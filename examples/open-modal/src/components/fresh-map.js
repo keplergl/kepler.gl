@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,18 +19,19 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer'
+import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import {addDataToMap, wrapTo} from 'kepler.gl/actions';
 import KeplerGl from 'kepler.gl';
 
 import sampleData from '../data/sample-data';
-import config from '../configurations/config.json';
+import config from '../configurations/config';
 
 export default class FreshMap extends Component {
   componentDidMount() {
     this.props.dispatch(
-      wrapTo(this.props.id, addDataToMap(
-        {
+      wrapTo(
+        this.props.id,
+        addDataToMap({
           datasets: sampleData,
           options: {
             centerMap: true
@@ -55,6 +56,6 @@ export default class FreshMap extends Component {
           />
         )}
       </AutoSizer>
-    )
+    );
   }
 }

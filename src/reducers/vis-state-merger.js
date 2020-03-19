@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,29 +20,31 @@
 
 import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
+import isEqual from 'lodash.isequal';
+import flattenDeep from 'lodash.flattendeep';
+import {toArray} from 'utils/utils';
 
-import {
-  getDefaultFilter,
-  getFilterProps,
-  getFilterPlot,
-  filterData,
-  adjustValueToFilterDomain
-} from 'utils/filter-utils';
+import {applyFiltersToDatasets, validateFilterWithData} from 'utils/filter-utils';
+
+import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
+import {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
+import {mergeFilterDomainStep} from '../utils/filter-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded
  * save it for later
  *
  * @param {Object} state
- * @param {Object[]} filtersToMerge
+ * @param {Array<Object>} filtersToMerge
  * @return {Object} updatedState
  */
 export function mergeFilters(state, filtersToMerge) {
   const merged = [];
   const unmerged = [];
   const {datasets} = state;
+  let updatedDatasets = datasets;
 
   if (!Array.isArray(filtersToMerge) || !filtersToMerge.length) {
     return state;
@@ -50,43 +52,81 @@ export function mergeFilters(state, filtersToMerge) {
 
   // merge filters
   filtersToMerge.forEach(filter => {
-    // match filter.dataId with current datesets id
-    // uploaded data need to have the same dataId with the filter
-    if (datasets[filter.dataId]) {
-      // datasets is already loaded
-      const validateFilter = validateFilterWithData(
-        datasets[filter.dataId],
-        filter
+    // we can only look for datasets define in the filter dataId
+    const datasetIds = toArray(filter.dataId);
+
+    // we can merge a filter only if all datasets in filter.dataId are loaded
+    if (datasetIds.every(d => datasets[d])) {
+      // all datasetIds in filter must be present the state datasets
+      const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce(
+        (acc, datasetId) => {
+          const dataset = updatedDatasets[datasetId];
+          const layers = state.layers.filter(l => l.config.dataId === dataset.id);
+          const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(
+            acc.augmentedDatasets[datasetId] || dataset,
+            filter,
+            layers
+          );
+
+          if (updatedFilter) {
+            return {
+              ...acc,
+              // merge filter props
+              filter: acc.filter
+                ? {
+                    ...acc.filter,
+                    ...mergeFilterDomainStep(acc, updatedFilter)
+                  }
+                : updatedFilter,
+
+              applyToDatasets: [...acc.applyToDatasets, datasetId],
+
+              augmentedDatasets: {
+                ...acc.augmentedDatasets,
+                [datasetId]: updatedDataset
+              }
+            };
+          }
+
+          return acc;
+        },
+        {
+          filter: null,
+          applyToDatasets: [],
+          augmentedDatasets: {}
+        }
       );
 
-      if (validateFilter) {
-        merged.push(validateFilter);
+      if (validatedFilter && isEqual(datasetIds, applyToDatasets)) {
+        merged.push(validatedFilter);
+        updatedDatasets = {
+          ...updatedDatasets,
+          ...augmentedDatasets
+        };
       }
     } else {
-      // datasets not yet loaded
       unmerged.push(filter);
     }
   });
 
+  // merge filter with existing
+  let updatedFilters = [...(state.filters || []), ...merged];
+  updatedFilters = resetFilterGpuMode(updatedFilters);
+  updatedFilters = assignGpuChannels(updatedFilters);
   // filter data
-  const updatedFilters = [...(state.filters || []), ...merged];
-  const datasetToFilter = uniq(merged.map(d => d.dataId));
+  const datasetsToFilter = uniq(flattenDeep(merged.map(f => f.dataId)));
 
-  const updatedDataset = datasetToFilter.reduce(
-    (accu, dataId) => ({
-      ...accu,
-      [dataId]: {
-        ...datasets[dataId],
-        ...filterData(datasets[dataId].allData, dataId, updatedFilters)
-      }
-    }),
-    datasets
+  const filtered = applyFiltersToDatasets(
+    datasetsToFilter,
+    updatedDatasets,
+    updatedFilters,
+    state.layers
   );
 
   return {
     ...state,
     filters: updatedFilters,
-    datasets: updatedDataset,
+    datasets: filtered,
     filterToBeMerged: unmerged
   };
 }
@@ -95,8 +135,8 @@ export function mergeFilters(state, filtersToMerge) {
  * Merge layers from de-serialized state, if no fields or data are loaded
  * save it for later
  *
- * @param {object} state
- * @param {Object[]} layersToMerge
+ * @param {Object} state
+ * @param {Array<Object>} layersToMerge
  * @return {Object} state
  */
 export function mergeLayers(state, layersToMerge) {
@@ -144,7 +184,7 @@ export function mergeLayers(state, layersToMerge) {
 /**
  * Merge interactions with saved config
  *
- * @param {object} state
+ * @param {Object} state
  * @param {Object} interactionToBeMerged
  * @return {Object} mergedState
  */
@@ -158,19 +198,18 @@ export function mergeInteractions(state, interactionToBeMerged) {
         return;
       }
 
+      const currentConfig = state.interactionConfig[key].config;
+
       const {enabled, ...configSaved} = interactionToBeMerged[key] || {};
       let configToMerge = configSaved;
 
       if (key === 'tooltip') {
-        const {mergedTooltip, unmergedTooltip} = mergeInteractionTooltipConfig(
-          state,
-          configSaved
-        );
+        const {mergedTooltip, unmergedTooltip} = mergeInteractionTooltipConfig(state, configSaved);
 
         // merge new dataset tooltips with original dataset tooltips
         configToMerge = {
           fieldsToShow: {
-            ...state.interactionConfig[key].config.fieldsToShow,
+            ...currentConfig.fieldsToShow,
             ...mergedTooltip
           }
         };
@@ -183,13 +222,17 @@ export function mergeInteractions(state, interactionToBeMerged) {
       merged[key] = {
         ...state.interactionConfig[key],
         enabled,
-        config: pick(
-          {
-            ...state.interactionConfig[key].config,
-            ...configToMerge
-          },
-          Object.keys(state.interactionConfig[key].config)
-        )
+        ...(currentConfig
+          ? {
+              config: pick(
+                {
+                  ...currentConfig,
+                  ...configToMerge
+                },
+                Object.keys(currentConfig)
+              )
+            }
+          : {})
       };
     });
   }
@@ -205,6 +248,39 @@ export function mergeInteractions(state, interactionToBeMerged) {
 }
 
 /**
+ * Merge splitMaps config with current visStete.
+ * 1. if current map is split, but splitMap DOESNOT contain maps
+ *    : don't merge anything
+ * 2. if current map is NOT split, but splitMaps contain maps
+ *    : add to splitMaps, and add current layers to splitMaps
+ */
+export function mergeSplitMaps(state, splitMaps = []) {
+  const merged = [...state.splitMaps];
+  const unmerged = [];
+  splitMaps.forEach((sm, i) => {
+    Object.entries(sm.layers).forEach(([id, value]) => {
+      // check if layer exists
+      const pushTo = state.layers.find(l => l.id === id) ? merged : unmerged;
+
+      // create map panel if current map is not split
+      pushTo[i] = pushTo[i] || {
+        layers: pushTo === merged ? getInitialMapLayersForSplitMap(state.layers) : []
+      };
+      pushTo[i].layers = {
+        ...pushTo[i].layers,
+        [id]: value
+      };
+    });
+  });
+
+  return {
+    ...state,
+    splitMaps: merged,
+    splitMapsToBeMerged: unmerged
+  };
+}
+
+/**
  * Merge interactionConfig.tooltip with saved config,
  * validate fieldsToShow
  *
@@ -216,10 +292,7 @@ export function mergeInteractionTooltipConfig(state, tooltipConfig = {}) {
   const unmergedTooltip = {};
   const mergedTooltip = {};
 
-  if (
-    !tooltipConfig.fieldsToShow ||
-    !Object.keys(tooltipConfig.fieldsToShow).length
-  ) {
+  if (!tooltipConfig.fieldsToShow || !Object.keys(tooltipConfig.fieldsToShow).length) {
     return {mergedTooltip, unmergedTooltip};
   }
 
@@ -230,8 +303,8 @@ export function mergeInteractionTooltipConfig(state, tooltipConfig = {}) {
     } else {
       // if dataset is loaded
       const allFields = state.datasets[dataId].fields.map(d => d.name);
-      const foundFieldsToShow = tooltipConfig.fieldsToShow[dataId].filter(
-        name => allFields.includes(name)
+      const foundFieldsToShow = tooltipConfig.fieldsToShow[dataId].filter(name =>
+        allFields.includes(name)
       );
 
       mergedTooltip[dataId] = foundFieldsToShow;
@@ -259,10 +332,30 @@ export function mergeLayerBlending(state, layerBlending) {
 }
 
 /**
+ * Merge animation config
+ * @param {Object} state
+ * @param {Object} animation
+ */
+export function mergeAnimationConfig(state, animation) {
+  if (animation && animation.currentTime) {
+    return {
+      ...state,
+      animationConfig: {
+        ...state.animationConfig,
+        ...animation,
+        domain: null
+      }
+    };
+  }
+
+  return state;
+}
+
+/**
  * Validate saved layer columns with new data,
  * update fieldIdx based on new fields
  *
- * @param {Object[]} fields
+ * @param {Array<Object>} fields
  * @param {Object} savedCols
  * @param {Object} emptyCols
  * @return {null | Object} - validated columns or null
@@ -275,6 +368,7 @@ export function validateSavedLayerColumns(fields, savedCols, emptyCols) {
     const saved = savedCols[key];
     colFound[key] = {...emptyCols[key]};
 
+    // TODO: replace with new approach
     const fieldIdx = fields.findIndex(({name}) => name === saved);
 
     if (fieldIdx > -1) {
@@ -295,63 +389,69 @@ export function validateSavedLayerColumns(fields, savedCols, emptyCols) {
  * Validate saved text label config with new data
  * refer to vis-state-schema.js TextLabelSchemaV1
  *
- * @param {Object[]} fields
+ * @param {Array<Object>} fields
  * @param {Object} savedTextLabel
  * @return {Object} - validated textlabel
  */
-export function validateSavedTextLabel(fields, layerTextLabel, savedTextLabel) {
+export function validateSavedTextLabel(fields, [layerTextLabel], savedTextLabel) {
+  const savedTextLabels = Array.isArray(savedTextLabel) ? savedTextLabel : [savedTextLabel];
 
   // validate field
-  const field = savedTextLabel.field ? fields.find(fd =>
-    Object.keys(savedTextLabel.field).every(
-      key => savedTextLabel.field[key] === fd[key]
-    )
-  ) : null;
+  return savedTextLabels.map(textLabel => {
+    const field = textLabel.field
+      ? fields.find(fd =>
+          Object.keys(textLabel.field).every(key => textLabel.field[key] === fd[key])
+        )
+      : null;
 
-  return Object.keys(layerTextLabel).reduce((accu, key) => ({
-    ...accu,
-    [key]: key === 'field' ? field : (savedTextLabel[key] || layerTextLabel[key])
-  }), {});
+    return Object.keys(layerTextLabel).reduce(
+      (accu, key) => ({
+        ...accu,
+        [key]: key === 'field' ? field : textLabel[key] || layerTextLabel[key]
+      }),
+      {}
+    );
+  });
 }
 
 /**
  * Validate saved visual channels config with new data,
  * refer to vis-state-schema.js VisualChannelSchemaV1
  *
- * @param {Object[]} fields
- * @param {Object} visualChannels
+ * @param {Array<Object>} fields
+ * @param {Object} newLayer
  * @param {Object} savedLayer
- * @return {Object} - validated visual channel in config or {}
+ * @return {Object} - newLayer
  */
-export function validateSavedVisualChannels(
-  fields,
-  visualChannels,
-  savedLayer
-) {
-  return Object.values(visualChannels).reduce((found, {field, scale}) => {
+export function validateSavedVisualChannels(fields, newLayer, savedLayer) {
+  Object.values(newLayer.visualChannels).forEach(({field, scale, key}) => {
     let foundField;
     if (savedLayer.config[field]) {
       foundField = fields.find(fd =>
         Object.keys(savedLayer.config[field]).every(
-          key => savedLayer.config[field][key] === fd[key]
+          prop => savedLayer.config[field][prop] === fd[prop]
         )
       );
     }
 
-    return {
-      ...found,
+    const foundChannel = {
       ...(foundField ? {[field]: foundField} : {}),
       ...(savedLayer.config[scale] ? {[scale]: savedLayer.config[scale]} : {})
     };
-  }, {});
+    if (Object.keys(foundChannel).length) {
+      newLayer.updateLayerConfig(foundChannel);
+      newLayer.validateVisualChannel(key);
+    }
+  });
+  return newLayer;
 }
 
 /**
  * Validate saved layer config with new data,
  * update fieldIdx based on new fields
  *
- * @param {Object[]} fields
- * @param {String} dataId
+ * @param {Array<Object>} fields
+ * @param {string} dataId
  * @param {Object} savedLayer
  * @param {Object} layerClasses
  * @return {null | Object} - validated layer or null
@@ -359,15 +459,11 @@ export function validateSavedVisualChannels(
 export function validateLayerWithData({fields, id: dataId}, savedLayer, layerClasses) {
   const {type} = savedLayer;
   // layer doesnt have a valid type
-  if (
-    !layerClasses.hasOwnProperty(type) ||
-    !savedLayer.config ||
-    !savedLayer.config.columns
-  ) {
+  if (!layerClasses.hasOwnProperty(type) || !savedLayer.config || !savedLayer.config.columns) {
     return null;
   }
 
-  const newLayer = new layerClasses[type]({
+  let newLayer = new layerClasses[type]({
     id: savedLayer.id,
     dataId,
     label: savedLayer.config.label,
@@ -389,88 +485,25 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
   // visual channel field is saved to be {name, type}
   // find visual channel field by matching both name and type
   // refer to vis-state-schema.js VisualChannelSchemaV1
-  const foundVisualChannelConfigs = validateSavedVisualChannels(
-    fields,
-    newLayer.visualChannels,
-    savedLayer
-  );
+  newLayer = validateSavedVisualChannels(fields, newLayer, savedLayer);
 
-  const textLabel = savedLayer.config.textLabel && newLayer.config.textLabel ? validateSavedTextLabel(
-    fields,
-    newLayer.config.textLabel,
-    savedLayer.config.textLabel
-  ) : newLayer.config.textLabel;
+  const textLabel =
+    savedLayer.config.textLabel && newLayer.config.textLabel
+      ? validateSavedTextLabel(fields, newLayer.config.textLabel, savedLayer.config.textLabel)
+      : newLayer.config.textLabel;
 
   // copy visConfig over to emptyLayer to make sure it has all the props
   const visConfig = newLayer.copyLayerConfig(
     newLayer.config.visConfig,
     savedLayer.config.visConfig || {},
-    {notToDeepMerge: 'colorRange'}
+    {shallowCopy: ['colorRange', 'strokeColorRange']}
   );
 
   newLayer.updateLayerConfig({
     columns,
     visConfig,
-    textLabel,
-    ...foundVisualChannelConfigs
+    textLabel
   });
 
   return newLayer;
-}
-
-/**
- * Validate saved filter config with new data,
- * calculate domain and fieldIdx based new fields and data
- *
- * @param {Object[]} dataset.fields
- * @param {Object[]} dataset.allData
- * @param {Object} filter - filter to be validate
- * @return {Object | null} - validated filter
- */
-export function validateFilterWithData({fields, allData}, filter) {
-  // match filter.name to field.name
-  const fieldIdx = fields.findIndex(({name}) => name === filter.name);
-
-  if (fieldIdx < 0) {
-    // if can't find field with same name, discharge filter
-    return null;
-  }
-
-  const field = fields[fieldIdx];
-  const value = filter.value;
-
-  // return filter type, default value, fieldType and fieldDomain from field
-  const filterPropsFromField = getFilterProps(allData, field);
-
-  let matchedFilter = {
-    ...getDefaultFilter(filter.dataId),
-    ...filter,
-    ...filterPropsFromField,
-    freeze: true,
-    fieldIdx
-  };
-
-  const {yAxis} = matchedFilter;
-  if (yAxis) {
-    const matcheAxis = fields.find(
-      ({name, type}) => name === yAxis.name && type === yAxis.type
-    );
-
-    matchedFilter = matcheAxis
-      ? {
-          ...matchedFilter,
-          yAxis: matcheAxis,
-          ...getFilterPlot({...matchedFilter, yAxis: matcheAxis}, allData)
-        }
-      : matchedFilter;
-  }
-
-  matchedFilter.value = adjustValueToFilterDomain(value, matchedFilter);
-
-  if (matchedFilter.value === null) {
-    // cannt adjust saved value to filter
-    return null;
-  }
-
-  return matchedFilter;
 }

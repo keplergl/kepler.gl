@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@ import './map-style-test';
 import './vis-state-test';
 import './ui-state-test';
 import './composer-state-test';
+import './provider-state-test';
 import './root-test';
 
 // test mergers

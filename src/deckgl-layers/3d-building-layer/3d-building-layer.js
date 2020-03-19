@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,43 +19,37 @@
 // THE SOFTWARE.
 
 import {CompositeLayer} from '@deck.gl/core';
-import {TileLayer as DeckGLTileLayer} from '@deck.gl/experimental-layers';
+import {TileLayer as DeckGLTileLayer} from '@deck.gl/geo-layers';
 import {getTileData} from './3d-building-utils';
-import {_SolidPolygonLayer as SolidPolygonLayer} from '@deck.gl/layers';
+import {SolidPolygonLayer} from '@deck.gl/layers';
 
 export default class ThreeDBuildingLayer extends CompositeLayer {
   // this layer add its subLayers to the redux store, and push sample data
-  
+
   renderSubLayers(props) {
     return new SolidPolygonLayer({
       ...props,
       parameter: {
-        blendFunc: [
-          'SRC_ALPHA',
-          'ONE_MINUS_SRC_ALPHA',
-          'ONE',
-          'ONE_MINUS_SRC_ALPHA'
-        ],
+        blendFunc: ['SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA', 'ONE', 'ONE_MINUS_SRC_ALPHA'],
         blendEquation: ['FUNC_ADD', 'FUNC_ADD']
       },
       extruded: true,
       opacity: 1,
       filled: true,
-      getElevation: (feature) => feature.properties.height || 0,
-      getPolygon: (feature) => feature.coordinates,
-      getFillColor: this.props.threeDBuildingColor,
-      lightSetting: {
-        ambientRatio: 0.2
-      }
+      getElevation: feature => feature.properties.height || 0,
+      getPolygon: feature => feature.coordinates,
+      getFillColor: this.props.threeDBuildingColor
     });
   }
 
   renderLayers() {
     return [
       new DeckGLTileLayer({
-        getTileData,
+        getTileData: args =>
+          getTileData(this.props.mapboxApiUrl, this.props.mapboxApiAccessToken, args),
         minZoom: 13,
-        renderSubLayers: this.renderSubLayers.bind(this)
+        renderSubLayers: this.renderSubLayers.bind(this),
+        updateTriggers: this.props.updateTriggers
       })
     ];
   }

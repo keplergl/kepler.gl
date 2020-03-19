@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,29 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {BrushingExtension} from '@deck.gl/extensions';
+import {ScatterplotLayer} from '@deck.gl/layers';
+
 import Layer from '../base-layer';
-import memoize from 'lodash.memoize';
-import {TextLayer} from 'deck.gl';
-import ScatterplotBrushingLayer from 'deckgl-layers/scatterplot-brushing-layer/scatterplot-brushing-layer';
-import uniq from 'lodash.uniq';
 import {hexToRgb} from 'utils/color-utils';
 import PointLayerIcon from './point-layer-icon';
-import {DEFAULT_LAYER_COLOR} from 'constants/default-settings';
+import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
+
+import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 
 export const pointPosAccessor = ({lat, lng, altitude}) => d => [
+  // lng
   d.data[lng.fieldIdx],
+  // lat
   d.data[lat.fieldIdx],
   altitude && altitude.fieldIdx > -1 ? d.data[altitude.fieldIdx] : 0
 ];
 
-export const pointPosResolver = ({lat, lng, altitude}) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}-${altitude ? altitude.fieldIdx : 'z'}`;
-
-export const pointLabelAccessor = textLabel => d => String(d.data[textLabel.field.tableFieldIndex - 1]);
-export const pointLabelResolver = textLabel => textLabel.field && textLabel.field.tableFieldIndex;
-
 export const pointRequiredColumns = ['lat', 'lng'];
 export const pointOptionalColumns = ['altitude'];
+
+const brushingExtension = new BrushingExtension();
 
 export const pointVisConfigs = {
   radius: 'radius',
@@ -48,9 +47,16 @@ export const pointVisConfigs = {
   opacity: 'opacity',
   outline: 'outline',
   thickness: 'thickness',
+  strokeColor: 'strokeColor',
   colorRange: 'colorRange',
+  strokeColorRange: 'strokeColorRange',
   radiusRange: 'radiusRange',
-  'hi-precision': 'hi-precision'
+  filled: {
+    type: 'boolean',
+    label: 'Fill Color',
+    defaultValue: true,
+    property: 'filled'
+  }
 };
 
 export default class PointLayer extends Layer {
@@ -58,8 +64,7 @@ export default class PointLayer extends Layer {
     super(props);
 
     this.registerVisConfig(pointVisConfigs);
-    this.getPosition = memoize(pointPosAccessor, pointPosResolver);
-    this.getText = memoize(pointLabelAccessor, pointLabelResolver);
+    this.getPositionAccessor = () => pointPosAccessor(this.config.columns);
   }
 
   get type() {
@@ -91,7 +96,20 @@ export default class PointLayer extends Layer {
 
   get visualChannels() {
     return {
-      ...super.visualChannels,
+      color: {
+        ...super.visualChannels.color,
+        condition: config => config.visConfig.filled
+      },
+      strokeColor: {
+        property: 'strokeColor',
+        field: 'strokeColorField',
+        scale: 'strokeColorScale',
+        domain: 'strokeColorDomain',
+        range: 'strokeColorRange',
+        key: 'strokeColor',
+        channelScaleType: CHANNEL_SCALES.color,
+        condition: config => config.visConfig.outline
+      },
       size: {
         ...super.visualChannels.size,
         range: 'radiusRange',
@@ -125,7 +143,6 @@ export default class PointLayer extends Layer {
         prop.isVisible = true;
       }
 
-      // const newLayer = new KeplerGlLayers.PointLayer(prop);
       prop.columns = {
         lat: latField,
         lng: lngField,
@@ -135,193 +152,200 @@ export default class PointLayer extends Layer {
       props.push(prop);
     });
 
-    return props;
+    return {props};
   }
 
-  // TODO: fix complexity
-  /* eslint-disable complexity */
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  getDefaultLayerConfig(props = {}) {
+    return {
+      ...super.getDefaultLayerConfig(props),
+
+      // add stroke color visual channel
+      strokeColorField: null,
+      strokeColorDomain: [0, 1],
+      strokeColorScale: 'quantile'
+    };
+  }
+
+  calculateDataAttribute({allData, filteredIndex}, getPosition) {
+    const data = [];
+
+    for (let i = 0; i < filteredIndex.length; i++) {
+      const index = filteredIndex[i];
+      const pos = getPosition({data: allData[index]});
+
+      // if doesn't have point lat or lng, do not add the point
+      // deck.gl can't handle position = null
+      if (pos.every(Number.isFinite)) {
+        data.push({
+          data: allData[index],
+          position: pos,
+          // index is important for filter
+          index
+        });
+      }
+    }
+    return data;
+  }
+
+  formatLayerData(datasets, oldLayerData) {
     const {
       colorScale,
       colorDomain,
       colorField,
+      strokeColorField,
+      strokeColorScale,
+      strokeColorDomain,
       color,
-      columns,
       sizeField,
       sizeScale,
       sizeDomain,
       textLabel,
-      visConfig: {radiusRange, fixedRadius, colorRange}
+      visConfig: {radiusRange, fixedRadius, colorRange, strokeColorRange, strokeColor}
     } = this.config;
 
+    const {gpuFilter} = datasets[this.config.dataId];
+    const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
+    const getPosition = this.getPositionAccessor();
     // point color
+
     const cScale =
       colorField &&
+      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
+
+    // stroke color
+    const scScale =
+      strokeColorField &&
       this.getVisChannelScale(
-        colorScale,
-        colorDomain,
-        colorRange.colors.map(hexToRgb)
+        strokeColorScale,
+        strokeColorDomain,
+        strokeColorRange.colors.map(hexToRgb)
       );
 
     // point radius
     const rScale =
-      sizeField &&
-      this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, fixedRadius);
+      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, fixedRadius);
 
-    const getPosition = this.getPosition(columns);
+    const getRadius = rScale ? d => this.getEncodedChannelValue(rScale, d.data, sizeField, 0) : 1;
 
-    if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
-      this.updateLayerMeta(allData, getPosition);
-    }
+    const getFillColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : color;
 
-    let data;
-    if (
-      oldLayerData &&
-      oldLayerData.data &&
-      opt.sameData &&
-      oldLayerData.getPosition === getPosition
-    ) {
-      data = oldLayerData.data;
-    } else {
-      data = filteredIndex.reduce((accu, index) => {
-        const pos = getPosition({data: allData[index]});
-
-        // if doesn't have point lat or lng, do not add the point
-        // deck.gl can't handle position = null
-        if (!pos.every(Number.isFinite)) {
-          return accu;
-        }
-
-        accu.push({
-          data: allData[index]
-        });
-
-        return accu;
-      }, []);
-    }
+    const getLineColor = scScale
+      ? d => this.getEncodedChannelValue(scScale, d.data, strokeColorField)
+      : strokeColor || color;
 
     // get all distinct characters in the text labels
-    const getText = this.getText(textLabel);
-    let labelCharacterSet;
-    if (
-      oldLayerData &&
-      oldLayerData.labelCharacterSet &&
-      opt.sameData &&
-      oldLayerData.getText === getText
-    ) {
-      labelCharacterSet = oldLayerData.labelCharacterSet
-    } else {
-      const textLabels = textLabel.field ? data.map(getText) : [];
-      labelCharacterSet = uniq(textLabels.join(''));
-    }
-
-    const getRadius = rScale ? d =>
-      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
-
-    const getColor = cScale ? d =>
-      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    const textLabels = formatTextLabelData({
+      textLabel,
+      triggerChanged,
+      oldLayerData,
+      data
+    });
 
     return {
       data,
-      labelCharacterSet,
       getPosition,
-      getColor,
+      getFillColor,
+      getLineColor,
+      getFilterValue: gpuFilter.filterValueAccessor(),
       getRadius,
-      getText
+      textLabels
     };
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(allData, getPosition) {
+  updateLayerMeta(allData) {
+    const getPosition = this.getPositionAccessor();
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
     this.updateMeta({bounds});
   }
 
-  renderLayer({
-    data,
-    idx,
-    layerInteraction,
-    objectHovered,
-    mapState,
-    interactionConfig
-  }) {
-    const enableBrushing = interactionConfig.brush.enabled;
+  renderLayer(opts) {
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
+
+    const radiusScale = this.getRadiusScaleByZoom(mapState);
 
     const layerProps = {
-      outline: this.config.visConfig.outline,
-      radiusMinPixels: 1,
-      fp64: this.config.visConfig['hi-precision'],
-      strokeWidth: this.config.visConfig.thickness,
-      radiusScale: this.getRadiusScaleByZoom(mapState),
+      stroked: this.config.visConfig.outline,
+      filled: this.config.visConfig.filled,
+      lineWidthScale: this.config.visConfig.thickness,
+      radiusScale,
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
-    const interaction = {
-      autoHighlight: !enableBrushing,
-      enableBrushing,
-      brushRadius: interactionConfig.brush.config.size * 1000,
-      highlightColor: this.config.highlightColor
+    const updateTriggers = {
+      getPosition: this.config.columns,
+      getRadius: {
+        sizeField: this.config.sizeField,
+        radiusRange: this.config.visConfig.radiusRange,
+        fixedRadius: this.config.visConfig.fixedRadius,
+        sizeScale: this.config.sizeScale
+      },
+      getFillColor: {
+        color: this.config.color,
+        colorField: this.config.colorField,
+        colorRange: this.config.visConfig.colorRange,
+        colorScale: this.config.colorScale
+      },
+      getLineColor: {
+        color: this.config.visConfig.strokeColor,
+        colorField: this.config.strokeColorField,
+        colorRange: this.config.visConfig.strokeColorRange,
+        colorScale: this.config.strokeColorScale
+      },
+      getFilterValue: gpuFilter.filterValueUpdateTriggers
+    };
+
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    const brushingProps = this.getBrushingExtensionProps(interactionConfig);
+    const getPixelOffset = getTextOffsetByRadius(radiusScale, data.getRadius, mapState);
+    const extensions = [...defaultLayerProps.extensions, brushingExtension];
+
+    const sharedProps = {
+      getFilterValue: data.getFilterValue,
+      extensions,
+      filterRange: defaultLayerProps.filterRange,
+      ...brushingProps
     };
 
     return [
-      new ScatterplotBrushingLayer({
+      new ScatterplotLayer({
+        ...defaultLayerProps,
+        ...brushingProps,
         ...layerProps,
-        ...layerInteraction,
         ...data,
-        ...interaction,
-        idx,
-        id: this.id,
-        opacity: this.config.visConfig.opacity,
-        pickable: true,
         parameters: {
           // circles will be flat on the map when the altitude column is not used
           depthTest: this.config.columns.altitude.fieldIdx > -1
         },
-
-        updateTriggers: {
-          getRadius: {
-            sizeField: this.config.sizeField,
-            radiusRange: this.config.visConfig.radiusRange,
-            fixedRadius: this.config.visConfig.fixedRadius,
-            sizeScale: this.config.sizeScale
-          },
-          getColor: {
-            color: this.config.color,
-            colorField: this.config.colorField,
-            colorRange: this.config.visConfig.colorRange,
-            colorScale: this.config.colorScale
-          }
-        }
+        updateTriggers,
+        extensions
       }),
-      // text label layer
-      ...(this.config.textLabel.field
+      // hover layer
+      ...(this.isLayerHovered(objectHovered)
         ? [
-            new TextLayer({
-              id: `${this.id}-label`,
-              data: data.data,
-              getPosition: data.getPosition,
-              getPixelOffset: this.config.textLabel.offset,
-              getSize: this.config.textLabel.size,
-              getTextAnchor: this.config.textLabel.anchor,
-              getText: data.getText,
-              getColor: d => this.config.textLabel.color,
-              fp64: this.config.visConfig['hi-precision'],
-              parameters: {
-                // text will always show on top of all layers
-                depthTest: false
-              },
-              characterSet: data.labelCharacterSet,
-              updateTriggers: {
-                getPosition: data.getPosition,
-                getPixelOffset: this.config.textLabel.offset,
-                getText: this.config.textLabel.field,
-                getTextAnchor: this.config.textLabel.anchor,
-                getSize: this.config.textLabel.size,
-                getColor: this.config.textLabel.color
-              }
+            new ScatterplotLayer({
+              ...this.getDefaultHoverLayerProps(),
+              ...layerProps,
+              data: [objectHovered.object],
+              getLineColor: this.config.highlightColor,
+              getFillColor: this.config.highlightColor,
+              getRadius: data.getRadius,
+              getPosition: data.getPosition
             })
           ]
-        : [])
+        : []),
+      // text label layer
+      ...this.renderTextLabelLayer(
+        {
+          getPosition: data.getPosition,
+          sharedProps,
+          getPixelOffset,
+          updateTriggers
+        },
+        opts
+      )
     ];
   }
 }

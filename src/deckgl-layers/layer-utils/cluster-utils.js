@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,11 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import supercluster from 'supercluster';
+import Supercluster from 'supercluster';
 import memoize from 'lodash.memoize';
 
-export function getGeoJSON(data, getPosition) {
-  return data
+export function getGeoJSON(data, getPosition, filterData) {
+  const raw = typeof filterData === 'function' ? data.filter(filterData) : data;
+
+  return raw
     .map(d => ({
       type: 'Point',
       properties: {
@@ -40,31 +42,35 @@ export function getGeoJSON(data, getPosition) {
 
 const clusterResolver = ({clusterRadius}) => `${clusterRadius}`;
 
-const getClusterer = memoize(({clusterRadius, geoJSON}) => {
-  return supercluster({
+const getClusterer = ({clusterRadius, geoJSON}) =>
+  new Supercluster({
     maxZoom: 20,
     radius: clusterRadius,
-    initial: () => ({points: []}),
-    map: props => props.data,
     reduce: (accumulated, props) => {
-      if (props.points) {
-        // avoid using spread to prevent max call stack exceeded error
-        props.points.forEach(p => {
-          accumulated.points.push(p);
-        });
-      } else {
-        accumulated.points.push(props);
-      }
-    }
+      accumulated.points = [...accumulated.points, ...props.points];
+    },
+    map: props => ({points: [props.data]})
   }).load(geoJSON);
-}, clusterResolver);
 
-export function clustersAtZoom({bbox, clusterRadius, geoJSON, zoom}) {
-  const clusterer = getClusterer({clusterRadius, geoJSON});
+export default class ClusterBuilder {
+  constructor() {
+    this.clusterer = memoize(getClusterer, clusterResolver);
+  }
 
-  return clusterer.getClusters(bbox, zoom);
-}
+  clustersAtZoom({bbox, clusterRadius, geoJSON, zoom}) {
+    const clusterer = this.clusterer({clusterRadius, geoJSON});
 
-export function clearClustererCache() {
-  getClusterer.cache.clear();
+    // map clusters to formatted bins to be passed to deck.gl bin-sorter
+    const clusters = clusterer.getClusters(bbox, zoom).map((c, i) => ({
+      points: c.properties.points,
+      position: c.geometry.coordinates,
+      index: i
+    }));
+
+    return clusters;
+  }
+
+  clearClustererCache() {
+    this.clusterer.cache.clear();
+  }
 }

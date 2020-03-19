@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
+import {polyfill} from 'react-lifecycles-compat';
 import PropTypes from 'prop-types';
 import fuzzy from 'fuzzy';
 import classNames from 'classnames';
@@ -54,8 +55,7 @@ const InputBox = styled.div`
 `;
 
 const TypeaheadInput = styled.input`
-  ${props => props.theme.secondaryInput}
-  :hover {
+  ${props => props.theme.secondaryInput} :hover {
     cursor: pointer;
     background-color: ${props => props.theme.secondaryInputBgd};
   }
@@ -68,7 +68,52 @@ const InputIcon = styled.div`
   color: ${props => props.theme.inputPlaceholderColor};
 `;
 
-export default class Typeahead extends Component {
+function generateSearchFunction(props) {
+  const {searchOptions, filterOption} = props;
+  if (typeof searchOptions === 'function') {
+    if (filterOption !== null) {
+      Console.warn('searchOptions prop is being used, filterOption prop will be ignored');
+    }
+    return searchOptions;
+  } else if (typeof filterOption === 'function') {
+    // use custom filter option
+    return (value, options) => options.filter(o => filterOption(value, o));
+  }
+
+  const mapper =
+    typeof filterOption === 'string'
+      ? Accessor.generateAccessor(filterOption)
+      : Accessor.IDENTITY_FN;
+
+  return (value, options) =>
+    fuzzy.filter(value, options, {extract: mapper}).map(res => options[res.index]);
+}
+
+function getOptionsForValue(value, props, state) {
+  const {options, showOptionsWhenEmpty} = props;
+
+  if (!props.searchable) {
+    // directly pass through options if can not be searched
+    return options;
+  }
+  if (shouldSkipSearch(value, state, showOptionsWhenEmpty)) {
+    return options;
+  }
+
+  const searchOptions = generateSearchFunction(props);
+  return searchOptions(value, options);
+}
+
+function shouldSkipSearch(input, state, showOptionsWhenEmpty) {
+  const emptyValue = !input || input.trim().length === 0;
+
+  // this.state must be checked because it may not be defined yet if this function
+  // is called from within getInitialState
+  const isFocused = state && state.isFocused;
+  return !(showOptionsWhenEmpty && isFocused) && emptyValue;
+}
+
+class Typeahead extends Component {
   static propTypes = {
     name: PropTypes.string,
     customClasses: PropTypes.object,
@@ -97,14 +142,8 @@ export default class Typeahead extends Component {
     formInputOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     defaultClassNames: PropTypes.bool,
     customListComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-    customListItemComponent: PropTypes.oneOfType([
-      PropTypes.element,
-      PropTypes.func
-    ]),
-    customListHeaderComponent: PropTypes.oneOfType([
-      PropTypes.element,
-      PropTypes.func
-    ]),
+    customListItemComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+    customListHeaderComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
     showOptionsWhenEmpty: PropTypes.bool,
     searchable: PropTypes.bool
   };
@@ -138,14 +177,18 @@ export default class Typeahead extends Component {
     resultsTruncatedMessage: null
   };
 
+  static getDerivedStateFromProps(props, state) {
+    //  invoked after a component is instantiated as well as before it is re-rendered
+    const searchResults = getOptionsForValue(state.entryValue, props, state);
+
+    return {searchResults};
+  }
+
   constructor(props) {
     super(props);
 
     this.state = {
-      searchResults: this.getOptionsForValue(
-        this.props.initialValue,
-        this.props.options
-      ),
+      searchResults: [],
 
       // This should be called something else, 'entryValue'
       entryValue: this.props.value || this.props.initialValue,
@@ -163,66 +206,34 @@ export default class Typeahead extends Component {
   }
 
   componentDidMount() {
-    this.setState({
-      searchResults: this.getOptionsForValue('', this.props.options)
-    });
-
     // call focus on entry or div to trigger key events listener
-    if (this.entry) {
-      this.entry.focus();
+    if (this.entry.current) {
+      this.entry.current.focus();
     } else {
-      this.root.focus();
+      this.root.current.focus();
     }
   }
 
-  componentWillReceiveProps(nextProps) {
-    const searchResults = this.getOptionsForValue(
-      this.state.entryValue,
-      nextProps.options
-    );
+  root = createRef();
+  entry = createRef();
 
-    this.setState({searchResults});
-  }
-
-  _shouldSkipSearch(input) {
-    const emptyValue = !input || input.trim().length === 0;
-
-    // this.state must be checked because it may not be defined yet if this function
-    // is called from within getInitialState
-    const isFocused = this.state && this.state.isFocused;
-    return !(this.props.showOptionsWhenEmpty && isFocused) && emptyValue;
-  }
-
-  getOptionsForValue(value, options) {
-    if (!this.props.searchable) {
-      // directly pass through options if can not be searched
-      return options;
+  focus = () => {
+    if (this.entry.current) {
+      this.entry.current.focus();
     }
-    if (this._shouldSkipSearch(value)) {
-      return options;
-    }
+  };
 
-    const searchOptions = this._generateSearchFunction();
-    return searchOptions(value, options);
-  }
-
-  focus() {
-    if (this.entry) {
-      this.entry.focus();
-    }
-  }
-
-  _hasCustomValue() {
+  _hasCustomValue = () => {
     return (
       this.props.allowCustomValues > 0 &&
       this.state.entryValue.length >= this.props.allowCustomValues &&
       this.state.searchResults.indexOf(this.state.entryValue) < 0
     );
-  }
+  };
 
-  _getCustomValue() {
+  _getCustomValue = () => {
     return this._hasCustomValue() ? this.state.entryValue : null;
-  }
+  };
 
   _renderIncrementalSearchResults() {
     return (
@@ -234,8 +245,7 @@ export default class Typeahead extends Component {
             : this.state.searchResults
         }
         areResultsTruncated={
-          this.props.maxVisible &&
-          this.state.searchResults.length > this.props.maxVisible
+          this.props.maxVisible && this.state.searchResults.length > this.props.maxVisible
         }
         resultsTruncatedMessage={this.props.resultsTruncatedMessage}
         onOptionSelected={this._onOptionSelected}
@@ -273,7 +283,7 @@ export default class Typeahead extends Component {
     if (this.props.searchable) {
       // reset entry input
       this.setState({
-        searchResults: this.getOptionsForValue('', this.props.options),
+        searchResults: getOptionsForValue('', this.props, this.state),
         selection: '',
         entryValue: ''
       });
@@ -285,10 +295,10 @@ export default class Typeahead extends Component {
   // use () => {} to avoid binding 'this'
   _onTextEntryUpdated = () => {
     if (this.props.searchable) {
-      const value = this.entry.value;
+      const value = this.entry.current.value;
 
       this.setState({
-        searchResults: this.getOptionsForValue(value, this.props.options),
+        searchResults: getOptionsForValue(value, this.props, this.state),
         selection: '',
         entryValue: value
       });
@@ -303,19 +313,19 @@ export default class Typeahead extends Component {
     return this._onOptionSelected(selection, event);
   };
 
-  _onEscape() {
+  _onEscape = () => {
     this.setState({
       selectionIndex: null
     });
-  }
+  };
 
-  _onTab(event) {
+  _onTab = event => {
     const selection = this.getSelection();
     let option = selection
       ? selection
       : this.state.searchResults.length > 0
-        ? this.state.searchResults[0]
-        : null;
+      ? this.state.searchResults[0]
+      : null;
 
     if (option === null && this._hasCustomValue()) {
       option = this._getCustomValue();
@@ -324,29 +334,29 @@ export default class Typeahead extends Component {
     if (option !== null) {
       return this._onOptionSelected(option, event);
     }
-  }
+  };
 
-  eventMap(event) {
+  eventMap = event => {
     const events = {};
 
     events[KeyEvent.DOM_VK_UP] = this.navUp;
     events[KeyEvent.DOM_VK_DOWN] = this.navDown;
-    events[KeyEvent.DOM_VK_RETURN] = events[
-      KeyEvent.DOM_VK_ENTER
-    ] = this._onEnter;
+    events[KeyEvent.DOM_VK_RETURN] = events[KeyEvent.DOM_VK_ENTER] = this._onEnter;
     events[KeyEvent.DOM_VK_ESCAPE] = this._onEscape;
     events[KeyEvent.DOM_VK_TAB] = this._onTab;
 
     return events;
-  }
+  };
 
-  _nav(delta) {
+  _nav = delta => {
     if (!this._hasHint()) {
       return;
     }
     let newIndex =
       this.state.selectionIndex === null
-        ? delta === 1 ? 0 : delta
+        ? delta === 1
+          ? 0
+          : delta
         : this.state.selectionIndex + delta;
     let length = this.props.maxVisible
       ? this.state.searchResults.slice(0, this.props.maxVisible).length
@@ -362,7 +372,7 @@ export default class Typeahead extends Component {
     }
 
     this.setState({selectionIndex: newIndex});
-  }
+  };
 
   navDown = () => {
     this._nav(1);
@@ -418,40 +428,7 @@ export default class Typeahead extends Component {
       return null;
     }
 
-    return (
-      <input
-        type="hidden"
-        name={this.props.name}
-        value={this.state.selection}
-      />
-    );
-  }
-
-  _generateSearchFunction() {
-    const searchOptionsProp = this.props.searchOptions;
-    const filterOptionProp = this.props.filterOption;
-    if (typeof searchOptionsProp === 'function') {
-      if (filterOptionProp !== null) {
-        Console.warn(
-          'searchOptions prop is being used, filterOption prop will be ignored'
-        );
-      }
-      return searchOptionsProp;
-    } else if (typeof filterOptionProp === 'function') {
-      // use custom filter option
-      return (value, options) =>
-        options.filter(o => filterOptionProp(value, o));
-    }
-
-    const mapper =
-      typeof filterOptionProp === 'string'
-        ? Accessor.generateAccessor(filterOptionProp)
-        : Accessor.IDENTITY_FN;
-
-    return (value, options) =>
-      fuzzy
-        .filter(value, options, {extract: mapper})
-        .map(res => options[res.index]);
+    return <input type="hidden" name={this.props.name} value={this.state.selection} />;
   }
 
   _hasHint() {
@@ -459,16 +436,12 @@ export default class Typeahead extends Component {
   }
 
   _hasFixedOptions() {
-    return (
-      Array.isArray(this.props.fixedOptions) && this.props.fixedOptions.length
-    );
+    return Array.isArray(this.props.fixedOptions) && this.props.fixedOptions.length;
   }
 
   render() {
     const inputClasses = {};
-    inputClasses[this.props.customClasses.input] = Boolean(
-      this.props.customClasses.input
-    );
+    inputClasses[this.props.customClasses.input] = Boolean(this.props.customClasses.input);
     const inputClassList = classNames(inputClasses);
 
     const classes = {
@@ -480,9 +453,7 @@ export default class Typeahead extends Component {
     return (
       <TypeaheadWrapper
         className={classList}
-        innerRef={comp => {
-          this.root = comp;
-        }}
+        ref={this.root}
         tabIndex="0"
         onKeyDown={this._onKeyDown}
         onKeyPress={this.props.onKeyPress}
@@ -491,27 +462,29 @@ export default class Typeahead extends Component {
       >
         {this._renderHiddenInput()}
         {this.props.searchable ? (
-        <InputBox>
-          <TypeaheadInput
-            innerRef={comp => {
-              this.entry = comp;
-            }}
-            type="text"
-            disabled={this.props.disabled}
-            {...this.props.inputProps}
-            placeholder={this.props.placeholder}
-            className={inputClassList}
-            value={this.state.entryValue}
-            onChange={this._onChange}
-            onBlur={this._onBlur}
-          />
-          <InputIcon>
-            <Search height="18px"/>
-          </InputIcon>
-        </InputBox>
+          <InputBox>
+            <TypeaheadInput
+              ref={this.entry}
+              type="text"
+              disabled={this.props.disabled}
+              {...this.props.inputProps}
+              placeholder={this.props.placeholder}
+              className={inputClassList}
+              value={this.state.entryValue}
+              onChange={this._onChange}
+              onBlur={this._onBlur}
+            />
+            <InputIcon>
+              <Search height="18px" />
+            </InputIcon>
+          </InputBox>
         ) : null}
         {this._renderIncrementalSearchResults()}
       </TypeaheadWrapper>
     );
   }
-};
+}
+
+polyfill(Typeahead);
+
+export default Typeahead;

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -59,17 +59,10 @@ export default class Swipeable extends PureComponent {
     const {children, onChange, selectedIndex} = this.props;
     return (
       <div>
-        <SwipeableViews
-          enableMouseEvents
-          index={selectedIndex}
-          onChange={onChange}>
+        <SwipeableViews enableMouseEvents index={selectedIndex} onChange={onChange}>
           {children}
         </SwipeableViews>
-        <Pagination
-          items={children}
-          selectedIndex={selectedIndex}
-          onChange={onChange}
-        />
+        <Pagination items={children} selectedIndex={selectedIndex} onChange={onChange} />
       </div>
     );
   }

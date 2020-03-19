@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ const StyledLink = styled.a`
   margin-left: 40px;
   transition: color 500ms;
   display: inline-block;
-  
+
   :hover {
     color: white;
     cursor: pointer;
@@ -48,13 +48,13 @@ const StyledHeader = styled.div`
   z-index: 1000;
   display: flex;
   justify-content: flex-end;
-  
+
   .links {
     margin-top: 20px;
   }
-  
+
   .icon-github:before {
-    content: "\\e904";
+    content: '\\e904';
   }
 `;
 

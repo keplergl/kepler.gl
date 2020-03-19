@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,25 +24,92 @@ import {console as globalConsole} from 'global/window';
 import assert from 'assert';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
-import {ALL_FIELD_TYPES, GEOJSON_FIELDS} from 'constants/default-settings';
-import {notNullorUndefined} from 'utils/data-utils';
+import {ALL_FIELD_TYPES, DATASET_FORMATS} from 'constants/default-settings';
+import {notNullorUndefined, parseFieldValue, getSampleData} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
+import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
+import {isPlainObject, toArray} from 'utils/utils';
+
+export const ACCEPTED_ANALYZER_TYPES = [
+  AnalyzerDATA_TYPES.DATE,
+  AnalyzerDATA_TYPES.TIME,
+  AnalyzerDATA_TYPES.DATETIME,
+  AnalyzerDATA_TYPES.NUMBER,
+  AnalyzerDATA_TYPES.INT,
+  AnalyzerDATA_TYPES.FLOAT,
+  AnalyzerDATA_TYPES.BOOLEAN,
+  AnalyzerDATA_TYPES.STRING,
+  AnalyzerDATA_TYPES.GEOMETRY,
+  AnalyzerDATA_TYPES.GEOMETRY_FROM_STRING,
+  AnalyzerDATA_TYPES.PAIR_GEOMETRY_FROM_STRING,
+  AnalyzerDATA_TYPES.ZIPCODE,
+  AnalyzerDATA_TYPES.ARRAY,
+  AnalyzerDATA_TYPES.OBJECT
+];
 
 // if any of these value occurs in csv, parse it to null;
-const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN'];
+const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];
 
+const IGNORE_DATA_TYPES = Object.keys(AnalyzerDATA_TYPES).filter(
+  type => !ACCEPTED_ANALYZER_TYPES.includes(type)
+);
+
+export const PARSE_FIELD_VALUE_FROM_STRING = {
+  [ALL_FIELD_TYPES.boolean]: {
+    valid: d => typeof d === 'boolean',
+    parse: d => d === 'true' || d === 'True' || d === '1'
+  },
+  [ALL_FIELD_TYPES.integer]: {
+    valid: d => parseInt(d, 10) === d,
+    parse: d => parseInt(d, 10)
+  },
+  [ALL_FIELD_TYPES.timestamp]: {
+    valid: (d, field) =>
+      ['x', 'X'].includes(field.format) ? typeof d === 'number' : typeof d === 'string',
+    parse: (d, field) => (['x', 'X'].includes(field.format) ? Number(d) : d)
+  },
+  [ALL_FIELD_TYPES.real]: {
+    valid: d => parseFloat(d) === d,
+    parse: parseFloat
+  }
+};
+
+/**
+ * Process csv data, output a data object with `{fields: [], rows: []}`.
+ * The data object can be wrapped in a `dataset` and pass to [`addDataToMap`](../actions/actions.md#adddatatomap)
+ * @param {string} rawData raw csv string
+ * @returns {Object} data object `{fields: [], rows: []}`
+ * @public
+ * @example
+ * import {processCsvData} from 'kepler.gl/processors';
+ *
+ * const testData = `gps_data.utc_timestamp,gps_data.lat,gps_data.lng,gps_data.types,epoch,has_result,id,time,begintrip_ts_utc,begintrip_ts_local,date
+ * 2016-09-17 00:09:55,29.9900937,31.2590542,driver_analytics,1472688000000,False,1,2016-09-23T00:00:00.000Z,2016-10-01 09:41:39+00:00,2016-10-01 09:41:39+00:00,2016-09-23
+ * 2016-09-17 00:10:56,29.9927699,31.2461142,driver_analytics,1472688000000,False,2,2016-09-23T00:00:00.000Z,2016-10-01 09:46:37+00:00,2016-10-01 16:46:37+00:00,2016-09-23
+ * 2016-09-17 00:11:56,29.9907261,31.2312742,driver_analytics,1472688000000,False,3,2016-09-23T00:00:00.000Z,,,2016-09-23
+ * 2016-09-17 00:12:58,29.9870074,31.2175827,driver_analytics,1472688000000,False,4,2016-09-23T00:00:00.000Z,,,2016-09-23`
+ *
+ * const dataset = {
+ *  info: {id: 'test_data', label: 'My Csv'},
+ *  data: processCsvData(testData)
+ * };
+ *
+ * dispatch(addDataToMap({
+ *  datasets: [dataset],
+ *  options: {centerMap: true, readOnly: true}
+ * }));
+ */
 export function processCsvData(rawData) {
-
   // here we assume the csv file that people uploaded will have first row
   // as name of the column
   // TODO: add a alert at upload csv to remind define first row
-  const [headerRow, ...rows] = csvParseRows(rawData);
-
-  if (!rows.length || !headerRow) {
-    // looks like an empty file
-    // resolve null, and catch them later in one place
-    return null;
+  const result = csvParseRows(rawData);
+  if (!Array.isArray(result) || result.length < 2) {
+    // looks like an empty file, throw error to be catch
+    throw new Error('Read File Failed: CSV is empty');
   }
+
+  const [headerRow, ...rows] = result;
 
   cleanUpFalsyCsvValue(rows);
   // No need to run type detection on every data point
@@ -51,18 +118,30 @@ export function processCsvData(rawData) {
 
   const fields = getFieldsFromData(sample, headerRow);
 
-  fields.forEach(parseCsvDataByFieldType.bind(null, rows));
+  const parsedRows = parseRowsByFields(rows, fields);
 
-  return {fields, rows};
+  return {fields, rows: parsedRows};
 }
 
 /**
- * get fields from csv data
+ * Parse rows of csv by analyzed field types. So that `'1'` -> `1`, `'True'` -> `true`
+ * @param {Array<Array>} rows
+ * @param {Array<Object} fields
+ */
+export function parseRowsByFields(rows, fields) {
+  // Edit rows in place
+  const geojsonFieldIdx = fields.findIndex(f => f.name === '_geojson');
+  fields.forEach(parseCsvRowsByFieldType.bind(null, rows, geojsonFieldIdx));
+
+  return rows;
+}
+/**
+ * Getting sample data for analyzing field type.
  *
- * @param {array} fields - an array of fields name
- * @param {array} allData
- * @param {array} sampleCount
- * @returns {array} formatted fields
+ * @param {Array<string>} fields an array of field names
+ * @param {Array<Array>} allData
+ * @param {Array} sampleCount
+ * @returns {Array} formatted fields
  */
 export function getSampleForTypeAnalyze({fields, allData, sampleCount = 50}) {
   const total = Math.min(sampleCount, allData.length);
@@ -94,6 +173,12 @@ export function getSampleForTypeAnalyze({fields, allData, sampleCount = 50}) {
   return sample;
 }
 
+/**
+ * Convert falsy value in csv including `'', 'null', 'NULL', 'Null', 'NaN'` to `null`,
+ * so that type-analyzer won't detect it as string
+ *
+ * @param {Array<Array>} rows
+ */
 function cleanUpFalsyCsvValue(rows) {
   for (let i = 0; i < rows.length; i++) {
     for (let j = 0; j < rows[i].length; j++) {
@@ -107,85 +192,111 @@ function cleanUpFalsyCsvValue(rows) {
     }
   }
 }
+
 /**
  * Process uploaded csv file to parse value by field type
  *
- * @param {array} rows
- * @param {object} field
- * @param {number} i
+ * @param {Array<Array>} rows
+ * @param {Number} geo field index
+ * @param {Object} field
+ * @param {Number} i
  * @returns {void}
  */
-export function parseCsvDataByFieldType(rows, field, i) {
-  const unixFormat = ['x', 'X'];
-
-  rows.forEach(row => {
-    if (row[i] !== null) {
-      switch (field.type) {
-        case ALL_FIELD_TYPES.real:
-          row[i] = parseFloat(row[i]);
-          break;
-
-        // TODO: timestamp can be either '1495827326' or '2016-03-10 11:20'
-        // if it's '1495827326' we pass it to int
-        case ALL_FIELD_TYPES.timestamp:
-          row[i] = unixFormat.includes(field.format) ? Number(row[i]) : row[i];
-          break;
-
-        case ALL_FIELD_TYPES.integer:
-          row[i] = parseInt(row[i], 10);
-          break;
-
-        case ALL_FIELD_TYPES.boolean:
-          // 0 and 1 only field can also be boolean
-          row[i] = row[i] === 'true' || row[i] === 'True' || row[i] === '1';
-          break;
-
-        default:
-          break;
-      }
+export function parseCsvRowsByFieldType(rows, geoFieldIdx, field, i) {
+  const parser = PARSE_FIELD_VALUE_FROM_STRING[field.type];
+  if (parser) {
+    // check first not null value of it's already parsed
+    const first = rows.find(r => notNullorUndefined(r[i]));
+    if (!first || parser.valid(first[i], field)) {
+      return;
     }
-  });
+    rows.forEach(row => {
+      // parse string value based on field type
+      if (row[i] !== null) {
+        row[i] = parser.parse(row[i], field);
+        if (geoFieldIdx > -1 && row[geoFieldIdx] && row[geoFieldIdx].properties) {
+          row[geoFieldIdx].properties[field.name] = row[i];
+        }
+      }
+    });
+  }
 }
 
 /**
- * get fields from csv data
+ * Analyze field types from data in `string` format, e.g. uploaded csv.
+ * Assign `type`, `tableFieldIndex` and `format` (timestamp only) to each field
  *
- * @param {array} data
- * @param {array} fieldOrder
- * @returns {array} formatted fields
+ * @param {Array<Object>} data array of row object
+ * @param {Array} fieldOrder array of field names as string
+ * @returns {Array<Object>} formatted fields
+ * @public
+ * @example
+ *
+ * import {getFieldsFromData} from 'kepler.gl/processors';
+ * const data = [{
+ *   time: '2016-09-17 00:09:55',
+ *   value: '4',
+ *   surge: '1.2',
+ *   isTrip: 'true',
+ *   zeroOnes: '0'
+ * }, {
+ *   time: '2016-09-17 00:30:08',
+ *   value: '3',
+ *   surge: null,
+ *   isTrip: 'false',
+ *   zeroOnes: '1'
+ * }, {
+ *   time: null,
+ *   value: '2',
+ *   surge: '1.3',
+ *   isTrip: null,
+ *   zeroOnes: '1'
+ * }];
+ *
+ * const fieldOrder = ['time', 'value', 'surge', 'isTrip', 'zeroOnes'];
+ * const fields = getFieldsFromData(data, fieldOrder);
+ * // fields = [
+ * // {name: 'time', format: 'YYYY-M-D H:m:s', tableFieldIndex: 1, type: 'timestamp'},
+ * // {name: 'value', format: '', tableFieldIndex: 4, type: 'integer'},
+ * // {name: 'surge', format: '', tableFieldIndex: 5, type: 'real'},
+ * // {name: 'isTrip', format: '', tableFieldIndex: 6, type: 'boolean'},
+ * // {name: 'zeroOnes', format: '', tableFieldIndex: 7, type: 'integer'}];
+ *
  */
 export function getFieldsFromData(data, fieldOrder) {
   // add a check for epoch timestamp
-  const metadata = Analyzer.computeColMeta(data, [
-    {regex: /.*geojson|all_points/g, dataType: 'GEOMETRY'}
-  ]);
+  const metadata = Analyzer.computeColMeta(
+    data,
+    [{regex: /.*geojson|all_points/g, dataType: 'GEOMETRY'}],
+    {ignoredDataTypes: IGNORE_DATA_TYPES}
+  );
 
   const {fieldByIndex} = renameDuplicateFields(fieldOrder);
 
-  return fieldOrder.reduce((orderedArray, field, index) => {
+  const result = fieldOrder.reduce((orderedArray, field, index) => {
     const name = fieldByIndex[index];
+
     const fieldMeta = metadata.find(m => m.key === field);
     const {type, format} = fieldMeta || {};
 
     orderedArray[index] = {
       name,
       format,
-
-      // need this for mapbuilder conversion: filter type detection
-      // category,
       tableFieldIndex: index + 1,
-      type: analyzerTypeToFieldType(type)
+      type: analyzerTypeToFieldType(type),
+      analyzerType: type
     };
-
     return orderedArray;
   }, []);
+
+  return result;
 }
 
 /**
  * pass in an array of field names, rename duplicated one
  * and return a map from old field index to new name
  *
- * @param {array} fieldOrder
+ * @param {Array} fieldOrder
  * @returns {Object} new field name by index
  */
 export function renameDuplicateFields(fieldOrder) {
@@ -213,10 +324,10 @@ export function renameDuplicateFields(fieldOrder) {
 }
 
 /**
- * Map Analyzer types to local field types
+ * Convert type-analyzer output to kepler.gl field types
  *
  * @param {string} aType
- * @returns {string} corresponding type in ALL_FIELD_TYPES
+ * @returns {string} corresponding type in `ALL_FIELD_TYPES`
  */
 /* eslint-disable complexity */
 export function analyzerTypeToFieldType(aType) {
@@ -229,11 +340,12 @@ export function analyzerTypeToFieldType(aType) {
     FLOAT,
     BOOLEAN,
     STRING,
-    CITY,
     GEOMETRY,
     GEOMETRY_FROM_STRING,
+    PAIR_GEOMETRY_FROM_STRING,
     ZIPCODE,
-    PAIR_GEOMETRY_FROM_STRING
+    ARRAY,
+    OBJECT
   } = AnalyzerDATA_TYPES;
 
   // TODO: un recognized types
@@ -244,7 +356,6 @@ export function analyzerTypeToFieldType(aType) {
     case TIME:
     case DATETIME:
       return ALL_FIELD_TYPES.timestamp;
-    case NUMBER:
     case FLOAT:
       return ALL_FIELD_TYPES.real;
     case INT:
@@ -254,9 +365,12 @@ export function analyzerTypeToFieldType(aType) {
     case GEOMETRY:
     case GEOMETRY_FROM_STRING:
     case PAIR_GEOMETRY_FROM_STRING:
+    case ARRAY:
+    case OBJECT:
+      // TODO: create a new data type for objects and arrays
       return ALL_FIELD_TYPES.geojson;
+    case NUMBER:
     case STRING:
-    case CITY:
     case ZIPCODE:
       return ALL_FIELD_TYPES.string;
     default:
@@ -266,50 +380,108 @@ export function analyzerTypeToFieldType(aType) {
 }
 /* eslint-enable complexity */
 
-/*
- * Process rawData where each row is an object
+/**
+ * Process data where each row is an object, output can be passed to [`addDataToMap`](../actions/actions.md#adddatatomap)
+ * @param {Array<Object>} rawData an array of row object, each object should have the same number of keys
+ * @returns {Object} dataset containing `fields` and `rows`
+ * @public
+ * @example
+ * import {addDataToMap} from 'kepler.gl/actions';
+ * import {processRowObject} from 'kepler.gl/processors';
+ *
+ * const data = [
+ *  {lat: 31.27, lng: 127.56, value: 3},
+ *  {lat: 31.22, lng: 126.26, value: 1}
+ * ];
+ *
+ * dispatch(addDataToMap({
+ *  datasets: {
+ *    info: {label: 'My Data', id: 'my_data'},
+ *    data: processRowObject(data)
+ *  }
+ * }));
  */
 export function processRowObject(rawData) {
-  if (!rawData.length) {
+  if (!Array.isArray(rawData) || !rawData.length) {
     return null;
   }
 
   const keys = Object.keys(rawData[0]);
   const rows = rawData.map(d => keys.map(key => d[key]));
-  const fields = getFieldsFromData(rawData, keys);
+
+  // pick samples
+  const sampleData = getSampleData(rawData, 500);
+  const fields = getFieldsFromData(sampleData, keys);
+  const parsedRows = parseRowsByFields(rows, fields);
 
   return {
     fields,
-    rows
+    rows: parsedRows
   };
 }
 
 /**
+ * Process GeoJSON [`FeatureCollection`](http://wiki.geojson.org/GeoJSON_draft_version_6#FeatureCollection),
+ * output a data object with `{fields: [], rows: []}`.
+ * The data object can be wrapped in a `dataset` and pass to [`addDataToMap`](../actions/actions.md#adddatatomap)
  *
- * @param {Object} rawData - raw geojson feature collection
+ * @param {Object} rawData raw geojson feature collection
+ * @returns {Object} dataset containing `fields` and `rows`
+ * @public
+ * @example
+ * import {addDataToMap} from 'kepler.gl/actions';
+ * import {processGeojson} from 'kepler.gl/processors';
+ *
+ * const geojson = {
+ * 	"type" : "FeatureCollection",
+ * 	"features" : [{
+ * 		"type" : "Feature",
+ * 		"properties" : {
+ * 			"capacity" : "10",
+ * 			"type" : "U-Rack"
+ * 		},
+ * 		"geometry" : {
+ * 			"type" : "Point",
+ * 			"coordinates" : [ -71.073283, 42.417500 ]
+ * 		}
+ * 	}]
+ * };
+ *
+ * dispatch(addDataToMap({
+ *  datasets: {
+ *    info: {
+ *      label: 'Sample Taxi Trips in New York City',
+ *      id: 'test_trip_data'
+ *    },
+ *    data: processGeojson(geojson)
+ *  }
+ * }));
  */
 export function processGeojson(rawData) {
   const normalizedGeojson = normalize(rawData);
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {
+    const error = new Error(
+      `Read File Failed: File is not a valid GeoJSON. Read more about [supported file format](${GUIDES_FILE_FORMAT})`
+    );
+    throw error;
     // fail to normalize geojson
-    return null;
   }
 
   // getting all feature fields
-  const allData = normalizedGeojson.features.reduce((accu, f, i) => {
+  const allDataRows = [];
+  for (let i = 0; i < normalizedGeojson.features.length; i++) {
+    const f = normalizedGeojson.features[i];
     if (f.geometry) {
-      accu.push({
+      allDataRows.push({
         // add feature to _geojson field
         _geojson: f,
         ...(f.properties || {})
       });
     }
-    return accu;
-  }, []);
-
+  }
   // get all the field
-  const fields = allData.reduce((prev, curr) => {
+  const fields = allDataRows.reduce((prev, curr) => {
     Object.keys(curr).forEach(key => {
       if (!prev.includes(key)) {
         prev.push(key);
@@ -319,21 +491,23 @@ export function processGeojson(rawData) {
   }, []);
 
   // make sure each feature has exact same fields
-  allData.forEach(d => {
+  allDataRows.forEach(d => {
     fields.forEach(f => {
       if (!(f in d)) {
         d[f] = null;
+        d._geojson.properties[f] = null;
       }
     });
   });
 
-  return processRowObject(allData);
+  return processRowObject(allDataRows);
 }
 
 /**
  * On export data to csv
- * @param data
- * @param fields
+ * @param {Array<Array>} data `dataset.allData` or filtered data `dataset.data`
+ * @param {Array<Object>} fields `dataset.fields`
+ * @returns {string} csv string
  */
 export function formatCsv(data, fields) {
   const columns = fields.map(f => f.name);
@@ -341,43 +515,28 @@ export function formatCsv(data, fields) {
 
   // parse geojson object as string
   data.forEach(row => {
-    formattedData.push(
-      row.map(
-        (d, i) => d && GEOJSON_FIELDS.geojson.includes(fields[i].name) ?
-          JSON.stringify(d) : d
-      )
-    )
+    formattedData.push(row.map((d, i) => parseFieldValue(d, fields[i].type)));
   });
 
   return csvFormatRows(formattedData);
 }
 
 /**
- * @param data
+ * Validate input data, adding missing field types, rename duplicate columns
+ * @param {Object} data dataset.data
+ * @param {Array<Object>} data.fields an array of fields
+ * @param {Array<Object>} data.rows an array of data rows
  * @returns {{allData: Array, fields: Array}}
  */
 export function validateInputData(data) {
-  // TODO: add test
-  /*
-   * expected input data format
-   * {
-   *   fields: [],
-   *   rows: []
-   * }
-   */
-  let proceed = true;
-  if (!data) {
-    assert('receiveVisData: data cannot be null');
-    proceed = false;
+  if (!isPlainObject(data)) {
+    assert('addDataToMap Error: dataset.data cannot be null');
+    return null;
   } else if (!Array.isArray(data.fields)) {
-    assert('receiveVisData: expect data.fields to be an array');
-    proceed = false;
+    assert('addDataToMap Error: expect dataset.data.fields to be an array');
+    return null;
   } else if (!Array.isArray(data.rows)) {
-    assert('receiveVisData: expect data.rows to be an array');
-    proceed = false;
-  }
-
-  if (!proceed) {
+    assert('addDataToMap Error: expect dataset.data.rows to be an array');
     return null;
   }
 
@@ -385,17 +544,15 @@ export function validateInputData(data) {
 
   // check if all fields has name, format and type
   const allValid = fields.every((f, i) => {
-    if (typeof f !== 'object') {
-      assert(`fields needs to be an array of object, but find ${f}`);
-      return false;
+    if (!isPlainObject(f)) {
+      assert(`fields needs to be an array of object, but find ${typeof f}`);
+      fields[i] = {};
     }
 
     if (!f.name) {
-      assert(
-        `field.name is required but missing in field ${JSON.stringify(f)}`
-      );
+      assert(`field.name is required but missing in ${JSON.stringify(f)}`);
       // assign a name
-      f.name = `column_${i}`;
+      fields[i].name = `column_${i}`;
     }
 
     if (!ALL_FIELD_TYPES[f.type]) {
@@ -403,7 +560,19 @@ export function validateInputData(data) {
       return false;
     }
 
-    return f.type !== ALL_FIELD_TYPES.timestamp || typeof f.format === 'string';
+    if (!fields.every(field => field.analyzerType)) {
+      assert('field missing analyzerType');
+      return false;
+    }
+
+    // check time format is correct based on first 10 not empty element
+    if (f.type === ALL_FIELD_TYPES.timestamp) {
+      const sample = findNonEmptyRowsAtField(rows, i, 10).map(r => ({ts: r[i]}));
+      const analyzedType = Analyzer.computeColMeta(sample)[0];
+      return analyzedType.category === 'TIME' && analyzedType.format === f.format;
+    }
+
+    return true;
   });
 
   if (allValid) {
@@ -412,34 +581,79 @@ export function validateInputData(data) {
 
   // if any field has missing type, recalculate it for everyone
   // because we simply lost faith in humanity
-  const sampleData = getSampleForTypeAnalyze({fields: fields.map(f => f.name), allData: rows});
+  const sampleData = getSampleForTypeAnalyze({
+    fields: fields.map(f => f.name),
+    allData: rows
+  });
   const fieldOrder = fields.map(f => f.name);
   const meta = getFieldsFromData(sampleData, fieldOrder);
   const updatedFields = fields.map((f, i) => ({
     ...f,
     type: meta[i].type,
-    format: meta[i].format
+    format: meta[i].format,
+    analyzerType: meta[i].analyzerType
   }));
 
   return {fields: updatedFields, rows};
 }
 
+function findNonEmptyRowsAtField(rows, fieldIdx, total) {
+  const sample = [];
+  let i = 0;
+  while (sample.length < total && i < rows.length) {
+    if (notNullorUndefined(rows[i][fieldIdx])) {
+      sample.push(rows[i]);
+    }
+    i++;
+  }
+  return sample;
+}
 /**
- * Process kepler.gl json to be load by addDataToMap
+ * Process saved kepler.gl json to be pass to [`addDataToMap`](../actions/actions.md#adddatatomap).
+ * The json object should contain `datasets` and `config`.
  * @param {Object} rawData
+ * @param {Array} rawData.datasets
+ * @param {Object} rawData.config
+ * @returns {Object} datasets and config `{datasets: {}, config: {}}`
+ * @public
+ * @example
+ * import {addDataToMap} from 'kepler.gl/actions';
+ * import {processKeplerglJSON} from 'kepler.gl/processors';
+ *
+ * dispatch(addDataToMap(processKeplerglJSON(keplerGlJson)));
  */
 export function processKeplerglJSON(rawData) {
-  return rawData
-    ? KeplerGlSchema.load(rawData.datasets, rawData.config)
-    : null;
+  return rawData ? KeplerGlSchema.load(rawData.datasets, rawData.config) : null;
 }
 
-export default {
+/**
+ * Parse a single or an array of datasets saved using kepler.gl schema
+ * @param {Array | Array<Object>} rawData
+ */
+export function processKeplerglDataset(rawData) {
+  if (!rawData) {
+    return null;
+  }
+
+  const results = KeplerGlSchema.parseSavedData(toArray(rawData));
+  return Array.isArray(rawData) ? results : results[0];
+}
+
+export const DATASET_HANDLERS = {
+  [DATASET_FORMATS.row]: processRowObject,
+  [DATASET_FORMATS.geojson]: processGeojson,
+  [DATASET_FORMATS.csv]: processCsvData,
+  [DATASET_FORMATS.keplergl]: processKeplerglDataset
+};
+
+export const Processors = {
   processGeojson,
   processCsvData,
   processRowObject,
   processKeplerglJSON,
+  processKeplerglDataset,
   analyzerTypeToFieldType,
   getFieldsFromData,
-  parseCsvDataByFieldType
+  parseCsvRowsByFieldType,
+  formatCsv
 };

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,8 @@ import test from 'tape';
 
 import SchemaManager from 'schemas';
 import {cmpParsedAppConfigs} from 'test/helpers/comparison-utils';
-import {console as Console} from 'global/window';
+import {logStep} from '../../../scripts/log';
+
 import {
   savedConfigV0 as savedConfig0,
   parsedConfigV0 as parsedConfig0
@@ -35,7 +36,7 @@ import {
 
 import {
   savedConfigV0 as savedConfig2,
-  parsecConfigV0 as parsedConfig2
+  parsedConfigV0 as parsedConfig2
 } from 'test/fixtures/config_v0_geojson_point';
 
 import {
@@ -73,10 +74,10 @@ const TEST_CASES = [
 
 test('#appSchema -> Convert Saved Configs', t => {
   TEST_CASES.forEach(({name, cases}) => {
-    Console.log(`---> test: ${name}`);
+    logStep(`---> test: ${name}`);
 
     cases.forEach(cs => {
-      Console.log(`------> test: ${cs.name}`);
+      logStep(`------> test: ${cs.name}`);
 
       const parsed = SchemaManager.parseSavedConfig(cs.saved);
       cmpParsedAppConfigs(t, cs.parsed, parsed, {name: cs.name});

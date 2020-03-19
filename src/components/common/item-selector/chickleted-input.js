@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,8 @@ const propTypes = {
   displayOption: PropTypes.func,
   focus: PropTypes.bool,
   error: PropTypes.bool,
-  placeholder: PropTypes.string
+  placeholder: PropTypes.string,
+  inputTheme: PropTypes.string
 };
 
 const ChickletButton = styled.div`
@@ -44,8 +45,8 @@ const ChickletButton = styled.div`
   color: ${props => props.theme.textColor};
   font-size: 11px;
   line-height: 20px;
-  margin: 3px 10px 3px 3px;
-  padding: 4px 6px;
+  margin: 4px 10px 4px 3px;
+  padding: 2px 6px;
   display: flex;
   align-items: center;
   max-width: calc(100% - 8px);
@@ -74,7 +75,14 @@ const Chicklet = ({disabled, name, remove}) => (
 );
 
 const ChickletedInputContainer = styled.div`
-  ${props => props.theme.chickletedInput}
+  ${props =>
+    props.inputTheme === 'secondary'
+      ? props.theme.secondaryChickletedInput
+      : props.theme.chickletedInput}
+
+  color: ${props =>
+    props.hasPlaceholder ? props.theme.selectColorPlaceHolder : props.theme.selectColor};
+  overflow: hidden;
 `;
 
 const ChickletedInput = ({
@@ -86,7 +94,8 @@ const ChickletedInput = ({
   selectedItems = [],
   placeholder = '',
   removeItem,
-  displayOption = d => d
+  displayOption = d => d,
+  inputTheme
 }) => (
   <ChickletedInputContainer
     className={`${className} chickleted-input`}
@@ -94,17 +103,21 @@ const ChickletedInput = ({
     disabled={disabled}
     error={error}
     onClick={onClick}
+    inputTheme={inputTheme}
+    hasPlaceholder={!selectedItems || !selectedItems.length}
   >
-    {selectedItems.length > 0
-      ? selectedItems.map((item, i) => (
-          <Chicklet
-            disabled={disabled}
-            key={`${displayOption(item)}_${i}`}
-            name={displayOption(item)}
-            remove={e => removeItem(item, e)}
-          />
-        ))
-      : placeholder}
+    {selectedItems.length > 0 ? (
+      selectedItems.map((item, i) => (
+        <Chicklet
+          disabled={disabled}
+          key={`${displayOption(item)}_${i}`}
+          name={displayOption(item)}
+          remove={e => removeItem(item, e)}
+        />
+      ))
+    ) : (
+      <span className={`${className} chickleted-input__placeholder`}>{placeholder}</span>
+    )}
   </ChickletedInputContainer>
 );
 

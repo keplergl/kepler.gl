@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -41,6 +41,10 @@ export * as visStateUpdaters from './vis-state-updaters';
 export * as mapStateUpdaters from './map-state-updaters';
 export * as mapStyleUpdaters from './map-style-updaters';
 export * as uiStateUpdaters from './ui-state-updaters';
-export * as combineUpdaters from './composers';
+
+// This will be deprecated
+export * as combineUpdaters from './combined-updaters';
+export * as combinedUpdaters from './combined-updaters';
+
 // reducer merges
 export * as visStateMergers from './vis-state-merger';

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -50,14 +50,7 @@ export const savedConfigV0 = {
               name: 'ColorBrewer Dark2-6',
               type: 'qualitative',
               category: 'ColorBrewer',
-              colors: [
-                '#1b9e77',
-                '#d95f02',
-                '#7570b3',
-                '#e7298a',
-                '#66a61e',
-                '#e6ab02'
-              ],
+              colors: ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02'],
               reversed: false
             },
             opacity: 0.8,
@@ -113,7 +106,7 @@ export const savedConfigV0 = {
   }
 };
 
-export const parsecConfigV0 = {
+export const parsedConfigV0 = {
   visState: {
     filters: [],
     layers: [
@@ -139,16 +132,17 @@ export const parsecConfigV0 = {
               name: 'ColorBrewer Dark2-6',
               type: 'qualitative',
               category: 'ColorBrewer',
-              colors: [
-                '#1b9e77',
-                '#d95f02',
-                '#7570b3',
-                '#e7298a',
-                '#66a61e',
-                '#e6ab02'
-              ],
+              colors: ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02'],
               reversed: false
             },
+            strokeColorRange: {
+              name: 'ColorBrewer Dark2-6',
+              type: 'qualitative',
+              category: 'ColorBrewer',
+              colors: ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02'],
+              reversed: false
+            },
+            strokeColor: [174, 14, 127],
             opacity: 0.8,
             thickness: 2,
             radius: 15.8,

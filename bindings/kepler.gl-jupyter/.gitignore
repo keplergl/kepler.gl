@@ -1,0 +1,34 @@
+*.egg-info/
+*.py[cod]
+*/__pycache__/
+.ipynb_checkpoints/
+
+dist/
+build/
+*.py[cod]
+node_modules/
+env/
+ENV/
+ENV3/
+
+# OS X
+.DS_Store
+.vs_code/
+
+# Compiled javascript
+keplergl/static/*
+
+setup.orig.py
+setup.orig2.py
+
+notebooks/*.html
+notebooks/*.sh
+notebooks/*.js
+notebooks/ignore_*
+
+*/*.tgz
+package/
+
+*.old*
+*test*
+js/temp.*

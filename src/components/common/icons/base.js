@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,7 @@ import PropTypes from 'prop-types';
 const getStyleClassFromColor = (totalColor, colors) =>
   new Array(totalColor)
     .fill(1)
-    .reduce(
-      (accu, c, i) => `${accu}.cr${i + 1} {fill:${colors[i % colors.length]};}`,
-      ''
-    );
+    .reduce((accu, c, i) => `${accu}.cr${i + 1} {fill:${colors[i % colors.length]};}`, '');
 
 export default class Base extends Component {
   static displayName = 'Base Icon';
@@ -51,7 +48,10 @@ export default class Base extends Component {
     width: null,
     viewBox: '0 0 64 64',
     predefinedClassName: '',
-    className: ''
+    className: '',
+    style: {
+      fill: 'currentColor'
+    }
   };
 
   render() {
@@ -59,7 +59,7 @@ export default class Base extends Component {
       height,
       width,
       viewBox,
-      style = {},
+      style,
       children,
       predefinedClassName,
       className,
@@ -69,12 +69,9 @@ export default class Base extends Component {
     } = this.props;
     const svgHeight = height;
     const svgWidth = width || svgHeight;
-    style.fill = 'currentColor';
 
     const fillStyle =
-      Array.isArray(colors) &&
-      totalColor &&
-      getStyleClassFromColor(totalColor, colors);
+      Array.isArray(colors) && totalColor && getStyleClassFromColor(totalColor, colors);
 
     return (
       <svg
@@ -85,10 +82,9 @@ export default class Base extends Component {
         className={`${predefinedClassName} ${className}`}
         {...props}
       >
-        {fillStyle ?
-          <style type="text/css">{fillStyle}</style> : null}
+        {fillStyle ? <style type="text/css">{fillStyle}</style> : null}
         {children}
       </svg>
     );
   }
-};
+}

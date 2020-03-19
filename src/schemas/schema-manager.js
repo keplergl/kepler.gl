@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@ import mapStyleSchema from './map-style-schema';
 import mapStateSchema from './map-state-schema';
 
 import {CURRENT_VERSION, VERSIONS} from './versions';
+import {isPlainObject} from 'utils/utils';
 
 const REDUCER_SCHEMAS = {
   visState: visStateSchema,
@@ -68,7 +69,7 @@ class KeplerGLSchema {
    *
    * Get config and data of current map to save
    * @param {Object} state
-   * @returns {Object | null} app state to save
+   * @returns {{datasets: Object[], config: Object, info: Object}} app state to save
    */
   save(state) {
     return {
@@ -76,15 +77,33 @@ class KeplerGLSchema {
       config: this.getConfigToSave(state),
       info: {
         app: 'kepler.gl',
-        created_at: new Date().toString()
+        created_at: new Date().toString(),
+        ...this.getMapInfo(state)
       }
     };
   }
 
+  getMapInfo(state) {
+    return state.visState.mapInfo;
+  }
+  /**
+   *  Load saved map, argument can be (datasets, config) or ({datasets, config})
+   * @param {Object|Array<Object>} savedDatasets
+   * @param {Object} savedConfig
+   */
   load(savedDatasets, savedConfig) {
+    // if pass dataset and config in as a single object
+    if (
+      arguments.length === 1 &&
+      isPlainObject(arguments[0]) &&
+      (Array.isArray(arguments[0].datasets) || isPlainObject(arguments[0].config))
+    ) {
+      return this.load(arguments[0].datasets, arguments[0].config);
+    }
+
     return {
-      datasets: this.parseSavedData(savedDatasets),
-      config: savedConfig ? this.parseSavedConfig(savedConfig) : undefined
+      ...(Array.isArray(savedDatasets) ? {datasets: this.parseSavedData(savedDatasets)} : {}),
+      ...(savedConfig ? {config: this.parseSavedConfig(savedConfig)} : {})
     };
   }
 
@@ -122,7 +141,7 @@ class KeplerGLSchema {
     const config = Object.keys(this._reducerSchemas).reduce(
       (accu, key) => ({
         ...accu,
-        ...this._reducerSchemas[key][this._version].save(state[key])
+        ...(state[key] ? this._reducerSchemas[key][this._version].save(state[key]) : {})
       }),
       {}
     );
@@ -164,14 +183,11 @@ class KeplerGLSchema {
 
     return Object.keys(config).reduce(
       (accu, key) => ({
-          ...accu,
-          ...(key in this._reducerSchemas
-            ? this._reducerSchemas[key][validVersion].load(
-                config[key],
-                state[key]
-              )
-            : {})
-        }),
+        ...accu,
+        ...(key in this._reducerSchemas
+          ? this._reducerSchemas[key][validVersion].load(config[key])
+          : {})
+      }),
       {}
     );
   }
@@ -183,9 +199,7 @@ class KeplerGLSchema {
    */
   validateVersion(version) {
     if (!version) {
-      Console.error(
-        'There is no version number associated with this saved map'
-      );
+      Console.error('There is no version number associated with this saved map');
       return null;
     }
 

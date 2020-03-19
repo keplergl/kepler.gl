@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,7 @@
 
 import {KeplerGlLayers} from 'layers';
 const {PointLayer} = KeplerGlLayers;
+import {DEFAULT_COLOR_UI} from 'layers/layer-factory';
 
 export const stateSavedV1 = {
   datasets: [
@@ -114,14 +115,7 @@ export const stateSavedV1 = {
                   name: 'Global Warming',
                   type: 'sequential',
                   category: 'Uber',
-                  colors: [
-                    '#5A1846',
-                    '#900C3F',
-                    '#C70039',
-                    '#E3611C',
-                    '#F1920E',
-                    '#FFC300'
-                  ]
+                  colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
                 },
                 radiusRange: [0, 50],
                 'hi-precision': false
@@ -148,13 +142,7 @@ export const stateSavedV1 = {
         interactionConfig: {
           tooltip: {
             fieldsToShow: {
-              '8ppj5gfrs': [
-                'radius',
-                'boolean',
-                'num_boolean',
-                'int_num',
-                'boolean_1'
-              ]
+              '8ppj5gfrs': ['radius', 'boolean', 'num_boolean', 'int_num', 'boolean_1']
             },
             enabled: true
           },
@@ -221,25 +209,36 @@ mergedLayer0.config = {
   },
   isVisible: true,
   colorField: null,
+  colorScale: 'quantile',
   colorDomain: [0, 1],
+  strokeColorField: null,
+  strokeColorScale: 'quantile',
+  strokeColorDomain: [0, 1],
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
-  colorScale: 'quantile',
   sizeField: null,
   sizeDomain: [0, 1],
   sizeScale: 'linear',
-  textLabel: {
-    field: {
-      name: 'name',
-      type: 'string',
-      format: '',
-      id: 'name',
-      tableFieldIndex: 8
-    },
-    color: [184, 15, 135, 255],
-    size: 27,
-    offset: [-10, 0],
-    anchor: 'end'
+  textLabel: [
+    {
+      field: {
+        name: 'name',
+        type: 'string',
+        format: '',
+        id: 'name',
+        tableFieldIndex: 8,
+        analyzerType: 'STRING'
+      },
+      color: [184, 15, 135, 255],
+      size: 27,
+      offset: [-10, 0],
+      anchor: 'end',
+      alignment: 'center'
+    }
+  ],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
   },
   visConfig: {
     radius: 12.5,
@@ -251,18 +250,19 @@ mergedLayer0.config = {
       name: 'Global Warming',
       type: 'sequential',
       category: 'Uber',
-      colors: [
-        '#5A1846',
-        '#900C3F',
-        '#C70039',
-        '#E3611C',
-        '#F1920E',
-        '#FFC300'
-      ]
+      colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
-    radiusRange: [0, 50],
-    'hi-precision': false
+    filled: true,
+    strokeColorRange: {
+      name: 'Global Warming',
+      type: 'sequential',
+      category: 'Uber',
+      colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+    },
+    strokeColor: [23, 184, 190, 255],
+    radiusRange: [0, 50]
   },
+  animation: {enabled: false}
 };
 
 export const mergedLayers = [mergedLayer0];

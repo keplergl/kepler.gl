@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,9 @@ import {ActionTypes} from 'kepler.gl/actions';
 import {LOCATION_CHANGE} from 'react-router-redux';
 import window from 'global/window';
 import {ALL_FIELD_TYPES} from 'kepler.gl/constants';
+import get from 'lodash.get';
 
-const getPayload = action => action ? action.payload : null;
+const getPayload = action => (action ? action.payload : null);
 
 // Hack, because we don't have a way to access next state
 const getFilterType = (store, idx, value) => {
@@ -83,7 +84,19 @@ const trackingInformation = {
   [ActionTypes.INTERACTION_CONFIG_CHANGE]: ({config: {id, enabled}}) => ({
     [id]: enabled
   }),
-  [LOCATION_CHANGE]: x => x
+  [LOCATION_CHANGE]: x => x,
+
+  // demo app actions
+  ['PUSHING_FILE']: payload => {
+    const size = get(payload, ['metadata', 'metadata', 'size']);
+    return {
+      isLoading: payload.isLoading,
+      status: payload.metadata.status,
+      filename: payload.metadata.filename,
+      size,
+      error: payload.error
+    };
+  }
 };
 
 const EXCLUDED_ACTIONS = [ActionTypes.LAYER_HOVER, ActionTypes.UPDATE_MAP];
@@ -91,14 +104,13 @@ const EXCLUDED_ACTIONS = [ActionTypes.LAYER_HOVER, ActionTypes.UPDATE_MAP];
 const analyticsMiddleware = store => next => action => {
   if (window.gtag && !EXCLUDED_ACTIONS.includes(action.type)) {
     const payload = action.payload || action;
+
     // eslint-disable-next-line no-undef
     window.gtag('event', 'action', {
       event_category: action.type,
       event_label: trackingInformation[action.type]
-        ? JSON.stringify(
-          trackingInformation[action.type](payload, store)
-        )
-        : undefined
+        ? JSON.stringify(trackingInformation[action.type](payload, store))
+        : null
     });
   }
 

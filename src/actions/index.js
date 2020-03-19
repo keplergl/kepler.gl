@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,11 +19,19 @@
 // THE SOFTWARE.
 
 // Actions
-export * from 'actions/actions';
+export * from './actions';
+
+// kepler.gl actions accessible outside component
+export * from './vis-state-actions';
+export * from './ui-state-actions';
+export * from './map-state-actions';
+export * from './map-style-actions';
+export * from './identity-actions';
+export * from './provider-actions';
 
 // Dispatch
 export {
-  actionFor,
+  _actionFor,
   forwardTo,
   getActionForwardAddress,
   isForwardAction,
@@ -31,4 +39,4 @@ export {
   wrapTo
 } from './action-wrapper';
 
-export {default as ActionTypes} from 'constants/action-types';
+export {default as ActionTypes} from '../constants/action-types';

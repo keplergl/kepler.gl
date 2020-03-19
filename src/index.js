@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -41,6 +41,9 @@ export * from './layers';
 
 // Styles
 export * from './styles';
+
+// Middleware
+export * from './middleware';
 
 // Default export
 export {default} from './components';

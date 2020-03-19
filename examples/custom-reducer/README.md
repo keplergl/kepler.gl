@@ -1,4 +1,4 @@
-# Cusomize kepler.gl Reducer
+# Customize kepler.gl Reducer
 
 This example demos how to customize kepler.gl reducer
   1. Customize reducer initialState by `keplerGlReducer.initialState`
@@ -10,7 +10,7 @@ npm install
 ```
 or
 ```
-yarn --ignore-engines
+yarn
 ```
 
 add mapbox access token to node env

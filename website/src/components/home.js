@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -38,6 +38,7 @@ import Announcement from '../../../examples/demo-app/src/components/announcement
 
 const BannerKey = 'kgHideBanner-iiba';
 const BannerHeight = 30;
+const BACKGROUND_COLOR = '#82368c';
 
 const SECTION_CONTENT = {
   showcase: Showcase,
@@ -79,30 +80,28 @@ export default class Home extends PureComponent {
           <Banner
             show={this.state.showBanner}
             height={BannerHeight}
-            bgColor="#82368c"
+            bgColor={BACKGROUND_COLOR}
             onClose={this._hideBanner}
           >
-            <Announcement onDisable={this._disableBanner}/>
+            <Announcement onDisable={this._disableBanner} />
           </Banner>
-          <Header/>
+          <Header />
           <Hero />
-          {SECTIONS.map(
-            ({id, title, description, icon, isDark, background}, i) => {
-              const SectionContent = SECTION_CONTENT[id];
-              return (
-                <Section
-                  key={`section-${i}`}
-                  title={title}
-                  description={description}
-                  icon={icon}
-                  isDark={isDark}
-                  background={background}
-                >
-                  <SectionContent />
-                </Section>
-              );
-            }
-          )}
+          {SECTIONS.map(({id, title, description, icon, isDark, background}, i) => {
+            const SectionContent = SECTION_CONTENT[id];
+            return (
+              <Section
+                key={`section-${i}`}
+                title={title}
+                description={description}
+                icon={icon}
+                isDark={isDark}
+                background={background}
+              >
+                <SectionContent />
+              </Section>
+            );
+          })}
           <Footer />
         </div>
       </ThemeProvider>

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -65,14 +65,7 @@ export const stateSavedV1_2 = {
                   name: 'Global Warming',
                   type: 'sequential',
                   category: 'Uber',
-                  colors: [
-                    '#5A1846',
-                    '#900C3F',
-                    '#C70039',
-                    '#E3611C',
-                    '#F1920E',
-                    '#FFC300'
-                  ]
+                  colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
                 },
                 radiusRange: [0, 50],
                 'hi-precision': false
@@ -89,13 +82,7 @@ export const stateSavedV1_2 = {
         interactionConfig: {
           tooltip: {
             fieldsToShow: {
-              test_phone_data: [
-                'uuid',
-                'Latitude',
-                'Longitude',
-                'at_Latitude',
-                'at_Longitude'
-              ]
+              test_phone_data: ['uuid', 'Latitude', 'Longitude', 'at_Latitude', 'at_Longitude']
             },
             enabled: true
           },
@@ -5037,18 +5024,18 @@ export const v1expectedInfo_2 = {
 };
 
 export const v1expectedFields_2 = [
-  {name: 'uuid', type: 'string', format: ''},
-  {name: 'lat', type: 'real', format: ''},
-  {name: 'lng', type: 'real', format: ''},
-  {name: 'Latitude', type: 'real', format: ''},
-  {name: 'Longitude', type: 'real', format: ''},
-  {name: 'at_Latitude', type: 'real', format: ''},
-  {name: 'at_Longitude', type: 'real', format: ''},
-  {name: 'metric', type: 'real', format: ''},
-  {name: 'epoch', type: 'timestamp', format: 'x'},
-  {name: 'epoch_ms', type: 'timestamp', format: 'X'},
-  {name: 'meta_data', type: 'real', format: ''},
-  {name: 'start_ts', type: 'timestamp', format: 'x'},
-  {name: 'end_ts', type: 'timestamp', format: 'x'},
-  {name: 'time string', type: 'timestamp', format: 'YYYY/M/D H:m'}
+  {name: 'uuid', type: 'string', format: '', analyzerType: 'STRING'},
+  {name: 'lat', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'lng', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'Latitude', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'Longitude', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'at_Latitude', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'at_Longitude', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'metric', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'epoch', type: 'timestamp', format: 'x', analyzerType: 'TIME'},
+  {name: 'epoch_ms', type: 'timestamp', format: 'X', analyzerType: 'TIME'},
+  {name: 'meta_data', type: 'integer', format: '', analyzerType: 'INT'},
+  {name: 'start_ts', type: 'timestamp', format: 'x', analyzerType: 'TIME'},
+  {name: 'end_ts', type: 'timestamp', format: 'x', analyzerType: 'TIME'},
+  {name: 'time string', type: 'timestamp', format: 'YYYY/M/D H:m', analyzerType: 'DATETIME'}
 ];

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,51 +18,61 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {hexToRgb} from 'utils/color-utils';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
+import {DataFilterExtension} from '@deck.gl/extensions';
+import {COORDINATE_SYSTEM} from '@deck.gl/core';
+import {TextLayer} from '@deck.gl/layers';
+
 import DefaultLayerIcon from './default-layer-icon';
+import {diffUpdateTriggers} from './layer-update';
 
 import {
   ALL_FIELD_TYPES,
-  DEFAULT_LIGHT_SETTINGS,
   NO_VALUE_COLOR,
   SCALE_TYPES,
   CHANNEL_SCALES,
   FIELD_OPTS,
   SCALE_FUNC,
-  CHANNEL_SCALE_SUPPORTED_FIELDS
+  CHANNEL_SCALE_SUPPORTED_FIELDS,
+  MAX_GPU_FILTERS
 } from 'constants/default-settings';
+import {COLOR_RANGES} from 'constants/color-ranges';
 import {DataVizColors} from 'constants/custom-color-ranges';
-import {LAYER_VIS_CONFIGS} from './layer-factory';
+import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from './layer-factory';
 
-import {generateHashId, notNullorUndefined, isPlainObject} from 'utils/utils';
+import {generateHashId, isPlainObject} from 'utils/utils';
 
 import {
   getSampleData,
   getLatLngBounds,
   maybeToDate,
-  getSortingFunction
+  getSortingFunction,
+  notNullorUndefined
 } from 'utils/data-utils';
 
 import {
   getQuantileDomain,
   getOrdinalDomain,
+  getLogDomain,
   getLinearDomain
 } from 'utils/data-scale-utils';
+import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
 /**
  * Approx. number of points to sample in a large data set
  * @type {number}
  */
 const MAX_SAMPLE_SIZE = 5000;
+const dataFilterExtension = new DataFilterExtension({filterSize: MAX_GPU_FILTERS});
+const identity = d => d;
 
 export const OVERLAY_TYPE = keymirror({
   deckgl: null,
   mapboxgl: null
 });
 
-const layerColors = Object.values(DataVizColors).map(hexToRgb);
+export const layerColors = Object.values(DataVizColors).map(hexToRgb);
 function* generateColor() {
   let index = 0;
   while (index < layerColors.length + 1) {
@@ -73,7 +83,7 @@ function* generateColor() {
   }
 }
 
-const colorMaker = generateColor();
+export const colorMaker = generateColor();
 const defaultGetFieldValue = (field, d) => d[field.tableFieldIndex - 1];
 
 export default class Layer {
@@ -193,19 +203,19 @@ export default class Layer {
     return null;
   }
   /*
-   * Given a dataset, automatically create layers based on it
-   * and return the props
+   * Given a dataset, automatically find props to create layer based on it
+   * and return the props and previous found layers.
    * By default, no layers will be found
    */
-  static findDefaultLayerProps(fieldPairs, dataId) {
-    return null;
+  static findDefaultLayerProps(dataset, foundLayers) {
+    return {props: [], foundLayers};
   }
 
   /**
    * Given a array of preset required column names
    * found field that has the same name to set as layer column
    *
-   * @param {object[]} defaultFields
+   * @param {object} defaultFields
    * @param {object[]} allFields
    * @returns {object[] | null} all possible required layer column pairs
    */
@@ -218,9 +228,9 @@ export default class Layer {
 
       prev[key] = requiredFields.length
         ? requiredFields.map(f => ({
-          value: f.name,
-          fieldIdx: f.tableFieldIndex - 1
-        }))
+            value: f.name,
+            fieldIdx: f.tableFieldIndex - 1
+          }))
         : null;
       return prev;
     }, {});
@@ -290,22 +300,22 @@ export default class Layer {
       // color by field, domain is set by filters, field, scale type
       colorField: null,
       colorDomain: [0, 1],
-      colorScale: 'quantile',
+      colorScale: SCALE_TYPES.quantile,
 
       // color by size, domain is set by filters, field, scale type
       sizeDomain: [0, 1],
-      sizeScale: 'linear',
+      sizeScale: SCALE_TYPES.linear,
       sizeField: null,
 
       visConfig: {},
 
-      textLabel: {
-        field: null,
-        color: [255, 255, 255],
-        size: 50,
-        offset: [0, 0],
-        anchor: 'middle'
-      }
+      textLabel: [DEFAULT_TEXT_LABEL],
+
+      colorUI: {
+        color: DEFAULT_COLOR_UI,
+        colorRange: DEFAULT_COLOR_UI
+      },
+      animation: {enabled: false}
     };
   }
 
@@ -321,7 +331,7 @@ export default class Layer {
       measure: this.config[this.visualChannels[key].field]
         ? this.config[this.visualChannels[key].field].name
         : this.visualChannels[key].defaultMeasure
-    }
+    };
   }
 
   /**
@@ -370,7 +380,7 @@ export default class Layer {
     };
   }
 
-	/**
+  /**
    * Calculate a radius zoom multiplier to render points, so they are visible in all zoom level
    * @param mapState
    * @param mapState.zoom - actual zoom
@@ -381,7 +391,7 @@ export default class Layer {
     return Math.pow(2, Math.max(14 - zoom + zoomOffset, 0));
   }
 
-	/**
+  /**
    * Calculate a elevation zoom multiplier to render points, so they are visible in all zoom level
    * @param mapState
    * @param mapState.zoom - actual zoom
@@ -392,7 +402,7 @@ export default class Layer {
     return Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
   }
 
-  formatLayerData(data, allData, filteredIndex) {
+  formatLayerData(datasets, filteredIndex) {
     return {};
   }
 
@@ -417,24 +427,29 @@ export default class Layer {
    */
   assignConfigToLayer(configToCopy, visConfigSettings) {
     // don't deep merge visualChannel field
-    const notToDeepMerge = Object.values(this.visualChannels).map(v => v.field);
-
     // don't deep merge color range, reversed: is not a key by default
-    notToDeepMerge.push('colorRange');
+    const shallowCopy = ['colorRange', 'strokeColorRange'].concat(
+      Object.values(this.visualChannels).map(v => v.field)
+    );
 
-    // don't copy over domain
-    const notToCopy = Object.values(this.visualChannels).map(v => v.domain);
-
+    // don't copy over domain and animation
+    const notToCopy = ['animation'].concat(Object.values(this.visualChannels).map(v => v.domain));
     // if range is for the same property group copy it, otherwise, not to copy
     Object.values(this.visualChannels).forEach(v => {
-      if (configToCopy.visConfig[v.range] && visConfigSettings[v.range].group !== this.visConfigSettings[v.range].group) {
+      if (
+        configToCopy.visConfig[v.range] &&
+        visConfigSettings[v.range].group !== this.visConfigSettings[v.range].group
+      ) {
         notToCopy.push(v.range);
       }
     });
 
     // don't copy over visualChannel range
     const currentConfig = this.config;
-    const copied = this.copyLayerConfig(currentConfig, configToCopy, {notToDeepMerge, notToCopy});
+    const copied = this.copyLayerConfig(currentConfig, configToCopy, {
+      shallowCopy,
+      notToCopy
+    });
 
     this.updateLayerConfig(copied);
     // validate visualChannel field type and scale types
@@ -449,25 +464,25 @@ export default class Layer {
    * make sure to only copy over value to existing keys
    * @param {object} currentConfig - existing config to be override
    * @param {object} configToCopy - new Config to copy over
-   * @param {string[]} notToDeepMerge - array of properties to not to be deep copied
+   * @param {string[]} shallowCopy - array of properties to not to be deep copied
    * @param {string[]} notToCopy - array of properties not to copy
    * @returns {object} - copied config
    */
-  copyLayerConfig(currentConfig, configToCopy, {notToDeepMerge = [], notToCopy = []} = {}) {
+  copyLayerConfig(currentConfig, configToCopy, {shallowCopy = [], notToCopy = []} = {}) {
     const copied = {};
     Object.keys(currentConfig).forEach(key => {
       if (
         isPlainObject(currentConfig[key]) &&
         isPlainObject(configToCopy[key]) &&
-        !notToDeepMerge.includes(key) &&
+        !shallowCopy.includes(key) &&
         !notToCopy.includes(key)
       ) {
         // recursively assign object value
-        copied[key] = this.copyLayerConfig(currentConfig[key], configToCopy[key], {notToDeepMerge, notToCopy});
-      } else if (
-        notNullorUndefined(configToCopy[key]) &&
-        !notToCopy.includes(key)
-      ) {
+        copied[key] = this.copyLayerConfig(currentConfig[key], configToCopy[key], {
+          shallowCopy,
+          notToCopy
+        });
+      } else if (notNullorUndefined(configToCopy[key]) && !notToCopy.includes(key)) {
         // copy
         copied[key] = configToCopy[key];
       } else {
@@ -481,17 +496,11 @@ export default class Layer {
 
   registerVisConfig(layerVisConfigs) {
     Object.keys(layerVisConfigs).forEach(item => {
-      if (
-        typeof item === 'string' &&
-        LAYER_VIS_CONFIGS[layerVisConfigs[item]]
-      ) {
+      if (typeof item === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {
         // if assigned one of default LAYER_CONFIGS
-        this.config.visConfig[item] =
-          LAYER_VIS_CONFIGS[layerVisConfigs[item]].defaultValue;
+        this.config.visConfig[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]].defaultValue;
         this.visConfigSettings[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]];
-      } else if (
-        ['type', 'defaultValue'].every(p => layerVisConfigs[item][p])
-      ) {
+      } else if (['type', 'defaultValue'].every(p => layerVisConfigs[item].hasOwnProperty(p))) {
         // if provided customized visConfig, and has type && defaultValue
         // TODO: further check if customized visConfig is valid
         this.config.visConfig[item] = layerVisConfigs[item].defaultValue;
@@ -528,6 +537,128 @@ export default class Layer {
     this.config.visConfig = {...this.config.visConfig, ...newVisConfig};
     return this;
   }
+
+  updateLayerColorUI(prop, newConfig) {
+    const {colorUI: previous, visConfig} = this.config;
+
+    if (!isPlainObject(newConfig) || typeof prop !== 'string') {
+      return this;
+    }
+
+    const colorUIProp = Object.entries(newConfig).reduce((accu, [key, value]) => {
+      return {
+        ...accu,
+        [key]: isPlainObject(accu[key]) && isPlainObject(value) ? {...accu[key], ...value} : value
+      };
+    }, previous[prop] || DEFAULT_COLOR_UI);
+
+    const colorUI = {
+      ...previous,
+      [prop]: colorUIProp
+    };
+
+    this.updateLayerConfig({colorUI});
+    // if colorUI[prop] is colorRange
+    const isColorRange = visConfig[prop] && visConfig[prop].colors;
+
+    if (isColorRange) {
+      this.updateColorUIByColorRange(newConfig, prop);
+      this.updateColorRangeByColorUI(newConfig, previous, prop);
+      this.updateCustomPalette(newConfig, previous, prop);
+    }
+
+    return this;
+  }
+
+  updateCustomPalette(newConfig, previous, prop) {
+    if (!newConfig.colorRangeConfig || !newConfig.colorRangeConfig.custom) {
+      return;
+    }
+
+    const {colorUI, visConfig} = this.config;
+
+    if (!visConfig[prop]) return;
+    const {colors} = visConfig[prop];
+    const customPalette = {
+      ...colorUI[prop].customPalette,
+      name: 'Custom Palette',
+      colors: [...colors]
+    };
+    this.updateLayerConfig({
+      colorUI: {
+        ...colorUI,
+        [prop]: {
+          ...colorUI[prop],
+          customPalette
+        }
+      }
+    });
+  }
+  /**
+   * if open dropdown and prop is color range
+   * Automatically set colorRangeConfig's step and reversed
+   * @param {*} newConfig
+   * @param {*} prop
+   */
+  updateColorUIByColorRange(newConfig, prop) {
+    if (typeof newConfig.showDropdown !== 'number') return;
+
+    const {colorUI, visConfig} = this.config;
+    this.updateLayerConfig({
+      colorUI: {
+        ...colorUI,
+        [prop]: {
+          ...colorUI[prop],
+          colorRangeConfig: {
+            ...colorUI[prop].colorRangeConfig,
+            steps: visConfig[prop].colors.length,
+            reversed: Boolean(visConfig[prop].reversed)
+          }
+        }
+      }
+    });
+  }
+
+  updateColorRangeByColorUI(newConfig, previous, prop) {
+    // only update colorRange if changes in UI is made to 'reversed', 'steps' or steps
+    const shouldUpdate =
+      newConfig.colorRangeConfig &&
+      ['reversed', 'steps'].some(
+        key =>
+          newConfig.colorRangeConfig.hasOwnProperty(key) &&
+          newConfig.colorRangeConfig[key] !==
+            (previous[prop] || DEFAULT_COLOR_UI).colorRangeConfig[key]
+      );
+    if (!shouldUpdate) return;
+
+    const {colorUI, visConfig} = this.config;
+    const {steps, reversed} = colorUI[prop].colorRangeConfig;
+    const colorRange = visConfig[prop];
+    // find based on step or reversed
+    let update;
+    if (newConfig.colorRangeConfig.hasOwnProperty('steps')) {
+      const group = getColorGroupByName(colorRange);
+
+      if (group) {
+        const sameGroup = COLOR_RANGES.filter(cr => getColorGroupByName(cr) === group);
+
+        update = sameGroup.find(cr => cr.colors.length === steps);
+
+        if (update && colorRange.reversed) {
+          update = reverseColorRange(true, update);
+        }
+      }
+    }
+
+    if (newConfig.colorRangeConfig.hasOwnProperty('reversed')) {
+      update = reverseColorRange(reversed, update || colorRange);
+    }
+
+    if (update) {
+      this.updateLayerVisConfig({[prop]: update});
+    }
+  }
+
   /**
    * Check whether layer has all columns
    *
@@ -566,9 +697,10 @@ export default class Layer {
   shouldRenderLayer(data) {
     return (
       this.type &&
-      this.hasAllColumns() &&
       this.config.isVisible &&
-      this.hasLayerData(data)
+      this.hasAllColumns() &&
+      this.hasLayerData(data) &&
+      typeof this.renderLayer === 'function'
     );
   }
 
@@ -578,13 +710,11 @@ export default class Layer {
       .range(fixed ? domain : range);
   }
 
-  getPointsBounds(allData, getPosition) {
+  getPointsBounds(allData, getPosition = identity) {
     // no need to loop through the entire dataset
     // get a sample of data to calculate bounds
     const sampleData =
-      allData.length > MAX_SAMPLE_SIZE
-        ? getSampleData(allData, MAX_SAMPLE_SIZE)
-        : allData;
+      allData.length > MAX_SAMPLE_SIZE ? getSampleData(allData, MAX_SAMPLE_SIZE) : allData;
     const points = sampleData.map(getPosition);
 
     const latBounds = getLatLngBounds(points, 1, [-90, 90]);
@@ -597,29 +727,27 @@ export default class Layer {
     return [lngBounds[0], latBounds[0], lngBounds[1], latBounds[1]];
   }
 
-  getLightSettingsFromBounds(bounds) {
-    return Array.isArray(bounds) && bounds.length >= 4
-      ? {
-          ...DEFAULT_LIGHT_SETTINGS,
-          lightsPosition: [
-            ...bounds.slice(0, 2),
-            DEFAULT_LIGHT_SETTINGS.lightsPosition[2],
-            ...bounds.slice(2, 4),
-            DEFAULT_LIGHT_SETTINGS.lightsPosition[5]
-          ]
-        }
-      : DEFAULT_LIGHT_SETTINGS;
+  getChangedTriggers(dataUpdateTriggers) {
+    const triggerChanged = diffUpdateTriggers(dataUpdateTriggers, this._oldDataUpdateTriggers);
+    this._oldDataUpdateTriggers = dataUpdateTriggers;
+
+    return triggerChanged;
   }
 
   getEncodedChannelValue(
     scale,
     data,
     field,
-    defaultValue = NO_VALUE_COLOR,
+    nullValue = NO_VALUE_COLOR,
     getValue = defaultGetFieldValue
   ) {
     const {type} = field;
     const value = getValue(field, data);
+
+    if (!notNullorUndefined(value)) {
+      return nullValue;
+    }
+
     let attributeValue;
     if (type === ALL_FIELD_TYPES.timestamp) {
       // shouldn't need to convert here
@@ -629,8 +757,8 @@ export default class Layer {
       attributeValue = scale(value);
     }
 
-    if (!attributeValue) {
-      attributeValue = defaultValue;
+    if (!notNullorUndefined(attributeValue)) {
+      attributeValue = nullValue;
     }
 
     return attributeValue;
@@ -640,6 +768,44 @@ export default class Layer {
     this.meta = {...this.meta, ...meta};
   }
 
+  getDataUpdateTriggers({filteredIndex, id}) {
+    const {columns} = this.config;
+
+    return {
+      getData: {datasetId: id, columns, filteredIndex},
+      getMeta: {datasetId: id, columns},
+      ...(this.config.textLabel || []).reduce(
+        (accu, tl, i) => ({
+          ...accu,
+          [`getLabelCharacterSet-${i}`]: tl.field ? tl.field.name : null
+        }),
+        {}
+      )
+    };
+  }
+
+  updateData(datasets, oldLayerData) {
+    const layerDataset = datasets[this.config.dataId];
+    const {allData} = datasets[this.config.dataId];
+
+    const getPosition = this.getPositionAccessor();
+    const dataUpdateTriggers = this.getDataUpdateTriggers(layerDataset);
+    const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
+
+    if (triggerChanged.getMeta) {
+      this.updateLayerMeta(allData, getPosition);
+    }
+
+    let data = [];
+    if (!triggerChanged.getData) {
+      // same data
+      data = oldLayerData.data;
+    } else {
+      data = this.calculateDataAttribute(layerDataset, getPosition);
+    }
+
+    return {data, triggerChanged};
+  }
   /**
    * helper function to update one layer domain when state.data changed
    * if state.data change is due ot update filter, newFiler will be passed
@@ -648,7 +814,11 @@ export default class Layer {
    * @param {Object} newFilter
    * @returns {object} layer
    */
-  updateLayerDomain(dataset, newFilter) {
+  updateLayerDomain(datasets, newFilter) {
+    const dataset = this.getDataset(datasets);
+    if (!dataset) {
+      return this;
+    }
     Object.values(this.visualChannels).forEach(channel => {
       const {scale} = channel;
       const scaleType = this.config[scale];
@@ -663,6 +833,10 @@ export default class Layer {
     });
 
     return this;
+  }
+
+  getDataset(datasets) {
+    return datasets[this.config.dataId];
   }
 
   /**
@@ -683,7 +857,8 @@ export default class Layer {
 
     if (this.config[field]) {
       // if field is selected, check if field type is supported
-      const channelSupportedFieldTypes = supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
+      const channelSupportedFieldTypes =
+        supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
 
       if (!channelSupportedFieldTypes.includes(this.config[field].type)) {
         // field type is not supported, set it back to null
@@ -720,18 +895,16 @@ export default class Layer {
     const visualChannel = this.visualChannels[channel];
     const {field, scale, channelScaleType} = visualChannel;
 
-    return this.config[field] ?
-      FIELD_OPTS[this.config[field].type].scale[channelScaleType] :
-      [this.getDefaultLayerConfig()[scale]];
+    return this.config[field]
+      ? FIELD_OPTS[this.config[field].type].scale[channelScaleType]
+      : [this.getDefaultLayerConfig()[scale]];
   }
 
   updateLayerVisualChannel(dataset, channel) {
     const visualChannel = this.visualChannels[channel];
-
     this.validateVisualChannel(channel);
-      // calculate layer channel domain
+    // calculate layer channel domain
     const updatedDomain = this.calculateLayerDomain(dataset, visualChannel);
-
     this.updateLayerConfig({[visualChannel.domain]: updatedDomain});
   }
 
@@ -755,12 +928,7 @@ export default class Layer {
     // TODO: refactor to add valueAccessor to field
     const fieldIdx = field.tableFieldIndex - 1;
     const isTime = field.type === ALL_FIELD_TYPES.timestamp;
-    const valueAccessor = maybeToDate.bind(
-      null,
-      isTime,
-      fieldIdx,
-      field.format
-    );
+    const valueAccessor = maybeToDate.bind(null, isTime, fieldIdx, field.format);
     const indexValueAccessor = i => valueAccessor(allData[i]);
 
     const sortFunction = getSortingFunction(field.type);
@@ -775,6 +943,9 @@ export default class Layer {
       case SCALE_TYPES.quantile:
         return getQuantileDomain(filteredIndexForDomain, indexValueAccessor, sortFunction);
 
+      case SCALE_TYPES.log:
+        return getLogDomain(filteredIndexForDomain, indexValueAccessor);
+
       case SCALE_TYPES.quantize:
       case SCALE_TYPES.linear:
       case SCALE_TYPES.sqrt:
@@ -785,35 +956,109 @@ export default class Layer {
 
   isLayerHovered(objectInfo) {
     return (
-      objectInfo &&
-      objectInfo.layer &&
-      objectInfo.picked &&
-      objectInfo.layer.props.id === this.id
+      objectInfo && objectInfo.layer && objectInfo.picked && objectInfo.layer.props.id === this.id
     );
   }
 
   getRadiusScaleByZoom(mapState, fixedRadius) {
-    const radiusChannel = Object.values(this.visualChannels).find(
-      vc => vc.property === 'radius'
-    );
+    const radiusChannel = Object.values(this.visualChannels).find(vc => vc.property === 'radius');
 
     if (!radiusChannel) {
       return 1;
     }
 
     const field = radiusChannel.field;
-    const fixed =
-      fixedRadius === undefined
-        ? this.config.visConfig.fixedRadius
-        : fixedRadius;
+    const fixed = fixedRadius === undefined ? this.config.visConfig.fixedRadius : fixedRadius;
     const {radius} = this.config.visConfig;
 
-    return fixed
-      ? 1
-      : (this.config[field] ? 1 : radius) * this.getZoomFactor(mapState);
+    return fixed ? 1 : (this.config[field] ? 1 : radius) * this.getZoomFactor(mapState);
   }
 
   shouldCalculateLayerData(props) {
     return props.some(p => !this.noneLayerDataAffectingProps.includes(p));
+  }
+
+  getBrushingExtensionProps(interactionConfig, brushingTarget) {
+    const {brush} = interactionConfig;
+
+    return {
+      // brushing
+      autoHighlight: !brush.enabled,
+      brushingRadius: brush.config.size * 1000,
+      brushingTarget: brushingTarget || 'source',
+      brushingEnabled: brush.enabled
+    };
+  }
+
+  getDefaultDeckLayerProps({idx, gpuFilter, mapState}) {
+    return {
+      id: this.id,
+      idx,
+      coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+      pickable: true,
+      wrapLongitude: true,
+      parameters: {depthTest: Boolean(mapState.dragRotate || this.config.visConfig.enable3d)},
+      // visconfig
+      opacity: this.config.visConfig.opacity,
+      highlightColor: this.config.highlightColor,
+      // data filtering
+      extensions: [dataFilterExtension],
+      filterRange: gpuFilter.filterRange
+    };
+  }
+
+  getDefaultHoverLayerProps() {
+    return {
+      id: `${this.id}-hovered`,
+      pickable: false,
+      wrapLongitude: true,
+      coordinateSystem: COORDINATE_SYSTEM.LNGLAT
+    };
+  }
+
+  renderTextLabelLayer({getPosition, getPixelOffset, updateTriggers, sharedProps}, renderOpts) {
+    const {data, mapState} = renderOpts;
+    const {textLabel} = this.config;
+
+    return data.textLabels.reduce((accu, d, i) => {
+      if (d.getText) {
+        accu.push(
+          new TextLayer({
+            ...sharedProps,
+            id: `${this.id}-label-${textLabel[i].field.name}`,
+            data: data.data,
+            getText: d.getText,
+            getPosition,
+            characterSet: d.characterSet,
+            getPixelOffset: getPixelOffset(textLabel[i]),
+            getSize: 1,
+            sizeScale: textLabel[i].size,
+            getTextAnchor: textLabel[i].anchor,
+            getAlignmentBaseline: textLabel[i].alignment,
+            getColor: textLabel[i].color,
+            parameters: {
+              // text will always show on top of all layers
+              depthTest: false
+            },
+
+            getFilterValue: data.getFilterValue,
+            updateTriggers: {
+              ...updateTriggers,
+              getText: textLabel[i].field.name,
+              getPixelOffset: {
+                ...updateTriggers.getRadius,
+                mapState,
+                anchor: textLabel[i].anchor,
+                alignment: textLabel[i].alignment
+              },
+              getTextAnchor: textLabel[i].anchor,
+              getAlignmentBaseline: textLabel[i].alignment,
+              getColor: textLabel[i].color
+            }
+          })
+        );
+      }
+      return accu;
+    }, []);
   }
 }

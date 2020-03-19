@@ -48,10 +48,10 @@ git clone git@github.com:<github username>/kepler.gl.git
 cd kepler.gl
 
 # Add the main kepler.gl repository as an upstream remote to your repository:
-git remote add upstream "git@github.com:uber/kepler.gl.git"
+git remote add upstream "git@github.com:keplergl/kepler.gl.git"
 
 # Install JavaScript dependencies:
-yarn --ignore-engines
+yarn
 
 # Setup mapbox access token locally
 export MapboxAccessToken=<insert_your_token>
@@ -68,6 +68,17 @@ http://localhost:8080/
 
 This is the demo app we hosted on [http://kepler.gl/#/demo][demo-app]. By default, it serves non-minified source code inside the src directory.
 
+#### Develop with deck.gl
+
+When develop, upgrade, debug deck.gl, Demo app can load deck.gl directly from src
+```
+// load deck.gl from node_modules/deck.gl/src, sub-modules from node_modules/@deck.gl/<module>/src
+npm run start:deck
+
+// load deck.gl src from the deck.gl folder parallel to kepler.gl
+npm run start:deck-src
+```
+
 ## <a name="tests"> Running Tests
 
 We write unit and browser tests with [Tape][tape] and [Enzyme][enzyme], and lint with [ESLint][eslint]. Make sure to run test before submitting your PR. To run all of the tests once with node:
@@ -76,7 +87,7 @@ We write unit and browser tests with [Tape][tape] and [Enzyme][enzyme], and lint
 yarn test
 ```
 
-To run seperately
+To run separately
 ```shell
 # lint
 yarn lint
@@ -96,7 +107,7 @@ To generate a coverage report
 yarn cover
 ```
 
-<!-- ## <a name="rules"></a> Coding Rules -->
+## <a name="rules"></a> Coding Rules
 
 To ensure consistency throughout the source code, keep these rules in mind as you are working:
 
@@ -104,6 +115,12 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 * All public API methods **must be documented** with using jsdoc. To see how we document our APIs, please check
   out the existing source code and see the section about [writing documentation](#documentation)
 
+This project use Eslint together Prettier. The linter should automatically inform you if you break any rules (like incorrect indenting, line breaking or if you forget a semicolon). Before doing a pull request, make sure to run the linter.
+
+```shell
+# To run the linter
+yarn lint
+```
 
 ## <a name="commits"></a> Git Commit Guidelines
 
@@ -139,12 +156,12 @@ being reverted.
 A commit with this format is automatically created by the [`git revert`][git-revert] command.
 
 ### Type
-Must be one of the following, capitalizd.
+Must be one of the following, capitalized.
 
-* **[Feat]]**: A new feature
-* **[Enhancement]]**: An update of a existing feature
-* **[Bug]]**: A bug fix
-* **[Docs]]**: Documentation only changes
+* **[Feat]**: A new feature
+* **[Enhancement]**: An update of a existing feature
+* **[Bug]**: A bug fix
+* **[Docs]**: Documentation only changes
 * **[Style]**: Changes that do not affect the meaning of the code (white-space, formatting, missing
   semi-colons, typos, etc)
 * **[Refactor]**: A code change that neither fixes a bug nor adds a feature
@@ -231,7 +248,7 @@ Publish on github pages __Authorized User Only__.
 ```
 
 ### <a name="gh-pages"></a> Testing environment using GH Pages
-We currently host the demo-app on Github pages. We have provided a way to test github pages before pushing the branch to 
+We currently host the demo-app on Github pages. We have provided a way to test github pages before pushing the branch to
 the actual repo.
 In order to test github pages with your changes, you need to satisfy the following requirements first:
 - Make sure you have your own github pages (username.github.io) repo, [click here](https://pages.github.com/)
@@ -247,7 +264,7 @@ When everything is set up, run the following command:
 
 ```bash
 yarn deploy:test
-``` 
+```
 
 The above command will build the website and push to your gh-pages branch.
 
@@ -257,7 +274,7 @@ The above command will build the website and push to your gh-pages branch.
 [enzyme]: https://airbnb.io/enzyme/
 [git-revert]: https://git-scm.com/docs/git-revert
 [git-setup]: https://help.github.com/articles/set-up-git
-[github]: https://github.com/uber/kepler.gl
+[github]: https://github.com/keplergl/kepler.gl
 [github-pr]: https://help.github.com/articles/creating-a-pull-request/
 [jsDoc]: http://usejsdoc.org/
 [tape]: https://github.com/substack/tape

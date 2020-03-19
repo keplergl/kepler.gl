@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +24,7 @@ import styled from 'styled-components';
 import {createSelector} from 'reselect';
 import {format} from 'd3-format';
 import moment from 'moment';
-import {
-  SCALE_TYPES,
-  SCALE_FUNC,
-  ALL_FIELD_TYPES
-} from 'constants/default-settings';
+import {SCALE_TYPES, SCALE_FUNC, ALL_FIELD_TYPES} from 'constants/default-settings';
 import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
 
 const ROW_H = 10;
@@ -70,7 +66,9 @@ const getQuantLabelFormat = (domain, fieldType) => {
   // quant scale can only be assigned to linear Fields: real, timestamp, integer
   return fieldType === ALL_FIELD_TYPES.timestamp
     ? getTimeLabelFormat(domain)
-    : !fieldType ? defaultFormat : getNumericLabelFormat(domain);
+    : !fieldType
+    ? defaultFormat
+    : getNumericLabelFormat(domain);
 };
 
 const getOrdinalLegends = scale => {
@@ -82,6 +80,14 @@ const getOrdinalLegends = scale => {
 };
 
 const getQuantLegends = (scale, labelFormat) => {
+  if (typeof scale.invertExtent !== 'function') {
+    // only quantile, quantize, threshold scale has invertExtent method
+    return {
+      data: [],
+      labels: []
+    };
+  }
+
   const labels = scale.range().map(d => {
     const invert = scale.invertExtent(d);
     return `${labelFormat(invert[0])} to ${labelFormat(invert[1])}`;
@@ -126,8 +132,7 @@ export default class ColorLegend extends Component {
         return getOrdinalLegends(scale);
       }
 
-      const formatLabel =
-        labelFormat || getQuantLabelFormat(scale.domain(), fieldType);
+      const formatLabel = labelFormat || getQuantLabelFormat(scale.domain(), fieldType);
 
       return getQuantLegends(scale, formatLabel);
     }
@@ -161,7 +166,7 @@ export default class ColorLegend extends Component {
   }
 }
 
-const LegendRow = ({label = '', displayLabel, color, idx}) => (
+export const LegendRow = ({label = '', displayLabel, color, idx}) => (
   <g transform={`translate(0, ${idx * (ROW_H + GAP)})`}>
     <rect width={RECT_W} height={ROW_H} style={{fill: color}} />
     <text x={RECT_W + 8} y={ROW_H - 1}>

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,15 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {CLOUD_PROVIDERS} from './cloud-providers';
 import {IndexRoute, Route} from 'react-router';
 import React from 'react';
 import Demo from '../app';
-import {DEFAULT_CLOUD_PROVIDER} from '../constants/default-settings';
+import {getCloudProvider, DEFAULT_CLOUD_PROVIDER} from '../cloud-providers';
 
 export function onAuthEnterCallback(nextState, replace, callback) {
   // TODO: detect auth provider
-  const authProvider = CLOUD_PROVIDERS[DEFAULT_CLOUD_PROVIDER];
+  const authProvider = getCloudProvider(DEFAULT_CLOUD_PROVIDER);
 
   // Check if the current tab was opened by our previous tab
   if (window.opener) {
@@ -40,13 +39,12 @@ export function onAuthEnterCallback(nextState, replace, callback) {
 
 export function buildAppRoutes(Component) {
   return [
-    (<Route key="auth" path="auth" component={Demo} onEnter={onAuthEnterCallback} />),
-    (
-      <Route key="demo" path="demo">
-        <IndexRoute component={Component} />
-        <Route path="map" component={Component} />
-        <Route path="(:id)" component={Component} />
-      </Route>
-    )
+    <Route key="auth" path="auth" component={Demo} onEnter={onAuthEnterCallback} />,
+    <Route key="demo" path="demo">
+      <IndexRoute component={Component} />
+      <Route path="map" component={Component} />
+      <Route path="(:id)" component={Component} />
+      <Route path="map/:provider" component={Component} />
+    </Route>
   ];
 }

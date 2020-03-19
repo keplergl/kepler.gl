@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,13 +20,13 @@
 
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer'
+import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import KeplerGl from 'kepler.gl';
 import {createAction} from 'redux-actions';
 
 import {addDataToMap, wrapTo} from 'kepler.gl/actions';
 import sampleData from './data/sample-data';
-import config from './configurations/config.json';
+import config from './configurations/config';
 
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
@@ -36,8 +36,9 @@ const hideAndShowSidePanel = createAction('HIDE_AND_SHOW_SIDE_PANEL');
 class App extends Component {
   componentDidMount() {
     this.props.dispatch(
-      wrapTo('map1', addDataToMap(
-        {
+      wrapTo(
+        'map1',
+        addDataToMap({
           datasets: sampleData,
           config
         })
@@ -46,25 +47,18 @@ class App extends Component {
   }
 
   _toggleSidePanelVisibility = () => {
-    this.props.dispatch(
-      wrapTo('map1', hideAndShowSidePanel())
-    );
+    this.props.dispatch(wrapTo('map1', hideAndShowSidePanel()));
   };
 
   render() {
     return (
       <div style={{position: 'absolute', width: '100%', height: '100%'}}>
-          <button onClick={this._toggleSidePanelVisibility}> Hide / Show Side Panel</button>
-          <AutoSizer>
-            {({height, width}) => (
-            <KeplerGl
-              mapboxApiAccessToken={MAPBOX_TOKEN}
-              id="map1"
-              width={width}
-              height={height}
-            />
+        <button onClick={this._toggleSidePanelVisibility}> Hide / Show Side Panel</button>
+        <AutoSizer>
+          {({height, width}) => (
+            <KeplerGl mapboxApiAccessToken={MAPBOX_TOKEN} id="map1" width={width} height={height} />
           )}
-          </AutoSizer>
+        </AutoSizer>
       </div>
     );
   }

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -84,14 +84,7 @@ export const savedConfigV0 = {
           visConfig: {
             colorRange: {
               category: 'ColorBrewer',
-              colors: [
-                '#ffffcc',
-                '#d9f0a3',
-                '#addd8e',
-                '#78c679',
-                '#31a354',
-                '#006837'
-              ],
+              colors: ['#ffffcc', '#d9f0a3', '#addd8e', '#78c679', '#31a354', '#006837'],
               name: 'ColorBrewer YlGn-6',
               reversed: false,
               type: 'sequential'
@@ -181,18 +174,19 @@ export const parsedConfigV0 = {
           visConfig: {
             colorRange: {
               category: 'ColorBrewer',
-              colors: [
-                '#ffffcc',
-                '#d9f0a3',
-                '#addd8e',
-                '#78c679',
-                '#31a354',
-                '#006837'
-              ],
+              colors: ['#ffffcc', '#d9f0a3', '#addd8e', '#78c679', '#31a354', '#006837'],
               name: 'ColorBrewer YlGn-6',
               reversed: false,
               type: 'sequential'
             },
+            strokeColorRange: {
+              category: 'ColorBrewer',
+              colors: ['#ffffcc', '#d9f0a3', '#addd8e', '#78c679', '#31a354', '#006837'],
+              name: 'ColorBrewer YlGn-6',
+              reversed: false,
+              type: 'sequential'
+            },
+            strokeColor: [18, 147, 154, 255],
             heightRange: [0, 500],
             elevationScale: 5,
             enable3d: true,

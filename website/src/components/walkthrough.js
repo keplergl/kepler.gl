@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -40,7 +40,7 @@ const VideoContainer = styled.div`
   width: 640px;
   ${media.portable`
     width: 500px;
-  `} 
+  `}
   ${media.palm`
     width: 100%;
   `};
@@ -56,7 +56,7 @@ const VideoDescription = styled.div`
 
 const VideoWrapperHeader = styled.div`
   height: 15px;
-  background: #E5E5E4;
+  background: #e5e5e4;
   border-radius: 3px 3px 0px 0px;
   display: flex;
   align-items: center;
@@ -91,7 +91,7 @@ class Walkthrough extends PureComponent {
     selectedIndex: 0
   };
 
-  _onChange = (index) => {
+  _onChange = index => {
     this.setState({selectedIndex: index});
     const videoElement = this.videoElements[index];
     videoElement.load();
@@ -122,7 +122,7 @@ class Walkthrough extends PureComponent {
                     src={videoUrl}
                     poster={imageUrl}
                     autoPlay={i === selectedIndex}
-                    ref={(elt) => this._assignVideoRef(elt, i)}
+                    ref={elt => this._assignVideoRef(elt, i)}
                     onEnded={this._onVideoEnded}
                   />
                 </VideoContainer>

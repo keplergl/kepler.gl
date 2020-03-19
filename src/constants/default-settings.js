@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,30 +19,114 @@
 // THE SOFTWARE.
 
 import keyMirror from 'keymirror';
+import {EditorModes} from 'react-map-gl-draw';
 
-export const ACTION_PREFIX = '@@kepler.gl/';
-export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
-export const ICON_PREFIX = `${CLOUDFRONT}/geodude`;
-
-// Modal Ids
-export const LAYER_CONFIG_ID = 'copyConfig';
-export const DATA_TABLE_ID = 'dataTable';
-export const DELETE_DATA_ID = 'deleteData';
-export const ADD_DATA_ID = 'addData';
-export const EXPORT_IMAGE_ID = 'exportImage';
-export const EXPORT_DATA_ID = 'exportData';
-export const EXPORT_CONFIG_ID = 'exportConfig';
-export const ADD_MAP_STYLE_ID = 'addMapStyle';
-
+import {
+  scaleLinear,
+  scaleQuantize,
+  scaleQuantile,
+  scaleOrdinal,
+  scaleSqrt,
+  scaleLog,
+  scalePoint
+} from 'd3-scale';
 import {
   Layers,
   FilterFunnel,
   Settings,
-  CursorClick
+  CursorClick,
+  Pin,
+  ArrowDown,
+  ArrowUp,
+  Clipboard,
+  Cancel
 } from 'components/common/icons';
+import {getHTMLMapModeTileUrl} from 'utils/utils';
+
+export const ACTION_PREFIX = '@@kepler.gl/';
+export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
+export const ICON_PREFIX = `${CLOUDFRONT}/geodude`;
+export const DEFAULT_MAPBOX_API_URL = 'https://api.mapbox.com';
+
+// Modal Ids
+/**
+ * Modal id: data table
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const DATA_TABLE_ID = 'dataTable';
+/**
+ * Modal id: delete dataset confirm dialog
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const DELETE_DATA_ID = 'deleteData';
+/**
+ * Modal id: add data modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const ADD_DATA_ID = 'addData';
+/**
+ * Modal id: export image modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const EXPORT_IMAGE_ID = 'exportImage';
+/**
+ * Modal id: export data modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const EXPORT_DATA_ID = 'exportData';
+/**
+ * Modal id: add custom map style modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const ADD_MAP_STYLE_ID = 'addMapStyle';
+/**
+ * Modal id: export map modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const EXPORT_MAP_ID = 'exportMap';
+/**
+ * Modal id: save map modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const SAVE_MAP_ID = 'saveMap';
+/**
+ * Modal id: confirm to overwrite saved map
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const OVERWRITE_MAP_ID = 'overwriteMap';
+/**
+ * Modal id: share map url modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const SHARE_MAP_ID = 'shareMap';
 
 export const KEPLER_GL_NAME = 'kepler.gl';
-export const KEPLER_GL_VERSION = 'v1.0';
+
+// __PACKAGE_VERSION__ is automatically injected by Babel/Webpack during the building process
+// Since we are injecting this during the build process with babel
+// while developing VERSION is not defined, we capture the exception and return
+// an empty string which will allow us to retrieve the latest umd version
+export const KEPLER_GL_VERSION = '__PACKAGE_VERSION__';
 export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
 
 export const DIMENSIONS = {
@@ -57,7 +141,24 @@ export const DIMENSIONS = {
   }
 };
 
-export const PANELS = [
+/**
+ * Theme name that can be passed to `KeplerGl` `prop.theme`.
+ * Available themes are `Theme.light` and `Theme.dark`. Default theme is `Theme.dark`
+ * @constant
+ * @type {string}
+ * @public
+ * @example
+ * ```js
+ * const Map = () => <KeplerGl theme={THEME.light} id="map"/>
+ * ```
+ */
+export const THEME = keyMirror({
+  light: null,
+  dark: null,
+  base: null
+});
+
+export const SIDEBAR_PANELS = [
   {
     id: 'layer',
     label: 'Layers',
@@ -80,13 +181,8 @@ export const PANELS = [
   }
 ];
 
-export const PANELS_FOOTER = [
-  {
-    id: LAYER_CONFIG_ID,
-    label: 'Copy Config',
-    icon: 'clipboard'
-  }
-];
+// backward compatibility
+export const PANELS = SIDEBAR_PANELS;
 
 // MAP STYLES
 
@@ -180,25 +276,34 @@ export const TRIP_ARC_FIELDS = {
   lng1: 'dropoff'
 };
 
+export const FILTER_TYPES = keyMirror({
+  range: null,
+  select: null,
+  timeRange: null,
+  multiSelect: null,
+  polygon: null
+});
+
 export const SCALE_TYPES = keyMirror({
   ordinal: null,
   quantile: null,
   quantize: null,
   linear: null,
-
-  // for radius
   sqrt: null,
+  log: null,
+
   // ordinal domain to linear range
   point: null
 });
 
 export const SCALE_FUNC = {
-  linear: require('d3-scale').scaleLinear,
-  quantize: require('d3-scale').scaleQuantize,
-  quantile: require('d3-scale').scaleQuantile,
-  ordinal: require('d3-scale').scaleOrdinal,
-  sqrt: require('d3-scale').scaleSqrt,
-  point: require('d3-scale').scalePoint
+  [SCALE_TYPES.linear]: scaleLinear,
+  [SCALE_TYPES.quantize]: scaleQuantize,
+  [SCALE_TYPES.quantile]: scaleQuantile,
+  [SCALE_TYPES.ordinal]: scaleOrdinal,
+  [SCALE_TYPES.sqrt]: scaleSqrt,
+  [SCALE_TYPES.log]: scaleLog,
+  [SCALE_TYPES.point]: scalePoint
 };
 
 export const ALL_FIELD_TYPES = keyMirror({
@@ -212,6 +317,51 @@ export const ALL_FIELD_TYPES = keyMirror({
   point: null
 });
 
+// Data Table
+export const SORT_ORDER = keyMirror({
+  ASCENDING: null,
+  DESCENDING: null,
+  UNSORT: null
+});
+
+export const TABLE_OPTION = keyMirror({
+  SORT_ASC: null,
+  SORT_DES: null,
+  UNSORT: null,
+  PIN: null,
+  UNPIN: null,
+  COPY: null
+});
+
+export const TABLE_OPTION_LIST = [
+  {
+    value: TABLE_OPTION.SORT_ASC,
+    display: 'Sort Ascending',
+    icon: ArrowUp,
+    condition: props => props.sortMode !== SORT_ORDER.ASCENDING
+  },
+  {
+    value: TABLE_OPTION.SORT_DES,
+    display: 'Sort Descending',
+    icon: ArrowDown,
+    condition: props => props.sortMode !== SORT_ORDER.DESCENDING
+  },
+  {
+    value: TABLE_OPTION.UNSORT,
+    display: 'Unsort Column',
+    icon: Cancel,
+    condition: props => props.isSorted
+  },
+  {value: TABLE_OPTION.PIN, display: 'Pin Column', icon: Pin, condition: props => !props.isPinned},
+  {
+    value: TABLE_OPTION.UNPIN,
+    display: 'Unpin Column',
+    icon: Cancel,
+    condition: props => props.isPinned
+  },
+  {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: Clipboard}
+];
+
 const ORANGE = '248, 194, 28';
 const PINK = '231, 189, 194';
 const PURPLE = '160, 106, 206';
@@ -220,6 +370,8 @@ const BLUE2 = '106, 160, 206';
 const BLUE3 = '0, 172, 237';
 const GREEN = '106, 160, 56';
 const RED = '237, 88, 106';
+
+export const HIGHLIGH_COLOR_3D = [255, 255, 255, 60];
 
 export const FIELD_COLORS = {
   default: RED
@@ -261,17 +413,6 @@ export const FILED_TYPE_DISPLAY = {
   }
 };
 
-export const defaultFormat = d => d;
-
-export const FIELD_DISPLAY_FORMAT = {
-  [ALL_FIELD_TYPES.string]: defaultFormat,
-  [ALL_FIELD_TYPES.timestamp]: defaultFormat,
-  [ALL_FIELD_TYPES.integer]: defaultFormat,
-  [ALL_FIELD_TYPES.boolean]: d => String(d),
-  [ALL_FIELD_TYPES.date]: defaultFormat,
-  [ALL_FIELD_TYPES.geojson]: defaultFormat
-};
-
 export const CHANNEL_SCALES = keyMirror({
   color: null,
   radius: null,
@@ -288,7 +429,9 @@ export const AGGREGATION_TYPES = {
   maximum: 'maximum',
   minimum: 'minimum',
   median: 'median',
+  stdev: 'stdev',
   sum: 'sum',
+  variance: 'variance',
   // ordinal
   mode: 'mode',
   countUnique: 'count unique'
@@ -297,7 +440,7 @@ export const AGGREGATION_TYPES = {
 export const linearFieldScaleFunctions = {
   [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
   [CHANNEL_SCALES.radius]: [SCALE_TYPES.sqrt],
-  [CHANNEL_SCALES.size]: [SCALE_TYPES.linear]
+  [CHANNEL_SCALES.size]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
 };
 
 export const linearFieldAggrScaleFunctions = {
@@ -306,15 +449,19 @@ export const linearFieldAggrScaleFunctions = {
     [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
     [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
     [AGGREGATION_TYPES.median]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
-    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
+    [AGGREGATION_TYPES.stdev]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],
+    [AGGREGATION_TYPES.variance]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
   },
 
   [CHANNEL_SCALES.sizeAggr]: {
-    [AGGREGATION_TYPES.average]: [SCALE_TYPES.linear],
-    [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.linear],
-    [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.linear],
-    [AGGREGATION_TYPES.median]: [SCALE_TYPES.linear],
-    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.linear]
+    [AGGREGATION_TYPES.average]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+    [AGGREGATION_TYPES.maximum]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+    [AGGREGATION_TYPES.minimum]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+    [AGGREGATION_TYPES.median]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+    [AGGREGATION_TYPES.stdev]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+    [AGGREGATION_TYPES.sum]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log],
+    [AGGREGATION_TYPES.variance]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
   }
 };
 
@@ -341,7 +488,7 @@ export const notSupportedScaleOpts = {
   [CHANNEL_SCALES.size]: []
 };
 
-export const  notSupportAggrOpts = {
+export const notSupportAggrOpts = {
   [CHANNEL_SCALES.colorAggr]: {},
   [CHANNEL_SCALES.sizeAggr]: {}
 };
@@ -354,7 +501,7 @@ export const DEFAULT_AGGREGATION = {
     [AGGREGATION_TYPES.count]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile]
   },
   [CHANNEL_SCALES.sizeAggr]: {
-    [AGGREGATION_TYPES.count]: [SCALE_TYPES.linear]
+    [AGGREGATION_TYPES.count]: [SCALE_TYPES.linear, SCALE_TYPES.sqrt, SCALE_TYPES.log]
   }
 };
 
@@ -433,14 +580,10 @@ export const FIELD_OPTS = {
   }
 };
 
-export const CHANNEL_SCALE_SUPPORTED_FIELDS = Object.keys(
-  CHANNEL_SCALES
-).reduce(
+export const CHANNEL_SCALE_SUPPORTED_FIELDS = Object.keys(CHANNEL_SCALES).reduce(
   (accu, key) => ({
     ...accu,
-    [key]: Object.keys(FIELD_OPTS).filter(
-      ft => Object.keys(FIELD_OPTS[ft].scale[key]).length
-    )
+    [key]: Object.keys(FIELD_OPTS).filter(ft => Object.keys(FIELD_OPTS[ft].scale[key]).length)
   }),
   {}
 );
@@ -468,16 +611,7 @@ export const DEFAULT_LAYER_COLOR = {
 // let user pass in default tooltip fields
 export const DEFAULT_TOOLTIP_FIELDS = [];
 
-export const DEFAULT_LIGHT_SETTINGS = {
-  lightsPosition: [-122.45, 37.66, 8000, -122.0, 38.0, 8000],
-  ambientRatio: 0.4,
-  diffuseRatio: 0.6,
-  specularRatio: 0.3,
-  lightsStrength: [0.9, 0.0, 0.8, 0.0],
-  numberOfLights: 2
-};
-
-export const NO_VALUE_COLOR = [147, 147, 147];
+export const NO_VALUE_COLOR = [0, 0, 0, 0];
 
 export const LAYER_BLENDINGS = {
   additive: {
@@ -487,12 +621,7 @@ export const LAYER_BLENDINGS = {
   normal: {
     // reference to
     // https://limnu.com/webgl-blending-youre-probably-wrong/
-    blendFunc: [
-      'SRC_ALPHA',
-      'ONE_MINUS_SRC_ALPHA',
-      'ONE',
-      'ONE_MINUS_SRC_ALPHA'
-    ],
+    blendFunc: ['SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA', 'ONE', 'ONE_MINUS_SRC_ALPHA'],
     blendEquation: ['FUNC_ADD', 'FUNC_ADD']
   },
   subtractive: {
@@ -508,49 +637,65 @@ export const RESOLUTIONS = keyMirror({
   TWO_X: null
 });
 
-export const RATIOS = keyMirror({
+export const EXPORT_IMG_RATIOS = keyMirror({
   SCREEN: null,
   FOUR_BY_THREE: null,
-  SIXTEEN_BY_NINE: null
+  SIXTEEN_BY_NINE: null,
+  CUSTOM: null
 });
 
-export const RATIO_OPTIONS = [{
-  id: RATIOS.SCREEN,
-  label: 'Original Screen',
-  getSize: (screenW, screenH) => ({width: screenW, height: screenH})
-}, {
-  id: RATIOS.FOUR_BY_THREE,
-  label: '4:3',
-  getSize: (screenW, screenH) => ({width: screenW, height: Math.round(screenW * 0.75)})
-}, {
-  id: RATIOS.SIXTEEN_BY_NINE,
-  label: '16:9',
-  getSize: (screenW, screenH) => ({width: screenW, height: Math.round(screenW * 0.5625)})
-}];
+export const EXPORT_IMG_RATIO_OPTIONS = [
+  {
+    id: EXPORT_IMG_RATIOS.SCREEN,
+    label: 'Original Screen',
+    getSize: (screenW, screenH) => ({width: screenW, height: screenH})
+  },
+  {
+    id: EXPORT_IMG_RATIOS.CUSTOM,
+    hidden: true,
+    label: 'Custom',
+    getSize: (mapW, mapH) => ({width: mapW, height: mapH})
+  },
+  {
+    id: EXPORT_IMG_RATIOS.FOUR_BY_THREE,
+    label: '4:3',
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: Math.round(screenW * 0.75)
+    })
+  },
+  {
+    id: EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE,
+    label: '16:9',
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: Math.round(screenW * 0.5625)
+    })
+  }
+];
 
-export const RESOLUTION_OPTIONS = [{
-  id: RESOLUTIONS.ONE_X,
-  label: '1x',
-  available: true,
-  scale: 1,
-  zoomOffset: Math.log2(1),
-  getSize: (screenW, screenH) => ({
-    width: screenW,
-    height: screenH
-  })
-}, {
-  id: RESOLUTIONS.TWO_X,
-  label: '2x',
-  available: true,
-  scale: 2,
-  zoomOffset: Math.log2(2),
-  getSize: (screenW, screenH) => ({
-    width: screenW * 2,
-    height: screenH * 2
-  })
-}];
-
-export const DEFAULT_EXPORT_IMAGE_NAME = 'kepler-gl.png';
+export const EXPORT_IMG_RESOLUTION_OPTIONS = [
+  {
+    id: RESOLUTIONS.ONE_X,
+    label: '1x',
+    available: true,
+    scale: 1,
+    getSize: (screenW, screenH) => ({
+      width: screenW,
+      height: screenH
+    })
+  },
+  {
+    id: RESOLUTIONS.TWO_X,
+    label: '2x',
+    available: true,
+    scale: 2,
+    getSize: (screenW, screenH) => ({
+      width: screenW * 2,
+      height: screenH * 2
+    })
+  }
+];
 
 export const EXPORT_DATA_TYPE = keyMirror({
   CSV: null
@@ -563,7 +708,7 @@ export const EXPORT_DATA_TYPE = keyMirror({
 export const EXPORT_DATA_TYPE_OPTIONS = [
   {
     id: EXPORT_DATA_TYPE.CSV,
-    label: 'csv',
+    label: EXPORT_DATA_TYPE.CSV.toLowerCase(),
     available: true
   }
   // {
@@ -588,6 +733,31 @@ export const EXPORT_DATA_TYPE_OPTIONS = [
   // }
 ];
 
+// Export map types
+export const EXPORT_MAP_FORMATS = keyMirror({
+  HTML: null,
+  JSON: null
+});
+
+export const EXPORT_HTML_MAP_MODES = keyMirror({
+  READ: null,
+  EDIT: null
+});
+
+// Export map options
+export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS).map(entry => ({
+  id: entry[0],
+  label: entry[1].toLowerCase(),
+  available: true
+}));
+
+export const EXPORT_HTML_MAP_MODE_OPTIONS = Object.entries(EXPORT_HTML_MAP_MODES).map(entry => ({
+  id: entry[0],
+  label: entry[1].toLowerCase(),
+  available: true,
+  url: getHTMLMapModeTileUrl(entry[1])
+}));
+
 export const DEFAULT_UUID_COUNT = 6;
 
 export const DEFAULT_NOTIFICATION_MESSAGE = 'MESSAGE_NOT_PROVIDED';
@@ -602,4 +772,62 @@ export const DEFAULT_NOTIFICATION_TYPES = keyMirror({
 export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
   global: null,
   file: null
+});
+
+export const TOKEN_MISUSE_WARNING =
+  '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ';
+export const DISCLAIMER =
+  'You can change the Mapbox token later using the following instructions: ';
+export const MAP_CONFIG_DESCRIPTION =
+  'Map config will be included in the Json file. If you are using kepler.gl in your own app. You can copy this config and pass it to ';
+export const SHARE_DISCLAIMER =
+  'kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' +
+  'You can edit/delete the data file in your cloud account anytime.';
+// Animation
+export const BASE_SPEED = 600;
+export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';
+export const SPEED_CONTROL_RANGE = [0, 10];
+
+// We could use directly react-map-gl-draw EditorMode but this would
+// create a direct dependency with react-map-gl-draw
+// Created this map to be independent from react-map-gl-draw
+export const EDITOR_MODES = {
+  READ_ONLY: EditorModes.READ_ONLY,
+  DRAW_POLYGON: EditorModes.DRAW_POLYGON,
+  DRAW_RECTANGLE: EditorModes.DRAW_RECTANGLE,
+  EDIT: EditorModes.EDIT_VERTEX
+};
+
+export const EDITOR_AVAILABLE_LAYERS = [
+  LAYER_TYPES.point,
+  LAYER_TYPES.hexagon,
+  LAYER_TYPES.arc,
+  LAYER_TYPES.line
+];
+// GPU Filtering
+/**
+ * Max number of filter value buffers that deck.gl provides
+ */
+export const MAX_GPU_FILTERS = 4;
+export const MAP_THUMBNAIL_DIMENSION = {
+  width: 300,
+  height: 200
+};
+
+export const MAP_INFO_CHARACTER = {
+  title: 100,
+  description: 100
+};
+
+// Load data
+export const LOADING_METHODS = keyMirror({
+  upload: null,
+  storage: null
+});
+
+export const DATASET_FORMATS = keyMirror({
+  row: null,
+  geojson: null,
+  csv: null,
+  keplergl: null
 });

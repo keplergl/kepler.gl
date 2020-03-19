@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -105,14 +105,7 @@ export const savedConfigV0 = {
               name: 'Global Warming',
               type: 'sequential',
               category: 'Uber',
-              colors: [
-                '#5A1846',
-                '#900C3F',
-                '#C70039',
-                '#E3611C',
-                '#F1920E',
-                '#FFC300'
-              ]
+              colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
             },
             opacity: 0.8,
             thickness: 8,
@@ -202,6 +195,23 @@ export const parsedConfigV0 = {
               ],
               reversed: false
             },
+            strokeColor: [221, 178, 124, 255],
+            strokeColorRange: {
+              name: 'Pink Wine',
+              type: 'sequential',
+              category: 'Uber',
+              colors: [
+                '#2C1E3D',
+                '#50315E',
+                '#764476',
+                '#9A5B88',
+                '#B77495',
+                '#CF91A3',
+                '#E0B1B3',
+                '#EDD1CA'
+              ],
+              reversed: false
+            },
             opacity: 0.8,
             thickness: 13,
             radius: 10,
@@ -230,6 +240,8 @@ export const parsedConfigV0 = {
           isVisible: true,
           colorField: null,
           colorScale: 'quantile',
+          strokeColorField: null,
+          strokeColorScale: 'quantile',
           sizeField: {
             name: 'c_avg_trips_per_rider',
             type: 'real'
@@ -239,14 +251,14 @@ export const parsedConfigV0 = {
               name: 'Global Warming',
               type: 'sequential',
               category: 'Uber',
-              colors: [
-                '#5A1846',
-                '#900C3F',
-                '#C70039',
-                '#E3611C',
-                '#F1920E',
-                '#FFC300'
-              ]
+              colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+            },
+            strokeColor: [136, 87, 44, 255],
+            strokeColorRange: {
+              name: 'Global Warming',
+              type: 'sequential',
+              category: 'Uber',
+              colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
             },
             opacity: 0.8,
             thickness: 8,

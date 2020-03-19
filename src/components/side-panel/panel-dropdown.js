@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,14 +26,16 @@ import listensToClickOutside from 'react-onclickoutside';
 class ClickOutsideCloseDropdown extends Component {
   static propTypes = {
     onClose: PropTypes.func,
-    show: PropTypes.bool
+    show: PropTypes.bool,
+    type: PropTypes.string
   };
 
   static defaultProps = {
-    show: true
+    show: true,
+    type: 'dark'
   };
 
-  handleClickOutside = (e) => {
+  handleClickOutside = e => {
     if (typeof this.props.onClose === 'function' && this.props.show) {
       this.props.onClose(e);
     }
@@ -41,11 +43,11 @@ class ClickOutsideCloseDropdown extends Component {
 
   render() {
     return (
-      <StyledPanelDropdown className={this.props.className}>
+      <StyledPanelDropdown type={this.props.type} className={this.props.className}>
         {this.props.children}
       </StyledPanelDropdown>
     );
   }
-};
+}
 
 export default listensToClickOutside(ClickOutsideCloseDropdown);

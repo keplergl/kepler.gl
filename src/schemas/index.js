@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,5 +19,5 @@
 // THE SOFTWARE.
 
 // Schemas
-export {default as default, default as KeplerGlSchema} from './schema-manager';
+export {default, default as KeplerGlSchema} from './schema-manager';
 export {CURRENT_VERSION, VERSIONS} from './versions';

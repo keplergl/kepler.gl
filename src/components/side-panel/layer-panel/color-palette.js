@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,9 @@ const defaultProps = {
   isReversed: false
 };
 
-const PaletteWrapper = styled.div`
+const PaletteWrapper = styled.div.attrs({
+  className: 'color-range-palette__inner'
+})`
   border-radius: 2px;
   display: flex;
   flex-direction: row;
@@ -47,33 +49,29 @@ const PaletteWrapper = styled.div`
   overflow: hidden;
 `;
 
-const PaletteContainer = styled.div`
+const PaletteContainer = styled.div.attrs({
+  className: 'color-range-palette'
+})`
   display: flex;
   flex-grow: 1;
   border-width: 1px;
   border-style: solid;
-  border-color: ${props => props.isSelected ? '#FFFFFF' : 'transparent'};
+  border-color: ${props => (props.isSelected ? '#FFFFFF' : 'transparent')};
   padding: 4px;
   border-radius: 4px;
 `;
 
-const ColorBlock = styled.div`
+const StyledColorBlock = styled.div.attrs({
+  className: 'color-range-palette__block'
+})`
   flex-grow: 1;
 `;
 
 const ColorPalette = ({colors, height, className, isSelected, isReversed}) => (
-  <PaletteContainer
-    className={`color-range-palette ${className}`}
-    isSelected={isSelected}
-  >
-    <PaletteWrapper className="color-range-palette__inner"
-                    style={{height, transform: `scale(${isReversed ? -1 : 1}, 1)`}}>
-      {colors.map(color => (
-        <ColorBlock
-          className="color-range-palette__block"
-          key={color}
-          style={{backgroundColor: color}}
-        />
+  <PaletteContainer className={className} isSelected={isSelected}>
+    <PaletteWrapper style={{height, transform: `scale(${isReversed ? -1 : 1}, 1)`}}>
+      {colors.map((color, index) => (
+        <StyledColorBlock key={`${color}-${index}`} style={{backgroundColor: color}} />
       ))}
     </PaletteWrapper>
   </PaletteContainer>

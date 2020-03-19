@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,30 +23,51 @@ export const ADDRESS_PREFIX = '@@KG_';
 
 import curry from 'lodash.curry';
 
-/*
- * wrap an action into a forward action
- *  A forward action looks like this:
+export const getActionForwardAddress = id => `${ADDRESS_PREFIX}${id.toUpperCase()}`;
+
+/**
+ * Wrap an action into a forward action that only modify the state of a specific
+ * kepler.gl instance. kepler.gl reducer will look for signatures in the action to
+ * determine whether it needs to be forwarded to a specific instance reducer.
  *
+ * wrapTo can be curried. You can create a curried action wrapper by only supply the `id` argument
+ *
+ * A forward action looks like this
+ * ```js
  *  {
  *    type: "@@kepler.gl/LAYER_CONFIG_CHANGE",
  *    payload: {
  *      type: '@@kepler.gl/LAYER_CONFIG_CHANGE',
  *      payload: {},
  *      meta: {
- *        // other meta,
+ *       // id of instance
  *        _id_: id
+ *       // other meta
  *      }
  *    },
  *    meta: {
- *      forward: '@redux-forward/FORWARD',
- *      id: '@@KG_id'
+ *      _forward_: '@redux-forward/FORWARD',
+ *      _addr_: '@@KG_id'
  *    }
  *  };
+ * ```
+ *
+ * @memberof forwardActions
+ * @param {string} id - The id to forward to
+ * @param {Object} action - the action object {type: string, payload: *}
+ * @returns {{type: string, payload: {type: string: payload: *, meta: {_id_: string}, meta: {_forward_: string, _addr_: string}}}}
+ * @public
+ * @example
+ *
+ * import {wrapTo, togglePerspective} from 'kepler.gl/actions';
+ *
+ * // This action will only dispatch to the KeplerGl instance with `id: map_1`
+ * this.props.dispatch(wrapTo('map_1', togglePerspective()));
+ *
+ * // You can also create a curried action for each instance
+ * const wrapToMap1 = wrapTo('map_1');
+ * this.props.dispatch(wrapToMap1(togglePerspective()));
  */
-
-export const getActionForwardAddress = id =>
-  `${ADDRESS_PREFIX}${id.toUpperCase()}`;
-
 export const wrapTo = curry((id, action) => ({
   // keep original action.type
   type: action.type,
@@ -68,27 +89,94 @@ export const wrapTo = curry((id, action) => ({
   }
 }));
 
+/**
+ * Whether an action is a forward action
+ * @memberof forwardActions
+ * @param {Object} action - the action object
+ * @returns {boolean} boolean - whether the action is a forward action
+ * @public
+ */
 export const isForwardAction = action => {
-  return action && action.meta && action.meta._forward_ === FORWARD;
+  return Boolean(action && action.meta && action.meta._forward_ === FORWARD);
 };
 
-export const unwrap = action =>
-  isForwardAction(action) ? unwrap(action.payload) : action;
+/**
+ * Unwrap an action
+ * @memberof forwardActions
+ * @param {Object} action - the action object
+ * @returns {Object} - unwrapped action
+ * @public
+ */
+export const unwrap = action => (isForwardAction(action) ? unwrap(action.payload) : action);
 
-// given a id to forward to, returns the action for that id
-export const actionFor = (id, action) =>
+/**
+ * Given an id, returns the action for that id.
+ * If the action is not a forward action, return the action
+ * @memberof forwardActions
+ * @param {String} id
+ * @param {Object} action
+ * @private
+ */
+export const _actionFor = (id, action) =>
   isForwardAction(action)
-    ? action.meta._addr_ === getActionForwardAddress(id) ? action.payload : {}
+    ? action.meta._addr_ === getActionForwardAddress(id)
+      ? action.payload
+      : {}
     : action;
 
-// returns a new dispatch that wraps and forwards the actions with the given id
-export const forwardTo = (id, dispatch) => action =>
-  dispatch(wrapTo(id, action));
+/**
+ * Returns an action dispatcher that wraps and forwards the actions to a specific instance
+ * @memberof forwardActions
+ * @param {string} id - instance id
+ * @param {Function} dispatch - action dispatcher
+ * @public
+ * @example
+ *
+ * // action and forward dispatcher
+ * import {toggleSplitMap, forwardTo} from 'kepler.gl/actions';
+ * import {connect} from 'react-redux';
+ *
+ * const MapContainer = props => (
+ *  <div>
+ *   <button onClick={() => props.keplerGlDispatch(toggleSplitMap())}/>
+ *  </div>
+ * )
+ *
+ * const mapDispatchToProps = (dispatch, props) => ({
+ *  dispatch,
+ *  keplerGlDispatch: forwardTo(‘foo’, dispatch)
+ * });
+ *
+ * export default connect(
+ *  state => state,
+ *  mapDispatchToProps
+ * )(MapContainer);
+ */
+export const forwardTo = (id, dispatch) => action => dispatch(wrapTo(id, action));
 
-export const updateProperty = (state, id, value) =>
-  state[id] === value
+/**
+ * Update the state of a kepler.gl instance
+ * @memberof forwardActions
+ * @param {Object} state
+ * @param {string} id
+ * @param {Object} nextState
+ * @private
+ */
+export const _updateProperty = (state, id, nextState) =>
+  state[id] === nextState
     ? state
     : {
         ...state,
-        [id]: value
+        [id]: nextState
       };
+
+/**
+ * This declaration is needed to group actions in docs
+ */
+/**
+ * A set of helpers to forward dispatch actions to a specific instance reducer
+ * @public
+ */
+/* eslint-disable no-unused-vars */
+const forwardActions = null;
+/* eslint-enable no-unused-vars */

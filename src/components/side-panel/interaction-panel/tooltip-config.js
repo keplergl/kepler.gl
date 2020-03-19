@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,12 +19,13 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {DatasetTag} from '../source-data-catalog';
-
 import {SidePanelSection} from 'components/common/styled-components';
 import FieldSelector from 'components/common/field-selector';
+import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
 
-function TooltipConfigFactory() {
+TooltipConfigFactory.deps = [DatasetTagFactory];
+
+function TooltipConfigFactory(DatasetTag) {
   const TooltipConfig = ({config, datasets, onChange}) => (
     <div>
       {Object.keys(config.fieldsToShow).map(dataId => (
@@ -45,6 +46,7 @@ function TooltipConfigFactory() {
             }}
             closeOnSelect={false}
             multiSelect
+            inputTheme="secondary"
           />
         </SidePanelSection>
       ))}

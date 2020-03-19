@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,37 +25,40 @@ import styled from 'styled-components';
 import Modal from 'react-modal';
 import {Delete} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
+import {media} from 'styles/media-breakpoints';
 
 const ModalContentWrapper = styled.div`
-  width: 60%;
-  max-width: 960px;
-  padding: 24px 24px 40px;
-  position: absolute;
+  overflow-y: auto;
+  max-width: 70vw;
+  max-height: 85vh;
+  padding: 24px 72px 40px;
+  position: relative;
   top: 92px;
   left: 0;
   right: 0;
-  margin-left: auto;
+  margin: 0 auto;
   background-color: #ffffff;
   border-radius: 4px;
   transition: ${props => props.theme.transition};
-  min-width: 600px;
-  overflow: hidden;
   box-sizing: border-box;
-  margin-right: auto;
   font-size: 12px;
   color: ${props => props.theme.labelColorLT};
+
+  ${media.portable`
+    padding: 12px 36px 24px;
+    max-width: 80vw;
+  `}
+
+  ${media.palm`
+    max-width: 100vw;
+  `}
+
   ${props => props.cssStyle || ''};
 `;
 
-const CloseButton = styled.div`
-  color: ${props => props.theme.titleColorLT};
-  display: flex;
-  justify-content: flex-end;
-  z-index: 10005;
-
-  :hover {
-    cursor: pointer;
-  }
+const ModalContent = styled.div`
+  position: relative;
+  z-index: ${props => props.theme.modalContentZ};
 `;
 
 export const ModalTitle = styled.div`
@@ -63,7 +66,7 @@ export const ModalTitle = styled.div`
   color: ${props => props.theme.modalTitleColor};
   margin-bottom: 10px;
   position: relative;
-  z-index: 10003;
+  z-index: ${props => props.theme.modalTitleZ};
 `;
 
 const StyledModalFooter = styled.div`
@@ -73,13 +76,29 @@ const StyledModalFooter = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding-top: 36px;
-  z-index: 10001;
+  padding-top: 24px;
+  ${media.portable`
+    padding-top: 24px;
+  `};
+
+  ${media.palm`
+    padding-top: 16px;
+  `};
+  z-index: ${props => props.theme.modalFooterZ};
 `;
 
-const ModalContent = styled.div`
-  position: relative;
-  z-index: 10002;
+const CloseButton = styled.div`
+  color: ${props => props.theme.titleColorLT};
+  display: flex;
+  justify-content: flex-end;
+  z-index: ${props => props.theme.modalButtonZ};
+  position: absolute;
+  top: 24px;
+  right: 24px;
+
+  :hover {
+    cursor: pointer;
+  }
 `;
 
 const FooterActionWrapper = styled.div`
@@ -99,12 +118,7 @@ const defaultConfirmButton = {
   children: 'Confirm'
 };
 
-export const ModalFooter = ({
-  cancel,
-  confirm,
-  cancelButton,
-  confirmButton
-}) => {
+export const ModalFooter = ({cancel, confirm, cancelButton, confirmButton}) => {
   const cancelButtonProps = {...defaultCancelButton, ...cancelButton};
   const confirmButtonProps = {...defaultConfirmButton, ...confirmButton};
   return (
@@ -124,7 +138,7 @@ export const ModalFooter = ({
 class ModalDialog extends Component {
   static propTypes = {
     footer: PropTypes.bool,
-    close: PropTypes.func.isRequired,
+    close: PropTypes.bool,
     onConfirm: PropTypes.func,
     onCancel: PropTypes.func,
     confirmButton: PropTypes.object,
@@ -136,7 +150,7 @@ class ModalDialog extends Component {
 
   static defaultProps = {
     footer: false,
-    close: () => {},
+    close: true,
     onConfirm: () => {},
     onCancel: () => {},
     cancelButton: defaultCancelButton,
@@ -148,44 +162,40 @@ class ModalDialog extends Component {
     const {props} = this;
     return (
       <Modal
+        className={this.props.className}
         {...props}
         ariaHideApp={false}
         style={{
           overlay: {
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 10000,
-            overflowY: 'auto',
-            position: 'absolute',
+            backgroundColor: (props.theme && props.theme.modalOverlayBgd) || 'rgba(0, 0, 0, 0.5)',
+            zIndex: (props.theme && props.theme.modalOverLayZ) || 1000,
             // in case we want to override the modal dialog style
             ...props.style
           }
         }}
       >
         <ModalContentWrapper
-          className="modal--content"
+          className="modal--wrapper"
           cssStyle={props.cssStyle}
           footer={props.footer}
         >
           {props.close && (
-            <CloseButton className="modal--close" onClick={props.close}>
+            <CloseButton className="modal--close" onClick={props.onCancel}>
               <Delete height="14px" />
             </CloseButton>
           )}
-          <div style={{padding: '0px 72px'}}>
-            {props.title && (
-              <ModalTitle className="modal--title">{props.title}</ModalTitle>
-            )}
-            <ModalContent className="content">{props.children}</ModalContent>
+          <div>
+            {props.title && <ModalTitle className="modal--title">{props.title}</ModalTitle>}
+            <ModalContent className="modal--body">{props.children}</ModalContent>
             {props.footer && (
               <ModalFooter
-                cancel={props.close}
+                cancel={props.onCancel}
                 confirm={props.onConfirm}
                 cancelButton={props.cancelButton}
                 confirmButton={props.confirmButton}
               />
             )}
           </div>
-
         </ModalContentWrapper>
       </Modal>
     );
@@ -193,15 +203,24 @@ class ModalDialog extends Component {
 }
 
 const StyledModal = styled(ModalDialog)`
-  width: 100%;
-  height: 100%;
   top: 0;
   left: 0;
-  z-index: 10000;
   transition: ${props => props.theme.transition};
+  padding-left: 40px;
+  padding-right: 40px;
+
+  ${media.portable`
+    padding-left: 24px;
+    padding-right: 24px;
+  `};
+
+  ${media.palm`
+    padding-left: 0;
+    padding-right: 0;
+  `};
 
   :focus {
-    outline: 0
+    outline: 0;
   }
 `;
 

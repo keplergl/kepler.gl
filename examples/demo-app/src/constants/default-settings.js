@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ export const MAP_URI = 'demo/map?mapUrl=';
 /*
  * If you want to add more samples, feel free to edit the json file on github kepler.gl data repo
  */
-export const MAP_CONFIG_URL = `${DATA_URL}samples.json?nocache=${(new Date()).getTime()}`;
+export const MAP_CONFIG_URL = `${DATA_URL}samples.json?nocache=${new Date().getTime()}`;
 
 /**
  * I know this is already defined in Kepler core but it should be defined here
@@ -47,59 +47,24 @@ export const QUERY_OPTIONS = keyMirror({
   geojson: null
 });
 
-export const LOADING_METHODS_NAMES = keyMirror({
-  upload: null,
+export const LOADING_METHODS = keyMirror({
   remote: null,
   sample: null
 });
 
-export const LOADING_METHODS = [
-  {
-    id: LOADING_METHODS_NAMES.upload,
-    label: 'Load Your Data',
-    options: [
-      {
-        id: QUERY_OPTIONS.csv,
-        queryType: QUERY_TYPES.file,
-        label: 'Csv',
-        icon: 'note',
-        description:
-        'Upload a csv file where each row contains one feature and its meta data. ' +
-        'Columns with name xxx_lat and xxx_lng will be automatically detected as points.'
-      },
-      {
-        id: QUERY_OPTIONS.geojson,
-        queryType: QUERY_TYPES.file,
-        label: 'Geojson',
-        icon: 'note',
-        description:
-          'Upload a gpx, kml, or zipped Shapefile and we will convert each layer to GeoJSON.'
-      }
-    ]
-  },
-  {
-    id: LOADING_METHODS_NAMES.remote,
-    label: 'Load Map using URL'
-  },
-  {
-    id: LOADING_METHODS_NAMES.sample,
-    label: 'Sample Data',
-    options: [
-      // Dynamically populated
-    ]
-  }
-];
-
 export const LOADING_SAMPLE_LIST_ERROR_MESSAGE = 'Not able to load sample gallery';
 export const LOADING_SAMPLE_ERROR_MESSAGE = 'Not able to load sample';
-export const LOADING_URL_MESSAGE = 'You can use the following formats: CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension.';
+export const LOADING_URL_MESSAGE =
+  'You can use the following formats: CSV | JSON | Kepler.gl config json. Make sure the url contains the file extension.';
 export const CORS_LINK = 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS';
-export const KEPLER_DISCLAIMER = '* Kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data.';
-
-export const DEFAULT_LOADING_METHOD = LOADING_METHODS[0];
-
-export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
 
 export const DEFAULT_FEATURE_FLAGS = {
-  cloudStorage: false
+  cloudStorage: true
+};
+
+export const AUTH_TOKENS = {
+  MAPBOX_TOKEN: process.env.MapboxAccessToken, // eslint-disable-line
+  DROPBOX_CLIENT_ID: process.env.DropboxClientId, // eslint-disable-line
+  EXPORT_MAPBOX_TOKEN: process.env.MapboxExportToken, // eslint-disable-line
+  CARTO_CLIENT_ID: process.env.CartoClientId // eslint-disable-line
 };

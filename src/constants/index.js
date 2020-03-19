@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,19 +20,47 @@
 
 // Constants
 export {
-  DIMENSIONS,
+  ADD_DATA_ID,
+  ADD_MAP_STYLE_ID,
+  AGGREGATION_TYPES,
   ALL_FIELD_TYPES,
+  DATA_TABLE_ID,
+  DEFAULT_COLOR_RANGE,
+  DEFAULT_LAYER_GROUPS,
+  DEFAULT_MAP_STYLES,
+  DEFAULT_NOTIFICATION_TOPICS,
+  DEFAULT_NOTIFICATION_TYPES,
+  DELETE_DATA_ID,
+  DIMENSIONS,
+  EDITOR_MODES,
+  EXPORT_DATA_ID,
+  EXPORT_DATA_TYPE_OPTIONS,
+  EXPORT_IMAGE_ID,
+  EXPORT_IMG_RATIO_OPTIONS,
+  EXPORT_IMG_RATIOS,
+  EXPORT_IMG_RESOLUTION_OPTIONS,
+  EXPORT_MAP_FORMAT_OPTIONS,
+  EXPORT_MAP_FORMATS,
+  EXPORT_MAP_ID,
   FIELD_OPTS,
   FILTER_TYPES,
   GEOJSON_FIELDS,
   ICON_FIELDS,
-  TRIP_POINT_FIELDS,
-  TRIP_ARC_FIELDS,
-  SCALE_TYPES,
-  LAYER_TYPES,
+  KEPLER_GL_NAME,
+  KEPLER_GL_VERSION,
+  KEPLER_GL_WEBSITE,
   LAYER_BLENDINGS,
-  AGGREGATION_TYPES,
-  MAX_DEFAULT_TOOLTIPS
+  LAYER_TYPES,
+  MAX_DEFAULT_TOOLTIPS,
+  PANELS,
+  SIDEBAR_PANELS,
+  SCALE_TYPES,
+  THEME,
+  TRIP_ARC_FIELDS,
+  TRIP_POINT_FIELDS
 } from './default-settings';
+
+export {GITHUB_BUG_REPORT, GITHUB_USER_GUIDE} from './user-guides';
+
 export {VizColorPalette, DataVizColors} from './custom-color-ranges';
 export {COLOR_RANGES, DefaultColorRange} from './color-ranges';

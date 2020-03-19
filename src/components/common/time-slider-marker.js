@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import {scaleUtc} from 'd3-scale';
 import {select} from 'd3-selection';
@@ -73,23 +73,22 @@ export default class TimeSliderMarker extends Component {
     this._updateAxis(this.scaleSelector(this.props));
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (this.scaleSelector(this.props) !== this.scaleSelector(nextProps)) {
-      this._updateAxis(this.scaleSelector(nextProps));
+  componentDidUpdate(prevProps) {
+    if (this.scaleSelector(this.props) !== this.scaleSelector(prevProps)) {
+      this._updateAxis(this.scaleSelector(this.props));
     }
   }
 
+  xAxis = createRef();
+
   domainSelector = props => props.domain;
   widthSelector = props => props.width;
-  scaleSelector = createSelector(
-    this.domainSelector,
-    this.widthSelector,
-    (domain, width) =>
-      Array.isArray(domain)
-        ? scaleUtc()
-            .domain(domain)
-            .range([0, width])
-        : null
+  scaleSelector = createSelector(this.domainSelector, this.widthSelector, (domain, width) =>
+    Array.isArray(domain)
+      ? scaleUtc()
+          .domain(domain)
+          .range([0, width])
+      : null
   );
 
   _updateAxis(scale) {
@@ -101,26 +100,14 @@ export default class TimeSliderMarker extends Component {
       .tickSize(8)
       .tickPadding(6);
 
-    const svg = select(this.svgContainer);
-
-    svg
-      .select('.x.axis')
-      .call(xAxis)
-      .selectAll('text');
+    select(this.xAxis.current).call(xAxis);
   }
 
   render() {
     return (
-      <TimeSliderContainer
-        className="time-slider-marker"
-        width={this.props.width}
-        height={height}
-        innerRef={comp => {
-          this.svgContainer = comp;
-        }}
-      >
-        <g className="x axis" transform="translate(0, 0)" />
+      <TimeSliderContainer className="time-slider-marker" width={this.props.width} height={height}>
+        <g className="x axis" ref={this.xAxis} transform="translate(0, 0)" />
       </TimeSliderContainer>
     );
   }
-};
+}

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,7 +19,8 @@
 // THE SOFTWARE.
 
 import GeojsonLayer from 'layers/geojson-layer/geojson-layer';
-import {Messages, Crosshairs} from 'components/common/icons';
+import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
+import {getDefaultInteraction} from 'utils/interaction-utils';
 
 export const savedStateV1 = {
   datasets: [
@@ -673,7 +674,6 @@ export const savedStateV1 = {
                 radiusRange: [0, 50],
                 heightRange: [0, 500],
                 elevationScale: 18,
-                'hi-precision': true,
                 stroked: true,
                 filled: true,
                 enable3d: true,
@@ -715,14 +715,7 @@ export const savedStateV1 = {
                   name: 'Global Warming',
                   type: 'sequential',
                   category: 'Uber',
-                  colors: [
-                    '#5A1846',
-                    '#900C3F',
-                    '#C70039',
-                    '#E3611C',
-                    '#F1920E',
-                    '#FFC300'
-                  ]
+                  colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
                 },
                 radius: 10,
                 sizeRange: [18.9, 47.6],
@@ -816,37 +809,42 @@ export const v0ExpectedInfo = {
 };
 
 export const v0ExpectedFields = [
-  {name: 'a_zip', type: 'integer', format: ''},
-  {name: 'simplified_shape_v2', type: 'geojson', format: ''},
-  {name: 'simplified_shape', type: 'geojson', format: ''},
-  {name: 'zip_area', type: 'real', format: ''},
-  {name: 'avg_number', type: 'real', format: ''},
-  {name: 'str_type', type: 'string', format: ''},
-  {name: 'int_type', type: 'integer', format: ''},
-  {name: 'real_type', type: 'real', format: ''},
-  {name: 'c_m_r', type: 'integer', format: ''},
-  {name: 'c_m_t', type: 'real', format: ''},
-  {name: 'c_a_v', type: 'real', format: ''},
-  {name: 'c_ch', type: 'real', format: ''},
-  {name: 'c_ta', type: 'real', format: ''},
-  {name: 'c_k_a', type: 'real', format: ''},
-  {name: 'c_ltv', type: 'real', format: ''},
-  {name: 'b_r_p', type: 'real', format: ''}
+  {name: 'a_zip', type: 'integer', format: '', analyzerType: 'INT'},
+  {
+    name: 'simplified_shape_v2',
+    type: 'geojson',
+    format: '',
+    analyzerType: 'PAIR_GEOMETRY_FROM_STRING'
+  },
+  {name: 'simplified_shape', type: 'geojson', format: '', analyzerType: 'GEOMETRY_FROM_STRING'},
+  {name: 'zip_area', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'avg_number', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'str_type', type: 'string', format: '', analyzerType: 'STRING'},
+  {name: 'int_type', type: 'integer', format: '', analyzerType: 'INT'},
+  {name: 'real_type', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_m_r', type: 'integer', format: '', analyzerType: 'INT'},
+  {name: 'c_m_t', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_a_v', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_ch', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_ta', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_k_a', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_ltv', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'b_r_p', type: 'real', format: '', analyzerType: 'FLOAT'}
 ];
 
 export const mergedFilters = [
   {
-    dataId: 'a5ybmwl2d',
+    dataId: ['a5ybmwl2d'],
     freeze: true,
     id: '9ca0l7p2a',
     enlarged: false,
     isAnimating: false,
-    name: 'zip_area',
+    name: ['zip_area'],
     type: 'range',
-    fieldIdx: 3,
-    domain: [0, 48.1],
-    value: [0, 21.8],
-    step: 0.1,
+    fieldIdx: [3],
+    domain: [0.03, 48.09],
+    value: [0.03, 21.8],
+    step: 0.01,
     plotType: 'histogram',
     yAxis: null,
     interval: null,
@@ -855,7 +853,9 @@ export const mergedFilters = [
     speed: 1,
     fieldType: 'real',
     typeOptions: ['range'],
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: true,
+    gpuChannel: [0]
   }
 ];
 
@@ -881,36 +881,63 @@ mergedLayer0.config = {
     type: 'integer',
     id: 'c_m_r',
     format: '',
-    tableFieldIndex: 9
+    tableFieldIndex: 9,
+    analyzerType: 'INT'
   },
   colorScale: 'quantize',
   colorDomain: [45, 9642],
+  strokeColorField: {
+    name: 'c_m_r',
+    type: 'integer',
+    id: 'c_m_r',
+    format: '',
+    tableFieldIndex: 9,
+    analyzerType: 'INT'
+  },
+  strokeColorScale: 'quantize',
+  strokeColorDomain: [45, 9642],
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
-  textLabel: {
-    field: null,
-    color: [255, 255, 255],
-    size: 50,
-    offset: [0, 0],
-    anchor: 'middle'
-  },
+  textLabel: [DEFAULT_TEXT_LABEL],
   heightField: {
     name: 'c_a_v',
     type: 'real',
     id: 'c_a_v',
     format: '',
-    tableFieldIndex: 11
+    tableFieldIndex: 11,
+    analyzerType: 'FLOAT'
   },
   heightScale: 'linear',
   heightDomain: [211.9244058, 858.5168842],
   radiusField: null,
   radiusScale: 'linear',
   radiusDomain: [0, 1],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
+  },
   visConfig: {
     opacity: 0.8,
     thickness: 2,
     colorRange: {
+      name: 'ColorBrewer YlGnBu-9',
+      type: 'sequential',
+      category: 'ColorBrewer',
+      colors: [
+        '#081d58',
+        '#253494',
+        '#225ea8',
+        '#1d91c0',
+        '#41b6c4',
+        '#7fcdbb',
+        '#c7e9b4',
+        '#edf8b1',
+        '#ffffd9'
+      ],
+      reversed: true
+    },
+    strokeColorRange: {
       name: 'ColorBrewer YlGnBu-9',
       type: 'sequential',
       category: 'ColorBrewer',
@@ -932,25 +959,18 @@ mergedLayer0.config = {
     radiusRange: [0, 50],
     heightRange: [0, 500],
     elevationScale: 18,
-    'hi-precision': true,
     stroked: true,
     filled: true,
+    strokeColor: [181, 18, 65],
+    strokeOpacity: 0.8,
     enable3d: true,
     wireframe: false
-  }
+  },
+  animation: {enabled: false}
 };
 
 mergedLayer0.meta = {
   bounds: [-75.135531, 40.213125, -73.949229, 41.172585],
-  lightSettings: {
-    lightsPosition: [-75.135531, 40.213125, 8000, -73.949229, 41.172585, 8000],
-    ambientRatio: 0.4,
-    diffuseRatio: 0.6,
-    specularRatio: 0.3,
-    lightsStrength: [0.9, 0, 0.8, 0],
-    numberOfLights: 2
-  },
-  fp64: false,
   fixedRadius: false,
   featureTypes: {polygon: true}
 };
@@ -2678,32 +2698,40 @@ mergedLayer1.config = {
   colorField: null,
   colorScale: 'quantile',
   colorDomain: [0, 1],
+  strokeColorField: null,
+  strokeColorScale: 'quantile',
+  strokeColorDomain: [0, 1],
   sizeField: {
     name: 'c_ta',
     id: 'c_ta',
     type: 'real',
     format: '',
-    tableFieldIndex: 13
+    tableFieldIndex: 13,
+    analyzerType: 'FLOAT'
   },
   sizeScale: 'linear',
   sizeDomain: [0.970877074, 1],
-  textLabel: {
-    field: null,
-    color: [255, 255, 255],
-    size: 50,
-    offset: [0, 0],
-    anchor: 'middle'
-  },
+  textLabel: [DEFAULT_TEXT_LABEL],
   heightField: null,
   heightScale: 'linear',
   heightDomain: [0, 1],
   radiusField: null,
   radiusScale: 'linear',
   radiusDomain: [0, 1],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
+  },
   visConfig: {
     opacity: 0.8,
     thickness: 7.6,
     colorRange: {
+      name: 'Global Warming',
+      type: 'sequential',
+      category: 'Uber',
+      colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+    },
+    strokeColorRange: {
       name: 'Global Warming',
       type: 'sequential',
       category: 'Uber',
@@ -2714,25 +2742,18 @@ mergedLayer1.config = {
     radiusRange: [0, 50],
     heightRange: [0, 500],
     elevationScale: 5,
-    'hi-precision': false,
     stroked: true,
     filled: false,
     enable3d: false,
-    wireframe: false
-  }
+    wireframe: false,
+    strokeColor: [221, 178, 124],
+    strokeOpacity: 0.8
+  },
+  animation: {enabled: false}
 };
 
 mergedLayer1.meta = {
   bounds: [-75.135531, 40.213125, -73.949229, 41.172585],
-  lightSettings: {
-    lightsPosition: [-75.135531, 40.213125, 8000, -73.949229, 41.172585, 8000],
-    ambientRatio: 0.4,
-    diffuseRatio: 0.6,
-    specularRatio: 0.3,
-    lightsStrength: [0.9, 0, 0.8, 0],
-    numberOfLights: 2
-  },
-  fp64: false,
   fixedRadius: false,
   featureTypes: {
     polygon: true
@@ -2743,10 +2764,11 @@ mergedLayer1.dataToFeature = mergedLayer0.dataToFeature;
 
 export const mergedLayers = [mergedLayer0, mergedLayer1];
 
+const defaultInteraction = getDefaultInteraction();
 export const mergedInteraction = {
+  ...defaultInteraction,
   tooltip: {
-    id: 'tooltip',
-    iconComponent: Messages,
+    ...defaultInteraction.tooltip,
     enabled: false,
     config: {
       fieldsToShow: {
@@ -2755,9 +2777,8 @@ export const mergedInteraction = {
     }
   },
   brush: {
-    id: 'brush',
+    ...defaultInteraction.brush,
     enabled: false,
-    iconComponent: Crosshairs,
     config: {
       size: 1
     }

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -43,12 +43,16 @@ const FormLink = 'https://www.informationisbeautifulawards.com/showcase/3082-kep
 
 const Announcement = ({onDisable}) => (
   <StyledText>
-    <span>Kepler.gl is shortlisted in the Information is Beautiful Award.  </span>
-    <StyledLink target="_blank" href={FormLink}>Vote for us</StyledLink>
-    <span>  before Fri 19th Oct!</span>
-    {onDisable ? <DisableBanner>
-      <StyledLink onClick={onDisable}>Already Voted!</StyledLink>
-    </DisableBanner> : null}
+    <span>Kepler.gl is shortlisted in the Information is Beautiful Award. </span>
+    <StyledLink target="_blank" href={FormLink}>
+      Vote for us
+    </StyledLink>
+    <span> before Fri 19th Oct!</span>
+    {onDisable ? (
+      <DisableBanner>
+        <StyledLink onClick={onDisable}>Already Voted!</StyledLink>
+      </DisableBanner>
+    ) : null}
   </StyledText>
 );
 

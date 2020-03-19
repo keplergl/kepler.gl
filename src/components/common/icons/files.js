@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ export default class Files extends React.Component {
   };
   static defaultProps = {
     height: '16px',
-    predefinedClassName: 'data-ex-icons-minus'
+    predefinedClassName: 'data-ex-icons-files'
   };
 
   render() {

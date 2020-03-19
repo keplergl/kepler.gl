@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -52,45 +52,52 @@ const SideBarInner = styled.div`
   height: 100%;
 `;
 
-export const CollapseButtonFactory = () => (
-  styled.div`
-    align-items: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    justify-content: center;
-    background-color: ${props => props.theme.sideBarCloseBtnBgd};
-    border-radius: 1px;
-    color: ${props => props.theme.sideBarCloseBtnColor};
-    display: flex;
-    height: 20px;
-    position: absolute;
-    right: -8px;
-    top: ${props => props.theme.sidePanel.margin.top}px;
-    width: 20px;
+const StyledCollapseButton = styled.div`
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  justify-content: center;
+  background-color: ${props => props.theme.sideBarCloseBtnBgd};
+  border-radius: 1px;
+  color: ${props => props.theme.sideBarCloseBtnColor};
+  display: flex;
+  height: 20px;
+  position: absolute;
+  right: -8px;
+  top: ${props => props.theme.sidePanel.margin.top}px;
+  width: 20px;
 
-    :hover {
-      cursor: pointer;
-      box-shadow: none;
-      background-color: ${props => props.theme.sideBarCloseBtnBgdHover};
-    }
-  `
-);
+  :hover {
+    cursor: pointer;
+    box-shadow: none;
+    background-color: ${props => props.theme.sideBarCloseBtnBgdHover};
+  }
+`;
+
+export const CollapseButtonFactory = () => {
+  const CollapseButton = ({onClick, isOpen}) => (
+    <StyledCollapseButton className="side-bar__close" onClick={onClick}>
+      <ArrowRight height="12px" style={{transform: `rotate(${isOpen ? 180 : 0}deg)`}} />
+    </StyledCollapseButton>
+  );
+  return CollapseButton;
+};
 
 SidebarFactory.deps = [CollapseButtonFactory];
 
 function SidebarFactory(CollapseButton) {
   return class SideBar extends Component {
-    static defaultProps = {
-      width: 300,
-      minifiedWidth: 0,
-      isOpen: true,
-      onOpenOrClose: function noop() {}
-    };
-
     static propTypes = {
       width: PropTypes.number,
       isOpen: PropTypes.bool,
       minifiedWidth: PropTypes.number,
       onOpenOrClose: PropTypes.func
+    };
+
+    static defaultProps = {
+      width: 300,
+      minifiedWidth: 0,
+      isOpen: true,
+      onOpenOrClose: function noop() {}
     };
 
     _onOpenOrClose = () => {
@@ -102,26 +109,16 @@ function SidebarFactory(CollapseButton) {
       const horizontalOffset = isOpen ? 0 : minifiedWidth - width;
 
       return (
-        <StyledSidePanelContainer
-          width={isOpen ? width : 0}
-          className="side-panel--container"
-        >
-          <SideBarContainer className="side-bar" style={{width: `${width}px`}}
-                            left={horizontalOffset}>
+        <StyledSidePanelContainer width={isOpen ? width : 0} className="side-panel--container">
+          <SideBarContainer
+            className="side-bar"
+            style={{width: `${width}px`}}
+            left={horizontalOffset}
+          >
             {isOpen ? (
-              <SideBarInner className="side-bar__inner">
-                {this.props.children}
-              </SideBarInner>
+              <SideBarInner className="side-bar__inner">{this.props.children}</SideBarInner>
             ) : null}
-            <CollapseButton
-              className="side-bar__close"
-              onClick={this._onOpenOrClose}
-            >
-              <ArrowRight
-                height="12px"
-                style={{transform: `rotate(${isOpen ? 180 : 0}deg)`}}
-              />
-            </CollapseButton>
+            <CollapseButton isOpen={isOpen} onClick={this._onOpenOrClose} />
           </SideBarContainer>
         </StyledSidePanelContainer>
       );

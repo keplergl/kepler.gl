@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,9 +30,10 @@ import {console as Console} from 'global/window';
  *
  */
 export function editShader(vs, type, originalText, testToReplace) {
-
   if (!vs.includes(originalText)) {
-    Console.warn(`Cannot edit ${type} layer shader`);
+    // Here we call Console.error when we fail to edit deck.gl shader
+    // This should be caught by layer test
+    Console.error(`Cannot edit ${type} layer shader`);
     return vs;
   }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
+import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 
@@ -28,14 +29,18 @@ import {classList} from './item-selector/dropdown-list';
 
 const defaultDisplayOption = d => d.name;
 
+const StyledToken = styled.div`
+  display: inline-block;
+  margin: 0 4px 0 0;
+`;
 // custom list Item
-const FieldListItemFactory = showToken => {
+export const FieldListItemFactory = (showToken = true) => {
   const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
     <div>
       {showToken ? (
-        <div style={{display: 'inline-block', margin: '0 4px 0 0'}}>
+        <StyledToken>
           <FieldToken type={value.type} />
-        </div>
+        </StyledToken>
       ) : null}
       <span className={classList.listItemAnchor}>{displayOption(value)}</span>
     </div>
@@ -60,10 +65,7 @@ const FieldType = PropTypes.oneOfType([
 
 export default class FieldSelector extends Component {
   static propTypes = {
-    fields: PropTypes.oneOfType([
-      PropTypes.array,
-      PropTypes.arrayOf(FieldType)
-    ]),
+    fields: PropTypes.oneOfType([PropTypes.array, PropTypes.arrayOf(FieldType)]),
     onSelect: PropTypes.func.isRequired,
     placement: PropTypes.string,
     value: FieldType,
@@ -96,15 +98,8 @@ export default class FieldSelector extends Component {
   filterFieldTypesSelector = props => props.filterFieldTypes;
   showTokenSelector = props => props.showToken;
 
-  selectedItemsSelector = createSelector(
-    this.fieldsSelector,
-    this.valueSelector,
-    (fields, value) =>
-      fields.filter(f =>
-        (Array.isArray(value) ? value : [value]).includes(
-          defaultDisplayOption(f)
-        )
-      )
+  selectedItemsSelector = createSelector(this.fieldsSelector, this.valueSelector, (fields, value) =>
+    fields.filter(f => (Array.isArray(value) ? value : [value]).includes(defaultDisplayOption(f)))
   );
 
   fieldOptionsSelector = createSelector(
@@ -114,21 +109,16 @@ export default class FieldSelector extends Component {
       if (!filterFieldTypes) {
         return fields;
       }
-      const filters = Array.isArray(filterFieldTypes)
-        ? filterFieldTypes
-        : [filterFieldTypes];
+      const filters = Array.isArray(filterFieldTypes) ? filterFieldTypes : [filterFieldTypes];
       return fields.filter(f => filters.includes(f.type));
     }
   );
 
-  fieldListItemSelector = createSelector(
-    this.showTokenSelector,
-    FieldListItemFactory
-  );
+  fieldListItemSelector = createSelector(this.showTokenSelector, FieldListItemFactory);
 
   render() {
     return (
-      <div>
+      <div className="field-selector">
         <ItemSelector
           getOptionValue={d => d}
           closeOnSelect={this.props.closeOnSelect}
@@ -144,14 +134,10 @@ export default class FieldSelector extends Component {
           placeholder={this.props.placeholder}
           placement={this.props.placement}
           onChange={this.props.onSelect}
-          DropDownLineItemRenderComponent={this.fieldListItemSelector(
-            this.props
-          )}
-          DropdownHeaderComponent={
-            this.props.suggested ? SuggestedFieldHeader : null
-          }
+          DropDownLineItemRenderComponent={this.fieldListItemSelector(this.props)}
+          DropdownHeaderComponent={this.props.suggested ? SuggestedFieldHeader : null}
         />
       </div>
     );
   }
-};
+}

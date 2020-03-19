@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,42 @@ export const PROPERTY_GROUPS = keyMirror({
   precision: null
 });
 
+export const DEFAULT_LAYER_OPACITY = 0.8;
+
+export const DEFAULT_TEXT_LABEL = {
+  field: null,
+  color: [255, 255, 255],
+  size: 18,
+  offset: [0, 0],
+  anchor: 'start',
+  alignment: 'center'
+};
+
+export const DEFAULT_COLOR_RANGE = DefaultColorRange;
+
+export const DEFAULT_CUSTOM_PALETTE = {
+  name: 'Custom Palette',
+  type: 'custom',
+  category: 'Custom',
+  colors: []
+};
+
+export const DEFAULT_COLOR_UI = {
+  // customPalette in edit
+  customPalette: DEFAULT_CUSTOM_PALETTE,
+  // show color sketcher modal
+  showSketcher: false,
+  // show color range selection panel
+  showDropdown: false,
+  // color range selector config
+  colorRangeConfig: {
+    type: 'all',
+    steps: 6,
+    reversed: false,
+    custom: false
+  }
+};
+
 export const LAYER_VIS_CONFIGS = {
   thickness: {
     type: 'number',
@@ -54,6 +90,16 @@ export const LAYER_VIS_CONFIGS = {
     step: 0.1,
     group: PROPERTY_GROUPS.stroke,
     property: 'sizeRange'
+  },
+  trailLength: {
+    type: 'number',
+    defaultValue: 180,
+    label: 'Stroke Width',
+    isRanged: false,
+    range: [1, 1000],
+    step: 1,
+    group: PROPERTY_GROUPS.stroke,
+    property: 'trailLength'
   },
   // radius is actually radiusScale in deck.gl
   radius: {
@@ -86,7 +132,7 @@ export const LAYER_VIS_CONFIGS = {
   },
   clusterRadius: {
     type: 'number',
-    label: 'Cluster Size (m)',
+    label: 'Cluster Radius in Pixels',
     defaultValue: 40,
     isRanged: false,
     range: [1, 500],
@@ -96,7 +142,7 @@ export const LAYER_VIS_CONFIGS = {
   },
   clusterRadiusRange: {
     type: 'number',
-    label: 'Radius Range (m)',
+    label: 'Radius Range in pixels',
     defaultValue: [1, 40],
     isRanged: true,
     range: [1, 150],
@@ -106,7 +152,7 @@ export const LAYER_VIS_CONFIGS = {
   },
   opacity: {
     type: 'number',
-    defaultValue: 0.8,
+    defaultValue: DEFAULT_LAYER_OPACITY,
     label: 'Opacity',
     isRanged: false,
     range: [0, 1],
@@ -124,10 +170,11 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.cell,
     property: 'coverage'
   },
+  // used in point layer
   outline: {
     type: 'boolean',
     defaultValue: false,
-    label: 'Draw outline',
+    label: 'Outline',
     group: PROPERTY_GROUPS.display,
     property: 'outline'
   },
@@ -138,12 +185,26 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.color,
     property: 'colorRange'
   },
+  strokeColorRange: {
+    type: 'color-range-select',
+    defaultValue: DefaultColorRange,
+    label: 'Stroke Color range',
+    group: PROPERTY_GROUPS.color,
+    property: 'strokeColorRange'
+  },
   targetColor: {
     type: 'color-select',
     label: 'Target Color',
     defaultValue: null,
     group: PROPERTY_GROUPS.color,
     property: 'targetColor'
+  },
+  strokeColor: {
+    type: 'color-select',
+    label: 'Stroke Color',
+    defaultValue: null,
+    group: PROPERTY_GROUPS.color,
+    property: 'strokeColor'
   },
   aggregation: {
     type: 'select',
@@ -188,9 +249,7 @@ export const LAYER_VIS_CONFIGS = {
     defaultValue: [0, 100],
     label: config =>
       `Filter by ${
-        config.sizeField
-          ? `${config.visConfig.sizeAggregation} ${config.sizeField.name}`
-          : 'count'
+        config.sizeField ? `${config.visConfig.sizeAggregation} ${config.sizeField.name}` : 'count'
       } percentile`,
     isRanged: true,
     range: [0, 100],
@@ -209,6 +268,22 @@ export const LAYER_VIS_CONFIGS = {
     step: 1,
     group: PROPERTY_GROUPS.cell,
     property: 'resolution'
+  },
+  sizeScale: {
+    type: 'number',
+    defaultValue: 10,
+    label: 'Size Scale',
+    isRanged: false,
+    range: [1, 1000],
+    step: 1,
+    property: 'sizeScale'
+  },
+  angle: {
+    type: 'number',
+    defaultValue: 0,
+    isRanged: false,
+    range: [0, 360],
+    step: 1
   },
   worldUnitSize: {
     type: 'number',
@@ -240,6 +315,16 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.height,
     property: 'sizeRange'
   },
+  heightRange: {
+    type: 'number',
+    defaultValue: [0, 500],
+    label: 'Height Scale',
+    isRanged: true,
+    range: [0, 1000],
+    step: 0.01,
+    group: PROPERTY_GROUPS.height,
+    property: 'heightRange'
+  },
   coverageRange: {
     type: 'number',
     defaultValue: [0, 1],
@@ -250,6 +335,7 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.radius,
     property: 'coverageRange'
   },
+  // hi precision is deprecated by deck.gl
   'hi-precision': {
     type: 'boolean',
     defaultValue: false,
@@ -331,6 +417,12 @@ export const LAYER_TEXT_CONFIGS = {
   textAnchor: {
     type: 'select',
     options: ['start', 'middle', 'end'],
+    multiSelect: false,
+    searchable: false
+  },
+  textAlignment: {
+    type: 'select',
+    options: ['top', 'center', 'bottom'],
     multiSelect: false,
     searchable: false
   }

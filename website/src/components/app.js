@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -52,11 +52,7 @@ const GlobalStyleDiv = styled.div`
 
 class App extends Component {
   render() {
-    return (
-      <GlobalStyleDiv className="kg-web-content">
-        {this.props.children}
-      </GlobalStyleDiv>
-    );
+    return <GlobalStyleDiv className="kg-web-content">{this.props.children}</GlobalStyleDiv>;
   }
 }
 

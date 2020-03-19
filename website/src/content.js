@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,16 +30,14 @@ export const SECTIONS = [
   {
     id: 'walkthrough',
     title: 'Data Scientist?',
-    description:
-      'Gain insights from location data and deliver business outcomes.',
+    description: 'Gain insights from location data and deliver business outcomes.',
     icon: cdnUrl('icons/walkthrough.png'),
     isDark: true
   },
   {
     id: 'features',
     title: 'Developer?',
-    description:
-      'A customizable geospatial toolbox to help make data-driven decisions.',
+    description: 'A customizable geospatial toolbox to help make data-driven decisions.',
     icon: cdnUrl('icons/features.png')
   },
   {
@@ -72,12 +70,19 @@ export const HERO_IMAGES_SCALED = [
 export const HEADER_NAVS = [
   {
     text: 'User Guide',
-    link: 'https://github.com/uber/kepler.gl/blob/master/docs/j-get-started.md'
+    link: 'https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/j-get-started.md'
   },
-
+  {
+    text: 'Documentation',
+    link: 'https://github.com/keplergl/kepler.gl/blob/master/docs/api-reference/overview.md'
+  },
   {
     text: 'Github',
-    link: 'https://github.com/uber/kepler.gl'
+    link: 'https://github.com/keplergl/kepler.gl'
+  },
+  {
+    text: 'Support Policy',
+    link: '/policy'
   }
 ];
 
@@ -128,26 +133,22 @@ export const WALKTHROUGH_ITEMS = [
   {
     videoUrl: cdnUrl('videos/0.upload_file.mp4'),
     imageUrl: cdnUrl('videos/0.upload_file.png'),
-    description:
-      'Easily add data to map by drag and drop files'
+    description: 'Easily add data to map by drag and drop files'
   },
   {
     videoUrl: cdnUrl('videos/1.time_filter.mp4'),
     imageUrl: cdnUrl('videos/1.time_filter.png'),
-    description:
-      'Free form filtering with time playback'
+    description: 'Free form filtering with time playback'
   },
   {
     videoUrl: cdnUrl('videos/2.aggregation.mp4'),
     imageUrl: cdnUrl('videos/2.aggregation.png'),
-    description:
-      'Gain deeper insights by performing geo aggregation'
+    description: 'Gain deeper insights by performing geo aggregation'
   },
   {
     videoUrl: cdnUrl('videos/3.brushing.mp4'),
     imageUrl: cdnUrl('videos/3.brushing.png'),
-    description:
-      'Explore origin-destination correlations with brushing'
+    description: 'Explore origin-destination correlations with brushing'
   }
 ];
 
@@ -211,7 +212,8 @@ export const EXAMPLES = [
   },
   {
     title: 'Commute Patterns in the UK',
-    description: 'A origin destination map using 3d arcs to show commute patterns of England and Wales residence',
+    description:
+      'A origin destination map using 3d arcs to show commute patterns of England and Wales residence',
     image: cdnUrl('examples/uk-commute.png'),
     url: '/demo/ukcommute'
   }

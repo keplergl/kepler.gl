@@ -1,0 +1,5 @@
+../modules
+
+# TODO remove when we have finished porting the old website
+src/components
+src/reducers

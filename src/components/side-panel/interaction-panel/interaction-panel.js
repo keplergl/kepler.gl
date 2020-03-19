@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,7 @@ import {
   PanelContent
 } from 'components/common/styled-components';
 
-const StyledPanelContent = PanelContent.extend`
+const StyledPanelContent = styled(PanelContent)`
   border-top: 1px solid ${props => props.theme.panelBorderColor};
 `;
 
@@ -41,10 +41,7 @@ const StyledInteractionPanel = styled.div`
   padding-bottom: 6px;
 `;
 
-InteractionPanelFactory.deps = [
-  TooltipConfigFactory,
-  BrushConfigFactory
-];
+InteractionPanelFactory.deps = [TooltipConfigFactory, BrushConfigFactory];
 
 function InteractionPanelFactory(TooltipConfig, BrushConfig) {
   return class InteractionPanel extends Component {
@@ -75,11 +72,7 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
       switch (config.id) {
         case 'tooltip':
           template = (
-            <TooltipConfig
-              datasets={datasets}
-              config={config.config}
-              onChange={onChange}
-            />
+            <TooltipConfig datasets={datasets} config={config.config} onChange={onChange} />
           );
           break;
 
@@ -93,13 +86,10 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
 
       return (
         <StyledInteractionPanel className="interaction-panel">
-          <StyledPanelHeader
-            className="interaction-panel__header"
-            onClick={this._enableConfig}
-          >
+          <StyledPanelHeader className="interaction-panel__header" onClick={this._enableConfig}>
             <PanelHeaderContent className="interaction-panel__header__content">
               <div className="interaction-panel__header__icon icon">
-                <config.iconComponent height="12px"/>
+                <config.iconComponent height="12px" />
               </div>
               <div className="interaction-panel__header__title">
                 <PanelHeaderTitle>{config.id}</PanelHeaderTitle>
@@ -114,7 +104,7 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
               />
             </div>
           </StyledPanelHeader>
-          {config.enabled && (
+          {config.enabled && template && (
             <StyledPanelContent className="interaction-panel__content">
               {template}
             </StyledPanelContent>
@@ -122,7 +112,7 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
         </StyledInteractionPanel>
       );
     }
-  }
+  };
 }
 
 export default InteractionPanelFactory;

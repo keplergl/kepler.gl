@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,20 +22,18 @@ import Protobuf from 'pbf';
 import {VectorTile, VectorTileFeature} from '@mapbox/vector-tile';
 import {worldToLngLat} from 'viewport-mercator-project';
 
-/* global fetch process */
+/* global fetch */
 const TILE_SIZE = 512;
-const MAPBOX_TOKEN = process.env.MapboxAccessToken;
+const MAPBOX_HOST = 'https://a.tiles.mapbox.com';
+const MAP_SOURCE = '/v4/mapbox.mapbox-streets-v7';
 
-export function getTileData({x, y, z}) {
-  const mapSource = `https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7/${z}/${x}/${y}.vector.pbf?access_token=${MAPBOX_TOKEN}`;
+export function getTileData(host, token, {x, y, z}) {
+  const mapSource = `${host ||
+    MAPBOX_HOST}${MAP_SOURCE}/${z}/${x}/${y}.vector.pbf?access_token=${token}`;
+
   return fetch(mapSource)
-    .then(response => {
-      return response.arrayBuffer();
-    })
-    .then(buffer => {
-      const data = decodeTile(x, y, z, buffer);
-      return data;
-    });
+    .then(response => response.arrayBuffer())
+    .then(buffer => decodeTile(x, y, z, buffer));
 }
 
 export function decodeTile(x, y, z, arrayBuffer) {
@@ -49,7 +47,7 @@ export function decodeTile(x, y, z, arrayBuffer) {
   const projectFunc = project.bind(null, xProj, yProj, scale);
 
   /* eslint-disable guard-for-in */
-  const layerName = "building";
+  const layerName = 'building';
   const vectorTileLayer = tile.layers[layerName];
   if (!vectorTileLayer) {
     return [];
@@ -85,7 +83,7 @@ export function vectorTileFeatureToProp(vectorTileFeature, project) {
   const extent = vectorTileFeature.extent;
   let i;
   let j;
-  
+
   coords = classifyRings(coords);
   for (i = 0; i < coords.length; i++) {
     for (j = 0; j < coords[i].length; j++) {

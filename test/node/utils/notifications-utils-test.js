@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +24,16 @@ import {errorNotification, successNotification} from 'utils/notifications-utils'
 test('#notificationsUtils -> errorNotification', t => {
   const notification = errorNotification({message: 'test', id: 'test-1'});
 
-  t.deepEqual(notification, {
-    id: 'test-1',
-    message: 'test',
-    type: 'error',
-    topic: 'global'
-  }, 'ErrorNotification creates an error notification');
+  t.deepEqual(
+    notification,
+    {
+      id: 'test-1',
+      message: 'test',
+      type: 'error',
+      topic: 'global'
+    },
+    'ErrorNotification creates an error notification'
+  );
 
   t.end();
 });
@@ -37,12 +41,16 @@ test('#notificationsUtils -> errorNotification', t => {
 test('#notificationsUtils -> successNotification', t => {
   const notification = successNotification({message: 'test', id: 'test-1'});
 
-  t.deepEqual(notification, {
-    id: 'test-1',
-    message: 'test',
-    type: 'success',
-    topic: 'global'
-  }, 'SuccessNotification creates an error notification');
+  t.deepEqual(
+    notification,
+    {
+      id: 'test-1',
+      message: 'test',
+      type: 'success',
+      topic: 'global'
+    },
+    'SuccessNotification creates an error notification'
+  );
 
   t.end();
 });

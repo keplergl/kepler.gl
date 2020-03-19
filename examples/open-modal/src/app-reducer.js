@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -36,16 +36,19 @@ const initialState = {
 };
 
 // REDUCER
-const appReducer = handleActions({
-  [INIT]: (state, action) => ({
-    ...state,
-    loaded: true
-  }),
+const appReducer = handleActions(
+  {
+    [INIT]: (state, action) => ({
+      ...state,
+      loaded: true
+    }),
 
-  [SHOW_MODAL]: (state, action) => ({
-    ...state,
-    modal: action.payload
-  })
-}, initialState);
+    [SHOW_MODAL]: (state, action) => ({
+      ...state,
+      modal: action.payload
+    })
+  },
+  initialState
+);
 
 export default appReducer;

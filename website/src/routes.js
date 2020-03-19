@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,11 +26,13 @@ import store from './reducers';
 import Home from './components/home';
 import App from './components/app';
 import Demo from '../../examples/demo-app/src/app';
+import Policy from './components/policy';
+
 import {buildAppRoutes} from '../../examples/demo-app/src/utils/routes';
 
 const appRoute = buildAppRoutes(Demo);
 
-const trackPageChange = (location) => {
+const trackPageChange = location => {
   const links = location.split('/');
 
   if (links.length === 3) {
@@ -38,7 +40,7 @@ const trackPageChange = (location) => {
     window.gtag('event', 'load_sample', {
       event_label: sampleId,
       value: sampleId
-    })
+    });
   }
 };
 
@@ -50,7 +52,7 @@ history.listen(location => {
 });
 
 function isOldUrl(location) {
-  return Boolean(location.pathname === '/' && location.hash && location.hash.startsWith('#/demo'))
+  return Boolean(location.pathname === '/' && location.hash && location.hash.startsWith('#/demo'));
 }
 
 function onEnter(nextState, replace, callback) {
@@ -59,7 +61,7 @@ function onEnter(nextState, replace, callback) {
    * we redirect to '/demo/.../
    **/
   if (isOldUrl(nextState.location)) {
-    replace(location.hash.substring(1))
+    replace(location.hash.substring(1));
   }
   callback();
 }
@@ -69,6 +71,7 @@ export default () => (
   <Router history={history}>
     <Route path="/" component={App} onEnter={onEnter}>
       <IndexRoute component={Home} onEnter={onEnter} />
+      <Route path="/policy" component={Policy} onEnter={onEnter} />
       {appRoute}
     </Route>
   </Router>

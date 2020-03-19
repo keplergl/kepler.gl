@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -49,9 +49,8 @@ const StyledLayerGroupItem = styled.div`
   }
 `;
 
-const LayerLabel = PanelLabelBold.extend`
-  color: ${props =>
-    props.active ? props.theme.textColor : props.theme.labelColor};
+const LayerLabel = styled(PanelLabelBold)`
+  color: ${props => (props.active ? props.theme.textColor : props.theme.labelColor)};
 `;
 
 function LayerGroupSelectorFactory() {

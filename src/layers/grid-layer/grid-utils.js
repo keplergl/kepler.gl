@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {WebMercatorViewport} from 'deck.gl';
+import {WebMercatorViewport} from '@deck.gl/core';
 
 /**
  * top left of the grid to a square polygon for the hover layer
@@ -32,13 +32,7 @@ import {WebMercatorViewport} from 'deck.gl';
  */
 
 // TODO: TEST
-export function pointToPolygonGeo({
-  object,
-  cellSize,
-  coverage,
-  properties,
-  mapState
-}) {
+export function pointToPolygonGeo({object, cellSize, coverage, properties, mapState}) {
   const {position} = object;
   const viewport = new WebMercatorViewport(mapState);
 

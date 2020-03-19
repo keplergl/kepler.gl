@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -78,16 +78,11 @@ class Features extends PureComponent {
       <div>
         <StaggeredScrollAnimation Container={FeaturesContainer}>
           {FEATURES.map(({title, description, image}, i) => (
-            <Feature
-              key={`feature-${i}`}
-              title={title}
-              description={description}
-              image={image}
-            />
+            <Feature key={`feature-${i}`} title={title} description={description} image={image} />
           ))}
         </StaggeredScrollAnimation>
         <CenteredContent>
-          <LinkButton large outline href="https://github.com/uber/kepler.gl">
+          <LinkButton large outline href="https://github.com/keplergl/kepler.gl">
             <img src={cdnUrl('icons/github-black.svg')} /> Open Source
           </LinkButton>
         </CenteredContent>

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,33 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import document from 'global/document';
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
+import MouseEventHandler from './mouse-event';
 
 const StyledSliderHandle = styled.span`
   position: absolute;
   z-index: 10;
-  display: ${props => (props.hidden ? 'none' : 'block')};
-  margin-top: -4px;
+  margin-${props => (props.vertical ? 'left' : 'top')}: -${props =>
+  (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
   height: ${props =>
     Number.isFinite(props.sliderHandleWidth)
-      ? `${props.sliderHandleWidth}px`
-      : props.theme.sliderHandleHeight};
+      ? props.sliderHandleWidth
+      : props.theme.sliderHandleHeight}px;
   width: ${props =>
     Number.isFinite(props.sliderHandleWidth)
-      ? `${props.sliderHandleWidth}px`
-      : props.theme.sliderHandleHeight};
+      ? props.sliderHandleWidth
+      : props.theme.sliderHandleHeight}px;
   box-shadow: ${props => props.theme.sliderHandleShadow};
   background-color: ${props => props.theme.sliderHandleColor};
   border-width: 1px;
   border-style: solid;
   border-color: ${props =>
-    props.active
-      ? props.theme.selectBorderColor
-      : props.theme.sliderHandleColor};
+    props.active ? props.theme.selectBorderColor : props.theme.sliderHandleColor};
 
   :hover {
     background-color: ${props => props.theme.sliderHandleHoverColor};
@@ -52,83 +50,115 @@ const StyledSliderHandle = styled.span`
   }
 `;
 
-/**
- *
- * props:
- *  width : default 23
- *  height : default 23
- *  display
- *  left
- *  onMove
- *  valueListener
- */
+const StyledSliderTooltip = styled.div`
+  position: absolute;
+  border-radius: 3px;
+  display: inline-block;
+  pointer-events: none;
+  transition: opacity 0.3s ease-out;
+  z-index: 999;
+  margin-left: ${props => props.sliderHandleWidth + 12}px;
+  font-size: 9.5px;
+  font-weight: 500;
+  padding: 7px 10px;
+  background-color: ${props => props.theme.tooltipBg};
+  color: ${props => props.theme.tooltipColor};
+  margin-bottom: -6px;
+  width: 50px;
+
+  :before,
+  :after {
+    content: '';
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
+
+  :before {
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    left: -8px;
+    top: 50%;
+  }
+
+  :after {
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    left: -6px;
+    top: 50%;
+    margin-top: -4px;
+    border-right-color: ${props => props.theme.tooltipBg};
+    border-right-style: solid;
+    border-right-width: 6px;
+  }
+`;
+
+const SliderTooltip = ({value, format = val => val, style, sliderHandleWidth}) => {
+  return (
+    <StyledSliderTooltip sliderHandleWidth={sliderHandleWidth} style={style}>
+      {format(value)}
+    </StyledSliderTooltip>
+  );
+};
+
 export default class SliderHandle extends Component {
   static propTypes = {
-    width: PropTypes.number,
-    height: PropTypes.number,
+    sliderHandleWidth: PropTypes.number,
     left: PropTypes.string,
     display: PropTypes.bool,
-    valueListener: PropTypes.func
+    valueListener: PropTypes.func,
+    vertical: PropTypes.bool
   };
 
   static defaultProps = {
+    sliderHandleWidth: 12,
     left: '50%',
     display: true,
-    valueListener: function valueListenerFn() {}
+    vertical: false,
+    valueListener: function valueListenerFn() {},
+    showTooltip: false
   };
+
+  constructor(props) {
+    super(props);
+
+    this.mouseEvent = new MouseEventHandler({
+      vertical: props.vertical,
+      valueListener: props.valueListener,
+      toggleMouseOver: this.toggleMouseOver
+    });
+  }
 
   state = {mouseOver: false};
-  prevX = 0;
 
-  handleMouseDown = () => {
-    document.addEventListener('mouseup', this.mouseup);
-    document.addEventListener('mousemove', this.mousemove);
-    this.setState({mouseOver: true});
-  };
-
-  mouseup = () => {
-    document.removeEventListener('mouseup', this.mouseup);
-    document.removeEventListener('mousemove', this.mousemove);
-    this.setState({mouseOver: false});
-  };
-
-  mousemove = e => {
-    e.preventDefault();
-    this.props.valueListener(e.movementX);
-  };
-
-  handleTouchStart = e => {
-    document.addEventListener('touchend', this.touchend);
-    document.addEventListener('touchmove', this.touchmove);
-    this.prevX = e.touches[0].clientX;
-    this.setState({mouseOver: true});
-  };
-
-  touchmove = e => {
-    const deltaX = e.touches[0].clientX - this.prevX;
-    this.prevX = e.touches[0].clientX;
-    this.props.valueListener(deltaX);
-  };
-
-  touchend = () => {
-    document.removeEventListener('touchend', this.touchend);
-    document.removeEventListener('touchmove', this.touchmove);
-    this.setState({mouseOver: false});
+  toggleMouseOver = () => {
+    this.setState({mouseOver: !this.state.mouseOver});
   };
 
   render() {
+    const style = {[this.props.vertical ? 'bottom' : 'left']: this.props.left};
+
     return (
-      <StyledSliderHandle
-        className={classnames('kg-range-slider__handle', {
-          'kg-range-slider__handle--active': this.state.mouseOver
-        })}
-        sliderHandleWidth={this.props.sliderHandleWidth}
-        active={this.state.mouseOver}
-        hidden={!this.props.display}
-        style={{left: this.props.left}}
-        onMouseDown={this.handleMouseDown}
-        onTouchStart={this.handleTouchStart}
-      />
+      <div style={{display: this.props.display ? 'block' : 'none'}}>
+        {this.props.showTooltip && this.state.mouseOver ? (
+          <SliderTooltip
+            style={style}
+            sliderHandleWidth={this.props.sliderHandleWidth}
+            value={Number.isFinite(this.props.value) ? this.props.value : null}
+          />
+        ) : null}
+        <StyledSliderHandle
+          className={classnames('kg-range-slider__handle', {
+            'kg-range-slider__handle--active': this.state.mouseOver
+          })}
+          sliderHandleWidth={this.props.sliderHandleWidth}
+          active={this.state.mouseOver}
+          vertical={this.props.vertical}
+          style={style}
+          onMouseDown={this.mouseEvent.handleMouseDown}
+          onTouchStart={this.mouseEvent.handleTouchStart}
+        />
+      </div>
     );
   }
-};
+}

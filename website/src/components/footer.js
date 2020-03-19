@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,17 +20,13 @@
 
 import React, {PureComponent} from 'react';
 import styled from 'styled-components';
-import {
-  FacebookIcon,
-  FacebookShareButton,
-  TwitterIcon,
-  TwitterShareButton
-} from 'react-share';
+import {FacebookIcon, FacebookShareButton, TwitterIcon, TwitterShareButton} from 'react-share';
 
 import {cdnUrl} from '../utils';
 import {LinkButton} from './common/styled-components';
 import {media} from '../styles';
 import MapboxLogo from './mapbox-logo';
+import NetlifyLogo from './netlify-logo';
 import {DEMO_LINK} from '../constants';
 
 const Container = styled.div`
@@ -49,16 +45,18 @@ const LogosContainer = styled.div`
 `;
 
 const BrandingContainer = styled.div`
-  display: inline-flex;
-  align-items: center;
   ${media.palm`
     margin-top: ${props => props.theme.margins.small};
   `};
+
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  column-gap: 20px;
+  align-items: center;
 `;
 
 const CreatedBy = styled.div`
   display: inline-flex;
-  margin-left: 20px;
   align-items: center;
   color: ${props => props.theme.footerColor};
   font-size: 11px;
@@ -149,15 +147,12 @@ export default class Footer extends PureComponent {
           <img style={{width: '120px'}} src={cdnUrl('icons/kepler.gl-logo.png')} />
           <BrandingContainer>
             <img src={cdnUrl('icons/uber.svg')} />
-            <MapboxLogo/>
+            <MapboxLogo />
+            <NetlifyLogo />
             <CreatedBy>
               created by
               <StyledLogo className="fg">
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="http://vis.gl"
-                >
+                <a target="_blank" rel="noopener noreferrer" href="http://vis.gl">
                   VIS.GL
                 </a>
               </StyledLogo>
@@ -172,7 +167,7 @@ export default class Footer extends PureComponent {
             <LinkButton
               large
               outlineDark
-              href="https://github.com/uber/kepler.gl"
+              href="https://github.com/keplergl/kepler.gl"
               style={{marginLeft: '5px'}}
             >
               <img src={cdnUrl('icons/github.svg')} /> Github
@@ -181,8 +176,7 @@ export default class Footer extends PureComponent {
           <SocialContainer>
             <FacebookShareButton url="https://uber.github.io/kepler.gl/">
               <FacebookIcon size={32} />
-            </FacebookShareButton>
-            {' '}
+            </FacebookShareButton>{' '}
             <TwitterShareButton url="https://uber.github.io/kepler.gl/" hashtags={['keplergl']}>
               <TwitterIcon size={32} />
             </TwitterShareButton>

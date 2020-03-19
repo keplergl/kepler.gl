@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,9 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import ArcLayer from '../arc-layer/arc-layer';
-import DeckGLLineLayer from 'deckgl-layers/line-layer/line-layer';
+import {BrushingExtension} from '@deck.gl/extensions';
+
 import LineLayerIcon from './line-layer-icon';
+import ArcLayer from '../arc-layer/arc-layer';
+import EnhancedLineLayer from 'deckgl-layers/line-layer/line-layer';
 
 export default class LineLayer extends ArcLayer {
   get type() {
@@ -31,9 +33,9 @@ export default class LineLayer extends ArcLayer {
     return LineLayerIcon;
   }
 
-  static findDefaultLayerProps({fieldPairs}) {
+  static findDefaultLayerProps({fieldPairs = []}) {
     if (fieldPairs.length < 2) {
-      return [];
+      return {props: []};
     }
     const props = {};
 
@@ -44,22 +46,17 @@ export default class LineLayer extends ArcLayer {
       lat1: fieldPairs[1].pair.lat,
       lng1: fieldPairs[1].pair.lng
     };
-    props.label = `${fieldPairs[0].defaultName} -> ${
-      fieldPairs[1].defaultName
-      } line`;
+    props.label = `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} line`;
 
-    return props;
+    return {props: [props]};
   }
 
-  renderLayer({
-    data,
-    idx,
-    layerInteraction,
-    objectHovered,
-    mapState,
-    interactionConfig
-  }) {
-    const {brush} = interactionConfig;
+  renderLayer(opts) {
+    const {data, gpuFilter, objectHovered, interactionConfig} = opts;
+
+    const layerProps = {
+      widthScale: this.config.visConfig.thickness
+    };
 
     const colorUpdateTriggers = {
       color: this.config.color,
@@ -69,42 +66,40 @@ export default class LineLayer extends ArcLayer {
       targetColor: this.config.visConfig.targetColor
     };
 
-    const interaction = {
-      // auto highlighting
-      pickable: true,
-      autoHighlight: !brush.enabled,
-      highlightColor: this.config.highlightColor,
-
-      // brushing
-      brushRadius: brush.config.size * 1000,
-      brushSource: true,
-      brushTarget: true,
-      enableBrushing: brush.enabled
-    };
-
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     return [
       // base layer
-      new DeckGLLineLayer({
-        ...layerInteraction,
+      new EnhancedLineLayer({
+        ...defaultLayerProps,
+        ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
-        ...interaction,
+        ...layerProps,
         getColor: data.getSourceColor,
-        id: this.id,
-        idx,
-        fp64: this.config.visConfig['hi-precision'],
-        opacity: this.config.visConfig.opacity,
-        strokeScale: this.config.visConfig.thickness,
-        // parameters
-        parameters: {depthTest: mapState.dragRotate},
         updateTriggers: {
-          getStrokeWidth: {
+          getFilterValue: gpuFilter.filterValueUpdateTriggers,
+          getWidth: {
             sizeField: this.config.sizeField,
-            sizeRange: this.config.visConfig.sizeRange
+            sizeRange: this.config.visConfig.sizeRange,
+            sizeScale: this.config.sizeScale
           },
           getColor: colorUpdateTriggers,
           getTargetColor: colorUpdateTriggers
-        }
-      })
+        },
+        extensions: [...defaultLayerProps.extensions, new BrushingExtension()]
+      }),
+      // hover layer
+      ...(this.isLayerHovered(objectHovered)
+        ? [
+            new EnhancedLineLayer({
+              ...this.getDefaultHoverLayerProps(),
+              ...layerProps,
+              data: [objectHovered.object],
+              getColor: this.config.highlightColor,
+              getTargetColor: this.config.highlightColor,
+              getWidth: data.getWidth
+            })
+          ]
+        : [])
     ];
   }
 }

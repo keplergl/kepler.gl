@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,6 +19,8 @@
 // THE SOFTWARE.
 
 import AggregationLayer from '../aggregation-layer';
+import {ScatterplotLayer} from '@deck.gl/layers';
+
 import DeckGLClusterLayer from 'deckgl-layers/cluster-layer/cluster-layer';
 import {CHANNEL_SCALES} from 'constants/default-settings';
 import ClusterLayerIcon from './cluster-layer-icon';
@@ -28,7 +30,6 @@ export const clusterVisConfigs = {
   clusterRadius: 'clusterRadius',
   colorRange: 'colorRange',
   radiusRange: 'clusterRadiusRange',
-  'hi-precision': 'hi-precision',
   colorAggregation: 'aggregation'
 };
 
@@ -62,40 +63,61 @@ export default class ClusterLayer extends AggregationLayer {
     };
   }
 
-  renderLayer({
-    data,
-    idx,
-    objectHovered,
-    mapState,
-    interaction,
-    layerCallbacks
-  }) {
+  renderLayer(opts) {
     const {visConfig} = this.config;
+    const {data, gpuFilter, objectHovered, mapState, layerCallbacks} = opts;
+
+    const updateTriggers = {
+      getColorValue: {
+        colorField: this.config.colorField,
+        colorAggregation: this.config.visConfig.colorAggregation
+      },
+      filterData: {
+        filterRange: gpuFilter.filterRange,
+        ...gpuFilter.filterValueUpdateTriggers
+      }
+    };
+    const {_filterData: filterData, ...clusterData} = data;
 
     return [
       new DeckGLClusterLayer({
-        ...data,
-        id: this.id,
-        idx,
+        ...this.getDefaultDeckLayerProps(opts),
+        ...clusterData,
+        filterData,
+
+        // radius
         radiusScale: 1,
         radiusRange: visConfig.radiusRange,
         clusterRadius: visConfig.clusterRadius,
-        colorRange: this.getColorRange(visConfig.colorRange),
-        colorScale: this.config.colorScale,
-        pickable: true,
-        autoHighlight: true,
-        highlightColor: this.config.highlightColor,
-        opacity: visConfig.opacity,
-        fp64: visConfig['hi-precision'],
-        lightSettings: this.meta.lightSettings,
-        zoom: mapState.zoom,
 
-        // parameters
-        parameters: {depthTest: mapState.dragRotate},
+        // color
+        colorRange: this.getColorRange(visConfig.colorRange),
+        colorScaleType: this.config.colorScale,
+        colorAggregation: visConfig.colorAggregation,
+
+        zoom: Math.round(mapState.zoom),
+        width: mapState.width,
+        height: mapState.height,
+
+        // updateTriggers
+        updateTriggers,
 
         // call back from layer after calculate clusters
         onSetColorDomain: layerCallbacks.onSetLayerDomain
-      })
+      }),
+      // hover layer
+      ...(this.isLayerHovered(objectHovered)
+        ? [
+            new ScatterplotLayer({
+              id: `${this.id}-hovered`,
+              data: [objectHovered.object],
+              getFillColor: this.config.highlightColor,
+              getRadius: d => d.radius,
+              radiusScale: 1,
+              pickable: false
+            })
+          ]
+        : [])
     ];
   }
 }

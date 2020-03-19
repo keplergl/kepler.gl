@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,12 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import pick from 'lodash.pick';
+import classnames from 'classnames';
 
 function noop() {}
 
 const StyledSwitchInput = styled.label`
-  ${props =>
-    props.secondary ? props.theme.secondarySwitch : props.theme.inputSwitch};
+  ${props => (props.secondary ? props.theme.secondarySwitch : props.theme.inputSwitch)};
 `;
 
 const StyledCheckboxInput = styled.label`
@@ -40,8 +40,8 @@ const HiddenInput = styled.input`
 `;
 
 const StyledCheckbox = styled.div`
-  line-height: 0;
-  height: ${props => props.theme.switchBtnHeight};
+  display: flex;
+  min-height: ${props => props.theme.switchBtnHeight};
   margin-left: ${props => props.theme.switchLabelMargin}px;
 `;
 
@@ -100,7 +100,7 @@ export default class Checkbox extends Component {
 
     const LabelElement = this.props.type === 'checkbox' ? StyledCheckboxInput : StyledSwitchInput;
     return (
-      <StyledCheckbox className="kg-checkbox">
+      <StyledCheckbox className={classnames('kg-checkbox', this.props.className)}>
         <HiddenInput {...inputProps} />
         <LabelElement className="kg-checkbox__label" {...labelProps}>
           {this.props.label}

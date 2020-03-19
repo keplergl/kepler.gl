@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import Waypoint from 'react-waypoint';
+import {Waypoint} from 'react-waypoint';
 
 const Container = styled.div`
   position: relative;
@@ -41,8 +41,7 @@ const Item = styled.div`
   position: absolute;
   transition: transform 1s;
   cursor: pointer;
-  transform: perspective(600px)
-    translate3d(${props => props.tX}%, 0, ${props => props.tZ}px);
+  transform: perspective(600px) translate3d(${props => props.tX}%, 0, ${props => props.tZ}px);
 `;
 
 export default class Carousel extends PureComponent {

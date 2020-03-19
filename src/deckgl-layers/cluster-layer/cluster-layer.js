@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,257 +18,225 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {CompositeLayer, ScatterplotLayer} from 'deck.gl';
+import {ScatterplotLayer} from '@deck.gl/layers';
+import {_AggregationLayer as AggregationLayer} from '@deck.gl/aggregation-layers';
+
 import geoViewport from '@mapbox/geo-viewport';
-import {ascending, max} from 'd3-array';
-import {
-  getQuantileDomain,
-  getOrdinalDomain,
-  getLinearDomain
-} from 'utils/data-scale-utils';
-import {
-  getColorScaleFunction,
-  getRadiusScaleFunction,
-  needsRecalculateRadiusRange,
-  needsRecalculateColorDomain,
-  needReCalculateScaleFunction
-} from '../layer-utils/utils';
+import CPUAggregator, {
+  defaultColorDimension,
+  getDimensionScale
+} from '../layer-utils/cpu-aggregator';
+import {getDistanceScales} from 'viewport-mercator-project';
+import {max} from 'd3-array';
+
 import {DefaultColorRange} from 'constants/color-ranges';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import {SCALE_TYPES} from 'constants/default-settings';
 
-import {
-  clearClustererCache,
-  clustersAtZoom,
-  getGeoJSON
-} from '../layer-utils/cluster-utils';
+import ClusterBuilder, {getGeoJSON} from '../layer-utils/cluster-utils';
 
 const defaultRadius = LAYER_VIS_CONFIGS.clusterRadius.defaultValue;
 const defaultRadiusRange = LAYER_VIS_CONFIGS.clusterRadiusRange.defaultValue;
+
+const defaultGetColorValue = points => points.length;
+const defaultGetRadiusValue = cell =>
+  cell.filteredPoints ? cell.filteredPoints.length : cell.points.length;
+
+function processGeoJSON(step, props, aggregation, {viewport}) {
+  const {data, getPosition, filterData} = props;
+  const geoJSON = getGeoJSON(data, getPosition, filterData);
+  const clusterBuilder = new ClusterBuilder();
+
+  this.setState({geoJSON, clusterBuilder});
+}
+
+function getClusters(step, props, aggregation, {viewport}) {
+  const {geoJSON, clusterBuilder} = this.state;
+  const {clusterRadius, zoom, width, height} = props;
+  const {longitude, latitude} = viewport;
+
+  // zoom needs to be an integer for the different map utils. Also helps with cache key.
+  const bbox = geoViewport.bounds([longitude, latitude], zoom, [width, height]);
+  const clusters = clusterBuilder.clustersAtZoom({bbox, clusterRadius, geoJSON, zoom});
+
+  this.setState({
+    layerData: {data: clusters}
+  });
+}
+
+function getSubLayerRadius(dimensionState, dimension, layerProps) {
+  return cell => {
+    const {getRadiusValue} = layerProps;
+    const {scaleFunc} = dimensionState;
+    return scaleFunc(getRadiusValue(cell));
+  };
+}
+
+export const clusterAggregation = {
+  key: 'position',
+  updateSteps: [
+    {
+      key: 'geojson',
+      triggers: {
+        position: {
+          prop: 'getPosition',
+          updateTrigger: 'getPosition'
+        },
+        filterData: {
+          prop: 'filterData',
+          updateTrigger: 'filterData'
+        }
+      },
+      updater: processGeoJSON
+    },
+    {
+      key: 'clustering',
+      triggers: {
+        clusterRadius: {
+          prop: 'clusterRadius'
+        },
+        zoom: {
+          prop: 'zoom'
+        },
+        width: {
+          prop: 'width'
+        },
+        height: {
+          prop: 'height'
+        }
+      },
+      updater: getClusters
+    }
+  ]
+};
+
+function getRadiusValueDomain(step, props, dimensionUpdater) {
+  const {key} = dimensionUpdater;
+  const {getRadiusValue} = props;
+  const {layerData} = this.state;
+
+  const valueDomain = [0, max(layerData.data, getRadiusValue)];
+  this._setDimensionState(key, {valueDomain});
+}
+
+const clusterLayerDimensions = [
+  defaultColorDimension,
+  {
+    key: 'radius',
+    accessor: 'getRadius',
+    nullValue: 0,
+    updateSteps: [
+      {
+        key: 'getDomain',
+        triggers: {
+          value: {
+            prop: 'getRadiusValue',
+            updateTrigger: 'getRadiusValue'
+          }
+        },
+        updater: getRadiusValueDomain
+      },
+      {
+        key: 'getScaleFunc',
+        triggers: {
+          domain: {prop: 'radiusDomain'},
+          range: {prop: 'radiusRange'},
+          scaleType: {prop: 'radiusScaleType'}
+        },
+        updater: getDimensionScale
+      }
+    ],
+    getSubLayerAccessor: getSubLayerRadius,
+    getPickingInfo: (dimensionState, cell, layerProps) => {
+      const radiusValue = layerProps.getRadiusValue(cell);
+      return {radiusValue};
+    }
+  }
+];
 
 const defaultProps = {
   clusterRadius: defaultRadius,
   colorDomain: null,
   colorRange: DefaultColorRange,
-  colorScale: SCALE_TYPES.quantize,
+  colorScaleType: SCALE_TYPES.quantize,
+  radiusScaleType: SCALE_TYPES.sqrt,
   radiusRange: defaultRadiusRange,
-
-  // maybe later...
-  lowerPercentile: 0,
-  upperPercentile: 100,
-
-  getPosition: x => x.position,
-
-  // if want to have color based on customized aggregator, instead of count
-  getColorValue: points => points.length,
-
-  //  if want to have radius based on customized aggregator, instead of count
-  getRadiusValue: cell => cell.properties.point_count,
-  fp64: false
+  getPosition: {type: 'accessor', value: x => x.position},
+  getColorValue: {type: 'accessor', value: defaultGetColorValue},
+  getRadiusValue: {type: 'accessor', value: defaultGetRadiusValue}
 };
 
-export default class ClusterLayer extends CompositeLayer {
+export default class ClusterLayer extends AggregationLayer {
   initializeState() {
-    this.state = {
-      clusters: null,
-      geoJSON: null
-    };
-  }
-
-  shouldUpdateState({changeFlags}) {
-    return changeFlags.somethingChanged;
-  }
-
-  updateState({context, oldProps, props, changeFlags}) {
-    if (changeFlags.dataChanged || this.needsReProjectPoints(oldProps, props)) {
-      // project data into clusters, and get clustered data
-      this.processGeoJSON();
-      this.getClusters();
-
-      // this needs clustered data to be set
-      this.getColorValueDomain();
-    } else if (this.needsReclusterPoints(oldProps, props)) {
-      this.getClusters();
-      this.getColorValueDomain();
-    } else if (this.needsRecalculateScaleFunction(oldProps, props)) {
-      this.getColorValueDomain();
-    }
-  }
-
-  needsReProjectPoints(oldProps, props) {
-    return (
-      oldProps.clusterRadius !== props.clusterRadius ||
-      oldProps.getPosition !== props.getPosition
-    );
-  }
-
-  needsReclusterPoints(oldProps, props) {
-    return (
-      Math.round(oldProps.zoom) !== Math.round(props.zoom)
-    );
-  }
-
-  needsRecalculateScaleFunction(oldProps, props) {
-    return (
-      needsRecalculateColorDomain(oldProps, props) ||
-      needReCalculateScaleFunction(oldProps, props) ||
-      needsRecalculateRadiusRange(oldProps, props) ||
-      oldProps.getColorValue !== props.getColorValue
-    );
-  }
-
-  processGeoJSON() {
-    const {data, getPosition} = this.props;
-    this.setState({geoJSON: getGeoJSON(data, getPosition)});
-    clearClustererCache();
-  }
-
-  getClusters() {
-    const {geoJSON} = this.state;
-    const {clusterRadius} = this.props;
-    const {
-      viewport,
-      viewport: {longitude, latitude, height, width}
-    } = this.context;
-
-    // zoom needs to be an integer for the different map utils. Also helps with cache key.
-    const zoom = Math.round(viewport.zoom);
-    const bbox = geoViewport.bounds([longitude, latitude], zoom, [
-      width,
-      height
-    ]);
-
-    const clusters = clustersAtZoom({bbox, clusterRadius, geoJSON, zoom});
-
-    this.setState({clusters});
-  }
-
-  getColorValueDomain() {
-    const {
-      colorScale,
-      getColorValue,
-      getRadiusValue,
-      onSetColorDomain
-    } = this.props;
-    const {clusters} = this.state;
-
-    const radiusDomain = [0, max(clusters, getRadiusValue)];
-
-    const colorValues = clusters.map(d => getColorValue(d.properties.points));
-
-    const identity = d => d;
-
-    const colorDomain =
-      colorScale === SCALE_TYPES.ordinal
-        ? getOrdinalDomain(colorValues, identity)
-        : colorScale === SCALE_TYPES.quantile
-          ? getQuantileDomain(colorValues, identity, ascending)
-          : getLinearDomain(colorValues, identity);
-
-    this.setState({
-      colorDomain,
-      radiusDomain
+    const cpuAggregator = new CPUAggregator({
+      aggregation: clusterAggregation,
+      dimensions: clusterLayerDimensions
     });
 
-    getColorScaleFunction(this);
-    getRadiusScaleFunction(this);
-
-    onSetColorDomain(colorDomain);
-  }
-
-  getUpdateTriggers() {
-    return {
-      getColor: {
-        colorRange: this.props.colorRange,
-        colorDomain: this.props.colorDomain,
-        getColorValue: this.props.getColorValue,
-        colorScale: this.props.colorScale,
-        lowerPercentile: this.props.lowerPercentile,
-        upperPercentile: this.props.upperPercentile
-      },
-      getRadius: {
-        radiusRange: this.props.radiusRange,
-        radiusDomain: this.props.radiusDomain,
-        getRadiusValue: this.props.getRadiusValue
-      }
+    this.state = {
+      cpuAggregator,
+      aggregatorState: cpuAggregator.state
     };
+    const attributeManager = this.getAttributeManager();
+    attributeManager.add({
+      positions: {size: 3, accessor: 'getPosition'}
+    });
   }
 
-  /*
-   * override default layer method to calculate cell color based on color scale function
-   */
-  _onGetSublayerColor(cell) {
-    const {getColorValue} = this.props;
-    const {colorScaleFunc, colorDomain} = this.state;
-
-    const cv = getColorValue(cell.properties.points);
-
-    // if cell value is outside domain, set alpha to 0
-    const color =
-      cv >= colorDomain[0] && cv <= colorDomain[colorDomain.length - 1]
-        ? colorScaleFunc(cv)
-        : [0, 0, 0, 0];
-
-    // add final alpha to color
-    color[3] = Number.isFinite(color[3]) ? color[3] : 255;
-
-    return color;
-  }
-
-  _onGetSublayerRadius(cell) {
-    const {getRadiusValue} = this.props;
-    const {radiusScaleFunc} = this.state;
-    return radiusScaleFunc(getRadiusValue(cell));
+  updateState({oldProps, props, changeFlags}) {
+    this.setState({
+      // make a copy of the internal state of cpuAggregator for testing
+      aggregatorState: this.state.cpuAggregator.updateState(
+        {oldProps, props, changeFlags},
+        {
+          viewport: this.context.viewport,
+          attributes: this.getAttributes(),
+          numInstances: this.getNumInstances(props)
+        }
+      )
+    });
   }
 
   getPickingInfo({info}) {
-    const {clusters} = this.state;
-    const isPicked = info.picked && info.index > -1;
+    return this.state.cpuAggregator.getPickingInfo({info}, this.props);
+  }
 
-    let object = null;
-    if (isPicked) {
-      // add cluster colorValue to object
-      const cluster = clusters[info.index];
-      const colorValue = this.props.getColorValue(cluster.properties.points);
+  _getSublayerUpdateTriggers() {
+    return this.state.cpuAggregator.getUpdateTriggers(this.props);
+  }
 
-      object = {
-        ...cluster.properties,
-        colorValue,
-        radius: this._onGetSublayerRadius(cluster),
-        position: cluster.geometry.coordinates
-      };
-    }
-
+  _getSubLayerAccessors() {
     return {
-      ...info,
-      picked: Boolean(object),
-      // override object with picked cluster property
-      object
+      getRadius: this.state.cpuAggregator.getAccessor('radius', this.props),
+      getFillColor: this.state.cpuAggregator.getAccessor('fillColor', this.props)
     };
   }
 
   renderLayers() {
     // for subclassing, override this method to return
     // customized sub layer props
-    const {id, radiusScale, fp64} = this.props;
+    const {id, radiusScale} = this.props;
+    const {cpuAggregator} = this.state;
 
     // base layer props
     const {opacity, pickable, autoHighlight, highlightColor} = this.props;
+    const updateTriggers = this._getSublayerUpdateTriggers();
+    const accessors = this._getSubLayerAccessors();
+
+    const distanceScale = getDistanceScales(this.context.viewport);
+    const metersPerPixel = distanceScale.metersPerPixel[0];
 
     // return props to the sublayer constructor
     return new ScatterplotLayer({
       id: `${id}-cluster`,
-      data: this.state.clusters,
-      radiusScale,
-      fp64,
+      data: cpuAggregator.state.layerData.data,
+      radiusScale: metersPerPixel * radiusScale,
       opacity,
       pickable,
       autoHighlight,
       highlightColor,
-      getPosition: d => d.geometry.coordinates,
-      getRadius: this._onGetSublayerRadius.bind(this),
-      getColor: this._onGetSublayerColor.bind(this),
-      updateTriggers: this.getUpdateTriggers()
+      updateTriggers,
+      ...accessors
     });
   }
 }

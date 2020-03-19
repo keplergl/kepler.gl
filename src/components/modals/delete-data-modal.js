@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,16 +28,14 @@ const StyledMsg = styled.div`
 
 export const DeleteDatasetModal = ({dataset = {}, layers = []}) => {
   // retrieve only layers related to the current dataset
-  const currDatasetLayers = layers.filter(
-    layer => layer.config.dataId === dataset.id
-  );
+  const currDatasetLayers = layers.filter(layer => layer.config.dataId === dataset.id);
 
   return (
     <div className="delete-dataset-modal">
       <DatasetLabel dataset={dataset} />
-      <StyledMsg className="delete-dataset-msg">{`you are going to delete this dataset. It will affect ${
-        currDatasetLayers.length
-      } layers`}</StyledMsg>
+      <StyledMsg className="delete-dataset-msg">
+        {`you are going to delete this dataset. It will affect ${currDatasetLayers.length} layers`}
+      </StyledMsg>
     </div>
   );
 };

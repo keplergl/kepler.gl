@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@ const MIN_LONGITUDE = -180;
 export function unique(values) {
   const results = [];
   values.forEach(v => {
-    if (!results.includes(v) && v !== null && v !== undefined) {
+    if (!results.includes(v) && notNullorUndefined(v)) {
       results.push(v);
     }
   });
@@ -59,20 +59,23 @@ export function findMapBounds(layers) {
       res.push(l.meta.bounds);
     }
     return res;
-  }, [])
+  }, []);
   // return null if no layer is available
   if (availableLayerBounds.length === 0) {
     return null;
   }
   // merge bounds in each layer
-  const newBounds = availableLayerBounds.reduce((res, b) => {
-    return [
-      Math.min(res[0], b[0]),
-      Math.min(res[1], b[1]),
-      Math.max(res[2], b[2]),
-      Math.max(res[3], b[3])
-    ];
-  }, [MAX_LONGITUDE, MAX_LATITUDE, MIN_LONGITUDE, MIN_LATITUDE]);
+  const newBounds = availableLayerBounds.reduce(
+    (res, b) => {
+      return [
+        Math.min(res[0], b[0]),
+        Math.min(res[1], b[1]),
+        Math.max(res[2], b[2]),
+        Math.max(res[3], b[3])
+      ];
+    },
+    [MAX_LONGITUDE, MAX_LATITUDE, MIN_LONGITUDE, MIN_LATITUDE]
+  );
   return newBounds;
 }
 /* eslint-enable max-statements */
@@ -96,40 +99,52 @@ export function getLatLngBounds(points, idx, limit) {
 
 export function clamp([min, max], val) {
   return val <= min ? min : val >= max ? max : val;
-};
+}
 
-export function getSampleData(data, sampleSize = 500) {
+export function getSampleData(data, sampleSize = 500, getValue = d => d) {
   const sampleStep = Math.max(Math.floor(data.length / sampleSize), 1);
   const output = [];
   for (let i = 0; i < data.length; i += sampleStep) {
-    output.push(data[i]);
+    output.push(getValue(data[i]));
   }
 
   return output;
 }
 
+/**
+ * Convert different time format to unix milliseconds
+ * @param {*} value
+ * @param {*} format
+ */
+export function timeToUnixMilli(value, format) {
+  if (notNullorUndefined(value)) {
+    return typeof value === 'string'
+      ? moment.utc(value, format).valueOf()
+      : format === 'x'
+      ? value * 1000
+      : value;
+  }
+  return null;
+}
+
 export function maybeToDate(isTime, fieldIdx, format, d) {
   if (isTime) {
-    if (notNullorUndefined(d[fieldIdx])) {
-      return typeof d[fieldIdx] === 'string'
-        ? moment.utc(d[fieldIdx], format).valueOf()
-        : format === 'x' ? d[fieldIdx] * 1000 : d[fieldIdx];
-    }
-
-    return null;
+    return timeToUnixMilli(d[fieldIdx], format);
   }
 
   return d[fieldIdx];
 }
 
+/**
+ * whether null or undefined
+ * @returns {boolean} - yes or no
+ */
 export function notNullorUndefined(d) {
   return d !== undefined && d !== null;
 }
 
 export function isPlainObject(obj) {
-  return (
-    obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj)
-  );
+  return obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj);
 }
 
 export function numberSort(a, b) {
@@ -158,9 +173,7 @@ export function preciseRound(num, decimals) {
   const t = Math.pow(10, decimals);
   return (
     Math.round(
-      num * t +
-        (decimals > 0 ? 1 : 0) *
-          (Math.sign(num) * (10 / Math.pow(100, decimals)))
+      num * t + (decimals > 0 ? 1 : 0) * (Math.sign(num) * (10 / Math.pow(100, decimals)))
     ) / t
   ).toFixed(decimals);
 }
@@ -215,4 +228,60 @@ export function roundValToStep(minValue, step, val) {
   const rounded = preciseRound(closest, decimal);
 
   return Number(rounded);
+}
+
+const identity = d => d;
+
+export const FIELD_DISPLAY_FORMAT = {
+  [ALL_FIELD_TYPES.string]: identity,
+  [ALL_FIELD_TYPES.timestamp]: identity,
+  [ALL_FIELD_TYPES.integer]: identity,
+  [ALL_FIELD_TYPES.real]: identity,
+  [ALL_FIELD_TYPES.boolean]: d => String(d),
+  [ALL_FIELD_TYPES.date]: identity,
+  [ALL_FIELD_TYPES.geojson]: d =>
+    typeof d === 'string'
+      ? d
+      : isPlainObject(d)
+      ? JSON.stringify(d)
+      : Array.isArray(d)
+      ? `[${String(d)}]`
+      : ''
+};
+
+/**
+ * Parse field value and type and return a string representation
+ * @param {string} value the field value
+ * @param {string} type the field type
+ * @return {*}
+ */
+export const parseFieldValue = (value, type) => {
+  if (!notNullorUndefined(value)) {
+    return '';
+  }
+
+  return FIELD_DISPLAY_FORMAT[type] ? FIELD_DISPLAY_FORMAT[type](value) : String(value);
+};
+
+const arrayMoveMutate = (array, from, to) => {
+  array.splice(to < 0 ? array.length + to : to, 0, array.splice(from, 1)[0]);
+};
+
+export const arrayMove = (array, from, to) => {
+  array = array.slice();
+  arrayMoveMutate(array, from, to);
+  return array;
+};
+
+export function findFirstNoneEmpty(data, count = 1, getValue = identity) {
+  let c = 0;
+  const found = [];
+  while (c < count && c < data.length) {
+    const value = getValue(data[c]);
+    if (notNullorUndefined(value)) {
+      found.push(value);
+    }
+    c++;
+  }
+  return found;
 }

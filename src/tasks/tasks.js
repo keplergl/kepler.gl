@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,30 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {taskCreator} from 'react-palm/tasks';
+import Task, {taskCreator} from 'react-palm/tasks';
 import {json as requestJson} from 'd3-request';
+import {readFile} from '../processors/file-handler';
 
-export const LOAD_FILE_TASK = taskCreator(
-  ({fileBlob, info, handler, processor}, success, error) =>
-    handler(fileBlob, processor)
-      .then(result => {
-        if (!result) {
-          // TODO: capture in the UI and show message
-          throw new Error('fail to load data');
-        } else {
-          // we are trying to standardize the shape of our return
-          // since we start using the kepler.json format
-          // result has both datasets and info
-          // TODO: I think we should pass info to the handler and return
-          // the same format back from the file handler
-          if (result.datasets) { // this is coming from parsing keplergl.json file
-            success(result); // info is already part of datasets
-          }
-          success({datasets: {data: result, info}});
-        }
-      })
-      .catch(err => error(err)),
-
+export const LOAD_FILE_TASK = Task.fromPromise(
+  ({file, fileCache}) => readFile({file, fileCache}),
   'LOAD_FILE_TASK'
 );
 
@@ -54,9 +36,44 @@ export const LOAD_MAP_STYLE_TASK = taskCreator(
         if (!result) {
           error(new Error('Map style response is empty'));
         }
-        success({id, style: result})
+        success({id, style: result});
       }
     }),
 
   'LOAD_MAP_STYLE_TASK'
+);
+
+/**
+ * task to upload file to cloud provider
+ */
+export const EXPORT_FILE_TO_CLOUD_TASK = Task.fromPromise(
+  ({provider, payload}) => provider.uploadMap(payload),
+
+  'EXPORT_FILE_TO_CLOUD_TASK'
+);
+
+export const LOAD_CLOUD_MAP_TASK = Task.fromPromise(
+  ({provider, payload}) => provider.downloadMap(payload),
+
+  'LOAD_CLOUD_MAP_TASK'
+);
+
+export const GET_SAVED_MAPS_TASK = Task.fromPromise(
+  provider => provider.listMaps(),
+
+  'GET_SAVED_MAPS_TASK'
+);
+/**
+ *  task to dispatch a function as a task
+ */
+export const ACTION_TASK = Task.fromCallback(
+  (_, cb) => cb(),
+
+  'ACTION_TASK'
+);
+
+export const DELAY_TASK = Task.fromCallback(
+  (delay, cb) => window.setTimeout(() => cb(), delay),
+
+  'DELAY_TASK'
 );

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +21,13 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
+import {createSelector} from 'reselect';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
-import {CodeAlt, Save, Files, Share, Picture} from 'components/common/icons';
+import {Save, DataTable, Save2, Picture, Db, Map as MapIcon, Share} from 'components/common/icons';
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
+import Toolbar from 'components/common/toolbar';
+import ToolbarItem from 'components/common/toolbar-item';
 
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
@@ -43,32 +46,33 @@ const StyledPanelHeaderTop = styled.div.attrs({
 `;
 
 const StyledPanelTopActions = styled.div.attrs({
-  className: 'side-panel__header__actions'
+  className: 'side-panel__top__actions'
 })`
   display: flex;
 `;
 
 const StyledPanelAction = styled.div.attrs({
-  className: 'side-panel__header__actions'
+  className: 'side-panel__panel-header__action'
 })`
   align-items: center;
   border-radius: 2px;
-  color: ${props =>
-    props.active ? props.theme.textColorHl : props.theme.subtextColor};
+  color: ${props => (props.active ? props.theme.textColorHl : props.theme.subtextColor)};
   display: flex;
   height: 26px;
   justify-content: space-between;
   margin-left: 4px;
-  width: 70px;
   padding: 5px;
   font-weight: bold;
+  p {
+    display: inline-block;
+    margin-right: 6px;
+  }
   a {
     height: 20px;
   }
 
   :hover {
     cursor: pointer;
-    background-color: ${props => props.theme.secondaryBtnActBgd};
     color: ${props => props.theme.textColorHl};
 
     a {
@@ -77,174 +81,214 @@ const StyledPanelAction = styled.div.attrs({
   }
 `;
 
-const StyledPanelDropdown = styled.div`
-  background-color: ${props => props.theme.dropdownListBgd};
-  box-shadow: ${props => props.theme.dropdownListShadow};
-  font-size: 11px;
-  padding: 16px 0;
+const StyledToolbar = styled(Toolbar)`
   position: absolute;
-  transition: ${props => props.theme.transitionSlow};
-  display: flex;
-  margin-top: ${props => props.show ? '6px' : '20px'};
-  opacity: ${props => props.show ? 1 : 0};
-  transform: translateX(calc(-50% + 20px));
-  pointer-events:  ${props => props.show ? 'all' : 'none'};
-  z-index: 1000;
-
-  .save-export-dropdown__inner {
-    box-shadow: none;
-    background-color: transparent;
-    display: flex;
-  }
-
-  .save-export-dropdown__item {
-    align-items: center;
-    border-right: 1px solid ${props => props.theme.panelHeaderIcon};
-    color: ${props => props.theme.textColor};
-    display: flex;
-    flex-direction: column;
-    padding: 0 22px;
-
-    :hover {
-      cursor: pointer;
-      color: ${props => props.theme.textColorHl};
-    }
-
-    &:last-child {
-      border-right: 0;
-    }
-  }
-
-  .save-export-dropdown__title {
-    white-space: nowrap;
-    margin-top: 4px;
-  }
 `;
 
 export const PanelAction = ({item, onClick}) => (
-  <StyledPanelAction className="side-panel__panel-header__action"
-    data-tip data-for={`${item.id}-action`} onClick={onClick}>
+  <StyledPanelAction data-tip data-for={`${item.id}-action`} onClick={onClick}>
     {item.label ? <p>{item.label}</p> : null}
     <a target={item.blank ? '_blank' : ''} href={item.href}>
       <item.iconComponent height="20px" />
     </a>
-    {item.tooltip ? (<Tooltip
-      id={`${item.id}-action`}
-      place="bottom"
-      delayShow={500}
-      effect="solid"
-    >
-      <span>{item.tooltip}</span>
-    </Tooltip>) : null }
+    {item.tooltip ? (
+      <Tooltip id={`${item.id}-action`} place="bottom" delayShow={500} effect="solid">
+        <span>{item.tooltip}</span>
+      </Tooltip>
+    ) : null}
   </StyledPanelAction>
 );
 
-const PanelItem = ({onClose, onClickHandler, label, icon}) => (
-  <div className="save-export-dropdown__item" onClick={(e) => {
-    e.stopPropagation();
-    onClose();
-    onClickHandler();
-  }}>
-    {icon}
-    <div className="save-export-dropdown__title">{label}</div>
-  </div>
-);
-
-export const SaveExportDropdown = ({
-  onExportImage,
-  onExportData,
-  onExportConfig,
-  onSaveMap,
-  show,
-  onClose
-}) => {
-  return (
-    <StyledPanelDropdown show={show} className="save-export-dropdown">
-      <ClickOutsideCloseDropdown className="save-export-dropdown__inner"
-        show={show}
-        onClose={onClose}>
-        <PanelItem
-          label="Export Image"
-          onClickHandler={onExportImage}
+export const PanelHeaderDropdownFactory = () => {
+  const PanelHeaderDropdown = ({items, show, onClose, id}) => {
+    return (
+      <StyledToolbar show={show} className={`${id}-dropdown`}>
+        <ClickOutsideCloseDropdown
+          className="panel-header-dropdown__inner"
+          show={show}
           onClose={onClose}
-          icon={(<Picture height="16px" />)}
-        />
+        >
+          {items.map(itm => (
+            <ToolbarItem
+              key={itm.key}
+              label={itm.label}
+              icon={itm.icon}
+              onClick={itm.onClick}
+              onClose={onClose}
+            />
+          ))}
+        </ClickOutsideCloseDropdown>
+      </StyledToolbar>
+    );
+  };
 
-        <PanelItem
-          label="Export Data"
-          onClickHandler={onExportData}
-          onClose={onClose}
-          icon={(<Files height="16px" />)}
-        />
-
-        <PanelItem
-          label="Export Config"
-          onClickHandler={onExportConfig}
-          onClose={onClose}
-          icon={(<CodeAlt height="16px" />)}
-        />
-
-        {onSaveMap ? (
-          <PanelItem
-            label="Save Map Url"
-            onClickHandler={onSaveMap}
-            onClose={onClose}
-            icon={(<Share height="16px" />)}
-          />
-        ) : null}
-      </ClickOutsideCloseDropdown>
-    </StyledPanelDropdown>
-  );
+  return PanelHeaderDropdown;
 };
 
-const defaultActionItems = [
-  {
-    id: 'save',
-    iconComponent: Save,
-    onClick: () => {},
-    label: 'Share',
-    dropdownComponent: SaveExportDropdown
-  }
-];
+const getDropdownItemsSelector = () =>
+  createSelector(
+    props => props,
+    props =>
+      props.items
+        .map(t => ({
+          ...t,
+          onClick: t.onClick && t.onClick(props) ? t.onClick(props) : null
+        }))
+        .filter(l => l.onClick)
+  );
 
-function PanelHeaderFactory() {
+export const SaveExportDropdownFactory = PanelHeaderDropdown => {
+  const dropdownItemsSelector = getDropdownItemsSelector();
+
+  const SaveExportDropdown = props => (
+    <PanelHeaderDropdown
+      items={dropdownItemsSelector(props)}
+      show={props.show}
+      onClose={props.onClose}
+      id="save-export"
+    />
+  );
+
+  SaveExportDropdown.defaultProps = {
+    items: [
+      {
+        label: 'Export Image',
+        icon: Picture,
+        key: 'image',
+        onClick: props => props.onExportImage
+      },
+      {
+        label: 'Export Data',
+        icon: DataTable,
+        key: 'data',
+        onClick: props => props.onExportData
+      },
+      {
+        label: 'Export Map',
+        icon: MapIcon,
+        key: 'map',
+        onClick: props => props.onExportMap
+      },
+      {
+        label: 'Save Map',
+        icon: Save2,
+        key: 'save',
+        onClick: props => props.onSaveMap
+      },
+      {
+        label: 'Share Map URL',
+        icon: Share,
+        key: 'share',
+        onClick: props => props.onShareMap
+      }
+    ]
+  };
+
+  return SaveExportDropdown;
+};
+SaveExportDropdownFactory.deps = [PanelHeaderDropdownFactory];
+
+export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
+  const dropdownItemsSelector = getDropdownItemsSelector();
+
+  const CloudStorageDropdown = props => (
+    <PanelHeaderDropdown
+      items={dropdownItemsSelector(props)}
+      show={props.show}
+      onClose={props.onClose}
+      id="cloud-storage"
+    />
+  );
+  CloudStorageDropdown.defaultProps = {
+    items: [
+      {
+        label: 'Save',
+        icon: Save2,
+        key: 'save',
+        onClick: props => props.onSaveToStorage
+      },
+      {
+        label: 'Save As',
+        icon: Save2,
+        key: 'saveAs',
+        onClick: props => props.onSaveAsToStorage
+      }
+    ]
+  };
+  return CloudStorageDropdown;
+};
+CloudStorageDropdownFactory.deps = [PanelHeaderDropdownFactory];
+
+PanelHeaderFactory.deps = [SaveExportDropdownFactory, CloudStorageDropdownFactory];
+
+function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
   return class PanelHeader extends Component {
     static propTypes = {
       appName: PropTypes.string,
+      appWebsite: PropTypes.string,
       version: PropTypes.string,
-      uiState: PropTypes.object,
-      uiStateActions: PropTypes.object,
+      visibleDropdown: PropTypes.string,
       logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-      actionItems: PropTypes.arrayOf(PropTypes.any)
+      actionItems: PropTypes.arrayOf(PropTypes.any),
+      onExportImage: PropTypes.func,
+      onExportData: PropTypes.func,
+      onExportConfig: PropTypes.func,
+      onExportMap: PropTypes.func,
+      onSaveToStorage: PropTypes.func,
+      onSaveAsToStorage: PropTypes.func,
+      onSaveMap: PropTypes.func,
+      onShareMap: PropTypes.func
     };
 
     static defaultProps = {
       logoComponent: KeplerGlLogo,
-      actionItems: defaultActionItems
+      actionItems: [
+        {
+          id: 'storage',
+          iconComponent: Db,
+          tooltip: 'Cloud Storage',
+          onClick: () => {},
+          dropdownComponent: CloudStorageDropdown
+        },
+        {
+          id: 'save',
+          iconComponent: Save,
+          onClick: () => {},
+          label: 'Share',
+          dropdownComponent: SaveExportDropdown
+        }
+      ]
     };
 
     render() {
       const {
         appName,
+        appWebsite,
         version,
         actionItems,
-        onSaveMap,
-        onExportImage,
-        onExportData,
-        onExportConfig,
         visibleDropdown,
         showExportDropdown,
-        hideExportDropdown
+        hideExportDropdown,
+        ...dropdownCallbacks
       } = this.props;
+      let items = actionItems || [];
+
+      // don't render cloud storage icon if onSaveToStorage is not provided
+      if (typeof this.props.onSaveToStorage !== 'function') {
+        items = actionItems.filter(ai => ai.id !== 'storage');
+      }
 
       return (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
-            <this.props.logoComponent appName={appName} version={version}/>
+            <this.props.logoComponent appName={appName} version={version} appWebsite={appWebsite} />
             <StyledPanelTopActions>
-              {actionItems.map(item => (
-                <div className="side-panel__panel-header__right"
-                     key={item.id} style={{position: 'relative'}}>
+              {items.map(item => (
+                <div
+                  className="side-panel__panel-header__right"
+                  key={item.id}
+                  style={{position: 'relative'}}
+                >
                   <PanelAction
                     item={item}
                     onClick={() => {
@@ -258,10 +302,7 @@ function PanelHeaderFactory() {
                     <item.dropdownComponent
                       onClose={hideExportDropdown}
                       show={visibleDropdown === item.id}
-                      onSaveMap={onSaveMap}
-                      onExportData={onExportData}
-                      onExportImage={onExportImage}
-                      onExportConfig={onExportConfig}
+                      {...dropdownCallbacks}
                     />
                   ) : null}
                 </div>
@@ -271,7 +312,7 @@ function PanelHeaderFactory() {
         </StyledPanelHeader>
       );
     }
-  }
+  };
 }
 
 export default PanelHeaderFactory;

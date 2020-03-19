@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,36 +19,23 @@
 // THE SOFTWARE.
 
 import domtoimage from 'utils/dom-to-image';
-import {
-  Blob,
-  URL,
-  atob,
-  Uint8Array,
-  ArrayBuffer,
-  document
-} from 'global/window';
-import {RESOLUTION_OPTIONS, RATIO_OPTIONS} from 'constants/default-settings';
+import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
+import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS} from 'constants/default-settings';
 
 export function calculateExportImageSize({width, height, ratio, resolution}) {
-  const resolutionItem = RESOLUTION_OPTIONS.find(op => op.id === resolution);
-  const {width: scaledWidth, height: scaledHeight} = resolutionItem.getSize(
-    width,
-    height
-  );
+  const resolutionItem = EXPORT_IMG_RESOLUTION_OPTIONS.find(op => op.id === resolution);
+  const {width: scaledWidth, height: scaledHeight} = resolutionItem.getSize(width, height);
   const {zoomOffset, scale} = resolutionItem;
 
   return {
     zoomOffset,
     scale,
-    ...RATIO_OPTIONS.find(op => op.id === ratio).getSize(
-      scaledWidth,
-      scaledHeight
-    )
+    ...EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === ratio).getSize(scaledWidth, scaledHeight)
   };
 }
 
-export function convertToPng(sourceElem) {
-  return domtoimage.toPng(sourceElem);
+export function convertToPng(sourceElem, options) {
+  return domtoimage.toPng(sourceElem, options);
 }
 
 export function dataURItoBlob(dataURI) {

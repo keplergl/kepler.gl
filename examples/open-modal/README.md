@@ -1,22 +1,29 @@
 # Open modal
 
-Open kepler.gl in a modal
+Example showing how to open kepler.gl in a modal.
 
-### Local dev
-```
+#### 1. Install
+
+```sh
 npm install
 ```
+
 or
-```
-yarn --ignore-engines
+
+```sh
+yarn
 ```
 
+
+#### 2. Mapbox Token
 add mapbox access token to node env
-```
+
+```sh
 export MapboxAccessToken=<your_mapbox_token>
 ```
 
-then
-```
+#### 3. Start the app
+
+```sh
 npm start
 ```

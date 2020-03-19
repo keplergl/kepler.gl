@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,14 +20,13 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import Waypoint from 'react-waypoint';
+import {Waypoint} from 'react-waypoint';
 import styled from 'styled-components';
 
 const FadeIn = styled.div`
   opacity: ${props => (props.isVisible ? '1.0' : '0.0')};
   transform: ${props => (props.isVisible ? undefined : 'translateY(10px)')};
-  transition: ${props =>
-    `opacity 350ms ${props.delay}ms, transform 350ms ${props.delay}ms`};
+  transition: ${props => `opacity 350ms ${props.delay}ms, transform 350ms ${props.delay}ms`};
 `;
 
 export default class StaggeredScrollAnimation extends PureComponent {
@@ -35,7 +34,12 @@ export default class StaggeredScrollAnimation extends PureComponent {
     duration: PropTypes.number,
     delay: PropTypes.number,
     animateOnce: PropTypes.bool,
-    Container: PropTypes.oneOfType([PropTypes.func, PropTypes.string]),
+    Container: PropTypes.oneOfType([
+      PropTypes.object,
+      PropTypes.element,
+      PropTypes.func,
+      PropTypes.string
+    ]),
     scrollOffsetTop: PropTypes.number
   };
 
@@ -72,7 +76,7 @@ export default class StaggeredScrollAnimation extends PureComponent {
         topOffset={scrollOffsetTop}
       >
         <Container>
-          {children.map((item, i) => (
+          {React.Children.map(children, (item, i) => (
             <FadeIn key={i} isVisible={isVisible} delay={delay * i}>
               {item}
             </FadeIn>

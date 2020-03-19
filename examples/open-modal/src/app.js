@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,11 +32,12 @@ import SavedMap from './components/saved-map';
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
 class App extends Component {
-  componentWillReceiveProps(nextProps) {
-    if (!this.props.keplerGl.bar && nextProps.keplerGl.bar) {
+  componentDidUpdate(prevProps) {
+    if (!prevProps.keplerGl.bar && this.props.keplerGl.bar) {
       this.props.dispatch(
-        wrapTo('bar', addDataToMap(
-          {
+        wrapTo(
+          'bar',
+          addDataToMap({
             datasets: sampleData,
             options: {
               centerMap: true
@@ -55,12 +56,14 @@ class App extends Component {
     this.props.dispatch(showModal(null));
   };
 
-  _openModal = (id) => {
+  _openModal = id => {
     this.props.dispatch(showModal(id));
   };
 
   render() {
-    const {app: {modal}} = this.props;
+    const {
+      app: {modal}
+    } = this.props;
 
     return (
       <div style={{position: 'absolute', width: '100%', height: '100%'}}>
@@ -68,23 +71,19 @@ class App extends Component {
         <button onClick={() => this._openModal('bar')}>Show Kepler.gl id: bar</button>
 
         <Modal isOpen={modal === 'foo'}>
-          <div>This Kepler.gl component will always load a fresh state when re mounted, state inside this component will be destroyed once its unmounted.</div>
+          <div>
+            This Kepler.gl component will always load a fresh state when re mounted, state inside
+            this component will be destroyed once its unmounted.
+          </div>
           <button onClick={this._closeModal}>Close</button>
-          <FreshMap
-            dispatch={this.props.dispatch}
-            mapboxApiAccessToken={MAPBOX_TOKEN}
-            id="foo"
-          />
+          <FreshMap dispatch={this.props.dispatch} mapboxApiAccessToken={MAPBOX_TOKEN} id="foo" />
         </Modal>
 
         <Modal isOpen={modal === 'bar'}>
-          By passing in mint: false, This Kepler.gl instance will keep the state of "bar" even when it is unmounted.
+          By passing in mint: false, This Kepler.gl instance will keep the state of "bar" even when
+          it is unmounted.
           <button onClick={this._closeModal}>Close</button>
-          <SavedMap
-            dispatch={this.props.dispatch}
-            mapboxApiAccessToken={MAPBOX_TOKEN}
-            id="bar"
-          />
+          <SavedMap dispatch={this.props.dispatch} mapboxApiAccessToken={MAPBOX_TOKEN} id="bar" />
         </Modal>
       </div>
     );

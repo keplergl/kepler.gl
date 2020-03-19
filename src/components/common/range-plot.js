@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,18 +26,17 @@ import {max} from 'd3-array';
 import {createSelector} from 'reselect';
 import {LineSeries, XYPlot, CustomSVGSeries, Hint, MarkSeries} from 'react-vis';
 import styled from 'styled-components';
+import classnames from 'classnames';
+
 import RangeBrush from './range-brush';
 import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
-import {theme} from 'styles/base';
 
-const chartMargin = {top: 18, bottom: 0, left: 0, right: 0};
+const chartMargin = {top: 8, bottom: 0, left: 0, right: 0};
 const chartH = 52;
-const containerH = 78;
+const containerH = 68;
 const histogramStyle = {
   highlightW: 0.7,
-  unHighlightedW: 0.4,
-  highlightedColor: theme.activeColor,
-  unHighlightedColor: theme.sliderBarColor
+  unHighlightedW: 0.4
 };
 
 export default class RangePlot extends Component {
@@ -61,34 +60,18 @@ export default class RangePlot extends Component {
   };
 
   domainSelector = props => props.lineChart && props.lineChart.xDomain;
-  hintFormatter = createSelector(this.domainSelector, domain =>
-    getTimeWidgetHintFormatter(domain)
-  );
+  hintFormatter = createSelector(this.domainSelector, domain => getTimeWidgetHintFormatter(domain));
 
   onMouseMove = hoveredDP => {
     this.setState({hoveredDP});
   };
 
   render() {
-    const {
-      onBrush,
-      range,
-      value,
-      width,
-      plotType,
-      lineChart,
-      histogram
-    } = this.props;
+    const {onBrush, range, value, width, plotType, lineChart, histogram} = this.props;
     const domain = [histogram[0].x0, histogram[histogram.length - 1].x1];
 
     const brushComponent = (
-      <RangeBrush
-        domain={domain}
-        onBrush={onBrush}
-        range={range}
-        value={value}
-        width={width}
-      />
+      <RangeBrush domain={domain} onBrush={onBrush} range={range} value={value} width={width} />
     );
 
     return (
@@ -125,14 +108,7 @@ export default class RangePlot extends Component {
   }
 }
 
-const Histogram = ({
-  width,
-  height,
-  margin,
-  histogram,
-  value,
-  brushComponent
-}) => {
+const Histogram = ({width, height, margin, histogram, value, brushComponent}) => {
   const domain = [histogram[0].x0, histogram[histogram.length - 1].x1];
   const barWidth = width / histogram.length;
 
@@ -145,20 +121,19 @@ const Histogram = ({
     .range([0, height]);
 
   return (
-    <svg width={width} height={height} style={{marginTop: `${margin.top}px`}}>
+    <HistogramWrapper width={width} height={height} style={{marginTop: `${margin.top}px`}}>
       <g className="histogram-bars">
         {histogram.map(bar => {
           const inRange = bar.x0 >= value[0] && bar.x1 <= value[1];
-          const fill = inRange ? histogramStyle.highlightedColor : histogramStyle.unHighlightedColor;
           const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
 
           return (
             <rect
+              className={classnames({'in-range': inRange})}
               key={bar.x0}
-              fill={fill}
               height={y(bar.count)}
               width={barWidth * wRatio}
-              x={x(bar.x0) + barWidth * (1 - wRatio) / 2}
+              x={x(bar.x0) + (barWidth * (1 - wRatio)) / 2}
               rx={1}
               ry={1}
               y={height - y(bar.count)}
@@ -167,7 +142,7 @@ const Histogram = ({
         })}
       </g>
       {brushComponent}
-    </svg>
+    </HistogramWrapper>
   );
 };
 
@@ -178,6 +153,16 @@ const LineChartWrapper = styled.div`
   }
 `;
 
+const HistogramWrapper = styled.svg`
+  .histogram-bars {
+    rect {
+      fill: ${props => props.theme.histogramFillOutRange};
+    }
+    rect.in-range {
+      fill: ${props => props.theme.histogramFillInRange};
+    }
+  }
+`;
 const LineChart = ({
   width,
   height,
@@ -190,31 +175,17 @@ const LineChart = ({
   onMouseMove,
   children
 }) => {
-  const brushData = [
-    {x: data[0].x, y: yDomain[1], customComponent: () => children}
-  ];
+  const brushData = [{x: data[0].x, y: yDomain[1], customComponent: () => children}];
 
   return (
     <LineChartWrapper>
       <XYPlot width={width} height={height} margin={{...margin, bottom: 12}}>
-        <LineSeries
-          strokeWidth={2}
-          color={color}
-          data={data}
-          onNearestX={onMouseMove}
-        />
-        <MarkSeries
-          data={hoveredDP ? [hoveredDP] : []}
-          color={color}
-          size={3}
-        />
+        <LineSeries strokeWidth={2} color={color} data={data} onNearestX={onMouseMove} />
+        <MarkSeries data={hoveredDP ? [hoveredDP] : []} color={color} size={3} />
         <CustomSVGSeries data={brushData} />
         {hoveredDP ? (
           <Hint value={hoveredDP}>
-            <HintContent
-              {...hoveredDP}
-              format={val => moment.utc(val).format(hintFormat)}
-            />
+            <HintContent {...hoveredDP} format={val => moment.utc(val).format(hintFormat)} />
           </Hint>
         ) : null}
       </XYPlot>

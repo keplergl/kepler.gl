@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,15 +21,15 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import ImagePreview from 'components/common/image-preview';
 
-import {calculateExportImageSize} from 'utils/export-image-utils';
 import {
-  RATIO_OPTIONS,
-  RATIOS,
-  RESOLUTION_OPTIONS
+  EXPORT_IMG_RATIO_OPTIONS,
+  EXPORT_IMG_RESOLUTION_OPTIONS,
+  EXPORT_IMG_RATIOS
 } from 'constants/default-settings';
-import LoadingSpinner from 'components/common/loading-spinner';
-import {StyledModalContent} from 'components/common/styled-components';
+
+import {StyledModalContent, SelectionButton} from 'components/common/styled-components';
 import Switch from 'components/common/switch';
 
 const ImageOptionList = styled.div`
@@ -56,151 +56,91 @@ const ImageOptionList = styled.div`
   }
 `;
 
-const PreviewImageSection = styled.div`
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  justify-content: center;
-  padding: 30px;
-
-  .dimension, .instruction {
-    padding: 8px 0px;
-  }
-
-  .preview-image {
-    background: #e2e2e2;
-    border-radius: 4px;
-    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.18);
-    width: 100%;
-    padding-bottom: ${props => props.ratio === RATIOS.SCREEN ?
-      `${100 * props.height/props.width}%`:
-      (props.ratio === RATIOS.SIXTEEN_BY_NINE ? '56.25%' : '75%')
+const ExportImageModalFactory = () => {
+  class ExportImageModal extends Component {
+    static propTypes = {
+      mapW: PropTypes.number.isRequired,
+      mapH: PropTypes.number.isRequired,
+      exportImage: PropTypes.object.isRequired,
+      // callbacks
+      onUpdateSetting: PropTypes.func.isRequired
     };
-    position: relative;
-  }
 
-  .preview-image-placeholder {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
+    componentDidMount() {
+      this._updateMapDim();
+    }
 
-  .preview-image-spinner {
-    position: absolute;
-    left: calc(50% - 25px);
-    top: calc(50% - 25px);
-  }
-`;
+    componentDidUpdate() {
+      this._updateMapDim();
+    }
 
-const Button = styled.div`
-  border-radius: 2px;
-  border: 1px solid ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
-  color: ${props => props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT};
-  cursor: pointer;
-  font-weight: 500;
-  margin-right: 6px;
-  padding: 6px 10px;
+    _updateMapDim() {
+      const {exportImage, mapH, mapW} = this.props;
+      if (mapH !== exportImage.mapH || mapW !== exportImage.mapW) {
+        this.props.onUpdateSetting({
+          mapH,
+          mapW,
+          ratio: EXPORT_IMG_RATIOS.CUSTOM,
+          legend: false
+        });
+      }
+    }
 
-  :hover {
-    color: ${props => props.available && props.theme.primaryBtnBgd};
-    border: 1px solid ${props => props.available && props.theme.primaryBtnBgd};
-  }
-`;
+    render() {
+      const {exportImage, onUpdateSetting} = this.props;
+      const {legend, ratio, resolution} = exportImage;
 
-class ExportImageModal extends Component {
-
-  static propTypes = {
-    height: PropTypes.number.isRequired,
-    ratio: PropTypes.string.isRequired,
-    resolution: PropTypes.string.isRequired,
-    width: PropTypes.number.isRequired,
-    exporting: PropTypes.bool.isRequired,
-    imageDataUri: PropTypes.string,
-    // callbacks
-    onChangeRatio: PropTypes.func.isRequired,
-    onChangeResolution: PropTypes.func.isRequired,
-    onToggleLegend: PropTypes.func.isRequired
-  };
-
-  render() {
-    const {
-      height,
-      legend,
-      ratio,
-      resolution,
-      width,
-      exporting,
-      imageDataUri,
-      // callbacks:
-      onChangeRatio,
-      onChangeResolution,
-      onToggleLegend
-    } = this.props;
-
-    const exportImageSize = calculateExportImageSize({
-      width, height, ratio, resolution
-    });
-
-    return (
-      <div className="export-image-modal">
-        <StyledModalContent>
+      return (
+        <StyledModalContent className="export-image-modal">
           <ImageOptionList>
             <div className="image-option-section">
               <div className="image-option-section-title">Ratio</div>
               Choose the ratio for various usages.
               <div className="button-list">
-                {RATIO_OPTIONS.map(op =>
-                  <Button
+                {EXPORT_IMG_RATIO_OPTIONS.filter(op => !op.hidden).map(op => (
+                  <SelectionButton
                     key={op.id}
                     selected={ratio === op.id}
-                    onClick={() => onChangeRatio({ratio: op.id})}
+                    onClick={() => onUpdateSetting({ratio: op.id})}
                   >
                     {op.label}
-                  </Button>
-                )}
+                  </SelectionButton>
+                ))}
               </div>
             </div>
             <div className="image-option-section">
               <div className="image-option-section-title">Resolution</div>
               High resolution is better for prints.
               <div className="button-list">
-                {RESOLUTION_OPTIONS.map(op =>
-                  <Button
+                {EXPORT_IMG_RESOLUTION_OPTIONS.map(op => (
+                  <SelectionButton
                     key={op.id}
                     selected={resolution === op.id}
-                    onClick={() => op.available && onChangeResolution({resolution: op.id})}
+                    onClick={() => op.available && onUpdateSetting({resolution: op.id})}
                   >
                     {op.label}
-                  </Button>
-                )}
+                  </SelectionButton>
+                ))}
               </div>
             </div>
             <div className="image-option-section">
               <div className="image-option-section-title">Map Legend</div>
-              <Switch type="checkbox"
-                      id="add-map-legend"
-                      checked={legend}
-                      label="Add legend on map"
-                      onChange={onToggleLegend}/>
+              <Switch
+                type="checkbox"
+                id="add-map-legend"
+                checked={legend}
+                label="Add legend on map"
+                onChange={() => onUpdateSetting({legend: !legend})}
+              />
             </div>
           </ImageOptionList>
-          <PreviewImageSection ratio={ratio} width={width} height={height}>
-            <div className="dimension">{`${exportImageSize.width} x ${exportImageSize.height}`}</div>
-            <div className="preview-image">
-              {exporting ?
-                <div className="preview-image-spinner"><LoadingSpinner /></div> :
-                <img className="preview-image-placeholder" src={imageDataUri} />
-              }
-            </div>
-          </PreviewImageSection>
+          <ImagePreview exportImage={exportImage} />
         </StyledModalContent>
-      </div>
-    );
+      );
+    }
   }
-}
 
-const ExportImageModalFactory = () => ExportImageModal;
+  return ExportImageModal;
+};
+
 export default ExportImageModalFactory;

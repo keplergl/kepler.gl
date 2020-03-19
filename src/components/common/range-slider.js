@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,35 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
+import {polyfill} from 'react-lifecycles-compat';
+
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-
 import RangePlot from './range-plot';
 import Slider from 'components/common/slider/slider';
 import {Input} from 'components/common/styled-components';
 
 import {roundValToStep} from 'utils/data-utils';
 
-const SliderInput = Input.extend`
-  height: ${props => props.theme.sliderInputHeight}px;
+const SliderInput = styled(Input)`
   width: ${props => props.theme.sliderInputWidth}px;
-  padding: 4px 6px;
-  margin-left: ${props => props.flush ? 0 : 24}px;
+  margin-left: ${props => (props.flush ? 0 : props.size === 'tiny' ? 12 : 18)}px;
 `;
 
 const SliderWrapper = styled.div`
   display: flex;
   position: relative;
+  align-items: center;
 `;
 
-const RangeInputWrapper =styled.div`
+const RangeInputWrapper = styled.div`
   margin-top: 6px;
   display: flex;
   justify-content: space-between;
 `;
 
-export default class RangeSlider extends Component {
+class RangeSlider extends Component {
   static propTypes = {
     range: PropTypes.arrayOf(PropTypes.number).isRequired,
     value0: PropTypes.number.isRequired,
@@ -57,6 +57,7 @@ export default class RangeSlider extends Component {
     isEnlarged: PropTypes.bool,
     showInput: PropTypes.bool,
     inputTheme: PropTypes.string,
+    inputSize: PropTypes.string,
     step: PropTypes.number,
     sliderHandleWidth: PropTypes.number,
     xAxis: PropTypes.func
@@ -67,31 +68,42 @@ export default class RangeSlider extends Component {
     isRanged: true,
     showInput: true,
     sliderHandleWidth: 12,
+    inputTheme: '',
+    inputSize: 'small',
     onChange: () => {}
   };
 
-  state = {value0: 0, value1: 1, width: 288};
+  static getDerivedStateFromProps(props, state) {
+    let update = null;
+    const {value0, value1} = props;
+    if (props.value0 !== state.prevValue0 && !isNaN(value0)) {
+      update = {...(update || {}), value0, prevValue0: value0};
+    }
+    if (props.value1 !== state.prevValue1 && !isNaN(value1)) {
+      update = {...(update || {}), value1, prevValue1: value1};
+    }
+    return update;
+  }
+
+  state = {
+    value0: 0,
+    value1: 1,
+    prevValue0: 0,
+    prevValue1: 1,
+    width: 288
+  };
 
   componentDidMount() {
-    this._setValueFromProps(this.props);
     this._resize();
   }
 
-  componentWillReceiveProps(nextProps) {
-    this._setValueFromProps(nextProps);
-  }
-
-  componentDidUpdate() {
+  componentDidUpdate(prevProps, prevState) {
     this._resize();
   }
 
-  _setValueFromProps = props => {
-    const {value0, value1} = props;
-
-    if (!isNaN(value0) && !isNaN(value1)) {
-      this.setState({value0, value1});
-    }
-  };
+  sliderContainer = createRef();
+  inputValue0 = createRef();
+  inputValue1 = createRef();
 
   _isVal0InRange = val => {
     const {value1, range} = this.props;
@@ -114,7 +126,6 @@ export default class RangeSlider extends Component {
   _setRangeVal1 = val => {
     const {value0, onChange} = this.props;
     val = Number(val);
-
     if (this._isVal1InRange(val)) {
       onChange([value0, this._roundValToStep(val)]);
       return true;
@@ -124,50 +135,54 @@ export default class RangeSlider extends Component {
 
   _setRangeVal0 = val => {
     const {value1, onChange} = this.props;
-    val = Number(val);
+    const val0 = Number(val);
 
-    if (this._isVal0InRange(val)) {
-      onChange([this._roundValToStep(val), value1]);
+    if (this._isVal0InRange(val0)) {
+      onChange([this._roundValToStep(val0), value1]);
       return true;
     }
     return false;
   };
 
   _resize() {
-    const width = this.sliderContainer.offsetWidth;
+    const width = this.sliderContainer.current.offsetWidth;
     if (width !== this.state.width) {
       this.setState({width});
     }
   }
+  _onChangeInput = (key, e) => {
+    this.setState({[key]: e.target.value});
+  };
 
   _renderInput(key) {
     const setRange = key === 'value0' ? this._setRangeVal0 : this._setRangeVal1;
+    const ref = key === 'value0' ? this.inputValue0 : this.inputValue1;
     const update = e => {
       if (!setRange(e.target.value)) {
         this.setState({[key]: this.state[key]});
       }
     };
 
+    const onChange = this._onChangeInput.bind(this, key);
+
     return (
       <SliderInput
         className="kg-range-slider__input"
         type="number"
-        innerRef={comp => {
-          this[`input-${key}`] = comp;
-        }}
-        id={`filter-${key}`}
+        ref={ref}
+        id={`slider-input-${key}`}
+        key={key}
         value={this.state[key]}
-        onChange={e => {
-          this.setState({[key]: e.target.value});
-        }}
+        onChange={onChange}
         onKeyPress={e => {
           if (e.key === 'Enter') {
             update(e);
-            this[`input-${key}`].blur();
+            ref.current.blur();
           }
         }}
         onBlur={update}
         flush={key === 'value0'}
+        size={this.props.inputSize}
         secondary={this.props.inputTheme === 'secondary'}
       />
     );
@@ -185,19 +200,20 @@ export default class RangeSlider extends Component {
       onChange,
       value0,
       value1,
-      sliderHandleWidth
+      sliderHandleWidth,
+      step
     } = this.props;
 
     const height = isRanged && showInput ? '16px' : '24px';
     const {width} = this.state;
-    const plotWidth =  width - sliderHandleWidth;
+    const plotWidth = Math.max(width - sliderHandleWidth, 0);
 
     return (
       <div
-        className="kg-range-slider" style={{width: '100%', padding: `0 ${sliderHandleWidth / 2}px`}}
-        ref={comp => {
-          this.sliderContainer = comp;
-        }}>
+        className="kg-range-slider"
+        style={{width: '100%', padding: `0 ${sliderHandleWidth / 2}px`}}
+        ref={this.sliderContainer}
+      >
         {histogram && histogram.length ? (
           <RangePlot
             histogram={histogram}
@@ -205,20 +221,15 @@ export default class RangeSlider extends Component {
             plotType={plotType}
             isEnlarged={isEnlarged}
             onBrush={(val0, val1) => {
-              onChange([
-                this._roundValToStep(val0),
-                this._roundValToStep(val1)
-              ]);
+              onChange([this._roundValToStep(val0), this._roundValToStep(val1)]);
             }}
             range={range}
             value={[value0, value1]}
             width={plotWidth}
           />
         ) : null}
-        <SliderWrapper
-          style={{height}}
-          className="kg-range-slider__slider">
-          {this.props.xAxis ? <this.props.xAxis width={plotWidth} domain={range}/> : null}
+        <SliderWrapper style={{height}} className="kg-range-slider__slider">
+          {this.props.xAxis ? <this.props.xAxis width={plotWidth} domain={range} /> : null}
           <Slider
             showValues={false}
             isRanged={isRanged}
@@ -226,26 +237,28 @@ export default class RangeSlider extends Component {
             maxValue={range[1]}
             value0={value0}
             value1={value1}
+            step={step}
             handleWidth={sliderHandleWidth}
             onSlider0Change={this._setRangeVal0}
             onSlider1Change={this._setRangeVal1}
             onSliderBarChange={(val0, val1) => {
-              if (this._isVal1InRange(val1) && this._isVal0InRange(val0)) {
-                onChange([
-                  this._roundValToStep(val0),
-                  this._roundValToStep(val1)
-                ]);
-              }
+              onChange([val0, val1]);
             }}
             enableBarDrag
           />
           {!isRanged && showInput ? this._renderInput('value1') : null}
         </SliderWrapper>
-        {isRanged && showInput ? <RangeInputWrapper className="range-slider__input-group">
-          {this._renderInput('value0')}
-          {this._renderInput('value1')}
-        </RangeInputWrapper> : null}
+        {isRanged && showInput ? (
+          <RangeInputWrapper className="range-slider__input-group">
+            {this._renderInput('value0')}
+            {this._renderInput('value1')}
+          </RangeInputWrapper>
+        ) : null}
       </div>
     );
   }
-};
+}
+
+polyfill(RangeSlider);
+
+export default RangeSlider;

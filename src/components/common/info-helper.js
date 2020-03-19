@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -47,7 +47,7 @@ const propTypes = {
 
 const InfoHelper = ({description, containerClass, id}) => (
   <StyledInfoHelper className={`info-helper ${containerClass || ''}`} data-tip data-for={id}>
-    <Docs height="16px"/>
+    <Docs height="16px" />
     <Tooltip id={id} effect="solid">
       <div className="info-helper__content">{description}</div>
     </Tooltip>

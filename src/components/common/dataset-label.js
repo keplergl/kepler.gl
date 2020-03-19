@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,9 @@ import React from 'react';
 import styled from 'styled-components';
 import {CenterFlexbox, DatasetSquare} from 'components/common/styled-components';
 
-const DatasetName = styled.div`
+const DatasetName = styled.div.attrs({
+  className: 'dataset-name'
+})`
   font-weight: 500;
   font-size: 12px;
   color: ${props => props.theme.titleColorLT};
@@ -31,7 +33,7 @@ const DatasetName = styled.div`
 const DatasetLabel = ({dataset}) => (
   <CenterFlexbox>
     <DatasetSquare className="dataset-clolor" color={dataset.color} />
-    <DatasetName className="dataset-name">{dataset.label}</DatasetName>
+    <DatasetName>{dataset.label}</DatasetName>
   </CenterFlexbox>
 );
 

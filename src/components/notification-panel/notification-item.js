@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,15 +25,13 @@ import {Delete, Info, Warning, Checkmark} from 'components/common/icons';
 import ReactMarkdown from 'react-markdown';
 
 const NotificationItemContent = styled.div`
-  background-color: ${props => props.theme.notificationColors[props.notification.type] || '#000'};
+  background-color: ${props => props.theme.notificationColors[props.type] || '#000'};
   color: #fff;
   display: flex;
   flex-direction: row;
   width: ${props => props.theme.notificationPanelItemWidth * (1 + Number(props.isExpanded))}px;
-  height: ${props => 
-    props.theme.notificationPanelItemHeight * (1 + Number(props.isExpanded)) 
-  }px;
-  font-size: 10px;
+  height: ${props => props.theme.notificationPanelItemHeight * (1 + Number(props.isExpanded))}px;
+  font-size: 11px;
   margin-bottom: 1rem;
   padding: 1em;
   border-radius: 4px;
@@ -45,14 +43,21 @@ const DeleteIcon = styled(Delete)`
   cursor: pointer;
 `;
 
-const NotificationMessage = styled.div`
+const NotificationMessage = styled.div.attrs({
+  className: 'notification-item--message'
+})`
   flex-grow: 2;
   width: ${props => props.theme.notificationPanelItemWidth}px;
   margin: 0 1em;
-  overflow: ${props => props.isExpanded ? 'auto' : 'hidden'};
-  padding-right: ${props => props.isExpanded ? '1em' : 0};
+  overflow: ${props => (props.isExpanded ? 'auto' : 'hidden')};
+  padding-right: ${props => (props.isExpanded ? '1em' : 0)};
+
   p {
     margin-top: 0;
+    a {
+      color: #fff;
+      text-decoration: underline;
+    }
   }
 `;
 
@@ -69,48 +74,59 @@ const icons = {
   success: <Checkmark />
 };
 
-export default function NotificationItemFactory()
-{
+const LinkRenderer = props => {
+  return (
+    <a href={props.href} target="_blank" rel="noopener noreferrer">
+      {props.children}
+    </a>
+  );
+};
+
+export default function NotificationItemFactory() {
   return class NotificationItem extends Component {
     static propTypes = {
       notification: PropTypes.shape({
         id: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
         message: PropTypes.string.isRequired
-      }).isRequired
+      }).isRequired,
+      isExpanded: PropTypes.bool
     };
 
-    constructor(props) {
-      super(props);
-      this.state = {
-        isExpanded: false
-      };
+    state = {
+      isExpanded: false
+    };
+
+    componentDidMount() {
+      if (this.props.isExpanded) {
+        this.setState({isExpanded: true});
+      }
     }
 
     render() {
       const {notification, removeNotification} = this.props;
+      const {isExpanded} = this.state;
+
       return (
         <NotificationItemContent
           className="notification-item"
-          {...this.props}
-          onClick={() => this.setState({isExpanded: !this.state.isExpanded})}
-          isExpanded={this.state.isExpanded}>
-          <NotificationIcon
-            className="notification-item--icon">
+          type={notification.type}
+          isExpanded={isExpanded}
+          onClick={() => this.setState({isExpanded: !isExpanded})}
+        >
+          <NotificationIcon className="notification-item--icon">
             {icons[notification.type]}
           </NotificationIcon>
-          <NotificationMessage
-            className="notification-item--message"
-            expanded={this.state.isExpanded}
-            theme={this.props.theme}>
-            <ReactMarkdown source={notification.message} />
+          <NotificationMessage isExpanded={isExpanded} theme={this.props.theme}>
+            <ReactMarkdown source={notification.message} renderers={{link: LinkRenderer}} />
           </NotificationMessage>
-          <div
-            className="notification-item--action">
-            <DeleteIcon height="10px" onClick={() => removeNotification(notification.id)} />
-          </div>
+          {typeof removeNotification === 'function' ? (
+            <div className="notification-item--action">
+              <DeleteIcon height="10px" onClick={() => removeNotification(notification.id)} />
+            </div>
+          ) : null}
         </NotificationItemContent>
       );
     }
-  }
+  };
 }

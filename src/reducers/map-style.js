@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,38 +19,34 @@
 // THE SOFTWARE.
 
 import {handleActions} from 'redux-actions';
-
-// Actions
 import ActionTypes from 'constants/action-types';
+import * as mapStyleUpdaters from './map-style-updaters';
 
-import {
-  INITIAL_MAP_STYLE,
-  inputMapStyleUpdater,
-  initMapStyleUpdater,
-  mapConfigChangeUpdater,
-  mapStyleChangeUpdater,
-  loadMapStylesUpdater,
-  loadMapStyleErrUpdater,
-  receiveMapConfigUpdater,
-  resetMapConfigMapStyleUpdater,
-  loadCustomMapStyleUpdater,
-  addCustomMapStyleUpdater
-} from './map-style-updaters';
-
+/**
+ * Important: Do not rename `actionHandler` or the assignment pattern of property value.
+ * It is used to generate documentation
+ */
 const actionHandler = {
-  [ActionTypes.INIT]: initMapStyleUpdater,
-  [ActionTypes.INPUT_MAP_STYLE]: inputMapStyleUpdater,
-  [ActionTypes.MAP_CONFIG_CHANGE]: mapConfigChangeUpdater,
-  [ActionTypes.MAP_STYLE_CHANGE]: mapStyleChangeUpdater,
-  [ActionTypes.LOAD_MAP_STYLES]: loadMapStylesUpdater,
-  [ActionTypes.LOAD_MAP_STYLE_ERR]: loadMapStyleErrUpdater,
-  [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
-  [ActionTypes.LOAD_CUSTOM_MAP_STYLE]: loadCustomMapStyleUpdater,
-  [ActionTypes.ADD_CUSTOM_MAP_STYLE]: addCustomMapStyleUpdater,
-  [ActionTypes.RESET_MAP_CONFIG]: resetMapConfigMapStyleUpdater
+  [ActionTypes.INIT]: mapStyleUpdaters.initMapStyleUpdater,
+  [ActionTypes.INPUT_MAP_STYLE]: mapStyleUpdaters.inputMapStyleUpdater,
+  [ActionTypes.MAP_CONFIG_CHANGE]: mapStyleUpdaters.mapConfigChangeUpdater,
+  [ActionTypes.MAP_STYLE_CHANGE]: mapStyleUpdaters.mapStyleChangeUpdater,
+  [ActionTypes.REQUEST_MAP_STYLES]: mapStyleUpdaters.requestMapStylesUpdater,
+  [ActionTypes.LOAD_MAP_STYLES]: mapStyleUpdaters.loadMapStylesUpdater,
+  [ActionTypes.LOAD_MAP_STYLE_ERR]: mapStyleUpdaters.loadMapStyleErrUpdater,
+  [ActionTypes.RECEIVE_MAP_CONFIG]: mapStyleUpdaters.receiveMapConfigUpdater,
+  [ActionTypes.LOAD_CUSTOM_MAP_STYLE]: mapStyleUpdaters.loadCustomMapStyleUpdater,
+  [ActionTypes.ADD_CUSTOM_MAP_STYLE]: mapStyleUpdaters.addCustomMapStyleUpdater,
+  [ActionTypes.RESET_MAP_CONFIG]: mapStyleUpdaters.resetMapConfigMapStyleUpdater,
+  [ActionTypes.SET_3D_BUILDING_COLOR]: mapStyleUpdaters.set3dBuildingColorUpdater,
+  [ActionTypes.RESET_MAP_CONFIG]: mapStyleUpdaters.resetMapConfigMapStyleUpdater
 };
 
 export const mapStyleReducerFactory = (initialState = {}) =>
-  handleActions(actionHandler, {...INITIAL_MAP_STYLE, ...initialState, initialState});
+  handleActions(actionHandler, {
+    ...mapStyleUpdaters.INITIAL_MAP_STYLE,
+    ...initialState,
+    initialState
+  });
 
 export default mapStyleReducerFactory();

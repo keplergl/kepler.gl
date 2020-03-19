@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,20 +19,23 @@
 // THE SOFTWARE.
 
 import test from 'tape';
+import cloneDeep from 'lodash.clonedeep';
 import SchemaManager from 'schemas';
 import {InitialState} from 'test/helpers/mock-state';
 
 test('#mapStateSchema -> v1 -> save load mapState', t => {
-  const initialState = InitialState.toJS();
+  const initialState = cloneDeep(InitialState);
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
   const msToSave = savedState.config.mapState;
   const msLoaded = SchemaManager.parseSavedConfig(savedState).mapState;
 
-  t.deepEqual(Object.keys(msToSave),
+  t.deepEqual(
+    Object.keys(msToSave),
     ['bearing', 'dragRotate', 'latitude', 'longitude', 'pitch', 'zoom', 'isSplit'],
-    'mapState should have all 6 entries');
+    'mapState should have all 6 entries'
+  );
 
   const expected = {
     pitch: 0,

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,32 +19,44 @@
 // THE SOFTWARE.
 
 // libraries
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 import {StaticMap} from 'react-map-gl';
 import debounce from 'lodash.debounce';
-import window from 'global/window';
-
+import {exportImageError} from 'utils/notifications-utils';
 import MapContainerFactory from './map-container';
-import {calculateExportImageSize, convertToPng} from 'utils/export-image-utils';
+import {convertToPng} from 'utils/export-utils';
 import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-editor';
+import {getScaleFromImageSize} from 'utils/export-utils';
+
 const propTypes = {
   width: PropTypes.number.isRequired,
   height: PropTypes.number.isRequired,
   exportImageSetting: PropTypes.object.isRequired,
+  addNotification: PropTypes.func.isRequired,
   mapFields: PropTypes.object.isRequired
 };
 
 PlotContainerFactory.deps = [MapContainerFactory];
 
+// Remove mapbox logo in exported map, because it contains non-ascii characters
 const StyledPlotContainer = styled.div`
   .mapboxgl-ctrl-bottom-left,
   .mapboxgl-ctrl-bottom-right {
     display: none;
   }
+
+  position: absolute;
 `;
+
+const deckGlProps = {
+  glOptions: {
+    preserveDrawingBuffer: true,
+    useDevicePixels: false
+  }
+};
 
 export default function PlotContainerFactory(MapContainer) {
   class PlotContainer extends Component {
@@ -53,34 +65,48 @@ export default function PlotContainerFactory(MapContainer) {
       this._onMapRender = debounce(this._onMapRender, 500);
     }
 
-    componentWillMount() {
+    componentDidMount() {
       this.props.startExportingImage();
     }
 
-    componentWillReceiveProps(newProps) {
+    componentDidUpdate(prevProps) {
       // re-fetch the new screenshot only when ratio legend or resolution changes
       const checks = ['ratio', 'resolution', 'legend'];
       const shouldRetrieveScreenshot = checks.some(
-        item =>
-          this.props.exportImageSetting[item] !==
-          newProps.exportImageSetting[item]
+        item => this.props.exportImageSetting[item] !== prevProps.exportImageSetting[item]
       );
       if (shouldRetrieveScreenshot) {
         this._retrieveNewScreenshot();
       }
     }
 
+    plottingAreaRef = createRef();
+
     mapStyleSelector = props => props.mapFields.mapStyle;
-    resolutionSelector = props => props.exportImageSetting.resolution;
+    mapScaleSelector = props => {
+      const {imageSize} = props.exportImageSetting;
+      const {mapState} = props.mapFields;
+      if (imageSize.scale) {
+        return imageSize.scale;
+      }
+
+      const scale = getScaleFromImageSize(
+        imageSize.imageW,
+        imageSize.imageH,
+        mapState.width * (mapState.isSplit ? 2 : 1),
+        mapState.height
+      );
+
+      return scale > 0 ? scale : 1;
+    };
+
     scaledMapStyleSelector = createSelector(
       this.mapStyleSelector,
-      this.resolutionSelector,
-      (mapStyle, resolution) => ({
-        bottomMapStyle: scaleMapStyleByResolution(
-          mapStyle.bottomMapStyle,
-          resolution
-        ),
-        topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, resolution)
+      this.mapScaleSelector,
+      (mapStyle, scale) => ({
+        ...mapStyle,
+        bottomMapStyle: scaleMapStyleByResolution(mapStyle.bottomMapStyle, scale),
+        topMapStyle: scaleMapStyleByResolution(mapStyle.topMapStyle, scale)
       })
     );
 
@@ -91,30 +117,29 @@ export default function PlotContainerFactory(MapContainer) {
     };
 
     _retrieveNewScreenshot = () => {
-      if (this.plottingAreaRef) {
-      // setting windowDevicePixelRatio to 1
-      // so that large mapbox base map will load in full
-        const savedDevicePixelRatio = window.devicePixelRatio;
-        window.devicePixelRatio = 1;
-
+      if (this.plottingAreaRef.current) {
         this.props.startExportingImage();
-        convertToPng(this.plottingAreaRef).then(dataUri => {
-          this.props.setExportImageDataUri({dataUri});
-          window.devicePixelRatio = savedDevicePixelRatio;
-        });
+        const filter = node => node.className !== 'mapboxgl-control-container';
+
+        convertToPng(this.plottingAreaRef.current, {filter})
+          .then(this.props.setExportImageDataUri)
+          .catch(err => {
+            this.props.setExportImageError(err);
+            this.props.addNotification(exportImageError({err}));
+          });
       }
     };
 
     render() {
-      const {width, height, exportImageSetting, mapFields} = this.props;
-      const {ratio, resolution, legend} = exportImageSetting;
-      const exportImageSize = calculateExportImageSize({
-        width,
-        height,
-        ratio,
-        resolution
-      });
+      const {exportImageSetting, mapFields, splitMaps} = this.props;
+      const {imageSize = {}, legend} = exportImageSetting;
+      const isSplit = splitMaps && splitMaps.length > 1;
 
+      const size = {
+        width: imageSize.imageW || 1,
+        height: imageSize.imageH || 1
+      };
+      const scale = this.mapScaleSelector(this.props);
       const mapProps = {
         ...mapFields,
         mapStyle: this.scaledMapStyleSelector(this.props),
@@ -122,8 +147,9 @@ export default function PlotContainerFactory(MapContainer) {
         // override viewport based on export settings
         mapState: {
           ...mapFields.mapState,
-          ...exportImageSize,
-          zoom: mapFields.mapState.zoom + exportImageSize.zoomOffset
+          width: size.width / (isSplit ? 2 : 1),
+          height: size.height,
+          zoom: mapFields.mapState.zoom + (Math.log2(scale) || 0)
         },
         mapControls: {
           // override map legend visibility
@@ -132,28 +158,39 @@ export default function PlotContainerFactory(MapContainer) {
             active: true
           }
         },
-        MapComponent: StaticMap
+        MapComponent: StaticMap,
+        onMapRender: this._onMapRender,
+        isExport: true,
+        deckGlProps
       };
+
+      const mapContainers = !isSplit ? (
+        <MapContainer index={0} {...mapProps} />
+      ) : (
+        splitMaps.map((settings, index) => (
+          <MapContainer
+            key={index}
+            index={index}
+            {...mapProps}
+            mapLayers={splitMaps[index].layers}
+          />
+        ))
+      );
 
       return (
         <StyledPlotContainer
           style={{position: 'absolute', top: -9999, left: -9999}}
+          className="export-map-instance"
         >
           <div
-            ref={element => {
-              this.plottingAreaRef = element;
-            }}
+            ref={this.plottingAreaRef}
             style={{
-              width: exportImageSize.width,
-              height: exportImageSize.height
+              width: `${size.width}px`,
+              height: `${size.height}px`,
+              display: 'flex'
             }}
           >
-            <MapContainer
-              index={0}
-              onMapRender={this._onMapRender}
-              isExport
-              {...mapProps}
-            />
+            {mapContainers}
           </div>
         </StyledPlotContainer>
       );

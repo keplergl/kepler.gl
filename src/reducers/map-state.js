@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,39 +20,27 @@
 
 import {handleActions} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
+import * as mapStateUpdaters from './map-state-updaters';
 
-export const INITIAL_MAP_STATE = {
-  pitch: 0,
-  bearing: 0,
-  latitude: 37.75043,
-  longitude: -122.34679,
-  zoom: 9,
-  dragRotate: false,
-  width: 800,
-  height: 800,
-  isSplit: false
-};
-
-import {
-  fitBoundsUpdater,
-  receiveMapConfigUpdater,
-  togglePerspectiveUpdater,
-  toggleSplitMapUpdater,
-  updateMapUpdater
-} from './map-state-updaters';
-
+/**
+ * Important: Do not rename `actionHandler` or the assignment pattern of property value.
+ * It is used to generate documentation
+ */
 const actionHandler = {
-  [ActionTypes.UPDATE_MAP]: updateMapUpdater,
-  [ActionTypes.FIT_BOUNDS]: fitBoundsUpdater,
-  [ActionTypes.TOGGLE_PERSPECTIVE]: togglePerspectiveUpdater,
-  [ActionTypes.RECEIVE_MAP_CONFIG]: receiveMapConfigUpdater,
-  [ActionTypes.TOGGLE_SPLIT_MAP]: toggleSplitMapUpdater
+  [ActionTypes.UPDATE_MAP]: mapStateUpdaters.updateMapUpdater,
+  [ActionTypes.FIT_BOUNDS]: mapStateUpdaters.fitBoundsUpdater,
+  [ActionTypes.TOGGLE_PERSPECTIVE]: mapStateUpdaters.togglePerspectiveUpdater,
+  [ActionTypes.RECEIVE_MAP_CONFIG]: mapStateUpdaters.receiveMapConfigUpdater,
+  [ActionTypes.RESET_MAP_CONFIG]: mapStateUpdaters.resetMapConfigUpdater,
+  [ActionTypes.TOGGLE_SPLIT_MAP]: mapStateUpdaters.toggleSplitMapUpdater
 };
 
 /* Reducer */
-export const mapStateReducerFactory = (initialState = {}) => handleActions(
-  actionHandler,
-  {...INITIAL_MAP_STATE, ...initialState, initialState}
-);
+export const mapStateReducerFactory = (initialState = {}) =>
+  handleActions(actionHandler, {
+    ...mapStateUpdaters.INITIAL_MAP_STATE,
+    ...initialState,
+    initialState
+  });
 
 export default mapStateReducerFactory();

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,8 +20,8 @@
 
 import {KeplerGlLayers} from 'layers';
 const {PointLayer, ArcLayer, HexagonLayer, GeojsonLayer} = KeplerGlLayers;
-
-import {Messages, Crosshairs} from 'components/common/icons';
+import {getDefaultInteraction} from 'utils/interaction-utils';
+import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 
 export const savedStateV0 = {
   config: {
@@ -230,14 +230,7 @@ export const savedStateV0 = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               radiusRange: [1, 100],
               'hi-precision': false
@@ -280,14 +273,7 @@ export const savedStateV0 = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               sizeRange: [0, 10],
               'hi-precision': false
@@ -370,14 +356,7 @@ export const savedStateV0 = {
                 name: 'Global Warming',
                 type: 'sequential',
                 category: 'Uber',
-                colors: [
-                  '#5A1846',
-                  '#900C3F',
-                  '#C70039',
-                  '#E3611C',
-                  '#F1920E',
-                  '#FFC300'
-                ]
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               },
               coverage: 1,
               sizeRange: [0, 50],
@@ -804,57 +783,68 @@ export const expectedFields0 = [
   {
     name: 'song_name',
     type: 'string',
-    format: ''
+    format: '',
+    analyzerType: 'STRING'
   },
   {
     name: 'begintrip_lat',
     type: 'real',
-    format: ''
+    format: '',
+    analyzerType: 'FLOAT'
   },
   {
     name: 'begintrip_lng',
     type: 'real',
-    format: ''
+    format: '',
+    analyzerType: 'FLOAT'
   },
   {
     name: 'timestamp_local',
     type: 'timestamp',
-    format: 'YYYY-M-DTHH:mm:ss.SSSS'
+    format: 'YYYY-M-DTHH:mm:ss.SSSS',
+    analyzerType: 'DATETIME'
   },
   {
     name: 'counting',
     type: 'real',
-    format: ''
+    format: '',
+    analyzerType: 'FLOAT'
   },
   {
     name: 'detail',
     type: 'string',
-    format: ''
+    format: '',
+    analyzerType: 'STRING'
   },
   {
     name: 'dropoff_lat',
     type: 'real',
-    format: ''
+    format: '',
+    analyzerType: 'FLOAT'
   },
   {
     name: 'dropoff_lng',
     type: 'real',
-    format: ''
+    format: '',
+    analyzerType: 'FLOAT'
   },
   {
     name: 'dropoff_timestamp_local',
     type: 'timestamp',
-    format: 'YYYY-M-DTHH:mm:ss.SSSS'
+    format: 'YYYY-M-DTHH:mm:ss.SSSS',
+    analyzerType: 'DATETIME'
   },
   {
     name: 'int_range',
     type: 'integer',
-    format: ''
+    format: '',
+    analyzerType: 'INT'
   },
   {
     name: 'type_boolean',
     type: 'boolean',
-    format: ''
+    format: '',
+    analyzerType: 'BOOLEAN'
   }
 ];
 
@@ -868,53 +858,58 @@ export const expectedFields1 = [
   {
     name: '_geojson',
     type: 'geojson',
-    format: ''
+    format: '',
+    analyzerType: 'GEOMETRY'
   },
   {
     name: 'OBJECTID',
     type: 'integer',
-    format: ''
+    format: '',
+    analyzerType: 'INT'
   },
   {
     name: 'ZIP_CODE',
     type: 'integer',
-    format: ''
+    format: '',
+    analyzerType: 'INT'
   },
   {
     name: 'ID',
     type: 'integer',
-    format: ''
+    format: '',
+    analyzerType: 'INT'
   }
 ];
 
 export const mergedFilters = [
   {
-    dataId: '9h10t7fyb',
+    dataId: ['9h10t7fyb'],
     freeze: true,
     id: 'vxzfwyg2v',
     enlarged: false,
     isAnimating: false,
-    name: 'song_name',
+    name: ['song_name'],
     type: 'multiSelect',
-    fieldIdx: 0,
-    domain: ['2.103.2', '2.107.3', '2.116.2', '2.117.1', '3.68.4' ],
+    fieldIdx: [0],
+    domain: ['2.103.2', '2.107.3', '2.116.2', '2.117.1', '3.68.4'],
     value: ['3.68.4', '2.117.1', '2.103.2', '2.116.2'],
     fieldType: 'string',
     plotType: 'histogram',
     yAxis: null,
     interval: null,
     speed: 1,
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: false
   },
   {
-    dataId: '9h10t7fyb',
+    dataId: ['9h10t7fyb'],
     freeze: true,
     id: 'fo9tjm2unl',
     enlarged: true,
     isAnimating: false,
-    name: 'timestamp_local',
+    name: ['timestamp_local'],
     type: 'timeRange',
-    fieldIdx: 3,
+    fieldIdx: [3],
     plotType: 'histogram',
     yAxis: null,
     interval: null,
@@ -936,30 +931,33 @@ export const mergedFilters = [
       1453770540000
     ],
     fieldType: 'timestamp',
-    fixedDomain: true
+    fixedDomain: true,
+    gpu: true,
+    gpuChannel: [0]
   },
   {
-    dataId: '9h10t7fyb',
+    dataId: ['9h10t7fyb'],
     id: 'aesy96t5',
-    name: 'type_boolean',
+    name: ['type_boolean'],
     type: 'select',
     freeze: true,
     value: false,
     enlarged: false,
     isAnimating: false,
-    fieldIdx: 10,
+    fieldIdx: [10],
     domain: [true, false],
     fieldType: 'boolean',
     plotType: 'histogram',
     yAxis: null,
     interval: null,
     speed: 1,
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: false
   },
   {
-    dataId: '9h10t7fyb',
+    dataId: ['9h10t7fyb'],
     id: 's1bhgjt1',
-    name: 'int_range',
+    name: ['int_range'],
     type: 'range',
     value: [78, 309],
     freeze: true,
@@ -970,23 +968,25 @@ export const mergedFilters = [
     histogram: ['not tested'],
     enlargedHistogram: ['not tested'],
     isAnimating: false,
-    fieldIdx: 9,
+    fieldIdx: [9],
     domain: [78, 694],
     step: 1,
     speed: 1,
     fieldType: 'integer',
     typeOptions: ['range'],
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: true,
+    gpuChannel: [1]
   },
   {
-    dataId: 'v79816te8',
+    dataId: ['v79816te8'],
     freeze: true,
     id: '5nfmxjjzl',
     enlarged: false,
     isAnimating: false,
-    name: 'ZIP_CODE',
+    name: ['ZIP_CODE'],
     type: 'range',
-    fieldIdx: 2,
+    fieldIdx: [2],
     plotType: 'histogram',
     yAxis: null,
     interval: null,
@@ -994,11 +994,13 @@ export const mergedFilters = [
     enlargedHistogram: ['not tested'],
     domain: [94107, 94132],
     value: [94115.3, 94132],
-    step: 0.1,
+    step: 0.01,
     speed: 1,
     fieldType: 'integer',
     typeOptions: ['range'],
-    fixedDomain: false
+    fixedDomain: false,
+    gpu: true,
+    gpuChannel: [0]
   }
 ];
 
@@ -1030,20 +1032,19 @@ mergedLayer0.config = {
   colorField: null,
   colorScale: 'quantile',
   colorDomain: [0, 1],
+  strokeColorField: null,
+  strokeColorScale: 'quantile',
+  strokeColorDomain: [0, 1],
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
-  textLabel: {
-    field: null,
-    color: [255, 255, 255],
-    size: 50,
-    offset: [0, 0],
-    anchor: 'middle'
-  },
+  textLabel: [DEFAULT_TEXT_LABEL],
+
   visConfig: {
     radius: 270.4,
     opacity: 0.8,
     outline: false,
+    filled: true,
     thickness: 2,
     fixedRadius: false,
     colorRange: {
@@ -1052,28 +1053,19 @@ mergedLayer0.config = {
       category: 'Uber',
       colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
-    radiusRange: [1, 100],
-    'hi-precision': false
+    strokeColorRange: {
+      name: 'Global Warming',
+      type: 'sequential',
+      category: 'Uber',
+      colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+    },
+    strokeColor: [76, 154, 78],
+    radiusRange: [1, 100]
   }
 };
 
 mergedLayer0.meta = {
-  bounds: [-122.4784396, 37.78188901, -121.3686062, 38.5590766],
-  lightSettings: {
-    lightsPosition: [
-      -122.4784396,
-      37.78188901,
-      8000,
-      -121.3686062,
-      38.5590766,
-      8000
-    ],
-    ambientRatio: 0.4,
-    diffuseRatio: 0.6,
-    specularRatio: 0.3,
-    lightsStrength: [0.9, 0, 0.8, 0],
-    numberOfLights: 2
-  }
+  bounds: [-122.4784396, 37.78188901, -121.3686062, 38.5590766]
 };
 
 const mergedLayer1 = new ArcLayer({
@@ -1110,12 +1102,10 @@ mergedLayer1.config = {
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
-  textLabel: {
-    field: null,
-    color: [255, 255, 255],
-    size: 50,
-    offset: [0, 0],
-    anchor: 'middle'
+  textLabel: [DEFAULT_TEXT_LABEL],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
   },
   visConfig: {
     opacity: 0.41,
@@ -1127,8 +1117,7 @@ mergedLayer1.config = {
       category: 'Uber',
       colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
-    sizeRange: [0, 10],
-    'hi-precision': false
+    sizeRange: [0, 10]
   }
 };
 
@@ -1163,30 +1152,34 @@ mergedLayer2.config = {
     type: 'string',
     id: 'song_name',
     format: '',
-    tableFieldIndex: 1
+    tableFieldIndex: 1,
+    analyzerType: 'STRING'
   },
   colorScale: 'ordinal',
   colorDomain: ['2.103.2', '2.107.3', '2.116.2', '2.117.1', '3.68.4'],
+  strokeColorField: null,
+  strokeColorScale: 'quantile',
+  strokeColorDomain: [0, 1],
   sizeField: {
     name: 'int_range',
     format: '',
     id: 'int_range',
     type: 'integer',
-    tableFieldIndex: 10
+    tableFieldIndex: 10,
+    analyzerType: 'INT'
   },
   sizeDomain: [78, 694],
-  sizeScale: 'linear',
-  textLabel: {
-    field: null,
-    color: [255, 255, 255],
-    size: 50,
-    offset: [0, 0],
-    anchor: 'middle'
+  sizeScale: 'sqrt',
+  textLabel: [DEFAULT_TEXT_LABEL],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
   },
   visConfig: {
     radius: 10,
     opacity: 0.8,
     outline: false,
+    filled: true,
     thickness: 2,
     colorRange: {
       name: 'Sunrise',
@@ -1195,29 +1188,22 @@ mergedLayer2.config = {
       colors: ['#355C7D', '#6C5B7B', '#C06C84', '#F67280', '#F8B195'],
       reversed: false
     },
+    strokeColorRange: {
+      name: 'Sunrise',
+      type: 'sequential',
+      category: 'Uber',
+      colors: ['#355C7D', '#6C5B7B', '#C06C84', '#F67280', '#F8B195'],
+      reversed: false
+    },
+    strokeColor: [218, 112, 191],
     fixedRadius: false,
-    radiusRange: [1, 854.16],
-    'hi-precision': false
-  }
+    radiusRange: [1, 854.16]
+  },
+  animation: {enabled: false}
 };
 
 mergedLayer2.meta = {
-  bounds: [-122.4761712, 37.6169644, -121.7922809, 38.4163786],
-  lightSettings: {
-    lightsPosition: [
-      -122.4761712,
-      37.6169644,
-      8000,
-      -121.7922809,
-      38.4163786,
-      8000
-    ],
-    ambientRatio: 0.4,
-    diffuseRatio: 0.6,
-    specularRatio: 0.3,
-    lightsStrength: [0.9, 0, 0.8, 0],
-    numberOfLights: 2
-  }
+  bounds: [-122.4761712, 37.6169644, -121.7922809, 38.4163786]
 };
 
 const mergedLayer3 = new HexagonLayer({
@@ -1244,7 +1230,8 @@ mergedLayer3.config = {
     id: 'int_range',
     type: 'integer',
     format: '',
-    tableFieldIndex: 10
+    tableFieldIndex: 10,
+    analyzerType: 'INT'
   },
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
@@ -1253,12 +1240,10 @@ mergedLayer3.config = {
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
-  textLabel: {
-    field: null,
-    color: [255, 255, 255],
-    size: 50,
-    offset: [0, 0],
-    anchor: 'middle'
+  textLabel: [DEFAULT_TEXT_LABEL],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
   },
   visConfig: {
     colorAggregation: 'maximum',
@@ -1277,28 +1262,13 @@ mergedLayer3.config = {
     sizeRange: [0, 50],
     percentile: [0, 100],
     elevationPercentile: [0, 100],
-    elevationScale: 10,
-    'hi-precision': false
-  }
+    elevationScale: 10
+  },
+  animation: {enabled: false}
 };
 
 mergedLayer3.meta = {
-  bounds: [-122.4761712, 37.6169644, -121.7922809, 38.4163786],
-  lightSettings: {
-    lightsPosition: [
-      -122.4761712,
-      37.6169644,
-      8000,
-      -121.7922809,
-      38.4163786,
-      8000
-    ],
-    ambientRatio: 0.4,
-    diffuseRatio: 0.6,
-    specularRatio: 0.3,
-    lightsStrength: [0.9, 0, 0.8, 0],
-    numberOfLights: 2
-  }
+  bounds: [-122.4761712, 37.6169644, -121.7922809, 38.4163786]
 };
 
 const mergedLayer4 = new GeojsonLayer({id: 'vta'});
@@ -1321,19 +1291,21 @@ mergedLayer4.config = {
     id: 'ID',
     type: 'integer',
     format: '',
-    tableFieldIndex: 4
+    tableFieldIndex: 4,
+    analyzerType: 'INT'
   },
   colorScale: 'quantize',
   colorDomain: [94107, 94132],
+  strokeColorField: null,
+  strokeColorScale: 'quantile',
+  strokeColorDomain: [0, 1],
   sizeField: null,
   sizeScale: 'linear',
   sizeDomain: [0, 1],
-  textLabel: {
-    field: null,
-    color: [255, 255, 255],
-    size: 50,
-    offset: [0, 0],
-    anchor: 'middle'
+  textLabel: [DEFAULT_TEXT_LABEL],
+  colorUI: {
+    color: DEFAULT_COLOR_UI,
+    colorRange: DEFAULT_COLOR_UI
   },
   heightField: null,
   heightDomain: [0, 1],
@@ -1367,6 +1339,30 @@ mergedLayer4.config = {
       ],
       reversed: false
     },
+    strokeColorRange: {
+      name: 'Uber Viz Qualitative 3',
+      type: 'qualitative',
+      category: 'Uber',
+      colors: [
+        '#12939A',
+        '#DDB27C',
+        '#88572C',
+        '#FF991F',
+        '#F15C17',
+        '#223F9A',
+        '#DA70BF',
+        '#125C77',
+        '#4DC19C',
+        '#776E57',
+        '#17B8BE',
+        '#F6D18A',
+        '#B7885E',
+        '#FFCB99',
+        '#F89570'
+      ],
+      reversed: false
+    },
+    strokeColor: [255, 153, 31, 255],
     opacity: 0.8,
     thickness: 2,
     radius: 10,
@@ -1378,8 +1374,9 @@ mergedLayer4.config = {
     filled: true,
     enable3d: false,
     wireframe: false,
-    'hi-precision': false
-  }
+    strokeOpacity: 0.8
+  },
+  animation: {enabled: false}
 };
 
 mergedLayer4.dataToFeature = {
@@ -1452,56 +1449,25 @@ mergedLayer4.dataToFeature = {
 };
 
 mergedLayer4.meta = {
-  bounds: [
-    -122.50828762723958,
-    37.733266432915535,
-    -122.39989147796784,
-    37.787534455433345
-  ],
-  lightSettings: {
-    lightsPosition: [
-      -122.50828762723958,
-      37.733266432915535,
-      8000,
-      -122.39989147796784,
-      37.787534455433345,
-      8000
-    ],
-    ambientRatio: 0.4,
-    diffuseRatio: 0.6,
-    specularRatio: 0.3,
-    lightsStrength: [0.9, 0, 0.8, 0],
-    numberOfLights: 2
-  },
+  bounds: [-122.50828762723958, 37.733266432915535, -122.39989147796784, 37.787534455433345],
   featureTypes: {polygon: true},
   fp64: false,
   fixedRadius: false
 };
 
-export const mergedLayers = [
-  mergedLayer0,
-  mergedLayer1,
-  mergedLayer2,
-  mergedLayer3,
-  mergedLayer4
-];
+export const mergedLayers = [mergedLayer0, mergedLayer1, mergedLayer2, mergedLayer3, mergedLayer4];
 
+const defaultInteraction = getDefaultInteraction();
 export const mergedInteractions = {
+  ...defaultInteraction,
   tooltip: {
-    id: 'tooltip',
+    ...defaultInteraction.tooltip,
     enabled: true,
     config: {
       fieldsToShow: {
         '9h10t7fyb': ['int_range', 'detail', 'type_boolean'],
         v79816te8: ['ID', 'ZIP_CODE']
       }
-    },
-    iconComponent: Messages
-  },
-  brush: {
-    id: 'brush',
-    enabled: false,
-    config: {size: 0.5},
-    iconComponent: Crosshairs
+    }
   }
 };

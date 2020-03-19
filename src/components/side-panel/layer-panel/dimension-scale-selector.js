@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,19 +19,10 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {
-  PanelLabel,
-  SidePanelSection
-} from 'components/common/styled-components';
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
 
-const DimensionScaleSelector = ({
-  label,
-  onSelect,
-  options,
-  scaleType,
-  disabled = false
-}) => {
+const DimensionScaleSelector = ({label, onSelect, options, scaleType, disabled = false}) => {
   return (
     <SidePanelSection>
       <PanelLabel>{label || 'Scale'}</PanelLabel>

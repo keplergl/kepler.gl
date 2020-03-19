@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,28 +21,23 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
-import {
-  SidePanelSection,
-  SidePanelDivider,
-  Button
-} from 'components/common/styled-components';
+import {SidePanelSection, SidePanelDivider, Button} from 'components/common/styled-components';
 import {Add} from 'components/common/icons';
-import SourceDataCatalogFactory from './source-data-catalog';
+import SourceDataCatalogFactory from './common/source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
 
-FilterManagerFactory.deps = [
-  SourceDataCatalogFactory,
-  FilterPanelFactory
-];
+FilterManagerFactory.deps = [SourceDataCatalogFactory, FilterPanelFactory];
 
 function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
   return class FilterManager extends Component {
     static propTypes = {
       datasets: PropTypes.object,
+      layers: PropTypes.arrayOf(PropTypes.any).isRequired,
       addFilter: PropTypes.func.isRequired,
       removeFilter: PropTypes.func.isRequired,
       enlargeFilter: PropTypes.func.isRequired,
       toggleAnimation: PropTypes.func.isRequired,
+      toggleFilterFeature: PropTypes.func.isRequired,
       setFilter: PropTypes.func.isRequired,
       filters: PropTypes.arrayOf(PropTypes.any).isRequired,
       showDatasetTable: PropTypes.func,
@@ -55,8 +50,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
     datasetsSelector = state => state.datasets;
     defaultDatasetSelector = createSelector(
       this.datasetsSelector,
-      datasets =>
-        (Object.keys(datasets).length && Object.keys(datasets)[0]) || null
+      datasets => (Object.keys(datasets).length && Object.keys(datasets)[0]) || null
     );
 
     /* actions */
@@ -66,17 +60,14 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
     };
 
     render() {
-      const {filters, datasets} = this.props;
+      const {filters, datasets, layers} = this.props;
       const isAnyFilterAnimating = filters.some(f => f.isAnimating);
       const hadEmptyFilter = filters.some(f => !f.name);
       const hadDataset = Object.keys(datasets).length;
 
       return (
         <div className="filter-manager">
-          <SourceDataCatalog
-            datasets={datasets}
-            showDatasetTable={this.props.showDatasetTable}
-          />
+          <SourceDataCatalog datasets={datasets} showDatasetTable={this.props.showDatasetTable} />
           <SidePanelDivider />
           <SidePanelSection>
             {filters &&
@@ -87,20 +78,19 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
                   filters={filters}
                   filter={filter}
                   datasets={datasets}
+                  layers={layers}
                   isAnyFilterAnimating={isAnyFilterAnimating}
                   removeFilter={() => this.props.removeFilter(idx)}
                   enlargeFilter={() => this.props.enlargeFilter(idx)}
                   toggleAnimation={() => this.props.toggleAnimation(idx)}
+                  toggleFilterFeature={() => this.props.toggleFilterFeature(idx)}
                   setFilter={this.props.setFilter}
                 />
               ))}
           </SidePanelSection>
-          <Button
-            inactive={hadEmptyFilter || !hadDataset}
-            width="105px"
-            onClick={this._addFilter}
-          >
-            <Add height="12px" />Add Filter
+          <Button inactive={hadEmptyFilter || !hadDataset} width="105px" onClick={this._addFilter}>
+            <Add height="12px" />
+            Add Filter
           </Button>
         </div>
       );

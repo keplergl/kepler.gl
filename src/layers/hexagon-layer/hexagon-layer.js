@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {GeoJsonLayer} from 'deck.gl';
+import {GeoJsonLayer} from '@deck.gl/layers';
 import AggregationLayer from '../aggregation-layer';
 import EnhancedHexagonLayer from 'deckgl-layers/hexagon-layer/enhanced-hexagon-layer';
 import {hexagonToPolygonGeo} from './hexagon-utils';
@@ -35,7 +35,6 @@ export const hexagonVisConfigs = {
   percentile: 'percentile',
   elevationPercentile: 'elevationPercentile',
   elevationScale: 'elevationScale',
-  'hi-precision': 'hi-precision',
   colorAggregation: 'aggregation',
   sizeAggregation: 'sizeAggregation',
   enable3d: 'enable3d'
@@ -61,68 +60,29 @@ export default class HexagonLayer extends AggregationLayer {
     return HexagonLayerIcon;
   }
 
-  renderLayer({
-    data,
-    idx,
-    objectHovered,
-    mapState,
-    interaction,
-    layerCallbacks
-  }) {
+  renderLayer(opts) {
+    const {data, objectHovered, mapState} = opts;
     const zoomFactor = this.getZoomFactor(mapState);
-    const eleZoomFactor = this.getElevationZoomFactor(mapState);
     const {visConfig} = this.config;
     const radius = visConfig.worldUnitSize * 1000;
 
     return [
       new EnhancedHexagonLayer({
+        ...this.getDefaultAggregationLayerProp(opts),
         ...data,
-        id: this.id,
-        idx,
-
-        // highlight
-        autoHighlight: visConfig.enable3d,
-
-        radius,
-        coverage: visConfig.coverage,
-
-        // color
-        colorRange: this.getColorRange(visConfig.colorRange),
-        colorScale: this.config.colorScale,
-        opacity: visConfig.opacity,
-        upperPercentile: visConfig.percentile[1],
-        lowerPercentile: visConfig.percentile[0],
-
-        // parameters
-        parameters: {depthTest: Boolean(visConfig.enable3d || mapState.dragRotate)},
-
-        // elevation
-        extruded: visConfig.enable3d,
-        elevationScale: visConfig.elevationScale * eleZoomFactor,
-        elevationLowerPercentile: visConfig.elevationPercentile[0],
-        elevationUpperPercentile: visConfig.elevationPercentile[1],
-
-        // render
-        fp64: visConfig['hi-precision'],
-        pickable: true,
-        lightSettings: this.meta.lightSettings,
-        // callbacks
-        onSetColorDomain: layerCallbacks.onSetLayerDomain
+        wrapLongitude: false,
+        radius
       }),
 
       // render an outline of each hexagon if not extruded
       ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
         ? [
             new GeoJsonLayer({
-              id: `${this.id}-hovered`,
+              ...this.getDefaultHoverLayerProps(),
+              wrapLongitude: false,
               data: [
-                hexagonToPolygonGeo(
-                  objectHovered,
-                  {},
-                  radius * visConfig.coverage,
-                  mapState
-                )
-              ],
+                hexagonToPolygonGeo(objectHovered, {}, radius * visConfig.coverage, mapState)
+              ].filter(d => d),
               getLineColor: this.config.highlightColor,
               lineWidthScale: clamp([1, 100], radius * 0.1 * zoomFactor)
             })

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export const transformRequest = (url, resourceType) => {
-  const isMapboxRequest = url.slice(8, 22) === 'api.mapbox.com' ||
-    url.slice(10, 26) === 'tiles.mapbox.com';
+export const transformRequest = url => {
+  const isMapboxRequest =
+    url.slice(8, 22) === 'api.mapbox.com' || url.slice(10, 26) === 'tiles.mapbox.com';
 
   return {
     url: isMapboxRequest ? url.replace('?', '?pluginName=Keplergl&') : url

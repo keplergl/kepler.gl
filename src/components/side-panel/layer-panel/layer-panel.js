@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,23 +21,24 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
-import {sortable} from 'react-anything-sortable';
 
-import LayerConfigurator from './layer-configurator';
+import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeader from './layer-panel-header';
 
 const PanelWrapper = styled.div`
   font-size: 12px;
   border-radius: 1px;
   margin-bottom: 8px;
+  z-index: 1000;
 
   &.dragging {
     cursor: move;
   }
 `;
 
-function LayerPanelFactory() {
-  @sortable
+LayerPanelFactory.deps = [LayerConfiguratorFactory];
+
+function LayerPanelFactory(LayerConfigurator) {
   class LayerPanel extends Component {
     static propTypes = {
       layer: PropTypes.object.isRequired,
@@ -48,10 +49,12 @@ function LayerPanelFactory() {
       openModal: PropTypes.func.isRequired,
       removeLayer: PropTypes.func.isRequired,
       onCloseConfig: PropTypes.func,
-
       layerTypeOptions: PropTypes.arrayOf(PropTypes.any),
-      layerVisConfigChange: PropTypes.func,
-      layerVisualChannelConfigChange: PropTypes.func
+      layerVisConfigChange: PropTypes.func.isRequired,
+      layerVisualChannelConfigChange: PropTypes.func.isRequired,
+      layerColorUIChange: PropTypes.func.isRequired,
+      updateAnimationTime: PropTypes.func,
+      updateLayerAnimationSpeed: PropTypes.func
     };
 
     updateLayerConfig = newProp => {
@@ -66,13 +69,16 @@ function LayerPanelFactory() {
       this.props.layerVisConfigChange(this.props.layer, newVisConfig);
     };
 
+    updateLayerColorUI = (...args) => {
+      this.props.layerColorUIChange(this.props.layer, ...args);
+    };
+
+    updateLayerTextLabel = (...args) => {
+      this.props.layerTextLabelChange(this.props.layer, ...args);
+    };
+
     updateLayerVisualChannelConfig = (newConfig, channel, scaleKey) => {
-      this.props.layerVisualChannelConfigChange(
-        this.props.layer,
-        newConfig,
-        channel,
-        scaleKey
-      );
+      this.props.layerVisualChannelConfigChange(this.props.layer, newConfig, channel, scaleKey);
     };
 
     _updateLayerLabel = ({target: {value}}) => {
@@ -87,7 +93,11 @@ function LayerPanelFactory() {
 
     _toggleEnableConfig = e => {
       e.stopPropagation();
-      const {layer: {config: {isConfigActive}}} = this.props;
+      const {
+        layer: {
+          config: {isConfigActive}
+        }
+      } = this.props;
       this.updateLayerConfig({isConfigActive: !isConfigActive});
     };
 
@@ -95,6 +105,7 @@ function LayerPanelFactory() {
       e.stopPropagation();
       this.props.removeLayer(this.props.idx);
     };
+
     render() {
       const {layer, idx, datasets, layerTypeOptions} = this.props;
       const {config} = layer;
@@ -127,9 +138,11 @@ function LayerPanelFactory() {
               datasets={datasets}
               layerTypeOptions={layerTypeOptions}
               openModal={this.props.openModal}
+              updateLayerColorUI={this.updateLayerColorUI}
               updateLayerConfig={this.updateLayerConfig}
               updateLayerVisualChannelConfig={this.updateLayerVisualChannelConfig}
               updateLayerType={this.updateLayerType}
+              updateLayerTextLabel={this.updateLayerTextLabel}
               updateLayerVisConfig={this.updateLayerVisConfig}
             />
           )}

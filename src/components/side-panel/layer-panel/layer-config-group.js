@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,21 +19,28 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
+import {polyfill} from 'react-lifecycles-compat';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import Switch from 'components/common/switch';
+import InfoHelper from 'components/common/info-helper';
 import {VertThreeDots} from 'components/common/icons';
 
 export const StyledLayerConfigGroupLabel = styled.div`
   border-left: 2px solid ${props => props.theme.labelColor};
-  color: ${props => props.theme.textColor};
-  font-size: 12px;
-  font-weight: 500;
   line-height: 12px;
   margin-left: -12px;
   padding-left: 10px;
-  text-transform: capitalize;
-  letter-spacing: 0.2px;
+  display: flex;
+  align-items: center;
+
+  span {
+    color: ${props => props.theme.textColor};
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    text-transform: capitalize;
+  }
 `;
 
 export const StyledLayerConfigGroupAction = styled.div`
@@ -51,16 +58,29 @@ export const ConfigGroupCollapsibleContent = styled.div.attrs({
   max-height: 600px;
 `;
 
+export const ConfigGroupCollapsibleHeader = styled.div.attrs({
+  className: 'layer-config-group__header__collapsible'
+})`
+  overflow: visible;
+  overflow: hidden;
+  max-height: 0;
+`;
+
 export const StyledLayerConfigGroup = styled.div`
   padding-left: 18px;
   margin-bottom: 12px;
 
+  &.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+  }
   &.collapsed {
+    .layer-config-group__header__collapsible {
+      overflow: visible;
+      max-height: 600px;
+    }
     .layer-config-group__content {
-
       .layer-config-group__content__collapsible {
-        /* display: none; */
-        /* flex: 0; */
         overflow: hidden;
         max-height: 0;
       }
@@ -82,7 +102,7 @@ export const StyledConfigGroupHeader = styled.div`
     }
 
     .layer-config-group__action {
-      color:  ${props => props.theme.textColorHl};
+      color: ${props => props.theme.textColorHl};
     }
   }
 `;
@@ -97,32 +117,27 @@ const ConfigGroupContent = styled.div`
   }
 `;
 
-export default class LayerConfigGroup extends Component {
-
+class LayerConfigGroup extends Component {
   static defaultProps = {
     collapsible: false,
     expanded: false,
-    onChange: () => {}
+    onChange: () => {},
+    description: null,
+    disabled: false
   };
+
+  static getDerivedStateFromProps(props, state) {
+    //  invoked after a component is instantiated as well as before it is re-rendered
+    if (props.expanded && state.collapsed) {
+      return {collapsed: false};
+    }
+
+    return null;
+  }
 
   state = {
     collapsed: true
   };
-
-  componentDidMount() {
-    this._setCollapseState(this.props.expanded);
-  }
-
-  componentWillReceiveProps(nextProps) {
-    this._setCollapseState(nextProps.expanded);
-  }
-
-  _setCollapseState(expanded) {
-    // if props,expanded, and state collapsed, set collapsed to be false
-    if (expanded && this.state.collapsed) {
-      this.setState({collapsed: false});
-    }
-  }
 
   render() {
     const {
@@ -131,30 +146,32 @@ export default class LayerConfigGroup extends Component {
       property,
       layer,
       onChange,
-      collapsible
+      collapsible,
+      description,
+      disabled
     } = this.props;
 
     const {collapsed} = this.state;
 
     return (
-      <StyledLayerConfigGroup className={classnames('layer-config-group', {collapsed})}>
-        <StyledConfigGroupHeader className="layer-config-group__header"
+      <StyledLayerConfigGroup className={classnames('layer-config-group', {collapsed, disabled})}>
+        <StyledConfigGroupHeader
+          className="layer-config-group__header"
           onClick={() => this.setState({collapsed: !this.state.collapsed})}
         >
           <StyledLayerConfigGroupLabel className="layer-config-group__label">
-            {label}
+            <span>{label}</span>
+            {description && <InfoHelper description={description} id={label} />}
           </StyledLayerConfigGroupLabel>
           <StyledLayerConfigGroupAction className="layer-config-group__action">
             {property ? (
               <Switch
                 checked={layer.config.visConfig[property]}
                 id={`${layer.id}-${property}`}
-                onChange={() =>
-                  onChange({[property]: !layer.config.visConfig[property]})
-                }
+                onChange={() => onChange({[property]: !layer.config.visConfig[property]})}
               />
             ) : null}
-            {collapsible ? <VertThreeDots height="18px"/> : null}
+            {collapsible ? <VertThreeDots height="18px" /> : null}
           </StyledLayerConfigGroupAction>
         </StyledConfigGroupHeader>
         <ConfigGroupContent
@@ -169,3 +186,6 @@ export default class LayerConfigGroup extends Component {
   }
 }
 
+polyfill(LayerConfigGroup);
+
+export default LayerConfigGroup;

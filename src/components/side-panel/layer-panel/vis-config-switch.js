@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,11 +30,7 @@ const propTypes = {
   layer: PropTypes.object.isRequired,
   property: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
-  label: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.bool,
-    PropTypes.func
-  ]),
+  label: PropTypes.oneOfType([PropTypes.string, PropTypes.bool, PropTypes.func]),
   description: PropTypes.string,
   disabled: PropTypes.bool
 };
@@ -42,7 +38,7 @@ const propTypes = {
 const StyledVisConfigSwitch = styled.div`
   display: flex;
   justify-content: space-between;
-  
+
   .vis-config-switch__title {
     display: flex;
   }
@@ -62,14 +58,14 @@ const VisConfigSwitch = ({
         {label ? <PanelLabel>{label || capitalizeFirstLetter(property)}</PanelLabel> : null}
         {description ? (
           <div>
-            <InfoHelper description={description} id={`${id}-${property}`} />
+            <InfoHelper description={description} id={`${id}-${property}-description`} />
           </div>
         ) : null}
       </div>
       <div className="vis-config-switch__switch">
         <Switch
           checked={config.visConfig[property]}
-          id={`${id}-${property}`}
+          id={`${id}-${property}-switch`}
           onChange={() => onChange({[property]: !config.visConfig[property]})}
         />
       </div>

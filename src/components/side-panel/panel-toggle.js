@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -44,10 +44,8 @@ const PanelTab = styled.div.attrs({
   align-items: flex-end;
   border-bottom-style: solid;
   border-bottom-width: 2px;
-  border-bottom-color: ${props =>
-  props.active ? props.theme.subtextColorActive : 'transparent'};
-  color: ${props =>
-  props.active ? props.theme.subtextColorActive : props.theme.subtextColor};
+  border-bottom-color: ${props => (props.active ? props.theme.subtextColorActive : 'transparent')};
+  color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.subtextColor)};
   display: flex;
   justify-content: center;
   margin-right: 12px;
@@ -72,12 +70,7 @@ const PanelToggleFactory = () => {
           onClick={() => togglePanel(panel.id)}
         >
           <panel.iconComponent height="20px" />
-          <Tooltip
-            id={`${panel.id}-nav`}
-            effect="solid"
-            delayShow={500}
-            place="bottom"
-          >
+          <Tooltip id={`${panel.id}-nav`} effect="solid" delayShow={500} place="bottom">
             <span>{panel.label || panel.id}</span>
           </Tooltip>
         </PanelTab>
@@ -87,6 +80,6 @@ const PanelToggleFactory = () => {
 
   PanelToggle.propTypes = propTypes;
   return PanelToggle;
-}
+};
 
 export default PanelToggleFactory;

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -94,13 +94,7 @@ const Link = styled.div`
   color: black;
 `;
 
-export const VerticalCard = ({
-  title,
-  description,
-  image,
-  linkText,
-  linkUrl
-}) => (
+export const VerticalCard = ({title, description, image, linkText, linkUrl}) => (
   <VerticalContainer>
     <VerticalCardImage src={image} />
     <Content>
@@ -111,13 +105,7 @@ export const VerticalCard = ({
   </VerticalContainer>
 );
 
-export const HorizontalCard = ({
-  title,
-  description,
-  image,
-  linkText,
-  linkUrl
-}) => (
+export const HorizontalCard = ({title, description, image, linkText, linkUrl}) => (
   <HorizontalContainer>
     <HorizontalCardImage src={image} />
     <Content>

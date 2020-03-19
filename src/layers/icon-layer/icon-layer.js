@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,40 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Layer from '../base-layer';
-import memoize from 'lodash.memoize';
+import window from 'global/window';
+import {BrushingExtension} from '@deck.gl/extensions';
+
 import {hexToRgb} from 'utils/color-utils';
-import {svgIcons as SvgIcons} from './svg-icons.json';
 import SvgIconLayer from 'deckgl-layers/svg-icon-layer/svg-icon-layer';
 import IconLayerIcon from './icon-layer-icon';
-import {ICON_FIELDS} from 'constants/default-settings';
+import {ICON_FIELDS, CLOUDFRONT} from 'constants/default-settings';
 import IconInfoModalFactory from './icon-info-modal';
+import Layer from '../base-layer';
+import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 
-const IconInfoModal = IconInfoModalFactory();
-const IconIds = SvgIcons.map(d => d.id);
-const SvgIconGeometry = SvgIcons.reduce(
-  (accu, curr) => ({
-    ...accu,
-    [curr.id]: curr.mesh.cells.reduce((prev, cell) => {
-      cell.forEach(p => {
-        Array.prototype.push.apply(prev, curr.mesh.positions[p]);
-      });
-      return prev;
-    }, [])
-  }),
-  {}
-);
+const brushingExtension = new BrushingExtension();
 
-export const iconPosAccessor = ({lat, lng}) => d => [
-  d.data[lng.fieldIdx],
-  d.data[lat.fieldIdx]
-];
+export const SVG_ICON_URL = `${CLOUDFRONT}/icons/svg-icons.json`;
 
-export const iconPosResolver = ({lat, lng}) =>
-  `${lat.fieldIdx}-${lng.fieldIdx}`;
-
+export const iconPosAccessor = ({lat, lng}) => d => [d.data[lng.fieldIdx], d.data[lat.fieldIdx]];
 export const iconAccessor = ({icon}) => d => d.data[icon.fieldIdx];
-export const iconResolver = ({icon}) => icon.fieldIdx;
 
 export const iconRequiredColumns = ['lat', 'lng', 'icon'];
 
@@ -60,17 +43,33 @@ export const pointVisConfigs = {
   fixedRadius: 'fixedRadius',
   opacity: 'opacity',
   colorRange: 'colorRange',
-  radiusRange: 'radiusRange',
-  'hi-precision': 'hi-precision'
+  radiusRange: 'radiusRange'
 };
 
+function flatterIconPositions(icon) {
+  // had to flip y, since @luma modal has changed
+  return icon.mesh.cells.reduce((prev, cell) => {
+    cell.forEach(p => {
+      prev.push(
+        ...[icon.mesh.positions[p][0], -icon.mesh.positions[p][1], icon.mesh.positions[p][2]]
+      );
+    });
+    return prev;
+  }, []);
+}
+
 export default class IconLayer extends Layer {
-  constructor(props) {
+  constructor(props = {}) {
     super(props);
 
     this.registerVisConfig(pointVisConfigs);
-    this.getPosition = memoize(iconPosAccessor, iconPosResolver);
-    this.getIcon = memoize(iconAccessor, iconResolver);
+    this.getPositionAccessor = () => iconPosAccessor(this.config.columns);
+    this.getIconAccessor = () => iconAccessor(this.config.columns);
+
+    // prepare layer info modal
+    this._layerInfoModal = IconInfoModalFactory();
+    this.iconGeometry = props.iconGeometry || null;
+    this.getSvgIcons();
   }
 
   get type() {
@@ -104,16 +103,43 @@ export default class IconLayer extends Layer {
   get layerInfoModal() {
     return {
       id: 'iconInfo',
-      template: IconInfoModal,
+      template: this._layerInfoModal,
       modalProps: {
         title: 'How to draw icons'
       }
     };
   }
 
-  static findDefaultLayerProps({fieldPairs, fields}) {
-    if (!fieldPairs.length) {
-      return [];
+  getSvgIcons() {
+    const fetchConfig = {
+      method: 'GET',
+      mode: 'cors',
+      cache: 'no-cache'
+    };
+
+    if (window.fetch) {
+      window
+        .fetch(SVG_ICON_URL, fetchConfig)
+        .then(response => response.json())
+        .then((parsed = {}) => {
+          const {svgIcons = []} = parsed;
+          this.iconGeometry = svgIcons.reduce(
+            (accu, curr) => ({
+              ...accu,
+              [curr.id]: flatterIconPositions(curr)
+            }),
+            {}
+          );
+
+          this._layerInfoModal = IconInfoModalFactory(svgIcons);
+        });
+    }
+  }
+
+  static findDefaultLayerProps({fieldPairs = [], fields = []}) {
+    const notFound = {props: []};
+    if (!fieldPairs.length || !fields.length) {
+      return notFound;
     }
 
     const iconFields = fields.filter(({name}) =>
@@ -125,7 +151,7 @@ export default class IconLayer extends Layer {
     );
 
     if (!iconFields.length) {
-      return [];
+      return notFound;
     }
 
     // create icon layers for first point pair
@@ -144,141 +170,167 @@ export default class IconLayer extends Layer {
       isVisible: true
     }));
 
-    return props;
+    return {props};
   }
 
-  // TODO: fix complexity
-  /* eslint-disable complexity */
-  formatLayerData(_, allData, filteredIndex, oldLayerData, opt = {}) {
+  calculateDataAttribute({allData, filteredIndex}, getPosition) {
+    const getIcon = this.getIconAccessor();
+    const data = [];
+
+    for (let i = 0; i < filteredIndex.length; i++) {
+      const index = filteredIndex[i];
+      const pos = getPosition({data: allData[index]});
+      const icon = getIcon({data: allData[index]});
+
+      // if doesn't have point lat or lng, do not add the point
+      // deck.gl can't handle position = null
+      if (pos.every(Number.isFinite) && typeof icon === 'string') {
+        data.push({
+          index,
+          icon,
+          data: allData[index]
+        });
+      }
+    }
+
+    return data;
+  }
+
+  formatLayerData(datasets, oldLayerData, opt = {}) {
     const {
       colorScale,
       colorDomain,
       colorField,
       color,
-      columns,
       sizeField,
       sizeScale,
       sizeDomain,
+      textLabel,
       visConfig: {radiusRange, colorRange}
     } = this.config;
+    const getPosition = this.getPositionAccessor();
+
+    const {gpuFilter} = datasets[this.config.dataId];
+    const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
 
     // point color
     const cScale =
       colorField &&
-      this.getVisChannelScale(
-        colorScale,
-        colorDomain,
-        colorRange.colors.map(hexToRgb)
-      );
+      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
 
     // point radius
-    const rScale =
-      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange);
+    const rScale = sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, 0);
 
-    const getPosition = this.getPosition(columns);
-    const getIcon = this.getIcon(columns);
+    const getRadius = rScale ? d => this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
 
-    if (!oldLayerData || oldLayerData.getPosition !== getPosition) {
-      this.updateLayerMeta(allData, getPosition);
-    }
+    const getFillColor = cScale
+      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
+      : color;
 
-    let data;
-    if (
-      oldLayerData &&
-      oldLayerData.data &&
-      opt.sameData &&
-      oldLayerData.getPosition === getPosition &&
-      oldLayerData.getIcon === getIcon
-    ) {
-      data = oldLayerData.data;
-    } else {
-      data = filteredIndex.reduce((accu, index) => {
-        const pos = getPosition({data: allData[index]});
-        const icon = getIcon({data: allData[index]});
-
-        // if doesn't have point lat or lng, do not add the point
-        // deck.gl can't handle position = null
-        if (!pos.every(Number.isFinite) || !icon || !IconIds.includes(icon)) {
-          return accu;
-        }
-
-        accu.push({
-          index,
-          icon,
-          data: allData[index]
-        });
-
-        return accu;
-      }, []);
-    }
-
-    const getRadius = rScale ? d =>
-      this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
-
-    const getColor = cScale ? d =>
-      this.getEncodedChannelValue(cScale, d.data, colorField) : color;
+    // get all distinct characters in the text labels
+    const textLabels = formatTextLabelData({
+      textLabel,
+      triggerChanged,
+      oldLayerData,
+      data
+    });
 
     return {
       data,
       getPosition,
-      getIcon,
-      getColor,
-      getRadius
+      getFillColor,
+      getFilterValue: gpuFilter.filterValueAccessor(),
+      getRadius,
+      textLabels
     };
   }
-  /* eslint-enable complexity */
 
   updateLayerMeta(allData, getPosition) {
     const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
     this.updateMeta({bounds});
   }
 
-  renderLayer({
-    data,
-    idx,
-    objectHovered,
-    mapState,
-    interactionConfig
-  }) {
+  renderLayer(opts) {
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
+
+    const radiusScale = this.getRadiusScaleByZoom(mapState);
+
     const layerProps = {
-      radiusMinPixels: 1,
-      fp64: this.config.visConfig['hi-precision'],
-      radiusScale: this.getRadiusScaleByZoom(mapState),
+      radiusScale,
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
-    return [
-      new SvgIconLayer({
-        ...layerProps,
-        ...data,
-        id: this.id,
-        idx,
-        opacity: this.config.visConfig.opacity,
-        getIconGeometry: id => SvgIconGeometry[id],
+    const updateTriggers = {
+      getFilterValue: gpuFilter.filterValueUpdateTriggers,
+      getRadius: {
+        sizeField: this.config.colorField,
+        radiusRange: this.config.visConfig.radiusRange,
+        sizeScale: this.config.sizeScale
+      },
+      getFillColor: {
+        color: this.config.color,
+        colorField: this.config.colorField,
+        colorRange: this.config.visConfig.colorRange,
+        colorScale: this.config.colorScale
+      }
+    };
 
-        // picking
-        autoHighlight: true,
-        highlightColor: this.config.highlightColor,
-        pickable: true,
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    const brushingProps = this.getBrushingExtensionProps(interactionConfig);
+    const getPixelOffset = getTextOffsetByRadius(radiusScale, data.getRadius, mapState);
+    const extensions = [...defaultLayerProps.extensions, brushingExtension];
 
-        // parameters
-        parameters: {depthTest: mapState.dragRotate},
+    // shared Props between layer and label layer
+    const sharedProps = {
+      getFilterValue: data.getFilterValue,
+      extensions,
+      filterRange: defaultLayerProps.filterRange,
+      ...brushingProps
+    };
 
-        // update triggers
-        updateTriggers: {
-          getRadius: {
-            sizeField: this.config.colorField,
-            radiusRange: this.config.visConfig.radiusRange,
-            sizeScale: this.config.sizeScale
-          },
-          getColor: {
-            color: this.config.color,
-            colorField: this.config.colorField,
-            colorRange: this.config.visConfig.colorRange,
-            colorScale: this.config.colorScale
-          }
-        }
-      })
+    const labelLayers = [
+      ...this.renderTextLabelLayer(
+        {
+          getPosition: data.getPosition,
+          sharedProps,
+          getPixelOffset,
+          updateTriggers
+        },
+        opts
+      )
     ];
+
+    return !this.iconGeometry
+      ? []
+      : [
+          new SvgIconLayer({
+            ...defaultLayerProps,
+            ...brushingProps,
+            ...layerProps,
+            ...data,
+            getIconGeometry: id => this.iconGeometry[id],
+
+            // update triggers
+            updateTriggers,
+            extensions
+          }),
+
+          ...(this.isLayerHovered(objectHovered)
+            ? [
+                new SvgIconLayer({
+                  ...this.getDefaultHoverLayerProps(),
+                  ...layerProps,
+                  data: [objectHovered.object],
+                  getPosition: data.getPosition,
+                  getRadius: data.getRadius,
+                  getFillColor: this.config.highlightColor,
+                  getIconGeometry: id => this.iconGeometry[id]
+                })
+              ]
+            : []),
+
+          // text label layer
+          ...labelLayers
+        ];
   }
 }

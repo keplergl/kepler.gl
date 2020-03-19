@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
 export default {
   info: {
     label: 'San Francisco Trees',
-    id: "tree_data"
+    id: 'tree_data'
   },
   data: {
     fields: [

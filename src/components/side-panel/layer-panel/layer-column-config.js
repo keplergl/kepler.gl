@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,11 +22,9 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import FieldSelector from 'components/common/field-selector';
+import {createSelector} from 'reselect';
 
-import {
-  PanelLabel,
-  SidePanelSection
-} from 'components/common/styled-components';
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 
 const TopRow = styled.div`
   display: flex;
@@ -35,57 +33,71 @@ const TopRow = styled.div`
 
 export default class LayerColumnConfig extends Component {
   static propTypes = {
-    layer: PropTypes.object.isRequired,
+    columns: PropTypes.object.isRequired,
     fields: PropTypes.arrayOf(PropTypes.any).isRequired,
+    assignColumnPairs: PropTypes.func.isRequired,
+    assignColumn: PropTypes.func.isRequired,
     updateLayerConfig: PropTypes.func.isRequired,
-    fieldPairs: PropTypes.arrayOf(PropTypes.any)
+    columnPairs: PropTypes.object,
+    fieldPairs: PropTypes.arrayOf(PropTypes.any),
+    columnLabels: PropTypes.object
   };
 
+  columnPairs = props => props.columnPairs;
+  fieldPairs = props => props.fieldPairs;
+  fieldPairsSelector = createSelector(
+    this.columnPairs,
+    this.fieldPairs,
+    (columnPairs, fieldPairs) =>
+      columnPairs
+        ? fieldPairs.map(fp => ({
+            name: fp.defaultName,
+            type: 'point',
+            pair: fp.pair
+          }))
+        : null
+  );
+
   _updateColumn(key, value) {
-    const {layer} = this.props;
+    const {columnPairs, assignColumnPairs, assignColumn} = this.props;
 
     const columns =
-      value && value.pair && layer.columnPairs
-        ? layer.assignColumnPairs(key, value.pair)
-        : layer.assignColumn(key, value);
+      value && value.pair && columnPairs
+        ? assignColumnPairs(key, value.pair)
+        : assignColumn(key, value);
 
     this.props.updateLayerConfig({columns});
   }
 
   render() {
-    const {layer, fields, fieldPairs} = this.props;
+    const {columns, columnLabels, fields} = this.props;
+
+    const fieldPairs = this.fieldPairsSelector(this.props);
+
     return (
       <div>
         <SidePanelSection>
           <div className="layer-config__column">
-          <TopRow>
-            <PanelLabel>Columns</PanelLabel>
-            <PanelLabel>* Required</PanelLabel>
-          </TopRow>
-          {Object.keys(layer.config.columns).map(key => (
-            <ColumnSelector
-              column={layer.config.columns[key]}
-              label={key}
-              key={key}
-              allFields={fields}
-              fieldPairs={
-                layer.columnPairs
-                  ? fieldPairs.map(fp => ({
-                      name: fp.defaultName,
-                      type: 'point',
-                      pair: fp.pair
-                    }))
-                  : null
-              }
-              onSelect={val => this._updateColumn(key, val)}
-            />
-          ))}
+            <TopRow>
+              <PanelLabel>Columns</PanelLabel>
+              <PanelLabel>Required*</PanelLabel>
+            </TopRow>
+            {Object.keys(columns).map(key => (
+              <ColumnSelector
+                column={columns[key]}
+                label={(columnLabels && columnLabels[key]) || key}
+                key={key}
+                allFields={fields}
+                fieldPairs={fieldPairs}
+                onSelect={val => this._updateColumn(key, val)}
+              />
+            ))}
           </div>
         </SidePanelSection>
       </div>
     );
   }
-};
+}
 
 const ColumnRow = styled.div`
   display: flex;

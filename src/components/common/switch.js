@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,13 +33,13 @@ const propTypes = {
   value: PropTypes.string
 };
 
-const Switch = (props) => {
+const Switch = props => {
   const switchProps = {
     ...props,
     switch: props.type !== 'checkbox'
   };
 
-  return <Checkbox {...switchProps}/>;
+  return <Checkbox {...switchProps} />;
 };
 
 Switch.propTypes = propTypes;

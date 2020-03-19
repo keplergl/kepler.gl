@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@ import PropTypes from 'prop-types';
 import Base from './base';
 
 export default class Clock extends Component {
-
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
@@ -42,4 +41,4 @@ export default class Clock extends Component {
       </Base>
     );
   }
-};
+}

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -40,16 +40,23 @@ const StyledBanner = styled.div`
   }
 `;
 
-const Banner = ({bgColor = '#1F7CF4', fontColor = '#FFFFFF', height = 30, children, onClose, show}) => (
-  <StyledBanner className="top-banner"
-  bgColor={bgColor}
-  fontColor={fontColor}
-  height={height}
-  style={{top: show ? 0 : `-100px`}}>
-    <div>
-      {children}
-    </div>
-    <Icons.Delete height="14px" onClick={onClose}/>
+const Banner = ({
+  bgColor = '#1F7CF4',
+  fontColor = '#FFFFFF',
+  height = 30,
+  children,
+  onClose,
+  show
+}) => (
+  <StyledBanner
+    className="top-banner"
+    bgColor={bgColor}
+    fontColor={fontColor}
+    height={height}
+    style={{top: show ? 0 : `-100px`}}
+  >
+    <div>{children}</div>
+    <Icons.Delete height="14px" onClick={onClose} />
   </StyledBanner>
 );
 

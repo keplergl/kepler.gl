@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,30 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {CompositeLayer} from 'deck.gl';
+import {CompositeLayer} from '@deck.gl/core';
 import ScatterplotIconLayer from './scatterplot-icon-layer';
 
 // default icon geometry is a square
-const DEFAULT_ICON_GEOMETRY = [
-  1,
-  1,
-  0,
-  1,
-  -1,
-  0,
-  -1,
-  -1,
-  0,
-  -1,
-  -1,
-  0,
-  -1,
-  1,
-  0,
-  1,
-  1,
-  0
-];
+const DEFAULT_ICON_GEOMETRY = [1, 1, 0, 1, -1, 0, -1, -1, 0, -1, -1, 0, -1, 1, 0, 1, 1, 0];
+
 const defaultProps = {
   getIconGeometry: iconId => DEFAULT_ICON_GEOMETRY,
   getIcon: d => d.icon
@@ -64,23 +46,16 @@ export default class SvgIconLayer extends CompositeLayer {
   _extractSublayers() {
     const {data, getIconGeometry, getIcon} = this.props;
 
-    const iconLayers = data.reduce((accu, d) => {
-      const iconId = getIcon(d);
-
-      if (iconId in accu) {
-        accu[iconId].data.push(d);
-      } else {
-        const geometry = getIconGeometry(iconId) || DEFAULT_ICON_GEOMETRY;
-        accu[iconId] = {
-          id: iconId,
-          geometry,
-          data: [d]
-        };
-      }
-
-      return accu;
-    }, {});
-
+    const iconLayers = {};
+    for (let i = 0; i < data.length; i++) {
+      const iconId = getIcon(data[i]);
+      iconLayers[iconId] = iconLayers[iconId] || {
+        id: iconId,
+        geometry: getIconGeometry(iconId) || DEFAULT_ICON_GEOMETRY,
+        data: []
+      };
+      iconLayers[iconId].data.push(data[i]);
+    }
     this.setState({
       data: Object.values(iconLayers)
     });

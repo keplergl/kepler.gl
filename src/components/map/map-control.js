@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@ import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 
-import {Tooltip, IconRoundSmall} from 'components/common/styled-components';
+import {Tooltip, IconRoundSmall, MapControlButton} from 'components/common/styled-components';
 import MapLayerSelector from 'components/common/map-layer-selector';
 import KeplerGlLogo from 'components/common/logo';
 import MapLegend from './map-legend';
@@ -33,14 +33,23 @@ import {
   Legend,
   Cube3d,
   Delete,
-  Layers
+  Layers,
+  DrawPolygon,
+  Polygon,
+  Rectangle,
+  CursorClick,
+  EyeSeen,
+  EyeUnseen
 } from 'components/common/icons';
+import VerticalToolbar from 'components/common/vertical-toolbar';
+import ToolbarItem from 'components/common/toolbar-item';
+import {EDITOR_MODES} from 'constants/default-settings';
 
 const StyledMapControl = styled.div`
   right: 0;
   width: ${props => props.theme.mapControl.width}px;
   padding: ${props => props.theme.mapControl.padding}px;
-  z-index: 1;
+  z-index: 10;
   top: ${props => props.top}px;
   position: absolute;
 `;
@@ -49,40 +58,6 @@ const StyledMapControlAction = styled.div`
   padding: 4px 0;
   display: flex;
   justify-content: flex-end;
-`;
-
-const StyledMapControlButton = styled.div`
-  align-items: center;
-  background-color: ${props =>
-    props.active
-      ? props.theme.secondaryBtnActBgd
-      : props.theme.secondaryBtnBgd};
-  border-radius: 18px;
-  border: 0;
-  box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
-  color: ${props =>
-    props.active
-      ? props.theme.secondaryBtnActColor
-      : props.theme.secondaryBtnColor};
-  cursor: pointer;
-  display: flex;
-  height: 36px;
-  justify-content: center;
-  margin: 0;
-  outline: none;
-  padding: 0;
-  transition: ${props => props.theme.transition};
-  width: 36px;
-
-  :focus {
-    outline: none;
-  }
-
-  :hover {
-    cursor: pointer;
-    background-color: ${props => props.theme.secondaryBtnActBgd};
-    color: ${props => props.theme.secondaryBtnActColor};
-  }
 `;
 
 const StyledMapControlPanel = styled.div`
@@ -95,7 +70,8 @@ const StyledMapControlPanel = styled.div`
 `;
 
 const StyledMapControlPanelContent = styled.div`
-  ${props => props.theme.dropdownScrollBar} max-height: 500px;
+  ${props => props.theme.dropdownScrollBar};
+  max-height: 500px;
   min-height: 100px;
   overflow: auto;
 `;
@@ -107,7 +83,8 @@ const StyledMapControlPanelHeader = styled.div`
   height: 32px;
   padding: 6px 12px;
   font-size: 11px;
-  color: ${props => props.theme.secondaryBtnColor};
+  color: ${props => props.theme.titleTextColor};
+  position: relative;
 
   button {
     width: 18px;
@@ -115,202 +92,64 @@ const StyledMapControlPanelHeader = styled.div`
   }
 `;
 
-/**
- * Generates all layers available for the current map
- * TODO: this may be moved into map-container or map-control or even at the reducer level
- * @param layers
- * @param mapLayers
- * @returns {[id, label, isVisible]}
- */
-const layerSelector = (layers, mapLayers) => {
-  const availableItems = Object.keys(layers).reduce(
-    (availableLayers, currentLayerId) => {
-      // is available ? if yes add to available list
-      const currentLayer = layers[currentLayerId];
-      // if maplayers exists we need to make sure currentlayer
-      // is contained in mapLayers in order to add onto availableLayers
-      // otherwise we add all layers
+const ActionPanel = ({className, children}) => (
+  <StyledMapControlAction className={className}>{children}</StyledMapControlAction>
+);
 
-      const layerConfig = mapLayers
-        ? mapLayers[currentLayer.id]
-        : currentLayer.config;
+ActionPanel.displayName = 'ActionPanel';
 
-      const mustBeAdded =
-        mapLayers && mapLayers[currentLayer.id]
-          ? mapLayers[currentLayer.id].isAvailable
-          : layerConfig.isVisible;
+const MapControlTooltip = React.memo(({id, message}) => (
+  <Tooltip id={id} place="left" effect="solid">
+    <span>{message}</span>
+  </Tooltip>
+));
 
-      return mustBeAdded
-        ? [
-            ...availableLayers,
-            {
-              id: currentLayer.id,
-              name: currentLayer.config.label,
-              isVisible:
-                mapLayers && mapLayers[currentLayer.id]
-                  ? mapLayers[currentLayer.id].isVisible
-                  : layerConfig.isVisible,
-              layer: currentLayer
-            }
-          ]
-        : availableLayers;
-    },
-    []
-  );
+MapControlTooltip.displayName = 'MapControlTooltip';
 
-  return availableItems;
-};
+const MapLegendTooltip = ({id, message}) => (
+  <Tooltip id={id} place="left" effect="solid">
+    <span>{message}</span>
+  </Tooltip>
+);
 
-export class MapControl extends Component {
-  static propTypes = {
-    datasets: PropTypes.object.isRequired,
-    dragRotate: PropTypes.bool.isRequired,
-    isSplit: PropTypes.bool.isRequired,
-    layers: PropTypes.arrayOf(PropTypes.object),
-    mapIndex: PropTypes.number.isRequired,
-    mapControls: PropTypes.object.isRequired,
-    onToggleFullScreen: PropTypes.func.isRequired,
-    onTogglePerspective: PropTypes.func.isRequired,
-    onToggleSplitMap: PropTypes.func.isRequired,
-    onToggleMapControl: PropTypes.func.isRequired,
-    onMapToggleLayer: PropTypes.func.isRequired,
-    top: PropTypes.number.isRequired,
+const LayerSelectorPanel = React.memo(({items, onMapToggleLayer, isActive, toggleMenuPanel}) =>
+  !isActive ? (
+    <MapControlButton
+      key={1}
+      onClick={e => {
+        e.preventDefault();
+        toggleMenuPanel();
+      }}
+      className="map-control-button toggle-layer"
+      data-tip
+      data-for="toggle-layer"
+    >
+      <Layers height="22px" />
+      <MapControlTooltip
+        id="toggle-layer"
+        message={isActive ? 'Hide layer panel' : 'Show layer panel'}
+      />
+    </MapControlButton>
+  ) : (
+    <MapControlPanel header="Visible layers" onClick={toggleMenuPanel}>
+      <MapLayerSelector layers={items} onMapToggleLayer={onMapToggleLayer} />
+    </MapControlPanel>
+  )
+);
 
-    // optional
-    scale: PropTypes.number,
-    mapLayers: PropTypes.object
-  };
+LayerSelectorPanel.displayName = 'LayerSelectorPanel';
 
-  static defaultProps = {
-    isSplit: false,
-    top: 0
-  };
-
-  layerSelector = state => state.layers;
-  mapLayersSelector = state => state.mapLayers;
-
-  initialDataSelector = createSelector(
-    this.layerSelector,
-    this.mapLayersSelector,
-    layerSelector
-  );
-
-  render() {
-    const items = this.initialDataSelector(this.props);
-
-    if (!items) {
-      return null;
-    }
-
-    const {
-      dragRotate,
-      isSplit,
-      isExport,
-      mapIndex,
-      mapControls,
-      onTogglePerspective,
-      onToggleSplitMap,
-      onMapToggleLayer,
-      onToggleMapControl,
-      scale
-    } = this.props;
-
-    const {
-      visibleLayers = {},
-      mapLegend = {},
-      toggle3d = {},
-      splitMap = {}
-    } = mapControls;
-
-    return (
-      <StyledMapControl className="map-control">
-        {/* Split Map */}
-        {splitMap.show ? (
-          <ActionPanel key={0}>
-            <StyledMapControlButton
-              active={isSplit}
-              onClick={e => {
-                e.preventDefault();
-                onToggleSplitMap(isSplit ? mapIndex : undefined);
-              }}
-              key={`split-${isSplit}`}
-              className="map-control-button split-map"
-              data-tip
-              data-for="action-toggle"
-            >
-              {isSplit ? <Delete height="18px" /> : <Split height="18px" />}
-              <MapLegendTooltip
-                id="action-toggle"
-                message={
-                  isSplit ? 'Close current panel' : 'Switch to dual map view'
-                }
-              />
-            </StyledMapControlButton>
-          </ActionPanel>
-        ) : null}
-
-        {/* Map Layers */}
-        {isSplit && visibleLayers.show ? (
-          <ActionPanel key={1}>
-            <LayerSelectorPanel
-              items={items}
-              onMapToggleLayer={onMapToggleLayer}
-              isActive={visibleLayers.active}
-              toggleMenuPanel={() => onToggleMapControl('visibleLayers')}
-            />
-          </ActionPanel>
-        ) : null}
-
-        {/* 3D Map */}
-        {toggle3d.show ? (
-          <ActionPanel key={2}>
-            <StyledMapControlButton
-              onClick={e => {
-                e.preventDefault();
-                onTogglePerspective();
-              }}
-              active={dragRotate}
-              data-tip
-              data-for="action-3d"
-            >
-              <Cube3d height="22px" />
-              {/* No icon since we are injecting through css .threeD-map class*/}
-              <MapLegendTooltip
-                id="action-3d"
-                message={dragRotate ? 'Disable 3D Map' : '3D Map'}
-              />
-            </StyledMapControlButton>
-          </ActionPanel>
-        ) : null}
-
-        {/* Map Legend */}
-        {mapLegend.show ? (
-          <ActionPanel key={3}>
-            <MapLegendPanel
-              items={items}
-              scale={scale}
-              isExport={isExport}
-              onMapToggleLayer={onMapToggleLayer}
-              isActive={mapLegend.active}
-              toggleMenuPanel={() => onToggleMapControl('mapLegend')}
-            />
-          </ActionPanel>
-        ) : null}
-      </StyledMapControl>
-    );
-  }
-}
-
-const MapControlPanel = ({children, header, onClick, scale = 1, isExport}) => (
+const MapControlPanel = React.memo(({children, header, onClick, scale = 1, isExport}) => (
   <StyledMapControlPanel
     style={{
       transform: `scale(${scale}) translate(calc(-${25 * (scale - 1)}% - ${10 *
-        scale}px), calc(${25 * (scale - 1)}% + ${10 * scale}px))`
+        scale}px), calc(${25 * (scale - 1)}% + ${10 * scale}px))`,
+      marginBottom: '8px'
     }}
   >
-    <StyledMapControlPanelHeader style={{position: 'relative'}}>
+    <StyledMapControlPanelHeader>
       {isExport ? (
-        <KeplerGlLogo version={false} appName="kepler.gl"/>
+        <KeplerGlLogo version={false} appName="kepler.gl" />
       ) : (
         <span style={{verticalAlign: 'middle'}}>{header}</span>
       )}
@@ -322,75 +161,273 @@ const MapControlPanel = ({children, header, onClick, scale = 1, isExport}) => (
     </StyledMapControlPanelHeader>
     <StyledMapControlPanelContent>{children}</StyledMapControlPanelContent>
   </StyledMapControlPanel>
-);
+));
 
-const MapLegendPanel = ({items, isActive, scale, toggleMenuPanel, isExport}) =>
+MapControlPanel.displayName = 'MapControlPanel';
+
+const MapLegendPanel = ({layers, isActive, scale, onToggleMenuPanel, isExport}) =>
   !isActive ? (
-    <StyledMapControlButton
+    <MapControlButton
       key={2}
       data-tip
       data-for="show-legend"
       className="map-control-button show-legend"
       onClick={e => {
         e.preventDefault();
-        toggleMenuPanel();
+        onToggleMenuPanel();
       }}
     >
       <Legend height="22px" />
       <MapLegendTooltip id="show-legend" message={'show legend'} />
-    </StyledMapControlButton>
+    </MapControlButton>
   ) : (
     <MapControlPanel
       scale={scale}
       header={'Layer Legend'}
-      onClick={toggleMenuPanel}
+      onClick={onToggleMenuPanel}
       isExport={isExport}
     >
-      <MapLegend
-        layers={items.filter(item => item.isVisible).map(item => item.layer)}
-      />
+      <MapLegend layers={layers} />
     </MapControlPanel>
   );
 
-const LayerSelectorPanel = ({
-  items,
-  onMapToggleLayer,
-  isActive,
-  toggleMenuPanel
-}) =>
-  !isActive ? (
-    <StyledMapControlButton
-      key={1}
-      onClick={e => {
-        e.preventDefault();
-        toggleMenuPanel();
-      }}
-      className="map-control-button toggle-layer"
-      data-tip
-      data-for="toggle-layer"
-    >
-      <Layers height="22px" />
-      <MapLegendTooltip
-        id="toggle-layer"
-        message={isActive ? 'Hide layer panel' : 'Show layer panel'}
-      />
-    </StyledMapControlButton>
-  ) : (
-    <MapControlPanel header="Visible layers" onClick={toggleMenuPanel}>
-      <MapLayerSelector layers={items} onMapToggleLayer={onMapToggleLayer} />
-    </MapControlPanel>
-  );
+MapLegendPanel.displayName = 'MapControlPanel';
 
-const ActionPanel = ({children}) => (
-  <StyledMapControlAction>{children}</StyledMapControlAction>
+const SplitMapButton = React.memo(({isSplit, mapIndex, onToggleSplitMap}) => (
+  <MapControlButton
+    active={isSplit}
+    onClick={e => {
+      e.preventDefault();
+      onToggleSplitMap(isSplit ? mapIndex : undefined);
+    }}
+    key={`split-${isSplit}`}
+    className="map-control-button split-map"
+    data-tip
+    data-for="action-toggle"
+  >
+    {isSplit ? <Delete height="18px" /> : <Split height="18px" />}
+    <MapControlTooltip
+      id="action-toggle"
+      message={isSplit ? 'Close current panel' : 'Switch to dual map view'}
+    />
+  </MapControlButton>
+));
+
+SplitMapButton.displayName = 'SplitMapButton';
+
+const Toggle3dButton = React.memo(({dragRotate, onTogglePerspective}) => (
+  <MapControlButton
+    onClick={e => {
+      e.preventDefault();
+      onTogglePerspective();
+    }}
+    active={dragRotate}
+    data-tip
+    data-for="action-3d"
+  >
+    <Cube3d height="22px" />
+    <MapControlTooltip id="action-3d" message={dragRotate ? 'Disable 3D Map' : '3D Map'} />
+  </MapControlButton>
+));
+
+Toggle3dButton.displayName = 'Toggle3dButton';
+
+const StyledToolbar = styled(VerticalToolbar)`
+  position: absolute;
+  right: 32px;
+`;
+
+const MapDrawPanel = React.memo(
+  ({editor, isActive, onToggleMenuPanel, onSetEditorMode, onToggleEditorVisibility}) => {
+    return (
+      <div style={{position: 'relative'}}>
+        {isActive ? (
+          <StyledToolbar show={isActive}>
+            <ToolbarItem
+              onClick={() => onSetEditorMode(EDITOR_MODES.EDIT)}
+              label="select"
+              iconHeight="22px"
+              icon={CursorClick}
+              active={editor.mode === EDITOR_MODES.EDIT}
+            />
+            <ToolbarItem
+              onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POLYGON)}
+              label="polygon"
+              iconHeight="22px"
+              icon={Polygon}
+              active={editor.mode === EDITOR_MODES.DRAW_POLYGON}
+            />
+            <ToolbarItem
+              onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE)}
+              label="rectangle"
+              iconHeight="22px"
+              icon={Rectangle}
+              active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
+            />
+            <ToolbarItem
+              onClick={onToggleEditorVisibility}
+              label={editor.visible ? 'hide' : 'show'}
+              iconHeight="22px"
+              icon={editor.visible ? EyeSeen : EyeUnseen}
+            />
+          </StyledToolbar>
+        ) : null}
+        <MapControlButton
+          onClick={e => {
+            e.preventDefault();
+            onToggleMenuPanel();
+          }}
+          active={isActive}
+          data-tip
+          data-for="map-draw"
+        >
+          <DrawPolygon height="22px" />
+          <MapControlTooltip id="map-draw" message="Draw on map" />
+        </MapControlButton>
+      </div>
+    );
+  }
 );
 
-const MapLegendTooltip = ({id, message}) => (
-  <Tooltip id={id} place="left" effect="solid">
-    <span>{message}</span>
-  </Tooltip>
-);
+MapDrawPanel.displayName = 'MapDrawPanel';
 
-const MapControlFactory = () => MapControl;
+const MapControlFactory = () => {
+  class MapControl extends Component {
+    static propTypes = {
+      datasets: PropTypes.object.isRequired,
+      dragRotate: PropTypes.bool.isRequired,
+      isSplit: PropTypes.bool.isRequired,
+      layers: PropTypes.arrayOf(PropTypes.object),
+      layersToRender: PropTypes.object.isRequired,
+      mapIndex: PropTypes.number.isRequired,
+      mapControls: PropTypes.object.isRequired,
+      onTogglePerspective: PropTypes.func.isRequired,
+      onToggleSplitMap: PropTypes.func.isRequired,
+      onToggleMapControl: PropTypes.func.isRequired,
+      onSetEditorMode: PropTypes.func.isRequired,
+      onToggleEditorVisibility: PropTypes.func.isRequired,
+      top: PropTypes.number.isRequired,
+
+      // optional
+      readOnly: PropTypes.bool,
+      scale: PropTypes.number,
+      mapLayers: PropTypes.object,
+      editor: PropTypes.object
+    };
+
+    static defaultProps = {
+      isSplit: false,
+      top: 0,
+      mapIndex: 0
+    };
+
+    layerSelector = props => props.layers;
+    layersToRenderSelector = props => props.layersToRender;
+    layerPanelItemsSelector = createSelector(
+      this.layerSelector,
+      this.layersToRenderSelector,
+      (layers, layersToRender) =>
+        layers
+          .filter(l => l.config.isVisible)
+          .map(layer => ({
+            id: layer.id,
+            name: layer.config.label,
+            // layer
+            isVisible: layersToRender[layer.id]
+          }))
+    );
+
+    render() {
+      const {
+        dragRotate,
+        layers,
+        layersToRender,
+        isSplit,
+        isExport,
+        mapIndex,
+        mapControls,
+        onTogglePerspective,
+        onToggleSplitMap,
+        onMapToggleLayer,
+        onToggleMapControl,
+        editor,
+        scale,
+        readOnly
+      } = this.props;
+
+      const {
+        visibleLayers = {},
+        mapLegend = {},
+        toggle3d = {},
+        splitMap = {},
+        mapDraw = {}
+      } = mapControls;
+
+      return (
+        <StyledMapControl className="map-control">
+          {/* Split Map */}
+          {splitMap.show && readOnly !== true ? (
+            <ActionPanel className="split-map" key={0}>
+              <SplitMapButton
+                isSplit={isSplit}
+                mapIndex={mapIndex}
+                onToggleSplitMap={onToggleSplitMap}
+              />
+            </ActionPanel>
+          ) : null}
+
+          {/* Map Layers */}
+          {isSplit && visibleLayers.show && readOnly !== true ? (
+            <ActionPanel className="map-layers" key={1}>
+              <LayerSelectorPanel
+                items={this.layerPanelItemsSelector(this.props)}
+                onMapToggleLayer={onMapToggleLayer}
+                isActive={visibleLayers.active}
+                toggleMenuPanel={() => onToggleMapControl('visibleLayers')}
+              />
+            </ActionPanel>
+          ) : null}
+
+          {/* 3D Map */}
+          {toggle3d.show ? (
+            <ActionPanel className="toggle-3d" key={2}>
+              <Toggle3dButton dragRotate={dragRotate} onTogglePerspective={onTogglePerspective} />
+            </ActionPanel>
+          ) : null}
+
+          {/* Map Legend */}
+          {mapLegend.show ? (
+            <ActionPanel className="show-legend" key={3}>
+              <MapLegendPanel
+                layers={layers.filter(l => layersToRender[l.id])}
+                scale={scale}
+                isExport={isExport}
+                onMapToggleLayer={onMapToggleLayer}
+                isActive={mapLegend.active}
+                onToggleMenuPanel={() => onToggleMapControl('mapLegend')}
+              />
+            </ActionPanel>
+          ) : null}
+
+          {mapDraw.show ? (
+            <ActionPanel key={4}>
+              <MapDrawPanel
+                isActive={mapDraw.active && mapDraw.activeMapIndex === mapIndex}
+                editor={editor}
+                onToggleMenuPanel={() => onToggleMapControl('mapDraw')}
+                onSetEditorMode={this.props.onSetEditorMode}
+                onToggleEditorVisibility={this.props.onToggleEditorVisibility}
+              />
+            </ActionPanel>
+          ) : null}
+        </StyledMapControl>
+      );
+    }
+  }
+
+  MapControl.displayName = 'MapControl';
+
+  return MapControl;
+};
 
 export default MapControlFactory;

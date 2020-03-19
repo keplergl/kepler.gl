@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,21 +22,25 @@ import React from 'react';
 import ItemSelector from '../common/item-selector/item-selector';
 import {PanelLabel, SidePanelSection} from '../common/styled-components';
 
-const SingleSelectFilter = ({filter, setFilter}) => (
-  <SidePanelSection>
-    <PanelLabel>Value equals</PanelLabel>
-    <ItemSelector
-      selectedItems={filter.value}
-      placeholder="Select a Value"
-      options={filter.domain}
-      multiSelect={false}
-      searchable={false}
-      displayOption={d => String(d)}
-      getOptionValue={d => d}
-      onChange={setFilter}
-      inputTheme="secondary"
-    />
-  </SidePanelSection>
-);
+export default function SingleSelectFilterFactory() {
+  const SingleSelectFilter = ({filter, setFilter}) => (
+    <SidePanelSection>
+      <PanelLabel>Value equals</PanelLabel>
+      <ItemSelector
+        selectedItems={filter.value}
+        placeholder="Select a Value"
+        options={filter.domain}
+        multiSelect={false}
+        searchable={false}
+        displayOption={d => String(d)}
+        getOptionValue={d => d}
+        onChange={setFilter}
+        inputTheme="secondary"
+      />
+    </SidePanelSection>
+  );
 
-export default SingleSelectFilter;
+  SingleSelectFilter.displayName = 'SingleSelectFilter';
+
+  return SingleSelectFilter;
+}
