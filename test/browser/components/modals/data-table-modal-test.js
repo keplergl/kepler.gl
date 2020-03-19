@@ -21,12 +21,16 @@
 import React from 'react';
 import test from 'tape-catch';
 import global from 'global';
+import sinon from 'sinon';
 import flatten from 'lodash.flattendeep';
 import {mount} from 'enzyme';
 import {mountWithTheme} from 'test/helpers/component-utils';
+import CloneDeep from 'lodash.clonedeep';
+import * as VisStateActions from 'actions/vis-state-actions';
+import visStateReducer from 'reducers/vis-state';
 
 import FieldToken from 'components/common/field-token';
-import {VertThreeDots} from 'components/common/icons';
+import {VertThreeDots, ArrowUp} from 'components/common/icons';
 import DataTableModalFactory, {
   DatasetTabs,
   DatasetModalTab
@@ -36,6 +40,17 @@ import OptionDropdown from 'components/common/data-table/option-dropdown';
 
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
+import {
+  applyActions,
+  StateWTripGeojson,
+  StateWSplitMaps,
+  StateWFilters,
+  StateWFiles,
+  StateWFilesFiltersLayerColor,
+  testCsvDataId,
+  testGeoJsonDataId
+} from 'test/helpers/mock-state';
+
 const DataTableModal = DataTableModalFactory(DataTable);
 
 const expectedCellSizeCache = {
@@ -50,6 +65,23 @@ const expectedCellSizeCache = {
   begintrip_ts_utc: {row: 182, header: 129},
   begintrip_ts_local: {row: 182, header: 137},
   date: {row: 95, header: 90}
+};
+
+const expectedExpandedCellSize = {
+  cellSizeCache: {
+    'gps_data.utc_timestamp': 145,
+    'gps_data.lat': 96,
+    'gps_data.lng': 96,
+    'gps_data.types': 125,
+    epoch: 121,
+    has_result: 75,
+    id: 75,
+    time: 180,
+    begintrip_ts_utc: 182,
+    begintrip_ts_local: 182,
+    date: 95
+  },
+  ghost: undefined
 };
 
 // This is to Mock Canvas.measureText response which we will not be testing
@@ -108,22 +140,12 @@ test('Components -> DataTableModal.render: csv 1', t => {
   }, 'Show not fail without data');
 
   const wrapper = mountWithTheme(
-    <DataTableModal
-      datasets={{
-        smoothie: {
-          id: 'smoothie',
-          allData: testAllData,
-          fields: testFields,
-          color: [113, 113, 113]
-        }
-      }}
-      dataId="smoothie"
-    />
+    <DataTableModal datasets={StateWFiles.visState.datasets} dataId={testCsvDataId} />
   );
 
   t.equal(wrapper.find(DataTableModal).length, 1, 'should render DataTableModal data');
   t.equal(wrapper.find(DatasetTabs).length, 1, 'should render DatasetTabs');
-  t.equal(wrapper.find(DatasetModalTab).length, 1, 'should render 1 DatasetModalTab');
+  t.equal(wrapper.find(DatasetModalTab).length, 2, 'should render 1 DatasetModalTab');
   t.equal(wrapper.find(DataTable).length, 1, 'should render 1 DataTable');
 
   const props = wrapper
@@ -171,39 +193,66 @@ test('Components -> DataTableModal.render: csv 1', t => {
   t.end();
 });
 
-test('Components -> DataTableModal -> render DataTable: csv 1', t => {
+test('Components -> DataTableModal -> click tab', t => {
+  const showDatasetTable = sinon.spy();
+
   const wrapper = mountWithTheme(
     <DataTableModal
-      datasets={{
-        smoothie: {
-          id: 'smoothie',
-          allData: testAllData,
-          fields: testFields,
-          color: [113, 113, 113]
-        }
-      }}
-      dataId="smoothie"
+      datasets={StateWFiles.visState.datasets}
+      dataId={testCsvDataId}
+      showDatasetTable={showDatasetTable}
     />
   );
 
-  const expectedExpandedCellSize = {
-    cellSizeCache: {
-      'gps_data.utc_timestamp': 145,
-      'gps_data.lat': 96,
-      'gps_data.lng': 96,
-      'gps_data.types': 125,
-      epoch: 121,
-      has_result: 75,
-      id: 75,
-      time: 180,
-      begintrip_ts_utc: 182,
-      begintrip_ts_local: 182,
-      date: 95
-    },
-    ghost: undefined
-  };
+  t.equal(wrapper.find(DatasetModalTab).length, 2, 'should render 2 DatasetModalTab');
+  t.equal(
+    wrapper
+      .find(DatasetModalTab)
+      .at(0)
+      .prop('active'),
+    true,
+    'prop 0 active should be true'
+  );
+  t.equal(
+    wrapper
+      .find(DatasetModalTab)
+      .at(0)
+      .find('.dataset-name')
+      .text(),
+    'hello.csv',
+    'dataset name should be correct'
+  );
+  t.equal(
+    wrapper
+      .find(DatasetModalTab)
+      .at(1)
+      .prop('active'),
+    false,
+    'prop 1 active should be true'
+  );
+  t.equal(
+    wrapper
+      .find(DatasetModalTab)
+      .at(1)
+      .find('.dataset-name')
+      .text(),
+    'zip.geojson',
+    'dataset name should be correct'
+  );
 
-  // console.log(wrapper.debug());
+  wrapper
+    .find(DatasetModalTab)
+    .at(1)
+    .simulate('click');
+  t.ok(showDatasetTable.calledWith(testGeoJsonDataId));
+
+  t.end();
+});
+
+test('Components -> DataTableModal -> render DataTable: csv 1', t => {
+  const wrapper = mountWithTheme(
+    <DataTableModal datasets={StateWFiles.visState.datasets} dataId={testCsvDataId} />
+  );
 
   t.equal(wrapper.find(DataTable).length, 1, 'should render 1 DataTable');
 
@@ -242,11 +291,6 @@ test('Components -> DataTableModal -> render DataTable: csv 1', t => {
     testFields.length * testAllData.length,
     `should render ${testFields.length * testAllData.length} cells`
   );
-  // t.equal(
-  //   wrapper.find('StyledComponent.cell.boolean').length,
-  //   testAllData.length,
-  //   `should render ${rows.length} boolean cells`
-  // );
 
   const expectedRows = {
     0: [
@@ -314,6 +358,102 @@ test('Components -> DataTableModal -> render DataTable: csv 1', t => {
       t.equal(cellText, expectedRow[c], `should render cell ${expectedRow[c]} correctly`);
     }
   });
+
+  t.end();
+});
+
+test('Components -> DataTableModal -> render DataTable: sort and pin', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+
+  // sort column
+  const nextState1 = visStateReducer(
+    initialState,
+    VisStateActions.sortTableColumn(testCsvDataId, 'gps_data.lat')
+  );
+
+  // pin column
+  const nextState2 = visStateReducer(
+    nextState1,
+    VisStateActions.pinTableColumn(testCsvDataId, 'has_result')
+  );
+
+  const wrapper = mountWithTheme(
+    <DataTableModal datasets={nextState2.datasets} dataId={testCsvDataId} />
+  );
+
+  const props = wrapper
+    .find(DataTable)
+    .at(0)
+    .props();
+
+  // mock cellSizeCache, width and height
+  const enriched = {
+    ...props,
+    cellSizeCache: expectedCellSizeCache,
+    fixedWidth: 1300,
+    fixedHeight: 800,
+    theme: {}
+  };
+
+  const wrapper2 = mount(<DataTable {...enriched} />);
+  const componentInstance = wrapper2.instance();
+  const result = componentInstance.getCellSizeCache();
+  // manully setting the state and update the component
+  wrapper2.setState(result);
+  wrapper2.update();
+
+  const expectedHeaders = [
+    'has_result',
+    'gps_data.utc_timestamp',
+    'gps_data.lat',
+    'gps_data.lng',
+    'gps_data.types',
+    'epoch',
+    'id',
+    'time',
+    'begintrip_ts_utc',
+    'begintrip_ts_local',
+    'date'
+  ];
+  t.equal(
+    wrapper2.find('.header-cell').length,
+    testFields.length,
+    `should render ${testFields.length} headers`
+  );
+  t.ok(
+    wrapper2
+      .find('.header-cell')
+      .at(0)
+      .hasClass('pinned-header-cell'),
+    'should assign pinned-header-cell class'
+  );
+  t.ok(
+    wrapper2
+      .find('.header-cell')
+      .at(0)
+      .hasClass('first-cell'),
+    'should assign first-cell class'
+  );
+  new Array(testFields.length).fill(0).forEach((d, i) => {
+    t.equal(
+      wrapper2
+        .find('.header-cell')
+        .at(i)
+        .find('.col-name__name')
+        .text(),
+      expectedHeaders[i],
+      'should render corrected pinned columns'
+    );
+  });
+
+  t.equal(
+    wrapper2
+      .find('.header-cell')
+      .at(2)
+      .find(ArrowUp).length,
+    1,
+    'should render sort icon'
+  );
 
   t.end();
 });

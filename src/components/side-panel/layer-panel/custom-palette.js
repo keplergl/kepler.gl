@@ -23,7 +23,7 @@ import classnames from 'classnames';
 import PropTypes from 'prop-types';
 import styled, {css} from 'styled-components';
 import {sortableContainer, sortableElement, sortableHandle} from 'react-sortable-hoc';
-import Portaled from '../../common/portaled';
+import Portaled from 'components/common/portaled';
 
 import {Button, InlineInput} from 'components/common/styled-components';
 import {VertDots, Trash} from 'components/common/icons';

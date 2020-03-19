@@ -25,6 +25,7 @@ import uniq from 'lodash.uniq';
 import get from 'lodash.get';
 import xor from 'lodash.xor';
 import copy from 'copy-to-clipboard';
+import {parseFieldValue} from 'utils/data-utils';
 
 // Tasks
 import {LOAD_FILE_TASK, ACTION_TASK} from 'tasks/tasks';
@@ -1820,7 +1821,9 @@ export function copyTableColumnUpdater(state, {dataId, column}) {
   if (fieldIdx < 0) {
     return state;
   }
-  const text = dataset.allData.map(d => d[fieldIdx]).join('\n');
+  const {type} = dataset.fields[fieldIdx];
+  const text = dataset.allData.map(d => parseFieldValue(d[fieldIdx], type)).join('\n');
+
   copy(text);
 
   return state;

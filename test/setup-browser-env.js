@@ -43,6 +43,31 @@ Object.defineProperty(window, 'fetch', {
   writable: true
 });
 
+Object.defineProperty(window, 'prompt', {
+  value: () => {},
+  writable: true
+});
+
+function mockClipboardData() {
+  let data = null;
+  const obj = {};
+  obj.data = () => {
+    return data;
+  };
+
+  obj.setData = (format, text) => {
+    data = {format, text};
+  };
+  obj.clearData = () => {};
+
+  return obj;
+}
+
+Object.defineProperty(window, 'clipboardData', {
+  value: mockClipboardData(),
+  writable: true
+});
+
 const nop = () => {};
 
 function mockCanvas(globalWindow) {

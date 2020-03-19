@@ -4088,9 +4088,9 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
   const initialState = CloneDeep(StateWFiles.visState);
   const previousDataset1 = initialState.datasets[testCsvDataId];
 
-  // sort with default mode
+  // pin with empty arg
   const nextState = reducer(initialState, VisStateActions.pinTableColumn());
-  t.equal(nextState, initialState, 'state should not change when input is given');
+  t.equal(nextState, initialState, 'state should not change when input is not given');
 
   // pin gps_data.lat
   const nextState1 = reducer(
