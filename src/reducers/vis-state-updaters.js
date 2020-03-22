@@ -52,7 +52,7 @@ import {
 } from 'utils/filter-utils';
 import {setFilterGpuMode, assignGpuChannel} from 'utils/gpu-filter-utils';
 import {createNewDataEntry, sortDatasetByColumn} from 'utils/dataset-utils';
-import {set, toArray, generateHashId} from 'utils/utils';
+import {set, toArray} from 'utils/utils';
 
 import {findDefaultLayer, calculateLayerData} from 'utils/layer-utils/layer-utils';
 
@@ -73,7 +73,7 @@ import {
 
 import {Layer, LayerClasses} from 'layers';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
-import {EDITOR_MODES, DATASET_FORMATS, SORT_ORDER} from 'constants/default-settings';
+import {EDITOR_MODES, SORT_ORDER} from 'constants/default-settings';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
