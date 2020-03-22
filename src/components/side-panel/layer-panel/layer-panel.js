@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import PropTypes from 'prop-types';
 
 import LayerConfiguratorFactory from './layer-configurator';
-import LayerPanelHeader from './layer-panel-header';
+import LayerPanelHeaderFactory from './layer-panel-header';
 
 const PanelWrapper = styled.div`
   font-size: 12px;
@@ -36,9 +36,9 @@ const PanelWrapper = styled.div`
   }
 `;
 
-LayerPanelFactory.deps = [LayerConfiguratorFactory];
+LayerPanelFactory.deps = [LayerConfiguratorFactory, LayerPanelHeaderFactory];
 
-function LayerPanelFactory(LayerConfigurator) {
+function LayerPanelFactory(LayerConfigurator, LayerPanelHeader) {
   class LayerPanel extends Component {
     static propTypes = {
       layer: PropTypes.object.isRequired,
