@@ -107,7 +107,7 @@ export const DragHandle = sortableHandle(({className, children}) => (
   <StyledDragHandle className={className}>{children}</StyledDragHandle>
 ));
 
-const LayerLabelEditor = ({label, onEdit}) => (
+const LayerLabelEditor = ({layerId, label, onEdit}) => (
   <InlineInput
     type="text"
     className="layer__title__editor"
@@ -116,7 +116,7 @@ const LayerLabelEditor = ({label, onEdit}) => (
       e.stopPropagation();
     }}
     onChange={onEdit}
-    id="input-layer-label"
+    id={`${layerId}:input-layer-label`}
   />
 );
 
@@ -151,7 +151,7 @@ function LayerPanelHeaderFactory() {
         )}
         <LayerTitleSection className="layer__title">
           <div>
-            <LayerLabelEditor label={label} onEdit={onUpdateLayerLabel} />
+            <LayerLabelEditor layerId={layerId} label={label} onEdit={onUpdateLayerLabel} />
             <div className="layer__title__type">{layerType}</div>
           </div>
         </LayerTitleSection>

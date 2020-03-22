@@ -107,7 +107,7 @@ function LayerPanelFactory(LayerConfigurator, LayerPanelHeader) {
     };
 
     render() {
-      const {layer, idx, datasets, layerTypeOptions} = this.props;
+      const {layer, datasets, layerTypeOptions} = this.props;
       const {config} = layer;
       const {isConfigActive} = config;
 
@@ -121,12 +121,11 @@ function LayerPanelFactory(LayerConfigurator, LayerPanelHeader) {
         >
           <LayerPanelHeader
             isConfigActive={isConfigActive}
-            id={layer.id}
-            idx={idx}
+            layerId={layer.id}
             isVisible={config.isVisible}
             label={config.label}
             labelRCGColorValues={datasets[config.dataId].color}
-            layerType={layer.name}
+            layerType={layer.type}
             onToggleEnableConfig={this._toggleEnableConfig}
             onToggleVisibility={this._toggleVisibility}
             onUpdateLayerLabel={this._updateLayerLabel}
