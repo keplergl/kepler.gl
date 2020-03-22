@@ -26,7 +26,7 @@ import {
   processKeplerglJSON,
   processRowObject
 } from './data-processor';
-import {isPlainObject} from 'utils/utils';
+import {isPlainObject, generateHashId} from 'utils/utils';
 import {DATASET_FORMATS} from 'constants/default-settings';
 
 const FILE_HANDLERS = {
@@ -170,4 +170,39 @@ export function determineJsonProcess({dataset, format}, defaultProcessor) {
   }
 
   return defaultProcessor;
+}
+
+export function filesToDataPayload(fileCache) {
+  // seperate out files which could be a single datasets. or a keplergl map json
+  const collection = fileCache.reduce(
+    (accu, file) => {
+      const {data, info = {}} = file;
+      const {format} = info;
+      if (format === DATASET_FORMATS.keplergl) {
+        // if file contains a single kepler map dataset & config
+        accu.keplerMaps.push({
+          ...data,
+          options: {
+            centerMap: !(data.config && data.config.mapState)
+          }
+        });
+      } else if (DATASET_FORMATS[format]) {
+        // if file contains only data
+        const newDataset = {
+          data,
+          info: {
+            id: info.id || generateHashId(4),
+            ...info
+          }
+        };
+        accu.datasets.push(newDataset);
+      }
+      return accu;
+    },
+    {datasets: [], keplerMaps: []}
+  );
+
+  // add kepler map first with config
+  // add datasets later in one add data call
+  return collection.keplerMaps.concat({datasets: collection.datasets});
 }

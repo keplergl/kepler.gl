@@ -550,12 +550,32 @@ export function loadFiles(files) {
   };
 }
 
-export function loadFileSuccess({fileCache, filesToLoad, totalCount}) {
+/**
+ * called with next file to load
+ * @param {object} payload
+ * @param {Array<object>} payload.fileCache
+ * @param {Array<object>} payload.filesToLoad
+ * @param {number} payload.totalCount
+ * @param {Function} payload.onFinish - action creator to execute when all files are loaded
+ */
+export function loadNextFile({fileCache, filesToLoad, totalCount, onFinish}) {
   return {
-    type: ActionTypes.LOAD_FILES_SUCCESS,
+    type: ActionTypes.LOAD_NEXT_FILE,
     fileCache,
     filesToLoad,
-    totalCount
+    totalCount,
+    onFinish
+  };
+}
+
+/**
+ * called when all files are processed and loaded
+ * @param {Array<object>} result
+ */
+export function loadFileSuccess(result) {
+  return {
+    type: ActionTypes.LOAD_FILES_SUCCESS,
+    result
   };
 }
 
