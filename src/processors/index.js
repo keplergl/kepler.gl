@@ -20,6 +20,7 @@
 
 // Data Processor
 export {
+  formatCsv,
   processGeojson,
   processCsvData,
   processRowObject,
