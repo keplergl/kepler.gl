@@ -84,7 +84,7 @@ export default class PanelHeaderAction extends Component {
         <this.props.IconComponent
           data-tip
           data-for={`${tooltip}_${id}`}
-          height="18px"
+          height="16px"
           onClick={onClick}
         />
         {tooltip ? (

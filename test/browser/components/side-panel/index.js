@@ -21,3 +21,4 @@
 import './color-selector-test';
 import './save-export-dropdown-test';
 import './side-panel-test';
+import './layer-panel-header-test';

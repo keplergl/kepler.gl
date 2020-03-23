@@ -42,6 +42,7 @@ export {default as PanelToggleFactory} from './side-panel/panel-toggle';
 
 export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel/layer-manager';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
+export {default as LayerPanelHeaderFactory} from './side-panel/layer-panel/layer-panel-header';
 export {default as LayerConfiguratorFactory} from './side-panel/layer-panel/layer-configurator';
 
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
