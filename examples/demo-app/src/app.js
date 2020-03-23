@@ -29,6 +29,8 @@ import Announcement from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
+import {replaceMapPopover} from './factories/map-popover';
+
 import {AUTH_TOKENS} from './constants/default-settings';
 import {
   loadRemoteMap,
@@ -44,7 +46,8 @@ import {CLOUD_PROVIDERS} from './cloud-providers';
 const KeplerGl = require('kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
   replaceMapControl(),
-  replacePanelHeader()
+  replacePanelHeader(),
+  replaceMapPopover()
 ]);
 
 // Sample data
