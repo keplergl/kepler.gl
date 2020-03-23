@@ -27,7 +27,7 @@ import {theme} from 'kepler.gl/styles';
 import Banner from './components/banner';
 import Announcement from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
-import {replaceMapControl} from './factories/map-control';
+// import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import {replaceMapPopover} from './factories/map-popover';
 
@@ -45,7 +45,7 @@ import {CLOUD_PROVIDERS} from './cloud-providers';
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
-  replaceMapControl(),
+  // replaceMapControl(),
   replacePanelHeader(),
   replaceMapPopover()
 ]);
