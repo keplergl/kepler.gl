@@ -91,10 +91,7 @@ export function getLatLngBounds(points, idx, limit) {
   }
   // use 99 percentile to filter out outliers
   // clamp to limit
-  return [
-    Math.max(lats[Math.floor(0.01 * (lats.length - 1))], limit[0]),
-    Math.min(lats[Math.ceil(0.99 * (lats.length - 1))], limit[1])
-  ];
+  return [Math.max(lats[0], limit[0]), Math.min(lats[lats.length - 1], limit[1])];
 }
 
 export function clamp([min, max], val) {
