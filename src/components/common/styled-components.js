@@ -527,12 +527,12 @@ export const StyledFilteredOption = styled.div`
     border: 1px solid ${props => props.theme.primaryBtnBgd};
   }
 
-  .filtered-title {
+  .filter-option-title {
     color: ${props => props.theme.textColorLT};
     font-size: 12px;
     font-weight: 500;
   }
-  .filtered-subtitle {
+  .filter-option-subtitle {
     color: ${props => props.theme.textColor};
     font-size: 11px;
   }

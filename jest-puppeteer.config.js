@@ -18,34 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import styled from 'styled-components';
-
-const StyledDiv = styled.div.attrs({
-  className: 'toolbar-item'
-})`
-  color: ${props => (props.active ? props.theme.titleTextColor : props.theme.textColor)};
-`;
-
-const ToolbarItem = React.memo(props => (
-  <StyledDiv
-    id={props.id}
-    className={props.className}
-    active={props.active}
-    onClick={e => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (typeof props.onClose === 'function') {
-        props.onClose();
-      }
-      props.onClick(e);
-    }}
-  >
-    <props.icon />
-    <div className="toolbar-item__title">{props.label}</div>
-  </StyledDiv>
-));
-
-ToolbarItem.displayName = 'ToolbarItem';
-
-export default ToolbarItem;
+module.exports = {
+  launch: {
+    headless: process.env.HEADLESS !== 'false',
+    slowMo: process.env.SLOWMO ? process.env.SLOWMO : 0,
+    devtools: false
+  },
+  server: {
+    command: 'yarn start:e2e',
+    port: 8080,
+    usedPortAction: 'kill',
+    launchTimeout: 60000,
+    waitOnScheme: {
+      delay: 50000
+    }
+  }
+};

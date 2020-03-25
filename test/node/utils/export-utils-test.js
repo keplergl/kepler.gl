@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
+
 import {registerEntry} from 'actions/identity-actions';
 import keplerGlReducer from 'reducers';
 import {getMapJSON, exportToJsonString} from 'utils/export-utils';

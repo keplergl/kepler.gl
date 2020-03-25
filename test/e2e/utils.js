@@ -18,34 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import styled from 'styled-components';
+export const TIMEOUT = process.env.SLOWMO ? 60000 : 10000;
 
-const StyledDiv = styled.div.attrs({
-  className: 'toolbar-item'
-})`
-  color: ${props => (props.active ? props.theme.titleTextColor : props.theme.textColor)};
-`;
+export const DEFAULT_WAIT_TIME = {
+  SHORTER: 1000,
+  SHORT: 2000,
+  LONG: 4000,
+  LONGER: 5000
+};
 
-const ToolbarItem = React.memo(props => (
-  <StyledDiv
-    id={props.id}
-    className={props.className}
-    active={props.active}
-    onClick={e => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (typeof props.onClose === 'function') {
-        props.onClose();
-      }
-      props.onClick(e);
-    }}
-  >
-    <props.icon />
-    <div className="toolbar-item__title">{props.label}</div>
-  </StyledDiv>
-));
+export const detectModalClosing = page =>
+  page.waitFor(() => !document.querySelector('.modal--wrapper'));
 
-ToolbarItem.displayName = 'ToolbarItem';
-
-export default ToolbarItem;
+export const testScreenshot = async (page, options = {}) => {
+  const image = await page.screenshot();
+  expect(image).toMatchImageSnapshot({
+    failureThreshold: 1,
+    failureThresholdType: 'percent',
+    ...options
+  });
+};

@@ -20,7 +20,6 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-
 import styled from 'styled-components';
 import Modal from 'react-modal';
 import {Delete} from 'components/common/icons';
@@ -124,10 +123,10 @@ export const ModalFooter = ({cancel, confirm, cancelButton, confirmButton}) => {
   return (
     <StyledModalFooter className="modal--footer">
       <FooterActionWrapper>
-        <Button {...cancelButtonProps} onClick={cancel}>
+        <Button className="modal--footer--cancel-button" {...cancelButtonProps} onClick={cancel}>
           {cancelButtonProps.children}
         </Button>
-        <Button {...confirmButtonProps} onClick={confirm}>
+        <Button className="modal--footer--confirm-button" {...confirmButtonProps} onClick={confirm}>
           {confirmButtonProps.children}
         </Button>
       </FooterActionWrapper>

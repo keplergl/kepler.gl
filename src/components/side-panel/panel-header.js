@@ -108,12 +108,13 @@ export const PanelHeaderDropdownFactory = () => {
           show={show}
           onClose={onClose}
         >
-          {items.map(itm => (
+          {items.map(item => (
             <ToolbarItem
-              key={itm.key}
-              label={itm.label}
-              icon={itm.icon}
-              onClick={itm.onClick}
+              id={item.key}
+              key={item.key}
+              label={item.label}
+              icon={item.icon}
+              onClick={item.onClick}
               onClose={onClose}
             />
           ))}
