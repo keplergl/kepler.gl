@@ -82,7 +82,7 @@ const SortableStyledItem = styled.div`
 
 export function AddDataButtonFactory() {
   const AddDataButton = ({onClick, isInactive}) => (
-    <Button onClick={onClick} isInactive={!isInactive} width="105px" secondary>
+    <Button  className="add-data-button" onClick={onClick} isInactive={!isInactive} width="105px" secondary>
       <Add height="12px" />
       Add Data
     </Button>
@@ -227,7 +227,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
           </SidePanelSection>
           <SidePanelSection>
             {defaultDataset ? (
-              <Button onClick={this._addEmptyNewLayer} width="105px">
+              <Button className="add-layer-button" onClick={this._addEmptyNewLayer} width="105px">
                 <Add height="12px" />
                 Add Layer
               </Button>

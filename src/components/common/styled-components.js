@@ -181,9 +181,9 @@ export const Tooltip = styled(ReactTooltip)`
   }
 `;
 
-export const Button = styled.div.attrs({
-  className: 'button'
-})`
+export const Button = styled.div.attrs(props => ({
+  className: classnames('button', props.className)
+}))`
   align-items: center;
   background-color: ${props =>
     props.negative
