@@ -37,6 +37,7 @@ export {
   SaveExportDropdownFactory,
   PanelHeaderDropdownFactory
 } from './side-panel/panel-header';
+export {default as PanelHeaderAction} from './side-panel/panel-header-action';
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
 export {default as PanelToggleFactory} from './side-panel/panel-toggle';
 
@@ -102,6 +103,7 @@ export {injector, withState} from './injector';
 // Common Components
 export {default as CloudTile} from './modals/cloud-tile';
 export {default as FileUploadFactory, FileUpload} from './common/file-uploader/file-upload';
+export {default as DatasetLabel} from './common/dataset-label';
 export {default as ItemSelector} from './common/item-selector/item-selector';
 export {default as FieldSelector} from './common/field-selector';
 export {default as RangeSlider} from './common/range-slider';
