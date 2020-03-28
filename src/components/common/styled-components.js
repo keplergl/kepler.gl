@@ -21,6 +21,7 @@
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import {media} from 'styles/media-breakpoints';
+import classnames from 'classnames';
 
 export const SelectText = styled.span`
   color: ${props => props.theme.labelColor};
