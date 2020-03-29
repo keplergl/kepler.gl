@@ -15,6 +15,29 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [2.0.2] - March 28 2020
+- [Enhancement] add classes to button for easier style override (#1035)
+- [Bugfix] Remove incorrect outlier calculation for better map centering (#1026)
+- [Bug] fix scatterplot stroke width in pixels (#1018)
+- [Test] e2e test (#940)
+- [Enhancement] Move layer panel visible toggle to end (#1017)
+- [Bug] export formatCsv (#1022)
+- [Enhancement] Refactor load file tasks to better handle multiple file types (#986)
+- Fixed carto-provider example: importing the correct kepler.gl processor path (#1016)
+- [Feat] Add satellite basemap (#1007)
+- [Feat] Improved data table rendering (#1010)
+- [Chore] Upgrade to Node 10 (#1009)
+- [Feat] S2 layer (#800)
+- [BUG] Fix provider test (#1008)
+- [Enhancement] better handling provider tile update (#1000)
+- [Enhancement] Loading and error feedback for shared maps loaded from URL #1002 (#1003)
+- [Enhancement] adjust button color in light theme (#1004)
+- [Bug] Reset selected provider status after loading and before sharing (#999)
+- [Feat] Add more light themes (#1001)
+- [Bug] fix bug map loaded with custom map style not save correctly (#993)
+- [Bug] Fix username set to null after loading map from URL #995 (#996)
+- [Enhancement] Decrease filter step size for small domains (#958)
+
 ## [2.0.1] - March 9 2020
 [Bug] Add cloud-providers.js to package.json (#991)
 [Feat] CARTO provider for cloud storage (#985)
