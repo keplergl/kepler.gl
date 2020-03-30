@@ -194,7 +194,7 @@ export const Container = styled.div`
         font-weight: 500;
         display: flex;
         flex-direction: column;
-        justify-content: space-around;
+        justify-content: flex-start;
         height: 100%;
         overflow: hidden;
         flex-grow: 1;
@@ -232,13 +232,6 @@ export const Container = styled.div`
     outline: none;
   }
 `;
-
-const validateCellDataSize = (data, {cellSizeLimit = 10000}) => {
-  if (`${data}`.length <= cellSizeLimit) {
-    return data;
-  }
-  return 'Data too large, download CSV';
-};
 
 const defaultColumnWidth = 200;
 
@@ -344,13 +337,11 @@ const renderHeaderCell = (columns, isPinned, props, toggleMoreOptions, moreOptio
 const renderDataCell = (columns, isPinned, props) => {
   return cellInfo => {
     const {columnIndex, key, style, rowIndex} = cellInfo;
-    const {cellSizeLimit, rows, colMeta} = props;
+    const {rows, colMeta} = props;
     const column = columns[columnIndex];
     const isGhost = column.ghost;
 
-    const rowCell = isGhost
-      ? ''
-      : validateCellDataSize(getRowCell({...props, column, rowIndex}), {cellSizeLimit});
+    const rowCell = isGhost ? '' : getRowCell({...props, column, rowIndex});
     const type = isGhost ? null : colMeta[column];
 
     const endCell = columnIndex === columns.length - 1;
