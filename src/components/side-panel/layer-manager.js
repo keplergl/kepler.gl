@@ -82,7 +82,13 @@ const SortableStyledItem = styled.div`
 
 export function AddDataButtonFactory() {
   const AddDataButton = ({onClick, isInactive}) => (
-    <Button  className="add-data-button" onClick={onClick} isInactive={!isInactive} width="105px" secondary>
+    <Button
+      className="add-data-button"
+      onClick={onClick}
+      isInactive={!isInactive}
+      width="105px"
+      secondary
+    >
       <Add height="12px" />
       Add Data
     </Button>

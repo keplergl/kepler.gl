@@ -88,7 +88,12 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
                 />
               ))}
           </SidePanelSection>
-          <Button className="add-filter-button" inactive={hadEmptyFilter || !hadDataset} width="105px" onClick={this._addFilter}>
+          <Button
+            className="add-filter-button"
+            inactive={hadEmptyFilter || !hadDataset}
+            width="105px"
+            onClick={this._addFilter}
+          >
             <Add height="12px" />
             Add Filter
           </Button>
