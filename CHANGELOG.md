@@ -15,6 +15,9 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [2.1.1] - March 31 2020
+- [Chore] Updated example to 2.1.0 (#1041)
+
 ## [2.1.0] - March 30 2020
 - [Enhancement] Remove table cell char limit and increased cell header height (#1038)
 - [Docs] CHANGELOG.md markup update (#1029)
