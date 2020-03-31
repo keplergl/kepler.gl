@@ -1,9 +1,48 @@
 # Upgrade Guide
 
+## Table of Content
+- [v2.0 to v2.2](#upgrade-from-v20-to-v22)
+- [v1.1.12 to v2.0](#upgrade-from-v1112-to-v20)
+- [v1.1.11 to v1.1.12](#upgrade-from-v1111-to-v1112)
 
-## Upgrade from v1.1 to v2.0
+## Upgrade from v2.0 to v2.2
+### Breaking Changes
+- Upgrade Node v10 for dev development, node requirement is now at `>=10.15.0`
+
+### New Features
+- __Provider__  - Add cloud provider API 
+- __Layer__ - Added S2 Layer
+- __Basemap__ - Added satellite to base map styles options
+- __Theme__ - Added base UI theme to theme option as `base`
+
+### Improvements
+- __UI__ - Improved data table and layer panel header
+- __Filter__ - Better handle filter steps for small domains
+
+### Bug Fixes
+- __Layer__ - Remove incorrect outlier for better map center detection
+- __Layer__ - Fix point layer stroke width
+- __Basemap__ - Fix bug custom map style not saved correctly 
+- __Export__ - Fix bug exported html blank
+
+-----
+## Upgrade from v1.1.12 to v2.0
+
+### Breaking Changes
+- Upgrade deck.gl to `8.0.15`, this only affects projects with deck.gl in its dependencies. Because only one version of deck.gl can be loaded.
+
+### New Features
+- __GPU Filter__  - Improved time and numeric filter performance by moving calculation to GPU
+- __Geo Fitler__ - Added drawing polygon function, allow filter layer based on polygon
+
+### Improvements
+- __Layer__ - Improved GeoJson and H3 layer geometry rendering
+- __UI__ - Support custom side panel tabs. [example](https://github.com/keplergl/kepler.gl/tree/master/examples/replace-component)
+
+### Bug Fixes
 
 
+-----
 ## Upgrade from v1.1.11 to v1.1.12
 
 ### Breaking Changes
