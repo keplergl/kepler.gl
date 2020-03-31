@@ -126,20 +126,22 @@ const ExportDataModalFactory = () => {
               </div>
               <div className="selection">
                 <StyledFilteredOption
+                  className="unfiltered-option"
                   selected={!filtered}
                   onClick={() => onChangeExportFiltered(false)}
                 >
-                  <div className="filtered-title">Unfiltered Data</div>
-                  <div className="filtered-subtitle">
+                  <div className="filter-option-title">Unfiltered Data</div>
+                  <div className="filter-option-subtitle">
                     {getDataRowCount(datasets, selectedDataset, false)}
                   </div>
                 </StyledFilteredOption>
                 <StyledFilteredOption
+                  className="filtered-option"
                   selected={filtered}
                   onClick={() => onChangeExportFiltered(true)}
                 >
-                  <div className="filtered-title">Filtered Data</div>
-                  <div className="filtered-subtitle">
+                  <div className="filter-option-title">Filtered Data</div>
+                  <div className="filter-option-subtitle">
                     {getDataRowCount(datasets, selectedDataset, true)}
                   </div>
                 </StyledFilteredOption>

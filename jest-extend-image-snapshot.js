@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './color-selector-test';
-import './save-export-dropdown-test';
-import './side-panel-test';
-import './layer-panel-header-test';
+import {toMatchImageSnapshot} from 'jest-image-snapshot';
+
+expect.extend({toMatchImageSnapshot});

@@ -18,8 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import window from 'global/window';
 /* eslint-disable no-use-before-define */
-const KeyEvent = KeyEvent || {};
+const KeyEvent = Object.assign({}, window.KeyEvent);
 /* eslint-enable no-use-before-define */
 
 KeyEvent.DOM_VK_UP = KeyEvent.DOM_VK_UP || 38;

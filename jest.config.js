@@ -18,7 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './color-selector-test';
-import './save-export-dropdown-test';
-import './side-panel-test';
-import './layer-panel-header-test';
+module.exports = {
+  preset: 'jest-puppeteer',
+  globals: {
+    URL: 'http://localhost:8080'
+  },
+  testMatch: [
+    '**/test/e2e/**/*.test.js'
+  ],
+  verbose: true,
+  setupFilesAfterEnv: ['./jest-extend-image-snapshot']
+};

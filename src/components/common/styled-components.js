@@ -21,6 +21,7 @@
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import {media} from 'styles/media-breakpoints';
+import classnames from 'classnames';
 
 export const SelectText = styled.span`
   color: ${props => props.theme.labelColor};
@@ -181,9 +182,9 @@ export const Tooltip = styled(ReactTooltip)`
   }
 `;
 
-export const Button = styled.div.attrs({
-  className: 'button'
-})`
+export const Button = styled.div.attrs(props => ({
+  className: classnames('button', props.className)
+}))`
   align-items: center;
   background-color: ${props =>
     props.negative
@@ -527,12 +528,12 @@ export const StyledFilteredOption = styled.div`
     border: 1px solid ${props => props.theme.primaryBtnBgd};
   }
 
-  .filtered-title {
+  .filter-option-title {
     color: ${props => props.theme.textColorLT};
     font-size: 12px;
     font-weight: 500;
   }
-  .filtered-subtitle {
+  .filter-option-subtitle {
     color: ${props => props.theme.textColor};
     font-size: 11px;
   }

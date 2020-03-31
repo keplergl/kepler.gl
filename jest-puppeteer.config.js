@@ -18,7 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './color-selector-test';
-import './save-export-dropdown-test';
-import './side-panel-test';
-import './layer-panel-header-test';
+module.exports = {
+  launch: {
+    headless: process.env.HEADLESS !== 'false',
+    slowMo: process.env.SLOWMO ? process.env.SLOWMO : 0,
+    devtools: false
+  },
+  server: {
+    command: 'yarn start:e2e',
+    port: 8080,
+    usedPortAction: 'kill',
+    launchTimeout: 60000,
+    waitOnScheme: {
+      delay: 50000
+    }
+  }
+};

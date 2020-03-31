@@ -153,7 +153,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
                 <VisConfigSlider
                   {...layer.visConfigSettings.thickness}
                   {...visConfiguratorProps}
-                  label={false}
+                  label="Stroke Width (Pixels)"
                   disabled={!layer.config.visConfig.outline}
                 />
               </ConfigGroupCollapsibleContent>

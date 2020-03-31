@@ -29,6 +29,8 @@ const StyledDiv = styled.div.attrs({
 
 const ToolbarItem = React.memo(props => (
   <StyledDiv
+    id={props.id}
+    className={props.className}
     active={props.active}
     onClick={e => {
       e.stopPropagation();

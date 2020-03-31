@@ -22,6 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
+import classnames from 'classnames';
 
 import {Tooltip, IconRoundSmall, MapControlButton} from 'components/common/styled-components';
 import MapLayerSelector from 'components/common/map-layer-selector';
@@ -154,8 +155,8 @@ const MapControlPanel = React.memo(({children, header, onClick, scale = 1, isExp
         <span style={{verticalAlign: 'middle'}}>{header}</span>
       )}
       {isExport ? null : (
-        <IconRoundSmall>
-          <Close height="16px" onClick={onClick} />
+        <IconRoundSmall className="close-map-control-item" onClick={onClick}>
+          <Close height="16px" />
         </IconRoundSmall>
       )}
     </StyledMapControlPanelHeader>
@@ -201,7 +202,7 @@ const SplitMapButton = React.memo(({isSplit, mapIndex, onToggleSplitMap}) => (
       onToggleSplitMap(isSplit ? mapIndex : undefined);
     }}
     key={`split-${isSplit}`}
-    className="map-control-button split-map"
+    className={classnames('map-control-button', 'split-map', {'close-map': isSplit})}
     data-tip
     data-for="action-toggle"
   >
@@ -240,10 +241,11 @@ const StyledToolbar = styled(VerticalToolbar)`
 const MapDrawPanel = React.memo(
   ({editor, isActive, onToggleMenuPanel, onSetEditorMode, onToggleEditorVisibility}) => {
     return (
-      <div style={{position: 'relative'}}>
+      <div className="map-draw-controls" style={{position: 'relative'}}>
         {isActive ? (
           <StyledToolbar show={isActive}>
             <ToolbarItem
+              className="edit-feature"
               onClick={() => onSetEditorMode(EDITOR_MODES.EDIT)}
               label="select"
               iconHeight="22px"
@@ -251,6 +253,7 @@ const MapDrawPanel = React.memo(
               active={editor.mode === EDITOR_MODES.EDIT}
             />
             <ToolbarItem
+              className="draw-feature"
               onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POLYGON)}
               label="polygon"
               iconHeight="22px"
@@ -258,6 +261,7 @@ const MapDrawPanel = React.memo(
               active={editor.mode === EDITOR_MODES.DRAW_POLYGON}
             />
             <ToolbarItem
+              className="draw-rectangle"
               onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE)}
               label="rectangle"
               iconHeight="22px"
@@ -265,6 +269,7 @@ const MapDrawPanel = React.memo(
               active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
             />
             <ToolbarItem
+              className="toggle-features"
               onClick={onToggleEditorVisibility}
               label={editor.visible ? 'hide' : 'show'}
               iconHeight="22px"

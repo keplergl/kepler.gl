@@ -88,8 +88,8 @@ const StyledError = styled.div`
   margin-bottom: 16px;
 `;
 
-const SampleMap = ({sample, onClick}) => (
-  <StyledSampleMap className="sample-map-gallery__item">
+const SampleMap = ({id, sample, onClick}) => (
+  <StyledSampleMap id={id} className="sample-map-gallery__item">
     <div className="sample-map">
       <div className="sample-map__image" onClick={onClick}>
         {sample.imageUrl && <img src={sample.imageUrl} />}
@@ -129,7 +129,7 @@ export default class SampleMapGallery extends Component {
             {sampleMaps
               .filter(sp => sp.visible)
               .map(sp => (
-                <SampleMap sample={sp} key={sp.id} onClick={() => onLoadSample(sp)} />
+                <SampleMap id={sp.id} sample={sp} key={sp.id} onClick={() => onLoadSample(sp)} />
               ))}
           </StyledSampleGallery>
         )}

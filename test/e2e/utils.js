@@ -18,7 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './color-selector-test';
-import './save-export-dropdown-test';
-import './side-panel-test';
-import './layer-panel-header-test';
+export const TIMEOUT = process.env.SLOWMO ? 60000 : 10000;
+
+export const DEFAULT_WAIT_TIME = {
+  SHORTER: 1000,
+  SHORT: 2000,
+  LONG: 4000,
+  LONGER: 5000
+};
+
+export const detectModalClosing = page =>
+  page.waitFor(() => !document.querySelector('.modal--wrapper'));
+
+export const testScreenshot = async (page, options = {}) => {
+  const image = await page.screenshot();
+  expect(image).toMatchImageSnapshot({
+    failureThreshold: 1,
+    failureThresholdType: 'percent',
+    ...options
+  });
+};

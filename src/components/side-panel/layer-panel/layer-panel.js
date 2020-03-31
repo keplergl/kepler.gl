@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import PropTypes from 'prop-types';
 
 import LayerConfiguratorFactory from './layer-configurator';
-import LayerPanelHeader from './layer-panel-header';
+import LayerPanelHeaderFactory from './layer-panel-header';
 
 const PanelWrapper = styled.div`
   font-size: 12px;
@@ -36,9 +36,9 @@ const PanelWrapper = styled.div`
   }
 `;
 
-LayerPanelFactory.deps = [LayerConfiguratorFactory];
+LayerPanelFactory.deps = [LayerConfiguratorFactory, LayerPanelHeaderFactory];
 
-function LayerPanelFactory(LayerConfigurator) {
+function LayerPanelFactory(LayerConfigurator, LayerPanelHeader) {
   class LayerPanel extends Component {
     static propTypes = {
       layer: PropTypes.object.isRequired,
@@ -107,7 +107,7 @@ function LayerPanelFactory(LayerConfigurator) {
     };
 
     render() {
-      const {layer, idx, datasets, layerTypeOptions} = this.props;
+      const {layer, datasets, layerTypeOptions} = this.props;
       const {config} = layer;
       const {isConfigActive} = config;
 
@@ -121,12 +121,11 @@ function LayerPanelFactory(LayerConfigurator) {
         >
           <LayerPanelHeader
             isConfigActive={isConfigActive}
-            id={layer.id}
-            idx={idx}
+            layerId={layer.id}
             isVisible={config.isVisible}
             label={config.label}
             labelRCGColorValues={datasets[config.dataId].color}
-            layerType={layer.name}
+            layerType={layer.type}
             onToggleEnableConfig={this._toggleEnableConfig}
             onToggleVisibility={this._toggleVisibility}
             onUpdateLayerLabel={this._updateLayerLabel}

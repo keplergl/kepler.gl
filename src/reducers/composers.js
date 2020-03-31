@@ -26,7 +26,8 @@ import * as combinedUpdaters from './combined-updaters';
  * It is used to generate documentation
  */
 const actionHandler = {
-  [ActionTypes.ADD_DATA_TO_MAP]: combinedUpdaters.addDataToMapUpdater
+  [ActionTypes.ADD_DATA_TO_MAP]: combinedUpdaters.addDataToMapUpdater,
+  [ActionTypes.LOAD_FILES_SUCCESS]: combinedUpdaters.loadFileSuccessUpdater
 };
 
 export default actionHandler;
