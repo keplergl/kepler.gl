@@ -5,7 +5,7 @@
 - [v1.1.12 to v2.0](#upgrade-from-v1112-to-v20)
 - [v1.1.11 to v1.1.12](#upgrade-from-v1111-to-v1112)
 
-## Upgrade from v2.0 to v2.2
+## Upgrade from v2.0 to v2.1
 ### Breaking Changes
 - Upgrade Node v10 for dev development, node requirement is now at `>=10.15.0`
 
