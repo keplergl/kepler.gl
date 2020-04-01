@@ -1230,7 +1230,7 @@ export const themeBS = {
   floatingBtnBgd: '#FFFFFF',
   floatingBtnActBgd: '#EEEEEE',
   floatingBtnBgdHover: '#EEEEEE',
-  floatingBtnColor: '#AFAFAF',
+  floatingBtnColor: '#757575',
   floatingBtnActColor: '#000000',
 
   secondaryBtnColor: '#000000',
