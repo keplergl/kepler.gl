@@ -5,11 +5,6 @@
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
-  "engines": {
-    "node": ">=10.15.0",
-    "npm": ">=6.4.0",
-    "yarn": ">=1.13.0"
-  },
   "keywords": [
     "babel",
     "es6",
@@ -250,6 +245,9 @@
       "src/templates",
       "src/styles"
     ]
+  },
+  "engines": {
+    "node": ">=10.0.0"
   },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
