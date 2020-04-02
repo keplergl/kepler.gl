@@ -385,7 +385,6 @@ export function gpuPolygonFilter(gl2, allData, layer, filter) {
 
   const {columns} = layer.config;
   if (columns !== filter.columns) {
-    console.log('update filterArgs')
     const getPosition = layer.getPositionAccessor();
     const points = allData.map(d => getPosition({data: d}));
     const count = points.length;
@@ -403,9 +402,8 @@ export function gpuPolygonFilter(gl2, allData, layer, filter) {
   }
 
   const polygons = toArray(filter.value).map(p => p.geometry.coordinates);
-
-  gpuPointInPolygon.update({polygons});
   gpuPointInPolygon.filter(filterArgs);
+  gpuPointInPolygon.update({polygons});
   const results = filterArgs.filterValueIndexBuffer.getData();
   const filteredIndex = [];
   for (let j = 0; j < filterArgs.count; j++) {
