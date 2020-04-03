@@ -29,11 +29,12 @@ import {Add} from 'components/common/icons';
 import {DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
 import ColorSelector from './layer-panel/color-selector';
 import {createSelector} from 'reselect';
+import {FormattedMessage, injectIntl} from 'react-intl';
 
 MapManagerFactory.deps = [MapStyleSelectorFactory, LayerGroupSelectorFactory];
 
 function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
-  return class MapManager extends Component {
+  class MapManager extends Component {
     static propTypes = {
       mapStyle: PropTypes.object.isRequired,
       onConfigChange: PropTypes.func.isRequired,
@@ -47,18 +48,6 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
 
     buildingColorSelector = props => props.mapStyle.threeDBuildingColor;
     setColorSelector = props => props.set3dBuildingColor;
-    colorSetSelector = createSelector(
-      this.buildingColorSelector,
-      this.setColorSelector,
-      (selectedColor, setColor) => [
-        {
-          selectedColor,
-          setColor,
-          isRange: false,
-          label: '3D Building Color'
-        }
-      ]
-    );
 
     _updateConfig = newProp => {
       const newConfig = {...this.props.mapStyle, ...newProp};
@@ -75,10 +64,23 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
     };
 
     render() {
-      const {mapStyle} = this.props;
+      const {mapStyle, intl} = this.props;
       const editableLayers = DEFAULT_LAYER_GROUPS.map(lg => lg.slug);
       const hasBuildingLayer = mapStyle.visibleLayerGroups['3d building'];
-      const colorSets = this.colorSetSelector(this.props);
+      const colorSetSelector = createSelector(
+        this.buildingColorSelector,
+        this.setColorSelector,
+        (selectedColor, setColor) => [
+          {
+            selectedColor,
+            setColor,
+            isRange: false,
+            label: intl.formatMessage({id: 'mapManager.3dBuildingColor'})
+          }
+        ]
+      );
+
+      const colorSets = colorSetSelector(this.props);
 
       return (
         <div className="map-style-panel">
@@ -106,13 +108,14 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
               secondary
             >
               <Add height="12px" />
-              Add Map Style
+              <FormattedMessage id={'mapManager.addMapStyle'} />
             </Button>
           </div>
         </div>
       );
     }
-  };
+  }
+  return injectIntl(MapManager);
 }
 
 export default MapManagerFactory;

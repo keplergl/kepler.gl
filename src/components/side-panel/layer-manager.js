@@ -18,13 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, useCallback} from 'react';
 import classnames from 'classnames';
 
 import PropTypes from 'prop-types';
 import {sortableContainer, sortableElement} from 'react-sortable-hoc';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
+import {FormattedMessage, injectIntl} from 'react-intl';
 import {arrayMove} from 'utils/data-utils';
 
 import LayerPanelFactory from './layer-panel/layer-panel';
@@ -32,26 +33,43 @@ import SourceDataCatalogFactory from './common/source-data-catalog';
 import {Add} from 'components/common/icons';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {
+  Button,
   PanelLabel,
   SidePanelDivider,
-  SidePanelSection,
-  Button
+  SidePanelSection
 } from 'components/common/styled-components';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 
-const LayerBlendingSelector = ({layerBlending, updateLayerBlending}) => (
-  <SidePanelSection>
-    <PanelLabel>Layer Blending</PanelLabel>
-    <ItemSelector
-      selectedItems={layerBlending}
-      options={Object.keys(LAYER_BLENDINGS)}
-      multiSelect={false}
-      searchable={false}
-      onChange={updateLayerBlending}
-    />
-  </SidePanelSection>
-);
+const LayerBlendingSelector = ({layerBlending, updateLayerBlending, intl}) => {
+  const labeledLayerBlendings = Object.keys(LAYER_BLENDINGS).reduce(
+    (acc, current) => ({
+      ...acc,
+      [intl.formatMessage({id: LAYER_BLENDINGS[current].label})]: current
+    }),
+    {}
+  );
+
+  const onChange = useCallback(blending => updateLayerBlending(labeledLayerBlendings[blending]), [
+    updateLayerBlending,
+    labeledLayerBlendings
+  ]);
+
+  return (
+    <SidePanelSection>
+      <PanelLabel>
+        <FormattedMessage id="layerBlending.title" />
+      </PanelLabel>
+      <ItemSelector
+        selectedItems={intl.formatMessage({id: LAYER_BLENDINGS[layerBlending].label})}
+        options={Object.keys(labeledLayerBlendings)}
+        multiSelect={false}
+        searchable={false}
+        onChange={onChange}
+      />
+    </SidePanelSection>
+  );
+};
 
 // make sure the element is always visible while is being dragged
 // item being dragged is appended in body, here to reset its global style
@@ -90,7 +108,7 @@ export function AddDataButtonFactory() {
       secondary
     >
       <Add height="12px" />
-      Add Data
+      <FormattedMessage id={'layerManager.addData'} />
     </Button>
   );
 
@@ -114,7 +132,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
     return <div>{children}</div>;
   });
 
-  return class LayerManager extends Component {
+  class LayerManager extends Component {
     static propTypes = {
       datasets: PropTypes.object.isRequired,
       layerBlending: PropTypes.string.isRequired,
@@ -174,7 +192,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
     };
 
     render() {
-      const {layers, datasets, layerOrder, openModal} = this.props;
+      const {layers, datasets, layerOrder, openModal, intl} = this.props;
       const defaultDataset = Object.keys(datasets)[0];
       const layerTypeOptions = this.layerTypeOptionsSelector(this.props);
 
@@ -235,18 +253,20 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
             {defaultDataset ? (
               <Button className="add-layer-button" onClick={this._addEmptyNewLayer} width="105px">
                 <Add height="12px" />
-                Add Layer
+                <FormattedMessage id={'layerManager.addLayer'} />
               </Button>
             ) : null}
           </SidePanelSection>
           <LayerBlendingSelector
             layerBlending={this.props.layerBlending}
             updateLayerBlending={this.props.updateLayerBlending}
+            intl={intl}
           />
         </div>
       );
     }
-  };
+  }
+  return injectIntl(LayerManager);
 }
 
 export default LayerManagerFactory;

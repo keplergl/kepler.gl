@@ -28,6 +28,7 @@ import ItemSelector from 'components/common/item-selector/item-selector';
 import {CLOUDFRONT} from 'constants/default-settings';
 
 import {SidePanelSection} from 'components/common/styled-components';
+import {FormattedMessage} from 'react-intl';
 
 const ITEM_SIZE = {
   large: 60,
@@ -99,7 +100,12 @@ const LayerTypeListItem = ({value, isTile}) => (
     <div className="layer-type-selector__item__icon">
       <value.icon height={`${isTile ? ITEM_SIZE.large : ITEM_SIZE.small}px`} />
     </div>
-    <div className="layer-type-selector__item__label">{value.label}</div>
+    <div className="layer-type-selector__item__label">
+      <FormattedMessage
+        id={`layer.type.${value.label.toLowerCase()}`}
+        defaultMessage={value.label}
+      />
+    </div>
   </StyledListItem>
 );
 
@@ -145,7 +151,7 @@ const LayerTypeSelector = ({layer, layerTypeOptions, onSelect}) => (
         selectedItems={layerTypeOptions.find(op => op.id === layer.type)}
         options={layerTypeOptions}
         multiSelect={false}
-        placeholder="Select A Type"
+        placeholder="placeholder.selectType"
         onChange={onSelect}
         getOptionValue={op => op.id}
         filterOption="label"

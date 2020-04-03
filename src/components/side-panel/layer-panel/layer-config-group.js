@@ -22,6 +22,7 @@ import React, {Component} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
 import styled from 'styled-components';
 import classnames from 'classnames';
+import {FormattedMessage} from 'react-intl';
 import Switch from 'components/common/switch';
 import InfoHelper from 'components/common/info-helper';
 import {VertThreeDots} from 'components/common/icons';
@@ -160,7 +161,9 @@ class LayerConfigGroup extends Component {
           onClick={() => this.setState({collapsed: !this.state.collapsed})}
         >
           <StyledLayerConfigGroupLabel className="layer-config-group__label">
-            <span>{label}</span>
+            <span>
+              <FormattedMessage id={label || 'misc.empty'} />
+            </span>
             {description && <InfoHelper description={description} id={label} />}
           </StyledLayerConfigGroupLabel>
           <StyledLayerConfigGroupAction className="layer-config-group__action">

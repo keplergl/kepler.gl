@@ -21,6 +21,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import {FormattedMessage} from 'react-intl';
 import FieldSelector from 'components/common/field-selector';
 import {createSelector} from 'reselect';
 
@@ -79,8 +80,10 @@ export default class LayerColumnConfig extends Component {
         <SidePanelSection>
           <div className="layer-config__column">
             <TopRow>
-              <PanelLabel>Columns</PanelLabel>
-              <PanelLabel>Required*</PanelLabel>
+              <PanelLabel><FormattedMessage id={'columns.title'} /></PanelLabel>
+              <PanelLabel>
+                <FormattedMessage id="layer.required" />
+              </PanelLabel>
             </TopRow>
             {Object.keys(columns).map(key => (
               <ColumnSelector
@@ -115,7 +118,9 @@ const ColumnSelect = styled.div`
 const ColumnSelector = ({column, label, allFields, onSelect, fieldPairs}) => (
   <ColumnRow className="layer-config__column__selector">
     <ColumnName className="layer-config__column__name">
-      <PanelLabel>{label}</PanelLabel>
+      <PanelLabel>
+        <FormattedMessage id={`columns.${label}`} />
+      </PanelLabel>
       {!column.optional ? <PanelLabel>{`  *`}</PanelLabel> : null}
     </ColumnName>
     <ColumnSelect className="layer-config__column__select">

@@ -57,7 +57,7 @@ const CustomLoadDataModalFactory = (...deps) => {
     ]
   };
 
-  return withState([], state => ({...state.demo.app}), {
+  return withState([], state => ({...state.demo.app, ...state.demo.keplerGl.map.uiState}), {
     onLoadSample: loadSample,
     onLoadRemoteMap: loadRemoteMap,
     loadSampleConfigurations

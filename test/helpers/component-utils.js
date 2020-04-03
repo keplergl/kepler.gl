@@ -18,9 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import React from 'react';
 import {mount} from 'enzyme';
 import {theme} from 'styles/base';
 import {ThemeProvider} from 'styled-components';
+import { IntlProvider } from "react-intl";
+import { messages } from "localization";
 
 export function mountWithTheme(node) {
   return mount(node, {
@@ -28,3 +31,9 @@ export function mountWithTheme(node) {
     wrappingComponentProps: {theme}
   });
 }
+
+export const IntlWrapper = ({children, locale='en'}) => (
+  <IntlProvider locale={locale} messages={messages[locale]}>
+    {children}
+  </IntlProvider>
+);

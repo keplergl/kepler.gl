@@ -30,6 +30,8 @@ import {
   PanelLabelWrapper,
   CenterFlexbox
 } from 'components/common/styled-components';
+import {FormattedMessage} from 'react-intl';
+import {camelize} from 'utils/utils';
 
 const StyledInteractionPanel = styled.div`
   padding-bottom: 12px;
@@ -57,7 +59,9 @@ function LayerGroupSelectorFactory() {
   const LayerGroupSelector = ({layers, editableLayers, onChange, topLayers}) => (
     <StyledInteractionPanel className="map-style__layer-group__selector">
       <div className="layer-group__header">
-        <PanelLabel>Map Layers</PanelLabel>
+        <PanelLabel>
+          <FormattedMessage id={'mapLayers.title'} />
+        </PanelLabel>
       </div>
       <PanelContent className="map-style__layer-group">
         {editableLayers.map(slug => (
@@ -66,7 +70,7 @@ function LayerGroupSelectorFactory() {
               <PanelHeaderAction
                 className="layer-group__visibility-toggle"
                 id={`${slug}-toggle`}
-                tooltip={layers[slug] ? 'hide' : 'show'}
+                tooltip={layers[slug] ? 'tooltip.hide' : 'tooltip.show'}
                 onClick={() =>
                   onChange({
                     visibleLayerGroups: {
@@ -79,12 +83,14 @@ function LayerGroupSelectorFactory() {
                 active={layers[slug]}
                 flush
               />
-              <LayerLabel active={layers[slug]}>{slug}</LayerLabel>
+              <LayerLabel active={layers[slug]}>
+                <FormattedMessage id={`mapLayers.${camelize(slug)}`} />
+              </LayerLabel>
             </PanelLabelWrapper>
             <CenterFlexbox className="layer-group__bring-top">
               <PanelHeaderAction
                 id={`${slug}-top`}
-                tooltip="Move to top of data layers"
+                tooltip="tooltip.moveToTop"
                 disabled={!layers[slug]}
                 IconComponent={Upload}
                 active={topLayers[slug]}

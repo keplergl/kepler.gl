@@ -63,7 +63,7 @@ const FieldType = PropTypes.oneOfType([
   })
 ]);
 
-export default class FieldSelector extends Component {
+class FieldSelector extends Component {
   static propTypes = {
     fields: PropTypes.oneOfType([PropTypes.array, PropTypes.arrayOf(FieldType)]),
     onSelect: PropTypes.func.isRequired,
@@ -90,7 +90,7 @@ export default class FieldSelector extends Component {
     multiSelect: false,
     closeOnSelect: true,
     showToken: true,
-    placeholder: 'Select a field'
+    placeholder: 'placeholder.selectField'
   };
 
   fieldsSelector = props => props.fields;
@@ -141,3 +141,5 @@ export default class FieldSelector extends Component {
     );
   }
 }
+
+export default FieldSelector;

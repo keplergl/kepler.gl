@@ -26,7 +26,7 @@ import test from 'tape';
 import {LayerPanelHeaderFactory} from 'components';
 import {DragHandle} from 'components/side-panel/layer-panel/layer-panel-header';
 import {appInjector} from 'components/container';
-import {mountWithTheme} from 'test/helpers/component-utils';
+import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 
 // components
 const nop = () => {};
@@ -46,7 +46,11 @@ test('Components -> LayerPanelHeader.mount -> no prop', t => {
   // mount
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<LayerPanelHeader {...defaultProps} />);
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <LayerPanelHeader {...defaultProps} />
+      </IntlWrapper>
+    );
   }, 'LayerPanelHeader should not fail without props');
 
   t.ok(wrapper.find('.layer-panel__header').length, 'should render layer-panel__header');

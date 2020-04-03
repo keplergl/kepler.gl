@@ -21,6 +21,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import {FormattedMessage} from 'react-intl';
 import {Tooltip} from 'components/common/styled-components';
 
 const propTypes = {
@@ -71,7 +72,9 @@ const PanelToggleFactory = () => {
         >
           <panel.iconComponent height="20px" />
           <Tooltip id={`${panel.id}-nav`} effect="solid" delayShow={500} place="bottom">
-            <span>{panel.label || panel.id}</span>
+            <span>
+              <FormattedMessage id={panel.label || panel.id} />
+            </span>
           </Tooltip>
         </PanelTab>
       ))}

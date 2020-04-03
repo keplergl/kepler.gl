@@ -22,8 +22,10 @@ import React from 'react';
 import styled from 'styled-components';
 import {Icons} from 'kepler.gl/components';
 import {media} from 'kepler.gl/styles';
+import {FormattedMessage, IntlProvider} from 'react-intl';
 
 import {ASSETS_URL} from '../../constants/default-settings';
+import {messages} from '../../constants/localization';
 
 const StyledMapIcon = styled.div`
   background-image: url("${ASSETS_URL}icon-demo-map.jpg");
@@ -86,17 +88,23 @@ const StyledTrySampleData = styled.div`
   }
 `;
 
-const SampleMapsTab = ({onClick}) => (
-  <StyledTrySampleData className="try-sample-data">
-    <StyledMapIcon className="demo-map-icon" />
-    <div className="demo-map-title">
-      <div className="demo-map-label">No data ?</div>
-      <div className="demo-map-action" onClick={onClick}>
-        <span>Try sample data</span>
-        <Icons.ArrowRight height="16px" />
-      </div>
-    </div>
-  </StyledTrySampleData>
-);
+const SampleMapsTab = ({onClick, intl}) => {
+  return (
+    <StyledTrySampleData className="try-sample-data">
+      <StyledMapIcon className="demo-map-icon" />
+      <IntlProvider locale={intl.locale} messages={messages[intl.locale]}>
+        <div className="demo-map-title">
+          <div className="demo-map-label">
+            <FormattedMessage id={'sampleMapsTab.noData'} />
+          </div>
+          <div className="demo-map-action" onClick={onClick}>
+            <FormattedMessage id={'sampleMapsTab.trySampleData'} />
+            <Icons.ArrowRight height="16px" />
+          </div>
+        </div>
+      </IntlProvider>
+    </StyledTrySampleData>
+  );
+};
 
 export default SampleMapsTab;

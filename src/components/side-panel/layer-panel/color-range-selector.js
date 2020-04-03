@@ -32,6 +32,7 @@ import CustomPalette from './custom-palette';
 import {COLOR_RANGES} from 'constants/color-ranges';
 import {numberSort} from 'utils/data-utils';
 import {reverseColorRange} from 'utils/color-utils';
+import {FormattedMessage} from 'react-intl';
 
 export const ALL_TYPES = uniq(
   COLOR_RANGES.map(c => c.type)
@@ -81,7 +82,7 @@ const CONFIG_SETTINGS = {
     options: [true, false]
   },
   custom: {
-    label: 'Custom Palette',
+    label: 'customPalette',
     type: 'switch',
     options: [true, false]
   }
@@ -194,7 +195,9 @@ export default class ColorRangeSelect extends Component {
 export const PaletteConfig = ({label, value, config: {type, options}, onChange}) => (
   <StyledPaletteConfig className="color-palette__config" onClick={e => e.stopPropagation()}>
     <div className="color-palette__config__label">
-      <PanelLabel>{label}</PanelLabel>
+      <PanelLabel>
+        <FormattedMessage id={`color.${label}`} />
+      </PanelLabel>
     </div>
     {type === 'select' && (
       <div className="color-palette__config__select">

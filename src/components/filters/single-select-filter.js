@@ -21,14 +21,17 @@
 import React from 'react';
 import ItemSelector from '../common/item-selector/item-selector';
 import {PanelLabel, SidePanelSection} from '../common/styled-components';
+import {FormattedMessage} from 'react-intl';
 
 export default function SingleSelectFilterFactory() {
   const SingleSelectFilter = ({filter, setFilter}) => (
     <SidePanelSection>
-      <PanelLabel>Value equals</PanelLabel>
+      <PanelLabel>
+        <FormattedMessage id={'misc.valueEquals'} />
+      </PanelLabel>
       <ItemSelector
         selectedItems={filter.value}
-        placeholder="Select a Value"
+        placeholder="placeholder.selectValue"
         options={filter.domain}
         multiSelect={false}
         searchable={false}

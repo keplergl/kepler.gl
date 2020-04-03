@@ -20,6 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
+import {FormattedMessage} from 'react-intl';
 
 const StyledDiv = styled.div.attrs({
   className: 'toolbar-item'
@@ -41,8 +42,10 @@ const ToolbarItem = React.memo(props => (
       props.onClick(e);
     }}
   >
-    <props.icon />
-    <div className="toolbar-item__title">{props.label}</div>
+    {props.icon && <props.icon />}
+    <div className="toolbar-item__title">
+      <FormattedMessage id={props.label} />
+    </div>
   </StyledDiv>
 ));
 

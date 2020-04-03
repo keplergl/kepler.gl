@@ -49,7 +49,7 @@ import {Button} from 'components/common/styled-components';
 import {COLOR_RANGES} from 'constants/color-ranges';
 
 import {StateWFilesFiltersLayerColor, StateWTrips} from 'test/helpers/mock-state';
-import {mountWithTheme} from 'test/helpers/component-utils';
+import { IntlWrapper, mountWithTheme } from "test/helpers/component-utils";
 import {hexToRgb} from 'utils/color-utils';
 
 test('Components -> ColorSelector.render', t => {
@@ -83,7 +83,7 @@ test('Components -> LayerColorSelector.render -> render layer color', t => {
   const layerConfiguratorProps = getLayerConfiguratorProps(mockProps);
 
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<LayerColorSelector {...layerConfiguratorProps} />);
+    wrapper = mountWithTheme(<IntlWrapper><LayerColorSelector {...layerConfiguratorProps} /></IntlWrapper> );
   }, 'Should not fail with layers');
   const CSInstance = wrapper.find(ColorSelector);
 
@@ -150,7 +150,7 @@ test('Components -> LayerColorSelector.render -> render single color click', t =
   const layerConfiguratorProps = getLayerConfiguratorProps(mockProps);
 
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<LayerColorSelector {...layerConfiguratorProps} />);
+    wrapper = mountWithTheme(<IntlWrapper><LayerColorSelector {...layerConfiguratorProps} /></IntlWrapper> );
   }, 'Should not fail render color select');
   const CSInstance = wrapper.find(ColorSelector);
 
@@ -196,14 +196,14 @@ test('Components -> ArcLayerColorSelector.render -> render single color', t => {
 
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
+    wrapper = mountWithTheme(<IntlWrapper>
       <ArcLayerColorSelector
         layer={arcLayer}
         setColorUI={layerConfiguratorProps.setColorUI}
         onChangeConfig={layerConfiguratorProps.onChange}
         onChangeVisConfig={visConfiguratorProps.onChange}
       />
-    );
+ </IntlWrapper>   );
   }, 'Should not fail render arc color select');
 
   const CSInstance = wrapper.find(ColorSelector);
@@ -279,14 +279,14 @@ test('Components -> ArcLayerColorSelector.render -> render single color click', 
 
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
+    wrapper = mountWithTheme(<IntlWrapper>
       <ArcLayerColorSelector
         layer={arcLayer}
         setColorUI={layerConfiguratorProps.setColorUI}
         onChangeConfig={layerConfiguratorProps.onChange}
         onChangeVisConfig={visConfiguratorProps.onChange}
       />
-    );
+ </IntlWrapper>   );
   }, 'Should not fail render arc color select');
   const CSInstance = wrapper.find(ColorSelector);
   t.equal(CSInstance.length, 1, 'should render 1 ColorSelector');
@@ -329,7 +329,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector', t => {
 
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<LayerColorRangeSelector {...visConfiguratorProps} />);
+    wrapper = mountWithTheme(<IntlWrapper><LayerColorRangeSelector {...visConfiguratorProps} /></IntlWrapper>);
   }, 'Should not fail render color range select');
   const CPInstance = wrapper.find(ColorPalette);
   t.equal(CPInstance.length, 1, 'should render 1 ColorPalette');
@@ -388,7 +388,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   let wrapper;
 
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<LayerColorRangeSelector {...visConfiguratorProps} />);
+    wrapper = mountWithTheme(<IntlWrapper><LayerColorRangeSelector {...visConfiguratorProps} /></IntlWrapper> );
   }, 'Should not fail render color range select');
 
   // open color dropdown
@@ -544,7 +544,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   const visConfiguratorProps = getVisConfiguratorProps(mockProps);
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<LayerColorRangeSelector {...visConfiguratorProps} />);
+    wrapper = mountWithTheme(<IntlWrapper><LayerColorRangeSelector {...visConfiguratorProps} /></IntlWrapper> );
   }, 'Should not fail render color range select');
 
   // open color dropdown
@@ -591,7 +591,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   const visConfiguratorProps = getVisConfiguratorProps(mockProps);
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<LayerColorRangeSelector {...visConfiguratorProps} />);
+    wrapper = mountWithTheme(<IntlWrapper><LayerColorRangeSelector {...visConfiguratorProps} /></IntlWrapper> );
   }, 'Should not fail render color range select');
   // current colorRange
   // { name: 'Ice And Fire 8',
@@ -743,7 +743,7 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
   const visConfiguratorProps = getVisConfiguratorProps(mockProps);
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<LayerColorRangeSelector {...visConfiguratorProps} />);
+    wrapper = mountWithTheme(<IntlWrapper><LayerColorRangeSelector {...visConfiguratorProps} /></IntlWrapper> );
   }, 'Should not fail render color range select');
 
   const cp = wrapper.find(CustomPalette);

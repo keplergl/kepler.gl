@@ -25,6 +25,7 @@ import InfoHelper from 'components/common/info-helper';
 import Switch from 'components/common/switch';
 import {SidePanelSection, PanelLabel} from 'components/common/styled-components';
 import {capitalizeFirstLetter} from 'utils/utils';
+import {FormattedMessage} from 'react-intl';
 
 const propTypes = {
   layer: PropTypes.object.isRequired,
@@ -55,7 +56,11 @@ const VisConfigSwitch = ({
   <SidePanelSection disabled={Boolean(disabled)}>
     <StyledVisConfigSwitch className="vis-config-switch">
       <div className="vis-config-switch__title">
-        {label ? <PanelLabel>{label || capitalizeFirstLetter(property)}</PanelLabel> : null}
+        {label ? (
+          <PanelLabel>
+            {(label && <FormattedMessage id={label} />) || capitalizeFirstLetter(property)}
+          </PanelLabel>
+        ) : null}
         {description ? (
           <div>
             <InfoHelper description={description} id={`${id}-${property}-description`} />
