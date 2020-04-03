@@ -1,7 +1,7 @@
 # Upgrade Guide
 
 ## Table of Content
-- [v2.0 to v2.2](#upgrade-from-v20-to-v22)
+- [v2.0 to v2.1](#upgrade-from-v20-to-v21)
 - [v1.1.12 to v2.0](#upgrade-from-v1112-to-v20)
 - [v1.1.11 to v1.1.12](#upgrade-from-v1111-to-v1112)
 
