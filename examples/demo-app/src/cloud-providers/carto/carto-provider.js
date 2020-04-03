@@ -115,7 +115,7 @@ export default class CartoProvider extends Provider {
             description,
             thumbnail: thumbnailBase64,
             config: JSON.stringify(config),
-            isPrivate: this.currentMap.isPrivate
+            isprivate: this.currentMap.isprivate
           },
           cartoDatasets
         );
@@ -132,7 +132,7 @@ export default class CartoProvider extends Provider {
             description,
             thumbnail: thumbnailBase64,
             config: JSON.stringify(config),
-            isPrivate: !isPublic
+            isprivate: !isPublic
           },
           cartoDatasets,
           true
@@ -268,13 +268,13 @@ export default class CartoProvider extends Provider {
           id: vis.id,
           title: vis.name,
           description: vis.description,
-          privateMap: vis.isPrivate,
+          privateMap: vis.isprivate,
           thumbnail: vis.thumbnail === 'undefined' ? null : vis.thumbnail,
-          lastModification: new Date(Date.parse(vis.lastModified)),
+          lastModification: new Date(Date.parse(vis.lastmodified)),
           loadParams: {
             owner: username,
             mapId: vis.id,
-            privateMap: vis.isPrivate.toString()
+            privateMap: vis.isprivate.toString()
           }
         });
       }
