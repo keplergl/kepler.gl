@@ -42,6 +42,7 @@ import {
   Cancel
 } from 'components/common/icons';
 import {getHTMLMapModeTileUrl} from 'utils/utils';
+import { emptyLocales } from '../localization/locales';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
@@ -185,9 +186,7 @@ export const THEME = keyMirror({
  * ```
  */
 export const LOCALES = keyMirror({
-  en: null,
-  fi: null,
-  pt: null
+  ...emptyLocales
 });
 
 export const SIDEBAR_PANELS = [

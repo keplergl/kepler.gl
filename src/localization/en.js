@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import { locales } from './locales';
+
 export default {
   property: {
     weight: 'weight',
@@ -212,9 +214,7 @@ export default {
     rectangle: 'rectangle',
     hide: 'hide',
     show: 'show',
-    en: 'English',
-    fi: 'Suomi',
-    pt: 'Português'
+    ...locales
   },
   modal: {
     title: {
