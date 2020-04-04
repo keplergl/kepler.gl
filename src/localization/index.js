@@ -20,11 +20,14 @@
 
 import en from './en';
 import fi from './fi';
+import pt from '././pt';
+
 import {flattenMessages} from 'utils/locale-utils';
 
 const en_flat = flattenMessages(en);
 
 export const messages = {
   en: en_flat,
-  fi: {...en_flat, ...flattenMessages(fi)}
+  fi: {...en_flat, ...flattenMessages(fi)},
+  pt: {...en_flat, ...flattenMessages(pt)}
 };

@@ -213,7 +213,8 @@ export default {
     hide: 'piilota',
     show: 'näytä',
     en: 'English',
-    fi: 'Suomi'
+    fi: 'Suomi',
+    pt: 'Português'
   },
   modal: {
     title: {
