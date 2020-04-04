@@ -20,7 +20,7 @@
 
 import en from './en';
 import fi from './fi';
-import pt from '././pt';
+import pt from './pt';
 
 import {flattenMessages} from 'utils/locale-utils';
 
