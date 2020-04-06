@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import { locales } from './locales';
+import { LOCALES } from './locales';
 
 export default {
   property: {
@@ -214,7 +214,7 @@ export default {
     rectangle: 'nelikulmio',
     hide: 'piilota',
     show: 'näytä',
-    ...locales
+    ...LOCALES
   },
   modal: {
     title: {

@@ -9,12 +9,12 @@ By default the first language is English `en`. The default language can be chang
 ```js
 import {combineReducers} from 'redux';
 import keplerGlReducer from 'kepler.gl/reducers';
-import { localeCodes } from 'kepler.gl/localization/locales';
+import { LOCALE_CODES } from 'kepler.gl/localization/locales';
 
 const customizedKeplerGlReducer = keplerGlReducer.initialState({
   uiState: {
     // use Finnish locale
-    locale: localeCodes.fi
+    locale: LOCALE_CODES.fi
   }
 });
 

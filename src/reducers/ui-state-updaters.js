@@ -28,7 +28,7 @@ import {
   EXPORT_MAP_FORMATS,
   RESOLUTIONS
 } from 'constants/default-settings';
-import { localeCodes } from 'localization/locales';
+import { LOCALE_CODES } from 'localization/locales';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 import {calculateExportImageSize} from 'utils/export-utils';
 
@@ -229,7 +229,7 @@ export const INITIAL_UI_STATE = {
   // load files
   loadFiles: DEFAULT_LOAD_FILES,
   // Locale of the UI
-  locale: localeCodes.en
+  locale: LOCALE_CODES.en
 };
 
 /* Updaters */

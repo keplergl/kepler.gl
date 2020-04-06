@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export const locales = {
+export const LOCALES = {
     en : 'English',
     fi : 'Suomi',
     pt: 'Português'
@@ -33,18 +33,18 @@ export const locales = {
  * @example
  * ```js
  * import {combineReducers} from 'redux';
- * import {localeCodes} from 'kepler.gl/localization/locales';
+ * import {LOCALE_CODES} from 'kepler.gl/localization/locales';
  *
  * const customizedKeplerGlReducer = keplerGlReducer
  *   .initialState({
  *     uiState: {
  *       // use Finnish locale
- *       locale: localeCodes.fi
+ *       locale: LOCALE_CODES.fi
  *     }
  *   });
  *
  * ```
  */
 
-export const localeCodes = Object.keys(locales)
+export const LOCALE_CODES = Object.keys(locales)
 .reduce((acc, key) => ({...acc, [key]: key}), {});
