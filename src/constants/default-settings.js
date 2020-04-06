@@ -42,7 +42,6 @@ import {
   Cancel
 } from 'components/common/icons';
 import {getHTMLMapModeTileUrl} from 'utils/utils';
-import { emptyLocales } from '../localization/locales';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
@@ -157,36 +156,6 @@ export const THEME = keyMirror({
   light: null,
   dark: null,
   base: null
-});
-
-/**
- * Localization can be passed to `KeplerGl` via uiState `locale`.
- * Available languages are `en` and `fi`. Default language is `en`
- * @constant
- * @type {string}
- * @public
- * @example
- * ```js
- * import {combineReducers} from 'redux';
- * import keplerGlReducer from 'kepler.gl/reducers';
- * import {LOCALES} from 'kepler.gl/constants';
- *
- * const customizedKeplerGlReducer = keplerGlReducer
- *   .initialState({
- *     uiState: {
- *       // use Finnish locale
- *       locale: LOCALES.fi
- *     }
- *   });
- *
- * const reducers = combineReducers({
- *  keplerGl: customizedKeplerGlReducer,
- *  app: appReducer
- * });
- * ```
- */
-export const LOCALES = keyMirror({
-  ...emptyLocales
 });
 
 export const SIDEBAR_PANELS = [

@@ -24,8 +24,27 @@ export const locales = {
     pt: 'Português'
 }
 
-export const emptyLocales = {
-    en : null,
-    fi : null,
-    pt: null
-} 
+/**
+ * Localization can be passed to `KeplerGl` via uiState `locale`.
+ * Available languages are `en` and `fi`. Default language is `en`
+ * @constant
+ * @type {string}
+ * @public
+ * @example
+ * ```js
+ * import {combineReducers} from 'redux';
+ * import {localeCodes} from 'kepler.gl/localization/locales';
+ *
+ * const customizedKeplerGlReducer = keplerGlReducer
+ *   .initialState({
+ *     uiState: {
+ *       // use Finnish locale
+ *       locale: localeCodes.fi
+ *     }
+ *   });
+ *
+ * ```
+ */
+
+export const localeCodes = Object.keys(locales)
+.reduce((acc, key) => ({...acc, [key]: key}), {});

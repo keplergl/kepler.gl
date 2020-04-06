@@ -435,4 +435,3 @@ export default {
     Save: 'Salvar',
     Share: 'Compartilhar'
   };
-  

@@ -9,12 +9,12 @@ By default the first language is English `en`. The default language can be chang
 ```js
 import {combineReducers} from 'redux';
 import keplerGlReducer from 'kepler.gl/reducers';
-import {LOCALES} from 'kepler.gl/constants';
+import { localeCodes } from 'kepler.gl/localization/locales';
 
 const customizedKeplerGlReducer = keplerGlReducer.initialState({
   uiState: {
     // use Finnish locale
-    locale: LOCALES.fi
+    locale: localeCodes.fi
   }
 });
 
@@ -40,13 +40,13 @@ Let's say we want to add the Swedish language to kepler.gl. Easiest way to add t
     sv: {...en_flat, ...flattenMessages(sv)}
   };
   ```
-- Update _LOCALES_ in `src/constants/default-settings.js` to include new language:
+- Update _locales_ in `src/localization/locales.js` to include new language translation:
   ```javascript
-  export const LOCALES = keyMirror({
-    en: null,
-    fi: null,
-    sv: null
-  });
+  export const locales = {
+    en : 'English',
+    fi : 'Suomi',
+    sv: 'Svenska'
+  }
   ```
 
 [react-intl]: https://github.com/formatjs/react-intl
