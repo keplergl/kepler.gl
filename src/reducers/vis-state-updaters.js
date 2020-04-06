@@ -26,49 +26,46 @@ import get from 'lodash.get';
 import xor from 'lodash.xor';
 import copy from 'copy-to-clipboard';
 import {parseFieldValue} from 'utils/data-utils';
-
 // Tasks
 import {LOAD_FILE_TASK} from 'tasks/tasks';
-
 // Actions
-import {loadFilesErr, loadNextFile, loadFileSuccess} from 'actions/vis-state-actions';
-
+import {loadFilesErr, loadFileSuccess, loadNextFile} from 'actions/vis-state-actions';
 // Utils
-import {getDefaultInteraction, findFieldsToShow} from 'utils/interaction-utils';
+import {findFieldsToShow, getDefaultInteraction} from 'utils/interaction-utils';
 import {
-  FILTER_UPDATER_PROPS,
-  LIMITED_FILTER_EFFECT_PROPS,
   applyFilterFieldName,
   applyFiltersToDatasets,
-  generatePolygonFilter,
-  filterDatasetCPU,
-  getDefaultFilter,
-  getFilterPlot,
-  getDefaultFilterPlotType,
-  isInRange,
-  getFilterIdInFeature,
   featureToFilterValue,
+  FILTER_UPDATER_PROPS,
+  filterDatasetCPU,
+  generatePolygonFilter,
+  getDefaultFilter,
+  getDefaultFilterPlotType,
+  getFilterIdInFeature,
+  getFilterPlot,
+  isInRange,
+  LIMITED_FILTER_EFFECT_PROPS,
   updateFilterDataId
 } from 'utils/filter-utils';
-import {setFilterGpuMode, assignGpuChannel} from 'utils/gpu-filter-utils';
+import {assignGpuChannel, setFilterGpuMode} from 'utils/gpu-filter-utils';
 import {createNewDataEntry, sortDatasetByColumn} from 'utils/dataset-utils';
 import {set, toArray} from 'utils/utils';
 
-import {findDefaultLayer, calculateLayerData} from 'utils/layer-utils/layer-utils';
+import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils/layer-utils';
 
 import {
+  mergeAnimationConfig,
   mergeFilters,
-  mergeLayers,
   mergeInteractions,
   mergeLayerBlending,
-  mergeSplitMaps,
-  mergeAnimationConfig
+  mergeLayers,
+  mergeSplitMaps
 } from './vis-state-merger';
 
 import {
   addNewLayersToSplitMap,
-  removeLayerFromSplitMaps,
-  computeSplitMapLayers
+  computeSplitMapLayers,
+  removeLayerFromSplitMaps
 } from 'utils/split-map-utils';
 
 import {Layer, LayerClasses} from 'layers';

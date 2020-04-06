@@ -24,6 +24,8 @@ import {bindActionCreators} from 'redux';
 import styled, {ThemeProvider, withTheme} from 'styled-components';
 import {createSelector} from 'reselect';
 import {connect as keplerGlConnect} from 'connect/keplergl-connect';
+import {IntlProvider} from 'react-intl';
+import {messages} from '../localization';
 import {RootContext} from 'components/context';
 
 import * as VisStateActions from 'actions/vis-state-actions';
@@ -336,69 +338,71 @@ function KeplerGlFactory(
 
       return (
         <RootContext.Provider value={this.root}>
-          <ThemeProvider theme={theme}>
-            <GlobalStyle
-              width={width}
-              height={height}
-              className="kepler-gl"
-              id={`kepler-gl__${id}`}
-              ref={this.root}
-            >
-              <NotificationPanel {...notificationPanelFields} />
-              {!uiState.readOnly && <SidePanel {...sideFields} />}
-              <div className="maps" style={{display: 'flex'}}>
-                {mapContainers}
-              </div>
-              {isExporting && (
-                <PlotContainer
-                  width={width}
-                  height={height}
-                  exportImageSetting={uiState.exportImage}
-                  mapFields={mapFields}
-                  addNotification={uiStateActions.addNotification}
-                  startExportingImage={uiStateActions.startExportingImage}
-                  setExportImageDataUri={uiStateActions.setExportImageDataUri}
-                  setExportImageError={uiStateActions.setExportImageError}
+          <IntlProvider locale={uiState.locale} messages={messages[uiState.locale]}>
+            <ThemeProvider theme={theme}>
+              <GlobalStyle
+                width={width}
+                height={height}
+                className="kepler-gl"
+                id={`kepler-gl__${id}`}
+                ref={this.root}
+              >
+                <NotificationPanel {...notificationPanelFields} />
+                {!uiState.readOnly && <SidePanel {...sideFields} />}
+                <div className="maps" style={{display: 'flex'}}>
+                  {mapContainers}
+                </div>
+                {isExporting && (
+                  <PlotContainer
+                    width={width}
+                    height={height}
+                    exportImageSetting={uiState.exportImage}
+                    mapFields={mapFields}
+                    addNotification={uiStateActions.addNotification}
+                    startExportingImage={uiStateActions.startExportingImage}
+                    setExportImageDataUri={uiStateActions.setExportImageDataUri}
+                    setExportImageError={uiStateActions.setExportImageError}
+                  />
+                )}
+                <BottomWidget
+                  filters={filters}
+                  datasets={datasets}
+                  uiState={uiState}
+                  layers={layers}
+                  animationConfig={animationConfig}
+                  visStateActions={visStateActions}
+                  sidePanelWidth={
+                    uiState.readOnly
+                      ? 0
+                      : this.props.sidePanelWidth + DIMENSIONS.sidePanel.margin.left
+                  }
+                  containerW={containerW}
                 />
-              )}
-              <BottomWidget
-                filters={filters}
-                datasets={datasets}
-                uiState={uiState}
-                layers={layers}
-                animationConfig={animationConfig}
-                visStateActions={visStateActions}
-                sidePanelWidth={
-                  uiState.readOnly
-                    ? 0
-                    : this.props.sidePanelWidth + DIMENSIONS.sidePanel.margin.left
-                }
-                containerW={containerW}
-              />
-              <ModalContainer
-                mapStyle={mapStyle}
-                visState={visState}
-                mapState={mapState}
-                uiState={uiState}
-                mapboxApiAccessToken={mapboxApiAccessToken}
-                mapboxApiUrl={mapboxApiUrl}
-                visStateActions={visStateActions}
-                uiStateActions={uiStateActions}
-                mapStyleActions={mapStyleActions}
-                providerActions={providerActions}
-                rootNode={this.root.current}
-                containerW={containerW}
-                containerH={mapState.height}
-                providerState={this.props.providerState}
-                // User defined cloud provider props
-                cloudProviders={this.props.cloudProviders}
-                onExportToCloudSuccess={this.props.onExportToCloudSuccess}
-                onLoadCloudMapSuccess={this.props.onLoadCloudMapSuccess}
-                onLoadCloudMapError={this.props.onLoadCloudMapError}
-                onExportToCloudError={this.props.onExportToCloudError}
-              />
-            </GlobalStyle>
-          </ThemeProvider>
+                <ModalContainer
+                  mapStyle={mapStyle}
+                  visState={visState}
+                  mapState={mapState}
+                  uiState={uiState}
+                  mapboxApiAccessToken={mapboxApiAccessToken}
+                  mapboxApiUrl={mapboxApiUrl}
+                  visStateActions={visStateActions}
+                  uiStateActions={uiStateActions}
+                  mapStyleActions={mapStyleActions}
+                  providerActions={providerActions}
+                  rootNode={this.root.current}
+                  containerW={containerW}
+                  containerH={mapState.height}
+                  providerState={this.props.providerState}
+                  // User defined cloud provider props
+                  cloudProviders={this.props.cloudProviders}
+                  onExportToCloudSuccess={this.props.onExportToCloudSuccess}
+                  onLoadCloudMapSuccess={this.props.onLoadCloudMapSuccess}
+                  onLoadCloudMapError={this.props.onLoadCloudMapError}
+                  onExportToCloudError={this.props.onExportToCloudError}
+                />
+              </GlobalStyle>
+            </ThemeProvider>
+          </IntlProvider>
         </RootContext.Provider>
       );
     }

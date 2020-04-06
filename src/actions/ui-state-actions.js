@@ -204,6 +204,16 @@ export const setExportHTMLMapMode = createAction(
 );
 
 /**
+ * Set `locale` value
+ * @memberof uiStateActions
+ * @param {Object} locale - locale of the UI
+ * @public
+ */
+export const setLocale = createAction(ActionTypes.SET_LOCALE, locale => ({
+  locale
+}));
+
+/**
  * This declaration is needed to group actions in docs
  */
 /**

@@ -111,7 +111,7 @@ export default class TripLayer extends Layer {
       id: 'iconInfo',
       template: this._layerInfoModal,
       modalProps: {
-        title: 'How to enable trip animation'
+        title: 'modal.tripInfo.title'
       }
     };
   }

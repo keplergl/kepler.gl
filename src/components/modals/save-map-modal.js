@@ -38,6 +38,7 @@ import {
   StyledModalInputFootnote
 } from 'components/common/styled-components';
 import ImagePreview from 'components/common/image-preview';
+import { FormattedMessage } from "react-intl";
 
 const StyledSaveMapModal = styled.div.attrs({
   className: 'save-map-modal'
@@ -182,8 +183,8 @@ function SaveMapModalFactory() {
               <StyledModalContent className="save-map-modal-content">
                 <StyledExportSection disabled={isProviderLoading}>
                   <div className="description">
-                    <div className="title">Cloud storage</div>
-                    <div className="subtitle">Login save map to your personal cloud storage</div>
+                    <div className="title"><FormattedMessage id={'modal.saveMap.title'} /></div>
+                    <div className="subtitle"><FormattedMessage id={'modal.saveMap.subtitle'} /></div>
                   </div>
                   <div className="selection">
                     {cloudProviders.map(cloudProvider => (

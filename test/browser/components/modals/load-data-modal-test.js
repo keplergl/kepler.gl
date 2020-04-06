@@ -20,7 +20,7 @@
 
 import React from 'react';
 import test from 'tape';
-import {mountWithTheme} from 'test/helpers/component-utils';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import LoadDataModalFactory from 'components/modals/load-data-modal';
 import {ModalTabItem} from 'components/modals/modal-tabs';
 import LoadStorageMapFactory from 'components/modals/load-storage-map';
@@ -34,7 +34,11 @@ test('Components -> LoadDataModal.mount', t => {
   // mount
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<LoadDataModal />);
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <LoadDataModal />
+      </IntlWrapper>
+    );
   }, 'Show not fail without props');
 
   t.equal(wrapper.find('.file-uploader').length, 3, 'should render FileUpload');
@@ -59,7 +63,11 @@ test('Components -> LoadDataModal -> custom loading method', t => {
 
   let wrapper;
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(<LoadDataModal loadingMethods={loadingMethods} />);
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <LoadDataModal loadingMethods={loadingMethods} />
+      </IntlWrapper>
+    );
   }, 'Show not fail without props');
 
   t.equal(wrapper.find(ModalTabItem).length, 1, 'should render 1 ModalTabItem');

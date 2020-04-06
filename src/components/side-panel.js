@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {PureComponent} from 'react';
+import {FormattedMessage} from 'react-intl';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import get from 'lodash.get';
@@ -263,7 +264,9 @@ export default function SidePanelFactory(
             <SidePanelContent className="side-panel__content">
               <div>
                 <PanelTitle className="side-panel__content__title">
-                  {(panels.find(({id}) => id === activeSidePanel) || {}).label}
+                  <FormattedMessage
+                    id={(panels.find(({id}) => id === activeSidePanel) || {}).label}
+                  />
                 </PanelTitle>
                 {activeSidePanel === 'layer' && (
                   <LayerManager

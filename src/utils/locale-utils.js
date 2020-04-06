@@ -18,25 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import styled from 'styled-components';
-import {format} from 'd3-format';
-import { FormattedMessage } from "react-intl";
-
-const numFormat = format(',');
-
-const StyledDataRowCount = styled.div`
-  font-size: 11px;
-  color: ${props => props.theme.subtextColor};
-  padding-left: 19px;
-`;
-
-export default function DatasetInfoFactory() {
-  const DatasetInfo = ({dataset}) => (
-    <StyledDataRowCount className="source-data-rows">
-      <FormattedMessage id={'datasetInfo.rowCount'} values={{rowCount: numFormat(dataset.allData.length)}}/>
-    </StyledDataRowCount>
-  );
-
-  return DatasetInfo;
-}
+// Flat messages since react-intl does not seem to support nested structures
+// Adapted from https://medium.com/siren-apparel-press/internationalization-and-localization-of-sirenapparel-eu-sirenapparel-us-and-sirenapparel-asia-ddee266066a2
+export const flattenMessages = (nestedMessages, prefix = '') => {
+  return Object.keys(nestedMessages).reduce((messages, key) => {
+    const value = nestedMessages[key];
+    const prefixedKey = prefix ? `${prefix}.${key}` : key;
+    if (typeof value === 'string') {
+      messages[prefixedKey] = value;
+    } else {
+      Object.assign(messages, flattenMessages(value, prefixedKey));
+    }
+    return messages;
+  }, {});
+};

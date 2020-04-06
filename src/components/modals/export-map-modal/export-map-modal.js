@@ -27,6 +27,7 @@ import {EXPORT_MAP_FORMATS, EXPORT_MAP_FORMAT_OPTIONS} from 'constants/default-s
 import {StyledExportMapSection} from './components';
 import ExportHtmlMapFactory from './export-html-map';
 import ExportJsonMapFactory from './export-json-map';
+import {FormattedMessage} from 'react-intl';
 
 const propTypes = {
   options: PropTypes.object,
@@ -56,8 +57,12 @@ function ExportMapModalFactory(ExportHtmlMap, ExportJsonMap) {
         <div style={style}>
           <StyledExportMapSection>
             <div className="description">
-              <div className="title">Map format</div>
-              <div className="subtitle">Choose the format to export your map to</div>
+              <div className="title">
+                <FormattedMessage id={'modal.exportMap.formatTitle'} />
+              </div>
+              <div className="subtitle">
+                <FormattedMessage id={'modal.exportMap.formatSubtitle'} />
+              </div>
             </div>
             <div className="selection">
               {EXPORT_MAP_FORMAT_OPTIONS.map(op => (

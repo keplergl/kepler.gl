@@ -21,11 +21,18 @@
 import React from 'react';
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
+import {FormattedMessage} from 'react-intl';
+import {camelize} from 'utils/utils';
 
 const DimensionScaleSelector = ({label, onSelect, options, scaleType, disabled = false}) => {
   return (
     <SidePanelSection>
-      <PanelLabel>{label || 'Scale'}</PanelLabel>
+      <PanelLabel>
+        <FormattedMessage
+          id={label ? `scale.${camelize(label)}` : 'misc.scale'}
+          defaultMessage={label}
+        />
+      </PanelLabel>
       <ItemSelector
         disabled={disabled}
         selectedItems={scaleType}

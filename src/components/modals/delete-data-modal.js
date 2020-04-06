@@ -21,6 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import DatasetLabel from 'components/common/dataset-label';
+import {FormattedMessage} from 'react-intl';
 
 const StyledMsg = styled.div`
   margin-top: 24px;
@@ -34,7 +35,10 @@ export const DeleteDatasetModal = ({dataset = {}, layers = []}) => {
     <div className="delete-dataset-modal">
       <DatasetLabel dataset={dataset} />
       <StyledMsg className="delete-dataset-msg">
-        {`you are going to delete this dataset. It will affect ${currDatasetLayers.length} layers`}
+        <FormattedMessage
+          id={'modal.deleteData.warning'}
+          values={{length: currDatasetLayers.length}}
+        />
       </StyledMsg>
     </div>
   );

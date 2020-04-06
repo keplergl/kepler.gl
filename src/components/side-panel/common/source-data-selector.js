@@ -24,6 +24,7 @@ import {createSelector} from 'reselect';
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
+import {FormattedMessage} from 'react-intl';
 
 const defaultPlaceHolder = 'Select A Data Source';
 
@@ -50,7 +51,9 @@ export default function SourceDataSelectorFactory(DatasetTag) {
 
       return (
         <SidePanelSection className="data-source-selector">
-          <PanelLabel>Data Source</PanelLabel>
+          <PanelLabel>
+            <FormattedMessage id={'misc.dataSource'} />
+          </PanelLabel>
           <ItemSelector
             inputTheme={inputTheme}
             selectedItems={dataId ? this.props.datasets[dataId] : null}

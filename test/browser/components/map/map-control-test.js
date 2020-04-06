@@ -30,6 +30,8 @@ test('MapControlFactory - display all options', t => {
   const onTogglePerspective = sinon.spy();
   const onToggleMapControl = sinon.spy();
   const onSetEditorMode = sinon.spy();
+  const onToggleEditorVisibility = sinon.spy();
+  const onSetLocale = sinon.spy();
 
   const $ = shallow(
     <MapControl
@@ -38,10 +40,12 @@ test('MapControlFactory - display all options', t => {
         visibleLayers: {show: true},
         toggle3d: {show: true},
         mapLegend: {show: true},
-        mapDraw: {show: true}
+        mapDraw: {show: true},
+        mapLocale: {show: true}
       }}
       datasets={{}}
       layers={[]}
+      locale={'en'}
       layersToRender={{}}
       dragRotate={true}
       mapIndex={0}
@@ -49,10 +53,12 @@ test('MapControlFactory - display all options', t => {
       onTogglePerspective={onTogglePerspective}
       onToggleMapControl={onToggleMapControl}
       onSetEditorMode={onSetEditorMode}
+      onToggleEditorVisibility={onToggleEditorVisibility}
+      onSetLocale={onSetLocale}
     />
   );
 
-  t.equal($.find('ActionPanel').length, 4, 'Should show 4 action panels');
+  t.equal($.find('ActionPanel').length, 5, 'Should show 5 action panels');
 
   t.end();
 });

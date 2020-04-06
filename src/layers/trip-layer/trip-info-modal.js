@@ -20,6 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
+import {FormattedMessage} from 'react-intl';
 
 const StyledCode = styled.code`
   color: ${props => props.theme.titleColorLT};
@@ -37,16 +38,15 @@ const TripInfoModalFactory = (svgIcons = []) => {
     <div className="trip-info-modal">
       <div className="trip-info-modal__description">
         <p>
-          In order to animate the path, the geoJSON data needs to contain `LineString` in its
-          feature geometry, and the coordinates in the LineString need to have 4 elements in the
-          formats of
-          <code> [longitude, latitude, altitude, timestamp] </code>
-          with the last element being a timestamp. Valid timestamp formats include unix in seconds
-          such as `1564184363` or in milliseconds such as `1564184363000`.
+          <FormattedMessage id={'modal.tripInfo.description1'} />
+          <code>
+            <FormattedMessage id={'modal.tripInfo.code'} />
+          </code>
+          <FormattedMessage id={'modal.tripInfo.description2'} />
         </p>
       </div>
       <div className="trip-info-modal__example">
-        <StyledTitle>Example:</StyledTitle>
+        <StyledTitle><FormattedMessage id={'modal.tripInfo.example'} /></StyledTitle>
         <pre>
           <StyledCode>
             {`

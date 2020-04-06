@@ -19,6 +19,7 @@
     - [Saving and loading maps with schema manager][saving-loading-w-schema]
     - [Replace UI component][replace-ui-component]
     - [Custom Mapbox Host][custom-mapbox-host]
+    - [Localization][localization]
 
 -  [API]()
     - [Components][components]
@@ -57,6 +58,7 @@ To start out with kepler.gl, you simply need to add the Kepler.gl UI component a
 [reducer-and-forward-dispatcher]: ./ecosystem.md#reducer-and-forward-dispatcher
 [actions-and-updaters]: ./ecosystem.md#actions-and-updaters
 [processors-and-schema-manager]: ./ecosystem.md#processors-and-schema-manager
+[localization]: ./localization/overview.md
 
 [redux]: https://redux.js.org/
 [react]: https://reactjs.org/

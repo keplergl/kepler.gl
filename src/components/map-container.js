@@ -426,6 +426,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         mapboxApiUrl,
         mapControls,
         uiState,
+        uiStateActions,
         visStateActions,
         editor,
         index
@@ -464,11 +465,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             scale={mapState.scale || 1}
             top={0}
             editor={editor}
+            locale={uiState.locale}
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
             onToggleMapControl={this._toggleMapControl}
             onSetEditorMode={visStateActions.setEditorMode}
+            onSetLocale={uiStateActions.setLocale}
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
           />
           <MapComponent

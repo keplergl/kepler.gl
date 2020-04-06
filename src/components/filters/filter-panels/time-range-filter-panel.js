@@ -50,7 +50,7 @@ function TimeRangeFilterPanelFactory(FieldPanelWithFieldSelect, TimeRangeFilter)
           {
             id: filter.id,
             onClick: enlargeFilter,
-            tooltip: 'Time Playback',
+            tooltip: 'tooltip.timePlayback',
             iconComponent: Clock,
             active: filter.enlarged
           }

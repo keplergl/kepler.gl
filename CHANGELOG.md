@@ -15,6 +15,13 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [2.1.2] - April 3 2020
+- [Enhancement] Add support for localization and Finnish translations (#994)
+- [Bug] Fixes for case sensitive fields in CARTO storage  (#1057)
+- [Chore] Removed engine requirements (#1049)
+- [Chore] Improve the secondary button color for base theme (#1048)
+- [Chore] Updated examples to v2.1.1 (#1043)
+
 ## [2.1.1] - March 31 2020
 - [Chore] Updated example to 2.1.0 (#1041)
 

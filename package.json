@@ -1,15 +1,10 @@
 {
   "name": "kepler.gl",
   "author": "Shan He <shan@uber.com>",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
-  "engines": {
-    "node": ">=10.15.0",
-    "npm": ">=6.4.0",
-    "yarn": ">=1.13.0"
-  },
   "keywords": [
     "babel",
     "es6",
@@ -129,6 +124,7 @@
     "prop-types": "^15.6.0",
     "react-color": "^2.17.3",
     "react-copy-to-clipboard": "^5.0.2",
+    "react-intl": "^3.12.0",
     "react-json-pretty": "^1.7.9",
     "react-lifecycles-compat": "^3.0.4",
     "react-map-gl": "^5.0.3",
@@ -250,6 +246,9 @@
       "src/templates",
       "src/styles"
     ]
+  },
+  "engines": {
+    "node": ">=10.0.0"
   },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",

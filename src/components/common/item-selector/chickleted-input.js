@@ -23,6 +23,7 @@ import PropTypes from 'prop-types';
 
 import styled from 'styled-components';
 import Delete from '../icons/delete';
+import {FormattedMessage} from 'react-intl';
 
 const propTypes = {
   // required properties
@@ -116,7 +117,9 @@ const ChickletedInput = ({
         />
       ))
     ) : (
-      <span className={`${className} chickleted-input__placeholder`}>{placeholder}</span>
+      <span className={`${className} chickleted-input__placeholder`}>
+        <FormattedMessage id={placeholder} />
+      </span>
     )}
   </ChickletedInputContainer>
 );

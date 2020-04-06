@@ -53,7 +53,7 @@ export const pointVisConfigs = {
   radiusRange: 'radiusRange',
   filled: {
     type: 'boolean',
-    label: 'Fill Color',
+    label: 'layer.fillColor',
     defaultValue: true,
     property: 'filled'
   }
