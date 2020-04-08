@@ -59,6 +59,7 @@ function flatterIconPositions(icon) {
 }
 
 export default class IconLayer extends Layer {
+  static iconGeometry = null;
   constructor(props = {}) {
     super(props);
 
@@ -68,7 +69,6 @@ export default class IconLayer extends Layer {
 
     // prepare layer info modal
     this._layerInfoModal = IconInfoModalFactory();
-    this.iconGeometry = props.iconGeometry || null;
     this.getSvgIcons();
   }
 
@@ -123,7 +123,7 @@ export default class IconLayer extends Layer {
         .then(response => response.json())
         .then((parsed = {}) => {
           const {svgIcons = []} = parsed;
-          this.iconGeometry = svgIcons.reduce(
+          IconLayer.iconGeometry = svgIcons.reduce(
             (accu, curr) => ({
               ...accu,
               [curr.id]: flatterIconPositions(curr)
@@ -300,7 +300,7 @@ export default class IconLayer extends Layer {
       )
     ];
 
-    return !this.iconGeometry
+    return !IconLayer.iconGeometry
       ? []
       : [
           new SvgIconLayer({
@@ -308,7 +308,7 @@ export default class IconLayer extends Layer {
             ...brushingProps,
             ...layerProps,
             ...data,
-            getIconGeometry: id => this.iconGeometry[id],
+            getIconGeometry: id => IconLayer.iconGeometry[id],
 
             // update triggers
             updateTriggers,
@@ -324,7 +324,7 @@ export default class IconLayer extends Layer {
                   getPosition: data.getPosition,
                   getRadius: data.getRadius,
                   getFillColor: this.config.highlightColor,
-                  getIconGeometry: id => this.iconGeometry[id]
+                  getIconGeometry: id => IconLayer.iconGeometry[id]
                 })
               ]
             : []),
