@@ -54,8 +54,8 @@ const defaultResolution = EXPORT_IMG_RESOLUTION_OPTIONS.find(op => op.id === RES
 
 const defaultRatio = EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === EXPORT_IMG_RATIOS.FOUR_BY_THREE);
 
-function isMSEdge() {
-  return window.navigator && window.navigator.msSaveOrOpenBlob;
+export function isMSEdge(window) {
+  return Boolean(window.navigator && window.navigator.msSaveOrOpenBlob);
 }
 
 export function getScaleFromImageSize(imageW, imageH, mapW, mapH) {
@@ -120,7 +120,7 @@ export function dataURItoBlob(dataURI) {
 }
 
 export function downloadFile(fileBlob, fileName) {
-  if (isMSEdge()) {
+  if (isMSEdge(window)) {
     window.navigator.msSaveOrOpenBlob(fileBlob, fileName);
   } else {
     const url = URL.createObjectURL(fileBlob);

@@ -32,7 +32,7 @@ import {
   PanelHeaderContent,
   PanelContent
 } from 'components/common/styled-components';
-import { FormattedMessage } from "react-intl";
+import {FormattedMessage} from 'react-intl';
 
 const StyledPanelContent = styled(PanelContent)`
   border-top: 1px solid ${props => props.theme.panelBorderColor};
@@ -93,8 +93,9 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
                 <config.iconComponent height="12px" />
               </div>
               <div className="interaction-panel__header__title">
-
-                <PanelHeaderTitle><FormattedMessage id={config.label} /></PanelHeaderTitle>
+                <PanelHeaderTitle>
+                  <FormattedMessage id={config.label} />
+                </PanelHeaderTitle>
               </div>
             </PanelHeaderContent>
             <div className="interaction-panel__header__actions">

@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import LoadingSpinner from 'components/common/loading-spinner';
-import { FormattedMessage } from "react-intl";
+import {FormattedMessage} from 'react-intl';
 
 const StyledSpinner = styled.div`
   text-align: center;
@@ -59,7 +59,9 @@ const LoadingDialog = ({size = 64, message = 'modal.loadingDialog.loading'}) => 
       <StyledSpinner>
         <LoadingSpinner size={size} />
       </StyledSpinner>
-      <div className="loading-message"><FormattedMessage id={message} /></div>
+      <div className="loading-message">
+        <FormattedMessage id={message} />
+      </div>
     </div>
   </StyledLoadingDialog>
 );
