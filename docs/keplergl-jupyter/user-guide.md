@@ -255,7 +255,7 @@ map_1.config
 #   u'longitude': -122.42590232651203,
 ```
 
-When the map is final, you can copy this config and load it later to reproduce the same map. Follow the instruction to [match config with data](match-config-w-data).
+When the map is final, you can copy this config and load it later to reproduce the same map. Follow the instruction to [match config with data][match-config-w-data].
 There are 2 ways to apply config to a map:
 
  1. Directly apply config to the map.
