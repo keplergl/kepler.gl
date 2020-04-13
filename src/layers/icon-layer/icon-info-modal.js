@@ -22,7 +22,7 @@ import React from 'react';
 import styled from 'styled-components';
 import {line} from 'd3-shape';
 import {Table, CenterFlexbox} from 'components/common/styled-components';
-import { FormattedMessage } from "react-intl";
+import {FormattedMessage} from 'react-intl';
 
 const lineFunction = line()
   .x(d => d[0] * 10)
@@ -125,15 +125,21 @@ const IconInfoModalFactory = (svgIcons = []) => {
     <div className="icon-info-modal">
       <div className="icon-info-modal__description">
         <FormattedMessage id={'modal.iconInfo.description1'} />{' '}
-        <code><FormattedMessage id={'modal.iconInfo.code'} /></code>
-        <FormattedMessage id={'modal.iconInfo.description2'}/>
+        <code>
+          <FormattedMessage id={'modal.iconInfo.code'} />
+        </code>
+        <FormattedMessage id={'modal.iconInfo.description2'} />
       </div>
       <div className="icon-info-modal__example">
-        <StyledTitle><FormattedMessage id={'modal.iconInfo.example'}/></StyledTitle>
+        <StyledTitle>
+          <FormattedMessage id={'modal.iconInfo.example'} />
+        </StyledTitle>
         <ExampleTable />
       </div>
       <div className="icon-info-modal__icons">
-        <StyledTitle><FormattedMessage id={'modal.iconInfo.icons'}/></StyledTitle>
+        <StyledTitle>
+          <FormattedMessage id={'modal.iconInfo.icons'} />
+        </StyledTitle>
         <IconTable className="icon-info-modal__icons__table">
           {svgIcons.map(icon => (
             <IconItem key={icon.id} icon={icon} />

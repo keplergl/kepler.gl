@@ -80,13 +80,13 @@ test('Utils -> camelToTitle', t => {
   t.end();
 });
 
-test('Utils -> camelize', t=> {
+test('Utils -> camelize', t => {
   t.equal(camelize('hello world test string'), 'helloWorldTestString', 'should camelize string');
   t.equal(camelize('Hello World test String'), 'helloWorldTestString', 'should camelize string');
   t.end();
 });
 
-test('Utils -> capitalizeFirstLetter', t=> {
+test('Utils -> capitalizeFirstLetter', t => {
   t.equal(capitalizeFirstLetter('hello world'), 'Hello world', 'should capitalize string');
   t.equal(capitalizeFirstLetter(1), 1, 'should ignore other types than string');
   t.end();

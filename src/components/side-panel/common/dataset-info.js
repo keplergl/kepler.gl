@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {format} from 'd3-format';
-import { FormattedMessage } from "react-intl";
+import {FormattedMessage} from 'react-intl';
 
 const numFormat = format(',');
 
@@ -34,7 +34,10 @@ const StyledDataRowCount = styled.div`
 export default function DatasetInfoFactory() {
   const DatasetInfo = ({dataset}) => (
     <StyledDataRowCount className="source-data-rows">
-      <FormattedMessage id={'datasetInfo.rowCount'} values={{rowCount: numFormat(dataset.allData.length)}}/>
+      <FormattedMessage
+        id={'datasetInfo.rowCount'}
+        values={{rowCount: numFormat(dataset.allData.length)}}
+      />
     </StyledDataRowCount>
   );
 
