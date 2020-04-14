@@ -80,7 +80,7 @@ map_1
 
 ![empty map][empty_map]
 
-You can also create the map and pass in the data or data and config at the same time. Follow the instruction to [match config with data](match-config-w-data)
+You can also create the map and pass in the data or data and config at the same time. Follow the instruction to [match config with data][match-config-w-data]
 
 ```python
 # Load a map with data and config and height
@@ -255,7 +255,7 @@ map_1.config
 #   u'longitude': -122.42590232651203,
 ```
 
-When the map is final, you can copy this config and load it later to reproduce the same map. Follow the instruction to [match config with data](match-config-w-data).
+When the map is final, you can copy this config and load it later to reproduce the same map. Follow the instruction to [match config with data][match-config-w-data].
 There are 2 ways to apply config to a map:
 
  1. Directly apply config to the map.
@@ -351,5 +351,5 @@ map_1.save_to_html(file_name='first_map.html' read_only=True)
 [data_frame]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
 [geo_data_frame]: https://geopandas.readthedocs.io/en/latest/data_structures.html#geodataframe
 
-[match-config-w-data]: #match-config-with-data
+[match-config-w-data]: #6-match-config-with-data
 [data_format]: #3-data-format

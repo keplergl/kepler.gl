@@ -125,32 +125,31 @@ export default function ShareMapUrlModalFactory() {
               currentProvider={currentProvider}
               cloudProviders={cloudProviders}
               onUpdateImageSetting={onUpdateImageSetting}
-
-          >
-            <StyledShareMapModal className="export-cloud-modal">
-            <StyledInnerDiv>
-              <StyledExportSection>
-                <div className="description">
-                  <div className="title">
-                    <FormattedMessage id={'modal.shareMap.shareUriTitle'} />
-                  </div>
-                  <div className="subtitle">
-                    <FormattedMessage id={'modal.shareMap.shareUriSubtitle'} />
-                  </div>
-                </div>
-                <div className="selection">
-                  <div className="title warning">
-                    <FormattedMessage id={'modal.shareMap.shareDisclaimer'} />
-                  </div>
-                </div>
-              </StyledExportSection>
-              <StyledExportSection disabled={isProviderLoading}>
-                <div className="description">
-                  <div className="title">
-                    <FormattedMessage id={'modal.shareMap.cloudTitle'} />
-                  </div>
-                  <div className="subtitle">
-                    <FormattedMessage id={'modal.shareMap.cloudSubtitle'} />
+            >
+              <StyledShareMapModal className="export-cloud-modal">
+                <StyledInnerDiv>
+                  <StyledExportSection>
+                    <div className="description">
+                      <div className="title">
+                        <FormattedMessage id={'modal.shareMap.shareUriTitle'} />
+                      </div>
+                      <div className="subtitle">
+                        <FormattedMessage id={'modal.shareMap.shareUriSubtitle'} />
+                      </div>
+                    </div>
+                    <div className="selection">
+                      <div className="title warning">
+                        <FormattedMessage id={'modal.shareMap.shareDisclaimer'} />
+                      </div>
+                    </div>
+                  </StyledExportSection>
+                  <StyledExportSection disabled={isProviderLoading}>
+                    <div className="description">
+                      <div className="title">
+                        <FormattedMessage id={'modal.shareMap.cloudTitle'} />
+                      </div>
+                      <div className="subtitle">
+                        <FormattedMessage id={'modal.shareMap.cloudSubtitle'} />
                       </div>
                     </div>
                     <div className="selection">
@@ -190,7 +189,10 @@ export default function ShareMapUrlModalFactory() {
                             rel="noopener noreferrer"
                             style={{textDecoration: 'underline'}}
                           >
-                            <FormattedMessage id={'modal.shareMap.gotoPage'} values={{currentProvider}} />
+                            <FormattedMessage
+                              id={'modal.shareMap.gotoPage'}
+                              values={{currentProvider}}
+                            />
                           </a>
                         )}
                       </div>

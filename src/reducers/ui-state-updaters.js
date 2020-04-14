@@ -110,7 +110,6 @@ export const DEFAULT_MAP_CONTROLS = [
   {}
 );
 
-
 /**
  * Default image export config
  * @memberof uiStateUpdaters
@@ -324,8 +323,6 @@ export const toggleMapControlUpdater = (state, {payload: {panelId, index = 0}}) 
     }
   }
 });
-
-
 
 /**
  * Toggle active map control panel

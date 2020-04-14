@@ -22,8 +22,8 @@ import React from 'react';
 import {mount} from 'enzyme';
 import {theme} from 'styles/base';
 import {ThemeProvider} from 'styled-components';
-import { IntlProvider } from "react-intl";
-import { messages } from "localization";
+import {IntlProvider} from 'react-intl';
+import {messages} from 'localization';
 
 export function mountWithTheme(node) {
   return mount(node, {
@@ -32,7 +32,7 @@ export function mountWithTheme(node) {
   });
 }
 
-export const IntlWrapper = ({children, locale='en'}) => (
+export const IntlWrapper = ({children, locale = 'en'}) => (
   <IntlProvider locale={locale} messages={messages[locale]}>
     {children}
   </IntlProvider>

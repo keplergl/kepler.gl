@@ -46,7 +46,9 @@ const TripInfoModalFactory = (svgIcons = []) => {
         </p>
       </div>
       <div className="trip-info-modal__example">
-        <StyledTitle><FormattedMessage id={'modal.tripInfo.example'} /></StyledTitle>
+        <StyledTitle>
+          <FormattedMessage id={'modal.tripInfo.example'} />
+        </StyledTitle>
         <pre>
           <StyledCode>
             {`

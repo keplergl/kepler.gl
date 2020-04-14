@@ -80,7 +80,9 @@ export default class LayerColumnConfig extends Component {
         <SidePanelSection>
           <div className="layer-config__column">
             <TopRow>
-              <PanelLabel><FormattedMessage id={'columns.title'} /></PanelLabel>
+              <PanelLabel>
+                <FormattedMessage id={'columns.title'} />
+              </PanelLabel>
               <PanelLabel>
                 <FormattedMessage id="layer.required" />
               </PanelLabel>
