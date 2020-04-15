@@ -19,16 +19,12 @@
 // THE SOFTWARE.
 
 import en from './en';
-import fi from './fi';
-import pt from './pt';
 import {flattenMessages} from 'utils/locale-utils';
+import {LOCALE_CODES, LOCALES} from './locales';
 
 const en_flat = flattenMessages(en);
 
-export const messages = {
-  en: en_flat,
-  fi: {...en_flat, ...flattenMessages(fi)},
-  pt: {...en_flat, ...flattenMessages(pt)}
-};
+export const messages = Object.keys(LOCALE_CODES)
+.reduce((acc, key) => ({...acc, [key]: key === "en" ? en_flat : {...en_flat, ...flattenMessages(require(`./${key}`))}}), {});
 
-export {LOCALE_CODES, LOCALES} from './locales';
+export {LOCALE_CODES, LOCALES};

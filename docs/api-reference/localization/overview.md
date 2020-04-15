@@ -30,21 +30,13 @@ Let's say we want to add the Swedish language to kepler.gl. Easiest way to add t
 
 - Find out the [language code][language-codes] for Swedish: `sv`
 - Add new translation file `src/localization/sv.js` by copying `src/localization/en.js` and translating the strings
-- Update `src/localization/index.js` to include new language:
-  ```javascript
-  import sv from './sv';
-  ...
-  export const messages = {
-    en: en_flat,
-    fi: {...en_flat, ...flattenMessages(fi)},
-    sv: {...en_flat, ...flattenMessages(sv)}
-  };
-  ```
-- Update _LOCALES_ in `src/localization/locale.js` to include new language translation:
+
+- Update _LOCALES_ in `src/localization/locales.js` to include new language translation:
   ```javascript
   export const LOCALES = {
     en : 'English',
     fi : 'Suomi',
+    pt: 'Português',
     sv: 'Svenska'
   }
   ```
