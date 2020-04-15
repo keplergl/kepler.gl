@@ -22,7 +22,6 @@ import en from './en';
 import fi from './fi';
 import pt from './pt';
 import {flattenMessages} from 'utils/locale-utils';
-import {LOCALE_CODES} from './locales';
 
 const en_flat = flattenMessages(en);
 
@@ -32,4 +31,4 @@ export const messages = {
   pt: {...en_flat, ...flattenMessages(pt)}
 };
 
-export {LOCALE_CODES}
+export {LOCALE_CODES, LOCALES} from './locales';
