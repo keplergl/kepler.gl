@@ -46,5 +46,5 @@ export const LOCALES = {
  * ```
  */
 
-export const LOCALE_CODES = Object.keys(locales)
+export const LOCALE_CODES = Object.keys(LOCALES)
 .reduce((acc, key) => ({...acc, [key]: key}), {});
