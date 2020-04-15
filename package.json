@@ -68,6 +68,7 @@
     "schemas.js",
     "styles.js",
     "cloud-providers.js",
+    "localization.js",
     "umd"
   ],
   "dependencies": {
