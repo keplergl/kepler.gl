@@ -186,7 +186,9 @@ export const THEME = keyMirror({
  */
 export const LOCALES = keyMirror({
   en: null,
-  fi: null
+  fi: null,
+  es: null,
+  ca: null
 });
 
 export const SIDEBAR_PANELS = [

@@ -213,7 +213,9 @@ export default {
     hide: 'hide',
     show: 'show',
     en: 'English',
-    fi: 'Suomi'
+    fi: 'Suomi',
+    es: 'Español',
+    ca:'Català'
   },
   modal: {
     title: {
