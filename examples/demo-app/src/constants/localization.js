@@ -74,12 +74,12 @@ export const messages = {
     'sampleDataViewer.rowCount': ' {rowCount} files',
     'loadRemoteMap.description': 'Carga tu mapa con tu enlace personalizado',
     'loadRemoteMap.message':
-    'Puedes usar los siguientes formatos: CSV | JSON | Kepler.gl config json. Asegurate que el enlace contenga la extensión del archivo.',
+      'Puedes usar los siguientes formatos: CSV | JSON | Kepler.gl config json. Asegurate que el enlace contenga la extensión del archivo.',
     'loadRemoteMap.examples': 'Ejemplos:',
     'loadRemoteMap.cors':
-    '* La política CORS debe ser definida en tu dominio para que sea accessible. Para más información ',
+      '* La política CORS debe ser definida en tu dominio para que sea accessible. Para más información ',
     'loadRemoteMap.clickHere':
-    '<a rel="noopener noreferrer" target="_blank" href="{corsLink}">haz clic aquí</a>',
-  'loadRemoteMap.fetch': 'Busca'
+      '<a rel="noopener noreferrer" target="_blank" href="{corsLink}">haz clic aquí</a>',
+    'loadRemoteMap.fetch': 'Busca'
   }
 };
