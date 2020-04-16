@@ -25,6 +25,6 @@ import {LOCALE_CODES} from './locales';
 const en_flat = flattenMessages(en);
 
 export const messages = Object.keys(LOCALE_CODES)
-.reduce((acc, key) => ({...acc, [key]: key === "en" ? en_flat : {...en_flat, ...flattenMessages(require(`./${key}`))}}), {});
+.reduce((acc, key) => ({...acc, [key]: key === "en" ? en_flat : {...en_flat, ...flattenMessages(require(`./${key}`).default)}}), {});
 
 export {LOCALE_CODES, LOCALES} from './locales';
