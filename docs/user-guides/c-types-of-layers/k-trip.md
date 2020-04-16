@@ -69,4 +69,4 @@ In order to animate the path, the `geoJSON` data needs to contain `LineString` i
 
 To export an animated map, you can use a screen recording or gif capture tool. You can also export the map as an interactive HTML to open in the browser.
 
-[Back to table of contents](../a-introduction.md)
+[Back to table of contents](../README.md)

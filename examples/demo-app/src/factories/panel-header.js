@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {PanelHeaderFactory, Icons} from 'kepler.gl/components';
-import {GITHUB_BUG_REPORT, GITHUB_USER_GUIDE} from 'kepler.gl/constants';
+import {BUG_REPORT_LINK, GITHUB_USER_GUIDE} from 'kepler.gl/constants';
 
 export function CustomPanelHeaderFactory(...deps) {
   const PanelHeader = PanelHeaderFactory(...deps);
@@ -30,7 +30,7 @@ export function CustomPanelHeaderFactory(...deps) {
       {
         id: 'bug',
         iconComponent: Icons.Bug,
-        href: GITHUB_BUG_REPORT,
+        href: BUG_REPORT_LINK,
         blank: true,
         tooltip: 'Bug Report',
         onClick: () => {}

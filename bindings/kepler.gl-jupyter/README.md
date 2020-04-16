@@ -1,21 +1,18 @@
-<h1>kepler.gl for Jupyter</h1>
+# kepler.gl for Jupyter
 
 This is the [kepler.gl](http://kepler.gl) jupyter widget, an advanced geospatial visualization tool, to render large-scale interactive maps in Jupyter Notebook.
 
 ![Kepler.gl for Jupyter][jupyter_widget]
 
-<!-- TOC -->
+Table of contacts
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Demo Notebooks](#demo-notebooks)
 - [Usage](#usage)
 - [Local Development Setup](#local-development-setup)
 - [FAQ & Troubleshoot](#faq--troubleshoot)
-<!-- /TOC -->
 
-
-<br></br>
-# Installation
+## Installation
 
 ### Prerequisites
 - Python >= 2
@@ -48,8 +45,8 @@ Then install jupyter labextension.
 - Python 3
 - JupyterLab>=1.0.0
 
-<br></br>
-# Quick Start
+
+## Quick Start
 
 ```python
 # Load kepler.gl with an empty map
@@ -74,17 +71,17 @@ map_1.config
 # save map to html
 map_1.save_to_html(file_name='keplergl_map.html')
 ```
-<br></br>
-# Demo Notebooks
+
+
+## Demo Notebooks
 - [Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Load%20kepler.gl.ipynb): Load kepler.gl widget, add data and config
 - [Geometry as String](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Geometry%20as%20String.ipynb): Embed Polygon geometries as `GeoJson` and `WKT` inside a `CSV`
 - [GeoJSON](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/GeoJSON.ipynb): Load GeoJSON to kepler.gl
 - [DataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/DataFrame.ipynb): Load DataFrame to kepler.gl
 - [GeoDataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/GeoDataFrame.ipynb): Load GeoDataFrame to kepler.gl
 
-<br></br>
-# Usage
 
+## Usage
   - [1. Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#1-load-keplergl)
     - [`keplergl.KeplerGl()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#keplerglkeplergl)
   - [2. Add Data](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#2-add-data)
@@ -103,30 +100,32 @@ map_1.save_to_html(file_name='keplergl_map.html')
   - [7. Save Map](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#7-save-map)
     - [`.save_to_html()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#save_to_html)
 
-# Local Development Setup
+## Local Development Setup
 
-## Environment Setup
+### Environment Setup
 You will need to install node, yarn and Jupyter Notebook.
 
-### 1. Node and Yarn
-Install [node](https://nodejs.org/en/download/package-manager/#macos) `> 8.15.0`, and [yarn](https://yarnpkg.com/en/docs/install#mac-stable). Use [nvm](https://github.com/creationix/nvm) for better node version management e.g. `nvm install 8`.
+#### 1. Node and Yarn
+Install [node](https://nodejs.org/en/download/package-manager/#macos) `> 10.15.0`, and [yarn](https://yarnpkg.com/en/docs/install#mac-stable). Use [nvm](https://github.com/creationix/nvm) for better node version management e.g. `nvm install 10`.
 
 
-### 2. Install Jupyter with pip
+#### 2. Install Jupyter with pip
 
 Python 3
-
-    $ python3 -m pip install --upgrade pip
-    $ python3 -m pip install jupyter
+```bash
+$ python3 -m pip install --upgrade pip
+$ python3 -m pip install jupyter
+```
 
 Python 2
+```bash
+$ python -m pip install --upgrade pip
+$ python -m pip install jupyter
+```
 
-    $ python -m pip install --upgrade pip
-    $ python -m pip install jupyter
+### Download and run keplergl in your local Jupyter Notebook
 
-## Download and run keplergl in your local Jupyter Notebook
-
-### Clone Repo
+#### Clone Repo
     $ git clone https://github.com/keplergl/kepler.gl.git
 
 ### Setup JS
@@ -176,7 +175,7 @@ This command must be run **AFTER** the `js` setup, and folder `static/` was crea
 You can now start editing the .js and .py files to see changes reflected in your local notebook. After changing files in the js folder, the local start script will recompile the js files and put them in to `keplergl/static` folder. You need to reload the jupyter notebook page to reload the files.
 
 
-# FAQ & Troubleshoot
+## FAQ & Troubleshoot
 
 #### 1. What about windows?
 keplergl is currently only published to PyPI, and unfortunately I use a Mac. If you encounter errors installing it on windows. [This issue](https://github.com/keplergl/kepler.gl/issues/557) might shed some light. Follow this issue for [conda](https://github.com/keplergl/kepler.gl/issues/646) support.
@@ -188,6 +187,7 @@ Make sure you are using node 8.15.0. and you have installed `@jupyter-widgets/ju
 Run `jupyter labextension install keplergl-jupyter --debug` and copy console output before creating an issue.
 
 If you are running `install` and `uninstall` several times. You should run.
+
 ```
 jupyter lab clean
 jupyter lab build
@@ -196,14 +196,20 @@ jupyter lab build
 #### 2.1 JavaScript heap out of memory when installing lab extension
 If you see this error during install labextension
 
-    $ FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
+```bash
+$ FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
+```
+
 run
 
-    $ export NODE_OPTIONS=--max-old-space-size=4096
+```bash
+$ export NODE_OPTIONS=--max-old-space-size=4096
+```
 
 #### 3. Is my lab extension successfully installed?
 Run `jupyter labextension list` You should see below. (Version may vary)
-```sh
+
+```bash
 JupyterLab v1.1.4
 Known labextensions:
    app dir: /Users/xxx/jupyter-python3/ENV3/share/jupyter/lab
@@ -214,7 +220,7 @@ Known labextensions:
 #### 4. What's your python and node env
 
 Python
-```
+```text
 python==3.7.4
 notebook==6.0.1
 jupyterlab==1.1.4
@@ -222,7 +228,8 @@ ipywidgets==7.5.1
 ```
 
 Node (Only for JupyterLab)
-```
+
+```text
 node==8.15.0
 yarn==1.7.0
 ```

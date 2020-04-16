@@ -65,11 +65,11 @@ Read more about [Processors][processors] and [Schema Manager][schemas].
 
 [basic-usage]: ./basic-usage.md
 [advanced-usage]: ./advanced-usage.md
-[components]: ./components/overview.md
-[reducers]: ./reducers/overview.md
-[actions-updaters]: ./actions/overview.md
-[processors]: ./processors/overview.md
-[schemas]: ./schemas/overview.md
+[components]: components/README.md
+[reducers]: reducers/README.md
+[actions-updaters]: actions/README.md
+[processors]: processors/README.md
+[schemas]: schemas/README.md
 [data-flow]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/api_data-flow.png
 [forward-dispatcher]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/api_forward-dispatch.png
 [processor-schema]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/api_load-save.png

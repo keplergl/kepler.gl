@@ -18,4 +18,4 @@ There is no limit on the amount of layers you can add. However, note that the mo
 ## Why does my layer color change during filtering?
 When layer color is based on a numerical value (e.g, trip fare, distance, ETA), Kepler.gl recalculates the color scale based on filtered data. This is not the case for categorical values such as vehicle_name, cuisine_type and app version.
 
-[Back to table of contents](./a-introduction.md)
+[Back to table of contents](README.md)

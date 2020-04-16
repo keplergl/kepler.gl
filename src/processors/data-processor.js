@@ -27,7 +27,7 @@ import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES, DATASET_FORMATS} from 'constants/default-settings';
 import {notNullorUndefined, parseFieldValue, getSampleData} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
-import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
+import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
 import {isPlainObject, toArray} from 'utils/utils';
 
 export const ACCEPTED_ANALYZER_TYPES = [
@@ -462,7 +462,7 @@ export function processGeojson(rawData) {
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {
     const error = new Error(
-      `Read File Failed: File is not a valid GeoJSON. Read more about [supported file format](${GUIDES_FILE_FORMAT})`
+      `Read File Failed: File is not a valid GeoJSON. Read more about [supported file format](${GUIDES_FILE_FORMAT_DOC})`
     );
     throw error;
     // fail to normalize geojson

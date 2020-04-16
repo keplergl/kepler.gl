@@ -17,4 +17,4 @@ To add a filter:
 
 __Note__: filters apply to all layers in the same dataset on your map.
 
-[Back to table of contents](./a-introduction.md)
+[Back to table of contents](README.md)

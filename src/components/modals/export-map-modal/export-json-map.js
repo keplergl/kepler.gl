@@ -21,7 +21,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import JSONPretty from 'react-json-pretty';
-import {GITHUB_ADD_DATA_TO_MAP} from 'constants/user-guides';
+import {ADD_DATA_TO_MAP_DOC} from 'constants/user-guides';
 import styled from 'styled-components';
 import {StyledExportSection} from 'components/common/styled-components';
 import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';
@@ -72,7 +72,7 @@ const ExportJsonMap = React.memo(({config = {}}) => (
         </div>
         <div className="subtitle">
           <FormattedMessage id={'modal.exportMap.json.configDisclaimer'} />
-          <ExportMapLink href={GITHUB_ADD_DATA_TO_MAP}>addDataToMap</ExportMapLink>.
+          <ExportMapLink href={ADD_DATA_TO_MAP_DOC}>addDataToMap</ExportMapLink>.
         </div>
       </div>
       <div className="selection">

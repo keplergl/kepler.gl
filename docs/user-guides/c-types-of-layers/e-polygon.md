@@ -23,4 +23,4 @@ A polygon GeoJSON layer is essentially a [choropleth](https://en.wikipedia.org/w
 To add a polygon layer, your dataset must contain geometry data.
 
 
-[Back to table of contents](../a-introduction.md)
+[Back to table of contents](../README.md)
