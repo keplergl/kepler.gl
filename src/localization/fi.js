@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {LOCALES} from './locales';
+
 export default {
   property: {
     weight: 'painotus',
@@ -212,8 +214,7 @@ export default {
     rectangle: 'nelikulmio',
     hide: 'piilota',
     show: 'näytä',
-    en: 'English',
-    fi: 'Suomi'
+    ...LOCALES
   },
   modal: {
     title: {

@@ -58,8 +58,7 @@ export {
   SCALE_TYPES,
   THEME,
   TRIP_ARC_FIELDS,
-  TRIP_POINT_FIELDS,
-  LOCALES
+  TRIP_POINT_FIELDS
 } from './default-settings';
 
 export {GITHUB_BUG_REPORT, GITHUB_USER_GUIDE} from './user-guides';
