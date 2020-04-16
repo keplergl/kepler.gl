@@ -371,7 +371,7 @@ export default {
   },
   header: {
     visibleLayers: 'Capes visibles',
-    layerLegend: 'Llegenda'
+    layerLegend: 'Llegenda de capes'
   },
   interactions: {
     tooltip: 'Suggeriment',
@@ -406,7 +406,7 @@ export default {
   },
   color: {
     customPalette: 'Paleta personalitzada',
-    steps: 'rangs',
+    steps: 'intervals',
     type: 'tipus',
     reversed: 'invertida'
   },

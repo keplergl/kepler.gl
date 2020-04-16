@@ -147,7 +147,8 @@ export default {
     highPrecisionRendering: 'Representación de alta precisión',
     highPrecisionRenderingDescription: 'La precisión alta tendrá un rendimiento más bajo',
     height: 'Altura',
-    heightDescription: 'Haz clic en el botón de arriba a la derecha del mapa per cambiar a vista 3D',
+    heightDescription:
+      'Haz clic en el botón de arriba a la derecha del mapa per cambiar a vista 3D',
     fill: 'Rellenar',
     enablePolygonHeight: 'Activar la altura del polígono',
     showWireframe: 'Muestra esquemàtico',
@@ -308,7 +309,8 @@ export default {
         tokenPlaceholder: 'Enganchar tu token de acceso a Mapbox',
         tokenMisuseWarning:
           '* Si no proporcionas tu propio token, el mapa podría fallar en cualquier momento cuando reemplacemos nuestro token para evitar abusos. ',
-        tokenDisclaimer: 'Puedes cambiar el token de Mapbox posteriormente utilizando estas instrucciones: ',
+        tokenDisclaimer:
+          'Puedes cambiar el token de Mapbox posteriormente utilizando estas instrucciones: ',
         tokenUpdate: 'Como actualitzar un token preexistente.',
         modeTitle: 'Modo mapa',
         modeSubtitle1: 'Seleccionar modo app. Más ',
@@ -370,7 +372,7 @@ export default {
   },
   header: {
     visibleLayers: 'Capas visibles',
-    layerLegend: 'Capa de leyenda'
+    layerLegend: 'Leyenda de capas'
   },
   interactions: {
     tooltip: 'Sugerencias',
@@ -405,7 +407,7 @@ export default {
   },
   color: {
     customPalette: 'Paleta personalizada',
-    steps: 'pasos',
+    steps: 'intervalos',
     type: 'tipo',
     reversed: 'invertida'
   },
