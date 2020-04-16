@@ -4,4 +4,4 @@
 
 Heatmap layers describe the intensity of data at geographical points through a colored overlap. The intensity can be weighted by a numerical field.
 
-[Back to table of contents](../a-introduction.md)
+[Back to table of contents](../README.md)

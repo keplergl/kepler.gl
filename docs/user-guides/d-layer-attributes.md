@@ -23,4 +23,4 @@
 | Wireframe                          | Create outlines around extruded polygons.                                                                                                              | GeoJSON                                        |
 | Stroke or radius based on          | Control the radius/thickness of GeoJSON line and point features.                                                                                       | GeoJSON                                        |
 
-[Back to table of contents](./a-introduction.md)
+[Back to table of contents](README.md)

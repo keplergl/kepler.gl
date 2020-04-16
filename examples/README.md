@@ -28,9 +28,9 @@ yarn && yarn start
   Customize kepler.gl theme by override current style properties.
 
 
-[custom-reducer]: custom-reducer
-[demo-app]: demo-app
-[open-modal]: open-modal
-[umd-client]: umd-client
-[replace-component]: replace-component
-[custom-theme]: custom-theme
+[custom-reducer]: custom-reducer/README.md
+[demo-app]: demo-app/README.md
+[open-modal]: open-modal/README.md
+[umd-client]: umd-client/README.md
+[replace-component]: replace-component/README.md
+[custom-theme]: custom-theme/README.md

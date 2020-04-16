@@ -19,8 +19,8 @@
   </a>
 </p>
 
-<h1 align="center">kepler.gl | <a href="http://kepler.gl">Website</a> |
-<a href="http://kepler.gl/#/demo">Demo App</a>
+<h1 align="center">
+  kepler.gl | <a href="http://kepler.gl">Website</a> | <a href="http://kepler.gl/#/demo">Demo App</a> | <a href="https://docs.kepler.gl/">Docs</a>
 </h1>
 <h3></h3>
 
@@ -48,12 +48,12 @@ Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to 
 
 ## Env
 
-Use Node 8.15.0 and above, older node versions have not been tested.
+Use Node 10.15.0 or above, older node versions have not been supported/ tested.
 For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 
 ## Install kepler.gl
 
-Install node (`> 8.15.0`), yarn, and project dependencies
+Install node (`> 10.15.0`), yarn, and project dependencies
 
 ```sh
 npm install --save kepler.gl
@@ -67,13 +67,13 @@ If you don't use a module bundler, it's also fine. Kepler.gl npm package include
 You can add the script tag to your html file as it follows:
 
 ```html
-<script src="https://unpkg.com/kepler.gl/umd/keplergl.min.js"></script>
+<script src="https://unpkg.com/kepler.gl/umd/keplergl.min.js" />
 ```
 
 or if you would like, you can load a specific version
 
 ```html
-<script src="https://unpkg.com/kepler.gl@0.2.2/umd/keplergl.min.js"></script>
+<script src="https://unpkg.com/kepler.gl@0.2.2/umd/keplergl.min.js" />
 ```
 
 ## Develop kepler.gl
@@ -616,7 +616,7 @@ this.props.dispatch(
 
 Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatatomap) and [Saving and loading maps with schema manager][saving-loading-w-schema].
 
-[contributing]: contributing/CONTRIBUTING.md
+[contributing]: contributing/README.md
 [demo-app]: http://kepler.gl/#/demo
 [github]: https://github.com/keplergl/kepler.gl
 [github-pr]: https://help.github.com/articles/creating-a-pull-request/
@@ -629,17 +629,17 @@ Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatato
 [stack]: https://stackoverflow.com/questions/tagged/kepler.gl
 [web]: http://www.kepler.gl/
 [vis-academy]: http://vis.academy/#/kepler.gl/
-[user-guide]: ./docs/user-guides/a-introduction.md
-[user-guide-jupyter]: ./docs/keplergl-jupyter/user-guide.md
-[api-reference]: ./docs/api-reference/overview.md
+[user-guide]: docs/user-guides/README.md
+[user-guide-jupyter]: docs/keplergl-jupyter/README.md
+[api-reference]: docs/api-reference/README.md
 [get-started]: ./docs/api-reference/get-started.md
-[reducers]: ./docs/api-reference/reducers/overview.md
-[components]: ./docs/api-reference/components/overview.md
-[custom-theme]: ./docs/api-reference/custom-theme/overview.md
-[reducers]: ./docs/api-reference/reducers/overview.md
-[actions-updaters]: ./docs/api-reference/actions/overview.md
-[processors]: ./docs/api-reference/processors/overview.md
-[schemas]: ./docs/api-reference/schemas/overview.md
+[reducers]: docs/api-reference/reducers/README.md
+[components]: docs/api-reference/components/README.md
+[custom-theme]: docs/api-reference/custom-theme/README.md
+[reducers]: docs/api-reference/reducers/README.md
+[actions-updaters]: docs/api-reference/actions/README.md
+[processors]: docs/api-reference/processors/README.md
+[schemas]: docs/api-reference/schemas/README.md
 [using-updaters]: ./docs/api-reference/advanced-usages/using-updaters.md
 [forward-actions]: ./docs/api-reference/advanced-usages/forward-actions.md
 [replace-ui-component]: ./docs/api-reference/advanced-usages/replace-ui-component.md

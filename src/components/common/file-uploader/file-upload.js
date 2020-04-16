@@ -28,7 +28,7 @@ import LoadingSpinner from 'components/common/loading-spinner';
 import FileDrop from './file-drop';
 
 import {isChrome} from 'utils/utils';
-import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
+import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
 import ReactMarkdown from 'react-markdown';
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
@@ -270,7 +270,7 @@ function FileUploadFactory() {
                 <ReactMarkdown
                   source={`${intl.formatMessage({
                     id: 'fileUploader.configUploadMessage'
-                  })}(${GUIDES_FILE_FORMAT}).`}
+                  })}(${GUIDES_FILE_FORMAT_DOC}).`}
                   renderers={{link: LinkRenderer}}
                 />
               </StyledUploadMessage>

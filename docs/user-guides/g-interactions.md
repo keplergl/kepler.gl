@@ -48,7 +48,7 @@ Tip: click a point to pin the tooltip info to the map. To unpin the tooltip, pre
 
 ![brush](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image12.png "brush")
 
-[Back to table of contents](./a-introduction.md)
+[Back to table of contents](README.md)
 
 
 ## Display Coordinates
@@ -57,4 +57,4 @@ Tip: click a point to pin the tooltip info to the map. To unpin the tooltip, pre
 
 When then on coordinate, a  panel contains latitude and longitude will follow your mouse
 
-[Back to table of contents](./a-introduction.md)
+[Back to table of contents](README.md)

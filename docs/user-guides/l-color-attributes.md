@@ -18,4 +18,4 @@ To choose a palette:
 
 <img src="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/l-color-attributes-3.png" alt="toggle" width="500"/>
 
-[Back to table of contents](./a-introduction.md)
+[Back to table of contents](README.md)

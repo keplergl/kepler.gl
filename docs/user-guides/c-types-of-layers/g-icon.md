@@ -8,4 +8,4 @@ To see the icon menu, create a new icon layer and click how to draw an icon laye
 
 ![How to Draw Icon Layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image38.png "How to Draw Icon Layer")
 
-[Back to table of contents](../a-introduction.md)
+[Back to table of contents](../README.md)

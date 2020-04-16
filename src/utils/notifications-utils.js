@@ -27,7 +27,7 @@ import {
   DEFAULT_UUID_COUNT
 } from 'constants/default-settings';
 
-import {GITHUB_BUG_REPORT} from 'constants/user-guides';
+import {BUG_REPORT_LINK} from 'constants/user-guides';
 
 /**
  * Creates a notofication
@@ -78,5 +78,5 @@ export const exportImageError = options =>
   errorNotification({
     ...options,
     topic: DEFAULT_NOTIFICATION_TOPICS.global,
-    message: `Failed to export image, please take a screenshot of the javascript console, report the with [this link](${GITHUB_BUG_REPORT}) `
+    message: `Failed to export image, please take a screenshot of the javascript console, report the with [this link](${BUG_REPORT_LINK}) `
   });

@@ -46,4 +46,4 @@ Save your map as an image, export current map data, export current map as a json
 
 Read about [Save and export](./k-save-and-export.md).
 
-[Back to table of contents](./a-introduction.md)
+[Back to table of contents](README.md)
