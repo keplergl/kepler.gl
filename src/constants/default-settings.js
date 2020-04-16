@@ -158,39 +158,6 @@ export const THEME = keyMirror({
   base: null
 });
 
-/**
- * Localization can be passed to `KeplerGl` via uiState `locale`.
- * Available languages are `en` and `fi`. Default language is `en`
- * @constant
- * @type {string}
- * @public
- * @example
- * ```js
- * import {combineReducers} from 'redux';
- * import keplerGlReducer from 'kepler.gl/reducers';
- * import {LOCALES} from 'kepler.gl/constants';
- *
- * const customizedKeplerGlReducer = keplerGlReducer
- *   .initialState({
- *     uiState: {
- *       // use Finnish locale
- *       locale: LOCALES.fi
- *     }
- *   });
- *
- * const reducers = combineReducers({
- *  keplerGl: customizedKeplerGlReducer,
- *  app: appReducer
- * });
- * ```
- */
-export const LOCALES = keyMirror({
-  en: null,
-  fi: null,
-  es: null,
-  ca: null
-});
-
 export const SIDEBAR_PANELS = [
   {
     id: 'layer',

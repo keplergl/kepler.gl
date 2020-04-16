@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
+import {LOCALES} from './locales';
 
 export default {
   property: {
@@ -156,8 +156,8 @@ export default {
     heightRange: 'Rang alçada'
   },
   layerManager: {
-    addData: ' Dades',
-    addLayer: 'Capes',
+    addData: 'Afegeix Dades',
+    addLayer: 'Afegeix Capes',
     layerBlending: 'Combinar capes'
   },
   mapManager: {
@@ -170,7 +170,7 @@ export default {
     howTo: 'How to'
   },
   filterManager: {
-    addFilter: 'Filtre'
+    addFilter: 'Afegeix Filtre'
   },
   datasetTitle: {
     showDataTable: 'Mostra taula de dades',
@@ -214,10 +214,7 @@ export default {
     rectangle: 'rectangle',
     hide: 'amaga',
     show: 'mostra',
-    en: 'English',
-    fi: 'Suomi',
-    es: 'Español',
-    ca:'Català'
+    ...LOCALES
   },
   modal: {
     title: {

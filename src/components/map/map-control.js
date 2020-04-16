@@ -45,7 +45,8 @@ import {
 } from 'components/common/icons';
 import VerticalToolbar from 'components/common/vertical-toolbar';
 import ToolbarItem from 'components/common/toolbar-item';
-import {EDITOR_MODES, LOCALES} from 'constants/default-settings';
+import {EDITOR_MODES} from 'constants/default-settings';
+import {LOCALE_CODES} from 'localization/locales';
 
 const StyledMapControl = styled.div`
   right: 0;
@@ -488,7 +489,7 @@ const MapControlFactory = () => {
               <LocalePanel
                 isActive={mapLocale.active}
                 activeLocale={locale}
-                availableLocales={Object.keys(LOCALES)}
+                availableLocales={Object.keys(LOCALE_CODES)}
                 onSetLocale={this.props.onSetLocale}
                 onToggleMenuPanel={() => onToggleMapControl('mapLocale')}
               />

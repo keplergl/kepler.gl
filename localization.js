@@ -18,13 +18,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import en from './en';
-import {flattenMessages} from 'utils/locale-utils';
-import {LOCALE_CODES} from './locales';
-
-const en_flat = flattenMessages(en);
-
-export const messages = Object.keys(LOCALE_CODES)
-.reduce((acc, key) => ({...acc, [key]: key === "en" ? en_flat : {...en_flat, ...flattenMessages(require(`./${key}`).default)}}), {});
-
-export {LOCALE_CODES, LOCALES} from './locales';
+module.exports = require('./dist/localization');
