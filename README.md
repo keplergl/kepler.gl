@@ -63,7 +63,7 @@ yarn add kepler.gl
 
 kepler.gl is built upon [mapbox][mapbox]. You will need a [Mapbox Access Token][mapbox-token] to use it.
 
-If you don't use a module bundler, it's also fine. Kepler.gl npm package includes precompiled production UMD builds in the (umd folder)[https://unpkg.com/kepler.gl/umd].
+If you don't use a module bundler, it's also fine. Kepler.gl npm package includes precompiled production UMD builds in the [umd folder](https://unpkg.com/kepler.gl/umd).
 You can add the script tag to your html file as it follows:
 
 ```html
