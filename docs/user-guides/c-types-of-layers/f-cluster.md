@@ -4,4 +4,4 @@
 
 Cluster layers visualize aggregated data based on a geospatial radius.
 
-[Back to table of contents](../a-introduction.md)
+[Back to table of contents](../README.md)

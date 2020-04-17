@@ -1,4 +1,4 @@
-# Introduction
+# User guides
 
 Kepler.gl is designed for geospatial data analysis. It allows technical and non-technical audiences to visualize trends in a city or region. With Kepler.gl, you can…
 
@@ -16,14 +16,14 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 #### [Get Started](./j-get-started.md)
 
-#### The kepler.gl workflow
+#### [The kepler.gl workflow](./b-kepler-gl-workflow/README.md)
 * [Add data to the map](./b-kepler-gl-workflow/a-add-data-to-the-map.md)
 * [Adding data layers](./b-kepler-gl-workflow/b-add-data-layers/a-adding-data-layers.md)
 * [Create a layer](./b-kepler-gl-workflow/b-add-data-layers/b-create-a-layer.md)
 * [Hide, edit and delete layers](./b-kepler-gl-workflow/b-add-data-layers/c-hide-edit-and-delete-layers.md)
 * [Blend and rearrange layers](./b-kepler-gl-workflow/b-add-data-layers/d-blend-and-rearrange-layers.md)
 
-#### Types of layers
+#### [Layers](./c-types-of-layers/README.md)
 
 * [Point](./c-types-of-layers/a-point.md)
 * [Arc](./c-types-of-layers/b-arc.md)
@@ -40,7 +40,7 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 #### [Layer attributes](./d-layer-attributes.md)
 
-#### [Layer color](./d-color-attributes.md)
+#### [Color Palettes](./l-color-attributes.md)
 
 #### [Filters](./e-filters.md)
 

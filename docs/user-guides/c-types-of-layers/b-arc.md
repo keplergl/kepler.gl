@@ -6,4 +6,4 @@ Arc layers draw an arc between two points. They’re useful for visualizing the 
 
 To draw arcs, your dataset must contain the latitude and longitude of two different points for each arc.
 
-[Back to table of contents](../a-introduction.md)
+[Back to table of contents](../README.md)
