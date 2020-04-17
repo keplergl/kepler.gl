@@ -214,6 +214,7 @@ export const savedStateV0 = {
                 fieldIdx: 7
               }
             },
+            hidden: false,
             isVisible: false,
             isAggregated: false,
             type: 'point',
@@ -259,6 +260,7 @@ export const savedStateV0 = {
                 fieldIdx: 7
               }
             },
+            hidden: false,
             isVisible: true,
             isAggregated: false,
             type: 'arc',
@@ -294,6 +296,7 @@ export const savedStateV0 = {
                 fieldIdx: 2
               }
             },
+            hidden: false,
             isVisible: true,
             isAggregated: false,
             type: 'point',
@@ -338,6 +341,7 @@ export const savedStateV0 = {
                 fieldIdx: 2
               }
             },
+            hidden: false,
             isVisible: true,
             isAggregated: true,
             type: 'hexagon',
@@ -378,6 +382,7 @@ export const savedStateV0 = {
                 fieldIdx: 0
               }
             },
+            hidden: false,
             isVisible: true,
             isAggregated: false,
             type: 'geojson',
@@ -1024,6 +1029,7 @@ const mergedLayer0 = new PointLayer({
       optional: true
     }
   },
+  hidden: false,
   isVisible: false
 });
 
@@ -1091,6 +1097,7 @@ const mergedLayer1 = new ArcLayer({
       fieldIdx: 7
     }
   },
+  hidden: false,
   isVisible: true
 });
 
@@ -1146,6 +1153,7 @@ mergedLayer2.config = {
   },
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
+  hidden: false,
   isVisible: true,
   colorField: {
     name: 'song_name',
@@ -1224,6 +1232,7 @@ mergedLayer3.config = {
       fieldIdx: 2
     }
   },
+  hidden: false,
   isVisible: true,
   colorField: {
     name: 'int_range',
@@ -1285,6 +1294,7 @@ mergedLayer4.config = {
   },
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
+  hidden: false,
   isVisible: true,
   colorField: {
     name: 'ID',

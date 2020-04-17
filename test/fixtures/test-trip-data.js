@@ -139,6 +139,7 @@ export const config = {
               lat: 'pickup_latitude',
               lng: 'pickup_longitude'
             },
+            hidden: false,
             isVisible: true
           }
         },
@@ -150,6 +151,7 @@ export const config = {
               lat: 'pickup_latitude',
               lng: 'pickup_longitude'
             },
+            hidden: false,
             isVisible: true,
             visConfig: {
               colorRange: {
@@ -197,6 +199,7 @@ export const config = {
               lat1: 'dropoff_latitude',
               lng1: 'dropoff_longitude'
             },
+            hidden: false,
             isVisible: true
           }
         },
@@ -210,6 +213,7 @@ export const config = {
               lat: 'pickup_latitude',
               lng: 'pickup_longitude'
             },
+            hidden: false,
             isVisible: true,
             visConfig: {
               opacity: 0.76,

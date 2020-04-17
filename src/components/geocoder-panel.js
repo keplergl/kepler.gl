@@ -55,7 +55,7 @@ const GeocoderPanelContent = styled.div`
   background-color: ${props => props.theme.panelBackground};
   padding: 0.5em 1em;
   position: absolute;
-  top: 1em;
+  top: 20px;
   left: 50%;
   margin-left: -20em;
   width: 40em;
@@ -172,13 +172,6 @@ export class GeocoderPanel extends Component {
           config: {
             visState: {
               layers: [ICON_LAYER]
-            },
-            interactionConfig: {
-              tooltip: {
-                fieldsToShow: {
-                  geocoder_dataset: ['text']
-                }
-              }
             }
           }
         }

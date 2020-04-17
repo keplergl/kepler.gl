@@ -111,13 +111,6 @@ test('GeocoderPanel - render', t => {
               }
             }
           ]
-        },
-        interactionConfig: {
-          tooltip: {
-            fieldsToShow: {
-              geocoder_dataset: ['text']
-            }
-          }
         }
       }
     }

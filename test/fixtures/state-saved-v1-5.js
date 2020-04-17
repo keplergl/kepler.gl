@@ -172,6 +172,7 @@ export const savedStateV1TripGeoJson = {
               columns: {
                 geojson: '_geojson'
               },
+              hidden: false,
               isVisible: true,
               visConfig: {
                 opacity: 0.8,
@@ -255,6 +256,7 @@ mergedLayer0.config = {
   label: 'Trip Data',
   color: [0, 0, 0],
   columns: {geojson: {value: '_geojson', fieldIdx: 0}},
+  hidden: false,
   isVisible: true,
   isConfigActive: false,
   highlightColor: [252, 242, 26, 255],

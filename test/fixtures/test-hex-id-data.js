@@ -77,6 +77,7 @@ export const hexIdDataConfig = {
               columns: {
                 hex_id: 'hex_id'
               },
+              hidden: false,
               isVisible: true,
               visConfig: {
                 opacity: 0.8,
@@ -336,6 +337,7 @@ mergedH3Layer.config = {
       fieldIdx: 0
     }
   },
+  hidden: false,
   isVisible: true,
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,

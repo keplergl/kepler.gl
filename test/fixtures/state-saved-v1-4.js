@@ -104,6 +104,7 @@ export const stateSavedV1 = {
                 lng: 'point_lng',
                 altitude: null
               },
+              hidden: false,
               isVisible: true,
               visConfig: {
                 radius: 12.5,
@@ -207,6 +208,7 @@ mergedLayer0.config = {
       value: null
     }
   },
+  hidden: false,
   isVisible: true,
   colorField: null,
   colorScale: 'quantile',

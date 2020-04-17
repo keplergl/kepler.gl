@@ -386,6 +386,7 @@ export const expectedSavedLayer0 = {
       lat: 'gps_data.lat',
       lng: 'gps_data.lng'
     },
+    hidden: false,
     isVisible: true,
     visConfig: {
       opacity: DEFAULT_LAYER_OPACITY,
@@ -422,6 +423,7 @@ export const expectedLoadedLayer0 = {
       lat: 'gps_data.lat',
       lng: 'gps_data.lng'
     },
+    hidden: false,
     isVisible: true,
     visConfig: {
       opacity: DEFAULT_LAYER_OPACITY,
@@ -467,6 +469,7 @@ export const expectedSavedLayer1 = {
         color: [255, 0, 0]
       }
     ],
+    hidden: false,
     isVisible: true,
     visConfig: {
       radius: 10,
@@ -511,6 +514,7 @@ export const expectedLoadedLayer1 = {
       lng: 'gps_data.lng',
       altitude: null
     },
+    hidden: false,
     isVisible: true,
     visConfig: {
       radius: 10,
@@ -561,6 +565,7 @@ export const expectedSavedLayer2 = {
     columns: {
       geojson: '_geojson'
     },
+    hidden: false,
     isVisible: true,
     visConfig: {
       opacity: DEFAULT_LAYER_OPACITY,
@@ -605,6 +610,7 @@ export const expectedLoadedLayer2 = {
     columns: {
       geojson: '_geojson'
     },
+    hidden: false,
     isVisible: true,
     visConfig: {
       opacity: DEFAULT_LAYER_OPACITY,
@@ -657,6 +663,7 @@ export const expectedSavedTripLayer = {
     columns: {
       geojson: '_geojson'
     },
+    hidden: false,
     isVisible: true,
     visConfig: {
       opacity: DEFAULT_LAYER_OPACITY,

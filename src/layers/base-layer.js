@@ -131,7 +131,7 @@ export default class Layer {
   }
 
   get noneLayerDataAffectingProps() {
-    return ['label', 'opacity', 'thickness', 'isVisible'];
+    return ['label', 'opacity', 'thickness', 'isVisible', 'hidden'];
   }
 
   get visualChannels() {
@@ -295,6 +295,7 @@ export default class Layer {
       isVisible: props.isVisible || false,
       isConfigActive: props.isConfigActive || false,
       highlightColor: props.highlightColor || [252, 242, 26, 255],
+      hidden: props.hidden || false,
 
       // TODO: refactor this into separate visual Channel config
       // color by field, domain is set by filters, field, scale type
@@ -998,6 +999,7 @@ export default class Layer {
       pickable: true,
       wrapLongitude: true,
       parameters: {depthTest: Boolean(mapState.dragRotate || this.config.visConfig.enable3d)},
+      hidden: this.config.hidden,
       // visconfig
       opacity: this.config.visConfig.opacity,
       highlightColor: this.config.highlightColor,

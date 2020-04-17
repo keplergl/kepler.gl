@@ -214,6 +214,7 @@ export const savedStateV1 = {
                 lng: 'restaurant_lng',
                 altitude: null
               },
+              hidden: false,
               isVisible: true,
               visConfig: {
                 radius: 10,
@@ -246,6 +247,7 @@ export const savedStateV1 = {
               label: 'hexagon',
               color: [221, 178, 124],
               columns: {lat: 'restaurant_lat', lng: 'restaurant_lng'},
+              hidden: false,
               isVisible: true,
               visConfig: {
                 opacity: 0.8,
@@ -355,6 +357,7 @@ mergedLayer0.config = {
       value: null
     }
   },
+  hidden: false,
   isVisible: true,
   colorField: {
     name: 'deliver_radius',
@@ -431,6 +434,7 @@ mergedLayer1.config = {
       fieldIdx: 2
     }
   },
+  hidden: false,
   isVisible: true,
   colorField: null,
   colorDomain: [0, 1],
