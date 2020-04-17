@@ -27,8 +27,7 @@ import Header from './header';
 const GITHUB_PROJECT = 'https://github.com/keplergl/kepler.gl';
 const GITHUB_PROJECT_ISSUES = `${GITHUB_PROJECT}/issues`;
 const MAILING_LIST_URL = 'https://groups.google.com/d/forum/kepler-gl';
-const CONTRIBUTING_URL =
-  'https://github.com/keplergl/kepler.gl/blob/master/contributing/CONTRIBUTING.md';
+const CONTRIBUTING_URL = 'https://docs.kepler.gl/contributing';
 
 const StyledContainer = styled(Container)`
   background-color: black;

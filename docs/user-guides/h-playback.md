@@ -14,4 +14,4 @@ Follow these steps to create a playback video of an event:
 ![custome y axis](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/h-playback-2.png "select filters")
 
 
-[Back to table of contents](./a-introduction.md)
+[Back to table of contents](README.md)

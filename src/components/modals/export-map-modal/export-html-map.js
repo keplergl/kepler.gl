@@ -23,7 +23,7 @@ import PropTypes from 'prop-types';
 import {StyledExportSection, StyledType} from 'components/common/styled-components';
 import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';
 import {EXPORT_HTML_MAP_MODE_OPTIONS} from 'constants/default-settings';
-import {GITHUB_EXPORT_HTML_MAP, GITHUB_EXPORT_HTML_MAP_MODES} from 'constants/user-guides';
+import {EXPORT_HTML_MAP_DOC, EXPORT_HTML_MAP_MODES_DOC} from 'constants/user-guides';
 import styled from 'styled-components';
 import {FormattedMessage, injectIntl} from 'react-intl';
 
@@ -102,7 +102,7 @@ const ExportHtmlMap = React.memo(
               <FormattedMessage id={'modal.exportMap.html.tokenMisuseWarning'} />
             </StyledWarning>
             <FormattedMessage id={'modal.exportMap.html.tokenDisclaimer'} />
-            <ExportMapLink href={GITHUB_EXPORT_HTML_MAP}>
+            <ExportMapLink href={EXPORT_HTML_MAP_DOC}>
               <FormattedMessage id={'modal.exportMap.html.tokenUpdate'} />
             </ExportMapLink>
           </div>
@@ -115,7 +115,7 @@ const ExportHtmlMap = React.memo(
           </div>
           <div className="subtitle">
             <FormattedMessage id={'modal.exportMap.html.modeSubtitle1'} />
-            <a href={GITHUB_EXPORT_HTML_MAP_MODES}>
+            <a href={EXPORT_HTML_MAP_MODES_DOC}>
               <FormattedMessage id={'modal.exportMap.html.modeSubtitle2'} />
             </a>
           </div>

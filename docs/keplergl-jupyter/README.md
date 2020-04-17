@@ -1,54 +1,63 @@
-  <h1>kepler.gl for Jupyter User Guide</h1>
+# Jupyter Notebook
 
-  - [Install](#install)
-  - [1. Load kepler.gl Map](#1-load-keplergl-map)
-    - [`KeplerGl()`](#keplergl)
-  - [2. Add Data](#2-add-data)
-    - [`.add_data()`](#add_data)
-    - [`.data`](#data)
-  - [3. Data Format](#3-data-format)
-    - [`CSV`](#csv)
-    - [`GeoJSON`](#geojson)
-    - [`DataFrame`](#dataframe)
-    - [`GeoDataFrame`](#geodataframe)
-    - [`WKT`](#wkt)
-  - [4. Customize the map](#4-customize-the-map)
-  - [5. Save and load config](#5-save-and-load-config)
-    - [`.config`](#config)
-  - [6. Match config with data](#6-match-config-with-data)
-  - [7. Save Map](#7-save-map)
-    - [`.save_to_html()`](#save_to_html)
-  - [Demo Notebooks](#demo-notebooks)
+## kepler.gl for Jupyter User Guide
 
-<br></br>
+### Table of contents
+- [Install](#install)
+- [1. Load kepler.gl Map](#1-load-keplergl-map)
+  - [`KeplerGl()`](#keplergl)
+- [2. Add Data](#2-add-data)
+  - [`.add_data()`](#add_data)
+  - [`.data`](#data)
+- [3. Data Format](#3-data-format)
+  - [`CSV`](#csv)
+  - [`GeoJSON`](#geojson)
+  - [`DataFrame`](#dataframe)
+  - [`GeoDataFrame`](#geodataframe)
+  - [`WKT`](#wkt)
+- [4. Customize the map](#4-customize-the-map)
+- [5. Save and load config](#5-save-and-load-config)
+  - [`.config`](#config)
+- [6. Match config with data](#6-match-config-with-data)
+- [7. Save Map](#7-save-map)
+  - [`.save_to_html()`](#save_to_html)
+- [Demo Notebooks](#demo-notebooks)
+
+
 ## Install
+
 ### Prerequisites
+
 - Python >= 2
 - ipywidgets >= 7.0.0
 
 To install use pip:
-
-    $ pip install keplergl
-
+```bash
+$ pip install keplergl
+```
 
 If you on Mac used `pip install` and running Notebook 5.3 and above, you don't need to run the following
 
-    $ jupyter nbextension install --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
+```bash
+$ jupyter nbextension install --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
+$ jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
+```
 
-    $ jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
-
-If you are using Jupyter Lab, you will also need to install the JupyterLab extension. This require [node](https://nodejs.org/en/download/package-manager/#macos) `> 8.15.0`
+If you are using Jupyter Lab, you will also need to install the JupyterLab extension. This require [node](https://nodejs.org/en/download/package-manager/#macos) `> 10.15.0`
 
 If you use [Homebrew](https://brew.sh/) on Mac:
-
-    $ brew install node@8
+```bash
+$ brew install node@10
+```
 
 Then install jupyter labextension.
 
-    $ jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupyter
+```bash
+$ jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupyter
+```
 
-**Prerequisites for JupyterLab:**
-- Node > 8.15.0
+### Prerequisites for JupyterLab
+- Node > 10.15.0
 - Python 3
 - JupyterLab>=1.0.0
 
@@ -56,16 +65,16 @@ Then install jupyter labextension.
 ### `KeplerGl()`
 
 - Input:
-    - __`height`__  _optional_ default: `400`
+  - __`height`__  _optional_ default: `400`
 
-        Height of the map display
+      Height of the map display
 
-    - __`data`__ `dict` _optional_
+  - __`data`__ `dict` _optional_
 
-        Datasets as a dictionary, key is the name of the dataset. Read more on [Accepted data format][data_format]
+      Datasets as a dictionary, key is the name of the dataset. Read more on [Accepted data format][data_format]
 
-    - __`config`__ `dict` _optional_
-        Map config as a dictionary. The `dataId` in the layer and filter settings should match the `name` of the dataset they are created under
+  - __`config`__ `dict` _optional_
+      Map config as a dictionary. The `dataId` in the layer and filter settings should match the `name` of the dataset they are created under
 
 The following command will load kepler.gl widget below a cell.
 **The map object created here is `map_1` it will be used throughout the code example in this doc.**
@@ -90,8 +99,6 @@ map_2
 ```
 
 ![Load map with data and config][load_map_w_data]
-
-<br></br>
 
 ## 2. Add Data
 ### `.add_data()`
@@ -131,8 +138,6 @@ map_1.data
 #  'data_3': 'location, lat, lng, name\n..',
 #  'data_3': '{"type": "FeatureCollecti...'}
 ```
-
-<br></br>
 
 ## 3. Data Format
 kepler.gl supports **CSV**,  **GeoJSON**, Pandas **DataFrame** or GeoPandas **GeoDataFrame**.
@@ -231,16 +236,11 @@ df_w_wkt = pd.DataFrame({
 map_1.add_data(df_w_wkt, "df_w_wkt")
 ```
 
-
-<br></br>
-
 ## 4. Customize the map
 
 Interact with kepler.gl and customize layers and filters. Map data and config will be stored locally to the widget state. To make sure the map state is saved, select `Widgets > Save Notebook Widget State`, before shutting down the kernel.
 
 ![Map interaction][map_interaction]
-
-<br></br>
 
 ## 5. Save and load config
 
@@ -289,7 +289,6 @@ with open('hex_config.py', 'w') as f:
 %run hex_config.py
 ```
 
-<br></br>
 ## 6. Match config with data
 All layers, filters and tooltips are associated with a specific dataset. Therefore the `data` and `config` in the map has to be able to match each other. The `name` of the dataset is assigned to:
 
@@ -301,7 +300,6 @@ All layers, filters and tooltips are associated with a specific dataset. Therefo
 
 You can use the same config on another dataset with the same name and schema.
 
-<br></br>
 ## 7. Save Map
 
 When you click in the map and change settings, config is saved to widget state. Closing the notebook and reopen it will reload current map. However, you need to manually select `Widget > Save Notebook Widget State` before shut downing the kernel to make sure it will be reloaded.
@@ -311,10 +309,10 @@ When you click in the map and change settings, config is saved to widget state. 
 ### `.save_to_html()`
 
 - input
-    - **`data`**: _optional_  A data dictionary {"name": data}, if not provided, will use current map data
-    - **`config`**: _optional_ map config dictionary, if not provided, will use current map config
-    - **`file_name`**: _optional_ the html file name, default is `keplergl_map.html`
-    - **`read_only`**: _optional_ if `read_only` is `True`, hide side panel to disable map customization
+  - **`data`**: _optional_  A data dictionary {"name": data}, if not provided, will use current map data
+  - **`config`**: _optional_ map config dictionary, if not provided, will use current map config
+  - **`file_name`**: _optional_ the html file name, default is `keplergl_map.html`
+  - **`read_only`**: _optional_ if `read_only` is `True`, hide side panel to disable map customization
 
 You can export your current map as an interactive html file.
 
