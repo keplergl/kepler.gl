@@ -66,9 +66,9 @@ export default {
     text: {
       label: 'etiqueta',
       labelWithId: 'Etiqueta {labelId}',
-      fontSize: 'Mida del text',
-      fontColor: 'Color del text',
-      textAnchor: 'Àncora de text',
+      fontSize: 'Mida de la font',
+      fontColor: 'Color de la font',
+      textAnchor: 'Àncora del text',
       alignment: 'Alineació',
       addMoreLabel: 'Afegeix més etiquetes'
     }

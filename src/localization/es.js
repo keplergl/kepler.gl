@@ -49,7 +49,7 @@ export default {
     valuesIn: 'Valores en',
     valueEquals: 'Valor igual a',
     dataSource: 'Fuente de datos',
-    brushRadius: 'Radio del pinzel (km)',
+    brushRadius: 'Radio del pincel (km)',
     empty: ' '
   },
   mapLayers: {
@@ -66,9 +66,9 @@ export default {
     text: {
       label: 'etiqueta',
       labelWithId: 'Etiqueta {labelId}',
-      fontSize: 'Medida de tipo',
-      fontColor: 'Color de tipo',
-      textAnchor: 'Àncora de texto',
+      fontSize: 'Tamaño de fuente',
+      fontColor: 'Color de fuente',
+      textAnchor: 'Anclaje del texto',
       alignment: 'Alineación',
       addMoreLabel: 'Añadir más etiquetas'
     }
@@ -88,7 +88,7 @@ export default {
     fillColor: 'Color de relleno',
     outline: 'Contorno',
     weight: 'Grueso',
-    propertyBasedOn: '{property} basada en',
+    propertyBasedOn: '{property} basado en',
     coverage: 'Cobertura',
     stroke: 'Trazo',
     strokeWidth: 'Grosor de trazo',
@@ -114,7 +114,7 @@ export default {
       icon: 'icono',
       heatmap: 'concentración',
       h3: 'H3',
-      trip: 'viage',
+      trip: 'viaje',
       s2: 'S2',
       '3d': '3D'
     }
@@ -181,17 +181,17 @@ export default {
     rowCount: '{rowCount} files'
   },
   tooltip: {
-    hideLayer: 'ocultar la capa',
-    showLayer: 'mostrar la capa',
+    hideLayer: 'Ocultar la capa',
+    showLayer: 'Mostrar la capa',
     hideFeature: 'Ocultar el objeto',
     showFeature: 'Mostrar el objeto',
-    hide: 'ocultar',
-    show: 'mostrar',
+    hide: 'Ocultar',
+    show: 'Mostrar',
     removeLayer: 'Eliminar capa',
     layerSettings: 'Configuración de capa',
     closePanel: 'Cerrar el panel actual',
     switchToDualView: 'Cambiar a la vista de mapa dual',
-    showLegend: 'mostrar leyenda',
+    showLegend: 'Mostrar leyenda',
     disable3DMap: 'Desactivar mapa 3D',
     DrawOnMap: 'Dibujar en el mapa',
     selectLocale: 'Seleccionar configuración regional',
@@ -338,7 +338,7 @@ export default {
       storage: 'Cargar desde almacenage'
     },
     tripInfo: {
-      title: 'Como habilitar la animación de viage',
+      title: 'Como habilitar la animación de viaje',
       description1:
         'Para animar la ruta, los datos geoJSON han de contener `LineString` en su geometría y las coordenadas de LineString deben tener 4 elementos en los formats de ',
       code: ' [longitude, latitude, altitude, timestamp] ',
@@ -372,7 +372,7 @@ export default {
   },
   header: {
     visibleLayers: 'Capas visibles',
-    layerLegend: 'Leyenda de capas'
+    layerLegend: 'Capa de leyenda'
   },
   interactions: {
     tooltip: 'Sugerencias',
@@ -407,7 +407,7 @@ export default {
   },
   color: {
     customPalette: 'Paleta personalizada',
-    steps: 'intervalos',
+    steps: 'pasos',
     type: 'tipo',
     reversed: 'invertida'
   },
