@@ -30,4 +30,3 @@ export const EXPORT_HTML_MAP_MODES_DOC = `${USER_GUIDE_DOC}/k-save-and-export#ex
 export const GUIDES_FILE_FORMAT_DOC = `${USER_GUIDE_DOC}/b-kepler-gl-workflow/a-add-data-to-the-map#supported-file-formats`;
 export const BUG_REPORT_LINK =
   'https://github.com/keplergl/kepler.gl/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBug%5D';
-

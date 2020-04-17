@@ -49,7 +49,7 @@
     "docs": "babel-node ./scripts/documentation.js",
     "example-version": "babel-node ./scripts/edit-version.js",
     "prettier-all": "prettier --write '{src,examples,test}/**/*.js'",
-    "lint": "eslint src test webpack examples/*.js  website/*.js website/src --fix",
+    "lint": "eslint src test webpack examples/*.js examples/**/src website/*.js website/src --fix",
     "web": "(yarn && yarn install:web && yarn start:web)",
     "deploy": "yarn install:web && (cd website && yarn build)",
     "clean": "rm -rf node_modules examples/**/node_modules website/node_modules",
