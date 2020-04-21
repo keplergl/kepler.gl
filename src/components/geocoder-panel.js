@@ -140,21 +140,15 @@ export class GeocoderPanel extends Component {
     mapboxApiAccessToken: PropTypes.string.isRequired
   };
 
-  constructor() {
-    super();
-    this.onSelected = this.onSelected.bind(this);
-    this.removeMarker = this.removeMarker.bind(this);
-
-    this.state = {
-      selectedGeoItem: null
-    };
-  }
+  state = {
+    selectedGeoItem: null
+  };
 
   removeGeocoderDataset() {
     this.props.dispatch(removeDataset(GEOCODER_DATASET_NAME));
   }
 
-  onSelected(viewport = null, geoItem) {
+  onSelected = (viewport = null, geoItem) => {
     const {
       center: [lon, lat],
       text,
@@ -183,14 +177,14 @@ export class GeocoderPanel extends Component {
     this.setState({
       selectedGeoItem: geoItem
     });
-  }
+  };
 
-  removeMarker() {
+  removeMarker = () => {
     this.setState({
       selectedGeoItem: null
     });
     this.removeGeocoderDataset();
-  }
+  };
 
   render() {
     const {isGeocoderEnabled, mapboxApiAccessToken} = this.props;
