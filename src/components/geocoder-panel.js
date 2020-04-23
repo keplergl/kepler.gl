@@ -59,7 +59,6 @@ const GeocoderPanelContent = styled.div`
   left: 50%;
   margin-left: -20em;
   width: 40em;
-  z-index: 10000;
   box-sizing: border-box;
 `;
 

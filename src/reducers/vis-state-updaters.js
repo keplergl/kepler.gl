@@ -71,6 +71,7 @@ import {
 import {Layer, LayerClasses} from 'layers';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 import {EDITOR_MODES, SORT_ORDER} from 'constants/default-settings';
+import {GEOCODER_DATASET_NAME} from 'components/geocoder-panel';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -451,48 +452,6 @@ export function layerVisConfigChangeUpdater(state, action) {
   }
 
   return updateStateWithLayerAndData(state, {layer: newLayer, idx});
-}
-
-/* eslint-enable max-statements */
-
-/**
- * Update `interactionConfig`
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {Object} action action
- * @param {Object} action.config new config as key value map: `{tooltip: {enabled: true}}`
- * @returns {Object} nextState
- * @public
- */
-export function interactionConfigChangeUpdater(state, action) {
-  const {config} = action;
-
-  const interactionConfig = {
-    ...state.interactionConfig,
-    ...{[config.id]: config}
-  };
-
-  // Don't enable tooltip and brush at the same time
-  // but coordinates can be shown at all time
-  const contradict = ['brush', 'tooltip'];
-
-  if (
-    contradict.includes(config.id) &&
-    config.enabled &&
-    !state.interactionConfig[config.id].enabled
-  ) {
-    // only enable one interaction at a time
-    contradict.forEach(k => {
-      if (k !== config.id) {
-        interactionConfig[k] = {...interactionConfig[k], enabled: false};
-      }
-    });
-  }
-
-  return {
-    ...state,
-    interactionConfig
-  };
 }
 
 /**
@@ -1068,6 +1027,54 @@ export const layerHoverUpdater = (state, action) => ({
   ...state,
   hoverInfo: action.info
 });
+
+/* eslint-enable max-statements */
+
+/**
+ * Update `interactionConfig`
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {Object} action action
+ * @param {Object} action.config new config as key value map: `{tooltip: {enabled: true}}`
+ * @returns {Object} nextState
+ * @public
+ */
+export function interactionConfigChangeUpdater(state, action) {
+  const {config} = action;
+
+  const interactionConfig = {
+    ...state.interactionConfig,
+    ...{[config.id]: config}
+  };
+
+  // Don't enable tooltip and brush at the same time
+  // but coordinates can be shown at all time
+  const contradict = ['brush', 'tooltip'];
+
+  if (
+    contradict.includes(config.id) &&
+    config.enabled &&
+    !state.interactionConfig[config.id].enabled
+  ) {
+    // only enable one interaction at a time
+    contradict.forEach(k => {
+      if (k !== config.id) {
+        interactionConfig[k] = {...interactionConfig[k], enabled: false};
+      }
+    });
+  }
+
+  const newState = {
+    ...state,
+    interactionConfig
+  };
+
+  if (config.id === 'geocoder' && !config.enabled) {
+    return removeDatasetUpdater(newState, {key: GEOCODER_DATASET_NAME});
+  }
+
+  return newState;
+}
 
 /**
  * Trigger layer click event with clicked object
