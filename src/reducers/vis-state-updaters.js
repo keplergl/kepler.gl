@@ -71,7 +71,6 @@ import {
 import {Layer, LayerClasses} from 'layers';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 import {EDITOR_MODES, SORT_ORDER} from 'constants/default-settings';
-import {GEOCODER_DATASET_NAME} from 'components/geocoder-panel';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -1070,7 +1069,7 @@ export function interactionConfigChangeUpdater(state, action) {
   };
 
   if (config.id === 'geocoder' && !config.enabled) {
-    return removeDatasetUpdater(newState, {key: GEOCODER_DATASET_NAME});
+    return removeDatasetUpdater(newState, {key: 'geocoder_dataset'});
   }
 
   return newState;

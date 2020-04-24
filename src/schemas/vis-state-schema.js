@@ -516,7 +516,7 @@ class FilterSchemaV0 extends Schema {
   }
 }
 
-const interactionPropsV0 = ['tooltip', 'brush'];
+const interactionPropsV0 = ['tooltip', 'brush', 'geocoder'];
 
 class InteractionSchemaV0 extends Schema {
   key = 'interactionConfig';
