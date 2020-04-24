@@ -2847,6 +2847,10 @@ test('#visStateReducer -> INTERACTION_CONFIG_CHANGE', t => {
     tooltip: {
       ...defaultInteractionConfig.tooltip,
       enabled: false
+    },
+    geocoder: {
+      ...defaultInteractionConfig.geocoder,
+      enabled: false
     }
   };
 

@@ -756,6 +756,9 @@ export const savedStateV1 = {
           brush: {
             size: 1,
             enabled: false
+          },
+          geocoder: {
+            enabled: false
           }
         },
         layerBlending: 'normal'
@@ -2786,5 +2789,9 @@ export const mergedInteraction = {
     config: {
       size: 1
     }
+  },
+  geocoder: {
+    ...defaultInteraction.geocoder,
+    enabled: false
   }
 };

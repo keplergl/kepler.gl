@@ -141,6 +141,9 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
     },
     coordinate: {
       enabled: false
+    },
+    geocoder: {
+      enabled: false
     }
   };
 

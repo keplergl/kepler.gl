@@ -285,7 +285,10 @@ export const savedStateV1 = {
             },
             enabled: true
           },
-          brush: {size: 0.5, enabled: false}
+          brush: {size: 0.5, enabled: false},
+          geocoder: {
+            enabled: false
+          }
         },
         layerBlending: 'normal',
         splitMaps: [
