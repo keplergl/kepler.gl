@@ -442,6 +442,9 @@ export const StyledMapContainer = styled.div`
   .mapboxgl-map .mapboxgl-missing-css {
     display: none;
   }
+  .mapboxgl-ctrl-attrib a {
+    font-size: 10px;
+  }
 `;
 
 export const StyledExportSection = styled.div`
