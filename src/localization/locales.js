@@ -19,10 +19,12 @@
 // THE SOFTWARE.
 
 export const LOCALES = {
-    en : 'English',
-    fi : 'Suomi',
-    pt: 'Português'
-}
+  en: 'English',
+  fi: 'Suomi',
+  pt: 'Português',
+  es: 'Español',
+  ca: 'Català'
+};
 
 /**
  * Localization can be passed to `KeplerGl` via uiState `locale`.
@@ -46,5 +48,4 @@ export const LOCALES = {
  * ```
  */
 
-export const LOCALE_CODES = Object.keys(LOCALES)
-.reduce((acc, key) => ({...acc, [key]: key}), {});
+export const LOCALE_CODES = Object.keys(LOCALES).reduce((acc, key) => ({...acc, [key]: key}), {});
