@@ -648,7 +648,6 @@ export const savedStateV1 = {
               columns: {
                 geojson: 'simplified_shape_v2'
               },
-              hidden: false,
               isVisible: true,
               visConfig: {
                 opacity: 0.8,
@@ -708,7 +707,6 @@ export const savedStateV1 = {
               columns: {
                 geojson: 'simplified_shape'
               },
-              hidden: false,
               isVisible: true,
               visConfig: {
                 opacity: 0.8,
@@ -755,9 +753,6 @@ export const savedStateV1 = {
           },
           brush: {
             size: 1,
-            enabled: false
-          },
-          geocoder: {
             enabled: false
           }
         },
@@ -878,7 +873,6 @@ mergedLayer0.config = {
       value: 'simplified_shape_v2'
     }
   },
-  hidden: false,
   isVisible: true,
   isConfigActive: false,
   highlightColor: [252, 242, 26, 255],
@@ -2698,7 +2692,6 @@ mergedLayer1.config = {
   columns: {
     geojson: {value: 'simplified_shape', fieldIdx: 2}
   },
-  hidden: false,
   isVisible: true,
   isConfigActive: false,
   highlightColor: [252, 242, 26, 255],
@@ -2789,9 +2782,5 @@ export const mergedInteraction = {
     config: {
       size: 1
     }
-  },
-  geocoder: {
-    ...defaultInteraction.geocoder,
-    enabled: false
   }
 };

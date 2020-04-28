@@ -750,9 +750,6 @@ export const savedStateWIthNonValidFilters = {
           brush: {
             size: 1,
             enabled: false
-          },
-          geocoder: {
-            enabled: false
           }
         },
         layerBlending: 'normal'

@@ -282,9 +282,6 @@ export const parsedConfigV0 = {
       },
       brush: {
         enabled: false
-      },
-      geocoder: {
-        enabled: false
       }
     },
     layerBlending: 'additive'

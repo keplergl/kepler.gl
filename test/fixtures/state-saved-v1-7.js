@@ -751,9 +751,6 @@ export const savedStateV1InteractionCoordinate = {
           },
           coordinate: {
             enabled: true
-          },
-          geocoder: {
-            enabled: false
           }
         },
         layerBlending: 'normal'
