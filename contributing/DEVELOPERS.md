@@ -253,29 +253,47 @@ Netlify is connected to the following github triggers:
 
 A new production version of kepler.gl website is automatically created and deployed every time a PR is merged onto master.
 
-In order to support testing environment, NEtlify is setup to generate build every time a PR is created or updated.
+In order to support testing environment, Netlify is setup to generate build every time a PR is created or updated.
 By generating builds for new and updated PRs we support CI/CD so developers can test their own build in a production like environment 
 
-## Publish kepler.gl package to NPM
-In order to publsih a new verion of the kepler.gl package a developer must perform the following steps:
-1. Update __package.json__ file with the new version value.
-2. Update each of the example folder package.json kepler.gl dependency with the newer version specified during step 1.
-3. Update __CHANGELOG.md__ with the latest commit changes.
-4. Create a new PR for review.
-5. Once the PR is reviewed and merged, create a new git tag with the new version value.
-6. Once the new tag is pushed to remote, Github will automatically trgger a new Github Action flow that will automatically build and publish the new package version to NPM registry.
+### Publish kepler.gl package to NPM
 
+#### Requirements
+To prepare a new release you need the following tool:
+- [gh-release](https://www.npmjs.com/package/gh-release): this tool facilitates the creation of a new git tag (using package.json version number) and a github release (different from npm release)
+
+Setup ```gh-release``` with your github api token ([instructions](https://www.npmjs.com/package/gh-release#command-line-interface))
+
+### Push a new release
+In order to publish a new version of kepler.gl a developer must perform the following steps:
+1. Update __package.json__ file with the new version value. Run ```npm version major | minor | patch``` to update version accordingly.
+2. Update __CHANGELOG.md__ with the latest commit changes. Print commits with ```git log --pretty=oneline --abbrev-commit```
+3. Create a new PR for review.
+4. Once the PR is reviewed and merged, pull the latest changes locally.
+5. Run ```gh-release```: this command will create a new Github Release with the new updated CHANGELOG.md section.
+6. Once the new Github Release is created, Github will automatically trgger a new Github Action flow that will automatically build and publish the new package version to NPM registry.
+
+__After Release is completed and pushed__
+* Update each of the example folder package.json kepler.gl dependency with the newer. To update all examples, run
+
+```bash
+npm run example-version
+```
+
+This step is required after the new version is published otherwise it would fail.
 
 ## Gitbook documentation
 Kepler.gl documentation is hosted on [gitbook](https://kepler-gl.gitbook.io/kepler-gl/). For more information [read here](https://docs.gitbook.com/)
 
 ### Documentation structure
 The documentation layout is defined by __SUMMARY.md__ file where the table of contents define each entry has the following structure
+
 ```markdown
 * [ENTRY_LABEL](FILE_PATH)
 e.g.
 * [Welcome](README.md)
 ``` 
+
 The above file is used by Gitbook to generate the doc navigation visible on the left-hand side of Kepler.gl doc website. 
 Gitbook also has the ability to show description for each folder/section of the documentation by creating an entry in __SUMMARY.md__
 and create a new __README.md__ file within said folder. The README.md file is a Gitbook convention that treats README files as if they were the main entry file for each folder.
