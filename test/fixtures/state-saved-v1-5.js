@@ -172,7 +172,6 @@ export const savedStateV1TripGeoJson = {
               columns: {
                 geojson: '_geojson'
               },
-              hidden: false,
               isVisible: true,
               visConfig: {
                 opacity: 0.8,

@@ -214,7 +214,6 @@ export const savedStateV1 = {
                 lng: 'restaurant_lng',
                 altitude: null
               },
-              hidden: false,
               isVisible: true,
               visConfig: {
                 radius: 10,
@@ -247,7 +246,6 @@ export const savedStateV1 = {
               label: 'hexagon',
               color: [221, 178, 124],
               columns: {lat: 'restaurant_lat', lng: 'restaurant_lng'},
-              hidden: false,
               isVisible: true,
               visConfig: {
                 opacity: 0.8,

@@ -104,7 +104,6 @@ export const stateSavedV1 = {
                 lng: 'point_lng',
                 altitude: null
               },
-              hidden: false,
               isVisible: true,
               visConfig: {
                 radius: 12.5,
