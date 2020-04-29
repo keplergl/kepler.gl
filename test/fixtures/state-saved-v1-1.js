@@ -873,6 +873,7 @@ mergedLayer0.config = {
       value: 'simplified_shape_v2'
     }
   },
+  hidden: false,
   isVisible: true,
   isConfigActive: false,
   highlightColor: [252, 242, 26, 255],
@@ -2709,6 +2710,7 @@ mergedLayer1.config = {
     tableFieldIndex: 13,
     analyzerType: 'FLOAT'
   },
+  hidden: false,
   sizeScale: 'linear',
   sizeDomain: [0.970877074, 1],
   textLabel: [DEFAULT_TEXT_LABEL],
