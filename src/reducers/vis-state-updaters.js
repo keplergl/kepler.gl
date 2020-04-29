@@ -453,48 +453,6 @@ export function layerVisConfigChangeUpdater(state, action) {
   return updateStateWithLayerAndData(state, {layer: newLayer, idx});
 }
 
-/* eslint-enable max-statements */
-
-/**
- * Update `interactionConfig`
- * @memberof visStateUpdaters
- * @param {Object} state `visState`
- * @param {Object} action action
- * @param {Object} action.config new config as key value map: `{tooltip: {enabled: true}}`
- * @returns {Object} nextState
- * @public
- */
-export function interactionConfigChangeUpdater(state, action) {
-  const {config} = action;
-
-  const interactionConfig = {
-    ...state.interactionConfig,
-    ...{[config.id]: config}
-  };
-
-  // Don't enable tooltip and brush at the same time
-  // but coordinates can be shown at all time
-  const contradict = ['brush', 'tooltip'];
-
-  if (
-    contradict.includes(config.id) &&
-    config.enabled &&
-    !state.interactionConfig[config.id].enabled
-  ) {
-    // only enable one interaction at a time
-    contradict.forEach(k => {
-      if (k !== config.id) {
-        interactionConfig[k] = {...interactionConfig[k], enabled: false};
-      }
-    });
-  }
-
-  return {
-    ...state,
-    interactionConfig
-  };
-}
-
 /**
  * Update filter property
  * @memberof visStateUpdaters
@@ -1068,6 +1026,54 @@ export const layerHoverUpdater = (state, action) => ({
   ...state,
   hoverInfo: action.info
 });
+
+/* eslint-enable max-statements */
+
+/**
+ * Update `interactionConfig`
+ * @memberof visStateUpdaters
+ * @param {Object} state `visState`
+ * @param {Object} action action
+ * @param {Object} action.config new config as key value map: `{tooltip: {enabled: true}}`
+ * @returns {Object} nextState
+ * @public
+ */
+export function interactionConfigChangeUpdater(state, action) {
+  const {config} = action;
+
+  const interactionConfig = {
+    ...state.interactionConfig,
+    ...{[config.id]: config}
+  };
+
+  // Don't enable tooltip and brush at the same time
+  // but coordinates can be shown at all time
+  const contradict = ['brush', 'tooltip'];
+
+  if (
+    contradict.includes(config.id) &&
+    config.enabled &&
+    !state.interactionConfig[config.id].enabled
+  ) {
+    // only enable one interaction at a time
+    contradict.forEach(k => {
+      if (k !== config.id) {
+        interactionConfig[k] = {...interactionConfig[k], enabled: false};
+      }
+    });
+  }
+
+  const newState = {
+    ...state,
+    interactionConfig
+  };
+
+  if (config.id === 'geocoder' && !config.enabled) {
+    return removeDatasetUpdater(newState, {key: 'geocoder_dataset'});
+  }
+
+  return newState;
+}
 
 /**
  * Trigger layer click event with clicked object

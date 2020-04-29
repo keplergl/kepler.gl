@@ -233,6 +233,7 @@ export const layerPropsV0 = {
   label: new LayerConfigSchemaV0({key: 'label'}),
   color: new LayerConfigSchemaV0({key: 'color'}),
   isVisible: new LayerConfigSchemaV0({key: 'isVisible'}),
+  hidden: new LayerConfigSchemaV0({key: 'hidden'}),
 
   // convert visConfig
   visConfig: new LayerVisConfigSchemaV0({key: 'visConfig'}),
@@ -463,6 +464,7 @@ export const layerPropsV1 = {
       visConfig: new VisConfigSchemaV1({
         version: VERSIONS.v1
       }),
+      hidden: false,
       textLabel: new TextLabelSchemaV1({
         version: VERSIONS.v1,
         key: 'textLabel'
@@ -550,7 +552,7 @@ class InteractionSchemaV0 extends Schema {
   }
 }
 
-const interactionPropsV1 = [...interactionPropsV0, 'coordinate'];
+const interactionPropsV1 = [...interactionPropsV0, 'geocoder', 'coordinate'];
 
 class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';

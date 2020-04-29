@@ -375,7 +375,8 @@ export default {
   interactions: {
     tooltip: 'Tooltip',
     brush: 'Brush',
-    coordinate: 'Coordinates'
+    coordinate: 'Coordinates',
+    geocoder: 'Geocoder'
   },
   layerBlending: {
     title: 'Layer Blending',
@@ -428,6 +429,9 @@ export default {
     uploading: 'Uploading',
     fileNotSupported: 'File {errorFiles} is not supported.',
     or: 'or'
+  },
+  geocoder: {
+    title: 'Geocoder'
   },
   density: 'density',
   'Bug Report': 'Bug Report',

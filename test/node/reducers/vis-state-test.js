@@ -2422,7 +2422,8 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
         }
       },
       brush: oldState.interactionConfig.brush,
-      coordinate: oldState.interactionConfig.coordinate
+      coordinate: oldState.interactionConfig.coordinate,
+      geocoder: oldState.interactionConfig.geocoder
     },
     editingDataset: oldState.editingDataset,
     layerBlending: oldState.layerBlending,
@@ -2639,7 +2640,8 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
         }
       },
       brush: oldState.interactionConfig.brush,
-      coordinate: oldState.interactionConfig.coordinate
+      coordinate: oldState.interactionConfig.coordinate,
+      geocoder: oldState.interactionConfig.geocoder
     },
     splitMaps: [{layers: {'point-0': false}}, {layers: {'point-0': true}}],
     editingDataset: oldState.editingDataset,
@@ -2844,6 +2846,10 @@ test('#visStateReducer -> INTERACTION_CONFIG_CHANGE', t => {
     brush: brushConfig,
     tooltip: {
       ...defaultInteractionConfig.tooltip,
+      enabled: false
+    },
+    geocoder: {
+      ...defaultInteractionConfig.geocoder,
       enabled: false
     }
   };

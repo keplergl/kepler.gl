@@ -34,7 +34,8 @@ import {
   MapContainerFactory,
   BottomWidgetFactory,
   ModalContainerFactory,
-  PlotContainerFactory
+  PlotContainerFactory,
+  GeocoderPanelFactory
 } from 'components';
 import NotificationPanelFactory from 'components/notification-panel';
 import {ActionTypes} from 'actions';
@@ -46,6 +47,7 @@ const MapContainer = appInjector.get(MapContainerFactory);
 const BottomWidget = appInjector.get(BottomWidgetFactory);
 const ModalContainer = appInjector.get(ModalContainerFactory);
 const PlotContainer = appInjector.get(PlotContainerFactory);
+const GeocoderPanel = appInjector.get(GeocoderPanelFactory);
 const NotificationPanel = appInjector.get(NotificationPanelFactory);
 
 const initialCoreState = coreReducer(
@@ -86,6 +88,7 @@ test('Components -> KeplerGl -> Mount', t => {
   t.equal(wrapper.find(ModalContainer).length, 1, 'should render ModalContainer');
   t.equal(wrapper.find(PlotContainer).length, 0, 'should not render PlotContainer');
   t.equal(wrapper.find(NotificationPanel).length, 1, 'should render NotificationPanel');
+  t.equal(wrapper.find(GeocoderPanel).length, 0, 'should not render GeocoderPanel');
 
   t.end();
 });
@@ -127,6 +130,7 @@ test('Components -> KeplerGl -> Mount -> readOnly', t => {
   t.equal(wrapper.find(ModalContainer).length, 1, 'should render ModalContainer');
   t.equal(wrapper.find(PlotContainer).length, 0, 'should not render PlotContainer');
   t.equal(wrapper.find(NotificationPanel).length, 1, 'should render NotificationPanel');
+  t.equal(wrapper.find(GeocoderPanel).length, 0, 'should not render GeocoderPanel');
 
   t.end();
 });
@@ -168,6 +172,7 @@ test('Components -> KeplerGl -> Mount -> Plot', t => {
   t.equal(wrapper.find(ModalContainer).length, 1, 'should render ModalContainer');
   t.equal(wrapper.find(PlotContainer).length, 1, 'should render PlotContainer');
   t.equal(wrapper.find(NotificationPanel).length, 1, 'should render NotificationPanel');
+  t.equal(wrapper.find(GeocoderPanel).length, 0, 'should not render GeocoderPanel');
 
   t.end();
 });
@@ -209,6 +214,7 @@ test('Components -> KeplerGl -> Mount -> Split Maps', t => {
   t.equal(wrapper.find(ModalContainer).length, 1, 'should render ModalContainer');
   t.equal(wrapper.find(PlotContainer).length, 0, 'should render PlotContainer');
   t.equal(wrapper.find(NotificationPanel).length, 1, 'should render NotificationPanel');
+  t.equal(wrapper.find(GeocoderPanel).length, 0, 'should not render GeocoderPanel');
 
   t.end();
 });

@@ -53,6 +53,7 @@ import BottomWidgetFactory from './bottom-widget';
 import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
 import NotificationPanelFactory from './notification-panel';
+import GeoCoderPanelFactory from './geocoder-panel';
 
 import {generateHashId} from 'utils/utils';
 import {validateToken} from 'utils/mapbox-utils';
@@ -92,6 +93,7 @@ const GlobalStyle = styled.div`
 
 KeplerGlFactory.deps = [
   BottomWidgetFactory,
+  GeoCoderPanelFactory,
   MapContainerFactory,
   ModalContainerFactory,
   SidePanelFactory,
@@ -101,6 +103,7 @@ KeplerGlFactory.deps = [
 
 function KeplerGlFactory(
   BottomWidget,
+  GeoCoderPanel,
   MapContainer,
   ModalContainer,
   SidePanel,
@@ -237,7 +240,8 @@ function KeplerGlFactory(
         mapStateActions,
         mapStyleActions,
         uiStateActions,
-        providerActions
+        providerActions,
+        dispatch
       } = this.props;
 
       const availableProviders = this.availableProviders(this.props);
@@ -362,6 +366,13 @@ function KeplerGlFactory(
                     startExportingImage={uiStateActions.startExportingImage}
                     setExportImageDataUri={uiStateActions.setExportImageDataUri}
                     setExportImageError={uiStateActions.setExportImageError}
+                  />
+                )}
+                {!uiState.readOnly && interactionConfig.geocoder.enabled && (
+                  <GeoCoderPanel
+                    isGeocoderEnabled={interactionConfig.geocoder.enabled}
+                    mapboxApiAccessToken={mapboxApiAccessToken}
+                    dispatch={dispatch}
                   />
                 )}
                 <BottomWidget

@@ -207,6 +207,7 @@ mergedLayer0.config = {
       value: null
     }
   },
+  hidden: false,
   isVisible: true,
   colorField: null,
   colorScale: 'quantile',
