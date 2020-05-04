@@ -68,10 +68,11 @@ const ChickletTag = styled.span`
   }
 `;
 
-const Chicklet = ({disabled, name, remove}) => (
+const Chicklet = ({disabled, name, remove, addon}) => (
   <ChickletButton>
     <ChickletTag>{name}</ChickletTag>
-    <Delete height="10px" onClick={disabled ? null : remove} />
+    {Boolean(addon) && addon(name)}
+    <Delete onClick={disabled ? null : remove} />
   </ChickletButton>
 );
 
@@ -96,7 +97,8 @@ const ChickletedInput = ({
   placeholder = '',
   removeItem,
   displayOption = d => d,
-  inputTheme
+  inputTheme,
+  addon
 }) => (
   <ChickletedInputContainer
     className={`${className} chickleted-input`}
@@ -114,6 +116,7 @@ const ChickletedInput = ({
           key={`${displayOption(item)}_${i}`}
           name={displayOption(item)}
           remove={e => removeItem(item, e)}
+          addon={addon}
         />
       ))
     ) : (

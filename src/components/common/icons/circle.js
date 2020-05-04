@@ -18,38 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import styled from 'styled-components';
-import {DatasetSquare} from 'components/common/styled-components';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
+import Base from './base';
 
-const DatasetTagWrapper = styled.div`
-  display: flex;
-  color: ${props => props.theme.textColor};
-  font-size: 11px;
-  letter-spacing: 0.2px;
-  overflow: auto;
+export default class Circle extends Component {
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string
+  };
 
-  .dataset-color {
-    flex-shrink: 0;
-    margin-top: 5px;
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-circle',
+    stroke: '#FFF'
+  };
+
+  render() {
+    return (
+      <Base {...this.props}>
+        <circle cx="32" cy="32" r="26" strokeWidth="12" fill="rgba(0,0,0,0)" />
+      </Base>
+    );
   }
-
-  .dataset-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-`;
-
-export default function DatasetTagFactory() {
-  const DatasetTag = ({onClick, dataset}) => (
-    <DatasetTagWrapper className="source-data-tag" onClick={onClick}>
-      <DatasetSquare className="dataset-color" color={dataset.color} />
-      <div className="dataset-name" title={dataset.label}>
-        {dataset.label}
-      </div>
-    </DatasetTagWrapper>
-  );
-
-  return DatasetTag;
 }

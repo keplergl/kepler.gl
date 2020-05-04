@@ -95,7 +95,8 @@ class ItemSelector extends Component {
     closeOnSelect: PropTypes.bool,
     DropdownHeaderComponent: PropTypes.func,
     DropDownRenderComponent: PropTypes.func,
-    DropDownLineItemRenderComponent: PropTypes.func
+    DropDownLineItemRenderComponent: PropTypes.func,
+    addon: PropTypes.func
   };
 
   static defaultProps = {
@@ -250,6 +251,7 @@ class ItemSelector extends Component {
               placeholder={this.props.placeholder}
               displayOption={displayOption}
               removeItem={this._removeItem}
+              addon={this.props.addon}
             />
           ) : (
             <StyledDropdownSelect {...dropdownSelectProps}>
