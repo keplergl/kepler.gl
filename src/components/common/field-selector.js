@@ -33,6 +33,7 @@ const StyledToken = styled.div`
   display: inline-block;
   margin: 0 4px 0 0;
 `;
+
 // custom list Item
 export const FieldListItemFactory = (showToken = true) => {
   const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
@@ -94,6 +95,8 @@ class FieldSelector extends Component {
   };
 
   fieldsSelector = props => props.fields;
+  filteredFieldsSelector = props =>
+    props.fields.filter(field => !(props.value || []).includes(field.name));
   valueSelector = props => props.value;
   filterFieldTypesSelector = props => props.filterFieldTypes;
   showTokenSelector = props => props.showToken;
@@ -103,7 +106,7 @@ class FieldSelector extends Component {
   );
 
   fieldOptionsSelector = createSelector(
-    this.fieldsSelector,
+    this.filteredFieldsSelector,
     this.filterFieldTypesSelector,
     (fields, filterFieldTypes) => {
       if (!filterFieldTypes) {
@@ -136,6 +139,7 @@ class FieldSelector extends Component {
           onChange={this.props.onSelect}
           DropDownLineItemRenderComponent={this.fieldListItemSelector(this.props)}
           DropdownHeaderComponent={this.props.suggested ? SuggestedFieldHeader : null}
+          addon={this.props.addon}
         />
       </div>
     );

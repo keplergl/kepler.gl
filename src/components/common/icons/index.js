@@ -32,6 +32,7 @@ export {default as Bug} from './bug';
 export {default as Cancel} from './cancel';
 export {default as Checkmark} from './checkmark';
 export {default as Clipboard} from './clipboard';
+export {default as Circle} from './circle';
 export {default as Clock} from './clock';
 export {default as Close} from './close';
 export {default as Crosshairs} from './crosshairs';
