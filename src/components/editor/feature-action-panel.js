@@ -32,73 +32,85 @@ const StyledActionsLayer = styled.div`
   position: absolute;
 `;
 
-export class FeatureActionPanel extends PureComponent {
-  static propTypes = {
-    className: PropTypes.string,
-    datasets: PropTypes.object.isRequired,
-    position: PropTypes.object.isRequired,
-    layers: PropTypes.arrayOf(PropTypes.object).isRequired,
-    currentFilter: PropTypes.object,
-    onClose: PropTypes.func.isRequired,
-    onDeleteFeature: PropTypes.func.isRequired
-  };
+PureFeatureActionPanelFactory.deps = [];
 
-  static defaultProps = {
-    position: {}
-  };
+export function PureFeatureActionPanelFactory() {
+  class FeatureActionPanel extends PureComponent {
+    static propTypes = {
+      className: PropTypes.string,
+      datasets: PropTypes.object.isRequired,
+      position: PropTypes.object.isRequired,
+      layers: PropTypes.arrayOf(PropTypes.object).isRequired,
+      currentFilter: PropTypes.object,
+      onClose: PropTypes.func.isRequired,
+      onDeleteFeature: PropTypes.func.isRequired
+    };
 
-  // Used by onClickOutside
-  handleClickOutside = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    this.props.onClose();
-  };
+    static defaultProps = {
+      position: {}
+    };
 
-  render() {
-    const {
-      className,
-      datasets,
-      position,
-      layers,
-      currentFilter,
-      onToggleLayer,
-      onDeleteFeature
-    } = this.props;
+    // Used by onClickOutside
+    handleClickOutside = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.props.onClose();
+    };
 
-    const {layerId = []} = currentFilter || {};
+    render() {
+      const {
+        className,
+        datasets,
+        position,
+        layers,
+        currentFilter,
+        onToggleLayer,
+        onDeleteFeature
+      } = this.props;
 
-    return (
-      <StyledActionsLayer
-        className={classnames('feature-action-panel', className)}
-        style={{
-          top: `${position.y + LAYOVER_OFFSET}px`,
-          left: `${position.x + LAYOVER_OFFSET}px`
-        }}
-      >
-        <ActionPanel>
-          <ActionPanelItem className="editor-layers-list" label="layers" Icon={Layers}>
-            {layers.map((layer, index) => (
-              <ActionPanelItem
-                key={index}
-                label={layer.config.label}
-                color={datasets[layer.config.dataId].color}
-                isSelection={true}
-                isActive={layerId.includes(layer.id)}
-                onClick={() => onToggleLayer(layer)}
-                className="layer-panel-item"
-              />
-            ))}
-          </ActionPanelItem>
-          <ActionPanelItem
-            label="delete"
-            className="delete-panel-item"
-            Icon={Trash}
-            onClick={onDeleteFeature}
-          />
-        </ActionPanel>
-      </StyledActionsLayer>
-    );
+      const {layerId = []} = currentFilter || {};
+
+      return (
+        <StyledActionsLayer
+          className={classnames('feature-action-panel', className)}
+          style={{
+            top: `${position.y + LAYOVER_OFFSET}px`,
+            left: `${position.x + LAYOVER_OFFSET}px`
+          }}
+        >
+          <ActionPanel>
+            <ActionPanelItem className="editor-layers-list" label="layers" Icon={Layers}>
+              {layers.map((layer, index) => (
+                <ActionPanelItem
+                  key={index}
+                  label={layer.config.label}
+                  color={datasets[layer.config.dataId].color}
+                  isSelection={true}
+                  isActive={layerId.includes(layer.id)}
+                  onClick={() => onToggleLayer(layer)}
+                  className="layer-panel-item"
+                />
+              ))}
+            </ActionPanelItem>
+            <ActionPanelItem
+              label="delete"
+              className="delete-panel-item"
+              Icon={Trash}
+              onClick={onDeleteFeature}
+            />
+          </ActionPanel>
+        </StyledActionsLayer>
+      );
+    }
   }
+
+  FeatureActionPanel.displayName = 'FeatureActionPanel';
+
+  return FeatureActionPanel;
 }
 
-export default onClickOutside(FeatureActionPanel);
+FeatureActionPanelFactory.deps = PureFeatureActionPanelFactory.deps;
+
+export default function FeatureActionPanelFactory() {
+  return onClickOutside(PureFeatureActionPanelFactory());
+}
