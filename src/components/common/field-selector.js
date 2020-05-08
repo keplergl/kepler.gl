@@ -53,7 +53,15 @@ export const FieldListItemFactory = (showToken = true) => {
 const SuggestedFieldHeader = () => <div>Suggested Field</div>;
 
 const FieldType = PropTypes.oneOfType([
-  PropTypes.arrayOf(PropTypes.string),
+  PropTypes.arrayOf(
+    PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        name: PropTypes.string,
+        format: PropTypes.string
+      })
+    ])
+  ),
   PropTypes.string,
   PropTypes.shape({
     format: PropTypes.string,
@@ -102,7 +110,16 @@ class FieldSelector extends Component {
   showTokenSelector = props => props.showToken;
 
   selectedItemsSelector = createSelector(this.fieldsSelector, this.valueSelector, (fields, value) =>
-    fields.filter(f => (Array.isArray(value) ? value : [value]).includes(defaultDisplayOption(f)))
+    fields.filter(f =>
+      Boolean(
+        (Array.isArray(value) ? value : [value]).find(d => {
+          if (!d) {
+            return false;
+          }
+          return d.name ? d.name === defaultDisplayOption(f) : d === defaultDisplayOption(f);
+        })
+      )
+    )
   );
 
   fieldOptionsSelector = createSelector(

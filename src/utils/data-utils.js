@@ -21,6 +21,11 @@
 import moment from 'moment';
 import assert from 'assert';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {
+  TOOLTIP_FORMATS,
+  TOOLTIP_FORMAT_TYPES
+} from 'components/side-panel/interaction-panel/tooltip-config';
+import {format as d3Format} from 'd3-format';
 
 const MAX_LATITUDE = 90;
 const MIN_LATITUDE = -90;
@@ -288,4 +293,19 @@ export function findFirstNoneEmpty(data, count = 1, getValue = identity) {
     c++;
   }
   return found;
+}
+
+export function getFormatter(format) {
+  const tooltipFormat = Object.values(TOOLTIP_FORMATS).find(f => f.label === format);
+  if (tooltipFormat && tooltipFormat.format) {
+    switch (tooltipFormat.type) {
+      case TOOLTIP_FORMAT_TYPES.DECIMAL:
+        return d3Format(tooltipFormat.format);
+      case TOOLTIP_FORMAT_TYPES.DATE:
+        return v => moment(v).format(tooltipFormat.format);
+      default:
+        return v => v;
+    }
+  }
+  return v => v;
 }
