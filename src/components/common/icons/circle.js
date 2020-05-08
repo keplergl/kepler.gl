@@ -31,13 +31,14 @@ export default class Circle extends Component {
   static defaultProps = {
     height: '16px',
     predefinedClassName: 'data-ex-icons-circle',
-    stroke: '#FFF'
+    stroke: '#FFF',
+    fill: 'rgba(0,0,0,0)'
   };
 
   render() {
     return (
       <Base {...this.props}>
-        <circle cx="32" cy="32" r="26" strokeWidth="12" fill="rgba(0,0,0,0)" />
+        <circle cx="32" cy="32" r="26" fill={this.props.fill} strokeWidth="12" />
       </Base>
     );
   }
