@@ -18,22 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// required by enzymev3
-const configure = require('enzyme').configure;
-const Adapter = require('enzyme-adapter-react-16');
-configure({adapter: new Adapter()});
+import React from 'react';
+import sinon from 'sinon';
+import test from 'tape';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import TooltipConfigFactory from 'components/side-panel/interaction-panel/tooltip-config';
+import {StateWTrips} from 'test/helpers/mock-state';
 
-import './injector-test';
-import './container-test';
-import './kepler-gl-test';
+test('TooltipConfig - render', t => {
+  const DataSetTag = () => <div className="dataset-tag" />;
+  const TooltipConfig = TooltipConfigFactory(DataSetTag);
+  const datasets = StateWTrips.visState.datasets;
+  const config = {
+    fieldsToShow: {
+      test_trip_data: ['tpep_pickup_datetime', 'tpep_dropoff_datetime', 'fare_amount']
+    },
+    enabled: true
+  };
+  const onChange = sinon.spy();
+  let wrapper;
 
-import './modals';
-import './notifications';
-import './map';
-import './side-panel';
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TooltipConfig onChange={onChange} config={config} datasets={datasets} />
+      </IntlWrapper>
+    );
+  }, 'Should render');
 
-import './common';
-import './editor';
-import './map-container-test';
-import './geocoder-panel-test';
-import './tooltip-config-test';
+  t.equal(wrapper.find(TooltipConfig).length, 1, 'Should display 1 TooltipConfig');
+  t.end();
+});
