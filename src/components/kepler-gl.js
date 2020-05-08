@@ -85,7 +85,7 @@ const GlobalStyle = styled.div`
     margin: 0;
   }
 
-  a:not(.mapboxgl-ctrl-attrib a) {
+  a {
     text-decoration: none;
     color: ${props => props.theme.labelColor};
   }
