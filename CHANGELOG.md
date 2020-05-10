@@ -15,6 +15,20 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [2.2.0] - May 10 2020
+- [Enhancement] Added Editor and FeatureActionPanel factories (#1093)
+- [Feat] Geocoder Search (#1068)
+- [Doc] Updated release docs with gh-release instructions (#1059)
+- [Bug] Aggregation layer fix out-of-domain coloring for valid strings (#1070)
+- [Feat] Add Spanish and Catalan translation (#1087)
+- [Doc] Update playback documentation (#1072)
+- [Bug] Fix link to umd folder
+- [Doc] Refactored doc files for better structure (#1084)
+- [Enhancement] Add Portuguese translations  (#1063)
+- [Bug] Fixed download file for microsoft edge (#1074)
+- [Bug] Fix broken redirects in jupyter user guide (#1077)
+- [Docs] update upgrade guide (#1044)
+
 ## [2.1.2] - April 3 2020
 - [Enhancement] Add support for localization and Finnish translations (#994)
 - [Bug] Fixes for case sensitive fields in CARTO storage  (#1057)

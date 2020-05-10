@@ -1,9 +1,24 @@
 # Upgrade Guide
 
 ## Table of Content
+- [v2.1 to v2.2](#upgrade-from-v21-to-v22)
 - [v2.0 to v2.1](#upgrade-from-v20-to-v21)
 - [v1.1.12 to v2.0](#upgrade-from-v1112-to-v20)
 - [v1.1.11 to v1.1.12](#upgrade-from-v1111-to-v1112)
+
+## Upgrade from v2.1 to v2.2
+### New Features
+- __Interaction__  - Added Geocoder in the interactin panel
+
+### Improvements
+- __Localization__ - Added Spanish, Catalan, and Portuguese translations
+
+### Bug Fixes
+- __Layer__ - Aggregation layer fix out-of-domain coloring for valid strings
+- __Export__ - Fixed download file for microsoft edge
+
+### API Update
+- __Components__ - Exported map drawing editor factories
 
 ## Upgrade from v2.0 to v2.1
 ### Breaking Changes
