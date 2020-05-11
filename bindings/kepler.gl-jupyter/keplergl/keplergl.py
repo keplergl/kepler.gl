@@ -6,7 +6,7 @@ import geopandas
 import shapely.wkt
 import json
 
-documentation = 'https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md'
+documentation = 'https://docs.kepler.gl/docs/keplergl-jupyter'
 def _df_to_dict(df):
     ''' Create an input dict for Kepler.gl using a DataFrame object
 

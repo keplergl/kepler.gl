@@ -26,11 +26,13 @@ import {
   SidebarFactory,
   AddDataButtonFactory,
   PanelHeaderFactory,
+  CustomPanelsFactory,
   injectComponents
 } from 'kepler.gl/components';
 
 import CustomPanelHeaderFactory from './panel-header';
 import CustomSidebarFactory from './side-bar';
+import CustomCustomPanelsFactory from './config-panel';
 export const KEPLER_GL_JUPYTER_VERSION = "__PACKAGE_VERSION__";
 
 const CustomAddDataButtonFactory = () => {
@@ -41,7 +43,8 @@ const CustomAddDataButtonFactory = () => {
 const KeplerGl = injectComponents([
   [AddDataButtonFactory, CustomAddDataButtonFactory],
   [SidebarFactory, CustomSidebarFactory],
-  [PanelHeaderFactory, CustomPanelHeaderFactory]
+  [PanelHeaderFactory, CustomPanelHeaderFactory],
+  [CustomPanelsFactory, CustomCustomPanelsFactory]
 ]);
 
 const MAPBOX_TOKEN = process.env.MapboxAccessTokenJupyter; // eslint-disable-line
@@ -112,11 +115,9 @@ function App() {
                 .kepler-gl .ReactModal__Overlay.ReactModal__Overlay--after-open {
                   position: absolute !important;
                 }
-
                 .jupyter-widgets.keplergl-jupyter-widgets {
                   overflow: hidden;
                 }
-
                 .p-Widget.p-Panel.jp-OutputArea-output.jupyter-widgets {
                   overflow: hidden
                 }

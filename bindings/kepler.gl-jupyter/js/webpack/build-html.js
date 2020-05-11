@@ -20,8 +20,7 @@
 
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const HtmlWebpackInlineSourcePlugin = require('html-webpack-inline-source-plugin');
-const HtmlWebpackExcludeAssetsPlugin = require('html-webpack-exclude-assets-plugin');
+const InlineChunkHtmlPlugin = require('react-dev-utils/InlineChunkHtmlPlugin');
 
 const packageJson = require('../package.json');
 const {dependencies} = packageJson;
@@ -38,24 +37,26 @@ const VERSIONS = {
   reactDom:clearCarats(dependencies['react-dom']),
   redux: clearCarats(dependencies.redux),
   reactRedux: clearCarats(dependencies['react-redux']),
+  reactIntl: clearCarats(dependencies['react-intl']),
+  reactCopyToClipboard: clearCarats(dependencies['react-copy-to-clipboard']),
   styledComponents: clearCarats(dependencies['styled-components']),
   keplergl: clearCarats(dependencies['kepler.gl'])
 }
-
-const MAPBOX_TOKEN = process.env.MapboxAccessTokenJupyter; // eslint-disable-line
 
 const externals = [
   {react: 'React'},
   {'react-dom': 'ReactDOM'},
   {redux: 'Redux'},
   {'react-redux': 'ReactRedux'},
+  {'react-intl': 'ReactIntl'},
+  {'react-copy-to-clipboard': 'CopyToClipboard'},
   {'styled-components': 'styled'},
   {'kepler.gl/reducers': 'KeplerGl'},
   {'kepler.gl/components': 'KeplerGl'},
   {'kepler.gl/actions': 'KeplerGl'},
   {'kepler.gl/processors': 'KeplerGl'},
   {'kepler.gl/schemas': 'KeplerGl'},
-  {'kepler.gl/dist/middleware': 'KeplerGl'},
+  {'kepler.gl/middleware': 'KeplerGl'},
   {'react-helmet': 'Helmet'}
 ].reduce((accu, ext) => ({
   ...accu,
@@ -79,7 +80,6 @@ module.exports = (rules, plugins) => ({
   module: {
     rules
   },
-
   plugins: [
     // ...webpackConfig.plugins,
     // new webpack.optimize.UglifyJsPlugin({sourceMap: true, compressor: {comparisons: false, warnings: false}}),
@@ -88,7 +88,8 @@ module.exports = (rules, plugins) => ({
       template,
       appMountId: 'app-content',
       filename: 'keplergl.html',
-      inlineSource: '.(js|css)$',
+      // inlineSource: '.(js|css)$',
+      inject: true,
       links: [
         'http://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css',
         'https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css'
@@ -99,6 +100,9 @@ module.exports = (rules, plugins) => ({
         `https://unpkg.com/react-dom@${VERSIONS.reactDom}/umd/react-dom.production.min.js`,
         `https://unpkg.com/redux@${VERSIONS.redux}/dist/redux.js`,
         `https://unpkg.com/react-redux@${VERSIONS.reactRedux}/dist/react-redux.min.js`,
+        `https://unpkg.com/react-intl@${VERSIONS.reactIntl}/dist/react-intl.min.js`,
+        `https://unpkg.com/react-copy-to-clipboard@${VERSIONS.reactCopyToClipboard}/build/react-copy-to-clipboard.min.js`,
+
         `https://unpkg.com/styled-components@${VERSIONS.styledComponents}/dist/styled-components.min.js`,
 
         // load kepler.gl last
@@ -106,11 +110,11 @@ module.exports = (rules, plugins) => ({
       ],
       title: 'Kepler.gl'
     }),
-    new HtmlWebpackExcludeAssetsPlugin(),
-    new HtmlWebpackInlineSourcePlugin()
+    new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [/main/])
   ],
 
   node: {
     fs: 'empty'
   }
 });
+//    // new HtmlWebpackInlineSourcePlugin()
