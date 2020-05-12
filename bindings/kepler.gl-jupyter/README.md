@@ -82,23 +82,25 @@ map_1.save_to_html(file_name='keplergl_map.html')
 
 
 ## Usage
-  - [1. Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#1-load-keplergl)
-    - [`keplergl.KeplerGl()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#keplerglkeplergl)
-  - [2. Add Data](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#2-add-data)
-    - [`.add_data()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#add_data)
-    - [`.data`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#data)
-  - [3. Data Format](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#3-data-format)
-    - [`CSV`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#csv)
-    - [`GeoJSON`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#geojson)
-    - [`DataFrame`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#dataframe)
-    - [`GeoDataFrame`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#geodataframe)
-    - [`WKT`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#wkt)
-  - [4. Customize the map](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#4-customize-the-map)
-  - [5. Save and load config](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#5-save-and-load-config)
-    - [`.config`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#config)
-  - [6. Match config with data](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#6-match-config-with-data)
-  - [7. Save Map](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#7-save-map)
-    - [`.save_to_html()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#save_to_html)
+  - [1. Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#1-load-keplergl)
+    - [`keplergl.KeplerGl()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#keplerglkeplergl)
+    
+    
+  - [2. Add Data](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#2-add-data)
+    - [`.add_data()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#add_data)
+    - [`.data`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#data)
+  - [3. Data Format](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#3-data-format)
+    - [`CSV`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#csv)
+    - [`GeoJSON`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#geojson)
+    - [`DataFrame`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#dataframe)
+    - [`GeoDataFrame`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#geodataframe)
+    - [`WKT`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#wkt)
+  - [4. Customize the map](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#4-customize-the-map)
+  - [5. Save and load config](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#5-save-and-load-config)
+    - [`.config`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#config)
+  - [6. Match config with data](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#6-match-config-with-data)
+  - [7. Save Map](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#7-save-map)
+    - [`.save_to_html()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/README.md#save_to_html)
 
 ## Local Development Setup
 
