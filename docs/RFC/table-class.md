@@ -83,26 +83,27 @@ table.fieldPairs,
 table.gpuFilter
 ```
 
-3. `getValue(columnName, rowIdx)`
+2. `getValue(columnName, rowIdx)`
+Get the value of a cell
 Should be a curried function
 getValue(columName) = idx => value
 
-2. `getColumnDomain(columnName)`
-
+3. `getColumnDomain(columnName)`
 to replace `filter-utils.js` `getFieldDomain`
-Get the field domain used in filter
+Get the value domain of a specific column used in filter
 
-3. `getColumnScaleDomain(columnName, scaleType)`
+4. `getColumnScaleDomain(columnName, scaleType)`
 to replace `base-layer.js` `layer.calculateLayerDomain`
 Get the domain of this column based on scale type
 
-4. `getSampleData(rows)`
+5. `getSampleData(rows)`
 Get a sample of rows to calculate layer boundaries
 
-5. `parseFieldValue(value, type) => string`
+6. `parseFieldValue(value, type) => string`
+Parse cell value based on column type and return a string representation
+Value the field value, type the field type
 
-Parse field value and type and return a string representation
-@param {string} value the field value
-@param {string} type the field type
+7. `sortDatasetByColumn`
+Sort a column, return an sorted index
 
-6. `sortDatasetByColumn`
+8.
