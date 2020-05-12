@@ -52,6 +52,12 @@ const SidePanelContent = styled.div`
   padding: ${props => props.theme.sidePanelInnerPadding}px;
   overflow-y: scroll;
   overflow-x: hidden;
+
+  .side-panel__content__inner {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+  }
 `;
 
 export const PanelTitleFactory = () => styled.div`
@@ -262,7 +268,7 @@ export default function SidePanelFactory(
               togglePanel={uiStateActions.toggleSidePanel}
             />
             <SidePanelContent className="side-panel__content">
-              <div>
+              <div className="side-panel__content__inner">
                 <PanelTitle className="side-panel__content__title">
                   <FormattedMessage
                     id={(panels.find(({id}) => id === activeSidePanel) || {}).label}

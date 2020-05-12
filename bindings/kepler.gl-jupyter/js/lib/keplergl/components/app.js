@@ -115,6 +115,12 @@ function App() {
                 .kepler-gl .ReactModal__Overlay.ReactModal__Overlay--after-open {
                   position: absolute !important;
                 }
+
+                .kepler-gl .side-panel__content > div {
+                  display: flex;
+                  height: 100%;
+                  flex-direction: column;
+                }
                 .jupyter-widgets.keplergl-jupyter-widgets {
                   overflow: hidden;
                 }
