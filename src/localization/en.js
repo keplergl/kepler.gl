@@ -109,7 +109,6 @@ export default {
       grid: 'grid',
       hexbin: 'hexbin',
       polygon: 'polygon',
-      hexagon: 'hexagon',
       geojson: 'geojson',
       cluster: 'cluster',
       icon: 'icon',
