@@ -88,7 +88,6 @@ module.exports = (rules, plugins) => ({
       template,
       appMountId: 'app-content',
       filename: 'keplergl.html',
-      // inlineSource: '.(js|css)$',
       inject: true,
       links: [
         'http://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css',
@@ -117,4 +116,3 @@ module.exports = (rules, plugins) => ({
     fs: 'empty'
   }
 });
-//    // new HtmlWebpackInlineSourcePlugin()
