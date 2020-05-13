@@ -245,7 +245,7 @@ Interact with kepler.gl and customize layers and filters. Map data and config wi
 ## 5. Save and load config
 
 ### `.config`
-you can print your current map configuration at any time.
+you can print your current map configuration at any time in the notebook 
 ```python
 map_1.config
 ## {u'config': {u'mapState': {u'bearing': 2.6192893401015205,
@@ -255,8 +255,12 @@ map_1.config
 #   u'longitude': -122.42590232651203,
 ```
 
+### Config panel
+Config can be copied from the side panel with the `{}` icon.
+
 When the map is final, you can copy this config and load it later to reproduce the same map. Follow the instruction to [match config with data][match-config-w-data].
-There are 2 ways to apply config to a map:
+
+#### Apply config to a map:
 
  1. Directly apply config to the map.
 ```python

@@ -81,24 +81,25 @@ map_1.save_to_html(file_name='keplergl_map.html')
 - [GeoDataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/GeoDataFrame.ipynb): Load GeoDataFrame to kepler.gl
 
 
+https://docs.kepler.gl/docs/keplergl-jupyter#1-load-keplergl-map
 ## Usage
-  - [1. Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#1-load-keplergl)
-    - [`keplergl.KeplerGl()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#keplerglkeplergl)
-  - [2. Add Data](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#2-add-data)
-    - [`.add_data()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#add_data)
-    - [`.data`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#data)
-  - [3. Data Format](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#3-data-format)
-    - [`CSV`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#csv)
-    - [`GeoJSON`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#geojson)
-    - [`DataFrame`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#dataframe)
-    - [`GeoDataFrame`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#geodataframe)
-    - [`WKT`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#wkt)
-  - [4. Customize the map](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#4-customize-the-map)
-  - [5. Save and load config](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#5-save-and-load-config)
-    - [`.config`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#config)
-  - [6. Match config with data](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#6-match-config-with-data)
-  - [7. Save Map](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#7-save-map)
-    - [`.save_to_html()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#save_to_html)
+  - [1. Load kepler.gl](https://docs.kepler.gl/docs/keplergl-jupyter#1-load-keplergl-map)
+    - [`keplergl.KeplerGl()`](https://docs.kepler.gl/docs/keplergl-jupyter#keplergl)
+  - [2. Add Data](https://docs.kepler.gl/docs/keplergl-jupyter#2-add-data)
+    - [`.add_data()`](https://docs.kepler.gl/docs/keplergl-jupyter#add_data)
+    - [`.data`](https://docs.kepler.gl/docs/keplergl-jupyter#data)
+  - [3. Data Format](https://docs.kepler.gl/docs/keplergl-jupyter#3-data-format)
+    - [`CSV`](https://docs.kepler.gl/docs/keplergl-jupyter#csv)
+    - [`GeoJSON`](https://docs.kepler.gl/docs/keplergl-jupyter#geojson)
+    - [`DataFrame`](https://docs.kepler.gl/docs/keplergl-jupyter#dataframe)
+    - [`GeoDataFrame`](https://docs.kepler.gl/docs/keplergl-jupyter#geodataframe)
+    - [`WKT`](https://docs.kepler.gl/docs/keplergl-jupyter#wkt)
+  - [4. Customize the map](https://docs.kepler.gl/docs/keplergl-jupyter#4-customize-the-map)
+  - [5. Save and load config](https://docs.kepler.gl/docs/keplergl-jupyter#5-save-and-load-config)
+    - [`.config`](https://docs.kepler.gl/docs/keplergl-jupyter#config)
+  - [6. Match config with data](https://docs.kepler.gl/docs/keplergl-jupyter#6-match-config-with-data)
+  - [7. Save Map](https://docs.kepler.gl/docs/keplergl-jupyter#7-save-map)
+    - [`.save_to_html()`](https://docs.kepler.gl/docs/keplergl-jupyter#save_to_html)
 
 ## Local Development Setup
 
