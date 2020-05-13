@@ -176,65 +176,6 @@ This command must be run **AFTER** the `js` setup, and folder `static/` was crea
 You can now start editing the .js and .py files to see changes reflected in your local notebook. After changing files in the js folder, the local start script will recompile the js files and put them in to `keplergl/static` folder. You need to reload the jupyter notebook page to reload the files.
 
 
-## FAQ & Troubleshoot
-
-#### 1. What about windows?
-keplergl is currently only published to PyPI, and unfortunately I use a Mac. If you encounter errors installing it on windows. [This issue](https://github.com/keplergl/kepler.gl/issues/557) might shed some light. Follow this issue for [conda](https://github.com/keplergl/kepler.gl/issues/646) support.
-
-#### 2. Install keplergl-jupyter on Jupyter Lab failed?
-
-Make sure you are using node 8.15.0. and you have installed `@jupyter-widgets/jupyterlab-manager`. Depends on your JupyterLab version. You might need to install the specific version of [jupyterlab-manager](https://github.com/jupyter-widgets/ipywidgets/tree/master/packages/jupyterlab-manager). with `jupyter labextension install @jupyter-widgets/jupyterlab-manager@0.31`. When use it in Jupyter lab, keplergl is only supported in JupyterLab > 1.0 and Python 3.
-
-Run `jupyter labextension install keplergl-jupyter --debug` and copy console output before creating an issue.
-
-If you are running `install` and `uninstall` several times. You should run.
-
-```
-jupyter lab clean
-jupyter lab build
-```
-
-#### 2.1 JavaScript heap out of memory when installing lab extension
-If you see this error during install labextension
-
-```bash
-$ FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
-```
-
-run
-
-```bash
-$ export NODE_OPTIONS=--max-old-space-size=4096
-```
-
-#### 3. Is my lab extension successfully installed?
-Run `jupyter labextension list` You should see below. (Version may vary)
-
-```bash
-JupyterLab v1.1.4
-Known labextensions:
-   app dir: /Users/xxx/jupyter-python3/ENV3/share/jupyter/lab
-        @jupyter-widgets/jupyterlab-manager v1.0.2  enabled  OK
-        keplergl-jupyter v0.1.0  enabled  OK
-```
-
-#### 4. What's your python and node env
-
-Python
-```text
-python==3.7.4
-notebook==6.0.3
-jupyterlab==2.1.2
-ipywidgets==7.5.1
-```
-
-Node (Only for JupyterLab)
-
-```text
-node==8.15.0
-yarn==1.7.0
-```
-
 [jupyter_widget]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_widget.png
 [empty_map]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_empty_map.png
 [geodataframe_map]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_geodataframe.png
