@@ -30,7 +30,7 @@ If you on Mac used `pip install` and running Notebook 5.3 and above, you don't n
 
     $ jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
 
-If you arr in JupyterLab, you will also need to install the JupyterLab extension. This require [node](https://nodejs.org/en/download/package-manager/#macos) `> 8.15.0`
+If you are in JupyterLab, you will also need to install the JupyterLab extension. This require [node](https://nodejs.org/en/download/package-manager/#macos) `> 8.15.0`
 
 If you use [Homebrew](https://brew.sh/) on Mac:
 
