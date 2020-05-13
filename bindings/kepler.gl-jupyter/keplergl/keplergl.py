@@ -5,6 +5,7 @@ import pandas as pd
 import geopandas
 import shapely.wkt
 import json
+from ._version import EXTENSION_SPEC_VERSION
 
 documentation = 'https://docs.kepler.gl/docs/keplergl-jupyter'
 def _df_to_dict(df):
@@ -86,8 +87,8 @@ class KeplerGl(widgets.DOMWidget):
     _model_name = Unicode('KeplerGlModal').tag(sync=True)
     _view_module = Unicode('keplergl-jupyter').tag(sync=True)
     _model_module = Unicode('keplergl-jupyter').tag(sync=True)
-    _view_module_version = Unicode('^0.1.0').tag(sync=True)
-    _model_module_version = Unicode('^0.1.0').tag(sync=True)
+    _view_module_version = Unicode(EXTENSION_SPEC_VERSION).tag(sync=True)
+    _model_module_version = Unicode(EXTENSION_SPEC_VERSION).tag(sync=True)
     value = Unicode('Hello World!').tag(sync=True)
 
     data = Dict({}).tag(sync=True, **data_serialization)
