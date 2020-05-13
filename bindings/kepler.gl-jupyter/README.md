@@ -30,7 +30,7 @@ If you on Mac used `pip install` and running Notebook 5.3 and above, you don't n
 
     $ jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
 
-If you arr in JupyterLab, you will also need to install the JupyterLab extension. This require [node](https://nodejs.org/en/download/package-manager/#macos) `> 8.15.0`
+If you are in JupyterLab, you will also need to install the JupyterLab extension. This require [node](https://nodejs.org/en/download/package-manager/#macos) `> 8.15.0`
 
 If you use [Homebrew](https://brew.sh/) on Mac:
 
@@ -43,7 +43,7 @@ Then install jupyter labextension.
 **Prerequisites for JupyterLab:**
 - Node > 8.15.0
 - Python 3
-- JupyterLab>=1.0.0
+- JupyterLab >=1.0.0 || >=2.0.0
 
 
 ## Quick Start
@@ -81,24 +81,25 @@ map_1.save_to_html(file_name='keplergl_map.html')
 - [GeoDataFrame](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/GeoDataFrame.ipynb): Load GeoDataFrame to kepler.gl
 
 
+https://docs.kepler.gl/docs/keplergl-jupyter#1-load-keplergl-map
 ## Usage
-  - [1. Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#1-load-keplergl)
-    - [`keplergl.KeplerGl()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#keplerglkeplergl)
-  - [2. Add Data](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#2-add-data)
-    - [`.add_data()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#add_data)
-    - [`.data`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#data)
-  - [3. Data Format](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#3-data-format)
-    - [`CSV`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#csv)
-    - [`GeoJSON`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#geojson)
-    - [`DataFrame`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#dataframe)
-    - [`GeoDataFrame`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#geodataframe)
-    - [`WKT`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#wkt)
-  - [4. Customize the map](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#4-customize-the-map)
-  - [5. Save and load config](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#5-save-and-load-config)
-    - [`.config`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#config)
-  - [6. Match config with data](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#6-match-config-with-data)
-  - [7. Save Map](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#7-save-map)
-    - [`.save_to_html()`](https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md#save_to_html)
+  - [1. Load kepler.gl](https://docs.kepler.gl/docs/keplergl-jupyter#1-load-keplergl-map)
+    - [`keplergl.KeplerGl()`](https://docs.kepler.gl/docs/keplergl-jupyter#keplergl)
+  - [2. Add Data](https://docs.kepler.gl/docs/keplergl-jupyter#2-add-data)
+    - [`.add_data()`](https://docs.kepler.gl/docs/keplergl-jupyter#add_data)
+    - [`.data`](https://docs.kepler.gl/docs/keplergl-jupyter#data)
+  - [3. Data Format](https://docs.kepler.gl/docs/keplergl-jupyter#3-data-format)
+    - [`CSV`](https://docs.kepler.gl/docs/keplergl-jupyter#csv)
+    - [`GeoJSON`](https://docs.kepler.gl/docs/keplergl-jupyter#geojson)
+    - [`DataFrame`](https://docs.kepler.gl/docs/keplergl-jupyter#dataframe)
+    - [`GeoDataFrame`](https://docs.kepler.gl/docs/keplergl-jupyter#geodataframe)
+    - [`WKT`](https://docs.kepler.gl/docs/keplergl-jupyter#wkt)
+  - [4. Customize the map](https://docs.kepler.gl/docs/keplergl-jupyter#4-customize-the-map)
+  - [5. Save and load config](https://docs.kepler.gl/docs/keplergl-jupyter#5-save-and-load-config)
+    - [`.config`](https://docs.kepler.gl/docs/keplergl-jupyter#config)
+  - [6. Match config with data](https://docs.kepler.gl/docs/keplergl-jupyter#6-match-config-with-data)
+  - [7. Save Map](https://docs.kepler.gl/docs/keplergl-jupyter#7-save-map)
+    - [`.save_to_html()`](https://docs.kepler.gl/docs/keplergl-jupyter#save_to_html)
 
 ## Local Development Setup
 
@@ -174,65 +175,6 @@ This command must be run **AFTER** the `js` setup, and folder `static/` was crea
 
 You can now start editing the .js and .py files to see changes reflected in your local notebook. After changing files in the js folder, the local start script will recompile the js files and put them in to `keplergl/static` folder. You need to reload the jupyter notebook page to reload the files.
 
-
-## FAQ & Troubleshoot
-
-#### 1. What about windows?
-keplergl is currently only published to PyPI, and unfortunately I use a Mac. If you encounter errors installing it on windows. [This issue](https://github.com/keplergl/kepler.gl/issues/557) might shed some light. Follow this issue for [conda](https://github.com/keplergl/kepler.gl/issues/646) support.
-
-#### 2. Install keplergl-jupyter on Jupyter Lab failed?
-
-Make sure you are using node 8.15.0. and you have installed `@jupyter-widgets/jupyterlab-manager`. Depends on your JupyterLab version. You might need to install the specific version of [jupyterlab-manager](https://github.com/jupyter-widgets/ipywidgets/tree/master/packages/jupyterlab-manager). with `jupyter labextension install @jupyter-widgets/jupyterlab-manager@0.31`. When use it in Jupyter lab, keplergl is only supported in JupyterLab > 1.0 and Python 3.
-
-Run `jupyter labextension install keplergl-jupyter --debug` and copy console output before creating an issue.
-
-If you are running `install` and `uninstall` several times. You should run.
-
-```
-jupyter lab clean
-jupyter lab build
-```
-
-#### 2.1 JavaScript heap out of memory when installing lab extension
-If you see this error during install labextension
-
-```bash
-$ FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
-```
-
-run
-
-```bash
-$ export NODE_OPTIONS=--max-old-space-size=4096
-```
-
-#### 3. Is my lab extension successfully installed?
-Run `jupyter labextension list` You should see below. (Version may vary)
-
-```bash
-JupyterLab v1.1.4
-Known labextensions:
-   app dir: /Users/xxx/jupyter-python3/ENV3/share/jupyter/lab
-        @jupyter-widgets/jupyterlab-manager v1.0.2  enabled  OK
-        keplergl-jupyter v0.1.0  enabled  OK
-```
-
-#### 4. What's your python and node env
-
-Python
-```text
-python==3.7.4
-notebook==6.0.1
-jupyterlab==1.1.4
-ipywidgets==7.5.1
-```
-
-Node (Only for JupyterLab)
-
-```text
-node==8.15.0
-yarn==1.7.0
-```
 
 [jupyter_widget]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_widget.png
 [empty_map]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_empty_map.png
