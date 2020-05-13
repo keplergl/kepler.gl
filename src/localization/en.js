@@ -26,6 +26,7 @@ export default {
     label: 'label',
     fillColor: 'fill color',
     color: 'color',
+    coverage: 'coverage',
     strokeColor: 'stroke color',
     radius: 'radius',
     outline: 'outline',
@@ -114,14 +115,14 @@ export default {
       icon: 'icon',
       heatmap: 'heatmap',
       hexagon: 'hexagon',
-      hexagonId: 'H3',
+      hexagonid: 'H3',
       trip: 'trip',
       s2: 'S2',
       '3d': '3D'
     }
   },
   layerVisConfigs: {
-    strokeWidth: 'Stroke Width',
+    strokeWidth: 'Stroke Width (Pixels)',
     strokeWidthRange: 'Stroke Width Range',
     radius: 'Radius',
     fixedRadius: 'Fixed Radius to meter',
@@ -403,7 +404,8 @@ export default {
     },
     hexagon: {
       worldUnitSize: 'Hexagon Radius (km)'
-    }
+    },
+    hex_id: 'hex id'
   },
   color: {
     customPalette: 'Custom Palette',

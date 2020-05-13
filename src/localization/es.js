@@ -114,7 +114,7 @@ export default {
       icon: 'icono',
       heatmap: 'concentración',
       hexagon: 'hexágono',
-      hexagonId: 'H3',
+      hexagonid: 'H3',
       trip: 'viaje',
       s2: 'S2',
       '3d': '3D'

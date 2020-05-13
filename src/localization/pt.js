@@ -114,7 +114,7 @@ export default {
       icon: 'icon',
       heatmap: 'mapa de calor',
       hexagon: 'hexágono',
-      hexagonId: 'H3',
+      hexagonid: 'H3',
       trip: 'viagem',
       s2: 'S2',
       '3d': '3D'

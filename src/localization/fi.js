@@ -114,7 +114,7 @@ export default {
       icon: 'kuva',
       heatmap: 'lämpökartta',
       hexagon: 'kuusikulmio',
-      hexagonId: 'H3',
+      hexagonid: 'H3',
       trip: 'matka',
       s2: 'S2',
       '3d': '3D'
