@@ -43,7 +43,7 @@ Then install jupyter labextension.
 **Prerequisites for JupyterLab:**
 - Node > 8.15.0
 - Python 3
-- JupyterLab>=1.0.0
+- JupyterLab >=1.0.0 || >=2.0.0
 
 
 ## Quick Start
@@ -222,8 +222,8 @@ Known labextensions:
 Python
 ```text
 python==3.7.4
-notebook==6.0.1
-jupyterlab==1.1.4
+notebook==6.0.3
+jupyterlab==2.1.2
 ipywidgets==7.5.1
 ```
 
