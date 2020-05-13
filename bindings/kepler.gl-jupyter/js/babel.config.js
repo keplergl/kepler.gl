@@ -26,6 +26,7 @@ module.exports = function babel(api) {
   const presets = ['@babel/preset-env', '@babel/preset-react'];
   const plugins = [
     '@babel/plugin-proposal-class-properties',
+    'transform-inline-environment-variables',
     [
       'search-and-replace',
       {

@@ -39,6 +39,7 @@ Now make some changes to your source code. Then:
 To develop this package against JupyterLab, run:
 
 - `pip install -e .` (installs python package for development, runs `npm install` and `npm run build`)
+- `jupyter labextension install @jupyter-widgets/jupyterlab-manager`: this install lab widgets manager.
 - `jupyter labextension install js`: this installs the current labextension into JupyterLab and enables it.
 - `jupyter lab --watch` starts JupyterLab, but in `--watch` mode: it will rebuild itself incrementally if it detects changes.
 
@@ -47,7 +48,7 @@ Now make some changes to your source code. Then:
 - After making Python code changes, restarting the notebook kernel will be enough to reflect changes
 - After making JavaScript code changes:
     - `cd js`
-    - `npm run build`
+    - `npm run build:lab`
     - Refresh browser to reflect changes
 
 - By default, the application will load from the JupyterLab staging directory (default is <sys-prefix>/share/jupyter/lab/staging. Check the correct version of `@jupyter-widgets/jupyterlab-manager` and  `@jupyter-widgets/base` is install in `yarn.lock`
