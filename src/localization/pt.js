@@ -112,8 +112,9 @@ export default {
       geojson: 'geojson',
       cluster: 'grupo',
       icon: 'icon',
-      heatmap: ' mapa de calor',
-      h3: 'H3',
+      heatmap: 'mapa de calor',
+      hexagon: 'hexágono',
+      hexagonId: 'H3',
       trip: 'viagem',
       s2: 'S2',
       '3d': '3D'
