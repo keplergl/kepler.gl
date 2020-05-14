@@ -34,6 +34,7 @@ const FILE_HANDLERS = {
   json: loadJSON
 };
 
+/** @type {typeof import('./file-handler').readFile} */
 export function readFile({file, fileCache = []}) {
   return new Promise((resolve, reject) => {
     const {handler, format} = getFileHandler(file);
@@ -63,6 +64,7 @@ export function readFile({file, fileCache = []}) {
   });
 }
 
+/** @type {typeof import('./file-handler').getFileHandler} */
 export function getFileHandler(fileBlob) {
   const type = getFileType(fileBlob.name);
 

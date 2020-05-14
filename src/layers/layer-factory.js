@@ -28,7 +28,7 @@ export const PROPERTY_GROUPS = keyMirror({
   stroke: null,
   radius: null,
   height: null,
-
+  angel: null,
   // for heatmap aggregation
   cell: null,
   precision: null
@@ -36,6 +36,7 @@ export const PROPERTY_GROUPS = keyMirror({
 
 export const DEFAULT_LAYER_OPACITY = 0.8;
 
+/** @type {import('./layer-factory').LayerTextLabel} */
 export const DEFAULT_TEXT_LABEL = {
   field: null,
   color: [255, 255, 255],
@@ -47,6 +48,7 @@ export const DEFAULT_TEXT_LABEL = {
 
 export const DEFAULT_COLOR_RANGE = DefaultColorRange;
 
+/** @type {import('./layer-factory').ColorRange} */
 export const DEFAULT_CUSTOM_PALETTE = {
   name: 'color.customPalette',
   type: 'custom',
@@ -54,6 +56,7 @@ export const DEFAULT_CUSTOM_PALETTE = {
   colors: []
 };
 
+/** @type {import('./layer-factory').ColorUI} */
 export const DEFAULT_COLOR_UI = {
   // customPalette in edit
   customPalette: DEFAULT_CUSTOM_PALETTE,
@@ -70,6 +73,7 @@ export const DEFAULT_COLOR_UI = {
   }
 };
 
+/** @type {import('./layer-factory').LayerVisConfig} */
 export const LAYER_VIS_CONFIGS = {
   thickness: {
     type: 'number',
@@ -276,14 +280,18 @@ export const LAYER_VIS_CONFIGS = {
     isRanged: false,
     range: [1, 1000],
     step: 1,
+    group: PROPERTY_GROUPS.stroke,
     property: 'sizeScale'
   },
   angle: {
     type: 'number',
+    label: 'layerVisConfigs.angle',
     defaultValue: 0,
     isRanged: false,
     range: [0, 360],
-    step: 1
+    group: PROPERTY_GROUPS.angle,
+    step: 1,
+    property: 'angle'
   },
   worldUnitSize: {
     type: 'number',
@@ -404,6 +412,7 @@ export const LAYER_VIS_CONFIGS = {
   }
 };
 
+/** @type {import('./layer-factory').LayerTextConfig} */
 export const LAYER_TEXT_CONFIGS = {
   fontSize: {
     type: 'number',

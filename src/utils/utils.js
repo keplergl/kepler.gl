@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// @ts-ignore
 import window from 'global/window';
 
 /**
@@ -143,6 +144,7 @@ const setPath = ([key, ...next], value, obj) => {
     return insertValue(obj, key, value);
   }
 
+  // @ts-ignore
   return insertValue(obj, key, setPath(next, value, obj.hasOwnProperty(key) ? obj[key] : {}));
 };
 
@@ -153,6 +155,7 @@ const setPath = ([key, ...next], value, obj) => {
  * @param {Object} obj
  * @returns {Object}
  */
+// @ts-ignore
 export const set = (path, value, obj) => (obj === null ? obj : setPath(path, value, obj));
 
 /**
@@ -183,5 +186,6 @@ export function getError(err) {
       : JSON.stringify(err);
   }
 
+  // @ts-ignore
   return null;
 }

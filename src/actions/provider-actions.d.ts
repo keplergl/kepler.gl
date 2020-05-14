@@ -18,50 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Constants
-export {
-  ADD_DATA_ID,
-  ADD_MAP_STYLE_ID,
-  AGGREGATION_TYPES,
-  ALL_FIELD_TYPES,
-  DATA_TABLE_ID,
-  DATASET_FORMATS,
-  DEFAULT_LAYER_GROUPS,
-  DEFAULT_MAP_STYLES,
-  DEFAULT_NOTIFICATION_TOPICS,
-  DEFAULT_NOTIFICATION_TYPES,
-  DELETE_DATA_ID,
-  DIMENSIONS,
-  EDITOR_MODES,
-  EXPORT_DATA_ID,
-  EXPORT_DATA_TYPE_OPTIONS,
-  EXPORT_IMAGE_ID,
-  EXPORT_IMG_RATIO_OPTIONS,
-  EXPORT_IMG_RATIOS,
-  EXPORT_IMG_RESOLUTION_OPTIONS,
-  EXPORT_MAP_FORMAT_OPTIONS,
-  EXPORT_MAP_FORMATS,
-  EXPORT_MAP_ID,
-  FIELD_OPTS,
-  FILTER_TYPES,
-  GEOJSON_FIELDS,
-  ICON_FIELDS,
-  KEPLER_GL_NAME,
-  KEPLER_GL_VERSION,
-  KEPLER_GL_WEBSITE,
-  LAYER_BLENDINGS,
-  LAYER_TYPES,
-  MAX_DEFAULT_TOOLTIPS,
-  PANELS,
-  SIDEBAR_PANELS,
-  SCALE_TYPES,
-  THEME,
-  TRIP_ARC_FIELDS,
-  TRIP_POINT_FIELDS
-} from './default-settings';
+import ActionTypes from 'constants/action-types';
 
-export {BUG_REPORT_LINK, USER_GUIDE_DOC} from './user-guides';
+export const exportFileToCloud = createAction(
+  ActionTypes.EXPORT_FILE_TO_CLOUD,
+  ({mapData, provider, isPublic, onSuccess, onError, closeModal}) => ({
+    mapData,
+    provider,
+    isPublic,
+    onSuccess,
+    onError,
+    closeModal
+  })
+);
 
-export {VizColorPalette, DataVizColors} from './custom-color-ranges';
-export {COLOR_RANGES, DefaultColorRange} from './color-ranges';
-export {DEFAULT_COLOR_RANGE} from 'layers/layer-factory';
+export const exportFileSuccess = createAction(
+  ActionTypes.EXPORT_FILE_SUCCESS,
+  ({response, provider, onSuccess, closeModal}) => ({response, provider, onSuccess, closeModal})
+);
+
+export const exportFileError = createAction(
+  ActionTypes.EXPORT_FILE_ERROR,
+  ({error, provider, onError}) => ({error, provider, onError})
+);
+
+export const saveToCloudSuccess = createAction(ActionTypes.SAVE_TO_CLOUD_SUCCESS);
+
+export const resetProviderStatus = createAction(ActionTypes.RESET_PROVIDER_STATUS);
+
+export const setCloudProvider = createAction(ActionTypes.SET_CLOUD_PROVIDER, provider => provider);

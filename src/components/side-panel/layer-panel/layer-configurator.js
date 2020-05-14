@@ -112,7 +112,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
         <StyledLayerVisualConfigurator>
           {/* Fill Color */}
           <LayerConfigGroup
-            {...layer.visConfigSettings.filled || {label: 'layer.color'}}
+            {...(layer.visConfigSettings.filled || {label: 'layer.color'})}
             {...visConfiguratorProps}
             collapsible
           >

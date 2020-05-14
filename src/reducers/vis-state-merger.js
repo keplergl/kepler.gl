@@ -37,7 +37,7 @@ import {mergeFilterDomainStep} from '../utils/filter-utils';
  * save it for later
  *
  * @param {Object} state
- * @param {Array<Object>} filtersToMerge
+ * @param {Array<Object> | undefined} filtersToMerge
  * @return {Object} updatedState
  */
 export function mergeFilters(state, filtersToMerge) {
@@ -136,7 +136,7 @@ export function mergeFilters(state, filtersToMerge) {
  * save it for later
  *
  * @param {Object} state
- * @param {Array<Object>} layersToMerge
+ * @param {Array<Object> | undefined} layersToMerge
  * @return {Object} state
  */
 export function mergeLayers(state, layersToMerge) {
@@ -317,7 +317,7 @@ export function mergeInteractionTooltipConfig(state, tooltipConfig = {}) {
  * Merge layerBlending with saved
  *
  * @param {object} state
- * @param {string} layerBlending
+ * @param {string | undefined} layerBlending
  * @return {object} merged state
  */
 export function mergeLayerBlending(state, layerBlending) {
@@ -333,8 +333,7 @@ export function mergeLayerBlending(state, layerBlending) {
 
 /**
  * Merge animation config
- * @param {Object} state
- * @param {Object} animation
+ * @type {typeof import('./vis-state-merger').mergeAnimationConfig}
  */
 export function mergeAnimationConfig(state, animation) {
   if (animation && animation.currentTime) {

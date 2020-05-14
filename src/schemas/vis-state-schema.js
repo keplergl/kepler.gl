@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// @ts-nocheck
 import pick from 'lodash.pick';
 import {VERSIONS} from './versions';
 import {isValidFilterValue} from 'utils/filter-utils';

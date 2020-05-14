@@ -4,67 +4,54 @@ Replace kepler.gl dataset with table class
 
 ```js
 export type KeplerDataset = {
-  id: string,
-  label: string,
-  color: number[], // rgb
+  id: string;
+  label?: string;
+  color: RGBColor;
 
-  // fields and row
-  fields: KeplerField[],
-  allData: any[][],
+  // fields and data
+  fields: KeplerField[];
+  allData: any[][];
 
-  // for Filter
-  allIndexes: number[],
-  filteredIndex: number[],
-  filteredIdxCPU: number[],
-  filteredIndexForDomain: number[],
-
-  gpuFilter: {
-    filterRange: number[][],
-    filterValueUpdateTriggers: any,
-    filterValueAccessor: any
-  },
-  filterRecord: {
-    dynamicDomain: any,
-    fixedDomain: any,
-    cpu: any,
-    gpu: any
-  },
-  filterRecordCPU: {
-    dynamicDomain: any,
-    fixedDomain: any,
-    cpu: any,
-    gpu: any
-  }
-  changedFilters: any,
-
-  // for suggest lat + lng column pairs, and can be extend to also support auto assign visuals
+  allIndexes: number[];
+  filteredIndex: number[];
+  filteredIdxCPU: number[];
+  filteredIndexForDomain: number[];
   fieldPairs: {
-    defaultName: string,
-    pair: any,
-    suffix: string[]
-  }[],
+    defaultName: string;
+    pair: any;
+    suffix: string[];
+  }[];
+  gpuFilter: {
+    filterRange: number[][];
+    filterValueUpdateTriggers: any;
+    filterValueAccessor: any;
+  };
+  filterRecord: FilterRecord;
+  filterRecordCPU: FilterRecord;
+  changedFilters: any;
 
+  // table-injected metadata
   sortColumn?: {
     // column name: sorted idx
-    [key: string]: number[]
-  },
-  sortOrder?: string, // ASCENDING | DESCENDING | UNSORT
+    [key: string]: number[];
+  };
+  sortOrder?: string; // ASCENDING | DESCENDING | UNSORT
 
-  pinnedColumns?: string[],
+  pinnedColumns?: string[];
   // table-injected metadata
-  metadata?: object
+  metadata?: object;
 };
 
 export type KeplerField = {
-  analyzerType: string,
-  id: string,
-  name: string,
-  format: string,
-  tableFieldIndex: numberstring,
-  type: string,
+  analyzerType: string;
+  id: string;
+  name: string;
+  format: string;
+  tableFieldIndex: numberstring;
+  type: string;
 
   // meta data, storing domain and mappedValues
-  filterProps?: any
+  filterProps?: any;
 };
 ```
 

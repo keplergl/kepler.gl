@@ -514,7 +514,7 @@ export default class Layer {
     const required = this.requiredLayerColumns.reduce(
       (accu, key) => ({
         ...accu,
-        [key]: {value: null, fieldIdx: -1}
+        [key]: {value: null, fieldIdx: -1, optional: false}
       }),
       {}
     );

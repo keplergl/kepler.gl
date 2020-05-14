@@ -130,10 +130,10 @@ function pick_(prop) {
  * @param {Object} action.payload `{datasets, options, config}`
  * @param {Array<Object>|Object} action.payload.datasets - ***required** datasets can be a dataset or an array of datasets
  * Each dataset object needs to have `info` and `data` property.
- * @param {Object} action.payload.datasets.info -info of a dataset
+ * @param {object} action.payload.datasets.info -info of a dataset
  * @param {string} action.payload.datasets.info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
  * @param {string} action.payload.datasets.info.label - A display name of this dataset
- * @param {Object} action.payload.datasets.data - ***required** The data object, in a tabular format with 2 properties `fields` and `rows`
+ * @param {object} action.payload.datasets.data - ***required** The data object, in a tabular format with 2 properties `fields` and `rows`
  * @param {Array<Object>} action.payload.datasets.data.fields - ***required** Array of fields,
  * @param {string} action.payload.datasets.data.fields.name - ***required** Name of the field,
  * @param {Array<Array>} action.payload.datasets.data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
