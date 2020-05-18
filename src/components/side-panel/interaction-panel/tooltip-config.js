@@ -36,7 +36,8 @@ TooltipConfigFactory.deps = [DatasetTagFactory];
 
 export const TOOLTIP_FORMAT_TYPES = {
   DATE: 'date',
-  DECIMAL: 'decimal'
+  DECIMAL: 'decimal',
+  PERCENTAGE: 'percentage'
 };
 
 export const TOOLTIP_FORMATS = {
@@ -53,15 +54,15 @@ export const TOOLTIP_FORMATS = {
     format: '.3s',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
-  DECIMAL_PERCENT_SHORT: {
-    label: '1,234,543.2%',
-    format: ',.1',
+  DECIMAL_PERCENT_FULL: {
+    label: '.1 → 10%',
+    format: '.1%',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
-  DECIMAL_PRECENT_LONG: {
-    label: '1234543.200%',
-    format: '.3%',
-    type: TOOLTIP_FORMAT_TYPES.DECIMAL
+  DECIMAL_PRECENT_REGULAR: {
+    label: '10 → 10%',
+    format: '.1%',
+    type: TOOLTIP_FORMAT_TYPES.PERCENTAGE
   },
   DECIMAL_INT: {
     label: '12350',
