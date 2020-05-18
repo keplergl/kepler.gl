@@ -303,6 +303,8 @@ export function getFormatter(format) {
         return d3Format(tooltipFormat.format);
       case TOOLTIP_FORMAT_TYPES.DATE:
         return v => moment(v).format(tooltipFormat.format);
+      case TOOLTIP_FORMAT_TYPES.PERCENTAGE:
+        return v => `${v}%`;
       default:
         return v => v;
     }
