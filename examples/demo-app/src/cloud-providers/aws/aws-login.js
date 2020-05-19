@@ -18,27 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {AUTH_TOKENS} from '../constants/default-settings';
+import React, {useEffect} from 'react';
+import Amplify, {Hub} from 'aws-amplify';
+import awsconfig from '../../aws-exports';
+import {AmplifyAuthenticator} from '@aws-amplify/ui-react';
 
-import DropboxProvider from './dropbox/dropbox-provider';
-import CartoProvider from './carto/carto-provider';
-import AwsProvider from './aws/aws-provider';
+Amplify.configure(awsconfig);
+export const AWS_LOGIN_URL = 'aws/aws-login';
+export const AWS_WEB_CLIENT_ID = awsconfig && awsconfig.aws_cognito_identity_pool_id;
 
-const {DROPBOX_CLIENT_ID, CARTO_CLIENT_ID, AWS_ACCOUNT_NAME} = AUTH_TOKENS;
-const DROPBOX_CLIENT_NAME = 'Kepler.gl%20(managed%20by%20Uber%20Technologies%2C%20Inc.)';
+const AwsLogin = () => {
+  useEffect(() => {
+    Hub.listen('auth', data => {
+      const {payload} = data;
+      if (payload.event === 'signIn') {
+        window.opener.postMessage({success: true}, location.origin);
+      }
+    });
+  }, []);
 
-export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
+  return <AmplifyAuthenticator usernameAlias="email" />;
+};
 
-export const CLOUD_PROVIDERS = [
-  new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME),
-  new CartoProvider(CARTO_CLIENT_ID),
-  new AwsProvider(AWS_ACCOUNT_NAME)
-];
-
-export function getCloudProvider(providerName) {
-  const cloudProvider = CLOUD_PROVIDERS.find(provider => provider.name === providerName);
-  if (!cloudProvider) {
-    throw new Error(`Unknown cloud provider ${providerName}`);
-  }
-  return cloudProvider;
-}
+export default AwsLogin;

@@ -71,7 +71,8 @@ const CONFIG = {
       'MapboxAccessToken',
       'DropboxClientId',
       'MapboxExportToken',
-      'CartoClientId'
+      'CartoClientId',
+      'AWSAccountName'
     ])
   ]
 };

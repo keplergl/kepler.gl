@@ -9,7 +9,10 @@
     "start-local-https": "webpack-dev-server --mode development --https --env.es6 --progress --hot --open"
   },
   "dependencies": {
+    "@aws-amplify/storage": "3.2.0",
+    "@aws-amplify/ui-react": "^0.2.5",
     "@carto/toolkit": "0.0.1-rc.18",
+    "aws-amplify": "3.0.11",
     "d3-request": "^1.0.6",
     "dropbox": "^4.0.12",
     "global": "^4.3.0",
@@ -55,6 +58,7 @@
     "babel-loader": "^8.0.0",
     "babel-plugin-module-resolver": "^3.0.0",
     "babel-plugin-transform-builtin-extend": "^1.1.0",
+    "json-loader": "^0.5.7",
     "webpack": "^4.29.0",
     "webpack-cli": "^3.2.1",
     "webpack-dev-middleware": "^3.5.1",

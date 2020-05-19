@@ -27,14 +27,15 @@ import {render} from 'react-dom';
 import store from './store';
 import App from './app';
 import {buildAppRoutes} from './utils/routes';
+import AwsLogin, {AWS_LOGIN_URL} from './cloud-providers/aws/aws-login';
 
 const history = syncHistoryWithStore(browserHistory, store);
-
 const appRoute = buildAppRoutes(App);
 
 const Root = () => (
   <Provider store={store}>
     <Router history={history}>
+      <Route path={AWS_LOGIN_URL} component={AwsLogin} />
       <Route path="/" component={App}>
         {appRoute}
       </Route>

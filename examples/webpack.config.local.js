@@ -123,7 +123,8 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
         'MapboxAccessToken',
         'DropboxClientId',
         'MapboxExportToken',
-        'CartoClientId'
+        'CartoClientId',
+        'AWSAccountName'
       ])
     ]
   };
