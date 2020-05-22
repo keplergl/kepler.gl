@@ -24,13 +24,12 @@ import isEqual from 'lodash.isequal';
 import flattenDeep from 'lodash.flattendeep';
 import {toArray} from 'utils/utils';
 
-import {applyFiltersToDatasets, validateFilterWithData} from 'utils/filter-utils';
+import {applyFiltersToDatasets, mergeFilterDomainStep, validateFilterWithData} from 'utils/filter-utils';
 
 import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
 import {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
-import {mergeFilterDomainStep} from '../utils/filter-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded

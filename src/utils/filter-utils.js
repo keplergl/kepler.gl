@@ -413,11 +413,9 @@ export const getPolygonFilterFunctor = (layer, filter) => {
  * @type {typeof import('./filter-utils').getFilterFunction}
  */
 export function getFilterFunction(field, dataId, filter, layers) {
-  // field could be null
-  if (!field) {
-    return data => true;
-  }
-  const valueAccessor = data => data[field.tableFieldIndex - 1];
+  // field could be null in polygon filter
+  const valueAccessor = data => (field ? data[field.tableFieldIndex - 1] : null);
+  const defaultFunc = d => true;
 
   switch (filter.type) {
     case FILTER_TYPES.range:
@@ -427,6 +425,9 @@ export function getFilterFunction(field, dataId, filter, layers) {
     case FILTER_TYPES.select:
       return data => valueAccessor(data) === filter.value;
     case FILTER_TYPES.timeRange:
+      if (!field) {
+        return defaultFunc;
+      }
       const mappedValue = get(field, ['filterProps', 'mappedValue']);
       const accessor = Array.isArray(mappedValue)
         ? (data, index) => mappedValue[index]
@@ -434,9 +435,8 @@ export function getFilterFunction(field, dataId, filter, layers) {
       return (data, index) => isInRange(accessor(data, index), filter.value);
     case FILTER_TYPES.polygon:
       if (!layers || !layers.length) {
-        return () => true;
+        return defaultFunc;
       }
-
       // @ts-ignore
       const layerFilterFunctions = filter.layerId
         .map(id => layers.find(l => l.id === id))
@@ -445,7 +445,7 @@ export function getFilterFunction(field, dataId, filter, layers) {
 
       return data => layerFilterFunctions.every(filterFunc => filterFunc(data));
     default:
-      return data => true;
+      return defaultFunc;
   }
 }
 
@@ -935,6 +935,7 @@ export function applyFiltersToDatasets(datasetIds, datasets, filters, layers) {
  */
 export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIndex = 0, option) {
   // using filterDatasetIndex we can filter only the specified dataset
+  const mergeDomain = option && option.hasOwnProperty('mergeDomain') ? option.mergeDomain : false;
   const {fields, allData} = dataset;
 
   const fieldIndex = fields.findIndex(f => f.name === fieldName);
@@ -950,13 +951,12 @@ export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIn
     ? field.filterProps
     : getFilterProps(allData, field);
 
-  //
   const newFilter = {
-    ...(option && option.mergeDomain
+    ...(mergeDomain
       ? mergeFilterDomainStep(filter, filterProps)
       : {...filter, ...filterProps}),
-    name: Object.assign([...filter.name], {[filterDatasetIndex]: field.name}),
-    fieldIdx: Object.assign([...filter.fieldIdx], {
+    name: Object.assign([].concat(filter.name), {[filterDatasetIndex]: field.name}),
+    fieldIdx: Object.assign([].concat(filter.fieldIdx), {
       [filterDatasetIndex]: field.tableFieldIndex - 1
     }),
     // TODO, since we allow to add multiple fields to a filter we can no longer freeze the filter
@@ -968,7 +968,7 @@ export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIn
     filterProps
   };
 
-  const newFields = Object.assign([...fields], {[fieldIndex]: fieldWithFilterProps});
+  const newFields = Object.assign([].concat(fields), {[fieldIndex]: fieldWithFilterProps});
 
   return {
     filter: newFilter,
@@ -989,7 +989,7 @@ export function mergeFilterDomainStep(filter, filterProps) {
     return null;
   }
 
-  if (!filterProps || !filter.fieldType) {
+  if (!filterProps) {
     return filter;
   }
 

@@ -8,7 +8,7 @@ export type LayerVisConfig = {
 };
 
 export type LayerColumns = {
-  [key: string]: {value: string | null; fieldIdx: number; optional: boolean};
+  [key: string]: {value: string | null; fieldIdx: number; optional?: boolean};
 };
 export type VisualChannelDomain = number[] | string[];
 export type VisualChannelField = Field | null;
