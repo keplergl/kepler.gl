@@ -19,10 +19,9 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import cloneDeep from 'lodash.clonedeep';
-
-import {findDefaultLayer, getLayerHoverProp} from 'utils/layer-utils';
-import {findPointFieldPairs, createNewDataEntry} from 'utils/dataset-utils';
+import {findDefaultLayer} from 'utils/layer-utils';
+import {createNewDataEntry} from 'utils/dataset-utils';
+import {findPointFieldPairs} from 'utils/table-utils/kepler-table';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 import {GEOJSON_FIELDS} from 'constants/default-settings';
 import {LayerClasses, KeplerGlLayers} from 'layers';

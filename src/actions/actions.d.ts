@@ -29,9 +29,9 @@ import {UiState} from 'reducers/ui-state-updaters';
  * Input dataest parsed to addDataToMap
  */
 export type ProtoDataset = {
-  info?: {
-    id: string;
-    label: string;
+  info: {
+    id?: string;
+    label?: string;
     format?: string;
     color?: RGBColor;
   };
