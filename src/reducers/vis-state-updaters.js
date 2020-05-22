@@ -48,7 +48,8 @@ import {
   updateFilterDataId
 } from 'utils/filter-utils';
 import {assignGpuChannel, setFilterGpuMode} from 'utils/gpu-filter-utils';
-import {createNewDataEntry, sortDatasetByColumn} from 'utils/dataset-utils';
+import {createNewDataEntry} from 'utils/dataset-utils';
+import {sortDatasetByColumn} from 'utils/table-utils/kepler-table';
 import {set, toArray} from 'utils/utils';
 
 import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils/layer-utils';
