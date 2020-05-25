@@ -28,7 +28,7 @@ export const PROPERTY_GROUPS = keyMirror({
   stroke: null,
   radius: null,
   height: null,
-  angel: null,
+  angle: null,
   // for heatmap aggregation
   cell: null,
   precision: null
