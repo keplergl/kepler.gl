@@ -30,8 +30,5 @@
     "src/utils",
     "src/cloud-providers",
     "src/schemas",
-  ],
-  // "exclude" :[
-  //   "src/layers"
-  // ]
+  ]
 }
