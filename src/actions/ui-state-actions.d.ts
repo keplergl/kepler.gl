@@ -19,73 +19,165 @@
 // THE SOFTWARE.
 
 import ActionTypes from 'constants/action-types';
+import {Merge} from '../reducers/types';
 
-export function toggleSidePanel(id: string): {type: ActionTypes.TOGGLE_SIDE_PANEL, payload: string;};
+/** TOGGLE_SIDE_PANEL */
+export type ToggleSidePanelUpdaterAction = {
+  payload: string;
+};
+export function toggleSidePanel(
+  id: string
+): Merge<ToggleSidePanelUpdaterAction, {type: ActionTypes.TOGGLE_SIDE_PANEL}>;
 
-export function toggleModal(id: string | null): {type: ActionTypes.TOGGLE_MODAL, payload: string | null;};
+/** TOGGLE_MODAL */
+export type ToggleModalUpdaterAction = {
+  payload: string | null;
+};
+export function toggleModal(
+  id: string | null
+): Merge<ToggleModalUpdaterAction, {type: ActionTypes.TOGGLE_MODAL}>;
 
-export function showExportDropdown(id: string): {type: ActionTypes.SHOW_EXPORT_DROPDOWN; payload: string;};
+/** SHOW_EXPORT_DROPDOWN */
+export type ShowExportDropdownUpdaterAction = {
+  payload: string;
+};
+export function showExportDropdown(
+  id: string
+): Merge<ShowExportDropdownUpdaterAction, {type: ActionTypes.SHOW_EXPORT_DROPDOWN}>;
 
+/** HIDE_EXPORT_DROPDOWN */
 export function hideExportDropdown(): {type: ActionTypes.HIDE_EXPORT_DROPDOWN};
 
-export function toggleMapControl(panelId, index): {type: ActionTypes.TOGGLE_MAP_CONTROL; payload: {
-  panelId: string;
-  index: number;
-}};
+/** TOGGLE_MAP_CONTROL */
+export type ToggleMapControlUpdaterAction = {
+  payload: {
+    panelId: string;
+    index: number;
+  };
+};
+export function toggleMapControl(
+  panelId,
+  index
+): Merge<ToggleMapControlUpdaterAction, {type: ActionTypes.TOGGLE_MAP_CONTROL}>;
 
-export function openDeleteModal(datasetId: string): {type: ActionTypes.OPEN_DELETE_MODAL; payload: string};
+/** OPEN_DELETE_MODAL */
+export type OpenDeleteModalUpdaterAction = {
+  payload: string;
+};
+export function openDeleteModal(
+  datasetId: string
+): Merge<OpenDeleteModalUpdaterAction, {type: ActionTypes.OPEN_DELETE_MODAL}>;
 
-export function addNotification(notification: object): {
-  type: ActionTypes.ADD_NOTIFICATION;
+/** ADD_NOTIFICATION */
+export type AddNotificationUpdaterAction = {
   payload: object;
 };
+export function addNotification(
+  notification: object
+): Merge<
+  AddNotificationUpdaterAction,
+  {
+    type: ActionTypes.ADD_NOTIFICATION;
+  }
+>;
 
-export function removeNotification(id: string): {type: ActionTypes.REMOVE_NOTIFICATION; payload: string;};
-
-export function setExportImageSetting(newSetting: {ratio?: string; resolution?: string; legend?: string}): {
-  type: ActionTypes.SET_EXPORT_IMAGE_SETTING;
-  payload: object;
+/** REMOVE_NOTIFICATION */
+export type RemoveNotificationUpdaterAction = {
+  payload: string;
 };
+export function removeNotification(
+  id: string
+): Merge<RemoveNotificationUpdaterAction, {type: ActionTypes.REMOVE_NOTIFICATION}>;
 
+/** SET_EXPORT_IMAGE_SETTING */
+export type SetExportImageSettingUpdaterAction = {
+  payload: {ratio?: string; resolution?: string; legend?: string};
+};
+export function setExportImageSetting(newSetting: {
+  ratio?: string;
+  resolution?: string;
+  legend?: string;
+}): Merge<SetExportImageSettingUpdaterAction, {type: ActionTypes.SET_EXPORT_IMAGE_SETTING}>;
+
+/** START_EXPORTING_IMAGE */
 export function startExportingImage(): {type: ActionTypes.START_EXPORTING_IMAGE};
 
-export function setExportImageDataUri(): {
-  type: ActionTypes.SET_EXPORT_IMAGE_DATA_URI;
+/** SET_EXPORT_IMAGE_DATA_URI */
+export type SetExportImageDataUriUpdaterAction = {
   payload: string;
 };
+export function setExportImageDataUri(): Merge<
+  SetExportImageDataUriUpdaterAction,
+  {type: ActionTypes.SET_EXPORT_IMAGE_DATA_URI}
+>;
 
-export function setExportImageError(error: Error): {type: ActionTypes.SET_EXPORT_IMAGE_ERROR; payload: Error;};
+/** SET_EXPORT_IMAGE_ERROR */
+export type SetExportImageErrorUpdaterAction = {
+  payload: Error;
+};
+export function setExportImageError(
+  error: Error
+): Merge<SetExportImageErrorUpdaterAction, {type: ActionTypes.SET_EXPORT_IMAGE_ERROR}>;
 
+/** CLEANUP_EXPORT_IMAGE */
 export function cleanupExportImage(): {type: ActionTypes.CLEANUP_EXPORT_IMAGE};
 
-export function setExportSelectedDataset(datasetId: string): {
-  type: ActionTypes.SET_EXPORT_SELECTED_DATASET;
+/** SET_EXPORT_SELECTED_DATASET */
+export type SetExportSelectedDatasetUpdaterAction = {
   payload: string;
 };
+export function setExportSelectedDataset(
+  datasetId: string
+): Merge<SetExportSelectedDatasetUpdaterAction, {type: ActionTypes.SET_EXPORT_SELECTED_DATASET}>;
 
-export function setExportDataType(dataType: string): {
-  type: ActionTypes.SET_EXPORT_DATA_TYPE;
-  payload: string
+/** SET_EXPORT_DATA_TYPE */
+export type SetExportDataTypeUpdaterAction = {
+  payload: string;
 };
+export function setExportDataType(
+  dataType: string
+): Merge<SetExportDataTypeUpdaterAction, {type: ActionTypes.SET_EXPORT_DATA_TYPE}>;
 
-export function setExportFiltered(exportFiltered: boolean): {
-  type: ActionTypes.SET_EXPORT_FILTERED;
+/** SET_EXPORT_FILTERED */
+export type SetExportFilteredUpdaterAction = {
   payload: boolean;
 };
+export function setExportFiltered(
+  exportFiltered: boolean
+): Merge<SetExportFilteredUpdaterAction, {type: ActionTypes.SET_EXPORT_FILTERED}>;
 
+/** SET_EXPORT_DATA */
 export function setExportData(): {type: ActionTypes.SET_EXPORT_DATA};
 
-export function setUserMapboxAccessToken(): {
-  type: ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN;
+/** SET_USER_MAPBOX_ACCESS_TOKEN */
+export type SetUserMapboxAccessTokenUpdaterAction = {
   payload: string;
 };
+export function setUserMapboxAccessToken(): Merge<
+  SetUserMapboxAccessTokenUpdaterAction,
+  {type: ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN}
+>;
 
-export function setExportMapFormat(mapFormat: string): {
-  type: ActionTypes.SET_EXPORT_MAP_FORMAT;
-  payload: string
-};
-
-export function setExportHTMLMapMode(mode: string): {
-  type: ActionTypes.SET_EXPORT_MAP_HTML_MODE;
+/** SET_EXPORT_MAP_FORMAT */
+export type SetExportMapFormatUpdaterAction = {
   payload: string;
 };
+export function setExportMapFormat(
+  mapFormat: string
+): Merge<SetExportMapFormatUpdaterAction, {type: ActionTypes.SET_EXPORT_MAP_FORMAT}>;
+
+/** SET_EXPORT_MAP_HTML_MODE */
+export type SetExportHTMLMapModeUpdaterAction = {
+  payload: string;
+};
+export function setExportHTMLMapMode(
+  mode: string
+): Merge<SetExportHTMLMapModeUpdaterAction, {type: ActionTypes.SET_EXPORT_MAP_HTML_MODE}>;
+
+/** SET_LOCALE */
+export type SetLocaleUpdaterAction = {
+  payload: {locale: string};
+};
+export function setLocale(
+  locale: string
+): Merge<SetLocaleUpdaterAction, {type: ActionTypes.SET_LOCALE}>;

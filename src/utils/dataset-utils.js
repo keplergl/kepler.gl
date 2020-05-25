@@ -75,7 +75,7 @@ function getNewDatasetColor(datasets) {
 
 /**
  * Take datasets payload from addDataToMap, create datasets entry save to visState
- * @type {typeof import('./dataset-utils').createNewDataEntry} 
+ * @type {typeof import('./dataset-utils').createNewDataEntry}
  */
 export function createNewDataEntry({info, data}, datasets = {}) {
   const validatedData = validateInputData(data);
@@ -129,7 +129,7 @@ export function removeSuffixAndDelimiters(layerName, suffix) {
  *
  * @param fields
  * @returns found point fields
- * @type {typeof import('./dataset-utils').findPointFieldPairs} 
+ * @type {typeof import('./dataset-utils').findPointFieldPairs}
  */
 export function findPointFieldPairs(fields) {
   const allNames = fields.map(f => f.name.toLowerCase());
@@ -171,11 +171,11 @@ export function findPointFieldPairs(fields) {
 }
 
 /**
- * 
+ *
  * @param dataset
- * @param column 
- * @param mode 
- * @type {typeof import('./dataset-utils').sortDatasetByColumn} 
+ * @param column
+ * @param mode
+ * @type {typeof import('./dataset-utils').sortDatasetByColumn}
  */
 export function sortDatasetByColumn(dataset, column, mode) {
   const {allIndexes, fields, allData} = dataset;

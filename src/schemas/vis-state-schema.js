@@ -522,33 +522,37 @@ class InteractionSchemaV0 extends Schema {
   key = 'interactionConfig';
 
   save(interactionConfig) {
-    return Array.isArray(this.properties) ? {
-      [this.key]: this.properties.reduce(
-        (accu, key) => ({
-          ...accu,
-          ...(interactionConfig[key].enabled ? {[key]: interactionConfig[key].config} : {})
-        }),
-        {}
-      )
-    } : {};
+    return Array.isArray(this.properties)
+      ? {
+          [this.key]: this.properties.reduce(
+            (accu, key) => ({
+              ...accu,
+              ...(interactionConfig[key].enabled ? {[key]: interactionConfig[key].config} : {})
+            }),
+            {}
+          )
+        }
+      : {};
   }
   load(interactionConfig) {
     // convert v0 -> v1
     // return enabled: false if disabled,
-    return Array.isArray(this.properties) ? {
-      [this.key]: this.properties.reduce(
-        (accu, key) => ({
-          ...accu,
-          ...{
-            [key]: {
-              ...(interactionConfig[key] || {}),
-              enabled: Boolean(interactionConfig[key])
-            }
-          }
-        }),
-        {}
-      )
-    } : {};
+    return Array.isArray(this.properties)
+      ? {
+          [this.key]: this.properties.reduce(
+            (accu, key) => ({
+              ...accu,
+              ...{
+                [key]: {
+                  ...(interactionConfig[key] || {}),
+                  enabled: Boolean(interactionConfig[key])
+                }
+              }
+            }),
+            {}
+          )
+        }
+      : {};
   }
 }
 
@@ -559,18 +563,20 @@ class InteractionSchemaV1 extends Schema {
 
   save(interactionConfig) {
     // save config even if disabled,
-    return Array.isArray(this.properties) ? {
-      [this.key]: this.properties.reduce(
-        (accu, key) => ({
-          ...accu,
-          [key]: {
-            ...interactionConfig[key].config,
-            enabled: interactionConfig[key].enabled
-          }
-        }),
-        {}
-      )
-    } : {};
+    return Array.isArray(this.properties)
+      ? {
+          [this.key]: this.properties.reduce(
+            (accu, key) => ({
+              ...accu,
+              [key]: {
+                ...interactionConfig[key].config,
+                enabled: interactionConfig[key].enabled
+              }
+            }),
+            {}
+          )
+        }
+      : {};
   }
   load(interactionConfig) {
     return {[this.key]: interactionConfig};

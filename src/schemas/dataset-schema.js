@@ -39,7 +39,6 @@ const fieldPropertiesV1 = {
 };
 
 class FieldSchema extends Schema {
-  
   save(fields) {
     return {
       [this.key]: fields.map(f => this.savePropertiesOrApplySchema(f)[this.key])

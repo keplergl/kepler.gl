@@ -388,7 +388,7 @@ export type LoadFileSuccessUpdaterAction = {
   result: FileCacheItem[];
 };
 export function loadFileSuccess(
-  result: AddDataToMaoPayload[]
+  result: FileCacheItem[]
 ): Merge<LoadFileSuccessUpdaterAction, {type: ActionTypes.LOAD_FILES_SUCCESS}>;
 
 export type loadFilesErrUpdaterAction = {

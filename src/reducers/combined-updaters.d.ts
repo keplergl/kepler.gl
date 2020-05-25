@@ -1,5 +1,6 @@
 import {VisState} from './vis-state-updaters';
 import {MapState} from './map-state-updaters';
+import {UiState} from './ui-state-updaters';
 import {ProviderState} from './provider-state-updaters';
 import {AddDataToMaoPayload} from 'actions/actions';
 import {FileCacheItem} from 'processors/file-handler';
@@ -9,7 +10,7 @@ export type KeplerGlState = {
   visState: VisState;
   mapState: MapState;
   mapStyle: any;
-  uiState: any;
+  uiState: UiState;
   providerState: ProviderState;
 };
 

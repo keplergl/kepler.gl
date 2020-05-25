@@ -197,7 +197,11 @@ export function getGpuFilterProps(filters, dataId, fields) {
 
   for (let i = 0; i < MAX_GPU_FILTERS; i++) {
     const filter = filters.find(
-      f => f.gpu && f.dataId.includes(dataId) && f.gpuChannel && f.gpuChannel[f.dataId.indexOf(dataId)] === i
+      f =>
+        f.gpu &&
+        f.dataId.includes(dataId) &&
+        f.gpuChannel &&
+        f.gpuChannel[f.dataId.indexOf(dataId)] === i
     );
 
     // @ts-ignore

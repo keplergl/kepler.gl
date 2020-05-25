@@ -74,6 +74,7 @@ import Console from 'global/console';
  *
  * export default composedReducer;
  */
+
 /* eslint-disable no-unused-vars */
 // @ts-ignore
 const combinedUpdaters = null;
@@ -89,11 +90,12 @@ export const defaultAddDataToMapOptions = {
 
 const identity = state => state;
 
-/* eslint-disable-next-line no-unused-vars */
+/* eslint-disable no-unused-vars */
 // @ts-ignore
 function log(text) {
   return value => Console.log(text, value);
 }
+/* eslint-enable no-unused-vars */
 
 function payload_(p) {
   return {payload: p};
@@ -136,7 +138,7 @@ function pick_(prop) {
  * @param [action.payload.config] map config
  * @param [action.payload.info] map info contains title and description
  * @returns nextState
- * 
+ *
  * @typedef {Object} Dataset
  * @property info -info of a dataset
  * @property info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
@@ -145,7 +147,7 @@ function pick_(prop) {
  * @property data.fields - ***required** Array of fields,
  * @property data.fields.name - ***required** Name of the field,
  * @property data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
- * 
+ *
  * @type {typeof import('./combined-updaters').addDataToMapUpdater}
  * @public
  */

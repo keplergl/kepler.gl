@@ -1055,7 +1055,6 @@ export const getFilterIdInFeature = f => get(f, ['properties', 'filterId']);
  * @type {typeof import('./filter-utils').generatePolygonFilter}
  */
 export function generatePolygonFilter(layers, feature) {
-
   const dataId = layers.map(l => l.config.dataId).filter(d => d);
   const layerId = layers.map(l => l.id);
   const name = layers.map(l => l.config.label);

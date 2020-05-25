@@ -122,5 +122,6 @@ export const set3dBuildingColor = createAction(ActionTypes.SET_3D_BUILDING_COLOR
  * @public
  */
 /* eslint-disable no-unused-vars */
+// @ts-ignore
 const mapStyleActions = null;
 /* eslint-enable no-unused-vars */

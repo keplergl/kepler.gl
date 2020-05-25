@@ -24,11 +24,7 @@ import {CURRENT_VERSION} from './versions';
 
 /** @type {typeof import('./schema').Schema} */
 export default class Schema {
-  constructor({
-    version = CURRENT_VERSION, 
-    key = '', 
-    properties = null
-  } = {}) {
+  constructor({version = CURRENT_VERSION, key = '', properties = null} = {}) {
     this.version = version;
     this.properties = properties;
     this.key = key;
