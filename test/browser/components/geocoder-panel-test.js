@@ -139,7 +139,7 @@ test('GeocoderPanel - render', t => {
   instance.onSelected(null, mockGeoItem);
   t.deepEqual(
     dispatch.getCall(0).args,
-    [{type: '@@kepler.gl/REMOVE_DATASET', key: 'geocoder_dataset'}],
+    [{type: '@@kepler.gl/REMOVE_DATASET', dataId: 'geocoder_dataset'}],
     'Should be dispatching removeDataset action on onSelected'
   );
   t.deepEqual(
@@ -163,14 +163,14 @@ test('GeocoderPanel - render', t => {
   instance.removeMarker();
   t.deepEqual(
     dispatch.getCall(6).args,
-    [{type: '@@kepler.gl/REMOVE_DATASET', key: 'geocoder_dataset'}],
+    [{type: '@@kepler.gl/REMOVE_DATASET', dataId: 'geocoder_dataset'}],
     'Should be dispatching removeDataset action on removeMarker'
   );
 
   instance.removeGeocoderDataset();
   t.deepEqual(
     dispatch.getCall(7).args,
-    [{type: '@@kepler.gl/REMOVE_DATASET', key: 'geocoder_dataset'}],
+    [{type: '@@kepler.gl/REMOVE_DATASET', dataId: 'geocoder_dataset'}],
     'Should be dispatching removeDataset action on removeGeocoderDataset'
   );
 
