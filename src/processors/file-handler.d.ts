@@ -34,3 +34,4 @@ export function readFile(payload: {
 }): Promise<FileCacheItem[]>;
 export function getFileHandler(fileBlob: File): {handler: function; format: string};
 export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMaoPayload[];
+export function getFileType(filename: string): 'csv' | 'json' | 'other';

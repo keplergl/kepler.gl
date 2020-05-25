@@ -122,6 +122,7 @@ disableStackCapturing();
  * export default composedReducer;
  */
 /* eslint-disable no-unused-vars */
+// @ts-ignore
 const visStateUpdaters = null;
 /* eslint-enable no-unused-vars */
 
@@ -397,7 +398,7 @@ export function layerTypeChangeUpdater(state, action) {
 /**
  * Update layer visual channel
  * @memberof visStateUpdaters
- * @type {typeof import('./vis-state-updaters').layerVisualChannelConfigChangeUpdater}
+ * @type {typeof import('./vis-state-updaters').layerVisualChannelChangeUpdater}
  * @returns {Object} nextState
  * @public
  */
@@ -950,7 +951,7 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}, options =
 /**
  * Trigger layer hover event with hovered object
  * @memberof visStateUpdaters
- * @type {typeof import('./vis-state-updaters').onLayerHoverUpdater}
+ * @type {typeof import('./vis-state-updaters').layerHoverUpdater}
  * @public
  */
 export const layerHoverUpdater = (state, action) => ({
@@ -1006,7 +1007,7 @@ export function interactionConfigChangeUpdater(state, action) {
 /**
  * Trigger layer click event with clicked object
  * @memberof visStateUpdaters
- * @type {typeof import('./vis-state-updaters').onLayerClickUpdater}
+ * @type {typeof import('./vis-state-updaters').layerClickUpdater}
  * @public
  */
 export const layerClickUpdater = (state, action) => ({
@@ -1023,7 +1024,7 @@ export const layerClickUpdater = (state, action) => ({
 /**
  * Trigger map click event, unselect clicked object
  * @memberof visStateUpdaters
- * @type {typeof import('./vis-state-updaters').onMapClickUpdater}
+ * @type {typeof import('./vis-state-updaters').mapClickUpdater}
  * @public
  */
 export const mapClickUpdater = state => {
@@ -1033,6 +1034,12 @@ export const mapClickUpdater = state => {
   };
 };
 
+/**
+ * Trigger map move event
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').mouseMoveUpdater}
+ * @public
+ */
 export const mouseMoveUpdater = (state, {evt}) => {
   if (Object.values(state.interactionConfig).some(config => config.enabled)) {
     return {
@@ -1675,10 +1682,9 @@ export function copyTableColumnUpdater(state, {dataId, column}) {
 
 /**
  * Update editor
- * @param {VisState} state `visState`
- * @returns {VisState} nextState
+ * @type {typeof import('./vis-state-updaters').toggleEditorVisibilityUpdater}
  */
-export function toggleEditorVisibility(state) {
+export function toggleEditorVisibilityUpdater(state) {
   return {
     ...state,
     editor: {

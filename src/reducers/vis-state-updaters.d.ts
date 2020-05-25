@@ -1,7 +1,8 @@
 import {RGBColor, RGBAColor, Millisecond} from './types';
-import {AddDaataToMapOptions} from '../actions/actions';
+import {AddDaataToMapOptions, ReceiveMapConfigPayload} from '../actions/actions';
 import {ParsedConfig} from '../schemas';
 import * as VisStateActions from 'actions/vis-state-actions';
+import ActionTypes from 'constants/action-types';
 
 export type HistogramBin = {
   x0: number | undefined;
@@ -129,12 +130,29 @@ export type FilterRecord = {
 
 export type Field = {
   analyzerType: string;
-  id: string;
+  id?: string;
   name: string;
   format: string;
   tableFieldIndex: number;
   type: string;
   filterProps?: any;
+};
+
+export type GpuFilter = {
+  filterRange: number[][];
+  filterValueUpdateTriggers: any;
+  filterValueAccessor: any;
+};
+
+export type FieldPair = {
+  defaultName: string;
+  pair: {
+    [key: string]: {
+      fieldIdx: number;
+      value: string;
+    }
+  };
+  suffix: string[];
 };
 
 export type Dataset = {
@@ -148,28 +166,20 @@ export type Dataset = {
 
   allIndexes: number[];
   filteredIndex: number[];
-  filteredIdxCPU: number[];
+  filteredIdxCPU?: number[];
   filteredIndexForDomain: number[];
-  fieldPairs: {
-    defaultName: string;
-    pair: any;
-    suffix: string[];
-  }[];
-  gpuFilter: {
-    filterRange: number[][];
-    filterValueUpdateTriggers: any;
-    filterValueAccessor: any;
-  };
-  filterRecord: FilterRecord;
-  filterRecordCPU: FilterRecord;
-  changedFilters: any;
+  fieldPairs: FieldPair[];
+  gpuFilter: GpuFilter;
+  filterRecord?: FilterRecord;
+  filterRecordCPU?: FilterRecord;
+  changedFilters?: any;
 
   // table-injected metadata
   sortColumn?: {
     // column name: sorted idx
-    [key: string]: number[];
+    [key: string]: string; // ASCENDING | DESCENDING | UNSORT
   };
-  sortOrder?: string; // ASCENDING | DESCENDING | UNSORT
+  sortOrder?: number[] | null;
 
   pinnedColumns?: string[];
   // table-injected metadata
@@ -242,12 +252,13 @@ export type InteractionConfig = {
   brush: Brush;
   coordinate: Coordinate;
 };
+export type MapInfo = {
+  title: string;
+  description: string;
+};
 export type VisState = {
-  mapInfo: {
-    title: string;
-    description: string;
-  };
-  layers: any[];
+  mapInfo: MapInfo;
+  layers: Layer[];
   layerData: any[];
   layerToBeMerged: any[];
   layerOrder: number[];
@@ -267,6 +278,7 @@ export type VisState = {
   animationConfig: AnimationConfig;
   editor: Editor;
   splitMaps: SplitMap[];
+  splitMapsToBeMerged?: SplitMap[];
   initialState?: Partial<VisState>;
   fileLoading?: boolean;
   fileLoadingErr?: any;
@@ -299,7 +311,7 @@ export function layerTypeChangeUpdater(
   state: VisState,
   action: VisStateActions.LayerTypeChangeUpdaterAction
 ): VisState;
-export function layerVisualChannelConfigChangeUpdater(
+export function layerVisualChannelChangeUpdater(
   state: VisState,
   action: VisStateActions.LayerVisualChannelConfigChangeUpdaterAction
 ): VisState;
@@ -391,19 +403,19 @@ export function toggleFilterFeatureUpdater(
   state: VisState,
   action: VisStateActions.ToggleFilterFeatureUpdaterAction
 ): VisState;
-export function onLayerHoverUpdater(
+export function layerHoverUpdater(
   state: VisState,
   action: VisStateActions.OnLayerHoverUpdaterAction
 ): VisState;
-export function onLayerClickUpdater(
+export function layerClickUpdater(
   state: VisState,
   action: VisStateActions.OnLayerClickUpdaterAction
 ): VisState;
-export function onMapClickUpdater(
+export function mapClickUpdater(
   state: VisState,
   action: VisStateActions.OnMapClickUpdaterAction
 ): VisState;
-export function onMouseMoveUpdater(
+export function mouseMoveUpdater(
   state: VisState,
   action: VisStateActions.OnMouseMoveUpdaterAction
 ): VisState;
@@ -473,10 +485,8 @@ export function resetMapConfigUpdater(state: VisState): VisState;
 export function receiveMapConfigUpdater(
   state: VisState,
   action: {
-    payload: {
-      config: ParsedConfig;
-      options: AddDaataToMapOptions;
-    };
+    type?: ActionTypes.RECEIVE_MAP_CONFIG;
+    payload: ReceiveMapConfigPayload;
   }
 );
 export const INITIAL_VIS_STATE: VisState;

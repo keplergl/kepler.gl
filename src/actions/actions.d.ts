@@ -20,6 +20,9 @@
 
 import ActionTypes from 'constants/action-types';
 import {ParsedConfig} from '../schemas';
+import {RGBColor} from 'reducers/types';
+import {Bounds} from 'reducers/map-state-updaters';
+import {MapInfo} from 'reducers/vis-state-updaters';
 
 /**
  * Input dataest parsed to addDataToMap
@@ -29,6 +32,7 @@ export type ProtoDataset = {
     id: string;
     label: string;
     format?: string;
+    color?: RGBColor;
   };
   data: {
     fields: {
@@ -51,8 +55,9 @@ export type AddDaataToMapOptions = {
 
 export type AddDataToMaoPayload = {
   datasets: ProtoDataset[];
-  options: AddDaataToMapOptions;
-  config: ParsedConfig;
+  options?: AddDaataToMapOptions;
+  config?: ParsedConfig;
+  info?: Partial<MapInfo>
 };
 
 export function addDataToMap(
@@ -61,15 +66,24 @@ export function addDataToMap(
 
 export function resetMapConfig(): {type: ActionTypes.RESET_MAP_CONFIG};
 
+export type ReceiveMapConfigPayload = {
+  config: ParsedConfig;
+  options?: AddDaataToMapOptions;
+  bounds?: Bounds;
+};
+
 export function receiveMapConfig(
   config: ParsedConfig,
   options: AddDaataToMapOptions
 ): {
   type: ActionTypes.RECEIVE_MAP_CONFIG;
-  payload: {
-    config: ParsedConfig;
-    options: AddDaataToMapOptions;
-  };
+  payload: ReceiveMapConfigPayload;
+};
+
+export type KeplerGlInitPayload = {
+  mapboxApiAccessToken?: string;
+  mapboxApiUrl?: string;
+  mapStylesReplaceDefault?: boolean;
 };
 
 export function keplerGlInit(options?: {
@@ -78,9 +92,5 @@ export function keplerGlInit(options?: {
   mapStylesReplaceDefault?: boolean;
 }): {
   type: ActionTypes.INIT;
-  payload: {
-    mapboxApiAccessToken?: string;
-    mapboxApiUrl?: string;
-    mapStylesReplaceDefault?: boolean;
-  };
+  payload: KeplerGlInitPayload;
 };

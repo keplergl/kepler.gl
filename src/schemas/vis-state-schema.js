@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// @ts-nocheck
 import pick from 'lodash.pick';
 import {VERSIONS} from './versions';
 import {isValidFilterValue} from 'utils/filter-utils';
@@ -465,7 +464,7 @@ export const layerPropsV1 = {
       visConfig: new VisConfigSchemaV1({
         version: VERSIONS.v1
       }),
-      hidden: false,
+      hidden: null,
       textLabel: new TextLabelSchemaV1({
         version: VERSIONS.v1,
         key: 'textLabel'
@@ -523,7 +522,7 @@ class InteractionSchemaV0 extends Schema {
   key = 'interactionConfig';
 
   save(interactionConfig) {
-    return {
+    return Array.isArray(this.properties) ? {
       [this.key]: this.properties.reduce(
         (accu, key) => ({
           ...accu,
@@ -531,12 +530,12 @@ class InteractionSchemaV0 extends Schema {
         }),
         {}
       )
-    };
+    } : {};
   }
   load(interactionConfig) {
     // convert v0 -> v1
     // return enabled: false if disabled,
-    return {
+    return Array.isArray(this.properties) ? {
       [this.key]: this.properties.reduce(
         (accu, key) => ({
           ...accu,
@@ -549,7 +548,7 @@ class InteractionSchemaV0 extends Schema {
         }),
         {}
       )
-    };
+    } : {};
   }
 }
 
@@ -560,7 +559,7 @@ class InteractionSchemaV1 extends Schema {
 
   save(interactionConfig) {
     // save config even if disabled,
-    return {
+    return Array.isArray(this.properties) ? {
       [this.key]: this.properties.reduce(
         (accu, key) => ({
           ...accu,
@@ -571,7 +570,7 @@ class InteractionSchemaV1 extends Schema {
         }),
         {}
       )
-    };
+    } : {};
   }
   load(interactionConfig) {
     return {[this.key]: interactionConfig};

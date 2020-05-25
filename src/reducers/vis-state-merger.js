@@ -24,7 +24,11 @@ import isEqual from 'lodash.isequal';
 import flattenDeep from 'lodash.flattendeep';
 import {toArray} from 'utils/utils';
 
-import {applyFiltersToDatasets, mergeFilterDomainStep, validateFilterWithData} from 'utils/filter-utils';
+import {
+  applyFiltersToDatasets,
+  mergeFilterDomainStep,
+  validateFilterWithData
+} from 'utils/filter-utils';
 
 import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
 import {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
@@ -35,9 +39,7 @@ import {LAYER_BLENDINGS} from 'constants/default-settings';
  * Merge loaded filters with current state, if no fields or data are loaded
  * save it for later
  *
- * @param {Object} state
- * @param {Array<Object> | undefined} filtersToMerge
- * @return {Object} updatedState
+ * @type {typeof import('./vis-state-merger').mergeFilters}
  */
 export function mergeFilters(state, filtersToMerge) {
   const merged = [];
@@ -134,9 +136,7 @@ export function mergeFilters(state, filtersToMerge) {
  * Merge layers from de-serialized state, if no fields or data are loaded
  * save it for later
  *
- * @param {Object} state
- * @param {Array<Object> | undefined} layersToMerge
- * @return {Object} state
+ * @type {typeof import('./vis-state-merger').mergeLayers}
  */
 export function mergeLayers(state, layersToMerge) {
   const mergedLayer = [];
@@ -183,9 +183,7 @@ export function mergeLayers(state, layersToMerge) {
 /**
  * Merge interactions with saved config
  *
- * @param {Object} state
- * @param {Object} interactionToBeMerged
- * @return {Object} mergedState
+ * @type {typeof import('./vis-state-merger').mergeInteractions}
  */
 export function mergeInteractions(state, interactionToBeMerged) {
   const merged = {};
@@ -252,6 +250,7 @@ export function mergeInteractions(state, interactionToBeMerged) {
  *    : don't merge anything
  * 2. if current map is NOT split, but splitMaps contain maps
  *    : add to splitMaps, and add current layers to splitMaps
+ * @type {typeof import('./vis-state-merger').mergeInteractions}
  */
 export function mergeSplitMaps(state, splitMaps = []) {
   const merged = [...state.splitMaps];
@@ -283,9 +282,9 @@ export function mergeSplitMaps(state, splitMaps = []) {
  * Merge interactionConfig.tooltip with saved config,
  * validate fieldsToShow
  *
- * @param {string} state
- * @param {Object} tooltipConfig
- * @return {Object} - {mergedTooltip: {}, unmergedTooltip: {}}
+ * @param {object} state
+ * @param {object} tooltipConfig
+ * @return {object} - {mergedTooltip: {}, unmergedTooltip: {}}
  */
 export function mergeInteractionTooltipConfig(state, tooltipConfig = {}) {
   const unmergedTooltip = {};
@@ -315,9 +314,7 @@ export function mergeInteractionTooltipConfig(state, tooltipConfig = {}) {
 /**
  * Merge layerBlending with saved
  *
- * @param {object} state
- * @param {string | undefined} layerBlending
- * @return {object} merged state
+ * @type {typeof import('./vis-state-merger').mergeLayerBlending}
  */
 export function mergeLayerBlending(state, layerBlending) {
   if (layerBlending && LAYER_BLENDINGS[layerBlending]) {
@@ -447,9 +444,9 @@ export function validateSavedVisualChannels(fields, newLayer, savedLayer) {
 /**
  * Validate saved layer config with new data,
  * update fieldIdx based on new fields
- *
- * @param {Array<Object>} fields
- * @param {string} dataId
+ * @param {object} dataset
+ * @param {Array<Object>} dataset.fields
+ * @param {string} dataset.id
  * @param {Object} savedLayer
  * @param {Object} layerClasses
  * @return {null | Object} - validated layer or null

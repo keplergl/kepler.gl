@@ -28,7 +28,7 @@ export function applyFilterFieldName(
   dataset: Dataset;
 };
 
-export function getDefaultFilter(dataId: string | string[]): FilterBase;
+export function getDefaultFilter(dataId: string | null | string[]): FilterBase;
 export function shouldApplyFilter(filter: Filter, datasetId: string): boolean;
 export function validatePolygonFilter(
   dataset: Dataset,

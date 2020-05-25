@@ -46,9 +46,11 @@ export type LayerConfig = {
 };
 
 export class Layer {
-  constructor(prop?: {
-    id?: string;
-  } & Partial<LayerConfig>)
+  constructor(
+    prop?: {
+      id?: string;
+    } & Partial<LayerConfig>
+  );
   id: string;
   type: string;
   config: LayerConfig;

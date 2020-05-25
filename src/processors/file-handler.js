@@ -71,6 +71,7 @@ export function getFileHandler(fileBlob) {
   return {handler: FILE_HANDLERS[type], format: type};
 }
 
+/** @type {typeof import('./file-handler').getFileType} */
 export function getFileType(filename) {
   if (filename.endsWith('csv')) {
     return 'csv';

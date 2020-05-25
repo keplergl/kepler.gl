@@ -251,10 +251,12 @@ export function validateFilter(dataset, filter) {
  *
  * @param dataset
  * @param filter - filter to be validate
+ * @param layers - layers
  * @return validated filter
  * @type {typeof import('./filter-utils').validateFilterWithData}
  */
 export function validateFilterWithData(dataset, filter, layers) {
+  // @ts-ignore
   return filterValidators.hasOwnProperty(filter.type)
     ? filterValidators[filter.type](dataset, filter, layers)
     : validateFilter(dataset, filter);
@@ -952,11 +954,9 @@ export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIn
     : getFilterProps(allData, field);
 
   const newFilter = {
-    ...(mergeDomain
-      ? mergeFilterDomainStep(filter, filterProps)
-      : {...filter, ...filterProps}),
-    name: Object.assign([].concat(filter.name), {[filterDatasetIndex]: field.name}),
-    fieldIdx: Object.assign([].concat(filter.fieldIdx), {
+    ...(mergeDomain ? mergeFilterDomainStep(filter, filterProps) : {...filter, ...filterProps}),
+    name: Object.assign([...toArray(filter.name)], {[filterDatasetIndex]: field.name}),
+    fieldIdx: Object.assign([...toArray(filter.fieldIdx)], {
       [filterDatasetIndex]: field.tableFieldIndex - 1
     }),
     // TODO, since we allow to add multiple fields to a filter we can no longer freeze the filter
@@ -968,7 +968,7 @@ export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIn
     filterProps
   };
 
-  const newFields = Object.assign([].concat(fields), {[fieldIndex]: fieldWithFilterProps});
+  const newFields = Object.assign([...fields], {[fieldIndex]: fieldWithFilterProps});
 
   return {
     filter: newFilter,
@@ -1055,21 +1055,11 @@ export const getFilterIdInFeature = f => get(f, ['properties', 'filterId']);
  * @type {typeof import('./filter-utils').generatePolygonFilter}
  */
 export function generatePolygonFilter(layers, feature) {
-  const {dataId, layerId, name} = layers.reduce(
-    // @ts-ignore
-    (acc, layer) => ({
-      ...acc,
-      dataId: [...acc.dataId, layer.config.dataId],
-      layerId: [...acc.layerId, layer.id],
-      name: [...acc.name, layer.config.label]
-    }),
-    {
-      dataId: [],
-      layerId: [],
-      name: []
-    }
-  );
 
+  const dataId = layers.map(l => l.config.dataId).filter(d => d);
+  const layerId = layers.map(l => l.id);
+  const name = layers.map(l => l.config.label);
+  // @ts-ignore
   const filter = getDefaultFilter(dataId);
   return {
     ...filter,
@@ -1123,7 +1113,7 @@ export function filterDatasetCPU(state, dataId) {
   const copied = {
     ...selectedDataset,
     filterRecord: selectedDataset.filterRecordCPU,
-    filteredIndex: selectedDataset.filteredIdxCPU
+    filteredIndex: selectedDataset.filteredIdxCPU || []
   };
 
   const filtered = filterDataset(copied, state.filters, state.layers, opt);

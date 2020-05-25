@@ -1,6 +1,3 @@
-
-import {ParsedConfig} from '../schemas';
-
 export type RGBColor = [number, number, number];
 export type RGBAColor = [number, number, number, number];
 export type HexColor = string; // this is the best tpescript can do at the moment

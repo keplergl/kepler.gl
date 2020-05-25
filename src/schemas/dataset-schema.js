@@ -39,7 +39,7 @@ const fieldPropertiesV1 = {
 };
 
 class FieldSchema extends Schema {
-  key = 'fields';
+  
   save(fields) {
     return {
       [this.key]: fields.map(f => this.savePropertiesOrApplySchema(f)[this.key])
@@ -56,6 +56,7 @@ const propertiesV0 = {
   color: null,
   allData: null,
   fields: new FieldSchema({
+    key: 'fields',
     version: VERSIONS.v0,
     properties: fieldPropertiesV0
   })
@@ -64,6 +65,7 @@ const propertiesV0 = {
 const propertiesV1 = {
   ...propertiesV0,
   fields: new FieldSchema({
+    key: 'fields',
     version: VERSIONS.v1,
     properties: fieldPropertiesV1
   })
@@ -116,10 +118,12 @@ class DatasetSchema extends Schema {
 
 const datasetSchema = {
   [VERSIONS.v0]: new DatasetSchema({
+    key: 'dataset',
     version: VERSIONS.v0,
     properties: propertiesV0
   }),
   [VERSIONS.v1]: new DatasetSchema({
+    key: 'dataset',
     version: VERSIONS.v1,
     properties: propertiesV1
   })

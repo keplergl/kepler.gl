@@ -20,6 +20,7 @@
 
 import ActionTypes from 'constants/action-types';
 import {ValueOf, Merge} from '../reducers/types';
+import {Bounds, Viewport} from '../reducers/map-state-updaters';
 
 export type TogglePerspectiveUpdaterAction = {};
 export function togglePerspective(): Merge<
@@ -27,37 +28,17 @@ export function togglePerspective(): Merge<
   {type: ActionTypes.TOGGLE_PERSPECTIVE}
 >;
 
-type FitBoundsUpdaterAction = {payload: readonly number[]};
+export type FitBoundsUpdaterAction = {payload: Bounds};
 export function fitBounds(
-  payload: readonly number[]
+  payload: Bounds
 ): Merge<FitBoundsUpdaterAction, {type: ActionTypes.FIT_BOUNDS}>;
 
-/** Width of viewport */
-type Viewport = {
-  /**  Width of viewport */
-  width?: number;
-  /**  Height of viewport */
-  height?: number;
-  /**  Zoom of viewport */
-  zoom?: number;
-  /**  Camera angle in degrees (0 is straight down) */
-  pitch?: number;
-  /**  Map rotation in degrees (0 means north is up) */
-  bearing?: number;
-  /**  Latitude center of viewport on map in mercator projection */
-  latitude?: number;
-  /**  Longitude Center of viewport on map in mercator projection */
-  longitude?: number;
-  /**  Whether to enable drag and rotate map into perspective viewport */
-  dragRotate?: number;
-};
-
-type UpdateMapUpdaterAction = {payload: Viewport};
+export type UpdateMapUpdaterAction = {payload: Viewport};
 export function updateMap(
   payload: Viewport
 ): Merge<UpdateMapUpdaterAction, {type: ActionTypes.UPDATE_MAP}>;
 
-type ToggleSplitMapUpdaterAction = {
+export type ToggleSplitMapUpdaterAction = {
   payload: number;
 };
 export function toggleSplitMap(

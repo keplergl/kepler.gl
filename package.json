@@ -229,7 +229,7 @@
     "tape": "4.8.0",
     "tape-catch": "^1.0.6",
     "typedoc-plugin-markdown": "^2.2.17",
-    "typescript": "^3.7.5",
+    "typescript": "3.8.3",
     "url-loader": "^0.5.7",
     "watchify": "^3.6.1",
     "webpack": "^4.29.0",

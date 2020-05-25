@@ -80,6 +80,9 @@ function _validateProvider(provider, method) {
   return true;
 }
 
+/**
+ * @type {typeof import('./provider-state-updaters').createGlobalNotificationTasks}
+ */
 function createGlobalNotificationTasks({type, message, delayClose = true}) {
   const id = generateHashId();
   const successNote = {
@@ -96,8 +99,7 @@ function createGlobalNotificationTasks({type, message, delayClose = true}) {
  * This method will export the current kepler config file to the chosen cloud proder
  * add returns a share URL
  *
- * @param {*} state
- * @param {*} action
+ * @type {typeof import('./provider-state-updaters').exportFileToCloudUpdater}
  */
 export const exportFileToCloudUpdater = (state, action) => {
   const {mapData, provider, options = {}, onSuccess, onError, closeModal} = action.payload;
@@ -129,11 +131,10 @@ export const exportFileToCloudUpdater = (state, action) => {
 
 /**
  *
- * @param {*} state
- * @param {*} action
+ * @type {typeof import('./provider-state-updaters').exportFileSuccessUpdater}
  */
 export const exportFileSuccessUpdater = (state, action) => {
-  const {response, provider, options, onSuccess, closeModal} = action.payload;
+  const {response, provider, options = {}, onSuccess, closeModal} = action.payload;
 
   const newState = {
     ...state,
@@ -158,8 +159,7 @@ export const exportFileSuccessUpdater = (state, action) => {
 
 /**
  * Close modal on success and display notification
- * @param {*} state
- * @param {*} action
+ * @type {typeof import('./provider-state-updaters').postSaveLoadSuccessUpdater}
  */
 export const postSaveLoadSuccessUpdater = (state, action) => {
   const message = action.payload || `Saved / Load to ${state.currentProvider} Success`;
@@ -175,8 +175,7 @@ export const postSaveLoadSuccessUpdater = (state, action) => {
 
 /**
  *
- * @param {*} state
- * @param {*} action
+ * @type {typeof import('./provider-state-updaters').exportFileErrorUpdater}
  */
 export const exportFileErrorUpdater = (state, action) => {
   const {error, provider, onError} = action.payload;
@@ -266,14 +265,18 @@ function parseLoadMapResponse(response, loadParams, provider) {
     return {info, data};
   });
 
-  const parsedConfig = map.config ? KeplerGlSchema.parseSavedConfig(map.config) : null;
+  const parsedConfig = map.config && KeplerGlSchema.parseSavedConfig(map.config);
 
   const info = {
     ...map.info,
     provider: provider.name,
     loadParams
   };
-  return {datasets: parsedDatasets, config: parsedConfig, info};
+  return {
+    datasets: parsedDatasets,
+    info,
+    ...(parsedConfig ? {config: parsedConfig} : {})
+  };
 }
 
 export const loadCloudMapSuccessUpdater = (state, action) => {
@@ -323,6 +326,7 @@ export const loadCloudMapErrorUpdater = (state, action) => {
     createGlobalNotificationTasks({type: 'error', message, delayClose: false})
   );
 };
+
 /**
  *
  * @param {*} state

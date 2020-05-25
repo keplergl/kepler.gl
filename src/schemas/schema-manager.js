@@ -34,6 +34,7 @@ const REDUCER_SCHEMAS = {
   mapStyle: mapStyleSchema
 };
 
+/** @type {typeof import('./schema-manager').KeplerGLSchema} */
 class KeplerGLSchema {
   constructor() {
     this._validVersions = VERSIONS;
@@ -68,8 +69,8 @@ class KeplerGLSchema {
    * }
    *
    * Get config and data of current map to save
-   * @param {Object} state
-   * @returns {{datasets: Object[], config: Object, info: Object}} app state to save
+   * @param state
+   * @returns app state to save
    */
   save(state) {
     return {
@@ -88,8 +89,8 @@ class KeplerGLSchema {
   }
   /**
    *  Load saved map, argument can be (datasets, config) or ({datasets, config})
-   * @param {Object|Array<Object>} savedDatasets
-   * @param {Object} savedConfig
+   * @param savedDatasets
+   * @param savedConfig
    */
   load(savedDatasets, savedConfig) {
     // if pass dataset and config in as a single object
@@ -109,8 +110,8 @@ class KeplerGLSchema {
 
   /**
    * Get data to save
-   * @param {Object} state - app state
-   * @returns {{version: String, data: Object}} - dataset to save
+   * @param state - app state
+   * @returns - dataset to save
    */
   getDatasetToSave(state) {
     const dataChangedSinceLastSave = this.hasDataChanged(state);
@@ -154,8 +155,8 @@ class KeplerGLSchema {
 
   /**
    * Parse saved data
-   * @param {Array} datasets
-   * @returns {Object | null} - data to save
+   * @param datasets
+   * @returns - dataset to pass to addDataToMap
    */
   parseSavedData(datasets) {
     return datasets.reduce((accu, ds) => {
@@ -170,10 +171,6 @@ class KeplerGLSchema {
 
   /**
    * Parse saved App config
-   * @param {String} opt.version - config version
-   * @param {Object} opt.config - saved config
-   * @param {Object} state - current App State
-   * @returns {Object | null} - parsed config
    */
   parseSavedConfig({version, config}, state = {}) {
     const validVersion = this.validateVersion(version);
@@ -194,8 +191,8 @@ class KeplerGLSchema {
 
   /**
    * Validate version
-   * @param {String} version
-   * @returns {String | null} validVersion
+   * @param version
+   * @returns validVersion
    */
   validateVersion(version) {
     if (!version) {
@@ -213,8 +210,8 @@ class KeplerGLSchema {
 
   /**
    * Check if data has changed since last save
-   * @param {Object} state
-   * @returns {boolean} - whether data has changed or not
+   * @param state
+   * @returns - whether data has changed or not
    */
   hasDataChanged(state) {
     return this._datasetLastSaved !== state.visState.datasets;

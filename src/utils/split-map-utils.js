@@ -41,6 +41,7 @@ export function addNewLayersToSplitMap(splitMaps, layers) {
       ...settings.layers,
       ...newLayers.reduce(
         (accu, newLayer) =>
+          // @ts-ignore
           [newLayer.id] in settings.layers || !newLayer.config.isVisible
             ? accu
             : {
