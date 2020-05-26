@@ -31,7 +31,20 @@ test('TooltipConfig - render', t => {
   const datasets = StateWTrips.visState.datasets;
   const config = {
     fieldsToShow: {
-      test_trip_data: ['tpep_pickup_datetime', 'tpep_dropoff_datetime', 'fare_amount']
+      test_trip_data: [
+        {
+          name: 'tpep_pickup_datetime',
+          format: null
+        },
+        {
+          name: 'tpep_dropoff_datetime',
+          format: null
+        },
+        {
+          name: 'fare_amount',
+          format: null
+        }
+      ]
     },
     enabled: true
   };

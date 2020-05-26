@@ -476,7 +476,16 @@ export const parsedConfigV0 = {
       tooltip: {
         enabled: true,
         fieldsToShow: {
-          something: ['begintrip_timestamp_local', 'dropoff_timestamp_local']
+          something: [
+            {
+              name: 'begintrip_timestamp_local',
+              format: null
+            },
+            {
+              name: 'dropoff_timestamp_local',
+              format: null
+            }
+          ]
         }
       },
       brush: {

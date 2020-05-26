@@ -24,7 +24,7 @@ import {FormattedMessage} from 'react-intl';
 import {SidePanelSection, SBFlexboxNoMargin, Button} from 'components/common/styled-components';
 import FieldSelector from 'components/common/field-selector';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
-import TooltipChickletFactory from './tooltip-components/tooltip-chicklet';
+import TooltipChickletFactory from './tooltip-config/tooltip-chicklet';
 
 TooltipConfigFactory.deps = [DatasetTagFactory];
 

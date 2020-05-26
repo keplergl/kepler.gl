@@ -2774,7 +2774,20 @@ export const mergedInteraction = {
     enabled: false,
     config: {
       fieldsToShow: {
-        a5ybmwl2d: ['a_zip', 'str_type', 'int_type']
+        a5ybmwl2d: [
+          {
+            name: 'a_zip',
+            format: null
+          },
+          {
+            name: 'str_type',
+            format: null
+          },
+          {
+            name: 'int_type',
+            format: null
+          }
+        ]
       }
     }
   },
