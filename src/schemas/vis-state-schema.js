@@ -24,6 +24,7 @@ import {isValidFilterValue} from 'utils/filter-utils';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
+import {notNullorUndefined} from 'utils/data-utils';
 
 /**
  * V0 Schema
@@ -583,6 +584,9 @@ class InteractionSchemaV1 extends Schema {
     Object.keys(interactionConfig).forEach(configType => {
       if (configType === 'tooltip') {
         const fieldsToShow = modifiedConfig[configType].fieldsToShow;
+        if (!notNullorUndefined(fieldsToShow)) {
+          return {[this.key]: modifiedConfig};
+        }
         Object.keys(fieldsToShow).forEach(key => {
           fieldsToShow[key] = fieldsToShow[key].map(fieldData => {
             if (!fieldData.name) {

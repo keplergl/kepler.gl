@@ -81,7 +81,6 @@ function TooltipChickletFactory(dataId, config, onChange) {
 
     handleClickOutside = () => {
       this.setState({show: false});
-      console.log('click outside');
     };
 
     render() {
