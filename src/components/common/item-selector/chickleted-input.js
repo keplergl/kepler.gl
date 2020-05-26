@@ -40,7 +40,7 @@ const propTypes = {
   inputTheme: PropTypes.string
 };
 
-const ChickletButton = styled.div`
+export const ChickletButton = styled.div`
   background: ${props => props.theme.panelActiveBg};
   border-radius: 1px;
   color: ${props => props.theme.textColor};
@@ -57,7 +57,7 @@ const ChickletButton = styled.div`
   }
 `;
 
-const ChickletTag = styled.span`
+export const ChickletTag = styled.span`
   margin-right: 10px;
   text-overflow: ellipsis;
   width: 100%;
@@ -68,10 +68,9 @@ const ChickletTag = styled.span`
   }
 `;
 
-const Chicklet = ({disabled, name, remove, addon}) => (
+const Chicklet = ({disabled, name, remove}) => (
   <ChickletButton>
     <ChickletTag>{name}</ChickletTag>
-    {Boolean(addon) && addon(name)}
     <Delete onClick={disabled ? null : remove} />
   </ChickletButton>
 );
@@ -98,7 +97,7 @@ const ChickletedInput = ({
   removeItem,
   displayOption = d => d,
   inputTheme,
-  addon
+  CustomChickletComponent
 }) => (
   <ChickletedInputContainer
     className={`${className} chickleted-input`}
@@ -110,15 +109,23 @@ const ChickletedInput = ({
     hasPlaceholder={!selectedItems || !selectedItems.length}
   >
     {selectedItems.length > 0 ? (
-      selectedItems.map((item, i) => (
-        <Chicklet
-          disabled={disabled}
-          key={`${displayOption(item)}_${i}`}
-          name={displayOption(item)}
-          remove={e => removeItem(item, e)}
-          addon={addon}
-        />
-      ))
+      selectedItems.map((item, i) =>
+        CustomChickletComponent ? (
+          <CustomChickletComponent
+            disabled={disabled}
+            key={`${displayOption(item)}_${i}`}
+            name={displayOption(item)}
+            remove={e => removeItem(item, e)}
+          />
+        ) : (
+          <Chicklet
+            disabled={disabled}
+            key={`${displayOption(item)}_${i}`}
+            name={displayOption(item)}
+            remove={e => removeItem(item, e)}
+          />
+        )
+      )
     ) : (
       <span className={`${className} chickleted-input__placeholder`}>
         <FormattedMessage id={placeholder} />

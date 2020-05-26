@@ -26,6 +26,8 @@ import {createSelector} from 'reselect';
 import ItemSelector from './item-selector/item-selector';
 import FieldToken from '../common/field-token';
 import {classList} from './item-selector/dropdown-list';
+import {toArray} from 'utils/utils';
+import {notNullorUndefined} from 'utils/data-utils';
 
 const defaultDisplayOption = d => d.name;
 
@@ -53,16 +55,14 @@ export const FieldListItemFactory = (showToken = true) => {
 const SuggestedFieldHeader = () => <div>Suggested Field</div>;
 
 const FieldType = PropTypes.oneOfType([
-  PropTypes.arrayOf(
-    PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.shape({
-        name: PropTypes.string,
-        format: PropTypes.string
-      })
-    ])
-  ),
   PropTypes.string,
+  PropTypes.arrayOf(PropTypes.string),
+  PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      format: PropTypes.string
+    })
+  ),
   PropTypes.shape({
     format: PropTypes.string,
     id: PropTypes.string,
@@ -86,7 +86,8 @@ class FieldSelector extends Component {
     multiSelect: PropTypes.bool,
     closeOnSelect: PropTypes.bool,
     showToken: PropTypes.bool,
-    suggested: PropTypes.arrayOf(PropTypes.any)
+    suggested: PropTypes.arrayOf(PropTypes.any),
+    CustomChickletComponent: PropTypes.func
   };
 
   static defaultProps = {
@@ -104,7 +105,9 @@ class FieldSelector extends Component {
 
   fieldsSelector = props => props.fields;
   filteredFieldsSelector = props =>
-    props.fields.filter(field => !(props.value || []).includes(field.name));
+    props.fields.filter(
+      field => !toArray(props.value).find(d => (d.name ? d.name === field.name : d === field.name))
+    );
   valueSelector = props => props.value;
   filterFieldTypesSelector = props => props.filterFieldTypes;
   showTokenSelector = props => props.showToken;
@@ -112,8 +115,8 @@ class FieldSelector extends Component {
   selectedItemsSelector = createSelector(this.fieldsSelector, this.valueSelector, (fields, value) =>
     fields.filter(f =>
       Boolean(
-        (Array.isArray(value) ? value : [value]).find(d => {
-          if (!d) {
+        toArray(value).find(d => {
+          if (!notNullorUndefined(d)) {
             return false;
           }
           return d.name ? d.name === defaultDisplayOption(f) : d === defaultDisplayOption(f);
@@ -156,7 +159,7 @@ class FieldSelector extends Component {
           onChange={this.props.onSelect}
           DropDownLineItemRenderComponent={this.fieldListItemSelector(this.props)}
           DropdownHeaderComponent={this.props.suggested ? SuggestedFieldHeader : null}
-          addon={this.props.addon}
+          CustomChickletComponent={this.props.CustomChickletComponent}
         />
       </div>
     );
