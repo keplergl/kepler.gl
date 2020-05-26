@@ -66,14 +66,13 @@ const Row = ({name, value, url}) => {
 const EntryInfo = ({fieldsToShow, fields, data}) => (
   <tbody>
     {fieldsToShow.map(item => (
-      <EntryInfoRow key={item} name={item} fields={fields} data={data} />
+      <EntryInfoRow key={item.name} item={item} fields={fields} data={data} />
     ))}
   </tbody>
 );
 
-const EntryInfoRow = ({name: item, fields, data}) => {
-  const name = item ? item.name || item : null;
-  const field = fields.find(f => f.name === name);
+const EntryInfoRow = ({item, fields, data}) => {
+  const field = fields.find(f => f.name === item.name);
   if (!field) {
     return null;
   }
@@ -82,7 +81,7 @@ const EntryInfoRow = ({name: item, fields, data}) => {
   const displayValue = item.format
     ? getFormatter(item.format)(data[valueIdx])
     : parseFieldValue(data[valueIdx], field.type);
-  return <Row name={name} value={displayValue} />;
+  return <Row name={item.name} value={displayValue} />;
 };
 
 const CellInfo = ({data, layer}) => {
