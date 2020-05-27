@@ -24,7 +24,7 @@ import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {
   TOOLTIP_FORMATS,
   TOOLTIP_FORMAT_TYPES
-} from 'components/side-panel/interaction-panel/tooltip-config/constants';
+} from 'constants/tooltip';
 import {format as d3Format} from 'd3-format';
 
 const MAX_LATITUDE = 90;
