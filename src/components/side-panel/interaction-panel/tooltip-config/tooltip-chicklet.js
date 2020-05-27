@@ -79,7 +79,18 @@ function TooltipChickletFactory(dataId, config, onChange) {
       show: false
     };
 
-    handleClickOutside = () => {
+    componentDidMount() {
+      document.addEventListener('mousedown', this.handleClickOutside, false);
+    }
+
+    componentWillUnmount() {
+      document.removeEventListener('mousedown', this.handleClickOutside, false);
+    }
+
+    handleClickOutside = e => {
+      if (this.node.contains(e.target)) {
+        return;
+      }
       this.setState({show: false});
     };
 
@@ -93,8 +104,9 @@ function TooltipChickletFactory(dataId, config, onChange) {
       if (show) {
         circleStyle = circleStyles.SHOW;
       }
+
       return (
-        <ChickletButton>
+        <ChickletButton ref={node => (this.node = node)}>
           <ChickletTag>{name}</ChickletTag>
           <ChickletAddonWrapper>
             <ChickletAddon data-tip data-for={`addon-${name}`}>
