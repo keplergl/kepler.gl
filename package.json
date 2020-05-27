@@ -47,7 +47,7 @@
     "add-licence": "uber-licence",
     "prepublish": "uber-licence && yarn build && yarn build:umd",
     "docs": "babel-node ./scripts/documentation.js",
-    "typedoc": "typedoc --theme markdown --out typedoc ./src/actions/vis-state-actions.js",
+    "typedoc": "typedoc --theme markdown --out typedoc --inputFiles ./src/reducers --inputFiles ./src/actions --excludeExternals --excludeNotExported --excludePrivate",
     "example-version": "babel-node ./scripts/edit-version.js",
     "prettier-all": "prettier --write '{src,examples,test}/**/*.js'",
     "lint": "yarn typescript && eslint src test webpack examples/*.js examples/**/src website/*.js website/src --fix",
