@@ -24,7 +24,7 @@ import {
   InputStyle,
   MapStyles,
   VisibleLayerGroups,
-  BaseMapStyle
+  MapStyles
 } from '../reducers/map-style-updaters';
 import {MapState} from '../reducers/map-state-updaters';
 
@@ -73,9 +73,7 @@ export function requestMapStyles(
 
 /** LOAD_MAP_STYLES */
 export type LoadMapStylesUpdaterAction = {
-  payload: {
-    [id: string]: BaseMapStyle;
-  };
+  payload: MapStyles;
 };
 export function loadMapStyles(
   newStyles: LoadMapStylesUpdaterAction['payload']

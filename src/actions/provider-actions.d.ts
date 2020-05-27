@@ -44,14 +44,22 @@ export type ExportFileOptions = {
   isPublic?: boolean;
   overwrite?: boolean;
 };
+export type OnErrorCallBack = (error: Error) => any;
+export type OnSuccessCallBack = (p: {
+  response: any;
+  provider: Provider;
+  options: ExportFileOptions;
+}) => any;
+
 export type ExportFileToCloudPayload = {
   mapData: MapData;
   provider: Provider;
   options: ExportFileOptions;
-  onSuccess?: any;
-  onError?: any;
+  onSuccess?: OnSuccessCallBack;
+  onError?: OnErrorCallBack;
   closeModal?: boolean;
 };
+
 export function exportFileToCloud(
   p: ExportFileToCloudPayload
 ): {
@@ -64,8 +72,8 @@ export type ExportFileSuccessPayload = {
   response: any;
   provider: Provider;
   options?: ExportFileOptions;
-  onSuccess?: any;
-  closeModal?: booleam;
+  onSuccess?: OnSuccessCallBack;
+  closeModal?: boolean;
 };
 export function exportFileSuccess(
   p: ExportFileSuccessPayload
@@ -79,7 +87,7 @@ export type ExportFileErrorPayload = {
   error: any;
   provider: Provider;
   options?: Options;
-  onError?: any;
+  onError?: OnErrorCallBack;
 };
 
 export function exportFileError(
@@ -113,11 +121,16 @@ export function postSaveLoadSuccess(
 };
 
 /** LOAD_CLOUD_MAP */
+type LoadCloudMapSuccessCallback = (p: {
+  response: any;
+  loadParams: any;
+  provider: Provider;
+}) => any;
 export type LoadCloudMapPayload = {
   loadParams: any;
   provider: string;
   onSuccess?: any;
-  onError?: any;
+  onError?: OnErrorCallBack;
 };
 export function loadCloudMap(
   p: LoadCloudMapPayload
@@ -130,9 +143,9 @@ export function loadCloudMap(
 export type LoadCloudMapSuccessPayload = {
   response: any;
   loadParams: any;
-  provider: string;
-  onSuccess?: any;
-  onError?: any;
+  provider: Provider;
+  onSuccess?: LoadCloudMapSuccessCallback;
+  onError?: OnErrorCallBack;
 };
 export function loadCloudMapSuccess(
   p: LoadCloudMapSuccessPayload
@@ -144,8 +157,8 @@ export function loadCloudMapSuccess(
 /** LOAD_CLOUD_MAP_ERROR */
 export type LoadCloudMapErrorPayload = {
   error: any;
-  provider: stirng;
-  onError?: any;
+  provider: Provider;
+  onError?: OnErrorCallBack;
 };
 export function loadCloudMapError(
   p: LoadCloudMapErrorPayload

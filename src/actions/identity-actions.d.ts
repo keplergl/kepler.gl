@@ -20,14 +20,7 @@
 
 import ActionTypes from 'constants/action-types';
 
-export function registerEntry(entry: {
-  id: string;
-  mint: boolean;
-  mapboxApiAccessToken: string;
-  mapboxApiUrl: string;
-  mapStylesReplaceDefault: boolean;
-}): {
-  type: ActionTypes.REGISTER_ENTRY;
+export type RegisterEntryUpdaterAction = {
   payload: {
     id: string;
     mint: boolean;
@@ -35,6 +28,13 @@ export function registerEntry(entry: {
     mapboxApiUrl: string;
     mapStylesReplaceDefault: boolean;
   };
+};
+
+export function registerEntry(
+  entry: RegisterEntryUpdaterAction['payload']
+): {
+  type: ActionTypes.REGISTER_ENTRY;
+  payload: RegisterEntryUpdaterAction['payload'];
 };
 
 export function deleteEntry(id: string): {type: ActionTypes.DELETE_ENTRY; payload: string};

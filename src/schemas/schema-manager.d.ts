@@ -4,9 +4,10 @@ import {
   Tooltip,
   SplitMap,
   AnimationConfig,
-  VisState
-} from 'reducers/vis-state-updaters';
-import {RGBColor, Merge} from 'reducers/types';
+  VisState,
+  RGBColor, 
+  Merge
+} from 'reducers';
 import {LayerTextLabel} from 'layers/layer-factory';
 
 export type SavedFilter = {

@@ -1,6 +1,7 @@
 import * as UiStateActions from 'actions/ui-state-actions';
 import {ToggleSplitMapUpdaterAction} from 'actions/map-state-actions';
 import {LoadFilesUpdaterAction, LoadFilesErrUpdaterAction} from ' actions/vis-state-actions';
+
 export type ExportImage = {
   ratio: string;
   resolution: string;

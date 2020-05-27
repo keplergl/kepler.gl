@@ -1,4 +1,4 @@
-import {RGBColor, RGBAColor, HexColor, Field} from '../reducers/types';
+import {RGBColor, RGBAColor, HexColor, Field} from 'reducers';
 
 export type ColorRange = {
   name: string;
@@ -54,7 +54,7 @@ export type VisConfigBoolean = VisConfig & {
   defaultValue: boolean;
 };
 
-export type VisConfigSelection = VisConfig<string> & {
+export type VisConfigSelection = VisConfig & {
   type: 'select';
   defaultValue: string;
   options: string[];

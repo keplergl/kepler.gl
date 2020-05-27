@@ -1,4 +1,5 @@
 import * as ProviderActions from 'actions/provider-actions';
+import {MapListItem} from 'cloud-providers';
 
 type ActionPayload<P> = {
   type?: string;
@@ -13,6 +14,7 @@ export type ProviderState = {
   successInfo: any;
   mapSaved: null | string;
   initialState: any;
+  visualizations: MapListItem[]
 };
 
 export const INITIAL_PROVIDER_STATE: ProviderState;

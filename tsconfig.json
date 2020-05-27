@@ -24,11 +24,20 @@
     "baseUrl": "./src"
   },
   "include": [
-    "src/reducers",
     "src/actions",
-    "src/processors",
-    "src/utils",
     "src/cloud-providers",
+    "src/processors",
+    "src/reducers",
     "src/schemas",
+    "src/utils",
+
+    // TODO: add types
+    // "src/components",
+    // "src/constants",
+    // "src/deckgl-layers",
+    // "src/layers"
+    // "src/localization",
+    // "src/middleware",
+    // "src/tasks"
   ]
 }

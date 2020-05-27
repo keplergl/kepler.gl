@@ -47,7 +47,7 @@ export type ProtoDataset = {
   metadata?: any;
 };
 
-export type AddDaataToMapOptions = {
+export type AddDataToMapOptions = {
   centerMap?: boolean;
   readOnly?: boolean;
   keepExistingConfig?: boolean;
@@ -55,7 +55,7 @@ export type AddDaataToMapOptions = {
 
 export type AddDataToMaoPayload = {
   datasets: ProtoDataset[];
-  options?: AddDaataToMapOptions;
+  options?: AddDataToMapOptions;
   config?: ParsedConfig;
   info?: Partial<MapInfo>
 };
@@ -68,13 +68,13 @@ export function resetMapConfig(): {type: ActionTypes.RESET_MAP_CONFIG};
 
 export type ReceiveMapConfigPayload = {
   config: ParsedConfig;
-  options?: AddDaataToMapOptions;
+  options?: AddDataToMapOptions;
   bounds?: Bounds;
 };
 
 export function receiveMapConfig(
   config: ParsedConfig,
-  options: AddDaataToMapOptions
+  options: AddDataToMapOptions
 ): {
   type: ActionTypes.RECEIVE_MAP_CONFIG;
   payload: ReceiveMapConfigPayload;

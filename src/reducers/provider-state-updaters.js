@@ -54,7 +54,8 @@ export const INITIAL_PROVIDER_STATE = {
   providerError: null,
   currentProvider: null,
   successInfo: {},
-  mapSaved: null
+  mapSaved: null,
+  visualizations: []
 };
 import {DATASET_HANDLERS} from 'processors/data-processor';
 
@@ -279,6 +280,10 @@ function parseLoadMapResponse(response, loadParams, provider) {
   };
 }
 
+/**
+ * 
+ * @type {typeof import('./provider-state-updaters').loadCloudMapSuccessUpdater} 
+ */
 export const loadCloudMapSuccessUpdater = (state, action) => {
   const {response, loadParams, provider, onSuccess, onError} = action.payload;
 
@@ -309,6 +314,10 @@ export const loadCloudMapSuccessUpdater = (state, action) => {
   return tasks.length ? withTask(newState, tasks) : newState;
 };
 
+/**
+ * 
+ * @type {typeof import('./provider-state-updaters').loadCloudMapErrorUpdater} 
+ */
 export const loadCloudMapErrorUpdater = (state, action) => {
   const message = getError(action.payload.error) || `Error loading saved map`;
 
@@ -328,9 +337,8 @@ export const loadCloudMapErrorUpdater = (state, action) => {
 };
 
 /**
- *
- * @param {*} state
- * @param {*} action
+ * 
+ * @type {typeof import('./provider-state-updaters').resetProviderStatusUpdater} 
  */
 export const resetProviderStatusUpdater = (state, action) => ({
   ...state,
@@ -342,8 +350,7 @@ export const resetProviderStatusUpdater = (state, action) => ({
 
 /**
  * Set current cloudProvider
- * @param {*} state
- * @param {*} action
+ * @type {typeof import('./provider-state-updaters').setCloudProviderUpdater} 
  */
 export const setCloudProviderUpdater = (state, action) => ({
   ...state,
@@ -353,6 +360,10 @@ export const setCloudProviderUpdater = (state, action) => ({
   currentProvider: action.payload
 });
 
+/**
+ * 
+ * @type {typeof import('./provider-state-updaters').getSavedMapsUpdater} 
+ */
 export const getSavedMapsUpdater = (state, action) => {
   const provider = action.payload;
   if (!_validateProvider(provider, 'listMaps')) {
@@ -375,12 +386,20 @@ export const getSavedMapsUpdater = (state, action) => {
   );
 };
 
+/**
+ * 
+ * @type {typeof import('./provider-state-updaters').getSavedMapsSuccessUpdater} 
+ */
 export const getSavedMapsSuccessUpdater = (state, action) => ({
   ...state,
   isProviderLoading: false,
   visualizations: action.payload.visualizations
 });
 
+/**
+ * 
+ * @type {typeof import('./provider-state-updaters').getSavedMapsErrorUpdater} 
+ */
 export const getSavedMapsErrorUpdater = (state, action) => {
   const message =
     getError(action.payload.error) || `Error getting saved maps from ${state.currentProvider}`;
