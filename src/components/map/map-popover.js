@@ -86,7 +86,7 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
     static propTypes = {
       layerHoverProp: PropTypes.object,
       coordinate: PropTypes.oneOfType([PropTypes.array, PropTypes.bool]),
-      freezed: PropTypes.bool,
+      frozen: PropTypes.bool,
       x: PropTypes.number,
       y: PropTypes.number,
       mapW: PropTypes.number.isRequired,
@@ -148,7 +148,7 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
     }
 
     render() {
-      const {x, y, freezed, coordinate, layerHoverProp} = this.props;
+      const {x, y, frozen, coordinate, layerHoverProp} = this.props;
 
       const style = Number.isFinite(x) && Number.isFinite(y) ? this._getPosition(x, y) : {};
 
@@ -162,7 +162,7 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
               maxWidth: MAX_WIDTH
             }}
           >
-            {freezed ? (
+            {frozen ? (
               <div className="map-popover__top">
                 <div className="gutter" />
                 <StyledPin className="popover-pin" onClick={this.props.onClose}>
