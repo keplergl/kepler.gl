@@ -45,6 +45,9 @@ import {hexToRgb} from 'utils/color-utils';
 
 const DEFAULT_BLDG_COLOR = '#D1CEC7';
 
+/**
+ * @return {import('./map-style-updaters').MapStyle}
+ */
 const getDefaultState = () => {
   const visibleLayerGroups = {};
   const styleType = 'dark';
@@ -114,15 +117,16 @@ const mapStyleUpdaters = null;
  * Default initial `mapStyle`
  * @memberof mapStyleUpdaters
  * @constant
- * @property {string} styleType - Default: `'dark'`
- * @property {Object} visibleLayerGroups - Default: `{}`
- * @property {Object} topLayerGroups - Default: `{}`
- * @property {Object} mapStyles - mapping from style key to style object
- * @property {string} mapboxApiAccessToken - Default: `null`
- * @Property {string} mapboxApiUrl - Default null
- * @Property {Boolean} mapStylesReplaceDefault - Default: `false`
- * @property {Object} inputStyle - Default: `{}`
- * @property {Array} threeDBuildingColor - Default: `[r, g, b]`
+ * @property styleType - Default: `'dark'`
+ * @property visibleLayerGroups - Default: `{}`
+ * @property topLayerGroups - Default: `{}`
+ * @property mapStyles - mapping from style key to style object
+ * @property mapboxApiAccessToken - Default: `null`
+ * @Property mapboxApiUrl - Default null
+ * @Property mapStylesReplaceDefault - Default: `false`
+ * @property inputStyle - Default: `{}`
+ * @property threeDBuildingColor - Default: `[r, g, b]`
+ * @type {import('./map-style-updaters').MapStyle}
  * @public
  */
 export const INITIAL_MAP_STYLE = getDefaultState();
@@ -216,11 +220,7 @@ function getLayerGroupsFromStyle(style) {
  * populate mapStyles.
  *
  * @memberof mapStyleUpdaters
- * @param {Object} state
- * @param {Object} action
- * @param {Object} action.payload
- * @param {string} action.payload.mapboxApiAccessToken
- * @returns {Object} nextState
+ * @type {typeof import('./map-style-updaters').initMapStyleUpdater}
  * @public
  */
 export const initMapStyleUpdater = (state, action) => ({
@@ -236,10 +236,7 @@ export const initMapStyleUpdater = (state, action) => ({
 /**
  * Update `visibleLayerGroups`to change layer group visibility
  * @memberof mapStyleUpdaters
- * @param {Object} state `mapStyle`
- * @param {Object} action
- * @param {Object} action.payload new config `{visibleLayerGroups: {label: false, road: true, background: true}}`
- * @returns {Object} nextState
+ * @type {typeof import('./map-style-updaters').mapConfigChangeUpdater}
  * @public
  */
 export const mapConfigChangeUpdater = (state, action) => ({
@@ -254,10 +251,7 @@ export const mapConfigChangeUpdater = (state, action) => ({
 /**
  * Change to another map style. The selected style should already been loaded into `mapStyle.mapStyles`
  * @memberof mapStyleUpdaters
- * @param {Object} state `mapStyle`
- * @param {Object} action
- * @param {string} action.payload
- * @returns {Object} nextState
+ * @type {typeof import('./map-style-updaters').mapStyleChangeUpdater}
  * @public
  */
 export const mapStyleChangeUpdater = (state, {payload: styleType}) => {
@@ -292,10 +286,7 @@ export const mapStyleChangeUpdater = (state, {payload: styleType}) => {
 /**
  * Callback when load map style success
  * @memberof mapStyleUpdaters
- * @param {Object} state `mapStyle`
- * @param {Object} action
- * @param {Object} action.payload a `{[id]: style}` mapping
- * @return {Object} nextState
+ * @type {typeof import('./map-style-updaters').loadMapStylesUpdater}
  * @public
  */
 export const loadMapStylesUpdater = (state, action) => {
@@ -328,15 +319,17 @@ export const loadMapStylesUpdater = (state, action) => {
 /**
  * Callback when load map style error
  * @memberof mapStyleUpdaters
- * @param {Object} state `mapStyle`
- * @param {Object} action
- * @param {*} action.payload error
- * @returns {Object} nextState
+ * @type {typeof import('./map-style-updaters').loadMapStyleErrUpdater}
  * @public
  */
 // do nothing for now, if didn't load, skip it
 export const loadMapStyleErrUpdater = state => state;
 
+/**
+ * @memberof mapStyleUpdaters
+ * @type {typeof import('./map-style-updaters').requestMapStylesUpdater}
+ * @public
+ */
 export const requestMapStylesUpdater = (state, {payload: mapStyles}) => {
   const loadMapStyleTasks = getLoadMapStyleTasks(
     mapStyles,
@@ -349,10 +342,11 @@ export const requestMapStylesUpdater = (state, {payload: mapStyles}) => {
 /**
  * Load map style object when pass in saved map config
  * @memberof mapStyleUpdaters
- * @param {Object} state `mapStyle`
- * @param {Object} action
- * @param {Object} action.payload saved map config `{mapStyle, visState, mapState}`
- * @returns {Object} nextState or `react-pam` tasks to load map style object
+ * @param state `mapStyle`
+ * @param action
+ * @param action.payload saved map config `{mapStyle, visState, mapState}`
+ * @returns nextState or `react-pam` tasks to load map style object
+ * @type {typeof import('./map-style-updaters').receiveMapConfigUpdater}
  */
 export const receiveMapConfigUpdater = (state, {payload: {config = {}}}) => {
   const {mapStyle} = config || {};
@@ -419,8 +413,9 @@ function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken, mapboxApiUrl) {
 /**
  * Reset map style config to initial state
  * @memberof mapStyleUpdaters
- * @param {Object} state `mapStyle`
- * @returns {Object} nextState
+ * @param state `mapStyle`
+ * @returns nextState
+ * @type {typeof import('./map-style-updaters').resetMapConfigMapStyleUpdater}
  * @public
  */
 export const resetMapConfigMapStyleUpdater = state => {
@@ -440,13 +435,7 @@ export const resetMapConfigMapStyleUpdater = state => {
 /**
  * Callback when a custom map style object is received
  * @memberof mapStyleUpdaters
- * @param {Object} state `mapStyle`
- * @param {Object} action
- * @param {Object} action.payload
- * @param {string} action.payload.icon
- * @param {Object} action.payload.style
- * @param {*} action.payload.error
- * @returns {Object} nextState
+ * @type {typeof import('./map-style-updaters').loadCustomMapStyleUpdater}
  * @public
  */
 export const loadCustomMapStyleUpdater = (state, {payload: {icon, style, error}}) => ({
@@ -472,16 +461,7 @@ export const loadCustomMapStyleUpdater = (state, {payload: {icon, style, error}}
 /**
  * Input a custom map style object
  * @memberof mapStyleUpdaters
- * @param {Object} state `mapStyle`
- * @param {Object} action action object
- * @param {Object} action.payload inputStyle
- * @param {string} action.payload.url style url e.g. `'mapbox://styles/heshan/xxxxxyyyyzzz'`
- * @param {string} action.payload.id style url e.g. `'custom_style_1'`
- * @param {Object} action.payload.style actual mapbox style json
- * @param {string} action.payload.name style name
- * @param {Object} action.payload.layerGroups layer groups that can be used to set map layer visibility
- * @param {Object} action.payload.icon icon image data url
- * @returns {Object} nextState
+ * @type {typeof import('./map-style-updaters').inputMapStyleUpdater}
  * @public
  */
 export const inputMapStyleUpdater = (state, {payload: {inputStyle, mapState}}) => {
@@ -515,8 +495,7 @@ export const inputMapStyleUpdater = (state, {payload: {inputStyle, mapState}}) =
  * This action is called when user click confirm after putting in a valid style url in the custom map style dialog.
  * It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
  * @memberof mapStyleUpdaters
- * @param {Object} state `mapStyle`
- * @returns {Object} nextState
+ * @type {typeof import('./map-style-updaters').addCustomMapStyleUpdater}
  */
 export const addCustomMapStyleUpdater = state => {
   const styleId = state.inputStyle.id;
@@ -536,9 +515,7 @@ export const addCustomMapStyleUpdater = state => {
 /**
  * Updates 3d building color
  * @memberof mapStyleUpdaters
- * @param state
- * @param color
- * @return {Object} nextState
+ * @type {typeof import('./map-style-updaters').set3dBuildingColorUpdater}
  */
 export const set3dBuildingColorUpdater = (state, {payload: color}) => ({
   ...state,

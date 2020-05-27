@@ -27,6 +27,7 @@ import ActionTypes from 'constants/action-types';
  * It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
  * param {void}
  * @memberof mapStyleActions
+ * @type {typeof import('./map-style-actions').addCustomMapStyle}
  * @public
  */
 export const addCustomMapStyle = createAction(ActionTypes.ADD_CUSTOM_MAP_STYLE);
@@ -34,14 +35,15 @@ export const addCustomMapStyle = createAction(ActionTypes.ADD_CUSTOM_MAP_STYLE);
 /**
  * Input a custom map style object
  * @memberof mapStyleActions
- * @param {Object} inputStyle
- * @param {string} inputStyle.url - style url e.g. `'mapbox://styles/heshan/xxxxxyyyyzzz'`
- * @param {string} inputStyle.id - style url e.g. `'custom_style_1'`
- * @param {Object} inputStyle.style - actual mapbox style json
- * @param {string} inputStyle.name - style name
- * @param {Object} inputStyle.layerGroups - layer groups that can be used to set map layer visibility
- * @param {Object} inputStyle.icon - icon image data url
- * @param {Object} mapState - mapState is optional
+ * @param inputStyle
+ * @param inputStyle.url - style url e.g. `'mapbox://styles/heshan/xxxxxyyyyzzz'`
+ * @param inputStyle.id - style id e.g. `'custom_style_1'`
+ * @param inputStyle.style - actual mapbox style json
+ * @param inputStyle.label - style name
+ * @param inputStyle.accessToken - mapbox access token
+ * @param inputStyle.icon - icon image data url
+ * @param [mapState] - mapState is optional
+ * @type {typeof import('./map-style-actions').inputMapStyle}
  * @public
  */
 export const inputMapStyle = createAction(ActionTypes.INPUT_MAP_STYLE, (inputStyle, mapState) => ({
@@ -52,7 +54,8 @@ export const inputMapStyle = createAction(ActionTypes.INPUT_MAP_STYLE, (inputSty
 /**
  * Update `visibleLayerGroups`to change layer group visibility
  * @memberof mapStyleActions
- * @param {Object} mapStyle new config `{visibleLayerGroups: {label: false, road: true, background: true}}`
+ * @param mapStyle new config `{visibleLayerGroups: {label: false, road: true, background: true}}`
+ * @type {typeof import('./map-style-actions').mapConfigChange}
  * @public
  */
 export const mapConfigChange = createAction(ActionTypes.MAP_CONFIG_CHANGE, mapStyle => mapStyle);
@@ -60,7 +63,7 @@ export const mapConfigChange = createAction(ActionTypes.MAP_CONFIG_CHANGE, mapSt
 /**
  * Request map style style object based on style.url.
  * @memberof mapStyleActions
- * @param {Array<Object>} mapStyles
+ * @type {typeof import('./map-style-actions').requestMapStyles}
  * @public
  */
 export const requestMapStyles = createAction(
@@ -70,7 +73,8 @@ export const requestMapStyles = createAction(
 /**
  * Callback when load map style success
  * @memberof mapStyleActions
- * @param {Object} newStyles a `{[id]: style}` mapping
+ * @param newStyles a `{[id]: style}` mapping
+ * @type {typeof import('./map-style-actions').loadMapStyles}
  * @public
  */
 export const loadMapStyles = createAction(ActionTypes.LOAD_MAP_STYLES, newStyles => newStyles);
@@ -78,7 +82,8 @@ export const loadMapStyles = createAction(ActionTypes.LOAD_MAP_STYLES, newStyles
 /**
  * Callback when load map style error
  * @memberof mapStyleActions
- * @param {*} error
+ * @param error
+ * @type {typeof import('./map-style-actions').loadMapStyleErr}
  * @public
  */
 export const loadMapStyleErr = createAction(ActionTypes.LOAD_MAP_STYLE_ERR, error => error);
@@ -86,7 +91,8 @@ export const loadMapStyleErr = createAction(ActionTypes.LOAD_MAP_STYLE_ERR, erro
 /**
  * Change to another map style. The selected style should already been loaded into `mapStyle.mapStyles`
  * @memberof mapStyleActions
- * @param {string} styleType the style to change to
+ * @param styleType the style to change to
+ * @type {typeof import('./map-style-actions').mapStyleChange}
  * @public
  */
 export const mapStyleChange = createAction(ActionTypes.MAP_STYLE_CHANGE, styleType => styleType);
@@ -94,10 +100,11 @@ export const mapStyleChange = createAction(ActionTypes.MAP_STYLE_CHANGE, styleTy
 /**
  * Callback when a custom map style object is received
  * @memberof mapStyleActions
- * @param {Object} customMapStyle
- * @param {string} customMapStyle.icon
- * @param {Object} customMapStyle.style
- * @param {*} customMapStyle.error
+ * @param customMapStyle
+ * @param customMapStyle.icon
+ * @param customMapStyle.style
+ * @param customMapStyle.error
+ * @type {typeof import('./map-style-actions').loadCustomMapStyle}
  * @public
  */
 export const loadCustomMapStyle = createAction(
@@ -109,7 +116,8 @@ export const loadCustomMapStyle = createAction(
 /**
  * Set 3d building layer group color
  * @memberof mapStyleActions
- * @param {Array} color - [r, g, b]
+ * @param color - [r, g, b]
+ * @type {typeof import('./map-style-actions').set3dBuildingColor}
  * @public
  */
 export const set3dBuildingColor = createAction(ActionTypes.SET_3D_BUILDING_COLOR, color => color);
