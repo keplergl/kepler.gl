@@ -62,10 +62,10 @@ Combine data and full configuration update in a single action
     -   `action.payload` **[Object][7]** `{datasets, options, config}`
         -   `action.payload.datasets` **([Array][8]&lt;[Object][7]> | [Object][7])** **\*required** datasets can be a dataset or an array of datasets
             Each dataset object needs to have `info` and `data` property.
-            -   `action.payload.datasets.info` **[object][7]** \-info of a dataset
+            -   `action.payload.datasets.info` **[Object][7]** \-info of a dataset
                 -   `action.payload.datasets.info.id` **[string][9]** id of this dataset. If config is defined, `id` should matches the `dataId` in config.
                 -   `action.payload.datasets.info.label` **[string][9]** A display name of this dataset
-            -   `action.payload.datasets.data` **[object][7]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
+            -   `action.payload.datasets.data` **[Object][7]** **\*required** The data object, in a tabular format with 2 properties `fields` and `rows`
                 -   `action.payload.datasets.data.fields` **[Array][8]&lt;[Object][7]>** **\*required** Array of fields,
                     -   `action.payload.datasets.data.fields.name` **[string][9]** **\*required** Name of the field,
                 -   `action.payload.datasets.data.rows` **[Array][8]&lt;[Array][8]>** **\*required** Array of rows, in a tabular format with `fields` and `rows`
