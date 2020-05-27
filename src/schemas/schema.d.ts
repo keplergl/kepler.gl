@@ -18,9 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-type Properties = {
-  [key: string]: null | Schema;
-} | string[] | null;
+type Properties =
+  | {
+      [key: string]: null | Schema;
+    }
+  | string[]
+  | null;
 
 export class Schema {
   constructor(prop?: {version?: string; key?: string; properties?: Properties}): any;

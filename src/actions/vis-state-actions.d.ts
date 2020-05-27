@@ -29,12 +29,12 @@ import {ValueOf, Merge} from '../reducers/types';
 
 export type LayerConfigChangeUpdaterAction = {
   oldLayer: Layer;
-  newConfig: Partiel<LayerConfig>;
+  newConfig: Partial<LayerConfig>;
 };
 
 export function layerConfigChange(
   oldLayer: Layer,
-  newConfig: Partiel<LayerConfig>
+  newConfig: Partial<LayerConfig>
 ): Merge<LayerConfigChangeUpdaterAction, {type: ActionTypes.LAYER_CONFIG_CHANGE}>;
 
 export type LayerTextLabelChangeUpdaterAction = {

@@ -281,8 +281,8 @@ function parseLoadMapResponse(response, loadParams, provider) {
 }
 
 /**
- * 
- * @type {typeof import('./provider-state-updaters').loadCloudMapSuccessUpdater} 
+ *
+ * @type {typeof import('./provider-state-updaters').loadCloudMapSuccessUpdater}
  */
 export const loadCloudMapSuccessUpdater = (state, action) => {
   const {response, loadParams, provider, onSuccess, onError} = action.payload;
@@ -315,8 +315,8 @@ export const loadCloudMapSuccessUpdater = (state, action) => {
 };
 
 /**
- * 
- * @type {typeof import('./provider-state-updaters').loadCloudMapErrorUpdater} 
+ *
+ * @type {typeof import('./provider-state-updaters').loadCloudMapErrorUpdater}
  */
 export const loadCloudMapErrorUpdater = (state, action) => {
   const message = getError(action.payload.error) || `Error loading saved map`;
@@ -337,8 +337,8 @@ export const loadCloudMapErrorUpdater = (state, action) => {
 };
 
 /**
- * 
- * @type {typeof import('./provider-state-updaters').resetProviderStatusUpdater} 
+ *
+ * @type {typeof import('./provider-state-updaters').resetProviderStatusUpdater}
  */
 export const resetProviderStatusUpdater = (state, action) => ({
   ...state,
@@ -350,7 +350,7 @@ export const resetProviderStatusUpdater = (state, action) => ({
 
 /**
  * Set current cloudProvider
- * @type {typeof import('./provider-state-updaters').setCloudProviderUpdater} 
+ * @type {typeof import('./provider-state-updaters').setCloudProviderUpdater}
  */
 export const setCloudProviderUpdater = (state, action) => ({
   ...state,
@@ -361,8 +361,8 @@ export const setCloudProviderUpdater = (state, action) => ({
 });
 
 /**
- * 
- * @type {typeof import('./provider-state-updaters').getSavedMapsUpdater} 
+ *
+ * @type {typeof import('./provider-state-updaters').getSavedMapsUpdater}
  */
 export const getSavedMapsUpdater = (state, action) => {
   const provider = action.payload;
@@ -387,8 +387,8 @@ export const getSavedMapsUpdater = (state, action) => {
 };
 
 /**
- * 
- * @type {typeof import('./provider-state-updaters').getSavedMapsSuccessUpdater} 
+ *
+ * @type {typeof import('./provider-state-updaters').getSavedMapsSuccessUpdater}
  */
 export const getSavedMapsSuccessUpdater = (state, action) => ({
   ...state,
@@ -397,8 +397,8 @@ export const getSavedMapsSuccessUpdater = (state, action) => ({
 });
 
 /**
- * 
- * @type {typeof import('./provider-state-updaters').getSavedMapsErrorUpdater} 
+ *
+ * @type {typeof import('./provider-state-updaters').getSavedMapsErrorUpdater}
  */
 export const getSavedMapsErrorUpdater = (state, action) => {
   const message =
