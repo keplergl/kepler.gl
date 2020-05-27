@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import {ChickletButton, ChickletTag} from 'components/common/item-selector/chickleted-input';
 import {Circle, Delete} from 'components/common/icons';
-import {TOOLTIP_FORMATS} from './constants';
+import {TOOLTIP_FORMATS} from 'constants/tooltip';
 import DropdownList from 'components/common/item-selector/dropdown-list';
 import {Tooltip} from 'components/common/styled-components';
 import {FormattedMessage} from 'react-intl';
