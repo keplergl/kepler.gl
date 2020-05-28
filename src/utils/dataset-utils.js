@@ -39,6 +39,7 @@ const datasetColors = [
 
 /**
  * Random color generator
+ * @return {Generator<import('reducers/types').RGBColor>}
  */
 function* generateColor() {
   let index = 0;
@@ -52,6 +53,7 @@ function* generateColor() {
 
 export const datasetColorMaker = generateColor();
 
+/** @type {typeof import('./dataset-utils').getNewDatasetColor} */
 function getNewDatasetColor(datasets) {
   const presetColors = datasetColors.map(String);
   const usedColors = uniq(Object.values(datasets).map(d => String(d.color))).filter(c =>
@@ -71,7 +73,11 @@ function getNewDatasetColor(datasets) {
   return color;
 }
 
-export function createNewDataEntry({info = {}, data}, datasets = {}) {
+/**
+ * Take datasets payload from addDataToMap, create datasets entry save to visState
+ * @type {typeof import('./dataset-utils').createNewDataEntry}
+ */
+export function createNewDataEntry({info, data}, datasets = {}) {
   const validatedData = validateInputData(data);
   if (!validatedData) {
     return {};
@@ -81,7 +87,7 @@ export function createNewDataEntry({info = {}, data}, datasets = {}) {
   const datasetInfo = {
     id: generateHashId(4),
     label: 'new dataset',
-    ...info
+    ...(info || {})
   };
   const dataId = datasetInfo.id;
 
@@ -121,8 +127,9 @@ export function removeSuffixAndDelimiters(layerName, suffix) {
 /**
  * Find point fields pairs from fields
  *
- * @param {Array} fields
- * @returns {Array} found point fields
+ * @param fields
+ * @returns found point fields
+ * @type {typeof import('./dataset-utils').findPointFieldPairs}
  */
 export function findPointFieldPairs(fields) {
   const allNames = fields.map(f => f.name.toLowerCase());
@@ -163,6 +170,13 @@ export function findPointFieldPairs(fields) {
   }, []);
 }
 
+/**
+ *
+ * @param dataset
+ * @param column
+ * @param mode
+ * @type {typeof import('./dataset-utils').sortDatasetByColumn}
+ */
 export function sortDatasetByColumn(dataset, column, mode) {
   const {allIndexes, fields, allData} = dataset;
   const fieldIndex = fields.findIndex(f => f.name === column);

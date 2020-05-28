@@ -30,7 +30,6 @@ export const LOCALES = {
  * Localization can be passed to `KeplerGl` via uiState `locale`.
  * Available languages are `en` and `fi`. Default language is `en`
  * @constant
- * @type {string}
  * @public
  * @example
  * ```js

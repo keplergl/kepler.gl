@@ -26,7 +26,6 @@ export {
   ALL_FIELD_TYPES,
   DATA_TABLE_ID,
   DATASET_FORMATS,
-  DEFAULT_COLOR_RANGE,
   DEFAULT_LAYER_GROUPS,
   DEFAULT_MAP_STYLES,
   DEFAULT_NOTIFICATION_TOPICS,
@@ -65,3 +64,4 @@ export {BUG_REPORT_LINK, USER_GUIDE_DOC} from './user-guides';
 
 export {VizColorPalette, DataVizColors} from './custom-color-ranges';
 export {COLOR_RANGES, DefaultColorRange} from './color-ranges';
+export {DEFAULT_COLOR_RANGE} from 'layers/layer-factory';

@@ -122,6 +122,7 @@ export default {
     }
   },
   layerVisConfigs: {
+    angle: 'Angle',
     strokeWidth: 'Stroke Width (Pixels)',
     strokeWidthRange: 'Stroke Width Range',
     radius: 'Radius',

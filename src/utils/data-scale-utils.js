@@ -23,10 +23,7 @@ import {extent} from 'd3-array';
 
 /**
  * return quantile domain for an array of data
- * @param {array} data
- * @param {function | undefined} valueAccessor
- * @param {function | undefined} sortFunc
- * @returns {array} domain
+ * @type {typeof import('./data-scale-utils').getQuantileDomain}
  */
 export function getQuantileDomain(data, valueAccessor, sortFunc) {
   const values = typeof valueAccessor === 'function' ? data.map(valueAccessor) : data;
@@ -36,9 +33,7 @@ export function getQuantileDomain(data, valueAccessor, sortFunc) {
 
 /**
  * return ordinal domain for an array of data
- * @param {array} data
- * @param {function} valueAccessor
- * @returns {array} domain
+ * @type {typeof import('./data-scale-utils').getOrdinalDomain}
  */
 export function getOrdinalDomain(data, valueAccessor) {
   const values = typeof valueAccessor === 'function' ? data.map(valueAccessor) : data;
@@ -50,21 +45,17 @@ export function getOrdinalDomain(data, valueAccessor) {
 
 /**
  * return linear domain for an array of data
- * @param {Array} data
- * @param {function} valueAccessor
- * @returns {Array} domain
+ * @type {typeof import('./data-scale-utils').getLinearDomain}
  */
-export function getLinearDomain(data, valueAccessor = null) {
+export function getLinearDomain(data, valueAccessor) {
   const range = typeof valueAccessor === 'function' ? extent(data, valueAccessor) : extent(data);
-
+  // @ts-ignore
   return range.map((d, i) => (d === undefined ? i : d));
 }
 
 /**
  * return linear domain for an array of data. A log scale domain cannot contain 0
- * @param {Array} data
- * @param {function} valueAccessor
- * @returns {Array} domain
+ * @type {typeof import('./data-scale-utils').getLogDomain}
  */
 export function getLogDomain(data, valueAccessor) {
   const [d0, d1] = getLinearDomain(data, valueAccessor);

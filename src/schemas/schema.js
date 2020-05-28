@@ -22,8 +22,9 @@ import {console as Console} from 'global/window';
 
 import {CURRENT_VERSION} from './versions';
 
+/** @type {typeof import('./schema').Schema} */
 export default class Schema {
-  constructor({version, key, properties} = {}) {
+  constructor({version = CURRENT_VERSION, key = '', properties = null} = {}) {
     this.version = version;
     this.properties = properties;
     this.key = key;

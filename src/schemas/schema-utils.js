@@ -22,7 +22,6 @@
  * Recursively save / load value for state based on property keys,
  * if property[key] is another schema
  * Use is to get value to save
- * @param {Object} opertation - 'save' or 'load'
  * @param {Object} state - state to save
  * @param {Object} properties - properties schema
  * @returns {Object} - saved state

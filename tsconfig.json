@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "allowJs": true,
+    "checkJs": true,
+    "jsx": "react",
+    "noEmit": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noImplicitAny": false,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "outDir": "build/dist",
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "baseUrl": "./src"
+  },
+  "include": [
+    "src/actions",
+    "src/cloud-providers",
+    "src/processors",
+    "src/reducers",
+    "src/schemas",
+    "src/utils",
+
+    // TODO: add types
+    // "src/components",
+    // "src/constants",
+    // "src/deckgl-layers",
+    // "src/layers"
+    // "src/localization",
+    // "src/middleware",
+    // "src/tasks"
+  ]
+}

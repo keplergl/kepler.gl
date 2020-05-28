@@ -121,8 +121,8 @@ export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
  * @param {string} param.mapboxApiAccessToken
  * @param {string} param.mapboxApiUrl
  * @param {Object} param.mapState
- * @param {numbers} param.mapW
- * @param {numbers} param.mapH
+ * @param {number} param.mapW
+ * @param {number} param.mapH
  */
 export function getStyleImageIcon({
   styleUrl,
@@ -149,6 +149,7 @@ export function getStyleImageIcon({
 export function scaleMapStyleByResolution(mapboxStyle, scale) {
   if (scale !== 1 && mapboxStyle) {
     const labelLayerGroup = DEFAULT_LAYER_GROUPS.find(lg => lg.slug === 'label');
+    // @ts-ignore
     const {filter: labelLayerFilter} = labelLayerGroup;
     const zoomOffset = Math.log2(scale);
 

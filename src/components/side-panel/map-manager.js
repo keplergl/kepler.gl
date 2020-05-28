@@ -49,11 +49,6 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
     buildingColorSelector = props => props.mapStyle.threeDBuildingColor;
     setColorSelector = props => props.set3dBuildingColor;
 
-    _updateConfig = newProp => {
-      const newConfig = {...this.props.mapStyle, ...newProp};
-      this.props.onConfigChange(newConfig);
-    };
-
     _toggleSelecting = () => {
       this.setState({isSelecting: !this.state.isSelecting});
     };
@@ -96,7 +91,7 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
                 layers={mapStyle.visibleLayerGroups}
                 editableLayers={editableLayers}
                 topLayers={mapStyle.topLayerGroups}
-                onChange={this._updateConfig}
+                onChange={this.props.onConfigChange}
               />
             ) : null}
             <SidePanelSection>
