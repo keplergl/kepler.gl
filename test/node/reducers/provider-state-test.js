@@ -102,7 +102,8 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
       currentProvider: 'taro',
       successInfo: {},
       initialState: {},
-      mapSaved: null
+      mapSaved: null,
+      visualizations: []
     },
     'Should set isProviderLoading and current provider'
   );
@@ -134,7 +135,8 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
       currentProvider: 'taro',
       initialState: {},
       mapSaved: 'taro',
-      successInfo: {url: 'taro_and_blue'}
+      successInfo: {url: 'taro_and_blue'},
+      visualizations: []
     },
     'Should set isProviderLoading to false and successInfo, mapSaved to taro'
   );
@@ -152,7 +154,8 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
       currentProvider: 'taro',
       initialState: {},
       mapSaved: null,
-      successInfo: {}
+      successInfo: {},
+      visualizations: []
     },
     'Should set isLoading to false and error'
   );
@@ -238,7 +241,8 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
       currentProvider: 'taro',
       mapSaved: 'taro',
       initialState: {},
-      successInfo: {url: 'taro_and_blue'}
+      successInfo: {url: 'taro_and_blue'},
+      visualizations: []
     },
     'Should set isProviderLoading to false and successInfo'
   );
@@ -267,7 +271,8 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
       mapSaved: 'taro',
       initialState: {},
       successInfo: {url: 'taro_and_blue'},
-      modalId: null
+      modalId: null,
+      visualizations: []
     },
     'Should call toggleModal(null'
   );
@@ -283,7 +288,8 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD -> onSuccess : onError', t =
       mapSaved: 'taro',
       initialState: {},
       successInfo: {},
-      modalId: null
+      modalId: null,
+      visualizations: []
     },
     'Should call resetProviderStatus'
   );
@@ -324,7 +330,8 @@ test('#providerStateReducer -> RESET_PROVIDER_STATUS', t => {
       currentProvider: 'taro',
       successInfo: {},
       initialState: {},
-      mapSaved: null
+      mapSaved: null,
+      visualizations: []
     },
     'Should resetProviderStatus'
   );
@@ -343,7 +350,8 @@ test('#providerStateReducer -> SET_CLOUD_PROVIDER', t => {
       currentProvider: 'blue',
       successInfo: {},
       mapSaved: null,
-      initialState: {}
+      initialState: {},
+      visualizations: []
     },
     'Should setCloudProvider'
   );

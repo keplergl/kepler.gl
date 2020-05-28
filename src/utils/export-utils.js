@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// @ts-nocheck
 import domtoimage from 'utils/dom-to-image';
 import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
 import {

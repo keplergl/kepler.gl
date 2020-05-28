@@ -20,10 +20,7 @@
 
 /**
  * Find default layers from fields
- *
- * @param {Object} dataset
- * @param {Object} layerClasses
- * @returns {Array} found layers
+ * @type {typeof import('./layer-utils').findDefaultLayer}
  */
 export function findDefaultLayer(dataset, layerClasses = {}) {
   if (!dataset) {
@@ -59,10 +56,7 @@ export function findDefaultLayer(dataset, layerClasses = {}) {
 /**
  * calculate layer data based on layer type, col Config,
  * return updated layer if colorDomain, dataMap has changed
- * @param {Object} layer
- * @param {Object} state
- * @param {Object} oldLayerData
- * @returns {{layerData: Array<Object>, layer: Object | undefined}}
+ * @type {typeof import('./layer-utils').calculateLayerData}
  */
 export function calculateLayerData(layer, state, oldLayerData) {
   const {type} = layer;

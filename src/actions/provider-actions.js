@@ -19,55 +19,76 @@
 // THE SOFTWARE.
 
 import {createAction} from 'redux-actions';
-import keyMirror from 'keymirror';
-import {addPrefix} from 'constants/action-types';
+import {ACTION_PREFIX} from 'constants/action-types';
 
-export const ActionTypes = addPrefix(
-  keyMirror({
-    EXPORT_FILE_TO_CLOUD: null,
-    EXPORT_FILE_SUCCESS: null,
-    EXPORT_FILE_ERROR: null,
-    RESET_PROVIDER_STATUS: null,
-    SET_CLOUD_PROVIDER: null,
-    POST_SAVE_LOAD_SUCCESS: null,
-    LOAD_CLOUD_MAP: null,
-    LOAD_CLOUD_MAP_SUCCESS: null,
-    LOAD_CLOUD_MAP_ERROR: null,
-    GET_SAVED_MAPS: null,
-    GET_SAVED_MAPS_SUCCESS: null,
-    GET_SAVED_MAPS_ERROR: null
-  })
-);
+/** @type {import('./provider-actions').ProviderActionTypes} */
+export const ActionTypes = {
+  EXPORT_FILE_TO_CLOUD: `${ACTION_PREFIX}EXPORT_FILE_TO_CLOUD`,
+  EXPORT_FILE_SUCCESS: `${ACTION_PREFIX}EXPORT_FILE_SUCCESS`,
+  EXPORT_FILE_ERROR: `${ACTION_PREFIX}EXPORT_FILE_ERROR`,
+  RESET_PROVIDER_STATUS: `${ACTION_PREFIX}RESET_PROVIDER_STATUS`,
+  SET_CLOUD_PROVIDER: `${ACTION_PREFIX}SET_CLOUD_PROVIDER`,
+  POST_SAVE_LOAD_SUCCESS: `${ACTION_PREFIX}POST_SAVE_LOAD_SUCCESS`,
+  LOAD_CLOUD_MAP: `${ACTION_PREFIX}LOAD_CLOUD_MAP`,
+  LOAD_CLOUD_MAP_SUCCESS: `${ACTION_PREFIX}LOAD_CLOUD_MAP_SUCCESS`,
+  LOAD_CLOUD_MAP_ERROR: `${ACTION_PREFIX}LOAD_CLOUD_MAP_ERROR`,
+  GET_SAVED_MAPS: `${ACTION_PREFIX}GET_SAVED_MAPS`,
+  GET_SAVED_MAPS_SUCCESS: `${ACTION_PREFIX}GET_SAVED_MAPS_SUCCESS`,
+  GET_SAVED_MAPS_ERROR: `${ACTION_PREFIX}GET_SAVED_MAPS_ERROR`
+};
 
+/**
+ * Call provider to upload file to cloud
+ * @param mapData
+ * @param provider
+ * @param options
+ * @param onSuccess
+ * @param onError
+ * @param closeModal
+ * @type {typeof import('./provider-actions').exportFileToCloud}
+ */
 export const exportFileToCloud = createAction(ActionTypes.EXPORT_FILE_TO_CLOUD, payload => payload);
 
+/**
+ * @type {typeof import('./provider-actions').exportFileSuccess}
+ */
 export const exportFileSuccess = createAction(ActionTypes.EXPORT_FILE_SUCCESS, payload => payload);
 
+/** @type {typeof import('./provider-actions').exportFileError} */
 export const exportFileError = createAction(ActionTypes.EXPORT_FILE_ERROR, payload => payload);
 
+/** @type {typeof import('./provider-actions').postSaveLoadSuccess} */
 export const postSaveLoadSuccess = createAction(
   ActionTypes.POST_SAVE_LOAD_SUCCESS,
   message => message
 );
 
+/** @type {typeof import('./provider-actions').resetProviderStatus} */
 export const resetProviderStatus = createAction(ActionTypes.RESET_PROVIDER_STATUS);
 
+/** @type {typeof import('./provider-actions').setCloudProvider} */
 export const setCloudProvider = createAction(ActionTypes.SET_CLOUD_PROVIDER, provider => provider);
 
+/** @type {typeof import('./provider-actions').loadCloudMap} */
 export const loadCloudMap = createAction(ActionTypes.LOAD_CLOUD_MAP, payload => payload);
 
+/** @type {typeof import('./provider-actions').loadCloudMapSuccess} */
 export const loadCloudMapSuccess = createAction(
   ActionTypes.LOAD_CLOUD_MAP_SUCCESS,
   payload => payload
 );
 
+/** @type {typeof import('./provider-actions').loadCloudMapError} */
 export const loadCloudMapError = createAction(ActionTypes.LOAD_CLOUD_MAP_ERROR, payload => payload);
 
+/** @type {typeof import('./provider-actions').getSavedMaps} */
 export const getSavedMaps = createAction(ActionTypes.GET_SAVED_MAPS, provider => provider);
 
+/** @type {typeof import('./provider-actions').getSavedMapsSuccess} */
 export const getSavedMapsSuccess = createAction(
   ActionTypes.GET_SAVED_MAPS_SUCCESS,
   payload => payload
 );
 
+/** @type {typeof import('./provider-actions').getSavedMapsError} */
 export const getSavedMapsError = createAction(ActionTypes.GET_SAVED_MAPS_ERROR, payload => payload);

@@ -55,7 +55,7 @@ export const getActionForwardAddress = id => `${ADDRESS_PREFIX}${id.toUpperCase(
  * @memberof forwardActions
  * @param {string} id - The id to forward to
  * @param {Object} action - the action object {type: string, payload: *}
- * @returns {{type: string, payload: {type: string: payload: *, meta: {_id_: string}, meta: {_forward_: string, _addr_: string}}}}
+ * @returns {{type: string, payload: {type: string, payload: *, meta: {_id_: string}, meta: {_forward_: string, _addr_: string}}}}
  * @public
  * @example
  *
@@ -178,5 +178,6 @@ export const _updateProperty = (state, id, nextState) =>
  * @public
  */
 /* eslint-disable no-unused-vars */
+// @ts-ignore
 const forwardActions = null;
 /* eslint-enable no-unused-vars */

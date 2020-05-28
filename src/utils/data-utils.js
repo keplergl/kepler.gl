@@ -48,7 +48,6 @@ export function unique(values) {
 /**
  * return center of map from given points
  * @param {array} layers
- * @param {string} dataId
  * @returns {object} coordinates of map center, empty if not found
  */
 export function findMapBounds(layers) {
@@ -110,8 +109,7 @@ export function getSampleData(data, sampleSize = 500, getValue = d => d) {
 
 /**
  * Convert different time format to unix milliseconds
- * @param {*} value
- * @param {*} format
+ * @type {typeof import('./data-utils').timeToUnixMilli}
  */
 export function timeToUnixMilli(value, format) {
   if (notNullorUndefined(value)) {
@@ -124,6 +122,10 @@ export function timeToUnixMilli(value, format) {
   return null;
 }
 
+/**
+ *
+ * @type {typeof import('./data-utils').maybeToDate}
+ */
 export function maybeToDate(isTime, fieldIdx, format, d) {
   if (isTime) {
     return timeToUnixMilli(d[fieldIdx], format);
@@ -134,20 +136,29 @@ export function maybeToDate(isTime, fieldIdx, format, d) {
 
 /**
  * whether null or undefined
- * @returns {boolean} - yes or no
+ * @type {typeof import('./data-utils').notNullorUndefined}
  */
 export function notNullorUndefined(d) {
   return d !== undefined && d !== null;
 }
 
+/**
+ * whether null or undefined
+ */
 export function isPlainObject(obj) {
   return obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj);
 }
 
+/**
+ * @type {typeof import('./data-utils').numberSort}
+ */
 export function numberSort(a, b) {
   return a - b;
 }
 
+/**
+ * @type {typeof import('./data-utils').getSortingFunction}
+ */
 export function getSortingFunction(fieldType) {
   switch (fieldType) {
     case ALL_FIELD_TYPES.real:
@@ -162,9 +173,7 @@ export function getSortingFunction(fieldType) {
 /**
  * round number with exact number of decimals
  * return as a string
- * @param {number} num
- * @param {number} decimals
- * @returns {string} - a rounded number in string format
+ * @type {typeof import('./data-utils').preciseRound}
  */
 export function preciseRound(num, decimals) {
   const t = Math.pow(10, decimals);
@@ -248,9 +257,7 @@ export const FIELD_DISPLAY_FORMAT = {
 
 /**
  * Parse field value and type and return a string representation
- * @param {string} value the field value
- * @param {string} type the field type
- * @return {*}
+ * @type {typeof import('./data-utils').parseFieldValue}
  */
 export const parseFieldValue = (value, type) => {
   if (!notNullorUndefined(value)) {

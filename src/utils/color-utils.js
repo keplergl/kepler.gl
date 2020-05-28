@@ -22,7 +22,7 @@
  * get r g b from hex code
  *
  * @param {string} hex
- * @returns {array} array of r g bs
+ * @returns {import('reducers/types').RGBColor} array of r g bs
  */
 export function hexToRgb(hex) {
   const result = isHexColor(hex);
@@ -64,7 +64,7 @@ export function rgbToHex([r, g, b]) {
  * e.g. Global Warming 6 -> Global Warming
  *
  * @param {Object} colorRange
- * @return {string}
+ * @return {string | null}
  */
 export function getColorGroupByName(colorRange) {
   if (!colorRange || typeof colorRange.name !== 'string') {
@@ -92,11 +92,11 @@ export function reverseColorRange(reversed, colorRange) {
 /**
  * given a list of rgb arrays it will generate a linear gradient css rule
  * @param direction
- * @param colors
+ * @param {Array} colors
  * @return {string}
  */
 export function createLinearGradient(direction, colors) {
-  const step = parseFloat(100.0 / colors.length).toFixed(2);
+  const step = parseFloat((100.0 / colors.length).toFixed(2));
   const bands = colors.map((rgb, index) => {
     return `rgba(${rgb.join(',')}, 1) ${step * index}%, rgba(${rgb.join(',')}, 1) ${step *
       (index + 1)}%`;

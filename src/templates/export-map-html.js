@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// @ts-nocheck
 import {KEPLER_GL_VERSION, EXPORT_HTML_MAP_MODES} from 'constants/default-settings';
 
 /**
