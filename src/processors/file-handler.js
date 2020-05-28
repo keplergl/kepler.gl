@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+<<<<<<< HEAD
 import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
@@ -44,6 +45,149 @@ const JSON_LOADER_OPTIONS = {
     '$.datasets' // KeplerGL JSON
   ]
 };
+=======
+import {FileReader} from 'global/window';
+import Console from 'global/console';
+import {parse, parseInBatches, registerLoaders} from '@loaders.gl/core';
+import {JSONLoader} from '@loaders.gl/json';
+import {CSVLoader} from '@loaders.gl/csv';
+import {
+  processCsvData,
+  processGeojson,
+  processKeplerglJSON,
+  processRowObject
+} from './data-processor';
+import {isPlainObject, generateHashId} from 'utils/utils';
+import {DATASET_FORMATS} from 'constants/default-settings';
+
+registerLoaders([JSONLoader, CSVLoader]);
+
+export async function readFile({file, fileCache = []}) {
+  const result = await loadFile(file);
+  if (!result || !result.data) {
+    Console.warn(`Cannot parse file ${file.name}.`);
+    // return fileCache, to keep process other files
+    return fileCache;
+  }
+  return [
+    ...fileCache,
+    {
+      data: result.data,
+      info: {
+        label: file.name,
+        format: result.format
+      }
+    }
+  ];
+}
+
+export async function loadFile(file) {
+  // Don't read as string files with a size 250MB or bigger because it may
+  // exceed the browsers maximum string length.
+  const content =
+    file.size >= 250 * 1024 * 1024 ? await parseFileInBatches(file) : await parseFile(file);
+  if (Array.isArray(content)) {
+    return {
+      format: 'csv',
+      data: processCsvData(content)
+    };
+  } else if (isKeplerGlMap(content)) {
+    return {
+      format: DATASET_FORMATS.keplergl,
+      data: processKeplerglJSON(content)
+    };
+  } else if (isRowObject(content)) {
+    return {
+      format: DATASET_FORMATS.row,
+      data: processRowObject(content)
+    };
+  } else if (isGeoJson(content)) {
+    return {
+      format: DATASET_FORMATS.geojson,
+      data: processGeojson(content)
+    };
+  }
+  return null;
+}
+
+async function* fileReaderAsyncIterable(file, chunkSize) {
+  let offset = 0;
+  while (offset < file.size) {
+    const end = offset + chunkSize;
+    const slice = file.slice(offset, end);
+    const chunk = await new Promise((resolve, reject) => {
+      const fileReader = new FileReader(file);
+      fileReader.onload = event => {
+        resolve(event.target.result);
+      };
+      fileReader.onerror = reject;
+      fileReader.onabort = reject;
+      fileReader.readAsArrayBuffer(slice);
+    });
+    offset = end;
+    yield chunk;
+  }
+}
+
+async function parseFileInBatches(file) {
+  const chunkSize = 1024 * 1024; // 1MB, biggest value that keeps UI responsive
+  const batchIterator = await parseInBatches(fileReaderAsyncIterable(file, chunkSize), {
+    csv: {header: false},
+    json: {_rootObjectBatches: true}
+  });
+  let result = {};
+  let batches = [];
+  for await (const batch of batchIterator) {
+    // Last batch will have this special type and will provide all the root
+    // properties of the parsed document.
+    if (batch.batchType === 'root-object-batch-complete') {
+      // TODO: It would be nice if loaders.gl could handle this detail when
+      // parsing in batches, otherwise we can't entirely delegate the
+      // responsibility of parsing any format.
+      if (batch.container.features) {
+        result.features = batches;
+      } else if (batch.container.datasets) {
+        result.datasets = batches;
+      } else {
+        // HACK to get things moving, I couldn't find any realiable way to
+        // identify a Row JSON—batch.container seems to equal batches[0] though.
+        result = batches;
+      }
+      // We copy all properties but skip datasets or fatures becuase they are
+      // empty arrays—we got its content in previous batches.
+      for (const k in batch.container) {
+        if (k !== 'datasets' && k !== 'features') {
+          result[k] = batch.container[k];
+        }
+      }
+    } else {
+      batches = batches.concat(batch.data);
+    }
+  }
+  return Object.keys(result).length === 0 // csv doesn't have any keys
+    ? batches
+    : result;
+}
+
+function parseFile(file) {
+  return new Promise((resolve, reject) => {
+    const fileReader = new FileReader(file);
+    fileReader.onload = async ({target: {result}}) => {
+      try {
+        const data = await parse(result, {
+          csv: {header: false}
+        });
+        resolve(data);
+      } catch (e) {
+        reject(e);
+      }
+    };
+    fileReader.onerror = reject;
+    fileReader.onabort = reject;
+    fileReader.readAsText(file, 'UTF-8');
+  });
+}
+>>>>>>> Install loaders.gl packages
 
 export function isGeoJson(json) {
   // json can be feature collection
