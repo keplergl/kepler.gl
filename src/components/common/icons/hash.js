@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base from './base';
 
-export default class Circle extends Component {
+export default class Hash extends Component {
   static propTypes = {
     /** Set the height of the icon, ex. '16px' */
     height: PropTypes.string
@@ -30,15 +30,17 @@ export default class Circle extends Component {
 
   static defaultProps = {
     height: '16px',
-    predefinedClassName: 'data-ex-icons-circle',
-    stroke: '#FFF',
+    predefinedClassName: 'data-ex-icons-hash',
     fill: 'rgba(0,0,0,0)'
   };
 
   render() {
     return (
       <Base {...this.props}>
-        <circle cx="32" cy="32" r="26" fill={this.props.fill} strokeWidth="12" />
+        <path
+          d="M33.3763 45.978H24.1434L20.3011 64H8.88889L12.7312 45.978H0V37.9341H14.4516L16.9749 26.3297H4.30108V18.2857H18.6953L22.6523 0H34.0072L30.1075 18.2857H39.3405L43.2975 0H54.7097L50.7527 18.2857H64V26.3297H49.0323L46.509 37.9341H59.6416V45.978H44.7885L40.9462 64H29.5341L33.3763 45.978ZM25.8638 37.9341H35.0968L37.6201 26.3297H28.3871L25.8638 37.9341Z"
+          fill={this.props.fill}
+        />
       </Base>
     );
   }

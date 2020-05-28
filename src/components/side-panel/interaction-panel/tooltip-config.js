@@ -98,7 +98,12 @@ function TooltipConfigFactory(DatasetTag) {
                 closeOnSelect={false}
                 multiSelect
                 inputTheme="secondary"
-                CustomChickletComponent={TooltipChickletFactory(dataId, config, onChange)}
+                CustomChickletComponent={TooltipChickletFactory(
+                  dataId,
+                  config,
+                  onChange,
+                  datasets[dataId].fields
+                )}
               />
             </SidePanelSection>
           ))}

@@ -21,15 +21,19 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import {ChickletButton, ChickletTag} from 'components/common/item-selector/chickleted-input';
-import {Circle, Delete} from 'components/common/icons';
-import {TOOLTIP_FORMATS} from 'constants/tooltip';
+import {Hash, Delete} from 'components/common/icons';
 import DropdownList from 'components/common/item-selector/dropdown-list';
 import {Tooltip} from 'components/common/styled-components';
 import {FormattedMessage} from 'react-intl';
 import onClickOutside from 'react-onclickoutside';
+import {FIELD_OPTS} from 'constants/default-settings';
+import {TOOLTIP_FORMATS} from 'constants/tooltip';
 
-function getFormatLabels() {
-  return Object.values(TOOLTIP_FORMATS).map(v => v.label);
+function getFormatLabels(fields, fieldName) {
+  const fieldType = fields.find(f => f.name === fieldName).type;
+  const formatLabels = (FIELD_OPTS[fieldType].format.tooltip || []).map(v => v.label);
+  formatLabels.unshift(TOOLTIP_FORMATS.NONE.label);
+  return formatLabels;
 }
 
 const ChickletAddonWrapper = styled.div`
@@ -59,21 +63,18 @@ const StyledPopover = styled.div`
   } */
 `;
 
-const circleStyles = {
+const hashStyles = {
   SHOW: {
-    stroke: '#fff',
-    fill: 'rgba(0,0,0,0)'
+    fill: '#fff'
   },
   IDLE: {
-    stroke: '#A0A7B4',
-    fill: 'rgba(0,0,0,0)'
+    fill: '#A0A7B4'
   },
   ACTIVE: {
-    stroke: '#1fbad6',
     fill: '#1fbad6'
   }
 };
-function TooltipChickletFactory(dataId, config, onChange) {
+function TooltipChickletFactory(dataId, config, onChange, fields) {
   class TooltipChicklet extends Component {
     state = {
       show: false
@@ -98,67 +99,70 @@ function TooltipChickletFactory(dataId, config, onChange) {
       const {disabled, name, remove} = this.props;
       const {show} = this.state;
       const field = config.fieldsToShow[dataId].find(fieldToShow => fieldToShow.name === name);
-      let selectionIndex = getFormatLabels().indexOf(field.format);
+      const formatLabels = getFormatLabels(fields, field.name);
+      let selectionIndex = formatLabels.indexOf(field.format);
       if (selectionIndex < 0) selectionIndex = 0;
-      let circleStyle = selectionIndex ? circleStyles.ACTIVE : circleStyles.IDLE;
+      let hashStyle = selectionIndex ? hashStyles.ACTIVE : hashStyles.IDLE;
       if (show) {
-        circleStyle = circleStyles.SHOW;
+        hashStyle = hashStyles.SHOW;
       }
 
       return (
         <ChickletButton ref={node => (this.node = node)}>
           <ChickletTag>{name}</ChickletTag>
-          <ChickletAddonWrapper>
-            <ChickletAddon data-tip data-for={`addon-${name}`}>
-              <Circle
-                height="8px"
-                onClick={e => {
-                  e.stopPropagation();
-                  this.setState({show: Boolean(!show)});
-                }}
-                {...circleStyle}
-              />
-              <Tooltip id={`addon-${name}`} effect="solid">
-                <span>
-                  {(selectionIndex && getFormatLabels()[selectionIndex]) || (
-                    <FormattedMessage id={'fieldSelector.formatting'} />
-                  )}
-                </span>
-              </Tooltip>
-            </ChickletAddon>
-            {show && (
-              <StyledPopover>
-                <DropdownList
-                  options={getFormatLabels()}
-                  selectionIndex={selectionIndex}
-                  onOptionSelected={(result, e) => {
+          {formatLabels.length > 1 && (
+            <ChickletAddonWrapper>
+              <ChickletAddon data-tip data-for={`addon-${name}`}>
+                <Hash
+                  height="8px"
+                  onClick={e => {
                     e.stopPropagation();
-                    this.setState({
-                      show: false
-                    });
-
-                    const oldFieldsToShow = config.fieldsToShow[dataId];
-                    const fieldsToShow = oldFieldsToShow.map(fieldToShow => {
-                      return fieldToShow.name === name
-                        ? {
-                            name,
-                            format: result
-                          }
-                        : fieldToShow;
-                    });
-                    const newConfig = {
-                      ...config,
-                      fieldsToShow: {
-                        ...config.fieldsToShow,
-                        [dataId]: fieldsToShow
-                      }
-                    };
-                    onChange(newConfig);
+                    this.setState({show: Boolean(!show)});
                   }}
+                  {...hashStyle}
                 />
-              </StyledPopover>
-            )}
-          </ChickletAddonWrapper>
+                <Tooltip id={`addon-${name}`} effect="solid">
+                  <span>
+                    {(selectionIndex && formatLabels[selectionIndex]) || (
+                      <FormattedMessage id={'fieldSelector.formatting'} />
+                    )}
+                  </span>
+                </Tooltip>
+              </ChickletAddon>
+              {show && (
+                <StyledPopover>
+                  <DropdownList
+                    options={formatLabels}
+                    selectionIndex={selectionIndex}
+                    onOptionSelected={(result, e) => {
+                      e.stopPropagation();
+                      this.setState({
+                        show: false
+                      });
+
+                      const oldFieldsToShow = config.fieldsToShow[dataId];
+                      const fieldsToShow = oldFieldsToShow.map(fieldToShow => {
+                        return fieldToShow.name === name
+                          ? {
+                              name,
+                              format: result
+                            }
+                          : fieldToShow;
+                      });
+                      const newConfig = {
+                        ...config,
+                        fieldsToShow: {
+                          ...config.fieldsToShow,
+                          [dataId]: fieldsToShow
+                        }
+                      };
+                      onChange(newConfig);
+                    }}
+                  />
+                </StyledPopover>
+              )}
+            </ChickletAddonWrapper>
+          )}
           <Delete onClick={disabled ? null : remove} />
         </ChickletButton>
       );
