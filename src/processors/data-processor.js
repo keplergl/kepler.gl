@@ -100,17 +100,16 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
  *  options: {centerMap: true, readOnly: true}
  * }));
  */
-export function processCsvData(rawData) {
+export function processCsvData(data) {
   // here we assume the csv file that people uploaded will have first row
   // as name of the column
   // TODO: add a alert at upload csv to remind define first row
-  const result = csvParseRows(rawData);
-  if (!Array.isArray(result) || result.length < 2) {
+  if (!Array.isArray(data) || data.length < 2) {
     // looks like an empty file, throw error to be catch
     throw new Error('Read File Failed: CSV is empty');
   }
 
-  const [headerRow, ...rows] = result;
+  const [headerRow, ...rows] = data;
 
   cleanUpFalsyCsvValue(rows);
   // No need to run type detection on every data point

@@ -2237,6 +2237,22 @@
     "@babel/runtime" "^7.3.1"
     "@loaders.gl/loader-utils" "2.0.2"
 
+"@loaders.gl/core@2.1.6", "@loaders.gl/core@^2.1.6":
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/@loaders.gl/core/-/core-2.1.6.tgz#9c3e0cf5a1aebb672c50876ab75fd35033b8672c"
+  integrity sha512-1uxlSZ3dKbraWmvsOsBeSfJxR/+mXjDCsDLkl8N9QzXeN1nIer3siDPLqckox4MMsPxPo5uo1Be8iwORAUo3VQ==
+  dependencies:
+    "@babel/runtime" "^7.3.1"
+    "@loaders.gl/loader-utils" "2.1.6"
+
+"@loaders.gl/csv@^2.1.6":
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/@loaders.gl/csv/-/csv-2.1.6.tgz#20d2b65ca6f88d9d9bdae7b402d651a5b29de1cc"
+  integrity sha512-4/nW67URAbPTSP7BywD5Nfd0981cpGPzubTwF682w4F6XJAqi9WfpYf6G8aoXIyfGbhFw4oh1dBoajd5ixUQ/g==
+  dependencies:
+    "@loaders.gl/core" "2.1.6"
+    "@loaders.gl/tables" "2.1.6"
+
 "@loaders.gl/gltf@2.0.2", "@loaders.gl/gltf@^2.0.0":
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@loaders.gl/gltf/-/gltf-2.0.2.tgz#b11f41ff903804d4bdbe1f5b437eac8052e721ab"
@@ -2251,12 +2267,27 @@
   resolved "https://registry.yarnpkg.com/@loaders.gl/images/-/images-2.0.2.tgz#546929146b38a428e55905e513b4b9ec7afc58e2"
   integrity sha512-H6xhSvM24CI++P46TZRLX+95mn5B4HaP0jWGSIn2Lo0aBpcI9/T8z2EZhJyihjoR450fph1ER0j+Mnz+ovHEGg==
 
+"@loaders.gl/json@^2.1.6":
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/@loaders.gl/json/-/json-2.1.6.tgz#277effab7d09af3bd34e2a0ea2250b4571d48b27"
+  integrity sha512-t0HvETHTv1IMHwdBK15tBYO0GfZiX91aakKceUFVtC1lw88kEba2eCHGoUeE29STUdf1Q4LaUt9n1Kg5FMuETA==
+  dependencies:
+    "@loaders.gl/tables" "2.1.6"
+
 "@loaders.gl/loader-utils@2.0.2":
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@loaders.gl/loader-utils/-/loader-utils-2.0.2.tgz#9ee11de0ae9f8d8d7c763fb5d17b3eeb0b5a888d"
   integrity sha512-sowdxj1wE2lSXSBSJswNjWfJvfdi21ZG9nB7OmenvbPiqcd1NyjUVsr+TeiTBiRsPlyQhp5BjVEYnywDLHSNUg==
   dependencies:
     "@babel/runtime" "^7.3.1"
+
+"@loaders.gl/loader-utils@2.1.6":
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/@loaders.gl/loader-utils/-/loader-utils-2.1.6.tgz#8eb5a9a2215b3c94c3bb548767cbc276e3701a5c"
+  integrity sha512-V9ZJH60HwSmSIw2jqNDMFpDqZVfy02WZ1/1e2ENw3PODE8ubNqs1bQ8nFj9omqwVMPF7fBVLvzoeoGrpeW0gfQ==
+  dependencies:
+    "@babel/runtime" "^7.3.1"
+    "@probe.gl/stats" "^3.2.1"
 
 "@loaders.gl/math@2.0.2":
   version "2.0.2"
@@ -2265,6 +2296,13 @@
   dependencies:
     "@loaders.gl/images" "2.0.2"
     math.gl "^3.1.2"
+
+"@loaders.gl/tables@2.1.6":
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/@loaders.gl/tables/-/tables-2.1.6.tgz#1f87fae63ce2dccf2a8e1c0057dd188a0a7e3937"
+  integrity sha512-CG/4ewOMRaMUOx0ovlRMUFpW+2AdobzgebazfjixZR6whkYg5lU6lyDvx4XjXRn1lPC7XtH+iWlE2Vq7IbsFzQ==
+  dependencies:
+    "@loaders.gl/core" "2.1.6"
 
 "@luma.gl/constants@8.0.5", "@luma.gl/constants@^8.0.5":
   version "8.0.5"
@@ -2559,7 +2597,7 @@
   dependencies:
     "@types/node" ">= 8"
 
-"@probe.gl/stats@3.2.1":
+"@probe.gl/stats@3.2.1", "@probe.gl/stats@^3.2.1":
   version "3.2.1"
   resolved "https://registry.yarnpkg.com/@probe.gl/stats/-/stats-3.2.1.tgz#4e95c75513229ebb01384045e89524a466c022eb"
   integrity sha512-tXe5krgbodxtVdUVWG4oIicMoCHNGp7QYkaHSDrUeTfJVqYuZz99T6r7qmn0bCo4wQlzn936jJ+QiAltHxatig==
