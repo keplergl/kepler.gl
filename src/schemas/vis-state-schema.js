@@ -599,6 +599,7 @@ class InteractionSchemaV1 extends Schema {
           });
         });
       }
+      return;
     });
     return {[this.key]: modifiedConfig};
   }
