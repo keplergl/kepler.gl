@@ -42,7 +42,7 @@ import {
   Cancel
 } from 'components/common/icons';
 import {getHTMLMapModeTileUrl} from 'utils/utils';
-import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES} from './tooltip';
+import {TOOLTIP_FORMAT_TYPES} from './tooltip';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
@@ -535,10 +535,7 @@ export const FIELD_OPTS = {
     },
     format: {
       legend: d => d,
-      tooltip: [
-        TOOLTIP_FORMAT_TYPES.DECIMAL,
-        TOOLTIP_FORMAT_TYPES.PERCENTAGE
-      ]
+      tooltip: [TOOLTIP_FORMAT_TYPES.DECIMAL, TOOLTIP_FORMAT_TYPES.PERCENTAGE]
     }
   },
   timestamp: {
@@ -549,10 +546,7 @@ export const FIELD_OPTS = {
     },
     format: {
       legend: d => d,
-      tooltip: [
-        TOOLTIP_FORMAT_TYPES.DATE,
-        TOOLTIP_FORMAT_TYPES.DATE_TIME,
-      ]
+      tooltip: [TOOLTIP_FORMAT_TYPES.DATE, TOOLTIP_FORMAT_TYPES.DATE_TIME]
     }
   },
   integer: {
@@ -563,10 +557,7 @@ export const FIELD_OPTS = {
     },
     format: {
       legend: d => d,
-      tooltip: [
-        TOOLTIP_FORMAT_TYPES.DECIMAL,
-        TOOLTIP_FORMAT_TYPES.PERCENTAGE
-      ]
+      tooltip: [TOOLTIP_FORMAT_TYPES.DECIMAL, TOOLTIP_FORMAT_TYPES.PERCENTAGE]
     }
   },
   boolean: {
@@ -587,9 +578,7 @@ export const FIELD_OPTS = {
     },
     format: {
       legend: d => d,
-      tooltip: [
-        TOOLTIP_FORMAT_TYPES.DATE
-      ]
+      tooltip: [TOOLTIP_FORMAT_TYPES.DATE]
     }
   },
   geojson: {

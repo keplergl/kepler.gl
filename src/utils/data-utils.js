@@ -297,9 +297,8 @@ export function getFormatter(format, field) {
   if (!format) {
     return defaultFormatter;
   }
-  const tooltipFormat = Object.values(TOOLTIP_FORMATS)
-    .find(f => f[TOOLTIP_KEY] === format);
-  
+  const tooltipFormat = Object.values(TOOLTIP_FORMATS).find(f => f[TOOLTIP_KEY] === format);
+
   if (tooltipFormat) {
     return applyDefaultFormat(tooltipFormat);
   } else if (typeof format === 'string' && field) {
@@ -332,7 +331,7 @@ export function applyCustomFormat(format, field) {
   switch (field.type) {
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
-      return d3Format(format);  
+      return d3Format(format);
     case ALL_FIELD_TYPES.date:
     case ALL_FIELD_TYPES.timestamp:
       return v => moment.utc(v).format(format);
@@ -340,4 +339,3 @@ export function applyCustomFormat(format, field) {
       return v => v;
   }
 }
-

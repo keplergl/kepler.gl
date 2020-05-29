@@ -102,7 +102,7 @@ export const TOOLTIP_FORMATS = {
     // 05/29/2020
     id: 'DATE_L',
     label: '',
-    format: 'L', 
+    format: 'L',
     type: TOOLTIP_FORMAT_TYPES.DATE
   },
   DATE_LL: {
