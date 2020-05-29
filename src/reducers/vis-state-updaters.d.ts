@@ -228,10 +228,14 @@ type BaseInteraction = {
   enabled: boolean;
   iconComponent: any;
 };
+type TooltipField = {
+  name: string;
+  format: string | null;
+}
 export type Tooltip = BaseInteraction & {
   config: {
     fieldsToShow: {
-      [key: string]: string[];
+      [key: string]: TooltipField[];
     };
   };
 };

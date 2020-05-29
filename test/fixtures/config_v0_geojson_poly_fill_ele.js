@@ -142,7 +142,16 @@ export const parsedConfigV0 = {
       tooltip: {
         enabled: true,
         fieldsToShow: {
-          c0pd4bocg: ['ZIP_CODE', 'ID']
+          c0pd4bocg: [
+            {
+              name: 'ZIP_CODE',
+              format: null
+            },
+            {
+              name: 'ID',
+              format: null
+            }
+          ]
         }
       },
       brush: {

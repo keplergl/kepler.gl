@@ -2417,7 +2417,28 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
         iconComponent: oldState.interactionConfig.tooltip.iconComponent,
         config: {
           fieldsToShow: {
-            [testGeoJsonDataId]: ['OBJECTID', 'ZIP_CODE', 'ID', 'TRIPS', 'RATE']
+            [testGeoJsonDataId]: [
+              {
+                name: 'OBJECTID',
+                format: null
+              },
+              {
+                name: 'ZIP_CODE',
+                format: null
+              },
+              {
+                name: 'ID',
+                format: null
+              },
+              {
+                name: 'TRIPS',
+                format: null
+              },
+              {
+                name: 'RATE',
+                format: null
+              }
+            ]
           }
         }
       },
@@ -2630,11 +2651,26 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
         config: {
           fieldsToShow: {
             [testCsvDataId]: [
-              'gps_data.utc_timestamp',
-              'gps_data.types',
-              'epoch',
-              'has_result',
-              'id'
+              {
+                name: 'gps_data.utc_timestamp',
+                format: null
+              },
+              {
+                name: 'gps_data.types',
+                format: null
+              },
+              {
+                name: 'epoch',
+                format: null
+              },
+              {
+                name: 'has_result',
+                format: null
+              },
+              {
+                name: 'id',
+                format: null
+              }
             ]
           }
         }

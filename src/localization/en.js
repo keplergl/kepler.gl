@@ -437,6 +437,10 @@ export default {
   geocoder: {
     title: 'Geocoder'
   },
+  fieldSelector: {
+    clearAll: 'Clear All',
+    formatting: 'Formatting'
+  },
   density: 'density',
   'Bug Report': 'Bug Report',
   'User Guide': 'User Guide',

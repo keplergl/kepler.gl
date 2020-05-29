@@ -25,6 +25,7 @@ import SchemaManager from 'schemas';
 
 import {
   StateWFilesFiltersLayerColor,
+  StateWTooltipFormat,
   expectedSavedLayer0,
   expectedLoadedLayer0,
   expectedSavedLayer1,
@@ -131,8 +132,105 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
     tooltip: {
       enabled: true,
       fieldsToShow: {
-        [testCsvDataId]: ['gps_data.utc_timestamp', 'gps_data.types', 'epoch', 'has_result', 'id'],
-        [testGeoJsonDataId]: ['OBJECTID', 'ZIP_CODE', 'ID', 'TRIPS', 'RATE']
+        [testCsvDataId]: [
+          {
+            name: 'gps_data.utc_timestamp',
+            format: null
+          },
+          {
+            name: 'gps_data.types',
+            format: null
+          },
+          {
+            name: 'epoch',
+            format: null
+          },
+          {
+            name: 'has_result',
+            format: null
+          },
+          {
+            name: 'id',
+            format: null
+          }
+        ],
+        [testGeoJsonDataId]: [
+          {
+            name: 'OBJECTID',
+            format: null
+          },
+          {
+            name: 'ZIP_CODE',
+            format: null
+          },
+          {
+            name: 'ID',
+            format: null
+          },
+          {
+            name: 'TRIPS',
+            format: null
+          },
+          {
+            name: 'RATE',
+            format: null
+          }
+        ]
+      }
+    },
+    brush: {
+      enabled: false,
+      size: 0.5
+    },
+    coordinate: {
+      enabled: false
+    },
+    geocoder: {
+      enabled: false
+    }
+  };
+
+  t.deepEqual(interactionToSave, expectedSaved);
+  t.deepEqual(interactionLoaded, expectedSaved);
+
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
+  const initialState = cloneDeep(StateWTooltipFormat);
+  const savedState = SchemaManager.getConfigToSave(initialState);
+
+  // save state
+  const interactionToSave = savedState.config.visState.interactionConfig;
+  const interactionLoaded = SchemaManager.parseSavedConfig(savedState).visState.interactionConfig;
+
+  const expectedSaved = {
+    tooltip: {
+      enabled: true,
+      fieldsToShow: {
+        [testCsvDataId]: [{name: 'gps_data.utc_timestamp', format: 'LL'}],
+        [testGeoJsonDataId]: [
+          {
+            name: 'OBJECTID',
+            format: null
+          },
+          {
+            name: 'ZIP_CODE',
+            format: null
+          },
+          {
+            name: 'ID',
+            format: null
+          },
+          {
+            name: 'TRIPS',
+            format: null
+          },
+          {
+            name: 'RATE',
+            format: null
+          }
+        ]
       }
     },
     brush: {
