@@ -20,82 +20,152 @@
 
 export const TOOLTIP_FORMAT_TYPES = {
   DATE: 'date',
+  DATE_TIME: 'date_time',
   DECIMAL: 'decimal',
   PERCENTAGE: 'percentage'
 };
 
+export const TOOLTIP_KEY = 'format';
+
 export const TOOLTIP_FORMATS = {
   NONE: {
+    id: 'NONE',
     label: 'None'
   },
   DECIMAL_SHORT: {
+    id: 'DECIMAL_SHORT',
     label: '10k',
     format: '.1s',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_SHORT_COMMA: {
+    id: 'DECIMAL_SHORT_COMMA',
     label: '12.3k',
     format: '.3s',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
-  DECIMAL_PERCENT_FULL: {
-    label: '.1 → 10%',
+  DECIMAL_PERCENT_FULL_1: {
+    id: 'DECIMAL_PERCENT_FULL_1',
+    label: '.01 → 1.0%',
     format: '.1%',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
+  DECIMAL_PERCENT_FULL_2: {
+    id: 'DECIMAL_PERCENT_FULL_2',
+    label: '.01 → 1.00%',
+    format: '.2%',
+    type: TOOLTIP_FORMAT_TYPES.DECIMAL
+  },
   DECIMAL_PRECENT_REGULAR: {
-    label: '10 → 10%',
-    format: '.1%',
+    id: 'DECIMAL_PRECENT_REGULAR',
+    label: '12.345 → 12.35%',
+    format: '.2f',
     type: TOOLTIP_FORMAT_TYPES.PERCENTAGE
   },
+  DECIMAL_DECIMAL_FIXED_2: {
+    id: 'DECIMAL_DECIMAL_FIXED_2',
+    label: '1.23',
+    format: '.2f',
+    type: TOOLTIP_FORMAT_TYPES.DECIMAL
+  },
+  DECIMAL_DECIMAL_FIXED_3: {
+    id: 'DECIMAL_DECIMAL_FIXED_3',
+    label: '1.234',
+    format: '.3f',
+    type: TOOLTIP_FORMAT_TYPES.DECIMAL
+  },
   DECIMAL_INT: {
+    id: 'DECIMAL_INT',
     label: '12350',
     format: '.4r',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_THREE: {
+    id: 'DECIMAL_THREE',
     label: '12,345.432',
     format: ',.3f',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_DELTA: {
+    id: 'DECIMAL_DELTA',
     label: '+12,345.432',
     format: '+,',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_CURRENCY: {
+    id: 'DECIMAL_CURRENCY',
     label: '$12,345.43',
     format: '$,.2f',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
-  DATE_DDMMYYYY: {
-    label: '14/01/2019',
-    format: '%d/%m/%Y',
+  DATE_L: {
+    // 05/29/2020
+    id: 'DATE_L',
+    label: '',
+    format: 'L', 
     type: TOOLTIP_FORMAT_TYPES.DATE
   },
-  DATE_DAY_MMDDYYYY: {
-    label: '01/14/2019',
-    format: '%m/%d/%Y',
+  DATE_LL: {
+    // September 5 2016
+    id: 'DATE_LL',
+    label: '',
+    format: 'LL',
     type: TOOLTIP_FORMAT_TYPES.DATE
   },
-  DATE_DAY_YYYYMMDD: {
-    label: '2019-01-14',
-    format: '%Y-%m-%d',
+  DATE_dddd_LL: {
+    // Monday September 5, 2016
+    id: 'DATE_dddd_LL',
+    label: '',
+    format: 'dddd LL',
     type: TOOLTIP_FORMAT_TYPES.DATE
   },
-  DATE_FULL: {
-    label: '2019-01-14 01:32:10',
-    format: '%Y-%m-%d %H:%M:%S',
+  DATE_ddd_LL: {
+    // Mon September 5, 2016
+    id: 'DATE_ddd_LL',
+    label: '',
+    format: 'ddd LL',
     type: TOOLTIP_FORMAT_TYPES.DATE
   },
-  DATE_FULL_ALT: {
-    label: '14-01-2019 01:32:10',
-    format: '%d-%m-%Y %H:%M:%S',
-    type: TOOLTIP_FORMAT_TYPES.DATE
+  DATE_TIME_L_LT: {
+    // 09/05/2016 12:00 AM
+    id: 'DATE_TIME_L_LT',
+    label: '',
+    format: 'L LT',
+    type: TOOLTIP_FORMAT_TYPES.DATE_TIME
   },
-  DATE_TIME: {
-    label: '01:32:10',
-    format: '%H:%M:%S',
-    type: TOOLTIP_FORMAT_TYPES.DATE
+  DATE_TIME_L_LTS: {
+    // 09/05/2016 12:00:00 AM
+    id: 'DATE_TIME_L_LTS',
+    label: '',
+    format: 'L LTS',
+    type: TOOLTIP_FORMAT_TYPES.DATE_TIME
+  },
+  DATE_TIME_LLL: {
+    // September 5, 2016 12:00 AM
+    id: 'DATE_TIME_LLL',
+    label: '',
+    format: 'LLL',
+    type: TOOLTIP_FORMAT_TYPES.DATE_TIME
+  },
+  DATE_TIME_LL_LTS: {
+    // September 5, 2016 12:00:00 AM
+    id: 'DATE_TIME_LL_LTS',
+    label: '',
+    format: 'LL LTS',
+    type: TOOLTIP_FORMAT_TYPES.DATE_TIME
+  },
+  DATE_TIME_ddd_LLL: {
+    // Mon September 5, 2016 12:00 AM
+    id: 'DATE_TIME_ddd_LLL',
+    label: '',
+    format: 'ddd LLL',
+    type: TOOLTIP_FORMAT_TYPES.DATE_TIME
+  },
+  DATE_TIME_LTS: {
+    // 12:00:00 AM
+    id: 'DATE_TIME',
+    label: '',
+    format: 'LTS',
+    type: TOOLTIP_FORMAT_TYPES.DATE_TIME
   }
 };

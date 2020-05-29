@@ -42,7 +42,7 @@ import {
   Cancel
 } from 'components/common/icons';
 import {getHTMLMapModeTileUrl} from 'utils/utils';
-import {TOOLTIP_FORMATS} from './tooltip';
+import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES} from './tooltip';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
@@ -523,7 +523,8 @@ export const FIELD_OPTS = {
       ...ordinalFieldAggrScaleFunctions
     },
     format: {
-      legend: d => d
+      legend: d => d,
+      tooltip: []
     }
   },
   real: {
@@ -535,14 +536,8 @@ export const FIELD_OPTS = {
     format: {
       legend: d => d,
       tooltip: [
-        TOOLTIP_FORMATS.DECIMAL_INT,
-        TOOLTIP_FORMATS.DECIMAL_CURRENCY,
-        TOOLTIP_FORMATS.DECIMAL_DELTA,
-        TOOLTIP_FORMATS.DECIMAL_PERCENT_FULL,
-        TOOLTIP_FORMATS.DECIMAL_PRECENT_REGULAR,
-        TOOLTIP_FORMATS.DECIMAL_SHORT,
-        TOOLTIP_FORMATS.DECIMAL_SHORT_COMMA,
-        TOOLTIP_FORMATS.DECIMAL_THREE
+        TOOLTIP_FORMAT_TYPES.DECIMAL,
+        TOOLTIP_FORMAT_TYPES.PERCENTAGE
       ]
     }
   },
@@ -555,12 +550,8 @@ export const FIELD_OPTS = {
     format: {
       legend: d => d,
       tooltip: [
-        // TOOLTIP_FORMATS.DATE_DAY_MMDDYYYY,
-        // TOOLTIP_FORMATS.DATE_DAY_YYYYMMDD,
-        // TOOLTIP_FORMATS.DATE_DDMMYYYY,
-        // TOOLTIP_FORMATS.DATE_FULL,
-        // TOOLTIP_FORMATS.DATE_FULL_ALT,
-        // TOOLTIP_FORMATS.DATE_TIME
+        TOOLTIP_FORMAT_TYPES.DATE,
+        TOOLTIP_FORMAT_TYPES.DATE_TIME,
       ]
     }
   },
@@ -573,14 +564,8 @@ export const FIELD_OPTS = {
     format: {
       legend: d => d,
       tooltip: [
-        TOOLTIP_FORMATS.DECIMAL_INT,
-        TOOLTIP_FORMATS.DECIMAL_CURRENCY,
-        TOOLTIP_FORMATS.DECIMAL_DELTA,
-        TOOLTIP_FORMATS.DECIMAL_PERCENT_FULL,
-        TOOLTIP_FORMATS.DECIMAL_PRECENT_REGULAR,
-        TOOLTIP_FORMATS.DECIMAL_SHORT,
-        TOOLTIP_FORMATS.DECIMAL_SHORT_COMMA,
-        TOOLTIP_FORMATS.DECIMAL_THREE
+        TOOLTIP_FORMAT_TYPES.DECIMAL,
+        TOOLTIP_FORMAT_TYPES.PERCENTAGE
       ]
     }
   },
@@ -591,7 +576,8 @@ export const FIELD_OPTS = {
       ...ordinalFieldAggrScaleFunctions
     },
     format: {
-      legend: d => d
+      legend: d => d,
+      tooltip: []
     }
   },
   date: {
@@ -602,12 +588,7 @@ export const FIELD_OPTS = {
     format: {
       legend: d => d,
       tooltip: [
-        // TOOLTIP_FORMATS.DATE_DAY_MMDDYYYY,
-        // TOOLTIP_FORMATS.DATE_DAY_YYYYMMDD,
-        // TOOLTIP_FORMATS.DATE_DDMMYYYY,
-        // TOOLTIP_FORMATS.DATE_FULL,
-        // TOOLTIP_FORMATS.DATE_FULL_ALT,
-        // TOOLTIP_FORMATS.DATE_TIME
+        TOOLTIP_FORMAT_TYPES.DATE
       ]
     }
   },
@@ -618,7 +599,8 @@ export const FIELD_OPTS = {
       ...notSupportAggrOpts
     },
     format: {
-      legend: d => '...'
+      legend: d => '...',
+      tooltip: []
     }
   }
 };

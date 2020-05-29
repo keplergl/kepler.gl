@@ -79,7 +79,7 @@ const EntryInfoRow = ({item, fields, data}) => {
 
   const valueIdx = field.tableFieldIndex - 1;
   const displayValue = item.format
-    ? getFormatter(item.format)(data[valueIdx])
+    ? getFormatter(item.format, field)(data[valueIdx])
     : parseFieldValue(data[valueIdx], field.type);
   return <Row name={item.name} value={displayValue} />;
 };

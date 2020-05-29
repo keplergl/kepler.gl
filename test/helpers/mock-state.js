@@ -374,6 +374,28 @@ function mockStateWithSplitMaps(state) {
   return prepareState;
 }
 
+function mockStateWithTooltipFormat() {
+  const initialState = mockStateWithFileUpload();
+
+  const oldConfig = initialState.visState.interactionConfig.tooltip;
+  const newConfig = {
+    ...oldConfig,
+    config: {
+      ...oldConfig.config,
+      fieldsToShow: {
+        ...oldConfig.config.fieldsToShow,
+        [testCsvDataId]: [{name: 'gps_data.utc_timestamp', format: 'LL'}]
+      }
+    }
+  };
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    {action: VisStateActions.interactionConfigChange, payload: [newConfig]}
+  ]);
+
+  return prepareState;
+}
+
 // saved hexagon layer
 export const expectedSavedLayer0 = {
   id: 'hexagon-2',
@@ -652,6 +674,7 @@ export const StateWCustomMapStyle = mockStateWithCustomMapStyle();
 export const StateWSplitMaps = mockStateWithSplitMaps();
 export const StateWTrips = mockStateWithTripData();
 export const StateWTripGeojson = mockStateWithTripGeojson();
+export const StateWTooltipFormat = mockStateWithTooltipFormat();
 
 export const expectedSavedTripLayer = {
   id: 'trip-0',

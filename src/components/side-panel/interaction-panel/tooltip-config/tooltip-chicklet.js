@@ -27,13 +27,27 @@ import {Tooltip} from 'components/common/styled-components';
 import {FormattedMessage} from 'react-intl';
 import onClickOutside from 'react-onclickoutside';
 import {FIELD_OPTS} from 'constants/default-settings';
-import {TOOLTIP_FORMATS} from 'constants/tooltip';
+import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from 'constants/tooltip';
+import {getFormatter} from 'utils/data-utils';
+
+const TIME_DISPLAY = '2020-05-11 14:00';
+const getValue = fmt => fmt[TOOLTIP_KEY];
+
+const addDTimeLabel = formats =>
+  formats.map(f => ({
+    ...f,
+    label:
+      f.type === TOOLTIP_FORMAT_TYPES.DATE_TIME || f.type === TOOLTIP_FORMAT_TYPES.DATE
+        ? getFormatter(getValue(f))(TIME_DISPLAY)
+        : f.label
+  }));
 
 function getFormatLabels(fields, fieldName) {
   const fieldType = fields.find(f => f.name === fieldName).type;
-  const formatLabels = (FIELD_OPTS[fieldType].format.tooltip || []).map(v => v.label);
-  formatLabels.unshift(TOOLTIP_FORMATS.NONE.label);
-  return formatLabels;
+  const tooltipTypes = (fieldType && FIELD_OPTS[fieldType].format.tooltip) || [];
+  const formatLabels = Object.values(TOOLTIP_FORMATS).filter(t => tooltipTypes.includes(t.type));
+
+  return addDTimeLabel(formatLabels);
 }
 
 const ChickletAddonWrapper = styled.div`
@@ -50,30 +64,21 @@ const StyledPopover = styled.div`
   top: 20px;
   width: 140px;
   z-index: 101;
-
-  /* &::after {
-    position: relative;
-    top: -5px;
-    left: 64px;
-    width: 0;
-    height: 0;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-bottom: 5px solid black;
-  } */
 `;
 
 const hashStyles = {
-  SHOW: {
-    fill: '#fff'
-  },
-  IDLE: {
-    fill: '#A0A7B4'
-  },
-  ACTIVE: {
-    fill: '#1fbad6'
-  }
+  SHOW: 'SHOW',
+  ACTIVE: 'ACTIVE'
 };
+
+const IconDiv = styled.div`
+  color: ${props =>
+    props.status === hashStyles.SHOW
+      ? props.theme.subtextColorActive
+      : props.status === hashStyles.ACTIVE
+      ? props.theme.activeColor
+      : props.theme.textColor};
+`;
 function TooltipChickletFactory(dataId, config, onChange, fields) {
   class TooltipChicklet extends Component {
     state = {
@@ -100,12 +105,9 @@ function TooltipChickletFactory(dataId, config, onChange, fields) {
       const {show} = this.state;
       const field = config.fieldsToShow[dataId].find(fieldToShow => fieldToShow.name === name);
       const formatLabels = getFormatLabels(fields, field.name);
-      let selectionIndex = formatLabels.indexOf(field.format);
+      let selectionIndex = formatLabels.findIndex(fl => getValue(fl) === field.format);
       if (selectionIndex < 0) selectionIndex = 0;
-      let hashStyle = selectionIndex ? hashStyles.ACTIVE : hashStyles.IDLE;
-      if (show) {
-        hashStyle = hashStyles.SHOW;
-      }
+      const hashStyle = show ? hashStyles.SHOW : selectionIndex ? hashStyles.ACTIVE : null;
 
       return (
         <ChickletButton ref={node => (this.node = node)}>
@@ -113,17 +115,18 @@ function TooltipChickletFactory(dataId, config, onChange, fields) {
           {formatLabels.length > 1 && (
             <ChickletAddonWrapper>
               <ChickletAddon data-tip data-for={`addon-${name}`}>
-                <Hash
-                  height="8px"
-                  onClick={e => {
-                    e.stopPropagation();
-                    this.setState({show: Boolean(!show)});
-                  }}
-                  {...hashStyle}
-                />
+                <IconDiv status={hashStyle}>
+                  <Hash
+                    height="8px"
+                    onClick={e => {
+                      e.stopPropagation();
+                      this.setState({show: Boolean(!show)});
+                    }}
+                  />
+                </IconDiv>
                 <Tooltip id={`addon-${name}`} effect="solid">
                   <span>
-                    {(selectionIndex && formatLabels[selectionIndex]) || (
+                    {(selectionIndex && formatLabels[selectionIndex]).label || (
                       <FormattedMessage id={'fieldSelector.formatting'} />
                     )}
                   </span>
@@ -134,6 +137,7 @@ function TooltipChickletFactory(dataId, config, onChange, fields) {
                   <DropdownList
                     options={formatLabels}
                     selectionIndex={selectionIndex}
+                    displayOption={item => item.label}
                     onOptionSelected={(result, e) => {
                       e.stopPropagation();
                       this.setState({
@@ -145,7 +149,7 @@ function TooltipChickletFactory(dataId, config, onChange, fields) {
                         return fieldToShow.name === name
                           ? {
                               name,
-                              format: result
+                              format: getValue(result)
                             }
                           : fieldToShow;
                       });
