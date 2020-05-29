@@ -51,6 +51,7 @@ export {default as Files} from './files';
 export {default as FileType} from './file-type';
 export {default as FilterFunnel} from './filter-funnel';
 export {default as Gear} from './gear';
+export {default as Hash} from './hash';
 export {default as Histogram} from './histogram';
 export {default as Info} from './info';
 export {default as Layers} from './layers';

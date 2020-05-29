@@ -18,40 +18,99 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import {SidePanelSection} from 'components/common/styled-components';
+import React, {Component} from 'react';
+import styled from 'styled-components';
+import {FormattedMessage} from 'react-intl';
+import {SidePanelSection, SBFlexboxNoMargin, Button} from 'components/common/styled-components';
 import FieldSelector from 'components/common/field-selector';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
+import TooltipChickletFactory from './tooltip-config/tooltip-chicklet';
 
 TooltipConfigFactory.deps = [DatasetTagFactory];
 
+const TooltipConfigWrapper = styled.div`
+  .item-selector > div > div {
+    overflow: visible;
+  }
+`;
+
+const ButtonWrapper = styled.div`
+  display: inherit;
+  padding: 0;
+
+  .button.clear-all {
+    background: transparent;
+    color: ${props => props.theme.subtextColor};
+    margin: 0 0 0 8px;
+    padding: 0;
+
+    &:hover {
+      color: ${props => props.theme.textColor};
+    }
+  }
+`;
+
 function TooltipConfigFactory(DatasetTag) {
-  const TooltipConfig = ({config, datasets, onChange}) => (
-    <div>
-      {Object.keys(config.fieldsToShow).map(dataId => (
-        <SidePanelSection key={dataId}>
-          <DatasetTag dataset={datasets[dataId]} />
-          <FieldSelector
-            fields={datasets[dataId].fields}
-            value={config.fieldsToShow[dataId]}
-            onSelect={fieldsToShow => {
-              const newConfig = {
-                ...config,
-                fieldsToShow: {
-                  ...config.fieldsToShow,
-                  [dataId]: fieldsToShow.map(d => d.name)
-                }
-              };
-              onChange(newConfig);
-            }}
-            closeOnSelect={false}
-            multiSelect
-            inputTheme="secondary"
-          />
-        </SidePanelSection>
-      ))}
-    </div>
-  );
+  class TooltipConfig extends Component {
+    render() {
+      const {config, datasets, onChange} = this.props;
+      return (
+        <TooltipConfigWrapper>
+          {Object.keys(config.fieldsToShow).map(dataId => (
+            <SidePanelSection key={dataId}>
+              <SBFlexboxNoMargin>
+                <DatasetTag dataset={datasets[dataId]} />
+                {Boolean(config.fieldsToShow[dataId].length) && (
+                  <ButtonWrapper>
+                    <Button
+                      className="clear-all"
+                      onClick={() => {
+                        const newConfig = {
+                          ...config,
+                          fieldsToShow: {
+                            ...config.fieldsToShow,
+                            [dataId]: []
+                          }
+                        };
+                        onChange(newConfig);
+                      }}
+                      width="48px"
+                      secondary
+                    >
+                      <FormattedMessage id="fieldSelector.clearAll" />
+                    </Button>
+                  </ButtonWrapper>
+                )}
+              </SBFlexboxNoMargin>
+              <FieldSelector
+                fields={datasets[dataId].fields}
+                value={config.fieldsToShow[dataId]}
+                onSelect={fieldsToShow => {
+                  const newConfig = {
+                    ...config,
+                    fieldsToShow: {
+                      ...config.fieldsToShow,
+                      [dataId]: fieldsToShow
+                    }
+                  };
+                  onChange(newConfig);
+                }}
+                closeOnSelect={false}
+                multiSelect
+                inputTheme="secondary"
+                CustomChickletComponent={TooltipChickletFactory(
+                  dataId,
+                  config,
+                  onChange,
+                  datasets[dataId].fields
+                )}
+              />
+            </SidePanelSection>
+          ))}
+        </TooltipConfigWrapper>
+      );
+    }
+  }
 
   return TooltipConfig;
 }

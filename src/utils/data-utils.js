@@ -21,6 +21,8 @@
 import moment from 'moment';
 import assert from 'assert';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from 'constants/tooltip';
+import {format as d3Format} from 'd3-format';
 
 const MAX_LATITUDE = 90;
 const MIN_LATITUDE = -90;
@@ -288,4 +290,52 @@ export function findFirstNoneEmpty(data, count = 1, getValue = identity) {
     c++;
   }
   return found;
+}
+
+export function getFormatter(format, field) {
+  const defaultFormatter = v => v;
+  if (!format) {
+    return defaultFormatter;
+  }
+  const tooltipFormat = Object.values(TOOLTIP_FORMATS).find(f => f[TOOLTIP_KEY] === format);
+
+  if (tooltipFormat) {
+    return applyDefaultFormat(tooltipFormat);
+  } else if (typeof format === 'string' && field) {
+    return applyCustomFormat(format, field);
+  }
+
+  return defaultFormatter;
+}
+
+export function applyDefaultFormat(tooltipFormat) {
+  if (!tooltipFormat || !tooltipFormat.format) {
+    return v => v;
+  }
+
+  switch (tooltipFormat.type) {
+    case TOOLTIP_FORMAT_TYPES.DECIMAL:
+      return d3Format(tooltipFormat.format);
+    case TOOLTIP_FORMAT_TYPES.DATE:
+    case TOOLTIP_FORMAT_TYPES.DATE_TIME:
+      return v => moment.utc(v).format(tooltipFormat.format);
+    case TOOLTIP_FORMAT_TYPES.PERCENTAGE:
+      return v => `${d3Format(tooltipFormat.format)(v)}%`;
+    default:
+      return v => v;
+  }
+}
+
+// Allow user to specify custom tooltip format via config
+export function applyCustomFormat(format, field) {
+  switch (field.type) {
+    case ALL_FIELD_TYPES.real:
+    case ALL_FIELD_TYPES.integer:
+      return d3Format(format);
+    case ALL_FIELD_TYPES.date:
+    case ALL_FIELD_TYPES.timestamp:
+      return v => moment.utc(v).format(format);
+    default:
+      return v => v;
+  }
 }
