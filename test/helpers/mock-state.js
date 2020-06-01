@@ -384,7 +384,7 @@ function mockStateWithTooltipFormat() {
       ...oldConfig.config,
       fieldsToShow: {
         ...oldConfig.config.fieldsToShow,
-        [testCsvDataId]: [{name: 'gps_data.utc_timestamp', format: 'LL'}]
+        [testCsvDataId]: [{name: 'gps_data.utc_timestamp', format: 'DATE_LL'}]
       }
     }
   };

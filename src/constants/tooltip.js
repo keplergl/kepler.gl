@@ -25,7 +25,7 @@ export const TOOLTIP_FORMAT_TYPES = {
   PERCENTAGE: 'percentage'
 };
 
-export const TOOLTIP_KEY = 'format';
+export const TOOLTIP_KEY = 'id';
 
 export const TOOLTIP_FORMATS = {
   NONE: {
@@ -89,7 +89,7 @@ export const TOOLTIP_FORMATS = {
   DECIMAL_DELTA: {
     id: 'DECIMAL_DELTA',
     label: '+12,345.432',
-    format: '+,',
+    format: '+,.3f',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_CURRENCY: {
