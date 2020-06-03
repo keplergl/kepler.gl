@@ -43,6 +43,17 @@ const StyledMapPopover = styled.div`
     height: 6px;
   }
 
+  .base {
+    background-color: ${props => props.theme.notificationColors.success};
+    border-radius: 2px;
+    color: ${props => props.theme.panelBackground};
+    padding: 0px 4px;
+    position: absolute;
+    right: 18px;
+    top: 16px;
+    font-size: 10px;
+  }
+
   table {
     margin: 2px 12px 12px 12px;
     width: auto;
@@ -86,12 +97,13 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
     static propTypes = {
       layerHoverProp: PropTypes.object,
       coordinate: PropTypes.oneOfType([PropTypes.array, PropTypes.bool]),
-      freezed: PropTypes.bool,
+      frozen: PropTypes.bool,
       x: PropTypes.number,
       y: PropTypes.number,
       mapW: PropTypes.number.isRequired,
       mapH: PropTypes.number.isRequired,
-      onClose: PropTypes.func.isRequired
+      onClose: PropTypes.func.isRequired,
+      isBase: PropTypes.bool
     };
 
     constructor(props) {
@@ -148,7 +160,7 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
     }
 
     render() {
-      const {x, y, freezed, coordinate, layerHoverProp} = this.props;
+      const {x, y, frozen, coordinate, layerHoverProp, isBase} = this.props;
 
       const style = Number.isFinite(x) && Number.isFinite(y) ? this._getPosition(x, y) : {};
 
@@ -162,12 +174,13 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
               maxWidth: MAX_WIDTH
             }}
           >
-            {freezed ? (
+            {frozen ? (
               <div className="map-popover__top">
                 <div className="gutter" />
                 <StyledPin className="popover-pin" onClick={this.props.onClose}>
                   <Pin height="16px" />
                 </StyledPin>
+                {isBase && <div className="base">PRIMARY</div>}
               </div>
             ) : null}
             {Array.isArray(coordinate) && <CoordinateInfo coordinate={coordinate} />}

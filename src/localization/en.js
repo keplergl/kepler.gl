@@ -441,6 +441,14 @@ export default {
     clearAll: 'Clear All',
     formatting: 'Formatting'
   },
+  compare: {
+    modeLabel: 'Comparison Mode',
+    typeLabel: 'Comparison Type',
+    types: {
+      decimal: 'Decimal',
+      percentage: 'Percentage'
+    }
+  },
   density: 'density',
   'Bug Report': 'Bug Report',
   'User Guide': 'User Guide',

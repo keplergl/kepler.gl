@@ -76,6 +76,33 @@ const Attribution = () => (
   </StyledAttrbution>
 );
 
+function getLayerProp({interactionConfig, hoverInfo, layers, layersToRender, datasets}) {
+  if (interactionConfig.tooltip.enabled && hoverInfo && hoverInfo.picked) {
+    // if anything hovered
+    const {object, layer: overlay} = hoverInfo;
+
+    // deckgl layer to kepler-gl layer
+    const layer = layers[overlay.props.idx];
+
+    if (layer.getHoverData && layersToRender[layer.id]) {
+      // if layer is visible and have hovered data
+      const {
+        config: {dataId}
+      } = layer;
+      const {allData, fields} = datasets[dataId];
+      const data = layer.getHoverData(object, allData);
+      const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
+
+      return {
+        data,
+        fields,
+        fieldsToShow,
+        layer
+      };
+    }
+  }
+}
+
 MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory];
 
 export default function MapContainerFactory(MapPopover, MapControl, Editor) {
@@ -249,54 +276,64 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         return null;
       }
       // if clicked something, ignore hover behavior
-      const objectInfo = clicked || hoverInfo;
       let layerHoverProp = null;
-      let position = {x: mousePosition[0], y: mousePosition[1]};
+      let layerPinnedProp = null;
+      const position = {x: mousePosition[0], y: mousePosition[1]};
+      let pinnedPosition = {};
 
-      if (interactionConfig.tooltip.enabled && objectInfo && objectInfo.picked) {
-        // if anything hovered
-        const {object, layer: overlay} = objectInfo;
+      layerHoverProp = getLayerProp({
+        interactionConfig,
+        hoverInfo,
+        layers,
+        layersToRender,
+        datasets
+      });
 
-        // deckgl layer to kepler-gl layer
-        const layer = layers[overlay.props.idx];
-
-        if (layer.getHoverData && layersToRender[layer.id]) {
-          // if layer is visible and have hovered data
-          const {
-            config: {dataId}
-          } = layer;
-          const {allData, fields} = datasets[dataId];
-          const data = layer.getHoverData(object, allData);
-          const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
-
-          layerHoverProp = {
-            data,
-            fields,
-            fieldsToShow,
-            layer
-          };
-        }
-      }
+      const compareMode = interactionConfig.tooltip.config
+        ? interactionConfig.tooltip.config.compareMode
+        : false;
 
       if (pinned || clicked) {
         // project lnglat to screen so that tooltip follows the object on zoom
         const viewport = new WebMercatorViewport(mapState);
         const lngLat = clicked ? clicked.lngLat : pinned.coordinate;
-        position = this._getHoverXY(viewport, lngLat);
+        pinnedPosition = this._getHoverXY(viewport, lngLat);
+        layerPinnedProp = getLayerProp({
+          interactionConfig,
+          hoverInfo: clicked,
+          layers,
+          layersToRender,
+          datasets
+        });
+        if (layerHoverProp) {
+          layerHoverProp.primaryData = layerPinnedProp.data;
+          layerHoverProp.compareType = interactionConfig.tooltip.config.compareType;
+        }
       }
       return (
         <div>
-          <MapPopover
-            {...position}
-            layerHoverProp={layerHoverProp}
-            coordinate={
-              interactionConfig.coordinate.enabled && ((pinned || {}).coordinate || coordinate)
-            }
-            freezed={Boolean(clicked || pinned)}
-            onClose={this._onCloseMapPopover}
-            mapW={mapState.width}
-            mapH={mapState.height}
-          />
+          {(clicked || pinned) && (
+            <MapPopover
+              {...pinnedPosition}
+              layerHoverProp={layerPinnedProp}
+              coordinate={interactionConfig.coordinate.enabled && (pinned || {}).coordinate}
+              frozen={Boolean(clicked || pinned)}
+              onClose={this._onCloseMapPopover}
+              mapW={mapState.width}
+              mapH={mapState.height}
+              isBase={compareMode}
+            />
+          )}
+          {(compareMode || (!clicked && !pinned)) && (
+            <MapPopover
+              {...position}
+              layerHoverProp={layerHoverProp}
+              coordinate={interactionConfig.coordinate.enabled && coordinate}
+              onClose={this._onCloseMapPopover}
+              mapW={mapState.width}
+              mapH={mapState.height}
+            />
+          )}
         </div>
       );
     }
