@@ -94,6 +94,7 @@ export {default as AnimationPlaybacksFactory} from './common/animation-control/p
 export {default as FloatingTimeDisplayFactory} from './common/animation-control/floating-time-display';
 export {default as DatasetSquare} from './common/styled-components';
 export {default as AnimationSpeedSliderFactory} from './common/animation-control/animation-speed-slider';
+export {default as RangePlotFactory} from './common/range-plot';
 
 // // Filters factory
 export {default as TimeWidgetFactory} from './filters/time-widget';
