@@ -142,6 +142,7 @@ export const dropdownListShadow = '0 6px 12px 0 rgba(0,0,0,0.16)';
 export const dropdownListBgd = '#3A414C';
 export const dropdownListBgdLT = '#FFFFFF';
 export const dropdownListBorderTop = '#242730';
+export const dropdownListBorderTopLT = '#D3D8E0';
 export const dropdownWrapperZ = 100;
 // Switch
 export const switchWidth = 24;
@@ -883,6 +884,7 @@ export const theme = {
   dropdownListBgd,
   dropdownListBgdLT,
   dropdownListBorderTop,
+  dropdownListBorderTopLT,
 
   labelColor,
   labelColorLT,
