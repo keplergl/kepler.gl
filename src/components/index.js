@@ -86,6 +86,9 @@ export {default as AddMapStyleModalFactory} from './modals/add-map-style-modal';
 export {default as ExportMapModalFactory} from './modals/export-map-modal/export-map-modal';
 export {default as ModalTabsFactory} from './modals/modal-tabs';
 export {default as LoadStorageMapFactory} from './modals/load-storage-map';
+export {default as ExportJsonMapFactory} from './modals/export-map-modal/export-json-map';
+export {default as ExportHtmlMapFactory} from './modals/export-map-modal/export-html-map';
+
 
 // // common factory
 export {default as AnimationControlFactory} from './common/animation-control/animation-control';

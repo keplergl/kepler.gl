@@ -30,6 +30,7 @@ TimeRangeFilterFactory.deps = [TimeRangeSliderFactory];
 function TimeRangeFilterFactory(TimeRangeSlider) {
   const TimeRangeFilter = ({filter, setFilter, isAnimatable, toggleAnimation, hideTimeTitle}) => (
     <TimeRangeSlider
+      id={filter.id}
       domain={filter.domain}
       value={filter.value}
       plotType={filter.plotType}
