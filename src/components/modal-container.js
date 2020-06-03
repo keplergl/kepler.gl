@@ -134,13 +134,6 @@ export default function ModalContainerFactory(
       onSaveToStorage: PropTypes.func,
       cloudProviders: PropTypes.arrayOf(PropTypes.object)
     };
-    cloudProviders = props => props.cloudProviders;
-    providerWithStorage = createSelector(this.cloudProviders, cloudProviders =>
-      cloudProviders.filter(p => p.hasPrivateStorage())
-    );
-    providerWithShare = createSelector(this.cloudProviders, cloudProviders =>
-      cloudProviders.filter(p => p.hasSharingUrl())
-    );
 
     componentDidMount = () => {
       document.addEventListener('keyup', this._onKeyUp);
@@ -148,6 +141,14 @@ export default function ModalContainerFactory(
     componentWillUnmount() {
       document.removeEventListener('keyup', this._onKeyUp);
     }
+
+    cloudProviders = props => props.cloudProviders;
+    providerWithStorage = createSelector(this.cloudProviders, cloudProviders =>
+      cloudProviders.filter(p => p.hasPrivateStorage())
+    );
+    providerWithShare = createSelector(this.cloudProviders, cloudProviders =>
+      cloudProviders.filter(p => p.hasSharingUrl())
+    );
 
     _onKeyUp = event => {
       const keyCode = event.keyCode;
