@@ -144,17 +144,17 @@ export default function ModalContainerFactory(
 
     componentDidMount = () => {
       document.addEventListener('keyup', this._onKeyUp);
-    }
+    };
     componentWillUnmount() {
       document.removeEventListener('keyup', this._onKeyUp);
     }
 
-    _onKeyUp = (event) => {
+    _onKeyUp = event => {
       const keyCode = event.keyCode;
       if (keyCode === KeyEvent.DOM_VK_ESCAPE) {
         this._closeModal();
       }
-    }
+    };
 
     _closeModal = () => {
       this.props.uiStateActions.toggleModal(null);
