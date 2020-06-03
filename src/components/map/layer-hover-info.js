@@ -23,7 +23,9 @@ import styled from 'styled-components';
 import {CenterFlexbox} from 'components/common/styled-components';
 import {Layers} from 'components/common/icons';
 import PropTypes from 'prop-types';
-import {parseFieldValue, getFormatter} from 'utils/data-utils';
+import {parseFieldValue, getFormatter, notNullorUndefined} from 'utils/data-utils';
+import {TOOLTIP_FORMATS, TOOLTIP_KEY, COMPARE_TYPES} from 'constants/tooltip';
+import {ALL_FIELD_TYPES} from 'constants/default-settings';
 
 export const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};
@@ -38,7 +40,21 @@ export const StyledLayerName = styled(CenterFlexbox)`
   }
 `;
 
-const Row = ({name, value, url}) => {
+const StyledTable = styled.table`
+  & .row__delta-value {
+    text-align: right;
+
+    &.positive {
+      color: ${props => props.theme.primaryBtnBgd};
+    }
+
+    &.negative {
+      color: ${props => props.theme.negativeBtnActBgd};
+    }
+  }
+`;
+
+const Row = ({name, value, deltaValue, url}) => {
   // Set 'url' to 'value' if it looks like a url
   if (!url && value && typeof value === 'string' && value.match(/^http/)) {
     url = value;
@@ -59,19 +75,35 @@ const Row = ({name, value, url}) => {
           value
         )}
       </td>
+      {notNullorUndefined(deltaValue) && (
+        <td
+          className={`row__delta-value ${
+            deltaValue.toString().charAt(0) === '+' ? 'positive' : 'negative'
+          }`}
+        >
+          {deltaValue}
+        </td>
+      )}
     </tr>
   );
 };
 
-const EntryInfo = ({fieldsToShow, fields, data}) => (
+const EntryInfo = ({fieldsToShow, fields, data, primaryData, compareType}) => (
   <tbody>
     {fieldsToShow.map(item => (
-      <EntryInfoRow key={item.name} item={item} fields={fields} data={data} />
+      <EntryInfoRow
+        key={item.name}
+        item={item}
+        fields={fields}
+        data={data}
+        primaryData={primaryData}
+        compareType={compareType}
+      />
     ))}
   </tbody>
 );
 
-const EntryInfoRow = ({item, fields, data}) => {
+const EntryInfoRow = ({item, fields, data, primaryData, compareType}) => {
   const field = fields.find(f => f.name === item.name);
   if (!field) {
     return null;
@@ -81,7 +113,27 @@ const EntryInfoRow = ({item, fields, data}) => {
   const displayValue = item.format
     ? getFormatter(item.format, field)(data[valueIdx])
     : parseFieldValue(data[valueIdx], field.type);
-  return <Row name={item.name} value={displayValue} />;
+  let displayDeltaValue = null;
+  if (
+    primaryData &&
+    (field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real)
+  ) {
+    const deltaValue =
+      compareType === COMPARE_TYPES.PERCENTAGE
+        ? 1 - data[valueIdx] / primaryData[valueIdx]
+        : data[valueIdx] - primaryData[valueIdx];
+    const deltaFormat =
+      compareType === COMPARE_TYPES.PERCENTAGE
+        ? TOOLTIP_FORMATS.DECIMAL_PERCENT_FULL_2[TOOLTIP_KEY]
+        : TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_3[TOOLTIP_KEY];
+    displayDeltaValue = getFormatter(item.format || deltaFormat)(deltaValue);
+    const deltaFirstChar = displayDeltaValue.toString().charAt(0);
+    if (deltaFirstChar !== '+' && deltaFirstChar !== '-') {
+      displayDeltaValue = `+${displayDeltaValue}`;
+    }
+  }
+
+  return <Row name={item.name} value={displayValue} deltaValue={displayDeltaValue} />;
 };
 
 const CellInfo = ({data, layer}) => {
@@ -122,9 +174,9 @@ const LayerHoverInfoFactory = () => {
           <Layers height="12px" />
           {props.layer.config.label}
         </StyledLayerName>
-        <table className="map-popover__table">
+        <StyledTable>
           {props.layer.isAggregated ? <CellInfo {...props} /> : <EntryInfo {...props} />}
-        </table>
+        </StyledTable>
       </div>
     );
   };
