@@ -44,10 +44,10 @@ const BottomWidgetContainer = styled.div`
   position: absolute;
   display: flex;
   flex-direction: column;
-  padding-top: ${props => props.theme.sidePanel.margin.top}px;
-  padding-right: ${props => props.theme.sidePanel.margin.right}px;
-  padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
-  padding-left: ${props => props.theme.sidePanel.margin.left}px;
+  padding-top: ${props => props.theme.bottomWidgetPaddingTop}px;
+  padding-right: ${props => props.theme.bottomWidgetPaddingRight}px;
+  padding-bottom: ${props => props.theme.bottomWidgetPaddingBottom}px;
+  padding-left: ${props => props.theme.bottomWidgetPaddingLeft}px;
   width: ${props => props.width}px;
   bottom: 0;
   right: 0;

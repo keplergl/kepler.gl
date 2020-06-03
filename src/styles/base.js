@@ -206,6 +206,10 @@ export const tooltipColor = '#333334';
 export const bottomInnerPdSide = 32;
 export const bottomInnerPdVert = 6;
 export const bottomPanelGap = 20;
+export const bottomWidgetPaddingTop = 20;
+export const bottomWidgetPaddingRight = 20;
+export const bottomWidgetPaddingBottom = 30;
+export const bottomWidgetPaddingLeft = 20;
 
 // Modal
 export const modalTitleColor = '#3A414C';
@@ -1063,6 +1067,10 @@ export const theme = {
   bottomInnerPdSide,
   bottomInnerPdVert,
   bottomPanelGap,
+  bottomWidgetPaddingTop,
+  bottomWidgetPaddingRight,
+  bottomWidgetPaddingBottom,
+  bottomWidgetPaddingLeft,
 
   // Slider
   sliderBarColor,

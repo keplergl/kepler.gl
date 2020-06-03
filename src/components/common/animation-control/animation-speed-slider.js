@@ -20,7 +20,7 @@
 
 import React, {Component} from 'react';
 import styled from 'styled-components';
-import RangeSlider from 'components/common/range-slider';
+import RangeSliderFactory from 'components/common/range-slider';
 import onClickOutside from 'react-onclickoutside';
 import {SPEED_CONTROL_RANGE} from 'constants/default-settings';
 
@@ -41,33 +41,37 @@ const SpeedSliderContainer = styled.div`
   }
 `;
 
-class AnimationSpeedSlider extends Component {
-  handleClickOutside = e => {
-    this.props.onHide();
-  };
+AnimationSpeedSliderFactory.deps = [RangeSliderFactory];
 
-  _onChange = v => this.props.updateAnimationSpeed(v[1]);
+export default function AnimationSpeedSliderFactory(RangeSlider) {
+  class AnimationSpeedSlider extends Component {
+    handleClickOutside = e => {
+      this.props.onHide();
+    };
 
-  render() {
-    return (
-      <SpeedSliderContainer className="animation-control__speed-slider">
-        <SliderWrapper>
-          <RangeSlider
-            range={SPEED_CONTROL_RANGE}
-            step={0.01}
-            value0={0}
-            value1={this.props.speed}
-            onChange={this._onChange}
-            isRanged={false}
-            showTooltip
-            showInput
-            inputTheme="secondary"
-            inputSize="tiny"
-          />
-        </SliderWrapper>
-      </SpeedSliderContainer>
-    );
+    _onChange = v => this.props.updateAnimationSpeed(v[1]);
+
+    render() {
+      return (
+        <SpeedSliderContainer className="animation-control__speed-slider">
+          <SliderWrapper>
+            <RangeSlider
+              range={SPEED_CONTROL_RANGE}
+              step={0.01}
+              value0={0}
+              value1={this.props.speed}
+              onChange={this._onChange}
+              isRanged={false}
+              showTooltip
+              showInput
+              inputTheme="secondary"
+              inputSize="tiny"
+            />
+          </SliderWrapper>
+        </SpeedSliderContainer>
+      );
+    }
   }
-}
 
-export default onClickOutside(AnimationSpeedSlider);
+  return onClickOutside(AnimationSpeedSlider);
+}

@@ -19,6 +19,8 @@
 // THE SOFTWARE.
 
 import TimeRangeSliderFactory from './common/time-range-slider';
+import RangeSliderFactory from './common/range-slider';
+import {appInjector} from './container';
 
 // Components
 export {default as KeplerGl, default, injectComponents} from './container';
@@ -46,6 +48,8 @@ export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
 export {default as LayerPanelHeaderFactory} from './side-panel/layer-panel/layer-panel-header';
 export {default as LayerConfiguratorFactory} from './side-panel/layer-panel/layer-configurator';
+export {default as VisConfigSliderFactory} from './side-panel/layer-panel/vis-config-slider';
+export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
 
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
@@ -89,6 +93,7 @@ export {default as SpeedControlFactory} from './common/animation-control/speed-c
 export {default as AnimationPlaybacksFactory} from './common/animation-control/playback-controls';
 export {default as FloatingTimeDisplayFactory} from './common/animation-control/floating-time-display';
 export {default as DatasetSquare} from './common/styled-components';
+export {default as AnimationSpeedSliderFactory} from './common/animation-control/animation-speed-slider';
 
 // // Filters factory
 export {default as TimeWidgetFactory} from './filters/time-widget';
@@ -110,7 +115,6 @@ export {default as FileUploadFactory, FileUpload} from './common/file-uploader/f
 export {default as DatasetLabel} from './common/dataset-label';
 export {default as ItemSelector} from './common/item-selector/item-selector';
 export {default as FieldSelector} from './common/field-selector';
-export {default as RangeSlider} from './common/range-slider';
 export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
@@ -120,5 +124,8 @@ export * from './common/styled-components';
 import * as Icons from './common/icons';
 export {Icons};
 
-export const TimeRangeSlider = TimeRangeSliderFactory();
-export {TimeRangeSliderFactory};
+// Individual Component from Dependency Tree
+export const TimeRangeSlider = appInjector.get(TimeRangeSliderFactory);
+export const RangeSlider = appInjector.get(RangeSliderFactory);
+
+export {TimeRangeSliderFactory, RangeSliderFactory};

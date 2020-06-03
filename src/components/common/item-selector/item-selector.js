@@ -172,7 +172,7 @@ class ItemSelector extends Component {
 
     if (this.props.multiSelect) {
       const items = uniqBy(previousSelected.concat(toArray(item)), getValue);
-      
+
       this.props.onChange(items);
     } else {
       this.props.onChange(getValue(item));
