@@ -34,9 +34,9 @@ import DimensionScaleSelector from './dimension-scale-selector';
 import ColorSelector from './color-selector';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
 import VisConfigSwitch from './vis-config-switch';
-import VisConfigSlider from './vis-config-slider';
+import VisConfigSliderFactory from './vis-config-slider';
 import LayerConfigGroup, {ConfigGroupCollapsibleContent} from './layer-config-group';
-import TextLabelPanel from './text-label-panel';
+import TextLabelPanelFactory from './text-label-panel';
 
 import {capitalizeFirstLetter} from 'utils/utils';
 
@@ -78,9 +78,17 @@ export const getLayerChannelConfigProps = props => ({
   onChange: props.updateLayerVisualChannelConfig
 });
 
-LayerConfiguratorFactory.deps = [SourceDataSelectorFactory];
+LayerConfiguratorFactory.deps = [
+  SourceDataSelectorFactory,
+  VisConfigSliderFactory,
+  TextLabelPanelFactory
+];
 
-export default function LayerConfiguratorFactory(SourceDataSelector) {
+export default function LayerConfiguratorFactory(
+  SourceDataSelector,
+  VisConfigSlider,
+  TextLabelPanel
+) {
   class LayerConfigurator extends Component {
     static propTypes = {
       layer: PropTypes.object.isRequired,

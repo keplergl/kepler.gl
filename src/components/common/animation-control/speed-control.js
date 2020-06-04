@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import AnimationSpeedSlider from './animation-speed-slider';
+import AnimationSpeedSliderFactory from './animation-speed-slider';
 import {Button, CenterFlexbox} from 'components/common/styled-components';
 import {Rocket} from 'components/common/icons';
 
@@ -37,7 +37,9 @@ const StyledSpeedText = styled.div`
   text-align: left;
 `;
 
-function SpeedControlFactory() {
+SpeedControlFactory.deps = [AnimationSpeedSliderFactory];
+
+function SpeedControlFactory(AnimationSpeedSlider) {
   const SpeedControl = ({
     onClick,
     updateAnimationSpeed,

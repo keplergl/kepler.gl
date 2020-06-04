@@ -142,6 +142,7 @@ export const dropdownListShadow = '0 6px 12px 0 rgba(0,0,0,0.16)';
 export const dropdownListBgd = '#3A414C';
 export const dropdownListBgdLT = '#FFFFFF';
 export const dropdownListBorderTop = '#242730';
+export const dropdownListBorderTopLT = '#D3D8E0';
 export const dropdownWrapperZ = 100;
 // Switch
 export const switchWidth = 24;
@@ -205,6 +206,10 @@ export const tooltipColor = '#333334';
 export const bottomInnerPdSide = 32;
 export const bottomInnerPdVert = 6;
 export const bottomPanelGap = 20;
+export const bottomWidgetPaddingTop = 20;
+export const bottomWidgetPaddingRight = 20;
+export const bottomWidgetPaddingBottom = 30;
+export const bottomWidgetPaddingLeft = 20;
 
 // Modal
 export const modalTitleColor = '#3A414C';
@@ -883,6 +888,7 @@ export const theme = {
   dropdownListBgd,
   dropdownListBgdLT,
   dropdownListBorderTop,
+  dropdownListBorderTopLT,
 
   labelColor,
   labelColorLT,
@@ -1061,6 +1067,10 @@ export const theme = {
   bottomInnerPdSide,
   bottomInnerPdVert,
   bottomPanelGap,
+  bottomWidgetPaddingTop,
+  bottomWidgetPaddingRight,
+  bottomWidgetPaddingBottom,
+  bottomWidgetPaddingLeft,
 
   // Slider
   sliderBarColor,
