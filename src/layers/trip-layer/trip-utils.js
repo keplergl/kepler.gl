@@ -134,13 +134,13 @@ export function parseTripGeoJsonTimestamp(dataToFeature) {
 }
 
 function findMinFromSorted(list = []) {
-  return list.find(notNullorUndefined) || null;
+  return list.find(d => notNullorUndefined(d) && Number.isFinite(d)) || null;
 }
 
 function findMaxFromSorted(list = []) {
   let i = list.length - 1;
   while (i > 0) {
-    if (notNullorUndefined(list[i])) {
+    if (notNullorUndefined(list[i]) && Number.isFinite(list[i])) {
       return list[i];
     }
     i--;
@@ -151,8 +151,12 @@ function findMaxFromSorted(list = []) {
 export function getAnimationDomainFromTimestamps(dataToTimeStamp = []) {
   return dataToTimeStamp.reduce(
     (accu, tss) => {
-      accu[0] = Math.min(accu[0], findMinFromSorted(tss));
-      accu[1] = Math.max(accu[1], findMaxFromSorted(tss));
+      const tsMin = findMinFromSorted(tss);
+      const tsMax = findMaxFromSorted(tss);
+      if (Number.isFinite(tsMin) && Number.isFinite(tsMax)) {
+        accu[0] = Math.min(accu[0], tsMin);
+        accu[1] = Math.max(accu[1], tsMax);
+      }
       return accu;
     },
     [Infinity, -Infinity]
