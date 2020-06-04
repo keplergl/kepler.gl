@@ -19,9 +19,11 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import RangeSlider from 'components/common/range-slider';
+import RangeSliderFactory from 'components/common/range-slider';
 
-export default function RangeFilterFactory() {
+RangeFilterFactory.deps = [RangeSliderFactory];
+
+export default function RangeFilterFactory(RangeSlider) {
   const RangeFilter = ({filter, setFilter}) => (
     <div>
       <RangeSlider

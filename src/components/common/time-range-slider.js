@@ -28,7 +28,7 @@ import {createSelector} from 'reselect';
 
 import {Minus} from 'components/common/icons';
 import {SelectTextBold, SelectText} from 'components/common/styled-components';
-import RangeSlider from 'components/common/range-slider';
+import RangeSliderFactory from 'components/common/range-slider';
 import TimeSliderMarker from 'components/common/time-slider-marker';
 import PlaybackControlsFactory from 'components/common/animation-control/playback-controls';
 import {BASE_SPEED, DEFAULT_TIME_FORMAT} from 'constants/default-settings';
@@ -51,9 +51,9 @@ const StyledSliderContainer = styled.div`
   }
 `;
 
-TimeRangeSliderFactory.deps = [PlaybackControlsFactory];
+TimeRangeSliderFactory.deps = [PlaybackControlsFactory, RangeSliderFactory];
 
-export default function TimeRangeSliderFactory(PlaybackControls) {
+export default function TimeRangeSliderFactory(PlaybackControls, RangeSlider) {
   class TimeRangeSlider extends Component {
     static propTypes = {
       onChange: PropTypes.func.isRequired,
