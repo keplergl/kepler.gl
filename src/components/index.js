@@ -89,7 +89,6 @@ export {default as LoadStorageMapFactory} from './modals/load-storage-map';
 export {default as ExportJsonMapFactory} from './modals/export-map-modal/export-json-map';
 export {default as ExportHtmlMapFactory} from './modals/export-map-modal/export-html-map';
 
-
 // // common factory
 export {default as AnimationControlFactory} from './common/animation-control/animation-control';
 export {default as SpeedControlFactory} from './common/animation-control/speed-control';
@@ -98,6 +97,7 @@ export {default as FloatingTimeDisplayFactory} from './common/animation-control/
 export {default as DatasetSquare} from './common/styled-components';
 export {default as AnimationSpeedSliderFactory} from './common/animation-control/animation-speed-slider';
 export {default as RangePlotFactory} from './common/range-plot';
+export {FieldListItemFactory} from './common/field-selector';
 
 // // Filters factory
 export {default as TimeWidgetFactory} from './filters/time-widget';
@@ -124,6 +124,10 @@ export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export {default as LoadingDialog} from './modals/loading-dialog';
+export {default as FieldToken} from './common/field-token';
+export {default as Portaled} from './common/portaled';
+export {default as DropdownList} from './common/item-selector/dropdown-list';
+
 export * from './common/styled-components';
 import * as Icons from './common/icons';
 export {Icons};
