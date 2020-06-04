@@ -175,6 +175,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
  */
 export const loadFilesSuccessUpdater = (state, action) => {
   // still more to load
+  console.time('loadFileSuccessUpdater')
   const payloads = filesToDataPayload(action.result);
   const nextState = compose_([
     pick_('visState')(
