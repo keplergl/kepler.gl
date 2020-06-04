@@ -53,31 +53,40 @@ export async function readFile({file, fileCache = []}) {
   ];
 }
 
+function isCsvRows(content) {
+  return Array.isArray(content) && content.length && Array.isArray(content[0]);
+}
+
+const SIZE_THRESHOLD =  30 * 1024 * 1024;
 export async function loadFile(file) {
   // Don't read as string files with a size 250MB or bigger because it may
   // exceed the browsers maximum string length.
+  console.time('loadFile');
   const content =
-    file.size >= 250 * 1024 * 1024 ? await parseFileInBatches(file) : await parseFile(file);
-  if (Array.isArray(content)) {
-    return {
-      format: 'csv',
-      data: processCsvData(content)
-    };
+    file.size >= SIZE_THRESHOLD ? await parseFileInBatches(file) : await parseFile(file);
+
+  console.timeEnd('loadFile');
+  console.log(content);
+  let format;
+  let processor;
+  if (isCsvRows(content)) {
+    format = DATASET_FORMATS.csv;
+    processor = processCsvData;
   } else if (isKeplerGlMap(content)) {
-    return {
-      format: DATASET_FORMATS.keplergl,
-      data: processKeplerglJSON(content)
-    };
+    (format = DATASET_FORMATS.keplergl), (processor = processKeplerglJSON);
   } else if (isRowObject(content)) {
-    return {
-      format: DATASET_FORMATS.row,
-      data: processRowObject(content)
-    };
+    format = DATASET_FORMATS.row;
+    processor = processRowObject;
   } else if (isGeoJson(content)) {
-    return {
-      format: DATASET_FORMATS.geojson,
-      data: processGeojson(content)
-    };
+    format = DATASET_FORMATS.geojson;
+    processor = processGeojson;
+  }
+
+  if (format && processor) {
+    console.time('process file content')
+    const data = processor(content);
+    console.timeEnd('process file content')
+    return {format, data};
   }
   return null;
 }
@@ -100,16 +109,28 @@ async function* fileReaderAsyncIterable(file, chunkSize) {
     yield chunk;
   }
 }
+const CSV_LOADER_OPTION = {header: false, batchSize: 4000};
+const JSON_LOADER_OPTION = {_rootObjectBatches: true};
+// 10 mb
+const chunkSize = 10 * 1024 * 1024;
 
 async function parseFileInBatches(file) {
-  const chunkSize = 1024 * 1024; // 1MB, biggest value that keeps UI responsive
-  const batchIterator = await parseInBatches(fileReaderAsyncIterable(file, chunkSize), {
-    csv: {header: false},
-    json: {_rootObjectBatches: true}
-  });
+  console.log('parseFileInBatches');
+
+  const batchIterator = await parseInBatches(
+    fileReaderAsyncIterable(file, chunkSize),
+    {
+      csv: CSV_LOADER_OPTION,
+      json: JSON_LOADER_OPTION
+    },
+    file.name
+  );
   let result = {};
   let batches = [];
+  let bidx = 0;
+
   for await (const batch of batchIterator) {
+    console.log(bidx);
     // Last batch will have this special type and will provide all the root
     // properties of the parsed document.
     if (batch.batchType === 'root-object-batch-complete') {
@@ -133,8 +154,12 @@ async function parseFileInBatches(file) {
         }
       }
     } else {
-      batches = batches.concat(batch.data);
+      for (let i = 0; i < batch.data.length; i++) {
+        batches.push(batch.data[i]);
+        // batches = batches.concat(batch.data);
+      }
     }
+    bidx++;
   }
   return Object.keys(result).length === 0 // csv doesn't have any keys
     ? batches
@@ -142,13 +167,19 @@ async function parseFileInBatches(file) {
 }
 
 function parseFile(file) {
+  console.log('parseFile');
+
   return new Promise((resolve, reject) => {
     const fileReader = new FileReader(file);
     fileReader.onload = async ({target: {result}}) => {
       try {
-        const data = await parse(result, {
-          csv: {header: false}
-        });
+        const data = await parse(
+          result,
+          {
+            csv: {header: false}
+          },
+          file.name
+        );
         resolve(data);
       } catch (e) {
         reject(e);

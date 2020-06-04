@@ -1285,7 +1285,7 @@ export function makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish) {
  * @type {typeof import('./vis-state-updaters').loadFilesErrUpdater}
  * @public
  */
-export const loadFilesErrUpdater = (state, {error}) => ({
+export const loadFilesErrUpdater = (state, {error}) => (console.log(error), {
   ...state,
   fileLoading: false,
   fileLoadingErr: error
