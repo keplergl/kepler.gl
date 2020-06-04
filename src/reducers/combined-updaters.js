@@ -209,6 +209,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
  */
 export const loadFileSuccessUpdater = (state, action) => {
   // still more to load
+  console.time('loadFileSuccessUpdater')
   const payloads = filesToDataPayload(action.result);
   const nextState = compose_([
     pick_('visState')(
@@ -220,7 +221,9 @@ export const loadFileSuccessUpdater = (state, action) => {
   ])(state);
 
   // make multiple add data to map calls
-  return compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(nextState);
+  const stateWithData = compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(nextState);
+  console.timeEnd('loadFileSuccessUpdater')
+  return stateWithData;
 };
 
 export const addDataToMapComposed = addDataToMapUpdater;
