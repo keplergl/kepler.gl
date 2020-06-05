@@ -49,7 +49,9 @@ export type ActionType = {
   SORT_TABLE_COLUMN: string;
   PIN_TABLE_COLUMN: string;
   COPY_TABLE_COLUMN: string;
-
+  NEXT_FILE_BATCH: string;
+  PROCESS_FILE_CONTENT: string;
+  
   // mapState
   UPDATE_MAP: string;
   FIT_BOUNDS: string;
