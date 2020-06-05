@@ -310,7 +310,8 @@ export default function ModalContainerFactory(
                 onSetCloudProvider={this.props.providerActions.setCloudProvider}
                 getSavedMaps={this.props.providerActions.getSavedMaps}
                 loadFiles={uiState.loadFiles}
-                {...uiState.loadFiles}
+                fileLoading={visState.fileLoading}
+                fileLoadingProgress={visState.fileLoadingProgress}
               />
             );
             modalProps = {

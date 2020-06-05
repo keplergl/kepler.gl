@@ -24,10 +24,13 @@ import styled from 'styled-components';
 import get from 'lodash.get';
 
 import FileUploadFactory from 'components/common/file-uploader/file-upload';
+import FileUploadProgress from 'components/common/file-uploader/file-upload-progress';
+
 import LoadStorageMapFactory from './load-storage-map';
 import ModalTabsFactory from './modal-tabs';
 
 import LoadingDialog from './loading-dialog';
+
 import {LOADING_METHODS} from 'constants/default-settings';
 
 const StyledLoadDataModal = styled.div.attrs({
@@ -46,9 +49,15 @@ LoadDataModalFactory.deps = [ModalTabsFactory, FileUploadFactory, LoadStorageMap
 
 function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
   const LoadDataModal = props => {
-    const {fileLoading, loadingMethods, isCloudMapLoading} = props;
+    const {fileLoading, fileLoadingProgress, loadingMethods, isCloudMapLoading} = props;
     const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
-
+    // const fileLoading = true;
+    // const fileLoadingProgress = {
+    //   'File upload.csv': {
+    //     fileName: 'File upload.csv',
+    //     percent: 
+    //   },
+    // }
     return (
       <StyledLoadDataModal>
         <ModalTabs
@@ -56,7 +65,9 @@ function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
           loadingMethods={loadingMethods}
           toggleMethod={toggleMethod}
         />
-        {fileLoading || isCloudMapLoading ? (
+        {fileLoading ? (
+          <FileUploadProgress fileLoadingProgress={fileLoadingProgress}/>
+        ) : isCloudMapLoading ? (
           <LoadingDialog size={64} />
         ) : (
           currentMethod && <currentMethod.elementType key={currentMethod.id} {...props} />

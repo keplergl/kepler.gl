@@ -29,7 +29,7 @@ import {findMapBounds} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
 import {isPlainObject} from 'utils/utils';
 import {filesToDataPayload} from 'processors/file-handler';
-import Console from 'global/console';
+import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-helpers';
 
 // compose action to apply result multiple reducers, with the output of one
 
@@ -87,43 +87,6 @@ export const defaultAddDataToMapOptions = {
   centerMap: true,
   keepExistingConfig: false
 };
-
-const identity = state => state;
-
-/* eslint-disable no-unused-vars */
-// @ts-ignore
-function log(text) {
-  return value => Console.log(text, value);
-}
-/* eslint-enable no-unused-vars */
-
-function payload_(p) {
-  return {payload: p};
-}
-
-function apply_(updater, payload) {
-  return state => updater(state, payload);
-}
-
-function with_(fn) {
-  return state => fn(state)(state);
-}
-
-function if_(pred, fn) {
-  return pred ? fn : identity;
-}
-
-function compose_(fns) {
-  return state => fns.reduce((state2, fn) => fn(state2), state);
-}
-
-function merge_(obj) {
-  return state => ({...state, ...obj});
-}
-
-function pick_(prop) {
-  return fn => state => ({...state, [prop]: fn(state[prop])});
-}
 
 /**
  * Combine data and full configuration update in a single action
@@ -209,7 +172,8 @@ export const addDataToMapUpdater = (state, {payload}) => {
  */
 export const loadFileSuccessUpdater = (state, action) => {
   // still more to load
-  console.time('loadFileSuccessUpdater')
+  console.time('loadFileSuccessUpdater');
+  console.log(action.result);
   const payloads = filesToDataPayload(action.result);
   const nextState = compose_([
     pick_('visState')(
@@ -221,8 +185,10 @@ export const loadFileSuccessUpdater = (state, action) => {
   ])(state);
 
   // make multiple add data to map calls
-  const stateWithData = compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(nextState);
-  console.timeEnd('loadFileSuccessUpdater')
+  const stateWithData = compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(
+    nextState
+  );
+  console.timeEnd('loadFileSuccessUpdater');
   return stateWithData;
 };
 
