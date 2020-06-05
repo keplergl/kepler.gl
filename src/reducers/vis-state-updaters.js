@@ -27,9 +27,14 @@ import xor from 'lodash.xor';
 import copy from 'copy-to-clipboard';
 import {parseFieldValue} from 'utils/data-utils';
 // Tasks
-import {LOAD_FILE_TASK} from 'tasks/tasks';
+import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA} from 'tasks/tasks';
 // Actions
-import {loadFilesErr, loadFileSuccess, loadNextFile} from 'actions/vis-state-actions';
+import {
+  loadFilesErr,
+  loadFileSuccess,
+  loadNextFile,
+  nextFileBatch
+} from 'actions/vis-state-actions';
 // Utils
 import {findFieldsToShow, getDefaultInteraction} from 'utils/interaction-utils';
 import {
@@ -71,6 +76,8 @@ import {
 import {Layer, LayerClasses} from 'layers';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 import {EDITOR_MODES, SORT_ORDER} from 'constants/default-settings';
+import {pick_, merge_} from './composer-helpers';
+import {processFileContent} from 'actions/vis-state-actions';
 
 // type imports
 /** @typedef {import('./vis-state-updaters').Field} Field */
@@ -1237,17 +1244,22 @@ export const loadFilesUpdater = (state, action) => {
   }
 
   const fileCache = [];
+  console.log(files);
   return withTask(
     {
       ...state,
       fileLoading: true,
-      fileLoadingProgress: 0
+      fileLoadingProgress: files.reduce(
+        (accu, f) => merge_(accu)(initialFileLoadingProgress(f)),
+        {}
+      )
     },
     makeLoadFileTask(files.length, files, fileCache, onFinish)
   );
 };
 
 export function loadNextFileUpdater(state, action) {
+  console.log('loadNextFileUpdater');
   const {fileCache, filesToLoad, totalCount, onFinish} = action;
   const fileLoadingProgress = ((totalCount - filesToLoad.length) / totalCount) * 100;
 
@@ -1260,24 +1272,109 @@ export function loadNextFileUpdater(state, action) {
   );
 }
 
-export function makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish) {
+export function makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish, totalPercent) {
   const [file, ...remainingFilesToLoad] = filesToLoad;
+  console.log('makeLoadFileTask');
 
   return LOAD_FILE_TASK({file, fileCache}).bimap(
     // success
-    result =>
-      remainingFilesToLoad.length
-        ? loadNextFile({
-            fileCache: result,
+    gen =>
+      nextFileBatch({
+        gen,
+        fileName: file.name,
+        onFinish: result =>
+          processFileContent({
+            content: result,
+            fileCache,
             filesToLoad: remainingFilesToLoad,
             totalCount,
             onFinish
-          })
-        : onFinish(result),
+          }),
+        // remainingFilesToLoad.length
+        //   ? loadNextFile({
+        //       fileCache: result,
+        //       filesToLoad: remainingFilesToLoad,
+        //       totalCount,
+        //       onFinish
+        //     })
+        //   : onFinish(result),
+        totalPercent
+      }),
+
     // error
     loadFilesErr
   );
 }
+
+export function processFileContentUpdater(state, action) {
+  const {content, fileCache, filesToLoad, totalCount, onFinish} = action.payload;
+  console.log('processFileContentUpdater');
+  console.log(content);
+  const stateWithProgress = updateFileLoadingProgressUpdater(state, {
+    fileName: content.fileName,
+    progress: {percent: 100, message: 'processing...'}
+  });
+  return withTask(
+    stateWithProgress,
+    PROCESS_FILE_DATA({content, fileCache}).bimap(
+      result =>
+        filesToLoad.length
+          ? loadNextFile({
+              fileCache: result,
+              filesToLoad: filesToLoad,
+              totalCount,
+              onFinish
+            })
+          : onFinish(result),
+
+      onFinish,
+      loadFilesErr
+    )
+  );
+}
+
+export function parseProgress(prevProgress = {}, progress, startPercent = 0, totalPercent = 100) {
+  // This happens when receiving query metadata or other cases we don't
+  // have an update for the user.
+  if (!progress || !progress.percent) {
+    return {};
+  }
+
+  const prevPercent = prevProgress.percent || 0;
+  if (!prevPercent) {
+    console.log('prevPercent is 0');
+  }
+  return {
+    percent: prevPercent + progress.percent * totalPercent
+  };
+}
+
+// gets called with payload = AsyncGenerator<???>
+export const nextFileBatchUpdater = (
+  state,
+  {payload: {gen, fileName, progress, accumulated, onFinish, totalPercent}}
+) => {
+  const stateWithProgress = updateFileLoadingProgressUpdater(state, {
+    fileName,
+    progress: parseProgress(state.fileLoadingProgress[fileName], progress, totalPercent)
+  });
+  console.log(state.fileLoadingProgress);
+  return withTask(
+    stateWithProgress,
+    UNWRAP_TASK(gen.next()).map(({value, done}) => {
+      return done
+        ? onFinish(accumulated)
+        : nextFileBatch({
+            gen,
+            fileName,
+            progress: value.progress,
+            accumulated: value,
+            onFinish,
+            totalPercent
+          });
+    })
+  );
+};
 
 /**
  * Trigger loading file error
@@ -1285,11 +1382,14 @@ export function makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish) {
  * @type {typeof import('./vis-state-updaters').loadFilesErrUpdater}
  * @public
  */
-export const loadFilesErrUpdater = (state, {error}) => (console.log(error), {
-  ...state,
-  fileLoading: false,
-  fileLoadingErr: error
-});
+export const loadFilesErrUpdater = (state, {error}) => (
+  console.log(error),
+  {
+    ...state,
+    fileLoading: false,
+    fileLoadingErr: error
+  }
+);
 
 /**
  * When select dataset for export, apply cpu filter to selected dataset
@@ -1358,6 +1458,22 @@ export function addDefaultTooltips(state, dataset) {
   return set(['interactionConfig', 'tooltip', 'config', 'fieldsToShow'], merged, state);
 }
 
+export function initialFileLoadingProgress(file, index) {
+  const fileName = file.name || `Untitled File ${index}`;
+  return {
+    [fileName]: {
+      // percent of current file
+      percent: 0,
+      message: '',
+      fileName,
+      error: null
+    }
+  };
+}
+
+export function updateFileLoadingProgressUpdater(state, {fileName, progress}) {
+  return pick_('fileLoadingProgress')(pick_(fileName)(merge_(progress)))(state);
+}
 /**
  * Helper function to update layer domains for an array of datasets
  * @type {typeof import('./vis-state-updaters').updateAllLayerDomainData}
