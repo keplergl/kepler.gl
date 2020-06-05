@@ -752,6 +752,20 @@ export function toggleEditorVisibility() {
   };
 }
 
+export function nextFileBatch(payload) {
+  return {
+    type: ActionTypes.NEXT_FILE_BATCH,
+    payload
+  };
+}
+
+export function processFileContent(payload) {
+  return {
+    type: ActionTypes.PROCESS_FILE_CONTENT,
+    payload
+  }
+}
+
 /**
  * Process the next file batch
  * @memberof visStateActions

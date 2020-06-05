@@ -1279,6 +1279,7 @@ export function loadFileStepSuccessUpdater(state, action) {
 export function loadNextFileUpdater(state) {
   const {filesToLoad} = state.fileLoading;
   const [file, ...remainingFilesToLoad] = filesToLoad;
+  console.log('makeLoadFileTask');
 
   // save filesToLoad to state
   const nextState = pick_('fileLoading')(merge_({filesToLoad: remainingFilesToLoad}))(state);
