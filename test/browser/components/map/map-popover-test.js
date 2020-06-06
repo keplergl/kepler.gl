@@ -24,8 +24,7 @@ import test from 'tape';
 import {Pin} from 'components/common/icons';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import MapPopoverFactory from 'components/map/map-popover';
-// TODO:  REMOVE ONLY!!!
-test.only('Map Popover - render', t => {
+test('Map Popover - render', t => {
   const LayerHoverInfo = () => <div className="layer-hover-info" />;
   const CoordinateInfo = () => <div className="coordingate-hover-info" />;
   const MapPopover = MapPopoverFactory(LayerHoverInfo, CoordinateInfo);
