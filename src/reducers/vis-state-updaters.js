@@ -1244,7 +1244,6 @@ export const loadFilesUpdater = (state, action) => {
   }
 
   const fileCache = [];
-  console.log(files);
   return withTask(
     {
       ...state,
@@ -1340,12 +1339,12 @@ export function parseProgress(prevProgress = {}, progress, startPercent = 0, tot
     return {};
   }
 
-  const prevPercent = prevProgress.percent || 0;
-  if (!prevPercent) {
-    console.log('prevPercent is 0');
-  }
+  // const prevPercent = prevProgress.percent || 0;
+  // if (!prevPercent) {
+  //   console.log('prevPercent is 0');
+  // }
   return {
-    percent: prevPercent + progress.percent * totalPercent
+    percent: progress.percent
   };
 }
 
@@ -1358,7 +1357,7 @@ export const nextFileBatchUpdater = (
     fileName,
     progress: parseProgress(state.fileLoadingProgress[fileName], progress, totalPercent)
   });
-  console.log(state.fileLoadingProgress);
+
   return withTask(
     stateWithProgress,
     UNWRAP_TASK(gen.next()).map(({value, done}) => {

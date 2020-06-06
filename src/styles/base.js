@@ -289,6 +289,9 @@ const timeDisplayPadding = '0 24px';
 // Export map modal
 const exportIntraSectionMargin = '8';
 
+// progress bar
+const progressBarColor = primaryBtnBgd;
+const progressBarTrackColor = '#E8E8E8';
 // Action Panel
 export const actionPanelWidth = 110;
 export const actionPanelHeight = 32;
@@ -1121,7 +1124,11 @@ export const theme = {
   actionPanelHeight,
 
   // Breakpoints
-  breakPoints
+  breakPoints,
+
+  // progressbar
+  progressBarColor,
+  progressBarTrackColor
 };
 
 export const themeLT = {
