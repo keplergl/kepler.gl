@@ -246,6 +246,7 @@ export type Geocoder = BaseInteraction & {
       lon: number;
       text: string;
     } | null;
+    color: number[];
   }
 };
 export type Brush = BaseInteraction & {

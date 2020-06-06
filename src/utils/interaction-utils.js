@@ -46,7 +46,8 @@ export function getDefaultInteraction() {
       enabled: false,
       iconComponent: Pin,
       config: {
-        data: null
+        data: null,
+        color: [255, 0, 0]
       }
     },
     brush: {

@@ -370,7 +370,7 @@ function KeplerGlFactory(
                 )}
                 {!uiState.readOnly && interactionConfig.geocoder.enabled && (
                   <GeoCoderPanel
-                    isGeocoderEnabled={interactionConfig.geocoder.enabled}
+                    geocoderConfig={interactionConfig.geocoder}
                     mapboxApiAccessToken={mapboxApiAccessToken}
                     dispatch={dispatch}
                   />

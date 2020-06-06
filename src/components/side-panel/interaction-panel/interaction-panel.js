@@ -25,6 +25,7 @@ import Switch from 'components/common/switch';
 
 import BrushConfigFactory from './brush-config';
 import TooltipConfigFactory from './tooltip-config';
+import GeocoderConfigFactory from './geocoder-config';
 
 import {
   StyledPanelHeader,
@@ -42,9 +43,9 @@ const StyledInteractionPanel = styled.div`
   padding-bottom: 6px;
 `;
 
-InteractionPanelFactory.deps = [TooltipConfigFactory, BrushConfigFactory];
+InteractionPanelFactory.deps = [TooltipConfigFactory, BrushConfigFactory, GeocoderConfigFactory];
 
-function InteractionPanelFactory(TooltipConfig, BrushConfig) {
+function InteractionPanelFactory(TooltipConfig, BrushConfig, GeocoderConfig) {
   return class InteractionPanel extends Component {
     static propTypes = {
       datasets: PropTypes.object.isRequired,
@@ -79,6 +80,10 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
 
         case 'brush':
           template = <BrushConfig config={config.config} onChange={onChange} />;
+          break;
+
+        case 'geocoder':
+          template = <GeocoderConfig config={config.config} onChange={onChange} />;
           break;
 
         default:

@@ -26,6 +26,7 @@ import {FormattedMessage} from 'react-intl';
 import Geocoder from 'react-mapbox-gl-geocoder';
 import Processors from 'processors';
 import {fitBounds, addDataToMap, removeDataset} from 'actions';
+import isEqual from 'lodash.isequal';
 
 const GEOCODER_DATASET_NAME = 'geocoder_dataset';
 const QUERY_PARAMS = {};
@@ -35,7 +36,7 @@ const ICON_LAYER = {
   type: 'icon',
   config: {
     label: 'Geocoder Layer',
-    color: [255, 0, 0],
+    color: null,
     dataId: GEOCODER_DATASET_NAME,
     columns: {
       lat: 'lt',
@@ -135,13 +136,22 @@ function isValid(key) {
 
 export class GeocoderPanel extends Component {
   static propTypes = {
-    isGeocoderEnabled: PropTypes.bool.isRequired,
-    mapboxApiAccessToken: PropTypes.string.isRequired
+    mapboxApiAccessToken: PropTypes.string.isRequired,
+    interactionConfig: PropTypes.object.isRequired
   };
 
   state = {
     selectedGeoItem: null
   };
+
+  componentDidUpdate() {
+    if (
+      !isEqual(this.props.geocoderConfig.config.color, this.state.color) &&
+      this.state.selectedGeoItem
+    ) {
+      this.onSelected(null, this.state.selectedGeoItem);
+    }
+  }
 
   removeGeocoderDataset() {
     this.props.dispatch(removeDataset(GEOCODER_DATASET_NAME));
@@ -154,6 +164,8 @@ export class GeocoderPanel extends Component {
       bbox
     } = geoItem;
     this.removeGeocoderDataset();
+    const iconLayer = {...ICON_LAYER};
+    iconLayer.config.color = this.props.geocoderConfig.config.color;
     this.props.dispatch(
       addDataToMap({
         datasets: [generateGeocoderDataset(lat, lon, text)],
@@ -164,7 +176,7 @@ export class GeocoderPanel extends Component {
           version: 'v1',
           config: {
             visState: {
-              layers: [ICON_LAYER],
+              layers: [iconLayer],
               interactionConfig: {
                 geocoder: {
                   enabled: true,
@@ -180,7 +192,8 @@ export class GeocoderPanel extends Component {
       fitBounds(bbox || [lon - GEO_OFFSET, lat - GEO_OFFSET, lon + GEO_OFFSET, lat + GEO_OFFSET])
     );
     this.setState({
-      selectedGeoItem: geoItem
+      selectedGeoItem: geoItem,
+      color: this.props.geocoderConfig.config.color
     });
   };
 
@@ -192,11 +205,11 @@ export class GeocoderPanel extends Component {
   };
 
   render() {
-    const {isGeocoderEnabled, mapboxApiAccessToken} = this.props;
+    const {geocoderConfig, mapboxApiAccessToken} = this.props;
     return (
       <GeocoderPanelContent
         className="geocoder-panel"
-        style={{display: isGeocoderEnabled ? 'block' : 'none'}}
+        style={{display: geocoderConfig.enabled ? 'block' : 'none'}}
       >
         <SidePanelSection>
           <PanelLabel>

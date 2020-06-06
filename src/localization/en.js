@@ -435,7 +435,8 @@ export default {
     or: 'or'
   },
   geocoder: {
-    title: 'Geocoder'
+    title: 'Geocoder',
+    pinColor: 'Pin Color'
   },
   fieldSelector: {
     clearAll: 'Clear All',

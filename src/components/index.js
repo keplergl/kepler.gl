@@ -63,6 +63,7 @@ export {default as FilterPanelFactory} from './side-panel/filter-panel/filter-pa
 export {default as InteractionManagerFactory} from './side-panel/interaction-manager';
 export {default as BrushConfigFactory} from './side-panel/interaction-panel/brush-config';
 export {default as TooltipConfigFactory} from './side-panel/interaction-panel/tooltip-config';
+export {default as GeocoderConfigFactory} from './side-panel/interaction-panel/geocoder-config';
 
 export {default as MapManagerFactory} from './side-panel/map-manager';
 export {default as LayerGroupSelectorFactory} from './side-panel/map-style-panel/map-layer-selector';
