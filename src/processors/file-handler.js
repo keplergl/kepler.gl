@@ -64,13 +64,10 @@ registerLoaders([JSONLoader, CSVLoader]);
 
 export async function* makeProgressIterator(asyncIterator, info) {
   let rowCount = 0;
-  let chunk = 0;
-  // let batchCount = 0;
   const startTime = Date.now();
 
   for await (const batch of asyncIterator) {
     const data = batch.data;
-
     // Update progress object
     rowCount += data.length;
     const progress = {
@@ -80,8 +77,8 @@ export async function* makeProgressIterator(asyncIterator, info) {
       rowCount,
       // For this batch:
       receivedRows: data.length,
-      unit: info.size,
-      percent: 0
+      // unit: info.size,
+      percent: batch.cursor / info.size
     };
     yield {...batch, progress};
   }
@@ -122,6 +119,7 @@ async function* addRows(asyncIterator, fileName) {
 
     yield {
       ...batch,
+      header: batch.schema ? Object.keys(batch.schema) : null,
       fileName,
       data:
         Object.keys(result).length === 0 // csv doesn't have any keys
@@ -141,13 +139,13 @@ export async function readFileBatch({file, fileCache = []}) {
     },
     file.name
   );
-
+    console.log('size:', file.size)
   const progressIterator = makeProgressIterator(batchIterator, {size: file.size});
 
   return addRows(progressIterator, file.name);
 }
 
-function isCsvRows(content) {
+export function isCsvRows(content) {
   return Array.isArray(content) && content.length && Array.isArray(content[0]);
 }
 
@@ -155,7 +153,7 @@ const SIZE_THRESHOLD = 30 * 1024 * 1024;
 
 export function processFileData({content, fileCache}) {
   return new Promise((resolve, reject) => {
-    const {data} = content;
+    const {data, header} = content;
 
     let format;
     let processor;
@@ -174,7 +172,7 @@ export function processFileData({content, fileCache}) {
 
     if (format && processor) {
       console.time('process file content');
-      const result = processor(data);
+      const result = processor(data, header);
       console.timeEnd('process file content');
 
       resolve([

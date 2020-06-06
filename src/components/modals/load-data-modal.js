@@ -54,7 +54,11 @@ function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
     // const fileLoadingProgress = {
     //   'File upload.csv': {
     //     fileName: 'File upload.csv',
-    //     percent: 
+    //     percent: 0.8
+    //   },
+    //   'File upload_2.csv': {
+    //     fileName: 'File upload_2.csv',
+    //     percent: 0.1
     //   },
     // }
     return (
