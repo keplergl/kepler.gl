@@ -35,7 +35,7 @@ const StyledMapPopover = styled.div`
   font-weight: 500;
   background-color: ${props => props.theme.panelBackground};
   color: ${props => props.theme.textColor};
-  z-index: 1001;
+  z-index: 1000;
   position: absolute;
   overflow-x: auto;
 
