@@ -16,7 +16,7 @@
     "page": true,
     "browser": true,
     "context": true,
-    "jestPuppeteer": true,
+    "jestPuppeteer": true
   },
   "parser": "babel-eslint",
   "plugins": [

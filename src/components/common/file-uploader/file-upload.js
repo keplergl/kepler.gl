@@ -24,6 +24,7 @@ import styled from 'styled-components';
 
 import UploadButton from './upload-button';
 import {DragNDrop, FileType} from 'components/common/icons';
+import FileUploadProgress from 'components/common/file-uploader/file-upload-progress';
 import LoadingSpinner from 'components/common/loading-spinner';
 import FileDrop from './file-drop';
 
@@ -77,10 +78,11 @@ const StyledFileDrop = styled.div`
   border-radius: 4px;
   border-style: dashed;
   border-width: 1px;
-  border-color: ${props => props.theme.subtextColorLT};
+  border-color: ${props => (props.dragOver ? props.theme.textColorLT : props.theme.subtextColorLT)};
   text-align: center;
   width: 100%;
   padding: 48px 8px 0;
+  height: 360px;
 
   .file-upload-or {
     color: ${props => props.theme.linkBtnColor};
@@ -254,7 +256,7 @@ function FileUploadFactory() {
 
     render() {
       const {dragOver, files} = this.state;
-      const {validFileExt, intl} = this.props;
+      const {validFileExt, intl, fileLoading, fileLoadingProgress} = this.props;
 
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>
@@ -275,33 +277,40 @@ function FileUploadFactory() {
                 />
               </StyledUploadMessage>
               <StyledFileDrop dragOver={dragOver}>
-                <div style={{opacity: dragOver ? 0.5 : 1}}>
-                  <StyledDragNDropIcon>
-                    <StyledFileTypeFow className="file-type-row">
-                      {validFileExt.map(ext => (
-                        <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
-                      ))}
-                    </StyledFileTypeFow>
-                    <DragNDrop height="44px" />
-                  </StyledDragNDropIcon>
-                  <div>{this._renderMessage()}</div>
-                </div>
-                {!files.length ? (
-                  <StyledDragFileWrapper>
-                    <MsgWrapper>
-                      <FormattedMessage id={'fileUploader.message'} />
-                    </MsgWrapper>
-                    <span className="file-upload-or">
-                      <FormattedMessage id={'fileUploader.or'} />
-                    </span>
-                    <UploadButton onUpload={this._handleFileInput}>
-                      <FormattedMessage id={'fileUploader.browseFiles'} />
-                    </UploadButton>
-                  </StyledDragFileWrapper>
-                ) : null}
-                <StyledDisclaimer>
-                  <FormattedMessage id={'fileUploader.disclaimer'} />
-                </StyledDisclaimer>
+                {fileLoading ? (
+                  <FileUploadProgress fileLoadingProgress={fileLoadingProgress} />
+                ) : (
+                  <>
+                    <div style={{opacity: dragOver ? 0.5 : 1}}>
+                      <StyledDragNDropIcon>
+                        <StyledFileTypeFow className="file-type-row">
+                          {validFileExt.map(ext => (
+                            <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
+                          ))}
+                        </StyledFileTypeFow>
+                        <DragNDrop height="44px" />
+                      </StyledDragNDropIcon>
+                      <div>{this._renderMessage()}</div>
+                    </div>
+                    {!files.length ? (
+                      <StyledDragFileWrapper>
+                        <MsgWrapper>
+                          <FormattedMessage id={'fileUploader.message'} />
+                        </MsgWrapper>
+                        <span className="file-upload-or">
+                          <FormattedMessage id={'fileUploader.or'} />
+                        </span>
+                        <UploadButton onUpload={this._handleFileInput}>
+                          <FormattedMessage id={'fileUploader.browseFiles'} />
+                        </UploadButton>
+                      </StyledDragFileWrapper>
+                    ) : null}
+
+                    <StyledDisclaimer>
+                      <FormattedMessage id={'fileUploader.disclaimer'} />
+                    </StyledDisclaimer>
+                  </>
+                )}
               </StyledFileDrop>
             </FileDrop>
           ) : null}
