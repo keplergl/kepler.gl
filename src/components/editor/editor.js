@@ -34,10 +34,7 @@ import {DEFAULT_RADIUS, getStyle as getFeatureStyle} from './feature-styles';
 import {getStyle as getEditHandleStyle, getEditHandleShape} from './handle-style';
 import {EDITOR_MODES} from 'constants';
 import {createSelector} from 'reselect';
-
-const DELETE_KEY_EVENT_CODE = 46;
-const BACKSPACE_KEY_EVENT_CODE = 8;
-const ESCAPE_KEY_EVENT_CODE = 27;
+import KeyEvent from 'constants/keyevent';
 
 const StyledWrapper = styled.div`
   cursor: ${props => (props.editor.mode === EDITOR_MODES.EDIT ? 'pointer' : 'crosshair')};
@@ -122,12 +119,12 @@ export default function EditorFactory(FeatureActionPanel) {
         return;
       }
 
-      switch (event.which) {
-        case DELETE_KEY_EVENT_CODE:
-        case BACKSPACE_KEY_EVENT_CODE:
+      switch (event.keyCode) {
+        case KeyEvent.DOM_VK_DELETE:
+        case KeyEvent.DOM_VK_BACK_SPACE:
           this._onDeleteSelectedFeature();
           break;
-        case ESCAPE_KEY_EVENT_CODE:
+        case KeyEvent.DOM_VK_ESCAPE:
           this.props.onSelect(null);
           break;
         default:
