@@ -164,7 +164,13 @@ export class GeocoderPanel extends Component {
           version: 'v1',
           config: {
             visState: {
-              layers: [ICON_LAYER]
+              layers: [ICON_LAYER],
+              interactionConfig: {
+                geocoder: {
+                  enabled: true,
+                  data: {lat, lon, text}
+                }
+              }
             }
           }
         }

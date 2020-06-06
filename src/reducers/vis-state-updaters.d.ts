@@ -240,7 +240,13 @@ export type Tooltip = BaseInteraction & {
   };
 };
 export type Geocoder = BaseInteraction & {
-  position: number[] | null;
+  config: {
+    data: {
+      lat: number;
+      lon: number;
+      text: string;
+    } | null;
+  }
 };
 export type Brush = BaseInteraction & {
   config: {

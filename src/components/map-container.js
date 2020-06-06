@@ -42,6 +42,7 @@ import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
 import {FILTER_TYPES} from 'constants/default-settings';
+import SvgIconLayer from '../deckgl-layers/svg-icon-layer/svg-icon-layer';
 
 const MAP_STYLE = {
   container: {
@@ -352,7 +353,8 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         layers,
         visStateActions,
         mapboxApiAccessToken,
-        mapboxApiUrl
+        mapboxApiUrl,
+        interactionConfig
       } = this.props;
 
       let deckGlLayers = [];
@@ -366,6 +368,16 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             idx => layers[idx].overlayType === OVERLAY_TYPE.deckgl && layersToRender[layers[idx].id]
           )
           .reduce(this._renderLayer, []);
+      }
+
+      if (interactionConfig.geocoder.config && interactionConfig.geocoder.config.data) {
+        deckGlLayers.push(
+          new SvgIconLayer({
+            id: 'geocoder_layer',
+            mapboxApiAccessToken,
+            mapboxApiUrl
+          })
+        );
       }
 
       if (mapStyle.visibleLayerGroups['3d building']) {

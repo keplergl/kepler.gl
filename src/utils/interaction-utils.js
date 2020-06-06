@@ -45,7 +45,9 @@ export function getDefaultInteraction() {
       label: 'interactions.geocoder',
       enabled: false,
       iconComponent: Pin,
-      position: null
+      config: {
+        data: null
+      }
     },
     brush: {
       id: 'brush',
