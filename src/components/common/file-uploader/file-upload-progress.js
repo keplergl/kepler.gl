@@ -1,6 +1,8 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 import ProgressBar from '../progress-bar';
+import {TrancatedTitleText} from 'components/common/styled-components';
+import {getError} from 'utils/utils';
 
 const StyledFileProgress = styled.div.attrs({
   className: 'file-upload__progress'
@@ -19,13 +21,12 @@ const StyledFileProgress = styled.div.attrs({
   .file-name {
     font-weight: 500;
   }
-
-  .percent {
-    color: ${props => props.theme.subtextColorLT};
-  }
-
-  .bottone-row {
+  .middle-row {
     margin-top: 6px;
+  }
+  .bottom-row {
+    margin-top: 6px;
+    text-align: start;
   }
 `;
 
@@ -41,29 +42,34 @@ const StyledContainer = styled.div`
   justify-content: center;
 `;
 const formatPercent = percent => `${Math.floor(percent * 100)}%`;
-const UploadProgress = ({message, fileName, percent, error}) => {
+const UploadProgress = ({message, fileName, percent, error, theme}) => {
   const percentStr = formatPercent(percent);
+  const barColor = error ? theme.errorColor : theme.activeColorLT;
+
   return (
     <StyledFileProgress>
       <div className="top-row">
-        <div className="file-name">{fileName}</div>
+        <TrancatedTitleText className="file-name" title={fileName}>{fileName}</TrancatedTitleText>
         <div className="percent">{percentStr}</div>
       </div>
-      <div className="bottone-row">
-        <ProgressBar percent={percentStr} isLoading />
+      <div className="middle-row">
+        <ProgressBar percent={percentStr} barColor={barColor} isLoading/>
+      </div>
+      <div className="bottom-row" style={{color: error ? theme.errorColor : theme.textColorLT}}>
+        {error ? getError(error) : message}
       </div>
     </StyledFileProgress>
   );
 };
 
-const FileUploadProgress = ({fileLoadingProgress}) => (
+const FileUploadProgress = ({fileLoadingProgress, theme}) => (console.log(fileLoadingProgress), (
   <StyledContainer>
     <StyledProgressWrapper>
       {Object.values(fileLoadingProgress).map(item => (
-        <UploadProgress {...item} key={item.fileName} />
+        <UploadProgress {...item} key={item.fileName} theme={theme}/>
       ))}
     </StyledProgressWrapper>
   </StyledContainer>
-);
+));
 
-export default FileUploadProgress;
+export default withTheme(FileUploadProgress);

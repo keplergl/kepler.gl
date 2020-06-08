@@ -116,6 +116,8 @@ export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export {default as LoadingDialog} from './modals/loading-dialog';
+export {default as ProgressBar} from './common/progress-bar';
+export {default as FileUploadProgress} from './common/file-uploader/file-upload-progress';
 export * from './common/styled-components';
 import * as Icons from './common/icons';
 export {Icons};
