@@ -18,7 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {toggleModalUpdater, loadFilesSuccessUpdater} from './ui-state-updaters';
+import {
+  toggleModalUpdater,
+  loadFilesSuccessUpdater as uiStateLoadFilesSuccessUpdater
+} from './ui-state-updaters';
 import {
   updateVisDataUpdater as visStateUpdateVisDataUpdater,
   setMapInfoUpdater
@@ -159,7 +162,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
 
     pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
 
-    pick_('uiState')(apply_(loadFilesSuccessUpdater)),
+    pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater)),
 
     pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),
 
@@ -168,18 +171,16 @@ export const addDataToMapUpdater = (state, {payload}) => {
 };
 
 /**
- * @type {typeof import('./combined-updaters').loadFileSuccessUpdater}
+ * @type {typeof import('./combined-updaters').loadFilesSuccessUpdater}
  */
-export const loadFileSuccessUpdater = (state, action) => {
+export const loadFilesSuccessUpdater = (state, action) => {
   // still more to load
-  console.time('loadFileSuccessUpdater');
-  console.log(action.result);
   const payloads = filesToDataPayload(action.result);
   const nextState = compose_([
     pick_('visState')(
       merge_({
         fileLoading: false,
-        fileLoadingProgress: 100
+        fileLoadingProgress: {}
       })
     )
   ])(state);
@@ -188,7 +189,6 @@ export const loadFileSuccessUpdater = (state, action) => {
   const stateWithData = compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(
     nextState
   );
-  console.timeEnd('loadFileSuccessUpdater');
   return stateWithData;
 };
 

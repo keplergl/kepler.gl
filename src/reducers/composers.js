@@ -27,7 +27,7 @@ import * as combinedUpdaters from './combined-updaters';
  */
 const actionHandler = {
   [ActionTypes.ADD_DATA_TO_MAP]: combinedUpdaters.addDataToMapUpdater,
-  [ActionTypes.LOAD_FILES_SUCCESS]: combinedUpdaters.loadFileSuccessUpdater
+  [ActionTypes.LOAD_FILES_SUCCESS]: combinedUpdaters.loadFilesSuccessUpdater
 };
 
 export default actionHandler;
