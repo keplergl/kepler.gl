@@ -616,6 +616,22 @@ export function loadFilesSuccess(result) {
   };
 }
 
+
+/**
+ * called when aucessfully loaded one file, ready to move on to the next one
+ * @memberof visStateActions
+ * @param result
+ * @type {typeof import('./vis-state-actions').loadFileStepSuccess}
+ * @returns action
+ */
+export function loadFileStepSuccess({fileName, fileCache}) {
+  return {
+    type: ActionTypes.LOAD_FILE_STEP_SUCCESS,
+    fileName,
+    fileCache
+  };
+}
+
 /**
  * called when successfully loaded one file, ready to move on to the next one
  * @memberof visStateActions

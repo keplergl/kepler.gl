@@ -1279,6 +1279,19 @@ export function loadFileStepSuccessUpdater(state, action) {
 export function loadNextFileUpdater(state) {
   const {filesToLoad} = state.fileLoading;
   const [file, ...remainingFilesToLoad] = filesToLoad;
+
+  // save filesToLoad to state
+  const nextStte = pick_('fileLoading')(merge_({filesToLoad: remainingFilesToLoad}))(state);
+
+  const stateWithProgress = updateFileLoadingProgressUpdater(nextStte, {
+    fileName: file.name,
+    progress: {percent: 0, message: 'loading...'}
+  });
+
+  return withTask(stateWithProgress, makeLoadFileTask(file, nextStte.fileLoading.fileCache));
+}
+
+export function makeLoadFileTask(file, fileCache) {
   console.log('makeLoadFileTask');
 
   // save filesToLoad to state
