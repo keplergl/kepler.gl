@@ -62,7 +62,7 @@ const UploadProgress = ({message, fileName, percent, error, theme}) => {
   );
 };
 
-const FileUploadProgress = ({fileLoadingProgress, theme}) => (console.log(fileLoadingProgress), (
+const FileUploadProgress = ({fileLoadingProgress, theme}) => (
   <StyledContainer>
     <StyledProgressWrapper>
       {Object.values(fileLoadingProgress).map(item => (
@@ -70,6 +70,6 @@ const FileUploadProgress = ({fileLoadingProgress, theme}) => (console.log(fileLo
       ))}
     </StyledProgressWrapper>
   </StyledContainer>
-));
+);
 
 export default withTheme(FileUploadProgress);
