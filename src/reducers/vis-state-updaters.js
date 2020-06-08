@@ -1244,29 +1244,37 @@ export const loadFilesUpdater = (state, action) => {
   }
 
   const fileCache = [];
+
+  const fileLoadingProgress = files.reduce(
+    (accu, f, i) => merge_(initialFileLoadingProgress(f, i))(accu),
+    {}
+  );
+
+  // set first to be loading
+  Object.values(fileLoadingProgress)[0].message = 'loading...';
+
   return withTask(
     {
       ...state,
       fileLoading: true,
-      fileLoadingProgress: files.reduce(
-        (accu, f) => merge_(accu)(initialFileLoadingProgress(f)),
-        {}
-      )
+      fileLoadingProgress,
+      fileCache: [],
+      filesToLoad: files
     },
     makeLoadFileTask(files.length, files, fileCache, onFinish)
   );
 };
 
 export function loadNextFileUpdater(state, action) {
-  console.log('loadNextFileUpdater');
   const {fileCache, filesToLoad, totalCount, onFinish} = action;
-  const fileLoadingProgress = ((totalCount - filesToLoad.length) / totalCount) * 100;
+  // const fileLoadingProgress = ((totalCount - filesToLoad.length) / totalCount) * 100;
+  const stateWithProgress = updateFileLoadingProgressUpdater(state, {
+    fileName: filesToLoad[0].name,
+    progress: {percent: 0, message: 'loading...'}
+  });
 
   return withTask(
-    {
-      ...state,
-      fileLoadingProgress
-    },
+    stateWithProgress,
     makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish)
   );
 }
@@ -1289,19 +1297,11 @@ export function makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish, t
             totalCount,
             onFinish
           }),
-        // remainingFilesToLoad.length
-        //   ? loadNextFile({
-        //       fileCache: result,
-        //       filesToLoad: remainingFilesToLoad,
-        //       totalCount,
-        //       onFinish
-        //     })
-        //   : onFinish(result),
         totalPercent
       }),
 
     // error
-    loadFilesErr
+    err => loadFilesErr(file.name, err)
   );
 }
 
@@ -1311,8 +1311,9 @@ export function processFileContentUpdater(state, action) {
   console.log(content);
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
     fileName: content.fileName,
-    progress: {percent: 100, message: 'processing...'}
+    progress: {percent: 1, message: 'processing...'}
   });
+
   return withTask(
     stateWithProgress,
     PROCESS_FILE_DATA({content, fileCache}).bimap(
@@ -1320,14 +1321,12 @@ export function processFileContentUpdater(state, action) {
         filesToLoad.length
           ? loadNextFile({
               fileCache: result,
-              filesToLoad: filesToLoad,
+              filesToLoad,
               totalCount,
               onFinish
             })
           : onFinish(result),
-
-      onFinish,
-      loadFilesErr
+      err => loadFilesErr(content.fileName, err)
     )
   );
 }
@@ -1339,10 +1338,6 @@ export function parseProgress(prevProgress = {}, progress, startPercent = 0, tot
     return {};
   }
 
-  // const prevPercent = prevProgress.percent || 0;
-  // if (!prevPercent) {
-  //   console.log('prevPercent is 0');
-  // }
   return {
     percent: progress.percent
   };
@@ -1381,14 +1376,18 @@ export const nextFileBatchUpdater = (
  * @type {typeof import('./vis-state-updaters').loadFilesErrUpdater}
  * @public
  */
-export const loadFilesErrUpdater = (state, {error}) => (
-  console.log(error),
-  {
-    ...state,
-    fileLoading: false,
-    fileLoadingErr: error
-  }
-);
+export const loadFilesErrUpdater = (state, {error, fileName}) => {
+  // update ui with error message 
+  const nextState = updateFileLoadingProgressUpdater(state, {
+    fileName,
+    progress: {error}
+  });
+
+  // kick off next file
+  return loadNextFileUpdater(nextState, {
+    fileCache, filesToLoad, totalCount, onFinish
+  });
+};
 
 /**
  * When select dataset for export, apply cpu filter to selected dataset
