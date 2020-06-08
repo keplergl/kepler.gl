@@ -629,9 +629,10 @@ export function loadFileSuccess(result) {
  * @returns action
  * @public
  */
-export function loadFilesErr(error) {
+export function loadFilesErr(fileName, error) {
   return {
     type: ActionTypes.LOAD_FILES_ERR,
+    fileName,
     error
   };
 }

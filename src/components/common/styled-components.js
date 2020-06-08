@@ -623,3 +623,9 @@ export const StyledFilterContent = styled.div`
   background-color: ${props => props.theme.panelBackground};
   padding: 12px;
 `;
+
+export const TrancatedTitleText = styled.div`
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+`;

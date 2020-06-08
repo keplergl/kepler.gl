@@ -395,5 +395,6 @@ export type loadFilesErrUpdaterAction = {
   error: any;
 };
 export function loadFilesErr(
+  fileName: string,
   error: any
 ): Merge<loadFilesErrUpdaterAction, {type: ActionTypes.LOAD_FILES_ERR}>;
