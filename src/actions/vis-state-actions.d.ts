@@ -384,12 +384,12 @@ export function loadNextFile(payload: {
   onFinish: function;
 }): Merge<LoadNextFileUpdaterAction, {type: ActionTypes.LOAD_NEXT_FILE}>;
 
-export type LoadFileSuccessUpdaterAction = {
+export type loadFilesSuccessUpdaterAction = {
   result: FileCacheItem[];
 };
-export function loadFileSuccess(
+export function loadFilesSuccess(
   result: FileCacheItem[]
-): Merge<LoadFileSuccessUpdaterAction, {type: ActionTypes.LOAD_FILES_SUCCESS}>;
+): Merge<loadFilesSuccessUpdaterAction, {type: ActionTypes.LOAD_FILES_SUCCESS}>;
 
 export type loadFilesErrUpdaterAction = {
   error: any;

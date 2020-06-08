@@ -42,6 +42,7 @@ export type ActionType = {
   LOAD_NEXT_FILE: string;
   LOAD_FILES_ERR: string;
   LOAD_FILES_SUCCESS: string;
+  LOAD_FILE_STEP_SUCCESS: string;
   LAYER_COLOR_UI_CHANGE: string;
   TOGGLE_FEATURE_LAYER: string;
   APPLY_CPU_FILTER: string;

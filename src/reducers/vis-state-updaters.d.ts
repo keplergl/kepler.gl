@@ -447,9 +447,9 @@ export function loadNextFileUpdater(
   state: VisState,
   action: VisStateActions.LoadNextFileUpdaterAction
 ): VisState;
-export function loadFileSuccessUpdater(
+export function loadFilesSuccessUpdater(
   state: VisState,
-  action: VisStateActions.LoadFileSuccessUpdaterAction
+  action: VisStateActions.loadFilesSuccessUpdaterAction
 ): VisState;
 export function loadFilesErrUpdater(
   state: VisState,
