@@ -127,7 +127,8 @@ export {default as LoadingDialog} from './modals/loading-dialog';
 export {default as FieldToken} from './common/field-token';
 export {default as Portaled} from './common/portaled';
 export {default as DropdownList} from './common/item-selector/dropdown-list';
-
+export {default as ProgressBar} from './common/progress-bar';
+export {default as FileUploadProgress} from './common/file-uploader/file-upload-progress';
 export * from './common/styled-components';
 import * as Icons from './common/icons';
 export {Icons};

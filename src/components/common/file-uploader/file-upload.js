@@ -21,11 +21,9 @@
 import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-
 import UploadButton from './upload-button';
 import {DragNDrop, FileType} from 'components/common/icons';
 import FileUploadProgress from 'components/common/file-uploader/file-upload-progress';
-import LoadingSpinner from 'components/common/loading-spinner';
 import FileDrop from './file-drop';
 
 import {isChrome} from 'utils/utils';
@@ -76,7 +74,7 @@ const PositiveMsg = styled.span`
 const StyledFileDrop = styled.div`
   background-color: white;
   border-radius: 4px;
-  border-style: dashed;
+  border-style: ${props => (props.dragOver ? 'solid' : 'dashed')};
   border-width: 1px;
   border-color: ${props => (props.dragOver ? props.theme.textColorLT : props.theme.subtextColorLT)};
   text-align: center;
@@ -89,6 +87,9 @@ const StyledFileDrop = styled.div`
     padding-right: 4px;
   }
 
+  .file-type-row {
+    opacity: 0.5;
+  }
   ${media.portable`
     padding: 16px 4px 0;
   `};
@@ -221,43 +222,24 @@ function FileUploadFactory() {
       this.setState({dragOver: newState});
     };
 
-    _renderMessage() {
-      const {errorFiles, files} = this.state;
-      if (errorFiles.length) {
-        return (
-          <WarningMsg>
-            <FormattedMessage
-              id={'fileUploader.filenNotSupported'}
-              values={{errorFiles: errorFiles.join(', ')}}
-            />
-          </WarningMsg>
-        );
-      } else if (this.props.fileLoading && files.length) {
-        return (
-          <StyledMessage className="file-uploader__message">
-            <div className="loading-action">
-              <FormattedMessage id={'fileUploader.uploading'} />
-            </div>
-            <div>
-              {files.map((f, i) => (
-                <PositiveMsg key={i}>{f.name}</PositiveMsg>
-              ))}
-              ...
-            </div>
-            <div className="loading-spinner">
-              <LoadingSpinner size={20} />
-            </div>
-          </StyledMessage>
-        );
-      }
-
-      return null;
-    }
-
     render() {
-      const {dragOver, files} = this.state;
+      const {dragOver, files, errorFiles} = this.state;
       const {validFileExt, intl, fileLoading, fileLoadingProgress} = this.props;
-
+      // const fileLoading = true;
+      // const fileLoadingProgress = {
+      //   'File upload.csv': {
+      //     fileName: 'File upload.csv',
+      //     percent: 0.8,
+      //     message: 'loading...'
+      //   },
+      //   'File upload_2.csv': {
+      //     fileName: 'File_upload-93843-129u918u981u4_afwerwegsadfasf_ef_Fewfwasfsa.csv',
+      //     percent: 0.1,
+      //     message: 'loading...',
+      //     error: new Error('Some thing is wrong')
+      //   }
+      // };
+    
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>
           {FileDrop ? (
@@ -277,20 +259,31 @@ function FileUploadFactory() {
                 />
               </StyledUploadMessage>
               <StyledFileDrop dragOver={dragOver}>
+                <StyledFileTypeFow className="file-type-row">
+                  {validFileExt.map(ext => (
+                    <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
+                  ))}
+                </StyledFileTypeFow>
                 {fileLoading ? (
                   <FileUploadProgress fileLoadingProgress={fileLoadingProgress} />
                 ) : (
                   <>
-                    <div style={{opacity: dragOver ? 0.5 : 1}}>
+                    <div
+                      style={{opacity: dragOver ? 0.5 : 1}}
+                      className="file-upload-display-message"
+                    >
                       <StyledDragNDropIcon>
-                        <StyledFileTypeFow className="file-type-row">
-                          {validFileExt.map(ext => (
-                            <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
-                          ))}
-                        </StyledFileTypeFow>
                         <DragNDrop height="44px" />
                       </StyledDragNDropIcon>
-                      <div>{this._renderMessage()}</div>
+
+                      {errorFiles.length ? (
+                        <WarningMsg>
+                          <FormattedMessage
+                            id={'fileUploader.filenNotSupported'}
+                            values={{errorFiles: errorFiles.join(', ')}}
+                          />
+                        </WarningMsg>
+                      ) : null}
                     </div>
                     {!files.length ? (
                       <StyledDragFileWrapper>
