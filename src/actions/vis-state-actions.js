@@ -597,13 +597,13 @@ export function loadFiles(files) {
  * @returns action
  * @public
  */
-export function loadNextFile({fileCache, filesToLoad, totalCount, onFinish}) {
+export function loadNextFile() {
   return {
     type: ActionTypes.LOAD_NEXT_FILE,
-    fileCache,
-    filesToLoad,
-    totalCount,
-    onFinish
+    // fileCache,
+    // filesToLoad,
+    // totalCount,
+    // onFinish
   };
 }
 
@@ -611,13 +611,29 @@ export function loadNextFile({fileCache, filesToLoad, totalCount, onFinish}) {
  * called when all files are processed and loaded
  * @memberof visStateActions
  * @param result
- * @type {typeof import('./vis-state-actions').loadFileSuccess}
+ * @type {typeof import('./vis-state-actions').loadFilesSuccess}
  * @returns action
  */
-export function loadFileSuccess(result) {
+export function loadFilesSuccess(result) {
   return {
     type: ActionTypes.LOAD_FILES_SUCCESS,
     result
+  };
+}
+
+
+/**
+ * called when aucessfully loaded one file, ready to move on to the next one
+ * @memberof visStateActions
+ * @param result
+ * @type {typeof import('./vis-state-actions').loadFileStepSuccess}
+ * @returns action
+ */
+export function loadFileStepSuccess({fileName, fileCache}) {
+  return {
+    type: ActionTypes.LOAD_FILE_STEP_SUCCESS,
+    fileName,
+    fileCache
   };
 }
 

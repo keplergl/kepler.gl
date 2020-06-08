@@ -27,11 +27,12 @@ import xor from 'lodash.xor';
 import copy from 'copy-to-clipboard';
 import {parseFieldValue} from 'utils/data-utils';
 // Tasks
-import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA} from 'tasks/tasks';
+import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from 'tasks/tasks';
 // Actions
 import {
   loadFilesErr,
-  loadFileSuccess,
+  loadFilesSuccess,
+  loadFileStepSuccess,
   loadNextFile,
   nextFileBatch
 } from 'actions/vis-state-actions';
@@ -1238,49 +1239,59 @@ function closeSpecificMapAtIndex(state, action) {
  * @public
  */
 export const loadFilesUpdater = (state, action) => {
-  const {files, onFinish = loadFileSuccess} = action;
+  const {files, onFinish = loadFilesSuccess} = action;
   if (!files.length) {
     return state;
   }
-
-  const fileCache = [];
 
   const fileLoadingProgress = files.reduce(
     (accu, f, i) => merge_(initialFileLoadingProgress(f, i))(accu),
     {}
   );
+  const fileLoading = {
+    fileCache: [],
+    filesToLoad: files,
+    onFinish
+  }
+  const nextState = merge_({fileLoading})(merge_({fileLoadingProgress})(state));
 
-  // set first to be loading
-  Object.values(fileLoadingProgress)[0].message = 'loading...';
-
-  return withTask(
-    {
-      ...state,
-      fileLoading: true,
-      fileLoadingProgress,
-      fileCache: [],
-      filesToLoad: files
-    },
-    makeLoadFileTask(files.length, files, fileCache, onFinish)
-  );
+  return loadNextFileUpdater(nextState);
 };
 
-export function loadNextFileUpdater(state, action) {
-  const {fileCache, filesToLoad, totalCount, onFinish} = action;
-  // const fileLoadingProgress = ((totalCount - filesToLoad.length) / totalCount) * 100;
+// sucessfully loaded one file, move on to the next one
+export function loadFileStepSuccessUpdater(state, action) {
+  const {fileName, fileCache} = action;
+  const {filesToLoad, onFinish} = state.fileLoading;
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
-    fileName: filesToLoad[0].name,
-    progress: {percent: 0, message: 'loading...'}
+    fileName,
+    progress: {percent: 1, message: 'Done'}
   });
 
+  // save processed file to fileCache
+  const stateWithCache = pick_('fileLoading')(merge_({fileCache}))(stateWithProgress);
+
   return withTask(
-    stateWithProgress,
-    makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish)
+    stateWithCache,
+    DELAY_TASK(200).map(filesToLoad.length ? loadNextFile : () => onFinish(fileCache))
   );
 }
 
-export function makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish, totalPercent) {
+export function loadNextFileUpdater(state) {
+  const {filesToLoad} = state.fileLoading;
   const [file, ...remainingFilesToLoad] = filesToLoad;
+
+  // save filesToLoad to state
+  const nextStte = pick_('fileLoading')(merge_({filesToLoad: remainingFilesToLoad}))(state);
+
+  const stateWithProgress = updateFileLoadingProgressUpdater(nextStte, {
+    fileName: file.name,
+    progress: {percent: 0, message: 'loading...'}
+  });
+
+  return withTask(stateWithProgress, makeLoadFileTask(file, nextStte.fileLoading.fileCache));
+}
+
+export function makeLoadFileTask(file, fileCache) {
   console.log('makeLoadFileTask');
 
   return LOAD_FILE_TASK({file, fileCache}).bimap(
@@ -1292,12 +1303,8 @@ export function makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish, t
         onFinish: result =>
           processFileContent({
             content: result,
-            fileCache,
-            filesToLoad: remainingFilesToLoad,
-            totalCount,
-            onFinish
-          }),
-        totalPercent
+            fileCache
+          })
       }),
 
     // error
@@ -1306,9 +1313,8 @@ export function makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish, t
 }
 
 export function processFileContentUpdater(state, action) {
-  const {content, fileCache, filesToLoad, totalCount, onFinish} = action.payload;
-  console.log('processFileContentUpdater');
-  console.log(content);
+  const {content, fileCache} = action.payload;
+
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
     fileName: content.fileName,
     progress: {percent: 1, message: 'processing...'}
@@ -1317,15 +1323,7 @@ export function processFileContentUpdater(state, action) {
   return withTask(
     stateWithProgress,
     PROCESS_FILE_DATA({content, fileCache}).bimap(
-      result =>
-        filesToLoad.length
-          ? loadNextFile({
-              fileCache: result,
-              filesToLoad,
-              totalCount,
-              onFinish
-            })
-          : onFinish(result),
+      result => loadFileStepSuccess({fileName: content.fileName, fileCache: result}),
       err => loadFilesErr(content.fileName, err)
     )
   );
@@ -1346,11 +1344,11 @@ export function parseProgress(prevProgress = {}, progress, startPercent = 0, tot
 // gets called with payload = AsyncGenerator<???>
 export const nextFileBatchUpdater = (
   state,
-  {payload: {gen, fileName, progress, accumulated, onFinish, totalPercent}}
+  {payload: {gen, fileName, progress, accumulated, onFinish}}
 ) => {
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
     fileName,
-    progress: parseProgress(state.fileLoadingProgress[fileName], progress, totalPercent)
+    progress: parseProgress(state.fileLoadingProgress[fileName], progress)
   });
 
   return withTask(
@@ -1363,8 +1361,7 @@ export const nextFileBatchUpdater = (
             fileName,
             progress: value.progress,
             accumulated: value,
-            onFinish,
-            totalPercent
+            onFinish
           });
     })
   );
@@ -1377,16 +1374,20 @@ export const nextFileBatchUpdater = (
  * @public
  */
 export const loadFilesErrUpdater = (state, {error, fileName}) => {
-  // update ui with error message 
+  // update ui with error message
+  Console.warn(error);
+  const {filesToLoad, onFinish, fileCache} = state.fileLoading;
+
   const nextState = updateFileLoadingProgressUpdater(state, {
     fileName,
     progress: {error}
   });
 
-  // kick off next file
-  return loadNextFileUpdater(nextState, {
-    fileCache, filesToLoad, totalCount, onFinish
-  });
+  // kick off next file or finish
+  return withTask(
+    nextState,
+    DELAY_TASK(200).map(filesToLoad.length ? loadNextFile : () => onFinish(fileCache))
+  );
 };
 
 /**
