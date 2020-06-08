@@ -90,6 +90,6 @@ const FileUploadProgress = ({fileLoadingProgress, theme}) => (
       ))}
     </StyledProgressWrapper>
   </StyledContainer>
-);
+));
 
 export default withTheme(FileUploadProgress);

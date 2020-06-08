@@ -24,7 +24,6 @@ import styled from 'styled-components';
 import get from 'lodash.get';
 
 import FileUploadFactory from 'components/common/file-uploader/file-upload';
-
 import LoadStorageMapFactory from './load-storage-map';
 import ModalTabsFactory from './modal-tabs';
 
