@@ -1252,7 +1252,7 @@ export const loadFilesUpdater = (state, action) => {
     fileCache: [],
     filesToLoad: files,
     onFinish
-  }
+  };
   const nextState = merge_({fileLoading})(merge_({fileLoadingProgress})(state));
 
   return loadNextFileUpdater(nextState);
@@ -1292,8 +1292,6 @@ export function loadNextFileUpdater(state) {
 }
 
 export function makeLoadFileTask(file, fileCache) {
-  console.log('makeLoadFileTask');
-
   return LOAD_FILE_TASK({file, fileCache}).bimap(
     // success
     gen =>
@@ -1350,20 +1348,22 @@ export const nextFileBatchUpdater = (
     fileName,
     progress: parseProgress(state.fileLoadingProgress[fileName], progress)
   });
-
   return withTask(
     stateWithProgress,
-    UNWRAP_TASK(gen.next()).map(({value, done}) => {
-      return done
-        ? onFinish(accumulated)
-        : nextFileBatch({
-            gen,
-            fileName,
-            progress: value.progress,
-            accumulated: value,
-            onFinish
-          });
-    })
+    UNWRAP_TASK(gen.next()).bimap(
+      ({value, done}) => {
+        return done
+          ? onFinish(accumulated)
+          : nextFileBatch({
+              gen,
+              fileName,
+              progress: value.progress,
+              accumulated: value,
+              onFinish
+            });
+      },
+      err => loadFilesErr(fileName, err)
+    )
   );
 };
 
