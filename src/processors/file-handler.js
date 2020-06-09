@@ -60,7 +60,7 @@ import {
 import {isPlainObject, generateHashId} from 'utils/utils';
 import {DATASET_FORMATS} from 'constants/default-settings';
 
-registerLoaders([JSONLoader, CSVLoader]);
+// registerLoaders([JSONLoader, CSVLoader]);
 
 export async function* makeProgressIterator(asyncIterator, info) {
   let rowCount = 0;
@@ -88,6 +88,7 @@ async function* addRows(asyncIterator, fileName) {
   let result = {};
   let batches = [];
   for await (const batch of asyncIterator) {
+
     // Last batch will have this special type and will provide all the root
     // properties of the parsed document.
     if (batch.batchType === 'root-object-batch-complete') {
@@ -133,6 +134,7 @@ export async function readFileBatch({file, fileCache = []}) {
   console.log('readFileBatch');
   const batchIterator = await parseInBatches(
     fileReaderAsyncIterable(file, chunkSize),
+    [JSONLoader, CSVLoader],
     {
       csv: CSV_LOADER_OPTION,
       json: JSON_LOADER_OPTION
@@ -216,7 +218,10 @@ const CSV_LOADER_OPTION = {
   batchSize: 4000,
   converToObject: false
 };
-const JSON_LOADER_OPTION = {_rootObjectBatches: true};
+const JSON_LOADER_OPTION = {
+  _rootObjectBatches: true, 
+  batchSize: 4000
+};
 // 10 mb
 const chunkSize = 10 * 1024 * 1024;
 
