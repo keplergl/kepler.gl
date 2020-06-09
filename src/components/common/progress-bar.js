@@ -5,7 +5,7 @@ const StyledBar = styled.span.attrs({
   className: 'progress-bar__bar'
 })`
   background-color: ${props => props.barColor || props.theme.progressBarColor};
-  transition: width 200ms;
+  /* transition: width 200ms; */
   display: block;
 `;
 const StyledTrack = styled.div.attrs({
