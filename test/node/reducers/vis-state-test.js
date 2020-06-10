@@ -2416,6 +2416,8 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
         enabled: true,
         iconComponent: oldState.interactionConfig.tooltip.iconComponent,
         config: {
+          compareMode: false,
+          compareType: 'absolute',
           fieldsToShow: {
             [testGeoJsonDataId]: [
               {
@@ -2649,6 +2651,8 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
         enabled: true,
         iconComponent: oldState.interactionConfig.tooltip.iconComponent,
         config: {
+          compareMode: false,
+          compareType: 'absolute',
           fieldsToShow: {
             [testCsvDataId]: [
               {

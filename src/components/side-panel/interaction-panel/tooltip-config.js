@@ -70,15 +70,6 @@ function TooltipConfigFactory(DatasetTag) {
   class TooltipConfig extends Component {
     render() {
       const {config, datasets, onChange, intl} = this.props;
-      const translatedCompareTypes = Object.keys(COMPARE_TYPES).reduce(
-        (acc, current) => ({
-          ...acc,
-          [intl.formatMessage({id: `compare.types.${COMPARE_TYPES[current]}`})]: COMPARE_TYPES[
-            current
-          ]
-        }),
-        {}
-      );
       return (
         <TooltipConfigWrapper>
           {Object.keys(config.fieldsToShow).map(dataId => (
@@ -158,15 +149,16 @@ function TooltipConfigFactory(DatasetTag) {
                   id: `compare.types.${d}`
                 })
               }
-              selectedItems={config.compareType || COMPARE_TYPES.DECIMAL}
+              selectedItems={config.compareType || COMPARE_TYPES.ABSOLUTE}
               options={Object.values(COMPARE_TYPES)}
               multiSelect={false}
               searchable={false}
               inputTheme={'secondary'}
+              getOptionValue={d => d}
               onChange={option => {
                 const newConfig = {
                   ...config,
-                  compareType: translatedCompareTypes[option]
+                  compareType: option
                 };
                 onChange(newConfig);
               }}

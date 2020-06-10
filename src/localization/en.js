@@ -445,7 +445,7 @@ export default {
     modeLabel: 'Comparison Mode',
     typeLabel: 'Comparison Type',
     types: {
-      decimal: 'Decimal',
+      absolute: 'Absolute',
       percentage: 'Percentage'
     }
   },

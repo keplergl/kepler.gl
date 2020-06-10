@@ -171,6 +171,6 @@ export const TOOLTIP_FORMATS = {
 };
 
 export const COMPARE_TYPES = {
-  DECIMAL: 'decimal',
+  ABSOLUTE: 'absolute',
   PERCENTAGE: 'percentage'
 };

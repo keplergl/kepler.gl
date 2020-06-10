@@ -237,6 +237,8 @@ export type Tooltip = BaseInteraction & {
     fieldsToShow: {
       [key: string]: TooltipField[];
     };
+    compareMode: boolean;
+    compareType: string | null;
   };
 };
 export type Geocoder = BaseInteraction & {

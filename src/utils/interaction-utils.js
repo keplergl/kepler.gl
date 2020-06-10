@@ -37,7 +37,9 @@ export function getDefaultInteraction() {
       enabled: true,
       iconComponent: Messages,
       config: {
-        fieldsToShow: {}
+        fieldsToShow: {},
+        compareMode: false,
+        compareType: 'absolute'
       }
     },
     geocoder: {
