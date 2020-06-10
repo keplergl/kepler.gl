@@ -652,6 +652,8 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
       ...defaultInteraction.tooltip,
       enabled: true,
       config: {
+        compareMode: false,
+        compareType: 'absolute',
         fieldsToShow: {
           [testCsvDataId]: [
             {
@@ -781,7 +783,9 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
             ...defaultInteraction.tooltip,
             enabled: false,
             config: {
-              fieldsToShow: {}
+              fieldsToShow: {},
+              compareMode: false,
+              compareType: 'absolute'
             }
           },
           brush: {
@@ -889,6 +893,8 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
             ...defaultInteraction.tooltip,
             enabled: false,
             config: {
+              compareMode: false,
+              compareType: 'absolute',
               fieldsToShow: {
                 [testCsvDataId]: [
                   {
@@ -969,6 +975,8 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
       ...defaultInteraction.tooltip,
       enabled: false,
       config: {
+        compareMode: false,
+        compareType: 'absolute',
         fieldsToShow: {
           [testCsvDataId]: [
             {
@@ -1108,6 +1116,8 @@ test('VisStateMerger.v1 -> mergeInteractions -> coordinate', t => {
       ...defaultInteraction.tooltip,
       enabled: false,
       config: {
+        compareMode: false,
+        compareType: 'absolute',
         fieldsToShow: {
           a5ybmwl2d: [
             {

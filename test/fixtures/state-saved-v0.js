@@ -1468,6 +1468,8 @@ export const mergedInteractions = {
     ...defaultInteraction.tooltip,
     enabled: true,
     config: {
+      compareMode: false,
+      compareType: 'absolute',
       fieldsToShow: {
         '9h10t7fyb': [
           {

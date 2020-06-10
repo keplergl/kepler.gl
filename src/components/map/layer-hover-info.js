@@ -120,7 +120,7 @@ const EntryInfoRow = ({item, fields, data, primaryData, compareType}) => {
   ) {
     const deltaValue =
       compareType === COMPARE_TYPES.PERCENTAGE
-        ? 1 - data[valueIdx] / primaryData[valueIdx]
+        ? data[valueIdx] / primaryData[valueIdx] - 1
         : data[valueIdx] - primaryData[valueIdx];
     const deltaFormat =
       compareType === COMPARE_TYPES.PERCENTAGE

@@ -230,6 +230,8 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
       tooltip: {
         ...oldInteractionConfig.tooltip,
         config: {
+          compareMode: false,
+          compareType: 'absolute',
           fieldsToShow: {
             ...oldInteractionConfig.tooltip.config.fieldsToShow,
             [hexDataId]: [
