@@ -25,7 +25,7 @@ export const TOOLTIP_FORMAT_TYPES = {
   PERCENTAGE: 'percentage'
 };
 
-export const TOOLTIP_KEY = 'id';
+export const TOOLTIP_KEY = 'format';
 
 export const TOOLTIP_FORMATS = {
   NONE: {
@@ -59,7 +59,7 @@ export const TOOLTIP_FORMATS = {
   DECIMAL_PRECENT_REGULAR: {
     id: 'DECIMAL_PRECENT_REGULAR',
     label: '12.345 → 12.35%',
-    format: '.2f',
+    format: '%',
     type: TOOLTIP_FORMAT_TYPES.PERCENTAGE
   },
   DECIMAL_DECIMAL_FIXED_2: {
