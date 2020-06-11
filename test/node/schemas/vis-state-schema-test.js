@@ -208,7 +208,7 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
     tooltip: {
       enabled: true,
       fieldsToShow: {
-        [testCsvDataId]: [{name: 'gps_data.utc_timestamp', format: 'DATE_LL'}],
+        [testCsvDataId]: [{name: 'gps_data.utc_timestamp', format: 'LL'}],
         [testGeoJsonDataId]: [
           {
             name: 'OBJECTID',
