@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import DatasetLabel from 'components/common/dataset-label';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const StyledMsg = styled.div`
   margin-top: 24px;

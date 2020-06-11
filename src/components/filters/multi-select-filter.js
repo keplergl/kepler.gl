@@ -21,7 +21,7 @@
 import React from 'react';
 import ItemSelector from '../common/item-selector/item-selector';
 import {PanelLabel} from '../common/styled-components';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 export default function MultiSelectFilterFactory() {
   const MultiSelectFilter = ({filter, setFilter}) => (

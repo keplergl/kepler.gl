@@ -28,7 +28,7 @@ import ItemSelector from 'components/common/item-selector/item-selector';
 import {CLOUDFRONT} from 'constants/default-settings';
 
 import {SidePanelSection} from 'components/common/styled-components';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const ITEM_SIZE = {
   large: 50,

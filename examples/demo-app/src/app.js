@@ -23,6 +23,8 @@ import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled, {ThemeProvider} from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
+import {FormattedMessage, IntlProvider, injectIntl} from 'react-intl';
+
 import {theme} from 'kepler.gl/styles';
 import Banner from './components/banner';
 import Announcement, {FormLink} from './components/announcement';
@@ -30,6 +32,8 @@ import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import {AUTH_TOKENS} from './constants/default-settings';
+import {messages} from './constants/localization';
+
 import {
   loadRemoteMap,
   loadSampleConfigurations,

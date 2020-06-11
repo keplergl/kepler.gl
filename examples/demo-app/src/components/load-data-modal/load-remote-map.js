@@ -24,7 +24,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {CORS_LINK} from '../../constants/default-settings';
 import {messages} from '../../constants/localization';
-import {FormattedHTMLMessage, FormattedMessage, IntlProvider} from 'react-intl';
+import {FormattedHTMLMessage, IntlProvider, FormattedMessage} from 'react-intl';
 
 const propTypes = {
   onLoadRemoteMap: PropTypes.func.isRequired

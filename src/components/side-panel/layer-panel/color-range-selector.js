@@ -32,7 +32,7 @@ import CustomPalette from './custom-palette';
 import {COLOR_RANGES} from 'constants/color-ranges';
 import {numberSort} from 'utils/data-utils';
 import {reverseColorRange} from 'utils/color-utils';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 export const ALL_TYPES = uniq(
   COLOR_RANGES.map(c => c.type)

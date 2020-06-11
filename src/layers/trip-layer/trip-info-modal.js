@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const StyledCode = styled.code`
   color: ${props => props.theme.titleColorLT};

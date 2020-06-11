@@ -29,7 +29,8 @@ import {
   StyledModalContent,
   StyledType
 } from 'components/common/styled-components';
-import {FormattedMessage, injectIntl} from 'react-intl';
+import {injectIntl} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const propTypes = {
   datasets: PropTypes.object.isRequired,

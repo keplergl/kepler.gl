@@ -30,7 +30,7 @@ import {
   PanelLabel,
   StyledPanelHeader
 } from 'components/common/styled-components';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const StyledMapDropdown = styled(StyledPanelHeader)`
   height: 48px;

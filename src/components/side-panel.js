@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {PureComponent} from 'react';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import get from 'lodash.get';

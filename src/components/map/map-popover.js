@@ -25,7 +25,8 @@ import LayerHoverInfoFactory from './layer-hover-info';
 import CoordinateInfoFactory from './coordinate-info';
 import {Pin, ArrowLeft, ArrowRight} from 'components/common/icons';
 import ErrorBoundary from 'components/common/error-boundary';
-import {FormattedMessage, injectIntl} from 'react-intl';
+import {injectIntl} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const MAX_WIDTH = 500;
 const MAX_HEIGHT = 600;

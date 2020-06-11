@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {useState} from 'react';
+
 import styled from 'styled-components';
 import get from 'lodash.get';
 
@@ -49,9 +50,7 @@ LoadDataModalFactory.deps = [ModalTabsFactory, FileUploadFactory, LoadStorageMap
 export function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
   /** @type {React.FunctionComponent<LoadDataModalProps>} */
   const LoadDataModal = props => {
-    // @ts-ignore TODO check why this is not defined
-    const {isCloudMapLoading} = props;
-    const {loadingMethods} = props;
+    const {loadingMethods, isCloudMapLoading} = props;
     const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
 
     return (
@@ -86,6 +85,7 @@ export function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
       }
     ]
   };
+
   return LoadDataModal;
 }
 

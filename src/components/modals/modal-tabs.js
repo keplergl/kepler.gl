@@ -23,7 +23,6 @@ import classnames from 'classnames';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import {media} from 'styles';
-import {FormattedMessage, useIntl} from 'react-intl';
 
 const ModalTab = styled.div`
   align-items: flex-end;
@@ -76,10 +75,9 @@ const noop = () => {};
 
 export const ModalTabItem = ({currentMethod, method, toggleMethod}) => {
   const onClick = useCallback(() => toggleMethod(method), [method, toggleMethod]);
-  const intl = useIntl();
 
   return method.tabElementType ? (
-    <method.tabElementType onClick={onClick} intl={intl} />
+    <method.tabElementType onClick={onClick} />
   ) : (
     <StyledLoadDataModalTabItem
       className={classnames('load-data-modal__tab__item', {
@@ -87,7 +85,7 @@ export const ModalTabItem = ({currentMethod, method, toggleMethod}) => {
       })}
       onClick={onClick}
     >
-      <div>{method.label ? <FormattedMessage id={method.label} /> : method.id}</div>
+      <div>{method.label || method.id}</div>
     </StyledLoadDataModalTabItem>
   );
 };
