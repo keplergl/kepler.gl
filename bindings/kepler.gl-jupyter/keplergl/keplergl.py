@@ -134,7 +134,7 @@ class KeplerGl(widgets.DOMWidget):
 
         self.data = copy
 
-    def save_to_html(self, data=None, config=None, file_name='keplergl_map.html', read_only=False):
+    def save_to_html(self, data=None, config=None, file_name='keplergl_map.html', read_only=False, center_map=False):
         ''' Save current map to an interactive html
 
         Inputs:
@@ -164,7 +164,7 @@ class KeplerGl(widgets.DOMWidget):
         # for key in data_to_add:
         #     print(type(data_to_add[key]))
 
-        keplergl_data = json.dumps({"config": config_to_add, "data": data_to_add, "options": {"readOnly": read_only}})
+        keplergl_data = json.dumps({"config": config_to_add, "data": data_to_add, "options": {"readOnly": read_only, "centerMap": center_map}})
 
         cmd = """window.__keplerglDataConfig = {};""".format(keplergl_data)
         frame_txt = keplergl_html[:k] + "<body><script>" + cmd + "</script>" + keplergl_html[k+6:]
