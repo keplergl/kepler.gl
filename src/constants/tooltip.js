@@ -59,7 +59,7 @@ export const TOOLTIP_FORMATS = {
   DECIMAL_PRECENT_REGULAR: {
     id: 'DECIMAL_PRECENT_REGULAR',
     label: '12.345 → 12.35%',
-    format: '.2f',
+    format: '%',
     type: TOOLTIP_FORMAT_TYPES.PERCENTAGE
   },
   DECIMAL_DECIMAL_FIXED_2: {
@@ -89,7 +89,7 @@ export const TOOLTIP_FORMATS = {
   DECIMAL_DELTA: {
     id: 'DECIMAL_DELTA',
     label: '+12,345.432',
-    format: '+,',
+    format: '+,.3f',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_CURRENCY: {

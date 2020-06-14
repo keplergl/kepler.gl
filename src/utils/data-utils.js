@@ -320,7 +320,7 @@ export function applyDefaultFormat(tooltipFormat) {
     case TOOLTIP_FORMAT_TYPES.DATE_TIME:
       return v => moment.utc(v).format(tooltipFormat.format);
     case TOOLTIP_FORMAT_TYPES.PERCENTAGE:
-      return v => `${d3Format(tooltipFormat.format)(v)}%`;
+      return v => `${d3Format(TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format)(v)}%`;
     default:
       return v => v;
   }
