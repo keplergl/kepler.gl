@@ -50,7 +50,7 @@ test('Map Popover - render', t => {
   t.equal(wrapper.find('.coordingate-hover-info').length, 1, 'Should display 1 coordinates');
   t.equal(wrapper.find('.layer-hover-info').length, 1, 'Should display 1 layer info');
   t.equal(wrapper.find(Pin).length, 1, 'Should display 1 pin');
-  t.equal(wrapper.find('.base').length, 1, 'Should display 1 PRIMARY');
+  t.equal(wrapper.find('.primary-label').length, 1, 'Should display 1 primary label');
 
   t.end();
 });
