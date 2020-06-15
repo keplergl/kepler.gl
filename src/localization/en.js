@@ -449,6 +449,9 @@ export default {
       percentage: 'Percentage'
     }
   },
+  mapPopover: {
+    primary: 'Primary'
+  },
   density: 'density',
   'Bug Report': 'Bug Report',
   'User Guide': 'User Guide',
