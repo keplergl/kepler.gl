@@ -56,6 +56,7 @@ export async function* makeProgressIterator(asyncIterator, info) {
   }
 }
 
+// eslint-disable-next-line complexity
 async function* addRows(asyncIterator, fileName) {
   let result = {};
   let batches = [];
@@ -63,31 +64,39 @@ async function* addRows(asyncIterator, fileName) {
 
     // Last batch will have this special type and will provide all the root
     // properties of the parsed document.
-    if (batch.batchType === 'root-object-batch-complete') {
-      // TODO: It would be nice if loaders.gl could handle this detail when
-      // parsing in batches, otherwise we can't entirely delegate the
-      // responsibility of parsing any format.
-      if (batch.container.features) {
-        result.features = batches;
-      } else if (batch.container.datasets) {
-        result.datasets = batches;
-      } else {
-        // HACK to get things moving, I couldn't find any realiable way to
-        // identify a Row JSON—batch.container seems to equal batches[0] though.
-        result = batches;
-      }
-      // We copy all properties but skip datasets or fatures becuase they are
-      // empty arrays—we got its content in previous batches.
-      for (const k in batch.container) {
-        if (k !== 'datasets' && k !== 'features') {
-          result[k] = batch.container[k];
+    switch (batch.batchType) {
+      case 'metadata':
+        Console.log('parseInBatches metadata ', batch);
+        break;
+
+      case 'root-object-batch-complete':
+        // TODO: It would be nice if loaders.gl could handle this detail when
+        // parsing in batches, otherwise we can't entirely delegate the
+        // responsibility of parsing any format.
+        if (batch.container.features) {
+          result.features = batches;
+        } else if (batch.container.datasets) {
+          result.datasets = batches;
+        } else {
+          // HACK to get things moving, I couldn't find any realiable way to
+          // identify a Row JSON—batch.container seems to equal batches[0] though.
+          result = batches;
         }
-      }
-    } else {
-      // console.log(batch)
-      for (let i = 0; i < batch.data.length; i++) {
-        batches.push(batch.data[i]);
-      }
+
+        // We copy all properties but skip datasets or fatures becuase they are
+        // empty arrays—we got its content in previous batches.
+        for (const k in batch.container) {
+          if (k !== 'datasets' && k !== 'features') {
+            result[k] = batch.container[k];
+          }
+        }
+        break;
+
+      default:
+        Console.log(batch)
+        for (let i = 0; i < batch.data.length; i++) {
+          batches.push(batch.data[i]);
+        }
     }
 
     yield {
@@ -108,8 +117,8 @@ export async function readFileBatch({file, fileCache = []}) {
     fileReaderAsyncIterable(file, chunkSize),
     [JSONLoader, CSVLoader],
     {
-      csv: CSV_LOADER_OPTION,
-      json: JSON_LOADER_OPTION
+      csv: CSV_LOADER_OPTIONS,
+      json: JSON_LOADER_OPTIONS
     },
     file.name
   );
@@ -184,16 +193,18 @@ async function* fileReaderAsyncIterable(file, chunkSize) {
     yield chunk;
   }
 }
-const CSV_LOADER_OPTION = {
-  header: false, 
-  // number of rows per batch
-  batchSize: 4000,
-  converToObject: false
+
+const CSV_LOADER_OPTIONS = {
+  // header: false // Use automatic header detection
+  // batchSize: 4000, // Auto detect number of rows per batch (network batch size)
+  rowFormat: 'object'
 };
-const JSON_LOADER_OPTION = {
-  _rootObjectBatches: true, 
-  batchSize: 4000
+
+const JSON_LOADER_OPTIONS = {
+  _rootObjectBatches: true 
+  // batchSize: 4000, // Auto detect number of rows per batch (network batch size)
 };
+
 // 10 mb
 const chunkSize = 10 * 1024 * 1024;
 
