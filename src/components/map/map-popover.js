@@ -39,6 +39,7 @@ const StyledMapPopover = styled.div`
   z-index: 1001;
   position: absolute;
   overflow-x: auto;
+  box-shadow: ${props => props.theme.panelBoxShadow};
 
   :hover {
     background-color: ${props => `${props.theme.panelBackground}dd`};

@@ -293,6 +293,9 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         ? interactionConfig.tooltip.config.compareMode
         : false;
 
+      const hasTooltip = pinned || clicked;
+      const hasComparisonTooltip = (compareMode || (!clicked && !pinned));
+
       if (pinned || clicked) {
         // project lnglat to screen so that tooltip follows the object on zoom
         const viewport = new WebMercatorViewport(mapState);
@@ -312,19 +315,19 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       }
       return (
         <div>
-          {(clicked || pinned) && (
+          {hasTooltip && (
             <MapPopover
               {...pinnedPosition}
               layerHoverProp={layerPinnedProp}
               coordinate={interactionConfig.coordinate.enabled && (pinned || {}).coordinate}
-              frozen={Boolean(clicked || pinned)}
+              frozen={Boolean(hasTooltip)}
               onClose={this._onCloseMapPopover}
               mapW={mapState.width}
               mapH={mapState.height}
               isBase={compareMode}
             />
           )}
-          {(compareMode || (!clicked && !pinned)) && (
+          {hasComparisonTooltip && (
             <MapPopover
               {...position}
               layerHoverProp={layerHoverProp}
