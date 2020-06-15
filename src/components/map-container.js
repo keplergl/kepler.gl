@@ -294,7 +294,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         : false;
 
       const hasTooltip = pinned || clicked;
-      const hasComparisonTooltip = (compareMode || (!clicked && !pinned));
+      const hasComparisonTooltip = compareMode || (!clicked && !pinned);
 
       if (pinned || clicked) {
         // project lnglat to screen so that tooltip follows the object on zoom
