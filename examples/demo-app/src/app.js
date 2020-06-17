@@ -356,7 +356,6 @@ class App extends Component {
   };
 
   render() {
-    const {showBanner} = this.state;
     return (
       <ThemeProvider theme={theme}>
         <GlobalStyle

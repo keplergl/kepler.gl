@@ -56,7 +56,7 @@ export default class Home extends PureComponent {
   componentDidMount() {
     // delay 2s to show the banner
     if (!window.localStorage.getItem(BannerKey)) {
-     window.setTimeout(this._showBanner, 3000);
+      window.setTimeout(this._showBanner, 3000);
     }
   }
 

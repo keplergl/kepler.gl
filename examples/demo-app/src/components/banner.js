@@ -39,7 +39,7 @@ const StyledBanner = styled.div`
     cursor: pointer;
   }
 
-  top: ${props => props.visible ? 0 : -100}px;
+  top: ${props => (props.visible ? 0 : -100)}px;
 `;
 
 const Banner = ({
