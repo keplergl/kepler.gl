@@ -38,7 +38,7 @@ import Announcement from '../../../examples/demo-app/src/components/announcement
 
 const BannerKey = 'kgHideBanner-iiba';
 const BannerHeight = 30;
-const BACKGROUND_COLOR = '#82368c';
+const BACKGROUND_COLOR = '#2E7CF6';
 
 const SECTION_CONTENT = {
   showcase: Showcase,
@@ -55,9 +55,9 @@ export default class Home extends PureComponent {
 
   componentDidMount() {
     // delay 2s to show the banner
-    // if (!window.localStorage.getItem(BannerKey)) {
-    //  window.setTimeout(this._showBanner, 3000);
-    // }
+    if (!window.localStorage.getItem(BannerKey)) {
+     window.setTimeout(this._showBanner, 3000);
+    }
   }
 
   _showBanner = () => {

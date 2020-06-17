@@ -370,7 +370,7 @@ class App extends Component {
           <Banner
             show={this.state.showBanner}
             height={BannerHeight}
-            bgColor="#82368c"
+            bgColor="#2E7CF6"
             onClose={this._hideBanner}
           >
             <Announcement onDisable={this._disableBanner} />
