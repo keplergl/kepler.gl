@@ -42,7 +42,7 @@ const CSV_LOADER_OPTIONS = {
 };
 
 const JSON_LOADER_OPTIONS = {
-  _rootObjectBatches: true,
+  _rootObjectBatches: true
   // batchSize: 4000, // Auto detect number of rows per batch (network batch size)
 };
 
@@ -82,14 +82,13 @@ export async function* makeProgressIterator(asyncIterator, info) {
   let rowCount = 0;
   const startTime = Date.now();
 
-
   for await (const batch of asyncIterator) {
     // skip metadata batches
     if (batch.batchType === BATCH_TYPE.METADATA) {
       continue;
     }
-    
-    const rowCountInBatch = batch.data && batch.data.length || 0;
+
+    const rowCountInBatch = (batch.data && batch.data.length) || 0;
     rowCount += rowCountInBatch;
     const elapsedMs = Date.now() - startTime;
     const percent = batch.bytesUsed / info.size;
@@ -99,7 +98,7 @@ export async function* makeProgressIterator(asyncIterator, info) {
       elapsedMs,
       rowCount,
       rowCountInBatch,
-      percent,
+      percent
     };
 
     // This is needed to release the thread to the UI loop and render the progress
@@ -110,13 +109,9 @@ export async function* makeProgressIterator(asyncIterator, info) {
 
 // eslint-disable-next-line complexity
 async function* readBatch(asyncIterator, fileName) {
-  console.log('rb1', asyncIterator);
   let result = {};
   let batches = [];
   for await (const batch of asyncIterator) {
-    console.log('batch: ', batch);
-    console.log('batchType: ', batch.batchType);
-    console.log('batchContainer', batch.container);
     // Last batch will have this special type and will provide all the root
     // properties of the parsed document.
     switch (batch.batchType) {
@@ -148,12 +143,12 @@ async function* readBatch(asyncIterator, fileName) {
         break;
 
       default:
-        Console.log(batch)
+        Console.log(batch);
         for (let i = 0; i < batch.data.length; i++) {
           batches.push(batch.data[i]);
         }
     }
-    
+
     yield {
       ...batch,
       header: batch.schema ? Object.keys(batch.schema) : null,
@@ -166,7 +161,6 @@ async function* readBatch(asyncIterator, fileName) {
   }
 }
 
-
 export async function readFileInBatches({file, fileCache = []}) {
   const batchIterator = await parseInBatches(
     file,
@@ -174,8 +168,10 @@ export async function readFileInBatches({file, fileCache = []}) {
     {
       csv: CSV_LOADER_OPTIONS,
       json: JSON_LOADER_OPTIONS,
-      // Somehow enabling metadata breaks the data iterator
-      metadata: false,
+      // Enabling metadata breaks after the first batch for JSON datasets (the metadata batch)
+      // TypeError: undefined is not a function
+      //       at makeMetadataBatchIterator (parse-in-batches.js:58)
+      metadata: false
     },
     file.name
   );
