@@ -25,7 +25,7 @@ import styled from 'styled-components';
 
 import SliderHandle from './slider-handle';
 import SliderBarHandle from './slider-bar-handle';
-import {roundValToStep} from 'utils/data-utils';
+import {normalizeSliderValue} from 'utils/data-utils';
 
 function noop() {}
 
@@ -39,8 +39,7 @@ const StyledRangeSlider = styled.div`
 
 const SliderWrapper = styled.div`
   flex-grow: 1;
-  margin-top: ${props =>
-    props.isRanged ? props.theme.sliderMarginTopIsRange : props.theme.sliderMarginTop}px;
+  margin-top: ${props => props.theme.sliderMarginTop}px;
 `;
 
 export default class Slider extends Component {
@@ -83,22 +82,33 @@ export default class Slider extends Component {
   };
 
   ref = createRef();
+  track = createRef();
+
+  _setAnchor = x => {
+    // used to calculate delta
+    this._anchor = x;
+  };
 
   _getBaseDistance() {
     return this.props.vertical ? this.ref.current.offsetHeight : this.ref.current.offsetWidth;
   }
 
-  _getValDelta(x) {
+  _getDeltaVal(x) {
     const percent = x / this._getBaseDistance();
     const maxDelta = this.props.maxValue - this.props.minValue;
     return percent * maxDelta;
   }
+  _getDeltaX(v) {
+    const percent = v / (this.props.maxValue - this.props.minValue);
+    const maxDelta = this._getBaseDistance();
+    return percent * maxDelta;
+  }
 
-  _getValue(val, offset) {
-    const delta = this._getValDelta(offset);
-    const rawValue = this.props.vertical ? val - delta : val + delta;
+  _getValue(baseV, offset) {
+    // offset is the distance between slider handle and track left
+    const rawValue = baseV + this._getDeltaVal(offset);
 
-    return this._roundValToStep(rawValue);
+    return this._normalizeValue(rawValue);
   }
 
   _isVal0InRange = val => {
@@ -111,30 +121,38 @@ export default class Slider extends Component {
     return Boolean(val <= maxValue && val >= value0);
   };
 
-  _roundValToStep(val) {
-    const {minValue, step} = this.props;
-    return roundValToStep(minValue, step, val);
+  _normalizeValue(val) {
+    const {minValue, step, marks} = this.props;
+    return normalizeSliderValue(val, minValue, step, marks);
   }
 
   slide0Listener = x => {
-    const val = this._getValue(this.props.value0, x);
+    const val = this._getValue(this.props.minValue, x);
+
     if (this._isVal0InRange(val)) {
       this.props.onSlider0Change(val);
     }
   };
 
   slide1Listener = x => {
-    const val = this._getValue(this.props.value1, x);
+    const val = this._getValue(this.props.minValue, x);
     if (this._isVal1InRange(val)) {
       this.props.onSlider1Change(val);
     }
   };
 
   sliderBarListener = x => {
-    const val0 = this._getValue(this.props.value0, x);
-    const val1 = this._getValue(this.props.value1, x);
-    if (this._isVal1InRange(val1) && this._isVal0InRange(val0)) {
+    const {minValue, maxValue} = this.props;
+    // for slider bar, we use distance delta
+    const anchor = this._anchor;
+    const val0 = this._getValue(this.props.value0, x - anchor);
+    const val1 = this._getValue(this.props.value1, x - anchor);
+
+    if (val0 >= minValue && val1 <= maxValue && val1 >= val0) {
+      const deltaX = this._getDeltaX(val0 - this.props.value0);
       this.props.onSliderBarChange(val0, val1);
+      // update anchor
+      this._anchor = this._anchor + deltaX;
     }
   };
 
@@ -176,7 +194,7 @@ export default class Slider extends Component {
         isRanged={isRanged}
         vertical={vertical}
       >
-        <StyledRangeSlider className="kg-range-slider" vertical={vertical}>
+        <StyledRangeSlider className="kg-range-slider" vertical={vertical} ref={this.track}>
           <SliderHandle
             className="kg-range-slider__handle"
             left={this.calcHandleLeft0(width, v0Left)}
@@ -185,6 +203,7 @@ export default class Slider extends Component {
             display={isRanged}
             vertical={vertical}
             showTooltip={showTooltip}
+            track={this.track}
           />
           <SliderHandle
             className="kg-range-slider__handle"
@@ -194,6 +213,7 @@ export default class Slider extends Component {
             vertical={vertical}
             value={value1}
             showTooltip={showTooltip}
+            track={this.track}
           />
           <SliderBarHandle
             width={width}
@@ -201,6 +221,8 @@ export default class Slider extends Component {
             enableBarDrag={this.props.enableBarDrag}
             sliderBarListener={this.sliderBarListener}
             vertical={vertical}
+            track={this.track}
+            setAnchor={this._setAnchor}
           />
         </StyledRangeSlider>
       </SliderWrapper>

@@ -23,6 +23,7 @@ import assert from 'assert';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from 'constants/tooltip';
 import {format as d3Format} from 'd3-format';
+import {bisectLeft} from 'd3-array';
 
 const MAX_LATITUDE = 90;
 const MIN_LATITUDE = -90;
@@ -209,6 +210,26 @@ export function getRoundingDecimalFromStep(step) {
     return 0;
   }
   return splitZero[1].length;
+}
+
+export function snapToMarks(value, marks) {
+  // always use bin x0
+  const i = bisectLeft(marks, value);
+  if (i === 0) {
+    return marks[i];
+  } else if (i === marks.length) {
+    return marks[i - 1];
+  }
+  const idx = marks[i] - value < value - marks[i - 1] ? i : i - 1;
+  return marks[idx];
+}
+
+export function normalizeSliderValue(val, minValue, step, marks) {
+  if (marks && marks.length) {
+    return snapToMarks(val, marks);
+  }
+
+  return roundValToStep(minValue, step, val);
 }
 
 /**

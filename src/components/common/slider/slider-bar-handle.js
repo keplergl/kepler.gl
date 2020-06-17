@@ -58,7 +58,9 @@ export default class SliderBarHandle extends Component {
     this.mouseEvent = new MouseEventHandler({
       vertical: props.vertical,
       valueListener: props.sliderBarListener,
-      toggleMouseOver: this.toggleMouseOver
+      toggleMouseOver: this.toggleMouseOver,
+      track: props.track,
+      setAnchor: props.setAnchor
     });
   }
 

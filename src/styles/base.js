@@ -246,7 +246,7 @@ export const sliderHandleHoverColor = '#FFFFFF';
 export const sliderHandleShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
 export const sliderInputHeight = 24;
 export const sliderInputWidth = 56;
-export const sliderMarginTopIsRange = 0;
+export const sliderMarginTopIsTime = -12;
 export const sliderMarginTop = 12;
 
 // Plot
@@ -1088,7 +1088,7 @@ export const theme = {
   sliderHandleShadow,
   sliderInputHeight,
   sliderInputWidth,
-  sliderMarginTopIsRange,
+  sliderMarginTopIsTime,
   sliderMarginTop,
 
   // Plot

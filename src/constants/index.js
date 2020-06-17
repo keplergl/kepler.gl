@@ -57,7 +57,12 @@ export {
   SCALE_TYPES,
   THEME,
   TRIP_ARC_FIELDS,
-  TRIP_POINT_FIELDS
+  TRIP_POINT_FIELDS,
+  BASE_SPEED,
+  FPS,
+  ANIMATION_TYPE,
+  DEFAULT_TIME_FORMAT,
+  SPEED_CONTROL_RANGE
 } from './default-settings';
 
 export {BUG_REPORT_LINK, USER_GUIDE_DOC} from './user-guides';

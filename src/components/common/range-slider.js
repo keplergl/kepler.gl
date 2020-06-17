@@ -20,7 +20,7 @@
 
 import React, {Component, createRef} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
-
+import {createSelector} from 'reselect';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import RangePlotFactory from './range-plot';
@@ -107,6 +107,13 @@ export default function RangeSliderFactory(RangePlot) {
     sliderContainer = createRef();
     inputValue0 = createRef();
     inputValue1 = createRef();
+    value0Selector = props => props.value0;
+    value1Selector = props => props.value1;
+    filterValueSelector = createSelector(
+      this.value0Selector,
+      this.value1Selector,
+      (value0, value1) => [value0, value1]
+    );
 
     _isVal0InRange = val => {
       const {value1, range} = this.props;
@@ -128,9 +135,9 @@ export default function RangeSliderFactory(RangePlot) {
 
     _setRangeVal1 = val => {
       const {value0, onChange} = this.props;
-      val = Number(val);
-      if (this._isVal1InRange(val)) {
-        onChange([value0, this._roundValToStep(val)]);
+      const val1 = Number(val);
+      if (this._isVal1InRange(val1)) {
+        onChange([value0, this._roundValToStep(val1)]);
         return true;
       }
       return false;
@@ -192,20 +199,7 @@ export default function RangeSliderFactory(RangePlot) {
     }
 
     render() {
-      const {
-        isRanged,
-        showInput,
-        histogram,
-        lineChart,
-        plotType,
-        isEnlarged,
-        range,
-        onChange,
-        value0,
-        value1,
-        sliderHandleWidth,
-        step
-      } = this.props;
+      const {isRanged, showInput, histogram, range, onChange, sliderHandleWidth, step} = this.props;
 
       const height = isRanged && showInput ? '16px' : '24px';
       const {width} = this.state;
@@ -220,26 +214,28 @@ export default function RangeSliderFactory(RangePlot) {
           {histogram && histogram.length ? (
             <RangePlot
               histogram={histogram}
-              lineChart={lineChart}
-              plotType={plotType}
-              isEnlarged={isEnlarged}
-              onBrush={(val0, val1) => {
-                onChange([this._roundValToStep(val0), this._roundValToStep(val1)]);
-              }}
+              lineChart={this.props.lineChart}
+              plotType={this.props.plotType}
+              isEnlarged={this.props.isEnlarged}
+              onBrush={(val0, val1) => onChange([val0, val1])}
+              marks={this.props.marks}
               range={range}
-              value={[value0, value1]}
+              value={this.filterValueSelector(this.props)}
               width={plotWidth}
+              isRanged={isRanged}
+              step={step}
             />
           ) : null}
           <SliderWrapper style={{height}} className="kg-range-slider__slider">
             {this.props.xAxis ? <this.props.xAxis width={plotWidth} domain={range} /> : null}
             <Slider
+              marks={this.props.marks}
               showValues={false}
               isRanged={isRanged}
               minValue={range[0]}
               maxValue={range[1]}
-              value0={value0}
-              value1={value1}
+              value0={this.props.value0}
+              value1={this.props.value1}
               step={step}
               handleWidth={sliderHandleWidth}
               onSlider0Change={this._setRangeVal0}
@@ -249,6 +245,7 @@ export default function RangeSliderFactory(RangePlot) {
               }}
               enableBarDrag
             />
+
             {!isRanged && showInput ? this._renderInput('value1') : null}
           </SliderWrapper>
           {isRanged && showInput ? (
