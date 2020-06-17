@@ -27,8 +27,9 @@ const StyledText = styled.div`
 
 const StyledLink = styled.a`
   text-decoration: underline !important;
-  color: white;
+  color: #2E7CF6 !important;
   font-weight: 500;
+  margin-left: 8px;
 
   :hover {
     cursor: pointer;
@@ -39,18 +40,22 @@ const DisableBanner = styled.div`
   display: inline-block;
   margin-left: 20px;
 `;
-const FormLink = 'https://www.informationisbeautifulawards.com/showcase/3082-kepler-gl';
+
+// We are using the link to make sure users who have seen
+// previous banners can see this one because we check localstorage key
+export const FormLink = 'https://shan990829.typeform.com/to/RbCAXt';
 
 const Announcement = ({onDisable}) => (
   <StyledText>
-    <span>Kepler.gl is shortlisted in the Information is Beautiful Award. </span>
+    <span>
+      Kepler.gl turns two years old!. Help us define our roadmap by taking this 5-minute-survey and win a <b>$100 Amazon gift card</b>. Make your answers count!
+    </span>
     <StyledLink target="_blank" href={FormLink}>
-      Vote for us
+      Contribute
     </StyledLink>
-    <span> before Fri 19th Oct!</span>
     {onDisable ? (
       <DisableBanner>
-        <StyledLink onClick={onDisable}>Already Voted!</StyledLink>
+        <StyledLink onClick={onDisable}>Already provided my feedback!</StyledLink>
       </DisableBanner>
     ) : null}
   </StyledText>

@@ -25,7 +25,7 @@ import window from 'global/window';
 import {connect} from 'react-redux';
 import {theme} from 'kepler.gl/styles';
 import Banner from './components/banner';
-import Announcement from './components/announcement';
+import Announcement, {FormLink} from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
@@ -61,8 +61,8 @@ import {addDataToMap, addNotification} from 'kepler.gl/actions';
 import {processCsvData, processGeojson} from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
-const BannerHeight = 30;
-const BannerKey = 'kgHideBanner-iiba';
+const BannerHeight = 48;
+const BannerKey = `banner-${FormLink}`;
 const keplerGlGetState = state => state.demo.keplerGl;
 
 const GlobalStyle = styled.div`
@@ -130,9 +130,9 @@ class App extends Component {
     }
 
     // delay zs to show the banner
-    // if (!window.localStorage.getItem(BannerKey)) {
-    //   window.setTimeout(this._showBanner, 3000);
-    // }
+    if (!window.localStorage.getItem(BannerKey)) {
+      window.setTimeout(this._showBanner, 3000);
+    }
     // load sample data
     // this._loadSampleData();
 
@@ -380,9 +380,9 @@ class App extends Component {
               transition: 'margin 1s, height 1s',
               position: 'absolute',
               width: '100%',
-              height: showBanner ? `calc(100% - ${BannerHeight}px)` : '100%',
-              minHeight: `calc(100% - ${BannerHeight}px)`,
-              marginTop: showBanner ? `${BannerHeight}px` : 0
+              height: '100%',
+              left: 0,
+              top: 0
             }}
           >
             <AutoSizer>
@@ -395,7 +395,7 @@ class App extends Component {
                    */
                   getState={keplerGlGetState}
                   width={width}
-                  height={height - (showBanner ? BannerHeight : 0)}
+                  height={height}
                   cloudProviders={CLOUD_PROVIDERS}
                   onExportToCloudSuccess={onExportFileSuccess}
                   onLoadCloudMapSuccess={onLoadCloudMapSuccess}
