@@ -20,12 +20,10 @@
 
 import Task, {taskCreator} from 'react-palm/tasks';
 import {json as requestJson} from 'd3-request';
-import {readFile, readFileBatch, processFileData} from '../processors/file-handler';
+import {readFileInBatches, processFileData} from '../processors/file-handler';
 
 export const LOAD_FILE_TASK = Task.fromPromise(
-  // ({file, fileCache}) => readFile({file, fileCache}),
-  ({file, fileCache}) => readFileBatch({file, fileCache}),
-
+  ({file, fileCache}) => readFileInBatches({file, fileCache}),
   'LOAD_FILE_TASK'
 );
 
