@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {FileReader} from 'global/window';
 import Console from 'global/console';
-import {parse, parseInBatches, registerLoaders} from '@loaders.gl/core';
+import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {
@@ -32,44 +31,100 @@ import {
 import {isPlainObject, generateHashId} from 'utils/utils';
 import {DATASET_FORMATS} from 'constants/default-settings';
 
-// registerLoaders([JSONLoader, CSVLoader]);
+const BATCH_TYPE = {
+  METADATA: 'metadata',
+  ROOT_OBJECT_COMPLETE: 'root-object-batch-complete'
+};
+
+const CSV_LOADER_OPTIONS = {
+  batchSize: 4000, // Auto detect number of rows per batch (network batch size)
+  rowFormat: 'object'
+};
+
+const JSON_LOADER_OPTIONS = {
+  _rootObjectBatches: true,
+  // batchSize: 4000, // Auto detect number of rows per batch (network batch size)
+};
+
+export function isGeoJson(json) {
+  // json can be feature collection
+  // or single feature
+  return isPlainObject(json) && (isFeature(json) || isFeatureCollection(json));
+}
+
+export function isFeature(json) {
+  return json.type === 'Feature' && json.geometry;
+}
+
+export function isFeatureCollection(json) {
+  return json.type === 'FeatureCollection' && json.features;
+}
+
+export function isRowObject(json) {
+  return Array.isArray(json) && isPlainObject(json[0]);
+}
+
+export function isCsvRows(content) {
+  return Array.isArray(content) && content.length && Array.isArray(content[0]);
+}
+
+export function isKeplerGlMap(json) {
+  return (
+    isPlainObject(json) &&
+    json.datasets &&
+    json.config &&
+    json.info &&
+    json.info.app === 'kepler.gl'
+  );
+}
 
 export async function* makeProgressIterator(asyncIterator, info) {
   let rowCount = 0;
   const startTime = Date.now();
 
+
   for await (const batch of asyncIterator) {
-    const data = batch.data;
+    // skip metadata batches
+    if (batch.batchType === BATCH_TYPE.METADATA) {
+      continue;
+    }
+    
+    const rowCountInBatch = batch.data && batch.data.length || 0;
+    rowCount += rowCountInBatch;
+    const elapsedMs = Date.now() - startTime;
+    const percent = batch.bytesUsed / info.size;
+
     // Update progress object
-    rowCount += data.length;
     const progress = {
-      elapsedMs: Date.now() - startTime,
-      // batchCount: batchCount++,
-      // Accumulated over all batches:
+      elapsedMs,
       rowCount,
-      // For this batch:
-      receivedRows: data.length,
-      // unit: info.size,
-      percent: batch.cursor / info.size
+      rowCountInBatch,
+      percent,
     };
+
+    // This is needed to release the thread to the UI loop and render the progress
+    await new Promise(resolve => window.setTimeout(resolve, 0));
     yield {...batch, progress};
   }
 }
 
 // eslint-disable-next-line complexity
-async function* addRows(asyncIterator, fileName) {
+async function* readBatch(asyncIterator, fileName) {
+  console.log('rb1', asyncIterator);
   let result = {};
   let batches = [];
   for await (const batch of asyncIterator) {
-
+    console.log('batch: ', batch);
+    console.log('batchType: ', batch.batchType);
+    console.log('batchContainer', batch.container);
     // Last batch will have this special type and will provide all the root
     // properties of the parsed document.
     switch (batch.batchType) {
-      case 'metadata':
+      case BATCH_TYPE.METADATA:
         Console.log('parseInBatches metadata ', batch);
         break;
 
-      case 'root-object-batch-complete':
+      case BATCH_TYPE.ROOT_OBJECT_COMPLETE:
         // TODO: It would be nice if loaders.gl could handle this detail when
         // parsing in batches, otherwise we can't entirely delegate the
         // responsibility of parsing any format.
@@ -98,7 +153,7 @@ async function* addRows(asyncIterator, fileName) {
           batches.push(batch.data[i]);
         }
     }
-
+    
     yield {
       ...batch,
       header: batch.schema ? Object.keys(batch.schema) : null,
@@ -111,28 +166,22 @@ async function* addRows(asyncIterator, fileName) {
   }
 }
 
-export async function readFileBatch({file, fileCache = []}) {
-  console.log('readFileBatch');
+
+export async function readFileInBatches({file, fileCache = []}) {
   const batchIterator = await parseInBatches(
-    fileReaderAsyncIterable(file, chunkSize),
+    file,
     [JSONLoader, CSVLoader],
     {
       csv: CSV_LOADER_OPTIONS,
-      json: JSON_LOADER_OPTIONS
+      json: JSON_LOADER_OPTIONS,
+      // Somehow enabling metadata breaks the data iterator
+      metadata: false,
     },
     file.name
   );
-    console.log('size:', file.size)
   const progressIterator = makeProgressIterator(batchIterator, {size: file.size});
-
-  return addRows(progressIterator, file.name);
+  return readBatch(progressIterator, file.name);
 }
-
-export function isCsvRows(content) {
-  return Array.isArray(content) && content.length && Array.isArray(content[0]);
-}
-
-const SIZE_THRESHOLD = 30 * 1024 * 1024;
 
 export function processFileData({content, fileCache}) {
   return new Promise((resolve, reject) => {
@@ -144,7 +193,8 @@ export function processFileData({content, fileCache}) {
       format = DATASET_FORMATS.csv;
       processor = processCsvData;
     } else if (isKeplerGlMap(data)) {
-      (format = DATASET_FORMATS.keplergl), (processor = processKeplerglJSON);
+      format = DATASET_FORMATS.keplergl;
+      processor = processKeplerglJSON;
     } else if (isRowObject(data)) {
       format = DATASET_FORMATS.row;
       processor = processRowObject;
@@ -172,101 +222,6 @@ export function processFileData({content, fileCache}) {
 
     reject('Unknow File Format');
   });
-}
-
-async function* fileReaderAsyncIterable(file, chunkSize) {
-  let offset = 0;
-  while (offset < file.size) {
-
-    const end = offset + chunkSize;
-    const slice = file.slice(offset, end);
-    const chunk = await new Promise((resolve, reject) => {
-      const fileReader = new FileReader(file);
-      fileReader.onload = event => {
-        resolve(event.target.result);
-      };
-      fileReader.onerror = reject;
-      fileReader.onabort = reject;
-      fileReader.readAsArrayBuffer(slice);
-    });
-    offset = end;
-    yield chunk;
-  }
-}
-
-const CSV_LOADER_OPTIONS = {
-  // header: false // Use automatic header detection
-  // batchSize: 4000, // Auto detect number of rows per batch (network batch size)
-  rowFormat: 'object'
-};
-
-const JSON_LOADER_OPTIONS = {
-  _rootObjectBatches: true 
-  // batchSize: 4000, // Auto detect number of rows per batch (network batch size)
-};
-
-// 10 mb
-const chunkSize = 10 * 1024 * 1024;
-
-function parseFile(file) {
-  console.log('parseFile');
-
-  return new Promise((resolve, reject) => {
-    const fileReader = new FileReader(file);
-    fileReader.onload = async ({target: {result}}) => {
-      try {
-        const data = await parse(
-          result,
-          {
-            csv: {header: false}
-          },
-          file.name
-        );
-        resolve(data);
-      } catch (e) {
-        reject(e);
-      }
-    };
-    fileReader.onerror = reject;
-    fileReader.onabort = reject;
-    fileReader.readAsText(file, 'UTF-8');
-  });
-}
-
-export function isGeoJson(json) {
-  // json can be feature collection
-  // or simgle feature
-  return isPlainObject(json) && (isFeature(json) || isFeatureCollection(json));
-}
-
-export function isFeature(json) {
-  return json.type === 'Feature' && json.geometry;
-}
-
-export function isFeatureCollection(json) {
-  return json.type === 'FeatureCollection' && json.features;
-}
-
-export function isRowObject(json) {
-  return Array.isArray(json) && isPlainObject(json[0]);
-}
-
-export function isKeplerGlMap(json) {
-  return (
-    isPlainObject(json) &&
-    json.datasets &&
-    json.config &&
-    json.info &&
-    json.info.app === 'kepler.gl'
-  );
-}
-
-export function determineJsonProcess({dataset, format}, defaultProcessor) {
-  if (isKeplerGlMap(dataset)) {
-    return processKeplerglJSON;
-  }
-
-  return defaultProcessor;
 }
 
 export function filesToDataPayload(fileCache) {
