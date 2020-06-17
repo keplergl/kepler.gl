@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Console from 'global/console';
+import {console as Console} from 'global/window';
 import {parseInBatches} from '@loaders.gl/core';
-import {JSONLoader} from '@loaders.gl/json';
+import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {
   processCsvData,
@@ -33,17 +33,22 @@ import {DATASET_FORMATS} from 'constants/default-settings';
 
 const BATCH_TYPE = {
   METADATA: 'metadata',
-  ROOT_OBJECT_COMPLETE: 'root-object-batch-complete'
+  PARTIAL_RESULT: 'partial-result',
+  FINAL_RESULT: 'final-result'
 };
 
 const CSV_LOADER_OPTIONS = {
-  batchSize: 4000, // Auto detect number of rows per batch (network batch size)
+  batchSize: 4000, // Auto de tect number of rows per batch (network batch size)
   rowFormat: 'object'
 };
 
 const JSON_LOADER_OPTIONS = {
-  _rootObjectBatches: true
-  // batchSize: 4000, // Auto detect number of rows per batch (network batch size)
+  // instruct loaders.gl on what json paths to stream
+  jsonpaths: [
+    '$', // JSON Row array
+    '$.features', // GeoJSON
+    '$.datasets' // KeplerGL JSON
+  ]
 };
 
 export function isGeoJson(json) {
@@ -79,15 +84,10 @@ export function isKeplerGlMap(json) {
 }
 
 export async function* makeProgressIterator(asyncIterator, info) {
-  let rowCount = 0;
   const startTime = Date.now();
+  let rowCount = 0;
 
   for await (const batch of asyncIterator) {
-    // skip metadata batches
-    if (batch.batchType === BATCH_TYPE.METADATA) {
-      continue;
-    }
-
     const rowCountInBatch = (batch.data && batch.data.length) || 0;
     rowCount += rowCountInBatch;
     const elapsedMs = Date.now() - startTime;
@@ -101,62 +101,43 @@ export async function* makeProgressIterator(asyncIterator, info) {
       percent
     };
 
-    // This is needed to release the thread to the UI loop and render the progress
-    await new Promise(resolve => window.setTimeout(resolve, 0));
     yield {...batch, progress};
   }
 }
 
 // eslint-disable-next-line complexity
 async function* readBatch(asyncIterator, fileName) {
-  let result = {};
+  let result = null;
   let batches = [];
+
   for await (const batch of asyncIterator) {
     // Last batch will have this special type and will provide all the root
     // properties of the parsed document.
-    switch (batch.batchType) {
-      case BATCH_TYPE.METADATA:
-        Console.log('parseInBatches metadata ', batch);
-        break;
-
-      case BATCH_TYPE.ROOT_OBJECT_COMPLETE:
-        // TODO: It would be nice if loaders.gl could handle this detail when
-        // parsing in batches, otherwise we can't entirely delegate the
-        // responsibility of parsing any format.
-        if (batch.container.features) {
-          result.features = batches;
-        } else if (batch.container.datasets) {
-          result.datasets = batches;
-        } else {
-          // HACK to get things moving, I couldn't find any realiable way to
-          // identify a Row JSON—batch.container seems to equal batches[0] though.
-          result = batches;
-        }
-
-        // We copy all properties but skip datasets or fatures becuase they are
-        // empty arrays—we got its content in previous batches.
-        for (const k in batch.container) {
-          if (k !== 'datasets' && k !== 'features') {
-            result[k] = batch.container[k];
-          }
-        }
-        break;
-
-      default:
-        Console.log(batch);
-        for (let i = 0; i < batch.data.length; i++) {
-          batches.push(batch.data[i]);
-        }
+    if (batch.batchType === BATCH_TYPE.FINAL_RESULT) {
+      if (batch.container) {
+        result = {...batch.container};
+      }
+      // Set the streamed data correctly is Batch json path is set
+      // and the path streamed is not the top level object (jsonpath = '$')
+      if (batch.jsonpath && batch.jsonpath.length > 1) {
+        const streamingPath = new _JSONPath(batch.jsonpath);
+        streamingPath.setFieldAtPath(result, batches);
+      } else {
+        // The streamed object is a ROW JSON-batch
+        result = batches;
+      }
+    } else {
+      for (let i = 0; i < batch.data.length; i++) {
+        batches.push(batch.data[i]);
+      }
     }
 
     yield {
       ...batch,
       header: batch.schema ? Object.keys(batch.schema) : null,
       fileName,
-      data:
-        Object.keys(result).length === 0 // csv doesn't have any keys
-          ? batches
-          : result
+      // if dataset is CSV, data is set to the raw batches
+      data: result ? result : batches
     };
   }
 }
@@ -168,10 +149,7 @@ export async function readFileInBatches({file, fileCache = []}) {
     {
       csv: CSV_LOADER_OPTIONS,
       json: JSON_LOADER_OPTIONS,
-      // Enabling metadata breaks after the first batch for JSON datasets (the metadata batch)
-      // TypeError: undefined is not a function
-      //       at makeMetadataBatchIterator (parse-in-batches.js:58)
-      metadata: false
+      metadata: true
     },
     file.name
   );
@@ -200,9 +178,9 @@ export function processFileData({content, fileCache}) {
     }
 
     if (format && processor) {
-      console.time('process file content');
+      Console.time('process file content');
       const result = processor(data, header);
-      console.timeEnd('process file content');
+      Console.timeEnd('process file content');
 
       resolve([
         ...fileCache,
