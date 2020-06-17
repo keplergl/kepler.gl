@@ -795,6 +795,7 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
 export const BASE_SPEED = 600;
 export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';
 export const SPEED_CONTROL_RANGE = [0, 10];
+export const SPEED_CONTROL_STEP = 0.001;
 
 // We could use directly react-map-gl-draw EditorMode but this would
 // create a direct dependency with react-map-gl-draw

@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import RangeSliderFactory from 'components/common/range-slider';
 import onClickOutside from 'react-onclickoutside';
-import {SPEED_CONTROL_RANGE} from 'constants/default-settings';
+import {SPEED_CONTROL_RANGE, SPEED_CONTROL_STEP} from 'constants/default-settings';
 
 const SliderWrapper = styled.div`
   position: relative;
@@ -57,7 +57,7 @@ export default function AnimationSpeedSliderFactory(RangeSlider) {
           <SliderWrapper>
             <RangeSlider
               range={SPEED_CONTROL_RANGE}
-              step={0.01}
+              step={SPEED_CONTROL_STEP}
               value0={0}
               value1={this.props.speed}
               onChange={this._onChange}
