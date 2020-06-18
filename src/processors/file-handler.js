@@ -18,16 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {console as Console} from 'global/window';
 import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
-import {
-  processCsvData,
-  processGeojson,
-  processKeplerglJSON,
-  processRowObject
-} from './data-processor';
+import {processGeojson, processKeplerglJSON, processRowObject} from './data-processor';
 import {isPlainObject, generateHashId} from 'utils/utils';
 import {DATASET_FORMATS} from 'constants/default-settings';
 
@@ -67,10 +61,6 @@ export function isFeatureCollection(json) {
 
 export function isRowObject(json) {
   return Array.isArray(json) && isPlainObject(json[0]);
-}
-
-export function isCsvRows(content) {
-  return Array.isArray(content) && content.length && Array.isArray(content[0]);
 }
 
 export function isKeplerGlMap(json) {
@@ -159,14 +149,12 @@ export async function readFileInBatches({file, fileCache = []}) {
 
 export function processFileData({content, fileCache}) {
   return new Promise((resolve, reject) => {
-    const {data, header} = content;
+    const {data} = content;
 
     let format;
     let processor;
-    if (isCsvRows(data)) {
-      format = DATASET_FORMATS.csv;
-      processor = processCsvData;
-    } else if (isKeplerGlMap(data)) {
+
+    if (isKeplerGlMap(data)) {
       format = DATASET_FORMATS.keplergl;
       processor = processKeplerglJSON;
     } else if (isRowObject(data)) {
@@ -178,9 +166,7 @@ export function processFileData({content, fileCache}) {
     }
 
     if (format && processor) {
-      Console.time('process file content');
-      const result = processor(data, header);
-      Console.timeEnd('process file content');
+      const result = processor(data);
 
       resolve([
         ...fileCache,
