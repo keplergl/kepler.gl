@@ -225,21 +225,7 @@ function FileUploadFactory() {
     render() {
       const {dragOver, files, errorFiles} = this.state;
       const {validFileExt, intl, fileLoading, fileLoadingProgress} = this.props;
-      // const fileLoading = true;
-      // const fileLoadingProgress = {
-      //   'File upload.csv': {
-      //     fileName: 'File upload.csv',
-      //     percent: 0.8,
-      //     message: 'loading...'
-      //   },
-      //   'File upload_2.csv': {
-      //     fileName: 'File_upload-93843-129u918u981u4_afwerwegsadfasf_ef_Fewfwasfsa.csv',
-      //     percent: 0.1,
-      //     message: 'loading...',
-      //     error: new Error('Some thing is wrong')
-      //   }
-      // };
-    
+
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>
           {FileDrop ? (
