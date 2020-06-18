@@ -67,7 +67,7 @@ const UploadProgress = ({message, fileName, percent, error, theme}) => {
   const barColor = error ? theme.errorColor : theme.activeColorLT;
 
   return (
-    <StyledFileProgress>
+    <StyledFileProgress className="file-upload-progress__message">
       <div className="top-row">
         <TrancatedTitleText className="file-name" title={fileName}>
           {fileName}

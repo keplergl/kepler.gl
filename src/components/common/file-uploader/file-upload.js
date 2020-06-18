@@ -218,7 +218,6 @@ function FileUploadFactory() {
     render() {
       const {dragOver, files, errorFiles} = this.state;
       const {validFileExt, intl, fileLoading, fileLoadingProgress} = this.props;
-
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>
           {FileDrop ? (
@@ -258,7 +257,7 @@ function FileUploadFactory() {
                       {errorFiles.length ? (
                         <WarningMsg>
                           <FormattedMessage
-                            id={'fileUploader.filenNotSupported'}
+                            id={'fileUploader.fileNotSupported'}
                             values={{errorFiles: errorFiles.join(', ')}}
                           />
                         </WarningMsg>
