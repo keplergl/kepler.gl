@@ -1292,18 +1292,19 @@ export function loadNextFileUpdater(state) {
 }
 
 export function makeLoadFileTask(file, fileCache) {
-  
   return LOAD_FILE_TASK({file, fileCache}).bimap(
     // prettier ignore
     // success
-    gen => nextFileBatch({
-      gen,
-      fileName: file.name,
-      onFinish: result => processFileContent({
-        content: result,
-        fileCache
-      })
-    }),
+    gen =>
+      nextFileBatch({
+        gen,
+        fileName: file.name,
+        onFinish: result =>
+          processFileContent({
+            content: result,
+            fileCache
+          })
+      }),
 
     // error
     err => loadFilesErr(file.name, err)
@@ -1327,7 +1328,7 @@ export function processFileContentUpdater(state, action) {
   );
 }
 
-export function parseProgress(prevProgress = {}, progress, startPercent = 0, totalPercent = 100) {
+export function parseProgress(prevProgress = {}, progress) {
   // This happens when receiving query metadata or other cases we don't
   // have an update for the user.
   if (!progress || !progress.percent) {

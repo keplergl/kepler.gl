@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 // vis-state-reducer
-import ActionTypes from 'constants/action-types';
+import ActionTypes, {ActionType} from 'constants/action-types';
 import {ProtoDataset, AddDataToMaoPayload} from '../actions/actions';
 import {ParsedConfig} from '../schemas';
 import {FileCacheItem} from '../processors/file-handler';
@@ -371,18 +371,7 @@ export function toggleEditorVisibility(): Merge<
   {type: ActionTypes.TOGGLE_EDITOR_VISIBILITY}
 >;
 
-export type LoadNextFileUpdaterAction = {
-  fileCache: FileCacheItem[];
-  filesToLoad: FileList[];
-  totalCount: number;
-  onFinish: function;
-};
-export function loadNextFile(payload: {
-  fileCache: FileCacheItem[];
-  filesToLoad: FileList[];
-  totalCount: number;
-  onFinish: function;
-}): Merge<LoadNextFileUpdaterAction, {type: ActionTypes.LOAD_NEXT_FILE}>;
+export function loadNextFile(): Merge<{type: ActionTypes.LOAD_NEXT_FILE}>;
 
 export type loadFilesSuccessUpdaterAction = {
   result: FileCacheItem[];
@@ -392,9 +381,48 @@ export function loadFilesSuccess(
 ): Merge<loadFilesSuccessUpdaterAction, {type: ActionTypes.LOAD_FILES_SUCCESS}>;
 
 export type loadFilesErrUpdaterAction = {
+  fileName: string;
   error: any;
 };
 export function loadFilesErr(
   fileName: string,
   error: any
 ): Merge<loadFilesErrUpdaterAction, {type: ActionTypes.LOAD_FILES_ERR}>;
+
+export type loadFileStepSuccessAction = {
+  fileName: string;
+  fileCache: FileCacheItem[];
+};
+export function loadFileStepSuccess(payload: {
+  fileName: string;
+  fileCache: FileCacheItem[];
+}): Merge<loadFileStepSuccessAction, {type: ActionTypes.LOAD_FILE_STEP_SUCCESS}>;
+
+type FileContent = {
+  fileName: string;
+  header: string[];
+  data: any;
+};
+export type nextFileBatchActionPayload = {
+  gen: AsyncGenerator<FileContent>;
+  fileName: string;
+  progress?: any;
+  accumulated?: any;
+  onFinish: (result: any) => any;
+};
+export function nextFileBatch(payload: {
+  gen: AsyncGenerator<FileContent>;
+  fileName: string;
+  progress?: any;
+  accumulated?: any;
+  onFinish: (result: any) => any;
+}): {payload: nextFileBatchAction; type: ActionTypes.NEXT_FILE_BATCH};
+
+export type processFileContentActionPayload = {
+  content: FileContent;
+  fileCache: FileCacheItem[];
+};
+
+export function processFileContent(
+  payload: processFileContentActionPayload
+): {payload: processFileContentAction; type: ActionTypes.PROCESS_FILE_CONTENT};
