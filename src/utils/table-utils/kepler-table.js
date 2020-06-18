@@ -24,6 +24,7 @@ import {generateHashId} from 'utils/utils';
 import {getGpuFilterProps} from 'utils/gpu-filter-utils';
 import {getFieldDomain} from 'utils/filter-utils';
 import {ascending, descending} from 'd3-array';
+import {maybeToDate} from 'utils/data-utils';
 
 const FID_KEY = 'name';
 
@@ -49,7 +50,14 @@ export class KeplerTable {
     const fields = data.fields.map((f, i) => ({
       ...f,
       id: f.name,
-      tableFieldIndex: i + 1
+      tableFieldIndex: i + 1,
+      valueAccessor: maybeToDate.bind(
+        null,
+        // is time
+        f.type === ALL_FIELD_TYPES.timestamp,
+        i,
+        f.format
+      )
     }));
 
     const allIndexes = allData.map((_, i) => i);
