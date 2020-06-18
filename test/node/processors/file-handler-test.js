@@ -19,21 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {getFileType, isKeplerGlMap} from 'processors/file-handler';
-
-test('#file-handler -> getFileType', t => {
-  t.equal(getFileType('filename.csv'), 'csv');
-
-  t.equal(getFileType('filename.json'), 'json');
-
-  t.equal(getFileType('filename.json.csv'), 'csv');
-
-  t.equal(getFileType('filename.geojson'), 'json');
-
-  t.equal(getFileType('filename.excel'), 'other');
-
-  t.end();
-});
+import {isKeplerGlMap} from 'processors/file-handler';
 
 test('#file-handler -> isKeplerGlMap', t => {
   t.equal(
