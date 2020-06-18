@@ -1295,14 +1295,16 @@ export function makeLoadFileTask(file, fileCache) {
   return LOAD_FILE_TASK({file, fileCache}).bimap(
     // prettier ignore
     // success
-    gen => nextFileBatch({
-      gen,
-      fileName: file.name,
-      onFinish: result => processFileContent({
-        content: result,
-        fileCache
-      })
-    }),
+    gen =>
+      nextFileBatch({
+        gen,
+        fileName: file.name,
+        onFinish: result =>
+          processFileContent({
+            content: result,
+            fileCache
+          })
+      }),
 
     // error
     err => loadFilesErr(file.name, err)

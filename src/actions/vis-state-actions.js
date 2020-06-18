@@ -616,9 +616,8 @@ export function loadFilesSuccess(result) {
   };
 }
 
-
 /**
- * called when aucessfully loaded one file, ready to move on to the next one
+ * called when successfully loaded one file, ready to move on to the next one
  * @memberof visStateActions
  * @param result
  * @type {typeof import('./vis-state-actions').loadFileStepSuccess}
@@ -768,6 +767,13 @@ export function toggleEditorVisibility() {
   };
 }
 
+/**
+ * Process the next file batch
+ * @memberof visStateActions
+ * @param payload - batch payload
+ * @type {typeof import('./vis-state-actions').nextFileBatch}
+ * @return action
+ */
 export function nextFileBatch(payload) {
   return {
     type: ActionTypes.NEXT_FILE_BATCH,
@@ -775,11 +781,18 @@ export function nextFileBatch(payload) {
   };
 }
 
+/**
+ * Process the file content
+ * @memberof visStateActions
+ * @param payload - the file content
+ * @type {typeof import('./vis-state-actions').processFileContent}
+ * @return action
+ */
 export function processFileContent(payload) {
   return {
     type: ActionTypes.PROCESS_FILE_CONTENT,
     payload
-  }
+  };
 }
 
 /**
