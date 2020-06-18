@@ -137,7 +137,7 @@ function isValid(key) {
 export class GeocoderPanel extends Component {
   static propTypes = {
     mapboxApiAccessToken: PropTypes.string.isRequired,
-    interactionConfig: PropTypes.object.isRequired
+    geocoderConfig: PropTypes.object.isRequired
   };
 
   state = {
@@ -168,7 +168,7 @@ export class GeocoderPanel extends Component {
     iconLayer.config.color = this.props.geocoderConfig.config.color;
     this.props.dispatch(
       addDataToMap({
-        datasets: [generateGeocoderDataset(lat, lon, text)],
+        // datasets: [generateGeocoderDataset(lat, lon, text)],
         options: {
           keepExistingConfig: true
         },
@@ -176,11 +176,11 @@ export class GeocoderPanel extends Component {
           version: 'v1',
           config: {
             visState: {
-              layers: [iconLayer],
+              // layers: [iconLayer],
               interactionConfig: {
                 geocoder: {
                   enabled: true,
-                  data: {lat, lon, text}
+                  data: {lat, lon, type: 'place', text}
                 }
               }
             }

@@ -42,7 +42,7 @@ import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
 import {FILTER_TYPES} from 'constants/default-settings';
-import SvgIconLayer from '../deckgl-layers/svg-icon-layer/svg-icon-layer';
+import IconLayer from 'layers/icon-layer/icon-layer';
 
 const MAP_STYLE = {
   container: {
@@ -370,12 +370,54 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           .reduce(this._renderLayer, []);
       }
 
-      if (interactionConfig.geocoder.config && interactionConfig.geocoder.config.data) {
+      const geocoderConfig = interactionConfig.geocoder.config;
+      if (geocoderConfig && geocoderConfig.data) {
+        const idx = 99;
+        const {hoverInfo, clicked, animationConfig} = this.props;
+        const geocoderLayer = new IconLayer({
+          color: geocoderConfig.color,
+          dataId: 'geocoder_dataset',
+          id: 'geocoder_layer',
+          isVisible: true,
+          label: 'Geocoder Layer'
+        });
+
+        const data = {
+          data: [
+            {
+              index: 0,
+              icon: geocoderConfig.data.type,
+              data: [
+                geocoderConfig.data.lat,
+                geocoderConfig.data.lon,
+                geocoderConfig.data.type,
+                geocoderConfig.data.text
+              ]
+            }
+          ],
+          getFillColor: geocoderConfig.color,
+          getFilterValue: d => d,
+          getPosition: d => d,
+          getRadius: 1,
+          textLabels: [
+            {
+              getText: null,
+              characterSet: []
+            }
+          ]
+        };
         deckGlLayers.push(
-          new SvgIconLayer({
-            id: 'geocoder_layer',
-            mapboxApiAccessToken,
-            mapboxApiUrl
+          geocoderLayer.renderLayer({
+            data,
+            gpuFilter: {},
+            idx,
+            interactionConfig,
+            layerCallbacks: {
+              onSetLayerDomain: val => this._onLayerSetDomain(idx, val)
+            },
+            mapState,
+            animationConfig,
+            objectHovered: clicked || hoverInfo
           })
         );
       }
