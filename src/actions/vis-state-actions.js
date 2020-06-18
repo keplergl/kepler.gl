@@ -592,18 +592,13 @@ export function loadFiles(files) {
 /**
  * Called with next file to load
  * @memberof visStateActions
- * @param payload
  * @type {typeof import('./vis-state-actions').loadNextFile}
  * @returns action
  * @public
  */
 export function loadNextFile() {
   return {
-    type: ActionTypes.LOAD_NEXT_FILE,
-    // fileCache,
-    // filesToLoad,
-    // totalCount,
-    // onFinish
+    type: ActionTypes.LOAD_NEXT_FILE
   };
 }
 
@@ -621,9 +616,8 @@ export function loadFilesSuccess(result) {
   };
 }
 
-
 /**
- * called when aucessfully loaded one file, ready to move on to the next one
+ * called when successfully loaded one file, ready to move on to the next one
  * @memberof visStateActions
  * @param result
  * @type {typeof import('./vis-state-actions').loadFileStepSuccess}
@@ -747,7 +741,6 @@ export function applyCPUFilter(dataId) {
 }
 
 /**
-
  * Toggle editor layer visibility
  * @memberof visStateActions
  * @type {typeof import('./vis-state-actions').toggleEditorVisibility}
@@ -759,6 +752,13 @@ export function toggleEditorVisibility() {
   };
 }
 
+/**
+ * Process the next file batch
+ * @memberof visStateActions
+ * @param payload - batch payload
+ * @type {typeof import('./vis-state-actions').nextFileBatch}
+ * @return action
+ */
 export function nextFileBatch(payload) {
   return {
     type: ActionTypes.NEXT_FILE_BATCH,
@@ -766,11 +766,18 @@ export function nextFileBatch(payload) {
   };
 }
 
+/**
+ * Process the file content
+ * @memberof visStateActions
+ * @param payload - the file content
+ * @type {typeof import('./vis-state-actions').processFileContent}
+ * @return action
+ */
 export function processFileContent(payload) {
   return {
     type: ActionTypes.PROCESS_FILE_CONTENT,
     payload
-  }
+  };
 }
 
 /**
