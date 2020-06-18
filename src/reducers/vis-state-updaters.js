@@ -1281,29 +1281,29 @@ export function loadNextFileUpdater(state) {
   const [file, ...remainingFilesToLoad] = filesToLoad;
 
   // save filesToLoad to state
-  const nextStte = pick_('fileLoading')(merge_({filesToLoad: remainingFilesToLoad}))(state);
+  const nextState = pick_('fileLoading')(merge_({filesToLoad: remainingFilesToLoad}))(state);
 
-  const stateWithProgress = updateFileLoadingProgressUpdater(nextStte, {
+  const stateWithProgress = updateFileLoadingProgressUpdater(nextState, {
     fileName: file.name,
     progress: {percent: 0, message: 'loading...'}
   });
 
-  return withTask(stateWithProgress, makeLoadFileTask(file, nextStte.fileLoading.fileCache));
+  return withTask(stateWithProgress, makeLoadFileTask(file, nextState.fileLoading.fileCache));
 }
 
 export function makeLoadFileTask(file, fileCache) {
+  
   return LOAD_FILE_TASK({file, fileCache}).bimap(
+    // prettier ignore
     // success
-    gen =>
-      nextFileBatch({
-        gen,
-        fileName: file.name,
-        onFinish: result =>
-          processFileContent({
-            content: result,
-            fileCache
-          })
-      }),
+    gen => nextFileBatch({
+      gen,
+      fileName: file.name,
+      onFinish: result => processFileContent({
+        content: result,
+        fileCache
+      })
+    }),
 
     // error
     err => loadFilesErr(file.name, err)
