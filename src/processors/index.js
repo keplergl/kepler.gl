@@ -31,6 +31,6 @@ export {
 } from './data-processor';
 
 // File Handlers
-export {getFileHandler, getFileType, readFile, filesToDataPayload} from './file-handler';
+export {readFileInBatches, processFileData, filesToDataPayload} from './file-handler';
 
 export {Processors as default} from './data-processor';

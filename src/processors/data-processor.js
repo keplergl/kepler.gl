@@ -101,7 +101,6 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
  * }));
  */
 export function processCsvData(rawData, header) {
-
   let rows;
   let headerRow;
 
@@ -114,7 +113,6 @@ export function processCsvData(rawData, header) {
     }
     headerRow = parsedRows[0];
     rows = parsedRows.slice(1);
-
   } else if (Array.isArray(rawData) && rawData.length) {
     rows = rawData;
     headerRow = header;

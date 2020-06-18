@@ -98,7 +98,7 @@ export async function* makeProgressIterator(asyncIterator, info) {
 // eslint-disable-next-line complexity
 async function* readBatch(asyncIterator, fileName) {
   let result = null;
-  let batches = [];
+  const batches = [];
 
   for await (const batch of asyncIterator) {
     // Last batch will have this special type and will provide all the root

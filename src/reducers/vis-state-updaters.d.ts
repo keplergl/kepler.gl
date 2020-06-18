@@ -150,7 +150,7 @@ export type FieldPair = {
     [key: string]: {
       fieldIdx: number;
       value: string;
-    }
+    };
   };
   suffix: string[];
 };
@@ -231,7 +231,7 @@ type BaseInteraction = {
 type TooltipField = {
   name: string;
   format: string | null;
-}
+};
 export type Tooltip = BaseInteraction & {
   config: {
     fieldsToShow: {
@@ -284,7 +284,7 @@ export type VisState = {
   splitMaps: SplitMap[];
   splitMapsToBeMerged?: SplitMap[];
   initialState?: Partial<VisState>;
-  fileLoading?: boolean;
+  fileLoading?: any;
   fileLoadingErr?: any;
 };
 
@@ -454,6 +454,18 @@ export function loadFilesSuccessUpdater(
 export function loadFilesErrUpdater(
   state: VisState,
   action: VisStateActions.LoadFilesErrUpdaterAction
+): VisState;
+export function loadFileStepSuccessUpdater(
+  state: VisState,
+  action: VisStateActions.loadFileStepSuccessAction
+): VisState;
+export function nextFileBatchUpdater(
+  state: VisState,
+  action: VisStateActions.nextFileBatchUpdaterAction
+): VisState;
+export function processFileContentUpdater(
+  state: VisState,
+  action: VisStateActions.processFileContentUpdaterAction
 ): VisState;
 export function setFeaturesUpdater(
   state: VisState,

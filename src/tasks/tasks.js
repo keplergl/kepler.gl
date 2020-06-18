@@ -27,7 +27,7 @@ export const LOAD_FILE_TASK = Task.fromPromise(
   'LOAD_FILE_TASK'
 );
 
-export const PROCESS_FILE_DATA =  Task.fromPromise(
+export const PROCESS_FILE_DATA = Task.fromPromise(
   // ({file, fileCache}) => readFile({file, fileCache}),
   processFileData,
 
@@ -86,7 +86,7 @@ export const DELAY_TASK = Task.fromCallback(
 );
 
 export const UNWRAP_TASK = Task.fromPromise(
-  promise => promise, 
-  
+  promise => promise,
+
   'UNWRAP'
 );

@@ -1244,7 +1244,7 @@ export const loadFilesUpdater = (state, action) => {
     return state;
   }
 
-  const fileLoadingProgress = files.reduce(
+  const fileLoadingProgress = Array.from(files).reduce(
     (accu, f, i) => merge_(initialFileLoadingProgress(f, i))(accu),
     {}
   );

@@ -64,13 +64,6 @@ export const WarningMsg = styled.span`
   font-weight: 500;
 `;
 
-const PositiveMsg = styled.span`
-  display: inline-block;
-  color: ${props => props.theme.primaryBtnActBgd};
-  font-weight: 500;
-  margin-right: 8px;
-`;
-
 const StyledFileDrop = styled.div`
   background-color: white;
   border-radius: 4px;

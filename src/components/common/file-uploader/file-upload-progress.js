@@ -69,11 +69,13 @@ const UploadProgress = ({message, fileName, percent, error, theme}) => {
   return (
     <StyledFileProgress>
       <div className="top-row">
-        <TrancatedTitleText className="file-name" title={fileName}>{fileName}</TrancatedTitleText>
+        <TrancatedTitleText className="file-name" title={fileName}>
+          {fileName}
+        </TrancatedTitleText>
         <div className="percent">{percentStr}</div>
       </div>
       <div className="middle-row">
-        <ProgressBar percent={percentStr} barColor={barColor} isLoading/>
+        <ProgressBar percent={percentStr} barColor={barColor} isLoading />
       </div>
       <div className="bottom-row" style={{color: error ? theme.errorColor : theme.textColorLT}}>
         {error ? getError(error) : message}
@@ -86,7 +88,7 @@ const FileUploadProgress = ({fileLoadingProgress, theme}) => (
   <StyledContainer>
     <StyledProgressWrapper>
       {Object.values(fileLoadingProgress).map(item => (
-        <UploadProgress {...item} key={item.fileName} theme={theme}/>
+        <UploadProgress {...item} key={item.fileName} theme={theme} />
       ))}
     </StyledProgressWrapper>
   </StyledContainer>

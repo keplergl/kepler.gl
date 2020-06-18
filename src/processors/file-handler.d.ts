@@ -28,10 +28,14 @@ export type FileCacheItem = {
   };
 };
 
-export function readFile(payload: {
+export function readFileInBatches(payload: {
   file: File;
   fileCache: FileCacheItem[];
+}): AsyncGenerator;
+
+export function processFileData(payload: {
+  content: any;
+  fileCache: FileCacheItem[];
 }): Promise<FileCacheItem[]>;
-export function getFileHandler(fileBlob: File): {handler: function; format: string};
+
 export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMaoPayload[];
-export function getFileType(filename: string): 'csv' | 'json' | 'other';

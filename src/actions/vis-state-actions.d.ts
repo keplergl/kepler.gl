@@ -403,26 +403,22 @@ type FileContent = {
   header: string[];
   data: any;
 };
-export type nextFileBatchActionPayload = {
+export type nextFileBatchUpdaterAction = {
   gen: AsyncGenerator<FileContent>;
   fileName: string;
   progress?: any;
   accumulated?: any;
   onFinish: (result: any) => any;
 };
-export function nextFileBatch(payload: {
-  gen: AsyncGenerator<FileContent>;
-  fileName: string;
-  progress?: any;
-  accumulated?: any;
-  onFinish: (result: any) => any;
-}): {payload: nextFileBatchAction; type: ActionTypes.NEXT_FILE_BATCH};
+export function nextFileBatch(
+  payload: nextFileBatchAction
+): {payload: nextFileBatchAction; type: ActionTypes.NEXT_FILE_BATCH};
 
-export type processFileContentActionPayload = {
+export type processFileContentUpdaterAction = {
   content: FileContent;
   fileCache: FileCacheItem[];
 };
 
 export function processFileContent(
-  payload: processFileContentActionPayload
-): {payload: processFileContentAction; type: ActionTypes.PROCESS_FILE_CONTENT};
+  payload: processFileContentUpdaterAction
+): {payload: processFileContentUpdaterAction; type: ActionTypes.PROCESS_FILE_CONTENT};
