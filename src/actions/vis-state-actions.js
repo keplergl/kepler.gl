@@ -632,21 +632,6 @@ export function loadFileStepSuccess({fileName, fileCache}) {
 }
 
 /**
- * called when successfully loaded one file, ready to move on to the next one
- * @memberof visStateActions
- * @param result
- * @type {typeof import('./vis-state-actions').loadFileStepSuccess}
- * @returns action
- */
-export function loadFileStepSuccess({fileName, fileCache}) {
-  return {
-    type: ActionTypes.LOAD_FILE_STEP_SUCCESS,
-    fileName,
-    fileCache
-  };
-}
-
-/**
  * Trigger loading file error
  * @memberof visStateActions
  * @param  error
@@ -764,34 +749,6 @@ export function applyCPUFilter(dataId) {
 export function toggleEditorVisibility() {
   return {
     type: ActionTypes.TOGGLE_EDITOR_VISIBILITY
-  };
-}
-
-/**
- * Process the next file batch
- * @memberof visStateActions
- * @param payload - batch payload
- * @type {typeof import('./vis-state-actions').nextFileBatch}
- * @return action
- */
-export function nextFileBatch(payload) {
-  return {
-    type: ActionTypes.NEXT_FILE_BATCH,
-    payload
-  };
-}
-
-/**
- * Process the file content
- * @memberof visStateActions
- * @param payload - the file content
- * @type {typeof import('./vis-state-actions').processFileContent}
- * @return action
- */
-export function processFileContent(payload) {
-  return {
-    type: ActionTypes.PROCESS_FILE_CONTENT,
-    payload
   };
 }
 
