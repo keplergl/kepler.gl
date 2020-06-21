@@ -144,6 +144,7 @@ export async function readFileInBatches({file, fileCache = []}) {
     file.name
   );
   const progressIterator = makeProgressIterator(batchIterator, {size: file.size});
+
   return readBatch(progressIterator, file.name);
 }
 
@@ -153,7 +154,6 @@ export function processFileData({content, fileCache}) {
 
     let format;
     let processor;
-
     if (isKeplerGlMap(data)) {
       format = DATASET_FORMATS.keplergl;
       processor = processKeplerglJSON;

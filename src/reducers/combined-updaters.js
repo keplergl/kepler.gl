@@ -184,7 +184,6 @@ export const loadFilesSuccessUpdater = (state, action) => {
       })
     )
   ])(state);
-
   // make multiple add data to map calls
   const stateWithData = compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(
     nextState

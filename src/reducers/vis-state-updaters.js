@@ -1377,6 +1377,9 @@ export const nextFileBatchUpdater = (
 export const loadFilesErrUpdater = (state, {error, fileName}) => {
   // update ui with error message
   Console.warn(error);
+  if (!state.fileLoading) {
+    return state;
+  }
   const {filesToLoad, onFinish, fileCache} = state.fileLoading;
 
   const nextState = updateFileLoadingProgressUpdater(state, {
@@ -1422,11 +1425,12 @@ export const setMapInfoUpdater = (state, action) => ({
  * @type {typeof import('./vis-state-updaters').addDefaultLayers}
  */
 export function addDefaultLayers(state, datasets) {
-  const defaultLayers = Object.values(datasets).reduce(
-    // @ts-ignore
-    (accu, dataset) => [...accu, ...(findDefaultLayer(dataset, state.layerClasses) || [])],
-    []
-  );
+  /** @type {Layer[]} */
+  const empty = [];
+  const defaultLayers = Object.values(datasets).reduce((accu, dataset) => {
+    const foundLayers = findDefaultLayer(dataset, state.layerClasses);
+    return foundLayers && foundLayers.length ? accu.concat(foundLayers) : accu;
+  }, empty);
 
   return {
     state: {

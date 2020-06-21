@@ -70,7 +70,7 @@ function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
     // call backs
     onFileUpload: PropTypes.func.isRequired,
     onLoadCloudMap: PropTypes.func.isRequired,
-    fileLoading: PropTypes.bool,
+    fileLoading: PropTypes.oneOfType([PropTypes.bool, PropTypes.object]),
     loadingMethods: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string,

@@ -155,7 +155,7 @@ function FileUploadFactory() {
     static propTypes = {
       onFileUpload: PropTypes.func.isRequired,
       validFileExt: PropTypes.arrayOf(PropTypes.string),
-      fileLoading: PropTypes.bool
+      fileLoading: PropTypes.oneOfType([PropTypes.bool, PropTypes.object])
     };
 
     static defaultProps = {

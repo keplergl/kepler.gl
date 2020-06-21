@@ -260,6 +260,22 @@ export type MapInfo = {
   title: string;
   description: string;
 };
+export type FileLoading =
+  | {
+      filesToLoad: any[];
+      onFinish: (payload: any) => any;
+      fileCache: any[];
+    }
+  | false;
+export type FileLoadingProgress = {
+  [key: string]: {
+    percent: number;
+    message: string;
+    fileName: string;
+    error: any;
+  };
+};
+
 export type VisState = {
   mapInfo: MapInfo;
   layers: Layer[];
@@ -284,8 +300,8 @@ export type VisState = {
   splitMaps: SplitMap[];
   splitMapsToBeMerged?: SplitMap[];
   initialState?: Partial<VisState>;
-  fileLoading?: any;
-  fileLoadingErr?: any;
+  fileLoading?: FileLoading;
+  fileLoadingProgress?: FileLoadingProgress;
 };
 
 export function addDefaultLayers(
