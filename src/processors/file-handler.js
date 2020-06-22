@@ -74,18 +74,16 @@ export function isKeplerGlMap(json) {
 }
 
 export async function* makeProgressIterator(asyncIterator, info) {
-  const startTime = Date.now();
   let rowCount = 0;
 
   for await (const batch of asyncIterator) {
+    // console.log(batch);
     const rowCountInBatch = (batch.data && batch.data.length) || 0;
     rowCount += rowCountInBatch;
-    const elapsedMs = Date.now() - startTime;
     const percent = batch.bytesUsed / info.size;
 
     // Update progress object
     const progress = {
-      elapsedMs,
       rowCount,
       rowCountInBatch,
       percent
@@ -96,11 +94,13 @@ export async function* makeProgressIterator(asyncIterator, info) {
 }
 
 // eslint-disable-next-line complexity
-async function* readBatch(asyncIterator, fileName) {
+export async function* readBatch(asyncIterator, fileName) {
   let result = null;
   const batches = [];
 
   for await (const batch of asyncIterator) {
+    // console.log(JSON.stringify(batch.schema, null, 2));
+    // console.log(batch);
     // Last batch will have this special type and will provide all the root
     // properties of the parsed document.
     if (batch.batchType === BATCH_TYPE.FINAL_RESULT) {
@@ -124,7 +124,7 @@ async function* readBatch(asyncIterator, fileName) {
 
     yield {
       ...batch,
-      header: batch.schema ? Object.keys(batch.schema) : null,
+      ...(batch.schema ? {headers: Object.keys(batch.schema)} : {}),
       fileName,
       // if dataset is CSV, data is set to the raw batches
       data: result ? result : batches

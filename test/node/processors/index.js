@@ -18,14 +18,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/*eslint-disable */
-import './utils';
-
-// test reducers
-import './reducers';
-
-// test schemas
-import './schemas';
-
-// test processers
-import './processors';
+import './file-handler-test';
