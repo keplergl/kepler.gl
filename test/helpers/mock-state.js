@@ -374,6 +374,28 @@ function mockStateWithSplitMaps(state) {
   return prepareState;
 }
 
+function mockStateWithTooltipFormat() {
+  const initialState = mockStateWithFileUpload();
+
+  const oldConfig = initialState.visState.interactionConfig.tooltip;
+  const newConfig = {
+    ...oldConfig,
+    config: {
+      ...oldConfig.config,
+      fieldsToShow: {
+        ...oldConfig.config.fieldsToShow,
+        [testCsvDataId]: [{name: 'gps_data.utc_timestamp', format: 'LL'}]
+      }
+    }
+  };
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    {action: VisStateActions.interactionConfigChange, payload: [newConfig]}
+  ]);
+
+  return prepareState;
+}
+
 // saved hexagon layer
 export const expectedSavedLayer0 = {
   id: 'hexagon-2',
@@ -386,6 +408,7 @@ export const expectedSavedLayer0 = {
       lat: 'gps_data.lat',
       lng: 'gps_data.lng'
     },
+    hidden: false,
     isVisible: true,
     visConfig: {
       opacity: DEFAULT_LAYER_OPACITY,
@@ -422,6 +445,7 @@ export const expectedLoadedLayer0 = {
       lat: 'gps_data.lat',
       lng: 'gps_data.lng'
     },
+    hidden: false,
     isVisible: true,
     visConfig: {
       opacity: DEFAULT_LAYER_OPACITY,
@@ -467,6 +491,7 @@ export const expectedSavedLayer1 = {
         color: [255, 0, 0]
       }
     ],
+    hidden: false,
     isVisible: true,
     visConfig: {
       radius: 10,
@@ -511,6 +536,7 @@ export const expectedLoadedLayer1 = {
       lng: 'gps_data.lng',
       altitude: null
     },
+    hidden: false,
     isVisible: true,
     visConfig: {
       radius: 10,
@@ -561,6 +587,7 @@ export const expectedSavedLayer2 = {
     columns: {
       geojson: '_geojson'
     },
+    hidden: false,
     isVisible: true,
     visConfig: {
       opacity: DEFAULT_LAYER_OPACITY,
@@ -605,6 +632,7 @@ export const expectedLoadedLayer2 = {
     columns: {
       geojson: '_geojson'
     },
+    hidden: false,
     isVisible: true,
     visConfig: {
       opacity: DEFAULT_LAYER_OPACITY,
@@ -646,6 +674,7 @@ export const StateWCustomMapStyle = mockStateWithCustomMapStyle();
 export const StateWSplitMaps = mockStateWithSplitMaps();
 export const StateWTrips = mockStateWithTripData();
 export const StateWTripGeojson = mockStateWithTripGeojson();
+export const StateWTooltipFormat = mockStateWithTooltipFormat();
 
 export const expectedSavedTripLayer = {
   id: 'trip-0',
@@ -657,6 +686,7 @@ export const expectedSavedTripLayer = {
     columns: {
       geojson: '_geojson'
     },
+    hidden: false,
     isVisible: true,
     visConfig: {
       opacity: DEFAULT_LAYER_OPACITY,

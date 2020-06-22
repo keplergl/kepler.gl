@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {set, toArray, getError} from 'utils/utils';
+import {set, toArray, getError, camelToTitle, camelize, capitalizeFirstLetter} from 'utils/utils';
 
 test('Utils -> set', t => {
   const obj1 = {map: {map1: 'world'}};
@@ -71,5 +71,23 @@ test('Utils -> getError', t => {
   );
   t.equal(getError({status: 400}), '{"status":400}', 'should find error message from object');
 
+  t.end();
+});
+
+test('Utils -> camelToTitle', t => {
+  t.equal(camelToTitle('camelToTitle'), 'Camel To Title', 'should return titled string');
+  t.equal(camelToTitle('strokeColor'), 'Stroke Color', 'should return titled string');
+  t.end();
+});
+
+test('Utils -> camelize', t => {
+  t.equal(camelize('hello world test string'), 'helloWorldTestString', 'should camelize string');
+  t.equal(camelize('Hello World test String'), 'helloWorldTestString', 'should camelize string');
+  t.end();
+});
+
+test('Utils -> capitalizeFirstLetter', t => {
+  t.equal(capitalizeFirstLetter('hello world'), 'Hello world', 'should capitalize string');
+  t.equal(capitalizeFirstLetter(1), 1, 'should ignore other types than string');
   t.end();
 });

@@ -1,15 +1,10 @@
 {
   "name": "kepler.gl",
   "author": "Shan He <shan@uber.com>",
-  "version": "2.0.1",
+  "version": "2.2.0",
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
-  "engines": {
-    "node": ">=10.15.0",
-    "npm": ">=6.4.0",
-    "yarn": ">=1.13.0"
-  },
   "keywords": [
     "babel",
     "es6",
@@ -29,6 +24,7 @@
     "fast-test": "npm run test-node && npm run test-browser",
     "test-browser": "NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser.js | tap-spec",
     "test-node": "NODE_ENV=test babel-tape-runner ./test/node.js | tap-spec",
+    "test-e2e": "NODE_ENV=test HEADLESS=true SLOWMO=true jest",
     "test": "npm run lint && npm run test-node && npm run test-browser",
     "cover": "nyc --reporter html --reporter cobertura --reporter json-summary npm test && nyc report",
     "coveralls": "nyc npm test && nyc report --reporter cobertura --reporter=text-lcov | coveralls",
@@ -42,6 +38,7 @@
     "start:node-app": "npm run install-and-start -- examples/node-app start-local",
     "start:web": "npm run install-and-start -- website start",
     "start:https": "npm run install-and-start -- examples/demo-app start-local-https",
+    "start:e2e": "npm run install-and-start -- examples/demo-app start-local-e2e",
     "build": "rm -fr dist && babel src --out-dir dist --source-maps inline",
     "build:umd": "webpack --config ./webpack/umd.js --progress --env.prod",
     "analyze": "npm run analyze:bundle",
@@ -50,9 +47,11 @@
     "add-licence": "uber-licence",
     "prepublish": "uber-licence && yarn build && yarn build:umd",
     "docs": "babel-node ./scripts/documentation.js",
+    "typedoc": "typedoc --theme markdown --out typedoc --inputFiles ./src/reducers --inputFiles ./src/actions --excludeExternals --excludeNotExported --excludePrivate",
     "example-version": "babel-node ./scripts/edit-version.js",
     "prettier-all": "prettier --write '{src,examples,test}/**/*.js'",
-    "lint": "eslint src test webpack examples/*.js examples/**/src website/*.js website/src --fix",
+    "lint": "yarn typescript && eslint src test webpack examples/*.js examples/**/src website/*.js website/src --fix",
+    "typescript": "tsc --noEmit",
     "web": "(yarn && yarn install:web && yarn start:web)",
     "deploy": "yarn install:web && (cd website && yarn build)",
     "clean": "rm -rf node_modules examples/**/node_modules website/node_modules",
@@ -71,6 +70,7 @@
     "schemas.js",
     "styles.js",
     "cloud-providers.js",
+    "localization.js",
     "umd"
   ],
   "dependencies": {
@@ -127,10 +127,12 @@
     "prop-types": "^15.6.0",
     "react-color": "^2.17.3",
     "react-copy-to-clipboard": "^5.0.2",
+    "react-intl": "^3.12.0",
     "react-json-pretty": "^1.7.9",
     "react-lifecycles-compat": "^3.0.4",
     "react-map-gl": "^5.0.3",
     "react-map-gl-draw": "0.14.8",
+    "react-mapbox-gl-geocoder": "^1.1.0",
     "react-markdown": "^4.0.6",
     "react-modal": "^3.8.1",
     "react-onclickoutside": "^6.7.1",
@@ -146,6 +148,7 @@
     "s2-geometry": "^1.2.10",
     "supercluster": "^6.0.1",
     "type-analyzer": "0.2.5",
+    "typedoc": "^0.17.7",
     "uber-licence": "^3.1.1",
     "viewport-mercator-project": "^6.0.0",
     "wellknown": "^0.5.0"
@@ -183,6 +186,7 @@
     "@deck.gl/test-utils": "^8.0.11",
     "@luma.gl/test-utils": "^8.0.5",
     "@probe.gl/test-utils": "^3.0.1",
+    "@types/d3-array": "^2.0.0",
     "babel-eslint": "^9.0.0",
     "babel-loader": "^8.0.0",
     "babel-plugin-istanbul": "^5.1.1",
@@ -203,12 +207,16 @@
     "eslint-plugin-prettier": "^3.1.2",
     "eslint-plugin-react": "^7.13.0",
     "gl": "^4.2.2",
+    "jest": "^25.1.0",
+    "jest-image-snapshot": "^2.12.0",
+    "jest-puppeteer": "^4.4.0",
     "jsdom": "^16.2.1",
     "json-loader": "^0.5.4",
     "nyc": "^11.4.1",
     "ocular-dev-tools": "^0.0.30",
     "prettier": "1.19.1",
     "progress-bar-webpack-plugin": "^1.9.3",
+    "puppeteer": "^2.1.1",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-hot-loader": "^3.0.0-beta.6",
@@ -220,6 +228,8 @@
     "tap-spec": "^4.1.1",
     "tape": "4.8.0",
     "tape-catch": "^1.0.6",
+    "typedoc-plugin-markdown": "^2.2.17",
+    "typescript": "3.8.3",
     "url-loader": "^0.5.7",
     "watchify": "^3.6.1",
     "webpack": "^4.29.0",
@@ -244,6 +254,9 @@
       "src/templates",
       "src/styles"
     ]
+  },
+  "engines": {
+    "node": ">=10.0.0"
   },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",

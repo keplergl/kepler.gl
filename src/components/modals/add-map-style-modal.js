@@ -35,6 +35,7 @@ import {media} from 'styles/media-breakpoints';
 
 // Utils
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
+import {FormattedMessage, injectIntl} from 'react-intl';
 
 const MapH = 190;
 const MapW = 264;
@@ -162,7 +163,7 @@ function AddMapStyleModalFactory() {
     };
 
     render() {
-      const {inputStyle, mapState, mapboxApiUrl} = this.props;
+      const {inputStyle, mapState, mapboxApiUrl, intl} = this.props;
 
       const mapboxApiAccessToken = inputStyle.accessToken || this.props.mapboxApiAccessToken;
       const mapProps = {
@@ -179,52 +180,54 @@ function AddMapStyleModalFactory() {
             <StyledModalVerticalPanel>
               <StyledModalSection>
                 <div className="modal-section-title">
-                  1. Publish your style at mapbox or provide access token
+                  <FormattedMessage id={'modal.addStyle.publishTitle'} />
                 </div>
                 <div className="modal-section-subtitle">
-                  You can create your own map style at
+                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle1'})}
                   <InlineLink target="_blank" href="https://www.mapbox.com/studio/styles/">
                     {' '}
                     mapbox
                   </InlineLink>{' '}
-                  and
+                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle2'})}
                   <InlineLink
                     target="_blank"
                     href="https://www.mapbox.com/help/studio-manual-publish/"
                   >
                     {' '}
-                    publish
+                    {intl.formatMessage({id: 'modal.addStyle.publishSubtitle3'})}
                   </InlineLink>{' '}
-                  it.
+                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle4'})}
                 </div>
                 <div className="modal-section-subtitle">
-                  To use private style, paste your
+                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle5'})}
                   <InlineLink
                     target="_blank"
                     href="https://www.mapbox.com/help/how-access-tokens-work/"
                   >
                     {' '}
-                    access token
+                    {intl.formatMessage({id: 'modal.addStyle.publishSubtitle6'})}
                   </InlineLink>{' '}
-                  here. *kepler.gl is a client-side application, data stays in your browser..
+                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle7'})}
                 </div>
                 <InputLight
                   type="text"
                   value={inputStyle.accessToken || ''}
                   onChange={({target: {value}}) => this.props.inputMapStyle({accessToken: value})}
-                  placeholder="e.g. pk.abcdefg.xxxxxx"
+                  placeholder={intl.formatMessage({id: 'modal.addStyle.exampleToken'})}
                 />
               </StyledModalSection>
               <StyledModalSection>
-                <div className="modal-section-title">2. Paste style url</div>
+                <div className="modal-section-title">
+                  <FormattedMessage id={'modal.addStyle.pasteTitle'} />
+                </div>
                 <div className="modal-section-subtitle">
-                  What is a
+                  {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle1'})}
                   <InlineLink
                     target="_blank"
                     href="https://www.mapbox.com/help/studio-manual-publish/#style-url"
                   >
                     {' '}
-                    style URL
+                    {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle2'})}
                   </InlineLink>
                 </div>
                 <InputLight
@@ -235,7 +238,9 @@ function AddMapStyleModalFactory() {
                 />
               </StyledModalSection>
               <StyledModalSection>
-                <div className="modal-section-title">3. Name your style</div>
+                <div className="modal-section-title">
+                  <FormattedMessage id={'modal.addStyle.namingTitle'} />
+                </div>
                 <InputLight
                   type="text"
                   value={inputStyle.label || ''}
@@ -278,7 +283,7 @@ function AddMapStyleModalFactory() {
     }
   }
 
-  return polyfill(AddMapStyleModal);
+  return injectIntl(polyfill(AddMapStyleModal));
 }
 
 export default AddMapStyleModalFactory;

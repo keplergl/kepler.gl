@@ -53,7 +53,7 @@ export const pointVisConfigs = {
   radiusRange: 'radiusRange',
   filled: {
     type: 'boolean',
-    label: 'Fill Color',
+    label: 'layer.fillColor',
     defaultValue: true,
     property: 'filled'
   }
@@ -319,6 +319,7 @@ export default class PointLayer extends Layer {
           // circles will be flat on the map when the altitude column is not used
           depthTest: this.config.columns.altitude.fieldIdx > -1
         },
+        lineWidthUnits: 'pixels',
         updateTriggers,
         extensions
       }),

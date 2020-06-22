@@ -18,29 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {PanelHeaderFactory, Icons} from 'kepler.gl/components';
+import {PanelHeaderFactory, Icons, withState} from 'kepler.gl/components';
+import {toggleModal} from 'kepler.gl/actions';
+import React from 'react';
+import {IntlProvider} from 'react-intl';
 
-// TODO: Move the doc to public repo
-const KEPLER_DOC = 'https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md';
+const KEPLER_DOC = 'https://docs.kepler.gl/docs/keplergl-jupyter';
 
 export function CustomPanelHeaderFactory() {
   const PanelHeader = PanelHeaderFactory();
 
-  PanelHeader.defaultProps = {
-    ...PanelHeader.defaultProps,
-    actionItems: [
-      {
-        id: 'docs',
-        label: 'Docs',
-        iconComponent: Icons.Docs,
-        href: KEPLER_DOC,
-        blank: true,
-        tooltip: 'Documentation',
-        onClick: () => {}
-      }
-    ]
-  };
-  return PanelHeader;
+  const actionItems = props => [
+    {
+      id: 'docs',
+      iconComponent: Icons.Docs,
+      href: KEPLER_DOC,
+      blank: true,
+      tooltip: 'tooltip.documentation',
+      onClick: () => {}
+    }
+  ];
+
+  const JupyterPanelHeader = props => (
+    <IntlProvider locale="en" messages={{'tooltip.documentation': 'Documentation'}}>
+      <PanelHeader {...props} actionItems={actionItems(props)} />
+    </IntlProvider>
+  );
+  return withState([], state => state, {
+    toggleModal
+  })(JupyterPanelHeader);
 }
 
 export default CustomPanelHeaderFactory;

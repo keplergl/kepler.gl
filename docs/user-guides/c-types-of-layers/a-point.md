@@ -28,4 +28,4 @@ __Layer Attributes__
  - Font Color
  - Text Anchor
 
-[Back to table of contents](../a-introduction.md)
+[Back to table of contents](../README.md)

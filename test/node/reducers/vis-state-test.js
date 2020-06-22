@@ -26,7 +26,7 @@ import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import reducer from 'reducers/vis-state';
 
-import {INITIAL_VIS_STATE, defaultAnimationConfig} from 'reducers/vis-state-updaters';
+import {INITIAL_VIS_STATE, DEFAULT_ANIMATION_CONFIG} from 'reducers/vis-state-updaters';
 
 import {getDefaultInteraction} from 'utils/interaction-utils';
 import {getDefaultFilter} from 'utils/filter-utils';
@@ -474,7 +474,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.3 -> animationConfig', t => {
   t.deepEqual(
     nextState.animationConfig,
     {
-      ...defaultAnimationConfig,
+      ...DEFAULT_ANIMATION_CONFIG,
       domain: timeStampDomain,
       currentTime: timeStampDomain[0]
     },
@@ -495,7 +495,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.3 -> animationConfig', t => {
 
   t.deepEqual(
     nextState2.animationConfig,
-    defaultAnimationConfig,
+    DEFAULT_ANIMATION_CONFIG,
     'should set animationConfig to default'
   );
 
@@ -514,7 +514,7 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> animationConfig', 
 
   t.deepEqual(
     nextState.animationConfig,
-    defaultAnimationConfig,
+    DEFAULT_ANIMATION_CONFIG,
     'should set animationConfig to default'
   );
 
@@ -836,7 +836,7 @@ test('#visStateReducer -> REMOVE_LAYER', t => {
       picked: true
     },
     splitMaps: [],
-    animationConfig: defaultAnimationConfig
+    animationConfig: DEFAULT_ANIMATION_CONFIG
   };
 
   const newReducer = reducer(oldState, VisStateActions.removeLayer(1));
@@ -853,7 +853,7 @@ test('#visStateReducer -> REMOVE_LAYER', t => {
         picked: true
       },
       splitMaps: [],
-      animationConfig: defaultAnimationConfig
+      animationConfig: DEFAULT_ANIMATION_CONFIG
     },
     'should remove layer and layerData'
   );
@@ -2412,16 +2412,39 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     interactionConfig: {
       tooltip: {
         id: 'tooltip',
+        label: 'interactions.tooltip',
         enabled: true,
         iconComponent: oldState.interactionConfig.tooltip.iconComponent,
         config: {
           fieldsToShow: {
-            [testGeoJsonDataId]: ['OBJECTID', 'ZIP_CODE', 'ID', 'TRIPS', 'RATE']
+            [testGeoJsonDataId]: [
+              {
+                name: 'OBJECTID',
+                format: null
+              },
+              {
+                name: 'ZIP_CODE',
+                format: null
+              },
+              {
+                name: 'ID',
+                format: null
+              },
+              {
+                name: 'TRIPS',
+                format: null
+              },
+              {
+                name: 'RATE',
+                format: null
+              }
+            ]
           }
         }
       },
       brush: oldState.interactionConfig.brush,
-      coordinate: oldState.interactionConfig.coordinate
+      coordinate: oldState.interactionConfig.coordinate,
+      geocoder: oldState.interactionConfig.geocoder
     },
     editingDataset: oldState.editingDataset,
     layerBlending: oldState.layerBlending,
@@ -2517,7 +2540,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
         }
       }
     ],
-    animationConfig: defaultAnimationConfig
+    animationConfig: DEFAULT_ANIMATION_CONFIG
   };
 
   const newReducer = reducer(oldState, VisStateActions.removeLayer(1));
@@ -2545,7 +2568,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
           }
         }
       ],
-      animationConfig: defaultAnimationConfig
+      animationConfig: DEFAULT_ANIMATION_CONFIG
     },
     'should remove layer and layerData in split mode'
   );
@@ -2601,7 +2624,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
   const newReducer3 = reducer(newReducer2, VisStateActions.removeLayer(2));
   t.deepEqual(
     newReducer3.animationConfig,
-    defaultAnimationConfig,
+    DEFAULT_ANIMATION_CONFIG,
     'remove last animation layer and set animation config to default'
   );
 
@@ -2622,22 +2645,39 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     interactionConfig: {
       tooltip: {
         id: 'tooltip',
+        label: 'interactions.tooltip',
         enabled: true,
         iconComponent: oldState.interactionConfig.tooltip.iconComponent,
         config: {
           fieldsToShow: {
             [testCsvDataId]: [
-              'gps_data.utc_timestamp',
-              'gps_data.types',
-              'epoch',
-              'has_result',
-              'id'
+              {
+                name: 'gps_data.utc_timestamp',
+                format: null
+              },
+              {
+                name: 'gps_data.types',
+                format: null
+              },
+              {
+                name: 'epoch',
+                format: null
+              },
+              {
+                name: 'has_result',
+                format: null
+              },
+              {
+                name: 'id',
+                format: null
+              }
             ]
           }
         }
       },
       brush: oldState.interactionConfig.brush,
-      coordinate: oldState.interactionConfig.coordinate
+      coordinate: oldState.interactionConfig.coordinate,
+      geocoder: oldState.interactionConfig.geocoder
     },
     splitMaps: [{layers: {'point-0': false}}, {layers: {'point-0': true}}],
     editingDataset: oldState.editingDataset,
@@ -2646,7 +2686,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     clicked: oldState.clicked,
     mousePos: oldState.mousePos,
     layerClasses: oldState.layerClasses,
-    animationConfig: defaultAnimationConfig,
+    animationConfig: DEFAULT_ANIMATION_CONFIG,
     initialState: [],
     layerToBeMerged: [],
     filterToBeMerged: [],
@@ -2842,6 +2882,10 @@ test('#visStateReducer -> INTERACTION_CONFIG_CHANGE', t => {
     brush: brushConfig,
     tooltip: {
       ...defaultInteractionConfig.tooltip,
+      enabled: false
+    },
+    geocoder: {
+      ...defaultInteractionConfig.geocoder,
       enabled: false
     }
   };

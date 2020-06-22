@@ -39,73 +39,78 @@ const histogramStyle = {
   unHighlightedW: 0.4
 };
 
-export default class RangePlot extends Component {
-  static propTypes = {
-    value: PropTypes.arrayOf(PropTypes.number).isRequired,
-    histogram: PropTypes.arrayOf(
-      PropTypes.shape({
-        x0: PropTypes.number,
-        x1: PropTypes.number
-      })
-    ),
-    lineChart: PropTypes.object,
-    plotType: PropTypes.string,
-    isEnlarged: PropTypes.bool,
-    onBlur: PropTypes.func,
-    width: PropTypes.number.isRequired
-  };
+export default function RangePlotFactory() {
+  class RangePlot extends Component {
+    static propTypes = {
+      value: PropTypes.arrayOf(PropTypes.number).isRequired,
+      histogram: PropTypes.arrayOf(
+        PropTypes.shape({
+          x0: PropTypes.number,
+          x1: PropTypes.number
+        })
+      ),
+      lineChart: PropTypes.object,
+      plotType: PropTypes.string,
+      isEnlarged: PropTypes.bool,
+      onBlur: PropTypes.func,
+      width: PropTypes.number.isRequired
+    };
 
-  state = {
-    hoveredDP: null
-  };
+    state = {
+      hoveredDP: null
+    };
 
-  domainSelector = props => props.lineChart && props.lineChart.xDomain;
-  hintFormatter = createSelector(this.domainSelector, domain => getTimeWidgetHintFormatter(domain));
-
-  onMouseMove = hoveredDP => {
-    this.setState({hoveredDP});
-  };
-
-  render() {
-    const {onBrush, range, value, width, plotType, lineChart, histogram} = this.props;
-    const domain = [histogram[0].x0, histogram[histogram.length - 1].x1];
-
-    const brushComponent = (
-      <RangeBrush domain={domain} onBrush={onBrush} range={range} value={value} width={width} />
+    domainSelector = props => props.lineChart && props.lineChart.xDomain;
+    hintFormatter = createSelector(this.domainSelector, domain =>
+      getTimeWidgetHintFormatter(domain)
     );
 
-    return (
-      <div
-        style={{
-          height: `${containerH}px`,
-          position: 'relative'
-        }}
-      >
-        {plotType === 'lineChart' ? (
-          <LineChart
-            hoveredDP={this.state.hoveredDP}
-            width={width}
-            height={containerH}
-            margin={chartMargin}
-            children={brushComponent}
-            onMouseMove={this.onMouseMove}
-            yDomain={lineChart.yDomain}
-            hintFormat={this.hintFormatter(this.props)}
-            data={lineChart.series}
-          />
-        ) : (
-          <Histogram
-            width={width}
-            height={chartH}
-            value={value}
-            margin={chartMargin}
-            histogram={histogram}
-            brushComponent={brushComponent}
-          />
-        )}
-      </div>
-    );
+    onMouseMove = hoveredDP => {
+      this.setState({hoveredDP});
+    };
+
+    render() {
+      const {onBrush, range, value, width, plotType, lineChart, histogram} = this.props;
+      const domain = [histogram[0].x0, histogram[histogram.length - 1].x1];
+
+      const brushComponent = (
+        <RangeBrush domain={domain} onBrush={onBrush} range={range} value={value} width={width} />
+      );
+
+      return (
+        <div
+          style={{
+            height: `${containerH}px`,
+            position: 'relative'
+          }}
+        >
+          {plotType === 'lineChart' ? (
+            <LineChart
+              hoveredDP={this.state.hoveredDP}
+              width={width}
+              height={containerH}
+              margin={chartMargin}
+              children={brushComponent}
+              onMouseMove={this.onMouseMove}
+              yDomain={lineChart.yDomain}
+              hintFormat={this.hintFormatter(this.props)}
+              data={lineChart.series}
+            />
+          ) : (
+            <Histogram
+              width={width}
+              height={chartH}
+              value={value}
+              margin={chartMargin}
+              histogram={histogram}
+              brushComponent={brushComponent}
+            />
+          )}
+        </div>
+      );
+    }
   }
+  return RangePlot;
 }
 
 const Histogram = ({width, height, margin, histogram, value, brushComponent}) => {

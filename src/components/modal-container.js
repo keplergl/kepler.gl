@@ -24,6 +24,7 @@ import {css} from 'styled-components';
 import {findDOMNode} from 'react-dom';
 import {createSelector} from 'reselect';
 import get from 'lodash.get';
+import document from 'global/document';
 
 import ModalDialogFactory from './modals/modal-dialog';
 import KeplerGlSchema from 'schemas';
@@ -58,7 +59,8 @@ import {
   SHARE_MAP_ID,
   OVERWRITE_MAP_ID
 } from 'constants/default-settings';
-import {EXPORT_MAP_FORMATS} from '../constants/default-settings';
+import {EXPORT_MAP_FORMATS} from 'constants/default-settings';
+import KeyEvent from 'constants/keyevent';
 
 const DataTableModalStyle = css`
   top: 80px;
@@ -132,6 +134,14 @@ export default function ModalContainerFactory(
       onSaveToStorage: PropTypes.func,
       cloudProviders: PropTypes.arrayOf(PropTypes.object)
     };
+
+    componentDidMount = () => {
+      document.addEventListener('keyup', this._onKeyUp);
+    };
+    componentWillUnmount() {
+      document.removeEventListener('keyup', this._onKeyUp);
+    }
+
     cloudProviders = props => props.cloudProviders;
     providerWithStorage = createSelector(this.cloudProviders, cloudProviders =>
       cloudProviders.filter(p => p.hasPrivateStorage())
@@ -139,6 +149,14 @@ export default function ModalContainerFactory(
     providerWithShare = createSelector(this.cloudProviders, cloudProviders =>
       cloudProviders.filter(p => p.hasSharingUrl())
     );
+
+    _onKeyUp = event => {
+      const keyCode = event.keyCode;
+      if (keyCode === KeyEvent.DOM_VK_ESCAPE) {
+        this._closeModal();
+      }
+    };
+
     _closeModal = () => {
       this.props.uiStateActions.toggleModal(null);
     };
@@ -286,7 +304,7 @@ export default function ModalContainerFactory(
                 <DeleteDatasetModal dataset={datasets[datasetKeyToRemove]} layers={layers} />
               );
               modalProps = {
-                title: 'Delete Dataset',
+                title: 'modal.title.deleteDataset',
                 cssStyle: smallModalCss,
                 footer: true,
                 onConfirm: () => this._deleteDataset(datasetKeyToRemove),
@@ -294,7 +312,7 @@ export default function ModalContainerFactory(
                 confirmButton: {
                   negative: true,
                   large: true,
-                  children: 'Delete'
+                  children: 'modal.button.delete'
                 }
               };
             }
@@ -314,7 +332,7 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              title: 'Add Data To Map',
+              title: 'modal.title.addDataToMap',
               cssStyle: LoadDataModalStyle,
               footer: false,
               onConfirm: this._closeModal
@@ -330,14 +348,14 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              title: 'Export Image',
+              title: 'modal.title.exportImage',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onExportImage,
               confirmButton: {
                 large: true,
                 disabled: uiState.exportImage.exporting,
-                children: 'Download'
+                children: 'modal.button.download'
               }
             };
             break;
@@ -354,13 +372,13 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              title: 'Export Data',
+              title: 'modal.title.exportData',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onExportData,
               confirmButton: {
                 large: true,
-                children: 'Export'
+                children: 'modal.button.export'
               }
             };
             break;
@@ -381,13 +399,13 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              title: 'Export Map',
+              title: 'modal.title.exportMap',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onExportMap,
               confirmButton: {
                 large: true,
-                children: 'Export'
+                children: 'modal.button.export'
               }
             };
             break;
@@ -403,14 +421,14 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              title: 'Add Custom Mapbox Style',
+              title: 'modal.title.addCustomMapboxStyle',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onAddCustomMapStyle,
               confirmButton: {
                 large: true,
                 disabled: !mapStyle.inputStyle.style,
-                children: 'Add Style'
+                children: 'modal.button.addStyle'
               }
             };
             break;
@@ -427,7 +445,7 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              title: 'Save Map',
+              title: 'modal.title.saveMap',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: () => this._onSaveMap(false),
@@ -437,7 +455,7 @@ export default function ModalContainerFactory(
                   uiState.exportImage.exporting ||
                   !isValidMapInfo(visState.mapInfo) ||
                   !providerState.currentProvider,
-                children: 'Save'
+                children: 'modal.button.save'
               }
             };
             break;
@@ -479,7 +497,7 @@ export default function ModalContainerFactory(
               />
             );
             modalProps = {
-              title: 'Share URL',
+              title: 'modal.title.shareURL',
               onCancel: this._onCloseSaveMap
             };
             break;

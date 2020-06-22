@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// @ts-ignore
 import window from 'global/window';
 
 /**
@@ -67,6 +68,19 @@ export function camelToTitle(str) {
   const breakWord = str.replace(/([A-Z])/g, ' $1');
   return capitalizeFirstLetter(breakWord);
 }
+
+/**
+ * Convert names to camel style
+ * Stroke Color -> strokeColor
+ * @param {string} str
+ * @returns {string}
+ */
+export const camelize = str => {
+  return str.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, (match, index) => {
+    if (Number(match) === 0) return ''; // or if (/\s+/.test(match)) for white spaces
+    return index === 0 ? match.toLowerCase() : match.toUpperCase();
+  });
+};
 
 /**
  * Returns the img url for a given map export option
@@ -130,6 +144,7 @@ const setPath = ([key, ...next], value, obj) => {
     return insertValue(obj, key, value);
   }
 
+  // @ts-ignore
   return insertValue(obj, key, setPath(next, value, obj.hasOwnProperty(key) ? obj[key] : {}));
 };
 
@@ -140,6 +155,7 @@ const setPath = ([key, ...next], value, obj) => {
  * @param {Object} obj
  * @returns {Object}
  */
+// @ts-ignore
 export const set = (path, value, obj) => (obj === null ? obj : setPath(path, value, obj));
 
 /**
@@ -170,5 +186,6 @@ export function getError(err) {
       : JSON.stringify(err);
   }
 
+  // @ts-ignore
   return null;
 }

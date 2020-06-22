@@ -58,12 +58,13 @@ export default class UploadButton extends Component {
 
   render() {
     return (
-      <Wrapper>
+      <Wrapper className="upload-button">
         <input
           type="file"
           ref={this._fileInput}
           style={{display: 'none'}}
           onChange={this._onChange}
+          className="upload-button-input"
         />
         <span className="file-upload__upload-button-span" onClick={this._onClick}>
           {this.props.children}

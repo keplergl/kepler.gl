@@ -7,4 +7,4 @@ Click the __down arrow__ to open up the settings menu for that layer. Click the 
 
 __Note__: The colored line on the left of each layer tab represents what dataset that layer belongs to.
 
-[Back to table of contents](../../a-introduction.md)
+[Back to table of contents](../../README.md)

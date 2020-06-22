@@ -15,14 +15,63 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [2.2.0] - May 10 2020
+- [Enhancement] Added Editor and FeatureActionPanel factories (#1093)
+- [Feat] Geocoder Search (#1068)
+- [Doc] Updated release docs with gh-release instructions (#1059)
+- [Bug] Aggregation layer fix out-of-domain coloring for valid strings (#1070)
+- [Feat] Add Spanish and Catalan translation (#1087)
+- [Doc] Update playback documentation (#1072)
+- [Bug] Fix link to umd folder
+- [Doc] Refactored doc files for better structure (#1084)
+- [Enhancement] Add Portuguese translations  (#1063)
+- [Bug] Fixed download file for microsoft edge (#1074)
+- [Bug] Fix broken redirects in jupyter user guide (#1077)
+- [Docs] update upgrade guide (#1044)
+
+## [2.1.2] - April 3 2020
+- [Enhancement] Add support for localization and Finnish translations (#994)
+- [Bug] Fixes for case sensitive fields in CARTO storage  (#1057)
+- [Chore] Removed engine requirements (#1049)
+- [Chore] Improve the secondary button color for base theme (#1048)
+- [Chore] Updated examples to v2.1.1 (#1043)
+
+## [2.1.1] - March 31 2020
+- [Chore] Updated example to 2.1.0 (#1041)
+
+## [2.1.0] - March 30 2020
+- [Enhancement] Remove table cell char limit and increased cell header height (#1038)
+- [Docs] CHANGELOG.md markup update (#1029)
+- [Enhancement] add classes to button for easier style override (#1035)
+- [Bugfix] Remove incorrect outlier calculation for better map centering (#1026)
+- [Bug] fix scatterplot stroke width in pixels (#1018)
+- [Test] e2e test (#940)
+- [Enhancement] Move layer panel visible toggle to end (#1017)
+- [Bug] export formatCsv (#1022)
+- [Enhancement] Refactor load file tasks to better handle multiple file types (#986)
+- [Bug] Fixed carto-provider example: importing the correct kepler.gl processor path (#1016)
+- [Feat] Add satellite basemap (#1007)
+- [Feat] Improved data table rendering (#1010)
+- [Chore] Upgrade to Node 10 (#1009)
+- [Feat] S2 layer (#800)
+- [BUG] Fix provider test (#1008)
+- [Enhancement] better handling provider tile update (#1000)
+- [Enhancement] Loading and error feedback for shared maps loaded from URL #1002 (#1003)
+- [Enhancement] adjust button color in light theme (#1004)
+- [Bug] Reset selected provider status after loading and before sharing (#999)
+- [Feat] Add more light themes (#1001)
+- [Bug] fix bug map loaded with custom map style not save correctly (#993)
+- [Bug] Fix username set to null after loading map from URL #995 (#996)
+- [Enhancement] Decrease filter step size for small domains (#958)
+
 ## [2.0.1] - March 9 2020
-[Bug] Add cloud-providers.js to package.json (#991)
-[Feat] CARTO provider for cloud storage (#985)
-[Bugfix] Fix typo on variable name (#987)
-[Enhancement] pass appWebsite to logo component (#984)
-[Chore] Removed testing from publish action (#980)
-[Bug] remove console.log in filter.utils
-[Feat] Load cloud map with provider (#947)
+- [Bug] Add cloud-providers.js to package.json (#991)
+- [Feat] CARTO provider for cloud storage (#985)
+- [Bugfix] Fix typo on variable name (#987)
+- [Enhancement] pass appWebsite to logo component (#984)
+- [Chore] Removed testing from publish action (#980)
+- [Bug] remove console.log in filter.utils
+- [Feat] Load cloud map with provider (#947)
 
 ## [2.0.0] - Feb 25 2020
 - [Enhancement] Independently customize Geojson layer fill stroke opacity (#966)

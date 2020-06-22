@@ -79,8 +79,6 @@ const actionHandler = {
 
   [ActionTypes.SET_MAP_INFO]: visStateUpdaters.setMapInfoUpdater,
 
-  [ActionTypes.SET_VISIBLE_LAYERS_FOR_MAP]: visStateUpdaters.setVisibleLayersForMapUpdater,
-
   [ActionTypes.SHOW_DATASET_TABLE]: visStateUpdaters.showDatasetTableUpdater,
 
   [ActionTypes.TOGGLE_FILTER_ANIMATION]: visStateUpdaters.toggleFilterAnimationUpdater,
@@ -109,7 +107,7 @@ const actionHandler = {
 
   [ActionTypes.SET_EDITOR_MODE]: visStateUpdaters.setEditorModeUpdater,
 
-  [ActionTypes.TOGGLE_EDITOR_VISIBILITY]: visStateUpdaters.toggleEditorVisibility,
+  [ActionTypes.TOGGLE_EDITOR_VISIBILITY]: visStateUpdaters.toggleEditorVisibilityUpdater,
 
   [ActionTypes.TOGGLE_FILTER_FEATURE]: visStateUpdaters.toggleFilterFeatureUpdater,
 

@@ -20,6 +20,7 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
+import {FormattedMessage} from 'react-intl';
 
 import styled from 'styled-components';
 import Modal from 'react-modal';
@@ -109,13 +110,13 @@ const FooterActionWrapper = styled.div`
 const defaultCancelButton = {
   link: true,
   large: true,
-  children: 'Cancel'
+  children: 'modal.button.defaultCancel'
 };
 
 const defaultConfirmButton = {
   large: true,
   width: '160px',
-  children: 'Confirm'
+  children: 'modal.button.defaultConfirm'
 };
 
 export const ModalFooter = ({cancel, confirm, cancelButton, confirmButton}) => {
@@ -124,11 +125,11 @@ export const ModalFooter = ({cancel, confirm, cancelButton, confirmButton}) => {
   return (
     <StyledModalFooter className="modal--footer">
       <FooterActionWrapper>
-        <Button {...cancelButtonProps} onClick={cancel}>
-          {cancelButtonProps.children}
+        <Button className="modal--footer--cancel-button" {...cancelButtonProps} onClick={cancel}>
+          <FormattedMessage id={cancelButtonProps.children} />
         </Button>
-        <Button {...confirmButtonProps} onClick={confirm}>
-          {confirmButtonProps.children}
+        <Button className="modal--footer--confirm-button" {...confirmButtonProps} onClick={confirm}>
+          <FormattedMessage id={confirmButtonProps.children} />
         </Button>
       </FooterActionWrapper>
     </StyledModalFooter>
@@ -185,7 +186,11 @@ class ModalDialog extends Component {
             </CloseButton>
           )}
           <div>
-            {props.title && <ModalTitle className="modal--title">{props.title}</ModalTitle>}
+            {props.title && (
+              <ModalTitle className="modal--title">
+                <FormattedMessage id={props.title} />
+              </ModalTitle>
+            )}
             <ModalContent className="modal--body">{props.children}</ModalContent>
             {props.footer && (
               <ModalFooter

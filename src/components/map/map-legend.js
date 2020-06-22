@@ -23,8 +23,8 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {rgb} from 'd3-color';
 import ColorLegend from 'components/common/color-legend';
-import {DIMENSIONS, CHANNEL_SCALES} from 'constants/default-settings';
-import {camelToTitle} from 'utils/utils';
+import {CHANNEL_SCALES, DIMENSIONS} from 'constants/default-settings';
+import {FormattedMessage} from 'react-intl';
 
 export const StyledMapControlLegend = styled.div`
   padding: 10px 0 10px ${props => props.theme.mapControl.padding}px;
@@ -64,17 +64,23 @@ export const StyledMapControlLegend = styled.div`
   }
 `;
 
-export const VisualChannelMetric = ({name}) => (
-  <div className="legend--layer__title">
-    <span className="legend--layer_by">by </span>
-    <span className="legend--layer_color_field">{name}</span>
-  </div>
-);
+export const VisualChannelMetric = ({name}) => {
+  return (
+    <div className="legend--layer__title">
+      <span className="legend--layer_by">by </span>
+      <span className="legend--layer_color_field">
+        <FormattedMessage id={name} />
+      </span>
+    </div>
+  );
+};
 
 export const LayerSizeLegend = ({label, name}) => (
   <div className="legend--layer_size-schema">
     <p>
-      <span className="legend--layer_by">{label}</span>
+      <span className="legend--layer_by">
+        <FormattedMessage id={label} />
+      </span>
     </p>
     <VisualChannelMetric name={name} />
   </div>
@@ -121,7 +127,9 @@ export const LayerColorLegend = React.memo(({description, config, width, colorCh
 
   return (
     <div>
-      <div className="legend--layer_type">{camelToTitle(key)}</div>
+      <div className="legend--layer_type">
+        <FormattedMessage id={`layer.${key}`} />
+      </div>
       <div className="legend--layer_color-schema">
         <div>
           {enableColorBy ? <VisualChannelMetric name={enableColorBy} /> : null}
@@ -155,7 +163,7 @@ const isColorChannel = visualChannel =>
 const MAP_LEGEND_WIDTH = DIMENSIONS.mapControl.width - 2 * DIMENSIONS.mapControl.padding;
 
 const MapLegend = ({layers = []}) => (
-  <div>
+  <div className="map-legend">
     {layers.map((layer, index) => {
       if (!layer.isValidToSave()) {
         return null;

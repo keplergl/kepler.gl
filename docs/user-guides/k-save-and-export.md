@@ -76,4 +76,4 @@ click on __Upload__ and Kepler.gl will push your current map onto your account.
 
 At the end of the process Kepler.gl will automatically generate a permalink for your work you can share with other users.
 
-[Back to table of contents](./a-introduction.md)
+[Back to table of contents](README.md)

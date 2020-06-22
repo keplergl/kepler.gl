@@ -149,14 +149,16 @@ export const receiveMapConfig = createAction(ActionTypes.RECEIVE_MAP_CONFIG, (co
 /**
  * Initialize kepler.gl reducer. It is used to pass in `mapboxApiAccessToken` to `mapStyle` reducer.
  * @memberof main
- * @param {Object} payload
- * @param {string} payload.mapboxApiAccessToken - mapboxApiAccessToken to be saved to mapStyle reducer
- * @param {string} payload.mapboxApiUrl - mapboxApiUrl to be saved to mapStyle reducer.
- * @param {Boolean} payload.mapStylesReplaceDefault - mapStylesReplaceDefault to be saved to mapStyle reducer
+ * @param {object} payload
+ * @param payload.mapboxApiAccessToken - mapboxApiAccessToken to be saved to mapStyle reducer
+ * @param payload.mapboxApiUrl - mapboxApiUrl to be saved to mapStyle reducer.
+ * @param payload.mapStylesReplaceDefault - mapStylesReplaceDefault to be saved to mapStyle reducer
+ * @type {typeof import('./actions').keplerGlInit}
  * @public
  */
 export const keplerGlInit = createAction(
   ActionTypes.INIT,
+  // @ts-ignore
   ({mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault} = {}) => ({
     mapboxApiAccessToken,
     mapboxApiUrl,
@@ -173,5 +175,6 @@ export const keplerGlInit = createAction(
  * @public
  */
 /* eslint-disable no-unused-vars */
+// @ts-ignore
 const main = null;
 /* eslint-enable no-unused-vars */

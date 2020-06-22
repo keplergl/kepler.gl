@@ -232,7 +232,16 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
         config: {
           fieldsToShow: {
             ...oldInteractionConfig.tooltip.config.fieldsToShow,
-            [hexDataId]: ['hex_id', 'value']
+            [hexDataId]: [
+              {
+                name: 'hex_id',
+                format: null
+              },
+              {
+                name: 'value',
+                format: null
+              }
+            ]
           }
         }
       }

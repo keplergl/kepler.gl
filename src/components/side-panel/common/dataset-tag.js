@@ -45,7 +45,9 @@ export default function DatasetTagFactory() {
   const DatasetTag = ({onClick, dataset}) => (
     <DatasetTagWrapper className="source-data-tag" onClick={onClick}>
       <DatasetSquare className="dataset-color" color={dataset.color} />
-      <div className="dataset-name">{dataset.label}</div>
+      <div className="dataset-name" title={dataset.label}>
+        {dataset.label}
+      </div>
     </DatasetTagWrapper>
   );
 

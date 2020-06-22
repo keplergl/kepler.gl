@@ -29,9 +29,9 @@ import WebMercatorViewport from 'viewport-mercator-project';
 // components
 import MapPopoverFactory from 'components/map/map-popover';
 import MapControlFactory from 'components/map/map-control';
-import {StyledMapContainer} from 'components/common/styled-components';
+import {StyledMapContainer, StyledAttrbution} from 'components/common/styled-components';
 
-import Editor from './editor/editor';
+import EditorFactory from './editor/editor';
 
 // utils
 import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
@@ -59,9 +59,26 @@ const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
 const TRANSITION_DURATION = 0;
 
-MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory];
+const Attribution = () => (
+  <StyledAttrbution>
+    <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
+      © kepler.gl |{' '}
+    </a>
+    <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
+      © Mapbox |{' '}
+    </a>
+    <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
+      © OpenStreetMap |{' '}
+    </a>
+    <a href="https://www.mapbox.com/map-feedback/" target="_blank" rel="noopener noreferrer">
+      <strong>Improve this map</strong>
+    </a>
+  </StyledAttrbution>
+);
 
-export default function MapContainerFactory(MapPopover, MapControl) {
+MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory];
+
+export default function MapContainerFactory(MapPopover, MapControl, Editor) {
   class MapContainer extends Component {
     static propTypes = {
       // required
@@ -426,6 +443,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
         mapboxApiUrl,
         mapControls,
         uiState,
+        uiStateActions,
         visStateActions,
         editor,
         index
@@ -464,11 +482,13 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             scale={mapState.scale || 1}
             top={0}
             editor={editor}
+            locale={uiState.locale}
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
             onToggleMapControl={this._toggleMapControl}
             onSetEditorMode={visStateActions.setEditorMode}
+            onSetLocale={uiStateActions.setLocale}
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
           />
           <MapComponent
@@ -507,6 +527,7 @@ export default function MapContainerFactory(MapPopover, MapControl) {
             </div>
           )}
           {this._renderMapPopover(layersToRender)}
+          <Attribution />
         </StyledMapContainer>
       );
     }

@@ -23,6 +23,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import moment from 'moment';
 import {LeftArrow} from 'components/common/icons';
+import {FormattedMessage} from 'react-intl';
 
 const imageH = 108;
 
@@ -138,7 +139,12 @@ const AssetItem = ({asset, onClick}) => (
     <div className="asset__title">{asset.label || asset.title}</div>
     <div className="asset__image__caption">{asset.description}</div>
     {asset.lastUpdated ? (
-      <div className="asset__last-updated">Last Modified {getDuration(asset.lastUpdated)} ago</div>
+      <div className="asset__last-updated">
+        <FormattedMessage
+          id={'modal.storageMapViewer.lastModified'}
+          values={{lastUpdated: getDuration(asset.lastUpdated)}}
+        />
+      </div>
     ) : null}
   </StyledAssetItem>
 );
@@ -153,7 +159,9 @@ class StorageAssetsViewer extends React.Component {
       <div className="storage-asset-viewer">
         <BackLink onClick={back}>
           <LeftArrow height="12px" />
-          <span>Back</span>
+          <span>
+            <FormattedMessage id={'modal.storageMapViewer.back'} />
+          </span>
         </BackLink>
         {error && <StyledError>{error.message}</StyledError>}
         <StyledAssetGallery>

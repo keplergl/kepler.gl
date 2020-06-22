@@ -21,7 +21,8 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
-import {SidePanelSection, SidePanelDivider, Button} from 'components/common/styled-components';
+import {FormattedMessage} from 'react-intl';
+import {Button, SidePanelDivider, SidePanelSection} from 'components/common/styled-components';
 import {Add} from 'components/common/icons';
 import SourceDataCatalogFactory from './common/source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
@@ -88,9 +89,14 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
                 />
               ))}
           </SidePanelSection>
-          <Button inactive={hadEmptyFilter || !hadDataset} width="105px" onClick={this._addFilter}>
+          <Button
+            className="add-filter-button"
+            inactive={hadEmptyFilter || !hadDataset}
+            width="105px"
+            onClick={this._addFilter}
+          >
             <Add height="12px" />
-            Add Filter
+            <FormattedMessage id={'filterManager.addFilter'} />
           </Button>
         </div>
       );

@@ -1,21 +1,21 @@
-# Contributing to kepler.gl
+# CONTRIBUTING
 
 Great to have you here. Here are a few ways you can help make kepler.gl even better!
 
-* [Developer Certification of Origin (DCO)](#dco)
-* [Code of Conduct](#coc)
-* [Questions and Problems](#question)
-* [Issues and Bugs](#issue)
-* [Feature Requests](#feature)
-* [Improving Documentation](#docs)
-* [Submitting Pull Request](#submit-pr)
-* [Development Documentation][developers]
+* [Developer Certification of Origin \(DCO\)](./#developer-certification-of-origin-dco)
+* [Code of Conduct](./#code-of-conduct)
+* [Questions and Problems](./#questions-and-problems)
+* [Issues and Bugs](./#issues-and-bugs)
+* [Feature Requests](./#feature-requests)
+* [Improving Documentation](./#improving-documentation)
+* [Submitting Pull Request](./#submit-pr)
 
-## <a name="dco"></a> Developer Certification of Origin (DCO)
+## Developer Certification of Origin (DCO)
 
-When commiting code, kepler.gl requires [Developer Certificate of Origin (DCO)][dco] process to be followed.
+When committing code, kepler.gl requires [Developer Certificate of Origin (DCO)][dco] process to be followed.
 
 The DCO is a lightweight way for contributors to certify that they wrote or otherwise have the right to submit the code they are contributing to the project. Here is the full text of the DCO, reformatted for readability:
+
 ```
 By making a contribution to this project, I certify that:
 
@@ -27,26 +27,30 @@ By making a contribution to this project, I certify that:
 
 (d) I understand and agree that this project and the contribution are public and that a record of the contribution (including all personal information I submit with it, including my sign-off) is maintained indefinitely and may be redistributed consistent with this project or the open source license(s) involved.
 ```
+
 ### DCO Sign-Off Methods
 Contributors sign-off that they adhere to these requirements by adding a Signed-off-by line to commit messages.
+
 ```
 Signed-off-by: Shan He <heshan0131@gmail.com>
 ```
+
 Use the `-s` or `--signoff` command line to append this automatically to your commit message:
+
 ```
 $ git commit -s -m 'This is my commit message'
 ```
 
-## <a name="coc"></a> Code of Conduct
+## Code of Conduct
 Help us keep kepler.gl open and inclusive. Please read and follow our [Code of Conduct](./CODE_OF_CONDUCT.md).
 
-## <a name="question"></a> Questions and Problems
+## Questions and Problems
 We are trying to keep our Github page for issues, bugs and feature requests only. You've got much better chances of getting supports on [Stack Overflow][stack]. Many people including our engineers are ready to answer questions on Stack Overflow. Your question might already been answered there.
 
-## <a name="issue"></a> Issues and Bugs
+## Issues and Bugs
 If you find a bug, you can help us by submitting an [Issue][git-iss] to our GitHub Repository. Please use the github [Bug Report Template][git-bug] and fill in as much as information as possible. Even better, you can submit a [Pull Request][git-pr] with a fix.
 
-## <a name="feature"></a> Feature Requests
+# Feature Requests
 
 If you want to contribute or add new features, please use [Issue][git-iss] on github projects to start a new discussion using the [Feature Request Template][git-feature]. If this receive a Go ahead, you can submit your patch as PR to the repository.
 
@@ -62,13 +66,13 @@ If you would like to implement a new feature then consider what kind of change i
   for detailed information the [core development documentation][developers].
 * **Let's review your code** Create a pull request
 
-## <a name="docs"></a> Improving Documentation
+## Improving Documentation
 
 Questions about kepler.gl? you can checkout the examples and medium articles on [kepler.gl][website].
 
 [User Guides][user-guide] and API Docs are saved in the [docs][api-docs] folder on Github. Help us improve documentation here by submitting a Pull Request.
 
-## <a name="submit-pr"></a> Submitting Pull Request
+## Submitting Pull Request
 <b>First, follow the [development documentation][developers] for detailed guidance on environment setup, code style, testing and commit message conventions.</b>
 
 * Search [GitHub][git-pr] for an open or closed Pull Request
@@ -76,9 +80,9 @@ Questions about kepler.gl? you can checkout the examples and medium articles on 
 * Create the [development environment][developers.setup]
 * Make your changes in a new git branch:
 
-    ```shell
-    git checkout -b my-fix-branch master
-    ```
+```bash
+$ git checkout -b my-fix-branch master
+```
 
 * Create your patch commit, **including appropriate test cases**.
 * If the changes affect public APIs, change or add relevant [documentation][developers.documentation].
@@ -98,9 +102,9 @@ Questions about kepler.gl? you can checkout the examples and medium articles on 
 [user-guide]: https://github.com/keplergl/kepler.gl/blob/master/docs/a-introduction.md
 [roadmap]: https://github.com/keplergl/kepler.gl/wiki/Roadmap
 [developers]: DEVELOPERS.md
-[developers.commits]: DEVELOPERS.md#commits
-[developers.documentation]: DEVELOPERS.md#documentation
-[developers.rules]: DEVELOPERS.md#rules
-[developers.setup]: DEVELOPERS.md#setup
-[developers.tests]: DEVELOPERS.md#tests
+[developers.commits]: ./#commits
+[developers.documentation]: ./#documentation
+[developers.rules]: ./#rules
+[developers.setup]: ./#setup
+[developers.tests]: ./#tests
 [dco]: https://probot.github.io/apps/dco/

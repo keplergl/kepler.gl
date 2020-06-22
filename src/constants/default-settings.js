@@ -42,6 +42,7 @@ import {
   Cancel
 } from 'components/common/icons';
 import {getHTMLMapModeTileUrl} from 'utils/utils';
+import {TOOLTIP_FORMAT_TYPES} from './tooltip';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
@@ -161,22 +162,22 @@ export const THEME = keyMirror({
 export const SIDEBAR_PANELS = [
   {
     id: 'layer',
-    label: 'Layers',
+    label: 'sidebar.panels.layer',
     iconComponent: Layers
   },
   {
     id: 'filter',
-    label: 'Filters',
+    label: 'sidebar.panels.filter',
     iconComponent: FilterFunnel
   },
   {
     id: 'interaction',
-    label: 'Interactions',
+    label: 'sidebar.panels.interaction',
     iconComponent: CursorClick
   },
   {
     id: 'map',
-    label: 'Base map',
+    label: 'sidebar.panels.basemap',
     iconComponent: Settings
   }
 ];
@@ -522,7 +523,8 @@ export const FIELD_OPTS = {
       ...ordinalFieldAggrScaleFunctions
     },
     format: {
-      legend: d => d
+      legend: d => d,
+      tooltip: []
     }
   },
   real: {
@@ -532,7 +534,8 @@ export const FIELD_OPTS = {
       ...linearFieldAggrScaleFunctions
     },
     format: {
-      legend: d => d
+      legend: d => d,
+      tooltip: [TOOLTIP_FORMAT_TYPES.DECIMAL, TOOLTIP_FORMAT_TYPES.PERCENTAGE]
     }
   },
   timestamp: {
@@ -542,7 +545,8 @@ export const FIELD_OPTS = {
       ...notSupportAggrOpts
     },
     format: {
-      legend: d => d
+      legend: d => d,
+      tooltip: [TOOLTIP_FORMAT_TYPES.DATE, TOOLTIP_FORMAT_TYPES.DATE_TIME]
     }
   },
   integer: {
@@ -552,7 +556,8 @@ export const FIELD_OPTS = {
       ...linearFieldAggrScaleFunctions
     },
     format: {
-      legend: d => d
+      legend: d => d,
+      tooltip: [TOOLTIP_FORMAT_TYPES.DECIMAL, TOOLTIP_FORMAT_TYPES.PERCENTAGE]
     }
   },
   boolean: {
@@ -562,7 +567,8 @@ export const FIELD_OPTS = {
       ...ordinalFieldAggrScaleFunctions
     },
     format: {
-      legend: d => d
+      legend: d => d,
+      tooltip: []
     }
   },
   date: {
@@ -571,7 +577,8 @@ export const FIELD_OPTS = {
       ...ordinalFieldAggrScaleFunctions
     },
     format: {
-      legend: d => d
+      legend: d => d,
+      tooltip: [TOOLTIP_FORMAT_TYPES.DATE]
     }
   },
   geojson: {
@@ -581,7 +588,8 @@ export const FIELD_OPTS = {
       ...notSupportAggrOpts
     },
     format: {
-      legend: d => '...'
+      legend: d => '...',
+      tooltip: []
     }
   }
 };
@@ -621,16 +629,19 @@ export const NO_VALUE_COLOR = [0, 0, 0, 0];
 
 export const LAYER_BLENDINGS = {
   additive: {
+    label: 'layerBlending.additive',
     blendFunc: ['SRC_ALPHA', 'DST_ALPHA'],
     blendEquation: 'FUNC_ADD'
   },
   normal: {
     // reference to
     // https://limnu.com/webgl-blending-youre-probably-wrong/
+    label: 'layerBlending.normal',
     blendFunc: ['SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA', 'ONE', 'ONE_MINUS_SRC_ALPHA'],
     blendEquation: ['FUNC_ADD', 'FUNC_ADD']
   },
   subtractive: {
+    label: 'layerBlending.subtractive',
     blendFunc: ['ONE', 'ONE_MINUS_DST_COLOR', 'SRC_ALPHA', 'DST_ALPHA'],
     blendEquation: ['FUNC_SUBTRACT', 'FUNC_ADD']
   }
@@ -653,18 +664,18 @@ export const EXPORT_IMG_RATIOS = keyMirror({
 export const EXPORT_IMG_RATIO_OPTIONS = [
   {
     id: EXPORT_IMG_RATIOS.SCREEN,
-    label: 'Original Screen',
+    label: 'modal.exportImage.ratioOriginalScreen',
     getSize: (screenW, screenH) => ({width: screenW, height: screenH})
   },
   {
     id: EXPORT_IMG_RATIOS.CUSTOM,
     hidden: true,
-    label: 'Custom',
+    label: 'modal.exportImage.ratioCustom',
     getSize: (mapW, mapH) => ({width: mapW, height: mapH})
   },
   {
     id: EXPORT_IMG_RATIOS.FOUR_BY_THREE,
-    label: '4:3',
+    label: 'modal.exportImage.ratio4_3',
     getSize: (screenW, screenH) => ({
       width: screenW,
       height: Math.round(screenW * 0.75)
@@ -672,7 +683,7 @@ export const EXPORT_IMG_RATIO_OPTIONS = [
   },
   {
     id: EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE,
-    label: '16:9',
+    label: 'modal.exportImage.ratio16_9',
     getSize: (screenW, screenH) => ({
       width: screenW,
       height: Math.round(screenW * 0.5625)
@@ -759,7 +770,7 @@ export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS).map(
 
 export const EXPORT_HTML_MAP_MODE_OPTIONS = Object.entries(EXPORT_HTML_MAP_MODES).map(entry => ({
   id: entry[0],
-  label: entry[1].toLowerCase(),
+  label: `modal.exportMap.html.${entry[1].toLowerCase()}`,
   available: true,
   url: getHTMLMapModeTileUrl(entry[1])
 }));
@@ -780,15 +791,6 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
   file: null
 });
 
-export const TOKEN_MISUSE_WARNING =
-  '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ';
-export const DISCLAIMER =
-  'You can change the Mapbox token later using the following instructions: ';
-export const MAP_CONFIG_DESCRIPTION =
-  'Map config will be included in the Json file. If you are using kepler.gl in your own app. You can copy this config and pass it to ';
-export const SHARE_DISCLAIMER =
-  'kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' +
-  'You can edit/delete the data file in your cloud account anytime.';
 // Animation
 export const BASE_SPEED = 600;
 export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';

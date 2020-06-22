@@ -5,8 +5,9 @@ import pandas as pd
 import geopandas
 import shapely.wkt
 import json
+from ._version import EXTENSION_SPEC_VERSION
 
-documentation = 'https://github.com/keplergl/kepler.gl/blob/master/docs/keplergl-jupyter/user-guide.md'
+documentation = 'https://docs.kepler.gl/docs/keplergl-jupyter'
 def _df_to_dict(df):
     ''' Create an input dict for Kepler.gl using a DataFrame object
 
@@ -86,8 +87,8 @@ class KeplerGl(widgets.DOMWidget):
     _model_name = Unicode('KeplerGlModal').tag(sync=True)
     _view_module = Unicode('keplergl-jupyter').tag(sync=True)
     _model_module = Unicode('keplergl-jupyter').tag(sync=True)
-    _view_module_version = Unicode('^0.1.0').tag(sync=True)
-    _model_module_version = Unicode('^0.1.0').tag(sync=True)
+    _view_module_version = Unicode(EXTENSION_SPEC_VERSION).tag(sync=True)
+    _model_module_version = Unicode(EXTENSION_SPEC_VERSION).tag(sync=True)
     value = Unicode('Hello World!').tag(sync=True)
 
     data = Dict({}).tag(sync=True, **data_serialization)
@@ -133,7 +134,7 @@ class KeplerGl(widgets.DOMWidget):
 
         self.data = copy
 
-    def save_to_html(self, data=None, config=None, file_name='keplergl_map.html', read_only=False):
+    def save_to_html(self, data=None, config=None, file_name='keplergl_map.html', read_only=False, center_map=False):
         ''' Save current map to an interactive html
 
         Inputs:
@@ -163,7 +164,7 @@ class KeplerGl(widgets.DOMWidget):
         # for key in data_to_add:
         #     print(type(data_to_add[key]))
 
-        keplergl_data = json.dumps({"config": config_to_add, "data": data_to_add, "options": {"readOnly": read_only}})
+        keplergl_data = json.dumps({"config": config_to_add, "data": data_to_add, "options": {"readOnly": read_only, "centerMap": center_map}})
 
         cmd = """window.__keplerglDataConfig = {};""".format(keplergl_data)
         frame_txt = keplergl_html[:k] + "<body><script>" + cmd + "</script>" + keplergl_html[k+6:]

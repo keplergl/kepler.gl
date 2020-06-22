@@ -25,8 +25,7 @@ import moment from 'moment';
 
 /**
  * Set gpu mode based on current number of gpu filters exists
- * @param {Object} gpuFilter
- * @param {Array<Object>} filters
+ * @type {typeof import('./gpu-filter-utils').setFilterGpuMode}
  */
 export function setFilterGpuMode(filter, filters) {
   // filter can be apply to multiple dataset, hence gpu filter mode should also be
@@ -45,6 +44,10 @@ export function setFilterGpuMode(filter, filters) {
   return filter;
 }
 
+/**
+ * Scan though all filters and assign gpu chanel to gpu filter
+ * @type {typeof import('./gpu-filter-utils').assignGpuChannels}
+ */
 export function assignGpuChannels(allFilters) {
   return allFilters.reduce((accu, f, index) => {
     let filters = accu;
@@ -60,8 +63,7 @@ export function assignGpuChannels(allFilters) {
 }
 /**
  * Assign a new gpu filter a channel based on first availability
- * @param {Object} filter
- * @param {Array<Object>} filters
+ * @type {typeof import('./gpu-filter-utils').assignGpuChannel}
  */
 export function assignGpuChannel(filter, filters) {
   // find first available channel
@@ -115,8 +117,7 @@ export function assignGpuChannel(filter, filters) {
 /**
  * Edit filter.gpu to ensure that only
  * X number of gpu filers can coexist.
- * @param {Array<Object>} filters
- * @returns {Array<Object>} updated filters
+ * @type {typeof import('./gpu-filter-utils').resetFilterGpuMode}
  */
 export function resetFilterGpuMode(filters) {
   const gpuPerDataset = {};
@@ -185,9 +186,7 @@ const getFilterValueAccessor = (channels, dataId, fields) => (
 
 /**
  * Get filter properties for gpu filtering
- * @param {Array<Object>} filters
- * @param {string} dataId
- * @returns {{filterRange: {Object}, filterValueUpdateTriggers: Object, getFilterValue: Function}}
+ * @type {typeof import('./gpu-filter-utils').getGpuFilterProps}
  */
 export function getGpuFilterProps(filters, dataId, fields) {
   const filterRange = getEmptyFilterRange();
@@ -198,10 +197,16 @@ export function getGpuFilterProps(filters, dataId, fields) {
 
   for (let i = 0; i < MAX_GPU_FILTERS; i++) {
     const filter = filters.find(
-      f => f.gpu && f.dataId.includes(dataId) && f.gpuChannel[f.dataId.indexOf(dataId)] === i
+      f =>
+        f.gpu &&
+        f.dataId.includes(dataId) &&
+        f.gpuChannel &&
+        f.gpuChannel[f.dataId.indexOf(dataId)] === i
     );
 
+    // @ts-ignore
     filterRange[i][0] = filter ? filter.value[0] - filter.domain[0] : 0;
+    // @ts-ignore
     filterRange[i][1] = filter ? filter.value[1] - filter.domain[0] : 0;
 
     triggers[`gpuFilter_${i}`] = filter ? filter.name[filter.dataId.indexOf(dataId)] : null;
@@ -220,9 +225,7 @@ export function getGpuFilterProps(filters, dataId, fields) {
 /**
  * Return dataset field index from filter.fieldIdx
  * The index matches the same dataset index for filter.dataId
- * @param dataset
- * @param filter
- * @return {*}
+ * @type {typeof import('./gpu-filter-utils').getDatasetFieldIndexForFilter}
  */
 export function getDatasetFieldIndexForFilter(dataId, filter) {
   const datasetIndex = toArray(filter.dataId).indexOf(dataId);

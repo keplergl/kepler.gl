@@ -19,35 +19,26 @@
 // THE SOFTWARE.
 
 import React, {Component, createRef} from 'react';
-import {polyfill} from 'react-lifecycles-compat';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import UploadButton from './upload-button';
-import {FileType, DragNDrop} from 'components/common/icons';
+import {DragNDrop, FileType} from 'components/common/icons';
 import LoadingSpinner from 'components/common/loading-spinner';
 import FileDrop from './file-drop';
 
 import {isChrome} from 'utils/utils';
-import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
+import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
 import ReactMarkdown from 'react-markdown';
-
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
+import {FormattedMessage, injectIntl} from 'react-intl';
 
 // File.type is not reliable if the OS does not have a
 // registered mapping for the extension.
 // NOTE: Shapefiles must be in a compressed format since
 // it requires multiple files to be present.
 const defaultValidFileExt = ['csv', 'json', 'geojson'];
-
-const MESSAGE = ' Drag & Drop Your File(s) Here';
-const CHROME_MSG =
-  '*Chrome user: Limit file size to 250mb, if need to upload larger file, try Safari';
-const DISCLAIMER =
-  '*kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
-  'No information or map data is sent to any server.';
-const CONFIG_UPLOAD_MESSAGE = `Upload **CSV**, **GeoJson** or saved map **Json**. Read more about [**supported file formats**](${GUIDES_FILE_FORMAT}).`;
 
 const fileIconColor = '#D3D8E0';
 
@@ -130,12 +121,6 @@ const StyledFileTypeFow = styled.div`
 `;
 
 const StyledFileUpload = styled.div`
-  .filter-upload__input {
-    visibility: hidden;
-    height: 0;
-    position: absolute;
-  }
-
   .file-drop {
     position: relative;
   }
@@ -237,11 +222,20 @@ function FileUploadFactory() {
     _renderMessage() {
       const {errorFiles, files} = this.state;
       if (errorFiles.length) {
-        return <WarningMsg>{`File ${errorFiles.join(', ')} is not supported.`}</WarningMsg>;
+        return (
+          <WarningMsg>
+            <FormattedMessage
+              id={'fileUploader.filenNotSupported'}
+              values={{errorFiles: errorFiles.join(', ')}}
+            />
+          </WarningMsg>
+        );
       } else if (this.props.fileLoading && files.length) {
         return (
           <StyledMessage className="file-uploader__message">
-            <div className="loading-action">Uploading</div>
+            <div className="loading-action">
+              <FormattedMessage id={'fileUploader.uploading'} />
+            </div>
             <div>
               {files.map((f, i) => (
                 <PositiveMsg key={i}>{f.name}</PositiveMsg>
@@ -260,11 +254,10 @@ function FileUploadFactory() {
 
     render() {
       const {dragOver, files} = this.state;
-      const {validFileExt} = this.props;
+      const {validFileExt, intl} = this.props;
 
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>
-          <input className="filter-upload__input" type="file" onChange={this._onChange} />
           {FileDrop ? (
             <FileDrop
               frame={this.frame.current || document}
@@ -274,7 +267,12 @@ function FileUploadFactory() {
               className="file-uploader__file-drop"
             >
               <StyledUploadMessage className="file-upload__message">
-                <ReactMarkdown source={CONFIG_UPLOAD_MESSAGE} renderers={{link: LinkRenderer}} />
+                <ReactMarkdown
+                  source={`${intl.formatMessage({
+                    id: 'fileUploader.configUploadMessage'
+                  })}(${GUIDES_FILE_FORMAT_DOC}).`}
+                  renderers={{link: LinkRenderer}}
+                />
               </StyledUploadMessage>
               <StyledFileDrop dragOver={dragOver}>
                 <div style={{opacity: dragOver ? 0.5 : 1}}>
@@ -290,23 +288,33 @@ function FileUploadFactory() {
                 </div>
                 {!files.length ? (
                   <StyledDragFileWrapper>
-                    <MsgWrapper>{MESSAGE}</MsgWrapper>
-                    <span className="file-upload-or">or</span>
-                    <UploadButton onUpload={this._handleFileInput}>browse your files</UploadButton>
+                    <MsgWrapper>
+                      <FormattedMessage id={'fileUploader.message'} />
+                    </MsgWrapper>
+                    <span className="file-upload-or">
+                      <FormattedMessage id={'fileUploader.or'} />
+                    </span>
+                    <UploadButton onUpload={this._handleFileInput}>
+                      <FormattedMessage id={'fileUploader.browseFiles'} />
+                    </UploadButton>
                   </StyledDragFileWrapper>
                 ) : null}
-                <StyledDisclaimer>{DISCLAIMER}</StyledDisclaimer>
+                <StyledDisclaimer>
+                  <FormattedMessage id={'fileUploader.disclaimer'} />
+                </StyledDisclaimer>
               </StyledFileDrop>
             </FileDrop>
           ) : null}
 
-          <WarningMsg>{isChrome() ? CHROME_MSG : ''}</WarningMsg>
+          <WarningMsg>
+            {isChrome() ? <FormattedMessage id={'fileUploader.chromeMessage'} /> : ''}
+          </WarningMsg>
         </StyledFileUpload>
       );
     }
   }
 
-  return polyfill(FileUpload);
+  return injectIntl(FileUpload);
 }
 
 export default FileUploadFactory;

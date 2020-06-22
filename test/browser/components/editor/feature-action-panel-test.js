@@ -22,7 +22,9 @@ import React from 'react';
 import test from 'tape';
 import {shallow} from 'enzyme';
 import sinon from 'sinon';
-import {FeatureActionPanel} from 'components/editor/feature-action-panel';
+import {PureFeatureActionPanelFactory} from 'components/editor/feature-action-panel';
+
+const FeatureActionPanel = PureFeatureActionPanelFactory();
 
 test('FeatureActionPanel -> display layers', t => {
   const layers = [

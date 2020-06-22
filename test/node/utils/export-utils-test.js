@@ -19,9 +19,10 @@
 // THE SOFTWARE.
 
 import test from 'tape';
+
 import {registerEntry} from 'actions/identity-actions';
 import keplerGlReducer from 'reducers';
-import {getMapJSON, exportToJsonString} from 'utils/export-utils';
+import {getMapJSON, exportToJsonString, getScaleFromImageSize, isMSEdge} from 'utils/export-utils';
 
 test('exportUtils -> ExportJson', t => {
   const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
@@ -33,5 +34,29 @@ test('exportUtils -> ExportJson', t => {
     JSON.parse(body);
   }, 'Should not throw when trying to parse body');
 
+  t.end();
+});
+
+test('exportUtils -> getScaleFromImageSize', t => {
+  t.equal(
+    getScaleFromImageSize(800, 600, 1400, 990),
+    0.5714285714285714,
+    'Should compute the right scale'
+  );
+  t.end();
+});
+
+test('exportUtils -> isMSEdge', t => {
+  t.equal(isMSEdge({}), false, 'Should return false because no navigator is defined');
+  t.equal(
+    isMSEdge({navigator: {}}),
+    false,
+    'Should return false because msSaveOrOpenBlob is not defined'
+  );
+  t.equal(
+    isMSEdge({navigator: {msSaveOrOpenBlob: () => {}}}),
+    true,
+    'Should return true because both navigator and msSaveOrOpenBlob are defined'
+  );
   t.end();
 });

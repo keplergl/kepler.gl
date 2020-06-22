@@ -22,8 +22,9 @@
 import React, {Component, Fragment} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import {FormattedMessage} from 'react-intl';
 
-import {Button, PanelLabel, SidePanelSection, Input} from 'components/common/styled-components';
+import {Button, Input, PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
 
 import VisConfigByFieldSelector from './vis-config-by-field-selector';
@@ -33,13 +34,13 @@ import DimensionScaleSelector from './dimension-scale-selector';
 import ColorSelector from './color-selector';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
 import VisConfigSwitch from './vis-config-switch';
-import VisConfigSlider from './vis-config-slider';
+import VisConfigSliderFactory from './vis-config-slider';
 import LayerConfigGroup, {ConfigGroupCollapsibleContent} from './layer-config-group';
-import TextLabelPanel from './text-label-panel';
+import TextLabelPanelFactory from './text-label-panel';
 
 import {capitalizeFirstLetter} from 'utils/utils';
 
-import {LAYER_TYPES, CHANNEL_SCALE_SUPPORTED_FIELDS} from 'constants/default-settings';
+import {CHANNEL_SCALE_SUPPORTED_FIELDS, LAYER_TYPES} from 'constants/default-settings';
 
 const StyledLayerConfigurator = styled.div.attrs({
   className: 'layer-panel__config'
@@ -77,9 +78,17 @@ export const getLayerChannelConfigProps = props => ({
   onChange: props.updateLayerVisualChannelConfig
 });
 
-LayerConfiguratorFactory.deps = [SourceDataSelectorFactory];
+LayerConfiguratorFactory.deps = [
+  SourceDataSelectorFactory,
+  VisConfigSliderFactory,
+  TextLabelPanelFactory
+];
 
-export default function LayerConfiguratorFactory(SourceDataSelector) {
+export default function LayerConfiguratorFactory(
+  SourceDataSelector,
+  VisConfigSlider,
+  TextLabelPanel
+) {
   class LayerConfigurator extends Component {
     static propTypes = {
       layer: PropTypes.object.isRequired,
@@ -111,7 +120,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
         <StyledLayerVisualConfigurator>
           {/* Fill Color */}
           <LayerConfigGroup
-            {...layer.visConfigSettings.filled}
+            {...(layer.visConfigSettings.filled || {label: 'layer.color'})}
             {...visConfiguratorProps}
             collapsible
           >
@@ -153,7 +162,6 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
                 <VisConfigSlider
                   {...layer.visConfigSettings.thickness}
                   {...visConfiguratorProps}
-                  label={false}
                   disabled={!layer.config.visConfig.outline}
                 />
               </ConfigGroupCollapsibleContent>
@@ -161,7 +169,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           ) : null}
 
           {/* Radius */}
-          <LayerConfigGroup label={'radius'} collapsible>
+          <LayerConfigGroup label={'layer.radius'} collapsible>
             {!layer.config.sizeField ? (
               <VisConfigSlider
                 {...layer.visConfigSettings.radius}
@@ -212,7 +220,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
-          <LayerConfigGroup label={'color'} collapsible>
+          <LayerConfigGroup label={'layer.color'} collapsible>
             <LayerColorRangeSelector {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
               <AggrScaleSelector {...layerConfiguratorProps} channel={layer.visualChannels.color} />
@@ -232,7 +240,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           </LayerConfigGroup>
 
           {/* Cluster Radius */}
-          <LayerConfigGroup label={'radius'} collapsible>
+          <LayerConfigGroup label={'layer.radius'} collapsible>
             <VisConfigSlider {...layer.visConfigSettings.clusterRadius} {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider {...layer.visConfigSettings.radiusRange} {...visConfiguratorProps} />
@@ -251,14 +259,14 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
-          <LayerConfigGroup label={'color'} collapsible>
+          <LayerConfigGroup label={'layer.color'} collapsible>
             <LayerColorRangeSelector {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
           {/* Radius */}
-          <LayerConfigGroup label={'radius'}>
+          <LayerConfigGroup label={'layer.radius'}>
             <VisConfigSlider
               {...layer.visConfigSettings.radius}
               {...visConfiguratorProps}
@@ -266,7 +274,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
             />
           </LayerConfigGroup>
           {/* Weight */}
-          <LayerConfigGroup label={'weight'}>
+          <LayerConfigGroup label={'layer.weight'}>
             <ChannelByValueSelector
               channel={layer.visualChannels.weight}
               {...layerChannelConfigProps}
@@ -294,13 +302,13 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       const {
         visConfig: {enable3d}
       } = config;
-      const elevationByDescription = 'When off, height is based on count of points';
-      const colorByDescription = 'When off, color is based on count of points';
+      const elevationByDescription = 'layer.elevationByDescription';
+      const colorByDescription = 'layer.colorByDescription';
 
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
-          <LayerConfigGroup label={'color'} collapsible>
+          <LayerConfigGroup label={'layer.color'} collapsible>
             <LayerColorRangeSelector {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
               <AggrScaleSelector {...layerConfiguratorProps} channel={layer.visualChannels.color} />
@@ -328,7 +336,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           </LayerConfigGroup>
 
           {/* Cell size */}
-          <LayerConfigGroup label={'radius'} collapsible>
+          <LayerConfigGroup label={'layer.radius'} collapsible>
             <VisConfigSlider {...layer.visConfigSettings.worldUnitSize} {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider {...layer.visConfigSettings.coverage} {...visConfiguratorProps} />
@@ -388,7 +396,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
-          <LayerConfigGroup label={'color'} collapsible>
+          <LayerConfigGroup label={'layer.color'} collapsible>
             {layer.config.colorField ? (
               <LayerColorRangeSelector {...visConfiguratorProps} />
             ) : (
@@ -404,7 +412,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           </LayerConfigGroup>
 
           {/* Coverage */}
-          <LayerConfigGroup label={'coverage'} collapsible>
+          <LayerConfigGroup label={'layer.coverage'} collapsible>
             {!layer.config.coverageField ? (
               <VisConfigSlider
                 {...layer.visConfigSettings.coverage}
@@ -444,7 +452,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
               <VisConfigSlider
                 {...layer.visConfigSettings.sizeRange}
                 {...visConfiguratorProps}
-                label="Height Range"
+                label="layerVisConfigs.heightRange"
               />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
@@ -465,7 +473,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
-          <LayerConfigGroup label={'color'} collapsible>
+          <LayerConfigGroup label={'layer.color'} collapsible>
             {layer.config.colorField ? (
               <LayerColorRangeSelector {...visConfiguratorProps} />
             ) : (
@@ -486,7 +494,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           </LayerConfigGroup>
 
           {/* thickness */}
-          <LayerConfigGroup label={'stroke'} collapsible>
+          <LayerConfigGroup label={'layer.stroke'} collapsible>
             {layer.config.sizeField ? (
               <VisConfigSlider
                 {...layer.visConfigSettings.sizeRange}
@@ -525,7 +533,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
-          <LayerConfigGroup label={'color'} collapsible>
+          <LayerConfigGroup label={'layer.color'} collapsible>
             {layer.config.colorField ? (
               <LayerColorRangeSelector {...visConfiguratorProps} />
             ) : (
@@ -541,7 +549,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           </LayerConfigGroup>
 
           {/* Stroke Width */}
-          <LayerConfigGroup {...visConfiguratorProps} label="Stroke Width" collapsible>
+          <LayerConfigGroup {...visConfiguratorProps} label="layer.strokeWidth" collapsible>
             {layer.config.sizeField ? (
               <VisConfigSlider
                 {...layer.visConfigSettings.sizeRange}
@@ -568,8 +576,8 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           <LayerConfigGroup
             {...visConfiguratorProps}
             {...(featureTypes.polygon ? layer.visConfigSettings.stroked : {})}
-            label="Trail Length"
-            description="Number of seconds for a path to completely fade out"
+            label="layer.trailLength"
+            description="layer.trailLengthDescription"
           >
             <VisConfigSlider
               {...layer.visConfigSettings.trailLength}
@@ -599,7 +607,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
             <LayerConfigGroup
               {...layer.visConfigSettings.filled}
               {...visConfiguratorProps}
-              label="Fill Color"
+              label="layer.fillColor"
               collapsible
             >
               {layer.config.colorField ? (
@@ -621,7 +629,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           <LayerConfigGroup
             {...layer.visConfigSettings.stroked}
             {...visConfiguratorProps}
-            label="Stroke Color"
+            label="layer.strokeColor"
             collapsible
           >
             {layer.config.strokeColorField ? (
@@ -649,7 +657,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           <LayerConfigGroup
             {...visConfiguratorProps}
             {...(featureTypes.polygon ? layer.visConfigSettings.stroked : {})}
-            label="Stroke Width"
+            label="layer.strokeWidth"
             collapsible
           >
             {layer.config.sizeField ? (
@@ -698,7 +706,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
 
           {/* Radius */}
           {featureTypes.point ? (
-            <LayerConfigGroup label={'radius'} collapsible>
+            <LayerConfigGroup label={'layer.radius'} collapsible>
               {!layer.config.radiusField ? (
                 <VisConfigSlider
                   {...layer.visConfigSettings.radius}
@@ -729,7 +737,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
     _render3DLayerConfig({layer, visConfiguratorProps}) {
       return (
         <Fragment>
-          <LayerConfigGroup label={'3D Model'} collapsible>
+          <LayerConfigGroup label={'layer.3DModel'} collapsible>
             <Input
               type="file"
               accept=".glb,.gltf"
@@ -741,7 +749,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
               }}
             />
           </LayerConfigGroup>
-          <LayerConfigGroup label={'3D Model Options'} collapsible>
+          <LayerConfigGroup label={'layer.3DModelOptions'} collapsible>
             <VisConfigSlider
               {...layer.visConfigSettings.sizeScale}
               {...visConfiguratorProps}
@@ -783,7 +791,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           <LayerConfigGroup
             {...layer.visConfigSettings.filled}
             {...visConfiguratorProps}
-            label="Fill Color"
+            label="layer.fillColor"
             collapsible
           >
             {layer.config.colorField ? (
@@ -804,7 +812,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           <LayerConfigGroup
             {...layer.visConfigSettings.stroked}
             {...visConfiguratorProps}
-            label="Stroke Color"
+            label="layer.strokeColor"
             collapsible
           >
             {layer.config.strokeColorField ? (
@@ -825,7 +833,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           </LayerConfigGroup>
 
           {/* Stroke Width */}
-          <LayerConfigGroup {...visConfiguratorProps} label="Stroke Width" collapsible>
+          <LayerConfigGroup {...visConfiguratorProps} label="layer.strokeWidth" collapsible>
             {layer.config.sizeField ? (
               <VisConfigSlider
                 {...layer.visConfigSettings.sizeRange}
@@ -861,13 +869,13 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
             <VisConfigSlider
               {...layer.visConfigSettings.elevationScale}
               {...visConfiguratorProps}
-              label="Elevation Scale"
+              label="layerVisConfigs.elevationScale"
             />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider
                 {...layer.visConfigSettings.heightRange}
                 {...visConfiguratorProps}
-                label="Height Range"
+                label="layerVisConfigs.heightRange"
               />
               <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.wireframe} />
             </ConfigGroupCollapsibleContent>
@@ -892,7 +900,7 @@ export default function LayerConfiguratorFactory(SourceDataSelector) {
           {layer.layerInfoModal ? (
             <HowToButton onClick={() => this.props.openModal(layer.layerInfoModal)} />
           ) : null}
-          <LayerConfigGroup label={'basic'} collapsible expanded={!layer.hasAllColumns()}>
+          <LayerConfigGroup label={'layer.basic'} collapsible expanded={!layer.hasAllColumns()}>
             <LayerTypeSelector
               layer={layer}
               layerTypeOptions={layerTypeOptions}
@@ -948,7 +956,7 @@ const StyledHowToButton = styled.div`
 export const HowToButton = ({onClick}) => (
   <StyledHowToButton>
     <Button link small onClick={onClick}>
-      How to
+      <FormattedMessage id={'layerConfiguration.howTo'} />
     </Button>
   </StyledHowToButton>
 );
@@ -1035,7 +1043,7 @@ export const ChannelByValueSelector = ({layer, channel, onChange, fields, descri
   const supportedFields = fields.filter(({type}) => channelSupportedFieldTypes.includes(type));
   const scaleOptions = layer.getScaleOptions(channel.key);
   const showScale = !layer.isAggregated && layer.config[scale] && scaleOptions.length > 1;
-  const defaultDescription = `Calculate ${property} based on selected field`;
+  const defaultDescription = 'layerConfiguration.defaultDescription';
 
   return (
     <VisConfigByFieldSelector
@@ -1046,7 +1054,7 @@ export const ChannelByValueSelector = ({layer, channel, onChange, fields, descri
       id={layer.id}
       key={`${key}-channel-selector`}
       property={property}
-      placeholder={defaultMeasure || 'Select a field'}
+      placeholder={defaultMeasure || 'placeholder.selectField'}
       range={layer.config.visConfig[range]}
       scaleOptions={scaleOptions}
       scaleType={scale ? layer.config[scale] : null}
@@ -1082,7 +1090,9 @@ export const AggregationTypeSelector = ({layer, channel, onChange}) => {
 
   return (
     <SidePanelSection>
-      <PanelLabel>{`Aggregate ${selectedField.name} by`}</PanelLabel>
+      <PanelLabel>
+        <FormattedMessage id={'layer.aggregateBy'} values={{field: selectedField.name}} />
+      </PanelLabel>
       <ItemSelector
         selectedItems={visConfig[aggregation]}
         options={aggregationOptions}

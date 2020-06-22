@@ -77,7 +77,16 @@ test('interactionUtil -> findFieldsToShow', t => {
     ]
   ];
 
-  const expectedFields = ['random', 'something_else'];
+  const expectedFields = [
+    {
+      name: 'random',
+      format: null
+    },
+    {
+      name: 'something_else',
+      format: null
+    }
+  ];
 
   t.deepEqual(
     findFieldsToShow({fields: someFields, id: dataId}),
@@ -89,7 +98,30 @@ test('interactionUtil -> findFieldsToShow', t => {
 });
 
 test('interactionUtil -> autoFindTooltipFields', t => {
-  const expectedFields = {test: ['hex_id', 'a', 'b', 'c', 'd']};
+  const expectedFields = {
+    test: [
+      {
+        name: 'hex_id',
+        format: null
+      },
+      {
+        name: 'a',
+        format: null
+      },
+      {
+        name: 'b',
+        format: null
+      },
+      {
+        name: 'c',
+        format: null
+      },
+      {
+        name: 'd',
+        format: null
+      }
+    ]
+  };
 
   t.deepEqual(
     findFieldsToShow({fields, id: 'test'}),

@@ -27,6 +27,7 @@ import {Button} from 'components/common/styled-components';
 import CloudTile from './cloud-tile';
 import {Base, ArrowLeft} from 'components/common/icons';
 import ProviderModalContainer from './provider-modal-container';
+import {FormattedMessage} from 'react-intl';
 
 const StyledProviderSection = styled.div.attrs({
   className: 'provider-selection'
@@ -317,7 +318,7 @@ function LoadStorageMapFactory() {
             <>
               {isProviderLoading && (
                 <StyledSpinner>
-                  <LoadingDialog size={64} message="Loading..." />
+                  <LoadingDialog size={64} />
                 </StyledSpinner>
               )}
               {!isProviderLoading && visualizations && (
@@ -326,7 +327,7 @@ function LoadStorageMapFactory() {
                     <StyledBackBtn>
                       <Button link onClick={this._clickBack}>
                         <ArrowLeft height="14px" />
-                        Back
+                        <FormattedMessage id={'modal.loadStorageMap.back'} />
                       </Button>
                     </StyledBackBtn>
                     {provider.getManagementUrl && (
@@ -337,13 +338,17 @@ function LoadStorageMapFactory() {
                         rel="noopener noreferrer"
                         style={{textDecoration: 'underline'}}
                       >
-                        Go to your Kepler.gl {provider.displayName} page
+                        <FormattedMessage
+                          id={'modal.loadStorageMap.back'}
+                          values={{displayName: provider.displayName}}
+                        />
                       </a>
                     )}
                   </StyledStorageHeader>
                   <StyledProviderVisSection>
                     <span className="title">
-                      <span>{currentProvider}</span> Storage / Maps
+                      <span>{currentProvider}</span>
+                      <FormattedMessage id={'modal.loadStorageMap.storageMaps'} />
                     </span>
                     <StyledSeparator />
                     <StyledVisualizationList>
@@ -356,7 +361,9 @@ function LoadStorageMapFactory() {
                           />
                         ))
                       ) : (
-                        <div className="visualization-list__message">No saved maps yet</div>
+                        <div className="visualization-list__message">
+                          <FormattedMessage id={'modal.loadStorageMap.noSavedMaps'} />
+                        </div>
                       )}
                     </StyledVisualizationList>
                   </StyledProviderVisSection>

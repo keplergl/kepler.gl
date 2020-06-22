@@ -46,7 +46,7 @@ Because CSV file content is uploaded as strings, kepler.gl will attempt to detec
 |---|---
 |**_`boolean`_** | `True`, `False`|
 |**_`date`_** | `2019-01-01`|
-|**_`geojson`_** | **WKT string:** `POLYGON ((-74.158 40.835, -74.148 40.830, -74.151 40.832, -74.158 40.835))`, **or GeoJson String** `{"type":"Polygon","coordinates":[[[-74.158,40.835],[-74.157,40.839,[-74.148,40.830],[-74.150,40.833],[-74.151,40.832],[-74.158,40.835]]]}` |
+|**_`geojson`_** | **WKT string:** `POLYGON ((-74.158 40.835, -74.148 40.830, -74.151 40.832, -74.158 40.835))`, **or GeoJson String** `{"type":"Polygon","coordinates":[[[-74.158,40.835],[-74.157,40.839],[-74.148,40.830],[-74.150,40.833],[-74.151,40.832],[-74.158,40.835]]]}` |
 |**_`integer`_** | `1`, `2`, `3`|
 |**_`real`_** | `-74.158`, `40.832`|
 |**_`string`_** | `hello`, `world` |
@@ -223,7 +223,7 @@ To add additional datasets to your map:
 
 3. Repeat as needed. There is no limit on the number of datasets you can add. However, adding too many might cause its performance to suffer.
 
-[Back to table of contents](../a-introduction.md)
+[Back to table of contents](../README.md)
 
 
 [kepler.gl-data-github]: https://github.com/uber-web/kepler.gl-data

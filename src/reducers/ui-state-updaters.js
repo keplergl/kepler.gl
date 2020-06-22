@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// @ts-nocheck
 import {
   ADD_DATA_ID,
   DEFAULT_NOTIFICATION_TOPICS,
@@ -28,6 +29,7 @@ import {
   EXPORT_MAP_FORMATS,
   RESOLUTIONS
 } from 'constants/default-settings';
+import {LOCALE_CODES} from 'localization/locales';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 import {calculateExportImageSize} from 'utils/export-utils';
 
@@ -74,17 +76,6 @@ export const DEFAULT_MODAL = ADD_DATA_ID;
 const uiStateUpdaters = null;
 /* eslint-enable no-unused-vars */
 
-/**
- * A list of map control visibility and whether is it active.
- * @memberof uiStateUpdaters
- * @constant
- * @type {Object}
- * @property {Object} visibleLayers Default: `{show: true, active: false}`
- * @property {Object} mapLegend Default: `{show: true, active: false}`
- * @property {Object} toggle3d Default: `{show: true}`
- * @property {Object} splitMap Default: `{show: true}`
- * @public
- */
 const DEFAULT_MAP_CONTROLS_FEATURES = {
   show: true,
   active: false,
@@ -92,12 +83,26 @@ const DEFAULT_MAP_CONTROLS_FEATURES = {
   activeMapIndex: 0
 };
 
+/**
+ * A list of map control visibility and whether is it active.
+ * @memberof uiStateUpdaters
+ * @constant
+ * @property visibleLayers Default: `{show: true, active: false}`
+ * @property mapLegend Default: `{show: true, active: false}`
+ * @property toggle3d Default: `{show: true}`
+ * @property splitMap Default: `{show: true}`
+ * @property mapDraw Default: `{show: true, active: false}`
+ * @property mapLocale Default: `{show: false, active: false}`
+ * @type {import('./ui-state-updaters').MapControls}
+ * @public
+ */
 export const DEFAULT_MAP_CONTROLS = [
   'visibleLayers',
   'mapLegend',
   'toggle3d',
   'splitMap',
-  'mapDraw'
+  'mapDraw',
+  'mapLocale'
 ].reduce(
   (final, current) => ({
     ...final,
@@ -110,13 +115,16 @@ export const DEFAULT_MAP_CONTROLS = [
  * Default image export config
  * @memberof uiStateUpdaters
  * @constant
- * @type {Object}
- * @property {string} ratio Default: `'SCREEN'`,
- * @property {string} resolution Default: `'ONE_X'`,
- * @property {boolean} legend Default: `false`,
- * @property {string} imageDataUri Default: `''`,
- * @property {boolean} exporting Default: `false`
- * @property {boolean} error Default: `false`
+ * @property ratio Default: `'SCREEN'`,
+ * @property resolution Default: `'ONE_X'`,
+ * @property legend Default: `false`,
+ * @property mapH Default: 0,
+ * @property mapW Default: 0,
+ * @property imageSize Default: {zoomOffset: 0, scale: 1, imageW: 0, imageH: 0},
+ * @property imageDataUri Default: `''`,
+ * @property exporting Default: `false`
+ * @property error Default: `false`
+ * @type {import('./ui-state-updaters').ExportImage}
  * @public
  */
 export const DEFAULT_EXPORT_IMAGE = {
@@ -146,12 +154,10 @@ export const DEFAULT_LOAD_FILES = {
  * Default initial `exportData` settings
  * @memberof uiStateUpdaters
  * @constant
- * @type {Object}
- * @property {string} selectedDataset Default: `''`,
- * @property {string} dataType Default: `'csv'`,
- * @property {boolean} filtered Default: `true`,
- * @property {boolean} config deprecated
- * @property {boolean} data used in modal config export. Default: `false`
+ * @property selectedDataset Default: `''`,
+ * @property dataType Default: `'csv'`,
+ * @property filtered Default: `true`,
+ * @type {import('./ui-state-updaters').ExportData}
  * @public
  */
 export const DEFAULT_EXPORT_DATA = {
@@ -162,15 +168,15 @@ export const DEFAULT_EXPORT_DATA = {
 
 /**
  * @constant
- * @type {Array}
  */
 export const DEFAULT_NOTIFICATIONS = [];
 
 /**
  * @constant
- * @type {Object}
- * @property {string} exportMapboxAccessToken - Default: null, this is used when we provide a default mapbox token for users to take advantage of
- * @property {string} userMapboxToken - Default: '', mapbox token provided by user through input field
+ * @property exportMapboxAccessToken - Default: null, this is used when we provide a default mapbox token for users to take advantage of
+ * @property userMapboxToken - Default: '', mapbox token provided by user through input field
+ * @property mode - Default: 'READ', read only or editable
+ * @type {import('./ui-state-updaters').ExportHtml}
  * @public
  */
 export const DEFAULT_EXPORT_HTML = {
@@ -179,10 +185,25 @@ export const DEFAULT_EXPORT_HTML = {
   mode: EXPORT_HTML_MAP_MODES.READ
 };
 
+/**
+ * @constant
+ * @property hasData - Default: 'true',
+ * @type {import('./ui-state-updaters').ExportJson}
+ * @public
+ */
 export const DEFAULT_EXPORT_JSON = {
   hasData: true
 };
 
+/**
+ * Export Map Config
+ * @constant
+ * @property HTML - Default: 'DEFAULT_EXPORT_HTML',
+ * @property JSON - Default: 'DEFAULT_EXPORT_JSON',
+ * @property format - Default: 'HTML',
+ * @type {import('./ui-state-updaters').ExportMap}
+ * @public
+ */
 export const DEFAULT_EXPORT_MAP = {
   [EXPORT_MAP_FORMATS.HTML]: DEFAULT_EXPORT_HTML,
   [EXPORT_MAP_FORMATS.JSON]: DEFAULT_EXPORT_JSON,
@@ -193,16 +214,19 @@ export const DEFAULT_EXPORT_MAP = {
  * Default initial `uiState`
  * @memberof uiStateUpdaters
  * @constant
- * @type {Object}
- * @property {boolean} readOnly Default: `false`
- * @property {string} activeSidePanel Default: `'layer'`
- * @property {string|null} currentModal Default: `'addData'`
- * @property {string|null} datasetKeyToRemove Default: `null`
- * @property {string|null} visibleDropdown Default: `null`
- * @property {Object} exportImage Default: [`DEFAULT_EXPORT_IMAGE`](#default_export_image)
- * @property {Object} exportData Default: [`DEFAULT_EXPORT_DATA`](#default_export_data)
- * @property {Object} mapControls Default: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
- * @property {number} activeMapIndex defines which map the user clicked on. Default: 0
+ * @property readOnly Default: `false`
+ * @property activeSidePanel Default: `'layer'`
+ * @property currentModal Default: `'addData'`
+ * @property datasetKeyToRemove Default: `null`
+ * @property visibleDropdown Default: `null`
+ * @property exportImage Default: [`DEFAULT_EXPORT_IMAGE`](#default_export_image)
+ * @property exportData Default: [`DEFAULT_EXPORT_DATA`](#default_export_data)
+ * @property exportMap Default: [`DEFAULT_EXPORT_MAP`](#default_export_map)
+ * @property mapControls Default: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
+ * @property notifications Default: `[]`
+ * @property notifications Default: `[]`
+ * @property loadFiles
+ * @type {import('./ui-state-updaters').UiState}
  * @public
  */
 export const INITIAL_UI_STATE = {
@@ -222,17 +246,20 @@ export const INITIAL_UI_STATE = {
   // ui notifications
   notifications: DEFAULT_NOTIFICATIONS,
   // load files
-  loadFiles: DEFAULT_LOAD_FILES
+  loadFiles: DEFAULT_LOAD_FILES,
+  // Locale of the UI
+  locale: LOCALE_CODES.en
 };
 
 /* Updaters */
 /**
  * Toggle active side panel
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {Object} action
- * @param {string|null} action.payload id of side panel to be shown, one of `layer`, `filter`, `interaction`, `map`. close side panel if `null`
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @param action
+ * @param action.payload id of side panel to be shown, one of `layer`, `filter`, `interaction`, `map`. close side panel if `null`
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').toggleSidePanelUpdater}
  * @public
  */
 export const toggleSidePanelUpdater = (state, {payload: id}) => {
@@ -247,17 +274,17 @@ export const toggleSidePanelUpdater = (state, {payload: id}) => {
 /**
  * Show and hide modal dialog
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {Object} action
- * @param {string|null} action.payload id of modal to be shown, null to hide modals. One of:
- *
+ * @param state `uiState`
+ * @param action
+ * @paramaction.payload id of modal to be shown, null to hide modals. One of:
  *  - [`DATA_TABLE_ID`](../constants/default-settings.md#data_table_id)
  *  - [`DELETE_DATA_ID`](../constants/default-settings.md#delete_data_id)
  *  - [`ADD_DATA_ID`](../constants/default-settings.md#add_data_id)
  *  - [`EXPORT_IMAGE_ID`](../constants/default-settings.md#export_image_id)
  *  - [`EXPORT_DATA_ID`](../constants/default-settings.md#export_data_id)
  *  - [`ADD_MAP_STYLE_ID`](../constants/default-settings.md#add_map_style_id)
- * @returns {Object} nextState
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').toggleModalUpdater}
  * @public
  */
 export const toggleModalUpdater = (state, {payload: id}) => ({
@@ -268,10 +295,7 @@ export const toggleModalUpdater = (state, {payload: id}) => ({
 /**
  * Hide and show side panel header dropdown, activated by clicking the share link on top of the side panel
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {Object} action
- * @param {string} action.payload id of the dropdown
- * @returns {Object} nextState
+ * @type {typeof import('./ui-state-updaters').showExportDropdownUpdater}
  * @public
  */
 export const showExportDropdownUpdater = (state, {payload: id}) => ({
@@ -282,8 +306,7 @@ export const showExportDropdownUpdater = (state, {payload: id}) => ({
 /**
  * Hide side panel header dropdown, activated by clicking the share link on top of the side panel
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @returns {Object} nextState
+ * @type {typeof import('./ui-state-updaters').hideExportDropdownUpdater}
  * @public
  */
 export const hideExportDropdownUpdater = state => ({
@@ -294,10 +317,11 @@ export const hideExportDropdownUpdater = state => ({
 /**
  * Toggle active map control panel
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {Object} action action
- * @param {string} action.payload map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @param action action
+ * @param action.payload map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').toggleMapControlUpdater}
  * @public
  */
 export const toggleMapControlUpdater = (state, {payload: {panelId, index = 0}}) => ({
@@ -321,10 +345,11 @@ export const toggleMapControlUpdater = (state, {payload: {panelId, index = 0}}) 
 /**
  * Toggle active map control panel
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {Object} action
- * @param {string} action.payload dataset id
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @param action
+ * @param action.payload dataset id
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').openDeleteModalUpdater}
  * @public
  */
 export const openDeleteModalUpdater = (state, {payload: datasetKeyToRemove}) => ({
@@ -336,11 +361,12 @@ export const openDeleteModalUpdater = (state, {payload: datasetKeyToRemove}) => 
 /**
  * Set `exportImage.legend` to `true` or `false`
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').setExportImageSettingUpdater}
  * @public
  */
-export const setExportImageSetting = (state, {payload: newSetting}) => {
+export const setExportImageSettingUpdater = (state, {payload: newSetting}) => {
   const updated = {...state.exportImage, ...newSetting};
   const imageSize = calculateExportImageSize(updated) || state.exportImage.imageSize;
 
@@ -356,11 +382,12 @@ export const setExportImageSetting = (state, {payload: newSetting}) => {
 /**
  * Set `exportImage.exporting` to `true`
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').startExportingImageUpdater}
  * @public
  */
-export const startExportingImage = state => ({
+export const startExportingImageUpdater = state => ({
   ...state,
   exportImage: {
     ...state.exportImage,
@@ -372,13 +399,14 @@ export const startExportingImage = state => ({
 /**
  * Set `exportImage.setExportImageDataUri` to a image dataUri
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {Object} action
- * @param {string} action.payload export image data uri
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @param action
+ * @param action.payload export image data uri
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').setExportImageDataUriUpdater}
  * @public
  */
-export const setExportImageDataUri = (state, {payload: dataUri}) => ({
+export const setExportImageDataUriUpdater = (state, {payload: dataUri}) => ({
   ...state,
   exportImage: {
     ...state.exportImage,
@@ -387,7 +415,12 @@ export const setExportImageDataUri = (state, {payload: dataUri}) => ({
   }
 });
 
-export const setExportImageError = (state, {payload: error}) => ({
+/**
+ * @memberof uiStateUpdaters
+ * @type {typeof import('./ui-state-updaters').setExportImageErrorUpdater}
+ * @public
+ */
+export const setExportImageErrorUpdater = (state, {payload: error}) => ({
   ...state,
   exportImage: {
     ...state.exportImage,
@@ -399,11 +432,10 @@ export const setExportImageError = (state, {payload: error}) => ({
 /**
  * Delete cached export image
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @returns {Object} nextState
+ * @type {typeof import('./ui-state-updaters').cleanupExportImageUpdater}
  * @public
  */
-export const cleanupExportImage = state => ({
+export const cleanupExportImageUpdater = state => ({
   ...state,
   exportImage: {
     ...state.exportImage,
@@ -416,10 +448,11 @@ export const cleanupExportImage = state => ({
 /**
  * Set selected dataset for export
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {Object} action
- * @param {string} action.payload dataset id
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @param action
+ * @param action.payload dataset id
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').setExportSelectedDatasetUpdater}
  * @public
  */
 export const setExportSelectedDatasetUpdater = (state, {payload: dataset}) => ({
@@ -433,10 +466,11 @@ export const setExportSelectedDatasetUpdater = (state, {payload: dataset}) => ({
 /**
  * Set data format for exporting data
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {Object} action
- * @param {string} action.payload one of `'text/csv'`
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @param action
+ * @param action.payload one of `'text/csv'`
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').setExportDataTypeUpdater}
  * @public
  */
 export const setExportDataTypeUpdater = (state, {payload: dataType}) => ({
@@ -450,10 +484,11 @@ export const setExportDataTypeUpdater = (state, {payload: dataType}) => ({
 /**
  * Whether to export filtered data, `true` or `false`
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {Object} action
- * @param {boolean} action.payload
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @param action
+ * @param action.payload
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').setExportFilteredUpdater}
  * @public
  */
 export const setExportFilteredUpdater = (state, {payload: filtered}) => ({
@@ -467,8 +502,9 @@ export const setExportFilteredUpdater = (state, {payload: filtered}) => ({
 /**
  * Whether to including data in map config, toggle between `true` or `false`
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').setExportDataUpdater}
  * @public
  */
 export const setExportDataUpdater = state => ({
@@ -484,10 +520,11 @@ export const setExportDataUpdater = state => ({
 
 /**
  * whether to export a mapbox access to HTML single page
- * @param {Object} state - `uiState`
- * @param {Object} action
- * @param {string} action.payload
- * @returns {Object} nextState
+ * @param state - `uiState`
+ * @param action
+ * @param action.payload
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').setUserMapboxAccessTokenUpdater}
  * @public
  */
 export const setUserMapboxAccessTokenUpdater = (state, {payload: userMapboxToken}) => ({
@@ -503,9 +540,11 @@ export const setUserMapboxAccessTokenUpdater = (state, {payload: userMapboxToken
 
 /**
  * Sets the export map format
- * @param {Object} state - `uiState`
- * @param {string} format to use to export the map onto
- * @return {Object} nextState
+ * @param state - `uiState`
+ * @param action
+ * @param action.payload format to use to export the map into
+ * @return nextState
+ * @type {typeof import('./ui-state-updaters').setExportMapFormatUpdater}
  */
 export const setExportMapFormatUpdater = (state, {payload: format}) => ({
   ...state,
@@ -517,11 +556,13 @@ export const setExportMapFormatUpdater = (state, {payload: format}) => ({
 
 /**
  * Set the export html map mode
- * @param {Object} state - `uiState`
- * @param {string} mode to be set (available modes: EXPORT_HTML_MAP_MODES)
- * @return {{[p: string]: *}}
+ * @param state - `uiState`
+ * @param action
+ * @param action.payload to be set (available modes: EXPORT_HTML_MAP_MODES)
+ * @return nextState
+ * @type {typeof import('./ui-state-updaters').setExportMapHTMLModeUpdater}
  */
-export const setExportMapHTMLMode = (state, {payload: mode}) => ({
+export const setExportMapHTMLModeUpdater = (state, {payload: mode}) => ({
   ...state,
   exportMap: {
     ...state.exportMap,
@@ -535,10 +576,11 @@ export const setExportMapHTMLMode = (state, {payload: mode}) => ({
 /**
  * Add a notification to be displayed
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {Object} action
- * @param {Object} action.payload
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @param action
+ * @param action.payload
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').addNotificationUpdater}
  * @public
  */
 export const addNotificationUpdater = (state, {payload}) => ({
@@ -549,10 +591,11 @@ export const addNotificationUpdater = (state, {payload}) => ({
 /**
  * Remove a notification
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @param {Object} action
- * @param {String} action.payload id of the notification to be removed
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @param action
+ * @param action.payload id of the notification to be removed
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').removeNotificationUpdater}
  * @public
  */
 export const removeNotificationUpdater = (state, {payload: id}) => ({
@@ -563,8 +606,9 @@ export const removeNotificationUpdater = (state, {payload: id}) => ({
 /**
  * Fired when file loading begin
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').loadFilesUpdater}
  * @public
  */
 export const loadFilesUpdater = state => ({
@@ -578,8 +622,9 @@ export const loadFilesUpdater = state => ({
 /**
  * Handles loading file success and set fileLoading property to false
  * @memberof uiStateUpdaters
- * @param {Object} state `uiState`
- * @returns {Object} nextState
+ * @param state `uiState`
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').loadFilesSuccessUpdater}
  */
 export const loadFilesSuccessUpdater = state => ({
   ...state,
@@ -593,8 +638,10 @@ export const loadFilesSuccessUpdater = state => ({
  * Handles load file error and set fileLoading property to false
  * @memberof uiStateUpdaters
  * @param state
- * @param error
- * @returns {Object} nextState
+ * @param action
+ * @param action.error
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').loadFilesErrUpdater}
  * @public
  */
 export const loadFilesErrUpdater = (state, {error}) =>
@@ -618,7 +665,8 @@ export const loadFilesErrUpdater = (state, {error}) =>
  * Handles toggle map split and reset all map control index to 0
  * @memberof uiStateUpdaters
  * @param state
- * @returns {Object} nextState
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').toggleSplitMapUpdater}
  * @public
  */
 export const toggleSplitMapUpdater = state => ({
@@ -633,4 +681,20 @@ export const toggleSplitMapUpdater = state => ({
     }),
     {}
   )
+});
+
+/**
+ * Set the locale of the UI
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload
+ * @param action.payload.locale locale
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').setLocaleUpdater}
+ * @public
+ */
+export const setLocaleUpdater = (state, {payload: {locale}}) => ({
+  ...state,
+  locale
 });

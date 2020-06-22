@@ -18,26 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to tdahe following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-
 import {hexToRgb} from './color-utils';
 import uniq from 'lodash.uniq';
 import {TRIP_POINT_FIELDS, SORT_ORDER} from 'constants/default-settings';
@@ -59,6 +39,7 @@ const datasetColors = [
 
 /**
  * Random color generator
+ * @return {Generator<import('reducers/types').RGBColor>}
  */
 function* generateColor() {
   let index = 0;
@@ -72,6 +53,7 @@ function* generateColor() {
 
 export const datasetColorMaker = generateColor();
 
+/** @type {typeof import('./dataset-utils').getNewDatasetColor} */
 function getNewDatasetColor(datasets) {
   const presetColors = datasetColors.map(String);
   const usedColors = uniq(Object.values(datasets).map(d => String(d.color))).filter(c =>
@@ -91,7 +73,11 @@ function getNewDatasetColor(datasets) {
   return color;
 }
 
-export function createNewDataEntry({info = {}, data}, datasets = {}) {
+/**
+ * Take datasets payload from addDataToMap, create datasets entry save to visState
+ * @type {typeof import('./dataset-utils').createNewDataEntry}
+ */
+export function createNewDataEntry({info, data}, datasets = {}) {
   const validatedData = validateInputData(data);
   if (!validatedData) {
     return {};
@@ -101,7 +87,7 @@ export function createNewDataEntry({info = {}, data}, datasets = {}) {
   const datasetInfo = {
     id: generateHashId(4),
     label: 'new dataset',
-    ...info
+    ...(info || {})
   };
   const dataId = datasetInfo.id;
 
@@ -141,8 +127,9 @@ export function removeSuffixAndDelimiters(layerName, suffix) {
 /**
  * Find point fields pairs from fields
  *
- * @param {Array} fields
- * @returns {Array} found point fields
+ * @param fields
+ * @returns found point fields
+ * @type {typeof import('./dataset-utils').findPointFieldPairs}
  */
 export function findPointFieldPairs(fields) {
   const allNames = fields.map(f => f.name.toLowerCase());
@@ -183,6 +170,13 @@ export function findPointFieldPairs(fields) {
   }, []);
 }
 
+/**
+ *
+ * @param dataset
+ * @param column
+ * @param mode
+ * @type {typeof import('./dataset-utils').sortDatasetByColumn}
+ */
 export function sortDatasetByColumn(dataset, column, mode) {
   const {allIndexes, fields, allData} = dataset;
   const fieldIndex = fields.findIndex(f => f.name === column);

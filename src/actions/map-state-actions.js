@@ -85,5 +85,6 @@ export const toggleSplitMap = createAction(ActionTypes.TOGGLE_SPLIT_MAP, index =
  * @public
  */
 /* eslint-disable no-unused-vars */
+// @ts-ignore
 const mapStateActions = null;
 /* eslint-enable no-unused-vars */

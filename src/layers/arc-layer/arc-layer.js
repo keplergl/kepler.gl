@@ -37,10 +37,10 @@ export const arcPosAccessor = ({lat0, lng0, lat1, lng1}) => d => [
 
 export const arcRequiredColumns = ['lat0', 'lng0', 'lat1', 'lng1'];
 export const arcColumnLabels = {
-  lat0: 'source lat',
-  lng0: 'source lng',
-  lat1: 'target lat',
-  lng1: 'target lng'
+  lat0: 'arc.lat0',
+  lng0: 'arc.lng0',
+  lat1: 'arc.lat1',
+  lng1: 'arc.lng1'
 };
 
 export const arcVisConfigs = {

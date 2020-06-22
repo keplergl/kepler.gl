@@ -27,7 +27,7 @@ import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES, DATASET_FORMATS} from 'constants/default-settings';
 import {notNullorUndefined, parseFieldValue, getSampleData} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
-import {GUIDES_FILE_FORMAT} from 'constants/user-guides';
+import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
 import {isPlainObject, toArray} from 'utils/utils';
 
 export const ACCEPTED_ANALYZER_TYPES = [
@@ -77,8 +77,9 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
 /**
  * Process csv data, output a data object with `{fields: [], rows: []}`.
  * The data object can be wrapped in a `dataset` and pass to [`addDataToMap`](../actions/actions.md#adddatatomap)
- * @param {string} rawData raw csv string
- * @returns {Object} data object `{fields: [], rows: []}`
+ * @param rawData raw csv string
+ * @returns  data object `{fields: [], rows: []}` can be passed to addDataToMaps
+ * @type {typeof import('./data-processor').processCsvData}
  * @public
  * @example
  * import {processCsvData} from 'kepler.gl/processors';
@@ -126,7 +127,7 @@ export function processCsvData(rawData) {
 /**
  * Parse rows of csv by analyzed field types. So that `'1'` -> `1`, `'True'` -> `true`
  * @param {Array<Array>} rows
- * @param {Array<Object} fields
+ * @param {Array<Object>} fields
  */
 export function parseRowsByFields(rows, fields) {
   // Edit rows in place
@@ -138,10 +139,7 @@ export function parseRowsByFields(rows, fields) {
 /**
  * Getting sample data for analyzing field type.
  *
- * @param {Array<string>} fields an array of field names
- * @param {Array<Array>} allData
- * @param {Array} sampleCount
- * @returns {Array} formatted fields
+ * @type {typeof import('./data-processor').getSampleForTypeAnalyze}
  */
 export function getSampleForTypeAnalyze({fields, allData, sampleCount = 50}) {
   const total = Math.min(sampleCount, allData.length);
@@ -196,11 +194,11 @@ function cleanUpFalsyCsvValue(rows) {
 /**
  * Process uploaded csv file to parse value by field type
  *
- * @param {Array<Array>} rows
- * @param {Number} geo field index
- * @param {Object} field
- * @param {Number} i
- * @returns {void}
+ * @param rows
+ * @param geoFieldIdx field index
+ * @param field
+ * @param i
+ * @type {typeof import('./data-processor').parseCsvRowsByFieldType}
  */
 export function parseCsvRowsByFieldType(rows, geoFieldIdx, field, i) {
   const parser = PARSE_FIELD_VALUE_FROM_STRING[field.type];
@@ -226,9 +224,10 @@ export function parseCsvRowsByFieldType(rows, geoFieldIdx, field, i) {
  * Analyze field types from data in `string` format, e.g. uploaded csv.
  * Assign `type`, `tableFieldIndex` and `format` (timestamp only) to each field
  *
- * @param {Array<Object>} data array of row object
- * @param {Array} fieldOrder array of field names as string
- * @returns {Array<Object>} formatted fields
+ * @param data array of row object
+ * @param fieldOrder array of field names as string
+ * @returns formatted fields
+ * @type {typeof import('./data-processor').getFieldsFromData}
  * @public
  * @example
  *
@@ -273,21 +272,20 @@ export function getFieldsFromData(data, fieldOrder) {
 
   const {fieldByIndex} = renameDuplicateFields(fieldOrder);
 
-  const result = fieldOrder.reduce((orderedArray, field, index) => {
+  const result = fieldOrder.map((field, index) => {
     const name = fieldByIndex[index];
 
     const fieldMeta = metadata.find(m => m.key === field);
     const {type, format} = fieldMeta || {};
 
-    orderedArray[index] = {
+    return {
       name,
       format,
       tableFieldIndex: index + 1,
       type: analyzerTypeToFieldType(type),
       analyzerType: type
     };
-    return orderedArray;
-  }, []);
+  });
 
   return result;
 }
@@ -326,8 +324,9 @@ export function renameDuplicateFields(fieldOrder) {
 /**
  * Convert type-analyzer output to kepler.gl field types
  *
- * @param {string} aType
- * @returns {string} corresponding type in `ALL_FIELD_TYPES`
+ * @param aType
+ * @returns corresponding type in `ALL_FIELD_TYPES`
+ * @type {typeof import('./data-processor').analyzerTypeToFieldType}}
  */
 /* eslint-disable complexity */
 export function analyzerTypeToFieldType(aType) {
@@ -382,8 +381,9 @@ export function analyzerTypeToFieldType(aType) {
 
 /**
  * Process data where each row is an object, output can be passed to [`addDataToMap`](../actions/actions.md#adddatatomap)
- * @param {Array<Object>} rawData an array of row object, each object should have the same number of keys
- * @returns {Object} dataset containing `fields` and `rows`
+ * @param rawData an array of row object, each object should have the same number of keys
+ * @returns dataset containing `fields` and `rows`
+ * @type {typeof import('./data-processor').processRowObject}
  * @public
  * @example
  * import {addDataToMap} from 'kepler.gl/actions';
@@ -425,8 +425,9 @@ export function processRowObject(rawData) {
  * output a data object with `{fields: [], rows: []}`.
  * The data object can be wrapped in a `dataset` and pass to [`addDataToMap`](../actions/actions.md#adddatatomap)
  *
- * @param {Object} rawData raw geojson feature collection
- * @returns {Object} dataset containing `fields` and `rows`
+ * @param  rawData raw geojson feature collection
+ * @returns  dataset containing `fields` and `rows`
+ * @type {typeof import('./data-processor').processGeojson}
  * @public
  * @example
  * import {addDataToMap} from 'kepler.gl/actions';
@@ -462,7 +463,7 @@ export function processGeojson(rawData) {
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {
     const error = new Error(
-      `Read File Failed: File is not a valid GeoJSON. Read more about [supported file format](${GUIDES_FILE_FORMAT})`
+      `Read File Failed: File is not a valid GeoJSON. Read more about [supported file format](${GUIDES_FILE_FORMAT_DOC})`
     );
     throw error;
     // fail to normalize geojson
@@ -523,10 +524,7 @@ export function formatCsv(data, fields) {
 
 /**
  * Validate input data, adding missing field types, rename duplicate columns
- * @param {Object} data dataset.data
- * @param {Array<Object>} data.fields an array of fields
- * @param {Array<Object>} data.rows an array of data rows
- * @returns {{allData: Array, fields: Array}}
+ * @type {typeof import('./data-processor').validateInputData}
  */
 export function validateInputData(data) {
   if (!isPlainObject(data)) {
@@ -636,6 +634,9 @@ export function processKeplerglDataset(rawData) {
   }
 
   const results = KeplerGlSchema.parseSavedData(toArray(rawData));
+  if (!results) {
+    return null;
+  }
   return Array.isArray(rawData) ? results : results[0];
 }
 

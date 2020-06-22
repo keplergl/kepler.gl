@@ -1039,7 +1039,7 @@ mergedLayer0.config = {
   sizeScale: 'linear',
   sizeDomain: [0, 1],
   textLabel: [DEFAULT_TEXT_LABEL],
-
+  hidden: false,
   visConfig: {
     radius: 270.4,
     opacity: 0.8,
@@ -1107,6 +1107,7 @@ mergedLayer1.config = {
     color: DEFAULT_COLOR_UI,
     colorRange: DEFAULT_COLOR_UI
   },
+  hidden: false,
   visConfig: {
     opacity: 0.41,
     thickness: 2,
@@ -1175,6 +1176,7 @@ mergedLayer2.config = {
     color: DEFAULT_COLOR_UI,
     colorRange: DEFAULT_COLOR_UI
   },
+  hidden: false,
   visConfig: {
     radius: 10,
     opacity: 0.8,
@@ -1224,6 +1226,7 @@ mergedLayer3.config = {
       fieldIdx: 2
     }
   },
+  hidden: false,
   isVisible: true,
   colorField: {
     name: 'int_range',
@@ -1285,6 +1288,7 @@ mergedLayer4.config = {
   },
   highlightColor: [252, 242, 26, 255],
   isConfigActive: false,
+  hidden: false,
   isVisible: true,
   colorField: {
     name: 'ID',
@@ -1465,8 +1469,30 @@ export const mergedInteractions = {
     enabled: true,
     config: {
       fieldsToShow: {
-        '9h10t7fyb': ['int_range', 'detail', 'type_boolean'],
-        v79816te8: ['ID', 'ZIP_CODE']
+        '9h10t7fyb': [
+          {
+            name: 'int_range',
+            format: null
+          },
+          {
+            name: 'detail',
+            format: null
+          },
+          {
+            name: 'type_boolean',
+            format: null
+          }
+        ],
+        v79816te8: [
+          {
+            name: 'ID',
+            format: null
+          },
+          {
+            name: 'ZIP_CODE',
+            format: null
+          }
+        ]
       }
     }
   }

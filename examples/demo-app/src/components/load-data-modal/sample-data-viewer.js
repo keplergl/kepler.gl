@@ -23,6 +23,8 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {format} from 'd3-format';
 import {LoadingDialog} from 'kepler.gl/components';
+import {FormattedMessage, IntlProvider} from 'react-intl';
+import {messages} from '../../constants/localization';
 
 const numFormat = format(',');
 
@@ -88,18 +90,25 @@ const StyledError = styled.div`
   margin-bottom: 16px;
 `;
 
-const SampleMap = ({sample, onClick}) => (
-  <StyledSampleMap className="sample-map-gallery__item">
-    <div className="sample-map">
-      <div className="sample-map__image" onClick={onClick}>
-        {sample.imageUrl && <img src={sample.imageUrl} />}
+const SampleMap = ({id, sample, onClick, locale}) => (
+  <StyledSampleMap id={id} className="sample-map-gallery__item">
+    <IntlProvider locale={locale} messages={messages[locale]}>
+      <div className="sample-map">
+        <div className="sample-map__image" onClick={onClick}>
+          {sample.imageUrl && <img src={sample.imageUrl} />}
+        </div>
+        <div className="sample-map__title">{sample.label}</div>
+        <div className="sample-map__size">
+          <FormattedMessage
+            id={'sampleDataViewer.rowCount'}
+            values={{rowCount: numFormat(sample.size)}}
+          />
+        </div>
+        <StyledImageCaption className="sample-map__image__caption">
+          {sample.description}
+        </StyledImageCaption>
       </div>
-      <div className="sample-map__title">{sample.label}</div>
-      <div className="sample-map__size">{`${numFormat(sample.size)} rows`}</div>
-      <StyledImageCaption className="sample-map__image__caption">
-        {sample.description}
-      </StyledImageCaption>
-    </div>
+    </IntlProvider>
   </StyledSampleMap>
 );
 
@@ -117,19 +126,25 @@ export default class SampleMapGallery extends Component {
   }
 
   render() {
-    const {sampleMaps, onLoadSample, error, isMapLoading} = this.props;
+    const {sampleMaps, onLoadSample, error, isMapLoading, locale} = this.props;
     return (
       <div className="sample-data-modal">
         {error ? (
           <StyledError>{error.message}</StyledError>
         ) : isMapLoading ? (
-          <LoadingDialog size={64} message="Loading..." />
+          <LoadingDialog size={64} />
         ) : (
           <StyledSampleGallery className="sample-map-gallery">
             {sampleMaps
               .filter(sp => sp.visible)
               .map(sp => (
-                <SampleMap sample={sp} key={sp.id} onClick={() => onLoadSample(sp)} />
+                <SampleMap
+                  id={sp.id}
+                  sample={sp}
+                  key={sp.id}
+                  onClick={() => onLoadSample(sp)}
+                  locale={locale}
+                />
               ))}
           </StyledSampleGallery>
         )}

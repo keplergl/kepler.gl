@@ -85,5 +85,6 @@ export const renameEntry = createAction(ActionTypes.RENAME_ENTRY, (oldId, newId)
  * @public
  */
 /* eslint-disable no-unused-vars */
+// @ts-ignore
 const rootActions = null;
 /* eslint-enable no-unused-vars */

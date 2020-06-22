@@ -1,7 +1,6 @@
 node_modules/
 dist/
 temp.*
-keplergl/
 babel/
 
 yarn.lock

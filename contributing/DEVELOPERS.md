@@ -1,13 +1,16 @@
 # Developing Kepler.gl
 
-* [Development Setup](#setup)
-* [Running Tests](#tests)
-* [Coding Rules](#rules)
-* [Commit Message Guidelines](#commits)
-* [Writing Documentation](#documentation)
-* [Developing kepler.gl Website](#website)
+## Table of contents
+* [Development Setup](./#development-setup)
+* [Running Tests](./#running-tests)
+* [Coding Rules](./#coding-rules)
+* [Commit Message Guidelines](./#git-commit-guidelines)
+* [Writing Documentation](./#writing-documentation-this-part-is-not-available-yet)
+* [Developing kepler.gl Website](./#develop-the-kepler-gl-website)
+* [Publish the website](./#publish-the-website)
+* [Publish a new version](./#publish-kepler-gl-package-to-npm)
 
-## <a name="setup"> Development Setup
+## Development Setup
 
 This document describes how to set up your development environment to build and test Kepler.gl, and
 explains the basic mechanics of using `git`, `node`, `yarn`.
@@ -17,8 +20,7 @@ explains the basic mechanics of using `git`, `node`, `yarn`.
 Before you can build Kepler.gl, you must install and configure the following dependencies on your
 machine:
 
-* [Git](http://git-scm.com/): The [Github Guide to
-  Installing Git][git-setup] is a good source of information.
+* [Git](http://git-scm.com/): The [Github Guide to Installing Git][git-setup] is a good source of information.
 
 * [Node.js ^6.x](http://nodejs.org): We use Node to generate the documentation, run a
   development web server, run tests, and generate distributable files. Depending on your system,
@@ -40,7 +42,7 @@ If you plan to contribute code to kepler.gl, you must have a [GitHub account](ht
 
 To develop features, debug code, run tests, we use webpack to start a local web server and serve the kepler.gl demo app from the src directory.
 
-```shell
+```bash
 # Clone your kepler.gl fork repository:
 git clone git@github.com:<github username>/kepler.gl.git
 
@@ -79,16 +81,16 @@ npm run start:deck
 npm run start:deck-src
 ```
 
-## <a name="tests"> Running Tests
+## Running Tests
 
 We write unit and browser tests with [Tape][tape] and [Enzyme][enzyme], and lint with [ESLint][eslint]. Make sure to run test before submitting your PR. To run all of the tests once with node:
 
-```shell
+```bash
 yarn test
 ```
 
 To run separately
-```shell
+```bash
 # lint
 yarn lint
 
@@ -103,11 +105,11 @@ yarn fast-test
 ```
 
 To generate a coverage report
-```shell
+```bash
 yarn cover
 ```
 
-## <a name="rules"></a> Coding Rules
+## Coding Rules
 
 To ensure consistency throughout the source code, keep these rules in mind as you are working:
 
@@ -117,12 +119,12 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 
 This project use Eslint together Prettier. The linter should automatically inform you if you break any rules (like incorrect indenting, line breaking or if you forget a semicolon). Before doing a pull request, make sure to run the linter.
 
-```shell
+```bash
 # To run the linter
 yarn lint
 ```
 
-## <a name="commits"></a> Git Commit Guidelines
+## Git Commit Guidelines
 
 To commit your changes, please follow our rules over how our git commit messages can be formatted.  This leads to **more readable and unified messages** that are easy to follow.  But also,
 we use the git commit messages to **generate the kepler.gl change log**.
@@ -131,7 +133,7 @@ we use the git commit messages to **generate the kepler.gl change log**.
 Each commit message consists of a **header** and a **body**.  The header has a special
 format that includes a **type** and a **subject**. The **PR** # will be auto-generated once the PR is merged.
 
-```shell
+```
 [<type>]<subject>(<pr>)
 <BLANK LINE>
 <body>
@@ -184,7 +186,7 @@ The body should include the motivation for the change and contrast this with pre
 **Breaking Changes** should start with the word `BREAKING CHANGE:` with a space or two newlines.
 The rest of the commit message is then used for this.
 
-## <a name="documentation"></a> Writing Documentation (THIS PART IS NOT AVAILABLE YET)
+## Writing Documentation (THIS PART IS NOT AVAILABLE YET)
 
 The Kepler.gl project uses [jsdoc](http://usejsdoc.org/)
 
@@ -200,7 +202,7 @@ version-specific documentation by simply checking out a version of Kepler.gl and
 ### Building and viewing the docs locally
 We build Api docs from scratch using [documentation.js][documentationjs]. It generates docs from jsdoc:
 
-```shell
+```bash
 yarn docs
 ```
 
@@ -222,51 +224,91 @@ Default values are only possible with the second syntax by appending `=<value>` 
 name, e.g. `@param {boolean} [ownPropsOnly=false]`.
 
 
-## <a name="website"></a> Develop The kepler.gl Website
+## Develop The kepler.gl Website
 
 Make sure to export mapbox token in the same terminal before start the server.
-```sh
-    export MapboxAccessToken=<insert_your_token>
+```bash
+$ export MapboxAccessToken=<insert_your_token>
 ```
 
 In order to start
-```
-    yarn web
+
+```bash
+$ yarn web
 ```
 
 To checkout the build
-```
-    cd website && yarn build
-```
-
-Publish on github pages __Authorized User Only__.
-
-<b>important* Before publish. Copy the mapbox token at [this link](http://t.uber.com/kepler.gl-token). (Only accessible by Uber developer). Deploy will fail if token is missing</b>
-```
-    export MapboxAccessToken=<insert_your_token>
-    yarn deploy
+```bash
+$ cd website && yarn build
 ```
 
-### <a name="gh-pages"></a> Testing environment using GH Pages
-We currently host the demo-app on Github pages. We have provided a way to test github pages before pushing the branch to
-the actual repo.
-In order to test github pages with your changes, you need to satisfy the following requirements first:
-- Make sure you have your own github pages (username.github.io) repo, [click here](https://pages.github.com/)
-- In your local fork of kepler.gl, add your github pages repo to the list of git remotes by doing:
+## Publish the website
+
+[Netlify](https://www.netlify.com/) is used to support kepler.gl demo website.
+
+Netlify is connected to the following github triggers:
+- Create a new PR
+- Updated an existing PR
+- Merge PR onto master
+
+A new production version of kepler.gl website is automatically created and deployed every time a PR is merged onto master.
+
+In order to support testing environment, Netlify is setup to generate build every time a PR is created or updated.
+By generating builds for new and updated PRs we support CI/CD so developers can test their own build in a production like environment 
+
+### Publish kepler.gl package to NPM
+
+#### Requirements
+To prepare a new release you need the following tool:
+- [gh-release](https://www.npmjs.com/package/gh-release): this tool facilitates the creation of a new git tag (using package.json version number) and a github release (different from npm release)
+
+Setup ```gh-release``` with your github api token ([instructions](https://www.npmjs.com/package/gh-release#command-line-interface))
+
+### Push a new release
+In order to publish a new version of kepler.gl a developer must perform the following steps:
+1. Update __package.json__ file with the new version value. Run ```npm version major | minor | patch``` to update version accordingly.
+2. Update __CHANGELOG.md__ with the latest commit changes. Print commits with ```git log --pretty=oneline --abbrev-commit```
+3. Create a new PR for review.
+4. Once the PR is reviewed and merged, pull the latest changes locally.
+5. Run ```gh-release```: this command will create a new Github Release with the new updated CHANGELOG.md section.
+6. Once the new Github Release is created, Github will automatically trgger a new Github Action flow that will automatically build and publish the new package version to NPM registry.
+
+__After Release is completed and pushed__
+* Update each of the example folder package.json kepler.gl dependency with the newer. To update all examples, run
 
 ```bash
-git remote add test git@github.com:<username>/<username>.github.io.git
+npm run example-version
 ```
 
-With the above command, A new origin __test__ will be created, and your own testing copy of gh pages will be push to it.
+This step is required after the new version is published otherwise it would fail.
 
-When everything is set up, run the following command:
+## Gitbook documentation
+Kepler.gl documentation is hosted on [gitbook](https://kepler-gl.gitbook.io/kepler-gl/). For more information [read here](https://docs.gitbook.com/)
 
-```bash
-yarn deploy:test
-```
+### Documentation structure
+The documentation layout is defined by __SUMMARY.md__ file where the table of contents define each entry has the following structure
 
-The above command will build the website and push to your gh-pages branch.
+```markdown
+* [ENTRY_LABEL](FILE_PATH)
+e.g.
+* [Welcome](README.md)
+``` 
+
+The above file is used by Gitbook to generate the doc navigation visible on the left-hand side of Kepler.gl doc website. 
+Gitbook also has the ability to show description for each folder/section of the documentation by creating an entry in __SUMMARY.md__
+and create a new __README.md__ file within said folder. The README.md file is a Gitbook convention that treats README files as if they were the main entry file for each folder.
+
+The following is an example of doc section in SUMMARY.md file:
+```markdown
+* [User guides](docs/user-guides/README.md)
+``` 
+
+### Update Documentation
+The integration with Gitbook allows to update the documentation in two different ways:
+- Update doc files in the Kepler.gl repo. Follow the PR flow like any other changes
+- Update documentation directly on Gitbook.
+
+For both scenarios, changes will be propagated from one system to the other and vice versa. When updating Gitbook, a new git commit will be push to the Kepler.gl master branch.
 
 [demo-app]: http://kepler.gl/#/demo
 [documentationjs]: https://documentation.js.org/

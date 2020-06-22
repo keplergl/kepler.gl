@@ -21,6 +21,7 @@
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import {media} from 'styles/media-breakpoints';
+import classnames from 'classnames';
 
 export const SelectText = styled.span`
   color: ${props => props.theme.labelColor};
@@ -75,6 +76,11 @@ export const SpaceBetweenFlexbox = styled.div`
 export const SBFlexboxItem = styled.div`
   flex-grow: 1;
   margin-left: 16px;
+`;
+
+export const SBFlexboxNoMargin = styled.div`
+  display: flex;
+  justify-content: space-between;
 `;
 
 export const PanelLabel = styled.label.attrs({
@@ -181,9 +187,9 @@ export const Tooltip = styled(ReactTooltip)`
   }
 `;
 
-export const Button = styled.div.attrs({
-  className: 'button'
-})`
+export const Button = styled.div.attrs(props => ({
+  className: classnames('button', props.className)
+}))`
   align-items: center;
   background-color: ${props =>
     props.negative
@@ -438,8 +444,28 @@ export const StyledModalInputFootnote = styled.div.attrs({
  * This workaround will hide the error banner.
  */
 export const StyledMapContainer = styled.div`
-  .mapboxgl-map .mapboxgl-missing-css {
-    display: none;
+  .mapboxgl-map {
+    .mapboxgl-missing-css {
+      display: none;
+    }
+    .mapboxgl-ctrl-attrib {
+      display: none;
+    }
+  }
+`;
+
+export const StyledAttrbution = styled.div.attrs({
+  className: 'mapbox-attribution-container'
+})`
+  bottom: 0;
+  right: 0;
+  position: absolute;
+  display: block;
+  margin: 0 10px 2px;
+  z-index: 999;
+  a {
+    color: black;
+    font-size: 10px;
   }
 `;
 
@@ -527,12 +553,12 @@ export const StyledFilteredOption = styled.div`
     border: 1px solid ${props => props.theme.primaryBtnBgd};
   }
 
-  .filtered-title {
+  .filter-option-title {
     color: ${props => props.theme.textColorLT};
     font-size: 12px;
     font-weight: 500;
   }
-  .filtered-subtitle {
+  .filter-option-subtitle {
     color: ${props => props.theme.textColor};
     font-size: 11px;
   }

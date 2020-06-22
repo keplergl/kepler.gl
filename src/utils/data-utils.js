@@ -21,6 +21,8 @@
 import moment from 'moment';
 import assert from 'assert';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from 'constants/tooltip';
+import {format as d3Format} from 'd3-format';
 
 const MAX_LATITUDE = 90;
 const MIN_LATITUDE = -90;
@@ -48,7 +50,6 @@ export function unique(values) {
 /**
  * return center of map from given points
  * @param {array} layers
- * @param {string} dataId
  * @returns {object} coordinates of map center, empty if not found
  */
 export function findMapBounds(layers) {
@@ -89,12 +90,9 @@ export function getLatLngBounds(points, idx, limit) {
   if (!lats.length) {
     return null;
   }
-  // use 99 percentile to filter out outliers
+
   // clamp to limit
-  return [
-    Math.max(lats[Math.floor(0.01 * (lats.length - 1))], limit[0]),
-    Math.min(lats[Math.ceil(0.99 * (lats.length - 1))], limit[1])
-  ];
+  return [Math.max(lats[0], limit[0]), Math.min(lats[lats.length - 1], limit[1])];
 }
 
 export function clamp([min, max], val) {
@@ -113,8 +111,7 @@ export function getSampleData(data, sampleSize = 500, getValue = d => d) {
 
 /**
  * Convert different time format to unix milliseconds
- * @param {*} value
- * @param {*} format
+ * @type {typeof import('./data-utils').timeToUnixMilli}
  */
 export function timeToUnixMilli(value, format) {
   if (notNullorUndefined(value)) {
@@ -127,6 +124,10 @@ export function timeToUnixMilli(value, format) {
   return null;
 }
 
+/**
+ *
+ * @type {typeof import('./data-utils').maybeToDate}
+ */
 export function maybeToDate(isTime, fieldIdx, format, d) {
   if (isTime) {
     return timeToUnixMilli(d[fieldIdx], format);
@@ -137,20 +138,29 @@ export function maybeToDate(isTime, fieldIdx, format, d) {
 
 /**
  * whether null or undefined
- * @returns {boolean} - yes or no
+ * @type {typeof import('./data-utils').notNullorUndefined}
  */
 export function notNullorUndefined(d) {
   return d !== undefined && d !== null;
 }
 
+/**
+ * whether null or undefined
+ */
 export function isPlainObject(obj) {
   return obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj);
 }
 
+/**
+ * @type {typeof import('./data-utils').numberSort}
+ */
 export function numberSort(a, b) {
   return a - b;
 }
 
+/**
+ * @type {typeof import('./data-utils').getSortingFunction}
+ */
 export function getSortingFunction(fieldType) {
   switch (fieldType) {
     case ALL_FIELD_TYPES.real:
@@ -165,9 +175,7 @@ export function getSortingFunction(fieldType) {
 /**
  * round number with exact number of decimals
  * return as a string
- * @param {number} num
- * @param {number} decimals
- * @returns {string} - a rounded number in string format
+ * @type {typeof import('./data-utils').preciseRound}
  */
 export function preciseRound(num, decimals) {
   const t = Math.pow(10, decimals);
@@ -251,9 +259,7 @@ export const FIELD_DISPLAY_FORMAT = {
 
 /**
  * Parse field value and type and return a string representation
- * @param {string} value the field value
- * @param {string} type the field type
- * @return {*}
+ * @type {typeof import('./data-utils').parseFieldValue}
  */
 export const parseFieldValue = (value, type) => {
   if (!notNullorUndefined(value)) {
@@ -284,4 +290,52 @@ export function findFirstNoneEmpty(data, count = 1, getValue = identity) {
     c++;
   }
   return found;
+}
+
+export function getFormatter(format, field) {
+  const defaultFormatter = v => v;
+  if (!format) {
+    return defaultFormatter;
+  }
+  const tooltipFormat = Object.values(TOOLTIP_FORMATS).find(f => f[TOOLTIP_KEY] === format);
+
+  if (tooltipFormat) {
+    return applyDefaultFormat(tooltipFormat);
+  } else if (typeof format === 'string' && field) {
+    return applyCustomFormat(format, field);
+  }
+
+  return defaultFormatter;
+}
+
+export function applyDefaultFormat(tooltipFormat) {
+  if (!tooltipFormat || !tooltipFormat.format) {
+    return v => v;
+  }
+
+  switch (tooltipFormat.type) {
+    case TOOLTIP_FORMAT_TYPES.DECIMAL:
+      return d3Format(tooltipFormat.format);
+    case TOOLTIP_FORMAT_TYPES.DATE:
+    case TOOLTIP_FORMAT_TYPES.DATE_TIME:
+      return v => moment.utc(v).format(tooltipFormat.format);
+    case TOOLTIP_FORMAT_TYPES.PERCENTAGE:
+      return v => `${d3Format(TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format)(v)}%`;
+    default:
+      return v => v;
+  }
+}
+
+// Allow user to specify custom tooltip format via config
+export function applyCustomFormat(format, field) {
+  switch (field.type) {
+    case ALL_FIELD_TYPES.real:
+    case ALL_FIELD_TYPES.integer:
+      return d3Format(format);
+    case ALL_FIELD_TYPES.date:
+    case ALL_FIELD_TYPES.timestamp:
+      return v => moment.utc(v).format(format);
+    default:
+      return v => v;
+  }
 }

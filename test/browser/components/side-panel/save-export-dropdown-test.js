@@ -27,6 +27,7 @@ import {
   PanelHeaderDropdownFactory
 } from 'components/side-panel/panel-header';
 import ToolbarItem from 'components/common/toolbar-item';
+import {IntlWrapper} from 'test/helpers/component-utils';
 
 test('SaveExportDropdown', t => {
   const PanelHeaderDropdown = PanelHeaderDropdownFactory();
@@ -40,15 +41,17 @@ test('SaveExportDropdown', t => {
   const onClose = sinon.spy();
 
   const wrapper = mount(
-    <SaveExportDropdown
-      onExportImage={onExportImage}
-      onExportData={onExportData}
-      onExportConfig={onExportConfig}
-      onExportMap={onExportMap}
-      onSaveMap={onSaveMap}
-      show={true}
-      onClose={onClose}
-    />
+    <IntlWrapper>
+      <SaveExportDropdown
+        onExportImage={onExportImage}
+        onExportData={onExportData}
+        onExportConfig={onExportConfig}
+        onExportMap={onExportMap}
+        onSaveMap={onSaveMap}
+        show={true}
+        onClose={onClose}
+      />
+    </IntlWrapper>
   );
   t.equal(wrapper.find(PanelHeaderDropdown).length, 1, 'We should display 1 PanelHeaderDropdown');
   t.equal(wrapper.find(ToolbarItem).length, 4, 'We should display 4 ToolbarItems');

@@ -24,6 +24,7 @@ import {isValidFilterValue} from 'utils/filter-utils';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
+import {notNullorUndefined} from 'utils/data-utils';
 
 /**
  * V0 Schema
@@ -233,6 +234,7 @@ export const layerPropsV0 = {
   label: new LayerConfigSchemaV0({key: 'label'}),
   color: new LayerConfigSchemaV0({key: 'color'}),
   isVisible: new LayerConfigSchemaV0({key: 'isVisible'}),
+  hidden: new LayerConfigSchemaV0({key: 'hidden'}),
 
   // convert visConfig
   visConfig: new LayerVisConfigSchemaV0({key: 'visConfig'}),
@@ -463,6 +465,7 @@ export const layerPropsV1 = {
       visConfig: new VisConfigSchemaV1({
         version: VERSIONS.v1
       }),
+      hidden: null,
       textLabel: new TextLabelSchemaV1({
         version: VERSIONS.v1,
         key: 'textLabel'
@@ -520,58 +523,85 @@ class InteractionSchemaV0 extends Schema {
   key = 'interactionConfig';
 
   save(interactionConfig) {
-    return {
-      [this.key]: this.properties.reduce(
-        (accu, key) => ({
-          ...accu,
-          ...(interactionConfig[key].enabled ? {[key]: interactionConfig[key].config} : {})
-        }),
-        {}
-      )
-    };
+    return Array.isArray(this.properties)
+      ? {
+          [this.key]: this.properties.reduce(
+            (accu, key) => ({
+              ...accu,
+              ...(interactionConfig[key].enabled ? {[key]: interactionConfig[key].config} : {})
+            }),
+            {}
+          )
+        }
+      : {};
   }
   load(interactionConfig) {
     // convert v0 -> v1
     // return enabled: false if disabled,
-    return {
-      [this.key]: this.properties.reduce(
-        (accu, key) => ({
-          ...accu,
-          ...{
-            [key]: {
-              ...(interactionConfig[key] || {}),
-              enabled: Boolean(interactionConfig[key])
-            }
-          }
-        }),
-        {}
-      )
-    };
+    return Array.isArray(this.properties)
+      ? {
+          [this.key]: this.properties.reduce(
+            (accu, key) => ({
+              ...accu,
+              ...{
+                [key]: {
+                  ...(interactionConfig[key] || {}),
+                  enabled: Boolean(interactionConfig[key])
+                }
+              }
+            }),
+            {}
+          )
+        }
+      : {};
   }
 }
 
-const interactionPropsV1 = [...interactionPropsV0, 'coordinate'];
+const interactionPropsV1 = [...interactionPropsV0, 'geocoder', 'coordinate'];
 
 class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
 
   save(interactionConfig) {
     // save config even if disabled,
-    return {
-      [this.key]: this.properties.reduce(
-        (accu, key) => ({
-          ...accu,
-          [key]: {
-            ...interactionConfig[key].config,
-            enabled: interactionConfig[key].enabled
-          }
-        }),
-        {}
-      )
-    };
+    return Array.isArray(this.properties)
+      ? {
+          [this.key]: this.properties.reduce(
+            (accu, key) => ({
+              ...accu,
+              [key]: {
+                ...interactionConfig[key].config,
+                enabled: interactionConfig[key].enabled
+              }
+            }),
+            {}
+          )
+        }
+      : {};
   }
   load(interactionConfig) {
-    return {[this.key]: interactionConfig};
+    const modifiedConfig = interactionConfig;
+    Object.keys(interactionConfig).forEach(configType => {
+      if (configType === 'tooltip') {
+        const fieldsToShow = modifiedConfig[configType].fieldsToShow;
+        if (!notNullorUndefined(fieldsToShow)) {
+          return {[this.key]: modifiedConfig};
+        }
+        Object.keys(fieldsToShow).forEach(key => {
+          fieldsToShow[key] = fieldsToShow[key].map(fieldData => {
+            if (!fieldData.name) {
+              return {
+                name: fieldData,
+                format: null
+              };
+            }
+            return fieldData;
+          });
+        });
+      }
+      return;
+    });
+    return {[this.key]: modifiedConfig};
   }
 }
 

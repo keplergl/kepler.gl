@@ -26,7 +26,6 @@ export {
   ALL_FIELD_TYPES,
   DATA_TABLE_ID,
   DATASET_FORMATS,
-  DEFAULT_COLOR_RANGE,
   DEFAULT_LAYER_GROUPS,
   DEFAULT_MAP_STYLES,
   DEFAULT_NOTIFICATION_TOPICS,
@@ -61,7 +60,9 @@ export {
   TRIP_POINT_FIELDS
 } from './default-settings';
 
-export {GITHUB_BUG_REPORT, GITHUB_USER_GUIDE} from './user-guides';
+export {BUG_REPORT_LINK, USER_GUIDE_DOC} from './user-guides';
 
 export {VizColorPalette, DataVizColors} from './custom-color-ranges';
 export {COLOR_RANGES, DefaultColorRange} from './color-ranges';
+export {DEFAULT_COLOR_RANGE} from 'layers/layer-factory';
+export {PLOT_TYPES} from 'utils/filter-utils';

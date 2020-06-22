@@ -32,6 +32,7 @@ import {Delete} from 'components/common/icons';
 import DropdownList, {ListItem} from './dropdown-list';
 
 import {toArray} from 'utils/utils';
+import {FormattedMessage, injectIntl} from 'react-intl';
 
 const StyledDropdownSelect = styled.div.attrs({
   className: 'item-selector__dropdown'
@@ -94,7 +95,8 @@ class ItemSelector extends Component {
     closeOnSelect: PropTypes.bool,
     DropdownHeaderComponent: PropTypes.func,
     DropDownRenderComponent: PropTypes.func,
-    DropDownLineItemRenderComponent: PropTypes.func
+    DropDownLineItemRenderComponent: PropTypes.func,
+    CustomChickletComponent: PropTypes.func
   };
 
   static defaultProps = {
@@ -107,7 +109,7 @@ class ItemSelector extends Component {
     fixedOptions: null,
     inputTheme: 'primary',
     multiSelect: true,
-    placeholder: 'Enter a value',
+    placeholder: 'placeholder.enterValue',
     closeOnSelect: true,
     searchable: true,
     dropdownHeader: null,
@@ -170,6 +172,7 @@ class ItemSelector extends Component {
 
     if (this.props.multiSelect) {
       const items = uniqBy(previousSelected.concat(toArray(item)), getValue);
+
       this.props.onChange(items);
     } else {
       this.props.onChange(getValue(item));
@@ -186,7 +189,8 @@ class ItemSelector extends Component {
     this.props.onChange(null);
   };
 
-  _showTypeahead = () => {
+  _showTypeahead = e => {
+    e.stopPropagation();
     if (!this.props.disabled) {
       this.setState({
         showTypeahead: true
@@ -194,7 +198,7 @@ class ItemSelector extends Component {
     }
   };
 
-  _renderDropdown() {
+  _renderDropdown(intl) {
     return (
       <DropdownWrapper placement={this.props.placement}>
         <Typeahead
@@ -207,7 +211,7 @@ class ItemSelector extends Component {
           options={this.props.options}
           filterOption={this.props.filterOption}
           fixedOptions={this.props.fixedOptions}
-          placeholder="Search"
+          placeholder={intl.formatMessage({id: 'placeholder.search'})}
           onOptionSelected={this._selectItem}
           customListComponent={this.props.DropDownRenderComponent}
           customListHeaderComponent={this.props.DropdownHeaderComponent}
@@ -236,6 +240,7 @@ class ItemSelector extends Component {
       error: this.props.isError,
       inputTheme: this.props.inputTheme
     };
+    const intl = this.props.intl;
 
     return (
       <div className="item-selector">
@@ -248,6 +253,7 @@ class ItemSelector extends Component {
               placeholder={this.props.placeholder}
               displayOption={displayOption}
               removeItem={this._removeItem}
+              CustomChickletComponent={this.props.CustomChickletComponent}
             />
           ) : (
             <StyledDropdownSelect {...dropdownSelectProps}>
@@ -261,7 +267,7 @@ class ItemSelector extends Component {
                     value={selected[0]}
                   />
                 ) : (
-                  this.props.placeholder
+                  <FormattedMessage id={this.props.placeholder} />
                 )}
               </DropdownSelectValue>
               {this.props.erasable && hasValue ? (
@@ -272,11 +278,11 @@ class ItemSelector extends Component {
             </StyledDropdownSelect>
           )}
           {/* this part is used to built the list */}
-          {this.state.showTypeahead && this._renderDropdown()}
+          {this.state.showTypeahead && this._renderDropdown(intl)}
         </div>
       </div>
     );
   }
 }
 
-export default listensToClickOutside(ItemSelector);
+export default injectIntl(listensToClickOutside(ItemSelector));

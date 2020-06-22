@@ -19,6 +19,8 @@
 // THE SOFTWARE.
 
 import TimeRangeSliderFactory from './common/time-range-slider';
+import RangeSliderFactory from './common/range-slider';
+import {appInjector} from './container';
 
 // Components
 export {default as KeplerGl, default, injectComponents} from './container';
@@ -30,6 +32,7 @@ export {default as MapContainerFactory} from './map-container';
 export {default as BottomWidgetFactory} from './bottom-widget';
 export {default as ModalContainerFactory} from './modal-container';
 export {default as PlotContainerFactory} from './plot-container';
+export {default as GeocoderPanelFactory} from './geocoder-panel';
 
 // // side panel factories
 export {
@@ -37,6 +40,7 @@ export {
   SaveExportDropdownFactory,
   PanelHeaderDropdownFactory
 } from './side-panel/panel-header';
+export {default as PanelHeaderAction} from './side-panel/panel-header-action';
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
 export {default as PanelToggleFactory} from './side-panel/panel-toggle';
 
@@ -44,6 +48,8 @@ export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
 export {default as LayerPanelHeaderFactory} from './side-panel/layer-panel/layer-panel-header';
 export {default as LayerConfiguratorFactory} from './side-panel/layer-panel/layer-configurator';
+export {default as VisConfigSliderFactory} from './side-panel/layer-panel/vis-config-slider';
+export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
 
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
@@ -80,6 +86,8 @@ export {default as AddMapStyleModalFactory} from './modals/add-map-style-modal';
 export {default as ExportMapModalFactory} from './modals/export-map-modal/export-map-modal';
 export {default as ModalTabsFactory} from './modals/modal-tabs';
 export {default as LoadStorageMapFactory} from './modals/load-storage-map';
+export {default as ExportJsonMapFactory} from './modals/export-map-modal/export-json-map';
+export {default as ExportHtmlMapFactory} from './modals/export-map-modal/export-html-map';
 
 // // common factory
 export {default as AnimationControlFactory} from './common/animation-control/animation-control';
@@ -87,14 +95,20 @@ export {default as SpeedControlFactory} from './common/animation-control/speed-c
 export {default as AnimationPlaybacksFactory} from './common/animation-control/playback-controls';
 export {default as FloatingTimeDisplayFactory} from './common/animation-control/floating-time-display';
 export {default as DatasetSquare} from './common/styled-components';
+export {default as AnimationSpeedSliderFactory} from './common/animation-control/animation-speed-slider';
+export {default as RangePlotFactory} from './common/range-plot';
+export {FieldListItemFactory} from './common/field-selector';
 
-// // Filters
+// // Filters factory
 export {default as TimeWidgetFactory} from './filters/time-widget';
 export {default as SingleSelectFilterFactory} from './filters/single-select-filter';
 export {default as MultiSelectFilterFactory} from './filters/multi-select-filter';
 export {default as TimeRangeFilterFactory} from './filters/time-range-filter';
-
 export {default as RangeFilterFactory} from './filters/range-filter';
+
+// // Editor Factory
+export {default as EditorFactory} from './editor/editor';
+export {default as FeatureActionPanelFactory} from './editor/feature-action-panel';
 
 // Injector
 export {injector, withState} from './injector';
@@ -102,17 +116,24 @@ export {injector, withState} from './injector';
 // Common Components
 export {default as CloudTile} from './modals/cloud-tile';
 export {default as FileUploadFactory, FileUpload} from './common/file-uploader/file-upload';
+export {default as DatasetLabel} from './common/dataset-label';
 export {default as ItemSelector} from './common/item-selector/item-selector';
 export {default as FieldSelector} from './common/field-selector';
-export {default as RangeSlider} from './common/range-slider';
 export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export {default as LoadingDialog} from './modals/loading-dialog';
+export {default as FieldToken} from './common/field-token';
+export {default as Portaled} from './common/portaled';
+export {default as DropdownList} from './common/item-selector/dropdown-list';
+
 export * from './common/styled-components';
 import * as Icons from './common/icons';
 export {Icons};
 
-export const TimeRangeSlider = TimeRangeSliderFactory();
-export {TimeRangeSliderFactory};
+// Individual Component from Dependency Tree
+export const TimeRangeSlider = appInjector.get(TimeRangeSliderFactory);
+export const RangeSlider = appInjector.get(RangeSliderFactory);
+
+export {TimeRangeSliderFactory, RangeSliderFactory};

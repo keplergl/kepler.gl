@@ -66,7 +66,7 @@ function PolygonFilterPanelFactory(FilterPanelHeader, PolygonFilter) {
             <PanelHeaderAction
               id={filter.id}
               onClick={toggleFilterFeature}
-              tooltip={isVisible ? 'Hide Feature' : 'Show feature'}
+              tooltip={isVisible ? 'tooltip.hideFeature' : 'tooltip.showFeature'}
               IconComponent={isVisible ? EyeSeen : EyeUnseen}
               active={isVisible}
             />

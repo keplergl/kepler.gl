@@ -149,7 +149,7 @@ function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay) {
                   id="selected-time-widget-field"
                   value={filter.yAxis ? filter.yAxis.name : null}
                   onSelect={this._setFilterPlotYAxis}
-                  placeholder="Y Axis"
+                  placeholder="placeholder.yAxis"
                   erasable
                   showToken={false}
                 />

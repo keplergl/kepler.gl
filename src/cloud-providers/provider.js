@@ -30,7 +30,7 @@ const ICON = Upload;
  * @param {object} props
  * @param {string} props.name
  * @param {string} props.displayName
- * @param {ReactElement} props.icon - React element
+ * @param {React.Component} props.icon - React element
  * @param {object} props.thumbnail - thumbnail size object
  * @param {number} props.thumbnail.width - thumbnail width in pixels
  * @param {number} props.thumbnail.height - thumbnail height in pixels
@@ -138,9 +138,9 @@ export default class Provider {
    * @param {Object} param.mapData - the map object
    * @param {Object} param.mapData.map - {datasets. config, info: {title, description}}
    * @param {Blob} param.mapData.thumbnail - A thumbnail of current map. thumbnail size can be defined by provider by this.thumbnail
-   * @param {Object} param.options
-   * @param {boolean} param.options.overwrite - whether user choose to overwrite already saved map under the same name
-   * @param {boolean} param.options.isPublic - whether user wish to share the map with others. if isPublic is truthy, kepler will call this.getShareUrl() to display an URL they can share with others
+   * @param {object} [param.options]
+   * @param {boolean} [param.options.overwrite] - whether user choose to overwrite already saved map under the same name
+   * @param {boolean} [param.options.isPublic] - whether user wish to share the map with others. if isPublic is truthy, kepler will call this.getShareUrl() to display an URL they can share with others
    * @public
    */
   async uploadMap({mapData, options = {}}) {
@@ -149,7 +149,7 @@ export default class Provider {
 
   /**
    * This method is called to get a list of maps saved by the current logged in user.
-   * @returns {Array<Viz>} an array of Viz objects
+   * @returns visualizations an array of Viz objects
    * @public
    * @example
    *  async listMaps() {
@@ -173,7 +173,7 @@ export default class Provider {
   /**
    * This method will be called when user select a map to load from the storage map viewer
    * @param {*} loadParams - the loadParams property of each visualization object
-   * @returns {MapResponse} - the map object containing dataset config info and format option
+   * @returns mapResponse - the map object containing dataset config info and format option
    * @public
    * @example
    * async downloadMap(loadParams) {

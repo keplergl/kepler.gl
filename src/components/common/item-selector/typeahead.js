@@ -27,9 +27,9 @@ import styled from 'styled-components';
 import {console as Console} from 'global/window';
 
 import Accessor from './accessor';
-import KeyEvent from './keyevent';
 import DropdownList, {ListItem} from './dropdown-list';
 import {Search} from 'components/common/icons';
+import KeyEvent from 'constants/keyevent';
 
 const DEFAULT_CLASS = 'typeahead';
 /**

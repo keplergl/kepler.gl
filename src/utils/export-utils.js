@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// @ts-nocheck
 import domtoimage from 'utils/dom-to-image';
 import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
 import {
@@ -53,6 +54,10 @@ export const DEFAULT_EXPORT_JSON_SETTINGS = {
 const defaultResolution = EXPORT_IMG_RESOLUTION_OPTIONS.find(op => op.id === RESOLUTIONS.ONE_X);
 
 const defaultRatio = EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === EXPORT_IMG_RATIOS.FOUR_BY_THREE);
+
+export function isMSEdge(window) {
+  return Boolean(window.navigator && window.navigator.msSaveOrOpenBlob);
+}
 
 export function getScaleFromImageSize(imageW, imageH, mapW, mapH) {
   if ([imageW, imageH, mapW, mapH].some(d => d <= 0)) {
@@ -115,17 +120,21 @@ export function dataURItoBlob(dataURI) {
   return new Blob([ab], {type: mimeString});
 }
 
-export function downloadFile(fileBlob, filename) {
-  const url = URL.createObjectURL(fileBlob);
+export function downloadFile(fileBlob, fileName) {
+  if (isMSEdge(window)) {
+    window.navigator.msSaveOrOpenBlob(fileBlob, fileName);
+  } else {
+    const url = URL.createObjectURL(fileBlob);
 
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
 
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
 }
 
 export function exportImage(state) {

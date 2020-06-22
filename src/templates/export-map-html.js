@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// @ts-nocheck
 import {KEPLER_GL_VERSION, EXPORT_HTML_MAP_MODES} from 'constants/default-settings';
 
 /**
@@ -64,7 +65,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <script src="https://unpkg.com/react@16.8.4/umd/react.production.min.js" crossorigin></script>
         <script src="https://unpkg.com/react-dom@16.8.4/umd/react-dom.production.min.js" crossorigin></script>
         <script src="https://unpkg.com/redux@3.7.2/dist/redux.js" crossorigin></script>
-        <script src="https://unpkg.com/react-redux@5.1.1/dist/react-redux.min.js" crossorigin></script>
+        <script src="https://unpkg.com/react-redux@7.1.3/dist/react-redux.min.js" crossorigin></script>
         <script src="https://unpkg.com/styled-components@4.1.3/dist/styled-components.min.js" crossorigin></script>
 
         <!-- Load Kepler.gl -->

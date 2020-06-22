@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import {CenterFlexbox} from 'components/common/styled-components';
 import {Layers} from 'components/common/icons';
 import PropTypes from 'prop-types';
-import {parseFieldValue} from 'utils/data-utils';
+import {parseFieldValue, getFormatter} from 'utils/data-utils';
 
 export const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};
@@ -65,22 +65,23 @@ const Row = ({name, value, url}) => {
 
 const EntryInfo = ({fieldsToShow, fields, data}) => (
   <tbody>
-    {fieldsToShow.map(name => (
-      <EntryInfoRow key={name} name={name} fields={fields} data={data} />
+    {fieldsToShow.map(item => (
+      <EntryInfoRow key={item.name} item={item} fields={fields} data={data} />
     ))}
   </tbody>
 );
 
-const EntryInfoRow = ({name, fields, data}) => {
-  const field = fields.find(f => f.name === name);
+const EntryInfoRow = ({item, fields, data}) => {
+  const field = fields.find(f => f.name === item.name);
   if (!field) {
     return null;
   }
 
   const valueIdx = field.tableFieldIndex - 1;
-  const displayValue = parseFieldValue(data[valueIdx], field.type);
-
-  return <Row name={name} value={displayValue} />;
+  const displayValue = item.format
+    ? getFormatter(item.format, field)(data[valueIdx])
+    : parseFieldValue(data[valueIdx], field.type);
+  return <Row name={item.name} value={displayValue} />;
 };
 
 const CellInfo = ({data, layer}) => {

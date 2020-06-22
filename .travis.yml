@@ -18,6 +18,7 @@ services:
   - xvfb
 install:
   - yarn
+  - yarn install:example
 node_js:
   - 10
 before_script:
@@ -28,5 +29,6 @@ after_success:
 script:
   - npm run lint
   - npm run coveralls
+  - npm run test-e2e
   - fossa
 cache: yarn

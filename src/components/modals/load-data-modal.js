@@ -86,12 +86,12 @@ function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
     loadingMethods: [
       {
         id: LOADING_METHODS.upload,
-        label: 'Load Files',
+        label: 'modal.loadData.upload',
         elementType: FileUpload
       },
       {
         id: LOADING_METHODS.storage,
-        label: 'Load from Storage',
+        label: 'modal.loadData.storage',
         elementType: LoadStorageMap
       }
     ]

@@ -24,21 +24,22 @@ import isEqual from 'lodash.isequal';
 import flattenDeep from 'lodash.flattendeep';
 import {toArray} from 'utils/utils';
 
-import {applyFiltersToDatasets, validateFilterWithData} from 'utils/filter-utils';
+import {
+  applyFiltersToDatasets,
+  mergeFilterDomainStep,
+  validateFilterWithData
+} from 'utils/filter-utils';
 
 import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
 import {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
-import {mergeFilterDomainStep} from '../utils/filter-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded
  * save it for later
  *
- * @param {Object} state
- * @param {Array<Object>} filtersToMerge
- * @return {Object} updatedState
+ * @type {typeof import('./vis-state-merger').mergeFilters}
  */
 export function mergeFilters(state, filtersToMerge) {
   const merged = [];
@@ -135,9 +136,7 @@ export function mergeFilters(state, filtersToMerge) {
  * Merge layers from de-serialized state, if no fields or data are loaded
  * save it for later
  *
- * @param {Object} state
- * @param {Array<Object>} layersToMerge
- * @return {Object} state
+ * @type {typeof import('./vis-state-merger').mergeLayers}
  */
 export function mergeLayers(state, layersToMerge) {
   const mergedLayer = [];
@@ -184,9 +183,7 @@ export function mergeLayers(state, layersToMerge) {
 /**
  * Merge interactions with saved config
  *
- * @param {Object} state
- * @param {Object} interactionToBeMerged
- * @return {Object} mergedState
+ * @type {typeof import('./vis-state-merger').mergeInteractions}
  */
 export function mergeInteractions(state, interactionToBeMerged) {
   const merged = {};
@@ -253,6 +250,7 @@ export function mergeInteractions(state, interactionToBeMerged) {
  *    : don't merge anything
  * 2. if current map is NOT split, but splitMaps contain maps
  *    : add to splitMaps, and add current layers to splitMaps
+ * @type {typeof import('./vis-state-merger').mergeInteractions}
  */
 export function mergeSplitMaps(state, splitMaps = []) {
   const merged = [...state.splitMaps];
@@ -284,9 +282,9 @@ export function mergeSplitMaps(state, splitMaps = []) {
  * Merge interactionConfig.tooltip with saved config,
  * validate fieldsToShow
  *
- * @param {string} state
- * @param {Object} tooltipConfig
- * @return {Object} - {mergedTooltip: {}, unmergedTooltip: {}}
+ * @param {object} state
+ * @param {object} tooltipConfig
+ * @return {object} - {mergedTooltip: {}, unmergedTooltip: {}}
  */
 export function mergeInteractionTooltipConfig(state, tooltipConfig = {}) {
   const unmergedTooltip = {};
@@ -303,8 +301,8 @@ export function mergeInteractionTooltipConfig(state, tooltipConfig = {}) {
     } else {
       // if dataset is loaded
       const allFields = state.datasets[dataId].fields.map(d => d.name);
-      const foundFieldsToShow = tooltipConfig.fieldsToShow[dataId].filter(name =>
-        allFields.includes(name)
+      const foundFieldsToShow = tooltipConfig.fieldsToShow[dataId].filter(field =>
+        allFields.includes(field.name)
       );
 
       mergedTooltip[dataId] = foundFieldsToShow;
@@ -316,9 +314,7 @@ export function mergeInteractionTooltipConfig(state, tooltipConfig = {}) {
 /**
  * Merge layerBlending with saved
  *
- * @param {object} state
- * @param {string} layerBlending
- * @return {object} merged state
+ * @type {typeof import('./vis-state-merger').mergeLayerBlending}
  */
 export function mergeLayerBlending(state, layerBlending) {
   if (layerBlending && LAYER_BLENDINGS[layerBlending]) {
@@ -333,8 +329,7 @@ export function mergeLayerBlending(state, layerBlending) {
 
 /**
  * Merge animation config
- * @param {Object} state
- * @param {Object} animation
+ * @type {typeof import('./vis-state-merger').mergeAnimationConfig}
  */
 export function mergeAnimationConfig(state, animation) {
   if (animation && animation.currentTime) {
@@ -449,9 +444,9 @@ export function validateSavedVisualChannels(fields, newLayer, savedLayer) {
 /**
  * Validate saved layer config with new data,
  * update fieldIdx based on new fields
- *
- * @param {Array<Object>} fields
- * @param {string} dataId
+ * @param {object} dataset
+ * @param {Array<Object>} dataset.fields
+ * @param {string} dataset.id
  * @param {Object} savedLayer
  * @param {Object} layerClasses
  * @return {null | Object} - validated layer or null
@@ -468,7 +463,8 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
     dataId,
     label: savedLayer.config.label,
     color: savedLayer.config.color,
-    isVisible: savedLayer.config.isVisible
+    isVisible: savedLayer.config.isVisible,
+    hidden: savedLayer.config.hidden
   });
 
   // find column fieldIdx

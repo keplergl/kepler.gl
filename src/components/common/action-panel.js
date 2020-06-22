@@ -20,6 +20,7 @@
 
 import React, {useCallback} from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
 import {ArrowRight} from 'components/common/icons';
 import Checkbox from 'components/common/switch';
 
@@ -91,7 +92,7 @@ const renderChildren = (child, index) =>
         }
       }
     },
-    className: 'action-panel-item'
+    className: classnames('action-panel-item', child.props.className)
   });
 
 export const ActionPanelItem = React.memo(

@@ -28,6 +28,7 @@ import {Save, DataTable, Save2, Picture, Db, Map as MapIcon, Share} from 'compon
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 import Toolbar from 'components/common/toolbar';
 import ToolbarItem from 'components/common/toolbar-item';
+import {FormattedMessage} from 'react-intl';
 
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
@@ -93,7 +94,7 @@ export const PanelAction = ({item, onClick}) => (
     </a>
     {item.tooltip ? (
       <Tooltip id={`${item.id}-action`} place="bottom" delayShow={500} effect="solid">
-        <span>{item.tooltip}</span>
+        <FormattedMessage id={item.tooltip} />
       </Tooltip>
     ) : null}
   </StyledPanelAction>
@@ -108,12 +109,13 @@ export const PanelHeaderDropdownFactory = () => {
           show={show}
           onClose={onClose}
         >
-          {items.map(itm => (
+          {items.map(item => (
             <ToolbarItem
-              key={itm.key}
-              label={itm.label}
-              icon={itm.icon}
-              onClick={itm.onClick}
+              id={item.key}
+              key={item.key}
+              label={item.label}
+              icon={item.icon}
+              onClick={item.onClick}
               onClose={onClose}
             />
           ))}
@@ -152,31 +154,31 @@ export const SaveExportDropdownFactory = PanelHeaderDropdown => {
   SaveExportDropdown.defaultProps = {
     items: [
       {
-        label: 'Export Image',
+        label: 'toolbar.exportImage',
         icon: Picture,
         key: 'image',
         onClick: props => props.onExportImage
       },
       {
-        label: 'Export Data',
+        label: 'toolbar.exportData',
         icon: DataTable,
         key: 'data',
         onClick: props => props.onExportData
       },
       {
-        label: 'Export Map',
+        label: 'toolbar.exportMap',
         icon: MapIcon,
         key: 'map',
         onClick: props => props.onExportMap
       },
       {
-        label: 'Save Map',
+        label: 'toolbar.saveMap',
         icon: Save2,
         key: 'save',
         onClick: props => props.onSaveMap
       },
       {
-        label: 'Share Map URL',
+        label: 'toolbar.shareMapURL',
         icon: Share,
         key: 'share',
         onClick: props => props.onShareMap
@@ -246,7 +248,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
         {
           id: 'storage',
           iconComponent: Db,
-          tooltip: 'Cloud Storage',
+          tooltip: 'tooltip.cloudStorage',
           onClick: () => {},
           dropdownComponent: CloudStorageDropdown
         },

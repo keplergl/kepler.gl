@@ -18,27 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Copyright (c) 2020 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// to use, copy, modify, merge_, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-
 import {toggleModalUpdater, loadFilesSuccessUpdater} from './ui-state-updaters';
 import {
   updateVisDataUpdater as visStateUpdateVisDataUpdater,
@@ -95,7 +74,9 @@ import Console from 'global/console';
  *
  * export default composedReducer;
  */
+
 /* eslint-disable no-unused-vars */
+// @ts-ignore
 const combinedUpdaters = null;
 /* eslint-enable no-unused-vars */
 
@@ -109,10 +90,12 @@ export const defaultAddDataToMapOptions = {
 
 const identity = state => state;
 
-/* eslint-disable-next-line no-unused-vars */
+/* eslint-disable no-unused-vars */
+// @ts-ignore
 function log(text) {
   return value => Console.log(text, value);
 }
+/* eslint-enable no-unused-vars */
 
 function payload_(p) {
   return {payload: p};
@@ -149,18 +132,23 @@ function pick_(prop) {
  * @param {Object} state kepler.gl instance state, containing all subreducer state
  * @param {Object} action
  * @param {Object} action.payload `{datasets, options, config}`
- * @param {Array<Object>|Object} action.payload.datasets - ***required** datasets can be a dataset or an array of datasets
+ * @param action.payload.datasets - ***required** datasets can be a dataset or an array of datasets
  * Each dataset object needs to have `info` and `data` property.
- * @param {Object} action.payload.datasets.info -info of a dataset
- * @param {string} action.payload.datasets.info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
- * @param {string} action.payload.datasets.info.label - A display name of this dataset
- * @param {Object} action.payload.datasets.data - ***required** The data object, in a tabular format with 2 properties `fields` and `rows`
- * @param {Array<Object>} action.payload.datasets.data.fields - ***required** Array of fields,
- * @param {string} action.payload.datasets.data.fields.name - ***required** Name of the field,
- * @param {Array<Array>} action.payload.datasets.data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
- * @param {Object} action.payload.options option object `{centerMap: true}`
- * @param {Object} action.payload.config map config
- * @returns {Object} nextState
+ * @param [action.payload.options] option object `{centerMap: true}`
+ * @param [action.payload.config] map config
+ * @param [action.payload.info] map info contains title and description
+ * @returns nextState
+ *
+ * @typedef {Object} Dataset
+ * @property info -info of a dataset
+ * @property info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
+ * @property info.label - A display name of this dataset
+ * @property data - ***required** The data object, in a tabular format with 2 properties `fields` and `rows`
+ * @property data.fields - ***required** Array of fields,
+ * @property data.fields.name - ***required** Name of the field,
+ * @property data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
+ *
+ * @type {typeof import('./combined-updaters').addDataToMapUpdater}
  * @public
  */
 export const addDataToMapUpdater = (state, {payload}) => {
@@ -216,6 +204,9 @@ export const addDataToMapUpdater = (state, {payload}) => {
   ])(state);
 };
 
+/**
+ * @type {typeof import('./combined-updaters').loadFileSuccessUpdater}
+ */
 export const loadFileSuccessUpdater = (state, action) => {
   // still more to load
   const payloads = filesToDataPayload(action.result);

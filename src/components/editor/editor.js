@@ -27,17 +27,14 @@ import classnames from 'classnames';
 import get from 'lodash.get';
 
 import {EDITOR_AVAILABLE_LAYERS} from 'constants/default-settings';
-import FeatureActionPanel from './feature-action-panel';
+import FeatureActionPanelFactory from './feature-action-panel';
 import {FILTER_TYPES} from 'constants/default-settings';
 
 import {DEFAULT_RADIUS, getStyle as getFeatureStyle} from './feature-styles';
 import {getStyle as getEditHandleStyle, getEditHandleShape} from './handle-style';
 import {EDITOR_MODES} from 'constants';
 import {createSelector} from 'reselect';
-
-const DELETE_KEY_EVENT_CODE = 46;
-const BACKSPACE_KEY_EVENT_CODE = 8;
-const ESCAPE_KEY_EVENT_CODE = 27;
+import KeyEvent from 'constants/keyevent';
 
 const StyledWrapper = styled.div`
   cursor: ${props => (props.editor.mode === EDITOR_MODES.EDIT ? 'pointer' : 'crosshair')};
@@ -46,171 +43,177 @@ const StyledWrapper = styled.div`
 
 const editorLayerFilter = layer => EDITOR_AVAILABLE_LAYERS.includes(layer.type);
 
-class Editor extends Component {
-  static propTypes = {
-    filters: PropTypes.arrayOf(PropTypes.object).isRequired,
-    layers: PropTypes.arrayOf(PropTypes.object).isRequired,
-    datasets: PropTypes.object.isRequired,
-    editor: PropTypes.object.isRequired,
-    layersToRender: PropTypes.object.isRequired,
-    onSelect: PropTypes.func.isRequired,
-    onUpdate: PropTypes.func.isRequired,
-    onDeleteFeature: PropTypes.func.isRequired,
-    onTogglePolygonFilter: PropTypes.func.isRequired,
+EditorFactory.deps = [FeatureActionPanelFactory];
 
-    index: PropTypes.number,
-    classnames: PropTypes.string,
-    clickRadius: PropTypes.number,
-    isEnabled: PropTypes.bool
-  };
+export default function EditorFactory(FeatureActionPanel) {
+  class Editor extends Component {
+    static propTypes = {
+      filters: PropTypes.arrayOf(PropTypes.object).isRequired,
+      layers: PropTypes.arrayOf(PropTypes.object).isRequired,
+      datasets: PropTypes.object.isRequired,
+      editor: PropTypes.object.isRequired,
+      layersToRender: PropTypes.object.isRequired,
+      onSelect: PropTypes.func.isRequired,
+      onUpdate: PropTypes.func.isRequired,
+      onDeleteFeature: PropTypes.func.isRequired,
+      onTogglePolygonFilter: PropTypes.func.isRequired,
 
-  static defaultProps = {
-    clickRadius: DEFAULT_RADIUS
-  };
+      index: PropTypes.number,
+      classnames: PropTypes.string,
+      clickRadius: PropTypes.number,
+      isEnabled: PropTypes.bool
+    };
 
-  state = {
-    showActions: false,
-    lastPosition: null
-  };
+    static defaultProps = {
+      clickRadius: DEFAULT_RADIUS
+    };
 
-  componentDidMount() {
-    window.addEventListener('keydown', this._onKeyPressed);
-  }
+    state = {
+      showActions: false,
+      lastPosition: null
+    };
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this._onKeyPressed);
-  }
-
-  layerSelector = props => props.layers;
-  layersToRenderSelector = props => props.layersToRender;
-  filterSelector = props => props.filters;
-  selectedFeatureIdSelector = props => get(props, ['editor', 'selectedFeature', 'id']);
-  editorFeatureSelector = props => get(props, ['editor', 'features']);
-
-  currentFilterSelector = createSelector(
-    this.filterSelector,
-    this.selectedFeatureIdSelector,
-    (filters, selectedFeatureId) => filters.find(f => f.value && f.value.id === selectedFeatureId)
-  );
-
-  availableLayersSeletor = createSelector(
-    this.layerSelector,
-    this.layersToRenderSelector,
-    (layers, layersToRender) =>
-      layers.filter(editorLayerFilter).filter(layer => {
-        return layersToRender[layer.id];
-      })
-  );
-
-  allFeaturesSelector = createSelector(
-    this.filterSelector,
-    this.editorFeatureSelector,
-    (filters, editorFeatures) =>
-      filters
-        .filter(f => f.type === FILTER_TYPES.polygon)
-        .map(f => f.value)
-        .concat(editorFeatures)
-  );
-
-  _onKeyPressed = event => {
-    const {isEnabled} = this.props;
-
-    if (!isEnabled) {
-      return;
+    componentDidMount() {
+      window.addEventListener('keydown', this._onKeyPressed);
     }
 
-    switch (event.which) {
-      case DELETE_KEY_EVENT_CODE:
-      case BACKSPACE_KEY_EVENT_CODE:
-        this._onDeleteSelectedFeature();
-        break;
-      case ESCAPE_KEY_EVENT_CODE:
-        this.props.onSelect(null);
-        break;
-      default:
-        break;
+    componentWillUnmount() {
+      window.removeEventListener('keydown', this._onKeyPressed);
     }
-  };
 
-  _onSelect = ({selectedFeatureId, sourceEvent}) => {
-    const allFeatures = this.allFeaturesSelector(this.props);
-    this.setState(
-      {
-        ...(sourceEvent.rightButton
-          ? {
-              showActions: true,
-              lastPosition: {
-                x: sourceEvent.changedPointers[0].offsetX,
-                y: sourceEvent.changedPointers[0].offsetY
-              }
-            }
-          : null)
-      },
-      () => {
-        this.props.onSelect(allFeatures.find(f => f.id === selectedFeatureId));
+    layerSelector = props => props.layers;
+    layersToRenderSelector = props => props.layersToRender;
+    filterSelector = props => props.filters;
+    selectedFeatureIdSelector = props => get(props, ['editor', 'selectedFeature', 'id']);
+    editorFeatureSelector = props => get(props, ['editor', 'features']);
+
+    currentFilterSelector = createSelector(
+      this.filterSelector,
+      this.selectedFeatureIdSelector,
+      (filters, selectedFeatureId) => filters.find(f => f.value && f.value.id === selectedFeatureId)
+    );
+
+    availableLayersSeletor = createSelector(
+      this.layerSelector,
+      this.layersToRenderSelector,
+      (layers, layersToRender) =>
+        layers.filter(editorLayerFilter).filter(layer => {
+          return layersToRender[layer.id];
+        })
+    );
+
+    allFeaturesSelector = createSelector(
+      this.filterSelector,
+      this.editorFeatureSelector,
+      (filters, editorFeatures) =>
+        filters
+          .filter(f => f.type === FILTER_TYPES.polygon)
+          .map(f => f.value)
+          .concat(editorFeatures)
+    );
+
+    _onKeyPressed = event => {
+      const {isEnabled} = this.props;
+
+      if (!isEnabled) {
+        return;
       }
-    );
-  };
 
-  _onDeleteSelectedFeature = () => {
-    if (this.state.showActions) {
+      switch (event.keyCode) {
+        case KeyEvent.DOM_VK_DELETE:
+        case KeyEvent.DOM_VK_BACK_SPACE:
+          this._onDeleteSelectedFeature();
+          break;
+        case KeyEvent.DOM_VK_ESCAPE:
+          this.props.onSelect(null);
+          break;
+        default:
+          break;
+      }
+    };
+
+    _onSelect = ({selectedFeatureId, sourceEvent}) => {
+      const allFeatures = this.allFeaturesSelector(this.props);
+      this.setState(
+        {
+          ...(sourceEvent.rightButton
+            ? {
+                showActions: true,
+                lastPosition: {
+                  x: sourceEvent.changedPointers[0].offsetX,
+                  y: sourceEvent.changedPointers[0].offsetY
+                }
+              }
+            : null)
+        },
+        () => {
+          this.props.onSelect(allFeatures.find(f => f.id === selectedFeatureId));
+        }
+      );
+    };
+
+    _onDeleteSelectedFeature = () => {
+      if (this.state.showActions) {
+        this.setState({showActions: false});
+      }
+
+      const {editor} = this.props;
+      const {selectedFeature = {}} = editor;
+      this.props.onDeleteFeature(selectedFeature);
+    };
+
+    _closeFeatureAction = () => {
       this.setState({showActions: false});
-    }
+    };
 
-    const {editor} = this.props;
-    const {selectedFeature = {}} = editor;
-    this.props.onDeleteFeature(selectedFeature);
-  };
+    _onToggleLayer = layer => {
+      const {selectedFeature} = this.props.editor;
+      if (!selectedFeature) {
+        return;
+      }
 
-  _closeFeatureAction = () => {
-    this.setState({showActions: false});
-  };
+      this.props.onTogglePolygonFilter(layer, selectedFeature);
+    };
 
-  _onToggleLayer = layer => {
-    const {selectedFeature} = this.props.editor;
-    if (!selectedFeature) {
-      return;
-    }
+    render() {
+      const {className, clickRadius, datasets, editor, onUpdate, style} = this.props;
 
-    this.props.onTogglePolygonFilter(layer, selectedFeature);
-  };
+      const {lastPosition, showActions} = this.state;
+      const selectedFeatureId = get(editor, ['selectedFeature', 'id']);
+      const currentFilter = this.currentFilterSelector(this.props);
+      const availableLayers = this.availableLayersSeletor(this.props);
+      const allFeatures = this.allFeaturesSelector(this.props);
 
-  render() {
-    const {className, clickRadius, datasets, editor, onUpdate, style} = this.props;
-
-    const {lastPosition, showActions} = this.state;
-    const selectedFeatureId = get(editor, ['selectedFeature', 'id']);
-    const currentFilter = this.currentFilterSelector(this.props);
-    const availableLayers = this.availableLayersSeletor(this.props);
-    const allFeatures = this.allFeaturesSelector(this.props);
-
-    return (
-      <StyledWrapper editor={editor} className={classnames('editor', className)} style={style}>
-        <Draw
-          clickRadius={clickRadius}
-          mode={editor.mode}
-          features={allFeatures}
-          selectedFeatureId={selectedFeatureId}
-          onSelect={this._onSelect}
-          onUpdate={onUpdate}
-          getEditHandleShape={getEditHandleShape}
-          getFeatureStyle={getFeatureStyle}
-          getEditHandleStyle={getEditHandleStyle}
-        />
-        {showActions && Boolean(selectedFeatureId) ? (
-          <FeatureActionPanel
-            datasets={datasets}
-            layers={availableLayers}
-            currentFilter={currentFilter}
-            onClose={this._closeFeatureAction}
-            onDeleteFeature={this._onDeleteSelectedFeature}
-            onToggleLayer={this._onToggleLayer}
-            position={lastPosition}
+      return (
+        <StyledWrapper editor={editor} className={classnames('editor', className)} style={style}>
+          <Draw
+            clickRadius={clickRadius}
+            mode={editor.mode}
+            features={allFeatures}
+            selectedFeatureId={selectedFeatureId}
+            onSelect={this._onSelect}
+            onUpdate={onUpdate}
+            getEditHandleShape={getEditHandleShape}
+            getFeatureStyle={getFeatureStyle}
+            getEditHandleStyle={getEditHandleStyle}
           />
-        ) : null}
-      </StyledWrapper>
-    );
+          {showActions && Boolean(selectedFeatureId) ? (
+            <FeatureActionPanel
+              datasets={datasets}
+              layers={availableLayers}
+              currentFilter={currentFilter}
+              onClose={this._closeFeatureAction}
+              onDeleteFeature={this._onDeleteSelectedFeature}
+              onToggleLayer={this._onToggleLayer}
+              position={lastPosition}
+            />
+          ) : null}
+        </StyledWrapper>
+      );
+    }
   }
-}
 
-export default Editor;
+  Editor.displayName = 'Editor';
+
+  return Editor;
+}
