@@ -2,10 +2,10 @@ node_modules/
 */**/node_modules/
 coverage/
 .nyc_output/
-dist/
+# dist/
 build/
 umd/
-*/**/dist/
+# */**/dist/
 
 typedoc/
 
