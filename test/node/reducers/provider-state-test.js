@@ -159,6 +159,8 @@ test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
     },
     'Should set isLoading to false and error'
   );
+
+  errSpy.restore();
   t.end();
 });
 

@@ -19,20 +19,12 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {isKeplerGlMap, makeProgressIterator, readBatch} from 'processors/file-handler';
+import {isKeplerGlMap, makeProgressIterator, filesToDataPayload} from 'processors/file-handler';
+import {parsedFields, parsedRows} from 'test/fixtures/row-object';
 import {
-  csvMetaDataBatch,
-  csvDataBatch0,
-  csvDataBatch1,
-  csvWithNull,
-  csvSchema,
-  geojsonMetaBatch,
-  geoJsonPartialBatch,
-  geoJsonDataBatch0,
-  geoJsonDataBatch1,
-  geoJsonFinalBatch
-} from './file-handler-fixtures';
-import {geojsonData} from 'test/fixtures/geojson';
+  savedStateV1InteractionCoordinate as keplerglMap,
+  parsedFields as parsedKeplerMapFields
+} from 'test/fixtures/state-saved-v1-7';
 
 test('#file-handler -> isKeplerGlMap', t => {
   t.equal(
@@ -112,108 +104,71 @@ test('#file-handler -> makeProgressIterator', async t => {
   t.end();
 });
 
-test('#file-handler -> readBatch.csv', async t => {
-  // TODO: should be able to fully test loaders.gl with js-dom
-  // after TextDecoder support is added
-  // https://github.com/jsdom/whatwg-encoding/pull/11
-  const batches = [csvMetaDataBatch, csvDataBatch0, csvDataBatch1];
-
-  async function* mock() {
-    let i = -1;
-    await new Promise(resolve => setTimeout(resolve, 100));
-    while (i < batches.length - 1) {
-      i += 1;
-      yield batches[i];
+test('#file-handler -> filesToDataPayload', t => {
+  const fileCache = [
+    {
+      data: {
+        fields: parsedFields,
+        rows: parsedRows
+      },
+      info: {label: 'rows-data.json', format: 'row'}
+    },
+    {
+      data: {
+        datasets: [
+          {
+            data: {
+              fields: parsedKeplerMapFields,
+              rows: keplerglMap.datasets[0].data.allData
+            },
+            info: {id: 'a5ybmwl2d', label: 'geojson_as_string_small.csv', color: [53, 92, 125]}
+          }
+        ],
+        config: keplerglMap.config
+      },
+      info: {label: 'keplergl-map.json', format: 'keplergl'}
     }
-  }
-  const asyncIterator = mock();
-  const gen = readBatch(asyncIterator, 'text-data.csv');
-  await gen.next(); // meta
-  await gen.next(); // value1
-  const b3 = await gen.next(); // value 2
-  await gen.next();
-  // final betch
-  const exptected = {
-    bytesUsed: 3000,
-    count: 1,
-    // cursor: 0
-    data: csvWithNull,
-    length: 7,
-    schema: csvSchema,
-    headers: [
-      'gps_data.utc_timestamp',
-      'gps_data.lat',
-      'gps_data.lng',
-      'gps_data.types',
-      'epoch',
-      'has_result',
-      'id',
-      'time',
-      'begintrip_ts_utc',
-      'begintrip_ts_local',
-      'date'
-    ],
-    fileName: 'text-data.csv'
-  };
-
-  t.deepEqual(b3.value, exptected, 'should return csv data from final batch');
-  t.end();
-});
-
-test('#file-handler -> readBatch.geoJson', async t => {
-  // TODO: should be able to fully test loaders.gl with js-dom
-  // after TextDecoder support is added
-  // https://github.com/jsdom/whatwg-encoding/pull/11
-  const batches = [
-    geojsonMetaBatch,
-    geoJsonPartialBatch,
-    geoJsonDataBatch0,
-    geoJsonDataBatch1,
-    geoJsonFinalBatch
   ];
 
-  async function* mock() {
-    let i = -1;
-    await new Promise(resolve => setTimeout(resolve, 100));
-    while (i < batches.length - 1) {
-      i += 1;
-      yield batches[i];
-    }
-  }
-  const asyncIterator = mock();
-  const gen = readBatch(asyncIterator, 'text-geojson.json');
-  await gen.next(); // meta
-  await gen.next(); // partial
-  await gen.next(); // value0
-  await gen.next(); // value1
-  const final = await gen.next(); // final
-  // final betch
-  const exptected = {
-    batchType: 'final-result',
-    container: {type: 'FeatureCollection', features: []},
-    data: geojsonData,
-    jsonpath: '$.features',
-    schema: null,
-    fileName: 'text-geojson.json'
-  };
+  const result = filesToDataPayload(fileCache);
+
+  // const expectedResults = [
+  //   {
+  //     datasets: [{data, info}],
+  //     config: {
+  //       version: 'v1',
+  //       config: {}
+  //     },
+  //     options: {centerMap: true}
+  //   },
+  //   {datasets: [{data, info}]}
+  // ];
+
+  t.equal(result.length, 2, 'result shoud have 2 entries');
   t.deepEqual(
-    Object.keys(final.value).sort(),
-    Object.keys(exptected).sort(),
-    'geojson data from final batch should have same keys'
+    Object.keys(result[0]),
+    ['datasets', 'config', 'options'],
+    'result[0] should have 3 keys'
   );
-  for (const key of Object.keys(final.value)) {
-    t.deepEqual(final.value[key], exptected[key], `geojson final batch ${key} should be correct`);
-  }
-  t.end();
-});
+  t.equal(result[0].datasets, fileCache[1].data.datasets, 'should save keplergl map datasets');
+  t.equal(result[0].config, fileCache[1].data.config, 'should save keplergl map config');
+  t.deepEqual(
+    result[0].options,
+    {centerMap: true},
+    'should save keplergl map set {centerMap: true}'
+  );
 
-test('#file-handler -> processFileData.csv', t => {
-  // const result = processFileData({content: csvWithNull, fileCache: []});
-  // console.log(result);
+  t.deepEqual(Object.keys(result[1]), ['datasets'], 'result[0] should have 1 key');
+  t.deepEqual(
+    result[1].datasets[0].data,
+    fileCache[0].data,
+    'should pass file data to datasets only'
+  );
+  t.deepEqual(
+    Object.keys(result[1].datasets[0].info),
+    ['id', 'label', 'format'],
+    'result[0] datasets[0].info should have 3 key'
+  );
 
-  t.end();
-});
-
-test('#file-handler -> filesToDataPayload', t => {
   t.end();
 });

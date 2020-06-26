@@ -22,6 +22,9 @@
 // Nulls are returned as string
 import {geojsonData} from 'test/fixtures/geojson';
 
+// TODO: this is result returned by loaders.gl
+// ideally we would test loaders.gl from start to end
+// need to upgrade JSDom to
 export const csvWithNull = [
   {
     'gps_data.utc_timestamp': 'Null',

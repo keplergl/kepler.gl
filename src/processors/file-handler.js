@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import '@loaders.gl/polyfills';
 import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
@@ -33,7 +34,8 @@ const BATCH_TYPE = {
 
 const CSV_LOADER_OPTIONS = {
   batchSize: 4000, // Auto de tect number of rows per batch (network batch size)
-  rowFormat: 'object'
+  rowFormat: 'object',
+  dynamicTyping: false // not working for now
 };
 
 const JSON_LOADER_OPTIONS = {
@@ -77,16 +79,16 @@ export async function* makeProgressIterator(asyncIterator, info) {
   let rowCount = 0;
 
   for await (const batch of asyncIterator) {
-    // console.log(batch);
     const rowCountInBatch = (batch.data && batch.data.length) || 0;
     rowCount += rowCountInBatch;
-    const percent = batch.bytesUsed / info.size;
+    const percent = Number.isFinite(batch.bytesUsed) ? batch.bytesUsed / info.size : null;
 
     // Update progress object
     const progress = {
       rowCount,
       rowCountInBatch,
-      percent
+      // @ts-ignore
+      ...(Number.isFinite(percent) ? {percent} : {})
     };
 
     yield {...batch, progress};
@@ -99,8 +101,6 @@ export async function* readBatch(asyncIterator, fileName) {
   const batches = [];
 
   for await (const batch of asyncIterator) {
-    // console.log(JSON.stringify(batch.schema, null, 2));
-    // console.log(batch);
     // Last batch will have this special type and will provide all the root
     // properties of the parsed document.
     if (batch.batchType === BATCH_TYPE.FINAL_RESULT) {

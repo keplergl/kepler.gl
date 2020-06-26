@@ -28,7 +28,6 @@ export const LOAD_FILE_TASK = Task.fromPromise(
 );
 
 export const PROCESS_FILE_DATA = Task.fromPromise(
-  // ({file, fileCache}) => readFile({file, fileCache}),
   processFileData,
 
   'PROCESS_FILE_CONTENT'

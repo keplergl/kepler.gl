@@ -4470,5 +4470,6 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.ok(loadFilesSuccessSpy.calledWith(expectedArgs));
   loadFilesSuccessSpy.restore();
 
+  loadFileErrSpy.restore();
   t.end();
 });

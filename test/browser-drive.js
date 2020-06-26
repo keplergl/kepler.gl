@@ -18,57 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const KeplerPackage = require('./package');
+const fs = require('fs');
+const resolve = require('path').resolve;
+const BrowserTestDriver = require('@probe.gl/test-utils').BrowserTestDriver;
 
-const PRESETS = ['@babel/preset-env', '@babel/preset-react'];
-const PLUGINS = [
-  '@babel/plugin-transform-modules-commonjs',
-  ['@babel/plugin-proposal-decorators', {legacy: true}],
-  '@babel/plugin-proposal-class-properties',
-  '@babel/plugin-proposal-export-namespace-from',
-  [
-    '@babel/transform-runtime',
-    {
-      regenerator: true
-    }
-  ],
-  [
-    'module-resolver',
-    {
-      root: ['./src'],
-      alias: {
-        test: './test'
-      }
-    }
-  ],
-  [
-    'search-and-replace',
-    {
-      rules: [
-        {
-          search: '__PACKAGE_VERSION__',
-          replace: KeplerPackage.version
-        }
-      ]
-    }
-  ]
-];
-const ENV = {
-  test: {
-    plugins: ['istanbul']
+const configPath = resolve(__dirname, './webpack.config.js');
+
+const options = {
+  server: {
+    command: 'webpack-dev-server',
+    arguments: ['--config', configPath, '--env.mode=test']
   },
-  debug: {
-    sourceMaps: 'inline',
-    retainLines: true
+  browser: {
+    defaultViewport: {width: 1200, height: 800}
+  },
+  headless: false,
+  executablePath: getExecutablePath()
+};
+
+function getExecutablePath(dir) {
+  try {
+    const puppeteer = require(dir ? `${dir}/node_modules/puppeteer` : 'puppeteer');
+    const executablePath = puppeteer.executablePath();
+    if (fs.existsSync(executablePath)) {
+      return executablePath;
+    }
+  } catch (err) {
+    // ignore
   }
-};
+  return null;
+}
 
-module.exports = function babel(api) {
-  api.cache(true);
-
-  return {
-    presets: PRESETS,
-    plugins: PLUGINS,
-    env: ENV
-  };
-};
+const browserTest = new BrowserTestDriver();
+browserTest.run(options);
