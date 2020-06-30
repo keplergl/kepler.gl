@@ -202,6 +202,10 @@ export const mapPanelHeaderBackgroundColor = '#29323C';
 export const tooltipBg = '#F8F8F9';
 export const tooltipColor = '#333334';
 
+export const layerTypeIconSizeL = 50;
+export const layerTypeIconPdL = 12;
+export const layerTypeIconSizeSM = 28;
+
 // Bottom Panel
 export const bottomInnerPdSide = 32;
 export const bottomInnerPdVert = 6;
@@ -1047,6 +1051,10 @@ export const theme = {
   panelHeaderIconActive,
   panelHeaderHeight,
   panelDropdownScrollBar,
+
+  layerTypeIconSizeL,
+  layerTypeIconPdL,
+  layerTypeIconSizeSM,
 
   // Text
   fontFamily,

@@ -20,6 +20,7 @@
 
 import TimeRangeSliderFactory from './common/time-range-slider';
 import RangeSliderFactory from './common/range-slider';
+import VisConfigSliderFactory from './side-panel/layer-panel/vis-config-slider';
 import {appInjector} from './container';
 
 // Components
@@ -48,7 +49,6 @@ export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
 export {default as LayerPanelHeaderFactory} from './side-panel/layer-panel/layer-panel-header';
 export {default as LayerConfiguratorFactory} from './side-panel/layer-panel/layer-configurator';
-export {default as VisConfigSliderFactory} from './side-panel/layer-panel/vis-config-slider';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
 
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
@@ -134,6 +134,17 @@ export {default as FileUploadProgress} from './common/file-uploader/file-upload-
 export {default as Slider} from './common/slider/slider';
 export {default as DatasetSquare} from './common/styled-components';
 
+// side pane components
+export {default as LayerConfigGroup} from './side-panel/layer-panel/layer-config-group';
+export {default as LayerTypeSelector} from './side-panel/layer-panel/layer-type-selector';
+
+export {
+  ChannelByValueSelector, 
+  HowToButton,
+  LayerColorRangeSelector,
+  LayerColorSelector
+} from './side-panel/layer-panel/layer-configurator'
+
 export * from './common/styled-components';
 import * as Icons from './common/icons';
 export {Icons};
@@ -141,5 +152,6 @@ export {Icons};
 // Individual Component from Dependency Tree
 export const TimeRangeSlider = appInjector.get(TimeRangeSliderFactory);
 export const RangeSlider = appInjector.get(RangeSliderFactory);
+export const VisConfigSlider = appInjector.get(VisConfigSliderFactory);
 
-export {TimeRangeSliderFactory, RangeSliderFactory};
+export {TimeRangeSliderFactory, RangeSliderFactory, VisConfigSliderFactory};

@@ -162,7 +162,7 @@ class LayerConfigGroup extends Component {
         >
           <StyledLayerConfigGroupLabel className="layer-config-group__label">
             <span>
-              <FormattedMessage id={label || 'misc.empty'} />
+              <FormattedMessage id={label || 'misc.empty'} defaultMessage={label}/>
             </span>
             {description && <InfoHelper description={description} id={label} />}
           </StyledLayerConfigGroupLabel>

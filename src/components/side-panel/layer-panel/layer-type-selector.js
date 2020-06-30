@@ -21,7 +21,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import styled from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 
 import {classList} from 'components/common/item-selector/dropdown-list';
 import ItemSelector from 'components/common/item-selector/item-selector';
@@ -31,13 +31,13 @@ import {SidePanelSection} from 'components/common/styled-components';
 import {FormattedMessage} from 'react-intl';
 
 const ITEM_SIZE = {
-  large: 60,
+  large: 50,
   small: 28
 };
 
 const StyledDropdownListItem = styled.div`
-  padding-bottom: 12px;
-  padding-right: 12px;
+  padding-bottom: ${props => props.theme.layerTypeIconPdL}px;
+  padding-right: ${props => props.theme.layerTypeIconPdL}px;
 
   &.selected {
     .layer-type-selector__item__icon {
@@ -65,7 +65,7 @@ const StyledListItem = styled.div`
 
     .layer-type-selector__item__icon {
       color: ${props => props.theme.activeColor};
-      background-size: ${ITEM_SIZE.small}px ${ITEM_SIZE.small}px;
+      background-size: ${props => props.theme.layerTypeIconSizeSM}px ${props => props.theme.layerTypeIconSizeSM}px;
       margin-right: 12px;
     }
   }
@@ -74,7 +74,7 @@ const StyledListItem = styled.div`
     color: ${props => props.theme.labelColor};
     display: flex;
     background-image: url(${`${CLOUDFRONT}/kepler.gl-layer-icon-bg.png`});
-    background-size: ${ITEM_SIZE.large}px ${ITEM_SIZE.large}px;
+    background-size: ${props => props.theme.layerTypeIconSizeL}px ${props => props.theme.layerTypeIconSizeL}px;
   }
 
   .layer-type-selector__item__label {
@@ -92,7 +92,7 @@ const DropdownListWrapper = styled.div`
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  padding: 12px 0 0 12px;
+  padding: ${props => props.theme.layerTypeIconPdL}px 0 0 ${props => props.theme.layerTypeIconPdL}px;
 `;
 
 const LayerTypeListItem = ({value, isTile}) => (
@@ -144,7 +144,7 @@ const StyledLayerTypeSelector = styled.div`
     padding: 4px 10px 4px 2px;
   }
 `;
-const LayerTypeSelector = ({layer, layerTypeOptions, onSelect}) => (
+const LayerTypeSelector = ({layer, layerTypeOptions, onSelect, theme}) => (
   <SidePanelSection>
     <StyledLayerTypeSelector className="layer-config__type">
       <ItemSelector
@@ -165,4 +165,4 @@ const LayerTypeSelector = ({layer, layerTypeOptions, onSelect}) => (
 
 LayerTypeSelector.propTypes = propTypes;
 
-export default LayerTypeSelector;
+export default withTheme(LayerTypeSelector);
