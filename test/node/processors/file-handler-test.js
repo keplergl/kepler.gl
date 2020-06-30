@@ -131,7 +131,7 @@ test('#file-handler -> readBatch.csv', async t => {
   await gen.next(); // meta
   await gen.next(); // value1
   let b3 = await gen.next(); // value 2
-  let b4=  await gen.next();
+  let b4 = await gen.next();
   // final betch
   const exptected = {
     bytesUsed: 3000,
@@ -157,8 +157,6 @@ test('#file-handler -> readBatch.csv', async t => {
   };
 
   t.deepEqual(b3.value, exptected, 'should return csv data from final batch');
-  console.log(b3);
-  console.log(b4);
   t.end();
 });
 
@@ -166,7 +164,13 @@ test('#file-handler -> readBatch.geoJson', async t => {
   // TODO: should be able to fully test loaders.gl with js-dom
   // after TextDecoder support is added
   // https://github.com/jsdom/whatwg-encoding/pull/11
-  const batches = [geojsonMetaBatch, geoJsonPartialBatch, geoJsonDataBatch0, geoJsonDataBatch1, geoJsonFinalBatch];
+  const batches = [
+    geojsonMetaBatch,
+    geoJsonPartialBatch,
+    geoJsonDataBatch0,
+    geoJsonDataBatch1,
+    geoJsonFinalBatch
+  ];
 
   async function* mock() {
     let i = -1;
@@ -198,11 +202,7 @@ test('#file-handler -> readBatch.geoJson', async t => {
     'geojson data from final batch should have same keys'
   );
   for (let key of Object.keys(final.value)) {
-    t.deepEqual(
-      final.value[key],
-      exptected[key],
-      `geojson final batch ${key} should be correct`
-    );
+    t.deepEqual(final.value[key], exptected[key], `geojson final batch ${key} should be correct`);
   }
   t.end();
 });
