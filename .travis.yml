@@ -24,6 +24,7 @@ node_js:
 before_script:
   - "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
   - ulimit -c unlimited -S       # enable core dumps
+  - echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p    # avoid Node.JS Error: ENOSPC
 after_success:
   - cat coverage/lcov.info | coveralls
 script:
