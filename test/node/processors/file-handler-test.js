@@ -130,8 +130,8 @@ test('#file-handler -> readBatch.csv', async t => {
   const gen = readBatch(asyncIterator, 'text-data.csv');
   await gen.next(); // meta
   await gen.next(); // value1
-  let b3 = await gen.next(); // value 2
-  let b4 = await gen.next();
+  const b3 = await gen.next(); // value 2
+  await gen.next();
   // final betch
   const exptected = {
     bytesUsed: 3000,
