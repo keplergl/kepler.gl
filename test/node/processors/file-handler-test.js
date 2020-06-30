@@ -201,7 +201,7 @@ test('#file-handler -> readBatch.geoJson', async t => {
     Object.keys(exptected).sort(),
     'geojson data from final batch should have same keys'
   );
-  for (let key of Object.keys(final.value)) {
+  for (const key of Object.keys(final.value)) {
     t.deepEqual(final.value[key], exptected[key], `geojson final batch ${key} should be correct`);
   }
   t.end();

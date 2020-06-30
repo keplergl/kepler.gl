@@ -64,12 +64,12 @@ export function isRowObject(json) {
 }
 
 export function isKeplerGlMap(json) {
-  return (
+  return Boolean(
     isPlainObject(json) &&
-    json.datasets &&
-    json.config &&
-    json.info &&
-    json.info.app === 'kepler.gl'
+      json.datasets &&
+      json.config &&
+      json.info &&
+      json.info.app === 'kepler.gl'
   );
 }
 
