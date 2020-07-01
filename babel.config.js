@@ -20,56 +20,55 @@
 
 const KeplerPackage = require('./package');
 
-module.exports = function babel(api) {
-  api.cache(true);
-
-  const presets = [
-    '@babel/preset-env',
-    '@babel/preset-react'
-  ];
-  const plugins = [
-    '@babel/plugin-transform-modules-commonjs',
-    ['@babel/plugin-proposal-decorators', { legacy: true }],
-    '@babel/plugin-proposal-class-properties',
-    '@babel/plugin-proposal-export-namespace-from',
-    ['@babel/transform-runtime', {
+const PRESETS = ['@babel/preset-env', '@babel/preset-react'];
+const PLUGINS = [
+  '@babel/plugin-transform-modules-commonjs',
+  ['@babel/plugin-proposal-decorators', {legacy: true}],
+  '@babel/plugin-proposal-class-properties',
+  '@babel/plugin-proposal-export-namespace-from',
+  [
+    '@babel/transform-runtime',
+    {
       regenerator: true
-    }],
-    [
-      'module-resolver',
-      {
-        root: [
-          './src'
-        ],
-        alias: {
-          test: './test'
-        }
+    }
+  ],
+  [
+    'module-resolver',
+    {
+      root: ['./src'],
+      alias: {
+        test: './test'
       }
-    ],
-    ['search-and-replace', {
+    }
+  ],
+  [
+    'search-and-replace',
+    {
       rules: [
         {
           search: '__PACKAGE_VERSION__',
           replace: KeplerPackage.version
         }
       ]
-    }]
-  ];
-  const env = {
-    test: {
-      plugins: [
-        'istanbul'
-      ]
-    },
-    debug: {
-      sourceMaps: 'inline',
-      retainLines: true
     }
-  };
+  ]
+];
+const ENV = {
+  test: {
+    plugins: ['istanbul']
+  },
+  debug: {
+    sourceMaps: 'inline',
+    retainLines: true
+  }
+};
+
+module.exports = function babel(api) {
+  api.cache(true);
 
   return {
-    presets,
-    plugins,
-    env
+    presets: PRESETS,
+    plugins: PLUGINS,
+    env: ENV
   };
 };

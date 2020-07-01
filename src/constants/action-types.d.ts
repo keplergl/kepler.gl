@@ -42,6 +42,7 @@ export type ActionType = {
   LOAD_NEXT_FILE: string;
   LOAD_FILES_ERR: string;
   LOAD_FILES_SUCCESS: string;
+  LOAD_FILE_STEP_SUCCESS: string;
   LAYER_COLOR_UI_CHANGE: string;
   TOGGLE_FEATURE_LAYER: string;
   APPLY_CPU_FILTER: string;
@@ -49,7 +50,9 @@ export type ActionType = {
   SORT_TABLE_COLUMN: string;
   PIN_TABLE_COLUMN: string;
   COPY_TABLE_COLUMN: string;
-
+  NEXT_FILE_BATCH: string;
+  PROCESS_FILE_CONTENT: string;
+  
   // mapState
   UPDATE_MAP: string;
   FIT_BOUNDS: string;

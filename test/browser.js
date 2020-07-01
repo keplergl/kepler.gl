@@ -18,4 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './browser/index.js';
+// import './browser/index.js';
+require('@probe.gl/test-utils/polyfill');
+
+const test = require('tape-catch');
+const enableDOMLogging = require('@probe.gl/test-utils')._enableDOMLogging;
+enableDOMLogging();
+
+test.onFinish(window.browserTestDriver_finish);
+test.onFailure(window.browserTestDriver_fail);
+
+test('Browser tests', t => {
+  // require('./node/index.js');
+  require('./browser/index.js');
+
+  t.end();
+});

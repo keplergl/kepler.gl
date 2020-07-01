@@ -150,7 +150,7 @@ export type FieldPair = {
     [key: string]: {
       fieldIdx: number;
       value: string;
-    }
+    };
   };
   suffix: string[];
 };
@@ -231,7 +231,7 @@ type BaseInteraction = {
 type TooltipField = {
   name: string;
   format: string | null;
-}
+};
 export type Tooltip = BaseInteraction & {
   config: {
     fieldsToShow: {
@@ -260,6 +260,22 @@ export type MapInfo = {
   title: string;
   description: string;
 };
+export type FileLoading =
+  | {
+      filesToLoad: any[];
+      onFinish: (payload: any) => any;
+      fileCache: any[];
+    }
+  | false;
+export type FileLoadingProgress = {
+  [key: string]: {
+    percent: number;
+    message: string;
+    fileName: string;
+    error: any;
+  };
+};
+
 export type VisState = {
   mapInfo: MapInfo;
   layers: Layer[];
@@ -284,8 +300,8 @@ export type VisState = {
   splitMaps: SplitMap[];
   splitMapsToBeMerged?: SplitMap[];
   initialState?: Partial<VisState>;
-  fileLoading?: boolean;
-  fileLoadingErr?: any;
+  fileLoading?: FileLoading;
+  fileLoadingProgress?: FileLoadingProgress;
 };
 
 export function addDefaultLayers(
@@ -447,13 +463,25 @@ export function loadNextFileUpdater(
   state: VisState,
   action: VisStateActions.LoadNextFileUpdaterAction
 ): VisState;
-export function loadFileSuccessUpdater(
+export function loadFilesSuccessUpdater(
   state: VisState,
-  action: VisStateActions.LoadFileSuccessUpdaterAction
+  action: VisStateActions.loadFilesSuccessUpdaterAction
 ): VisState;
 export function loadFilesErrUpdater(
   state: VisState,
   action: VisStateActions.LoadFilesErrUpdaterAction
+): VisState;
+export function loadFileStepSuccessUpdater(
+  state: VisState,
+  action: VisStateActions.loadFileStepSuccessAction
+): VisState;
+export function nextFileBatchUpdater(
+  state: VisState,
+  action: VisStateActions.nextFileBatchUpdaterAction
+): VisState;
+export function processFileContentUpdater(
+  state: VisState,
+  action: VisStateActions.processFileContentUpdaterAction
 ): VisState;
 export function setFeaturesUpdater(
   state: VisState,

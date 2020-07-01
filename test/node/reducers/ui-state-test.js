@@ -254,7 +254,7 @@ test('#uiStateReducer -> LOAD_FILES_ERR', t => {
   const newState = reducer(INITIAL_UI_STATE, loadFiles());
   t.equal(newState.loadFiles.fileLoading, true, 'should set fileLoading to true');
 
-  const newState1 = reducer(newState, loadFilesErr(new Error('this is an error')));
+  const newState1 = reducer(newState, loadFilesErr('file.csv', new Error('this is an error')));
   const expectedId = newState1.notifications.length ? newState1.notifications[0].id : 'error';
   t.equal(
     newState1.loadFiles.fileLoading,

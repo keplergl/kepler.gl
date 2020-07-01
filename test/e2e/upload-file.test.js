@@ -64,7 +64,7 @@ describe('Load map', () => {
 
       await page.waitForSelector('.preview-image-placeholder');
 
-      await page.waitFor(DEFAULT_WAIT_TIME.SHORT);
+      await page.waitFor(DEFAULT_WAIT_TIME.LONGER);
 
       await testScreenshot(page);
 

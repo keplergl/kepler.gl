@@ -592,18 +592,13 @@ export function loadFiles(files) {
 /**
  * Called with next file to load
  * @memberof visStateActions
- * @param payload
  * @type {typeof import('./vis-state-actions').loadNextFile}
  * @returns action
  * @public
  */
-export function loadNextFile({fileCache, filesToLoad, totalCount, onFinish}) {
+export function loadNextFile() {
   return {
-    type: ActionTypes.LOAD_NEXT_FILE,
-    fileCache,
-    filesToLoad,
-    totalCount,
-    onFinish
+    type: ActionTypes.LOAD_NEXT_FILE
   };
 }
 
@@ -611,13 +606,28 @@ export function loadNextFile({fileCache, filesToLoad, totalCount, onFinish}) {
  * called when all files are processed and loaded
  * @memberof visStateActions
  * @param result
- * @type {typeof import('./vis-state-actions').loadFileSuccess}
+ * @type {typeof import('./vis-state-actions').loadFilesSuccess}
  * @returns action
  */
-export function loadFileSuccess(result) {
+export function loadFilesSuccess(result) {
   return {
     type: ActionTypes.LOAD_FILES_SUCCESS,
     result
+  };
+}
+
+/**
+ * called when successfully loaded one file, ready to move on to the next one
+ * @memberof visStateActions
+ * @param result
+ * @type {typeof import('./vis-state-actions').loadFileStepSuccess}
+ * @returns action
+ */
+export function loadFileStepSuccess({fileName, fileCache}) {
+  return {
+    type: ActionTypes.LOAD_FILE_STEP_SUCCESS,
+    fileName,
+    fileCache
   };
 }
 
@@ -629,9 +639,10 @@ export function loadFileSuccess(result) {
  * @returns action
  * @public
  */
-export function loadFilesErr(error) {
+export function loadFilesErr(fileName, error) {
   return {
     type: ActionTypes.LOAD_FILES_ERR,
+    fileName,
     error
   };
 }
@@ -730,7 +741,6 @@ export function applyCPUFilter(dataId) {
 }
 
 /**
-
  * Toggle editor layer visibility
  * @memberof visStateActions
  * @type {typeof import('./vis-state-actions').toggleEditorVisibility}
@@ -739,6 +749,34 @@ export function applyCPUFilter(dataId) {
 export function toggleEditorVisibility() {
   return {
     type: ActionTypes.TOGGLE_EDITOR_VISIBILITY
+  };
+}
+
+/**
+ * Process the next file batch
+ * @memberof visStateActions
+ * @param payload - batch payload
+ * @type {typeof import('./vis-state-actions').nextFileBatch}
+ * @return action
+ */
+export function nextFileBatch(payload) {
+  return {
+    type: ActionTypes.NEXT_FILE_BATCH,
+    payload
+  };
+}
+
+/**
+ * Process the file content
+ * @memberof visStateActions
+ * @param payload - the file content
+ * @type {typeof import('./vis-state-actions').processFileContent}
+ * @return action
+ */
+export function processFileContent(payload) {
+  return {
+    type: ActionTypes.PROCESS_FILE_CONTENT,
+    payload
   };
 }
 

@@ -21,10 +21,9 @@
 import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-
 import UploadButton from './upload-button';
 import {DragNDrop, FileType} from 'components/common/icons';
-import LoadingSpinner from 'components/common/loading-spinner';
+import FileUploadProgress from 'components/common/file-uploader/file-upload-progress';
 import FileDrop from './file-drop';
 
 import {isChrome} from 'utils/utils';
@@ -65,28 +64,25 @@ export const WarningMsg = styled.span`
   font-weight: 500;
 `;
 
-const PositiveMsg = styled.span`
-  display: inline-block;
-  color: ${props => props.theme.primaryBtnActBgd};
-  font-weight: 500;
-  margin-right: 8px;
-`;
-
 const StyledFileDrop = styled.div`
   background-color: white;
   border-radius: 4px;
-  border-style: dashed;
+  border-style: ${props => (props.dragOver ? 'solid' : 'dashed')};
   border-width: 1px;
-  border-color: ${props => props.theme.subtextColorLT};
+  border-color: ${props => (props.dragOver ? props.theme.textColorLT : props.theme.subtextColorLT)};
   text-align: center;
   width: 100%;
   padding: 48px 8px 0;
+  height: 360px;
 
   .file-upload-or {
     color: ${props => props.theme.linkBtnColor};
     padding-right: 4px;
   }
 
+  .file-type-row {
+    opacity: 0.5;
+  }
   ${media.portable`
     padding: 16px 4px 0;
   `};
@@ -159,7 +155,7 @@ function FileUploadFactory() {
     static propTypes = {
       onFileUpload: PropTypes.func.isRequired,
       validFileExt: PropTypes.arrayOf(PropTypes.string),
-      fileLoading: PropTypes.bool
+      fileLoading: PropTypes.oneOfType([PropTypes.bool, PropTypes.object])
     };
 
     static defaultProps = {
@@ -219,43 +215,9 @@ function FileUploadFactory() {
       this.setState({dragOver: newState});
     };
 
-    _renderMessage() {
-      const {errorFiles, files} = this.state;
-      if (errorFiles.length) {
-        return (
-          <WarningMsg>
-            <FormattedMessage
-              id={'fileUploader.filenNotSupported'}
-              values={{errorFiles: errorFiles.join(', ')}}
-            />
-          </WarningMsg>
-        );
-      } else if (this.props.fileLoading && files.length) {
-        return (
-          <StyledMessage className="file-uploader__message">
-            <div className="loading-action">
-              <FormattedMessage id={'fileUploader.uploading'} />
-            </div>
-            <div>
-              {files.map((f, i) => (
-                <PositiveMsg key={i}>{f.name}</PositiveMsg>
-              ))}
-              ...
-            </div>
-            <div className="loading-spinner">
-              <LoadingSpinner size={20} />
-            </div>
-          </StyledMessage>
-        );
-      }
-
-      return null;
-    }
-
     render() {
-      const {dragOver, files} = this.state;
-      const {validFileExt, intl} = this.props;
-
+      const {dragOver, files, errorFiles} = this.state;
+      const {validFileExt, intl, fileLoading, fileLoadingProgress} = this.props;
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>
           {FileDrop ? (
@@ -275,33 +237,51 @@ function FileUploadFactory() {
                 />
               </StyledUploadMessage>
               <StyledFileDrop dragOver={dragOver}>
-                <div style={{opacity: dragOver ? 0.5 : 1}}>
-                  <StyledDragNDropIcon>
-                    <StyledFileTypeFow className="file-type-row">
-                      {validFileExt.map(ext => (
-                        <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
-                      ))}
-                    </StyledFileTypeFow>
-                    <DragNDrop height="44px" />
-                  </StyledDragNDropIcon>
-                  <div>{this._renderMessage()}</div>
-                </div>
-                {!files.length ? (
-                  <StyledDragFileWrapper>
-                    <MsgWrapper>
-                      <FormattedMessage id={'fileUploader.message'} />
-                    </MsgWrapper>
-                    <span className="file-upload-or">
-                      <FormattedMessage id={'fileUploader.or'} />
-                    </span>
-                    <UploadButton onUpload={this._handleFileInput}>
-                      <FormattedMessage id={'fileUploader.browseFiles'} />
-                    </UploadButton>
-                  </StyledDragFileWrapper>
-                ) : null}
-                <StyledDisclaimer>
-                  <FormattedMessage id={'fileUploader.disclaimer'} />
-                </StyledDisclaimer>
+                <StyledFileTypeFow className="file-type-row">
+                  {validFileExt.map(ext => (
+                    <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
+                  ))}
+                </StyledFileTypeFow>
+                {fileLoading ? (
+                  <FileUploadProgress fileLoadingProgress={fileLoadingProgress} />
+                ) : (
+                  <>
+                    <div
+                      style={{opacity: dragOver ? 0.5 : 1}}
+                      className="file-upload-display-message"
+                    >
+                      <StyledDragNDropIcon>
+                        <DragNDrop height="44px" />
+                      </StyledDragNDropIcon>
+
+                      {errorFiles.length ? (
+                        <WarningMsg>
+                          <FormattedMessage
+                            id={'fileUploader.fileNotSupported'}
+                            values={{errorFiles: errorFiles.join(', ')}}
+                          />
+                        </WarningMsg>
+                      ) : null}
+                    </div>
+                    {!files.length ? (
+                      <StyledDragFileWrapper>
+                        <MsgWrapper>
+                          <FormattedMessage id={'fileUploader.message'} />
+                        </MsgWrapper>
+                        <span className="file-upload-or">
+                          <FormattedMessage id={'fileUploader.or'} />
+                        </span>
+                        <UploadButton onUpload={this._handleFileInput}>
+                          <FormattedMessage id={'fileUploader.browseFiles'} />
+                        </UploadButton>
+                      </StyledDragFileWrapper>
+                    ) : null}
+
+                    <StyledDisclaimer>
+                      <FormattedMessage id={'fileUploader.disclaimer'} />
+                    </StyledDisclaimer>
+                  </>
+                )}
               </StyledFileDrop>
             </FileDrop>
           ) : null}

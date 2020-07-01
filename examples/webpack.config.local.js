@@ -42,6 +42,9 @@ const NODE_MODULES_DIR = resolve(__dirname, '../node_modules');
 // For debugging deck.gl, load deck.gl from external deck.gl directory
 const EXTERNAL_DECK_SRC = resolve(__dirname, '../../deck.gl');
 
+// For debugging loaders.gl, load loaders.gl from external loaders.gl directory
+const EXTERNAL_LOADERS_SRC = resolve(__dirname, '../../loaders.gl');
+
 // Support for hot reloading changes to the deck.gl library:
 function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
   const resolveAlias = {
@@ -85,6 +88,12 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
           ? `${NODE_MODULES_DIR}/@${name}/${mdl}/src`
           : `${EXTERNAL_DECK_SRC}/node_modules/@${name}/${mdl}/src`;
       });
+    });
+  }
+
+  if (env.loaders_src) {
+    externals['loaders.gl'].forEach(mdl => {
+      resolveAlias[`@loaders.gl/${mdl}`] = `${EXTERNAL_LOADERS_SRC}/modules/${mdl}/src`;
     });
   }
 

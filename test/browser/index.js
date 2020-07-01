@@ -26,3 +26,6 @@ import './layer-tests';
 
 // test reducers
 import './reducers';
+
+// test processors
+import './file-handler';

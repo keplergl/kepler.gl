@@ -27,9 +27,15 @@ import xor from 'lodash.xor';
 import copy from 'copy-to-clipboard';
 import {parseFieldValue} from 'utils/data-utils';
 // Tasks
-import {LOAD_FILE_TASK} from 'tasks/tasks';
+import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from 'tasks/tasks';
 // Actions
-import {loadFilesErr, loadFileSuccess, loadNextFile} from 'actions/vis-state-actions';
+import {
+  loadFilesErr,
+  loadFilesSuccess,
+  loadFileStepSuccess,
+  loadNextFile,
+  nextFileBatch
+} from 'actions/vis-state-actions';
 // Utils
 import {findFieldsToShow, getDefaultInteraction} from 'utils/interaction-utils';
 import {
@@ -71,6 +77,8 @@ import {
 import {Layer, LayerClasses} from 'layers';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 import {EDITOR_MODES, SORT_ORDER} from 'constants/default-settings';
+import {pick_, merge_} from './composer-helpers';
+import {processFileContent} from 'actions/vis-state-actions';
 
 // type imports
 /** @typedef {import('./vis-state-updaters').Field} Field */
@@ -1231,53 +1239,134 @@ function closeSpecificMapAtIndex(state, action) {
  * @public
  */
 export const loadFilesUpdater = (state, action) => {
-  const {files, onFinish = loadFileSuccess} = action;
+  const {files, onFinish = loadFilesSuccess} = action;
   if (!files.length) {
     return state;
   }
 
-  const fileCache = [];
-  return withTask(
-    {
-      ...state,
-      fileLoading: true,
-      fileLoadingProgress: 0
-    },
-    makeLoadFileTask(files.length, files, fileCache, onFinish)
+  const fileLoadingProgress = Array.from(files).reduce(
+    (accu, f, i) => merge_(initialFileLoadingProgress(f, i))(accu),
+    {}
   );
+  const fileLoading = {
+    fileCache: [],
+    filesToLoad: files,
+    onFinish
+  };
+  const nextState = merge_({fileLoading})(merge_({fileLoadingProgress})(state));
+
+  return loadNextFileUpdater(nextState);
 };
 
-export function loadNextFileUpdater(state, action) {
-  const {fileCache, filesToLoad, totalCount, onFinish} = action;
-  const fileLoadingProgress = ((totalCount - filesToLoad.length) / totalCount) * 100;
+// sucessfully loaded one file, move on to the next one
+export function loadFileStepSuccessUpdater(state, action) {
+  const {fileName, fileCache} = action;
+  const {filesToLoad, onFinish} = state.fileLoading;
+  const stateWithProgress = updateFileLoadingProgressUpdater(state, {
+    fileName,
+    progress: {percent: 1, message: 'Done'}
+  });
+
+  // save processed file to fileCache
+  const stateWithCache = pick_('fileLoading')(merge_({fileCache}))(stateWithProgress);
 
   return withTask(
-    {
-      ...state,
-      fileLoadingProgress
-    },
-    makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish)
+    stateWithCache,
+    DELAY_TASK(200).map(filesToLoad.length ? loadNextFile : () => onFinish(fileCache))
   );
 }
 
-export function makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish) {
+export function loadNextFileUpdater(state) {
+  const {filesToLoad} = state.fileLoading;
   const [file, ...remainingFilesToLoad] = filesToLoad;
 
+  // save filesToLoad to state
+  const nextState = pick_('fileLoading')(merge_({filesToLoad: remainingFilesToLoad}))(state);
+
+  const stateWithProgress = updateFileLoadingProgressUpdater(nextState, {
+    fileName: file.name,
+    progress: {percent: 0, message: 'loading...'}
+  });
+
+  return withTask(stateWithProgress, makeLoadFileTask(file, nextState.fileLoading.fileCache));
+}
+
+export function makeLoadFileTask(file, fileCache) {
   return LOAD_FILE_TASK({file, fileCache}).bimap(
+    // prettier ignore
     // success
-    result =>
-      remainingFilesToLoad.length
-        ? loadNextFile({
-            fileCache: result,
-            filesToLoad: remainingFilesToLoad,
-            totalCount,
-            onFinish
+    gen =>
+      nextFileBatch({
+        gen,
+        fileName: file.name,
+        onFinish: result =>
+          processFileContent({
+            content: result,
+            fileCache
           })
-        : onFinish(result),
+      }),
+
     // error
-    loadFilesErr
+    err => loadFilesErr(file.name, err)
   );
 }
+
+export function processFileContentUpdater(state, action) {
+  const {content, fileCache} = action.payload;
+
+  const stateWithProgress = updateFileLoadingProgressUpdater(state, {
+    fileName: content.fileName,
+    progress: {percent: 1, message: 'processing...'}
+  });
+
+  return withTask(
+    stateWithProgress,
+    PROCESS_FILE_DATA({content, fileCache}).bimap(
+      result => loadFileStepSuccess({fileName: content.fileName, fileCache: result}),
+      err => loadFilesErr(content.fileName, err)
+    )
+  );
+}
+
+export function parseProgress(prevProgress = {}, progress) {
+  // This happens when receiving query metadata or other cases we don't
+  // have an update for the user.
+  if (!progress || !progress.percent) {
+    return {};
+  }
+
+  return {
+    percent: progress.percent
+  };
+}
+
+// gets called with payload = AsyncGenerator<???>
+export const nextFileBatchUpdater = (
+  state,
+  {payload: {gen, fileName, progress, accumulated, onFinish}}
+) => {
+  const stateWithProgress = updateFileLoadingProgressUpdater(state, {
+    fileName,
+    progress: parseProgress(state.fileLoadingProgress[fileName], progress)
+  });
+  return withTask(
+    stateWithProgress,
+    UNWRAP_TASK(gen.next()).bimap(
+      ({value, done}) => {
+        return done
+          ? onFinish(accumulated)
+          : nextFileBatch({
+              gen,
+              fileName,
+              progress: value.progress,
+              accumulated: value,
+              onFinish
+            });
+      },
+      err => loadFilesErr(fileName, err)
+    )
+  );
+};
 
 /**
  * Trigger loading file error
@@ -1285,11 +1374,25 @@ export function makeLoadFileTask(totalCount, filesToLoad, fileCache, onFinish) {
  * @type {typeof import('./vis-state-updaters').loadFilesErrUpdater}
  * @public
  */
-export const loadFilesErrUpdater = (state, {error}) => ({
-  ...state,
-  fileLoading: false,
-  fileLoadingErr: error
-});
+export const loadFilesErrUpdater = (state, {error, fileName}) => {
+  // update ui with error message
+  Console.warn(error);
+  if (!state.fileLoading) {
+    return state;
+  }
+  const {filesToLoad, onFinish, fileCache} = state.fileLoading;
+
+  const nextState = updateFileLoadingProgressUpdater(state, {
+    fileName,
+    progress: {error}
+  });
+
+  // kick off next file or finish
+  return withTask(
+    nextState,
+    DELAY_TASK(200).map(filesToLoad.length ? loadNextFile : () => onFinish(fileCache))
+  );
+};
 
 /**
  * When select dataset for export, apply cpu filter to selected dataset
@@ -1322,11 +1425,12 @@ export const setMapInfoUpdater = (state, action) => ({
  * @type {typeof import('./vis-state-updaters').addDefaultLayers}
  */
 export function addDefaultLayers(state, datasets) {
-  const defaultLayers = Object.values(datasets).reduce(
-    // @ts-ignore
-    (accu, dataset) => [...accu, ...(findDefaultLayer(dataset, state.layerClasses) || [])],
-    []
-  );
+  /** @type {Layer[]} */
+  const empty = [];
+  const defaultLayers = Object.values(datasets).reduce((accu, dataset) => {
+    const foundLayers = findDefaultLayer(dataset, state.layerClasses);
+    return foundLayers && foundLayers.length ? accu.concat(foundLayers) : accu;
+  }, empty);
 
   return {
     state: {
@@ -1358,6 +1462,22 @@ export function addDefaultTooltips(state, dataset) {
   return set(['interactionConfig', 'tooltip', 'config', 'fieldsToShow'], merged, state);
 }
 
+export function initialFileLoadingProgress(file, index) {
+  const fileName = file.name || `Untitled File ${index}`;
+  return {
+    [fileName]: {
+      // percent of current file
+      percent: 0,
+      message: '',
+      fileName,
+      error: null
+    }
+  };
+}
+
+export function updateFileLoadingProgressUpdater(state, {fileName, progress}) {
+  return pick_('fileLoadingProgress')(pick_(fileName)(merge_(progress)))(state);
+}
 /**
  * Helper function to update layer domains for an array of datasets
  * @type {typeof import('./vis-state-updaters').updateAllLayerDomainData}

@@ -16,4 +16,4 @@ type FoundLayerProp = {
 export function findDefaultLayer(
   dataset: Dataset,
   layerClasses: LayerClasses
-): FoundLayerProp[]
+): Layer[]

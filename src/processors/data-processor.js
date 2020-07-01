@@ -25,7 +25,7 @@ import assert from 'assert';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES, DATASET_FORMATS} from 'constants/default-settings';
-import {notNullorUndefined, parseFieldValue, getSampleData} from 'utils/data-utils';
+import {notNullorUndefined, parseFieldValue} from 'utils/data-utils';
 import KeplerGlSchema from 'schemas';
 import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
 import {isPlainObject, toArray} from 'utils/utils';
@@ -48,7 +48,9 @@ export const ACCEPTED_ANALYZER_TYPES = [
 ];
 
 // if any of these value occurs in csv, parse it to null;
-const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];
+// const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];
+// matches empty string
+export const CSV_NULLS = /^(null|NULL|Null|NaN|\/N||)$/;
 
 const IGNORE_DATA_TYPES = Object.keys(AnalyzerDATA_TYPES).filter(
   type => !ACCEPTED_ANALYZER_TYPES.includes(type)
@@ -70,6 +72,7 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
   },
   [ALL_FIELD_TYPES.real]: {
     valid: d => parseFloat(d) === d,
+    // Note this will result in NaN for some string
     parse: parseFloat
   }
 };
@@ -100,25 +103,43 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
  *  options: {centerMap: true, readOnly: true}
  * }));
  */
-export function processCsvData(rawData) {
-  // here we assume the csv file that people uploaded will have first row
-  // as name of the column
-  // TODO: add a alert at upload csv to remind define first row
-  const result = csvParseRows(rawData);
-  if (!Array.isArray(result) || result.length < 2) {
-    // looks like an empty file, throw error to be catch
-    throw new Error('Read File Failed: CSV is empty');
+export function processCsvData(rawData, header) {
+  let rows;
+  let headerRow;
+
+  if (typeof rawData === 'string') {
+    const parsedRows = csvParseRows(rawData);
+
+    if (!Array.isArray(parsedRows) || parsedRows.length < 2) {
+      // looks like an empty file, throw error to be catch
+      throw new Error('process Csv Data Failed: CSV is empty');
+    }
+    headerRow = parsedRows[0];
+    rows = parsedRows.slice(1);
+  } else if (Array.isArray(rawData) && rawData.length) {
+    rows = rawData;
+    headerRow = header;
+
+    if (!Array.isArray(headerRow)) {
+      // if data is passed in as array of rows and missing header
+      // assume first row is header
+      headerRow = rawData[0];
+      rows = rawData.slice(1);
+    }
   }
 
-  const [headerRow, ...rows] = result;
+  if (!rows || !headerRow) {
+    throw new Error('invalid input passed to processCsvData');
+  }
+
+  // here we assume the csv file that people uploaded will have first row
+  // as name of the column
 
   cleanUpFalsyCsvValue(rows);
   // No need to run type detection on every data point
   // here we get a list of none null values to run analyze on
   const sample = getSampleForTypeAnalyze({fields: headerRow, allData: rows});
-
   const fields = getFieldsFromData(sample, headerRow);
-
   const parsedRows = parseRowsByFields(rows, fields);
 
   return {fields, rows: parsedRows};
@@ -178,13 +199,14 @@ export function getSampleForTypeAnalyze({fields, allData, sampleCount = 50}) {
  * @param {Array<Array>} rows
  */
 function cleanUpFalsyCsvValue(rows) {
+  const re = new RegExp(CSV_NULLS, 'g');
   for (let i = 0; i < rows.length; i++) {
     for (let j = 0; j < rows[i].length; j++) {
       // analyzer will set any fields to 'string' if there are empty values
       // which will be parsed as '' by d3.csv
       // here we parse empty data as null
       // TODO: create warning when deltect `CSV_NULLS` in the data
-      if (!rows[i][j] || CSV_NULLS.includes(rows[i][j])) {
+      if (typeof rows[i][j] === 'string' && rows[i][j].match(re)) {
         rows[i][j] = null;
       }
     }
@@ -409,15 +431,10 @@ export function processRowObject(rawData) {
   const keys = Object.keys(rawData[0]);
   const rows = rawData.map(d => keys.map(key => d[key]));
 
-  // pick samples
-  const sampleData = getSampleData(rawData, 500);
-  const fields = getFieldsFromData(sampleData, keys);
-  const parsedRows = parseRowsByFields(rows, fields);
+  // row object an still contain values like `Null` or `N/A`
+  cleanUpFalsyCsvValue(rows);
 
-  return {
-    fields,
-    rows: parsedRows
-  };
+  return processCsvData(rows, keys);
 }
 
 /**

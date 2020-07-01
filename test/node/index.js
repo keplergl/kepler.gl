@@ -26,3 +26,6 @@ import './reducers';
 
 // test schemas
 import './schemas';
+
+// test processers
+import './processors';

@@ -89,9 +89,21 @@ test('Components -> FileUpload.onDrop -> render loading msg', t => {
     t.deepEqual(arg, mockFiles, 'should call onFileUpload with files');
   });
 
+  const mockFileProgress = {
+    'tst-file.csv': {
+      fileName: 'tst-file.csv',
+      percent: 1,
+      message: 'Done'
+    }
+  };
   const wrapper = mountWithTheme(
     <IntlWrapper>
-      <FileUpload onFileUpload={onFileUpload} fileLoading />
+      <FileUpload
+        validFileExts={['csv', 'json', 'geojson']}
+        onFileUpload={onFileUpload}
+        fileLoading={{fileCache: [], filesToLoad: [], onFinish: () => {}}}
+        fileLoadingProgress={mockFileProgress}
+      />
     </IntlWrapper>
   );
 
@@ -108,11 +120,12 @@ test('Components -> FileUpload.onDrop -> render loading msg', t => {
   FileDropDiv.simulate('drop', mockEvent);
 
   t.ok(onFileUpload.called, 'onFileUpload should get called');
+
   const uploadMsg = wrapper
-    .find('.file-uploader__message')
+    .find('.file-upload-progress__message')
     .at(0)
     .html();
-
+  t.comment(uploadMsg);
   t.ok(uploadMsg.includes('tst-file.csv', 'should render upload file msg'));
 
   t.end();

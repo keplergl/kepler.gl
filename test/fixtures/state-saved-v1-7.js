@@ -796,5 +796,33 @@ export const savedStateV1InteractionCoordinate = {
         ]
       }
     }
+  },
+  info: {
+    app: 'kepler.gl',
+    created_at: 'Sun Nov 17 2019 18:37:59 GMT-0800 (Pacific Standard Time)'
   }
 };
+
+export const parsedFields = [
+  {name: 'a_zip', type: 'integer', format: '', analyzerType: 'INT'},
+  {
+    name: 'simplified_shape_v2',
+    type: 'geojson',
+    format: '',
+    analyzerType: 'PAIR_GEOMETRY_FROM_STRING'
+  },
+  {name: 'simplified_shape', type: 'geojson', format: '', analyzerType: 'GEOMETRY_FROM_STRING'},
+  {name: 'zip_area', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'avg_number', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'str_type', type: 'string', format: '', analyzerType: 'STRING'},
+  {name: 'int_type', type: 'integer', format: '', analyzerType: 'INT'},
+  {name: 'real_type', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_m_r', type: 'integer', format: '', analyzerType: 'INT'},
+  {name: 'c_m_t', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_a_v', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_ch', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_ta', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_k_a', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'c_ltv', type: 'real', format: '', analyzerType: 'FLOAT'},
+  {name: 'b_r_p', type: 'real', format: '', analyzerType: 'FLOAT'}
+];

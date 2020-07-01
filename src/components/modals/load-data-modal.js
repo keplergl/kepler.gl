@@ -28,6 +28,7 @@ import LoadStorageMapFactory from './load-storage-map';
 import ModalTabsFactory from './modal-tabs';
 
 import LoadingDialog from './loading-dialog';
+
 import {LOADING_METHODS} from 'constants/default-settings';
 
 const StyledLoadDataModal = styled.div.attrs({
@@ -46,7 +47,7 @@ LoadDataModalFactory.deps = [ModalTabsFactory, FileUploadFactory, LoadStorageMap
 
 function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
   const LoadDataModal = props => {
-    const {fileLoading, loadingMethods, isCloudMapLoading} = props;
+    const {loadingMethods, isCloudMapLoading} = props;
     const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
 
     return (
@@ -56,7 +57,7 @@ function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
           loadingMethods={loadingMethods}
           toggleMethod={toggleMethod}
         />
-        {fileLoading || isCloudMapLoading ? (
+        {isCloudMapLoading ? (
           <LoadingDialog size={64} />
         ) : (
           currentMethod && <currentMethod.elementType key={currentMethod.id} {...props} />
@@ -69,7 +70,7 @@ function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
     // call backs
     onFileUpload: PropTypes.func.isRequired,
     onLoadCloudMap: PropTypes.func.isRequired,
-    fileLoading: PropTypes.bool,
+    fileLoading: PropTypes.oneOfType([PropTypes.bool, PropTypes.object]),
     loadingMethods: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string,

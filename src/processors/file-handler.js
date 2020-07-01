@@ -18,130 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {FileReader} from 'global/window';
-import Console from 'global/console';
-import {
-  processCsvData,
-  processGeojson,
-  processKeplerglJSON,
-  processRowObject
-} from './data-processor';
+import '@loaders.gl/polyfills';
+import {parseInBatches} from '@loaders.gl/core';
+import {JSONLoader, _JSONPath} from '@loaders.gl/json';
+import {CSVLoader} from '@loaders.gl/csv';
+import {processGeojson, processKeplerglJSON, processRowObject} from './data-processor';
 import {isPlainObject, generateHashId} from 'utils/utils';
 import {DATASET_FORMATS} from 'constants/default-settings';
 
-const FILE_HANDLERS = {
-  csv: loadCsv,
-  json: loadJSON
+const BATCH_TYPE = {
+  METADATA: 'metadata',
+  PARTIAL_RESULT: 'partial-result',
+  FINAL_RESULT: 'final-result'
 };
 
-/** @type {typeof import('./file-handler').readFile} */
-export function readFile({file, fileCache = []}) {
-  return new Promise((resolve, reject) => {
-    const {handler, format} = getFileHandler(file);
-    if (!handler) {
-      Console.warn(
-        `Canont determine file handler for file ${file.name}. It must have a valid file extension`
-      );
-      resolve(fileCache);
-    }
+const CSV_LOADER_OPTIONS = {
+  batchSize: 4000, // Auto de tect number of rows per batch (network batch size)
+  rowFormat: 'object',
+  dynamicTyping: false // not working for now
+};
 
-    handler({file, format}).then(result => {
-      if (!result || !result.data) {
-        // return fileCache, to keep process other files
-        resolve(fileCache);
-      }
-      resolve([
-        ...fileCache,
-        {
-          data: result.data,
-          info: {
-            label: file.name,
-            format: result.format
-          }
-        }
-      ]);
-    });
-  });
-}
-
-/** @type {typeof import('./file-handler').getFileHandler} */
-export function getFileHandler(fileBlob) {
-  const type = getFileType(fileBlob.name);
-
-  return {handler: FILE_HANDLERS[type], format: type};
-}
-
-/** @type {typeof import('./file-handler').getFileType} */
-export function getFileType(filename) {
-  if (filename.endsWith('csv')) {
-    return 'csv';
-  } else if (filename.endsWith('json') || filename.endsWith('geojson')) {
-    // Read GeoJson from browser
-    return 'json';
-  }
-
-  // Wait to add other file type handler
-  return 'other';
-}
-
-function readCSVFile(fileBlob) {
-  return new Promise((resolve, reject) => {
-    const fileReader = new FileReader();
-    fileReader.onload = ({target: {result}}) => {
-      resolve(result);
-    };
-
-    fileReader.readAsText(fileBlob);
-  });
-}
-
-export function loadCsv({file, format, processor = processCsvData}) {
-  return readCSVFile(file).then(rawData => (rawData ? {data: processor(rawData), format} : null));
-}
-
-export function loadJSON({file, processor = processGeojson}) {
-  return readJSONFile(file).then(content => {
-    if (isKeplerGlMap(content)) {
-      return {
-        format: DATASET_FORMATS.keplergl,
-        data: processKeplerglJSON(content)
-      };
-    } else if (isRowObject(content)) {
-      return {
-        format: DATASET_FORMATS.row,
-        data: processRowObject(content)
-      };
-    } else if (isGeoJson(content)) {
-      return {
-        format: DATASET_FORMATS.geojson,
-        data: processGeojson(content)
-      };
-    }
-    // unsupported json format
-    Console.warn(`unsupported Json format ${file.name}`);
-    return null;
-  });
-}
-
-export function readJSONFile(fileBlob) {
-  return new Promise((resolve, reject) => {
-    const fileReader = new FileReader();
-    fileReader.onload = ({target: {result}}) => {
-      try {
-        const json = JSON.parse(result);
-        resolve(json);
-      } catch (err) {
-        reject(null);
-      }
-    };
-
-    fileReader.readAsText(fileBlob, 'UTF-8');
-  });
-}
+const JSON_LOADER_OPTIONS = {
+  // instruct loaders.gl on what json paths to stream
+  jsonpaths: [
+    '$', // JSON Row array
+    '$.features', // GeoJSON
+    '$.datasets' // KeplerGL JSON
+  ]
+};
 
 export function isGeoJson(json) {
   // json can be feature collection
-  // or simgle feature
+  // or single feature
   return isPlainObject(json) && (isFeature(json) || isFeatureCollection(json));
 }
 
@@ -158,21 +66,122 @@ export function isRowObject(json) {
 }
 
 export function isKeplerGlMap(json) {
-  return (
+  return Boolean(
     isPlainObject(json) &&
-    json.datasets &&
-    json.config &&
-    json.info &&
-    json.info.app === 'kepler.gl'
+      json.datasets &&
+      json.config &&
+      json.info &&
+      json.info.app === 'kepler.gl'
   );
 }
 
-export function determineJsonProcess({dataset, format}, defaultProcessor) {
-  if (isKeplerGlMap(dataset)) {
-    return processKeplerglJSON;
-  }
+export async function* makeProgressIterator(asyncIterator, info) {
+  let rowCount = 0;
 
-  return defaultProcessor;
+  for await (const batch of asyncIterator) {
+    const rowCountInBatch = (batch.data && batch.data.length) || 0;
+    rowCount += rowCountInBatch;
+    const percent = Number.isFinite(batch.bytesUsed) ? batch.bytesUsed / info.size : null;
+
+    // Update progress object
+    const progress = {
+      rowCount,
+      rowCountInBatch,
+      // @ts-ignore
+      ...(Number.isFinite(percent) ? {percent} : {})
+    };
+
+    yield {...batch, progress};
+  }
+}
+
+// eslint-disable-next-line complexity
+export async function* readBatch(asyncIterator, fileName) {
+  let result = null;
+  const batches = [];
+
+  for await (const batch of asyncIterator) {
+    // Last batch will have this special type and will provide all the root
+    // properties of the parsed document.
+    if (batch.batchType === BATCH_TYPE.FINAL_RESULT) {
+      if (batch.container) {
+        result = {...batch.container};
+      }
+      // Set the streamed data correctly is Batch json path is set
+      // and the path streamed is not the top level object (jsonpath = '$')
+      if (batch.jsonpath && batch.jsonpath.length > 1) {
+        const streamingPath = new _JSONPath(batch.jsonpath);
+        streamingPath.setFieldAtPath(result, batches);
+      } else {
+        // The streamed object is a ROW JSON-batch
+        result = batches;
+      }
+    } else {
+      for (let i = 0; i < batch.data.length; i++) {
+        batches.push(batch.data[i]);
+      }
+    }
+
+    yield {
+      ...batch,
+      ...(batch.schema ? {headers: Object.keys(batch.schema)} : {}),
+      fileName,
+      // if dataset is CSV, data is set to the raw batches
+      data: result ? result : batches
+    };
+  }
+}
+
+export async function readFileInBatches({file, fileCache = []}) {
+  const batchIterator = await parseInBatches(
+    file,
+    [JSONLoader, CSVLoader],
+    {
+      csv: CSV_LOADER_OPTIONS,
+      json: JSON_LOADER_OPTIONS,
+      metadata: true
+    },
+    file.name
+  );
+  const progressIterator = makeProgressIterator(batchIterator, {size: file.size});
+
+  return readBatch(progressIterator, file.name);
+}
+
+export function processFileData({content, fileCache}) {
+  return new Promise((resolve, reject) => {
+    const {data} = content;
+
+    let format;
+    let processor;
+    if (isKeplerGlMap(data)) {
+      format = DATASET_FORMATS.keplergl;
+      processor = processKeplerglJSON;
+    } else if (isRowObject(data)) {
+      format = DATASET_FORMATS.row;
+      processor = processRowObject;
+    } else if (isGeoJson(data)) {
+      format = DATASET_FORMATS.geojson;
+      processor = processGeojson;
+    }
+
+    if (format && processor) {
+      const result = processor(data);
+
+      resolve([
+        ...fileCache,
+        {
+          data: result,
+          info: {
+            label: content.fileName,
+            format
+          }
+        }
+      ]);
+    }
+
+    reject('Unknow File Format');
+  });
 }
 
 export function filesToDataPayload(fileCache) {
