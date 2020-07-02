@@ -446,7 +446,7 @@ export default {
     typeLabel: 'Comparison Type',
     types: {
       absolute: 'Absolute',
-      percentage: 'Percentage'
+      relative: 'Relative'
     }
   },
   mapPopover: {

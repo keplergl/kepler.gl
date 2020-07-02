@@ -9,10 +9,6 @@ export function calculateLayerData(
   layerData: any;
   layer: Layer;
 };
-type FoundLayerProp = {
-  type: string;
-  dataId: string;
-};
 
 export type LayersToRender = {
   [layerId: string]: boolean;
@@ -25,7 +21,7 @@ export type LayerHoverProp = {
   layer: Layer;
 };
 
-export function findDefaultLayer(dataset: Dataset, layerClasses: LayerClasses): FoundLayerProp[];
+export function findDefaultLayer(dataset: Dataset, layerClasses: LayerClasses): Layer[];
 export function getLayerHoverProp(arg: {
   interactionConfig: VisState['interactionConfig'];
   hoverInfo: VisState['hoverInfo'];
