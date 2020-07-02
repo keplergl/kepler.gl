@@ -18,6 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './file-uploader-test';
-import './color-legend-test';
-import './range-slider';
+import React from 'react';
+import test from 'tape';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {RangeSlider, Slider} from 'components';
+import SliderHandle from 'components/common/slider/slider-handle';
+import SliderBarHandle from 'components/common/slider/slider-bar-handle';
+
+test('Components -> RangeSlider.render', t => {
+  let wrapper;
+  const onChange = () => {};
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <RangeSlider range={[0, 10]} value0={1} value1={3} onChange={onChange} />
+      </IntlWrapper>
+    );
+  }, 'Show not fail without props');
+
+  t.equal(wrapper.find(Slider).length, 1, 'should render Slider');
+  t.equal(wrapper.find(SliderHandle).length, 2, 'should render 2 Slider handle');
+  t.equal(wrapper.find(SliderBarHandle).length, 1, 'should render 1 Slider bar');
+
+  t.end();
+});
