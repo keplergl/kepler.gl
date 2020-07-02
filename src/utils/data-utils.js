@@ -212,6 +212,12 @@ export function getRoundingDecimalFromStep(step) {
   return splitZero[1].length;
 }
 
+/**
+ * Use in slider, given a number and an array of numbers, return the nears number from the array
+ * @type {typeof import('./data-utils').snapToMarks}
+ * @param value
+ * @param marks
+ */
 export function snapToMarks(value, marks) {
   // always use bin x0
   const i = bisectLeft(marks, value);
@@ -224,6 +230,14 @@ export function snapToMarks(value, marks) {
   return marks[idx];
 }
 
+/**
+ * If marks is provided, snap to marks, if not normalize to step
+ * @type {typeof import('./data-utils').normalizeSliderValue}
+ * @param val
+ * @param minValue
+ * @param step
+ * @param marks
+ */
 export function normalizeSliderValue(val, minValue, step, marks) {
   if (marks && marks.length) {
     return snapToMarks(val, marks);
@@ -234,13 +248,14 @@ export function normalizeSliderValue(val, minValue, step, marks) {
 
 /**
  * round the value to step for the slider
- * @param {number} minValue
- * @param {number} step
- * @param {number} val
- * @returns {number} - rounded number
+ * @type {typeof import('./data-utils').roundValToStep}
+ * @param minValue
+ * @param step
+ * @param val
+ * @returns - rounded number
  */
 export function roundValToStep(minValue, step, val) {
-  if (isNaN(step)) {
+  if (!isNumber(step) || !isNumber(minValue)) {
     return val;
   }
 
@@ -265,8 +280,6 @@ export function roundValToStep(minValue, step, val) {
 
   return Number(rounded);
 }
-
-const identity = d => d;
 
 /**
  * Get the value format based on field and format options
@@ -308,24 +321,17 @@ const arrayMoveMutate = (array, from, to) => {
   array.splice(to < 0 ? array.length + to : to, 0, array.splice(from, 1)[0]);
 };
 
+/**
+ *
+ * @param {*} array
+ * @param {*} from
+ * @param {*} to
+ */
 export const arrayMove = (array, from, to) => {
   array = array.slice();
   arrayMoveMutate(array, from, to);
   return array;
 };
-
-export function findFirstNoneEmpty(data, count = 1, getValue = identity) {
-  let c = 0;
-  const found = [];
-  while (c < count && c < data.length) {
-    const value = getValue(data[c]);
-    if (notNullorUndefined(value)) {
-      found.push(value);
-    }
-    c++;
-  }
-  return found;
-}
 
 /**
  * Get the value format based on field and format options
