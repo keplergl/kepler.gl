@@ -19,8 +19,14 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {findFieldsToShow} from 'utils/interaction-utils';
+import {
+  findFieldsToShow,
+  getTooltipDisplayValue,
+  getTooltipDisplayDeltaValue
+} from 'utils/interaction-utils';
 import {DEFAULT_TOOLTIP_FIELDS} from 'constants/default-settings';
+import {StateWTooltipFormat, testGeoJsonDataId} from 'test/helpers/mock-state';
+import {COMPARE_TYPES} from 'constants/tooltip';
 
 const fields = [
   {
@@ -129,5 +135,124 @@ test('interactionUtil -> autoFindTooltipFields', t => {
     'should filter out all default geometry fields and return first 5'
   );
 
+  t.end();
+});
+
+test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
+  const tooltipConfig = StateWTooltipFormat.visState.interactionConfig.tooltip.config;
+  const dataset = StateWTooltipFormat.visState.datasets[testGeoJsonDataId];
+  const testFieldIdx = dataset.fields.findIndex(f => f.name === 'TRIPS');
+  const item = tooltipConfig.fieldsToShow[testGeoJsonDataId].find(fs => fs.name === 'TRIPS');
+
+  const TEST_CASES = [
+    {
+      input: {
+        primaryData: dataset.allData[0],
+        field: dataset.fields[testFieldIdx],
+        compareType: COMPARE_TYPES.ABSOLUTE,
+        data: dataset.allData[1],
+        fieldIdx: testFieldIdx,
+        item
+      },
+      output: '-7.000',
+      message: 'should display absolute delta value'
+    },
+    {
+      input: {
+        primaryData: dataset.allData[0],
+        field: dataset.fields[testFieldIdx],
+        compareType: COMPARE_TYPES.RELATIVE,
+        data: dataset.allData[1],
+        fieldIdx: testFieldIdx,
+        item
+      },
+      output: '-63.64%',
+      message: 'should display relative delta value'
+    },
+    {
+      input: {
+        primaryData: dataset.allData[3],
+        field: dataset.fields[testFieldIdx],
+        compareType: COMPARE_TYPES.ABSOLUTE,
+        data: dataset.allData[1],
+        fieldIdx: testFieldIdx,
+        item
+      },
+      output: '-',
+      message: 'should display - when primary is null'
+    },
+    {
+      input: {
+        primaryData: dataset.allData[0],
+        field: dataset.fields[testFieldIdx],
+        compareType: COMPARE_TYPES.ABSOLUTE,
+        data: dataset.allData[3],
+        fieldIdx: testFieldIdx,
+        item
+      },
+      output: '-',
+      message: 'should display - when data is null'
+    },
+    {
+      input: {
+        primaryData: dataset.allData[4],
+        field: dataset.fields[testFieldIdx],
+        compareType: COMPARE_TYPES.ABSOLUTE,
+        data: dataset.allData[3],
+        fieldIdx: testFieldIdx,
+        item
+      },
+      output: '-',
+      message: 'should display - when both are null'
+    }
+  ];
+
+  TEST_CASES.forEach(tc => {
+    t.equal(getTooltipDisplayDeltaValue(tc.input), tc.output, tc.message);
+  });
+
+  t.end();
+});
+
+test('interactionUtil -> getTooltipDisplayValue', t => {
+  const tooltipConfig = StateWTooltipFormat.visState.interactionConfig.tooltip.config;
+  const dataset = StateWTooltipFormat.visState.datasets[testGeoJsonDataId];
+  const items = tooltipConfig.fieldsToShow[testGeoJsonDataId];
+
+  const TEST_CASES = [
+    {
+      input: items[0], // OBJECTID
+      output: ['1', '2', '3', '4', '5'],
+      message: `should display correct tooltip value for ${items[0].name}`
+    },
+    {
+      input: items[3], // ID
+      output: ['11.000', '4.000', '20.000', '', ''],
+      message: `should display correct tooltip value for ${items[3].name}`
+    },
+    {
+      input: {name: 'OBJ', format: null}, // ID
+      output: ['{"id":1}', '{"id":2}', '{"id":3}', '{"id":4}', '{"id":5}'],
+      message: 'should display correct tooltip value for OBJ'
+    }
+  ];
+
+  TEST_CASES.forEach(tc => {
+    const field = dataset.fields.find(f => f.name === tc.input.name);
+    const fieldIdx = dataset.fields.findIndex(f => f.name === tc.input.name);
+
+    t.deepEqual(
+      dataset.allData.map(data =>
+        getTooltipDisplayValue({
+          field,
+          data,
+          fieldIdx,
+          item: tc.input
+        })
+      ),
+      tc.output,
+      tc.message
+    );
+  });
   t.end();
 });

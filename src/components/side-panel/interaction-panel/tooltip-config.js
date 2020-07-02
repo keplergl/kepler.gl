@@ -149,7 +149,7 @@ function TooltipConfigFactory(DatasetTag) {
                   id: `compare.types.${d}`
                 })
               }
-              selectedItems={config.compareType || COMPARE_TYPES.ABSOLUTE}
+              selectedItems={config.compareType}
               options={Object.values(COMPARE_TYPES)}
               multiSelect={false}
               searchable={false}

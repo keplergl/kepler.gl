@@ -172,5 +172,5 @@ export const TOOLTIP_FORMATS = {
 
 export const COMPARE_TYPES = {
   ABSOLUTE: 'absolute',
-  PERCENTAGE: 'percentage'
+  RELATIVE: 'relative'
 };

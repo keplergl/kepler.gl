@@ -51,7 +51,7 @@ import {assignGpuChannel, setFilterGpuMode} from 'utils/gpu-filter-utils';
 import {createNewDataEntry, sortDatasetByColumn} from 'utils/dataset-utils';
 import {set, toArray} from 'utils/utils';
 
-import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils/layer-utils';
+import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils';
 
 import {
   mergeAnimationConfig,

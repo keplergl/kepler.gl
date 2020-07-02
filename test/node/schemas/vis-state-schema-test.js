@@ -209,8 +209,8 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
   const expectedSaved = {
     tooltip: {
       enabled: true,
-      compareMode: false,
-      compareType: 'absolute',
+      compareMode: true,
+      compareType: 'relative',
       fieldsToShow: {
         [testCsvDataId]: [{name: 'gps_data.utc_timestamp', format: 'LL'}],
         [testGeoJsonDataId]: [
@@ -228,7 +228,7 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
           },
           {
             name: 'TRIPS',
-            format: null
+            format: '.3f'
           },
           {
             name: 'RATE',
