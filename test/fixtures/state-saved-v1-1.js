@@ -2773,6 +2773,8 @@ export const mergedInteraction = {
     ...defaultInteraction.tooltip,
     enabled: false,
     config: {
+      compareMode: false,
+      compareType: 'absolute',
       fieldsToShow: {
         a5ybmwl2d: [
           {

@@ -23,8 +23,9 @@ import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import LayerHoverInfoFactory from './layer-hover-info';
 import CoordinateInfoFactory from './coordinate-info';
-import {Pin} from 'components/common/icons';
+import {Pin, ArrowLeft, ArrowRight} from 'components/common/icons';
 import ErrorBoundary from 'components/common/error-boundary';
+import {FormattedMessage, injectIntl} from 'react-intl';
 
 const MAX_WIDTH = 500;
 const MAX_HEIGHT = 600;
@@ -38,9 +39,23 @@ const StyledMapPopover = styled.div`
   z-index: 1000;
   position: absolute;
   overflow-x: auto;
+  box-shadow: ${props => props.theme.panelBoxShadow};
+
+  :hover {
+    background-color: ${props => `${props.theme.panelBackground}dd`};
+  }
 
   .gutter {
     height: 6px;
+    margin-bottom: 20px;
+  }
+
+  .primary-label {
+    color: ${props => props.theme.notificationColors.success};
+    position: absolute;
+    right: 18px;
+    top: 10px;
+    font-size: 10px;
   }
 
   table {
@@ -66,12 +81,22 @@ const StyledMapPopover = styled.div`
   }
 `;
 
-const StyledPin = styled.div`
+const StyledIcon = styled.div`
   position: absolute;
   left: 50%;
   transform: rotate(30deg);
   top: 10px;
   color: ${props => props.theme.primaryBtnBgd};
+
+  &.popover-arrow-left {
+    left: 40%;
+    transform: rotate(0deg);
+  }
+
+  &.popover-arrow-right {
+    left: 60%;
+    transform: rotate(0deg);
+  }
 
   :hover {
     cursor: pointer;
@@ -86,19 +111,21 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
     static propTypes = {
       layerHoverProp: PropTypes.object,
       coordinate: PropTypes.oneOfType([PropTypes.array, PropTypes.bool]),
-      freezed: PropTypes.bool,
+      frozen: PropTypes.bool,
       x: PropTypes.number,
       y: PropTypes.number,
       mapW: PropTypes.number.isRequired,
       mapH: PropTypes.number.isRequired,
-      onClose: PropTypes.func.isRequired
+      onClose: PropTypes.func.isRequired,
+      isBase: PropTypes.bool
     };
 
     constructor(props) {
       super(props);
       this.state = {
         width: 380,
-        height: 160
+        height: 160,
+        isLeft: false
       };
     }
 
@@ -126,13 +153,13 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
       }
     }
 
-    _getPosition(x, y) {
+    _getPosition(x, y, isLeft) {
       const topOffset = 20;
       const leftOffset = 20;
       const {mapW, mapH} = this.props;
       const {width, height} = this.state;
       const pos = {};
-      if (x + leftOffset + width > mapW) {
+      if (x + leftOffset + width > mapW || isLeft) {
         pos.right = mapW - x + leftOffset;
       } else {
         pos.left = x + leftOffset;
@@ -147,10 +174,19 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
       return pos;
     }
 
-    render() {
-      const {x, y, freezed, coordinate, layerHoverProp} = this.props;
+    moveLeft = () => {
+      this.setState({isLeft: true});
+    };
 
-      const style = Number.isFinite(x) && Number.isFinite(y) ? this._getPosition(x, y) : {};
+    moveRight = () => {
+      this.setState({isLeft: false});
+    };
+
+    render() {
+      const {x, y, frozen, coordinate, layerHoverProp, isBase} = this.props;
+      const {isLeft} = this.state;
+
+      const style = Number.isFinite(x) && Number.isFinite(y) ? this._getPosition(x, y, isLeft) : {};
 
       return (
         <ErrorBoundary>
@@ -162,12 +198,27 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
               maxWidth: MAX_WIDTH
             }}
           >
-            {freezed ? (
+            {frozen ? (
               <div className="map-popover__top">
                 <div className="gutter" />
-                <StyledPin className="popover-pin" onClick={this.props.onClose}>
+                {!isLeft && (
+                  <StyledIcon className="popover-arrow-left" onClick={this.moveLeft}>
+                    <ArrowLeft />
+                  </StyledIcon>
+                )}
+                <StyledIcon className="popover-pin" onClick={this.props.onClose}>
                   <Pin height="16px" />
-                </StyledPin>
+                </StyledIcon>
+                {isLeft && (
+                  <StyledIcon className="popover-arrow-right" onClick={this.moveRight}>
+                    <ArrowRight />
+                  </StyledIcon>
+                )}
+                {isBase && (
+                  <div className="primary-label">
+                    <FormattedMessage id="mapPopover.primary" />
+                  </div>
+                )}
               </div>
             ) : null}
             {Array.isArray(coordinate) && <CoordinateInfo coordinate={coordinate} />}
@@ -178,5 +229,5 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
     }
   }
 
-  return MapPopover;
+  return injectIntl(MapPopover);
 }

@@ -169,3 +169,8 @@ export const TOOLTIP_FORMATS = {
     type: TOOLTIP_FORMAT_TYPES.DATE_TIME
   }
 };
+
+export const COMPARE_TYPES = {
+  ABSOLUTE: 'absolute',
+  RELATIVE: 'relative'
+};

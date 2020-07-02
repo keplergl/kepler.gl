@@ -41,6 +41,7 @@ import {
 } from 'test/fixtures/test-trip-data';
 import tripGeojson, {tripDataInfo} from 'test/fixtures/trip-geojson';
 import {processGeojson} from 'processors/data-processor';
+import {COMPARE_TYPES} from 'constants/tooltip';
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);
@@ -382,9 +383,18 @@ function mockStateWithTooltipFormat() {
     ...oldConfig,
     config: {
       ...oldConfig.config,
+      compareMode: true,
+      compareType: COMPARE_TYPES.RELATIVE,
       fieldsToShow: {
         ...oldConfig.config.fieldsToShow,
-        [testCsvDataId]: [{name: 'gps_data.utc_timestamp', format: 'LL'}]
+        [testCsvDataId]: [{name: 'gps_data.utc_timestamp', format: 'LL'}],
+        [testGeoJsonDataId]: [
+          {name: 'OBJECTID', format: null},
+          {name: 'ZIP_CODE', format: null},
+          {name: 'ID', format: null},
+          {name: 'TRIPS', format: '.3f'},
+          {name: 'RATE', format: null}
+        ]
       }
     }
   };

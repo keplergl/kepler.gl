@@ -20,3 +20,4 @@
 
 import './map-legend-test';
 import './map-control-test';
+import './map-popover-test';

@@ -145,6 +145,13 @@ export function notNullorUndefined(d) {
 }
 
 /**
+ * Whether d is a number, this filtered out NaN as well
+ * @type {typeof import('./data-utils').notNullorUndefined}
+ */
+export function isNumber(d) {
+  return Number.isFinite(d);
+}
+/**
  * whether null or undefined
  */
 export function isPlainObject(obj) {
@@ -240,13 +247,20 @@ export function roundValToStep(minValue, step, val) {
 
 const identity = d => d;
 
+/**
+ * Get the value format based on field and format options
+ * Used in render tooltip value
+ * @type {typeof import('./data-utils').defaultFormatter}
+ */
+export const defaultFormatter = v => (notNullorUndefined(v) ? String(v) : '');
+
 export const FIELD_DISPLAY_FORMAT = {
-  [ALL_FIELD_TYPES.string]: identity,
-  [ALL_FIELD_TYPES.timestamp]: identity,
-  [ALL_FIELD_TYPES.integer]: identity,
-  [ALL_FIELD_TYPES.real]: identity,
-  [ALL_FIELD_TYPES.boolean]: d => String(d),
-  [ALL_FIELD_TYPES.date]: identity,
+  [ALL_FIELD_TYPES.string]: defaultFormatter,
+  [ALL_FIELD_TYPES.timestamp]: defaultFormatter,
+  [ALL_FIELD_TYPES.integer]: defaultFormatter,
+  [ALL_FIELD_TYPES.real]: defaultFormatter,
+  [ALL_FIELD_TYPES.boolean]: defaultFormatter,
+  [ALL_FIELD_TYPES.date]: defaultFormatter,
   [ALL_FIELD_TYPES.geojson]: d =>
     typeof d === 'string'
       ? d
@@ -292,8 +306,14 @@ export function findFirstNoneEmpty(data, count = 1, getValue = identity) {
   return found;
 }
 
+/**
+ * Get the value format based on field and format options
+ * Used in render tooltip value
+ * @type {typeof import('./data-utils').getFormatter}
+ * @param format
+ * @param field
+ */
 export function getFormatter(format, field) {
-  const defaultFormatter = v => v;
   if (!format) {
     return defaultFormatter;
   }
@@ -310,7 +330,7 @@ export function getFormatter(format, field) {
 
 export function applyDefaultFormat(tooltipFormat) {
   if (!tooltipFormat || !tooltipFormat.format) {
-    return v => v;
+    return defaultFormatter;
   }
 
   switch (tooltipFormat.type) {
@@ -322,7 +342,7 @@ export function applyDefaultFormat(tooltipFormat) {
     case TOOLTIP_FORMAT_TYPES.PERCENTAGE:
       return v => `${d3Format(TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format)(v)}%`;
     default:
-      return v => v;
+      return defaultFormatter;
   }
 }
 

@@ -20,12 +20,19 @@
 
 import React, {Component} from 'react';
 import styled from 'styled-components';
-import {FormattedMessage} from 'react-intl';
-import {SidePanelSection, SBFlexboxNoMargin, Button} from 'components/common/styled-components';
+import {FormattedMessage, injectIntl} from 'react-intl';
+import {
+  SidePanelSection,
+  SBFlexboxNoMargin,
+  Button,
+  PanelLabel
+} from 'components/common/styled-components';
 import FieldSelector from 'components/common/field-selector';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
 import TooltipChickletFactory from './tooltip-config/tooltip-chicklet';
-
+import Switch from 'components/common/switch';
+import ItemSelector from 'components/common/item-selector/item-selector';
+import {COMPARE_TYPES} from 'constants/tooltip';
 TooltipConfigFactory.deps = [DatasetTagFactory];
 
 const TooltipConfigWrapper = styled.div`
@@ -50,10 +57,19 @@ const ButtonWrapper = styled.div`
   }
 `;
 
+const CompareSwitchWrapper = styled.div`
+  color: ${props => props.theme.labelColor};
+  display: flex;
+  font-size: ${props => props.theme.inputFontSize};
+  justify-content: space-between;
+  line-height: 11px;
+  margin-bottom: 8px;
+`;
+
 function TooltipConfigFactory(DatasetTag) {
   class TooltipConfig extends Component {
     render() {
-      const {config, datasets, onChange} = this.props;
+      const {config, datasets, onChange, intl} = this.props;
       return (
         <TooltipConfigWrapper>
           {Object.keys(config.fieldsToShow).map(dataId => (
@@ -107,12 +123,53 @@ function TooltipConfigFactory(DatasetTag) {
               />
             </SidePanelSection>
           ))}
+          <CompareSwitchWrapper>
+            <FormattedMessage id="compare.modeLabel" />
+            <Switch
+              checked={config.compareMode}
+              id="compare-mode-toggle"
+              onChange={() => {
+                const newConfig = {
+                  ...config,
+                  compareMode: !config.compareMode
+                };
+                onChange(newConfig);
+              }}
+              secondary
+            />
+          </CompareSwitchWrapper>
+          <SidePanelSection>
+            <PanelLabel>
+              <FormattedMessage id="compare.typeLabel" />
+            </PanelLabel>
+            <ItemSelector
+              disabled={!config.compareMode}
+              displayOption={d =>
+                intl.formatMessage({
+                  id: `compare.types.${d}`
+                })
+              }
+              selectedItems={config.compareType}
+              options={Object.values(COMPARE_TYPES)}
+              multiSelect={false}
+              searchable={false}
+              inputTheme={'secondary'}
+              getOptionValue={d => d}
+              onChange={option => {
+                const newConfig = {
+                  ...config,
+                  compareType: option
+                };
+                onChange(newConfig);
+              }}
+            />
+          </SidePanelSection>
         </TooltipConfigWrapper>
       );
     }
   }
 
-  return TooltipConfig;
+  return injectIntl(TooltipConfig);
 }
 
 export default TooltipConfigFactory;
