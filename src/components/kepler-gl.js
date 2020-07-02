@@ -123,7 +123,8 @@ function KeplerGlFactory(
       version: KEPLER_GL_VERSION,
       sidePanelWidth: DIMENSIONS.sidePanel.width,
       theme: {},
-      cloudProviders: []
+      cloudProviders: [],
+      readOnly: false
     };
 
     componentDidMount() {
@@ -244,7 +245,10 @@ function KeplerGlFactory(
         mapStateActions,
         mapStyleActions,
         uiStateActions,
-        providerActions
+        providerActions,
+
+        // readOnly override
+        readOnly
       } = this.props;
 
       const availableProviders = this.availableProviders(this.props);
@@ -353,7 +357,7 @@ function KeplerGlFactory(
                 ref={this.root}
               >
                 <NotificationPanel {...notificationPanelFields} />
-                {!uiState.readOnly && <SidePanel {...sideFields} />}
+                {(!uiState.readOnly && !readOnly) && <SidePanel {...sideFields} />}
                 <div className="maps" style={{display: 'flex'}}>
                   {mapContainers}
                 </div>
