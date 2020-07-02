@@ -222,23 +222,24 @@ export type AnimationConfig = {
   speed: number;
 };
 
-type BaseInteraction = {
+export type BaseInteraction = {
   id: string;
   label: string;
   enabled: boolean;
   iconComponent: any;
 };
-type TooltipField = {
+export type TooltipField = {
   name: string;
   format: string | null;
 };
+export type CompareType = string | null;
 export type Tooltip = BaseInteraction & {
   config: {
     fieldsToShow: {
       [key: string]: TooltipField[];
     };
     compareMode: boolean;
-    compareType: string | null;
+    compareType: CompareType;
   };
 };
 export type Geocoder = BaseInteraction & {

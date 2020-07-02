@@ -38,6 +38,7 @@ import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
 import {OVERLAY_TYPE} from 'layers/base-layer';
 import {setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
+import {getLayerHoverProp} from 'utils/layer-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
@@ -75,33 +76,6 @@ const Attribution = () => (
     </a>
   </StyledAttrbution>
 );
-
-function getLayerProp({interactionConfig, hoverInfo, layers, layersToRender, datasets}) {
-  if (interactionConfig.tooltip.enabled && hoverInfo && hoverInfo.picked) {
-    // if anything hovered
-    const {object, layer: overlay} = hoverInfo;
-
-    // deckgl layer to kepler-gl layer
-    const layer = layers[overlay.props.idx];
-
-    if (layer.getHoverData && layersToRender[layer.id]) {
-      // if layer is visible and have hovered data
-      const {
-        config: {dataId}
-      } = layer;
-      const {allData, fields} = datasets[dataId];
-      const data = layer.getHoverData(object, allData);
-      const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
-
-      return {
-        data,
-        fields,
-        fieldsToShow,
-        layer
-      };
-    }
-  }
-}
 
 MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory];
 
@@ -281,7 +255,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       const position = {x: mousePosition[0], y: mousePosition[1]};
       let pinnedPosition = {};
 
-      layerHoverProp = getLayerProp({
+      layerHoverProp = getLayerHoverProp({
         interactionConfig,
         hoverInfo,
         layers,
@@ -296,12 +270,12 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       const hasTooltip = pinned || clicked;
       const hasComparisonTooltip = compareMode || (!clicked && !pinned);
 
-      if (pinned || clicked) {
+      if (hasTooltip) {
         // project lnglat to screen so that tooltip follows the object on zoom
         const viewport = new WebMercatorViewport(mapState);
         const lngLat = clicked ? clicked.lngLat : pinned.coordinate;
         pinnedPosition = this._getHoverXY(viewport, lngLat);
-        layerPinnedProp = getLayerProp({
+        layerPinnedProp = getLayerHoverProp({
           interactionConfig,
           hoverInfo: clicked,
           layers,

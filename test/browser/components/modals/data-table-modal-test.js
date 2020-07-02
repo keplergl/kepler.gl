@@ -477,7 +477,7 @@ test('Components -> cellSize -> renderedSize', t => {
 
   const expected = {
     _geojson: {row: 400, header: 91},
-    'income level of people over 65': {row: 117, header: 150},
+    'income level of people over 65': {row: 75, header: 150},
     engagement: {row: 117, header: 110}
   };
 

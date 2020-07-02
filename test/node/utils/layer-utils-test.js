@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {findDefaultLayer} from 'utils/layer-utils/layer-utils';
+import {findDefaultLayer} from 'utils/layer-utils';
 import {findPointFieldPairs, createNewDataEntry} from 'utils/dataset-utils';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 import {GEOJSON_FIELDS} from 'constants/default-settings';
