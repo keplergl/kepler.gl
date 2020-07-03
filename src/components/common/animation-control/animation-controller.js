@@ -50,14 +50,14 @@ function AnimationControllerFactory() {
           // when speed = 1, animation should loop through 600 frames at 60 FPS
           // calculate delay based on # steps
           const delay = (BASE_SPEED * (1000 / FPS)) / steps.length / (speed || 1);
-          this._animte(delay);
+          this._animate(delay);
         }
       }
     }
 
     _timer = null;
 
-    _animte = delay => {
+    _animate = delay => {
       this._startTime = new Date().getTime();
 
       const loop = () => {
