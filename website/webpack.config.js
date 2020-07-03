@@ -140,9 +140,7 @@ const COMMON_CONFIG = {
       DropboxClientId: null,
       CartoClientId: null,
       GoogleDriveClientId: null,
-      MapboxExportToken: null,
-      UNFOLDED_API_URL: null,
-      SHAPIFY_API_URL: null
+      MapboxExportToken: null
     })
   ],
 
