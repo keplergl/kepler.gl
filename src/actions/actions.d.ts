@@ -23,6 +23,7 @@ import {ParsedConfig} from '../schemas';
 import {RGBColor} from 'reducers/types';
 import {Bounds} from 'reducers/map-state-updaters';
 import {MapInfo} from 'reducers/vis-state-updaters';
+import {UiState} from 'reducers/ui-state-updaters';
 
 /**
  * Input dataest parsed to addDataToMap
@@ -84,13 +85,10 @@ export type KeplerGlInitPayload = {
   mapboxApiAccessToken?: string;
   mapboxApiUrl?: string;
   mapStylesReplaceDefault?: boolean;
+  initialUiState?: Partial<UiState>;
 };
 
-export function keplerGlInit(options?: {
-  mapboxApiAccessToken?: string;
-  mapboxApiUrl?: string;
-  mapStylesReplaceDefault?: boolean;
-}): {
+export function keplerGlInit(options?: KeplerGlInitPayload): {
   type: ActionTypes.INIT;
   payload: KeplerGlInitPayload;
 };

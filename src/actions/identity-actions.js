@@ -27,24 +27,20 @@ import ActionTypes from 'constants/action-types';
  * Note that if you dispatch actions such as adding data to a kepler.gl instance before the React component is mounted, the action will not be
  * performed. Instance reducer can only handle actions when it is instantiated.
  * @memberof rootActions
- * @param {Object} payload
- * @param {string} payload.id - ***required** The id of the instance
- * @param {boolean} payload.mint - Whether to use a fresh empty state, when `mint: true` it will *always* load a fresh state when the component is re-mounted.
+ * @param payload
+ * @param payload.id - ***required** The id of the instance
+ * @param payload.mint - Whether to use a fresh empty state, when `mint: true` it will *always* load a fresh state when the component is re-mounted.
  * When `mint: false` it will register with existing instance state under the same `id`, when the component is unmounted then mounted again. Default: `true`
- * @param {string} payload.mapboxApiAccessToken - mapboxApiAccessToken to be saved in `map-style` reducer.
- * @param {string} payload.mapboxApiUrl - mapboxApiUrl to be saved in `map-style` reducer.
- * @param {Boolean} payload.mapStylesReplaceDefault - mapStylesReplaceDefault to be saved in `map-style` reducer.
+ * @param payload.mapboxApiAccessToken - mapboxApiAccessToken to be saved in `map-style` reducer.
+ * @param payload.mapboxApiUrl - mapboxApiUrl to be saved in `map-style` reducer.
+ * @param payload.mapStylesReplaceDefault - mapStylesReplaceDefault to be saved in `map-style` reducer.
+ * @param payload.initialUiState - initial ui state
+ * @type {typeof import('./identity-actions').registerEntry}
  * @public
  */
 export const registerEntry = createAction(
   ActionTypes.REGISTER_ENTRY,
-  ({id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}) => ({
-    id,
-    mint,
-    mapboxApiAccessToken,
-    mapboxApiUrl,
-    mapStylesReplaceDefault
-  })
+  payload => payload
 );
 
 /**
