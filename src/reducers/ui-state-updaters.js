@@ -253,6 +253,15 @@ export const INITIAL_UI_STATE = {
 
 /* Updaters */
 /**
+ * @memberof uiStateUpdaters
+
+ */
+export const initUiStateUpdater = (state, action) => (console.log(action.payload), {
+  ...state,
+  ...(action.payload || {}).initialUiState
+});
+
+/**
  * Toggle active side panel
  * @memberof uiStateUpdaters
  * @param state `uiState`

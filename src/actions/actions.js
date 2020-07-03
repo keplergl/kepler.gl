@@ -153,17 +153,14 @@ export const receiveMapConfig = createAction(ActionTypes.RECEIVE_MAP_CONFIG, (co
  * @param payload.mapboxApiAccessToken - mapboxApiAccessToken to be saved to mapStyle reducer
  * @param payload.mapboxApiUrl - mapboxApiUrl to be saved to mapStyle reducer.
  * @param payload.mapStylesReplaceDefault - mapStylesReplaceDefault to be saved to mapStyle reducer
+ * @param payload.initialUiState - initial ui state
  * @type {typeof import('./actions').keplerGlInit}
  * @public
  */
 export const keplerGlInit = createAction(
   ActionTypes.INIT,
   // @ts-ignore
-  ({mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault} = {}) => ({
-    mapboxApiAccessToken,
-    mapboxApiUrl,
-    mapStylesReplaceDefault
-  })
+  (payload) => (payload)
 );
 
 /**
