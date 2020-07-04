@@ -368,7 +368,7 @@ function KeplerGlFactory(
                     setExportImageError={uiStateActions.setExportImageError}
                   />
                 )}
-                {!uiState.readOnly && interactionConfig.geocoder.enabled && (
+                {interactionConfig.geocoder.enabled && (
                   <GeoCoderPanel
                     isGeocoderEnabled={interactionConfig.geocoder.enabled}
                     mapboxApiAccessToken={mapboxApiAccessToken}
