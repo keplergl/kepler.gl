@@ -26,10 +26,12 @@ import {axisBottom} from 'd3-axis';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 
+const MIN_TICK_WIDTH = 50;
+
 const TimeSliderContainer = styled.svg`
   pointer-events: none;
   position: absolute;
-  top: 0;
+
   .axis text {
     font-size: 9px;
     fill: ${props => props.theme.textColor};
@@ -63,51 +65,65 @@ const TimeSliderContainer = styled.svg`
 
 const height = 30;
 
-export default class TimeSliderMarker extends Component {
-  static propTypes = {
-    domain: PropTypes.arrayOf(PropTypes.any).isRequired,
-    width: PropTypes.number.isRequired
-  };
+function TimeSliderMarkerFactory() {
+  class TimeSliderMarker extends Component {
+    static propTypes = {
+      domain: PropTypes.arrayOf(PropTypes.any).isRequired,
+      width: PropTypes.number.isRequired
+    };
 
-  componentDidMount() {
-    this._updateAxis(this.scaleSelector(this.props));
-  }
-
-  componentDidUpdate(prevProps) {
-    if (this.scaleSelector(this.props) !== this.scaleSelector(prevProps)) {
+    componentDidMount() {
       this._updateAxis(this.scaleSelector(this.props));
     }
-  }
 
-  xAxis = createRef();
-
-  domainSelector = props => props.domain;
-  widthSelector = props => props.width;
-  scaleSelector = createSelector(this.domainSelector, this.widthSelector, (domain, width) =>
-    Array.isArray(domain)
-      ? scaleUtc()
-          .domain(domain)
-          .range([0, width])
-      : null
-  );
-
-  _updateAxis(scale) {
-    if (!scale) {
-      return;
+    componentDidUpdate(prevProps) {
+      if (this.scaleSelector(this.props) !== this.scaleSelector(prevProps)) {
+        this._updateAxis(this.scaleSelector(this.props));
+      }
     }
-    const xAxis = axisBottom(scale)
-      .ticks(4)
-      .tickSize(8)
-      .tickPadding(6);
 
-    select(this.xAxis.current).call(xAxis);
-  }
+    xAxis = createRef();
 
-  render() {
-    return (
-      <TimeSliderContainer className="time-slider-marker" width={this.props.width} height={height}>
-        <g className="x axis" ref={this.xAxis} transform="translate(0, 0)" />
-      </TimeSliderContainer>
+    domainSelector = props => props.domain;
+    widthSelector = props => props.width;
+    scaleSelector = createSelector(this.domainSelector, this.widthSelector, (domain, width) =>
+      Array.isArray(domain)
+        ? scaleUtc()
+            .domain(domain)
+            .range([0, width])
+        : null
     );
+
+    _updateAxis(scale) {
+      if (!scale) {
+        return;
+      }
+
+      // TODO: pass in ticks if interval is defined
+      const ticks = Math.floor(this.props.width / MIN_TICK_WIDTH);
+
+      const xAxis = axisBottom(scale)
+        .ticks(ticks)
+        .tickSize(8)
+        .tickPadding(6);
+
+      select(this.xAxis.current).call(xAxis);
+    }
+
+    render() {
+      return (
+        <TimeSliderContainer
+          className="time-slider-marker"
+          width={this.props.width}
+          height={height}
+        >
+          <g className="x axis" ref={this.xAxis} transform="translate(0, 0)" />
+        </TimeSliderContainer>
+      );
+    }
   }
+
+  return TimeSliderMarker;
 }
+
+export default TimeSliderMarkerFactory;

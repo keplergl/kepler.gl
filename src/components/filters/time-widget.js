@@ -37,6 +37,9 @@ import FloatingTimeDisplayFactory from 'components/common/animation-control/floa
 
 const TOP_SECTION_HEIGHT = '36px';
 
+const TimeBottomWidgetInner = styled(BottomWidgetInner)`
+  padding: 6px 32px 16px 32px;
+`;
 const TopSectionWrapper = styled.div`
   display: flex;
   justify-content: space-between;
@@ -130,7 +133,7 @@ function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay) {
 
       const {showSpeedControl} = this.state;
       return (
-        <BottomWidgetInner className="bottom-widget--inner">
+        <TimeBottomWidgetInner className="bottom-widget--inner">
           <TopSectionWrapper>
             <StyledTitle className="bottom-widget__field">
               <CenterFlexbox className="bottom-widget__icon">
@@ -179,7 +182,7 @@ function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay) {
             isAnimatable
           />
           {showTimeDisplay ? <FloatingTimeDisplay currentTime={filter.value} /> : null}
-        </BottomWidgetInner>
+        </TimeBottomWidgetInner>
       );
     }
   }

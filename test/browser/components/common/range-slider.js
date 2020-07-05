@@ -18,34 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Layer, LayerClasses} from 'layers';
-import {VisState, Dataset, TooltipField} from 'reducers/vis-state-updaters';
+import React from 'react';
+import test from 'tape';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {RangeSlider, Slider} from 'components';
+import SliderHandle from 'components/common/slider/slider-handle';
+import SliderBarHandle from 'components/common/slider/slider-bar-handle';
 
-export function calculateLayerData(
-  layer: Layer,
-  state: VisState,
-  oldLayerData?: any
-): {
-  layerData: any;
-  layer: Layer;
-};
+test('Components -> RangeSlider.render', t => {
+  let wrapper;
+  const onChange = () => {};
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <RangeSlider range={[0, 10]} value0={1} value1={3} onChange={onChange} />
+      </IntlWrapper>
+    );
+  }, 'Show not fail without props');
 
-export type LayersToRender = {
-  [layerId: string]: boolean;
-};
+  t.equal(wrapper.find(Slider).length, 1, 'should render Slider');
+  t.equal(wrapper.find(SliderHandle).length, 2, 'should render 2 Slider handle');
+  t.equal(wrapper.find(SliderBarHandle).length, 1, 'should render 1 Slider bar');
 
-export type LayerHoverProp = {
-  data: any[];
-  fields: Field[];
-  fieldsToShow: TooltipField[];
-  layer: Layer;
-};
-
-export function findDefaultLayer(dataset: Dataset, layerClasses: LayerClasses): Layer[];
-export function getLayerHoverProp(arg: {
-  interactionConfig: VisState['interactionConfig'];
-  hoverInfo: VisState['hoverInfo'];
-  layers: VisState['layers'];
-  layersToRender: LayersToRender;
-  datasets: VisState['datasets'];
-}): LayerHoverProp | null;
+  t.end();
+});

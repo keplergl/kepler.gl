@@ -20,3 +20,4 @@
 
 import './file-uploader-test';
 import './color-legend-test';
+import './range-slider';

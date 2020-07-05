@@ -21,7 +21,6 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
-import {requestAnimationFrame, cancelAnimationFrame} from 'global/window';
 import throttle from 'lodash.throttle';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
@@ -29,9 +28,11 @@ import {createSelector} from 'reselect';
 import {Minus} from 'components/common/icons';
 import {SelectTextBold, SelectText} from 'components/common/styled-components';
 import RangeSliderFactory from 'components/common/range-slider';
-import TimeSliderMarker from 'components/common/time-slider-marker';
+import TimeSliderMarkerFactory from 'components/common/time-slider-marker';
 import PlaybackControlsFactory from 'components/common/animation-control/playback-controls';
-import {BASE_SPEED, DEFAULT_TIME_FORMAT} from 'constants/default-settings';
+import AnimationControllerFactory from 'components/common/animation-control/animation-controller';
+
+import {DEFAULT_TIME_FORMAT} from 'constants/default-settings';
 
 const animationControlWidth = 140;
 
@@ -49,11 +50,25 @@ const StyledSliderContainer = styled.div`
   .playback-control-button {
     padding: 9px 12px;
   }
+
+  .kg-range-slider__slider .kg-slider {
+    margin-top: ${props => props.theme.sliderMarginTopIsTime}px;
+  }
 `;
 
-TimeRangeSliderFactory.deps = [PlaybackControlsFactory, RangeSliderFactory];
+TimeRangeSliderFactory.deps = [
+  PlaybackControlsFactory,
+  RangeSliderFactory,
+  TimeSliderMarkerFactory,
+  AnimationControllerFactory
+];
 
-export default function TimeRangeSliderFactory(PlaybackControls, RangeSlider) {
+export default function TimeRangeSliderFactory(
+  PlaybackControls,
+  RangeSlider,
+  TimeSliderMarker,
+  AnimationController
+) {
   class TimeRangeSlider extends Component {
     static propTypes = {
       onChange: PropTypes.func.isRequired,
@@ -73,18 +88,7 @@ export default function TimeRangeSliderFactory(PlaybackControls, RangeSlider) {
 
     constructor(props) {
       super(props);
-      this.state = {
-        isAnimating: false,
-        width: 288
-      };
-      this._animation = null;
       this._sliderThrottle = throttle((...value) => this.props.onChange(...value), 20);
-    }
-
-    componentDidUpdate() {
-      if (!this._animation && this.state.isAnimating) {
-        this._animation = requestAnimationFrame(this._nextFrame);
-      }
     }
 
     timeSelector = props => props.currentTime;
@@ -116,43 +120,8 @@ export default function TimeRangeSliderFactory(PlaybackControls, RangeSlider) {
       this._sliderThrottle(args);
     };
 
-    _resetAnimation = () => {
-      const {domain, value} = this.props;
-      const value0 = domain[0];
-      const value1 = value0 + value[1] - value[0];
-      this.props.onChange([value0, value1]);
-    };
-
-    _startAnimation = () => {
-      this._pauseAnimation();
-      this.props.toggleAnimation();
-      this.setState({isAnimating: true});
-    };
-
-    _pauseAnimation = () => {
-      if (this._animation) {
-        cancelAnimationFrame(this._animation);
-        this.props.toggleAnimation();
-        this._animation = null;
-      }
-      this.setState({isAnimating: false});
-    };
-
-    _nextFrame = () => {
-      this._animation = null;
-
-      const {domain, value} = this.props;
-      const speed = ((domain[1] - domain[0]) / BASE_SPEED) * this.props.speed;
-
-      // loop when reaches the end
-      const value0 = value[1] + speed > domain[1] ? domain[0] : value[0] + speed;
-      const value1 = value0 + value[1] - value[0];
-      this.props.onChange([value0, value1]);
-    };
-
     render() {
       const {domain, value, isEnlarged, hideTimeTitle} = this.props;
-      const {isAnimating} = this.state;
 
       return (
         <div className="time-range-slider">
@@ -161,16 +130,27 @@ export default function TimeRangeSliderFactory(PlaybackControls, RangeSlider) {
           ) : null}
           <StyledSliderContainer className="time-range-slider__container" isEnlarged={isEnlarged}>
             {isEnlarged ? (
-              <PlaybackControls
-                isAnimatable={this.props.isAnimatable}
-                isEnlarged={isEnlarged}
-                isAnimating={isAnimating}
-                pauseAnimation={this._pauseAnimation}
-                resetAnimation={this._resetAnimation}
-                startAnimation={this._startAnimation}
-                buttonHeight="12px"
-                buttonStyle="secondary"
-              />
+              <AnimationController
+                value={this.props.value}
+                domain={this.props.domain}
+                speed={this.props.speed}
+                startAnimation={this.props.toggleAnimation}
+                pauseAnimation={this.props.toggleAnimation}
+                updateAnimation={this.props.onChange}
+              >
+                {(isAnimating, start, pause, reset) => (
+                  <PlaybackControls
+                    isAnimatable={this.props.isAnimatable}
+                    isAnimating={isAnimating}
+                    width={animationControlWidth}
+                    pauseAnimation={pause}
+                    resetAnimation={reset}
+                    startAnimation={start}
+                    buttonHeight="12px"
+                    buttonStyle="secondary"
+                  />
+                )}
+              </AnimationController>
             ) : null}
             <div
               style={{

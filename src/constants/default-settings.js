@@ -793,6 +793,11 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
 
 // Animation
 export const BASE_SPEED = 600;
+export const FPS = 60;
+export const ANIMATION_TYPE = keyMirror({
+  interval: null,
+  continuous: null
+});
 export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';
 export const SPEED_CONTROL_RANGE = [0, 10];
 export const SPEED_CONTROL_STEP = 0.001;

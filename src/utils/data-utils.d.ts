@@ -18,3 +18,11 @@ export function findMapBounds(layers: Layer[]): Bounds | null;
 function formatter(v: any): any;
 export function getFormatter(format: any, field?: Field): formatter;
 export function defaultFormatter(v: any): string;
+export function snapToMarks(value: number, marks: number[]): number;
+export function normalizeSliderValue(
+  val: number,
+  minValue: number,
+  step: number,
+  marks?: number[]
+): number;
+export function roundValToStep(minValue: number, step: number, val: number): number;

@@ -20,40 +20,39 @@
 
 import document from 'global/document';
 
-function nope() {}
+function nope(...args) {}
 
 export default class MouseEventHandler {
-  constructor({vertical = false, valueListener = nope, toggleMouseOver = nope}) {
+  constructor({
+    vertical = false,
+    valueListener = nope,
+    toggleMouseOver = nope,
+    track,
+    setAnchor = null
+  }) {
     this._vertical = vertical;
     this._valueListener = valueListener;
     this._toggleMouseOver = toggleMouseOver;
-
-    this._prev = 0;
+    this._track = track;
+    this._setAnchor = setAnchor;
   }
 
   handleMouseDown = e => {
     document.addEventListener('mouseup', this._mouseup);
     document.addEventListener('mousemove', this._mousemove);
-    this._prev = this._getMousePos(e);
+    if (this._setAnchor) {
+      const pos = this._getMousePos(e);
+      this._setAnchor(this._getDistanceToTrack(pos));
+    }
     this._toggleMouseOver();
   };
 
   _getMousePos(e) {
-    return this._vertical ? e.clientY : e.pageX;
+    return this._vertical ? e.clientY : e.clientX;
   }
+
   _getTouchPosition(e) {
-    return this._vertical ? e.touches[0].clientY : e.touches[0].pageX;
-  }
-
-  _getMouseDelta(e) {
-    // movementX might not be supported in some browser
-    // https://stackoverflow.com/questions/41774726/mouseevent-movementx-property-apparently-not-supported-in-internet-explorer
-    const mouseCoord = this._vertical ? e.movementY : e.movementX;
-    const clientCoord = this._getMousePos(e);
-
-    const delta = mouseCoord === 0 ? clientCoord - this._prev : mouseCoord;
-
-    return delta;
+    return this._vertical ? e.touches[0].clientY : e.touches[0].clientX;
   }
 
   _mouseup = () => {
@@ -62,26 +61,32 @@ export default class MouseEventHandler {
     this._toggleMouseOver();
   };
 
+  _getDistanceToTrack(pos) {
+    const trackRect = this._track.current.getBoundingClientRect();
+    return pos - (this._vertical ? trackRect.bottom : trackRect.left);
+  }
+
   _mousemove = e => {
     e.preventDefault();
-
-    const delta = this._getMouseDelta(e);
-    this._prev = this._getMousePos(e);
-
-    this._valueListener(delta);
+    const pos = this._getMousePos(e);
+    this._valueListener(this._getDistanceToTrack(pos));
   };
 
   handleTouchStart = e => {
+    // TODO: fix touch event
     document.addEventListener('touchend', this._touchend);
     document.addEventListener('touchmove', this._touchmove);
-    this._prev = this._getTouchPosition(e);
+    if (this._setAnchor) {
+      const pos = this._getTouchPosition(e);
+      this._setAnchor(this._getDistanceToTrack(pos));
+    }
     this._toggleMouseOver();
   };
 
   _touchmove = e => {
-    const delta = this._getTouchPosition(e) - this._prev;
-    this._prev = this._getTouchPosition(e);
-    this.props._valueListener(delta);
+    // TODO: touch not tested
+    const pos = this._getTouchPosition(e);
+    this._valueListener(this._getDistanceToTrack(pos));
   };
 
   _touchend = () => {

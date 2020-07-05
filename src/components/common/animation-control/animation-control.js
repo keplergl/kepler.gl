@@ -18,17 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import moment from 'moment';
-import {requestAnimationFrame, cancelAnimationFrame} from 'global/window';
 
 import Slider from 'components/common/slider/slider';
 import {BottomWidgetInner} from 'components/common/styled-components';
 import SpeedControlFactory from './speed-control';
 import AnimationPlaybacksFactory from './playback-controls';
 import FloatingTimeDisplayFactory from './floating-time-display';
-import {BASE_SPEED} from 'constants/default-settings';
+import AnimationControllerFactory from './animation-controller';
+import {snapToMarks} from 'utils/data-utils';
+import {DEFAULT_TIME_FORMAT, ANIMATION_TYPE} from 'constants';
 
 const SliderWrapper = styled.div`
   display: flex;
@@ -59,65 +60,33 @@ const StyledDomain = styled.div`
   font-size: 10px;
 `;
 
-const defaultTimeFormat = 'MM/DD/YY hh:mm:ss';
 const BUTTON_HEIGHT = '18px';
 
 AnimationControlFactory.deps = [
   SpeedControlFactory,
   AnimationPlaybacksFactory,
-  FloatingTimeDisplayFactory
+  FloatingTimeDisplayFactory,
+  AnimationControllerFactory
 ];
 
-function AnimationControlFactory(SpeedControl, AnimationPlaybacks, FloatingTimeDisplay) {
-  class AnimationControl extends Component {
-    constructor(props) {
-      super(props);
-      this.state = {
-        isAnimating: false,
-        width: 288,
-        showSpeedControl: false
-      };
-      this._animation = null;
-    }
-
-    componentDidUpdate() {
-      if (!this._animation && this.state.isAnimating) {
-        this._animation = requestAnimationFrame(this._nextFrame);
-      }
-    }
-
+function AnimationControlFactory(
+  SpeedControl,
+  AnimationPlaybacks,
+  FloatingTimeDisplay,
+  AnimationController
+) {
+  class AnimationControl extends React.PureComponent {
+    state = {
+      showSpeedControl: false
+    };
     onSlider1Change = val => {
       const {domain} = this.props.animationConfig;
-      if (val >= domain[0] && val <= domain[1]) {
+      if (Array.isArray(this.props.timeSteps)) {
+        this.props.updateAnimationTime(snapToMarks(val, this.props.timeSteps));
+        // TODO: merge slider in to avoid this step
+      } else if (val >= domain[0] && val <= domain[1]) {
         this.props.updateAnimationTime(val);
       }
-    };
-
-    _updateAnimationTime = () => {
-      const {domain} = this.props.animationConfig;
-      this.props.updateAnimationTime(domain[0]);
-      this._startAnimation();
-    };
-
-    _startAnimation = () => {
-      this._pauseAnimation();
-      this.setState({isAnimating: true});
-    };
-
-    _nextFrame = () => {
-      this._animation = null;
-      const {currentTime, domain, speed = 1} = this.props.animationConfig;
-      const adjustedSpeed = ((domain[1] - domain[0]) / BASE_SPEED) * speed;
-      const nextTime = currentTime + speed > domain[1] ? domain[0] : currentTime + adjustedSpeed;
-      this.props.updateAnimationTime(nextTime);
-    };
-
-    _pauseAnimation = () => {
-      if (this._animation) {
-        cancelAnimationFrame(this._animation);
-        this._animation = null;
-      }
-      this.setState({isAnimating: false});
     };
 
     toggleSpeedControl = () => {
@@ -128,31 +97,50 @@ function AnimationControlFactory(SpeedControl, AnimationPlaybacks, FloatingTimeD
       this.toggleSpeedControl();
     };
 
+    _updateAnimation = value => {
+      this.props.updateAnimationTime(Array.isArray(value) ? value[0] : value);
+    };
+
     render() {
-      const {currentTime, domain, speed} = this.props.animationConfig;
+      const {currentTime, domain, speed, step, timeSteps} = this.props.animationConfig;
       const {showSpeedControl} = this.state;
+      const animationType = Array.isArray(timeSteps)
+        ? ANIMATION_TYPE.interval
+        : ANIMATION_TYPE.continuous;
 
       return (
         <BottomWidgetInner className="bottom-widget--inner">
           <AnimationWidgetInner className="animation-widget--inner">
             <div style={{marginLeft: '-10px'}}>
-              <AnimationPlaybacks
-                className="animation-control-playpause"
-                startAnimation={this._startAnimation}
-                isAnimating={this.state.isAnimating}
-                pauseAnimation={this._pauseAnimation}
-                resetAnimation={this._resetAnimation}
-                buttonHeight={BUTTON_HEIGHT}
-                buttonStyle="link"
-              />
+              <AnimationController
+                value={currentTime}
+                domain={domain}
+                speed={speed}
+                updateAnimation={this._updateAnimation}
+                steps={timeSteps}
+                animationType={animationType}
+              >
+                {(isAnimating, start, pause, reset) => (
+                  <AnimationPlaybacks
+                    className="animation-control-playpause"
+                    startAnimation={start}
+                    isAnimating={isAnimating}
+                    pauseAnimation={pause}
+                    resetAnimation={reset}
+                    buttonHeight={BUTTON_HEIGHT}
+                    buttonStyle="link"
+                  />
+                )}
+              </AnimationController>
             </div>
             <StyledDomain className="animation-control__time-domain">
-              <span>{moment.utc(domain[0]).format(defaultTimeFormat)}</span>
+              <span>{moment.utc(domain[0]).format(DEFAULT_TIME_FORMAT)}</span>
             </StyledDomain>
             <SliderWrapper className="animation-control__slider">
               <Slider
                 showValues={false}
                 isRanged={false}
+                step={step}
                 minValue={domain ? domain[0] : 0}
                 maxValue={domain ? domain[1] : 1}
                 value1={currentTime}
@@ -161,7 +149,7 @@ function AnimationControlFactory(SpeedControl, AnimationPlaybacks, FloatingTimeD
               />
             </SliderWrapper>
             <StyledDomain className="animation-control__time-domain">
-              <span>{moment.utc(domain[1]).format(defaultTimeFormat)}</span>
+              <span>{moment.utc(domain[1]).format(DEFAULT_TIME_FORMAT)}</span>
             </StyledDomain>
             <div className="animation-control__speed-control">
               <SpeedControl

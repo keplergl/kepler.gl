@@ -28,7 +28,7 @@ import {LineSeries, XYPlot, CustomSVGSeries, Hint, MarkSeries} from 'react-vis';
 import styled from 'styled-components';
 import classnames from 'classnames';
 
-import RangeBrush from './range-brush';
+import RangeBrushFactory from './range-brush';
 import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
 
 const chartMargin = {top: 8, bottom: 0, left: 0, right: 0};
@@ -39,7 +39,9 @@ const histogramStyle = {
   unHighlightedW: 0.4
 };
 
-export default function RangePlotFactory() {
+RangePlotFactory.deps = [RangeBrushFactory];
+
+export default function RangePlotFactory(RangeBrush) {
   class RangePlot extends Component {
     static propTypes = {
       value: PropTypes.arrayOf(PropTypes.number).isRequired,
