@@ -28,7 +28,7 @@ import {StyledLayerName} from './layer-hover-info';
 const DECIMAL = 6;
 
 const CoordinateInfoFactory = () => {
-  const CoordinateInfo = ({coordinate}) => (
+  const CoordinateInfo = ({coordinate, zoom}) => (
     <div>
       <StyledLayerName className="map-popover__layer-name">
         <CursorClick height="12px" />
@@ -39,6 +39,7 @@ const CoordinateInfoFactory = () => {
           <tr className="row">
             <td className="row__value">{preciseRound(coordinate[1], DECIMAL)},</td>
             <td className="row__value">{preciseRound(coordinate[0], DECIMAL)}</td>
+            <td className="row__value">{preciseRound(zoom, DECIMAL)}</td>
           </tr>
         </tbody>
       </table>
