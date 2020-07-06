@@ -1,10 +1,15 @@
 # Upgrade Guide
 
 ## Table of Content
+- [v2.2 to v2.3](#upgrade-from-v22-to-v23)
 - [v2.1 to v2.2](#upgrade-from-v21-to-v22)
 - [v2.0 to v2.1](#upgrade-from-v20-to-v21)
 - [v1.1.12 to v2.0](#upgrade-from-v1112-to-v20)
 - [v1.1.11 to v1.1.12](#upgrade-from-v1111-to-v1112)
+
+
+## Upgrade from v2.2 to v2.3
+- Upgrade dependencies to `deck.gl@8.2.0`, `loaders.gl@2.2.5` and `luma.gl@8.2.0`. This should only affects projects with the above libraries in its dependencies.
 
 ## Upgrade from v2.1 to v2.2
 ### New Features
