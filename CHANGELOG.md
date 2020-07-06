@@ -14,6 +14,29 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+## [2.3.0] - July 6 2020
+[Enhancement] Improve animation sliders (#1157)
+[Enhancement] speed control step to 0.001 (#1155)
+[website] remove unused env, relax on  package engines requirement (#1173)
+[Feat] Pinned tooltip + Compare (#1132)
+[Feat] Integration with loaders.gl 2.2 (#1156)
+[Feat] Bump deck.gl and luma.gl to v8.2 (#1166)
+[Chore] Bump websocket-extensions from 0.1.3 to 0.1.4 (#1138)
+[Website] Add 2020 Survey (#1154)
+[Bug] Tooltip formatting (#1129)
+[Jupyter] Default centerMap to False so that zoom map state configurations are not  (#1142)
+[Enhancement] close modal when press escape key (#1134)
+[Enhancement] Export time widget factories (#1133)
+[Enhancement] filter invalid value when calculate trip layer domain (#1131)
+[Feat] enable tooltip formatting in interaction config  (#1102)
+[Feat] Add type definition  (#1116)
+[RFC] table class RFC (#1109)
+[Docs] adding missing bracket (#1094)
+add side-panel inner class (#1113)
+[Bug] add hexagon layer translation (#1114)
+[Jupyter] fix gitignore add missing files (#1118)
+[Jupyter] Publish keplergl jupyter 0.2.0 (#1110)
+[Enhancement] fix attribution color, add kepler smaller font (#1092)
 
 ## [2.2.0] - May 10 2020
 - [Enhancement] Added Editor and FeatureActionPanel factories (#1093)
