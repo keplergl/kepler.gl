@@ -62,6 +62,11 @@ const TRANSITION_DURATION = 0;
 
 const Attribution = () => (
   <StyledAttrbution>
+    <div className="attrition-logo">
+      Basemap by:
+      <a className="mapboxgl-ctrl-logo" target="_blank" rel="noopener nofollow" href="https://www.mapbox.com/" aria-label="Mapbox logo"/>
+    </div>
+    <div>
     <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
       © kepler.gl |{' '}
     </a>
@@ -74,6 +79,7 @@ const Attribution = () => (
     <a href="https://www.mapbox.com/map-feedback/" target="_blank" rel="noopener noreferrer">
       <strong>Improve this map</strong>
     </a>
+    </div>
   </StyledAttrbution>
 );
 
