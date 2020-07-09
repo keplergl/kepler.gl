@@ -52,6 +52,7 @@ export type AddDataToMapOptions = {
   centerMap?: boolean;
   readOnly?: boolean;
   keepExistingConfig?: boolean;
+  autoCreateLayers?: boolean;
 };
 
 export type AddDataToMapPayload = {

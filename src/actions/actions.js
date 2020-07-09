@@ -133,6 +133,7 @@ export const resetMapConfig = createAction(ActionTypes.RESET_MAP_CONFIG);
  * @param {boolean} options.readOnly `default: false` if `readOnly` is set to `true`
  * the left setting panel will be hidden
  * @param {boolean} options.keepExistingConfig whether to keep exiting layer filter and interaction config `default: false`.
+ * @param {boolean} options.autoCreateLayers whether to automatically create layers based on dataset columns `default: true`.
  * @public
  * @example
  * import {receiveMapConfig} from 'kepler.gl/actions';
