@@ -297,7 +297,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
                       if (item.dropdownComponent) {
                         showExportDropdown(item.id);
                       }
-                      item.onClick();
+                      item.onClick && item.onClick(this.props);
                     }}
                   />
                   {item.dropdownComponent ? (
