@@ -23,12 +23,11 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {SidePanelSection, PanelLabel} from './common/styled-components';
 import {FormattedMessage} from 'react-intl';
-import Geocoder from 'react-mapbox-gl-geocoder';
+import Geocoder from './geocoder/geocoder';
 import Processors from 'processors';
 import {fitBounds, addDataToMap, removeDataset} from 'actions';
 
 const GEOCODER_DATASET_NAME = 'geocoder_dataset';
-const QUERY_PARAMS = {};
 const GEO_OFFSET = 0.1;
 const ICON_LAYER = {
   id: 'geocoder_layer',
@@ -66,25 +65,6 @@ const GeocoderWrapper = styled.div`
   color: ${props => props.theme.textColor};
   font-size: ${props => props.theme.fontSize};
 
-  .react-geocoder {
-    position: relative;
-  }
-
-  .react-geocoder input {
-    ${props => props.theme.secondaryInput};
-  }
-
-  .react-geocoder-results {
-    background-color: ${props => props.theme.panelBackground};
-    position: absolute;
-    width: 43.5em;
-  }
-
-  .react-geocoder-item {
-    ${props => props.theme.dropdownListItem};
-    ${props => props.theme.textTruncate};
-  }
-
   .remove-layer {
     background: transparent;
     border: none;
@@ -102,7 +82,7 @@ const GeocoderWrapper = styled.div`
     :active {
       background: transparent !important;
       border: none;
-      box-shadow: 0;
+      box-shadow: unset;
       color: ${props => props.theme.textColor};
       opacity: 0.6;
       outline: none;
@@ -139,10 +119,6 @@ export class GeocoderPanel extends Component {
     mapboxApiAccessToken: PropTypes.string.isRequired
   };
 
-  state = {
-    selectedGeoItem: null
-  };
-
   removeGeocoderDataset() {
     this.props.dispatch(removeDataset(GEOCODER_DATASET_NAME));
   }
@@ -173,19 +149,14 @@ export class GeocoderPanel extends Component {
     this.props.dispatch(
       fitBounds(bbox || [lon - GEO_OFFSET, lat - GEO_OFFSET, lon + GEO_OFFSET, lat + GEO_OFFSET])
     );
-    this.setState({
-      selectedGeoItem: geoItem
-    });
   };
 
   removeMarker = () => {
-    this.setState({
-      selectedGeoItem: null
-    });
     this.removeGeocoderDataset();
   };
 
   render() {
+
     const {isGeocoderEnabled, mapboxApiAccessToken} = this.props;
     return (
       <GeocoderPanelContent
@@ -201,21 +172,8 @@ export class GeocoderPanel extends Component {
               <Geocoder
                 mapboxApiAccessToken={mapboxApiAccessToken}
                 onSelected={this.onSelected}
-                hideOnSelect
-                pointZoom={15}
-                viewport={{}}
-                queryParams={QUERY_PARAMS}
+                onDeleteMarker={this.removeMarker}
               />
-            )}
-            {this.state.selectedGeoItem && (
-              <button
-                type="button"
-                className="btn btn-primary remove-layer"
-                onClick={this.removeMarker}
-                title="Remove marker"
-              >
-                &times;
-              </button>
             )}
           </GeocoderWrapper>
         </SidePanelSection>

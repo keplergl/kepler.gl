@@ -144,6 +144,7 @@ export const dropdownListBgdLT = '#FFFFFF';
 export const dropdownListBorderTop = '#242730';
 export const dropdownListBorderTopLT = '#D3D8E0';
 export const dropdownWrapperZ = 100;
+export const dropdownWapperMargin = 4;
 // Switch
 export const switchWidth = 24;
 export const switchHeight = 12;
@@ -868,6 +869,7 @@ export const theme = {
   dropdownListSection,
   dropdownListShadow,
   dropdownWrapperZ,
+  dropdownWapperMargin,
   modalScrollBar,
   scrollBar,
   sidePanelScrollBar,
