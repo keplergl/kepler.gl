@@ -53,6 +53,7 @@ export * as visStateMergers from './vis-state-merger';
 export {
   AnimationConfig,
   Brush,
+  ColumnsConfig,
   Coordinate,
   Dataset,
   Datasets,

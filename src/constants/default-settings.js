@@ -39,7 +39,8 @@ import {
   ArrowDown,
   ArrowUp,
   Clipboard,
-  Cancel
+  Cancel,
+  Columns
 } from 'components/common/icons';
 import {getHTMLMapModeTileUrl} from 'utils/utils';
 import {TOOLTIP_FORMAT_TYPES} from './tooltip';
@@ -164,6 +165,11 @@ export const SIDEBAR_PANELS = [
     id: 'layer',
     label: 'sidebar.panels.layer',
     iconComponent: Layers
+  },
+  {
+    id: 'columns',
+    label: 'sidebar.panels.columns',
+    iconComponent: Columns
   },
   {
     id: 'filter',

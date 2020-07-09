@@ -27,6 +27,7 @@ import get from 'lodash.get';
 import SidebarFactory from './side-panel/side-bar';
 import PanelHeaderFactory from './side-panel/panel-header';
 import LayerManagerFactory from './side-panel/layer-manager';
+import ColumnsManagerFactory from './side-panel/columns-manager';
 import FilterManagerFactory from './side-panel/filter-manager';
 import InteractionManagerFactory from './side-panel/interaction-manager';
 import MapManagerFactory from './side-panel/map-manager';
@@ -75,6 +76,7 @@ SidePanelFactory.deps = [
   PanelTitleFactory,
   LayerManagerFactory,
   FilterManagerFactory,
+  ColumnsManagerFactory,
   InteractionManagerFactory,
   MapManagerFactory,
   CustomPanelsFactory
@@ -91,6 +93,7 @@ export default function SidePanelFactory(
   PanelTitle,
   LayerManager,
   FilterManager,
+  ColumnsManager,
   InteractionManager,
   MapManager,
   CustomPanels
@@ -102,6 +105,7 @@ export default function SidePanelFactory(
     static propTypes = {
       filters: PropTypes.arrayOf(PropTypes.any).isRequired,
       interactionConfig: PropTypes.object.isRequired,
+      columnsConfig: PropTypes.object.isRequired,
       layerBlending: PropTypes.string.isRequired,
       layers: PropTypes.arrayOf(PropTypes.any).isRequired,
       layerClasses: PropTypes.object.isRequired,
@@ -112,7 +116,8 @@ export default function SidePanelFactory(
       mapStyleActions: PropTypes.object.isRequired,
       availableProviders: PropTypes.object,
       mapSaved: PropTypes.string,
-      panels: PropTypes.arrayOf(PropTypes.object)
+      panels: PropTypes.arrayOf(PropTypes.object),
+      dispatch: PropTypes.func
     };
 
     static defaultProps = {
@@ -184,10 +189,12 @@ export default function SidePanelFactory(
         uiState,
         layerOrder,
         interactionConfig,
+        columnsConfig,
         visStateActions,
         mapStyleActions,
         uiStateActions,
-        availableProviders
+        availableProviders,
+        dispatch
       } = this.props;
 
       const {activeSidePanel} = uiState;
@@ -283,6 +290,13 @@ export default function SidePanelFactory(
                     layerOrder={layerOrder}
                     layerBlending={layerBlending}
                     colorPalette={uiState.colorPalette}
+                  />
+                )}
+                {activeSidePanel === 'columns' && (
+                  <ColumnsManager
+                    datasets={datasets}
+                    dispatch={dispatch}
+                    columnsConfig={columnsConfig}
                   />
                 )}
                 {activeSidePanel === 'filter' && (

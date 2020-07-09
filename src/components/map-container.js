@@ -85,6 +85,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       // required
       datasets: PropTypes.object,
       interactionConfig: PropTypes.object.isRequired,
+      columnsConfig: PropTypes.object.isRequired,
       layerBlending: PropTypes.string.isRequired,
       layerOrder: PropTypes.arrayOf(PropTypes.any).isRequired,
       layerData: PropTypes.arrayOf(PropTypes.any).isRequired,
@@ -242,6 +243,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         clicked,
         datasets,
         interactionConfig,
+        columnsConfig,
         layers,
         mousePos: {mousePosition, coordinate, pinned}
       } = this.props;
@@ -257,6 +259,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
 
       layerHoverProp = getLayerHoverProp({
         interactionConfig,
+        columnsConfig,
         hoverInfo,
         layers,
         layersToRender,
@@ -277,6 +280,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         pinnedPosition = this._getHoverXY(viewport, lngLat);
         layerPinnedProp = getLayerHoverProp({
           interactionConfig,
+          columnsConfig,
           hoverInfo: clicked,
           layers,
           layersToRender,

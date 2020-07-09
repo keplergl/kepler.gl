@@ -18,36 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Layer, LayerClasses} from 'layers';
-import {VisState, Dataset, TooltipField} from 'reducers/vis-state-updaters';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
+import {SidePanelSection} from 'components/common/styled-components';
+import ColumnsPanelFactory from './columns-panel/columns-panel';
 
-export function calculateLayerData(
-  layer: Layer,
-  state: VisState,
-  oldLayerData?: any
-): {
-  layerData: any;
-  layer: Layer;
-};
+ColumnsManagerFactory.deps = [ColumnsPanelFactory];
 
-export type LayersToRender = {
-  [layerId: string]: boolean;
-};
+function ColumnsManagerFactory(ColumnsPanel) {
+  return class ColumnsManager extends Component {
+    static propTypes = {
+      datasets: PropTypes.object.isRequired,
+      dispatch: PropTypes.func,
+      columnsConfig: PropTypes.object
+    };
 
-export type LayerHoverProp = {
-  data: any[];
-  fields: Field[];
-  fieldsToShow: TooltipField[];
-  layer: Layer;
-  columns: object
-};
+    render() {
+      const {datasets, dispatch, columnsConfig} = this.props;
 
-export function findDefaultLayer(dataset: Dataset, layerClasses: LayerClasses): Layer[];
-export function getLayerHoverProp(arg: {
-  interactionConfig: VisState['interactionConfig'];
-  columnsConfig: VisState['columnsConfig'];
-  hoverInfo: VisState['hoverInfo'];
-  layers: VisState['layers'];
-  layersToRender: LayersToRender;
-  datasets: VisState['datasets'];
-}): LayerHoverProp | null;
+      return (
+        <div className="filter-manager">
+          <SidePanelSection>
+            {datasets && (
+              <ColumnsPanel datasets={datasets} dispatch={dispatch} columnsConfig={columnsConfig} />
+            )}
+          </SidePanelSection>
+        </div>
+      );
+    }
+  };
+}
+
+export default ColumnsManagerFactory;

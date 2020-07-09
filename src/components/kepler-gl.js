@@ -254,6 +254,7 @@ function KeplerGlFactory(
         layerBlending,
         layerClasses,
         interactionConfig,
+        columnsConfig,
         datasets,
         layerData,
         hoverInfo,
@@ -278,6 +279,7 @@ function KeplerGlFactory(
         layerOrder,
         layerClasses,
         interactionConfig,
+        columnsConfig,
         mapStyle,
         mapInfo,
         layerBlending,
@@ -288,7 +290,8 @@ function KeplerGlFactory(
         uiStateActions,
         width: this.props.sidePanelWidth,
         availableProviders,
-        mapSaved: providerState.mapSaved
+        mapSaved: providerState.mapSaved,
+        dispatch
       };
 
       const mapFields = {
@@ -307,6 +310,7 @@ function KeplerGlFactory(
         layerBlending,
         filters,
         interactionConfig,
+        columnsConfig,
         hoverInfo,
         clicked,
         mousePos,

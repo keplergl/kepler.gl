@@ -60,6 +60,9 @@ export {default as DatasetTagFactory} from './side-panel/common/dataset-tag';
 export {default as FilterManagerFactory} from './side-panel/filter-manager';
 export {default as FilterPanelFactory} from './side-panel/filter-panel/filter-panel';
 
+export {default as ColumnsManagerFactory} from './side-panel/columns-manager';
+export {default as ColumnsPanelFactory} from './side-panel/columns-panel/columns-panel';
+
 export {default as InteractionManagerFactory} from './side-panel/interaction-manager';
 export {default as BrushConfigFactory} from './side-panel/interaction-panel/brush-config';
 export {default as TooltipConfigFactory} from './side-panel/interaction-panel/tooltip-config';

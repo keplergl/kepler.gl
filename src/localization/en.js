@@ -78,6 +78,7 @@ export default {
     panels: {
       layer: 'Layers',
       filter: 'Filters',
+      columns: 'Columns',
       interaction: 'Interactions',
       basemap: 'Base map'
     }

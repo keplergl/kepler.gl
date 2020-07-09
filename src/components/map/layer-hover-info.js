@@ -53,7 +53,7 @@ const StyledTable = styled.table`
   }
 `;
 
-const Row = ({name, value, deltaValue, url}) => {
+const Row = ({name, value, deltaValue, url, columns}) => {
   // Set 'url' to 'value' if it looks like a url
   if (!url && value && typeof value === 'string' && value.match(/^http/)) {
     url = value;
@@ -62,7 +62,7 @@ const Row = ({name, value, deltaValue, url}) => {
   const asImg = /<img>/.test(name);
   return (
     <tr className="row" key={name}>
-      <td className="row__name">{name}</td>
+      <td className="row__name">{(columns && columns[name]) || name}</td>
       <td className="row__value">
         {asImg ? (
           <img src={value} />
@@ -87,7 +87,7 @@ const Row = ({name, value, deltaValue, url}) => {
   );
 };
 
-const EntryInfo = ({fieldsToShow, fields, data, primaryData, compareType}) => (
+const EntryInfo = ({fieldsToShow, fields, data, primaryData, compareType, columns}) => (
   <tbody>
     {fieldsToShow.map(item => (
       <EntryInfoRow
@@ -97,12 +97,13 @@ const EntryInfo = ({fieldsToShow, fields, data, primaryData, compareType}) => (
         data={data}
         primaryData={primaryData}
         compareType={compareType}
+        columns={columns}
       />
     ))}
   </tbody>
 );
 
-const EntryInfoRow = ({item, fields, data, primaryData, compareType}) => {
+const EntryInfoRow = ({item, fields, data, primaryData, compareType, columns}) => {
   const fieldIdx = fields.findIndex(f => f.name === item.name);
   if (fieldIdx < 0) {
     return null;
@@ -119,7 +120,9 @@ const EntryInfoRow = ({item, fields, data, primaryData, compareType}) => {
     compareType
   });
 
-  return <Row name={item.name} value={displayValue} deltaValue={displayDeltaValue} />;
+  return (
+    <Row name={item.name} value={displayValue} deltaValue={displayDeltaValue} columns={columns} />
+  );
 };
 
 // TODO: supporting comparative value for aggregated cells as well
@@ -172,7 +175,8 @@ const LayerHoverInfoFactory = () => {
     fields: PropTypes.arrayOf(PropTypes.any),
     fieldsToShow: PropTypes.arrayOf(PropTypes.any),
     layer: PropTypes.object,
-    data: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.any), PropTypes.object])
+    data: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.any), PropTypes.object]),
+    columns: PropTypes.object
   };
   return LayerHoverInfo;
 };

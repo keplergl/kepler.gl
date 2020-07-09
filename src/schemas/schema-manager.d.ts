@@ -4,11 +4,13 @@ import {
   Tooltip,
   SplitMap,
   AnimationConfig,
+  ColumnsConfig,
   VisState,
   RGBColor, 
   Merge
 } from 'reducers';
 import {LayerTextLabel} from 'layers/layer-factory';
+import { object } from 'prop-types';
 
 export type SavedFilter = {
   dataId: Filter['dataId'];
@@ -134,6 +136,7 @@ export type ParsedConfig = {
   visState?: {
     layers?: ParsedLayer[];
     filters?: ParsedFilter[];
+    columnsConfig?: Partial<ColumnsConfig>;
     interactionConfig?: Partial<SavedInteractionConfig>;
     layerBlending?: string;
     splitMaps?: SplitMap[];

@@ -259,6 +259,13 @@ export type InteractionConfig = {
   brush: Brush;
   coordinate: Coordinate;
 };
+
+export type ColumnsConfig = {
+  [dataId: string]: {
+    [field: string]: string
+  }
+};
+
 export type MapInfo = {
   title: string;
   description: string;
@@ -290,6 +297,7 @@ export type VisState = {
   datasets: Datasets;
   editingDataset: string | undefined;
   interactionConfig: InteractionConfig;
+  columnsConfig: ColumnsConfig;
   interactionToBeMerged: any;
   layerBlending: string;
   hoverInfo: any;

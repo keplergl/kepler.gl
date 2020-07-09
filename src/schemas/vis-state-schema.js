@@ -25,6 +25,7 @@ import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
 import {notNullorUndefined} from 'utils/data-utils';
+import { Columns } from 'components/common/icons';
 
 /**
  * V0 Schema
@@ -517,6 +518,18 @@ class FilterSchemaV0 extends Schema {
   }
 }
 
+class ColumnsConfigSchemaV0 extends Schema {
+  key = 'columnsConfig';
+  save(columnsConfig) {
+    return {
+      columnsConfig
+    };
+  }
+  load(columnsConfig) {
+    return {columnsConfig};
+  }
+}
+
 const interactionPropsV0 = ['tooltip', 'brush'];
 
 class InteractionSchemaV0 extends Schema {
@@ -687,6 +700,9 @@ export const propertiesV0 = {
     version: VERSIONS.v0,
     properties: interactionPropsV0
   }),
+  columnsConfig: new ColumnsConfigSchemaV0({
+    version: VERSIONS.v0
+  }),
   layerBlending: null
 };
 
@@ -702,6 +718,9 @@ export const propertiesV1 = {
   interactionConfig: new InteractionSchemaV1({
     version: VERSIONS.v1,
     properties: interactionPropsV1
+  }),
+  columnsConfig: new ColumnsConfigSchemaV0({
+    version: VERSIONS.v1
   }),
   layerBlending: null,
   splitMaps: new SplitMapsSchema({

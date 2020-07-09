@@ -13,6 +13,10 @@ export function mergeInteractions(
   state: VisState,
   interactionConfig: ParsedConfig['visState']['interactionConfig']
 ): VisState;
+export function mergeColumns(
+  state: VisState,
+  columnsConfig: ParsedConfig['visState']['columnsConfig']
+): VisState;
 export function mergeLayerBlending(
   state: VisState,
   layerBlending: ParsedConfig['visState']['layerBlending']

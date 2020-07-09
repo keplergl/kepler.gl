@@ -65,7 +65,8 @@ import {
   mergeInteractions,
   mergeLayerBlending,
   mergeLayers,
-  mergeSplitMaps
+  mergeSplitMaps,
+  mergeColumns
 } from './vis-state-merger';
 
 import {
@@ -178,6 +179,7 @@ export const INITIAL_VIS_STATE = {
 
   interactionConfig: getDefaultInteraction(),
   interactionToBeMerged: undefined,
+  columnsConfig: {},
 
   layerBlending: 'normal',
   hoverInfo: undefined,
@@ -939,7 +941,8 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}, options =
     interactionConfig,
     layerBlending,
     splitMaps,
-    animationConfig
+    animationConfig,
+    columnsConfig
   } = config.visState;
 
   const {keepExistingConfig} = options;
@@ -949,6 +952,7 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}, options =
   mergedState = mergeLayers(mergedState, layers);
   mergedState = mergeFilters(mergedState, filters);
   mergedState = mergeInteractions(mergedState, interactionConfig);
+  mergedState = mergeColumns(mergedState, columnsConfig);
   mergedState = mergeLayerBlending(mergedState, layerBlending);
   mergedState = mergeSplitMaps(mergedState, splitMaps);
   mergedState = mergeAnimationConfig(mergedState, animationConfig);

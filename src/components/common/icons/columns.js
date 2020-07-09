@@ -18,36 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Layer, LayerClasses} from 'layers';
-import {VisState, Dataset, TooltipField} from 'reducers/vis-state-updaters';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
+import Base from './base';
 
-export function calculateLayerData(
-  layer: Layer,
-  state: VisState,
-  oldLayerData?: any
-): {
-  layerData: any;
-  layer: Layer;
-};
+export default class Columns extends Component {
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string
+  };
 
-export type LayersToRender = {
-  [layerId: string]: boolean;
-};
+  static defaultProps = {
+    height: '14px',
+    predefinedClassName: 'data-ex-icons-columns'
+  };
 
-export type LayerHoverProp = {
-  data: any[];
-  fields: Field[];
-  fieldsToShow: TooltipField[];
-  layer: Layer;
-  columns: object
-};
-
-export function findDefaultLayer(dataset: Dataset, layerClasses: LayerClasses): Layer[];
-export function getLayerHoverProp(arg: {
-  interactionConfig: VisState['interactionConfig'];
-  columnsConfig: VisState['columnsConfig'];
-  hoverInfo: VisState['hoverInfo'];
-  layers: VisState['layers'];
-  layersToRender: LayersToRender;
-  datasets: VisState['datasets'];
-}): LayerHoverProp | null;
+  render() {
+    return (
+      <Base viewBox="-2 -2 20 20" {...this.props}>
+        <path d="M15.5 0.5H1.5C0.947715 0.5 0.5 0.947716 0.5 1.5V2.63333H8.5H16.5V1.5C16.5 0.947715 16.0523 0.5 15.5 0.5Z" />
+        <path
+          d="M0.5 17.0333V2.63333M16.5 17.0333V2.63333M16.5 2.63333V1.5C16.5 0.947715 16.0523 0.5 15.5 0.5H1.5C0.947715 0.5 0.5 0.947716 0.5 1.5V2.63333M16.5 2.63333H8.5H0.5"
+          stroke="currentColor"
+        />
+        <rect x="2.1" y="6.36667" width="12.8" height="0.533333" rx="0.266667" />
+        <rect x="2.1" y="9.56668" width="12.8" height="0.533333" rx="0.266667" />
+        <rect x="2.1" y="12.7667" width="12.8" height="0.533333" rx="0.266667" />
+      </Base>
+    );
+  }
+}

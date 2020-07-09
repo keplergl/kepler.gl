@@ -245,6 +245,21 @@ export function mergeInteractions(state, interactionToBeMerged) {
 }
 
 /**
+ * Merge columns with saved config
+ *
+ * @type {typeof import('./vis-state-merger').mergeColumns}
+ */
+export function mergeColumns(state, columnsToBeMerged) {
+  return {
+    ...state,
+    columnsConfig: {
+      ...state.columnsConfig,
+      ...(columnsToBeMerged || {})
+    }
+  };
+}
+
+/**
  * Merge splitMaps config with current visStete.
  * 1. if current map is split, but splitMap DOESNOT contain maps
  *    : don't merge anything

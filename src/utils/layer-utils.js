@@ -75,6 +75,7 @@ export function calculateLayerData(layer, state, oldLayerData) {
  */
 export function getLayerHoverProp({
   interactionConfig,
+  columnsConfig,
   hoverInfo,
   layers,
   layersToRender,
@@ -95,12 +96,14 @@ export function getLayerHoverProp({
       const {allData, fields} = datasets[dataId];
       const data = layer.getHoverData(object, allData);
       const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
+      const columns = columnsConfig[dataId] || {};
 
       return {
         data,
         fields,
         fieldsToShow,
-        layer
+        layer,
+        columns
       };
     }
   }
