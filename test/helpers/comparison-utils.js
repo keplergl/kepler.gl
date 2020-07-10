@@ -151,19 +151,7 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
   // test everything except auto generated color
   Object.keys(actualDataset).forEach(key => {
     if (key === 'fields') {
-      t.equal(
-        actualDataset.fields.length,
-        expectedDataset.fields.length,
-        `dataset.${expectedDataset.id}.${key} should have same number of fields`
-      );
-      actualDataset.fields.forEach((actualField, i) => {
-        cmpField(
-          t,
-          expectedDataset.fields[i],
-          actualField,
-          `dataset.${expectedDataset.id} fields ${actualField.name}`
-        );
-      });
+      cmpFields(t,  expectedDataset.fields, actualDataset.fields, expectedDataset.id);
     } else if (key === 'gpuFilter') {
       // test gpuFilter props
       cmpGpuFilterProp(t, expectedDataset.gpuFilter, actualDataset.gpuFilter);
@@ -265,6 +253,21 @@ export function cmpParsedAppConfigs(t, expectedConfig, actualConfig, {name} = {}
   });
 }
 
+export function cmpFields(t, expected, actual, name) {
+  t.equal(
+    expected.length,
+    actual.length,
+    `dataset.${name} should have same number of fields`
+  );
+  actual.forEach((actualField, i) => {
+    cmpField(
+      t,
+      expected[i],
+      actualField,
+      `dataset.${name} fields ${actualField.name}`
+    );
+  });
+}
 export function cmpField(t, expected, actual, name) {
   cmpObjectKeys(t, expected, actual, name);
 
@@ -288,6 +291,8 @@ export function cmpField(t, expected, actual, name) {
           }
         });
       }
+    } else if (k === 'valueAccessor') {
+      t.ok(typeof actual[k] === 'function');
     } else {
       t.deepEqual(actual[k], expected[k], `${name}.${k} should be the same`);
     }

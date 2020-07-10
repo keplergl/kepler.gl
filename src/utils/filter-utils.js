@@ -359,9 +359,8 @@ export function getFilterProps(allData, field) {
  * @type {typeof import('./filter-utils').getFieldDomain}
  */
 export function getFieldDomain(allData, field) {
-  const fieldIdx = field.tableFieldIndex - 1;
-  const isTime = field.type === ALL_FIELD_TYPES.timestamp;
-  const valueAccessor = maybeToDate.bind(null, isTime, fieldIdx, field.format);
+  const {valueAccessor} = field;
+
   let domain;
 
   switch (field.type) {
@@ -952,23 +951,23 @@ export function applyFiltersToDatasets(datasetIds, datasets, filters, layers) {
 /**
  * Applies a new field name value to fielter and update both filter and dataset
  * @param filter - to be applied the new field name on
- * @param dataset - dataset the field belongs to
+ * @param table - table the field belongs to
  * @param fieldName - field.name
  * @param filterDatasetIndex - field.name
  * @param option
  * @return - {filter, datasets}
  * @type {typeof import('./filter-utils').applyFilterFieldName}
  */
-export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIndex = 0, option) {
+export function applyFilterFieldName(filter, table, fieldName, filterDatasetIndex = 0, option) {
   // using filterDatasetIndex we can filter only the specified dataset
   const mergeDomain = option && option.hasOwnProperty('mergeDomain') ? option.mergeDomain : false;
-  const {fields, allData} = dataset;
+  const {fields, allData} = table;
 
-  const fieldIndex = fields.findIndex(f => f.name === fieldName);
+  const fieldIndex = table.getColumnFieldIdx(fieldName);
   // if no field with same name is found, move to the next datasets
   if (fieldIndex === -1) {
     // throw new Error(`fieldIndex not found. Dataset must contain a property with name: ${fieldName}`);
-    return {filter: null, dataset};
+    return {filter: null, dataset: table};
   }
 
   // TODO: validate field type
@@ -982,7 +981,7 @@ export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIn
     ...(mergeDomain ? mergeFilterDomainStep(filter, filterProps) : {...filter, ...filterProps}),
     name: Object.assign([...toArray(filter.name)], {[filterDatasetIndex]: field.name}),
     fieldIdx: Object.assign([...toArray(filter.fieldIdx)], {
-      [filterDatasetIndex]: field.tableFieldIndex - 1
+      [filterDatasetIndex]: fieldIndex
     }),
     // TODO, since we allow to add multiple fields to a filter we can no longer freeze the filter
     freeze: true
@@ -993,14 +992,11 @@ export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIn
     filterProps
   };
 
-  const newFields = Object.assign([...fields], {[fieldIndex]: fieldWithFilterProps});
-
+  // const newFields = Object.assign([...fields], {[fieldIndex]: fieldWithFilterProps});
+  table.updateColumnField(fieldIndex, fieldWithFilterProps);
   return {
     filter: newFilter,
-    dataset: {
-      ...dataset,
-      fields: newFields
-    }
+    dataset: table
   };
 }
 

@@ -457,78 +457,78 @@ export const testFields = [
     type: 'timestamp',
     name: 'gps_data.utc_timestamp',
     format: 'YYYY-M-D H:m:s',
-    tableFieldIndex: 1,
-    analyzerType: 'DATETIME'
+    analyzerType: 'DATETIME',
+    valueAccessor: 'skip_testing'
   },
   {
     type: 'real',
     name: 'gps_data.lat',
     format: '',
-    tableFieldIndex: 2,
-    analyzerType: 'FLOAT'
+    analyzerType: 'FLOAT',
+    valueAccessor: 'skip_testing'
   },
   {
     type: 'real',
     name: 'gps_data.lng',
     format: '',
-    tableFieldIndex: 3,
-    analyzerType: 'FLOAT'
+    analyzerType: 'FLOAT',
+    valueAccessor: 'skip_testing'
   },
   {
     type: 'string',
     name: 'gps_data.types',
     format: '',
-    tableFieldIndex: 4,
-    analyzerType: 'STRING'
+    analyzerType: 'STRING',
+    valueAccessor: 'skip_testing'
   },
   {
     type: 'timestamp',
     name: 'epoch',
     format: 'X',
-    tableFieldIndex: 5,
-    analyzerType: 'TIME'
+    analyzerType: 'TIME',
+    valueAccessor: 'skip_testing'
   },
   {
     type: 'boolean',
     name: 'has_result',
     format: '',
-    tableFieldIndex: 6,
-    analyzerType: 'BOOLEAN'
+    analyzerType: 'BOOLEAN',
+    valueAccessor: 'skip_testing'
   },
   {
     type: 'integer',
     name: 'id',
     format: '',
-    tableFieldIndex: 7,
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: 'skip_testing'
   },
   {
     type: 'timestamp',
     name: 'time',
     format: 'YYYY-M-DTHH:mm:ss.SSSS',
-    tableFieldIndex: 8,
-    analyzerType: 'DATETIME'
+    analyzerType: 'DATETIME',
+    valueAccessor: 'skip_testing'
   },
   {
     type: 'timestamp',
     name: 'begintrip_ts_utc',
     format: 'YYYY-M-D HH:mm:ssZZ',
-    tableFieldIndex: 9,
-    analyzerType: 'DATETIME'
+    analyzerType: 'DATETIME',
+    valueAccessor: 'skip_testing'
   },
   {
     type: 'timestamp',
     name: 'begintrip_ts_local',
     format: 'YYYY-M-D HH:mm:ssZZ',
-    tableFieldIndex: 10,
-    analyzerType: 'DATETIME'
+    analyzerType: 'DATETIME',
+    valueAccessor: 'skip_testing'
   },
   {
     type: 'date',
     name: 'date',
     format: 'YYYY-M-D',
-    tableFieldIndex: 11,
-    analyzerType: 'DATE'
+    analyzerType: 'DATE',
+    valueAccessor: 'skip_testing'
   }
 ];
 

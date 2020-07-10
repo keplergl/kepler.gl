@@ -38,17 +38,19 @@ import {
 } from 'utils/filter-utils';
 
 import {preciseRound} from 'utils/data-utils';
+import {createNewDataEntry} from 'utils/dataset-utils'
 import {getDatasetFieldIndexForFilter} from 'utils/gpu-filter-utils';
 
 import {FILTER_TYPES} from 'constants/default-settings';
 import {processCsvData} from 'processors/data-processor';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
+import {cmpFields} from '../../helpers/comparison-utils';
 
-function testGetTimeFieldDomain(rows, allFields, t) {
+function testGetTimeFieldDomain(table, t) {
   const test_cases = [
     {
       name: 'default',
-      input: getFieldDomain(rows, allFields[0]).domain,
+      input: getFieldDomain(table.allData, table.fields[0]).domain,
       output: [
         moment.utc('2016-09-17 00:09:55').valueOf(),
         moment.utc('2016-09-17 00:30:08').valueOf()
@@ -57,13 +59,13 @@ function testGetTimeFieldDomain(rows, allFields, t) {
     },
     {
       name: 'epoch',
-      input: getFieldDomain(rows, allFields[4]).domain,
+      input: getFieldDomain(table.allData, table.fields[4]).domain,
       output: [moment.utc(1472688000000).valueOf(), moment.utc(1472774400000).valueOf()],
       msg: 1472688000000
     },
     {
       name: 'T',
-      input: getFieldDomain(rows, allFields[7]).domain,
+      input: getFieldDomain(table.allData, table.fields[7]).domain,
       output: [
         moment.utc('2016-09-23T00:00:00.000Z').valueOf(),
         moment.utc('2016-09-23T08:00:00.000Z').valueOf()
@@ -72,7 +74,7 @@ function testGetTimeFieldDomain(rows, allFields, t) {
     },
     {
       name: 'UTC',
-      input: getFieldDomain(rows, allFields[8]).domain,
+      input: getFieldDomain(table.allData, table.fields[8]).domain,
       output: [
         moment.utc('2016-10-01 09:41:39+00:00').valueOf(),
         moment.utc('2016-10-01 10:01:54+00:00').valueOf()
@@ -81,7 +83,7 @@ function testGetTimeFieldDomain(rows, allFields, t) {
     },
     {
       name: 'local',
-      input: getFieldDomain(rows, allFields[9]).domain,
+      input: getFieldDomain(table.allData, table.fields[9]).domain,
       output: [
         moment.utc('2016-10-01 09:41:39+00:00').valueOf(),
         moment.utc('2016-10-01 17:01:54+00:00').valueOf()
@@ -95,31 +97,32 @@ function testGetTimeFieldDomain(rows, allFields, t) {
   );
 }
 
-function testGetNumericFieldStep(rows, allFields, t) {
+function testGetNumericFieldStep(table, t) {
+
   const test_cases = [
     {
       name: 'smallest',
-      input: getFieldDomain(rows, allFields[0]).step,
+      input: getFieldDomain(table.allData, table.fields[0]).step,
       output: 0.0000001
     },
     {
       name: 'small',
-      input: getFieldDomain(rows, allFields[1]).step,
+      input: getFieldDomain(table.allData, table.fields[1]).step,
       output: 0.001
     },
     {
       name: 'negative',
-      input: getFieldDomain(rows, allFields[2]).step,
+      input: getFieldDomain(table.allData, table.fields[2]).step,
       output: 0.01
     },
     {
       name: 'medium',
-      input: getFieldDomain(rows, allFields[3]).step,
+      input: getFieldDomain(table.allData, table.fields[3]).step,
       output: 0.01
     },
     {
       name: 'large',
-      input: getFieldDomain(rows, allFields[4]).step,
+      input: getFieldDomain(table.allData, table.fields[4]).step,
       output: 1
     }
   ];
@@ -315,15 +318,18 @@ test('filterUtils -> adjustValueToFilterDomain', t => {
   t.end();
 });
 
-test('filterUtils -> getFieldDomain.time', async t => {
-  const data = testData;
+test.only('filterUtils -> getFieldDomain.time', t => {
   const expectedFields = testFields;
 
-  const {fields, rows} = await processCsvData(data);
-
-  t.deepEqual(fields, expectedFields, 'should get current field type');
-  testGetTimeFieldDomain(rows, fields, t);
-  testGetFilterFunction(rows, fields, t);
+  const data = processCsvData(testData);
+  const dataset = createNewDataEntry({
+    info: {id: 'test'}, 
+    data
+  });
+  const table = dataset.test;
+  cmpFields(t, table.fields, expectedFields);
+  testGetTimeFieldDomain(table, t);
+  testGetFilterFunction(table, t);
 
   t.end();
 });
@@ -331,7 +337,7 @@ test('filterUtils -> getFieldDomain.time', async t => {
 test('filterUtils -> getFieldDomain.numeric', async t => {
   const data = numericRangesCsv;
 
-  const {fields, rows} = await processCsvData(data);
+  const {fields, rows} = processCsvData(data);
 
   testGetNumericFieldStep(rows, fields, t);
 

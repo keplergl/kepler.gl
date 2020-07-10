@@ -26,7 +26,7 @@ export {
   defaultFormatter,
   FIELD_DISPLAY_FORMAT
 } from './data-utils';
-export {findPointFieldPairs, createNewDataEntry, datasetColorMaker} from './dataset-utils';
+export {createNewDataEntry, datasetColorMaker} from './dataset-utils';
 export {hexToRgb} from './color-utils';
 export {errorNotification} from './notifications-utils';
 export {dataURItoBlob, downloadFile} from './export-utils';
@@ -42,16 +42,6 @@ export {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
 
 // REDUCER UTILS
 export {updateAllLayerDomainData} from '../reducers/vis-state-updaters';
-export {
-  validateLayerWithData,
-  validateLayersByDatasets,
-  validateSavedVisualChannels,
-  mergeLayers
-} from '../reducers/vis-state-merger';
-
-// LAYER UTILS
 export {getHexFields} from '../layers/h3-hexagon-layer/h3-utils';
 export {containValidTime} from '../layers/trip-layer/trip-utils';
-
-// Render
-export {renderedSize} from 'components/common/data-table/cell-size';
+export {KeplerTable, findPointFieldPairs} from './table-utils/kepler-table';

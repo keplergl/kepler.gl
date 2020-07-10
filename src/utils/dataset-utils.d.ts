@@ -1,5 +1,5 @@
 
-import {Dataset, Datasets, FieldPair} from '../reducers/vis-state-updaters';
+import {Dataset, Datasets, FieldPair, Feild} from '../reducers/vis-state-updaters';
 import {ProtoDataset} from '../actions';
 import {RGBColor} from 'reducers/types';
 
