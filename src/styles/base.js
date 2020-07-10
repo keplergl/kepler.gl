@@ -254,6 +254,12 @@ export const sliderInputWidth = 56;
 export const sliderMarginTopIsTime = -12;
 export const sliderMarginTop = 12;
 
+// Geocoder
+export const geocoderWidth = 360;
+export const geocoderTop = 16;
+export const geocoderRight = 80;
+export const geocoderInputHeight = 36;
+
 // Plot
 export const rangeBrushBgd = '#3A414C';
 export const histogramFillInRange = activeColor;
@@ -367,7 +373,7 @@ const input = css`
   opacity: ${props => (props.disabled ? 0.5 : 1)};
 
   :hover {
-    cursor: ${props => (props.type === 'number' ? 'text' : 'pointer')};
+    cursor: ${props => (props.type === 'number' || props.type === 'text' ? 'text' : 'pointer')};
     background-color: ${props =>
       props.active ? props.theme.inputBgdActive : props.theme.inputBgdHover};
     border-color: ${props =>
@@ -1100,6 +1106,12 @@ export const theme = {
   sliderInputWidth,
   sliderMarginTopIsTime,
   sliderMarginTop,
+
+  // Geocoder
+  geocoderWidth,
+  geocoderTop,
+  geocoderRight,
+  geocoderInputHeight,
 
   // Plot
   rangeBrushBgd,

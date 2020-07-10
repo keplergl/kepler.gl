@@ -72,14 +72,18 @@ const StyledMapControlPanel = styled.div`
   }
 `;
 
-const StyledMapControlPanelContent = styled.div`
+const StyledMapControlPanelContent = styled.div.attrs({
+  className: 'map-control__panel-content'
+})`
   ${props => props.theme.dropdownScrollBar};
   max-height: 500px;
   min-height: 100px;
   overflow: auto;
 `;
 
-const StyledMapControlPanelHeader = styled.div`
+const StyledMapControlPanelHeader = styled.div.attrs({
+  className: 'map-control__panel-header'
+})`
   display: flex;
   justify-content: space-between;
   background-color: ${props => props.theme.mapPanelHeaderBackgroundColor};

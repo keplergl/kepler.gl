@@ -21,11 +21,10 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import {SidePanelSection, PanelLabel} from './common/styled-components';
-import {FormattedMessage} from 'react-intl';
 import Geocoder from './geocoder/geocoder';
 import Processors from 'processors';
 import {fitBounds, addDataToMap, removeDataset} from 'actions';
+import {injectIntl} from 'react-intl';
 
 const GEOCODER_DATASET_NAME = 'geocoder_dataset';
 const GEO_OFFSET = 0.1;
@@ -50,44 +49,13 @@ const ICON_LAYER = {
   }
 };
 
-const GeocoderPanelContent = styled.div`
-  background-color: ${props => props.theme.panelBackground};
-  padding: 0.5em 1em;
+const StyledGeocoderPanel = styled.div`
   position: absolute;
-  top: 20px;
-  left: 50%;
-  margin-left: -20em;
-  width: 40em;
-  box-sizing: border-box;
-`;
-
-const GeocoderWrapper = styled.div`
-  color: ${props => props.theme.textColor};
-  font-size: ${props => props.theme.fontSize};
-
-  .remove-layer {
-    background: transparent;
-    border: none;
-    bottom: 28px;
-    color: ${props => props.theme.textColor};
-    cursor: pointer;
-    display: inline;
-    font-size: 16px;
-    padding: 2px 8px;
-    position: absolute;
-    right: 16px;
-
-    :hover,
-    :focus,
-    :active {
-      background: transparent !important;
-      border: none;
-      box-shadow: unset;
-      color: ${props => props.theme.textColor};
-      opacity: 0.6;
-      outline: none;
-    }
-  }
+  top: ${props => props.theme.geocoderTop}px;
+  right: ${props => props.theme.geocoderRight}px;
+  width: ${props => props.theme.geocoderWidth}px;
+  box-shadow: ${props => props.theme.dropdownListShadow};
+  z-index: 100;
 `;
 
 function generateGeocoderDataset(lat, lon, text) {
@@ -156,28 +124,20 @@ export class GeocoderPanel extends Component {
   };
 
   render() {
-
     const {isGeocoderEnabled, mapboxApiAccessToken} = this.props;
     return (
-      <GeocoderPanelContent
+      <StyledGeocoderPanel
         className="geocoder-panel"
         style={{display: isGeocoderEnabled ? 'block' : 'none'}}
       >
-        <SidePanelSection>
-          <PanelLabel>
-            <FormattedMessage id={'geocoder.title'} />
-          </PanelLabel>
-          <GeocoderWrapper>
-            {isValid(mapboxApiAccessToken) && (
-              <Geocoder
-                mapboxApiAccessToken={mapboxApiAccessToken}
-                onSelected={this.onSelected}
-                onDeleteMarker={this.removeMarker}
-              />
-            )}
-          </GeocoderWrapper>
-        </SidePanelSection>
-      </GeocoderPanelContent>
+        {isValid(mapboxApiAccessToken) && (
+          <Geocoder
+            mapboxApiAccessToken={mapboxApiAccessToken}
+            onSelected={this.onSelected}
+            onDeleteMarker={this.removeMarker}
+          />
+        )}
+      </StyledGeocoderPanel>
     );
   }
 }

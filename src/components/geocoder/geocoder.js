@@ -2,22 +2,40 @@ import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import MapboxClient from 'mapbox';
+import {injectIntl} from 'react-intl';
 import {WebMercatorViewport} from 'viewport-mercator-project';
 import KeyEvent from 'constants/keyevent';
+import {Input} from 'components/common/styled-components';
+import {Search, Delete} from 'components/common/icons';
 
 let debounceTimeout = null;
 
 const StyledContainer = styled.div`
   position: relative;
+  color: ${props => props.theme.textColor};
 
-  input {
-    ${props => props.theme.secondaryInput};
+  .geocoder-input {
+    .geocoder-input__search {
+      position: absolute;
+      height: ${props => props.theme.geocoderInputHeight}px;
+      width: 30px;
+      padding-left: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: ${props => props.theme.subtextColor};
+    }
+
+    input {
+      padding: 4px 36px;
+      height: ${props => props.theme.geocoderInputHeight}px;
+    }
   }
 
   .geocoder-results {
     background-color: ${props => props.theme.panelBackground};
     position: absolute;
-    width: 43.5em;
+    width: ${props => props.theme.geocoderWidth}px;
     margin-top: ${props => props.theme.dropdownWapperMargin}px;
   }
 
@@ -29,7 +47,23 @@ const StyledContainer = styled.div`
       background-color: ${props => props.theme.dropdownListHighlightBg};
     }
   }
+
+  .remove-result {
+    position: absolute;
+    right: 16px;
+    top: 0px;
+    height: ${props => props.theme.geocoderInputHeight}px;
+    display: flex;
+    align-items: center;
+
+    :hover {
+      cursor: pointer;
+      color: ${props => props.theme.textColorHl};
+    }
+  }
 `;
+
+const PLACEHOLDER = 'Enter an Address';
 
 const GeoCoder = ({
   mapboxApiAccessToken,
@@ -42,7 +76,8 @@ const GeoCoder = ({
   onSelected,
   onDeleteMarker,
   transitionDuration,
-  pointZoom
+  pointZoom,
+  intl
 }) => {
   const [inputValue, setInputValue] = useState(initialInputValue);
   const [showResults, setShowResults] = useState(false);
@@ -52,20 +87,22 @@ const GeoCoder = ({
 
   const client = useMemo(() => new MapboxClient(mapboxApiAccessToken), [mapboxApiAccessToken]);
 
-  const onChange = useCallback( event => {
-    const queryString = event.target.value;
-    setInputValue(queryString);
-    clearTimeout(debounceTimeout);
+  const onChange = useCallback(
+    event => {
+      const queryString = event.target.value;
+      setInputValue(queryString);
+      clearTimeout(debounceTimeout);
 
-    debounceTimeout = setTimeout(async () => {
-      if (limit > 0 && !!queryString) {
-        const response = await client.geocodeForward(queryString, {limit});
-        setShowResults(true);
-        setResults(response.entity.features);
-      }
-    }, timeout);
-
-  }, [client, results, setResults, setShowResults]);
+      debounceTimeout = setTimeout(async () => {
+        if (limit > 0 && !!queryString) {
+          const response = await client.geocodeForward(queryString, {limit});
+          setShowResults(true);
+          setResults(response.entity.features);
+        }
+      }, timeout);
+    },
+    [client, results, setResults, setShowResults]
+  );
 
   const onBlur = useCallback(() => {
     setTimeout(() => {
@@ -75,28 +112,32 @@ const GeoCoder = ({
 
   const onFocus = useCallback(() => setShowResults(true), [setShowResults]);
 
-  const onItemSelected = useCallback(item => {
-    let newViewport = new WebMercatorViewport(viewport);
-    const {bbox, center} = item;
+  const onItemSelected = useCallback(
+    item => {
+      let newViewport = new WebMercatorViewport(viewport);
+      const {bbox, center} = item;
 
-    newViewport = bbox ? newViewport.fitBounds([
-      [bbox[0], bbox[1]],
-      [bbox[2], bbox[3]]
-    ]) : {
-      longitude: center[0],
-      latitude: center[1],
-      zoom: pointZoom
-    };
+      newViewport = bbox
+        ? newViewport.fitBounds([
+            [bbox[0], bbox[1]],
+            [bbox[2], bbox[3]]
+          ])
+        : {
+            longitude: center[0],
+            latitude: center[1],
+            zoom: pointZoom
+          };
 
-    const {longitude, latitude, zoom} = newViewport;
+      const {longitude, latitude, zoom} = newViewport;
 
-    onSelected({...viewport, ...{longitude, latitude, zoom, transitionDuration}}, item);
+      onSelected({...viewport, ...{longitude, latitude, zoom, transitionDuration}}, item);
 
-    setShowResults(false);
-    setInputValue(formatItem(item));
-    setShowDelete(true);
-  },
-    [viewport, onSelected, transitionDuration, pointZoom, formatItem]);
+      setShowResults(false);
+      setInputValue(formatItem(item));
+      setShowDelete(true);
+    },
+    [viewport, onSelected, transitionDuration, pointZoom, formatItem]
+  );
 
   const onMarkDeleted = useCallback(() => {
     setShowDelete(false);
@@ -104,47 +145,54 @@ const GeoCoder = ({
     onDeleteMarker();
   }, [onDeleteMarker]);
 
-  const onKeyDown = useCallback(e => {
-    switch (e.keyCode) {
-      case KeyEvent.DOM_VK_UP:
-        setSelectedIndex(selectedIndex > 0 ? selectedIndex - 1 : selectedIndex);
-        break;
-      case KeyEvent.DOM_VK_DOWN:
-        setSelectedIndex(selectedIndex < results.length - 1 ? selectedIndex + 1 : selectedIndex);
-        break;
-      case KeyEvent.DOM_VK_ENTER:
-      case KeyEvent.DOM_VK_RETURN:
-        onItemSelected(results[selectedIndex]);
-        break;
-      default: break;
-    }
-  }, [results, selectedIndex, setSelectedIndex]);
+  const onKeyDown = useCallback(
+    e => {
+      switch (e.keyCode) {
+        case KeyEvent.DOM_VK_UP:
+          setSelectedIndex(selectedIndex > 0 ? selectedIndex - 1 : selectedIndex);
+          break;
+        case KeyEvent.DOM_VK_DOWN:
+          setSelectedIndex(selectedIndex < results.length - 1 ? selectedIndex + 1 : selectedIndex);
+          break;
+        case KeyEvent.DOM_VK_ENTER:
+        case KeyEvent.DOM_VK_RETURN:
+          onItemSelected(results[selectedIndex]);
+          break;
+        default:
+          break;
+      }
+    },
+    [results, selectedIndex, setSelectedIndex]
+  );
 
   return (
     <StyledContainer className={className}>
-      <div>
-        <input
+      <div className="geocoder-input">
+        <div className="geocoder-input__search">
+          <Search height="20px" />
+        </div>
+        <Input
           type="text"
           onChange={onChange}
           onBlur={onBlur}
           onFocus={onFocus}
           onKeyDown={onKeyDown}
           value={inputValue}
+          placeholder={
+            intl
+              ? intl.formatMessage({id: 'geocoder.title', defaultMessage: PLACEHOLDER})
+              : PLACEHOLDER
+          }
         />
         {showDelete ? (
-          <button
-            type="button"
-            className="btn btn-primary remove-layer"
-            onClick={onMarkDeleted}
-            title="Remove marker"
-          >
-            &times;
-          </button>
+          <div className="remove-result">
+            <Delete height="12px" onClick={onMarkDeleted} />
+          </div>
         ) : null}
       </div>
 
       {showResults ? (
-        <div className='geocoder-results'>
+        <div className="geocoder-results">
           {results.map((item, index) => (
             <div
               key={index}
@@ -158,6 +206,6 @@ const GeoCoder = ({
       ) : null}
     </StyledContainer>
   );
-}
+};
 
-export default GeoCoder;
+export default injectIntl(GeoCoder);
