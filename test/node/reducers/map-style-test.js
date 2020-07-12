@@ -52,6 +52,19 @@ test('#mapStyleReducer', t => {
 });
 
 test('#mapStyleReducer -> INIT', t => {
+  const initialState = reducer(
+    InitialMapStyle,
+    keplerGlInit()
+  );
+  t.deepEqual(
+    initialState,
+    {
+      ...INITIAL_MAP_STYLE,
+      initialState: {}
+    },
+    'initialize map style with no argument'
+  );
+
   const newState = reducer(
     InitialMapStyle,
     keplerGlInit({

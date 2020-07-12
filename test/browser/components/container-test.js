@@ -80,7 +80,8 @@ test('Components -> Container -> Mount with mint:true', t => {
       mint: true,
       mapboxApiAccessToken: undefined,
       mapboxApiUrl: undefined,
-      mapStylesReplaceDefault: undefined
+      mapStylesReplaceDefault: undefined,
+      initialUiState: undefined
     }
   };
 
@@ -130,7 +131,8 @@ test('Components -> Container -> Mount with mint:true', t => {
       mint: true,
       mapboxApiAccessToken: 'pk.smoothie',
       mapboxApiUrl: undefined,
-      mapStylesReplaceDefault: undefined
+      mapStylesReplaceDefault: undefined,
+      initialUiState: undefined
     }
   };
 
@@ -206,7 +208,8 @@ test('Components -> Container -> Mount with mint:false', t => {
       mint: false,
       mapboxApiAccessToken: 'hello.world',
       mapboxApiUrl: undefined,
-      mapStylesReplaceDefault: undefined
+      mapStylesReplaceDefault: undefined,
+      initialUiState: undefined
     }
   };
 
@@ -273,7 +276,8 @@ test('Components -> Container -> Mount then rename', t => {
       mint: true,
       mapboxApiAccessToken: 'hello.world',
       mapboxApiUrl: undefined,
-      mapStylesReplaceDefault: undefined
+      mapStylesReplaceDefault: undefined,
+      initialUiState: undefined
     }
   };
 

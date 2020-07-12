@@ -223,13 +223,13 @@ function getLayerGroupsFromStyle(style) {
  * @type {typeof import('./map-style-updaters').initMapStyleUpdater}
  * @public
  */
-export const initMapStyleUpdater = (state, action) => ({
+export const initMapStyleUpdater = (state, {payload = {}}) => ({
   ...state,
   // save mapbox access token to map style state
-  mapboxApiAccessToken: (action.payload || {}).mapboxApiAccessToken,
-  mapboxApiUrl: (action.payload || {}).mapboxApiUrl || state.mapboxApiUrl,
-  mapStyles: action.payload && !action.payload.mapStylesReplaceDefault ? state.mapStyles : {},
-  mapStylesReplaceDefault: action.payload.mapStylesReplaceDefault || false
+  mapboxApiAccessToken: payload.mapboxApiAccessToken || state.mapboxApiAccessToken,
+  mapboxApiUrl: payload.mapboxApiUrl || state.mapboxApiUrl,
+  mapStyles: !payload.mapStylesReplaceDefault ? state.mapStyles : {},
+  mapStylesReplaceDefault: payload.mapStylesReplaceDefault || false
 });
 // });
 
