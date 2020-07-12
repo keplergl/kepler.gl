@@ -202,7 +202,10 @@ export const INITIAL_VIS_STATE = {
   // time in unix timestamp (milliseconds) (the number of seconds since the Unix Epoch)
   animationConfig: DEFAULT_ANIMATION_CONFIG,
 
-  editor: DEFAULT_EDITOR
+  editor: DEFAULT_EDITOR,
+
+  // fileLoading: {}
+  fileLoadingProgress: {}
 };
 
 /**
@@ -1253,7 +1256,9 @@ export const loadFilesUpdater = (state, action) => {
     filesToLoad: files,
     onFinish
   };
-  const nextState = merge_({fileLoading})(merge_({fileLoadingProgress})(state));
+  let nextState = state;
+  nextState = merge_({fileLoadingProgress})(nextState);
+  nextState = merge_({fileLoading})(nextState);
 
   return loadNextFileUpdater(nextState);
 };

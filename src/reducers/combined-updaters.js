@@ -134,6 +134,12 @@ export const addDataToMapUpdater = (state, {payload}) => {
   const oldLayers = state.visState.layers;
   const filterNewlyAddedLayers = layers => layers.filter(nl => !oldLayers.find(ol => ol === nl));
 
+  // Returns undefined if not found, to make typescript happy
+  const findMapBoundsIfCentered = layers => {
+    const bounds = options.centerMap && findMapBounds(layers);
+    return bounds ? bounds : undefined;
+  };
+
   return compose_([
     pick_('visState')(
       apply_(visStateUpdateVisDataUpdater, {
@@ -152,9 +158,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
           payload_({
             config: parsedConfig,
             options,
-            bounds: options.centerMap
-              ? findMapBounds(filterNewlyAddedLayers(visState.layers))
-              : null
+            bounds: findMapBoundsIfCentered(filterNewlyAddedLayers(visState.layers))
           })
         )
       )
@@ -162,7 +166,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
 
     pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
 
-    pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater)),
+    pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null))),
 
     pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),
 

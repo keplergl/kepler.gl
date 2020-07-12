@@ -48,3 +48,6 @@ export * as combinedUpdaters from './combined-updaters';
 
 // reducer merges
 export * as visStateMergers from './vis-state-merger';
+
+// Helpers
+export * from './composer-helpers';
