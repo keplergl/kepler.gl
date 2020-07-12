@@ -14,7 +14,7 @@
     "outDir": "build/dist",
     "sourceMap": true,
     "strictNullChecks": true,
-    "suppressImplicitAnyIndexErrors": true,
+    "suppressImplicitAnyIndexErrors": false,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
@@ -30,9 +30,11 @@
     "src/reducers",
     "src/schemas",
     "src/utils",
+    "src/components/common/file-uploader",
+    "src/components/common/progress-bar.js",
+    "src/components/modals/load-data-modal.js"
 
     // TODO: add types
-    // "src/components",
     // "src/constants",
     // "src/deckgl-layers",
     // "src/layers"

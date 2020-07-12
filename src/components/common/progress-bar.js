@@ -21,6 +21,8 @@
 import React from 'react';
 import styled from 'styled-components';
 
+/** @typedef {import('./progress-bar').ProgressBarProps} ProgressBarProps */
+
 const StyledBar = styled.span.attrs({
   className: 'progress-bar__bar'
 })`
@@ -34,8 +36,9 @@ const StyledTrack = styled.div.attrs({
   background-color: ${props => props.trackColor || props.theme.progressBarTrackColor};
 `;
 
-const ProgressBar = ({percent, height = 4, isLoading, barColor, trackColor}) => (
-  <StyledTrack trackColor={trackColor}>
+/** @type {React.SFC<ProgressBarProps>} */
+const ProgressBar = ({percent, height = 4, isLoading, barColor, trackColor, theme}) => (
+  <StyledTrack trackColor={trackColor} theme={theme}>
     <StyledBar
       barColor={barColor}
       style={{width: percent, height: `${height}px`, opacity: isLoading ? 1 : 0}}
