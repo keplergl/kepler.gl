@@ -32,6 +32,7 @@ import {
   addNotification
 } from 'actions/ui-state-actions';
 import {loadFiles, loadFilesErr} from 'actions/vis-state-actions';
+import {keplerGlInit} from 'actions/actions';
 import reducer, {uiStateReducerFactory} from 'reducers/ui-state';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
 import {
@@ -47,6 +48,23 @@ test('#uiStateReducer', t => {
     reducer(undefined, {}),
     {...INITIAL_UI_STATE, initialState: {}},
     'should return the initial state'
+  );
+  t.end();
+});
+
+test('#uiStateReducer -> INIT', t => {
+  const uiStateReducer = uiStateReducerFactory();
+
+  const newState = reducer(
+    uiStateReducer(undefined, {}),
+    keplerGlInit({
+      initialUiState: {readOnly: true}
+    })
+  );
+  t.deepEqual(
+    newState,
+    {...INITIAL_UI_STATE, readOnly: true, initialState: {}},
+    'should apply initialUiState'
   );
   t.end();
 });
