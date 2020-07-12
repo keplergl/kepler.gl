@@ -296,6 +296,12 @@ const mapStyles = [
 ];
 ```
 
+#### `initialUiState` (object, optional)
+
+- Default: `undefined`
+
+Intial UI State applied to uiState reducer, value will be shallow merged with default [`INITIAL_UI_STATE`](https://docs.kepler.gl/docs/api-reference/reducers/ui-state#initial_ui_state)
+
 ### 3. Dispatch custom actions to `keplerGl` reducer.
 
 One advantage of using the reducer over React component state to handle keplerGl state is the flexibility
