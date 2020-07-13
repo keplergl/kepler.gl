@@ -378,7 +378,7 @@ export const TableSection = ({
   columns,
   headerGridProps,
   fixedWidth,
-  fixedHeight,
+  fixedHeight = undefined,
   onScroll,
   scrollTop,
   dataGridProps,
@@ -386,7 +386,7 @@ export const TableSection = ({
   setGridRef,
   headerCellRender,
   dataCellRender,
-  scrollLeft
+  scrollLeft = undefined
 }) => (
   <AutoSizer>
     {({width, height}) => {
@@ -580,7 +580,6 @@ export class DataTable extends Component {
                       }}
                       isPinned={false}
                       columns={unpinnedColumnsGhost}
-                      ghost={ghost}
                       headerGridProps={headerGridProps}
                       fixedWidth={fixedWidth}
                       fixedHeight={fixedHeight}

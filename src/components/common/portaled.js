@@ -149,6 +149,7 @@ class Portaled extends Component {
 
   componentWillUnmount() {
     this._unmounted = true;
+    // @ts-ignore
     this.unsubscribe();
   }
 
@@ -216,6 +217,7 @@ class Portaled extends Component {
                   // React modal issue: https://github.com/reactjs/react-modal/issues/769
                   // failed to execute removeChild on parent node when it is already unmounted
                   return (
+                    // @ts-ignore
                     (context && context.current) || {
                       removeChild: () => {},
                       appendChild: () => {}
@@ -233,6 +235,7 @@ class Portaled extends Component {
                     top: this.state.top,
                     transition: this.props.theme.transition,
                     marginTop: isVisible ? '0px' : '14px',
+                    // @ts-ignore
                     ...pos
                   }}
                 >

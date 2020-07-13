@@ -57,7 +57,7 @@ const exportJsonPropTypes = {
   options: PropTypes.object
 };
 
-const ExportJsonMap = React.memo(({config = {}}) => (
+const ExportJsonMapUnmemoized = ({config = {}}) => (
   <div>
     <StyledExportMapSection>
       <div className="description" />
@@ -87,11 +87,13 @@ const ExportJsonMap = React.memo(({config = {}}) => (
       </div>
     </StyledJsonExportSection>
   </div>
-));
+);
 
-ExportJsonMap.propTypes = exportJsonPropTypes;
+ExportJsonMapUnmemoized.propTypes = exportJsonPropTypes;
 
-ExportJsonMap.displayName = 'ExportJsonMap';
+ExportJsonMapUnmemoized.displayName = 'ExportJsonMap';
+
+const ExportJsonMap = React.memo(ExportJsonMapUnmemoized);
 
 const ExportJsonMapFactory = () => ExportJsonMap;
 

@@ -38,10 +38,10 @@ const StyledButton = styled.button`
   }
 `;
 const noop = () => {};
-const TableHeaderButton = ({onClick = noop, disabled, text, children, ...props}) => (
+const Button = ({onClick = noop, disabled = false, text = '', children, ...props}) => (
   <StyledButton {...props} onClick={disabled ? null : onClick}>
     {text || children}
   </StyledButton>
 );
 
-export default TableHeaderButton;
+export default Button;

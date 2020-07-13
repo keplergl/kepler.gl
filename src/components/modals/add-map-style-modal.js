@@ -149,7 +149,7 @@ function AddMapStyleModalFactory() {
         });
 
         map.on('error', () => {
-          this.loadMaoStyleError();
+          this.loadMapStyleError();
         });
       }
     }

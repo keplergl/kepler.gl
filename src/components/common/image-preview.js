@@ -67,8 +67,26 @@ const StyledImagePreview = styled.div.attrs({
   }
 `;
 
-const ImagePreview = ({exportImage = {}, width = 400, showDimension}) => {
-  const {error, imageDataUri, exporting, imageSize: {imageW, imageH} = {}} = exportImage;
+/** @typedef {{
+  error: Error;
+  imageDataUri: string;
+  exporting: boolean;
+  imageSize: {
+    imageW: number;
+    imageH: number;
+  }
+}} ExportImage;
+ */
+
+/**
+ * @param {object} props
+ * @param {ExportImage} [props.exportImage]
+ * @param {number} [props.width]
+ * @param {boolean} [props.showDimension]
+ */
+const ImagePreview = ({exportImage, width = 400, showDimension = false}) => {
+  const {error, imageDataUri, exporting, imageSize: {imageW = 0, imageH = 0} = {}} =
+    exportImage || {};
 
   const imageStyle = {
     width: `${width}px`,
