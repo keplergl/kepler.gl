@@ -139,11 +139,11 @@ export {default as LayerConfigGroup} from './side-panel/layer-panel/layer-config
 export {default as LayerTypeSelector} from './side-panel/layer-panel/layer-type-selector';
 
 export {
-  ChannelByValueSelector, 
+  ChannelByValueSelector,
   HowToButton,
   LayerColorRangeSelector,
   LayerColorSelector
-} from './side-panel/layer-panel/layer-configurator'
+} from './side-panel/layer-panel/layer-configurator';
 
 export * from './common/styled-components';
 import * as Icons from './common/icons';

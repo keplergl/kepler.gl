@@ -389,36 +389,40 @@ export function loadFilesErr(
   error: any
 ): Merge<loadFilesErrUpdaterAction, {type: ActionTypes.LOAD_FILES_ERR}>;
 
-export type loadFileStepSuccessAction = {
+export type LoadFileStepSuccessAction = {
   fileName: string;
   fileCache: FileCacheItem[];
 };
 export function loadFileStepSuccess(payload: {
   fileName: string;
   fileCache: FileCacheItem[];
-}): Merge<loadFileStepSuccessAction, {type: ActionTypes.LOAD_FILE_STEP_SUCCESS}>;
+}): Merge<LoadFileStepSuccessAction, {type: ActionTypes.LOAD_FILE_STEP_SUCCESS}>;
 
 type FileContent = {
   fileName: string;
   header: string[];
   data: any;
 };
-export type nextFileBatchUpdaterAction = {
-  gen: AsyncGenerator<FileContent>;
-  fileName: string;
-  progress?: any;
-  accumulated?: any;
-  onFinish: (result: any) => any;
+export type NextFileBatchUpdaterAction = {
+  payload: {
+    gen: AsyncGenerator<FileContent>;
+    fileName: string;
+    progress?: any;
+    accumulated?: any;
+    onFinish: (result: any) => any;
+  };
 };
 export function nextFileBatch(
-  payload: nextFileBatchAction
-): {payload: nextFileBatchAction; type: ActionTypes.NEXT_FILE_BATCH};
+  payload: NextFileBatchAction['payload']
+): Merge<NextFileBatchUpdaterAction, {type: ActionTypes.NEXT_FILE_BATCH}>;
 
-export type processFileContentUpdaterAction = {
-  content: FileContent;
-  fileCache: FileCacheItem[];
+export type ProcessFileContentUpdaterAction = {
+  payload: {
+    content: FileContent;
+    fileCache: FileCacheItem[];
+  };
 };
 
 export function processFileContent(
-  payload: processFileContentUpdaterAction
-): {payload: processFileContentUpdaterAction; type: ActionTypes.PROCESS_FILE_CONTENT};
+  payload: ProcessFileContentUpdaterAction['payload']
+): Merge<ProcessFileContentUpdaterAction, {type: ActionTypes.PROCESS_FILE_CONTENT}>;
