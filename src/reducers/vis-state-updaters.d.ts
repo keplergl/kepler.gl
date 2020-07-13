@@ -264,7 +264,7 @@ export type MapInfo = {
   description: string;
 };
 export type FileLoading = {
-  filesToLoad: any[];
+  filesToLoad: FileList;
   onFinish: (payload: any) => any;
   fileCache: any[];
 };
@@ -300,7 +300,7 @@ export type VisState = {
   editor: Editor;
   splitMaps: SplitMap[];
   splitMapsToBeMerged?: SplitMap[];
-  fileLoading?: FileLoading;
+  fileLoading: FileLoading | false;
   fileLoadingProgress: FileLoadingProgress;
   initialState?: Partial<VisState>;
 };
@@ -461,8 +461,7 @@ export function loadFilesUpdater(
   action: VisStateActions.LoadFilesUpdaterAction
 ): VisState;
 export function loadNextFileUpdater(
-  state: VisState,
-  action: VisStateActions.LoadNextFileUpdaterAction
+  state: VisState
 ): VisState;
 export function loadFilesSuccessUpdater(
   state: VisState,
@@ -474,15 +473,15 @@ export function loadFilesErrUpdater(
 ): VisState;
 export function loadFileStepSuccessUpdater(
   state: VisState,
-  action: VisStateActions.loadFileStepSuccessAction
+  action: VisStateActions.LoadFileStepSuccessAction
 ): VisState;
 export function nextFileBatchUpdater(
   state: VisState,
-  action: VisStateActions.nextFileBatchUpdaterAction
+  action: VisStateActions.NextFileBatchUpdaterAction
 ): VisState;
 export function processFileContentUpdater(
   state: VisState,
-  action: VisStateActions.processFileContentUpdaterAction
+  action: VisStateActions.ProcessFileContentUpdaterAction
 ): VisState;
 export function setFeaturesUpdater(
   state: VisState,

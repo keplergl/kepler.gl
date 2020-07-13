@@ -65,7 +65,8 @@ const StyledListItem = styled.div`
 
     .layer-type-selector__item__icon {
       color: ${props => props.theme.activeColor};
-      background-size: ${props => props.theme.layerTypeIconSizeSM}px ${props => props.theme.layerTypeIconSizeSM}px;
+      background-size: ${props => props.theme.layerTypeIconSizeSM}px
+        ${props => props.theme.layerTypeIconSizeSM}px;
       margin-right: 12px;
     }
   }
@@ -74,7 +75,8 @@ const StyledListItem = styled.div`
     color: ${props => props.theme.labelColor};
     display: flex;
     background-image: url(${`${CLOUDFRONT}/kepler.gl-layer-icon-bg.png`});
-    background-size: ${props => props.theme.layerTypeIconSizeL}px ${props => props.theme.layerTypeIconSizeL}px;
+    background-size: ${props => props.theme.layerTypeIconSizeL}px
+      ${props => props.theme.layerTypeIconSizeL}px;
   }
 
   .layer-type-selector__item__label {

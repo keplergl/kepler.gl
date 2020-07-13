@@ -18,10 +18,10 @@ declare export function pick_<State, Prop extends keyof State>(
   prop: Prop
 ): (fn: (p: State[Prop]) => State[Prop]) => (state: State) => State;
 
-/** Returns a reducer function that merges in a partial state value */
-declare export function merge_<State>(
-  object: Partial<State>
-): (state: State) => State;
+/** Returns a reducer function that merges props with state */
+declare export function merge_<State, Props>(
+  object: Props
+): (state: State) => State & Props;
 
 declare export function pickKepler_<X>(fn: (x: X) => X): (s: {keplerGL: {map: X}}) => {keplerGL: {map: X}}
 
