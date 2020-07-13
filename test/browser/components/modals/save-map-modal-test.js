@@ -169,7 +169,10 @@ test('Components -> SaveMapModal on click provider', t => {
   t.ok(onSetCloudProvider.calledWithExactly('blue'), 'should call onSetCloudProvider with blue');
 
   // click taro to logout
-  wrapper.find('.logout-button').simulate('click');
+  wrapper
+    .find('.logout-button')
+    .at(0)
+    .simulate('click');
   t.ok(logout.calledOnce, 'should call logout');
 
   // call onSuccess after login to set current provider
