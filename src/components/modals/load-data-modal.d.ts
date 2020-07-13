@@ -5,7 +5,7 @@ export type LoadDataModalProps = {
   // call backs
   onFileUpload: (files: File[]) => void;
   onLoadCloudMap: (provider: any, vis: any) => void;
-  fileLoading?: FileLoading,
+  fileLoading: FileLoading | false,
   loadingMethods: {
     id: string;
     label: string;

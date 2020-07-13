@@ -36,7 +36,7 @@ const StyledTrack = styled.div.attrs({
   background-color: ${props => props.trackColor || props.theme.progressBarTrackColor};
 `;
 
-/** @type {React.SFC<ProgressBarProps>} */
+/** @type {React.FunctionComponent<ProgressBarProps>} */
 const ProgressBar = ({percent, height = 4, isLoading, barColor, trackColor, theme}) => (
   <StyledTrack trackColor={trackColor} theme={theme}>
     <StyledBar

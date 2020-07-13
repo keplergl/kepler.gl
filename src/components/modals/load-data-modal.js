@@ -72,7 +72,7 @@ export function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
 
   LoadDataModal.defaultProps = {
     onFileUpload: noop,
-    // fileLoading: undefined,
+    fileLoading: false,
     loadingMethods: [
       {
         id: LOADING_METHODS.upload,
