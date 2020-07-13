@@ -256,7 +256,7 @@ export const INITIAL_UI_STATE = {
  * @memberof uiStateUpdaters
 
  */
-export const initUiStateUpdater = (state, action) => (console.log(action.payload), {
+export const initUiStateUpdater = (state, action) => ({
   ...state,
   ...(action.payload || {}).initialUiState
 });

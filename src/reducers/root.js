@@ -33,7 +33,16 @@ export function provideInitialState(initialState) {
 
   const handleRegisterEntry = (
     state,
-    {payload: {id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault, initialUiState}}
+    {
+      payload: {
+        id,
+        mint,
+        mapboxApiAccessToken,
+        mapboxApiUrl,
+        mapStylesReplaceDefault,
+        initialUiState
+      }
+    }
   ) => {
     // by default, always create a mint state even if the same id already exist
     // if state.id exist and mint=false, keep the existing state

@@ -90,8 +90,15 @@ export function ContainerFactory(KeplerGl) {
     }
 
     componentDidMount() {
-      const {id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault, initialUiState} = this.props;
-      
+      const {
+        id,
+        mint,
+        mapboxApiAccessToken,
+        mapboxApiUrl,
+        mapStylesReplaceDefault,
+        initialUiState
+      } = this.props;
+
       // add a new entry to reducer
       this.props.dispatch(
         registerEntry({

@@ -38,10 +38,7 @@ import ActionTypes from 'constants/action-types';
  * @type {typeof import('./identity-actions').registerEntry}
  * @public
  */
-export const registerEntry = createAction(
-  ActionTypes.REGISTER_ENTRY,
-  payload => payload
-);
+export const registerEntry = createAction(ActionTypes.REGISTER_ENTRY, payload => payload);
 
 /**
  *

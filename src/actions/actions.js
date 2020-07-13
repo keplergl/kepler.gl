@@ -160,7 +160,7 @@ export const receiveMapConfig = createAction(ActionTypes.RECEIVE_MAP_CONFIG, (co
 export const keplerGlInit = createAction(
   ActionTypes.INIT,
   // @ts-ignore
-  (payload) => (payload)
+  payload => payload
 );
 
 /**
