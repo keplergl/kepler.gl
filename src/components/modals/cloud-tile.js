@@ -100,20 +100,20 @@ const StyledUserName = styled.div`
 `;
 
 const LoginButton = ({onClick}) => (
-  <Button link small onClick={onClick}>
+  <Button className="login-button" link small onClick={onClick}>
     <Login />
     Login
   </Button>
 );
 
 const LogoutButton = ({onClick}) => (
-  <Button link small onClick={onClick}>
+  <Button className="logout-button" link small onClick={onClick}>
     <Logout />
     Logout
   </Button>
 );
 
-const ActionButton = ({isConnected, actionName, isReady}) =>
+const ActionButton = ({isConnected, actionName = null, isReady}) =>
   isConnected && actionName ? (
     <Button className="cloud-tile__action" small secondary disabled={!isReady}>
       {isReady ? actionName : <LoadingSpinner size={12} />}
@@ -124,11 +124,11 @@ const CloudTile = ({
   // action when click on the tile
   onSelect,
   // default to login
-  onConnect,
+  onConnect = null,
   // default to logout
-  onLogout,
+  onLogout = null,
   // action name
-  actionName,
+  actionName = null,
   // cloud provider class
   cloudProvider,
   // function to take after login or logout
@@ -163,9 +163,9 @@ const CloudTile = ({
         {isSelected && <CheckMark />}
       </StyledTileWrapper>
       {isConnected ? (
-        <LogoutButton className="logout-button" onClick={onClickLogout} />
+        <LogoutButton onClick={onClickLogout} />
       ) : (
-        <LoginButton className="login-button" onClick={onClickConnect} />
+        <LoginButton onClick={onClickConnect} />
       )}
     </StyledBox>
   );

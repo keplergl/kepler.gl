@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {Component, createRef} from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import UploadButton from './upload-button';
 import {DragNDrop, FileType} from 'components/common/icons';
@@ -32,6 +31,8 @@ import ReactMarkdown from 'react-markdown';
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
 import {FormattedMessage, injectIntl} from 'react-intl';
+
+/** @typedef {import('./file-upload').FileUploadProps} FileUploadProps */
 
 // File.type is not reliable if the OS does not have a
 // registered mapping for the extension.
@@ -151,13 +152,8 @@ const StyledDisclaimer = styled(StyledMessage)`
 `;
 
 function FileUploadFactory() {
+  /** @augments {Component<FileUploadProps>} */
   class FileUpload extends Component {
-    static propTypes = {
-      onFileUpload: PropTypes.func.isRequired,
-      validFileExt: PropTypes.arrayOf(PropTypes.string),
-      fileLoading: PropTypes.oneOfType([PropTypes.bool, PropTypes.object])
-    };
-
     static defaultProps = {
       validFileExt: defaultValidFileExt
     };
@@ -190,21 +186,26 @@ function FileUploadFactory() {
       return Boolean(fileExt);
     };
 
-    _handleFileInput = (files, e) => {
-      if (e) {
-        e.stopPropagation();
+    /** @param {FileList} fileList */
+    _handleFileInput = (fileList, event) => {
+      if (event) {
+        event.stopPropagation();
       }
 
-      const nextState = {files: [], errorFiles: [], dragOver: false};
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      const files = [...fileList].filter(Boolean);
 
-        if (file && this._isValidFileType(file.name)) {
-          nextState.files.push(file);
+      // TODO - move this code out of the component
+      const filesToLoad = [];
+      const errorFiles = [];
+      for (const file of files) {
+        if (this._isValidFileType(file.name)) {
+          filesToLoad.push(file);
         } else {
-          nextState.errorFiles.push(file.name);
+          errorFiles.push(file.name);
         }
       }
+
+      const nextState = {files: filesToLoad, errorFiles, dragOver: false};
 
       this.setState(nextState, () =>
         nextState.files.length ? this.props.onFileUpload(nextState.files) : null
@@ -217,7 +218,7 @@ function FileUploadFactory() {
 
     render() {
       const {dragOver, files, errorFiles} = this.state;
-      const {validFileExt, intl, fileLoading, fileLoadingProgress} = this.props;
+      const {validFileExt, intl, fileLoading, fileLoadingProgress, theme} = this.props;
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>
           {FileDrop ? (
@@ -243,7 +244,7 @@ function FileUploadFactory() {
                   ))}
                 </StyledFileTypeFow>
                 {fileLoading ? (
-                  <FileUploadProgress fileLoadingProgress={fileLoadingProgress} />
+                  <FileUploadProgress fileLoadingProgress={fileLoadingProgress} theme={theme} />
                 ) : (
                   <>
                     <div

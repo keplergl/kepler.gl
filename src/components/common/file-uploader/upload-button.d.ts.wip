@@ -1,0 +1,11 @@
+// For some reason these types don't work
+// JSX element type 'UploadButton' does not have any construct or call signatures.
+
+import React from 'react';
+
+export type UploadButtonProps = {
+  onUpload: (files: FileList, event: any) => void;
+};
+
+export const UploadButton: React.Component<UploadButtonProps>;
+export default UploadButton;

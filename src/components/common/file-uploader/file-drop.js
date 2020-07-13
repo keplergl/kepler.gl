@@ -22,10 +22,12 @@
  * Copied from https://github.com/sarink/react-file-drop
  * For React 16.8 compatibility
  */
-import PropTypes from 'prop-types';
 import React from 'react';
 import window from 'global/window';
 
+/** @typedef {import('./file-drop').FileDropProps} FileDropProps */
+
+/** @augments React.PureComponent<FileDropProps> */
 class FileDrop extends React.PureComponent {
   static isIE = () =>
     window &&
@@ -47,33 +49,6 @@ class FileDrop extends React.PureComponent {
       }
     }
     return hasFiles;
-  };
-
-  static propTypes = {
-    className: PropTypes.string,
-    targetClassName: PropTypes.string,
-    draggingOverFrameClassName: PropTypes.string,
-    draggingOverTargetClassName: PropTypes.string,
-    onDragOver: PropTypes.func,
-    onDragLeave: PropTypes.func,
-    onDrop: PropTypes.func,
-    dropEffect: PropTypes.oneOf(['copy', 'move', 'link', 'none']),
-    frame: (props, propName, componentName) => {
-      const prop = props[propName];
-      if (prop === null) {
-        return new Error(
-          `Warning: Required prop \`${propName}\` was not specified in \`${componentName}\``
-        );
-      }
-      if (prop !== document && prop !== window && !(prop instanceof HTMLElement)) {
-        return new Error(
-          `Warning: Prop \`${propName}\` must be one of the following: document, HTMLElement!`
-        );
-      }
-    },
-    onFrameDragEnter: PropTypes.func,
-    onFrameDragLeave: PropTypes.func,
-    onFrameDrop: PropTypes.func
   };
 
   static defaultProps = {

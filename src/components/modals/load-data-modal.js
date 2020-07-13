@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {useState} from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import get from 'lodash.get';
 
@@ -30,6 +29,8 @@ import ModalTabsFactory from './modal-tabs';
 import LoadingDialog from './loading-dialog';
 
 import {LOADING_METHODS} from 'constants/default-settings';
+
+/** @typedef {import('./load-data-modal').LoadDataModalProps} LoadDataModalProps */
 
 const StyledLoadDataModal = styled.div.attrs({
   className: 'load-data-modal'
@@ -45,9 +46,12 @@ const getDefaultMethod = methods => (Array.isArray(methods) ? get(methods, [0]) 
 
 LoadDataModalFactory.deps = [ModalTabsFactory, FileUploadFactory, LoadStorageMapFactory];
 
-function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
+export function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
+  /** @type {React.FunctionComponent<LoadDataModalProps>} */
   const LoadDataModal = props => {
-    const {loadingMethods, isCloudMapLoading} = props;
+    // @ts-ignore TODO check why this is not defined
+    const {isCloudMapLoading} = props;
+    const {loadingMethods} = props;
     const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
 
     return (
@@ -64,21 +68,6 @@ function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
         )}
       </StyledLoadDataModal>
     );
-  };
-
-  LoadDataModal.propTypes = {
-    // call backs
-    onFileUpload: PropTypes.func.isRequired,
-    onLoadCloudMap: PropTypes.func.isRequired,
-    fileLoading: PropTypes.oneOfType([PropTypes.bool, PropTypes.object]),
-    loadingMethods: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string,
-        label: PropTypes.string,
-        elementType: PropTypes.elementType,
-        tabElementType: PropTypes.elementType
-      })
-    )
   };
 
   LoadDataModal.defaultProps = {
