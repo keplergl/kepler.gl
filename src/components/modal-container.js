@@ -117,8 +117,8 @@ export default function ModalContainerFactory(
   SaveMapModal,
   ShareMapModal
 ) {
-  // /** @typedef {import('./modal-container').ModalContainerProps} ModalContainerProps */
-  // /** @augments React.Component<ModalContainerProps> */
+  /** @typedef {import('./modal-container').ModalContainerProps} ModalContainerProps */
+  /** @augments React.Component<ModalContainerProps> */
   class ModalContainer extends Component {
     // TODO - remove when prop types are fully exported
     static propTypes = {
@@ -204,6 +204,7 @@ export default function ModalContainerFactory(
       const toSave = exportMap(this.props);
 
       this.props.providerActions.exportFileToCloud({
+        // @ts-ignore
         mapData: toSave,
         provider,
         options: {
@@ -218,6 +219,7 @@ export default function ModalContainerFactory(
 
     _onSaveMap = (overwrite = false) => {
       const {currentProvider} = this.props.providerState;
+      // @ts-ignore
       const provider = this.props.cloudProviders.find(p => p.name === currentProvider);
       this._exportFileToCloud({
         provider,
@@ -269,10 +271,14 @@ export default function ModalContainerFactory(
       let template = null;
       let modalProps = {};
 
+      // TODO - currentModal is a string
+      // @ts-ignore
       if (currentModal && currentModal.id && currentModal.template) {
         // if currentMdoal template is already provided
         // TODO: need to check whether template is valid
+        // @ts-ignore
         template = <currentModal.template />;
+        // @ts-ignore
         modalProps = currentModal.modalProps;
       } else {
         switch (currentModal) {

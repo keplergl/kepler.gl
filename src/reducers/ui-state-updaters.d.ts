@@ -17,7 +17,7 @@ export type ExportImage = {
   // exporting state
   imageDataUri: string;
   exporting: boolean;
-  error: boolean;
+  error: Error;
 };
 
 export type ExportData = {
