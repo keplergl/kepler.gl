@@ -11,6 +11,8 @@ export type FileUploadProps = {
   fileFormatNames?: string[];
   /** A list of typically 3 letter extensions (without '.') for file matching */
   fileExtensions?: string[];
+  /** Set to true if app wants to do its own file filtering */
+  disableExtensionFilter?: boolean;
 };
 
 export const WarningMsg: React.Component;

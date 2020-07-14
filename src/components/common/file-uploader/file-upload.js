@@ -184,11 +184,13 @@ function FileUploadFactory() {
 
       const files = [...fileList].filter(Boolean);
 
+      const {disableExtensionFilter = false} = this.props;
+
       // TODO - move this code out of the component
       const filesToLoad = [];
       const errorFiles = [];
       for (const file of files) {
-        if (this._isValidFileType(file.name)) {
+        if (disableExtensionFilter || this._isValidFileType(file.name)) {
           filesToLoad.push(file);
         } else {
           errorFiles.push(file.name);
