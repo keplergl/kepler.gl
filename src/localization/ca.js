@@ -425,7 +425,7 @@ export default {
       '*kepler.gl és una aplicació a la banda client que no es recolza en cap servidor. Les dades només existeixen a la teva màquina/navegador. ' +
       "No s'envien dades ni mapes a cap servidor.",
     configUploadMessage:
-      'Carrega **CSV**, **GeoJson** o un mapa desat en **Json**. Més informació sobre [**supported file formats**]',
+      'Carrega {fileFormatNames} o un mapa desat en **Json**. Més informació sobre [**supported file formats**]',
     browseFiles: 'navega pels teus arxius',
     uploading: 'Carregant',
     fileNotSupported: "L'arxiu {errorFiles} no és compatible.",

@@ -303,8 +303,8 @@ export type VisState = {
   splitMapsToBeMerged?: SplitMap[];
   fileLoading: FileLoading | false;
   fileLoadingProgress: FileLoadingProgress;
-  loaders?: LoaderObject[];
-  loadOptions?: object;
+  loaders: LoaderObject[];
+  loadOptions: object;
   initialState?: Partial<VisState>;
 };
 

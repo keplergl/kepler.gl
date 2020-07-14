@@ -1,4 +1,5 @@
 import React from 'react';
+import {LoaderObject} from '@loaders.gl/loader-utils';
 
 export type KeplerGlProps = {
   mapStyles: object[];

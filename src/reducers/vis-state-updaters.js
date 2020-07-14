@@ -205,7 +205,10 @@ export const INITIAL_VIS_STATE = {
   editor: DEFAULT_EDITOR,
 
   fileLoading: false,
-  fileLoadingProgress: {}
+  fileLoadingProgress: {},
+
+  loaders: [],
+  loadOptions: {}
 };
 
 /**

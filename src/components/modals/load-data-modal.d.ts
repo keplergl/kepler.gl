@@ -12,6 +12,10 @@ export type LoadDataModalProps = {
     elementType: React.Component;
     tabElementType?: React.Component;
   }[];
+  /** A list of names of supported formats suitable to present to user */
+  fileFormatNames: string[];
+  /** A list of typically 3 letter extensions (without '.') for file matching */
+  fileExtensions: string[];
 };
 
 export function LoadDataModalFactory(
