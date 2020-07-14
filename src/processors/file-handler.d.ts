@@ -31,6 +31,8 @@ export type FileCacheItem = {
 export function readFileInBatches(payload: {
   file: File;
   fileCache: FileCacheItem[];
+  loaders: LoaderObject;
+  loadOptions: object;
 }): AsyncGenerator;
 
 export function processFileData(payload: {

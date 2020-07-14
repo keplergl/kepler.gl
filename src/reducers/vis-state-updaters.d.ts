@@ -267,6 +267,8 @@ export type FileLoading = {
   filesToLoad: FileList;
   onFinish: (payload: any) => any;
   fileCache: any[];
+  loaders: LoaderObject[];
+  loadOptions: object;
 };
 export type FileLoadingProgress = {
   [key: string]: {

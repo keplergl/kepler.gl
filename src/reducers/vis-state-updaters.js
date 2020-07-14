@@ -1242,7 +1242,7 @@ function closeSpecificMapAtIndex(state, action) {
  * @public
  */
 export const loadFilesUpdater = (state, action) => {
-  const {files, onFinish = loadFilesSuccess} = action;
+  const {files, onFinish = loadFilesSuccess, loaders, loadOptions} = action;
   if (!files.length) {
     return state;
   }
@@ -1255,6 +1255,8 @@ export const loadFilesUpdater = (state, action) => {
   const fileLoading = {
     fileCache: [],
     filesToLoad: files,
+    loaders,
+    loadOptions,
     onFinish
   };
 
@@ -1301,7 +1303,7 @@ export function loadNextFileUpdater(state) {
   if (!state.fileLoading) {
     return state;
   }
-  const {filesToLoad} = state.fileLoading;
+  const {filesToLoad, loaders, loadOptions} = state.fileLoading;
   const [file, ...remainingFilesToLoad] = filesToLoad;
 
   // save filesToLoad to state
@@ -1312,11 +1314,14 @@ export function loadNextFileUpdater(state) {
     progress: {percent: 0, message: 'loading...'}
   });
 
-  return withTask(stateWithProgress, makeLoadFileTask(file, nextState.fileLoading.fileCache));
+  return withTask(
+    stateWithProgress,
+    makeLoadFileTask(file, nextState.fileLoading.fileCache, [], {})
+  );
 }
 
-export function makeLoadFileTask(file, fileCache) {
-  return LOAD_FILE_TASK({file, fileCache}).bimap(
+export function makeLoadFileTask(file, fileCache, loaders, loadOptions) {
+  return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions}).bimap(
     // prettier ignore
     // success
     gen =>

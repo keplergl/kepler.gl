@@ -132,17 +132,18 @@ export async function* readBatch(asyncIterator, fileName) {
   }
 }
 
-export async function readFileInBatches({file, fileCache = []}) {
-  const batchIterator = await parseInBatches(
-    file,
-    [JSONLoader, CSVLoader],
-    {
-      csv: CSV_LOADER_OPTIONS,
-      json: JSON_LOADER_OPTIONS,
-      metadata: true
-    },
-    file.name
-  );
+export async function readFileInBatches({file, fileCache = [], loaders = [], loadOptions = {}}) {
+  debugger
+
+  loaders = [JSONLoader, CSVLoader, ...loaders];
+  loadOptions = {
+    csv: CSV_LOADER_OPTIONS,
+    json: JSON_LOADER_OPTIONS,
+    metadata: true,
+    ...loadOptions
+  };
+
+  const batchIterator = await parseInBatches(file, loaders, loadOptions, file.name);
   const progressIterator = makeProgressIterator(batchIterator, {size: file.size});
 
   return readBatch(progressIterator, file.name);

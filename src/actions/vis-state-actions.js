@@ -582,10 +582,12 @@ export function setMapInfo(info) {
  * @returns action
  * @public
  */
-export function loadFiles(files) {
+export function loadFiles(files, loaders, loadOptions) {
   return {
     type: ActionTypes.LOAD_FILES,
-    files
+    files,
+    loaders,
+    loadOptions
   };
 }
 
