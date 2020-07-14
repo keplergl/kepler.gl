@@ -79,6 +79,18 @@ const IconDiv = styled.div`
       ? props.theme.activeColor
       : props.theme.textColor};
 `;
+
+function getFormatTooltip(formatLabels, format) {
+  if (!format) {
+    return null;
+  }
+  let formatLabel = formatLabels.find(fl => getValue(fl) === format);
+  if (formatLabel) {
+    return formatLabel.label;
+  }
+  return typeof format === 'object' ? JSON.stringify(format, null, 2) : String(format); 
+}
+
 function TooltipChickletFactory(dataId, config, onChange, fields) {
   class TooltipChicklet extends Component {
     state = {
@@ -103,11 +115,15 @@ function TooltipChickletFactory(dataId, config, onChange, fields) {
     render() {
       const {disabled, name, remove} = this.props;
       const {show} = this.state;
-      const field = config.fieldsToShow[dataId].find(fieldToShow => fieldToShow.name === name);
-      const formatLabels = getFormatLabels(fields, field.name);
-      let selectionIndex = formatLabels.findIndex(fl => getValue(fl) === field.format);
-      if (selectionIndex < 0) selectionIndex = 0;
-      const hashStyle = show ? hashStyles.SHOW : selectionIndex ? hashStyles.ACTIVE : null;
+      const tooltipField = config.fieldsToShow[dataId].find(
+        fieldToShow => fieldToShow.name === name
+      );
+      const formatLabels = getFormatLabels(fields, tooltipField.name);
+      const hasFormat = Boolean(tooltipField.format);
+      const selectionIndex = formatLabels.findIndex(fl => getValue(fl) === tooltipField.format);
+      // if (selectionIndex < 0) selectionIndex = 0;
+      // console.log(selectionIndex)
+      const hashStyle = show ? hashStyles.SHOW : hasFormat ? hashStyles.ACTIVE : null;
 
       return (
         <ChickletButton ref={node => (this.node = node)}>
@@ -126,7 +142,9 @@ function TooltipChickletFactory(dataId, config, onChange, fields) {
                 </IconDiv>
                 <Tooltip id={`addon-${name}`} effect="solid">
                   <span>
-                    {(selectionIndex && formatLabels[selectionIndex]).label || (
+                    {hasFormat ? (
+                      getFormatTooltip(formatLabels, tooltipField.format)
+                    ) : (
                       <FormattedMessage id={'fieldSelector.formatting'} />
                     )}
                   </span>

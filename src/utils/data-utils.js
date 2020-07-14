@@ -368,11 +368,23 @@ export function applyDefaultFormat(tooltipFormat) {
       return v => moment.utc(v).format(tooltipFormat.format);
     case TOOLTIP_FORMAT_TYPES.PERCENTAGE:
       return v => `${d3Format(TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format)(v)}%`;
+    case TOOLTIP_FORMAT_TYPES.BOOLEAN:
+      return getBooleanFormatter(tooltipFormat.format)
     default:
       return defaultFormatter;
   }
 }
 
+export function getBooleanFormatter(format) {
+  switch (format) {
+    case '01':
+      return v => v ? '1' : '0';
+    case 'yn':
+      return v => v ? 'yes' : 'no';
+    default:
+      return defaultFormatter;
+  }
+}
 // Allow user to specify custom tooltip format via config
 export function applyCustomFormat(format, field) {
   switch (field.type) {
