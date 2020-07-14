@@ -32,7 +32,8 @@
     "src/utils",
     "src/components/common/file-uploader",
     "src/components/common/progress-bar.js",
-    "src/components/modals/load-data-modal.js"
+    "src/components/modals/load-data-modal.js",
+    "src/components/kepler.gl"
 
     // TODO: add types
     // "src/constants",
