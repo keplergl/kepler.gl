@@ -12,9 +12,6 @@ import {VisState} from 'reducers/vis-state-updaters';
 import {ProviderState} from 'reducers/provider-state-updaters';
 import {OnSuccessCallBack} from 'actions';
 
-// TODO - import from @loaders.gl/core
-import {LoaderObject} from '@loaders.gl/loader-utils';
-
 export type ModalContainerProps = {
   rootNode: object;
   containerW: number;
@@ -35,9 +32,7 @@ export type ModalContainerProps = {
   onLoadCloudMapSuccess: OnSuccessCallBack,
   onLoadCloudMapError: OnErrorCallBack,
   onExportToCloudSuccess:OnSuccessCallBack,
-  onExportToCloudError: OnErrorCallBack,
-  loaders?: LoaderObject[],
-  loadOptions?: object
+  onExportToCloudError: OnErrorCallBack
 };
 
 export default function ModalContainerFactory(): React.Component<ModelContainerProps>;

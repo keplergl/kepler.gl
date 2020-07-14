@@ -4176,7 +4176,7 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
   t.end();
 });
 
-test('#visStateReducer -> LOAD_FILES', async t => {
+test.only('#visStateReducer -> LOAD_FILES', async t => {
   const loadFilesSuccessSpy = sinon.spy(VisStateActions, 'loadFilesSuccess');
   const loadFileErrSpy = sinon.spy(Console, 'warn');
   const initialState = CloneDeep(InitialState).visState;
@@ -4206,17 +4206,19 @@ test('#visStateReducer -> LOAD_FILES', async t => {
 
   t.equal(more.length, 0, 'should ceate 1 task');
 
-  const exptectedTask1 = {
+  const expectedTask1 = {
     type: 'LOAD_FILE_TASK',
-    payload: {file: {type: 'text/csv', name: 'test-file.csv'}, fileCache: []}
+    payload: {
+      file: {type: 'text/csv', name: 'test-file.csv'},
+      fileCache: [],
+      loaders: [],
+      loadOptions: {}
+    }
   };
 
-  t.equal(task1.type, exptectedTask1.type, 'should create LOAD_FILE_TASK task');
-  t.deepEqual(
-    task1.payload,
-    exptectedTask1.payload,
-    'should create LOAD_FILE_TASK correct payload'
-  );
+  t.comment(JSON.stringify(task1));
+  t.equal(task1.type, expectedTask1.type, 'should create LOAD_FILE_TASK task');
+  t.deepEqual(task1.payload, expectedTask1.payload, 'should create LOAD_FILE_TASK correct payload');
 
   const expectedFileLoading = {
     fileCache: [],
@@ -4283,7 +4285,12 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.equal(task3Err.type, 'LOAD_FILE_TASK', 'should return an LOAD_FILE_TASK');
   t.deepEqual(
     task3Err.payload,
-    {file: {type: 'text/csv', name: 'test-file-2.csv'}, fileCache: []},
+    {
+      file: {type: 'text/csv', name: 'test-file-2.csv'},
+      fileCache: [],
+      loaders: [],
+      loadOptions: {}
+    },
     'should return an LOAD_FILE_TASK with 2nd file to load'
   );
   const expectedErrFileLoadingProgress = {
@@ -4399,7 +4406,12 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.equal(task6.type, 'LOAD_FILE_TASK', 'should return an LOAD_FILE_TASK');
   t.deepEqual(
     task6.payload,
-    {file: {type: 'text/csv', name: 'test-file-2.csv'}, fileCache: fileProcessResult},
+    {
+      file: {type: 'text/csv', name: 'test-file-2.csv'},
+      fileCache: fileProcessResult,
+      loaders: [],
+      loadOptions: {}
+    },
     'should return an LOAD_FILE_TASK with 2nd file to load'
   );
   const expectedFileLoadingProgress6 = {

@@ -26,8 +26,8 @@ import {FileCacheItem} from '../processors/file-handler';
 import {Layer, LayerConfig, LayerVisConfig} from 'layers';
 import {Feature, InteractionConfig} from 'reducers/vis-state-updaters';
 import {ValueOf, Merge} from '../reducers/types';
-// TODO this should be importable from @loaders.gl/core
-// TODO - add loadOptions type
+// TODO - import LoaderObject type from @loaders.gl/core when supported
+// TODO - import LoadOptions type from @loaders.gl/core when supported
 import {LoaderObject} from '@loaders.gl/loader-utils';
 
 export type LayerConfigChangeUpdaterAction = {
@@ -317,14 +317,10 @@ export function setMapInfo(
 
 export type LoadFilesUpdaterAction = {
   files: FileList;
-  loaders: LoaderObject[],
-  loadOptions: object,
   onFinish?(result: any): any;
 };
 export function loadFiles(
   files: FileList,
-  loaders: LoaderObject[],
-  loadOptions: object,
   onFinish?: (result: any) => any
 ): Merge<LoadFilesUpdaterAction, {type: ActionTypes.LOAD_FILES}>;
 

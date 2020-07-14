@@ -174,11 +174,7 @@ export default function ModalContainerFactory(
     };
 
     _onFileUpload = fileList => {
-      this.props.visStateActions.loadFiles(
-        fileList,
-        this.props.loaders || [],
-        this.props.loadOptions || {}
-      );
+      this.props.visStateActions.loadFiles(fileList);
     };
 
     _onExportImage = () => {

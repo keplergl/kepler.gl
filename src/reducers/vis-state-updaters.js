@@ -1242,7 +1242,7 @@ function closeSpecificMapAtIndex(state, action) {
  * @public
  */
 export const loadFilesUpdater = (state, action) => {
-  const {files, onFinish = loadFilesSuccess, loaders, loadOptions} = action;
+  const {files, onFinish = loadFilesSuccess} = action;
   if (!files.length) {
     return state;
   }
@@ -1255,8 +1255,6 @@ export const loadFilesUpdater = (state, action) => {
   const fileLoading = {
     fileCache: [],
     filesToLoad: files,
-    loaders,
-    loadOptions,
     onFinish
   };
 
@@ -1303,7 +1301,7 @@ export function loadNextFileUpdater(state) {
   if (!state.fileLoading) {
     return state;
   }
-  const {filesToLoad, loaders, loadOptions} = state.fileLoading;
+  const {filesToLoad} = state.fileLoading;
   const [file, ...remainingFilesToLoad] = filesToLoad;
 
   // save filesToLoad to state
@@ -1314,9 +1312,10 @@ export function loadNextFileUpdater(state) {
     progress: {percent: 0, message: 'loading...'}
   });
 
+  const {loaders, loadOptions} = state;
   return withTask(
     stateWithProgress,
-    makeLoadFileTask(file, nextState.fileLoading.fileCache, [], {})
+    makeLoadFileTask(file, nextState.fileLoading.fileCache, loaders, loadOptions)
   );
 }
 

@@ -1,5 +1,4 @@
 import React from 'react';
-import {LoaderObject} from '@loaders.gl/loader-utils';
 
 export type KeplerGlProps = {
   mapStyles: object[];
@@ -12,8 +11,6 @@ export type KeplerGlProps = {
   sidePanelWidth: number;
   theme: object;
   cloudProviders: object[];
-  loaders?: LoaderObject[],
-  loadOptions?: object
 };
 
 export default function KeplerGlFactory(): React.Component<KeplerGlProps>;

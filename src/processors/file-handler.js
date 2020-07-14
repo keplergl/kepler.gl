@@ -133,8 +133,6 @@ export async function* readBatch(asyncIterator, fileName) {
 }
 
 export async function readFileInBatches({file, fileCache = [], loaders = [], loadOptions = {}}) {
-  debugger
-
   loaders = [JSONLoader, CSVLoader, ...loaders];
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
