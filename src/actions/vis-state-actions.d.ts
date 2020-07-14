@@ -20,7 +20,7 @@
 
 // vis-state-reducer
 import ActionTypes, {ActionType} from 'constants/action-types';
-import {ProtoDataset, AddDataToMaoPayload} from '../actions/actions';
+import {ProtoDataset, AddDataToMapPayload} from '../actions/actions';
 import {ParsedConfig} from '../schemas';
 import {FileCacheItem} from '../processors/file-handler';
 import {Layer, LayerConfig, LayerVisConfig} from 'layers';
@@ -206,14 +206,14 @@ export type AddDaataToMapOUpdaterptions = {
 };
 
 export type UpdateVisDataUpdaterAction = {
-  datasets: AddDataToMaoPayload['datasets'];
-  options: AddDataToMaoPayload['options'];
-  config: AddDataToMaoPayload['config'];
-} & AddDataToMaoPayload;
+  datasets: AddDataToMapPayload['datasets'];
+  options: AddDataToMapPayload['options'];
+  config: AddDataToMapPayload['config'];
+} & AddDataToMapPayload;
 export function updateVisData(
-  datasets: AddDataToMaoPayload['datasets'],
-  options: AddDataToMaoPayload['options'],
-  config: AddDataToMaoPayload['config']
+  datasets: AddDataToMapPayload['datasets'],
+  options: AddDataToMapPayload['options'],
+  config: AddDataToMapPayload['config']
 ): Merge<UpdateVisDataUpdaterAction, {type: ActionTypes.UPDATE_VIS_DATA}>;
 
 export type ToggleFilterAnimationUpdaterAction = {

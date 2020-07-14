@@ -53,7 +53,7 @@ export type AddDataToMapOptions = {
   keepExistingConfig?: boolean;
 };
 
-export type AddDataToMaoPayload = {
+export type AddDataToMapPayload = {
   datasets: ProtoDataset[];
   options?: AddDataToMapOptions;
   config?: ParsedConfig;
@@ -61,8 +61,8 @@ export type AddDataToMaoPayload = {
 };
 
 export function addDataToMap(
-  data: AddDataToMaoPayload
-): {type: ActionTypes.ADD_DATA_TO_MAP; payload: AddDataToMaoPayload};
+  data: AddDataToMapPayload
+): {type: ActionTypes.ADD_DATA_TO_MAP; payload: AddDataToMapPayload};
 
 export function resetMapConfig(): {type: ActionTypes.RESET_MAP_CONFIG};
 

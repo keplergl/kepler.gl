@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ProtoDataset, AddDataToMaoPayload} from 'actions/actions';
+import {ProtoDataset, AddDataToMapPayload} from 'actions/actions';
 
 export type FileCacheItem = {
   data: any;
@@ -38,4 +38,4 @@ export function processFileData(payload: {
   fileCache: FileCacheItem[];
 }): Promise<FileCacheItem[]>;
 
-export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMaoPayload[];
+export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayload[];

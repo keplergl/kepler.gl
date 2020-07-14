@@ -22,6 +22,8 @@ import React from 'react';
 import styled from 'styled-components';
 import LoadingSpinner from 'components/common/loading-spinner';
 
+/** @typedef {import('../../reducers/ui-state-updaters').ExportImage} ExportImage */
+
 const StyledImagePreview = styled.div.attrs({
   className: 'image-preview'
 })`
@@ -67,17 +69,6 @@ const StyledImagePreview = styled.div.attrs({
   }
 `;
 
-/** @typedef {{
-  error: Error;
-  imageDataUri: string;
-  exporting: boolean;
-  imageSize: {
-    imageW: number;
-    imageH: number;
-  }
-}} ExportImage;
- */
-
 /**
  * @param {object} props
  * @param {ExportImage} [props.exportImage]
@@ -107,7 +98,7 @@ const ImagePreview = ({exportImage, width = 400, showDimension = false}) => {
           </div>
         ) : error ? (
           <div className="preview-image--error">
-            <span> {error.message || 'Generate map image failed!'}</span>
+            <span>{error.message || 'Generate map image failed!'}</span>
           </div>
         ) : (
           <img className="preview-image-placeholder" src={imageDataUri} />
