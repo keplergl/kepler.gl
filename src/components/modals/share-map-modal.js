@@ -59,7 +59,7 @@ export const StyleSharingUrl = styled.div.attrs({
   }
 `;
 
-export const SharingUrl = ({url, message}) => {
+export const SharingUrl = ({url, message = ''}) => {
   const [copied, setCopy] = useState(false);
   return (
     <StyleSharingUrl>

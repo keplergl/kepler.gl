@@ -23,6 +23,10 @@
     "isolatedModules": true,
     "baseUrl": "./src"
   },
+  "paths": {
+    "actions": "src/actions",
+    "actions/*": "src/actions/*"
+  },
   "include": [
     "src/actions",
     "src/cloud-providers",
@@ -33,6 +37,7 @@
     "src/components/common/file-uploader",
     "src/components/common/progress-bar.js",
     "src/components/modals/load-data-modal.js",
+    "src/components/modal-container.js",
     "src/components/kepler.gl"
 
     // TODO: add types

@@ -117,8 +117,8 @@ export default function ModalContainerFactory(
   SaveMapModal,
   ShareMapModal
 ) {
-  /** @typedef {import('./modal-container').ModalContainer} ModalContainer */
-  /** @augments React.Component<ModalContainer> */
+  // /** @typedef {import('./modal-container').ModalContainerProps} ModalContainerProps */
+  // /** @augments React.Component<ModalContainerProps> */
   class ModalContainer extends Component {
     // TODO - remove when prop types are fully exported
     static propTypes = {
@@ -179,7 +179,7 @@ export default function ModalContainerFactory(
 
     _onExportImage = () => {
       if (!this.props.uiState.exportImage.exporting) {
-        exportImage(this.props, this.props.uiState.exportImage);
+        exportImage(this.props);
         this.props.uiStateActions.cleanupExportImage();
         this._closeModal();
       }
@@ -352,6 +352,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               title: 'modal.title.exportImage',
+              cssStyle: '',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onExportImage,
@@ -376,6 +377,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               title: 'modal.title.exportData',
+              cssStyle: '',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onExportData,
@@ -403,6 +405,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               title: 'modal.title.exportMap',
+              cssStyle: '',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onExportMap,
@@ -425,6 +428,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               title: 'modal.title.addCustomMapboxStyle',
+              cssStyle: '',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onAddCustomMapStyle,
@@ -449,6 +453,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               title: 'modal.title.saveMap',
+              cssStyle: '',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: () => this._onSaveMap(false),
@@ -501,6 +506,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               title: 'modal.title.shareURL',
+              cssStyle: '',
               onCancel: this._onCloseSaveMap
             };
             break;
@@ -515,7 +521,7 @@ export default function ModalContainerFactory(
           isOpen={Boolean(currentModal)}
           onCancel={this._closeModal}
           {...modalProps}
-          cssStyle={DefaultStyle.concat(modalProps.cssStyle || '')}
+          cssStyle={DefaultStyle.concat(modalProps.cssStyle)}
         >
           {template}
         </ModalDialog>

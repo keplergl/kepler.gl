@@ -24,6 +24,7 @@ import Checkbox from './checkbox';
 
 const propTypes = {
   checked: PropTypes.bool,
+  type: PropTypes.string,
   id: PropTypes.string.isRequired,
   label: PropTypes.node,
   error: PropTypes.string,
