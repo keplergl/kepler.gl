@@ -22,10 +22,11 @@ import React, {Component, Fragment} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import DatasetTagFactory from '../common/dataset-tag';
-import {FieldListItemFactory} from '../../common/field-selector';
-import {Input, Button} from 'components/common/styled-components';
+import FieldToken from 'components/common/field-token';
+import {Input} from 'components/common/styled-components';
 import {addDataToMap} from 'kepler.gl/actions';
-import {Delete, Reset} from 'components/common/icons';
+import {ArrowUp, ArrowDown} from 'components/common/icons';
+import ColumnActionsFactory from './column-actions';
 // import {ALL_FIELD_TYPES} from 'constants/default-settings';
 
 const StyledColumnsPanel = styled.div`
@@ -34,9 +35,18 @@ const StyledColumnsPanel = styled.div`
 `;
 
 const StyledDatasetHeader = styled.div`
-  padding: 16px;
   background-color: ${props => props.theme.panelBackground};
   border-bottom: 1px solid ${props => props.theme.borderColor};
+  color: ${props => props.theme.textColor};
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  padding: 16px;
+  transition: ${props => props.theme.transition};
+
+  &:hover {
+    background-color: ${props => props.theme.panelBackgroundHover};
+  }
 `;
 
 const StyledFieldsPanel = styled.div`
@@ -51,40 +61,37 @@ const StyledFieldControls = styled.div`
   position: relative;
 
   .columns-panel_input {
-    margin-top: 8px;
+    padding-left: 55px;
+    padding-right: 32px;
   }
+`;
+
+const StyledToken = styled.div`
+  display: block;
+  left: 10px;
+  position: absolute;
+  top: 8px;
 `;
 
 const StyledButtonsContainter = styled.div`
   position: absolute;
-  right: 8px;
-  top: 34px;
+  right: 0;
+  top: 8px;
   color: ${props => props.theme.textColor};
 `;
 
-const IconButton = styled(Button)`
-  padding: 2px 2px;
-  background: transparent;
-  opacity: 0.8;
+ColumnsPanelFactory.deps = [DatasetTagFactory, ColumnActionsFactory];
 
-  &:hover {
-    opacity: 1;
-    background: transparent;
-  }
-
-  svg {
-    margin: 0;
-  }
-`;
-
-ColumnsPanelFactory.deps = [DatasetTagFactory, FieldListItemFactory];
-
-function ColumnsPanelFactory(DatasetTag, FieldListItem) {
+function ColumnsPanelFactory(DatasetTag) {
   return class ColumnsPanel extends Component {
     static propTypes = {
       datasets: PropTypes.object,
       columnsConfig: PropTypes.object,
       dispatch: PropTypes.func
+    };
+
+    state = {
+      toggles: {}
     };
 
     updateColumnsConfig = columnsConfig => {
@@ -121,15 +128,18 @@ function ColumnsPanelFactory(DatasetTag, FieldListItem) {
       this._onChange(dataId, fieldId, '');
     };
 
-    _reset = (dataId, fieldId) => {
+    _copy = (dataId, fieldId) => {
       this._onChange(dataId, fieldId, fieldId);
     };
 
     _renderFieldControls = (field, dataset) => {
       const inputValue = this._getValue(dataset.id, field.id);
+      const ColumnActions = ColumnActionsFactory(dataset.id, field.id, {
+        clear: this._clear,
+        copy: this._copy
+      });
       return (
         <StyledFieldControls key={field.id}>
-          <FieldListItem value={field} className="columns-panel_field" />
           <Input
             className="columns-panel_input"
             id={`${dataset.id}-${field.id}`}
@@ -139,34 +149,41 @@ function ColumnsPanelFactory(DatasetTag, FieldListItem) {
             secondary={true}
             placeholder={field.name}
           />
+          <StyledToken>
+            <FieldToken type={field.type} className="columns-panel_token" />
+          </StyledToken>
           <StyledButtonsContainter>
-            {inputValue && (
-              <IconButton
-                className="input-button"
-                onClick={() => this._clear(dataset.id, field.id)}
-              >
-                <Delete height={'12px'} />
-              </IconButton>
-            )}
-            <IconButton className="input-button" onClick={() => this._reset(dataset.id, field.id)}>
-              <Reset height={'12px'} />
-            </IconButton>
+            <ColumnActions />
           </StyledButtonsContainter>
         </StyledFieldControls>
       );
     };
 
+    _toggle(dataId) {
+      const {toggles} = this.state;
+      toggles[dataId] = !toggles[dataId];
+      this.setState(toggles);
+    }
+
+    _isToggled(dataId) {
+      return Boolean(this.state.toggles[dataId]);
+    }
+
     _renderDatasetPanel = (dataId, datasets) => {
       return (
         <Fragment key={dataId}>
-          <StyledDatasetHeader>
+          <StyledDatasetHeader onClick={() => this._toggle(dataId)}>
             <DatasetTag dataset={datasets[dataId]} />
+            {!this._isToggled(dataId) && <ArrowDown height={'16px'} />}
+            {this._isToggled(dataId) && <ArrowUp height={'16px'} />}
           </StyledDatasetHeader>
-          <StyledFieldsPanel>
-            {datasets[dataId].fields.map(field =>
-              this._renderFieldControls(field, datasets[dataId])
-            )}
-          </StyledFieldsPanel>
+          {this._isToggled(dataId) && (
+            <StyledFieldsPanel>
+              {datasets[dataId].fields.map(field =>
+                this._renderFieldControls(field, datasets[dataId])
+              )}
+            </StyledFieldsPanel>
+          )}
         </Fragment>
       );
     };
@@ -174,7 +191,7 @@ function ColumnsPanelFactory(DatasetTag, FieldListItem) {
     render() {
       const {datasets} = this.props;
       return (
-        <StyledColumnsPanel className="filter-panel">
+        <StyledColumnsPanel className="columns-panel">
           {Object.keys(datasets).map(dataId => this._renderDatasetPanel(dataId, datasets))}
         </StyledColumnsPanel>
       );

@@ -453,6 +453,11 @@ export default {
   mapPopover: {
     primary: 'Primary'
   },
+  columnsPanel: {
+    actions: 'Actions',
+    clear: 'Clear',
+    copy: 'Copy'
+  },
   density: 'density',
   'Bug Report': 'Bug Report',
   'User Guide': 'User Guide',
