@@ -4176,7 +4176,7 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
   t.end();
 });
 
-test.only('#visStateReducer -> LOAD_FILES', async t => {
+test('#visStateReducer -> LOAD_FILES', async t => {
   const loadFilesSuccessSpy = sinon.spy(VisStateActions, 'loadFilesSuccess');
   const loadFileErrSpy = sinon.spy(Console, 'warn');
   const initialState = CloneDeep(InitialState).visState;

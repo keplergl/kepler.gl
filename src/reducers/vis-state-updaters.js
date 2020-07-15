@@ -1319,7 +1319,7 @@ export function loadNextFileUpdater(state) {
   );
 }
 
-export function makeLoadFileTask(file, fileCache, loaders, loadOptions) {
+export function makeLoadFileTask(file, fileCache, loaders = [], loadOptions = {}) {
   return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions}).bimap(
     // prettier ignore
     // success
