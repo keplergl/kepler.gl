@@ -227,6 +227,12 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       }
     };
 
+    _onDeckInitialized(gl) {
+      if (this.props.onDeckInitialized) {
+        this.props.onDeckInitialized(this._deck, gl);
+      }
+    }
+
     _onBeforeRender = ({gl}) => {
       setLayerBlending(gl, this.props.layerBlending);
     };
@@ -413,6 +419,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
               this._deck = comp.deck;
             }
           }}
+          onWebGLInitialized={gl => this._onDeckInitialized(gl)}
         />
       );
     }

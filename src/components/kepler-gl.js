@@ -224,11 +224,13 @@ function KeplerGlFactory(
         appWebsite,
         onSaveMap,
         onViewStateChange,
+        onDeckInitialized,
         width,
         height,
         mapboxApiAccessToken,
         mapboxApiUrl,
         getMapboxRef,
+        deckGlProps,
 
         // redux state
         mapStyle,
@@ -313,11 +315,13 @@ function KeplerGlFactory(
         clicked,
         mousePos,
         readOnly: uiState.readOnly,
+        onDeckInitialized,
         onViewStateChange,
         uiStateActions,
         visStateActions,
         mapStateActions,
-        animationConfig
+        animationConfig,
+        deckGlProps
       };
 
       const isSplit = splitMaps && splitMaps.length > 1;
