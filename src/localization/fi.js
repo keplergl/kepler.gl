@@ -425,7 +425,7 @@ export default {
       '*kepler.gl on client-side sovellus, data pysyy vain selaimessasi...' +
       'Tietoja ei lähetetä palvelimelle.',
     configUploadMessage:
-      'Lisää **CSV**, **GeoJson** tai tallennettu kartta **Json**. Lue lisää [**tuetuista formaateista**]',
+      'Lisää {fileFormatNames} tai tallennettu kartta **Json**. Lue lisää [**tuetuista formaateista**]',
     browseFiles: 'selaa tiedostojasi',
     uploading: 'ladataan',
     fileNotSupported: 'Tiedosto {errorFiles} ei ole tuettu.',

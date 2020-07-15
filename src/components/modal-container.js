@@ -62,6 +62,23 @@ import {
 import {EXPORT_MAP_FORMATS} from 'constants/default-settings';
 import KeyEvent from 'constants/keyevent';
 
+// File.type is not reliable if the OS does not have a
+// registered mapping for the extension.
+// NOTE: Shapefiles must be in a compressed format since
+// it requires multiple files to be present.
+const DEFAULT_FILE_EXTENSIONS = ['csv', 'json', 'geojson'];
+const DEFAULT_FILE_FORMATS = ['CSV', 'Json', 'GeoJSON'];
+
+const getFileFormatNames = createSelector(
+  state => state.loaders,
+  loaders => [...DEFAULT_FILE_FORMATS, ...loaders.map(loader => loader.name)]
+);
+
+const getFileExtensions = createSelector(
+  state => state.loaders,
+  loaders => [...DEFAULT_FILE_EXTENSIONS, ...loaders.flatMap(loader => loader.extensions)]
+);
+
 const DataTableModalStyle = css`
   top: 80px;
   padding: 32px 0 0 0;
@@ -338,6 +355,8 @@ export default function ModalContainerFactory(
                 loadFiles={uiState.loadFiles}
                 fileLoading={visState.fileLoading}
                 fileLoadingProgress={visState.fileLoadingProgress}
+                fileFormatNames={getFileFormatNames(this.props.visState)}
+                fileExtensions={getFileExtensions(this.props.visState)}
               />
             );
             modalProps = {
