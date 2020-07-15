@@ -2470,7 +2470,9 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
       description: ''
     },
     fileLoading: oldState.fileLoading,
-    fileLoadingProgress: oldState.fileLoadingProgress
+    fileLoadingProgress: oldState.fileLoadingProgress,
+    loaders: oldState.loaders,
+    loadOptions: oldState.loadOptions
   };
 
   const newReducer = reducer(oldState, VisStateActions.removeDataset(testCsvDataId));
@@ -2707,7 +2709,9 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
       description: ''
     },
     fileLoading: oldState.fileLoading,
-    fileLoadingProgress: oldState.fileLoadingProgress
+    fileLoadingProgress: oldState.fileLoadingProgress,
+    loaders: oldState.loaders,
+    loadOptions: oldState.loadOptions
   };
 
   const newReducer = reducer(oldState, VisStateActions.removeDataset(testGeoJsonDataId));
