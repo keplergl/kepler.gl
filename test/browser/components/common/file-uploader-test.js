@@ -52,7 +52,7 @@ test('Components -> FileUpload.onDrop', t => {
   const stopPropagation = sinon.spy();
   const wrapper = mountWithTheme(
     <IntlWrapper>
-      <FileUpload onFileUpload={onFileUpload} />
+      <FileUpload onFileUpload={onFileUpload} fileExtensions={['csv']} />
     </IntlWrapper>
   );
 
@@ -99,7 +99,7 @@ test('Components -> FileUpload.onDrop -> render loading msg', t => {
   const wrapper = mountWithTheme(
     <IntlWrapper>
       <FileUpload
-        validFileExts={['csv', 'json', 'geojson']}
+        fileExtensions={['csv', 'json', 'geojson']}
         onFileUpload={onFileUpload}
         fileLoading={{fileCache: [], filesToLoad: [], onFinish: () => {}}}
         fileLoadingProgress={mockFileProgress}
@@ -239,7 +239,7 @@ test('Components -> UploadButton fileInput', t => {
   });
   const wrapper = mountWithTheme(
     <IntlWrapper>
-      <FileUpload onFileUpload={onFileUpload} />
+      <FileUpload onFileUpload={onFileUpload} fileExtensions={['csv']} />
     </IntlWrapper>
   );
   const uploadButton = wrapper.find(UploadButton);

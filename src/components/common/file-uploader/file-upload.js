@@ -170,7 +170,7 @@ function FileUploadFactory() {
     frame = createRef();
 
     _isValidFileType = filename => {
-      const {fileExtensions} = this.props;
+      const {fileExtensions = []} = this.props;
       const fileExt = fileExtensions.find(ext => filename.endsWith(ext));
 
       return Boolean(fileExt);
@@ -209,7 +209,7 @@ function FileUploadFactory() {
     render() {
       const {dragOver, files, errorFiles} = this.state;
       const {fileLoading, fileLoadingProgress, theme, intl} = this.props;
-      const {fileExtensions, fileFormatNames} = this.props;
+      const {fileExtensions = [], fileFormatNames = []} = this.props;
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>
           {FileDrop ? (
