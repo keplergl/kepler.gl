@@ -1312,11 +1312,15 @@ export function loadNextFileUpdater(state) {
     progress: {percent: 0, message: 'loading...'}
   });
 
-  return withTask(stateWithProgress, makeLoadFileTask(file, nextState.fileLoading.fileCache));
+  const {loaders, loadOptions} = state;
+  return withTask(
+    stateWithProgress,
+    makeLoadFileTask(file, nextState.fileLoading.fileCache, loaders, loadOptions)
+  );
 }
 
-export function makeLoadFileTask(file, fileCache) {
-  return LOAD_FILE_TASK({file, fileCache}).bimap(
+export function makeLoadFileTask(file, fileCache, loaders = [], loadOptions = {}) {
+  return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions}).bimap(
     // prettier ignore
     // success
     gen =>

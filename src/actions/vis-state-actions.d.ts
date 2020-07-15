@@ -26,6 +26,9 @@ import {FileCacheItem} from '../processors/file-handler';
 import {Layer, LayerConfig, LayerVisConfig} from 'layers';
 import {Feature, InteractionConfig} from 'reducers/vis-state-updaters';
 import {ValueOf, Merge} from '../reducers/types';
+// TODO - import LoaderObject type from @loaders.gl/core when supported
+// TODO - import LoadOptions type from @loaders.gl/core when supported
+import {LoaderObject} from '@loaders.gl/loader-utils';
 
 export type LayerConfigChangeUpdaterAction = {
   oldLayer: Layer;
@@ -199,7 +202,7 @@ export function copyTableColumn(
   column: string
 ): Merge<CopyTableColumnUpdaterAction, {type: ActionTypes.COPY_TABLE_COLUMN}>;
 
-export type AddDaataToMapOUpdaterptions = {
+export type AddDataToMapUpdaterOptions = {
   centrMap?: boolean;
   readOnly?: boolean;
   keepExistingConfig?: boolean;

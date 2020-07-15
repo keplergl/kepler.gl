@@ -25,7 +25,9 @@
   },
   "paths": {
     "actions": "src/actions",
-    "actions/*": "src/actions/*"
+    "actions/*": "src/actions/*",
+    "reducers": "src/reducers",
+    "reducers/*": "src/reducers/*"
   },
   "include": [
     "src/actions",

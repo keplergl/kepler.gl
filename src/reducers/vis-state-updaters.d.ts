@@ -3,6 +3,7 @@ import {AddDataToMapOptions, ReceiveMapConfigPayload} from '../actions/actions';
 import {ParsedConfig} from '../schemas';
 import * as VisStateActions from 'actions/vis-state-actions';
 import ActionTypes from 'constants/action-types';
+import {LoaderObject} from '@loaders.gl/loader-utils';
 
 export type HistogramBin = {
   x0: number | undefined;
@@ -302,6 +303,8 @@ export type VisState = {
   splitMapsToBeMerged?: SplitMap[];
   fileLoading: FileLoading | false;
   fileLoadingProgress: FileLoadingProgress;
+  loaders?: LoaderObject[];
+  loadOptions?: object;
   initialState?: Partial<VisState>;
 };
 

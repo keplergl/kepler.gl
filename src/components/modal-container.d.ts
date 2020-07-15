@@ -3,13 +3,13 @@ import * as VisStateActions from '../actions/vis-state-actions';
 import * as UIStateActions from '../actions/ui-state-actions';
 import * as MapStyleActions from '../actions/map-style-actions';
 import * as ProviderActions from '../actions/provider-actions';
-import {OnErrorCallBack, OnSuccessCallBack} from '../actions/provider-actions';
+import {OnErrorCallBack, OnSuccessCallBack} from 'actions/provider-actions';
 
-import {MapState} from '../reducers/map-state-updaters';
-import {MapStyle} from '../reducers/map-style-updaters';
-import {UiState} from '../reducers/ui-state-updaters';
-import {VisState} from '../reducers/vis-state-updaters';
-import {ProviderState} from '../reducers/provider-state-updaters';
+import {MapState} from 'reducers/map-state-updaters';
+import {MapStyle} from 'reducers/map-style-updaters';
+import {UiState} from 'reducers/ui-state-updaters';
+import {VisState} from 'reducers/vis-state-updaters';
+import {ProviderState} from 'reducers/provider-state-updaters';
 import {OnSuccessCallBack} from 'actions';
 
 export type ModalContainerProps = {
@@ -32,7 +32,7 @@ export type ModalContainerProps = {
   onLoadCloudMapSuccess: OnSuccessCallBack,
   onLoadCloudMapError: OnErrorCallBack,
   onExportToCloudSuccess:OnSuccessCallBack,
-  onExportToCloudError: OnErrorCallBack,
+  onExportToCloudError: OnErrorCallBack
 };
 
 export default function ModalContainerFactory(): React.Component<ModelContainerProps>;
