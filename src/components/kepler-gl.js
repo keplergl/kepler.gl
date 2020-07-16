@@ -372,6 +372,7 @@ function KeplerGlFactory(
                     isGeocoderEnabled={interactionConfig.geocoder.enabled}
                     mapboxApiAccessToken={mapboxApiAccessToken}
                     dispatch={dispatch}
+                    mapState={mapState}
                   />
                 )}
                 <BottomWidget

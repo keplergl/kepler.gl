@@ -23,11 +23,12 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import Geocoder from './geocoder/geocoder';
 import Processors from 'processors';
-import {fitBounds, addDataToMap, removeDataset} from 'actions';
-import {injectIntl} from 'react-intl';
+import {addDataToMap, removeDataset, updateMap} from 'actions';
+import {FlyToInterpolator} from '@deck.gl/core';
+import geoViewport from '@mapbox/geo-viewport';
 
 const GEOCODER_DATASET_NAME = 'geocoder_dataset';
-const GEO_OFFSET = 0.1;
+const GEO_OFFSET = 0.05;
 const ICON_LAYER = {
   id: 'geocoder_layer',
   type: 'icon',
@@ -81,67 +82,91 @@ function isValid(key) {
   return /pk\..*\..*/.test(key);
 }
 
-export class GeocoderPanel extends Component {
-  static propTypes = {
-    isGeocoderEnabled: PropTypes.bool.isRequired,
-    mapboxApiAccessToken: PropTypes.string.isRequired
-  };
+export default function GeocoderPanelFactory() {
+  class GeocoderPanel extends Component {
+    static propTypes = {
+      isGeocoderEnabled: PropTypes.bool.isRequired,
+      mapboxApiAccessToken: PropTypes.string.isRequired,
+      transitionDuration: PropTypes.number
+    };
 
-  removeGeocoderDataset() {
-    this.props.dispatch(removeDataset(GEOCODER_DATASET_NAME));
-  }
+    removeGeocoderDataset() {
+      this.props.dispatch(removeDataset(GEOCODER_DATASET_NAME));
+    }
 
-  onSelected = (viewport = null, geoItem) => {
-    const {
-      center: [lon, lat],
-      text,
-      bbox
-    } = geoItem;
-    this.removeGeocoderDataset();
-    this.props.dispatch(
-      addDataToMap({
-        datasets: [generateGeocoderDataset(lat, lon, text)],
-        options: {
-          keepExistingConfig: true
-        },
-        config: {
-          version: 'v1',
+    onSelected = (viewport = null, geoItem) => {
+      const {
+        center: [lon, lat],
+        text,
+        bbox
+      } = geoItem;
+      this.removeGeocoderDataset();
+      this.props.dispatch(
+        addDataToMap({
+          datasets: [generateGeocoderDataset(lat, lon, text)],
+          options: {
+            keepExistingConfig: true
+          },
           config: {
-            visState: {
-              layers: [ICON_LAYER]
+            version: 'v1',
+            config: {
+              visState: {
+                layers: [ICON_LAYER]
+              }
             }
           }
-        }
-      })
-    );
-    this.props.dispatch(
-      fitBounds(bbox || [lon - GEO_OFFSET, lat - GEO_OFFSET, lon + GEO_OFFSET, lat + GEO_OFFSET])
-    );
-  };
+        })
+      );
+      const bounds = bbox || [
+        lon - GEO_OFFSET,
+        lat - GEO_OFFSET,
+        lon + GEO_OFFSET,
+        lat + GEO_OFFSET
+      ];
+      const {center, zoom} = geoViewport.viewport(bounds, [
+        this.props.mapState.width,
+        this.props.mapState.height
+      ]);
 
-  removeMarker = () => {
-    this.removeGeocoderDataset();
-  };
+      this.props.dispatch(
+        updateMap({
+          latitude: center[1],
+          longitude: center[0],
+          zoom,
+          pitch: 0,
+          bearing: 0,
+          transitionDuration: this.props.transitionDuration,
+          transitionInterpolator: new FlyToInterpolator()
+        })
+      );
+    };
 
-  render() {
-    const {isGeocoderEnabled, mapboxApiAccessToken} = this.props;
-    return (
-      <StyledGeocoderPanel
-        className="geocoder-panel"
-        style={{display: isGeocoderEnabled ? 'block' : 'none'}}
-      >
-        {isValid(mapboxApiAccessToken) && (
-          <Geocoder
-            mapboxApiAccessToken={mapboxApiAccessToken}
-            onSelected={this.onSelected}
-            onDeleteMarker={this.removeMarker}
-          />
-        )}
-      </StyledGeocoderPanel>
-    );
+    removeMarker = () => {
+      this.removeGeocoderDataset();
+    };
+
+    render() {
+      const {isGeocoderEnabled, mapboxApiAccessToken} = this.props;
+      return (
+        <StyledGeocoderPanel
+          className="geocoder-panel"
+          style={{display: isGeocoderEnabled ? 'block' : 'none'}}
+        >
+          {isValid(mapboxApiAccessToken) && (
+            <Geocoder
+              mapboxApiAccessToken={mapboxApiAccessToken}
+              onSelected={this.onSelected}
+              onDeleteMarker={this.removeMarker}
+            />
+          )}
+        </StyledGeocoderPanel>
+      );
+    }
   }
-}
 
-export default function GeocoderPanelFactory() {
+  GeocoderPanel.defaultProps = {
+    transitionDuration: 3000
+  };
+  
   return GeocoderPanel;
 }
