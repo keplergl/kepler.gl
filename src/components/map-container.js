@@ -464,7 +464,8 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         uiStateActions,
         visStateActions,
         editor,
-        index
+        index,
+        columnsConfig
       } = this.props;
 
       const layersToRender = this.layersToRenderSelector(this.props);
@@ -508,6 +509,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             onSetEditorMode={visStateActions.setEditorMode}
             onSetLocale={uiStateActions.setLocale}
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
+            columnsConfig={columnsConfig}
           />
           <MapComponent
             {...mapProps}

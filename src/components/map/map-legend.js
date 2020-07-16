@@ -75,14 +75,14 @@ export const VisualChannelMetric = ({name}) => {
   );
 };
 
-export const LayerSizeLegend = ({label, name}) => (
+export const LayerSizeLegend = ({label, name, columnsLabels}) => (
   <div className="legend--layer_size-schema">
     <p>
       <span className="legend--layer_by">
         <FormattedMessage id={label} />
       </span>
     </p>
-    <VisualChannelMetric name={name} />
+    <VisualChannelMetric name={(columnsLabels && columnsLabels[name]) || name} />
   </div>
 );
 
@@ -119,41 +119,47 @@ export const MultiColorLegend = React.memo(
 
 MultiColorLegend.displayName = 'MultiColorLegend';
 
-export const LayerColorLegend = React.memo(({description, config, width, colorChannel}) => {
-  const enableColorBy = description.measure;
-  const {scale, field, domain, range, property, key} = colorChannel;
-  const [colorScale, colorField, colorDomain] = [scale, field, domain].map(k => config[k]);
-  const colorRange = config.visConfig[range];
+export const LayerColorLegend = React.memo(
+  ({description, config, width, colorChannel, columnsLabels}) => {
+    const enableColorBy = description.measure;
+    const {scale, field, domain, range, property, key} = colorChannel;
+    const [colorScale, colorField, colorDomain] = [scale, field, domain].map(k => config[k]);
+    const colorRange = config.visConfig[range];
 
-  return (
-    <div>
-      <div className="legend--layer_type">
-        <FormattedMessage id={`layer.${key}`} />
-      </div>
-      <div className="legend--layer_color-schema">
-        <div>
-          {enableColorBy ? <VisualChannelMetric name={enableColorBy} /> : null}
-          <div className="legend--layer_color-legend">
+    return (
+      <div>
+        <div className="legend--layer_type">
+          <FormattedMessage id={`layer.${key}`} />
+        </div>
+        <div className="legend--layer_color-schema">
+          <div>
             {enableColorBy ? (
-              <MultiColorLegend
-                colorScale={colorScale}
-                colorField={colorField}
-                colorDomain={colorDomain}
-                colorRange={colorRange}
-                width={width}
+              <VisualChannelMetric
+                name={(columnsLabels && columnsLabels[enableColorBy]) || enableColorBy}
               />
-            ) : (
-              <SingleColorLegend
-                color={config.visConfig[property] || config[property] || config.color}
-                width={width}
-              />
-            )}
+            ) : null}
+            <div className="legend--layer_color-legend">
+              {enableColorBy ? (
+                <MultiColorLegend
+                  colorScale={colorScale}
+                  colorField={colorField}
+                  colorDomain={colorDomain}
+                  colorRange={colorRange}
+                  width={width}
+                />
+              ) : (
+                <SingleColorLegend
+                  color={config.visConfig[property] || config[property] || config.color}
+                  width={width}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 LayerColorLegend.displayName = 'LayerColorLegend';
 
@@ -162,7 +168,7 @@ const isColorChannel = visualChannel =>
 
 const MAP_LEGEND_WIDTH = DIMENSIONS.mapControl.width - 2 * DIMENSIONS.mapControl.padding;
 
-const MapLegend = ({layers = []}) => (
+const MapLegend = ({layers = [], columnsConfig}) => (
   <div className="map-legend">
     {layers.map((layer, index) => {
       if (!layer.isValidToSave()) {
@@ -189,6 +195,7 @@ const MapLegend = ({layers = []}) => (
                 config={layer.config}
                 width={MAP_LEGEND_WIDTH}
                 colorChannel={colorChannel}
+                columnsLabels={columnsConfig[layer.config.dataId]}
               />
             ) : null
           )}
@@ -204,6 +211,7 @@ const MapLegend = ({layers = []}) => (
                 key={visualChannel.key}
                 label={description.label}
                 name={description.measure}
+                columnsLabels={columnsConfig[layer.config.dataId]}
               />
             ) : null;
           })}

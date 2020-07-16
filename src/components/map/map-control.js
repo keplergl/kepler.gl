@@ -174,7 +174,7 @@ const MapControlPanel = React.memo(({children, header, onClick, scale = 1, isExp
 
 MapControlPanel.displayName = 'MapControlPanel';
 
-const MapLegendPanel = ({layers, isActive, scale, onToggleMenuPanel, isExport}) =>
+const MapLegendPanel = ({layers, isActive, scale, onToggleMenuPanel, isExport, columnsConfig}) =>
   !isActive ? (
     <MapControlButton
       key={2}
@@ -196,7 +196,7 @@ const MapLegendPanel = ({layers, isActive, scale, onToggleMenuPanel, isExport}) 
       onClick={onToggleMenuPanel}
       isExport={isExport}
     >
-      <MapLegend layers={layers} />
+      <MapLegend layers={layers} columnsConfig={columnsConfig}/>
     </MapControlPanel>
   );
 
@@ -414,7 +414,8 @@ const MapControlFactory = () => {
         editor,
         scale,
         readOnly,
-        locale
+        locale,
+        columnsConfig
       } = this.props;
 
       const {
@@ -468,6 +469,7 @@ const MapControlFactory = () => {
                 onMapToggleLayer={onMapToggleLayer}
                 isActive={mapLegend.active}
                 onToggleMenuPanel={() => onToggleMapControl('mapLegend')}
+                columnsConfig={columnsConfig}
               />
             </ActionPanel>
           ) : null}
