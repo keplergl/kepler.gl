@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import moment from 'moment';
 
 import Slider from 'components/common/slider/slider';
-import {BottomWidgetInner} from 'components/common/styled-components';
+import {BottomWidgetInner, Button} from 'components/common/styled-components';
 import SpeedControlFactory from './speed-control';
 import AnimationPlaybacksFactory from './playback-controls';
 import FloatingTimeDisplayFactory from './floating-time-display';
@@ -161,7 +161,7 @@ function AnimationControlFactory(
               />
             </div>
           </AnimationWidgetInner>
-          <button>Export</button>
+          <Button onClick="">Export</Button>
           <FloatingTimeDisplay currentTime={currentTime} />
           
         </BottomWidgetInner>
