@@ -258,7 +258,8 @@ export default function ModalContainerFactory(
         rootNode,
         visStateActions,
         uiStateActions,
-        providerState
+        providerState,
+        columnsConfig
       } = this.props;
 
       const {currentModal, datasetKeyToRemove} = uiState;
@@ -286,6 +287,7 @@ export default function ModalContainerFactory(
                 sortTableColumn={visStateActions.sortTableColumn}
                 pinTableColumn={visStateActions.pinTableColumn}
                 copyTableColumn={visStateActions.copyTableColumn}
+                columnsConfig={columnsConfig}
               />
             );
 

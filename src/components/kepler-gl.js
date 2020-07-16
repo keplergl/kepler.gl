@@ -412,6 +412,7 @@ function KeplerGlFactory(
                   onLoadCloudMapSuccess={this.props.onLoadCloudMapSuccess}
                   onLoadCloudMapError={this.props.onLoadCloudMapError}
                   onExportToCloudError={this.props.onExportToCloudError}
+                  columnsConfig={columnsConfig}
                 />
               </GlobalStyle>
             </ThemeProvider>

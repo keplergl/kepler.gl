@@ -146,10 +146,12 @@ function DataTableModalFactory(DataTable) {
     });
 
     render() {
-      const {datasets, dataId, showDatasetTable} = this.props;
+      const {datasets, dataId, showDatasetTable, columnsConfig} = this.props;
       if (!datasets || !dataId) {
         return null;
       }
+
+      const columnsLabels = columnsConfig[dataId];
 
       const activeDataset = datasets[dataId];
       const columns = this.columns(this.props);
@@ -179,6 +181,7 @@ function DataTableModalFactory(DataTable) {
                 copyTableColumn={this.props.copyTableColumn}
                 pinTableColumn={this.props.pinTableColumn}
                 sortTableColumn={this.props.sortTableColumn}
+                columnsLabels={columnsLabels}
               />
             ) : null}
           </TableContainer>

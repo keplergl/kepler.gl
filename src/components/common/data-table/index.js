@@ -249,7 +249,14 @@ const getRowCell = ({rows, columns, column, colMeta, rowIndex, sortColumn, sortO
   return parseFieldValue(get(rows, [rowIdx, columns.indexOf(column)], 'Err'), type);
 };
 
-const renderHeaderCell = (columns, isPinned, props, toggleMoreOptions, moreOptionsColumn) => {
+const renderHeaderCell = (
+  columns,
+  isPinned,
+  props,
+  toggleMoreOptions,
+  moreOptionsColumn,
+  columnsLabels
+) => {
   // eslint-disable-next-line react/display-name
   return cellInfo => {
     const {columnIndex, key, style} = cellInfo;
@@ -267,7 +274,7 @@ const renderHeaderCell = (columns, isPinned, props, toggleMoreOptions, moreOptio
     const isGhost = column.ghost;
     const isSorted = sortColumn[column];
     const firstCell = columnIndex === 0;
-
+    const title = (columnsLabels && columnsLabels[column]) || column;
     return (
       <div
         className={classnames('header-cell', {
@@ -281,7 +288,7 @@ const renderHeaderCell = (columns, isPinned, props, toggleMoreOptions, moreOptio
           e.shiftKey ? sortTableColumn(dataId, column) : null;
         }}
         onDoubleClick={() => sortTableColumn(dataId, column)}
-        title={column}
+        title={title}
       >
         {isGhost ? (
           <div />
@@ -290,7 +297,7 @@ const renderHeaderCell = (columns, isPinned, props, toggleMoreOptions, moreOptio
             <section className="details">
               <div className="col-name">
                 <div className="col-name__left">
-                  <div className="col-name__name">{column}</div>
+                  <div className="col-name__name">{title}</div>
                   <Button
                     className="col-name__sort"
                     onClick={() => sortTableColumn(dataId, column)}
@@ -503,7 +510,7 @@ export class DataTable extends Component {
   scaleCellsToWidth = debounce(this.doScaleCellsToWidth, 300);
 
   render() {
-    const {rows, pinnedColumns, theme = {}, fixedWidth, fixedHeight} = this.props;
+    const {rows, pinnedColumns, theme = {}, fixedWidth, fixedHeight, columnsLabels} = this.props;
     const unpinnedColumns = this.unpinnedColumns(this.props);
 
     const {cellSizeCache, moreOptionsColumn, ghost} = this.state;
@@ -560,7 +567,8 @@ export class DataTable extends Component {
                           true,
                           this.props,
                           this.toggleMoreOptions,
-                          moreOptionsColumn
+                          moreOptionsColumn,
+                          columnsLabels
                         )}
                         dataCellRender={renderDataCell(pinnedColumns, true, this.props)}
                       />
@@ -595,7 +603,8 @@ export class DataTable extends Component {
                         false,
                         this.props,
                         this.toggleMoreOptions,
-                        moreOptionsColumn
+                        moreOptionsColumn,
+                        columnsLabels
                       )}
                       dataCellRender={renderDataCell(unpinnedColumnsGhost, false, this.props)}
                     />
