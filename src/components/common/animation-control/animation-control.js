@@ -161,7 +161,9 @@ function AnimationControlFactory(
               />
             </div>
           </AnimationWidgetInner>
+          <button>Export</button>
           <FloatingTimeDisplay currentTime={currentTime} />
+          
         </BottomWidgetInner>
       );
     }
