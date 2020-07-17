@@ -101,6 +101,10 @@ function AnimationControlFactory(
       this.props.updateAnimationTime(Array.isArray(value) ? value[0] : value);
     };
 
+    handleExport = () => {
+      console.log(this);
+    }
+
     render() {
       const {currentTime, domain, speed, step, timeSteps} = this.props.animationConfig;
       const {showSpeedControl} = this.state;
@@ -161,7 +165,7 @@ function AnimationControlFactory(
               />
             </div>
           </AnimationWidgetInner>
-          <Button onClick="">Export</Button>
+          <Button onClick={this.handleExport}>Export</Button>
           <FloatingTimeDisplay currentTime={currentTime} />
           
         </BottomWidgetInner>
