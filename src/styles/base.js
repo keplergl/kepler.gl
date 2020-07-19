@@ -257,7 +257,7 @@ export const sliderMarginTop = 12;
 // Geocoder
 export const geocoderWidth = 360;
 export const geocoderTop = 16;
-export const geocoderRight = 80;
+export const geocoderRight = 20;
 export const geocoderInputHeight = 36;
 
 // Plot

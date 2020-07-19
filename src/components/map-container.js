@@ -469,6 +469,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         uiState,
         uiStateActions,
         visStateActions,
+        interactionConfig,
         editor,
         index
       } = this.props;
@@ -504,7 +505,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             mapControls={mapControls}
             readOnly={this.props.readOnly}
             scale={mapState.scale || 1}
-            top={0}
+            top={interactionConfig.geocoder && interactionConfig.geocoder.enabled ? 40 : 0}
             editor={editor}
             locale={uiState.locale}
             onTogglePerspective={mapStateActions.togglePerspective}

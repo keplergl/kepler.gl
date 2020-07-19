@@ -55,7 +55,7 @@ const StyledGeocoderPanel = styled.div`
   top: ${props => props.theme.geocoderTop}px;
   right: ${props => props.theme.geocoderRight}px;
   width: ${props => props.theme.geocoderWidth}px;
-  box-shadow: ${props => props.theme.dropdownListShadow};
+  box-shadow: ${props => props.theme.boxShadow};
   z-index: 100;
 `;
 

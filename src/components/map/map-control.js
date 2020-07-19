@@ -418,7 +418,8 @@ const MapControlFactory = () => {
         editor,
         scale,
         readOnly,
-        locale
+        locale,
+        top
       } = this.props;
 
       const {
@@ -431,7 +432,7 @@ const MapControlFactory = () => {
       } = mapControls;
 
       return (
-        <StyledMapControl className="map-control">
+        <StyledMapControl className="map-control" top={top || 0}>
           {/* Split Map */}
           {splitMap.show && readOnly !== true ? (
             <ActionPanel className="split-map" key={0}>
