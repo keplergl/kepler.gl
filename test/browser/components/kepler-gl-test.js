@@ -143,7 +143,11 @@ test('Components -> KeplerGl -> Mount -> Plot', t => {
         ...initialCoreState,
         uiState: {
           ...initialCoreState.uiState,
-          currentModal: EXPORT_IMAGE_ID
+          currentModal: EXPORT_IMAGE_ID,
+          exportImage: {
+            ...initialCoreState.uiState.exportImage,
+            exporting: true
+          }
         }
       }
     }

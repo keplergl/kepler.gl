@@ -35,15 +35,11 @@ import * as UIStateActions from 'actions/ui-state-actions';
 import * as ProviderActions from 'actions/provider-actions';
 
 import {
-  EXPORT_IMAGE_ID,
   DIMENSIONS,
   KEPLER_GL_NAME,
   KEPLER_GL_VERSION,
   THEME,
-  DEFAULT_MAPBOX_API_URL,
-  SAVE_MAP_ID,
-  SHARE_MAP_ID,
-  OVERWRITE_MAP_ID
+  DEFAULT_MAPBOX_API_URL
 } from 'constants/default-settings';
 import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
 
@@ -300,6 +296,7 @@ function KeplerGlFactory(
         mapboxApiUrl,
         mapState,
         uiState,
+        visState,
         editor: visState.editor,
         mapStyle,
         mapControls: uiState.mapControls,
@@ -323,22 +320,20 @@ function KeplerGlFactory(
       const isSplit = splitMaps && splitMaps.length > 1;
       const containerW = mapState.width * (Number(isSplit) + 1);
 
-      const mapContainers = !isSplit
-        ? [<MapContainer key={0} index={0} {...mapFields} mapLayers={null} />]
-        : splitMaps.map((settings, index) => (
-            <MapContainer
-              key={index}
-              index={index}
-              {...mapFields}
-              mapLayers={splitMaps[index].layers}
-            />
-          ));
+      const mapContainers = !isSplit ? (
+        <MapContainer key={0} index={0} {...mapFields} mapLayers={null} />
+      ) : (
+        splitMaps.map((settings, index) => (
+          <MapContainer
+            key={index}
+            index={index}
+            {...mapFields}
+            mapLayers={splitMaps[index].layers}
+          />
+        ))
+      );
 
-      const isExporting =
-        uiState.currentModal === EXPORT_IMAGE_ID ||
-        uiState.currentModal === SAVE_MAP_ID ||
-        uiState.currentModal === SHARE_MAP_ID ||
-        uiState.currentModal === OVERWRITE_MAP_ID;
+      const isExportingImage = uiState.exportImage.exporting;
 
       const theme = this.availableThemeSelector(this.props);
 
@@ -358,14 +353,14 @@ function KeplerGlFactory(
                 <div className="maps" style={{display: 'flex'}}>
                   {mapContainers}
                 </div>
-                {isExporting && (
+                {isExportingImage && (
                   <PlotContainer
                     width={width}
                     height={height}
                     exportImageSetting={uiState.exportImage}
                     mapFields={mapFields}
                     addNotification={uiStateActions.addNotification}
-                    startExportingImage={uiStateActions.startExportingImage}
+                    setExportingImage={uiStateActions.setExportingImage}
                     setExportImageDataUri={uiStateActions.setExportImageDataUri}
                     setExportImageError={uiStateActions.setExportImageError}
                   />

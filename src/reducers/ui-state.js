@@ -37,10 +37,11 @@ const actionHandler = {
   [ActionTypes.REMOVE_NOTIFICATION]: uiStateUpdaters.removeNotificationUpdater,
 
   [ActionTypes.SET_EXPORT_IMAGE_SETTING]: uiStateUpdaters.setExportImageSettingUpdater,
-  [ActionTypes.START_EXPORTING_IMAGE]: uiStateUpdaters.startExportingImageUpdater,
+  [ActionTypes.SET_EXPORTING_IMAGE]: uiStateUpdaters.setExportingImageUpdater,
   [ActionTypes.SET_EXPORT_IMAGE_DATA_URI]: uiStateUpdaters.setExportImageDataUriUpdater,
   [ActionTypes.SET_EXPORT_IMAGE_ERROR]: uiStateUpdaters.setExportImageErrorUpdater,
   [ActionTypes.CLEANUP_EXPORT_IMAGE]: uiStateUpdaters.cleanupExportImageUpdater,
+  [ActionTypes.START_EXPORT_IMAGE]: uiStateUpdaters.startExportImageUpdater,
 
   [ActionTypes.SET_EXPORT_SELECTED_DATASET]: uiStateUpdaters.setExportSelectedDatasetUpdater,
   [ActionTypes.SET_EXPORT_DATA_TYPE]: uiStateUpdaters.setExportDataTypeUpdater,

@@ -55,7 +55,7 @@ const SaveExportDropdown = appInjector.get(SaveExportDropdownFactory);
 import {InitialState} from 'test/helpers/mock-state';
 
 // Constants
-import {EXPORT_IMAGE_ID, EXPORT_DATA_ID, EXPORT_MAP_ID} from 'constants/default-settings';
+import {EXPORT_DATA_ID, EXPORT_MAP_ID} from 'constants/default-settings';
 
 // default props from initial state
 const defaultProps = {
@@ -316,9 +316,11 @@ test('Components -> SidePanel -> PanelHeader', t => {
 
 test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
   const toggleModal = sinon.spy();
+  const startExportImage = sinon.spy();
   const uiStateActions = {
     ...UIStateActions,
-    toggleModal
+    toggleModal,
+    startExportImage
   };
 
   // mound with exportDropdown
@@ -350,12 +352,13 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
     'Export Image',
     'Should render Export Image'
   );
+
   wrapper
     .find(ToolbarItem)
     .at(0)
     .find('.toolbar-item')
     .simulate('click');
-  t.ok(toggleModal.calledWith(EXPORT_IMAGE_ID), 'Should call toggleModal with EXPORT_IMAGE_ID');
+  t.ok(startExportImage.calledOnce, 'Should call startExportImage with no params');
 
   // export data
   t.equal(

@@ -32,6 +32,7 @@ import {
 import {LOCALE_CODES} from 'localization/locales';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 import {calculateExportImageSize} from 'utils/export-utils';
+import {EXPORT_IMAGE_ID} from '../constants';
 
 export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
 export const DEFAULT_MODAL = ADD_DATA_ID;
@@ -140,6 +141,8 @@ export const DEFAULT_EXPORT_IMAGE = {
     imageW: 0,
     imageH: 0
   },
+  // when this is set to true, the mock map viewport will move to the center of data
+  center: false,
   // exporting state
   imageDataUri: '',
   exporting: false,
@@ -384,10 +387,10 @@ export const setExportImageSettingUpdater = (state, {payload: newSetting}) => {
  * @memberof uiStateUpdaters
  * @param state `uiState`
  * @returns nextState
- * @type {typeof import('./ui-state-updaters').startExportingImageUpdater}
+ * @type {typeof import('./ui-state-updaters').setExportingImageUpdater}
  * @public
  */
-export const startExportingImageUpdater = state => ({
+export const setExportingImageUpdater = state => ({
   ...state,
   exportImage: {
     ...state.exportImage,
@@ -441,9 +444,29 @@ export const cleanupExportImageUpdater = state => ({
     ...state.exportImage,
     exporting: false,
     imageDataUri: '',
-    error: false
+    error: false,
+    center: false
   }
 });
+
+/**
+ * Start image exporting flow
+ * @memberof uiStateUpdaters
+ * @param state
+ * @param options
+ * @returns {UiState}
+ * @type {typeof import('./ui-state-updaters').startExportImage}
+ * @public
+ */
+export const startExportImageUpdater = (state, {payload: options = {}}) => {
+  const modifiers = [
+    cleanupExportImageUpdater,
+    setExportingImageUpdater,
+    newState => setExportImageSettingUpdater(newState, {payload: options}),
+    newState => toggleModalUpdater(newState, {payload: EXPORT_IMAGE_ID})
+  ];
+  return modifiers.reduce((acc, modifier) => modifier(acc), state);
+};
 
 /**
  * Set selected dataset for export

@@ -37,7 +37,6 @@ import {
   ADD_DATA_ID,
   ADD_MAP_STYLE_ID,
   DATA_TABLE_ID,
-  EXPORT_IMAGE_ID,
   EXPORT_DATA_ID,
   EXPORT_MAP_ID,
   SAVE_MAP_ID,
@@ -150,7 +149,7 @@ export default function SidePanelFactory(
       this.props.uiStateActions.openDeleteModal(key);
     };
 
-    _onClickExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
+    _onClickExportImage = () => this.props.uiStateActions.startExportImage();
 
     _onClickExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 

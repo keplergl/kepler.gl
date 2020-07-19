@@ -129,9 +129,9 @@ export function setExportImageSettingUpdater(
   state: UiState,
   action: UiStateActions.SetExportImageSettingUpdaterAction
 ): UiState;
-export function startExportingImageUpdater(
+export function setExportingImageUpdater(
   state: UiState,
-  action: UiStateActions.StartExportingImageUpdaterAction
+  action: UiStateActions.SetExportingImageUpdaterAction
 ): UiState;
 export function setExportImageDataUriUpdater(
   state: UiState,
@@ -144,6 +144,10 @@ export function setExportImageErrorUpdater(
 export function cleanupExportImageUpdater(
   state: UiState,
   action: UiStateActions.CleanupExportImageUpdaterAction
+): UiState;
+export function startExportImageUpdater(
+  state: UiState,
+  action: UiStateActions.startExportImage
 ): UiState;
 export function setExportSelectedDatasetUpdater(
   state: UiState,

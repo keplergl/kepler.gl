@@ -18,8 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import ActionTypes from 'constants/action-types';
+import ActionTypes, {ActionType} from 'constants/action-types';
 import {Merge} from '../reducers/types';
+import {payload_} from '../reducers/composer-helpers';
 
 /** TOGGLE_SIDE_PANEL */
 export type ToggleSidePanelUpdaterAction = {
@@ -91,7 +92,12 @@ export function removeNotification(
 
 /** SET_EXPORT_IMAGE_SETTING */
 export type SetExportImageSettingUpdaterAction = {
-  payload: {ratio?: string; resolution?: string; legend?: string};
+  payload: {
+    ratio?: string;
+    resolution?: string;
+    legend?: string,
+    center?: boolean
+  };
 };
 export function setExportImageSetting(newSetting: {
   ratio?: string;
@@ -99,8 +105,8 @@ export function setExportImageSetting(newSetting: {
   legend?: string;
 }): Merge<SetExportImageSettingUpdaterAction, {type: ActionTypes.SET_EXPORT_IMAGE_SETTING}>;
 
-/** START_EXPORTING_IMAGE */
-export function startExportingImage(): {type: ActionTypes.START_EXPORTING_IMAGE};
+/** SET_EXPORTING_IMAGE */
+export function setExportingImage(): {type: ActionTypes.START_EXPORTING_IMAGE};
 
 /** SET_EXPORT_IMAGE_DATA_URI */
 export type SetExportImageDataUriUpdaterAction = {
@@ -121,6 +127,14 @@ export function setExportImageError(
 
 /** CLEANUP_EXPORT_IMAGE */
 export function cleanupExportImage(): {type: ActionTypes.CLEANUP_EXPORT_IMAGE};
+
+/** START_EXPORT_IMAGE */
+export function startExportImage(options?: {
+  ratio?: string;
+  resolution?: string;
+  legend?: string,
+  center?: boolean
+}): Merge<SetExportImageSettingUpdaterAction, {type: ActionTypes.START_EXPORT_IMAGE}>;
 
 /** SET_EXPORT_SELECTED_DATASET */
 export type SetExportSelectedDatasetUpdaterAction = {

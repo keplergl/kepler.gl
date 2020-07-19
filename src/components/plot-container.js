@@ -30,13 +30,16 @@ import MapContainerFactory from './map-container';
 import {convertToPng} from 'utils/export-utils';
 import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-editor';
 import {getScaleFromImageSize} from 'utils/export-utils';
+import {findMapBounds} from 'utils/data-utils';
+import geoViewport from '@mapbox/geo-viewport';
 
 const propTypes = {
   width: PropTypes.number.isRequired,
   height: PropTypes.number.isRequired,
   exportImageSetting: PropTypes.object.isRequired,
   addNotification: PropTypes.func.isRequired,
-  mapFields: PropTypes.object.isRequired
+  mapFields: PropTypes.object.isRequired,
+  setExportingImage: PropTypes.func.isRequired
 };
 
 PlotContainerFactory.deps = [MapContainerFactory];
@@ -63,10 +66,6 @@ export default function PlotContainerFactory(MapContainer) {
     constructor(props) {
       super(props);
       this._onMapRender = debounce(this._onMapRender, 500);
-    }
-
-    componentDidMount() {
-      this.props.startExportingImage();
     }
 
     componentDidUpdate(prevProps) {
@@ -118,7 +117,7 @@ export default function PlotContainerFactory(MapContainer) {
 
     _retrieveNewScreenshot = () => {
       if (this.plottingAreaRef.current) {
-        this.props.startExportingImage();
+        this.props.setExportingImage();
         const filter = node => node.className !== 'mapboxgl-control-container';
 
         convertToPng(this.plottingAreaRef.current, {filter})
@@ -133,24 +132,41 @@ export default function PlotContainerFactory(MapContainer) {
     render() {
       const {exportImageSetting, mapFields, splitMaps} = this.props;
       const {imageSize = {}, legend} = exportImageSetting;
+      const {mapState} = mapFields;
       const isSplit = splitMaps && splitMaps.length > 1;
 
       const size = {
         width: imageSize.imageW || 1,
         height: imageSize.imageH || 1
       };
+
+      const bounds = findMapBounds(mapFields.visState.layers);
+      const width = size.width / (isSplit ? 2 : 1);
+      const height = size.height;
       const scale = this.mapScaleSelector(this.props);
+      const newMapState = {
+        ...mapState,
+        width,
+        height,
+        zoom: mapState.zoom + (Math.log2(scale) || 0)
+      };
+
+      if (exportImageSetting.center) {
+        const {center, zoom} = exportImageSetting.center
+          ? geoViewport.viewport(bounds, [width, height])
+          : {center: [mapState.longitude, mapState.latitude], zoom: mapState.zoom};
+
+        newMapState.longitude = center[0];
+        newMapState.latitude = center[1];
+        newMapState.zoom = zoom + Number(Math.log2(scale) || 0);
+      }
+
       const mapProps = {
         ...mapFields,
         mapStyle: this.scaledMapStyleSelector(this.props),
 
         // override viewport based on export settings
-        mapState: {
-          ...mapFields.mapState,
-          width: size.width / (isSplit ? 2 : 1),
-          height: size.height,
-          zoom: mapFields.mapState.zoom + (Math.log2(scale) || 0)
-        },
+        mapState: newMapState,
         mapControls: {
           // override map legend visibility
           mapLegend: {
