@@ -33,6 +33,9 @@ import {getScaleFromImageSize} from 'utils/export-utils';
 import {findMapBounds} from 'utils/data-utils';
 import geoViewport from '@mapbox/geo-viewport';
 
+const DOM_FILTER_FUNC = node => node.className !== 'mapboxgl-control-container';
+const OUT_OF_SCREEN_POSITION = -9999;
+
 const propTypes = {
   width: PropTypes.number.isRequired,
   height: PropTypes.number.isRequired,
@@ -52,6 +55,14 @@ const StyledPlotContainer = styled.div`
   }
 
   position: absolute;
+  top: ${OUT_OF_SCREEN_POSITION}px;
+  left: ${OUT_OF_SCREEN_POSITION}px;
+`;
+
+const StyledMapContainer = styled.div`
+  width: ${props => props.width}px;
+  height: ${props => props.height}px;
+  display: flex;
 `;
 
 const deckGlProps = {
@@ -118,9 +129,8 @@ export default function PlotContainerFactory(MapContainer) {
     _retrieveNewScreenshot = () => {
       if (this.plottingAreaRef.current) {
         this.props.setExportingImage();
-        const filter = node => node.className !== 'mapboxgl-control-container';
 
-        convertToPng(this.plottingAreaRef.current, {filter})
+        convertToPng(this.plottingAreaRef.current, {filter: DOM_FILTER_FUNC})
           .then(this.props.setExportImageDataUri)
           .catch(err => {
             this.props.setExportImageError(err);
@@ -194,20 +204,10 @@ export default function PlotContainerFactory(MapContainer) {
       );
 
       return (
-        <StyledPlotContainer
-          style={{position: 'absolute', top: -9999, left: -9999}}
-          className="export-map-instance"
-        >
-          <div
-            ref={this.plottingAreaRef}
-            style={{
-              width: `${size.width}px`,
-              height: `${size.height}px`,
-              display: 'flex'
-            }}
-          >
+        <StyledPlotContainer className="export-map-instance">
+          <StyledMapContainer ref={this.plottingAreaRef} width={size.width} height={size.height}>
             {mapContainers}
-          </div>
+          </StyledMapContainer>
         </StyledPlotContainer>
       );
     }

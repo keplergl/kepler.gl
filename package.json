@@ -22,7 +22,7 @@
     "install:web": "yarn install:example && cd website && yarn",
     "install-and-start": "node ./scripts/install-and-start",
     "fast-test": "npm run test-node && npm run test-browser",
-    "test-browser": "NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser/index.js",
+    "test-browser": "NODE_ENV=test babel-tape-runner -r ./test/setup-browser-env.js ./test/browser/index.js | tap-spec",
     "test-node": "NODE_ENV=test babel-tape-runner ./test/node.js | tap-spec",
     "test-browser-headless": "NODE_ENV=test node ./test/browser-drive.js",
     "test-e2e": "NODE_ENV=test HEADLESS=true SLOWMO=true jest",
