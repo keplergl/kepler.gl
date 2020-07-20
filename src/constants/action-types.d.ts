@@ -117,6 +117,9 @@ export type ActionType = {
   SET_POLYGON_FILTER_LAYER: string;
   DELETE_FEATURE: string;
   TOGGLE_EDITOR_VISIBILITY: string;
+
+  // storage
+  START_SAVE_STORAGE: string;
 };
 
 export const ActionTypes: ActionType;

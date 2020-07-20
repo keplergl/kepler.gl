@@ -145,6 +145,10 @@ function SaveMapModalFactory() {
       onUpdateImageSetting: nop
     };
 
+    componentWillUnmount() {
+      this.props.onUpdateImageSetting({isExporting: false});
+    }
+
     _onChangeInput = (key, e) => {
       const {
         target: {value}

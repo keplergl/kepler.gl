@@ -356,7 +356,7 @@ export default function ModalContainerFactory(
                 exportImage={uiState.exportImage}
                 mapW={containerW}
                 mapH={containerH}
-                onUpdateSetting={uiStateActions.setExportImageSetting}
+                onUpdateImageSetting={uiStateActions.setExportImageSetting}
               />
             );
             modalProps = {
@@ -455,7 +455,7 @@ export default function ModalContainerFactory(
                 exportImage={uiState.exportImage}
                 mapInfo={visState.mapInfo}
                 onSetMapInfo={visStateActions.setMapInfo}
-                onUpdateImageSetting={uiStateActions.setExportImageSetting}
+                onUpdateExportingImage={uiStateActions.setExportingImage}
                 cloudProviders={this.providerWithStorage(this.props)}
                 onSetCloudProvider={this.props.providerActions.setCloudProvider}
               />
