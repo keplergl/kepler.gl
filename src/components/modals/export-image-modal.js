@@ -72,7 +72,7 @@ const ExportImageModalFactory = () => {
     }
 
     componentWillUnmount() {
-      this.props.onUpdateImageSetting({isExporting: false});
+      this.props.onUpdateImageSetting({exporting: false});
     }
 
     _updateMapDim() {

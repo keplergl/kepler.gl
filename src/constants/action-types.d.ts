@@ -89,7 +89,7 @@ export type ActionType = {
   SET_EXPORT_IMAGE_DATA_URI: string;
   SET_EXPORT_IMAGE_ERROR: string;
   CLEANUP_EXPORT_IMAGE: string;
-  START_EXPORT_IMAGE: string;
+  START_EXPORTING_IMAGE: string;
 
   // uiState > export data
   SET_EXPORT_SELECTED_DATASET: string;

@@ -316,11 +316,11 @@ test('Components -> SidePanel -> PanelHeader', t => {
 
 test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
   const toggleModal = sinon.spy();
-  const startExportImage = sinon.spy();
+  const startExportingImage = sinon.spy();
   const uiStateActions = {
     ...UIStateActions,
     toggleModal,
-    startExportImage
+    startExportingImage
   };
 
   // mound with exportDropdown
@@ -358,7 +358,7 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
     .at(0)
     .find('.toolbar-item')
     .simulate('click');
-  t.ok(startExportImage.calledOnce, 'Should call startExportImage with no params');
+  t.ok(startExportingImage.calledOnce, 'Should call startExportingImage with no params');
 
   // export data
   t.equal(

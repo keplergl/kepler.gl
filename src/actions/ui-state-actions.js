@@ -117,12 +117,12 @@ export const setExportImageSetting = createAction(
 );
 
 /**
- * Set `exportImage.exporting` to true
+ * Start exporting image flow
  * @memberof uiStateActions
- * @type {typeof import('./ui-state-actions').setExportingImage}
+ * @type {typeof import('./ui-state-actions').startExportingImage}
  * @public
  */
-export const setExportingImage = createAction(ActionTypes.SET_EXPORTING_IMAGE);
+export const startExportingImage = createAction(ActionTypes.START_EXPORTING_IMAGE);
 
 /**
  * Set `exportImage.setExportImageDataUri` to a dataUri
@@ -153,12 +153,12 @@ export const setExportImageError = createAction(ActionTypes.SET_EXPORT_IMAGE_ERR
 export const cleanupExportImage = createAction(ActionTypes.CLEANUP_EXPORT_IMAGE);
 
 /**
- * Start exporting image flow
+ * Set `exportImage.exporting` to true
  * @memberof uiStateActions
- * @type {typeof import('./ui-state-actions').startExportImage}
+ * @type {typeof import('./ui-state-actions').setExportingImage}
  * @public
  */
-export const startExportImage = createAction(ActionTypes.START_EXPORT_IMAGE);
+export const setExportingImage = createAction(ActionTypes.SET_EXPORTING_IMAGE);
 
 /**
  * Start saving storage flow

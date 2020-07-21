@@ -96,7 +96,7 @@ export type SetExportImageSettingUpdaterAction = {
     resolution?: string;
     legend?: string;
     center?: boolean;
-    isExporting?: boolean;
+    exporting?: boolean;
   };
 };
 export function setExportImageSetting(newSetting: {
@@ -104,16 +104,17 @@ export function setExportImageSetting(newSetting: {
   resolution?: string;
   legend?: string;
   center?: boolean;
-  isExporting?: boolean;
+  exporting?: boolean;
 }): Merge<SetExportImageSettingUpdaterAction, {type: ActionTypes.SET_EXPORT_IMAGE_SETTING}>;
 
-/** SET_EXPORTING_IMAGE */
-export type SetExportingImageUpdaterAction = {
-  isExporting?: boolean
-}
-export function setExportingImage(
-  isExporting?: boolean
-): Merge<SetExportingImageUpdaterAction, {type: ActionTypes.START_EXPORTING_IMAGE}>;
+/** START_EXPORTING_IMAGE */
+export function startExportingImage(options?: {
+  ratio?: string;
+  resolution?: string;
+  legend?: string,
+  center?: boolean
+}): Merge<SetExportImageSettingUpdaterAction, {type: ActionTypes.START_EXPORT_IMAGE}>;
+
 
 /** SET_EXPORT_IMAGE_DATA_URI */
 export type SetExportImageDataUriUpdaterAction = {
@@ -135,13 +136,13 @@ export function setExportImageError(
 /** CLEANUP_EXPORT_IMAGE */
 export function cleanupExportImage(): {type: ActionTypes.CLEANUP_EXPORT_IMAGE};
 
-/** START_EXPORT_IMAGE */
-export function startExportImage(options?: {
-  ratio?: string;
-  resolution?: string;
-  legend?: string,
-  center?: boolean
-}): Merge<SetExportImageSettingUpdaterAction, {type: ActionTypes.START_EXPORT_IMAGE}>;
+/** SET_EXPORTING_IMAGE */
+export type SetExportingImageUpdaterAction = {
+  exporting?: boolean
+}
+export function setExportingImage(
+  exporting?: boolean
+): Merge<SetExportingImageUpdaterAction, {type: ActionTypes.START_EXPORTING_IMAGE}>;
 
 /** SET_EXPORT_SELECTED_DATASET */
 export type SetExportSelectedDatasetUpdaterAction = {

@@ -387,16 +387,16 @@ export const setExportImageSettingUpdater = (state, {payload: newSetting}) => {
  * Set `exportImage.exporting` to `true`
  * @memberof uiStateUpdaters
  * @param state `uiState`
- * @param isExporting boolean
+ * @param exporting boolean
  * @returns nextState
  * @type {typeof import('./ui-state-updaters').setExportingImageUpdater}
  * @public
  */
-export const setExportingImageUpdater = (state, {payload: isExporting = true} = {}) => ({
+export const setExportingImageUpdater = (state, {payload: exporting = true} = {}) => ({
   ...state,
   exportImage: {
     ...state.exportImage,
-    exporting: isExporting,
+    exporting,
     imageDataUri: ''
   }
 });
@@ -457,10 +457,10 @@ export const cleanupExportImageUpdater = state => ({
  * @param state
  * @param options
  * @returns {UiState}
- * @type {typeof import('./ui-state-updaters').startExportImage}
+ * @type {typeof import('./ui-state-updaters').startExportingImage}
  * @public
  */
-export const startExportImageUpdater = (state, {payload: options = {}}) => {
+export const startExportingImageUpdater = (state, {payload: options = {}}) => {
   const modifiers = [
     cleanupExportImageUpdater,
     // custom exporting options

@@ -145,9 +145,9 @@ export function cleanupExportImageUpdater(
   state: UiState,
   action: UiStateActions.CleanupExportImageUpdaterAction
 ): UiState;
-export function startExportImageUpdater(
+export function startExportingImageUpdater(
   state: UiState,
-  action: UiStateActions.startExportImage
+  action: UiStateActions.startExportingImage
 ): UiState;
 export function setExportSelectedDatasetUpdater(
   state: UiState,
