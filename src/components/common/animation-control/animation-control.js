@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import styled from 'styled-components';
+import styled, { withTheme } from 'styled-components';
 import moment from 'moment';
 
 import Slider from 'components/common/slider/slider';
@@ -30,6 +30,9 @@ import FloatingTimeDisplayFactory from './floating-time-display';
 import AnimationControllerFactory from './animation-controller';
 import {snapToMarks} from 'utils/data-utils';
 import {DEFAULT_TIME_FORMAT, ANIMATION_TYPE} from 'constants';
+import HubbleExport from 'components/hubble-export';
+import {connect as keplerGlConnect} from 'connect/keplergl-connect';
+
 
 const SliderWrapper = styled.div`
   display: flex;
@@ -102,7 +105,13 @@ function AnimationControlFactory(
     };
 
     handleExport = () => {
-      console.log(this);
+      
+      // log all the props from mapComponent/mapComponentFactory
+      // stop rendering in bg
+      // setState
+      // pop up modal if isOpen. If false, closes modal TODO put function into render
+      // all the data is passed through and can use in deck/hubble components
+      return keplerGlConnect(mapStateToProps, makeMapDispatchToProps)(withTheme(KeplerGL));
     }
 
     render() {
@@ -165,7 +174,9 @@ function AnimationControlFactory(
               />
             </div>
           </AnimationWidgetInner>
-          <Button onClick={this.handleExport}>Export</Button>
+          <HubbleExport /> {/* Button or clickable interface */}
+          {/* Once "Export" button is clicked, this.state.isOpen: === True, once "X" is clicked, isOpen === False */}
+          {/* <Button onClick={this.handleExport}>Export</Button> */}
           <FloatingTimeDisplay currentTime={currentTime} />
           
         </BottomWidgetInner>
