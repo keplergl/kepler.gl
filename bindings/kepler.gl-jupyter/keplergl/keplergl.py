@@ -34,11 +34,12 @@ def _gdf_to_dict(gdf):
     # will cause error if data frame has no geometry column
     name = gdf.geometry.name
 
-    copy = gdf.copy()
-    # convert it to wkt
-    copy[name] = copy.geometry.apply(lambda x: shapely.wkt.dumps(x))
+    # convert geodataframe to dataframe
+    df = pd.DataFrame(gdf)
+    # convert geometry to wkt
+    df[name] = df.geometry.apply(lambda x: shapely.wkt.dumps(x))
 
-    return _df_to_dict(copy)
+    return _df_to_dict(df)
 
 def _normalize_data(data):
     if isinstance(data, pd.DataFrame):
