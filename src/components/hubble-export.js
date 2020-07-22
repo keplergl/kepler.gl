@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import {ThemeProvider, withTheme} from 'styled-components';
 
 import {connect as keplerGlConnect} from 'connect/keplergl-connect';
-import * as RenderSettingsModal from 'hubble.gl/animation-control/render-settings-modal';
+// import * as RenderSettingsModal from 'hubble.gl/animation-control/render-settings-modal';
 import {Button} from 'components/common/styled-components';
 import {theme} from '../styles';
 
@@ -45,12 +45,16 @@ class HubbleExport extends Component {
 //       keyframes: abstraction of keyframes,
 //       dlsjkas,
 //   ]
+    handleClose() {
+        this.setState(state => ({
+            isOpen: false
+        }));
+    }
+
     handleExport() {
         this.setState(state => ({
-            isOpen: !state.isOpen
-          }));
-        console.log("Reached")
-        
+            isOpen: true
+          }));        
         // stop rendering in bg
         // setState
         // pop up modal if isOpen. If false, closes modal TODO put function into render
@@ -59,11 +63,13 @@ class HubbleExport extends Component {
     }
 
     render() {
-        console.log(this.props)
+        // console.log(this.props)
+        console.log(this.state)
         return (
             <div>
-                <ThemeProvider theme={RenderSettingsModal}></ThemeProvider>
-                <Button onClick={this.handleExport}>Export</Button>
+                {/* <ThemeProvider theme={RenderSettingsModal}></ThemeProvider> */}
+                <Button onClick={() => this.handleExport()}>Export</Button> {/* anonymous function to bind state onclick  */}
+
             </div>
         )
     }
