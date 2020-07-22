@@ -84,19 +84,25 @@ export default function BottomWidgetFactory(TimeWidget, AnimationControl) {
     const readToAnimation = Array.isArray(animationConfig.domain) && animationConfig.currentTime;
     // if animation control is showing, hide time display in time slider
     const showFloatingTimeDisplay = !animatedLayer.length;
+    const showAnimationControl = animatedLayer.length && readToAnimation;
+    const showTimeWidget = enlargedFilterIdx > -1 && Object.keys(datasets).length > 0;
+    // The bottom widget can hide clickable elements so do not render it if not needed
+    if (!showAnimationControl && !showTimeWidget) {
+      return null;
+    }
     return (
       <BottomWidgetContainer
         width={Math.min(maxWidth, enlargedFilterWidth)}
         className="bottom-widget--container"
       >
-        {animatedLayer.length && readToAnimation ? (
+        {showAnimationControl ? (
           <AnimationControl
             animationConfig={animationConfig}
             updateAnimationTime={visStateActions.updateAnimationTime}
             updateAnimationSpeed={visStateActions.updateLayerAnimationSpeed}
           />
         ) : null}
-        {enlargedFilterIdx > -1 && Object.keys(datasets).length > 0 ? (
+        {showTimeWidget ? (
           <TimeWidget
             filter={filters[enlargedFilterIdx]}
             index={enlargedFilterIdx}
