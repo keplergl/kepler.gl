@@ -104,16 +104,6 @@ function AnimationControlFactory(
       this.props.updateAnimationTime(Array.isArray(value) ? value[0] : value);
     };
 
-    handleExport = () => {
-      
-      // log all the props from mapComponent/mapComponentFactory
-      // stop rendering in bg
-      // setState
-      // pop up modal if isOpen. If false, closes modal TODO put function into render
-      // all the data is passed through and can use in deck/hubble components
-      return keplerGlConnect(mapStateToProps, makeMapDispatchToProps)(withTheme(KeplerGL));
-    }
-
     render() {
       const {currentTime, domain, speed, step, timeSteps} = this.props.animationConfig;
       const {showSpeedControl} = this.state;
@@ -174,7 +164,8 @@ function AnimationControlFactory(
               />
             </div>
           </AnimationWidgetInner>
-          <HubbleExport /> {/* Button or clickable interface */}
+          
+          <HubbleExport />
           {/* Once "Export" button is clicked, this.state.isOpen: === True, once "X" is clicked, isOpen === False */}
           {/* <Button onClick={this.handleExport}>Export</Button> */}
           <FloatingTimeDisplay currentTime={currentTime} />
