@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import {ThemeProvider, withTheme} from 'styled-components';
 
 import {connect as keplerGlConnect} from 'connect/keplergl-connect';
-import * as RenderSettingsModal from 'hubble.gl';
+import * as RenderSettingsModal from 'hubble.gl/animation-control/render-settings-modal';
 import {Button} from 'components/common/styled-components';
 import {theme} from '../styles';
 
