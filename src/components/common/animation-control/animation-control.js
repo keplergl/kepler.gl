@@ -163,13 +163,11 @@ function AnimationControlFactory(
                 buttonHeight={BUTTON_HEIGHT}
               />
             </div>
+            <div style={{marginLeft: '5px'}}>
+              <HubbleExport className="animation-control__export-button"/>
+            </div>
           </AnimationWidgetInner>
-          
-          <HubbleExport />
-          {/* Once "Export" button is clicked, this.state.isOpen: === True, once "X" is clicked, isOpen === False */}
-          {/* <Button onClick={this.handleExport}>Export</Button> */}
           <FloatingTimeDisplay currentTime={currentTime} />
-          
         </BottomWidgetInner>
       );
     }

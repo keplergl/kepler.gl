@@ -25,10 +25,8 @@ const PanelCloseInner = styled.div`
 `;
 
 const PanelClose = ({buttonHeight, handleClose}) => (
-    // TODO pass in isOpen to false
   <PanelCloseInner className="render-settings-panel__close" >
     <IconButton className="render-settings-button" link onClick={() => {handleClose()}}>
-    {/* <IconButton className="render-settings-button" link onClick={nop}> */}
       <Delete height={buttonHeight} />
     </IconButton>
   </PanelCloseInner>

@@ -88,7 +88,7 @@ class RenderSettingsModal extends Component {
       <ModalContainer className="render-settings-modal" ref={this.root}>
         {this.root.current ? (
           <Modal
-            isOpen={isOpen} // TODO possible deconstruction to make it more clear
+            isOpen={isOpen}
             style={modalStyles}
             ariaHideApp={false}
             parentSelector={() => {
@@ -103,7 +103,6 @@ class RenderSettingsModal extends Component {
             }}
           >
             <RenderSettingsPanel handleClose={() => {handleClose()}}/>
-            {/* <RenderSettingsPanel /> */}
           </Modal>
         ) : null}
       </ModalContainer>

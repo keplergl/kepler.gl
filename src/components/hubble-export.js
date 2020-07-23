@@ -40,12 +40,7 @@ class HubbleExport extends Component {
             isOpen: false
         };
     }
-  // To be used to store all modal components & functions 
-//   this.states = [ // React props
-//       keyframes: abstraction of keyframes,
-//       dlsjkas,
-//   ]
-    handleClose() {this.setState({isOpen: false})} // X button in Kepler UI was clicked
+    handleClose() {this.setState({isOpen: false})} // X button in Modal UI was clicked
 
     handleExport() { // Export button in Kepler UI was clicked
         this.setState(state => ({
@@ -71,9 +66,5 @@ class HubbleExport extends Component {
     }
 };
 
-// States we need:
-// 
-// 
-// 
 export default keplerGlConnect(mapStateToProps, makeMapDispatchToProps)(withTheme(HubbleExport));
 
