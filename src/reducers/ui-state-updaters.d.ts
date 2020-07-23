@@ -17,6 +17,7 @@ export type ExportImage = {
   // exporting state
   imageDataUri: string;
   exporting: boolean;
+  processing: boolean;
   error: Error;
 };
 
@@ -128,10 +129,6 @@ export function removeNotificationUpdater(
 export function setExportImageSettingUpdater(
   state: UiState,
   action: UiStateActions.SetExportImageSettingUpdaterAction
-): UiState;
-export function setExportingImageUpdater(
-  state: UiState,
-  action: UiStateActions.SetExportingImageUpdaterAction
 ): UiState;
 export function setExportImageDataUriUpdater(
   state: UiState,

@@ -146,7 +146,10 @@ export const DEFAULT_EXPORT_IMAGE = {
   center: false,
   // exporting state
   imageDataUri: '',
+  // exporting: used to attach plot-container to dom
   exporting: false,
+  // processing: used as loading indicator when export image is being produced
+  processing: false,
   error: false
 };
 
@@ -384,24 +387,6 @@ export const setExportImageSettingUpdater = (state, {payload: newSetting}) => {
 };
 
 /**
- * Set `exportImage.exporting` to `true`
- * @memberof uiStateUpdaters
- * @param state `uiState`
- * @param exporting boolean
- * @returns nextState
- * @type {typeof import('./ui-state-updaters').setExportingImageUpdater}
- * @public
- */
-export const setExportingImageUpdater = (state, {payload: exporting = true} = {}) => ({
-  ...state,
-  exportImage: {
-    ...state.exportImage,
-    exporting,
-    imageDataUri: ''
-  }
-});
-
-/**
  * Set `exportImage.setExportImageDataUri` to a image dataUri
  * @memberof uiStateUpdaters
  * @param state `uiState`
@@ -415,7 +400,7 @@ export const setExportImageDataUriUpdater = (state, {payload: dataUri}) => ({
   ...state,
   exportImage: {
     ...state.exportImage,
-    exporting: false,
+    processing: false,
     imageDataUri: dataUri
   }
 });
@@ -461,12 +446,15 @@ export const cleanupExportImageUpdater = state => ({
  * @public
  */
 export const startExportingImageUpdater = (state, {payload: options = {}}) => {
+  const imageSettings = {
+    ...options,
+    exporting: true
+  };
+
   const modifiers = [
     cleanupExportImageUpdater,
     // custom exporting options
-    newState => setExportImageSettingUpdater(newState, {payload: options}),
-    // exporting = true and appending plot-container to the dom
-    setExportingImageUpdater,
+    newState => setExportImageSettingUpdater(newState, {payload: imageSettings}),
     newState => toggleModalUpdater(newState, {payload: EXPORT_IMAGE_ID})
   ];
   return modifiers.reduce((acc, modifier) => modifier(acc), state);
@@ -738,7 +726,12 @@ export const startSaveStorage = (state, {payload: mapSaved}) => {
   const modifiers = [
     cleanupExportImageUpdater,
     // exporting = true and appending plot-container to the dom
-    setExportingImageUpdater,
+    newState =>
+      setExportImageSettingUpdater(newState, {
+        payload: {
+          exporting: true
+        }
+      }),
     newState => toggleModalUpdater(newState, {payload: mapSaved ? OVERWRITE_MAP_ID : SAVE_MAP_ID})
   ];
   return modifiers.reduce((acc, modifier) => modifier(acc), state);

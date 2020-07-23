@@ -85,11 +85,10 @@ export type ActionType = {
 
   // uiState > export image
   SET_EXPORT_IMAGE_SETTING: string;
-  SET_EXPORTING_IMAGE: string;
+  START_EXPORTING_IMAGE: string;
   SET_EXPORT_IMAGE_DATA_URI: string;
   SET_EXPORT_IMAGE_ERROR: string;
   CLEANUP_EXPORT_IMAGE: string;
-  START_EXPORTING_IMAGE: string;
 
   // uiState > export data
   SET_EXPORT_SELECTED_DATASET: string;

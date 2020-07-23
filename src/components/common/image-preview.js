@@ -76,7 +76,7 @@ const StyledImagePreview = styled.div.attrs({
  * @param {boolean} [props.showDimension]
  */
 const ImagePreview = ({exportImage, width = 400, showDimension = false}) => {
-  const {error, imageDataUri, exporting, imageSize: {imageW = 0, imageH = 0} = {}} =
+  const {error, imageDataUri, processing, imageSize: {imageW = 0, imageH = 0} = {}} =
     exportImage || {};
 
   const imageStyle = {
@@ -92,7 +92,7 @@ const ImagePreview = ({exportImage, width = 400, showDimension = false}) => {
         </div>
       ) : null}
       <div className="preview-image" style={imageStyle}>
-        {exporting ? (
+        {processing ? (
           <div className="preview-image-spinner">
             <LoadingSpinner />
           </div>

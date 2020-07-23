@@ -64,7 +64,7 @@ const ExportImageModalFactory = () => {
     };
 
     componentDidMount() {
-      this._updateMapDim();
+      // this._updateMapDim();
     }
 
     componentDidUpdate() {

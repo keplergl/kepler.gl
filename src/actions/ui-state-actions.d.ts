@@ -97,6 +97,7 @@ export type SetExportImageSettingUpdaterAction = {
     legend?: string;
     center?: boolean;
     exporting?: boolean;
+    processing?: boolean;
   };
 };
 export function setExportImageSetting(newSetting: {
@@ -135,14 +136,6 @@ export function setExportImageError(
 
 /** CLEANUP_EXPORT_IMAGE */
 export function cleanupExportImage(): {type: ActionTypes.CLEANUP_EXPORT_IMAGE};
-
-/** SET_EXPORTING_IMAGE */
-export type SetExportingImageUpdaterAction = {
-  exporting?: boolean
-}
-export function setExportingImage(
-  exporting?: boolean
-): Merge<SetExportingImageUpdaterAction, {type: ActionTypes.START_EXPORTING_IMAGE}>;
 
 /** SET_EXPORT_SELECTED_DATASET */
 export type SetExportSelectedDatasetUpdaterAction = {

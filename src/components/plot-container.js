@@ -42,7 +42,9 @@ const propTypes = {
   exportImageSetting: PropTypes.object.isRequired,
   addNotification: PropTypes.func.isRequired,
   mapFields: PropTypes.object.isRequired,
-  setExportingImage: PropTypes.func.isRequired
+  setExportImageSetting: PropTypes.object.isRequired,
+  setExportImageDataUri: PropTypes.func.isRequired,
+  setExportImageError: PropTypes.func.isRequired
 };
 
 PlotContainerFactory.deps = [MapContainerFactory];
@@ -77,6 +79,11 @@ export default function PlotContainerFactory(MapContainer) {
     constructor(props) {
       super(props);
       this._onMapRender = debounce(this._onMapRender, 500);
+      this._retrieveNewScreenshot = debounce(this._retrieveNewScreenshot, 500);
+    }
+
+    componentDidMount() {
+      this.props.setExportImageSetting({processing: true});
     }
 
     componentDidUpdate(prevProps) {
@@ -86,6 +93,7 @@ export default function PlotContainerFactory(MapContainer) {
         item => this.props.exportImageSetting[item] !== prevProps.exportImageSetting[item]
       );
       if (shouldRetrieveScreenshot) {
+        this.props.setExportImageSetting({processing: true});
         this._retrieveNewScreenshot();
       }
     }
@@ -128,8 +136,6 @@ export default function PlotContainerFactory(MapContainer) {
 
     _retrieveNewScreenshot = () => {
       if (this.plottingAreaRef.current) {
-        this.props.setExportingImage();
-
         convertToPng(this.plottingAreaRef.current, {filter: DOM_FILTER_FUNC})
           .then(this.props.setExportImageDataUri)
           .catch(err => {

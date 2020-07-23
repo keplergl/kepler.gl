@@ -37,7 +37,6 @@ const actionHandler = {
   [ActionTypes.REMOVE_NOTIFICATION]: uiStateUpdaters.removeNotificationUpdater,
 
   [ActionTypes.SET_EXPORT_IMAGE_SETTING]: uiStateUpdaters.setExportImageSettingUpdater,
-  [ActionTypes.SET_EXPORTING_IMAGE]: uiStateUpdaters.setExportingImageUpdater,
   [ActionTypes.SET_EXPORT_IMAGE_DATA_URI]: uiStateUpdaters.setExportImageDataUriUpdater,
   [ActionTypes.SET_EXPORT_IMAGE_ERROR]: uiStateUpdaters.setExportImageErrorUpdater,
   [ActionTypes.CLEANUP_EXPORT_IMAGE]: uiStateUpdaters.cleanupExportImageUpdater,

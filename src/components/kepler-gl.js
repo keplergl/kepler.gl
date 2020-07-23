@@ -360,7 +360,7 @@ function KeplerGlFactory(
                     exportImageSetting={uiState.exportImage}
                     mapFields={mapFields}
                     addNotification={uiStateActions.addNotification}
-                    setExportingImage={uiStateActions.setExportingImage}
+                    setExportImageSetting={uiStateActions.setExportImageSetting}
                     setExportImageDataUri={uiStateActions.setExportImageDataUri}
                     setExportImageError={uiStateActions.setExportImageError}
                   />

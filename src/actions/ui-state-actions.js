@@ -153,14 +153,6 @@ export const setExportImageError = createAction(ActionTypes.SET_EXPORT_IMAGE_ERR
 export const cleanupExportImage = createAction(ActionTypes.CLEANUP_EXPORT_IMAGE);
 
 /**
- * Set `exportImage.exporting` to true
- * @memberof uiStateActions
- * @type {typeof import('./ui-state-actions').setExportingImage}
- * @public
- */
-export const setExportingImage = createAction(ActionTypes.SET_EXPORTING_IMAGE);
-
-/**
  * Start saving storage flow
  * @memberof uiStateActions
  * @type {typeof import('./ui-state-actions').startSaveStorage}
