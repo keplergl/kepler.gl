@@ -26,7 +26,7 @@ const PanelCloseInner = styled.div`
 
 const PanelClose = ({buttonHeight, handleClose}) => (
   <PanelCloseInner className="render-settings-panel__close" >
-    <IconButton className="render-settings-button" link onClick={() => {handleClose()}}>
+    <IconButton className="render-settings-panel__button" link onClick={() => {handleClose()}}>
       <Delete height={buttonHeight} />
     </IconButton>
   </PanelCloseInner>
@@ -146,7 +146,7 @@ const ButtonGroup = styled.div`
   display: flex;
 `;
 
-const PanelFooter = () => (
+const PanelFooter = ({handleClose}) => (
   <PanelFooterInner className="render-settings-panel__footer">
     <Button
       width={DEFAULT_BUTTON_WIDTH}
@@ -163,7 +163,7 @@ const PanelFooter = () => (
         height={DEFAULT_BUTTON_HEIGHT}
         link
         className={'render-settings-button'}
-        onClick={nop}
+        onClick={() => {handleClose()}}
       >
         Cancel {/* TODO add functionality to close  */}
       </Button>
@@ -194,9 +194,9 @@ class RenderSettingsPanel extends Component {
 
     return (
       <Panel settingsWidth={settingsWidth} className="render-settings-panel">
-        <PanelClose buttonHeight={buttonHeight} handleClose={handleClose}/>
+        <PanelClose buttonHeight={buttonHeight} handleClose={handleClose}/> {/* handleClose for X button */}
         <PanelBody />
-        <PanelFooter />
+        <PanelFooter handleClose={handleClose}/> {/* handleClose for Cancel button */}
       </Panel>
     );
   }
