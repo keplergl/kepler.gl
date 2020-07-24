@@ -296,7 +296,6 @@ function KeplerGlFactory(
         mapboxApiUrl,
         mapState,
         uiState,
-        visState,
         editor: visState.editor,
         mapStyle,
         mapControls: uiState.mapControls,
@@ -320,18 +319,16 @@ function KeplerGlFactory(
       const isSplit = splitMaps && splitMaps.length > 1;
       const containerW = mapState.width * (Number(isSplit) + 1);
 
-      const mapContainers = !isSplit ? (
-        <MapContainer key={0} index={0} {...mapFields} mapLayers={null} />
-      ) : (
-        splitMaps.map((settings, index) => (
-          <MapContainer
-            key={index}
-            index={index}
-            {...mapFields}
-            mapLayers={splitMaps[index].layers}
-          />
-        ))
-      );
+      const mapContainers = !isSplit
+        ? [<MapContainer key={0} index={0} {...mapFields} mapLayers={null} />]
+        : splitMaps.map((settings, index) => (
+            <MapContainer
+              key={index}
+              index={index}
+              {...mapFields}
+              mapLayers={splitMaps[index].layers}
+            />
+          ));
 
       const isExportingImage = uiState.exportImage.exporting;
 
@@ -363,6 +360,7 @@ function KeplerGlFactory(
                     setExportImageSetting={uiStateActions.setExportImageSetting}
                     setExportImageDataUri={uiStateActions.setExportImageDataUri}
                     setExportImageError={uiStateActions.setExportImageError}
+                    splitMaps={splitMaps}
                   />
                 )}
                 {!uiState.readOnly && interactionConfig.geocoder.enabled && (

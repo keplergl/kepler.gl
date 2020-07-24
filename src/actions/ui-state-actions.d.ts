@@ -100,13 +100,9 @@ export type SetExportImageSettingUpdaterAction = {
     processing?: boolean;
   };
 };
-export function setExportImageSetting(newSetting: {
-  ratio?: string;
-  resolution?: string;
-  legend?: string;
-  center?: boolean;
-  exporting?: boolean;
-}): Merge<SetExportImageSettingUpdaterAction, {type: ActionTypes.SET_EXPORT_IMAGE_SETTING}>;
+export function setExportImageSetting(newSetting:
+  SetExportImageSettingUpdaterAction['payload']
+): Merge<SetExportImageSettingUpdaterAction, {type: ActionTypes.SET_EXPORT_IMAGE_SETTING}>;
 
 /** START_EXPORTING_IMAGE */
 export function startExportingImage(options?: {

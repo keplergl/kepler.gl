@@ -63,10 +63,6 @@ const ExportImageModalFactory = () => {
       onUpdateImageSetting: PropTypes.func.isRequired
     };
 
-    componentDidMount() {
-      // this._updateMapDim();
-    }
-
     componentDidUpdate() {
       this._updateMapDim();
     }

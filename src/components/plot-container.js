@@ -44,7 +44,8 @@ const propTypes = {
   mapFields: PropTypes.object.isRequired,
   setExportImageSetting: PropTypes.object.isRequired,
   setExportImageDataUri: PropTypes.func.isRequired,
-  setExportImageError: PropTypes.func.isRequired
+  setExportImageError: PropTypes.func.isRequired,
+  splitMaps: PropTypes.arrayOf(PropTypes.object)
 };
 
 PlotContainerFactory.deps = [MapContainerFactory];
@@ -156,7 +157,7 @@ export default function PlotContainerFactory(MapContainer) {
         height: imageSize.imageH || 1
       };
 
-      const bounds = findMapBounds(mapFields.visState.layers);
+      const bounds = findMapBounds(mapFields.layers);
       const width = size.width / (isSplit ? 2 : 1);
       const height = size.height;
       const scale = this.mapScaleSelector(this.props);

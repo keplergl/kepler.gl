@@ -32,6 +32,7 @@ import {
 import {LOCALE_CODES} from 'localization/locales';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 import {calculateExportImageSize} from 'utils/export-utils';
+import {payload_, apply_, compose_} from './composer-helpers';
 import {EXPORT_IMAGE_ID} from '../constants';
 import {OVERWRITE_MAP_ID, SAVE_MAP_ID} from '../constants/default-settings';
 
@@ -451,13 +452,11 @@ export const startExportingImageUpdater = (state, {payload: options = {}}) => {
     exporting: true
   };
 
-  const modifiers = [
+  return compose_([
     cleanupExportImageUpdater,
-    // custom exporting options
-    newState => setExportImageSettingUpdater(newState, {payload: imageSettings}),
-    newState => toggleModalUpdater(newState, {payload: EXPORT_IMAGE_ID})
-  ];
-  return modifiers.reduce((acc, modifier) => modifier(acc), state);
+    apply_(setExportImageSettingUpdater, payload_(imageSettings)),
+    apply_(toggleModalUpdater, payload_(EXPORT_IMAGE_ID))
+  ])(state);
 };
 
 /**
@@ -723,16 +722,9 @@ export const setLocaleUpdater = (state, {payload: {locale}}) => ({
  * @type {typeof import('./ui-state-updaters').startSaveStorage}
  */
 export const startSaveStorage = (state, {payload: mapSaved}) => {
-  const modifiers = [
+  return compose_([
     cleanupExportImageUpdater,
-    // exporting = true and appending plot-container to the dom
-    newState =>
-      setExportImageSettingUpdater(newState, {
-        payload: {
-          exporting: true
-        }
-      }),
-    newState => toggleModalUpdater(newState, {payload: mapSaved ? OVERWRITE_MAP_ID : SAVE_MAP_ID})
-  ];
-  return modifiers.reduce((acc, modifier) => modifier(acc), state);
+    apply_(setExportImageSettingUpdater, payload_({exporting: true})),
+    apply_(toggleModalUpdater, payload_(mapSaved ? OVERWRITE_MAP_ID : SAVE_MAP_ID))
+  ])(state);
 };
