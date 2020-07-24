@@ -179,7 +179,7 @@ export default function ModalContainerFactory(
     };
 
     _onExportImage = () => {
-      if (!this.props.uiState.exportImage.exporting) {
+      if (!this.props.uiState.exportImage.processing) {
         exportImage(this.props);
         this.props.uiStateActions.cleanupExportImage();
         this._closeModal();
@@ -356,7 +356,7 @@ export default function ModalContainerFactory(
                 exportImage={uiState.exportImage}
                 mapW={containerW}
                 mapH={containerH}
-                onUpdateSetting={uiStateActions.setExportImageSetting}
+                onUpdateImageSetting={uiStateActions.setExportImageSetting}
               />
             );
             modalProps = {
@@ -367,7 +367,7 @@ export default function ModalContainerFactory(
               onConfirm: this._onExportImage,
               confirmButton: {
                 large: true,
-                disabled: uiState.exportImage.exporting,
+                disabled: uiState.exportImage.processing,
                 children: 'modal.button.download'
               }
             };
@@ -455,7 +455,6 @@ export default function ModalContainerFactory(
                 exportImage={uiState.exportImage}
                 mapInfo={visState.mapInfo}
                 onSetMapInfo={visStateActions.setMapInfo}
-                onUpdateImageSetting={uiStateActions.setExportImageSetting}
                 cloudProviders={this.providerWithStorage(this.props)}
                 onSetCloudProvider={this.props.providerActions.setCloudProvider}
               />

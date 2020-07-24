@@ -17,6 +17,7 @@ export type ExportImage = {
   // exporting state
   imageDataUri: string;
   exporting: boolean;
+  processing: boolean;
   error: Error;
 };
 
@@ -129,10 +130,6 @@ export function setExportImageSettingUpdater(
   state: UiState,
   action: UiStateActions.SetExportImageSettingUpdaterAction
 ): UiState;
-export function startExportingImageUpdater(
-  state: UiState,
-  action: UiStateActions.StartExportingImageUpdaterAction
-): UiState;
 export function setExportImageDataUriUpdater(
   state: UiState,
   action: UiStateActions.SetExportImageDataUriUpdaterAction
@@ -144,6 +141,10 @@ export function setExportImageErrorUpdater(
 export function cleanupExportImageUpdater(
   state: UiState,
   action: UiStateActions.CleanupExportImageUpdaterAction
+): UiState;
+export function startExportingImageUpdater(
+  state: UiState,
+  action: UiStateActions.startExportingImage
 ): UiState;
 export function setExportSelectedDatasetUpdater(
   state: UiState,
@@ -177,6 +178,10 @@ export function setLocaleUpdater(
   state: UiState,
   action: UiStateActions.SetLocaleUpdaterAction
 ): UiState;
+export function startSaveStorage(
+  state: UiState,
+  action: UiStateActions.StartSaveStorage
+): UiState
 
 export function loadFilesUpdater(state: UiState, action: LoadFilesUpdaterAction): UiState;
 export function loadFilesErrUpdater(state: UiState, action: LoadFilesErrUpdaterAction): UiState;

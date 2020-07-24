@@ -32,6 +32,9 @@ import {
 import {LOCALE_CODES} from 'localization/locales';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 import {calculateExportImageSize} from 'utils/export-utils';
+import {payload_, apply_, compose_} from './composer-helpers';
+import {EXPORT_IMAGE_ID} from '../constants';
+import {OVERWRITE_MAP_ID, SAVE_MAP_ID} from '../constants/default-settings';
 
 export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
 export const DEFAULT_MODAL = ADD_DATA_ID;
@@ -140,9 +143,14 @@ export const DEFAULT_EXPORT_IMAGE = {
     imageW: 0,
     imageH: 0
   },
+  // when this is set to true, the mock map viewport will move to the center of data
+  center: false,
   // exporting state
   imageDataUri: '',
+  // exporting: used to attach plot-container to dom
   exporting: false,
+  // processing: used as loading indicator when export image is being produced
+  processing: false,
   error: false
 };
 
@@ -380,23 +388,6 @@ export const setExportImageSettingUpdater = (state, {payload: newSetting}) => {
 };
 
 /**
- * Set `exportImage.exporting` to `true`
- * @memberof uiStateUpdaters
- * @param state `uiState`
- * @returns nextState
- * @type {typeof import('./ui-state-updaters').startExportingImageUpdater}
- * @public
- */
-export const startExportingImageUpdater = state => ({
-  ...state,
-  exportImage: {
-    ...state.exportImage,
-    exporting: true,
-    imageDataUri: ''
-  }
-});
-
-/**
  * Set `exportImage.setExportImageDataUri` to a image dataUri
  * @memberof uiStateUpdaters
  * @param state `uiState`
@@ -410,7 +401,7 @@ export const setExportImageDataUriUpdater = (state, {payload: dataUri}) => ({
   ...state,
   exportImage: {
     ...state.exportImage,
-    exporting: false,
+    processing: false,
     imageDataUri: dataUri
   }
 });
@@ -441,9 +432,32 @@ export const cleanupExportImageUpdater = state => ({
     ...state.exportImage,
     exporting: false,
     imageDataUri: '',
-    error: false
+    error: false,
+    center: false
   }
 });
+
+/**
+ * Start image exporting flow
+ * @memberof uiStateUpdaters
+ * @param state
+ * @param options
+ * @returns {UiState}
+ * @type {typeof import('./ui-state-updaters').startExportingImage}
+ * @public
+ */
+export const startExportingImageUpdater = (state, {payload: options = {}}) => {
+  const imageSettings = {
+    ...options,
+    exporting: true
+  };
+
+  return compose_([
+    cleanupExportImageUpdater,
+    apply_(setExportImageSettingUpdater, payload_(imageSettings)),
+    apply_(toggleModalUpdater, payload_(EXPORT_IMAGE_ID))
+  ])(state);
+};
 
 /**
  * Set selected dataset for export
@@ -698,3 +712,19 @@ export const setLocaleUpdater = (state, {payload: {locale}}) => ({
   ...state,
   locale
 });
+
+/**
+ * Start saving storage  flow
+ * @memberof uiStateUpdaters
+ * @param state
+ * @param mapSaved
+ * @returns {UiState}
+ * @type {typeof import('./ui-state-updaters').startSaveStorage}
+ */
+export const startSaveStorage = (state, {payload: mapSaved}) => {
+  return compose_([
+    cleanupExportImageUpdater,
+    apply_(setExportImageSettingUpdater, payload_({exporting: true})),
+    apply_(toggleModalUpdater, payload_(mapSaved ? OVERWRITE_MAP_ID : SAVE_MAP_ID))
+  ])(state);
+};
