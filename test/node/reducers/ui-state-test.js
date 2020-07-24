@@ -29,7 +29,9 @@ import {
   setExportSelectedDataset,
   setExportDataType,
   setExportFiltered,
-  addNotification
+  addNotification,
+  startExportingImage,
+  startSaveStorage
 } from 'actions/ui-state-actions';
 import {loadFiles, loadFilesErr} from 'actions/vis-state-actions';
 import reducer, {uiStateReducerFactory} from 'reducers/ui-state';
@@ -38,7 +40,9 @@ import {
   EXPORT_DATA_TYPE,
   RESOLUTIONS,
   DEFAULT_NOTIFICATION_TOPICS,
-  DEFAULT_NOTIFICATION_TYPES
+  DEFAULT_NOTIFICATION_TYPES,
+  EXPORT_IMAGE_ID,
+  SAVE_MAP_ID
 } from 'constants/default-settings';
 import {removeNotification} from 'actions/ui-state-actions';
 
@@ -122,6 +126,23 @@ test('#uiStateReducer -> SET_EXPORT_IMAGE_SETTING', t => {
   };
 
   t.deepEqual(newReducer, expectedState, 'should set the resolution to TWO_X');
+
+  t.end();
+});
+
+test('#uiStateReducer -> START_EXPORTING_IMAGE', t => {
+  const newReducer = reducer(INITIAL_UI_STATE, startExportingImage());
+
+  const expectedState = {
+    ...INITIAL_UI_STATE,
+    currentModal: EXPORT_IMAGE_ID,
+    exportImage: {
+      ...INITIAL_UI_STATE.exportImage,
+      exporting: true
+    }
+  };
+
+  t.deepEqual(newReducer, expectedState, 'should set exporting to true and modal to export image');
 
   t.end();
 });
@@ -273,6 +294,23 @@ test('#uiStateReducer -> LOAD_FILES_ERR', t => {
     ],
     'should add an error notification'
   );
+
+  t.end();
+});
+
+test('#uiStateReducer -> START_SAVE_STORAGE', t => {
+  const newReducer = reducer(INITIAL_UI_STATE, startSaveStorage(''));
+
+  const expectedState = {
+    ...INITIAL_UI_STATE,
+    currentModal: SAVE_MAP_ID,
+    exportImage: {
+      ...INITIAL_UI_STATE.exportImage,
+      exporting: true
+    }
+  };
+
+  t.deepEqual(newReducer, expectedState, 'should set exporting to true and modal to export image');
 
   t.end();
 });
