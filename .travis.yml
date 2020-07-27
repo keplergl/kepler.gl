@@ -1,0 +1,34 @@
+language: node_js
+os: linux
+env:
+  - CXX=g++-6
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-6
+      - mesa-utils
+      - xvfb
+      - libgl1-mesa-dri
+      - libglapi-mesa
+      - libosmesa6
+      - libxi-dev
+services:
+  - xvfb
+install:
+  - yarn
+  - yarn install:example
+node_js:
+  - 10
+before_script:
+  - "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
+  - ulimit -c unlimited -S       # enable core dumps
+  - echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p    # avoid Node.JS Error: ENOSPC
+after_success:
+  - cat coverage/lcov.info | coveralls
+script:
+  - npm run lint
+  - npm run coveralls
+  - fossa
+cache: yarn

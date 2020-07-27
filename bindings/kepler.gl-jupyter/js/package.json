@@ -1,0 +1,80 @@
+{
+  "name": "keplergl-jupyter",
+  "version": "0.2.0",
+  "description": "This is a simple jupyter widget for kepler.gl, an advanced geo-spatial visualization tool, to render large-scale interactive maps.",
+  "author": "Shan He",
+  "license": "MIT",
+  "main": "babel/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keplergl/kepler.gl.git"
+  },
+  "keywords": [
+    "jupyter",
+    "jupyterlab",
+    "jupyterlab-extension",
+    "widgets",
+    "ipython",
+    "ipywidgets"
+  ],
+  "files": [
+    "lib/**/*.js",
+    "dist/*.js",
+    "babel/**"
+  ],
+  "scripts": {
+    "start": "NODE_ENV=development webpack --config ./webpack/dev.js --mode development --watch --progress",
+    "clean": "rimraf dist/ && rimraf ../keplergl/static/",
+    "cleanall": "npm run clean && rimraf node_modules/",
+    "prepublish": "yarn build && yarn build:lab",
+    "build": "npm run clean && webpack --config ./webpack/build.js",
+    "build:lab": "rimraf babel/ && mkdir babel && babel lib --out-dir babel",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint lib webpack --fix",
+    "prettier": "prettier --config ./.prettierrc --print-width 80 --single-quote --write lib/**/*.js"
+  },
+  "devDependencies": {
+    "@babel/cli": "7.4.4",
+    "@babel/core": "7.4.5",
+    "@babel/plugin-proposal-class-properties": "^7.3.0",
+    "@babel/preset-env": "^7.0.0",
+    "@babel/preset-react": "^7.0.0",
+    "babel-eslint": "^9.0.0",
+    "babel-loader": "^8.0.0",
+    "babel-plugin-search-and-replace": "^1.0.0",
+    "babel-plugin-transform-inline-environment-variables": "0.4.3",
+    "eslint": "^5.12.1",
+    "eslint-config-prettier": "^3.6.0",
+    "eslint-config-uber-es2015": "^3.1.2",
+    "eslint-config-uber-jsx": "^3.3.3",
+    "eslint-plugin-babel": "^5.3.0",
+    "eslint-plugin-prettier": "^3.0.1",
+    "eslint-plugin-react": "~7.12.4",
+    "html-webpack-plugin": "^4.3.0",
+    "react-dev-utils": "^10.2.1",
+    "rimraf": "^2.6.1",
+    "webpack": "^4.29.0",
+    "webpack-cli": "^3.2.3",
+    "webpack-dev-middleware": "^3.5.1",
+    "webpack-dev-server": "^3.1.14",
+    "webpack-hot-middleware": "^2.24.3",
+    "webpack-stats-plugin": "^0.2.1"
+  },
+  "dependencies": {
+    "@jupyter-widgets/base": "^1.1.10 || ^2.0.0 || ^3.0.0",
+    "global": "^4.3.0",
+    "kepler.gl": "^2.2.0",
+    "react": "^16.8.4",
+    "react-copy-to-clipboard": "^5.0.2",
+    "react-dom": "^16.8.4",
+    "react-helmet": "^5.2.0",
+    "react-intl": "^3.12.0",
+    "react-redux": "^7.1.3",
+    "redux": "^3.7.2",
+    "redux-actions": "^2.2.1",
+    "styled-components": "^4.1.3"
+  },
+  "jupyterlab": {
+    "extension": "babel/labplugin"
+  }
+}
