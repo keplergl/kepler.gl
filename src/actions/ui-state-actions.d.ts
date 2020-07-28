@@ -181,3 +181,12 @@ export type SetLocaleUpdaterAction = {
 export function setLocale(
   locale: string
 ): Merge<SetLocaleUpdaterAction, {type: ActionTypes.SET_LOCALE}>;
+
+/** TOGGLE_HUBBLE_EXPORT_MODAL TODO */ 
+export type ToggleHubbleExportModalUpdaterAction = {
+  payload: {isOpen: string};
+};
+
+export function toggleHubbleExportModal(
+  locale: string
+): Merge<ToggleHubbleExportModalUpdaterAction, {type: ActionTypes.TOGGLE_HUBBLE_EXPORT_MODAL}>;

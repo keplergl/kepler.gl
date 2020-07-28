@@ -56,8 +56,9 @@ class HubbleExport extends Component {
     }
 
     render() {
-        // console.log(this.props)
-        console.log(this.state)
+        console.log(this.props)
+        // console.log(this.state)
+
         return (
             <div>
                 <RenderSettingsModal isOpen={this.state.isOpen} handleClose={this.handleClose.bind(this)} />
