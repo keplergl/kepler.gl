@@ -52,7 +52,7 @@ export type ActionType = {
   COPY_TABLE_COLUMN: string;
   NEXT_FILE_BATCH: string;
   PROCESS_FILE_CONTENT: string;
-  
+
   // mapState
   UPDATE_MAP: string;
   FIT_BOUNDS: string;
@@ -116,6 +116,9 @@ export type ActionType = {
   SET_POLYGON_FILTER_LAYER: string;
   DELETE_FEATURE: string;
   TOGGLE_EDITOR_VISIBILITY: string;
+
+  // storage
+  START_SAVE_STORAGE: string;
 };
 
 export const ActionTypes: ActionType;

@@ -35,15 +35,11 @@ import * as UIStateActions from 'actions/ui-state-actions';
 import * as ProviderActions from 'actions/provider-actions';
 
 import {
-  EXPORT_IMAGE_ID,
   DIMENSIONS,
   KEPLER_GL_NAME,
   KEPLER_GL_VERSION,
   THEME,
-  DEFAULT_MAPBOX_API_URL,
-  SAVE_MAP_ID,
-  SHARE_MAP_ID,
-  OVERWRITE_MAP_ID
+  DEFAULT_MAPBOX_API_URL
 } from 'constants/default-settings';
 import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
 
@@ -334,11 +330,7 @@ function KeplerGlFactory(
             />
           ));
 
-      const isExporting =
-        uiState.currentModal === EXPORT_IMAGE_ID ||
-        uiState.currentModal === SAVE_MAP_ID ||
-        uiState.currentModal === SHARE_MAP_ID ||
-        uiState.currentModal === OVERWRITE_MAP_ID;
+      const isExportingImage = uiState.exportImage.exporting;
 
       const theme = this.availableThemeSelector(this.props);
 
@@ -358,16 +350,17 @@ function KeplerGlFactory(
                 <div className="maps" style={{display: 'flex'}}>
                   {mapContainers}
                 </div>
-                {isExporting && (
+                {isExportingImage && (
                   <PlotContainer
                     width={width}
                     height={height}
                     exportImageSetting={uiState.exportImage}
                     mapFields={mapFields}
                     addNotification={uiStateActions.addNotification}
-                    startExportingImage={uiStateActions.startExportingImage}
+                    setExportImageSetting={uiStateActions.setExportImageSetting}
                     setExportImageDataUri={uiStateActions.setExportImageDataUri}
                     setExportImageError={uiStateActions.setExportImageError}
+                    splitMaps={splitMaps}
                   />
                 )}
                 {!uiState.readOnly && interactionConfig.geocoder.enabled && (

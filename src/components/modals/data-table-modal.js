@@ -57,7 +57,7 @@ export const DatasetModalTab = styled.div`
   }
 `;
 
-export const DatasetTabs = React.memo(({activeDataset, datasets, showDatasetTable}) => (
+const DatasetTabsUnmemoized = ({activeDataset, datasets, showDatasetTable}) => (
   <DatasetCatalog className="dataset-modal-catalog">
     {Object.values(datasets).map(dataset => (
       <DatasetModalTab
@@ -70,7 +70,9 @@ export const DatasetTabs = React.memo(({activeDataset, datasets, showDatasetTabl
       </DatasetModalTab>
     ))}
   </DatasetCatalog>
-));
+);
+
+export const DatasetTabs = React.memo(DatasetTabsUnmemoized);
 
 DatasetTabs.displayName = 'DatasetTabs';
 

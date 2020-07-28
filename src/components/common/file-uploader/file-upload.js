@@ -34,12 +34,6 @@ import {FormattedMessage, injectIntl} from 'react-intl';
 
 /** @typedef {import('./file-upload').FileUploadProps} FileUploadProps */
 
-// File.type is not reliable if the OS does not have a
-// registered mapping for the extension.
-// NOTE: Shapefiles must be in a compressed format since
-// it requires multiple files to be present.
-const defaultValidFileExt = ['csv', 'json', 'geojson'];
-
 const fileIconColor = '#D3D8E0';
 
 const LinkRenderer = props => {
@@ -154,10 +148,6 @@ const StyledDisclaimer = styled(StyledMessage)`
 function FileUploadFactory() {
   /** @augments {Component<FileUploadProps>} */
   class FileUpload extends Component {
-    static defaultProps = {
-      validFileExt: defaultValidFileExt
-    };
-
     state = {
       dragOver: false,
       fileLoading: false,
@@ -180,8 +170,8 @@ function FileUploadFactory() {
     frame = createRef();
 
     _isValidFileType = filename => {
-      const {validFileExt} = this.props;
-      const fileExt = validFileExt.find(ext => filename.endsWith(ext));
+      const {fileExtensions = []} = this.props;
+      const fileExt = fileExtensions.find(ext => filename.endsWith(ext));
 
       return Boolean(fileExt);
     };
@@ -194,11 +184,13 @@ function FileUploadFactory() {
 
       const files = [...fileList].filter(Boolean);
 
+      const {disableExtensionFilter = false} = this.props;
+
       // TODO - move this code out of the component
       const filesToLoad = [];
       const errorFiles = [];
       for (const file of files) {
-        if (this._isValidFileType(file.name)) {
+        if (disableExtensionFilter || this._isValidFileType(file.name)) {
           filesToLoad.push(file);
         } else {
           errorFiles.push(file.name);
@@ -218,7 +210,8 @@ function FileUploadFactory() {
 
     render() {
       const {dragOver, files, errorFiles} = this.state;
-      const {validFileExt, intl, fileLoading, fileLoadingProgress, theme} = this.props;
+      const {fileLoading, fileLoadingProgress, theme, intl} = this.props;
+      const {fileExtensions = [], fileFormatNames = []} = this.props;
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>
           {FileDrop ? (
@@ -231,15 +224,20 @@ function FileUploadFactory() {
             >
               <StyledUploadMessage className="file-upload__message">
                 <ReactMarkdown
-                  source={`${intl.formatMessage({
-                    id: 'fileUploader.configUploadMessage'
-                  })}(${GUIDES_FILE_FORMAT_DOC}).`}
+                  source={`${intl.formatMessage(
+                    {
+                      id: 'fileUploader.configUploadMessage'
+                    },
+                    {
+                      fileFormatNames: fileFormatNames.map(format => `**${format}**`).join(', ')
+                    }
+                  )}(${GUIDES_FILE_FORMAT_DOC}).`}
                   renderers={{link: LinkRenderer}}
                 />
               </StyledUploadMessage>
               <StyledFileDrop dragOver={dragOver}>
                 <StyledFileTypeFow className="file-type-row">
-                  {validFileExt.map(ext => (
+                  {fileExtensions.map(ext => (
                     <FileType key={ext} ext={ext} height="50px" fontSize="9px" />
                   ))}
                 </StyledFileTypeFow>

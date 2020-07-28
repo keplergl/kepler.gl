@@ -2293,6 +2293,14 @@
     "@babel/runtime" "^7.3.1"
     "@probe.gl/stats" "^3.3.0"
 
+"@loaders.gl/loader-utils@^2.2.5":
+  version "2.2.8"
+  resolved "https://registry.yarnpkg.com/@loaders.gl/loader-utils/-/loader-utils-2.2.8.tgz#9f12f3460260b15e961fa46c3d3c867d7bf48bee"
+  integrity sha512-3F2VgxJPxjuZwAr8fDBkZzx3Wg275XdVaWnyYQ3uyZQ22yGEkrzKc+TlgcqSrxbO5pHrtS5PdS7dmyoJo2+Bdg==
+  dependencies:
+    "@babel/runtime" "^7.3.1"
+    "@probe.gl/stats" "^3.3.0"
+
 "@loaders.gl/math@2.2.5":
   version "2.2.5"
   resolved "https://registry.yarnpkg.com/@loaders.gl/math/-/math-2.2.5.tgz#d3c52a75821b5934e54dd82211a372a69ec6474e"

@@ -61,6 +61,7 @@ import {
 } from 'constants/default-settings';
 import {EXPORT_MAP_FORMATS} from 'constants/default-settings';
 import KeyEvent from 'constants/keyevent';
+import {getFileFormatNames, getFileExtensions} from '../reducers/vis-state-selectors';
 
 const DataTableModalStyle = css`
   top: 80px;
@@ -117,8 +118,8 @@ export default function ModalContainerFactory(
   SaveMapModal,
   ShareMapModal
 ) {
-  /** @typedef {import('./modal-container').ModalContainer} ModalContainer */
-  /** @augments React.Component<ModalContainer> */
+  /** @typedef {import('./modal-container').ModalContainerProps} ModalContainerProps */
+  /** @augments React.Component<ModalContainerProps> */
   class ModalContainer extends Component {
     // TODO - remove when prop types are fully exported
     static propTypes = {
@@ -173,13 +174,13 @@ export default function ModalContainerFactory(
       this._closeModal();
     };
 
-    _onFileUpload = blob => {
-      this.props.visStateActions.loadFiles(blob);
+    _onFileUpload = fileList => {
+      this.props.visStateActions.loadFiles(fileList);
     };
 
     _onExportImage = () => {
-      if (!this.props.uiState.exportImage.exporting) {
-        exportImage(this.props, this.props.uiState.exportImage);
+      if (!this.props.uiState.exportImage.processing) {
+        exportImage(this.props);
         this.props.uiStateActions.cleanupExportImage();
         this._closeModal();
       }
@@ -204,6 +205,7 @@ export default function ModalContainerFactory(
       const toSave = exportMap(this.props);
 
       this.props.providerActions.exportFileToCloud({
+        // @ts-ignore
         mapData: toSave,
         provider,
         options: {
@@ -218,6 +220,7 @@ export default function ModalContainerFactory(
 
     _onSaveMap = (overwrite = false) => {
       const {currentProvider} = this.props.providerState;
+      // @ts-ignore
       const provider = this.props.cloudProviders.find(p => p.name === currentProvider);
       this._exportFileToCloud({
         provider,
@@ -269,10 +272,14 @@ export default function ModalContainerFactory(
       let template = null;
       let modalProps = {};
 
+      // TODO - currentModal is a string
+      // @ts-ignore
       if (currentModal && currentModal.id && currentModal.template) {
         // if currentMdoal template is already provided
         // TODO: need to check whether template is valid
+        // @ts-ignore
         template = <currentModal.template />;
+        // @ts-ignore
         modalProps = currentModal.modalProps;
       } else {
         switch (currentModal) {
@@ -332,6 +339,8 @@ export default function ModalContainerFactory(
                 loadFiles={uiState.loadFiles}
                 fileLoading={visState.fileLoading}
                 fileLoadingProgress={visState.fileLoadingProgress}
+                fileFormatNames={getFileFormatNames(this.props.visState)}
+                fileExtensions={getFileExtensions(this.props.visState)}
               />
             );
             modalProps = {
@@ -347,17 +356,18 @@ export default function ModalContainerFactory(
                 exportImage={uiState.exportImage}
                 mapW={containerW}
                 mapH={containerH}
-                onUpdateSetting={uiStateActions.setExportImageSetting}
+                onUpdateImageSetting={uiStateActions.setExportImageSetting}
               />
             );
             modalProps = {
               title: 'modal.title.exportImage',
+              cssStyle: '',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onExportImage,
               confirmButton: {
                 large: true,
-                disabled: uiState.exportImage.exporting,
+                disabled: uiState.exportImage.processing,
                 children: 'modal.button.download'
               }
             };
@@ -376,6 +386,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               title: 'modal.title.exportData',
+              cssStyle: '',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onExportData,
@@ -403,6 +414,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               title: 'modal.title.exportMap',
+              cssStyle: '',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onExportMap,
@@ -425,6 +437,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               title: 'modal.title.addCustomMapboxStyle',
+              cssStyle: '',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: this._onAddCustomMapStyle,
@@ -442,13 +455,13 @@ export default function ModalContainerFactory(
                 exportImage={uiState.exportImage}
                 mapInfo={visState.mapInfo}
                 onSetMapInfo={visStateActions.setMapInfo}
-                onUpdateImageSetting={uiStateActions.setExportImageSetting}
                 cloudProviders={this.providerWithStorage(this.props)}
                 onSetCloudProvider={this.props.providerActions.setCloudProvider}
               />
             );
             modalProps = {
               title: 'modal.title.saveMap',
+              cssStyle: '',
               footer: true,
               onCancel: this._closeModal,
               onConfirm: () => this._onSaveMap(false),
@@ -501,6 +514,7 @@ export default function ModalContainerFactory(
             );
             modalProps = {
               title: 'modal.title.shareURL',
+              cssStyle: '',
               onCancel: this._onCloseSaveMap
             };
             break;
@@ -515,7 +529,7 @@ export default function ModalContainerFactory(
           isOpen={Boolean(currentModal)}
           onCancel={this._closeModal}
           {...modalProps}
-          cssStyle={DefaultStyle.concat(modalProps.cssStyle || '')}
+          cssStyle={DefaultStyle.concat(modalProps.cssStyle)}
         >
           {template}
         </ModalDialog>

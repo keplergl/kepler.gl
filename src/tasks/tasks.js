@@ -23,7 +23,8 @@ import {json as requestJson} from 'd3-request';
 import {readFileInBatches, processFileData} from '../processors/file-handler';
 
 export const LOAD_FILE_TASK = Task.fromPromise(
-  ({file, fileCache}) => readFileInBatches({file, fileCache}),
+  ({file, fileCache, loaders, loadOptions}) =>
+    readFileInBatches({file, fileCache, loaders, loadOptions}),
   'LOAD_FILE_TASK'
 );
 

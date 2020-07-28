@@ -18,31 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import PropTypes from 'prop-types';
-import Checkbox from './checkbox';
+import {createSelector} from 'reselect';
 
-const propTypes = {
-  checked: PropTypes.bool,
-  type: PropTypes.string,
-  id: PropTypes.string.isRequired,
-  label: PropTypes.node,
-  error: PropTypes.string,
-  onBlur: PropTypes.func,
-  onChange: PropTypes.func,
-  onFocus: PropTypes.func,
-  value: PropTypes.string
-};
+// NOTE: default formats must match file-handler.js
+const DEFAULT_FILE_EXTENSIONS = ['csv', 'json', 'geojson'];
+const DEFAULT_FILE_FORMATS = ['CSV', 'Json', 'GeoJSON'];
 
-const Switch = props => {
-  const switchProps = {
-    ...props,
-    switch: props.type !== 'checkbox'
-  };
+export const getFileFormatNames = createSelector(
+  state => state.loaders,
+  loaders => [...DEFAULT_FILE_FORMATS, ...loaders.map(loader => loader.name)]
+);
 
-  return <Checkbox {...switchProps} />;
-};
-
-Switch.propTypes = propTypes;
-
-export default Switch;
+export const getFileExtensions = createSelector(
+  state => state.loaders,
+  loaders => [...DEFAULT_FILE_EXTENSIONS, ...loaders.flatMap(loader => loader.extensions)]
+);

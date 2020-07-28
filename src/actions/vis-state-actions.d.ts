@@ -20,12 +20,15 @@
 
 // vis-state-reducer
 import ActionTypes, {ActionType} from 'constants/action-types';
-import {ProtoDataset, AddDataToMaoPayload} from '../actions/actions';
+import {ProtoDataset, AddDataToMapPayload} from '../actions/actions';
 import {ParsedConfig} from '../schemas';
 import {FileCacheItem} from '../processors/file-handler';
 import {Layer, LayerConfig, LayerVisConfig} from 'layers';
 import {Feature, InteractionConfig} from 'reducers/vis-state-updaters';
 import {ValueOf, Merge} from '../reducers/types';
+// TODO - import LoaderObject type from @loaders.gl/core when supported
+// TODO - import LoadOptions type from @loaders.gl/core when supported
+import {LoaderObject} from '@loaders.gl/loader-utils';
 
 export type LayerConfigChangeUpdaterAction = {
   oldLayer: Layer;
@@ -199,21 +202,21 @@ export function copyTableColumn(
   column: string
 ): Merge<CopyTableColumnUpdaterAction, {type: ActionTypes.COPY_TABLE_COLUMN}>;
 
-export type AddDaataToMapOUpdaterptions = {
+export type AddDataToMapUpdaterOptions = {
   centrMap?: boolean;
   readOnly?: boolean;
   keepExistingConfig?: boolean;
 };
 
 export type UpdateVisDataUpdaterAction = {
-  datasets: AddDataToMaoPayload['datasets'];
-  options: AddDataToMaoPayload['options'];
-  config: AddDataToMaoPayload['config'];
-} & AddDataToMaoPayload;
+  datasets: AddDataToMapPayload['datasets'];
+  options: AddDataToMapPayload['options'];
+  config: AddDataToMapPayload['config'];
+} & AddDataToMapPayload;
 export function updateVisData(
-  datasets: AddDataToMaoPayload['datasets'],
-  options: AddDataToMaoPayload['options'],
-  config: AddDataToMaoPayload['config']
+  datasets: AddDataToMapPayload['datasets'],
+  options: AddDataToMapPayload['options'],
+  config: AddDataToMapPayload['config']
 ): Merge<UpdateVisDataUpdaterAction, {type: ActionTypes.UPDATE_VIS_DATA}>;
 
 export type ToggleFilterAnimationUpdaterAction = {
