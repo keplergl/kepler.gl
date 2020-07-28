@@ -16,6 +16,7 @@ function mapStateToProps(state = {}, props) {
       mapState: state.mapState,
       uiState: state.uiState,
       providerState: state.providerState
+    //   isOpen: state.isOpen TODO
     };
 }
 
@@ -25,6 +26,7 @@ function makeMapDispatchToProps() {
     //   const groupedActionCreators = getActionCreators(dispatch, ownProps);
   
       return {
+        //   TODO Put action creator and return here
         // ...groupedActionCreators,
         dispatch
       };

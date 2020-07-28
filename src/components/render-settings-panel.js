@@ -113,7 +113,8 @@ const PanelBody = () => (
       <Input placeholder="Video Name" />
       <StyledLabelCell>Media Type</StyledLabelCell> {/* TODO add functionality  */}
       <ItemSelector
-        selectedItems={['WebM Video']}
+        selectedItems={['WebM Video']} {/* this.state =  [mediaType: 'WebM Video'] */}
+        {/* onChange=this.setState(mediaType: 'NEW TYPE')*/}
         options={['WebM Video', 'PNG Sequence', 'JPEG Sequence']}
         multiSelect={false}
         searchable={false}
