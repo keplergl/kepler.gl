@@ -21,8 +21,10 @@
 import React from 'react';
 import styled, {withTheme} from 'styled-components';
 import ProgressBar from '../progress-bar';
-import {TrancatedTitleText} from 'components/common/styled-components';
+import {TruncatedTitleText} from 'components/common/styled-components';
 import {getError} from 'utils/utils';
+
+/** @typedef {import('./file-upload-progress').FileUploadProgressProps} FileUploadProgressProps*/
 
 const StyledFileProgress = styled.div.attrs({
   className: 'file-upload__progress'
@@ -61,7 +63,17 @@ const StyledContainer = styled.div`
   display: flex;
   justify-content: center;
 `;
+
 const formatPercent = percent => `${Math.floor(percent * 100)}%`;
+
+/**
+ * @param {object} params
+ * @param {string} params.message
+ * @param {string} params.fileName
+ * @param {number} params.percent
+ * @param {any} params.error
+ * @param {object} params.theme
+ */
 const UploadProgress = ({message, fileName, percent, error, theme}) => {
   const percentStr = formatPercent(percent);
   const barColor = error ? theme.errorColor : theme.activeColorLT;
@@ -69,13 +81,13 @@ const UploadProgress = ({message, fileName, percent, error, theme}) => {
   return (
     <StyledFileProgress className="file-upload-progress__message">
       <div className="top-row">
-        <TrancatedTitleText className="file-name" title={fileName}>
+        <TruncatedTitleText className="file-name" title={fileName}>
           {fileName}
-        </TrancatedTitleText>
+        </TruncatedTitleText>
         <div className="percent">{percentStr}</div>
       </div>
       <div className="middle-row">
-        <ProgressBar percent={percentStr} barColor={barColor} isLoading />
+        <ProgressBar percent={percentStr} barColor={barColor} isLoading theme={theme} />
       </div>
       <div className="bottom-row" style={{color: error ? theme.errorColor : theme.textColorLT}}>
         {error ? getError(error) : message}
@@ -84,6 +96,7 @@ const UploadProgress = ({message, fileName, percent, error, theme}) => {
   );
 };
 
+/** @type {React.FunctionComponent<FileUploadProgressProps>} */
 const FileUploadProgress = ({fileLoadingProgress, theme}) => (
   <StyledContainer>
     <StyledProgressWrapper>

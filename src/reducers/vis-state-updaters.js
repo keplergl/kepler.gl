@@ -202,7 +202,10 @@ export const INITIAL_VIS_STATE = {
   // time in unix timestamp (milliseconds) (the number of seconds since the Unix Epoch)
   animationConfig: DEFAULT_ANIMATION_CONFIG,
 
-  editor: DEFAULT_EDITOR
+  editor: DEFAULT_EDITOR,
+
+  fileLoading: false,
+  fileLoadingProgress: {}
 };
 
 /**
@@ -1248,18 +1251,28 @@ export const loadFilesUpdater = (state, action) => {
     (accu, f, i) => merge_(initialFileLoadingProgress(f, i))(accu),
     {}
   );
+
   const fileLoading = {
     fileCache: [],
     filesToLoad: files,
     onFinish
   };
-  const nextState = merge_({fileLoading})(merge_({fileLoadingProgress})(state));
+
+  const nextState = merge_({fileLoadingProgress, fileLoading})(state);
 
   return loadNextFileUpdater(nextState);
 };
 
-// sucessfully loaded one file, move on to the next one
+/**
+ * Sucessfully loaded one file, move on to the next one
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').loadFileStepSuccessUpdater}
+ * @public
+ */
 export function loadFileStepSuccessUpdater(state, action) {
+  if (!state.fileLoading) {
+    return state;
+  }
   const {fileName, fileCache} = action;
   const {filesToLoad, onFinish} = state.fileLoading;
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
@@ -1276,7 +1289,18 @@ export function loadFileStepSuccessUpdater(state, action) {
   );
 }
 
+// withTask<T>(state: T, task: any): T
+
+/**
+ *
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').loadNextFileUpdater}
+ * @public
+ */
 export function loadNextFileUpdater(state) {
+  if (!state.fileLoading) {
+    return state;
+  }
   const {filesToLoad} = state.fileLoading;
   const [file, ...remainingFilesToLoad] = filesToLoad;
 
@@ -1311,6 +1335,12 @@ export function makeLoadFileTask(file, fileCache) {
   );
 }
 
+/**
+ *
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').processFileContentUpdater}
+ * @public
+ */
 export function processFileContentUpdater(state, action) {
   const {content, fileCache} = action.payload;
 
@@ -1340,7 +1370,12 @@ export function parseProgress(prevProgress = {}, progress) {
   };
 }
 
-// gets called with payload = AsyncGenerator<???>
+/**
+ * gets called with payload = AsyncGenerator<???>
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').nextFileBatchUpdater}
+ * @public
+ */
 export const nextFileBatchUpdater = (
   state,
   {payload: {gen, fileName, progress, accumulated, onFinish}}

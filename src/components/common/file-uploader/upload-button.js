@@ -19,8 +19,13 @@
 // THE SOFTWARE.
 
 import React, {Component, createRef} from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
+
+/**
+@typedef {{
+  onUpload: (files: FileList, event: any) => void;
+}} UploadButtonProps
+*/
 
 const Wrapper = styled.div`
   display: inline-block;
@@ -36,11 +41,8 @@ const Wrapper = styled.div`
 /*
 Inspired by https://github.com/okonet/react-dropzone/blob/master/src/index.js
 */
-export default class UploadButton extends Component {
-  static propTypes = {
-    onUpload: PropTypes.func.isRequired
-  };
-
+/** @augments React.Component<UploadButtonProps> */
+export class UploadButton extends Component {
   _fileInput = createRef();
 
   _onClick = () => {
@@ -48,12 +50,16 @@ export default class UploadButton extends Component {
     this._fileInput.current.click();
   };
 
-  _onChange = ({target: {files}}) => {
+  _onChange = event => {
+    const {
+      target: {files}
+    } = event;
+
     if (!files) {
       return;
     }
 
-    this.props.onUpload(files);
+    this.props.onUpload(files, event);
   };
 
   render() {
@@ -73,3 +79,5 @@ export default class UploadButton extends Component {
     );
   }
 }
+
+export default UploadButton;

@@ -124,7 +124,7 @@ function LayerPanelFactory(LayerConfigurator, LayerPanelHeader) {
             layerId={layer.id}
             isVisible={config.isVisible}
             label={config.label}
-            labelRCGColorValues={datasets[config.dataId].color}
+            labelRCGColorValues={config.dataId ? datasets[config.dataId].color : null}
             layerType={layer.type}
             onToggleEnableConfig={this._toggleEnableConfig}
             onToggleVisibility={this._toggleVisibility}

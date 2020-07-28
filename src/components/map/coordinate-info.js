@@ -26,9 +26,10 @@ import {StyledLayerName} from './layer-hover-info';
 // 6th decimal is worth up to 0.11 m
 // https://gis.stackexchange.com/questions/8650/measuring-accuracy-of-latitude-and-longitude
 const DECIMAL = 6;
+const DECIMAL_Z = 1;
 
 const CoordinateInfoFactory = () => {
-  const CoordinateInfo = ({coordinate}) => (
+  const CoordinateInfo = ({coordinate, zoom}) => (
     <div>
       <StyledLayerName className="map-popover__layer-name">
         <CursorClick height="12px" />
@@ -38,7 +39,8 @@ const CoordinateInfoFactory = () => {
         <tbody>
           <tr className="row">
             <td className="row__value">{preciseRound(coordinate[1], DECIMAL)},</td>
-            <td className="row__value">{preciseRound(coordinate[0], DECIMAL)}</td>
+            <td className="row__value">{preciseRound(coordinate[0], DECIMAL)},</td>
+            <td className="row__value">{preciseRound(zoom, DECIMAL_Z)}z</td>
           </tr>
         </tbody>
       </table>

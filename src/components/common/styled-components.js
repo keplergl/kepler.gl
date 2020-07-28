@@ -624,7 +624,7 @@ export const StyledFilterContent = styled.div`
   padding: 12px;
 `;
 
-export const TrancatedTitleText = styled.div`
+export const TruncatedTitleText = styled.div`
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;

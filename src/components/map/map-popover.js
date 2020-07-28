@@ -114,6 +114,7 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
       frozen: PropTypes.bool,
       x: PropTypes.number,
       y: PropTypes.number,
+      z: PropTypes.number,
       mapW: PropTypes.number.isRequired,
       mapH: PropTypes.number.isRequired,
       onClose: PropTypes.func.isRequired,
@@ -183,7 +184,7 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
     };
 
     render() {
-      const {x, y, frozen, coordinate, layerHoverProp, isBase} = this.props;
+      const {x, y, frozen, coordinate, layerHoverProp, isBase, zoom} = this.props;
       const {isLeft} = this.state;
 
       const style = Number.isFinite(x) && Number.isFinite(y) ? this._getPosition(x, y, isLeft) : {};
@@ -221,7 +222,7 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
                 )}
               </div>
             ) : null}
-            {Array.isArray(coordinate) && <CoordinateInfo coordinate={coordinate} />}
+            {Array.isArray(coordinate) && <CoordinateInfo coordinate={coordinate} zoom={zoom} />}
             {layerHoverProp && <LayerHoverInfo {...layerHoverProp} />}
           </StyledMapPopover>
         </ErrorBoundary>

@@ -287,28 +287,31 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           layerHoverProp.compareType = interactionConfig.tooltip.config.compareType;
         }
       }
+      const commonProp = {
+        onClose: this._onCloseMapPopover,
+        mapW: mapState.width,
+        mapH: mapState.height,
+        zoom: mapState.zoom
+      };
+
       return (
         <div>
           {hasTooltip && (
             <MapPopover
               {...pinnedPosition}
+              {...commonProp}
               layerHoverProp={layerPinnedProp}
               coordinate={interactionConfig.coordinate.enabled && (pinned || {}).coordinate}
               frozen={Boolean(hasTooltip)}
-              onClose={this._onCloseMapPopover}
-              mapW={mapState.width}
-              mapH={mapState.height}
               isBase={compareMode}
             />
           )}
           {hasComparisonTooltip && (
             <MapPopover
               {...position}
+              {...commonProp}
               layerHoverProp={layerHoverProp}
               coordinate={interactionConfig.coordinate.enabled && coordinate}
-              onClose={this._onCloseMapPopover}
-              mapW={mapState.width}
-              mapH={mapState.height}
             />
           )}
         </div>

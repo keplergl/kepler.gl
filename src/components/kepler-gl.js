@@ -110,6 +110,8 @@ function KeplerGlFactory(
   PlotContainer,
   NotificationPanel
 ) {
+  /** @typedef {import('./kepler-gl').KeplerGlProps} KeplerGlProps */
+  /** @augments React.Component<KeplerGlProps> */
   class KeplerGL extends Component {
     static defaultProps = {
       mapStyles: [],

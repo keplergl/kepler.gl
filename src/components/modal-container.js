@@ -117,7 +117,10 @@ export default function ModalContainerFactory(
   SaveMapModal,
   ShareMapModal
 ) {
-  class ModalWrapper extends Component {
+  /** @typedef {import('./modal-container').ModalContainer} ModalContainer */
+  /** @augments React.Component<ModalContainer> */
+  class ModalContainer extends Component {
+    // TODO - remove when prop types are fully exported
     static propTypes = {
       rootNode: PropTypes.object,
       containerW: PropTypes.number,
@@ -134,7 +137,6 @@ export default function ModalContainerFactory(
       onSaveToStorage: PropTypes.func,
       cloudProviders: PropTypes.arrayOf(PropTypes.object)
     };
-
     componentDidMount = () => {
       document.addEventListener('keyup', this._onKeyUp);
     };
@@ -522,5 +524,5 @@ export default function ModalContainerFactory(
     /* eslint-enable complexity */
   }
 
-  return ModalWrapper;
+  return ModalContainer;
 }
