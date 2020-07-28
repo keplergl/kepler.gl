@@ -92,20 +92,20 @@ export class Scene extends Component {
 
     constructor(props) {
         super(props);
-   this.prop = this.props.prop;
+   this.mapData = this.props.mapData;
    
    //this.adapter = new DeckAdapter(this.props.sceneBuilder);
       }
 
   _renderLayer = (overlays, idx) => {
-    const datasets = this.prop.visState.datasets;
-    const layers = this.prop.visState.layers;    
-    const layerData = this.prop.visState.layerData;
-    const hoverInfo = this.prop.visState.hoverInfo;
-    const clicked = this.prop.visState.clicked;
-    const mapState = this.prop.mapState;
-    const interactionConfig = this.prop.visState.interactionConfig;
-    const animationConfig = this.prop.visState.animationConfig;
+    const datasets = this.mapData.visState.datasets;
+    const layers = this.mapData.visState.layers;    
+    const layerData = this.mapData.visState.layerData;
+    const hoverInfo = this.mapData.visState.hoverInfo;
+    const clicked = this.mapData.visState.clicked;
+    const mapState = this.mapData.mapState;
+    const interactionConfig = this.mapData.visState.interactionConfig;
+    const animationConfig = this.mapData.visState.animationConfig;
 
     const layer = layers[idx];
     const data = layerData[idx];
@@ -142,20 +142,20 @@ export class Scene extends Component {
        
      //   interactionConfig,  
         render() {
-        console.log("all props ", this.props.prop);
+        console.log("all props ", this.props.mapData);
 
-        const mapStyle = this.prop.mapStyle;
-        const mapState = this.prop.mapState;
-        const layers = this.prop.visState.layers;    
-        const layerData = this.prop.visState.layerData;
-        const layerOrder = this.prop.visState.layerOrder;
-        const animationConfig = this.prop.visState.animationConfig;
+        const mapStyle = this.mapData.mapStyle;
+        const mapState = this.mapData.mapState;
+        const layers = this.mapData.visState.layers;    
+        const layerData = this.mapData.visState.layerData;
+        const layerOrder = this.mapData.visState.layerOrder;
+        const animationConfig = this.mapData.visState.animationConfig;
         const width = '100%';
         const height = '100%';
         const useDevicePixels = 2;
         //Map data
-        const mapboxApiAccessToken = this.prop.mapStyle.mapboxApiAccessToken;
-        const mapboxApiUrl = this.prop.mapStyle.mapboxApiUrl;
+        const mapboxApiAccessToken = this.mapData.mapStyle.mapboxApiAccessToken;
+        const mapboxApiUrl = this.mapData.mapStyle.mapboxApiUrl;
         // define trip and geojson layers 
         let deckGlLayers = [];
 

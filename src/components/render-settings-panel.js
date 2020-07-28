@@ -25,7 +25,7 @@ import {Delete} from 'kepler.gl/components/common/icons';
 import ItemSelector from 'kepler.gl/components/common/item-selector/item-selector';
 import {Scene} from 'components/scene'; 
 
-
+import {PreviewEncoder} from '@hubble.gl/core'
 import {DeckScene, CameraKeyframes} from '@hubble.gl/core';
 import {easing} from 'popmotion';
 import {DeckAdapter} from 'hubble.gl';
@@ -85,11 +85,15 @@ const encoderSettings = {
   }
 };
 
-var _core = require("@hubble.gl/core");
+
 const adapter = new DeckAdapter(sceneBuilder);
 
 function preview() {
-  adapter.render(_core.PreviewEncoder, encoderSettings, ()=>{});
+  adapter.render(PreviewEncoder, encoderSettings, ()=>{});
+}
+
+function render(){
+  
 }
 
 // TODO:
@@ -174,10 +178,10 @@ const InputGrid = styled.div`
   grid-row-gap: ${DEFAULT_ROW_GAP};
 `;
 
-const PanelBody = ({props}) => (
+const PanelBody = ({mapData}) => (
   <PanelBodyInner className="render-settings-panel__body">
      <div  style={{width: '100%', height: "100%"}}>
-       <Scene prop={props} sceneBuilder={sceneBuilder} encoderSettings={encoderSettings} adapter={adapter} /*ref={sce}*//> 
+       <Scene mapData={mapData} sceneBuilder={sceneBuilder} encoderSettings={encoderSettings} adapter={adapter} /*ref={sce}*//> 
     </div>
     <div>
     <StyledTitle className="render-settings-panel__title">Export Video</StyledTitle>
@@ -297,7 +301,7 @@ class RenderSettingsPanel extends Component {
     return (
       <Panel settingsWidth={settingsWidth} className="render-settings-panel">
         <PanelClose buttonHeight={buttonHeight} handleClose={handleClose}/> {/* handleClose for X button */}
-        <PanelBody props={this.props.prop}/>
+        <PanelBody mapData={this.props.mapData}/>
         <PanelFooter handleClose={handleClose}/> {/* handleClose for Cancel button */}
       </Panel>
     );
