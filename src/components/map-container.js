@@ -287,12 +287,13 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           layerHoverProp.compareType = interactionConfig.tooltip.config.compareType;
         }
       }
-      const commonProp = {
-        onClose: this._onCloseMapPopover,
-        mapW: mapState.width,
-        mapH: mapState.height,
-        zoom: mapState.zoom
-      };
+
+      const commonProp = {	
+        onClose: this._onCloseMapPopover,	
+        mapW: mapState.width,	
+        mapH: mapState.height,	
+        zoom: mapState.zoom	
+      };	
 
       return (
         <div>
@@ -483,8 +484,8 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       };
 
       const isEdit = uiState.mapControls.mapDraw.active;
-
       return (
+      
         <StyledMapContainer style={MAP_STYLE.container}>
           <MapControl
             datasets={datasets}
@@ -508,17 +509,24 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             onSetLocale={uiStateActions.setLocale}
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
           />
+
+
           <MapComponent
-            {...mapProps}
+       /*     {...mapProps}               //Provisional
             key="bottom"
             ref={this._setMapboxMap}
             mapStyle={mapStyle.bottomMapStyle}
             getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
             transitionDuration={TRANSITION_DURATION}
-            onMouseMove={this.props.visStateActions.onMouseMove}
+            onMouseMove={this.props.visStateActions.onMouseMove}*/
           >
-            {this._renderDeckOverlay(layersToRender)}
-            {this._renderMapboxOverlays(layersToRender)}
+         
+
+
+           {/*this._renderDeckOverlay(layersToRender) Provisional*/}
+            {/*this._renderMapboxOverlays(layersToRender)*/}
+
+
             <Editor
               index={index}
               datasets={datasets}
