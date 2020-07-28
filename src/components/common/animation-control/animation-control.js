@@ -19,17 +19,20 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import styled from 'styled-components';
+import styled, { withTheme } from 'styled-components';
 import moment from 'moment';
 
 import Slider from 'components/common/slider/slider';
-import {BottomWidgetInner} from 'components/common/styled-components';
+import {BottomWidgetInner, Button} from 'components/common/styled-components';
 import SpeedControlFactory from './speed-control';
 import AnimationPlaybacksFactory from './playback-controls';
 import FloatingTimeDisplayFactory from './floating-time-display';
 import AnimationControllerFactory from './animation-controller';
 import {snapToMarks} from 'utils/data-utils';
 import {DEFAULT_TIME_FORMAT, ANIMATION_TYPE} from 'constants';
+import HubbleExport from 'components/hubble-export';
+import {connect as keplerGlConnect} from 'connect/keplergl-connect';
+
 
 const SliderWrapper = styled.div`
   display: flex;
@@ -159,6 +162,9 @@ function AnimationControlFactory(
                 speed={speed}
                 buttonHeight={BUTTON_HEIGHT}
               />
+            </div>
+            <div style={{marginLeft: '5px'}}>
+              <HubbleExport className="animation-control__export-button"/>
             </div>
           </AnimationWidgetInner>
           <FloatingTimeDisplay currentTime={currentTime} />
