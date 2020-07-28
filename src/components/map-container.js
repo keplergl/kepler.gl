@@ -63,7 +63,7 @@ const TRANSITION_DURATION = 0;
 const Attribution = () => (
   <StyledAttrbution>
     <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
-      © kepler.gl |{' '}
+      © kepler.gl|{' '}
     </a>
     <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
       © Mapbox |{' '}
@@ -287,31 +287,28 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           layerHoverProp.compareType = interactionConfig.tooltip.config.compareType;
         }
       }
-      const commonProp = {
-        onClose: this._onCloseMapPopover,
-        mapW: mapState.width,
-        mapH: mapState.height,
-        zoom: mapState.zoom
-      };
-
       return (
         <div>
           {hasTooltip && (
             <MapPopover
               {...pinnedPosition}
-              {...commonProp}
               layerHoverProp={layerPinnedProp}
               coordinate={interactionConfig.coordinate.enabled && (pinned || {}).coordinate}
               frozen={Boolean(hasTooltip)}
+              onClose={this._onCloseMapPopover}
+              mapW={mapState.width}
+              mapH={mapState.height}
               isBase={compareMode}
             />
           )}
           {hasComparisonTooltip && (
             <MapPopover
               {...position}
-              {...commonProp}
               layerHoverProp={layerHoverProp}
               coordinate={interactionConfig.coordinate.enabled && coordinate}
+              onClose={this._onCloseMapPopover}
+              mapW={mapState.width}
+              mapH={mapState.height}
             />
           )}
         </div>
@@ -373,6 +370,9 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       } = this.props;
 
       let deckGlLayers = [];
+
+     
+
       // wait until data is ready before render data layers
       if (layerData && layerData.length) {
         // last layer render first
@@ -398,6 +398,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           })
         );
       }
+     
 
       return (
         <DeckGL
@@ -448,6 +449,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
     };
 
     render() {
+    
       const {
         mapState,
         mapStyle,
@@ -466,7 +468,11 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         index
       } = this.props;
 
+
+
       const layersToRender = this.layersToRenderSelector(this.props);
+
+    
 
       if (!mapStyle.bottomMapStyle) {
         // style not yet loaded
@@ -483,8 +489,9 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       };
 
       const isEdit = uiState.mapControls.mapDraw.active;
-
+     
       return (
+      
         <StyledMapContainer style={MAP_STYLE.container}>
           <MapControl
             datasets={datasets}
@@ -508,17 +515,24 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             onSetLocale={uiStateActions.setLocale}
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
           />
+
+
           <MapComponent
-            {...mapProps}
+       /*     {...mapProps}               //Provisional
             key="bottom"
             ref={this._setMapboxMap}
             mapStyle={mapStyle.bottomMapStyle}
             getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
             transitionDuration={TRANSITION_DURATION}
-            onMouseMove={this.props.visStateActions.onMouseMove}
+            onMouseMove={this.props.visStateActions.onMouseMove}*/
           >
-            {this._renderDeckOverlay(layersToRender)}
-            {this._renderMapboxOverlays(layersToRender)}
+         
+
+
+           {/*this._renderDeckOverlay(layersToRender) Provisional*/}
+            {/*this._renderMapboxOverlays(layersToRender)*/}
+
+
             <Editor
               index={index}
               datasets={datasets}
