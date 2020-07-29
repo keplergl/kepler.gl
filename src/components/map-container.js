@@ -483,7 +483,8 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       };
 
       const isEdit = uiState.mapControls.mapDraw.active;
-
+      
+      console.log("layersToRender", layersToRender)
       return (
         <StyledMapContainer style={MAP_STYLE.container}>
           <MapControl
@@ -517,7 +518,8 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             transitionDuration={TRANSITION_DURATION}
             onMouseMove={this.props.visStateActions.onMouseMove}
           >
-            {this._renderDeckOverlay(layersToRender)}
+            {/* TODO update this function to stop rendering when modal is open */}
+            {!uiState.hubbleExportModalOpen && this._renderDeckOverlay(layersToRender)}
             {this._renderMapboxOverlays(layersToRender)}
             <Editor
               index={index}
