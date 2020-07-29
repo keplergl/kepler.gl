@@ -25,21 +25,33 @@ import {Delete} from 'kepler.gl/components/common/icons';
 import ItemSelector from 'kepler.gl/components/common/item-selector/item-selector';
 import {Scene} from 'components/scene'; 
 
-import {PreviewEncoder} from '@hubble.gl/core'
+import {
+  WebMEncoder,
+  JPEGSequenceEncoder,
+  PNGSequenceEncoder,
+  PreviewEncoder,
+  GifEncoder
+} from '@hubble.gl/core';
 import {DeckScene, CameraKeyframes} from '@hubble.gl/core';
 import {easing} from 'popmotion';
-import {DeckAdapter} from 'hubble.gl';
+import {DeckAdapter, ScatterPlotLayerKeyframes} from 'hubble.gl';
+
+import {DEFAULT_TIME_FORMAT} from 'constants';
+import moment from 'moment';
 
 const DEFAULT_BUTTON_HEIGHT = '32px';
 const DEFAULT_BUTTON_WIDTH = '64px';
 const DEFAULT_PADDING = '32px';
 const DEFAULT_ROW_GAP = '16px';
 
+//const keyframes = setKeyframes(camera);
+let adapter = new DeckAdapter(sceneBuilder);
+
 function sceneBuilder(animationLoop) {
   const data = {};
   const keyframes = {
     camera: new CameraKeyframes({
-      timings: [0, 3000],
+      timings: [0, 500],
       keyframes: [
         {
           longitude: 0,
@@ -50,10 +62,10 @@ function sceneBuilder(animationLoop) {
         },
         {
           longitude: 0,
-          latitude: 33,
-          zoom: 3,
-          bearing: 90,
-          pitch: 50
+          latitude: 11,
+          zoom: 2,
+          bearing: 180,
+          pitch: 0
         }
       ],
       easings: [easing.easeInOut]
@@ -65,11 +77,127 @@ function sceneBuilder(animationLoop) {
   return new DeckScene({
     animationLoop,
     keyframes,
-    lengthMs: 5000,
+    lengthMs: 500,
     data,
    width: 480,
    height: 460
   });
+}
+
+function setKeyframes(cameraType){
+  adapter.scene.keyframes.camera._lastTime = 0;
+  adapter.scene.keyframes.camera.factor = 0;
+      if(cameraType === 'Orbit (90º)'){
+          // How to reset the camera to its initial position?
+          adapter.scene.keyframes.camera.values[0].bearing = 0;
+          adapter.scene.keyframes.camera.values[0].latitude = 0;
+          adapter.scene.keyframes.camera.values[0].longitude = 11;
+          adapter.scene.keyframes.camera.values[0].pitch = 0;
+          adapter.scene.keyframes.camera.values[0].zoom = 2;
+  
+          adapter.scene.keyframes.camera.values[1].bearing = 90;
+          adapter.scene.keyframes.camera.values[1].latitude = 0;
+          adapter.scene.keyframes.camera.values[1].longitude = 11;
+          adapter.scene.keyframes.camera.values[1].pitch = 0;
+          adapter.scene.keyframes.camera.values[1].zoom = 2;
+      }else if(cameraType === 'Orbit (180º)'){
+        adapter.scene.keyframes.camera.values[0].bearing = 0;
+        adapter.scene.keyframes.camera.values[0].latitude = 0;
+        adapter.scene.keyframes.camera.values[0].longitude = 11;
+        adapter.scene.keyframes.camera.values[0].pitch = 0;
+        adapter.scene.keyframes.camera.values[0].zoom = 2;
+
+        adapter.scene.keyframes.camera.values[1].bearing = 180;
+        adapter.scene.keyframes.camera.values[1].latitude = 0;
+        adapter.scene.keyframes.camera.values[1].longitude = 11;
+        adapter.scene.keyframes.camera.values[1].pitch = 0;
+        adapter.scene.keyframes.camera.values[1].zoom = 2;
+      }else if(cameraType === 'Orbit (360º)'){
+        adapter.scene.keyframes.camera.values[0].bearing = 0;
+        adapter.scene.keyframes.camera.values[0].latitude = 0;
+        adapter.scene.keyframes.camera.values[0].longitude = 11;
+        adapter.scene.keyframes.camera.values[0].pitch = 0;
+        adapter.scene.keyframes.camera.values[0].zoom = 2;
+
+        adapter.scene.keyframes.camera.values[1].bearing = 360;
+        adapter.scene.keyframes.camera.values[1].latitude = 0;
+        adapter.scene.keyframes.camera.values[1].longitude = 11;
+        adapter.scene.keyframes.camera.values[1].pitch = 0;
+        adapter.scene.keyframes.camera.values[1].zoom = 2;
+      }else if(cameraType === 'North to South'){
+        adapter.scene.keyframes.camera.values[0].bearing = 0;
+        adapter.scene.keyframes.camera.values[0].latitude = 70;
+        adapter.scene.keyframes.camera.values[0].longitude = 11;
+        adapter.scene.keyframes.camera.values[0].pitch = 0;
+        adapter.scene.keyframes.camera.values[0].zoom = 2;
+
+        adapter.scene.keyframes.camera.values[1].bearing = 0;
+        adapter.scene.keyframes.camera.values[1].latitude = -20;
+        adapter.scene.keyframes.camera.values[1].longitude = 11;
+        adapter.scene.keyframes.camera.values[1].pitch = 0;
+        adapter.scene.keyframes.camera.values[1].zoom = 2;
+      }else if(cameraType === 'South to North'){
+        adapter.scene.keyframes.camera.values[0].bearing = 0;
+        adapter.scene.keyframes.camera.values[0].latitude = -20;
+        adapter.scene.keyframes.camera.values[0].longitude = 11;
+        adapter.scene.keyframes.camera.values[0].pitch = 0;
+        adapter.scene.keyframes.camera.values[0].zoom = 2;
+
+        adapter.scene.keyframes.camera.values[1].bearing = 0;
+        adapter.scene.keyframes.camera.values[1].latitude = 70;
+        adapter.scene.keyframes.camera.values[1].longitude = 11;
+        adapter.scene.keyframes.camera.values[1].pitch = 0;
+        adapter.scene.keyframes.camera.values[1].zoom = 2;
+      }else if(cameraType === 'East to West'){
+        adapter.scene.keyframes.camera.values[0].bearing = 0;
+        adapter.scene.keyframes.camera.values[0].latitude = 11;
+        adapter.scene.keyframes.camera.values[0].longitude = 55;
+        adapter.scene.keyframes.camera.values[0].pitch = 0;
+        adapter.scene.keyframes.camera.values[0].zoom = 2;
+
+        adapter.scene.keyframes.camera.values[1].bearing = 0;
+        adapter.scene.keyframes.camera.values[1].latitude = 11;
+        adapter.scene.keyframes.camera.values[1].longitude = -77;
+        adapter.scene.keyframes.camera.values[1].pitch = 0;
+        adapter.scene.keyframes.camera.values[1].zoom = 2;
+      }else if(cameraType === 'West to East'){
+        adapter.scene.keyframes.camera.values[0].bearing = 0;
+        adapter.scene.keyframes.camera.values[0].latitude = 11;
+        adapter.scene.keyframes.camera.values[0].longitude = -77;
+        adapter.scene.keyframes.camera.values[0].pitch = 0;
+        adapter.scene.keyframes.camera.values[0].zoom = 2;
+
+        adapter.scene.keyframes.camera.values[1].bearing = 0;
+        adapter.scene.keyframes.camera.values[1].latitude = 11;
+        adapter.scene.keyframes.camera.values[1].longitude = 55;
+        adapter.scene.keyframes.camera.values[1].pitch = 0;
+        adapter.scene.keyframes.camera.values[0].zoom = 2;
+      }else if(cameraType === 'Zoom Out'){
+        adapter.scene.keyframes.camera.values[0].bearing = 0;
+        adapter.scene.keyframes.camera.values[0].latitude = 0;
+        adapter.scene.keyframes.camera.values[0].longitude = 11;
+        adapter.scene.keyframes.camera.values[0].pitch = 0;
+        adapter.scene.keyframes.camera.values[0].zoom = 15;
+
+        adapter.scene.keyframes.camera.values[1].bearing = 0;
+        adapter.scene.keyframes.camera.values[1].latitude = 0;
+        adapter.scene.keyframes.camera.values[1].longitude = 11;
+        adapter.scene.keyframes.camera.values[1].pitch = 0;
+        adapter.scene.keyframes.camera.values[1].zoom = 2;
+      }else if(cameraType === 'Zoom In'){
+        adapter.scene.keyframes.camera.values[0].bearing = 0;
+        adapter.scene.keyframes.camera.values[0].latitude = 0;
+        adapter.scene.keyframes.camera.values[0].longitude = 11;
+        adapter.scene.keyframes.camera.values[0].pitch = 0;
+        adapter.scene.keyframes.camera.values[0].zoom = 2;
+
+        adapter.scene.keyframes.camera.values[1].bearing = 0;
+        adapter.scene.keyframes.camera.values[1].latitude = 0;
+        adapter.scene.keyframes.camera.values[1].longitude = 11;
+        adapter.scene.keyframes.camera.values[1].pitch = 0;
+        adapter.scene.keyframes.camera.values[1].zoom = 15;
+      }      
+     console.log("adapter", adapter);
 }
 
 const encoderSettings = {
@@ -82,30 +210,61 @@ const encoderSettings = {
   },
   gif: {
     sampleInterval: 1000
-  }
+  },
+  webm:{
+    quality: 0.8
+  },
+  filename: "Default Video Name" + " " + moment().format(DEFAULT_TIME_FORMAT).toString()
 };
-
-
-const adapter = new DeckAdapter(sceneBuilder);
 
 function preview() {
   adapter.render(PreviewEncoder, encoderSettings, ()=>{});
 }
 
-function render(){
-  
+function setFileNameDeckAdapter(name){
+  encoderSettings.filename = name + " " + moment().format(DEFAULT_TIME_FORMAT).toString();
 }
+
+/*function setResolution(resolution){
+  if(resolution === 'Good (540p)'){
+    adapter.scene.width = 960;
+    adapter.scene.height = 540;
+  }else if(resolution === 'High (720p)'){
+    adapter.scene.width = 1280;
+    adapter.scene.height = 720;
+  }else if(resolution === 'Highest (1080p)'){
+    adapter.scene.width = 1920;
+    adapter.scene.height = 1080;
+  }
+}*/
+
+// This is temporary, for showing purposes on Friday, resolution settings should be in a separate function, 
+// only because we are against the clock. 
+// TODO: refactor
+function render(settingsdata){
+
+  //  setResolution(settingsdata.resolution); // Remove this
+
+    if (settingsdata.mediaType === 'WebM Video') {
+      adapter.render(WebMEncoder, encoderSettings, () => {});
+    } else if (settingsdata.mediaType === 'PNG Sequence') {
+      adapter.render(PNGSequenceEncoder, encoderSettings, () => {});
+    } else if (settingsdata.mediaType === 'JPEG Sequence') {
+      adapter.render(JPEGSequenceEncoder, encoderSettings, () => {});
+    } 
+  // preview();
+  }
 
 // TODO:
 
 // Changes Timestamp function
-// Camera function (preset keyframes)
-// File Name function
-// MediaType function
+// Camera function (preset keyframes) DONE
+// File Name function DONE
+// MediaType function DONE
 // Quality function
 // Set Duration function
 // Calculate File Size function
-// Render Function
+// Render Function DONE
 
 function nop() {}
 
@@ -135,6 +294,7 @@ const StyledTitle = styled.div`
   font-size: 20px;
   font-weight: 400;
   line-height: ${props => props.theme.lineHeight};
+  padding: 0 ${DEFAULT_PADDING} 16px ${DEFAULT_PADDING};
 `;
 
 const StyledSection = styled.div`
@@ -178,13 +338,12 @@ const InputGrid = styled.div`
   grid-row-gap: ${DEFAULT_ROW_GAP};
 `;
 
-const PanelBody = ({mapData}) => (
-  <PanelBodyInner className="render-settings-panel__body">
-     <div  style={{width: '100%', height: "100%"}}>
-       <Scene mapData={mapData} sceneBuilder={sceneBuilder} encoderSettings={encoderSettings} adapter={adapter} /*ref={sce}*//> 
+const PanelBody = ({mapData, setMediaType, setCamera, setFileName/*, setQuality*/, settingsData}) => (
+  <PanelBodyInner className="render-settings-panel__body"> 
+     <div style={{width: "480px", height: "460px"}}>
+       <Scene mapData={mapData} encoderSettings={encoderSettings} adapter={adapter} /*ref={sce}*//> 
     </div>
     <div>
-    <StyledTitle className="render-settings-panel__title">Export Video</StyledTitle>
     <StyledSection>Video Effects</StyledSection>
     <InputGrid rows={2}>
       <StyledLabelCell>Timestamp</StyledLabelCell> {/* TODO add functionality  */}
@@ -196,7 +355,7 @@ const PanelBody = ({mapData}) => (
       />
       <StyledLabelCell>Camera</StyledLabelCell> {/* TODO add functionality */}
       <ItemSelector
-        selectedItems={['None']}
+        selectedItems={settingsData.camera}
         options={[
           'None',
           'Orbit (90º)',
@@ -206,29 +365,33 @@ const PanelBody = ({mapData}) => (
           'South to North',
           'East to West',
           'West to East',
-          'Zoom Out'
+          'Zoom Out',
+          'Zoom In'
         ]}
         multiSelect={false}
         searchable={false}
+        onChange={setCamera}
       />
     </InputGrid>
     <StyledSection>Export Settings</StyledSection> {/* TODO add functionality  */}
     <InputGrid rows={3}>
       <StyledLabelCell>File Name</StyledLabelCell>
-      <Input placeholder="Video Name" />
+      <Input placeholder={settingsData.fileName} onChange={setFileName}/>
       <StyledLabelCell>Media Type</StyledLabelCell> {/* TODO add functionality  */}
       <ItemSelector
-        selectedItems={['WebM Video']}
+        selectedItems={settingsData.mediaType}
         options={['WebM Video', 'PNG Sequence', 'JPEG Sequence']}
         multiSelect={false}
         searchable={false}
+        onChange={setMediaType}
       />
       <StyledLabelCell>Quality</StyledLabelCell> {/* TODO add functionality  */}
       <ItemSelector
-        selectedItems={['High (720p)']}
+        selectedItems={settingsData.resolution}
         options={['Good (540p)', 'High (720p)', 'Highest (1080p)']}
         multiSelect={false}
         searchable={false}
+       /* onChange={setQuality}*/
       />
     </InputGrid>
     <InputGrid style={{marginTop: DEFAULT_ROW_GAP}} rows={2} rowHeight="18px">
@@ -252,7 +415,7 @@ const ButtonGroup = styled.div`
   display: flex;
 `;
 
-const PanelFooter = ({handleClose}) => (
+const PanelFooter = ({handleClose, settingsData}) => (
   <PanelFooterInner className="render-settings-panel__footer">
     <Button
       width={DEFAULT_BUTTON_WIDTH}
@@ -277,7 +440,7 @@ const PanelFooter = ({handleClose}) => (
         width={DEFAULT_BUTTON_WIDTH}
         height={DEFAULT_BUTTON_HEIGHT}
         className={'render-settings-button'}
-        onClick={nop}
+        onClick={() => render(settingsData)}
       >
         Render
       </Button>
@@ -290,19 +453,80 @@ const Panel = styled.div`
 `;
 
 class RenderSettingsPanel extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      mediaType: "WebM Video",
+      camera: "None",
+      fileName: "Video Name",
+    //  quality: "High (720p)"
+    };
+
+    this.setMediaTypeState = this.setMediaTypeState.bind(this);
+    this.setCamera = this.setCamera.bind(this);
+    this.setFileName = this.setFileName.bind(this);
+   // this.setQuality = this.setQuality.bind(this);
+  }
+
   static defaultProps = {
     settingsWidth: 980,
     buttonHeight: '16px'
   };
 
+  setMediaTypeState(media){
+    this.setState({
+      mediaType: media
+    });
+  }
+  setCamera(option){
+      this.setState({
+        camera: option
+      });
+      setKeyframes(option);
+  }
+  setFileName(name){
+    this.setState({
+      fileName: name.target.value
+    });
+    setFileNameDeckAdapter(name.target.value);
+  }
+ /* setQuality(resolution){
+    this.setState({
+      quality: resolution
+    });
+    setResolution(resolution);
+  }*/
+
+  
   render() {
+
     const {buttonHeight, settingsWidth, handleClose} = this.props;
-    console.log("props from render setting panel", this.props.prop);
+    const settingsData = {
+      mediaType : this.state.mediaType,
+      camera : this.state.camera,
+      fileName: this.state.fileName,
+      resolution: this.state.quality,
+    }
+
     return (
       <Panel settingsWidth={settingsWidth} className="render-settings-panel">
-        <PanelClose buttonHeight={buttonHeight} handleClose={handleClose}/> {/* handleClose for X button */}
-        <PanelBody mapData={this.props.mapData}/>
-        <PanelFooter handleClose={handleClose}/> {/* handleClose for Cancel button */}
+        <PanelClose 
+            buttonHeight={buttonHeight} 
+            handleClose={handleClose}/> {/* handleClose for X button */}
+        <StyledTitle className="render-settings-panel__title">Export Video</StyledTitle>  
+        <PanelBody 
+            mapData={this.props.mapData} 
+            setMediaType={this.setMediaTypeState} 
+            setCamera={this.setCamera}
+            setFileName={this.setFileName}
+          //  setQuality={this.setQuality}
+            settingsData={settingsData}
+            />
+        <PanelFooter 
+            handleClose={handleClose} 
+            settingsData = {settingsData}
+            /> {/* handleClose for Cancel button */}
       </Panel>
     );
   }

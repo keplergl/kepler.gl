@@ -26,66 +26,6 @@ import {OVERLAY_TYPE} from 'layers/base-layer';
 import MapboxGLMap from 'react-map-gl';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 
-//Hubble Imports - Animation (from example for starters)
-import {DeckScene, CameraKeyframes} from '@hubble.gl/core';
-import {easing} from 'popmotion';
-import {BasicControls} from '@hubble.gl/react';
-import {DeckAdapter} from 'hubble.gl';
-
-
-// Hubble Part (Maybe we should get this in a different file or put everything on a folder)
-// Question: Does is make sense to have the sceneBuilder and enconderSettings in RenderSettingsPanel?
-/*function sceneBuilder(animationLoop) {
-    const data = {};
-    const keyframes = {
-      camera: new CameraKeyframes({
-        timings: [0, 2000],
-        keyframes: [
-          {
-            longitude: 0,
-            latitude: 11,
-            zoom: 2,
-            pitch: 0,
-            bearing: 0
-          },
-          {
-            longitude: 0,
-            latitude: 11,
-            zoom: 2,
-            bearing: 90,
-            pitch: 0
-          }
-        ],
-        easings: [easing.easeInOut]
-      })
-    };
-    animationLoop.timeline.attachAnimation(keyframes.camera);
-  
-    // TODO: Figure out how to set up the size 
-    return new DeckScene({
-      animationLoop,
-      keyframes,
-      lengthMs: 5000,
-      data,
-     width: 480,
-     height: 460
-    });
-  }*/
-
- /* const encoderSettings = {
-    framerate: 30,
-    webm: {
-      quality: 0.8
-    },
-    jpeg: {
-      quality: 0.8
-    },
-    gif: {
-      sampleInterval: 1000
-    }
-  };*/
-
-
 const TRANSITION_DURATION = 0;
 
 export class Scene extends Component {
@@ -142,7 +82,7 @@ export class Scene extends Component {
        
      //   interactionConfig,  
         render() {
-        console.log("all props ", this.props.mapData);
+      //  console.log("all props ", this.props.mapData);
 
         const mapStyle = this.mapData.mapStyle;
         const mapState = this.mapData.mapState;
@@ -150,9 +90,7 @@ export class Scene extends Component {
         const layerData = this.mapData.visState.layerData;
         const layerOrder = this.mapData.visState.layerOrder;
         const animationConfig = this.mapData.visState.animationConfig;
-        const width = '100%';
-        const height = '100%';
-        const useDevicePixels = 2;
+        const useDevicePixels = false;
         //Map data
         const mapboxApiAccessToken = this.mapData.mapStyle.mapboxApiAccessToken;
         const mapboxApiUrl = this.mapData.mapStyle.mapboxApiUrl;
@@ -183,18 +121,16 @@ export class Scene extends Component {
          const style = {
             position: 'relative'
           }
-          console.log("mapState prop ",mapState);
+        //  console.log("mapState prop ",mapState);
      
         return (
-            <div style={{width: '100%', height: "100%", position: 'relative'}}>
+            <div style={{width: '480px', height: "460px", position: 'relative'}}>
               <DeckGL
                 ref={r => {this.deckgl={current:r}}}
                 viewState={mapState}
                 id="default-deckgl-overlay2"
                 layers={deckGlLayers}
                 useDevicePixels={useDevicePixels}
-                width={width}
-                height={height}
                 style={style}
                 /* onBeforeRender={this._onBeforeRender} // Not yet
                       onHover={visStateActions.onLayerHover} // Not yet
@@ -209,14 +145,7 @@ export class Scene extends Component {
                   getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
                   transitionDuration={TRANSITION_DURATION}
                 ></MapboxGLMap>
-              </DeckGL>
-              <div style={{position: 'absolute'}}>
-                <BasicControls
-                  adapter={this.props.adapter}
-                  encoderSettings={this.props.encoderSettings}
-                  setBusy={()=>{}}
-                />
-              </div>
+              </DeckGL>  
             </div>
           );
     }
