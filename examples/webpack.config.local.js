@@ -260,8 +260,6 @@ module.exports = (exampleConfig, exampleDir) => env => {
     }))
     .then(externals => {
       let config = addLocalDevSettings(env, exampleConfig, exampleDir, externals);
-      config = addBabelSettings(env, config, exampleDir, externals);
-      console.log(JSON.stringify(config, null, 2));
-      return config;
+      return addBabelSettings(env, config, exampleDir, externals);
     });
 };
