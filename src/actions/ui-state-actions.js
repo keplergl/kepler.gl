@@ -253,7 +253,7 @@ export const setLocale = createAction(ActionTypes.SET_LOCALE, locale => ({
   locale
 }));
 
-/**
+/** TODO
  * Toggles modal that allows for exporting of visualizations with camera controls (Hubble library)
  * @memberof uiStateActions
  * @param isOpen - Determines whether export modal is open or closed

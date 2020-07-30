@@ -248,7 +248,8 @@ export const INITIAL_UI_STATE = {
   // load files
   loadFiles: DEFAULT_LOAD_FILES,
   // Locale of the UI
-  locale: LOCALE_CODES.en
+  locale: LOCALE_CODES.en,
+  hubbleExportModalOpen: false
 };
 
 /* Updaters */
@@ -697,4 +698,20 @@ export const toggleSplitMapUpdater = state => ({
 export const setLocaleUpdater = (state, {payload: {locale}}) => ({
   ...state,
   locale
+});
+
+/** TODO do I need state? And update docs
+ * Set the locale of the UI
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload
+ * @param action.payload.isOpen
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').toggleHubbleExportModalUpdater}
+ * @public
+ */
+export const toggleHubbleExportModalUpdater = (state, {payload: {isOpen}}) => ({
+  ...state,
+  hubbleExportModalOpen: isOpen
 });

@@ -55,7 +55,8 @@ const actionHandler = {
   [ActionTypes.LOAD_FILES_ERR]: uiStateUpdaters.loadFilesErrUpdater,
 
   [ActionTypes.TOGGLE_SPLIT_MAP]: uiStateUpdaters.toggleSplitMapUpdater,
-  [ActionTypes.SET_LOCALE]: uiStateUpdaters.setLocaleUpdater
+  [ActionTypes.SET_LOCALE]: uiStateUpdaters.setLocaleUpdater,
+  [ActionTypes.TOGGLE_HUBBLE_EXPORT_MODAL]: uiStateUpdaters.toggleHubbleExportModalUpdater,
 };
 
 /* Reducer */

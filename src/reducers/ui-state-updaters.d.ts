@@ -87,6 +87,8 @@ export type UiState = {
   loadFiles: LoadFiles;
   // Locale of the UI
   locale: Locale;
+  // Opens/closes export modal relating to Hubble export
+  hubbleExportModalOpen: boolean;
 };
 
 export const DEFAULT_MAP_CONTROLS: MapControls;
@@ -176,6 +178,10 @@ export function setExportMapHTMLModeUpdater(
 export function setLocaleUpdater(
   state: UiState,
   action: UiStateActions.SetLocaleUpdaterAction
+): UiState;
+export function toggleHubbleExportModalUpdater(
+  state: UiState,
+  action: UiStateActions.ToggleHubbleExportModalUpdaterAction
 ): UiState;
 
 export function loadFilesUpdater(state: UiState, action: LoadFilesUpdaterAction): UiState;
