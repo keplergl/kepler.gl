@@ -19,14 +19,16 @@
 // THE SOFTWARE.
 
 import ActionTypes from 'constants/action-types';
+import {UiState} from 'reducers/ui-state-updaters';
 
 export type RegisterEntryUpdaterAction = {
   payload: {
     id: string;
-    mint: boolean;
-    mapboxApiAccessToken: string;
-    mapboxApiUrl: string;
-    mapStylesReplaceDefault: boolean;
+    mint?: boolean;
+    mapboxApiAccessToken?: string;
+    mapboxApiUrl?: string;
+    mapStylesReplaceDefault?: boolean;
+    initialUiState?:Partial<UiState>;
   };
 };
 
