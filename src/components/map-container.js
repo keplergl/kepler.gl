@@ -512,19 +512,19 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
 
 
           <MapComponent
-       /*     {...mapProps}               //Provisional
+           {...mapProps}            
             key="bottom"
             ref={this._setMapboxMap}
             mapStyle={mapStyle.bottomMapStyle}
             getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
             transitionDuration={TRANSITION_DURATION}
-            onMouseMove={this.props.visStateActions.onMouseMove}*/
+            onMouseMove={this.props.visStateActions.onMouseMove}
           >
          
 
 
-           {/*this._renderDeckOverlay(layersToRender) Provisional*/}
-            {/*this._renderMapboxOverlays(layersToRender)*/}
+           {this._renderDeckOverlay(layersToRender)}
+            {this._renderMapboxOverlays(layersToRender)}
 
 
             <Editor
