@@ -24,6 +24,10 @@ import {processFileData, readFileInBatches} from 'processors/file-handler';
 import {csvWithNull} from '../node/processors/file-handler-fixtures';
 import {dataWithNulls, testFields, parsedDataWithNulls} from 'test/fixtures/test-csv-data';
 import geojsonString, {
+  featureString,
+  processedFeature,
+  processedFeatureRows,
+  processedFeatureFields,
   processedFields as geojsonFields,
   processedRows as geojsonRows
 } from 'test/fixtures/geojson-style';
@@ -144,7 +148,7 @@ test('#file-handler -> readFileInBatches.csv -> processFileData', async t => {
   t.end();
 });
 
-test('#file-handler -> readFileInBatches.geoJson -> processFileData', async t => {
+test('#file-handler -> readFileInBatches.GeoJSON FeatureCollection -> processFileData', async t => {
   const geojsonFile = new File([geojsonString], 'text-data-1.geojson', {type: ''});
   const gen = await readFileInBatches({file: geojsonFile, fileCache: []});
 
@@ -261,6 +265,100 @@ test('#file-handler -> readFileInBatches.geoJson -> processFileData', async t =>
   });
   rows.forEach((r, i) => {
     t.deepEqual(r, geojsonRows[i], `should process geojson row ${i} correctly`);
+  });
+
+  t.end();
+});
+
+test('#file-handler -> readFileInBatches.GeoJSON Single Feature -> processFileData', async t => {
+  const geojsonFile = new File([featureString], 'text-data-1.geojson', {type: ''});
+  const gen = await readFileInBatches({file: geojsonFile, fileCache: []});
+
+  // metadata batch
+  const batch1 = await gen.next();
+
+  const expected1 = {
+    value: {
+      batchType: 'metadata',
+      metadata: {_loader: {}, _context: {}},
+      data: [],
+      bytesUsed: 0,
+      progress: {rowCount: 0, rowCountInBatch: 0, percent: 0},
+      fileName: 'text-data-1.geojson'
+    },
+    done: false
+  };
+
+  t.deepEqual(
+    Object.keys(batch1.value).sort(),
+    Object.keys(expected1.value).sort(),
+    'value should have same keyss'
+  );
+
+  t.equal(batch1.value.batchType, expected1.value.batchType, 'batch1.batchType should be the same');
+  t.equal(batch1.value.fileName, expected1.value.fileName, 'batch1.fileName should be the same');
+  t.deepEqual(batch1.value.data, expected1.value.data, 'batch1.data should be the same');
+  t.deepEqual(
+    batch1.value.progress,
+    expected1.value.progress,
+    'batch1.progress should be the same'
+  );
+
+  // final result batch
+  const batch2 = await gen.next();
+  const expected2 = {
+    value: {
+      batchType: 'final-result',
+      container: processedFeature,
+      jsonpath: null,
+      data: processedFeature,
+      schema: null,
+      progress: {rowCount: 0, rowCountInBatch: 0},
+      fileName: 'text-data-1.geojson'
+    },
+    done: false
+  };
+
+  t.deepEqual(
+    batch2.value.batchType,
+    expected2.value.batchType,
+    'batch2 batchType should be a final-result'
+  );
+  t.deepEqual(
+    batch2.value.data,
+    expected2.value.data,
+    'batch2 data should be a single geojson feature'
+  );
+  t.deepEqual(
+    batch2.value.container,
+    expected2.value.container,
+    'batch2 container should be a single geojson feature'
+  );
+  t.equal(batch2.value.jsonpath, expected2.value.jsonpath, 'batch2 jsonpath should be null');
+  t.deepEqual(batch2.value.progress, expected2.value.progress, 'batch2 progress should be correct');
+
+  const batch3 = await gen.next();
+  t.deepEqual(batch3, {value: undefined, done: true}, 'batch3 should be done');
+
+  // process geojson data received
+  const processed = await processFileData({content: batch2.value, fileCache: []});
+  const expectedInfo = {label: 'text-data-1.geojson', format: 'geojson'};
+
+  t.equal(processed.length, 1, 'processFileData should return 1 result');
+  t.ok(processed[0].info, 'processFileData should have info');
+  t.ok(processed[0].data, 'processFileData should have data');
+  t.deepEqual(processed[0].info, expectedInfo, 'info should be correct');
+  const {fields, rows} = processed[0].data;
+
+  fields.forEach((f, i) => {
+    t.deepEqual(
+      f,
+      processedFeatureFields[i],
+      `should process correct geojson field ${processedFeatureFields[i].name}`
+    );
+  });
+  rows.forEach((r, i) => {
+    t.deepEqual(r, processedFeatureRows[i], `should process geojson row ${i} correctly`);
   });
 
   t.end();
