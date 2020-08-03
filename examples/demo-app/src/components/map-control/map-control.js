@@ -179,7 +179,7 @@ function SampleMapPanel(props) {
 const CustomMapControl = props => (
   <StyledMapControlOverlay top={props.top}>
     {!props.isExport && props.currentSample ? <SampleMapPanel {...props} /> : null}
-    <MapControl {...props} top={0}/>
+    <MapControl {...props} top={0} />
   </StyledMapControlOverlay>
 );
 

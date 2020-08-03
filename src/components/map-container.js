@@ -64,21 +64,27 @@ const Attribution = () => (
   <StyledAttrbution>
     <div className="attrition-logo">
       Basemap by:
-      <a className="mapboxgl-ctrl-logo" target="_blank" rel="noopener nofollow" href="https://www.mapbox.com/" aria-label="Mapbox logo"/>
+      <a
+        className="mapboxgl-ctrl-logo"
+        target="_blank"
+        rel="noopener noreferrer"
+        href="https://www.mapbox.com/"
+        aria-label="Mapbox logo"
+      />
     </div>
     <div>
-    <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
-      © kepler.gl |{' '}
-    </a>
-    <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
-      © Mapbox |{' '}
-    </a>
-    <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
-      © OpenStreetMap |{' '}
-    </a>
-    <a href="https://www.mapbox.com/map-feedback/" target="_blank" rel="noopener noreferrer">
-      <strong>Improve this map</strong>
-    </a>
+      <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
+        © kepler.gl |{' '}
+      </a>
+      <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
+        © Mapbox |{' '}
+      </a>
+      <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
+        © OpenStreetMap |{' '}
+      </a>
+      <a href="https://www.mapbox.com/map-feedback/" target="_blank" rel="noopener noreferrer">
+        <strong>Improve this map</strong>
+      </a>
     </div>
   </StyledAttrbution>
 );
@@ -558,7 +564,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           {mapStyle.topMapStyle || hasGeocoderLayer ? (
             <div style={MAP_STYLE.top}>
               <MapComponent {...mapProps} key="top" mapStyle={mapStyle.topMapStyle}>
-                  {this._renderDeckOverlay({[GEOCODER_LAYER_ID]: true})}
+                {this._renderDeckOverlay({[GEOCODER_LAYER_ID]: true})}
               </MapComponent>
             </div>
           ) : null}

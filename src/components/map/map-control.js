@@ -53,7 +53,7 @@ const StyledMapControl = styled.div`
   width: ${props => props.theme.mapControl.width}px;
   padding: ${props => props.theme.mapControl.padding}px;
   z-index: 10;
-  margin-top: ${props => props.top}px;
+  margin-top: ${props => props.top || 0}px;
   position: absolute;
 `;
 
@@ -432,7 +432,7 @@ const MapControlFactory = () => {
       } = mapControls;
 
       return (
-        <StyledMapControl className="map-control" top={top || 0}>
+        <StyledMapControl className="map-control" top={top}>
           {/* Split Map */}
           {splitMap.show && readOnly !== true ? (
             <ActionPanel className="split-map" key={0}>

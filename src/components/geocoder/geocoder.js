@@ -98,7 +98,7 @@ const GeoCoder = ({
       clearTimeout(debounceTimeout);
 
       debounceTimeout = setTimeout(async () => {
-        if (limit > 0 && !!queryString) {
+        if (limit > 0 && Boolean(queryString)) {
           const response = await client.geocodeForward(queryString, {limit});
           setShowResults(true);
           setResults(response.entity.features);

@@ -244,8 +244,7 @@ function KeplerGlFactory(
         mapStateActions,
         mapStyleActions,
         uiStateActions,
-        providerActions,
-        dispatch
+        providerActions
       } = this.props;
 
       const availableProviders = this.availableProviders(this.props);

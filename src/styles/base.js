@@ -256,7 +256,7 @@ export const sliderMarginTop = 12;
 
 // Geocoder
 export const geocoderWidth = 360;
-export const geocoderTop = 20
+export const geocoderTop = 20;
 export const geocoderRight = 12;
 export const geocoderInputHeight = 36;
 
