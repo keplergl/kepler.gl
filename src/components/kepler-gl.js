@@ -371,8 +371,10 @@ function KeplerGlFactory(
                   <GeoCoderPanel
                     isGeocoderEnabled={interactionConfig.geocoder.enabled}
                     mapboxApiAccessToken={mapboxApiAccessToken}
-                    dispatch={dispatch}
                     mapState={mapState}
+                    updateVisData={visStateActions.updateVisData}
+                    removeDataset={visStateActions.removeDataset}
+                    updateMap={mapStateActions.updateMap}
                   />
                 )}
                 <BottomWidget

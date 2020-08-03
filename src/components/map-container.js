@@ -42,7 +42,7 @@ import {getLayerHoverProp} from 'utils/layer-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
-import {FILTER_TYPES} from 'constants/default-settings';
+import {FILTER_TYPES, GEOCODER_LAYER_ID} from 'constants/default-settings';
 
 const MAP_STYLE = {
   container: {
@@ -152,7 +152,9 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           (accu, layer, idx) => ({
             ...accu,
             [layer.id]:
-              layer.shouldRenderLayer(layerData[idx]) && this._isVisibleMapLayer(layer, mapLayers)
+              layer.id !== GEOCODER_LAYER_ID &&
+              layer.shouldRenderLayer(layerData[idx]) &&
+              this._isVisibleMapLayer(layer, mapLayers)
           }),
           {}
         )
@@ -548,7 +550,11 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           </MapComponent>
           {mapStyle.topMapStyle && (
             <div style={MAP_STYLE.top}>
-              <MapComponent {...mapProps} key="top" mapStyle={mapStyle.topMapStyle} />
+              <MapComponent {...mapProps} key="top" mapStyle={mapStyle.topMapStyle}>
+                {layers.find(l => l.id === GEOCODER_LAYER_ID)
+                  ? this._renderDeckOverlay({[GEOCODER_LAYER_ID]: true})
+                  : null}
+              </MapComponent>
             </div>
           )}
           {this._renderMapPopover(layersToRender)}

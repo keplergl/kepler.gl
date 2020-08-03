@@ -462,7 +462,7 @@ export const StyledAttrbution = styled.div.attrs({
   position: absolute;
   display: block;
   margin: 0 10px 2px;
-  z-index: 999;
+  z-index: 0;
   a {
     color: black;
     font-size: 10px;
