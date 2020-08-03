@@ -51,6 +51,15 @@ const ICON_LAYER = {
   }
 };
 
+const PARSED_CONFIG = KeplerGlSchema.parseSavedConfig({
+  version: 'v1',
+  config: {
+    visState: {
+      layers: [ICON_LAYER]
+    }
+  }
+});
+
 const StyledGeocoderPanel = styled.div`
   position: absolute;
   top: ${props => props.theme.geocoderTop}px;
@@ -113,14 +122,7 @@ export default function GeocoderPanelFactory() {
         {
           keepExistingConfig: true
         },
-        KeplerGlSchema.parseSavedConfig({
-          version: 'v1',
-          config: {
-            visState: {
-              layers: [ICON_LAYER]
-            }
-          }
-        })
+        PARSED_CONFIG
       );
       const bounds = bbox || [
         lon - GEO_OFFSET,

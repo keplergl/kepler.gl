@@ -27,6 +27,7 @@ import GeocoderPanelFactory from 'components/geocoder-panel';
 import {appInjector} from 'components/container';
 
 const GeocoderPanel = appInjector.get(GeocoderPanelFactory);
+const MAPBOX_TOKEN = process.env.MapboxAccessToken;
 
 test('GeocoderPanel - render', t => {
   const enabled = true;
@@ -134,7 +135,7 @@ test('GeocoderPanel - render', t => {
       <IntlWrapper>
         <GeocoderPanel
           isGeocoderEnabled={enabled}
-          mapboxApiAccessToken="smoothie-the-cat"
+          mapboxApiAccessToken={MAPBOX_TOKEN}
           mapState={mockMapState}
           updateVisData={updateVisData}
           removeDataset={removeDataset}
