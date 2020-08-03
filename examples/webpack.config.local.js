@@ -259,7 +259,7 @@ module.exports = (exampleConfig, exampleDir) => env => {
       'probe.gl': results[3]
     }))
     .then(externals => {
-      let config = addLocalDevSettings(env, exampleConfig, exampleDir, externals);
+      const config = addLocalDevSettings(env, exampleConfig, exampleDir, externals);
       return addBabelSettings(env, config, exampleDir, externals);
     });
 };
