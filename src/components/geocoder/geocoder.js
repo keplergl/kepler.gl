@@ -35,7 +35,7 @@ const StyledContainer = styled.div`
   .geocoder-results {
     background-color: ${props => props.theme.panelBackground};
     position: absolute;
-    width: ${props => props.theme.geocoderWidth}px;
+    width: ${props => Number.isFinite(props.width) ? props.width : props.theme.geocoderWidth}px;
     margin-top: ${props => props.theme.dropdownWapperMargin}px;
   }
 
@@ -77,6 +77,7 @@ const GeoCoder = ({
   onDeleteMarker,
   transitionDuration,
   pointZoom,
+  width,
   intl
 }) => {
   const [inputValue, setInputValue] = useState(initialInputValue);
@@ -166,7 +167,7 @@ const GeoCoder = ({
   );
 
   return (
-    <StyledContainer className={className}>
+    <StyledContainer className={className} width={width}>
       <div className="geocoder-input">
         <div className="geocoder-input__search">
           <Search height="20px" />

@@ -21,16 +21,17 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import Geocoder from './geocoder/geocoder';
 import Processors from 'processors';
-import {addDataToMap, removeDataset, updateMap} from 'actions';
 import {FlyToInterpolator} from '@deck.gl/core';
 import geoViewport from '@mapbox/geo-viewport';
+import KeplerGlSchema from 'schemas';
 
-const GEOCODER_DATASET_NAME = 'geocoder_dataset';
+import Geocoder from './geocoder/geocoder';
+import {GEOCODER_DATASET_NAME, GEOCODER_LAYER_ID} from 'constants/default-settings';
+
 const GEO_OFFSET = 0.05;
 const ICON_LAYER = {
-  id: 'geocoder_layer',
+  id: GEOCODER_LAYER_ID,
   type: 'icon',
   config: {
     label: 'Geocoder Layer',
@@ -52,9 +53,8 @@ const ICON_LAYER = {
 
 const StyledGeocoderPanel = styled.div`
   position: absolute;
-  top: ${props => props.theme.geocoderTop}px;
   right: ${props => props.theme.geocoderRight}px;
-  width: ${props => props.theme.geocoderWidth}px;
+  width: ${props => Number.isFinite(props.width) ? props.width : props.theme.geocoderWidth}px;
   box-shadow: ${props => props.theme.boxShadow};
   z-index: 100;
 `;
@@ -87,11 +87,17 @@ export default function GeocoderPanelFactory() {
     static propTypes = {
       isGeocoderEnabled: PropTypes.bool.isRequired,
       mapboxApiAccessToken: PropTypes.string.isRequired,
-      transitionDuration: PropTypes.number
+      mapState: PropTypes.object.isRequired,
+      updateVisData: PropTypes.func.isRequired,
+      removeDataset: PropTypes.func.isRequired,
+      updateMap: PropTypes.func.isRequired,
+
+      transitionDuration: PropTypes.number,
+      width: PropTypes.number
     };
 
     removeGeocoderDataset() {
-      this.props.dispatch(removeDataset(GEOCODER_DATASET_NAME));
+      this.props.removeDataset(GEOCODER_DATASET_NAME);
     }
 
     onSelected = (viewport = null, geoItem) => {
@@ -101,18 +107,16 @@ export default function GeocoderPanelFactory() {
         bbox
       } = geoItem;
       this.removeGeocoderDataset();
-      this.props.dispatch(
-        addDataToMap({
-          datasets: [generateGeocoderDataset(lat, lon, text)],
-          options: {
-            keepExistingConfig: true
-          },
+      this.props.updateVisData(
+        [generateGeocoderDataset(lat, lon, text)],
+        {
+          keepExistingConfig: true
+        },
+        KeplerGlSchema.parseSavedConfig({
+          version: 'v1',
           config: {
-            version: 'v1',
-            config: {
-              visState: {
-                layers: [ICON_LAYER]
-              }
+            visState: {
+              layers: [ICON_LAYER]
             }
           }
         })
@@ -128,17 +132,15 @@ export default function GeocoderPanelFactory() {
         this.props.mapState.height
       ]);
 
-      this.props.dispatch(
-        updateMap({
-          latitude: center[1],
-          longitude: center[0],
-          zoom,
-          pitch: 0,
-          bearing: 0,
-          transitionDuration: this.props.transitionDuration,
-          transitionInterpolator: new FlyToInterpolator()
-        })
-      );
+      this.props.updateMap({
+        latitude: center[1],
+        longitude: center[0],
+        zoom,
+        pitch: 0,
+        bearing: 0,
+        transitionDuration: this.props.transitionDuration,
+        transitionInterpolator: new FlyToInterpolator()
+      });
     };
 
     removeMarker = () => {
@@ -146,10 +148,11 @@ export default function GeocoderPanelFactory() {
     };
 
     render() {
-      const {isGeocoderEnabled, mapboxApiAccessToken} = this.props;
+      const {isGeocoderEnabled, mapboxApiAccessToken, width} = this.props;
       return (
         <StyledGeocoderPanel
           className="geocoder-panel"
+          width={width}
           style={{display: isGeocoderEnabled ? 'block' : 'none'}}
         >
           {isValid(mapboxApiAccessToken) && (
@@ -157,6 +160,7 @@ export default function GeocoderPanelFactory() {
               mapboxApiAccessToken={mapboxApiAccessToken}
               onSelected={this.onSelected}
               onDeleteMarker={this.removeMarker}
+              width={width}
             />
           )}
         </StyledGeocoderPanel>
@@ -167,6 +171,6 @@ export default function GeocoderPanelFactory() {
   GeocoderPanel.defaultProps = {
     transitionDuration: 3000
   };
-  
+
   return GeocoderPanel;
 }
