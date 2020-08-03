@@ -18,28 +18,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+/* eslint-disable max-statements */
 import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {GeocoderPanel} from 'components/geocoder-panel';
+import GeocoderPanelFactory from 'components/geocoder-panel';
+import {appInjector} from 'components/container';
+
+const GeocoderPanel = appInjector.get(GeocoderPanelFactory);
 
 test('GeocoderPanel - render', t => {
   const enabled = true;
-  const dispatch = sinon.spy();
+  const updateVisData = sinon.spy();
+  const removeDataset = sinon.spy();
+  const updateMap = sinon.spy();
+  const mockMapState = {
+    latitude: 33,
+    longitude: 127,
+    zoom: 8,
+    width: 800,
+    height: 800
+  };
+
   const mockGeoItem = {
-    center: [0, 0],
+    center: [1, 55],
     text: 'mock',
-    bbox: [0, 0, 0, 0]
+    bbox: [-1, 50, 4, 65]
   };
 
   const mockGeoItemWithOutBbox = {
-    center: [0, 0],
+    center: [1, 55],
     text: 'mock'
   };
 
-  const mockPayload = {
-    datasets: [
+  const mockPayload = [
+    [
       {
         data: {
           fields: [
@@ -72,7 +86,7 @@ test('GeocoderPanel - render', t => {
               analyzerType: 'STRING'
             }
           ],
-          rows: [[0, 0, 'place', 'mock']]
+          rows: [[55, 1, 'place', 'mock']]
         },
         id: 'geocoder_dataset',
         info: {
@@ -82,41 +96,37 @@ test('GeocoderPanel - render', t => {
         }
       }
     ],
-    options: {
+    {
       keepExistingConfig: true
     },
-    config: {
-      version: 'v1',
-      config: {
-        visState: {
-          layers: [
-            {
-              id: 'geocoder_layer',
-              type: 'icon',
-              config: {
-                label: 'Geocoder Layer',
-                color: [255, 0, 0],
-                dataId: 'geocoder_dataset',
-                columns: {
-                  lat: 'lt',
-                  lng: 'ln',
-                  icon: 'icon',
-                  label: 'text'
-                },
-                isVisible: true,
-                hidden: true,
-                visConfig: {
-                  radius: 80
-                }
+    {
+      visState: {
+        layers: [
+          {
+            id: 'geocoder_layer',
+            type: 'icon',
+            config: {
+              label: 'Geocoder Layer',
+              color: [255, 0, 0],
+              dataId: 'geocoder_dataset',
+              columns: {
+                lat: 'lt',
+                lng: 'ln',
+                icon: 'icon',
+                label: 'text'
+              },
+              isVisible: true,
+              hidden: true,
+              visConfig: {
+                radius: 80
               }
             }
-          ]
-        }
+          }
+        ]
       }
     }
-  };
+  ];
 
-  // const onLayerClick = sinon.spy();
   let wrapper;
 
   t.doesNotThrow(() => {
@@ -125,7 +135,10 @@ test('GeocoderPanel - render', t => {
         <GeocoderPanel
           isGeocoderEnabled={enabled}
           mapboxApiAccessToken="smoothie-the-cat"
-          dispatch={dispatch}
+          mapState={mockMapState}
+          updateVisData={updateVisData}
+          removeDataset={removeDataset}
+          updateMap={updateMap}
         />
       </IntlWrapper>
     );
@@ -138,39 +151,41 @@ test('GeocoderPanel - render', t => {
 
   instance.onSelected(null, mockGeoItem);
   t.deepEqual(
-    dispatch.getCall(0).args,
-    [{type: '@@kepler.gl/REMOVE_DATASET', dataId: 'geocoder_dataset'}],
-    'Should be dispatching removeDataset action on onSelected'
+    removeDataset.args,
+    [['geocoder_dataset']],
+    'Should call removeDataset on onSelected'
   );
+  t.deepEqual(updateVisData.args, [mockPayload], 'Should call updateVisData onSelected');
+  const newVP = updateMap.args[0][0];
+
   t.deepEqual(
-    dispatch.getCall(1).args,
-    [{type: '@@kepler.gl/ADD_DATA_TO_MAP', payload: mockPayload}],
-    'Should be dispatching addDataToMap action on onSelected'
-  );
-  t.deepEqual(
-    dispatch.getCall(2).args,
-    [{type: '@@kepler.gl/FIT_BOUNDS', payload: mockGeoItem.bbox}],
-    'Should be dispatching fitBounds action on onSelected w/ bbox'
+    {latitude: newVP.latitude, longitude: newVP.longitude, zoom: newVP.zoom},
+    {latitude: 57.5, longitude: 1.5, zoom: 5},
+    'Should call updateMap action on onSelected w/ new viewport'
   );
 
+  t.ok(newVP.transitionInterpolator, 'Should call updateMap action with transitionInterpolator');
+
   instance.onSelected(null, mockGeoItemWithOutBbox);
+
+  const newVP2 = updateMap.args[1][0];
   t.deepEqual(
-    dispatch.getCall(5).args,
-    [{type: '@@kepler.gl/FIT_BOUNDS', payload: [-0.1, -0.1, 0.1, 0.1]}],
-    'Should be dispatching fitBounds action on onSelected w/o bbox'
+    {latitude: newVP2.latitude, longitude: newVP2.longitude, zoom: newVP2.zoom},
+    {latitude: 55, longitude: 1, zoom: 12},
+    'Should call updateMapaction on onSelected w/o bbox'
   );
 
   instance.removeMarker();
   t.deepEqual(
-    dispatch.getCall(6).args,
-    [{type: '@@kepler.gl/REMOVE_DATASET', dataId: 'geocoder_dataset'}],
+    removeDataset.args[1],
+    ['geocoder_dataset'],
     'Should be dispatching removeDataset action on removeMarker'
   );
 
   instance.removeGeocoderDataset();
   t.deepEqual(
-    dispatch.getCall(7).args,
-    [{type: '@@kepler.gl/REMOVE_DATASET', dataId: 'geocoder_dataset'}],
+    removeDataset.args[2],
+    ['geocoder_dataset'],
     'Should be dispatching removeDataset action on removeGeocoderDataset'
   );
 
