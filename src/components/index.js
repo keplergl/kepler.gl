@@ -138,6 +138,7 @@ export {default as ActionPanel, ActionPanelItem} from 'components/common/action-
 // side pane components
 export {default as LayerConfigGroup} from './side-panel/layer-panel/layer-config-group';
 export {default as LayerTypeSelector} from './side-panel/layer-panel/layer-type-selector';
+export {ConfigGroupCollapsibleContent} from './side-panel/layer-panel/layer-config-group';
 
 export {
   ChannelByValueSelector,

@@ -85,6 +85,10 @@ const GlobalStyle = styled.div`
     text-decoration: none;
     color: ${props => props.theme.labelColor};
   }
+
+  .mapboxgl-ctrl .mapboxgl-ctrl-logo {
+    display: none;
+  }
 `;
 
 KeplerGlFactory.deps = [

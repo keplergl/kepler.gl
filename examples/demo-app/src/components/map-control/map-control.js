@@ -27,7 +27,7 @@ const MapControl = MapControlFactory();
 
 const StyledMapControlOverlay = styled.div`
   position: absolute;
-  top: 0px;
+  top: ${props => props.top}px;
   right: 0px;
   z-index: 1;
 `;
@@ -177,9 +177,9 @@ function SampleMapPanel(props) {
 }
 
 const CustomMapControl = props => (
-  <StyledMapControlOverlay>
+  <StyledMapControlOverlay top={props.top}>
     {!props.isExport && props.currentSample ? <SampleMapPanel {...props} /> : null}
-    <MapControl {...props} />
+    <MapControl {...props} top={0}/>
   </StyledMapControlOverlay>
 );
 

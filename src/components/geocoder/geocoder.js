@@ -15,6 +15,8 @@ const StyledContainer = styled.div`
   color: ${props => props.theme.textColor};
 
   .geocoder-input {
+    box-shadow: ${props => props.theme.boxShadow};
+
     .geocoder-input__search {
       position: absolute;
       height: ${props => props.theme.geocoderInputHeight}px;
@@ -33,9 +35,10 @@ const StyledContainer = styled.div`
   }
 
   .geocoder-results {
+    box-shadow: ${props => props.theme.boxShadow};
     background-color: ${props => props.theme.panelBackground};
     position: absolute;
-    width: ${props => Number.isFinite(props.width) ? props.width : props.theme.geocoderWidth}px;
+    width: ${props => (Number.isFinite(props.width) ? props.width : props.theme.geocoderWidth)}px;
     margin-top: ${props => props.theme.dropdownWapperMargin}px;
   }
 

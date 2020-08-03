@@ -499,6 +499,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       };
 
       const isEdit = uiState.mapControls.mapDraw.active;
+      const hasGeocoderLayer = layers.find(l => l.id === GEOCODER_LAYER_ID);
 
       return (
         <StyledMapContainer style={MAP_STYLE.container}>
@@ -513,7 +514,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             mapControls={mapControls}
             readOnly={this.props.readOnly}
             scale={mapState.scale || 1}
-            top={interactionConfig.geocoder && interactionConfig.geocoder.enabled ? 40 : 0}
+            top={interactionConfig.geocoder && interactionConfig.geocoder.enabled ? 52 : 0}
             editor={editor}
             locale={uiState.locale}
             onTogglePerspective={mapStateActions.togglePerspective}
@@ -554,15 +555,13 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
               }}
             />
           </MapComponent>
-          {mapStyle.topMapStyle && (
+          {mapStyle.topMapStyle || hasGeocoderLayer ? (
             <div style={MAP_STYLE.top}>
               <MapComponent {...mapProps} key="top" mapStyle={mapStyle.topMapStyle}>
-                {layers.find(l => l.id === GEOCODER_LAYER_ID)
-                  ? this._renderDeckOverlay({[GEOCODER_LAYER_ID]: true})
-                  : null}
+                  {this._renderDeckOverlay({[GEOCODER_LAYER_ID]: true})}
               </MapComponent>
             </div>
-          )}
+          ) : null}
           {this._renderMapPopover(layersToRender)}
           <Attribution />
         </StyledMapContainer>

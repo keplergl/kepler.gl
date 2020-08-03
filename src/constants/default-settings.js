@@ -802,6 +802,10 @@ export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';
 export const SPEED_CONTROL_RANGE = [0, 10];
 export const SPEED_CONTROL_STEP = 0.001;
 
+// Geocoder
+export const GEOCODER_DATASET_NAME = 'geocoder_dataset';
+export const GEOCODER_LAYER_ID = 'geocoder_layer';
+
 // We could use directly react-map-gl-draw EditorMode but this would
 // create a direct dependency with react-map-gl-draw
 // Created this map to be independent from react-map-gl-draw

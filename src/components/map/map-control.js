@@ -53,7 +53,7 @@ const StyledMapControl = styled.div`
   width: ${props => props.theme.mapControl.width}px;
   padding: ${props => props.theme.mapControl.padding}px;
   z-index: 10;
-  top: ${props => props.top}px;
+  margin-top: ${props => props.top}px;
   position: absolute;
 `;
 

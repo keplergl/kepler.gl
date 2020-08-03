@@ -53,6 +53,7 @@ const ICON_LAYER = {
 
 const StyledGeocoderPanel = styled.div`
   position: absolute;
+  top: ${props => props.theme.geocoderTop}px;
   right: ${props => props.theme.geocoderRight}px;
   width: ${props => Number.isFinite(props.width) ? props.width : props.theme.geocoderWidth}px;
   box-shadow: ${props => props.theme.boxShadow};
