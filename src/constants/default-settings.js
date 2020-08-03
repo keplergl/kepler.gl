@@ -805,6 +805,10 @@ export const SPEED_CONTROL_STEP = 0.001;
 // Geocoder
 export const GEOCODER_DATASET_NAME = 'geocoder_dataset';
 export const GEOCODER_LAYER_ID = 'geocoder_layer';
+export const GEOCODER_GEO_OFFSET = 0.05;
+export const GEOCODER_ICON_COLOR = [255, 0, 0];
+export const GEOCODER_ICON_SIZE = 80;
+
 
 // We could use directly react-map-gl-draw EditorMode but this would
 // create a direct dependency with react-map-gl-draw

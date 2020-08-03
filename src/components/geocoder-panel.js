@@ -27,15 +27,20 @@ import geoViewport from '@mapbox/geo-viewport';
 import KeplerGlSchema from 'schemas';
 
 import Geocoder from './geocoder/geocoder';
-import {GEOCODER_DATASET_NAME, GEOCODER_LAYER_ID} from 'constants/default-settings';
+import {
+  GEOCODER_DATASET_NAME, 
+  GEOCODER_LAYER_ID,
+  GEOCODER_GEO_OFFSET,
+  GEOCODER_ICON_COLOR,
+  GEOCODER_ICON_SIZE
+} from 'constants/default-settings';
 
-const GEO_OFFSET = 0.05;
 const ICON_LAYER = {
   id: GEOCODER_LAYER_ID,
   type: 'icon',
   config: {
     label: 'Geocoder Layer',
-    color: [255, 0, 0],
+    color: GEOCODER_ICON_COLOR,
     dataId: GEOCODER_DATASET_NAME,
     columns: {
       lat: 'lt',
@@ -46,7 +51,7 @@ const ICON_LAYER = {
     isVisible: true,
     hidden: true,
     visConfig: {
-      radius: 80
+      radius: GEOCODER_ICON_SIZE
     }
   }
 };
@@ -125,10 +130,10 @@ export default function GeocoderPanelFactory() {
         PARSED_CONFIG
       );
       const bounds = bbox || [
-        lon - GEO_OFFSET,
-        lat - GEO_OFFSET,
-        lon + GEO_OFFSET,
-        lat + GEO_OFFSET
+        lon - GEOCODER_GEO_OFFSET,
+        lat - GEOCODER_GEO_OFFSET,
+        lon + GEOCODER_GEO_OFFSET,
+        lat + GEOCODER_GEO_OFFSET
       ];
       const {center, zoom} = geoViewport.viewport(bounds, [
         this.props.mapState.width,
