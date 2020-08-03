@@ -19,22 +19,17 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import sinon from 'sinon';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import BottomWidgetFactory from 'components/bottom-widget';
-import TimeWidgetFactory from 'components/filters/time-widget';
-import AnimationControlFactory from 'components/common/animation-control/animation-control';
 import {appInjector} from 'components/container';
 
 const BottomWidget = appInjector.get(BottomWidgetFactory);
-const TimeWidget = appInjector.get(TimeWidgetFactory);
-const AnimationControl = appInjector.get(AnimationControlFactory);
 
 import * as VisStateActions from 'actions/vis-state-actions';
 
 // mock state
-import {InitialState, StateWFilters} from 'test/helpers/mock-state';
+import {InitialState} from 'test/helpers/mock-state';
 
 // default props from initial state
 const defaultProps = {
@@ -58,6 +53,10 @@ test('Components -> BottomWidget.mount -> initial state', t => {
       </IntlWrapper>
     );
   }, 'BottomWidget should not fail without props');
-  t.equal(wrapper.find('div').length, 0, 'should not render anything when layers and filters are empty');
+  t.equal(
+    wrapper.find('div').length,
+    0,
+    'should not render anything when layers and filters are empty'
+  );
   t.end();
 });
