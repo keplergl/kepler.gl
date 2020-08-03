@@ -53,7 +53,7 @@ const StyledMapControl = styled.div`
   width: ${props => props.theme.mapControl.width}px;
   padding: ${props => props.theme.mapControl.padding}px;
   z-index: 10;
-  top: ${props => props.top}px;
+  margin-top: ${props => props.top || 0}px;
   position: absolute;
 `;
 
@@ -72,14 +72,18 @@ const StyledMapControlPanel = styled.div`
   }
 `;
 
-const StyledMapControlPanelContent = styled.div`
+const StyledMapControlPanelContent = styled.div.attrs({
+  className: 'map-control__panel-content'
+})`
   ${props => props.theme.dropdownScrollBar};
   max-height: 500px;
   min-height: 100px;
   overflow: auto;
 `;
 
-const StyledMapControlPanelHeader = styled.div`
+const StyledMapControlPanelHeader = styled.div.attrs({
+  className: 'map-control__panel-header'
+})`
   display: flex;
   justify-content: space-between;
   background-color: ${props => props.theme.mapPanelHeaderBackgroundColor};
@@ -414,7 +418,8 @@ const MapControlFactory = () => {
         editor,
         scale,
         readOnly,
-        locale
+        locale,
+        top
       } = this.props;
 
       const {
@@ -427,7 +432,7 @@ const MapControlFactory = () => {
       } = mapControls;
 
       return (
-        <StyledMapControl className="map-control">
+        <StyledMapControl className="map-control" top={top}>
           {/* Split Map */}
           {splitMap.show && readOnly !== true ? (
             <ActionPanel className="split-map" key={0}>

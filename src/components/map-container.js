@@ -42,7 +42,7 @@ import {getLayerHoverProp} from 'utils/layer-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
-import {FILTER_TYPES} from 'constants/default-settings';
+import {FILTER_TYPES, GEOCODER_LAYER_ID} from 'constants/default-settings';
 
 const MAP_STYLE = {
   container: {
@@ -62,18 +62,30 @@ const TRANSITION_DURATION = 0;
 
 const Attribution = () => (
   <StyledAttrbution>
-    <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
-      © kepler.gl |{' '}
-    </a>
-    <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
-      © Mapbox |{' '}
-    </a>
-    <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
-      © OpenStreetMap |{' '}
-    </a>
-    <a href="https://www.mapbox.com/map-feedback/" target="_blank" rel="noopener noreferrer">
-      <strong>Improve this map</strong>
-    </a>
+    <div className="attrition-logo">
+      Basemap by:
+      <a
+        className="mapboxgl-ctrl-logo"
+        target="_blank"
+        rel="noopener noreferrer"
+        href="https://www.mapbox.com/"
+        aria-label="Mapbox logo"
+      />
+    </div>
+    <div>
+      <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
+        © kepler.gl |{' '}
+      </a>
+      <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
+        © Mapbox |{' '}
+      </a>
+      <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
+        © OpenStreetMap |{' '}
+      </a>
+      <a href="https://www.mapbox.com/map-feedback/" target="_blank" rel="noopener noreferrer">
+        <strong>Improve this map</strong>
+      </a>
+    </div>
   </StyledAttrbution>
 );
 
@@ -152,7 +164,9 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           (accu, layer, idx) => ({
             ...accu,
             [layer.id]:
-              layer.shouldRenderLayer(layerData[idx]) && this._isVisibleMapLayer(layer, mapLayers)
+              layer.id !== GEOCODER_LAYER_ID &&
+              layer.shouldRenderLayer(layerData[idx]) &&
+              this._isVisibleMapLayer(layer, mapLayers)
           }),
           {}
         )
@@ -469,6 +483,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         uiState,
         uiStateActions,
         visStateActions,
+        interactionConfig,
         editor,
         index
       } = this.props;
@@ -490,6 +505,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       };
 
       const isEdit = uiState.mapControls.mapDraw.active;
+      const hasGeocoderLayer = layers.find(l => l.id === GEOCODER_LAYER_ID);
 
       return (
         <StyledMapContainer style={MAP_STYLE.container}>
@@ -504,7 +520,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             mapControls={mapControls}
             readOnly={this.props.readOnly}
             scale={mapState.scale || 1}
-            top={0}
+            top={interactionConfig.geocoder && interactionConfig.geocoder.enabled ? 52 : 0}
             editor={editor}
             locale={uiState.locale}
             onTogglePerspective={mapStateActions.togglePerspective}
@@ -545,11 +561,13 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
               }}
             />
           </MapComponent>
-          {mapStyle.topMapStyle && (
+          {mapStyle.topMapStyle || hasGeocoderLayer ? (
             <div style={MAP_STYLE.top}>
-              <MapComponent {...mapProps} key="top" mapStyle={mapStyle.topMapStyle} />
+              <MapComponent {...mapProps} key="top" mapStyle={mapStyle.topMapStyle}>
+                {this._renderDeckOverlay({[GEOCODER_LAYER_ID]: true})}
+              </MapComponent>
             </div>
-          )}
+          ) : null}
           {this._renderMapPopover(layersToRender)}
           <Attribution />
         </StyledMapContainer>

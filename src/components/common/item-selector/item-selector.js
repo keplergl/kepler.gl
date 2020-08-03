@@ -62,8 +62,10 @@ const DropdownWrapper = styled.div`
   z-index: ${props => props.theme.dropdownWrapperZ};
   position: absolute;
   bottom: ${props => (props.placement === 'top' ? props.theme.inputBoxHeight : 'auto')};
-  margin-top: ${props => (props.placement === 'bottom' ? '4px' : 'auto')};
-  margin-bottom: ${props => (props.placement === 'top' ? '4px' : 'auto')};
+  margin-top: ${props =>
+    props.placement === 'bottom' ? `${props.theme.dropdownWapperMargin}px` : 'auto'};
+  margin-bottom: ${props =>
+    props.placement === 'top' ? `${props.theme.dropdownWapperMargin}px` : 'auto'};
 `;
 
 class ItemSelector extends Component {

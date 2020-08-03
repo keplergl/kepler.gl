@@ -85,6 +85,10 @@ const GlobalStyle = styled.div`
     text-decoration: none;
     color: ${props => props.theme.labelColor};
   }
+
+  .mapboxgl-ctrl .mapboxgl-ctrl-logo {
+    display: none;
+  }
 `;
 
 KeplerGlFactory.deps = [
@@ -240,8 +244,7 @@ function KeplerGlFactory(
         mapStateActions,
         mapStyleActions,
         uiStateActions,
-        providerActions,
-        dispatch
+        providerActions
       } = this.props;
 
       const availableProviders = this.availableProviders(this.props);
@@ -371,7 +374,10 @@ function KeplerGlFactory(
                   <GeoCoderPanel
                     isGeocoderEnabled={interactionConfig.geocoder.enabled}
                     mapboxApiAccessToken={mapboxApiAccessToken}
-                    dispatch={dispatch}
+                    mapState={mapState}
+                    updateVisData={visStateActions.updateVisData}
+                    removeDataset={visStateActions.removeDataset}
+                    updateMap={mapStateActions.updateMap}
                   />
                 )}
                 <BottomWidget

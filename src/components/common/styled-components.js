@@ -462,9 +462,21 @@ export const StyledAttrbution = styled.div.attrs({
   position: absolute;
   display: block;
   margin: 0 10px 2px;
-  z-index: 999;
+  z-index: 0;
+
+  .attrition-logo {
+    display: flex;
+    font-size: 10px;
+    justify-content: flex-end;
+    align-items: center;
+    color: ${props => props.theme.labelColor};
+
+    a.mapboxgl-ctrl-logo {
+      width: 72px;
+      margin-left: 6px;
+    }
+  }
   a {
-    color: black;
     font-size: 10px;
   }
 `;
