@@ -39,7 +39,7 @@ const StyledToken = styled.div`
 // custom list Item
 export const FieldListItemFactory = (showToken = true) => {
   const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
-    <div>
+    <div className="field-selector_list-item">
       {showToken ? (
         <StyledToken>
           <FieldToken type={value.type} />
@@ -113,16 +113,15 @@ class FieldSelector extends Component {
   showTokenSelector = props => props.showToken;
 
   selectedItemsSelector = createSelector(this.fieldsSelector, this.valueSelector, (fields, value) =>
-    fields.filter(f =>
-      Boolean(
-        toArray(value).find(d => {
-          if (!notNullorUndefined(d)) {
-            return false;
-          }
-          return d.name ? d.name === defaultDisplayOption(f) : d === defaultDisplayOption(f);
-        })
+    toArray(value)
+      .map(d =>
+        fields.find(f =>
+          notNullorUndefined(d) && d.name
+            ? d.name === defaultDisplayOption(f)
+            : d === defaultDisplayOption(f)
+        )
       )
-    )
+      .filter(d => d)
   );
 
   fieldOptionsSelector = createSelector(
@@ -146,7 +145,7 @@ class FieldSelector extends Component {
           getOptionValue={d => d}
           closeOnSelect={this.props.closeOnSelect}
           displayOption={defaultDisplayOption}
-          filterOption={'id'}
+          filterOption="name"
           fixedOptions={this.props.suggested}
           inputTheme={this.props.inputTheme}
           isError={this.props.error}
