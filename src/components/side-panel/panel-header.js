@@ -90,7 +90,7 @@ export const PanelAction = ({item, onClick}) => (
   <StyledPanelAction data-tip data-for={`${item.id}-action`} onClick={onClick}>
     {item.label ? <p>{item.label}</p> : null}
     <a target={item.blank ? '_blank' : ''} href={item.href}>
-      <item.iconComponent height="20px" {...item.iconComponentProps} />
+      <item.iconComponent height="20px" />
     </a>
     {item.tooltip ? (
       <Tooltip id={`${item.id}-action`} place="bottom" delayShow={500} effect="solid">
