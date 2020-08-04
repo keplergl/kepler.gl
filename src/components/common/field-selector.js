@@ -39,7 +39,7 @@ const StyledToken = styled.div`
 // custom list Item
 export const FieldListItemFactory = (showToken = true) => {
   const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
-    <div>
+    <div className="field-selector_list-item">
       {showToken ? (
         <StyledToken>
           <FieldToken type={value.type} />

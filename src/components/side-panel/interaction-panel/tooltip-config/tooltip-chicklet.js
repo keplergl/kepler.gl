@@ -71,7 +71,9 @@ const hashStyles = {
   ACTIVE: 'ACTIVE'
 };
 
-const IconDiv = styled.div`
+const IconDiv = styled.div.attrs({
+  className: 'tooltip-chicklet__icon'
+})`
   color: ${props =>
     props.status === hashStyles.SHOW
       ? props.theme.subtextColorActive
@@ -84,11 +86,11 @@ function getFormatTooltip(formatLabels, format) {
   if (!format) {
     return null;
   }
-  let formatLabel = formatLabels.find(fl => getValue(fl) === format);
+  const formatLabel = formatLabels.find(fl => getValue(fl) === format);
   if (formatLabel) {
     return formatLabel.label;
   }
-  return typeof format === 'object' ? JSON.stringify(format, null, 2) : String(format); 
+  return typeof format === 'object' ? JSON.stringify(format, null, 2) : String(format);
 }
 
 function TooltipChickletFactory(dataId, config, onChange, fields) {
@@ -121,8 +123,6 @@ function TooltipChickletFactory(dataId, config, onChange, fields) {
       const formatLabels = getFormatLabels(fields, tooltipField.name);
       const hasFormat = Boolean(tooltipField.format);
       const selectionIndex = formatLabels.findIndex(fl => getValue(fl) === tooltipField.format);
-      // if (selectionIndex < 0) selectionIndex = 0;
-      // console.log(selectionIndex)
       const hashStyle = show ? hashStyles.SHOW : hasFormat ? hashStyles.ACTIVE : null;
 
       return (

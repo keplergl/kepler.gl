@@ -28,7 +28,7 @@ import KeplerGlSchema from 'schemas';
 
 import Geocoder from './geocoder/geocoder';
 import {
-  GEOCODER_DATASET_NAME, 
+  GEOCODER_DATASET_NAME,
   GEOCODER_LAYER_ID,
   GEOCODER_GEO_OFFSET,
   GEOCODER_ICON_COLOR,

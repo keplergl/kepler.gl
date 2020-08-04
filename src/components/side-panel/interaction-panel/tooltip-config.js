@@ -112,7 +112,8 @@ function TooltipConfigFactory(DatasetTag) {
                             tooltipField => tooltipField.name === f.name
                           ) || {
                             name: f.name,
-                            format: f.format
+                            // default initial tooltip is null
+                            format: null
                           }
                       )
                     }
