@@ -91,7 +91,7 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
-  static findDefaultLayerProps({fields = [], allData}) {
+  static findDefaultLayerProps({fields = [], allData = []}) {
     const foundColumns = this.findDefaultColumnField(HEXAGON_ID_FIELDS, fields);
     const hexFields = getHexFields(fields, allData);
     if ((!foundColumns || !foundColumns.length) && !hexFields.length) {
@@ -99,20 +99,24 @@ export default class HexagonIdLayer extends Layer {
     }
 
     return {
-      props: (foundColumns || []).map(columns => ({
-        isVisible: true,
-        label: 'H3 Hexagon',
-        columns
-      })).concat((hexFields || []).map(f => ({
-        isVisible: true,
-        label: f.name,
-        columns: {
-          hex_id: {
-            value: f.name,
-            fieldIdx: fields.findIndex(fid => fid.name === f.name)
-          }
-        }
-      })))
+      props: (foundColumns || [])
+        .map(columns => ({
+          isVisible: true,
+          label: 'H3 Hexagon',
+          columns
+        }))
+        .concat(
+          (hexFields || []).map(f => ({
+            isVisible: true,
+            label: f.name,
+            columns: {
+              hex_id: {
+                value: f.name,
+                fieldIdx: fields.findIndex(fid => fid.name === f.name)
+              }
+            }
+          }))
+        )
     };
   }
 
