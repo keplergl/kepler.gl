@@ -19,14 +19,21 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import {ThemeProvider, withTheme} from 'styled-components';
 
-import {connect as keplerGlConnect} from 'connect/keplergl-connect';
+// Modal aesthetics
+import {ThemeProvider, withTheme} from 'styled-components';
 import RenderSettingsModal from './render-settings-modal';
 import {Button} from 'components/common/styled-components';
 import {theme} from '../styles';
 
+// Redux stores/actions
+import {connect as keplerGlConnect} from 'connect/keplergl-connect';
 import {toggleHubbleExportModal} from 'kepler.gl/actions';
+import {connect} from 'react-redux';
+import { bindActionCreators } from 'redux';
+
+const boundtoggleHubbleExportModal = bindActionCreators(toggleHubbleExportModal)
+
 
 // TODO this isn't DRY. Comes from https://github.com/keplergl/kepler.gl/blob/995024e86880fefb0624af4ed1e98d3879558336/src/components/kepler-gl.js
 function mapStateToProps(state = {}, props) {
@@ -36,9 +43,12 @@ function mapStateToProps(state = {}, props) {
       mapStyle: state.mapStyle,
       mapState: state.mapState,
       uiState: state.uiState,
-      providerState: state.providerState
+      providerState: state.providerState,
+      toggleHubbleExportModal: state.uiState // NOTE is this the proper import? Imports state rather than fn
     };
 }
+// const mapStateToProps = (state, props) => ({state,  ...props});
+
 
 function makeMapDispatchToProps() {
     // const getActionCreators = makeGetActionCreators();
@@ -46,7 +56,10 @@ function makeMapDispatchToProps() {
     //   const groupedActionCreators = getActionCreators(dispatch, ownProps);
       
       return {
-        ...toggleHubbleExportModal(),
+        toggleHubbleExportModal: (isOpen) => dispatch(toggleHubbleExportModal(isOpen)), // NOTE gives dispatch error
+        // toggleHubbleExportModal: (isOpen) => toggleHubbleExportModal(isOpen),
+        // toggleHubbleExportModal: (isOpen) => {dispatch({type: 'TOGGLE_HUBBLE_EXPORT_MODAL', hubbleExportModalOpen: isOpen})},
+        // bindActionCreators({toggleHubbleExportModal}, dispatch){}, // NOTE possibly wrong but doesn't give dispatch error
         //   TODO Put action creator and return here
         // ...groupedActionCreators,
         dispatch
@@ -56,17 +69,27 @@ function makeMapDispatchToProps() {
     return mapDispatchToProps;
 }
 
+// const mapStateToProps = (state, props) => ({state, ...props});
+// const mapDispatchToProps = (dispatch) => {
+//     return {
+//         dispatch,
+//         toggleHubbleExportModal: (isOpen) => {dispatch({type: 'TOGGLE_HUBBLE_EXPORT_MODAL', hubbleExportModalOpen: isOpen})}
+//     }
+// };
+
 class HubbleExport extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            isOpen: false
-        };
-    }
+    // constructor(props) {
+    //     super(props);
+    //     this.state = {
+    //         isOpen: false
+    //     };
+    // }
     handleClose() {this.setState({isOpen: false})} // X button in Modal UI was clicked
 
     handleExport() { // Export button in Kepler UI was clicked
-        this.props.toggleHubbleExportModal({hubbleExportModalOpen: true})
+        console.log("handleExport this.props", this.props)
+        this.props.toggleHubbleExportModal({isOpen: true})
+        // this.props.toggleHubbleExportModal({hubbleExportModalOpen: true})
         // this.setState(state => ({
         //     isOpen: true
         //   }));
@@ -78,12 +101,15 @@ class HubbleExport extends Component {
     }
 
     render() {
-        console.log(this.props)
-        // console.log(this.state)
+        // const {uiState} = this.props
+        // console.log("reached")
+        // console.log("this", this)
+        console.log("render this.props", this.props)
+        // console.log("this.state", this.state)
 
         return (
             <div>
-                <RenderSettingsModal isOpen={this.state.isOpen} handleClose={this.handleClose.bind(this)} />
+                <RenderSettingsModal isOpen={this.props.isOpen} handleClose={this.handleClose.bind(this)} />
                 <ThemeProvider theme={RenderSettingsModal}></ThemeProvider>
                 <Button onClick={() => this.handleExport()}>Export</Button> {/* anonymous function to bind state onclick  */}
             </div>
@@ -92,4 +118,6 @@ class HubbleExport extends Component {
 };
 
 export default keplerGlConnect(mapStateToProps, makeMapDispatchToProps)(withTheme(HubbleExport));
+// export default connect(mapStateToProps, makeMapDispatchToProps)(withTheme(HubbleExport));
+// export default connect(mapStateToProps, makeMapDispatchToProps)(HubbleExport);
 

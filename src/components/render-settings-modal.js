@@ -26,9 +26,15 @@ import RenderSettingsPanel from './render-settings-panel';
 import Modal from 'react-modal';
 import {DIMENSIONS} from 'kepler.gl/constants/default-settings';
 
+import {connect} from 'react-redux';
+
+
 const ModalContainer = styled.div`
   position: relative;
 `;
+
+const mapStateToProps = state => state;
+const mapDispatchToProps = dispatch => ({dispatch});
 
 class RenderSettingsModal extends Component {
   static defaultProps = {
@@ -129,5 +135,5 @@ class RenderSettingsModal extends Component {
     );
   }
 }
-
-export default withTheme(RenderSettingsModal);
+export default connect(mapStateToProps, mapDispatchToProps)(withTheme(RenderSettingsModal));
+// export default withTheme(RenderSettingsModal);

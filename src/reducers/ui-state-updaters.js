@@ -711,7 +711,9 @@ export const setLocaleUpdater = (state, {payload: {locale}}) => ({
  * @type {typeof import('./ui-state-updaters').toggleHubbleExportModalUpdater}
  * @public
  */
-export const toggleHubbleExportModalUpdater = (state, {payload: {isOpen}}) => ({
+export const toggleHubbleExportModalUpdater = (state, {payload: {isOpen}}) => (
+  console.log("toggleHubbleExportModalUpdater reached"),
+  {
   ...state,
-  hubbleExportModalOpen: isOpen
+  hubbleExportModalOpen: isOpen,
 });
