@@ -24,7 +24,7 @@ import withLocalSelector from './with-local-selector';
 const defaultMapStateToProps = state => state;
 const defaultMapDispatchToProps = () => dispatch => ({dispatch});
 
-// Code below puts Redux store in a more predictable state for keplergl to use
+// Code below puts Kepler's Redux store in a more predictable state
 export const connect = (
   mapStateToProps = defaultMapStateToProps,
   makeMapDispatchToProps = defaultMapDispatchToProps,
@@ -33,7 +33,7 @@ export const connect = (
 ) => BaseComponent => {
   const mapDispatchToProps = makeMapDispatchToProps();
   const reduxMapState = (state, props) => {
-    return mapStateToProps(props.selector(state), props, state) // props.selector(state) is provided with withLocalSelector (uses reselector package)
+    return mapStateToProps(props.selector(state), props, state) // props.selector(state) is provided with withLocalSelector (uses reselector library)
   };
 
   const reduxMapDispatch = (dispatch, props) => {

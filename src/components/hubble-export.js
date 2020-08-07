@@ -24,16 +24,13 @@ import React, {Component} from 'react';
 import {ThemeProvider, withTheme} from 'styled-components';
 import RenderSettingsModal from './render-settings-modal';
 import {Button} from 'components/common/styled-components';
-import {theme} from '../styles';
 
 // Redux stores/actions
 import {connect as keplerGlConnect} from 'connect/keplergl-connect';
 import {toggleHubbleExportModal} from 'kepler.gl/actions';
-import {connect} from 'react-redux';
 
-// TODO this isn't DRY. Comes from https://github.com/keplergl/kepler.gl/blob/995024e86880fefb0624af4ed1e98d3879558336/src/components/kepler-gl.js
 function mapStateToProps(state = {}, props) {
-    return {
+    return { // TODO unsure if other redux stores are needed atm
     //   ...props,
     //   visState: state.visState,
     //   mapStyle: state.mapStyle,
@@ -44,7 +41,8 @@ function mapStateToProps(state = {}, props) {
 }
 
 // noResultDispatch returns nothing in this case. Undefined if console.log
-// Because we're using Kepler's connect (wrapper of Redux connect) this argument format comes from ../connect/keplergl-connect
+// because we're using Kepler's connect (wrapper of Redux connect) it has 2 dispatches
+// the code can be found from ../connect/keplergl-connect
 const mapDispatchToProps = () => (noResultDispatch, ownProps, dispatch) => {	
     return {
         toggleHubbleExportModal: (isOpen) => dispatch(toggleHubbleExportModal(isOpen)), // NOTE gives dispatch error
@@ -52,20 +50,8 @@ const mapDispatchToProps = () => (noResultDispatch, ownProps, dispatch) => {
 }	
 
 class HubbleExport extends Component {
-    handleClose() {this.setState({isOpen: false})} // X button in Modal UI was clicked
-
-    handleExport() { // Export button in Kepler UI was clicked
-        console.log("handleExport this.props", this.props)
-        this.props.toggleHubbleExportModal(true)
-        // this.props.toggleHubbleExportModal({hubbleExportModalOpen: true})
-        // this.setState(state => ({
-        //     isOpen: true
-        //   }));
-        // stop rendering in bg
-        // setState
-        // pop up modal if isOpen. If false, closes modal TODO put function into render
-        // all the data is passed through and can use in deck/hubble components
-    }
+    handleClose() {this.props.toggleHubbleExportModal(false)} // X button in Modal UI was clicked
+    handleExport() {this.props.toggleHubbleExportModal(true)} // Export button in Kepler UI was clicked
 
     render() {
         return (
@@ -78,7 +64,5 @@ class HubbleExport extends Component {
     }
 };
 
+// keplerGlConnect is a wrapper of Redux's standard connect except with access to Kepler's Redux store
 export default keplerGlConnect(mapStateToProps, mapDispatchToProps)(withTheme(HubbleExport));
-// export default connect(mapStateToProps, makeMapDispatchToProps)(withTheme(HubbleExport));
-// export default connect(mapStateToProps, makeMapDispatchToProps)(HubbleExport);
-

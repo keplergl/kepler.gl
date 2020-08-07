@@ -26,15 +26,9 @@ import RenderSettingsPanel from './render-settings-panel';
 import Modal from 'react-modal';
 import {DIMENSIONS} from 'kepler.gl/constants/default-settings';
 
-import {connect} from 'react-redux';
-
-
 const ModalContainer = styled.div`
   position: relative;
 `;
-
-const mapStateToProps = state => state;
-const mapDispatchToProps = dispatch => ({dispatch});
 
 class RenderSettingsModal extends Component {
   static defaultProps = {
@@ -86,9 +80,9 @@ class RenderSettingsModal extends Component {
         borderRadius: theme.panelBorderRadius || '2px'
       },
       overlay: {
-        backgroundColor: 'rgba(0, 0, 0, 0)'
+        backgroundColor: 'rgba(0, 0, 0, .5)'
       }
-      // content: {
+      // content: { // TODO delete once final look is set
       //   top: 0,
       //   left: 0,
       //   border: 0,
@@ -118,8 +112,6 @@ class RenderSettingsModal extends Component {
             style={modalStyles}
             ariaHideApp={false}
             parentSelector={() => {
-              // React modal issue: https://github.com/reactjs/react-modal/issues/769
-              // failed to execute removeChild on parent node when it is already unmounted
               return (
                 this.root.current || {
                   removeChild: () => {},
@@ -135,5 +127,5 @@ class RenderSettingsModal extends Component {
     );
   }
 }
-export default connect(mapStateToProps, mapDispatchToProps)(withTheme(RenderSettingsModal));
-// export default withTheme(RenderSettingsModal);
+
+export default withTheme(RenderSettingsModal);
