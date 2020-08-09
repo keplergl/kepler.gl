@@ -123,6 +123,7 @@ export type SavedMapStyle = {
   mapStyles: SavedCustomMapStyle;
 };
 
+/** Schema for v1 saved configuration */
 export type SavedConfigV1 = {
   version: 'v1';
   config: {
@@ -132,7 +133,9 @@ export type SavedConfigV1 = {
   };
 };
 
+/** Schema for a parsed configuration ("normalized" across versions) */
 export type ParsedConfig = {
+  version: string;
   visState?: {
     layers?: ParsedLayer[];
     filters?: ParsedFilter[];
