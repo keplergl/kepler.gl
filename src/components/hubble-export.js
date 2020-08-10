@@ -41,7 +41,7 @@ function mapStateToProps(state = {}, props) {
 }
 
 // noResultDispatch returns nothing in this case. Undefined if console.log
-// because we're using Kepler's connect (wrapper of Redux connect) it has 2 dispatches
+// because we're using Kepler's connect (wrapper of Redux connect) it has 3 arguments (2 are dispatches)
 // the code can be found from ../connect/keplergl-connect
 const mapDispatchToProps = () => (noResultDispatch, ownProps, dispatch) => {	
     return {
@@ -64,5 +64,5 @@ class HubbleExport extends Component {
     }
 };
 
-// keplerGlConnect is a wrapper of Redux's standard connect except with access to Kepler's Redux store
+// keplerGlConnect is a wrapper of Redux's standard connect except w/ access to Kepler's Redux store
 export default keplerGlConnect(mapStateToProps, mapDispatchToProps)(withTheme(HubbleExport));
