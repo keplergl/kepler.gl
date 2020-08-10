@@ -143,7 +143,7 @@ export async function readFileInBatches({file, fileCache = [], loaders = [], loa
     ...loadOptions
   };
 
-  const batchIterator = await parseInBatches(file, loaders, loadOptions, file.name);
+  const batchIterator = await parseInBatches(file, loaders, loadOptions);
   const progressIterator = makeProgressIterator(batchIterator, {size: file.size});
 
   return readBatch(progressIterator, file.name);
