@@ -146,9 +146,7 @@ export const SidePanelSection = styled.div.attrs({
 export const SidePanelDivider = styled.div.attrs({
   className: 'side-panel-divider'
 })`
-  border-bottom: 1px solid ${props => props.theme.panelBorderColor};
-  height: 12px;
-  margin-bottom: 12px;
+  height: 21px;
 `;
 
 export const Tooltip = styled(ReactTooltip)`
@@ -281,8 +279,7 @@ export const InlineInput = styled(Input)`
 `;
 
 export const StyledPanelHeader = styled.div`
-  background-color: ${props =>
-    props.active ? props.theme.panelBackgroundHover : props.theme.panelBackground};
+  background-color: ${props => props.theme.panelBackground};
   border-left: 3px solid
     rgb(
       ${props => (props.labelRCGColorValues ? props.labelRCGColorValues.join(',') : 'transparent')}
@@ -292,6 +289,7 @@ export const StyledPanelHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-radius: 0px 4px 4px 0px;
   transition: ${props => props.theme.transition};
 `;
 

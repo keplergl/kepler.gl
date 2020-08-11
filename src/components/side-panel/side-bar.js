@@ -50,6 +50,7 @@ const SideBarInner = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+  border-left: 1px solid ${props => props.theme.sidePanelBorder};
 `;
 
 const StyledCollapseButton = styled.div`

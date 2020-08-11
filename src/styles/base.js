@@ -36,7 +36,7 @@ export const fontFamily = `ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-se
 export const fontWeight = 400;
 export const fontSize = '0.875em';
 export const lineHeight = 1.71429;
-export const labelColor = '#6A7485';
+export const labelColor = '#54638C';
 export const labelHoverColor = '#C6C6C6';
 export const labelColorLT = '#6A7485';
 
@@ -146,8 +146,8 @@ export const dropdownListBorderTopLT = '#D3D8E0';
 export const dropdownWrapperZ = 100;
 export const dropdownWapperMargin = 4;
 // Switch
-export const switchWidth = 24;
-export const switchHeight = 12;
+export const switchWidth = 30;
+export const switchHeight = 18;
 export const switchLabelMargin = 12;
 
 export const switchTrackBgd = '#29323C';
@@ -156,7 +156,7 @@ export const switchTrackBorderRadius = '1px';
 export const switchBtnBgd = '#6A7485';
 export const switchBtnBgdActive = '#D3D8E0';
 export const switchBtnBoxShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
-export const switchBtnBorderRadius = '0';
+export const switchBtnBorderRadius = '1px';
 export const switchBtnWidth = '12px';
 export const switchBtnHeight = '12px';
 
@@ -182,7 +182,7 @@ export const sidePanelScrollBarHeight = 10;
 export const sideBarCloseBtnBgd = secondaryBtnBgd;
 export const sideBarCloseBtnColor = '#29323C';
 export const sideBarCloseBtnBgdHover = secondaryBtnActBgd;
-
+export const sidePanelTitleFontsize = '15px';
 export const panelBackground = '#29323C';
 export const panelBackgroundHover = '#3A4552';
 export const panelActiveBg = '#3A4552';
@@ -523,9 +523,9 @@ const switchTrack = css`
 const switchButton = css`
   transition: ${props => props.theme.transition};
   position: absolute;
-  top: 0;
+  top: 3px;
   left: ${props =>
-    (props.checked ? props.theme.switchWidth / 2 : -1) - props.theme.switchLabelMargin}px;
+    (props.checked ? props.theme.switchWidth / 2 : 2) - props.theme.switchLabelMargin}px;
   content: '';
   display: block;
   height: ${props => props.theme.switchBtnHeight};
@@ -599,7 +599,8 @@ const inputCheckbox = css`
   vertical-align: middle;
   cursor: pointer;
   font-size: 12px;
-  color: ${props => props.theme.labelColor};
+  color:red;
+  // color: ${props => props.theme.labelColor};
   margin-left: -${props => props.theme.switchLabelMargin}px;
 
   :before {
@@ -1044,6 +1045,7 @@ export const theme = {
   sidePanelHeaderBg,
   sidePanelScrollBarWidth,
   sidePanelScrollBarHeight,
+  sidePanelTitleFontsize,
 
   // Side Panel Panel
   panelActiveBg,

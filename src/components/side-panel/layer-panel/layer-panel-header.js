@@ -152,10 +152,10 @@ function LayerPanelHeaderFactory() {
         )}
         <LayerTitleSection className="layer__title">
           <div>
-            <LayerLabelEditor layerId={layerId} label={label} onEdit={onUpdateLayerLabel} />
             <div className="layer__title__type">
               {layerType && <FormattedMessage id={`layer.type.${layerType.toLowerCase()}`} />}
             </div>
+            <LayerLabelEditor layerId={layerId} label={label} onEdit={onUpdateLayerLabel} />
           </div>
         </LayerTitleSection>
       </HeaderLabelSection>
