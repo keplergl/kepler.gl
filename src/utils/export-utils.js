@@ -33,8 +33,6 @@ import {formatCsv} from 'processors/data-processor';
 import get from 'lodash.get';
 import {set, generateHashId} from 'utils/utils';
 
-import KeplerGlSchema from 'schemas';
-
 /**
  * Default file names
  */
@@ -155,12 +153,13 @@ export function exportToJsonString(data) {
 
 export function getMapJSON(state, options = DEFAULT_EXPORT_JSON_SETTINGS) {
   const {hasData} = options;
+  const schema = state.visState.schema;
 
   if (!hasData) {
-    return KeplerGlSchema.getConfigToSave(state);
+    return schema.getConfigToSave(state);
   }
 
-  let mapToSave = KeplerGlSchema.save(state);
+  let mapToSave = schema.save(state);
   // add file name if title is not provided
   const title = get(mapToSave, ['info', 'title']);
   if (!title || !title.length) {

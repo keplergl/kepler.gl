@@ -28,19 +28,24 @@ import mapStateSchema from './map-state-schema';
 import {CURRENT_VERSION, VERSIONS} from './versions';
 import {isPlainObject} from 'utils/utils';
 
-const REDUCER_SCHEMAS = {
+export const reducerSchema = {
   visState: visStateSchema,
   mapState: mapStateSchema,
   mapStyle: mapStyleSchema
 };
 
 /** @type {typeof import('./schema-manager').KeplerGLSchema} */
-class KeplerGLSchema {
-  constructor() {
-    this._validVersions = VERSIONS;
-    this._version = CURRENT_VERSION;
-    this._reducerSchemas = REDUCER_SCHEMAS;
-    this._datasetSchema = datasetSchema;
+export class KeplerGLSchema {
+  constructor({
+    reducers = reducerSchema, 
+    datasets = datasetSchema,
+    validVersions = VERSIONS,
+    version = CURRENT_VERSION
+  } = {}) {
+    this._validVersions = validVersions;
+    this._version = version;
+    this._reducerSchemas = reducers;
+    this._datasetSchema = datasets;
 
     this._datasetLastSaved = null;
     this._savedDataset = null;

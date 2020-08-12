@@ -4,6 +4,8 @@ import {ParsedConfig} from '../schemas';
 import * as VisStateActions from 'actions/vis-state-actions';
 import ActionTypes from 'constants/action-types';
 import {LoaderObject} from '@loaders.gl/loader-utils';
+import {VisStateMergers} from './vis-state-merger';
+import KeplerGLSchema from 'schemas';
 
 export type HistogramBin = {
   x0: number | undefined;
@@ -306,6 +308,8 @@ export type VisState = {
   loaders: LoaderObject[];
   loadOptions: object;
   initialState?: Partial<VisState>;
+  mergers: VisStateMergers;
+  schema: KeplerGLSchema
 };
 
 export function addDefaultLayers(
