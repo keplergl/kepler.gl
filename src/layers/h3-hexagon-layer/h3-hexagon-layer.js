@@ -22,7 +22,7 @@ import Layer from '../base-layer';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
 import EnhancedColumnLayer from 'deckgl-layers/column-layer/enhanced-column-layer';
-import {getCentroid, idToPolygonGeo, h3IsValid} from './h3-utils';
+import {getCentroid, idToPolygonGeo, h3IsValid, getHexFields} from './h3-utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {CHANNEL_SCALES, HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 import {hexToRgb} from 'utils/color-utils';
@@ -91,18 +91,32 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
-  static findDefaultLayerProps({fields = []}) {
+  static findDefaultLayerProps({fields = [], allData = []}) {
     const foundColumns = this.findDefaultColumnField(HEXAGON_ID_FIELDS, fields);
-    if (!foundColumns || !foundColumns.length) {
+    const hexFields = getHexFields(fields, allData);
+    if ((!foundColumns || !foundColumns.length) && !hexFields.length) {
       return {props: []};
     }
 
     return {
-      props: foundColumns.map(columns => ({
-        isVisible: true,
-        label: 'H3 Hexagon',
-        columns
-      }))
+      props: (foundColumns || [])
+        .map(columns => ({
+          isVisible: true,
+          label: 'H3 Hexagon',
+          columns
+        }))
+        .concat(
+          (hexFields || []).map(f => ({
+            isVisible: true,
+            label: f.name,
+            columns: {
+              hex_id: {
+                value: f.name,
+                fieldIdx: fields.findIndex(fid => fid.name === f.name)
+              }
+            }
+          }))
+        )
     };
   }
 

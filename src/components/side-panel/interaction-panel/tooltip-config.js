@@ -101,12 +101,21 @@ function TooltipConfigFactory(DatasetTag) {
               <FieldSelector
                 fields={datasets[dataId].fields}
                 value={config.fieldsToShow[dataId]}
-                onSelect={fieldsToShow => {
+                onSelect={selected => {
                   const newConfig = {
                     ...config,
                     fieldsToShow: {
                       ...config.fieldsToShow,
-                      [dataId]: fieldsToShow
+                      [dataId]: selected.map(
+                        f =>
+                          config.fieldsToShow[dataId].find(
+                            tooltipField => tooltipField.name === f.name
+                          ) || {
+                            name: f.name,
+                            // default initial tooltip is null
+                            format: null
+                          }
+                      )
                     }
                   };
                   onChange(newConfig);

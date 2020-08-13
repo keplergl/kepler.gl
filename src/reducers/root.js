@@ -33,7 +33,16 @@ export function provideInitialState(initialState) {
 
   const handleRegisterEntry = (
     state,
-    {payload: {id, mint, mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault}}
+    {
+      payload: {
+        id,
+        mint,
+        mapboxApiAccessToken,
+        mapboxApiUrl,
+        mapStylesReplaceDefault,
+        initialUiState
+      }
+    }
   ) => {
     // by default, always create a mint state even if the same id already exist
     // if state.id exist and mint=false, keep the existing state
@@ -44,7 +53,7 @@ export function provideInitialState(initialState) {
       ...state,
       [id]: coreReducer(
         previousState,
-        keplerGlInit({mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault})
+        keplerGlInit({mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault, initialUiState})
       )
     };
   };

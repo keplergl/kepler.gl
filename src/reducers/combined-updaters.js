@@ -88,7 +88,8 @@ export const isValidConfig = config =>
 
 export const defaultAddDataToMapOptions = {
   centerMap: true,
-  keepExistingConfig: false
+  keepExistingConfig: false,
+  autoCreateLayers: true
 };
 
 /**

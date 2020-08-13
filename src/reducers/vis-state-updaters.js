@@ -1168,7 +1168,7 @@ export const updateVisDataUpdater = (state, action) => {
 
   let newLayers = mergedState.layers.filter(l => l.config.dataId in newDataEntries);
 
-  if (!newLayers.length) {
+  if (!newLayers.length && (options || {}).autoCreateLayers !== false) {
     // no layer merged, find defaults
     const result = addDefaultLayers(mergedState, newDataEntries);
     mergedState = result.state;

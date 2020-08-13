@@ -18,18 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const configure = require('enzyme').configure;
-const Adapter = require('enzyme-adapter-react-16');
-configure({adapter: new Adapter()});
-
-// component tests
-require('./components');
-
-// test layers
-require('./layer-tests');
-
-// test reducers
-require('./reducers');
-
-// test processors
-require('./file-handler');
+export {maybeToDate, roundValToStep} from './data-utils';
+export {updateAllLayerDomainData} from '../reducers/vis-state-updaters';
+export {findPointFieldPairs} from '../utils/dataset-utils';
+export {getHexFields} from '../layers/h3-hexagon-layer/h3-utils';

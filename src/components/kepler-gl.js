@@ -85,6 +85,10 @@ const GlobalStyle = styled.div`
     text-decoration: none;
     color: ${props => props.theme.labelColor};
   }
+
+  .mapboxgl-ctrl .mapboxgl-ctrl-logo {
+    display: none;
+  }
 `;
 
 KeplerGlFactory.deps = [
@@ -119,7 +123,8 @@ function KeplerGlFactory(
       version: KEPLER_GL_VERSION,
       sidePanelWidth: DIMENSIONS.sidePanel.width,
       theme: {},
-      cloudProviders: []
+      cloudProviders: [],
+      readOnly: false
     };
 
     componentDidMount() {
@@ -220,11 +225,13 @@ function KeplerGlFactory(
         appWebsite,
         onSaveMap,
         onViewStateChange,
+        onDeckInitialized,
         width,
         height,
         mapboxApiAccessToken,
         mapboxApiUrl,
         getMapboxRef,
+        deckGlProps,
 
         // redux state
         mapStyle,
@@ -239,7 +246,9 @@ function KeplerGlFactory(
         mapStyleActions,
         uiStateActions,
         providerActions,
-        dispatch
+
+        // readOnly override
+        readOnly
       } = this.props;
 
       const availableProviders = this.availableProviders(this.props);
@@ -309,11 +318,13 @@ function KeplerGlFactory(
         clicked,
         mousePos,
         readOnly: uiState.readOnly,
+        onDeckInitialized,
         onViewStateChange,
         uiStateActions,
         visStateActions,
         mapStateActions,
-        animationConfig
+        animationConfig,
+        deckGlProps
       };
 
       const isSplit = splitMaps && splitMaps.length > 1;
@@ -346,7 +357,7 @@ function KeplerGlFactory(
                 ref={this.root}
               >
                 <NotificationPanel {...notificationPanelFields} />
-                {!uiState.readOnly && <SidePanel {...sideFields} />}
+                {(!uiState.readOnly && !readOnly) && <SidePanel {...sideFields} />}
                 <div className="maps" style={{display: 'flex'}}>
                   {mapContainers}
                 </div>
@@ -363,11 +374,14 @@ function KeplerGlFactory(
                     splitMaps={splitMaps}
                   />
                 )}
-                {!uiState.readOnly && interactionConfig.geocoder.enabled && (
+                {interactionConfig.geocoder.enabled && (
                   <GeoCoderPanel
                     isGeocoderEnabled={interactionConfig.geocoder.enabled}
                     mapboxApiAccessToken={mapboxApiAccessToken}
-                    dispatch={dispatch}
+                    mapState={mapState}
+                    updateVisData={visStateActions.updateVisData}
+                    removeDataset={visStateActions.removeDataset}
+                    updateMap={mapStateActions.updateMap}
                   />
                 )}
                 <BottomWidget

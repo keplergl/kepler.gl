@@ -187,3 +187,7 @@ export function loadFilesUpdater(state: UiState, action: LoadFilesUpdaterAction)
 export function loadFilesErrUpdater(state: UiState, action: LoadFilesErrUpdaterAction): UiState;
 export function loadFilesSuccessUpdater(state: UiState): UiState;
 export function toggleSplitMapUpdater(state: UiState, action: ToggleSplitMapUpdaterAction): UiState;
+export function initUiStateUpdater(state: UiState, action: {
+  type?: ActionTypes.INIT;
+  payload: KeplerGlInitPayload;
+}): UiState;

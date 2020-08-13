@@ -39,23 +39,12 @@ const CONFIG = {
 
   devtool: 'source-map',
 
-  resolve: {
-    // Make src files outside of this dir resolve modules in our node_modules folder
-    modules: [resolve(__dirname, '.'), resolve(__dirname, 'node_modules'), 'node_modules']
-  },
-
   module: {
     rules: [
       {
         test: /\.js$/,
         loader: 'babel-loader',
         include: join(__dirname, 'src'),
-        exclude: [/node_modules/]
-      },
-      {
-        // The example has some JSON data
-        test: /\.json$/,
-        loader: 'json-loader',
         exclude: [/node_modules/]
       }
     ]
