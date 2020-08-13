@@ -27,7 +27,7 @@ import {FormattedMessage} from 'react-intl';
 import {Button, Input, PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
 
-import VisConfigByFieldSelector from './vis-config-by-field-selector';
+import VisConfigByFieldSelectorFactory from './vis-config-by-field-selector';
 import LayerColumnConfig from './layer-column-config';
 import LayerTypeSelector from './layer-type-selector';
 import DimensionScaleSelector from './dimension-scale-selector';
@@ -35,7 +35,7 @@ import ColorSelector from './color-selector';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
 import VisConfigSwitch from './vis-config-switch';
 import VisConfigSliderFactory from './vis-config-slider';
-import LayerConfigGroup, {ConfigGroupCollapsibleContent} from './layer-config-group';
+import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import TextLabelPanelFactory from './text-label-panel';
 
 import {capitalizeFirstLetter} from 'utils/utils';
@@ -84,13 +84,17 @@ export const getLayerChannelConfigProps = props => ({
 LayerConfiguratorFactory.deps = [
   SourceDataSelectorFactory,
   VisConfigSliderFactory,
-  TextLabelPanelFactory
+  TextLabelPanelFactory,
+  LayerConfigGroupFactory,
+  ChannelByValueSelectorFactory
 ];
 
 export default function LayerConfiguratorFactory(
   SourceDataSelector,
   VisConfigSlider,
-  TextLabelPanel
+  TextLabelPanel,
+  LayerConfigGroup,
+  ChannelByValueSelector
 ) {
   class LayerConfigurator extends Component {
     static propTypes = {
@@ -1029,45 +1033,50 @@ export const LayerColorRangeSelector = ({layer, onChange, property = 'colorRange
   </SidePanelSection>
 );
 
-export const ChannelByValueSelector = ({layer, channel, onChange, fields, description}) => {
-  const {
-    channelScaleType,
-    domain,
-    field,
-    key,
-    property,
-    range,
-    scale,
-    defaultMeasure,
-    supportedFieldTypes
-  } = channel;
-  const channelSupportedFieldTypes =
-    supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
-  const supportedFields = fields.filter(({type}) => channelSupportedFieldTypes.includes(type));
-  const scaleOptions = layer.getScaleOptions(channel.key);
-  const showScale = !layer.isAggregated && layer.config[scale] && scaleOptions.length > 1;
-  const defaultDescription = 'layerConfiguration.defaultDescription';
+ChannelByValueSelectorFactory.deps = [VisConfigByFieldSelectorFactory];
+export function ChannelByValueSelectorFactory(VisConfigByFieldSelector) {
+  const ChannelByValueSelector = ({layer, channel, onChange, fields, description}) => {
+    const {
+      channelScaleType,
+      domain,
+      field,
+      key,
+      property,
+      range,
+      scale,
+      defaultMeasure,
+      supportedFieldTypes
+    } = channel;
+    const channelSupportedFieldTypes =
+      supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
+    const supportedFields = fields.filter(({type}) => channelSupportedFieldTypes.includes(type));
+    const scaleOptions = layer.getScaleOptions(channel.key);
+    const showScale = !layer.isAggregated && layer.config[scale] && scaleOptions.length > 1;
+    const defaultDescription = 'layerConfiguration.defaultDescription';
 
-  return (
-    <VisConfigByFieldSelector
-      channel={channel.key}
-      description={description || defaultDescription}
-      domain={layer.config[domain]}
-      fields={supportedFields}
-      id={layer.id}
-      key={`${key}-channel-selector`}
-      property={property}
-      placeholder={defaultMeasure || 'placeholder.selectField'}
-      range={layer.config.visConfig[range]}
-      scaleOptions={scaleOptions}
-      scaleType={scale ? layer.config[scale] : null}
-      selectedField={layer.config[field]}
-      showScale={showScale}
-      updateField={val => onChange({[field]: val}, key)}
-      updateScale={val => onChange({[scale]: val}, key)}
-    />
-  );
-};
+    return (
+      <VisConfigByFieldSelector
+        channel={channel.key}
+        description={description || defaultDescription}
+        domain={layer.config[domain]}
+        fields={supportedFields}
+        id={layer.id}
+        key={`${key}-channel-selector`}
+        property={property}
+        placeholder={defaultMeasure || 'placeholder.selectField'}
+        range={layer.config.visConfig[range]}
+        scaleOptions={scaleOptions}
+        scaleType={scale ? layer.config[scale] : null}
+        selectedField={layer.config[field]}
+        showScale={showScale}
+        updateField={val => onChange({[field]: val}, key)}
+        updateScale={val => onChange({[scale]: val}, key)}
+      />
+    );
+  };
+
+  return ChannelByValueSelector;
+}
 
 export const AggrScaleSelector = ({channel, layer, onChange}) => {
   const {scale, key} = channel;

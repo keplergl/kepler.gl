@@ -24,38 +24,8 @@ import styled from 'styled-components';
 import classnames from 'classnames';
 import {FormattedMessage} from 'react-intl';
 import Switch from 'components/common/switch';
-import InfoHelper from 'components/common/info-helper';
+import InfoHelperFactory from 'components/common/info-helper';
 import {VertThreeDots} from 'components/common/icons';
-
-const DashedPrependCss = `
-  div {
-    width: 12px;
-    border-top: 1px dashed #333c54;
-    margin-left: -17px;
-  }
-`;
-export const StyledLayerConfigGroupLabel = styled.div`
-  border-left: ${props => props.theme.styledLayerConfigGroupLabelBorderLeft} solid
-    ${props => props.theme.labelColor};
-  line-height: 12px;
-  margin-left: ${props => props.theme.styledLayerConfigGroupLabelMargin};
-  padding-left: ${props => props.theme.styledLayerConfigGroupLabelPadding};
-
-  display: flex;
-  align-items: center;
-
-  ${props => (props.theme.styledLayerConfigGroupLabelDashedPrepend ? DashedPrependCss : '')}
-
-  span {
-    color: ${props => props.theme.textColor};
-
-    font-weight: 500;
-    letter-spacing: 0.2px;
-    text-transform: capitalize;
-    margin-left: ${props => props.theme.styledLayerConfigGroupLabelLabelMargin};
-    font-size: ${props => props.theme.styledLayerConfigGroupLabelLabelFontSize};
-  }
-`;
 
 export const StyledLayerConfigGroupAction = styled.div`
   display: flex;
@@ -102,13 +72,11 @@ export const StyledLayerConfigGroup = styled.div`
   }
 `;
 
-export const StyledConfigGroupHeader = styled.div`
+const StyledConfigGroupHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
-  border-left: ${props => props.theme.styledConfigGroupHeaderBorder} solid
-    ${props => props.theme.textColorHl};
 
   :hover {
     cursor: pointer;
@@ -132,78 +100,111 @@ const ConfigGroupContent = styled.div`
   }
 `;
 
-class LayerConfigGroup extends Component {
-  static defaultProps = {
-    collapsible: false,
-    expanded: false,
-    onChange: () => {},
-    description: null,
-    disabled: false
-  };
+LayerConfigGroupLabelFactory.deps = [InfoHelperFactory];
+export function LayerConfigGroupLabelFactory(InfoHelper) {
+  const StyledLayerConfigGroupLabel = styled.div`
+    border-left: ${props => props.theme.styledLayerConfigGroupLabelBorderLeft} solid
+      ${props => props.theme.labelColor};
+    line-height: 12px;
+    margin-left: ${props => props.theme.styledLayerConfigGroupLabelMargin};
+    padding-left: ${props => props.theme.styledLayerConfigGroupLabelPadding};
 
-  static getDerivedStateFromProps(props, state) {
-    //  invoked after a component is instantiated as well as before it is re-rendered
-    if (props.expanded && state.collapsed) {
-      return {collapsed: false};
+    display: flex;
+    align-items: center;
+
+    span {
+      color: ${props => props.theme.textColor};
+      font-weight: 500;
+      letter-spacing: 0.2px;
+      text-transform: capitalize;
+      margin-left: ${props => props.theme.styledLayerConfigGroupLabelLabelMargin};
+      font-size: ${props => props.theme.styledLayerConfigGroupLabelLabelFontSize};
     }
+  `;
 
-    return null;
-  }
+  const LayerConfigGroupLabel = ({label, description}) => (
+    <StyledLayerConfigGroupLabel className="layer-config-group__label">
+      <span>
+        <FormattedMessage id={label || 'misc.empty'} defaultMessage={label} />
+      </span>
+      {description && <InfoHelper description={description} id={label} />}
+    </StyledLayerConfigGroupLabel>
+  );
 
-  state = {
-    collapsed: true
-  };
-
-  render() {
-    const {
-      label,
-      children,
-      property,
-      layer,
-      onChange,
-      collapsible,
-      description,
-      disabled
-    } = this.props;
-
-    const {collapsed} = this.state;
-
-    return (
-      <StyledLayerConfigGroup className={classnames('layer-config-group', {collapsed, disabled})}>
-        <StyledConfigGroupHeader
-          className="layer-config-group__header"
-          onClick={() => this.setState({collapsed: !this.state.collapsed})}
-        >
-          <StyledLayerConfigGroupLabel className="layer-config-group__label">
-            <div></div>
-            <span>
-              <FormattedMessage id={label || 'misc.empty'} defaultMessage={label} />
-            </span>
-            {description && <InfoHelper description={description} id={label} />}
-          </StyledLayerConfigGroupLabel>
-          <StyledLayerConfigGroupAction className="layer-config-group__action">
-            {property ? (
-              <Switch
-                checked={layer.config.visConfig[property]}
-                id={`${layer.id}-${property}`}
-                onChange={() => onChange({[property]: !layer.config.visConfig[property]})}
-              />
-            ) : null}
-            {collapsible ? <VertThreeDots height="18px" /> : null}
-          </StyledLayerConfigGroupAction>
-        </StyledConfigGroupHeader>
-        <ConfigGroupContent
-          className={classnames('layer-config-group__content', {
-            disabled: property && !layer.config.visConfig[property]
-          })}
-        >
-          {children}
-        </ConfigGroupContent>
-      </StyledLayerConfigGroup>
-    );
-  }
+  return LayerConfigGroupLabel;
 }
 
-polyfill(LayerConfigGroup);
+LayerConfigGroupFactory.deps = [LayerConfigGroupLabelFactory];
+function LayerConfigGroupFactory(LayerConfigGroupLabel) {
+  class LayerConfigGroup extends Component {
+    static defaultProps = {
+      collapsible: false,
+      expanded: false,
+      onChange: () => {},
+      description: null,
+      disabled: false
+    };
 
-export default LayerConfigGroup;
+    static getDerivedStateFromProps(props, state) {
+      //  invoked after a component is instantiated as well as before it is re-rendered
+      if (props.expanded && state.collapsed) {
+        return {collapsed: false};
+      }
+
+      return null;
+    }
+
+    state = {
+      collapsed: true
+    };
+
+    render() {
+      const {
+        label,
+        children,
+        property,
+        layer,
+        onChange,
+        collapsible,
+        description,
+        disabled
+      } = this.props;
+
+      const {collapsed} = this.state;
+
+      return (
+        <StyledLayerConfigGroup className={classnames('layer-config-group', {collapsed, disabled})}>
+          <StyledConfigGroupHeader
+            className="layer-config-group__header"
+            onClick={() => this.setState({collapsed: !this.state.collapsed})}
+          >
+            <LayerConfigGroupLabel label={label} description={description} />
+            <StyledLayerConfigGroupAction className="layer-config-group__action">
+              {property ? (
+                <Switch
+                  checked={layer.config.visConfig[property]}
+                  id={`${layer.id}-${property}`}
+                  onChange={() => onChange({[property]: !layer.config.visConfig[property]})}
+                />
+              ) : null}
+              {collapsible ? <VertThreeDots height="18px" /> : null}
+            </StyledLayerConfigGroupAction>
+          </StyledConfigGroupHeader>
+          <ConfigGroupContent
+            className={classnames('layer-config-group__content', {
+              disabled: property && !layer.config.visConfig[property]
+            })}
+          >
+            {children}
+          </ConfigGroupContent>
+        </StyledLayerConfigGroup>
+      );
+    }
+  }
+
+  polyfill(LayerConfigGroup);
+
+  return LayerConfigGroup;
+}
+
+export default LayerConfigGroupFactory;

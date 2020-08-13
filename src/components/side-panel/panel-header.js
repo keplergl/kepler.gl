@@ -33,7 +33,7 @@ import {FormattedMessage} from 'react-intl';
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
 })`
-  background-color: ${props => props.theme.sidePanelHeaderBg}
+  background-color: ${props => props.theme.sidePanelHeaderBg};
   padding: 12px 16px 0 16px;
 `;
 

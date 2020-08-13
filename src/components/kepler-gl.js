@@ -67,8 +67,6 @@ const GlobalStyle = styled.div`
   *,
   *:before,
   *:after {
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
     box-sizing: border-box;
   }
 
@@ -357,7 +355,7 @@ function KeplerGlFactory(
                 ref={this.root}
               >
                 <NotificationPanel {...notificationPanelFields} />
-                {(!uiState.readOnly && !readOnly) && <SidePanel {...sideFields} />}
+                {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
                 <div className="maps" style={{display: 'flex'}}>
                   {mapContainers}
                 </div>

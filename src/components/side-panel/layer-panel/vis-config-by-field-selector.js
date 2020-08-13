@@ -24,90 +24,93 @@ import {FormattedMessage, injectIntl} from 'react-intl';
 
 import {PanelLabel, PanelLabelWrapper, SidePanelSection} from 'components/common/styled-components';
 import FieldSelector from 'components/common/field-selector';
-import InfoHelper from 'components/common/info-helper';
+import InfoHelperFacotry from 'components/common/info-helper';
 import DimensionScaleSelector from './dimension-scale-selector';
 import {camelize} from 'utils/utils';
 
-class VisConfigByFieldSelector extends Component {
-  static propTypes = {
-    channel: PropTypes.string.isRequired,
-    fields: PropTypes.arrayOf(PropTypes.any).isRequired,
-    id: PropTypes.string.isRequired,
-    property: PropTypes.string.isRequired,
-    showScale: PropTypes.bool.isRequired,
-    updateField: PropTypes.func.isRequired,
-    updateScale: PropTypes.func.isRequired,
+VisConfigByFieldSelectorFacotry.deps = [InfoHelperFacotry];
+export default function VisConfigByFieldSelectorFacotry(InfoHelper) {
+  class VisConfigByFieldSelector extends Component {
+    static propTypes = {
+      channel: PropTypes.string.isRequired,
+      fields: PropTypes.arrayOf(PropTypes.any).isRequired,
+      id: PropTypes.string.isRequired,
+      property: PropTypes.string.isRequired,
+      showScale: PropTypes.bool.isRequired,
+      updateField: PropTypes.func.isRequired,
+      updateScale: PropTypes.func.isRequired,
 
-    // optional
-    scaleType: PropTypes.string,
-    selectedField: PropTypes.object,
-    description: PropTypes.string,
-    label: PropTypes.string,
-    placeholder: PropTypes.string
-  };
+      // optional
+      scaleType: PropTypes.string,
+      selectedField: PropTypes.object,
+      description: PropTypes.string,
+      label: PropTypes.string,
+      placeholder: PropTypes.string
+    };
 
-  _updateVisByField = val => {
-    this.props.updateField(val);
-  };
+    _updateVisByField = val => {
+      this.props.updateField(val);
+    };
 
-  render() {
-    const {
-      property,
-      showScale,
-      selectedField,
-      description,
-      label,
-      intl,
-      scaleOptions = []
-    } = this.props;
+    render() {
+      const {
+        property,
+        showScale,
+        selectedField,
+        description,
+        label,
+        intl,
+        scaleOptions = []
+      } = this.props;
 
-    return (
-      <SidePanelSection>
+      return (
         <SidePanelSection>
-          <PanelLabelWrapper>
-            <PanelLabel>
-              {(label && <FormattedMessage id={label} />) || (
-                <FormattedMessage
-                  id="layer.propertyBasedOn"
-                  values={{
-                    property: intl.formatMessage({
-                      id: `property.${camelize(property)}`,
-                      defaultMessage: property
-                    })
-                  }}
+          <SidePanelSection>
+            <PanelLabelWrapper>
+              <PanelLabel>
+                {(label && <FormattedMessage id={label} />) || (
+                  <FormattedMessage
+                    id="layer.propertyBasedOn"
+                    values={{
+                      property: intl.formatMessage({
+                        id: `property.${camelize(property)}`,
+                        defaultMessage: property
+                      })
+                    }}
+                  />
+                )}
+              </PanelLabel>
+              {description && (
+                <InfoHelper
+                  description={description}
+                  property={property}
+                  id={`${this.props.id}-${property}`}
                 />
               )}
-            </PanelLabel>
-            {description && (
-              <InfoHelper
-                description={description}
-                property={property}
-                id={`${this.props.id}-${property}`}
-              />
-            )}
-          </PanelLabelWrapper>
-          <FieldSelector
-            fields={this.props.fields}
-            value={selectedField && selectedField.name}
-            placeholder={this.props.placeholder}
-            onSelect={this._updateVisByField}
-            erasable
-          />
-        </SidePanelSection>
-        <div>
-          {showScale ? (
-            <DimensionScaleSelector
-              scaleType={this.props.scaleType}
-              options={scaleOptions}
-              label={`${property} scale`}
-              onSelect={this.props.updateScale}
-              disabled={scaleOptions.length < 2}
+            </PanelLabelWrapper>
+            <FieldSelector
+              fields={this.props.fields}
+              value={selectedField && selectedField.name}
+              placeholder={this.props.placeholder}
+              onSelect={this._updateVisByField}
+              erasable
             />
-          ) : null}
-        </div>
-      </SidePanelSection>
-    );
+          </SidePanelSection>
+          <div>
+            {showScale ? (
+              <DimensionScaleSelector
+                scaleType={this.props.scaleType}
+                options={scaleOptions}
+                label={`${property} scale`}
+                onSelect={this.props.updateScale}
+                disabled={scaleOptions.length < 2}
+              />
+            ) : null}
+          </div>
+        </SidePanelSection>
+      );
+    }
   }
-}
 
-export default injectIntl(VisConfigByFieldSelector);
+  return injectIntl(VisConfigByFieldSelector);
+}

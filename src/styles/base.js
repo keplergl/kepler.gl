@@ -643,6 +643,7 @@ const inputCheckbox = css`
 
 const secondarySwitch = css`
   ${props => props.theme.inputSwitch}
+
   :before {
     ${props => props.theme.switchTrack} background: ${props =>
   props.checked ? props.theme.switchTrackBgdActive : props.theme.secondarySwitchTrackBgd};
@@ -673,13 +674,13 @@ const dropdownScrollBar = css`
     border-radius: 10px;
     background: ${props => props.theme.labelColor};
     border: 3px solid ${props => props.theme.dropdownListBgd};
-  };
+  }
 
   :vertical:hover {
     background: ${props => props.theme.textColorHl};
     cursor: pointer;
   }
-}`;
+`;
 
 const dropdownListAnchor = css`
   color: ${props => props.theme.selectColor};
@@ -787,8 +788,8 @@ const sidePanelScrollBar = css`
       background: ${props => props.theme.labelColor};
       cursor: pointer;
     }
-  };
-}`;
+  }
+`;
 
 const panelDropdownScrollBar = css`
   ::-webkit-scrollbar {
@@ -844,7 +845,7 @@ const scrollBar = css`
       cursor: pointer;
     }
   }
-}`;
+`;
 
 export const modalScrollBar = css`
   ::-webkit-scrollbar {
