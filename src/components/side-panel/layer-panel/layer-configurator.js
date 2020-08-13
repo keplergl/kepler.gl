@@ -46,7 +46,10 @@ const StyledLayerConfigurator = styled.div.attrs({
   className: 'layer-panel__config'
 })`
   position: relative;
-  margin-top: 12px;
+  margin-top: ${props => props.theme.styledLayerConfiguratorMargin};
+  padding-top: ${props => props.theme.styledLayerConfiguratorPadding};
+  border-left: ${props => props.theme.styledLayerConfiguratorBorder} dashed
+    ${props => props.theme.styledLayerConfiguratorBorderColor};
 `;
 
 const StyledLayerVisualConfigurator = styled.div.attrs({

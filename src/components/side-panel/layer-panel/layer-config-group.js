@@ -27,20 +27,33 @@ import Switch from 'components/common/switch';
 import InfoHelper from 'components/common/info-helper';
 import {VertThreeDots} from 'components/common/icons';
 
+const DashedPrependCss = `
+  div {
+    width: 12px;
+    border-top: 1px dashed #333c54;
+    margin-left: -17px;
+  }
+`;
 export const StyledLayerConfigGroupLabel = styled.div`
-  border-left: 2px solid ${props => props.theme.labelColor};
+  border-left: ${props => props.theme.styledLayerConfigGroupLabelBorderLeft} solid
+    ${props => props.theme.labelColor};
   line-height: 12px;
-  margin-left: -12px;
-  padding-left: 10px;
+  margin-left: ${props => props.theme.styledLayerConfigGroupLabelMargin};
+  padding-left: ${props => props.theme.styledLayerConfigGroupLabelPadding};
+
   display: flex;
   align-items: center;
 
+  ${props => (props.theme.styledLayerConfigGroupLabelDashedPrepend ? DashedPrependCss : '')}
+
   span {
     color: ${props => props.theme.textColor};
-    font-size: 12px;
+
     font-weight: 500;
     letter-spacing: 0.2px;
     text-transform: capitalize;
+    margin-left: ${props => props.theme.styledLayerConfigGroupLabelLabelMargin};
+    font-size: ${props => props.theme.styledLayerConfigGroupLabelLabelFontSize};
   }
 `;
 
@@ -94,12 +107,13 @@ export const StyledConfigGroupHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  border-left: ${props => props.theme.styledConfigGroupHeaderBorder} solid
+    ${props => props.theme.textColorHl};
 
   :hover {
     cursor: pointer;
     .layer-config-group__label {
       color: ${props => props.theme.textColorHl};
-      border-left: 2px solid ${props => props.theme.textColorHl};
     }
 
     .layer-config-group__action {
@@ -161,6 +175,7 @@ class LayerConfigGroup extends Component {
           onClick={() => this.setState({collapsed: !this.state.collapsed})}
         >
           <StyledLayerConfigGroupLabel className="layer-config-group__label">
+            <div></div>
             <span>
               <FormattedMessage id={label || 'misc.empty'} defaultMessage={label} />
             </span>

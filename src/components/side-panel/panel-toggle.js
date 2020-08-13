@@ -33,7 +33,8 @@ const propTypes = {
 const PanelHeaderBottom = styled.div.attrs({
   className: 'side-side-panel__header__bottom'
 })`
-  background-color: ${props => props.theme.sidePanelHeaderBg};
+  background-color: ${props => props.theme.sidePanelHeaderBg}
+  border-bottom: 1px solid ${props => props.theme.sidePanelHeaderBorder};
   padding: 0 16px;
   display: flex;
   min-height: 30px;
@@ -45,7 +46,7 @@ const PanelTab = styled.div.attrs({
   align-items: flex-end;
   border-bottom-style: solid;
   border-bottom-width: 2px;
-  border-bottom-color: ${props => (props.active ? props.theme.subtextColorActive : 'transparent')};
+  border-bottom-color: ${props => (props.active ? props.theme.subtextColorActive : 'transparent')}
   color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.subtextColor)};
   display: flex;
   justify-content: center;
