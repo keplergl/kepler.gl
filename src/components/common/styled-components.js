@@ -283,7 +283,7 @@ export const InlineInput = styled(Input)`
 
 export const StyledPanelHeader = styled.div`
   background-color: ${props =>
-    props.active ? props.theme.panelBackgroundHover : props.theme.panelBackground}
+    props.active ? props.theme.panelBackgroundHover : props.theme.panelBackground};
   border-left: 3px solid
     rgb(
       ${props => (props.labelRCGColorValues ? props.labelRCGColorValues.join(',') : 'transparent')}
