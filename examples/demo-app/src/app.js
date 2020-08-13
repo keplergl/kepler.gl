@@ -34,8 +34,7 @@ import {
   loadRemoteMap,
   loadSampleConfigurations,
   onExportFileSuccess,
-  onLoadCloudMapSuccess,
-  onLoadCloudMapError
+  onLoadCloudMapSuccess
 } from './actions';
 
 import {loadCloudMap} from 'kepler.gl/actions';
@@ -398,7 +397,6 @@ class App extends Component {
                   cloudProviders={CLOUD_PROVIDERS}
                   onExportToCloudSuccess={onExportFileSuccess}
                   onLoadCloudMapSuccess={onLoadCloudMapSuccess}
-                  onLoadCloudMapError={onLoadCloudMapError}
                 />
               )}
             </AutoSizer>

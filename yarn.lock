@@ -363,7 +363,7 @@
     "@babel/helper-create-class-features-plugin" "^7.8.3"
     "@babel/helper-plugin-utils" "^7.8.3"
 
-"@babel/plugin-proposal-decorators@^7.1.2", "@babel/plugin-proposal-decorators@^7.3.0":
+"@babel/plugin-proposal-decorators@^7.1.2":
   version "7.8.3"
   resolved "https://registry.yarnpkg.com/@babel/plugin-proposal-decorators/-/plugin-proposal-decorators-7.8.3.tgz#2156860ab65c5abf068c3f67042184041066543e"
   integrity sha512-e3RvdvS4qPJVTe288DlXjwKflpfy1hr0j5dz5WpIYYeP7vQZg2WfAEIp8k5/Lwis/m5REXEteIz6rrcDtXXG7w==
@@ -412,7 +412,7 @@
     "@babel/helper-plugin-utils" "^7.8.3"
     "@babel/plugin-syntax-function-bind" "^7.8.3"
 
-"@babel/plugin-proposal-function-sent@^7.0.0", "@babel/plugin-proposal-function-sent@^7.1.0":
+"@babel/plugin-proposal-function-sent@^7.1.0":
   version "7.8.3"
   resolved "https://registry.yarnpkg.com/@babel/plugin-proposal-function-sent/-/plugin-proposal-function-sent-7.8.3.tgz#341fd532b7eadbbbdd8bcb715150f279a779f14f"
   integrity sha512-lu9wQjLnXd6Zy6eBKr0gE175xfD+da1rv2wOWEnZlD5KIxl894Tg34ppZ7ANR0jzQJMn+7pGuzSdy6JK4zGtKg==
@@ -543,7 +543,7 @@
   dependencies:
     "@babel/helper-plugin-utils" "^7.8.3"
 
-"@babel/plugin-syntax-export-namespace-from@^7.2.0", "@babel/plugin-syntax-export-namespace-from@^7.8.3":
+"@babel/plugin-syntax-export-namespace-from@^7.8.3":
   version "7.8.3"
   resolved "https://registry.yarnpkg.com/@babel/plugin-syntax-export-namespace-from/-/plugin-syntax-export-namespace-from-7.8.3.tgz#028964a9ba80dbc094c915c487ad7c4e7a66465a"
   integrity sha512-MXf5laXo6c1IbEbegDmzGPwGNTsHZmEy6QGznu5Sh2UCWvueywb2ee+CCE4zQiZstxU9BMoQO9i6zUFSY0Kj0Q==
@@ -13180,14 +13180,6 @@ react-map-gl@^5.0.3:
     prop-types "^15.7.2"
     react-virtualized-auto-sizer "^1.0.2"
     viewport-mercator-project "^6.2.3 || ^7.0.1"
-
-react-mapbox-gl-geocoder@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/react-mapbox-gl-geocoder/-/react-mapbox-gl-geocoder-1.1.0.tgz#f07e27a1329db711ec5843fbf1b78dbdc5930c9a"
-  integrity sha512-U8fVUlj7Sb19KOgkKvfr3MPuqiGZ+ldHwwfo4BxBv7cyr397PQ/0o2XiC/Nz4PvN7dbIFHz7JfuVaq/MFZ5oHw==
-  dependencies:
-    mapbox "^1.0.0-beta10"
-    viewport-mercator-project "^6.0.0"
 
 react-markdown@^4.0.6:
   version "4.3.1"

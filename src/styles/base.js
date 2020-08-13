@@ -144,6 +144,7 @@ export const dropdownListBgdLT = '#FFFFFF';
 export const dropdownListBorderTop = '#242730';
 export const dropdownListBorderTopLT = '#D3D8E0';
 export const dropdownWrapperZ = 100;
+export const dropdownWapperMargin = 4;
 // Switch
 export const switchWidth = 24;
 export const switchHeight = 12;
@@ -252,6 +253,12 @@ export const sliderInputHeight = 24;
 export const sliderInputWidth = 56;
 export const sliderMarginTopIsTime = -12;
 export const sliderMarginTop = 12;
+
+// Geocoder
+export const geocoderWidth = 360;
+export const geocoderTop = 20;
+export const geocoderRight = 12;
+export const geocoderInputHeight = 36;
 
 // Plot
 export const rangeBrushBgd = '#3A414C';
@@ -366,7 +373,7 @@ const input = css`
   opacity: ${props => (props.disabled ? 0.5 : 1)};
 
   :hover {
-    cursor: ${props => (props.type === 'number' ? 'text' : 'pointer')};
+    cursor: ${props => (props.type === 'number' || props.type === 'text' ? 'text' : 'pointer')};
     background-color: ${props =>
       props.active ? props.theme.inputBgdActive : props.theme.inputBgdHover};
     border-color: ${props =>
@@ -868,6 +875,7 @@ export const theme = {
   dropdownListSection,
   dropdownListShadow,
   dropdownWrapperZ,
+  dropdownWapperMargin,
   modalScrollBar,
   scrollBar,
   sidePanelScrollBar,
@@ -1098,6 +1106,12 @@ export const theme = {
   sliderInputWidth,
   sliderMarginTopIsTime,
   sliderMarginTop,
+
+  // Geocoder
+  geocoderWidth,
+  geocoderTop,
+  geocoderRight,
+  geocoderInputHeight,
 
   // Plot
   rangeBrushBgd,

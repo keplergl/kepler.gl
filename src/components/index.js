@@ -133,10 +133,12 @@ export {default as ProgressBar} from './common/progress-bar';
 export {default as FileUploadProgress} from './common/file-uploader/file-upload-progress';
 export {default as Slider} from './common/slider/slider';
 export {default as DatasetSquare} from './common/styled-components';
+export {default as ActionPanel, ActionPanelItem} from 'components/common/action-panel';
 
 // side pane components
 export {default as LayerConfigGroup} from './side-panel/layer-panel/layer-config-group';
 export {default as LayerTypeSelector} from './side-panel/layer-panel/layer-type-selector';
+export {ConfigGroupCollapsibleContent} from './side-panel/layer-panel/layer-config-group';
 
 export {
   ChannelByValueSelector,

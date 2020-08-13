@@ -17,6 +17,7 @@ export type ExportImage = {
   // exporting state
   imageDataUri: string;
   exporting: boolean;
+  processing: boolean;
   error: Error;
 };
 
@@ -131,10 +132,6 @@ export function setExportImageSettingUpdater(
   state: UiState,
   action: UiStateActions.SetExportImageSettingUpdaterAction
 ): UiState;
-export function startExportingImageUpdater(
-  state: UiState,
-  action: UiStateActions.StartExportingImageUpdaterAction
-): UiState;
 export function setExportImageDataUriUpdater(
   state: UiState,
   action: UiStateActions.SetExportImageDataUriUpdaterAction
@@ -146,6 +143,10 @@ export function setExportImageErrorUpdater(
 export function cleanupExportImageUpdater(
   state: UiState,
   action: UiStateActions.CleanupExportImageUpdaterAction
+): UiState;
+export function startExportingImageUpdater(
+  state: UiState,
+  action: UiStateActions.startExportingImage
 ): UiState;
 export function setExportSelectedDatasetUpdater(
   state: UiState,
@@ -179,12 +180,23 @@ export function setLocaleUpdater(
   state: UiState,
   action: UiStateActions.SetLocaleUpdaterAction
 ): UiState;
+<<<<<<< HEAD
 export function toggleHubbleExportModalUpdater(
   state: UiState,
   action: UiStateActions.ToggleHubbleExportModalUpdaterAction
 ): UiState;
+=======
+export function startSaveStorage(
+  state: UiState,
+  action: UiStateActions.StartSaveStorage
+): UiState
+>>>>>>> 3d72066f773f1c0bd83f76707da0c60a1f0e65e6
 
 export function loadFilesUpdater(state: UiState, action: LoadFilesUpdaterAction): UiState;
 export function loadFilesErrUpdater(state: UiState, action: LoadFilesErrUpdaterAction): UiState;
 export function loadFilesSuccessUpdater(state: UiState): UiState;
 export function toggleSplitMapUpdater(state: UiState, action: ToggleSplitMapUpdaterAction): UiState;
+export function initUiStateUpdater(state: UiState, action: {
+  type?: ActionTypes.INIT;
+  payload: KeplerGlInitPayload;
+}): UiState;

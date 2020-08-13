@@ -435,7 +435,7 @@ export default {
     or: 'or'
   },
   geocoder: {
-    title: 'Geocoder'
+    title: 'Enter an Address'
   },
   fieldSelector: {
     clearAll: 'Clear All',

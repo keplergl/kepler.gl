@@ -62,8 +62,10 @@ const DropdownWrapper = styled.div`
   z-index: ${props => props.theme.dropdownWrapperZ};
   position: absolute;
   bottom: ${props => (props.placement === 'top' ? props.theme.inputBoxHeight : 'auto')};
-  margin-top: ${props => (props.placement === 'bottom' ? '4px' : 'auto')};
-  margin-bottom: ${props => (props.placement === 'top' ? '4px' : 'auto')};
+  margin-top: ${props =>
+    props.placement === 'bottom' ? `${props.theme.dropdownWapperMargin}px` : 'auto'};
+  margin-bottom: ${props =>
+    props.placement === 'top' ? `${props.theme.dropdownWapperMargin}px` : 'auto'};
 `;
 
 class ItemSelector extends Component {
@@ -172,7 +174,6 @@ class ItemSelector extends Component {
 
     if (this.props.multiSelect) {
       const items = uniqBy(previousSelected.concat(toArray(item)), getValue);
-
       this.props.onChange(items);
     } else {
       this.props.onChange(getValue(item));

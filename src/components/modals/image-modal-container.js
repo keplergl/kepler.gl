@@ -52,6 +52,10 @@ export default class ImageModalContainer extends Component {
     }
   }
 
+  componentWillUnmount() {
+    this.props.onUpdateImageSetting({exporting: false});
+  }
+
   _updateThumbSize(initialMount) {
     if (this.props.currentProvider && this.props.cloudProviders.length) {
       const provider = this.props.cloudProviders.find(p => p.name === this.props.currentProvider);

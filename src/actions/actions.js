@@ -133,6 +133,7 @@ export const resetMapConfig = createAction(ActionTypes.RESET_MAP_CONFIG);
  * @param {boolean} options.readOnly `default: false` if `readOnly` is set to `true`
  * the left setting panel will be hidden
  * @param {boolean} options.keepExistingConfig whether to keep exiting layer filter and interaction config `default: false`.
+ * @param {boolean} options.autoCreateLayers whether to automatically create layers based on dataset columns `default: true`.
  * @public
  * @example
  * import {receiveMapConfig} from 'kepler.gl/actions';
@@ -153,17 +154,14 @@ export const receiveMapConfig = createAction(ActionTypes.RECEIVE_MAP_CONFIG, (co
  * @param payload.mapboxApiAccessToken - mapboxApiAccessToken to be saved to mapStyle reducer
  * @param payload.mapboxApiUrl - mapboxApiUrl to be saved to mapStyle reducer.
  * @param payload.mapStylesReplaceDefault - mapStylesReplaceDefault to be saved to mapStyle reducer
+ * @param payload.initialUiState - initial ui state
  * @type {typeof import('./actions').keplerGlInit}
  * @public
  */
 export const keplerGlInit = createAction(
   ActionTypes.INIT,
   // @ts-ignore
-  ({mapboxApiAccessToken, mapboxApiUrl, mapStylesReplaceDefault} = {}) => ({
-    mapboxApiAccessToken,
-    mapboxApiUrl,
-    mapStylesReplaceDefault
-  })
+  payload => payload
 );
 
 /**

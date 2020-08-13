@@ -47,7 +47,7 @@ export function findDefaultLayer(dataset, layerClasses = {}) {
   // go through all layerProps to create layer
   return layerProps.map(props => {
     const layer = new layerClasses[props.type](props);
-    return typeof layer.setInitialLayerConfig === 'function'
+    return typeof layer.setInitialLayerConfig === 'function' && Array.isArray(dataset.allData)
       ? layer.setInitialLayerConfig(dataset.allData)
       : layer;
   });

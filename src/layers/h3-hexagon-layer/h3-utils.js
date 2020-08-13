@@ -19,6 +19,9 @@
 // THE SOFTWARE.
 
 import {h3GetResolution, h3IsValid, h3ToGeo, h3ToGeoBoundary, geoToH3} from 'h3-js';
+import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {notNullorUndefined} from 'utils/data-utils';
+
 export {h3GetResolution, h3IsValid};
 
 // get vertices should return [lon, lat]
@@ -170,3 +173,13 @@ function getDistortions(vts, origs) {
 
   return distortions;
 }
+
+export const isHexField = (field, fieldIdx, allData) => {
+  if (!field.type === ALL_FIELD_TYPES.string) {
+    return false;
+  }
+  const firstDP = allData.find(d => notNullorUndefined(d[fieldIdx]));
+  return firstDP && h3IsValid(firstDP[fieldIdx]);
+};
+
+export const getHexFields = (fields, allData) => fields.filter((f, i) => isHexField(f, i, allData));

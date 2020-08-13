@@ -23,11 +23,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import ImagePreview from 'components/common/image-preview';
 
-import {
-  EXPORT_IMG_RATIO_OPTIONS,
-  EXPORT_IMG_RESOLUTION_OPTIONS,
-  EXPORT_IMG_RATIOS
-} from 'constants/default-settings';
+import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS} from 'constants/default-settings';
 
 import {StyledModalContent, SelectionButton} from 'components/common/styled-components';
 import Switch from 'components/common/switch';
@@ -64,31 +60,30 @@ const ExportImageModalFactory = () => {
       mapH: PropTypes.number.isRequired,
       exportImage: PropTypes.object.isRequired,
       // callbacks
-      onUpdateSetting: PropTypes.func.isRequired
+      onUpdateImageSetting: PropTypes.func.isRequired
     };
-
-    componentDidMount() {
-      this._updateMapDim();
-    }
 
     componentDidUpdate() {
       this._updateMapDim();
     }
 
+    componentWillUnmount() {
+      this.props.onUpdateImageSetting({exporting: false});
+    }
+
     _updateMapDim() {
       const {exportImage, mapH, mapW} = this.props;
       if (mapH !== exportImage.mapH || mapW !== exportImage.mapW) {
-        this.props.onUpdateSetting({
+        this.props.onUpdateImageSetting({
           mapH,
           mapW,
-          ratio: EXPORT_IMG_RATIOS.CUSTOM,
           legend: false
         });
       }
     }
 
     render() {
-      const {exportImage, onUpdateSetting, intl} = this.props;
+      const {exportImage, onUpdateImageSetting, intl} = this.props;
       const {legend, ratio, resolution} = exportImage;
 
       return (
@@ -104,7 +99,7 @@ const ExportImageModalFactory = () => {
                   <SelectionButton
                     key={op.id}
                     selected={ratio === op.id}
-                    onClick={() => onUpdateSetting({ratio: op.id})}
+                    onClick={() => onUpdateImageSetting({ratio: op.id})}
                   >
                     <FormattedMessage id={op.label} />
                   </SelectionButton>
@@ -121,7 +116,7 @@ const ExportImageModalFactory = () => {
                   <SelectionButton
                     key={op.id}
                     selected={resolution === op.id}
-                    onClick={() => op.available && onUpdateSetting({resolution: op.id})}
+                    onClick={() => op.available && onUpdateImageSetting({resolution: op.id})}
                   >
                     {op.label}
                   </SelectionButton>
@@ -137,7 +132,7 @@ const ExportImageModalFactory = () => {
                 id="add-map-legend"
                 checked={legend}
                 label={intl.formatMessage({id: 'modal.exportImage.mapLegendAdd'})}
-                onChange={() => onUpdateSetting({legend: !legend})}
+                onChange={() => onUpdateImageSetting({legend: !legend})}
               />
             </div>
           </ImageOptionList>
