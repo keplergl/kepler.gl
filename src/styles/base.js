@@ -330,25 +330,25 @@ export const textTruncate = {
   wordWrap: 'normal'
 };
 
-// StyledLayerConfigGroupLabel
-export const styledLayerConfigGroupLabelBorderLeft = '2px';
-export const styledLayerConfigGroupLabelMargin = '-12px';
-export const styledLayerConfigGroupLabelPadding = '10px';
-export const styledLayerConfigGroupLabelDashedPrepend = false;
+// layerConfigGroupLabel
+export const layerConfigGroupLabelBorderLeft = '2px';
+export const layerConfigGroupLabelMargin = '-12px';
+export const layerConfigGroupLabelPadding = '10px';
+export const layerConfigGroupLabelDashedPrepend = false;
 
-// StyledLayerConfigGroupLabel label
-export const styledLayerConfigGroupLabelLabelMargin = '0';
-export const styledLayerConfigGroupLabelLabelFontSize = '12px';
+// layerConfigGroupLabel label
+export const layerConfigGroupLabelLabelMargin = '0';
+export const layerConfigGroupLabelLabelFontSize = '12px';
 
 // styledConfigGroupHeader
 export const styledConfigGroupHeaderBorder = '2px';
 
-// StyledLayerConfigurator
+// layerConfigurator
 
-export const styledLayerConfiguratorBorder = '0';
-export const styledLayerConfiguratorBorderColor = 'transparent';
-export const styledLayerConfiguratorMargin = '12px';
-export const styledLayerConfiguratorPadding = '0';
+export const layerConfiguratorBorder = '0';
+export const layerConfiguratorBorderColor = 'transparent';
+export const layerConfiguratorMargin = '12px';
+export const layerConfiguratorPadding = '0';
 // This breakpoints are used for responsive design
 export const breakPoints = {
   palm: 588,
@@ -1201,24 +1201,24 @@ export const theme = {
   progressBarColor,
   progressBarTrackColor,
 
-  // StyledLayerConfigGroupLabel
-  styledLayerConfigGroupLabelBorderLeft,
-  styledLayerConfigGroupLabelMargin,
-  styledLayerConfigGroupLabelPadding,
-  styledLayerConfigGroupLabelDashedPrepend,
+  // layerConfigGroupLabel
+  layerConfigGroupLabelBorderLeft,
+  layerConfigGroupLabelMargin,
+  layerConfigGroupLabelPadding,
+  layerConfigGroupLabelDashedPrepend,
 
-  // StyledLayerConfigGroupLabel label
-  styledLayerConfigGroupLabelLabelMargin,
-  styledLayerConfigGroupLabelLabelFontSize,
+  // layerConfigGroupLabel label
+  layerConfigGroupLabelLabelMargin,
+  layerConfigGroupLabelLabelFontSize,
 
   // StyledConfigGroupHeader
   styledConfigGroupHeaderBorder,
 
-  // StyledLayerConfigurator
-  styledLayerConfiguratorBorder,
-  styledLayerConfiguratorBorderColor,
-  styledLayerConfiguratorMargin,
-  styledLayerConfiguratorPadding
+  // layerConfigurator
+  layerConfiguratorBorder,
+  layerConfiguratorBorderColor,
+  layerConfiguratorMargin,
+  layerConfiguratorPadding
 };
 
 export const themeLT = {
