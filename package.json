@@ -233,7 +233,8 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "resolutions": {
-    "lodash": "4.17.19"
+    "lodash": "4.17.19",
+    "dot-prop": "5.1.1"
   },
   "peerDependencies": {
     "react": "^16.3",
