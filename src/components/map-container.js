@@ -307,12 +307,13 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           layerHoverProp.compareType = interactionConfig.tooltip.config.compareType;
         }
       }
-      const commonProp = {
-        onClose: this._onCloseMapPopover,
-        mapW: mapState.width,
-        mapH: mapState.height,
-        zoom: mapState.zoom
-      };
+
+      const commonProp = {	
+        onClose: this._onCloseMapPopover,	
+        mapW: mapState.width,	
+        mapH: mapState.height,	
+        zoom: mapState.zoom	
+      };	
 
       return (
         <div>
@@ -508,6 +509,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       const hasGeocoderLayer = layers.find(l => l.id === GEOCODER_LAYER_ID);
 
       return (
+      
         <StyledMapContainer style={MAP_STYLE.container}>
           <MapControl
             datasets={datasets}
@@ -531,8 +533,10 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             onSetLocale={uiStateActions.setLocale}
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
           />
+
+
           <MapComponent
-            {...mapProps}
+           {...mapProps}            
             key="bottom"
             ref={this._setMapboxMap}
             mapStyle={mapStyle.bottomMapStyle}
@@ -540,9 +544,11 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             transitionDuration={TRANSITION_DURATION}
             onMouseMove={this.props.visStateActions.onMouseMove}
           >
+
             {/* Stops rendering Deck layers when export modal open to allow for more resources when rendering w/ Hubble. */}
             {!uiState.hubbleExportModalOpen && this._renderDeckOverlay(layersToRender)}
             {this._renderMapboxOverlays(layersToRender)}
+
             <Editor
               index={index}
               datasets={datasets}

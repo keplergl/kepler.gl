@@ -31,12 +31,12 @@ import {toggleHubbleExportModal} from 'kepler.gl/actions';
 
 function mapStateToProps(state = {}, props) {
     return { // TODO unsure if other redux stores are needed atm
-    //   ...props,
-    //   visState: state.visState,
-    //   mapStyle: state.mapStyle,
-    //   mapState: state.mapState,
+      ...props,
+      visState: state.visState,
+      mapStyle: state.mapStyle,
+      mapState: state.mapState,
       uiState: state.uiState,
-    //   providerState: state.providerState,
+      providerState: state.providerState,
     };
 }
 
@@ -54,9 +54,10 @@ class HubbleExport extends Component {
     handleExport() {this.props.toggleHubbleExportModal(true)} // Export button in Kepler UI was clicked
 
     render() {
+
         return (
-            <div>
-                <RenderSettingsModal isOpen={this.props.uiState.hubbleExportModalOpen} handleClose={this.handleClose.bind(this)} />
+            <div> 
+                <RenderSettingsModal isOpen={this.props.uiState.hubbleExportModalOpen} handleClose={this.handleClose.bind(this)} mapData={this.props}/>
                 <ThemeProvider theme={RenderSettingsModal}></ThemeProvider>
                 <Button onClick={() => this.handleExport()}>Export</Button> {/* anonymous function to bind state onclick  */}
             </div>
