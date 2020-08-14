@@ -234,7 +234,9 @@
   },
   "resolutions": {
     "lodash": "4.17.19",
-    "dot-prop": "5.1.1"
+    "dot-prop": "5.1.1",
+    "minimist": "1.2.3",
+    "jpeg-js": "0.4.0"
   },
   "peerDependencies": {
     "react": "^16.3",
