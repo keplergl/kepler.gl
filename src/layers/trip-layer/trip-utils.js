@@ -26,7 +26,7 @@ import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from 'layers/geojson-lay
 
 /**
  * Parse geojson from string
- * @param {array} geojson feature object values
+ * @param {array} samples feature object values
  * @returns {boolean} whether the geometry coordinates has length of 4
  */
 export function coordHasLength4(samples) {
@@ -42,8 +42,8 @@ export function coordHasLength4(samples) {
 
 /**
  * Check whether geojson linestring's 4th coordinate is 1) not timestamp 2) unix time stamp 3) real date time
- * @param {array} data array to be tested if its elements are timestamp
- * @returns {string} the type of timestamp: unix/datetime/invalid(not timestamp)
+ * @param {array} timestamps array to be tested if its elements are timestamp
+ * @returns {object | boolean} the type of timestamp: unix/datetime/invalid(not timestamp)
  */
 
 export function containValidTime(timestamps) {
@@ -63,7 +63,8 @@ export function containValidTime(timestamps) {
 
 /**
  * Check if geojson features are trip layer animatable by meeting 3 conditions
- * @param {array} features array of geojson feature objects
+ * @param {array} allData array of geojson feature objects
+ * @param {object} field array of geojson feature objects
  * @returns {boolean} whether it is trip layer animatable
  */
 export function isTripGeoJsonField(allData = [], field) {
@@ -97,7 +98,7 @@ export function isTripGeoJsonField(allData = [], field) {
 /**
  * Get unix timestamp from animatable geojson for deck.gl trip layer
  * @param {Array<Object>} dataToFeature array of geojson feature objects, can be null
- * @returns {Array<Number>} unix timestamp in milliseconds
+ * @returns {{dataToTimeStamp: Array[Number], animationDomain: null | Array<Number>}} {dataToTimeStamp: [], animationDomain: null}
  */
 export function parseTripGeoJsonTimestamp(dataToFeature) {
   // Analyze type based on coordinates of the 1st lineString
