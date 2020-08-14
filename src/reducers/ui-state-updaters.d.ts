@@ -88,6 +88,8 @@ export type UiState = {
   loadFiles: LoadFiles;
   // Locale of the UI
   locale: Locale;
+  // Opens/closes export modal relating to Hubble export
+  hubbleExportModalOpen: boolean;
 };
 
 export const DEFAULT_MAP_CONTROLS: MapControls;
@@ -178,10 +180,17 @@ export function setLocaleUpdater(
   state: UiState,
   action: UiStateActions.SetLocaleUpdaterAction
 ): UiState;
+<<<<<<< HEAD
+export function toggleHubbleExportModalUpdater(
+  state: UiState,
+  action: UiStateActions.ToggleHubbleExportModalUpdaterAction
+): UiState;
+=======
 export function startSaveStorage(
   state: UiState,
   action: UiStateActions.StartSaveStorage
 ): UiState
+>>>>>>> 3d72066f773f1c0bd83f76707da0c60a1f0e65e6
 
 export function loadFilesUpdater(state: UiState, action: LoadFilesUpdaterAction): UiState;
 export function loadFilesErrUpdater(state: UiState, action: LoadFilesErrUpdaterAction): UiState;

@@ -82,6 +82,7 @@ export type ActionType = {
   ADD_NOTIFICATION: string;
   REMOVE_NOTIFICATION: string;
   SET_LOCALE: string;
+  TOGGLE_HUBBLE_EXPORT_MODAL: string;
 
   // uiState > export image
   SET_EXPORT_IMAGE_SETTING: string;

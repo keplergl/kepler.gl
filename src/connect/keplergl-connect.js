@@ -24,6 +24,7 @@ import withLocalSelector from './with-local-selector';
 const defaultMapStateToProps = state => state;
 const defaultMapDispatchToProps = () => dispatch => ({dispatch});
 
+// Code below puts Kepler's Redux store in a more predictable state
 export const connect = (
   mapStateToProps = defaultMapStateToProps,
   makeMapDispatchToProps = defaultMapDispatchToProps,
@@ -31,10 +32,14 @@ export const connect = (
   options
 ) => BaseComponent => {
   const mapDispatchToProps = makeMapDispatchToProps();
-  const reduxMapState = (state, props) => mapStateToProps(props.selector(state), props, state);
+  const reduxMapState = (state, props) => {
+    return mapStateToProps(props.selector(state), props, state) // props.selector(state) is provided with withLocalSelector (uses reselector library)
+  };
 
-  const reduxMapDispatch = (dispatch, props) => mapDispatchToProps(props.dispatch, props, dispatch);
-
+  const reduxMapDispatch = (dispatch, props) => {
+    return mapDispatchToProps(props.dispatch, props, dispatch) // Takes 2 types of dispatch. "dispatch" seems to mount before props.dispatch (?)
+  };
+  
   const ReduxComponent = reduxConnect(
     reduxMapState,
     reduxMapDispatch,

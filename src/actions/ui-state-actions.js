@@ -20,6 +20,7 @@
 
 import {createAction} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
+import { locale } from 'moment';
 
 /**
  * Toggle active side panel
@@ -29,7 +30,20 @@ import ActionTypes from 'constants/action-types';
  * @public
  */
 export const toggleSidePanel = createAction(ActionTypes.TOGGLE_SIDE_PANEL, id => id);
+// export const TOGGLESIDEPANEL = "TOGGLESIDEPANEL"
 
+// export function toggleSidePanel() {
+//   // returns value + payload
+//   return {type: TOGGLESIDEPANEL}
+// }
+
+// export function makesAction(id) {
+//   return function(payload) {
+//     return {type: id, payload}
+//   }
+// }
+
+// const toggleSidePanelConst = makesAction(TOGGLESIDEPANEL) 
 /**
  * Show and hide modal dialog
  * @memberof uiStateActions
@@ -244,6 +258,17 @@ export const setExportHTMLMapMode = createAction(
  */
 export const setLocale = createAction(ActionTypes.SET_LOCALE, locale => ({
   locale
+}));
+
+/** TODO
+ * Toggles modal that allows for exporting of visualizations with camera controls (Hubble library)
+ * @memberof uiStateActions
+ * @param isOpen - Determines whether export modal is open or closed
+ * @type {typeof import('./ui-state-actions').toggleHubbleExportModal}
+ * @public
+ */
+export const toggleHubbleExportModal = createAction(ActionTypes.TOGGLE_HUBBLE_EXPORT_MODAL, isOpen => ({
+  isOpen
 }));
 
 /**
