@@ -20,10 +20,11 @@
 
 // Schemas
 export {
-  default, 
-  default as KeplerGlSchema, 
-  reducerSchema, 
-  KeplerGLSchema as KeplerGLSchemaClass} from './schema-manager';
+  default,
+  default as KeplerGlSchema,
+  reducerSchema,
+  KeplerGLSchema as KeplerGLSchemaClass
+} from './schema-manager';
 export {CURRENT_VERSION, VERSIONS} from './versions';
 export {default as visStateSchema} from './vis-state-schema';
 export {default as datasetSchema} from './dataset-schema';

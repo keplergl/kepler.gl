@@ -128,7 +128,7 @@ export function mergeFilters(state, filtersToMerge) {
     ...state,
     filters: updatedFilters,
     datasets: filtered,
-    filterToBeMerged: unmerged
+    filterToBeMerged: [...state.filterToBeMerged, ...unmerged]
   };
 }
 
@@ -274,7 +274,7 @@ export function mergeSplitMaps(state, splitMaps = []) {
   return {
     ...state,
     splitMaps: merged,
-    splitMapsToBeMerged: unmerged
+    splitMapsToBeMerged: [...state.splitMapsToBeMerged, ...unmerged]
   };
 }
 
@@ -505,7 +505,7 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
 }
 
 export function isValidMerger(merger) {
-  return isObject(merger) && typeof merger.merge === 'function' && typeof merger.prop === 'string'; 
+  return isObject(merger) && typeof merger.merge === 'function' && typeof merger.prop === 'string';
 }
 
 export const VIS_STATE_MERGERS = [
@@ -514,6 +514,5 @@ export const VIS_STATE_MERGERS = [
   {merge: mergeInteractions, prop: 'interactionConfig', toMergeProp: 'interactionToBeMerged'},
   {merge: mergeLayerBlending, prop: 'layerBlending'},
   {merge: mergeSplitMaps, prop: 'splitMaps', toMergeProp: 'splitMapsToBeMerged'},
-  {merge: mergeAnimationConfig, prop: 'animationConfig'},
-  {merge: mergeFieldDisplayNames, prop: 'fieldDisplayNames', toMergeProp: 'fieldDisplayNamesToBeMerged'}
+  {merge: mergeAnimationConfig, prop: 'animationConfig'}
 ];

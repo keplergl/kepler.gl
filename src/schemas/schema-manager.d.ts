@@ -5,9 +5,11 @@ import {
   SplitMap,
   AnimationConfig,
   VisState,
-  RGBColor, 
+  RGBColor,
   Merge
 } from 'reducers';
+import {Schema} from './schema';
+
 import {LayerTextLabel} from 'layers/layer-factory';
 
 export type SavedFilter = {
@@ -203,7 +205,7 @@ export class KeplerGLSchema {
   validateVersion(version: any): string | null;
   hasDataChanged(state: any): boolean;
 }
-
+export const reducerSchema: {[key: string]: Schema};
 const KeplerGLSchemaManager: KeplerGLSchema;
 
 export default KeplerGLSchemaManager;

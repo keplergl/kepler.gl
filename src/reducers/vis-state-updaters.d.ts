@@ -302,7 +302,7 @@ export type VisState = {
   animationConfig: AnimationConfig;
   editor: Editor;
   splitMaps: SplitMap[];
-  splitMapsToBeMerged?: SplitMap[];
+  splitMapsToBeMerged: SplitMap[];
   fileLoading: FileLoading | false;
   fileLoadingProgress: FileLoadingProgress;
   loaders: LoaderObject[];

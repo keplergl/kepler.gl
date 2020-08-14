@@ -37,7 +37,7 @@ export const reducerSchema = {
 /** @type {typeof import('./schema-manager').KeplerGLSchema} */
 export class KeplerGLSchema {
   constructor({
-    reducers = reducerSchema, 
+    reducers = reducerSchema,
     datasets = datasetSchema,
     validVersions = VERSIONS,
     version = CURRENT_VERSION
