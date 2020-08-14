@@ -29,7 +29,6 @@ import {
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
 import {findMapBounds} from 'utils/data-utils';
-// import KeplerGlSchema from 'schemas';
 import {isPlainObject} from 'utils/utils';
 import {filesToDataPayload} from 'processors/file-handler';
 import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-helpers';
