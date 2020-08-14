@@ -50,7 +50,7 @@ const mapDispatchToProps = () => (noResultDispatch, ownProps, dispatch) => {
 }	
 
 class HubbleExport extends Component {
-    handleClose() {this.props.toggleHubbleExportModal(false)} // X button in Modal UI was clicked
+    handleClose() {this.props.toggleHubbleExportModal(false)} // X button in RenderSettingsModal was clicked
     handleExport() {this.props.toggleHubbleExportModal(true)} // Export button in Kepler UI was clicked
 
     render() {
@@ -65,5 +65,5 @@ class HubbleExport extends Component {
     }
 };
 
-// keplerGlConnect is a wrapper of Redux's standard connect except w/ access to Kepler's Redux store
+// keplerGlConnect is a wrapper of Redux's standard connect w/ access to Kepler's Redux store
 export default keplerGlConnect(mapStateToProps, mapDispatchToProps)(withTheme(HubbleExport));

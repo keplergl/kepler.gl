@@ -48,10 +48,8 @@ const DEFAULT_ROW_GAP = '16px';
 let adapter = new DeckAdapter(sceneBuilder);
 let mapdataGlobal = null;
 
-// @Chris I think this has to be done this way since adapter eventually gets used on many elements outside of the class
 function sceneBuilder(animationLoop) {
   const data = {};
-  // PSEUDO calls helper function to create new keyframes
   const keyframes = 
   {
     camera: new CameraKeyframes({
@@ -323,7 +321,7 @@ const PanelFooter = ({handleClose, settingsData}) => (
         className={'render-settings-button'}
         onClick={() => {handleClose()}}
       >
-        Cancel {/* TODO add functionality to close  */}
+        Cancel
       </Button>
       <Button
         width={DEFAULT_BUTTON_WIDTH}
@@ -347,7 +345,7 @@ class RenderSettingsPanel extends Component {
 
     this.state = {
       mediaType: "WebM Video",
-      camera: "None", // @Chris slightly different from your plan. Camera for the str of which camera angle;. cameraHandle for the actual Luma str
+      camera: "None", 
       fileName: "Video Name",
       cameraHandle: undefined,
     //  quality: "High (720p)"
@@ -365,19 +363,12 @@ class RenderSettingsPanel extends Component {
     buttonHeight: '16px'
   };
 
-  // PSEUDO BRAINSTORM - sceneBuilder
-  // factory function to handle parsing of keyframes. Could possibly have functions for orbit, north/south, etc.
-  // helper function to apply keyframes (attach/detach animation) (inputs - factory function camera keyframes obj)
-  // NOTE: every attach/detach gives a new id (Number from Timeline)
-  // switcher function - when cameraHandle is undefined, just use attachAnimation + default keyframes
-
-  // TODO test cases ['Orbit (90º)','Orbit (180º)', 'Orbit (360º)', 'North to South', 'North to South', 'Zoom In', 'Zoom Out']
-  // Helper function that will parse input str for type of camera to be used for keyframes
   createKeyframe(strCameraType) {    
-    if (this.state.cameraHandle != undefined) { // Unsure if you can do: if (this.state.cameraHandle)
+    if (this.state.cameraHandle != undefined) { 
       // NOTE this is where each parts of chain come from
       // adapter - Deck, scene.animationLoop - Hubble, timeline.detachAnimation - Luma
-      adapter.scene.animationLoop.timeline.detachAnimation(this.state.cameraHandle)  
+      adapter.scene.animationLoop.timeline.detachAnimation(this.state.cameraHandle)
+      adapter.scene.keyframes = this.resetKeyframes() // Resets keyframes so that they don't inherit other options
       console.log("DETACHED")
     }
 
@@ -399,19 +390,42 @@ class RenderSettingsPanel extends Component {
       secondKeyframe.bearing = parseInt(match[1])
     }
 
-    // set_checker = new Set(["East", "South", "West", "North"])
-    // if (set_checker.has(match[0])) { // TODO use turf.js to modify keyframe distances
-    //   console.log("Reached")
-    // }
+    const set_checker = new Set(["East", "South", "West", "North"])
+    if (set_checker.has(match[0])) { // TODO use turf.js to modify keyframe distances
+      if (match[0] == "East") { // TODO Temporary solution to catch this branch to master. Doesn't work for "East to North" for example if option allows in future
+        firstKeyframe.longitude = 55
+        secondKeyframe.longitude = -77
+      } else 
+      if (match[0] == "South") {
+        firstKeyframe.latitude = -20
+        secondKeyframe.latitude = 70
+      } else 
+      if (match[0] == "West") {
+        firstKeyframe.longitude = -77
+        secondKeyframe.longitude = 55
+      } else 
+      if (match[0] == "North") {
+        firstKeyframe.latitude = 70
+        secondKeyframe.latitude = -20
+      }
+    }
 
-    // TODO if 
-  //   if (match[0] == "Zoom") {
-  //     if (match[1] == "In") {
-
-  //     }
-  //   }
+    if (match[0] == "Zoom") {
+      if (match[1] == "In") {
+        firstKeyframe.zoom = 2
+        secondKeyframe.zoom = 15
+      } else 
+      if (match[1] == "Out") {
+        firstKeyframe.zoom = 15
+        secondKeyframe.zoom = 2
+      } 
+    }
   }
 
+  resetKeyframes() { // default keyframes from scenebuilder fn DO NOT MODIFY
+    return {camera:new CameraKeyframes({timings:[0,1000],keyframes:[{longitude:mapdataGlobal.mapState.longitude,latitude:mapdataGlobal.mapState.latitude,zoom:mapdataGlobal.mapState.zoom,pitch:0,bearing:0},{longitude:mapdataGlobal.mapState.longitude,latitude:mapdataGlobal.mapState.latitude,zoom:mapdataGlobal.mapState.zoom,bearing:0,pitch:0}],easings:[easing.easeInOut]})}
+  }
+ 
   setMediaTypeState(media){
     this.setState({
       mediaType: media
@@ -422,8 +436,6 @@ class RenderSettingsPanel extends Component {
         camera: option
       });
       this.createKeyframe(option)
-      // this.parseSetCameraType(option);
-      // setKeyframes(option);
   }
   setFileName(name){
     this.setState({
@@ -465,9 +477,9 @@ class RenderSettingsPanel extends Component {
             settingsData={settingsData}
             />
         <PanelFooter 
-            handleClose={handleClose} {/* handleClose for Cancel button */}
+            handleClose={handleClose} 
             settingsData = {settingsData}
-            /> 
+            /> {/* handleClose for Cancel button */}
       </Panel>
     );
   }
