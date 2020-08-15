@@ -19,14 +19,12 @@
 // THE SOFTWARE.
 
 import React, {useState} from 'react';
-
 import styled from 'styled-components';
 import get from 'lodash.get';
 
 import FileUploadFactory from 'components/common/file-uploader/file-upload';
 import LoadStorageMapFactory from './load-storage-map';
 import ModalTabsFactory from './modal-tabs';
-
 import LoadingDialog from './loading-dialog';
 
 import {LOADING_METHODS} from 'constants/default-settings';

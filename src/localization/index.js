@@ -22,12 +22,12 @@ import en from './en';
 import {flattenMessages} from 'utils/locale-utils';
 import {LOCALE_CODES} from './locales';
 
-const en_flat = flattenMessages(en);
+const enFlat = flattenMessages(en);
 
 export const messages = Object.keys(LOCALE_CODES).reduce(
   (acc, key) => ({
     ...acc,
-    [key]: key === 'en' ? en_flat : {...en_flat, ...flattenMessages(require(`./${key}`).default)}
+    [key]: key === 'en' ? enFlat : {...enFlat, ...flattenMessages(require(`./${key}`).default)}
   }),
   {}
 );

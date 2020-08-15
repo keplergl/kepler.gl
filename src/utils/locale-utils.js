@@ -18,6 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {isObject} from './utils';
+import {console as Console} from 'global/console';
+
 // Flat messages since react-intl does not seem to support nested structures
 // Adapted from https://medium.com/siren-apparel-press/internationalization-and-localization-of-sirenapparel-eu-sirenapparel-us-and-sirenapparel-asia-ddee266066a2
 export const flattenMessages = (nestedMessages, prefix = '') => {
@@ -31,4 +34,26 @@ export const flattenMessages = (nestedMessages, prefix = '') => {
     }
     return messages;
   }, {});
+};
+
+export const mergeMessages = (defaultMessages, userMessages) => {
+  if (!isObject(userMessages) || !isObject(userMessages.en)) {
+    Console.error(
+      'message should be an object and contain at least the `en` translation. Read more at https://docs.kepler.gl/docs/api-reference/localization'
+    );
+
+    return defaultMessages;
+  }
+
+  const userEnFlat = flattenMessages(userMessages.en);
+  return Object.keys(defaultMessages).reduce(
+    (acc, key) => ({
+      ...acc,
+      [key]:
+        key === 'en'
+          ? {...defaultMessages.en, ...userEnFlat}
+          : {...defaultMessages[key], ...userEnFlat, ...flattenMessages(userMessages[key] || {})}
+    }),
+    {}
+  );
 };

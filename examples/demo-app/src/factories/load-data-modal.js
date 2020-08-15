@@ -31,12 +31,12 @@ import {loadRemoteMap, loadSample, loadSampleConfigurations} from '../actions';
 const additionalMethods = {
   remote: {
     id: LOADING_METHODS.remote,
-    label: 'Load Map using URL',
+    label: 'modal.loadData.remote',
     elementType: LoadRemoteMap
   },
   sample: {
     id: LOADING_METHODS.sample,
-    label: 'Sample Maps',
+    label: 'modal.loadData.sample',
     elementType: SampleMapGallery,
     tabElementType: SampleMapsTab
   }
