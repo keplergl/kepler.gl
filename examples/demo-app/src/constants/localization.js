@@ -21,6 +21,7 @@
 // Add english messages here, other languages will use these
 // if translations not available for every message
 const en = {
+  'modal.loadData.remote': 'Load Map using URL',
   'sampleMapsTab.noData': 'No data ?',
   'sampleMapsTab.trySampleData': 'Try sample data',
   'sampleDataViewer.rowCount': ' {rowCount} rows',
@@ -32,14 +33,13 @@ const en = {
     '* CORS policy must be defined on your custom url domain in order to be accessible. For more info ',
   'loadRemoteMap.clickHere':
     '<a rel="noopener noreferrer" target="_blank" href="{corsLink}">click here</a>',
-  'loadRemoteMap.fetch': 'Fetch',
-  'loadData.remote': 'Load Map using URL',
+  'loadRemoteMap.fetch': 'Fetch'
 };
 
 export const messages = {
   en,
   fi: {
-    ...en,
+    'modal.loadData.remote': 'Lataa kartta URL-osoitteen avulla',
     'sampleMapsTab.noData': 'Ei aineistoja?',
     'sampleMapsTab.trySampleData': 'Kokeile testiaineistoja',
     'sampleDataViewer.rowCount': ' {rowCount} riviä',
@@ -54,7 +54,7 @@ export const messages = {
     'loadRemoteMap.fetch': 'Nouda'
   },
   ca: {
-    ...en,
+    'modal.loadData.remote': 'Carrega mapa mitjançant URL',
     'sampleMapsTab.noData': 'Cap dada?',
     'sampleMapsTab.trySampleData': 'Prova dades de mostra',
     'sampleDataViewer.rowCount': ' {rowCount} files',
@@ -69,7 +69,7 @@ export const messages = {
     'loadRemoteMap.fetch': 'Cerca'
   },
   es: {
-    ...en,
+    'modal.loadData.remote': 'Cargar mapa usando URL',
     'sampleMapsTab.noData': 'Ningún dato?',
     'sampleMapsTab.trySampleData': 'Prueba datos de muestra',
     'sampleDataViewer.rowCount': ' {rowCount} files',

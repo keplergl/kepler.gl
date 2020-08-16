@@ -23,8 +23,8 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {format} from 'd3-format';
 import {LoadingDialog} from 'kepler.gl/components';
-import {IntlProvider, FormattedMessage} from 'react-intl';
-import {messages} from '../../constants/localization';
+import {FormattedMessage, useIntl} from 'react-intl';
+// import {messages} from '../../constants/localization';
 
 const numFormat = format(',');
 
@@ -92,7 +92,7 @@ const StyledError = styled.div`
 
 const SampleMap = ({id, sample, onClick, locale}) => (
   <StyledSampleMap id={id} className="sample-map-gallery__item">
-    <IntlProvider locale={locale} messages={messages[locale]}>
+    {/* <IntlProvider locale={locale} messages={messages[locale]}> */}
       <div className="sample-map">
         <div className="sample-map__image" onClick={onClick}>
           {sample.imageUrl && <img src={sample.imageUrl} />}
@@ -108,7 +108,7 @@ const SampleMap = ({id, sample, onClick, locale}) => (
           {sample.description}
         </StyledImageCaption>
       </div>
-    </IntlProvider>
+    {/* </IntlProvider> */}
   </StyledSampleMap>
 );
 
@@ -126,6 +126,9 @@ export default class SampleMapGallery extends Component {
   }
 
   render() {
+    // const i = useIntl();
+    // console.log(i);
+
     const {sampleMaps, onLoadSample, error, isMapLoading, locale} = this.props;
     return (
       <div className="sample-data-modal">

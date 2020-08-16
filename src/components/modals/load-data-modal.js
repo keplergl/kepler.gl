@@ -21,6 +21,7 @@
 import React, {useState} from 'react';
 import styled from 'styled-components';
 import get from 'lodash.get';
+import {useIntl} from 'react-intl';
 
 import FileUploadFactory from 'components/common/file-uploader/file-upload';
 import LoadStorageMapFactory from './load-storage-map';
@@ -48,8 +49,11 @@ LoadDataModalFactory.deps = [ModalTabsFactory, FileUploadFactory, LoadStorageMap
 export function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
   /** @type {React.FunctionComponent<LoadDataModalProps>} */
   const LoadDataModal = props => {
+    const intl = useIntl();
     const {loadingMethods, isCloudMapLoading} = props;
     const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
+
+    const ElementType = currentMethod.elementType;
 
     return (
       <StyledLoadDataModal>
@@ -61,7 +65,9 @@ export function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
         {isCloudMapLoading ? (
           <LoadingDialog size={64} />
         ) : (
-          currentMethod && <currentMethod.elementType key={currentMethod.id} {...props} />
+          currentMethod && (
+            <ElementType key={currentMethod.id} intl={intl} {...props} />
+          )
         )}
       </StyledLoadDataModal>
     );

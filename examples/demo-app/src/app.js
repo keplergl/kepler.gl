@@ -31,7 +31,7 @@ import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
 import {AUTH_TOKENS} from './constants/default-settings';
-import messages from './localization';
+import {messages} from './constants/localization';
 
 import {
   loadRemoteMap,

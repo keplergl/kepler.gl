@@ -53,7 +53,8 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
     react: `${NODE_MODULES_DIR}/react`,
     'react-dom': `${NODE_MODULES_DIR}/react-dom`,
     'react-redux': `${NODE_MODULES_DIR}/react-redux/lib`,
-    'styled-components': `${NODE_MODULES_DIR}/styled-components`
+    'styled-components': `${NODE_MODULES_DIR}/styled-components`,
+    'react-intl': `${NODE_MODULES_DIR}/react-intl`
   };
 
   // resolve deck.gl from local dir

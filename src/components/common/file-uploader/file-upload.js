@@ -30,7 +30,6 @@ import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
 import ReactMarkdown from 'react-markdown';
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
-import {injectIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';
 
 /** @typedef {import('./file-upload').FileUploadProps} FileUploadProps */
@@ -294,7 +293,7 @@ function FileUploadFactory() {
     }
   }
 
-  return injectIntl(FileUpload);
+  return FileUpload;
 }
 
 export default FileUploadFactory;
