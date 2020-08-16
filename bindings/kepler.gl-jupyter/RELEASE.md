@@ -37,3 +37,13 @@ twine upload dist/*
 git tag -a <version>-jupyter -m "<version>-jupyter
 git push origin master && git push origin <version>-jupyter
 ```
+
+### Upgrade kepler.gl version
+- Go to the js folder and open package.json
+- Edit kepler.gl version to the latest 
+```
+"kepler.gl": "^2.3.2"
+```
+- Run `yarn` to install dependencies
+
+- Run `yarn start` to build js files, the script will put the built files in the `keplergl/static` Folder.
