@@ -20,6 +20,7 @@
 
 import React, {Component, createRef} from 'react';
 import styled from 'styled-components';
+import {injectIntl} from 'react-intl';
 import UploadButton from './upload-button';
 import {DragNDrop, FileType} from 'components/common/icons';
 import FileUploadProgress from 'components/common/file-uploader/file-upload-progress';
@@ -293,7 +294,7 @@ function FileUploadFactory() {
     }
   }
 
-  return FileUpload;
+  return injectIntl(FileUpload);
 }
 
 export default FileUploadFactory;
