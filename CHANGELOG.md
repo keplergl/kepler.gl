@@ -15,8 +15,15 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [2.3.1] - Aug 4 2020
+## [2.3.2] - Aug 16 2020
+- 10468e19 [Enhancement] Export more utils (#1233)
+- 242dcf99 [Enhancement] Upgrade dependencies and fix vulnerabilities (#1236)
+- 3d72066f [Bug] Fixed image export bug due to mapbox attrition logo (#1229)
+- f4951102 [Feat] add readonly prop to KeplerGl component (#1220)
+- 04991352 [Enhancement] Added props to panel-header iconComponent (#64) (#1219)
+- b91785ec [Feat] Auto detect h3 layer from h3 field data (#53) (#1218)
 
+## [2.3.1] - Aug 4 2020
 - [Bug] fix tooltip config, add boolean formatter (#1216)
 - [Enhancement] Geocoder interaction improvements (#1214)
 - [Enhancement] add options.autoCreateLayers to addDataToMap (#1215)
