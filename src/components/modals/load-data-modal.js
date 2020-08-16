@@ -65,9 +65,7 @@ export function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
         {isCloudMapLoading ? (
           <LoadingDialog size={64} />
         ) : (
-          currentMethod && (
-            <ElementType key={currentMethod.id} intl={intl} {...props} />
-          )
+          currentMethod && <ElementType key={currentMethod.id} intl={intl} {...props} />
         )}
       </StyledLoadDataModal>
     );
