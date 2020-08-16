@@ -18,7 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export {maybeToDate, roundValToStep} from './data-utils';
+export {maybeToDate, roundValToStep, timeToUnixMilli} from './data-utils';
 export {updateAllLayerDomainData} from '../reducers/vis-state-updaters';
 export {findPointFieldPairs} from '../utils/dataset-utils';
 export {getHexFields} from '../layers/h3-hexagon-layer/h3-utils';
+export {hexToRgb} from './color-utils';
+export {containValidTime} from '../layers/trip-layer/trip-utils';

@@ -59,7 +59,7 @@ export function applyFiltersToDatasets(
   datasetIds: string[],
   datasets: Datasets,
   filters: Filter[],
-  layers: Layer[]
+  layers?: Layer[]
 ): Datasets;
 export function getFilterRecord(
   dataId: string,

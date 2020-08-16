@@ -160,6 +160,7 @@ export const VisConfigSlider = appInjector.get(VisConfigSliderFactory);
 export const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
 export const ChannelByValueSelector = appInjector.get(ChannelByValueSelectorFactory);
 
+<<<<<<< HEAD
 export {
   TimeRangeSliderFactory,
   RangeSliderFactory,
@@ -167,3 +168,9 @@ export {
   LayerConfigGroupFactory,
   ChannelByValueSelectorFactory
 };
+=======
+export {TimeRangeSliderFactory, RangeSliderFactory, VisConfigSliderFactory};
+
+// Context
+export {default as KeplerGlContext, RootContext} from 'components/context';
+>>>>>>> [Enhancement] Export more utils (#1233)

@@ -45,5 +45,8 @@ export * from './styles';
 // Middleware
 export * from './middleware';
 
+// Utils
+export * from './utils';
+
 // Default export
 export {default} from './components';
