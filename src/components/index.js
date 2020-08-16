@@ -157,3 +157,6 @@ export const RangeSlider = appInjector.get(RangeSliderFactory);
 export const VisConfigSlider = appInjector.get(VisConfigSliderFactory);
 
 export {TimeRangeSliderFactory, RangeSliderFactory, VisConfigSliderFactory};
+
+// Context
+export {default as KeplerGlContext, RootContext} from 'components/context';
