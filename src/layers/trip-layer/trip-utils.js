@@ -71,7 +71,7 @@ export function isTripGeoJsonField(allData = [], field) {
   if (!allData.length) {
     return false;
   }
-  const getValue = d => d[field.tableFieldIndex - 1];
+  const getValue = d => field.valueAccessor(d);
   const maxCount = 10000;
   const sampleRawFeatures =
     allData.length > maxCount ? getSampleData(allData, maxCount, getValue) : allData.map(getValue);

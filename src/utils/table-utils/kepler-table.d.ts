@@ -1,12 +1,13 @@
 import {RGBColor, RGBAColor, Millisecond} from '../../reducers/types';
-
+import {Layer} from 'layers';
+import {Filter} from '../reducers/vis-state-updaters';
 export type Field = {
   analyzerType: string;
   id?: string;
   name: string;
   format: string;
-  // tableFieldIndex: number;
   type: string;
+  fieldIdx: number;
   valueAccessor(v: any[]): any;
   filterProps?: any;
 };
@@ -34,9 +35,14 @@ export type FilterRecord = {
   cpu: Filter[];
   gpu: Filter[];
 };
-
+export type FilterDatasetOpt = {
+  // only allow cpu filtering
+  cpuOnly?: boolean;
+  // ignore filter for domain calculation
+  ignoreDomain?: boolean;
+};
 export class KeplerTable {
-  constructor(schema: {info?: object, data: any, color: RGBColor});
+  constructor(schema: {info?: object; data: any; color: RGBColor; metadata: any});
   id: string;
   label?: string;
   color: RGBColor;
@@ -66,7 +72,6 @@ export class KeplerTable {
   // table-injected metadata
   metadata?: object;
 
-
   // methods
   getColumnField(columnName: string): Field | undefined;
   getColumnFieldIdx(columnName: string): number;
@@ -74,6 +79,9 @@ export class KeplerTable {
 
   getValue(columnName: string, rowIdx: number): any;
   updateColumnField(fieldIdx: number, newField: Field): void;
+  getColumnFilterProps(fieldName: string): Field['filterProps'] | null | undefined;
+  filterTable(filters: Filter[], layers: Layer[], opt?: FilterDatasetOpt): KeplerTable;
+  filterTableCPU(filters: Filter[], layers: Layer[]): KeplerTable;
 }
 
 export default KeplerTable;

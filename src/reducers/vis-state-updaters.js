@@ -699,10 +699,7 @@ export const setFilterPlotUpdater = (state, {idx, newProp, valueIndex = 0}) => {
     if (plotType) {
       newFilter = {
         ...newFilter,
-        ...getFilterPlot(
-          {...newFilter, plotType},
-          state.datasets[newFilter.dataId[valueIndex]].allData
-        ),
+        ...getFilterPlot({...newFilter, plotType}, state.datasets[newFilter.dataId[valueIndex]]),
         plotType
       };
     }

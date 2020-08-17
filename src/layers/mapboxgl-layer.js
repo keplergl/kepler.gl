@@ -111,7 +111,7 @@ class MapboxLayerGL extends Layer {
           vcFields.reduce(
             (accu, field) => ({
               ...accu,
-              [field.name]: d[field.tableFieldIndex - 1]
+              [field.name]: field.valueAccessor(d)
             }),
             {}
           )

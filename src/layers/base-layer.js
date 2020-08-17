@@ -56,12 +56,12 @@ import {
   notNullorUndefined
 } from 'utils/data-utils';
 
-import {
-  getQuantileDomain,
-  getOrdinalDomain,
-  getLogDomain,
-  getLinearDomain
-} from 'utils/data-scale-utils';
+// import {
+//   getQuantileDomain,
+//   getOrdinalDomain,
+//   getLogDomain,
+//   getLinearDomain
+// } from 'utils/data-scale-utils';
 import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
 /** @typedef {import('./index').Layer} LayerClass} */
@@ -93,7 +93,7 @@ function* generateColor() {
 }
 
 export const colorMaker = generateColor();
-const defaultGetFieldValue = (field, d) => d[field.tableFieldIndex - 1];
+const defaultGetFieldValue = (field, d) => field.valueAccessor(d);
 
 /** @type {LayerClass} */
 class Layer {
@@ -243,7 +243,7 @@ class Layer {
       prev[key] = requiredFields.length
         ? requiredFields.map(f => ({
             value: f.name,
-            fieldIdx: f.tableFieldIndex - 1
+            fieldIdx: f.fieldIdx
           }))
         : null;
       return prev;
@@ -360,7 +360,7 @@ class Layer {
     const update = field
       ? {
           value: field.name,
-          fieldIdx: field.tableFieldIndex - 1
+          fieldIdx: field.fieldIdx
         }
       : {value: null, fieldIdx: -1};
 
@@ -987,16 +987,15 @@ class Layer {
       : [this.getDefaultLayerConfig()[scale]];
   }
 
-  updateLayerVisualChannel(table, channel) {
+  updateLayerVisualChannel(dataset, channel) {
     const visualChannel = this.visualChannels[channel];
     this.validateVisualChannel(channel);
     // calculate layer channel domain
-    const updatedDomain = this.calculateLayerDomain(table, visualChannel);
+    const updatedDomain = this.calculateLayerDomain(dataset, visualChannel);
     this.updateLayerConfig({[visualChannel.domain]: updatedDomain});
   }
 
-  calculateLayerDomain(table, visualChannel) {
-    const {allData, filteredIndexForDomain} = table;
+  calculateLayerDomain(dataset, visualChannel) {
     const defaultDomain = [0, 1];
     const {scale} = visualChannel;
     const scaleType = this.config[scale];
@@ -1007,34 +1006,7 @@ class Layer {
       return defaultDomain;
     }
 
-    if (!SCALE_TYPES[scaleType]) {
-      Console.error(`scale type ${scaleType} not supported`);
-      return defaultDomain;
-    }
-
-    const {valueAccessor} = field;
-    const indexValueAccessor = i => valueAccessor(allData[i]);
-    const sortFunction = getSortingFunction(field.type);
-
-    switch (scaleType) {
-      case SCALE_TYPES.ordinal:
-      case SCALE_TYPES.point:
-        // do not recalculate ordinal domain based on filtered data
-        // don't need to update ordinal domain every time
-        return getOrdinalDomain(allData, valueAccessor);
-
-      case SCALE_TYPES.quantile:
-        return getQuantileDomain(filteredIndexForDomain, indexValueAccessor, sortFunction);
-
-      case SCALE_TYPES.log:
-        return getLogDomain(filteredIndexForDomain, indexValueAccessor);
-
-      case SCALE_TYPES.quantize:
-      case SCALE_TYPES.linear:
-      case SCALE_TYPES.sqrt:
-      default:
-        return getLinearDomain(filteredIndexForDomain, indexValueAccessor);
-    }
+    return dataset.getColumnLayerDomain(field, scaleType) || defaultDomain;
   }
 
   hasHoveredObject(objectInfo) {

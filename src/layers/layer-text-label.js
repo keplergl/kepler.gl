@@ -53,7 +53,7 @@ export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
 }
 
 export const textLabelAccessor = textLabel => d => {
-  const val = d.data[textLabel.field.tableFieldIndex - 1];
+  const val = textLabel.field.valueAccessor(d.data);
   return notNullorUndefined(val) ? String(val) : '';
 };
 

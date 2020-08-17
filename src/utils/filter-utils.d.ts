@@ -44,18 +44,18 @@ export function validateFilter(
 
 export function adjustValueToFilterDomain(value: Filter['value'], Filter): any;
 
-export type FilterDatasetOpt = {
-  // only allow cpu filtering
-  cpuOnly?: boolean;
-  // ignore filter for domain calculation
-  ignoreDomain?: boolean;
-};
-export function filterDataset(
-  dataset: KeplerTable,
-  filters: Filter[],
-  layers: Layer[],
-  opt?: FilterDatasetOpt
-): KeplerTable;
+// export type FilterDatasetOpt = {
+//   // only allow cpu filtering
+//   cpuOnly?: boolean;
+//   // ignore filter for domain calculation
+//   ignoreDomain?: boolean;
+// };
+// export function filterDataset(
+//   dataset: KeplerTable,
+//   filters: Filter[],
+//   layers: Layer[],
+//   opt?: FilterDatasetOpt
+// ): KeplerTable;
 export function applyFiltersToDatasets(
   datasetIds: string[],
   datasets: Datasets,
@@ -134,8 +134,8 @@ export function getNumericStepSize(diff: number): number;
 export function mergeFilterDomainStep(filter: Filter, filterProps?: any): Filter | null;
 
 export function getFilterProps(
-  allData: KeplerTable['allData'],
-  field: Field
+  field: Field,
+  FieldDomain: FieldDomain
 ): Partiel<Filter> & {fieldType: string};
 
 export function generatePolygonFilter(layers: Layer[], feature: Feature): PolygonFilter;
@@ -156,7 +156,7 @@ export function featureToFilterValue(
 export function getDefaultFilterPlotType(filter: Filter): string | null;
 export function getFilterPlot(
   filter: Filter,
-  allData: KeplerTable['allData']
+  dataset: KeplerTable
 ): {lineChart: LineChart; yAxs: Field} | {};
 export function getFilterIdInFeature(f: FeatureValue): string;
 export function isInRange(v: any, domain: number[]): boolean;
