@@ -27,7 +27,6 @@ import get from 'lodash.get';
 import document from 'global/document';
 
 import ModalDialogFactory from './modals/modal-dialog';
-import KeplerGlSchema from 'schemas';
 import {exportJson, exportHtml, exportData, exportImage, exportMap} from 'utils/export-utils';
 import {isValidMapInfo} from 'utils/map-info-utils';
 
@@ -397,7 +396,7 @@ export default function ModalContainerFactory(
             };
             break;
           case EXPORT_MAP_ID:
-            const keplerGlConfig = KeplerGlSchema.getConfigToSave({
+            const keplerGlConfig = visState.schema.getConfigToSave({
               mapStyle,
               visState,
               mapState,

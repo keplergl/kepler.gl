@@ -59,14 +59,7 @@ import {set, toArray} from 'utils/utils';
 
 import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils';
 
-import {
-  mergeAnimationConfig,
-  mergeFilters,
-  mergeInteractions,
-  mergeLayerBlending,
-  mergeLayers,
-  mergeSplitMaps
-} from './vis-state-merger';
+import {isValidMerger, VIS_STATE_MERGERS} from './vis-state-merger';
 
 import {
   addNewLayersToSplitMap,
@@ -79,6 +72,8 @@ import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 import {EDITOR_MODES, SORT_ORDER} from 'constants/default-settings';
 import {pick_, merge_} from './composer-helpers';
 import {processFileContent} from 'actions/vis-state-actions';
+
+import KeplerGLSchema from 'schemas';
 
 // type imports
 /** @typedef {import('./vis-state-updaters').Field} Field */
@@ -194,7 +189,8 @@ export const INITIAL_VIS_STATE = {
     //   }
     // ]
   ],
-  //
+  splitMapsToBeMerged: [],
+
   // defaults layer classes
   layerClasses: LayerClasses,
 
@@ -208,7 +204,12 @@ export const INITIAL_VIS_STATE = {
   fileLoadingProgress: {},
 
   loaders: [],
-  loadOptions: {}
+  loadOptions: {},
+
+  // visStateMergers
+  mergers: VIS_STATE_MERGERS,
+
+  schema: KeplerGLSchema
 };
 
 /**
@@ -939,25 +940,15 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}, options =
     return state;
   }
 
-  const {
-    filters,
-    layers,
-    interactionConfig,
-    layerBlending,
-    splitMaps,
-    animationConfig
-  } = config.visState;
-
   const {keepExistingConfig} = options;
 
   // reset config if keepExistingConfig is falsy
   let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
-  mergedState = mergeLayers(mergedState, layers);
-  mergedState = mergeFilters(mergedState, filters);
-  mergedState = mergeInteractions(mergedState, interactionConfig);
-  mergedState = mergeLayerBlending(mergedState, layerBlending);
-  mergedState = mergeSplitMaps(mergedState, splitMaps);
-  mergedState = mergeAnimationConfig(mergedState, animationConfig);
+  for (const merger of state.mergers) {
+    if (isValidMerger(merger) && config.visState[merger.prop]) {
+      mergedState = merger.merge(mergedState, config.visState[merger.prop]);
+    }
+  }
 
   return mergedState;
 };
@@ -1117,23 +1108,21 @@ export const toggleLayerForMapUpdater = (state, {mapIndex, layerId}) => {
  * @public
  */
 /* eslint-disable max-statements */
+// eslint-disable-next-line complexity
 export const updateVisDataUpdater = (state, action) => {
   // datasets can be a single data entries or an array of multiple data entries
   const {config, options} = action;
-
   const datasets = toArray(action.datasets);
 
   const newDataEntries = datasets.reduce(
-    (accu, {info = {}, data}) => ({
+    (accu, {info = {}, data} = {}) => ({
       ...accu,
       ...(createNewDataEntry({info, data}, state.datasets) || {})
     }),
     {}
   );
 
-  if (!Object.keys(newDataEntries).length) {
-    return state;
-  }
+  const dataEmpty = Object.keys(newDataEntries).length < 1;
 
   // apply config if passed from action
   const previousState = config
@@ -1142,7 +1131,7 @@ export const updateVisDataUpdater = (state, action) => {
       })
     : state;
 
-  const stateWithNewData = {
+  let mergedState = {
     ...previousState,
     datasets: {
       ...previousState.datasets,
@@ -1150,23 +1139,18 @@ export const updateVisDataUpdater = (state, action) => {
     }
   };
 
-  // previously saved config before data loaded
-  const {
-    filterToBeMerged = [],
-    layerToBeMerged = [],
-    interactionToBeMerged = {},
-    splitMapsToBeMerged = []
-  } = stateWithNewData;
+  // merge state with config to be merged
+  for (const merger of mergedState.mergers) {
+    if (isValidMerger(merger) && merger.toMergeProp && mergedState[merger.toMergeProp]) {
+      const toMerge = mergedState[merger.toMergeProp];
+      mergedState[merger.toMergeProp] = INITIAL_VIS_STATE[merger.toMergeProp];
+      mergedState = merger.merge(mergedState, toMerge);
+    }
+  }
 
-  // We need to merge layers before filters because polygon filters requires layers to be loaded
-  let mergedState = mergeLayers(stateWithNewData, layerToBeMerged);
-
-  mergedState = mergeFilters(mergedState, filterToBeMerged);
-
-  // merge state with saved splitMaps
-  mergedState = mergeSplitMaps(mergedState, splitMapsToBeMerged);
-
-  let newLayers = mergedState.layers.filter(l => l.config.dataId in newDataEntries);
+  let newLayers = !dataEmpty
+    ? mergedState.layers.filter(l => l.config.dataId in newDataEntries)
+    : [];
 
   if (!newLayers.length && (options || {}).autoCreateLayers !== false) {
     // no layer merged, find defaults
@@ -1184,9 +1168,6 @@ export const updateVisDataUpdater = (state, action) => {
     };
   }
 
-  // merge state with saved interactions
-  mergedState = mergeInteractions(mergedState, interactionToBeMerged);
-
   // if no tooltips merged add default tooltips
   Object.keys(newDataEntries).forEach(dataId => {
     const tooltipFields = mergedState.interactionConfig.tooltip.config.fieldsToShow[dataId];
@@ -1195,7 +1176,11 @@ export const updateVisDataUpdater = (state, action) => {
     }
   });
 
-  let updatedState = updateAllLayerDomainData(mergedState, Object.keys(newDataEntries), undefined);
+  let updatedState = updateAllLayerDomainData(
+    mergedState,
+    dataEmpty ? Object.keys(mergedState.datasets) : Object.keys(newDataEntries),
+    undefined
+  );
 
   // register layer animation domain,
   // need to be called after layer data is calculated

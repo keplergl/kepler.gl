@@ -186,7 +186,6 @@ test('Components -> ArcLayerColorSelector.render -> render single color', t => {
   const initialState = StateWTrips.visState;
   const {layers} = initialState;
   const arcLayer = layers.find(l => l.type === 'arc');
-
   const updateLayerConfig = sinon.spy();
   const updateLayerVisConfig = sinon.spy();
   const updateLayerColorUI = sinon.spy();

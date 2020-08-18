@@ -19,5 +19,15 @@
 // THE SOFTWARE.
 
 // Schemas
-export {default, default as KeplerGlSchema} from './schema-manager';
+export {
+  default,
+  default as KeplerGlSchema,
+  reducerSchema,
+  KeplerGLSchema as KeplerGLSchemaClass
+} from './schema-manager';
 export {CURRENT_VERSION, VERSIONS} from './versions';
+export {default as visStateSchema} from './vis-state-schema';
+export {default as datasetSchema} from './dataset-schema';
+export {default as mapStyleSchema} from './map-style-schema';
+export {default as mapStateSchema} from './map-state-schema';
+export {default as Schema} from './schema';

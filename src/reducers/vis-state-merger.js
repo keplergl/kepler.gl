@@ -22,7 +22,7 @@ import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
 import isEqual from 'lodash.isequal';
 import flattenDeep from 'lodash.flattendeep';
-import {toArray} from 'utils/utils';
+import {toArray, isObject} from 'utils/utils';
 
 import {
   applyFiltersToDatasets,
@@ -128,7 +128,7 @@ export function mergeFilters(state, filtersToMerge) {
     ...state,
     filters: updatedFilters,
     datasets: filtered,
-    filterToBeMerged: unmerged
+    filterToBeMerged: [...state.filterToBeMerged, ...unmerged]
   };
 }
 
@@ -176,7 +176,7 @@ export function mergeLayers(state, layersToMerge) {
     ...state,
     layers,
     layerOrder,
-    layerToBeMerged: unmerged
+    layerToBeMerged: [...state.layerToBeMerged, ...unmerged]
   };
 }
 
@@ -274,7 +274,7 @@ export function mergeSplitMaps(state, splitMaps = []) {
   return {
     ...state,
     splitMaps: merged,
-    splitMapsToBeMerged: unmerged
+    splitMapsToBeMerged: [...state.splitMapsToBeMerged, ...unmerged]
   };
 }
 
@@ -503,3 +503,16 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
 
   return newLayer;
 }
+
+export function isValidMerger(merger) {
+  return isObject(merger) && typeof merger.merge === 'function' && typeof merger.prop === 'string';
+}
+
+export const VIS_STATE_MERGERS = [
+  {merge: mergeLayers, prop: 'layers', toMergeProp: 'layerToBeMerged'},
+  {merge: mergeFilters, prop: 'filters', toMergeProp: 'filterToBeMerged'},
+  {merge: mergeInteractions, prop: 'interactionConfig', toMergeProp: 'interactionToBeMerged'},
+  {merge: mergeLayerBlending, prop: 'layerBlending'},
+  {merge: mergeSplitMaps, prop: 'splitMaps', toMergeProp: 'splitMapsToBeMerged'},
+  {merge: mergeAnimationConfig, prop: 'animationConfig'}
+];

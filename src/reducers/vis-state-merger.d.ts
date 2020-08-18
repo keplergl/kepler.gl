@@ -24,3 +24,14 @@ export function mergeSplitMaps(
 ): VisState;
 
 export function mergeInteractionTooltipConfig(state: VisState);
+
+export function isValidMerger(arg: any): boolean;
+export type Merger = {
+  merge: (state: VisState, config: any) => VisState, 
+  prop: string, 
+  toMergeProp?: string 
+};
+
+export type VisStateMergers = Merger[];
+
+export const VIS_STATE_MERGERS: VisStateMergers;
