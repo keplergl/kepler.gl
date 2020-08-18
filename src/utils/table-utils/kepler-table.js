@@ -271,7 +271,6 @@ class KeplerTable {
    */
   getColumnFilterDomain(field) {
     const {allData} = this;
-    // return field ? getFieldDomain(allData, field) : null;
     const {valueAccessor} = field;
 
     let domain;

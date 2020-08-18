@@ -115,7 +115,7 @@ test('Processor -> getFieldsFromData', t => {
   t.end();
 });
 
-test('Processor -> processCsvData', t => {
+test.only('Processor -> processCsvData', t => {
   t.throws(() => processCsvData(''), 'should throw if csv is empty');
 
   // load sample dataset csv as text

@@ -451,84 +451,95 @@ export const wktCsv = `a_zip,simplified_shape_v2,simplified_shape,m_rate,c_zip_t
 7023,"{""type"":""LineString"",""coordinates"":[[-74.387589,40.632238],[-74.387589,40.632238]]}","LINESTRING (-74.387589 40.632238, -74.387589 40.632238)",7.6,C_Medium_High,29.2
 `;
 
-// csv data
+// output of processCsvData
 export const testFields = [
   {
     type: 'timestamp',
+    fieldIdx: 0,
     name: 'gps_data.utc_timestamp',
     format: 'YYYY-M-D H:m:s',
     analyzerType: 'DATETIME',
-    valueAccessor: 'skip_testing'
+    // valueAccessor: 'skip_testing'
   },
   {
     type: 'real',
+    fieldIdx: 1,
     name: 'gps_data.lat',
     format: '',
     analyzerType: 'FLOAT',
-    valueAccessor: 'skip_testing'
+    // valueAccessor: 'skip_testing'
   },
   {
     type: 'real',
+    fieldIdx: 2,
     name: 'gps_data.lng',
     format: '',
     analyzerType: 'FLOAT',
-    valueAccessor: 'skip_testing'
+    // valueAccessor: 'skip_testing'
   },
   {
     type: 'string',
+    fieldIdx: 3,
     name: 'gps_data.types',
     format: '',
     analyzerType: 'STRING',
-    valueAccessor: 'skip_testing'
+    // valueAccessor: 'skip_testing'
   },
   {
     type: 'timestamp',
+    fieldIdx: 4,
     name: 'epoch',
     format: 'X',
     analyzerType: 'TIME',
-    valueAccessor: 'skip_testing'
+    // valueAccessor: 'skip_testing'
   },
   {
     type: 'boolean',
+    fieldIdx: 5,
     name: 'has_result',
     format: '',
     analyzerType: 'BOOLEAN',
-    valueAccessor: 'skip_testing'
+    // valueAccessor: 'skip_testing'
   },
   {
     type: 'integer',
+    fieldIdx: 6,
     name: 'id',
     format: '',
     analyzerType: 'INT',
-    valueAccessor: 'skip_testing'
+    // valueAccessor: 'skip_testing'
   },
   {
     type: 'timestamp',
+    fieldIdx: 7,
     name: 'time',
     format: 'YYYY-M-DTHH:mm:ss.SSSS',
     analyzerType: 'DATETIME',
-    valueAccessor: 'skip_testing'
+    // valueAccessor: 'skip_testing'
   },
   {
     type: 'timestamp',
+    fieldIdx: 8,
     name: 'begintrip_ts_utc',
     format: 'YYYY-M-D HH:mm:ssZZ',
     analyzerType: 'DATETIME',
-    valueAccessor: 'skip_testing'
+    // valueAccessor: 'skip_testing'
   },
   {
     type: 'timestamp',
+    fieldIdx: 9,
     name: 'begintrip_ts_local',
     format: 'YYYY-M-D HH:mm:ssZZ',
     analyzerType: 'DATETIME',
-    valueAccessor: 'skip_testing'
+    // valueAccessor: 'skip_testing'
   },
   {
     type: 'date',
+    fieldIdx: 10,
     name: 'date',
     format: 'YYYY-M-D',
     analyzerType: 'DATE',
-    valueAccessor: 'skip_testing'
+    // valueAccessor: 'skip_testing'
   }
 ];
 
