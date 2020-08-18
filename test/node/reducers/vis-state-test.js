@@ -868,11 +868,7 @@ test('#visStateReducer -> REMOVE_LAYER', t => {
 });
 
 test('#visStateReducer -> UPDATE_VIS_DATA.1 -> No data', t => {
-  const oldState = {
-    datasets: {},
-    layers: [{name: 'a'}, {name: 'b'}],
-    layerData: [{data: 1}, {data: 2}]
-  };
+  const oldState = CloneDeep(InitialState).visState;
 
   t.deepEqual(
     reducer(oldState, VisStateActions.updateVisData([{info: null, data: null}])),
@@ -2462,8 +2458,8 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     initialState: [],
     layerToBeMerged: [],
     filterToBeMerged: [],
+    interactionToBeMerged: undefined,
     splitMapsToBeMerged: [],
-    interactionToBeMerged: [],
     editor: oldState.editor,
     mapInfo: {
       title: '',
@@ -2472,7 +2468,9 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     fileLoading: oldState.fileLoading,
     fileLoadingProgress: oldState.fileLoadingProgress,
     loaders: oldState.loaders,
-    loadOptions: oldState.loadOptions
+    loadOptions: oldState.loadOptions,
+    mergers: oldState.mergers,
+    schema: oldState.schema
   };
 
   const newReducer = reducer(oldState, VisStateActions.removeDataset(testCsvDataId));
@@ -2701,8 +2699,8 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     initialState: [],
     layerToBeMerged: [],
     filterToBeMerged: [],
+    interactionToBeMerged: undefined,
     splitMapsToBeMerged: [],
-    interactionToBeMerged: [],
     editor: oldState.editor,
     mapInfo: {
       title: '',
@@ -2711,7 +2709,9 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     fileLoading: oldState.fileLoading,
     fileLoadingProgress: oldState.fileLoadingProgress,
     loaders: oldState.loaders,
-    loadOptions: oldState.loadOptions
+    loadOptions: oldState.loadOptions,
+    schema: oldState.schema,
+    mergers: oldState.mergers
   };
 
   const newReducer = reducer(oldState, VisStateActions.removeDataset(testGeoJsonDataId));

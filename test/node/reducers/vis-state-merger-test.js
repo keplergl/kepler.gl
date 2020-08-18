@@ -363,6 +363,7 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
 
   // merge State
   const mergedState = visStateReducer(oldVisState, receiveMapConfig(parsedConfig));
+
   Object.keys(oldVisState).forEach(key => {
     if (key === 'layerToBeMerged') {
       t.deepEqual(
@@ -372,7 +373,7 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
       );
     } else if (key === 'splitMaps') {
       t.deepEqual(mergedState.splitMaps, [], 'Should wait to merge splitMaps');
-    } else if (key === 'splitMaps') {
+    } else if (key === 'splitMapsToBeMerged') {
       t.deepEqual(
         mergedState.splitMapsToBeMerged,
         expectedConfig,
@@ -1263,7 +1264,8 @@ test('VisStateMerger - mergeSplitMaps -> split to split', t => {
 test('VisStateMerger - mergeSplitMaps', t => {
   const testState1 = {
     layers: [],
-    splitMaps: [{layers: {a: true}}, {layers: {a: false}}]
+    splitMaps: [{layers: {a: true}}, {layers: {a: false}}],
+    splitMapsToBeMerged: []
   };
 
   t.deepEqual(
@@ -1282,7 +1284,8 @@ test('VisStateMerger - mergeSplitMaps', t => {
 
   const testState2 = {
     layers: [{id: 'c', config: {isVisible: true}}],
-    splitMaps: [{layers: {a: true}}, {layers: {a: false}}]
+    splitMaps: [{layers: {a: true}}, {layers: {a: false}}],
+    splitMapsToBeMerged: []
   };
 
   t.deepEqual(
@@ -1297,7 +1300,8 @@ test('VisStateMerger - mergeSplitMaps', t => {
 
   const testState3 = {
     layers: [{id: 'c', config: {isVisible: true}}],
-    splitMaps: []
+    splitMaps: [],
+    splitMapsToBeMerged: []
   };
   t.deepEqual(
     mergeSplitMaps(testState3, testSM),
@@ -1315,7 +1319,8 @@ test('VisStateMerger - mergeSplitMaps', t => {
       {id: 'b', config: {isVisible: false}},
       {id: 'c', config: {isVisible: true}}
     ],
-    splitMaps: []
+    splitMaps: [],
+    splitMapsToBeMerged: []
   };
   t.deepEqual(
     mergeSplitMaps(testState4, testSM),

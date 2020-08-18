@@ -46,7 +46,6 @@ import {
   DATASET_FORMATS
 } from 'constants/default-settings';
 import {toArray} from 'utils/utils';
-import KeplerGlSchema from 'schemas';
 
 export const INITIAL_PROVIDER_STATE = {
   isProviderLoading: false,
@@ -266,8 +265,6 @@ function parseLoadMapResponse(response, loadParams, provider) {
     return {info, data};
   });
 
-  const parsedConfig = map.config && KeplerGlSchema.parseSavedConfig(map.config);
-
   const info = {
     ...map.info,
     provider: provider.name,
@@ -276,7 +273,7 @@ function parseLoadMapResponse(response, loadParams, provider) {
   return {
     datasets: parsedDatasets,
     info,
-    ...(parsedConfig ? {config: parsedConfig} : {})
+    ...(map.config ? {config: map.config} : {})
   };
 }
 
