@@ -20,7 +20,9 @@
 
 import React, {Component} from 'react';
 import styled from 'styled-components';
-import {FormattedMessage, injectIntl} from 'react-intl';
+import {injectIntl} from 'react-intl';
+import {FormattedMessage} from 'localization';
+
 import {
   SidePanelSection,
   SBFlexboxNoMargin,

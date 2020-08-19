@@ -23,7 +23,7 @@ import PropTypes from 'prop-types';
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 
 import RangeSliderFactory from 'components/common/range-slider';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const propTypes = {
   layer: PropTypes.object.isRequired,

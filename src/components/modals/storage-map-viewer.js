@@ -23,7 +23,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import moment from 'moment';
 import {LeftArrow} from 'components/common/icons';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const imageH = 108;
 

@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {format} from 'd3-format';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const numFormat = format(',');
 

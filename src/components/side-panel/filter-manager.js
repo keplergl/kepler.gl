@@ -21,7 +21,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 import {Button, SidePanelDivider, SidePanelSection} from 'components/common/styled-components';
 import {Add} from 'components/common/icons';
 import SourceDataCatalogFactory from './common/source-data-catalog';

@@ -24,7 +24,7 @@ import {createSelector} from 'reselect';
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const defaultPlaceHolder = 'Select A Data Source';
 

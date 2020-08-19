@@ -1,6 +1,15 @@
 # Localization
 
-Kepler.gl supports localization trough [react-intl]. Locale is determined by `uiState.locale` value.
+Kepler.gl supports localization through [react-intl]. Locale is determined by `uiState.locale` value.
+Current supported languages are: 
+
+| locale code | Language   | Default? |
+|-------------|------------|----------|
+| en          | English    | default  |
+| fi          | Finish     |          |
+| pt          | Portuguese |          |
+| ca          | Catalan    |          |
+| es          | Spanish    |          |
 
 ## Changing default language
 
@@ -26,7 +35,7 @@ const reducers = combineReducers({
 
 ## Adding new language
 
-Let's say we want to add the Swedish language to kepler.gl. Easiest way to add translation of new language is to follow these steps:
+Let's say we want to add the Swedish language to kepler.gl. Easiest way to add translation of new language is to follow these 3 steps:
 
 - Find out the [language code][language-codes] for Swedish: `sv`
 - Add new translation file `src/localization/sv.js` by copying `src/localization/en.js` and translating the strings
@@ -37,9 +46,50 @@ Let's say we want to add the Swedish language to kepler.gl. Easiest way to add t
     en : 'English',
     fi : 'Suomi',
     pt: 'Português',
+    // add Swedish language
     sv: 'Svenska'
   }
   ```
+
+## Modify default translation or add new translation
+the `localeMessages` prop of `KeplerGl` takes additional translations and merge with default translation. 
+
+#### Example 1. Update default translation
+To update the english translation of `layerManager.addData`, pass `localeMessages` like this.
+
+```javascript
+const localeMessages = {
+  en: {
+    ['layerManager.addData']: 'Add Data to Layer'
+  }
+};
+
+const App = () => (
+    <KeplerGl 
+      id="map"
+      localeMessages={messages}
+      mapboxApiAccessToken={Token}
+    />
+);
+```
+#### Example 2. Pass additional translation
+Sometimes together with dependency injection, you might need to add additional translations to the customized component. For example, adding an additional `settings` panel in the side panel, you will need to provide a translation for the panel name assigned to `sidebar.panels.settings`
+
+```javascript
+const localeMessages = {
+  en: {
+    ['sidebar.panels.settings']: 'Settings'
+  }
+};
+
+const App = () => (
+    <KeplerGl 
+      id="map"
+      localeMessages={messages}
+      mapboxApiAccessToken={Token}
+    />
+);
+```
 
 [react-intl]: https://github.com/formatjs/react-intl
 [language-codes]: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes

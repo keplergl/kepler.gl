@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import {CenterVerticalFlexbox} from 'components/common/styled-components';
 import {UploadAnimation} from './status-panel';
 import ImageModalContainer from './image-modal-container';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const StyledMsg = styled.div`
   margin-top: 24px;

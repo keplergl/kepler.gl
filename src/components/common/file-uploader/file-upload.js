@@ -20,6 +20,7 @@
 
 import React, {Component, createRef} from 'react';
 import styled from 'styled-components';
+import {injectIntl} from 'react-intl';
 import UploadButton from './upload-button';
 import {DragNDrop, FileType} from 'components/common/icons';
 import FileUploadProgress from 'components/common/file-uploader/file-upload-progress';
@@ -30,7 +31,7 @@ import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
 import ReactMarkdown from 'react-markdown';
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
-import {FormattedMessage, injectIntl} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 /** @typedef {import('./file-upload').FileUploadProps} FileUploadProps */
 

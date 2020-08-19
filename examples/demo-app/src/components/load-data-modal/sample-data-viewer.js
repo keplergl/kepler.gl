@@ -18,13 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {format} from 'd3-format';
 import {LoadingDialog} from 'kepler.gl/components';
-import {FormattedMessage, IntlProvider} from 'react-intl';
-import {messages} from '../../constants/localization';
+import {FormattedMessage} from 'react-intl';
 
 const numFormat = format(',');
 
@@ -92,63 +91,66 @@ const StyledError = styled.div`
 
 const SampleMap = ({id, sample, onClick, locale}) => (
   <StyledSampleMap id={id} className="sample-map-gallery__item">
-    <IntlProvider locale={locale} messages={messages[locale]}>
-      <div className="sample-map">
-        <div className="sample-map__image" onClick={onClick}>
-          {sample.imageUrl && <img src={sample.imageUrl} />}
-        </div>
-        <div className="sample-map__title">{sample.label}</div>
-        <div className="sample-map__size">
-          <FormattedMessage
-            id={'sampleDataViewer.rowCount'}
-            values={{rowCount: numFormat(sample.size)}}
-          />
-        </div>
-        <StyledImageCaption className="sample-map__image__caption">
-          {sample.description}
-        </StyledImageCaption>
+    <div className="sample-map">
+      <div className="sample-map__image" onClick={onClick}>
+        {sample.imageUrl && <img src={sample.imageUrl} />}
       </div>
-    </IntlProvider>
+      <div className="sample-map__title">{sample.label}</div>
+      <div className="sample-map__size">
+        <FormattedMessage
+          id={'sampleDataViewer.rowCount'}
+          values={{rowCount: numFormat(sample.size)}}
+        />
+      </div>
+      <StyledImageCaption className="sample-map__image__caption">
+        {sample.description}
+      </StyledImageCaption>
+    </div>
   </StyledSampleMap>
 );
 
-export default class SampleMapGallery extends Component {
-  static propTypes = {
-    sampleMaps: PropTypes.arrayOf(PropTypes.object),
-    onLoadSample: PropTypes.func.isRequired,
-    loadSampleConfigurations: PropTypes.func.isRequired,
-    error: PropTypes.object
-  };
-  componentDidMount() {
-    if (!this.props.sampleMaps.length) {
-      this.props.loadSampleConfigurations();
+const SampleMapGallery = ({
+  sampleMaps,
+  onLoadSample,
+  error,
+  isMapLoading,
+  locale,
+  loadSampleConfigurations
+}) => {
+  useEffect(() => {
+    if (!sampleMaps.length) {
+      loadSampleConfigurations();
     }
-  }
+  }, [sampleMaps, loadSampleConfigurations]);
 
-  render() {
-    const {sampleMaps, onLoadSample, error, isMapLoading, locale} = this.props;
-    return (
-      <div className="sample-data-modal">
-        {error ? (
-          <StyledError>{error.message}</StyledError>
-        ) : isMapLoading ? (
-          <LoadingDialog size={64} />
-        ) : (
-          <StyledSampleGallery className="sample-map-gallery">
-            {sampleMaps
-              .filter(sp => sp.visible)
-              .map(sp => (
-                <SampleMap
-                  id={sp.id}
-                  sample={sp}
-                  key={sp.id}
-                  onClick={() => onLoadSample(sp)}
-                  locale={locale}
-                />
-              ))}
-          </StyledSampleGallery>
-        )}
-      </div>
-    );
-  }
-}
+  return (
+    <div className="sample-data-modal">
+      {error ? (
+        <StyledError>{error.message}</StyledError>
+      ) : isMapLoading ? (
+        <LoadingDialog size={64} />
+      ) : (
+        <StyledSampleGallery className="sample-map-gallery">
+          {sampleMaps
+            .filter(sp => sp.visible)
+            .map(sp => (
+              <SampleMap
+                id={sp.id}
+                sample={sp}
+                key={sp.id}
+                onClick={() => onLoadSample(sp)}
+                locale={locale}
+              />
+            ))}
+        </StyledSampleGallery>
+      )}
+    </div>
+  );
+};
+
+SampleMapGallery.propTypes = {
+  sampleMaps: PropTypes.arrayOf(PropTypes.object),
+  onLoadSample: PropTypes.func.isRequired,
+  loadSampleConfigurations: PropTypes.func.isRequired,
+  error: PropTypes.object
+};

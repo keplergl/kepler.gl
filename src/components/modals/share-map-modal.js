@@ -33,7 +33,7 @@ import {
 } from 'components/common/styled-components';
 import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 export const StyledInputLabel = styled.label`
   font-size: 12px;

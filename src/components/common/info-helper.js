@@ -20,7 +20,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {FormattedMessage, useIntl} from 'react-intl';
+import {useIntl} from 'react-intl';
+import {FormattedMessage} from 'localization';
 import {Tooltip} from './styled-components';
 import {Docs} from 'components/common/icons';
 import styled from 'styled-components';

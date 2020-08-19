@@ -23,8 +23,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {CORS_LINK} from '../../constants/default-settings';
-import {messages} from '../../constants/localization';
-import {FormattedHTMLMessage, FormattedMessage, IntlProvider} from 'react-intl';
+import {FormattedHTMLMessage, FormattedMessage} from 'react-intl';
 
 const propTypes = {
   onLoadRemoteMap: PropTypes.func.isRequired
@@ -96,13 +95,10 @@ const Error = ({error, url}) => (
 );
 
 class LoadRemoteMap extends Component {
-  constructor(props) {
-    super(props);
+  state = {
+    dataUrl: ''
+  };
 
-    this.state = {
-      dataUrl: ''
-    };
-  }
   onMapUrlChange = e => {
     // TODO: validate url
     this.setState({
@@ -120,42 +116,39 @@ class LoadRemoteMap extends Component {
   };
 
   render() {
-    const {locale} = this.props;
     return (
       <div>
         <InputForm>
-          <IntlProvider locale={locale} messages={messages[locale]}>
-            <StyledDescription>
-              <FormattedMessage id={'loadRemoteMap.description'} />
-            </StyledDescription>
-            <StyledInputLabel>
-              <FormattedMessage id={'loadRemoteMap.message'} />
-            </StyledInputLabel>
-            <StyledInputLabel>
-              <FormattedMessage id={'loadRemoteMap.examples'} />
-              <ul>
-                <li>https://your.map.url/map.json</li>
-                <li>http://your.map.url/data.csv</li>
-              </ul>
-            </StyledInputLabel>
-            <StyledInputLabel>
-              <FormattedMessage id={'loadRemoteMap.cors'} />{' '}
-              <FormattedHTMLMessage id={'loadRemoteMap.clickHere'} values={{corsLink: CORS_LINK}} />
-            </StyledInputLabel>
-            <StyledFromGroup>
-              <StyledInput
-                onChange={this.onMapUrlChange}
-                type="text"
-                placeholder="Url"
-                value={this.state.dataUrl}
-                error={this.props.error}
-              />
-              <StyledBtn type="submit" onClick={this.onLoadRemoteMap}>
-                <FormattedMessage id={'loadRemoteMap.fetch'} />
-              </StyledBtn>
-            </StyledFromGroup>
-            {this.props.error && <Error error={this.props.error} url={this.props.option.dataUrl} />}
-          </IntlProvider>
+          <StyledDescription>
+            <FormattedMessage id={'loadRemoteMap.description'} />
+          </StyledDescription>
+          <StyledInputLabel>
+            <FormattedMessage id={'loadRemoteMap.message'} />
+          </StyledInputLabel>
+          <StyledInputLabel>
+            <FormattedMessage id={'loadRemoteMap.examples'} />
+            <ul>
+              <li>https://your.map.url/map.json</li>
+              <li>http://your.map.url/data.csv</li>
+            </ul>
+          </StyledInputLabel>
+          <StyledInputLabel>
+            <FormattedMessage id={'loadRemoteMap.cors'} />{' '}
+            <FormattedHTMLMessage id={'loadRemoteMap.clickHere'} values={{corsLink: CORS_LINK}} />
+          </StyledInputLabel>
+          <StyledFromGroup>
+            <StyledInput
+              onChange={this.onMapUrlChange}
+              type="text"
+              placeholder="Url"
+              value={this.state.dataUrl}
+              error={this.props.error}
+            />
+            <StyledBtn type="submit" onClick={this.onLoadRemoteMap}>
+              <FormattedMessage id={'loadRemoteMap.fetch'} />
+            </StyledBtn>
+          </StyledFromGroup>
+          {this.props.error && <Error error={this.props.error} url={this.props.option.dataUrl} />}
         </InputForm>
       </div>
     );

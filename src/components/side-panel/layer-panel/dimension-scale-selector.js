@@ -21,7 +21,7 @@
 import React from 'react';
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 import {camelize} from 'utils/utils';
 
 const DimensionScaleSelector = ({label, onSelect, options, scaleType, disabled = false}) => {
