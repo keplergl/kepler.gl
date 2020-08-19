@@ -178,10 +178,6 @@ export function setLocaleUpdater(
   state: UiState,
   action: UiStateActions.SetLocaleUpdaterAction
 ): UiState;
-export function startSaveStorage(
-  state: UiState,
-  action: UiStateActions.StartSaveStorage
-): UiState
 
 export function loadFilesUpdater(state: UiState, action: LoadFilesUpdaterAction): UiState;
 export function loadFilesErrUpdater(state: UiState, action: LoadFilesErrUpdaterAction): UiState;

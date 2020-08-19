@@ -185,14 +185,6 @@ export function setExportHTMLMapMode(
   mode: string
 ): Merge<SetExportHTMLMapModeUpdaterAction, {type: ActionTypes.SET_EXPORT_MAP_HTML_MODE}>;
 
-/** START_SAVE_STORAGE */
-export type StartSaveStorageUpdaterAction = {
-  payload: boolean;
-}
-export function startSaveStorage(
-  mapSaved: string
-): Merge<StartSaveStorageUpdaterAction, {type: ActionTypes.START_SAVE_STORAGE}>
-
 /** SET_LOCALE */
 export type SetLocaleUpdaterAction = {
   payload: {locale: string};

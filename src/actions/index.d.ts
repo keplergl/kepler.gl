@@ -7,6 +7,7 @@ export * from './ui-state-actions';
 export * from './map-state-actions';
 export * from './map-style-actions';
 export * from './identity-actions';
+export * from './provider-actions';
 
 // TODO - Add typescript defs for these functions
 // Dispatch

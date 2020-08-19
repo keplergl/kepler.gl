@@ -48,26 +48,30 @@ const propTypes = {
   containerClass: PropTypes.string
 };
 
-const InfoHelper = ({description, property, containerClass, id}) => (
-  <StyledInfoHelper className={`info-helper ${containerClass || ''}`} data-tip data-for={id}>
-    <Docs height="16px" />
-    <Tooltip id={id} effect="solid">
-      <div className="info-helper__content">
-        {description && (
-          <FormattedMessage
-            id={description}
-            values={{
-              property: useIntl().formatMessage({
-                id: property ? `property.${camelize(property)}` : 'misc.empty'
-              })
-            }}
-          />
-        )}
-      </div>
-    </Tooltip>
-  </StyledInfoHelper>
-);
+const InfoHelper = ({description, property, containerClass, id}) => {
+  // TODO: move intl out
+  const intl = useIntl();
 
+  return (
+    <StyledInfoHelper className={`info-helper ${containerClass || ''}`} data-tip data-for={id}>
+      <Docs height="16px" />
+      <Tooltip id={id} effect="solid">
+        <div className="info-helper__content">
+          {description && (
+            <FormattedMessage
+              id={description}
+              values={{
+                property: intl.formatMessage({
+                  id: property ? `property.${camelize(property)}` : 'misc.empty'
+                })
+              }}
+            />
+          )}
+        </div>
+      </Tooltip>
+    </StyledInfoHelper>
+  );
+};
 InfoHelper.propTypes = propTypes;
 
 export default InfoHelper;

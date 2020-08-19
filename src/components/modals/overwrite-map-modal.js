@@ -25,6 +25,8 @@ import {UploadAnimation} from './status-panel';
 import ImageModalContainer from './image-modal-container';
 import {FormattedMessage} from 'localization';
 
+/** @typedef {import('./overwrite-map-modal').OverwriteMapModalProps} OverwriteMapModalProps */
+
 const StyledMsg = styled.div`
   margin-top: 24px;
   font-size: 14px;
@@ -45,6 +47,9 @@ const StyledOverwriteMapModal = styled(CenterVerticalFlexbox)`
 `;
 
 const OverwriteMapModalFactory = () => {
+  /**
+   * @type {React.FunctionComponent<OverwriteMapModalProps>}
+   */
   const OverwriteMapModal = ({
     mapSaved,
     title,
@@ -52,7 +57,7 @@ const OverwriteMapModalFactory = () => {
     cloudProviders,
     isProviderLoading,
     onUpdateImageSetting,
-    onSetCloudProvider
+    cleanupExportImage
   }) => {
     const provider = cloudProviders.find(cp => cp.name === currentProvider);
     return (
@@ -60,7 +65,7 @@ const OverwriteMapModalFactory = () => {
         currentProvider={currentProvider}
         cloudProviders={cloudProviders}
         onUpdateImageSetting={onUpdateImageSetting}
-        onSetCloudProvider={onSetCloudProvider}
+        cleanupExportImage={cleanupExportImage}
       >
         <StyledOverwriteMapModal className="overwrite-map-modal">
           {isProviderLoading ? (
@@ -76,7 +81,7 @@ const OverwriteMapModalFactory = () => {
                 {provider && provider.icon ? <provider.icon height="64px" /> : null}
               </StyledIcon>
               <StyledMsg className="overwrite-map-msg">
-                <StyledTitle>{title}</StyledTitle>
+                <StyledTitle>{title} </StyledTitle>
                 <FormattedMessage id={'modal.overwriteMap.alreadyExists'} values={{mapSaved}} />
               </StyledMsg>
             </>
@@ -89,5 +94,4 @@ const OverwriteMapModalFactory = () => {
 };
 
 export const OverwriteMapModal = OverwriteMapModalFactory();
-
 export default OverwriteMapModalFactory;

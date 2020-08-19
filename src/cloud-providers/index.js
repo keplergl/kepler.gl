@@ -19,3 +19,4 @@
 // THE SOFTWARE.
 
 export {default as Provider} from './provider';
+export {FILE_CONFLICT_MSG} from './provider';
