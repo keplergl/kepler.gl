@@ -46,10 +46,10 @@ const StyledLayerConfigurator = styled.div.attrs({
   className: 'layer-panel__config'
 })`
   position: relative;
-  margin-top: ${props => props.theme.styledLayerConfiguratorMargin};
-  padding-top: ${props => props.theme.styledLayerConfiguratorPadding};
-  // border-left: ${props => props.theme.styledLayerConfiguratorBorder}px dashed
-  //   ${props => props.theme.styledLayerConfiguratorBorderColor};
+  margin-top: ${props => props.theme.layerConfiguratorMargin};
+  padding-top: ${props => props.theme.layerConfiguratorPadding};
+  border-left: ${props => props.theme.layerConfiguratorBorder} dashed
+    ${props => props.theme.layerConfiguratorBorderColor};
 `;
 
 const StyledLayerVisualConfigurator = styled.div.attrs({

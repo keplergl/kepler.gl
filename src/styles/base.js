@@ -346,7 +346,7 @@ export const styledConfigGroupHeaderBorder = '2px';
 // layerConfigurator
 
 export const layerConfiguratorBorder = '0';
-export const layerConfiguratorBorderColor = 'transparent';
+export const layerConfiguratorBorderColor = '';
 export const layerConfiguratorMargin = '12px';
 export const layerConfiguratorPadding = '0';
 // This breakpoints are used for responsive design
