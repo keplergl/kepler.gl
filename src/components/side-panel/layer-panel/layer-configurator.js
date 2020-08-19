@@ -48,8 +48,8 @@ const StyledLayerConfigurator = styled.div.attrs({
   position: relative;
   margin-top: ${props => props.theme.styledLayerConfiguratorMargin};
   padding-top: ${props => props.theme.styledLayerConfiguratorPadding};
-  border-left: ${props => props.theme.styledLayerConfiguratorBorder} dashed
-    ${props => props.theme.styledLayerConfiguratorBorderColor};
+  // border-left: ${props => props.theme.styledLayerConfiguratorBorder}px dashed
+  //   ${props => props.theme.styledLayerConfiguratorBorderColor};
 `;
 
 const StyledLayerVisualConfigurator = styled.div.attrs({

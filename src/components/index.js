@@ -46,7 +46,6 @@ export {
 export {default as PanelHeaderAction} from './side-panel/panel-header-action';
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
 export {default as PanelToggleFactory} from './side-panel/panel-toggle';
-
 export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel/layer-manager';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
 export {default as LayerPanelHeaderFactory} from './side-panel/layer-panel/layer-panel-header';
@@ -142,6 +141,10 @@ export {default as ActionPanel, ActionPanelItem} from 'components/common/action-
 // side pane components
 export {default as LayerTypeSelector} from './side-panel/layer-panel/layer-type-selector';
 export {ConfigGroupCollapsibleContent} from './side-panel/layer-panel/layer-config-group';
+export {
+  LayerLabelEditor,
+  LayerTitleSectionFactory
+} from './side-panel/layer-panel/layer-panel-header';
 
 export {
   HowToButton,

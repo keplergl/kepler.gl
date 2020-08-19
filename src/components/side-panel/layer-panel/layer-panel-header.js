@@ -25,7 +25,6 @@ import styled from 'styled-components';
 import {sortableHandle} from 'react-sortable-hoc';
 import PanelHeaderAction from 'components/side-panel/panel-header-action';
 import {ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from 'components/common/icons';
-
 import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
 import {FormattedMessage} from 'react-intl';
 
@@ -96,7 +95,7 @@ export const DragHandle = sortableHandle(({className, children}) => (
   <StyledDragHandle className={className}>{children}</StyledDragHandle>
 ));
 
-const LayerLabelEditor = ({layerId, label, onEdit}) => (
+export const LayerLabelEditor = ({layerId, label, onEdit}) => (
   <InlineInput
     type="text"
     className="layer__title__editor"
@@ -124,16 +123,15 @@ export function LayerTitleSectionFactory() {
   const LayerTitleSection = ({layerType, layerId, label, onUpdateLayerLabel}) => (
     <StyledLayerTitleSection className="layer__title">
       <div>
+        <LayerLabelEditor layerId={layerId} label={label} onEdit={onUpdateLayerLabel} />
         <div className="layer__title__type">
           {layerType && <FormattedMessage id={`layer.type.${layerType.toLowerCase()}`} />}
         </div>
-        <LayerLabelEditor layerId={layerId} label={label} onEdit={onUpdateLayerLabel} />
       </div>
     </StyledLayerTitleSection>
   );
   return LayerTitleSection;
 }
-LayerTitleSectionFactory.deps = [];
 
 function LayerPanelHeaderFactory(LayerTitleSection) {
   const LayerPanelHeader = ({
@@ -206,4 +204,5 @@ function LayerPanelHeaderFactory(LayerTitleSection) {
   return LayerPanelHeader;
 }
 LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory];
+
 export default LayerPanelHeaderFactory;
