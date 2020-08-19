@@ -32,7 +32,8 @@ import {Delete} from 'components/common/icons';
 import DropdownList, {ListItem} from './dropdown-list';
 
 import {toArray} from 'utils/utils';
-import {FormattedMessage, injectIntl} from 'react-intl';
+import {injectIntl} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const StyledDropdownSelect = styled.div.attrs({
   className: 'item-selector__dropdown'

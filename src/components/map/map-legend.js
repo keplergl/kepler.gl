@@ -24,7 +24,7 @@ import styled from 'styled-components';
 import {rgb} from 'd3-color';
 import ColorLegend from 'components/common/color-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from 'constants/default-settings';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 export const StyledMapControlLegend = styled.div`
   padding: 10px 0 10px ${props => props.theme.mapControl.padding}px;

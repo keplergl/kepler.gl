@@ -25,7 +25,7 @@ import InfoHelper from 'components/common/info-helper';
 import Switch from 'components/common/switch';
 import {SidePanelSection, PanelLabel} from 'components/common/styled-components';
 import {capitalizeFirstLetter} from 'utils/utils';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const propTypes = {
   layer: PropTypes.object.isRequired,

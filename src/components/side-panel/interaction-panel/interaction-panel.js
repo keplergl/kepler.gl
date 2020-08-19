@@ -32,7 +32,7 @@ import {
   PanelHeaderContent,
   PanelContent
 } from 'components/common/styled-components';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const StyledPanelContent = styled(PanelContent)`
   border-top: 1px solid ${props => props.theme.panelBorderColor};

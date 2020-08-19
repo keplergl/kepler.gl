@@ -21,7 +21,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 import {Tooltip} from 'components/common/styled-components';
 
 const propTypes = {

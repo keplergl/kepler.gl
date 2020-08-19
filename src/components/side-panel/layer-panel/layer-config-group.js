@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 import Switch from 'components/common/switch';
 import InfoHelperFactory from 'components/common/info-helper';
 import {VertThreeDots} from 'components/common/icons';

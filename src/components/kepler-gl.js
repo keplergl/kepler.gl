@@ -53,6 +53,7 @@ import GeoCoderPanelFactory from './geocoder-panel';
 
 import {generateHashId} from 'utils/utils';
 import {validateToken} from 'utils/mapbox-utils';
+import {mergeMessages} from 'utils/locale-utils';
 
 import {theme as basicTheme, themeLT, themeBS} from 'styles/base';
 
@@ -171,6 +172,11 @@ function KeplerGlFactory(
               hasShare: providers.some(p => p.hasSharingUrl())
             }
           : {}
+    );
+
+    localeMessagesSelector = createSelector(
+      props => props.localeMessages,
+      customMessages => (customMessages ? mergeMessages(messages, customMessages) : messages)
     );
 
     /* private methods */
@@ -342,10 +348,11 @@ function KeplerGlFactory(
       const isExportingImage = uiState.exportImage.exporting;
 
       const theme = this.availableThemeSelector(this.props);
+      const localeMessages = this.localeMessagesSelector(this.props);
 
       return (
         <RootContext.Provider value={this.root}>
-          <IntlProvider locale={uiState.locale} messages={messages[uiState.locale]}>
+          <IntlProvider locale={uiState.locale} messages={localeMessages[uiState.locale]}>
             <ThemeProvider theme={theme}>
               <GlobalStyle
                 width={width}

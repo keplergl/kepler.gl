@@ -38,7 +38,7 @@ import {
   StyledModalInputFootnote
 } from 'components/common/styled-components';
 import ImagePreview from 'components/common/image-preview';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const StyledSaveMapModal = styled.div.attrs({
   className: 'save-map-modal'

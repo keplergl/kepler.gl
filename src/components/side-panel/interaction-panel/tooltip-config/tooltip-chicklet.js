@@ -24,7 +24,7 @@ import {ChickletButton, ChickletTag} from 'components/common/item-selector/chick
 import {Hash, Delete} from 'components/common/icons';
 import DropdownList from 'components/common/item-selector/dropdown-list';
 import {Tooltip} from 'components/common/styled-components';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 import onClickOutside from 'react-onclickoutside';
 import {FIELD_OPTS} from 'constants/default-settings';
 import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from 'constants/tooltip';

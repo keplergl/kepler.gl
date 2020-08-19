@@ -21,11 +21,11 @@
 import React, {useState} from 'react';
 import styled from 'styled-components';
 import get from 'lodash.get';
+import {useIntl} from 'react-intl';
 
 import FileUploadFactory from 'components/common/file-uploader/file-upload';
 import LoadStorageMapFactory from './load-storage-map';
 import ModalTabsFactory from './modal-tabs';
-
 import LoadingDialog from './loading-dialog';
 
 import {LOADING_METHODS} from 'constants/default-settings';
@@ -49,10 +49,11 @@ LoadDataModalFactory.deps = [ModalTabsFactory, FileUploadFactory, LoadStorageMap
 export function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
   /** @type {React.FunctionComponent<LoadDataModalProps>} */
   const LoadDataModal = props => {
-    // @ts-ignore TODO check why this is not defined
-    const {isCloudMapLoading} = props;
-    const {loadingMethods} = props;
+    const intl = useIntl();
+    const {loadingMethods, isCloudMapLoading} = props;
     const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
+
+    const ElementType = currentMethod.elementType;
 
     return (
       <StyledLoadDataModal>
@@ -64,7 +65,7 @@ export function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
         {isCloudMapLoading ? (
           <LoadingDialog size={64} />
         ) : (
-          currentMethod && <currentMethod.elementType key={currentMethod.id} {...props} />
+          currentMethod && <ElementType key={currentMethod.id} intl={intl} {...props} />
         )}
       </StyledLoadDataModal>
     );
@@ -86,6 +87,7 @@ export function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
       }
     ]
   };
+
   return LoadDataModal;
 }
 

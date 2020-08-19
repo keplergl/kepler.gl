@@ -29,7 +29,8 @@ import {Add} from 'components/common/icons';
 import {DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
 import ColorSelector from './layer-panel/color-selector';
 import {createSelector} from 'reselect';
-import {FormattedMessage, injectIntl} from 'react-intl';
+import {injectIntl} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 MapManagerFactory.deps = [MapStyleSelectorFactory, LayerGroupSelectorFactory];
 

@@ -28,7 +28,7 @@ import {Save, DataTable, Save2, Picture, Db, Map as MapIcon, Share} from 'compon
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 import Toolbar from 'components/common/toolbar';
 import ToolbarItem from 'components/common/toolbar-item';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'

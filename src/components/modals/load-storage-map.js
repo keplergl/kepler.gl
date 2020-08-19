@@ -27,7 +27,7 @@ import {Button} from 'components/common/styled-components';
 import CloudTile from './cloud-tile';
 import {Base, ArrowLeft} from 'components/common/icons';
 import ProviderModalContainer from './provider-modal-container';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const StyledProviderSection = styled.div.attrs({
   className: 'provider-selection'

@@ -30,7 +30,7 @@ import {
   PanelLabelWrapper,
   CenterFlexbox
 } from 'components/common/styled-components';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 import {camelize} from 'utils/utils';
 
 const StyledInteractionPanel = styled.div`

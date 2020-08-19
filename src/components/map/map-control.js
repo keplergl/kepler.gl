@@ -22,7 +22,7 @@ import React, {Component, useCallback} from 'react';
 import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'localization';
 import classnames from 'classnames';
 
 import {IconRoundSmall, MapControlButton, Tooltip} from 'components/common/styled-components';

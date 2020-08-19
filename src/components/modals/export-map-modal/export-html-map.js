@@ -25,7 +25,8 @@ import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components
 import {EXPORT_HTML_MAP_MODE_OPTIONS} from 'constants/default-settings';
 import {EXPORT_HTML_MAP_DOC, EXPORT_HTML_MAP_MODES_DOC} from 'constants/user-guides';
 import styled from 'styled-components';
-import {FormattedMessage, injectIntl} from 'react-intl';
+import {injectIntl} from 'react-intl';
+import {FormattedMessage} from 'localization';
 
 const ExportMapStyledExportSection = styled(StyledExportSection)`
   .disclaimer {
