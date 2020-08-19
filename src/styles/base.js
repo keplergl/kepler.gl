@@ -179,7 +179,8 @@ export const checkboxBoxBgdChecked = primaryBtnBgd;
 export const sidePanelHeaderBg = '#29323C';
 export const sidePanelHeaderBorder = 'transparent';
 export const sidePanelInnerPadding = 16;
-export const sidePanelBorder = 'transparent';
+export const sidePanelBorder = 0;
+export const sidePanelBorderColor = 'transparent';
 export const sidePanelBg = '#242730';
 export const sidePanelScrollBarWidth = 10;
 export const sidePanelScrollBarHeight = 10;
@@ -334,7 +335,6 @@ export const textTruncate = {
 export const layerConfigGroupLabelBorderLeft = '2px';
 export const layerConfigGroupLabelMargin = '-12px';
 export const layerConfigGroupLabelPadding = '10px';
-export const layerConfigGroupLabelDashedPrepend = false;
 
 // layerConfigGroupLabel label
 export const layerConfigGroupLabelLabelMargin = '0';
@@ -1078,7 +1078,8 @@ export const theme = {
   sidePanelScrollBarHeight,
   sidePanelTitleFontsize,
   panelHeaderBorderRadius,
-
+  sidePanelBorder,
+  sidePanelBorderColor,
   // Side Panel Panel
   panelActiveBg,
   panelBackground,
@@ -1205,7 +1206,6 @@ export const theme = {
   layerConfigGroupLabelBorderLeft,
   layerConfigGroupLabelMargin,
   layerConfigGroupLabelPadding,
-  layerConfigGroupLabelDashedPrepend,
 
   // layerConfigGroupLabel label
   layerConfigGroupLabelLabelMargin,
