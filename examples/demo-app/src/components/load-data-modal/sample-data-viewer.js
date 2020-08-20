@@ -154,3 +154,5 @@ SampleMapGallery.propTypes = {
   loadSampleConfigurations: PropTypes.func.isRequired,
   error: PropTypes.object
 };
+
+export default SampleMapGallery;

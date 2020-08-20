@@ -132,7 +132,6 @@ export {default as DropdownList} from './common/item-selector/dropdown-list';
 export {default as ProgressBar} from './common/progress-bar';
 export {default as FileUploadProgress} from './common/file-uploader/file-upload-progress';
 export {default as Slider} from './common/slider/slider';
-export {default as DatasetSquare} from './common/styled-components';
 export {default as ActionPanel, ActionPanelItem} from 'components/common/action-panel';
 
 // side pane components
