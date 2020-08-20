@@ -40,7 +40,10 @@ import {
   EXPORT_DATA_ID,
   EXPORT_MAP_ID,
   SHARE_MAP_ID,
-  SIDEBAR_PANELS
+  SIDEBAR_PANELS,
+  OVERWRITE_MAP_ID,
+  SAVE_MAP_ID,
+  EXPORT_IMAGE_ID
 } from 'constants/default-settings';
 
 const SidePanelContent = styled.div`
@@ -147,20 +150,22 @@ export default function SidePanelFactory(
       this.props.uiStateActions.openDeleteModal(key);
     };
 
-    _onClickExportImage = () => this.props.uiStateActions.startExportingImage();
+    _onClickExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
 
     _onClickExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 
     _onClickExportMap = () => this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
 
-    _onClickSaveToStorage = () => this.props.uiStateActions.startSaveStorage(this.props.mapSaved);
+    _onClickSaveToStorage = () =>
+      this.props.uiStateActions.toggleModal(this.props.mapSaved ? OVERWRITE_MAP_ID : SAVE_MAP_ID);
 
     _onClickSaveAsToStorage = () => {
       // add (copy) to file name
       this.props.visStateActions.setMapInfo({
         title: `${this.props.mapInfo.title || 'Kepler.gl'} (Copy)`
       });
-      this.props.uiStateActions.startSaveStorage(false);
+
+      this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
     };
 
     _onClickShareMap = () => this.props.uiStateActions.toggleModal(SHARE_MAP_ID);

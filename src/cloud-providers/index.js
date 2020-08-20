@@ -18,4 +18,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export {default as Provider} from './provider';
+export {default as Provider, FILE_CONFLICT_MSG} from './provider';

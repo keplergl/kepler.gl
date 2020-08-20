@@ -48,10 +48,10 @@ test('Components -> SaveMapModal.mount', t => {
       </IntlWrapper>
     );
   }, 'Show not fail without props');
-  t.ok(onUpdateImageSetting.calledOnce, 'should call onUpdateImageSetting when mount');
+  t.ok(onUpdateImageSetting.calledTwice, 'should call onUpdateImageSetting twice when mount');
   t.deepEqual(
     onUpdateImageSetting.args,
-    [[{mapW: 100, mapH: 60, ratio: 'CUSTOM', legend: false}]],
+    [[{exporting: true}], [{mapW: 100, mapH: 60, ratio: 'CUSTOM', legend: false}]],
     'should call onUpdateImageSetting when mount'
   );
   t.ok(onSetCloudProvider.notCalled, 'should not call onSetCloudProvider when mount');

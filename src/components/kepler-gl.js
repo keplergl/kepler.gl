@@ -346,7 +346,6 @@ function KeplerGlFactory(
           ));
 
       const isExportingImage = uiState.exportImage.exporting;
-
       const theme = this.availableThemeSelector(this.props);
       const localeMessages = this.localeMessagesSelector(this.props);
 

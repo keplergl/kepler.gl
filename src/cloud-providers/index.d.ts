@@ -43,3 +43,5 @@ export class Provider {
   listMaps(): Promise<MapListItem>;
   downloadMap(param: any): Promose<{map: MapData; format: string}>;
 }
+
+export const FILE_CONFLICT_MSG: string;

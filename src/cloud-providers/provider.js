@@ -24,7 +24,7 @@ const NAME = 'cloud-provider';
 const DISPLAY_NAME = 'Cloud Provider';
 const THUMBNAIL = {width: 300, height: 200};
 const ICON = Upload;
-
+export const FILE_CONFLICT_MSG = 'file_conflict';
 /**
  * The default provider class
  * @param {object} props
@@ -106,6 +106,13 @@ export default class Provider {
    */
   getUserName() {
     return '';
+  }
+
+  /**
+   * This return a standard error that will trigger the overwrite map modal
+   */
+  getFileConflictError() {
+    return new Error(FILE_CONFLICT_MSG);
   }
 
   /**

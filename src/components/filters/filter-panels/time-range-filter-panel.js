@@ -55,7 +55,7 @@ function TimeRangeFilterPanelFactory(FieldPanelWithFieldSelect, TimeRangeFilter)
             active: filter.enlarged
           }
         ],
-        [filter.id, filter.enlargeFilter, enlargeFilter]
+        [filter.id, filter.enlarged, enlargeFilter]
       );
 
       return (

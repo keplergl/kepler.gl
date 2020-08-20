@@ -46,6 +46,11 @@ function parseQueryString(query) {
   return params;
 }
 
+function isConfigFile(err) {
+  const summary = err.error && err.error.error_summary;
+  return typeof summary === 'string' && Boolean(summary.match(/path\/conflict\/file\//g));
+}
+
 export default class DropboxProvider extends Provider {
   constructor(clientId, appName) {
     super({name: NAME, displayName: DISPLAY_NAME, icon: DropboxIcon});
@@ -214,14 +219,20 @@ export default class DropboxProvider extends Provider {
     const fileName = `${name}.json`;
     const fileContent = map;
     // FileWriteMode: Selects what to do if the file already exists.
-    const mode = options.overwrite ? 'overwrite' : 'add';
-
-    const metadata = await this._dropbox.filesUpload({
-      path: `${this._path}/${fileName}`,
-      contents: JSON.stringify(fileContent),
-      mode
-    });
-
+    // Always overwrite if sharing
+    const mode = options.overwrite || isPublic ? 'overwrite' : 'add';
+    let metadata;
+    try {
+      metadata = await this._dropbox.filesUpload({
+        path: `${this._path}/${fileName}`,
+        contents: JSON.stringify(fileContent),
+        mode
+      });
+    } catch (err) {
+      if (isConfigFile(err)) {
+        throw this.getFileConflictError();
+      }
+    }
     // save a thumbnail image
     thumbnail &&
       (await this._dropbox.filesUpload({
@@ -361,25 +372,30 @@ export default class DropboxProvider extends Provider {
    * @returns {Promise<DropboxTypes.sharing.FileLinkMetadataReference | DropboxTypes.sharing.FolderLinkMetadataReference | DropboxTypes.sharing.SharedLinkMetadataReference>}
    */
   _shareFile(metadata) {
+    const shareArgs = {
+      path: metadata.path_display || metadata.path_lower
+    };
+
     return this._dropbox
-      .sharingCreateSharedLinkWithSettings({
-        path: metadata.path_display || metadata.path_lower
+      .sharingListSharedLinks(shareArgs)
+      .then(({links} = {}) => {
+        if (links && links.length) {
+          return links[0];
+        }
+        return this._dropbox.sharingCreateSharedLinkWithSettings(shareArgs);
       })
-      .then(
+      .then(result => {
         // Update URL to avoid CORS issue
         // Unfortunately this is not the ideal scenario but it will make sure people
         // can share dropbox urls with users without the dropbox account (publish on twitter, facebook)
-        result => {
-          // save share link
-          this._shareUrl = this._overrideUrl(result.url);
+        this._shareUrl = this._overrideUrl(result.url);
 
-          return {
-            // the full url to be displayed
-            shareUrl: this.getShareUrl(true),
-            folderLink: this._folderLink
-          };
-        }
-      );
+        return {
+          // the full url to be displayed
+          shareUrl: this.getShareUrl(true),
+          folderLink: this._folderLink
+        };
+      });
   }
 
   /**

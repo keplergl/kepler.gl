@@ -54,7 +54,8 @@ PlotContainerFactory.deps = [MapContainerFactory];
 // Remove mapbox logo in exported map, because it contains non-ascii characters
 const StyledPlotContainer = styled.div`
   .mapboxgl-ctrl-bottom-left,
-  .mapboxgl-ctrl-bottom-right {
+  .mapboxgl-ctrl-bottom-right,
+  .mapbox-attribution-container {
     display: none;
   }
 
@@ -142,7 +143,9 @@ export default function PlotContainerFactory(MapContainer) {
           .then(this.props.setExportImageDataUri)
           .catch(err => {
             this.props.setExportImageError(err);
-            this.props.addNotification(exportImageError({err}));
+            if (this.props.enableErrorNotification) {
+              this.props.addNotification(exportImageError({err}));
+            }
           });
       }
     };
