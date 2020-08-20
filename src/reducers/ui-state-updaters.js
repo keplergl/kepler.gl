@@ -33,6 +33,8 @@ import {LOCALE_CODES} from 'localization/locales';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 import {calculateExportImageSize} from 'utils/export-utils';
 import {payload_, apply_, compose_} from './composer-helpers';
+import {EXPORT_IMAGE_ID} from '../constants';
+import {OVERWRITE_MAP_ID, SAVE_MAP_ID} from '../constants/default-settings';
 
 export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
 export const DEFAULT_MODAL = ADD_DATA_ID;
@@ -422,7 +424,7 @@ export const setExportImageErrorUpdater = (state, {payload: error}) => ({
   ...state,
   exportImage: {
     ...state.exportImage,
-    processing: false,
+    exporting: false,
     error
   }
 });
@@ -440,7 +442,6 @@ export const cleanupExportImageUpdater = state => ({
     exporting: false,
     imageDataUri: '',
     error: false,
-    processing: false,
     center: false
   }
 });
@@ -462,7 +463,8 @@ export const startExportingImageUpdater = (state, {payload: options = {}}) => {
 
   return compose_([
     cleanupExportImageUpdater,
-    apply_(setExportImageSettingUpdater, payload_(imageSettings))
+    apply_(setExportImageSettingUpdater, payload_(imageSettings)),
+    apply_(toggleModalUpdater, payload_(EXPORT_IMAGE_ID))
   ])(state);
 };
 
@@ -719,3 +721,19 @@ export const setLocaleUpdater = (state, {payload: {locale}}) => ({
   ...state,
   locale
 });
+
+/**
+ * Start saving storage  flow
+ * @memberof uiStateUpdaters
+ * @param state
+ * @param mapSaved
+ * @returns {UiState}
+ * @type {typeof import('./ui-state-updaters').startSaveStorage}
+ */
+export const startSaveStorage = (state, {payload: mapSaved}) => {
+  return compose_([
+    cleanupExportImageUpdater,
+    apply_(setExportImageSettingUpdater, payload_({exporting: true})),
+    apply_(toggleModalUpdater, payload_(mapSaved ? OVERWRITE_MAP_ID : SAVE_MAP_ID))
+  ])(state);
+};

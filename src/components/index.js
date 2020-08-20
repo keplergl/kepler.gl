@@ -21,6 +21,8 @@
 import TimeRangeSliderFactory from './common/time-range-slider';
 import RangeSliderFactory from './common/range-slider';
 import VisConfigSliderFactory from './side-panel/layer-panel/vis-config-slider';
+import LayerConfigGroupFactory from './side-panel/layer-panel/layer-config-group';
+import {ChannelByValueSelectorFactory} from './side-panel/layer-panel/layer-configurator';
 import {appInjector} from './container';
 
 // Components
@@ -44,12 +46,12 @@ export {
 export {default as PanelHeaderAction} from './side-panel/panel-header-action';
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
 export {default as PanelToggleFactory} from './side-panel/panel-toggle';
-
 export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel/layer-manager';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
 export {default as LayerPanelHeaderFactory} from './side-panel/layer-panel/layer-panel-header';
 export {default as LayerConfiguratorFactory} from './side-panel/layer-panel/layer-configurator';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
+export {LayerConfigGroupLabelFactory} from './side-panel/layer-panel/layer-config-group';
 
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
@@ -100,6 +102,7 @@ export {default as RangePlotFactory} from './common/range-plot';
 export {default as RangeBrushFactory} from './common/range-brush';
 export {FieldListItemFactory} from './common/field-selector';
 export {default as TimeSliderMarkerFactory} from './common/time-slider-marker';
+export {default as InfoHelperFactory} from 'components/common/info-helper';
 
 // // Filters factory
 export {default as TimeWidgetFactory} from './filters/time-widget';
@@ -132,15 +135,18 @@ export {default as DropdownList} from './common/item-selector/dropdown-list';
 export {default as ProgressBar} from './common/progress-bar';
 export {default as FileUploadProgress} from './common/file-uploader/file-upload-progress';
 export {default as Slider} from './common/slider/slider';
+export {DatasetSquare} from './common/styled-components';
 export {default as ActionPanel, ActionPanelItem} from 'components/common/action-panel';
 
 // side pane components
-export {default as LayerConfigGroup} from './side-panel/layer-panel/layer-config-group';
 export {default as LayerTypeSelector} from './side-panel/layer-panel/layer-type-selector';
 export {ConfigGroupCollapsibleContent} from './side-panel/layer-panel/layer-config-group';
+export {
+  LayerLabelEditor,
+  LayerTitleSectionFactory
+} from './side-panel/layer-panel/layer-panel-header';
 
 export {
-  ChannelByValueSelector,
   HowToButton,
   LayerColorRangeSelector,
   LayerColorSelector
@@ -154,6 +160,8 @@ export {Icons};
 export const TimeRangeSlider = appInjector.get(TimeRangeSliderFactory);
 export const RangeSlider = appInjector.get(RangeSliderFactory);
 export const VisConfigSlider = appInjector.get(VisConfigSliderFactory);
+export const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
+export const ChannelByValueSelector = appInjector.get(ChannelByValueSelectorFactory);
 
 export {TimeRangeSliderFactory, RangeSliderFactory, VisConfigSliderFactory};
 

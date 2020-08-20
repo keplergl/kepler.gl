@@ -125,14 +125,14 @@ const GeoCoder = ({
         }
       }, timeout);
     },
-    [client, limit, timeout, setResults, setShowResults]
+    [client, results, setResults, setShowResults]
   );
 
   const onBlur = useCallback(() => {
     setTimeout(() => {
       setShowResults(false);
     }, timeout);
-  }, [setShowResults, timeout]);
+  }, [setShowResults]);
 
   const onFocus = useCallback(() => setShowResults(true), [setShowResults]);
 
@@ -186,7 +186,7 @@ const GeoCoder = ({
           break;
       }
     },
-    [results, selectedIndex, setSelectedIndex, onItemSelected]
+    [results, selectedIndex, setSelectedIndex]
   );
 
   return (

@@ -264,6 +264,7 @@ export default function ModalContainerFactory(
         uiStateActions,
         providerState
       } = this.props;
+
       const {currentModal, datasetKeyToRemove} = uiState;
       const {datasets, layers, editingDataset} = visState;
 
@@ -455,8 +456,6 @@ export default function ModalContainerFactory(
                 onSetMapInfo={visStateActions.setMapInfo}
                 cloudProviders={this.providerWithStorage(this.props)}
                 onSetCloudProvider={this.props.providerActions.setCloudProvider}
-                cleanupExportImage={uiStateActions.cleanupExportImage}
-                onUpdateImageSetting={uiStateActions.setExportImageSetting}
               />
             );
             modalProps = {
@@ -468,7 +467,7 @@ export default function ModalContainerFactory(
               confirmButton: {
                 large: true,
                 disabled:
-                  uiState.exportImage.processing ||
+                  uiState.exportImage.exporting ||
                   !isValidMapInfo(visState.mapInfo) ||
                   !providerState.currentProvider,
                 children: 'modal.button.save'
@@ -483,7 +482,6 @@ export default function ModalContainerFactory(
                 title={get(visState, ['mapInfo', 'title'])}
                 onSetCloudProvider={this.props.providerActions.setCloudProvider}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
-                cleanupExportImage={uiStateActions.cleanupExportImage}
               />
             );
             modalProps = {
@@ -496,7 +494,7 @@ export default function ModalContainerFactory(
                 large: true,
                 children: 'Yes',
                 disabled:
-                  uiState.exportImage.processing ||
+                  uiState.exportImage.exporting ||
                   !isValidMapInfo(visState.mapInfo) ||
                   !providerState.currentProvider
               }
@@ -506,11 +504,10 @@ export default function ModalContainerFactory(
             template = (
               <ShareMapModal
                 {...providerState}
-                isReady={!uiState.exportImage.processing}
+                isReady={!uiState.exportImage.exporting}
                 cloudProviders={this.providerWithShare(this.props)}
                 onExport={this._onShareMapUrl}
                 onSetCloudProvider={this.props.providerActions.setCloudProvider}
-                cleanupExportImage={uiStateActions.cleanupExportImage}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
               />
             );

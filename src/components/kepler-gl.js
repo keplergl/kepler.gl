@@ -68,8 +68,6 @@ const GlobalStyle = styled.div`
   *,
   *:before,
   *:after {
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
     box-sizing: border-box;
   }
 
@@ -348,6 +346,7 @@ function KeplerGlFactory(
           ));
 
       const isExportingImage = uiState.exportImage.exporting;
+
       const theme = this.availableThemeSelector(this.props);
       const localeMessages = this.localeMessagesSelector(this.props);
 

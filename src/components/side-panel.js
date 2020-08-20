@@ -40,10 +40,7 @@ import {
   EXPORT_DATA_ID,
   EXPORT_MAP_ID,
   SHARE_MAP_ID,
-  SIDEBAR_PANELS,
-  OVERWRITE_MAP_ID,
-  SAVE_MAP_ID,
-  EXPORT_IMAGE_ID
+  SIDEBAR_PANELS
 } from 'constants/default-settings';
 
 const SidePanelContent = styled.div`
@@ -62,7 +59,7 @@ const SidePanelContent = styled.div`
 
 export const PanelTitleFactory = () => styled.div`
   color: ${props => props.theme.titleTextColor};
-  font-size: 20px;
+  font-size: ${props => props.theme.sidePanelTitleFontsize};
   font-weight: 400;
   letter-spacing: 1.25px;
   margin-bottom: 14px;
@@ -150,22 +147,20 @@ export default function SidePanelFactory(
       this.props.uiStateActions.openDeleteModal(key);
     };
 
-    _onClickExportImage = () => this.props.uiStateActions.toggleModal(EXPORT_IMAGE_ID);
+    _onClickExportImage = () => this.props.uiStateActions.startExportingImage();
 
     _onClickExportData = () => this.props.uiStateActions.toggleModal(EXPORT_DATA_ID);
 
     _onClickExportMap = () => this.props.uiStateActions.toggleModal(EXPORT_MAP_ID);
 
-    _onClickSaveToStorage = () =>
-      this.props.uiStateActions.toggleModal(this.props.mapSaved ? OVERWRITE_MAP_ID : SAVE_MAP_ID);
+    _onClickSaveToStorage = () => this.props.uiStateActions.startSaveStorage(this.props.mapSaved);
 
     _onClickSaveAsToStorage = () => {
       // add (copy) to file name
       this.props.visStateActions.setMapInfo({
         title: `${this.props.mapInfo.title || 'Kepler.gl'} (Copy)`
       });
-
-      this.props.uiStateActions.toggleModal(SAVE_MAP_ID);
+      this.props.uiStateActions.startSaveStorage(false);
     };
 
     _onClickShareMap = () => this.props.uiStateActions.toggleModal(SHARE_MAP_ID);

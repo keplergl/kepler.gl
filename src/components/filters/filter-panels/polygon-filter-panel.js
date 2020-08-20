@@ -37,15 +37,18 @@ function PolygonFilterPanelFactory(FilterPanelHeader, PolygonFilter) {
       idx,
       datasets,
       layers,
+      layerData,
       allAvailableFields,
       filter,
+      isAnyFilterAnimating,
+      enlargeFilter,
       removeFilter,
       setFilter,
       toggleFilterFeature
     }) => {
       const filterDatasets = useMemo(() => filter.dataId.map(d => datasets[d]), [filter, datasets]);
 
-      const onSetLayers = useCallback(value => setFilter(idx, 'layerId', value), [setFilter, idx]);
+      const onSetLayers = useCallback(value => setFilter(idx, 'layerId', value), [setFilter]);
 
       const isVisible = get(filter, ['value', 'properties', 'isVisible'], true);
       const featureType = get(filter, ['value', 'properties', 'renderType'], true);

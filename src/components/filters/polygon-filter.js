@@ -33,7 +33,7 @@ function PolygonFilterFactory() {
       newLayers => {
         return setLayers(newLayers.map(l => l.id));
       },
-      [setLayers]
+      [layers, setLayers]
     );
 
     const selectedLayers = useMemo(() => layers.filter(l => filter.layerId.includes(l.id)), [

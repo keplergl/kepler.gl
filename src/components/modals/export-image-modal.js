@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useEffect} from 'react';
+import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import ImagePreview from 'components/common/image-preview';
 
@@ -28,8 +29,6 @@ import {StyledModalContent, SelectionButton} from 'components/common/styled-comp
 import Switch from 'components/common/switch';
 import {injectIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';
-
-/** @typedef {import('./export-image-modal').ExportImageModalProps} ExportImageModalProps */
 
 const ImageOptionList = styled.div`
   display: flex;
@@ -56,81 +55,93 @@ const ImageOptionList = styled.div`
 `;
 
 const ExportImageModalFactory = () => {
-  /**
-   * @type {React.FunctionComponent<ExportImageModalProps>}
-   */
-  const ExportImageModal = ({exportImage, onUpdateImageSetting, cleanupExportImage, intl}) => {
-    const {mapH, mapW, legend, ratio, resolution} = exportImage;
-    useEffect(() => {
-      onUpdateImageSetting({
-        exporting: true
-      });
-      return cleanupExportImage;
-    }, [onUpdateImageSetting, cleanupExportImage]);
+  class ExportImageModal extends Component {
+    static propTypes = {
+      mapW: PropTypes.number.isRequired,
+      mapH: PropTypes.number.isRequired,
+      exportImage: PropTypes.object.isRequired,
+      // callbacks
+      onUpdateImageSetting: PropTypes.func.isRequired
+    };
 
-    useEffect(() => {
+    componentDidUpdate() {
+      this._updateMapDim();
+    }
+
+    componentWillUnmount() {
+      this.props.onUpdateImageSetting({exporting: false});
+    }
+
+    _updateMapDim() {
+      const {exportImage, mapH, mapW} = this.props;
       if (mapH !== exportImage.mapH || mapW !== exportImage.mapW) {
-        onUpdateImageSetting({
+        this.props.onUpdateImageSetting({
           mapH,
-          mapW
+          mapW,
+          legend: false
         });
       }
-    }, [mapH, mapW, exportImage, onUpdateImageSetting]);
+    }
 
-    return (
-      <StyledModalContent className="export-image-modal">
-        <ImageOptionList>
-          <div className="image-option-section">
-            <div className="image-option-section-title">
-              <FormattedMessage id={'modal.exportImage.ratioTitle'} />
+    render() {
+      const {exportImage, onUpdateImageSetting, intl} = this.props;
+      const {legend, ratio, resolution} = exportImage;
+
+      return (
+        <StyledModalContent className="export-image-modal">
+          <ImageOptionList>
+            <div className="image-option-section">
+              <div className="image-option-section-title">
+                <FormattedMessage id={'modal.exportImage.ratioTitle'} />
+              </div>
+              <FormattedMessage id={'modal.exportImage.ratioDescription'} />
+              <div className="button-list">
+                {EXPORT_IMG_RATIO_OPTIONS.filter(op => !op.hidden).map(op => (
+                  <SelectionButton
+                    key={op.id}
+                    selected={ratio === op.id}
+                    onClick={() => onUpdateImageSetting({ratio: op.id})}
+                  >
+                    <FormattedMessage id={op.label} />
+                  </SelectionButton>
+                ))}
+              </div>
             </div>
-            <FormattedMessage id={'modal.exportImage.ratioDescription'} />
-            <div className="button-list">
-              {EXPORT_IMG_RATIO_OPTIONS.filter(op => !op.hidden).map(op => (
-                <SelectionButton
-                  key={op.id}
-                  selected={ratio === op.id}
-                  onClick={() => onUpdateImageSetting({ratio: op.id})}
-                >
-                  <FormattedMessage id={op.label} />
-                </SelectionButton>
-              ))}
+            <div className="image-option-section">
+              <div className="image-option-section-title">
+                <FormattedMessage id={'modal.exportImage.resolutionTitle'} />
+              </div>
+              <FormattedMessage id={'modal.exportImage.resolutionDescription'} />
+              <div className="button-list">
+                {EXPORT_IMG_RESOLUTION_OPTIONS.map(op => (
+                  <SelectionButton
+                    key={op.id}
+                    selected={resolution === op.id}
+                    onClick={() => op.available && onUpdateImageSetting({resolution: op.id})}
+                  >
+                    {op.label}
+                  </SelectionButton>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="image-option-section">
-            <div className="image-option-section-title">
-              <FormattedMessage id={'modal.exportImage.resolutionTitle'} />
+            <div className="image-option-section">
+              <div className="image-option-section-title">
+                <FormattedMessage id={'modal.exportImage.mapLegendTitle'} />
+              </div>
+              <Switch
+                type="checkbox"
+                id="add-map-legend"
+                checked={legend}
+                label={intl.formatMessage({id: 'modal.exportImage.mapLegendAdd'})}
+                onChange={() => onUpdateImageSetting({legend: !legend})}
+              />
             </div>
-            <FormattedMessage id={'modal.exportImage.resolutionDescription'} />
-            <div className="button-list">
-              {EXPORT_IMG_RESOLUTION_OPTIONS.map(op => (
-                <SelectionButton
-                  key={op.id}
-                  selected={resolution === op.id}
-                  onClick={() => op.available && onUpdateImageSetting({resolution: op.id})}
-                >
-                  {op.label}
-                </SelectionButton>
-              ))}
-            </div>
-          </div>
-          <div className="image-option-section">
-            <div className="image-option-section-title">
-              <FormattedMessage id={'modal.exportImage.mapLegendTitle'} />
-            </div>
-            <Switch
-              type="checkbox"
-              id="add-map-legend"
-              checked={legend}
-              label={intl.formatMessage({id: 'modal.exportImage.mapLegendAdd'})}
-              onChange={() => onUpdateImageSetting({legend: !legend})}
-            />
-          </div>
-        </ImageOptionList>
-        <ImagePreview exportImage={exportImage} />
-      </StyledModalContent>
-    );
-  };
+          </ImageOptionList>
+          <ImagePreview exportImage={exportImage} />
+        </StyledModalContent>
+      );
+    }
+  }
 
   return injectIntl(ExportImageModal);
 };
