@@ -135,10 +135,6 @@ export {default as DropdownList} from './common/item-selector/dropdown-list';
 export {default as ProgressBar} from './common/progress-bar';
 export {default as FileUploadProgress} from './common/file-uploader/file-upload-progress';
 export {default as Slider} from './common/slider/slider';
-<<<<<<< HEAD
-export {DatasetSquare} from './common/styled-components';
-=======
->>>>>>> [Bug] Fix component exports
 export {default as ActionPanel, ActionPanelItem} from 'components/common/action-panel';
 
 // side pane components
@@ -166,17 +162,7 @@ export const VisConfigSlider = appInjector.get(VisConfigSliderFactory);
 export const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
 export const ChannelByValueSelector = appInjector.get(ChannelByValueSelectorFactory);
 
-<<<<<<< HEAD
-export {
-  TimeRangeSliderFactory,
-  RangeSliderFactory,
-  VisConfigSliderFactory,
-  LayerConfigGroupFactory,
-  ChannelByValueSelectorFactory
-};
-=======
 export {TimeRangeSliderFactory, RangeSliderFactory, VisConfigSliderFactory};
 
 // Context
 export {default as KeplerGlContext, RootContext} from 'components/context';
->>>>>>> [Enhancement] Export more utils (#1233)
