@@ -145,12 +145,11 @@ test('#uiStateReducer -> SET_EXPORT_IMAGE_SETTING', t => {
   t.end();
 });
 
-test.only('#uiStateReducer -> START_EXPORTING_IMAGE', t => {
+test('#uiStateReducer -> START_EXPORTING_IMAGE', t => {
   const newReducer = reducer(INITIAL_UI_STATE, startExportingImage());
 
   const expectedState = {
     ...INITIAL_UI_STATE,
-    // currentModal: EXPORT_IMAGE_ID,
     exportImage: {
       ...INITIAL_UI_STATE.exportImage,
       exporting: true
