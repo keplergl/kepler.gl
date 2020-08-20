@@ -27,26 +27,6 @@ import Switch from 'components/common/switch';
 import InfoHelperFactory from 'components/common/info-helper';
 import {VertThreeDots} from 'components/common/icons';
 
-export const StyledLayerConfigGroupLabel = styled.div`
-  border-left: ${props => props.theme.layerConfigGroupLabelBorderLeft} solid
-    ${props => props.theme.labelColor};
-  line-height: 12px;
-  margin-left: ${props => props.theme.layerConfigGroupLabelMargin};
-  padding-left: ${props => props.theme.layerConfigGroupLabelPadding};
-
-  display: flex;
-  align-items: center;
-
-  span {
-    color: ${props => props.theme.textColor};
-    font-weight: 500;
-    letter-spacing: 0.2px;
-    text-transform: capitalize;
-    margin-left: ${props => props.theme.layerConfigGroupLabelLabelMargin};
-    font-size: ${props => props.theme.layerConfigGroupLabelLabelFontSize};
-  }
-`;
-
 export const StyledLayerConfigGroupAction = styled.div`
   display: flex;
   align-items: center;
@@ -137,8 +117,8 @@ export function LayerConfigGroupLabelFactory(InfoHelper) {
       font-weight: 500;
       letter-spacing: 0.2px;
       text-transform: capitalize;
-      margin-left: ${props => props.theme.styledLayerConfigGroupLabelLabelMargin};
-      font-size: ${props => props.theme.styledLayerConfigGroupLabelLabelFontSize};
+      margin-left: ${props => props.theme.layerConfigGroupLabelLabelMargin};
+      font-size: ${props => props.theme.layerConfigGroupLabelLabelFontSize};
     }
   `;
 
