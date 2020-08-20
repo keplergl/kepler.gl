@@ -46,6 +46,11 @@ function parseQueryString(query) {
   return params;
 }
 
+function isConfigFile(err) {
+  const summary = err.error && err.error.error_summary;
+  return typeof summary === 'string' && Boolean(summary.match(/path\/conflict\/file\//g));
+}
+
 export default class DropboxProvider extends Provider {
   constructor(clientId, appName) {
     super({name: NAME, displayName: DISPLAY_NAME, icon: DropboxIcon});
@@ -224,13 +229,10 @@ export default class DropboxProvider extends Provider {
         mode
       });
     } catch (err) {
-      console.log(err.error.error_summary)
-      if (err.error && err.error.error_summary === 'path/conflict/file/') {
-        console.log('path/conflict/file/');
+      if (isConfigFile(err)) {
         throw this.getFileConflictError();
       }
     }
-
     // save a thumbnail image
     thumbnail &&
       (await this._dropbox.filesUpload({

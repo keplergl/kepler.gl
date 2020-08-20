@@ -24,7 +24,7 @@ const NAME = 'cloud-provider';
 const DISPLAY_NAME = 'Cloud Provider';
 const THUMBNAIL = {width: 300, height: 200};
 const ICON = Upload;
-const FILE_CONFLICT_MSG = 'file_conflict';
+export const FILE_CONFLICT_MSG = 'file_conflict';
 /**
  * The default provider class
  * @param {object} props

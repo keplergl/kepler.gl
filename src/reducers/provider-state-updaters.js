@@ -181,13 +181,14 @@ export const postSaveLoadSuccessUpdater = (state, action) => {
  */
 export const exportFileErrorUpdater = (state, action) => {
   const {error, provider, onError} = action.payload;
-  console.log(error);
+
   const newState = {
     ...state,
     isProviderLoading: false
   };
 
   if (isFileConflict(error)) {
+    newState.mapSaved = provider.name;
     return withTask(newState, [ACTION_TASK().map(_ => toggleModal(OVERWRITE_MAP_ID))]);
   }
 

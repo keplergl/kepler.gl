@@ -33,8 +33,6 @@ import {LOCALE_CODES} from 'localization/locales';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 import {calculateExportImageSize} from 'utils/export-utils';
 import {payload_, apply_, compose_} from './composer-helpers';
-import {EXPORT_IMAGE_ID} from '../constants';
-import {OVERWRITE_MAP_ID, SAVE_MAP_ID} from '../constants/default-settings';
 
 export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
 export const DEFAULT_MODAL = ADD_DATA_ID;
