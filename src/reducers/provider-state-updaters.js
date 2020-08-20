@@ -43,9 +43,12 @@ import {addDataToMap} from 'actions/actions';
 import {
   DEFAULT_NOTIFICATION_TYPES,
   DEFAULT_NOTIFICATION_TOPICS,
-  DATASET_FORMATS
+  DATASET_FORMATS,
+  OVERWRITE_MAP_ID
 } from 'constants/default-settings';
 import {toArray} from 'utils/utils';
+import {FILE_CONFLICT_MSG} from 'cloud-providers';
+import {DATASET_HANDLERS} from 'processors/data-processor';
 
 export const INITIAL_PROVIDER_STATE = {
   isProviderLoading: false,
@@ -56,7 +59,6 @@ export const INITIAL_PROVIDER_STATE = {
   mapSaved: null,
   visualizations: []
 };
-import {DATASET_HANDLERS} from 'processors/data-processor';
 
 function createActionTask(action, payload) {
   if (typeof action === 'function') {
@@ -179,12 +181,18 @@ export const postSaveLoadSuccessUpdater = (state, action) => {
  */
 export const exportFileErrorUpdater = (state, action) => {
   const {error, provider, onError} = action.payload;
+
   const newState = {
     ...state,
-    isProviderLoading: false,
-    providerError: getError(error)
+    isProviderLoading: false
   };
 
+  if (isFileConflict(error)) {
+    newState.mapSaved = provider.name;
+    return withTask(newState, [ACTION_TASK().map(_ => toggleModal(OVERWRITE_MAP_ID))]);
+  }
+
+  newState.providerError = getError(error);
   const task = createActionTask(onError, {error, provider});
 
   return task ? withTask(newState, task) : newState;
@@ -216,6 +224,10 @@ export const loadCloudMapUpdater = (state, action) => {
 
   return withTask(newState, uploadFileTask);
 };
+
+function isFileConflict(error) {
+  return error && error.message === FILE_CONFLICT_MSG;
+}
 
 function checkLoadMapResponseError(response) {
   if (!response || !isPlainObject(response)) {

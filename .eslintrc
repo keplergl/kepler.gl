@@ -4,7 +4,8 @@
     "uber-es2015",
     "prettier",
     "plugin:prettier/recommended",
-    "prettier/react"
+    "prettier/react",
+    "plugin:react-hooks/recommended"
   ],
   "env": {
     "es6": true,

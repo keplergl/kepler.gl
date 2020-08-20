@@ -18,66 +18,60 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import React, {useEffect} from 'react';
 import get from 'lodash.get';
 
 import {MAP_THUMBNAIL_DIMENSION, EXPORT_IMG_RATIOS} from 'constants/default-settings';
 
+/** @typedef {import('./image-modal-container').ImageModalContainerProps} ImageModalContainerProps */
+
 /**
  * A wrapper component in modals contain a image preview of the map with cloud providers
  * It sets export image size based on provider thumbnail size
- * @component
+ * @type {React.FunctionComponent<ImageModalContainerProps>}
  */
-export default class ImageModalContainer extends Component {
-  static propTypes = {
-    onUpdateImageSetting: PropTypes.func.isRequired,
-    cloudProviders: PropTypes.arrayOf(PropTypes.object),
-    currentProvider: PropTypes.string
-  };
+const ImageModalContainer = ({
+  onUpdateImageSetting,
+  cleanupExportImage,
+  cloudProviders,
+  currentProvider,
+  children
+}) => {
+  useEffect(() => {
+    onUpdateImageSetting({exporting: true});
+    return () => {
+      cleanupExportImage();
+    };
+  }, [onUpdateImageSetting, cleanupExportImage]);
 
-  static defaultProps = {
-    cloudProviders: [],
-    currentProvider: null
-  };
-
-  componentDidMount() {
-    this._updateThumbSize(true);
-  }
-
-  componentDidUpdate(prevProps) {
-    // set thumbnail size if provider changes
-    if (this.props.currentProvider !== prevProps.currentProvider && this.props.currentProvider) {
-      this._updateThumbSize();
-    }
-  }
-
-  componentWillUnmount() {
-    this.props.onUpdateImageSetting({exporting: false});
-  }
-
-  _updateThumbSize(initialMount) {
-    if (this.props.currentProvider && this.props.cloudProviders.length) {
-      const provider = this.props.cloudProviders.find(p => p.name === this.props.currentProvider);
+  useEffect(() => {
+    if (currentProvider && cloudProviders.length) {
+      const provider = cloudProviders.find(p => p.name === currentProvider);
 
       if (provider && provider.thumbnail) {
-        this.props.onUpdateImageSetting({
+        onUpdateImageSetting({
           mapW: get(provider, ['thumbnail', 'width']) || MAP_THUMBNAIL_DIMENSION.width,
           mapH: get(provider, ['thumbnail', 'height']) || MAP_THUMBNAIL_DIMENSION.height,
           ratio: EXPORT_IMG_RATIOS.CUSTOM,
           legend: false
         });
       }
-    } else if (initialMount) {
-      this.props.onUpdateImageSetting({
+    } else {
+      onUpdateImageSetting({
         mapW: MAP_THUMBNAIL_DIMENSION.width,
         mapH: MAP_THUMBNAIL_DIMENSION.height,
-        ratio: EXPORT_IMG_RATIOS.CUSTOM
+        ratio: EXPORT_IMG_RATIOS.CUSTOM,
+        legend: false
       });
     }
-  }
+  }, [currentProvider, cloudProviders, onUpdateImageSetting]);
 
-  render() {
-    return <>{this.props.children}</>;
-  }
-}
+  return <>{children}</>;
+};
+
+ImageModalContainer.defaultProps = {
+  cloudProviders: [],
+  currentProvider: null
+};
+
+export default ImageModalContainer;

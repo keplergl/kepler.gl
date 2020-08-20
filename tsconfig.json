@@ -21,7 +21,10 @@
     "strict": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": "./src"
+    "baseUrl": "./src",
+    "paths": {
+      "*": ["*"]
+    }
   },
   "paths": {
     "actions": "src/actions",

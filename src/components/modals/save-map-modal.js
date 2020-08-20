@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 import styled from 'styled-components';
 import CloudTile from './cloud-tile';
 import ImageModalContainer from './image-modal-container';
 import ProviderModalContainer from './provider-modal-container';
-
 import StatusPanel, {UploadAnimation} from './status-panel';
 
 import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER} from 'constants/default-settings';
@@ -39,6 +37,8 @@ import {
 } from 'components/common/styled-components';
 import ImagePreview from 'components/common/image-preview';
 import {FormattedMessage} from 'localization';
+
+/** @typedef {import('./save-map-modal').SaveMapModalProps} SaveMapModalProps */
 
 const StyledSaveMapModal = styled.div.attrs({
   className: 'save-map-modal'
@@ -120,141 +120,125 @@ export const MapInfoPanel = ({
 );
 
 function SaveMapModalFactory() {
-  class SaveMapModal extends Component {
-    static propTypes = {
-      exportImage: PropTypes.object.isRequired,
-      mapInfo: PropTypes.object.isRequired,
-      isProviderLoading: PropTypes.bool.isRequired,
-      thumbWidth: PropTypes.number,
-      thumbHeight: PropTypes.number,
-      characterLimits: PropTypes.object,
-      cloudProviders: PropTypes.arrayOf(PropTypes.object),
-      currentProvider: PropTypes.string,
-      onSetMapInfo: PropTypes.func.isRequired,
-      onSetCloudProvider: PropTypes.func.isRequired,
-      onUpdateImageSetting: PropTypes.func.isRequired
+  /**
+   * @type {React.FunctionComponent<SaveMapModalProps>}
+   */
+  const SaveMapModal = ({
+    mapInfo,
+    exportImage,
+    characterLimits = {},
+    cloudProviders,
+    isProviderLoading,
+    currentProvider,
+    providerError,
+    onSetCloudProvider,
+    onUpdateImageSetting,
+    cleanupExportImage,
+    onSetMapInfo
+  }) => {
+    const onChangeInput = (key, {target: {value}}) => {
+      onSetMapInfo({[key]: value});
     };
+    const provider = currentProvider ? cloudProviders.find(p => p.name === currentProvider) : null;
 
-    static defaultProps = {
-      characterLimits: MAP_INFO_CHARACTER,
-      cloudProviders: [],
-      currentProvider: null,
-      providerError: null,
-      isProviderLoading: false,
-      onSetCloudProvider: nop,
-      onUpdateImageSetting: nop
-    };
-
-    _onChangeInput = (key, e) => {
-      const {
-        target: {value}
-      } = e;
-      this.props.onSetMapInfo({[key]: value});
-    };
-
-    render() {
-      const {
-        mapInfo,
-        exportImage,
-        characterLimits = {},
-        cloudProviders,
-        isProviderLoading,
-        currentProvider,
-        providerError,
-        onSetCloudProvider,
-        onUpdateImageSetting
-      } = this.props;
-      const provider = currentProvider
-        ? cloudProviders.find(p => p.name === currentProvider)
-        : null;
-
-      return (
-        <ProviderModalContainer
-          onSetCloudProvider={onSetCloudProvider}
-          cloudProviders={cloudProviders}
+    return (
+      <ProviderModalContainer
+        onSetCloudProvider={onSetCloudProvider}
+        cloudProviders={cloudProviders}
+        currentProvider={currentProvider}
+      >
+        <ImageModalContainer
           currentProvider={currentProvider}
+          cloudProviders={cloudProviders}
+          onUpdateImageSetting={onUpdateImageSetting}
+          cleanupExportImage={cleanupExportImage}
         >
-          <ImageModalContainer
-            currentProvider={currentProvider}
-            cloudProviders={cloudProviders}
-            onUpdateImageSetting={onUpdateImageSetting}
-          >
-            <StyledSaveMapModal>
-              <StyledModalContent className="save-map-modal-content">
-                <StyledExportSection disabled={isProviderLoading}>
-                  <div className="description">
-                    <div className="title">
-                      <FormattedMessage id={'modal.saveMap.title'} />
-                    </div>
-                    <div className="subtitle">
-                      <FormattedMessage id={'modal.saveMap.subtitle'} />
-                    </div>
+          <StyledSaveMapModal>
+            <StyledModalContent className="save-map-modal-content">
+              <StyledExportSection disabled={isProviderLoading}>
+                <div className="description">
+                  <div className="title">
+                    <FormattedMessage id={'modal.saveMap.title'} />
                   </div>
+                  <div className="subtitle">
+                    <FormattedMessage id={'modal.saveMap.subtitle'} />
+                  </div>
+                </div>
+                <div className="selection">
+                  {cloudProviders.map(cloudProvider => (
+                    <CloudTile
+                      key={cloudProvider.name}
+                      onSelect={() => onSetCloudProvider(cloudProvider.name)}
+                      onSetCloudProvider={onSetCloudProvider}
+                      cloudProvider={cloudProvider}
+                      isSelected={cloudProvider.name === currentProvider}
+                      isConnected={Boolean(
+                        cloudProvider.getAccessToken && cloudProvider.getAccessToken()
+                      )}
+                    />
+                  ))}
+                </div>
+              </StyledExportSection>
+              {provider && provider.getManagementUrl && (
+                <StyledExportSection style={{margin: '2px 0'}}>
+                  <div className="description" />
                   <div className="selection">
-                    {cloudProviders.map(cloudProvider => (
-                      <CloudTile
-                        key={cloudProvider.name}
-                        onSelect={() => onSetCloudProvider(cloudProvider.name)}
-                        onSetCloudProvider={onSetCloudProvider}
-                        cloudProvider={cloudProvider}
-                        isSelected={cloudProvider.name === currentProvider}
-                        isConnected={Boolean(
-                          cloudProvider.getAccessToken && cloudProvider.getAccessToken()
-                        )}
-                      />
-                    ))}
+                    <a
+                      key={1}
+                      href={provider.getManagementUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{textDecoration: 'underline'}}
+                    >
+                      Go to your Kepler.gl {provider.displayName} page
+                    </a>
                   </div>
                 </StyledExportSection>
-                {provider && provider.getManagementUrl && (
-                  <StyledExportSection style={{margin: '2px 0'}}>
-                    <div className="description" />
-                    <div className="selection">
-                      <a
-                        key={1}
-                        href={provider.getManagementUrl()}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{textDecoration: 'underline'}}
-                      >
-                        Go to your Kepler.gl {provider.displayName} page
-                      </a>
-                    </div>
-                  </StyledExportSection>
-                )}
-                <StyledExportSection>
-                  <div className="description image-preview-panel">
-                    <ImagePreview
-                      exportImage={exportImage}
-                      width={MAP_THUMBNAIL_DIMENSION.width}
-                      showDimension={false}
-                    />
-                  </div>
-                  {isProviderLoading ? (
-                    <div className="selection map-saving-animation">
-                      <UploadAnimation icon={provider && provider.icon} />
-                    </div>
-                  ) : (
-                    <MapInfoPanel
-                      mapInfo={mapInfo}
-                      characterLimits={characterLimits}
-                      onChangeInput={this._onChangeInput}
-                    />
-                  )}
-                </StyledExportSection>
-                {providerError ? (
-                  <StatusPanel
-                    isLoading={false}
-                    error={providerError}
-                    providerIcon={provider && provider.icon}
+              )}
+              <StyledExportSection>
+                <div className="description image-preview-panel">
+                  <ImagePreview
+                    exportImage={exportImage}
+                    width={MAP_THUMBNAIL_DIMENSION.width}
+                    showDimension={false}
                   />
-                ) : null}
-              </StyledModalContent>
-            </StyledSaveMapModal>
-          </ImageModalContainer>
-        </ProviderModalContainer>
-      );
-    }
-  }
+                </div>
+                {isProviderLoading ? (
+                  <div className="selection map-saving-animation">
+                    <UploadAnimation icon={provider && provider.icon} />
+                  </div>
+                ) : (
+                  <MapInfoPanel
+                    mapInfo={mapInfo}
+                    characterLimits={characterLimits}
+                    onChangeInput={onChangeInput}
+                  />
+                )}
+              </StyledExportSection>
+              {providerError ? (
+                <StatusPanel
+                  isLoading={false}
+                  error={providerError}
+                  providerIcon={provider && provider.icon}
+                />
+              ) : null}
+            </StyledModalContent>
+          </StyledSaveMapModal>
+        </ImageModalContainer>
+      </ProviderModalContainer>
+    );
+  };
+
+  SaveMapModal.defaultProps = {
+    characterLimits: MAP_INFO_CHARACTER,
+    cloudProviders: [],
+    currentProvider: null,
+    providerError: null,
+    isProviderLoading: false,
+    onSetCloudProvider: nop,
+    onUpdateImageSetting: nop
+  };
+
   return SaveMapModal;
 }
 
