@@ -72,7 +72,8 @@ const COMMON_CONFIG = {
       react: resolve(rootDir, './node_modules/react'),
       'styled-components': resolve(rootDir, './node_modules/styled-components'),
       'react-redux': resolve(rootDir, './node_modules/react-redux'),
-      'react-palm': resolve(rootDir, './node_modules/react-palm')
+      'react-palm': resolve(rootDir, './node_modules/react-palm'),
+      'react-intl': resolve(rootDir, './node_modules/react-intl')
     }
   },
 
