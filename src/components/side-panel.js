@@ -62,7 +62,7 @@ const SidePanelContent = styled.div`
 
 export const PanelTitleFactory = () => styled.div`
   color: ${props => props.theme.titleTextColor};
-  font-size: 20px;
+  font-size: ${props => props.theme.sidePanelTitleFontsize};
   font-weight: 400;
   letter-spacing: 1.25px;
   margin-bottom: 14px;

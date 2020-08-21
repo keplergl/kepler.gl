@@ -32,46 +32,47 @@ const StyledInfoHelper = styled.div`
   margin-left: 10px;
   color: ${props => props.theme.labelColor};
   display: inline-flex;
-
   .info-helper__content {
     max-width: 100px;
   }
-
   :hover {
     cursor: pointer;
     color: ${props => props.theme.textColorHl};
   }
 `;
 
-const propTypes = {
-  description: PropTypes.string.isRequired,
-  containerClass: PropTypes.string
-};
+function InfoHelperFactory() {
+  const propTypes = {
+    description: PropTypes.string.isRequired,
+    containerClass: PropTypes.string
+  };
+  const InfoHelper = ({description, property, containerClass, id}) => {
+    // TODO: move intl out
+    const intl = useIntl();
 
-const InfoHelper = ({description, property, containerClass, id}) => {
-  // TODO: move intl out
-  const intl = useIntl();
+    return (
+      <StyledInfoHelper className={`info-helper ${containerClass || ''}`} data-tip data-for={id}>
+        <Docs height="16px" />
+        <Tooltip id={id} effect="solid">
+          <div className="info-helper__content">
+            {description && (
+              <FormattedMessage
+                id={description}
+                defaultValue={description}
+                values={{
+                  property: intl.formatMessage({
+                    id: property ? `property.${camelize(property)}` : 'misc.empty'
+                  })
+                }}
+              />
+            )}
+          </div>
+        </Tooltip>
+      </StyledInfoHelper>
+    );
+  };
+  InfoHelper.propTypes = propTypes;
+  return InfoHelper;
+}
 
-  return (
-    <StyledInfoHelper className={`info-helper ${containerClass || ''}`} data-tip data-for={id}>
-      <Docs height="16px" />
-      <Tooltip id={id} effect="solid">
-        <div className="info-helper__content">
-          {description && (
-            <FormattedMessage
-              id={description}
-              values={{
-                property: intl.formatMessage({
-                  id: property ? `property.${camelize(property)}` : 'misc.empty'
-                })
-              }}
-            />
-          )}
-        </div>
-      </Tooltip>
-    </StyledInfoHelper>
-  );
-};
-InfoHelper.propTypes = propTypes;
-
-export default InfoHelper;
+export default InfoHelperFactory;
