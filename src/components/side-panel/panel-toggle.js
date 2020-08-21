@@ -34,6 +34,7 @@ const PanelHeaderBottom = styled.div.attrs({
   className: 'side-side-panel__header__bottom'
 })`
   background-color: ${props => props.theme.sidePanelHeaderBg};
+  border-bottom: 1px solid ${props => props.theme.sidePanelHeaderBorder};
   padding: 0 16px;
   display: flex;
   min-height: 30px;

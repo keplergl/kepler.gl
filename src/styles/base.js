@@ -149,6 +149,8 @@ export const dropdownWapperMargin = 4;
 export const switchWidth = 24;
 export const switchHeight = 12;
 export const switchLabelMargin = 12;
+export const switchButtonTopMargin = 0;
+export const switchButtonLeftMargin = -1;
 
 export const switchTrackBgd = '#29323C';
 export const switchTrackBgdActive = activeColor;
@@ -175,16 +177,20 @@ export const checkboxBoxBgdChecked = primaryBtnBgd;
 
 // Side Panel
 export const sidePanelHeaderBg = '#29323C';
+export const sidePanelHeaderBorder = 'transparent';
 export const sidePanelInnerPadding = 16;
+export const sidePanelBorder = 0;
+export const sidePanelBorderColor = 'transparent';
 export const sidePanelBg = '#242730';
 export const sidePanelScrollBarWidth = 10;
 export const sidePanelScrollBarHeight = 10;
 export const sideBarCloseBtnBgd = secondaryBtnBgd;
 export const sideBarCloseBtnColor = '#29323C';
 export const sideBarCloseBtnBgdHover = secondaryBtnActBgd;
-
+export const sidePanelTitleFontsize = '20px';
 export const panelBackground = '#29323C';
 export const panelBackgroundHover = '#3A4552';
+export const panelHeaderBorderRadius = '0px';
 export const panelActiveBg = '#3A4552';
 export const panelActiveBgLT = '#6A7485';
 export const panelHeaderIcon = '#6A7485';
@@ -206,6 +212,11 @@ export const tooltipColor = '#333334';
 export const layerTypeIconSizeL = 50;
 export const layerTypeIconPdL = 12;
 export const layerTypeIconSizeSM = 28;
+
+// Sidepanel divider
+export const sidepanelDividerBorder = '1px';
+export const sidepanelDividerMargin = 12;
+export const sidepanelDividerHeight = 12;
 
 // Bottom Panel
 export const bottomInnerPdSide = 32;
@@ -320,6 +331,24 @@ export const textTruncate = {
   wordWrap: 'normal'
 };
 
+// layerConfigGroupLabel
+export const layerConfigGroupLabelBorderLeft = '2px';
+export const layerConfigGroupLabelMargin = '-12px';
+export const layerConfigGroupLabelPadding = '10px';
+
+// layerConfigGroupLabel label
+export const layerConfigGroupLabelLabelMargin = '0';
+export const layerConfigGroupLabelLabelFontSize = '12px';
+
+// styledConfigGroupHeader
+export const styledConfigGroupHeaderBorder = '2px';
+
+// layerConfigurator
+
+export const layerConfiguratorBorder = '0';
+export const layerConfiguratorBorderColor = '';
+export const layerConfiguratorMargin = '12px';
+export const layerConfiguratorPadding = '0';
 // This breakpoints are used for responsive design
 export const breakPoints = {
   palm: 588,
@@ -523,9 +552,10 @@ const switchTrack = css`
 const switchButton = css`
   transition: ${props => props.theme.transition};
   position: absolute;
-  top: 0;
+  top: ${props => props.theme.switchButtonTopMargin};
   left: ${props =>
-    (props.checked ? props.theme.switchWidth / 2 : -1) - props.theme.switchLabelMargin}px;
+    (props.checked ? props.theme.switchWidth / 2 : props.theme.switchButtonLeftMargin) -
+    props.theme.switchLabelMargin}px;
   content: '';
   display: block;
   height: ${props => props.theme.switchBtnHeight};
@@ -613,6 +643,7 @@ const inputCheckbox = css`
 
 const secondarySwitch = css`
   ${props => props.theme.inputSwitch}
+
   :before {
     ${props => props.theme.switchTrack} background: ${props =>
   props.checked ? props.theme.switchTrackBgdActive : props.theme.secondarySwitchTrackBgd};
@@ -643,13 +674,13 @@ const dropdownScrollBar = css`
     border-radius: 10px;
     background: ${props => props.theme.labelColor};
     border: 3px solid ${props => props.theme.dropdownListBgd};
-  };
+  }
 
   :vertical:hover {
     background: ${props => props.theme.textColorHl};
     cursor: pointer;
   }
-}`;
+`;
 
 const dropdownListAnchor = css`
   color: ${props => props.theme.selectColor};
@@ -757,8 +788,8 @@ const sidePanelScrollBar = css`
       background: ${props => props.theme.labelColor};
       cursor: pointer;
     }
-  };
-}`;
+  }
+`;
 
 const panelDropdownScrollBar = css`
   ::-webkit-scrollbar {
@@ -814,7 +845,7 @@ const scrollBar = css`
       cursor: pointer;
     }
   }
-}`;
+`;
 
 export const modalScrollBar = css`
   ::-webkit-scrollbar {
@@ -969,6 +1000,7 @@ export const theme = {
   switchBtnWidth,
   switchBtnHeight,
   switchLabelMargin,
+  switchButtonLeftMargin,
 
   secondarySwitchTrackBgd,
   secondarySwitchBtnBgd,
@@ -1042,9 +1074,13 @@ export const theme = {
   sideBarCloseBtnColor,
   sideBarCloseBtnBgdHover,
   sidePanelHeaderBg,
+  sidePanelHeaderBorder,
   sidePanelScrollBarWidth,
   sidePanelScrollBarHeight,
-
+  sidePanelTitleFontsize,
+  panelHeaderBorderRadius,
+  sidePanelBorder,
+  sidePanelBorderColor,
   // Side Panel Panel
   panelActiveBg,
   panelBackground,
@@ -1081,6 +1117,11 @@ export const theme = {
   tooltipBg,
   tooltipColor,
   logoColor,
+
+  // Sidepanel divider
+  sidepanelDividerBorder,
+  sidepanelDividerMargin,
+  sidepanelDividerHeight,
 
   // Bottom Panel
   bottomInnerPdSide,
@@ -1160,7 +1201,25 @@ export const theme = {
 
   // progressbar
   progressBarColor,
-  progressBarTrackColor
+  progressBarTrackColor,
+
+  // layerConfigGroupLabel
+  layerConfigGroupLabelBorderLeft,
+  layerConfigGroupLabelMargin,
+  layerConfigGroupLabelPadding,
+
+  // layerConfigGroupLabel label
+  layerConfigGroupLabelLabelMargin,
+  layerConfigGroupLabelLabelFontSize,
+
+  // StyledConfigGroupHeader
+  styledConfigGroupHeaderBorder,
+
+  // layerConfigurator
+  layerConfiguratorBorder,
+  layerConfiguratorBorderColor,
+  layerConfiguratorMargin,
+  layerConfiguratorPadding
 };
 
 export const themeLT = {
