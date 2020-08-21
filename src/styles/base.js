@@ -643,7 +643,7 @@ const inputCheckbox = css`
 
 const secondarySwitch = css`
   ${props => props.theme.inputSwitch}
-  
+
   :before {
     ${props => props.theme.switchTrack} background: ${props =>
   props.checked ? props.theme.switchTrackBgdActive : props.theme.secondarySwitchTrackBgd};
@@ -1000,6 +1000,7 @@ export const theme = {
   switchBtnWidth,
   switchBtnHeight,
   switchLabelMargin,
+  switchButtonLeftMargin,
 
   secondarySwitchTrackBgd,
   secondarySwitchBtnBgd,
