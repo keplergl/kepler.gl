@@ -32,6 +32,9 @@ export type Merger = {
   toMergeProp?: string 
 };
 
+export function validateSavedVisualChannels(fields, newLayer, savedLayer);
+export function validateLayerWithData({fields, id: dataId}, savedLayer, layerClasses);
+
 export type VisStateMergers = Merger[];
 
 export const VIS_STATE_MERGERS: VisStateMergers;
