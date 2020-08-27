@@ -47,6 +47,8 @@ export const titleColorLT = '#29323C';
 export const subtextColor = '#6A7485';
 export const subtextColorLT = '#A0A7B4';
 export const subtextColorActive = '#FFFFFF';
+export const subtextBorderColorActive = '#FFFFFF';
+export const subtextWidth = '30px';
 
 export const titleTextColor = '#FFFFFF';
 export const textColorHl = '#F0F0F0';
@@ -178,6 +180,8 @@ export const checkboxBoxBgdChecked = primaryBtnBgd;
 // Side Panel
 export const sidePanelHeaderBg = '#29323C';
 export const sidePanelHeaderBorder = 'transparent';
+export const sidePanelTopMargin = '12px';
+
 export const sidePanelInnerPadding = 16;
 export const sidePanelBorder = 0;
 export const sidePanelBorderColor = 'transparent';
@@ -188,6 +192,7 @@ export const sideBarCloseBtnBgd = secondaryBtnBgd;
 export const sideBarCloseBtnColor = '#29323C';
 export const sideBarCloseBtnBgdHover = secondaryBtnActBgd;
 export const sidePanelTitleFontsize = '20px';
+export const sidePanelTitleLineHeight = '1.71429';
 export const panelBackground = '#29323C';
 export const panelBackgroundHover = '#3A4552';
 export const panelHeaderBorderRadius = '0px';
@@ -199,6 +204,7 @@ export const panelHeaderHeight = 48;
 export const panelBoxShadow = '0 6px 12px 0 rgba(0,0,0,0.16)';
 export const panelBorderRadius = '2px';
 export const panelBackgroundLT = '#F8F8F9';
+export const styledLayerConfigGroupLabelLabelFontSize = '12px';
 
 export const panelBorderColor = '#3A414C';
 export const panelBorder = `1px solid ${borderColor}`;
@@ -259,9 +265,12 @@ export const sliderHandleHeight = 12;
 export const sliderHandleWidth = 12;
 export const sliderHandleColor = '#D3D8E0';
 export const sliderHandleHoverColor = '#FFFFFF';
+export const sliderHandleText = '';
 export const sliderHandleShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
 export const sliderInputHeight = 24;
 export const sliderInputWidth = 56;
+export const sliderInputFontSize = '10px';
+export const sliderInputPadding = '4px 6px';
 export const sliderMarginTopIsTime = -12;
 export const sliderMarginTop = 12;
 
@@ -322,6 +331,9 @@ const progressBarTrackColor = '#E8E8E8';
 // Action Panel
 export const actionPanelWidth = 110;
 export const actionPanelHeight = 32;
+
+// Styled Token
+export const tokenRightMargin = 4;
 
 export const textTruncate = {
   maxWidth: '100%',
@@ -685,6 +697,7 @@ const dropdownScrollBar = css`
 const dropdownListAnchor = css`
   color: ${props => props.theme.selectColor};
   padding-left: 3px;
+  font-size: ${props => props.theme.selectFontSize};
 `;
 
 const dropdownListSize = css`
@@ -1075,12 +1088,15 @@ export const theme = {
   sideBarCloseBtnBgdHover,
   sidePanelHeaderBg,
   sidePanelHeaderBorder,
+  sidePanelTopMargin,
   sidePanelScrollBarWidth,
   sidePanelScrollBarHeight,
   sidePanelTitleFontsize,
+  sidePanelTitleLineHeight,
   panelHeaderBorderRadius,
   sidePanelBorder,
   sidePanelBorderColor,
+  styledLayerConfigGroupLabelLabelFontSize,
   // Side Panel Panel
   panelActiveBg,
   panelBackground,
@@ -1112,6 +1128,8 @@ export const theme = {
   subtextColor,
   subtextColorLT,
   subtextColorActive,
+  subtextBorderColorActive,
+  subtextWidth,
   textTruncate,
   titleColorLT,
   tooltipBg,
@@ -1142,6 +1160,7 @@ export const theme = {
   sliderHandleWidth,
   sliderHandleColor,
   sliderHandleHoverColor,
+  sliderHandleText,
   sliderHandleShadow,
   sliderInputHeight,
   sliderInputWidth,
@@ -1219,7 +1238,10 @@ export const theme = {
   layerConfiguratorBorder,
   layerConfiguratorBorderColor,
   layerConfiguratorMargin,
-  layerConfiguratorPadding
+  layerConfiguratorPadding,
+
+  // Styled token
+  tokenRightMargin
 };
 
 export const themeLT = {

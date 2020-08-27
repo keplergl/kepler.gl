@@ -28,7 +28,7 @@ import {Button, Input, PanelLabel, SidePanelSection} from 'components/common/sty
 import ItemSelector from 'components/common/item-selector/item-selector';
 
 import VisConfigByFieldSelectorFactory from './vis-config-by-field-selector';
-import LayerColumnConfig from './layer-column-config';
+import LayerColumnConfigFactory from './layer-column-config';
 import LayerTypeSelector from './layer-type-selector';
 import DimensionScaleSelector from './dimension-scale-selector';
 import ColorSelector from './color-selector';
@@ -86,7 +86,8 @@ LayerConfiguratorFactory.deps = [
   VisConfigSliderFactory,
   TextLabelPanelFactory,
   LayerConfigGroupFactory,
-  ChannelByValueSelectorFactory
+  ChannelByValueSelectorFactory,
+  LayerColumnConfigFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -94,7 +95,8 @@ export default function LayerConfiguratorFactory(
   VisConfigSlider,
   TextLabelPanel,
   LayerConfigGroup,
-  ChannelByValueSelector
+  ChannelByValueSelector,
+  LayerColumnConfig
 ) {
   class LayerConfigurator extends Component {
     static propTypes = {

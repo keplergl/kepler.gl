@@ -27,7 +27,8 @@ import MouseEventHandler from './mouse-event';
 const StyledSliderHandle = styled.span`
   position: absolute;
   z-index: 10;
-  ${props => (props.vertical ? 'margin-left' : 'margin-top')}: -${props => (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
+  ${props => (props.vertical ? 'margin-left' : 'margin-top')}: -${props =>
+  (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
 
   height: ${props =>
     Number.isFinite(props.sliderHandleWidth)
@@ -48,6 +49,17 @@ const StyledSliderHandle = styled.span`
     background-color: ${props => props.theme.sliderHandleHoverColor};
     cursor: pointer;
   }
+
+  ////
+  line-height: 10px;
+  font-size: 6px;
+  padding: 0 3px;
+  letter-spacing: 1px;
+  :after {
+    content: '${props => props.theme.sliderHandleText}';
+  }
+
+  ////
 `;
 
 const StyledSliderTooltip = styled.div`

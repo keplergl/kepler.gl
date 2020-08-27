@@ -23,13 +23,12 @@ import PropTypes from 'prop-types';
 import {FormattedMessage, injectIntl} from 'react-intl';
 
 import {PanelLabel, PanelLabelWrapper, SidePanelSection} from 'components/common/styled-components';
-import FieldSelector from 'components/common/field-selector';
 import InfoHelperFacotry from 'components/common/info-helper';
 import DimensionScaleSelector from './dimension-scale-selector';
 import {camelize} from 'utils/utils';
+import FieldSelectorFactory from '../../common/field-selector';
 
-VisConfigByFieldSelectorFacotry.deps = [InfoHelperFacotry];
-export default function VisConfigByFieldSelectorFacotry(InfoHelper) {
+const VisConfigByFieldSelectorFactory = (InfoHelper, FieldSelector) => {
   class VisConfigByFieldSelector extends Component {
     static propTypes = {
       channel: PropTypes.string.isRequired,
@@ -111,6 +110,7 @@ export default function VisConfigByFieldSelectorFacotry(InfoHelper) {
       );
     }
   }
-
   return injectIntl(VisConfigByFieldSelector);
-}
+};
+VisConfigByFieldSelectorFactory.deps = [InfoHelperFacotry, FieldSelectorFactory];
+export default VisConfigByFieldSelectorFactory;
