@@ -139,6 +139,7 @@ export const SidePanelSection = styled.div.attrs({
   className: 'side-panel-section'
 })`
   margin-bottom: 12px;
+
   opacity: ${props => (props.disabled ? 0.4 : 1)};
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
 `;

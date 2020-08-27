@@ -31,7 +31,6 @@ import {
 } from 'components/common/styled-components';
 import {Add} from 'components/common/icons';
 import ColorSelector from './color-selector';
-import FieldSelector from 'components/common/field-selector';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import LayerConfigGroupFactory, {
   ConfigGroupCollapsibleContent,
@@ -40,10 +39,9 @@ import LayerConfigGroupFactory, {
 import RangeSliderFactory from 'components/common/range-slider';
 
 import {LAYER_TEXT_CONFIGS} from 'layers/layer-factory';
+import FieldSelectorFactory from '../../common/field-selector';
 
-TextLabelPanelFactory.deps = [RangeSliderFactory, LayerConfigGroupFactory];
-
-export default function TextLabelPanelFactory(RangeSlider, LayerConfigGroup) {
+const TextLabelPanelFactory = (RangeSlider, LayerConfigGroup, FieldSelector) => {
   class TextLabelPanel extends Component {
     static propTypes = {
       fields: PropTypes.arrayOf(PropTypes.object),
@@ -142,4 +140,6 @@ export default function TextLabelPanelFactory(RangeSlider, LayerConfigGroup) {
   }
 
   return TextLabelPanel;
-}
+};
+TextLabelPanelFactory.deps = [RangeSliderFactory, LayerConfigGroupFactory, FieldSelectorFactory];
+export default TextLabelPanelFactory;
