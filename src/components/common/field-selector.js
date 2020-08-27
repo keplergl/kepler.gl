@@ -24,33 +24,36 @@ import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 
 import ItemSelector from './item-selector/item-selector';
-import FieldToken from '../common/field-token';
 import {classList} from './item-selector/dropdown-list';
 import {toArray} from 'utils/utils';
 import {notNullorUndefined} from 'utils/data-utils';
+import FieldTokenFactory from '../common/field-token';
 
 const defaultDisplayOption = d => d.name;
 
 const StyledToken = styled.div`
   display: inline-block;
-  margin: 0 4px 0 0;
+  margin: 0 ${props => props.theme.tokenRightMargin}px 0 0;
 `;
 
+FieldListItemFactoryFactory.deps = [FieldTokenFactory];
 // custom list Item
-export const FieldListItemFactory = (showToken = true) => {
-  const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
-    <div className="field-selector_list-item">
-      {showToken ? (
-        <StyledToken>
-          <FieldToken type={value.type} />
-        </StyledToken>
-      ) : null}
-      <span className={classList.listItemAnchor}>{displayOption(value)}</span>
-    </div>
-  );
-
-  return FieldListItem;
-};
+export function FieldListItemFactoryFactory(FieldToken) {
+  const FieldListItemFactory = (showToken = true) => {
+    const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
+      <div className="field-selector_list-item">
+        {showToken ? (
+          <StyledToken>
+            <FieldToken type={value.type} />
+          </StyledToken>
+        ) : null}
+        <span className={classList.listItemAnchor}>{displayOption(value)}</span>
+      </div>
+    );
+    return FieldListItem;
+  };
+  return FieldListItemFactory;
+}
 
 const SuggestedFieldHeader = () => <div>Suggested Field</div>;
 
@@ -72,97 +75,105 @@ const FieldType = PropTypes.oneOfType([
   })
 ]);
 
-class FieldSelector extends Component {
-  static propTypes = {
-    fields: PropTypes.oneOfType([PropTypes.array, PropTypes.arrayOf(FieldType)]),
-    onSelect: PropTypes.func.isRequired,
-    placement: PropTypes.string,
-    value: FieldType,
-    filterFieldTypes: PropTypes.oneOfType([FieldType, PropTypes.arrayOf(FieldType)]),
-    inputTheme: PropTypes.string,
-    placeholder: PropTypes.string,
-    erasable: PropTypes.bool,
-    error: PropTypes.bool,
-    multiSelect: PropTypes.bool,
-    closeOnSelect: PropTypes.bool,
-    showToken: PropTypes.bool,
-    suggested: PropTypes.arrayOf(PropTypes.any),
-    CustomChickletComponent: PropTypes.func
-  };
+const FieldSelectorFactory = FieldListItemFactory => {
+  class FieldSelector extends Component {
+    static propTypes = {
+      fields: PropTypes.oneOfType([PropTypes.array, PropTypes.arrayOf(FieldType)]),
+      onSelect: PropTypes.func.isRequired,
+      placement: PropTypes.string,
+      value: FieldType,
+      filterFieldTypes: PropTypes.oneOfType([FieldType, PropTypes.arrayOf(FieldType)]),
+      inputTheme: PropTypes.string,
+      placeholder: PropTypes.string,
+      erasable: PropTypes.bool,
+      error: PropTypes.bool,
+      multiSelect: PropTypes.bool,
+      closeOnSelect: PropTypes.bool,
+      showToken: PropTypes.bool,
+      suggested: PropTypes.arrayOf(PropTypes.any),
+      CustomChickletComponent: PropTypes.func
+    };
 
-  static defaultProps = {
-    erasable: true,
-    error: false,
-    fields: [],
-    onSelect: () => {},
-    placement: 'bottom',
-    value: null,
-    multiSelect: false,
-    closeOnSelect: true,
-    showToken: true,
-    placeholder: 'placeholder.selectField'
-  };
+    static defaultProps = {
+      erasable: true,
+      error: false,
+      fields: [],
+      onSelect: () => {},
+      placement: 'bottom',
+      value: null,
+      multiSelect: false,
+      closeOnSelect: true,
+      showToken: true,
+      placeholder: 'placeholder.selectField'
+    };
 
-  fieldsSelector = props => props.fields;
-  filteredFieldsSelector = props =>
-    props.fields.filter(
-      field => !toArray(props.value).find(d => (d.name ? d.name === field.name : d === field.name))
+    fieldsSelector = props => props.fields;
+    filteredFieldsSelector = props =>
+      props.fields.filter(
+        field =>
+          !toArray(props.value).find(d => (d.name ? d.name === field.name : d === field.name))
+      );
+    valueSelector = props => props.value;
+    filterFieldTypesSelector = props => props.filterFieldTypes;
+    showTokenSelector = props => props.showToken;
+
+    selectedItemsSelector = createSelector(
+      this.fieldsSelector,
+      this.valueSelector,
+      (fields, value) =>
+        toArray(value)
+          .map(d =>
+            fields.find(f =>
+              notNullorUndefined(d) && d.name
+                ? d.name === defaultDisplayOption(f)
+                : d === defaultDisplayOption(f)
+            )
+          )
+          .filter(d => d)
     );
-  valueSelector = props => props.value;
-  filterFieldTypesSelector = props => props.filterFieldTypes;
-  showTokenSelector = props => props.showToken;
 
-  selectedItemsSelector = createSelector(this.fieldsSelector, this.valueSelector, (fields, value) =>
-    toArray(value)
-      .map(d =>
-        fields.find(f =>
-          notNullorUndefined(d) && d.name
-            ? d.name === defaultDisplayOption(f)
-            : d === defaultDisplayOption(f)
-        )
-      )
-      .filter(d => d)
-  );
-
-  fieldOptionsSelector = createSelector(
-    this.filteredFieldsSelector,
-    this.filterFieldTypesSelector,
-    (fields, filterFieldTypes) => {
-      if (!filterFieldTypes) {
-        return fields;
+    fieldOptionsSelector = createSelector(
+      this.filteredFieldsSelector,
+      this.filterFieldTypesSelector,
+      (fields, filterFieldTypes) => {
+        if (!filterFieldTypes) {
+          return fields;
+        }
+        const filters = Array.isArray(filterFieldTypes) ? filterFieldTypes : [filterFieldTypes];
+        return fields.filter(f => filters.includes(f.type));
       }
-      const filters = Array.isArray(filterFieldTypes) ? filterFieldTypes : [filterFieldTypes];
-      return fields.filter(f => filters.includes(f.type));
-    }
-  );
-
-  fieldListItemSelector = createSelector(this.showTokenSelector, FieldListItemFactory);
-
-  render() {
-    return (
-      <div className="field-selector">
-        <ItemSelector
-          getOptionValue={d => d}
-          closeOnSelect={this.props.closeOnSelect}
-          displayOption={defaultDisplayOption}
-          filterOption="name"
-          fixedOptions={this.props.suggested}
-          inputTheme={this.props.inputTheme}
-          isError={this.props.error}
-          selectedItems={this.selectedItemsSelector(this.props)}
-          erasable={this.props.erasable}
-          options={this.fieldOptionsSelector(this.props)}
-          multiSelect={this.props.multiSelect}
-          placeholder={this.props.placeholder}
-          placement={this.props.placement}
-          onChange={this.props.onSelect}
-          DropDownLineItemRenderComponent={this.fieldListItemSelector(this.props)}
-          DropdownHeaderComponent={this.props.suggested ? SuggestedFieldHeader : null}
-          CustomChickletComponent={this.props.CustomChickletComponent}
-        />
-      </div>
     );
-  }
-}
 
-export default FieldSelector;
+    fieldListItemSelector = createSelector(this.showTokenSelector, FieldListItemFactory);
+
+    render() {
+      return (
+        <div className="field-selector">
+          <ItemSelector
+            getOptionValue={d => d}
+            closeOnSelect={this.props.closeOnSelect}
+            displayOption={defaultDisplayOption}
+            filterOption="name"
+            fixedOptions={this.props.suggested}
+            inputTheme={this.props.inputTheme}
+            isError={this.props.error}
+            selectedItems={this.selectedItemsSelector(this.props)}
+            erasable={this.props.erasable}
+            options={this.fieldOptionsSelector(this.props)}
+            multiSelect={this.props.multiSelect}
+            placeholder={this.props.placeholder}
+            placement={this.props.placement}
+            onChange={this.props.onSelect}
+            DropDownLineItemRenderComponent={this.fieldListItemSelector(this.props)}
+            DropdownHeaderComponent={this.props.suggested ? SuggestedFieldHeader : null}
+            CustomChickletComponent={this.props.CustomChickletComponent}
+          />
+        </div>
+      );
+    }
+  }
+  return FieldSelector;
+};
+
+FieldSelectorFactory.deps = [FieldListItemFactoryFactory];
+export default FieldSelectorFactory;

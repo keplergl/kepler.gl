@@ -22,88 +22,117 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
-import FieldSelector from 'components/common/field-selector';
 import {createSelector} from 'reselect';
 
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
+import FieldSelectorFactory from '../../common/field-selector';
 
 const TopRow = styled.div`
   display: flex;
   justify-content: space-between;
 `;
 
-export default class LayerColumnConfig extends Component {
-  static propTypes = {
-    columns: PropTypes.object.isRequired,
-    fields: PropTypes.arrayOf(PropTypes.any).isRequired,
-    assignColumnPairs: PropTypes.func.isRequired,
-    assignColumn: PropTypes.func.isRequired,
-    updateLayerConfig: PropTypes.func.isRequired,
-    columnPairs: PropTypes.object,
-    fieldPairs: PropTypes.arrayOf(PropTypes.any),
-    columnLabels: PropTypes.object
-  };
+const LayerColumnConfigFactory = ColumnSelector => {
+  class LayerColumnConfig extends Component {
+    static propTypes = {
+      columns: PropTypes.object.isRequired,
+      fields: PropTypes.arrayOf(PropTypes.any).isRequired,
+      assignColumnPairs: PropTypes.func.isRequired,
+      assignColumn: PropTypes.func.isRequired,
+      updateLayerConfig: PropTypes.func.isRequired,
+      columnPairs: PropTypes.object,
+      fieldPairs: PropTypes.arrayOf(PropTypes.any),
+      columnLabels: PropTypes.object
+    };
 
-  columnPairs = props => props.columnPairs;
-  fieldPairs = props => props.fieldPairs;
-  fieldPairsSelector = createSelector(
-    this.columnPairs,
-    this.fieldPairs,
-    (columnPairs, fieldPairs) =>
-      columnPairs
-        ? fieldPairs.map(fp => ({
-            name: fp.defaultName,
-            type: 'point',
-            pair: fp.pair
-          }))
-        : null
-  );
-
-  _updateColumn(key, value) {
-    const {columnPairs, assignColumnPairs, assignColumn} = this.props;
-
-    const columns =
-      value && value.pair && columnPairs
-        ? assignColumnPairs(key, value.pair)
-        : assignColumn(key, value);
-
-    this.props.updateLayerConfig({columns});
-  }
-
-  render() {
-    const {columns, columnLabels, fields} = this.props;
-
-    const fieldPairs = this.fieldPairsSelector(this.props);
-
-    return (
-      <div>
-        <SidePanelSection>
-          <div className="layer-config__column">
-            <TopRow>
-              <PanelLabel>
-                <FormattedMessage id={'columns.title'} />
-              </PanelLabel>
-              <PanelLabel>
-                <FormattedMessage id="layer.required" />
-              </PanelLabel>
-            </TopRow>
-            {Object.keys(columns).map(key => (
-              <ColumnSelector
-                column={columns[key]}
-                label={(columnLabels && columnLabels[key]) || key}
-                key={key}
-                allFields={fields}
-                fieldPairs={fieldPairs}
-                onSelect={val => this._updateColumn(key, val)}
-              />
-            ))}
-          </div>
-        </SidePanelSection>
-      </div>
+    columnPairs = props => props.columnPairs;
+    fieldPairs = props => props.fieldPairs;
+    fieldPairsSelector = createSelector(
+      this.columnPairs,
+      this.fieldPairs,
+      (columnPairs, fieldPairs) =>
+        columnPairs
+          ? fieldPairs.map(fp => ({
+              name: fp.defaultName,
+              type: 'point',
+              pair: fp.pair
+            }))
+          : null
     );
-  }
-}
 
+    _updateColumn(key, value) {
+      const {columnPairs, assignColumnPairs, assignColumn} = this.props;
+
+      const columns =
+        value && value.pair && columnPairs
+          ? assignColumnPairs(key, value.pair)
+          : assignColumn(key, value);
+
+      this.props.updateLayerConfig({columns});
+    }
+
+    render() {
+      const {columns, columnLabels, fields} = this.props;
+
+      const fieldPairs = this.fieldPairsSelector(this.props);
+
+      return (
+        <div>
+          <SidePanelSection>
+            <div className="layer-config__column">
+              <TopRow>
+                <PanelLabel>
+                  <FormattedMessage id={'columns.title'} />
+                </PanelLabel>
+                <PanelLabel>
+                  <FormattedMessage id="layer.required" />
+                </PanelLabel>
+              </TopRow>
+              {Object.keys(columns).map(key => (
+                <ColumnSelector
+                  column={columns[key]}
+                  label={(columnLabels && columnLabels[key]) || key}
+                  key={key}
+                  allFields={fields}
+                  fieldPairs={fieldPairs}
+                  onSelect={val => this._updateColumn(key, val)}
+                />
+              ))}
+            </div>
+          </SidePanelSection>
+        </div>
+      );
+    }
+  }
+  return LayerColumnConfig;
+};
+const ColumnSelectorFactory = FieldSelector => {
+  const ColumnSelector = ({column, label, allFields, onSelect, fieldPairs}) => (
+    <ColumnRow className="layer-config__column__selector">
+      <ColumnName className="layer-config__column__name">
+        <PanelLabel>
+          <FormattedMessage id={`columns.${label}`} />
+        </PanelLabel>
+        {!column.optional ? <PanelLabel>{`  *`}</PanelLabel> : null}
+      </ColumnName>
+      <ColumnSelect className="layer-config__column__select">
+        <FieldSelector
+          suggested={fieldPairs}
+          error={!column.optional && !column.value}
+          fields={allFields}
+          value={column.value}
+          erasable={Boolean(column.optional)}
+          onSelect={onSelect}
+        />
+      </ColumnSelect>
+    </ColumnRow>
+  );
+  return ColumnSelector;
+};
+
+ColumnSelectorFactory.deps = [FieldSelectorFactory];
+
+LayerColumnConfigFactory.deps = [ColumnSelectorFactory];
 const ColumnRow = styled.div`
   display: flex;
   margin-bottom: 8px;
@@ -117,23 +146,4 @@ const ColumnSelect = styled.div`
   width: 70%;
 `;
 
-const ColumnSelector = ({column, label, allFields, onSelect, fieldPairs}) => (
-  <ColumnRow className="layer-config__column__selector">
-    <ColumnName className="layer-config__column__name">
-      <PanelLabel>
-        <FormattedMessage id={`columns.${label}`} />
-      </PanelLabel>
-      {!column.optional ? <PanelLabel>{`  *`}</PanelLabel> : null}
-    </ColumnName>
-    <ColumnSelect className="layer-config__column__select">
-      <FieldSelector
-        suggested={fieldPairs}
-        error={!column.optional && !column.value}
-        fields={allFields}
-        value={column.value}
-        erasable={Boolean(column.optional)}
-        onSelect={onSelect}
-      />
-    </ColumnSelect>
-  </ColumnRow>
-);
+export default LayerColumnConfigFactory;

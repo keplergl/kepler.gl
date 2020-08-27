@@ -101,7 +101,7 @@ export {default as FloatingTimeDisplayFactory} from './common/animation-control/
 export {default as AnimationSpeedSliderFactory} from './common/animation-control/animation-speed-slider';
 export {default as RangePlotFactory} from './common/range-plot';
 export {default as RangeBrushFactory} from './common/range-brush';
-export {FieldListItemFactory} from './common/field-selector';
+export {FieldListItemFactoryFactory} from './common/field-selector';
 export {default as TimeSliderMarkerFactory} from './common/time-slider-marker';
 export {default as InfoHelperFactory} from 'components/common/info-helper';
 
@@ -124,13 +124,13 @@ export {default as CloudTile} from './modals/cloud-tile';
 export {default as FileUploadFactory, FileUpload} from './common/file-uploader/file-upload';
 export {default as DatasetLabel} from './common/dataset-label';
 export {default as ItemSelector} from './common/item-selector/item-selector';
-export {default as FieldSelector} from './common/field-selector';
+export {default as FieldSelectorFactory} from './common/field-selector';
 export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export {default as LoadingDialog} from './modals/loading-dialog';
-export {default as FieldToken} from './common/field-token';
+export {default as FieldTokenFactory} from './common/field-token';
 export {default as Portaled} from './common/portaled';
 export {default as DropdownList} from './common/item-selector/dropdown-list';
 export {default as ProgressBar} from './common/progress-bar';
