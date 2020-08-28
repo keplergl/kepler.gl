@@ -181,7 +181,8 @@ export const checkboxBoxBgdChecked = primaryBtnBgd;
 // Side Panel
 export const sidePanelHeaderBg = '#29323C';
 export const sidePanelHeaderBorder = 'transparent';
-export const sidePanelTopMargin = '12px';
+export const layerConfigGroupMarginBottom = 12;
+export const layerConfigGroupPaddingLeft = 18;
 
 export const sidePanelInnerPadding = 16;
 export const sidePanelBorder = 0;
@@ -205,7 +206,7 @@ export const panelHeaderHeight = 48;
 export const panelBoxShadow = '0 6px 12px 0 rgba(0,0,0,0.16)';
 export const panelBorderRadius = '2px';
 export const panelBackgroundLT = '#F8F8F9';
-export const styledLayerConfigGroupLabelLabelFontSize = '12px';
+export const panelToggleMarginRight = 12;
 
 export const panelBorderColor = '#3A414C';
 export const panelBorder = `1px solid ${borderColor}`;
@@ -1093,7 +1094,6 @@ export const theme = {
   sideBarCloseBtnBgdHover,
   sidePanelHeaderBg,
   sidePanelHeaderBorder,
-  sidePanelTopMargin,
   sidePanelScrollBarWidth,
   sidePanelScrollBarHeight,
   sidePanelTitleFontsize,
@@ -1101,12 +1101,17 @@ export const theme = {
   panelHeaderBorderRadius,
   sidePanelBorder,
   sidePanelBorderColor,
-  styledLayerConfigGroupLabelLabelFontSize,
+
+  layerConfigGroupLabelLabelFontSize,
+  layerConfigGroupMarginBottom,
+  layerConfigGroupPaddingLeft,
+
   // Side Panel Panel
   panelActiveBg,
   panelBackground,
   panelBackgroundHover,
   panelBackgroundLT,
+  panelToggleMarginRight,
   panelBoxShadow,
   panelBorderRadius,
   panelBorder,
