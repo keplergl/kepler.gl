@@ -111,7 +111,8 @@ export const inputColor = '#A0A7B4';
 export const inputBorderRadius = '1px';
 export const inputPlaceholderColor = '#6A7485';
 export const inputPlaceholderFontWeight = 400;
-
+export const inputBoxShadow = 'none';
+export const inputBoxShadowActive = 'none';
 export const secondaryInputBgd = '#242730';
 export const secondaryInputBgdHover = '#3A414C';
 export const secondaryInputBgdActive = '#3A414C';
@@ -412,6 +413,7 @@ const input = css`
   word-wrap: normal;
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
   opacity: ${props => (props.disabled ? 0.5 : 1)};
+  box-shadow: ${props => props.theme.inputBoxShadow};
 
   :hover {
     cursor: ${props => (props.type === 'number' || props.type === 'text' ? 'text' : 'pointer')};
@@ -427,6 +429,7 @@ const input = css`
   &.active {
     background-color: ${props => props.theme.inputBgdActive};
     border-color: ${props => props.theme.inputBorderActiveColor};
+    box-shadow: ${props => props.theme.inputBoxShadowActive};
   }
 
   ::placeholder {
@@ -992,6 +995,8 @@ export const theme = {
   inputFontWeight,
   inputPlaceholderColor,
   inputPlaceholderFontWeight,
+  inputBoxShadow,
+  inputBoxShadowActive,
 
   secondaryInputBgd,
   secondaryInputBgdHover,
