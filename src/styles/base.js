@@ -354,6 +354,7 @@ export const textTruncate = {
 export const layerConfigGroupLabelBorderLeft = '2px';
 export const layerConfigGroupLabelMargin = '-12px';
 export const layerConfigGroupLabelPadding = '10px';
+export const layerConfigGroupColor = 'transparent';
 
 // layerConfigGroupLabel label
 export const layerConfigGroupLabelLabelMargin = '0';
@@ -1244,10 +1245,10 @@ export const theme = {
   layerConfigGroupLabelBorderLeft,
   layerConfigGroupLabelMargin,
   layerConfigGroupLabelPadding,
+  layerConfigGroupColor,
 
   // layerConfigGroupLabel label
   layerConfigGroupLabelLabelMargin,
-  layerConfigGroupLabelLabelFontSize,
 
   // StyledConfigGroupHeader
   styledConfigGroupHeaderBorder,
