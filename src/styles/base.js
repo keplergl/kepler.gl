@@ -119,6 +119,7 @@ export const secondaryInputBgdActive = '#3A414C';
 export const secondaryInputColor = '#A0A7B4';
 export const secondaryInputBorderColor = '#242730';
 export const secondaryInputBorderActiveColor = '#D3D8E0';
+export const dropdownSelectHeight = '30px';
 
 // Select
 export const selectColor = inputColor;
@@ -266,6 +267,10 @@ export const sliderBarHeight = 4;
 export const sliderHandleHeight = 12;
 export const sliderHandleWidth = 12;
 export const sliderHandleColor = '#D3D8E0';
+export const sliderHandleTextColor = 'black';
+
+export const sliderBorderRadius = '0';
+
 export const sliderHandleHoverColor = '#FFFFFF';
 export const sliderHandleText = '';
 export const sliderHandleShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
@@ -1005,6 +1010,7 @@ export const theme = {
   secondaryInputColor,
   secondaryInputBorderColor,
   secondaryInputBorderActiveColor,
+  dropdownSelectHeight,
 
   // Switch
   switchWidth,
@@ -1169,6 +1175,8 @@ export const theme = {
   sliderHandleHeight,
   sliderHandleWidth,
   sliderHandleColor,
+  sliderHandleTextColor,
+  sliderBorderRadius,
   sliderHandleHoverColor,
   sliderHandleText,
   sliderHandleShadow,

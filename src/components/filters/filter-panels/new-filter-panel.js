@@ -77,10 +77,10 @@ const NewFilterPanelFactory = (FilterPanelHeader, SourceDataSelector, FieldSelec
   return NewFilterPanel;
 };
 
-// NewFilterPanelFactory.deps = [
-//   FilterPanelHeaderFactory,
-//   SourceDataSelectorFactory,
-//   FieldSelectorFactory
-// ];
+NewFilterPanelFactory.deps = [
+  FilterPanelHeaderFactory,
+  SourceDataSelectorFactory,
+  FieldSelectorFactory
+];
 
 export default NewFilterPanelFactory;
