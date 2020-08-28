@@ -180,7 +180,6 @@ const TooltipConfigFactory = (DatasetTag, FieldSelector) => {
   }
 
   return injectIntl(TooltipConfig);
-  // return TooltipConfig;
 };
 
 TooltipConfigFactory.deps = [DatasetTagFactory, FieldSelectorFactory];
