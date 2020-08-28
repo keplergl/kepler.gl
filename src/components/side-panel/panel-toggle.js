@@ -51,7 +51,7 @@ const PanelTab = styled.div.attrs({
   color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.subtextColor)};
   display: flex;
   justify-content: center;
-  margin-right: 12px;
+  margin-right: ${props => props.theme.panelToggleMarginRight}px;
   padding-bottom: 6px;
   width: ${props => props.theme.subtextWidth};
 
