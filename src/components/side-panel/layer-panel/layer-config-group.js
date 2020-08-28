@@ -51,8 +51,8 @@ export const ConfigGroupCollapsibleHeader = styled.div.attrs({
 `;
 
 export const StyledLayerConfigGroup = styled.div`
-  padding-left: 18px;
-  margin-bottom: ${props => props.theme.sidePanelTopMargin};
+  padding-left: ${props => props.theme.layerConfigGroupPaddingLeft}px;
+  margin-bottom: ${props => props.theme.layerConfigGroupMarginBottom}px;
 
   &.disabled {
     opacity: 0.3;

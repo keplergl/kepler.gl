@@ -140,10 +140,10 @@ const ColumnRow = styled.div`
 `;
 
 const ColumnName = styled.div`
-  width: 30%;
+  width: 25%;
 `;
 const ColumnSelect = styled.div`
-  width: 70%;
+  width: 75%;
 `;
 
 export default LayerColumnConfigFactory;
