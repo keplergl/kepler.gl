@@ -24,6 +24,8 @@ import VisConfigSliderFactory from './side-panel/layer-panel/vis-config-slider';
 import LayerConfigGroupFactory from './side-panel/layer-panel/layer-config-group';
 import {ChannelByValueSelectorFactory} from './side-panel/layer-panel/layer-configurator';
 import {appInjector} from './container';
+import FieldSelectorFactory from './common/field-selector';
+import FieldTokenFactory from './common/field-token';
 
 // Components
 export {default as KeplerGl, default, injectComponents} from './container';
@@ -163,6 +165,8 @@ export const RangeSlider = appInjector.get(RangeSliderFactory);
 export const VisConfigSlider = appInjector.get(VisConfigSliderFactory);
 export const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
 export const ChannelByValueSelector = appInjector.get(ChannelByValueSelectorFactory);
+export const FieldSelector = appInjector.get(FieldSelectorFactory);
+export const FieldToken = appInjector.get(FieldTokenFactory);
 
 export {
   TimeRangeSliderFactory,
