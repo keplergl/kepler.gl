@@ -93,6 +93,8 @@ export const negativeBtnActColor = '#FFFFFF';
 export const floatingBtnBgd = '#29323C';
 export const floatingBtnActBgd = '#3A4552';
 export const floatingBtnBgdHover = '#3A4552';
+export const floatingBtnBorder = '0';
+export const floatingBtnBorderHover = '0';
 export const floatingBtnColor = subtextColor;
 export const floatingBtnActColor = subtextColorActive;
 
@@ -241,7 +243,7 @@ export const bottomWidgetPaddingTop = 20;
 export const bottomWidgetPaddingRight = 20;
 export const bottomWidgetPaddingBottom = 30;
 export const bottomWidgetPaddingLeft = 20;
-
+export const bottomWidgetBgd = '#29323C';
 // Modal
 export const modalTitleColor = '#3A414C';
 export const modalTitleFontSize = '24px';
@@ -1081,6 +1083,8 @@ export const theme = {
   floatingBtnBgd,
   floatingBtnActBgd,
   floatingBtnBgdHover,
+  floatingBtnBorder,
+  floatingBtnBorderHover,
   floatingBtnColor,
   floatingBtnActColor,
 
@@ -1179,6 +1183,7 @@ export const theme = {
   bottomWidgetPaddingRight,
   bottomWidgetPaddingBottom,
   bottomWidgetPaddingLeft,
+  bottomWidgetBgd,
 
   // Slider
   sliderBarColor,
@@ -1299,6 +1304,7 @@ export const themeLT = {
   dropdownListHighlightBg: '#F0F0F0',
 
   panelBackground: '#F7F7F7',
+  bottomWidgetBgd: '#F7F7F7',
   panelBackgroundHover: '#F7F7F7',
   panelBorderColor: '#D3D8E0',
 
@@ -1365,6 +1371,7 @@ export const themeBS = {
   inputColor: '#000000',
   panelActiveBg: '#E2E2E2',
   panelBackground: '#FFFFFF',
+  bottomWidgetBgd: '#F7F7F7',
   panelBackgroundHover: '#EEEEEE',
   panelBorderColor: '#E2E2E2',
   primaryBtnBgd: '#E2E2E2',
