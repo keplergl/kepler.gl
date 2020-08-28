@@ -83,7 +83,7 @@ const StyledListItem = styled.div`
     text-transform: capitalize;
     font-size: 12px;
     text-align: center;
-    color: ${props => props.theme.labelColor};
+    color: ${props => props.theme.selectColor};
   }
 `;
 
