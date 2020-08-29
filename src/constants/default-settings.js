@@ -368,6 +368,55 @@ export const TABLE_OPTION_LIST = [
   },
   {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: Clipboard}
 ];
+
+const ORANGE = '248, 194, 28';
+const PINK = '231, 189, 194';
+const PURPLE = '160, 106, 206';
+const BLUE = '140, 210, 205';
+const BLUE2 = '106, 160, 206';
+const BLUE3 = '0, 172, 237';
+const GREEN = '106, 160, 56';
+const RED = '237, 88, 106';
+
+export const FILED_TYPE_DISPLAY = {
+  [ALL_FIELD_TYPES.boolean]: {
+    label: 'bool',
+    color: PINK
+  },
+  [ALL_FIELD_TYPES.date]: {
+    label: 'date',
+    color: PURPLE
+  },
+  [ALL_FIELD_TYPES.geojson]: {
+    label: 'geo',
+    color: BLUE2
+  },
+  [ALL_FIELD_TYPES.integer]: {
+    label: 'int',
+    color: ORANGE
+  },
+  [ALL_FIELD_TYPES.real]: {
+    label: 'float',
+    color: ORANGE
+  },
+  [ALL_FIELD_TYPES.string]: {
+    label: 'string',
+    color: BLUE
+  },
+  [ALL_FIELD_TYPES.timestamp]: {
+    label: 'time',
+    color: GREEN
+  },
+  // field pairs
+  [ALL_FIELD_TYPES.point]: {
+    label: 'point',
+    color: BLUE3
+  }
+};
+
+export const FIELD_COLORS = {
+  default: RED
+};
 export const HIGHLIGH_COLOR_3D = [255, 255, 255, 60];
 export const CHANNEL_SCALES = keyMirror({
   color: null,

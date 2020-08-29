@@ -102,6 +102,12 @@ const StyledTitle = styled(CenterFlexbox)`
   }
 `;
 
+TimeWidgetFactory.deps = [
+  SpeedControlFactory,
+  TimeRangeFilterFactory,
+  FloatingTimeDisplayFactory,
+  FieldSelectorFactory
+];
 function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay, FieldSelector) {
   class TimeWidget extends Component {
     state = {
@@ -185,11 +191,5 @@ function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay, F
   }
   return TimeWidget;
 }
-TimeWidgetFactory.deps = [
-  SpeedControlFactory,
-  TimeRangeFilterFactory,
-  FloatingTimeDisplayFactory,
-  FieldSelectorFactory
-];
 
 export default TimeWidgetFactory;

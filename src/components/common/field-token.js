@@ -20,9 +20,8 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
-
-const FieldTokenFactory = () => {
+import {FILED_TYPE_DISPLAY, FIELD_COLORS} from 'constants/default-settings';
+const FieldTokenFactory = (fieldTypeDisplay, fieldColors) => {
   const FieldTag = styled.div`
     background-color: rgba(${props => props.color}, 0.2);
     border-radius: 2px;
@@ -36,54 +35,6 @@ const FieldTokenFactory = () => {
     width: 40px;
   `;
 
-  const ORANGE = '248, 194, 28';
-  const PINK = '231, 189, 194';
-  const PURPLE = '160, 106, 206';
-  const BLUE = '140, 210, 205';
-  const BLUE2 = '106, 160, 206';
-  const BLUE3 = '0, 172, 237';
-  const GREEN = '106, 160, 56';
-  const RED = '237, 88, 106';
-
-  const fieldTypeDisplay = {
-    [ALL_FIELD_TYPES.boolean]: {
-      label: 'bool',
-      color: PINK
-    },
-    [ALL_FIELD_TYPES.date]: {
-      label: 'date',
-      color: PURPLE
-    },
-    [ALL_FIELD_TYPES.geojson]: {
-      label: 'geo',
-      color: BLUE2
-    },
-    [ALL_FIELD_TYPES.integer]: {
-      label: 'int',
-      color: ORANGE
-    },
-    [ALL_FIELD_TYPES.real]: {
-      label: 'float',
-      color: ORANGE
-    },
-    [ALL_FIELD_TYPES.string]: {
-      label: 'string',
-      color: BLUE
-    },
-    [ALL_FIELD_TYPES.timestamp]: {
-      label: 'time',
-      color: GREEN
-    },
-    // field pairs
-    [ALL_FIELD_TYPES.point]: {
-      label: 'point',
-      color: BLUE3
-    }
-  };
-
-  const fieldColors = {
-    default: RED
-  };
   const FieldToken = ({type}) => (
     <FieldTag
       color={(fieldTypeDisplay[type] && fieldTypeDisplay[type].color) || fieldColors.default}
@@ -93,5 +44,5 @@ const FieldTokenFactory = () => {
   );
   return FieldToken;
 };
-
+FieldTokenFactory.deps = [() => FILED_TYPE_DISPLAY, () => FIELD_COLORS];
 export default FieldTokenFactory;
