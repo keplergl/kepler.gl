@@ -31,8 +31,8 @@ const TopRow = styled.div`
   display: flex;
   justify-content: space-between;
 `;
-
-const LayerColumnConfigFactory = ColumnSelector => {
+LayerColumnConfigFactory.deps = [ColumnSelectorFactory];
+function LayerColumnConfigFactory(ColumnSelector) {
   class LayerColumnConfig extends Component {
     static propTypes = {
       columns: PropTypes.object.isRequired,
@@ -105,8 +105,9 @@ const LayerColumnConfigFactory = ColumnSelector => {
     }
   }
   return LayerColumnConfig;
-};
-const ColumnSelectorFactory = FieldSelector => {
+}
+ColumnSelectorFactory.deps = [FieldSelectorFactory];
+function ColumnSelectorFactory(FieldSelector) {
   const ColumnSelector = ({column, label, allFields, onSelect, fieldPairs}) => (
     <ColumnRow className="layer-config__column__selector">
       <ColumnName className="layer-config__column__name">
@@ -128,11 +129,8 @@ const ColumnSelectorFactory = FieldSelector => {
     </ColumnRow>
   );
   return ColumnSelector;
-};
+}
 
-ColumnSelectorFactory.deps = [FieldSelectorFactory];
-
-LayerColumnConfigFactory.deps = [ColumnSelectorFactory];
 const ColumnRow = styled.div`
   display: flex;
   margin-bottom: 8px;

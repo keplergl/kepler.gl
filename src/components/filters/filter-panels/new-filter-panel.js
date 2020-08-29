@@ -24,7 +24,13 @@ import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
 import FieldSelectorFactory from '../../common/field-selector';
 
-const NewFilterPanelFactory = (FilterPanelHeader, SourceDataSelector, FieldSelector) => {
+NewFilterPanelFactory.deps = [
+  FilterPanelHeaderFactory,
+  SourceDataSelectorFactory,
+  FieldSelectorFactory
+];
+
+function NewFilterPanelFactory(FilterPanelHeader, SourceDataSelector, FieldSelector) {
   const NewFilterPanel = React.memo(
     ({idx, filter, datasets, allAvailableFields, setFilter, removeFilter, enlargeFilter}) => {
       const onFieldSelector = useCallback(field => setFilter(idx, 'name', field.name), [
@@ -75,12 +81,6 @@ const NewFilterPanelFactory = (FilterPanelHeader, SourceDataSelector, FieldSelec
   NewFilterPanel.displayName = 'NewFilterPanel';
 
   return NewFilterPanel;
-};
-
-NewFilterPanelFactory.deps = [
-  FilterPanelHeaderFactory,
-  SourceDataSelectorFactory,
-  FieldSelectorFactory
-];
+}
 
 export default NewFilterPanelFactory;

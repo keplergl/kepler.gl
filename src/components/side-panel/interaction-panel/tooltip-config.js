@@ -67,7 +67,8 @@ const CompareSwitchWrapper = styled.div`
   margin-bottom: 8px;
 `;
 
-const TooltipConfigFactory = (DatasetTag, FieldSelector) => {
+TooltipConfigFactory.deps = [DatasetTagFactory, FieldSelectorFactory];
+function TooltipConfigFactory(DatasetTag, FieldSelector) {
   class TooltipConfig extends Component {
     render() {
       const {config, datasets, onChange, intl} = this.props;
@@ -180,7 +181,6 @@ const TooltipConfigFactory = (DatasetTag, FieldSelector) => {
   }
 
   return injectIntl(TooltipConfig);
-};
+}
 
-TooltipConfigFactory.deps = [DatasetTagFactory, FieldSelectorFactory];
 export default TooltipConfigFactory;

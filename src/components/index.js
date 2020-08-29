@@ -23,9 +23,9 @@ import RangeSliderFactory from './common/range-slider';
 import VisConfigSliderFactory from './side-panel/layer-panel/vis-config-slider';
 import LayerConfigGroupFactory from './side-panel/layer-panel/layer-config-group';
 import {ChannelByValueSelectorFactory} from './side-panel/layer-panel/layer-configurator';
-import {appInjector} from './container';
 import FieldSelectorFactory from './common/field-selector';
 import FieldTokenFactory from './common/field-token';
+import {appInjector} from './container';
 
 // Components
 export {default as KeplerGl, default, injectComponents} from './container';
