@@ -47,8 +47,8 @@ export const titleColorLT = '#29323C';
 export const subtextColor = '#6A7485';
 export const subtextColorLT = '#A0A7B4';
 export const subtextColorActive = '#FFFFFF';
-export const subtextBorderColorActive = '#FFFFFF';
-export const subtextWidth = '30px';
+export const panelToggleBorderColor = '#FFFFFF';
+export const panelTabWidth = '30px';
 
 export const titleTextColor = '#FFFFFF';
 export const textColorHl = '#F0F0F0';
@@ -119,7 +119,7 @@ export const secondaryInputBgdActive = '#3A414C';
 export const secondaryInputColor = '#A0A7B4';
 export const secondaryInputBorderColor = '#242730';
 export const secondaryInputBorderActiveColor = '#D3D8E0';
-export const dropdownSelectHeight = '30px';
+export const dropdownSelectHeight = 30;
 
 // Select
 export const selectColor = inputColor;
@@ -267,12 +267,12 @@ export const sliderBarHeight = 4;
 export const sliderHandleHeight = 12;
 export const sliderHandleWidth = 12;
 export const sliderHandleColor = '#D3D8E0';
-export const sliderHandleTextColor = 'black';
+export const sliderHandleTextColor = sliderHandleColor;
 
 export const sliderBorderRadius = '0';
 
 export const sliderHandleHoverColor = '#FFFFFF';
-export const sliderHandleText = '';
+export const sliderHandleAfterContent = '';
 export const sliderHandleShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
 export const sliderInputHeight = 24;
 export const sliderInputWidth = 56;
@@ -340,7 +340,7 @@ export const actionPanelWidth = 110;
 export const actionPanelHeight = 32;
 
 // Styled Token
-export const tokenRightMargin = 4;
+export const fieldTokenRightMargin = 4;
 
 export const textTruncate = {
   maxWidth: '100%',
@@ -1145,8 +1145,8 @@ export const theme = {
   subtextColor,
   subtextColorLT,
   subtextColorActive,
-  subtextBorderColorActive,
-  subtextWidth,
+  panelToggleBorderColor,
+  panelTabWidth,
   textTruncate,
   titleColorLT,
   tooltipBg,
@@ -1179,7 +1179,7 @@ export const theme = {
   sliderHandleTextColor,
   sliderBorderRadius,
   sliderHandleHoverColor,
-  sliderHandleText,
+  sliderHandleAfterContent,
   sliderHandleShadow,
   sliderInputHeight,
   sliderInputWidth,
@@ -1260,7 +1260,7 @@ export const theme = {
   layerConfiguratorPadding,
 
   // Styled token
-  tokenRightMargin
+  fieldTokenRightMargin
 };
 
 export const themeLT = {

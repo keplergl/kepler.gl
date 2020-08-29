@@ -41,7 +41,8 @@ import RangeSliderFactory from 'components/common/range-slider';
 import {LAYER_TEXT_CONFIGS} from 'layers/layer-factory';
 import FieldSelectorFactory from '../../common/field-selector';
 
-const TextLabelPanelFactory = (RangeSlider, LayerConfigGroup, FieldSelector) => {
+TextLabelPanelFactory.deps = [RangeSliderFactory, LayerConfigGroupFactory, FieldSelectorFactory];
+function TextLabelPanelFactory(RangeSlider, LayerConfigGroup, FieldSelector) {
   class TextLabelPanel extends Component {
     static propTypes = {
       fields: PropTypes.arrayOf(PropTypes.object),
@@ -140,6 +141,6 @@ const TextLabelPanelFactory = (RangeSlider, LayerConfigGroup, FieldSelector) => 
   }
 
   return TextLabelPanel;
-};
-TextLabelPanelFactory.deps = [RangeSliderFactory, LayerConfigGroupFactory, FieldSelectorFactory];
+}
+
 export default TextLabelPanelFactory;

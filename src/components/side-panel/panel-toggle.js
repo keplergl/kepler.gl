@@ -47,13 +47,13 @@ const PanelTab = styled.div.attrs({
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: ${props =>
-    props.active ? props.theme.subtextBorderColorActive : 'transparent'};
+    props.active ? props.theme.panelToggleBorderColor : 'transparent'};
   color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.subtextColor)};
   display: flex;
   justify-content: center;
   margin-right: ${props => props.theme.panelToggleMarginRight}px;
   padding-bottom: 6px;
-  width: ${props => props.theme.subtextWidth};
+  width: ${props => props.theme.panelTabWidth};
 
   :hover {
     cursor: pointer;

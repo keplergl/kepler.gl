@@ -33,7 +33,7 @@ const defaultDisplayOption = d => d.name;
 
 const StyledToken = styled.div`
   display: inline-block;
-  margin: 0 ${props => props.theme.tokenRightMargin}px 0 0;
+  margin: 0 ${props => props.theme.fieldTokenRightMargin}px 0 0;
 `;
 
 FieldListItemFactoryFactory.deps = [FieldTokenFactory];

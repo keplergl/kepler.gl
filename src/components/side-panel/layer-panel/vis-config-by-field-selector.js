@@ -28,7 +28,8 @@ import DimensionScaleSelector from './dimension-scale-selector';
 import {camelize} from 'utils/utils';
 import FieldSelectorFactory from '../../common/field-selector';
 
-const VisConfigByFieldSelectorFactory = (InfoHelper, FieldSelector) => {
+VisConfigByFieldSelectorFactory.deps = [InfoHelperFacotry, FieldSelectorFactory];
+function VisConfigByFieldSelectorFactory(InfoHelper, FieldSelector) {
   class VisConfigByFieldSelector extends Component {
     static propTypes = {
       channel: PropTypes.string.isRequired,
@@ -111,6 +112,6 @@ const VisConfigByFieldSelectorFactory = (InfoHelper, FieldSelector) => {
     }
   }
   return injectIntl(VisConfigByFieldSelector);
-};
-VisConfigByFieldSelectorFactory.deps = [InfoHelperFacotry, FieldSelectorFactory];
+}
+
 export default VisConfigByFieldSelectorFactory;

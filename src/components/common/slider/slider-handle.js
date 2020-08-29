@@ -58,7 +58,7 @@ const StyledSliderHandle = styled.span`
   padding: 0 3px;
   letter-spacing: 1px;
   :after {
-    content: '${props => props.theme.sliderHandleText}';
+    content: '${props => props.theme.sliderHandleAfterContent}';
   }
 `;
 
