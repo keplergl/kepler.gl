@@ -52,7 +52,7 @@ const PanelTab = styled.div.attrs({
   display: flex;
   justify-content: center;
   margin-right: ${props => props.theme.panelToggleMarginRight}px;
-  padding-bottom: 6px;
+  padding-bottom: ${props => props.theme.panelToggleBottomPadding}px;
   width: ${props => props.theme.panelTabWidth};
 
   :hover {

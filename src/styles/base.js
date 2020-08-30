@@ -66,12 +66,17 @@ export const primaryBtnColor = '#FFFFFF';
 export const primaryBtnActColor = '#FFFFFF';
 export const primaryBtnBgdHover = '#13B17B';
 export const primaryBtnRadius = '2px';
+export const primaryBtnFontSizeDefault = '11px';
+export const primaryBtnFontSizeSmall = '10px';
+export const primaryBtnFontSizeLarge = '14px';
+export const primaryBtnBorder = '0';
 
 export const secondaryBtnBgd = '#6A7485';
 export const secondaryBtnActBgd = '#A0A7B4';
 export const secondaryBtnColor = '#FFFFFF';
 export const secondaryBtnActColor = '#FFFFFF';
 export const secondaryBtnBgdHover = '#A0A7B4';
+export const secondaryBtnBorder = '0';
 
 export const linkBtnBgd = 'transparent';
 export const linkBtnActBgd = linkBtnBgd;
@@ -208,6 +213,7 @@ export const panelBoxShadow = '0 6px 12px 0 rgba(0,0,0,0.16)';
 export const panelBorderRadius = '2px';
 export const panelBackgroundLT = '#F8F8F9';
 export const panelToggleMarginRight = 12;
+export const panelToggleBottomPadding = 6;
 
 export const panelBorderColor = '#3A414C';
 export const panelBorder = `1px solid ${borderColor}`;
@@ -489,7 +495,7 @@ const inputLT = css`
 const secondaryInput = css`
   ${props => props.theme.input}
   color: ${props => props.theme.secondaryInputColor};
-  background-color: ${props => props.theme.secondaryInputBgd};
+  background-color:re ${props => props.theme.secondaryInputBgd};
   border: 1px solid
     ${props => (props.error ? props.theme.errorColor : props.theme.secondaryInputBorderColor)};
 
@@ -1048,11 +1054,17 @@ export const theme = {
   primaryBtnActColor,
   primaryBtnBgdHover,
   primaryBtnRadius,
+  primaryBtnFontSizeDefault,
+  primaryBtnFontSizeSmall,
+  primaryBtnFontSizeLarge,
+  primaryBtnBorder,
+
   secondaryBtnBgd,
   secondaryBtnActBgd,
   secondaryBtnBgdHover,
   secondaryBtnColor,
   secondaryBtnActColor,
+  secondaryBtnBorder,
 
   negativeBtnBgd,
   negativeBtnActBgd,
@@ -1119,6 +1131,7 @@ export const theme = {
   panelBackgroundHover,
   panelBackgroundLT,
   panelToggleMarginRight,
+  panelToggleBottomPadding,
   panelBoxShadow,
   panelBorderRadius,
   panelBorder,

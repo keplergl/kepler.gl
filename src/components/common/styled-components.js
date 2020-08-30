@@ -216,7 +216,12 @@ export const Button = styled.div.attrs(props => ({
       : props.theme.primaryBtnColor};
   cursor: pointer;
   display: inline-flex;
-  font-size: ${props => (props.large ? '14px' : props.small ? '10px' : '11px')};
+  font-size: ${props =>
+    props.large
+      ? props.theme.primaryBtnFontSizeLarge
+      : props.small
+      ? props.theme.primaryBtnFontSizeSmall
+      : props.theme.primaryBtnFontSizeDefault};
   font-weight: 500;
   justify-content: center;
   letter-spacing: 0.3px;
@@ -229,7 +234,8 @@ export const Button = styled.div.attrs(props => ({
   width: ${props => props.width || 'auto'};
   opacity: ${props => (props.disabled ? 0.4 : 1)};
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
-
+  border: ${props =>
+    props.secondary ? props.theme.secondaryBtnBorder : props.theme.primaryBtnBorder};
   :hover,
   :focus,
   :active,
