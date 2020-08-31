@@ -35,14 +35,15 @@ import DataTableModalFactory, {
   DatasetTabs,
   DatasetModalTab
 } from 'components/modals/data-table-modal';
-import {DataTable} from 'components/common/data-table';
+import {DataTableFactory} from 'components/common/data-table';
 import OptionDropdown from 'components/common/data-table/option-dropdown';
-
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
+import {appInjector} from '../../../../src/components/container';
 
-const DataTableModal = DataTableModalFactory(DataTable);
+const DataTableModal = appInjector.get(DataTableModalFactory);
+const DataTable = appInjector.get(DataTableFactory);
 
 const expectedCellSizeCache = {
   'gps_data.utc_timestamp': {row: 145, header: 150},
