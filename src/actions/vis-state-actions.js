@@ -180,6 +180,27 @@ export function setFilter(idx, prop, value, valueIndex) {
 }
 
 /**
+ * Same as Update filter
+ * @memberof visStateActions
+ * @param idx -`idx` of filter to be updated
+ * @param prop - `prop` of filter, e,g, `dataId`, `name`, `value`
+ * @param value - new value
+ * @param valueIndex - dataId index
+ * @returns action
+ * @type {typeof import('./vis-state-actions').setTimeAnmation}
+ * @public
+ */
+export function setTimeAnmation(idx, prop, value, valueIndex) {
+  return {
+    type: ActionTypes.SET_TIME_ANIMATION,
+    idx,
+    prop,
+    value,
+    valueIndex
+  };
+}
+
+/**
  * Add a new filter
  * @memberof visStateActions
  * @param dataId - dataset `id` this new filter is associated with

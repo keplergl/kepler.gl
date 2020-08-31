@@ -76,6 +76,8 @@ const actionHandler = {
   [ActionTypes.RESET_MAP_CONFIG]: visStateUpdaters.resetMapConfigUpdater,
 
   [ActionTypes.SET_FILTER]: visStateUpdaters.setFilterUpdater,
+  
+  [ActionTypes.SET_TIME_ANIMATION]: visStateUpdaters.setTimeAnmationUpdater,
 
   [ActionTypes.SET_FILTER_PLOT]: visStateUpdaters.setFilterPlotUpdater,
 

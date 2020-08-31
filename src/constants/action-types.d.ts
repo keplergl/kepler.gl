@@ -23,6 +23,7 @@ export type ActionType = {
   REMOVE_DATASET: string;
   REORDER_LAYER: string;
   SET_FILTER: string;
+  SET_TIME_ANIMATION:  string; 
   SHOW_DATASET_TABLE: string;
   UPDATE_LAYER_BLENDING: string;
   UPDATE_VIS_DATA: string;

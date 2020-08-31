@@ -363,6 +363,10 @@ export function setFilterUpdater(
   state: VisState,
   action: VisStateActions.SetFilterUpdaterAction
 ): VisState;
+export function setTimeAnmationUpdater(
+  state: VisState,
+  action: VisStateActions.SetTimeAnmationUpdaterAction
+): VisState;
 export function addFilterUpdater(
   state: VisState,
   action: VisStateActions.AddFilterUpdaterAction
