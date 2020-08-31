@@ -304,7 +304,8 @@ export const TableSection = ({
     }}
   </AutoSizer>
 );
-const DataTableFactory = FieldToken => {
+DataTableFactory.deps = [FieldTokenFactory];
+function DataTableFactory(FieldToken) {
   class DataTable extends Component {
     static defaultProps = {
       rows: [],
@@ -622,7 +623,6 @@ const DataTableFactory = FieldToken => {
   }
 
   return withTheme(DataTable);
-};
+}
 
-DataTableFactory.deps = [FieldTokenFactory];
 export default DataTableFactory;
