@@ -35,7 +35,7 @@ import DataTableModalFactory, {
   DatasetTabs,
   DatasetModalTab
 } from 'components/modals/data-table-modal';
-import {DataTableFactory} from 'components/common/data-table';
+import DataTableFactory from 'components/common/data-table';
 import OptionDropdown from 'components/common/data-table/option-dropdown';
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
@@ -540,6 +540,14 @@ test('Components -> DataTableModal.render: csv 2', t => {
   };
   const wrapper2 = mount(<DataTable {...enriched} />);
   const componentInstance = wrapper2.instance();
+  // console.log('aaaaaaaaaaaaaaaaaaaaaaaa');
+  // console.log(
+  //   wrapper
+  //     .find(DataTable)
+  //     .at(0)
+  //     .props()
+  // );
+  // console.log('BBBBBBBBBBBBBBBBB');
   const result = componentInstance.getCellSizeCache();
   t.deepEqual(result, expectedExpandedCellSizeGeo, 'should calculate correct cell expansion');
 
