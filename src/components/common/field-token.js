@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {FILED_TYPE_DISPLAY, FIELD_COLORS} from 'constants/default-settings';
-const FieldTokenFactory = (fieldTypeDisplay, fieldColors) => {
+function FieldTokenFactory(fieldTypeDisplay, fieldColors) {
   const FieldTag = styled.div`
     background-color: rgba(${props => props.color}, 0.2);
     border-radius: 2px;
@@ -43,6 +43,14 @@ const FieldTokenFactory = (fieldTypeDisplay, fieldColors) => {
     </FieldTag>
   );
   return FieldToken;
-};
-FieldTokenFactory.deps = [() => FILED_TYPE_DISPLAY, () => FIELD_COLORS];
+}
+
+function getFieldTypes() {
+  return FILED_TYPE_DISPLAY;
+}
+
+function getFieldColors() {
+  return FIELD_COLORS;
+}
+FieldTokenFactory.deps = [getFieldTypes, getFieldColors];
 export default FieldTokenFactory;
