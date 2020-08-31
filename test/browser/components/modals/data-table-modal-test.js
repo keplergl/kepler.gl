@@ -492,7 +492,7 @@ test('Components -> cellSize -> renderedSize', t => {
   t.end();
 });
 
-test('Components -> DataTableModal.render: csv 2', t => {
+test.only('Components -> DataTableModal.render: csv 2', t => {
   const wrapper = mountWithTheme(
     <DataTableModal
       datasets={{
@@ -540,14 +540,6 @@ test('Components -> DataTableModal.render: csv 2', t => {
   };
   const wrapper2 = mount(<DataTable {...enriched} />);
   const componentInstance = wrapper2.instance();
-  // console.log('aaaaaaaaaaaaaaaaaaaaaaaa');
-  // console.log(
-  //   wrapper
-  //     .find(DataTable)
-  //     .at(0)
-  //     .props()
-  // );
-  // console.log('BBBBBBBBBBBBBBBBB');
   const result = componentInstance.getCellSizeCache();
   t.deepEqual(result, expectedExpandedCellSizeGeo, 'should calculate correct cell expansion');
 
