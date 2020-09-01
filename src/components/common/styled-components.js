@@ -235,7 +235,11 @@ export const Button = styled.div.attrs(props => ({
   opacity: ${props => (props.disabled ? 0.4 : 1)};
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
   border: ${props =>
-    props.secondary ? props.theme.secondaryBtnBorder : props.theme.primaryBtnBorder};
+    props.secondary
+      ? props.theme.secondaryBtnBorder
+      : props.floating
+      ? props.theme.floatingBtnBorder
+      : props.theme.primaryBtnBorder};
   :hover,
   :focus,
   :active,
@@ -609,7 +613,7 @@ export const WidgetContainer = styled.div`
 `;
 
 export const BottomWidgetInner = styled.div`
-  background-color: ${props => props.theme.panelBackground};
+  background-color: ${props => props.theme.bottomWidgetBgd};
   padding: ${props => `${props.theme.bottomInnerPdVert}px ${props.theme.bottomInnerPdSide}px`};
   position: relative;
   margin-top: ${props => props.theme.bottomPanelGap}px;
@@ -627,6 +631,8 @@ export const MapControlButton = styled(Button).attrs({
     props.active ? props.theme.floatingBtnBgdHover : props.theme.floatingBtnBgd};
   color: ${props =>
     props.active ? props.theme.floatingBtnActColor : props.theme.floatingBtnColor};
+  border: ${props =>
+    props.active ? props.theme.floatingBtnBorderHover : props.theme.floatingBtnBorder};
 
   :hover,
   :focus,
@@ -634,6 +640,7 @@ export const MapControlButton = styled(Button).attrs({
   &.active {
     background-color: ${props => props.theme.floatingBtnBgdHover};
     color: ${props => props.theme.floatingBtnActColor};
+    border: ${props => props.theme.floatingBtnBorderHover};
   }
   svg {
     margin-right: 0;
