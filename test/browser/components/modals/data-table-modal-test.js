@@ -23,7 +23,6 @@ import test from 'tape-catch';
 import global from 'global';
 import sinon from 'sinon';
 import flatten from 'lodash.flattendeep';
-import {mount} from 'enzyme';
 import {mountWithTheme} from 'test/helpers/component-utils';
 import CloneDeep from 'lodash.clonedeep';
 import * as VisStateActions from 'actions/vis-state-actions';
@@ -263,14 +262,14 @@ test('Components -> DataTableModal -> render DataTable: csv 1', t => {
     theme: {}
   };
 
-  const wrapper2 = mount(<DataTable {...enriched} />);
-  const componentInstance = wrapper2.instance();
+  const wrapper2 = mountWithTheme(<DataTable {...enriched} />);
+  const componentInstance = wrapper2.find('DataTable').instance();
   const result = componentInstance.getCellSizeCache();
 
   t.deepEqual(result, expectedExpandedCellSize, 'should calculate correct cell expansion');
 
   // manully setting the state and update the component
-  wrapper2.setState(result);
+  componentInstance.setState(result);
   wrapper2.update();
 
   t.equal(
@@ -389,10 +388,10 @@ test('Components -> DataTableModal -> render DataTable: sort and pin', t => {
   };
 
   const wrapper2 = mountWithTheme(<DataTable {...enriched} />);
-  const componentInstance = wrapper2.instance();
+  const componentInstance = wrapper2.find('DataTable').instance();
   const result = componentInstance.getCellSizeCache();
   // manully setting the state and update the component
-  wrapper2.setState(result);
+  componentInstance.setState(result);
   wrapper2.update();
 
   const expectedHeaders = [
