@@ -79,10 +79,7 @@ const KeplerGlLogo = ({appName, appWebsite = KEPLER_GL_WEBSITE, version}) => (
 
 KeplerGlLogo.propTypes = {
   appName: PropTypes.string,
-  version: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.bool,
-  ]),
+  version: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
   appWebsite: PropTypes.string
 };
 

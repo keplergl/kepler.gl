@@ -77,6 +77,7 @@ const StyledMapControlPanelContent = styled.div.attrs({
   ${props => props.theme.dropdownScrollBar};
   max-height: 500px;
   min-height: 100px;
+  min-width: ${props => props.theme.mapControl.width}px;
   overflow: auto;
 `;
 
@@ -153,19 +154,18 @@ const MapControlPanel = React.memo(
   ({children, header, onClick, scale = 1, isExport, disableClose = false, logoComponent}) => (
     <StyledMapControlPanel
       style={{
-        transform: `scale(${scale}) translate(calc(-${25 * (scale - 1)}% - ${10 *
-          scale}px), calc(${25 * (scale - 1)}% + ${10 * scale}px))`,
+        transform: `scale(${scale})`,
         marginBottom: '8px'
       }}
     >
       <StyledMapControlPanelHeader>
         {isExport && logoComponent ? (
           logoComponent
-        ) : (
+        ) : header ? (
           <span style={{verticalAlign: 'middle'}}>
             <FormattedMessage id={header} />
           </span>
-        )}
+        ) : null}
         {isExport ? null : (
           <IconRoundSmall className="close-map-control-item" onClick={onClick}>
             <Close height="16px" />

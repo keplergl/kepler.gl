@@ -129,7 +129,10 @@ export const loadRemoteResourceSuccess = (state, action) => {
     {
       payload: {
         datasets,
-        config
+        config,
+        options: {
+          centerMap: Boolean(!action.config)
+        }
       }
     }
   );

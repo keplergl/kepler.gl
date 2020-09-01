@@ -137,7 +137,7 @@ export const DIMENSIONS = {
     headerHeight: 96
   },
   mapControl: {
-    width: 204,
+    width: 184,
     padding: 12
   }
 };
