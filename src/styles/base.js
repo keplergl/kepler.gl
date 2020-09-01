@@ -497,7 +497,7 @@ const inputLT = css`
 const secondaryInput = css`
   ${props => props.theme.input}
   color: ${props => props.theme.secondaryInputColor};
-  background-color:re ${props => props.theme.secondaryInputBgd};
+  background-color: ${props => props.theme.secondaryInputBgd};
   border: 1px solid
     ${props => (props.error ? props.theme.errorColor : props.theme.secondaryInputBorderColor)};
 

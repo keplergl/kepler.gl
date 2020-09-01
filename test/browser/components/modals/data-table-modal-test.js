@@ -493,7 +493,7 @@ test('Components -> cellSize -> renderedSize', t => {
   t.end();
 });
 
-test.only('Components -> DataTableModal.render: csv 2', t => {
+test('Components -> DataTableModal.render: csv 2', t => {
   const wrapper = mountWithTheme(
     <DataTableModal
       datasets={{
