@@ -204,13 +204,16 @@ export const sideBarCloseBtnBgdHover = secondaryBtnActBgd;
 export const sidePanelTitleFontsize = '20px';
 export const sidePanelTitleLineHeight = '1.71429';
 export const panelBackground = '#29323C';
+export const panelContentBackground = '#292E36';
 export const panelBackgroundHover = '#3A4552';
 export const panelHeaderBorderRadius = '0px';
-export const panelActiveBg = '#3A4552';
-export const panelActiveBgLT = '#6A7485';
+export const chickletBgd = '#3A4552';
+export const chickletBgdLT = '#6A7485';
 export const panelHeaderIcon = '#6A7485';
 export const panelHeaderIconActive = '#A0A7B4';
+export const panelHeaderIconHover = textColorHl;
 export const panelHeaderHeight = 48;
+export const layerPanelHeaderHeight = 48;
 export const panelBoxShadow = '0 6px 12px 0 rgba(0,0,0,0.16)';
 export const panelBorderRadius = '2px';
 export const panelBackgroundLT = '#F8F8F9';
@@ -225,6 +228,8 @@ export const mapPanelBackgroundColor = '#242730';
 export const mapPanelHeaderBackgroundColor = '#29323C';
 export const tooltipBg = '#F8F8F9';
 export const tooltipColor = '#333334';
+export const tooltipBoxShadow = boxShadow;
+export const tooltipFontSize = '10px';
 
 export const layerTypeIconSizeL = 50;
 export const layerTypeIconPdL = 12;
@@ -1130,8 +1135,9 @@ export const theme = {
   layerConfigGroupPaddingLeft,
 
   // Side Panel Panel
-  panelActiveBg,
+  chickletBgd,
   panelBackground,
+  panelContentBackground,
   panelBackgroundHover,
   panelBackgroundLT,
   panelToggleMarginRight,
@@ -1144,6 +1150,7 @@ export const theme = {
   panelHeaderIcon,
   panelHeaderIconActive,
   panelHeaderHeight,
+  layerPanelHeaderHeight,
   panelDropdownScrollBar,
 
   layerTypeIconSizeL,
@@ -1168,6 +1175,7 @@ export const theme = {
   titleColorLT,
   tooltipBg,
   tooltipColor,
+  tooltipBoxShadow,
   logoColor,
 
   // Sidepanel divider
@@ -1319,7 +1327,7 @@ export const themeLT = {
   secondaryInputBorderColor: 'none',
   secondaryInputColor: '#545454',
 
-  panelActiveBg: '#F7F7F7',
+  chickletBgd: '#F7F7F7',
   mapPanelBackgroundColor: '#FFFFFF',
   mapPanelHeaderBackgroundColor: '#F7F7F7',
 
@@ -1369,7 +1377,7 @@ export const themeBS = {
   inputBgdHover: 'inherit',
   inputBorderActiveColor: '#000000',
   inputColor: '#000000',
-  panelActiveBg: '#E2E2E2',
+  chickletBgd: '#E2E2E2',
   panelBackground: '#FFFFFF',
   bottomWidgetBgd: '#F7F7F7',
   panelBackgroundHover: '#EEEEEE',

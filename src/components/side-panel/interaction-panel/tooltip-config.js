@@ -92,7 +92,7 @@ function TooltipConfigFactory(DatasetTag, FieldSelector) {
                         };
                         onChange(newConfig);
                       }}
-                      width="48px"
+                      width="54px"
                       secondary
                     >
                       <FormattedMessage id="fieldSelector.clearAll" />

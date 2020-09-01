@@ -44,8 +44,7 @@ export const IconRoundSmall = styled.div`
   width: 18px;
   height: 18px;
   border-radius: 9px;
-  background-color: ${props =>
-    props.theme.secondaryBtnBgdHover}; // updated after checking sketch file
+  background-color: ${props => props.theme.secondaryBtnBgdHover};
   color: ${props => props.theme.secondaryBtnColor};
   align-items: center;
   justify-content: center;
@@ -131,7 +130,7 @@ export const PanelHeaderContent = styled.div`
 export const PanelContent = styled.div.attrs({
   className: 'side-panel-panel__content'
 })`
-  background-color: ${props => props.theme.panelBackground};
+  background-color: ${props => props.theme.panelContentBackground};
   padding: 12px;
 `;
 
@@ -155,9 +154,10 @@ export const SidePanelDivider = styled.div.attrs({
 
 export const Tooltip = styled(ReactTooltip)`
   &.__react_component_tooltip {
-    font-size: 9.5px;
+    font-size: ${props => props.theme.tooltipFontSize};
     font-weight: 500;
     padding: 7px 18px;
+    box-shadow: ${props => props.theme.tooltipBoxShadow};
 
     &.type-dark {
       background-color: ${props => props.theme.tooltipBg};
@@ -648,7 +648,7 @@ export const MapControlButton = styled(Button).attrs({
 `;
 
 export const StyledFilterContent = styled.div`
-  background-color: ${props => props.theme.panelBackground};
+  background-color: ${props => props.theme.panelContentBackground};
   padding: 12px;
 `;
 

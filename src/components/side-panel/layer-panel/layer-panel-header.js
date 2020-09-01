@@ -53,6 +53,7 @@ export const defaultProps = {
 };
 
 const StyledLayerPanelHeader = styled(StyledPanelHeader)`
+  height: ${props => props.theme.layerPanelHeaderHeight}px;
   .layer__remove-layer {
     opacity: 0;
   }

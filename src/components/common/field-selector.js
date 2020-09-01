@@ -35,20 +35,23 @@ const StyledToken = styled.div`
   display: inline-block;
   margin: 0 ${props => props.theme.fieldTokenRightMargin}px 0 0;
 `;
+const StyledFieldListItem = styled.div`
+  line-height: 0;
+`;
 
 FieldListItemFactoryFactory.deps = [FieldTokenFactory];
 // custom list Item
 export function FieldListItemFactoryFactory(FieldToken) {
   const FieldListItemFactory = (showToken = true) => {
     const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
-      <div className="field-selector_list-item">
+      <StyledFieldListItem className="field-selector_list-item">
         {showToken ? (
           <StyledToken>
             <FieldToken type={value.type} />
           </StyledToken>
         ) : null}
         <span className={classList.listItemAnchor}>{displayOption(value)}</span>
-      </div>
+      </StyledFieldListItem>
     );
     return FieldListItem;
   };

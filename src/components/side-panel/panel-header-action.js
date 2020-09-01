@@ -34,7 +34,8 @@ const HeaderActionWrapper = styled.div`
 
   :hover {
     cursor: pointer;
-    color: ${props => (props.hoverColor ? props.theme[props.hoverColor] : props.theme.textColorHl)};
+    color: ${props =>
+      props.hoverColor ? props.theme[props.hoverColor] : props.theme.panelHeaderIconHover};
   }
 
   &.disabled {
