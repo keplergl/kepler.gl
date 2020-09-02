@@ -169,6 +169,7 @@ export const toolbarItemBorderRaddius = '0px';
 export const dropdownListBgdLT = '#FFFFFF';
 export const dropdownListBorderTop = '#242730';
 export const dropdownListBorderTopLT = '#D3D8E0';
+export const dropdownListLineHeight = 20;
 export const dropdownWrapperZ = 100;
 export const dropdownWapperMargin = 4;
 // Switch
@@ -736,6 +737,7 @@ const dropdownListAnchor = css`
   color: ${props => props.theme.selectColor};
   padding-left: 3px;
   font-size: ${props => props.theme.selectFontSize};
+  line-height: ${props => props.theme.dropdownListLineHeight}px;
 `;
 
 const dropdownListSize = css`
@@ -990,6 +992,7 @@ export const theme = {
   dropdownListBgdLT,
   dropdownListBorderTop,
   dropdownListBorderTopLT,
+  dropdownListLineHeight,
 
   labelColor,
   labelColorLT,

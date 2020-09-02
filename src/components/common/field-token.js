@@ -33,6 +33,7 @@ function FieldTokenFactory(fieldTypeDisplay, fieldColors) {
     padding: 0 5px;
     text-align: center;
     width: 40px;
+    line-height: 20px;
   `;
 
   const FieldToken = ({type}) => (
