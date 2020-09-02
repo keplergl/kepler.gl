@@ -355,6 +355,7 @@ export default function ModalContainerFactory(
                 mapW={containerW}
                 mapH={containerH}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
+                cleanupExportImage={uiStateActions.cleanupExportImage}
               />
             );
             modalProps = {

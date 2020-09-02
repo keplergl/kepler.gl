@@ -22,8 +22,6 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
-import FieldSelector from 'components/common/field-selector';
-
 import {
   SelectTextBold,
   IconRoundSmall,
@@ -34,6 +32,7 @@ import {Close, Clock, LineChart} from 'components/common/icons';
 import SpeedControlFactory from 'components/common/animation-control/speed-control';
 import TimeRangeFilterFactory from 'components/filters/time-range-filter';
 import FloatingTimeDisplayFactory from 'components/common/animation-control/floating-time-display';
+import FieldSelectorFactory from '../common/field-selector';
 
 const TOP_SECTION_HEIGHT = '36px';
 
@@ -103,9 +102,13 @@ const StyledTitle = styled(CenterFlexbox)`
   }
 `;
 
-TimeWidgetFactory.deps = [SpeedControlFactory, TimeRangeFilterFactory, FloatingTimeDisplayFactory];
-
-function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay) {
+TimeWidgetFactory.deps = [
+  SpeedControlFactory,
+  TimeRangeFilterFactory,
+  FloatingTimeDisplayFactory,
+  FieldSelectorFactory
+];
+function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay, FieldSelector) {
   class TimeWidget extends Component {
     state = {
       showSpeedControl: false

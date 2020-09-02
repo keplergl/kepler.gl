@@ -27,7 +27,8 @@ import MouseEventHandler from './mouse-event';
 const StyledSliderHandle = styled.span`
   position: absolute;
   z-index: 10;
-  ${props => (props.vertical ? 'margin-left' : 'margin-top')}: -${props => (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
+  ${props => (props.vertical ? 'margin-left' : 'margin-top')}: -${props =>
+  (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
 
   height: ${props =>
     Number.isFinite(props.sliderHandleWidth)
@@ -39,7 +40,10 @@ const StyledSliderHandle = styled.span`
       : props.theme.sliderHandleHeight}px;
   box-shadow: ${props => props.theme.sliderHandleShadow};
   background-color: ${props => props.theme.sliderHandleColor};
+  color: ${props => props.theme.sliderHandleTextColor};
+
   border-width: 1px;
+  border-radius: ${props => props.theme.sliderBorderRadius};
   border-style: solid;
   border-color: ${props =>
     props.active ? props.theme.selectBorderColor : props.theme.sliderHandleColor};
@@ -47,6 +51,14 @@ const StyledSliderHandle = styled.span`
   :hover {
     background-color: ${props => props.theme.sliderHandleHoverColor};
     cursor: pointer;
+  }
+
+  line-height: 10px;
+  font-size: 6px;
+  padding: 0 3px;
+  letter-spacing: 1px;
+  :after {
+    content: '${props => props.theme.sliderHandleAfterContent}';
   }
 `;
 

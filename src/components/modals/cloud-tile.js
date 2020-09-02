@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {Logout, Login} from 'components/common/icons';
-import {CenterVerticalFlexbox, Button} from 'components/common/styled-components';
+import {CenterVerticalFlexbox, Button, CheckMark} from 'components/common/styled-components';
 import LoadingSpinner from 'components/common/loading-spinner';
 
 const StyledTileWrapper = styled.div.attrs({
@@ -52,33 +52,6 @@ const StyledTileWrapper = styled.div.attrs({
   }
 `;
 
-const CheckMark = styled.span.attrs({
-  className: 'checkbox-inner'
-})`
-  background-color: ${props => props.theme.primaryBtnBgd};
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  display: block;
-  width: 16px;
-  height: 16px;
-  border-top-left-radius: 2px;
-
-  :after {
-    position: absolute;
-    display: table;
-    border: 2px solid #fff;
-    border-top: 0;
-    border-left: 0;
-    transform: rotate(45deg) scale(1) translate(-50%, -50%);
-    opacity: 1;
-    content: ' ';
-    top: 50%;
-    left: 25%;
-    width: 5.7px;
-    height: 9.1px;
-  }
-`;
 const StyledBox = styled(CenterVerticalFlexbox)`
   margin-right: 12px;
 `;

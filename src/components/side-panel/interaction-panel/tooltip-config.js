@@ -29,13 +29,12 @@ import {
   Button,
   PanelLabel
 } from 'components/common/styled-components';
-import FieldSelector from 'components/common/field-selector';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
 import TooltipChickletFactory from './tooltip-config/tooltip-chicklet';
 import Switch from 'components/common/switch';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {COMPARE_TYPES} from 'constants/tooltip';
-TooltipConfigFactory.deps = [DatasetTagFactory];
+import FieldSelectorFactory from '../../common/field-selector';
 
 const TooltipConfigWrapper = styled.div`
   .item-selector > div > div {
@@ -68,7 +67,8 @@ const CompareSwitchWrapper = styled.div`
   margin-bottom: 8px;
 `;
 
-function TooltipConfigFactory(DatasetTag) {
+TooltipConfigFactory.deps = [DatasetTagFactory, FieldSelectorFactory];
+function TooltipConfigFactory(DatasetTag, FieldSelector) {
   class TooltipConfig extends Component {
     render() {
       const {config, datasets, onChange, intl} = this.props;
@@ -92,7 +92,7 @@ function TooltipConfigFactory(DatasetTag) {
                         };
                         onChange(newConfig);
                       }}
-                      width="48px"
+                      width="54px"
                       secondary
                     >
                       <FormattedMessage id="fieldSelector.clearAll" />

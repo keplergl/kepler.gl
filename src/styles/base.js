@@ -47,6 +47,8 @@ export const titleColorLT = '#29323C';
 export const subtextColor = '#6A7485';
 export const subtextColorLT = '#A0A7B4';
 export const subtextColorActive = '#FFFFFF';
+export const panelToggleBorderColor = '#FFFFFF';
+export const panelTabWidth = '30px';
 
 export const titleTextColor = '#FFFFFF';
 export const textColorHl = '#F0F0F0';
@@ -58,24 +60,31 @@ export const errorColor = '#F9042C';
 export const logoColor = activeColor;
 
 // Button
+export const btnFontFamily = fontFamily;
 export const primaryBtnBgd = '#0F9668';
 export const primaryBtnActBgd = '#13B17B';
 export const primaryBtnColor = '#FFFFFF';
 export const primaryBtnActColor = '#FFFFFF';
 export const primaryBtnBgdHover = '#13B17B';
 export const primaryBtnRadius = '2px';
+export const primaryBtnFontSizeDefault = '11px';
+export const primaryBtnFontSizeSmall = '10px';
+export const primaryBtnFontSizeLarge = '14px';
+export const primaryBtnBorder = '0';
 
 export const secondaryBtnBgd = '#6A7485';
 export const secondaryBtnActBgd = '#A0A7B4';
 export const secondaryBtnColor = '#FFFFFF';
 export const secondaryBtnActColor = '#FFFFFF';
 export const secondaryBtnBgdHover = '#A0A7B4';
+export const secondaryBtnBorder = '0';
 
 export const linkBtnBgd = 'transparent';
 export const linkBtnActBgd = linkBtnBgd;
 export const linkBtnColor = '#A0A7B4';
 export const linkBtnActColor = '#F1F1F1';
 export const linkBtnActBgdHover = linkBtnBgd;
+export const linkBtnBorder = '0';
 
 export const negativeBtnBgd = errorColor;
 export const negativeBtnActBgd = '#FF193E';
@@ -86,8 +95,19 @@ export const negativeBtnActColor = '#FFFFFF';
 export const floatingBtnBgd = '#29323C';
 export const floatingBtnActBgd = '#3A4552';
 export const floatingBtnBgdHover = '#3A4552';
+export const floatingBtnBorder = '0';
+export const floatingBtnBorderHover = '0';
 export const floatingBtnColor = subtextColor;
 export const floatingBtnActColor = subtextColorActive;
+
+export const selectionBtnBgd = 'transparent';
+export const selectionBtnActBgd = 'transparent';
+export const selectionBtnColor = '#D3D8E0';
+export const selectionBtnActColor = '#0F9668';
+export const selectionBtnBgdHover = '#0F9668';
+export const selectionBtnBorder = '1';
+export const selectionBtnBorderColor = '#D3D8E0';
+export const selectionBtnBorderActColor = '#0F9668';
 
 // Input
 export const inputBoxHeight = '34px';
@@ -109,13 +129,15 @@ export const inputColor = '#A0A7B4';
 export const inputBorderRadius = '1px';
 export const inputPlaceholderColor = '#6A7485';
 export const inputPlaceholderFontWeight = 400;
-
+export const inputBoxShadow = 'none';
+export const inputBoxShadowActive = 'none';
 export const secondaryInputBgd = '#242730';
 export const secondaryInputBgdHover = '#3A414C';
 export const secondaryInputBgdActive = '#3A414C';
 export const secondaryInputColor = '#A0A7B4';
 export const secondaryInputBorderColor = '#242730';
 export const secondaryInputBorderActiveColor = '#D3D8E0';
+export const dropdownSelectHeight = 30;
 
 // Select
 export const selectColor = inputColor;
@@ -139,7 +161,11 @@ export const selectBorder = 0;
 export const dropdownListHighlightBg = '#6A7485';
 export const dropdownListHighlightBgLT = '#F8F8F9';
 export const dropdownListShadow = '0 6px 12px 0 rgba(0,0,0,0.16)';
-export const dropdownListBgd = '#3A414C';
+export const dropdownListBgd = '#29323C';
+export const toolbarItemBgdHover = '#3A4552';
+export const toolbarItemIconHover = textColorHl;
+export const toolbarItemBorderHover = 'transparent';
+export const toolbarItemBorderRaddius = '0px';
 export const dropdownListBgdLT = '#FFFFFF';
 export const dropdownListBorderTop = '#242730';
 export const dropdownListBorderTopLT = '#D3D8E0';
@@ -178,6 +204,9 @@ export const checkboxBoxBgdChecked = primaryBtnBgd;
 // Side Panel
 export const sidePanelHeaderBg = '#29323C';
 export const sidePanelHeaderBorder = 'transparent';
+export const layerConfigGroupMarginBottom = 12;
+export const layerConfigGroupPaddingLeft = 18;
+
 export const sidePanelInnerPadding = 16;
 export const sidePanelBorder = 0;
 export const sidePanelBorderColor = 'transparent';
@@ -188,17 +217,23 @@ export const sideBarCloseBtnBgd = secondaryBtnBgd;
 export const sideBarCloseBtnColor = '#29323C';
 export const sideBarCloseBtnBgdHover = secondaryBtnActBgd;
 export const sidePanelTitleFontsize = '20px';
+export const sidePanelTitleLineHeight = '1.71429';
 export const panelBackground = '#29323C';
+export const panelContentBackground = '#292E36';
 export const panelBackgroundHover = '#3A4552';
 export const panelHeaderBorderRadius = '0px';
-export const panelActiveBg = '#3A4552';
-export const panelActiveBgLT = '#6A7485';
+export const chickletBgd = '#3A4552';
+export const chickletBgdLT = '#6A7485';
 export const panelHeaderIcon = '#6A7485';
 export const panelHeaderIconActive = '#A0A7B4';
+export const panelHeaderIconHover = textColorHl;
 export const panelHeaderHeight = 48;
+export const layerPanelHeaderHeight = 48;
 export const panelBoxShadow = '0 6px 12px 0 rgba(0,0,0,0.16)';
 export const panelBorderRadius = '2px';
 export const panelBackgroundLT = '#F8F8F9';
+export const panelToggleMarginRight = 12;
+export const panelToggleBottomPadding = 6;
 
 export const panelBorderColor = '#3A414C';
 export const panelBorder = `1px solid ${borderColor}`;
@@ -206,8 +241,10 @@ export const panelBorderLT = `1px solid ${borderColorLT}`;
 
 export const mapPanelBackgroundColor = '#242730';
 export const mapPanelHeaderBackgroundColor = '#29323C';
-export const tooltipBg = '#F8F8F9';
-export const tooltipColor = '#333334';
+export const tooltipBg = '#3A414C';
+export const tooltipColor = textColorHl;
+export const tooltipBoxShadow = boxShadow;
+export const tooltipFontSize = '10px';
 
 export const layerTypeIconSizeL = 50;
 export const layerTypeIconPdL = 12;
@@ -226,7 +263,7 @@ export const bottomWidgetPaddingTop = 20;
 export const bottomWidgetPaddingRight = 20;
 export const bottomWidgetPaddingBottom = 30;
 export const bottomWidgetPaddingLeft = 20;
-
+export const bottomWidgetBgd = '#29323C';
 // Modal
 export const modalTitleColor = '#3A414C';
 export const modalTitleFontSize = '24px';
@@ -258,10 +295,17 @@ export const sliderBarHeight = 4;
 export const sliderHandleHeight = 12;
 export const sliderHandleWidth = 12;
 export const sliderHandleColor = '#D3D8E0';
+export const sliderHandleTextColor = sliderHandleColor;
+
+export const sliderBorderRadius = '0';
+
 export const sliderHandleHoverColor = '#FFFFFF';
+export const sliderHandleAfterContent = '';
 export const sliderHandleShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
 export const sliderInputHeight = 24;
 export const sliderInputWidth = 56;
+export const sliderInputFontSize = '10px';
+export const sliderInputPadding = '4px 6px';
 export const sliderMarginTopIsTime = -12;
 export const sliderMarginTop = 12;
 
@@ -323,6 +367,9 @@ const progressBarTrackColor = '#E8E8E8';
 export const actionPanelWidth = 110;
 export const actionPanelHeight = 32;
 
+// Styled Token
+export const fieldTokenRightMargin = 4;
+
 export const textTruncate = {
   maxWidth: '100%',
   overflow: 'hidden',
@@ -335,6 +382,7 @@ export const textTruncate = {
 export const layerConfigGroupLabelBorderLeft = '2px';
 export const layerConfigGroupLabelMargin = '-12px';
 export const layerConfigGroupLabelPadding = '10px';
+export const layerConfigGroupColor = 'transparent';
 
 // layerConfigGroupLabel label
 export const layerConfigGroupLabelLabelMargin = '0';
@@ -348,7 +396,7 @@ export const styledConfigGroupHeaderBorder = '2px';
 export const layerConfiguratorBorder = '0';
 export const layerConfiguratorBorderColor = '';
 export const layerConfiguratorMargin = '12px';
-export const layerConfiguratorPadding = '0';
+export const layerConfiguratorPadding = '12px 0 8px 0';
 // This breakpoints are used for responsive design
 export const breakPoints = {
   palm: 588,
@@ -400,6 +448,7 @@ const input = css`
   word-wrap: normal;
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
   opacity: ${props => (props.disabled ? 0.5 : 1)};
+  box-shadow: ${props => props.theme.inputBoxShadow};
 
   :hover {
     cursor: ${props => (props.type === 'number' || props.type === 'text' ? 'text' : 'pointer')};
@@ -415,6 +464,7 @@ const input = css`
   &.active {
     background-color: ${props => props.theme.inputBgdActive};
     border-color: ${props => props.theme.inputBorderActiveColor};
+    box-shadow: ${props => props.theme.inputBoxShadowActive};
   }
 
   ::placeholder {
@@ -685,6 +735,7 @@ const dropdownScrollBar = css`
 const dropdownListAnchor = css`
   color: ${props => props.theme.selectColor};
   padding-left: 3px;
+  font-size: ${props => props.theme.selectFontSize};
 `;
 
 const dropdownListSize = css`
@@ -932,6 +983,10 @@ export const theme = {
   dropdownListHighlightBg,
   dropdownListHighlightBgLT,
   dropdownListBgd,
+  toolbarItemBgdHover,
+  toolbarItemBorderHover,
+  toolbarItemIconHover,
+  toolbarItemBorderRaddius,
   dropdownListBgdLT,
   dropdownListBorderTop,
   dropdownListBorderTopLT,
@@ -979,6 +1034,8 @@ export const theme = {
   inputFontWeight,
   inputPlaceholderColor,
   inputPlaceholderFontWeight,
+  inputBoxShadow,
+  inputBoxShadowActive,
 
   secondaryInputBgd,
   secondaryInputBgdHover,
@@ -986,6 +1043,7 @@ export const theme = {
   secondaryInputColor,
   secondaryInputBorderColor,
   secondaryInputBorderActiveColor,
+  dropdownSelectHeight,
 
   // Switch
   switchWidth,
@@ -1017,17 +1075,24 @@ export const theme = {
   checkboxBoxBgdChecked,
 
   // Button
+  btnFontFamily,
   primaryBtnBgd,
   primaryBtnActBgd,
   primaryBtnColor,
   primaryBtnActColor,
   primaryBtnBgdHover,
   primaryBtnRadius,
+  primaryBtnFontSizeDefault,
+  primaryBtnFontSizeSmall,
+  primaryBtnFontSizeLarge,
+  primaryBtnBorder,
+
   secondaryBtnBgd,
   secondaryBtnActBgd,
   secondaryBtnBgdHover,
   secondaryBtnColor,
   secondaryBtnActColor,
+  secondaryBtnBorder,
 
   negativeBtnBgd,
   negativeBtnActBgd,
@@ -1040,12 +1105,24 @@ export const theme = {
   linkBtnColor,
   linkBtnActColor,
   linkBtnActBgdHover,
+  linkBtnBorder,
 
   floatingBtnBgd,
   floatingBtnActBgd,
   floatingBtnBgdHover,
+  floatingBtnBorder,
+  floatingBtnBorderHover,
   floatingBtnColor,
   floatingBtnActColor,
+
+  selectionBtnBgd,
+  selectionBtnActBgd,
+  selectionBtnColor,
+  selectionBtnActColor,
+  selectionBtnBgdHover,
+  selectionBtnBorder,
+  selectionBtnBorderColor,
+  selectionBtnBorderActColor,
 
   // Modal
   modalTitleColor,
@@ -1079,14 +1156,23 @@ export const theme = {
   sidePanelScrollBarWidth,
   sidePanelScrollBarHeight,
   sidePanelTitleFontsize,
+  sidePanelTitleLineHeight,
   panelHeaderBorderRadius,
   sidePanelBorder,
   sidePanelBorderColor,
+
+  layerConfigGroupLabelLabelFontSize,
+  layerConfigGroupMarginBottom,
+  layerConfigGroupPaddingLeft,
+
   // Side Panel Panel
-  panelActiveBg,
+  chickletBgd,
   panelBackground,
+  panelContentBackground,
   panelBackgroundHover,
   panelBackgroundLT,
+  panelToggleMarginRight,
+  panelToggleBottomPadding,
   panelBoxShadow,
   panelBorderRadius,
   panelBorder,
@@ -1094,7 +1180,9 @@ export const theme = {
   panelBorderLT,
   panelHeaderIcon,
   panelHeaderIconActive,
+  panelHeaderIconHover,
   panelHeaderHeight,
+  layerPanelHeaderHeight,
   panelDropdownScrollBar,
 
   layerTypeIconSizeL,
@@ -1113,10 +1201,14 @@ export const theme = {
   subtextColor,
   subtextColorLT,
   subtextColorActive,
+  panelToggleBorderColor,
+  panelTabWidth,
   textTruncate,
   titleColorLT,
   tooltipBg,
   tooltipColor,
+  tooltipBoxShadow,
+  tooltipFontSize,
   logoColor,
 
   // Sidepanel divider
@@ -1132,6 +1224,7 @@ export const theme = {
   bottomWidgetPaddingRight,
   bottomWidgetPaddingBottom,
   bottomWidgetPaddingLeft,
+  bottomWidgetBgd,
 
   // Slider
   sliderBarColor,
@@ -1142,7 +1235,10 @@ export const theme = {
   sliderHandleHeight,
   sliderHandleWidth,
   sliderHandleColor,
+  sliderHandleTextColor,
+  sliderBorderRadius,
   sliderHandleHoverColor,
+  sliderHandleAfterContent,
   sliderHandleShadow,
   sliderInputHeight,
   sliderInputWidth,
@@ -1208,10 +1304,10 @@ export const theme = {
   layerConfigGroupLabelBorderLeft,
   layerConfigGroupLabelMargin,
   layerConfigGroupLabelPadding,
+  layerConfigGroupColor,
 
   // layerConfigGroupLabel label
   layerConfigGroupLabelLabelMargin,
-  layerConfigGroupLabelLabelFontSize,
 
   // StyledConfigGroupHeader
   styledConfigGroupHeaderBorder,
@@ -1220,7 +1316,10 @@ export const theme = {
   layerConfiguratorBorder,
   layerConfiguratorBorderColor,
   layerConfiguratorMargin,
-  layerConfiguratorPadding
+  layerConfiguratorPadding,
+
+  // Styled token
+  fieldTokenRightMargin
 };
 
 export const themeLT = {
@@ -1237,6 +1336,7 @@ export const themeLT = {
   tooltipBg: '#1869B5',
   tooltipColor: '#FFFFFF',
   dropdownListBgd: '#FFFFFF',
+  toolbarItemBgdHover: '#F7F7F7',
   textColorHl: activeColorLT,
 
   inputBgd: '#F7F7F7',
@@ -1244,11 +1344,14 @@ export const themeLT = {
   inputBgdActive: '#FFFFFF',
 
   dropdownListHighlightBg: '#F0F0F0',
-
+  toolbarItemIconHover: activeColorLT,
   panelBackground: '#F7F7F7',
+  panelContentBackground: '#F7F7F7',
+  bottomWidgetBgd: '#F7F7F7',
   panelBackgroundHover: '#F7F7F7',
   panelBorderColor: '#D3D8E0',
-
+  panelHeaderIconActive: '#000000',
+  panelHeaderIconHover: '#000000',
   sideBarCloseBtnBgd: '#F7F7F7',
   sideBarCloseBtnColor: textColorLT,
   sideBarCloseBtnBgdHover: '#F7F7F7',
@@ -1260,7 +1363,7 @@ export const themeLT = {
   secondaryInputBorderColor: 'none',
   secondaryInputColor: '#545454',
 
-  panelActiveBg: '#F7F7F7',
+  chickletBgd: '#F7F7F7',
   mapPanelBackgroundColor: '#FFFFFF',
   mapPanelHeaderBackgroundColor: '#F7F7F7',
 
@@ -1303,16 +1406,22 @@ export const themeBS = {
   ...theme,
   activeColor: '#E2E2E2',
   dropdownListBgd: '#FFFFFF',
+  toolbarItemBgdHover: '#F7F7F7',
   dropdownListBorderTop: 'none',
   dropdownListHighlightBg: '#F6F6F6',
+  toolbarItemIconHover: '#000000',
   inputBgd: '#E2E2E2',
   inputBgdActive: '#E2E2E2',
   inputBgdHover: 'inherit',
   inputBorderActiveColor: '#000000',
   inputColor: '#000000',
-  panelActiveBg: '#E2E2E2',
+  chickletBgd: '#E2E2E2',
   panelBackground: '#FFFFFF',
   panelBackgroundHover: '#EEEEEE',
+  panelContentBackground: '#FFFFFF',
+  bottomWidgetBgd: '#F7F7F7',
+  panelHeaderIconActive: '#000000',
+  panelHeaderIconHover: '#000000',
   panelBorderColor: '#E2E2E2',
   primaryBtnBgd: '#E2E2E2',
   primaryBtnBgdHover: '#333333',

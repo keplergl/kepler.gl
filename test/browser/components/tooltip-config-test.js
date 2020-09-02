@@ -26,7 +26,7 @@ import uniq from 'lodash.uniq';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import TooltipConfigFactory from 'components/side-panel/interaction-panel/tooltip-config';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
-import FieldSelector from 'components/common/field-selector';
+import FieldSelectorFactory from 'components/common/field-selector';
 import ChickletedInput from 'components/common/item-selector/chickleted-input';
 import {ChickletButton} from 'components/common/item-selector/chickleted-input';
 import DropdownList from 'components/common/item-selector/dropdown-list';
@@ -64,6 +64,7 @@ test('TooltipConfig - render', t => {
   const datasets = StateWFiles.visState.datasets;
   const tooltipConfig = StateWFiles.visState.interactionConfig.tooltip.config;
 
+  const FieldSelector = appInjector.get(FieldSelectorFactory);
   const onChange = sinon.spy();
   let wrapper;
 

@@ -23,26 +23,27 @@ import test from 'tape-catch';
 import global from 'global';
 import sinon from 'sinon';
 import flatten from 'lodash.flattendeep';
-import {mount} from 'enzyme';
 import {mountWithTheme} from 'test/helpers/component-utils';
 import CloneDeep from 'lodash.clonedeep';
 import * as VisStateActions from 'actions/vis-state-actions';
 import visStateReducer from 'reducers/vis-state';
 
-import FieldToken from 'components/common/field-token';
+import FieldTokenFactory from 'components/common/field-token';
 import {VertThreeDots, ArrowUp} from 'components/common/icons';
 import DataTableModalFactory, {
   DatasetTabs,
   DatasetModalTab
 } from 'components/modals/data-table-modal';
-import {DataTable} from 'components/common/data-table';
+import DataTableFactory from 'components/common/data-table';
 import OptionDropdown from 'components/common/data-table/option-dropdown';
-
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
+import {appInjector} from '../../../../src/components/container';
 
-const DataTableModal = DataTableModalFactory(DataTable);
+const DataTableModal = appInjector.get(DataTableModalFactory);
+const DataTable = appInjector.get(DataTableFactory);
+const FieldToken = appInjector.get(FieldTokenFactory);
 
 const expectedCellSizeCache = {
   'gps_data.utc_timestamp': {row: 145, header: 150},
@@ -261,14 +262,14 @@ test('Components -> DataTableModal -> render DataTable: csv 1', t => {
     theme: {}
   };
 
-  const wrapper2 = mount(<DataTable {...enriched} />);
-  const componentInstance = wrapper2.instance();
+  const wrapper2 = mountWithTheme(<DataTable {...enriched} />);
+  const componentInstance = wrapper2.find('DataTable').instance();
   const result = componentInstance.getCellSizeCache();
 
   t.deepEqual(result, expectedExpandedCellSize, 'should calculate correct cell expansion');
 
   // manully setting the state and update the component
-  wrapper2.setState(result);
+  componentInstance.setState(result);
   wrapper2.update();
 
   t.equal(
@@ -386,11 +387,11 @@ test('Components -> DataTableModal -> render DataTable: sort and pin', t => {
     theme: {}
   };
 
-  const wrapper2 = mount(<DataTable {...enriched} />);
-  const componentInstance = wrapper2.instance();
+  const wrapper2 = mountWithTheme(<DataTable {...enriched} />);
+  const componentInstance = wrapper2.find('DataTable').instance();
   const result = componentInstance.getCellSizeCache();
   // manully setting the state and update the component
-  wrapper2.setState(result);
+  componentInstance.setState(result);
   wrapper2.update();
 
   const expectedHeaders = [
@@ -537,12 +538,13 @@ test('Components -> DataTableModal.render: csv 2', t => {
     },
     ghost: 334
   };
-  const wrapper2 = mount(<DataTable {...enriched} />);
-  const componentInstance = wrapper2.instance();
+  const wrapper2 = mountWithTheme(<DataTable {...enriched} />);
+  const componentInstance = wrapper2.find('DataTable').instance();
+
   const result = componentInstance.getCellSizeCache();
   t.deepEqual(result, expectedExpandedCellSizeGeo, 'should calculate correct cell expansion');
 
-  wrapper2.setState(result);
+  componentInstance.setState(result);
   wrapper2.update();
 
   t.equal(wrapper2.find('.header-cell').length, 7, `should render 7 header cells`);

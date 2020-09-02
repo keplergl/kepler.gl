@@ -25,7 +25,35 @@ import {FormattedMessage} from 'localization';
 const StyledDiv = styled.div.attrs({
   className: 'toolbar-item'
 })`
-  color: ${props => (props.active ? props.theme.titleTextColor : props.theme.textColor)};
+  color: ${props =>
+    props.active ? props.theme.toolbarItemIconHover : props.theme.panelHeaderIcon};
+  padding: 12px 20px;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  width: 110px;
+  justify-content: space-between;
+  border: 1px solid ${props => (props.active ? props.theme.toolbarItemBorderHover : 'transparent')};
+  border-radius: ${props => props.theme.toolbarItemBorderRaddius};
+  background-color: ${props =>
+    props.active ? props.theme.toolbarItemBgdHover : props.theme.dropdownListBgd};
+
+  svg {
+    margin-bottom: 4px;
+  }
+  .toolbar-item__title {
+    white-space: nowrap;
+    color: ${props => props.theme.textColorHl};
+  }
+
+  :hover {
+    background-color: ${props => props.theme.toolbarItemBgdHover};
+    border-color: ${props => props.theme.toolbarItemBorderHover};
+    svg {
+      color: ${props => props.theme.toolbarItemIconHover};
+    }
+    cursor: pointer;
+  }
 `;
 
 const ToolbarItem = React.memo(props => (

@@ -34,10 +34,6 @@ import {
 } from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
 
-const StyledPanelContent = styled(PanelContent)`
-  border-top: 1px solid ${props => props.theme.panelBorderColor};
-`;
-
 const StyledInteractionPanel = styled.div`
   padding-bottom: 6px;
 `;
@@ -90,7 +86,7 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
           <StyledPanelHeader className="interaction-panel__header" onClick={this._enableConfig}>
             <PanelHeaderContent className="interaction-panel__header__content">
               <div className="interaction-panel__header__icon icon">
-                <config.iconComponent height="12px" />
+                <config.iconComponent height="16px" />
               </div>
               <div className="interaction-panel__header__title">
                 <PanelHeaderTitle>
@@ -108,9 +104,7 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
             </div>
           </StyledPanelHeader>
           {config.enabled && template && (
-            <StyledPanelContent className="interaction-panel__content">
-              {template}
-            </StyledPanelContent>
+            <PanelContent className="interaction-panel__content">{template}</PanelContent>
           )}
         </StyledInteractionPanel>
       );

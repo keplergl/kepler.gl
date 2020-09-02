@@ -41,7 +41,7 @@ const propTypes = {
 };
 
 export const ChickletButton = styled.div`
-  background: ${props => props.theme.panelActiveBg};
+  background: ${props => props.theme.chickletBgd};
   border-radius: 1px;
   color: ${props => props.theme.textColor};
   font-size: 11px;

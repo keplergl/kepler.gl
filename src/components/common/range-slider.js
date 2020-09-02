@@ -32,6 +32,8 @@ import {roundValToStep} from 'utils/data-utils';
 const SliderInput = styled(Input)`
   width: ${props => props.theme.sliderInputWidth}px;
   margin-left: ${props => (props.flush ? 0 : props.size === 'tiny' ? 12 : 18)}px;
+  font-size: ${props => props.theme.sliderInputFontSize}; // 10px // 12px;
+  padding: ${props => props.theme.sliderInputPadding}; // 4px 6px; // 6px 12px;
 `;
 
 const SliderWrapper = styled.div`

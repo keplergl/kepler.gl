@@ -46,13 +46,14 @@ const PanelTab = styled.div.attrs({
   align-items: flex-end;
   border-bottom-style: solid;
   border-bottom-width: 2px;
-  border-bottom-color: ${props => (props.active ? props.theme.subtextColorActive : 'transparent')};
+  border-bottom-color: ${props =>
+    props.active ? props.theme.panelToggleBorderColor : 'transparent'};
   color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.subtextColor)};
   display: flex;
   justify-content: center;
-  margin-right: 12px;
-  padding-bottom: 6px;
-  width: 30px;
+  margin-right: ${props => props.theme.panelToggleMarginRight}px;
+  padding-bottom: ${props => props.theme.panelToggleBottomPadding}px;
+  width: ${props => props.theme.panelTabWidth};
 
   :hover {
     cursor: pointer;

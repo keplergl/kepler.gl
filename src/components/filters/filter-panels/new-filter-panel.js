@@ -21,12 +21,16 @@
 import React, {useCallback} from 'react';
 import {StyledFilterContent} from 'components/common/styled-components';
 import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
-import FieldSelector from 'components/common/field-selector';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
+import FieldSelectorFactory from '../../common/field-selector';
 
-NewFilterPanelFactory.deps = [FilterPanelHeaderFactory, SourceDataSelectorFactory];
+NewFilterPanelFactory.deps = [
+  FilterPanelHeaderFactory,
+  SourceDataSelectorFactory,
+  FieldSelectorFactory
+];
 
-function NewFilterPanelFactory(FilterPanelHeader, SourceDataSelector) {
+function NewFilterPanelFactory(FilterPanelHeader, SourceDataSelector, FieldSelector) {
   const NewFilterPanel = React.memo(
     ({idx, filter, datasets, allAvailableFields, setFilter, removeFilter, enlargeFilter}) => {
       const onFieldSelector = useCallback(field => setFilter(idx, 'name', field.name), [
