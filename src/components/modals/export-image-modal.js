@@ -59,8 +59,16 @@ const ExportImageModalFactory = () => {
   /**
    * @type {React.FunctionComponent<ExportImageModalProps>}
    */
-  const ExportImageModal = ({exportImage, onUpdateImageSetting, cleanupExportImage, intl}) => {
-    const {mapH, mapW, legend, ratio, resolution} = exportImage;
+  const ExportImageModal = ({
+    mapW,
+    mapH,
+    exportImage,
+    onUpdateImageSetting,
+    cleanupExportImage,
+    intl
+  }) => {
+    const {legend, ratio, resolution} = exportImage;
+
     useEffect(() => {
       onUpdateImageSetting({
         exporting: true
@@ -85,7 +93,7 @@ const ExportImageModalFactory = () => {
               <FormattedMessage id={'modal.exportImage.ratioTitle'} />
             </div>
             <FormattedMessage id={'modal.exportImage.ratioDescription'} />
-            <div className="button-list">
+            <div className="button-list" id="export-image-modal__option_ratio">
               {EXPORT_IMG_RATIO_OPTIONS.filter(op => !op.hidden).map(op => (
                 <SelectionButton
                   key={op.id}
@@ -102,7 +110,7 @@ const ExportImageModalFactory = () => {
               <FormattedMessage id={'modal.exportImage.resolutionTitle'} />
             </div>
             <FormattedMessage id={'modal.exportImage.resolutionDescription'} />
-            <div className="button-list">
+            <div className="button-list" id="export-image-modal__option_resolution">
               {EXPORT_IMG_RESOLUTION_OPTIONS.map(op => (
                 <SelectionButton
                   key={op.id}
