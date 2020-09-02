@@ -72,7 +72,7 @@ const Attribution = () => (
         aria-label="Mapbox logo"
       />
     </div>
-    <div>
+    <div className="attrition-link">
       <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
         © kepler.gl |{' '}
       </a>

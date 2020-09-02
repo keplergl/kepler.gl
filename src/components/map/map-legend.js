@@ -121,15 +121,12 @@ MultiColorLegend.displayName = 'MultiColorLegend';
 
 export const LayerColorLegend = React.memo(({description, config, width, colorChannel}) => {
   const enableColorBy = description.measure;
-  const {scale, field, domain, range, property, key} = colorChannel;
+  const {scale, field, domain, range, property} = colorChannel;
   const [colorScale, colorField, colorDomain] = [scale, field, domain].map(k => config[k]);
   const colorRange = config.visConfig[range];
 
   return (
     <div>
-      <div className="legend--layer_type">
-        <FormattedMessage id={`layer.${key}`} />
-      </div>
       <div className="legend--layer_color-schema">
         <div>
           {enableColorBy ? <VisualChannelMetric name={enableColorBy} /> : null}

@@ -150,7 +150,7 @@ export default class ColorLegend extends Component {
 
     return (
       <StyledLegend>
-        <svg width={width - 24} height={height}>
+        <svg width={width} height={height}>
           {legends.data.map((color, idx) => (
             <LegendRow
               key={idx}

@@ -97,14 +97,7 @@ function testGeojsonLegend(t, geojsonLegend) {
   );
   const fillColorLegend = geojsonLegend.find(LayerColorLegend).at(0);
   const strokeColorLegend = geojsonLegend.find(LayerColorLegend).at(1);
-  t.equal(
-    fillColorLegend
-      .find('.legend--layer_type')
-      .at(0)
-      .text(),
-    'Color',
-    'geojson color legend should have Fill Color'
-  );
+
   t.equal(
     fillColorLegend.find(SingleColorLegend).length,
     1,
@@ -118,14 +111,7 @@ function testGeojsonLegend(t, geojsonLegend) {
     geojsonLayer.config.color,
     'geojson color legend should be correct color'
   );
-  t.equal(
-    strokeColorLegend
-      .find('.legend--layer_type')
-      .at(0)
-      .text(),
-    'Stroke Color',
-    'geojson color legend should have Stroke Color'
-  );
+
   t.equal(
     strokeColorLegend.find(SingleColorLegend).length,
     1,
@@ -165,14 +151,7 @@ function testPointLayerLegend(t, pointLegend) {
     'point layer legend should render 0 point layer size legend'
   );
   const pointColorLegend = pointLegend.find(LayerColorLegend).at(0);
-  t.equal(
-    pointColorLegend
-      .find('.legend--layer_type')
-      .at(0)
-      .text(),
-    'Color',
-    'point layer legend should have title Color'
-  );
+
   t.equal(
     pointColorLegend.find(VisualChannelMetric).length,
     1,
@@ -210,14 +189,7 @@ function testHexagonLayerLegend(t, hexagonLegend) {
     'hexagon layer legend should render 0 size legend'
   );
   const hexagonColorLegend = hexagonLegend.find(LayerColorLegend).at(0);
-  t.equal(
-    hexagonColorLegend
-      .find('.legend--layer_type')
-      .at(0)
-      .text(),
-    'Color',
-    'hexagon layer legend should have title Color'
-  );
+
   t.equal(
     hexagonColorLegend.find(VisualChannelMetric).length,
     1,

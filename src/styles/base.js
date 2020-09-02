@@ -149,8 +149,8 @@ export const dropdownWapperMargin = 4;
 export const switchWidth = 24;
 export const switchHeight = 12;
 export const switchLabelMargin = 12;
-export const switchButtonTopMargin = 0;
-export const switchButtonLeftMargin = -1;
+export const switchBtnTopMargin = 0;
+export const switchBtnLeftMargin = -1;
 
 export const switchTrackBgd = '#29323C';
 export const switchTrackBgdActive = activeColor;
@@ -552,9 +552,9 @@ const switchTrack = css`
 const switchButton = css`
   transition: ${props => props.theme.transition};
   position: absolute;
-  top: ${props => props.theme.switchButtonTopMargin};
+  top: ${props => props.theme.switchBtnTopMargin};
   left: ${props =>
-    (props.checked ? props.theme.switchWidth / 2 : props.theme.switchButtonLeftMargin) -
+    (props.checked ? props.theme.switchWidth / 2 : props.theme.switchBtnLeftMargin) -
     props.theme.switchLabelMargin}px;
   content: '';
   display: block;
@@ -1000,7 +1000,8 @@ export const theme = {
   switchBtnWidth,
   switchBtnHeight,
   switchLabelMargin,
-  switchButtonLeftMargin,
+  switchBtnLeftMargin,
+  switchBtnTopMargin,
 
   secondarySwitchTrackBgd,
   secondarySwitchBtnBgd,

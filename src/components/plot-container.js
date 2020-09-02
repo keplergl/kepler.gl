@@ -33,7 +33,7 @@ import {getScaleFromImageSize} from 'utils/export-utils';
 import {findMapBounds} from 'utils/data-utils';
 import geoViewport from '@mapbox/geo-viewport';
 
-const CLASS_FILTER = ['mapboxgl-control-container', 'attrition-logo'];
+const CLASS_FILTER = ['mapboxgl-control-container', 'attrition-link', 'attrition-logo'];
 const DOM_FILTER_FUNC = node => !CLASS_FILTER.includes(node.className);
 const OUT_OF_SCREEN_POSITION = -9999;
 

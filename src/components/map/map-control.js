@@ -50,7 +50,6 @@ import {LOCALE_CODES} from 'localization/locales';
 
 const StyledMapControl = styled.div`
   right: 0;
-  width: ${props => props.theme.mapControl.width}px;
   padding: ${props => props.theme.mapControl.padding}px;
   z-index: 10;
   margin-top: ${props => props.top || 0}px;
@@ -78,6 +77,7 @@ const StyledMapControlPanelContent = styled.div.attrs({
   ${props => props.theme.dropdownScrollBar};
   max-height: 500px;
   min-height: 100px;
+  min-width: ${props => props.theme.mapControl.width}px;
   overflow: auto;
 `;
 
@@ -150,35 +150,44 @@ const LayerSelectorPanel = React.memo(({items, onMapToggleLayer, isActive, toggl
 
 LayerSelectorPanel.displayName = 'LayerSelectorPanel';
 
-const MapControlPanel = React.memo(({children, header, onClick, scale = 1, isExport}) => (
-  <StyledMapControlPanel
-    style={{
-      transform: `scale(${scale}) translate(calc(-${25 * (scale - 1)}% - ${10 *
-        scale}px), calc(${25 * (scale - 1)}% + ${10 * scale}px))`,
-      marginBottom: '8px'
-    }}
-  >
-    <StyledMapControlPanelHeader>
-      {isExport ? (
-        <KeplerGlLogo version={false} appName="kepler.gl" />
-      ) : (
-        <span style={{verticalAlign: 'middle'}}>
-          <FormattedMessage id={header} />
-        </span>
-      )}
-      {isExport ? null : (
-        <IconRoundSmall className="close-map-control-item" onClick={onClick}>
-          <Close height="16px" />
-        </IconRoundSmall>
-      )}
-    </StyledMapControlPanelHeader>
-    <StyledMapControlPanelContent>{children}</StyledMapControlPanelContent>
-  </StyledMapControlPanel>
-));
+const MapControlPanel = React.memo(
+  ({children, header, onClick, scale = 1, isExport, disableClose = false, logoComponent}) => (
+    <StyledMapControlPanel
+      style={{
+        transform: `scale(${scale})`,
+        marginBottom: '8px'
+      }}
+    >
+      <StyledMapControlPanelHeader>
+        {isExport && logoComponent ? (
+          logoComponent
+        ) : header ? (
+          <span style={{verticalAlign: 'middle'}}>
+            <FormattedMessage id={header} />
+          </span>
+        ) : null}
+        {isExport ? null : (
+          <IconRoundSmall className="close-map-control-item" onClick={onClick}>
+            <Close height="16px" />
+          </IconRoundSmall>
+        )}
+      </StyledMapControlPanelHeader>
+      <StyledMapControlPanelContent>{children}</StyledMapControlPanelContent>
+    </StyledMapControlPanel>
+  )
+);
 
 MapControlPanel.displayName = 'MapControlPanel';
 
-const MapLegendPanel = ({layers, isActive, scale, onToggleMenuPanel, isExport}) =>
+export const MapLegendPanel = ({
+  layers,
+  isActive,
+  scale,
+  onToggleMenuPanel,
+  isExport,
+  disableClose,
+  logoComponent
+}) =>
   !isActive ? (
     <MapControlButton
       key={2}
@@ -199,6 +208,8 @@ const MapLegendPanel = ({layers, isActive, scale, onToggleMenuPanel, isExport}) 
       header={'header.layerLegend'}
       onClick={onToggleMenuPanel}
       isExport={isExport}
+      disableClose={disableClose}
+      logoComponent={logoComponent}
     >
       <MapLegend layers={layers} />
     </MapControlPanel>
@@ -354,6 +365,7 @@ const LocalePanel = React.memo(
 
 LocalePanel.displayName = 'LocalePanel';
 
+const LegendLogo = <KeplerGlLogo version={false} appName="kepler.gl" />;
 const MapControlFactory = () => {
   class MapControl extends Component {
     static propTypes = {
@@ -372,6 +384,7 @@ const MapControlFactory = () => {
       top: PropTypes.number.isRequired,
       onSetLocale: PropTypes.func.isRequired,
       locale: PropTypes.string.isRequired,
+      logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
 
       // optional
       readOnly: PropTypes.bool,
@@ -383,7 +396,8 @@ const MapControlFactory = () => {
     static defaultProps = {
       isSplit: false,
       top: 0,
-      mapIndex: 0
+      mapIndex: 0,
+      logoComponent: LegendLogo
     };
 
     layerSelector = props => props.layers;
@@ -419,7 +433,8 @@ const MapControlFactory = () => {
         scale,
         readOnly,
         locale,
-        top
+        top,
+        logoComponent
       } = this.props;
 
       const {
@@ -473,6 +488,8 @@ const MapControlFactory = () => {
                 onMapToggleLayer={onMapToggleLayer}
                 isActive={mapLegend.active}
                 onToggleMenuPanel={() => onToggleMapControl('mapLegend')}
+                disableClose={mapLegend.disableClose}
+                logoComponent={logoComponent}
               />
             </ActionPanel>
           ) : null}
