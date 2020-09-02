@@ -316,11 +316,11 @@ export function setMapInfo(
 ): Merge<SetMapInfoUpdaterAction, {type: ActionTypes.SET_MAP_INFO}>;
 
 export type LoadFilesUpdaterAction = {
-  files: FileList;
+  files: File[];
   onFinish?(result: any): any;
 };
 export function loadFiles(
-  files: FileList,
+  files: File[],
   onFinish?: (result: any) => any
 ): Merge<LoadFilesUpdaterAction, {type: ActionTypes.LOAD_FILES}>;
 

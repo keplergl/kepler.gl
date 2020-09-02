@@ -23,13 +23,13 @@
 // export {default as keplerGlReducer} from './root';
 
 // Core Reducer
-// export {
-//   default as keplerGlReducerCore,
-//   visStateLens,
-//   mapStateLens,
-//   uiStateLens,
-//   mapStyleLens
-// } from './core';
+export {
+  default as keplerGlReducerCore,
+  visStateLens,
+  mapStateLens,
+  uiStateLens,
+  mapStyleLens
+} from './core';
 
 // Each individual reducer
 // export {default as visStateReducer} from './vis-state';

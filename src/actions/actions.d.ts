@@ -56,7 +56,11 @@ export type AddDataToMapOptions = {
 };
 
 export type AddDataToMapPayload = {
-  datasets: ProtoDataset[];
+  // TODO/ib - internally the code calls `toArray` a couple of layers deep
+  // so this function can actually accept both an array and an object
+  // recommend dropping such "sloppy typing" and enforcing array type
+  // as the field is called `datasets`
+  datasets: ProtoDataset[] | ProtoDataset;
   options?: AddDataToMapOptions;
   config?: ParsedConfig;
   info?: Partial<MapInfo>

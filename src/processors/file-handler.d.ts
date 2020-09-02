@@ -41,3 +41,5 @@ export function processFileData(payload: {
 }): Promise<FileCacheItem[]>;
 
 export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayload[];
+
+export function readBatch(asyncIterator, fileName): AsyncIterable<any>;
