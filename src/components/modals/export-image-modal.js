@@ -24,7 +24,7 @@ import ImagePreview from 'components/common/image-preview';
 
 import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS} from 'constants/default-settings';
 
-import {StyledModalContent, SelectionButton} from 'components/common/styled-components';
+import {StyledModalContent, SelectionButton, CheckMark} from 'components/common/styled-components';
 import Switch from 'components/common/switch';
 import {injectIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';
@@ -93,6 +93,7 @@ const ExportImageModalFactory = () => {
                   onClick={() => onUpdateImageSetting({ratio: op.id})}
                 >
                   <FormattedMessage id={op.label} />
+                  {ratio === op.id && <CheckMark />}
                 </SelectionButton>
               ))}
             </div>
@@ -110,6 +111,7 @@ const ExportImageModalFactory = () => {
                   onClick={() => op.available && onUpdateImageSetting({resolution: op.id})}
                 >
                   {op.label}
+                  {resolution === op.id && <CheckMark />}
                 </SelectionButton>
               ))}
             </div>

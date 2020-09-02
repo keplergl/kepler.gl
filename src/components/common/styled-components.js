@@ -223,6 +223,7 @@ export const Button = styled.div.attrs(props => ({
       ? props.theme.primaryBtnFontSizeSmall
       : props.theme.primaryBtnFontSizeDefault};
   font-weight: 500;
+  font-family: ${props => props.theme.btnFontFamily};
   justify-content: center;
   letter-spacing: 0.3px;
   line-height: 14px;
@@ -239,6 +240,8 @@ export const Button = styled.div.attrs(props => ({
       ? props.theme.secondaryBtnBorder
       : props.floating
       ? props.theme.floatingBtnBorder
+      : props.link
+      ? props.theme.linkBtnBorder
       : props.theme.primaryBtnBorder};
   :hover,
   :focus,
@@ -315,7 +318,6 @@ export const StyledPanelDropdown = styled.div`
   overflow-y: auto;
   box-shadow: ${props => props.theme.panelBoxShadow};
   border-radius: ${props => props.theme.panelBorderRadius};
-  margin-top: 2px;
   max-height: 500px;
   position: relative;
   z-index: 999;
@@ -347,18 +349,26 @@ export const DatasetSquare = styled.div`
 `;
 
 export const SelectionButton = styled.div`
+  position: relative;
   border-radius: 2px;
   border: 1px solid
-    ${props => (props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT)};
-  color: ${props => (props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT)};
+    ${props =>
+      props.selected
+        ? props.theme.selectionBtnBorderActColor
+        : props.theme.selectionBtnBorderColor};
+  color: ${props =>
+    props.selected ? props.theme.selectionBtnActColor : props.theme.selectionBtnColor};
+  background-color: ${props =>
+    props.selected ? props.theme.selectionBtnActBgd : props.theme.selectionBtnBgd};
+
   cursor: pointer;
   font-weight: 500;
   margin-right: 6px;
-  padding: 6px 10px;
+  padding: 6px 16px;
 
   :hover {
-    color: ${props => props.available && props.theme.primaryBtnBgd};
-    border: 1px solid ${props => props.available && props.theme.primaryBtnBgd};
+    color: ${props => props.theme.selectionBtnActColor};
+    border: 1px solid ${props => props.theme.selectionBtnBorderActColor};
   }
 `;
 
@@ -560,23 +570,14 @@ export const StyledExportSection = styled.div`
   }
 `;
 
-export const StyledFilteredOption = styled.div`
+export const StyledFilteredOption = styled(SelectionButton)`
   align-items: center;
-  border-radius: 2px;
-  border: 1px solid
-    ${props => (props.selected ? props.theme.primaryBtnBgd : props.theme.selectBorderColorLT)};
-  cursor: pointer;
   display: flex;
   flex-direction: column;
-  height: 60px;
   justify-content: center;
   margin: 4px;
   padding: 8px 12px;
   width: 140px;
-
-  :hover {
-    border: 1px solid ${props => props.theme.primaryBtnBgd};
-  }
 
   .filter-option-title {
     color: ${props => props.theme.textColorLT};
@@ -584,28 +585,16 @@ export const StyledFilteredOption = styled.div`
     font-weight: 500;
   }
   .filter-option-subtitle {
-    color: ${props => props.theme.textColor};
+    color: ${props => props.theme.subtextColorLT};
     font-size: 11px;
   }
 `;
 
-export const StyledType = styled.div`
-  border-radius: 2px;
-  border: 1px solid
-    ${props => (props.selected ? props.theme.primaryBtnBgdHover : props.theme.selectBorderColorLT)};
-  color: ${props =>
-    props.selected ? props.theme.primaryBtnBgdHover : props.theme.selectBorderColorLT};
-  cursor: pointer;
-  font-weight: 500;
+export const StyledType = styled(SelectionButton)`
   height: 100px;
   margin: 4px;
   padding: 6px 10px;
   width: 100px;
-
-  :hover {
-    color: ${props => props.available && props.theme.primaryBtnBgd};
-    border: 1px solid ${props => props.available && props.theme.primaryBtnBgd};
-  }
 `;
 
 export const WidgetContainer = styled.div`
@@ -656,4 +645,32 @@ export const TruncatedTitleText = styled.div`
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+`;
+
+export const CheckMark = styled.span.attrs({
+  className: 'checkbox-inner'
+})`
+  background-color: ${props => props.theme.selectionBtnBorderActColor};
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-top-left-radius: 2px;
+
+  :after {
+    position: absolute;
+    display: table;
+    border: 1px solid #fff;
+    border-top: 0;
+    border-left: 0;
+    transform: rotate(45deg) scale(1) translate(-50%, -50%);
+    opacity: 1;
+    content: ' ';
+    top: 40%;
+    left: 30%;
+    width: 3.2px;
+    height: 6.22px;
+  }
 `;

@@ -47,7 +47,7 @@ const StyledLayerConfigurator = styled.div.attrs({
 })`
   position: relative;
   margin-top: ${props => props.theme.layerConfiguratorMargin};
-  padding-top: ${props => props.theme.layerConfiguratorPadding};
+  padding: ${props => props.theme.layerConfiguratorPadding};
   border-left: ${props => props.theme.layerConfiguratorBorder} dashed
     ${props => props.theme.layerConfiguratorBorderColor};
 `;

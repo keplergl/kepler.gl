@@ -22,7 +22,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import {FileType} from 'components/common/icons';
-import {StyledModalContent, StyledType} from 'components/common/styled-components';
+import {StyledModalContent, StyledType, CheckMark} from 'components/common/styled-components';
 import {EXPORT_MAP_FORMATS, EXPORT_MAP_FORMAT_OPTIONS} from 'constants/default-settings';
 import {StyledExportMapSection} from './components';
 import ExportHtmlMapFactory from './export-html-map';
@@ -50,7 +50,7 @@ function ExportMapModalFactory(ExportHtmlMap, ExportJsonMap) {
     onChangeExportMapFormat = format => {},
     onChangeExportMapHTMLMode = NO_OP,
     onEditUserMapboxAccessToken = NO_OP,
-    options = {}
+    options = {format: ''}
   }) => (
     <StyledModalContent className="export-map-modal">
       <div style={style}>
@@ -67,14 +67,13 @@ function ExportMapModalFactory(ExportHtmlMap, ExportJsonMap) {
             {EXPORT_MAP_FORMAT_OPTIONS.map(op => (
               <StyledType
                 key={op.id}
-                selected={
-                  // @ts-ignore
-                  options.format === op.id
-                }
+                selected={options.format === op.id}
                 available={op.available}
                 onClick={() => op.available && onChangeExportMapFormat(op.id)}
               >
                 <FileType ext={op.label} height="80px" fontSize="11px" />
+
+                {options.format === op.id && <CheckMark />}
               </StyledType>
             ))}
           </div>
@@ -85,20 +84,14 @@ function ExportMapModalFactory(ExportHtmlMap, ExportJsonMap) {
               <ExportHtmlMap
                 onChangeExportMapHTMLMode={onChangeExportMapHTMLMode}
                 onEditUserMapboxAccessToken={onEditUserMapboxAccessToken}
-                options={
-                  // @ts-ignore
-                  options[options.format]
-                }
+                options={options[options.format]}
               />
             ),
             [EXPORT_MAP_FORMATS.JSON]: (
               <ExportJsonMap
                 config={config}
                 onChangeExportData={onChangeExportData}
-                options={
-                  // @ts-ignore
-                  options[options.format]
-                }
+                options={options[options.format]}
               />
             )
           }[

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,7 +21,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {StyledExportSection, StyledType} from 'components/common/styled-components';
+import {StyledExportSection, StyledType, CheckMark} from 'components/common/styled-components';
 import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';
 import {EXPORT_HTML_MAP_MODE_OPTIONS} from 'constants/default-settings';
 import {EXPORT_HTML_MAP_DOC, EXPORT_HTML_MAP_MODES_DOC} from 'constants/user-guides';
@@ -93,10 +94,7 @@ const ExportHtmlMapUnmemoized = ({
           onChange={e => onEditUserMapboxAccessToken(e.target.value)}
           type="text"
           placeholder={intl.formatMessage({id: 'modal.exportMap.html.tokenPlaceholder'})}
-          value={
-            // @ts-ignore
-            options ? options.userMapboxToken : ''
-          }
+          value={options ? options.userMapboxToken : ''}
         />
         <div className="disclaimer">
           <StyledWarning>
@@ -125,10 +123,7 @@ const ExportHtmlMapUnmemoized = ({
         {EXPORT_HTML_MAP_MODE_OPTIONS.map(mode => (
           <BigStyledTile
             key={mode.id}
-            selected={
-              // @ts-ignore
-              options.mode === mode.id
-            }
+            selected={options.mode === mode.id}
             available={mode.available}
             onClick={() => mode.available && onChangeExportMapHTMLMode(mode.id)}
           >
@@ -139,6 +134,7 @@ const ExportHtmlMapUnmemoized = ({
                 values={{mode: intl.formatMessage({id: mode.label})}}
               />
             </p>
+            {options.mode === mode.id && <CheckMark />}
           </BigStyledTile>
         ))}
       </div>
