@@ -176,8 +176,6 @@ export const dropdownWapperMargin = 4;
 export const switchWidth = 24;
 export const switchHeight = 12;
 export const switchLabelMargin = 12;
-export const switchBtnTopMargin = 0;
-export const switchBtnLeftMargin = -1;
 
 export const switchTrackBgd = '#29323C';
 export const switchTrackBgdActive = activeColor;
@@ -186,8 +184,8 @@ export const switchBtnBgd = '#6A7485';
 export const switchBtnBgdActive = '#D3D8E0';
 export const switchBtnBoxShadow = '0 2px 4px 0 rgba(0,0,0,0.40)';
 export const switchBtnBorderRadius = '0';
-export const switchBtnWidth = '12px';
-export const switchBtnHeight = '12px';
+export const switchBtnWidth = 12;
+export const switchBtnHeight = 12;
 
 export const secondarySwitchTrackBgd = '#242730';
 export const secondarySwitchBtnBgd = '#3A414C';
@@ -603,14 +601,16 @@ const switchTrack = css`
 const switchButton = css`
   transition: ${props => props.theme.transition};
   position: absolute;
-  top: ${props => props.theme.switchBtnTopMargin};
+  top: ${props => (props.theme.switchHeight - props.theme.switchBtnHeight) / 2}px;
   left: ${props =>
-    (props.checked ? props.theme.switchWidth / 2 : props.theme.switchBtnLeftMargin) -
+    (props.checked
+      ? props.theme.switchWidth / 2
+      : (props.theme.switchHeight - props.theme.switchBtnHeight) / 2) -
     props.theme.switchLabelMargin}px;
   content: '';
   display: block;
-  height: ${props => props.theme.switchBtnHeight};
-  width: ${props => props.theme.switchBtnWidth};
+  height: ${props => props.theme.switchBtnHeight}px;
+  width: ${props => props.theme.switchBtnWidth}px;
   background: ${props =>
     props.checked ? props.theme.switchBtnBgdActive : props.theme.switchBtnBgd};
   box-shadow: ${props => props.theme.switchBtnBoxShadow};
@@ -620,7 +620,7 @@ const switchButton = css`
 const inputSwitch = css`
   user-select: none;
   cursor: pointer;
-  line-height: 16px;
+  line-height: ${props => props.theme.switchHeight}px;
   font-weight: 500;
   font-size: 12px;
   color: ${props => props.theme.labelColor};
@@ -1061,8 +1061,6 @@ export const theme = {
   switchBtnWidth,
   switchBtnHeight,
   switchLabelMargin,
-  switchBtnLeftMargin,
-  switchBtnTopMargin,
 
   secondarySwitchTrackBgd,
   secondarySwitchBtnBgd,

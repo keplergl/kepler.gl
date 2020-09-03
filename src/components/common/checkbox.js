@@ -41,7 +41,7 @@ const HiddenInput = styled.input`
 
 const StyledCheckbox = styled.div`
   display: flex;
-  min-height: ${props => props.theme.switchBtnHeight};
+  min-height: ${props => props.theme.switchHeight}px;
   margin-left: ${props => props.theme.switchLabelMargin}px;
 `;
 
