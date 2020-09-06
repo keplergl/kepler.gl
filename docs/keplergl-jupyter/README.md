@@ -328,7 +328,7 @@ map_1.save_to_html(file_name='first_map.html')
 map_1.save_to_html(data={'data_1': df}, config=config, file_name='first_map.html')
 
 # this will save map with the interaction panel disabled
-map_1.save_to_html(file_name='first_map.html' read_only=True)
+map_1.save_to_html(file_name='first_map.html', read_only=True)
 ```
 # Demo Notebooks
 - [Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Load%20kepler.gl.ipynb): Load kepler.gl widget, add data and config
