@@ -44,16 +44,23 @@ const IconButton = styled(Button)`
 
 function nop() {}
 const DEFAULT_BUTTON_HEIGHT = '18px';
+const DEFAULT_ICONS = {
+  reset: Reset,
+  play: Play,
+  pause: Pause
+};
 
 function AnimationPlaybacksFactory() {
   const AnimationPlaybacks = ({
     isAnimatable,
     isAnimating,
     buttonStyle,
+    width,
     pauseAnimation = nop,
     updateAnimationTime = nop,
     startAnimation = nop,
-    buttonHeight = DEFAULT_BUTTON_HEIGHT
+    buttonHeight = DEFAULT_BUTTON_HEIGHT,
+    playbackIcons = DEFAULT_ICONS
   }) => {
     const btnStyle = buttonStyle ? {[buttonStyle]: true} : {};
     return (
@@ -61,6 +68,7 @@ function AnimationPlaybacksFactory() {
         className={classnames('time-range-slider__control', {
           disabled: !isAnimatable
         })}
+        style={{width: `${width}px`}}
       >
         <ButtonGroup>
           <IconButton
@@ -68,14 +76,18 @@ function AnimationPlaybacksFactory() {
             {...btnStyle}
             onClick={updateAnimationTime}
           >
-            <Reset height={buttonHeight} />
+            <playbackIcons.reset height={buttonHeight} />
           </IconButton>
           <IconButton
             {...btnStyle}
             className={classnames('playback-control-button', {active: isAnimating})}
             onClick={isAnimating ? pauseAnimation : startAnimation}
           >
-            {isAnimating ? <Pause height={buttonHeight} /> : <Play height={buttonHeight} />}
+            {isAnimating ? (
+              <playbackIcons.pause height={buttonHeight} />
+            ) : (
+              <playbackIcons.play height={buttonHeight} />
+            )}
           </IconButton>
         </ButtonGroup>
       </StyledAnimationControls>

@@ -20,7 +20,7 @@
 
 import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 import {event, select} from 'd3-selection';
 import {brushX} from 'd3-brush';
 import {normalizeSliderValue} from 'utils/data-utils';
@@ -43,6 +43,21 @@ function moveRight(startSel, selection) {
 
   return Boolean(startSel0 === sel0);
 }
+// style brush resize handle
+// https://github.com/crossfilter/crossfilter/blob/gh-pages/index.html#L466
+const getHandlePath = props => {
+  return function brushResizePath(d) {
+    const e = Number(d.type === 'e');
+    const x = e ? 1 : -1;
+    const h = 39;
+    const w = 4.5;
+    const y = (props.height - h) / 2;
+    // return `M0,57.3c2.5,0,4.5,2,4.5,4.5v29.3c0,2.5-2,4.5-4.5,4.5V57.3z`
+    // return `M-0.5,57.3c-2.5,0-4.5,2-4.5,4.5v29.3c0,2.5,2,4.5,4.5,4.5V57.3z`
+    return `M${0.5 * x},${y}c${2.5 * x},0,${w * x},2,${w * x},${w}v${h - w * 2}c0,2.5,${-2 *
+      x},${w},${-w * x},${w}V${y}z`;
+  };
+};
 
 function RangeBrushFactory() {
   class RangeBrush extends Component {
@@ -65,6 +80,7 @@ function RangeBrushFactory() {
       // distinguish between the uses.
       //
       // We don't use state because that would trigger another `componentDidUpdate`
+      const {theme, isRanged, onMouseoverHandle, onMouseoutHandle} = this.props;
 
       this.brushing = false;
       this.moving = false;
@@ -98,6 +114,23 @@ function RangeBrushFactory() {
         });
 
       this.root.call(this.brush);
+      const brushResizePath = getHandlePath(this.props);
+      this.handle = this.root
+        .selectAll('.handle--custom')
+        .data([{type: 'w'}, {type: 'e'}])
+        .enter()
+        .append('path')
+        .attr('class', 'handle--custom')
+        .attr('display', isRanged ? null : 'none')
+        .attr('fill', theme ? theme.sliderHandleColor : '#D3D8E0')
+        .attr('cursor', 'ew-resize')
+        .attr('d', brushResizePath)
+        .on('mouseover', () => {
+          if (onMouseoverHandle) onMouseoverHandle();
+        })
+        .on('mouseout', () => {
+          if (onMouseoutHandle) onMouseoutHandle();
+        });
 
       const {
         value: [val0, val1]
@@ -126,6 +159,10 @@ function RangeBrushFactory() {
           this._move(val0, val1);
         }
       }
+
+      if (!this.props.isRanged) {
+        this.handle.attr('display', 'none');
+      }
     }
 
     rootContainer = createRef();
@@ -150,6 +187,10 @@ function RangeBrushFactory() {
           this.brush.move(this.root, [scale(val0), scale(val0) + 1]);
         } else {
           this.brush.move(this.root, [scale(val0), scale(val1)]);
+
+          this.handle
+            .attr('display', null)
+            .attr('transform', (d, i) => `translate(${[i === 0 ? scale(val0) : scale(val1), 0]})`);
         }
       }
     }
@@ -174,7 +215,7 @@ function RangeBrushFactory() {
       d1 = normalizeSliderValue(d1, min, step, marks);
 
       if (isRanged) this._move(d0, d1);
-      else this._move(right ? d1 : d0);
+      else this._move(...(right ? [d1, d1] : [d0, d0]));
 
       if (isRanged) this._onBrush(d0, d1);
       else this._onBrush(right ? d1 : d0);
@@ -199,13 +240,12 @@ function RangeBrushFactory() {
 
     render() {
       const {isRanged} = this.props;
-
       return (
         <StyledG className="kg-range-slider__brush" isRanged={isRanged} ref={this.rootContainer} />
       );
     }
   }
-  return RangeBrush;
+  return withTheme(RangeBrush);
 }
 
 export default RangeBrushFactory;

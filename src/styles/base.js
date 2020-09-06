@@ -307,6 +307,7 @@ export const sliderInputFontSize = '10px';
 export const sliderInputPadding = '4px 6px';
 export const sliderMarginTopIsTime = -12;
 export const sliderMarginTop = 12;
+export const sliderMarginBottom = 12;
 
 // Geocoder
 export const geocoderWidth = 360;
@@ -318,6 +319,14 @@ export const geocoderInputHeight = 36;
 export const rangeBrushBgd = '#3A414C';
 export const histogramFillInRange = activeColor;
 export const histogramFillOutRange = sliderBarColor;
+export const axisFontSize = '10px';
+export const timeTitleFontSize = '10px';
+export const rangePlotMargin = {top: 12, bottom: 0, left: 0, right: 0};
+export const rangePlotMarginLarge = {top: 18, bottom: 0, left: 0, right: 0};
+export const rangePlotH = 62;
+export const rangePlotContainerH = 78;
+export const rangePlotHLarge = 102;
+export const rangePlotContainerHLarge = 120;
 
 // Notification
 export const notificationColors = {
@@ -1289,6 +1298,7 @@ export const theme = {
   sliderInputWidth,
   sliderMarginTopIsTime,
   sliderMarginTop,
+  sliderMarginBottom,
 
   // Geocoder
   geocoderWidth,
@@ -1300,6 +1310,14 @@ export const theme = {
   rangeBrushBgd,
   histogramFillInRange,
   histogramFillOutRange,
+  axisFontSize,
+  timeTitleFontSize,
+  rangePlotMargin,
+  rangePlotMarginLarge,
+  rangePlotH,
+  rangePlotHLarge,
+  rangePlotContainerH,
+  rangePlotContainerHLarge,
 
   // Notifications
   notificationColors,

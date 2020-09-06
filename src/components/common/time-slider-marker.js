@@ -18,22 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef} from 'react';
+import React, {useRef, useEffect, useMemo} from 'react';
 import PropTypes from 'prop-types';
 import {scaleUtc} from 'd3-scale';
 import {select} from 'd3-selection';
 import {axisBottom} from 'd3-axis';
-import {createSelector} from 'reselect';
 import styled from 'styled-components';
 
-const MIN_TICK_WIDTH = 50;
+const MIN_TICK_WIDTH_LARGE = 80;
+const MIN_TICK_WIDTH_SMALL = 50;
+const HEIGHT = 30;
 
 const TimeSliderContainer = styled.svg`
   pointer-events: none;
   position: absolute;
+  top: 0;
+  overflow: visible;
 
   .axis text {
-    font-size: 9px;
+    font-size: ${props => props.theme.axisFontSize};
     fill: ${props => props.theme.textColor};
   }
 
@@ -51,7 +54,7 @@ const TimeSliderContainer = styled.svg`
 
   .value {
     fill: ${props => props.theme.textColor};
-    font-size: 10px;
+    font-size: ${props => props.theme.axisFontSize};
 
     &.start {
       text-anchor: start;
@@ -63,65 +66,49 @@ const TimeSliderContainer = styled.svg`
   }
 `;
 
-const height = 30;
-
 function TimeSliderMarkerFactory() {
-  class TimeSliderMarker extends Component {
-    static propTypes = {
-      domain: PropTypes.arrayOf(PropTypes.any).isRequired,
-      width: PropTypes.number.isRequired
-    };
-
-    componentDidMount() {
-      this._updateAxis(this.scaleSelector(this.props));
+  function updateAxis(scale, width, xAxisRef, isEnlarged) {
+    if (!scale) {
+      return;
     }
 
-    componentDidUpdate(prevProps) {
-      if (this.scaleSelector(this.props) !== this.scaleSelector(prevProps)) {
-        this._updateAxis(this.scaleSelector(this.props));
-      }
-    }
+    // TODO: pass in ticks if interval is defined
+    const ticks = Math.floor(width / (isEnlarged ? MIN_TICK_WIDTH_LARGE : MIN_TICK_WIDTH_SMALL));
 
-    xAxis = createRef();
+    const xAxis = axisBottom(scale)
+      .ticks(ticks)
+      .tickSize(0)
+      .tickPadding(12);
 
-    domainSelector = props => props.domain;
-    widthSelector = props => props.width;
-    scaleSelector = createSelector(this.domainSelector, this.widthSelector, (domain, width) =>
-      Array.isArray(domain)
-        ? scaleUtc()
-            .domain(domain)
-            .range([0, width])
-        : null
+    select(xAxisRef.current).call(xAxis);
+  }
+
+  const TimeSliderMarker = ({width, domain, isEnlarged = true, height = HEIGHT}) => {
+    const xAxisRef = useRef();
+    const scale = useMemo(
+      () =>
+        Array.isArray(domain)
+          ? scaleUtc()
+              .domain(domain)
+              .range([0, width])
+          : null,
+      [domain, width]
     );
 
-    _updateAxis(scale) {
-      if (!scale) {
-        return;
-      }
+    useEffect(() => {
+      updateAxis(scale, width, xAxisRef, isEnlarged);
+    }, [scale, width, xAxisRef, isEnlarged]);
+    return (
+      <TimeSliderContainer className="time-slider-marker" width={width} height={height}>
+        <g className="x axis" ref={xAxisRef} transform="translate(0, 0)" />
+      </TimeSliderContainer>
+    );
+  };
 
-      // TODO: pass in ticks if interval is defined
-      const ticks = Math.floor(this.props.width / MIN_TICK_WIDTH);
-
-      const xAxis = axisBottom(scale)
-        .ticks(ticks)
-        .tickSize(8)
-        .tickPadding(6);
-
-      select(this.xAxis.current).call(xAxis);
-    }
-
-    render() {
-      return (
-        <TimeSliderContainer
-          className="time-slider-marker"
-          width={this.props.width}
-          height={height}
-        >
-          <g className="x axis" ref={this.xAxis} transform="translate(0, 0)" />
-        </TimeSliderContainer>
-      );
-    }
-  }
+  TimeSliderMarker.propTypes = {
+    domain: PropTypes.arrayOf(PropTypes.any).isRequired,
+    width: PropTypes.number.isRequired
+  };
 
   return TimeSliderMarker;
 }

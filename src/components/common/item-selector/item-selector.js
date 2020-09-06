@@ -45,7 +45,8 @@ const StyledDropdownSelect = styled.div.attrs({
       ? props.theme.inputLT
       : props.theme.input};
 
-  height: ${props => props.theme.dropdownSelectHeight}px;
+  height: ${props =>
+    props.size === 'small' ? props.theme.inputBoxHeightSmall : props.theme.inputBoxHeight};
 
   .list__item__anchor {
     ${props => props.theme.dropdownListAnchor};
@@ -269,7 +270,8 @@ class ItemSelector extends Component {
       onClick: this._showTypeahead,
       onFocus: this._showPopover,
       error: this.props.isError,
-      inputTheme: this.props.inputTheme
+      inputTheme: this.props.inputTheme,
+      size: this.props.size
     };
     const intl = this.props.intl;
 

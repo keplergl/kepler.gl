@@ -37,7 +37,7 @@ import FieldSelectorFactory from '../common/field-selector';
 const TOP_SECTION_HEIGHT = '36px';
 
 const TimeBottomWidgetInner = styled(BottomWidgetInner)`
-  padding: 6px 32px 16px 32px;
+  padding: 6px 32px 24px 32px;
 `;
 const TopSectionWrapper = styled.div`
   display: flex;

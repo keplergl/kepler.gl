@@ -26,7 +26,6 @@ import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
 import {Minus} from 'components/common/icons';
-import {SelectTextBold, SelectText} from 'components/common/styled-components';
 import RangeSliderFactory from 'components/common/range-slider';
 import TimeSliderMarkerFactory from 'components/common/time-slider-marker';
 import PlaybackControlsFactory from 'components/common/animation-control/playback-controls';
@@ -49,10 +48,6 @@ const StyledSliderContainer = styled.div`
 
   .playback-control-button {
     padding: 9px 12px;
-  }
-
-  .kg-range-slider__slider .kg-slider {
-    margin-top: ${props => props.theme.sliderMarginTopIsTime}px;
   }
 `;
 
@@ -187,12 +182,12 @@ export default function TimeRangeSliderFactory(
 const TimeValueWrapper = styled.div`
   display: flex;
   align-items: center;
-  font-size: 11px;
+  font-size: ${props => props.theme.timeTitleFontSize};
   justify-content: ${props => (props.isEnlarged ? 'center' : 'space-between')};
 
   .horizontal-bar {
     padding: 0 12px;
-    color: ${props => props.theme.titleTextColor};
+    color: ${props => props.theme.textColor};
   }
 
   .time-value {
@@ -201,7 +196,7 @@ const TimeValueWrapper = styled.div`
     align-items: flex-start;
 
     span {
-      color: ${props => props.theme.titleTextColor};
+      color: ${props => props.theme.textColor};
     }
   }
 
@@ -228,13 +223,9 @@ const TimeValue = ({value, split}) => (
     {split ? (
       value
         .split(' ')
-        .map((v, i) => (
-          <div key={i}>
-            {i === 0 ? <SelectText>{v}</SelectText> : <SelectTextBold>{v}</SelectTextBold>}
-          </div>
-        ))
+        .map((v, i) => <div key={i}>{i === 0 ? <span>{v}</span> : <span>{v}</span>}</div>)
     ) : (
-      <SelectTextBold>{value}</SelectTextBold>
+      <span>{value}</span>
     )}
   </div>
 );
