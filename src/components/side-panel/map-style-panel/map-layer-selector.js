@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import PanelHeaderAction from 'components/side-panel/panel-header-action';
+import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import {EyeSeen, EyeUnseen, Upload} from 'components/common/icons';
 
 import {
@@ -55,8 +55,20 @@ const LayerLabel = styled(PanelLabelBold)`
   color: ${props => (props.active ? props.theme.textColor : props.theme.labelColor)};
 `;
 
-function LayerGroupSelectorFactory() {
-  const LayerGroupSelector = ({layers, editableLayers, onChange, topLayers}) => (
+LayerGroupSelectorFactory.deps = [PanelHeaderActionFactory];
+
+function LayerGroupSelectorFactory(PanelHeaderAction) {
+  const defaultActionIcons = {
+    visible: EyeSeen,
+    hidden: EyeUnseen
+  };
+  const LayerGroupSelector = ({
+    layers,
+    editableLayers,
+    onChange,
+    topLayers,
+    actionIcons = defaultActionIcons
+  }) => (
     <StyledInteractionPanel className="map-style__layer-group__selector">
       <div className="layer-group__header">
         <PanelLabel>
@@ -79,7 +91,7 @@ function LayerGroupSelectorFactory() {
                     }
                   })
                 }
-                IconComponent={layers[slug] ? EyeSeen : EyeUnseen}
+                IconComponent={layers[slug] ? actionIcons.visible : actionIcons.hidden}
                 active={layers[slug]}
                 flush
               />

@@ -264,63 +264,79 @@ const StyledToolbar = styled(VerticalToolbar)`
   right: 32px;
 `;
 
-const MapDrawPanel = React.memo(
-  ({editor, isActive, onToggleMenuPanel, onSetEditorMode, onToggleEditorVisibility}) => {
-    return (
-      <div className="map-draw-controls" style={{position: 'relative'}}>
-        {isActive ? (
-          <StyledToolbar show={isActive}>
-            <ToolbarItem
-              className="edit-feature"
-              onClick={() => onSetEditorMode(EDITOR_MODES.EDIT)}
-              label="toolbar.select"
-              iconHeight="22px"
-              icon={CursorClick}
-              active={editor.mode === EDITOR_MODES.EDIT}
-            />
-            <ToolbarItem
-              className="draw-feature"
-              onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POLYGON)}
-              label="toolbar.polygon"
-              iconHeight="22px"
-              icon={Polygon}
-              active={editor.mode === EDITOR_MODES.DRAW_POLYGON}
-            />
-            <ToolbarItem
-              className="draw-rectangle"
-              onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE)}
-              label="toolbar.rectangle"
-              iconHeight="22px"
-              icon={Rectangle}
-              active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
-            />
-            <ToolbarItem
-              className="toggle-features"
-              onClick={onToggleEditorVisibility}
-              label={editor.visible ? 'toolbar.hide' : 'toolbar.show'}
-              iconHeight="22px"
-              icon={editor.visible ? EyeSeen : EyeUnseen}
-            />
-          </StyledToolbar>
-        ) : null}
-        <MapControlButton
-          onClick={e => {
-            e.preventDefault();
-            onToggleMenuPanel();
-          }}
-          active={isActive}
-          data-tip
-          data-for="map-draw"
-        >
-          <DrawPolygon height="22px" />
-          <MapControlTooltip id="map-draw" message="tooltip.DrawOnMap" />
-        </MapControlButton>
-      </div>
-    );
-  }
-);
+MapDrawPanelFactory.deps = [];
+export function MapDrawPanelFactory() {
+  const defaultActionIcons = {
+    visible: EyeSeen,
+    hidden: EyeUnseen,
+    polygon: () => <DrawPolygon height="22px" />
+  };
+  const MapDrawPanel = React.memo(
+    ({
+      editor,
+      isActive,
+      onToggleMenuPanel,
+      onSetEditorMode,
+      onToggleEditorVisibility,
+      actionIcons = defaultActionIcons
+    }) => {
+      return (
+        <div className="map-draw-controls" style={{position: 'relative'}}>
+          {isActive ? (
+            <StyledToolbar show={isActive}>
+              <ToolbarItem
+                className="edit-feature"
+                onClick={() => onSetEditorMode(EDITOR_MODES.EDIT)}
+                label="toolbar.select"
+                iconHeight="22px"
+                icon={CursorClick}
+                active={editor.mode === EDITOR_MODES.EDIT}
+              />
+              <ToolbarItem
+                className="draw-feature"
+                onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POLYGON)}
+                label="toolbar.polygon"
+                iconHeight="22px"
+                icon={Polygon}
+                active={editor.mode === EDITOR_MODES.DRAW_POLYGON}
+              />
+              <ToolbarItem
+                className="draw-rectangle"
+                onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE)}
+                label="toolbar.rectangle"
+                iconHeight="22px"
+                icon={Rectangle}
+                active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
+              />
+              <ToolbarItem
+                className="toggle-features"
+                onClick={onToggleEditorVisibility}
+                label={editor.visible ? 'toolbar.hide' : 'toolbar.show'}
+                iconHeight="22px"
+                icon={editor.visible ? actionIcons.visible : actionIcons.hidden}
+              />
+            </StyledToolbar>
+          ) : null}
+          <MapControlButton
+            onClick={e => {
+              e.preventDefault();
+              onToggleMenuPanel();
+            }}
+            active={isActive}
+            data-tip
+            data-for="map-draw"
+          >
+            {React.createElement(actionIcons.polygon)}
+            <MapControlTooltip id="map-draw" message="tooltip.DrawOnMap" />
+          </MapControlButton>
+        </div>
+      );
+    }
+  );
 
-MapDrawPanel.displayName = 'MapDrawPanel';
+  MapDrawPanel.displayName = 'MapDrawPanel';
+  return MapDrawPanel;
+}
 
 const LocalePanel = React.memo(
   ({availableLocales, isActive, onToggleMenuPanel, onSetLocale, activeLocale}) => {
@@ -366,7 +382,8 @@ const LocalePanel = React.memo(
 LocalePanel.displayName = 'LocalePanel';
 
 const LegendLogo = <KeplerGlLogo version={false} appName="kepler.gl" />;
-const MapControlFactory = () => {
+MapControlFactory.deps = [MapDrawPanelFactory];
+function MapControlFactory(MapDrawPanel) {
   class MapControl extends Component {
     static propTypes = {
       datasets: PropTypes.object.isRequired,
@@ -496,13 +513,20 @@ const MapControlFactory = () => {
 
           {mapDraw.show ? (
             <ActionPanel key={4}>
-              <MapDrawPanel
+              {React.createElement(MapDrawPanel, {
+                isActive: mapDraw.active && mapDraw.activeMapIndex === mapIndex,
+                editor: editor,
+                onToggleMenuPanel: () => onToggleMapControl('mapDraw'),
+                onSetEditorMode: this.props.onSetEditorMode,
+                onToggleEditorVisibility: this.props.onToggleEditorVisibility
+              })}
+              {/* <MapDrawPanel
                 isActive={mapDraw.active && mapDraw.activeMapIndex === mapIndex}
                 editor={editor}
                 onToggleMenuPanel={() => onToggleMapControl('mapDraw')}
                 onSetEditorMode={this.props.onSetEditorMode}
                 onToggleEditorVisibility={this.props.onToggleEditorVisibility}
-              />
+              /> */}
             </ActionPanel>
           ) : null}
 
@@ -525,6 +549,6 @@ const MapControlFactory = () => {
   MapControl.displayName = 'MapControl';
 
   return MapControl;
-};
+}
 
 export default MapControlFactory;

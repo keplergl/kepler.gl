@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import PanelHeaderAction from 'components/side-panel/panel-header-action';
+import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import {Trash} from 'components/common/icons';
 import {createLinearGradient} from 'utils/color-utils';
 import {StyledPanelHeader} from 'components/common/styled-components';
@@ -45,9 +45,9 @@ const StyledChildrenContainer = styled.div`
   flex: 2;
 `;
 
-FilterPanelHeaderFactory.deps = [];
+FilterPanelHeaderFactory.deps = [PanelHeaderActionFactory];
 
-function FilterPanelHeaderFactory() {
+function FilterPanelHeaderFactory(PanelHeaderAction) {
   const FilterPanelHeader = ({
     children,
     datasets,

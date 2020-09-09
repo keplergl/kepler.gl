@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import {sortableHandle} from 'react-sortable-hoc';
-import PanelHeaderAction from 'components/side-panel/panel-header-action';
+import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import {ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from 'components/common/icons';
 
 import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
@@ -135,7 +135,14 @@ export function LayerTitleSectionFactory() {
   return LayerTitleSection;
 }
 
-function LayerPanelHeaderFactory(LayerTitleSection) {
+LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory, PanelHeaderActionFactory];
+const defaultActionIcons = {
+  remove: Trash,
+  visible: EyeSeen,
+  hidden: EyeUnseen,
+  enableConfig: ArrowDown
+};
+function LayerPanelHeaderFactory(LayerTitleSection, PanelHeaderAction) {
   const LayerPanelHeader = ({
     isConfigActive,
     isDragNDropEnabled,
@@ -148,63 +155,72 @@ function LayerPanelHeaderFactory(LayerTitleSection) {
     onUpdateLayerLabel,
     onToggleEnableConfig,
     onRemoveLayer,
-    showRemoveLayer
-  }) => (
-    <StyledLayerPanelHeader
-      className={classnames('layer-panel__header', {
-        'sort--handle': !isConfigActive
-      })}
-      active={isConfigActive}
-      labelRCGColorValues={labelRCGColorValues}
-      onClick={onToggleEnableConfig}
-    >
-      <HeaderLabelSection className="layer-panel__header__content">
-        {isDragNDropEnabled && (
-          <DragHandle className="layer__drag-handle">
-            <VertDots height="20px" />
-          </DragHandle>
-        )}
-        <LayerTitleSection
-          layerId={layerId}
-          label={label}
-          onUpdateLayerLabel={onUpdateLayerLabel}
-          layerType={layerType}
-        />
-      </HeaderLabelSection>
-      <HeaderActionSection className="layer-panel__header__actions">
-        {showRemoveLayer ? (
-          <PanelHeaderAction
-            className="layer__remove-layer"
-            id={layerId}
-            tooltip={'tooltip.removeLayer'}
-            onClick={onRemoveLayer}
-            tooltipType="error"
-            IconComponent={Trash}
+    showRemoveLayer,
+    actionIcons = defaultActionIcons
+  }) => {
+    const [isOpen, setOpen] = useState(false);
+    const toggleLayerConfigurator = e => {
+      setOpen(!isOpen);
+      onToggleEnableConfig(e);
+    };
+    return (
+      <StyledLayerPanelHeader
+        className={classnames('layer-panel__header', {
+          'sort--handle': !isConfigActive
+        })}
+        active={isConfigActive}
+        labelRCGColorValues={labelRCGColorValues}
+        onClick={toggleLayerConfigurator}
+      >
+        <HeaderLabelSection className="layer-panel__header__content">
+          {isDragNDropEnabled && (
+            <DragHandle className="layer__drag-handle">
+              <VertDots height="20px" />
+            </DragHandle>
+          )}
+          <LayerTitleSection
+            layerId={layerId}
+            label={label}
+            onUpdateLayerLabel={onUpdateLayerLabel}
+            layerType={layerType}
           />
-        ) : null}
-        <PanelHeaderAction
-          className="layer__visibility-toggle"
-          id={layerId}
-          tooltip={isVisible ? 'tooltip.hideLayer' : 'tooltip.showLayer'}
-          onClick={onToggleVisibility}
-          IconComponent={isVisible ? EyeSeen : EyeUnseen}
-        />
-        <PanelHeaderAction
-          className="layer__enable-config"
-          id={layerId}
-          tooltip={'tooltip.layerSettings'}
-          onClick={onToggleEnableConfig}
-          IconComponent={ArrowDown}
-        />
-      </HeaderActionSection>
-    </StyledLayerPanelHeader>
-  );
+        </HeaderLabelSection>
+        <HeaderActionSection className="layer-panel__header__actions">
+          {showRemoveLayer ? (
+            <PanelHeaderAction
+              className="layer__remove-layer"
+              id={layerId}
+              tooltip={'tooltip.removeLayer'}
+              onClick={onRemoveLayer}
+              tooltipType="error"
+              IconComponent={actionIcons.remove}
+            />
+          ) : null}
+          <PanelHeaderAction
+            className="layer__visibility-toggle"
+            id={layerId}
+            tooltip={isVisible ? 'tooltip.hideLayer' : 'tooltip.showLayer'}
+            onClick={onToggleVisibility}
+            IconComponent={isVisible ? actionIcons.visible : actionIcons.hidden}
+          />
+          <PanelHeaderAction
+            className={classnames('layer__enable-config ', {
+              'is-open': isOpen
+            })}
+            id={layerId}
+            tooltip={'tooltip.layerSettings'}
+            onClick={toggleLayerConfigurator}
+            IconComponent={actionIcons.enableConfig}
+          />
+        </HeaderActionSection>
+      </StyledLayerPanelHeader>
+    );
+  };
 
   LayerPanelHeader.propTypes = propTypes;
   LayerPanelHeader.defaultProps = defaultProps;
 
   return LayerPanelHeader;
 }
-LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory];
 
 export default LayerPanelHeaderFactory;
