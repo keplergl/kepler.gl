@@ -79,7 +79,12 @@ export {default as MapPopoverFactory} from './map/map-popover';
 export {default as MapControlFactory} from './map/map-control';
 export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as CoordinateInfoFactory} from './map/coordinate-info';
-export {MapDrawPanelFactory} from './map/map-control';
+export {
+  Toggle3dButtonFactory,
+  MapDrawPanelFactory,
+  SplitMapButtonFactory,
+  MapLegendPanelFactory
+} from './map/map-control';
 
 // // modal factories
 export {default as ModalDialogFactory} from './modals/modal-dialog';
