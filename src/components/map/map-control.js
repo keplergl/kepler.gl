@@ -182,9 +182,7 @@ MapControlPanel.displayName = 'MapControlPanel';
 MapLegendPanelFactory.deps = [];
 export function MapLegendPanelFactory() {
   const defaultActionIcons = {
-    legend() {
-      return <Legend height="22px" />;
-    }
+    legend: Legend
   };
   const MapLegendPanel = ({
     layers,
@@ -207,7 +205,7 @@ export function MapLegendPanelFactory() {
           onToggleMenuPanel();
         }}
       >
-        {actionIcons.legend()}
+        <actionIcons.legend height="22px" />
         <MapLegendTooltip id="show-legend" message={'tooltip.showLegend'} />
       </MapControlButton>
     ) : (
@@ -229,12 +227,8 @@ export function MapLegendPanelFactory() {
 SplitMapButtonFactory.deps = [];
 export function SplitMapButtonFactory() {
   const defaultActionIcons = {
-    delete() {
-      return <Delete height="18px" />;
-    },
-    split() {
-      return <Split height="18px" />;
-    }
+    delete: Delete,
+    split: Split
   };
   const SplitMapButton = React.memo(
     ({isSplit, mapIndex, onToggleSplitMap, actionIcons = defaultActionIcons}) => (
@@ -249,7 +243,7 @@ export function SplitMapButtonFactory() {
         data-tip
         data-for="action-toggle"
       >
-        {isSplit ? actionIcons.delete() : actionIcons.split()}
+        {isSplit ? <actionIcons.delete height="18px" /> : <actionIcons.split height="18px" />}
         <MapControlTooltip
           id="action-toggle"
           message={isSplit ? 'tooltip.closePanel' : 'tooltip.switchToDualView'}
@@ -264,9 +258,7 @@ export function SplitMapButtonFactory() {
 Toggle3dButtonFactory.deps = [];
 export function Toggle3dButtonFactory() {
   const defaultActionIcons = {
-    cube() {
-      return <Cube3d height="22px" />;
-    }
+    cube: Cube3d
   };
   const Toggle3dButton = React.memo(
     ({dragRotate, onTogglePerspective, actionIcons = defaultActionIcons}) => (
@@ -279,7 +271,7 @@ export function Toggle3dButtonFactory() {
         data-tip
         data-for="action-3d"
       >
-        {actionIcons.cube()}
+        <actionIcons.cube height="22px" />
         <MapControlTooltip
           id="action-3d"
           message={dragRotate ? 'tooltip.disable3DMap' : 'tooltip.3DMap'}
@@ -301,9 +293,7 @@ export function MapDrawPanelFactory() {
   const defaultActionIcons = {
     visible: EyeSeen,
     hidden: EyeUnseen,
-    polygon() {
-      return <DrawPolygon height="22px" />;
-    },
+    polygon: DrawPolygon,
     cursor: CursorClick,
     innerPolygon: Polygon,
     rectangle: Rectangle
@@ -363,7 +353,7 @@ export function MapDrawPanelFactory() {
             data-tip
             data-for="map-draw"
           >
-            {React.createElement(actionIcons.polygon)}
+            <actionIcons.polygon height="22px" />
             <MapControlTooltip id="map-draw" message="tooltip.DrawOnMap" />
           </MapControlButton>
         </div>

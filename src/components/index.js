@@ -25,6 +25,7 @@ import LayerConfigGroupFactory from './side-panel/layer-panel/layer-config-group
 import {ChannelByValueSelectorFactory} from './side-panel/layer-panel/layer-configurator';
 import FieldSelectorFactory from './common/field-selector';
 import FieldTokenFactory from './common/field-token';
+import PanelHeaderActionFactory from './side-panel/panel-header-action';
 import {appInjector} from './container';
 
 // Components
@@ -172,6 +173,7 @@ export const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
 export const ChannelByValueSelector = appInjector.get(ChannelByValueSelectorFactory);
 export const FieldSelector = appInjector.get(FieldSelectorFactory);
 export const FieldToken = appInjector.get(FieldTokenFactory);
+export const PanelHeaderAction = appInjector.get(PanelHeaderActionFactory);
 
 export {
   TimeRangeSliderFactory,
