@@ -20,33 +20,9 @@
 
 import React, {useState} from 'react';
 import styled from 'styled-components';
-import {
-  MapControlFactory,
-  Icons,
-  IconRoundSmall,
-  MapControlButton,
-  MapDrawPanelFactory,
-  Toggle3dButtonFactory,
-  SplitMapButtonFactory,
-  MapLegendPanelFactory
-} from 'kepler.gl/components';
+import {Icons, IconRoundSmall, MapControlButton} from 'kepler.gl/components';
 
 import ReactMarkdown from 'react-markdown';
-import {appInjector} from 'kepler.gl/components/container';
-
-const MapControl = MapControlFactory(
-  appInjector.get(MapDrawPanelFactory),
-  appInjector.get(Toggle3dButtonFactory),
-  appInjector.get(SplitMapButtonFactory),
-  appInjector.get(MapLegendPanelFactory)
-);
-
-const StyledMapControlOverlay = styled.div`
-  position: absolute;
-  top: ${props => props.top}px;
-  right: 0px;
-  z-index: 1;
-`;
 
 const StyledFloatingPanel = styled.div`
   margin-right: 12px;
@@ -146,7 +122,7 @@ function getURL(url) {
     : url;
 }
 
-function SampleMapPanel(props) {
+export function SampleMapPanel(props) {
   const [isActive, setActive] = useState(true);
 
   return (
@@ -192,11 +168,14 @@ function SampleMapPanel(props) {
   );
 }
 
-const CustomMapControl = props => (
-  <StyledMapControlOverlay top={props.top}>
-    {!props.isExport && props.currentSample ? <SampleMapPanel {...props} /> : null}
-    <MapControl {...props} top={0} />
-  </StyledMapControlOverlay>
-);
+// function CustomMapControlFactory(...deps) {
+//   const MapControl = MapControlFactory(...deps);
+//   return props => (
+//     <StyledMapControlOverlay top={props.top}>
+//       {!props.isExport && props.currentSample ? <SampleMapPanel {...props} /> : null}
+//       <MapControl {...props} top={0} />
+//     </StyledMapControlOverlay>
+//   );
+// }
 
-export default CustomMapControl;
+// export default CustomMapControlFactory;
