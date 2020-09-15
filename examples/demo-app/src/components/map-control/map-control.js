@@ -20,10 +20,26 @@
 
 import React, {useState} from 'react';
 import styled from 'styled-components';
-import {MapControlFactory, Icons, IconRoundSmall, MapControlButton} from 'kepler.gl/components';
-import ReactMarkdown from 'react-markdown';
+import {
+  MapControlFactory,
+  Icons,
+  IconRoundSmall,
+  MapControlButton,
+  MapDrawPanelFactory,
+  Toggle3dButtonFactory,
+  SplitMapButtonFactory,
+  MapLegendPanelFactory
+} from 'kepler.gl/components';
 
-const MapControl = MapControlFactory();
+import ReactMarkdown from 'react-markdown';
+import {appInjector} from 'kepler.gl/components/container';
+
+const MapControl = MapControlFactory(
+  appInjector.get(MapDrawPanelFactory),
+  appInjector.get(Toggle3dButtonFactory),
+  appInjector.get(SplitMapButtonFactory),
+  appInjector.get(MapLegendPanelFactory)
+);
 
 const StyledMapControlOverlay = styled.div`
   position: absolute;
