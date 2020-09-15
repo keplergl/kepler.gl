@@ -179,148 +179,191 @@ const MapControlPanel = React.memo(
 
 MapControlPanel.displayName = 'MapControlPanel';
 
-export const MapLegendPanel = ({
-  layers,
-  isActive,
-  scale,
-  onToggleMenuPanel,
-  isExport,
-  disableClose,
-  logoComponent
-}) =>
-  !isActive ? (
-    <MapControlButton
-      key={2}
-      data-tip
-      data-for="show-legend"
-      className="map-control-button show-legend"
-      onClick={e => {
-        e.preventDefault();
-        onToggleMenuPanel();
-      }}
-    >
-      <Legend height="22px" />
-      <MapLegendTooltip id="show-legend" message={'tooltip.showLegend'} />
-    </MapControlButton>
-  ) : (
-    <MapControlPanel
-      scale={scale}
-      header={'header.layerLegend'}
-      onClick={onToggleMenuPanel}
-      isExport={isExport}
-      disableClose={disableClose}
-      logoComponent={logoComponent}
-    >
-      <MapLegend layers={layers} />
-    </MapControlPanel>
+MapLegendPanelFactory.deps = [];
+export function MapLegendPanelFactory() {
+  const defaultActionIcons = {
+    legend: Legend
+  };
+  const MapLegendPanel = ({
+    layers,
+    isActive,
+    scale,
+    onToggleMenuPanel,
+    isExport,
+    disableClose,
+    logoComponent,
+    actionIcons = defaultActionIcons
+  }) =>
+    !isActive ? (
+      <MapControlButton
+        key={2}
+        data-tip
+        data-for="show-legend"
+        className="map-control-button show-legend"
+        onClick={e => {
+          e.preventDefault();
+          onToggleMenuPanel();
+        }}
+      >
+        <actionIcons.legend height="22px" />
+        <MapLegendTooltip id="show-legend" message={'tooltip.showLegend'} />
+      </MapControlButton>
+    ) : (
+      <MapControlPanel
+        scale={scale}
+        header={'header.layerLegend'}
+        onClick={onToggleMenuPanel}
+        isExport={isExport}
+        disableClose={disableClose}
+        logoComponent={logoComponent}
+      >
+        <MapLegend layers={layers} />
+      </MapControlPanel>
+    );
+
+  MapLegendPanel.displayName = 'MapControlPanel';
+  return MapLegendPanel;
+}
+SplitMapButtonFactory.deps = [];
+export function SplitMapButtonFactory() {
+  const defaultActionIcons = {
+    delete: Delete,
+    split: Split
+  };
+  const SplitMapButton = React.memo(
+    ({isSplit, mapIndex, onToggleSplitMap, actionIcons = defaultActionIcons}) => (
+      <MapControlButton
+        active={isSplit}
+        onClick={e => {
+          e.preventDefault();
+          onToggleSplitMap(isSplit ? mapIndex : undefined);
+        }}
+        key={`split-${isSplit}`}
+        className={classnames('map-control-button', 'split-map', {'close-map': isSplit})}
+        data-tip
+        data-for="action-toggle"
+      >
+        {isSplit ? <actionIcons.delete height="18px" /> : <actionIcons.split height="18px" />}
+        <MapControlTooltip
+          id="action-toggle"
+          message={isSplit ? 'tooltip.closePanel' : 'tooltip.switchToDualView'}
+        />
+      </MapControlButton>
+    )
   );
 
-MapLegendPanel.displayName = 'MapControlPanel';
+  SplitMapButton.displayName = 'SplitMapButton';
+  return SplitMapButton;
+}
+Toggle3dButtonFactory.deps = [];
+export function Toggle3dButtonFactory() {
+  const defaultActionIcons = {
+    cube: Cube3d
+  };
+  const Toggle3dButton = React.memo(
+    ({dragRotate, onTogglePerspective, actionIcons = defaultActionIcons}) => (
+      <MapControlButton
+        onClick={e => {
+          e.preventDefault();
+          onTogglePerspective();
+        }}
+        active={dragRotate}
+        data-tip
+        data-for="action-3d"
+      >
+        <actionIcons.cube height="22px" />
+        <MapControlTooltip
+          id="action-3d"
+          message={dragRotate ? 'tooltip.disable3DMap' : 'tooltip.3DMap'}
+        />
+      </MapControlButton>
+    )
+  );
 
-const SplitMapButton = React.memo(({isSplit, mapIndex, onToggleSplitMap}) => (
-  <MapControlButton
-    active={isSplit}
-    onClick={e => {
-      e.preventDefault();
-      onToggleSplitMap(isSplit ? mapIndex : undefined);
-    }}
-    key={`split-${isSplit}`}
-    className={classnames('map-control-button', 'split-map', {'close-map': isSplit})}
-    data-tip
-    data-for="action-toggle"
-  >
-    {isSplit ? <Delete height="18px" /> : <Split height="18px" />}
-    <MapControlTooltip
-      id="action-toggle"
-      message={isSplit ? 'tooltip.closePanel' : 'tooltip.switchToDualView'}
-    />
-  </MapControlButton>
-));
-
-SplitMapButton.displayName = 'SplitMapButton';
-
-const Toggle3dButton = React.memo(({dragRotate, onTogglePerspective}) => (
-  <MapControlButton
-    onClick={e => {
-      e.preventDefault();
-      onTogglePerspective();
-    }}
-    active={dragRotate}
-    data-tip
-    data-for="action-3d"
-  >
-    <Cube3d height="22px" />
-    <MapControlTooltip
-      id="action-3d"
-      message={dragRotate ? 'tooltip.disable3DMap' : 'tooltip.3DMap'}
-    />
-  </MapControlButton>
-));
-
-Toggle3dButton.displayName = 'Toggle3dButton';
-
+  Toggle3dButton.displayName = 'Toggle3dButton';
+  return Toggle3dButton;
+}
 const StyledToolbar = styled(VerticalToolbar)`
   position: absolute;
   right: 32px;
 `;
 
-const MapDrawPanel = React.memo(
-  ({editor, isActive, onToggleMenuPanel, onSetEditorMode, onToggleEditorVisibility}) => {
-    return (
-      <div className="map-draw-controls" style={{position: 'relative'}}>
-        {isActive ? (
-          <StyledToolbar show={isActive}>
-            <ToolbarItem
-              className="edit-feature"
-              onClick={() => onSetEditorMode(EDITOR_MODES.EDIT)}
-              label="toolbar.select"
-              iconHeight="22px"
-              icon={CursorClick}
-              active={editor.mode === EDITOR_MODES.EDIT}
-            />
-            <ToolbarItem
-              className="draw-feature"
-              onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POLYGON)}
-              label="toolbar.polygon"
-              iconHeight="22px"
-              icon={Polygon}
-              active={editor.mode === EDITOR_MODES.DRAW_POLYGON}
-            />
-            <ToolbarItem
-              className="draw-rectangle"
-              onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE)}
-              label="toolbar.rectangle"
-              iconHeight="22px"
-              icon={Rectangle}
-              active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
-            />
-            <ToolbarItem
-              className="toggle-features"
-              onClick={onToggleEditorVisibility}
-              label={editor.visible ? 'toolbar.hide' : 'toolbar.show'}
-              iconHeight="22px"
-              icon={editor.visible ? EyeSeen : EyeUnseen}
-            />
-          </StyledToolbar>
-        ) : null}
-        <MapControlButton
-          onClick={e => {
-            e.preventDefault();
-            onToggleMenuPanel();
-          }}
-          active={isActive}
-          data-tip
-          data-for="map-draw"
-        >
-          <DrawPolygon height="22px" />
-          <MapControlTooltip id="map-draw" message="tooltip.DrawOnMap" />
-        </MapControlButton>
-      </div>
-    );
-  }
-);
+MapDrawPanelFactory.deps = [];
+export function MapDrawPanelFactory() {
+  const defaultActionIcons = {
+    visible: EyeSeen,
+    hidden: EyeUnseen,
+    polygon: DrawPolygon,
+    cursor: CursorClick,
+    innerPolygon: Polygon,
+    rectangle: Rectangle
+  };
+  const MapDrawPanel = React.memo(
+    ({
+      editor,
+      isActive,
+      onToggleMenuPanel,
+      onSetEditorMode,
+      onToggleEditorVisibility,
+      actionIcons = defaultActionIcons
+    }) => {
+      return (
+        <div className="map-draw-controls" style={{position: 'relative'}}>
+          {isActive ? (
+            <StyledToolbar show={isActive}>
+              <ToolbarItem
+                className="edit-feature"
+                onClick={() => onSetEditorMode(EDITOR_MODES.EDIT)}
+                label="toolbar.select"
+                iconHeight="22px"
+                icon={actionIcons.cursor}
+                active={editor.mode === EDITOR_MODES.EDIT}
+              />
+              <ToolbarItem
+                className="draw-feature"
+                onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POLYGON)}
+                label="toolbar.polygon"
+                iconHeight="22px"
+                icon={actionIcons.innerPolygon}
+                active={editor.mode === EDITOR_MODES.DRAW_POLYGON}
+              />
+              <ToolbarItem
+                className="draw-rectangle"
+                onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE)}
+                label="toolbar.rectangle"
+                iconHeight="22px"
+                icon={actionIcons.rectangle}
+                active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
+              />
+              <ToolbarItem
+                className="toggle-features"
+                onClick={onToggleEditorVisibility}
+                label={editor.visible ? 'toolbar.hide' : 'toolbar.show'}
+                iconHeight="22px"
+                icon={editor.visible ? actionIcons.visible : actionIcons.hidden}
+              />
+            </StyledToolbar>
+          ) : null}
+          <MapControlButton
+            onClick={e => {
+              e.preventDefault();
+              onToggleMenuPanel();
+            }}
+            active={isActive}
+            data-tip
+            data-for="map-draw"
+          >
+            <actionIcons.polygon height="22px" />
+            <MapControlTooltip id="map-draw" message="tooltip.DrawOnMap" />
+          </MapControlButton>
+        </div>
+      );
+    }
+  );
 
-MapDrawPanel.displayName = 'MapDrawPanel';
+  MapDrawPanel.displayName = 'MapDrawPanel';
+  return MapDrawPanel;
+}
 
 const LocalePanel = React.memo(
   ({availableLocales, isActive, onToggleMenuPanel, onSetLocale, activeLocale}) => {
@@ -366,7 +409,13 @@ const LocalePanel = React.memo(
 LocalePanel.displayName = 'LocalePanel';
 
 const LegendLogo = <KeplerGlLogo version={false} appName="kepler.gl" />;
-const MapControlFactory = () => {
+MapControlFactory.deps = [
+  MapDrawPanelFactory,
+  Toggle3dButtonFactory,
+  SplitMapButtonFactory,
+  MapLegendPanelFactory
+];
+function MapControlFactory(MapDrawPanel, Toggle3dButton, SplitMapButton, MapLegendPanel) {
   class MapControl extends Component {
     static propTypes = {
       datasets: PropTypes.object.isRequired,
@@ -525,6 +574,6 @@ const MapControlFactory = () => {
   MapControl.displayName = 'MapControl';
 
   return MapControl;
-};
+}
 
 export default MapControlFactory;

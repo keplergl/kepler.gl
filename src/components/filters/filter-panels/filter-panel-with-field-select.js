@@ -21,17 +21,23 @@
 import React, {useCallback, useMemo} from 'react';
 import {StyledFilterContent} from 'components/common/styled-components';
 import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
-import PanelHeaderAction from 'components/side-panel/panel-header-action';
+import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
 import FieldSelectorFactory from '../../common/field-selector';
 
 FieldPanelWithFieldSelectFactory.deps = [
   FilterPanelHeaderFactory,
   SourceDataSelectorFactory,
-  FieldSelectorFactory
+  FieldSelectorFactory,
+  PanelHeaderActionFactory
 ];
 
-function FieldPanelWithFieldSelectFactory(FilterPanelHeader, SourceDataSelector, FieldSelector) {
+function FieldPanelWithFieldSelectFactory(
+  FilterPanelHeader,
+  SourceDataSelector,
+  FieldSelector,
+  PanelHeaderAction
+) {
   const FilterPanelWithFieldSelect = React.memo(
     ({
       allAvailableFields,

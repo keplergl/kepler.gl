@@ -25,6 +25,7 @@ import LayerConfigGroupFactory from './side-panel/layer-panel/layer-config-group
 import {ChannelByValueSelectorFactory} from './side-panel/layer-panel/layer-configurator';
 import FieldSelectorFactory from './common/field-selector';
 import FieldTokenFactory from './common/field-token';
+import PanelHeaderActionFactory from './side-panel/panel-header-action';
 import {appInjector} from './container';
 
 // Components
@@ -45,7 +46,7 @@ export {
   SaveExportDropdownFactory,
   PanelHeaderDropdownFactory
 } from './side-panel/panel-header';
-export {default as PanelHeaderAction} from './side-panel/panel-header-action';
+export {default as PanelHeaderActionFactory} from './side-panel/panel-header-action';
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
 export {default as PanelToggleFactory} from './side-panel/panel-toggle';
 
@@ -79,6 +80,12 @@ export {default as MapPopoverFactory} from './map/map-popover';
 export {default as MapControlFactory} from './map/map-control';
 export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as CoordinateInfoFactory} from './map/coordinate-info';
+export {
+  Toggle3dButtonFactory,
+  MapDrawPanelFactory,
+  SplitMapButtonFactory,
+  MapLegendPanelFactory
+} from './map/map-control';
 
 // // modal factories
 export {default as ModalDialogFactory} from './modals/modal-dialog';
@@ -140,10 +147,10 @@ export {default as FileUploadProgress} from './common/file-uploader/file-upload-
 export {default as Slider} from './common/slider/slider';
 export {DatasetSquare} from './common/styled-components';
 export {default as ActionPanel, ActionPanelItem} from 'components/common/action-panel';
-
 // side pane components
 export {default as LayerTypeSelector} from './side-panel/layer-panel/layer-type-selector';
 export {ConfigGroupCollapsibleContent} from './side-panel/layer-panel/layer-config-group';
+export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
 export {
   LayerLabelEditor,
   LayerTitleSectionFactory
@@ -167,6 +174,7 @@ export const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
 export const ChannelByValueSelector = appInjector.get(ChannelByValueSelectorFactory);
 export const FieldSelector = appInjector.get(FieldSelectorFactory);
 export const FieldToken = appInjector.get(FieldTokenFactory);
+export const PanelHeaderAction = appInjector.get(PanelHeaderActionFactory);
 
 export {
   TimeRangeSliderFactory,
