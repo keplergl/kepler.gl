@@ -11,6 +11,7 @@ import {
 import {Schema} from './schema';
 
 import {LayerTextLabel} from 'layers/layer-factory';
+import {datasetSchema, visStateSchema, mapStyleSchema, mapStateSchema} from 'schemas';
 
 export type SavedFilter = {
   dataId: Filter['dataId'];
@@ -197,7 +198,15 @@ export type SavedMap = {
 };
 
 export type LoadedMap = {datasets?: ParsedDataset[] | null; config?: ParsedConfig | null};
+export const reducerSchema: {[key: string]: typeof mapStateSchema | typeof visStateSchema | typeof mapStyleSchema};
+
 export class KeplerGLSchema {
+  constructor(prop: {
+    reducers?: typeof reducerSchema;
+    datasets?: typeof datasetSchema;
+    validVersions?: string[];
+    version?: string;
+  });
   save(state: any): SavedMap;
   load(arg1: SavedMap | SavedMap['datasets'] | any, arg1?: SavedMap['cnofig'] | any): LoadedMap;
   getMapInfo(state: any): VisState['mapInfo'];
@@ -208,7 +217,6 @@ export class KeplerGLSchema {
   validateVersion(version: any): string | null;
   hasDataChanged(state: any): boolean;
 }
-export const reducerSchema: {[key: string]: Schema};
 const KeplerGLSchemaManager: KeplerGLSchema;
 
 export default KeplerGLSchemaManager;
