@@ -80,7 +80,7 @@ function generateGeocoderDataset(lat, lon, text) {
       {
         lt: lat,
         ln: lon,
-        icon: 'place',
+        icon: 'crosshairs-alt',
         text
       }
     ]),
