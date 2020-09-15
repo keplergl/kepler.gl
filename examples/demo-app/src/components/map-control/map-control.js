@@ -167,15 +167,3 @@ export function SampleMapPanel(props) {
     </StyledFloatingPanel>
   );
 }
-
-// function CustomMapControlFactory(...deps) {
-//   const MapControl = MapControlFactory(...deps);
-//   return props => (
-//     <StyledMapControlOverlay top={props.top}>
-//       {!props.isExport && props.currentSample ? <SampleMapPanel {...props} /> : null}
-//       <MapControl {...props} top={0} />
-//     </StyledMapControlOverlay>
-//   );
-// }
-
-// export default CustomMapControlFactory;

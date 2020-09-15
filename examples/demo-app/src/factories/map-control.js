@@ -43,8 +43,6 @@ function CustomMapControlFactory(...deps) {
   return withState([], state => ({...state.demo.app}))(CustomMapControl);
 }
 
-CustomMapControlFactory.deps = MapControlFactory.deps;
-
 export function replaceMapControl() {
   return [MapControlFactory, CustomMapControlFactory];
 }
