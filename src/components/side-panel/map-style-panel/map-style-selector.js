@@ -63,7 +63,16 @@ const StyledMapDropdown = styled(StyledPanelHeader)`
 MapStyleSelectorFactory.deps = [PanelHeaderActionFactory];
 
 function MapStyleSelectorFactory(PanelHeaderAction) {
-  const MapStyleSelector = ({mapStyle, onChange, toggleActive, isSelecting}) => (
+  const defaultActionIcons = {
+    arrowDown: ArrowDown
+  };
+  const MapStyleSelector = ({
+    mapStyle,
+    onChange,
+    toggleActive,
+    isSelecting,
+    actionIcons = defaultActionIcons
+  }) => (
     <div>
       <PanelLabel>
         <FormattedMessage id={'mapManager.mapStyle'} />
@@ -86,7 +95,7 @@ function MapStyleSelectorFactory(PanelHeaderAction) {
             <PanelHeaderAction
               className="map-dropdown-option__enable-config"
               id="map-enable-config"
-              IconComponent={ArrowDown}
+              IconComponent={actionIcons.arrowDown}
               tooltip={'tooltip.selectBaseMapStyle'}
               onClick={toggleActive}
             />

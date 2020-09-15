@@ -48,6 +48,9 @@ const StyledChildrenContainer = styled.div`
 FilterPanelHeaderFactory.deps = [PanelHeaderActionFactory];
 
 function FilterPanelHeaderFactory(PanelHeaderAction) {
+  const defaultActionIcons = {
+    delete: Trash
+  };
   const FilterPanelHeader = ({
     children,
     datasets,
@@ -55,7 +58,8 @@ function FilterPanelHeaderFactory(PanelHeaderAction) {
     setFilter,
     idx,
     filter,
-    removeFilter
+    removeFilter,
+    actionIcons = defaultActionIcons
   }) => (
     <StyledFilterHeader
       className="filter-panel__header"
@@ -68,7 +72,7 @@ function FilterPanelHeaderFactory(PanelHeaderAction) {
         tooltipType="error"
         onClick={removeFilter}
         hoverColor={'errorColor'}
-        IconComponent={Trash}
+        IconComponent={actionIcons.delete}
       />
     </StyledFilterHeader>
   );
