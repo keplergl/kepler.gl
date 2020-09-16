@@ -222,7 +222,7 @@ export const panelContentBackground = '#292E36';
 export const panelBackgroundHover = '#3A4552';
 export const panelHeaderBorderRadius = '0px';
 export const chickletBgd = '#3A4552';
-export const chickletBgdLT = '#6A7485';
+export const chickletBgdLT = '#D3D8E0';
 export const panelHeaderIcon = '#6A7485';
 export const panelHeaderIconActive = '#A0A7B4';
 export const panelHeaderIconHover = textColorHl;
@@ -553,6 +553,11 @@ const chickletedInput = css`
   ${props => props.theme.chickletedInputContainer}
 `;
 
+const chickletedInputLT = css`
+  ${props => props.theme.inputLT}
+  ${props => props.theme.chickletedInputContainer}
+`;
+
 const secondaryChickletedInput = css`
   ${props => props.theme.secondaryInput}
   ${props => props.theme.chickletedInputContainer}
@@ -733,11 +738,40 @@ const dropdownScrollBar = css`
   }
 `;
 
+const dropdownScrollBarLT = css`
+  ${dropdownScrollBar}
+
+  ::-webkit-scrollbar-corner {
+    background: ${props => props.theme.dropdownListBgdLT};
+  }
+
+  ::-webkit-scrollbar-track {
+    background: ${props => props.theme.dropdownListBgdLT};
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: ${props => props.theme.labelColorLT};
+    border: 3px solid ${props => props.theme.dropdownListBgdLT};
+  }
+
+  :vertical:hover {
+    background: ${props => props.theme.textColorHlLT};
+    cursor: pointer;
+  }
+`;
+
+
 const dropdownListAnchor = css`
   color: ${props => props.theme.selectColor};
   padding-left: 3px;
   font-size: ${props => props.theme.selectFontSize};
   line-height: ${props => props.theme.dropdownListLineHeight}px;
+`;
+
+const dropdownListAnchorLT = css`
+  ${dropdownListAnchor}
+  color: ${props => props.theme.selectColorLT};
 `;
 
 const dropdownListSize = css`
@@ -771,7 +805,7 @@ const dropdownListItemLT = css`
     background-color: ${props => props.theme.dropdownListHighlightBgLT};
 
     .list__item__anchor {
-      color: ${props => props.theme.textColorHlLT};
+      color: ${props => props.theme.selectColorLT};
     }
   }
 `;
@@ -817,6 +851,12 @@ const dropdownListLT = css`
   .list__item {
     ${props => props.theme.dropdownListItemLT};
   }
+
+  .list__item__anchor {
+    ${props => props.theme.dropdownListAnchorLT};
+  }
+
+  ${props => props.theme.dropdownScrollBarLT};
 `;
 const sidePanelScrollBar = css`
   ::-webkit-scrollbar {
@@ -942,6 +982,7 @@ export const theme = {
   inputLT,
   inlineInput,
   chickletedInput,
+  chickletedInputLT,
   chickletedInputContainer,
   secondaryChickletedInput,
 
@@ -950,11 +991,13 @@ export const theme = {
 
   secondaryInput,
   dropdownScrollBar,
+  dropdownScrollBarLT,
   dropdownList,
   dropdownListLT,
   dropdownListItem,
   dropdownListItemLT,
   dropdownListAnchor,
+  dropdownListAnchorLT,
   dropdownListHeader,
   dropdownListSection,
   dropdownListShadow,
@@ -1168,6 +1211,7 @@ export const theme = {
 
   // Side Panel Panel
   chickletBgd,
+  chickletBgdLT,
   panelBackground,
   panelContentBackground,
   panelBackgroundHover,

@@ -41,9 +41,11 @@ const propTypes = {
 };
 
 export const ChickletButton = styled.div`
-  background: ${props => props.theme.chickletBgd};
+  background: ${props =>
+    props.inputTheme === 'light' ? props.theme.chickletBgdLT : props.theme.chickletBgd};
   border-radius: 1px;
-  color: ${props => props.theme.textColor};
+  color: ${props =>
+    props.inputTheme === 'light' ? props.theme.textColorLT : props.theme.textColor};
   font-size: 11px;
   line-height: 20px;
   margin: 4px 10px 4px 3px;
@@ -53,7 +55,8 @@ export const ChickletButton = styled.div`
   max-width: calc(100% - 8px);
 
   :hover {
-    color: ${props => props.theme.textColorHl};
+    color: ${props =>
+      props.inputTheme === 'light' ? props.theme.textColorHlLT : props.theme.textColorHl};
   }
 `;
 
@@ -68,8 +71,8 @@ export const ChickletTag = styled.span`
   }
 `;
 
-const Chicklet = ({disabled, name, remove}) => (
-  <ChickletButton>
+const Chicklet = ({disabled, name, remove, inputTheme}) => (
+  <ChickletButton inputTheme={inputTheme}>
     <ChickletTag>{name}</ChickletTag>
     <Delete onClick={disabled ? null : remove} />
   </ChickletButton>
@@ -79,7 +82,9 @@ const ChickletedInputContainer = styled.div`
   ${props =>
     props.inputTheme === 'secondary'
       ? props.theme.secondaryChickletedInput
-      : props.theme.chickletedInput}
+      : props.inputTheme === 'light'
+        ? props.theme.chickletedInputLT
+        : props.theme.chickletedInput}
 
   color: ${props =>
     props.hasPlaceholder ? props.theme.selectColorPlaceHolder : props.theme.selectColor};
@@ -109,23 +114,20 @@ const ChickletedInput = ({
     hasPlaceholder={!selectedItems || !selectedItems.length}
   >
     {selectedItems.length > 0 ? (
-      selectedItems.map((item, i) =>
-        CustomChickletComponent ? (
-          <CustomChickletComponent
-            disabled={disabled}
-            key={`${displayOption(item)}_${i}`}
-            name={displayOption(item)}
-            remove={e => removeItem(item, e)}
-          />
+      selectedItems.map((item, i) => {
+        const chickletProps = {
+          inputTheme,
+          disabled,
+          key: `${displayOption(item)}_${i}`,
+          name: displayOption(item),
+          remove: e => removeItem(item, e)
+        };
+        return CustomChickletComponent ? (
+          <CustomChickletComponent {...chickletProps} />
         ) : (
-          <Chicklet
-            disabled={disabled}
-            key={`${displayOption(item)}_${i}`}
-            name={displayOption(item)}
-            remove={e => removeItem(item, e)}
-          />
-        )
-      )
+          <Chicklet {...chickletProps} />
+        );
+      })
     ) : (
       <span className={`${className} chickleted-input__placeholder`}>
         <FormattedMessage id={placeholder} />
