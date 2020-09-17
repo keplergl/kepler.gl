@@ -135,7 +135,7 @@ export function setTimeAnmation(
   idx: number,
   prop: string,
   value: any,
-  valueIndex: number
+  valueIndex?: number
 ): Merge<SetTimeAnimationUpdaterAction, {type: ActionTypes.SET_TIME_ANIMATION}>;
 
 
