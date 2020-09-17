@@ -22,3 +22,4 @@ import './file-uploader-test';
 import './color-legend-test';
 import './range-slider-test';
 import './item-selector-test';
+import './range-plot-test';
