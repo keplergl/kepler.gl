@@ -42,8 +42,8 @@ const StyledDropdownSelect = styled.div.attrs({
     props.inputTheme === 'secondary'
       ? props.theme.secondaryInput
       : props.inputTheme === 'light'
-        ? props.theme.inputLT
-        : props.theme.input};
+      ? props.theme.inputLT
+      : props.theme.input};
 
   height: ${props => props.theme.dropdownSelectHeight}px;
 
@@ -57,8 +57,8 @@ const DropdownSelectValue = styled.span`
     props.hasPlaceholder
       ? props.theme.selectColorPlaceHolder
       : props.inputTheme === 'light'
-        ? props.theme.selectColorLT
-        : props.theme.selectColor};
+      ? props.theme.selectColorLT
+      : props.theme.selectColor};
   overflow: hidden;
 
   .list__item {
@@ -119,6 +119,7 @@ class ItemSelector extends Component {
     onBlur: PropTypes.func,
     placeholder: PropTypes.string,
     closeOnSelect: PropTypes.bool,
+    typeaheadPlaceholder: PropTypes.string,
     DropdownHeaderComponent: PropTypes.func,
     DropDownRenderComponent: PropTypes.func,
     DropDownLineItemRenderComponent: PropTypes.func,
@@ -236,7 +237,11 @@ class ItemSelector extends Component {
           options={this.props.options}
           filterOption={this.props.filterOption}
           fixedOptions={this.props.fixedOptions}
-          placeholder={intl.formatMessage({id: 'placeholder.search'})}
+          placeholder={
+            this.props.typeaheadPlaceholder || intl
+              ? intl.formatMessage({id: 'placeholder.search'})
+              : 'Search'
+          }
           onOptionSelected={this._selectItem}
           customListComponent={this.props.DropDownRenderComponent}
           customListHeaderComponent={this.props.DropdownHeaderComponent}
@@ -314,4 +319,5 @@ class ItemSelector extends Component {
   }
 }
 
+export const ItemSelectorListen = listensToClickOutside(ItemSelector);
 export default injectIntl(listensToClickOutside(ItemSelector));
