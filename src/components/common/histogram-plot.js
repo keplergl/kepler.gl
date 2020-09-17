@@ -25,8 +25,8 @@ function HistogramPlotFactory() {
     const domain = useMemo(() => [histogram[0].x0, histogram[histogram.length - 1].x1], [
       histogram
     ]);
-    const barWidth = width / histogram.length;
     const dataId = Object.keys(histogram[0]).filter(k => k !== 'x0' && k !== 'x1')[0];
+
     // use 1st for now
     const getValue = useMemo(() => d => d[dataId], [dataId]);
 
@@ -45,6 +45,8 @@ function HistogramPlotFactory() {
           .range([0, height]),
       [histogram, height, getValue]
     );
+
+    const barWidth = width / histogram.length;
 
     return (
       <HistogramWrapper width={width} height={height} style={{marginTop: `${margin.top}px`}}>
@@ -70,6 +72,10 @@ function HistogramPlotFactory() {
       </HistogramWrapper>
     );
   };
-  return HistogramPlot;
+
+  const EmpptyOrPlot = props =>
+    !props.histogram || !props.histogram.length ? null : <HistogramPlot {...props} />;
+
+  return EmpptyOrPlot;
 }
 export default HistogramPlotFactory;
