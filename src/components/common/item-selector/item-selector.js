@@ -38,7 +38,12 @@ import {FormattedMessage} from 'localization';
 const StyledDropdownSelect = styled.div.attrs({
   className: 'item-selector__dropdown'
 })`
-  ${props => (props.inputTheme === 'secondary' ? props.theme.secondaryInput : props.theme.input)};
+  ${props =>
+    props.inputTheme === 'secondary'
+      ? props.theme.secondaryInput
+      : props.inputTheme === 'light'
+      ? props.theme.inputLT
+      : props.theme.input};
 
   height: ${props => props.theme.dropdownSelectHeight}px;
 
@@ -49,8 +54,24 @@ const StyledDropdownSelect = styled.div.attrs({
 
 const DropdownSelectValue = styled.span`
   color: ${props =>
-    props.hasPlaceholder ? props.theme.selectColorPlaceHolder : props.theme.selectColor};
+    props.hasPlaceholder
+      ? props.theme.selectColorPlaceHolder
+      : props.inputTheme === 'light'
+      ? props.theme.selectColorLT
+      : props.theme.selectColor};
   overflow: hidden;
+
+  .list__item {
+    ${props =>
+      props.inputTheme === 'light' ? props.theme.dropdownListItemLT : props.theme.dropdownListItem};
+  }
+
+  .list__item__anchor {
+    ${props =>
+      props.inputTheme === 'light'
+        ? props.theme.dropdownListAnchorLT
+        : props.theme.dropdownListAnchor};
+  }
 `;
 
 const DropdownSelectErase = styled.div`
@@ -98,6 +119,7 @@ class ItemSelector extends Component {
     onBlur: PropTypes.func,
     placeholder: PropTypes.string,
     closeOnSelect: PropTypes.bool,
+    typeaheadPlaceholder: PropTypes.string,
     DropdownHeaderComponent: PropTypes.func,
     DropDownRenderComponent: PropTypes.func,
     DropDownLineItemRenderComponent: PropTypes.func,
@@ -215,7 +237,11 @@ class ItemSelector extends Component {
           options={this.props.options}
           filterOption={this.props.filterOption}
           fixedOptions={this.props.fixedOptions}
-          placeholder={intl.formatMessage({id: 'placeholder.search'})}
+          placeholder={
+            this.props.typeaheadPlaceholder || intl
+              ? intl.formatMessage({id: 'placeholder.search'})
+              : 'Search'
+          }
           onOptionSelected={this._selectItem}
           customListComponent={this.props.DropDownRenderComponent}
           customListHeaderComponent={this.props.DropdownHeaderComponent}
@@ -224,6 +250,7 @@ class ItemSelector extends Component {
           searchable={this.props.searchable}
           showOptionsWhenEmpty
           selectedItems={toArray(this.props.selectedItems)}
+          light={this.props.inputTheme === 'light'}
         />
       </DropdownWrapper>
     );
@@ -258,17 +285,20 @@ class ItemSelector extends Component {
               displayOption={displayOption}
               removeItem={this._removeItem}
               CustomChickletComponent={this.props.CustomChickletComponent}
+              inputTheme={this.props.inputTheme}
             />
           ) : (
             <StyledDropdownSelect {...dropdownSelectProps}>
               <DropdownSelectValue
                 hasPlaceholder={!hasValue}
+                inputTheme={this.props.inputTheme}
                 className="item-selector__dropdown__value"
               >
                 {hasValue ? (
                   <this.props.DropDownLineItemRenderComponent
                     displayOption={displayOption}
                     value={selected[0]}
+                    light={this.props.inputTheme === 'light'}
                   />
                 ) : (
                   <FormattedMessage id={this.props.placeholder} />
@@ -289,4 +319,5 @@ class ItemSelector extends Component {
   }
 }
 
+export const ItemSelectorListen = listensToClickOutside(ItemSelector);
 export default injectIntl(listensToClickOutside(ItemSelector));
