@@ -94,6 +94,7 @@ function LineChartFactory() {
     const brushData = useMemo(() => {
       return [{x: series[0].x, y: yDomain[1], customComponent: () => brushComponent}];
     }, [series, yDomain, brushComponent]);
+
     return (
       <LineChartWrapper style={{marginTop: `${margin.top}px`}}>
         <XYPlot
