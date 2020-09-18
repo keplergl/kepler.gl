@@ -31,7 +31,6 @@ function noop() {}
 
 const StyledRangeSlider = styled.div`
   position: relative;
-  margin-bottom: 12px;
   background-color: ${props => props.theme.sliderBarBgd};
   ${props => `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
   ${props => `${props.vertical ? 'height' : 'width'}: 100%`};
@@ -39,7 +38,6 @@ const StyledRangeSlider = styled.div`
 
 const SliderWrapper = styled.div`
   flex-grow: 1;
-  margin-top: ${props => props.theme.sliderMarginTop}px;
 `;
 
 export default class Slider extends Component {

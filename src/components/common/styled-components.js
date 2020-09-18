@@ -155,7 +155,7 @@ export const SidePanelDivider = styled.div.attrs({
 export const Tooltip = styled(ReactTooltip)`
   &.__react_component_tooltip {
     font-size: ${props => props.theme.tooltipFontSize};
-    font-weight: 500;
+    font-weight: 400;
     padding: 7px 18px;
     box-shadow: ${props => props.theme.tooltipBoxShadow};
 

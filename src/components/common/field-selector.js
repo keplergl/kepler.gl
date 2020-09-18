@@ -159,6 +159,7 @@ const FieldSelectorFactory = FieldListItemFactory => {
             filterOption="name"
             fixedOptions={this.props.suggested}
             inputTheme={this.props.inputTheme}
+            size={this.props.size}
             isError={this.props.error}
             selectedItems={this.selectedItemsSelector(this.props)}
             erasable={this.props.erasable}

@@ -109,6 +109,8 @@ export {default as AnimationPlaybacksFactory} from './common/animation-control/p
 export {default as FloatingTimeDisplayFactory} from './common/animation-control/floating-time-display';
 export {default as AnimationSpeedSliderFactory} from './common/animation-control/animation-speed-slider';
 export {default as RangePlotFactory} from './common/range-plot';
+export {default as HistogramPlotFactory} from './common/histogram-plot';
+export {default as LineChartFactory} from './common/line-chart';
 export {default as RangeBrushFactory} from './common/range-brush';
 export {FieldListItemFactoryFactory} from './common/field-selector';
 export {default as TimeSliderMarkerFactory} from './common/time-slider-marker';
