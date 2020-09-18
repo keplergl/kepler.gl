@@ -18,43 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/* eslint-disable no-unused-vars */
 import React from 'react';
 import test from 'tape';
-import {mountWithTheme} from 'test/helpers/component-utils';
-import {appInjector} from 'components/container';
-import {RangePlotFactory} from 'components';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {RangeSlider, Slider} from 'components';
+import SliderHandle from 'components/common/slider/slider-handle';
+import SliderBarHandle from 'components/common/slider/slider-bar-handle';
 
-const RangePlot = appInjector.get(RangePlotFactory);
-
-test('Components -> RangePlot.render', t => {
-  const props = {
-    histogram: [],
-    isEnlarged: true,
-    isRanged: true,
-    onBrush: () => {},
-    plotType: 'histogram',
-    range: [1421315219000, 1421348744000],
-    value: [1421315219000, 1421348744000],
-    width: 137
-  };
+test('Components -> RangeSlider.render', t => {
+  let wrapper;
+  const onChange = () => {};
   t.doesNotThrow(() => {
-    const wrapper = mountWithTheme(<RangePlot {...props} />);
-  }, 'Show not fail without histogram');
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <RangeSlider range={[0, 10]} value0={1} value1={3} onChange={onChange} />
+      </IntlWrapper>
+    );
+  }, 'Show not fail without props');
 
-  // cant test D3 in jsDom for now
-  // props.histogram = [
-  //   {count: 20, x0: 1421315219000, x1: 1421315500000},
-  //   {count: 0, x0: 1421315500000, x1: 1421316000000},
-  //   {count: 0, x0: 1421316000000, x1: 1421316500000},
-  //   {count: 0, x0: 1421316500000, x1: 1421317000000},
-  //   {count: 0, x0: 1421317000000, x1: 1421317500000},
-  //   {count: 21, x0: 1421317500000, x1: 1421318000000}
-  // ];
-
-  t.doesNotThrow(() => {
-    const wrapper = mountWithTheme(<RangePlot {...props} />);
-  }, 'Show not fail render histogram');
+  t.equal(wrapper.find(Slider).length, 1, 'should render Slider');
+  t.equal(wrapper.find(SliderHandle).length, 2, 'should render 2 Slider handle');
+  t.equal(wrapper.find(SliderBarHandle).length, 1, 'should render 1 Slider bar');
 
   t.end();
 });
