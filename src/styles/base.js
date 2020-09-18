@@ -748,9 +748,7 @@ const dropdownScrollBar = css`
 `;
 
 const dropdownScrollBarLT = css`
-  ${dropdownScrollBar}
-
-  ::-webkit-scrollbar-corner {
+  ${dropdownScrollBar} ::-webkit-scrollbar-corner {
     background: ${props => props.theme.dropdownListBgdLT};
   }
 
@@ -769,7 +767,6 @@ const dropdownScrollBarLT = css`
     cursor: pointer;
   }
 `;
-
 
 const dropdownListAnchor = css`
   color: ${props => props.theme.selectColor};

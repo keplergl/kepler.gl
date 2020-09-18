@@ -83,8 +83,8 @@ const ChickletedInputContainer = styled.div`
     props.inputTheme === 'secondary'
       ? props.theme.secondaryChickletedInput
       : props.inputTheme === 'light'
-        ? props.theme.chickletedInputLT
-        : props.theme.chickletedInput}
+      ? props.theme.chickletedInputLT
+      : props.theme.chickletedInput}
 
   color: ${props =>
     props.hasPlaceholder ? props.theme.selectColorPlaceHolder : props.theme.selectColor};
