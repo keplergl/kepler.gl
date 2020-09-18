@@ -1899,7 +1899,7 @@ test('#visStateReducer -> SET_FILTER.dataId', t => {
   t.end();
 });
 
-test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
+function testSetFilterDynamicDomainGPU(t, setFilter) {
   const {fields, rows} = processGeojson(CloneDeep(geojsonData));
   const payload = [
     {
@@ -1918,10 +1918,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
   const stateWithFilter = reducer(initialState, VisStateActions.addFilter('milkshake'));
 
   // set filter 'name'
-  const stateWithFilterName = reducer(
-    stateWithFilter,
-    VisStateActions.setFilter(0, 'name', 'TRIPS')
-  );
+  const stateWithFilterName = reducer(stateWithFilter, setFilter(0, 'name', 'TRIPS'));
 
   const expectedFilterWName = {
     dataId: ['milkshake'],
@@ -1952,10 +1949,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
   cmpFilters(t, expectedFilterWName, stateWithFilterName.filters[0]);
 
   // set filter value
-  const stateWithFilterValue = reducer(
-    stateWithFilterName,
-    VisStateActions.setFilter(0, 'value', [8, 20])
-  );
+  const stateWithFilterValue = reducer(stateWithFilterName, setFilter(0, 'value', [8, 20]));
 
   const expectedFilterWValue = {
     ...expectedFilterWName,
@@ -2020,7 +2014,14 @@ test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
     t.deepEqual(actualTripField[k], expectedField[k], `trip field ${k} should be same`);
   });
   cmpDataset(t, expectedFilteredDataset, stateWithFilterValue.datasets.milkshake);
+}
+test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
+  testSetFilterDynamicDomainGPU(t, VisStateActions.setFilter);
+  t.end();
+});
 
+test('#visStateReducer -> setTimeAnmation', t => {
+  testSetFilterDynamicDomainGPU(t, VisStateActions.setTimeAnmation);
   t.end();
 });
 

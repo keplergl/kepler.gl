@@ -464,6 +464,16 @@ export function layerVisConfigChangeUpdater(state, action) {
 /**
  * Update filter property
  * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').setTimeAnmationUpdater}
+ * @public
+ */
+export function setTimeAnmationUpdater(state, action) {
+  return setFilterUpdater(state, action);
+}
+
+/**
+ * Update filter property
+ * @memberof visStateUpdaters
  * @type {typeof import('./vis-state-updaters').setFilterUpdater}
  * @public
  */

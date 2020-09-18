@@ -124,6 +124,21 @@ export function setFilter(
   valueIndex: number
 ): Merge<SetFilterUpdaterAction, {type: ActionTypes.SET_FILTER}>;
 
+
+export type SetTimeAnimationUpdaterAction = {
+  idx: number;
+  prop: string;
+  value: any;
+  valueIndex?: number;
+};
+export function setTimeAnmation(
+  idx: number,
+  prop: string,
+  value: any,
+  valueIndex?: number
+): Merge<SetTimeAnimationUpdaterAction, {type: ActionTypes.SET_TIME_ANIMATION}>;
+
+
 export type AddFilterUpdaterAction = {
   dataId: string;
 };
