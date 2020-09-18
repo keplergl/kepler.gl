@@ -20,6 +20,7 @@ const HistogramWrapper = styled.svg`
     }
   }
 `;
+
 function HistogramPlotFactory() {
   const HistogramPlot = ({width, height, margin, isRanged, histogram, value, brushComponent}) => {
     const domain = useMemo(() => [histogram[0].x0, histogram[histogram.length - 1].x1], [

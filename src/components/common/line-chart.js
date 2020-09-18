@@ -52,6 +52,7 @@ const LineChartWrapper = styled.div`
     fill: ${props => props.theme.textColor};
   }
 `;
+
 const StyledHint = styled.div`
   background-color: #d3d8e0;
   border-radius: 2px;
@@ -69,6 +70,7 @@ const HintContent = ({x, y, format}) => (
     <div className="row">{y}</div>
   </StyledHint>
 );
+
 const MARGIN = {top: 0, bottom: 0, left: 0, right: 0};
 function LineChartFactory() {
   const LineChart = ({

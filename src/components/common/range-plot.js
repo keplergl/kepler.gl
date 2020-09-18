@@ -32,6 +32,7 @@ const StyledRangePlot = styled.div`
 `;
 
 RangePlotFactory.deps = [RangeBrushFactory, HistogramPlotFactory, LineChartFactory];
+
 export default function RangePlotFactory(RangeBrush, HistogramPlot, LineChart) {
   const RangePlot = ({
     onBrush,
@@ -86,6 +87,7 @@ export default function RangePlotFactory(RangeBrush, HistogramPlot, LineChart) {
         {...chartProps}
       />
     );
+
     const commonProps = {
       width,
       value,
