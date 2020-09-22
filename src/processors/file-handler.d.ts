@@ -43,3 +43,4 @@ export function processFileData(payload: {
 export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayload[];
 
 export function readBatch(asyncIterator, fileName): AsyncIterable<any>;
+export function isKeplerGlMap(obj: any): Boolean;

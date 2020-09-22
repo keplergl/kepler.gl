@@ -139,6 +139,7 @@ export type Field = {
   tableFieldIndex: number;
   type: string;
   filterProps?: any;
+  metadata?: any;
 };
 
 export type GpuFilter = {
