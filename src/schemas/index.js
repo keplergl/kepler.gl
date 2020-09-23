@@ -26,7 +26,16 @@ export {
   KeplerGLSchema as KeplerGLSchemaClass
 } from './schema-manager';
 export {CURRENT_VERSION, VERSIONS} from './versions';
-export {default as visStateSchema} from './vis-state-schema';
+export {
+  visStateSchemaV1,
+  FilterSchemaV0,
+  LayerSchemaV0,
+  InteractionSchemaV1,
+  DimensionFieldSchema,
+  SplitMapsSchema,
+  filterPropsV1,
+  default as visStateSchema
+} from './vis-state-schema';
 export {default as datasetSchema} from './dataset-schema';
 export {default as mapStyleSchema} from './map-style-schema';
 export {default as mapStateSchema} from './map-state-schema';

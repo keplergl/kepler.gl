@@ -217,7 +217,7 @@ export const INITIAL_VIS_STATE = {
  * @type {typeof import('./vis-state-updaters').updateStateWithLayerAndData}
  *
  */
-function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
+export function updateStateWithLayerAndData(state, {layerData, layer, idx}) {
   return {
     ...state,
     layers: state.layers.map((lyr, i) => (i === idx ? layer : lyr)),
