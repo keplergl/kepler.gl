@@ -397,6 +397,11 @@ export const expectedMergedDataset = {
   id: 'h3-hex-id',
   label: 'new dataset',
   color: 'dont test me',
+  metadata: {
+    id: 'h3-hex-id',
+    label: 'new dataset',
+    format: ''
+  },
   allData: [
     ['89283082c2fffff', 64],
     ['8928308288fffff', 73],

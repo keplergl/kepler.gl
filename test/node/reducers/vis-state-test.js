@@ -919,7 +919,8 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
     VisStateActions.updateVisData([
       {
         data: mockRawData,
-        info: {id: 'smoothie', label: 'exciting dataset'}
+        info: {id: 'smoothie', label: 'exciting dataset'},
+        metadata: {album: 'taro_and_blue'}
       }
     ])
   );
@@ -983,7 +984,8 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
           },
           suffix: ['lat', 'lng']
         }
-      ]
+      ],
+      metadata: {id: 'smoothie', format: '', label: 'exciting dataset', album: 'taro_and_blue'}
     }
   };
 
@@ -1107,6 +1109,11 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
       allData: [['something'], ['something_else']]
     },
     smoothie: {
+      metadata: {
+        id: 'smoothie',
+        format: '',
+        label: 'smoothie and milkshake'
+      },
       fields: expectedFields,
       allData: mockRawData.rows,
       color: 'donnot test me',
@@ -1225,6 +1232,11 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
   const initialState = reducer(initialVisState, VisStateActions.updateVisData(payload));
 
   const expectedDatasets = {
+    metadata: {
+      id: 'milkshake',
+      label: 'king milkshake',
+      format: ''
+    },
     id: 'milkshake',
     label: 'king milkshake',
     color: 'donnot test me',
@@ -1427,6 +1439,11 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
 
   const expectedDatasets = {
     smoothie: {
+      metadata: {
+        id: 'smoothie',
+        label: 'smoothie and milkshake',
+        format: '' 
+      },
       fields: expectedFields.map(f =>
         f.name === mockFilter.name
           ? {
@@ -1725,6 +1742,11 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
   // test dataset
   const expectedDataset = {
+    metadata: {
+      id: 'smoothie',
+      label: 'queen smoothie',
+      format: ''
+    },
     id: 'smoothie',
     label: 'queen smoothie',
     color: 'donnot test me',
