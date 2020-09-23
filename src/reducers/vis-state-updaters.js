@@ -1125,9 +1125,9 @@ export const updateVisDataUpdater = (state, action) => {
   const datasets = toArray(action.datasets);
 
   const newDataEntries = datasets.reduce(
-    (accu, {info = {}, data} = {}) => ({
+    (accu, {info = {}, data, metadata} = {}) => ({
       ...accu,
-      ...(createNewDataEntry({info, data}, state.datasets) || {})
+      ...(createNewDataEntry({info, data, metadata}, state.datasets) || {})
     }),
     {}
   );

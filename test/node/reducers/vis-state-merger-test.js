@@ -1424,6 +1424,11 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
   // and field has filterProps
   const expectedDatasets = {
     [testCsvDataId]: {
+      metadata: {
+        id: testCsvDataId,
+        format: '',
+        label: 'hello.csv'
+      },
       fields: datasetCsvFields.map(f => ({
         ...f,
         ...(f.name === 'time'
@@ -1498,6 +1503,11 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
       }
     },
     [testGeoJsonDataId]: {
+      metadata: {
+        id: testGeoJsonDataId,
+        format: '',
+        label: 'zip.geojson'
+      },
       fields: testGeoJsonFields.map(f => ({
         ...f,
         ...(f.name === 'TRIPS'

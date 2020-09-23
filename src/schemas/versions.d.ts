@@ -18,29 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ProtoDataset, AddDataToMapPayload} from 'actions/actions';
+export const VERSIONS: {[key: string]: string};
 
-export type FileCacheItem = {
-  data: any;
-  info: {
-    label: string;
-    format: string;
-  };
-};
-
-export function readFileInBatches(payload: {
-  file: File;
-  fileCache: FileCacheItem[];
-  loaders: LoaderObject;
-  loadOptions: object;
-}): AsyncGenerator;
-
-export function processFileData(payload: {
-  content: any;
-  fileCache: FileCacheItem[];
-}): Promise<FileCacheItem[]>;
-
-export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayload[];
-
-export function readBatch(asyncIterator, fileName): AsyncIterable<any>;
-export function isKeplerGlMap(obj: any): Boolean;
+export const CURRENT_VERSION: string;

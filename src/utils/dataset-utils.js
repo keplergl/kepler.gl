@@ -77,7 +77,7 @@ function getNewDatasetColor(datasets) {
  * Take datasets payload from addDataToMap, create datasets entry save to visState
  * @type {typeof import('./dataset-utils').createNewDataEntry}
  */
-export function createNewDataEntry({info, data}, datasets = {}) {
+export function createNewDataEntry({info, data, metadata}, datasets = {}) {
   const validatedData = validateInputData(data);
   if (!validatedData) {
     return {};
@@ -101,6 +101,11 @@ export function createNewDataEntry({info, data}, datasets = {}) {
   }));
 
   const allIndexes = allData.map((_, i) => i);
+  const defaultMetadata = {
+    id: datasetInfo.id,
+    format: datasetInfo.format || '',
+    label: datasetInfo.label || ''
+  };
   return {
     [dataId]: {
       ...datasetInfo,
@@ -112,7 +117,8 @@ export function createNewDataEntry({info, data}, datasets = {}) {
       filteredIndexForDomain: allIndexes,
       fieldPairs: findPointFieldPairs(fields),
       fields,
-      gpuFilter: getGpuFilterProps([], dataId, fields)
+      gpuFilter: getGpuFilterProps([], dataId, fields),
+      metadata: {...defaultMetadata, ...metadata}
     }
   };
 }
