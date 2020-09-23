@@ -478,7 +478,7 @@ export const layerPropsV1 = {
   })
 };
 
-class LayerSchemaV0 extends Schema {
+export class LayerSchemaV0 extends Schema {
   key = 'layers';
 
   save(layers, parents) {
@@ -503,7 +503,7 @@ class LayerSchemaV0 extends Schema {
   }
 }
 
-class FilterSchemaV0 extends Schema {
+export class FilterSchemaV0 extends Schema {
   key = 'filters';
   save(filters) {
     return {
@@ -559,7 +559,7 @@ class InteractionSchemaV0 extends Schema {
 
 const interactionPropsV1 = [...interactionPropsV0, 'geocoder', 'coordinate'];
 
-class InteractionSchemaV1 extends Schema {
+export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
 
   save(interactionConfig) {
