@@ -42,7 +42,8 @@ const DEFAULT_CLASS = 'typeahead';
 const TypeaheadWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  background-color: ${props => props.theme.dropdownListBgd};
+  background-color: ${props =>
+    props.light ? props.theme.dropdownListBgdLT : props.theme.dropdownListBgd};
   box-shadow: ${props => props.theme.dropdownListShadow};
 
   :focus {
@@ -55,9 +56,10 @@ const InputBox = styled.div`
 `;
 
 const TypeaheadInput = styled.input`
-  ${props => props.theme.secondaryInput} :hover {
+  ${props => (props.light ? props.theme.inputLT : props.theme.secondaryInput)} :hover {
     cursor: pointer;
-    background-color: ${props => props.theme.secondaryInputBgd};
+    background-color: ${props =>
+      props.light ? props.theme.selectBackgroundLT : props.theme.secondaryInputBgd};
   }
 `;
 
@@ -325,8 +327,8 @@ class Typeahead extends Component {
     let option = selection
       ? selection
       : this.state.searchResults.length > 0
-      ? this.state.searchResults[0]
-      : null;
+        ? this.state.searchResults[0]
+        : null;
 
     if (option === null && this._hasCustomValue()) {
       option = this._getCustomValue();
@@ -460,6 +462,7 @@ class Typeahead extends Component {
         onKeyPress={this.props.onKeyPress}
         onKeyUp={this.props.onKeyUp}
         onFocus={this._onFocus}
+        light={this.props.light}
       >
         {this._renderHiddenInput()}
         {this.props.searchable ? (
@@ -474,6 +477,7 @@ class Typeahead extends Component {
               value={this.state.entryValue}
               onChange={this._onChange}
               onBlur={this._onBlur}
+              light={this.props.light}
             />
             <InputIcon>
               <Search height="18px" />
