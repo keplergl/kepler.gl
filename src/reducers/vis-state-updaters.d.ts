@@ -310,7 +310,8 @@ export type VisState = {
   loadOptions: object;
   initialState?: Partial<VisState>;
   mergers: VisStateMergers;
-  schema: KeplerGLSchema
+  schema: KeplerGLSchema,
+  preserveLayerOrder?: number[];
 };
 
 export function addDefaultLayers(

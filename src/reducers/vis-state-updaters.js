@@ -956,7 +956,7 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}, options =
   let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
   for (const merger of state.mergers) {
     if (isValidMerger(merger) && config.visState[merger.prop]) {
-      mergedState = merger.merge(mergedState, config.visState[merger.prop]);
+      mergedState = merger.merge(mergedState, config.visState[merger.prop], true);
     }
   }
 

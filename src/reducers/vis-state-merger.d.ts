@@ -3,31 +3,36 @@ import {ParsedConfig} from 'schemas';
 
 export function mergeAnimationConfig(
   state: VisState,
-  animation: ParsedConfig['visState']['animationConfig']
+  animation: ParsedConfig['visState']['animationConfig'],
+  fromConfig?: boolean
 ): VisState;
 export function mergeFilters(
   state: VisState,
-  filters: ParsedConfig['visState']['filters']
+  filters: ParsedConfig['visState']['filters'],
+  fromConfig?: boolean
 ): VisState;
 export function mergeInteractions(
   state: VisState,
-  interactionConfig: ParsedConfig['visState']['interactionConfig']
+  interactionConfig: ParsedConfig['visState']['interactionConfig'],
+  fromConfig?: boolean
 ): VisState;
 export function mergeLayerBlending(
   state: VisState,
-  layerBlending: ParsedConfig['visState']['layerBlending']
+  layerBlending: ParsedConfig['visState']['layerBlending'],
+  fromConfig?: boolean
 ): VisState;
-export function mergeLayers(state: VisState, layers: ParsedConfig['visState']['layers']): VisState;
+export function mergeLayers(state: VisState, layers: ParsedConfig['visState']['layers'], fromConfig?: boolean): VisState;
 export function mergeSplitMaps(
   state: VisState,
-  splitMaps: ParsedConfig['visState']['splitMaps']
+  splitMaps: ParsedConfig['visState']['splitMaps'],
+  fromConfig?: boolean
 ): VisState;
 
 export function mergeInteractionTooltipConfig(state: VisState);
 
 export function isValidMerger(arg: any): boolean;
 export type Merger = {
-  merge: (state: VisState, config: any) => VisState, 
+  merge: (state: VisState, config: any, fromConfig?: boolean) => VisState, 
   prop: string, 
   toMergeProp?: string 
 };

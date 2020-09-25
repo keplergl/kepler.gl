@@ -118,7 +118,7 @@ export function toArray(item) {
  * @param {*} value
  * @returns {Array|Object}
  */
-const insertValue = (obj, key, value) => {
+export const insertValue = (obj, key, value) => {
   if (Array.isArray(obj) && typeof key === 'number') {
     return [...obj.slice(0, key), value, ...obj.slice(key + 1, obj.length)];
   }
@@ -188,4 +188,12 @@ export function getError(err) {
 
   // @ts-ignore
   return null;
+}
+
+export function arrayInsert(arr, index, val) {
+  if (!Array.isArray(arr)) {
+    return arr;
+  }
+
+  return [...arr.slice(0, index), val, ...arr.slice(index)];
 }
