@@ -135,6 +135,42 @@ class KeplerGl(widgets.DOMWidget):
 
         self.data = copy
 
+    def _repr_html_(self, data=None, config=None, read_only=False, center_map=False):
+        ''' Return current map in an html encoded string
+
+        Inputs:
+        - data: a data dictionary {"name": data}, if not provided, will use current map data
+        - config: map config dictionary, if not provided, will use current map config
+        - read_only: if read_only is True, hide side panel to disable map customization
+
+        Returns:
+        - a html encoded string
+
+        Example of use:
+            # this will save map with provided data and config
+            keplergl._repr_html_(data={"data_1": df}, config=config)
+
+            # this will save current map
+            keplergl._repr_html_()
+
+        '''
+        keplergl_html = resource_string(__name__, 'static/keplergl.html').decode('utf-8')
+        # find open of body
+        k = keplergl_html.find("<body>")
+
+        data_to_add = data_to_json(self.data, None) if data == None else data_to_json(data, None)
+        config_to_add = self.config if config == None else config
+
+        # for key in data_to_add:
+        #     print(type(data_to_add[key]))
+
+        keplergl_data = json.dumps({"config": config_to_add, "data": data_to_add, "options": {"readOnly": read_only, "centerMap": center_map}})
+
+        cmd = """window.__keplerglDataConfig = {};""".format(keplergl_data)
+        frame_txt = keplergl_html[:k] + "<body><script>" + cmd + "</script>" + keplergl_html[k+6:]
+
+        return frame_txt.encode('utf-8')
+
     def save_to_html(self, data=None, config=None, file_name='keplergl_map.html', read_only=False, center_map=False):
         ''' Save current map to an interactive html
 
@@ -155,22 +191,9 @@ class KeplerGl(widgets.DOMWidget):
             keplergl.save_to_html(file_name='first_map.html')
 
         '''
-        keplergl_html = resource_string(__name__, 'static/keplergl.html').decode('utf-8')
-        # find open of body
-        k = keplergl_html.find("<body>")
+        frame_txt = self._repr_html_(data=data, config=config, read_only=read_only, center_map=center_map)
 
-        data_to_add = data_to_json(self.data, None) if data == None else data_to_json(data, None)
-        config_to_add = self.config if config == None else config
-
-        # for key in data_to_add:
-        #     print(type(data_to_add[key]))
-
-        keplergl_data = json.dumps({"config": config_to_add, "data": data_to_add, "options": {"readOnly": read_only, "centerMap": center_map}})
-
-        cmd = """window.__keplerglDataConfig = {};""".format(keplergl_data)
-        frame_txt = keplergl_html[:k] + "<body><script>" + cmd + "</script>" + keplergl_html[k+6:]
-
-        with open(file_name,'wb') as f:
-            f.write(frame_txt.encode('utf-8'))
+        with open(file_name, 'wb') as f:
+            f.write(frame_txt)
 
         print("Map saved to {}!".format(file_name))
