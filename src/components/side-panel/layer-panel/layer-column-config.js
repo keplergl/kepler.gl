@@ -91,6 +91,7 @@ function LayerColumnConfigFactory(ColumnSelector) {
               {Object.keys(columns).map(key => (
                 <ColumnSelector
                   column={columns[key]}
+                  columns={columns}
                   label={(columnLabels && columnLabels[key]) || key}
                   key={key}
                   allFields={fields}
@@ -108,7 +109,7 @@ function LayerColumnConfigFactory(ColumnSelector) {
 }
 ColumnSelectorFactory.deps = [FieldSelectorFactory];
 function ColumnSelectorFactory(FieldSelector) {
-  const ColumnSelector = ({column, label, allFields, onSelect, fieldPairs}) => (
+  const ColumnSelector = ({column, columns, label, allFields, onSelect, fieldPairs}) => (
     <ColumnRow className="layer-config__column__selector">
       <ColumnName className="layer-config__column__name">
         <PanelLabel>
@@ -119,7 +120,7 @@ function ColumnSelectorFactory(FieldSelector) {
       <ColumnSelect className="layer-config__column__select">
         <FieldSelector
           suggested={fieldPairs}
-          error={!column.optional && !column.value}
+          error={!validateColumn(column, columns, allFields)}
           fields={allFields}
           value={column.value}
           erasable={Boolean(column.optional)}
@@ -129,6 +130,16 @@ function ColumnSelectorFactory(FieldSelector) {
     </ColumnRow>
   );
   return ColumnSelector;
+}
+
+function validateColumn(column, columns, allFields) {
+  if (column.optional || column.value) {
+    return true;
+  }
+  if (column.validator) {
+    return column.validator(column, columns, allFields);
+  }
+  return false;
 }
 
 const ColumnRow = styled.div`
