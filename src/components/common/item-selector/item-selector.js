@@ -35,7 +35,7 @@ import {toArray} from 'utils/utils';
 import {injectIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';
 
-const StyledDropdownSelect = styled.div.attrs({
+export const StyledDropdownSelect = styled.div.attrs({
   className: 'item-selector__dropdown'
 })`
   ${props =>
