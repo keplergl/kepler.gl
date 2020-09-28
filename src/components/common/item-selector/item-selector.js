@@ -28,7 +28,7 @@ import styled from 'styled-components';
 import Accessor from './accessor';
 import ChickletedInput from './chickleted-input';
 import Typeahead from './typeahead';
-import {Delete} from 'components/common/icons';
+import {Delete, ArrowDown} from 'components/common/icons';
 import DropdownList, {ListItem} from './dropdown-list';
 
 import {toArray} from 'utils/utils';
@@ -42,8 +42,8 @@ export const StyledDropdownSelect = styled.div.attrs({
     props.inputTheme === 'secondary'
       ? props.theme.secondaryInput
       : props.inputTheme === 'light'
-      ? props.theme.inputLT
-      : props.theme.input};
+        ? props.theme.inputLT
+        : props.theme.input};
 
   height: ${props =>
     props.size === 'small' ? props.theme.inputBoxHeightSmall : props.theme.inputBoxHeight};
@@ -58,8 +58,8 @@ const DropdownSelectValue = styled.span`
     props.hasPlaceholder
       ? props.theme.selectColorPlaceHolder
       : props.inputTheme === 'light'
-      ? props.theme.selectColorLT
-      : props.theme.selectColor};
+        ? props.theme.selectColorLT
+        : props.theme.selectColor};
   overflow: hidden;
 
   .list__item {
@@ -75,9 +75,14 @@ const DropdownSelectValue = styled.span`
   }
 `;
 
-const DropdownSelectErase = styled.div`
-  margin-left: 6px;
+const DropdownSelectActionRight = styled.div`
+  margin-right: 6px;
   display: flex;
+  color: ${props => props.theme.subtextColor};
+
+  :hover {
+    color: ${props => props.theme.textColor};
+  }
 `;
 
 const DropdownWrapper = styled.div`
@@ -109,6 +114,7 @@ class ItemSelector extends Component {
     // optional properties
     fixedOptions: PropTypes.arrayOf(PropTypes.any),
     erasable: PropTypes.bool,
+    showArrow: PropTypes.bool,
     displayOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     getOptionValue: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     filterOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
@@ -129,6 +135,7 @@ class ItemSelector extends Component {
 
   static defaultProps = {
     erasable: false,
+    showArrow: true,
     placement: 'bottom',
     selectedItems: [],
     displayOption: null,
@@ -307,9 +314,13 @@ class ItemSelector extends Component {
                 )}
               </DropdownSelectValue>
               {this.props.erasable && hasValue ? (
-                <DropdownSelectErase>
+                <DropdownSelectActionRight>
                   <Delete height="12px" onClick={this._onErase} />
-                </DropdownSelectErase>
+                </DropdownSelectActionRight>
+              ) : this.props.showArrow ? (
+                <DropdownSelectActionRight>
+                  <ArrowDown height="14px" onClick={this._showTypeahead} />
+                </DropdownSelectActionRight>
               ) : null}
             </StyledDropdownSelect>
           )}

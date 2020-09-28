@@ -78,7 +78,7 @@ const FieldType = PropTypes.oneOfType([
   })
 ]);
 
-const FieldSelectorFactory = FieldListItemFactory => {
+function FieldSelectorFactory(FieldListItemFactory) {
   class FieldSelector extends Component {
     static propTypes = {
       fields: PropTypes.oneOfType([PropTypes.array, PropTypes.arrayOf(FieldType)]),

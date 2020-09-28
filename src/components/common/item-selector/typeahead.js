@@ -51,7 +51,9 @@ const TypeaheadWrapper = styled.div`
   }
 `;
 
-const InputBox = styled.div`
+const InputBox = styled.div.attrs({
+  className: 'typeahead__input_box'
+})`
   padding: 8px;
 `;
 
@@ -63,7 +65,9 @@ const TypeaheadInput = styled.input`
   }
 `;
 
-const InputIcon = styled.div`
+const InputIcon = styled.div.attrs({
+  className: 'typeahead__input_icon'
+})`
   position: absolute;
   right: 15px;
   top: 14px;
@@ -173,6 +177,7 @@ class Typeahead extends Component {
     defaultClassNames: true,
     customListComponent: DropdownList,
     customListItemComponent: ListItem,
+    inputIcon: Search,
     customListHeaderComponent: null,
     showOptionsWhenEmpty: true,
     searchable: true,
@@ -480,7 +485,7 @@ class Typeahead extends Component {
               light={this.props.light}
             />
             <InputIcon>
-              <Search height="18px" />
+              <this.props.inputIcon height="18px" />
             </InputIcon>
           </InputBox>
         ) : null}
