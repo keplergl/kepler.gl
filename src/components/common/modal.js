@@ -114,6 +114,7 @@ const defaultCancelButton = {
 };
 
 const defaultConfirmButton = {
+  cta: true,
   large: true,
   width: '160px',
   children: 'modal.button.defaultConfirm'
