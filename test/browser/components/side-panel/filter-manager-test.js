@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/* eslint-disable max-statements */
-
 import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';
