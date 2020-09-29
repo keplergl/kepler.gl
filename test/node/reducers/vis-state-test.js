@@ -1442,7 +1442,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
       metadata: {
         id: 'smoothie',
         label: 'smoothie and milkshake',
-        format: '' 
+        format: ''
       },
       fields: expectedFields.map(f =>
         f.name === mockFilter.name

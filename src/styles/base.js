@@ -429,8 +429,8 @@ const input = css`
       props.active
         ? props.theme.inputBorderActiveColor
         : props.error
-          ? props.theme.errorColor
-          : props.theme.inputBgd};
+        ? props.theme.errorColor
+        : props.theme.inputBgd};
   border-radius: 2px;
   caret-color: ${props => props.theme.inputBorderActiveColor};
   color: ${props => props.theme.inputColor};
@@ -444,8 +444,8 @@ const input = css`
     props.size === 'small'
       ? props.theme.inputBoxHeightSmall
       : props.size === 'tiny'
-        ? props.theme.inputBoxHeightTiny
-        : props.theme.inputBoxHeight};
+      ? props.theme.inputBoxHeightTiny
+      : props.theme.inputBoxHeight};
   justify-content: space-between;
   outline: none;
   overflow: hidden;
@@ -453,8 +453,8 @@ const input = css`
     props.size === 'small'
       ? props.theme.inputPaddingSmall
       : props.size === 'tiny'
-        ? props.theme.inputPaddingTiny
-        : props.theme.inputPadding};
+      ? props.theme.inputPaddingTiny
+      : props.theme.inputPadding};
   text-overflow: ellipsis;
   transition: ${props => props.theme.transition};
   white-space: nowrap;
@@ -503,8 +503,8 @@ const inputLT = css`
     props.active
       ? props.theme.selectActiveBorderColor
       : props.error
-        ? props.theme.errorColor
-        : props.theme.selectBorderColorLT};
+      ? props.theme.errorColor
+      : props.theme.selectBorderColorLT};
   color: ${props => props.theme.selectColorLT};
   caret-color: ${props => props.theme.selectColorLT};
 

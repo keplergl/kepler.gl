@@ -197,35 +197,35 @@ export const Button = styled.div.attrs(props => ({
     props.negative
       ? props.theme.negativeBtnBgd
       : props.secondary
-        ? props.theme.secondaryBtnBgd
-        : props.link
-          ? props.theme.linkBtnBgd
-          : props.floating
-            ? props.theme.floatingBtnBgd
-            : props.cta
-              ? props.theme.ctaBtnBgd
-              : props.theme.primaryBtnBgd};
+      ? props.theme.secondaryBtnBgd
+      : props.link
+      ? props.theme.linkBtnBgd
+      : props.floating
+      ? props.theme.floatingBtnBgd
+      : props.cta
+      ? props.theme.ctaBtnBgd
+      : props.theme.primaryBtnBgd};
   border-radius: ${props => props.theme.primaryBtnRadius};
   color: ${props =>
     props.negative
       ? props.theme.negativeBtnColor
       : props.secondary
-        ? props.theme.secondaryBtnColor
-        : props.link
-          ? props.theme.linkBtnColor
-          : props.floating
-            ? props.theme.floatingBtnColor
-            : props.cta
-              ? props.theme.ctaBtnColor
-              : props.theme.primaryBtnColor};
+      ? props.theme.secondaryBtnColor
+      : props.link
+      ? props.theme.linkBtnColor
+      : props.floating
+      ? props.theme.floatingBtnColor
+      : props.cta
+      ? props.theme.ctaBtnColor
+      : props.theme.primaryBtnColor};
   cursor: pointer;
   display: inline-flex;
   font-size: ${props =>
     props.large
       ? props.theme.primaryBtnFontSizeLarge
       : props.small
-        ? props.theme.primaryBtnFontSizeSmall
-        : props.theme.primaryBtnFontSizeDefault};
+      ? props.theme.primaryBtnFontSizeSmall
+      : props.theme.primaryBtnFontSizeDefault};
   font-weight: 500;
   font-family: ${props => props.theme.btnFontFamily};
   justify-content: center;
@@ -243,10 +243,10 @@ export const Button = styled.div.attrs(props => ({
     props.secondary
       ? props.theme.secondaryBtnBorder
       : props.floating
-        ? props.theme.floatingBtnBorder
-        : props.link
-          ? props.theme.linkBtnBorder
-          : props.theme.primaryBtnBorder};
+      ? props.theme.floatingBtnBorder
+      : props.link
+      ? props.theme.linkBtnBorder
+      : props.theme.primaryBtnBorder};
   :hover,
   :focus,
   :active,
@@ -255,26 +255,26 @@ export const Button = styled.div.attrs(props => ({
       props.negative
         ? props.theme.negativeBtnBgdHover
         : props.secondary
-          ? props.theme.secondaryBtnBgdHover
-          : props.link
-            ? props.theme.linkBtnActBgdHover
-            : props.floating
-              ? props.theme.floatingBtnBgdHover
-              : props.cta
-                ? props.theme.ctaBtnBgdHover
-                : props.theme.primaryBtnBgdHover};
+        ? props.theme.secondaryBtnBgdHover
+        : props.link
+        ? props.theme.linkBtnActBgdHover
+        : props.floating
+        ? props.theme.floatingBtnBgdHover
+        : props.cta
+        ? props.theme.ctaBtnBgdHover
+        : props.theme.primaryBtnBgdHover};
     color: ${props =>
       props.negative
         ? props.theme.negativeBtnActColor
         : props.secondary
-          ? props.theme.secondaryBtnActColor
-          : props.link
-            ? props.theme.linkBtnActColor
-            : props.floating
-              ? props.theme.floatingBtnActColor
-              : props.cta
-                ? props.theme.ctaBtnActColor
-                : props.theme.primaryBtnActColor};
+        ? props.theme.secondaryBtnActColor
+        : props.link
+        ? props.theme.linkBtnActColor
+        : props.floating
+        ? props.theme.floatingBtnActColor
+        : props.cta
+        ? props.theme.ctaBtnActColor
+        : props.theme.primaryBtnActColor};
   }
 
   svg {
