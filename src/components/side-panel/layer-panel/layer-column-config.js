@@ -25,7 +25,8 @@ import {FormattedMessage} from 'localization';
 import {createSelector} from 'reselect';
 
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
-import FieldSelectorFactory from '../../common/field-selector';
+import FieldSelectorFactory from 'components/common/field-selector';
+import {validateColumn} from 'reducers/vis-state-merger';
 
 const TopRow = styled.div`
   display: flex;
@@ -130,16 +131,6 @@ function ColumnSelectorFactory(FieldSelector) {
     </ColumnRow>
   );
   return ColumnSelector;
-}
-
-function validateColumn(column, columns, allFields) {
-  if (column.optional || column.value) {
-    return true;
-  }
-  if (column.validator) {
-    return column.validator(column, columns, allFields);
-  }
-  return false;
 }
 
 const ColumnRow = styled.div`

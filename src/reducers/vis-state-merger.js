@@ -375,24 +375,25 @@ export function validateSavedLayerColumns(fields, savedCols = {}, emptyCols) {
   }
 
   // find actual column fieldIdx, in case it has changed
-  const allColFound = Object.keys(emptyCols).every(key => {
-    if (columns[key]) {
-      return true;
-    }
-
-    // if col is optional, allow null value
-    if (emptyCols[key].optional) {
-      return true;
-    }
-    const {validator} = emptyCols[key];
-    return validator && validator(columns[key], columns, fields);
-  });
+  const allColFound = Object.keys(columns).every(key =>
+    validateColumn(columns[key], columns, fields)
+  );
 
   if (allColFound) {
     return columns;
   }
 
   return null;
+}
+
+export function validateColumn(column, columns, allFields) {
+  if (column.optional || column.value) {
+    return true;
+  }
+  if (column.validator) {
+    return column.validator(column, columns, allFields);
+  }
+  return false;
 }
 
 /**
