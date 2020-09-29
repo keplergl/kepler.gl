@@ -44,23 +44,17 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
     const isAnyFilterAnimating = filters.some(f => f.isAnimating);
     const hadEmptyFilter = filters.some(f => !f.name);
     const hadDataset = Object.keys(datasets).length;
-    const onClickAddFilter = useCallback(
-      () => {
-        const defaultDataset = (Object.keys(datasets).length && Object.keys(datasets)[0]) || null;
-        addFilter(defaultDataset);
-      },
-      [datasets, addFilter]
-    );
+    const onClickAddFilter = useCallback(() => {
+      const defaultDataset = (Object.keys(datasets).length && Object.keys(datasets)[0]) || null;
+      addFilter(defaultDataset);
+    }, [datasets, addFilter]);
     // render last added filter first
-    const reversedIndex = useMemo(
-      () => {
-        return new Array(filters.length)
-          .fill(0)
-          .map((d, i) => i)
-          .reverse();
-      },
-      [filters.length]
-    );
+    const reversedIndex = useMemo(() => {
+      return new Array(filters.length)
+        .fill(0)
+        .map((d, i) => i)
+        .reverse();
+    }, [filters.length]);
 
     return (
       <div className="filter-manager">
