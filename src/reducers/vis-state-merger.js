@@ -195,7 +195,7 @@ export function insertLayerAtRightOrder(
   // layerOrder [1, 0, 3]
   // layerOrderMap ['a', 'c']
   let layerOrderQueue = currentOrder.map(i => currentLayers[i].id);
-  let layers = currentLayers.slice();
+  let newLayers = currentLayers;
 
   for (const newLayer of newLayers) {
     // find where to insert it
@@ -218,15 +218,15 @@ export function insertLayerAtRightOrder(
     }
 
     layerOrderQueue = arrayInsert(layerOrderQueue, insertAt, newLayer.id);
-    layers = layers.concat(newLayer);
+    newLayers = newLayers.concat(newLayer);
   }
 
   // reconstruct layerOrder after insert
-  const newLayerOrder = layerOrderQueue.map(id => layers.findIndex(l => l.id === id));
+  const newLayerOrder = layerOrderQueue.map(id => newLayers.findIndex(l => l.id === id));
 
   return {
     newLayerOrder,
-    newLayers: layers
+    newLayers
   };
 }
 
