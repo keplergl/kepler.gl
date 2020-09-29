@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import PropTypes from 'prop-types';
-import {createSelector} from 'reselect';
 import {FormattedMessage} from 'localization';
 import {Button, SidePanelDivider, SidePanelSection} from 'components/common/styled-components';
 import {Add} from 'components/common/icons';
@@ -30,78 +29,85 @@ import FilterPanelFactory from './filter-panel/filter-panel';
 FilterManagerFactory.deps = [SourceDataCatalogFactory, FilterPanelFactory];
 
 function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
-  return class FilterManager extends Component {
-    static propTypes = {
-      datasets: PropTypes.object,
-      layers: PropTypes.arrayOf(PropTypes.any).isRequired,
-      addFilter: PropTypes.func.isRequired,
-      removeFilter: PropTypes.func.isRequired,
-      enlargeFilter: PropTypes.func.isRequired,
-      toggleAnimation: PropTypes.func.isRequired,
-      toggleFilterFeature: PropTypes.func.isRequired,
-      setFilter: PropTypes.func.isRequired,
-      filters: PropTypes.arrayOf(PropTypes.any).isRequired,
-      showDatasetTable: PropTypes.func,
+  const FilterManager = ({
+    filters = [],
+    datasets,
+    layers,
+    showDatasetTable,
+    addFilter,
+    setFilter,
+    removeFilter,
+    enlargeFilter,
+    toggleAnimation,
+    toggleFilterFeature
+  }) => {
+    const isAnyFilterAnimating = filters.some(f => f.isAnimating);
+    const hadEmptyFilter = filters.some(f => !f.name);
+    const hadDataset = Object.keys(datasets).length;
+    const onClickAddFilter = useCallback(() => {
+      const defaultDataset = (Object.keys(datasets).length && Object.keys(datasets)[0]) || null;
+      addFilter(defaultDataset);
+    }, [datasets, addFilter]);
+    // render last added filter first
+    const reversedIndex = useMemo(() => {
+      return new Array(filters.length)
+        .fill(0)
+        .map((d, i) => i)
+        .reverse();
+    }, [filters.length]);
 
-      // fields can be undefined when dataset is not selected
-      fields: PropTypes.arrayOf(PropTypes.any)
-    };
-
-    /* selectors */
-    datasetsSelector = state => state.datasets;
-    defaultDatasetSelector = createSelector(
-      this.datasetsSelector,
-      datasets => (Object.keys(datasets).length && Object.keys(datasets)[0]) || null
+    return (
+      <div className="filter-manager">
+        <SourceDataCatalog datasets={datasets} showDatasetTable={showDatasetTable} />
+        <SidePanelDivider />
+        <SidePanelSection>
+          {reversedIndex.map(idx => (
+            <FilterPanel
+              key={`${filters[idx].id}-${idx}`}
+              idx={idx}
+              filters={filters}
+              filter={filters[idx]}
+              datasets={datasets}
+              layers={layers}
+              isAnyFilterAnimating={isAnyFilterAnimating}
+              removeFilter={() => removeFilter(idx)}
+              enlargeFilter={() => enlargeFilter(idx)}
+              toggleAnimation={() => toggleAnimation(idx)}
+              toggleFilterFeature={() => toggleFilterFeature(idx)}
+              setFilter={setFilter}
+            />
+          ))}
+        </SidePanelSection>
+        <Button
+          className="add-filter-button"
+          inactive={hadEmptyFilter || !hadDataset}
+          width="105px"
+          onClick={onClickAddFilter}
+        >
+          <Add height="12px" />
+          <FormattedMessage id={'filterManager.addFilter'} />
+        </Button>
+      </div>
     );
-
-    /* actions */
-    _addFilter = () => {
-      const defaultDataset = this.defaultDatasetSelector(this.props);
-      this.props.addFilter(defaultDataset);
-    };
-
-    render() {
-      const {filters, datasets, layers} = this.props;
-      const isAnyFilterAnimating = filters.some(f => f.isAnimating);
-      const hadEmptyFilter = filters.some(f => !f.name);
-      const hadDataset = Object.keys(datasets).length;
-
-      return (
-        <div className="filter-manager">
-          <SourceDataCatalog datasets={datasets} showDatasetTable={this.props.showDatasetTable} />
-          <SidePanelDivider />
-          <SidePanelSection>
-            {filters &&
-              filters.map((filter, idx) => (
-                <FilterPanel
-                  key={`${filter.id}-${idx}`}
-                  idx={idx}
-                  filters={filters}
-                  filter={filter}
-                  datasets={datasets}
-                  layers={layers}
-                  isAnyFilterAnimating={isAnyFilterAnimating}
-                  removeFilter={() => this.props.removeFilter(idx)}
-                  enlargeFilter={() => this.props.enlargeFilter(idx)}
-                  toggleAnimation={() => this.props.toggleAnimation(idx)}
-                  toggleFilterFeature={() => this.props.toggleFilterFeature(idx)}
-                  setFilter={this.props.setFilter}
-                />
-              ))}
-          </SidePanelSection>
-          <Button
-            className="add-filter-button"
-            inactive={hadEmptyFilter || !hadDataset}
-            width="105px"
-            onClick={this._addFilter}
-          >
-            <Add height="12px" />
-            <FormattedMessage id={'filterManager.addFilter'} />
-          </Button>
-        </div>
-      );
-    }
   };
+
+  FilterManager.propTypes = {
+    datasets: PropTypes.object,
+    layers: PropTypes.arrayOf(PropTypes.any).isRequired,
+    addFilter: PropTypes.func.isRequired,
+    removeFilter: PropTypes.func.isRequired,
+    enlargeFilter: PropTypes.func.isRequired,
+    toggleAnimation: PropTypes.func.isRequired,
+    toggleFilterFeature: PropTypes.func.isRequired,
+    setFilter: PropTypes.func.isRequired,
+    filters: PropTypes.arrayOf(PropTypes.any).isRequired,
+    showDatasetTable: PropTypes.func,
+
+    // fields can be undefined when dataset is not selected
+    fields: PropTypes.arrayOf(PropTypes.any)
+  };
+
+  return FilterManager;
 }
 
 export default FilterManagerFactory;
