@@ -169,11 +169,7 @@ export function mergeLayers(state, layersToMerge, fromConfig) {
     }
   });
 
-  // const layers = [...state.layers, ...mergedLayer];
-  // const newLayerOrder = mergedLayer.map((_, i) => state.layers.length + i);
-
   // put new layers in front of current layers
-  // const layerOrder = [...newLayerOrder, ...state.layerOrder];
   const {newLayerOrder, newLayers} = insertLayerAtRightOrder(
     state.layers,
     mergedLayer,

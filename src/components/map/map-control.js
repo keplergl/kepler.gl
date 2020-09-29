@@ -563,7 +563,6 @@ function MapControlFactory(MapDrawPanel, Toggle3dButton, SplitMapButton, MapLege
                 availableLocales={Object.keys(LOCALE_CODES)}
                 onSetLocale={this.props.onSetLocale}
                 onToggleMenuPanel={() => onToggleMapControl('mapLocale')}
-                disableClose={LocalePanel.disableClose}
               />
             </ActionPanel>
           ) : null}
