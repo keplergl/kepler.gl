@@ -356,28 +356,44 @@ export function mergeAnimationConfig(state, animation) {
  * @return {null | Object} - validated columns or null
  */
 
-export function validateSavedLayerColumns(fields, savedCols, emptyCols) {
-  const colFound = {};
-  // find actual column fieldIdx, in case it has changed
-  const allColFound = Object.keys(emptyCols).every(key => {
+export function validateSavedLayerColumns(fields, savedCols = {}, emptyCols) {
+  // Prepare columns for the validator
+  const columns = {};
+  for (const key of Object.keys(emptyCols)) {
+    columns[key] = {...emptyCols[key]};
+
     const saved = savedCols[key];
-    colFound[key] = {...emptyCols[key]};
+    if (saved) {
+      const fieldIdx = fields.findIndex(({name}) => name === saved);
 
-    // TODO: replace with new approach
-    const fieldIdx = fields.findIndex(({name}) => name === saved);
-
-    if (fieldIdx > -1) {
-      // update found columns
-      colFound[key].fieldIdx = fieldIdx;
-      colFound[key].value = saved;
-      return true;
+      if (fieldIdx > -1) {
+        // update found columns
+        columns[key].fieldIdx = fieldIdx;
+        columns[key].value = saved;
+      }
     }
+  }
 
-    // if col is optional, allow null value
-    return emptyCols[key].optional || false;
-  });
+  // find actual column fieldIdx, in case it has changed
+  const allColFound = Object.keys(columns).every(key =>
+    validateColumn(columns[key], columns, fields)
+  );
 
-  return allColFound && colFound;
+  if (allColFound) {
+    return columns;
+  }
+
+  return null;
+}
+
+export function validateColumn(column, columns, allFields) {
+  if (column.optional || column.value) {
+    return true;
+  }
+  if (column.validator) {
+    return column.validator(column, columns, allFields);
+  }
+  return false;
 }
 
 /**

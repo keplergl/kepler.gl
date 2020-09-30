@@ -25,7 +25,8 @@ import {FormattedMessage} from 'localization';
 import {createSelector} from 'reselect';
 
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
-import FieldSelectorFactory from '../../common/field-selector';
+import FieldSelectorFactory from 'components/common/field-selector';
+import {validateColumn} from 'reducers/vis-state-merger';
 
 const TopRow = styled.div`
   display: flex;
@@ -91,6 +92,7 @@ function LayerColumnConfigFactory(ColumnSelector) {
               {Object.keys(columns).map(key => (
                 <ColumnSelector
                   column={columns[key]}
+                  columns={columns}
                   label={(columnLabels && columnLabels[key]) || key}
                   key={key}
                   allFields={fields}
@@ -108,7 +110,7 @@ function LayerColumnConfigFactory(ColumnSelector) {
 }
 ColumnSelectorFactory.deps = [FieldSelectorFactory];
 function ColumnSelectorFactory(FieldSelector) {
-  const ColumnSelector = ({column, label, allFields, onSelect, fieldPairs}) => (
+  const ColumnSelector = ({column, columns, label, allFields, onSelect, fieldPairs}) => (
     <ColumnRow className="layer-config__column__selector">
       <ColumnName className="layer-config__column__name">
         <PanelLabel>
@@ -119,7 +121,7 @@ function ColumnSelectorFactory(FieldSelector) {
       <ColumnSelect className="layer-config__column__select">
         <FieldSelector
           suggested={fieldPairs}
-          error={!column.optional && !column.value}
+          error={!validateColumn(column, columns, allFields)}
           fields={allFields}
           value={column.value}
           erasable={Boolean(column.optional)}

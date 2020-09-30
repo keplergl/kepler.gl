@@ -511,10 +511,13 @@ export default class Layer {
   }
 
   getLayerColumns() {
+    const columnValidators = this.columnValidators || {};
     const required = this.requiredLayerColumns.reduce(
       (accu, key) => ({
         ...accu,
-        [key]: {value: null, fieldIdx: -1}
+        [key]: columnValidators[key]
+          ? {value: null, fieldIdx: -1, validator: columnValidators[key]}
+          : {value: null, fieldIdx: -1}
       }),
       {}
     );
