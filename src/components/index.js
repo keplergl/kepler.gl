@@ -136,20 +136,22 @@ export {default as FileUploadFactory, FileUpload} from './common/file-uploader/f
 export {default as DatasetLabel} from './common/dataset-label';
 export {default as ItemSelector} from './common/item-selector/item-selector';
 export {default as Typeahead} from './common/item-selector/typeahead';
+export {default as DropdownList} from './common/item-selector/dropdown-list';
 export {default as FieldSelectorFactory} from './common/field-selector';
 export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
+export {default as Checkbox} from 'components/common/checkbox';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export {default as LoadingDialog} from './modals/loading-dialog';
 export {default as FieldTokenFactory} from './common/field-token';
 export {default as Portaled} from './common/portaled';
-export {default as DropdownList} from './common/item-selector/dropdown-list';
 export {default as ProgressBar} from './common/progress-bar';
 export {default as FileUploadProgress} from './common/file-uploader/file-upload-progress';
 export {default as Slider} from './common/slider/slider';
 export {DatasetSquare} from './common/styled-components';
 export {default as ActionPanel, ActionPanelItem} from 'components/common/action-panel';
+
 // side pane components
 export {default as LayerTypeSelector} from './side-panel/layer-panel/layer-type-selector';
 export {ConfigGroupCollapsibleContent} from './side-panel/layer-panel/layer-config-group';

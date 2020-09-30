@@ -148,11 +148,10 @@ function DataTableModalFactory(DataTable) {
     });
 
     render() {
-      const {datasets, dataId, showDatasetTable} = this.props;
+      const {datasets, dataId, showDatasetTable, showTab} = this.props;
       if (!datasets || !dataId) {
         return null;
       }
-
       const activeDataset = datasets[dataId];
       const columns = this.columns(this.props);
       const colMeta = this.colMeta(this.props);
@@ -162,11 +161,13 @@ function DataTableModalFactory(DataTable) {
         <StyledModal className="dataset-modal" id="dataset-modal">
           <CanvasHack />
           <TableContainer>
-            <DatasetTabs
-              activeDataset={activeDataset}
-              datasets={datasets}
-              showDatasetTable={showDatasetTable}
-            />
+            {showTab ? (
+              <DatasetTabs
+                activeDataset={activeDataset}
+                datasets={datasets}
+                showDatasetTable={showDatasetTable}
+              />
+            ) : null}
             {datasets[dataId] ? (
               <DataTable
                 key={dataId}
@@ -188,7 +189,9 @@ function DataTableModalFactory(DataTable) {
       );
     }
   }
-
+  DataTableModal.defaultProps = {
+    showTab: true
+  };
   return withTheme(DataTableModal);
 }
 

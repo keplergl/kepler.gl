@@ -206,6 +206,13 @@ export const checkboxBorderColorLT = selectBorderColorLT;
 export const checkboxBoxBgd = 'white';
 export const checkboxBoxBgdChecked = primaryBtnBgd;
 
+// Radio
+export const radioRadius = 8;
+export const radioBorderRadius = 100;
+export const radioBorderColor = 'transparent';
+export const radioButtonRadius = 4;
+export const radioButtonBgdColor = switchBtnBgdActive;
+
 // Side Panel
 export const sidePanelHeaderBg = '#29323C';
 export const sidePanelHeaderBorder = 'transparent';
@@ -709,6 +716,35 @@ const inputCheckbox = css`
   }
 `;
 
+const inputRadio = css`
+  ${props => props.theme.inputCheckbox}
+  padding-left: ${props => props.theme.radioRadius * 2 + 8}px;
+  margin-bottom: 0;
+  margin-left: 0;
+  line-height: ${props => props.theme.radioRadius * 2}px;
+  cursor: pointer;
+
+  :before {
+    ${props => props.theme.checkboxBox}
+    width: ${props => props.theme.radioRadius * 2}px;
+    height: ${props => props.theme.radioRadius * 2}px;
+    border-radius: ${props => props.theme.radioBorderRadius}px;
+    background-color: ${props => props.theme.switchTrackBgd};
+    border-color: ${props => props.theme.radioBorderColor};
+  }
+
+  :after {
+    top: ${props => props.theme.radioRadius - props.theme.radioButtonRadius}px;
+    left: ${props => props.theme.radioRadius - props.theme.radioButtonRadius}px;
+    display: table;
+    width: ${props => props.theme.radioButtonRadius * 2}px;
+    height: ${props => props.theme.radioButtonRadius * 2}px;
+    border-radius: ${props => props.theme.radioButtonRadius * 2}px;
+    border: 0;
+    background-color: ${props => props.theme.radioButtonBgdColor};
+  }
+`;
+
 const secondarySwitch = css`
   ${props => props.theme.inputSwitch}
 
@@ -1018,6 +1054,7 @@ export const theme = {
   switchTrack,
   switchButton,
   inputCheckbox,
+  inputRadio,
   checkboxBox,
   checkboxCheck,
 
@@ -1124,6 +1161,13 @@ export const theme = {
   checkboxBorderColorLT,
   checkboxBoxBgd,
   checkboxBoxBgdChecked,
+
+  // Radio
+  radioRadius,
+  radioBorderRadius,
+  radioBorderColor,
+  radioButtonRadius,
+  radioButtonBgdColor,
 
   // Button
   btnFontFamily,
