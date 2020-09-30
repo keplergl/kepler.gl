@@ -202,6 +202,8 @@ export const Button = styled.div.attrs(props => ({
       ? props.theme.linkBtnBgd
       : props.floating
       ? props.theme.floatingBtnBgd
+      : props.cta
+      ? props.theme.ctaBtnBgd
       : props.theme.primaryBtnBgd};
   border-radius: ${props => props.theme.primaryBtnRadius};
   color: ${props =>
@@ -213,6 +215,8 @@ export const Button = styled.div.attrs(props => ({
       ? props.theme.linkBtnColor
       : props.floating
       ? props.theme.floatingBtnColor
+      : props.cta
+      ? props.theme.ctaBtnColor
       : props.theme.primaryBtnColor};
   cursor: pointer;
   display: inline-flex;
@@ -256,6 +260,8 @@ export const Button = styled.div.attrs(props => ({
         ? props.theme.linkBtnActBgdHover
         : props.floating
         ? props.theme.floatingBtnBgdHover
+        : props.cta
+        ? props.theme.ctaBtnBgdHover
         : props.theme.primaryBtnBgdHover};
     color: ${props =>
       props.negative
@@ -266,6 +272,8 @@ export const Button = styled.div.attrs(props => ({
         ? props.theme.linkBtnActColor
         : props.floating
         ? props.theme.floatingBtnActColor
+        : props.cta
+        ? props.theme.ctaBtnActColor
         : props.theme.primaryBtnActColor};
   }
 
@@ -279,15 +287,14 @@ export const Input = styled.input`
 `;
 
 export const InputLight = styled.input`
-  ${props => props.theme.inputLT}
+  ${props => props.theme.inputLT};
 `;
 
 export const TextArea = styled.textarea`
   ${props => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
 `;
 export const TextAreaLight = styled.textarea`
-  ${props => props.theme.inputLT}
-  height: auto;
+  ${props => props.theme.inputLT} height: auto;
   white-space: pre-wrap;
 `;
 

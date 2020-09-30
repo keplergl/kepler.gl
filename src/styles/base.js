@@ -79,6 +79,12 @@ export const secondaryBtnActColor = '#FFFFFF';
 export const secondaryBtnBgdHover = '#A0A7B4';
 export const secondaryBtnBorder = '0';
 
+export const ctaBtnBgd = '#0F9668';
+export const ctaBtnBgdHover = '#13B17B';
+export const ctaBtnActBgd = '#13B17B';
+export const ctaBtnColor = '#FFFFFF';
+export const ctaBtnActColor = '#FFFFFF';
+
 export const linkBtnBgd = 'transparent';
 export const linkBtnActBgd = linkBtnBgd;
 export const linkBtnColor = '#A0A7B4';
@@ -558,18 +564,15 @@ const chickletedInputContainer = css`
 `;
 
 const chickletedInput = css`
-  ${props => props.theme.input}
-  ${props => props.theme.chickletedInputContainer}
+  ${props => props.theme.input} ${props => props.theme.chickletedInputContainer};
 `;
 
 const chickletedInputLT = css`
-  ${props => props.theme.inputLT}
-  ${props => props.theme.chickletedInputContainer}
+  ${props => props.theme.inputLT} ${props => props.theme.chickletedInputContainer};
 `;
 
 const secondaryChickletedInput = css`
-  ${props => props.theme.secondaryInput}
-  ${props => props.theme.chickletedInputContainer}
+  ${props => props.theme.secondaryInput} ${props => props.theme.chickletedInputContainer};
 `;
 
 const inlineInput = css`
@@ -788,8 +791,7 @@ const dropdownListSize = css`
 `;
 
 const dropdownListItem = css`
-  ${dropdownListSize}
-  &.hover,
+  ${dropdownListSize} &.hover,
   &:hover {
     cursor: pointer;
     background-color: ${props => props.theme.dropdownListHighlightBg};
@@ -853,8 +855,7 @@ const dropdownList = css`
 `;
 
 const dropdownListLT = css`
-  ${dropdownList}
-  .list__item {
+  ${dropdownList} .list__item {
     ${props => props.theme.dropdownListItemLT};
   }
 
@@ -1164,6 +1165,12 @@ export const theme = {
   floatingBtnBorderHover,
   floatingBtnColor,
   floatingBtnActColor,
+
+  ctaBtnBgd,
+  ctaBtnBgdHover,
+  ctaBtnActBgd,
+  ctaBtnColor,
+  ctaBtnActColor,
 
   selectionBtnBgd,
   selectionBtnActBgd,
@@ -1490,6 +1497,10 @@ export const themeBS = {
   secondaryBtnActColor: '#000000',
   secondaryBtnBgd: '#E2E2E2',
   secondaryBtnBgdHover: '#CBCBCB',
+  ctnBtnBgd: '#E2E2E2',
+  ctnBtnBgdHover: '333333',
+  ctnBtnColor: '#000000',
+  ctnBtnActColor: '#000000',
 
   sideBarCloseBtnBgd: '#E2E2E2',
   sideBarCloseBtnColor: '#000000',
