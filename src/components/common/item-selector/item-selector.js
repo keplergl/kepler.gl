@@ -135,7 +135,7 @@ class ItemSelector extends Component {
 
   static defaultProps = {
     erasable: false,
-    showArrow: true,
+    showArrow: false,
     placement: 'bottom',
     selectedItems: [],
     displayOption: null,

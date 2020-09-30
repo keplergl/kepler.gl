@@ -75,11 +75,6 @@ export const StyledInputLabel = styled.div`
   }
 `;
 
-// export const StyledBtn = styled(Button)`
-//   background-color: ${props => props.theme.primaryBtnActBgd};
-//   color: ${props => props.theme.primaryBtnActColor};
-// `;
-
 export const StyledError = styled.div`
   color: red;
 `;
