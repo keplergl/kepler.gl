@@ -14,3 +14,5 @@ export function sortDatasetByColumn(
   column: string, 
   mode?: string
 ): Dataset
+
+export const datasetColorMaker: Generator<RGBColor>;

@@ -33,8 +33,8 @@ const StyledInfoHelper = styled.div`
   color: ${props => props.theme.labelColor};
   display: inline-flex;
   .info-helper__content {
-    width: ${props => props.width ? `${props.width}px` : 'auto'};
-    max-width: ${props => props.width ? 'auto' : '100px'};
+    width: ${props => (props.width ? `${props.width}px` : 'auto')};
+    max-width: ${props => (props.width ? 'auto' : '100px')};
   }
   :hover {
     cursor: pointer;
@@ -52,7 +52,12 @@ function InfoHelperFactory() {
     const intl = useIntl();
 
     return (
-      <StyledInfoHelper className={`info-helper ${containerClass || ''}`} width={width} data-tip data-for={id}>
+      <StyledInfoHelper
+        className={`info-helper ${containerClass || ''}`}
+        width={width}
+        data-tip
+        data-for={id}
+      >
         <Docs height="16px" />
         <Tooltip id={id} effect="solid">
           <div className="info-helper__content">

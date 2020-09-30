@@ -1156,7 +1156,7 @@ export const theme = {
   checkboxBorderColorLT,
   checkboxBoxBgd,
   checkboxBoxBgdChecked,
-  
+
   // Radio
   radioRadius,
   radioBorderRadius,

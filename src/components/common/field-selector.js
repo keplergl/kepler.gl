@@ -177,7 +177,7 @@ function FieldSelectorFactory(FieldListItemFactory) {
     }
   }
   return FieldSelector;
-};
+}
 
 FieldSelectorFactory.deps = [FieldListItemFactoryFactory];
 export default FieldSelectorFactory;

@@ -106,8 +106,8 @@ export default class Checkbox extends Component {
       this.props.type === 'checkbox'
         ? StyledCheckboxInput
         : this.props.type === 'radio'
-          ? StyledRadiuInput
-          : StyledSwitchInput;
+        ? StyledRadiuInput
+        : StyledSwitchInput;
 
     return (
       <StyledCheckbox className={classnames('kg-checkbox', this.props.className)}>
