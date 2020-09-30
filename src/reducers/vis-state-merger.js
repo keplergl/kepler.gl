@@ -22,7 +22,7 @@ import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
 import isEqual from 'lodash.isequal';
 import flattenDeep from 'lodash.flattendeep';
-import {toArray, isObject} from 'utils/utils';
+import {toArray, isObject, arrayInsert} from 'utils/utils';
 
 import {
   applyFiltersToDatasets,
@@ -138,7 +138,9 @@ export function mergeFilters(state, filtersToMerge) {
  *
  * @type {typeof import('./vis-state-merger').mergeLayers}
  */
-export function mergeLayers(state, layersToMerge) {
+export function mergeLayers(state, layersToMerge, fromConfig) {
+  const preserveLayerOrder = fromConfig ? layersToMerge.map(l => l.id) : state.preserveLayerOrder;
+
   const mergedLayer = [];
   const unmerged = [];
 
@@ -149,34 +151,82 @@ export function mergeLayers(state, layersToMerge) {
   }
 
   layersToMerge.forEach(layer => {
+    let validateLayer;
     if (datasets[layer.config.dataId]) {
       // datasets are already loaded
-      const validateLayer = validateLayerWithData(
+      validateLayer = validateLayerWithData(
         datasets[layer.config.dataId],
         layer,
         state.layerClasses
       );
+    }
 
-      if (validateLayer) {
-        mergedLayer.push(validateLayer);
-      }
+    if (validateLayer) {
+      mergedLayer.push(validateLayer);
     } else {
       // datasets not yet loaded
       unmerged.push(layer);
     }
   });
 
-  const layers = [...state.layers, ...mergedLayer];
-  const newLayerOrder = mergedLayer.map((_, i) => state.layers.length + i);
-
   // put new layers in front of current layers
-  const layerOrder = [...newLayerOrder, ...state.layerOrder];
-
+  const {newLayerOrder, newLayers} = insertLayerAtRightOrder(
+    state.layers,
+    mergedLayer,
+    state.layerOrder,
+    preserveLayerOrder
+  );
   return {
     ...state,
-    layers,
-    layerOrder,
+    layers: newLayers,
+    layerOrder: newLayerOrder,
+    preserveLayerOrder,
     layerToBeMerged: [...state.layerToBeMerged, ...unmerged]
+  };
+}
+
+export function insertLayerAtRightOrder(
+  currentLayers,
+  layersToInsert,
+  currentOrder,
+  preservedOrder = []
+) {
+  // perservedOrder ['a', 'b', 'c'];
+  // layerOrder [1, 0, 3]
+  // layerOrderMap ['a', 'c']
+  let layerOrderQueue = currentOrder.map(i => currentLayers[i].id);
+  let newLayers = currentLayers;
+
+  for (const newLayer of layersToInsert) {
+    // find where to insert it
+    const expectedIdx = preservedOrder.indexOf(newLayer.id);
+    // if cant find place to insert, insert at the font
+    let insertAt = 0;
+
+    if (expectedIdx > 0) {
+      // look for layer to insert after
+      let i = expectedIdx + 1;
+      let preceedIdx = null;
+      while (i-- > 0 && preceedIdx === null) {
+        const preceedLayer = preservedOrder[expectedIdx - 1];
+        preceedIdx = layerOrderQueue.indexOf(preceedLayer);
+      }
+
+      if (preceedIdx > -1) {
+        insertAt = preceedIdx + 1;
+      }
+    }
+
+    layerOrderQueue = arrayInsert(layerOrderQueue, insertAt, newLayer.id);
+    newLayers = newLayers.concat(newLayer);
+  }
+
+  // reconstruct layerOrder after insert
+  const newLayerOrder = layerOrderQueue.map(id => newLayers.findIndex(l => l.id === id));
+
+  return {
+    newLayerOrder,
+    newLayers
   };
 }
 
@@ -484,14 +534,13 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
   });
 
   // find column fieldIdx
-  const columns = validateSavedLayerColumns(
-    fields,
-    savedLayer.config.columns,
-    newLayer.getLayerColumns()
-  );
-
-  if (!columns) {
-    return null;
+  const columnConfig = newLayer.getLayerColumns();
+  if (Object.keys(columnConfig).length) {
+    const columns = validateSavedLayerColumns(fields, savedLayer.config.columns, columnConfig);
+    if (!columns) {
+      return null;
+    }
+    newLayer.updateLayerConfig({columns});
   }
 
   // visual channel field is saved to be {name, type}
@@ -512,7 +561,6 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
   );
 
   newLayer.updateLayerConfig({
-    columns,
     visConfig,
     textLabel
   });

@@ -19,7 +19,15 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {set, toArray, getError, camelToTitle, camelize, capitalizeFirstLetter} from 'utils/utils';
+import {
+  set,
+  toArray,
+  getError,
+  camelToTitle,
+  camelize,
+  capitalizeFirstLetter,
+  arrayInsert
+} from 'utils/utils';
 
 test('Utils -> set', t => {
   const obj1 = {map: {map1: 'world'}};
@@ -89,5 +97,14 @@ test('Utils -> camelize', t => {
 test('Utils -> capitalizeFirstLetter', t => {
   t.equal(capitalizeFirstLetter('hello world'), 'Hello world', 'should capitalize string');
   t.equal(capitalizeFirstLetter(1), 1, 'should ignore other types than string');
+  t.end();
+});
+
+test('Utils -> arrayInsert', t => {
+  t.deepEqual(arrayInsert([], 1, 0), [0], 'should insert val at index');
+  t.deepEqual(arrayInsert([1, 2, 3, 4], 1, 5), [1, 5, 2, 3, 4], 'should insert val at index');
+  t.deepEqual(arrayInsert([1, 2, 3], 0, 6), [6, 1, 2, 3], 'should insert val at index');
+  t.deepEqual(arrayInsert(null, 1, 0), null, 'should insert val at index');
+  t.deepEqual(arrayInsert([1, 2, 3], 3, 4), [1, 2, 3, 4], 'should insert val at index');
   t.end();
 });
