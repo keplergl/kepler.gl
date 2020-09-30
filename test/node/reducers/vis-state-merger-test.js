@@ -86,8 +86,7 @@ import {
   StateWFilesFiltersLayerColor,
   StateWSplitMaps,
   testCsvDataId,
-  testGeoJsonDataId,
-  StateWFiles
+  testGeoJsonDataId
 } from 'test/helpers/mock-state';
 
 import {

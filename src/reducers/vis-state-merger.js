@@ -187,7 +187,7 @@ export function mergeLayers(state, layersToMerge, fromConfig) {
 
 export function insertLayerAtRightOrder(
   currentLayers,
-  newLayers,
+  layersToInsert,
   currentOrder,
   preservedOrder = []
 ) {
@@ -197,7 +197,7 @@ export function insertLayerAtRightOrder(
   let layerOrderQueue = currentOrder.map(i => currentLayers[i].id);
   let newLayers = currentLayers;
 
-  for (const newLayer of newLayers) {
+  for (const newLayer of layersToInsert) {
     // find where to insert it
     const expectedIdx = preservedOrder.indexOf(newLayer.id);
     // if cant find place to insert, insert at the font
