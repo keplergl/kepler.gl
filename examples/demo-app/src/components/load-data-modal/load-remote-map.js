@@ -24,6 +24,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {CORS_LINK} from '../../constants/default-settings';
 import {FormattedHTMLMessage, FormattedMessage} from 'react-intl';
+import {Button} from 'kepler.gl/components';
 
 const propTypes = {
   onLoadRemoteMap: PropTypes.func.isRequired
@@ -74,10 +75,10 @@ export const StyledInputLabel = styled.div`
   }
 `;
 
-export const StyledBtn = styled.button`
-  background-color: ${props => props.theme.primaryBtnActBgd};
-  color: ${props => props.theme.primaryBtnActColor};
-`;
+// export const StyledBtn = styled(Button)`
+//   background-color: ${props => props.theme.primaryBtnActBgd};
+//   color: ${props => props.theme.primaryBtnActColor};
+// `;
 
 export const StyledError = styled.div`
   color: red;
@@ -144,9 +145,9 @@ class LoadRemoteMap extends Component {
               value={this.state.dataUrl}
               error={this.props.error}
             />
-            <StyledBtn type="submit" onClick={this.onLoadRemoteMap}>
+            <Button type="submit" cta size="small" onClick={this.onLoadRemoteMap}>
               <FormattedMessage id={'loadRemoteMap.fetch'} />
-            </StyledBtn>
+            </Button>
           </StyledFromGroup>
           {this.props.error && <Error error={this.props.error} url={this.props.option.dataUrl} />}
         </InputForm>

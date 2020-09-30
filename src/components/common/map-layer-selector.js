@@ -21,7 +21,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import Switch from 'components/common/switch';
+// import Switch from 'components/common/switch';
+import Checkbox from 'components/common/checkbox';
 import {generateHashId} from '../../utils/utils';
 
 const propTypes = {
@@ -42,7 +43,8 @@ const MapLayerSelector = ({layers, onMapToggleLayer}) => (
   <MapLayerSelect className="map-layer-selector">
     {layers.map((layer, index) => (
       <div key={layer.id} className="map-layer-selector__item">
-        <Switch
+        <Checkbox
+          type="radio"
           checked={layer.isVisible}
           id={`${layer.id}-toggle-${generateHashId(4)}`}
           label={layer.name}
