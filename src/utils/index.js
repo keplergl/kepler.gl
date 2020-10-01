@@ -38,3 +38,6 @@ export {
 // LAYER UTILS
 export {getHexFields} from '../layers/h3-hexagon-layer/h3-utils';
 export {containValidTime} from '../layers/trip-layer/trip-utils';
+
+// Render
+export {renderedSize} from 'components/common/data-table/cell-size';
