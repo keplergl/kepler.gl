@@ -35,6 +35,7 @@ const dgSettings = {
 const StyledModal = styled.div`
   min-height: 70vh;
   overflow: hidden;
+  display: flex;
 `;
 
 const DatasetCatalog = styled.div`
@@ -82,8 +83,8 @@ const TableContainer = styled.div`
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  min-height: 70vh;
-  max-height: 70vh;
+  min-height: 100%;
+  max-height: 100%;
 `;
 
 function DataTableModalFactory(DataTable) {
