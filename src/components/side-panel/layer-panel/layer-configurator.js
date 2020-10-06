@@ -911,6 +911,7 @@ export default function LayerConfiguratorFactory(
           ) : null}
           <LayerConfigGroup label={'layer.basic'} collapsible expanded={!layer.hasAllColumns()}>
             <LayerTypeSelector
+              datasets={datasets}
               layer={layer}
               layerTypeOptions={layerTypeOptions}
               onSelect={updateLayerType}
