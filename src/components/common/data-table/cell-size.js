@@ -51,11 +51,11 @@ export function renderedSize({
   const context = textCanvas.getContext('2d');
   context.font = [fontSize, font].join('px ');
   let rowsToSample = [...Array(numRowsToCalculate)].map(() =>
-    Math.floor(Math.random() * (rows.length - 1 - 0 + 1))
+    Math.floor(Math.random() * (rows.length - 1))
   );
 
   // IF we have less than 10 rows, lets measure all of them
-  if (rows.length < numRowsToCalculate) {
+  if (rows.length <= numRowsToCalculate) {
     rowsToSample = Array.from(Array(rows.length).keys());
   }
   const rowWidth = Math.max(
