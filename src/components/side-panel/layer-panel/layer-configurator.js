@@ -131,7 +131,7 @@ export default function LayerConfiguratorFactory(
         <StyledLayerVisualConfigurator>
           {/* Fill Color */}
           <LayerConfigGroup
-            {...(layer.visConfigSettings.filled || {label: 'layer.color'})}
+            {...layer.visConfigSettings.filled || {label: 'layer.color'}}
             {...visConfiguratorProps}
             collapsible
           >
@@ -918,28 +918,25 @@ export default function LayerConfiguratorFactory(
               layerTypeOptions={layerTypeOptions}
               onSelect={updateLayerType}
             />
-            <ConfigGroupCollapsibleContent>
-              {Object.keys(datasets).length > 1 && (
-                <SourceDataSelector
-                  datasets={datasets}
-                  id={layer.id}
-                  disabled={layer.type && config.columns}
-                  dataId={config.dataId}
-                  onSelect={value => updateLayerConfig({dataId: value})}
-                />
-              )}
-              <LayerColumnConfig
-                columnPairs={layer.columnPairs}
-                columns={layer.config.columns}
-                assignColumnPairs={layer.assignColumnPairs.bind(layer)}
-                assignColumn={layer.assignColumn.bind(layer)}
-                columnLabels={layer.columnLabels}
-                fields={fields}
-                fieldPairs={fieldPairs}
-                updateLayerConfig={updateLayerConfig}
-                updateLayerType={this.props.updateLayerType}
+            {Object.keys(datasets).length > 1 && (
+              <SourceDataSelector
+                datasets={datasets}
+                id={layer.id}
+                dataId={config.dataId}
+                onSelect={value => updateLayerConfig({dataId: value})}
               />
-            </ConfigGroupCollapsibleContent>
+            )}
+            <LayerColumnConfig
+              columnPairs={layer.columnPairs}
+              columns={layer.config.columns}
+              assignColumnPairs={layer.assignColumnPairs.bind(layer)}
+              assignColumn={layer.assignColumn.bind(layer)}
+              columnLabels={layer.columnLabels}
+              fields={fields}
+              fieldPairs={fieldPairs}
+              updateLayerConfig={updateLayerConfig}
+              updateLayerType={this.props.updateLayerType}
+            />
           </LayerConfigGroup>
           {this[renderTemplate] &&
             this[renderTemplate]({

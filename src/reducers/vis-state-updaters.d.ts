@@ -310,7 +310,7 @@ export type VisState = {
   loadOptions: object;
   initialState?: Partial<VisState>;
   mergers: VisStateMergers;
-  schema: KeplerGLSchema,
+  schema: KeplerGLSchema;
   preserveLayerOrder?: number[];
 };
 
@@ -336,6 +336,15 @@ export function layerConfigChangeUpdater(
 export function layerTextLabelChangeUpdater(
   state: VisState,
   action: VisStateActions.LayerTextLabelChangeUpdaterAction
+): VisState;
+export function layerDataIdChangeUpdater(
+  state: VisState,
+  action: {
+    oldLayer: Layer;
+    newConfig: {
+      dataId: string;
+    };
+  }
 ): VisState;
 export function layerTypeChangeUpdater(
   state: VisState,
@@ -473,9 +482,7 @@ export function loadFilesUpdater(
   state: VisState,
   action: VisStateActions.LoadFilesUpdaterAction
 ): VisState;
-export function loadNextFileUpdater(
-  state: VisState
-): VisState;
+export function loadNextFileUpdater(state: VisState): VisState;
 export function loadFilesSuccessUpdater(
   state: VisState,
   action: VisStateActions.loadFilesSuccessUpdaterAction

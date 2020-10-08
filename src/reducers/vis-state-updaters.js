@@ -59,7 +59,7 @@ import {set, toArray} from 'utils/utils';
 
 import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils';
 
-import {isValidMerger, VIS_STATE_MERGERS} from './vis-state-merger';
+import {isValidMerger, VIS_STATE_MERGERS, validateLayerWithData} from './vis-state-merger';
 
 import {
   addNewLayersToSplitMap,
@@ -73,7 +73,7 @@ import {EDITOR_MODES, SORT_ORDER} from 'constants/default-settings';
 import {pick_, merge_} from './composer-helpers';
 import {processFileContent} from 'actions/vis-state-actions';
 
-import KeplerGLSchema from 'schemas';
+import KeplerGLSchema, {CURRENT_VERSION, visStateSchema} from 'schemas';
 
 // type imports
 /** @typedef {import('./vis-state-updaters').Field} Field */
@@ -255,6 +255,13 @@ export function layerConfigChangeUpdater(state, action) {
   const {oldLayer} = action;
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const props = Object.keys(action.newConfig);
+  if (typeof action.newConfig.dataId === 'string') {
+    return layerDataIdChangeUpdater(state, {
+      oldLayer,
+      newConfig: {dataId: action.newConfig.dataId}
+    });
+  }
+
   let newLayer = oldLayer.updateLayerConfig(action.newConfig);
 
   let layerData;
@@ -350,6 +357,52 @@ export function layerTextLabelChangeUpdater(state, action) {
   });
 }
 
+function validateExistingLayerWithData(dataset, layerClasses, layer) {
+  let newLayer = layer;
+
+  const savedVisState = visStateSchema[CURRENT_VERSION].save({
+    layers: [newLayer],
+    layerOrder: [0]
+  }).visState;
+  const loadedLayer = visStateSchema[CURRENT_VERSION].load(savedVisState).visState.layers[0];
+  newLayer = validateLayerWithData(dataset, loadedLayer, layerClasses, {
+    allowEmptyColumn: true
+  });
+
+  return newLayer;
+}
+
+/**
+ * Update layer config dataId
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').layerDataIdChangeUpdater}
+ * @returns nextState
+ */
+export function layerDataIdChangeUpdater(state, action) {
+  const {oldLayer, newConfig} = action;
+  const {dataId} = newConfig;
+  if (!oldLayer || !state.datasets[dataId]) {
+    return state;
+  }
+  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
+
+  let newLayer = oldLayer.updateLayerConfig({dataId});
+  newLayer = validateExistingLayerWithData(state.datasets[dataId], state.layerClasses, newLayer);
+  // if cant validate it with data create a new one
+  if (!newLayer) {
+    newLayer = new state.layerClasses[oldLayer.type]({dataId, id: oldLayer.id});
+  }
+  newLayer = newLayer.updateLayerConfig({
+    isVisible: oldLayer.config.isVisible,
+    isConfigActive: true
+  });
+
+  newLayer.updateLayerDomain(state.datasets);
+  const {layerData, layer} = calculateLayerData(newLayer, state, undefined);
+
+  return updateStateWithLayerAndData(state, {layerData, layer, idx});
+}
+
 /**
  * Update layer type. Previews layer config will be copied if applicable.
  * @memberof visStateUpdaters
@@ -376,10 +429,6 @@ export function layerTypeChangeUpdater(state, action) {
 
   newLayer.assignConfigToLayer(oldLayer.config, oldLayer.visConfigSettings);
 
-  // if (newLayer.config.dataId) {
-  //   const dataset = state.datasets[newLayer.config.dataId];
-  //   newLayer.updateLayerDomain(dataset);
-  // }
   newLayer.updateLayerDomain(state.datasets);
   const {layerData, layer} = calculateLayerData(newLayer, state);
   let newState = updateStateWithLayerAndData(state, {layerData, layer, idx});

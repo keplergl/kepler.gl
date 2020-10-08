@@ -38,7 +38,16 @@ export type Merger = {
 };
 
 export function validateSavedVisualChannels(fields, newLayer, savedLayer);
-export function validateLayerWithData({fields, id: dataId}, savedLayer, layerClasses);
+export function validateLayerWithData(
+  dataset: {fields, id: dataId}, 
+  savedLayer: savedLayer, 
+  layerClasses: {
+    [key: string]: LayerClass
+  },
+  option?: {
+    allowEmptyColumn?: boolean;
+  }
+): Layer | null;
 
 export type VisStateMergers = Merger[];
 

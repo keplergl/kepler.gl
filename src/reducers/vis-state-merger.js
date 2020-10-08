@@ -510,14 +510,14 @@ export function validateSavedVisualChannels(fields, newLayer, savedLayer) {
 /**
  * Validate saved layer config with new data,
  * update fieldIdx based on new fields
- * @param {object} dataset
- * @param {Array<Object>} dataset.fields
- * @param {string} dataset.id
- * @param {Object} savedLayer
- * @param {Object} layerClasses
- * @return {null | Object} - validated layer or null
+ * @type {typeof import('./vis-state-merger').validateLayerWithData}
  */
-export function validateLayerWithData({fields, id: dataId}, savedLayer, layerClasses) {
+export function validateLayerWithData(
+  {fields, id: dataId},
+  savedLayer,
+  layerClasses,
+  options = {}
+) {
   const {type} = savedLayer;
   // layer doesnt have a valid type
   if (!layerClasses.hasOwnProperty(type) || !savedLayer.config || !savedLayer.config.columns) {
@@ -537,10 +537,11 @@ export function validateLayerWithData({fields, id: dataId}, savedLayer, layerCla
   const columnConfig = newLayer.getLayerColumns();
   if (Object.keys(columnConfig).length) {
     const columns = validateSavedLayerColumns(fields, savedLayer.config.columns, columnConfig);
-    if (!columns) {
+    if (columns) {
+      newLayer.updateLayerConfig({columns});
+    } else if (!options.allowEmptyColumn) {
       return null;
     }
-    newLayer.updateLayerConfig({columns});
   }
 
   // visual channel field is saved to be {name, type}
