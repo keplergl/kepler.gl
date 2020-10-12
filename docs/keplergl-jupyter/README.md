@@ -21,6 +21,7 @@
 - [6. Match config with data](#6-match-config-with-data)
 - [7. Save Map](#7-save-map)
   - [`.save_to_html()`](#save_to_html)
+  - [`._repr_html_()`](#_repr_html_)
 - [Demo Notebooks](#demo-notebooks)
 
 
@@ -330,6 +331,29 @@ map_1.save_to_html(data={'data_1': df}, config=config, file_name='first_map.html
 # this will save map with the interaction panel disabled
 map_1.save_to_html(file_name='first_map.html', read_only=True)
 ```
+
+### `._repr_html_()`
+
+- input
+  - **`data`**: _optional_  A data dictionary {"name": data}, if not provided, will use current map data
+  - **`config`**: _optional_ map config dictionary, if not provided, will use current map config
+  - **`read_only`**: _optional_ if `read_only` is `True`, hide side panel to disable map customization
+
+You can also directly serve the current map via a flask app. To do that return kepler’s map HTML representation. Here is an example on how to do that:
+
+```python
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return map_1._repr_html_()
+    
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
 # Demo Notebooks
 - [Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Load%20kepler.gl.ipynb): Load kepler.gl widget, add data and config
 - [Geometry as String](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Geometry%20as%20String.ipynb): Embed Polygon geometries as `GeoJson` and `WKT` inside a `CSV`
