@@ -447,6 +447,7 @@ const input = css`
       ? props.theme.inputFontSizeSmall
       : props.theme.inputFontSize};
   font-weight: ${props => props.theme.inputFontWeight};
+  font-family: ${props => props.theme.fontFamily};
   height: ${props =>
     props.size === 'small'
       ? props.theme.inputBoxHeightSmall

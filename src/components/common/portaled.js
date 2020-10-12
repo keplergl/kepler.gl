@@ -186,17 +186,22 @@ class Portaled extends Component {
       isOpened,
       onClose,
 
-      // Mordal
+      // Modal
       children,
-      modalProps
+      modalProps,
+      modalStyle = {}
     } = this.props;
 
     const {isVisible, pos} = this.state;
 
-    const modalStyle = {
+    const newModalStyle = {
       ...defaultModalStyle,
+      content: {
+        ...(modalStyle.content || {})
+      },
       overlay: {
         ...defaultModalStyle.overlay,
+        ...(modalStyle.overlay || {}),
         // needs to be on top of existing modal
         zIndex: overlayZIndex || 9999
       }
@@ -212,7 +217,7 @@ class Portaled extends Component {
                 {...modalProps}
                 ariaHideApp={false}
                 isOpen
-                style={modalStyle}
+                style={newModalStyle}
                 parentSelector={() => {
                   // React modal issue: https://github.com/reactjs/react-modal/issues/769
                   // failed to execute removeChild on parent node when it is already unmounted

@@ -52,7 +52,7 @@ function LayerColumnConfigFactory(ColumnSelector) {
       this.columnPairs,
       this.fieldPairs,
       (columnPairs, fieldPairs) =>
-        columnPairs
+        columnPairs && fieldPairs
           ? fieldPairs.map(fp => ({
               name: fp.defaultName,
               type: 'point',

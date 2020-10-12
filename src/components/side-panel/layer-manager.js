@@ -165,7 +165,8 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
         return {
           id: key,
           label: layer.name,
-          icon: layer.layerIcon
+          icon: layer.layerIcon,
+          requireData: layer.requireData
         };
       })
     );
