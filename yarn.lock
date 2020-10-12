@@ -11537,10 +11537,10 @@ react-onclickoutside@^6.7.1:
   resolved "https://registry.yarnpkg.com/react-onclickoutside/-/react-onclickoutside-6.9.0.tgz#a54bc317ae8cf6131a5d78acea55a11067f37a1f"
   integrity sha512-8ltIY3bC7oGhj2nPAvWOGi+xGFybPNhJM0V1H8hY/whNcXgmDeaeoCMPPd8VatrpTsUWjb/vGzrmu6SrXVty3A==
 
-react-palm@^3.3.6:
-  version "3.3.6"
-  resolved "https://registry.yarnpkg.com/react-palm/-/react-palm-3.3.6.tgz#98449669f9455aa24afe3e9d9ed7136ca1b1dbf6"
-  integrity sha512-1G1632sfdaFyCMJa7Epz1jk5+RkMPFl51g46uUOMSwhFyFzAA5aaNCVRxI/HCc0zmzHudKVzjzQurg5TTIP2pg==
+react-palm@^3.3.7:
+  version "3.3.7"
+  resolved "https://registry.yarnpkg.com/react-palm/-/react-palm-3.3.7.tgz#7783b4e17c24d48d5e0c4c4c344ee7315e7deba1"
+  integrity sha512-qzJ+/iH8tohwJjrPm/ruOvqcmQckUZ0emtmHa4meWioR8WBT2QLS2krXUKHVzJ0+5Hvlc2q17caTBUrS7jxpuw==
   dependencies:
     function.prototype.name "^1.1.0"
     react-dom "^16.4.2"
