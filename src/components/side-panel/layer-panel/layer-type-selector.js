@@ -102,48 +102,56 @@ const DropdownListWrapper = styled.div`
   padding: ${props => props.theme.layerTypeIconPdL}px 0 0 ${props => props.theme.layerTypeIconPdL}px;
 `;
 
-const LayerTypeListItem = ({value, isTile}) => (
-  <StyledListItem
-    className={classNames('layer-type-selector__item__inner', {
-      list: !isTile
-    })}
-  >
-    <div className="layer-type-selector__item__icon">
-      <value.icon height={`${isTile ? ITEM_SIZE.large : ITEM_SIZE.small}px`} />
-    </div>
-    <div className="layer-type-selector__item__label">
-      <FormattedMessage
-        id={`layer.type.${value.label.toLowerCase()}`}
-        defaultMessage={value.label}
-      />
-    </div>
-  </StyledListItem>
-);
+function LayerTypeListItemFactory() {
+  const LayerTypeListItem = ({value, isTile}) => (
+    <StyledListItem
+      className={classNames('layer-type-selector__item__inner', {
+        list: !isTile
+      })}
+    >
+      <div className="layer-type-selector__item__icon">
+        <value.icon height={`${isTile ? ITEM_SIZE.large : ITEM_SIZE.small}px`} />
+      </div>
+      <div className="layer-type-selector__item__label">
+        <FormattedMessage
+          id={`layer.type.${value.label.toLowerCase()}`}
+          defaultMessage={value.label}
+        />
+      </div>
+    </StyledListItem>
+  );
 
-const LayerTypeDropdownList = props => (
-  <DropdownListWrapper className={classList.list}>
-    {props.options.map((value, i) => (
-      <StyledDropdownListItem
-        className={classNames('layer-type-selector__item', {
-          selected: props.selectedItems.find(it => it.id === value.id),
-          hover: props.selectionIndex === i,
-          disabled: value.disabled
-        })}
-        key={`${value.id}_${i}`}
-        onMouseDown={e => {
-          e.preventDefault();
-          props.onOptionSelected(value, e);
-        }}
-        onClick={e => {
-          e.preventDefault();
-          props.onOptionSelected(value, e);
-        }}
-      >
-        <props.customListItemComponent value={value} isTile />
-      </StyledDropdownListItem>
-    ))}
-  </DropdownListWrapper>
-);
+  return LayerTypeListItem;
+}
+
+function LayerTypeDropdownListFactory() {
+  const LayerTypeDropdownList = props => (
+    <DropdownListWrapper className={classList.list}>
+      {props.options.map((value, i) => (
+        <StyledDropdownListItem
+          className={classNames('layer-type-selector__item', {
+            selected: props.selectedItems.find(it => it.id === value.id),
+            hover: props.selectionIndex === i,
+            disabled: value.disabled
+          })}
+          key={`${value.id}_${i}`}
+          onMouseDown={e => {
+            e.preventDefault();
+            props.onOptionSelected(value, e);
+          }}
+          onClick={e => {
+            e.preventDefault();
+            props.onOptionSelected(value, e);
+          }}
+        >
+          <props.customListItemComponent value={value} isTile />
+        </StyledDropdownListItem>
+      ))}
+    </DropdownListWrapper>
+  );
+
+  return LayerTypeDropdownList;
+}
 
 const propTypes = {
   layer: PropTypes.object.isRequired,
@@ -156,36 +164,50 @@ const StyledLayerTypeSelector = styled.div`
   }
 `;
 
-const LayerTypeSelector = ({layer, layerTypeOptions, onSelect, datasets}) => {
-  const hasData = Boolean(Object.keys(datasets).length);
-  const typeOptions = useMemo(
-    () =>
-      layerTypeOptions.map(op => ({
-        ...op,
-        disabled: !hasData && op.requireData !== false
-      })),
-    [hasData, layerTypeOptions]
-  );
-  return (
-    <SidePanelSection>
-      <StyledLayerTypeSelector className="layer-config__type">
-        <ItemSelector
-          selectedItems={typeOptions.find(op => op.id === layer.type)}
-          options={typeOptions}
-          multiSelect={false}
-          placeholder="placeholder.selectType"
-          onChange={onSelect}
-          getOptionValue={op => op.id}
-          filterOption="label"
-          displayOption={op => op.label}
-          DropDownLineItemRenderComponent={LayerTypeListItem}
-          DropDownRenderComponent={LayerTypeDropdownList}
-        />
-      </StyledLayerTypeSelector>
-    </SidePanelSection>
-  );
-};
+LayerTypeSelectorFactory.deps = [LayerTypeListItemFactory, LayerTypeDropdownListFactory];
 
-LayerTypeSelector.propTypes = propTypes;
+const getDisplayOption = op => op.label;
+const getOptionValue = op => op.id;
 
-export default withTheme(LayerTypeSelector);
+function LayerTypeSelectorFactory(LayerTypeListItem, LayerTypeDropdownList) {
+  const LayerTypeSelector = ({layer, layerTypeOptions, onSelect, datasets}) => {
+    const hasData = useMemo(() => Boolean(Object.keys(datasets).length), []);
+    const typeOptions = useMemo(
+      () =>
+        layerTypeOptions.map(op => ({
+          ...op,
+          disabled: !hasData && op.requireData !== false
+        })),
+      [hasData, layerTypeOptions]
+    );
+
+    const selectedItems = useMemo(() => typeOptions.find(op => op.id === layer.type), [
+      typeOptions
+    ]);
+
+    return (
+      <SidePanelSection>
+        <StyledLayerTypeSelector className="layer-config__type">
+          <ItemSelector
+            selectedItems={selectedItems}
+            options={typeOptions}
+            multiSelect={false}
+            placeholder="placeholder.selectType"
+            onChange={onSelect}
+            getOptionValue={getOptionValue}
+            filterOption="label"
+            displayOption={getDisplayOption}
+            DropDownLineItemRenderComponent={LayerTypeListItem}
+            DropDownRenderComponent={LayerTypeDropdownList}
+          />
+        </StyledLayerTypeSelector>
+      </SidePanelSection>
+    );
+  };
+
+  LayerTypeSelector.propTypes = propTypes;
+
+  return withTheme(LayerTypeSelector);
+}
+
+export default LayerTypeSelectorFactory;
