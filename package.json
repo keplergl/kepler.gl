@@ -249,7 +249,7 @@
     "jpeg-js": "0.4.0",
     "lodash": "4.17.19",
     "minimist": "1.2.3",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "2.6.1",
     "tough-cookie": "2.3.0"
   },
   "peerDependencies": {

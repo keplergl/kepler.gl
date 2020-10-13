@@ -101,6 +101,7 @@ const ConfigGroupContent = styled.div`
 `;
 
 LayerConfigGroupLabelFactory.deps = [InfoHelperFactory];
+
 export function LayerConfigGroupLabelFactory(InfoHelper) {
   const StyledLayerConfigGroupLabel = styled.div`
     border-left: ${props => props.theme.layerConfigGroupLabelBorderLeft} solid
@@ -135,6 +136,7 @@ export function LayerConfigGroupLabelFactory(InfoHelper) {
 }
 
 LayerConfigGroupFactory.deps = [LayerConfigGroupLabelFactory];
+
 function LayerConfigGroupFactory(LayerConfigGroupLabel) {
   class LayerConfigGroup extends Component {
     static defaultProps = {

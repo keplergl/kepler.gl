@@ -18,152 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useMemo} from 'react';
+import React, {useMemo} from 'react';
 import PropTypes from 'prop-types';
-import classNames from 'classnames';
 import styled, {withTheme} from 'styled-components';
 
-import {classList} from 'components/common/item-selector/dropdown-list';
+import LayerTypeDropdownListFactory from './layer-type-dropdown-list';
+import LayerTypeListItemFactory from './layer-type-list-item';
 import ItemSelector from 'components/common/item-selector/item-selector';
-import {CLOUDFRONT} from 'constants/default-settings';
 
 import {SidePanelSection} from 'components/common/styled-components';
-import {FormattedMessage} from 'localization';
-
-const ITEM_SIZE = {
-  large: 50,
-  small: 28
-};
-
-const StyledDropdownListItem = styled.div`
-  padding-bottom: ${props => props.theme.layerTypeIconPdL}px;
-  padding-right: ${props => props.theme.layerTypeIconPdL}px;
-
-  &.disabled {
-    pointer-events: none;
-    opacity: 0.3;
-  }
-
-  &.selected {
-    .layer-type-selector__item__icon {
-      border: 1px solid #caf2f4;
-    }
-  }
-
-  :hover,
-  &.selected {
-    cursor: pointer;
-    .layer-type-selector__item__icon {
-      color: ${props => props.theme.activeColor};
-    }
-
-    .layer-type-selector__item__label {
-      color: ${props => props.theme.textColor};
-    }
-  }
-`;
-
-const StyledListItem = styled.div`
-  &.list {
-    display: flex;
-    align-items: center;
-
-    .layer-type-selector__item__icon {
-      color: ${props => props.theme.activeColor};
-      background-size: ${props => props.theme.layerTypeIconSizeSM}px
-        ${props => props.theme.layerTypeIconSizeSM}px;
-      margin-right: 12px;
-    }
-  }
-
-  .layer-type-selector__item__icon {
-    color: ${props => props.theme.labelColor};
-    display: flex;
-    background-image: url(${`${CLOUDFRONT}/kepler.gl-layer-icon-bg.png`});
-    background-size: ${props => props.theme.layerTypeIconSizeL}px
-      ${props => props.theme.layerTypeIconSizeL}px;
-  }
-
-  .layer-type-selector__item__label {
-    text-transform: capitalize;
-    font-size: 12px;
-    text-align: center;
-    color: ${props => props.theme.selectColor};
-  }
-`;
-
-const DropdownListWrapper = styled.div`
-  ${props => props.theme.dropdownList};
-  background-color: ${props => props.theme.dropdownListBgd};
-  border-top: 1px solid ${props => props.theme.dropdownListBorderTop};
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  padding: ${props => props.theme.layerTypeIconPdL}px 0 0 ${props => props.theme.layerTypeIconPdL}px;
-`;
-
-function LayerTypeListItemFactory() {
-  const LayerTypeListItem = ({value, isTile}) => (
-    <StyledListItem
-      className={classNames('layer-type-selector__item__inner', {
-        list: !isTile
-      })}
-    >
-      <div className="layer-type-selector__item__icon">
-        <value.icon height={`${isTile ? ITEM_SIZE.large : ITEM_SIZE.small}px`} />
-      </div>
-      <div className="layer-type-selector__item__label">
-        <FormattedMessage
-          id={`layer.type.${value.label.toLowerCase()}`}
-          defaultMessage={value.label}
-        />
-      </div>
-    </StyledListItem>
-  );
-
-  return LayerTypeListItem;
-}
-
-function LayerTypeDropdownListFactory() {
-  const LayerTypeDropdownList = ({
-    onOptionSelected,
-    options,
-    selectedItems,
-    selectionIndex,
-    customListItemComponent
-  }) => {
-    const onSelectOption = useCallback(
-      (e, value) => {
-        e.preventDefault();
-        onOptionSelected(value, e);
-      },
-      [onOptionSelected]
-    );
-
-    const Component = customListItemComponent;
-
-    return (
-      <DropdownListWrapper className={classList.list}>
-        {options.map((value, i) => (
-          <StyledDropdownListItem
-            className={classNames('layer-type-selector__item', {
-              selected: selectedItems.find(it => it.id === value.id),
-              hover: selectionIndex === i,
-              disabled: value.disabled
-            })}
-            key={`${value.id}_${i}`}
-            onMouseDown={e => onSelectOption(e, value)}
-            onClick={e => onSelectOption(e, value)}
-          >
-            <Component value={value} isTile />
-          </StyledDropdownListItem>
-        ))}
-      </DropdownListWrapper>
-    );
-  };
-
-  return LayerTypeDropdownList;
-}
 
 const propTypes = {
   layer: PropTypes.object.isRequired,
