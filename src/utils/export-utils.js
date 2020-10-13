@@ -57,16 +57,14 @@ export function isMSEdge(window) {
   return Boolean(window.navigator && window.navigator.msSaveOrOpenBlob);
 }
 
-export function getScaleFromImageSize(imageW, imageH, mapW, mapH) {
+export function getScaleFromImageSize(imageW = 0, imageH = 0, mapW = 0, mapH = 0) {
   if ([imageW, imageH, mapW, mapH].some(d => d <= 0)) {
     return 1;
   }
 
   const base = imageW / imageH > 1 ? imageW : imageH;
   const mapBase = imageW / imageH > 1 ? mapW : mapH;
-  const scale = base / mapBase;
-
-  return scale;
+  return base / mapBase;
 }
 
 export function calculateExportImageSize({mapW, mapH, ratio, resolution}) {
