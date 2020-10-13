@@ -155,6 +155,7 @@ const StyledLayerTypeSelector = styled.div`
     padding: 4px 10px 4px 2px;
   }
 `;
+
 const LayerTypeSelector = ({layer, layerTypeOptions, onSelect, datasets}) => {
   const hasData = Boolean(Object.keys(datasets).length);
   const typeOptions = useMemo(
