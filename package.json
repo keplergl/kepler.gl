@@ -239,16 +239,18 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "resolutions": {
-    "lodash": "4.17.19",
-    "dot-prop": "5.1.1",
-    "minimist": "1.2.3",
-    "jpeg-js": "0.4.0",
     "@loaders.gl/core": "^2.3.0-alpha.9",
     "@loaders.gl/csv": "^2.3.0-alpha.9",
     "@loaders.gl/gltf": "^2.3.0-alpha.9",
     "@loaders.gl/json": "^2.3.0-alpha.9",
     "@loaders.gl/loader-utils": "^2.3.0-alpha.9",
-    "@loaders.gl/polyfills": "^2.3.0-alpha.9"
+    "@loaders.gl/polyfills": "^2.3.0-alpha.9",
+    "dot-prop": "5.1.1",
+    "jpeg-js": "0.4.0",
+    "lodash": "4.17.19",
+    "minimist": "1.2.3",
+    "node-fetch": "^2.6.1",
+    "tough-cookie": "2.3.0"
   },
   "peerDependencies": {
     "react": "^16.3",

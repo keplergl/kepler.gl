@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useMemo} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import styled, {withTheme} from 'styled-components';
@@ -125,30 +125,42 @@ function LayerTypeListItemFactory() {
 }
 
 function LayerTypeDropdownListFactory() {
-  const LayerTypeDropdownList = props => (
-    <DropdownListWrapper className={classList.list}>
-      {props.options.map((value, i) => (
-        <StyledDropdownListItem
-          className={classNames('layer-type-selector__item', {
-            selected: props.selectedItems.find(it => it.id === value.id),
-            hover: props.selectionIndex === i,
-            disabled: value.disabled
-          })}
-          key={`${value.id}_${i}`}
-          onMouseDown={e => {
-            e.preventDefault();
-            props.onOptionSelected(value, e);
-          }}
-          onClick={e => {
-            e.preventDefault();
-            props.onOptionSelected(value, e);
-          }}
-        >
-          <props.customListItemComponent value={value} isTile />
-        </StyledDropdownListItem>
-      ))}
-    </DropdownListWrapper>
-  );
+  const LayerTypeDropdownList = ({
+    onOptionSelected,
+    options,
+    selectedItems,
+    selectionIndex,
+    customListItemComponent
+  }) => {
+    const onSelectOption = useCallback(
+      (e, value) => {
+        e.preventDefault();
+        onOptionSelected(value, e);
+      },
+      [onOptionSelected]
+    );
+
+    const Component = customListItemComponent;
+
+    return (
+      <DropdownListWrapper className={classList.list}>
+        {options.map((value, i) => (
+          <StyledDropdownListItem
+            className={classNames('layer-type-selector__item', {
+              selected: selectedItems.find(it => it.id === value.id),
+              hover: selectionIndex === i,
+              disabled: value.disabled
+            })}
+            key={`${value.id}_${i}`}
+            onMouseDown={e => onSelectOption(e, value)}
+            onClick={e => onSelectOption(e, value)}
+          >
+            <Component value={value} isTile />
+          </StyledDropdownListItem>
+        ))}
+      </DropdownListWrapper>
+    );
+  };
 
   return LayerTypeDropdownList;
 }
@@ -171,7 +183,7 @@ const getOptionValue = op => op.id;
 
 function LayerTypeSelectorFactory(LayerTypeListItem, LayerTypeDropdownList) {
   const LayerTypeSelector = ({layer, layerTypeOptions, onSelect, datasets}) => {
-    const hasData = useMemo(() => Boolean(Object.keys(datasets).length), []);
+    const hasData = useMemo(() => Boolean(Object.keys(datasets).length), [datasets]);
     const typeOptions = useMemo(
       () =>
         layerTypeOptions.map(op => ({
@@ -182,7 +194,8 @@ function LayerTypeSelectorFactory(LayerTypeListItem, LayerTypeDropdownList) {
     );
 
     const selectedItems = useMemo(() => typeOptions.find(op => op.id === layer.type), [
-      typeOptions
+      typeOptions,
+      layer.type
     ]);
 
     return (
