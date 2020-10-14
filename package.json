@@ -246,6 +246,7 @@
     "@loaders.gl/loader-utils": "^2.3.0-alpha.9",
     "@loaders.gl/polyfills": "^2.3.0-alpha.9",
     "dot-prop": "5.1.1",
+    "kind-of": "6.0.3",
     "jpeg-js": "0.4.0",
     "lodash": "4.17.19",
     "minimist": "1.2.3",
