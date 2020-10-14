@@ -55,7 +55,7 @@ export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel
 export {default as LayerPanelHeaderFactory} from './side-panel/layer-panel/layer-panel-header';
 export {default as LayerConfiguratorFactory} from './side-panel/layer-panel/layer-configurator';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
-export {LayerConfigGroupLabelFactory} from './side-panel/layer-panel/layer-config-group';
+export {default as LayerConfigGroupLabelFactory} from './side-panel/layer-panel/layer-config-group';
 
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
@@ -153,8 +153,11 @@ export {DatasetSquare} from './common/styled-components';
 export {default as ActionPanel, ActionPanelItem} from 'components/common/action-panel';
 
 // side pane components
-export {default as LayerTypeSelector} from './side-panel/layer-panel/layer-type-selector';
+export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
+export {default as LayerTypeDropdownListFactory} from './side-panel/layer-panel/layer-type-dropdown-list';
+export {default as LayerTypeListItemFactory} from './side-panel/layer-panel/layer-type-list-item';
 export {ConfigGroupCollapsibleContent} from './side-panel/layer-panel/layer-config-group';
+export {default as ColumnSelectorFactory} from './side-panel/layer-panel/column-selector';
 export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
 export {default as StyledDropdownSelect} from './common/item-selector/item-selector';
 export {

@@ -29,7 +29,7 @@ import ItemSelector from 'components/common/item-selector/item-selector';
 
 import VisConfigByFieldSelectorFactory from './vis-config-by-field-selector';
 import LayerColumnConfigFactory from './layer-column-config';
-import LayerTypeSelector from './layer-type-selector';
+import LayerTypeSelectorFactory from './layer-type-selector';
 import DimensionScaleSelector from './dimension-scale-selector';
 import ColorSelector from './color-selector';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
@@ -87,7 +87,8 @@ LayerConfiguratorFactory.deps = [
   TextLabelPanelFactory,
   LayerConfigGroupFactory,
   ChannelByValueSelectorFactory,
-  LayerColumnConfigFactory
+  LayerColumnConfigFactory,
+  LayerTypeSelectorFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -96,7 +97,8 @@ export default function LayerConfiguratorFactory(
   TextLabelPanel,
   LayerConfigGroup,
   ChannelByValueSelector,
-  LayerColumnConfig
+  LayerColumnConfig,
+  LayerTypeSelector
 ) {
   class LayerConfigurator extends Component {
     static propTypes = {
