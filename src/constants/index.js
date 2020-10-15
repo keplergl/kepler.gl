@@ -63,7 +63,8 @@ export {
   ANIMATION_TYPE,
   DEFAULT_TIME_FORMAT,
   SPEED_CONTROL_RANGE,
-  RESOLUTIONS
+  RESOLUTIONS,
+  SORT_ORDER
 } from './default-settings';
 
 export {BUG_REPORT_LINK, USER_GUIDE_DOC} from './user-guides';
