@@ -87,7 +87,7 @@ const StyledIcon = styled.div`
   left: 50%;
   transform: rotate(30deg);
   top: 10px;
-  color: ${props => props.theme.primaryBtnBgd};
+  color: ${props => props.theme.activeColor};
 
   &.popover-arrow-left {
     left: 40%;
