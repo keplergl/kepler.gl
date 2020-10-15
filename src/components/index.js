@@ -151,6 +151,9 @@ export {default as FileUploadProgress} from './common/file-uploader/file-upload-
 export {default as Slider} from './common/slider/slider';
 export {DatasetSquare} from './common/styled-components';
 export {default as ActionPanel, ActionPanelItem} from 'components/common/action-panel';
+export {default as HeaderCellFactory} from './common/data-table/header-cell';
+export {default as Button} from './common/data-table/button';
+export {default as OptionDropdown} from './common/data-table/option-dropdown';
 
 // side pane components
 export {default as LayerTypeSelector} from './side-panel/layer-panel/layer-type-selector';

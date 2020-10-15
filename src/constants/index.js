@@ -62,7 +62,8 @@ export {
   FPS,
   ANIMATION_TYPE,
   DEFAULT_TIME_FORMAT,
-  SPEED_CONTROL_RANGE
+  SPEED_CONTROL_RANGE,
+  SORT_ORDER
 } from './default-settings';
 
 export {BUG_REPORT_LINK, USER_GUIDE_DOC} from './user-guides';
