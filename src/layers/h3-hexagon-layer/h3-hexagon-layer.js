@@ -29,10 +29,6 @@ import {hexToRgb} from 'utils/color-utils';
 
 const DEFAULT_LINE_SCALE_VALUE = 8;
 
-export const HEXAGON_ID_FIELDS = {
-  hex_id: ['hex_id', 'hexagon_id', 'h3_id']
-};
-
 export const hexIdRequiredColumns = ['hex_id'];
 export const hexIdAccessor = ({hex_id}) => d => d.data[hex_id.fieldIdx];
 export const defaultElevation = 500;
@@ -92,31 +88,22 @@ export default class HexagonIdLayer extends Layer {
   }
 
   static findDefaultLayerProps({fields = [], allData = []}) {
-    const foundColumns = this.findDefaultColumnField(HEXAGON_ID_FIELDS, fields);
     const hexFields = getHexFields(fields, allData);
-    if ((!foundColumns || !foundColumns.length) && !hexFields.length) {
+    if (!hexFields.length) {
       return {props: []};
     }
 
     return {
-      props: (foundColumns || [])
-        .map(columns => ({
-          isVisible: true,
-          label: 'H3 Hexagon',
-          columns
-        }))
-        .concat(
-          (hexFields || []).map(f => ({
-            isVisible: true,
-            label: f.name,
-            columns: {
-              hex_id: {
-                value: f.name,
-                fieldIdx: fields.findIndex(fid => fid.name === f.name)
-              }
-            }
-          }))
-        )
+      props: hexFields.map(f => ({
+        isVisible: true,
+        label: f.displayName || f.name,
+        columns: {
+          hex_id: {
+            value: f.name,
+            fieldIdx: fields.findIndex(fid => fid.name === f.name)
+          }
+        }
+      }))
     };
   }
 
@@ -180,7 +167,6 @@ export default class HexagonIdLayer extends Layer {
         colorDomain,
         colorRange.colors.map(c => hexToRgb(c))
       );
-
     // height
     const sScale =
       sizeField && enable3d && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange, 0);
