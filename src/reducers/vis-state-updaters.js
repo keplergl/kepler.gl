@@ -381,17 +381,22 @@ function validateExistingLayerWithData(dataset, layerClasses, layer) {
 export function layerDataIdChangeUpdater(state, action) {
   const {oldLayer, newConfig} = action;
   const {dataId} = newConfig;
+
   if (!oldLayer || !state.datasets[dataId]) {
     return state;
   }
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
 
   let newLayer = oldLayer.updateLayerConfig({dataId});
-  newLayer = validateExistingLayerWithData(state.datasets[dataId], state.layerClasses, newLayer);
-  // if cant validate it with data create a new one
-  if (!newLayer) {
-    newLayer = new state.layerClasses[oldLayer.type]({dataId, id: oldLayer.id});
+  // this may happen when a layer is new (type: null and no columns) but it's not ready to be saved
+  if (newLayer.isValidToSave()) {
+    newLayer = validateExistingLayerWithData(state.datasets[dataId], state.layerClasses, newLayer);
+    // if cant validate it with data create a new one
+    if (!newLayer) {
+      newLayer = new state.layerClasses[oldLayer.type]({dataId, id: oldLayer.id});
+    }
   }
+
   newLayer = newLayer.updateLayerConfig({
     isVisible: oldLayer.config.isVisible,
     isConfigActive: true
