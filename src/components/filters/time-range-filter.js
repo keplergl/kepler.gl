@@ -37,6 +37,7 @@ function TimeRangeFilterFactory(TimeRangeSlider) {
       lineChart={filter.lineChart}
       step={filter.step}
       speed={filter.speed}
+      isAnimating={filter.isAnimating}
       histogram={filter.enlarged ? filter.enlargedHistogram : filter.histogram}
       onChange={setFilter}
       toggleAnimation={toggleAnimation}

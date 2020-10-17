@@ -44,19 +44,13 @@ const defaultProps = {
 };
 
 test('Components -> BottomWidget.mount -> initial state', t => {
-  let wrapper;
-
   t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
+    mountWithTheme(
       <IntlWrapper>
         <BottomWidget {...defaultProps} />
       </IntlWrapper>
     );
   }, 'BottomWidget should not fail without props');
-  t.equal(
-    wrapper.find('div').length,
-    0,
-    'should not render anything when layers and filters are empty'
-  );
+
   t.end();
 });

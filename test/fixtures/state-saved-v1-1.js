@@ -839,6 +839,7 @@ export const mergedFilters = [
     id: '9ca0l7p2a',
     enlarged: false,
     isAnimating: false,
+    animationWindow: 'free',
     name: ['zip_area'],
     type: 'range',
     fieldIdx: [3],

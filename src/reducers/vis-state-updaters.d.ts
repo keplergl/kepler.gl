@@ -225,6 +225,7 @@ export type AnimationConfig = {
   domain: number[] | null;
   currentTime: number | null;
   speed: number;
+  isAnimating?: boolean;
 };
 
 export type BaseInteraction = {
@@ -365,6 +366,10 @@ export function updateLayerBlendingUpdater(
   state: VisState,
   action: VisStateActions.UpdateLayerBlendingUpdaterAction
 ): VisState;
+export function toggleLayerAnimationUpdater(
+  state: VisState,
+  action: VisStateActions.ToggleLayerAnimationUpdaterAction
+): VisState;
 export function interactionConfigChangeUpdater(
   state: VisState,
   action: VisStateActions.InteractionConfigChangeUpdaterAction
@@ -373,9 +378,13 @@ export function setFilterUpdater(
   state: VisState,
   action: VisStateActions.SetFilterUpdaterAction
 ): VisState;
-export function setTimeAnmationUpdater(
+export function setFilterAnimationTimeUpdater(
   state: VisState,
-  action: VisStateActions.SetTimeAnmationUpdaterAction
+  action: VisStateActions.setFilterAnimationTimeUpdaterAction
+): VisState;
+export function setFilterAnimationWindowUpdater(
+  state: VisState,
+  action: VisStateActions.setFilterAnimationWindowUpdaterAction
 ): VisState;
 export function addFilterUpdater(
   state: VisState,
@@ -429,9 +438,9 @@ export function updateFilterAnimationSpeedUpdater(
   state: VisState,
   action: VisStateActions.UpdateFilterAnimationSpeedUpdaterAction
 ): VisState;
-export function updateAnimationTimeUpdater(
+export function setLayerAnimationTimeUpdater(
   state: VisState,
-  action: VisStateActions.UpdateAnimationTimeUpdaterAction
+  action: VisStateActions.setLayerAnimationTimeUpdaterAction
 ): VisState;
 export function updateLayerAnimationSpeedUpdater(
   state: VisState,

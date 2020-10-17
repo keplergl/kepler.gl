@@ -125,18 +125,27 @@ export function setFilter(
 ): Merge<SetFilterUpdaterAction, {type: ActionTypes.SET_FILTER}>;
 
 
-export type SetTimeAnimationUpdaterAction = {
+export type SetFilterAnimationTimeUpdaterAction = {
   idx: number;
   prop: string;
   value: any;
   valueIndex?: number;
 };
-export function setTimeAnmation(
+export function setFilterAnimationTime(
   idx: number,
   prop: string,
   value: any,
   valueIndex?: number
-): Merge<SetTimeAnimationUpdaterAction, {type: ActionTypes.SET_TIME_ANIMATION}>;
+): Merge<SetFilterAnimationTimeUpdaterAction, {type: ActionTypes.SET_FILTER_ANIMATION_TIME}>;
+
+export type SetFilterAnimationWindowUpdaterAction = {
+  id: string;
+  animationWindow: string;
+};
+export function setFilterAnimationWindow({
+  id: string,
+  animationWindow: string,
+}): Merge<SetFilterAnimationWindowUpdaterAction, {type: ActionTypes.SET_FILTER_ANIMATION_WINDOW}>;
 
 
 export type AddFilterUpdaterAction = {
@@ -253,12 +262,12 @@ export function updateFilterAnimationSpeed(
   {type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED}
 >;
 
-export type UpdateAnimationTimeUpdaterAction = {
+export type SetLayerAnimationTimeUpdaterAction = {
   value: number;
 };
-export function updateAnimationTime(
+export function setLayerAnimationTime(
   value: number
-): Merge<UpdateAnimationTimeUpdaterAction, {type: ActionTypes.UPDATE_ANIMATION_TIME}>;
+): Merge<SetLayerAnimationTimeUpdaterAction, {type: ActionTypes.SET_LAYER_ANIMATION_TIME}>;
 
 export type UpdateLayerAnimationSpeedUpdaterAction = {
   speed: number;
@@ -266,6 +275,13 @@ export type UpdateLayerAnimationSpeedUpdaterAction = {
 export function updateLayerAnimationSpeed(
   speed: number
 ): Merge<UpdateLayerAnimationSpeedUpdaterAction, {type: ActionTypes.UPDATE_LAYER_ANIMATION_SPEED}>;
+
+export type ToggleLayerAnimationUpdaterAction = {
+  idx;
+};
+export function toggleLayerAnimation(
+  idx: number
+): Merge<ToggleLayerAnimationUpdaterAction, {type: ActionTypes.TOGGLE_LAYER_ANIMATION}>;
 
 export type EnlargeFilterUpdaterAction = {
   idx: number;

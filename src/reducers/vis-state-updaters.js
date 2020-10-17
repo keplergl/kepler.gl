@@ -133,7 +133,8 @@ const visStateUpdaters = null;
 export const DEFAULT_ANIMATION_CONFIG = {
   domain: null,
   currentTime: null,
-  speed: 1
+  speed: 1,
+  isAnimating: false
 };
 
 /** @type {Editor} */
@@ -521,13 +522,32 @@ export function layerVisConfigChangeUpdater(state, action) {
 /**
  * Update filter property
  * @memberof visStateUpdaters
- * @type {typeof import('./vis-state-updaters').setTimeAnmationUpdater}
+ * @type {typeof import('./vis-state-updaters').setFilterAnimationTimeUpdater}
  * @public
  */
-export function setTimeAnmationUpdater(state, action) {
+export function setFilterAnimationTimeUpdater(state, action) {
   return setFilterUpdater(state, action);
 }
 
+/**
+ * Update filter animation window
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').setFilterAnimationWindowUpdater}
+ * @public
+ */
+export function setFilterAnimationWindowUpdater(state, {id, animationWindow}) {
+  return {
+    ...state,
+    filters: state.filters.map(f =>
+      f.id === id
+        ? {
+            ...f,
+            animationWindow
+          }
+        : f
+    )
+  };
+}
 /**
  * Update filter property
  * @memberof visStateUpdaters
@@ -730,6 +750,18 @@ export const toggleFilterAnimationUpdater = (state, action) => ({
 });
 
 /**
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').toggleLayerAnimationUpdater}
+ * @public
+ */
+export const toggleLayerAnimationUpdater = state => ({
+  ...state,
+  animationConfig: {
+    ...state.animationConfig,
+    isAnimating: !state.animationConfig.isAnimating
+  }
+});
+/**
  * Change filter animation speed
  * @memberof visStateUpdaters
  * @type {typeof import('./vis-state-updaters').updateFilterAnimationSpeedUpdater}
@@ -743,11 +775,11 @@ export const updateFilterAnimationSpeedUpdater = (state, action) => ({
 /**
  * Reset animation config current time to a specified value
  * @memberof visStateUpdaters
- * @type {typeof import('./vis-state-updaters').updateAnimationTimeUpdater}
+ * @type {typeof import('./vis-state-updaters').setLayerAnimationTimeUpdater}
  * @public
  *
  */
-export const updateAnimationTimeUpdater = (state, {value}) => ({
+export const setLayerAnimationTimeUpdater = (state, {value}) => ({
   ...state,
   animationConfig: {
     ...state.animationConfig,

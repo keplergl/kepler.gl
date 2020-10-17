@@ -661,6 +661,7 @@ export class SplitMapsSchema extends Schema {
 export const filterPropsV1 = {
   ...filterPropsV0,
   plotType: null,
+  animationWindow: null,
   yAxis: new DimensionFieldSchema({
     version: VERSIONS.v1,
     key: 'yAxis',

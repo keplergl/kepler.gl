@@ -29,41 +29,34 @@ import {Minus} from 'components/common/icons';
 import RangeSliderFactory from 'components/common/range-slider';
 import TimeSliderMarkerFactory from 'components/common/time-slider-marker';
 import PlaybackControlsFactory from 'components/common/animation-control/playback-controls';
-import AnimationControllerFactory from 'components/common/animation-control/animation-controller';
 
 import {DEFAULT_TIME_FORMAT} from 'constants/default-settings';
 
-const animationControlWidth = 140;
+const animationControlWidth = 176;
 
 const StyledSliderContainer = styled.div`
   align-items: flex-end;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  padding-left: ${props => (props.isEnlarged ? 24 : 0)}px;
 
-  .time-range-slider__control {
-    margin-bottom: 12px;
-    margin-right: 30px;
+  .timeline-container .kg-slider {
+    display: none;
   }
 
-  .playback-control-button {
-    padding: 9px 12px;
+  .playback-controls {
+    margin-left: 22px;
   }
 `;
 
 TimeRangeSliderFactory.deps = [
   PlaybackControlsFactory,
   RangeSliderFactory,
-  TimeSliderMarkerFactory,
-  AnimationControllerFactory
+  TimeSliderMarkerFactory
 ];
 
-export default function TimeRangeSliderFactory(
-  PlaybackControls,
-  RangeSlider,
-  TimeSliderMarker,
-  AnimationController
-) {
+export default function TimeRangeSliderFactory(PlaybackControls, RangeSlider, TimeSliderMarker) {
   class TimeRangeSlider extends Component {
     static propTypes = {
       onChange: PropTypes.func.isRequired,
@@ -116,7 +109,7 @@ export default function TimeRangeSliderFactory(
     };
 
     render() {
-      const {domain, value, isEnlarged, hideTimeTitle} = this.props;
+      const {domain, value, isEnlarged, hideTimeTitle, animationControlProps} = this.props;
 
       return (
         <div className="time-range-slider">
@@ -124,29 +117,6 @@ export default function TimeRangeSliderFactory(
             <TimeTitle timeFormat={this.props.timeFormat} value={value} isEnlarged={isEnlarged} />
           ) : null}
           <StyledSliderContainer className="time-range-slider__container" isEnlarged={isEnlarged}>
-            {isEnlarged ? (
-              <AnimationController
-                value={this.props.value}
-                domain={this.props.domain}
-                speed={this.props.speed}
-                startAnimation={this.props.toggleAnimation}
-                pauseAnimation={this.props.toggleAnimation}
-                updateAnimation={this.props.onChange}
-              >
-                {(isAnimating, start, pause, reset) => (
-                  <PlaybackControls
-                    isAnimatable={this.props.isAnimatable}
-                    isAnimating={isAnimating}
-                    width={animationControlWidth}
-                    pauseAnimation={pause}
-                    resetAnimation={reset}
-                    startAnimation={start}
-                    buttonHeight="12px"
-                    buttonStyle="secondary"
-                  />
-                )}
-              </AnimationController>
-            ) : null}
             <div
               style={{
                 width: isEnlarged ? `calc(100% - ${animationControlWidth}px)` : '100%'
@@ -166,6 +136,22 @@ export default function TimeRangeSliderFactory(
                 xAxis={TimeSliderMarker}
               />
             </div>
+
+            {isEnlarged ? (
+              <PlaybackControls
+                isAnimatable={this.props.isAnimatable}
+                width={animationControlWidth}
+                speed={this.props.speed}
+                animationWindow={this.props.animationWindow}
+                updateAnimationSpeed={this.props.updateAnimationSpeed}
+                setFilterAnimationWindow={this.props.setFilterAnimationWindow}
+                pauseAnimation={this.props.toggleAnimation}
+                resetAnimation={animationControlProps.reset}
+                isAnimating={animationControlProps.isAnimating}
+                startAnimation={this.props.toggleAnimation}
+                buttonStyle="secondary"
+              />
+            ) : null}
           </StyledSliderContainer>
         </div>
       );

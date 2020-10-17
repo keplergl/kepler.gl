@@ -23,6 +23,7 @@ import styled from 'styled-components';
 import AnimationSpeedSliderFactory from './animation-speed-slider';
 import {Button, CenterFlexbox} from 'components/common/styled-components';
 import {Rocket} from 'components/common/icons';
+import {preciseRound} from 'utils/data-utils';
 
 const StyledSpeedToggle = styled.div`
   display: flex;
@@ -53,7 +54,7 @@ function SpeedControlFactory(AnimationSpeedSlider) {
           <Rocket height={buttonHeight} />
         </CenterFlexbox>
         <StyledSpeedText style={{visibility: !showSpeedControl ? 'visible' : 'hidden'}}>
-          {speed}x
+          {preciseRound(speed, 1)}x
         </StyledSpeedText>
       </Button>
       {showSpeedControl ? (
