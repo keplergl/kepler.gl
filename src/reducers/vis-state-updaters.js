@@ -652,6 +652,9 @@ export const addFilterUpdater = (state, action) =>
  */
 export const layerColorUIChangeUpdater = (state, {oldLayer, prop, newConfig}) => {
   const newLayer = oldLayer.updateLayerColorUI(prop, newConfig);
+  if (prop === 'colorRange') {
+    return layerVisConfigChangeUpdater(state, {oldLayer, newVisConfig: newLayer.config.visConfig});
+  }
   return {
     ...state,
     layers: state.layers.map(l => (l.id === oldLayer.id ? newLayer : l))
