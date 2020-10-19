@@ -1,6 +1,6 @@
 # API Reference
 
-## Table of Content
+## Table of Contents
 
 -  [Overview](./#overview)
 -  [Ecosystem](./ecosystem.md)
