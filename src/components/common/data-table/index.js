@@ -413,6 +413,21 @@ function DataTableFactory(FieldToken, HeaderCell) {
         return cell;
       };
     };
+
+    renderHeaderCell(columns, isPinned, props, toggleMoreOptions, moreOptionsColumn) {
+      return cellInfo => (
+        <HeaderCell
+          cellInfo={cellInfo}
+          key={cellInfo.columnIndex}
+          columns={columns}
+          isPinned={isPinned}
+          props={props}
+          toggleMoreOptions={toggleMoreOptions}
+          moreOptionsColumn={moreOptionsColumn}
+          style={{}}
+        />
+      );
+    }
     render() {
       const {rows, pinnedColumns, theme = {}, fixedWidth, fixedHeight} = this.props;
       const unpinnedColumns = this.unpinnedColumns(this.props);
@@ -466,7 +481,7 @@ function DataTableFactory(FieldToken, HeaderCell) {
                           dataGridProps={dataGridProps}
                           setGridRef={pinnedGrid => (this.pinnedGrid = pinnedGrid)}
                           columnWidth={columnWidthFunction(pinnedColumns, cellSizeCache)}
-                          headerCellRender={HeaderCell(
+                          headerCellRender={this.renderHeaderCell(
                             pinnedColumns,
                             true,
                             this.props,
@@ -504,7 +519,7 @@ function DataTableFactory(FieldToken, HeaderCell) {
                           cellSizeCache,
                           ghost
                         )}
-                        headerCellRender={HeaderCell(
+                        headerCellRender={this.renderHeaderCell(
                           unpinnedColumnsGhost,
                           false,
                           this.props,
