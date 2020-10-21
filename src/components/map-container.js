@@ -302,7 +302,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           layersToRender,
           datasets
         });
-        if (layerHoverProp) {
+        if (layerHoverProp && layerPinnedProp) {
           layerHoverProp.primaryData = layerPinnedProp.data;
           layerHoverProp.compareType = interactionConfig.tooltip.config.compareType;
         }
