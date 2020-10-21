@@ -128,7 +128,7 @@ export const inputFontWeight = 500;
 export const inputBgd = '#29323C';
 export const inputBgdHover = '#3A414C';
 export const inputBgdActive = '#3A414C';
-export const inputBgdActiveLT = '#F0F0F0';
+export const inputBgdActiveLT = '#FFFFFF';
 
 export const inputBorderColor = '#29323C';
 export const inputBorderHoverColor = '#3A414C';
@@ -185,9 +185,6 @@ export const dropdownListBorderTopLT = '#D3D8E0';
 export const dropdownListLineHeight = 20;
 export const dropdownWrapperZ = 100;
 export const dropdownWapperMargin = 4;
-
-// Input variables that depends of other components
-export const inputBgdActiveLT = selectBackgroundLT;
 
 // Switch
 export const switchWidth = 24;
@@ -1142,7 +1139,6 @@ export const theme = {
   inputPlaceholderFontWeight,
   inputBoxShadow,
   inputBoxShadowActive,
-  inputBgdActiveLT,
   secondaryInputBgd,
   secondaryInputBgdHover,
   secondaryInputBgdActive,
