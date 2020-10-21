@@ -178,6 +178,10 @@ export const dropdownListBorderTopLT = '#D3D8E0';
 export const dropdownListLineHeight = 20;
 export const dropdownWrapperZ = 100;
 export const dropdownWapperMargin = 4;
+
+// Input variables that depends of other components
+export const inputBgdActiveLT = selectBackgroundLT;
+
 // Switch
 export const switchWidth = 24;
 export const switchHeight = 12;
@@ -530,8 +534,7 @@ const inputLT = css`
   }
 
   :hover {
-    background-color: ${props =>
-      props.theme.inputBgdActiveLT ? props.theme.inputBgdActiveLT : props.theme.selectBackgroundLT};
+    background-color: ${props => props.theme.inputBgdActiveLT};
     cursor: ${props => (['number', 'text'].includes(props.type) ? 'text' : 'pointer')};
     border-color: ${props => (props.active ? props.theme.textColorLT : props.theme.subtextColor)};
   }
@@ -1128,7 +1131,7 @@ export const theme = {
   inputPlaceholderFontWeight,
   inputBoxShadow,
   inputBoxShadowActive,
-
+  inputBgdActiveLT,
   secondaryInputBgd,
   secondaryInputBgdHover,
   secondaryInputBgdActive,
