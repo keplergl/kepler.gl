@@ -128,12 +128,18 @@ export const inputFontWeight = 500;
 export const inputBgd = '#29323C';
 export const inputBgdHover = '#3A414C';
 export const inputBgdActive = '#3A414C';
+export const inputBgdActiveLT = '#FFFFFF';
+
 export const inputBorderColor = '#29323C';
 export const inputBorderHoverColor = '#3A414C';
-export const inputBorderActiveColor = '#D3D8E0';
+export const inputBorderHoverColorLT = subtextColor;
+export const inputBorderActiveColor = '#3A414C';
+export const inputBorderActiveColorLT = textColorLT;
+
 export const inputColor = '#A0A7B4';
 export const inputBorderRadius = '1px';
 export const inputPlaceholderColor = '#6A7485';
+export const inputPlaceholderColorLT = subtextColorLT;
 export const inputPlaceholderFontWeight = 400;
 export const inputBoxShadow = 'none';
 export const inputBoxShadowActive = 'none';
@@ -155,6 +161,7 @@ export const selectFontWeight = '400';
 export const selectFontWeightBold = '500';
 
 export const selectColorPlaceHolder = '#6A7485';
+export const selectColorPlaceHolderLT = selectColorLT;
 export const selectBackground = inputBgd;
 export const selectBackgroundHover = inputBgdHover;
 export const selectBackgroundLT = '#FFFFFF';
@@ -178,6 +185,7 @@ export const dropdownListBorderTopLT = '#D3D8E0';
 export const dropdownListLineHeight = 20;
 export const dropdownWrapperZ = 100;
 export const dropdownWapperMargin = 4;
+
 // Switch
 export const switchWidth = 24;
 export const switchHeight = 12;
@@ -333,6 +341,7 @@ export const rangeBrushBgd = '#3A414C';
 export const histogramFillInRange = activeColor;
 export const histogramFillOutRange = sliderBarColor;
 export const axisFontSize = '10px';
+export const axisFontColor = textColor;
 export const timeTitleFontSize = '10px';
 export const rangePlotMargin = {top: 12, bottom: 0, left: 0, right: 0};
 export const rangePlotMarginLarge = {top: 18, bottom: 0, left: 0, right: 0};
@@ -429,6 +438,11 @@ export const breakPoints = {
 // all child components
 
 const input = css`
+  ::placeholder {
+    color: ${props => props.theme.inputPlaceholderColor};
+    font-weight: ${props => props.theme.inputPlaceholderFontWeight};
+  }
+
   align-items: center;
   background-color: ${props => props.theme.inputBgd};
   border: 1px solid
@@ -489,11 +503,6 @@ const input = css`
     box-shadow: ${props => props.theme.inputBoxShadowActive};
   }
 
-  ::placeholder {
-    color: ${props => props.theme.inputPlaceholderColor};
-    font-weight: ${props => props.theme.inputPlaceholderFontWeight};
-  }
-
   /* Disable Arrows on Number Inputs */
   ::-webkit-inner-spin-button,
   ::-webkit-outer-spin-button {
@@ -503,6 +512,10 @@ const input = css`
 `;
 
 const inputLT = css`
+  ::placeholder {
+    color: ${props => props.theme.inputPlaceholderColorLT};
+    font-weight: 400;
+  }
   ${input}
 
   background-color: ${props => props.theme.selectBackgroundLT};
@@ -516,23 +529,19 @@ const inputLT = css`
   color: ${props => props.theme.selectColorLT};
   caret-color: ${props => props.theme.selectColorLT};
 
-  ::-webkit-input-placeholder {
-    color: ${props => props.theme.subtextColorLT};
-    font-weight: 400;
-  }
-
   :active,
   :focus,
   &.focus,
   &.active {
-    background-color: ${props => props.theme.selectBackgroundLT};
-    border-color: ${props => props.theme.textColorLT};
+    background-color: ${props => props.theme.inputBgdActiveLT};
+    border-color: ${props => props.theme.inputBorderActiveColorLT};
   }
 
   :hover {
-    background-color: ${props => props.theme.selectBackgroundLT};
+    background-color: ${props => props.theme.inputBgdActiveLT};
     cursor: ${props => (['number', 'text'].includes(props.type) ? 'text' : 'pointer')};
-    border-color: ${props => (props.active ? props.theme.textColorLT : props.theme.subtextColor)};
+    border-color: ${props =>
+      props.active ? props.theme.inputBorderActiveColorLT : props.theme.inputBorderHoverColorLT};
   }
 `;
 
@@ -1100,6 +1109,7 @@ export const theme = {
   selectBorderColorLT,
   selectColor,
   selectColorPlaceHolder,
+  selectColorPlaceHolderLT,
   selectFontSize,
   selectFontWeight,
   selectColorLT,
@@ -1109,6 +1119,7 @@ export const theme = {
   inputBgd,
   inputBgdHover,
   inputBgdActive,
+  inputBgdActiveLT,
   inputBoxHeight,
   inputBoxHeightSmall,
   inputBoxHeightTiny,
@@ -1124,10 +1135,10 @@ export const theme = {
   inputFontSizeSmall,
   inputFontWeight,
   inputPlaceholderColor,
+  inputPlaceholderColorLT,
   inputPlaceholderFontWeight,
   inputBoxShadow,
   inputBoxShadowActive,
-
   secondaryInputBgd,
   secondaryInputBgdHover,
   secondaryInputBgdActive,
@@ -1360,6 +1371,7 @@ export const theme = {
   histogramFillInRange,
   histogramFillOutRange,
   axisFontSize,
+  axisFontColor,
   timeTitleFontSize,
   rangePlotMargin,
   rangePlotMarginLarge,
@@ -1454,7 +1466,7 @@ export const themeLT = {
   inputBgd: '#F7F7F7',
   inputBgdHover: '#FFFFFF',
   inputBgdActive: '#FFFFFF',
-
+  inputBgdActiveLT: '#FFFFFF',
   dropdownListHighlightBg: '#F0F0F0',
   toolbarItemIconHover: activeColorLT,
   panelBackground: '#F7F7F7',
@@ -1511,7 +1523,8 @@ export const themeLT = {
 
   rangeBrushBgd: '#D3D8E0',
   histogramFillInRange: activeColorLT,
-  histogramFillOutRange: '#A0A7B4'
+  histogramFillOutRange: '#A0A7B4',
+  axisFontColor: textColorLT
 };
 
 export const themeBS = {
