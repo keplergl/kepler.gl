@@ -530,7 +530,8 @@ const inputLT = css`
   }
 
   :hover {
-    background-color: ${props => props.theme.selectBackgroundLT};
+    background-color: ${props =>
+      props.theme.inputBgdActiveLT ? props.theme.inputBgdActiveLT : props.theme.selectBackgroundLT};
     cursor: ${props => (['number', 'text'].includes(props.type) ? 'text' : 'pointer')};
     border-color: ${props => (props.active ? props.theme.textColorLT : props.theme.subtextColor)};
   }
