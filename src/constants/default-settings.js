@@ -622,7 +622,8 @@ export const LAYER_TYPES = keyMirror({
   geojson: null,
   icon: null,
   heatmap: null,
-  hexagon: null
+  hexagon: null,
+  hexagonId: null
 });
 
 export const DEFAULT_LAYER_COLOR = {
@@ -833,7 +834,8 @@ export const EDITOR_AVAILABLE_LAYERS = [
   LAYER_TYPES.point,
   LAYER_TYPES.hexagon,
   LAYER_TYPES.arc,
-  LAYER_TYPES.line
+  LAYER_TYPES.line,
+  LAYER_TYPES.hexagonId
 ];
 // GPU Filtering
 /**

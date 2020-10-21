@@ -30,6 +30,7 @@ import * as ScaleUtils from './data-scale-utils';
 import {LAYER_TYPES} from '../constants';
 import {generateHashId, set, toArray} from './utils';
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
+import {getCentroid, h3IsValid} from 'layers/h3-hexagon-layer/h3-utils';
 
 // TYPE
 /** @typedef {import('../reducers/vis-state-updaters').FilterRecord} FilterRecord */
@@ -234,6 +235,9 @@ export function validateFilter(dataset, filter) {
   }
 
   updatedFilter.value = adjustValueToFilterDomain(filter.value, updatedFilter);
+  updatedFilter.enlarged =
+    typeof filter.enlarged === 'boolean' ? filter.enlarged : updatedFilter.enlarged;
+
   if (updatedFilter.value === null) {
     // cannot adjust saved value to filter
     return failed;
@@ -401,6 +405,22 @@ export const getPolygonFilterFunctor = (layer, filter) => {
           ].every(point => isInPolygon(point, filter.value))
         );
       };
+    case LAYER_TYPES.hexagonId:
+      if (layer.dataToFeature && layer.dataToFeature.centroids) {
+        return (data, index) => {
+          // null or getCentroid({id})
+          const centroid = layer.dataToFeature.centroids[index];
+          return centroid && isInPolygon(centroid, filter.value);
+        };
+      }
+      return data => {
+        const id = getPosition({data});
+        if (!h3IsValid(id)) {
+          return false;
+        }
+        const pos = getCentroid({id});
+        return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
+      };
     default:
       return () => true;
   }
@@ -445,7 +465,7 @@ export function getFilterFunction(field, dataId, filter, layers) {
         .filter(l => l && l.config.dataId === dataId)
         .map(layer => getPolygonFilterFunctor(layer, filter));
 
-      return data => layerFilterFunctions.every(filterFunc => filterFunc(data));
+      return (data, index) => layerFilterFunctions.every(filterFunc => filterFunc(data, index));
     default:
       return defaultFunc;
   }
