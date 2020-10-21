@@ -55,7 +55,8 @@ export const StyledDropdownSelect = styled.div.attrs({
 
 const DropdownSelectValue = styled.span`
   color: ${props =>
-    props.hasPlaceholder
+    props.hasPlaceholder && props.inputTheme === 'light' ?
+    props.theme.selectColorPlaceHolderLT :  props.hasPlaceholder
       ? props.theme.selectColorPlaceHolder
       : props.inputTheme === 'light'
       ? props.theme.selectColorLT

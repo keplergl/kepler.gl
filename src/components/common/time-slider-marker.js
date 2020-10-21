@@ -37,7 +37,7 @@ const TimeSliderContainer = styled.svg`
 
   .axis text {
     font-size: ${props => props.theme.axisFontSize};
-    fill: ${props => props.theme.textColor};
+    fill: ${props => props.theme.axisFontColor};
   }
 
   .axis line,
@@ -53,7 +53,7 @@ const TimeSliderContainer = styled.svg`
   }
 
   .value {
-    fill: ${props => props.theme.textColor};
+    fill: ${props => props.theme.axisFontColor};
     font-size: ${props => props.theme.axisFontSize};
 
     &.start {
