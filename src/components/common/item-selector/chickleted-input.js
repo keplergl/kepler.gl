@@ -85,7 +85,7 @@ const ChickletedInputContainer = styled.div`
       : props.inputTheme === 'light'
       ? props.theme.chickletedInputLT
       : props.theme.chickletedInput}
-
+      
   color: ${props =>
     props.hasPlaceholder ? props.theme.selectColorPlaceHolder : props.theme.selectColor};
   overflow: hidden;

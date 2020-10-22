@@ -51,7 +51,7 @@ export const Container = styled.div`
   display: flex;
   font-size: 11px;
   flex-grow: 1;
-  color: ${props => props.theme.textColorLT};
+  color: ${props => props.theme.dataTabletextColor};
   width: 100%;
 
   .ReactVirtualized__Grid:focus,

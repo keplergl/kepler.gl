@@ -42,6 +42,7 @@ export const labelColorLT = '#6A7485';
 
 export const textColor = '#A0A7B4';
 export const textColorLT = '#3A414C';
+export const dataTabletextColor = textColorLT;
 export const titleColorLT = '#29323C';
 
 export const subtextColor = '#6A7485';
@@ -170,7 +171,7 @@ export const selectBorderColor = '#D3D8E0';
 export const selectBorderColorLT = '#D3D8E0';
 export const selectBorderRadius = '1px';
 export const selectBorder = 0;
-
+export const panelTabColor = subtextColor;
 export const dropdownListHighlightBg = '#6A7485';
 export const dropdownListHighlightBgLT = '#F8F8F9';
 export const dropdownListShadow = '0 6px 12px 0 rgba(0,0,0,0.16)';
@@ -316,7 +317,7 @@ export const sliderHandleHeight = 12;
 export const sliderHandleWidth = 12;
 export const sliderHandleColor = '#D3D8E0';
 export const sliderHandleTextColor = sliderHandleColor;
-
+export const sliderInactiveBorderColor = sliderHandleColor;
 export const sliderBorderRadius = '0';
 
 export const sliderHandleHoverColor = '#FFFFFF';
@@ -1114,6 +1115,7 @@ export const theme = {
   selectFontWeight,
   selectColorLT,
   selectFontWeightBold,
+  panelTabColor,
 
   // Input
   inputBgd,
@@ -1310,6 +1312,7 @@ export const theme = {
   lineHeight,
   textColor,
   textColorLT,
+  dataTabletextColor,
   textColorHl,
   titleTextColor,
   subtextColor,
@@ -1350,6 +1353,7 @@ export const theme = {
   sliderHandleWidth,
   sliderHandleColor,
   sliderHandleTextColor,
+  sliderInactiveBorderColor,
   sliderBorderRadius,
   sliderHandleHoverColor,
   sliderHandleAfterContent,
