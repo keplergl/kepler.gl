@@ -828,7 +828,7 @@ export const mergedEpochFilter = {
   freeze: true,
   id: 'epoch-1',
   fixedDomain: true,
-  enlarged: true,
+  enlarged: false,
   isAnimating: false,
   speed: 1,
   name: ['epoch'],
