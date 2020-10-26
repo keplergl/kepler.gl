@@ -41,7 +41,7 @@ import TextLabelPanelFactory from './text-label-panel';
 import {capitalizeFirstLetter} from 'utils/utils';
 
 import {CHANNEL_SCALE_SUPPORTED_FIELDS} from 'constants/default-settings';
-import {LAYER_TYPES} from 'layers';
+import {LAYER_TYPES} from 'layers/types';
 
 const StyledLayerConfigurator = styled.div.attrs({
   className: 'layer-panel__config'

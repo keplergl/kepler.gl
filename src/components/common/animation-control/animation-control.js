@@ -29,7 +29,7 @@ import AnimationPlaybacksFactory from './playback-controls';
 import FloatingTimeDisplayFactory from './floating-time-display';
 import AnimationControllerFactory from './animation-controller';
 import {snapToMarks} from 'utils/data-utils';
-import {DEFAULT_TIME_FORMAT, ANIMATION_TYPE} from 'constants';
+import {DEFAULT_TIME_FORMAT, ANIMATION_TYPE} from 'constants/default-settings';
 
 const SliderWrapper = styled.div`
   display: flex;

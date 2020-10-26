@@ -25,15 +25,13 @@ import {Editor as Draw} from 'react-map-gl-draw';
 import window from 'global/window';
 import classnames from 'classnames';
 import get from 'lodash.get';
+import {createSelector} from 'reselect';
 
-import {EDITOR_AVAILABLE_LAYERS} from 'constants/default-settings';
 import FeatureActionPanelFactory from './feature-action-panel';
-import {FILTER_TYPES} from 'constants/default-settings';
+import {FILTER_TYPES, EDITOR_MODES, EDITOR_AVAILABLE_LAYERS} from 'constants/default-settings';
 
 import {DEFAULT_RADIUS, getStyle as getFeatureStyle} from './feature-styles';
 import {getStyle as getEditHandleStyle, getEditHandleShape} from './handle-style';
-import {EDITOR_MODES} from 'constants';
-import {createSelector} from 'reselect';
 import KeyEvent from 'constants/keyevent';
 
 const StyledWrapper = styled.div`

@@ -29,10 +29,9 @@ import CPUAggregator, {
 import {getDistanceScales} from 'viewport-mercator-project';
 import {max} from 'd3-array';
 
-import {DefaultColorRange} from 'constants/color-ranges';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import {SCALE_TYPES} from 'constants/default-settings';
-
+import {DEFAULT_COLOR_RANGE} from 'constants/color-ranges';
 import ClusterBuilder, {getGeoJSON} from '../layer-utils/cluster-utils';
 
 const defaultRadius = LAYER_VIS_CONFIGS.clusterRadius.defaultValue;
@@ -157,7 +156,7 @@ const clusterLayerDimensions = [
 const defaultProps = {
   clusterRadius: defaultRadius,
   colorDomain: null,
-  colorRange: DefaultColorRange,
+  colorRange: DEFAULT_COLOR_RANGE,
   colorScaleType: SCALE_TYPES.quantize,
   radiusScaleType: SCALE_TYPES.sqrt,
   radiusRange: defaultRadiusRange,

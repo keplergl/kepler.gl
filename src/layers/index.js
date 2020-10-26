@@ -31,6 +31,7 @@ import {default as H3Layer} from './h3-hexagon-layer/h3-hexagon-layer';
 import {default as ScenegraphLayer} from './scenegraph-layer/scenegraph-layer';
 import {default as TripLayer} from './trip-layer/trip-layer';
 import {default as S2GeometryLayer} from './s2-geometry-layer/s2-geometry-layer';
+import {LAYER_TYPES} from './types';
 
 // base layer
 export {default as Layer} from './base-layer';
@@ -53,25 +54,17 @@ export const KeplerGlLayers = {
 };
 
 export const LayerClasses = {
-  point: PointLayer,
-  arc: ArcLayer,
-  line: LineLayer,
-  grid: GridLayer,
-  hexagon: HexagonLayer,
-  geojson: GeojsonLayer,
-  cluster: ClusterLayer,
-  icon: IconLayer,
-  heatmap: HeatmapLayer,
-  hexagonId: H3Layer,
-  '3D': ScenegraphLayer,
-  trip: TripLayer,
-  s2: S2GeometryLayer
+  [LAYER_TYPES.point]: PointLayer,
+  [LAYER_TYPES.arc]: ArcLayer,
+  [LAYER_TYPES.line]: LineLayer,
+  [LAYER_TYPES.grid]: GridLayer,
+  [LAYER_TYPES.hexagon]: HexagonLayer,
+  [LAYER_TYPES.geojson]: GeojsonLayer,
+  [LAYER_TYPES.cluster]: ClusterLayer,
+  [LAYER_TYPES.icon]: IconLayer,
+  [LAYER_TYPES.heatmap]: HeatmapLayer,
+  [LAYER_TYPES.hexagonId]: H3Layer,
+  [LAYER_TYPES['3D']]: ScenegraphLayer,
+  [LAYER_TYPES.trip]: TripLayer,
+  [LAYER_TYPES.s2]: S2GeometryLayer
 };
-
-export const LAYER_TYPES = Object.keys(LayerClasses).reduce(
-  (accu, key) => ({
-    ...accu,
-    [key]: key
-  }),
-  {}
-);
