@@ -21,6 +21,7 @@
 import TimeRangeSliderFactory from './common/time-range-slider';
 import RangeSliderFactory from './common/range-slider';
 import VisConfigSliderFactory from './side-panel/layer-panel/vis-config-slider';
+import VisConfigSwitchFactory from './side-panel/layer-panel/vis-config-switch';
 import LayerConfigGroupFactory from './side-panel/layer-panel/layer-config-group';
 import {ChannelByValueSelectorFactory} from './side-panel/layer-panel/layer-configurator';
 import FieldSelectorFactory from './common/field-selector';
@@ -179,6 +180,7 @@ export {Icons};
 export const TimeRangeSlider = appInjector.get(TimeRangeSliderFactory);
 export const RangeSlider = appInjector.get(RangeSliderFactory);
 export const VisConfigSlider = appInjector.get(VisConfigSliderFactory);
+export const VisConfigSwitch = appInjector.get(VisConfigSwitchFactory);
 export const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
 export const ChannelByValueSelector = appInjector.get(ChannelByValueSelectorFactory);
 export const FieldSelector = appInjector.get(FieldSelectorFactory);
@@ -189,6 +191,7 @@ export {
   TimeRangeSliderFactory,
   RangeSliderFactory,
   VisConfigSliderFactory,
+  VisConfigSwitchFactory,
   LayerConfigGroupFactory,
   ChannelByValueSelectorFactory
 };

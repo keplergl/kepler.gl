@@ -33,7 +33,7 @@ import LayerTypeSelectorFactory from './layer-type-selector';
 import DimensionScaleSelector from './dimension-scale-selector';
 import ColorSelector from './color-selector';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
-import VisConfigSwitch from './vis-config-switch';
+import VisConfigSwitchFactory from './vis-config-switch';
 import VisConfigSliderFactory from './vis-config-slider';
 import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import TextLabelPanelFactory from './text-label-panel';
@@ -88,7 +88,8 @@ LayerConfiguratorFactory.deps = [
   LayerConfigGroupFactory,
   ChannelByValueSelectorFactory,
   LayerColumnConfigFactory,
-  LayerTypeSelectorFactory
+  LayerTypeSelectorFactory,
+  VisConfigSwitchFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -98,7 +99,8 @@ export default function LayerConfiguratorFactory(
   LayerConfigGroup,
   ChannelByValueSelector,
   LayerColumnConfig,
-  LayerTypeSelector
+  LayerTypeSelector,
+  VisConfigSwitch
 ) {
   class LayerConfigurator extends Component {
     static propTypes = {
