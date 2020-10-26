@@ -32,6 +32,8 @@ import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_RANGE, DEFAULT_LAYER_OPACITY} from 'la
 
 // fixtures
 import {dataId as csvDataId, testFields, testAllData} from 'test/fixtures/test-csv-data';
+import testLayerData from 'test/fixtures/test-layer-data';
+
 import {fields, rows, geoJsonDataId} from 'test/fixtures/geojson';
 import {
   fields as tripFields,
@@ -40,7 +42,7 @@ import {
   dataId as tripDataId
 } from 'test/fixtures/test-trip-data';
 import tripGeojson, {tripDataInfo} from 'test/fixtures/trip-geojson';
-import {processGeojson} from 'processors/data-processor';
+import {processCsvData, processGeojson} from 'processors/data-processor';
 import {COMPARE_TYPES} from 'constants/tooltip';
 
 const geojsonFields = cloneDeep(fields);
@@ -211,6 +213,44 @@ function mockStateWithMultiFilters() {
   return prepareState;
 }
 
+function mockStateWithH3Layer() {
+  const initialState = cloneDeep(InitialState);
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: {
+            info: {id: csvDataId},
+            data: processCsvData(testLayerData)
+          },
+          config: {
+            version: 'v1',
+            config: {
+              visState: {
+                layers: [
+                  {
+                    id: 'h3-layer',
+                    type: 'hexagonId',
+                    config: {
+                      dataId: csvDataId,
+                      label: 'H3 Hexagon',
+                      color: [255, 153, 31],
+                      columns: {hex_id: 'hex_id'},
+                      isVisible: true
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]);
+  return prepareState;
+}
 /**
  * Mock state will contain 1 heatmap, 1 point and 1 arc layer, 1 hexbin layer and 1 time filter
  * @param {*} state
@@ -685,6 +725,7 @@ export const StateWSplitMaps = mockStateWithSplitMaps();
 export const StateWTrips = mockStateWithTripData();
 export const StateWTripGeojson = mockStateWithTripGeojson();
 export const StateWTooltipFormat = mockStateWithTooltipFormat();
+export const StateWH3Layer = mockStateWithH3Layer();
 
 export const expectedSavedTripLayer = {
   id: 'trip-0',
