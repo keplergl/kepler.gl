@@ -256,10 +256,13 @@ export function layerConfigChangeUpdater(state, action) {
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const props = Object.keys(action.newConfig);
   if (typeof action.newConfig.dataId === 'string') {
-    return layerDataIdChangeUpdater(state, {
+    const {dataId, ...restConfig} = action.newConfig;
+    const stateWithDataId = layerDataIdChangeUpdater(state, {
       oldLayer,
-      newConfig: {dataId: action.newConfig.dataId}
+      newConfig: {dataId}
     });
+    const nextLayer = stateWithDataId.layers.find(l => l.id === oldLayer.id);
+    return layerConfigChangeUpdater(state, {oldLayer: nextLayer, newConfig: restConfig});
   }
 
   let newLayer = oldLayer.updateLayerConfig(action.newConfig);
