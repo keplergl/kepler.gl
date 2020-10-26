@@ -575,6 +575,11 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> splitMaps', t => {
   t.end();
 });
 
+test.only('visStateReducer -> layerDataIdChangeUpdater', t => {
+
+  t.end();
+});
+
 test('#visStateReducer -> LAYER_VIS_CONFIG_CHANGE -> opacity', t => {
   const initialState = StateWFiles.visState;
   const layer = initialState.layers[0];
