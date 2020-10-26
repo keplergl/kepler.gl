@@ -68,6 +68,11 @@ Object.defineProperty(window, 'clipboardData', {
   writable: true
 });
 
+// These do not seem to be present under jsdom v16, even though the documentation suggests that should be the case
+['addEventListener', 'removeEventListener', 'dispatchEvent'].forEach(prop => {
+  window[prop] = () => {};
+});
+
 const nop = () => {};
 
 function mockCanvas(globalWindow) {

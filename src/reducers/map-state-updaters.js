@@ -110,7 +110,11 @@ export const updateMapUpdater = (state, action) => ({
  */
 export const fitBoundsUpdater = (state, action) => {
   const bounds = action.payload;
-  const {center, zoom} = geoViewport.viewport(bounds, [state.width, state.height]);
+  const {zoom} = geoViewport.viewport(bounds, [state.width, state.height]);
+  // center being calculated by geo-vieweport.viewport has a complex logic that
+  // projects and then unprojects the coordinates to determine the center
+  // Calculating a simple average instead as that is the expected behavior in most of cases
+  const center = [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2];
 
   return {
     ...state,
