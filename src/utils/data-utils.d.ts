@@ -26,3 +26,8 @@ export function normalizeSliderValue(
   marks?: number[]
 ): number;
 export function roundValToStep(minValue: number, step: number, val: number): number;
+
+export type FieldFormatter = (value: any) => string;
+export declare const FIELD_DISPLAY_FORMAT: {
+  [key: string]: FieldFormatter;
+};
