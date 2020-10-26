@@ -575,7 +575,35 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> splitMaps', t => {
   t.end();
 });
 
-test.only('visStateReducer -> layerDataIdChangeUpdater', t => {
+test('visStateReducer -> layerDataIdChangeUpdater', t => {
+  const initialState = CloneDeep(StateWFiles).visState;
+  const pointLayer = initialState.layers[0];
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerConfigChange(pointLayer, {
+      dataId: testGeoJsonDataId
+    })
+  );
+
+  t.equal(nextState.layers[0].config.dataId, testGeoJsonDataId, 'should update point layer dataId');
+
+  // add layer
+  const nextState1 = reducer(nextState, VisStateActions.addLayer());
+  const newLayer = nextState1.layers[nextState1.layers.length - 1];
+
+  const nextState2 = reducer(
+    nextState1,
+    VisStateActions.layerConfigChange(newLayer, {
+      dataId: testGeoJsonDataId
+    })
+  );
+
+  t.equal(
+    nextState2.layers[2].config.dataId,
+    testGeoJsonDataId,
+    'should update point layer dataId'
+  );
 
   t.end();
 });
