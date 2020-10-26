@@ -50,7 +50,6 @@ export {
   KEPLER_GL_VERSION,
   KEPLER_GL_WEBSITE,
   LAYER_BLENDINGS,
-  LAYER_TYPES,
   MAX_DEFAULT_TOOLTIPS,
   PANELS,
   SIDEBAR_PANELS,
@@ -71,4 +70,5 @@ export {BUG_REPORT_LINK, USER_GUIDE_DOC} from './user-guides';
 export {VizColorPalette, DataVizColors} from './custom-color-ranges';
 export {COLOR_RANGES, DefaultColorRange} from './color-ranges';
 export {DEFAULT_COLOR_RANGE} from 'layers/layer-factory';
+export {LAYER_TYPES} from 'layers';
 export {PLOT_TYPES} from 'utils/filter-utils';

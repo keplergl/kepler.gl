@@ -6,6 +6,7 @@ import ActionTypes from 'constants/action-types';
 import {LoaderObject} from '@loaders.gl/loader-utils';
 import {VisStateMergers} from './vis-state-merger';
 import KeplerGLSchema from 'schemas';
+import {LayerClassesType} from 'layers';
 
 export type HistogramBin = {
   x0: number | undefined;
@@ -297,9 +298,7 @@ export type VisState = {
   hoverInfo: any;
   clicked: any;
   mousePos: any;
-  layerClasses: {
-    [key: string]: any;
-  };
+  layerClasses: LayerClassesType;
   animationConfig: AnimationConfig;
   editor: Editor;
   splitMaps: SplitMap[];

@@ -43,6 +43,7 @@ import {
 } from 'components/common/icons';
 import {getHTMLMapModeTileUrl} from 'utils/utils';
 import {TOOLTIP_FORMAT_TYPES} from './tooltip';
+import {LAYER_TYPES} from 'layers';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
@@ -611,20 +612,6 @@ export const CHANNEL_SCALE_SUPPORTED_FIELDS = Object.keys(CHANNEL_SCALES).reduce
   }),
   {}
 );
-
-// TODO: shan delete use of LAYER_TYPES
-export const LAYER_TYPES = keyMirror({
-  point: null,
-  arc: null,
-  cluster: null,
-  line: null,
-  grid: null,
-  geojson: null,
-  icon: null,
-  heatmap: null,
-  hexagon: null,
-  hexagonId: null
-});
 
 export const DEFAULT_LAYER_COLOR = {
   tripArc: '#9226C6',

@@ -67,3 +67,11 @@ export const LayerClasses = {
   trip: TripLayer,
   s2: S2GeometryLayer
 };
+
+export const LAYER_TYPES = Object.keys(LayerClasses).reduce(
+  (accu, key) => ({
+    ...accu,
+    [key]: key
+  }),
+  {}
+);

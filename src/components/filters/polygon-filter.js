@@ -21,7 +21,7 @@
 import React, {useMemo, useCallback} from 'react';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {StyledFilterPanel} from './components';
-import {LAYER_TYPES} from 'constants';
+import {LAYER_TYPES} from 'layers';
 
 const layerFilter = layer => layer.type === LAYER_TYPES.point;
 const isAlreadySelected = (selectedLayers, layerId) =>

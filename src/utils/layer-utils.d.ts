@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Layer, LayerClasses} from 'layers';
+import {Layer, LayerClassesType} from 'layers';
 import {VisState, Dataset, TooltipField} from 'reducers/vis-state-updaters';
 
 export function calculateLayerData(
@@ -41,7 +41,7 @@ export type LayerHoverProp = {
   layer: Layer;
 };
 
-export function findDefaultLayer(dataset: Dataset, layerClasses: LayerClasses): Layer[];
+export function findDefaultLayer(dataset: Dataset, layerClasses: LayerClassesType): Layer[];
 export function getLayerHoverProp(arg: {
   interactionConfig: VisState['interactionConfig'];
   hoverInfo: VisState['hoverInfo'];

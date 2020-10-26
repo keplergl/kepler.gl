@@ -27,7 +27,7 @@ import {Decimal} from 'decimal.js';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
-import {LAYER_TYPES} from '../constants';
+import {LAYER_TYPES} from 'layers';
 import {generateHashId, set, toArray} from './utils';
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 import {getCentroid, h3IsValid} from 'layers/h3-hexagon-layer/h3-utils';
