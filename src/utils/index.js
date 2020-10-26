@@ -19,7 +19,13 @@
 // THE SOFTWARE.
 
 // UTILS
-export {maybeToDate, roundValToStep, timeToUnixMilli, defaultFormatter, FIELD_DISPLAY_FORMAT} from './data-utils';
+export {
+  maybeToDate,
+  roundValToStep,
+  timeToUnixMilli,
+  defaultFormatter,
+  FIELD_DISPLAY_FORMAT
+} from './data-utils';
 export {findPointFieldPairs, createNewDataEntry, datasetColorMaker} from './dataset-utils';
 export {hexToRgb} from './color-utils';
 export {errorNotification} from './notifications-utils';
