@@ -732,6 +732,7 @@ const inputRadio = css`
   margin-bottom: 0;
   margin-left: 0;
   line-height: ${props => props.theme.radioRadius * 2}px;
+  color: ${props => props.theme.textColorHl};
   cursor: pointer;
 
   :before {
