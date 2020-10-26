@@ -63,6 +63,8 @@ const DropdownSelectValue = styled.span`
       ? props.theme.selectColorLT
       : props.theme.selectColor};
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
   .list__item {
     ${props =>
