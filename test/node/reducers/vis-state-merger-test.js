@@ -257,7 +257,6 @@ test('VisStateMerger.current -> mergeLayers -> toEmptyState', t => {
   const oldVisState = oldState.visState;
 
   const parsedLayers = configParsed.visState.layers;
-
   // mergeLayers
   const mergedState = mergeLayers(oldState.visState, parsedLayers, true);
 

@@ -575,6 +575,112 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> splitMaps', t => {
   t.end();
 });
 
+test('visStateReducer -> layerDataIdChangeUpdater', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor).visState;
+  const pointLayer = initialState.layers[0];
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.layerConfigChange(pointLayer, {
+      dataId: testGeoJsonDataId
+    })
+  );
+  const updatedLayer = nextState.layers[0];
+
+  t.equal(updatedLayer.config.dataId, testGeoJsonDataId, 'should update point layer dataId');
+  t.deepEqual(
+    updatedLayer.config.columns,
+    {
+      altitude: {value: null, fieldIdx: -1, optional: true},
+      lat: {value: null, fieldIdx: -1},
+      lng: {value: null, fieldIdx: -1}
+    },
+    'should not update point layer column'
+  );
+  t.equal(updatedLayer.config.colorField, null, 'should not update point layer colorField');
+
+  // add layer
+  const nextState1 = reducer(nextState, VisStateActions.addLayer());
+  const newLayer = nextState1.layers[nextState1.layers.length - 1];
+
+  const nextState2 = reducer(
+    nextState1,
+    VisStateActions.layerConfigChange(newLayer, {
+      dataId: testGeoJsonDataId,
+      color: [1, 2, 3]
+    })
+  );
+
+  t.equal(
+    nextState2.layers[nextState1.layers.length - 1].config.dataId,
+    testGeoJsonDataId,
+    'should update new layer dataId'
+  );
+  t.deepEqual(
+    nextState2.layers[nextState1.layers.length - 1].config.color,
+    [1, 2, 3],
+    'should update new layer color'
+  );
+
+  t.end();
+});
+
+test('visStateReducer -> layerDataIdChangeUpdater -> validation', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor).visState;
+  const pointLayer = initialState.layers[0];
+  const textField = pointLayer.config.textLabel[0].field;
+
+  const newDataInfo = {
+    id: 'new-data-csv',
+    label: 'new Data'
+  };
+  const fieldIdx = testFields.findIndex(f => f.name === textField.name);
+
+  // remove 1 field from sample data
+  const fields = testFields.filter(f => f.name !== textField.name);
+  const rows = testAllData.map(row => [
+    ...row.slice(0, fieldIdx),
+    ...row.slice(fieldIdx + 1, row.length)
+  ]);
+  // add another dataset
+  const nextState = reducer(
+    initialState,
+    VisStateActions.updateVisData([{info: newDataInfo, data: {fields, rows}}])
+  );
+
+  const nextState1 = reducer(
+    nextState,
+    VisStateActions.layerConfigChange(pointLayer, {
+      dataId: 'new-data-csv'
+    })
+  );
+
+  const updatedLayer = nextState1.layers[0];
+  t.equal(updatedLayer.config.dataId, 'new-data-csv', 'should update point layer dataId');
+  t.equal(
+    updatedLayer.config.colorField.name,
+    'gps_data.types',
+    'should update point layer colorField'
+  );
+
+  t.deepEqual(
+    updatedLayer.config.columns,
+    {
+      altitude: {value: null, fieldIdx: -1, optional: true},
+      lat: {value: 'gps_data.lat', fieldIdx: 1},
+      lng: {value: 'gps_data.lng', fieldIdx: 2}
+    },
+    'should update point layer column'
+  );
+
+  t.equal(
+    updatedLayer.config.textLabel[0].field,
+    undefined,
+    'should assign fields not exists to undefined'
+  );
+  t.end();
+});
+
 test('#visStateReducer -> LAYER_VIS_CONFIG_CHANGE -> opacity', t => {
   const initialState = StateWFiles.visState;
   const layer = initialState.layers[0];
