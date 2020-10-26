@@ -245,6 +245,7 @@
     "@loaders.gl/json": "^2.3.0-alpha.9",
     "@loaders.gl/loader-utils": "^2.3.0-alpha.9",
     "@loaders.gl/polyfills": "^2.3.0-alpha.9",
+    "d3-scale": "^3.2.3",
     "dot-prop": "5.1.1",
     "kind-of": "6.0.3",
     "jpeg-js": "0.4.0",
