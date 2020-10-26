@@ -1498,6 +1498,7 @@ export const themeLT = {
   sliderBarColor: '#A0A7B4',
   sliderBarBgd: '#D3D8E0',
   sliderHandleColor: '#F7F7F7',
+  sliderHandleTextColor: '#F7F7F7',
   sliderHandleHoverColor: '#F7F7F7',
 
   subtextColor: subtextColorLT,
@@ -1584,6 +1585,7 @@ export const themeBS = {
   sidePanelBg: '#F6F6F6',
   sidePanelHeaderBg: '#FFFFFF',
   subtextColor: '#AFAFAF',
+  panelTabColor: '#AFAFAF',
   subtextColorActive: '#000000',
   textColor: '#000000',
   textColorHl: '#545454',
@@ -1601,5 +1603,6 @@ export const themeBS = {
   rangeBrushBgd: '#E2E2E2',
   sliderBarBgd: '#E2E2E2',
   sliderHandleColor: '#FFFFFF',
+  sliderHandleTextColor: '#FFFFFF',
   sliderBarColor: '#000000'
 };
