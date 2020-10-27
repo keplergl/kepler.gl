@@ -144,6 +144,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
   const testFieldIdx = dataset.fields.findIndex(f => f.name === 'TRIPS');
   const item = tooltipConfig.fieldsToShow[testGeoJsonDataId].find(fs => fs.name === 'TRIPS');
 
+  // \u2212 is the minus sign that d3-format uses for decimal number formatting
   const TEST_CASES = [
     {
       input: {
@@ -154,7 +155,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
         fieldIdx: testFieldIdx,
         item
       },
-      output: '−7.000',
+      output: '\u22127.000',
       message: 'should display absolute delta value'
     },
     {
@@ -166,7 +167,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
         fieldIdx: testFieldIdx,
         item
       },
-      output: '−63.64%',
+      output: '\u221263.64%',
       message: 'should display relative delta value'
     },
     {
@@ -178,7 +179,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
         fieldIdx: testFieldIdx,
         item
       },
-      output: '−',
+      output: '\u2212',
       message: 'should display - when primary is null'
     },
     {
@@ -190,7 +191,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
         fieldIdx: testFieldIdx,
         item
       },
-      output: '−',
+      output: '\u2212',
       message: 'should display - when data is null'
     },
     {
@@ -202,7 +203,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
         fieldIdx: testFieldIdx,
         item
       },
-      output: '−',
+      output: '\u2212',
       message: 'should display - when both are null'
     }
   ];

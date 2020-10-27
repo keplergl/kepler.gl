@@ -156,11 +156,12 @@ export function getTooltipDisplayDeltaValue({
       // safely cast string
       displayDeltaValue = defaultFormatter(displayDeltaValue);
       const deltaFirstChar = displayDeltaValue.charAt(0);
-      if (deltaFirstChar !== '+' && deltaFirstChar !== '−') {
+      // \u2212 is the minus sign that d3-format uses for decimal number formatting
+      if (deltaFirstChar !== '+' && deltaFirstChar !== '\u2212') {
         displayDeltaValue = `+${displayDeltaValue}`;
       }
     } else {
-      displayDeltaValue = '−';
+      displayDeltaValue = '\u2212';
     }
   }
 
