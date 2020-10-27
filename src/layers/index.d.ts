@@ -63,7 +63,7 @@ export class Layer {
   updateLayerColorUI(prop: string, newConfig: Partial<ColorUI>): Layer;
 }
 
-export const LayerClasses: {
+export type LayerClassesType = {
   point: Layer;
   arc: Layer;
   line: Layer;
@@ -77,4 +77,8 @@ export const LayerClasses: {
   '3D': Layer;
   trip: Layer;
   s2: Layer;
+}
+export const LayerClasses: LayerClassesType
+export const LAYER_TYPES: {
+  [key in keyof LayerClassesType]: string;
 };

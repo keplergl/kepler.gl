@@ -21,7 +21,7 @@
 import keyMirror from 'keymirror';
 
 import {AGGREGATION_TYPES} from 'constants/default-settings';
-import {DefaultColorRange} from 'constants/color-ranges';
+import {DEFAULT_COLOR_RANGE} from 'constants/color-ranges';
 
 export const PROPERTY_GROUPS = keyMirror({
   color: null,
@@ -35,6 +35,7 @@ export const PROPERTY_GROUPS = keyMirror({
 });
 
 export const DEFAULT_LAYER_OPACITY = 0.8;
+export {DEFAULT_COLOR_RANGE};
 
 /** @type {import('./layer-factory').LayerTextLabel} */
 export const DEFAULT_TEXT_LABEL = {
@@ -45,8 +46,6 @@ export const DEFAULT_TEXT_LABEL = {
   anchor: 'start',
   alignment: 'center'
 };
-
-export const DEFAULT_COLOR_RANGE = DefaultColorRange;
 
 /** @type {import('./layer-factory').ColorRange} */
 export const DEFAULT_CUSTOM_PALETTE = {
@@ -184,14 +183,14 @@ export const LAYER_VIS_CONFIGS = {
   },
   colorRange: {
     type: 'color-range-select',
-    defaultValue: DefaultColorRange,
+    defaultValue: DEFAULT_COLOR_RANGE,
     label: 'layerVisConfigs.colorRange',
     group: PROPERTY_GROUPS.color,
     property: 'colorRange'
   },
   strokeColorRange: {
     type: 'color-range-select',
-    defaultValue: DefaultColorRange,
+    defaultValue: DEFAULT_COLOR_RANGE,
     label: 'layerVisConfigs.strokeColorRange',
     group: PROPERTY_GROUPS.color,
     property: 'strokeColorRange'

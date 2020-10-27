@@ -195,3 +195,21 @@ export const mockPolygonData = {
     }
   }
 };
+
+export const mockPolygonFeature2 = {
+  type: 'Feature',
+  geometry: {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [-122.447837, 37.768506],
+        [-122.402435, 37.798517],
+        [-122.379596, 37.776771],
+        [-122.400234, 37.755671],
+        [-122.447837, 37.768506]
+      ]
+    ]
+  },
+  properties: {},
+  id: '5afe6042-b0f7-4249-8a59-5911901912ad'
+};

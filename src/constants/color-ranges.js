@@ -55,7 +55,7 @@ for (const [keyName, colorScheme] of Object.entries(colorbrewer)) {
 
 export const COLOR_RANGES = colorRanges;
 
-export const DefaultColorRange = colorRanges.find(({name}) => name === 'Global Warming') || {
+export const DEFAULT_COLOR_RANGE = colorRanges.find(({name}) => name === 'Global Warming') || {
   name: 'Global Warming',
   type: 'SEQ',
   category: 'Uber',

@@ -22,7 +22,7 @@
  * Find default layers from fields
  * @type {typeof import('./layer-utils').findDefaultLayer}
  */
-export function findDefaultLayer(dataset, layerClasses = {}) {
+export function findDefaultLayer(dataset, layerClasses) {
   if (!dataset) {
     return [];
   }

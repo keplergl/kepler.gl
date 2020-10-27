@@ -52,7 +52,7 @@ import {
 } from 'test/fixtures/geojson';
 
 import tripGeojson, {timeStampDomain} from 'test/fixtures/trip-geojson';
-import {mockPolygonFeature, mockPolygonData} from 'test/fixtures/polygon';
+import {mockPolygonFeature, mockPolygonFeature2, mockPolygonData} from 'test/fixtures/polygon';
 
 // test helpers
 import {
@@ -69,6 +69,7 @@ import {
   StateWFilters,
   StateWFiles,
   StateWFilesFiltersLayerColor,
+  StateWH3Layer,
   testCsvDataId,
   testGeoJsonDataId,
   InitialState
@@ -3966,6 +3967,27 @@ test('#visStateReducer -> POLYGON: delete polygon filter', t => {
   // deleting the filter will also delete the feature
   t.deepEqual(newReducer.editor.features.length, 0, 'Should have removed the feature');
 
+  t.end();
+});
+
+test('#visStateReducer -> POLYGON: setPolygonFilterLayer: H3', t => {
+  const initialState = CloneDeep(StateWH3Layer).visState;
+  const newState = reducer(
+    initialState,
+    VisStateActions.setPolygonFilterLayer(initialState.layers[0], mockPolygonFeature2)
+  );
+
+  const expectedFilteredIndex = [1, 3, 5, 8];
+  t.deepEqual(
+    newState.datasets['190vdll3di'].filteredIndex,
+    expectedFilteredIndex,
+    'should filter data based on h3 layer'
+  );
+  t.deepEqual(
+    newState.layerData[0].data.map(d => d.index),
+    [1, 3, 5, 8],
+    'should filter layer data'
+  );
   t.end();
 });
 

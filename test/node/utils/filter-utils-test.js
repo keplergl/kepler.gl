@@ -680,6 +680,7 @@ test('filterUtils -> Polygon getFilterFunction ', t => {
 
   t.end();
 });
+
 /* eslint-enable max-statements */
 
 test('filterUtils -> diffFilters', t => {
