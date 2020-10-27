@@ -194,7 +194,8 @@ function RangeBrushFactory() {
     }
 
     _brushed = evt => {
-      if (evt.sourceEvent.type === 'brush') return;
+      // Ignore brush events which don't have an underlying sourceEvent
+      if (!evt.sourceEvent) return;
       const [sel0, sel1] = evt.selection;
       const right = moveRight(this._startSel, evt.selection);
 
