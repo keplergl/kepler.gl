@@ -157,7 +157,6 @@ export default function BottomWidgetFactory(
       f => f.enlarged && f.type === FILTER_TYPES.timeRange
     );
     const animatedFilter = filters.find(f => f.isAnimating);
-
     const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
 
     // show playback control if layers contain trip layer & at least one trip layer is visible
@@ -171,7 +170,7 @@ export default function BottomWidgetFactory(
     const showFloatingTimeDisplay = !animatableLayer.length;
     const showAnimationControl = animatableLayer.length && readyToAnimation;
     const showTimeWidget = enlargedFilterIdx > -1 && Object.keys(datasets).length > 0;
-
+    console.log(!animationConfig || !animationConfig.isAnimating);
     return (
       <BottomWidgetContainer
         width={Math.min(maxWidth, enlargedFilterWidth)}
@@ -220,7 +219,7 @@ export default function BottomWidgetFactory(
                 updateAnimationSpeed={visStateActions.updateFilterAnimationSpeed}
                 enlargeFilter={visStateActions.enlargeFilter}
                 animationControlProps={animationControlProps}
-                isAnimatable={!animationConfig || !animationConfig.enabled}
+                isAnimatable={!animationConfig || !animationConfig.isAnimating}
               />
             ) : null
           }

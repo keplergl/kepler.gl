@@ -18,13 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useState} from 'react';
+import React, {useCallback} from 'react';
 import styled from 'styled-components';
 import moment from 'moment';
 
 import Slider from 'components/common/slider/slider';
 import {BottomWidgetInner} from 'components/common/styled-components';
-import SpeedControlFactory from './speed-control';
 import PlaybackControlsFactory from './playback-controls';
 import FloatingTimeDisplayFactory from './floating-time-display';
 import {snapToMarks} from 'utils/data-utils';
@@ -44,17 +43,9 @@ const AnimationWidgetInner = styled.div`
   align-items: center;
   height: 32px;
 
-  .animation-control__speed-control {
-    margin-right: -10px;
-
-    .animation-control__speed-slider {
-      right: calc(0% - 10px);
-    }
-  }
-
   .playback-controls {
     margin-left: -8px;
-    margin-right: 8px;
+    margin-right: 16px;
   }
 `;
 
@@ -67,12 +58,11 @@ const StyledDomain = styled.div`
 const BUTTON_HEIGHT = '18px';
 
 AnimationControlFactory.deps = [
-  SpeedControlFactory,
   PlaybackControlsFactory,
   FloatingTimeDisplayFactory
 ];
 
-function AnimationControlFactory(SpeedControl, PlaybackControls, FloatingTimeDisplay) {
+function AnimationControlFactory(PlaybackControls, FloatingTimeDisplay) {
   const AnimationControl = ({
     isAnimatable,
     animationControlProps,
@@ -82,7 +72,6 @@ function AnimationControlFactory(SpeedControl, PlaybackControls, FloatingTimeDis
     animationConfig
   }) => {
     const {currentTime, domain, speed, step, timeSteps} = animationConfig;
-    const [showSpeedControl, toggleSpeedControl] = useState(false);
     const onSlider1Change = useCallback(
       val => {
         if (Array.isArray(timeSteps)) {
@@ -99,18 +88,17 @@ function AnimationControlFactory(SpeedControl, PlaybackControls, FloatingTimeDis
     return (
       <BottomWidgetInner className="bottom-widget--inner">
         <AnimationWidgetInner className="animation-widget--inner">
-          <div style={{marginLeft: '-10px'}}>
-            <PlaybackControls
-              className="animation-control-playpause"
-              startAnimation={toggleAnimation}
-              isAnimating={animationControlProps.isAnimating}
-              pauseAnimation={toggleAnimation}
-              resetAnimation={animationControlProps.reset}
-              buttonHeight={BUTTON_HEIGHT}
-              buttonStyle="link"
-              isAnimatable={isAnimatable}
-            />
-          </div>
+          <PlaybackControls
+            className="animation-control-playpause"
+            startAnimation={toggleAnimation}
+            isAnimating={animationControlProps.isAnimating}
+            pauseAnimation={toggleAnimation}
+            resetAnimation={animationControlProps.reset}
+            buttonHeight={BUTTON_HEIGHT}
+            speed={speed}
+            isAnimatable={isAnimatable}
+            updateAnimationSpeed={updateAnimationSpeed}
+          />
           <StyledDomain className="animation-control__time-domain">
             <span>{moment.utc(domain[0]).format(DEFAULT_TIME_FORMAT)}</span>
           </StyledDomain>
@@ -129,15 +117,6 @@ function AnimationControlFactory(SpeedControl, PlaybackControls, FloatingTimeDis
           <StyledDomain className="animation-control__time-domain">
             <span>{moment.utc(domain[1]).format(DEFAULT_TIME_FORMAT)}</span>
           </StyledDomain>
-          <div className="animation-control__speed-control">
-            <SpeedControl
-              onClick={toggleSpeedControl}
-              showSpeedControl={showSpeedControl}
-              updateAnimationSpeed={updateAnimationSpeed}
-              speed={speed}
-              buttonHeight={BUTTON_HEIGHT}
-            />
-          </div>
         </AnimationWidgetInner>
         <FloatingTimeDisplay currentTime={currentTime} />
       </BottomWidgetInner>

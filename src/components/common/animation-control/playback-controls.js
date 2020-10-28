@@ -46,10 +46,7 @@ const StyledSpeedControl = styled.div`
   align-items: center;
 
   .animation-control__speed-slider {
-    background-color: transparent;
-    padding: 2px 8px;
     left: 0;
-    box-shadow: none;
   }
 `;
 
@@ -68,6 +65,9 @@ const IconButton = styled(Button)`
   }
   svg {
     margin: 0;
+  }
+  &.active {
+    background-color: ${props => props.theme.playbackButtonActBgColor};
   }
 `;
 
