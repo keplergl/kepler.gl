@@ -2159,6 +2159,21 @@ test('#visStateReducer -> SET_FILTER_ANIMATION_TIME', t => {
   t.end();
 });
 
+test('#visStateReducer -> SET_FILTER_ANIMATION_WINDOW', t => {
+  const initialState = StateWFilters.visState;
+  const nextState = reducer(
+    initialState,
+    VisStateActions.setFilterAnimationWindow({
+      id: initialState.filters[0].id,
+      animationWindow: 'incremental'
+    })
+  );
+
+  t.equal(nextState.filters[0].animationWindow, 'incremental', 'should update ANIMATIONWINDOW');
+
+  t.end();
+});
+
 test('#visStateReducer -> UPDATE_FILTER_ANIMATION_SPEED', t => {
   const initialState = StateWFilters.visState;
 
@@ -3005,7 +3020,7 @@ test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
 });
 
 test('#visStateReducer -> SET_LAYER_ANIMATION_TIME', t => {
-  const initialState = StateWTripGeojson;
+  const initialState = StateWTripGeojson.visState;
   const newState = reducer(initialState, VisStateActions.setLayerAnimationTime(1000));
 
   t.equal(newState.animationConfig.currentTime, 1000, 'should update animation time');
@@ -3013,11 +3028,18 @@ test('#visStateReducer -> SET_LAYER_ANIMATION_TIME', t => {
 });
 
 test('#visStateReducer -> UPDATE_LAYER_ANIMATION_SPEED', t => {
-  const initialState = StateWTripGeojson;
+  const initialState = StateWTripGeojson.visState;
   const newState = reducer(initialState, VisStateActions.updateLayerAnimationSpeed(1.23));
 
   t.equal(newState.animationConfig.speed, 1.23, 'should update animation speed');
 
+  t.end();
+});
+
+test('#visStateReducer -> TOGGLE_LAYER_ANIMATION', t => {
+  const initialState = StateWTripGeojson.visState;
+  const newState = reducer(initialState, VisStateActions.toggleLayerAnimation());
+  t.equal(newState.animationConfig.isAnimating, true, 'should update animationConfig');
   t.end();
 });
 
