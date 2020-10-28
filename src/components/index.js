@@ -24,7 +24,7 @@ import VisConfigSliderFactory from './side-panel/layer-panel/vis-config-slider';
 import VisConfigSwitchFactory from './side-panel/layer-panel/vis-config-switch';
 import LayerConfigGroupFactory from './side-panel/layer-panel/layer-config-group';
 import {ChannelByValueSelectorFactory} from './side-panel/layer-panel/layer-configurator';
-import FieldSelectorFactory from './common/field-selector';
+import FieldSelectorFactory, {FieldListItemFactoryFactory} from './common/field-selector';
 import FieldTokenFactory from './common/field-token';
 import PanelHeaderActionFactory from './side-panel/panel-header-action';
 import {appInjector} from './container';
@@ -117,7 +117,6 @@ export {default as RangePlotFactory} from './common/range-plot';
 export {default as HistogramPlotFactory} from './common/histogram-plot';
 export {default as LineChartFactory} from './common/line-chart';
 export {default as RangeBrushFactory} from './common/range-brush';
-export {FieldListItemFactoryFactory} from './common/field-selector';
 export {default as TimeSliderMarkerFactory} from './common/time-slider-marker';
 export {default as InfoHelperFactory} from 'components/common/info-helper';
 
@@ -176,6 +175,10 @@ export {
   LayerColorSelector
 } from './side-panel/layer-panel/layer-configurator';
 
+// map components
+export {default as MapLegend} from 'components/map/map-legend'
+
+
 export * from './common/styled-components';
 import * as Icons from './common/icons';
 export {Icons};
@@ -190,6 +193,7 @@ export const ChannelByValueSelector = appInjector.get(ChannelByValueSelectorFact
 export const FieldSelector = appInjector.get(FieldSelectorFactory);
 export const FieldToken = appInjector.get(FieldTokenFactory);
 export const PanelHeaderAction = appInjector.get(PanelHeaderActionFactory);
+export const FieldListItemFactory = appInjector.get(FieldListItemFactoryFactory);
 
 export {
   TimeRangeSliderFactory,
@@ -197,5 +201,9 @@ export {
   VisConfigSliderFactory,
   VisConfigSwitchFactory,
   LayerConfigGroupFactory,
-  ChannelByValueSelectorFactory
+  ChannelByValueSelectorFactory,
+  FieldListItemFactoryFactory
 };
+
+// Context
+export {default as KeplerGlContext, RootContext} from 'components/context';

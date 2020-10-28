@@ -18,19 +18,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Data Processor
-export {
-  formatCsv,
-  processGeojson,
-  processCsvData,
-  processRowObject,
-  processKeplerglJSON,
-  analyzerTypeToFieldType,
-  getFieldsFromData,
-  parseCsvRowsByFieldType
-} from './data-processor';
-
-// File Handlers
-export {readFileInBatches, processFileData, filesToDataPayload, isKeplerGlMap} from './file-handler';
-
-export {Processors as default} from './data-processor';
+module.exports = require('./dist/utils');

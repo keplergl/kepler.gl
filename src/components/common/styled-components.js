@@ -500,6 +500,7 @@ export const StyledAttrbution = styled.div.attrs({
     justify-content: flex-end;
     align-items: center;
     color: ${props => props.theme.labelColor};
+    margin-bottom: -4px;
 
     a.mapboxgl-ctrl-logo {
       width: 72px;

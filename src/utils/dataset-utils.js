@@ -54,7 +54,7 @@ function* generateColor() {
 export const datasetColorMaker = generateColor();
 
 /** @type {typeof import('./dataset-utils').getNewDatasetColor} */
-function getNewDatasetColor(datasets) {
+export function getNewDatasetColor(datasets) {
   const presetColors = datasetColors.map(String);
   const usedColors = uniq(Object.values(datasets).map(d => String(d.color))).filter(c =>
     presetColors.includes(c)

@@ -132,6 +132,9 @@ function KeplerGlFactory(
       this._validateMapboxToken();
       this._loadMapStyle(this.props.mapStyles);
       this._handleResize(this.props);
+      if (typeof this.props.onKeplerGlInitialized === 'function') {
+        this.props.onKeplerGlInitialized();
+      }
     }
 
     componentDidUpdate(prevProps) {

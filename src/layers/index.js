@@ -68,3 +68,5 @@ export const LayerClasses = {
   [LAYER_TYPES.trip]: TripLayer,
   [LAYER_TYPES.s2]: S2GeometryLayer
 };
+
+export {LAYER_VIS_CONFIGS} from './layer-factory';
