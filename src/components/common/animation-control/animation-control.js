@@ -55,8 +55,6 @@ const StyledDomain = styled.div`
   font-size: 10px;
 `;
 
-const BUTTON_HEIGHT = '18px';
-
 AnimationControlFactory.deps = [PlaybackControlsFactory, FloatingTimeDisplayFactory];
 
 function AnimationControlFactory(PlaybackControls, FloatingTimeDisplay) {
@@ -91,7 +89,6 @@ function AnimationControlFactory(PlaybackControls, FloatingTimeDisplay) {
             isAnimating={animationControlProps.isAnimating}
             pauseAnimation={toggleAnimation}
             resetAnimation={animationControlProps.reset}
-            buttonHeight={BUTTON_HEIGHT}
             speed={speed}
             isAnimatable={isAnimatable}
             updateAnimationSpeed={updateAnimationSpeed}

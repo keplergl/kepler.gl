@@ -146,7 +146,7 @@ function PlaybackControlsFactory(AnimationSpeedSlider) {
     startAnimation = nop,
     playbackIcons = DEFAULT_ICONS,
     animationItems = DEFAULT_ANIMATE_ITEMS,
-    buttonStyle = 'cta',
+    buttonStyle = 'secondary',
     buttonHeight = DEFAULT_BUTTON_HEIGHT
   }) => {
     const [showSpeedControl, toggleSpeedControl] = useState(false);

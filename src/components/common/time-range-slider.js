@@ -149,7 +149,6 @@ export default function TimeRangeSliderFactory(PlaybackControls, RangeSlider, Ti
                 resetAnimation={animationControlProps.reset}
                 isAnimating={animationControlProps.isAnimating}
                 startAnimation={this.props.toggleAnimation}
-                buttonStyle="secondary"
               />
             ) : null}
           </StyledSliderContainer>
