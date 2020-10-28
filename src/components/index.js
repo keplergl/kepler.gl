@@ -109,7 +109,7 @@ export {default as ExportHtmlMapFactory} from './modals/export-map-modal/export-
 export {default as AnimationControlFactory} from './common/animation-control/animation-control';
 export {default as AnimationControllerFactory} from './common/animation-control/animation-controller';
 export {default as SpeedControlFactory} from './common/animation-control/speed-control';
-export {default as AnimationPlaybacksFactory} from './common/animation-control/playback-controls';
+export {default as PlaybackControlsFactory} from './common/animation-control/playback-controls';
 export {default as FloatingTimeDisplayFactory} from './common/animation-control/floating-time-display';
 export {default as AnimationSpeedSliderFactory} from './common/animation-control/animation-speed-slider';
 export {default as RangePlotFactory} from './common/range-plot';
