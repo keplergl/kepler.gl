@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 export {default as Add} from './add';
+export {default as AnchorWindow} from './anchor_window';
 export {default as ArrowDown} from './arrow-down';
 export {default as ArrowDownAlt} from './arrow-down-alt';
 export {default as ArrowDownSolid} from './arrow-down-alt';
@@ -50,6 +51,7 @@ export {default as File} from './file';
 export {default as Files} from './files';
 export {default as FileType} from './file-type';
 export {default as FilterFunnel} from './filter-funnel';
+export {default as FreeWindow} from './free-window';
 export {default as Gear} from './gear';
 export {default as Hash} from './hash';
 export {default as Histogram} from './histogram';

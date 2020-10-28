@@ -30,7 +30,8 @@ import {
 } from 'components/common/styled-components';
 import {Close, Clock, LineChart} from 'components/common/icons';
 import SpeedControlFactory from 'components/common/animation-control/speed-control';
-import TimeRangeFilterFactory from 'components/filters/time-range-filter';
+import TimeRangeSliderFactory from 'components/common/time-range-slider';
+
 import FloatingTimeDisplayFactory from 'components/common/animation-control/floating-time-display';
 import FieldSelectorFactory from '../common/field-selector';
 
@@ -104,16 +105,12 @@ const StyledTitle = styled(CenterFlexbox)`
 
 TimeWidgetFactory.deps = [
   SpeedControlFactory,
-  TimeRangeFilterFactory,
+  TimeRangeSliderFactory,
   FloatingTimeDisplayFactory,
   FieldSelectorFactory
 ];
-function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay, FieldSelector) {
+function TimeWidgetFactory(SpeedControl, TimeRangeSlider, FloatingTimeDisplay, FieldSelector) {
   class TimeWidget extends Component {
-    state = {
-      showSpeedControl: false
-    };
-
     fieldSelector = props => props.fields;
     yAxisFieldsSelector = createSelector(this.fieldSelector, fields =>
       fields.filter(f => f.type === 'integer' || f.type === 'real')
@@ -121,20 +118,28 @@ function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay, F
 
     _updateAnimationSpeed = speed => this.props.updateAnimationSpeed(this.props.index, speed);
 
-    _toggleSpeedControl = () => this.setState({showSpeedControl: !this.state.showSpeedControl});
-
-    _setFilterPlotYAxis = value => this.props.setFilterPlot(this.props.index, {yAxis: value});
-
-    _updateAnimationSpeed = speed => this.props.updateAnimationSpeed(this.props.index, speed);
-
     _toggleAnimation = () => this.props.toggleAnimation(this.props.index);
 
     _onClose = () => this.props.enlargeFilter(this.props.index);
 
-    render() {
-      const {datasets, filter, index, readOnly, setFilter, showTimeDisplay} = this.props;
+    _setFilterPlotYAxis = value => this.props.setFilterPlot(this.props.index, {yAxis: value});
 
-      const {showSpeedControl} = this.state;
+    _setFilterAnimationWindow = animationWindow => {
+      this.props.setFilterAnimationWindow({id: this.props.filter.id, animationWindow});
+    };
+
+    render() {
+      const {
+        datasets,
+        filter,
+        index,
+        readOnly,
+        showTimeDisplay,
+        setFilterAnimationTime,
+        animationControlProps,
+        isAnimatable
+      } = this.props;
+
       return (
         <TimeBottomWidgetInner className="bottom-widget--inner">
           <TopSectionWrapper>
@@ -161,14 +166,6 @@ function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay, F
                 />
               </div>
             </StyledTitle>
-            <StyledTitle className="bottom-widget__speed">
-              <SpeedControl
-                onClick={this._toggleSpeedControl}
-                showSpeedControl={showSpeedControl}
-                updateAnimationSpeed={this._updateAnimationSpeed}
-                speed={filter.speed}
-              />
-            </StyledTitle>
             {!readOnly ? (
               <CenterFlexbox>
                 <IconRoundSmall>
@@ -177,13 +174,28 @@ function TimeWidgetFactory(SpeedControl, TimeRangeFilter, FloatingTimeDisplay, F
               </CenterFlexbox>
             ) : null}
           </TopSectionWrapper>
-          <TimeRangeFilter
-            filter={filter}
-            setFilter={value => setFilter(index, 'value', value)}
+          <TimeRangeSlider
+            id={filter.id}
+            domain={filter.domain}
+            bins={filter.bins}
+            value={filter.value}
+            plotType={filter.plotType}
+            lineChart={filter.lineChart}
+            step={filter.step}
+            speed={filter.speed}
+            histogram={filter.enlargedHistogram}
+            onChange={value => setFilterAnimationTime(index, 'value', value)}
             toggleAnimation={this._toggleAnimation}
+            updateAnimationSpeed={this._updateAnimationSpeed}
+            setFilterAnimationWindow={this._setFilterAnimationWindow}
+            isEnlarged={filter.enlarged}
+            animationWindow={filter.animationWindow}
+            isAnimating={filter.isAnimating}
             hideTimeTitle={showTimeDisplay}
-            isAnimatable
+            animationControlProps={animationControlProps}
+            isAnimatable={isAnimatable}
           />
+
           {showTimeDisplay ? <FloatingTimeDisplay currentTime={filter.value} /> : null}
         </TimeBottomWidgetInner>
       );

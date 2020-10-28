@@ -36,7 +36,11 @@ export {default as KeplerGl, default, injectComponents} from './container';
 export {default as KeplerGlFactory} from './kepler-gl';
 export {default as SidePanelFactory, PanelTitleFactory} from './side-panel';
 export {default as MapContainerFactory} from './map-container';
-export {default as BottomWidgetFactory} from './bottom-widget';
+export {
+  default as BottomWidgetFactory,
+  LayerAnimationControllerFactory,
+  FilterAnimationControllerFactory
+} from './bottom-widget';
 export {default as ModalContainerFactory} from './modal-container';
 export {default as PlotContainerFactory} from './plot-container';
 export {default as GeocoderPanelFactory} from './geocoder-panel';
@@ -106,7 +110,7 @@ export {default as ExportHtmlMapFactory} from './modals/export-map-modal/export-
 export {default as AnimationControlFactory} from './common/animation-control/animation-control';
 export {default as AnimationControllerFactory} from './common/animation-control/animation-controller';
 export {default as SpeedControlFactory} from './common/animation-control/speed-control';
-export {default as AnimationPlaybacksFactory} from './common/animation-control/playback-controls';
+export {default as PlaybackControlsFactory} from './common/animation-control/playback-controls';
 export {default as FloatingTimeDisplayFactory} from './common/animation-control/floating-time-display';
 export {default as AnimationSpeedSliderFactory} from './common/animation-control/animation-speed-slider';
 export {default as RangePlotFactory} from './common/range-plot';

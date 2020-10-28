@@ -24,7 +24,7 @@ import get from 'lodash.get';
 import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
-import {ALL_FIELD_TYPES, FILTER_TYPES} from 'constants/default-settings';
+import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW} from 'constants/default-settings';
 import {maybeToDate, notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {LAYER_TYPES} from 'layers/types';
@@ -104,6 +104,7 @@ export const DEFAULT_FILTER_STRUCTURE = {
   fixedDomain: false,
   enlarged: false,
   isAnimating: false,
+  animationWindow: ANIMATION_WINDOW.free,
   speed: 1,
 
   // field specific

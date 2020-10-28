@@ -18,16 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {useState, useCallback} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
+import {FormattedMessage} from 'localization';
+import {Button, Tooltip} from 'components/common/styled-components';
+import AnimationSpeedSliderFactory from './animation-speed-slider';
+import {Reset, Play, Pause, Rocket, AnchorWindow, FreeWindow} from 'components/common/icons';
+import {ANIMATION_WINDOW} from 'constants';
+import {preciseRound} from 'utils/data-utils';
 
-import {ButtonGroup, Button} from 'components/common/styled-components';
-import {Play, Reset, Pause} from 'components/common/icons';
+const DELAY_SHOW = 500;
+const DEFAULT_BUTTON_HEIGHT = '20px';
 
 const StyledAnimationControls = styled.div`
   display: flex;
-  margin-right: 12px;
+  position: relative;
 
   &.disabled {
     opacity: 0.4;
@@ -35,65 +41,235 @@ const StyledAnimationControls = styled.div`
   }
 `;
 
-const IconButton = styled(Button)`
-  padding: 6px 4px;
+const StyledSpeedControl = styled.div`
+  display: flex;
+  align-items: center;
+
+  .animation-control__speed-slider {
+    left: 0;
+  }
+`;
+
+export const IconButton = styled(Button)`
+  width: ${props => (props.collapsed ? 0 : 32)}px;
+  height: 32px;
+  color: ${props => props.theme.playbackButtonColor};
+  background-color: ${props => props.theme.playbackButtonBgColor};
+  border-radius: 4px;
+  margin-left: 7px;
+  border: 0;
+  padding: 0;
+
+  .__react_component_tooltip {
+    font-family: ${props => props.theme.fontFamily};
+  }
   svg {
-    margin: 0 6px;
+    margin: 0;
+  }
+  &.active {
+    background-color: ${props => props.theme.playbackButtonActBgColor};
   }
 `;
 
 function nop() {}
-const DEFAULT_BUTTON_HEIGHT = '18px';
 const DEFAULT_ICONS = {
-  reset: Reset,
-  play: Play,
-  pause: Pause
+  /* eslint-disable react/display-name */
+  reset: () => <Reset height="18px" />,
+  play: () => <Play height="18px" />,
+  pause: () => <Pause height="18px" />,
+  /* eslint-enable react/display-name */
+  speed: Rocket,
+  animationFree: FreeWindow,
+  animationIncremental: AnchorWindow
 };
 
-function AnimationPlaybacksFactory() {
-  const AnimationPlaybacks = ({
-    isAnimatable,
+const DEFAULT_ANIMATE_ITEMS = {
+  [ANIMATION_WINDOW.free]: {
+    id: ANIMATION_WINDOW.free,
+    icon: DEFAULT_ICONS.animationFree,
+    tooltip: 'tooltip.animationByWindow'
+  },
+  [ANIMATION_WINDOW.incremental]: {
+    id: ANIMATION_WINDOW.incremental,
+    icon: DEFAULT_ICONS.animationIncremental,
+    tooltip: 'tooltip.animationByIncremental'
+  }
+};
+
+export const AnimationWindowControl = ({
+  onClick,
+  selected,
+  onHide,
+  height,
+  animationItems,
+  btnStyle = {}
+}) => (
+  <div>
+    {Object.values(animationItems)
+      .filter(item => item.id !== selected)
+      .map(item => (
+        <IconButton
+          key={item.id}
+          data-tip
+          data-for={`${item.id}-tooltip`}
+          className="playback-control-button"
+          onClick={() => {
+            onClick(item.id);
+            onHide();
+          }}
+          {...btnStyle}
+        >
+          <item.icon height={height} />
+          {item.tooltip ? (
+            <Tooltip id={`${item.id}-tooltip`} effect="solid" place="top">
+              <FormattedMessage id={item.tooltip} />
+            </Tooltip>
+          ) : null}
+        </IconButton>
+      ))}
+  </div>
+);
+
+PlaybackControlsFactory.deps = [AnimationSpeedSliderFactory];
+function PlaybackControlsFactory(AnimationSpeedSlider) {
+  // eslint-disable-next-line complexity
+  const PlaybackControls = ({
+    isAnimatable = true,
     isAnimating,
-    buttonStyle,
     width,
+    speed,
+    animationWindow = ANIMATION_WINDOW.free,
+    setFilterAnimationWindow,
+    updateAnimationSpeed,
     pauseAnimation = nop,
-    updateAnimationTime = nop,
+    resetAnimation = nop,
     startAnimation = nop,
-    buttonHeight = DEFAULT_BUTTON_HEIGHT,
-    playbackIcons = DEFAULT_ICONS
+    playbackIcons = DEFAULT_ICONS,
+    animationItems = DEFAULT_ANIMATE_ITEMS,
+    buttonStyle = 'secondary',
+    buttonHeight = DEFAULT_BUTTON_HEIGHT
   }) => {
+    const [showSpeedControl, toggleSpeedControl] = useState(false);
+    const [showAnimationWindowControl, setShowAnimationWindowControl] = useState(false);
+    const toggleAnimationWindowControl = useCallback(() => {
+      setShowAnimationWindowControl(!showAnimationWindowControl);
+    }, [showAnimationWindowControl, setShowAnimationWindowControl]);
     const btnStyle = buttonStyle ? {[buttonStyle]: true} : {};
+
     return (
       <StyledAnimationControls
-        className={classnames('time-range-slider__control', {
+        className={classnames('playback-controls', {
           disabled: !isAnimatable
         })}
         style={{width: `${width}px`}}
       >
-        <ButtonGroup>
+        {/** Window */}
+        {setFilterAnimationWindow ? (
           <IconButton
-            className="playback-control-button"
+            data-tip
+            data-for="animate-window"
+            className={classnames('playback-control-button', {active: showAnimationWindowControl})}
+            onClick={toggleAnimationWindowControl}
             {...btnStyle}
-            onClick={updateAnimationTime}
+          >
+            {(() => {
+              if (animationItems[animationWindow]) {
+                return React.createElement(animationItems[animationWindow].icon, {
+                  height: buttonHeight
+                });
+              }
+              return null;
+            })()}
+            {animationItems[animationWindow] && animationItems[animationWindow].tooltip ? (
+              <Tooltip id="animate-window" place="top" delayShow={500} effect="solid">
+                <FormattedMessage id={animationItems[animationWindow].tooltip} />
+              </Tooltip>
+            ) : null}
+          </IconButton>
+        ) : null}
+
+        {showAnimationWindowControl ? (
+          <AnimationWindowControl
+            onClick={setFilterAnimationWindow}
+            selected={animationWindow}
+            onHide={toggleAnimationWindowControl}
+            height={buttonHeight}
+            btnStyle={btnStyle}
+            animationItems={animationItems}
+          />
+        ) : null}
+
+        {/** Speed */}
+        {showAnimationWindowControl || !updateAnimationSpeed ? null : (
+          <StyledSpeedControl
+            onClick={() => {
+              toggleSpeedControl(!showSpeedControl);
+            }}
+          >
+            <IconButton
+              data-tip
+              data-for="animate-speed"
+              className="playback-control-button"
+              onClick={nop}
+              {...btnStyle}
+            >
+              <playbackIcons.speed height={buttonHeight} />
+              <Tooltip id="animate-speed" place="top" delayShow={DELAY_SHOW} effect="solid">
+                <span>{preciseRound(speed, 1)}x</span>
+              </Tooltip>
+            </IconButton>
+            {showSpeedControl ? (
+              <AnimationSpeedSlider
+                onHide={() => {
+                  toggleSpeedControl(false);
+                }}
+                updateAnimationSpeed={updateAnimationSpeed}
+                speed={speed}
+              />
+            ) : null}
+          </StyledSpeedControl>
+        )}
+
+        {/** Reset */}
+        {showAnimationWindowControl ? null : (
+          <IconButton
+            data-tip
+            data-for="animate-reset"
+            className="playback-control-button"
+            onClick={resetAnimation}
+            {...btnStyle}
           >
             <playbackIcons.reset height={buttonHeight} />
+            <Tooltip id="animate-reset" place="top" delayShow={DELAY_SHOW} effect="solid">
+              <FormattedMessage id="tooltip.reset" />
+            </Tooltip>
           </IconButton>
+        )}
+
+        {/** Play and pause */}
+        {showAnimationWindowControl ? null : (
           <IconButton
-            {...btnStyle}
+            data-tip
+            data-for="animate-play-pause"
             className={classnames('playback-control-button', {active: isAnimating})}
             onClick={isAnimating ? pauseAnimation : startAnimation}
+            hide={showSpeedControl}
+            {...btnStyle}
           >
             {isAnimating ? (
               <playbackIcons.pause height={buttonHeight} />
             ) : (
               <playbackIcons.play height={buttonHeight} />
             )}
+            <Tooltip id="animate-play-pause" place="top" delayShow={DELAY_SHOW} effect="solid">
+              <FormattedMessage id={isAnimating ? 'tooltip.pause' : 'tooltip.play'} />
+            </Tooltip>
           </IconButton>
-        </ButtonGroup>
+        )}
       </StyledAnimationControls>
     );
   };
-  return AnimationPlaybacks;
+  return PlaybackControls;
 }
 
-export default AnimationPlaybacksFactory;
+export default PlaybackControlsFactory;

@@ -34,10 +34,12 @@ const SpeedSliderContainer = styled.div`
   right: calc(0% - 32px);
   width: 180px;
   padding: 2px 8px 2px 12px;
-  background-color: ${props => props.theme.panelBackground};
+  background-color: ${props => props.theme.bottomWidgetBgd};
   box-shadow: -2px -2px 0 0 rgba(0, 0, 0, 0.1);
+
   .kg-range-slider__input {
-    width: 36px;
+    width: 48px;
+    padding: 6px;
   }
 `;
 

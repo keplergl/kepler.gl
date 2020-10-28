@@ -1514,6 +1514,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
 
   const expectedFilter = {
     ...expectedFilterProps,
+    animationWindow: 'free',
     dataId: ['smoothie'],
     fieldIdx: [0],
     id: '38chejr',
@@ -1794,6 +1795,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     value: null,
     enlarged: false,
     isAnimating: false,
+    animationWindow: 'free',
     plotType: 'histogram',
     yAxis: null,
     speed: 1,
@@ -1823,6 +1825,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     value: [],
     enlarged: false,
     isAnimating: false,
+    animationWindow: 'free',
     fieldType: 'date',
     plotType: 'histogram',
     yAxis: null,
@@ -1974,6 +1977,7 @@ test('#visStateReducer -> SET_FILTER.name', t => {
     fixedDomain: false,
     enlarged: false,
     isAnimating: false,
+    animationWindow: 'free',
     speed: 1,
     name: ['ZIP_CODE'],
     type: 'range',
@@ -2064,6 +2068,7 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
     histogram: [],
     enlargedHistogram: [],
     isAnimating: false,
+    animationWindow: 'free',
     fieldType: 'integer',
     typeOptions: ['range'],
     plotType: 'histogram',
@@ -2149,8 +2154,23 @@ test('#visStateReducer -> setFilter.dynamicDomain & gpu', t => {
   t.end();
 });
 
-test('#visStateReducer -> setTimeAnmation', t => {
-  testSetFilterDynamicDomainGPU(t, VisStateActions.setTimeAnmation);
+test('#visStateReducer -> SET_FILTER_ANIMATION_TIME', t => {
+  testSetFilterDynamicDomainGPU(t, VisStateActions.setFilterAnimationTime);
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER_ANIMATION_WINDOW', t => {
+  const initialState = StateWFilters.visState;
+  const nextState = reducer(
+    initialState,
+    VisStateActions.setFilterAnimationWindow({
+      id: initialState.filters[0].id,
+      animationWindow: 'incremental'
+    })
+  );
+
+  t.equal(nextState.filters[0].animationWindow, 'incremental', 'should update ANIMATIONWINDOW');
+
   t.end();
 });
 
@@ -2251,6 +2271,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     enlargedHistogram: [],
     enlarged: true,
     isAnimating: false,
+    animationWindow: 'free',
     fieldType: 'timestamp',
     gpu: true,
     gpuChannel: [0]
@@ -2486,6 +2507,7 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
     enlargedHistogram: [],
     enlarged: true,
     isAnimating: false,
+    animationWindow: 'free',
     fieldType: 'timestamp',
     gpu: true,
     gpuChannel: [0]
@@ -2997,20 +3019,27 @@ test('#visStateReducer -> SPLIT_MAP: HIDE LAYER', t => {
   t.end();
 });
 
-test('#visStateReducer -> UPDATE_ANIMATION_TIME', t => {
-  const initialState = StateWTripGeojson;
-  const newState = reducer(initialState, VisStateActions.updateAnimationTime(1000));
+test('#visStateReducer -> SET_LAYER_ANIMATION_TIME', t => {
+  const initialState = StateWTripGeojson.visState;
+  const newState = reducer(initialState, VisStateActions.setLayerAnimationTime(1000));
 
   t.equal(newState.animationConfig.currentTime, 1000, 'should update animation time');
   t.end();
 });
 
 test('#visStateReducer -> UPDATE_LAYER_ANIMATION_SPEED', t => {
-  const initialState = StateWTripGeojson;
+  const initialState = StateWTripGeojson.visState;
   const newState = reducer(initialState, VisStateActions.updateLayerAnimationSpeed(1.23));
 
   t.equal(newState.animationConfig.speed, 1.23, 'should update animation speed');
 
+  t.end();
+});
+
+test('#visStateReducer -> TOGGLE_LAYER_ANIMATION', t => {
+  const initialState = StateWTripGeojson.visState;
+  const newState = reducer(initialState, VisStateActions.toggleLayerAnimation());
+  t.equal(newState.animationConfig.isAnimating, true, 'should update animationConfig');
   t.end();
 });
 
@@ -3755,6 +3784,7 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
     fixedDomain: true,
     enlarged: false,
     isAnimating: false,
+    animationWindow: 'free',
     speed: 1,
     name: [],
     type: 'polygon',
@@ -3883,6 +3913,7 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
     fixedDomain: true,
     enlarged: false,
     isAnimating: false,
+    animationWindow: 'free',
     speed: 1,
     name: [],
     type: 'polygon',

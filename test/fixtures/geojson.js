@@ -419,6 +419,7 @@ export const geoJsonTripFilterProps = {
 
 export const mergedTripFilter = {
   ...geoJsonTripFilterProps,
+  animationWindow: 'free',
   dataId: [geoJsonDataId],
   freeze: true,
   id: 'TRIPS-3',
@@ -445,6 +446,7 @@ export const geoJsonRateFilterProps = {
 
 export const mergedRateFilter = {
   ...geoJsonRateFilterProps,
+  animationWindow: 'free',
   name: ['RATE'],
   dataId: [geoJsonDataId],
   freeze: true,

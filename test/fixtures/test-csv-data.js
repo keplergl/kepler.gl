@@ -790,6 +790,7 @@ export const timeFilterProps = {
 
 export const mergedTimeFilter = {
   ...timeFilterProps,
+  animationWindow: 'free',
   dataId: [dataId],
   freeze: true,
   id: 'time-0',
@@ -824,6 +825,7 @@ export const epochFilterProps = {
 // value set mockStateWithFilters 1472700000000, 1472760000000
 export const mergedEpochFilter = {
   ...epochFilterProps,
+  animationWindow: 'free',
   dataId: [dataId],
   freeze: true,
   id: 'epoch-1',
@@ -852,6 +854,7 @@ export const dateFilterProps = {
 
 export const mergedDateFilter = {
   ...dateFilterProps,
+  animationWindow: 'free',
   dataId: [dataId],
   freeze: true,
   id: 'date-2',

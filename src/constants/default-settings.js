@@ -792,9 +792,34 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
 // Animation
 export const BASE_SPEED = 600;
 export const FPS = 60;
-export const ANIMATION_TYPE = keyMirror({
-  interval: null,
-  continuous: null
+
+/**
+ * 4 Animation Window Types
+ * 1. free
+ *  |->  |->
+ * Current time is a fixed range, animation controller calls next animation frames continuously to animation a moving window
+ * The increment id based on domain / BASE_SPEED * SPEED
+ *
+ * 2. incremental
+ * |    |->
+ * Same as free, current time is a growing range, only the max value of range increment during animation.
+ * The increment is also based on domain / BASE_SPEED * SPEED
+ *
+ * 3. point
+ * o -> o
+ * Current time is a point, animation controller calls next animation frame continuously to animation a moving point
+ * The increment is based on domain / BASE_SPEED * SPEED
+ *
+ * 4. interval
+ * o ~> o
+ * Current time is a point. An array of sorted time steps need to be provided.
+ * animation controller calls next animation at a interval when the point jumps to the next step
+ */
+export const ANIMATION_WINDOW = keyMirror({
+  free: null,
+  incremental: null,
+  point: null,
+  interval: null
 });
 export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';
 export const SPEED_CONTROL_RANGE = [0, 10];

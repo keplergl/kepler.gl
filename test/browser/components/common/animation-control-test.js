@@ -20,42 +20,53 @@
 
 import React from 'react';
 import test from 'tape';
-import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {BottomWidgetFactory, TimeWidgetFactory, AnimationControlFactory} from 'components';
+import sinon from 'sinon';
+import {mountWithTheme} from 'test/helpers/component-utils';
+import {AnimationControlFactory, PlaybackControlsFactory} from 'components';
 import {appInjector} from 'components/container';
-import * as VisStateActions from 'actions/vis-state-actions';
+import {StateWTripGeojson} from 'test/helpers/mock-state';
+import {
+  AnimationWindowControl,
+  IconButton
+} from 'components/common/animation-control/playback-controls';
 
-const BottomWidget = appInjector.get(BottomWidgetFactory);
-const TimeWidget = appInjector.get(TimeWidgetFactory);
 const AnimationControl = appInjector.get(AnimationControlFactory);
+const PlaybackControls = appInjector.get(PlaybackControlsFactory);
 
-// mock state
-import {InitialState} from 'test/helpers/mock-state';
+test('Components -> AnimationControl.render', t => {
+  t.doesNotThrow(() => {
+    mountWithTheme(<AnimationControl />);
+  }, 'Show not fail without props');
 
-// default props from initial state
-const defaultProps = {
-  datasets: InitialState.visState.datasets,
-  filters: InitialState.visState.filters,
-  layers: InitialState.visState.layers,
-  animationConfig: InitialState.visState.animationConfig,
-  uiState: InitialState.uiState,
-  containerW: 900,
-  sidePanelWidth: 300,
-  visStateActions: VisStateActions
-};
+  t.end();
+});
 
-test('Components -> BottomWidget.mount -> initial state', t => {
+test('Components -> AnimationControl.render with props', t => {
   let wrapper;
+  const toggleAnimation = sinon.spy();
+  const setLayerAnimationTime = sinon.spy();
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <IntlWrapper>
-        <BottomWidget {...defaultProps} />
-      </IntlWrapper>
+      <AnimationControl
+        isAnimatable
+        setLayerAnimationTime={setLayerAnimationTime}
+        toggleAnimation={toggleAnimation}
+        animationConfig={StateWTripGeojson.visState.animationConfig}
+      />
     );
-  }, 'BottomWidget should not fail without props');
+  }, 'Show not fail without props');
 
-  t.equal(wrapper.find(TimeWidget).length, 0, 'should not render');
-  t.equal(wrapper.find(AnimationControl).length, 0, 'should not render');
+  t.equal(
+    wrapper.find(AnimationWindowControl).length,
+    0,
+    'should not render AnimationWindowControl'
+  );
+  t.ok(wrapper.find(PlaybackControls), 'should render PlaybackControls');
 
+  wrapper
+    .find(IconButton)
+    .at(2)
+    .simulate('click');
+  t.ok(toggleAnimation.calledOnce, 'should call toggleAnimation');
   t.end();
 });

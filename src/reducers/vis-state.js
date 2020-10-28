@@ -51,6 +51,8 @@ const actionHandler = {
 
   [ActionTypes.LAYER_COLOR_UI_CHANGE]: visStateUpdaters.layerColorUIChangeUpdater,
 
+  [ActionTypes.TOGGLE_LAYER_ANIMATION]: visStateUpdaters.toggleLayerAnimationUpdater,
+
   [ActionTypes.LOAD_FILES]: visStateUpdaters.loadFilesUpdater,
 
   [ActionTypes.LOAD_FILES_ERR]: visStateUpdaters.loadFilesErrUpdater,
@@ -77,7 +79,9 @@ const actionHandler = {
 
   [ActionTypes.SET_FILTER]: visStateUpdaters.setFilterUpdater,
 
-  [ActionTypes.SET_TIME_ANIMATION]: visStateUpdaters.setTimeAnmationUpdater,
+  [ActionTypes.SET_FILTER_ANIMATION_TIME]: visStateUpdaters.setFilterAnimationTimeUpdater,
+
+  [ActionTypes.SET_FILTER_ANIMATION_WINDOW]: visStateUpdaters.setFilterAnimationWindowUpdater,
 
   [ActionTypes.SET_FILTER_PLOT]: visStateUpdaters.setFilterPlotUpdater,
 
@@ -89,7 +93,7 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: visStateUpdaters.updateFilterAnimationSpeedUpdater,
 
-  [ActionTypes.UPDATE_ANIMATION_TIME]: visStateUpdaters.updateAnimationTimeUpdater,
+  [ActionTypes.SET_LAYER_ANIMATION_TIME]: visStateUpdaters.setLayerAnimationTimeUpdater,
 
   [ActionTypes.UPDATE_LAYER_ANIMATION_SPEED]: visStateUpdaters.updateLayerAnimationSpeedUpdater,
 

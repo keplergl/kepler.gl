@@ -204,7 +204,13 @@ export default {
     delete: 'Delete',
     timePlayback: 'Time Playback',
     cloudStorage: 'Cloud Storage',
-    '3DMap': '3D Map'
+    '3DMap': '3D Map',
+    animationByWindow: 'Moving Time Window',
+    animationByIncremental: 'Incremental Time Window',
+    speed: 'speed',
+    play: 'play',
+    pause: 'pause',
+    reset: 'reset'
   },
   toolbar: {
     exportImage: 'Export Image',

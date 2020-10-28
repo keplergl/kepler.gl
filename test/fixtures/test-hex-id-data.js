@@ -164,6 +164,7 @@ export const mergedFilters = [
     plotType: 'histogram',
     yAxis: null,
     isAnimating: false,
+    animationWindow: 'free',
     fieldIdx: [1],
     domain: [1, 76],
     step: 0.01,
