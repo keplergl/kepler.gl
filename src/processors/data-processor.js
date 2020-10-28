@@ -587,7 +587,7 @@ export function validateInputData(data) {
     if (f.type === ALL_FIELD_TYPES.timestamp) {
       const sample = findNonEmptyRowsAtField(rows, i, 10).map(r => ({ts: r[i]}));
       const analyzedType = Analyzer.computeColMeta(sample)[0];
-      return analyzedType.category === 'TIME' && analyzedType.format === f.format;
+      return analyzedType && analyzedType.category === 'TIME' && analyzedType.format === f.format;
     }
 
     return true;
