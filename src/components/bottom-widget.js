@@ -61,12 +61,11 @@ export function FilterAnimationControllerFactory(AnimationController) {
     setFilterAnimationTime,
     children
   }) => {
-    const bins = useMemo(() => filter && filter.bins, [filter]);
-    const interval = useMemo(() => filter.plotType && filter.plotType.interval, [filter]);
-    const intervalBins = useMemo(
-      () => bins && Object.keys(bins).length && Object.values(bins)[0][interval],
-      [bins, interval]
-    );
+    const intervalBins = useMemo(() => {
+      const bins = filter && filter.bins;
+      const interval = filter.plotType && filter.plotType.interval;
+      return bins && Object.keys(bins).length && Object.values(bins)[0][interval];
+    }, [filter]);
     const steps = useMemo(() => (intervalBins ? intervalBins.map(x => x.x0) : null), [
       intervalBins
     ]);
@@ -153,15 +152,18 @@ export default function BottomWidgetFactory(
     const {activeSidePanel, readOnly} = uiState;
     const isOpen = Boolean(activeSidePanel);
 
-    const enlargedFilterIdx = filters.findIndex(
-      f => f.enlarged && f.type === FILTER_TYPES.timeRange
+    const enlargedFilterIdx = useMemo(
+      () => filters.findIndex(f => f.enlarged && f.type === FILTER_TYPES.timeRange),
+      [filters]
     );
-    const animatedFilter = filters.find(f => f.isAnimating);
+    const animatedFilter = useMemo(() => filters.find(f => f.isAnimating), [filters]);
     const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
 
     // show playback control if layers contain trip layer & at least one trip layer is visible
-    const animatableLayer = layers.filter(
-      l => l.config.animation && l.config.animation.enabled && l.config.isVisible
+    const animatableLayer = useMemo(
+      () =>
+        layers.filter(l => l.config.animation && l.config.animation.enabled && l.config.isVisible),
+      [layers]
     );
 
     const readyToAnimation =
@@ -170,7 +172,7 @@ export default function BottomWidgetFactory(
     const showFloatingTimeDisplay = !animatableLayer.length;
     const showAnimationControl = animatableLayer.length && readyToAnimation;
     const showTimeWidget = enlargedFilterIdx > -1 && Object.keys(datasets).length > 0;
-    console.log(!animationConfig || !animationConfig.isAnimating);
+
     return (
       <BottomWidgetContainer
         width={Math.min(maxWidth, enlargedFilterWidth)}

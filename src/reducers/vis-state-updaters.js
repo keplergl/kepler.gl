@@ -811,14 +811,16 @@ export const updateLayerAnimationSpeedUpdater = (state, {speed}) => {
  * @public
  */
 export const enlargeFilterUpdater = (state, action) => {
-  const isEnlarged = state.filters[action.idx].enlarged;
-
   return {
     ...state,
-    filters: state.filters.map((f, i) => {
-      f.enlarged = !isEnlarged && i === action.idx;
-      return f;
-    })
+    filters: state.filters.map((f, i) =>
+      i === action.idx
+        ? {
+            ...f,
+            enlarged: !f.enlarged
+          }
+        : f
+    )
   };
 };
 

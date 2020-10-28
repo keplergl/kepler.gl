@@ -21,12 +21,13 @@
 import React from 'react';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import BottomWidgetFactory from 'components/bottom-widget';
+import {BottomWidgetFactory, TimeWidgetFactory, AnimationControlFactory} from 'components';
 import {appInjector} from 'components/container';
+import * as VisStateActions from 'actions/vis-state-actions';
 
 const BottomWidget = appInjector.get(BottomWidgetFactory);
-
-import * as VisStateActions from 'actions/vis-state-actions';
+const TimeWidget = appInjector.get(TimeWidgetFactory);
+const AnimationControl = appInjector.get(AnimationControlFactory);
 
 // mock state
 import {InitialState} from 'test/helpers/mock-state';
@@ -44,13 +45,17 @@ const defaultProps = {
 };
 
 test('Components -> BottomWidget.mount -> initial state', t => {
+  let wrapper;
   t.doesNotThrow(() => {
-    mountWithTheme(
+    wrapper = mountWithTheme(
       <IntlWrapper>
         <BottomWidget {...defaultProps} />
       </IntlWrapper>
     );
   }, 'BottomWidget should not fail without props');
+
+  t.equal(wrapper.find(TimeWidget).length, 0, 'should not render');
+  t.equal(wrapper.find(AnimationControl).length, 0, 'should not render');
 
   t.end();
 });

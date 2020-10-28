@@ -57,10 +57,7 @@ const StyledDomain = styled.div`
 
 const BUTTON_HEIGHT = '18px';
 
-AnimationControlFactory.deps = [
-  PlaybackControlsFactory,
-  FloatingTimeDisplayFactory
-];
+AnimationControlFactory.deps = [PlaybackControlsFactory, FloatingTimeDisplayFactory];
 
 function AnimationControlFactory(PlaybackControls, FloatingTimeDisplay) {
   const AnimationControl = ({
