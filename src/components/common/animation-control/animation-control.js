@@ -94,7 +94,7 @@ function AnimationControlFactory(PlaybackControls, FloatingTimeDisplay) {
             updateAnimationSpeed={updateAnimationSpeed}
           />
           <StyledDomain className="animation-control__time-domain">
-            <span>{moment.utc(domain[0]).format(DEFAULT_TIME_FORMAT)}</span>
+            <span>{domain ? moment.utc(domain[0]).format(DEFAULT_TIME_FORMAT) : ''}</span>
           </StyledDomain>
           <SliderWrapper className="animation-control__slider">
             <Slider
@@ -109,7 +109,7 @@ function AnimationControlFactory(PlaybackControls, FloatingTimeDisplay) {
             />
           </SliderWrapper>
           <StyledDomain className="animation-control__time-domain">
-            <span>{moment.utc(domain[1]).format(DEFAULT_TIME_FORMAT)}</span>
+            <span>{domain ? moment.utc(domain[1]).format(DEFAULT_TIME_FORMAT) : ''}</span>
           </StyledDomain>
         </AnimationWidgetInner>
         <FloatingTimeDisplay currentTime={currentTime} />

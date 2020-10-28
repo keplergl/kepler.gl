@@ -50,7 +50,7 @@ const StyledSpeedControl = styled.div`
   }
 `;
 
-const IconButton = styled(Button)`
+export const IconButton = styled(Button)`
   width: ${props => (props.collapsed ? 0 : 32)}px;
   height: 32px;
   color: ${props => props.theme.playbackButtonColor};
@@ -96,7 +96,7 @@ const DEFAULT_ANIMATE_ITEMS = {
   }
 };
 
-const AnimationWindowControl = ({
+export const AnimationWindowControl = ({
   onClick,
   selected,
   onHide,
