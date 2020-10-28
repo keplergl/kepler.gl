@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import memoize from 'lodash.memoize';
 import {console as Console} from 'global/window';
-import {injector, typeCheckRecipe} from './injector';
+import {injector, provideRecipesToInjector, flattenDeps} from './injector';
 import KeplerGlFactory from './kepler-gl';
 import {forwardTo} from 'actions/action-wrapper';
 
@@ -155,14 +155,6 @@ export function ContainerFactory(KeplerGl) {
   return connect(mapStateToProps, dispatchToProps)(Container);
 }
 
-// entryPoint
-function flattenDeps(allDeps, factory) {
-  const addToDeps = allDeps.concat([factory]);
-  return Array.isArray(factory.deps) && factory.deps.length
-    ? factory.deps.reduce((accu, dep) => flattenDeps(accu, dep), addToDeps)
-    : addToDeps;
-}
-
 const allDependencies = flattenDeps([], ContainerFactory);
 
 // provide all dependencies to appInjector
@@ -173,20 +165,7 @@ export const appInjector = allDependencies.reduce(
 
 // Helper to inject custom components and return kepler.gl container
 export function injectComponents(recipes = []) {
-  return recipes
-    .reduce((inj, recipe) => {
-      if (!typeCheckRecipe(recipe)) {
-        return inj;
-      }
-
-      // collect dependencies of custom factories, if there is any.
-      // Add them to the injector
-      const customDependencies = flattenDeps([], recipe[1]);
-      inj = customDependencies.reduce((ij, factory) => ij.provide(factory, factory), inj);
-
-      return inj.provide(...recipe);
-    }, appInjector)
-    .get(ContainerFactory);
+  provideRecipesToInjector(recipes, appInjector).get(ContainerFactory);
 }
 
 const InjectedContainer = appInjector.get(ContainerFactory);

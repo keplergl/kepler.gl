@@ -70,6 +70,40 @@ export function injector(map = new Map()) {
   };
 }
 
+// entryPoint
+export function flattenDeps(allDeps, factory) {
+  const addToDeps = allDeps.concat([factory]);
+  return Array.isArray(factory.deps) && factory.deps.length
+    ? factory.deps.reduce((accu, dep) => flattenDeps(accu, dep), addToDeps)
+    : addToDeps;
+}
+
+export function provideRecipesToInjector(recipes, appInjector) {
+  const provided = new Map();
+
+  return recipes.reduce((inj, recipe) => {
+    if (!typeCheckRecipe(recipe)) {
+      return inj;
+    }
+
+    // collect dependencies of custom factories, if there is any.
+    // Add them to the appInjector
+    const customDependencies = flattenDeps([], recipe[1]);
+    inj = customDependencies.reduce((ij, factory) => {
+      if (provided.get(factory)) {
+        Console.warn(
+          `${factory.name} already injected from ${provided.get(factory).name}, injecting ${
+            recipe[0].name
+          } after ${provided.get(factory).name} will override it`
+        );
+      }
+      return ij.provide(factory, factory);
+    }, inj);
+    provided.set(recipe[0], recipe[1]);
+    return inj.provide(...recipe);
+  }, appInjector);
+}
+
 export function typeCheckRecipe(recipe) {
   if (!Array.isArray(recipe) || recipe.length < 2) {
     Console.error('Error injecting [factory, replacement]', recipe);
