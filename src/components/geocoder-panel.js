@@ -135,10 +135,14 @@ export default function GeocoderPanelFactory() {
         lon + GEOCODER_GEO_OFFSET,
         lat + GEOCODER_GEO_OFFSET
       ];
-      const {center, zoom} = geoViewport.viewport(bounds, [
+      const {zoom} = geoViewport.viewport(bounds, [
         this.props.mapState.width,
         this.props.mapState.height
       ]);
+      // center being calculated by geo-vieweport.viewport has a complex logic that
+      // projects and then unprojects the coordinates to determine the center
+      // Calculating a simple average instead as that is the expected behavior in most of cases
+      const center = [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2];
 
       this.props.updateMap({
         latitude: center[1],

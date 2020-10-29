@@ -21,7 +21,7 @@
 import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import styled, {withTheme} from 'styled-components';
-import {event, select} from 'd3-selection';
+import {select} from 'd3-selection';
 import {brushX} from 'd3-brush';
 import {normalizeSliderValue} from 'utils/data-utils';
 
@@ -86,11 +86,11 @@ function RangeBrushFactory() {
       this.root = select(this.rootContainer.current);
       this.brush = brushX()
         .handleSize(3)
-        .on('start', () => {
+        .on('start', event => {
           if (typeof this.props.onBrushStart === 'function') this.props.onBrushStart();
           this._startSel = event.selection;
         })
-        .on('brush', () => {
+        .on('brush', event => {
           if (this.moving) {
             return;
           }
@@ -99,7 +99,7 @@ function RangeBrushFactory() {
             this._brushed(event);
           }
         })
-        .on('end', () => {
+        .on('end', event => {
           if (!this.brushing && this._startSel && !event.selection) {
             // handle click
 
@@ -194,7 +194,8 @@ function RangeBrushFactory() {
     }
 
     _brushed = evt => {
-      if (evt.sourceEvent.type === 'brush') return;
+      // Ignore brush events which don't have an underlying sourceEvent
+      if (!evt.sourceEvent) return;
       const [sel0, sel1] = evt.selection;
       const right = moveRight(this._startSel, evt.selection);
 

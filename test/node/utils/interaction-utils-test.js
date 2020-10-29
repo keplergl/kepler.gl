@@ -22,7 +22,8 @@ import test from 'tape';
 import {
   findFieldsToShow,
   getTooltipDisplayValue,
-  getTooltipDisplayDeltaValue
+  getTooltipDisplayDeltaValue,
+  TOOLTIP_MINUS_SIGN
 } from 'utils/interaction-utils';
 import {DEFAULT_TOOLTIP_FIELDS} from 'constants/default-settings';
 import {StateWTooltipFormat, testGeoJsonDataId} from 'test/helpers/mock-state';
@@ -154,7 +155,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
         fieldIdx: testFieldIdx,
         item
       },
-      output: '-7.000',
+      output: `${TOOLTIP_MINUS_SIGN}7.000`,
       message: 'should display absolute delta value'
     },
     {
@@ -166,7 +167,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
         fieldIdx: testFieldIdx,
         item
       },
-      output: '-63.64%',
+      output: `${TOOLTIP_MINUS_SIGN}63.64%`,
       message: 'should display relative delta value'
     },
     {
@@ -178,7 +179,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
         fieldIdx: testFieldIdx,
         item
       },
-      output: '-',
+      output: TOOLTIP_MINUS_SIGN,
       message: 'should display - when primary is null'
     },
     {
@@ -190,7 +191,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
         fieldIdx: testFieldIdx,
         item
       },
-      output: '-',
+      output: TOOLTIP_MINUS_SIGN,
       message: 'should display - when data is null'
     },
     {
@@ -202,7 +203,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
         fieldIdx: testFieldIdx,
         item
       },
-      output: '-',
+      output: TOOLTIP_MINUS_SIGN,
       message: 'should display - when both are null'
     }
   ];

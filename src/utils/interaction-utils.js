@@ -34,6 +34,9 @@ import {
 import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons/index';
 import {TOOLTIP_FORMATS, TOOLTIP_KEY, COMPARE_TYPES} from 'constants/tooltip';
 
+// \u2212 is the minus sign that d3-format uses for decimal number formatting
+export const TOOLTIP_MINUS_SIGN = '\u2212';
+
 /**
  * @type {typeof import('./interaction-utils').getDefaultInteraction}
  */
@@ -156,11 +159,11 @@ export function getTooltipDisplayDeltaValue({
       // safely cast string
       displayDeltaValue = defaultFormatter(displayDeltaValue);
       const deltaFirstChar = displayDeltaValue.charAt(0);
-      if (deltaFirstChar !== '+' && deltaFirstChar !== '-') {
+      if (deltaFirstChar !== '+' && deltaFirstChar !== TOOLTIP_MINUS_SIGN) {
         displayDeltaValue = `+${displayDeltaValue}`;
       }
     } else {
-      displayDeltaValue = '-';
+      displayDeltaValue = TOOLTIP_MINUS_SIGN;
     }
   }
 
