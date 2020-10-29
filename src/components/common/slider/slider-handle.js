@@ -46,7 +46,7 @@ const StyledSliderHandle = styled.span`
   border-radius: ${props => props.theme.sliderBorderRadius};
   border-style: solid;
   border-color: ${props =>
-    props.active ? props.theme.selectBorderColor : props.theme.sliderHandleColor};
+    props.active ? props.theme.selectBorderColor : props.theme.sliderInactiveBorderColor};
 
   :hover {
     background-color: ${props => props.theme.sliderHandleHoverColor};

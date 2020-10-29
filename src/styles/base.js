@@ -42,6 +42,7 @@ export const labelColorLT = '#6A7485';
 
 export const textColor = '#A0A7B4';
 export const textColorLT = '#3A414C';
+export const dataTableTextColor = textColorLT;
 export const titleColorLT = '#29323C';
 
 export const subtextColor = '#6A7485';
@@ -170,7 +171,7 @@ export const selectBorderColor = '#D3D8E0';
 export const selectBorderColorLT = '#D3D8E0';
 export const selectBorderRadius = '1px';
 export const selectBorder = 0;
-
+export const panelTabColor = subtextColor;
 export const dropdownListHighlightBg = '#6A7485';
 export const dropdownListHighlightBgLT = '#F8F8F9';
 export const dropdownListShadow = '0 6px 12px 0 rgba(0,0,0,0.16)';
@@ -316,7 +317,7 @@ export const sliderHandleHeight = 12;
 export const sliderHandleWidth = 12;
 export const sliderHandleColor = '#D3D8E0';
 export const sliderHandleTextColor = sliderHandleColor;
-
+export const sliderInactiveBorderColor = sliderHandleColor;
 export const sliderBorderRadius = '0';
 
 export const sliderHandleHoverColor = '#FFFFFF';
@@ -1115,6 +1116,7 @@ export const theme = {
   selectFontWeight,
   selectColorLT,
   selectFontWeightBold,
+  panelTabColor,
 
   // Input
   inputBgd,
@@ -1311,6 +1313,7 @@ export const theme = {
   lineHeight,
   textColor,
   textColorLT,
+  dataTableTextColor,
   textColorHl,
   titleTextColor,
   subtextColor,
@@ -1351,6 +1354,7 @@ export const theme = {
   sliderHandleWidth,
   sliderHandleColor,
   sliderHandleTextColor,
+  sliderInactiveBorderColor,
   sliderBorderRadius,
   sliderHandleHoverColor,
   sliderHandleAfterContent,
@@ -1495,6 +1499,8 @@ export const themeLT = {
   sliderBarColor: '#A0A7B4',
   sliderBarBgd: '#D3D8E0',
   sliderHandleColor: '#F7F7F7',
+  sliderInactiveBorderColor: '#F7F7F7',
+  sliderHandleTextColor: '#F7F7F7',
   sliderHandleHoverColor: '#F7F7F7',
 
   subtextColor: subtextColorLT,
@@ -1581,6 +1587,7 @@ export const themeBS = {
   sidePanelBg: '#F6F6F6',
   sidePanelHeaderBg: '#FFFFFF',
   subtextColor: '#AFAFAF',
+  panelTabColor: '#AFAFAF',
   subtextColorActive: '#000000',
   textColor: '#000000',
   textColorHl: '#545454',
@@ -1598,5 +1605,7 @@ export const themeBS = {
   rangeBrushBgd: '#E2E2E2',
   sliderBarBgd: '#E2E2E2',
   sliderHandleColor: '#FFFFFF',
+  sliderInactiveBorderColor: '#FFFFFF',
+  sliderHandleTextColor: '#FFFFFF',
   sliderBarColor: '#000000'
 };
