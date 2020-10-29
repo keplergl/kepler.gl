@@ -42,7 +42,7 @@ export const labelColorLT = '#6A7485';
 
 export const textColor = '#A0A7B4';
 export const textColorLT = '#3A414C';
-export const dataTabletextColor = textColorLT;
+export const dataTableTextColor = textColorLT;
 export const titleColorLT = '#29323C';
 
 export const subtextColor = '#6A7485';
@@ -1312,7 +1312,7 @@ export const theme = {
   lineHeight,
   textColor,
   textColorLT,
-  dataTabletextColor,
+  dataTableTextColor,
   textColorHl,
   titleTextColor,
   subtextColor,
@@ -1498,6 +1498,7 @@ export const themeLT = {
   sliderBarColor: '#A0A7B4',
   sliderBarBgd: '#D3D8E0',
   sliderHandleColor: '#F7F7F7',
+  sliderInactiveBorderColor: '#F7F7F7',
   sliderHandleTextColor: '#F7F7F7',
   sliderHandleHoverColor: '#F7F7F7',
 
@@ -1603,6 +1604,7 @@ export const themeBS = {
   rangeBrushBgd: '#E2E2E2',
   sliderBarBgd: '#E2E2E2',
   sliderHandleColor: '#FFFFFF',
+  sliderInactiveBorderColor: '#FFFFFF',
   sliderHandleTextColor: '#FFFFFF',
   sliderBarColor: '#000000'
 };
