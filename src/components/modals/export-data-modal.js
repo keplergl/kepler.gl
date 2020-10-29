@@ -21,7 +21,6 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 
-import {EXPORT_DATA_TYPE_OPTIONS} from 'constants/default-settings';
 import {FileType} from 'components/common/icons';
 import {
   StyledExportSection,
@@ -82,6 +81,7 @@ const ExportDataModalFactory = () => {
 
     render() {
       const {
+        supportedDataTypes,
         datasets,
         selectedDataset,
         dataType,
@@ -125,7 +125,7 @@ const ExportDataModalFactory = () => {
                 </div>
               </div>
               <div className="selection">
-                {EXPORT_DATA_TYPE_OPTIONS.map(op => (
+                {supportedDataTypes.map(op => (
                   <StyledType
                     key={op.id}
                     selected={dataType === op.id}
