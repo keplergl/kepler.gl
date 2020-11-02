@@ -26,6 +26,7 @@ export default {
     label: 'etiqueta',
     fillColor: 'color de relleno',
     color: 'color',
+    coverage: 'cobertura',
     strokeColor: 'color de trazo',
     radius: 'radio',
     outline: 'contorno',
@@ -121,6 +122,7 @@ export default {
     }
   },
   layerVisConfigs: {
+    angle: 'Ángulo',
     strokeWidth: 'Ancho del trazo',
     strokeWidthRange: 'Rango del ancho del trazo',
     radius: 'Radio',
@@ -148,8 +150,7 @@ export default {
     highPrecisionRendering: 'Representación de alta precisión',
     highPrecisionRenderingDescription: 'La precisión alta tendrá un rendimiento más bajo',
     height: 'Altura',
-    heightDescription:
-      'Haz clic en el botón de arriba a la derecha del mapa per cambiar a vista 3D',
+    heightDescription: 'Haz clic en el botón de arriba a la derecha del mapa per cambiar a vista 3D',
     fill: 'Rellenar',
     enablePolygonHeight: 'Activar la altura del polígono',
     showWireframe: 'Muestra esquemàtico',
@@ -203,7 +204,13 @@ export default {
     delete: 'Borrar',
     timePlayback: 'Reproducción de tiempo',
     cloudStorage: 'Almacenaje en la nube',
-    '3DMap': 'Mapa 3D'
+    '3DMap': 'Mapa 3D',
+    animationByWindow: 'Ventana Temporal Móvil',
+    animationByIncremental: 'Ventana Temporal Incremental',
+    speed: 'velocidad',
+    play: 'iniciar',
+    pause: 'pausar',
+    reset: 'reiniciar'
   },
   toolbar: {
     exportImage: 'Exportar imagen',
@@ -310,8 +317,7 @@ export default {
         tokenPlaceholder: 'Enganchar tu token de acceso a Mapbox',
         tokenMisuseWarning:
           '* Si no proporcionas tu propio token, el mapa podría fallar en cualquier momento cuando reemplacemos nuestro token para evitar abusos. ',
-        tokenDisclaimer:
-          'Puedes cambiar el token de Mapbox posteriormente utilizando estas instrucciones: ',
+        tokenDisclaimer: 'Puedes cambiar el token de Mapbox posteriormente utilizando estas instrucciones: ',
         tokenUpdate: 'Como actualitzar un token preexistente.',
         modeTitle: 'Modo mapa',
         modeSubtitle1: 'Seleccionar modo app. Más ',
@@ -378,7 +384,8 @@ export default {
   interactions: {
     tooltip: 'Sugerencias',
     brush: 'Pincel',
-    coordinate: 'Coordenadas'
+    coordinate: 'Coordenadas',
+    geocoder: 'Geocodificador'
   },
   layerBlending: {
     title: 'Combinación de capas',
@@ -404,7 +411,8 @@ export default {
     },
     hexagon: {
       worldUnitSize: 'Radio de hexágono (km)'
-    }
+    },
+    hex_id: 'id hex'
   },
   color: {
     customPalette: 'Paleta personalizada',
@@ -431,6 +439,24 @@ export default {
     uploading: 'Cargando',
     fileNotSupported: 'El archivo {errorFiles} no es compatible.',
     or: 'o'
+  },
+  geocoder: {
+    title: 'Introduce una dirección'
+  },
+  fieldSelector: {
+    clearAll: 'Quitar todos',
+    formatting: 'Formato'
+  },
+  compare: {
+    modeLabel: 'Modo Comparación',
+    typeLabel: 'Tipo de Comparación',
+    types: {
+      absolute: 'Absoluta',
+      relative: 'Relativa'
+    }
+  },
+  mapPopover: {
+    primary: 'Principal'
   },
   density: 'densidad',
   'Bug Report': 'Informe de errores',
