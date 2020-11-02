@@ -43,7 +43,7 @@ import {
 } from 'utils/data-scale-utils';
 
 import {ALL_FIELD_TYPES, SCALE_TYPES} from 'constants/default-settings';
-import {copyTableColumn} from 'actions';
+// import {copyTableColumn} from 'actions';
 
 // Unique identifier of each field
 const FID_KEY = 'name';
@@ -105,7 +105,7 @@ class KeplerTable {
    */
   getColumnField(columnName) {
     const field = this.fields.find(fd => fd[FID_KEY] === columnName);
-    this._assetFeild(columnName, field);
+    this._assetField(columnName, field);
     return field;
   }
 
@@ -115,7 +115,7 @@ class KeplerTable {
    */
   getColumnFieldIdx(columnName) {
     const fieldIdx = this.fields.findIndex(fd => fd[FID_KEY] === columnName);
-    this._assetFeild(columnName, Boolean(fieldIdx > -1));
+    this._assetField(columnName, Boolean(fieldIdx > -1));
     return fieldIdx;
   }
 
@@ -351,7 +351,7 @@ class KeplerTable {
    * @param fieldName
    * @param condition
    */
-  _assetFeild(fieldName, condition) {
+  _assetField(fieldName, condition) {
     if (!condition) {
       Console.error(`${fieldName} doesnt exist in dataset ${this.id}`);
     }

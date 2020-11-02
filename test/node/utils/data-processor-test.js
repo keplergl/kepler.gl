@@ -115,7 +115,7 @@ test('Processor -> getFieldsFromData', t => {
   t.end();
 });
 
-test.only('Processor -> processCsvData', t => {
+test('Processor -> processCsvData', t => {
   t.throws(() => processCsvData(''), 'should throw if csv is empty');
 
   // load sample dataset csv as text
@@ -145,10 +145,10 @@ test('Processor -> processCsvData: duplicated field name', t => {
 
   const expectedResult = {
     fields: [
-      {name: 'column1', format: '', tableFieldIndex: 1, type: 'string', analyzerType: 'STRING'},
-      {name: 'column1-0', format: '', tableFieldIndex: 2, type: 'string', analyzerType: 'STRING'},
-      {name: 'column1-1', format: '', tableFieldIndex: 3, type: 'string', analyzerType: 'STRING'},
-      {name: 'column2', format: '', tableFieldIndex: 4, type: 'string', analyzerType: 'STRING'}
+      {name: 'column1', format: '', fieldIdx: 0, type: 'string', analyzerType: 'STRING'},
+      {name: 'column1-0', format: '', fieldIdx: 1, type: 'string', analyzerType: 'STRING'},
+      {name: 'column1-1', format: '', fieldIdx: 2, type: 'string', analyzerType: 'STRING'},
+      {name: 'column2', format: '', fieldIdx: 3, type: 'string', analyzerType: 'STRING'}
     ],
     rows: [
       ['a', 'b', 'c', 'd'],
