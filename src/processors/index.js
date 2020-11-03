@@ -31,6 +31,6 @@ export {
 } from './data-processor';
 
 // File Handlers
-export {readFileInBatches, processFileData, filesToDataPayload} from './file-handler';
+export {readFileInBatches, processFileData, filesToDataPayload, isKeplerGlMap} from './file-handler';
 
 export {Processors as default} from './data-processor';

@@ -1008,7 +1008,7 @@ export default class Layer {
       highlightColor: this.config.highlightColor,
       // data filtering
       extensions: [dataFilterExtension],
-      filterRange: gpuFilter.filterRange
+      filterRange: gpuFilter ? gpuFilter.filterRange : undefined
     };
   }
 
