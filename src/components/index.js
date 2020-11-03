@@ -30,7 +30,7 @@ import PanelHeaderActionFactory from './side-panel/panel-header-action';
 import {appInjector} from './container';
 
 // Components
-export {default as KeplerGl, default, injectComponents} from './container';
+export {default as KeplerGl, default, injectComponents, ContainerFactory} from './container';
 
 // factories
 export {default as KeplerGlFactory} from './kepler-gl';
@@ -133,7 +133,7 @@ export {default as EditorFactory} from './editor/editor';
 export {default as FeatureActionPanelFactory} from './editor/feature-action-panel';
 
 // Injector
-export {injector, withState} from './injector';
+export {injector, provideRecipesToInjector, withState} from './injector';
 
 // Common Components
 export {default as CloudTile} from './modals/cloud-tile';
@@ -192,6 +192,7 @@ export const FieldToken = appInjector.get(FieldTokenFactory);
 export const PanelHeaderAction = appInjector.get(PanelHeaderActionFactory);
 
 export {
+  appInjector,
   TimeRangeSliderFactory,
   RangeSliderFactory,
   VisConfigSliderFactory,
