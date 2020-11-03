@@ -390,7 +390,7 @@ test('Components -> DataTableModal -> render DataTable: sort and pin', t => {
   const wrapper2 = mountWithTheme(<DataTable {...enriched} />);
   const componentInstance = wrapper2.find('DataTable').instance();
   const result = componentInstance.getCellSizeCache();
-  // manully setting the state and update the component
+  // manually setting the state and update the component
   componentInstance.setState(result);
   wrapper2.update();
 
@@ -407,11 +407,13 @@ test('Components -> DataTableModal -> render DataTable: sort and pin', t => {
     'begintrip_ts_local',
     'date'
   ];
+
   t.equal(
     wrapper2.find('.header-cell').length,
     testFields.length,
     `should render ${testFields.length} headers`
   );
+
   t.ok(
     wrapper2
       .find('.header-cell')
@@ -419,6 +421,7 @@ test('Components -> DataTableModal -> render DataTable: sort and pin', t => {
       .hasClass('pinned-header-cell'),
     'should assign pinned-header-cell class'
   );
+
   t.ok(
     wrapper2
       .find('.header-cell')
@@ -426,6 +429,7 @@ test('Components -> DataTableModal -> render DataTable: sort and pin', t => {
       .hasClass('first-cell'),
     'should assign first-cell class'
   );
+
   new Array(testFields.length).fill(0).forEach((d, i) => {
     t.equal(
       wrapper2
@@ -445,6 +449,54 @@ test('Components -> DataTableModal -> render DataTable: sort and pin', t => {
       .find(ArrowUp).length,
     1,
     'should render sort icon'
+  );
+
+  t.end();
+});
+
+test('Components -> DatableModal -> sort/pin and copy should be called with the right params', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const copyTableColumn = sinon.spy();
+  const pinTableColumn = sinon.spy();
+  const sortTableColumn = sinon.spy();
+  const column = 'gps_data.lat';
+
+  const wrapper = mountWithTheme(
+    <DataTableModal
+      datasets={initialState.datasets}
+      dataId={testCsvDataId}
+      copyTableColumn={copyTableColumn}
+      pinTableColumn={pinTableColumn}
+      sortTableColumn={sortTableColumn}
+    />
+  );
+
+  const {
+    sortTableColumn: testSortColumn,
+    pinTableColumn: testPinColumn,
+    copyTableColumn: testCopyColumn
+  } = wrapper.find('DataTable').props();
+
+  testSortColumn(column);
+  testPinColumn(column);
+  testCopyColumn(column);
+
+  t.equal(
+    sortTableColumn.calledWith(testCsvDataId, column),
+    true,
+    'should call sortTableColumn with dataId and column gps_data.lat'
+  );
+
+  t.equal(
+    pinTableColumn.calledWith(testCsvDataId, column),
+    true,
+    'should call pinTableColumn with dataId and column gps_data.lat'
+  );
+
+  t.equal(
+    copyTableColumn.calledWith(testCsvDataId, column),
+    true,
+    'should call copyTableColumn with dataId and column gps_data.lat'
   );
 
   t.end();
@@ -477,9 +529,9 @@ test('Components -> cellSize -> renderedSize', t => {
     .props();
 
   const expected = {
-    _geojson: {row: 400, header: 91},
-    'income level of people over 65': {row: 75, header: 150},
-    engagement: {row: 117, header: 110}
+    _geojson: {row: 400, header: 96},
+    'income level of people over 65': {row: 85, header: 150},
+    engagement: {row: 127, header: 115}
   };
 
   t.deepEqual(

@@ -34,7 +34,7 @@ export function renderedSize({
   numRowsToCalculate = 10,
   fontSize = 12,
   font = 'Lato',
-  cellPadding = 30,
+  cellPadding = 40,
   maxCellSize = 400,
   maxHeaderSize = 150,
   minCellSize = 45,
