@@ -887,42 +887,42 @@ export const wktCsvFields = [
     type: 'integer',
     name: 'a_zip',
     format: '',
-    tableFieldIndex: 1,
+    fieldIdx: 0,
     analyzerType: 'INT'
   },
   {
     type: 'geojson',
     name: 'simplified_shape_v2',
     format: '',
-    tableFieldIndex: 2,
+    fieldIdx: 1,
     analyzerType: 'PAIR_GEOMETRY_FROM_STRING'
   },
   {
     type: 'geojson',
     name: 'simplified_shape',
     format: '',
-    tableFieldIndex: 3,
+    fieldIdx: 2,
     analyzerType: 'GEOMETRY_FROM_STRING'
   },
   {
     type: 'real',
     name: 'm_rate',
     format: '',
-    tableFieldIndex: 4,
+    fieldIdx: 3,
     analyzerType: 'FLOAT'
   },
   {
     type: 'string',
     name: 'c_zip_type',
     format: '',
-    tableFieldIndex: 5,
+    fieldIdx: 4,
     analyzerType: 'STRING'
   },
   {
     type: 'real',
     name: 'c_number',
     format: '',
-    tableFieldIndex: 6,
+    fieldIdx: 5,
     analyzerType: 'FLOAT'
   }
 ];

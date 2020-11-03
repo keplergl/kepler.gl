@@ -127,6 +127,11 @@ class KeplerTable {
     return field ? field.valueAccessor(this.allData[rowIdx]) : null;
   }
 
+  /**
+   * Updates existing field with a new object
+   * @param fieldIdx
+   * @param newField
+   */
   updateColumnField(fieldIdx, newField) {
     this.fields = Object.assign([...this.fields], {[fieldIdx]: newField});
   }

@@ -210,49 +210,49 @@ export const fields = [
     type: 'geojson',
     name: '_geojson',
     format: '',
-    tableFieldIndex: 1,
+    fieldIdx: 0,
     analyzerType: 'GEOMETRY'
   },
   {
     type: 'integer',
     name: 'OBJECTID',
     format: '',
-    tableFieldIndex: 2,
+    fieldIdx: 1,
     analyzerType: 'INT'
   },
   {
     type: 'integer',
     name: 'ZIP_CODE',
     format: '',
-    tableFieldIndex: 3,
+    fieldIdx: 2,
     analyzerType: 'INT'
   },
   {
     type: 'integer',
     name: 'ID',
     format: '',
-    tableFieldIndex: 4,
+    fieldIdx: 3,
     analyzerType: 'INT'
   },
   {
     type: 'integer',
     name: 'TRIPS',
     format: '',
-    tableFieldIndex: 5,
+    fieldIdx: 4,
     analyzerType: 'INT'
   },
   {
     type: 'string',
     name: 'RATE',
     format: '',
-    tableFieldIndex: 6,
+    fieldIdx: 5,
     analyzerType: 'STRING'
   },
   {
     type: 'geojson',
     name: 'OBJ',
     format: '',
-    tableFieldIndex: 7,
+    fieldIdx: 6,
     analyzerType: 'OBJECT'
   }
 ];
@@ -540,42 +540,42 @@ export const geoStyleFields = [
   {
     name: '_geojson',
     format: '',
-    tableFieldIndex: 1,
+    fieldIdx: 0,
     type: 'geojson',
     analyzerType: 'GEOMETRY'
   },
   {
     name: 'fillColor',
     format: '',
-    tableFieldIndex: 2,
+    fieldIdx: 1,
     type: 'geojson',
     analyzerType: 'ARRAY'
   },
   {
     name: 'lineColor',
     format: '',
-    tableFieldIndex: 3,
+    fieldIdx: 2,
     type: 'geojson',
     analyzerType: 'ARRAY'
   },
   {
     name: 'lineWidth',
     format: '',
-    tableFieldIndex: 4,
+    fieldIdx: 3,
     type: 'integer',
     analyzerType: 'INT'
   },
   {
     name: 'elevation',
     format: '',
-    tableFieldIndex: 5,
+    fieldIdx: 4,
     type: 'integer',
     analyzerType: 'INT'
   },
   {
     name: 'radius',
     format: '',
-    tableFieldIndex: 6,
+    fieldIdx: 5,
     type: 'integer',
     analyzerType: 'INT'
   }

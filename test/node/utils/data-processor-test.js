@@ -243,10 +243,10 @@ test('Processor => processGeojson: parse rows', t => {
   };
 
   const expectedFields = [
-    {name: '_geojson', format: '', tableFieldIndex: 1, type: 'geojson', analyzerType: 'GEOMETRY'},
-    {name: 'TRIPS', format: '', tableFieldIndex: 2, type: 'integer', analyzerType: 'INT'},
-    {name: 'RATE', format: '', tableFieldIndex: 3, type: 'string', analyzerType: 'STRING'},
-    {name: 'TIME', format: 'x', tableFieldIndex: 4, type: 'timestamp', analyzerType: 'TIME'}
+    {name: '_geojson', format: '', fieldIdx: 0, type: 'geojson', analyzerType: 'GEOMETRY'},
+    {name: 'TRIPS', format: '', fieldIdx: 1, type: 'integer', analyzerType: 'INT'},
+    {name: 'RATE', format: '', fieldIdx: 2, type: 'string', analyzerType: 'STRING'},
+    {name: 'TIME', format: 'x', fieldIdx: 3, type: 'timestamp', analyzerType: 'TIME'}
   ];
 
   const expectedRows = [
@@ -482,6 +482,7 @@ test('Processor -> validateInputData', t => {
 
 test('Processor -> processRowObject', t => {
   t.equal(processRowObject({}), null, 'Should return null when rawData is empty');
+
   const cases = [
     {
       input: [
@@ -500,28 +501,28 @@ test('Processor -> processRowObject', t => {
             name: 'a',
             type: 'integer',
             format: '',
-            tableFieldIndex: 1,
+            fieldIdx: 0,
             analyzerType: 'INT'
           },
           {
             name: 'b',
             type: 'string',
             format: '',
-            tableFieldIndex: 2,
+            fieldIdx: 1,
             analyzerType: 'STRING'
           },
           {
             name: 'c',
             type: 'boolean',
             format: '',
-            tableFieldIndex: 3,
+            fieldIdx: 2,
             analyzerType: 'BOOLEAN'
           },
           {
             name: 'd',
             type: 'real',
             format: '',
-            tableFieldIndex: 4,
+            fieldIdx: 3,
             analyzerType: 'FLOAT'
           }
         ]
