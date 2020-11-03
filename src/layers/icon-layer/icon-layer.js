@@ -21,7 +21,6 @@
 import window from 'global/window';
 import {BrushingExtension} from '@deck.gl/extensions';
 
-import {hexToRgb} from 'utils/color-utils';
 import SvgIconLayer from 'deckgl-layers/svg-icon-layer/svg-icon-layer';
 import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS, CLOUDFRONT} from 'constants/default-settings';
@@ -90,12 +89,18 @@ export default class IconLayer extends Layer {
 
   get visualChannels() {
     return {
-      ...super.visualChannels,
+      color: {
+        ...super.visualChannels.color,
+        accessor: 'getFillColor',
+        defaultValue: config => config.color
+      },
       size: {
         ...super.visualChannels.size,
-        range: 'radiusRange',
         property: 'radius',
-        channelScaleType: 'radius'
+        range: 'radiusRange',
+        channelScaleType: 'radius',
+        accessor: 'getRadius',
+        defaultValue: 1
       }
     };
   }
@@ -196,36 +201,12 @@ export default class IconLayer extends Layer {
     return data;
   }
 
-  formatLayerData(datasets, oldLayerData, opt = {}) {
-    const {
-      colorScale,
-      colorDomain,
-      colorField,
-      color,
-      sizeField,
-      sizeScale,
-      sizeDomain,
-      textLabel,
-      visConfig: {radiusRange, colorRange}
-    } = this.config;
+  formatLayerData(datasets, oldLayerData) {
+    const {textLabel} = this.config;
     const getPosition = this.getPositionAccessor();
 
     const {gpuFilter} = datasets[this.config.dataId];
     const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
-
-    // point color
-    const cScale =
-      colorField &&
-      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
-
-    // point radius
-    const rScale = sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, 0);
-
-    const getRadius = rScale ? d => this.getEncodedChannelValue(rScale, d.data, sizeField) : 1;
-
-    const getFillColor = cScale
-      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
-      : color;
 
     // get all distinct characters in the text labels
     const textLabels = formatTextLabelData({
@@ -235,13 +216,14 @@ export default class IconLayer extends Layer {
       data
     });
 
+    const accessors = this.getAttributeAccessors();
+
     return {
       data,
       getPosition,
-      getFillColor,
       getFilterValue: gpuFilter.filterValueAccessor(),
-      getRadius,
-      textLabels
+      textLabels,
+      ...accessors
     };
   }
 
@@ -261,18 +243,9 @@ export default class IconLayer extends Layer {
     };
 
     const updateTriggers = {
+      getPosition: this.config.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
-      getRadius: {
-        sizeField: this.config.colorField,
-        radiusRange: this.config.visConfig.radiusRange,
-        sizeScale: this.config.sizeScale
-      },
-      getFillColor: {
-        color: this.config.color,
-        colorField: this.config.colorField,
-        colorRange: this.config.visConfig.colorRange,
-        colorScale: this.config.colorScale
-      }
+      ...this.getVisualChannelUpdateTriggers()
     };
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);

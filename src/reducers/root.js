@@ -84,14 +84,14 @@ export function provideInitialState(initialState) {
     });
 
     // perform additional state reducing (e.g. switch action.type etc...)
-    return handleActions(
-      {
-        [ActionTypes.REGISTER_ENTRY]: handleRegisterEntry,
-        [ActionTypes.DELETE_ENTRY]: handleDeleteEntry,
-        [ActionTypes.RENAME_ENTRY]: handleRenameEntry
-      },
-      initialCoreState
-    )(state, action);
+    const handlers = {
+      [ActionTypes.REGISTER_ENTRY]: handleRegisterEntry,
+      [ActionTypes.DELETE_ENTRY]: handleDeleteEntry,
+      [ActionTypes.RENAME_ENTRY]: handleRenameEntry
+    };
+
+    // @ts-ignore
+    return handleActions(handlers, initialCoreState)(state, action);
   };
 }
 

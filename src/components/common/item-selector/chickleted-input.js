@@ -120,6 +120,8 @@ const ChickletedInput = ({
           disabled,
           key: `${displayOption(item)}_${i}`,
           name: displayOption(item),
+          displayOption,
+          item,
           remove: e => removeItem(item, e)
         };
         return CustomChickletComponent ? (

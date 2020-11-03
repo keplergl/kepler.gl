@@ -223,7 +223,7 @@ test('#H3Layer -> renderLayer', t => {
 
   const TEST_CASES = [
     {
-      name: 'Test render h3.2 -> has icon geometry',
+      name: 'Test render h3.2',
       layer: {
         id: 'test_layer_1',
         type: 'hexagonId',

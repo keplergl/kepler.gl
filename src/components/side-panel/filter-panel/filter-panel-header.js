@@ -37,7 +37,7 @@ export const StyledFilterHeader = styled(StyledPanelHeader)`
   ${props =>
     props.labelRCGColorValues && props.labelRCGColorValues.length > 0
       ? `border-image: ${createLinearGradient('bottom', props.labelRCGColorValues)} 3;`
-      : 'border-color: transparent;'}
+      : 'border-color: transparent;'};
 `;
 
 const StyledChildrenContainer = styled.div`

@@ -309,22 +309,6 @@ class TextLabelSchemaV1 extends Schema {
 }
 
 const visualChannelModificationV1 = {
-  point: (vc, parents, accumulator) => {
-    const [layer] = parents.slice(-1);
-
-    if (layer.config.visConfig.outline && vc.colorField && !vc.hasOwnProperty('strokeColorField')) {
-      // point layer now supports both outline and fill
-      // for older schema where filled has not been added to point layer
-      // copy colorField, colorScale to strokeColorField, and strokeColorScale
-      return {
-        strokeColorField: vc.colorField,
-        strokeColorScale: vc.colorScale,
-        colorField: null,
-        colorScale: 'quantile'
-      };
-    }
-    return {};
-  },
   geojson: (vc, parents, accumulator) => {
     const [layer] = parents.slice(-1);
     const isOld = !vc.hasOwnProperty('strokeColorField');

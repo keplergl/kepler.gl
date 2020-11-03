@@ -98,23 +98,30 @@ export default class PointLayer extends Layer {
     return {
       color: {
         ...super.visualChannels.color,
-        condition: config => config.visConfig.filled
+        accessor: 'getFillColor',
+        condition: config => config.visConfig.filled,
+        defaultValue: config => config.color
       },
       strokeColor: {
         property: 'strokeColor',
+        key: 'strokeColor',
         field: 'strokeColorField',
         scale: 'strokeColorScale',
         domain: 'strokeColorDomain',
         range: 'strokeColorRange',
-        key: 'strokeColor',
         channelScaleType: CHANNEL_SCALES.color,
-        condition: config => config.visConfig.outline
+        accessor: 'getLineColor',
+        condition: config => config.visConfig.outline,
+        defaultValue: config => config.visConfig.strokeColor || config.color
       },
       size: {
         ...super.visualChannels.size,
-        range: 'radiusRange',
         property: 'radius',
-        channelScaleType: 'radius'
+        range: 'radiusRange',
+        fixed: 'fixedRadius',
+        channelScaleType: 'radius',
+        accessor: 'getRadius',
+        defaultValue: 1
       }
     };
   }
@@ -188,52 +195,10 @@ export default class PointLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
-    const {
-      colorScale,
-      colorDomain,
-      colorField,
-      strokeColorField,
-      strokeColorScale,
-      strokeColorDomain,
-      color,
-      sizeField,
-      sizeScale,
-      sizeDomain,
-      textLabel,
-      visConfig: {radiusRange, fixedRadius, colorRange, strokeColorRange, strokeColor}
-    } = this.config;
-
+    const {textLabel} = this.config;
     const {gpuFilter} = datasets[this.config.dataId];
     const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
     const getPosition = this.getPositionAccessor();
-    // point color
-
-    const cScale =
-      colorField &&
-      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
-
-    // stroke color
-    const scScale =
-      strokeColorField &&
-      this.getVisChannelScale(
-        strokeColorScale,
-        strokeColorDomain,
-        strokeColorRange.colors.map(hexToRgb)
-      );
-
-    // point radius
-    const rScale =
-      sizeField && this.getVisChannelScale(sizeScale, sizeDomain, radiusRange, fixedRadius);
-
-    const getRadius = rScale ? d => this.getEncodedChannelValue(rScale, d.data, sizeField, 0) : 1;
-
-    const getFillColor = cScale
-      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
-      : color;
-
-    const getLineColor = scScale
-      ? d => this.getEncodedChannelValue(scScale, d.data, strokeColorField)
-      : strokeColor || color;
 
     // get all distinct characters in the text labels
     const textLabels = formatTextLabelData({
@@ -243,14 +208,14 @@ export default class PointLayer extends Layer {
       data
     });
 
+    const accessors = this.getAttributeAccessors();
+
     return {
       data,
       getPosition,
-      getFillColor,
-      getLineColor,
       getFilterValue: gpuFilter.filterValueAccessor(),
-      getRadius,
-      textLabels
+      textLabels,
+      ...accessors
     };
   }
   /* eslint-enable complexity */
@@ -263,7 +228,6 @@ export default class PointLayer extends Layer {
 
   renderLayer(opts) {
     const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
-
     const radiusScale = this.getRadiusScaleByZoom(mapState);
 
     const layerProps = {
@@ -276,25 +240,8 @@ export default class PointLayer extends Layer {
 
     const updateTriggers = {
       getPosition: this.config.columns,
-      getRadius: {
-        sizeField: this.config.sizeField,
-        radiusRange: this.config.visConfig.radiusRange,
-        fixedRadius: this.config.visConfig.fixedRadius,
-        sizeScale: this.config.sizeScale
-      },
-      getFillColor: {
-        color: this.config.color,
-        colorField: this.config.colorField,
-        colorRange: this.config.visConfig.colorRange,
-        colorScale: this.config.colorScale
-      },
-      getLineColor: {
-        color: this.config.visConfig.strokeColor,
-        colorField: this.config.strokeColorField,
-        colorRange: this.config.visConfig.strokeColorRange,
-        colorScale: this.config.strokeColorScale
-      },
-      getFilterValue: gpuFilter.filterValueUpdateTriggers
+      getFilterValue: gpuFilter.filterValueUpdateTriggers,
+      ...this.getVisualChannelUpdateTriggers()
     };
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);

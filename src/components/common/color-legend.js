@@ -105,10 +105,11 @@ export default class ColorLegend extends Component {
     scaleType: PropTypes.string,
     domain: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
     fieldType: PropTypes.string,
-    range: PropTypes.arrayOf(PropTypes.string),
+    range: PropTypes.object,
     labelFormat: PropTypes.func
   };
 
+  userLegendsSelector = props => props.legends;
   domainSelector = props => props.domain;
   rangeSelector = props => props.range;
   labelFormatSelector = props => props.labelFormat;
@@ -116,17 +117,29 @@ export default class ColorLegend extends Component {
   fieldTypeSelector = props => props.fieldType;
 
   legendsSelector = createSelector(
+    this.userLegendsSelector,
     this.domainSelector,
     this.rangeSelector,
     this.scaleTypeSelector,
     this.labelFormatSelector,
     this.fieldTypeSelector,
-    (domain, range, scaleType, labelFormat, fieldType) => {
+    (legends, domain, range, scaleType, labelFormat, fieldType) => {
+      if (legends) {
+        return {
+          data: Object.keys(legends),
+          labels: Object.values(legends)
+        };
+      } else if (range.colorMap) {
+        return {
+          data: range.colorMap.map(cm => cm[1]),
+          labels: range.colorMap.map(cm => cm[0])
+        };
+      }
       const scaleFunction = SCALE_FUNC[scaleType];
       // color scale can only be quantize, quantile or ordinal
       const scale = scaleFunction()
         .domain(domain)
-        .range(range);
+        .range(range.colors);
 
       if (scaleType === SCALE_TYPES.ordinal) {
         return getOrdinalLegends(scale);

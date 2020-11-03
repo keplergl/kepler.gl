@@ -25,6 +25,7 @@ import {
   testCreateCases,
   testFormatLayerDataCases,
   testRenderLayerCases,
+  testUpdateLayer,
   preparedDataset,
   dataId,
   testRows,
@@ -630,5 +631,48 @@ test('#PointLayer -> renderLayer', t => {
   ];
 
   testRenderLayerCases(t, PointLayer, TEST_CASES);
+  t.end();
+});
+
+test('#PointLayer -> updateLayer', t => {
+  const layerConfig = {
+    id: 'test1',
+    type: 'point',
+    config: {
+      dataId,
+      label: 'some point file',
+      columns: {
+        lat: 'lat',
+        lng: 'lng'
+      },
+      visConfig: {
+        outline: true,
+        filled: true,
+        colorRange: {
+          colors: ['#010101', '#020202', '#030303']
+        },
+        strokeColor: [4, 5, 6]
+      }
+    },
+    visualChannels: {
+      // color by id(integer)
+      colorField: {
+        type: 'string',
+        name: 'types'
+      },
+      // size by id(integer)
+      sizeField: {
+        type: 'integer',
+        name: 'id'
+      }
+    }
+  };
+
+  const shouldUpdate = {
+    gpuFilter: {},
+    dynamicGpuFilter: {instanceRadius: true}
+  };
+
+  testUpdateLayer(t, {layerConfig, shouldUpdate});
   t.end();
 });

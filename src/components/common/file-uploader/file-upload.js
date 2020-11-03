@@ -51,7 +51,7 @@ const StyledUploadMessage = styled.div`
 
   ${media.portable`
     font-size: 12px;
-  `}
+  `};
 `;
 
 export const WarningMsg = styled.span`
@@ -139,7 +139,7 @@ const StyledDragFileWrapper = styled.div`
   `};
   ${media.portable`
     margin-bottom: 16px;
-  `}
+  `};
 `;
 
 const StyledDisclaimer = styled(StyledMessage)`

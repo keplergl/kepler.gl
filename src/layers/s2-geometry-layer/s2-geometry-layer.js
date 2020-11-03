@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import {S2Layer} from '@deck.gl/geo-layers';
-import {hexToRgb} from 'utils/color-utils';
 import {HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import Layer from '../base-layer';
@@ -33,7 +32,7 @@ export const S2_TOKEN_FIELDS = {
 };
 
 export const s2RequiredColumns = ['token'];
-export const S2TokenAccessor = ({token}) => d => d[token.fieldIdx];
+export const S2TokenAccessor = ({token}) => d => d.data[token.fieldIdx];
 export const defaultElevation = 500;
 export const defaultLineWidth = 1;
 
@@ -91,21 +90,18 @@ export default class S2GeometryLayer extends Layer {
   }
 
   get visualChannels() {
+    const visualChannels = super.visualChannels;
     return {
-      ...super.visualChannels,
       color: {
-        property: 'color',
-        field: 'colorField',
-        scale: 'colorScale',
-        domain: 'colorDomain',
-        range: 'colorRange',
-        key: 'color',
-        channelScaleType: CHANNEL_SCALES.color
+        ...visualChannels.color,
+        accessor: 'getFillColor'
       },
       size: {
-        ...super.visualChannels.size,
+        ...visualChannels.size,
         property: 'stroke',
-        condition: config => config.visConfig.stroked
+        accessor: 'getLineWidth',
+        condition: config => config.visConfig.stroked,
+        defaultValue: defaultLineWidth
       },
       strokeColor: {
         property: 'strokeColor',
@@ -115,7 +111,10 @@ export default class S2GeometryLayer extends Layer {
         range: 'strokeColorRange',
         key: 'strokeColor',
         channelScaleType: CHANNEL_SCALES.color,
-        condition: config => config.visConfig.stroked
+        accessor: 'getLineColor',
+        condition: config => config.visConfig.stroked,
+        nullValue: visualChannels.color.nullValue,
+        defaultValue: config => config.visConfig.strokeColor || config.color
       },
       height: {
         property: 'height',
@@ -125,7 +124,10 @@ export default class S2GeometryLayer extends Layer {
         range: 'heightRange',
         key: 'height',
         channelScaleType: CHANNEL_SCALES.size,
-        condition: config => config.visConfig.enable3d
+        accessor: 'getElevation',
+        condition: config => config.visConfig.enable3d,
+        nullValue: 0,
+        defaultValue: defaultElevation
       }
     };
   }
@@ -165,7 +167,7 @@ export default class S2GeometryLayer extends Layer {
     const data = [];
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
-      const token = getS2Token(allData[index]);
+      const token = getS2Token({data: allData[index]});
 
       if (token) {
         data.push({
@@ -181,7 +183,7 @@ export default class S2GeometryLayer extends Layer {
 
   updateLayerMeta(allData, getS2Token) {
     const centroids = allData.reduce((acc, entry) => {
-      const s2Token = getS2Token(entry);
+      const s2Token = getS2Token({data: entry});
       return s2Token ? [...acc, getS2Center(s2Token)] : acc;
     }, []);
 
@@ -190,76 +192,20 @@ export default class S2GeometryLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  /* eslint-disable complexity */
   formatLayerData(datasets, oldLayerData, opt = {}) {
-    const {
-      colorScale,
-      colorDomain,
-      colorField,
-      color,
-      heightField,
-      heightDomain,
-      heightScale,
-      strokeColorField,
-      strokeColorScale,
-      strokeColorDomain,
-      sizeScale,
-      sizeDomain,
-      sizeField,
-      visConfig
-    } = this.config;
-
-    const {
-      enable3d,
-      stroked,
-      colorRange,
-      heightRange,
-      sizeRange,
-      strokeColorRange,
-      strokeColor
-    } = visConfig;
-
     const {gpuFilter} = datasets[this.config.dataId];
     const getS2Token = this.getPositionAccessor();
     const {data} = this.updateData(datasets, oldLayerData);
 
-    const cScale =
-      colorField &&
-      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
-
-    // calculate elevation scale - if extruded = true
-    const eScale =
-      heightField && enable3d && this.getVisChannelScale(heightScale, heightDomain, heightRange);
-
-    // stroke color
-    const scScale =
-      strokeColorField &&
-      this.getVisChannelScale(
-        strokeColorScale,
-        strokeColorDomain,
-        strokeColorRange.colors.map(hexToRgb)
-      );
-
-    // calculate stroke scale - if stroked = true
-    const sScale =
-      sizeField && stroked && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
+    const accessors = this.getAttributeAccessors();
 
     return {
       data,
       getS2Token,
-      getLineColor: d =>
-        scScale
-          ? this.getEncodedChannelValue(scScale, d.data, strokeColorField)
-          : strokeColor || color,
-      getLineWidth: d =>
-        sScale ? this.getEncodedChannelValue(sScale, d.data, sizeField, 0) : defaultLineWidth,
-      getFillColor: d => (cScale ? this.getEncodedChannelValue(cScale, d.data, colorField) : color),
-      getElevation: d =>
-        eScale ? this.getEncodedChannelValue(eScale, d.data, heightField, 0) : defaultElevation,
-      getFilterValue: gpuFilter.filterValueAccessor()
+      getFilterValue: gpuFilter.filterValueAccessor(),
+      ...accessors
     };
   }
-  /* eslint-enable complexity */
 
   renderLayer(opts) {
     const {data, gpuFilter, interactionConfig, mapState} = opts;
@@ -272,27 +218,7 @@ export default class S2GeometryLayer extends Layer {
     const {visConfig} = config;
 
     const updateTriggers = {
-      getLineColor: {
-        color: visConfig.strokeColor,
-        colorField: config.strokeColorField,
-        colorRange: visConfig.strokeColorRange,
-        colorScale: config.strokeColorScale
-      },
-      getLineWidth: {
-        sizeField: config.sizeField,
-        sizeRange: visConfig.sizeRange
-      },
-      getFillColor: {
-        color: config.color,
-        colorField: config.colorField,
-        colorRange: visConfig.colorRange,
-        colorScale: config.colorScale
-      },
-      getElevation: {
-        heightField: config.heightField,
-        heightScaleType: config.heightScale,
-        heightRange: visConfig.heightRange
-      },
+      ...this.getVisualChannelUpdateTriggers(),
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
 

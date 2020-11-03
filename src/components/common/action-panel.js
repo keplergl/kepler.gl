@@ -36,9 +36,7 @@ const StyledItem = styled.div`
   background-color: ${props => props.theme.dropdownListBgd};
   width: ${props => props.theme.actionPanelWidth}px;
   position: relative;
-  ${props => (props.color ? `border-left: 3px solid rgb(${props.color});` : '')}
-
-  :hover {
+  ${props => (props.color ? `border-left: 3px solid rgb(${props.color});` : '')} :hover {
     cursor: pointer;
     color: ${props => props.theme.textColorHl};
     .nested-group {
@@ -150,9 +148,7 @@ const StyledActionPanel = styled.div`
     ${props =>
       props.direction === 'column'
         ? `border-bottom: 1px solid ${props.theme.panelHeaderIcon}`
-        : `border-right: 1px solid ${props.theme.panelHeaderIcon}`}
-
-    &:last-of-type {
+        : `border-right: 1px solid ${props.theme.panelHeaderIcon}`} &:last-of-type {
       border-bottom: 0;
     }
   }
