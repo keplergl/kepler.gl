@@ -99,6 +99,7 @@ export function provideRecipesToInjector(recipes, appInjector) {
       }
       return ij.provide(factory, factory);
     }, inj);
+
     provided.set(recipe[0], recipe[1]);
     return inj.provide(...recipe);
   }, appInjector);
