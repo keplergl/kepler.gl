@@ -383,13 +383,7 @@ function DataTableFactory(FieldToken) {
       // eslint-disable-next-line react/display-name
       return cellInfo => {
         const {columnIndex, key, style} = cellInfo;
-        const {
-          colMeta,
-          sortColumn,
-          sortTableColumn,
-          pinTableColumn,
-          copyTableColumn
-        } = props;
+        const {colMeta, sortColumn, sortTableColumn, pinTableColumn, copyTableColumn} = props;
 
         const column = columns[columnIndex];
         const isGhost = column.ghost;

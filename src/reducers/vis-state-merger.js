@@ -20,19 +20,12 @@
 
 import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
-import isEqual from 'lodash.isequal';
 import flattenDeep from 'lodash.flattendeep';
-import {toArray, isObject, arrayInsert} from 'utils/utils';
-
-import {
-  applyFiltersToDatasets,
-  mergeFilterDomainStep,
-  validateFilterWithData
-} from 'utils/filter-utils';
+import {isObject, arrayInsert} from 'utils/utils';
+import {applyFiltersToDatasets, validateFiltersUpdateDatasets} from 'utils/filter-utils';
 
 import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
 import {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
-
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 
 /**
@@ -42,80 +35,18 @@ import {LAYER_BLENDINGS} from 'constants/default-settings';
  * @type {typeof import('./vis-state-merger').mergeFilters}
  */
 export function mergeFilters(state, filtersToMerge) {
-  const merged = [];
-  const unmerged = [];
-  const {datasets} = state;
-  let updatedDatasets = datasets;
-
   if (!Array.isArray(filtersToMerge) || !filtersToMerge.length) {
     return state;
   }
 
-  // merge filters
-  filtersToMerge.forEach(filter => {
-    // we can only look for datasets define in the filter dataId
-    const datasetIds = toArray(filter.dataId);
-
-    // we can merge a filter only if all datasets in filter.dataId are loaded
-    if (datasetIds.every(d => datasets[d])) {
-      // all datasetIds in filter must be present the state datasets
-      const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce(
-        (acc, datasetId) => {
-          const dataset = updatedDatasets[datasetId];
-          const layers = state.layers.filter(l => l.config.dataId === dataset.id);
-          const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(
-            acc.augmentedDatasets[datasetId] || dataset,
-            filter,
-            layers
-          );
-
-          if (updatedFilter) {
-            return {
-              ...acc,
-              // merge filter props
-              filter: acc.filter
-                ? {
-                    ...acc.filter,
-                    ...mergeFilterDomainStep(acc, updatedFilter)
-                  }
-                : updatedFilter,
-
-              applyToDatasets: [...acc.applyToDatasets, datasetId],
-
-              augmentedDatasets: {
-                ...acc.augmentedDatasets,
-                [datasetId]: updatedDataset
-              }
-            };
-          }
-
-          return acc;
-        },
-        {
-          filter: null,
-          applyToDatasets: [],
-          augmentedDatasets: {}
-        }
-      );
-
-      if (validatedFilter && isEqual(datasetIds, applyToDatasets)) {
-        merged.push(validatedFilter);
-        updatedDatasets = {
-          ...updatedDatasets,
-          ...augmentedDatasets
-        };
-      }
-    } else {
-      unmerged.push(filter);
-    }
-  });
+  const {validated, failed, updatedDatasets} = validateFiltersUpdateDatasets(state, filtersToMerge);
 
   // merge filter with existing
-  let updatedFilters = [...(state.filters || []), ...merged];
+  let updatedFilters = [...(state.filters || []), ...validated];
   updatedFilters = resetFilterGpuMode(updatedFilters);
   updatedFilters = assignGpuChannels(updatedFilters);
   // filter data
-  const datasetsToFilter = uniq(flattenDeep(merged.map(f => f.dataId)));
+  const datasetsToFilter = uniq(flattenDeep(validated.map(f => f.dataId)));
 
   const filtered = applyFiltersToDatasets(
     datasetsToFilter,
@@ -128,7 +59,7 @@ export function mergeFilters(state, filtersToMerge) {
     ...state,
     filters: updatedFilters,
     datasets: filtered,
-    filterToBeMerged: [...state.filterToBeMerged, ...unmerged]
+    filterToBeMerged: [...state.filterToBeMerged, ...failed]
   };
 }
 
@@ -141,33 +72,15 @@ export function mergeFilters(state, filtersToMerge) {
 export function mergeLayers(state, layersToMerge, fromConfig) {
   const preserveLayerOrder = fromConfig ? layersToMerge.map(l => l.id) : state.preserveLayerOrder;
 
-  const mergedLayer = [];
-  const unmerged = [];
-
-  const {datasets} = state;
-
   if (!Array.isArray(layersToMerge) || !layersToMerge.length) {
     return state;
   }
 
-  layersToMerge.forEach(layer => {
-    let validateLayer;
-    if (datasets[layer.config.dataId]) {
-      // datasets are already loaded
-      validateLayer = validateLayerWithData(
-        datasets[layer.config.dataId],
-        layer,
-        state.layerClasses
-      );
-    }
-
-    if (validateLayer) {
-      mergedLayer.push(validateLayer);
-    } else {
-      // datasets not yet loaded
-      unmerged.push(layer);
-    }
-  });
+  const {validated: mergedLayer, failed: unmerged} = validateLayersByDatasets(
+    state.datasets,
+    state.layerClasses,
+    layersToMerge
+  );
 
   // put new layers in front of current layers
   const {newLayerOrder, newLayers} = insertLayerAtRightOrder(
@@ -176,6 +89,7 @@ export function mergeLayers(state, layersToMerge, fromConfig) {
     state.layerOrder,
     preserveLayerOrder
   );
+
   return {
     ...state,
     layers: newLayers,
@@ -478,35 +392,52 @@ export function validateSavedTextLabel(fields, [layerTextLabel], savedTextLabel)
 /**
  * Validate saved visual channels config with new data,
  * refer to vis-state-schema.js VisualChannelSchemaV1
- *
- * @param {Array<Object>} fields
- * @param {Object} newLayer
- * @param {Object} savedLayer
- * @return {Object} - newLayer
+ * @type {typeof import('./vis-state-merger').validateSavedVisualChannels}
  */
 export function validateSavedVisualChannels(fields, newLayer, savedLayer) {
   Object.values(newLayer.visualChannels).forEach(({field, scale, key}) => {
     let foundField;
-    if (savedLayer.config[field]) {
-      foundField = fields.find(fd =>
-        Object.keys(savedLayer.config[field]).every(
-          prop => savedLayer.config[field][prop] === fd[prop]
-        )
-      );
-    }
+    if (savedLayer.config) {
+      if (savedLayer.config[field]) {
+        foundField = fields.find(
+          fd => savedLayer.config && fd.name === savedLayer.config[field].name
+        );
+      }
 
-    const foundChannel = {
-      ...(foundField ? {[field]: foundField} : {}),
-      ...(savedLayer.config[scale] ? {[scale]: savedLayer.config[scale]} : {})
-    };
-    if (Object.keys(foundChannel).length) {
-      newLayer.updateLayerConfig(foundChannel);
-      newLayer.validateVisualChannel(key);
+      const foundChannel = {
+        ...(foundField ? {[field]: foundField} : {}),
+        ...(savedLayer.config[scale] ? {[scale]: savedLayer.config[scale]} : {})
+      };
+      if (Object.keys(foundChannel).length) {
+        newLayer.updateLayerConfig(foundChannel);
+        newLayer.validateVisualChannel(key);
+      }
     }
   });
   return newLayer;
 }
 
+export function validateLayersByDatasets(datasets, layerClasses, layers) {
+  const validated = [];
+  const failed = [];
+
+  layers.forEach(layer => {
+    let validateLayer;
+    if (datasets[layer.config.dataId]) {
+      // datasets are already loaded
+      validateLayer = validateLayerWithData(datasets[layer.config.dataId], layer, layerClasses);
+    }
+
+    if (validateLayer) {
+      validated.push(validateLayer);
+    } else {
+      // datasets not yet loaded
+      failed.push(layer);
+    }
+  });
+
+  return {validated, failed};
+}
 /**
  * Validate saved layer config with new data,
  * update fieldIdx based on new fields
@@ -520,7 +451,7 @@ export function validateLayerWithData(
 ) {
   const {type} = savedLayer;
   // layer doesnt have a valid type
-  if (!layerClasses.hasOwnProperty(type) || !savedLayer.config || !savedLayer.config.columns) {
+  if (!type || !layerClasses.hasOwnProperty(type) || !savedLayer.config) {
     return null;
   }
 

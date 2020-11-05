@@ -28,8 +28,13 @@ import {providerStateReducerFactory} from './provider-state';
 
 import composers from './composers';
 
+/**
+ * @type {typeof import('./core').combineReducers_}
+ */
+const combineReducers_ = combineReducers;
+
 const combined = (initialState = {}) =>
-  combineReducers({
+  combineReducers_({
     visState: visStateReducerFactory(initialState.visState),
     mapState: mapStateReducerFactory(initialState.mapState),
     mapStyle: mapStyleReducerFactory(initialState.mapStyle),
