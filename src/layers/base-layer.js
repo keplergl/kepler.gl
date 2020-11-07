@@ -884,7 +884,8 @@ export default class Layer {
     }
 
     let data = [];
-    if (!triggerChanged.getData) {
+
+    if (!triggerChanged.getData && oldLayerData && oldLayerData.data) {
       // same data
       data = oldLayerData.data;
     } else {
