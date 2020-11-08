@@ -96,7 +96,6 @@ export default function SidePanelFactory(
   MapManager,
   CustomPanels
 ) {
-  const customPanels = get(CustomPanels, ['defaultProps', 'panels']) || [];
   const getCustomPanelProps = get(CustomPanels, ['defaultProps', 'getProps']) || (() => ({}));
 
   class SidePanel extends PureComponent {
@@ -188,12 +187,12 @@ export default function SidePanelFactory(
         visStateActions,
         mapStyleActions,
         uiStateActions,
-        availableProviders
+        availableProviders,
+        panels
       } = this.props;
 
       const {activeSidePanel} = uiState;
       const isOpen = Boolean(activeSidePanel);
-      const panels = [...this.props.panels, ...customPanels];
 
       const layerManagerActions = {
         addLayer: visStateActions.addLayer,
@@ -304,12 +303,10 @@ export default function SidePanelFactory(
                 {activeSidePanel === 'map' && (
                   <MapManager {...mapManagerActions} mapStyle={this.props.mapStyle} />
                 )}
-                {(customPanels || []).find(p => p.id === activeSidePanel) ? (
-                  <CustomPanels
-                    {...getCustomPanelProps(this.props)}
-                    activeSidePanel={activeSidePanel}
-                  />
-                ) : null}
+                <CustomPanels
+                  {...getCustomPanelProps(this.props)}
+                  activeSidePanel={activeSidePanel}
+                />
               </div>
             </SidePanelContent>
           </Sidebar>

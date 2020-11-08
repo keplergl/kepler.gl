@@ -198,18 +198,6 @@ test('Components -> SidePanel -> render custom panel', t => {
   };
 
   MyPanels.defaultProps = {
-    panels: [
-      {
-        id: 'rocket',
-        label: 'Rocket',
-        iconComponent: RocketIcon
-      },
-      {
-        id: 'chart',
-        label: 'Chart',
-        iconComponent: ChartIcon
-      }
-    ],
     getProps: props => ({
       layers: props.layers
     })
@@ -219,9 +207,33 @@ test('Components -> SidePanel -> render custom panel', t => {
     return MyPanels;
   }
 
+  function CustomSidePanelFactory(...deps) {
+    const CustomSidePanel = SidePanelFactory(...deps);
+    CustomSidePanel.defaultProps = {
+      ...CustomSidePanel.defaultProps,
+      panels: [
+        ...CustomSidePanel.defaultProps.panels,
+        {
+          id: 'rocket',
+          label: 'Rocket',
+          iconComponent: RocketIcon
+        },
+        {
+          id: 'chart',
+          label: 'Chart',
+          iconComponent: ChartIcon
+        }
+      ]
+    };
+    return CustomSidePanel;
+  }
+
+  CustomSidePanelFactory.deps = SidePanelFactory.deps;
+
   let wrapper;
 
   const CustomSidePanel = appInjector
+    .provide(SidePanelFactory, CustomSidePanelFactory)
     .provide(CustomPanelsFactory, CustomSidePanelsFactory)
     .get(SidePanelFactory);
 
@@ -239,7 +251,7 @@ test('Components -> SidePanel -> render custom panel', t => {
   t.equal(wrapper.find(RocketIcon).length, 1, 'should render RocketIcon');
   t.equal(wrapper.find(ChartIcon).length, 1, 'should render RocketIcon');
 
-  // mount CustomSidePanel with 1 of the custom panel
+  // // mount CustomSidePanel with 1 of the custom panel
   const uiState = {...defaultProps.uiState, activeSidePanel: 'rocket'};
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
