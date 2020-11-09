@@ -33,7 +33,8 @@ import {
   generatePolygonFilter,
   isValidFilterValue,
   isInPolygon,
-  diffFilters
+  diffFilters,
+  getIntervalBins
 } from 'utils/filter-utils';
 
 import {preciseRound} from 'utils/data-utils';
@@ -756,5 +757,43 @@ test('filterUtils -> diffFilters', t => {
     );
   });
 
+  t.end();
+});
+
+test('filterUtils => getIntervalBins', t => {
+  const interval = '15 minutes';
+  const dataId = '123test';
+  const filter = {
+    plotType: {
+      interval
+    },
+    bins: {
+      [dataId]: {
+        [interval]: [0, 1, 2]
+      }
+    }
+  };
+
+  t.deepEqual(getIntervalBins(filter), [0, 1, 2]);
+
+  const notValidPlotFilter = {
+    plotType: {},
+    bins: {
+      [dataId]: {
+        [interval]: [0, 1, 2]
+      }
+    }
+  };
+
+  t.equal(getIntervalBins(notValidPlotFilter), null);
+
+  const notValidBinFilter = {
+    plotType: {
+      interval
+    },
+    bins: {}
+  };
+
+  t.deepEqual(getIntervalBins(notValidBinFilter), null);
   t.end();
 });

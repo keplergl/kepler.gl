@@ -11,8 +11,8 @@ import {
   Feature,
   FeatureValue,
   VisState,
-  Field,
-  LineChart
+  LineChart,
+  TimeRangeFilter
 } from '../reducers/vis-state-updaters';
 import {Layer} from 'layers';
 import {Field} from 'reducers/types';
@@ -166,6 +166,8 @@ export function validateFiltersUpdateDatasets(state: VisState, filtersToValidate
   failed: Filter[],
   updatedDatasets: Datasets
 }
+export function isInPolygon(point: number[], polygon: object): boolean;
+export function getIntervalBins(filter: TimeRangeFilter)
 
 export const FILTER_UPDATER_PROPS: {
   dataId: string;

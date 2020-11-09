@@ -1221,3 +1221,17 @@ export function validateFiltersUpdateDatasets(state, filtersToValidate = []) {
 
   return {validated, failed, updatedDatasets};
 }
+
+/**
+ * Retrieve interval bins for time filter
+ * @type {typeof import('./filter-utils').getIntervalBins}
+ */
+export function getIntervalBins(filter) {
+  const {bins} = filter;
+  const interval = filter.plotType && filter.plotType.interval;
+  if (!interval || !bins || Object.keys(bins).length === 0) {
+    return null;
+  }
+  const values = Object.values(bins);
+  return values[0] ? values[0][interval] : null;
+}
