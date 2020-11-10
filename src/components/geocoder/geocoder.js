@@ -28,7 +28,26 @@ import KeyEvent from 'constants/keyevent';
 import {Input} from 'components/common/styled-components';
 import {Search, Delete} from 'components/common/icons';
 
+// matches only valid coordinates
+const COORDINATE_REGEX_STRING =
+  '^[-+]?([1-8]?\\d(\\.\\d+)?|90(\\.0+)?),\\s*[-+]?(180(\\.0+)?|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+)?)';
+const COORDINATE_REGEX = RegExp(COORDINATE_REGEX_STRING);
+
+const PLACEHOLDER = 'Enter an address or coordinates, ex 37.79,-122.40';
+
 let debounceTimeout = null;
+
+const testForCoordinates = query => {
+  const isValid = COORDINATE_REGEX.test(query.trim());
+
+  if (!isValid) {
+    return [isValid, query];
+  }
+
+  const tokens = query.trim().split(',');
+
+  return [isValid, Number(tokens[0]), Number(tokens[1])];
+};
 
 const StyledContainer = styled.div`
   position: relative;
@@ -51,6 +70,7 @@ const StyledContainer = styled.div`
     input {
       padding: 4px 36px;
       height: ${props => props.theme.geocoderInputHeight}px;
+      caret-color: unset;
     }
   }
 
@@ -86,12 +106,9 @@ const StyledContainer = styled.div`
   }
 `;
 
-const PLACEHOLDER = 'Enter an Address';
-
 const GeoCoder = ({
   mapboxApiAccessToken,
   className = '',
-  initialInputValue = '',
   limit = 5,
   timeout = 300,
   formatItem = item => item.place_name,
@@ -103,7 +120,7 @@ const GeoCoder = ({
   width,
   intl
 }) => {
-  const [inputValue, setInputValue] = useState(initialInputValue);
+  const [inputValue, setInputValue] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [results, setResults] = useState([]);
@@ -115,15 +132,27 @@ const GeoCoder = ({
     event => {
       const queryString = event.target.value;
       setInputValue(queryString);
-      clearTimeout(debounceTimeout);
-
-      debounceTimeout = setTimeout(async () => {
-        if (limit > 0 && Boolean(queryString)) {
-          const response = await client.geocodeForward(queryString, {limit});
-          setShowResults(true);
-          setResults(response.entity.features);
-        }
-      }, timeout);
+      const [hasValidCoordinates, longitude, latitude] = testForCoordinates(queryString);
+      if (hasValidCoordinates) {
+        setResults([{center: [latitude, longitude], place_name: queryString}]);
+      } else {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(async () => {
+          if (limit > 0 && Boolean(queryString)) {
+            try {
+              const response = await client.geocodeForward(queryString, {limit});
+              if (response.entity.features) {
+                setShowResults(true);
+                setResults(response.entity.features);
+              }
+            } catch (e) {
+              // TODO: show geocode error
+              // eslint-disable-next-line no-console
+              console.log(e);
+            }
+          }
+        }, timeout);
+      }
     },
     [client, limit, timeout, setResults, setShowResults]
   );
