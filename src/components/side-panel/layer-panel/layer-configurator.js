@@ -60,7 +60,10 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
 `;
 
 export const getLayerFields = (datasets, layer) =>
-  datasets[layer.config.dataId] ? datasets[layer.config.dataId].fields : [];
+  layer.config && datasets[layer.config.dataId] ? datasets[layer.config.dataId].fields : [];
+
+  export const getLayerDataset = (datasets, layer) =>
+  layer.config && datasets[layer.config.dataId] ? datasets[layer.config.dataId] : null;
 
 export const getLayerConfiguratorProps = props => ({
   layer: props.layer,
@@ -134,7 +137,7 @@ export default function LayerConfiguratorFactory(
         <StyledLayerVisualConfigurator>
           {/* Fill Color */}
           <LayerConfigGroup
-            {...(layer.visConfigSettings.filled || {label: 'layer.color'})}
+            {...layer.visConfigSettings.filled || {label: 'layer.color'}}
             {...visConfiguratorProps}
             collapsible
           >
@@ -906,7 +909,7 @@ export default function LayerConfiguratorFactory(
       const visConfiguratorProps = getVisConfiguratorProps(this.props);
       const layerConfiguratorProps = getLayerConfiguratorProps(this.props);
       const layerChannelConfigProps = getLayerChannelConfigProps(this.props);
-
+      const dataset = getLayerDataset(datasets, layer);
       const renderTemplate = layer.type && `_render${capitalizeFirstLetter(layer.type)}LayerConfig`;
 
       return (
@@ -944,6 +947,7 @@ export default function LayerConfiguratorFactory(
           {this[renderTemplate] &&
             this[renderTemplate]({
               layer,
+              dataset,
               visConfiguratorProps,
               layerChannelConfigProps,
               layerConfiguratorProps
