@@ -243,6 +243,15 @@ export function updateVisData(
   config: AddDataToMapPayload['config']
 ): Merge<UpdateVisDataUpdaterAction, {type: ActionTypes.UPDATE_VIS_DATA}>;
 
+export type RenameDatasetUpdaterAction = {
+  dataId: string;
+  label: string;
+};
+export function renameDataset(
+  dataId: string, 
+  label: string
+): Merge<RenameDatasetUpdaterAction, {type: ActionTypes.RENAME_DATASET}>;
+
 export type ToggleFilterAnimationUpdaterAction = {
   idx;
 };

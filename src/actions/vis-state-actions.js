@@ -406,6 +406,23 @@ export function updateVisData(datasets, options, config) {
 }
 
 /**
+ * Rename an existing dataset in `visState`
+ * @memberof visStateActions
+ * @param dataId - ***required** Id of the dataset to update
+ * @param label - ***required** New name for the dataset
+ * @returns action
+ * @type {typeof import('./vis-state-actions').renameDataset}
+ * @public
+ */
+export function renameDataset(dataId, label) {
+  return {
+    type: ActionTypes.RENAME_DATASET,
+    dataId,
+    label
+  };
+}
+
+/**
  * Start and end filter animation
  * @memberof visStateActions
  * @param {Number} idx of filter

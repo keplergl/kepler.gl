@@ -430,6 +430,10 @@ export function updateVisDataUpdater(
   state: VisState,
   action: VisStateActions.UpdateVisDataUpdaterAction
 ): VisState;
+export function renameDatasetUpdater(
+  state: VisState,
+  action: VisStateActions.RenameDatasetUpdaterAction
+): VisState;
 export function toggleFilterAnimationUpdater(
   state: VisState,
   action: VisStateActions.ToggleFilterAnimationUpdaterAction

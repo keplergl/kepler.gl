@@ -1306,6 +1306,31 @@ export const updateVisDataUpdater = (state, action) => {
 /* eslint-enable max-statements */
 
 /**
+ * Rename an existing dataset in `visState`
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').renameDatasetUpdater}
+ * @public
+ */
+export function renameDatasetUpdater(state, action) {
+  const {dataId, label} = action;
+  const {datasets} = state;
+  const existing = datasets[dataId];
+  return existing
+    ? {
+        ...state,
+        datasets: {
+          ...datasets,
+          [dataId]: {
+            ...existing,
+            label
+          }
+        }
+      }
+    : // No-op if the dataset doesn't exist
+      state;
+}
+
+/**
  * When a user clicks on the specific map closing icon
  * the application will close the selected map
  * and will merge the remaining one with the global state

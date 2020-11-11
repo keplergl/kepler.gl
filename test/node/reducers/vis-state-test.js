@@ -51,7 +51,7 @@ import {
   fields as geojsonFields
 } from 'test/fixtures/geojson';
 
-import tripGeojson, {timeStampDomain} from 'test/fixtures/trip-geojson';
+import tripGeojson, {timeStampDomain, tripDataInfo} from 'test/fixtures/trip-geojson';
 import {mockPolygonFeature, mockPolygonFeature2, mockPolygonData} from 'test/fixtures/polygon';
 
 // test helpers
@@ -1392,7 +1392,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
   const expectedLayerData = {
     data: geojsonData.features.map((f, i) => ({
       ...f,
-      properties: {...f.properties, index: i}
+      properties: {...f.properties, TRIPS: f.properties.TRIPS || null, index: i}
     }))
   };
 
@@ -1410,7 +1410,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
   t.deepEqual(
     initialState.layerData[0].data,
     expectedLayerData.data,
-    'should save geojson to datasets'
+    'should save geojson to layer data'
   );
 
   t.end();
@@ -1959,6 +1959,23 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     expectedLayerData1.data,
     'should format layer data correctly'
   );
+
+  t.end();
+});
+
+test('#visStateReducer -> RENAME_DATASET', t => {
+  const initialState = StateWTripGeojson.visState;
+
+  t.equal(
+    initialState.datasets[tripDataInfo.id].label,
+    tripDataInfo.label,
+    'Initial label as expected'
+  );
+
+  const newLabel = 'New label!!!11';
+  const updated = reducer(initialState, VisStateActions.renameDataset(tripDataInfo.id, newLabel));
+
+  t.equal(updated.datasets[tripDataInfo.id].label, newLabel, 'Updated label as expected');
 
   t.end();
 });
