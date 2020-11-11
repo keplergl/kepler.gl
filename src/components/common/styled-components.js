@@ -240,7 +240,9 @@ export const Button = styled.div.attrs(props => ({
   opacity: ${props => (props.disabled ? 0.4 : 1)};
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
   border: ${props =>
-    props.secondary
+    props.negative
+      ? props.theme.negativeBtnBorder
+      : props.secondary
       ? props.theme.secondaryBtnBorder
       : props.floating
       ? props.theme.floatingBtnBorder

@@ -96,6 +96,7 @@ export const linkBtnBorder = '0';
 export const negativeBtnBgd = errorColor;
 export const negativeBtnActBgd = '#FF193E';
 export const negativeBtnBgdHover = '#FF193E';
+export const negativeBtnBorder = '0';
 export const negativeBtnColor = '#FFFFFF';
 export const negativeBtnActColor = '#FFFFFF';
 
@@ -1207,6 +1208,7 @@ export const theme = {
   negativeBtnBgd,
   negativeBtnActBgd,
   negativeBtnBgdHover,
+  negativeBtnBorder,
   negativeBtnColor,
   negativeBtnActColor,
 
