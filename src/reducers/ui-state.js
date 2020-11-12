@@ -56,6 +56,7 @@ const actionHandler = {
   [ActionTypes.LOAD_FILES_ERR]: uiStateUpdaters.loadFilesErrUpdater,
 
   [ActionTypes.TOGGLE_SPLIT_MAP]: uiStateUpdaters.toggleSplitMapUpdater,
+  [ActionTypes.SHOW_DATASET_TABLE]: uiStateUpdaters.showDatasetTableUpdater,
   [ActionTypes.SET_LOCALE]: uiStateUpdaters.setLocaleUpdater
 };
 
