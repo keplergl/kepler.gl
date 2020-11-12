@@ -32,11 +32,13 @@ const ColumnRow = styled.div`
 `;
 
 const ColumnName = styled.div`
-  width: 25%;
+  width: 27%;
+  line-height: 1.2;
+  padding-right: 6px;
 `;
 
 const ColumnSelect = styled.div`
-  width: 75%;
+  width: 73%;
 `;
 
 ColumnSelectorFactory.deps = [FieldSelectorFactory];
@@ -47,8 +49,8 @@ function ColumnSelectorFactory(FieldSelector) {
       <ColumnName className="layer-config__column__name">
         <PanelLabel>
           <FormattedMessage id={`columns.${label}`} />
+          {!column.optional ? `  *` : null}
         </PanelLabel>
-        {!column.optional ? <PanelLabel>{`  *`}</PanelLabel> : null}
       </ColumnName>
       <ColumnSelect className="layer-config__column__select">
         <FieldSelector
