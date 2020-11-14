@@ -200,6 +200,9 @@ const GeoCoder = ({
 
   const onKeyDown = useCallback(
     e => {
+      if (!results || results.length === 0) {
+        return;
+      }
       switch (e.keyCode) {
         case KeyEvent.DOM_VK_UP:
           setSelectedIndex(selectedIndex > 0 ? selectedIndex - 1 : selectedIndex);
@@ -209,7 +212,9 @@ const GeoCoder = ({
           break;
         case KeyEvent.DOM_VK_ENTER:
         case KeyEvent.DOM_VK_RETURN:
-          onItemSelected(results[selectedIndex]);
+          if (results[selectedIndex]) {
+            onItemSelected(results[selectedIndex]);
+          }
           break;
         default:
           break;
