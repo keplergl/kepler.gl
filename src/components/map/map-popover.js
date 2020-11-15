@@ -105,6 +105,10 @@ const StyledIcon = styled.div`
   }
 `;
 
+function shouldReset(dim, stateDim) {
+  return Number.isFinite(dim) && dim > 0 && dim !== stateDim;
+}
+
 MapPopoverFactory.deps = [LayerHoverInfoFactory, CoordinateInfoFactory];
 
 export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
@@ -150,8 +154,18 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
       const width = Math.min(Math.round(node.scrollWidth), MAX_WIDTH);
       const height = Math.min(Math.round(node.scrollHeight), MAX_HEIGHT);
 
-      if (width !== this.state.width || height !== this.state.height) {
-        this.setState({width, height});
+      const toUpdate = {};
+
+      if (shouldReset(width, this.state.width)) {
+        toUpdate.width = width;
+      }
+
+      if (shouldReset(height, this.state.height)) {
+        toUpdate.height = height;
+      }
+
+      if (Object.keys(toUpdate).length) {
+        this.setState(toUpdate);
       }
     }
 
