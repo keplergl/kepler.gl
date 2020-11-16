@@ -91,7 +91,7 @@ class ColorSelector extends Component {
   node = createRef();
 
   handleClickOutside = e => {
-    if (this.props.colorUI && this.props.colorUI.showSketcher) {
+    if (this.props.colorUI && Number.isInteger(this.props.colorUI.showSketcher)) {
       // if sketcher is open, let sketch to close itself first
       return;
     }
