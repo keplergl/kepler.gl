@@ -113,20 +113,19 @@ export const updateMapUpdater = (state, action) => ({
 export const fitBoundsUpdater = (state, action) => {
   const bounds = validateBounds(action.payload);
   if (!bounds) {
-    Console.warn('invalid map bounds provided')
+    Console.warn('invalid map bounds provided');
     return state;
-  }  
-  const {zoom} = geoViewport.viewport(bounds, [state.width, state.height]);
-  // center being calculated by geo-vieweport.viewport has a complex logic that
-  // projects and then unprojects the coordinates to determine the center
-  // Calculating a simple average instead as that is the expected behavior in most of cases
-  const center = [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2];
+  }
+
+  const viewport = geoViewport.viewport(bounds, [state.width, state.height]);
 
   return {
     ...state,
-    latitude: center[1],
-    longitude: center[0],
-    zoom
+    latitude: viewport.center[1],
+    longitude: viewport.center[0],
+    // For marginal or invalid bounds, zoom may be NaN. Make sure to provide a valid value in order
+    // to avoid corrupt state and potential crashes as zoom is expected to be a number
+    ...(Number.isFinite(viewport.zoom) ? {zoom: viewport.zoom} : {})
   };
 };
 

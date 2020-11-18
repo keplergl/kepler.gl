@@ -173,23 +173,15 @@ export default function PlotContainerFactory(MapContainer) {
       };
 
       if (exportImageSetting.center) {
-        const getViewport = shouldCenter => {
-          if (shouldCenter) {
-            const {zoom} = geoViewport.viewport(bounds, [width, height]);
-            // center being calculated by geo-vieweport.viewport has a complex logic that
-            // projects and then unprojects the coordinates to determine the center
-            // Calculating a simple average instead as that is the expected behavior in most of cases
-            const center = [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2];
-            return {center, zoom};
-          }
+        const viewport = exportImageSetting.center
+          ? geoViewport.viewport(bounds, [width, height])
+          : {center: [newMapState.longitude, newMapState.latitude], zoom: mapState.zoom};
+        // For marginal or invalid bounds, zoom may be NaN. Make sure to provide a valid value in order
+        // to avoid corrupt state and potential crashes as zoom is expected to be a number
+        const zoom = viewport.zoom || mapState.zoom;
 
-          return {center: [mapState.longitude, mapState.latitude], zoom: mapState.zoom};
-        };
-
-        const {center, zoom} = getViewport(exportImageSetting.center);
-
-        newMapState.longitude = center[0];
-        newMapState.latitude = center[1];
+        newMapState.longitude = viewport.center[0];
+        newMapState.latitude = viewport.center[1];
         newMapState.zoom = zoom + Number(Math.log2(scale) || 0);
       }
 
