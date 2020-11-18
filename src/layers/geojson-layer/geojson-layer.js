@@ -318,7 +318,7 @@ export default class GeoJsonLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, mapState} = opts;
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const {fixedRadius, featureTypes} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
@@ -368,13 +368,15 @@ export default class GeoJsonLayer extends Layer {
       opacity: visConfig.strokeOpacity
     };
 
+    const pickable = interactionConfig.tooltip.enabled;
     return [
       new DeckGLGeoJsonLayer({
         ...defaultLayerProps,
         ...layerProps,
         ...data,
+        pickable,
         highlightColor: HIGHLIGH_COLOR_3D,
-        autoHighlight: visConfig.enable3d,
+        autoHighlight: visConfig.enable3d && pickable,
         stroked: visConfig.stroked,
         filled: visConfig.filled,
         extruded: visConfig.enable3d,
