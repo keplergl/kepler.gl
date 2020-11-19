@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import Layer from '../base-layer';
+import {findDefaultColorField} from 'utils/dataset-utils';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
 import EnhancedColumnLayer from 'deckgl-layers/column-layer/enhanced-column-layer';
@@ -95,6 +96,19 @@ export default class HexagonIdLayer extends Layer {
         defaultValue: defaultCoverage
       }
     };
+  }
+
+  setInitialLayerConfig(dataset) {
+    const defaultColorField = findDefaultColorField(dataset);
+
+    if (defaultColorField) {
+      this.updateLayerConfig({
+        colorField: defaultColorField
+      });
+      this.updateLayerVisualChannel(dataset, 'color');
+    }
+
+    return this;
   }
 
   static findDefaultLayerProps({fields = [], allData = []}) {

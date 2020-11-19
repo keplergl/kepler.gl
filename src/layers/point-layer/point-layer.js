@@ -23,6 +23,7 @@ import {ScatterplotLayer} from '@deck.gl/layers';
 
 import Layer from '../base-layer';
 import {hexToRgb} from 'utils/color-utils';
+import {findDefaultColorField} from 'utils/dataset-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
 
@@ -124,6 +125,19 @@ export default class PointLayer extends Layer {
         defaultValue: 1
       }
     };
+  }
+
+  setInitialLayerConfig(dataset) {
+    const defaultColorField = findDefaultColorField(dataset);
+
+    if (defaultColorField) {
+      this.updateLayerConfig({
+        colorField: defaultColorField
+      });
+      this.updateLayerVisualChannel(dataset, 'color');
+    }
+
+    return this;
   }
 
   static findDefaultLayerProps({fieldPairs = []}) {

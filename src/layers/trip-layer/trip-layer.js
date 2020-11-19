@@ -235,7 +235,7 @@ export default class TripLayer extends Layer {
     this.updateMeta({bounds, featureTypes, getFeature});
   }
 
-  setInitialLayerConfig(allData) {
+  setInitialLayerConfig({allData}) {
     this.updateLayerMeta(allData);
     return this;
   }

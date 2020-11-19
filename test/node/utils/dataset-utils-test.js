@@ -18,19 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './data-utils-test';
-import './data-processor-test';
-import './filter-utils-test';
-import './gpu-filter-utils-test';
-import './dataset-utils-test';
-import './layer-utils-test';
-import './data-scale-utils-test';
-import './interaction-utils-test';
-import './mapbox-gl-style-editor-test';
-import './notifications-utils-test';
-import './aggregate-utils-test';
-import './color-util-test';
-import './util-test';
-import './export-utils-test';
-import './s2-utils-test';
-import './map-info-utils-test';
+import test from 'tape';
+import {findDefaultColorField} from 'utils/dataset-utils';
+import {createNewDataEntry} from 'utils/dataset-utils';
+import {processCsvData} from 'processors/data-processor';
+
+import csvData from 'test/fixtures/test-layer-data';
+
+test('datasetUtils.findDefaultColorField', t => {
+  const dataset = createNewDataEntry({
+    info: {id: 'taro'},
+    data: processCsvData(csvData)
+  })['taro'];
+
+  const defaultField = findDefaultColorField(dataset);
+  // Unfortunately lat_1 is not detected as part of a field pair :(
+  t.equals(defaultField.name, 'lat_1', 'default field name is OK');
+
+  t.end();
+});
+
+test('datasetUtils.findDefaultColorField empty', t => {
+  const dataset = createNewDataEntry({
+    info: {id: 'taro'},
+    data: processCsvData('a\na')
+  })['taro'];
+
+  const defaultField = findDefaultColorField(dataset);
+  t.notOk(defaultField, 'default field is null');
+
+  t.end();
+});
