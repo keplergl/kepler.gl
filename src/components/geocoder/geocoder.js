@@ -27,6 +27,7 @@ import {WebMercatorViewport} from 'viewport-mercator-project';
 import KeyEvent from 'constants/keyevent';
 import {Input} from 'components/common/styled-components';
 import {Search, Delete} from 'components/common/icons';
+import geoViewport from '@mapbox/geo-viewport';
 
 // matches only valid coordinates
 const COORDINATE_REGEX_STRING =
@@ -117,6 +118,7 @@ const GeoCoder = ({
   onDeleteMarker,
   transitionDuration,
   pointZoom,
+  mapState,
   width,
   intl
 }) => {
@@ -131,6 +133,10 @@ const GeoCoder = ({
   const onChange = useCallback(
     event => {
       const queryString = event.target.value;
+      const bbox = geoViewport.bounds([mapState.longitude, mapState.latitude], mapState.zoom, [
+        mapState.width,
+        mapState.height
+      ]);
       setInputValue(queryString);
       const [hasValidCoordinates, longitude, latitude] = testForCoordinates(queryString);
       if (hasValidCoordinates) {
@@ -140,7 +146,7 @@ const GeoCoder = ({
         debounceTimeout = setTimeout(async () => {
           if (limit > 0 && Boolean(queryString)) {
             try {
-              const response = await client.geocodeForward(queryString, {limit});
+              const response = await client.geocodeForward(queryString, {limit, bbox});
               if (response.entity.features) {
                 setShowResults(true);
                 setResults(response.entity.features);

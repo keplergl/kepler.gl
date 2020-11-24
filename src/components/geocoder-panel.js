@@ -31,7 +31,6 @@ import {
   GEOCODER_DATASET_NAME,
   GEOCODER_LAYER_ID,
   GEOCODER_GEO_OFFSET,
-  GEOCODER_ICON_COLOR,
   GEOCODER_ICON_SIZE
 } from 'constants/default-settings';
 
@@ -163,7 +162,7 @@ export default function GeocoderPanelFactory() {
     };
 
     render() {
-      const {isGeocoderEnabled, mapboxApiAccessToken, width} = this.props;
+      const {isGeocoderEnabled, mapboxApiAccessToken, mapState, width} = this.props;
       return (
         <StyledGeocoderPanel
           className="geocoder-panel"
@@ -176,6 +175,7 @@ export default function GeocoderPanelFactory() {
               onSelected={this.onSelected}
               onDeleteMarker={this.removeMarker}
               width={width}
+              mapState={mapState}
             />
           )}
         </StyledGeocoderPanel>
