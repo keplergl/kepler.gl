@@ -46,7 +46,13 @@ export const TOOLTIP_FORMATS = {
     id: 'DECIMAL_SHORT_COMMA',
     label: '12.3k',
     format: '.3s',
-    type: TOOLTIP_FORMAT_TYPES.DECIMAL
+    type: TOOLTIP_FORMAT_TYPES.DECIMAL,
+    custom: formatter => {
+      return value => {
+        const formatted = formatter(value);
+        return Math.abs(value) < 100 ? formatted.split('.')[0] : formatted;
+      };
+    }
   },
   DECIMAL_PERCENT_FULL_1: {
     id: 'DECIMAL_PERCENT_FULL_1',

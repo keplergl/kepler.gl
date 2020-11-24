@@ -362,7 +362,8 @@ export function applyDefaultFormat(tooltipFormat) {
 
   switch (tooltipFormat.type) {
     case TOOLTIP_FORMAT_TYPES.DECIMAL:
-      return d3Format(tooltipFormat.format);
+      const formatter = d3Format(tooltipFormat.format);
+      return tooltipFormat.custom ? tooltipFormat.custom(formatter) : formatter;
     case TOOLTIP_FORMAT_TYPES.DATE:
     case TOOLTIP_FORMAT_TYPES.DATE_TIME:
       return v => moment.utc(v).format(tooltipFormat.format);
