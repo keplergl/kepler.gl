@@ -81,7 +81,7 @@ export const TOOLTIP_FORMATS = {
   DECIMAL_INT: {
     id: 'DECIMAL_INT',
     label: '12350',
-    format: '.4r',
+    format: '.5r',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_THREE: {
