@@ -18,6 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+export const decimalShortCommaFormatter = formatter => {
+  return value => {
+    const formatted = formatter(value);
+    return Math.abs(value) < 100 ? formatted.split('.')[0] : formatted;
+  };
+};
+
 export const TOOLTIP_FORMAT_TYPES = {
   NONE: 'none',
   DATE: 'date',
@@ -47,12 +54,7 @@ export const TOOLTIP_FORMATS = {
     label: '12.3k',
     format: '.3s',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL,
-    custom: formatter => {
-      return value => {
-        const formatted = formatter(value);
-        return Math.abs(value) < 100 ? formatted.split('.')[0] : formatted;
-      };
-    }
+    custom: decimalShortCommaFormatter
   },
   DECIMAL_PERCENT_FULL_1: {
     id: 'DECIMAL_PERCENT_FULL_1',

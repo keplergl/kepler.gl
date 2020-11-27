@@ -18,21 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const configure = require('enzyme').configure;
-const Adapter = require('enzyme-adapter-react-16');
-configure({adapter: new Adapter()});
+import test from 'tape-catch';
+import {decimalShortCommaFormatter} from 'constants/tooltip';
+import {format} from 'd3-format';
 
-// component tests
-require('./components');
+test('#Formatters -> decimalShortCommaFormatter', t => {
+  const formatter = decimalShortCommaFormatter(format('.3s'));
 
-// test layers
-require('./layer-tests');
-
-// test formatters
-require('./formatters');
-
-// test reducers
-require('./reducers');
-
-// test processors
-require('./file-handler');
+  t.equals(formatter(1000), '1.00k', 'should format 1000 as 1.00k');
+  t.equals(formatter(999), '999', 'should format 999 as 999');
+  t.equals(formatter(50), '50', 'should format 50 as 50');
+  t.end();
+});
