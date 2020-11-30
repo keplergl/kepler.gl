@@ -15,7 +15,71 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [2.3.2] - Aug 16 2020
+## [2.4.0] - Nov 30 2020
+- 259022ee [Upgrade] Support React 17 (#1323)
+- 6c48c422 [Enhancement] Export more utils (#1317)
+- 81bc6b37 [Enhancement] make provider injector function to get injectedApp back (#1318)
+- 5e2b8988 [Enhancement] update spanish and catalan translations (#1319)
+- 334f0b76 [Enhancement] extend template for light theme (#1305)
+- abbe032e [Chore] Dependency upgrade (#1314)
+- f0a966cd [Bug] check category (#1316)
+- 7f5282b4 [Feat] add incremental timeline animation (#1315)
+- c1a251de [Enhancement] make visConfigSwitch a factory (#1313)
+- 37cf1457 [Enhancement] Enable polygon filter on h3 layer (#1306)
+- bdbea264 [Feat] allow changing dataset in layer config (#1312)
+- 28f5204d [Bug] fix radio button style (#1310)
+- c990a477 [Enhancement] Upgrade d3-scale (#1311)
+- ea69da8a [Enhancement] fix item-selector dropdown value overflow nad tooltip pin color (#1309)
+- d94de814 [Chores] Exported default formatters (#1308)
+- 307cd3d4 [Bug] avoid duplicated h3 layer detection (#93) (#1307)
+- 8bc11a37 [Enhancement] Add inputBGdActive for light theme (#1301)
+- 3f0f7a6c [Bug] Check for valid layer pinned prop before performing comparison (#1297)
+- 42acc1cf [Bug] Fixed bug when reversing color schema (#1296)
+- 9949888f Table of content -> Table of contents
+- 9a13ce68 [Chores] Fixed security vulnerabilities and added new factories (#1294)
+- 3276cef3 Merge branch 'upwards_update'
+- 70687cab [Docs] Add usage example in doc for _repr_html_ method (#1282)
+- 32b519af [Chores] Updated yarn.lock and file license
+- aecbdc55 [Bug] Fixed typo in renderedSize cell-size (#90)
+- 9f8b84e1 upgrade react-palm to 3.3.7 (#89)
+- 7410cfa5 [Enhancement] Disable layer select option when no data is loaded (#88)
+- 7a69c865 data table style tiny adjustment
+- 21d09475 add fontFamily to input style
+- 96c37618 export renderSize from cell-size.js
+- f356fe43 [Enhancement] Added modalStyle prop Portaled to override default values (#83)
+- b6fd3916 [Enhancement] UI input style improvement (#1284)
+- 92a2bb65 [Enhancement] Add preserveLayerOrder to layer merger (#1288)
+- 480ead69 [Enhancement] Add a CTA button type (#80) (#1286)
+- d882ba09 [Enhancement] Layer config: Add column validators (#1287)
+- e8fc1c5e Export typeahead (#1289)
+- ad5ec020 [Enhancement] render last added filter first (#1285)
+- 42569ec3 [Enhancement] Export StyledDropdownSelect (#1283)
+- 1b748471 [Jupyter] add _repr_html_ method (#1202)
+- fbbd4c45 [Enhancement] export more utils and schema (#1280)
+- e5a6f9e8 [Enhancement] Improve schema and utils typing  (#1279)
+- ad651700 [Enhancement] Create factory for histogram and line chart, add brush handle to range brush (#1274)
+- 6681d2e2 [Enhancement] pass light theme through to item selector (#1276)
+- 0184cf1e [Enhancement] add setTimeAnimation action (#70) (#1263)
+- 908a5e2b [Chores] Bump http-proxy from 1.18.0 to 1.18.1 (#1268)
+- 7acb3d66 [Auto] Bump elliptic from 6.5.2 to 6.5.3 (#1210)
+- 490cafb0 [Jupyter] Updated Docs for Jupyter (#1267)
+- a7865c8d [Enhancement] Added factory for the icons of the map control (#1273)
+- 77b4e018 [Enhancement] switch style tweak (#1262)
+- 9dbb9e73 [Bug] fix dropdown list item lineheight (#1261)
+- d677c18f [Feat] Move more css to theme and create more factories (#1248)
+- 2ebd1368 [Enhancement] Typescript improvement (#1254)
+- 959f1a33 [Bug] fix export image size not set (#1257)
+- 678aacc2 [Upgrade] upgrade react-palm to 3.3.6 (#1255)
+- f54d6afb [Enhancement] Map control style improve (#1253)
+- 3e40a48c [Website] disable banner (#1252)
+- 3b81b59f [Enhancement] Add new theme variables (#1245)
+- b09aa2e1 [Bug] Fix load data modal crash (#1244)
+- 42670d89 [Bug] Fix provider preview image during map save and share flow (#1243)
+- efd3676d [Bug] Fix component exports
+- 0b91f4d1 [Enhancement] Improve react intl support (#1237)
+- 7ff0c459 [Enhancement] Save merger and schema to visState  (#1235)
+
+- ## [2.3.2] - Aug 16 2020
 - 10468e19 [Enhancement] Export more utils (#1233)
 - 242dcf99 [Enhancement] Upgrade dependencies and fix vulnerabilities (#1236)
 - 3d72066f [Bug] Fixed image export bug due to mapbox attrition logo (#1229)

@@ -1,13 +1,29 @@
 # Upgrade Guide
 
 ## Table of Content
+- [v2.3 to v2.4](#upgrade-from-v23-to-v24)
+
 - [v2.2 to v2.3](#upgrade-from-v22-to-v23)
 - [v2.1 to v2.2](#upgrade-from-v21-to-v22)
 - [v2.0 to v2.1](#upgrade-from-v20-to-v21)
 - [v1.1.12 to v2.0](#upgrade-from-v1112-to-v20)
 - [v1.1.11 to v1.1.12](#upgrade-from-v1111-to-v1112)
 
+## Upgrade from v2.3 to v2.4
 
+### Breaking Changes
+- Supports React 17
+- Dependency Upgrades, major ones: `d3-xxx@^2`, `redux@4.0.5`, `type-analyzer@0.3.0`, `react-palm@~3.3.7`
+
+### New Features
+- Support incremental timeline animation 
+- Allow changing dataset in layer config
+- Enable polygon filter for h3 layer
+- Show last added filter at the top
+
+### Bug Fixes
+- Avoid duplicated h3 layer detection
+- Fixed bug when reversing color palette not update
 ## Upgrade from v2.2 to v2.3
 - Upgrade dependencies to `deck.gl@8.2.0`, `loaders.gl@2.2.5` and `luma.gl@8.2.0`. This should only affects projects with the above libraries in its dependencies.
 
