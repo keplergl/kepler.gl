@@ -21,6 +21,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 
+import {EXPORT_DATA_TYPE_OPTIONS} from 'constants/default-settings';
 import {FileType} from 'components/common/icons';
 import {
   StyledExportSection,
@@ -182,6 +183,10 @@ const ExportDataModalFactory = () => {
     }
   }
   ExportDataModal.propTypes = propTypes;
+  ExportDataModal.defaultProps = {
+    supportedDataTypes: EXPORT_DATA_TYPE_OPTIONS
+  };
+
   return injectIntl(ExportDataModal);
 };
 
