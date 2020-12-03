@@ -26,6 +26,7 @@ import {format} from 'd3-format';
 import moment from 'moment';
 import {SCALE_TYPES, SCALE_FUNC, ALL_FIELD_TYPES} from 'constants/default-settings';
 import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
+import {isObject} from 'utils/utils';
 
 const ROW_H = 10;
 const GAP = 4;
@@ -109,7 +110,6 @@ export default class ColorLegend extends Component {
     labelFormat: PropTypes.func
   };
 
-  userLegendsSelector = props => props.legends;
   domainSelector = props => props.domain;
   rangeSelector = props => props.range;
   labelFormatSelector = props => props.labelFormat;
@@ -117,46 +117,54 @@ export default class ColorLegend extends Component {
   fieldTypeSelector = props => props.fieldType;
 
   legendsSelector = createSelector(
-    this.userLegendsSelector,
     this.domainSelector,
     this.rangeSelector,
     this.scaleTypeSelector,
     this.labelFormatSelector,
     this.fieldTypeSelector,
-    (legends, domain, range, scaleType, labelFormat, fieldType) => {
-      if (legends) {
+    (domain, range, scaleType, labelFormat, fieldType) => {
+      const empty = {
+        data: [],
+        labels: []
+      };
+      if (!range) {
+        return empty;
+      }
+      if (isObject(range.colorLegends)) {
         return {
-          data: Object.keys(legends),
-          labels: Object.values(legends)
+          data: Object.keys(range.colorLegends),
+          labels: Object.values(range.colorLegends)
         };
-      } else if (range.colorMap) {
+      } else if (Array.isArray(range.colorMap)) {
         return {
           data: range.colorMap.map(cm => cm[1]),
           labels: range.colorMap.map(cm => cm[0])
         };
+      } else if (Array.isArray(range.colors)) {
+        if (!domain || !scaleType) {
+          return empty;
+        }
+
+        const scaleFunction = SCALE_FUNC[scaleType];
+        // color scale can only be quantize, quantile or ordinal
+        const scale = scaleFunction()
+          .domain(domain)
+          .range(range.colors);
+
+        if (scaleType === SCALE_TYPES.ordinal) {
+          return getOrdinalLegends(scale);
+        }
+
+        const formatLabel = labelFormat || getQuantLabelFormat(scale.domain(), fieldType);
+
+        return getQuantLegends(scale, formatLabel);
       }
-      const scaleFunction = SCALE_FUNC[scaleType];
-      // color scale can only be quantize, quantile or ordinal
-      const scale = scaleFunction()
-        .domain(domain)
-        .range(range.colors);
-
-      if (scaleType === SCALE_TYPES.ordinal) {
-        return getOrdinalLegends(scale);
-      }
-
-      const formatLabel = labelFormat || getQuantLabelFormat(scale.domain(), fieldType);
-
-      return getQuantLegends(scale, formatLabel);
+      return empty;
     }
   );
 
   render() {
-    const {width, scaleType, domain, range, displayLabel = true} = this.props;
-
-    if (!domain || !range || !scaleType) {
-      return null;
-    }
+    const {width, displayLabel = true} = this.props;
 
     const legends = this.legendsSelector(this.props);
     const height = legends.data.length * (ROW_H + GAP);

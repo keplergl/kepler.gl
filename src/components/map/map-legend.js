@@ -69,7 +69,9 @@ export const StyledMapControlLegend = styled.div`
 export const VisualChannelMetric = ({name}) => {
   return (
     <div className="legend--layer__title">
-      <span className="legend--layer_color_field">{name}</span>
+      <span className="legend--layer_color_field">
+        <FormattedMessage id={name} />
+      </span>
     </div>
   );
 };
@@ -80,7 +82,7 @@ export const LayerSizeLegend = ({label, name}) => (
       <span className="legend--layer_by">
         <FormattedMessage id={label} />
       </span>
-      <span className="legend--layer_by">by </span>
+      <span className="legend--layer_by"> by </span>
     </p>
     <VisualChannelMetric name={name} />
   </div>
@@ -109,7 +111,7 @@ export const LayerColorLegend = React.memo(({description, config, width, colorCh
   const {scale, field, domain, range, property} = colorChannel;
   const [colorScale, colorField, colorDomain] = [scale, field, domain].map(k => config[k]);
   const colorRange = config.visConfig[range];
-  const {colorLegends} = colorRange;
+
   return (
     <div>
       <div className="legend--layer_color-schema">
@@ -123,7 +125,6 @@ export const LayerColorLegend = React.memo(({description, config, width, colorCh
                 domain={colorDomain}
                 fieldType={(colorField && colorField.type) || 'real'}
                 range={colorRange}
-                legends={colorLegends}
                 width={width}
               />
             ) : (

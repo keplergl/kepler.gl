@@ -33,7 +33,9 @@ test('Components -> ColorLegend.render', t => {
   const fieldType = 'real';
   const domain = [0, 20];
   const scaleType = 'quantize';
-  const range = ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300'];
+  const range = {
+    colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+  };
   const displayLabel = true;
 
   const props = {
@@ -76,5 +78,63 @@ test('Components -> ColorLegend.render', t => {
     .text();
   t.equal(row1Txt, '', 'should not render text');
 
+  t.end();
+});
+
+test('Components -> ColorLegend.render', t => {
+  t.doesNotThrow(() => {
+    mountWithTheme(<ColorLegend />);
+  }, 'Show not fail without props');
+
+  const width = 180;
+  const range = {
+    colorMap: [
+      ['apple', '#C1C9CC'],
+      ['pear', '#DFB02F'],
+      ['car', '#7F8120'],
+      ['dog', '#DCD0A4'],
+      ['chicken', '#AD5633']
+    ]
+  };
+
+  const props = {
+    displayLabel: true,
+    range,
+    width
+  };
+
+  let wrapper = mountWithTheme(<ColorLegend {...props} />);
+  t.equal(wrapper.find(LegendRow).length, 5, 'Should render 5 legends');
+  let row1 = wrapper
+    .find(LegendRow)
+    .at(0)
+    .find('rect')
+    .at(0)
+    .html();
+
+  t.ok(row1.indexOf('fill: #C1C9CC'), 'should render color rect based on colorMap');
+  t.ok(row1.indexOf('apple'), 'should render color text based on colorMap');
+
+  props.range = {
+    colorLegends: {
+      '#DFB02F': 'Apple',
+      '#7F8120': 'Pear',
+      '#DCD0A4': 'Car',
+      '#AD5633': 'Dog',
+      '#C1C9CC': 'Chicken'
+    }
+  };
+
+  wrapper = mountWithTheme(<ColorLegend {...props} />);
+  t.equal(wrapper.find(LegendRow).length, 5, 'Should render 5 legends');
+  row1 = wrapper
+    .find(LegendRow)
+    .at(0)
+    .find('rect')
+    .at(0)
+    .html();
+
+  t.ok(row1.indexOf('fill: #DFB02F'), 'should render color rect based on colorMap');
+  t.ok(row1.indexOf('Apple'), 'should render color text based on colorMap');
   t.end();
 });
