@@ -159,17 +159,17 @@ test('Components -> DataTableModal.render: csv 1', t => {
   ];
 
   const expectedColMeta = {
-    'gps_data.utc_timestamp': 'timestamp',
-    'gps_data.lat': 'real',
-    'gps_data.lng': 'real',
-    'gps_data.types': 'string',
-    epoch: 'timestamp',
-    has_result: 'boolean',
-    id: 'integer',
-    time: 'timestamp',
-    begintrip_ts_utc: 'timestamp',
-    begintrip_ts_local: 'timestamp',
-    date: 'date'
+    'gps_data.utc_timestamp': {name: 'gps_data.utc_timestamp', type: 'timestamp'},
+    'gps_data.lat': {name: 'gps_data.lat', type: 'real'},
+    'gps_data.lng': {name: 'gps_data.lng', type: 'real'},
+    'gps_data.types': {name: 'gps_data.types', type: 'string'},
+    epoch: {name: 'epoch', type: 'timestamp'},
+    has_result: {name: 'has_result', type: 'boolean'},
+    id: {name: 'id', type: 'integer'},
+    time: {name: 'time', type: 'timestamp'},
+    begintrip_ts_utc: {name: 'begintrip_ts_utc', type: 'timestamp'},
+    begintrip_ts_local: {name: 'begintrip_ts_local', type: 'timestamp'},
+    date: {name: 'date', type: 'date'}
   };
 
   t.deepEqual(props.columns, expectedColumns, 'DataTable should have the correct props.columns');
