@@ -82,6 +82,7 @@ const ExportDataModalFactory = () => {
 
     render() {
       const {
+        supportedDataTypes,
         datasets,
         selectedDataset,
         dataType,
@@ -125,7 +126,7 @@ const ExportDataModalFactory = () => {
                 </div>
               </div>
               <div className="selection">
-                {EXPORT_DATA_TYPE_OPTIONS.map(op => (
+                {supportedDataTypes.map(op => (
                   <StyledType
                     key={op.id}
                     selected={dataType === op.id}
@@ -182,6 +183,10 @@ const ExportDataModalFactory = () => {
     }
   }
   ExportDataModal.propTypes = propTypes;
+  ExportDataModal.defaultProps = {
+    supportedDataTypes: EXPORT_DATA_TYPE_OPTIONS
+  };
+
   return injectIntl(ExportDataModal);
 };
 

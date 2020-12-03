@@ -26,6 +26,7 @@ import {createSelector} from 'reselect';
 import get from 'lodash.get';
 import document from 'global/document';
 
+import {EXPORT_DATA_TYPE_OPTIONS} from 'constants/default-settings';
 import ModalDialogFactory from './modals/modal-dialog';
 import {exportJson, exportHtml, exportData, exportImage, exportMap} from 'utils/export-utils';
 import {isValidMapInfo} from 'utils/map-info-utils';
@@ -375,6 +376,7 @@ export default function ModalContainerFactory(
             template = (
               <ExportDataModal
                 {...uiState.exportData}
+                supportedDataTypes={EXPORT_DATA_TYPE_OPTIONS}
                 datasets={datasets}
                 applyCPUFilter={this.props.visStateActions.applyCPUFilter}
                 onClose={this._closeModal}
