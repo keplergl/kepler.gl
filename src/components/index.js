@@ -27,6 +27,7 @@ import {ChannelByValueSelectorFactory} from './side-panel/layer-panel/layer-conf
 import FieldSelectorFactory, {FieldListItemFactoryFactory} from './common/field-selector';
 import FieldTokenFactory from './common/field-token';
 import PanelHeaderActionFactory from './side-panel/panel-header-action';
+import InfoHelperFactory from 'components/common/info-helper';
 import {appInjector} from './container';
 
 // Components
@@ -118,7 +119,6 @@ export {default as HistogramPlotFactory} from './common/histogram-plot';
 export {default as LineChartFactory} from './common/line-chart';
 export {default as RangeBrushFactory} from './common/range-brush';
 export {default as TimeSliderMarkerFactory} from './common/time-slider-marker';
-export {default as InfoHelperFactory} from 'components/common/info-helper';
 
 // // Filters factory
 export {default as TimeWidgetFactory} from './filters/time-widget';
@@ -196,6 +196,7 @@ export const FieldSelector = appInjector.get(FieldSelectorFactory);
 export const FieldToken = appInjector.get(FieldTokenFactory);
 export const PanelHeaderAction = appInjector.get(PanelHeaderActionFactory);
 export const FieldListItemFactory = appInjector.get(FieldListItemFactoryFactory);
+export const InfoHelper = appInjector.get(InfoHelperFactory);
 
 export {
   appInjector,
@@ -205,7 +206,8 @@ export {
   VisConfigSwitchFactory,
   LayerConfigGroupFactory,
   ChannelByValueSelectorFactory,
-  FieldListItemFactoryFactory
+  FieldListItemFactoryFactory,
+  InfoHelperFactory
 };
 
 // Context
