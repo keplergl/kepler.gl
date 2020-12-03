@@ -195,6 +195,7 @@ class Typeahead extends Component {
     super(props);
 
     this.state = {
+      /** @type {ReadonlyArray<string>} */
       searchResults: [],
 
       // This should be called something else, 'entryValue'

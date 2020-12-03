@@ -99,12 +99,13 @@ const StyledMapControlPanelHeader = styled.div.attrs({
   }
 `;
 
-const ActionPanel = ({className, children}) => (
+const ActionPanel = ({className = '', children}) => (
   <StyledMapControlAction className={className}>{children}</StyledMapControlAction>
 );
 
 ActionPanel.displayName = 'ActionPanel';
 
+/** @type {import('./map-control').MapControlTooltipComponent} */
 const MapControlTooltip = React.memo(({id, message}) => (
   <Tooltip id={id} place="left" effect="solid">
     <span>
@@ -123,9 +124,10 @@ const MapLegendTooltip = ({id, message}) => (
   </Tooltip>
 );
 
+/** @type {import('./map-control').LayerSelectorPanelComponent} */
 const LayerSelectorPanel = React.memo(({items, onMapToggleLayer, isActive, toggleMenuPanel}) =>
   !isActive ? (
-    <MapControlButton
+    (<MapControlButton
       key={1}
       onClick={e => {
         e.preventDefault();
@@ -140,16 +142,17 @@ const LayerSelectorPanel = React.memo(({items, onMapToggleLayer, isActive, toggl
         id="toggle-layer"
         message={isActive ? 'tooltip.hideLayerPanel' : 'tooltip.showLayerPanel'}
       />
-    </MapControlButton>
+    </MapControlButton>)
   ) : (
-    <MapControlPanel header="header.visibleLayers" onClick={toggleMenuPanel}>
+    (<MapControlPanel header="header.visibleLayers" onClick={toggleMenuPanel}>
       <MapLayerSelector layers={items} onMapToggleLayer={onMapToggleLayer} />
-    </MapControlPanel>
+    </MapControlPanel>)
   )
 );
 
 LayerSelectorPanel.displayName = 'LayerSelectorPanel';
 
+/** @type {import('./map-control').MapControlPanelComponent} */
 const MapControlPanel = React.memo(
   ({children, header, onClick, scale = 1, isExport, disableClose = false, logoComponent}) => (
     <StyledMapControlPanel
@@ -184,6 +187,7 @@ export function MapLegendPanelFactory() {
   const defaultActionIcons = {
     legend: Legend
   };
+  /** @type {import('./map-control').MapLegendPanelComponent} */
   const MapLegendPanel = ({
     layers,
     isActive,
@@ -195,7 +199,7 @@ export function MapLegendPanelFactory() {
     actionIcons = defaultActionIcons
   }) =>
     !isActive ? (
-      <MapControlButton
+      (<MapControlButton
         key={2}
         data-tip
         data-for="show-legend"
@@ -207,9 +211,9 @@ export function MapLegendPanelFactory() {
       >
         <actionIcons.legend height="22px" />
         <MapLegendTooltip id="show-legend" message={'tooltip.showLegend'} />
-      </MapControlButton>
+      </MapControlButton>)
     ) : (
-      <MapControlPanel
+      (<MapControlPanel
         scale={scale}
         header={'header.layerLegend'}
         onClick={onToggleMenuPanel}
@@ -218,18 +222,20 @@ export function MapLegendPanelFactory() {
         logoComponent={logoComponent}
       >
         <MapLegend layers={layers} />
-      </MapControlPanel>
+      </MapControlPanel>)
     );
 
   MapLegendPanel.displayName = 'MapControlPanel';
   return MapLegendPanel;
 }
+
 SplitMapButtonFactory.deps = [];
 export function SplitMapButtonFactory() {
   const defaultActionIcons = {
     delete: Delete,
     split: Split
   };
+  /** @type {import('./map-control').SplitMapButtonComponent} */
   const SplitMapButton = React.memo(
     ({isSplit, mapIndex, onToggleSplitMap, actionIcons = defaultActionIcons}) => (
       <MapControlButton
@@ -255,11 +261,13 @@ export function SplitMapButtonFactory() {
   SplitMapButton.displayName = 'SplitMapButton';
   return SplitMapButton;
 }
+
 Toggle3dButtonFactory.deps = [];
 export function Toggle3dButtonFactory() {
   const defaultActionIcons = {
     cube: Cube3d
   };
+  /** @type {import('./map-control').Toggle3dButtonComponent} */
   const Toggle3dButton = React.memo(
     ({dragRotate, onTogglePerspective, actionIcons = defaultActionIcons}) => (
       <MapControlButton
@@ -298,6 +306,7 @@ export function MapDrawPanelFactory() {
     innerPolygon: Polygon,
     rectangle: Rectangle
   };
+  /** @type {import('./map-control').MapDrawPanelComponent} */
   const MapDrawPanel = React.memo(
     ({
       editor,
@@ -315,7 +324,6 @@ export function MapDrawPanelFactory() {
                 className="edit-feature"
                 onClick={() => onSetEditorMode(EDITOR_MODES.EDIT)}
                 label="toolbar.select"
-                iconHeight="22px"
                 icon={actionIcons.cursor}
                 active={editor.mode === EDITOR_MODES.EDIT}
               />
@@ -323,7 +331,6 @@ export function MapDrawPanelFactory() {
                 className="draw-feature"
                 onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_POLYGON)}
                 label="toolbar.polygon"
-                iconHeight="22px"
                 icon={actionIcons.innerPolygon}
                 active={editor.mode === EDITOR_MODES.DRAW_POLYGON}
               />
@@ -331,7 +338,6 @@ export function MapDrawPanelFactory() {
                 className="draw-rectangle"
                 onClick={() => onSetEditorMode(EDITOR_MODES.DRAW_RECTANGLE)}
                 label="toolbar.rectangle"
-                iconHeight="22px"
                 icon={actionIcons.rectangle}
                 active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
               />
@@ -339,7 +345,6 @@ export function MapDrawPanelFactory() {
                 className="toggle-features"
                 onClick={onToggleEditorVisibility}
                 label={editor.visible ? 'toolbar.hide' : 'toolbar.show'}
-                iconHeight="22px"
                 icon={editor.visible ? actionIcons.visible : actionIcons.hidden}
               />
             </StyledToolbar>
@@ -365,6 +370,7 @@ export function MapDrawPanelFactory() {
   return MapDrawPanel;
 }
 
+/** @type {import('./map-control').LocalePanelComponent} */
 const LocalePanel = React.memo(
   ({availableLocales, isActive, onToggleMenuPanel, onSetLocale, activeLocale}) => {
     const onClickItem = useCallback(
@@ -563,6 +569,7 @@ function MapControlFactory(MapDrawPanel, Toggle3dButton, SplitMapButton, MapLege
                 availableLocales={Object.keys(LOCALE_CODES)}
                 onSetLocale={this.props.onSetLocale}
                 onToggleMenuPanel={() => onToggleMapControl('mapLocale')}
+                disableClose={mapLocale.disableClose}
               />
             </ActionPanel>
           ) : null}

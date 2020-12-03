@@ -1,7 +1,7 @@
 import {
   InteractionConfig,
   Filter,
-  Tooltip,
+  TooltipInfo,
   SplitMap,
   AnimationConfig,
   VisState,
@@ -30,16 +30,16 @@ export type SavedFilter = {
 export type ParsedFilter = Partial<SavedFilter>;
 
 export type SavedInteractionConfig = {
-  tooltip: Tooltip['config'] & {
+  tooltip: TooltipInfo['config'] & {
     enabled: boolean;
   };
-  geocoder: Tooltip['geocoder'] & {
+  geocoder: TooltipInfo['geocoder'] & {
     enabled: boolean;
   };
-  brush: Tooltip['brush'] & {
+  brush: TooltipInfo['brush'] & {
     enabled: boolean;
   };
-  coordinate: Tooltip['coordinate'] & {
+  coordinate: TooltipInfo['coordinate'] & {
     enabled: boolean;
   };
 };
@@ -198,7 +198,9 @@ export type SavedMap = {
 };
 
 export type LoadedMap = {datasets?: ParsedDataset[] | null; config?: ParsedConfig | null};
-export const reducerSchema: {[key: string]: typeof mapStateSchema | typeof visStateSchema | typeof mapStyleSchema};
+export const reducerSchema: {
+  [key: string]: typeof mapStateSchema | typeof visStateSchema | typeof mapStyleSchema;
+};
 
 export class KeplerGLSchema {
   constructor(prop: {

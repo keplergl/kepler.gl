@@ -21,8 +21,8 @@
 import {Component} from 'react';
 import {bisectLeft} from 'd3-array';
 import {requestAnimationFrame, cancelAnimationFrame} from 'global/window';
-import {BASE_SPEED, FPS, ANIMATION_WINDOW} from 'constants';
 import Console from 'global/console';
+import {BASE_SPEED, FPS, ANIMATION_WINDOW} from 'constants/default-settings';
 
 function AnimationControllerFactory() {
   /**

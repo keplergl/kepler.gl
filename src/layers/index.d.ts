@@ -54,10 +54,15 @@ export type VisualChannel = {
   key: string;
   channelScaleType: string;
   nullValue: any;
-  defaultValue: any;
+  defaultMeasure: any;
   accessor?: string;
   condition?: (config: any) => boolean;
   getAttributeValue?: (config: any) => (d: any) => any;
+};
+
+export type VisualChannelDescription = {
+  label: string;
+  measure: string;
 };
 
 export class Layer {
@@ -71,15 +76,17 @@ export class Layer {
   config: LayerConfig;
   visConfigSettings: any;
   visualChannels: {[key: string]: VisualChannel};
+  _oldDataUpdateTriggers: any;
   hasAllColumns(): boolean;
   updateLayerConfig(p: Partial<LayerConfig>): Layer;
-  updateLayerDomain(datasets: Datasets, fitler?: Filter): Layer;
+  updateLayerDomain(datasets: Datasets, filter?: Filter): Layer;
   updateLayerVisualChannel(dataset: Dataset, channel: string): Layer;
   shouldCalculateLayerData(props: string[]): boolean;
   formatLayerData(datasets: Datasets, oldLayerData?: any);
   updateLayerColorUI(prop: string, newConfig: Partial<ColorUI>): Layer;
   validateVisualChannel(channel: string): void;
   isValidToSave(): boolean;
+  getVisualChannelDescription(key: string): VisualChannelDescription;
   isLayerHovered(objectInfo: any): boolean;
   getHoverData(object: any, allData?: Dataset['allData'], fields?: Dataset['fields']): any;
 }
@@ -100,4 +107,3 @@ export type LayerClassesType = {
   s2: Layer;
 };
 export const LayerClasses: LayerClassesType;
-export const LAYER_TYPES: {[key in keyof LayerClassesType]: string};

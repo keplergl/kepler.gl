@@ -84,6 +84,7 @@ export function createNewDataEntry({info, data, metadata}, datasets = {}) {
   }
 
   const allData = validatedData.rows;
+  /** @type {import('../actions').ProtoDataset['info']} */
   const datasetInfo = {
     id: generateHashId(4),
     label: 'new dataset',
@@ -190,7 +191,7 @@ export function sortDatasetByColumn(dataset, column, mode) {
     return dataset;
   }
 
-  const sortBy = SORT_ORDER[mode] || SORT_ORDER.ASCENDING;
+  const sortBy = SORT_ORDER[mode || ''] || SORT_ORDER.ASCENDING;
 
   if (sortBy === SORT_ORDER.UNSORT) {
     return {

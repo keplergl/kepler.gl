@@ -19,17 +19,9 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
-// import Switch from 'components/common/switch';
 import Checkbox from 'components/common/checkbox';
 import {generateHashId} from '../../utils/utils';
-
-const propTypes = {
-  // Required
-  layers: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onMapToggleLayer: PropTypes.func.isRequired
-};
 
 const MapLayerSelect = styled.div`
   padding: 12px;
@@ -39,6 +31,7 @@ const MapLayerSelect = styled.div`
   }
 `;
 
+/** @type {typeof import('./map-layer-selector').default} */
 const MapLayerSelector = ({layers, onMapToggleLayer}) => (
   <MapLayerSelect className="map-layer-selector">
     {layers.map((layer, index) => (
@@ -57,7 +50,5 @@ const MapLayerSelector = ({layers, onMapToggleLayer}) => (
     ))}
   </MapLayerSelect>
 );
-
-MapLayerSelector.propTypes = propTypes;
 
 export default MapLayerSelector;

@@ -45,7 +45,7 @@ const ImageModalContainer = ({
   }, [onUpdateImageSetting, cleanupExportImage]);
 
   useEffect(() => {
-    if (currentProvider && cloudProviders.length) {
+    if (currentProvider && cloudProviders && cloudProviders.length) {
       const provider = cloudProviders.find(p => p.name === currentProvider);
 
       if (provider && provider.thumbnail) {
@@ -70,8 +70,7 @@ const ImageModalContainer = ({
 };
 
 ImageModalContainer.defaultProps = {
-  cloudProviders: [],
-  currentProvider: null
+  cloudProviders: []
 };
 
 export default ImageModalContainer;

@@ -108,10 +108,10 @@ export type TimeRangeFilter = FilterBase &
     fieldType: 'timestamp';
     fixedDomain: true;
     value: [number, number];
-    bins?: Object,
+    bins?: Object;
     plotType: {
-      [key: string]: any
-    }
+      [key: string]: any;
+    };
   };
 
 export type PolygonFilter = FilterBase & {
@@ -243,7 +243,7 @@ export type TooltipField = {
   format: string | null;
 };
 export type CompareType = string | null;
-export type Tooltip = BaseInteraction & {
+export type TooltipInfo = BaseInteraction & {
   config: {
     fieldsToShow: {
       [key: string]: TooltipField[];
@@ -264,7 +264,7 @@ export type Coordinate = BaseInteraction & {
   position: number[] | null;
 };
 export type InteractionConfig = {
-  tooltip: Tooltip;
+  tooltip: TooltipInfo;
   geocoder: Geocoder;
   brush: Brush;
   coordinate: Coordinate;

@@ -44,6 +44,7 @@ import {getLayerHoverProp, renderDeckGlLayer} from 'utils/layer-utils';
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
 import {FILTER_TYPES, GEOCODER_LAYER_ID} from 'constants/default-settings';
 
+/** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE = {
   container: {
     display: 'inline-block',
@@ -511,7 +512,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             onMouseMove={this.props.visStateActions.onMouseMove}
           >
             {this._renderDeckOverlay(layersToRender)}
-            {this._renderMapboxOverlays(layersToRender)}
+            {this._renderMapboxOverlays()}
             <Editor
               index={index}
               datasets={datasets}

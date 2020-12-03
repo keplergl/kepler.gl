@@ -25,6 +25,7 @@ import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/f
 RangeFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, RangeFilterFactory];
 
 function RangeFilterPanelFactory(FieldPanelWithFieldSelect, RangeFilter) {
+  /** @type {import('./filter-panel-types').FilterPanelComponent} */
   const RangeFilterPanel = React.memo(
     ({
       idx,
