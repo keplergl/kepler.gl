@@ -548,7 +548,7 @@ export function receiveMapConfigUpdater(
     type?: ActionTypes.RECEIVE_MAP_CONFIG;
     payload: ReceiveMapConfigPayload;
   }
-);
+): VisState;
 export const INITIAL_VIS_STATE: VisState;
 export const DEFAULT_ANIMATION_CONFIG: AnimationConfig;
 export const DEFAULT_EDITOR: Editor;

@@ -728,9 +728,16 @@ export const addFilterUpdater = (state, action) =>
  * @type {typeof import('./vis-state-updaters').layerColorUIChangeUpdater}
  */
 export const layerColorUIChangeUpdater = (state, {oldLayer, prop, newConfig}) => {
+  const oldVixConfig = oldLayer.config.visConfig[prop];
   const newLayer = oldLayer.updateLayerColorUI(prop, newConfig);
-  if (prop === 'colorRange') {
-    return layerVisConfigChangeUpdater(state, {oldLayer, newVisConfig: newLayer.config.visConfig});
+  const newVisConfig = newLayer.config.visConfig[prop];
+  if (oldVixConfig !== newVisConfig) {
+    return layerVisConfigChangeUpdater(state, {
+      oldLayer,
+      newVisConfig: {
+        [prop]: newVisConfig
+      }
+    });
   }
   return {
     ...state,

@@ -40,8 +40,7 @@ const VideoContainer = styled.div`
   width: 640px;
   ${media.portable`
     width: 500px;
-  `}
-  ${media.palm`
+  `} ${media.palm`
     width: 100%;
   `};
 

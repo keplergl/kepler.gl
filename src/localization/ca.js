@@ -317,7 +317,8 @@ export default {
         tokenPlaceholder: "Enganxa el teu token d'accés a Mapbox",
         tokenMisuseWarning:
           '* Si no proporciones el teu propi token, el mapa podria fallar en qualsevol moment quan reemplacem el nostre token per evitar abusos. ',
-        tokenDisclaimer: 'Pots canviar el toke de Mapbox més endavant fent servir aquestes instruccions: ',
+        tokenDisclaimer:
+          'Pots canviar el toke de Mapbox més endavant fent servir aquestes instruccions: ',
         tokenUpdate: 'Com actualitzar un token preexistent.',
         modeTitle: 'Mode mapa',
         modeSubtitle1: 'Selecciona mode app. Més ',

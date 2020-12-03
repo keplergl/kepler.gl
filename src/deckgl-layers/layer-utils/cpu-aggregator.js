@@ -19,10 +19,9 @@
 // THE SOFTWARE.
 
 /* eslint-disable guard-for-in */
-import {AGGREGATION_OPERATION} from '@deck.gl/aggregation-layers';
+import {AGGREGATION_OPERATION, _BinSorter as BinSorter} from '@deck.gl/aggregation-layers';
 import {console as Console} from 'global/window';
 
-import EnhancedBinSorter from './enhanced-bin-sorter';
 import {aggregate} from 'utils/aggregate-utils';
 import {AGGREGATION_TYPES, SCALE_FUNC} from 'constants/default-settings';
 
@@ -73,7 +72,7 @@ export function getDimensionSortedBins(step, props, dimensionUpdater) {
   const {key} = dimensionUpdater;
   const {getValue} = this.state.dimensions[key];
 
-  const sortedBins = new EnhancedBinSorter(this.state.layerData.data || [], {
+  const sortedBins = new BinSorter(this.state.layerData.data || [], {
     getValue,
     filterData: props._filterData
   });

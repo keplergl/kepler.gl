@@ -29,14 +29,16 @@ import cloneDeep from 'lodash.clonedeep';
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 import {INITIAL_VIS_STATE} from 'reducers/vis-state-updaters';
 import * as VisStateActions from 'actions/vis-state-actions';
+import {addDataToMap} from 'actions/actions';
 
 import {colorMaker, layerColors} from 'layers/base-layer';
 import {getGpuFilterProps} from 'utils/gpu-filter-utils';
+import {renderDeckGlLayer} from 'utils/layer-utils';
 import {validateLayerWithData} from 'reducers/vis-state-merger';
 import {LayerClasses} from 'layers';
 import {processCsvData, processGeojson} from 'processors/data-processor';
-import {applyActions} from 'test/helpers/mock-state';
-import {visStateReducer} from 'reducers';
+import {applyActions, InitialState} from 'test/helpers/mock-state';
+import {visStateReducer, keplerGlReducerCore} from 'reducers';
 // Fixtures
 import csvData, {wktCsv} from 'test/fixtures/test-csv-data';
 import testLayerData, {bounds, fieldDomain, iconGeometry} from 'test/fixtures/test-layer-data';
@@ -45,6 +47,10 @@ import tripGeoJson from 'test/fixtures/trip-geojson';
 
 import {logStep} from '../../scripts/log';
 import {IntlWrapper} from './component-utils';
+import mapState from '../../src/reducers/map-state';
+
+export const dataId = '0dj3h';
+export const timeFilter = [{name: 'utc_timestamp', value: [1474071095000, 1474071608000]}];
 
 export function testCreateLayer(t, LayerClass, props = {}) {
   let layer;
@@ -62,8 +68,7 @@ export function testCreateLayerFromConfig(t, tc) {
   let layer;
 
   t.doesNotThrow(() => {
-    const {dataId} = layerConfig.config;
-    layer = validateLayerWithData(datasets[dataId], layerConfig, LayerClasses);
+    layer = validateLayerWithData(datasets[layerConfig.config.dataId], layerConfig, LayerClasses);
     t.ok(layer instanceof LayerClasses[layerConfig.type], `${layerConfig.type} layer created`);
     layer.updateLayerDomain(datasets);
     if (tc.afterLayerInitialized) {
@@ -112,17 +117,6 @@ export function testCreateCases(t, LayerClass, testCases) {
   });
 }
 
-export function testUpdateLayer(t, layer, updateMethod, updateArgs) {
-  let result;
-
-  t.doesNotThrow(() => {
-    result = layer[updateMethod](...updateArgs);
-    t.ok(layer, `layer ${updateMethod} called`);
-  }, 'update layer should not fail');
-
-  return {result, layer};
-}
-
 export function testFormatLayerDataCases(t, LayerClass, testCases) {
   testCases.forEach(tc => {
     logStep(`---> Test Format Layer Data ${tc.name}`);
@@ -135,7 +129,7 @@ export function testFormatLayerDataCases(t, LayerClass, testCases) {
 
       // apply 1 or multiple updates
       applyUpdates.forEach(update => {
-        const updated = testUpdateLayer(t, updatedLayer, update.method, update.args);
+        const updated = testLayerUpdate(t, updatedLayer, update.method, update.args);
         updatedLayer = updated.layer;
       });
     }
@@ -184,7 +178,7 @@ export function testRenderLayerCases(t, LayerClass, testCases) {
     }
 
     if (deckLayers) {
-      const initialDeckLayers = testInitializeDeckLayer(t, layer.type, deckLayers, {viewport});
+      const initialDeckLayers = testRenderDeckLayer(t, layer.type, deckLayers, {viewport});
 
       if (tc.assert) {
         tc.assert(initialDeckLayers, layer, result);
@@ -193,18 +187,21 @@ export function testRenderLayerCases(t, LayerClass, testCases) {
   });
 }
 
-export function testInitializeDeckLayer(t, layerType, deckLayers, {viewport}) {
-  const testViewport = new MapView().makeViewport({
-    width: viewport.width,
-    height: viewport.height,
-    viewState: viewport
-  });
+export function testRenderDeckLayer(t, layerType, deckLayers, {viewport, layerManager}) {
+  let deckLayerManager = layerManager;
+  if (!layerManager) {
+    const testViewport = new MapView().makeViewport({
+      width: viewport.width,
+      height: viewport.height,
+      viewState: viewport
+    });
+    deckLayerManager = new LayerManager(gl, {viewport: testViewport});
+  }
 
-  const layerManager = new LayerManager(gl, {viewport: testViewport});
   const spy = sinon.spy(Console, 'error');
 
   t.doesNotThrow(
-    () => layerManager.setLayers(Array.isArray(deckLayers) ? deckLayers : [deckLayers]),
+    () => deckLayerManager.setLayers(Array.isArray(deckLayers) ? deckLayers : [deckLayers]),
     `initialization of ${layerType} layer render should not fail`
   );
 
@@ -212,7 +209,130 @@ export function testInitializeDeckLayer(t, layerType, deckLayers, {viewport}) {
   t.deepEqual(spy.args, [], 'should not call console.error during layer initialization');
 
   spy.restore();
-  return layerManager.layers;
+  return deckLayerManager.getLayers();
+}
+
+export function testLayerUpdate(t, layer, updateMethod, updateArgs) {
+  let result;
+  t.doesNotThrow(() => {
+    result = layer[updateMethod](...updateArgs);
+    t.ok(layer, `layer ${updateMethod} called`);
+  }, 'update layer should not fail');
+
+  return {result, layer};
+}
+
+function testAttributeUpdate(t, attributeValues, layer, shouldUpdate) {
+  Object.keys(attributeValues).forEach(key => {
+    const newValue = layer.state.attributeManager.attributes[key].value;
+    if (shouldUpdate[key]) {
+      t.notDeepEqual(attributeValues[key], newValue, `attribute${key} should update`);
+    } else {
+      t.deepEqual(attributeValues[key], newValue, `attribute${key} should not update`);
+    }
+
+    attributeValues[key] = [...newValue];
+  });
+}
+
+export function renderLayerByState(t, state, layerManager) {
+  const layerCallbacks = () => {};
+  const layer = state.visState.layers[0];
+
+  let layerOverlay;
+  t.doesNotThrow(() => {
+    layerOverlay = renderDeckGlLayer(
+      {
+        ...state.visState,
+        mapState: state.mapState
+      },
+      layerCallbacks,
+      0
+    );
+  }, `${layer.type}.renderLayer should not fail`);
+  testRenderDeckLayer(t, layer.type, layerOverlay, {layerManager});
+
+  return {
+    layerManager,
+    deckGlLayers: layerManager.getLayers()
+  };
+}
+
+export function testUpdateLayer(t, {layerConfig, shouldUpdate}) {
+  const initialState = cloneDeep(InitialState);
+  const filter0 = {
+    dataId,
+    id: 'me',
+    type: 'timeRange',
+    ...timeFilter[0]
+  };
+  const filter1 = {
+    dataId,
+    id: 'me2',
+    type: 'range',
+    name: 'trip_distance',
+    value: [3, 8.33]
+  };
+
+  const stateWithLayer = keplerGlReducerCore(
+    initialState,
+    addDataToMap({
+      datasets: {
+        info: {id: dataId},
+        data: processCsvData(testLayerData)
+      },
+      config: {
+        version: 'v1',
+        config: {
+          visState: {
+            layers: [layerConfig],
+            filters: [filter0, filter1]
+          }
+        }
+      }
+    })
+  );
+
+  const layer = stateWithLayer.visState.layers[0];
+  t.ok(layer, 'should create layer');
+
+  const testViewport = new MapView().makeViewport({
+    width: mapState.width,
+    height: mapState.height,
+    viewState: mapState
+  });
+
+  const layerManager = new LayerManager(gl, {viewport: testViewport});
+
+  let rendered = renderLayerByState(t, stateWithLayer, layerManager);
+  const attributeValues = Object.keys(
+    rendered.deckGlLayers[0].state.attributeManager.attributes
+  ).reduce(
+    (accu, key) => ({
+      ...accu,
+      [key]: [...rendered.deckGlLayers[0].state.attributeManager.attributes[key].value]
+    }),
+    {}
+  );
+
+  // update Gpu Filter
+  let stateWithFilterUpdate = keplerGlReducerCore(
+    stateWithLayer,
+    VisStateActions.setFilter(0, 'value', [filter0.value[0] + 1, filter0.value[1]], 0)
+  );
+
+  rendered = renderLayerByState(t, stateWithFilterUpdate, rendered.layerManager);
+  logStep(`---> test: set GPU filter value`);
+  testAttributeUpdate(t, attributeValues, rendered.deckGlLayers[0], shouldUpdate.gpuFilter);
+
+  // update dynamic domain gpu Filter
+  stateWithFilterUpdate = keplerGlReducerCore(
+    stateWithFilterUpdate,
+    VisStateActions.setFilter(1, 'value', [filter1.value[0] + 0.5, filter1.value[1]], 0)
+  );
+  rendered = renderLayerByState(t, stateWithFilterUpdate, rendered.layerManager);
+  logStep(`---> test: set dynamic domain GPU filter value`);
+  testAttributeUpdate(t, attributeValues, rendered.deckGlLayers[0], shouldUpdate.dynamicGpuFilter);
 }
 
 /**
@@ -268,7 +388,6 @@ function addFilterToData(data, id, filters) {
 export const {rows, fields} = processCsvData(csvData);
 export const {rows: testRows, fields: testFields} = processCsvData(testLayerData);
 
-export const dataId = '0dj3h';
 export {
   dataId as tripDataId,
   fields as tripFields,
@@ -278,7 +397,6 @@ export {
 /*
  * point, arc, hex, csv dataset from with gpu time filter
  */
-const timeFilter = [{name: 'utc_timestamp', value: [1474071095000, 1474071608000]}];
 
 const stateWithTimeFilter = addFilterToData(
   {fields: testFields, rows: testRows},

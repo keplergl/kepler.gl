@@ -38,7 +38,7 @@ import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
 import {OVERLAY_TYPE} from 'layers/base-layer';
 import {setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
-import {getLayerHoverProp} from 'utils/layer-utils';
+import {getLayerHoverProp, renderDeckGlLayer} from 'utils/layer-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
@@ -345,41 +345,6 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       return screenCoord && {x: screenCoord[0], y: screenCoord[1]};
     }
 
-    _renderLayer = (overlays, idx) => {
-      const {
-        datasets,
-        layers,
-        layerData,
-        hoverInfo,
-        clicked,
-        mapState,
-        interactionConfig,
-        animationConfig
-      } = this.props;
-      const layer = layers[idx];
-      const data = layerData[idx];
-      const {gpuFilter} = datasets[layer.config.dataId] || {};
-
-      const objectHovered = clicked || hoverInfo;
-      const layerCallbacks = {
-        onSetLayerDomain: val => this._onLayerSetDomain(idx, val)
-      };
-
-      // Layer is Layer class
-      const layerOverlay = layer.renderLayer({
-        data,
-        gpuFilter,
-        idx,
-        interactionConfig,
-        layerCallbacks,
-        mapState,
-        animationConfig,
-        objectHovered
-      });
-
-      return overlays.concat(layerOverlay || []);
-    };
-
     _renderDeckOverlay(layersToRender) {
       const {
         mapState,
@@ -402,7 +367,13 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           .filter(
             idx => layers[idx].overlayType === OVERLAY_TYPE.deckgl && layersToRender[layers[idx].id]
           )
-          .reduce(this._renderLayer, []);
+          .reduce((overlays, idx) => {
+            const layerCallbacks = {
+              onSetLayerDomain: val => this._onLayerSetDomain(idx, val)
+            };
+            const layerOverlay = renderDeckGlLayer(this.props, layerCallbacks, idx);
+            return overlays.concat(layerOverlay || []);
+          }, []);
       }
 
       if (mapStyle.visibleLayerGroups['3d building']) {

@@ -23,7 +23,6 @@ import {DATA_TYPES} from 'type-analyzer';
 
 import Layer, {colorMaker} from '../base-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
-import {hexToRgb} from 'utils/color-utils';
 import {getGeojsonDataMaps, getGeojsonBounds, getGeojsonFeatureTypes} from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
 import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
@@ -62,6 +61,7 @@ export const geojsonVisConfigs = {
 
 export const geoJsonRequiredColumns = ['geojson'];
 export const featureAccessor = ({geojson}) => d => d[geojson.fieldIdx];
+// access feature properties from geojson sub layer
 export const defaultElevation = 500;
 export const defaultLineWidth = 1;
 export const defaultRadius = 1;
@@ -92,8 +92,17 @@ export default class GeoJsonLayer extends Layer {
   }
 
   get visualChannels() {
+    const visualChannels = super.visualChannels;
     return {
-      ...super.visualChannels,
+      color: {
+        ...visualChannels.color,
+        accessor: 'getFillColor',
+        condition: config => config.visConfig.filled,
+        nullValue: visualChannels.color.nullValue,
+        getAttributeValue: config => d => d.properties.fillColor || config.color,
+        // used this to get updateTriggers
+        defaultValue: config => config.color
+      },
       strokeColor: {
         property: 'strokeColor',
         field: 'strokeColorField',
@@ -102,12 +111,21 @@ export default class GeoJsonLayer extends Layer {
         range: 'strokeColorRange',
         key: 'strokeColor',
         channelScaleType: CHANNEL_SCALES.color,
-        condition: config => config.visConfig.stroked
+        accessor: 'getLineColor',
+        condition: config => config.visConfig.stroked,
+        nullValue: visualChannels.color.nullValue,
+        getAttributeValue: config => d =>
+          d.properties.lineColor || config.visConfig.strokeColor || config.color,
+        // used this to get updateTriggers
+        defaultValue: config => config.visConfig.strokeColor || config.color
       },
       size: {
-        ...super.visualChannels.size,
+        ...visualChannels.size,
         property: 'stroke',
-        condition: config => config.visConfig.stroked
+        accessor: 'getLineWidth',
+        condition: config => config.visConfig.stroked,
+        nullValue: 0,
+        getAttributeValue: () => d => d.properties.lineWidth || defaultLineWidth
       },
       height: {
         property: 'height',
@@ -117,7 +135,10 @@ export default class GeoJsonLayer extends Layer {
         range: 'heightRange',
         key: 'height',
         channelScaleType: CHANNEL_SCALES.size,
-        condition: config => config.visConfig.enable3d
+        accessor: 'getElevation',
+        condition: config => config.visConfig.enable3d,
+        nullValue: 0,
+        getAttributeValue: () => d => d.properties.elevation || defaultElevation
       },
       radius: {
         property: 'radius',
@@ -126,7 +147,10 @@ export default class GeoJsonLayer extends Layer {
         domain: 'radiusDomain',
         range: 'radiusRange',
         key: 'radius',
-        channelScaleType: CHANNEL_SCALES.radius
+        channelScaleType: CHANNEL_SCALES.radius,
+        accessor: 'getRadius',
+        nullValue: 0,
+        getAttributeValue: () => d => d.properties.radius || defaultRadius
       }
     };
   }
@@ -187,98 +211,20 @@ export default class GeoJsonLayer extends Layer {
   calculateDataAttribute({allData, filteredIndex}, getPosition) {
     return filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
   }
-  // TODO: fix complexity
-  /* eslint-disable complexity */
-  formatLayerData(datasets, oldLayerData, opt = {}) {
-    const {
-      colorScale,
-      colorField,
-      colorDomain,
-      strokeColorField,
-      strokeColorScale,
-      strokeColorDomain,
-      color,
-      sizeScale,
-      sizeDomain,
-      sizeField,
-      heightField,
-      heightDomain,
-      heightScale,
-      radiusField,
-      radiusDomain,
-      radiusScale,
-      visConfig
-    } = this.config;
 
-    const {
-      enable3d,
-      stroked,
-      colorRange,
-      heightRange,
-      sizeRange,
-      radiusRange,
-      strokeColorRange,
-      strokeColor
-    } = visConfig;
-
+  formatLayerData(datasets, oldLayerData) {
     const {allData, gpuFilter} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);
-
-    // fill color
-    const cScale =
-      colorField &&
-      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
-
-    // stroke color
-    const scScale =
-      strokeColorField &&
-      this.getVisChannelScale(
-        strokeColorScale,
-        strokeColorDomain,
-        strokeColorRange.colors.map(hexToRgb)
-      );
-
-    // calculate stroke scale - if stroked = true
-    const sScale =
-      sizeField && stroked && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
-
-    // calculate elevation scale - if extruded = true
-    const eScale =
-      heightField && enable3d && this.getVisChannelScale(heightScale, heightDomain, heightRange);
-
-    // point radius
-    const rScale = radiusField && this.getVisChannelScale(radiusScale, radiusDomain, radiusRange);
-
-    // access feature properties from geojson sub layer
-    const getDataForGpuFilter = f => allData[f.properties.index];
-    const getIndexForGpuFilter = f => f.properties.index;
+    const valueAccessor = f => allData[f.properties.index];
+    const indexAccessor = f => f.properties.index;
+    const accessors = this.getAttributeAccessors(valueAccessor);
 
     return {
       data,
-      getFilterValue: gpuFilter.filterValueAccessor(getIndexForGpuFilter, getDataForGpuFilter),
-      getFillColor: d =>
-        cScale
-          ? this.getEncodedChannelValue(cScale, allData[d.properties.index], colorField)
-          : d.properties.fillColor || color,
-      getLineColor: d =>
-        scScale
-          ? this.getEncodedChannelValue(scScale, allData[d.properties.index], strokeColorField)
-          : d.properties.lineColor || strokeColor || color,
-      getLineWidth: d =>
-        sScale
-          ? this.getEncodedChannelValue(sScale, allData[d.properties.index], sizeField, 0)
-          : d.properties.lineWidth || defaultLineWidth,
-      getElevation: d =>
-        eScale
-          ? this.getEncodedChannelValue(eScale, allData[d.properties.index], heightField, 0)
-          : d.properties.elevation || defaultElevation,
-      getRadius: d =>
-        rScale
-          ? this.getEncodedChannelValue(rScale, allData[d.properties.index], radiusField, 0)
-          : d.properties.radius || defaultRadius
+      getFilterValue: gpuFilter.filterValueAccessor(indexAccessor, valueAccessor),
+      ...accessors
     };
   }
-  /* eslint-enable complexity */
 
   updateLayerMeta(allData) {
     const getFeature = this.getPositionAccessor();
@@ -335,31 +281,7 @@ export default class GeoJsonLayer extends Layer {
     };
 
     const updateTriggers = {
-      getElevation: {
-        heightField: this.config.heightField,
-        heightScaleType: this.config.heightScale,
-        heightRange: visConfig.heightRange
-      },
-      getFillColor: {
-        color: this.config.color,
-        colorField: this.config.colorField,
-        colorRange: visConfig.colorRange,
-        colorScale: this.config.colorScale
-      },
-      getLineColor: {
-        color: visConfig.strokeColor,
-        colorField: this.config.strokeColorField,
-        colorRange: visConfig.strokeColorRange,
-        colorScale: this.config.strokeColorScale
-      },
-      getLineWidth: {
-        sizeField: this.config.sizeField,
-        sizeRange: visConfig.sizeRange
-      },
-      getRadius: {
-        radiusField: this.config.radiusField,
-        radiusRange: visConfig.radiusRange
-      },
+      ...this.getVisualChannelUpdateTriggers(),
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
 

@@ -55,6 +55,8 @@ export const DEFAULT_CUSTOM_PALETTE = {
   colors: []
 };
 
+export const UNKNOWN_COLOR_KEY = '__unknownColor__';
+
 /** @type {import('./layer-factory').ColorUI} */
 export const DEFAULT_COLOR_UI = {
   // customPalette in edit

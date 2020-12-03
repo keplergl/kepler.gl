@@ -49,13 +49,13 @@ const StyledSortableItem = styled.div`
   :not(.sorting) {
     :hover {
       background-color: ${props => props.theme.panelBackgroundHover};
-      ${dragHandleActive}
+      ${dragHandleActive};
     }
   }
 
   &.sorting-colors {
     background-color: ${props => props.theme.panelBackgroundHover};
-    ${dragHandleActive}
+    ${dragHandleActive};
   }
 `;
 

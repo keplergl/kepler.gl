@@ -22,7 +22,7 @@
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
 
-import TripLayer, {defaultWidth} from 'layers/trip-layer/trip-layer';
+import TripLayer, {defaultLineWidth} from 'layers/trip-layer/trip-layer';
 
 import {
   dataId,
@@ -127,7 +127,7 @@ test('#TripLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getWidth),
-          [defaultWidth, defaultWidth, defaultWidth],
+          [defaultLineWidth, defaultLineWidth, defaultLineWidth],
           'getWidth should return correct value'
         );
         t.deepEqual(
