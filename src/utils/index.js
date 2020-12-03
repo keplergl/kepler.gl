@@ -29,7 +29,7 @@ export {
 export {findPointFieldPairs, createNewDataEntry, datasetColorMaker} from './dataset-utils';
 export {hexToRgb} from './color-utils';
 export {errorNotification} from './notifications-utils';
-export {dataURItoBlob} from './export-utils';
+export {dataURItoBlob, downloadFile} from './export-utils';
 export {calculateLayerData} from './layer-utils';
 export {applyFilterFieldName, applyFiltersToDatasets} from 'utils/filter-utils';
 

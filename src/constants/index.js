@@ -69,5 +69,6 @@ export {BUG_REPORT_LINK, USER_GUIDE_DOC} from './user-guides';
 
 export {VizColorPalette, DataVizColors} from './custom-color-ranges';
 export {COLOR_RANGES, DEFAULT_COLOR_RANGE} from './color-ranges';
+export {default as KeyEvent} from './keyevent';
 export {LAYER_TYPES} from 'layers/types';
 export {PLOT_TYPES} from 'utils/filter-utils';
