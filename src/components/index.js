@@ -145,7 +145,7 @@ export {default as FieldSelectorFactory} from './common/field-selector';
 export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
-export {default as Checkbox} from 'components/common/checkbox';
+export {default as Checkbox} from './common/checkbox';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export {default as LoadingDialog} from './modals/loading-dialog';
 export {default as FieldTokenFactory} from './common/field-token';
@@ -154,7 +154,9 @@ export {default as ProgressBar} from './common/progress-bar';
 export {default as FileUploadProgress} from './common/file-uploader/file-upload-progress';
 export {default as Slider} from './common/slider/slider';
 export {DatasetSquare} from './common/styled-components';
-export {default as ActionPanel, ActionPanelItem} from 'components/common/action-panel';
+export {default as ActionPanel, ActionPanelItem} from './common/action-panel';
+export {default as DataTableFactory} from './common/data-table';
+export {default as CanvasHack} from './common/data-table/canvas';
 
 // side pane components
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
