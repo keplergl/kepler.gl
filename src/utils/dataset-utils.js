@@ -213,4 +213,3 @@ export function sortDatasetByColumn(dataset, column, mode) {
     sortOrder
   };
 }
-
