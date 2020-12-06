@@ -423,7 +423,9 @@ export function validateLayersByDatasets(datasets, layerClasses, layers) {
 
   layers.forEach(layer => {
     let validateLayer;
-    if (datasets[layer.config.dataId]) {
+    if (!layer || !layer.config) {
+      validateLayer = null;
+    } else if (datasets[layer.config.dataId]) {
       // datasets are already loaded
       validateLayer = validateLayerWithData(datasets[layer.config.dataId], layer, layerClasses);
     }
