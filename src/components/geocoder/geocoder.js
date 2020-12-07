@@ -37,7 +37,7 @@ const PLACEHOLDER = 'Enter an address or coordinates, ex 37.79,-122.40';
 
 let debounceTimeout = null;
 
-const testForCoordinates = query => {
+export const testForCoordinates = query => {
   const isValid = COORDINATE_REGEX.test(query.trim());
 
   if (!isValid) {

@@ -25,6 +25,7 @@ import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import GeocoderPanelFactory from 'components/geocoder-panel';
 import {appInjector} from 'components/container';
+import {testForCoordinates} from 'components/geocoder/geocoder';
 
 const GeocoderPanel = appInjector.get(GeocoderPanelFactory);
 const MAPBOX_TOKEN = process.env.MapboxAccessToken;
@@ -190,5 +191,32 @@ test('GeocoderPanel - render', t => {
     'Should be dispatching removeDataset action on removeGeocoderDataset'
   );
 
+  t.end();
+});
+
+test('Geocoder -> testForCoordinates', t => {
+  t.deepEqual(
+    testForCoordinates('21.22,-138.0'),
+    [true, 21.22, -138.0],
+    'should recognize valid coordinates'
+  );
+
+  t.deepEqual(
+    testForCoordinates('san francisco'),
+    [false, 'san francisco'],
+    'should recognize invalid coordinates'
+  );
+
+  t.deepEqual(
+    testForCoordinates('91,123'),
+    [false, '91,123'],
+    'should recognize invalid coordinates'
+  );
+
+  t.deepEqual(
+    testForCoordinates('-21.122, -123.4321'),
+    [true, -21.122, -123.4321],
+    'should recognize valid coordinates'
+  );
   t.end();
 });
