@@ -19,6 +19,8 @@
 // THE SOFTWARE.
 
 import geoViewport from '@mapbox/geo-viewport';
+import {validateBounds} from 'utils/projection-utils';
+import Console from 'global/console';
 
 /** @typedef {import('./map-state-updaters').MapState} MapState */
 
@@ -109,7 +111,11 @@ export const updateMapUpdater = (state, action) => ({
  * @public
  */
 export const fitBoundsUpdater = (state, action) => {
-  const bounds = action.payload;
+  const bounds = validateBounds(action.payload);
+  if (!bounds) {
+    Console.warn('invalid map bounds provided')
+    return state;
+  }  
   const {zoom} = geoViewport.viewport(bounds, [state.width, state.height]);
   // center being calculated by geo-vieweport.viewport has a complex logic that
   // projects and then unprojects the coordinates to determine the center

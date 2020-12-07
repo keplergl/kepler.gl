@@ -111,6 +111,24 @@ test('#mapStateReducer -> FIT_BOUNDS', t => {
   t.end();
 });
 
+test('#mapStateReducer -> FIT_BOUNDS.invalid', t => {
+  // default input and output in @mapbox/geo-viewport
+  // https://github.com/mapbox/geo-viewport
+
+  const mapUpdate = {
+    width: 640,
+    height: 480
+  };
+
+  const stateWidthMapDimension = reducer(undefined, updateMap(mapUpdate));
+  const updatedState = reducer(stateWidthMapDimension, fitBounds(null));
+  t.equal(updatedState, stateWidthMapDimension, 'should not update state when bounds is invalid');
+  const updatedState2 = reducer(stateWidthMapDimension, fitBounds([500, -100, 322, 9]));
+  t.equal(updatedState2, stateWidthMapDimension, 'should not update state when bounds is invalid');
+
+  t.end();
+});
+
 test('#mapStateReducer -> SPLIT_MAP: toggle', t => {
   let newState = reducer(INITIAL_MAP_STATE, toggleSplitMap());
 
