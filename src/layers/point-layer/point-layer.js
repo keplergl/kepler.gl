@@ -228,7 +228,10 @@ export default class PointLayer extends Layer {
 
   renderLayer(opts) {
     const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
-    const radiusScale = this.getRadiusScaleByZoom(mapState);
+
+    // if no field size is defined we need to pass fixed radius = false
+    const fixedRadius = this.config.visConfig.fixedRadius && Boolean(this.config.sizeField);
+    const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
 
     const layerProps = {
       stroked: this.config.visConfig.outline,
