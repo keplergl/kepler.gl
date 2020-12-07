@@ -22,6 +22,7 @@ import test from 'tape';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
 import {DATA_TYPES} from 'type-analyzer';
+import cloneDeep from 'lodash.clonedeep';
 
 import testData, {
   dataWithNulls,
@@ -118,7 +119,7 @@ test('Processor -> processCsvData', t => {
   t.throws(() => processCsvData(''), 'should throw if csv is empty');
 
   // load sample dataset csv as text
-  const {fields, rows} = processCsvData(testData);
+  const {fields, rows} = processCsvData(cloneDeep(testData));
 
   t.equal(rows.length, testAllData.length, `should return ${testAllData.length} rows`);
 
@@ -188,7 +189,7 @@ test('Processor -> processCsv.wkt', t => {
 });
 
 test('Processor => processGeojson', t => {
-  const {fields, rows} = processGeojson(geojsonData);
+  const {fields, rows} = processGeojson(cloneDeep(geojsonData));
 
   t.equal(fields.length, geojsonFields.length, 'should have same field length');
   fields.forEach((f, i) => {
@@ -203,7 +204,7 @@ test('Processor => processGeojson', t => {
 });
 
 test('Processor => processGeojson: with style property', t => {
-  const {fields, rows} = processGeojson(geoJsonWithStyle);
+  const {fields, rows} = processGeojson(cloneDeep(geoJsonWithStyle));
 
   t.deepEqual(fields, geoStyleFields, 'should preserve objects in geojson properties');
   t.deepEqual(rows, geoStyleRows, 'should preserve objects in geojson properties');

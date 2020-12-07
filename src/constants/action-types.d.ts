@@ -28,6 +28,7 @@ export type ActionType = {
   SHOW_DATASET_TABLE: string;
   UPDATE_LAYER_BLENDING: string;
   UPDATE_VIS_DATA: string;
+  RENAME_DATASET: string;
   TOGGLE_FILTER_ANIMATION: string;
   UPDATE_FILTER_ANIMATION_SPEED: string;
   PLAY_ANIMATION: string;

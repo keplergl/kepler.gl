@@ -406,6 +406,7 @@ export function analyzerTypeToFieldType(aType) {
 
 /**
  * Process data where each row is an object, output can be passed to [`addDataToMap`](../actions/actions.md#adddatatomap)
+ * NOTE: This function may mutate input.
  * @param rawData an array of row object, each object should have the same number of keys
  * @returns dataset containing `fields` and `rows`
  * @type {typeof import('./data-processor').processRowObject}
@@ -443,7 +444,8 @@ export function processRowObject(rawData) {
 /**
  * Process GeoJSON [`FeatureCollection`](http://wiki.geojson.org/GeoJSON_draft_version_6#FeatureCollection),
  * output a data object with `{fields: [], rows: []}`.
- * The data object can be wrapped in a `dataset` and pass to [`addDataToMap`](../actions/actions.md#adddatatomap)
+ * The data object can be wrapped in a `dataset` and passed to [`addDataToMap`](../actions/actions.md#adddatatomap)
+ * NOTE: This function may mutate input.
  *
  * @param  rawData raw geojson feature collection
  * @returns  dataset containing `fields` and `rows`
