@@ -174,6 +174,9 @@ export function setExportMapHTMLModeUpdater(
   state: UiState,
   action: UiStateActions.SetExportHTMLMapModeUpdaterAction
 ): UiState;
+export function showDatasetTableUpdater(
+  state: UiState
+)
 export function setLocaleUpdater(
   state: UiState,
   action: UiStateActions.SetLocaleUpdaterAction

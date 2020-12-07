@@ -21,6 +21,7 @@
 // @ts-nocheck
 import {
   ADD_DATA_ID,
+  DATA_TABLE_ID,
   DEFAULT_NOTIFICATION_TOPICS,
   DELETE_DATA_ID,
   EXPORT_DATA_TYPE,
@@ -703,6 +704,16 @@ export const toggleSplitMapUpdater = state => ({
     {}
   )
 });
+
+/**
+ * Toggle modal data
+ * @memberof uiStateUpdaters
+ * @param state
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').showDatasetTableUpdater}
+ * @public
+ */
+export const showDatasetTableUpdater = state => toggleModalUpdater(state, {payload: DATA_TABLE_ID});
 
 /**
  * Set the locale of the UI

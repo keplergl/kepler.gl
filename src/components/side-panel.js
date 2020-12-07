@@ -36,7 +36,6 @@ import CustomPanelsFactory from './side-panel/custom-panel';
 import {
   ADD_DATA_ID,
   ADD_MAP_STYLE_ID,
-  DATA_TABLE_ID,
   EXPORT_DATA_ID,
   EXPORT_MAP_ID,
   SHARE_MAP_ID,
@@ -132,9 +131,7 @@ export default function SidePanelFactory(
     };
 
     _showDatasetTable = dataId => {
-      // this will open data table modal
       this.props.visStateActions.showDatasetTable(dataId);
-      this.props.uiStateActions.toggleModal(DATA_TABLE_ID);
     };
 
     _showAddDataModal = () => {
