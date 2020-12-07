@@ -6,7 +6,7 @@ import ActionTypes from 'constants/action-types';
 import {LoaderObject} from '@loaders.gl/loader-utils';
 import {VisStateMergers} from './vis-state-merger';
 import KeplerGLSchema from 'schemas';
-import {LayerClassesType} from 'layers';
+import {LayerClassesType, Layer} from 'layers';
 
 export type HistogramBin = {
   x0: number | undefined;

@@ -176,7 +176,20 @@ export const config = {
                 category: 'Uber',
                 colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
               }
-            }
+            },
+            textLabel: [
+              {
+                field: {
+                  name: 'pickup_latitude',
+                  type: 'real'
+                },
+                color: [255, 255, 255],
+                size: 18,
+                offset: [0, 0],
+                anchor: 'start',
+                alignment: 'center'
+              }
+            ]
           },
           visualChannels: {
             colorField: {

@@ -6,6 +6,8 @@ export {
   default as KeplerGlSchema,
   ParsedConfig,
   ParsedDataset,
+  ParsedLayer,
+  ParsedFilter,
   SavedConfigV1,
   SavedDatasetV1,
   SavedMap,

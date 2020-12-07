@@ -74,7 +74,7 @@ export type SavedLayer = {
 export type ParsedLayer = {
   id?: string;
   type?: string;
-  config?: Partial<SavedLayer['config']> & SavedVisualChannels;
+  config?: Partial<SavedLayer['config']>;
 };
 
 export type SavedAnimationConfig = {

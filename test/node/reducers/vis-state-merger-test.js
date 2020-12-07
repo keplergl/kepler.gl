@@ -247,6 +247,22 @@ test('VisStateMerger.v1 -> mergeFilters -> toWorkingState', t => {
   t.end();
 });
 
+test('VisStateMerger -> mergeLayers -> invalid layer config', t => {
+  const oldState = cloneDeep(InitialState);
+  const oldVisState = oldState.visState;
+
+  const layers = [
+    {id: 'abc'},
+    {type: 'taro'}, // no type
+    {type: 'point', id: 'yes'} // no config
+  ];
+  const mergedState = mergeLayers(oldVisState, layers, true);
+
+  t.equal(mergedState.layers, oldVisState.layers, 'merge invalid layer should not error');
+  t.deepEqual(mergedState.layerToBeMerged, layers, 'layerToBeMerged should contain invalid layers');
+  t.end();
+});
+
 test('VisStateMerger.current -> mergeLayers -> toEmptyState', t => {
   const stateToSave = cloneDeep(StateWFilesFiltersLayerColor);
   const appStateToSave = SchemaManager.save(stateToSave);
