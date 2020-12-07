@@ -21,6 +21,8 @@
 import {ascending, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import keyMirror from 'keymirror';
 import get from 'lodash.get';
+import isEqual from 'lodash.isequal';
+
 import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
@@ -970,9 +972,10 @@ export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIn
 
   // TODO: validate field type
   const field = fields[fieldIndex];
-  const filterProps = field.hasOwnProperty('filterProps')
-    ? field.filterProps
-    : getFilterProps(allData, field);
+  const filterProps =
+    field.hasOwnProperty('filterProps') && field.filterProps
+      ? field.filterProps
+      : getFilterProps(allData, field);
 
   const newFilter = {
     ...(mergeDomain ? mergeFilterDomainStep(filter, filterProps) : {...filter, ...filterProps}),
@@ -1145,4 +1148,76 @@ export function filterDatasetCPU(state, dataId) {
   };
 
   return set(['datasets', dataId], cpuFilteredDataset, state);
+}
+
+/**
+ * Validate parsed filters with datasets and add filterProps to field
+ * @type {typeof import('./filter-utils').validateFiltersUpdateDatasets}
+ */
+export function validateFiltersUpdateDatasets(state, filtersToValidate = []) {
+  const validated = [];
+  const failed = [];
+  const {datasets} = state;
+  let updatedDatasets = datasets;
+
+  // merge filters
+  filtersToValidate.forEach(filter => {
+    // we can only look for datasets define in the filter dataId
+    const datasetIds = toArray(filter.dataId);
+
+    // we can merge a filter only if all datasets in filter.dataId are loaded
+    if (datasetIds.every(d => datasets[d])) {
+      // all datasetIds in filter must be present the state datasets
+      const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce(
+        (acc, datasetId) => {
+          const dataset = updatedDatasets[datasetId];
+          const layers = state.layers.filter(l => l.config.dataId === dataset.id);
+          const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(
+            acc.augmentedDatasets[datasetId] || dataset,
+            filter,
+            layers
+          );
+
+          if (updatedFilter) {
+            return {
+              ...acc,
+              // merge filter props
+              filter: acc.filter
+                ? {
+                    ...acc.filter,
+                    ...mergeFilterDomainStep(acc, updatedFilter)
+                  }
+                : updatedFilter,
+
+              applyToDatasets: [...acc.applyToDatasets, datasetId],
+
+              augmentedDatasets: {
+                ...acc.augmentedDatasets,
+                [datasetId]: updatedDataset
+              }
+            };
+          }
+
+          return acc;
+        },
+        {
+          filter: null,
+          applyToDatasets: [],
+          augmentedDatasets: {}
+        }
+      );
+
+      if (validatedFilter && isEqual(datasetIds, applyToDatasets)) {
+        validated.push(validatedFilter);
+        updatedDatasets = {
+          ...updatedDatasets,
+          ...augmentedDatasets
+        };
+      }
+    } else {
+      failed.push(filter);
+    }
+  });
+
+  return {validated, failed, updatedDatasets};
 }

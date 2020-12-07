@@ -19,15 +19,18 @@
 // THE SOFTWARE.
 
 import test from 'tape';
+import moment from 'moment';
+
 import {
   testCreateCases,
   testFormatLayerDataCases,
-  testRenderLayerCases
+  testRenderLayerCases,
+  preparedDataset,
+  dataId,
+  testRows,
+  preparedFilterDomain0
 } from 'test/helpers/layer-utils';
-import {getGpuFilterProps} from 'utils/gpu-filter-utils';
-import {data} from 'test/fixtures/s2-geometry';
 import S2GeometryLayer, {defaultElevation} from 'layers/s2-geometry-layer/s2-geometry-layer';
-import {processCsvData} from 'processors/data-processor';
 
 test('#S2Geometry -> constructor', t => {
   const TEST_CASES = [
@@ -67,86 +70,36 @@ test('#S2Geometry -> constructor', t => {
 });
 
 test('#S2Geometry -> formatLayerData', t => {
-  const {rows, fields} = processCsvData(data);
-
-  t.deepEqual(
-    fields,
-    [
-      {
-        name: 's2',
-        format: '',
-        tableFieldIndex: 1,
-        type: 'string',
-        analyzerType: 'STRING'
-      },
-      {
-        name: 'value',
-        format: '',
-        tableFieldIndex: 2,
-        type: 'real',
-        analyzerType: 'FLOAT'
-      }
-    ],
-    'Should compute fields correctly'
-  );
-
   const filteredIndex = [0, 2, 4];
-
-  const dataId = 'puppy';
-
-  const nullRows = [
-    [null, 12345],
-    [null, 3456]
-  ];
-
-  const invalidRows = [
-    [0, 12345],
-    [1234, 3456],
-    ['abcd', 123]
-  ];
-
-  const allRows = nullRows.concat(rows).concat(invalidRows);
-  const dataset = {
-    fields,
-    rows,
-    id: dataId,
-    data: allRows,
-    allData: allRows,
-    filteredIndexForDomain: filteredIndex,
-    filteredIndex,
-    gpuFilter: getGpuFilterProps([], dataId, fields)
-  };
-
-  const props = {
-    name: 's2 layer',
-    layer: {
-      type: 's2',
-      id: 'test_layer_1',
-      config: {
-        dataId,
-        label: 'S2',
-        color: [255, 203, 153],
-        columns: {
-          token: 's2'
-        },
-        isVisible: true
-      }
-    },
-    datasets: {
-      [dataId]: dataset
-    }
-  };
 
   const TEST_CASES = [
     {
-      ...props,
-      data: [data, rows, filteredIndex, undefined],
+      name: 's2 layer',
+      layer: {
+        type: 's2',
+        id: 'test_layer_1',
+        config: {
+          dataId,
+          label: 'S2',
+          color: [2, 3, 4],
+          columns: {
+            token: 's2x'
+          },
+          isVisible: true
+        }
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
       assert: result => {
         const {layerData, layer} = result;
         const expectedLayerData = {
           data: [
-            {index: 2, token: rows[0][0], data: rows[0]},
-            {index: 4, token: rows[2][0], data: rows[2]}
+            {index: 0, token: '80858004', data: testRows[0]},
+            {index: 4, token: '8085801c', data: testRows[4]}
           ],
           getElevation: () => {},
           getFillColor: () => {},
@@ -156,17 +109,11 @@ test('#S2Geometry -> formatLayerData', t => {
           getLineWidth: () => {}
         };
 
-        t.equal(
-          layerData.getElevation(),
-          defaultElevation,
-          `Elevation should be set to ${defaultElevation}`
-        );
-
         // test layer.meta
         t.deepEqual(
           layer.meta,
           {
-            bounds: [-122.39575481805574, -50.18582525999928, 143.41537625914856, 37.81968456730113]
+            bounds: [-122.38442501650697, 37.79109908631398, -122.3617617587711, 37.81968456730113]
           },
           'should format correct S2 layer meta'
         );
@@ -182,52 +129,110 @@ test('#S2Geometry -> formatLayerData', t => {
           Object.keys(expectedLayerData).sort(),
           `layerData should have ${expectedLayerData.length} keys`
         );
+
+        t.deepEqual(layerData.getFillColor, [2, 3, 4], 'getFillColor should be a constant');
+        t.deepEqual(layerData.getElevation, defaultElevation, 'getElevation should be a constant');
+        t.deepEqual(
+          layerData.data.map(layerData.getS2Token),
+          ['80858004', '8085801c'],
+          'getS2Token should return correct token'
+        );
+        // getFilterValue
+        t.deepEqual(
+          layerData.data.map(layerData.getFilterValue),
+          [
+            [Number.MIN_SAFE_INTEGER, 0, 0, 0],
+            [moment.utc(testRows[4][0]).valueOf() - preparedFilterDomain0, 0, 0, 0]
+          ],
+          'getFilterValue should return [value, 0, 0, 0]'
+        );
       }
     },
     {
-      ...props,
-      updates: [
-        {method: 'updateLayerConfig', args: [{colorField: fields[1]}]},
-        {method: 'updateLayerConfig', args: [{sizeField: fields[1]}]},
-        {
-          method: 'updateLayerVisualChannel',
-          args: [dataset, 'color']
+      name: 's2 layer',
+      layer: {
+        type: 's2',
+        id: 'test_layer_1',
+        config: {
+          dataId,
+          label: 'S2',
+          color: [2, 3, 4],
+          columns: {
+            token: 's2x'
+          },
+          isVisible: true,
+          // color by types(string)
+          colorField: {
+            type: 'string',
+            name: 'types'
+          },
+          // size by id(integer)
+          heightField: {
+            type: 'real',
+            name: 'trip_distance'
+          },
+          sizeField: {
+            type: 'real',
+            name: 'trip_distance'
+          },
+          visConfig: {
+            colorRange: {
+              colors: ['#010101', '#020202', '#030303']
+            },
+            elevationRange: [10, 20],
+            sizeRange: [10, 20],
+            enable3d: true
+          }
         }
-      ],
-      data: [allRows, allRows, filteredIndex, undefined],
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
       assert: result => {
         const {layerData} = result;
-        const expectedLayerData = {
-          data: [
-            {index: 2, token: rows[0][0], data: rows[0]},
-            {index: 4, token: rows[2][0], data: rows[2]}
-          ],
-          getElevation: () => {},
-          getFillColor: () => {},
-          getFilterValue: () => {},
-          getS2Token: () => {},
-          getLineColor: () => {},
-          getLineWidth: () => {}
-        };
-
-        t.ok(typeof layerData.getFillColor === 'function', 'should have getFillColor');
-
-        t.ok(typeof layerData.getElevation === 'function', 'should have getElevation');
-
-        t.ok(typeof layerData.getFilterValue === 'function', 'should have getFilterValue');
-
-        t.ok(typeof layerData.getS2Token === 'function', 'should have getS2Token');
-
+        // getFillColor
+        // domain: ['driver_analytics', 'driver_analytics_0', 'driver_gps']
+        // range ['#010101', '#020202', '#030303']
         t.deepEqual(
-          layerData.data,
-          expectedLayerData.data,
-          'should format correct s2-geometry layerData and remove null values'
+          layerData.data.map(layerData.getFillColor),
+          [
+            [2, 2, 2],
+            [1, 1, 1]
+          ],
+          'getFillColor should be correct'
         );
 
+        // getElevation
+        // domain: [1.59, 11]
+        // range: [0, 500]
+        // value [1.59, 2.37]
         t.deepEqual(
-          Object.keys(layerData).sort(),
-          Object.keys(expectedLayerData).sort(),
-          `layerData should have ${Object.keys(expectedLayerData).length} keys`
+          layerData.data.map(layerData.getElevation),
+          [0, 41.445270988310305],
+          'getElevation should correct'
+        );
+
+        // getLineWidth
+        // domain: [1.59, 11]
+        // range: [10, 20]
+        // value [1.59, 2.37]
+        t.deepEqual(
+          layerData.data.map(layerData.getLineWidth),
+          [10, (2.37 - 1.59) * (10 / 9.41) + 10],
+          'getLineWidth should be correct'
+        );
+
+        // getFilterValue
+        t.deepEqual(
+          layerData.data.map(layerData.getFilterValue),
+          [
+            [Number.MIN_SAFE_INTEGER, 0, 0, 0],
+            [moment.utc(testRows[4][0]).valueOf() - preparedFilterDomain0, 0, 0, 0]
+          ],
+          'getFilterValue should return [value, 0, 0, 0]'
         );
       }
     }
@@ -239,58 +244,30 @@ test('#S2Geometry -> formatLayerData', t => {
 });
 
 test('#S2Geometry -> renderLayer', t => {
-  const {rows, fields} = processCsvData(data);
   const filteredIndex = [0, 2, 4];
-
-  const dataId = 'puppy';
-
-  const nullRows = [
-    [null, 12345],
-    [null, 3456]
-  ];
-  const invalidRows = [
-    [0, 12345],
-    [1234, 3456],
-    ['abcd', 123]
-  ];
-
-  const allRows = nullRows.concat(rows).concat(invalidRows);
-
-  const dataset = {
-    fields,
-    rows,
-    id: dataId,
-    data: allRows,
-    allData: allRows,
-    filteredIndexForDomain: filteredIndex,
-    filteredIndex,
-    gpuFilter: getGpuFilterProps([], dataId, fields)
-  };
-
-  const props = {
-    name: 's2 layer',
-    layer: {
-      type: 's2',
-      id: 'test_layer_1',
-      config: {
-        dataId,
-        label: 'S2',
-        color: [255, 203, 153],
-        columns: {
-          token: 's2'
-        },
-        isVisible: true
-      }
-    },
-    datasets: {
-      [dataId]: dataset
-    }
-  };
 
   const TEST_CASES = [
     {
-      ...props,
-      data: [data, rows, filteredIndex, undefined],
+      name: 's2 layer',
+      layer: {
+        type: 's2',
+        id: 'test_layer_1',
+        config: {
+          dataId,
+          label: 'S2',
+          color: [2, 3, 4],
+          columns: {
+            token: 's2x'
+          },
+          isVisible: true
+        }
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
       assert: (deckLayers, layer) => {
         t.equal(layer.type, 's2', 'should create 1 s2 layer');
         t.equal(deckLayers.length, 4, 'Should create 4 deck.gl layers');
@@ -312,12 +289,7 @@ test('#S2Geometry -> renderLayer', t => {
 
         const expectedProps = {
           opacity: layer.config.visConfig.opacity,
-          filterRange: [
-            [0, 0],
-            [0, 0],
-            [0, 0],
-            [0, 0]
-          ],
+          filterRange: preparedDataset.gpuFilter.filterRange,
           filled: true,
           wrapLongitude: false,
           autoHighlight: false,

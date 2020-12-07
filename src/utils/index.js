@@ -31,12 +31,20 @@ export {hexToRgb} from './color-utils';
 export {errorNotification} from './notifications-utils';
 export {dataURItoBlob, downloadFile} from './export-utils';
 export {calculateLayerData} from './layer-utils';
-export {applyFilterFieldName, applyFiltersToDatasets} from 'utils/filter-utils';
+export {
+  applyFilterFieldName,
+  applyFiltersToDatasets,
+  validateFilterWithData,
+  validateFiltersUpdateDatasets
+} from 'utils/filter-utils';
+
+export {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
 
 // REDUCER UTILS
 export {updateAllLayerDomainData} from '../reducers/vis-state-updaters';
 export {
   validateLayerWithData,
+  validateLayersByDatasets,
   validateSavedVisualChannels,
   mergeLayers
 } from '../reducers/vis-state-merger';

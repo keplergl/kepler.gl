@@ -33,14 +33,12 @@ import {
 } from 'layers/geojson-layer/geojson-utils';
 
 import {isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
-
-import {hexToRgb} from 'utils/color-utils';
 import TripInfoModalFactory from './trip-info-modal';
 
 const zoomFactorValue = 8;
 
 export const defaultThickness = 0.5;
-export const defaultWidth = 1;
+export const defaultLineWidth = 1;
 
 export const tripVisConfigs = {
   opacity: 'opacity',
@@ -91,13 +89,25 @@ export default class TripLayer extends Layer {
   }
 
   get visualChannels() {
-    return {
-      ...super.visualChannels,
+    const visualChannels = super.visualChannels;
 
+    return {
+      ...visualChannels,
+      color: {
+        ...visualChannels.color,
+        accessor: 'getColor',
+        nullValue: visualChannels.color.nullValue,
+        getAttributeValue: config => d => d.properties.lineColor || config.color,
+        // used this to get updateTriggers
+        defaultValue: config => config.color
+      },
       size: {
-        ...super.visualChannels.size,
+        ...visualChannels.size,
         property: 'stroke',
-        condition: config => config.visConfig.stroked
+        accessor: 'getWidth',
+        condition: config => config.visConfig.stroked,
+        nullValue: 0,
+        getAttributeValue: () => d => d.properties.lineWidth || defaultLineWidth
       }
     };
   }
@@ -177,45 +187,19 @@ export default class TripLayer extends Layer {
 
   formatLayerData(datasets, oldLayerData) {
     // to-do: parse segment from allData
-
-    const {
-      colorScale,
-      colorField,
-      colorDomain,
-      color,
-      sizeScale,
-      sizeDomain,
-      sizeField,
-      visConfig
-    } = this.config;
-
-    const {colorRange, sizeRange} = visConfig;
     const {allData, gpuFilter} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);
 
-    // color
-    const cScale =
-      colorField &&
-      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
-    // calculate stroke scale - if stroked = true
-    const sScale = sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
-    // access feature properties from geojson sub layer
-    const getDataForGpuFilter = f => allData[f.properties.index];
-    const getIndexForGpuFilter = f => f.properties.index;
+    const valueAccessor = f => allData[f.properties.index];
+    const indexAccessor = f => f.properties.index;
+    const accessors = this.getAttributeAccessors(valueAccessor);
 
     return {
       data,
-      getFilterValue: gpuFilter.filterValueAccessor(getIndexForGpuFilter, getDataForGpuFilter),
+      getFilterValue: gpuFilter.filterValueAccessor(indexAccessor, valueAccessor),
       getPath: d => d.geometry.coordinates,
       getTimestamps: d => this.dataToTimeStamp[d.properties.index],
-      getColor: d =>
-        cScale
-          ? this.getEncodedChannelValue(cScale, allData[d.properties.index], colorField)
-          : d.properties.fillColor || color,
-      getWidth: d =>
-        sScale
-          ? this.getEncodedChannelValue(sScale, allData[d.properties.index], sizeField, 0)
-          : d.properties.lineWidth || defaultWidth
+      ...accessors
     };
   }
 
@@ -262,16 +246,7 @@ export default class TripLayer extends Layer {
     const zoomFactor = this.getZoomFactor(mapState);
 
     const updateTriggers = {
-      getColor: {
-        color: this.config.color,
-        colorField: this.config.colorField,
-        colorRange: visConfig.colorRange,
-        colorScale: this.config.colorScale
-      },
-      getWidth: {
-        sizeField: this.config.sizeField,
-        sizeRange: visConfig.sizeRange
-      },
+      ...this.getVisualChannelUpdateTriggers(),
       getTimestamps: {
         columns: this.config.columns,
         domain0: animationConfig.domain[0]

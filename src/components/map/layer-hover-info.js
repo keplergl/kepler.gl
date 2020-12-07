@@ -119,7 +119,7 @@ const EntryInfoRow = ({item, fields, data, primaryData, compareType}) => {
     compareType
   });
 
-  return <Row name={item.name} value={displayValue} deltaValue={displayDeltaValue} />;
+  return <Row name={field.name} value={displayValue} deltaValue={displayDeltaValue} />;
 };
 
 // TODO: supporting comparative value for aggregated cells as well

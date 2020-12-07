@@ -112,14 +112,6 @@ export const Container = styled.div`
       overflow: hidden !important;
     }
 
-    .body-grid {
-      overflow: overlay !important;
-    }
-
-    .pinned-grid {
-      overflow: overlay !important;
-    }
-
     .even-row {
       background-color: ${props => props.theme.evenRowBackground};
     }
@@ -197,10 +189,12 @@ export const Container = styled.div`
         height: 100%;
         overflow: hidden;
         flex-grow: 1;
+
         .col-name {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          cursor: pointer;
 
           .col-name__left {
             display: flex;
@@ -213,9 +207,6 @@ export const Container = styled.div`
           .col-name__name {
             overflow: hidden;
             white-space: nowrap;
-          }
-          .col-name__sort {
-            cursor: pointer;
           }
         }
       }
@@ -241,9 +232,9 @@ const columnWidthFunction = (columns, cellSizeCache, ghost) => ({index}) => {
 /*
  * This is an accessor method used to generalize getting a cell from a data row
  */
-const getRowCell = ({rows, columns, column, colMeta, rowIndex, sortColumn, sortOrder}) => {
+const getRowCell = ({rows, columns, column, colMeta, rowIndex, sortOrder}) => {
   const rowIdx = sortOrder && sortOrder.length ? get(sortOrder, rowIndex) : rowIndex;
-  const type = colMeta[column];
+  const {type} = colMeta[column];
 
   return parseFieldValue(get(rows, [rowIdx, columns.indexOf(column)], 'Err'), type);
 };
@@ -304,6 +295,7 @@ export const TableSection = ({
     }}
   </AutoSizer>
 );
+
 DataTableFactory.deps = [FieldTokenFactory];
 function DataTableFactory(FieldToken) {
   class DataTable extends Component {
@@ -367,6 +359,7 @@ function DataTableFactory(FieldToken) {
         pinnedColumns,
         unpinnedColumns
       );
+
       return {
         cellSizeCache,
         ghost
@@ -390,20 +383,13 @@ function DataTableFactory(FieldToken) {
       // eslint-disable-next-line react/display-name
       return cellInfo => {
         const {columnIndex, key, style} = cellInfo;
-        const {
-          colMeta,
-          sortColumn,
-          sortTableColumn,
-          unsortColumn,
-          pinTableColumn,
-          copyTableColumn,
-          dataId
-        } = props;
+        const {colMeta, sortColumn, sortTableColumn, pinTableColumn, copyTableColumn} = props;
 
         const column = columns[columnIndex];
         const isGhost = column.ghost;
         const isSorted = sortColumn[column];
         const firstCell = columnIndex === 0;
+
         return (
           <div
             className={classnames('header-cell', {
@@ -414,9 +400,9 @@ function DataTableFactory(FieldToken) {
             key={key}
             style={style}
             onClick={e => {
-              e.shiftKey ? sortTableColumn(dataId, column) : null;
+              e.shiftKey ? sortTableColumn(column) : null;
             }}
-            onDoubleClick={() => sortTableColumn(dataId, column)}
+            onDoubleClick={() => sortTableColumn(column)}
             title={column}
           >
             {isGhost ? (
@@ -426,11 +412,8 @@ function DataTableFactory(FieldToken) {
                 <section className="details">
                   <div className="col-name">
                     <div className="col-name__left">
-                      <div className="col-name__name">{column}</div>
-                      <Button
-                        className="col-name__sort"
-                        onClick={() => sortTableColumn(dataId, column)}
-                      >
+                      <div className="col-name__name">{colMeta[column].name}</div>
+                      <Button className="col-name__sort" onClick={() => sortTableColumn(column)}>
                         {isSorted ? (
                           isSorted === SORT_ORDER.ASCENDING ? (
                             <ArrowUp height="14px" />
@@ -445,22 +428,21 @@ function DataTableFactory(FieldToken) {
                     </Button>
                   </div>
 
-                  <FieldToken type={colMeta[column]} />
+                  <FieldToken type={colMeta[column].type} />
                 </section>
 
                 <section className="options">
                   <OptionDropdown
                     isOpened={moreOptionsColumn === column}
-                    type={colMeta[column]}
+                    type={colMeta[column].type}
                     column={column}
                     toggleMoreOptions={toggleMoreOptions}
-                    sortTableColumn={mode => sortTableColumn(dataId, column, mode)}
+                    sortTableColumn={mode => sortTableColumn(column, mode)}
                     sortMode={sortColumn && sortColumn[column]}
-                    pinTableColumn={() => pinTableColumn(dataId, column)}
-                    copyTableColumn={() => copyTableColumn(dataId, column)}
+                    pinTableColumn={() => pinTableColumn(column)}
+                    copyTableColumn={() => copyTableColumn(column)}
                     isSorted={isSorted}
                     isPinned={isPinned}
-                    unsortColumn={unsortColumn}
                   />
                 </section>
               </>
@@ -478,7 +460,7 @@ function DataTableFactory(FieldToken) {
         const isGhost = column.ghost;
 
         const rowCell = isGhost ? '' : getRowCell({...props, column, rowIndex});
-        const type = isGhost ? null : colMeta[column];
+        const type = isGhost ? null : colMeta[column].type;
 
         const endCell = columnIndex === columns.length - 1;
         const firstCell = columnIndex === 0;
@@ -507,6 +489,7 @@ function DataTableFactory(FieldToken) {
         return cell;
       };
     };
+
     render() {
       const {rows, pinnedColumns, theme = {}, fixedWidth, fixedHeight} = this.props;
       const unpinnedColumns = this.unpinnedColumns(this.props);

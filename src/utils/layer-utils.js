@@ -92,6 +92,9 @@ export function getLayerHoverProp({
       const {
         config: {dataId}
       } = layer;
+      if (!dataId) {
+        return null;
+      }
       const {allData, fields} = datasets[dataId];
       const data = layer.getHoverData(object, allData);
       const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
@@ -106,4 +109,34 @@ export function getLayerHoverProp({
   }
 
   return null;
+}
+
+export function renderDeckGlLayer(props, layerCallbacks, idx) {
+  const {
+    datasets,
+    layers,
+    layerData,
+    hoverInfo,
+    clicked,
+    mapState,
+    interactionConfig,
+    animationConfig
+  } = props;
+  const layer = layers[idx];
+  const data = layerData[idx];
+  const {gpuFilter} = datasets[layer.config.dataId] || {};
+
+  const objectHovered = clicked || hoverInfo;
+
+  // Layer is Layer class
+  return layer.renderLayer({
+    data,
+    gpuFilter,
+    idx,
+    interactionConfig,
+    layerCallbacks,
+    mapState,
+    animationConfig,
+    objectHovered
+  });
 }

@@ -263,7 +263,9 @@ export function layerConfigChangeUpdater(state, action) {
       newConfig: {dataId}
     });
     const nextLayer = stateWithDataId.layers.find(l => l.id === oldLayer.id);
-    return layerConfigChangeUpdater(state, {oldLayer: nextLayer, newConfig: restConfig});
+    return nextLayer
+      ? layerConfigChangeUpdater(state, {oldLayer: nextLayer, newConfig: restConfig})
+      : stateWithDataId;
   }
 
   let newLayer = oldLayer.updateLayerConfig(action.newConfig);
@@ -353,7 +355,6 @@ export function layerTextLabelChangeUpdater(state, action) {
   } else {
     newTextLabel = updateTextLabelPropAndValue(idx, prop, value, newTextLabel);
   }
-
   // update text label prop and value
   return layerConfigChangeUpdater(state, {
     oldLayer,
@@ -728,9 +729,16 @@ export const addFilterUpdater = (state, action) =>
  * @type {typeof import('./vis-state-updaters').layerColorUIChangeUpdater}
  */
 export const layerColorUIChangeUpdater = (state, {oldLayer, prop, newConfig}) => {
+  const oldVixConfig = oldLayer.config.visConfig[prop];
   const newLayer = oldLayer.updateLayerColorUI(prop, newConfig);
-  if (prop === 'colorRange') {
-    return layerVisConfigChangeUpdater(state, {oldLayer, newVisConfig: newLayer.config.visConfig});
+  const newVisConfig = newLayer.config.visConfig[prop];
+  if (oldVixConfig !== newVisConfig) {
+    return layerVisConfigChangeUpdater(state, {
+      oldLayer,
+      newVisConfig: {
+        [prop]: newVisConfig
+      }
+    });
   }
   return {
     ...state,
@@ -961,6 +969,7 @@ export const removeDatasetUpdater = (state, action) => {
 
   const indexes = layers.reduce((listOfIndexes, layer, index) => {
     if (layer.config.dataId === datasetKey) {
+      // @ts-ignore
       listOfIndexes.push(index);
     }
     return listOfIndexes;
@@ -1253,7 +1262,7 @@ export const updateVisDataUpdater = (state, action) => {
   }
 
   let newLayers = !dataEmpty
-    ? mergedState.layers.filter(l => l.config.dataId in newDataEntries)
+    ? mergedState.layers.filter(l => l.config.dataId && l.config.dataId in newDataEntries)
     : [];
 
   if (!newLayers.length && (options || {}).autoCreateLayers !== false) {
@@ -1265,7 +1274,9 @@ export const updateVisDataUpdater = (state, action) => {
 
   if (mergedState.splitMaps.length) {
     // if map is split, add new layers to splitMaps
-    newLayers = mergedState.layers.filter(l => l.config.dataId in newDataEntries);
+    newLayers = mergedState.layers.filter(
+      l => l.config.dataId && l.config.dataId in newDataEntries
+    );
     mergedState = {
       ...mergedState,
       splitMaps: addNewLayersToSplitMap(mergedState.splitMaps, newLayers)

@@ -27,6 +27,7 @@ import {ChannelByValueSelectorFactory} from './side-panel/layer-panel/layer-conf
 import FieldSelectorFactory, {FieldListItemFactoryFactory} from './common/field-selector';
 import FieldTokenFactory from './common/field-token';
 import PanelHeaderActionFactory from './side-panel/panel-header-action';
+import InfoHelperFactory from 'components/common/info-helper';
 import {appInjector} from './container';
 
 // Components
@@ -118,7 +119,6 @@ export {default as HistogramPlotFactory} from './common/histogram-plot';
 export {default as LineChartFactory} from './common/line-chart';
 export {default as RangeBrushFactory} from './common/range-brush';
 export {default as TimeSliderMarkerFactory} from './common/time-slider-marker';
-export {default as InfoHelperFactory} from 'components/common/info-helper';
 
 // // Filters factory
 export {default as TimeWidgetFactory} from './filters/time-widget';
@@ -145,7 +145,7 @@ export {default as FieldSelectorFactory} from './common/field-selector';
 export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
-export {default as Checkbox} from 'components/common/checkbox';
+export {default as Checkbox} from './common/checkbox';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export {default as LoadingDialog} from './modals/loading-dialog';
 export {default as FieldTokenFactory} from './common/field-token';
@@ -154,7 +154,9 @@ export {default as ProgressBar} from './common/progress-bar';
 export {default as FileUploadProgress} from './common/file-uploader/file-upload-progress';
 export {default as Slider} from './common/slider/slider';
 export {DatasetSquare} from './common/styled-components';
-export {default as ActionPanel, ActionPanelItem} from 'components/common/action-panel';
+export {default as ActionPanel, ActionPanelItem} from './common/action-panel';
+export {default as DataTableFactory} from './common/data-table';
+export {default as CanvasHack} from './common/data-table/canvas';
 
 // side pane components
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
@@ -176,8 +178,7 @@ export {
 } from './side-panel/layer-panel/layer-configurator';
 
 // map components
-export {default as MapLegend} from 'components/map/map-legend'
-
+export {default as MapLegend} from 'components/map/map-legend';
 
 export * from './common/styled-components';
 import * as Icons from './common/icons';
@@ -194,6 +195,7 @@ export const FieldSelector = appInjector.get(FieldSelectorFactory);
 export const FieldToken = appInjector.get(FieldTokenFactory);
 export const PanelHeaderAction = appInjector.get(PanelHeaderActionFactory);
 export const FieldListItemFactory = appInjector.get(FieldListItemFactoryFactory);
+export const InfoHelper = appInjector.get(InfoHelperFactory);
 
 export {
   appInjector,
@@ -203,7 +205,8 @@ export {
   VisConfigSwitchFactory,
   LayerConfigGroupFactory,
   ChannelByValueSelectorFactory,
-  FieldListItemFactoryFactory
+  FieldListItemFactoryFactory,
+  InfoHelperFactory
 };
 
 // Context

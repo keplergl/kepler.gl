@@ -123,7 +123,7 @@ export default class AggregationLayer extends Layer {
     return {
       label: this.visConfigSettings[range].label,
       measure: this.config[field]
-        ? `${this.config.visConfig[aggregation]} of ${this.config[field].name}`
+        ? `${this.config.visConfig[aggregation]} of ${this.config[field].displayName}`
         : defaultMeasure
     };
   }

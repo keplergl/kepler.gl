@@ -1,5 +1,6 @@
-import {VisState} from './vis-state-updaters';
-import {ParsedConfig} from 'schemas';
+import {VisState, Datasets, Dataset} from './vis-state-updaters';
+import {ParsedConfig, ParsedLayer} from 'schemas';
+import {Layer} from 'layers';
 
 export function mergeAnimationConfig(
   state: VisState,
@@ -21,7 +22,11 @@ export function mergeLayerBlending(
   layerBlending: ParsedConfig['visState']['layerBlending'],
   fromConfig?: boolean
 ): VisState;
-export function mergeLayers(state: VisState, layers: ParsedConfig['visState']['layers'], fromConfig?: boolean): VisState;
+export function mergeLayers(
+  state: VisState,
+  layers: ParsedConfig['visState']['layers'],
+  fromConfig?: boolean
+): VisState;
 export function mergeSplitMaps(
   state: VisState,
   splitMaps: ParsedConfig['visState']['splitMaps'],
@@ -32,22 +37,31 @@ export function mergeInteractionTooltipConfig(state: VisState);
 
 export function isValidMerger(arg: any): boolean;
 export type Merger = {
-  merge: (state: VisState, config: any, fromConfig?: boolean) => VisState, 
-  prop: string, 
-  toMergeProp?: string 
+  merge: (state: VisState, config: any, fromConfig?: boolean) => VisState;
+  prop: string;
+  toMergeProp?: string;
 };
 
-export function validateSavedVisualChannels(fields, newLayer, savedLayer);
+export function validateSavedVisualChannels(
+  fields: Dataset['fields'],
+  newLayer: Layer,
+  savedLayer: ParsedLayer
+): null | Layer;
+
 export function validateLayerWithData(
-  dataset: {fields, id: dataId}, 
-  savedLayer: savedLayer, 
-  layerClasses: {
-    [key: string]: LayerClass
-  },
+  dataset: Dataset,
+  savedLayer: ParsedLayer,
+  layerClasses: VisState['layerClasses'],
   option?: {
     allowEmptyColumn?: boolean;
   }
 ): Layer | null;
+
+export function validateLayersByDatasets(
+  datasets: Datasets,
+  layerClasses: VisState['layerClasses'],
+  layers: ParsedConfig['visState']['layers']
+): {validated: Layer[]; failed: ParsedConfig['visState']['layers']};
 
 export type VisStateMergers = Merger[];
 

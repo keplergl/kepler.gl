@@ -144,6 +144,7 @@ export const inputPlaceholderColorLT = subtextColorLT;
 export const inputPlaceholderFontWeight = 400;
 export const inputBoxShadow = 'none';
 export const inputBoxShadowActive = 'none';
+export const inputBoxShadowActiveLT = 'none';
 export const secondaryInputBgd = '#242730';
 export const secondaryInputBgdHover = '#3A414C';
 export const secondaryInputBgdActive = '#3A414C';
@@ -444,6 +445,13 @@ const input = css`
     font-weight: ${props => props.theme.inputPlaceholderFontWeight};
   }
 
+  /* Disable Arrows on Number Inputs */
+  ::-webkit-inner-spin-button,
+  ::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
   align-items: center;
   background-color: ${props => props.theme.inputBgd};
   border: 1px solid
@@ -487,14 +495,6 @@ const input = css`
   opacity: ${props => (props.disabled ? 0.5 : 1)};
   box-shadow: ${props => props.theme.inputBoxShadow};
 
-  :hover {
-    cursor: ${props => (props.type === 'number' || props.type === 'text' ? 'text' : 'pointer')};
-    background-color: ${props =>
-      props.active ? props.theme.inputBgdActive : props.theme.inputBgdHover};
-    border-color: ${props =>
-      props.active ? props.theme.inputBorderActiveColor : props.theme.inputBorderHoverColor};
-  }
-
   :active,
   :focus,
   &.focus,
@@ -504,11 +504,12 @@ const input = css`
     box-shadow: ${props => props.theme.inputBoxShadowActive};
   }
 
-  /* Disable Arrows on Number Inputs */
-  ::-webkit-inner-spin-button,
-  ::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  :hover {
+    cursor: ${props => (props.type === 'number' || props.type === 'text' ? 'text' : 'pointer')};
+    background-color: ${props =>
+      props.active ? props.theme.inputBgdActive : props.theme.inputBgdHover};
+    border-color: ${props =>
+      props.active ? props.theme.inputBorderActiveColor : props.theme.inputBorderHoverColor};
   }
 `;
 
@@ -528,7 +529,14 @@ const inputLT = css`
       ? props.theme.errorColor
       : props.theme.selectBorderColorLT};
   color: ${props => props.theme.selectColorLT};
-  caret-color: ${props => props.theme.selectColorLT};
+  caret-color: ${props => props.theme.inputBorderActiveColorLT};
+
+  :hover {
+    background-color: ${props => props.theme.inputBgdActiveLT};
+    cursor: ${props => (['number', 'text'].includes(props.type) ? 'text' : 'pointer')};
+    border-color: ${props =>
+      props.active ? props.theme.inputBorderActiveColorLT : props.theme.inputBorderHoverColorLT};
+  }
 
   :active,
   :focus,
@@ -536,13 +544,7 @@ const inputLT = css`
   &.active {
     background-color: ${props => props.theme.inputBgdActiveLT};
     border-color: ${props => props.theme.inputBorderActiveColorLT};
-  }
-
-  :hover {
-    background-color: ${props => props.theme.inputBgdActiveLT};
-    cursor: ${props => (['number', 'text'].includes(props.type) ? 'text' : 'pointer')};
-    border-color: ${props =>
-      props.active ? props.theme.inputBorderActiveColorLT : props.theme.inputBorderHoverColorLT};
+    box-shadow: ${props => props.theme.inputBoxShadowActiveLT};
   }
 `;
 
@@ -1142,6 +1144,7 @@ export const theme = {
   inputPlaceholderFontWeight,
   inputBoxShadow,
   inputBoxShadowActive,
+  inputBoxShadowActiveLT,
   secondaryInputBgd,
   secondaryInputBgdHover,
   secondaryInputBgdActive,

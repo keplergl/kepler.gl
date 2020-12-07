@@ -84,9 +84,23 @@ export default class ArcLayer extends Layer {
 
   get visualChannels() {
     return {
-      ...super.visualChannels,
+      sourceColor: {
+        ...super.visualChannels.color,
+        property: 'color',
+        key: 'sourceColor',
+        accessor: 'getSourceColor',
+        defaultValue: config => config.color
+      },
+      targetColor: {
+        ...super.visualChannels.color,
+        property: 'targetColor',
+        key: 'targetColor',
+        accessor: 'getTargetColor',
+        defaultValue: config => config.visConfig.targetColor || config.color
+      },
       size: {
         ...super.visualChannels.size,
+        accessor: 'getWidth',
         property: 'stroke'
       }
     };
@@ -116,7 +130,6 @@ export default class ArcLayer extends Layer {
   calculateDataAttribute({allData, filteredIndex}, getPosition) {
     const data = [];
     for (let i = 0; i < filteredIndex.length; i++) {
-      // data = filteredIndex.reduce((accu, index) => {
       const index = filteredIndex[i];
       const pos = getPosition({data: allData[index]});
 
@@ -135,49 +148,14 @@ export default class ArcLayer extends Layer {
     return data;
   }
 
-  // TODO: fix complexity
-  /* eslint-disable complexity */
-  formatLayerData(datasets, oldLayerData, opt = {}) {
-    const {
-      colorScale,
-      colorDomain,
-      colorField,
-      color,
-      sizeField,
-      sizeScale,
-      sizeDomain,
-      visConfig: {sizeRange, colorRange, targetColor}
-    } = this.config;
-
+  formatLayerData(datasets, oldLayerData) {
     const {gpuFilter} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);
-
-    // arc color
-    const cScale =
-      colorField &&
-      this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
-
-    // arc thickness
-    const sScale = sizeField && this.getVisChannelScale(sizeScale, sizeDomain, sizeRange);
-
-    const getStrokeWidth = sScale
-      ? d => this.getEncodedChannelValue(sScale, d.data, sizeField, 0)
-      : 1;
-
-    const getSourceColor = cScale
-      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
-      : color;
-
-    const getTargetColor = cScale
-      ? d => this.getEncodedChannelValue(cScale, d.data, colorField)
-      : targetColor || color;
-
+    const accessors = this.getAttributeAccessors();
     return {
       data,
-      getSourceColor,
-      getTargetColor,
-      getWidth: getStrokeWidth,
-      getFilterValue: gpuFilter.filterValueAccessor()
+      getFilterValue: gpuFilter.filterValueAccessor(),
+      ...accessors
     };
   }
   /* eslint-enable complexity */
@@ -210,15 +188,11 @@ export default class ArcLayer extends Layer {
 
   renderLayer(opts) {
     const {data, gpuFilter, objectHovered, interactionConfig} = opts;
-
-    const colorUpdateTriggers = {
-      color: this.config.color,
-      colorField: this.config.colorField,
-      colorRange: this.config.visConfig.colorRange,
-      colorScale: this.config.colorScale,
-      targetColor: this.config.visConfig.targetColor
+    const updateTriggers = {
+      getPosition: this.config.columns,
+      getFilterValue: gpuFilter.filterValueUpdateTriggers,
+      ...this.getVisualChannelUpdateTriggers()
     };
-
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
 
     return [
@@ -227,16 +201,7 @@ export default class ArcLayer extends Layer {
         ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
         widthScale: this.config.visConfig.thickness,
-        updateTriggers: {
-          getFilterValue: gpuFilter.filterValueUpdateTriggers,
-          getWidth: {
-            sizeField: this.config.sizeField,
-            sizeScale: this.config.sizeScale,
-            sizeRange: this.config.visConfig.sizeRange
-          },
-          getSourceColor: colorUpdateTriggers,
-          getTargetColor: colorUpdateTriggers
-        },
+        updateTriggers,
         extensions: [...defaultLayerProps.extensions, new BrushingExtension()]
       }),
       // hover layer

@@ -400,6 +400,7 @@ export default {
     altitude: 'altitude',
     icon: 'icon',
     geojson: 'geojson',
+    token: 'token',
     arc: {
       lat0: 'source lat',
       lng0: 'source lng',

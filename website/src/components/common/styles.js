@@ -90,7 +90,7 @@ export const Container = styled.div`
 
   ${media.palm`
     padding-top: ${props => props.theme.margins.large};
-  `}
+  `};
 `;
 
 export const Content = styled.div`

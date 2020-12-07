@@ -39,7 +39,12 @@ import {
 } from 'constants/default-settings';
 import {COLOR_RANGES} from 'constants/color-ranges';
 import {DataVizColors} from 'constants/custom-color-ranges';
-import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from './layer-factory';
+import {
+  LAYER_VIS_CONFIGS,
+  DEFAULT_TEXT_LABEL,
+  DEFAULT_COLOR_UI,
+  UNKNOWN_COLOR_KEY
+} from './layer-factory';
 
 import {generateHashId, isPlainObject} from 'utils/utils';
 
@@ -64,8 +69,10 @@ import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-util
  * @type {number}
  */
 const MAX_SAMPLE_SIZE = 5000;
+const defaultDomain = [0, 1];
 const dataFilterExtension = new DataFilterExtension({filterSize: MAX_GPU_FILTERS});
 const identity = d => d;
+const defaultDataAccessor = d => d.data;
 
 export const OVERLAY_TYPE = keymirror({
   deckgl: null,
@@ -143,7 +150,9 @@ export default class Layer {
         domain: 'colorDomain',
         range: 'colorRange',
         key: 'color',
-        channelScaleType: CHANNEL_SCALES.color
+        channelScaleType: CHANNEL_SCALES.color,
+        nullValue: NO_VALUE_COLOR,
+        defaultValue: config => config.color
       },
       size: {
         property: 'size',
@@ -152,7 +161,9 @@ export default class Layer {
         domain: 'sizeDomain',
         range: 'sizeRange',
         key: 'size',
-        channelScaleType: CHANNEL_SCALES.size
+        channelScaleType: CHANNEL_SCALES.size,
+        nullValue: 0,
+        defaultValue: 1
       }
     };
   }
@@ -708,6 +719,78 @@ export default class Layer {
     );
   }
 
+  getColorScale(colorScale, colorDomain, colorRange) {
+    if (Array.isArray(colorRange.colorMap)) {
+      const cMap = new Map();
+      colorRange.colorMap.forEach(([k, v]) => {
+        cMap.set(k, typeof v === 'string' ? hexToRgb(v) : v);
+      });
+
+      const scale = SCALE_FUNC[SCALE_TYPES.ordinal]()
+        .domain(cMap.keys())
+        .range(cMap.values())
+        .unknown(cMap.get(UNKNOWN_COLOR_KEY) || NO_VALUE_COLOR);
+      return scale;
+    }
+
+    return this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
+  }
+
+  /**
+   * Mapping from visual channels to deck.gl accesors
+   * @param {Function} dataAccessor - access kepler.gl layer data from deck.gl layer
+   * @return {Object} attributeAccessors - deck.gl layer attribute accessors
+   */
+  getAttributeAccessors(dataAccessor = defaultDataAccessor) {
+    const attributeAccessors = {};
+
+    Object.keys(this.visualChannels).forEach(channel => {
+      const {
+        field,
+        fixed,
+        scale,
+        domain,
+        range,
+        accessor,
+        defaultValue,
+        getAttributeValue,
+        nullValue,
+        channelScaleType
+      } = this.visualChannels[channel];
+
+      const shouldGetScale = this.config[field];
+
+      if (shouldGetScale) {
+        const args = [this.config[scale], this.config[domain], this.config.visConfig[range]];
+        const isFixed = fixed && this.config.visConfig[fixed];
+
+        const scaleFunction =
+          channelScaleType === CHANNEL_SCALES.color
+            ? this.getColorScale(...args)
+            : this.getVisChannelScale(...args, isFixed);
+
+        attributeAccessors[accessor] = d =>
+          this.getEncodedChannelValue(
+            scaleFunction,
+            dataAccessor(d),
+            this.config[field],
+            nullValue
+          );
+      } else if (typeof getAttributeValue === 'function') {
+        attributeAccessors[accessor] = getAttributeValue(this.config);
+      } else {
+        attributeAccessors[accessor] =
+          typeof defaultValue === 'function' ? defaultValue(this.config) : defaultValue;
+      }
+
+      if (!attributeAccessors[accessor]) {
+        Console.warn(`Failed to provide accesso function for ${accessor || channel}`);
+      }
+    });
+
+    return attributeAccessors;
+  }
+
   getVisChannelScale(scale, domain, range, fixed) {
     return SCALE_FUNC[fixed ? 'linear' : scale]()
       .domain(domain)
@@ -801,7 +884,8 @@ export default class Layer {
     }
 
     let data = [];
-    if (!triggerChanged.getData) {
+
+    if (!triggerChanged.getData && oldLayerData && oldLayerData.data) {
       // same data
       data = oldLayerData.data;
     } else {
@@ -831,7 +915,6 @@ export default class Layer {
       if (!newFilter || scaleType !== SCALE_TYPES.ordinal) {
         const {domain} = channel;
         const updatedDomain = this.calculateLayerDomain(dataset, channel);
-
         this.updateLayerConfig({[domain]: updatedDomain});
       }
     });
@@ -912,9 +995,26 @@ export default class Layer {
     this.updateLayerConfig({[visualChannel.domain]: updatedDomain});
   }
 
+  getVisualChannelUpdateTriggers() {
+    const updateTriggers = {};
+    Object.values(this.visualChannels).forEach(visualChannel => {
+      // field range scale domain
+      const {accessor, field, scale, domain, range, defaultValue, fixed} = visualChannel;
+
+      updateTriggers[accessor] = {
+        [field]: this.config[field],
+        [scale]: this.config[scale],
+        [domain]: this.config[domain],
+        [range]: this.config.visConfig[range],
+        defaultValue: typeof defaultValue === 'function' ? defaultValue(this.config) : defaultValue,
+        ...(fixed ? {[fixed]: this.config.visConfig[fixed]} : {})
+      };
+    });
+    return updateTriggers;
+  }
+
   calculateLayerDomain(dataset, visualChannel) {
     const {allData, filteredIndexForDomain} = dataset;
-    const defaultDomain = [0, 1];
     const {scale} = visualChannel;
     const scaleType = this.config[scale];
 

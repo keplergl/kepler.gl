@@ -152,7 +152,7 @@ export function getTooltipDisplayDeltaValue({
       const deltaFormat =
         compareType === COMPARE_TYPES.RELATIVE
           ? TOOLTIP_FORMATS.DECIMAL_PERCENT_FULL_2[TOOLTIP_KEY]
-          : (item.format || TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_3[TOOLTIP_KEY]);
+          : item.format || TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_3[TOOLTIP_KEY];
 
       displayDeltaValue = getFormatter(deltaFormat)(deltaValue);
 

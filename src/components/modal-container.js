@@ -71,12 +71,10 @@ const DataTableModalStyle = css`
 
   ${media.portable`
     padding: 0;
-  `}
-
-  ${media.palm`
+  `} ${media.palm`
     padding: 0;
     margin: 0 auto;
-  `}
+  `};
 `;
 const smallModalCss = css`
   width: 40%;
@@ -302,7 +300,7 @@ export default function ModalContainerFactory(
               ${DataTableModalStyle};
               ${media.palm`
                 width: ${width}px;
-              `}
+              `};
             `;
             break;
           case DELETE_DATA_ID:

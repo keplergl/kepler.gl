@@ -37,6 +37,7 @@ const actionHandler = {
 
 /* Reducer */
 export const mapStateReducerFactory = (initialState = {}) =>
+  // @ts-ignore
   handleActions(actionHandler, {
     ...mapStateUpdaters.INITIAL_MAP_STATE,
     ...initialState,

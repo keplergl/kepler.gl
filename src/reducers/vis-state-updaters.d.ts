@@ -6,7 +6,7 @@ import ActionTypes from 'constants/action-types';
 import {LoaderObject} from '@loaders.gl/loader-utils';
 import {VisStateMergers} from './vis-state-merger';
 import KeplerGLSchema from 'schemas';
-import {LayerClassesType} from 'layers';
+import {LayerClassesType, Layer} from 'layers';
 
 export type HistogramBin = {
   x0: number | undefined;
@@ -548,7 +548,7 @@ export function receiveMapConfigUpdater(
     type?: ActionTypes.RECEIVE_MAP_CONFIG;
     payload: ReceiveMapConfigPayload;
   }
-);
+): VisState;
 export const INITIAL_VIS_STATE: VisState;
 export const DEFAULT_ANIMATION_CONFIG: AnimationConfig;
 export const DEFAULT_EDITOR: Editor;
