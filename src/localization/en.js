@@ -442,7 +442,7 @@ export default {
     or: 'or'
   },
   geocoder: {
-    title: 'Enter an Address'
+    title: 'Enter an address or coordinates, ex 37.79,-122.40'
   },
   fieldSelector: {
     clearAll: 'Clear All',
