@@ -87,7 +87,7 @@ export function getLayerHoverProp({
     // deckgl layer to kepler-gl layer
     const layer = layers[overlay.props.idx];
 
-    if (layer.getHoverData && layersToRender[layer.id]) {
+    if (layer && layer.getHoverData && layersToRender[layer.id]) {
       // if layer is visible and have hovered data
       const {
         config: {dataId}

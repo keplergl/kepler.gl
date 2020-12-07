@@ -19,12 +19,14 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {findDefaultLayer} from 'utils/layer-utils';
+import cloneDeep from 'lodash.clonedeep';
+
+import {findDefaultLayer, getLayerHoverProp} from 'utils/layer-utils';
 import {findPointFieldPairs, createNewDataEntry} from 'utils/dataset-utils';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 import {GEOJSON_FIELDS} from 'constants/default-settings';
 import {LayerClasses, KeplerGlLayers} from 'layers';
-import {StateWTripGeojson} from 'test/helpers/mock-state';
+import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 
 const {PointLayer, ArcLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
 
@@ -797,5 +799,56 @@ test('layerUtils -> findDefaultLayer: TripLayer.1 -> ts as string', t => {
     {enabled: true, domain: [1535799600000, 1535799780000]},
     'should set correct animation domain'
   );
+  t.end();
+});
+
+test('layerUtils -> getLayerHoverProp', t => {
+  const visState = cloneDeep(StateWFiles).visState;
+  const layer = visState.layers[0];
+  const layerData = visState.layerData[0];
+  const layersToRender = {
+    [layer.id]: layer
+  };
+
+  const mockHoverInfo = {
+    object: {
+      data: layerData[0]
+    },
+    picked: true,
+    layer: {
+      props: {
+        idx: 0
+      }
+    }
+  };
+  const mockHoverInfoNotHovered = {
+    picked: false,
+    object: null
+  };
+  const args = {
+    interactionConfig: visState.interactionConfig,
+    hoverInfo: mockHoverInfo,
+    layers: visState.layers,
+    layersToRender,
+    datasets: visState.datasets
+  };
+
+  const expected = {
+    data: layerData[0],
+    fields: visState.datasets[layer.config.dataId].fields,
+    fieldsToShow: visState.interactionConfig.tooltip.config.fieldsToShow[layer.config.dataId],
+    layer
+  };
+
+  t.deepEqual(getLayerHoverProp(args), expected, 'should get correct layerHoverProp');
+
+  args.hoverInfo = mockHoverInfoNotHovered;
+  t.deepEqual(getLayerHoverProp(args), null, 'should get correct layerHoverProp');
+
+  visState.interactionConfig.tooltip.enabled = false;
+  args.hoverInfo = mockHoverInfo;
+
+  t.deepEqual(getLayerHoverProp(args), null, 'should get correct layerHoverProp');
+
   t.end();
 });
