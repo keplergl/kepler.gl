@@ -176,8 +176,7 @@ export {
 } from './side-panel/layer-panel/layer-configurator';
 
 // map components
-export {default as MapLegend} from 'components/map/map-legend'
-
+export {default as MapLegend} from 'components/map/map-legend';
 
 export * from './common/styled-components';
 import * as Icons from './common/icons';
