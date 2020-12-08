@@ -8,13 +8,13 @@ jobs:
   publish-npm:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2.1.1
       - uses: actions/setup-node@v1
         with:
-          node-version: 10
+          node-version: 12
           registry-url: https://registry.npmjs.org/
       - run: npm install -g yarn
-      - run: yarn --ignore
+      - run: yarn
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
