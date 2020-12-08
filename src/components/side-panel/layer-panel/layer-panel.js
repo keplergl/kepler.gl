@@ -48,6 +48,7 @@ function LayerPanelFactory(LayerConfigurator, LayerPanelHeader) {
       layerTypeChange: PropTypes.func.isRequired,
       openModal: PropTypes.func.isRequired,
       removeLayer: PropTypes.func.isRequired,
+      duplicateLayer: PropTypes.func.isRequired,
       onCloseConfig: PropTypes.func,
       layerTypeOptions: PropTypes.arrayOf(PropTypes.any),
       layerVisConfigChange: PropTypes.func.isRequired,
@@ -106,6 +107,11 @@ function LayerPanelFactory(LayerConfigurator, LayerPanelHeader) {
       this.props.removeLayer(this.props.idx);
     };
 
+    _duplicateLayer = e => {
+      e.stopPropagation();
+      this.props.duplicateLayer(this.props.idx);
+    };
+
     render() {
       const {layer, datasets, layerTypeOptions} = this.props;
       const {config} = layer;
@@ -130,6 +136,7 @@ function LayerPanelFactory(LayerConfigurator, LayerPanelHeader) {
             onToggleVisibility={this._toggleVisibility}
             onUpdateLayerLabel={this._updateLayerLabel}
             onRemoveLayer={this._removeLayer}
+            onDuplicateLayer={this._duplicateLayer}
           />
           {isConfigActive && (
             <LayerConfigurator

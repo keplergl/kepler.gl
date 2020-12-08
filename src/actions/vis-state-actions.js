@@ -294,6 +294,21 @@ export function removeLayer(idx) {
 }
 
 /**
+ * Remove a layer
+ * @memberof visStateActions
+ * @param idx idx of layer to be duplicated
+ * @returns action
+ * @type {typeof import('./vis-state-actions').duplicateLayer}
+ * @public
+ */
+export function duplicateLayer(idx) {
+  return {
+    type: ActionTypes.DUPLICATE_LAYER,
+    idx
+  };
+}
+
+/**
  * Remove a dataset and all layers, filters, tooltip configs that based on it
  * @memberof visStateActions
  * @param dataId dataset id

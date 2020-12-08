@@ -149,6 +149,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       layerVisConfigChange: PropTypes.func.isRequired,
       openModal: PropTypes.func.isRequired,
       removeLayer: PropTypes.func.isRequired,
+      duplicateLayer: PropTypes.func.isRequired,
       removeDataset: PropTypes.func.isRequired,
       showDatasetTable: PropTypes.func.isRequired,
       updateLayerBlending: PropTypes.func.isRequired,
@@ -205,7 +206,8 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
         layerTypeChange: this.props.layerTypeChange,
         layerVisConfigChange: this.props.layerVisConfigChange,
         layerTextLabelChange: this.props.layerTextLabelChange,
-        removeLayer: this.props.removeLayer
+        removeLayer: this.props.removeLayer,
+        duplicateLayer: this.props.duplicateLayer
       };
 
       const panelProps = {
