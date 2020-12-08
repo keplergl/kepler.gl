@@ -146,7 +146,6 @@ export default function GeocoderPanelFactory() {
         // For marginal or invalid bounds, zoom may be NaN. Make sure to provide a valid value in order
         // to avoid corrupt state and potential crashes as zoom is expected to be a number
         ...(Number.isFinite(centerAndZoom.zoom) ? {zoom: centerAndZoom.zoom} : {}),
-        zoom,
         pitch: 0,
         bearing: 0,
         transitionDuration: this.props.transitionDuration,

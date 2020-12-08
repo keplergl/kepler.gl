@@ -93,7 +93,7 @@ test('#composerStateReducer - addDataToMapUpdater: mapStyle', t => {
   t.end();
 });
 
-test('#composerStateReducer - addDataToMapUpdater: mapState should be centered', t => {
+test.only('#composerStateReducer - addDataToMapUpdater: mapState should be centered', t => {
   // init kepler.gl root and instance
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
   const mapStateProperties = {
