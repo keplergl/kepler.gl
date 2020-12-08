@@ -25,6 +25,7 @@ import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-control';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
 import {ANIMATION_WINDOW, FILTER_TYPES} from 'constants';
+import {getIntervalBins} from 'utils/filter-utils';
 
 const propTypes = {
   filters: PropTypes.arrayOf(PropTypes.object),
@@ -61,11 +62,8 @@ export function FilterAnimationControllerFactory(AnimationController) {
     setFilterAnimationTime,
     children
   }) => {
-    const intervalBins = useMemo(() => {
-      const bins = filter && filter.bins;
-      const interval = filter.plotType && filter.plotType.interval;
-      return bins && Object.keys(bins).length && Object.values(bins)[0][interval];
-    }, [filter]);
+    const intervalBins = useMemo(() => getIntervalBins(filter), [filter]);
+
     const steps = useMemo(() => (intervalBins ? intervalBins.map(x => x.x0) : null), [
       intervalBins
     ]);
@@ -197,7 +195,7 @@ export default function BottomWidgetFactory(
           }
         </LayerAnimationController>
         <FilterAnimationController
-          /* pass if filter is not animating, pass in 
+          /* pass if filter is not animating, pass in
            enlarged filter here because animation controller needs to call reset on it
            we can */
           filter={animatedFilter || filters[enlargedFilterIdx]}

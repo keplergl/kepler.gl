@@ -108,6 +108,10 @@ export type TimeRangeFilter = FilterBase &
     fieldType: 'timestamp';
     fixedDomain: true;
     value: [number, number];
+    bins?: Object,
+    plotType: {
+      [key: string]: any
+    }
   };
 
 export type PolygonFilter = FilterBase & {
