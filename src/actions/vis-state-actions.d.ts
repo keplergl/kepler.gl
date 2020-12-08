@@ -186,7 +186,7 @@ export function removeLayer(
 export type DuplicateLayerUpdaterAction = {
   idx: number;
 };
-export function removeLayer(
+export function duplicateLayer(
   idx: number
 ): Merge<DuplicateLayerUpdaterAction, {type: ActionTypes.DUPLICATE_LAYER}>;
 
