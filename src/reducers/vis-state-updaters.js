@@ -56,6 +56,7 @@ import {
 import {assignGpuChannel, setFilterGpuMode} from 'utils/gpu-filter-utils';
 import {createNewDataEntry, sortDatasetByColumn} from 'utils/dataset-utils';
 import {set, toArray} from 'utils/utils';
+import {generateHashId} from 'utils/utils';
 
 import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils';
 
@@ -942,7 +943,7 @@ export const removeLayerUpdater = (state, {idx}) => {
 export const duplicateLayerUpdater = (state, {idx}) => {
   const {layers, layerData} = state;
   const layerToDuplicate = cloneDeep(state.layers[idx]);
-  layerToDuplicate.id = `${layerToDuplicate.config.id}_copy`;
+  layerToDuplicate.id = generateHashId();
   layerToDuplicate.config.label = `Copy of ${layerToDuplicate.config.label}`;
   const existingCopiesNum = layers.filter(l => l.id.includes(layerToDuplicate.id)).length;
   if (existingCopiesNum) {
