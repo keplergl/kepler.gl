@@ -24,7 +24,7 @@ import classnames from 'classnames';
 import styled from 'styled-components';
 import {sortableHandle} from 'react-sortable-hoc';
 import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
-import {ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from 'components/common/icons';
+import {Add, ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from 'components/common/icons';
 
 import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
@@ -37,6 +37,7 @@ const propTypes = {
   onUpdateLayerLabel: PropTypes.func.isRequired,
   onToggleEnableConfig: PropTypes.func.isRequired,
   onRemoveLayer: PropTypes.func.isRequired,
+  onDuplicateLayer: PropTypes.func.isRequired,
   isConfigActive: PropTypes.bool.isRequired,
 
   // optional
@@ -140,7 +141,8 @@ const defaultActionIcons = {
   remove: Trash,
   visible: EyeSeen,
   hidden: EyeUnseen,
-  enableConfig: ArrowDown
+  enableConfig: ArrowDown,
+  duplicate: Add
 };
 function LayerPanelHeaderFactory(LayerTitleSection, PanelHeaderAction) {
   const LayerPanelHeader = ({
@@ -154,6 +156,7 @@ function LayerPanelHeaderFactory(LayerTitleSection, PanelHeaderAction) {
     onToggleVisibility,
     onUpdateLayerLabel,
     onToggleEnableConfig,
+    onDuplicateLayer,
     onRemoveLayer,
     showRemoveLayer,
     actionIcons = defaultActionIcons
@@ -202,6 +205,13 @@ function LayerPanelHeaderFactory(LayerTitleSection, PanelHeaderAction) {
             tooltip={isVisible ? 'tooltip.hideLayer' : 'tooltip.showLayer'}
             onClick={onToggleVisibility}
             IconComponent={isVisible ? actionIcons.visible : actionIcons.hidden}
+          />
+          <PanelHeaderAction
+            className="layer__duplicate"
+            id={layerId}
+            tooltip={'tooltip.duplicateLayer'}
+            onClick={onDuplicateLayer}
+            IconComponent={actionIcons.duplicate}
           />
           <PanelHeaderAction
             className={classnames('layer__enable-config ', {

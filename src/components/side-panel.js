@@ -204,6 +204,7 @@ export default function SidePanelFactory(
         showDatasetTable: this._showDatasetTable,
         showAddDataModal: this._showAddDataModal,
         removeLayer: visStateActions.removeLayer,
+        duplicateLayer: visStateActions.duplicateLayer,
         removeDataset: this._removeDataset,
         openModal: uiStateActions.toggleModal
       };

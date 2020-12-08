@@ -934,6 +934,43 @@ export const removeLayerUpdater = (state, {idx}) => {
 };
 
 /**
+ * duplicate layer
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').duplicateLayerUpdater}
+ * @public
+ */
+export const duplicateLayerUpdater = (state, {idx}) => {
+  const {layers, layerData} = state;
+  const layerToDuplicate = cloneDeep(state.layers[idx]);
+  layerToDuplicate.id = `${layerToDuplicate.config.id}_copy`;
+  layerToDuplicate.config.label = `Copy of ${layerToDuplicate.config.label}`;
+  const existingCopiesNum = layers.filter(l => l.id.includes(layerToDuplicate.id)).length;
+  if (existingCopiesNum) {
+    const postfix = `${existingCopiesNum + 1}`;
+    layerToDuplicate.id += postfix;
+    layerToDuplicate.config.label += postfix;
+  }
+  const duplicatedLayerData = cloneDeep(state.layerData[idx]);
+  const newLayers = cloneDeep(layers);
+  newLayers.splice(idx, 0, layerToDuplicate);
+  const newLayerData = cloneDeep(layerData);
+  newLayerData.splice(idx, 0, duplicatedLayerData);
+  const newLayerOrder = [...state.layerOrder].map(pid => (pid >= idx + 1 ? pid + 1 : pid));
+  newLayerOrder.splice(idx + 1, 0, idx + 1);
+
+  const newState = {
+    ...state,
+    layers: newLayers,
+    layerData: newLayerData,
+    layerOrder: newLayerOrder
+    // splitMaps: newMaps
+    // TODO: update filters, create helper to remove layer form filter (remove layerid and dataid) if mapped
+  };
+
+  return updateAnimationDomain(newState);
+};
+
+/**
  * Reorder layer
  * @memberof visStateUpdaters
  * @type {typeof import('./vis-state-updaters').reorderLayerUpdater}
