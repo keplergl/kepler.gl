@@ -29,6 +29,9 @@ def _gdf_to_dict(gdf):
     Returns:
     - dictionary: a dictionary variable that can be used in Kepler.gl
     '''
+    # reproject to 4326 if needed
+    if gdf.crs and not gdf.crs == 4326:
+        gdf = gdf.to_crs(4326)
 
     # get name of the geometry column
     # will cause error if data frame has no geometry column

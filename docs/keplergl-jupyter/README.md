@@ -212,7 +212,7 @@ w1.add_data(data=df, name='cities')
 ```
 
 ### `GeoDataFrame`
-kepler.gl accepts [geopandas.GeoDataFrame][geo_data_frame], it automatically converts the current `geometry` column from shapely to wkt string.
+kepler.gl accepts [geopandas.GeoDataFrame][geo_data_frame], it automatically converts the current `geometry` column from shapely to wkt string and re-projects geometries to latitude and longitude (EPSG:4326) if the active `geometry` column is in a different projection.
 ```python
 url = 'http://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_040_00_500k.json'
 country_gdf = geopandas.read_file(url)
