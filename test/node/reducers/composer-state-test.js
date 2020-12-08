@@ -93,7 +93,7 @@ test('#composerStateReducer - addDataToMapUpdater: mapStyle', t => {
   t.end();
 });
 
-test.only('#composerStateReducer - addDataToMapUpdater: mapState should be centered', t => {
+test('#composerStateReducer - addDataToMapUpdater: mapState should be centered', t => {
   // init kepler.gl root and instance
   const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
   const mapStateProperties = {
@@ -117,8 +117,8 @@ test.only('#composerStateReducer - addDataToMapUpdater: mapState should be cente
     }
   });
 
-  t.equal(newState.mapState.latitude, 29.23, 'centerMap: true should override mapState config');
-  t.equal(newState.mapState.longitude, 60.71, 'centerMap: true should override mapState config');
+  t.equal(newState.mapState.latitude, 30.702086980763045, 'centerMap: true should override mapState config');
+  t.equal(newState.mapState.longitude, 60.709999948740005, 'centerMap: true should override mapState config');
 
   t.end();
 });
