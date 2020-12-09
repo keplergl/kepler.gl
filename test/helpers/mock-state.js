@@ -26,7 +26,7 @@ import {getInitialInputStyle} from 'reducers/map-style-updaters';
 import keplerGlReducer from 'reducers/core';
 import {addDataToMap} from 'actions/actions';
 import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_RANGE, DEFAULT_LAYER_OPACITY} from 'layers/layer-factory';
-import {DEFAULT_PROPS} from 'components/kepler-gl';
+import {DEFAULT_KEPLER_GL_PROPS} from 'components';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
@@ -761,7 +761,7 @@ export const expectedSavedTripLayer = {
 
 export const mockKeplerProps = {
   ...StateWFiles,
-  ...DEFAULT_PROPS,
+  ...DEFAULT_KEPLER_GL_PROPS,
   visStateActions: VisStateActions,
   mapStateActions: MapStateActions,
   mapStyleActions: MapStyleActions,

@@ -217,7 +217,7 @@ export const notificationPanelSelector = props => ({
   notifications: props.uiState.notifications
 });
 
-export const DEFAULT_PROPS = {
+export const DEFAULT_KEPLER_GL_PROPS = {
   mapStyles: [],
   mapStylesReplaceDefault: false,
   mapboxApiUrl: DEFAULT_MAPBOX_API_URL,
@@ -253,7 +253,7 @@ function KeplerGlFactory(
   /** @typedef {import('./kepler-gl').KeplerGlProps} KeplerGlProps */
   /** @augments React.Component<KeplerGlProps> */
   class KeplerGL extends Component {
-    static defaultProps = DEFAULT_PROPS;
+    static defaultProps = DEFAULT_KEPLER_GL_PROPS;
 
     componentDidMount() {
       this._validateMapboxToken();
