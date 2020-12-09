@@ -610,6 +610,35 @@ export const addNotificationUpdater = (state, {payload}) => ({
   notifications: [...(state.notifications || []), createNotification(payload)]
 });
 
+function filterOut(notifications, payload) {
+  const existing = notifications.filter(n => n.id === payload.id);
+  if (existing.length > 0) {
+    const index = notifications.indexOf(existing[0]);
+    if (index >= 0) {
+      const out = notifications.slice(0);
+      out[index] = createNotification(payload);
+      return out;
+    }
+  }
+
+  return [...(notifications || []), createNotification(payload)];
+}
+
+/**
+ * Update a notification
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload id of the notification to be removed
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').updateNotificationUpdater}
+ * @public
+ */
+export const updateNotificationUpdater = (state, {payload}) => ({
+  ...state,
+  notifications: filterOut(state.notifications, payload)
+});
+
 /**
  * Remove a notification
  * @memberof uiStateUpdaters

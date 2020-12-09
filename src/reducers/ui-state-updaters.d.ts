@@ -122,6 +122,10 @@ export function addNotificationUpdater(
   state: UiState,
   action: UiStateActions.AddNotificationUpdaterAction
 ): UiState;
+export function updateNotificationUpdater(
+  state: UiState,
+  action: UiStateActions.UpdateNotificationUpdaterAction
+): UiState;
 export function removeNotificationUpdater(
   state: UiState,
   action: UiStateActions.RemoveNotificationUpdaterAction

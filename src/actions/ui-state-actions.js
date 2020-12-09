@@ -96,6 +96,18 @@ export const addNotification = createAction(
 );
 
 /**
+ * Updates a notification
+ * @memberof uiStateActions
+ * @param notification - The `notification` object to be added
+ * @type {typeof import('./ui-state-actions').updateNotification}
+ * @public
+ */
+export const updateNotification = createAction(
+  ActionTypes.UPDATE_NOTIFICATION,
+  notification => notification
+);
+
+/**
  * Remove a notification
  * @memberof uiStateActions
  * @param id - `id` of the notification to be removed

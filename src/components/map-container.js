@@ -251,6 +251,29 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       setLayerBlending(gl, this.props.layerBlending);
     };
 
+    _onError = (error, layer) => {
+      // We don't want to show the error on every frame and crash React
+      const errorMessage = `An error in deck.gl: ${error.message} in ${layer.id}`;
+      const notificationId = `${layer.id}-${error.message}`;
+
+      // Throtle error notifications
+      this._deckGLErrors = this._deckGLErrors || {};
+      const lastShown = this._deckGLErrors[notificationId];
+      if (lastShown === undefined || lastShown < Date.now() - 200) {
+        this._deckGLErrors[notificationId] = Date.now();
+
+        // Create new error notification or update existing one with same id.
+        // This is required to preserver order of notifications.
+        const {uiStateActions} = this.props;
+        uiStateActions.updateNotification({
+          type: 'error',
+          message: errorMessage,
+          topic: 'global',
+          id: notificationId
+        });
+      }
+    };
+
     /* component render functions */
 
     /* eslint-disable complexity */
@@ -394,6 +417,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         <DeckGL
           {...this.props.deckGlProps}
           viewState={mapState}
+          onError={this._onError}
           id="default-deckgl-overlay"
           layers={deckGlLayers}
           onBeforeRender={this._onBeforeRender}
