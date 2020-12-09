@@ -19,83 +19,50 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {mount as render} from 'enzyme';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+
 import sinon from 'sinon';
 import test from 'tape';
-import MapContainerFactory from 'components/map-container';
+import {appInjector, MapContainerFactory} from 'components';
+import {mapFieldsSelector} from 'components/kepler-gl';
+import {mockKeplerProps} from '../../helpers/mock-state';
+
+const MapContainer = appInjector.get(MapContainerFactory);
+const initialProps = mapFieldsSelector(mockKeplerProps);
 
 test('MapContainerFactory - display all options', t => {
-  const MapPopover = () => <div className="map-popover" />;
-  const MapControl = () => <div className="map-control" />;
-  const MapContainer = MapContainerFactory(MapPopover, MapControl);
-
-  const updateMap = sinon.spy();
   const onMapStyleLoaded = sinon.spy();
   const onLayerClick = sinon.spy();
 
-  const $ = render(
-    <MapContainer
-      mapState={{}}
-      mapStyle={{
-        bottomMapStyle: {layers: [], name: 'foo'},
-        visibleLayerGroups: {}
-      }}
-      mapStateActions={{
-        updateMap
-      }}
-      mapLayers={{}}
-      layers={[]}
-      filters={[]}
-      datasets={{}}
-      uiState={{
-        mapControls: {
-          splitMap: {show: true},
-          visibleLayers: {show: true},
-          toggle3d: {show: true},
-          mapLegend: {show: true},
-          mapDraw: {show: true}
-        },
-        editor: {}
-      }}
-      uiStateActions={{}}
-      visStateActions={{
-        onLayerClick
-      }}
-      interactionConfig={{
-        tooltip: {
-          enabled: true
-        },
-        coordinate: {
-          enabled: true
-        }
-      }}
-      layerBlending=""
-      layerOrder={[]}
-      layerData={[]}
-      pinned={{
-        coordinate: [0, 0]
-      }}
-      mapboxApiAccessToken=""
-      editor={{
-        features: []
-      }}
-      onMapStyleLoaded={onMapStyleLoaded}
-      mousePos={{
-        mousePosition: [0, 0],
-        coordinate: [0, 0],
-        pinned: null
-      }}
-    />
-  );
+  const props = {
+    ...initialProps,
+    mapStyle: {
+      bottomMapStyle: {layers: [], name: 'foo'},
+      visibleLayerGroups: {}
+    },
+    onMapStyleLoaded,
+    visStateActions: {
+      ...initialProps.visStateActions,
+      onLayerClick
+    }
+  };
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <MapContainer {...props} />
+      </IntlWrapper>
+    );
+  }, 'MapContainer should not fail without props');
 
-  t.equal($.find('MapControl').length, 1, 'Should display 1 MapControl');
+  t.equal(wrapper.find('MapControl').length, 1, 'Should display 1 MapControl');
 
-  t.equal($.find('InteractiveMap').length, 1, 'Should display 1 InteractiveMap');
+  t.equal(wrapper.find('InteractiveMap').length, 1, 'Should display 1 InteractiveMap');
 
   // Editor
-  t.equal($.find('StaticMap').length, 1, 'Should display 1 DeckGl');
+  t.equal(wrapper.find('StaticMap').length, 1, 'Should display 1 DeckGl');
 
-  const instance = $.instance();
+  const instance = wrapper.find(MapContainer).instance();
 
   instance._onMapboxStyleUpdate();
 

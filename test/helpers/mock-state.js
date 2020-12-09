@@ -24,11 +24,14 @@ import {VizColorPalette} from 'constants/custom-color-ranges';
 import {getInitialInputStyle} from 'reducers/map-style-updaters';
 
 import keplerGlReducer from 'reducers/core';
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as MapStyleActions from 'actions/map-style-actions';
-import * as MapStateActions from 'actions/map-state-actions';
 import {addDataToMap} from 'actions/actions';
 import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_RANGE, DEFAULT_LAYER_OPACITY} from 'layers/layer-factory';
+import {DEFAULT_KEPLER_GL_PROPS} from 'components';
+import * as VisStateActions from 'actions/vis-state-actions';
+import * as MapStateActions from 'actions/map-state-actions';
+import * as MapStyleActions from 'actions/map-style-actions';
+import * as UIStateActions from 'actions/ui-state-actions';
+import * as ProviderActions from 'actions/provider-actions';
 
 // fixtures
 import {dataId as csvDataId, testFields, testAllData} from 'test/fixtures/test-csv-data';
@@ -754,4 +757,14 @@ export const expectedSavedTripLayer = {
     sizeField: null,
     sizeScale: 'linear'
   }
+};
+
+export const mockKeplerProps = {
+  ...StateWFiles,
+  ...DEFAULT_KEPLER_GL_PROPS,
+  visStateActions: VisStateActions,
+  mapStateActions: MapStateActions,
+  mapStyleActions: MapStyleActions,
+  uiStateActions: UIStateActions,
+  providerActions: ProviderActions
 };

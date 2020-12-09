@@ -104,7 +104,6 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       filters: PropTypes.arrayOf(PropTypes.any).isRequired,
       mapState: PropTypes.object.isRequired,
       mapControls: PropTypes.object.isRequired,
-      uiState: PropTypes.object.isRequired,
       mapStyle: PropTypes.object.isRequired,
       mousePos: PropTypes.object.isRequired,
       mapboxApiAccessToken: PropTypes.string.isRequired,
@@ -451,7 +450,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         mapboxApiAccessToken,
         mapboxApiUrl,
         mapControls,
-        uiState,
+        locale,
         uiStateActions,
         visStateActions,
         interactionConfig,
@@ -475,7 +474,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         transformRequest
       };
 
-      const isEdit = uiState.mapControls.mapDraw.active;
+      const isEdit = mapControls.mapDraw.active;
       const hasGeocoderLayer = layers.find(l => l.id === GEOCODER_LAYER_ID);
 
       return (
@@ -493,7 +492,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             scale={mapState.scale || 1}
             top={interactionConfig.geocoder && interactionConfig.geocoder.enabled ? 52 : 0}
             editor={editor}
-            locale={uiState.locale}
+            locale={locale}
             onTogglePerspective={mapStateActions.togglePerspective}
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
