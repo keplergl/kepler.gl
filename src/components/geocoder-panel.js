@@ -139,18 +139,11 @@ export default function GeocoderPanelFactory() {
         width: this.props.mapState.width,
         height: this.props.mapState.height
       });
+
       if (!centerAndZoom) {
         // failed to fit bounds
         return;
       }
-      // const {zoom} = geoViewport.viewport(bounds, [
-      //   this.props.mapState.width,
-      //   this.props.mapState.height
-      // ]);
-      // center being calculated by geo-vieweport.viewport has a complex logic that
-      // projects and then unprojects the coordinates to determine the center
-      // Calculating a simple average instead as that is the expected behavior in most of cases
-      // const center = [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2];
 
       this.props.updateMap({
         latitude: centerAndZoom.center[1],
