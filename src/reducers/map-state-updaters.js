@@ -18,9 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import geoViewport from '@mapbox/geo-viewport';
-import {validateBounds} from 'utils/projection-utils';
-import Console from 'global/console';
+import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
 
 /** @typedef {import('./map-state-updaters').MapState} MapState */
 
@@ -111,21 +109,22 @@ export const updateMapUpdater = (state, action) => ({
  * @public
  */
 export const fitBoundsUpdater = (state, action) => {
-  const bounds = validateBounds(action.payload);
-  if (!bounds) {
-    Console.warn('invalid map bounds provided');
+  const centerAndZoom = getCenterAndZoomFromBounds(action.payload, {
+    width: state.width,
+    height: state.height
+  });
+  if (!centerAndZoom) {
+    // bounds is invalid
     return state;
   }
 
-  const viewport = geoViewport.viewport(bounds, [state.width, state.height]);
-
   return {
     ...state,
-    latitude: viewport.center[1],
-    longitude: viewport.center[0],
+    latitude: centerAndZoom.center[1],
+    longitude: centerAndZoom.center[0],
     // For marginal or invalid bounds, zoom may be NaN. Make sure to provide a valid value in order
     // to avoid corrupt state and potential crashes as zoom is expected to be a number
-    ...(Number.isFinite(viewport.zoom) ? {zoom: viewport.zoom} : {})
+    ...(Number.isFinite(centerAndZoom.zoom) ? {zoom: centerAndZoom.zoom} : {})
   };
 };
 

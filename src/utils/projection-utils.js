@@ -18,6 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import geoViewport from '@mapbox/geo-viewport';
+import Console from 'global/console';
+
 function isLat(num) {
   return Number.isFinite(num) && num <= 90 && num >= -90;
 }
@@ -41,4 +44,21 @@ export function validateBounds(bounds) {
     return bounds;
   }
   return null;
+}
+
+export function getCenterAndZoomFromBounds(bounds, {width, height}) {
+  const validBounds = validateBounds(bounds);
+  if (!validBounds) {
+    Console.warn('invalid map bounds provided');
+    return null;
+  }
+
+  const {zoom} = geoViewport.viewport(bounds, [width, height]);
+
+  // center being calculated by geo-vieweport.viewport has a complex logic that
+  // projects and then unprojects the coordinates to determine the center
+  // Calculating a simple average instead as that is the expected behavior in most of cases
+  const center = [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2];
+
+  return {zoom, center};
 }

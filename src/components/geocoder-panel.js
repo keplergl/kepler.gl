@@ -23,8 +23,8 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import Processors from 'processors';
 import {FlyToInterpolator} from '@deck.gl/core';
-import geoViewport from '@mapbox/geo-viewport';
 import KeplerGlSchema from 'schemas';
+import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
 
 import Geocoder from './geocoder/geocoder';
 import {
@@ -135,21 +135,29 @@ export default function GeocoderPanelFactory() {
         lon + GEOCODER_GEO_OFFSET,
         lat + GEOCODER_GEO_OFFSET
       ];
-      const {zoom} = geoViewport.viewport(bounds, [
-        this.props.mapState.width,
-        this.props.mapState.height
-      ]);
+      const centerAndZoom = getCenterAndZoomFromBounds(bounds, {
+        width: this.props.mapState.width,
+        height: this.props.mapState.height
+      });
+      if (!centerAndZoom) {
+        // failed to fit bounds
+        return;
+      }
+      // const {zoom} = geoViewport.viewport(bounds, [
+      //   this.props.mapState.width,
+      //   this.props.mapState.height
+      // ]);
       // center being calculated by geo-vieweport.viewport has a complex logic that
       // projects and then unprojects the coordinates to determine the center
       // Calculating a simple average instead as that is the expected behavior in most of cases
-      const center = [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2];
+      // const center = [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2];
 
       this.props.updateMap({
-        latitude: center[1],
-        longitude: center[0],
+        latitude: centerAndZoom.center[1],
+        longitude: centerAndZoom.center[0],
         // For marginal or invalid bounds, zoom may be NaN. Make sure to provide a valid value in order
         // to avoid corrupt state and potential crashes as zoom is expected to be a number
-        ...(Number.isFinite(zoom) ? {zoom} : {}),
+        ...(Number.isFinite(centerAndZoom.zoom) ? {zoom: centerAndZoom.zoom} : {}),
         pitch: 0,
         bearing: 0,
         transitionDuration: this.props.transitionDuration,

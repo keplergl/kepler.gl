@@ -117,8 +117,8 @@ test('#composerStateReducer - addDataToMapUpdater: mapState should be centered',
     }
   });
 
-  t.equal(newState.mapState.latitude, 30.702086980763045, 'centerMap: true should override mapState config');
-  t.equal(newState.mapState.longitude, 60.709999948740005, 'centerMap: true should override mapState config');
+  t.equal(newState.mapState.latitude, 29.23, 'centerMap: true should override mapState config');
+  t.equal(newState.mapState.longitude, 60.71, 'centerMap: true should override mapState config');
 
   t.end();
 });
