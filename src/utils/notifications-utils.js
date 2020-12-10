@@ -30,7 +30,7 @@ import {
 import {BUG_REPORT_LINK} from 'constants/user-guides';
 
 /**
- * Creates a notofication
+ * Creates a notification
  * @param {object} opt
  * @param {string} opt.message - Message to display during the notification
  * @param {string} opt.type - The type of message. One of DEFAULT_NOTIFICATION_TYPES

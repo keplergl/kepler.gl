@@ -35,7 +35,7 @@ const actionHandler = {
   [ActionTypes.OPEN_DELETE_MODAL]: uiStateUpdaters.openDeleteModalUpdater,
   [ActionTypes.TOGGLE_MAP_CONTROL]: uiStateUpdaters.toggleMapControlUpdater,
   [ActionTypes.ADD_NOTIFICATION]: uiStateUpdaters.addNotificationUpdater,
-  [ActionTypes.UPDATE_NOTIFICATION]: uiStateUpdaters.updateNotificationUpdater,
+  [ActionTypes.SET_NOTIFICATION]: uiStateUpdaters.setNotificationUpdater,
   [ActionTypes.REMOVE_NOTIFICATION]: uiStateUpdaters.removeNotificationUpdater,
 
   [ActionTypes.SET_EXPORT_IMAGE_SETTING]: uiStateUpdaters.setExportImageSettingUpdater,

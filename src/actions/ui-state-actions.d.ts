@@ -81,13 +81,13 @@ export function addNotification(
   }
 >;
 
-/** UPDATE_NOTIFICATION */
-export type UpdateNotificationUpdaterAction = {
+/** SET_NOTIFICATION */
+export type SetNotificationUpdaterAction = {
   payload: object;
 };
-export function updateNotification(
+export function setNotification(
   notification: object
-): Merge<UpdateNotificationUpdaterAction, { type: ActionTypes.UPDATE_NOTIFICATION; }>;
+): Merge<SetNotificationUpdaterAction, { type: ActionTypes.SET_NOTIFICATION; }>;
 
 /** REMOVE_NOTIFICATION */
 export type RemoveNotificationUpdaterAction = {

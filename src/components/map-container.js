@@ -25,6 +25,7 @@ import MapboxGLMap from 'react-map-gl';
 import DeckGL from '@deck.gl/react';
 import {createSelector} from 'reselect';
 import WebMercatorViewport from 'viewport-mercator-project';
+import {errorNotification} from 'utils/notifications-utils';
 
 // components
 import MapPopoverFactory from 'components/map/map-popover';
@@ -42,7 +43,11 @@ import {getLayerHoverProp, renderDeckGlLayer} from 'utils/layer-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
-import {FILTER_TYPES, GEOCODER_LAYER_ID} from 'constants/default-settings';
+import {
+  FILTER_TYPES,
+  GEOCODER_LAYER_ID,
+  THROTTLE_NOTIFICATION_TIME
+} from 'constants/default-settings';
 
 const MAP_STYLE = {
   container: {
@@ -252,25 +257,24 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
     };
 
     _onError = (error, layer) => {
-      // We don't want to show the error on every frame and crash React
       const errorMessage = `An error in deck.gl: ${error.message} in ${layer.id}`;
       const notificationId = `${layer.id}-${error.message}`;
 
-      // Throtle error notifications
-      this._deckGLErrors = this._deckGLErrors || {};
-      const lastShown = this._deckGLErrors[notificationId];
-      if (lastShown === undefined || lastShown < Date.now() - 200) {
-        this._deckGLErrors[notificationId] = Date.now();
+      // Throttle error notifications, as React doesn't like too many state changes from here.
+      this._deckGLErrorsElapsed = this._deckGLErrorsElapsed || {};
+      const lastShown = this._deckGLErrorsElapsed[notificationId];
+      if (!lastShown || lastShown < Date.now() - THROTTLE_NOTIFICATION_TIME) {
+        this._deckGLErrorsElapsed[notificationId] = Date.now();
 
         // Create new error notification or update existing one with same id.
-        // This is required to preserver order of notifications.
+        // Update is required to preserve the order of notifications as they probably are going to "jump" based on order of errors.
         const {uiStateActions} = this.props;
-        uiStateActions.updateNotification({
-          type: 'error',
-          message: errorMessage,
-          topic: 'global',
-          id: notificationId
-        });
+        uiStateActions.setNotification(
+          errorNotification({
+            message: errorMessage,
+            id: notificationId
+          })
+        );
       }
     };
 

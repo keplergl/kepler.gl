@@ -84,7 +84,7 @@ export type ActionType = {
   OPEN_DELETE_MODAL: string;
   TOGGLE_MAP_CONTROL: string;
   ADD_NOTIFICATION: string;
-  UPDATE_NOTIFICATION: string;
+  SET_NOTIFICATION: string;
   REMOVE_NOTIFICATION: string;
   SET_LOCALE: string;
 

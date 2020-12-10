@@ -96,14 +96,14 @@ export const addNotification = createAction(
 );
 
 /**
- * Updates a notification
+ * Updates a notification with identical id or adds a new notification to be displayed
  * @memberof uiStateActions
- * @param notification - The `notification` object to be added
- * @type {typeof import('./ui-state-actions').updateNotification}
+ * @param notification - The `notification` object to be updated or added
+ * @type {typeof import('./ui-state-actions').setNotification}
  * @public
  */
-export const updateNotification = createAction(
-  ActionTypes.UPDATE_NOTIFICATION,
+export const setNotification = createAction(
+  ActionTypes.SET_NOTIFICATION,
   notification => notification
 );
 
