@@ -179,6 +179,7 @@
     "@deck.gl/test-utils": "^8.2.0",
     "@luma.gl/test-utils": "^8.2.0",
     "@probe.gl/test-utils": "^3.0.1",
+    "@testing-library/react-hooks": "^3.4.2",
     "@types/d3-array": "^2.0.0",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.0.0",
