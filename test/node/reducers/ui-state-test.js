@@ -29,8 +29,10 @@ import {
   setExportSelectedDataset,
   setExportDataType,
   setExportFiltered,
+  startExportingImage,
   addNotification,
-  startExportingImage
+  setNotification,
+  removeNotification
 } from 'actions/ui-state-actions';
 import {loadFiles, loadFilesErr} from 'actions/vis-state-actions';
 import {keplerGlInit} from 'actions/actions';
@@ -42,7 +44,6 @@ import {
   DEFAULT_NOTIFICATION_TOPICS,
   DEFAULT_NOTIFICATION_TYPES
 } from 'constants/default-settings';
-import {removeNotification} from 'actions/ui-state-actions';
 
 test('#uiStateReducer', t => {
   t.deepEqual(
@@ -250,6 +251,59 @@ test('#uiStateReducer -> ADD_NOTIFICATION', t => {
       id: 'test-1'
     },
     'AddNotification should have propagated data correctly '
+  );
+
+  t.end();
+});
+
+test('#uiStateReducer -> SET_NOTIFICATION', t => {
+  const sharedNotificationId = 'test-set-0';
+
+  const state0 = reducer(
+    INITIAL_UI_STATE,
+    setNotification({
+      type: DEFAULT_NOTIFICATION_TYPES.error,
+      message: 'TEST',
+      topic: DEFAULT_NOTIFICATION_TOPICS.global,
+      id: sharedNotificationId
+    })
+  );
+
+  t.equal(state0.notifications.length, 1, 'setNotification should add one new notification');
+  t.deepEqual(
+    state0.notifications[0],
+    {
+      type: DEFAULT_NOTIFICATION_TYPES.error,
+      message: 'TEST',
+      topic: DEFAULT_NOTIFICATION_TOPICS.global,
+      id: sharedNotificationId
+    },
+    'setNotification should have propagated data correctly '
+  );
+
+  const state1 = reducer(
+    state0,
+    setNotification({
+      type: DEFAULT_NOTIFICATION_TYPES.info,
+      message: 'TEST-updated',
+      topic: DEFAULT_NOTIFICATION_TOPICS.file,
+      id: sharedNotificationId
+    })
+  );
+  t.equal(
+    state1.notifications.length,
+    1,
+    "setNotification shouldn't add new notification with same id"
+  );
+  t.deepEqual(
+    state1.notifications[0],
+    {
+      type: DEFAULT_NOTIFICATION_TYPES.info,
+      message: 'TEST-updated',
+      topic: DEFAULT_NOTIFICATION_TOPICS.file,
+      id: sharedNotificationId
+    },
+    'setNotification updated existing notification'
   );
 
   t.end();
