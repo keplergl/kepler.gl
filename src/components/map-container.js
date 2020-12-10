@@ -421,12 +421,12 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         <DeckGL
           {...this.props.deckGlProps}
           viewState={mapState}
-          onError={this._onError}
           id="default-deckgl-overlay"
           layers={deckGlLayers}
           onBeforeRender={this._onBeforeRender}
           onHover={visStateActions.onLayerHover}
           onClick={visStateActions.onLayerClick}
+          onError={this._onError}
           ref={comp => {
             if (comp && comp.deck && !this._deck) {
               this._deck = comp.deck;
