@@ -30,7 +30,7 @@ const DECIMAL_Z = 1;
 
 const CoordinateInfoFactory = () => {
   const CoordinateInfo = ({coordinate, zoom}) => (
-    <div>
+    <div className="coordingate-hover-info">
       <StyledLayerName className="map-popover__layer-name">
         <CursorClick height="12px" />
         Coordinate

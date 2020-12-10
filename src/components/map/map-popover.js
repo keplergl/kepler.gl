@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {PureComponent, createRef} from 'react';
+import React, {useState, useCallback, useRef, useLayoutEffect} from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import LayerHoverInfoFactory from './layer-hover-info';
@@ -107,129 +107,181 @@ const StyledIcon = styled.div`
 
 MapPopoverFactory.deps = [LayerHoverInfoFactory, CoordinateInfoFactory];
 
-export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
-  class MapPopover extends PureComponent {
-    static propTypes = {
-      layerHoverProp: PropTypes.object,
-      coordinate: PropTypes.oneOfType([PropTypes.array, PropTypes.bool]),
-      frozen: PropTypes.bool,
-      x: PropTypes.number,
-      y: PropTypes.number,
-      z: PropTypes.number,
-      mapW: PropTypes.number.isRequired,
-      mapH: PropTypes.number.isRequired,
-      onClose: PropTypes.func.isRequired,
-      isBase: PropTypes.bool
-    };
+export function getPosition({x, y, mapW, mapH, width, height, isLeft}) {
+  const topOffset = 20;
+  const leftOffset = 20;
+  if (![x, y, mapW, mapH, width, height].every(Number.isFinite)) {
+    return {};
+  }
 
-    constructor(props) {
-      super(props);
-      this.state = {
-        width: 380,
-        height: 160,
-        isLeft: false
-      };
-    }
+  const pos = {};
+  if (x + leftOffset + width > mapW || isLeft) {
+    pos.right = mapW - x + leftOffset;
+  } else {
+    pos.left = x + leftOffset;
+  }
 
-    componentDidMount() {
-      this._setContainerSize();
-    }
+  if (y + topOffset + height > mapH) {
+    pos.bottom = 10;
+  } else {
+    pos.top = y + topOffset;
+  }
 
-    componentDidUpdate() {
-      this._setContainerSize();
-    }
+  return pos;
+}
 
-    popover = createRef();
-
-    _setContainerSize() {
-      const node = this.popover.current;
-      if (!node) {
-        return;
-      }
-
-      const width = Math.min(Math.round(node.scrollWidth), MAX_WIDTH);
-      const height = Math.min(Math.round(node.scrollHeight), MAX_HEIGHT);
-
-      if (width !== this.state.width || height !== this.state.height) {
-        this.setState({width, height});
-      }
-    }
-
-    _getPosition(x, y, isLeft) {
-      const topOffset = 20;
-      const leftOffset = 20;
-      const {mapW, mapH} = this.props;
-      const {width, height} = this.state;
-      const pos = {};
-      if (x + leftOffset + width > mapW || isLeft) {
-        pos.right = mapW - x + leftOffset;
-      } else {
-        pos.left = x + leftOffset;
-      }
-
-      if (y + topOffset + height > mapH) {
-        pos.bottom = 10;
-      } else {
-        pos.top = y + topOffset;
-      }
-
-      return pos;
-    }
-
-    moveLeft = () => {
-      this.setState({isLeft: true});
-    };
-
-    moveRight = () => {
-      this.setState({isLeft: false});
-    };
-
-    render() {
-      const {x, y, frozen, coordinate, layerHoverProp, isBase, zoom} = this.props;
-      const {isLeft} = this.state;
-
-      const style = Number.isFinite(x) && Number.isFinite(y) ? this._getPosition(x, y, isLeft) : {};
-
-      return (
-        <ErrorBoundary>
-          <StyledMapPopover
-            ref={this.popover}
-            className="map-popover"
-            style={{
-              ...style,
-              maxWidth: MAX_WIDTH
-            }}
-          >
-            {frozen ? (
-              <div className="map-popover__top">
-                <div className="gutter" />
-                {!isLeft && (
-                  <StyledIcon className="popover-arrow-left" onClick={this.moveLeft}>
-                    <ArrowLeft />
-                  </StyledIcon>
-                )}
-                <StyledIcon className="popover-pin" onClick={this.props.onClose}>
-                  <Pin height="16px" />
-                </StyledIcon>
-                {isLeft && (
-                  <StyledIcon className="popover-arrow-right" onClick={this.moveRight}>
-                    <ArrowRight />
-                  </StyledIcon>
-                )}
-                {isBase && (
-                  <div className="primary-label">
-                    <FormattedMessage id="mapPopover.primary" />
-                  </div>
-                )}
-              </div>
-            ) : null}
-            {Array.isArray(coordinate) && <CoordinateInfo coordinate={coordinate} zoom={zoom} />}
-            {layerHoverProp && <LayerHoverInfo {...layerHoverProp} />}
-          </StyledMapPopover>
-        </ErrorBoundary>
-      );
+function hasPosChanged({oldPos = {}, newPos = {}}) {
+  for (const key in newPos) {
+    if (oldPos[key] !== newPos[key]) {
+      return true;
     }
   }
+  for (const key in oldPos) {
+    if (oldPos[key] !== newPos[key]) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// hooks
+export function usePosition({layerHoverProp, x, y, mapW, mapH}, popover) {
+  const [isLeft, setIsLeft] = useState(false);
+  const [pos, setPosition] = useState({});
+
+  const moveLeft = useCallback(() => setIsLeft(true), [setIsLeft]);
+  const moveRight = useCallback(() => setIsLeft(false), [setIsLeft]);
+  const hoverData = layerHoverProp && layerHoverProp.data;
+
+  useLayoutEffect(() => {
+    const node = popover.current;
+
+    if (!node || !hoverData) {
+      return;
+    }
+
+    const width = Math.round(node.offsetWidth);
+    const height = Math.round(node.offsetHeight);
+
+    if (Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0) {
+      const newPos = getPosition({
+        x,
+        y,
+        mapW,
+        mapH,
+        width,
+        height,
+        isLeft
+      });
+      if (hasPosChanged({oldPos: pos, newPos})) {
+        setPosition(newPos);
+      }
+    }
+  }, [x, y, mapH, mapW, isLeft, hoverData, pos, popover]);
+
+  return {moveLeft, moveRight, isLeft, pos};
+}
+export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
+  const MapPopover = ({
+    x,
+    y,
+    mapW,
+    mapH,
+    frozen,
+    coordinate,
+    layerHoverProp,
+    isBase,
+    zoom,
+    onClose
+  }) => {
+    const popover = useRef(null);
+    const {moveLeft, moveRight, isLeft, pos} = usePosition(
+      {layerHoverProp, x, y, mapW, mapH},
+      popover
+    );
+    // const [isLeft, setIsLeft] = useState(false);
+    // const [pos, setPosition] = useState({});
+
+    // const moveLeft = useCallback(() => setIsLeft(true), [setIsLeft]);
+    // const moveRight = useCallback(() => setIsLeft(false), [setIsLeft]);
+    // const hoverData = layerHoverProp && layerHoverProp.data;
+
+    // useLayoutEffect(() => {
+    //   const node = popover.current;
+    //   if (!node || !hoverData) {
+    //     return;
+    //   }
+    //   const width = Math.round(node.offsetWidth);
+    //   const height = Math.round(node.offsetHeight);
+
+    //   if (Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0) {
+    //     setPosition(
+    //       getPosition({
+    //         x,
+    //         y,
+    //         mapW,
+    //         mapH,
+    //         width,
+    //         height,
+    //         isLeft
+    //       })
+    //     );
+    //   }
+    // }, [x, y, mapH, mapW, isLeft, hoverData]);
+
+    return (
+      <ErrorBoundary>
+        <StyledMapPopover
+          ref={popover}
+          className="map-popover"
+          style={{
+            ...pos,
+            maxWidth: MAX_WIDTH,
+            maxHeight: MAX_HEIGHT
+          }}
+        >
+          {frozen ? (
+            <div className="map-popover__top">
+              <div className="gutter" />
+              {!isLeft && (
+                <StyledIcon className="popover-arrow-left" onClick={moveLeft}>
+                  <ArrowLeft />
+                </StyledIcon>
+              )}
+              <StyledIcon className="popover-pin" onClick={onClose}>
+                <Pin height="16px" />
+              </StyledIcon>
+              {isLeft && (
+                <StyledIcon className="popover-arrow-right" onClick={moveRight}>
+                  <ArrowRight />
+                </StyledIcon>
+              )}
+              {isBase && (
+                <div className="primary-label">
+                  <FormattedMessage id="mapPopover.primary" />
+                </div>
+              )}
+            </div>
+          ) : null}
+          {Array.isArray(coordinate) && <CoordinateInfo coordinate={coordinate} zoom={zoom} />}
+          {layerHoverProp && <LayerHoverInfo {...layerHoverProp} />}
+        </StyledMapPopover>
+      </ErrorBoundary>
+    );
+  };
+
+  MapPopover.propTypes = {
+    layerHoverProp: PropTypes.object,
+    coordinate: PropTypes.oneOfType([PropTypes.array, PropTypes.bool]),
+    frozen: PropTypes.bool,
+    x: PropTypes.number,
+    y: PropTypes.number,
+    z: PropTypes.number,
+    mapW: PropTypes.number.isRequired,
+    mapH: PropTypes.number.isRequired,
+    onClose: PropTypes.func.isRequired,
+    isBase: PropTypes.bool
+  };
 
   return injectIntl(MapPopover);
 }
