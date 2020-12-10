@@ -35,7 +35,8 @@ export {
   readFileInBatches,
   processFileData,
   filesToDataPayload,
-  isKeplerGlMap
+  isKeplerGlMap,
+  readBatch
 } from './file-handler';
 
 export {Processors as default} from './data-processor';

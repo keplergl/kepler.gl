@@ -149,13 +149,24 @@ function PlaybackControlsFactory(AnimationSpeedSlider) {
     buttonStyle = 'secondary',
     buttonHeight = DEFAULT_BUTTON_HEIGHT
   }) => {
-    const [showSpeedControl, toggleSpeedControl] = useState(false);
+    
+    const [isSpeedControlVisible, toggleSpeedControl] = useState(false);
     const [showAnimationWindowControl, setShowAnimationWindowControl] = useState(false);
+
     const toggleAnimationWindowControl = useCallback(() => {
       setShowAnimationWindowControl(!showAnimationWindowControl);
     }, [showAnimationWindowControl, setShowAnimationWindowControl]);
     const btnStyle = buttonStyle ? {[buttonStyle]: true} : {};
 
+    const hideAndShowSpeedControl = useCallback(() => {
+      if (!isSpeedControlVisible) {
+        toggleSpeedControl(true);
+      } else {
+        // TODO: A HACK to allow input onblur get triggered before the input is unmounted
+        // A better solution should be invested, see https://github.com/facebook/react/issues/12363
+        window.setTimeout(() => toggleSpeedControl(false), 200);
+      }
+    }, [isSpeedControlVisible, toggleSpeedControl]);
     return (
       <StyledAnimationControls
         className={classnames('playback-controls', {
@@ -201,28 +212,22 @@ function PlaybackControlsFactory(AnimationSpeedSlider) {
 
         {/** Speed */}
         {showAnimationWindowControl || !updateAnimationSpeed ? null : (
-          <StyledSpeedControl
-            onClick={() => {
-              toggleSpeedControl(!showSpeedControl);
-            }}
-          >
+          <StyledSpeedControl>
             <IconButton
               data-tip
               data-for="animate-speed"
               className="playback-control-button"
-              onClick={nop}
               {...btnStyle}
+              onClick={hideAndShowSpeedControl}
             >
               <playbackIcons.speed height={buttonHeight} />
               <Tooltip id="animate-speed" place="top" delayShow={DELAY_SHOW} effect="solid">
                 <span>{preciseRound(speed, 1)}x</span>
               </Tooltip>
             </IconButton>
-            {showSpeedControl ? (
+            {isSpeedControlVisible ? (
               <AnimationSpeedSlider
-                onHide={() => {
-                  toggleSpeedControl(false);
-                }}
+                onHide={hideAndShowSpeedControl}
                 updateAnimationSpeed={updateAnimationSpeed}
                 speed={speed}
               />
@@ -253,7 +258,7 @@ function PlaybackControlsFactory(AnimationSpeedSlider) {
             data-for="animate-play-pause"
             className={classnames('playback-control-button', {active: isAnimating})}
             onClick={isAnimating ? pauseAnimation : startAnimation}
-            hide={showSpeedControl}
+            hide={isSpeedControlVisible}
             {...btnStyle}
           >
             {isAnimating ? (
