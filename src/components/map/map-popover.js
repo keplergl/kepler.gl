@@ -199,35 +199,6 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
       {layerHoverProp, x, y, mapW, mapH},
       popover
     );
-    // const [isLeft, setIsLeft] = useState(false);
-    // const [pos, setPosition] = useState({});
-
-    // const moveLeft = useCallback(() => setIsLeft(true), [setIsLeft]);
-    // const moveRight = useCallback(() => setIsLeft(false), [setIsLeft]);
-    // const hoverData = layerHoverProp && layerHoverProp.data;
-
-    // useLayoutEffect(() => {
-    //   const node = popover.current;
-    //   if (!node || !hoverData) {
-    //     return;
-    //   }
-    //   const width = Math.round(node.offsetWidth);
-    //   const height = Math.round(node.offsetHeight);
-
-    //   if (Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0) {
-    //     setPosition(
-    //       getPosition({
-    //         x,
-    //         y,
-    //         mapW,
-    //         mapH,
-    //         width,
-    //         height,
-    //         isLeft
-    //       })
-    //     );
-    //   }
-    // }, [x, y, mapH, mapW, isLeft, hoverData]);
 
     return (
       <ErrorBoundary>
