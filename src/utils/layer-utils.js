@@ -48,7 +48,7 @@ export function findDefaultLayer(dataset, layerClasses) {
   return layerProps.map(props => {
     const layer = new layerClasses[props.type](props);
     return typeof layer.setInitialLayerConfig === 'function' && Array.isArray(dataset.allData)
-      ? layer.setInitialLayerConfig(dataset.allData)
+      ? layer.setInitialLayerConfig(dataset)
       : layer;
   });
 }

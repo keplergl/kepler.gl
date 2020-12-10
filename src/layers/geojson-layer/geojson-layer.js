@@ -243,7 +243,7 @@ export default class GeoJsonLayer extends Layer {
     this.updateMeta({bounds, fixedRadius, featureTypes});
   }
 
-  setInitialLayerConfig(allData) {
+  setInitialLayerConfig({allData}) {
     this.updateLayerMeta(allData);
 
     const {featureTypes} = this.meta;
