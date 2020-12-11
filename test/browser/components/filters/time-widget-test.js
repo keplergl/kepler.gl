@@ -40,10 +40,7 @@ import {
   TimeSliderMarkerFactory,
   TimeRangeSliderTimeTitleFactory
 } from 'components';
-import {
-  AnimationWindowControl,
-  IconButton
-} from 'components/common/animation-control/playback-controls';
+import IconButton from 'components/common/icon-button';
 import SliderHandle from 'components/common/slider/slider-handle';
 import Typeahead from 'components/common/item-selector/typeahead';
 
@@ -159,9 +156,9 @@ test('Components -> TimeWidget.mount -> test actions', t => {
     'should  not render AnimationSpeedSlider iniitally'
   );
   t.equal(
-    wrapper.find(AnimationWindowControl).length,
+    wrapper.find('.animation-window-control').length,
     0,
-    'should not render AnimationWindowControl iniitally'
+    'should not render AnimationWindowControl initially'
   );
 
   // hit play
@@ -207,26 +204,27 @@ test('Components -> TimeWidget.mount -> test actions', t => {
     .at(0)
     .simulate('click');
   t.equal(
-    wrapper.find(AnimationWindowControl).length,
+    wrapper.find('.animation-window-control').length,
     1,
-    'should render AnimationWindowControl iniitally'
+    'should render AnimationWindowControl initially'
   );
   t.equal(
     wrapper
-      .find(AnimationWindowControl)
+      .find('.animation-window-control')
       .at(0)
       .find(IconButton).length,
     1,
     'should render 1 animate window options'
   );
 
-  // select an animtion option
+  // select an animation option
   wrapper
-    .find(AnimationWindowControl)
+    .find('.animation-window-control')
     .at(0)
     .find(IconButton)
     .at(0)
     .simulate('click');
+
   t.deepEqual(
     setFilterAnimationWindow.args[0],
     [{id: StateWFilters.visState.filters[0].id, animationWindow: 'incremental'}],

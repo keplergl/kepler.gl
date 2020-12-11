@@ -7,6 +7,7 @@
     "start-local-deck": "webpack-dev-server --mode development --env.es6 --env.deck --progress --hot --open",
     "start-local-deck-src": "webpack-dev-server --mode development --env.es6 --env.deck_src --progress --hot --open",
     "start-local-loaders-src": "webpack-dev-server --mode development --env.es6 --env.loaders_src --progress --hot --open",
+    "start-local-hubble-src": "webpack-dev-server --mode development --env.es6 --env.hubble_src --progress --hot --open",
     "start-local-https": "webpack-dev-server --mode development --https --env.es6 --progress --hot --open"
   },
   "dependencies": {

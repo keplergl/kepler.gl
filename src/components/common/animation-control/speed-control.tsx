@@ -20,52 +20,63 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import AnimationSpeedSliderFactory from './animation-speed-slider';
-import {Button, CenterFlexbox} from 'components/common/styled-components';
-import {Rocket} from 'components/common/icons';
+import {Tooltip} from 'components/common/styled-components';
+import IconButton from '../icon-button';
+import {media} from '@kepler.gl/styles';
 import {preciseRound} from 'utils/data-utils';
 
-const StyledSpeedToggle = styled.div`
+const StyledSpeedControl = styled.div`
   display: flex;
-  flex-grow: 0;
-  color: ${props => props.theme.textColor};
-  position: relative;
+  align-items: center;
+
+  .animation-control__speed-slider {
+    left: 0;
+    ${media.palm`
+      left: 60px;
+    `}
+  }
 `;
 
-const StyledSpeedText = styled.div`
-  display: inline-block;
-  width: 24px;
-  text-align: left;
-`;
+const DELAY_SHOW = 500;
+const PRECISE_SPEED_ROUND = 1;
 
-SpeedControlFactory.deps = [AnimationSpeedSliderFactory];
-
-function SpeedControlFactory(AnimationSpeedSlider: ReturnType<typeof AnimationSpeedSliderFactory>) {
+function SpeedControlFactory(AnimationSpeedSlider) {
   const SpeedControl = ({
-    onClick,
+    showAnimationWindowControl,
     updateAnimationSpeed,
+    btnStyle,
+    hideAndShowSpeedControl,
+    buttonHeight,
+    playbackIcons,
     speed,
-    showSpeedControl,
-    buttonHeight = '18px'
-  }) => (
-    <StyledSpeedToggle className="animation-control__speed-control">
-      <Button link width="80px" onClick={onClick}>
-        <CenterFlexbox className="bottom-widget__icon speed">
-          <Rocket height={buttonHeight} />
-        </CenterFlexbox>
-        <StyledSpeedText style={{visibility: !showSpeedControl ? 'visible' : 'hidden'}}>
-          {preciseRound(speed, 1)}x
-        </StyledSpeedText>
-      </Button>
-      {showSpeedControl ? (
-        <AnimationSpeedSlider
-          onHide={onClick}
-          updateAnimationSpeed={updateAnimationSpeed}
-          speed={speed}
-        />
-      ) : null}
-    </StyledSpeedToggle>
-  );
+    isSpeedControlVisible
+  }) => {
+    return showAnimationWindowControl || !updateAnimationSpeed ? null : (
+      <StyledSpeedControl>
+        <IconButton
+          data-tip
+          data-for="animate-speed"
+          className="playback-control-button"
+          {...btnStyle}
+          onClick={hideAndShowSpeedControl}
+        >
+          <playbackIcons.speed height={buttonHeight} />
+          <Tooltip id="animate-speed" place="top" delayShow={DELAY_SHOW} effect="solid">
+            <span>{preciseRound(speed, PRECISE_SPEED_ROUND)}x</span>
+          </Tooltip>
+        </IconButton>
+        {isSpeedControlVisible ? (
+          <AnimationSpeedSlider
+            onHide={hideAndShowSpeedControl}
+            updateAnimationSpeed={updateAnimationSpeed}
+            speed={speed}
+          />
+        ) : null}
+      </StyledSpeedControl>
+    );
+  };
+
   return SpeedControl;
 }
+
 export default SpeedControlFactory;
