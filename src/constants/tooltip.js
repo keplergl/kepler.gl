@@ -45,7 +45,7 @@ export const TOOLTIP_FORMATS = {
   DECIMAL_SHORT_COMMA: {
     id: 'DECIMAL_SHORT_COMMA',
     label: '12.3k',
-    format: '.3s',
+    format: '.3~s',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_PERCENT_FULL_1: {
@@ -63,7 +63,7 @@ export const TOOLTIP_FORMATS = {
   DECIMAL_PRECENT_REGULAR: {
     id: 'DECIMAL_PRECENT_REGULAR',
     label: '12.345 → 12.35%',
-    format: '%',
+    format: '~%',
     type: TOOLTIP_FORMAT_TYPES.PERCENTAGE
   },
   DECIMAL_DECIMAL_FIXED_2: {
