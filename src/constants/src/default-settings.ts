@@ -924,6 +924,8 @@ export const LOADING_METHODS = keyMirror({
   storage: null
 });
 
+export const DEFAULT_FEATURE_FLAGS = {};
+
 export const DATASET_FORMATS = keyMirror({
   row: null,
   geojson: null,
