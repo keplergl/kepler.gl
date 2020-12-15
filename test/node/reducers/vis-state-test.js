@@ -974,6 +974,57 @@ test('#visStateReducer -> REMOVE_LAYER', t => {
   t.end();
 });
 
+test('#visStateReducer -> DUPLICATE_LAYER', t => {
+  const layer1 = new PointLayer({id: 'a'});
+  const oldState = {
+    layers: [layer1],
+    layerData: [{data: 1}],
+    layerOrder: [0],
+    hoverInfo: {
+      layer: {props: {id: 'a'}},
+      picked: true
+    },
+    clicked: {
+      layer: {props: {id: 'a'}},
+      picked: true
+    },
+    splitMaps: [],
+    animationConfig: DEFAULT_ANIMATION_CONFIG
+  };
+
+  const newReducer = reducer(oldState, VisStateActions.duplicateLayer(0));
+
+  t.deepEqual(
+    newReducer,
+    {
+      layers: [
+        {
+          ...layer1,
+          id: newReducer.layers[0].id,
+          config: {...layer1.config, label: 'Copy of new layer'}
+        },
+        layer1
+      ],
+      layerData: [{data: 1}, {data: 1}],
+      layerOrder: [0, 1],
+      hoverInfo: {
+        layer: {props: {id: 'a'}},
+        picked: true
+      },
+      clicked: {
+        layer: {props: {id: 'a'}},
+        picked: true
+      },
+      splitMaps: [],
+      animationConfig: DEFAULT_ANIMATION_CONFIG
+    },
+    'should duplicate layer'
+  );
+
+  // test remove
+  t.end();
+});
+
 test('#visStateReducer -> UPDATE_VIS_DATA.1 -> No data', t => {
   const oldState = CloneDeep(InitialState).visState;
 
