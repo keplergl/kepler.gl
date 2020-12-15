@@ -294,7 +294,7 @@ export function removeLayer(idx) {
 }
 
 /**
- * Remove a layer
+ * Duplicate a layer
  * @memberof visStateActions
  * @param idx idx of layer to be duplicated
  * @returns action
