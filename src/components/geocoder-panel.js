@@ -106,6 +106,7 @@ export default function GeocoderPanelFactory() {
       updateVisData: PropTypes.func.isRequired,
       removeDataset: PropTypes.func.isRequired,
       updateMap: PropTypes.func.isRequired,
+      limitSearch: PropTypes.bool,
 
       transitionDuration: PropTypes.number,
       width: PropTypes.number
@@ -163,7 +164,7 @@ export default function GeocoderPanelFactory() {
     };
 
     render() {
-      const {isGeocoderEnabled, mapboxApiAccessToken, mapState, width} = this.props;
+      const {isGeocoderEnabled, mapboxApiAccessToken, mapState, width, limitSearch} = this.props;
       return (
         <StyledGeocoderPanel
           className="geocoder-panel"
@@ -177,6 +178,7 @@ export default function GeocoderPanelFactory() {
               onDeleteMarker={this.removeMarker}
               width={width}
               mapState={mapState}
+              limitSearch={limitSearch}
             />
           )}
         </StyledGeocoderPanel>
@@ -185,7 +187,8 @@ export default function GeocoderPanelFactory() {
   }
 
   GeocoderPanel.defaultProps = {
-    transitionDuration: 3000
+    transitionDuration: 3000,
+    limitSearch: false
   };
 
   return GeocoderPanel;

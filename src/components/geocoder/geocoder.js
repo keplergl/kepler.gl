@@ -132,6 +132,7 @@ const GeoCoder = ({
   pointZoom,
   mapState,
   width,
+  limitSearch,
   intl
 }) => {
   const [inputValue, setInputValue] = useState(null);
@@ -145,11 +146,15 @@ const GeoCoder = ({
   const onChange = useCallback(
     event => {
       const queryString = event.target.value;
-      const bbox = geoViewport.bounds([mapState.longitude, mapState.latitude], mapState.zoom, [
-        mapState.width,
-        mapState.height
-      ]);
-      fixMeridian(bbox);
+      let bbox = null;
+      if (limitSearch) {
+        bbox = geoViewport.bounds([mapState.longitude, mapState.latitude], mapState.zoom, [
+          mapState.width,
+          mapState.height
+        ]);
+        fixMeridian(bbox);
+      }
+
       setInputValue(queryString);
       const [hasValidCoordinates, longitude, latitude] = testForCoordinates(queryString);
       if (hasValidCoordinates) {
@@ -158,8 +163,14 @@ const GeoCoder = ({
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(async () => {
           if (limit > 0 && Boolean(queryString)) {
+            const params = {
+              limit
+            };
+            if (limitSearch && bbox) {
+              params.bbox = bbox;
+            }
             try {
-              const response = await client.geocodeForward(queryString, {limit, bbox});
+              const response = await client.geocodeForward(queryString, params);
               if (response.entity.features) {
                 setShowResults(true);
                 setResults(response.entity.features);
@@ -173,7 +184,7 @@ const GeoCoder = ({
         }, timeout);
       }
     },
-    [client, limit, timeout, setResults, setShowResults]
+    [client, limit, timeout, setResults, setShowResults, limitSearch, mapState]
   );
 
   const onBlur = useCallback(() => {
