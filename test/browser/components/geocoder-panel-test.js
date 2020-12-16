@@ -25,7 +25,7 @@ import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import GeocoderPanelFactory from 'components/geocoder-panel';
 import {appInjector} from 'components/container';
-import {testForCoordinates} from 'components/geocoder/geocoder';
+import {testForCoordinates, fixMeridian} from 'components/geocoder/geocoder';
 
 const GeocoderPanel = appInjector.get(GeocoderPanelFactory);
 const MAPBOX_TOKEN = process.env.MapboxAccessToken;
@@ -218,5 +218,24 @@ test('Geocoder -> testForCoordinates', t => {
     [true, -21.122, -123.4321],
     'should recognize valid coordinates'
   );
+  t.end();
+});
+
+test('Geocoder -> fixMeridian', t => {
+  let bbox1 = [-148, 26, -97, 46];
+  let bbox2 = [-148, 26, -97, 46];
+  fixMeridian(bbox1);
+  t.deepEqual(bbox1, bbox2, 'should ignore valid coordinates');
+
+  bbox1 = [-196, 26, -97, 46];
+  bbox2 = [-180, 26, -97, 46];
+  fixMeridian(bbox1);
+  t.deepEqual(bbox1, bbox2, 'should fix first latitude in bbox');
+
+  bbox1 = [-148, 26, 250, 46];
+  bbox2 = [-148, 26, 180, 46];
+  fixMeridian(bbox1);
+  t.deepEqual(bbox1, bbox2, 'should fix second latitude in bbox');
+
   t.end();
 });

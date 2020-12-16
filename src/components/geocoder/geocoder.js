@@ -50,6 +50,17 @@ export const testForCoordinates = query => {
   return [isValid, Number(tokens[0]), Number(tokens[1])];
 };
 
+export const fixMeridian = bbox => {
+  const EDGE_MERIDIAN = 180;
+
+  if (bbox[0] < -EDGE_MERIDIAN) {
+    bbox[0] = -EDGE_MERIDIAN;
+  }
+  if (bbox[2] > EDGE_MERIDIAN) {
+    bbox[2] = EDGE_MERIDIAN;
+  }
+}
+
 const StyledContainer = styled.div`
   position: relative;
   color: ${props => props.theme.textColor};
@@ -106,18 +117,6 @@ const StyledContainer = styled.div`
     }
   }
 `;
-
-// 180 meridian fix
-function fixMeridian(bbox) {
-  const EDGE_MERIDIAN = 180;
-
-  if (bbox[0] < -EDGE_MERIDIAN) {
-    bbox[0] = -EDGE_MERIDIAN;
-  }
-  if (bbox[2] > EDGE_MERIDIAN) {
-    bbox[2] = EDGE_MERIDIAN;
-  }
-}
 
 const GeoCoder = ({
   mapboxApiAccessToken,
