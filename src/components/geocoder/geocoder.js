@@ -107,6 +107,18 @@ const StyledContainer = styled.div`
   }
 `;
 
+// 180 meridian fix
+function fixMeridian(bbox) {
+  const EDGE_MERIDIAN = 180;
+
+  if (bbox[0] < -EDGE_MERIDIAN) {
+    bbox[0] = -EDGE_MERIDIAN;
+  }
+  if (bbox[2] > EDGE_MERIDIAN) {
+    bbox[2] = EDGE_MERIDIAN;
+  }
+}
+
 const GeoCoder = ({
   mapboxApiAccessToken,
   className = '',
@@ -137,6 +149,7 @@ const GeoCoder = ({
         mapState.width,
         mapState.height
       ]);
+      fixMeridian(bbox);
       setInputValue(queryString);
       const [hasValidCoordinates, longitude, latitude] = testForCoordinates(queryString);
       if (hasValidCoordinates) {
@@ -255,7 +268,7 @@ const GeoCoder = ({
         ) : null}
       </div>
 
-      {showResults ? (
+      {results && showResults ? (
         <div className="geocoder-results">
           {results.map((item, index) => (
             <div
