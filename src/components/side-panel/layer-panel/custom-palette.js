@@ -133,7 +133,7 @@ const SortableItem = SortableElement(({children, isSorting}) => (
 
 // TODO: Should className be applied to the div here?
 const WrappedSortableContainer = SortableContainer(({children, className}) => (
-  <div>{children}</div>
+  <div className={className}>{children}</div>
 ));
 
 const DragHandle = SortableHandle(({className, children}) => (
