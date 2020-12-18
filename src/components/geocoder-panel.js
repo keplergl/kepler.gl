@@ -25,6 +25,7 @@ import Processors from 'processors';
 import {FlyToInterpolator} from '@deck.gl/core';
 import KeplerGlSchema from 'schemas';
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
+import {isString} from 'lodash';
 
 import Geocoder from './geocoder/geocoder';
 import {
@@ -74,7 +75,7 @@ const StyledGeocoderPanel = styled.div`
   z-index: 100;
 `;
 
-function generateGeocoderDataset(lat, lon, text) {
+export function generateGeocoderDataset(lat, lon, text) {
   return {
     data: Processors.processRowObject([
       {
@@ -93,8 +94,8 @@ function generateGeocoderDataset(lat, lon, text) {
   };
 }
 
-function isValid(key) {
-  return /pk\..*\..*/.test(key);
+export function isValidMapboxKey(key) {
+  return isString(key) ? /pk\..*\..*/.test(key) : false;
 }
 
 export default function GeocoderPanelFactory() {
@@ -171,7 +172,7 @@ export default function GeocoderPanelFactory() {
           width={width}
           style={{display: isGeocoderEnabled ? 'block' : 'none'}}
         >
-          {isValid(mapboxApiAccessToken) && (
+          {isValidMapboxKey(mapboxApiAccessToken) && (
             <Geocoder
               mapboxApiAccessToken={mapboxApiAccessToken}
               onSelected={this.onSelected}

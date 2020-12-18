@@ -23,9 +23,14 @@ import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import GeocoderPanelFactory from 'components/geocoder-panel';
+import GeocoderPanelFactory, {
+  isValidMapboxKey,
+  generateGeocoderDataset
+} from 'components/geocoder-panel';
 import {appInjector} from 'components/container';
 import {testForCoordinates, fixMeridian} from 'components/geocoder/geocoder';
+
+import {GEOCODER_DATASET_NAME} from 'constants/default-settings';
 
 const GeocoderPanel = appInjector.get(GeocoderPanelFactory);
 const MAPBOX_TOKEN = process.env.MapboxAccessToken;
@@ -88,7 +93,7 @@ test('GeocoderPanel - render', t => {
               analyzerType: 'STRING'
             }
           ],
-          rows: [[55, 1, 'place', 'mock']]
+          rows: [[55, 1, 'crosshairs-alt', 'mock']]
         },
         id: 'geocoder_dataset',
         info: {
@@ -237,5 +242,25 @@ test('Geocoder -> fixMeridian', t => {
   fixMeridian(bbox1);
   t.deepEqual(bbox1, bbox2, 'should fix second latitude in bbox');
 
+  t.end();
+});
+
+test('Geocoder -> isValidMapboxKey', t => {
+  t.equal(isValidMapboxKey('this is a token'), false, 'should invalidate wrong format token');
+  t.equal(isValidMapboxKey('pk.0.0'), true, 'should validate token');
+  t.end();
+});
+
+test('Geocoder -> generateGeocoderDataset', t => {
+  const lat = 0;
+  const lon = 1;
+  const text = 'Test';
+  const dataset = generateGeocoderDataset(lat, lon, text);
+  t.equal(dataset.id, GEOCODER_DATASET_NAME, 'should have right id');
+  t.deepEqual(
+    dataset.data.rows[0],
+    [lat, lon, 'crosshairs-alt', text],
+    'should contain object with lat, lon and text'
+  );
   t.end();
 });
