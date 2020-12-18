@@ -5,6 +5,10 @@ import {InteractionConfig, Field, TooltipField, CompareType} from '../reducers/v
  */
 export const TOOLTIP_MINUS_SIGN: string;
 
+export const BRUSH_CONFIG: {
+  range: [number, number]
+};
+
 export function getDefaultInteraction(): InteractionConfig;
 export function findFieldsToShow(p: {
   fields: Field[];

@@ -21,8 +21,8 @@
 import {connect as reduxConnect} from 'react-redux';
 import withLocalSelector from './with-local-selector';
 
-const defaultMapStateToProps = state => state;
-const defaultMapDispatchToProps = () => dispatch => ({dispatch});
+const defaultMapStateToProps = (state, _, __) => state;
+const defaultMapDispatchToProps = () => (dispatch, _, __) => ({dispatch});
 
 export const connect = (
   mapStateToProps = defaultMapStateToProps,

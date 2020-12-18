@@ -25,7 +25,7 @@ import {FormattedMessage} from 'localization';
 import {Button, Tooltip} from 'components/common/styled-components';
 import AnimationSpeedSliderFactory from './animation-speed-slider';
 import {Reset, Play, Pause, Rocket, AnchorWindow, FreeWindow} from 'components/common/icons';
-import {ANIMATION_WINDOW} from 'constants';
+import {ANIMATION_WINDOW} from 'constants/default-settings';
 import {preciseRound} from 'utils/data-utils';
 
 const DELAY_SHOW = 500;
@@ -74,9 +74,9 @@ export const IconButton = styled(Button)`
 function nop() {}
 const DEFAULT_ICONS = {
   /* eslint-disable react/display-name */
-  reset: () => <Reset height="18px" />,
-  play: () => <Play height="18px" />,
-  pause: () => <Pause height="18px" />,
+  reset: _ => <Reset height="18px" />,
+  play: _ => <Play height="18px" />,
+  pause: _ => <Pause height="18px" />,
   /* eslint-enable react/display-name */
   speed: Rocket,
   animationFree: FreeWindow,
@@ -149,7 +149,6 @@ function PlaybackControlsFactory(AnimationSpeedSlider) {
     buttonStyle = 'secondary',
     buttonHeight = DEFAULT_BUTTON_HEIGHT
   }) => {
-    
     const [isSpeedControlVisible, toggleSpeedControl] = useState(false);
     const [showAnimationWindowControl, setShowAnimationWindowControl] = useState(false);
 
@@ -185,9 +184,8 @@ function PlaybackControlsFactory(AnimationSpeedSlider) {
           >
             {(() => {
               if (animationItems[animationWindow]) {
-                return React.createElement(animationItems[animationWindow].icon, {
-                  height: buttonHeight
-                });
+                const WindowIcon = animationItems[animationWindow].icon;
+                return <WindowIcon height={buttonHeight} />;
               }
               return null;
             })()}

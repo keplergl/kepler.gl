@@ -22,7 +22,7 @@ import React, {Component, useCallback} from 'react';
 import classnames from 'classnames';
 
 import PropTypes from 'prop-types';
-import {sortableContainer, sortableElement} from 'react-sortable-hoc';
+import {SortableContainer, SortableElement} from 'react-sortable-hoc';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
 import {injectIntl} from 'react-intl';
@@ -121,7 +121,7 @@ LayerManagerFactory.deps = [AddDataButtonFactory, LayerPanelFactory, SourceDataC
 function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
   // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
   // Developers can provide any layer panel implementation and it will still be sortable
-  const SortableItem = sortableElement(({children, isSorting}) => {
+  const SortableItem = SortableElement(({children, isSorting}) => {
     return (
       <SortableStyledItem className={classnames('sortable-layer-items', {sorting: isSorting})}>
         {children}
@@ -129,7 +129,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
     );
   });
 
-  const SortableContainer = sortableContainer(({children}) => {
+  const WrappedSortableContainer = SortableContainer(({children}) => {
     return <div>{children}</div>;
   });
 
@@ -225,7 +225,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
           <AddDataButton onClick={this.props.showAddDataModal} isInactive={!defaultDataset} />
           <SidePanelDivider />
           <SidePanelSection>
-            <SortableContainer
+            <WrappedSortableContainer
               onSortEnd={this._handleSort}
               onSortStart={this._onSortStart}
               updateBeforeSortStart={this._updateBeforeSortStart}
@@ -252,7 +252,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
                     </SortableItem>
                   )
               )}
-            </SortableContainer>
+            </WrappedSortableContainer>
           </SidePanelSection>
           <SidePanelSection>
             {defaultDataset ? (

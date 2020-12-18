@@ -84,7 +84,7 @@ function TimeSliderMarkerFactory() {
   }
 
   const TimeSliderMarker = ({width, domain, isEnlarged = true, height = HEIGHT}) => {
-    const xAxisRef = useRef();
+    const xAxisRef = useRef(null);
     const scale = useMemo(
       () =>
         Array.isArray(domain)

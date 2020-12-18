@@ -35,6 +35,9 @@ jobs:
       - name: Install Dependecies
         run: yarn
 
+      - name: Lint
+        run: yarn lint
+
       - name: Test
         run: xvfb-run --auto-servernum yarn cover
 

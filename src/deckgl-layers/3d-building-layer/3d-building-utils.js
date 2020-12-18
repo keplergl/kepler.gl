@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import Protobuf from 'pbf';
-import {VectorTile, VectorTileFeature} from '@mapbox/vector-tile';
+import {VectorTile} from '@mapbox/vector-tile';
 import {worldToLngLat} from 'viewport-mercator-project';
 
 /* global fetch */
@@ -79,7 +79,6 @@ function project(x, y, scale, line, extent) {
 /* eslint-disable */
 export function vectorTileFeatureToProp(vectorTileFeature, project) {
   let coords = getCoordinates(vectorTileFeature);
-  const type = VectorTileFeature.types[vectorTileFeature.type];
   const extent = vectorTileFeature.extent;
   let i;
   let j;
@@ -129,7 +128,7 @@ function getCoordinates(vectorTileFeature) {
         line = [];
       }
 
-      line.push([x, y]);
+      if (line) line.push([x, y]);
     } else if (cmd === 7) {
       // Workaround for https://github.com/mapbox/mapnik-vector-tile/issues/90
       if (line) {
@@ -171,7 +170,7 @@ function classifyRings(rings) {
         polygons.push(polygon);
       }
       polygon = [rings[i]];
-    } else {
+    } else if (polygon) {
       polygon.push(rings[i]);
     }
   }

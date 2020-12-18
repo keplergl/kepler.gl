@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import {StyledExportSection, StyledType, CheckMark} from 'components/common/styled-components';
 import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';
 import {EXPORT_HTML_MAP_MODE_OPTIONS} from 'constants/default-settings';
@@ -27,8 +26,6 @@ import {EXPORT_HTML_MAP_DOC, EXPORT_HTML_MAP_MODES_DOC} from 'constants/user-gui
 import styled from 'styled-components';
 import {injectIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';
-
-/** @typedef {import('./export-html-map').ExportHtmlMapProps} ExportHtmlMapProps */
 
 const ExportMapStyledExportSection = styled(StyledExportSection)`
   .disclaimer {
@@ -63,15 +60,8 @@ const BigStyledTile = styled(StyledType)`
   }
 `;
 
-const exportHtmlPropTypes = {
-  options: PropTypes.object,
-  onEditUserMapboxAccessToken: PropTypes.func.isRequired
-};
-
 function ExportHtmlMapFactory() {
-  /**
-   * @type {React.FunctionComponent<ExportHtmlMapProps>}
-   */
+  /** @type {typeof import('./export-html-map').ExportHtmlMap} */
   const ExportHtmlMap = ({
     onChangeExportMapHTMLMode = mode => {},
     onEditUserMapboxAccessToken = token => {},
@@ -147,7 +137,6 @@ function ExportHtmlMapFactory() {
     </div>
   );
 
-  ExportHtmlMap.propTypes = exportHtmlPropTypes;
   ExportHtmlMap.displayName = 'ExportHtmlMap';
 
   return injectIntl(ExportHtmlMap);

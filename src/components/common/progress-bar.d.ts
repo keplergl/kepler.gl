@@ -1,4 +1,4 @@
-import React from 'react';
+import {FunctionComponent} from 'react';
 
 export type ProgressBarProps = {
   percent: string,
@@ -9,5 +9,5 @@ export type ProgressBarProps = {
   theme: object;
 };
 
-const ProgressBar: React.FunctionCompoment<ProgressBarProps>;
+const ProgressBar: FunctionComponent<ProgressBarProps>;
 export default ProgressBar;

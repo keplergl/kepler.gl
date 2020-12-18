@@ -5,14 +5,16 @@ import {Bounds} from 'reducers/map-state-updaters';
 export function maybeToDate(isTime: boolean, fieldIdx: number, format: string, d: any[]): any;
 
 export function timeToUnixMilli(value: any, format: string): Millisecond | null;
-export function notNullorUndefined(d: any): boolean;
+export function notNullorUndefined<T extends NonNullable<any>>(d: T | null | undefined): d is T;
 export function isNumber(d: any): boolean;
 export function isPlainObject(d: any): boolean;
 export function numberSort(a: any, b: any): any;
 export function unique(values: any[]): any[];
+export function arrayMove(array: any[], from: number, to: number);
 export function getSortingFunction(fieldType: string): numberSort | undefined;
 export function preciseRound(num: number, decimals: number): string;
 export function parseFieldValue(value: any, type: string): string;
+export function getLatLngBounds(points: [number, number], idx: number, limit: [number, number]): [number, number];
 export function getSampleData(data: any[], sampleSize?: number, getValue?: any): any[];
 export function findMapBounds(layers: Layer[]): Bounds | null;
 function formatter(v: any): any;

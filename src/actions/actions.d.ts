@@ -29,7 +29,7 @@ import {UiState} from 'reducers/ui-state-updaters';
  * Input dataest parsed to addDataToMap
  */
 export type ProtoDataset = {
-  info: {
+  info?: {
     id: string;
     label: string;
     format?: string;

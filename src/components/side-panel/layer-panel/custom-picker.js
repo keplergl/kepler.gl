@@ -69,6 +69,7 @@ class CustomPicker extends Component {
 
   render() {
     const {color, onChange} = this.props;
+    /** @type {any} - TS complains this doesn't match SketchPickerStylesProps */
     const pickerStyle = this.pickerStyleSelector(this.props);
     return (
       <StyledPicker>

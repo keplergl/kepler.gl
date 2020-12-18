@@ -28,6 +28,7 @@ const isAlreadySelected = (selectedLayers, layerId) =>
   selectedLayers.findIndex(l => l.id === layerId) === -1;
 
 function PolygonFilterFactory() {
+  /** @type {typeof import('./polygon-filter').PolygonFilter} */
   const PolygonFilter = React.memo(({filter, layers, setLayers}) => {
     const setNewLayers = useCallback(
       newLayers => {
@@ -36,7 +37,7 @@ function PolygonFilterFactory() {
       [setLayers]
     );
 
-    const selectedLayers = useMemo(() => layers.filter(l => filter.layerId.includes(l.id)), [
+    const selectedLayers = useMemo(() => layers.filter(l => filter.layerId?.includes(l.id)), [
       filter,
       layers
     ]);

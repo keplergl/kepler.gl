@@ -56,6 +56,7 @@ const StyledDiv = styled.div.attrs({
   }
 `;
 
+/** @type {typeof import('./toolbar-item').ToolbarItem} */
 const ToolbarItem = React.memo(props => (
   <StyledDiv
     id={props.id}

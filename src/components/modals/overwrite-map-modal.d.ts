@@ -1,6 +1,6 @@
 import React from 'react';
 import {Provider} from '../../cloud-providers';
-import {setExportImageSetting, cleanupExportImage} from '../../actions';
+import {ImageModalContainerProps} from './image-modal-container';
 
 export type OverwriteMapModalProps = {
   mapSaved: string;
@@ -10,8 +10,8 @@ export type OverwriteMapModalProps = {
   currentProvider: string;
 
   // callbacks
-  onUpdateImageSetting: typeof setExportImageSetting;
-  cleanupExportImage: typeof cleanupExportImage;
+  onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
+  cleanupExportImage: onUpdateImageSetting['cleanupExportImage'];
 };
 
 function OverwriteMapModalFactory(): React.FunctionComponent<OverwriteMapModal>;

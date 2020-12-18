@@ -38,6 +38,7 @@ function FieldPanelWithFieldSelectFactory(
   FieldSelector,
   PanelHeaderAction
 ) {
+  /** @type {import('./filter-panel-types').FilterPanelComponent} */
   const FilterPanelWithFieldSelect = React.memo(
     ({
       allAvailableFields,

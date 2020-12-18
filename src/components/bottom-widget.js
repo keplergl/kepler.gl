@@ -24,7 +24,7 @@ import PropTypes from 'prop-types';
 import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-control';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
-import {ANIMATION_WINDOW, FILTER_TYPES} from 'constants';
+import {ANIMATION_WINDOW, FILTER_TYPES} from 'constants/default-settings';
 import {getIntervalBins} from 'utils/filter-utils';
 
 const propTypes = {
@@ -56,12 +56,7 @@ const BottomWidgetContainer = styled.div`
 
 FilterAnimationControllerFactory.deps = [AnimationControllerFactory];
 export function FilterAnimationControllerFactory(AnimationController) {
-  const FilterAnimationController = ({
-    filter = {},
-    filterIdx,
-    setFilterAnimationTime,
-    children
-  }) => {
+  const FilterAnimationController = ({filter, filterIdx, setFilterAnimationTime, children}) => {
     const intervalBins = useMemo(() => getIntervalBins(filter), [filter]);
 
     const steps = useMemo(() => (intervalBins ? intervalBins.map(x => x.x0) : null), [
@@ -171,6 +166,10 @@ export default function BottomWidgetFactory(
     const showAnimationControl = animatableLayer.length && readyToAnimation;
     const showTimeWidget = enlargedFilterIdx > -1 && Object.keys(datasets).length > 0;
 
+    // if filter is not animating, pass in enlarged filter here because
+    // animation controller needs to call reset on it
+    const filter = animatedFilter || filters[enlargedFilterIdx];
+
     return (
       <BottomWidgetContainer
         width={Math.min(maxWidth, enlargedFilterWidth)}
@@ -194,36 +193,35 @@ export default function BottomWidgetFactory(
             ) : null
           }
         </LayerAnimationController>
-        <FilterAnimationController
-          /* pass if filter is not animating, pass in
-           enlarged filter here because animation controller needs to call reset on it
-           we can */
-          filter={animatedFilter || filters[enlargedFilterIdx]}
-          filterIdx={enlargedFilterIdx}
-          setFilterAnimationTime={visStateActions.setFilterAnimationTime}
-        >
-          {animationControlProps =>
-            showTimeWidget ? (
-              <TimeWidget
-                filter={filters[enlargedFilterIdx]}
-                index={enlargedFilterIdx}
-                isAnyFilterAnimating={Boolean(animatedFilter)}
-                datasets={datasets}
-                readOnly={readOnly}
-                showTimeDisplay={showFloatingTimeDisplay}
-                setFilterPlot={visStateActions.setFilterPlot}
-                setFilter={visStateActions.setFilter}
-                setFilterAnimationTime={visStateActions.setFilterAnimationTime}
-                setFilterAnimationWindow={visStateActions.setFilterAnimationWindow}
-                toggleAnimation={visStateActions.toggleFilterAnimation}
-                updateAnimationSpeed={visStateActions.updateFilterAnimationSpeed}
-                enlargeFilter={visStateActions.enlargeFilter}
-                animationControlProps={animationControlProps}
-                isAnimatable={!animationConfig || !animationConfig.isAnimating}
-              />
-            ) : null
-          }
-        </FilterAnimationController>
+        {filter && (
+          <FilterAnimationController
+            filter={filter}
+            filterIdx={enlargedFilterIdx}
+            setFilterAnimationTime={visStateActions.setFilterAnimationTime}
+          >
+            {animationControlProps =>
+              showTimeWidget ? (
+                <TimeWidget
+                  filter={filters[enlargedFilterIdx]}
+                  index={enlargedFilterIdx}
+                  isAnyFilterAnimating={Boolean(animatedFilter)}
+                  datasets={datasets}
+                  readOnly={readOnly}
+                  showTimeDisplay={showFloatingTimeDisplay}
+                  setFilterPlot={visStateActions.setFilterPlot}
+                  setFilter={visStateActions.setFilter}
+                  setFilterAnimationTime={visStateActions.setFilterAnimationTime}
+                  setFilterAnimationWindow={visStateActions.setFilterAnimationWindow}
+                  toggleAnimation={visStateActions.toggleFilterAnimation}
+                  updateAnimationSpeed={visStateActions.updateFilterAnimationSpeed}
+                  enlargeFilter={visStateActions.enlargeFilter}
+                  animationControlProps={animationControlProps}
+                  isAnimatable={!animationConfig || !animationConfig.isAnimating}
+                />
+              ) : null
+            }
+          </FilterAnimationController>
+        )}
       </BottomWidgetContainer>
     );
   };

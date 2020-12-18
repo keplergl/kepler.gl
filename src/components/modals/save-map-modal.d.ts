@@ -2,11 +2,10 @@ import React from 'react';
 import {Provider} from '../../cloud-providers';
 import {MapInfo, ExportImage} from '../../reducers';
 import {
-  setCloudProvider,
-  setExportImageSetting,
-  cleanupExportImage,
   setMapInfo
 } from '../../actions';
+import {ImageModalContainerProps} from './image-modal-container';
+import {ProviderModalContainerProps} from './provider-modal-container';
 
 type CharacterLimits = {
   title: number;
@@ -18,14 +17,14 @@ export type SaveMapModalProps = {
   exportImage: ExportImage;
   cloudProviders: Provider[];
   isProviderLoading: boolean;
-  currentProvider: string;
+  currentProvider?: string;
   providerError?: any;
   characterLimits?: CharacterLimits;
 
   // callbacks
-  onSetCloudProvider: typeof setCloudProvider;
-  onUpdateImageSetting: typeof setExportImageSetting;
-  cleanupExportImage: typeof cleanupExportImage;
+  onSetCloudProvider: ProviderModalContainerProps['onSetCloudProvider'];
+  onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
+  cleanupExportImage: onUpdateImageSetting['cleanupExportImage'];
   onSetMapInfo: typeof setMapInfo;
 };
 

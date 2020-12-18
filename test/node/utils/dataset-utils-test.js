@@ -29,7 +29,7 @@ test('datasetUtils.findDefaultColorField', t => {
   const dataset = createNewDataEntry({
     info: {id: 'taro'},
     data: processCsvData(csvData)
-  })['taro'];
+  }).taro;
 
   const defaultField = findDefaultColorField(dataset);
   // Unfortunately lat_1 is not detected as part of a field pair :(
@@ -42,7 +42,7 @@ test('datasetUtils.findDefaultColorField empty', t => {
   const dataset = createNewDataEntry({
     info: {id: 'taro'},
     data: processCsvData('a\na')
-  })['taro'];
+  }).taro;
 
   const defaultField = findDefaultColorField(dataset);
   t.notOk(defaultField, 'default field is null');

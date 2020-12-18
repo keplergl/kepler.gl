@@ -142,3 +142,4 @@ export const DEFAULT_CUSTOM_PALETTE: ColorRange;
 export const DEFAULT_COLOR_UI: ColorUI;
 export const LAYER_VIS_CONFIGS: LayerVisConfig;
 export const LAYER_TEXT_CONFIGS: LayerTextConfig;
+export const UNKNOWN_COLOR_KEY: string;

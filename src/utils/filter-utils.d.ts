@@ -167,7 +167,9 @@ export function validateFiltersUpdateDatasets(state: VisState, filtersToValidate
   updatedDatasets: Datasets
 }
 export function isInPolygon(point: number[], polygon: object): boolean;
-export function getIntervalBins(filter: TimeRangeFilter)
+export function getIntervalBins(filter: TimeRangeFilter);
+export function getTimeWidgetHintFormatter(domain: [number, number]): string;
+
 
 export const FILTER_UPDATER_PROPS: {
   dataId: string;

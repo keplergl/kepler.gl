@@ -168,6 +168,7 @@
     "@babel/parser": "^7.3.3",
     "@babel/plugin-proposal-class-properties": "^7.3.0",
     "@babel/plugin-proposal-export-namespace-from": "^7.2.0",
+    "@babel/plugin-proposal-optional-chaining": "^7.2.0",
     "@babel/plugin-transform-modules-commonjs": "^7.2.0",
     "@babel/plugin-transform-runtime": "^7.0.0",
     "@babel/polyfill": "^7.0.0",
@@ -181,6 +182,7 @@
     "@probe.gl/test-utils": "^3.0.1",
     "@testing-library/react-hooks": "^3.4.2",
     "@types/d3-array": "^2.0.0",
+    "@types/geojson": "^7946.0.7",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.0.0",
     "babel-plugin-istanbul": "^6.0.0",
@@ -275,5 +277,8 @@
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
     "Giuseppe Macri <gmacri@uber.com>"
-  ]
+  ],
+  "volta": {
+    "node": "10.23.0"
+  }
 }

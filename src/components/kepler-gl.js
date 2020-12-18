@@ -250,14 +250,14 @@ function KeplerGlFactory(
   PlotContainer,
   NotificationPanel
 ) {
-  /** @typedef {import('./kepler-gl').KeplerGlProps} KeplerGlProps */
+  /** @typedef {import('./kepler-gl').UnconnectedKeplerGlProps} KeplerGlProps */
   /** @augments React.Component<KeplerGlProps> */
   class KeplerGL extends Component {
     static defaultProps = DEFAULT_KEPLER_GL_PROPS;
 
     componentDidMount() {
       this._validateMapboxToken();
-      this._loadMapStyle(this.props.mapStyles);
+      this._loadMapStyle();
       this._handleResize(this.props);
       if (typeof this.props.onKeplerGlInitialized === 'function') {
         this.props.onKeplerGlInitialized();
@@ -276,9 +276,9 @@ function KeplerGlFactory(
         this._handleResize(this.props);
       }
     }
+    static contextType = RootContext;
 
     root = createRef();
-    static contextType = RootContext;
 
     /* selectors */
     themeSelector = props => props.theme;
@@ -436,9 +436,11 @@ export function mapStateToProps(state = {}, props) {
 }
 
 const defaultUserActions = {};
-const getDispatch = dispatch => dispatch;
+
+const getDispatch = (dispatch, props) => dispatch;
 const getUserActions = (dispatch, props) => props.actions || defaultUserActions;
 
+/** @type {() => import('reselect').OutputParametricSelector<any, any, any, any>} */
 function makeGetActionCreators() {
   return createSelector([getDispatch, getUserActions], (dispatch, userActions) => {
     const [visStateActions, mapStateActions, mapStyleActions, uiStateActions, providerActions] = [

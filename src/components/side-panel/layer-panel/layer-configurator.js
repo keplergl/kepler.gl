@@ -903,7 +903,9 @@ export default function LayerConfiguratorFactory(
 
     render() {
       const {layer, datasets, updateLayerConfig, layerTypeOptions, updateLayerType} = this.props;
-      const {fields = [], fieldPairs} = layer.config.dataId ? datasets[layer.config.dataId] : {};
+      const {fields = [], fieldPairs = undefined} = layer.config.dataId
+        ? datasets[layer.config.dataId]
+        : {};
       const {config} = layer;
 
       const visConfiguratorProps = getVisConfiguratorProps(this.props);

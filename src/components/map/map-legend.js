@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {rgb} from 'd3-color';
 import ColorLegend from 'components/common/color-legend';
@@ -88,16 +87,14 @@ export const LayerSizeLegend = ({label, name}) => (
   </div>
 );
 
-const propTypes = {
-  layers: PropTypes.arrayOf(PropTypes.object)
-};
+const SINGLE_COLOR_DOMAIN = [''];
 
-const SingleColorDomain = [''];
+/** @type {typeof import('./map-legend').SingleColorLegend} */
 export const SingleColorLegend = React.memo(({width, color}) => (
   <ColorLegend
     scaleType="ordinal"
     displayLabel={false}
-    domain={SingleColorDomain}
+    domain={SINGLE_COLOR_DOMAIN}
     fieldType={null}
     range={{colors: [rgb(...color).toString()]}}
     width={width}
@@ -106,6 +103,7 @@ export const SingleColorLegend = React.memo(({width, color}) => (
 
 SingleColorLegend.displayName = 'SingleColorLegend';
 
+/** @type {typeof import('./map-legend').LayerColorLegend} */
 export const LayerColorLegend = React.memo(({description, config, width, colorChannel}) => {
   const enableColorBy = description.measure;
   const {scale, field, domain, range, property} = colorChannel;
@@ -145,13 +143,8 @@ LayerColorLegend.displayName = 'LayerColorLegend';
 const isColorChannel = visualChannel =>
   [CHANNEL_SCALES.color, CHANNEL_SCALES.colorAggr].includes(visualChannel.channelScaleType);
 
-/**
- * @param {Layer[]} layers
- * @param {number} width
- * @param {object} options
- * @param {boolean} options.showLayerName
- */
-const MapLegend = ({layers = [], width, options = {}}) => (
+/** @type {typeof import('./map-legend').default }> */
+const MapLegend = ({layers = [], width, options}) => (
   <div className="map-legend">
     {layers.map((layer, index) => {
       if (!layer.isValidToSave() || layer.config.hidden) {
@@ -170,7 +163,7 @@ const MapLegend = ({layers = [], width, options = {}}) => (
           key={index}
           width={containerW}
         >
-          {options.showLayerName !== false ? (
+          {options?.showLayerName !== false ? (
             <div className="legend--layer_name">{layer.config.label}</div>
           ) : null}
           {colorChannels.map(colorChannel =>
@@ -205,6 +198,5 @@ const MapLegend = ({layers = [], width, options = {}}) => (
   </div>
 );
 
-MapLegend.propTypes = propTypes;
-
+/** @type {typeof import('./map-legend').default }> */
 export default MapLegend;

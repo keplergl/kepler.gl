@@ -1,4 +1,4 @@
-import {ReactElementLike} from 'prop-types';
+import {ComponentType} from 'prop-types';
 import {MapData, ExportFileOptions} from 'actions/provider-actions';
 
 export type Millisecond = number;
@@ -21,16 +21,22 @@ export type Thumbnail = {
 export type ProviderProps = {
   name?: string;
   displayName?: string;
-  icon?: ReactElementLike;
+  icon?: ComponentType<IconProps>;
   thumbnail?: Thumbnail;
 };
+
+interface IconProps {
+  height?: number | string;
+  width?: number | string;
+}
 
 export class Provider {
   constructor(p: ProviderProps);
   name: string;
   displayName: string;
-  icon: ReactElementLike;
+  icon: ComponentType<IconProps>;
   thumbnail: Thumbnail;
+  getManagementUrl?: () => string;
   hasPrivateStorage(): boolean;
   hasSharingUrl(): boolean;
   getShareUrl(fullUrl?: boolean): string;
