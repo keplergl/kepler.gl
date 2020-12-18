@@ -559,6 +559,10 @@ export function setFilterUpdater(state, action) {
   const {idx, prop, value, valueIndex = 0} = action;
 
   const oldFilter = state.filters[idx];
+  if (!oldFilter) {
+    Console.error(`filters.${idx} is undefined`);
+    return state;
+  }
   let newFilter = set([prop], value, oldFilter);
   let newState = state;
 

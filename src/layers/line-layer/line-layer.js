@@ -75,6 +75,8 @@ export default class LineLayer extends ArcLayer {
       ...this.getVisualChannelUpdateTriggers()
     };
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    const hoveredObject = this.hasHoveredObject(objectHovered);
+
     return [
       // base layer
       new EnhancedLineLayer({
@@ -86,12 +88,12 @@ export default class LineLayer extends ArcLayer {
         extensions: [...defaultLayerProps.extensions, new BrushingExtension()]
       }),
       // hover layer
-      ...(this.isLayerHovered(objectHovered)
+      ...(hoveredObject
         ? [
             new EnhancedLineLayer({
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
-              data: [objectHovered.object],
+              data: [hoveredObject],
               getColor: this.config.highlightColor,
               getTargetColor: this.config.highlightColor,
               getWidth: data.getWidth

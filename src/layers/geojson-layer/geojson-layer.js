@@ -291,6 +291,8 @@ export default class GeoJsonLayer extends Layer {
     };
 
     const pickable = interactionConfig.tooltip.enabled;
+    const hoveredObject = this.hasHoveredObject(objectHovered);
+
     return [
       new DeckGLGeoJsonLayer({
         ...defaultLayerProps,
@@ -319,13 +321,13 @@ export default class GeoJsonLayer extends Layer {
             : {})
         }
       }),
-      ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
+      ...(hoveredObject && !visConfig.enable3d
         ? [
             new DeckGLGeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
               wrapLongitude: false,
-              data: [objectHovered.object],
+              data: [hoveredObject],
               getLineWidth: data.getLineWidth,
               getRadius: data.getRadius,
               getElevation: data.getElevation,

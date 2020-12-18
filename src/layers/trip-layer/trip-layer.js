@@ -244,12 +244,23 @@ export default class TripLayer extends Layer {
     const {data, gpuFilter, mapState, animationConfig} = opts;
     const {visConfig} = this.config;
     const zoomFactor = this.getZoomFactor(mapState);
+    const isValidTime =
+      animationConfig &&
+      Array.isArray(animationConfig.domain) &&
+      animationConfig.domain.every(Number.isFinite) &&
+      Number.isFinite(animationConfig.currentTime);
+
+    if (!isValidTime) {
+      return [];
+    }
+
+    const domain0 = animationConfig.domain?.[0];
 
     const updateTriggers = {
       ...this.getVisualChannelUpdateTriggers(),
       getTimestamps: {
         columns: this.config.columns,
-        domain0: animationConfig.domain[0]
+        domain0
       },
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
@@ -259,7 +270,7 @@ export default class TripLayer extends Layer {
       new DeckGLTripsLayer({
         ...defaultLayerProps,
         ...data,
-        getTimestamps: d => data.getTimestamps(d).map(ts => ts - animationConfig.domain[0]),
+        getTimestamps: d => data.getTimestamps(d).map(ts => ts - domain0),
         widthScale: this.config.visConfig.thickness * zoomFactor * zoomFactorValue,
         rounded: true,
         wrapLongitude: false,
@@ -268,7 +279,7 @@ export default class TripLayer extends Layer {
           depthMask: false
         },
         trailLength: visConfig.trailLength * 1000,
-        currentTime: animationConfig.currentTime - animationConfig.domain[0],
+        currentTime: animationConfig.currentTime - domain0,
         updateTriggers
       })
     ];

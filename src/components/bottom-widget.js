@@ -149,7 +149,9 @@ export default function BottomWidgetFactory(
       () => filters.findIndex(f => f.enlarged && f.type === FILTER_TYPES.timeRange),
       [filters]
     );
-    const animatedFilter = useMemo(() => filters.find(f => f.isAnimating), [filters]);
+    const animatedFilterIdx = useMemo(() => filters.findIndex(f => f.isAnimating), [filters]);
+    const animatedFilter = animatedFilterIdx > -1 ? filters[animatedFilterIdx] : null;
+
     const enlargedFilterWidth = isOpen ? containerW - sidePanelWidth : containerW;
 
     // show playback control if layers contain trip layer & at least one trip layer is visible
@@ -196,7 +198,7 @@ export default function BottomWidgetFactory(
         {filter && (
           <FilterAnimationController
             filter={filter}
-            filterIdx={enlargedFilterIdx}
+            filterIdx={animatedFilterIdx > -1 ? animatedFilterIdx : enlargedFilterIdx}
             setFilterAnimationTime={visStateActions.setFilterAnimationTime}
           >
             {animationControlProps =>
