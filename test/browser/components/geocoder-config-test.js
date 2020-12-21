@@ -18,20 +18,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './injector-test';
-import './container-test';
-import './kepler-gl-test';
+/* eslint-disable max-statements */
+import React from 'react';
+import sinon from 'sinon';
+import test from 'tape';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {appInjector} from 'components/container';
+import GeocoderConfigFactory from 'components/side-panel/interaction-panel/geocoder-config';
+import Switch from 'components/common/switch';
 
-import './modals';
-import './notifications';
-import './map';
-import './side-panel';
+const GeocoderConfig = appInjector.get(GeocoderConfigFactory);
 
-import './common';
-import './editor';
-import './map-container-test';
-import './geocoder-panel-test';
-import './tooltip-config-test';
-import './geocoder-config-test';
-import './bottom-widget-test';
-import './plot-container-test';
+test('GeocoderConfig - render', t => {
+  let wrapper;
+  const onChange = sinon.spy();
+  const config = {
+    enable: false,
+    limitSearch: false
+  };
+
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <GeocoderConfig config={config} onChange={onChange} />
+      </IntlWrapper>
+    );
+  }, 'Should render');
+
+  t.equal(wrapper.find(GeocoderConfig).length, 1, 'Should display 1 GeocoderConfig');
+
+  wrapper
+    .find(Switch)
+    .at(0)
+    .find('input')
+    .at(0)
+    .simulate('change');
+  t.deepEqual(
+    onChange.args[0],
+    [{enable: false, limitSearch: true}],
+    'should call onchange when limit is turned on'
+  );
+  t.end();
+});
