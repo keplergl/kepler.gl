@@ -56,8 +56,7 @@ import {
 import {assignGpuChannel, setFilterGpuMode} from 'utils/gpu-filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {sortDatasetByColumn} from 'utils/table-utils/kepler-table';
-import {set, toArray} from 'utils/utils';
-import {generateHashId} from 'utils/utils';
+import {set, toArray, arrayInsert} from 'utils/utils';
 
 import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils';
 
@@ -895,6 +894,7 @@ export const removeFilterUpdater = (state, action) => {
  */
 export const addLayerUpdater = (state, action) => {
   const defaultDataset = Object.keys(state.datasets)[0];
+  if (props.type && state.layerClasses[props.type])
   const newLayer = new Layer({
     isVisible: true,
     isConfigActive: true,
@@ -943,23 +943,49 @@ export const removeLayerUpdater = (state, {idx}) => {
  * @public
  */
 export const duplicateLayerUpdater = (state, {idx}) => {
-  const {layers, layerData} = state;
-  const layerToDuplicate = cloneDeep(state.layers[idx]);
-  layerToDuplicate.id = generateHashId();
-  layerToDuplicate.config.label = `Copy of ${layerToDuplicate.config.label}`;
-  const existingCopiesNum = layers.filter(l => l.id.includes(layerToDuplicate.id)).length;
-  if (existingCopiesNum) {
-    const postfix = `${existingCopiesNum + 1}`;
-    layerToDuplicate.id += postfix;
-    layerToDuplicate.config.label += postfix;
+  const {layers} = state;
+  const original = state.layers[idx];
+  if (!original) {
+    Console.warn(`layer.${idx} is undefined`);
+    return state;
   }
-  const duplicatedLayerData = cloneDeep(state.layerData[idx]);
-  const newLayers = cloneDeep(layers);
-  newLayers.splice(idx, 0, layerToDuplicate);
-  const newLayerData = cloneDeep(layerData);
-  newLayerData.splice(idx, 0, duplicatedLayerData);
-  const newLayerOrder = [...state.layerOrder].map(pid => (pid >= idx + 1 ? pid + 1 : pid));
-  newLayerOrder.splice(idx + 1, 0, idx + 1);
+  let newLabel = `Copy of ${original.config.label}`;
+  let postfix = 0;
+  while (layers.find(l => l.config.label === newLabel)) {
+    newLabel = `${newLabel} ${postfix++}`;
+  }
+
+  const newLayerProp = {
+    label: newLabel,
+    dataId: original.config.dataId
+  };
+
+  let nextState = addLayerUpdater(state, {props: newLayerProp});
+  // new added layer are at the end, move it to be on top of original layer
+  const originalLayerOrderIdx = state.layerOrder.find(i => i === idx);
+  const newLayerOrderIdx = state.layerOrder.length - 1;
+  const newLayerOrder = arrayInsert(
+    state.layerOrder.slice(0, newLayerOrderIdx),
+    originalLayerOrderIdx,
+    newLayerOrderIdx
+  );
+  nextState.layerOrder = newLayerOrder;
+
+  // layerToDuplicate.id = generateHashId();
+  // layerToDuplicate.config.label = `Copy of ${layerToDuplicate.config.label}`;
+  // const existingCopiesNum = layers.filter(l => l.id.includes(layerToDuplicate.id)).length;
+  // if (existingCopiesNum) {
+  //   const postfix = `${existingCopiesNum + 1}`;
+  //   layerToDuplicate.id += postfix;
+  //   layerToDuplicate.config.label += postfix;
+  // }
+  // const duplicatedLayerData = cloneDeep(state.layerData[idx]);
+  // const newLayers = cloneDeep(layers);
+  // newLayers.splice(idx, 0, layerToDuplicate);
+  // const newLayerData = cloneDeep(layerData);
+  // newLayerData.splice(idx, 0, duplicatedLayerData);
+  // const newLayerOrder = [...state.layerOrder].map(pid => (pid >= idx + 1 ? pid + 1 : pid));
+  // newLayerOrder.splice(idx + 1, 0, idx + 1);
 
   const newState = {
     ...state,

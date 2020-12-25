@@ -24,7 +24,7 @@ import classnames from 'classnames';
 import styled from 'styled-components';
 import {SortableHandle} from 'react-sortable-hoc';
 import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
-import {Add, ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from 'components/common/icons';
+import {Copy, ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from 'components/common/icons';
 
 import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
@@ -142,7 +142,7 @@ const defaultActionIcons = {
   visible: EyeSeen,
   hidden: EyeUnseen,
   enableConfig: ArrowDown,
-  duplicate: Add
+  duplicate: Copy
 };
 function LayerPanelHeaderFactory(LayerTitleSection, PanelHeaderAction) {
   const LayerPanelHeader = ({
