@@ -49,6 +49,7 @@ import {
   getDefaultFilterPlotType,
   getFilterIdInFeature,
   getFilterPlot,
+  getTimeWidgetTitleFormatter,
   isInRange,
   LIMITED_FILTER_EFFECT_PROPS,
   updateFilterDataId
@@ -76,8 +77,8 @@ import {
 
 import {Layer, LayerClasses, LAYER_ID_LENGTH} from 'layers';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
-import {EDITOR_MODES, SORT_ORDER} from 'constants/default-settings';
-import {pick_, merge_} from './composer-helpers';
+import {EDITOR_MODES, SORT_ORDER, FILTER_TYPES} from 'constants/default-settings';
+import {pick_, merge_, swap_} from './composer-helpers';
 import {processFileContent} from 'actions/vis-state-actions';
 
 import KeplerGLSchema from 'schemas';
@@ -141,7 +142,10 @@ export const DEFAULT_ANIMATION_CONFIG = {
   domain: null,
   currentTime: null,
   speed: 1,
-  isAnimating: false
+  isAnimating: false,
+  timeFormat: null,
+  timezone: null,
+  defaultTimeFormat: null
 };
 
 /** @type {Editor} */
@@ -217,6 +221,7 @@ export const INITIAL_VIS_STATE = {
   // visStateMergers
   mergers: VIS_STATE_MERGERS,
 
+  // kepler schemas
   schema: KeplerGLSchema
 };
 
@@ -1769,7 +1774,11 @@ export function updateAnimationDomain(state) {
   if (!animatableLayers.length) {
     return {
       ...state,
-      animationConfig: DEFAULT_ANIMATION_CONFIG
+      animationConfig: {
+        ...state.animationConfig,
+        domain: null,
+        defaultTimeFormat: null
+      }
     };
   }
 
@@ -1780,6 +1789,7 @@ export function updateAnimationDomain(state) {
     ],
     [Number(Infinity), -Infinity]
   );
+  const defaultTimeFormat = getTimeWidgetTitleFormatter(mergedDomain);
 
   return {
     ...state,
@@ -1788,7 +1798,8 @@ export function updateAnimationDomain(state) {
       currentTime: isInRange(state.animationConfig.currentTime, mergedDomain)
         ? state.animationConfig.currentTime
         : mergedDomain[0],
-      domain: mergedDomain
+      domain: mergedDomain,
+      defaultTimeFormat
     }
   };
 }
@@ -2056,4 +2067,49 @@ export function toggleEditorVisibilityUpdater(state) {
       visible: !state.editor.visible
     }
   };
+}
+
+export function setFilterAnimationTimeConfigUpdater(state, {idx, config}) {
+  const oldFilter = state.filters[idx];
+  if (!oldFilter) {
+    Console.error(`filters.${idx} is undefined`);
+    return state;
+  }
+  if (oldFilter.type !== FILTER_TYPES.timeRange) {
+    Console.error(
+      `setFilterAnimationTimeConfig can only be called to update a time filter. check filter.type === 'timeRange'`
+    );
+    return state;
+  }
+
+  const updates = checkTimeConfigArgs(config);
+
+  return pick_('filters')(swap_(merge_(updates)(oldFilter)))(state);
+}
+
+function checkTimeConfigArgs(config) {
+  const allowed = ['timeFormat', 'timezone'];
+  return Object.keys(config).reduce((accu, prop) => {
+    if (!allowed.includes(prop)) {
+      Console.error(
+        `setLayerAnimationTimeConfig takes timeFormat and/or timezone as options, found ${prop}`
+      );
+      return accu;
+    }
+
+    // here we are NOT checking if timezone or timeFormat input is valid
+    accu[prop] = config[prop];
+    return accu;
+  }, {});
+}
+/**
+ * Update editor
+ * @type {typeof import('./vis-state-updaters').setLayerAnimationTimeConfigUpdater}
+ */
+export function setLayerAnimationTimeConfigUpdater(state, {config}) {
+  if (!config) {
+    return state;
+  }
+  const updates = checkTimeConfigArgs(config);
+  return pick_('animationConfig')(merge_(updates))(state);
 }

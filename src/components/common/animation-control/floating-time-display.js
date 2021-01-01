@@ -18,27 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {PureComponent} from 'react';
+import React, {useMemo} from 'react';
 import styled from 'styled-components';
-import moment from 'moment';
-import {createSelector} from 'reselect';
 import {Minus} from 'components/common/icons';
 import {DEFAULT_TIME_FORMAT} from 'constants/default-settings';
 import {CenterFlexbox} from 'components/common/styled-components';
+import {datetimeFormatter} from 'utils/data-utils';
 
-const StyledTimeDisplay = styled.div`
+const StyledTimeDisplayWrapper = styled.div.attrs({
+  className: 'floating-time-display'
+})`
+  bottom: ${props => `calc(100% + ${props.theme.bottomPanelGap}px)`};
+  display: flex;
+  position: absolute;
+  width: 100%;
+  margin-left: -${props => props.theme.bottomInnerPdSide}px;
+  justify-content: center;
+`;
+
+const StyledTimeDisplay = styled.div.attrs({
+  className: 'floating-time-display__inner'
+})`
   background-color: ${props => props.theme.panelBackground};
   border-radius: ${props => props.theme.timeDisplayBorderRadius}px;
-  bottom: ${props => `calc(100% + ${props.theme.bottomPanelGap}px)`};
   color: ${props => props.theme.titleTextColor};
   display: flex;
   height: ${props => props.theme.timeDisplayHeight}px;
   justify-content: center;
-  left: calc(50% - 88px);
   min-width: ${props => props.theme.timeDisplayMinWidth}px;
   opacity: ${props => props.theme.timeDisplayOpacity};
   padding: ${props => props.theme.timeDisplayPadding};
-  position: absolute;
 `;
 
 const StyledTimeDisplayGroups = styled.div`
@@ -94,45 +103,52 @@ const TimeDivider = () => (
 
 const TimeDisplayRow = ({timeValues = []}) => (
   <CenterFlexbox>
-    <div>{timeValues[0]}</div>
+    <div className="time-value">{timeValues[0]}</div>
     {timeValues[1] ? <TimeDivider /> : null}
-    {timeValues[1] ? <div>{timeValues[1]}</div> : null}
+    {timeValues[1] ? <div className="time-value">{timeValues[1]}</div> : null}
   </CenterFlexbox>
 );
 
 export default function FloatingTimeDisplayFactory() {
-  class FloatingTimeDisplay extends PureComponent {
-    timeSelector = props => props.currentTime;
-    formatSelector = props => props.format;
-    displayTimeSelector = createSelector(
-      this.timeSelector,
-      this.formatSelector,
-      (currentTime, format) => {
-        const groupTime = Array.isArray(currentTime) ? currentTime : [currentTime];
-        return groupTime.reduce(
-          (accu, curr) => {
-            const displayDateTime = moment.utc(curr).format(format);
-            const [displayDate, displayTime] = displayDateTime.split(' ');
+  const FloatingTimeDisplay = ({currentTime, defaultTimeFormat, timeFormat, timezone}) => {
+    const {displayDate, displayTime} = useMemo(() => {
+      const groupTime = Array.isArray(currentTime) ? currentTime : [currentTime];
+      const hasUserFormat = typeof timeFormat === 'string';
+      const currentFormat = (hasUserFormat ? timeFormat : defaultTimeFormat) || DEFAULT_TIME_FORMAT;
+      const dateFunc = datetimeFormatter(timezone);
 
-            if (!accu.displayDate.includes(displayDate)) {
-              accu.displayDate.push(displayDate);
-            }
-            accu.displayTime.push(displayTime);
-
-            return accu;
-          },
-          {displayDate: [], displayTime: []}
-        );
+      if (hasUserFormat) {
+        // dont split time if user defined it
+        return {
+          displayDate: groupTime.map(dateFunc(currentFormat)),
+          displayTime: []
+        };
       }
-    );
+      return groupTime.reduce(
+        (accu, curr) => {
+          const [dateFormat, datetimeFormat] = currentFormat.split(' ');
+          const dateString = dateFunc(dateFormat)(curr);
+          const timeString = datetimeFormat ? dateFunc(datetimeFormat)(curr) : null;
 
-    render() {
-      const {displayDate, displayTime} = this.displayTimeSelector(this.props);
-      const twoGroups = displayDate.length === 2 && displayTime.length === 2;
-      const bottomRow = displayTime.length ? displayTime : displayDate.length ? displayDate : null;
-      const topRow = displayDate.length && displayTime.length ? displayDate : null;
+          if (!accu.displayDate.includes(dateString)) {
+            accu.displayDate.push(dateString);
+          }
+          if (timeString) {
+            accu.displayTime.push(timeString);
+          }
 
-      return (
+          return accu;
+        },
+        {displayDate: [], displayTime: []}
+      );
+    }, [currentTime, timeFormat, defaultTimeFormat, timezone]);
+
+    const twoGroups = displayDate.length === 2 && displayTime.length === 2;
+    const bottomRow = displayTime.length ? displayTime : displayDate.length ? displayDate : null;
+    const topRow = displayDate.length && displayTime.length ? displayDate : null;
+
+    return (
+      <StyledTimeDisplayWrapper>
         <StyledTimeDisplay className="animation-control__time-display">
           {twoGroups ? (
             <StyledTimeDisplayGroups>
@@ -163,13 +179,8 @@ export default function FloatingTimeDisplayFactory() {
             </StyledTimeDisplayRows>
           )}
         </StyledTimeDisplay>
-      );
-    }
-  }
-
-  FloatingTimeDisplay.defaultProps = {
-    format: DEFAULT_TIME_FORMAT,
-    currentTime: null
+      </StyledTimeDisplayWrapper>
+    );
   };
 
   return FloatingTimeDisplay;

@@ -33,6 +33,12 @@ export type TimeRangeFieldDomain = {
   histogram: HistogramBin[];
   enlargedHistogram: HistogramBin[];
   mappedValue: (Millisecond | null)[];
+  // auto generated based on time domain
+  defaultTimeFormat?: string | null;
+  // custom ui input
+  timeFormat?: string | null;
+  // custom ui input
+  timezone?: string | null;
 };
 export type FieldDomain =
   | RangeFieldDomain
@@ -57,6 +63,7 @@ export type FilterBase = {
   enlarged: boolean;
   isAnimating: boolean;
   speed: number;
+  showTimeDisplay?: boolean;
 
   // field specific
   name: string[]; // string
@@ -164,6 +171,12 @@ export type AnimationConfig = {
   currentTime: number | null;
   speed: number;
   isAnimating?: boolean;
+  // auto generated based on time domain
+  defaultTimeFormat?: string | null;
+  // custom ui input
+  timeFormat?: string | null;
+  // custom ui input
+  timezone?: string | null;
 };
 
 export type BaseInteraction = {
@@ -487,6 +500,16 @@ export function toggleEditorVisibilityUpdater(
 ): VisState;
 
 export function resetMapConfigUpdater(state: VisState): VisState;
+
+export function setLayerAnimationTimeConfigUpdater(
+  state: VisState,
+  action: VisStateActions.setLayerAnimationTimeConfig
+): VisState;
+
+export function setFilterAnimationTimeConfigUpdater(
+  state: VisState,
+  action: VisStateActions.setFilterAnimationTimeConfig
+): VisState;
 
 export function receiveMapConfigUpdater(
   state: VisState,

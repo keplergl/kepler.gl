@@ -120,6 +120,7 @@ export const mapFieldsSelector = props => ({
   animationConfig: props.visState.animationConfig,
 
   // uiState
+  activeSidePanel: props.uiState.activeSidePanel,
   mapControls: props.uiState.mapControls,
   readOnly: props.uiState.readOnly,
   locale: props.uiState.locale

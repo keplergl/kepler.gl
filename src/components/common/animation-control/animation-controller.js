@@ -213,12 +213,7 @@ function AnimationControllerFactory() {
       const {children} = this.props;
 
       return typeof children === 'function'
-        ? children({
-            isAnimating,
-            start: this._startAnimation,
-            pause: this._pauseAnimation,
-            reset: this._resetAnimation
-          })
+        ? children(isAnimating, this._startAnimation, this._pauseAnimation, this._resetAnimation)
         : null;
     }
   }

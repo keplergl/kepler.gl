@@ -18,10 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
-import {createSelector} from 'reselect';
-
 import {
   SelectTextBold,
   IconRoundSmall,
@@ -29,18 +27,19 @@ import {
   BottomWidgetInner
 } from 'components/common/styled-components';
 import {Close, Clock, LineChart} from 'components/common/icons';
-import SpeedControlFactory from 'components/common/animation-control/speed-control';
 import TimeRangeSliderFactory from 'components/common/time-range-slider';
-
+import FieldSelectorFactory from 'components/common/field-selector';
 import FloatingTimeDisplayFactory from 'components/common/animation-control/floating-time-display';
-import FieldSelectorFactory from '../common/field-selector';
+import {timeRangeSliderFieldsSelector} from './time-range-filter';
 
 const TOP_SECTION_HEIGHT = '36px';
 
 const TimeBottomWidgetInner = styled(BottomWidgetInner)`
   padding: 6px 32px 24px 32px;
 `;
-const TopSectionWrapper = styled.div`
+const TopSectionWrapper = styled.div.attrs({
+  className: 'time-widget--top'
+})`
   display: flex;
   justify-content: space-between;
   width: 100%;
@@ -103,105 +102,127 @@ const StyledTitle = styled(CenterFlexbox)`
   }
 `;
 
-TimeWidgetFactory.deps = [
-  SpeedControlFactory,
-  TimeRangeSliderFactory,
-  FloatingTimeDisplayFactory,
-  FieldSelectorFactory
-];
-function TimeWidgetFactory(SpeedControl, TimeRangeSlider, FloatingTimeDisplay, FieldSelector) {
-  class TimeWidget extends Component {
-    fieldSelector = props => props.fields;
-    yAxisFieldsSelector = createSelector(this.fieldSelector, fields =>
-      fields.filter(f => f.type === 'integer' || f.type === 'real')
+TimeWidgetTopFactory.deps = [FieldSelectorFactory];
+export function TimeWidgetTopFactory(FieldSelector) {
+  const TimeWidgetTop = ({filter, readOnly, datasets, setFilterPlot, index, onClose}) => {
+    const yAxisFields = useMemo(
+      () =>
+        ((datasets[filter.dataId[0]] || {}).fields || []).filter(
+          f => f.type === 'integer' || f.type === 'real'
+        ),
+      [datasets, filter.dataId]
+    );
+    const _setFilterPlotYAxis = useCallback(value => setFilterPlot(index, {yAxis: value}), [
+      setFilterPlot,
+      index
+    ]);
+    return (
+      <TopSectionWrapper>
+        <StyledTitle className="bottom-widget__field">
+          <CenterFlexbox className="bottom-widget__icon">
+            <Clock height="15px" />
+          </CenterFlexbox>
+          <SelectTextBold>{filter.name}</SelectTextBold>
+        </StyledTitle>
+        <StyledTitle className="bottom-widget__y-axis">
+          <CenterFlexbox className="bottom-widget__icon">
+            <LineChart height="15px" />
+          </CenterFlexbox>
+          <div className="bottom-widget__field-select">
+            <FieldSelector
+              fields={yAxisFields}
+              placement="top"
+              id="selected-time-widget-field"
+              value={filter.yAxis ? filter.yAxis.name : null}
+              onSelect={_setFilterPlotYAxis}
+              placeholder="placeholder.yAxis"
+              erasable
+              showToken={false}
+            />
+          </div>
+        </StyledTitle>
+        {!readOnly ? (
+          <CenterFlexbox>
+            <IconRoundSmall>
+              <Close height="12px" onClick={onClose} />
+            </IconRoundSmall>
+          </CenterFlexbox>
+        ) : null}
+      </TopSectionWrapper>
+    );
+  };
+  return TimeWidgetTop;
+}
+
+TimeWidgetFactory.deps = [TimeRangeSliderFactory, FloatingTimeDisplayFactory, TimeWidgetTopFactory];
+function TimeWidgetFactory(TimeRangeSlider, FloatingTimeDisplay, TimeWidgetTop) {
+  const TimeWidget = ({
+    datasets,
+    filter,
+    index,
+    readOnly,
+    showTimeDisplay,
+    setFilterAnimationTime,
+    resetAnimation,
+    isAnimatable,
+    updateAnimationSpeed,
+    toggleAnimation,
+    enlargeFilter,
+    setFilterPlot,
+    setFilterAnimationWindow
+  }) => {
+    const _updateAnimationSpeed = useCallback(speed => updateAnimationSpeed(index, speed), [
+      updateAnimationSpeed,
+      index
+    ]);
+
+    const _toggleAnimation = useCallback(() => toggleAnimation(index), [toggleAnimation, index]);
+
+    const _onClose = useCallback(() => enlargeFilter(index), [enlargeFilter, index]);
+
+    const _setFilterAnimationWindow = useCallback(
+      animationWindow => setFilterAnimationWindow({id: filter.id, animationWindow}),
+      [setFilterAnimationWindow, filter.id]
     );
 
-    _updateAnimationSpeed = speed => this.props.updateAnimationSpeed(this.props.index, speed);
+    const timeSliderOnChange = useCallback(value => setFilterAnimationTime(index, 'value', value), [
+      setFilterAnimationTime,
+      index
+    ]);
 
-    _toggleAnimation = () => this.props.toggleAnimation(this.props.index);
-
-    _onClose = () => this.props.enlargeFilter(this.props.index);
-
-    _setFilterPlotYAxis = value => this.props.setFilterPlot(this.props.index, {yAxis: value});
-
-    _setFilterAnimationWindow = animationWindow => {
-      this.props.setFilterAnimationWindow({id: this.props.filter.id, animationWindow});
-    };
-
-    render() {
-      const {
-        datasets,
-        filter,
-        index,
-        readOnly,
-        showTimeDisplay,
-        setFilterAnimationTime,
-        animationControlProps,
-        isAnimatable
-      } = this.props;
-
-      return (
-        <TimeBottomWidgetInner className="bottom-widget--inner">
-          <TopSectionWrapper>
-            <StyledTitle className="bottom-widget__field">
-              <CenterFlexbox className="bottom-widget__icon">
-                <Clock height="15px" />
-              </CenterFlexbox>
-              <SelectTextBold>{filter.name}</SelectTextBold>
-            </StyledTitle>
-            <StyledTitle className="bottom-widget__y-axis">
-              <CenterFlexbox className="bottom-widget__icon">
-                <LineChart height="15px" />
-              </CenterFlexbox>
-              <div className="bottom-widget__field-select">
-                <FieldSelector
-                  fields={this.yAxisFieldsSelector(datasets[filter.dataId[0]])}
-                  placement="top"
-                  id="selected-time-widget-field"
-                  value={filter.yAxis ? filter.yAxis.name : null}
-                  onSelect={this._setFilterPlotYAxis}
-                  placeholder="placeholder.yAxis"
-                  erasable
-                  showToken={false}
-                />
-              </div>
-            </StyledTitle>
-            {!readOnly ? (
-              <CenterFlexbox>
-                <IconRoundSmall>
-                  <Close height="12px" onClick={this._onClose} />
-                </IconRoundSmall>
-              </CenterFlexbox>
-            ) : null}
-          </TopSectionWrapper>
-          <TimeRangeSlider
-            id={filter.id}
-            domain={filter.domain}
-            bins={filter.bins}
-            value={filter.value}
-            plotType={filter.plotType}
-            lineChart={filter.lineChart}
-            step={filter.step}
-            speed={filter.speed}
-            histogram={filter.enlargedHistogram}
-            onChange={value => setFilterAnimationTime(index, 'value', value)}
-            toggleAnimation={this._toggleAnimation}
-            updateAnimationSpeed={this._updateAnimationSpeed}
-            setFilterAnimationWindow={this._setFilterAnimationWindow}
-            isEnlarged={filter.enlarged}
-            animationWindow={filter.animationWindow}
-            isAnimating={filter.isAnimating}
-            hideTimeTitle={showTimeDisplay}
-            animationControlProps={animationControlProps}
-            isAnimatable={isAnimatable}
+    return (
+      <TimeBottomWidgetInner className="bottom-widget--inner">
+        <TimeWidgetTop
+          filter={filter}
+          readOnly={readOnly}
+          datasets={datasets}
+          setFilterPlot={setFilterPlot}
+          index={index}
+          onClose={_onClose}
+        />
+        <TimeRangeSlider
+          {...timeRangeSliderFieldsSelector(filter)}
+          onChange={timeSliderOnChange}
+          toggleAnimation={_toggleAnimation}
+          updateAnimationSpeed={_updateAnimationSpeed}
+          setFilterAnimationWindow={_setFilterAnimationWindow}
+          hideTimeTitle={showTimeDisplay}
+          resetAnimation={resetAnimation}
+          isAnimatable={isAnimatable}
+        />
+        {showTimeDisplay ? (
+          <FloatingTimeDisplay
+            currentTime={filter.value}
+            defaultTimeFormat={filter.defaultTimeFormat}
+            timeFormat={filter.timeFormat}
+            timezone={filter.timezone}
           />
+        ) : null}
+      </TimeBottomWidgetInner>
+    );
+  };
 
-          {showTimeDisplay ? <FloatingTimeDisplay currentTime={filter.value} /> : null}
-        </TimeBottomWidgetInner>
-      );
-    }
-  }
-  return TimeWidget;
+  return React.memo(TimeWidget);
 }
 
 export default TimeWidgetFactory;

@@ -83,6 +83,9 @@ const actionHandler = {
 
   [ActionTypes.SET_FILTER_ANIMATION_TIME]: visStateUpdaters.setFilterAnimationTimeUpdater,
 
+  [ActionTypes.SET_FILTER_ANIMATION_TIME_CONFIG]:
+    visStateUpdaters.setFilterAnimationTimeConfigUpdater,
+
   [ActionTypes.SET_FILTER_ANIMATION_WINDOW]: visStateUpdaters.setFilterAnimationWindowUpdater,
 
   [ActionTypes.SET_FILTER_PLOT]: visStateUpdaters.setFilterPlotUpdater,
@@ -133,7 +136,9 @@ const actionHandler = {
 
   [ActionTypes.NEXT_FILE_BATCH]: visStateUpdaters.nextFileBatchUpdater,
 
-  [ActionTypes.PROCESS_FILE_CONTENT]: visStateUpdaters.processFileContentUpdater
+  [ActionTypes.PROCESS_FILE_CONTENT]: visStateUpdaters.processFileContentUpdater,
+
+  [ActionTypes.SET_LAYER_ANIMATION_TIME_CONFIG]: visStateUpdaters.setLayerAnimationTimeConfigUpdater
 };
 
 // construct vis-state reducer

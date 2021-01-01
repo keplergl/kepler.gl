@@ -181,7 +181,6 @@ export default class Slider extends Component {
       >
         <StyledRangeSlider className="kg-range-slider" vertical={vertical} ref={this.track}>
           <SliderHandle
-            className="kg-range-slider__handle"
             left={this.calcHandleLeft0(width, v0Left)}
             valueListener={this.slide0Listener}
             sliderHandleWidth={sliderHandleWidth}
@@ -191,7 +190,6 @@ export default class Slider extends Component {
             track={this.track}
           />
           <SliderHandle
-            className="kg-range-slider__handle"
             left={this.calcHandleLeft1(width, v0Left)}
             valueListener={this.slide1Listener}
             sliderHandleWidth={sliderHandleWidth}

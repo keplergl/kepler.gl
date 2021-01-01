@@ -18,20 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './injector-test';
-import './container-test';
-import './kepler-gl-test';
+import {useEffect, useRef} from 'react';
 
-import './modals';
-import './notifications';
-import './map';
-import './side-panel';
-
-import './common';
-import './editor';
-import './filters';
-import './map-container-test';
-import './geocoder-panel-test';
-import './tooltip-config-test';
-import './bottom-widget-test';
-import './plot-container-test';
+// Hook to check which prop change causing component rerender
+export function useTraceUpdate(props) {
+  const prev = useRef(props);
+  useEffect(() => {
+    const changedProps = Object.entries(props).reduce((ps, [k, v]) => {
+      if (prev.current[k] !== v) {
+        ps[k] = [prev.current[k], v];
+      }
+      return ps;
+    }, {});
+    if (Object.keys(changedProps).length > 0) {
+      // eslint-disable-next-line no-console
+      console.log('Changed props:', changedProps);
+    }
+    prev.current = props;
+  });
+}

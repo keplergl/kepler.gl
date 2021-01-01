@@ -143,6 +143,129 @@ test('filterUtils -> adjustValueToFilterDomain', t => {
   t.end();
 });
 
+test('filterUtils -> getFieldDomain.time', async t => {
+  const data = testData;
+  const expectedFields = testFields;
+
+  const {fields, rows} = await processCsvData(data);
+
+  t.deepEqual(fields, expectedFields, 'should get current field type');
+  testGetTimeFieldDomain(rows, fields, t);
+  testGetFilterFunction(rows, fields, t);
+
+  t.end();
+});
+
+test('filterUtils -> getFieldDomain.numeric', async t => {
+  const data = numericRangesCsv;
+
+  const {fields, rows} = await processCsvData(data);
+
+  testGetNumericFieldStep(rows, fields, t);
+
+  t.end();
+});
+
+test('filterUtils -> getTimestampFieldDomain', t => {
+  /* eslint-disable func-style */
+  const valueAccessor = d => moment.utc(d).valueOf();
+  /* eslint-enable func-style */
+
+  const timeData = {
+    no: {
+      input: 0.5,
+      expect: {
+        domain: [0, 1],
+        step: 0.05,
+        ...getHistogram([0, 1], []),
+        mappedValue: [],
+        defaultTimeFormat: 'L LTS'
+      }
+    },
+    zero: {
+      input: ['2016-10-01 09:45:39', '2016-10-01 09:45:39'],
+      expect: {
+        domain: [1475315139000, 1475315139000],
+        mappedValue: [1475315139000, 1475315139000],
+        histogram: [{count: 2, x0: 1475315139000, x1: 1475315139000}],
+        enlargedHistogram: [{count: 2, x0: 1475315139000, x1: 1475315139000}],
+        step: 0.05,
+        defaultTimeFormat: 'L LTS'
+      }
+    },
+    tiny: {
+      input: ['2016-10-01 09:45:39.001', '2016-10-01 09:45:39.002', '2016-10-01 09:45:39.003'],
+      expect: {
+        domain: [1475315139001, 1475315139003],
+        mappedValue: [1475315139001, 1475315139002, 1475315139003],
+        ...getHistogram(
+          [1475315139001, 1475315139003],
+          [1475315139001, 1475315139002, 1475315139003]
+        ),
+        step: 0.1,
+        defaultTimeFormat: 'L LTS'
+      }
+    },
+    small: {
+      input: ['2016-10-01 09:45:39.010', '2016-10-01 09:45:39.020', '2016-10-01 09:45:39.030'],
+      expect: {
+        domain: [1475315139010, 1475315139030],
+        mappedValue: [1475315139010, 1475315139020, 1475315139030],
+        histogram: [],
+        enlargedHistogram: [],
+        step: 1,
+        defaultTimeFormat: 'L LTS'
+      }
+    },
+    medium: {
+      input: ['2016-10-01 09:45:39.100', '2016-10-01 09:45:39.200', '2016-10-01 09:45:39.300'],
+      expect: {
+        domain: [1475315139100, 1475315139300],
+        mappedValue: [1475315139100, 1475315139200, 1475315139300],
+        histogram: [],
+        enlargedHistogram: [],
+        step: 5,
+        defaultTimeFormat: 'L LTS'
+      }
+    },
+    large: {
+      input: ['2016-10-01 09:45:39', '2016-10-01 09:45:45'],
+      expect: {
+        domain: [1475315139000, 1475315145000],
+        mappedValue: [1475315139000, 1475315145000],
+        histogram: [],
+        enlargedHistogram: [],
+        step: 1000,
+        defaultTimeFormat: 'L LTS'
+      }
+    }
+  };
+
+  Object.keys(timeData).forEach(key => {
+    const tsFieldDomain = getTimestampFieldDomain(timeData[key].input, valueAccessor);
+    t.deepEqual(
+      Object.keys(tsFieldDomain).sort(),
+      Object.keys(timeData[key].expect).sort(),
+      'Should domain should have same keys'
+    );
+
+    Object.keys(timeData[key].expect).forEach(k => {
+      // histogram is created by d3, only need to test they exist
+      if (k === 'histogram' || k === 'enlargedHistogram') {
+        t.ok(tsFieldDomain[k].length, `should create ${k}`);
+      } else {
+        t.deepEqual(
+          tsFieldDomain[k],
+          timeData[key].expect[k],
+          `time domain ${k} should be the same`
+        );
+      }
+    });
+  });
+
+  t.end();
+});
+
 test('filterUtils -> getDatasetFieldIndexForFilter', t => {
   const dataId = 'test-this-id';
 

@@ -19,16 +19,18 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import sinon from 'sinon';
 import {mount} from 'enzyme';
 import {theme} from 'styles/base';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
 import {messages} from 'localization';
 
-export function mountWithTheme(node) {
+export function mountWithTheme(node, options) {
   return mount(node, {
     wrappingComponent: ThemeProvider,
-    wrappingComponentProps: {theme}
+    wrappingComponentProps: {theme},
+    ...options
   });
 }
 
@@ -37,3 +39,7 @@ export const IntlWrapper = ({children, locale = 'en'}) => (
     {children}
   </IntlProvider>
 );
+
+export function mockHTMLElementClientSize(prop, value) {
+  return sinon.stub(HTMLElement.prototype, prop).get(() => value);
+}

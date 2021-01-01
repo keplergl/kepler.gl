@@ -656,6 +656,8 @@ export function getTimestampFieldDomain(data, valueAccessor) {
 
   const mappedValue = Array.isArray(data) ? data.map(valueAccessor) : [];
   const domain = ScaleUtils.getLinearDomain(mappedValue);
+  const defaultTimeFormat = getTimeWidgetTitleFormatter(domain);
+
   let step = 0.01;
 
   const diff = domain[1] - domain[0];
@@ -666,7 +668,14 @@ export function getTimestampFieldDomain(data, valueAccessor) {
 
   const {histogram, enlargedHistogram} = getHistogram(domain, mappedValue);
 
-  return {domain, step, mappedValue, histogram, enlargedHistogram};
+  return {
+    domain,
+    step,
+    mappedValue,
+    histogram,
+    enlargedHistogram,
+    defaultTimeFormat
+  };
 }
 
 /**
@@ -733,35 +742,34 @@ export function isInRange(val, domain) {
 export function isInPolygon(point, polygon) {
   return booleanWithin(turfPoint(point), polygon);
 }
-
+export function isValidTimeDomain(domain) {
+  return Array.isArray(domain) && domain.every(Number.isFinite);
+}
 export function getTimeWidgetTitleFormatter(domain) {
-  if (!Array.isArray(domain)) {
+  if (!isValidTimeDomain(domain)) {
     return null;
   }
 
   const diff = domain[1] - domain[0];
-  return diff > durationYear
-    ? 'MM/DD/YY'
-    : diff > durationDay
-    ? 'MM/DD/YY hh:mma'
-    : 'MM/DD/YY hh:mm:ssa';
+
+  // Local aware formats
+  // https://momentjs.com/docs/#/parsing/string-format
+  return diff > durationYear ? 'L' : diff > durationDay ? 'L LT' : 'L LTS';
 }
 
 export function getTimeWidgetHintFormatter(domain) {
-  if (!Array.isArray(domain)) {
+  if (!isValidTimeDomain(domain)) {
     return null;
   }
 
   const diff = domain[1] - domain[0];
-  return diff > durationYear
-    ? 'MM/DD/YY'
-    : diff > durationWeek
-    ? 'MM/DD'
+  return diff > durationWeek
+    ? 'L'
     : diff > durationDay
-    ? 'MM/DD hha'
+    ? 'L LT'
     : diff > durationHour
-    ? 'hh:mma'
-    : 'hh:mm:ssa';
+    ? 'LT'
+    : 'LTS';
 }
 
 /**
@@ -1090,7 +1098,7 @@ export function validateFiltersUpdateDatasets(state, filtersToValidate = []) {
  */
 export function getIntervalBins(filter) {
   const {bins} = filter;
-  const interval = filter.plotType && filter.plotType.interval;
+  const interval = filter.plotType?.interval;
   if (!interval || !bins || Object.keys(bins).length === 0) {
     return null;
   }

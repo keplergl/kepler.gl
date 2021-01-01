@@ -55,12 +55,11 @@ export function PanelTabFactory() {
     margin-right: ${props => props.theme.panelToggleMarginRight}px;
     padding-bottom: ${props => props.theme.panelToggleBottomPadding}px;
     width: ${props => props.theme.panelTabWidth};
-  
+
     :hover {
       cursor: pointer;
       color: ${props => props.theme.textColorHl};
     }
-
   `;
 
   return PanelTab;

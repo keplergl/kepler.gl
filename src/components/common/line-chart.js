@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {useMemo} from 'react';
-import moment from 'moment';
 import {
   HorizontalGridLines,
   LineSeries,
@@ -30,7 +29,7 @@ import {
   MarkSeries
 } from 'react-vis';
 import styled from 'styled-components';
-import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
+import {datetimeFormatter} from 'utils/data-utils';
 
 const LineChartWrapper = styled.div`
   .rv-xy-plot {
@@ -84,16 +83,19 @@ function LineChartFactory() {
     lineChart,
     margin,
     onMouseMove,
-    width
+    width,
+    timezone,
+    timeFormat
   }) => {
-    const {xDomain, series, yDomain} = lineChart;
-    const hintFormatter = useMemo(() => {
-      return getTimeWidgetHintFormatter(xDomain);
-    }, [xDomain]);
+    const {series, yDomain} = lineChart;
 
     const brushData = useMemo(() => {
       return [{x: series[0].x, y: yDomain[1], customComponent: () => brushComponent}];
     }, [series, yDomain, brushComponent]);
+    const hintFormatter = useMemo(() => datetimeFormatter(timezone)(timeFormat), [
+      timezone,
+      timeFormat
+    ]);
 
     return (
       <LineChartWrapper style={{marginTop: `${margin.top}px`}}>
@@ -119,7 +121,7 @@ function LineChartFactory() {
           {isEnlarged && <YAxis tickTotal={3} />}
           {hoveredDP && enableChartHover && !brushing ? (
             <Hint value={hoveredDP}>
-              <HintContent {...hoveredDP} format={val => moment.utc(val).format(hintFormatter)} />
+              <HintContent {...hoveredDP} format={hintFormatter} />
             </Hint>
           ) : null}
         </XYPlot>

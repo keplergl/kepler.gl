@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import moment from 'moment';
 import assert from 'assert';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from 'constants/tooltip';
 import {format as d3Format} from 'd3-format';
 import {bisectLeft} from 'd3-array';
+import moment from 'moment-timezone';
 
 const MAX_LATITUDE = 90;
 const MIN_LATITUDE = -90;
@@ -365,7 +365,7 @@ export function applyDefaultFormat(tooltipFormat) {
       return d3Format(tooltipFormat.format);
     case TOOLTIP_FORMAT_TYPES.DATE:
     case TOOLTIP_FORMAT_TYPES.DATE_TIME:
-      return v => moment.utc(v).format(tooltipFormat.format);
+      return datetimeFormatter(null)(tooltipFormat.format);
     case TOOLTIP_FORMAT_TYPES.PERCENTAGE:
       return v => `${d3Format(TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format)(v)}%`;
     case TOOLTIP_FORMAT_TYPES.BOOLEAN:
@@ -393,8 +393,22 @@ export function applyCustomFormat(format, field) {
       return d3Format(format);
     case ALL_FIELD_TYPES.date:
     case ALL_FIELD_TYPES.timestamp:
-      return v => moment.utc(v).format(format);
+      return datetimeFormatter(null)(format);
     default:
       return v => v;
   }
+}
+
+/**
+ * Format epoch milliseconds with a format string
+ * @type {typeof import('./data-utils').datetimeFormatter} timezone
+ */
+export function datetimeFormatter(timezone) {
+  return timezone
+    ? format => ts =>
+        moment
+          .utc(ts)
+          .tz(timezone)
+          .format(format)
+    : format => ts => moment.utc(ts).format(format);
 }

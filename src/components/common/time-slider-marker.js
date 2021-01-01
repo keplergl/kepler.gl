@@ -19,11 +19,13 @@
 // THE SOFTWARE.
 
 import React, {useRef, useEffect, useMemo} from 'react';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import {scaleUtc} from 'd3-scale';
 import {select} from 'd3-selection';
 import {axisBottom} from 'd3-axis';
 import styled from 'styled-components';
+import {datetimeFormatter} from 'utils/data-utils';
 
 const MIN_TICK_WIDTH_LARGE = 80;
 const MIN_TICK_WIDTH_SMALL = 50;
@@ -34,6 +36,7 @@ const TimeSliderContainer = styled.svg`
   position: absolute;
   top: 0;
   overflow: visible;
+  margin-top: 6px;
 
   .axis text {
     font-size: ${props => props.theme.axisFontSize};
@@ -66,38 +69,87 @@ const TimeSliderContainer = styled.svg`
   }
 `;
 
-function TimeSliderMarkerFactory() {
-  function updateAxis(scale, width, xAxisRef, isEnlarged) {
-    if (!scale) {
-      return;
-    }
+const TICK_FORMATS = {
+  millisecond: '.SSS',
+  second: ':ss',
+  minute: 'HH:ss',
+  hour: 'HH A',
+  day: 'ddd DD',
+  week: 'MMM DD',
+  month: 'MMM',
+  year: 'YYYY'
+};
 
-    // TODO: pass in ticks if interval is defined
-    const ticks = Math.floor(width / (isEnlarged ? MIN_TICK_WIDTH_LARGE : MIN_TICK_WIDTH_SMALL));
+// timezone sensitive tick formatter based on moment
+// adapted based on d3 time scale tick format https://github.com/d3/d3-scale/blob/master/src/time.js#L59
+export function getTickFormat(timezone) {
+  // date is js date object
+  const toMoment = timezone ? date => moment(date).tz(timezone) : moment;
+  const formatter = datetimeFormatter(timezone);
 
-    const xAxis = axisBottom(scale)
-      .ticks(ticks)
-      .tickSize(0)
-      .tickPadding(12);
+  return date =>
+    (toMoment(date).startOf('second') < date
+      ? formatter(TICK_FORMATS.millisecond)
+      : toMoment(date).startOf('minute') < date
+      ? formatter(TICK_FORMATS.second)
+      : toMoment(date).startOf('hour') < date
+      ? formatter(TICK_FORMATS.minute)
+      : toMoment(date).startOf('day') < date
+      ? formatter(TICK_FORMATS.hour)
+      : toMoment(date).startOf('month') < date
+      ? toMoment(date).startOf('isoWeek') < date
+        ? formatter(TICK_FORMATS.day)
+        : formatter(TICK_FORMATS.week)
+      : toMoment(date).startOf('year') < date
+      ? formatter(TICK_FORMATS.month)
+      : formatter(TICK_FORMATS.year))(date);
+}
 
-    select(xAxisRef.current).call(xAxis);
+// create a helper function so we can test it
+export function getXAxis(domain, width, isEnlarged, timezone) {
+  if (!Array.isArray(domain) || !domain.every(Number.isFinite)) {
+    return null;
+  }
+  const scale = scaleUtc()
+    .domain(domain)
+    .range([0, width]);
+  if (!scale) {
+    return null;
   }
 
-  const TimeSliderMarker = ({width, domain, isEnlarged = true, height = HEIGHT}) => {
-    const xAxisRef = useRef(null);
-    const scale = useMemo(
-      () =>
-        Array.isArray(domain)
-          ? scaleUtc()
-              .domain(domain)
-              .range([0, width])
-          : null,
-      [domain, width]
-    );
+  const ticks = Math.floor(width / (isEnlarged ? MIN_TICK_WIDTH_LARGE : MIN_TICK_WIDTH_SMALL));
+  const tickFormat = timezone ? getTickFormat(timezone) : null;
+  const xAxis = axisBottom(scale)
+    .ticks(ticks)
+    .tickSize(0)
+    .tickPadding(12);
+  if (tickFormat) {
+    xAxis.tickFormat(tickFormat);
+  }
 
+  return xAxis;
+}
+
+export function updateAxis(xAxisRef, xAxis) {
+  if (!xAxis) {
+    return;
+  }
+
+  select(xAxisRef.current).call(xAxis);
+}
+
+function TimeSliderMarkerFactory() {
+  const TimeSliderMarker = ({width, domain, isEnlarged = true, height = HEIGHT, timezone}) => {
+    const xAxisRef = useRef(null);
+    const xAxis = useMemo(() => getXAxis(domain, width, isEnlarged, timezone), [
+      domain,
+      width,
+      isEnlarged,
+      timezone
+    ]);
     useEffect(() => {
-      updateAxis(scale, width, xAxisRef, isEnlarged);
-    }, [scale, width, xAxisRef, isEnlarged]);
+      updateAxis(xAxisRef, xAxis);
+    }, [xAxisRef, xAxis]);
     return (
       <TimeSliderContainer className="time-slider-marker" width={width} height={height}>
         <g className="x axis" ref={xAxisRef} transform="translate(0, 0)" />
@@ -110,7 +162,7 @@ function TimeSliderMarkerFactory() {
     width: PropTypes.number.isRequired
   };
 
-  return TimeSliderMarker;
+  return React.memo(TimeSliderMarker);
 }
 
 export default TimeSliderMarkerFactory;

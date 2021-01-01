@@ -20,29 +20,44 @@
 
 import React from 'react';
 import TimeRangeSliderFactory from 'components/common/time-range-slider';
+import {DEFAULT_TIME_FORMAT} from 'constants/default-settings';
 
 /*
  * TimeRangeFilter -> TimeRangeSlider -> RangeSlider
  */
+export function timeRangeSliderFieldsSelector(filter) {
+  const hasUserFormat = typeof filter.timeFormat === 'string';
+  const timeFormat =
+    (hasUserFormat ? filter.timeFormat : filter.defaultTimeFormat) || DEFAULT_TIME_FORMAT;
+
+  return {
+    id: filter.id,
+    domain: filter.domain,
+    bins: filter.bins,
+    value: filter.value,
+    plotType: filter.plotType,
+    lineChart: filter.lineChart,
+    yAxis: filter.yAxis,
+    step: filter.step,
+    speed: filter.speed,
+    histogram: filter.enlarged ? filter.enlargedHistogram : filter.histogram,
+    isEnlarged: filter.enlarged,
+    animationWindow: filter.animationWindow,
+    isAnimating: filter.isAnimating,
+    timezone: filter.timezone,
+    timeFormat
+  };
+}
 
 TimeRangeFilterFactory.deps = [TimeRangeSliderFactory];
 
 function TimeRangeFilterFactory(TimeRangeSlider) {
   const TimeRangeFilter = ({filter, setFilter, isAnimatable, toggleAnimation, hideTimeTitle}) => (
     <TimeRangeSlider
-      id={filter.id}
-      domain={filter.domain}
-      value={filter.value}
-      plotType={filter.plotType}
-      lineChart={filter.lineChart}
-      step={filter.step}
-      speed={filter.speed}
-      isAnimating={filter.isAnimating}
-      histogram={filter.enlarged ? filter.enlargedHistogram : filter.histogram}
+      {...timeRangeSliderFieldsSelector(filter)}
       onChange={setFilter}
       toggleAnimation={toggleAnimation}
       isAnimatable={isAnimatable}
-      isEnlarged={filter.enlarged}
       hideTimeTitle={hideTimeTitle}
     />
   );
