@@ -217,6 +217,7 @@ export default class HexagonIdLayer extends Layer {
     };
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
       new H3HexagonLayer({
@@ -247,11 +248,11 @@ export default class HexagonIdLayer extends Layer {
           }
         }
       }),
-      ...(this.isLayerHovered(objectHovered) && !config.sizeField
+      ...(hoveredObject && !config.sizeField
         ? [
             new GeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
-              data: [idToPolygonGeo(objectHovered)],
+              data: [idToPolygonGeo(hoveredObject)],
               getLineColor: config.highlightColor,
               lineWidthScale: DEFAULT_LINE_SCALE_VALUE * zoomFactor,
               wrapLongitude: false

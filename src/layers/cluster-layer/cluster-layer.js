@@ -78,6 +78,7 @@ export default class ClusterLayer extends AggregationLayer {
       }
     };
     const {_filterData: filterData, ...clusterData} = data;
+    const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
       new DeckGLClusterLayer({
@@ -106,11 +107,11 @@ export default class ClusterLayer extends AggregationLayer {
         onSetColorDomain: layerCallbacks.onSetLayerDomain
       }),
       // hover layer
-      ...(this.isLayerHovered(objectHovered)
+      ...(hoveredObject
         ? [
             new ScatterplotLayer({
               id: `${this.id}-hovered`,
-              data: [objectHovered.object],
+              data: [hoveredObject],
               getFillColor: this.config.highlightColor,
               getRadius: d => d.radius,
               radiusScale: 1,

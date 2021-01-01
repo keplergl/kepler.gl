@@ -59,7 +59,7 @@ const IGNORE_DATA_TYPES = Object.keys(AnalyzerDATA_TYPES).filter(
 export const PARSE_FIELD_VALUE_FROM_STRING = {
   [ALL_FIELD_TYPES.boolean]: {
     valid: d => typeof d === 'boolean',
-    parse: d => d === 'true' || d === 'True' || d === '1'
+    parse: d => d === 'true' || d === 'True' || d === 'TRUE' || d === '1'
   },
   [ALL_FIELD_TYPES.integer]: {
     valid: d => parseInt(d, 10) === d,

@@ -194,7 +194,7 @@ export default class ArcLayer extends Layer {
       ...this.getVisualChannelUpdateTriggers()
     };
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
-
+    const hoveredObject = this.hasHoveredObject(objectHovered);
     return [
       new DeckArcLayer({
         ...defaultLayerProps,
@@ -205,11 +205,11 @@ export default class ArcLayer extends Layer {
         extensions: [...defaultLayerProps.extensions, new BrushingExtension()]
       }),
       // hover layer
-      ...(this.isLayerHovered(objectHovered)
+      ...(hoveredObject
         ? [
             new DeckArcLayer({
               ...this.getDefaultHoverLayerProps(),
-              data: [objectHovered.object],
+              data: [hoveredObject],
               widthScale: this.config.visConfig.thickness,
               getSourceColor: this.config.highlightColor,
               getTargetColor: this.config.highlightColor,

@@ -65,6 +65,7 @@ export default class HexagonLayer extends AggregationLayer {
     const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
     const radius = visConfig.worldUnitSize * 1000;
+    const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
       new EnhancedHexagonLayer({
@@ -75,13 +76,13 @@ export default class HexagonLayer extends AggregationLayer {
       }),
 
       // render an outline of each hexagon if not extruded
-      ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
+      ...(hoveredObject && !visConfig.enable3d
         ? [
             new GeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
               wrapLongitude: false,
               data: [
-                hexagonToPolygonGeo(objectHovered, {}, radius * visConfig.coverage, mapState)
+                hexagonToPolygonGeo(hoveredObject, {}, radius * visConfig.coverage, mapState)
               ].filter(d => d),
               getLineColor: this.config.highlightColor,
               lineWidthScale: clamp([1, 100], radius * 0.1 * zoomFactor)

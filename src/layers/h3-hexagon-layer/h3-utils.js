@@ -36,7 +36,7 @@ export function getCentroid({id}) {
   return h3ToGeo(id).reverse();
 }
 
-export function idToPolygonGeo({object}, properties) {
+export function idToPolygonGeo(object, properties) {
   if (!object || !object.id) {
     return null;
   }

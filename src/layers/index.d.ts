@@ -88,6 +88,7 @@ export class Layer {
   isValidToSave(): boolean;
   getVisualChannelDescription(key: string): VisualChannelDescription;
   isLayerHovered(objectInfo: any): boolean;
+  hasHoveredObject(objectInfo: any): any | null;
   getHoverData(object: any, allData?: Dataset['allData'], fields?: Dataset['fields']): any;
 }
 

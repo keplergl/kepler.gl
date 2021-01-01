@@ -450,6 +450,7 @@ export default class Layer {
     Object.values(this.visualChannels).forEach(v => {
       if (
         configToCopy.visConfig[v.range] &&
+        this.visConfigSettings[v.range] &&
         visConfigSettings[v.range].group !== this.visConfigSettings[v.range].group
       ) {
         notToCopy.push(v.range);
@@ -1054,10 +1055,12 @@ export default class Layer {
     }
   }
 
+  hasHoveredObject(objectInfo) {
+    return this.isLayerHovered(objectInfo) && objectInfo.object ? objectInfo.object : null;
+  }
+
   isLayerHovered(objectInfo) {
-    return (
-      objectInfo && objectInfo.layer && objectInfo.picked && objectInfo.layer.props.id === this.id
-    );
+    return objectInfo?.picked && objectInfo?.layer?.props?.id === this.id;
   }
 
   getRadiusScaleByZoom(mapState, fixedRadius) {

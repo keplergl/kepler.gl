@@ -272,6 +272,7 @@ export default class PointLayer extends Layer {
       filterRange: defaultLayerProps.filterRange,
       ...brushingProps
     };
+    const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
       new ScatterplotLayer({
@@ -288,12 +289,12 @@ export default class PointLayer extends Layer {
         extensions
       }),
       // hover layer
-      ...(this.isLayerHovered(objectHovered)
+      ...(hoveredObject
         ? [
             new ScatterplotLayer({
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
-              data: [objectHovered.object],
+              data: [hoveredObject],
               getLineColor: this.config.highlightColor,
               getFillColor: this.config.highlightColor,
               getRadius: data.getRadius,

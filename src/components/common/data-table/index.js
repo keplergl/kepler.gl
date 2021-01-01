@@ -331,7 +331,12 @@ function DataTableFactory(FieldToken) {
 
     componentWillUnmount() {
       window.removeEventListener('resize', this.scaleCellsToWidth);
+      // fix Warning: Can't perform a React state update on an unmounted component
+      this.setState = () => {
+        return;
+      };
     }
+
     root = createRef();
     columns = props => props.columns;
     pinnedColumns = props => props.pinnedColumns;
