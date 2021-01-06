@@ -170,6 +170,7 @@ function makeBabelRule(env, exampleDir) {
       presets: ['@babel/preset-env', '@babel/preset-react'],
       plugins: [
         '@babel/plugin-proposal-class-properties',
+        '@babel/plugin-proposal-optional-chaining',
         '@babel/plugin-proposal-export-namespace-from',
         [
           'module-resolver',

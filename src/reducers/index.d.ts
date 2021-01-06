@@ -49,7 +49,7 @@ export * as combinedUpdaters from './combined-updaters';
 // reducer merges
 export * as visStateMergers from './vis-state-merger';
 
-// export tyes
+// export types
 export {
   AnimationConfig,
   Brush,
@@ -81,7 +81,7 @@ export {
   SplitMap,
   TimeRangeFieldDomain,
   TimeRangeFilter,
-  Tooltip,
+  TooltipInfo,
   VisState
 } from './vis-state-updaters';
 

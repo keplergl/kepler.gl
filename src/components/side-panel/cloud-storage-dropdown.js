@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {PanelHeaderDropdownFactory, Icons} from 'kepler.gl/components';
+import {PanelHeaderDropdownFactory, Icons} from 'components';
 
 const CloudStorageItems = [
   {

@@ -93,13 +93,14 @@ const renderChildren = (child, index) =>
     className: classnames('action-panel-item', child.props.className)
   });
 
+/** @type {typeof import('./action-panel').ActionPanelItem} */
 export const ActionPanelItem = React.memo(
   ({children, color, className, Icon, label, onClick, isSelection, isActive, style}) => {
     const onClickCallback = useCallback(
       event => {
         event.preventDefault();
         event.stopPropagation();
-        onClick();
+        onClick?.();
       },
       [onClick]
     );
@@ -122,7 +123,7 @@ export const ActionPanelItem = React.memo(
         ) : (
           <span className="label">{label}</span>
         )}
-        {children && children.length ? (
+        {children ? (
           <div>
             <div className="label-icon">
               <ArrowRight height="16px" />
@@ -155,6 +156,7 @@ const StyledActionPanel = styled.div`
 `;
 
 // React compound element https://medium.com/@Dane_s/react-js-compound-components-a6e54b5c9992
+/** @type {typeof import('./action-panel').ActionPanel} */
 const ActionPanel = ({children, className, direction = 'column'}) => (
   <StyledActionPanel className={className} direction={direction}>
     {React.Children.map(children, renderChildren)}

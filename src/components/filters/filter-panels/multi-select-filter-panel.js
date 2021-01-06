@@ -25,6 +25,7 @@ import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/f
 MultiSelectFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, MultiSelectFilterFactory];
 
 function MultiSelectFilterPanelFactory(FieldPanelWithFieldSelect, MultiSelectFilter) {
+  /** @type {import('./filter-panel-types').FilterPanelComponent} */
   const MultiSelectFilterPanel = React.memo(
     ({
       idx,

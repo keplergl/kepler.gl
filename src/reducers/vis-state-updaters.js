@@ -559,6 +559,10 @@ export function setFilterUpdater(state, action) {
   const {idx, prop, value, valueIndex = 0} = action;
 
   const oldFilter = state.filters[idx];
+  if (!oldFilter) {
+    Console.error(`filters.${idx} is undefined`);
+    return state;
+  }
   let newFilter = set([prop], value, oldFilter);
   let newState = state;
 
@@ -1907,14 +1911,16 @@ export function sortTableColumnUpdater(state, {dataId, column, mode}) {
   if (!dataset) {
     return state;
   }
-  if (!mode) {
+  let sortMode = mode;
+  if (!sortMode) {
     const currentMode = get(dataset, ['sortColumn', column]);
-    mode = currentMode
+    // @ts-ignore - should be fixable in a TS file
+    sortMode = currentMode
       ? Object.keys(SORT_ORDER).find(m => m !== currentMode)
       : SORT_ORDER.ASCENDING;
   }
 
-  const sorted = sortDatasetByColumn(dataset, column, mode);
+  const sorted = sortDatasetByColumn(dataset, column, sortMode);
   return set(['datasets', dataId], sorted, state);
 }
 

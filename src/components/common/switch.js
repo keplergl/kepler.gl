@@ -31,7 +31,8 @@ const propTypes = {
   onBlur: PropTypes.func,
   onChange: PropTypes.func,
   onFocus: PropTypes.func,
-  value: PropTypes.string
+  value: PropTypes.string,
+  secondary: PropTypes.bool
 };
 
 const Switch = props => {

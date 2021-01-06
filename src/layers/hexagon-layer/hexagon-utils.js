@@ -21,7 +21,7 @@
 import {WebMercatorViewport} from '@deck.gl/core';
 import Console from 'global/console';
 
-export function hexagonToPolygonGeo({object}, properties, radius, mapState) {
+export function hexagonToPolygonGeo(object, properties, radius, mapState) {
   const viewport = new WebMercatorViewport(mapState);
   if (!Array.isArray(object.position)) {
     return null;

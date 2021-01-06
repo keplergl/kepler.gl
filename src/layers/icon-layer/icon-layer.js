@@ -272,6 +272,7 @@ export default class IconLayer extends Layer {
         opts
       )
     ];
+    const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return !this.iconGeometry
       ? []
@@ -288,12 +289,12 @@ export default class IconLayer extends Layer {
             extensions
           }),
 
-          ...(this.isLayerHovered(objectHovered)
+          ...(hoveredObject
             ? [
                 new SvgIconLayer({
                   ...this.getDefaultHoverLayerProps(),
                   ...layerProps,
-                  data: [objectHovered.object],
+                  data: [hoveredObject],
                   getPosition: data.getPosition,
                   getRadius: data.getRadius,
                   getFillColor: this.config.highlightColor,

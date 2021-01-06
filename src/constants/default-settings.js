@@ -145,9 +145,9 @@ export const DIMENSIONS = {
 
 /**
  * Theme name that can be passed to `KeplerGl` `prop.theme`.
- * Available themes are `Theme.light` and `Theme.dark`. Default theme is `Theme.dark`
+ * Available themes are `THEME.light` and `THEME.dark`. Default theme is `THEME.dark`
  * @constant
- * @type {string}
+ * @type {object}
  * @public
  * @example
  * ```js
@@ -287,6 +287,7 @@ export const TRIP_ARC_FIELDS = {
 export const FILTER_TYPES = keyMirror({
   range: null,
   select: null,
+  input: null,
   timeRange: null,
   multiSelect: null,
   polygon: null

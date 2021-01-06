@@ -20,7 +20,7 @@
 
 import {hexToRgb} from './color-utils';
 import uniq from 'lodash.uniq';
-import {TRIP_POINT_FIELDS, SORT_ORDER} from 'constants/default-settings';
+import {ALL_FIELD_TYPES, TRIP_POINT_FIELDS, SORT_ORDER} from 'constants/default-settings';
 import {generateHashId} from './utils';
 import {validateInputData} from 'processors/data-processor';
 import {getGpuFilterProps} from 'utils/gpu-filter-utils';
@@ -84,6 +84,7 @@ export function createNewDataEntry({info, data, metadata}, datasets = {}) {
   }
 
   const allData = validatedData.rows;
+  /** @type {import('../actions').ProtoDataset['info']} */
   const datasetInfo = {
     id: generateHashId(4),
     label: 'new dataset',
@@ -190,7 +191,7 @@ export function sortDatasetByColumn(dataset, column, mode) {
     return dataset;
   }
 
-  const sortBy = SORT_ORDER[mode] || SORT_ORDER.ASCENDING;
+  const sortBy = SORT_ORDER[mode || ''] || SORT_ORDER.ASCENDING;
 
   if (sortBy === SORT_ORDER.UNSORT) {
     return {
@@ -212,4 +213,31 @@ export function sortDatasetByColumn(dataset, column, mode) {
     },
     sortOrder
   };
+}
+
+/**
+ * Choose a field to use as the default color field of a layer.
+ *
+ * Right now this implements a very simple heuristic looking
+ * for a real-type field that is not lat/lon.
+ *
+ * In the future we could consider other things:
+ * Consider integer fields
+ * look for highest dynamic range (using a sample of the data)
+ * Look for particular names to select ("value", "color", etc)
+ * Look for particular names to avoid ("" - the Pandas index column)
+ *
+ * @param dataset
+ */
+export function findDefaultColorField({fields, fieldPairs = []}) {
+  const defaultField = fields.find(
+    f =>
+      f.type === ALL_FIELD_TYPES.real &&
+      // Do not permit lat, lon fields
+      !fieldPairs.find(pair => pair.pair.lat.value === f.name || pair.pair.lng.value === f.name)
+  );
+  if (!defaultField) {
+    return null;
+  }
+  return defaultField;
 }

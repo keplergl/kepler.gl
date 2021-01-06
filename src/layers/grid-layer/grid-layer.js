@@ -60,6 +60,7 @@ export default class GridLayer extends AggregationLayer {
     const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
     const cellSize = visConfig.worldUnitSize * 1000;
+    const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
       new EnhancedGridLayer({
@@ -70,14 +71,14 @@ export default class GridLayer extends AggregationLayer {
       }),
 
       // render an outline of each cell if not extruded
-      ...(this.isLayerHovered(objectHovered) && !visConfig.enable3d
+      ...(hoveredObject && !visConfig.enable3d
         ? [
             new GeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
               wrapLongitude: false,
               data: [
                 pointToPolygonGeo({
-                  object: objectHovered.object,
+                  object: hoveredObject,
                   cellSize,
                   coverage: visConfig.coverage,
                   mapState

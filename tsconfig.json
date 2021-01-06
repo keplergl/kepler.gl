@@ -26,31 +26,11 @@
       "*": ["*"]
     }
   },
-  "paths": {
-    "actions": "src/actions",
-    "actions/*": "src/actions/*",
-    "reducers": "src/reducers",
-    "reducers/*": "src/reducers/*"
-  },
   "include": [
-    "src/actions",
-    "src/cloud-providers",
-    "src/processors",
-    "src/reducers",
-    "src/schemas",
-    "src/utils",
-    "src/components/common/file-uploader",
-    "src/components/common/progress-bar.js",
-    "src/components/modals/load-data-modal.js",
-    "src/components/modal-container.js",
-    "src/components/kepler.gl"
-
-    // TODO: add types
-    // "src/constants",
-    // "src/deckgl-layers",
-    // "src/layers"
-    // "src/localization",
-    // "src/middleware",
-    // "src/tasks"
+    "src"
+  ],
+  "exclude": [
+    "src/deckgl-layers",
+    "src/layers"
   ]
 }

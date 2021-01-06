@@ -83,12 +83,12 @@
     "@deck.gl/layers": "^8.2.0",
     "@deck.gl/mesh-layers": "^8.2.0",
     "@deck.gl/react": "^8.2.0",
-    "@loaders.gl/core": "^2.3.0",
-    "@loaders.gl/csv": "^2.3.0",
-    "@loaders.gl/gltf": "^2.3.0",
-    "@loaders.gl/json": "^2.3.0",
-    "@loaders.gl/loader-utils": "^2.3.0",
-    "@loaders.gl/polyfills": "^2.3.0",
+    "@loaders.gl/core": "^2.3.3",
+    "@loaders.gl/csv": "^2.3.3",
+    "@loaders.gl/gltf": "^2.3.3",
+    "@loaders.gl/json": "^2.3.3",
+    "@loaders.gl/loader-utils": "^2.3.3",
+    "@loaders.gl/polyfills": "^2.3.3",
     "@luma.gl/constants": "^8.2.0",
     "@luma.gl/core": "^8.2.0",
     "@mapbox/geo-viewport": "^0.4.1",
@@ -168,6 +168,7 @@
     "@babel/parser": "^7.3.3",
     "@babel/plugin-proposal-class-properties": "^7.3.0",
     "@babel/plugin-proposal-export-namespace-from": "^7.2.0",
+    "@babel/plugin-proposal-optional-chaining": "^7.2.0",
     "@babel/plugin-transform-modules-commonjs": "^7.2.0",
     "@babel/plugin-transform-runtime": "^7.0.0",
     "@babel/polyfill": "^7.0.0",
@@ -179,7 +180,9 @@
     "@deck.gl/test-utils": "^8.2.0",
     "@luma.gl/test-utils": "^8.2.0",
     "@probe.gl/test-utils": "^3.0.1",
+    "@testing-library/react-hooks": "^3.4.2",
     "@types/d3-array": "^2.0.0",
+    "@types/geojson": "^7946.0.7",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.0.0",
     "babel-plugin-istanbul": "^6.0.0",
@@ -238,12 +241,12 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "resolutions": {
-    "@loaders.gl/core": "2.3.0",
-    "@loaders.gl/csv": "2.3.0",
-    "@loaders.gl/gltf": "2.3.0",
-    "@loaders.gl/json": "2.3.0",
-    "@loaders.gl/loader-utils": "2.3.0",
-    "@loaders.gl/polyfills": "2.3.0",
+    "@loaders.gl/core": "^2.3.3",
+    "@loaders.gl/csv": "^2.3.3",
+    "@loaders.gl/gltf": "^2.3.3",
+    "@loaders.gl/json": "^2.3.3",
+    "@loaders.gl/loader-utils": "^2.3.3",
+    "@loaders.gl/polyfills": "^2.3.3",
     "d3-scale": "^3.2.3",
     "dot-prop": "6.0.0",
     "kind-of": "6.0.3",
@@ -274,5 +277,8 @@
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
     "Giuseppe Macri <gmacri@uber.com>"
-  ]
+  ],
+  "volta": {
+    "node": "10.23.0"
+  }
 }

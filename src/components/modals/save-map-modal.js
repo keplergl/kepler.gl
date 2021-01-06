@@ -71,7 +71,7 @@ const StyledSaveMapModal = styled.div.attrs({
   }
 `;
 
-const nop = () => {};
+const nop = _ => {};
 
 export const MapInfoPanel = ({
   mapInfo = {description: '', title: ''},
@@ -232,7 +232,6 @@ function SaveMapModalFactory() {
   SaveMapModal.defaultProps = {
     characterLimits: MAP_INFO_CHARACTER,
     cloudProviders: [],
-    currentProvider: null,
     providerError: null,
     isProviderLoading: false,
     onSetCloudProvider: nop,

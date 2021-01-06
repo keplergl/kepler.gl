@@ -53,6 +53,7 @@ const StyledTable = styled.table`
   }
 `;
 
+/** @type {import('./layer-hover-info').RowComponent} */
 const Row = ({name, value, deltaValue, url}) => {
   // Set 'url' to 'value' if it looks like a url
   if (!url && value && typeof value === 'string' && value.match(/^http/)) {

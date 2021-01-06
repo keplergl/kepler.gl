@@ -27,7 +27,7 @@ import {BottomWidgetInner} from 'components/common/styled-components';
 import PlaybackControlsFactory from './playback-controls';
 import FloatingTimeDisplayFactory from './floating-time-display';
 import {snapToMarks} from 'utils/data-utils';
-import {DEFAULT_TIME_FORMAT} from 'constants';
+import {DEFAULT_TIME_FORMAT} from 'constants/default-settings';
 
 const SliderWrapper = styled.div`
   display: flex;

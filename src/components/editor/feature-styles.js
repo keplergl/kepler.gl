@@ -70,6 +70,6 @@ export function getStyle({feature, state}) {
 
   return {
     ...style,
-    ...(RENDER_TYPE_STYLES[renderType] || noOp)(state)
+    ...(RENDER_TYPE_STYLES[renderType] || noOp)()
   };
 }

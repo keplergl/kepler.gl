@@ -89,7 +89,7 @@ function createGlobalNotificationTasks({type, message, delayClose = true}) {
   const id = generateHashId();
   const successNote = {
     id,
-    type: DEFAULT_NOTIFICATION_TYPES[type] || DEFAULT_NOTIFICATION_TYPES.success,
+    type: DEFAULT_NOTIFICATION_TYPES[type || ''] || DEFAULT_NOTIFICATION_TYPES.success,
     topic: DEFAULT_NOTIFICATION_TOPICS.global,
     message
   };

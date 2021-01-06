@@ -22,7 +22,7 @@ import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
-import {sortableHandle} from 'react-sortable-hoc';
+import {SortableHandle} from 'react-sortable-hoc';
 import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import {ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from 'components/common/icons';
 
@@ -93,7 +93,7 @@ const StyledDragHandle = styled.div`
   }
 `;
 
-export const DragHandle = sortableHandle(({className, children}) => (
+export const DragHandle = SortableHandle(({className, children}) => (
   <StyledDragHandle className={className}>{children}</StyledDragHandle>
 ));
 

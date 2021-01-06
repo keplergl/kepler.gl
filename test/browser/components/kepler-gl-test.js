@@ -27,8 +27,8 @@ import {Provider} from 'react-redux';
 
 import coreReducer from 'reducers/core';
 import {keplerGlInit} from 'actions/actions';
-import {appInjector} from 'components/container';
 import {
+  appInjector,
   KeplerGlFactory,
   SidePanelFactory,
   MapContainerFactory,
@@ -152,7 +152,6 @@ test('Components -> KeplerGl -> Mount -> Plot', t => {
       }
     }
   };
-
   const store = mockStore(initialStatePlots);
   let wrapper;
 

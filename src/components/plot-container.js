@@ -31,7 +31,8 @@ import {convertToPng} from 'utils/export-utils';
 import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-editor';
 import {getScaleFromImageSize} from 'utils/export-utils';
 import {findMapBounds} from 'utils/data-utils';
-import geoViewport from '@mapbox/geo-viewport';
+import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
+import {GEOCODER_LAYER_ID} from 'constants/default-settings';
 
 const CLASS_FILTER = ['mapboxgl-control-container', 'attrition-link', 'attrition-logo'];
 const DOM_FILTER_FUNC = node => !CLASS_FILTER.includes(node.className);
@@ -160,8 +161,6 @@ export default function PlotContainerFactory(MapContainer) {
         width: imageSize.imageW || 1,
         height: imageSize.imageH || 1
       };
-
-      const bounds = findMapBounds(mapFields.layers);
       const width = size.width / (isSplit ? 2 : 1);
       const height = size.height;
       const scale = this.mapScaleSelector(this.props);
@@ -172,25 +171,21 @@ export default function PlotContainerFactory(MapContainer) {
         zoom: mapState.zoom + (Math.log2(scale) || 0)
       };
 
+      // center and all layer bounds
       if (exportImageSetting.center) {
-        const getViewport = shouldCenter => {
-          if (shouldCenter) {
-            const {zoom} = geoViewport.viewport(bounds, [width, height]);
-            // center being calculated by geo-vieweport.viewport has a complex logic that
-            // projects and then unprojects the coordinates to determine the center
-            // Calculating a simple average instead as that is the expected behavior in most of cases
-            const center = [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2];
-            return {center, zoom};
-          }
+        const renderedLayers = mapFields.layers.filter(
+          (layer, idx) =>
+            layer.id !== GEOCODER_LAYER_ID && layer.shouldRenderLayer(mapFields.layerData[idx])
+        );
+        const bounds = findMapBounds(renderedLayers);
+        const centerAndZoom = getCenterAndZoomFromBounds(bounds, {width, height});
+        if (centerAndZoom) {
+          const zoom = Number.isFinite(centerAndZoom.zoom) ? centerAndZoom.zoom : mapState.zoom;
 
-          return {center: [mapState.longitude, mapState.latitude], zoom: mapState.zoom};
-        };
-
-        const {center, zoom} = getViewport(exportImageSetting.center);
-
-        newMapState.longitude = center[0];
-        newMapState.latitude = center[1];
-        newMapState.zoom = zoom + Number(Math.log2(scale) || 0);
+          newMapState.longitude = centerAndZoom.center[0];
+          newMapState.latitude = centerAndZoom.center[1];
+          newMapState.zoom = zoom + Number(Math.log2(scale) || 0);
+        }
       }
 
       const mapProps = {

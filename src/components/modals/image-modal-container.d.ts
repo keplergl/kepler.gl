@@ -1,12 +1,12 @@
 import React from 'react';
-import {setExportImageSetting, cleanupExportImage} from '../../actions';
+import {SetExportImageSettingUpdaterAction} from '../../actions';
 import {Provider} from '../../cloud-providers';
 
 export type ImageModalContainerProps = {
   cloudProviders?: Provider[];
   currentProvider?: string;
-  onUpdateImageSetting: typeof setExportImageSetting;
-  cleanupExportImage: typeof cleanupExportImage;
+  onUpdateImageSetting: (newSetting: SetExportImageSettingUpdaterAction['payload']) => void;
+  cleanupExportImage: () => void;
 };
 
 export const ImageModalContainer: React.FunctionComponent<ImageModalContainerProps>;

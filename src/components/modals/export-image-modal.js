@@ -29,8 +29,6 @@ import Switch from 'components/common/switch';
 import {injectIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';
 
-/** @typedef {import('./export-image-modal').ExportImageModalProps} ExportImageModalProps */
-
 const ImageOptionList = styled.div`
   display: flex;
   flex-direction: column;
@@ -56,9 +54,7 @@ const ImageOptionList = styled.div`
 `;
 
 const ExportImageModalFactory = () => {
-  /**
-   * @type {React.FunctionComponent<ExportImageModalProps>}
-   */
+  /** @type {typeof import('./export-image-modal').ExportImageModal} */
   const ExportImageModal = ({
     mapW,
     mapH,

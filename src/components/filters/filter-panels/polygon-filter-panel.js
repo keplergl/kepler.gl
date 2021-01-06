@@ -36,6 +36,7 @@ PolygonFilterPanelFactory.deps = [
 ];
 
 function PolygonFilterPanelFactory(FilterPanelHeader, PolygonFilter, PanelHeaderAction) {
+  /** @type {import('./filter-panel-types').FilterPanelComponent} */
   const PolygonFilterPanel = React.memo(
     ({
       idx,

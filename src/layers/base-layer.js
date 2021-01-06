@@ -374,16 +374,16 @@ export default class Layer {
    * Assign a field pair to column config, return column config
    * @param key - Column Key
    * @param pair - field Pair
-   * @returns {{}} - Column config
+   * @returns {object} - Column config
    */
   assignColumnPairs(key, pair) {
-    if (!this.columnPairs || !this.columnPairs[key]) {
+    if (!this.columnPairs || !this.columnPairs?.[key]) {
       // should not end in this state
       return this.config.columns;
     }
 
-    const {pair: partnerKey, fieldPairKey} = this.columnPairs[key];
-    const {fieldPairKey: partnerFieldPairKey} = this.columnPairs[partnerKey];
+    const {pair: partnerKey, fieldPairKey} = this.columnPairs?.[key];
+    const {fieldPairKey: partnerFieldPairKey} = this.columnPairs?.[partnerKey];
 
     return {
       ...this.config.columns,
@@ -394,9 +394,9 @@ export default class Layer {
 
   /**
    * Calculate a radius zoom multiplier to render points, so they are visible in all zoom level
-   * @param mapState
-   * @param mapState.zoom - actual zoom
-   * @param mapState.zoomOffset - zoomOffset when render in the plot container for export image
+   * @param {object} mapState
+   * @param {number} mapState.zoom - actual zoom
+   * @param {number | void} mapState.zoomOffset - zoomOffset when render in the plot container for export image
    * @returns {number}
    */
   getZoomFactor({zoom, zoomOffset = 0}) {
@@ -405,9 +405,9 @@ export default class Layer {
 
   /**
    * Calculate a elevation zoom multiplier to render points, so they are visible in all zoom level
-   * @param mapState
-   * @param mapState.zoom - actual zoom
-   * @param mapState.zoomOffset - zoomOffset when render in the plot container for export image
+   * @param {object} mapState
+   * @param {number} mapState.zoom - actual zoom
+   * @param {number | void} mapState.zoomOffset - zoomOffset when render in the plot container for export image
    * @returns {number}
    */
   getElevationZoomFactor({zoom, zoomOffset = 0}) {
@@ -450,6 +450,7 @@ export default class Layer {
     Object.values(this.visualChannels).forEach(v => {
       if (
         configToCopy.visConfig[v.range] &&
+        this.visConfigSettings[v.range] &&
         visConfigSettings[v.range].group !== this.visConfigSettings[v.range].group
       ) {
         notToCopy.push(v.range);
@@ -676,8 +677,6 @@ export default class Layer {
 
   /**
    * Check whether layer has all columns
-   *
-   * @param {object} layer
    * @returns {boolean} yes or no
    */
   hasAllColumns() {
@@ -693,7 +692,6 @@ export default class Layer {
   /**
    * Check whether layer has data
    *
-   * @param {object} layer
    * @param {Array | Object} layerData
    * @returns {boolean} yes or no
    */
@@ -701,7 +699,6 @@ export default class Layer {
     if (!layerData) {
       return false;
     }
-
     return Boolean(layerData.data && layerData.data.length);
   }
 
@@ -898,7 +895,7 @@ export default class Layer {
    * helper function to update one layer domain when state.data changed
    * if state.data change is due ot update filter, newFiler will be passed
    * called by updateAllLayerDomainData
-   * @param {Object} dataset
+   * @param {Object} datasets
    * @param {Object} newFilter
    * @returns {object} layer
    */
@@ -1058,10 +1055,12 @@ export default class Layer {
     }
   }
 
+  hasHoveredObject(objectInfo) {
+    return this.isLayerHovered(objectInfo) && objectInfo.object ? objectInfo.object : null;
+  }
+
   isLayerHovered(objectInfo) {
-    return (
-      objectInfo && objectInfo.layer && objectInfo.picked && objectInfo.layer.props.id === this.id
-    );
+    return objectInfo?.picked && objectInfo?.layer?.props?.id === this.id;
   }
 
   getRadiusScaleByZoom(mapState, fixedRadius) {
@@ -1130,7 +1129,7 @@ export default class Layer {
         accu.push(
           new TextLayer({
             ...sharedProps,
-            id: `${this.id}-label-${textLabel[i].field.name}`,
+            id: `${this.id}-label-${textLabel[i].field?.name}`,
             data: data.data,
             getText: d.getText,
             getPosition,
@@ -1149,7 +1148,7 @@ export default class Layer {
             getFilterValue: data.getFilterValue,
             updateTriggers: {
               ...updateTriggers,
-              getText: textLabel[i].field.name,
+              getText: textLabel[i].field?.name,
               getPixelOffset: {
                 ...updateTriggers.getRadius,
                 mapState,
@@ -1165,5 +1164,19 @@ export default class Layer {
       }
       return accu;
     }, []);
+  }
+
+  calculateDataAttribute(dataset, getPosition) {
+    // implemented in subclasses
+    return [];
+  }
+
+  updateLayerMeta(allData, getPosition) {
+    // implemented in subclasses
+  }
+
+  getPositionAccessor() {
+    // implemented in subclasses
+    return () => null;
   }
 }
