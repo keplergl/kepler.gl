@@ -84,26 +84,15 @@ export const toggleMapControl = createAction(ActionTypes.TOGGLE_MAP_CONTROL, (pa
 export const openDeleteModal = createAction(ActionTypes.OPEN_DELETE_MODAL, datasetId => datasetId);
 
 /**
- * Add a notification to be displayed
+ * Add a notification to be displayed.
+ * Existing notification will be updated in case of matching id.
  * @memberof uiStateActions
- * @param notification - The `notification` object to be added
+ * @param notification - The `notification` object to be added or updated
  * @type {typeof import('./ui-state-actions').addNotification}
  * @public
  */
 export const addNotification = createAction(
   ActionTypes.ADD_NOTIFICATION,
-  notification => notification
-);
-
-/**
- * Updates a notification with identical id or adds a new notification to be displayed
- * @memberof uiStateActions
- * @param notification - The `notification` object to be updated or added
- * @type {typeof import('./ui-state-actions').setNotification}
- * @public
- */
-export const setNotification = createAction(
-  ActionTypes.SET_NOTIFICATION,
   notification => notification
 );
 

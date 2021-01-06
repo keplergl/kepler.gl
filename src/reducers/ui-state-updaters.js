@@ -596,38 +596,25 @@ export const setExportMapHTMLModeUpdater = (state, {payload: mode}) => ({
 });
 
 /**
- * Add a notification to be displayed
- * @memberof uiStateUpdaters
- * @param state `uiState`
- * @param action
- * @param action.payload
- * @returns nextState
- * @type {typeof import('./ui-state-updaters').addNotificationUpdater}
- * @public
- */
-export const addNotificationUpdater = (state, {payload}) => ({
-  ...state,
-  notifications: [...(state.notifications || []), createNotification(payload)]
-});
-
-/**
- * Updates a notification with identical id or adds a new notification
+ * Adds a new notification.
+ * Updates a notification in case of matching ids.
  * @memberof uiStateUpdaters
  * @param state `uiState`
  * @param action
  * @param action.payload Params of a notification
  * @returns nextState
- * @type {typeof import('./ui-state-updaters').setNotificationUpdater}
+ * @type {typeof import('./ui-state-updaters').addNotificationUpdater}
  * @public
  */
-export const setNotificationUpdater = (state, {payload}) => {
+export const addNotificationUpdater = (state, {payload}) => {
   let notifications;
-  const notificationToUpdate = state.notifications.filter(n => n.id === payload.id);
-  if (notificationToUpdate.length) {
-    notifications = [...state.notifications];
 
-    const ind = state.notifications.indexOf(notificationToUpdate[0]);
-    notifications[ind] = createNotification(payload);
+  const payloadId = payload?.id;
+  const notificationToUpdate = payloadId ? state.notifications.find(n => n.id === payloadId) : null;
+  if (notificationToUpdate) {
+    notifications = state.notifications.map(n =>
+      n.id === payloadId ? createNotification(payload) : n
+    );
   } else {
     notifications = [...(state.notifications || []), createNotification(payload)];
   }

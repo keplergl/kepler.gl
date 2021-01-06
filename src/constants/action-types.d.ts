@@ -23,7 +23,7 @@ export type ActionType = {
   REMOVE_DATASET: string;
   REORDER_LAYER: string;
   SET_FILTER: string;
-  SET_FILTER_ANIMATION_TIME:  string;
+  SET_FILTER_ANIMATION_TIME: string;
   SET_FILTER_ANIMATION_WINDOW: string;
   SHOW_DATASET_TABLE: string;
   UPDATE_LAYER_BLENDING: string;
@@ -84,7 +84,6 @@ export type ActionType = {
   OPEN_DELETE_MODAL: string;
   TOGGLE_MAP_CONTROL: string;
   ADD_NOTIFICATION: string;
-  SET_NOTIFICATION: string;
   REMOVE_NOTIFICATION: string;
   SET_LOCALE: string;
 

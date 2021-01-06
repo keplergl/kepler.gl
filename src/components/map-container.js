@@ -256,7 +256,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       setLayerBlending(gl, this.props.layerBlending);
     };
 
-    _onError = (error, layer) => {
+    _onDeckError = (error, layer) => {
       const errorMessage = `An error in deck.gl: ${error.message} in ${layer.id}`;
       const notificationId = `${layer.id}-${error.message}`;
 
@@ -269,7 +269,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         // Create new error notification or update existing one with same id.
         // Update is required to preserve the order of notifications as they probably are going to "jump" based on order of errors.
         const {uiStateActions} = this.props;
-        uiStateActions.setNotification(
+        uiStateActions.addNotification(
           errorNotification({
             message: errorMessage,
             id: notificationId
@@ -426,7 +426,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           onBeforeRender={this._onBeforeRender}
           onHover={visStateActions.onLayerHover}
           onClick={visStateActions.onLayerClick}
-          onError={this._onError}
+          onError={this._onDeckError}
           ref={comp => {
             if (comp && comp.deck && !this._deck) {
               this._deck = comp.deck;

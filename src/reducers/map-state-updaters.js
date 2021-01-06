@@ -113,9 +113,9 @@ export const updateMapUpdater = (state, action) => ({
 export const fitBoundsUpdater = (state, action) => {
   const bounds = validateBounds(action.payload);
   if (!bounds) {
-    Console.warn('invalid map bounds provided')
+    Console.warn('invalid map bounds provided');
     return state;
-  }  
+  }
   const {zoom} = geoViewport.viewport(bounds, [state.width, state.height]);
   // center being calculated by geo-vieweport.viewport has a complex logic that
   // projects and then unprojects the coordinates to determine the center

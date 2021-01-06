@@ -122,10 +122,6 @@ export function addNotificationUpdater(
   state: UiState,
   action: UiStateActions.AddNotificationUpdaterAction
 ): UiState;
-export function setNotificationUpdater(
-  state: UiState,
-  action: UiStateActions.SetNotificationUpdaterAction
-): UiState;
 export function removeNotificationUpdater(
   state: UiState,
   action: UiStateActions.RemoveNotificationUpdaterAction
@@ -178,9 +174,7 @@ export function setExportMapHTMLModeUpdater(
   state: UiState,
   action: UiStateActions.SetExportHTMLMapModeUpdaterAction
 ): UiState;
-export function showDatasetTableUpdater(
-  state: UiState
-)
+export function showDatasetTableUpdater(state: UiState);
 export function setLocaleUpdater(
   state: UiState,
   action: UiStateActions.SetLocaleUpdaterAction
@@ -190,7 +184,10 @@ export function loadFilesUpdater(state: UiState, action: LoadFilesUpdaterAction)
 export function loadFilesErrUpdater(state: UiState, action: LoadFilesErrUpdaterAction): UiState;
 export function loadFilesSuccessUpdater(state: UiState): UiState;
 export function toggleSplitMapUpdater(state: UiState, action: ToggleSplitMapUpdaterAction): UiState;
-export function initUiStateUpdater(state: UiState, action: {
-  type?: ActionTypes.INIT;
-  payload: KeplerGlInitPayload;
-}): UiState;
+export function initUiStateUpdater(
+  state: UiState,
+  action: {
+    type?: ActionTypes.INIT;
+    payload: KeplerGlInitPayload;
+  }
+): UiState;

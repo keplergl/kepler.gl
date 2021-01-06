@@ -31,7 +31,6 @@ import {
   setExportFiltered,
   startExportingImage,
   addNotification,
-  setNotification,
   removeNotification
 } from 'actions/ui-state-actions';
 import {loadFiles, loadFilesErr} from 'actions/vis-state-actions';
@@ -231,79 +230,52 @@ test('#uiStateReducer -> SET_EXPORT_FILTERED', t => {
 });
 
 test('#uiStateReducer -> ADD_NOTIFICATION', t => {
-  const newState = reducer(
-    INITIAL_UI_STATE,
-    addNotification({
-      type: DEFAULT_NOTIFICATION_TYPES.error,
-      message: 'TEST',
-      topic: DEFAULT_NOTIFICATION_TOPICS.global,
-      id: 'test-1'
-    })
+  const sharedNotificationId = 'test-notification-id';
+
+  const notification1 = {
+    type: DEFAULT_NOTIFICATION_TYPES.error,
+    message: 'TEST',
+    topic: DEFAULT_NOTIFICATION_TOPICS.global,
+    id: 'test-1'
+  };
+  const state0 = reducer(INITIAL_UI_STATE, addNotification(notification1));
+  t.equal(state0.notifications.length, 1, 'AddNotification should add one new notification');
+  t.deepEqual(
+    state0.notifications[0],
+    notification1,
+    'AddNotification should have propagated data correctly'
   );
 
-  t.equal(newState.notifications.length, 1, 'AddNotification should add one new notification');
+  const notification2 = {
+    type: DEFAULT_NOTIFICATION_TYPES.info,
+    message: 'TEST',
+    topic: DEFAULT_NOTIFICATION_TOPICS.file,
+    id: sharedNotificationId
+  };
+  const state1 = reducer(state0, addNotification(notification2));
+  t.equal(state1.notifications.length, 2, 'AddNotification should add second notification');
   t.deepEqual(
-    newState.notifications[0],
-    {
-      type: DEFAULT_NOTIFICATION_TYPES.error,
-      message: 'TEST',
-      topic: DEFAULT_NOTIFICATION_TOPICS.global,
-      id: 'test-1'
-    },
+    state0.notifications[1],
+    notification2,
     'AddNotification should have propagated data correctly '
   );
 
-  t.end();
-});
-
-test('#uiStateReducer -> SET_NOTIFICATION', t => {
-  const sharedNotificationId = 'test-set-0';
-
-  const state0 = reducer(
-    INITIAL_UI_STATE,
-    setNotification({
-      type: DEFAULT_NOTIFICATION_TYPES.error,
-      message: 'TEST',
-      topic: DEFAULT_NOTIFICATION_TOPICS.global,
-      id: sharedNotificationId
-    })
-  );
-
-  t.equal(state0.notifications.length, 1, 'setNotification should add one new notification');
-  t.deepEqual(
-    state0.notifications[0],
-    {
-      type: DEFAULT_NOTIFICATION_TYPES.error,
-      message: 'TEST',
-      topic: DEFAULT_NOTIFICATION_TOPICS.global,
-      id: sharedNotificationId
-    },
-    'setNotification should have propagated data correctly '
-  );
-
-  const state1 = reducer(
-    state0,
-    setNotification({
-      type: DEFAULT_NOTIFICATION_TYPES.info,
-      message: 'TEST-updated',
-      topic: DEFAULT_NOTIFICATION_TOPICS.file,
-      id: sharedNotificationId
-    })
-  );
+  const updatedNotification = {
+    type: DEFAULT_NOTIFICATION_TYPES.error,
+    message: 'TEST-updated-message',
+    topic: DEFAULT_NOTIFICATION_TOPICS.global,
+    id: sharedNotificationId
+  };
+  const state2 = reducer(state1, addNotification(updatedNotification));
   t.equal(
-    state1.notifications.length,
-    1,
-    "setNotification shouldn't add new notification with same id"
+    state2.notifications.length,
+    2,
+    "addNotification shouldn't add new notification with same id"
   );
   t.deepEqual(
-    state1.notifications[0],
-    {
-      type: DEFAULT_NOTIFICATION_TYPES.info,
-      message: 'TEST-updated',
-      topic: DEFAULT_NOTIFICATION_TOPICS.file,
-      id: sharedNotificationId
-    },
-    'setNotification updated existing notification'
+    state2.notifications[1],
+    updatedNotification,
+    'AddNotification should have propagated data correctly '
   );
 
   t.end();
