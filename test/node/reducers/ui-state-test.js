@@ -255,7 +255,7 @@ test('#uiStateReducer -> ADD_NOTIFICATION', t => {
   const state1 = reducer(state0, addNotification(notification2));
   t.equal(state1.notifications.length, 2, 'AddNotification should add second notification');
   t.deepEqual(
-    state0.notifications[1],
+    state1.notifications[1],
     notification2,
     'AddNotification should have propagated data correctly '
   );
