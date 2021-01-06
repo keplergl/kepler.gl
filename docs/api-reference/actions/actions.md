@@ -961,7 +961,8 @@ It also manges which settings are selected during image and map export
 
 ### addNotification
 
-Add a notification to be displayed
+Add a notification to be displayed.
+Existing notification is going to be updated in case of matching ids.
 
 -   **ActionTypes**: [`ActionTypes.ADD_NOTIFICATION`][12]
 -   **Updaters**: [`uiStateUpdaters.addNotificationUpdater`][220]

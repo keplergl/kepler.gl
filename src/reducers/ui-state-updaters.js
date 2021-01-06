@@ -596,19 +596,31 @@ export const setExportMapHTMLModeUpdater = (state, {payload: mode}) => ({
 });
 
 /**
- * Add a notification to be displayed
+ * Adds a new notification.
+ * Updates a notification in case of matching ids.
  * @memberof uiStateUpdaters
  * @param state `uiState`
  * @param action
- * @param action.payload
+ * @param action.payload Params of a notification
  * @returns nextState
  * @type {typeof import('./ui-state-updaters').addNotificationUpdater}
  * @public
  */
-export const addNotificationUpdater = (state, {payload}) => ({
-  ...state,
-  notifications: [...(state.notifications || []), createNotification(payload)]
-});
+export const addNotificationUpdater = (state, {payload}) => {
+  let notifications;
+
+  const payloadId = payload?.id;
+  const notificationToUpdate = payloadId ? state.notifications.find(n => n.id === payloadId) : null;
+  if (notificationToUpdate) {
+    notifications = state.notifications.map(n =>
+      n.id === payloadId ? createNotification(payload) : n
+    );
+  } else {
+    notifications = [...(state.notifications || []), createNotification(payload)];
+  }
+
+  return {...state, notifications};
+};
 
 /**
  * Remove a notification

@@ -25,6 +25,7 @@ import MapboxGLMap from 'react-map-gl';
 import DeckGL from '@deck.gl/react';
 import {createSelector} from 'reselect';
 import WebMercatorViewport from 'viewport-mercator-project';
+import {errorNotification} from 'utils/notifications-utils';
 
 // components
 import MapPopoverFactory from 'components/map/map-popover';
@@ -42,7 +43,11 @@ import {getLayerHoverProp, renderDeckGlLayer} from 'utils/layer-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
-import {FILTER_TYPES, GEOCODER_LAYER_ID} from 'constants/default-settings';
+import {
+  FILTER_TYPES,
+  GEOCODER_LAYER_ID,
+  THROTTLE_NOTIFICATION_TIME
+} from 'constants/default-settings';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE = {
@@ -251,6 +256,28 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       setLayerBlending(gl, this.props.layerBlending);
     };
 
+    _onDeckError = (error, layer) => {
+      const errorMessage = `An error in deck.gl: ${error.message} in ${layer.id}`;
+      const notificationId = `${layer.id}-${error.message}`;
+
+      // Throttle error notifications, as React doesn't like too many state changes from here.
+      this._deckGLErrorsElapsed = this._deckGLErrorsElapsed || {};
+      const lastShown = this._deckGLErrorsElapsed[notificationId];
+      if (!lastShown || lastShown < Date.now() - THROTTLE_NOTIFICATION_TIME) {
+        this._deckGLErrorsElapsed[notificationId] = Date.now();
+
+        // Create new error notification or update existing one with same id.
+        // Update is required to preserve the order of notifications as they probably are going to "jump" based on order of errors.
+        const {uiStateActions} = this.props;
+        uiStateActions.addNotification(
+          errorNotification({
+            message: errorMessage,
+            id: notificationId
+          })
+        );
+      }
+    };
+
     /* component render functions */
 
     /* eslint-disable complexity */
@@ -399,6 +426,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           onBeforeRender={this._onBeforeRender}
           onHover={visStateActions.onLayerHover}
           onClick={visStateActions.onLayerClick}
+          onError={this._onDeckError}
           ref={comp => {
             if (comp && comp.deck && !this._deck) {
               this._deck = comp.deck;
