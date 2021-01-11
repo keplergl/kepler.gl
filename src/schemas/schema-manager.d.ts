@@ -25,6 +25,8 @@ export type SavedFilter = {
     name: string;
     type: string;
   } | null;
+  speed: Filter['speed'];
+  layerId: Filter['layerId'];
 };
 
 export type ParsedFilter = Partial<SavedFilter>;
