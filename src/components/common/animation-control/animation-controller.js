@@ -77,9 +77,10 @@ function AnimationControllerFactory() {
     _timer = null;
 
     _startOrPauseAnimation() {
-      if (!this._timer && this.props.isAnimating) {
+      const {isAnimating, speed} = this.props;
+      if (!this._timer && isAnimating && speed > 0) {
         this._startAnimation();
-      } else if (this._timer && !this.props.isAnimating) {
+      } else if (this._timer && !isAnimating) {
         this._pauseAnimation();
       }
     }
@@ -130,31 +131,37 @@ function AnimationControllerFactory() {
     };
 
     _startAnimation = () => {
-      this._pauseAnimation();
-      if (this.props.animationWindow === ANIMATION_WINDOW.interval) {
-        // animate by interval
-        // 30*600
-        const {steps, speed} = this.props;
-        if (!Array.isArray(steps) || !steps.length) {
-          Console.warn('animation steps should be an array');
-          return;
+      const {speed} = this.props;
+      this._clearTimer();
+      if (speed > 0) {
+        if (this.props.animationWindow === ANIMATION_WINDOW.interval) {
+          // animate by interval
+          // 30*600
+          const {steps} = this.props;
+          if (!Array.isArray(steps) || !steps.length) {
+            Console.warn('animation steps should be an array');
+            return;
+          }
+          // when speed = 1, animation should loop through 600 frames at 60 FPS
+          // calculate delay based on # steps
+          const delay = (BASE_SPEED * (1000 / FPS)) / steps.length / (speed || 1);
+          this._animate(delay);
+        } else {
+          this._timer = requestAnimationFrame(this._nextFrame);
         }
-        // when speed = 1, animation should loop through 600 frames at 60 FPS
-        // calculate delay based on # steps
-        const delay = (BASE_SPEED * (1000 / FPS)) / steps.length / (speed || 1);
-        this._animate(delay);
-      } else {
-        this._timer = requestAnimationFrame(this._nextFrame);
       }
-
       this.setState({isAnimating: true});
     };
 
-    _pauseAnimation = () => {
+    _clearTimer = () => {
       if (this._timer) {
         cancelAnimationFrame(this._timer);
         this._timer = null;
       }
+    };
+
+    _pauseAnimation = () => {
+      this._clearTimer();
       this.setState({isAnimating: false});
     };
 
