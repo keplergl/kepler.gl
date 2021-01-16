@@ -313,7 +313,7 @@ class ItemSelector extends Component {
                     light={this.props.inputTheme === 'light'}
                   />
                 ) : (
-                  <FormattedMessage id={this.props.placeholder} />
+                  <FormattedMessage id={this.props.placeholder || 'Select a Value'} />
                 )}
               </DropdownSelectValue>
               {this.props.erasable && hasValue ? (
