@@ -1624,7 +1624,13 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
           },
           suffix: ['lat', 'lng']
         }
-      ]
+      ],
+      changedFilters: {
+        dynamicDomain: {'38chejr': 'added'},
+        fixedDomain: null,
+        cpu: null,
+        gpu: {'38chejr': 'added'}
+      }
     }
   };
 
@@ -1904,7 +1910,8 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
         },
         suffix: ['lat', 'lng']
       }
-    ]
+    ],
+    changedFilters: {dynamicDomain: null, fixedDomain: null, cpu: null, gpu: null}
   };
 
   cmpDataset(t, expectedDataset, stateWithFilterName.datasets.smoothie);
@@ -1924,7 +1931,6 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
   cmpFilters(t, expectedFilterWValue, stateWithFilterValue.filters[0]);
 
   const updatedFilterWValue = stateWithFilterValue.filters[0];
-
   const expectedFilteredDataset = {
     ...expectedDataset,
     filterRecord: {
@@ -1935,7 +1941,13 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     },
     allData,
     filteredIndex: [17, 18, 19, 20, 21, 22],
-    filteredIndexForDomain: [17, 18, 19, 20, 21, 22]
+    filteredIndexForDomain: [17, 18, 19, 20, 21, 22],
+    changedFilters: {
+      dynamicDomain: {[updatedFilterWValue.id]: 'added'},
+      fixedDomain: null,
+      cpu: {[updatedFilterWValue.id]: 'added'},
+      gpu: null
+    }
   };
 
   cmpDataset(t, expectedFilteredDataset, stateWithFilterValue.datasets.smoothie);
@@ -2101,7 +2113,7 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
 
   // set filter value
   const stateWithFilterValue = reducer(stateWithFilterName, setFilter(0, 'value', [8, 20]));
-
+  const filterId = stateWithFilterName.filters[0].id;
   const expectedFilterWValue = {
     ...expectedFilterWName,
     value: [8, 20]
@@ -2150,7 +2162,13 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
     },
     filteredIndex: geojsonData.features.map((_, i) => i),
     filteredIndexForDomain: [0, 2],
-    allIndexes: geojsonData.features.map((_, i) => i)
+    allIndexes: geojsonData.features.map((_, i) => i),
+    changedFilters: {
+      dynamicDomain: {[filterId]: 'value_changed'},
+      fixedDomain: null,
+      cpu: null,
+      gpu: {[filterId]: 'value_changed'}
+    }
   };
 
   const actualTripField = stateWithFilterValue.datasets.milkshake.fields[4];
@@ -2243,11 +2261,13 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     }
   ]);
 
+  const filterId = stateWidthTsFilter.filters[0].id;
+
   const expectedFilterTs = {
     dataId: ['smoothie'],
     freeze: true,
     fixedDomain: true,
-    id: 'dont test me',
+    id: filterId,
     name: ['gps_data.utc_timestamp'],
     type: 'timeRange',
     fieldIdx: [0],
@@ -2345,7 +2365,13 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
     },
     // copy everything
     filteredIndex: datasetSmoothie.allData.map((d, i) => i),
-    filteredIndexForDomain: datasetSmoothie.allData.map((d, i) => i)
+    filteredIndexForDomain: datasetSmoothie.allData.map((d, i) => i),
+    changedFilters: {
+      dynamicDomain: null,
+      fixedDomain: {[filterId]: 'value_changed'},
+      cpu: null,
+      gpu: {[filterId]: 'value_changed'}
+    }
   };
 
   // check filter by ts
@@ -2367,7 +2393,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
       payload: [1, 'value', ['2016-09-24', '2016-10-10']]
     }
   ]);
-
+  const filterId1 = stateWidthTsAndNameFilter.filters[1].id;
   const expectedFilteredDataset = {
     ...stateWidthTsFilter.datasets.smoothie,
     fields: stateWidthTsFilter.datasets.smoothie.fields.map(f =>
@@ -2409,7 +2435,13 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
       gpu: [stateWidthTsAndNameFilter.filters[0]]
     },
     filteredIndex: [7, 8, 9, 10, 11, 12, 17, 18, 19, 20, 21, 22],
-    filteredIndexForDomain: [7, 8, 9, 10, 11, 12, 17, 18, 19, 20, 21, 22]
+    filteredIndexForDomain: [7, 8, 9, 10, 11, 12, 17, 18, 19, 20, 21, 22],
+    changedFilters: {
+      dynamicDomain: {[filterId1]: 'added'},
+      fixedDomain: null,
+      cpu: {[filterId1]: 'added'},
+      gpu: null
+    }
   };
 
   cmpDataset(t, expectedFilteredDataset, stateWidthTsAndNameFilter.datasets.smoothie);

@@ -455,5 +455,11 @@ export const expectedMergedDataset = {
     fixedDomain: [],
     cpu: [],
     gpu: [mergedFilters[0]]
+  },
+  changedFilters: {
+    dynamicDomain: {byjasfp0u: 'added'},
+    fixedDomain: null,
+    cpu: null,
+    gpu: {byjasfp0u: 'added'}
   }
 };
