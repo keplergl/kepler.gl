@@ -1,11 +1,6 @@
 import {RGBColor, RGBAColor} from '../reducers/types';
 import {Field, Datasets, KeplerTable} from '../reducers/vis-state-updaters';
-import {LayerTextLabel, ColorRange, ColorUI} from './layer-factory';
-
-export type LayerVisConfig = {
-  opacity: number;
-  colorRange: ColorRange;
-};
+import {LayerTextLabel, ColorRange, ColorUI, LayerVisConfig} from './layer-factory';
 
 export type LayerColumns = {
   [key: string]: {value: string | null; fieldIdx: number; optional?: boolean};
@@ -83,6 +78,9 @@ export class Layer {
   shouldCalculateLayerData(props: string[]): boolean;
   formatLayerData(datasets: Datasets, oldLayerData?: any);
   updateLayerColorUI(prop: string, newConfig: Partial<ColorUI>): Layer;
+  isValidToSave(): boolean;
+  validateVisualChannel(channel: string);
+  getVisualChannelDescription(key: string): {label: string, measure: string};
 
   static findDefaultLayerProps(dataset: KeplerTable, foundLayers?: any[]);
   // static findDefaultColumnField(defaultFields, allFields)
@@ -104,3 +102,5 @@ export type LayerClassesType = {
   s2: Layer;
 };
 export const LayerClasses: LayerClassesType;
+
+export type OVERLAY_TYPE = {[key: string]: string}

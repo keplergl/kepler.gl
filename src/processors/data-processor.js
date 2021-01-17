@@ -140,6 +140,7 @@ export function processCsvData(rawData, header) {
   // here we get a list of none null values to run analyze on
   const sample = getSampleForTypeAnalyze({fields: headerRow, allData: rows});
   const fields = getFieldsFromData(sample, headerRow);
+  // console.log(JSON.stringify(fields, null, 2));
   const parsedRows = parseRowsByFields(rows, fields);
 
   return {fields, rows: parsedRows};
@@ -308,10 +309,12 @@ export function getFieldsFromData(data, fieldOrder) {
       format,
       fieldIdx: index,
       type: analyzerTypeToFieldType(type),
-      analyzerType: type
+      analyzerType: type,
+      valueAccessor: values => values[index]
     };
   });
 
+  // @ts-ignore
   return result;
 }
 

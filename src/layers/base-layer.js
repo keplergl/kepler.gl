@@ -48,20 +48,8 @@ import {
 
 import {generateHashId, isPlainObject} from 'utils/utils';
 
-import {
-  getSampleData,
-  getLatLngBounds,
-  maybeToDate,
-  getSortingFunction,
-  notNullorUndefined
-} from 'utils/data-utils';
+import {getSampleData, getLatLngBounds, notNullorUndefined} from 'utils/data-utils';
 
-// import {
-//   getQuantileDomain,
-//   getOrdinalDomain,
-//   getLogDomain,
-//   getLinearDomain
-// } from 'utils/data-scale-utils';
 import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
 /** @typedef {import('./index').Layer} LayerClass} */
@@ -106,6 +94,7 @@ class Layer {
     // visConfigSettings
     this.visConfigSettings = {};
 
+    // @ts-ignore
     this.config = this.getDefaultLayerConfig({
       columns: this.getLayerColumns(),
       ...props
@@ -262,7 +251,7 @@ class Layer {
     // combinations, e. g. if column a has 2 matched, column b has 3 matched
     // 6 possible column pairs will be returned
     const allKeys = Object.keys(requiredColumns);
-    const pointers = allKeys.map((k, i) => (i === allKeys.length - 1 ? -1 : 0));
+    const pointers = allKeys.map((k, i) => ((i === allKeys.length - 1 ? -1 : 0)));
     const countPerKey = allKeys.map(k => requiredColumns[k].length);
     const pairs = [];
 
@@ -685,10 +674,10 @@ class Layer {
   hasAllColumns() {
     const {columns} = this.config;
     return (
-      columns &&
+      (columns &&
       Object.values(columns).every(v => {
         return Boolean(v.optional || (v.value && v.fieldIdx > -1));
-      })
+      }))
     );
   }
 
@@ -711,11 +700,11 @@ class Layer {
 
   shouldRenderLayer(data) {
     return (
-      this.type &&
+      (this.type &&
       this.config.isVisible &&
       this.hasAllColumns() &&
       this.hasLayerData(data) &&
-      typeof this.renderLayer === 'function'
+      typeof this.renderLayer === 'function')
     );
   }
 
@@ -872,6 +861,9 @@ class Layer {
   }
 
   updateData(datasets, oldLayerData) {
+    if (!this.config.dataId) {
+      return {};
+    }
     const layerDataset = datasets[this.config.dataId];
     const {allData} = datasets[this.config.dataId];
 
@@ -923,7 +915,7 @@ class Layer {
   }
 
   getDataset(datasets) {
-    return datasets[this.config.dataId];
+    return this.config.dataId ? datasets[this.config.dataId] : null;
   }
 
   /**
@@ -995,8 +987,25 @@ class Layer {
     this.updateLayerConfig({[visualChannel.domain]: updatedDomain});
   }
 
+  getVisualChannelUpdateTriggers() {
+    const updateTriggers = {};
+    Object.values(this.visualChannels).forEach(visualChannel => {
+      // field range scale domain
+      const {accessor, field, scale, domain, range, defaultValue, fixed} = visualChannel;
+
+      updateTriggers[accessor] = {
+        [field]: this.config[field],
+        [scale]: this.config[scale],
+        [domain]: this.config[domain],
+        [range]: this.config.visConfig[range],
+        defaultValue: typeof defaultValue === 'function' ? defaultValue(this.config) : defaultValue,
+        ...(fixed ? {[fixed]: this.config.visConfig[fixed]} : {})
+      };
+    });
+    return updateTriggers;
+  }
+
   calculateLayerDomain(dataset, visualChannel) {
-    const defaultDomain = [0, 1];
     const {scale} = visualChannel;
     const scaleType = this.config[scale];
 
@@ -1028,6 +1037,7 @@ class Layer {
     const fixed = fixedRadius === undefined ? this.config.visConfig.fixedRadius : fixedRadius;
     const {radius} = this.config.visConfig;
 
+    // @ts-ignore
     return fixed ? 1 : (this.config[field] ? 1 : radius) * this.getZoomFactor(mapState);
   }
 

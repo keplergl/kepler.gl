@@ -131,6 +131,7 @@ export type Filter =
 export type Datasets = {
   [key: string]: KeplerTable;
 };
+
 export type Feature = {
   id: string;
   properties: any;

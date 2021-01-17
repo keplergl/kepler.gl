@@ -1317,6 +1317,7 @@ export function renameDatasetUpdater(state, action) {
   const {dataId, label} = action;
   const {datasets} = state;
   const existing = datasets[dataId];
+  // @ts-ignore
   return existing
     ? {
         ...state,

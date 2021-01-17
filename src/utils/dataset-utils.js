@@ -20,8 +20,7 @@
 
 import {hexToRgb} from './color-utils';
 import uniq from 'lodash.uniq';
-import {ALL_FIELD_TYPES, TRIP_POINT_FIELDS, SORT_ORDER} from 'constants/default-settings';
-import {generateHashId} from './utils';
+import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {validateInputData} from 'processors/data-processor';
 import KeplerTable from './table-utils/kepler-table';
 

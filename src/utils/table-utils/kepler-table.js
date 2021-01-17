@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
+// Copyright (c) 2021 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -69,9 +69,6 @@ class KeplerTable {
     };
     const dataId = datasetInfo.id;
 
-    // add tableFieldIndex and id to fields
-    // TODO: don't need id and name and tableFieldIndex anymore
-    // Add value accessor instead
     const fields = data.fields.map((f, i) => ({
       ...f,
       fieldIdx: i,
@@ -89,7 +86,11 @@ class KeplerTable {
     this.id = datasetInfo.id;
     this.label = datasetInfo.label;
     this.color = color;
-    this.metadata = metadata;
+    this.metadata = {
+      ...metadata,
+      id: datasetInfo.id,
+      label: datasetInfo.label
+    };
     this.allData = allData;
     this.allIndexes = allIndexes;
     this.filteredIndex = allIndexes;
@@ -219,14 +220,10 @@ class KeplerTable {
       );
     }
 
-    this.filteredIndex = filterResult.filteredIndexForDomain || this.filteredIndexForDomain;
-    this.filteredIndexForDomain = filterResult.filteredIndex || this.filteredIndex;
+    this.filteredIndex = filterResult.filteredIndex || this.filteredIndex;
+    this.filteredIndexForDomain =
+      filterResult.filteredIndexForDomain || this.filteredIndexForDomain;
 
-    // return {
-    //   ...newDataset,
-    //   ...filterResult,
-    //   gpuFilter: getGpuFilterProps(filters, dataId, fields)
-    // };
     return this;
   }
 
@@ -241,12 +238,10 @@ class KeplerTable {
       ignoreDomain: true
     };
 
+    // no filter
     if (!filters.length) {
-      // no filter
-
       this.filteredIdxCPU = this.allIndexes;
       this.filterRecordCPU = getFilterRecord(this.id, filters, opt);
-
       return this;
     }
 
@@ -268,7 +263,7 @@ class KeplerTable {
     this.filteredIdxCPU = filtered.filteredIndex;
     this.filterRecordCPU = filtered.filterRecord;
 
-    return filtered;
+    return this;
   }
   /**
    * Calculate field domain based on field type and data
@@ -377,7 +372,7 @@ export function removeSuffixAndDelimiters(layerName, suffix) {
  *
  * @param fields
  * @returns found point fields
- * @type {typeof import('../dataset-utils').findPointFieldPairs}
+ * @type {typeof import('./kepler-table').findPointFieldPairs}
  */
 export function findPointFieldPairs(fields) {
   const allNames = fields.map(f => f.name.toLowerCase());
@@ -423,7 +418,7 @@ export function findPointFieldPairs(fields) {
  * @param dataset
  * @param column
  * @param mode
- * @type {typeof import('../dataset-utils').sortDatasetByColumn}
+ * @type {typeof import('./kepler-table').sortDatasetByColumn}
  */
 export function sortDatasetByColumn(dataset, column, mode) {
   const {allIndexes, fields, allData} = dataset;

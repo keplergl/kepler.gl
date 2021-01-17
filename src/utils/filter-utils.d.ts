@@ -17,6 +17,7 @@ import {
 import {Layer} from 'layers';
 import {Field} from 'reducers/types';
 import {ParsedConfig} from 'schemas';
+import {FilterDatasetOpt} from './table-utils/kepler-table';
 
 export function applyFilterFieldName(
   filter: Filter,
@@ -27,7 +28,7 @@ export function applyFilterFieldName(
 ): {
   filter: Filter | null;
   dataset: KeplerTable;
-};
+}
 
 export function getDefaultFilter(dataId: string | null | string[]): FilterBase;
 export function shouldApplyFilter(filter: Filter, datasetId: string): boolean;
@@ -44,18 +45,13 @@ export function validateFilter(
 
 export function adjustValueToFilterDomain(value: Filter['value'], Filter): any;
 
-// export type FilterDatasetOpt = {
-//   // only allow cpu filtering
-//   cpuOnly?: boolean;
-//   // ignore filter for domain calculation
-//   ignoreDomain?: boolean;
-// };
-// export function filterDataset(
-//   dataset: KeplerTable,
-//   filters: Filter[],
-//   layers: Layer[],
-//   opt?: FilterDatasetOpt
-// ): KeplerTable;
+export function filterDataset(
+  dataset: KeplerTable,
+  filters: Filter[],
+  layers: Layer[],
+  opt?: FilterDatasetOpt
+): KeplerTable;
+
 export function applyFiltersToDatasets(
   datasetIds: string[],
   datasets: Datasets,

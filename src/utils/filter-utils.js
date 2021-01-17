@@ -36,7 +36,7 @@ import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-uti
 import {getCentroid, h3IsValid} from 'layers/h3-hexagon-layer/h3-utils';
 
 // TYPE
-/** @typedef {import('../reducers/vis-state-updaters').FilterRecord} FilterRecord */
+/** @typedef {import('./table-utils/kepler-table').FilterRecord} FilterRecord */
 /** @typedef {import('./filter-utils').FilterResult} FilterResult */
 
 export const TimestampStepMap = [
@@ -1111,46 +1111,6 @@ export function filterDatasetCPU(state, dataId) {
   }
 
   const cpuFilteredDataset = dataset.filterTableCPU(datasetFilters, state.layers);
-  // const opt = {
-  //   cpuOnly: true,
-  //   ignoreDomain: true
-  // };
-
-  // if (!datasetFilters.length) {
-  //   // no filter
-  //   const filtered = {
-  //     ...selectedDataset,
-  //     filteredIdxCPU: selectedDataset.allIndexes,
-  //     filterRecordCPU: getFilterRecord(dataId, state.filters, opt)
-  //   };
-
-  //   return set(['datasets', dataId], filtered, state);
-  // }
-
-  // // no gpu filter
-  // if (!datasetFilters.find(f => f.gpu)) {
-  //   const filtered = {
-  //     ...selectedDataset,
-  //     filteredIdxCPU: selectedDataset.filteredIndex,
-  //     filterRecordCPU: getFilterRecord(dataId, state.filters, opt)
-  //   };
-  //   return set(['datasets', dataId], filtered, state);
-  // }
-
-  // // make a copy for cpu filtering
-  // const copied = {
-  //   ...selectedDataset,
-  //   filterRecord: selectedDataset.filterRecordCPU,
-  //   filteredIndex: selectedDataset.filteredIdxCPU || []
-  // };
-
-  // const filtered = filterDataset(copied, state.filters, state.layers, opt);
-
-  // const cpuFilteredDataset = {
-  //   ...selectedDataset,
-  //   filteredIdxCPU: filtered.filteredIndex,
-  //   filterRecordCPU: filtered.filterRecord
-  // };
 
   return set(['datasets', dataId], cpuFilteredDataset, state);
 }

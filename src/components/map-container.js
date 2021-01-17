@@ -36,7 +36,6 @@ import EditorFactory from './editor/editor';
 
 // utils
 import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
-import {OVERLAY_TYPE} from 'layers';
 import {setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 import {getLayerHoverProp, renderDeckGlLayer} from 'utils/layer-utils';
@@ -48,6 +47,7 @@ import {
   GEOCODER_LAYER_ID,
   THROTTLE_NOTIFICATION_TIME
 } from 'constants/default-settings';
+import {OVERLAY_TYPE} from 'layers/base-layer';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE = {

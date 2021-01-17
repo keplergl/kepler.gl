@@ -211,56 +211,58 @@ export const fields = [
     name: '_geojson',
     format: '',
     fieldIdx: 0,
-    analyzerType: 'GEOMETRY'
+    analyzerType: 'GEOMETRY',
+    valueAccessor: values => values[0]
   },
   {
     type: 'integer',
     name: 'OBJECTID',
     format: '',
     fieldIdx: 1,
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[1]
   },
   {
     type: 'integer',
     name: 'ZIP_CODE',
     format: '',
     fieldIdx: 2,
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[2]
   },
   {
     type: 'integer',
     name: 'ID',
     format: '',
     fieldIdx: 3,
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[3]
   },
   {
     type: 'integer',
     name: 'TRIPS',
     format: '',
     fieldIdx: 4,
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[4]
   },
   {
     type: 'string',
     name: 'RATE',
     format: '',
     fieldIdx: 5,
-    analyzerType: 'STRING'
+    analyzerType: 'STRING',
+    valueAccessor: values => values[5]
   },
   {
     type: 'geojson',
     name: 'OBJ',
     format: '',
     fieldIdx: 6,
-    analyzerType: 'OBJECT'
+    analyzerType: 'OBJECT',
+    valueAccessor: values => values[6]
   }
 ];
-
-export const datasetFields = fields.map(f => ({
-  ...f,
-  id: f.name
-}));
 
 export const rows = [
   [feature0Parsed, 1, 94107, 94107, 11, 'a', {id: 1}],
@@ -542,42 +544,48 @@ export const geoStyleFields = [
     format: '',
     fieldIdx: 0,
     type: 'geojson',
-    analyzerType: 'GEOMETRY'
+    analyzerType: 'GEOMETRY',
+    valueAccessor: values => values[0]
   },
   {
     name: 'fillColor',
     format: '',
     fieldIdx: 1,
     type: 'geojson',
-    analyzerType: 'ARRAY'
+    analyzerType: 'ARRAY',
+    valueAccessor: values => values[1]
   },
   {
     name: 'lineColor',
     format: '',
     fieldIdx: 2,
     type: 'geojson',
-    analyzerType: 'ARRAY'
+    analyzerType: 'ARRAY',
+    valueAccessor: values => values[2]
   },
   {
     name: 'lineWidth',
     format: '',
     fieldIdx: 3,
     type: 'integer',
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[3]
   },
   {
     name: 'elevation',
     format: '',
     fieldIdx: 4,
     type: 'integer',
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[4]
   },
   {
     name: 'radius',
     format: '',
     fieldIdx: 5,
     type: 'integer',
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[5]
   }
 ];
 

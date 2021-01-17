@@ -1,6 +1,8 @@
-import {RGBColor, RGBAColor, Millisecond} from '../../reducers/types';
+import {RGBColor} from '../../reducers/types';
 import {Layer} from 'layers';
 import {Filter} from '../reducers/vis-state-updaters';
+import {Dataset, Feild} from '../../reducers/vis-state-updaters';
+
 export type Field = {
   analyzerType: string;
   id?: string;
@@ -35,12 +37,22 @@ export type FilterRecord = {
   cpu: Filter[];
   gpu: Filter[];
 };
+
 export type FilterDatasetOpt = {
   // only allow cpu filtering
   cpuOnly?: boolean;
   // ignore filter for domain calculation
   ignoreDomain?: boolean;
 };
+
+export function sortDatasetByColumn(
+  dataset: Dataset,
+  column: string,
+  mode?: string
+): Dataset;
+
+export function findPointFieldPairs(fields: Feild[]): FieldPair[];
+
 export class KeplerTable {
   constructor(schema: {info?: object; data: any; color: RGBColor; metadata: any});
   id: string;

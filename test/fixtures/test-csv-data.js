@@ -459,7 +459,7 @@ export const testFields = [
     name: 'gps_data.utc_timestamp',
     format: 'YYYY-M-D H:m:s',
     analyzerType: 'DATETIME',
-    // valueAccessor: 'skip_testing'
+    valueAccessor: values => values[0]
   },
   {
     type: 'real',
@@ -467,7 +467,7 @@ export const testFields = [
     name: 'gps_data.lat',
     format: '',
     analyzerType: 'FLOAT',
-    // valueAccessor: 'skip_testing'
+    valueAccessor: values => values[1]
   },
   {
     type: 'real',
@@ -475,7 +475,7 @@ export const testFields = [
     name: 'gps_data.lng',
     format: '',
     analyzerType: 'FLOAT',
-    // valueAccessor: 'skip_testing'
+    valueAccessor: values => values[2]
   },
   {
     type: 'string',
@@ -483,7 +483,7 @@ export const testFields = [
     name: 'gps_data.types',
     format: '',
     analyzerType: 'STRING',
-    // valueAccessor: 'skip_testing'
+    valueAccessor: values => values[3]
   },
   {
     type: 'timestamp',
@@ -491,7 +491,7 @@ export const testFields = [
     name: 'epoch',
     format: 'X',
     analyzerType: 'TIME',
-    // valueAccessor: 'skip_testing'
+    valueAccessor: values => values[4]
   },
   {
     type: 'boolean',
@@ -499,7 +499,7 @@ export const testFields = [
     name: 'has_result',
     format: '',
     analyzerType: 'BOOLEAN',
-    // valueAccessor: 'skip_testing'
+    valueAccessor: values => values[5]
   },
   {
     type: 'integer',
@@ -507,7 +507,7 @@ export const testFields = [
     name: 'id',
     format: '',
     analyzerType: 'INT',
-    // valueAccessor: 'skip_testing'
+    valueAccessor: values => values[6]
   },
   {
     type: 'timestamp',
@@ -515,7 +515,7 @@ export const testFields = [
     name: 'time',
     format: 'YYYY-M-DTHH:mm:ss.SSSS',
     analyzerType: 'DATETIME',
-    // valueAccessor: 'skip_testing'
+    valueAccessor: values => values[7]
   },
   {
     type: 'timestamp',
@@ -523,7 +523,7 @@ export const testFields = [
     name: 'begintrip_ts_utc',
     format: 'YYYY-M-D HH:mm:ssZZ',
     analyzerType: 'DATETIME',
-    // valueAccessor: 'skip_testing'
+    valueAccessor: values => values[8]
   },
   {
     type: 'timestamp',
@@ -531,7 +531,7 @@ export const testFields = [
     name: 'begintrip_ts_local',
     format: 'YYYY-M-D HH:mm:ssZZ',
     analyzerType: 'DATETIME',
-    // valueAccessor: 'skip_testing'
+    valueAccessor: values => values[9]
   },
   {
     type: 'date',
@@ -539,16 +539,9 @@ export const testFields = [
     name: 'date',
     format: 'YYYY-M-D',
     analyzerType: 'DATE',
-    // valueAccessor: 'skip_testing'
+    valueAccessor: values => values[10]
   }
 ];
-
-// add id to fields
-// TODO: cleaning up after filter refractor
-export const datasetCsvFields = testFields.map(f => ({
-  ...f,
-  id: f.name
-}));
 
 export const timeMappedValue = [
   1474588800000,
@@ -888,42 +881,48 @@ export const wktCsvFields = [
     name: 'a_zip',
     format: '',
     fieldIdx: 0,
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[0]
   },
   {
     type: 'geojson',
     name: 'simplified_shape_v2',
     format: '',
     fieldIdx: 1,
-    analyzerType: 'PAIR_GEOMETRY_FROM_STRING'
+    analyzerType: 'PAIR_GEOMETRY_FROM_STRING',
+    valueAccessor: values => values[1]
   },
   {
     type: 'geojson',
     name: 'simplified_shape',
     format: '',
     fieldIdx: 2,
-    analyzerType: 'GEOMETRY_FROM_STRING'
+    analyzerType: 'GEOMETRY_FROM_STRING',
+    valueAccessor: values => values[2]
   },
   {
     type: 'real',
     name: 'm_rate',
     format: '',
     fieldIdx: 3,
-    analyzerType: 'FLOAT'
+    analyzerType: 'FLOAT',
+    valueAccessor: values => values[3]
   },
   {
     type: 'string',
     name: 'c_zip_type',
     format: '',
     fieldIdx: 4,
-    analyzerType: 'STRING'
+    analyzerType: 'STRING',
+    valueAccessor: values => values[4]
   },
   {
     type: 'real',
     name: 'c_number',
     format: '',
     fieldIdx: 5,
-    analyzerType: 'FLOAT'
+    analyzerType: 'FLOAT',
+    valueAccessor: values => values[4]
   }
 ];
 
