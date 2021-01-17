@@ -398,10 +398,13 @@ function KeplerGlFactory(
           <IntlProvider locale={uiState.locale} messages={localeMessages[uiState.locale]}>
             <ThemeProvider theme={theme}>
               <GlobalStyle
-                width={width}
-                height={height}
                 className="kepler-gl"
                 id={`kepler-gl__${id}`}
+                style={{
+                  position: 'relative',
+                  width: `${width}px`,
+                  height: `${height}px`
+                }}
                 ref={this.root}
               >
                 <NotificationPanel {...notificationPanelFields} />
