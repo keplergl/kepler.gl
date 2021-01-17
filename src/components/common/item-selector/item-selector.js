@@ -315,7 +315,6 @@ class ItemSelector extends Component {
                 ) : (
                   <FormattedMessage
                     id={this.props.placeholder || 'placeholder.selectValue'}
-                    defaultMessage="Select a Value"
                   />
                 )}
               </DropdownSelectValue>
