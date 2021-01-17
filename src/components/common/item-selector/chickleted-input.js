@@ -132,7 +132,7 @@ const ChickletedInput = ({
       })
     ) : (
       <span className={`${className} chickleted-input__placeholder`}>
-        <FormattedMessage id={placeholder} />
+        <FormattedMessage id={placeholder || 'placeholder.enterValue'} />
       </span>
     )}
   </ChickletedInputContainer>

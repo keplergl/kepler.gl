@@ -1615,6 +1615,12 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
           ],
           result: [1474588800000 - 1474588800000, 1472688000000 - 1472688000000, 0, 0]
         }
+      },
+      changedFilters: {
+        dynamicDomain: {'date-2': 'added'},
+        fixedDomain: {'time-0': 'added', 'epoch-4': 'added'},
+        cpu: {'date-2': 'added'},
+        gpu: {'time-0': 'added', 'epoch-4': 'added'}
       }
     },
     [testGeoJsonDataId]: {
@@ -1667,7 +1673,13 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
       color: 'donot test me',
       filteredIndex: [0],
       filteredIndexForDomain: [0],
-      fieldPairs: oldGeoJsonData.fieldPairs
+      fieldPairs: oldGeoJsonData.fieldPairs,
+      changedFilters: {
+        dynamicDomain: {'RATE-1': 'added', 'TRIPS-3': 'added'},
+        fixedDomain: null,
+        cpu: {'RATE-1': 'added'},
+        gpu: {'TRIPS-3': 'added'}
+      }
     }
   };
 

@@ -6,6 +6,7 @@ export type ColorRange = {
   category: string;
   colors: HexColor[];
   reversed?: boolean;
+  colorMap?: Map | object;
 };
 
 export type LayerTextLabel = {

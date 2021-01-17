@@ -488,7 +488,7 @@ export function filterDataset(dataset, filters, layers, opt) {
   // if there is no filters
   const filterRecord = getFilterRecord(dataId, filters, opt || {});
 
-  const newDataset = set(['filterRecord'], filterRecord, dataset);
+  let newDataset = set(['filterRecord'], filterRecord, dataset);
 
   if (!filters.length) {
     return {
@@ -500,6 +500,7 @@ export function filterDataset(dataset, filters, layers, opt) {
   }
 
   const changedFilters = diffFilters(filterRecord, oldFilterRecord);
+  newDataset = set(['changedFilters'], changedFilters, newDataset);
 
   // generate 2 sets of filter result
   // filteredIndex used to calculate layer data
