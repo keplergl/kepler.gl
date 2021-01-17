@@ -152,6 +152,12 @@ function mockStateWithFilters(state) {
       payload: [0, 'value', [1474606800000, 1474617600000]]
     },
 
+    // set filter animation speed
+    {
+      action: VisStateActions.updateFilterAnimationSpeed,
+      payload: [0, 4]
+    },
+
     // add another filter
     {action: VisStateActions.addFilter, payload: [testGeoJsonDataId]},
 

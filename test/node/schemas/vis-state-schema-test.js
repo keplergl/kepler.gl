@@ -101,7 +101,8 @@ test('#visStateSchema -> v1 -> save load filters', t => {
       enlarged: true,
       plotType: 'histogram',
       yAxis: null,
-      animationWindow: 'free'
+      animationWindow: 'free',
+      speed: 4
     },
     {
       dataId: [testGeoJsonDataId],
@@ -112,7 +113,8 @@ test('#visStateSchema -> v1 -> save load filters', t => {
       enlarged: false,
       plotType: 'histogram',
       yAxis: null,
-      animationWindow: 'free'
+      animationWindow: 'free',
+      speed: 1
     }
   ];
 

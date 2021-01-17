@@ -656,7 +656,8 @@ export const filterPropsV1 = {
   }),
 
   // polygon filter properties
-  layerId: null
+  layerId: null,
+  speed: null
 };
 
 export const propertiesV0 = {

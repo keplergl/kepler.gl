@@ -797,7 +797,7 @@ export const mergedTimeFilter = {
   fixedDomain: true,
   enlarged: true,
   isAnimating: false,
-  speed: 1,
+  speed: 4,
   name: ['time'],
   type: 'timeRange',
   fieldIdx: [7],
