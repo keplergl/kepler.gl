@@ -54,7 +54,7 @@ export {
 } from './side-panel/panel-header';
 export {default as PanelHeaderActionFactory} from './side-panel/panel-header-action';
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
-export {default as PanelToggleFactory} from './side-panel/panel-toggle';
+export {default as PanelToggleFactory, PanelTabFactory} from './side-panel/panel-toggle';
 
 export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel/layer-manager';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
