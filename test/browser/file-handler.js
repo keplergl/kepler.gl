@@ -38,6 +38,7 @@ import {
 } from 'test/fixtures/state-saved-v1-7';
 
 import global from 'global';
+import {cmpField} from '../helpers/comparison-utils';
 
 /** loaders.gl uses these from global */
 global.File = global.window.File;
@@ -137,9 +138,9 @@ test('#file-handler -> readFileInBatches.csv -> processFileData', async t => {
 
   const {fields, rows} = processed[0].data;
 
-  fields.forEach((f, i) => {
-    t.deepEqual(f, testFields[i], `should process correct field ${testFields[i].name}`);
-  });
+  fields.forEach((f, i) =>
+    cmpField(t, testFields[i], f, `should process correct field ${testFields[i].name}`)
+  );
 
   rows.forEach((r, i) => {
     t.deepEqual(r, parsedDataWithNulls[i], `should process row ${i} correctly`);
@@ -256,13 +257,14 @@ test('#file-handler -> readFileInBatches.GeoJSON FeatureCollection -> processFil
   t.ok(processed[0].data, 'processFileData should have data');
   t.deepEqual(processed[0].info, expectedInfo, 'info should be correct');
   const {fields, rows} = processed[0].data;
-  fields.forEach((f, i) => {
-    t.deepEqual(
-      f,
+  fields.forEach((f, i) =>
+    cmpField(
+      t,
       geojsonFields[i],
+      f,
       `should process correct geojson field ${geojsonFields[i].name}`
-    );
-  });
+    )
+  );
   rows.forEach((r, i) => {
     t.deepEqual(r, geojsonRows[i], `should process geojson row ${i} correctly`);
   });
@@ -350,13 +352,14 @@ test('#file-handler -> readFileInBatches.GeoJSON Single Feature -> processFileDa
   t.deepEqual(processed[0].info, expectedInfo, 'info should be correct');
   const {fields, rows} = processed[0].data;
 
-  fields.forEach((f, i) => {
-    t.deepEqual(
-      f,
+  fields.forEach((f, i) =>
+    cmpField(
+      t,
       processedFeatureFields[i],
+      f,
       `should process correct geojson field ${processedFeatureFields[i].name}`
-    );
-  });
+    )
+  );
   rows.forEach((r, i) => {
     t.deepEqual(r, processedFeatureRows[i], `should process geojson row ${i} correctly`);
   });
@@ -473,14 +476,14 @@ test('#file-handler -> readFileInBatches.row -> processFileData', async t => {
   t.deepEqual(processed[0].info, expectedFileCache[0].info, 'info should be correct');
 
   const {fields, rows} = processed[0].data;
-
-  fields.forEach((f, i) => {
-    t.deepEqual(
-      f,
+  fields.forEach((f, i) =>
+    cmpField(
+      t,
       expectedFileCache[0].data.fields[i],
+      f,
       `should process correct row object field ${parsedFields[i].name}`
-    );
-  });
+    )
+  );
   rows.forEach((r, i) => {
     t.deepEqual(r, expectedFileCache[0].data.rows[i], `should process row ${i} correctly`);
   });

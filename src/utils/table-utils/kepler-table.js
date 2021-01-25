@@ -43,7 +43,6 @@ import {
 } from 'utils/data-scale-utils';
 
 import {ALL_FIELD_TYPES, SCALE_TYPES} from 'constants/default-settings';
-// import {copyTableColumn} from 'actions';
 
 // Unique identifier of each field
 const FID_KEY = 'name';
@@ -98,6 +97,12 @@ class KeplerTable {
     this.fieldPairs = findPointFieldPairs(fields);
     this.fields = fields;
     this.gpuFilter = getGpuFilterProps([], dataId, fields);
+  }
+
+  static clone(table) {
+    const clonedTable = Object.create(KeplerTable);
+
+    return clonedTable;
   }
 
   /**
@@ -451,8 +456,15 @@ export function sortDatasetByColumn(dataset, column, mode) {
   };
 }
 
-function copyTable(original) {
+export function copyTable(original) {
   return Object.assign(Object.create(Object.getPrototypeOf(original)), original);
+}
+
+export function copyTableAndUpdate(original, options = {}) {
+  return Object.entries(options).reduce((acc, entry) => {
+    acc[entry[0]] = entry[1];
+    return acc;
+  }, copyTable(original));
 }
 
 export default KeplerTable;

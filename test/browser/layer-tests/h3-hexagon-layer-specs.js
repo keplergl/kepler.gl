@@ -34,6 +34,8 @@ import {
 import {KeplerGlLayers} from 'layers';
 import {getCentroid} from 'layers/h3-hexagon-layer/h3-utils';
 import {defaultElevation} from 'layers/h3-hexagon-layer/h3-hexagon-layer';
+import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
+
 const {H3Layer} = KeplerGlLayers;
 const columns = {
   lat: 'lat',
@@ -81,10 +83,7 @@ test('#H3Layer -> formatLayerData', t => {
         id: 'test_layer_1'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -173,10 +172,7 @@ test('#H3Layer -> formatLayerData', t => {
         id: 'test_layer_2'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData} = result;
@@ -239,10 +235,7 @@ test('#H3Layer -> renderLayer', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: (deckLayers, layer) => {
         t.equal(layer.type, 'hexagonId', 'should create 1 hexagonId layer');

@@ -36,6 +36,7 @@ import {
 import {KeplerGlLayers} from 'layers';
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
+import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 
 const {PointLayer} = KeplerGlLayers;
 
@@ -108,10 +109,7 @@ test('#PointLayer -> formatLayerData', t => {
         id: 'test_layer_1'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -234,10 +232,7 @@ test('#PointLayer -> formatLayerData', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -330,10 +325,7 @@ test('#PointLayer -> formatLayerData', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -418,10 +410,7 @@ test('#PointLayer -> formatLayerData', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -498,10 +487,7 @@ test('#PointLayer -> renderLayer', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: (deckLayers, layer) => {
         t.equal(deckLayers.length, 1, 'Should create 1 deck.gl layer');
@@ -555,10 +541,7 @@ test('#PointLayer -> renderLayer', t => {
         id: 'test_layer_1'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: (deckLayers, layer, layerData) => {
         t.equal(deckLayers.length, 5, 'Should create 5 deck.gl layer');
@@ -658,10 +641,7 @@ test('#PointLayer -> renderLayer', t => {
         id: 'test_layer_1'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: (deckLayers, layer, layerData) => {
         t.deepEqual(
@@ -682,8 +662,8 @@ test('#PointLayer -> renderLayer', t => {
         const getRadius = layerData.getRadius(layerData.data[1]);
 
         const expectedPixelOffset1 = [
-          1 * (getRadius * pixelRadius + padding),
-          1 * (getRadius * pixelRadius + padding + 10)
+          getRadius * pixelRadius + padding,
+          getRadius * pixelRadius + padding + 10
         ];
         t.deepEqual(getColor, [2, 2, 2], 'Should calculate correct getColor');
         t.deepEqual(getSize, 1, 'Should calculate correct getSize');

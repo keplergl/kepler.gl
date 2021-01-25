@@ -40,10 +40,38 @@ export const processedFeature = {
 };
 
 export const processedFeatureFields = [
-  {name: '_geojson', format: '', tableFieldIndex: 1, type: 'geojson', analyzerType: 'GEOMETRY'},
-  {name: 'lat', format: '', tableFieldIndex: 2, type: 'real', analyzerType: 'FLOAT'},
-  {name: 'lng', format: '', tableFieldIndex: 3, type: 'real', analyzerType: 'FLOAT'},
-  {name: 'icon', format: '', tableFieldIndex: 4, type: 'string', analyzerType: 'STRING'}
+  {
+    name: '_geojson',
+    format: '',
+    fieldIdx: 0,
+    type: 'geojson',
+    analyzerType: 'GEOMETRY',
+    valueAccessor: values => values[0]
+  },
+  {
+    name: 'lat',
+    format: '',
+    fieldIdx: 1,
+    type: 'real',
+    analyzerType: 'FLOAT',
+    valueAccessor: values => values[1]
+  },
+  {
+    name: 'lng',
+    format: '',
+    fieldIdx: 2,
+    type: 'real',
+    analyzerType: 'FLOAT',
+    valueAccessor: values => values[2]
+  },
+  {
+    name: 'icon',
+    format: '',
+    fieldIdx: 3,
+    type: 'string',
+    analyzerType: 'STRING',
+    valueAccessor: values => values[3]
+  }
 ];
 
 export const processedFeatureRows = [
@@ -70,10 +98,38 @@ export const processedFeatureRows = [
 ];
 
 export const processedFields = [
-  {name: '_geojson', format: '', tableFieldIndex: 1, type: 'geojson', analyzerType: 'GEOMETRY'},
-  {name: 'fillColor', format: '', tableFieldIndex: 2, type: 'geojson', analyzerType: 'ARRAY'},
-  {name: 'radius', format: '', tableFieldIndex: 3, type: 'integer', analyzerType: 'INT'},
-  {name: 'id', format: '', tableFieldIndex: 4, type: 'string', analyzerType: 'STRING'}
+  {
+    name: '_geojson',
+    format: '',
+    fieldIdx: 0,
+    type: 'geojson',
+    analyzerType: 'GEOMETRY',
+    valueAccessor: values => values[0]
+  },
+  {
+    name: 'fillColor',
+    format: '',
+    fieldIdx: 1,
+    type: 'geojson',
+    analyzerType: 'ARRAY',
+    valueAccessor: values => values[1]
+  },
+  {
+    name: 'radius',
+    format: '',
+    fieldIdx: 2,
+    type: 'integer',
+    analyzerType: 'INT',
+    valueAccessor: values => values[2]
+  },
+  {
+    name: 'id',
+    format: '',
+    fieldIdx: 3,
+    type: 'string',
+    analyzerType: 'STRING',
+    valueAccessor: values => values[3]
+  }
 ];
 
 export const processedRows = [

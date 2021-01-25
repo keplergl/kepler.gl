@@ -33,6 +33,7 @@ import {
 } from 'test/helpers/layer-utils';
 
 import {KeplerGlLayers} from 'layers';
+import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 
 const {ArcLayer} = KeplerGlLayers;
 const columns = {
@@ -71,6 +72,7 @@ test('#ArcLayer -> formatLayerData', t => {
 
   // filter.domain: [ 1474071056000, 1474071489000 ]
   // filterRange: [ [ 39000, 552000 ]
+  // create a clone from preparedDataset
   const TEST_CASES = [
     {
       name: 'Arc trip data.1',
@@ -85,10 +87,7 @@ test('#ArcLayer -> formatLayerData', t => {
         id: 'test_layer_0'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -227,11 +226,9 @@ test('#ArcLayer -> formatLayerData', t => {
         type: 'arc',
         id: 'test_layer_1'
       },
+      // modify preparedDataset
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData} = result;
