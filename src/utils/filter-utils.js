@@ -32,7 +32,6 @@ import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {LAYER_TYPES} from 'layers/types';
 import {generateHashId, set, toArray} from './utils';
-import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 import {getCentroid, h3IsValid} from 'layers/h3-hexagon-layer/h3-utils';
 
 // TYPE
@@ -476,64 +475,6 @@ export function getFilterFunction(field, dataId, filter, layers) {
 
 export function updateFilterDataId(dataId) {
   return getDefaultFilter(dataId);
-}
-
-/**
- * Filter data based on an array of filters
- * @type {typeof import('./filter-utils').filterDataset}
- */
-export function filterDataset(dataset, filters, layers, opt) {
-  const {allData, id: dataId, filterRecord: oldFilterRecord, fields} = dataset;
-
-  // if there is no filters
-  const filterRecord = getFilterRecord(dataId, filters, opt || {});
-
-  let newDataset = set(['filterRecord'], filterRecord, dataset);
-
-  if (!filters.length) {
-    return {
-      ...newDataset,
-      gpuFilter: getGpuFilterProps(filters, dataId, fields),
-      filteredIndex: dataset.allIndexes,
-      filteredIndexForDomain: dataset.allIndexes
-    };
-  }
-
-  const changedFilters = diffFilters(filterRecord, oldFilterRecord);
-  newDataset = set(['changedFilters'], changedFilters, newDataset);
-
-  // generate 2 sets of filter result
-  // filteredIndex used to calculate layer data
-  // filteredIndexForDomain used to calculate layer Domain
-  const shouldCalDomain = Boolean(changedFilters.dynamicDomain);
-  const shouldCalIndex = Boolean(changedFilters.cpu);
-
-  let filterResult = {};
-  if (shouldCalDomain || shouldCalIndex) {
-    const dynamicDomainFilters = shouldCalDomain ? filterRecord.dynamicDomain : null;
-    const cpuFilters = shouldCalIndex ? filterRecord.cpu : null;
-
-    const filterFuncs = filters.reduce((acc, filter) => {
-      const fieldIndex = getDatasetFieldIndexForFilter(dataset.id, filter);
-      const field = fieldIndex !== -1 ? fields[fieldIndex] : null;
-
-      return {
-        ...acc,
-        [filter.id]: getFilterFunction(field, dataset.id, filter, layers)
-      };
-    }, {});
-
-    filterResult = filterDataByFilterTypes(
-      {dynamicDomainFilters, cpuFilters, filterFuncs},
-      allData
-    );
-  }
-
-  return {
-    ...newDataset,
-    ...filterResult,
-    gpuFilter: getGpuFilterProps(filters, dataId, fields)
-  };
 }
 
 /**

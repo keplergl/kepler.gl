@@ -99,12 +99,6 @@ class KeplerTable {
     this.gpuFilter = getGpuFilterProps([], dataId, fields);
   }
 
-  static clone(table) {
-    const clonedTable = Object.create(KeplerTable);
-
-    return clonedTable;
-  }
-
   /**
    * Get field
    * @param columnName
@@ -196,13 +190,13 @@ class KeplerTable {
       return this;
     }
 
-    const changedFilters = diffFilters(filterRecord, oldFilterRecord);
+    this.changedFilters = diffFilters(filterRecord, oldFilterRecord);
 
     // generate 2 sets of filter result
     // filteredIndex used to calculate layer data
     // filteredIndexForDomain used to calculate layer Domain
-    const shouldCalDomain = Boolean(changedFilters.dynamicDomain);
-    const shouldCalIndex = Boolean(changedFilters.cpu);
+    const shouldCalDomain = Boolean(this.changedFilters.dynamicDomain);
+    const shouldCalIndex = Boolean(this.changedFilters.cpu);
 
     let filterResult = {};
     if (shouldCalDomain || shouldCalIndex) {
@@ -270,6 +264,7 @@ class KeplerTable {
 
     return this;
   }
+
   /**
    * Calculate field domain based on field type and data
    * for Filter
