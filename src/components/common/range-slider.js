@@ -27,7 +27,7 @@ import RangePlotFactory from './range-plot';
 import Slider from 'components/common/slider/slider';
 import {Input} from 'components/common/styled-components';
 
-import {roundValToStep} from 'utils/data-utils';
+import {roundValToStep, clamp} from 'utils/data-utils';
 
 const SliderInput = styled(Input)`
   width: ${props => props.theme.sliderInputWidth}px;
@@ -117,18 +117,6 @@ export default function RangeSliderFactory(RangePlot) {
       (value0, value1) => [value0, value1]
     );
 
-    _isVal0InRange = val => {
-      const {value1, range} = this.props;
-
-      return Boolean(val >= range[0] && val <= value1);
-    };
-
-    _isVal1InRange = val => {
-      const {range, value0} = this.props;
-
-      return Boolean(val <= range[1] && val >= value0);
-    };
-
     _roundValToStep = val => {
       const {range, step} = this.props;
 
@@ -136,24 +124,23 @@ export default function RangeSliderFactory(RangePlot) {
     };
 
     _setRangeVal1 = val => {
-      const {value0, onChange} = this.props;
+      const {value0, range, onChange} = this.props;
       const val1 = Number(val);
-      if (this._isVal1InRange(val1)) {
-        onChange([value0, this._roundValToStep(val1)]);
-        return true;
-      }
-      return false;
+      onChange([
+        value0,
+        clamp([value0, range[1]], this._roundValToStep(val1))
+      ]);
+      return true;
     };
 
     _setRangeVal0 = val => {
-      const {value1, onChange} = this.props;
+      const {value1, range, onChange} = this.props;
       const val0 = Number(val);
-
-      if (this._isVal0InRange(val0)) {
-        onChange([this._roundValToStep(val0), value1]);
-        return true;
-      }
-      return false;
+      onChange([
+        clamp([range[0], value1], this._roundValToStep(val0)),
+        value1
+      ]);
+      return true;
     };
 
     _resize() {

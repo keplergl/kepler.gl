@@ -26,6 +26,7 @@ import styled from 'styled-components';
 import SliderHandle from './slider-handle';
 import SliderBarHandle from './slider-bar-handle';
 import {normalizeSliderValue} from 'utils/data-utils';
+import { clamp } from 'utils/data-utils';
 
 function noop() {}
 
@@ -109,49 +110,35 @@ export default class Slider extends Component {
     return this._normalizeValue(rawValue);
   }
 
-  _isVal0InRange = val => {
-    const {value1, minValue} = this.props;
-    return Boolean(val >= minValue && val <= value1);
-  };
-
-  _isVal1InRange = val => {
-    const {maxValue, value0} = this.props;
-    return Boolean(val <= maxValue && val >= value0);
-  };
-
   _normalizeValue(val) {
     const {minValue, step, marks} = this.props;
     return normalizeSliderValue(val, minValue, step, marks);
   }
 
   slide0Listener = x => {
-    const val = this._getValue(this.props.minValue, x);
-
-    if (this._isVal0InRange(val)) {
-      this.props.onSlider0Change(val);
-    }
+    const {value1, minValue} = this.props;
+    const val = this._getValue(minValue, x);
+    this.props.onSlider0Change(clamp([minValue, value1], val));
   };
 
   slide1Listener = x => {
-    const val = this._getValue(this.props.minValue, x);
-    if (this._isVal1InRange(val)) {
-      this.props.onSlider1Change(val);
-    }
+    const {minValue, maxValue, value0} = this.props;
+    const val = this._getValue(minValue, x);
+    this.props.onSlider1Change(clamp([value0, maxValue], val));
   };
 
   sliderBarListener = x => {
-    const {minValue, maxValue} = this.props;
+    const {value0, value1, minValue, maxValue} = this.props;
     // for slider bar, we use distance delta
     const anchor = this._anchor;
-    const val0 = this._getValue(this.props.value0, x - anchor);
-    const val1 = this._getValue(this.props.value1, x - anchor);
+    const length = value1 - value0; // the length of the selected range shouldn't change when clamping
+    const val0 = clamp([minValue, maxValue - length], this._getValue(value0, x - anchor));
+    const val1 = clamp([val0 + length, maxValue], this._getValue(value1, x - anchor));
 
-    if (val0 >= minValue && val1 <= maxValue && val1 >= val0) {
-      const deltaX = this._getDeltaX(val0 - this.props.value0);
-      this.props.onSliderBarChange(val0, val1);
-      // update anchor
-      this._anchor = this._anchor + deltaX;
-    }
+    const deltaX = this._getDeltaX(val0 - this.props.value0);
+    this.props.onSliderBarChange(val0, val1);
+    // update anchor
+    this._anchor = this._anchor + deltaX;
   };
 
   calcHandleLeft0 = (w, l, num) => {
