@@ -190,6 +190,7 @@ export default {
     removeLayer: 'Poista taso',
     layerSettings: 'Tason asetukset',
     closePanel: 'Sulje paneeli',
+    fullscreen: 'Vaihda koko näytöllä',
     switchToDualView: 'Vaihda kaksoiskarrtanäkymään',
     showLegend: 'Näytä selite',
     disable3DMap: 'Poistu 3D-näkymästä',
@@ -274,7 +275,7 @@ export default {
       publishSubtitle5: 'Käyttääksesi yksityistä tyyliä, liitä',
       publishSubtitle6: 'tunnisteesi',
       publishSubtitle7:
-        'tänne. *kepler.gl on client-side sovellus, data pysyy vain selaimessasi...',
+        'tänne.',
       exampleToken: 'esim. pk.abcdefg.xxxxxx',
       pasteTitle: '2. Liitä tyyli-URL',
       pasteSubtitle1: 'Mikä on',
@@ -288,9 +289,9 @@ export default {
       cloudSubtitle:
         'Kirjaudu sisään ja lataa kartta ja aineistot henkilökohtaiseen pilvipalveluun',
       shareDisclaimer:
-        'kepler.gl tallentaa kartan datan henkilökohtaiseen pilvitallennustilaasi, vain ihmiset, joilla on URL, voivat päästä käsiksi karttaan ja aineistoihin. ' +
+        'Napkin-Visual tallentaa kartan datan henkilökohtaiseen pilvitallennustilaasi, vain ihmiset, joilla on URL, voivat päästä käsiksi karttaan ja aineistoihin. ' +
         'Voit muokata tiedostoja tai poistaa ne pilvipalvelustasi milloin vain.',
-      gotoPage: 'Mene Kepler.gl {currentProvider} sivullesi'
+      gotoPage: 'Mene Napkin-Visual {currentProvider} sivullesi'
     },
     statusPanel: {
       mapUploading: 'Karttaa ladataan',
@@ -322,9 +323,9 @@ export default {
       json: {
         configTitle: 'Kartan asetukset',
         configDisclaimer:
-          'Kartan asetukset sisältyvät Json-tiedostoon. Jos käytät kirjastoa kepler.gl omassa sovelluksessasi. Voit kopioida asetukset ja antaa ne funktiolle: ',
+          'Kartan asetukset sisältyvät Json-tiedostoon. Jos käytät kirjastoa Napkin-Visual omassa sovelluksessasi. Voit kopioida asetukset ja antaa ne funktiolle: ',
         selection:
-          'Vie kyseisen kartan aineistot ja asetukset yhdessä json-tiedostossa. Voit myöhemmin avata saman kartan lataamalla tiedoston kepler.gl:n',
+          'Vie kyseisen kartan aineistot ja asetukset yhdessä json-tiedostossa. Voit myöhemmin avata saman kartan lataamalla tiedoston Napkin-Visual:n',
         disclaimer:
           '* Kartan asetukset ovat sidoksissa ladattuihin aineistoihin. Arvoa ‘dataId’ käytetään tasojen, suodattimien ja vihjeiden liittämiseksi tiettyyn aineistoon. ' +
           'Varmista, että aineiston dataId:t vastaavat asetusten arvoja jos lataat asetukset käyttäen `addDataToMap`-funktiolle.'
@@ -351,7 +352,7 @@ export default {
       description1:
         'csv-tiedostossasi, luo sarake nimeltä icon. Voit jättää sen tyhjäksi jos et halua piirtää kuvaa joillain pisteillä. Kun sarakkeen nimi on ',
       code: 'icon',
-      description2: ' kepler.gl luo automaattisesti kuvatason sinua varten.',
+      description2: ' Napkin-Visual luo automaattisesti kuvatason sinua varten.',
       example: 'Esimerkki:',
       icons: 'Kuvat'
     },
@@ -365,7 +366,7 @@ export default {
     },
     loadStorageMap: {
       back: 'Takaisin',
-      goToPage: 'Mene Kepler.gl {displayName} sivullesi',
+      goToPage: 'Mene Napkin-Visual {displayName} sivullesi',
       storageMaps: 'Tallennus / Kartat',
       noSavedMaps: 'Ei tallennettuja karttoja vielä'
     }
@@ -422,8 +423,7 @@ export default {
     chromeMessage:
       '*Chromen käyttäjä: Rajoita tiedostokokosi 250Mb:hen. Jos haluat suurempia tiedostoja, kokeile Safaria',
     disclaimer:
-      '*kepler.gl on client-side sovellus, data pysyy vain selaimessasi...' +
-      'Tietoja ei lähetetä palvelimelle.',
+      '',
     configUploadMessage:
       'Lisää {fileFormatNames} tai tallennettu kartta **Json**. Lue lisää [**tuetuista formaateista**]',
     browseFiles: 'selaa tiedostojasi',

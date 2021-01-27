@@ -34,7 +34,7 @@ const ModalContentWrapper = styled.div`
   max-height: 85vh;
   padding: 24px 72px 40px;
   position: relative;
-  top: 92px;
+  top: 60px;
   left: 0;
   right: 0;
   margin: 0 auto;
@@ -78,6 +78,7 @@ const StyledModalFooter = styled.div`
   flex-direction: column;
   justify-content: flex-end;
   padding-top: 24px;
+  padding-bottom: 24px;
   ${media.portable`
     padding-top: 24px;
   `};

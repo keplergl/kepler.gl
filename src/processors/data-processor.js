@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {csvParseRows, csvFormatRows} from 'd3-dsv';
+import {dsvFormat, csvFormatRows} from 'd3-dsv';
 import {range} from 'd3-array';
 import {console as globalConsole} from 'global/window';
 import assert from 'assert';
@@ -108,7 +108,12 @@ export function processCsvData(rawData, header) {
   let headerRow;
 
   if (typeof rawData === 'string') {
-    const parsedRows = csvParseRows(rawData);
+    //const parsedRows = csvParseRows(rawData);
+    let del = getDelimiter(rawData);
+    del = del.length > 0 ? del[0] : "\,";
+
+    const dsv = dsvFormat(del);
+    const parsedRows = dsv.parseRows(rawData);
 
     if (!Array.isArray(parsedRows) || parsedRows.length < 2) {
       // looks like an empty file, throw error to be catch
@@ -143,6 +148,24 @@ export function processCsvData(rawData, header) {
   const parsedRows = parseRowsByFields(rows, fields);
 
   return {fields, rows: parsedRows};
+}
+
+function getDelimiter(data) {
+  let delimiters = ["\,", "\;", "\t"];
+
+  return delimiters.filter(function(delimiter) {
+    let cache = -1;
+
+    return data.split("\n").every(function(line) {
+      if(!line) { return true; }
+
+      let length = line.split(delimiter).length;
+      if(cache < 0) {
+        cache = length;
+      }
+      return cache === length && length > 1;
+    });
+  });
 }
 
 /**

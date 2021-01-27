@@ -35,7 +35,7 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
     <html>
       <head>
         <meta charset="UTF-8"/>
-        <title>Kepler.gl embedded map</title>
+        <title>Napkin-Visual embedded map</title>
 
         <!--Uber Font-->
         <link rel="stylesheet" href="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css">
@@ -44,22 +44,22 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
         <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css" rel="stylesheet">
 
         <!-— facebook open graph tags -->
-        <meta property="og:url" content="http://kepler.gl/" />
-        <meta property="og:title" content="Large-scale WebGL-powered Geospatial Data Visualization Tool" />
-        <meta property="og:description" content="Kepler.gl is a powerful web-based geospatial data analysis tool. Built on a high performance rendering engine and designed for large-scale data sets." />
-        <meta property="og:site_name" content="kepler.gl" />
-        <meta property="og:image" content="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/kepler.gl-meta-tag.png" />
+        <meta property="og:url" content="https://napkingis.com" />
+        <meta property="og:title" content="Powerful and user-friendly GIS visual analysis tool" />
+        <meta property="og:description" content="Napkin Visual is a powerful and intuitive spatial analysis tool that enables you to seamlessly create and deploy beautiful visualizations with little to no effort." />
+        <meta property="og:site_name" content="Napkin-Visual" />
+        <meta property="og:image" content="https://napkingis.com/assets/jumbotron.png" />
         <meta property="og:image:type" content="image/png" />
         <meta property="og:image:width" content="800" />
         <meta property="og:image:height" content="800" />
 
         <!-— twitter card tags -->
         <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:site" content="@uber">
-        <meta name="twitter:creator" content="@uber">
-        <meta name="twitter:title" content="Large-scale WebGL-powered Geospatial Data Visualization Tool">
-        <meta name="twitter:description" content="Kepler.gl is a powerful web-based geospatial data analysis tool. Built on a high performance rendering engine and designed for large-scale data sets.">
-        <meta name="twitter:image" content="https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/kepler.gl-meta-tag.png" />
+        <meta name="twitter:site" content="@napkin">
+        <meta name="twitter:creator" content="@napkin">
+        <meta name="twitter:title" content="Powerful and user-friendly GIS visual analysis tool">
+        <meta name="twitter:description" content="Napkin Visual is a powerful and intuitive spatial analysis tool that enables you to seamlessly create and deploy beautiful visualizations with little to no effort.">
+        <meta name="twitter:image" content="https://napkingis.com/assets/jumbotron.png" />
 
         <!-- Load React/Redux -->
         <script src="https://unpkg.com/react@16.8.4/umd/react.production.min.js" crossorigin></script>
@@ -83,31 +83,11 @@ export const exportMapToHTML = (options, version = KEPLER_GL_VERSION) => {
           const MAPBOX_TOKEN = '${options.mapboxApiAccessToken || 'PROVIDE_MAPBOX_TOKEN'}';
           const WARNING_MESSAGE = 'Please Provide a Mapbox Token in order to use Kepler.gl. Edit this file and fill out MAPBOX_TOKEN with your access key';
         </script>
-
-        <!-- GA: Delete this as you wish, However to pat ourselves on the back, we only track anonymous pageview to understand how many people are using kepler.gl. -->
-        <script>
-          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-          })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-          ga('create', 'UA-64694404-19', {
-            'storage': 'none',
-            'clientId': localStorage.getItem('ga:clientId')
-          });
-          ga(function(tracker) {
-              localStorage.setItem('ga:clientId', tracker.get('clientId'));
-          });
-          ga('set', 'checkProtocolTask', null); // Disable file protocol checking.
-          ga('set', 'checkStorageTask', null); // Disable cookie storage checking.
-          ga('set', 'historyImportTask', null); // Disable history checking (requires reading from cookies).
-          ga('set', 'page', 'keplergl-html');
-          ga('send', 'pageview');
-        </script>
       </head>
       <body>
         <!-- We will put our React component inside this div. -->
         <div id="app">
-          <!-- Kepler.gl map will be placed here-->
+          <!-- map will be placed here-->
         </div>
 
         <!-- Load our React component. -->

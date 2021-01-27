@@ -159,7 +159,7 @@ export default function SidePanelFactory(
     _onClickSaveAsToStorage = () => {
       // add (copy) to file name
       this.props.visStateActions.setMapInfo({
-        title: `${this.props.mapInfo.title || 'Kepler.gl'} (Copy)`
+        title: `${this.props.mapInfo.title || 'Napkin-Visual'} (Copy)`
       });
 
       this.props.uiStateActions.toggleModal(SAVE_MAP_ID);

@@ -41,7 +41,8 @@ import {
   Legend,
   Polygon,
   Rectangle,
-  Split
+  Split,
+  Fullscreen
 } from 'components/common/icons';
 import VerticalToolbar from 'components/common/vertical-toolbar';
 import ToolbarItem from 'components/common/toolbar-item';
@@ -227,6 +228,61 @@ export function MapLegendPanelFactory() {
 
   MapLegendPanel.displayName = 'MapControlPanel';
   return MapLegendPanel;
+}
+
+FullscreenButtonFactory.deps = [];
+export function FullscreenButtonFactory() {
+  let isFullscreen = false;
+
+  const FullscreenButton = ({
+    isActive,
+    isExport
+  }) =>
+    !isExport ? (
+      (<MapControlButton
+        key={2}
+        data-tip
+        data-for="action-fullscreen"
+        className="map-control-button fullscreen-map"
+        onClick={e => {
+          e.preventDefault();
+          let elem = document.documentElement;
+
+          if(isFullscreen) {
+            if (document.exitFullscreen) {
+              document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+              document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+              document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+              document.msExitFullscreen();
+            }
+          }else{
+            if (elem.requestFullscreen) {
+              elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+              elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+              elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+              elem.msRequestFullscreen();
+            }
+          }
+
+          isFullscreen = !isFullscreen;
+        }}
+      >
+        <Fullscreen height="18px" />
+        <MapControlTooltip
+          id="action-fullscreen"
+          message={'tooltip.fullscreen'}
+        />
+      </MapControlButton>)
+    ) : null;
+
+  FullscreenButton.displayName = 'FullscreenButton';
+  return FullscreenButton;
 }
 
 SplitMapButtonFactory.deps = [];
@@ -418,10 +474,11 @@ const LegendLogo = <KeplerGlLogo version={false} appName="kepler.gl" />;
 MapControlFactory.deps = [
   MapDrawPanelFactory,
   Toggle3dButtonFactory,
+  FullscreenButtonFactory,
   SplitMapButtonFactory,
   MapLegendPanelFactory
 ];
-function MapControlFactory(MapDrawPanel, Toggle3dButton, SplitMapButton, MapLegendPanel) {
+function MapControlFactory(MapDrawPanel, Toggle3dButton, FullscreenButton, SplitMapButton, MapLegendPanel) {
   class MapControl extends Component {
     static propTypes = {
       datasets: PropTypes.object.isRequired,
@@ -503,6 +560,13 @@ function MapControlFactory(MapDrawPanel, Toggle3dButton, SplitMapButton, MapLege
 
       return (
         <StyledMapControl className="map-control" top={top}>
+          {/* fullscreen Map */}
+          {isExport !== true ? (
+            <ActionPanel className="fullscreen-map" key={0}>
+              <FullscreenButton />
+            </ActionPanel>
+          ) : null}
+
           {/* Split Map */}
           {splitMap.show && readOnly !== true ? (
             <ActionPanel className="split-map" key={0}>

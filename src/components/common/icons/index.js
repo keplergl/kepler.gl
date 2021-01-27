@@ -80,6 +80,7 @@ export {default as SquareSelect} from './square-select';
 export {default as Settings} from './settings';
 export {default as Search} from './search';
 export {default as Split} from './split';
+export {default as Fullscreen} from './fullscreen';
 export {default as Table} from './table';
 export {default as Trash} from './trash';
 export {default as Upload} from './upload';

@@ -192,6 +192,7 @@ export default {
     removeLayer: 'Elimina capa',
     layerSettings: 'Configuració de capa',
     closePanel: 'Tanca panel actual',
+    fullscreen: 'Commuta la pantalla completa',
     switchToDualView: 'Canvia a la vista de mapa dual',
     showLegend: 'mostra llegenda',
     disable3DMap: 'Desactiva mapa 3D',
@@ -282,7 +283,7 @@ export default {
       publishSubtitle5: 'Per utilitzar un estil privat, enganxa el teu',
       publishSubtitle6: "token d'accés",
       publishSubtitle7:
-        'aquí. *kepler.gl és una aplicació client, les dades romanen al teu navegador..',
+        'aquí.',
       exampleToken: 'p.ex. pk.abcdefg.xxxxxx',
       pasteTitle: "2. Enganxa la URL de l'estil",
       pasteSubtitle1: 'Què és un',
@@ -295,9 +296,9 @@ export default {
       cloudTitle: 'Emmagatzematge al núvol',
       cloudSubtitle: 'Accedeix i carrega dades de mapa al teu emmagatzematge al núvol personal',
       shareDisclaimer:
-        'kepler.gl desarà les dades del mapa al teu emmagatzematge al núvol personal, només qui tingui la URL podrà accedir al mapa i a les dades . ' +
+        'Napkin-Visual desarà les dades del mapa al teu emmagatzematge al núvol personal, només qui tingui la URL podrà accedir al mapa i a les dades . ' +
         "Pots editar/esborrar l'arxiu de dades en el teu compte al núvol en qualsevol moment.",
-      gotoPage: 'Ves a la pàgina de {currentProvider} de Kepler.gl'
+      gotoPage: 'Ves a la pàgina de {currentProvider} de Napkin-Visual'
     },
     statusPanel: {
       mapUploading: 'Carregar un mapa',
@@ -330,9 +331,9 @@ export default {
       json: {
         configTitle: 'Configuració del mapa',
         configDisclaimer:
-          "La configuració del mapa s'inclourà a l'arxiu Json. Si utilitzes kepler.gl a la teva pròpia app pots copiar aquesta configuració i passar-la a  ",
+          "La configuració del mapa s'inclourà a l'arxiu Json. Si utilitzes Napkin-Visual a la teva pròpia app pots copiar aquesta configuració i passar-la a  ",
         selection:
-          'Exporta les dades del mapa i la configuració en un sol arxiu Json. Més endavant pots obrir aquest mateix mapa carregant aquest mateix arxiu a kepler.gl.',
+          'Exporta les dades del mapa i la configuració en un sol arxiu Json. Més endavant pots obrir aquest mateix mapa carregant aquest mateix arxiu a Napkin-Visual.',
         disclaimer:
           "* La configuració del mapa es combina amb els conjunts de dades carregats. ‘dataId’ s'utilitza per lligar capes, filtres i suggeriments a un conjunt de dades específic. " +
           "Quan passis aquesta configuració a addDataToMap, assegura que l'identificador del conjunt de dades coincideixi amb els ‘dataId’ d'aquesta configuració."
@@ -359,7 +360,7 @@ export default {
       description1:
         "En el teu CSV crea una columna i posa-hi el nom de la icona que vols dibuixar. Pots deixar la cel·la buida quan no vulguis que es mostri per a certs punts. Quan la columna s'anomena",
       code: 'icon',
-      description2: " kepler.gl automàticament crearà una capa d'icona.",
+      description2: " Napkin-Visual automàticament crearà una capa d'icona.",
       example: 'Exemple:',
       icons: 'Icones'
     },
@@ -373,7 +374,7 @@ export default {
     },
     loadStorageMap: {
       back: 'Enrere',
-      goToPage: 'Ves a la pàgina {displayName} de Kepler.gl',
+      goToPage: 'Ves a la pàgina {displayName} de Napkin-Visual',
       storageMaps: 'Emmagatzematge / Mapes',
       noSavedMaps: 'Cap mapa desat encara'
     }
@@ -432,8 +433,7 @@ export default {
     chromeMessage:
       '*usuari de Chrome: la mida màxima són 250mb, si has de carrgar un arxiu més gran fes servir Safari',
     disclaimer:
-      '*kepler.gl és una aplicació a la banda client que no es recolza en cap servidor. Les dades només existeixen a la teva màquina/navegador. ' +
-      "No s'envien dades ni mapes a cap servidor.",
+      '',
     configUploadMessage:
       'Carrega {fileFormatNames} o un mapa desat en **Json**. Més informació sobre [**supported file formats**]',
     browseFiles: 'navega pels teus arxius',

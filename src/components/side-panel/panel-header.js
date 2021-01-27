@@ -256,7 +256,7 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
           id: 'save',
           iconComponent: Save,
           onClick: () => {},
-          label: 'Share',
+          label: 'Export',
           dropdownComponent: SaveExportDropdown
         }
       ]

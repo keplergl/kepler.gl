@@ -192,6 +192,7 @@ export default {
     removeLayer: 'Remove layer',
     layerSettings: 'Layer settings',
     closePanel: 'Close current panel',
+    fullscreen: 'Toggle fullscreen',
     switchToDualView: 'Switch to dual map view',
     showLegend: 'show legend',
     disable3DMap: 'Disable 3D Map',
@@ -282,7 +283,7 @@ export default {
       publishSubtitle5: 'To use private style, paste your',
       publishSubtitle6: 'access token',
       publishSubtitle7:
-        'here. *kepler.gl is a client-side application, data stays in your browser..',
+        'here.',
       exampleToken: 'e.g. pk.abcdefg.xxxxxx',
       pasteTitle: '2. Paste style url',
       pasteSubtitle1: 'What is a',
@@ -295,9 +296,9 @@ export default {
       cloudTitle: 'Cloud storage',
       cloudSubtitle: 'Login and upload map data to your personal cloud storage',
       shareDisclaimer:
-        'kepler.gl will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' +
+        'Napkin-Visual will save your map data to your personal cloud storage, only people with the URL can access your map and data. ' +
         'You can edit/delete the data file in your cloud account anytime.',
-      gotoPage: 'Go to your Kepler.gl {currentProvider} page'
+      gotoPage: 'Go to your Napkin-Visual {currentProvider} page'
     },
     statusPanel: {
       mapUploading: 'Map Uploading',
@@ -329,9 +330,9 @@ export default {
       json: {
         configTitle: 'Map Config',
         configDisclaimer:
-          'Map config will be included in the Json file. If you are using kepler.gl in your own app. You can copy this config and pass it to ',
+          'Map config will be included in the Json file. If you are using Napkin-Visual in your own app. You can copy this config and pass it to ',
         selection:
-          'Export current map data and config into a single Json file. You can later open the same map by uploading this file to kepler.gl.',
+          'Export current map data and config into a single Json file. You can later open the same map by uploading this file to Napkin-Visual.',
         disclaimer:
           '* Map config is coupled with loaded datasets. ‘dataId’ is used to bind layers, filters, and tooltips to a specific dataset. ' +
           'When passing this config to addDataToMap, make sure the dataset id matches the dataId/s in this config.'
@@ -358,7 +359,7 @@ export default {
       description1:
         'In your csv, create a column, put the name of the icon you want to draw in it. You can leave the cell empty if you do not want the icon to show for some points. When the column is named',
       code: 'icon',
-      description2: ' kepler.gl will automatically create a icon layer for you.',
+      description2: ' Napkin-Visual will automatically create a icon layer for you.',
       example: 'Example:',
       icons: 'Icons'
     },
@@ -372,7 +373,7 @@ export default {
     },
     loadStorageMap: {
       back: 'Back',
-      goToPage: 'Go to your Kepler.gl {displayName} page',
+      goToPage: 'Go to your Napkin-Visual {displayName} page',
       storageMaps: 'Storage / Maps',
       noSavedMaps: 'No saved maps yet'
     }
@@ -432,8 +433,7 @@ export default {
     chromeMessage:
       '*Chrome user: Limit file size to 250mb, if need to upload larger file, try Safari',
     disclaimer:
-      '*kepler.gl is a client-side application with no server backend. Data lives only on your machine/browser. ' +
-      'No information or map data is sent to any server.',
+      '',
     configUploadMessage:
       'Upload {fileFormatNames} or saved map **Json**. Read more about [**supported file formats**]',
     browseFiles: 'browse your files',

@@ -275,7 +275,7 @@ export default {
       publishSubtitle5: 'Para utilizar estilo privado, cole a sua',
       publishSubtitle6: 'chave de acesso',
       publishSubtitle7:
-        'aqui. *kepler.gl é uma aplicação client-side, os dados permanecem no seu browser..',
+        'aqui.',
       exampleToken: 'e.g. pk.abcdefg.xxxxxx',
       pasteTitle: '2. Cole a url do seu estilo',
       pasteSubtitle1: 'O que é uma',
@@ -288,9 +288,9 @@ export default {
       cloudTitle: 'Armazenamento Cloud',
       cloudSubtitle: 'Conecte-se e envie os dados do mapa para o seu armazenamento cloud pessoal',
       shareDisclaimer:
-        'kepler.gl irá salvar os dados do mapa em seu armazenamento cloud pessoal, apenas pessoas com a URL podem acessar o seu mapa e dados. ' +
+        'Napkin-Visual irá salvar os dados do mapa em seu armazenamento cloud pessoal, apenas pessoas com a URL podem acessar o seu mapa e dados. ' +
         'Você pode editar/deletar o arquivo de dados na sua conta de armazenamento cloud em qualquer momento.',
-      gotoPage: 'Vá para a sua página Kepler.gl {currentProvider}'
+      gotoPage: 'Vá para a sua página Napkin-Visual {currentProvider}'
     },
     statusPanel: {
       mapUploading: 'Enviando Mapa',
@@ -323,9 +323,9 @@ export default {
       json: {
         configTitle: 'Configurações do Mapa',
         configDisclaimer:
-          'A configuração do mapa será incluida no arquivo Json. Se você está utilizando kepler.gl no seu próprio mapa. Você pode copiar essa configuração e passar para ele ',
+          'A configuração do mapa será incluida no arquivo Json. Se você está utilizando Napkin-Visual no seu próprio mapa. Você pode copiar essa configuração e passar para ele ',
         selection:
-          'Exportar atuais dados e configurações do mapa em um único arquivo Json. Você pode mais tarde abrir o mesmo mapa enviando esse arquivo para o kepler.gl.',
+          'Exportar atuais dados e configurações do mapa em um único arquivo Json. Você pode mais tarde abrir o mesmo mapa enviando esse arquivo para o Napkin-Visual.',
         disclaimer:
           '* Configuração do mapa é aclopado com conjunto de dados carregados. ‘dataId’ é utilizado para ligar as camadas, filtros, e dicas de contextos a conjunto de dados expecíficos. ' +
           'Quando passando essa configuração para addDataToMap, tenha certeza de que o id do conjunto de dados combina com o(s) dataId/s nessa configuração.'
@@ -352,7 +352,7 @@ export default {
       description1:
         'No seu csv, crie uma coluna, coloque o nome do ícone que você quer desenhar nele. Você pode deixar o campo vazio se você não desejar que o ícone apareça para alguns pontos. Quando a coluna tem nome',
       code: 'icon',
-      description2: ' kepler.gl irá automaticamente criar uma camada de ícone para você.',
+      description2: ' Napkin-Visual irá automaticamente criar uma camada de ícone para você.',
       example: 'Exemplos:',
       icons: 'Ícones'
     },
@@ -366,7 +366,7 @@ export default {
     },
     loadStorageMap: {
       back: 'Voltar',
-      goToPage: 'Vá para a sua página {displayName} do Kepler.gl',
+      goToPage: 'Vá para a sua página {displayName} do Napkin-Visual',
       storageMaps: 'Armazenamento / Mapas',
       noSavedMaps: 'Nenhum mapa salvo'
     }
@@ -423,8 +423,7 @@ export default {
     chromeMessage:
       '*Usuários do chrome: O limite de tamanho de arquivo é 250mb, se você precisa fazer upload de arquivos maiores tente o Safari',
     disclaimer:
-      '*kepler.gl é uma aplicação client-side, sem um servidor backend. Os dados ficam apenas na sua máquina/browser. ' +
-      'Nenhuma informação ou dados de mapa é enviado para qualquer server.',
+      '',
     configUploadMessage:
       'Envie {fileFormatNames} ou mapas salvos **Json**. Leia mais sobre [**tipos de arquivos suportados**]',
     browseFiles: 'procure seus arquivos',

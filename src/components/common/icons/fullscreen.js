@@ -19,41 +19,25 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import styled from 'styled-components';
-import {connect} from 'react-redux';
+import PropTypes from 'prop-types';
+import Base from './base';
 
-const GlobalStyleDiv = styled.div`
-  font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
-  font-weight: 400;
-  font-size: 0.875em;
-  line-height: 1.71429;
+export default class Fullscreen extends Component {
+  static propTypes = {
+    /** Set the height of the icon, ex. '16px' */
+    height: PropTypes.string
+  };
 
-  *,
-  *:before,
-  *:after {
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-  }
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-fullscreen'
+  };
 
-  ul {
-    margin: 0;
-    padding: 0;
-  }
-
-  li {
-    margin: 0;
-  }
-
-  a {
-    text-decoration: none;
-  }
-`;
-
-class App extends Component {
   render() {
-    return <GlobalStyleDiv className="kg-web-content">{this.props.children}</GlobalStyleDiv>;
+    return (
+      <Base {...this.props}>
+        <path d="M 18.667969 37.332031 L 13.332031 37.332031 L 13.332031 50.667969 L 26.667969 50.667969 L 26.667969 45.332031 L 18.667969 45.332031 Z M 13.332031 26.667969 L 18.667969 26.667969 L 18.667969 18.667969 L 26.667969 18.667969 L 26.667969 13.332031 L 13.332031 13.332031 Z M 45.332031 45.332031 L 37.332031 45.332031 L 37.332031 50.667969 L 50.667969 50.667969 L 50.667969 37.332031 L 45.332031 37.332031 Z M 37.332031 13.332031 L 37.332031 18.667969 L 45.332031 18.667969 L 45.332031 26.667969 L 50.667969 26.667969 L 50.667969 13.332031 Z M 37.332031 13.332031 " />
+      </Base>
+    );
   }
 }
-
-export default connect(state => state)(App);

@@ -193,6 +193,7 @@ export default {
     removeLayer: 'Eliminar capa',
     layerSettings: 'Configuración de capa',
     closePanel: 'Cerrar el panel actual',
+    fullscreen: 'Alternar pantalla completa',
     switchToDualView: 'Cambiar a la vista de mapa dual',
     showLegend: 'Mostrar leyenda',
     disable3DMap: 'Desactivar mapa 3D',
@@ -283,7 +284,7 @@ export default {
       publishSubtitle5: 'Para utilizar un estilo privado, engancha tu',
       publishSubtitle6: 'token de acceso',
       publishSubtitle7:
-        'aquí. *kepler.gl es una aplicación cliente, los datos quedan en tu navegador..',
+        'aquí.',
       exampleToken: 'p.e. pk.abcdefg.xxxxxx',
       pasteTitle: '2. Engancha el enlace del estilo',
       pasteSubtitle1: 'Qué es un',
@@ -296,9 +297,9 @@ export default {
       cloudTitle: 'Almacenage en la nube',
       cloudSubtitle: 'Acceder y cargar datos del mapa a tu almacenage a la nube personal',
       shareDisclaimer:
-        'kepler.gl guardará los datos del mapa en el almacenage de tu nube personal, sólo quien tenga el enlace podra acceder al mapa y a los datos . ' +
+        'Napkin-Visual guardará los datos del mapa en el almacenage de tu nube personal, sólo quien tenga el enlace podra acceder al mapa y a los datos . ' +
         'Puedes editar/borrar el archivo de datos en tu cuenta en la nube en cualquier momento.',
-      gotoPage: 'Ves a la página de {currentProvider} de Kepler.gl'
+      gotoPage: 'Ves a la página de {currentProvider} de Napkin-Visual'
     },
     statusPanel: {
       mapUploading: 'Cargar un mapa',
@@ -331,9 +332,9 @@ export default {
       json: {
         configTitle: 'Configuración del mapa',
         configDisclaimer:
-          'La configuración del mapa será incluida en el archivo Json. Si utilitzas kepler.gl en tu propia app puedes copiar esta configuración y pasarla a  ',
+          'La configuración del mapa será incluida en el archivo Json. Si utilitzas Napkin-Visual en tu propia app puedes copiar esta configuración y pasarla a  ',
         selection:
-          'Exportar los datos del mapa y la configuración en un solo archivo Json. Posteriormente puedes abrir este mismo mapa cargando este mismo archivo a kepler.gl.',
+          'Exportar los datos del mapa y la configuración en un solo archivo Json. Posteriormente puedes abrir este mismo mapa cargando este mismo archivo a Napkin-Visual.',
         disclaimer:
           '* La configuración del mapa se combina con los conjuntos de datos cargados. ‘dataId’ se utiliza para vincular capas, filtros y sugerencias a un conjunto de datos específico. ' +
           'Cuando pases esta configuración a addDataToMap, asegura que el identificador del conjunto de datos coincida con los ‘dataId’ de esta configuración.'
@@ -360,7 +361,7 @@ export default {
       description1:
         'En tu CSV crea una columna y pon el nombre del ícono que quieres dibujar. Puedes dejar la celda vacía cuando no quieras que se muestre para ciertos puntos. Cuando la columna se llama',
       code: 'ícono',
-      description2: ' kepler.gl automáticamente creará una capa de ícono.',
+      description2: ' Napkin-Visual automáticamente creará una capa de ícono.',
       example: 'Ejemplo:',
       icons: 'Iconos'
     },
@@ -374,7 +375,7 @@ export default {
     },
     loadStorageMap: {
       back: 'Atrás',
-      goToPage: 'Ves a la página {displayName} de Kepler.gl',
+      goToPage: 'Ves a la página {displayName} de Napkin-Visual',
       storageMaps: 'Almancenage / Mapas',
       noSavedMaps: 'No hay ningún mapa guardado todavía'
     }
@@ -433,8 +434,7 @@ export default {
     chromeMessage:
       '*usuario de Chrome: la medida máxima son 250mb, si debes cargar un archivo más grande utiliza Safari',
     disclaimer:
-      '*kepler.gl es una aplicación al lado cliente que no utiliza ningún servidor. Los datos sólo existen en tu máquina/navegador. ' +
-      'No se envian datos ni mapas a ningún servidor.',
+      '',
     configUploadMessage:
       'Cargar {fileFormatNames} o un mapa guardado en **Json**. Más información sobre [**supported file formats**]',
     browseFiles: 'navega por tus archivos',

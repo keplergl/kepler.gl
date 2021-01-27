@@ -48,7 +48,7 @@ const LogoWrapper = styled.div`
   align-items: flex-start;
 `;
 
-const LogoSvgWrapper = styled.div`
+/*const LogoSvgWrapper = styled.div`
   margin-top: 3px;
 `;
 
@@ -59,13 +59,10 @@ const LogoSvg = () => (
       <rect fill="#1FBAD6" x="5" y="0" width="10" height="10" />
     </g>
   </svg>
-);
+);*/
 
 const KeplerGlLogo = ({appName, appWebsite = KEPLER_GL_WEBSITE, version}) => (
   <LogoWrapper className="side-panel-logo">
-    <LogoSvgWrapper>
-      <LogoSvg />
-    </LogoSvgWrapper>
     <LogoTitle className="logo__title">
       <LogoName className="logo__name">
         <a className="logo__link" target="_blank" rel="noopener noreferrer" href={appWebsite}>
