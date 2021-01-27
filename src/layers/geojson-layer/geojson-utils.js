@@ -74,13 +74,16 @@ export function getGeojsonDataMaps(allData, getFeature) {
     const feature = parseGeoJsonRawFeature(getFeature(allData[index]));
 
     if (feature && feature.geometry && acceptableTypes.includes(feature.geometry.type)) {
-      // store index of the data in feature properties
-      feature.properties = {
-        ...(feature.properties || {}),
-        index
+      const cleaned = {
+        ...feature,
+        // store index of the data in feature properties
+        properties: {
+          ...feature.properties,
+          index
+        }
       };
 
-      dataToFeature[index] = feature;
+      dataToFeature[index] = cleaned;
     } else {
       dataToFeature[index] = null;
     }
