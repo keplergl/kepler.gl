@@ -49,7 +49,8 @@ import {
   geoJsonTripFilterProps,
   expectedDataToFeature,
   updatedGeoJsonLayer,
-  fields as geojsonFields
+  fields as geojsonFields,
+  rows as geojsonRows
 } from 'test/fixtures/geojson';
 
 import tripGeojson, {timeStampDomain, tripDataInfo} from 'test/fixtures/trip-geojson';
@@ -624,6 +625,40 @@ test('visStateReducer -> layerDataIdChangeUpdater', t => {
     [1, 2, 3],
     'should update new layer color'
   );
+
+  t.end();
+});
+
+test('visStateReducer -> layerDataIdChangeUpdater -> geojson', t => {
+  const initialState = CloneDeep(StateWFilesFiltersLayerColor).visState;
+  const nextState = reducer(
+    initialState,
+    // add another geojson
+    VisStateActions.updateVisData([
+      {
+        info: {id: 'geojson2', label: 'Some Geojson'},
+        data: {fields: geojsonFields, rows: geojsonRows.slice(0, 3)}
+      }
+    ])
+  );
+
+  // find geojson layer
+  const index = nextState.layers.findIndex(l => l.type === 'geojson');
+  const geojsonLayer = nextState.layers[index];
+  const id = geojsonLayer.id;
+  // change dataId
+  const nextState1 = reducer(
+    nextState,
+    VisStateActions.layerConfigChange(geojsonLayer, {
+      dataId: 'geojson2'
+    })
+  );
+
+  const neextGeojsonLayer = nextState1.layers.find(l => l.id === id);
+
+  t.equal(neextGeojsonLayer.config.dataId, 'geojson2', 'should update layer dataId');
+  t.equal(neextGeojsonLayer.dataToFeature.length, 3, 'should calculate dataToFeature');
+  t.equal(nextState1.layerData[index].data.length, 3, 'should calculate layerData');
 
   t.end();
 });
