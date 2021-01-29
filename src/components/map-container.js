@@ -503,7 +503,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         transformRequest
       };
 
-      const isEdit = mapControls.mapDraw.active;
+      const isEdit = mapControls.mapDraw ? mapControls.mapDraw.active : false;
       const hasGeocoderLayer = layers.find(l => l.id === GEOCODER_LAYER_ID);
 
       return (
