@@ -25,14 +25,15 @@ import Processors from 'processors';
 import {FlyToInterpolator} from '@deck.gl/core';
 import KeplerGlSchema from 'schemas';
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
+import {isString} from 'lodash';
 
 import Geocoder from './geocoder/geocoder';
 import {
   GEOCODER_DATASET_NAME,
   GEOCODER_LAYER_ID,
   GEOCODER_GEO_OFFSET,
-  GEOCODER_ICON_COLOR,
-  GEOCODER_ICON_SIZE
+  GEOCODER_ICON_SIZE,
+  GEOCODER_ICON_COLOR
 } from 'constants/default-settings';
 
 const ICON_LAYER = {
@@ -74,13 +75,13 @@ const StyledGeocoderPanel = styled.div`
   z-index: 100;
 `;
 
-function generateGeocoderDataset(lat, lon, text) {
+export function generateGeocoderDataset(lat, lon, text) {
   return {
     data: Processors.processRowObject([
       {
         lt: lat,
         ln: lon,
-        icon: 'place',
+        icon: 'crosshairs-alt',
         text
       }
     ]),
@@ -93,8 +94,8 @@ function generateGeocoderDataset(lat, lon, text) {
   };
 }
 
-function isValid(key) {
-  return /pk\..*\..*/.test(key);
+export function isValidMapboxKey(key) {
+  return isString(key) ? /pk\..*\..*/.test(key) : false;
 }
 
 export default function GeocoderPanelFactory() {
@@ -106,6 +107,7 @@ export default function GeocoderPanelFactory() {
       updateVisData: PropTypes.func.isRequired,
       removeDataset: PropTypes.func.isRequired,
       updateMap: PropTypes.func.isRequired,
+      limitSearch: PropTypes.bool,
 
       transitionDuration: PropTypes.number,
       width: PropTypes.number
@@ -163,19 +165,21 @@ export default function GeocoderPanelFactory() {
     };
 
     render() {
-      const {isGeocoderEnabled, mapboxApiAccessToken, width} = this.props;
+      const {isGeocoderEnabled, mapboxApiAccessToken, mapState, width, limitSearch} = this.props;
       return (
         <StyledGeocoderPanel
           className="geocoder-panel"
           width={width}
           style={{display: isGeocoderEnabled ? 'block' : 'none'}}
         >
-          {isValid(mapboxApiAccessToken) && (
+          {isValidMapboxKey(mapboxApiAccessToken) && (
             <Geocoder
               mapboxApiAccessToken={mapboxApiAccessToken}
               onSelected={this.onSelected}
               onDeleteMarker={this.removeMarker}
               width={width}
+              mapState={mapState}
+              limitSearch={limitSearch}
             />
           )}
         </StyledGeocoderPanel>
@@ -184,7 +188,8 @@ export default function GeocoderPanelFactory() {
   }
 
   GeocoderPanel.defaultProps = {
-    transitionDuration: 3000
+    transitionDuration: 3000,
+    limitSearch: false
   };
 
   return GeocoderPanel;

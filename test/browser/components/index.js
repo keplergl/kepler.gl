@@ -31,6 +31,8 @@ import './common';
 import './editor';
 import './map-container-test';
 import './geocoder-panel-test';
+import './geocoder-test';
 import './tooltip-config-test';
+import './geocoder-config-test';
 import './bottom-widget-test';
 import './plot-container-test';

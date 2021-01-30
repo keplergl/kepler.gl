@@ -442,7 +442,8 @@ export default {
     or: 'or'
   },
   geocoder: {
-    title: 'Enter an address or coordinates, ex 37.79,-122.40'
+    title: 'Enter an address or coordinates, ex 37.79,-122.40',
+    limit: 'Limit Search to Viewport'
   },
   fieldSelector: {
     clearAll: 'Clear All',

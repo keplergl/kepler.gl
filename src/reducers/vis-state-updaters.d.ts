@@ -254,6 +254,9 @@ export type TooltipInfo = BaseInteraction & {
 };
 export type Geocoder = BaseInteraction & {
   position: number[] | null;
+  config: {
+    limitSearch: boolean;
+  };
 };
 export type Brush = BaseInteraction & {
   config: {

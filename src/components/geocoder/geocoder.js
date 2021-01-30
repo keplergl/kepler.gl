@@ -27,6 +27,7 @@ import {WebMercatorViewport} from 'viewport-mercator-project';
 import KeyEvent from 'constants/keyevent';
 import {Input} from 'components/common/styled-components';
 import {Search, Delete} from 'components/common/icons';
+import geoViewport from '@mapbox/geo-viewport';
 
 // matches only valid coordinates
 const COORDINATE_REGEX_STRING =
@@ -48,6 +49,17 @@ export const testForCoordinates = query => {
 
   return [isValid, Number(tokens[0]), Number(tokens[1])];
 };
+
+export const fixMeridian = bbox => {
+  const EDGE_MERIDIAN = 180;
+
+  if (bbox[0] < -EDGE_MERIDIAN) {
+    bbox[0] = -EDGE_MERIDIAN;
+  }
+  if (bbox[2] > EDGE_MERIDIAN) {
+    bbox[2] = EDGE_MERIDIAN;
+  }
+}
 
 const StyledContainer = styled.div`
   position: relative;
@@ -118,7 +130,9 @@ const GeoCoder = ({
   onDeleteMarker,
   transitionDuration,
   pointZoom,
+  mapState,
   width,
+  limitSearch,
   intl
 }) => {
   const [inputValue, setInputValue] = useState('');
@@ -134,6 +148,15 @@ const GeoCoder = ({
   const onChange = useCallback(
     event => {
       const queryString = event.target.value;
+      let bbox = null;
+      if (limitSearch) {
+        bbox = geoViewport.bounds([mapState.longitude, mapState.latitude], mapState.zoom, [
+          mapState.width,
+          mapState.height
+        ]);
+        fixMeridian(bbox);
+      }
+
       setInputValue(queryString);
       const [hasValidCoordinates, longitude, latitude] = testForCoordinates(queryString);
       if (hasValidCoordinates) {
@@ -142,8 +165,14 @@ const GeoCoder = ({
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(async () => {
           if (limit > 0 && Boolean(queryString)) {
+            const params = {
+              limit
+            };
+            if (limitSearch && bbox) {
+              params.bbox = bbox;
+            }
             try {
-              const response = await client.geocodeForward(queryString, {limit});
+              const response = await client.geocodeForward(queryString, params);
               if (response.entity.features) {
                 setShowResults(true);
                 setResults(response.entity.features);
@@ -157,7 +186,7 @@ const GeoCoder = ({
         }, timeout);
       }
     },
-    [client, limit, timeout, setResults, setShowResults]
+    [client, limit, timeout, setResults, setShowResults, limitSearch, mapState]
   );
 
   const onBlur = useCallback(() => {
@@ -252,7 +281,7 @@ const GeoCoder = ({
         ) : null}
       </div>
 
-      {showResults ? (
+      {results && showResults ? (
         <div className="geocoder-results">
           {results.map((item, index) => (
             <div

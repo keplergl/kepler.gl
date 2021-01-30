@@ -209,7 +209,8 @@ export const geoCoderPanelSelector = props => ({
   mapState: props.mapState,
   updateVisData: props.visStateActions.updateVisData,
   removeDataset: props.visStateActions.removeDataset,
-  updateMap: props.mapStateActions.updateMap
+  updateMap: props.mapStateActions.updateMap,
+  limitSearch: props.visState.interactionConfig.geocoder.config.limitSearch
 });
 
 export const notificationPanelSelector = props => ({

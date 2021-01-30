@@ -192,7 +192,8 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
       enabled: false
     },
     geocoder: {
-      enabled: false
+      enabled: false,
+      limitSearch: false
     }
   };
 
@@ -249,7 +250,8 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
       enabled: false
     },
     geocoder: {
-      enabled: false
+      enabled: false,
+      limitSearch: false
     }
   };
 
