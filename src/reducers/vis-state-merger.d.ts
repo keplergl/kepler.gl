@@ -70,6 +70,9 @@ export function validateColumn(
   allFields: Dataset['fields']
 ): boolean;
 
+export function createLayerFromConfig(state: VisState, layerConfig: any): Layer;
+export function serializeLayer(Layer): ParsedLayer
+
 export type VisStateMergers = Merger[];
 
 export const VIS_STATE_MERGERS: VisStateMergers;

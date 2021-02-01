@@ -105,3 +105,4 @@ export type LayerClassesType = {
 export const LayerClasses: LayerClassesType;
 
 export type OVERLAY_TYPE = {[key: string]: string}
+export const LAYER_ID_LENGTH: number;

@@ -231,15 +231,15 @@ export function addFilter(dataId) {
 /**
  * Add a new layer
  * @memberof visStateActions
- * @param props - new layer props
+ * @param config - new layer config
  * @returns action
  * @type {typeof import('./vis-state-actions').addLayer}
  * @public
  */
-export function addLayer(props) {
+export function addLayer(config) {
   return {
     type: ActionTypes.ADD_LAYER,
-    props
+    config
   };
 }
 

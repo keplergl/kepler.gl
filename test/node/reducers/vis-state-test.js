@@ -31,7 +31,7 @@ import * as MapStateActions from 'actions/map-state-actions';
 import reducer from 'reducers/vis-state';
 
 import {INITIAL_VIS_STATE, DEFAULT_ANIMATION_CONFIG} from 'reducers/vis-state-updaters';
-
+import {serializeLayer} from 'reducers/vis-state-merger';
 import {getDefaultInteraction} from 'utils/interaction-utils';
 import {getDefaultFilter} from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
@@ -992,51 +992,76 @@ test('#visStateReducer -> REMOVE_LAYER', t => {
 });
 
 test('#visStateReducer -> DUPLICATE_LAYER', t => {
-  const layer1 = new PointLayer({id: 'a'});
-  const oldState = {
-    layers: [layer1],
-    layerData: [{data: 1}],
-    layerOrder: [0],
-    hoverInfo: {
-      layer: {props: {id: 'a'}},
-      picked: true
-    },
-    clicked: {
-      layer: {props: {id: 'a'}},
-      picked: true
-    },
-    splitMaps: [],
-    animationConfig: DEFAULT_ANIMATION_CONFIG
+  const oldState = CloneDeep(StateWFilesFiltersLayerColor.visState);
+  // layers: ['point-0', 'geojson-1', 'hexagon-2'],
+  const layerToCopy = serializeLayer(oldState.layers[0]);
+  t.equal(oldState.layers.length, 3, 'should have 3 layers to begin');
+  t.deepEqual(oldState.layerOrder, [2, 0, 1], 'should have 3 layers to begin');
+
+  const nextState = reducer(oldState, VisStateActions.duplicateLayer(0));
+  t.equal(nextState.layers.length, 4, 'should add 1 layer');
+  const layerCopied = serializeLayer(nextState.layers[3]);
+
+  const expectedLayer = {
+    ...layerToCopy,
+    id: layerCopied.id,
+    config: {
+      ...layerToCopy.config,
+      label: 'Copy of gps data'
+    }
   };
 
-  const newReducer = reducer(oldState, VisStateActions.duplicateLayer(0));
-
+  t.deepEqual(layerCopied, expectedLayer, 'should copy layer config correctly');
   t.deepEqual(
-    newReducer,
-    {
-      layers: [
-        {
-          ...layer1,
-          id: newReducer.layers[0].id,
-          config: {...layer1.config, label: 'Copy of new layer'}
-        },
-        layer1
-      ],
-      layerData: [{data: 1}, {data: 1}],
-      layerOrder: [0, 1],
-      hoverInfo: {
-        layer: {props: {id: 'a'}},
-        picked: true
-      },
-      clicked: {
-        layer: {props: {id: 'a'}},
-        picked: true
-      },
-      splitMaps: [],
-      animationConfig: DEFAULT_ANIMATION_CONFIG
-    },
-    'should duplicate layer'
+    nextState.layerData[3].data,
+    nextState.layerData[0].data,
+    'should copy layer data correctly'
   );
+  t.deepEqual(
+    nextState.layerOrder,
+    [2, 3, 0, 1],
+    'should insert copied layer in front of older layer'
+  );
+
+  // copy again
+  const nextState1 = reducer(nextState, VisStateActions.duplicateLayer(0));
+  t.equal(nextState1.layers.length, 5, 'should add 1 layer');
+  const layerCopied1 = serializeLayer(nextState1.layers[4]);
+
+  const expectedLayer1 = {
+    ...layerToCopy,
+    id: layerCopied1.id,
+    config: {
+      ...layerToCopy.config,
+      label: 'Copy of gps data 1'
+    }
+  };
+  t.deepEqual(layerCopied1, expectedLayer1, 'should copy layer config correctly');
+  t.deepEqual(
+    nextState1.layerData[4].data,
+    nextState1.layerData[0].data,
+    'should copy layer data correctly'
+  );
+  t.deepEqual(
+    nextState1.layerOrder,
+    [2, 3, 4, 0, 1],
+    'should insert copied layer in front of older layer'
+  );
+
+  // copy again
+  const nextState2 = reducer(nextState1, VisStateActions.duplicateLayer(0));
+  t.equal(nextState2.layers.length, 6, 'should add 1 layer');
+  const layerCopied2 = serializeLayer(nextState2.layers[5]);
+
+  const expectedLayer2 = {
+    ...layerToCopy,
+    id: layerCopied2.id,
+    config: {
+      ...layerToCopy.config,
+      label: 'Copy of gps data 2'
+    }
+  };
+  t.deepEqual(layerCopied2, expectedLayer2, 'should copy layer config correctly');
 
   // test remove
   t.end();

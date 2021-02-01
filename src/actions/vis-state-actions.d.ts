@@ -156,10 +156,10 @@ export function addFilter(
 ): Merge<AddFilterUpdaterAction, {type: ActionTypes.ADD_FILTER}>;
 
 export type AddLayerUpdaterAction = {
-  props: object;
+  config: object;
 };
 export function addLayer(
-  props: object
+  config: object
 ): Merge<AddLayerUpdaterAction, {type: ActionTypes.ADD_LAYER}>;
 
 export type ReorderLayerUpdaterAction = {
