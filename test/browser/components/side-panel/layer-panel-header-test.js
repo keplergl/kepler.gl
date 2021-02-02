@@ -31,6 +31,7 @@ const nop = () => {};
 const defaultProps = {
   layerId: 'taro',
   isVisible: true,
+  isValid: true,
   isConfigActive: false,
   onToggleVisibility: nop,
   onUpdateLayerLabel: nop,
@@ -56,6 +57,19 @@ test('Components -> LayerPanelHeader.mount -> no prop', t => {
   t.ok(wrapper.find('.layer__title__editor').length, 'should render title eidtor');
   t.ok(wrapper.find('.layer__visibility-toggle').length, 'should render visibility toggle');
   t.ok(wrapper.find('.layer__enable-config').length, 'should render enable config toggle');
+
+  // mount
+  const layerAfterErrorProps = {...defaultProps, ...{isValid: false}};
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <LayerPanelHeader {...layerAfterErrorProps} />
+      </IntlWrapper>
+    );
+  }, 'LayerPanelHeader should not fail without props');
+
+  t.ok(!wrapper.find('.layer__visibility-toggle').length, "shouldn't render visibility toggle");
+  t.ok(wrapper.find('.layer__is-valid-refresh').length, 'should render validity refresh icon');
 
   t.end();
 });

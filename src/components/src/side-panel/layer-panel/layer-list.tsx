@@ -114,7 +114,8 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
       layerVisConfigChange: visStateActions.layerVisConfigChange,
       layerTextLabelChange: visStateActions.layerTextLabelChange,
       removeLayer: visStateActions.removeLayer,
-      duplicateLayer: visStateActions.duplicateLayer
+      duplicateLayer: visStateActions.duplicateLayer,
+      layerSetIsValid: visStateActions.layerSetIsValid
     };
 
     const panelProps = {

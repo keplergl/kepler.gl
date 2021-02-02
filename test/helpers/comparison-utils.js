@@ -97,7 +97,7 @@ export function cmpLayers(t, expectedLayer, actualLayer, opt = {}) {
     cmpObjectKeys(t, expectedLayer.config, actualLayer.config, `layer.${actualLayer.id}`);
 
     Object.keys(expectedLayer.config).forEach(key => {
-      // test everything except color and id, which is auto generated
+      // test everything except color and id, which are auto generated
       // also skip functions
       switch (key) {
         // list of fields

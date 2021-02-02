@@ -119,7 +119,9 @@ export default {
       trip: 'viatge',
       s2: 'S2',
       '3d': '3D'
-    }
+    },
+    layerUpdateError:
+      "S'ha produït un error durant l'actualització de la capa: {errorMessage}. Assegureu-vos que el format de les dades d’entrada sigui vàlid."
   },
   layerVisConfigs: {
     angle: 'Angle',
@@ -195,6 +197,7 @@ export default {
     hide: 'amaga',
     show: 'mostra',
     removeLayer: 'Elimina capa',
+    resetAfterError: 'Intenteu habilitar la capa després dun error',
     layerSettings: 'Configuració de capa',
     closePanel: 'Tanca panel actual',
     switchToDualView: 'Canvia a la vista de mapa dual',

@@ -118,7 +118,9 @@ export default {
       trip: 'matka',
       s2: 'S2',
       '3d': '3D'
-    }
+    },
+    layerUpdateError:
+      'Tason päivityksen aikana tapahtui virhe: {errorMessage}. Varmista, että syötetietojen muoto on kelvollinen.'
   },
   layerVisConfigs: {
     strokeWidth: 'Viivan paksuus',
@@ -193,6 +195,7 @@ export default {
     hide: 'piilota',
     show: 'näytä',
     removeLayer: 'Poista taso',
+    resetAfterError: 'Yritä ottaa taso käyttöön virheen jälkeen',
     layerSettings: 'Tason asetukset',
     closePanel: 'Sulje paneeli',
     switchToDualView: 'Vaihda kaksoiskarrtanäkymään',

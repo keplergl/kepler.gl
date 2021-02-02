@@ -118,6 +118,8 @@ type AggregationSelectorProps = {
   ) => void;
 };
 
+import LayerErrorMessage from './layer-error-message';
+
 const StyledLayerConfigurator = styled.div.attrs({
   className: 'layer-panel__config'
 })`
@@ -1045,6 +1047,7 @@ export default function LayerConfiguratorFactory(
                 updateLayerConfig={updateLayerConfig}
               />
             </ConfigGroupCollapsibleContent>
+            {layer.errorMessage ? <LayerErrorMessage errorMessage={layer.errorMessage} /> : null}
           </LayerConfigGroup>
           {renderTemplate &&
             this[renderTemplate] &&

@@ -876,7 +876,7 @@ export const DEFAULT_NOTIFICATION_TOPICS = keyMirror({
 });
 
 // Minimum time between identical notifications about deck.gl errors
-export const THROTTLE_NOTIFICATION_TIME = 2500;
+export const THROTTLE_NOTIFICATION_TIME = 330;
 
 // Animation
 export const BASE_SPEED = 600;

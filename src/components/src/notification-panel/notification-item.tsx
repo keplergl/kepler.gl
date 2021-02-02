@@ -22,10 +22,20 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import {Delete, Info, Warning, Checkmark} from '../common/icons';
 import ReactMarkdown from 'react-markdown';
-import {
-  ActionHandler,
-  removeNotification as removeNotificationActions
-} from '@kepler.gl/actions';
+import {ActionHandler, removeNotification as removeNotificationActions} from '@kepler.gl/actions';
+
+interface NotificationItemContentBlockProps {
+  isExpanded?: boolean;
+}
+
+const NotificationItemContentBlock = styled.div.attrs({
+  className: 'notification-item--content-block'
+})<NotificationItemContentBlockProps>`
+  display: block;
+  position: relative;
+  width: ${props => props.theme.notificationPanelItemWidth * (1 + Number(props.isExpanded))}px;
+  margin-left: auto;
+`;
 
 interface NotificationItemContentProps {
   type: string;
@@ -49,6 +59,30 @@ const NotificationItemContent = styled.div<NotificationItemContentProps>`
 
 const DeleteIcon = styled(Delete)`
   cursor: pointer;
+  width: 13px;
+  height: 13px;
+`;
+
+interface NotificationCounterProps {
+  type: string;
+}
+
+const NotificationCounter = styled.div.attrs({
+  className: 'notification-item--counter'
+})<NotificationCounterProps>`
+  position: absolute;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  left: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  background-color: #ffffff;
+  border: 1px solid ${props => props.theme.notificationColors[props.type] || '#000'};
+  color: ${props => props.theme.notificationColors[props.type] || '#000'};
+  box-shadow: ${props => props.theme.boxShadow};
 `;
 
 interface NotificationMessageProps {
@@ -99,6 +133,7 @@ interface NotificationItemProps {
     id: string;
     type: string;
     message: string;
+    count?: number;
   };
   isExpanded?: boolean;
   removeNotification?: ActionHandler<typeof removeNotificationActions>;
@@ -122,24 +157,31 @@ export default function NotificationItemFactory() {
       const {isExpanded} = this.state;
 
       return (
-        <NotificationItemContent
-          className="notification-item"
-          type={notification.type}
-          isExpanded={isExpanded}
-          onClick={() => this.setState({isExpanded: !isExpanded})}
-        >
-          <NotificationIcon className="notification-item--icon">
-            {icons[notification.type]}
-          </NotificationIcon>
-          <NotificationMessage isExpanded={isExpanded} theme={this.props.theme}>
-            <ReactMarkdown source={notification.message} renderers={{link: LinkRenderer}} />
-          </NotificationMessage>
-          {typeof removeNotification === 'function' ? (
-            <div className="notification-item--action">
-              <DeleteIcon height="10px" onClick={() => removeNotification(notification.id)} />
-            </div>
+        <NotificationItemContentBlock isExpanded={isExpanded} theme={this.props.theme}>
+          {(notification.count || 0) > 1 ? (
+            <NotificationCounter type={notification.type} theme={this.props.theme}>
+              {notification.count}
+            </NotificationCounter>
           ) : null}
-        </NotificationItemContent>
+          <NotificationItemContent
+            className="notification-item"
+            type={notification.type}
+            isExpanded={isExpanded}
+            onClick={() => this.setState({isExpanded: !isExpanded})}
+          >
+            <NotificationIcon className="notification-item--icon">
+              {icons[notification.type]}
+            </NotificationIcon>
+            <NotificationMessage isExpanded={isExpanded} theme={this.props.theme}>
+              <ReactMarkdown source={notification.message} renderers={{link: LinkRenderer}} />
+            </NotificationMessage>
+            {typeof removeNotification === 'function' ? (
+              <div className="notification-item--action">
+                <DeleteIcon height="10px" onClick={() => removeNotification(notification.id)} />
+              </div>
+            ) : null}
+          </NotificationItemContent>
+        </NotificationItemContentBlock>
       );
     }
   };

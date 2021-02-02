@@ -330,6 +330,7 @@ export interface StyledPanelHeaderProps {
   active?: boolean;
   labelRCGColorValues?: RGBColor | null;
   warning?: boolean;
+  isValid?: boolean;
 }
 
 export const StyledPanelHeader = styled.div<StyledPanelHeaderProps>`
