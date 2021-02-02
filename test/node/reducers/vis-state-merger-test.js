@@ -1650,15 +1650,15 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
 
   cmpDatasets(t, expectedDatasets, mergedState.datasets);
 
-  // const expectedFilters = [
-  //   mergedTimeFilter,
-  //   mergedRateFilter,
-  //   mergedDateFilter,
-  //   mergedTripFilter,
-  //   mergedEpochFilter
-  // ];
-  //
-  // cmpFilters(t, expectedFilters, mergedState.filters);
+  const expectedFilters = [
+    mergedTimeFilter,
+    mergedRateFilter,
+    mergedDateFilter,
+    mergedTripFilter,
+    mergedEpochFilter
+  ];
+
+  cmpFilters(t, expectedFilters, mergedState.filters);
   t.end();
 });
 

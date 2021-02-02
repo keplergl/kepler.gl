@@ -376,6 +376,6 @@ export function cmpField(t, expected, actual, name) {
       }
     });
   } else {
-    t.deepEqual(expected, actual, `${name} should have be the same`);
+    t.deepEqual(expected, actual, `${name} should be the same`);
   }
 }

@@ -482,12 +482,12 @@ export function layerVisualChannelChangeUpdater(state, action) {
   if (!oldLayer.config.dataId) {
     return state;
   }
-  const table = state.datasets[oldLayer.config.dataId];
+  const dataset = state.datasets[oldLayer.config.dataId];
 
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const newLayer = oldLayer.updateLayerConfig(newConfig);
 
-  newLayer.updateLayerVisualChannel(table, channel);
+  newLayer.updateLayerVisualChannel(dataset, channel);
 
   const oldLayerData = state.layerData[idx];
   const {layerData, layer} = calculateLayerData(newLayer, state, oldLayerData);

@@ -353,38 +353,6 @@ export function getFilterProps(field, fieldDomain) {
   }
 }
 
-/**
- * Calculate field domain based on field type and data
- *
-//  * @type {typeof import('./filter-utils').getFieldDomain}
- */
-// export function getFieldDomain(allData, field) {
-//   const {valueAccessor} = field;
-
-//   let domain;
-
-//   switch (field.type) {
-//     case ALL_FIELD_TYPES.real:
-//     case ALL_FIELD_TYPES.integer:
-//       // calculate domain and step
-//       return getNumericFieldDomain(allData, valueAccessor);
-
-//     case ALL_FIELD_TYPES.boolean:
-//       return {domain: [true, false]};
-
-//     case ALL_FIELD_TYPES.string:
-//     case ALL_FIELD_TYPES.date:
-//       domain = ScaleUtils.getOrdinalDomain(allData, valueAccessor);
-//       return {domain};
-
-//     case ALL_FIELD_TYPES.timestamp:
-//       return getTimestampFieldDomain(allData, valueAccessor);
-
-//     default:
-//       return {domain: ScaleUtils.getOrdinalDomain(allData, valueAccessor)};
-//   }
-// }
-
 export const getPolygonFilterFunctor = (layer, filter) => {
   const getPosition = layer.getPositionAccessor();
 
@@ -909,7 +877,6 @@ export function applyFiltersToDatasets(datasetIds, datasets, filters, layers) {
 export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIndex = 0, option) {
   // using filterDatasetIndex we can filter only the specified dataset
   const mergeDomain = option && option.hasOwnProperty('mergeDomain') ? option.mergeDomain : false;
-  // const {fields, allData} = dataset;
 
   const fieldIndex = dataset.getColumnFieldIdx(fieldName);
   // if no field with same name is found, move to the next datasets
@@ -919,10 +886,6 @@ export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIn
   }
 
   // TODO: validate field type
-  // const field = fields[fieldIndex];
-  // const filterProps = field.hasOwnProperty('filterProps')
-  //   ? field.filterProps
-  //   : getFilterProps(allData, field);
   const filterProps = dataset.getColumnFilterProps(fieldName);
 
   const newFilter = {
@@ -935,13 +898,6 @@ export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIn
     freeze: true
   };
 
-  // const fieldWithFilterProps = {
-  //   ...field,
-  //   filterProps
-  // };
-
-  // const newFields = Object.assign([...fields], {[fieldIndex]: fieldWithFilterProps});
-  // table.updateColumnField(fieldIndex, fieldWithFilterProps);
   return {
     filter: newFilter,
     dataset

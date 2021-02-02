@@ -1172,7 +1172,7 @@ mergedLayer2.config = {
     type: 'integer',
     fieldIdx: 9,
     analyzerType: 'INT',
-    valueAccessor: values => values[0]
+    valueAccessor: values => values[9]
   },
   sizeDomain: [78, 694],
   sizeScale: 'sqrt',

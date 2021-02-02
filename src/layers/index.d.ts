@@ -74,6 +74,7 @@ export class Layer {
   _oldDataUpdateTriggers: any;
   hasAllColumns(): boolean;
   updateLayerConfig(p: Partial<LayerConfig>): Layer;
+  updateLayerDomain(datasets: Datasets, filter?: Filter): Layer;
   updateLayerVisualChannel(dataset: KeplerTable, channel: string): Layer;
   shouldCalculateLayerData(props: string[]): boolean;
   formatLayerData(datasets: Datasets, oldLayerData?: any);

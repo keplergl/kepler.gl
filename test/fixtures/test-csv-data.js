@@ -922,7 +922,7 @@ export const wktCsvFields = [
     format: '',
     fieldIdx: 5,
     analyzerType: 'FLOAT',
-    valueAccessor: values => values[4]
+    valueAccessor: values => values[5]
   }
 ];
 
