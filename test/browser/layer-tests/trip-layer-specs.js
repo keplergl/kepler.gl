@@ -35,6 +35,7 @@ import {
 } from 'test/helpers/layer-utils';
 import {parseTripGeoJsonTimestamp} from 'layers/trip-layer/trip-utils';
 import {TripLayerMeta, dataToFeature, dataToTimeStamp} from 'test/fixtures/trip-geojson';
+import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 
 test('#TripLayer -> constructor', t => {
   const TEST_CASES = {
@@ -77,10 +78,7 @@ test('#TripLayer -> formatLayerData', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...prepareTripGeoDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(prepareTripGeoDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -201,10 +199,7 @@ test('#TripLayer -> formatLayerData', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...prepareTripGeoDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(prepareTripGeoDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -285,10 +280,7 @@ test('#TripLayer -> renderLayer', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...prepareTripGeoDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(prepareTripGeoDataset, {filteredIndex})
       },
       renderArgs: {
         animationConfig

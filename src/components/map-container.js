@@ -36,7 +36,6 @@ import EditorFactory from './editor/editor';
 
 // utils
 import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
-import {OVERLAY_TYPE} from 'layers/base-layer';
 import {setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 import {getLayerHoverProp, renderDeckGlLayer} from 'utils/layer-utils';
@@ -48,6 +47,7 @@ import {
   GEOCODER_LAYER_ID,
   THROTTLE_NOTIFICATION_TIME
 } from 'constants/default-settings';
+import {OVERLAY_TYPE} from 'layers/base-layer';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE = {
@@ -484,7 +484,8 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         visStateActions,
         interactionConfig,
         editor,
-        index
+        index,
+        isExport
       } = this.props;
 
       const layersToRender = this.layersToRenderSelector(this.props);
@@ -503,7 +504,8 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         transformRequest
       };
 
-      const isEdit = mapControls.mapDraw ? mapControls.mapDraw.active : false;
+      const isEdit = (mapControls.mapDraw || {}).active;
+
       const hasGeocoderLayer = layers.find(l => l.id === GEOCODER_LAYER_ID);
 
       return (
@@ -512,7 +514,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             datasets={datasets}
             dragRotate={mapState.dragRotate}
             isSplit={Boolean(mapLayers)}
-            isExport={this.props.isExport}
+            isExport={isExport}
             layers={layers}
             layersToRender={layersToRender}
             mapIndex={index}

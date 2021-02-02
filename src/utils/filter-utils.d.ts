@@ -2,7 +2,7 @@ import {
   Filter,
   FilterBase,
   PolygonFilter,
-  Dataset,
+  KeplerTable,
   Datasets,
   FilterRecord,
   FieldDomain,
@@ -17,45 +17,41 @@ import {
 import {Layer} from 'layers';
 import {Field} from 'reducers/types';
 import {ParsedConfig} from 'schemas';
+import {FilterDatasetOpt} from './table-utils/kepler-table';
 
 export function applyFilterFieldName(
   filter: Filter,
-  dataset: Dataset,
+  dataset: KeplerTable,
   fieldName: string,
   filterDatasetIndex?: number,
   option?: {mergeDomain: boolean}
 ): {
   filter: Filter | null;
-  dataset: Dataset;
-};
+  dataset: KeplerTable;
+}
 
 export function getDefaultFilter(dataId: string | null | string[]): FilterBase;
 export function shouldApplyFilter(filter: Filter, datasetId: string): boolean;
 export function validatePolygonFilter(
-  dataset: Dataset,
+  dataset: KeplerTable,
   filter: PolygonFilter,
   layers: Layer[]
-): {filter: PolygonFilter | null; dataset: Dataset};
+): {filter: PolygonFilter | null; dataset: KeplerTable};
 
 export function validateFilter(
-  dataset: Dataset,
+  dataset: KeplerTable,
   filter: Filter
-): {filter: PolygonFilter | null; dataset: Dataset};
+): {filter: PolygonFilter | null; dataset: KeplerTable};
 
 export function adjustValueToFilterDomain(value: Filter['value'], Filter): any;
 
-export type FilterDatasetOpt = {
-  // only allow cpu filtering
-  cpuOnly?: boolean;
-  // ignore filter for domain calculation
-  ignoreDomain?: boolean;
-};
 export function filterDataset(
-  dataset: Dataset,
+  dataset: KeplerTable,
   filters: Filter[],
   layers: Layer[],
   opt?: FilterDatasetOpt
-): Dataset;
+): KeplerTable;
+
 export function applyFiltersToDatasets(
   datasetIds: string[],
   datasets: Datasets,
@@ -90,7 +86,7 @@ export function filterDataByFilterTypes(
       [key: string]: typeof filterFunction;
     };
   },
-  allData: Dataset['allData']
+  allData: KeplerTable['allData']
 ): FilterResult;
 
 export type FilterChanged = {
@@ -105,16 +101,16 @@ export function diffFilters(
 
 export type FilterDomain = any;
 
-export function getFieldDomain(allData: Dataset['allData'], filed: Field): FieldDomain;
+export function getFieldDomain(allData: KeplerTable['allData'], filed: Field): FieldDomain;
 
 export function dataValueAccessor(data: any[]): number | null;
 export function getTimestampFieldDomain(
-  data: Dataset['allData'],
+  data: KeplerTable['allData'],
   valueAccessor: typeof dataValueAccessor
 ): TimeRangeFieldDomain;
 
 export function getNumericFieldDomain(
-  data: Dataset['allData'],
+  data: KeplerTable['allData'],
   valueAccessor: typeof dataValueAccessor
 ): RangeFieldDomain;
 
@@ -134,8 +130,8 @@ export function getNumericStepSize(diff: number): number;
 export function mergeFilterDomainStep(filter: Filter, filterProps?: any): Filter | null;
 
 export function getFilterProps(
-  allData: Dataset['allData'],
-  field: Field
+  field: Field,
+  FieldDomain: FieldDomain
 ): Partiel<Filter> & {fieldType: string};
 
 export function generatePolygonFilter(layers: Layer[], feature: Feature): PolygonFilter;
@@ -143,10 +139,10 @@ export function generatePolygonFilter(layers: Layer[], feature: Feature): Polygo
 export function filterDatasetCPU(state: VisState, dataId: string): VisState;
 
 export function validateFilterWithData(
-  dataset: Dataset,
+  dataset: KeplerTable,
   filter: Filter,
   layers: Layer[]
-): {filter: Filter; dataset: Dataset};
+): {filter: Filter; dataset: KeplerTable};
 export function featureToFilterValue(
   feature: Feature,
   filterId: string,
@@ -156,7 +152,7 @@ export function featureToFilterValue(
 export function getDefaultFilterPlotType(filter: Filter): string | null;
 export function getFilterPlot(
   filter: Filter,
-  allData: Dataset['allData']
+  dataset: KeplerTable
 ): {lineChart: LineChart; yAxs: Field} | {};
 export function getFilterIdInFeature(f: FeatureValue): string;
 export function isInRange(v: any, domain: number[]): boolean;

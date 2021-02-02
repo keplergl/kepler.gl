@@ -41,6 +41,7 @@ import {
 import {KeplerGlLayers} from 'layers';
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 import {IntlWrapper} from '../../helpers/component-utils';
+import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 
 const {IconLayer} = KeplerGlLayers;
 const columns = {
@@ -124,10 +125,7 @@ test('#IconLayer -> formatLayerData', t => {
         id: 'test_layer_1'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -230,10 +228,7 @@ test('#IconLayer -> formatLayerData', t => {
         id: 'test_layer_2'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData} = result;
@@ -286,10 +281,7 @@ test('#IconLayer -> renderLayer', t => {
         id: 'test_layer_1'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: (deckLayers, layer) => {
         t.equal(layer.type, 'icon', 'should create 1 icon layer');
@@ -316,10 +308,7 @@ test('#IconLayer -> renderLayer', t => {
         layer.iconGeometry = iconGeometry;
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: (deckLayers, layer) => {
         t.equal(layer.type, 'icon', 'should create 1 icon layer');
@@ -366,10 +355,7 @@ test('#IconLayer -> renderLayer', t => {
         layer.iconGeometry = iconGeometry;
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       renderArgs: {
         interactionConfig: {
@@ -441,10 +427,7 @@ test('#IconLayer -> renderLayer', t => {
         layer.iconGeometry = iconGeometry;
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: (deckLayers, layer, layerData) => {
         t.equal(deckLayers.length, 7, 'Should create 7 deck.gl layer');

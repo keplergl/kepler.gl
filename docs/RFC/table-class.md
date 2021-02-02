@@ -47,7 +47,7 @@ export type KeplerField = {
   id: string;
   name: string;
   format: string;
-  tableFieldIndex: numberstring;
+  fieldIdx: number;
   type: string;
 
   // meta data, storing domain and mappedValues

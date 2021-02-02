@@ -56,6 +56,7 @@ import {
 } from 'processors/data-processor';
 
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {cmpFields} from '../../helpers/comparison-utils';
 
 test('Processor -> getFieldsFromData', t => {
   const data = [
@@ -123,12 +124,9 @@ test('Processor -> processCsvData', t => {
 
   t.equal(rows.length, testAllData.length, `should return ${testAllData.length} rows`);
 
-  t.deepEqual(fields, testFields, 'should parse fields correctly');
-  t.deepEqual(rows, testAllData, 'should parse rows correctly');
+  cmpFields(t, testFields, fields, 'should parse rows correctly');
 
-  fields.forEach((f, i) => {
-    t.deepEqual(f, testFields[i], `should parse correct field ${testFields[i].name}`);
-  });
+  t.deepEqual(rows, testAllData, 'should parse rows correctly');
 
   rows.forEach((r, i) => {
     t.deepEqual(r, testAllData[i], `should parse row ${i} correctly`);
@@ -145,10 +143,38 @@ test('Processor -> processCsvData: duplicated field name', t => {
 
   const expectedResult = {
     fields: [
-      {name: 'column1', format: '', tableFieldIndex: 1, type: 'string', analyzerType: 'STRING'},
-      {name: 'column1-0', format: '', tableFieldIndex: 2, type: 'string', analyzerType: 'STRING'},
-      {name: 'column1-1', format: '', tableFieldIndex: 3, type: 'string', analyzerType: 'STRING'},
-      {name: 'column2', format: '', tableFieldIndex: 4, type: 'string', analyzerType: 'STRING'}
+      {
+        name: 'column1',
+        format: '',
+        fieldIdx: 0,
+        type: 'string',
+        analyzerType: 'STRING',
+        valueAccessor: values => values[0]
+      },
+      {
+        name: 'column1-0',
+        format: '',
+        fieldIdx: 1,
+        type: 'string',
+        analyzerType: 'STRING',
+        valueAccessor: values => values[1]
+      },
+      {
+        name: 'column1-1',
+        format: '',
+        fieldIdx: 2,
+        type: 'string',
+        analyzerType: 'STRING',
+        valueAccessor: values => values[2]
+      },
+      {
+        name: 'column2',
+        format: '',
+        fieldIdx: 3,
+        type: 'string',
+        analyzerType: 'STRING',
+        valueAccessor: values => values[3]
+      }
     ],
     rows: [
       ['a', 'b', 'c', 'd'],
@@ -156,18 +182,19 @@ test('Processor -> processCsvData: duplicated field name', t => {
     ]
   };
 
-  t.deepEqual(result, expectedResult, `should return ${testAllData.length} rows`);
+  cmpFields(t, result.fields, expectedResult.fields, 'should have created non duplicated fields');
+  t.deepEqual(
+    result.rows,
+    expectedResult.rows,
+    'should have computed rows with non duplicated fields'
+  );
 
   t.end();
 });
 
 test('Processor -> processCsvData -> with nulls', t => {
   const {fields, rows} = processCsvData(dataWithNulls);
-  t.deepEqual(fields, testFields, 'should parse fields correctly');
-
-  fields.forEach((f, i) => {
-    t.deepEqual(f, testFields[i], `should parse correct field ${testFields[i].name}`);
-  });
+  cmpFields(t, fields, testFields, 'should parse fields correctly');
 
   t.deepEqual(rows, parsedDataWithNulls, 'should parse rows correctly');
   rows.forEach((r, i) => {
@@ -179,7 +206,8 @@ test('Processor -> processCsvData -> with nulls', t => {
 test('Processor -> processCsv.wkt', t => {
   const {fields, rows} = processCsvData(wktCsv);
 
-  t.deepEqual(fields, wktCsvFields, 'should find geometry fields as type:geojson');
+  cmpFields(t, fields, wktCsvFields, 'should find geometry fields as type:geojson');
+
   rows.forEach((r, i) => {
     t.deepEqual(r, wktCsvRows[i], `should process wkt rows[${i}] correctly`);
   });
@@ -191,10 +219,7 @@ test('Processor -> processCsv.wkt', t => {
 test('Processor => processGeojson', t => {
   const {fields, rows} = processGeojson(cloneDeep(geojsonData));
 
-  t.equal(fields.length, geojsonFields.length, 'should have same field length');
-  fields.forEach((f, i) => {
-    t.deepEqual(f, geojsonFields[i], 'should format geojson fields');
-  });
+  cmpFields(t, fields, geojsonFields, 'should have same field length');
 
   t.equal(rows.length, geojsonRows.length, 'should have same row length');
   rows.forEach((r, i) => {
@@ -206,7 +231,7 @@ test('Processor => processGeojson', t => {
 test('Processor => processGeojson: with style property', t => {
   const {fields, rows} = processGeojson(cloneDeep(geoJsonWithStyle));
 
-  t.deepEqual(fields, geoStyleFields, 'should preserve objects in geojson properties');
+  cmpFields(t, fields, geoStyleFields, 'should preserve objects in geojson properties');
   t.deepEqual(rows, geoStyleRows, 'should preserve objects in geojson properties');
   t.end();
 });
@@ -243,10 +268,38 @@ test('Processor => processGeojson: parse rows', t => {
   };
 
   const expectedFields = [
-    {name: '_geojson', format: '', tableFieldIndex: 1, type: 'geojson', analyzerType: 'GEOMETRY'},
-    {name: 'TRIPS', format: '', tableFieldIndex: 2, type: 'integer', analyzerType: 'INT'},
-    {name: 'RATE', format: '', tableFieldIndex: 3, type: 'string', analyzerType: 'STRING'},
-    {name: 'TIME', format: 'x', tableFieldIndex: 4, type: 'timestamp', analyzerType: 'TIME'}
+    {
+      name: '_geojson',
+      format: '',
+      fieldIdx: 0,
+      type: 'geojson',
+      analyzerType: 'GEOMETRY',
+      valueAccessor: values => values[0]
+    },
+    {
+      name: 'TRIPS',
+      format: '',
+      fieldIdx: 1,
+      type: 'integer',
+      analyzerType: 'INT',
+      valueAccessor: values => values[1]
+    },
+    {
+      name: 'RATE',
+      format: '',
+      fieldIdx: 2,
+      type: 'string',
+      analyzerType: 'STRING',
+      valueAccessor: values => values[2]
+    },
+    {
+      name: 'TIME',
+      format: 'x',
+      fieldIdx: 3,
+      type: 'timestamp',
+      analyzerType: 'TIME',
+      valueAccessor: values => values[3]
+    }
   ];
 
   const expectedRows = [
@@ -284,11 +337,13 @@ test('Processor => processGeojson: parse rows', t => {
   const result = processGeojson(testGeoData);
 
   t.deepEqual(Object.keys(result), ['fields', 'rows'], 'should contain fields and rows');
-  t.deepEqual(
+  cmpFields(
+    t,
     result.fields,
     expectedFields,
     'should parse correct fields when geojson input contain string'
   );
+
   t.deepEqual(
     result.rows,
     expectedRows,
@@ -482,6 +537,7 @@ test('Processor -> validateInputData', t => {
 
 test('Processor -> processRowObject', t => {
   t.equal(processRowObject({}), null, 'Should return null when rawData is empty');
+
   const cases = [
     {
       input: [
@@ -500,29 +556,33 @@ test('Processor -> processRowObject', t => {
             name: 'a',
             type: 'integer',
             format: '',
-            tableFieldIndex: 1,
-            analyzerType: 'INT'
+            fieldIdx: 0,
+            analyzerType: 'INT',
+            valueAccessor: values => values[0]
           },
           {
             name: 'b',
             type: 'string',
             format: '',
-            tableFieldIndex: 2,
-            analyzerType: 'STRING'
+            fieldIdx: 1,
+            analyzerType: 'STRING',
+            valueAccessor: values => values[1]
           },
           {
             name: 'c',
             type: 'boolean',
             format: '',
-            tableFieldIndex: 3,
-            analyzerType: 'BOOLEAN'
+            fieldIdx: 2,
+            analyzerType: 'BOOLEAN',
+            valueAccessor: values => values[2]
           },
           {
             name: 'd',
             type: 'real',
             format: '',
-            tableFieldIndex: 4,
-            analyzerType: 'FLOAT'
+            fieldIdx: 3,
+            analyzerType: 'FLOAT',
+            valueAccessor: values => values[3]
           }
         ]
       },
@@ -531,7 +591,9 @@ test('Processor -> processRowObject', t => {
   ];
 
   cases.forEach(({input, expected, msg}) => {
-    t.deepEqual(processRowObject(input), expected, msg);
+    const {fields, rows} = processRowObject(input);
+    cmpFields(t, fields, expected.fields, `${msg} fields`);
+    t.deepEqual(rows, expected.rows, msg);
   });
   t.end();
 });

@@ -32,6 +32,7 @@ import {
 } from 'test/helpers/layer-utils';
 
 import {KeplerGlLayers} from 'layers';
+import {copyTable, copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 
 const {LineLayer} = KeplerGlLayers;
 const columns = {
@@ -83,10 +84,7 @@ test('#LineLayer -> formatLayerData', t => {
         id: 'test_layer_0'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -159,7 +157,7 @@ test('#LineLayer -> formatLayerData', t => {
         id: 'test_layer_2'
       },
       datasets: {
-        [dataId]: preparedDataset
+        [dataId]: copyTable(preparedDataset)
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -213,10 +211,7 @@ test('#LineLayer -> formatLayerData', t => {
         id: 'test_layer_1'
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData} = result;

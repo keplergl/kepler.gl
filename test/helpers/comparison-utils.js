@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import {FILTER_TYPES} from 'constants/default-settings';
+import {toArray} from '../../src/utils/utils';
 
 export function cmpObjectKeys(t, expectedObj, actualObj, name) {
   t.deepEqual(
@@ -48,17 +49,31 @@ export function cmpFilters(t, expectedFilter, actualFilter, opt = {}, idx = '', 
     );
 
     Object.keys(actualFilter).forEach(key => {
-      if (key === 'histogram' || key === 'enlargedHistogram') {
-        if (actualFilter.type === FILTER_TYPES.range || FILTER_TYPES.timeRange) {
-          t.ok(actualFilter[key].length, `${name}.filter.${key} should not be empty`);
-        }
-      } else if (key !== 'id' || opt.id) {
-        // test everything except id, which is auto generated
-        t.deepEqual(
-          actualFilter[key],
-          expectedFilter[key],
-          `${name}.idx:${idx} |  ${actualFilter.type} filter ${actualFilter.name} ${key} should be correct`
-        );
+      switch (key) {
+        case 'histogram':
+        case 'enlargedHistogram':
+          if (actualFilter.type === FILTER_TYPES.range || FILTER_TYPES.timeRange) {
+            t.ok(actualFilter[key].length, `${name}.filter.${key} should not be empty`);
+          }
+          break;
+        case 'yAxis':
+          // yAxis is a field
+          cmpField(
+            t,
+            expectedFilter[key],
+            actualFilter[key],
+            `${name}.filter.${key} should be the same`
+          );
+          break;
+        default:
+          if (key !== 'id' || opt.id) {
+            // test everything except id, which is auto generated
+            t.deepEqual(
+              actualFilter[key],
+              expectedFilter[key],
+              `${name}.idx:${idx} |  ${actualFilter.type} filter ${actualFilter.name} ${key} should be correct`
+            );
+          }
       }
     });
   }
@@ -79,16 +94,60 @@ export function cmpLayers(t, expectedLayer, actualLayer, opt = {}) {
     Object.keys(expectedLayer.config).forEach(key => {
       // test everything except color and id, which is auto generated
       // also skip functions
-      if (
-        (key !== 'id' || opt.id) &&
-        (key !== 'color' || opt.color) &&
-        typeof expectedLayer.config[key] !== 'function'
-      ) {
-        t.deepEqual(
-          actualLayer.config[key],
-          expectedLayer.config[key],
-          `${actualLayer.type} layer ${key} should be correct`
-        );
+      switch (key) {
+        // list of fields
+        case 'textLabel':
+          cmpObjectKeys(
+            t,
+            expectedLayer.config[key],
+            actualLayer.config[key],
+            `${actualLayer.type} layer config ${key} should be the same`
+          );
+
+          const actualTextLabel = actualLayer.config[key];
+          const expectedTextLabel = expectedLayer.config[key];
+
+          toArray(actualTextLabel).forEach((actualConfig, index) => {
+            const {field: actualField, ...actualRestConfigLayer} = actualConfig;
+            const {field: expectedField, ...expectedRestConfigLayer} = expectedTextLabel[index];
+            cmpField(
+              t,
+              expectedField,
+              actualField,
+              `${actualLayer.type} layer config ${key} should be correct`
+            );
+
+            t.deepEqual(
+              actualRestConfigLayer,
+              expectedRestConfigLayer,
+              `${actualLayer.type} layer config ${key} should be the same textLabel`
+            );
+          });
+          break;
+        // colorField is a field
+        case 'colorField':
+        case 'sizeField':
+        case 'heightField':
+        case 'strokeColorField':
+          cmpField(
+            t,
+            expectedLayer.config[key],
+            actualLayer.config[key],
+            `${actualLayer.type} layer config ${key} should be correct`
+          );
+          break;
+        default:
+          if (
+            (key !== 'id' || opt.id) &&
+            (key !== 'color' || opt.color) &&
+            typeof expectedLayer.config[key] !== 'function'
+          ) {
+            t.deepEqual(
+              actualLayer.config[key],
+              expectedLayer.config[key],
+              `${actualLayer.type} layer ${key} should be correct`
+            );
+          }
       }
     });
   }
@@ -137,6 +196,25 @@ export function cmpSavedLayers(t, expectedLayer, actualLayer, opt = {}, idx = ''
   }
 }
 
+export function cmpDatasetData(t, expectedDatasetData, actualDatasetData, datasetId = '') {
+  if (expectedDatasetData && actualDatasetData) {
+    cmpObjectKeys(
+      t,
+      expectedDatasetData,
+      actualDatasetData,
+      `dataset.${datasetId}.data should have same keys`
+    );
+    const {fields: actualFields, ...actualRestData} = actualDatasetData;
+    const {fields: expectedFields, ...expectedRestData} = expectedDatasetData;
+    cmpFields(t, expectedFields, actualFields, `dataset.${datasetId}.data should have same fields`);
+    t.deepEqual(
+      actualRestData,
+      expectedRestData,
+      `dataset.${datasetId}.data should have same props`
+    );
+  }
+}
+
 export function cmpDatasets(t, expectedDatasets, actualDatasets) {
   cmpObjectKeys(t, expectedDatasets, actualDatasets, 'datasets');
 
@@ -150,48 +228,43 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
 
   // test everything except auto generated color
   Object.keys(actualDataset).forEach(key => {
-    if (key === 'fields') {
-      t.equal(
-        actualDataset.fields.length,
-        expectedDataset.fields.length,
-        `dataset.${expectedDataset.id}.${key} should have same number of fields`
-      );
-      actualDataset.fields.forEach((actualField, i) => {
-        cmpField(
+    switch (key) {
+      case 'fields':
+        cmpFields(t, expectedDataset.fields, actualDataset.fields, expectedDataset.id);
+        break;
+      case 'gpuFilter':
+        // test gpuFilter props
+        cmpGpuFilterProp(t, expectedDataset.gpuFilter, actualDataset.gpuFilter);
+        break;
+      case 'filterRecord':
+      case 'filterRecordCPU':
+        cmpObjectKeys(
           t,
-          expectedDataset.fields[i],
-          actualField,
-          `dataset.${expectedDataset.id} fields ${actualField.name}`
+          expectedDataset[key],
+          actualDataset[key],
+          `dataset.${expectedDataset.id}.${key}`
         );
-      });
-    } else if (key === 'gpuFilter') {
-      // test gpuFilter props
-      cmpGpuFilterProp(t, expectedDataset.gpuFilter, actualDataset.gpuFilter);
-    } else if (key === 'filterRecord' || key === 'filterRecordCPU') {
-      cmpObjectKeys(
-        t,
-        expectedDataset[key],
-        actualDataset[key],
-        `dataset.${expectedDataset.id}.${key}`
-      );
-      Object.keys(expectedDataset[key]).forEach(item => {
-        t.ok(
-          Array.isArray(expectedDataset[key][item]),
-          `dataset.${expectedDataset.id}[key].${item} should be an array`
-        );
-        // compare filter name
-        t.deepEqual(
-          actualDataset[key][item].map(f => f.name),
-          expectedDataset[key][item].map(f => f.name),
-          `dataset.${expectedDataset.id}.${key}.${item} should contain correct filter`
-        );
-      });
-    } else if (key !== 'color' || opt.color) {
-      t.deepEqual(
-        actualDataset[key],
-        expectedDataset[key],
-        `dataset.${expectedDataset.id}.${key} should be correct`
-      );
+        Object.keys(expectedDataset[key]).forEach(item => {
+          t.ok(
+            Array.isArray(expectedDataset[key][item]),
+            `dataset.${expectedDataset.id}[key].${item} should be an array`
+          );
+          // compare filter name
+          t.deepEqual(
+            actualDataset[key][item].map(f => f.name),
+            expectedDataset[key][item].map(f => f.name),
+            `dataset.${expectedDataset.id}.${key}.${item} should contain correct filter`
+          );
+        });
+        break;
+      default:
+        if (key !== 'color' || opt.color) {
+          t.deepEqual(
+            actualDataset[key],
+            expectedDataset[key],
+            `dataset.${expectedDataset.id}.${key} should be correct`
+          );
+        }
     }
   });
 }
@@ -265,31 +338,44 @@ export function cmpParsedAppConfigs(t, expectedConfig, actualConfig, {name} = {}
   });
 }
 
-export function cmpField(t, expected, actual, name) {
-  cmpObjectKeys(t, expected, actual, name);
-
-  Object.keys(expected).forEach(k => {
-    if (k === 'filterProps') {
-      // compare filterProps
-      t.ok(typeof actual[k] === 'object', `${name} should have filterProps`);
-
-      if (actual[k]) {
-        cmpObjectKeys(t, expected[k], actual[k], `${name} filterProps`);
-        // compare filterProps key
-        Object.keys(expected[k]).forEach(key => {
-          if (key === 'histogram' || key === 'enlargedHistogram') {
-            t.ok(actual[k][key].length, `${name}.filterProps.${key} should not be empty`);
-          } else {
-            t.deepEqual(
-              actual[k][key],
-              expected[k][key],
-              `${name}.filterProps.${key} should be correct`
-            );
-          }
-        });
-      }
-    } else {
-      t.deepEqual(actual[k], expected[k], `${name}.${k} should be the same`);
-    }
+export function cmpFields(t, expected, actual, name) {
+  t.equal(expected.length, actual.length, `dataset.${name} should have same number of fields`);
+  actual.forEach((actualField, i) => {
+    cmpField(t, expected[i], actualField, `dataset.${name} fields ${actualField.name}`);
   });
+}
+
+export function cmpField(t, expected, actual, name) {
+  if (expected && actual) {
+    cmpObjectKeys(t, expected, actual, name);
+
+    Object.keys(expected).forEach(k => {
+      if (k === 'filterProps') {
+        // compare filterProps
+        t.ok(typeof actual[k] === 'object', `${name} should have filterProps`);
+
+        if (actual[k]) {
+          cmpObjectKeys(t, expected[k], actual[k], `${name} filterProps`);
+          // compare filterProps key
+          Object.keys(expected[k]).forEach(key => {
+            if (key === 'histogram' || key === 'enlargedHistogram') {
+              t.ok(actual[k][key].length, `${name}.filterProps.${key} should not be empty`);
+            } else {
+              t.deepEqual(
+                actual[k][key],
+                expected[k][key],
+                `${name}.filterProps.${key} should be correct`
+              );
+            }
+          });
+        }
+      } else if (k === 'valueAccessor') {
+        t.ok(typeof actual[k] === 'function', `${name}.valueAccessor should be a function`);
+      } else {
+        t.deepEqual(actual[k], expected[k], `${name}.${k} should be the same`);
+      }
+    });
+  } else {
+    t.deepEqual(expected, actual, `${name} should be the same`);
+  }
 }

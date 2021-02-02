@@ -1,11 +1,6 @@
 import {RGBColor, RGBAColor} from '../reducers/types';
-import {Dataset, Field, Filter, Datasets} from '../reducers/vis-state-updaters';
-import {LayerTextLabel, ColorRange, ColorUI} from './layer-factory';
-
-export type LayerVisConfig = {
-  opacity: number;
-  colorRange: ColorRange;
-};
+import {Field, Datasets, KeplerTable} from '../reducers/vis-state-updaters';
+import {LayerTextLabel, ColorRange, ColorUI, LayerVisConfig} from './layer-factory';
 
 export type LayerColumns = {
   [key: string]: {value: string | null; fieldIdx: number; optional?: boolean};
@@ -80,16 +75,16 @@ export class Layer {
   hasAllColumns(): boolean;
   updateLayerConfig(p: Partial<LayerConfig>): Layer;
   updateLayerDomain(datasets: Datasets, filter?: Filter): Layer;
-  updateLayerVisualChannel(dataset: Dataset, channel: string): Layer;
+  updateLayerVisualChannel(dataset: KeplerTable, channel: string): Layer;
   shouldCalculateLayerData(props: string[]): boolean;
   formatLayerData(datasets: Datasets, oldLayerData?: any);
   updateLayerColorUI(prop: string, newConfig: Partial<ColorUI>): Layer;
-  validateVisualChannel(channel: string): void;
   isValidToSave(): boolean;
-  getVisualChannelDescription(key: string): VisualChannelDescription;
-  isLayerHovered(objectInfo: any): boolean;
-  hasHoveredObject(objectInfo: any): any | null;
-  getHoverData(object: any, allData?: Dataset['allData'], fields?: Dataset['fields']): any;
+  validateVisualChannel(channel: string);
+  getVisualChannelDescription(key: string): {label: string, measure: string};
+
+  static findDefaultLayerProps(dataset: KeplerTable, foundLayers?: any[]);
+  // static findDefaultColumnField(defaultFields, allFields)
 }
 
 export type LayerClassesType = {
@@ -108,3 +103,5 @@ export type LayerClassesType = {
   s2: Layer;
 };
 export const LayerClasses: LayerClassesType;
+
+export type OVERLAY_TYPE = {[key: string]: string}

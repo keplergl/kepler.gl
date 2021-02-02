@@ -145,7 +145,6 @@ export default class PointLayer extends Layer {
 
     // Make layer for each pair
     fieldPairs.forEach(pair => {
-      // find fields for tableFieldIndex
       const latField = pair.pair.lat;
       const lngField = pair.pair.lng;
       const layerName = pair.defaultName;

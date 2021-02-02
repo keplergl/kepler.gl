@@ -184,18 +184,18 @@ const mergedFields = [
   {
     name: 'hex_id',
     format: '',
-    tableFieldIndex: 1,
+    fieldIdx: 0,
     type: 'string',
-    id: 'hex_id',
-    analyzerType: 'STRING'
+    analyzerType: 'STRING',
+    valueAccessor: values => values[0]
   },
   {
     name: 'value',
     format: '',
-    tableFieldIndex: 2,
+    fieldIdx: 1,
     type: 'integer',
-    id: 'value',
     analyzerType: 'INT',
+    valueAccessor: values => values[1],
     filterProps: {
       domain: [1, 76],
       step: 0.01,
@@ -348,10 +348,10 @@ mergedH3Layer.config = {
   colorField: {
     name: 'value',
     format: '',
-    tableFieldIndex: 2,
+    fieldIdx: 1,
     type: 'integer',
     analyzerType: 'INT',
-    id: 'value'
+    valueAccessor: values => values[1]
   },
   colorScale: 'quantile',
   colorDomain: [18, 19, 26, 27],
@@ -400,8 +400,7 @@ export const expectedMergedDataset = {
   color: 'dont test me',
   metadata: {
     id: 'h3-hex-id',
-    label: 'new dataset',
-    format: ''
+    label: 'new dataset'
   },
   allData: [
     ['89283082c2fffff', 64],

@@ -31,6 +31,7 @@ import {
   preparedFilterDomain0
 } from 'test/helpers/layer-utils';
 import S2GeometryLayer, {defaultElevation} from 'layers/s2-geometry-layer/s2-geometry-layer';
+import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 
 test('#S2Geometry -> constructor', t => {
   const TEST_CASES = [
@@ -89,10 +90,7 @@ test('#S2Geometry -> formatLayerData', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData, layer} = result;
@@ -186,10 +184,7 @@ test('#S2Geometry -> formatLayerData', t => {
         }
       },
       datasets: {
-        [dataId]: {
-          ...preparedDataset,
-          filteredIndex
-        }
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
       },
       assert: result => {
         const {layerData} = result;

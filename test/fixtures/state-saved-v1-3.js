@@ -360,10 +360,10 @@ mergedLayer0.config = {
   colorField: {
     name: 'deliver_radius',
     type: 'integer',
-    id: 'deliver_radius',
     format: '',
-    tableFieldIndex: 1,
-    analyzerType: 'INT'
+    fieldIdx: 0,
+    analyzerType: 'INT',
+    valueAccessor: values => values[0]
   },
   colorDomain: [1000, 1000, 2000, 2000, 2000, 3000, 3000, 3000, 3000],
   highlightColor: [252, 242, 26, 255],
@@ -375,10 +375,10 @@ mergedLayer0.config = {
   sizeField: {
     name: 'deliver_radius',
     type: 'integer',
-    id: 'deliver_radius',
     format: '',
-    tableFieldIndex: 1,
-    analyzerType: 'INT'
+    fieldIdx: 0,
+    analyzerType: 'INT',
+    valueAccessor: values => values[0]
   },
   sizeScale: 'sqrt',
   sizeDomain: [1000, 3000],

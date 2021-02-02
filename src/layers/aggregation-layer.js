@@ -34,7 +34,7 @@ export const getValueAggrFunc = (field, aggregation) => {
   return points => {
     return field
       ? aggregate(
-          points.map(p => p.data[field.tableFieldIndex - 1]),
+          points.map(p => field.valueAccessor(p.data)),
           aggregation
         )
       : points.length;

@@ -4,10 +4,9 @@ import {ParsedConfig} from '../schemas';
 import * as VisStateActions from 'actions/vis-state-actions';
 import ActionTypes from 'constants/action-types';
 import {LoaderObject} from '@loaders.gl/loader-utils';
-import {VisStateMergers} from './vis-state-merger';
-import KeplerGLSchema from 'schemas';
-import {LayerClassesType, Layer} from 'layers';
+import {KeplerTable, Field} from 'utils';
 
+export {KeplerTable, Field};
 export type HistogramBin = {
   x0: number | undefined;
   x1: number | undefined;
@@ -129,75 +128,10 @@ export type Filter =
   | MultiSelectFilter
   | PolygonFilter;
 
-export type FilterRecord = {
-  dynamicDomain: Filter[];
-  fixedDomain: Filter[];
-  cpu: Filter[];
-  gpu: Filter[];
-};
-
-export type Field = {
-  analyzerType: string;
-  id?: string;
-  name: string;
-  format: string;
-  tableFieldIndex: number;
-  type: string;
-  filterProps?: any;
-  metadata?: any;
-};
-
-export type GpuFilter = {
-  filterRange: number[][];
-  filterValueUpdateTriggers: any;
-  filterValueAccessor: any;
-};
-
-export type FieldPair = {
-  defaultName: string;
-  pair: {
-    [key: string]: {
-      fieldIdx: number;
-      value: string;
-    };
-  };
-  suffix: string[];
-};
-
-export type Dataset = {
-  id: string;
-  label?: string;
-  color: RGBColor;
-
-  // fields and data
-  fields: Field[];
-  allData: any[][];
-
-  allIndexes: number[];
-  filteredIndex: number[];
-  filteredIdxCPU?: number[];
-  filteredIndexForDomain: number[];
-  fieldPairs: FieldPair[];
-  gpuFilter: GpuFilter;
-  filterRecord?: FilterRecord;
-  filterRecordCPU?: FilterRecord;
-  changedFilters?: any;
-
-  // table-injected metadata
-  sortColumn?: {
-    // column name: sorted idx
-    [key: string]: string; // ASCENDING | DESCENDING | UNSORT
-  };
-  sortOrder?: number[] | null;
-
-  pinnedColumns?: string[];
-  // table-injected metadata
-  metadata?: object;
-};
-
 export type Datasets = {
-  [key: string]: Dataset;
+  [key: string]: KeplerTable;
 };
+
 export type Feature = {
   id: string;
   properties: any;

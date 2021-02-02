@@ -226,9 +226,9 @@ mergedLayer0.config = {
         name: 'name',
         type: 'string',
         format: '',
-        id: 'name',
-        tableFieldIndex: 8,
-        analyzerType: 'STRING'
+        fieldIdx: 7,
+        analyzerType: 'STRING',
+        valueAccessor: values => values[7]
       },
       color: [184, 15, 135, 255],
       size: 27,

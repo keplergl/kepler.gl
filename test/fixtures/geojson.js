@@ -210,57 +210,59 @@ export const fields = [
     type: 'geojson',
     name: '_geojson',
     format: '',
-    tableFieldIndex: 1,
-    analyzerType: 'GEOMETRY'
+    fieldIdx: 0,
+    analyzerType: 'GEOMETRY',
+    valueAccessor: values => values[0]
   },
   {
     type: 'integer',
     name: 'OBJECTID',
     format: '',
-    tableFieldIndex: 2,
-    analyzerType: 'INT'
+    fieldIdx: 1,
+    analyzerType: 'INT',
+    valueAccessor: values => values[1]
   },
   {
     type: 'integer',
     name: 'ZIP_CODE',
     format: '',
-    tableFieldIndex: 3,
-    analyzerType: 'INT'
+    fieldIdx: 2,
+    analyzerType: 'INT',
+    valueAccessor: values => values[2]
   },
   {
     type: 'integer',
     name: 'ID',
     format: '',
-    tableFieldIndex: 4,
-    analyzerType: 'INT'
+    fieldIdx: 3,
+    analyzerType: 'INT',
+    valueAccessor: values => values[3]
   },
   {
     type: 'integer',
     name: 'TRIPS',
     format: '',
-    tableFieldIndex: 5,
-    analyzerType: 'INT'
+    fieldIdx: 4,
+    analyzerType: 'INT',
+    valueAccessor: values => values[4]
   },
   {
     type: 'string',
     name: 'RATE',
     format: '',
-    tableFieldIndex: 6,
-    analyzerType: 'STRING'
+    fieldIdx: 5,
+    analyzerType: 'STRING',
+    valueAccessor: values => values[5]
   },
   {
     type: 'geojson',
     name: 'OBJ',
     format: '',
-    tableFieldIndex: 7,
-    analyzerType: 'OBJECT'
+    fieldIdx: 6,
+    analyzerType: 'OBJECT',
+    valueAccessor: values => values[6]
   }
 ];
-
-export const datasetFields = fields.map(f => ({
-  ...f,
-  id: f.name
-}));
 
 export const rows = [
   [feature0Parsed, 1, 94107, 94107, 11, 'a', {id: 1}],
@@ -540,44 +542,50 @@ export const geoStyleFields = [
   {
     name: '_geojson',
     format: '',
-    tableFieldIndex: 1,
+    fieldIdx: 0,
     type: 'geojson',
-    analyzerType: 'GEOMETRY'
+    analyzerType: 'GEOMETRY',
+    valueAccessor: values => values[0]
   },
   {
     name: 'fillColor',
     format: '',
-    tableFieldIndex: 2,
+    fieldIdx: 1,
     type: 'geojson',
-    analyzerType: 'ARRAY'
+    analyzerType: 'ARRAY',
+    valueAccessor: values => values[1]
   },
   {
     name: 'lineColor',
     format: '',
-    tableFieldIndex: 3,
+    fieldIdx: 2,
     type: 'geojson',
-    analyzerType: 'ARRAY'
+    analyzerType: 'ARRAY',
+    valueAccessor: values => values[2]
   },
   {
     name: 'lineWidth',
     format: '',
-    tableFieldIndex: 4,
+    fieldIdx: 3,
     type: 'integer',
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[3]
   },
   {
     name: 'elevation',
     format: '',
-    tableFieldIndex: 5,
+    fieldIdx: 4,
     type: 'integer',
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[4]
   },
   {
     name: 'radius',
     format: '',
-    tableFieldIndex: 6,
+    fieldIdx: 5,
     type: 'integer',
-    analyzerType: 'INT'
+    analyzerType: 'INT',
+    valueAccessor: values => values[5]
   }
 ];
 

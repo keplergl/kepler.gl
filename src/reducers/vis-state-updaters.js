@@ -54,7 +54,8 @@ import {
   updateFilterDataId
 } from 'utils/filter-utils';
 import {assignGpuChannel, setFilterGpuMode} from 'utils/gpu-filter-utils';
-import {createNewDataEntry, sortDatasetByColumn} from 'utils/dataset-utils';
+import {createNewDataEntry} from 'utils/dataset-utils';
+import {sortDatasetByColumn} from 'utils/table-utils/kepler-table';
 import {set, toArray} from 'utils/utils';
 
 import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils';
@@ -78,7 +79,7 @@ import KeplerGLSchema, {CURRENT_VERSION, visStateSchema} from 'schemas';
 // type imports
 /** @typedef {import('./vis-state-updaters').Field} Field */
 /** @typedef {import('./vis-state-updaters').Filter} Filter */
-/** @typedef {import('./vis-state-updaters').Dataset} Dataset */
+/** @typedef {import('./vis-state-updaters').KeplerTable} KeplerTable */
 /** @typedef {import('./vis-state-updaters').VisState} VisState */
 /** @typedef {import('./vis-state-updaters').Datasets} Datasets */
 /** @typedef {import('./vis-state-updaters').AnimationConfig} AnimationConfig */
@@ -698,10 +699,7 @@ export const setFilterPlotUpdater = (state, {idx, newProp, valueIndex = 0}) => {
     if (plotType) {
       newFilter = {
         ...newFilter,
-        ...getFilterPlot(
-          {...newFilter, plotType},
-          state.datasets[newFilter.dataId[valueIndex]].allData
-        ),
+        ...getFilterPlot({...newFilter, plotType}, state.datasets[newFilter.dataId[valueIndex]]),
         plotType
       };
     }
@@ -1319,6 +1317,7 @@ export function renameDatasetUpdater(state, action) {
   const {dataId, label} = action;
   const {datasets} = state;
   const existing = datasets[dataId];
+  // @ts-ignore
   return existing
     ? {
         ...state,

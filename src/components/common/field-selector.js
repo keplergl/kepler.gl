@@ -73,7 +73,7 @@ const FieldType = PropTypes.oneOfType([
     format: PropTypes.string,
     id: PropTypes.string,
     name: PropTypes.string,
-    tableFieldIndex: PropTypes.number,
+    fieldIdx: PropTypes.number,
     type: PropTypes.number
   })
 ]);

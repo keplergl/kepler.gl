@@ -169,7 +169,7 @@ export default class IconLayer extends Layer {
         lng: ptPair.pair.lng,
         icon: {
           value: iconField.name,
-          fieldIdx: iconField.tableFieldIndex - 1
+          fieldIdx: iconField.fieldIdx
         }
       },
       isVisible: true

@@ -20,196 +20,24 @@
 
 import test from 'tape';
 import moment from 'moment';
-import testData, {numericRangesCsv, testFields} from 'test/fixtures/test-csv-data';
 
 import {
   adjustValueToFilterDomain,
   getFilterFunction,
-  getFieldDomain,
-  getHistogram,
-  getTimestampFieldDomain,
   getDefaultFilter,
   validatePolygonFilter,
   generatePolygonFilter,
   isValidFilterValue,
   isInPolygon,
   diffFilters,
-  getIntervalBins
+  getHistogram,
+  getTimestampFieldDomain
 } from 'utils/filter-utils';
 
-import {preciseRound} from 'utils/data-utils';
 import {getDatasetFieldIndexForFilter} from 'utils/gpu-filter-utils';
 
 import {FILTER_TYPES} from 'constants/default-settings';
-import {processCsvData} from 'processors/data-processor';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
-
-function testGetTimeFieldDomain(rows, allFields, t) {
-  const test_cases = [
-    {
-      name: 'default',
-      input: getFieldDomain(rows, allFields[0]).domain,
-      output: [
-        moment.utc('2016-09-17 00:09:55').valueOf(),
-        moment.utc('2016-09-17 00:30:08').valueOf()
-      ],
-      msg: '2016-09-17 00:30:08'
-    },
-    {
-      name: 'epoch',
-      input: getFieldDomain(rows, allFields[4]).domain,
-      output: [moment.utc(1472688000000).valueOf(), moment.utc(1472774400000).valueOf()],
-      msg: 1472688000000
-    },
-    {
-      name: 'T',
-      input: getFieldDomain(rows, allFields[7]).domain,
-      output: [
-        moment.utc('2016-09-23T00:00:00.000Z').valueOf(),
-        moment.utc('2016-09-23T08:00:00.000Z').valueOf()
-      ],
-      msg: '2016-09-23T00:00:00.000Z'
-    },
-    {
-      name: 'UTC',
-      input: getFieldDomain(rows, allFields[8]).domain,
-      output: [
-        moment.utc('2016-10-01 09:41:39+00:00').valueOf(),
-        moment.utc('2016-10-01 10:01:54+00:00').valueOf()
-      ],
-      msg: '2016-10-01 09:41:39+00:00'
-    },
-    {
-      name: 'local',
-      input: getFieldDomain(rows, allFields[9]).domain,
-      output: [
-        moment.utc('2016-10-01 09:41:39+00:00').valueOf(),
-        moment.utc('2016-10-01 17:01:54+00:00').valueOf()
-      ],
-      msg: '2016-10-01 09:41:39+00:00'
-    }
-  ];
-
-  test_cases.forEach(tc =>
-    t.deepEqual(tc.input, tc.output, `should process correct domain for timestamp ${tc.msg}`)
-  );
-}
-
-function testGetNumericFieldStep(rows, allFields, t) {
-  const test_cases = [
-    {
-      name: 'smallest',
-      input: getFieldDomain(rows, allFields[0]).step,
-      output: 0.0000001
-    },
-    {
-      name: 'small',
-      input: getFieldDomain(rows, allFields[1]).step,
-      output: 0.001
-    },
-    {
-      name: 'negative',
-      input: getFieldDomain(rows, allFields[2]).step,
-      output: 0.01
-    },
-    {
-      name: 'medium',
-      input: getFieldDomain(rows, allFields[3]).step,
-      output: 0.01
-    },
-    {
-      name: 'large',
-      input: getFieldDomain(rows, allFields[4]).step,
-      output: 1
-    }
-  ];
-
-  test_cases.forEach(tc =>
-    t.equal(
-      preciseRound(tc.input, 5),
-      preciseRound(tc.output, 5),
-      `should process correct step for field ${tc.name}`
-    )
-  );
-}
-
-function testGetFilterFunction(rows, fields, t) {
-  const dataId = 'dataset-1';
-  const timeStringFilter = {
-    fieldIdx: [0],
-    type: FILTER_TYPES.timeRange,
-    value: [
-      moment.utc('2016-09-17 00:09:55').valueOf(),
-      moment.utc('2016-09-17 00:20:08').valueOf()
-    ],
-    id: 'filter-1',
-    dataId: [dataId]
-  };
-
-  let field = fields[timeStringFilter.fieldIdx[0]];
-
-  let filterFunction = getFilterFunction(field, dataId, timeStringFilter, []);
-
-  t.equal(filterFunction(rows[10], 10), true, `${rows[10][0]} should be inside the range`);
-
-  t.equal(filterFunction(rows[15], 15), false, `${rows[15][0]} should be outside the range`);
-
-  const epochFilter = {
-    fieldIdx: [4],
-    type: FILTER_TYPES.timeRange,
-    value: [moment.utc(1472688000000).valueOf(), moment.utc(1472734400000).valueOf()],
-    id: 'filter-2',
-    dataId: [dataId]
-  };
-
-  field = fields[epochFilter.fieldIdx[0]];
-
-  filterFunction = getFilterFunction(field, dataId, epochFilter, []);
-
-  t.equal(filterFunction(rows[10], 10), true, `${rows[10][1]} should be inside the range`);
-
-  t.equal(filterFunction(rows[15], 15), false, `${rows[15][1]} should be outside the range`);
-
-  const tzFilter = {
-    fieldIdx: [7],
-    type: FILTER_TYPES.timeRange,
-    value: [
-      moment.utc('2016-09-23T00:00:00.000Z').valueOf(),
-      moment.utc('2016-09-23T06:00:00.000Z').valueOf()
-    ],
-    id: 'filter-3',
-    dataId: [dataId]
-  };
-
-  field = fields[tzFilter.fieldIdx[0]];
-
-  filterFunction = getFilterFunction(field, dataId, tzFilter, []);
-
-  t.equal(filterFunction(rows[10], 10), true, `${rows[10][7]} should be inside the range`);
-
-  t.equal(filterFunction(rows[23], 10), false, `${rows[23][7]} should be outside the range`);
-
-  const utcFilter = {
-    fieldIdx: [8],
-    type: FILTER_TYPES.timeRange,
-    value: [
-      moment.utc('2016-10-01 09:45:39+00:00').valueOf(),
-      moment.utc('2016-10-01 10:00:00+00:00').valueOf()
-    ],
-    id: 'filter-4',
-    dataId: [dataId]
-  };
-
-  field = fields[utcFilter.fieldIdx[0]];
-
-  filterFunction = getFilterFunction(field, dataId, utcFilter, []);
-
-  t.equal(filterFunction(rows[6], 6), false, `${rows[0][8]} should be outside the range`);
-
-  t.equal(filterFunction(rows[4], 4), true, `${rows[4][8]} should be inside the range`);
-
-  t.equal(filterFunction(rows[23], 23), false, `${rows[23][8]} should be outside the range`);
-}
 
 /* eslint-disable max-statements */
 test('filterUtils -> adjustValueToFilterDomain', t => {
@@ -311,123 +139,6 @@ test('filterUtils -> adjustValueToFilterDomain', t => {
     true,
     'should return true if nothing matched to select filter'
   );
-
-  t.end();
-});
-
-test('filterUtils -> getFieldDomain.time', async t => {
-  const data = testData;
-  const expectedFields = testFields;
-
-  const {fields, rows} = await processCsvData(data);
-
-  t.deepEqual(fields, expectedFields, 'should get current field type');
-  testGetTimeFieldDomain(rows, fields, t);
-  testGetFilterFunction(rows, fields, t);
-
-  t.end();
-});
-
-test('filterUtils -> getFieldDomain.numeric', async t => {
-  const data = numericRangesCsv;
-
-  const {fields, rows} = await processCsvData(data);
-
-  testGetNumericFieldStep(rows, fields, t);
-
-  t.end();
-});
-
-test('filterUtils -> getTimestampFieldDomain', t => {
-  /* eslint-disable func-style */
-  const valueAccessor = d => moment.utc(d).valueOf();
-  /* eslint-enable func-style */
-
-  const timeData = {
-    no: {
-      input: 0.5,
-      expect: {
-        domain: [0, 1],
-        step: 0.05,
-        ...getHistogram([0, 1], []),
-        mappedValue: []
-      }
-    },
-    zero: {
-      input: ['2016-10-01 09:45:39', '2016-10-01 09:45:39'],
-      expect: {
-        domain: [1475315139000, 1475315139000],
-        mappedValue: [1475315139000, 1475315139000],
-        histogram: [{count: 2, x0: 1475315139000, x1: 1475315139000}],
-        enlargedHistogram: [{count: 2, x0: 1475315139000, x1: 1475315139000}],
-        step: 0.05
-      }
-    },
-    tiny: {
-      input: ['2016-10-01 09:45:39.001', '2016-10-01 09:45:39.002', '2016-10-01 09:45:39.003'],
-      expect: {
-        domain: [1475315139001, 1475315139003],
-        mappedValue: [1475315139001, 1475315139002, 1475315139003],
-        ...getHistogram(
-          [1475315139001, 1475315139003],
-          [1475315139001, 1475315139002, 1475315139003]
-        ),
-        step: 0.1
-      }
-    },
-    small: {
-      input: ['2016-10-01 09:45:39.010', '2016-10-01 09:45:39.020', '2016-10-01 09:45:39.030'],
-      expect: {
-        domain: [1475315139010, 1475315139030],
-        mappedValue: [1475315139010, 1475315139020, 1475315139030],
-        histogram: [],
-        enlargedHistogram: [],
-        step: 1
-      }
-    },
-    medium: {
-      input: ['2016-10-01 09:45:39.100', '2016-10-01 09:45:39.200', '2016-10-01 09:45:39.300'],
-      expect: {
-        domain: [1475315139100, 1475315139300],
-        mappedValue: [1475315139100, 1475315139200, 1475315139300],
-        histogram: [],
-        enlargedHistogram: [],
-        step: 5
-      }
-    },
-    large: {
-      input: ['2016-10-01 09:45:39', '2016-10-01 09:45:45'],
-      expect: {
-        domain: [1475315139000, 1475315145000],
-        mappedValue: [1475315139000, 1475315145000],
-        histogram: [],
-        enlargedHistogram: [],
-        step: 1000
-      }
-    }
-  };
-
-  Object.keys(timeData).forEach(key => {
-    const tsFieldDomain = getTimestampFieldDomain(timeData[key].input, valueAccessor);
-    t.deepEqual(
-      Object.keys(tsFieldDomain).sort(),
-      Object.keys(timeData[key].expect).sort(),
-      'Should domain should have same keys'
-    );
-
-    Object.keys(timeData[key].expect).forEach(k => {
-      // histogram is created by d3, only need to test they exist
-      if (k === 'histogram' || k === 'enlargedHistogram') {
-        t.ok(tsFieldDomain[k].length, `should create ${k}`);
-      } else {
-        t.deepEqual(
-          tsFieldDomain[k],
-          timeData[key].expect[k],
-          `time domain ${k} should be the same`
-        );
-      }
-    });
-  });
 
   t.end();
 });
@@ -760,40 +471,96 @@ test('filterUtils -> diffFilters', t => {
   t.end();
 });
 
-test('filterUtils => getIntervalBins', t => {
-  const interval = '15 minutes';
-  const dataId = '123test';
-  const filter = {
-    plotType: {
-      interval
+test('filterUtils -> getTimestampFieldDomain', t => {
+  /* eslint-disable func-style */
+  const valueAccessor = d => moment.utc(d).valueOf();
+  /* eslint-enable func-style */
+
+  const timeData = {
+    no: {
+      input: 0.5,
+      expect: {
+        domain: [0, 1],
+        step: 0.05,
+        ...getHistogram([0, 1], []),
+        mappedValue: []
+      }
     },
-    bins: {
-      [dataId]: {
-        [interval]: [0, 1, 2]
+    zero: {
+      input: ['2016-10-01 09:45:39', '2016-10-01 09:45:39'],
+      expect: {
+        domain: [1475315139000, 1475315139000],
+        mappedValue: [1475315139000, 1475315139000],
+        histogram: [{count: 2, x0: 1475315139000, x1: 1475315139000}],
+        enlargedHistogram: [{count: 2, x0: 1475315139000, x1: 1475315139000}],
+        step: 0.05
+      }
+    },
+    tiny: {
+      input: ['2016-10-01 09:45:39.001', '2016-10-01 09:45:39.002', '2016-10-01 09:45:39.003'],
+      expect: {
+        domain: [1475315139001, 1475315139003],
+        mappedValue: [1475315139001, 1475315139002, 1475315139003],
+        ...getHistogram(
+          [1475315139001, 1475315139003],
+          [1475315139001, 1475315139002, 1475315139003]
+        ),
+        step: 0.1
+      }
+    },
+    small: {
+      input: ['2016-10-01 09:45:39.010', '2016-10-01 09:45:39.020', '2016-10-01 09:45:39.030'],
+      expect: {
+        domain: [1475315139010, 1475315139030],
+        mappedValue: [1475315139010, 1475315139020, 1475315139030],
+        histogram: [],
+        enlargedHistogram: [],
+        step: 1
+      }
+    },
+    medium: {
+      input: ['2016-10-01 09:45:39.100', '2016-10-01 09:45:39.200', '2016-10-01 09:45:39.300'],
+      expect: {
+        domain: [1475315139100, 1475315139300],
+        mappedValue: [1475315139100, 1475315139200, 1475315139300],
+        histogram: [],
+        enlargedHistogram: [],
+        step: 5
+      }
+    },
+    large: {
+      input: ['2016-10-01 09:45:39', '2016-10-01 09:45:45'],
+      expect: {
+        domain: [1475315139000, 1475315145000],
+        mappedValue: [1475315139000, 1475315145000],
+        histogram: [],
+        enlargedHistogram: [],
+        step: 1000
       }
     }
   };
 
-  t.deepEqual(getIntervalBins(filter), [0, 1, 2]);
+  Object.keys(timeData).forEach(key => {
+    const tsFieldDomain = getTimestampFieldDomain(timeData[key].input, valueAccessor);
+    t.deepEqual(
+      Object.keys(tsFieldDomain).sort(),
+      Object.keys(timeData[key].expect).sort(),
+      'Should domain should have same keys'
+    );
 
-  const notValidPlotFilter = {
-    plotType: {},
-    bins: {
-      [dataId]: {
-        [interval]: [0, 1, 2]
+    Object.keys(timeData[key].expect).forEach(k => {
+      // histogram is created by d3, only need to test they exist
+      if (k === 'histogram' || k === 'enlargedHistogram') {
+        t.ok(tsFieldDomain[k].length, `should create ${k}`);
+      } else {
+        t.deepEqual(
+          tsFieldDomain[k],
+          timeData[key].expect[k],
+          `time domain ${k} should be the same`
+        );
       }
-    }
-  };
+    });
+  });
 
-  t.equal(getIntervalBins(notValidPlotFilter), null);
-
-  const notValidBinFilter = {
-    plotType: {
-      interval
-    },
-    bins: {}
-  };
-
-  t.deepEqual(getIntervalBins(notValidBinFilter), null);
   t.end();
 });
