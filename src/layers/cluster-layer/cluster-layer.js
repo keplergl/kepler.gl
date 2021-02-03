@@ -37,6 +37,9 @@ export default class ClusterLayer extends AggregationLayer {
   constructor(props) {
     super(props);
     this.registerVisConfig(clusterVisConfigs);
+
+    // Access data of each point from aggregated clusters, depends on how getClusterer works
+    this.getPointData = pt => pt;
   }
 
   get type() {

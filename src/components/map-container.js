@@ -299,7 +299,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
     /* component render functions */
 
     /* eslint-disable complexity */
-    _renderMapPopover(layersToRender) {
+    _renderMapPopover() {
       // TODO: move this into reducer so it can be tested
       const {
         mapState,
@@ -310,6 +310,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         layers,
         mousePos: {mousePosition, coordinate, pinned}
       } = this.props;
+      const layersToRender = this.layersToRenderSelector(this.props);
 
       if (!mousePosition || !interactionConfig.tooltip) {
         return null;
@@ -332,7 +333,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       if (pinned || clicked) {
         // project lnglat to screen so that tooltip follows the object on zoom
         const viewport = new WebMercatorViewport(mapState);
-        const lngLat = clicked ? clicked.lngLat : pinned.coordinate;
+        const lngLat = clicked ? clicked.coordinate : pinned.coordinate;
         pinnedPosition = this._getHoverXY(viewport, lngLat);
         layerPinnedProp = getLayerHoverProp({
           interactionConfig,
@@ -469,6 +470,33 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       }
     }
 
+    _renderDrawEditor() {
+      const {layers, datasets, mapControls, visStateActions, editor, index} = this.props;
+      const isEdit = mapControls.mapDraw ? mapControls.mapDraw.active : false;
+      const layersToRender = this.layersToRenderSelector(this.props);
+
+      return (
+        <Editor
+          index={index}
+          datasets={datasets}
+          editor={editor}
+          filters={this.polygonFilters(this.props)}
+          isEnabled={isEdit}
+          layers={layers}
+          layersToRender={layersToRender}
+          onDeleteFeature={visStateActions.deleteFeature}
+          onSelect={visStateActions.setSelectedFeature}
+          onUpdate={visStateActions.setFeatures}
+          onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
+          style={{
+            pointerEvents: isEdit ? 'all' : 'none',
+            position: 'absolute',
+            display: editor.visible ? 'block' : 'none'
+          }}
+        />
+      );
+    }
+
     _onViewportChange = viewState => {
       const {width, height, ...restViewState} = viewState;
       const {primary} = this.props;
@@ -527,8 +555,6 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         transformRequest
       };
 
-      const isEdit = (mapControls.mapDraw || {}).active;
-
       const hasGeocoderLayer = layers.find(l => l.id === GEOCODER_LAYER_ID);
       const isSplit = Boolean(mapState.isSplit);
 
@@ -569,24 +595,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
           >
             {this._renderDeckOverlay(layersForDeck)}
             {this._renderMapboxOverlays()}
-            <Editor
-              index={index}
-              datasets={datasets}
-              editor={editor}
-              filters={this.polygonFilters(this.props)}
-              isEnabled={isEdit}
-              layers={layers}
-              layersToRender={layersToRender}
-              onDeleteFeature={visStateActions.deleteFeature}
-              onSelect={visStateActions.setSelectedFeature}
-              onUpdate={visStateActions.setFeatures}
-              onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
-              style={{
-                pointerEvents: isEdit ? 'all' : 'none',
-                position: 'absolute',
-                display: editor.visible ? 'block' : 'none'
-              }}
-            />
+            {this._renderDrawEditor()}
           </MapComponent>
           {mapStyle.topMapStyle || hasGeocoderLayer ? (
             <div style={MAP_STYLE.top}>
@@ -595,7 +604,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
               </MapComponent>
             </div>
           ) : null}
-          {this._renderMapPopover(layersToRender)}
+          {this._renderMapPopover()}
           {!isSplit || index === 1 ? <Attribution /> : null}
         </>
       );

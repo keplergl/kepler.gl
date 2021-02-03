@@ -19,6 +19,7 @@ export const Clock: React.ElementType;
 export const Close: React.ElementType;
 export const Copy: React.ElementType;
 export const Crosshairs: React.ElementType;
+export const Copy: React.ElementType;
 export const Cube3d: React.ElementType;
 export const CursorClick: React.ElementType;
 export const DataTable: React.ElementType;

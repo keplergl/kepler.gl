@@ -18,41 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const resolve = require('path').resolve;
-const DtsBundleWebpack = require('dts-bundle-webpack');
+// test in puppeteer browser
+// require('@probe.gl/test-utils/polyfill');
+import Console from 'global/console';
 
-const SRC_DIR = resolve(__dirname, '../src');
-const OUTPUT_DIR = resolve(__dirname, '../dist');
+const test = require('tape-catch');
+const enableDOMLogging = require('@probe.gl/test-utils')._enableDOMLogging;
+enableDOMLogging();
 
-const LIBRARY_BUNDLE_CONFIG = env => ({
-  // Silence warnings about big bundles
-  stats: {
-    warnings: false
-  },
-
-  // let's put everything in
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        loader: 'babel-loader',
-        include: [SRC_DIR]
-      }
-    ]
-  },
-
-  node: {
-    fs: 'empty'
-  },
-
-  plugins: [
-    new DtsBundleWebpack({
-      name: 'kepler.gl',
-      main: `${SRC_DIR}/index.d.ts`,
-      out: `${OUTPUT_DIR}/types.d.ts`,
-      outputAsModuleFolder: true
-    })
-  ]
+test.onFinish(window.browserTestDriver_finish);
+test.onFailure(args => {
+  Console.log(args);
+  window.browserTestDriver_fail();
 });
 
-module.exports = env => LIBRARY_BUNDLE_CONFIG(env);
+test('Browser tests', t => {
+  // running all tests in browser for debugging
+  require('./node/index.js');
+  require('./browser/index.js');
+  require('./browser-headless/index.js');
+
+  t.end();
+});

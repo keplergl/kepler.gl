@@ -1204,7 +1204,10 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}, options =
  */
 export const layerHoverUpdater = (state, action) => ({
   ...state,
-  hoverInfo: action.info
+  hoverInfo: {
+    // deck.gl info is mutable
+    ...action.info
+  }
 });
 
 /* eslint-enable max-statements */

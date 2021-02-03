@@ -36,21 +36,22 @@ export const pointPosAccessor = ({lat, lng}) => dc => d => [
 
 export const pointPosResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
 
-export const getValueAggrFunc = (field, aggregation) => {
-  return points => {
-    return field
-      ? aggregate(
-          points.map(p => {
-            return field.valueAccessor(p);
-          }),
-          aggregation
-        )
-      : points.length;
+export const getValueAggrFunc = getPointData => (field, aggregation) => points =>
+  field
+    ? aggregate(
+        // TODO: fix for data container
+        points.map(p => field.valueAccessor(getPointData(p).data)),
+        aggregation
+      )
+    : points.length;
+
+export const getFilterDataFunc = (filterRange, getFilterValue) => {
+  return pt => {
+    return getFilterValue(pt).every(
+      (val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]
+    );
   };
 };
-
-export const getFilterDataFunc = (filterRange, getFilterValue) => pt =>
-  getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
 
 const getLayerColorRange = colorRange => colorRange.colors.map(hexToRgb);
 
@@ -63,6 +64,13 @@ export default class AggregationLayer extends Layer {
     this.getPositionAccessor = dataContainer =>
       pointPosAccessor(this.config.columns)(dataContainer);
     this.getColorRange = memoize(getLayerColorRange);
+
+    // Access data of each point from aggregated bins, depends on how BinSorter works
+    // Deck.gl BinSorter put data in point.source
+    this.getPointData = pt => pt.source;
+
+    this.gpufilterGetIndex = pt => this.getPointData(pt).index;
+    this.gpuFilterGetData = pt => this.getPointData(pt).data;
   }
 
   get isAggregated() {
@@ -248,18 +256,25 @@ export default class AggregationLayer extends Layer {
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getPosition = this.getPositionAccessor(dataContainer);
 
-    const getColorValue = getValueAggrFunc(
+    const aggregatePoints = getValueAggrFunc(this.getPointData);
+    const getColorValue = aggregatePoints(
       this.config.colorField,
       this.config.visConfig.colorAggregation
     );
 
-    const getElevationValue = getValueAggrFunc(
+    const getElevationValue = aggregatePoints(
       this.config.sizeField,
       this.config.visConfig.sizeAggregation
     );
     const hasFilter = Object.values(gpuFilter.filterRange).some(arr => arr.some(v => v !== 0));
 
-    const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)();
+    // TODO: fix fr data container
+    // const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)();
+    const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
+      // BinSorter put data in point.source
+      this.gpufilterGetIndex,
+      this.gpuFilterGetData
+    );
     const filterData = hasFilter
       ? getFilterDataFunc(gpuFilter.filterRange, getFilterValue)
       : undefined;

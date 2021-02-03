@@ -93,7 +93,7 @@ export class Layer {
   getVisualChannelDescription(key: string): VisualChannelDescription;
   isLayerHovered(objectInfo: any): boolean;
   hasHoveredObject(objectInfo: any): any | null;
-  getHoverData(object: any, allData?: KeplerTable['allData'], fields?: KeplerTable['fields']): any;
+  getHoverData(object: any, dataContainer?: KeplerTable['allData'], fields?: KeplerTable['fields']): any;
   registerVisConfig(config: LayerVisConfig): any;
   getDefaultLayerConfig(config: {[key: string]: any}): any;
   getColorScale(

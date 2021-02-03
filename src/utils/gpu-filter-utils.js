@@ -169,7 +169,10 @@ const defaultGetIndex = d => d.index;
 const defaultGetData = (dc, d, fieldIndex) => {
   return dc.valueAt(d.index, fieldIndex);
 };
-
+function log(args) {
+  console.log(args);
+  return args;
+}
 /**
  * @param {Array<Object>} channels
  * @param {string} dataId

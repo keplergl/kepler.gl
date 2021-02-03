@@ -504,6 +504,33 @@ function mockStateWithGeocoderDataset() {
   return prepareState;
 }
 
+function mockStateWithLayerStyling() {
+  const initialState = mockStateWithFileUpload();
+  const layer0 = initialState.visState.layers.find(
+    l => l.config.dataId === testCsvDataId && l.type === 'point'
+  );
+  const mapCenter = {
+    longitude: 31.2369645,
+    latitude: 30.0242098,
+    zoom: 13
+  };
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    // make radius bigger
+    {
+      action: VisStateActions.layerVisConfigChange,
+      payload: [layer0, {radius: 100}]
+    },
+    // center map
+    {
+      action: MapStateActions.updateMap,
+      payload: [mapCenter]
+    }
+  ]);
+
+  return prepareState;
+}
+
 // saved hexagon layer
 export const expectedSavedLayer0 = {
   id: 'hexagon-2',
@@ -795,6 +822,7 @@ export const StateWTripGeojson = mockStateWithTripGeojson();
 export const StateWTooltipFormat = mockStateWithTooltipFormat();
 export const StateWH3Layer = mockStateWithH3Layer();
 export const StateWithGeocoderDataset = mockStateWithGeocoderDataset();
+export const StateWLayerStyle = mockStateWithLayerStyling();
 
 export const expectedSavedTripLayer = {
   id: 'trip-0',
@@ -861,4 +889,4 @@ export function mockKeplerPropsWithState({
   };
 }
 
-export const mockKeplerProps = mockKeplerPropsWithState({state: StateWFiles});
+export const mockKeplerProps = mockKeplerPropsWithState({state: StateWLayerStyle});
