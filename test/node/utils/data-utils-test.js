@@ -34,11 +34,11 @@ import {
 import {ALL_FIELD_TYPES} from 'constants';
 
 test('dataUtils -> clamp', t => {
-  t.equal(clamp([0,1], 2), 1, 'should clamp 2 to 1 for [0,1]');
-  t.equal(clamp([0,1], 0.5), 0.5, 'should not clamp 0.5 for [0,1]');
-  t.equal(clamp([-1,1], -2), -1, 'should clamp -2 to -1 for [-1,1]');
-  t.equal(clamp([0,10], 11), 10, 'should clamp 11 to 10 for [0,10]');
-  t.equal(clamp([0,0], 1), 0, 'should clamp 1 to 0 for [0,0]');
+  t.equal(clamp([0, 1], 2), 1, 'should clamp 2 to 1 for [0,1]');
+  t.equal(clamp([0, 1], 0.5), 0.5, 'should not clamp 0.5 for [0,1]');
+  t.equal(clamp([-1, 1], -2), -1, 'should clamp -2 to -1 for [-1,1]');
+  t.equal(clamp([0, 10], 11), 10, 'should clamp 11 to 10 for [0,10]');
+  t.equal(clamp([0, 0], 1), 0, 'should clamp 1 to 0 for [0,0]');
   t.end();
 });
 
