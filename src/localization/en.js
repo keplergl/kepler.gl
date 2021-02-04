@@ -190,6 +190,7 @@ export default {
     hide: 'hide',
     show: 'show',
     removeLayer: 'Remove layer',
+    duplicateLayer: 'Duplicate layer',
     layerSettings: 'Layer settings',
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',

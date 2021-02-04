@@ -35,6 +35,7 @@ export {default as Checkmark} from './checkmark';
 export {default as Clipboard} from './clipboard';
 export {default as Clock} from './clock';
 export {default as Close} from './close';
+export {default as Copy} from './copy';
 export {default as Crosshairs} from './crosshairs';
 export {default as Cube3d} from './cube-3d';
 export {default as CursorClick} from './cursor-click';

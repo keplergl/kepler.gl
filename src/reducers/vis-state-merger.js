@@ -27,6 +27,7 @@ import {applyFiltersToDatasets, validateFiltersUpdateDatasets} from 'utils/filte
 import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
 import {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
 import {LAYER_BLENDINGS} from 'constants/default-settings';
+import {CURRENT_VERSION, visStateSchema} from 'schemas';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded
@@ -61,6 +62,31 @@ export function mergeFilters(state, filtersToMerge) {
     datasets: filtered,
     filterToBeMerged: [...state.filterToBeMerged, ...failed]
   };
+}
+
+export function createLayerFromConfig(state, layerConfig) {
+  // first validate config against dataset
+  const {validated, failed} = validateLayersByDatasets(state.datasets, state.layerClasses, [
+    layerConfig
+  ]);
+
+  if (failed.length || !validated.length) {
+    // failed
+    return null;
+  }
+
+  const newLayer = validated[0];
+  newLayer.updateLayerDomain(state.datasets);
+  return newLayer;
+}
+
+export function serializeLayer(newLayer) {
+  const savedVisState = visStateSchema[CURRENT_VERSION].save({
+    layers: [newLayer],
+    layerOrder: [0]
+  }).visState;
+  const loadedLayer = visStateSchema[CURRENT_VERSION].load(savedVisState).visState.layers[0];
+  return loadedLayer;
 }
 
 /**
@@ -410,8 +436,9 @@ export function validateSavedVisualChannels(fields, newLayer, savedLayer) {
       };
       if (Object.keys(foundChannel).length) {
         newLayer.updateLayerConfig(foundChannel);
-        newLayer.validateVisualChannel(key);
       }
+
+      newLayer.validateVisualChannel(key);
     }
   });
   return newLayer;

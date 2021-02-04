@@ -231,15 +231,15 @@ export function addFilter(dataId) {
 /**
  * Add a new layer
  * @memberof visStateActions
- * @param props - new layer props
+ * @param config - new layer config
  * @returns action
  * @type {typeof import('./vis-state-actions').addLayer}
  * @public
  */
-export function addLayer(props) {
+export function addLayer(config) {
   return {
     type: ActionTypes.ADD_LAYER,
-    props
+    config
   };
 }
 
@@ -289,6 +289,21 @@ export function removeFilter(idx) {
 export function removeLayer(idx) {
   return {
     type: ActionTypes.REMOVE_LAYER,
+    idx
+  };
+}
+
+/**
+ * Duplicate a layer
+ * @memberof visStateActions
+ * @param idx idx of layer to be duplicated
+ * @returns action
+ * @type {typeof import('./vis-state-actions').duplicateLayer}
+ * @public
+ */
+export function duplicateLayer(idx) {
+  return {
+    type: ActionTypes.DUPLICATE_LAYER,
     idx
   };
 }

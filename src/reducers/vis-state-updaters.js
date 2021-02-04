@@ -56,11 +56,17 @@ import {
 import {assignGpuChannel, setFilterGpuMode} from 'utils/gpu-filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {sortDatasetByColumn} from 'utils/table-utils/kepler-table';
-import {set, toArray} from 'utils/utils';
+import {set, toArray, arrayInsert, generateHashId} from 'utils/utils';
 
 import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils';
 
-import {isValidMerger, VIS_STATE_MERGERS, validateLayerWithData} from './vis-state-merger';
+import {
+  isValidMerger,
+  VIS_STATE_MERGERS,
+  validateLayerWithData,
+  createLayerFromConfig,
+  serializeLayer
+} from './vis-state-merger';
 
 import {
   addNewLayersToSplitMap,
@@ -68,13 +74,13 @@ import {
   removeLayerFromSplitMaps
 } from 'utils/split-map-utils';
 
-import {Layer, LayerClasses} from 'layers';
+import {Layer, LayerClasses, LAYER_ID_LENGTH} from 'layers';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 import {EDITOR_MODES, SORT_ORDER} from 'constants/default-settings';
 import {pick_, merge_} from './composer-helpers';
 import {processFileContent} from 'actions/vis-state-actions';
 
-import KeplerGLSchema, {CURRENT_VERSION, visStateSchema} from 'schemas';
+import KeplerGLSchema from 'schemas';
 
 // type imports
 /** @typedef {import('./vis-state-updaters').Field} Field */
@@ -364,18 +370,10 @@ export function layerTextLabelChangeUpdater(state, action) {
 }
 
 function validateExistingLayerWithData(dataset, layerClasses, layer) {
-  let newLayer = layer;
-
-  const savedVisState = visStateSchema[CURRENT_VERSION].save({
-    layers: [newLayer],
-    layerOrder: [0]
-  }).visState;
-  const loadedLayer = visStateSchema[CURRENT_VERSION].load(savedVisState).visState.layers[0];
-  newLayer = validateLayerWithData(dataset, loadedLayer, layerClasses, {
+  const loadedLayer = serializeLayer(layer);
+  return validateLayerWithData(dataset, loadedLayer, layerClasses, {
     allowEmptyColumn: true
   });
-
-  return newLayer;
 }
 
 /**
@@ -396,10 +394,16 @@ export function layerDataIdChangeUpdater(state, action) {
   let newLayer = oldLayer.updateLayerConfig({dataId});
   // this may happen when a layer is new (type: null and no columns) but it's not ready to be saved
   if (newLayer.isValidToSave()) {
-    newLayer = validateExistingLayerWithData(state.datasets[dataId], state.layerClasses, newLayer);
+    const validated = validateExistingLayerWithData(
+      state.datasets[dataId],
+      state.layerClasses,
+      newLayer
+    );
     // if cant validate it with data create a new one
-    if (!newLayer) {
+    if (!validated) {
       newLayer = new state.layerClasses[oldLayer.type]({dataId, id: oldLayer.id});
+    } else {
+      newLayer = validated;
     }
   }
 
@@ -893,18 +897,35 @@ export const removeFilterUpdater = (state, action) => {
  * @public
  */
 export const addLayerUpdater = (state, action) => {
-  const defaultDataset = Object.keys(state.datasets)[0];
-  const newLayer = new Layer({
-    isVisible: true,
-    isConfigActive: true,
-    dataId: defaultDataset,
-    ...action.props
-  });
+  let newLayer;
+  let newLayerData;
+  if (action.config) {
+    newLayer = createLayerFromConfig(state, action.config);
+    if (!newLayer) {
+      Console.warn(
+        'Failed to create layer from config, it usually means the config is not be in correct format',
+        action.config
+      );
+      return state;
+    }
 
+    const result = calculateLayerData(newLayer, state);
+    newLayer = result.layer;
+    newLayerData = result.layerData;
+  } else {
+    // create an empty layer with the first available dataset
+    const defaultDataset = Object.keys(state.datasets)[0];
+    newLayer = new Layer({
+      isVisible: true,
+      isConfigActive: true,
+      dataId: defaultDataset
+    });
+    newLayerData = {};
+  }
   return {
     ...state,
     layers: [...state.layers, newLayer],
-    layerData: [...state.layerData, {}],
+    layerData: [...state.layerData, newLayerData],
     layerOrder: [...state.layerOrder, state.layerOrder.length],
     splitMaps: addNewLayersToSplitMap(state.splitMaps, newLayer)
   };
@@ -933,6 +954,57 @@ export const removeLayerUpdater = (state, {idx}) => {
   };
 
   return updateAnimationDomain(newState);
+};
+
+/**
+ * duplicate layer
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').duplicateLayerUpdater}
+ * @public
+ */
+export const duplicateLayerUpdater = (state, {idx}) => {
+  const {layers} = state;
+  const original = state.layers[idx];
+  const originalLayerOrderIdx = state.layerOrder.findIndex(i => i === idx);
+
+  if (!original) {
+    Console.warn(`layer.${idx} is undefined`);
+    return state;
+  }
+  let newLabel = `Copy of ${original.config.label}`;
+  let postfix = 0;
+  // eslint-disable-next-line no-loop-func
+  while (layers.find(l => l.config.label === newLabel)) {
+    newLabel = `Copy of ${original.config.label} ${++postfix}`;
+  }
+
+  // collect layer config from original
+  const loadedLayer = serializeLayer(original);
+
+  // assign new id and label to copied layer
+  if (!loadedLayer.config) {
+    return state;
+  }
+  loadedLayer.config.label = newLabel;
+  loadedLayer.id = generateHashId(LAYER_ID_LENGTH);
+
+  // add layer to state
+  let nextState = addLayerUpdater(state, {config: loadedLayer});
+
+  // new added layer are at the end, move it to be on top of original layer
+  const newLayerOrderIdx = nextState.layerOrder.length - 1;
+  const newLayerOrder = arrayInsert(
+    nextState.layerOrder.slice(0, newLayerOrderIdx),
+    originalLayerOrderIdx,
+    newLayerOrderIdx
+  );
+
+  nextState = {
+    ...nextState,
+    layerOrder: newLayerOrder
+  };
+
+  return updateAnimationDomain(nextState);
 };
 
 /**

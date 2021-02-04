@@ -156,10 +156,10 @@ export function addFilter(
 ): Merge<AddFilterUpdaterAction, {type: ActionTypes.ADD_FILTER}>;
 
 export type AddLayerUpdaterAction = {
-  props: object;
+  config: object;
 };
 export function addLayer(
-  props: object
+  config: object
 ): Merge<AddLayerUpdaterAction, {type: ActionTypes.ADD_LAYER}>;
 
 export type ReorderLayerUpdaterAction = {
@@ -182,6 +182,13 @@ export type RemoveLayerUpdaterAction = {
 export function removeLayer(
   idx: number
 ): Merge<RemoveLayerUpdaterAction, {type: ActionTypes.REMOVE_LAYER}>;
+
+export type DuplicateLayerUpdaterAction = {
+  idx: number;
+};
+export function duplicateLayer(
+  idx: number
+): Merge<DuplicateLayerUpdaterAction, {type: ActionTypes.DUPLICATE_LAYER}>;
 
 export type RemoveDatasetUpdaterAction = {
   dataId: string;
