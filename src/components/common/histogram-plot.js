@@ -73,7 +73,7 @@ function HistogramPlotFactory() {
       <HistogramWrapper width={width} height={height} style={{marginTop: `${margin.top}px`}}>
         <g className="histogram-bars">
           {histogram.map(bar => {
-            const inRange = bar.x1 <= value[1] + 1 && bar.x0 >= value[0];
+            const inRange = bar.x1 <= value[1] && bar.x0 >= value[0];
             const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
             return (
               <rect
