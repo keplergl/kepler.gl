@@ -20,6 +20,8 @@
 
 import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
+import {drainTasksForTesting} from 'react-palm/tasks';
+
 import {VizColorPalette} from 'constants/custom-color-ranges';
 import {getInitialInputStyle} from 'reducers/map-style-updaters';
 
@@ -53,6 +55,7 @@ import {
 import tripGeojson, {tripDataInfo} from 'test/fixtures/trip-geojson';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 import {COMPARE_TYPES} from 'constants/tooltip';
+import {MOCK_MAP_STYLE} from './mock-map-styles';
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);
@@ -96,6 +99,10 @@ function mockStateWithFileUpload() {
   // load csv and geojson
   const updatedState = applyActions(keplerGlReducer, initialState, [
     {
+      action: MapStyleActions.loadMapStyles,
+      payload: [{dark: MOCK_MAP_STYLE}]
+    },
+    {
       action: VisStateActions.updateVisData,
       payload: [[{info: csvInfo, data: {fields: testFields, rows: testAllData}}]]
     },
@@ -104,7 +111,8 @@ function mockStateWithFileUpload() {
       payload: [[{info: geojsonInfo, data: {fields: geojsonFields, rows: geojsonRows}}]]
     }
   ]);
-
+  // cleanup tasks created during loadMapStyles
+  drainTasksForTesting();
   // replace layer id and color with controlled value for testing
   updatedState.visState.layers.forEach((l, i) => {
     l.id = `${l.type}-${i}`;

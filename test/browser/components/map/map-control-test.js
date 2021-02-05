@@ -23,9 +23,11 @@ import {shallow} from 'enzyme';
 import sinon from 'sinon';
 import test from 'tape';
 import MapControlFactory from 'components/map/map-control';
+import {appInjector} from 'components';
+
+const MapControl = appInjector.get(MapControlFactory);
 
 test('MapControlFactory - display all options', t => {
-  const MapControl = MapControlFactory();
   const onToggleSplitMap = sinon.spy();
   const onTogglePerspective = sinon.spy();
   const onToggleMapControl = sinon.spy();
@@ -58,7 +60,7 @@ test('MapControlFactory - display all options', t => {
     />
   );
 
-  t.equal($.find('ActionPanel').length, 5, 'Should show 5 action panels');
+  t.equal($.find('.map-control-action').length, 6, 'Should show 6 action panels');
 
   t.end();
 });

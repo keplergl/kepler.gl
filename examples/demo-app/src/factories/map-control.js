@@ -29,7 +29,7 @@ function CustomMapControlFactory(...deps) {
   const StyledMapControlOverlay = styled.div`
     position: absolute;
     top: ${props => props.top}px;
-    right: 0px;
+    right: 0;
     z-index: 1;
   `;
 
