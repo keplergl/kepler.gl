@@ -532,3 +532,5 @@ export const DEFAULT_EDITOR: Editor;
 
 export function computeSplitMapLayers(layers: Array<Layer>): Array<Layer>;
 export function closeSpecificMapAtIndex(state: VisState, action: unknown);
+
+export {ProtoDataset} from '../actions/actions';

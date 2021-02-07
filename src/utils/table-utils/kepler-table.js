@@ -440,11 +440,10 @@ export function sortDatasetByColumn(dataset, column, mode) {
   const sortBy = SORT_ORDER[mode] || SORT_ORDER.ASCENDING;
 
   if (sortBy === SORT_ORDER.UNSORT) {
-    return {
-      ...dataset,
-      sortColumn: {},
-      sortOrder: null
-    };
+    dataset.sortColumn = {};
+    dataset.sortOrder = null;
+
+    return dataset;
   }
 
   const sortFunction = sortBy === SORT_ORDER.ASCENDING ? ascending : descending;
@@ -454,13 +453,12 @@ export function sortDatasetByColumn(dataset, column, mode) {
       sortFunction(dataContainer.valueAt(a, fieldIndex), dataContainer.valueAt(b, fieldIndex))
     );
 
-  return {
-    ...dataset,
-    sortColumn: {
-      [column]: sortBy
-    },
-    sortOrder
+  dataset.sortColumn = {
+    [column]: sortBy
   };
+  dataset.sortOrder = sortOrder;
+
+  return dataset;
 }
 
 export function copyTable(original) {

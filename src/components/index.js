@@ -151,6 +151,8 @@ export {injector, provideRecipesToInjector, withState} from './injector';
 // Common Components
 export {default as CloudTile} from './modals/cloud-tile';
 export {default as FileUploadFactory, FileUpload} from './common/file-uploader/file-upload';
+export {default as FileDrop} from './common/file-uploader/file-drop';
+export {default as UploadButton} from './common/file-uploader/upload-button';
 export {default as DatasetLabel} from './common/dataset-label';
 export {default as ItemSelector} from './common/item-selector/item-selector';
 export {default as Typeahead} from './common/item-selector/typeahead';
@@ -174,6 +176,7 @@ export {default as CanvasHack} from './common/data-table/canvas';
 export {default as MapLayerSelector} from './common/map-layer-selector';
 export {default as VerticalToolbar} from './common/vertical-toolbar';
 export {default as ToolbarItem} from './common/toolbar-item';
+export {SharingUrl} from './modals/share-map-modal';
 
 // side pane components
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
