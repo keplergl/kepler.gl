@@ -197,7 +197,7 @@ export function findDefaultColorField({fields, fieldPairs = []}) {
       return false;
     }
 
-    const normalizedFieldName = field.displayName.toLowerCase();
+    const normalizedFieldName = field.name.toLowerCase();
     if (normalizedFieldName === '') {
       // Special case excluded name when the name is blank.
       return false;
@@ -212,8 +212,8 @@ export function findDefaultColorField({fields, fieldPairs = []}) {
   });
 
   const sortedFields = fieldsWithoutExcluded.sort((left, right) => {
-    const normalizedLeft = left.displayName.toLowerCase();
-    const normalizedRight = right.displayName.toLowerCase();
+    const normalizedLeft = left.name.toLowerCase();
+    const normalizedRight = right.name.toLowerCase();
     const leftHasInclusion = METRIC_DEFAULT_FIELDS.findIndex(
       f => normalizedLeft.startsWith(f) || normalizedLeft.endsWith(f)
     );
