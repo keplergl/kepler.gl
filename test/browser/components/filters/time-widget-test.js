@@ -245,23 +245,8 @@ test('Components -> TimeWidget.mount -> test actions', t => {
     .find('.field-selector_list-item')
     .at(0)
     .simulate('click');
-  t.deepEqual(
-    setFilterPlot.args[0],
-    [
-      0,
-      {
-        yAxis: {
-          type: 'real',
-          name: 'gps_data.lat',
-          format: '',
-          tableFieldIndex: 2,
-          analyzerType: 'FLOAT',
-          id: 'gps_data.lat'
-        }
-      }
-    ],
-    'should call setFilterPlot'
-  );
+  t.equal(setFilterPlot.args[0][0], 0, 'should pass filteridx to setFilterPlot');
+  t.equal(setFilterPlot.args[0][1].yAxis.name, 'gps_data.lat', 'should pass correct yAxis to setFilterPlot');
 
   // hit close
   wrapper
