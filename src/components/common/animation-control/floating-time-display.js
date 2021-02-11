@@ -34,6 +34,11 @@ const StyledTimeDisplayWrapper = styled.div.attrs({
   width: 100%;
   margin-left: -${props => props.theme.bottomInnerPdSide}px;
   justify-content: center;
+  pointer-events: none; /* prevent padding from blocking input */
+  & > * {
+    /* all children should allow input */
+    pointer-events: all;
+  }
 `;
 
 const StyledTimeDisplay = styled.div.attrs({

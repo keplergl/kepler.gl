@@ -36,6 +36,11 @@ const BottomWidgetContainer = styled.div`
   padding-right: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingRight : 0)}px;
   padding-bottom: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingBottom : 0)}px;
   padding-left: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingLeft : 0)}px;
+  pointer-events: none !important; /* prevent padding from blocking input */
+  & > * {
+    /* all children should allow input */
+    pointer-events: all;
+  }
   width: ${props => props.width}px;
   z-index: 1;
   ${media.portable`padding: 0;`}

@@ -58,7 +58,6 @@ import {mergeMessages} from 'utils/locale-utils';
 
 import {theme as basicTheme, themeLT, themeBS} from 'styles/base';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
-import Position from '../components/common/position';
 
 // Maybe we should think about exporting this or creating a variable
 // as part of the base.js theme
@@ -94,6 +93,16 @@ const GlobalStyle = styled.div`
     display: none;
   }
 `;
+
+const BottomWidgetOuter = styled.div(
+  ({absolute}) => `
+  ${absolute ? 'position: absolute; bottom: 0; right: 0;' : ''}
+  pointer-events: none; /* prevent padding from blocking input */
+  & > * {
+    /* all children should allow input */
+    pointer-events: all;
+  }`
+);
 
 export const mapFieldsSelector = props => ({
   getMapboxRef: props.getMapboxRef,
@@ -413,13 +422,13 @@ function KeplerGlFactory(
                 <MapsLayout className="maps">{mapContainers}</MapsLayout>
                 {isExportingImage && <PlotContainer {...plotContainerFields} />}
                 {interactionConfig.geocoder.enabled && <GeoCoderPanel {...geoCoderPanelFields} />}
-                <Position bottom={0} right={0}>
+                <BottomWidgetOuter>
                   <BottomWidget
                     ref={this.bottomWidgetRef}
                     {...bottomWidgetFields}
                     containerW={dimensions.width}
                   />
-                </Position>
+                </BottomWidgetOuter>
                 <ModalContainer
                   {...modalContainerFields}
                   containerW={dimensions.width}
