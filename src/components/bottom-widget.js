@@ -20,28 +20,16 @@
 
 import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
-import PropTypes from 'prop-types';
 import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-control';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
 import {ANIMATION_WINDOW, FILTER_TYPES} from 'constants/default-settings';
 import {getIntervalBins} from 'utils/filter-utils';
-
-const propTypes = {
-  filters: PropTypes.arrayOf(PropTypes.object),
-  datasets: PropTypes.object,
-  uiState: PropTypes.object,
-  layers: PropTypes.arrayOf(PropTypes.object),
-  animationConfig: PropTypes.object,
-  visStateActions: PropTypes.object,
-  sidePanelWidth: PropTypes.number,
-  containerW: PropTypes.number
-};
+import {media} from 'styles/media-breakpoints';
 
 const maxWidth = 1080;
 
 const BottomWidgetContainer = styled.div`
-  position: absolute;
   display: flex;
   flex-direction: column;
   padding-top: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingTop : 0)}px;
@@ -49,9 +37,8 @@ const BottomWidgetContainer = styled.div`
   padding-bottom: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingBottom : 0)}px;
   padding-left: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingLeft : 0)}px;
   width: ${props => props.width}px;
-  bottom: 0;
-  right: 0;
   z-index: 1;
+  ${media.portable`padding: 0;`}
 `;
 
 FilterAnimationControllerFactory.deps = [AnimationControllerFactory];
@@ -234,8 +221,6 @@ export default function BottomWidgetFactory(
       </BottomWidgetContainer>
     );
   };
-
-  BottomWidget.propTypes = propTypes;
 
   return BottomWidget;
 }

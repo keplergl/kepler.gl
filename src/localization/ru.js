@@ -127,7 +127,8 @@ export default {
     strokeWidthRange: 'Диапазон ширины штриха',
     radius: 'Радиус',
     fixedRadius: 'Фиксированный радиус в метрах',
-    fixedRadiusDescription: 'Сопоставьте радиус с абсолютным радиусом в метрах, например От 5 до 5 метров',
+    fixedRadiusDescription:
+      'Сопоставьте радиус с абсолютным радиусом в метрах, например От 5 до 5 метров',
     radiusRange: 'Диапазон радиуса',
     clusterRadius: 'Радиус кластера в пикселях',
     radiusRangePixels: 'Диапазон радиуса в пикселях',
@@ -146,7 +147,8 @@ export default {
     worldUnitSize: 'Мировые ед.изм.',
     elevationScale: 'Шкала возвышения',
     enableElevationZoomFactor: 'Использовать коэффициент увеличения по высоте',
-    enableElevationZoomFactorDescription: 'Отрегулируйте высоту / возвышение на основе текущего коэффициента масштабирования',
+    enableElevationZoomFactorDescription:
+      'Отрегулируйте высоту / возвышение на основе текущего коэффициента масштабирования',
     enableHeightZoomFactor: 'вкл. коэффициент масштабирования по высоте',
     heightScale: 'Масштаб высоты',
     coverageRange: 'Диапазон покрытия',
@@ -331,7 +333,8 @@ export default {
         tokenPlaceholder: 'Вставьте токен доступа Mapbox',
         tokenMisuseWarning:
           '* If you do not provide your own token, the map may fail to display at any time when we replace ours to avoid misuse. ',
-        tokenDisclaimer: 'Если вы не предоставите свой собственный токен, карта может не отображаться в любое время, когда мы заменяем наш, чтобы избежать неправильного использования.',
+        tokenDisclaimer:
+          'Если вы не предоставите свой собственный токен, карта может не отображаться в любое время, когда мы заменяем наш, чтобы избежать неправильного использования.',
         tokenUpdate: 'Как обновить существующий токен карты.',
         modeTitle: 'Режим карты',
         modeSubtitle1: 'Выберите режим приложения. Подробнее',

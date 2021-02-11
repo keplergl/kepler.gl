@@ -250,8 +250,7 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
     {
       type: ActionTypes.REQUEST_MAP_STYLES,
       payload: DEFAULT_MAP_STYLES.reduce((accu, curr) => ({...accu, [curr.id]: curr}), {})
-    },
-    {type: ActionTypes.UPDATE_MAP, payload: {width: 800, height: 800}}
+    }
   ];
   t.deepEqual(
     actions,
@@ -398,8 +397,7 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
         (accu, curr) => ({...accu, [curr.id]: curr, smoothie: customStyle1}),
         {}
       )
-    },
-    {type: ActionTypes.UPDATE_MAP, payload: {width: 800, height: 800}}
+    }
   ];
   t.deepEqual(
     actions,

@@ -19,15 +19,16 @@
 // THE SOFTWARE.
 
 import styled from 'styled-components';
-import VerticalToolbar from '../common/vertical-toolbar';
 
-function MapControlToolbar() {
-  const StyledToolbar = styled(VerticalToolbar)`
-    position: absolute;
-    right: 32px;
-  `;
+const withPx = v => (typeof v === 'number' ? `${v}px` : v);
 
-  return StyledToolbar;
-}
-
-export default MapControlToolbar;
+const Position = styled.div(
+  ({absolute = true, top, left, right, bottom}) => `
+  ${absolute ? `position: absolute;` : ''};
+  ${top !== undefined ? `top: ${withPx(top)};` : ''};
+  ${bottom !== undefined ? `bottom: ${withPx(bottom)};` : ''};
+  ${left !== undefined ? `left: ${withPx(left)};` : ''};
+  ${right !== undefined ? `right: ${withPx(right)};` : ''};
+`
+);
+export default Position;

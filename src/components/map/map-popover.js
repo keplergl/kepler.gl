@@ -176,8 +176,6 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
   const MapPopover = ({
     x,
     y,
-    mapW,
-    mapH,
     frozen,
     coordinate,
     layerHoverProp,

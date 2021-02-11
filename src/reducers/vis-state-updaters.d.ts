@@ -163,8 +163,10 @@ export type Editor = {
   selectedFeature: any;
   visible: boolean;
 };
+
+export type SplitMapLayers = {[key: string]: boolean};
 export type SplitMap = {
-  layers: {[key: string]: boolean};
+  layers: SplitMapLayers;
 };
 export type AnimationConfig = {
   domain: number[] | null;
@@ -527,3 +529,6 @@ export function receiveMapConfigUpdater(
 export const INITIAL_VIS_STATE: VisState;
 export const DEFAULT_ANIMATION_CONFIG: AnimationConfig;
 export const DEFAULT_EDITOR: Editor;
+
+export function computeSplitMapLayers(layers: Array<Layer>): Array<Layer>;
+export function closeSpecificMapAtIndex(state: VisState, action: unknown);

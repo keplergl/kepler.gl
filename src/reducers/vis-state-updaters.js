@@ -1434,7 +1434,7 @@ export function renameDatasetUpdater(state, action) {
  * @param {Object} action action
  * @returns {Object} nextState
  */
-function closeSpecificMapAtIndex(state, action) {
+export function closeSpecificMapAtIndex(state, action) {
   // retrieve layers meta data from the remaining map that we need to keep
   const indexToRetrieve = 1 - action.payload;
   const mapLayers = state.splitMaps[indexToRetrieve].layers;

@@ -6,8 +6,6 @@ import {LayerHoverProp} from '../../utils/layer-utils';
 export type MapPopoverProps = {
   x: number;
   y: number;
-  mapW: number;
-  mapH: number;
   frozen?: boolean;
   coordinate: [number, number] | boolean;
   layerHoverProp: LayerHoverProp | null;

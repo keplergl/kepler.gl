@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 // libraries
-import React, {Component} from 'react';
+import React, {Component, createRef} from 'react';
 import PropTypes from 'prop-types';
 import MapboxGLMap from 'react-map-gl';
 import DeckGL from '@deck.gl/react';
@@ -50,17 +50,23 @@ import {
 import {OVERLAY_TYPE} from 'layers/base-layer';
 
 import ErrorBoundary from 'components/common/error-boundary';
+import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
+import MapLegendPanelFactory from './map/map-legend-panel';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE = {
   container: {
     display: 'inline-block',
-    position: 'relative'
+    position: 'relative',
+    width: '100%',
+    height: '100%'
   },
   top: {
     position: 'absolute',
     top: '0px',
-    pointerEvents: 'none'
+    pointerEvents: 'none',
+    width: '100%',
+    height: '100%'
   }
 };
 
@@ -68,7 +74,7 @@ const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
 const TRANSITION_DURATION = 0;
 
-const Attribution = () => (
+export const Attribution = () => (
   <StyledAttrbution>
     <div className="attrition-logo">
       Basemap by:
@@ -97,9 +103,29 @@ const Attribution = () => (
   </StyledAttrbution>
 );
 
-MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory];
+// {[id]: true \ false}
+export function prepareLayersToRender(layers, layerData, mapLayers) {
+  return layers.reduce(
+    (accu, layer, idx) => ({
+      ...accu,
+      [layer.id]:
+        layer.id !== GEOCODER_LAYER_ID &&
+        layer.shouldRenderLayer(layerData[idx]) &&
+        // if layer.id is not in mapLayers, don't render it
+        (!mapLayers || (mapLayers && mapLayers[layer.id]))
+    }),
+    {}
+  );
+}
 
-export default function MapContainerFactory(MapPopover, MapControl, Editor) {
+MapContainerFactory.deps = [
+  MapPopoverFactory,
+  MapControlFactory,
+  EditorFactory,
+  MapLegendPanelFactory
+];
+
+export default function MapContainerFactory(MapPopover, MapControl, Editor, MapLegendPanel) {
   class MapContainer extends Component {
     static propTypes = {
       // required
@@ -121,6 +147,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       uiStateActions: PropTypes.object.isRequired,
 
       // optional
+      primary: PropTypes.bool, // primary one will be reporting its size to appState
       readOnly: PropTypes.bool,
       isExport: PropTypes.bool,
       clicked: PropTypes.object,
@@ -136,7 +163,8 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
     static defaultProps = {
       MapComponent: MapboxGLMap,
       deckGlProps: {},
-      index: 0
+      index: 0,
+      primary: true
     };
 
     constructor(props) {
@@ -147,6 +175,11 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       };
 
       this._deck = null;
+      this._ref = createRef();
+    }
+
+    componentDidMount() {
+      observeDimensions(this._ref.current, this._handleResize);
     }
 
     componentWillUnmount() {
@@ -155,7 +188,18 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         this._map.off(MAPBOXGL_STYLE_UPDATE);
         this._map.off(MAPBOXGL_RENDER);
       }
+      unobserveDimensions(this._ref.current);
     }
+
+    _handleResize = dimensions => {
+      const {primary} = this.props;
+      if (primary) {
+        const {mapStateActions} = this.props;
+        if (dimensions && dimensions.width > 0 && dimensions.height > 0) {
+          mapStateActions.updateMap(dimensions);
+        }
+      }
+    };
 
     layersSelector = props => props.layers;
     layerDataSelector = props => props.layerData;
@@ -165,18 +209,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       this.layersSelector,
       this.layerDataSelector,
       this.mapLayersSelector,
-      // {[id]: true \ false}
-      (layers, layerData, mapLayers) =>
-        layers.reduce(
-          (accu, layer, idx) => ({
-            ...accu,
-            [layer.id]:
-              layer.id !== GEOCODER_LAYER_ID &&
-              layer.shouldRenderLayer(layerData[idx]) &&
-              this._isVisibleMapLayer(layer, mapLayers)
-          }),
-          {}
-        )
+      prepareLayersToRender
     );
 
     filtersSelector = props => props.filters;
@@ -193,11 +226,6 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
     );
 
     /* component private functions */
-    _isVisibleMapLayer(layer, mapLayers) {
-      // if layer.id is not in mapLayers, don't render it
-      return !mapLayers || (mapLayers && mapLayers[layer.id]);
-    }
-
     _onCloseMapPopover = () => {
       this.props.visStateActions.onLayerClick(null);
     };
@@ -333,8 +361,6 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
 
       const commonProp = {
         onClose: this._onCloseMapPopover,
-        mapW: mapState.width,
-        mapH: mapState.height,
         zoom: mapState.zoom,
         container: this._deck ? this._deck.canvas : undefined
       };
@@ -458,10 +484,19 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
     }
 
     _onViewportChange = viewState => {
+      const {width, height, ...restViewState} = viewState;
+      const {primary} = this.props;
+      // react-map-gl sends 0,0 dimensions during initialization
+      // after we have received proper dimensions from observeDimensions
+      const next = {
+        ...(width > 0 && height > 0 ? viewState : restViewState),
+        // enabling transition in two maps may lead to endless update loops
+        transitionDuration: primary ? TRANSITION_DURATION : 0
+      };
       if (typeof this.props.onViewStateChange === 'function') {
-        this.props.onViewStateChange(viewState);
+        this.props.onViewStateChange(next);
       }
-      this.props.mapStateActions.updateMap(viewState);
+      this.props.mapStateActions.updateMap(next);
     };
 
     _toggleMapControl = panelId => {
@@ -470,36 +505,34 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       uiStateActions.toggleMapControl(panelId, index);
     };
 
-    render() {
+    /* eslint-disable complexity */
+    _renderMap() {
       const {
         mapState,
         mapStyle,
         mapStateActions,
-        mapLayers,
         layers,
         MapComponent,
         datasets,
         mapboxApiAccessToken,
         mapboxApiUrl,
         mapControls,
+        isExport,
         locale,
         uiStateActions,
         visStateActions,
         interactionConfig,
         editor,
         index,
-        isExport
+        primary
       } = this.props;
 
       const layersToRender = this.layersToRenderSelector(this.props);
 
-      if (!mapStyle.bottomMapStyle) {
-        // style not yet loaded
-        return <div />;
-      }
-
       const mapProps = {
         ...mapState,
+        width: '100%',
+        height: '100%',
         preserveDrawingBuffer: true,
         mapboxApiAccessToken,
         mapboxApiUrl,
@@ -510,13 +543,15 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
       const isEdit = (mapControls.mapDraw || {}).active;
 
       const hasGeocoderLayer = layers.find(l => l.id === GEOCODER_LAYER_ID);
+      const isSplit = Boolean(index);
 
       return (
-        <StyledMapContainer style={MAP_STYLE.container}>
+        <>
           <MapControl
             datasets={datasets}
             dragRotate={mapState.dragRotate}
-            isSplit={Boolean(mapLayers)}
+            isSplit={isSplit}
+            primary={primary}
             isExport={isExport}
             layers={layers}
             layersToRender={layersToRender}
@@ -541,7 +576,6 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             ref={this._setMapboxMap}
             mapStyle={mapStyle.bottomMapStyle}
             getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
-            transitionDuration={TRANSITION_DURATION}
             onMouseMove={this.props.visStateActions.onMouseMove}
           >
             {this._renderDeckOverlay(layersToRender)}
@@ -573,7 +607,16 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             </div>
           ) : null}
           {this._renderMapPopover(layersToRender)}
-          <Attribution />
+          {!isSplit || index === 1 ? <Attribution /> : null}
+        </>
+      );
+    }
+
+    render() {
+      const {mapState, mapStyle} = this.props;
+      return (
+        <StyledMapContainer ref={this._ref} style={MAP_STYLE.container} globe={mapState.globe}>
+          {mapStyle.bottomMapStyle && this._renderMap()}
         </StyledMapContainer>
       );
     }

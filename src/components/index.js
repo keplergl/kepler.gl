@@ -37,7 +37,8 @@ export {default as KeplerGl, default, injectComponents, ContainerFactory} from '
 export {default as KeplerGlFactory, DEFAULT_KEPLER_GL_PROPS} from './kepler-gl';
 export {default as SidePanelFactory} from './side-panel';
 export {default as PanelTitleFactory} from './side-panel/panel-title';
-export {default as MapContainerFactory} from './map-container';
+export {default as MapContainerFactory, Attribution, prepareLayersToRender} from './map-container';
+export {default as MapsLayoutFactory} from './maps-layout';
 export {
   default as BottomWidgetFactory,
   LayerAnimationControllerFactory,
@@ -165,6 +166,9 @@ export {DatasetSquare} from './common/styled-components';
 export {default as ActionPanel, ActionPanelItem} from './common/action-panel';
 export {default as DataTableFactory} from './common/data-table';
 export {default as CanvasHack} from './common/data-table/canvas';
+export {default as MapLayerSelector} from './common/map-layer-selector';
+export {default as VerticalToolbar} from './common/vertical-toolbar';
+export {default as ToolbarItem} from './common/toolbar-item';
 
 // side pane components
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';

@@ -27,6 +27,7 @@ import {StaticMap} from 'react-map-gl';
 import debounce from 'lodash.debounce';
 import {exportImageError} from 'utils/notifications-utils';
 import MapContainerFactory from './map-container';
+import MapsLayoutFactory from './maps-layout';
 import {convertToPng} from 'utils/export-utils';
 import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-editor';
 import {getScaleFromImageSize} from 'utils/export-utils';
@@ -50,7 +51,7 @@ const propTypes = {
   splitMaps: PropTypes.arrayOf(PropTypes.object)
 };
 
-PlotContainerFactory.deps = [MapContainerFactory];
+PlotContainerFactory.deps = [MapContainerFactory, MapsLayoutFactory];
 
 // Remove mapbox logo in exported map, because it contains non-ascii characters
 const StyledPlotContainer = styled.div`
@@ -78,7 +79,7 @@ const deckGlProps = {
   }
 };
 
-export default function PlotContainerFactory(MapContainer) {
+export default function PlotContainerFactory(MapContainer, MapsLayout) {
   class PlotContainer extends Component {
     constructor(props) {
       super(props);
@@ -208,18 +209,20 @@ export default function PlotContainerFactory(MapContainer) {
       };
 
       const mapContainers = !isSplit ? (
-        <MapContainer index={0} {...mapProps} />
+        <MapContainer index={0} primary={true} {...mapProps} />
       ) : (
-        splitMaps.map((settings, index) => (
-          <MapContainer
-            key={index}
-            index={index}
-            {...mapProps}
-            mapLayers={splitMaps[index].layers}
-          />
-        ))
+        <MapsLayout>
+          {splitMaps.map((settings, index) => (
+            <MapContainer
+              key={index}
+              index={index}
+              primary={index === 1}
+              {...mapProps}
+              mapLayers={splitMaps[index].layers}
+            />
+          ))}
+        </MapsLayout>
       );
-
       return (
         <StyledPlotContainer className="export-map-instance">
           <StyledMapContainer ref={this.plottingAreaRef} width={size.width} height={size.height}>

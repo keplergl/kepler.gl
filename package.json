@@ -156,6 +156,7 @@
     "redux": "^4.0.5",
     "redux-actions": "^2.2.1",
     "reselect": "^4.0.0",
+    "resize-observer-polyfill": "^1.5.1",
     "s2-geometry": "^1.2.10",
     "supercluster": "^7.1.0",
     "type-analyzer": "0.3.0",
