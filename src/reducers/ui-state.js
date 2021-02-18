@@ -34,6 +34,7 @@ const actionHandler = {
   [ActionTypes.HIDE_EXPORT_DROPDOWN]: uiStateUpdaters.hideExportDropdownUpdater,
   [ActionTypes.OPEN_DELETE_MODAL]: uiStateUpdaters.openDeleteModalUpdater,
   [ActionTypes.TOGGLE_MAP_CONTROL]: uiStateUpdaters.toggleMapControlUpdater,
+  [ActionTypes.SET_MAP_CONTROL_VISIBILITY]: uiStateUpdaters.setMapControlVisibilityUpdater,
   [ActionTypes.ADD_NOTIFICATION]: uiStateUpdaters.addNotificationUpdater,
   [ActionTypes.REMOVE_NOTIFICATION]: uiStateUpdaters.removeNotificationUpdater,
 

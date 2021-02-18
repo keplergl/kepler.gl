@@ -77,6 +77,21 @@ export const toggleMapControl = createAction(ActionTypes.TOGGLE_MAP_CONTROL, (pa
 /**
  * Toggle active map control panel
  * @memberof uiStateActions
+ * @param panelId - map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
+ * @type {typeof import('./ui-state-actions').setMapControlVisibility}
+ * @public
+ */
+export const setMapControlVisibility = createAction(
+  ActionTypes.SET_MAP_CONTROL_VISIBILITY,
+  (panelId, show) => ({
+    panelId,
+    show
+  })
+);
+
+/**
+ * Toggle active map control panel
+ * @memberof uiStateActions
  * @param datasetId - `id` of the dataset to be deleted
  * @type {typeof import('./ui-state-actions').openDeleteModal}
  * @public

@@ -64,7 +64,8 @@ export {
   DEFAULT_TIME_FORMAT,
   SPEED_CONTROL_RANGE,
   RESOLUTIONS,
-  SORT_ORDER
+  SORT_ORDER,
+  MAP_CONTROLS
 } from './default-settings';
 
 export {BUG_REPORT_LINK, USER_GUIDE_DOC} from './user-guides';

@@ -115,6 +115,10 @@ export function toggleMapControlUpdater(
   state: UiState,
   action: UiStateActions.ToggleMapControlUpdaterAction
 ): UiState;
+export function setMapControlVisibilityUpdater(
+  state: UiState,
+  action: UiStateActions.setMapControlVisibilityUpdaterAction
+): UiState;
 export function openDeleteModalUpdater(
   state: UiState,
   action: UiStateActions.OpenDeleteModalUpdaterAction
