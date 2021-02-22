@@ -25,6 +25,7 @@ export {
   processCsvData,
   processRowObject,
   processKeplerglJSON,
+  processKeplerglDataset,
   analyzerTypeToFieldType,
   getFieldsFromData,
   parseCsvRowsByFieldType
