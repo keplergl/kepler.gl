@@ -51,7 +51,7 @@ export const aggregateRequiredColumns = ['lat', 'lng'];
 export default class AggregationLayer extends Layer {
   constructor(props) {
     super(props);
-    this.config.colorDomai = [1, 100, 200, 300, 400, 500, 600]
+    this.config.colorDomain = [1, 100, 200, 300, 400, 500, 600];
     this.getPositionAccessor = () => pointPosAccessor(this.config.columns);
     this.getColorRange = memoize(getLayerColorRange);
   }
