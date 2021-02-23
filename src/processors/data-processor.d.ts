@@ -7,7 +7,7 @@ type RowData = {
 }[];
 type ProcessorResult = {fields: Field[]; rows: any[][]} | null;
 export function processGeojson(rawData: object): ProcessorResult;
-export function processCsvData(rawData: string | any[][], header?: strin[]): ProcessorResult;
+export function processCsvData(rawData: string | any[][], header?: string[]): ProcessorResult;
 export function processKeplerglJSON(rawData: SavedMap): ProcessorResult;
 export function processRowObject(rawData: object[]): ProcessorResult;
 export function processKeplerglDataset(
