@@ -316,7 +316,7 @@ export default class AggregationLayer extends Layer {
       elevationUpperPercentile: visConfig.elevationPercentile[1],
 
       // updateTriggers
-      updateTriggers,
+      updateTriggers
 
       // callbacks
     };
