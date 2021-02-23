@@ -51,7 +51,7 @@ export const aggregateRequiredColumns = ['lat', 'lng'];
 export default class AggregationLayer extends Layer {
   constructor(props) {
     super(props);
-
+    this.config.colorDomai = [1, 100, 200, 300, 400, 500, 600]
     this.getPositionAccessor = () => pointPosAccessor(this.config.columns);
     this.getColorRange = memoize(getLayerColorRange);
   }
@@ -276,7 +276,7 @@ export default class AggregationLayer extends Layer {
   }
 
   getDefaultAggregationLayerProp(opts) {
-    const {gpuFilter, mapState, layerCallbacks = {}} = opts;
+    const {gpuFilter, mapState} = opts;
     const {visConfig} = this.config;
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
 
@@ -300,6 +300,7 @@ export default class AggregationLayer extends Layer {
       coverage: visConfig.coverage,
 
       // color
+      colorDomain: this.config.colorDomain,
       colorRange: this.getColorRange(visConfig.colorRange),
       colorScaleType: this.config.colorScale,
       upperPercentile: visConfig.percentile[1],
@@ -318,7 +319,6 @@ export default class AggregationLayer extends Layer {
       updateTriggers,
 
       // callbacks
-      onSetColorDomain: layerCallbacks.onSetLayerDomain
     };
   }
 }
