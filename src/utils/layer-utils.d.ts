@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {Layer, LayerClassesType} from 'layers';
-import {VisState, Dataset, TooltipField, CompareType} from 'reducers/vis-state-updaters';
+import {VisState, Dataset, TooltipField, CompareType, SplitMapLayers} from 'reducers/vis-state-updaters';
 
 export function calculateLayerData(
   layer: Layer,
@@ -53,3 +53,17 @@ export function getLayerHoverProp(arg: {
 }): LayerHoverProp | null;
 
 export function renderDeckGlLayer(props: any, layerCallbacks: {[key]: any}, idx: number);
+
+export function prepareLayersToRender(
+  layers: Layer, 
+  layerData: VisState['layerData'], 
+  mapLayers?: SplitMapLayers): {
+  [key: string]: boolean;
+}
+
+export function prepareLayersForDeck(
+  layers: Layer, 
+  layerData: VisState['layerData'], 
+): {
+  [key: string]: boolean;
+}

@@ -38,7 +38,13 @@ import EditorFactory from './editor/editor';
 import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
 import {setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
-import {getLayerHoverProp, renderDeckGlLayer} from 'utils/layer-utils';
+import {
+  getLayerHoverProp,
+  renderDeckGlLayer,
+  prepareLayersToRender,
+  prepareLayersForDeck
+} from 'utils/layer-utils';
+import {hasMobileWidth} from 'utils/utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
@@ -211,7 +217,11 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor, MapL
       this.mapLayersSelector,
       prepareLayersToRender
     );
-
+    layersForDeckSelector = createSelector(
+      this.layersSelector,
+      this.layerDataSelector,
+      prepareLayersForDeck
+    );
     filtersSelector = props => props.filters;
     polygonFilters = createSelector(this.filtersSelector, filters =>
       filters.filter(f => f.type === FILTER_TYPES.polygon)
@@ -398,7 +408,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor, MapL
       return screenCoord && {x: screenCoord[0], y: screenCoord[1]};
     }
 
-    _renderDeckOverlay(layersToRender) {
+    _renderDeckOverlay(layersForDeck) {
       const {
         mapState,
         mapStyle,
@@ -419,9 +429,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor, MapL
         const dataLayers = layerOrder
           .slice()
           .reverse()
-          .filter(
-            idx => layers[idx].overlayType === OVERLAY_TYPE.deckgl && layersToRender[layers[idx].id]
-          )
+          .filter(idx => layersForDeck[layers[idx].id])
           .reduce((overlays, idx) => {
             const layerCallbacks = {
               onSetLayerDomain: val => this._onLayerSetDomain(idx, val)
@@ -528,6 +536,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor, MapL
       } = this.props;
 
       const layersToRender = this.layersToRenderSelector(this.props);
+      const layersForDeck = this.layersForDeckSelector(this.props);
 
       const mapProps = {
         ...mapState,
@@ -578,7 +587,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor, MapL
             getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
             onMouseMove={this.props.visStateActions.onMouseMove}
           >
-            {this._renderDeckOverlay(layersToRender)}
+            {this._renderDeckOverlay(layersForDeck)}
             {this._renderMapboxOverlays()}
             <Editor
               index={index}
