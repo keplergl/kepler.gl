@@ -48,6 +48,7 @@ export type ProtoDataset = {
 
   // table-injected metadata
   metadata?: any;
+  supportedFilterTypes?: string[];
 };
 
 export type AddDataToMapOptions = {

@@ -76,7 +76,7 @@ export function getNewDatasetColor(datasets) {
  * Take datasets payload from addDataToMap, create datasets entry save to visState
  * @type {typeof import('./dataset-utils').createNewDataEntry}
  */
-export function createNewDataEntry({info, data, metadata}, datasets = {}) {
+export function createNewDataEntry({info, data, metadata, supportedFilterTypes}, datasets = {}) {
   const validatedData = validateInputData(data);
   if (!validatedData) {
     return {};

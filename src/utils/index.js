@@ -36,7 +36,9 @@ export {
   applyFiltersToDatasets,
   validateFilterWithData,
   validateFiltersUpdateDatasets,
-  getIntervalBins
+  getIntervalBins,
+  getNumericStepSize,
+  formatNumberByStep
 } from 'utils/filter-utils';
 export {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
 

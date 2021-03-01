@@ -93,6 +93,7 @@ export class KeplerTable {
   sortOrder?: number[] | null;
 
   pinnedColumns?: string[];
+  supportedFilterTypes?: string[];
   // table-injected metadata
   metadata?: object;
 

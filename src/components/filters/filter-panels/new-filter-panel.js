@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import {StyledFilterContent} from 'components/common/styled-components';
 import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
@@ -29,6 +29,12 @@ NewFilterPanelFactory.deps = [
   SourceDataSelectorFactory,
   FieldSelectorFactory
 ];
+
+export function getSupportedFilterFields(supportedFilterTypes, fields) {
+  return supportedFilterTypes
+    ? fields.filter(field => supportedFilterTypes.includes(field.type))
+    : fields;
+}
 
 function NewFilterPanelFactory(FilterPanelHeader, SourceDataSelector, FieldSelector) {
   /** @type {import('./filter-panel-types').FilterPanelComponent} */
@@ -44,11 +50,17 @@ function NewFilterPanelFactory(FilterPanelHeader, SourceDataSelector, FieldSelec
         setFilter
       ]);
 
+      const dataset = datasets[filter.dataId[0]];
+      const supportedFields = useMemo(
+        () => getSupportedFilterFields(dataset.supportedFilterTypes, allAvailableFields),
+        [dataset.supportedFilterTypes, allAvailableFields]
+      );
+
       return (
         <>
           <FilterPanelHeader
-            datasets={[datasets[filter.dataId[0]]]}
-            allAvailableFields={allAvailableFields}
+            datasets={[dataset]}
+            allAvailableFields={supportedFields}
             idx={idx}
             filter={filter}
             removeFilter={removeFilter}
@@ -57,7 +69,7 @@ function NewFilterPanelFactory(FilterPanelHeader, SourceDataSelector, FieldSelec
           >
             <FieldSelector
               inputTheme="secondary"
-              fields={allAvailableFields}
+              fields={supportedFields}
               value={Array.isArray(filter.name) ? filter.name[0] : filter.name}
               erasable={false}
               onSelect={onFieldSelector}

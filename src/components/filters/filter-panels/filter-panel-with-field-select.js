@@ -24,6 +24,7 @@ import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-
 import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
 import FieldSelectorFactory from '../../common/field-selector';
+import {getSupportedFilterFields} from './new-filter-panel';
 
 FieldPanelWithFieldSelectFactory.deps = [
   FilterPanelHeaderFactory,
@@ -65,18 +66,23 @@ function FieldPanelWithFieldSelectFactory(
         [filter.name]
       );
 
+      const dataset = datasets[filter.dataId[0]];
+      const supportedFields = useMemo(
+        () => getSupportedFilterFields(dataset.supportedFilterTypes, allAvailableFields),
+        [dataset.supportedFilterTypes, allAvailableFields]
+      );
       return (
         <>
           <FilterPanelHeader
-            datasets={[datasets[filter.dataId[0]]]}
-            allAvailableFields={allAvailableFields}
+            datasets={[dataset]}
+            allAvailableFields={supportedFields}
             idx={idx}
             filter={filter}
             removeFilter={removeFilter}
           >
             <FieldSelector
               inputTheme="secondary"
-              fields={allAvailableFields}
+              fields={supportedFields}
               value={fieldValue}
               erasable={false}
               onSelect={onFieldSelector}
