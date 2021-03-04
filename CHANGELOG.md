@@ -14,7 +14,8 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
-- ## [2.5.0] - Mar 3 2021
+
+## [2.5.0] - Mar 3 2021
 - 58af5b65 [bug] Set colorbrewer version to 1.4.0 #1416 (#1428)
 - a03250a4 CHORE: export processKeplerglDataset (#1422)
 - ddaa8bf7 FIX: incorrect type strin -> string (#1421)
