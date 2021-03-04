@@ -98,7 +98,7 @@
     "@turf/boolean-within": "^6.0.1",
     "@turf/helpers": "^6.1.4",
     "classnames": "^2.2.1",
-    "colorbrewer": "^1.0.0",
+    "colorbrewer": "^1.4.0",
     "copy-to-clipboard": "^3.3.1",
     "d3-array": "^2.8.0",
     "d3-axis": "^2.0.0",
