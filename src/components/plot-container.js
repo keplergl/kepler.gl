@@ -28,9 +28,9 @@ import debounce from 'lodash.debounce';
 import {exportImageError} from 'utils/notifications-utils';
 import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
-import {convertToPng} from 'utils/export-utils';
+import {convertToPng, getScaleFromImageSize} from 'utils/export-utils';
 import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-editor';
-import {getScaleFromImageSize} from 'utils/export-utils';
+
 import {findMapBounds} from 'utils/data-utils';
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
 import {GEOCODER_LAYER_ID} from 'constants/default-settings';

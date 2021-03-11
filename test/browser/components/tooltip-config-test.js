@@ -27,8 +27,8 @@ import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import TooltipConfigFactory from 'components/side-panel/interaction-panel/tooltip-config';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
 import FieldSelectorFactory from 'components/common/field-selector';
-import ChickletedInput from 'components/common/item-selector/chickleted-input';
-import {ChickletButton} from 'components/common/item-selector/chickleted-input';
+import ChickletedInput, {ChickletButton} from 'components/common/item-selector/chickleted-input';
+
 import DropdownList from 'components/common/item-selector/dropdown-list';
 import Typeahead from 'components/common/item-selector/typeahead';
 

@@ -722,6 +722,7 @@ class Layer {
         cMap.set(k, typeof v === 'string' ? hexToRgb(v) : v);
       });
 
+      // @ts-ignore d3 scale
       const scale = SCALE_FUNC[SCALE_TYPES.ordinal]()
         .domain(cMap.keys())
         .range(cMap.values())
@@ -790,6 +791,7 @@ class Layer {
   }
 
   getVisChannelScale(scale, domain, range, fixed) {
+    // @ts-ignore d3-scale type
     return SCALE_FUNC[fixed ? 'linear' : scale]()
       .domain(domain)
       .range(fixed ? domain : range);

@@ -8,3 +8,4 @@ export function createNewDataEntry(data: ProtoDataset, datasets?: Datasets): Dat
 export function getNewDatasetColor(ds: Datasets): RGBColor;
 
 export const datasetColorMaker: Generator<RGBColor>;
+export function findDefaultColorField(dataset: Dataset): false | Feild;

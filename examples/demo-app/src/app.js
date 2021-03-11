@@ -40,7 +40,7 @@ import {
   onLoadCloudMapSuccess
 } from './actions';
 
-import {loadCloudMap} from 'kepler.gl/actions';
+import {loadCloudMap, addDataToMap, addNotification} from 'kepler.gl/actions';
 import {CLOUD_PROVIDERS} from './cloud-providers';
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
@@ -59,7 +59,7 @@ import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
 import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sample-s2-data';
 import sampleAnimateTrip from './data/sample-animate-trip-data';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
-import {addDataToMap, addNotification} from 'kepler.gl/actions';
+
 import {processCsvData, processGeojson} from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
