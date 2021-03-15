@@ -25,6 +25,8 @@ import {Cube3d} from 'components/common/icons';
 import {MapControlButton} from 'components/common/styled-components';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlPanelFactory from './map-control-panel';
+import {FormattedMessage} from '../../localization';
+import TippyTooltip from 'components/common/tippy-tooltip';
 
 Toggle3dButtonFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory];
 
@@ -52,19 +54,22 @@ function Toggle3dButtonFactory(MapControlTooltip) {
     }, [mapControls]);
 
     return isVisible ? (
-      (<MapControlButton
-        onClick={onClick}
-        className={classnames('map-control-button', 'toggle-3d', {map3d: dragRotate})}
-        active={dragRotate}
-        data-tip
-        data-for="action-3d"
+      (<TippyTooltip
+        placement="left"
+        render={() => (
+          <div id="action-3d">
+            <FormattedMessage id={dragRotate ? 'tooltip.disable3DMap' : 'tooltip.3DMap'} />
+          </div>
+        )}
       >
-        <actionIcons.cube height="22px" />
-        <MapControlTooltip
-          id="action-3d"
-          message={dragRotate ? 'tooltip.disable3DMap' : 'tooltip.3DMap'}
-        />
-      </MapControlButton>)
+        <MapControlButton
+          onClick={onClick}
+          active={dragRotate}
+          className={classnames('map-control-button', 'toggle-3d', {map3d: dragRotate})}
+        >
+          <actionIcons.cube height="22px" />
+        </MapControlButton>
+      </TippyTooltip>)
     ) : null;
   };
 

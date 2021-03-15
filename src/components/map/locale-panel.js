@@ -25,6 +25,8 @@ import ToolbarItem from 'components/common/toolbar-item';
 import {MapControlButton} from 'components/common/styled-components';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlToolbarFactory from './map-control-toolbar';
+import {FormattedMessage} from '../../localization';
+import TippyTooltip from 'components/common/tippy-tooltip';
 
 LocalePanelFactory.deps = [MapControlTooltipFactory, MapControlToolbarFactory];
 
@@ -67,17 +69,23 @@ function LocalePanelFactory(MapControlTooltip, MapControlToolbar) {
               ))}
             </MapControlToolbar>
           ) : null}
-          <MapControlButton
-            onClick={onClickButton}
-            className={classnames('map-control-button', 'map-locale', {isActive})}
-            active={isActive}
-            data-tip
-            data-for="locale"
-            disableClose={disableClose}
+          <TippyTooltip
+            placement="left"
+            render={() => (
+              <div id="locale">
+                <FormattedMessage id="tooltip.selectLocale" />
+              </div>
+            )}
           >
-            <span className="map-control-button__locale">{currentLocal.toUpperCase()}</span>
-            <MapControlTooltip id="locale" message="tooltip.selectLocale" />
-          </MapControlButton>
+            <MapControlButton
+              className={classnames('map-control-button', 'map-locale', {isActive})}
+              onClick={onClickButton}
+              active={isActive}
+              disableClose={disableClose}
+            >
+              {currentLocal.toUpperCase()}
+            </MapControlButton>
+          </TippyTooltip>
         </div>
       );
     }
