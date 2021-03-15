@@ -38,12 +38,12 @@ const MIN_LONGITUDE = -180;
  */
 export function unique(values) {
   const results = [];
-  values.forEach(v => {
-    if (!results.includes(v) && notNullorUndefined(v)) {
+  const uniqueSet = new Set(values);
+  uniqueSet.forEach(v => {
+    if (notNullorUndefined(v)) {
       results.push(v);
     }
   });
-
   return results;
 }
 
