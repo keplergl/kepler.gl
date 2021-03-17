@@ -4,6 +4,9 @@ export type MapControlPanelProps = {
   header?: string;
   scale?: number;
   onClick: () => void;
+  onPinClick?: () => void;
+  pinnable?: boolean;
+  disableClose?: boolean;
   isExport?: boolean;
   logoComponent?: Element;
 };

@@ -139,7 +139,13 @@ export const DIMENSIONS = {
   },
   mapControl: {
     width: 184,
-    padding: 12
+    padding: 12,
+    mapLegend: {
+      pinned: {
+        bottom: 22,
+        right: 12
+      }
+    }
   }
 };
 

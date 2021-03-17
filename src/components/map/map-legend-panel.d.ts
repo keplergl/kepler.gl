@@ -3,7 +3,7 @@ import {Layer} from 'layers';
 import {MapControls} from '../../reducers';
 
 interface MapLegendPanelIcons {
-  legend: ComponentType<any>
+  legend: ComponentType<any>;
 }
 
 export type MapLegendPanelProps = {
@@ -14,6 +14,7 @@ export type MapLegendPanelProps = {
   logoComponent: Element;
   actionIcons: MapLegendPanelIcons;
   mapControls: MapControls;
+  mapHeight?: number;
 };
 
 export type MapLegendPanelComponent = React.FunctionComponent<MapLegendPanelProps>;

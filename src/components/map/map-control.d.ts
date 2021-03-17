@@ -16,21 +16,23 @@ export type MapControlProps = {
   layersToRender: {[key: string]: boolean};
   mapIndex: number;
   mapControls: MapControls;
-  readOnly?: boolean;
-  scale: number;
-  top: number;
-  editor: Editor;
-  locale: string;
-
   onTogglePerspective: () => void;
-  onToggleGlobe: () => void;
   onToggleSplitMap: () => void;
   onToggleMapControl: (control: string) => void;
   onSetEditorMode: (mode: string) => void;
-  onSetLocale: () => void;
   onToggleEditorVisibility: () => void;
+  top: number;
+  onSetLocale: () => void;
+  locale: string;
   logoComponent: React.FC | React.ReactNode;
+
+  // optional
+  readOnly?: boolean;
+  scale?: number;
+  mapLayers?: {[key: string]: boolean};
+  editor: Editor;
   actionComponents: React.FC[] | React.Component[];
+  mapHeight?: number;
 };
 
 export type MapControl = React.FC<MapControlProps>;

@@ -557,6 +557,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             onSetEditorMode={visStateActions.setEditorMode}
             onSetLocale={uiStateActions.setLocale}
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
+            mapHeight={mapState.height}
           />
           <MapComponent
             {...mapProps}
