@@ -246,7 +246,11 @@ test('Components -> TimeWidget.mount -> test actions', t => {
     .at(0)
     .simulate('click');
   t.equal(setFilterPlot.args[0][0], 0, 'should pass filteridx to setFilterPlot');
-  t.equal(setFilterPlot.args[0][1].yAxis.name, 'gps_data.lat', 'should pass correct yAxis to setFilterPlot');
+  t.equal(
+    setFilterPlot.args[0][1].yAxis.name,
+    'gps_data.lat',
+    'should pass correct yAxis to setFilterPlot'
+  );
 
   // hit close
   wrapper
