@@ -95,16 +95,22 @@ function RangeBrushFactory() {
             return;
           }
           if (event.selection) {
+            this._lastSel = event.selection;
             this.brushing = true;
             this._brushed(event);
           }
         })
         .on('end', event => {
-          if (!this.brushing && this._startSel && !event.selection) {
-            // handle click
-
-            this._click(this._startSel);
+          if (!event.selection) {
+            if (this.brushing) {
+              // handle null selection
+              this._click(this._lastSel);
+            } else if (this._startSel) {
+              // handle click
+              this._click(this._startSel);
+            }
           }
+
           if (typeof this.props.onBrushEnd === 'function') this.props.onBrushEnd();
 
           this.brushing = false;
