@@ -476,3 +476,26 @@ export type ProcessFileContentUpdaterAction = {
 export function processFileContent(
   payload: ProcessFileContentUpdaterAction['payload']
 ): Merge<ProcessFileContentUpdaterAction, {type: ActionTypes.PROCESS_FILE_CONTENT}>;
+
+export type SetLayerAnimationTimeConfigAction = {
+  config: {
+    timezone?: string;
+    timeFormat?: string;
+  };
+};
+
+export function setLayerAnimationTimeConfig(
+  config: SetLayerAnimationTimeConfigAction['config']
+): Merge<SetLayerAnimationTimeConfigAction, {type: ActionTypes.SET_TIME_FORMAT}>;
+
+export type SetFilterAnimationTimeConfigAction = {
+  idx: number;
+  config: {
+    timezone?: string;
+    timeFormat?: string;
+  };
+}
+export function setFilterAnimationTimeConfig(
+  idx: SetFilterAnimationTimeConfigAction['idx'],
+  config: SetFilterAnimationTimeConfigAction['config']
+): Merge<timeFormatAction, {type: ActionTypes.SET_TIME_FORMAT}>;

@@ -935,7 +935,8 @@ export const mergedFilters = [
     fieldType: 'timestamp',
     fixedDomain: true,
     gpu: true,
-    gpuChannel: [0]
+    gpuChannel: [0],
+    defaultTimeFormat: 'L LTS'
   },
   {
     dataId: ['9h10t7fyb'],

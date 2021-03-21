@@ -18,20 +18,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './injector-test';
-import './container-test';
-import './kepler-gl-test';
-
-import './modals';
-import './notifications';
-import './map';
-import './side-panel';
-
-import './common';
-import './editor';
-import './filters';
-import './map-container-test';
-import './geocoder-panel-test';
-import './tooltip-config-test';
-import './bottom-widget-test';
-import './plot-container-test';
+import './time-widget-test';

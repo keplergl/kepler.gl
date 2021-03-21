@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
-import moment from 'moment';
 
 import Slider from 'components/common/slider/slider';
 import {BottomWidgetInner} from 'components/common/styled-components';
@@ -28,6 +27,7 @@ import PlaybackControlsFactory from './playback-controls';
 import FloatingTimeDisplayFactory from './floating-time-display';
 import {snapToMarks} from 'utils/data-utils';
 import {DEFAULT_TIME_FORMAT} from 'constants/default-settings';
+import {datetimeFormatter} from 'utils/data-utils';
 
 const SliderWrapper = styled.div`
   display: flex;
@@ -49,7 +49,9 @@ const AnimationWidgetInner = styled.div`
   }
 `;
 
-const StyledDomain = styled.div`
+const StyledDomain = styled.div.attrs({
+  className: 'animation-control__time-domain'
+})`
   color: ${props => props.theme.titleTextColor};
   font-weight: 400;
   font-size: 10px;
@@ -60,13 +62,23 @@ AnimationControlFactory.deps = [PlaybackControlsFactory, FloatingTimeDisplayFact
 function AnimationControlFactory(PlaybackControls, FloatingTimeDisplay) {
   const AnimationControl = ({
     isAnimatable,
-    animationControlProps,
+    isAnimating,
+    resetAnimation,
     toggleAnimation,
     setLayerAnimationTime,
     updateAnimationSpeed,
     animationConfig
   }) => {
-    const {currentTime, domain, speed, step, timeSteps} = animationConfig;
+    const {
+      currentTime,
+      domain,
+      speed,
+      step,
+      timeSteps,
+      timeFormat,
+      timezone,
+      defaultTimeFormat
+    } = animationConfig;
     const onSlider1Change = useCallback(
       val => {
         if (Array.isArray(timeSteps)) {
@@ -80,21 +92,30 @@ function AnimationControlFactory(PlaybackControls, FloatingTimeDisplay) {
       [domain, timeSteps, setLayerAnimationTime]
     );
 
+    const dateFunc = useMemo(() => {
+      const hasUserFormat = typeof timeFormat === 'string';
+      const currentFormat = (hasUserFormat ? timeFormat : defaultTimeFormat) || DEFAULT_TIME_FORMAT;
+      return datetimeFormatter(timezone)(currentFormat);
+    }, [timeFormat, defaultTimeFormat, timezone]);
+
+    const timeStart = useMemo(() => (domain ? dateFunc(domain[0]) : ''), [domain, dateFunc]);
+    const timeEnd = useMemo(() => (domain ? dateFunc(domain[1]) : ''), [domain, dateFunc]);
+
     return (
       <BottomWidgetInner className="bottom-widget--inner">
         <AnimationWidgetInner className="animation-widget--inner">
           <PlaybackControls
             className="animation-control-playpause"
             startAnimation={toggleAnimation}
-            isAnimating={animationControlProps.isAnimating}
+            isAnimating={isAnimating}
             pauseAnimation={toggleAnimation}
-            resetAnimation={animationControlProps.reset}
+            resetAnimation={resetAnimation}
             speed={speed}
             isAnimatable={isAnimatable}
             updateAnimationSpeed={updateAnimationSpeed}
           />
-          <StyledDomain className="animation-control__time-domain">
-            <span>{domain ? moment.utc(domain[0]).format(DEFAULT_TIME_FORMAT) : ''}</span>
+          <StyledDomain className="domain-start">
+            <span>{timeStart}</span>
           </StyledDomain>
           <SliderWrapper className="animation-control__slider">
             <Slider
@@ -108,11 +129,16 @@ function AnimationControlFactory(PlaybackControls, FloatingTimeDisplay) {
               enableBarDrag={true}
             />
           </SliderWrapper>
-          <StyledDomain className="animation-control__time-domain">
-            <span>{domain ? moment.utc(domain[1]).format(DEFAULT_TIME_FORMAT) : ''}</span>
+          <StyledDomain className="domain-end">
+            <span>{timeEnd}</span>
           </StyledDomain>
         </AnimationWidgetInner>
-        <FloatingTimeDisplay currentTime={currentTime} />
+        <FloatingTimeDisplay
+          currentTime={currentTime}
+          defaultTimeFormat={defaultTimeFormat}
+          timeFormat={timeFormat}
+          timezone={timezone}
+        />
       </BottomWidgetInner>
     );
   };

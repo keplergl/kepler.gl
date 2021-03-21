@@ -132,6 +132,7 @@
     "mapbox": "^1.0.0-beta10",
     "mini-svg-data-uri": "^1.0.3",
     "moment": "^2.10.6",
+    "moment-timezone": "^0.5.32",
     "pbf": "^3.1.0",
     "prop-types": "^15.6.0",
     "react-color": "^2.17.3",

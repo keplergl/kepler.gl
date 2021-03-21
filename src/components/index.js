@@ -119,12 +119,16 @@ export {default as HistogramPlotFactory} from './common/histogram-plot';
 export {default as LineChartFactory} from './common/line-chart';
 export {default as RangeBrushFactory} from './common/range-brush';
 export {default as TimeSliderMarkerFactory} from './common/time-slider-marker';
+export {default as TimeRangeSliderTimeTitleFactory} from './common/time-range-slider-time-title';
 
 // // Filters factory
-export {default as TimeWidgetFactory} from './filters/time-widget';
+export {default as TimeWidgetFactory, TimeWidgetTopFactory} from './filters/time-widget';
 export {default as SingleSelectFilterFactory} from './filters/single-select-filter';
 export {default as MultiSelectFilterFactory} from './filters/multi-select-filter';
-export {default as TimeRangeFilterFactory} from './filters/time-range-filter';
+export {
+  timeRangeSliderFieldsSelector,
+  default as TimeRangeFilterFactory
+} from './filters/time-range-filter';
 export {default as RangeFilterFactory} from './filters/range-filter';
 
 // // Editor Factory

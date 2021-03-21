@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 /**
  * A function with a JSDoc type import that is different from its name
  * @type {typeof import('./b').MyFn}

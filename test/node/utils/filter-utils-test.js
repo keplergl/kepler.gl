@@ -483,7 +483,8 @@ test('filterUtils -> getTimestampFieldDomain', t => {
         domain: [0, 1],
         step: 0.05,
         ...getHistogram([0, 1], []),
-        mappedValue: []
+        mappedValue: [],
+        defaultTimeFormat: 'L LTS'
       }
     },
     zero: {
@@ -493,7 +494,8 @@ test('filterUtils -> getTimestampFieldDomain', t => {
         mappedValue: [1475315139000, 1475315139000],
         histogram: [{count: 2, x0: 1475315139000, x1: 1475315139000}],
         enlargedHistogram: [{count: 2, x0: 1475315139000, x1: 1475315139000}],
-        step: 0.05
+        step: 0.05,
+        defaultTimeFormat: 'L LTS'
       }
     },
     tiny: {
@@ -505,7 +507,8 @@ test('filterUtils -> getTimestampFieldDomain', t => {
           [1475315139001, 1475315139003],
           [1475315139001, 1475315139002, 1475315139003]
         ),
-        step: 0.1
+        step: 0.1,
+        defaultTimeFormat: 'L LTS'
       }
     },
     small: {
@@ -515,7 +518,8 @@ test('filterUtils -> getTimestampFieldDomain', t => {
         mappedValue: [1475315139010, 1475315139020, 1475315139030],
         histogram: [],
         enlargedHistogram: [],
-        step: 1
+        step: 1,
+        defaultTimeFormat: 'L LTS'
       }
     },
     medium: {
@@ -525,7 +529,8 @@ test('filterUtils -> getTimestampFieldDomain', t => {
         mappedValue: [1475315139100, 1475315139200, 1475315139300],
         histogram: [],
         enlargedHistogram: [],
-        step: 5
+        step: 5,
+        defaultTimeFormat: 'L LTS'
       }
     },
     large: {
@@ -535,7 +540,8 @@ test('filterUtils -> getTimestampFieldDomain', t => {
         mappedValue: [1475315139000, 1475315145000],
         histogram: [],
         enlargedHistogram: [],
-        step: 1000
+        step: 1000,
+        defaultTimeFormat: 'L LTS'
       }
     }
   };

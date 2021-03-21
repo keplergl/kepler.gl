@@ -34,3 +34,5 @@ export type FieldFormatter = (value: any) => string;
 export declare const FIELD_DISPLAY_FORMAT: {
   [key: string]: FieldFormatter;
 };
+
+export declare function datetimeFormatter(timezone?: string | null): (format: string) => (ts: number) => string;

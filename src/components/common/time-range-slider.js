@@ -18,19 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {useMemo} from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
 import throttle from 'lodash.throttle';
 import styled from 'styled-components';
-import {createSelector} from 'reselect';
 
-import {Minus} from 'components/common/icons';
 import RangeSliderFactory from 'components/common/range-slider';
 import TimeSliderMarkerFactory from 'components/common/time-slider-marker';
 import PlaybackControlsFactory from 'components/common/animation-control/playback-controls';
-
-import {DEFAULT_TIME_FORMAT} from 'constants/default-settings';
+import TimeRangeSliderTimeTitleFactory from 'components/common/time-range-slider-time-title';
 
 const animationControlWidth = 176;
 
@@ -53,164 +49,115 @@ const StyledSliderContainer = styled.div`
 TimeRangeSliderFactory.deps = [
   PlaybackControlsFactory,
   RangeSliderFactory,
-  TimeSliderMarkerFactory
+  TimeSliderMarkerFactory,
+  TimeRangeSliderTimeTitleFactory
 ];
 
-export default function TimeRangeSliderFactory(PlaybackControls, RangeSlider, TimeSliderMarker) {
-  class TimeRangeSlider extends Component {
-    static propTypes = {
-      onChange: PropTypes.func.isRequired,
-      domain: PropTypes.arrayOf(PropTypes.number).isRequired,
-      value: PropTypes.arrayOf(PropTypes.number).isRequired,
-      step: PropTypes.number.isRequired,
-      plotType: PropTypes.string,
-      histogram: PropTypes.arrayOf(PropTypes.any),
-      lineChart: PropTypes.object,
-      toggleAnimation: PropTypes.func.isRequired,
-      isAnimatable: PropTypes.bool,
-      isEnlarged: PropTypes.bool,
-      speed: PropTypes.number,
-      timeFormat: PropTypes.string,
-      hideTimeTitle: PropTypes.bool
-    };
-
-    constructor(props) {
-      super(props);
-      this._sliderThrottle = throttle((...value) => this.props.onChange(...value), 20);
-    }
-
-    timeSelector = props => props.currentTime;
-    formatSelector = props => props.format;
-    displayTimeSelector = createSelector(
-      this.timeSelector,
-      this.formatSelector,
-      (currentTime, format) => {
-        const groupTime = Array.isArray(currentTime) ? currentTime : [currentTime];
-        return groupTime.reduce(
-          (accu, curr) => {
-            const displayDateTime = moment.utc(curr).format(format);
-            const [displayDate, displayTime] = displayDateTime.split(' ');
-
-            if (!accu.displayDate.includes(displayDate)) {
-              accu.displayDate.push(displayDate);
-            }
-            accu.displayTime.push(displayTime);
-
-            return accu;
-          },
-          {displayDate: [], displayTime: []}
-        );
-      }
-    );
-
-    _sliderUpdate = args => {
-      this._sliderThrottle.cancel();
-      this._sliderThrottle(args);
-    };
-
-    render() {
-      const {domain, value, isEnlarged, hideTimeTitle, animationControlProps} = this.props;
-
-      return (
-        <div className="time-range-slider">
-          {!hideTimeTitle ? (
-            <TimeTitle timeFormat={this.props.timeFormat} value={value} isEnlarged={isEnlarged} />
+export default function TimeRangeSliderFactory(
+  PlaybackControls,
+  RangeSlider,
+  TimeSliderMarker,
+  TimeRangeSliderTimeTitle
+) {
+  const TimeRangeSlider = props => {
+    const {
+      domain,
+      value,
+      isEnlarged,
+      hideTimeTitle,
+      isAnimating,
+      resetAnimation,
+      timeFormat,
+      timezone,
+      histogram,
+      plotType,
+      lineChart,
+      step,
+      isAnimatable,
+      speed,
+      animationWindow,
+      updateAnimationSpeed,
+      setFilterAnimationWindow,
+      toggleAnimation,
+      onChange
+    } = props;
+    const throttledOnchange = useMemo(() => throttle(onChange, 20), [onChange]);
+    return (
+      <div className="time-range-slider">
+        {!hideTimeTitle ? (
+          <div
+            className="time-range-slider__title"
+            style={{
+              width: isEnlarged ? `calc(100% - ${animationControlWidth}px)` : '100%'
+            }}
+          >
+            <TimeRangeSliderTimeTitle
+              timeFormat={timeFormat}
+              timezone={timezone}
+              value={value}
+              isEnlarged={isEnlarged}
+            />
+          </div>
+        ) : null}
+        <StyledSliderContainer className="time-range-slider__container" isEnlarged={isEnlarged}>
+          <div
+            className="timeline-container"
+            style={{
+              width: isEnlarged ? `calc(100% - ${animationControlWidth}px)` : '100%'
+            }}
+          >
+            <RangeSlider
+              range={domain}
+              value0={value[0]}
+              value1={value[1]}
+              histogram={histogram}
+              lineChart={lineChart}
+              plotType={plotType}
+              isEnlarged={isEnlarged}
+              showInput={false}
+              step={step}
+              onChange={throttledOnchange}
+              xAxis={TimeSliderMarker}
+              timezone={timezone}
+              timeFormat={timeFormat}
+            />
+          </div>
+          {isEnlarged ? (
+            <PlaybackControls
+              isAnimatable={isAnimatable}
+              width={animationControlWidth}
+              speed={speed}
+              animationWindow={animationWindow}
+              updateAnimationSpeed={updateAnimationSpeed}
+              setFilterAnimationWindow={setFilterAnimationWindow}
+              pauseAnimation={toggleAnimation}
+              resetAnimation={resetAnimation}
+              isAnimating={isAnimating}
+              startAnimation={toggleAnimation}
+            />
           ) : null}
-          <StyledSliderContainer className="time-range-slider__container" isEnlarged={isEnlarged}>
-            <div
-              style={{
-                width: isEnlarged ? `calc(100% - ${animationControlWidth}px)` : '100%'
-              }}
-            >
-              <RangeSlider
-                range={domain}
-                value0={value[0]}
-                value1={value[1]}
-                histogram={this.props.histogram}
-                lineChart={this.props.lineChart}
-                plotType={this.props.plotType}
-                isEnlarged={isEnlarged}
-                showInput={false}
-                step={this.props.step}
-                onChange={this._sliderUpdate}
-                xAxis={TimeSliderMarker}
-              />
-            </div>
-
-            {isEnlarged ? (
-              <PlaybackControls
-                isAnimatable={this.props.isAnimatable}
-                width={animationControlWidth}
-                speed={this.props.speed}
-                animationWindow={this.props.animationWindow}
-                updateAnimationSpeed={this.props.updateAnimationSpeed}
-                setFilterAnimationWindow={this.props.setFilterAnimationWindow}
-                pauseAnimation={this.props.toggleAnimation}
-                resetAnimation={animationControlProps.reset}
-                isAnimating={animationControlProps.isAnimating}
-                startAnimation={this.props.toggleAnimation}
-              />
-            ) : null}
-          </StyledSliderContainer>
-        </div>
-      );
-    }
-  }
-
-  TimeRangeSlider.defaultProps = {
-    timeFormat: DEFAULT_TIME_FORMAT
+        </StyledSliderContainer>
+      </div>
+    );
   };
 
-  return TimeRangeSlider;
+  TimeRangeSlider.propTypes = {
+    onChange: PropTypes.func.isRequired,
+    domain: PropTypes.arrayOf(PropTypes.number),
+    value: PropTypes.arrayOf(PropTypes.number).isRequired,
+    step: PropTypes.number.isRequired,
+    plotType: PropTypes.string,
+    histogram: PropTypes.arrayOf(PropTypes.any),
+    lineChart: PropTypes.object,
+    toggleAnimation: PropTypes.func.isRequired,
+    exportAnimation: PropTypes.func,
+    isAnimatable: PropTypes.bool,
+    isEnlarged: PropTypes.bool,
+    speed: PropTypes.number,
+    timeFormat: PropTypes.string,
+    timezone: PropTypes.string,
+    hideTimeTitle: PropTypes.bool
+  };
+
+  return React.memo(TimeRangeSlider);
 }
-
-const TimeValueWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  font-size: ${props => props.theme.timeTitleFontSize};
-  justify-content: ${props => (props.isEnlarged ? 'center' : 'space-between')};
-
-  .horizontal-bar {
-    padding: 0 12px;
-    color: ${props => props.theme.textColor};
-  }
-
-  .time-value {
-    display: flex;
-    flex-direction: ${props => (props.isEnlarged ? 'row' : 'column')};
-    align-items: flex-start;
-
-    span {
-      color: ${props => props.theme.textColor};
-    }
-  }
-
-  .time-value:last-child {
-    align-items: flex-end;
-  }
-`;
-
-const TimeTitle = ({value, isEnlarged, timeFormat = DEFAULT_TIME_FORMAT}) => (
-  <TimeValueWrapper isEnlarged={isEnlarged} className="time-range-slider__time-title">
-    <TimeValue key={0} value={moment.utc(value[0]).format(timeFormat)} split={!isEnlarged} />
-    {isEnlarged ? (
-      <div className="horizontal-bar">
-        <Minus height="12px" />
-      </div>
-    ) : null}
-    <TimeValue key={1} value={moment.utc(value[1]).format(timeFormat)} split={!isEnlarged} />
-  </TimeValueWrapper>
-);
-
-const TimeValue = ({value, split}) => (
-  // render two lines if not enlarged
-  <div className="time-value">
-    {split ? (
-      value
-        .split(' ')
-        .map((v, i) => <div key={i}>{i === 0 ? <span>{v}</span> : <span>{v}</span>}</div>)
-    ) : (
-      <span>{value}</span>
-    )}
-  </div>
-);

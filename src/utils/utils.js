@@ -197,3 +197,7 @@ export function arrayInsert(arr, index, val) {
 
   return [...arr.slice(0, index), val, ...arr.slice(index)];
 }
+
+export function isTest() {
+  return process?.env?.NODE_ENV === 'test';
+}

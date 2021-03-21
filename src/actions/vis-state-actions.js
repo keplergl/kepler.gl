@@ -854,6 +854,36 @@ export function processFileContent(payload) {
 }
 
 /**
+ * Set layer animation time format and timezone
+ * @memberof visStateActions
+ * @param config - {timeFormat: string, timezone: string}
+ * @type {typeof import('./vis-state-actions').setLayerAnimationTimeConfig}
+ * @return action
+ */
+export function setLayerAnimationTimeConfig(config) {
+  return {
+    type: ActionTypes.SET_LAYER_ANIMATION_TIME_CONFIG,
+    config
+  };
+}
+
+/**
+ * Set Filter animation time format and timezone
+ * @memberof visStateActions
+ * @param idx
+ * @param config
+ * @type {typeof import('./vis-state-actions').setFilterAnimationTimeConfig}
+ * @return action
+ */
+export function setFilterAnimationTimeConfig(idx, config) {
+  return {
+    type: ActionTypes.SET_FILTER_ANIMATION_TIME_CONFIG,
+    idx,
+    config
+  };
+}
+
+/**
  * This declaration is needed to group actions in docs
  */
 /**

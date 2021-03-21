@@ -789,7 +789,8 @@ export const timeFilterProps = {
   enlarged: true,
   fixedDomain: true,
   gpu: true,
-  value: [1474588800000, 1474617600000]
+  value: [1474588800000, 1474617600000],
+  defaultTimeFormat: 'L LTS'
 };
 
 export const mergedTimeFilter = {
@@ -823,7 +824,8 @@ export const epochFilterProps = {
   enlarged: true,
   fixedDomain: true,
   gpu: true,
-  value: [1472688000000, 1472774400000]
+  value: [1472688000000, 1472774400000],
+  defaultTimeFormat: 'L LTS'
 };
 
 // value set mockStateWithFilters 1472700000000, 1472760000000

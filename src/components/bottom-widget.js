@@ -182,7 +182,7 @@ export default function BottomWidgetFactory(
           animationConfig={animationConfig}
           setLayerAnimationTime={visStateActions.setLayerAnimationTime}
         >
-          {animationControlProps =>
+          {(isAnimating, start, pause, reset) =>
             showAnimationControl ? (
               <AnimationControl
                 animationConfig={animationConfig}
@@ -190,7 +190,8 @@ export default function BottomWidgetFactory(
                 updateAnimationSpeed={visStateActions.updateLayerAnimationSpeed}
                 toggleAnimation={visStateActions.toggleLayerAnimation}
                 isAnimatable={!animatedFilter}
-                animationControlProps={animationControlProps}
+                isAnimating={isAnimating}
+                resetAnimation={reset}
               />
             ) : null
           }
@@ -201,9 +202,12 @@ export default function BottomWidgetFactory(
             filterIdx={animatedFilterIdx > -1 ? animatedFilterIdx : enlargedFilterIdx}
             setFilterAnimationTime={visStateActions.setFilterAnimationTime}
           >
-            {animationControlProps =>
+            {(isAnimating, start, pause, resetAnimation) =>
               showTimeWidget ? (
                 <TimeWidget
+                  // TimeWidget uses React.memo, here we pass width
+                  // even though it doesnt use it, to force rerender
+                  width={enlargedFilterWidth}
                   filter={filters[enlargedFilterIdx]}
                   index={enlargedFilterIdx}
                   isAnyFilterAnimating={Boolean(animatedFilter)}
@@ -217,7 +221,7 @@ export default function BottomWidgetFactory(
                   toggleAnimation={visStateActions.toggleFilterAnimation}
                   updateAnimationSpeed={visStateActions.updateFilterAnimationSpeed}
                   enlargeFilter={visStateActions.enlargeFilter}
-                  animationControlProps={animationControlProps}
+                  resetAnimation={resetAnimation}
                   isAnimatable={!animationConfig || !animationConfig.isAnimating}
                 />
               ) : null
