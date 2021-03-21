@@ -85,6 +85,6 @@ const PanelToggleFactory = () => {
 
   PanelToggle.propTypes = propTypes;
   return PanelToggle;
-};
+}
 
 export default PanelToggleFactory;

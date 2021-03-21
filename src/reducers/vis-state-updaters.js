@@ -270,8 +270,8 @@ export function layerConfigChangeUpdater(state, action) {
       newConfig: {dataId}
     });
     const nextLayer = stateWithDataId.layers.find(l => l.id === oldLayer.id);
-    return nextLayer
-      ? layerConfigChangeUpdater(state, {oldLayer: nextLayer, newConfig: restConfig})
+    return nextLayer && Object.keys(restConfig).length
+      ? layerConfigChangeUpdater(stateWithDataId, {oldLayer: nextLayer, newConfig: restConfig})
       : stateWithDataId;
   }
 
