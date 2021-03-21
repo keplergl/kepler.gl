@@ -179,6 +179,39 @@ function AddMapStyleModalFactory() {
         <div className="add-map-style-modal">
           <StyledModalContent>
             <StyledModalVerticalPanel>
+            <StyledModalSection>
+                <div className="modal-section-title">
+                  <FormattedMessage id={'modal.addStyle.pasteTitle'} />
+                </div>
+                <div className="modal-section-subtitle">
+                  {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle0'})}
+                  <InlineLink
+                    target="_blank"
+                    href="https://www.mapbox.com/help/studio-manual-publish/#style-url"
+                  >
+                    {' '}
+                    {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle2'})}
+                  </InlineLink>
+                  {' '}
+                  {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle3'})}
+
+                  <InlineLink
+                    target="_blank"
+                    href="https://docs.mapbox.com/mapbox-gl-js/style-spec"
+                  >
+                    {' '}
+                    {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle4'})}
+                  </InlineLink>
+
+                </div>
+                <InputLight
+                  type="text"
+                  value={inputStyle.url || ''}
+                  onChange={({target: {value}}) => this.props.inputMapStyle({url: value})}
+                  placeholder="e.g. mapbox://styles/username/style, http://my.stles.com/xxx/style.json "
+                />
+              </StyledModalSection>
+
               <StyledModalSection>
                 <div className="modal-section-title">
                   <FormattedMessage id={'modal.addStyle.publishTitle'} />
@@ -199,6 +232,7 @@ function AddMapStyleModalFactory() {
                   </InlineLink>{' '}
                   {intl.formatMessage({id: 'modal.addStyle.publishSubtitle4'})}
                 </div>
+
                 <div className="modal-section-subtitle">
                   {intl.formatMessage({id: 'modal.addStyle.publishSubtitle5'})}
                   <InlineLink
@@ -217,27 +251,7 @@ function AddMapStyleModalFactory() {
                   placeholder={intl.formatMessage({id: 'modal.addStyle.exampleToken'})}
                 />
               </StyledModalSection>
-              <StyledModalSection>
-                <div className="modal-section-title">
-                  <FormattedMessage id={'modal.addStyle.pasteTitle'} />
-                </div>
-                <div className="modal-section-subtitle">
-                  {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle1'})}
-                  <InlineLink
-                    target="_blank"
-                    href="https://www.mapbox.com/help/studio-manual-publish/#style-url"
-                  >
-                    {' '}
-                    {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle2'})}
-                  </InlineLink>
-                </div>
-                <InputLight
-                  type="text"
-                  value={inputStyle.url || ''}
-                  onChange={({target: {value}}) => this.props.inputMapStyle({url: value})}
-                  placeholder="e.g. mapbox://styles/uberdataviz/abcdefghijklmnopq"
-                />
-              </StyledModalSection>
+
               <StyledModalSection>
                 <div className="modal-section-title">
                   <FormattedMessage id={'modal.addStyle.namingTitle'} />

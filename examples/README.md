@@ -27,6 +27,8 @@ yarn && yarn start
 - ### [custom-theme][custom-theme]
   Customize kepler.gl theme by override current style properties.
 
+- ### [node-app][node-app]
+  Embed Kepler.gl in a node/express/webpack application. 
 
 [custom-reducer]: custom-reducer/README.md
 [demo-app]: demo-app/README.md

@@ -191,10 +191,11 @@ export function scaleMapStyleByResolution(mapboxStyle, scale) {
  * @return {Object} mergedLayerGroups
  */
 export function mergeLayerGroupVisibility(defaultLayerGroup, currentLayerGroup) {
-  return Object.keys(currentLayerGroup).reduce(
+
+  return Object.keys(defaultLayerGroup).reduce(
     (accu, key) => ({
       ...accu,
-      ...(defaultLayerGroup.hasOwnProperty(key) ? {[key]: currentLayerGroup[key]} : {})
+      ...(currentLayerGroup.hasOwnProperty(key) ? {[key]: currentLayerGroup[key]} : {})
     }),
     defaultLayerGroup
   );
