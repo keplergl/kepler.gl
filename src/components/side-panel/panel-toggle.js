@@ -40,28 +40,34 @@ const PanelHeaderBottom = styled.div.attrs({
   min-height: 30px;
 `;
 
-const PanelTab = styled.div.attrs({
-  className: 'side-panel__tab'
-})`
-  align-items: flex-end;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: ${props =>
-    props.active ? props.theme.panelToggleBorderColor : 'transparent'};
-  color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.panelTabColor)};
-  display: flex;
-  justify-content: center;
-  margin-right: ${props => props.theme.panelToggleMarginRight}px;
-  padding-bottom: ${props => props.theme.panelToggleBottomPadding}px;
-  width: ${props => props.theme.panelTabWidth};
+export function PanelTabFactory() {
+  const PanelTab = styled.div.attrs({
+    className: 'side-panel__tab'
+  })`
+    align-items: flex-end;
+    border-bottom-style: solid;
+    border-bottom-width: 2px;
+    border-bottom-color: ${props =>
+      props.active ? props.theme.panelToggleBorderColor : 'transparent'};
+    color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.panelTabColor)};
+    display: flex;
+    justify-content: center;
+    margin-right: ${props => props.theme.panelToggleMarginRight}px;
+    padding-bottom: ${props => props.theme.panelToggleBottomPadding}px;
+    width: ${props => props.theme.panelTabWidth};
+  
+    :hover {
+      cursor: pointer;
+      color: ${props => props.theme.textColorHl};
+    }
 
-  :hover {
-    cursor: pointer;
-    color: ${props => props.theme.textColorHl};
-  }
-`;
+  `;
 
-const PanelToggleFactory = () => {
+  return PanelTab;
+}
+
+PanelToggleFactory.deps = [PanelTabFactory];
+function PanelToggleFactory(PanelTab) {
   const PanelToggle = ({panels, activePanel, togglePanel}) => (
     <PanelHeaderBottom>
       {panels.map(panel => (
