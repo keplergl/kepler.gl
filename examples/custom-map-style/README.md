@@ -2,7 +2,7 @@
 
 ![map layers](https://cdn.unfolded.ai/statics/keplergl/documentation/f-map-styles-8.jpg "custom map style")
 
-Showing how to use kepler.gl with other basemap services other than Mapbox.
+Demo how to use kepler.gl with other basemap services other than Mapbox.
 
 Read more about [Custom Map Style][custom-map-styles]
 

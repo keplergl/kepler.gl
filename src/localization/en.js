@@ -291,7 +291,6 @@ export default {
       pasteSubtitle1: 'What is a',
       pasteSubtitle2: 'style URL',
       pasteSubtitle3: 'or a style.json using the',
-
       pasteSubtitle4: 'Mapbox GL Style Spec',
       namingTitle: '3. Name your style'
     },
