@@ -19,6 +19,7 @@
     - [Saving and loading maps with schema manager](./advanced-usages/saving-loading-w-schema.md)
     - [Replace UI component](./advanced-usages/replace-ui-component.md)
     - [Custom Mapbox Host](./advanced-usages/custom-mapbox-host.md)
+    - [Custom Map Style](./advanced-usages/custom-map-style.md)
     - [Localization](./localization/README.md)
 
 -  API
