@@ -35,11 +35,11 @@ const App = () => (
   <div style={{position: 'absolute', width: '100%', height: '100%'}}>
     <AutoSizer>
       {({height, width}) => (
-        <KeplerGl 
-          mapboxApiAccessToken="" 
-          id="map" 
-          width={width} 
-          height={height} 
+        <KeplerGl
+          mapboxApiAccessToken=""
+          id="map"
+          width={width}
+          height={height}
           localeMessages={localeMessages}
         />
       )}

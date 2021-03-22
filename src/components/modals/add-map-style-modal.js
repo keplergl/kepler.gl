@@ -179,7 +179,7 @@ function AddMapStyleModalFactory() {
         <div className="add-map-style-modal">
           <StyledModalContent>
             <StyledModalVerticalPanel>
-            <StyledModalSection>
+              <StyledModalSection>
                 <div className="modal-section-title">
                   <FormattedMessage id={'modal.addStyle.pasteTitle'} />
                 </div>
@@ -191,10 +191,8 @@ function AddMapStyleModalFactory() {
                   >
                     {' '}
                     {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle2'})}
-                  </InlineLink>
-                  {' '}
+                  </InlineLink>{' '}
                   {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle3'})}
-
                   <InlineLink
                     target="_blank"
                     href="https://docs.mapbox.com/mapbox-gl-js/style-spec"
@@ -202,7 +200,6 @@ function AddMapStyleModalFactory() {
                     {' '}
                     {intl.formatMessage({id: 'modal.addStyle.pasteSubtitle4'})}
                   </InlineLink>
-
                 </div>
                 <InputLight
                   type="text"

@@ -66,7 +66,7 @@ const customizedKeplerGlReducer = keplerGlReducer.initialState({
 });
 
 const reducers = combineReducers({
-  keplerGl: customizedKeplerGlReducer,
+  keplerGl: customizedKeplerGlReducer
 });
 
 const middlewares = enhanceReduxMiddleware([]);
