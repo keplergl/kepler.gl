@@ -1,27 +1,13 @@
-# Replacing components
+# Custom Map Style 
 
-Showing how to use kepler.gl without Mapbox, using other basemap services
+![map layers](https://cdn.unfolded.ai/statics/keplergl/documentation/f-map-styles-8.jpg "custom map style")
 
-By default, kepler.gl uses mapbox-gl.js to render its base maps, that's why a mapbox api token is required input. 
+Showing how to use kepler.gl with other basemap services other than Mapbox.
 
-You can custom kepler.gl to use kepler.gl other base map services, by passing in  map style.json that is written in [Mapbox GL Style Spec](https://docs.mapbox.com/mapbox-gl-js/style-spec/).
+Read more about [Custom Map Style][custom-map-styles]
 
-Your Style.json should points to the tile server described in the `sources` field.
 
-For example. there is a example [style.json]`https://raw.githubusercontent.com/heshan0131/kepler.gl-data/master/style/basic.json` 
-
-With custom style.json kepler.gl can render the base map independent of mapbox vector tile service.
-
-#### 
-```js
-{
-    id: 'my_map',
-    label: 'Basic',
-    url: 'https://raw.githubusercontent.com/heshan0131/kepler.gl-data/master/style/basic.json',
-    icon: ``,
-    layerGroups: []
-  }
-```
+### Run Example
 #### 1. Install
 
 ```sh
@@ -40,3 +26,5 @@ yarn
 npm start
 ```
 
+
+[custom-map-styles]: ./docs/api-reference/advanced-usages/custom-map-styles.md
