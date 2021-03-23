@@ -22,7 +22,7 @@ import throttle from 'lodash.throttle';
 import {useEffect, useRef, useState} from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 
-const DEFAULT_THROTTLE_DELAY = 0;
+const DEFAULT_THROTTLE_DELAY = 100;
 
 // Using a single ResizeObserver for all elements can be 10x
 // more performant than using a separate ResizeObserver per element
@@ -99,10 +99,7 @@ export default function useDimensions(throttleDelay = DEFAULT_THROTTLE_DELAY) {
         const newSize = getSize(current, entry);
         if (newSize) {
           // @ts-ignore
-          if (!size || newSize.width !== size.width || newSize.height !== size.height) {
-            // @ts-ignore
-            setSize(newSize);
-          }
+          setSize(newSize);
         }
       },
       throttleDelay
