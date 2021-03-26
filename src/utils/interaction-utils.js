@@ -90,6 +90,7 @@ export function findFieldsToShow({fields, id, maxDefaultTooltips}) {
   // first find default tooltip fields for trips
   const fieldsToShow = DEFAULT_TOOLTIP_FIELDS.reduce((prev, curr) => {
     if (fields.find(({name}) => curr.name === name)) {
+      // @ts-ignore
       prev.push(curr);
     }
     return prev;
