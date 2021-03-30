@@ -14,6 +14,18 @@ Each version should:
   Security to invite users to upgrade in case of vulnerabilities.
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
+## [2.5.1] - Mar 30 2021
+- 16703c0b [CHORE] add utils.js to package.json
+- a15109b3 [Feat] add timezone and timeFormat prop for time display in animation control and time - widget (#1411)
+- 13c6171e Bump elliptic from 6.5.3 to 6.5.4 (#1435)
+- cdcc0eea [Enhancement] make panel tab a factory (#172) (#1412)
+- 173811a3 [bug]: Fixed range slider null selection bug (#1413)
+- df3fee5c [Bug]: Updated babel dependencies (#1410)
+- 119c8933 [Bug] fix update dataId not update layer data (#1414)
+- b97b58a9 [Enhancement] Choose the default field to be integer if no reals are present (#1409)
+- 072876df [bug] upgrade colorbrewer to 1.5.0 (#1439)
+- d4698bb8 [Chore] add initial version of ts-smoosh (#1437)
+- 6b39c43f [Chore] reformat changelog
 
 ## [2.5.0] - Mar 3 2021
 - 58af5b65 [bug] Set colorbrewer version to 1.4.0 #1416 (#1428)
