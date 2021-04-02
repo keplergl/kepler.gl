@@ -26,7 +26,6 @@ import MapStyleSelectorFactory from 'components/side-panel/map-style-panel/map-s
 import LayerGroupSelectorFactory from 'components/side-panel/map-style-panel/map-layer-selector';
 
 import {Add} from 'components/common/icons';
-import {DEFAULT_LAYER_GROUPS} from 'constants/default-settings';
 import ColorSelector from './layer-panel/color-selector';
 import {createSelector} from 'reselect';
 import {injectIntl} from 'react-intl';
@@ -61,7 +60,8 @@ function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
 
     render() {
       const {mapStyle, intl} = this.props;
-      const editableLayers = DEFAULT_LAYER_GROUPS.map(lg => lg.slug);
+      const currentStyle = mapStyle.mapStyles[mapStyle.styleType] || {};
+      const editableLayers = (currentStyle.layerGroups || []).map(lg => lg.slug);
       const hasBuildingLayer = mapStyle.visibleLayerGroups['3d building'];
       const colorSetSelector = createSelector(
         this.buildingColorSelector,

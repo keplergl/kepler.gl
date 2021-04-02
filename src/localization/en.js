@@ -233,7 +233,7 @@ export default {
       exportImage: 'Export Image',
       exportData: 'Export Data',
       exportMap: 'Export Map',
-      addCustomMapboxStyle: 'Add Custom Mapbox Style',
+      addCustomMapboxStyle: 'Add Custom Map Style',
       saveMap: 'Save Map',
       shareURL: 'Share URL'
     },
@@ -275,7 +275,8 @@ export default {
       warning: 'you are going to delete this dataset. It will affect {length} layers'
     },
     addStyle: {
-      publishTitle: '1. Publish your style at mapbox or provide access token',
+      publishTitle:
+        '2. If entered mapbox stule url in step.1, publish your style at mapbox or provide access token. (Optional)',
       publishSubtitle1: 'You can create your own map style at',
       publishSubtitle2: 'and',
       publishSubtitle3: 'publish',
@@ -285,9 +286,12 @@ export default {
       publishSubtitle7:
         'here. *kepler.gl is a client-side application, data stays in your browser..',
       exampleToken: 'e.g. pk.abcdefg.xxxxxx',
-      pasteTitle: '2. Paste style url',
+      pasteTitle: '1. Paste style url',
+      pasteSubtitle0: 'Style url can be a mapbox',
       pasteSubtitle1: 'What is a',
       pasteSubtitle2: 'style URL',
+      pasteSubtitle3: 'or a style.json using the',
+      pasteSubtitle4: 'Mapbox GL Style Spec',
       namingTitle: '3. Name your style'
     },
     shareMap: {
