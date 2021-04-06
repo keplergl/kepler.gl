@@ -159,7 +159,6 @@
     "supercluster": "^7.1.0",
     "type-analyzer": "0.3.0",
     "typedoc": "^0.19.2",
-    "uber-licence": "^3.1.1",
     "viewport-mercator-project": "^6.0.0",
     "wellknown": "^0.5.0"
   },
@@ -232,6 +231,7 @@
     "tape-catch": "^1.0.6",
     "typedoc-plugin-markdown": "^3.0.11",
     "typescript": "3.8.3",
+    "uber-licence": "^3.1.1",
     "url-loader": "^4.1.1",
     "watchify": "^3.6.1",
     "webpack": "^4.29.0",
