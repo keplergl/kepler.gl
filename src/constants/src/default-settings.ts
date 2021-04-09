@@ -385,7 +385,7 @@ const BLUE3 = '0, 172, 237';
 const GREEN = '106, 160, 56';
 const RED = '237, 88, 106';
 
-export const FILED_TYPE_DISPLAY = {
+export const FIELD_TYPE_DISPLAY = {
   [ALL_FIELD_TYPES.boolean]: {
     label: 'bool',
     color: PINK
