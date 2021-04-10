@@ -62,7 +62,8 @@ export {
   applyDefaultFormat,
   getBooleanFormatter,
   applyCustomFormat,
-  datetimeFormatter
+  datetimeFormatter,
+  formatNumber
 } from './data-utils';
 export {
   datasetColorMaker,

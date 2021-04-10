@@ -21,10 +21,9 @@
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
-import {format} from 'd3-format';
 import moment from 'moment';
 import {SCALE_TYPES, SCALE_FUNC, ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {getTimeWidgetHintFormatter} from '@kepler.gl/utils';
+import {getTimeWidgetHintFormatter, formatNumber} from '@kepler.gl/utils';
 
 const ROW_H = 10;
 const GAP = 4;
@@ -51,23 +50,13 @@ const getTimeLabelFormat = domain => {
   return val => moment.utc(val).format(formatter);
 };
 
-const getNumericLabelFormat = domain => {
-  const diff = domain[1] - domain[0];
-
-  if (diff < 10) {
-    return format('.2f');
-  }
-
-  return format('.1f');
-};
-
 const getQuantLabelFormat = (domain, fieldType) => {
   // quant scale can only be assigned to linear Fields: real, timestamp, integer
   return fieldType === ALL_FIELD_TYPES.timestamp
     ? getTimeLabelFormat(domain)
     : !fieldType
     ? defaultFormat
-    : getNumericLabelFormat(domain);
+    : n => formatNumber(n, fieldType);
 };
 
 const getOrdinalLegends = scale => {

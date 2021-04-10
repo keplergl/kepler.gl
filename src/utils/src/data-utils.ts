@@ -372,6 +372,41 @@ export function applyCustomFormat(format, field): FieldFormatter {
   }
 }
 
+function formatLargeNumber(n) {
+  // SI-prefix with 4 significant digits
+  return d3Format('.4~s')(n);
+}
+
+export function formatNumber(n: number, type: string | undefined): string {
+  switch (type) {
+    case ALL_FIELD_TYPES.integer:
+      if (n < 0) {
+        return `-${formatNumber(-n, 'integer')}`;
+      }
+      if (n < 1000) {
+        return `${Math.round(n)}`;
+      }
+      if (n < 10 * 1000) {
+        return d3Format(',')(Math.round(n));
+      }
+      return formatLargeNumber(n);
+    case ALL_FIELD_TYPES.real:
+      if (n < 0) {
+        return `-${formatNumber(-n, 'number')}`;
+      }
+      if (n < 1000) {
+        return d3Format('.4~r')(n);
+      }
+      if (n < 10 * 1000) {
+        return d3Format(',')(Math.round(n));
+      }
+      return formatLargeNumber(n);
+
+    default:
+      return formatNumber(n, 'real');
+  }
+}
+
 /**
  * Format epoch milliseconds with a format string
  * @type timezone
