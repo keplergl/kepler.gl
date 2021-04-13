@@ -237,8 +237,7 @@ test('interactionUtil -> getTooltipDisplayValue', t => {
       dataset.dataContainer.map(data =>
         getTooltipDisplayValue({
           field,
-          data,
-          fieldIdx,
+          value: data.valueAt(fieldIdx),
           item: tc.input
         })
       ),

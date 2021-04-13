@@ -28,12 +28,14 @@ export type LayersToRender = {
   [layerId: string]: boolean;
 };
 
+export type AggregationLayerHoverData = {points: any[]; colorValue?: any; elevationValue?: any};
+
 export type LayerHoverProp = {
-  data: any[];
+  data: any[] | AggregationLayerHoverData;
   fields: Field[];
   fieldsToShow: TooltipField[];
   layer: Layer;
-  primaryData?: any[];
+  primaryData?: any[] | AggregationLayerHoverData;
   compareType?: CompareType;
 };
 
