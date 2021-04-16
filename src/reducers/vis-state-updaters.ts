@@ -710,6 +710,44 @@ export function layerDataIdChangeUpdater(
   return updateStateWithLayerAndData(state, {layerData, layer, idx});
 }
 
+function setInitialLayerConfig(layer, datasets, layerClasses) {
+
+  let newLayer = layer;
+  if (!Object.keys(datasets).length) {
+    // no data is loaded
+    return layer;
+  }
+  if (!layer.config.dataId) {
+    //set layer dataId
+    newLayer = layer.updateLayerConfig({dataId: Object.keys(datasets)[0]});
+  }
+  const dataset = datasets[newLayer.config.dataId];
+  if (!dataset) {
+    return layer;
+  }
+
+  // find defaut layer props
+  const result = typeof layerClasses[newLayer.type].findDefaultLayerProps === 'function'
+    ? layerClasses[newLayer.type].findDefaultLayerProps(dataset, []) : {props: []};
+
+  // an array of possible props, use 1st one
+  const props = Array.isArray(result) ? result : result.props || [];
+
+  if (props.length) {
+    newLayer = new layerClasses[layer.type]({
+      ...props[0],
+      label: newLayer.config.label,
+      dataId: newLayer.config.dataId,
+      isVisible: true
+    });
+    
+    return typeof newLayer.setInitialLayerConfig === 'function'
+    ? newLayer.setInitialLayerConfig(dataset)
+    : newLayer;
+  }
+
+  return newLayer;
+}
 /**
  * Update layer type. Previews layer config will be copied if applicable.
  * @memberof visStateUpdaters
@@ -730,15 +768,21 @@ export function layerTypeChangeUpdater(
     Console.error(`${newType} is not a valid layer type`);
     return state;
   }
+  let newLayer = new state.layerClasses[newType]({
+    label: oldLayer.config.label
+  });
 
-  // get a mint layer, with new id and type
-  // because deck.gl uses id to match between new and old layer.
-  // If type has changed but id is the same, it will break
-  const newLayer = new state.layerClasses[newType]();
+  if (!oldLayer.type) {
+    // if setting layer type on an empty layer
+    newLayer = setInitialLayerConfig(newLayer, state.datasets, state.layerClasses)    
+  } else {
+    // get a mint layer, with new id and type
+    // because deck.gl uses id to match between new and old layer.
+    // If type has changed but id is the same, it will break
+    newLayer.assignConfigToLayer(oldLayer.config, oldLayer.visConfigSettings);
+    newLayer.updateLayerDomain(state.datasets);
+  }
 
-  newLayer.assignConfigToLayer(oldLayer.config, oldLayer.visConfigSettings);
-
-  newLayer.updateLayerDomain(state.datasets);
   const {layerData, layer} = calculateLayerData(newLayer, state);
   let newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
 

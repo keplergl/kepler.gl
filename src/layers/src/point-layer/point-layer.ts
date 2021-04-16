@@ -207,6 +207,9 @@ export default class PointLayer extends Layer {
   }
 
   setInitialLayerConfig(dataset) {
+    if (!dataset.allData?.length) {
+      return this;
+    }
     const defaultColorField = findDefaultColorField(dataset);
 
     if (defaultColorField) {

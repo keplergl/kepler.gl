@@ -302,6 +302,9 @@ export default class TripLayer extends Layer {
   }
 
   setInitialLayerConfig({dataContainer}) {
+    if (!dataContainer.numRows()) {
+      return this;
+    }
     this.updateLayerMeta(dataContainer);
     return this;
   }
