@@ -26,10 +26,20 @@ import React, {
   ChangeEventHandler
 } from 'react';
 import classnames from 'classnames';
-import styled from 'styled-components';
+import styled, {css} from 'styled-components';
 import {SortableHandle} from 'react-sortable-hoc';
 import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
-import {Copy, ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from 'components/common/icons';
+import {Tooltip} from 'components/common/styled-components';
+import {
+  Copy,
+  ArrowDown,
+  EyeSeen,
+  EyeUnseen,
+  Trash,
+  VertDots,
+  Reset,
+  WarningSign
+} from 'components/common/icons';
 
 import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -67,6 +77,7 @@ type LayerPanelHeaderProps = {
   layerType?: string | null;
   allowDuplicate?: boolean;
   isDragNDropEnabled?: boolean;
+  warning?: boolean;
   labelRCGColorValues?: RGBColor | null;
   actionIcons?: {
     remove: ComponentType<Partial<BaseProps>>;
@@ -83,6 +94,13 @@ export const defaultProps = {
   showRemoveLayer: true
 };
 
+const getBorderCss = status =>
+  css`
+    border-top: 2px solid ${({theme}) => theme.notificationColors[status]};
+    border-bottom: 2px solid ${({theme}) => theme.notificationColors[status]};
+    border-right: 2px solid ${({theme}) => theme.notificationColors[status]};
+  `;
+
 const StyledLayerPanelHeader = styled(StyledPanelHeader)`
   height: ${props => props.theme.layerPanelHeaderHeight}px;
   position: relative;
@@ -96,6 +114,8 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
     height: 20px;
     padding: 10px;
   }
+
+  ${props => (props.warning ? getBorderCss('warning') : props.isValid ? '' : getBorderCss('error'))}
 
   :hover {
     cursor: pointer;
@@ -241,6 +261,21 @@ export function LayerTitleSectionFactory() {
   return LayerTitleSection;
 }
 
+const StyledHeaderWaring = styled.div`
+  position: absolute;
+  right: -9px;
+  top: calc(50% - 9px);
+  color: ${({theme}) => theme.notificationColors.warning};
+`;
+
+export const HeaderWarning = ({warning, id}) => (
+  <StyledHeaderWaring>
+    <WarningSign data-tip data-for={`layer-${id}-warning`} height="16px" />
+    <Tooltip id={`layer-${id}-warning`} type="warning" effect="solid" textColor="black">
+      {warning}
+    </Tooltip>
+  </StyledHeaderWaring>
+);
 LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory, PanelHeaderActionFactory];
 
 const defaultActionIcons = {
@@ -260,6 +295,7 @@ function LayerPanelHeaderFactory(
     allowDuplicate,
     isDragNDropEnabled,
     isVisible,
+    warning,
     label,
     layerId,
     layerType,
@@ -279,10 +315,12 @@ function LayerPanelHeaderFactory(
         className={classnames('layer-panel__header', {
           'sort--handle': !isConfigActive
         })}
+        warning={warning}
         active={isConfigActive}
         labelRCGColorValues={labelRCGColorValues}
         onClick={onToggleEnableConfig}
       >
+        {warning ? <HeaderWarning warning={warning} id={layerId} /> : null}
         <HeaderLabelSection className="layer-panel__header__content">
           {isDragNDropEnabled ? (
             <DragHandle className="layer__drag-handle">
