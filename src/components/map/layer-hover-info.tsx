@@ -166,22 +166,16 @@ const CellInfo = ({
     return null;
   }, [fieldsToShow, sizeField, layer, data.elevationValue]);
 
+  const colorMeasure = layer.getVisualChannelDescription('color').measure;
+  const sizeMeasure = layer.getVisualChannelDescription('size').measure;
   return (
     <tbody>
       <Row name={'total points'} key="count" value={String(data.points && data.points.length)} />
-      {colorField && layer.visualChannels.color ? (
-        <Row
-          name={layer.getVisualChannelDescription('color').measure}
-          key="color"
-          value={colorValue || 'N/A'}
-        />
+      {colorField && layer.visualChannels.color && colorMeasure ? (
+        <Row name={colorMeasure} key="color" value={colorValue || 'N/A'} />
       ) : null}
-      {sizeField && layer.visualChannels.size ? (
-        <Row
-          name={layer.getVisualChannelDescription('size').measure}
-          key="size"
-          value={elevationValue || 'N/A'}
-        />
+      {sizeField && layer.visualChannels.size && sizeMeasure ? (
+        <Row name={sizeMeasure} key="size" value={elevationValue || 'N/A'} />
       ) : null}
     </tbody>
   );

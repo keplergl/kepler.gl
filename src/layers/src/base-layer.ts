@@ -168,7 +168,7 @@ export type VisualChannel = {
 
 export type VisualChannelDescription = {
   label: string;
-  measure: string;
+  measure: string | undefined;
 };
 
 export type ColumnPairs = {[key: string]: {pair: string; fieldPairKey: string}};
@@ -482,12 +482,12 @@ class Layer {
   getVisualChannelDescription(key: string): VisualChannelDescription {
     // e.g. label: Color, measure: Vehicle Type
     const channel = this.visualChannels[key];
-    if (!channel) return {label: '', measure: ''};
+    if (!channel) return {label: '', measure: undefined};
     const rangeSettings = this.visConfigSettings[channel.range];
     const fieldSettings = this.config[channel.field];
     const label = rangeSettings?.label;
     return {
-      label: typeof label === 'function' ? label(this.config) : label,
+      label: typeof label === 'function' ? label(this.config) : label || '',
       measure: fieldSettings
         ? fieldSettings.displayName || fieldSettings.name
         : channel.defaultMeasure
