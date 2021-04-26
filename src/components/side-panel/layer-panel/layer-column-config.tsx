@@ -78,7 +78,12 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
       },
       [updateLayerConfig, columnPairs, assignColumnPairs, assignColumn]
     );
-
+  
+    if (!Object.keys(columns).length) {
+      // don't render if columns is empty
+      return <div />
+    }
+  
     return (
       <div>
         <SidePanelSection>
