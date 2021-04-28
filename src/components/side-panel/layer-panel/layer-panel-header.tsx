@@ -65,6 +65,7 @@ type LayerPanelHeaderProps = {
   showRemoveLayer?: boolean;
   label?: string;
   layerType?: string | null;
+  allowDuplicate?: boolean;
   isDragNDropEnabled?: boolean;
   labelRCGColorValues?: RGBColor | null;
   actionIcons?: {
@@ -145,8 +146,10 @@ const StyledPanelHeaderHiddenActions = styled.div.attrs({
   opacity: 0;
   display: flex;
   align-items: center;
-  background-color: ${props => props.theme.panelBackground};
-  transition: ${props => props.theme.transition};
+  background-color: ${props =>
+    props.isConfigActive ? props.theme.panelBackgroundHover : props.theme.panelBackground};
+  transition: opacity 0.4s ease, background-color 0.4s ease;
+
   :hover {
     opacity: 1;
   }
@@ -250,6 +253,7 @@ function LayerPanelHeaderFactory(
 ) {
   const LayerPanelHeader: React.FC<LayerPanelHeaderProps> = ({
     isConfigActive,
+    allowDuplicate,
     isDragNDropEnabled,
     isVisible,
     label,
@@ -264,13 +268,7 @@ function LayerPanelHeaderFactory(
     showRemoveLayer,
     actionIcons = defaultActionIcons
   }) => {
-    const [isOpen, setOpen] = useState(false);
     const [isEditingLabel, setIsEditingLabel] = useState(false);
-
-    const toggleLayerConfigurator = e => {
-      setOpen(!isOpen);
-      onToggleEnableConfig(e);
-    };
 
     return (
       <StyledLayerPanelHeader
@@ -279,7 +277,7 @@ function LayerPanelHeaderFactory(
         })}
         active={isConfigActive}
         labelRCGColorValues={labelRCGColorValues}
-        onClick={toggleLayerConfigurator}
+        onClick={onToggleEnableConfig}
       >
         <HeaderLabelSection className="layer-panel__header__content">
           {isDragNDropEnabled ? (
@@ -323,6 +321,7 @@ function LayerPanelHeaderFactory(
               tooltip={'tooltip.duplicateLayer'}
               onClick={onDuplicateLayer}
               IconComponent={actionIcons.duplicate}
+              disabled={!allowDuplicate}
             />
           </StyledPanelHeaderHiddenActions>
           <PanelHeaderAction
@@ -334,11 +333,11 @@ function LayerPanelHeaderFactory(
           />
           <PanelHeaderAction
             className={classnames('layer__enable-config ', {
-              'is-open': isOpen
+              'is-open': isConfigActive
             })}
             id={layerId}
             tooltip={'tooltip.layerSettings'}
-            onClick={toggleLayerConfigurator}
+            onClick={onToggleEnableConfig}
             IconComponent={actionIcons.enableConfig}
           />
         </HeaderActionSection>

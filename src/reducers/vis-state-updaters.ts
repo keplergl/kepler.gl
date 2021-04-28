@@ -1331,7 +1331,7 @@ export const duplicateLayerUpdater = (
   const loadedLayer = serializeLayer(original);
 
   // assign new id and label to copied layer
-  if (!loadedLayer.config) {
+  if (!loadedLayer?.config) {
     return state;
   }
   loadedLayer.config.label = newLabel;

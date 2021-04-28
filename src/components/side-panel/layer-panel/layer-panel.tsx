@@ -140,6 +140,8 @@ function LayerPanelFactory(
       const {layer, datasets, isDraggable, layerTypeOptions} = this.props;
       const {config} = layer;
       const {isConfigActive} = config;
+      const allowDuplicate =
+        typeof layer.isValidToSave === 'function' && layer.isValidToSave() && isValid;
 
       return (
         <PanelWrapper
@@ -156,6 +158,7 @@ function LayerPanelFactory(
             label={config.label}
             labelRCGColorValues={config.dataId ? datasets[config.dataId].color : null}
             layerType={layer.type}
+            allowDuplicate={allowDuplicate}
             onToggleEnableConfig={this._toggleEnableConfig}
             onToggleVisibility={this._toggleVisibility}
             onUpdateLayerLabel={this._updateLayerLabel}
