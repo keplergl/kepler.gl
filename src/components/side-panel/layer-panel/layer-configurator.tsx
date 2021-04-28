@@ -1029,15 +1029,13 @@ export default function LayerConfiguratorFactory(
               // @ts-ignore
               onSelect={updateLayerType}
             />
-            {Object.keys(datasets).length > 1 && (
-              <SourceDataSelector
-                datasets={datasets}
-                id={layer.id}
-                dataId={config.dataId}
-                // @ts-ignore
-                onSelect={(value: string) => updateLayerConfig({dataId: value})}
-              />
-            )}
+            <SourceDataSelector
+              datasets={datasets}
+              id={layer.id}
+              dataId={config.dataId}
+              // @ts-ignore
+              onSelect={(value: string) => updateLayerConfig({dataId: value})}
+            />
             <LayerColumnConfig
               columnPairs={layer.columnPairs}
               columns={layer.config.columns}
