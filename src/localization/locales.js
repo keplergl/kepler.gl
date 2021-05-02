@@ -23,7 +23,8 @@ export const LOCALES = {
   fi: 'Suomi',
   pt: 'Português',
   es: 'Español',
-  ca: 'Català'
+  ca: 'Català',
+  ja: 'Japanese'
 };
 
 /**
