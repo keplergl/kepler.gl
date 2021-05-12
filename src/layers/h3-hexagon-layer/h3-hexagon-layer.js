@@ -41,7 +41,8 @@ export const HexagonIdVisConfigs = {
   enable3d: 'enable3d',
   sizeRange: 'elevationRange',
   coverageRange: 'coverageRange',
-  elevationScale: 'elevationScale'
+  elevationScale: 'elevationScale',
+  enableElevationZoomFactor: 'enableElevationZoomFactor'
 };
 
 export default class HexagonIdLayer extends Layer {

@@ -383,6 +383,10 @@ export default function LayerConfiguratorFactory(
                   description={elevationByDescription}
                   disabled={!enable3d}
                 />
+                <VisConfigSwitch
+                  {...layer.visConfigSettings.enableElevationZoomFactor}
+                  {...visConfiguratorProps}
+                />
                 {layer.visConfigSettings.sizeAggregation.condition(layer.config) ? (
                   <AggregationTypeSelector
                     {...layer.visConfigSettings.sizeAggregation}
@@ -470,6 +474,10 @@ export default function LayerConfiguratorFactory(
                 {...layer.visConfigSettings.sizeRange}
                 {...visConfiguratorProps}
                 label="layerVisConfigs.heightRange"
+              />
+              <VisConfigSwitch
+                {...layer.visConfigSettings.enableElevationZoomFactor}
+                {...visConfiguratorProps}
               />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
@@ -716,6 +724,10 @@ export default function LayerConfiguratorFactory(
                   channel={layer.visualChannels.height}
                   {...layerChannelConfigProps}
                 />
+                <VisConfigSwitch
+                  {...layer.visConfigSettings.enableElevationZoomFactor}
+                  {...visConfiguratorProps}
+                />
                 <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.wireframe} />
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
@@ -893,6 +905,10 @@ export default function LayerConfiguratorFactory(
                 {...layer.visConfigSettings.heightRange}
                 {...visConfiguratorProps}
                 label="layerVisConfigs.heightRange"
+              />
+              <VisConfigSwitch
+                {...layer.visConfigSettings.enableElevationZoomFactor}
+                {...visConfiguratorProps}
               />
               <VisConfigSwitch {...visConfiguratorProps} {...layer.visConfigSettings.wireframe} />
             </ConfigGroupCollapsibleContent>

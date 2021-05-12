@@ -1271,7 +1271,8 @@ mergedLayer3.config = {
     sizeRange: [0, 50],
     percentile: [0, 100],
     elevationPercentile: [0, 100],
-    elevationScale: 10
+    elevationScale: 10,
+    enableElevationZoomFactor: true
   },
   animation: {enabled: false}
 };
@@ -1380,6 +1381,7 @@ mergedLayer4.config = {
     radiusRange: [0, 50],
     heightRange: [0, 500],
     elevationScale: 5,
+    enableElevationZoomFactor: true,
     stroked: false,
     filled: true,
     enable3d: false,

@@ -145,6 +145,8 @@ export default {
     sizeScale: 'Size Scale',
     worldUnitSize: 'World Unit Size',
     elevationScale: 'Elevation Scale',
+    enableElevationZoomFactor: 'Use elevation zoom factor',
+    enableElevationZoomFactorDescription: 'Adjust elevation based on current zoom factor',
     heightScale: 'Height Scale',
     coverageRange: 'Coverage Range',
     highPrecisionRendering: 'High Precision Rendering',
