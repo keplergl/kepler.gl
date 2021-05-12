@@ -81,7 +81,7 @@ export default class AggregationLayer extends Layer {
       'coverage',
       'elevationPercentile',
       'elevationScale',
-      'enableElevationZoomFactor' // ! ??????????????/
+      'enableElevationZoomFactor'
     ];
   }
 
