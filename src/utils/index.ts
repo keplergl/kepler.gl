@@ -44,6 +44,13 @@ export {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
 
 // REDUCER UTILS
 export {updateAllLayerDomainData} from '../reducers/vis-state-updaters';
+export {
+  validateLayerWithData,
+  validateLayersByDatasets,
+  validateSavedVisualChannels,
+  mergeLayers
+} from '../reducers/vis-state-merger';
+
 export {getHexFields, containValidTime} from '@kepler.gl/layers';
 
 export {
@@ -52,6 +59,9 @@ export {
   copyTableAndUpdate
 } from './table-utils/kepler-table';
 export {createDataContainer, createIndexedDataContainer} from './table-utils/data-container-utils';
+
+// Render
+export {renderedSize} from 'components/common/data-table/cell-size';
 
 export * from './color-utils';
 export * from './data-scale-utils';

@@ -103,6 +103,7 @@ import * as MapStateActions from 'actions/map-state-actions';
 import {LoaderObject} from '@loaders.gl/loader-utils';
 import {KeplerTable} from '../utils';
 
+export {KeplerTable};
 export type HistogramBin = {
   x0: number | undefined;
   x1: number | undefined;
