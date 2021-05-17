@@ -107,10 +107,10 @@ export default class LineLayer extends ArcLayer {
     props.columns = {
       lat0: fieldPairs[0].pair.lat,
       lng0: fieldPairs[0].pair.lng,
-      alt0: fieldPairs[0].pair.alt0,
+      alt0: {value: null, fieldIdx: -1, optional: true},
       lat1: fieldPairs[1].pair.lat,
       lng1: fieldPairs[1].pair.lng,
-      alt1: fieldPairs[1].pair.alt1
+      alt1: {value: null, fieldIdx: -1, optional: true}
     };
     props.label = `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} line`;
 
