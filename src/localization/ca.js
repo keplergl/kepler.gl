@@ -407,6 +407,10 @@ export default {
       lat1: 'lat destinació',
       lng1: 'lng destinació'
     },
+    line: {
+      alt0: 'alçada origen',
+      alt1: 'alçada destinació'
+    },
     grid: {
       worldUnitSize: 'Mida de malla (km)'
     },

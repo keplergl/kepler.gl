@@ -533,6 +533,14 @@ export default function LayerConfiguratorFactory(
               />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
+
+          {/* elevation scale */}
+          <LayerConfigGroup label="layerVisConfigs.elevationScale" collapsible>
+            <VisConfigSlider
+              {...layer.visConfigSettings.elevationScale}
+              {...visConfiguratorProps}
+            />
+          </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );
     }

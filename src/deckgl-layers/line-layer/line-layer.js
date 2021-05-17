@@ -44,14 +44,62 @@ function addInstanceColorShader(vs) {
   );
 }
 
+function addElevationScale(vs) {
+  let elevationVs = editShader(
+    vs,
+    'line elevation scale 1 vs',
+    'uniform float widthMaxPixels;',
+    `uniform float widthMaxPixels;
+     uniform float elevationScale;`
+  );
+
+  elevationVs = editShader(
+    elevationVs,
+    'line elevation scale 2 vs',
+    `geometry.worldPosition = instanceSourcePositions;
+  geometry.worldPositionAlt = instanceTargetPositions;`,
+    `vec3 sourcePosAdjusted = instanceSourcePositions;
+     vec3 targetPosAdjusted = instanceTargetPositions;
+     sourcePosAdjusted.z *= elevationScale;
+     targetPosAdjusted.z *= elevationScale;
+     
+     geometry.worldPosition = sourcePosAdjusted;
+     geometry.worldPositionAlt = sourcePosAdjusted;`
+  );
+
+  elevationVs = editShader(
+    elevationVs,
+    'line elevation scale 3 vs',
+    'vec4 source = project_position_to_clipspace(instanceSourcePositions, instanceSourcePositions64Low, vec3(0.), source_commonspace);',
+    'vec4 source = project_position_to_clipspace(sourcePosAdjusted, instanceSourcePositions64Low, vec3(0.), source_commonspace);'
+  );
+
+  elevationVs = editShader(
+    elevationVs,
+    'line elevation scale 4 vs',
+    'vec4 target = project_position_to_clipspace(instanceTargetPositions, instanceTargetPositions64Low, vec3(0.), target_commonspace);',
+    'vec4 target = project_position_to_clipspace(targetPosAdjusted, instanceTargetPositions64Low, vec3(0.), target_commonspace);'
+  );
+
+  return elevationVs;
+}
+
 export default class EnhancedLineLayer extends LineLayer {
   getShaders() {
     const shaders = super.getShaders();
 
+    let vs = addInstanceColorShader(shaders.vs);
+    vs = addElevationScale(vs);
+
     return {
       ...shaders,
-      vs: addInstanceColorShader(shaders.vs)
+      vs
     };
+  }
+
+  draw({uniforms}) {
+    const {elevationScale} = this.props;
+    super.draw({uniforms: {...uniforms, elevationScale}});
   }
 
   initializeState() {
