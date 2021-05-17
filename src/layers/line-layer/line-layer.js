@@ -28,10 +28,10 @@ import EnhancedLineLayer from 'deckgl-layers/line-layer/line-layer';
 export const linePosAccessor = ({lat0, lng0, lat1, lng1, alt0, alt1}) => d => [
   d.data[lng0.fieldIdx],
   d.data[lat0.fieldIdx],
-  alt0 && alt0.fieldIdx > -1 ? d.data[alt0.fieldIdx] : 0,
+  alt0?.fieldIdx > -1 ? d.data[alt0.fieldIdx] : 0,
   d.data[lng1.fieldIdx],
   d.data[lat1.fieldIdx],
-  alt1 && alt1.fieldIdx > -1 ? d.data[alt1.fieldIdx] : 0
+  alt1?.fieldIdx > -1 ? d.data[alt1.fieldIdx] : 0
 ];
 
 export const lineRequiredColumns = ['lat0', 'lng0', 'lat1', 'lng1'];
