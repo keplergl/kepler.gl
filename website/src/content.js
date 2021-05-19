@@ -41,6 +41,13 @@ export const SECTIONS = [
     icon: cdnUrl('icons/features.png')
   },
   {
+    id: 'ecosystems',
+    title: 'Ecosystem',
+    description: 'A collection of kepler.gl plugins built for common data analytics tools',
+    icon: 'https://cdn.unfolded.ai/statics/keplergl/images/ecosystem.png',
+    isDark: true
+  },
+  {
     id: 'examples',
     title: 'See What People Created',
     description: 'See what others have been creating with Kepler.gl.',
@@ -173,6 +180,26 @@ export const FEATURES = [
   }
 ];
 
+export const ECOSYSTEM = [
+  {
+    title: 'Jupyter',
+    description:
+      'Built with Deck.gl, Kepler.gl utilizes WebGL to render large datasets quickly and efficiently.',
+    image: cdnUrl('features/performance.svg')
+  },
+  {
+    title: 'Tableau',
+    description:
+      'You can easily drag and drop a dataset, add filters, apply scales, and do aggregation on the fly.',
+    image: cdnUrl('features/interaction.svg')
+  },
+  {
+    title: 'Visual Studio Code',
+    description:
+      'Built on React & Redux, Kepler.gl can be embedded inside your own mapping applications.',
+    image: cdnUrl('features/embeddable.svg')
+  }
+];
 export const EXAMPLES = [
   {
     title: 'California Earthquakes',
