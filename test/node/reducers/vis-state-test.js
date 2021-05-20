@@ -1254,7 +1254,17 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
       lat0: {fieldIdx: 0, value: 'start_point_lat'},
       lng0: {fieldIdx: 1, value: 'start_point_lng'},
       lat1: {fieldIdx: 2, value: 'end_point_lat'},
-      lng1: {fieldIdx: 3, value: 'end_point_lng'}
+      lng1: {fieldIdx: 3, value: 'end_point_lng'},
+      alt0: {
+        value: null,
+        fieldIdx: -1,
+        optional: true
+      },
+      alt1: {
+        value: null,
+        fieldIdx: -1,
+        optional: true
+      }
     }
   });
 

@@ -414,6 +414,10 @@ export default {
       lat1: 'target lat',
       lng1: 'target lng'
     },
+    line: {
+      alt0: 'source altitude',
+      alt1: 'target altitude'
+    },
     grid: {
       worldUnitSize: 'Grid Size (km)'
     },

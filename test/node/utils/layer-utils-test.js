@@ -235,6 +235,16 @@ test('layerUtils -> findDefaultLayer.1', t => {
         lng1: {
           value: 'two_two.lng',
           fieldIdx: 2
+        },
+        alt0: {
+          value: null,
+          fieldIdx: -1,
+          optional: true
+        },
+        alt1: {
+          value: null,
+          fieldIdx: -1,
+          optional: true
         }
       }
     })
@@ -464,6 +474,16 @@ test('layerUtils -> findDefaultLayer.4', t => {
         lng1: {
           value: 'dropoff_lng',
           fieldIdx: 3
+        },
+        alt0: {
+          value: null,
+          fieldIdx: -1,
+          optional: true
+        },
+        alt1: {
+          value: null,
+          fieldIdx: -1,
+          optional: true
         }
       }
     })

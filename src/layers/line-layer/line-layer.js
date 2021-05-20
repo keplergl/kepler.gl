@@ -20,17 +20,70 @@
 
 import {BrushingExtension} from '@deck.gl/extensions';
 
+import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import LineLayerIcon from './line-layer-icon';
 import ArcLayer from '../arc-layer/arc-layer';
 import EnhancedLineLayer from 'deckgl-layers/line-layer/line-layer';
 
+export const linePosAccessor = ({lat0, lng0, lat1, lng1, alt0, alt1}) => d => [
+  d.data[lng0.fieldIdx],
+  d.data[lat0.fieldIdx],
+  alt0?.fieldIdx > -1 ? d.data[alt0.fieldIdx] : 0,
+  d.data[lng1.fieldIdx],
+  d.data[lat1.fieldIdx],
+  alt1?.fieldIdx > -1 ? d.data[alt1.fieldIdx] : 0
+];
+
+export const lineRequiredColumns = ['lat0', 'lng0', 'lat1', 'lng1'];
+export const lineOptionalColumns = ['alt0', 'alt1'];
+
+export const lineColumnLabels = {
+  lat0: 'arc.lat0',
+  lng0: 'arc.lng0',
+  lat1: 'arc.lat1',
+  lng1: 'arc.lng1',
+  alt0: 'line.alt0',
+  alt1: 'line.alt1'
+};
+
+export const lineVisConfigs = {
+  opacity: 'opacity',
+  thickness: 'thickness',
+  colorRange: 'colorRange',
+  sizeRange: 'strokeWidthRange',
+  targetColor: 'targetColor',
+  elevationScale: {
+    ...LAYER_VIS_CONFIGS.elevationScale,
+    defaultValue: 1
+  }
+};
+
 export default class LineLayer extends ArcLayer {
+  constructor(props) {
+    super(props);
+
+    this.registerVisConfig(lineVisConfigs);
+    this.getPositionAccessor = () => linePosAccessor(this.config.columns);
+  }
+
   get type() {
     return 'line';
   }
 
   get layerIcon() {
     return LineLayerIcon;
+  }
+
+  get requiredLayerColumns() {
+    return lineRequiredColumns;
+  }
+
+  get optionalColumns() {
+    return lineOptionalColumns;
+  }
+
+  get columnLabels() {
+    return lineColumnLabels;
   }
 
   get visualChannels() {
@@ -50,12 +103,14 @@ export default class LineLayer extends ArcLayer {
     }
     const props = {};
 
-    // connect the first two point layer with arc
+    // connect the first two point layer with line
     props.columns = {
       lat0: fieldPairs[0].pair.lat,
       lng0: fieldPairs[0].pair.lng,
+      alt0: {value: null, fieldIdx: -1, optional: true},
       lat1: fieldPairs[1].pair.lat,
-      lng1: fieldPairs[1].pair.lng
+      lng1: fieldPairs[1].pair.lng,
+      alt1: {value: null, fieldIdx: -1, optional: true}
     };
     props.label = `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} line`;
 
@@ -66,7 +121,8 @@ export default class LineLayer extends ArcLayer {
     const {data, gpuFilter, objectHovered, interactionConfig} = opts;
 
     const layerProps = {
-      widthScale: this.config.visConfig.thickness
+      widthScale: this.config.visConfig.thickness,
+      elevationScale: this.config.visConfig.elevationScale
     };
 
     const updateTriggers = {

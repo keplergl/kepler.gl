@@ -400,6 +400,10 @@ export default {
       lat1: 'kohteen lat',
       lng1: 'kohteen lng'
     },
+    line: {
+      alt0: 'lähteen korkeus',
+      alt1: 'kohde korkeus'
+    },
     grid: {
       worldUnitSize: 'Ruutujen koko (km)'
     },

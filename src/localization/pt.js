@@ -401,6 +401,10 @@ export default {
       lat1: 'destino lat',
       lng1: 'destino lng'
     },
+    line: {
+      alt0: 'origem altitude',
+      alt1: 'destino altitude'
+    },
     grid: {
       worldUnitSize: 'Tamanho da Grade (km)'
     },
