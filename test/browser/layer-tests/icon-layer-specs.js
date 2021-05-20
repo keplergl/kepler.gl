@@ -166,7 +166,7 @@ test('#IconLayer -> formatLayerData', t => {
         // getPosition
         t.deepEqual(
           layerData.getPosition(layerData.data[0]),
-          [testRows[0][2], testRows[0][1]],
+          [testRows[0][2], testRows[0][1], 0],
           'getPosition should return correct position'
         );
         // getFillColor
@@ -471,7 +471,7 @@ test('#IconLayer -> renderLayer', t => {
 
         t.deepEqual(
           getPosition(layerData.data[0]),
-          [testRows[0][2], testRows[0][1]],
+          [testRows[0][2], testRows[0][1], 0],
           'Should calculate correct getPosition'
         );
         t.deepEqual(getColor, DEFAULT_TEXT_LABEL.color, 'Should calculate correct getColor');

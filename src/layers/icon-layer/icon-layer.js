@@ -32,10 +32,15 @@ const brushingExtension = new BrushingExtension();
 
 export const SVG_ICON_URL = `${CLOUDFRONT}/icons/svg-icons.json`;
 
-export const iconPosAccessor = ({lat, lng}) => d => [d.data[lng.fieldIdx], d.data[lat.fieldIdx]];
+export const iconPosAccessor = ({lat, lng, altitude}) => d => [
+  d.data[lng.fieldIdx],
+  d.data[lat.fieldIdx],
+  altitude?.fieldIdx > -1 ? d.data[altitude.fieldIdx] : 0
+];
 export const iconAccessor = ({icon}) => d => d.data[icon.fieldIdx];
 
 export const iconRequiredColumns = ['lat', 'lng', 'icon'];
+export const iconOptionalColumns = ['altitude'];
 
 export const pointVisConfigs = {
   radius: 'radius',
@@ -77,6 +82,10 @@ export default class IconLayer extends Layer {
 
   get requiredLayerColumns() {
     return iconRequiredColumns;
+  }
+
+  get optionalColumns() {
+    return iconOptionalColumns;
   }
 
   get columnPairs() {
@@ -274,6 +283,11 @@ export default class IconLayer extends Layer {
     ];
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
+    const parameters = {
+      // icons will be flat on the map when the altitude column is not used
+      depthTest: this.config.columns.altitude.fieldIdx > -1
+    };
+
     return !this.iconGeometry
       ? []
       : [
@@ -282,6 +296,7 @@ export default class IconLayer extends Layer {
             ...brushingProps,
             ...layerProps,
             ...data,
+            parameters,
             getIconGeometry: id => this.iconGeometry[id],
 
             // update triggers
@@ -295,6 +310,7 @@ export default class IconLayer extends Layer {
                   ...this.getDefaultHoverLayerProps(),
                   ...layerProps,
                   data: [hoveredObject],
+                  parameters,
                   getPosition: data.getPosition,
                   getRadius: data.getRadius,
                   getFillColor: this.config.highlightColor,
