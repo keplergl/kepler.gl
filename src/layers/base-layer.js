@@ -405,7 +405,9 @@ class Layer {
    * @returns {number}
    */
   getElevationZoomFactor({zoom, zoomOffset = 0}) {
-    return Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
+    return this.config.visConfig.enableElevationZoomFactor
+      ? Math.pow(2, Math.max(8 - zoom + zoomOffset, 0))
+      : 1;
   }
 
   formatLayerData(datasets, filteredIndex) {

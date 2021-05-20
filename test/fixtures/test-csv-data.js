@@ -155,6 +155,7 @@ export const config = {
               percentile: [0, 100],
               elevationPercentile: [0, 100],
               elevationScale: 5,
+              enableElevationZoomFactor: true,
               colorAggregation: 'count',
               sizeAggregation: 'count',
               enable3d: false

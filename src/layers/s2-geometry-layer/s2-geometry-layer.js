@@ -60,6 +60,7 @@ export const S2VisConfigs = {
   // height
   enable3d: 'enable3d',
   elevationScale: 'elevationScale',
+  enableElevationZoomFactor: 'enableElevationZoomFactor',
   heightRange: 'elevationRange',
 
   // wireframe

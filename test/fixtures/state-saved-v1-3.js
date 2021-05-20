@@ -463,6 +463,7 @@ mergedLayer1.config = {
     percentile: [0, 96.54],
     elevationPercentile: [0, 100],
     elevationScale: 5,
+    enableElevationZoomFactor: true,
     colorAggregation: 'average',
     sizeAggregation: 'average',
     enable3d: false

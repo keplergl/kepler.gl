@@ -53,6 +53,7 @@ export const geojsonVisConfigs = {
   radiusRange: 'radiusRange',
   heightRange: 'elevationRange',
   elevationScale: 'elevationScale',
+  enableElevationZoomFactor: 'enableElevationZoomFactor',
   stroked: 'stroked',
   filled: 'filled',
   enable3d: 'enable3d',

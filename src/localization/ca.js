@@ -145,6 +145,8 @@ export default {
     sizeScale: 'Mida escala',
     worldUnitSize: 'Mida de la unitat mundial',
     elevationScale: 'Escala elevació',
+    enableElevationZoomFactor: 'Utilitzeu el factor de zoom d’elevació',
+    enableElevationZoomFactorDescription: "'Ajusteu l'elevació en funció del factor de zoom actual",
     heightScale: 'Escala alçada',
     coverageRange: 'Rang ed cobertura',
     highPrecisionRendering: 'Representació alta precisió',

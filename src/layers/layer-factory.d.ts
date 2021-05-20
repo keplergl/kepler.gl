@@ -104,6 +104,7 @@ export type LayerVisConfig = {
   angle: VisConfigNumber;
   worldUnitSize: VisConfigNumber;
   elevationScale: VisConfigNumber;
+  enableElevationZoomFactor: VisConfigBoolean;
   elevationRange: VisConfigRange;
   heightRange: VisConfigRange;
   coverageRange: VisConfigRange;

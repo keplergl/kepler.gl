@@ -314,6 +314,14 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.height,
     property: 'elevationScale'
   },
+  enableElevationZoomFactor: {
+    type: 'boolean',
+    defaultValue: true,
+    label: 'layerVisConfigs.enableElevationZoomFactor',
+    group: PROPERTY_GROUPS.height,
+    property: 'enableElevationZoomFactor',
+    description: 'layerVisConfigs.enableElevationZoomFactorDescription'
+  },
   elevationRange: {
     type: 'number',
     defaultValue: [0, 500],

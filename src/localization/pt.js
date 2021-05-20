@@ -143,6 +143,8 @@ export default {
     sizeScale: 'Escala de tamanho',
     worldUnitSize: 'Tamanho unitário do mundo',
     elevationScale: 'Escala de Elevação',
+    enableElevationZoomFactor: 'Use fator de zoom de elevação',
+    enableElevationZoomFactorDescription: 'Ajuste a elevação com base no fator de zoom atual',
     heightScale: 'Escala de Altura',
     coverageRange: 'Alcance de cobertura',
     highPrecisionRendering: 'Renderização de Alta Precisão',

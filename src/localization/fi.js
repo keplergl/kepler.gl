@@ -143,6 +143,8 @@ export default {
     sizeScale: 'Koon skaala',
     worldUnitSize: 'Yksikkö',
     elevationScale: 'Korottamisen skaala',
+    enableElevationZoomFactor: 'Käytä korkeuden zoomauskerrointa',
+    enableElevationZoomFactorDescription: 'Säädä korkeus nykyisen zoomauskertoimen perusteella',
     heightScale: 'Korkeuden skaala',
     coverageRange: 'Peittävyyden rajat',
     highPrecisionRendering: 'Tarkka renderöinti',
