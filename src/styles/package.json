@@ -31,13 +31,13 @@
   ],
   "dependencies": {
     "@danmarshall/deckgl-typings": "4.9.22",
-    "@deck.gl/aggregation-layers": "8.4.11",
-    "@deck.gl/core": "^8.4.11",
-    "@deck.gl/extensions": "^8.4.11",
-    "@deck.gl/geo-layers": "^8.4.11",
-    "@deck.gl/layers": "^8.4.11",
-    "@deck.gl/mesh-layers": "^8.4.11",
-    "@deck.gl/react": "^8.4.11",
+    "@deck.gl/aggregation-layers": "8.4.16",
+    "@deck.gl/core": "^8.4.16",
+    "@deck.gl/extensions": "^8.4.16",
+    "@deck.gl/geo-layers": "^8.4.16",
+    "@deck.gl/layers": "^8.4.16",
+    "@deck.gl/mesh-layers": "^8.4.16",
+    "@deck.gl/react": "^8.4.16",
     "@luma.gl/constants": "^8.4.3",
     "@luma.gl/core": "^8.4.3",
     "@mapbox/geo-viewport": "^0.4.1",
@@ -55,7 +55,9 @@
   },
   "typesVersions": {
     "*": {
-      "*": ["dist/*"]
+      "*": [
+        "dist/*"
+      ]
     }
   },
   "nyc": {
