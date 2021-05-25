@@ -34,8 +34,9 @@ const StyledItem = styled.div`
   min-height: ${props => props.theme.actionPanelHeight}px;
   text-transform: capitalize;
   background-color: ${props => props.theme.dropdownListBgd};
-  width: ${props => props.theme.actionPanelWidth}px;
+  max-width: 200px;
   position: relative;
+
   ${props => (props.color ? `border-left: 3px solid rgb(${props.color});` : '')} :hover {
     cursor: pointer;
     color: ${props => props.theme.textColorHl};
@@ -46,6 +47,8 @@ const StyledItem = styled.div`
 
   .label {
     margin-left: 8px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .label-icon {
@@ -53,13 +56,19 @@ const StyledItem = styled.div`
   }
 
   .nested-group {
-    width: 110px;
+    max-width: 200px;
+    overflow: hidden;
     display: none;
     color: ${props => props.theme.textColor};
     position: absolute;
-    left: 110px;
+    left: 100%;
     top: 0px;
     padding-left: 4px;
+
+    label {
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
   }
 `;
 
