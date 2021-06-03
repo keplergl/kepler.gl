@@ -53,9 +53,9 @@ export function PureFeatureActionPanelFactory() {
     const intl = useIntl();
 
     const copyGeometry = useCallback(() => {
-      copy(JSON.stringify(selectedFeature.geometry));
+      if (selectedFeature?.geometry) copy(JSON.stringify(selectedFeature.geometry));
       setCopied(true);
-    }, [selectedFeature.geometry]);
+    }, [selectedFeature?.geometry]);
 
     return (
       <StyledActionsLayer
