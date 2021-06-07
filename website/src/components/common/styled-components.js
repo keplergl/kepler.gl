@@ -18,8 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import React from 'react';
 import styled, {css} from 'styled-components';
 import {media} from '../../styles';
+import {cdnUrl} from '../../utils';
 
 const buttonStyles = css`
   align-items: center;
@@ -128,3 +130,9 @@ export const CenteredContent = styled.div`
   align-items: center;
   justify-content: center;
 `;
+
+export const GithubButton = ({href, style}) => (
+  <LinkButton large outlineDark href={href} style={style}>
+    <img src={cdnUrl('icons/github.svg')} /> Github
+  </LinkButton>
+);
