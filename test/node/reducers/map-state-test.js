@@ -85,7 +85,7 @@ test('#mapStateReducer -> TOGGLE_PERSPECTIVE', t => {
   t.end();
 });
 
-test.only('#mapStateReducer -> FIT_BOUNDS', t => {
+test('#mapStateReducer -> FIT_BOUNDS', t => {
   // default input and output in @mapbox/geo-viewport
   // https://github.com/mapbox/geo-viewport
 
