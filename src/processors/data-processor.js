@@ -180,7 +180,10 @@ export function getSampleForTypeAnalyze({fields, allData, sampleCount = 50}) {
         sample[j][field] = null;
         j++;
       } else if (notNullorUndefined(allData[i][fieldIdx])) {
-        sample[j][field] = allData[i][fieldIdx];
+        sample[j][field] =
+          typeof allData[i][fieldIdx] === 'string'
+            ? allData[i][fieldIdx].trim()
+            : allData[i][fieldIdx];
         j++;
         i++;
       } else {
