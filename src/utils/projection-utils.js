@@ -53,8 +53,8 @@ export function getCenterAndZoomFromBounds(bounds, {width, height}) {
     return null;
   }
 
-  const {zoom} = geoViewport.viewport(bounds, [width, height]);
-
+  // viewport(bounds, dimensions, minzoom, maxzoom, tileSize, allowFloat)
+  const {zoom} = geoViewport.viewport(bounds, [width, height], undefined, undefined, 512);
   // center being calculated by geo-vieweport.viewport has a complex logic that
   // projects and then unprojects the coordinates to determine the center
   // Calculating a simple average instead as that is the expected behavior in most of cases
