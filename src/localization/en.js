@@ -221,13 +221,18 @@ export default {
     exportMap: 'Export Map',
     shareMapURL: 'Share Map URL',
     saveMap: 'Save Map',
-    select: 'select',
-    polygon: 'polygon',
-    rectangle: 'rectangle',
-    hide: 'hide',
-    show: 'show',
+    select: 'Select',
+    polygon: 'Polygon',
+    rectangle: 'Rectangle',
+    hide: 'Hide',
+    show: 'Show',
     ...LOCALES
   },
+  editor: {
+    filterLayer: 'Filter Layers',
+    copyGeometry: 'Copy Geometry'
+  },
+
   modal: {
     title: {
       deleteDataset: 'Delete Dataset',

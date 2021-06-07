@@ -20,9 +20,9 @@
 
 import React from 'react';
 import test from 'tape';
-import {shallow} from 'enzyme';
 import sinon from 'sinon';
 import {PureFeatureActionPanelFactory} from 'components/editor/feature-action-panel';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 const FeatureActionPanel = PureFeatureActionPanelFactory();
 
@@ -51,17 +51,34 @@ test('FeatureActionPanel -> display layers', t => {
   const onToggleLayer = sinon.spy();
   const onDeleteFeature = sinon.spy();
 
-  const $ = shallow(
-    <FeatureActionPanel
-      className="action-item-test"
-      layers={layers}
-      datasets={datasets}
-      onToggleLayer={onToggleLayer}
-      onDeleteFeature={onDeleteFeature}
-    />
-  );
+  let wrapper;
 
-  t.equal($.find('.layer-panel-item').length, 2, 'We should display only 2 action panel items');
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <FeatureActionPanel
+          className="action-item-test"
+          layers={layers}
+          datasets={datasets}
+          onToggleLayer={onToggleLayer}
+          onDeleteFeature={onDeleteFeature}
+        />
+      </IntlWrapper>
+    );
+  }, 'FeatureActionPanel should not fail mount');
+
+  t.equal(wrapper.find('Checkbox').length, 2, 'We should display only 2 layer checkbox');
+  for (let i = 0; i < wrapper.find('Checkbox').length; i++) {
+    t.equal(
+      wrapper
+        .find('Checkbox')
+        .at(i)
+        .find('label')
+        .text(),
+      `layer ${i + 1}`,
+      'should render correct layer label'
+    );
+  }
 
   t.end();
 });

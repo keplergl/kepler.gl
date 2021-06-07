@@ -18,13 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {PureComponent} from 'react';
+import React, {useCallback, useState} from 'react';
+import {useIntl} from 'react-intl';
+
 import ActionPanel, {ActionPanelItem} from 'components/common/action-panel';
 import styled from 'styled-components';
 import onClickOutside from 'react-onclickoutside';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import {Trash, Layers} from 'components/common/icons';
+import {Trash, Layers, Copy, Checkmark} from 'components/common/icons';
+import copy from 'copy-to-clipboard';
 
 const LAYOVER_OFFSET = 4;
 
@@ -35,76 +38,83 @@ const StyledActionsLayer = styled.div`
 PureFeatureActionPanelFactory.deps = [];
 
 export function PureFeatureActionPanelFactory() {
-  class FeatureActionPanel extends PureComponent {
-    static propTypes = {
-      className: PropTypes.string,
-      datasets: PropTypes.object.isRequired,
-      position: PropTypes.object.isRequired,
-      layers: PropTypes.arrayOf(PropTypes.object).isRequired,
-      currentFilter: PropTypes.object,
-      onClose: PropTypes.func.isRequired,
-      onDeleteFeature: PropTypes.func.isRequired
-    };
+  const FeatureActionPanel = ({
+    className,
+    datasets,
+    selectedFeature,
+    position,
+    layers,
+    currentFilter,
+    onToggleLayer,
+    onDeleteFeature
+  }) => {
+    const [copied, setCopied] = useState(false);
+    const {layerId = []} = currentFilter || {};
+    const intl = useIntl();
 
-    static defaultProps = {
-      position: {}
-    };
+    const copyGeometry = useCallback(() => {
+      if (selectedFeature?.geometry) copy(JSON.stringify(selectedFeature.geometry));
+      setCopied(true);
+    }, [selectedFeature?.geometry]);
 
-    // Used by onClickOutside
-    handleClickOutside = e => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.props.onClose();
-    };
+    return (
+      <StyledActionsLayer
+        className={classnames('feature-action-panel', className)}
+        style={{
+          top: `${position.y + LAYOVER_OFFSET}px`,
+          left: `${position.x + LAYOVER_OFFSET}px`
+        }}
+      >
+        <ActionPanel>
+          <ActionPanelItem
+            className="editor-layers-list"
+            label={intl.formatMessage({id: 'editor.filterLayer', defaultMessage: 'Filter layers'})}
+            Icon={Layers}
+          >
+            {layers.map((layer, index) => (
+              <ActionPanelItem
+                key={index}
+                label={layer.config.label}
+                color={datasets[layer.config.dataId].color}
+                isSelection={true}
+                isActive={layerId.includes(layer.id)}
+                onClick={() => onToggleLayer(layer)}
+                className="layer-panel-item"
+              />
+            ))}
+          </ActionPanelItem>
+          <ActionPanelItem
+            label={intl.formatMessage({id: 'editor.copyGeometry', defaultMessage: 'Copy Geometry'})}
+            className="delete-panel-item"
+            Icon={copied ? Checkmark : Copy}
+            onClick={copyGeometry}
+          />
 
-    render() {
-      const {
-        className,
-        datasets,
-        position,
-        layers,
-        currentFilter,
-        onToggleLayer,
-        onDeleteFeature
-      } = this.props;
-
-      const {layerId = []} = currentFilter || {};
-
-      return (
-        <StyledActionsLayer
-          className={classnames('feature-action-panel', className)}
-          style={{
-            top: `${position.y + LAYOVER_OFFSET}px`,
-            left: `${position.x + LAYOVER_OFFSET}px`
-          }}
-        >
-          <ActionPanel>
-            <ActionPanelItem className="editor-layers-list" label="layers" Icon={Layers}>
-              {layers.map((layer, index) => (
-                <ActionPanelItem
-                  key={index}
-                  label={layer.config.label}
-                  color={datasets[layer.config.dataId].color}
-                  isSelection={true}
-                  isActive={layerId.includes(layer.id)}
-                  onClick={() => onToggleLayer(layer)}
-                  className="layer-panel-item"
-                />
-              ))}
-            </ActionPanelItem>
-            <ActionPanelItem
-              label="delete"
-              className="delete-panel-item"
-              Icon={Trash}
-              onClick={onDeleteFeature}
-            />
-          </ActionPanel>
-        </StyledActionsLayer>
-      );
-    }
-  }
+          <ActionPanelItem
+            label={intl.formatMessage({id: 'tooltip.delete', defaultMessage: 'Delete'})}
+            className="delete-panel-item"
+            Icon={Trash}
+            onClick={onDeleteFeature}
+          />
+        </ActionPanel>
+      </StyledActionsLayer>
+    );
+  };
 
   FeatureActionPanel.displayName = 'FeatureActionPanel';
+  FeatureActionPanel.propTypes = {
+    className: PropTypes.string,
+    datasets: PropTypes.object.isRequired,
+    position: PropTypes.object.isRequired,
+    layers: PropTypes.arrayOf(PropTypes.object).isRequired,
+    currentFilter: PropTypes.object,
+    onClose: PropTypes.func.isRequired,
+    onDeleteFeature: PropTypes.func.isRequired
+  };
+
+  FeatureActionPanel.defaultProps = {
+    position: {}
+  };
 
   return FeatureActionPanel;
 }
@@ -112,5 +122,22 @@ export function PureFeatureActionPanelFactory() {
 FeatureActionPanelFactory.deps = PureFeatureActionPanelFactory.deps;
 
 export default function FeatureActionPanelFactory() {
-  return onClickOutside(PureFeatureActionPanelFactory());
+  const PureFeatureActionPanel = PureFeatureActionPanelFactory();
+
+  const ClickOutsideFeatureActionPanel = props => {
+    // @ts-ignore
+    ClickOutsideFeatureActionPanel.handleClickOutside = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      props.onClose?.();
+    };
+    return <PureFeatureActionPanel {...props} />;
+  };
+
+  const clickOutsideConfig = {
+    // @ts-ignore
+    handleClickOutside: () => ClickOutsideFeatureActionPanel.handleClickOutside
+  };
+
+  return onClickOutside(ClickOutsideFeatureActionPanel, clickOutsideConfig);
 }

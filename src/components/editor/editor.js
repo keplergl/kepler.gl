@@ -197,6 +197,7 @@ export default function EditorFactory(FeatureActionPanel) {
           />
           {showActions && Boolean(selectedFeatureId) ? (
             <FeatureActionPanel
+              selectedFeature={get(editor, ['selectedFeature'])}
               datasets={datasets}
               layers={availableLayers}
               currentFilter={currentFilter}
