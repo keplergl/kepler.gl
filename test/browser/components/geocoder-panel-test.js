@@ -193,7 +193,7 @@ test('GeocoderPanel - render', t => {
 
   t.deepEqual(
     {latitude: newVP.latitude, longitude: newVP.longitude, zoom: newVP.zoom},
-    {latitude: 57.5, longitude: 1.5, zoom: 5},
+    {latitude: 57.5, longitude: 1.5, zoom: 4},
     'Should call updateMap action on onSelected w/ new viewport'
   );
 
@@ -204,7 +204,7 @@ test('GeocoderPanel - render', t => {
   const newVP2 = updateMap.args[1][0];
   t.deepEqual(
     {latitude: newVP2.latitude, longitude: newVP2.longitude, zoom: newVP2.zoom},
-    {latitude: 55, longitude: 1, zoom: 12},
+    {latitude: 55, longitude: 1, zoom: 11},
     'Should call updateMapaction on onSelected w/o bbox'
   );
 
