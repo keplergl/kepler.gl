@@ -21,6 +21,8 @@
 import geoViewport from '@mapbox/geo-viewport';
 import Console from 'global/console';
 
+const MAPBOX_TILE_SIZE = 512;
+
 function isLat(num) {
   return Number.isFinite(num) && num <= 90 && num >= -90;
 }
@@ -54,7 +56,13 @@ export function getCenterAndZoomFromBounds(bounds, {width, height}) {
   }
 
   // viewport(bounds, dimensions, minzoom, maxzoom, tileSize, allowFloat)
-  const {zoom} = geoViewport.viewport(bounds, [width, height], undefined, undefined, 512);
+  const {zoom} = geoViewport.viewport(
+    bounds,
+    [width, height],
+    undefined,
+    undefined,
+    MAPBOX_TILE_SIZE
+  );
   // center being calculated by geo-vieweport.viewport has a complex logic that
   // projects and then unprojects the coordinates to determine the center
   // Calculating a simple average instead as that is the expected behavior in most of cases
