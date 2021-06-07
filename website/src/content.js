@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {cdnUrl} from './utils';
+import {cdnUrl, unfoldedCdnUrl} from './utils';
 
 export const SECTIONS = [
   {
@@ -44,7 +44,7 @@ export const SECTIONS = [
     id: 'ecosystems',
     title: 'Ecosystem',
     description: 'A collection of kepler.gl plugins built for common data analytics tools',
-    icon: 'https://cdn.unfolded.ai/statics/keplergl/images/ecosystem.png',
+    icon: unfoldedCdnUrl('ecosystem.png'),
     isDark: true
   },
   {
@@ -185,21 +185,26 @@ export const ECOSYSTEM = [
     title: 'Jupyter',
     description:
       'Built with Deck.gl, Kepler.gl utilizes WebGL to render large datasets quickly and efficiently.',
-    image: cdnUrl('features/performance.svg')
+    image: unfoldedCdnUrl('ecosystem-jupyter.png'),
+    githubUrl: 'https://github.com/keplergl/kepler.gl/tree/master/bindings/kepler.gl-jupyter'
   },
   {
     title: 'Tableau',
     description:
       'You can easily drag and drop a dataset, add filters, apply scales, and do aggregation on the fly.',
-    image: cdnUrl('features/interaction.svg')
+    image: unfoldedCdnUrl('ecosystem-tableau.png'),
+    githubUrl: 'https://github.com/keplergl/kepler.gl-tableau'
   },
   {
     title: 'Visual Studio Code',
     description:
       'Built on React & Redux, Kepler.gl can be embedded inside your own mapping applications.',
-    image: cdnUrl('features/embeddable.svg')
+    image: unfoldedCdnUrl('ecosystem-vscode.png'),
+    githubUrl:
+      'https://marketplace.visualstudio.com/items?itemName=RandomFractalsInc.geo-data-viewer'
   }
 ];
+
 export const EXAMPLES = [
   {
     title: 'California Earthquakes',

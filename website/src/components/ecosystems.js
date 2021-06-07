@@ -21,11 +21,10 @@
 import React, {PureComponent} from 'react';
 import styled from 'styled-components';
 
-import {cdnUrl} from '../utils';
 import {ECOSYSTEM} from '../content';
 import {media} from '../styles';
 import StaggeredScrollAnimation from './common/staggered-scroll-animation';
-import {LinkButton, CenteredContent} from './common/styled-components';
+import {GithubButton} from './common/styled-components';
 
 const FeaturesContainer = styled.div`
   display: flex;
@@ -55,19 +54,16 @@ const FeatureImage = styled.img`
 
 const FeatureTitle = styled.div`
   font-size: 20px;
-  font-weight: 500;
+  font-weight: 400;
   margin-bottom: ${props => props.theme.margins.small};
+  margin-top: ${props => props.theme.margins.small};
 `;
 
-const FeatureDescription = styled.div`
-  font-size: 16px;
-  color: #535353;
-`;
-
-const Feature = ({title, description, image}) => (
+const Feature = ({title, image, githubUrl}) => (
   <FeatureContainer>
     <FeatureImage src={image} />
     <FeatureTitle>{title}</FeatureTitle>
+    <GithubButton href={githubUrl} style={{marginTop: '2rem'}} />
   </FeatureContainer>
 );
 
@@ -76,8 +72,14 @@ class Ecosystems extends PureComponent {
     return (
       <div>
         <StaggeredScrollAnimation Container={FeaturesContainer}>
-          {ECOSYSTEM.map(({title, description, image}, i) => (
-            <Feature key={`feature-${i}`} title={title} description={description} image={image} />
+          {ECOSYSTEM.map(({title, description, image, githubUrl}, i) => (
+            <Feature
+              key={`feature-${i}`}
+              title={title}
+              description={description}
+              image={image}
+              githubUrl={githubUrl}
+            />
           ))}
         </StaggeredScrollAnimation>
       </div>

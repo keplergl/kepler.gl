@@ -26,7 +26,7 @@ import {cdnUrl} from '../utils';
 import {media, breakPoints} from '../styles';
 import {HERO_IMAGES, HERO_IMAGES_SCALED} from '../content';
 import SlideShow from './common/slideshow';
-import {LinkButton} from './common/styled-components';
+import {LinkButton, GithubButton} from './common/styled-components';
 import {DEMO_LINK} from '../constants';
 
 import {Container, Content, HeroImage, LogoImage, StyledCaption} from './common/styles';
@@ -111,14 +111,10 @@ export default class Hero extends PureComponent {
               <LinkButton large href={DEMO_LINK}>
                 Get Started
               </LinkButton>
-              <LinkButton
-                large
-                outlineDark
+              <GithubButton
                 href="https://github.com/keplergl/kepler.gl"
                 style={{marginLeft: '5px'}}
-              >
-                <img src={cdnUrl('icons/github.svg')} /> Github
-              </LinkButton>
+              />
             </ButtonContainer>
           </StyledCaption>
           <FadeIn>
