@@ -98,7 +98,7 @@ test('#mapStateReducer -> FIT_BOUNDS', t => {
 
   const expected = {
     center: [5.7604079999999955, 45.189756500000016],
-    zoom: 11
+    zoom: 10
   };
 
   const stateWidthMapDimension = reducer(undefined, updateMap(mapUpdate));
