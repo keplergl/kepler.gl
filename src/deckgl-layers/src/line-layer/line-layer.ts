@@ -58,18 +58,22 @@ function addElevationScale(vs) {
     elevationVs,
     'line elevation scale 2 vs - multiply by elevation scale',
     `geometry.worldPosition = instanceSourcePositions;
-  geometry.worldPositionAlt = instanceTargetPositions;
-
-  vec3 source_world = instanceSourcePositions;
-  vec3 target_world = instanceTargetPositions;`,
+  geometry.worldPositionAlt = instanceTargetPositions;`,
     `vec3 source_world = instanceSourcePositions;
-    vec3 target_world = instanceTargetPositions;
-    source_world.z *= elevationScale;
-    target_world.z *= elevationScale;
-  
-    geometry.worldPosition = source_world;
-    geometry.worldPositionAlt = target_world;
-  `
+     vec3 target_world = instanceTargetPositions;
+     source_world.z *= elevationScale;
+     target_world.z *= elevationScale;
+     
+     geometry.worldPosition = source_world;
+     geometry.worldPositionAlt = target_world;`
+  );
+
+  elevationVs = editShader(
+    elevationVs,
+    'line elevation scale 3 vs',
+    `vec3 source_world = instanceSourcePositions;
+  vec3 target_world = instanceTargetPositions;`,
+    ''
   );
 
   return elevationVs;
