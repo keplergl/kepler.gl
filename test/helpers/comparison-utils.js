@@ -43,7 +43,7 @@ export function cmpFilters(t, expectedFilter, actualFilter, opt = {}, idx = '', 
       `${name} should have same number of filters`
     );
     expectedFilter.forEach((f, i) => {
-      cmpFilters(t, expectedFilter[i], actualFilter[i], opt, i, name);
+      cmpFilters(t, expectedFilter[i], actualFilter[i], opt, String(i), name);
     });
   } else {
     cmpObjectKeys(
@@ -163,7 +163,7 @@ export function cmpSavedLayers(t, expectedLayer, actualLayer, opt = {}, idx = ''
   if (Array.isArray(expectedLayer) && Array.isArray(actualLayer)) {
     t.equal(actualLayer.length, expectedLayer.length, 'should have same number of layers');
     expectedLayer.forEach((_, i) => {
-      cmpSavedLayers(t, expectedLayer[i], actualLayer[i], opt, i);
+      cmpSavedLayers(t, expectedLayer[i], actualLayer[i], opt, String(i));
     });
   } else {
     cmpObjectKeys(t, expectedLayer, actualLayer, `idx:${idx} | layer.${actualLayer.type}`);
@@ -332,7 +332,7 @@ export function cmpInteraction(t, expectedInt, actualInt) {
   });
 }
 
-export function cmpParsedAppConfigs(t, expectedConfig, actualConfig, {name} = {}) {
+export function cmpParsedAppConfigs(t, expectedConfig, actualConfig, {name = ''} = {}) {
   t.deepEqual(actualConfig, expectedConfig, `${name} should be expected`);
 
   Object.keys(actualConfig).forEach(key => {

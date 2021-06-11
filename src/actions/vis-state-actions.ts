@@ -572,7 +572,7 @@ export type AddDataToMapUpdaterOptions = {
 export type UpdateVisDataUpdaterAction = {
   datasets: AddDataToMapPayload['datasets'];
   options: AddDataToMapPayload['options'];
-  config: AddDataToMapPayload['config'];
+  config?: AddDataToMapPayload['config'];
 } & AddDataToMapPayload;
 // * @param dataset.info -info of a dataset
 // * @param dataset.info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
@@ -598,7 +598,7 @@ export type UpdateVisDataUpdaterAction = {
 export function updateVisData(
   datasets: AddDataToMapPayload['datasets'],
   options: AddDataToMapPayload['options'],
-  config: AddDataToMapPayload['config']
+  config?: AddDataToMapPayload['config']
 ): Merge<UpdateVisDataUpdaterAction, {type: typeof ActionTypes.UPDATE_VIS_DATA}> {
   return {
     type: ActionTypes.UPDATE_VIS_DATA,

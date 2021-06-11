@@ -317,6 +317,7 @@
     "@deck.gl/mesh-layers": "^8.4.16",
     "@deck.gl/react": "^8.4.16",
     "@deck.gl/test-utils": "^8.4.16",
+    "d3-array": "^2.8.0",
     "d3-scale": "^3.2.3",
     "dot-prop": "6.0.0",
     "kind-of": "6.0.3",

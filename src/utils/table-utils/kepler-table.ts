@@ -175,15 +175,7 @@ class KeplerTable {
       fieldIdx: i,
       id: f.name,
       displayName: f.displayName || f.name,
-      // @ts-expect-error
-      valueAccessor: maybeToDate.bind(
-        null,
-        // is time
-        f.type === ALL_FIELD_TYPES.timestamp,
-        i,
-        f.format,
-        dataContainer
-      )
+      valueAccessor: getFieldValueAccessor(f, i, dataContainer)
     }));
 
     const allIndexes = dataContainer.getPlainIndex();
@@ -596,7 +588,7 @@ export function pinTableColumns(dataset: KeplerTable, column: string): KeplerTab
   // @ts-ignore
   return copyTableAndUpdate(dataset, {pinnedColumns});
 }
-export function copyTable<T extends {}>(original: T): T {
+export function copyTable<T extends KeplerTable>(original: T): T {
   return Object.assign(Object.create(Object.getPrototypeOf(original)), original);
 }
 
@@ -604,11 +596,30 @@ export function copyTable<T extends {}>(original: T): T {
  * @type
  * @returns
  */
-export function copyTableAndUpdate<T extends {}>(original: T, options: Partial<T> = {}): T {
+export function copyTableAndUpdate<T extends KeplerTable>(
+  original: T,
+  options: Partial<T> = {}
+): T {
   return Object.entries(options).reduce((acc, entry) => {
     acc[entry[0]] = entry[1];
     return acc;
   }, copyTable(original));
+}
+
+export function getFieldValueAccessor<
+  F extends {
+    type?: Field['type'];
+    format?: Field['format'];
+  }
+>(f: F, i: number, dc: DataContainerInterface) {
+  return maybeToDate.bind(
+    null,
+    // is time
+    f.type === ALL_FIELD_TYPES.timestamp,
+    i,
+    f.format || '',
+    dc
+  );
 }
 
 export default KeplerTable;

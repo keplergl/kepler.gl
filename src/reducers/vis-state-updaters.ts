@@ -149,7 +149,7 @@ export type LineChart = {
   xDomain: [number, number];
 };
 
-export type FilterBase = {
+export type FilterBase<L extends LineChart> = {
   dataId: string[];
   id: string;
 
@@ -173,7 +173,7 @@ export type FilterBase = {
   // plot
   yAxis: Field | null;
   plotType: string;
-  lineChart?: LineChart;
+  lineChart?: L;
   // gpu filter
   gpu: boolean;
   gpuChannel?: number[];
@@ -183,7 +183,7 @@ export type FilterBase = {
   layerId?: string[];
 };
 
-export type RangeFilter = FilterBase &
+export type RangeFilter = FilterBase<LineChart> &
   RangeFieldDomain & {
     type: 'range';
     fieldType: 'real' | 'integer';
@@ -192,20 +192,20 @@ export type RangeFilter = FilterBase &
     typeOptions: ['range'];
   };
 
-export type SelectFilter = FilterBase &
+export type SelectFilter = FilterBase<LineChart> &
   SelectFieldDomain & {
     type: 'select';
     fieldType: 'boolean';
     value: boolean;
   };
 
-export type MultiSelectFilter = FilterBase &
+export type MultiSelectFilter = FilterBase<LineChart> &
   MultiSelectFieldDomain & {
     type: 'range';
     fieldType: 'string' | 'date';
     value: string[];
   };
-export type TimeRangeFilter = FilterBase &
+export type TimeRangeFilter = FilterBase<LineChart> &
   TimeRangeFieldDomain & {
     type: 'timeRange';
     fieldType: 'timestamp';
@@ -218,7 +218,7 @@ export type TimeRangeFilter = FilterBase &
     animationWindow: string;
   };
 
-export type PolygonFilter = FilterBase & {
+export type PolygonFilter = FilterBase<LineChart> & {
   layerId: string[];
   type: 'polygon';
   fixedDomain: true;
@@ -226,7 +226,7 @@ export type PolygonFilter = FilterBase & {
 };
 
 export type Filter =
-  | FilterBase
+  | FilterBase<LineChart>
   | RangeFilter
   | TimeRangeFilter
   | SelectFilter
@@ -503,10 +503,10 @@ export const INITIAL_VIS_STATE: VisState = {
  * Update state with updated layer and layerData
  *
  */
-export function updateStateWithLayerAndData(
-  state: VisState,
+export function updateStateWithLayerAndData<S extends VisState>(
+  state: S,
   {layerData, layer, idx}: {layerData?: any; layer: Layer; idx: number}
-): VisState {
+): S {
   return {
     ...state,
     layers: state.layers.map((lyr, i) => (i === idx ? layer : lyr)),
@@ -516,7 +516,7 @@ export function updateStateWithLayerAndData(
   };
 }
 
-export function updateStateOnLayerVisibilityChange(state: VisState, layer: Layer): VisState {
+export function updateStateOnLayerVisibilityChange<S extends VisState>(state: S, layer: Layer): S {
   let newState = state;
   if (state.splitMaps.length) {
     newState = {
@@ -539,10 +539,10 @@ export function updateStateOnLayerVisibilityChange(state: VisState, layer: Layer
  * @memberof visStateUpdaters
  * @returns nextState
  */
-export function layerConfigChangeUpdater(
-  state: VisState,
+export function layerConfigChangeUpdater<S extends VisState>(
+  state: S,
   action: VisStateActions.LayerConfigChangeUpdaterAction
-): VisState {
+): S {
   const {oldLayer} = action;
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const props = Object.keys(action.newConfig);
@@ -629,10 +629,10 @@ function updateTextLabelPropAndValue(idx, prop, value, textLabel) {
  * @memberof visStateUpdaters
  * @returns nextState
  */
-export function layerTextLabelChangeUpdater(
-  state: VisState,
+export function layerTextLabelChangeUpdater<S extends VisState>(
+  state: S,
   action: VisStateActions.LayerTextLabelChangeUpdaterAction
-): VisState {
+): S {
   const {oldLayer, idx, prop, value} = action;
   const {textLabel} = oldLayer.config;
 
@@ -666,15 +666,15 @@ function validateExistingLayerWithData(dataset, layerClasses, layer) {
  * @memberof visStateUpdaters
  * @returns nextState
  */
-export function layerDataIdChangeUpdater(
-  state: VisState,
+export function layerDataIdChangeUpdater<S extends VisState>(
+  state: S,
   action: {
     oldLayer: Layer;
     newConfig: {
       dataId: string;
     };
   }
-): VisState {
+): S {
   const {oldLayer, newConfig} = action;
   const {dataId} = newConfig;
 
@@ -755,10 +755,10 @@ function setInitialLayerConfig(layer, datasets, layerClasses) {
  * @memberof visStateUpdaters
  * @public
  */
-export function layerTypeChangeUpdater(
-  state: VisState,
+export function layerTypeChangeUpdater<S extends VisState>(
+  state: S,
   action: VisStateActions.LayerTypeChangeUpdaterAction
-): VisState {
+): S {
   const {oldLayer, newType} = action;
   if (!oldLayer) {
     return state;
@@ -820,10 +820,10 @@ export function layerTypeChangeUpdater(
  * @returns {Object} nextState
  * @public
  */
-export function layerVisualChannelChangeUpdater(
-  state: VisState,
+export function layerVisualChannelChangeUpdater<S extends VisState>(
+  state: S,
   action: VisStateActions.LayerVisualChannelConfigChangeUpdaterAction
-): VisState {
+): S {
   const {oldLayer, newConfig, channel} = action;
   if (!oldLayer.config.dataId) {
     return state;
@@ -846,10 +846,10 @@ export function layerVisualChannelChangeUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export function layerVisConfigChangeUpdater(
-  state: VisState,
+export function layerVisConfigChangeUpdater<S extends VisState>(
+  state: S,
   action: VisStateActions.LayerVisConfigChangeUpdaterAction
-): VisState {
+): S {
   const {oldLayer} = action;
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const props = Object.keys(action.newVisConfig);
@@ -874,10 +874,10 @@ export function layerVisConfigChangeUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export function setFilterAnimationTimeUpdater(
-  state: VisState,
+export function setFilterAnimationTimeUpdater<S extends VisState>(
+  state: S,
   action: VisStateActions.SetFilterAnimationTimeUpdaterAction
-): VisState {
+): S {
   return setFilterUpdater(state, action);
 }
 
@@ -886,10 +886,10 @@ export function setFilterAnimationTimeUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export function setFilterAnimationWindowUpdater(
-  state: VisState,
+export function setFilterAnimationWindowUpdater<S extends VisState>(
+  state: S,
   {id, animationWindow}: VisStateActions.SetFilterAnimationWindowUpdaterAction
-): VisState {
+): S {
   return {
     ...state,
     filters: state.filters.map(f =>
@@ -907,10 +907,10 @@ export function setFilterAnimationWindowUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export function setFilterUpdater(
-  state: VisState,
+export function setFilterUpdater<S extends VisState>(
+  state: S,
   action: VisStateActions.SetFilterUpdaterAction
-): VisState {
+): S {
   const {idx, prop, value, valueIndex = 0} = action;
   const oldFilter = state.filters[idx];
 
@@ -1043,10 +1043,10 @@ export function setFilterUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export const setFilterPlotUpdater = (
-  state: VisState,
+export const setFilterPlotUpdater = <S extends VisState>(
+  state: S,
   {idx, newProp, valueIndex = 0}: VisStateActions.SetFilterPlotUpdaterAction
-): VisState => {
+): S => {
   let newFilter = {...state.filters[idx], ...newProp};
   const prop = Object.keys(newProp)[0];
   if (prop === 'yAxis') {
@@ -1072,10 +1072,10 @@ export const setFilterPlotUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const addFilterUpdater = (
-  state: VisState,
+export const addFilterUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.AddFilterUpdaterAction
-): VisState =>
+): S =>
   !action.dataId
     ? state
     : {
@@ -1087,10 +1087,10 @@ export const addFilterUpdater = (
  * Set layer color palette ui state
  * @memberof visStateUpdaters
  */
-export const layerColorUIChangeUpdater = (
-  state: VisState,
+export const layerColorUIChangeUpdater = <S extends VisState>(
+  state: S,
   {oldLayer, prop, newConfig}: VisStateActions.LayerColorUIChangeUpdaterAction
-): VisState => {
+): S => {
   const oldVixConfig = oldLayer.config.visConfig[prop];
   const newLayer = oldLayer.updateLayerColorUI(prop, newConfig);
   const newVisConfig = newLayer.config.visConfig[prop];
@@ -1113,10 +1113,10 @@ export const layerColorUIChangeUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const toggleFilterAnimationUpdater = (
-  state: VisState,
+export const toggleFilterAnimationUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.ToggleFilterAnimationUpdaterAction
-): VisState => ({
+): S => ({
   ...state,
   filters: state.filters.map((f, i) => (i === action.idx ? {...f, isAnimating: !f.isAnimating} : f))
 });
@@ -1125,10 +1125,10 @@ export const toggleFilterAnimationUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const toggleLayerAnimationUpdater = (
-  state: VisState,
+export const toggleLayerAnimationUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.ToggleLayerAnimationUpdaterAction
-): VisState => ({
+): S => ({
   ...state,
   animationConfig: {
     ...state.animationConfig,
@@ -1141,10 +1141,10 @@ export const toggleLayerAnimationUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const toggleLayerAnimationControlUpdater = (
-  state: VisState,
+export const toggleLayerAnimationControlUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.ToggleLayerAnimationControlUpdaterAction
-): VisState => ({
+): S => ({
   ...state,
   animationConfig: {
     ...state.animationConfig,
@@ -1157,10 +1157,10 @@ export const toggleLayerAnimationControlUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const updateFilterAnimationSpeedUpdater = (
-  state: VisState,
+export const updateFilterAnimationSpeedUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.UpdateFilterAnimationSpeedUpdaterAction
-): VisState => ({
+): S => ({
   ...state,
   filters: state.filters.map((f, i) => (i === action.idx ? {...f, speed: action.speed} : f))
 });
@@ -1171,10 +1171,10 @@ export const updateFilterAnimationSpeedUpdater = (
  * @public
  *
  */
-export const setLayerAnimationTimeUpdater = (
-  state: VisState,
+export const setLayerAnimationTimeUpdater = <S extends VisState>(
+  state: S,
   {value}: VisStateActions.SetLayerAnimationTimeUpdaterAction
-): VisState => ({
+): S => ({
   ...state,
   animationConfig: {
     ...state.animationConfig,
@@ -1188,10 +1188,10 @@ export const setLayerAnimationTimeUpdater = (
  * @public
  *
  */
-export const updateLayerAnimationSpeedUpdater = (
-  state: VisState,
+export const updateLayerAnimationSpeedUpdater = <S extends VisState>(
+  state: S,
   {speed}: VisStateActions.UpdateLayerAnimationSpeedUpdaterAction
-): VisState => {
+): S => {
   return {
     ...state,
     animationConfig: {
@@ -1206,10 +1206,10 @@ export const updateLayerAnimationSpeedUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const enlargeFilterUpdater = (
-  state: VisState,
+export const enlargeFilterUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.EnlargeFilterUpdaterAction
-): VisState => {
+): S => {
   return {
     ...state,
     filters: state.filters.map((f, i) =>
@@ -1227,10 +1227,10 @@ export const enlargeFilterUpdater = (
  * Toggles filter feature visibility
  * @memberof visStateUpdaters
  */
-export const toggleFilterFeatureUpdater = (
-  state: VisState,
+export const toggleFilterFeatureUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.ToggleFilterFeatureUpdaterAction
-): VisState => {
+): S => {
   const filter = state.filters[action.idx];
   const isVisible = get(filter, ['value', 'properties', 'isVisible']);
   const newFilter = {
@@ -1251,10 +1251,10 @@ export const toggleFilterFeatureUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const removeFilterUpdater = (
-  state: VisState,
+export const removeFilterUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.RemoveFilterUpdaterAction
-): VisState => {
+): S => {
   const {idx} = action;
   const {dataId, id} = state.filters[idx];
 
@@ -1284,10 +1284,10 @@ export const removeFilterUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const addLayerUpdater = (
-  state: VisState,
+export const addLayerUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.AddLayerUpdaterAction
-): VisState => {
+): S => {
   let newLayer;
   let newLayerData;
   if (action.config) {
@@ -1327,10 +1327,10 @@ export const addLayerUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const removeLayerUpdater = (
-  state: VisState,
+export const removeLayerUpdater = <S extends VisState>(
+  state: S,
   {idx}: VisStateActions.RemoveLayerUpdaterAction
-): VisState => {
+): S => {
   const {layers, layerData, clicked, hoverInfo} = state;
   const layerToRemove = state.layers[idx];
   const newMaps = removeLayerFromSplitMaps(state.splitMaps, layerToRemove);
@@ -1354,10 +1354,10 @@ export const removeLayerUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const duplicateLayerUpdater = (
-  state: VisState,
+export const duplicateLayerUpdater = <S extends VisState>(
+  state: S,
   {idx}: VisStateActions.DuplicateLayerUpdaterAction
-): VisState => {
+): S => {
   const {layers} = state;
   const original = state.layers[idx];
   const originalLayerOrderIdx = state.layerOrder.findIndex(i => i === idx);
@@ -1407,10 +1407,10 @@ export const duplicateLayerUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const reorderLayerUpdater = (
-  state: VisState,
+export const reorderLayerUpdater = <S extends VisState>(
+  state: S,
   {order}: VisStateActions.ReorderLayerUpdaterAction
-): VisState => ({
+): S => ({
   ...state,
   layerOrder: order
 });
@@ -1420,10 +1420,10 @@ export const reorderLayerUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const removeDatasetUpdater = (
-  state: VisState,
+export const removeDatasetUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.RemoveDatasetUpdaterAction
-): VisState => {
+): S => {
   // extract dataset key
   const {dataId: datasetKey} = action;
   const {datasets} = state;
@@ -1484,10 +1484,10 @@ export const removeDatasetUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const updateLayerBlendingUpdater = (
-  state: VisState,
+export const updateLayerBlendingUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.UpdateLayerBlendingUpdaterAction
-): VisState => ({
+): S => ({
   ...state,
   layerBlending: action.mode
 });
@@ -1497,10 +1497,10 @@ export const updateLayerBlendingUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const showDatasetTableUpdater = (
-  state: VisState,
+export const showDatasetTableUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.ShowDatasetTableUpdaterAction
-): VisState => {
+): S => {
   return {
     ...state,
     editingDataset: action.dataId
@@ -1539,26 +1539,27 @@ export const updateTableColorUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const resetMapConfigUpdater = (state: VisState): VisState => ({
-  ...INITIAL_VIS_STATE,
-  ...state.initialState,
-  initialState: state.initialState
-});
+export const resetMapConfigUpdater = <S extends VisState>(state: S): S =>
+  ({
+    ...INITIAL_VIS_STATE,
+    ...state.initialState,
+    initialState: state.initialState
+  } as S);
 
 /**
  * Propagate `visState` reducer with a new configuration. Current config will be override.
  * @memberof visStateUpdaters
  * @public
  */
-export const receiveMapConfigUpdater = (
-  state: VisState,
+export const receiveMapConfigUpdater = <S extends VisState>(
+  state: S,
   {
     payload: {config = {version: ''}, options = {}}
   }: {
     type?: typeof ActionTypes.RECEIVE_MAP_CONFIG;
     payload: ReceiveMapConfigPayload;
   }
-): VisState => {
+): S => {
   if (!config.visState) {
     return state;
   }
@@ -1581,10 +1582,10 @@ export const receiveMapConfigUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const layerHoverUpdater = (
-  state: VisState,
+export const layerHoverUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.OnLayerHoverUpdaterAction
-): VisState => ({
+): S => ({
   ...state,
   hoverInfo: {
     // deck.gl info is mutable
@@ -1599,10 +1600,10 @@ export const layerHoverUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export function interactionConfigChangeUpdater(
-  state: VisState,
+export function interactionConfigChangeUpdater<S extends VisState>(
+  state: S,
   action: VisStateActions.InteractionConfigChangeUpdaterAction
-): VisState {
+): S {
   const {config} = action;
 
   const interactionConfig = {
@@ -1644,10 +1645,10 @@ export function interactionConfigChangeUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export const layerClickUpdater = (
-  state: VisState,
+export const layerClickUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.OnLayerClickUpdaterAction
-): VisState => ({
+): S => ({
   ...state,
   mousePos: state.interactionConfig.coordinate.enabled
     ? {
@@ -1663,10 +1664,10 @@ export const layerClickUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const mapClickUpdater = (
-  state: VisState,
+export const mapClickUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.OnMapClickUpdaterAction
-): VisState => {
+): S => {
   return {
     ...state,
     clicked: null
@@ -1678,10 +1679,10 @@ export const mapClickUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const mouseMoveUpdater = (
-  state: VisState,
+export const mouseMoveUpdater = <S extends VisState>(
+  state: S,
   {evt}: VisStateActions.OnMouseMoveUpdaterAction
-): VisState => {
+): S => {
   if (Object.values(state.interactionConfig).some(config => config.enabled)) {
     return {
       ...state,
@@ -1700,10 +1701,10 @@ export const mouseMoveUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const toggleSplitMapUpdater = (
-  state: VisState,
+export const toggleSplitMapUpdater = <S extends VisState>(
+  state: S,
   action: MapStateActions.ToggleSplitMapUpdaterAction
-): VisState =>
+): S =>
   state.splitMaps && state.splitMaps.length === 0
     ? {
         ...state,
@@ -1718,10 +1719,10 @@ export const toggleSplitMapUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const toggleLayerForMapUpdater = (
-  state: VisState,
+export const toggleLayerForMapUpdater = <S extends VisState>(
+  state: S,
   {mapIndex, layerId}: VisStateActions.ToggleLayerForMapUpdaterAction
-): VisState => {
+): S => {
   const {splitMaps} = state;
 
   return {
@@ -1748,10 +1749,10 @@ export const toggleLayerForMapUpdater = (
  */
 /* eslint-disable max-statements */
 // eslint-disable-next-line complexity
-export const updateVisDataUpdater = (
-  state: VisState,
+export const updateVisDataUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.UpdateVisDataUpdaterAction
-): VisState => {
+): S => {
   // datasets can be a single data entries or an array of multiple data entries
   const {config, options} = action;
   const datasets = toArray(action.datasets);
@@ -1839,10 +1840,10 @@ export const updateVisDataUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export function renameDatasetUpdater(
-  state: VisState,
+export function renameDatasetUpdater<S extends VisState>(
+  state: S,
   action: VisStateActions.RenameDatasetUpdaterAction
-): VisState {
+): S {
   const {dataId, label} = action;
   const {datasets} = state;
   const existing = datasets[dataId];
@@ -1871,10 +1872,10 @@ export function renameDatasetUpdater(
  * @param {Object} action action
  * @returns {Object} nextState
  */
-export function closeSpecificMapAtIndex(
-  state: VisState,
+export function closeSpecificMapAtIndex<S extends VisState>(
+  state: S,
   action: MapStateActions.ToggleSplitMapUpdaterAction
-): VisState {
+): S {
   // retrieve layers meta data from the remaining map that we need to keep
   const indexToRetrieve = 1 - action.payload;
   const mapLayers = state.splitMaps[indexToRetrieve].layers;
@@ -1903,10 +1904,10 @@ export function closeSpecificMapAtIndex(
  * @memberof visStateUpdaters
  * @public
  */
-export const loadFilesUpdater = (
-  state: VisState,
+export const loadFilesUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.LoadFilesUpdaterAction
-): VisState => {
+): S => {
   const {files, onFinish = loadFilesSuccess} = action;
   if (!files.length) {
     return state;
@@ -1933,10 +1934,10 @@ export const loadFilesUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export function loadFileStepSuccessUpdater(
-  state: VisState,
+export function loadFileStepSuccessUpdater<S extends VisState>(
+  state: S,
   action: VisStateActions.LoadFileStepSuccessAction
-): VisState {
+): S {
   if (!state.fileLoading) {
     return state;
   }
@@ -1963,7 +1964,7 @@ export function loadFileStepSuccessUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export function loadNextFileUpdater(state: VisState): VisState {
+export function loadNextFileUpdater<S extends VisState>(state: S): S {
   if (!state.fileLoading) {
     return state;
   }
@@ -2015,10 +2016,10 @@ export function makeLoadFileTask(file, fileCache, loaders: LoaderObject[] = [], 
  * @memberof visStateUpdaters
  * @public
  */
-export function processFileContentUpdater(
-  state: VisState,
+export function processFileContentUpdater<S extends VisState>(
+  state: S,
   action: VisStateActions.ProcessFileContentUpdaterAction
-): VisState {
+): S {
   const {content, fileCache} = action.payload;
 
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
@@ -2052,12 +2053,12 @@ export function parseProgress(prevProgress = {}, progress) {
  * @memberof visStateUpdaters
  * @public
  */
-export const nextFileBatchUpdater = (
-  state: VisState,
+export const nextFileBatchUpdater = <S extends VisState>(
+  state: S,
   {
     payload: {gen, fileName, progress, accumulated, onFinish}
   }: VisStateActions.NextFileBatchUpdaterAction
-): VisState => {
+): S => {
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
     fileName,
     progress: parseProgress(state.fileLoadingProgress[fileName], progress)
@@ -2086,10 +2087,10 @@ export const nextFileBatchUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const loadFilesErrUpdater = (
-  state: VisState,
+export const loadFilesErrUpdater = <S extends VisState>(
+  state: S,
   {error, fileName}: VisStateActions.LoadFilesErrUpdaterAction
-): VisState => {
+): S => {
   // update ui with error message
   Console.warn(error);
   if (!state.fileLoading) {
@@ -2114,10 +2115,10 @@ export const loadFilesErrUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const applyCPUFilterUpdater = (
-  state: VisState,
+export const applyCPUFilterUpdater = <S extends VisState>(
+  state: S,
   {dataId}: VisStateActions.ApplyCPUFilterUpdaterAction
-): VisState => {
+): S => {
   // apply cpuFilter
   const dataIds = toArray(dataId);
 
@@ -2129,10 +2130,10 @@ export const applyCPUFilterUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const setMapInfoUpdater = (
-  state: VisState,
+export const setMapInfoUpdater = <S extends VisState>(
+  state: S,
   action: VisStateActions.SetMapInfoUpdaterAction
-): VisState => ({
+): S => ({
   ...state,
   mapInfo: {
     ...state.mapInfo,
@@ -2142,10 +2143,10 @@ export const setMapInfoUpdater = (
 /**
  * Helper function to update All layer domain and layer data of state
  */
-export function addDefaultLayers(
-  state: VisState,
+export function addDefaultLayers<S extends VisState>(
+  state: S,
   datasets: Datasets
-): {state: VisState; newLayers: Layer[]} {
+): {state: S; newLayers: Layer[]} {
   const empty: Layer[] = [];
   const defaultLayers = Object.values(datasets).reduce((accu, dataset) => {
     const foundLayers = findDefaultLayer(dataset, state.layerClasses);
@@ -2205,11 +2206,11 @@ export function updateFileLoadingProgressUpdater(state, {fileName, progress}) {
 /**
  * Helper function to update layer domains for an array of datasets
  */
-export function updateAllLayerDomainData(
-  state: VisState,
+export function updateAllLayerDomainData<S extends VisState>(
+  state: S,
   dataId: string | string[],
   updatedFilter?: Filter
-): VisState {
+): S {
   const dataIds = typeof dataId === 'string' ? [dataId] : dataId;
   const newLayers: Layer[] = [];
   const newLayerData: any[] = [];
@@ -2241,14 +2242,14 @@ export function updateAllLayerDomainData(
   return newState;
 }
 
-export function updateAnimationDomain(state: VisState): VisState {
+export function updateAnimationDomain<S extends VisState>(state: S): S {
   // merge all animatable layer domain and update global config
   const animatableLayers = state.layers.filter(
     l =>
       l.config.isVisible &&
       l.config.animation &&
       l.config.animation.enabled &&
-      // @ts-expect-error
+      // @ts-expect-error trip-layer-only
       Array.isArray(l.animationDomain)
   );
 
@@ -2265,9 +2266,9 @@ export function updateAnimationDomain(state: VisState): VisState {
 
   const mergedDomain: [number, number] = animatableLayers.reduce(
     (accu, layer) => [
-      // @ts-expect-error
+      // @ts-expect-error trip-layer-only
       Math.min(accu[0], layer.animationDomain[0]),
-      // @ts-expect-error
+      // @ts-expect-error trip-layer-only
       Math.max(accu[1], layer.animationDomain[1])
     ],
     [Number(Infinity), -Infinity]
@@ -2291,10 +2292,10 @@ export function updateAnimationDomain(state: VisState): VisState {
  * Update the status of the editor
  * @memberof visStateUpdaters
  */
-export const setEditorModeUpdater = (
-  state: VisState,
+export const setEditorModeUpdater = <S extends VisState>(
+  state: S,
   {mode}: VisStateActions.SetEditorModeUpdaterAction
-): VisState => ({
+): S => ({
   ...state,
   editor: {
     ...state.editor,
@@ -2308,10 +2309,10 @@ export const setEditorModeUpdater = (
  * Update editor features
  * @memberof visStateUpdaters
  */
-export function setFeaturesUpdater(
-  state: VisState,
+export function setFeaturesUpdater<S extends VisState>(
+  state: S,
   {features = []}: VisStateActions.SetFeaturesUpdaterAction
-): VisState {
+): S {
   const lastFeature = features.length && features[features.length - 1];
 
   const newState = {
@@ -2340,6 +2341,7 @@ export function setFeaturesUpdater(
   if (filterId && feature) {
     const featureValue = featureToFilterValue(feature, filterId);
     const filterIdx = state.filters.findIndex(fil => fil.id === filterId);
+    // @ts-ignore
     return setFilterUpdater(newState, {
       idx: filterIdx,
       prop: 'value',
@@ -2354,10 +2356,10 @@ export function setFeaturesUpdater(
  * Set the current selected feature
  * @memberof uiStateUpdaters
  */
-export const setSelectedFeatureUpdater = (
-  state: VisState,
+export const setSelectedFeatureUpdater = <S extends VisState>(
+  state: S,
   {feature}: VisStateActions.SetSelectedFeatureUpdaterAction
-): VisState => ({
+): S => ({
   ...state,
   editor: {
     ...state.editor,
@@ -2369,10 +2371,10 @@ export const setSelectedFeatureUpdater = (
  * Delete existing feature from filters
  * @memberof visStateUpdaters
  */
-export function deleteFeatureUpdater(
-  state: VisState,
+export function deleteFeatureUpdater<S extends VisState>(
+  state: S,
   {feature}: VisStateActions.DeleteFeatureUpdaterAction
-): VisState {
+): S {
   if (!feature) {
     return state;
   }
@@ -2408,10 +2410,10 @@ export function deleteFeatureUpdater(
  * Toggle feature as layer filter
  * @memberof visStateUpdaters
  */
-export function setPolygonFilterLayerUpdater(
-  state: VisState,
+export function setPolygonFilterLayerUpdater<S extends VisState>(
+  state: S,
   payload: VisStateActions.SetPolygonFilterLayerUpdaterAction
-): VisState {
+): S {
   const {layer, feature} = payload;
   const filterId = getFilterIdInFeature(feature);
 
@@ -2480,10 +2482,10 @@ export function setPolygonFilterLayerUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export function sortTableColumnUpdater(
-  state: VisState,
+export function sortTableColumnUpdater<S extends VisState>(
+  state: S,
   {dataId, column, mode}: VisStateActions.SortTableColumnUpdaterAction
-): VisState {
+): S {
   const dataset = state.datasets[dataId];
   if (!dataset) {
     return state;
@@ -2505,10 +2507,10 @@ export function sortTableColumnUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export function pinTableColumnUpdater(
-  state: VisState,
+export function pinTableColumnUpdater<S extends VisState>(
+  state: S,
   {dataId, column}: VisStateActions.PinTableColumnUpdaterAction
-): VisState {
+): S {
   const dataset = state.datasets[dataId];
   if (!dataset) {
     return state;
@@ -2523,10 +2525,10 @@ export function pinTableColumnUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export function copyTableColumnUpdater(
-  state: VisState,
+export function copyTableColumnUpdater<S extends VisState>(
+  state: S,
   {dataId, column}: VisStateActions.CopyTableColumnUpdaterAction
-): VisState {
+): S {
   const dataset = state.datasets[dataId];
   if (!dataset) {
     return state;
@@ -2548,10 +2550,10 @@ export function copyTableColumnUpdater(
 /**
  * Update editor
  */
-export function toggleEditorVisibilityUpdater(
-  state: VisState,
+export function toggleEditorVisibilityUpdater<S extends VisState>(
+  state: S,
   action: VisStateActions.ToggleEditorVisibilityUpdaterAction
-): VisState {
+): S {
   return {
     ...state,
     editor: {
@@ -2561,10 +2563,10 @@ export function toggleEditorVisibilityUpdater(
   };
 }
 
-export function setFilterAnimationTimeConfigUpdater(
-  state: VisState,
+export function setFilterAnimationTimeConfigUpdater<S extends VisState>(
+  state: S,
   {idx, config}: VisStateActions.SetFilterAnimationTimeConfigAction
-): VisState {
+): S {
   const oldFilter = state.filters[idx];
   if (!oldFilter) {
     Console.error(`filters.${idx} is undefined`);
@@ -2600,10 +2602,10 @@ function checkTimeConfigArgs(config) {
 /**
  * Update editor
  */
-export function setLayerAnimationTimeConfigUpdater(
-  state: VisState,
+export function setLayerAnimationTimeConfigUpdater<S extends VisState>(
+  state: S,
   {config}: VisStateActions.SetLayerAnimationTimeConfigAction
-): VisState {
+): S {
   if (!config) {
     return state;
   }

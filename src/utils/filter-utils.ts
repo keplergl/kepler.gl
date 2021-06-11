@@ -157,7 +157,7 @@ export const LAYER_FILTERS = [FILTER_TYPES.polygon];
 /**
  * Generates a filter with a dataset id as dataId
  */
-export function getDefaultFilter(dataId: string | null | string[]): FilterBase {
+export function getDefaultFilter(dataId: string | null | string[]): FilterBase<LineChart> {
   return {
     ...DEFAULT_FILTER_STRUCTURE,
     // store it as dataId and it could be one or many
@@ -492,7 +492,7 @@ export function getFilterFunction(
   }
 }
 
-export function updateFilterDataId(dataId: string): FilterBase {
+export function updateFilterDataId(dataId: string): FilterBase<LineChart> {
   return getDefaultFilter(dataId);
 }
 
@@ -1090,13 +1090,13 @@ export function filterDatasetCPU(state: VisState, dataId: string): VisState {
 /**
  * Validate parsed filters with datasets and add filterProps to field
  */
-export function validateFiltersUpdateDatasets(
-  state: VisState,
+export function validateFiltersUpdateDatasets<S extends VisState>(
+  state: S,
   filtersToValidate: ParsedFilter[] = []
 ): {
   validated: Filter[];
   failed: Filter[];
-  updatedDatasets: Datasets;
+  updatedDatasets: S['datasets'];
 } {
   // TODO Better Typings here
   const validated: any[] = [];

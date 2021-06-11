@@ -23,7 +23,7 @@ import {StyledFilterContent} from 'components/common/styled-components';
 import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
 import FieldSelectorFactory from '../../common/field-selector';
-import {FilterBase} from 'reducers';
+import {FilterBase, LineChart} from 'reducers';
 import {FilterPanelComponent} from './types';
 import KeplerTable, {Field} from 'utils/table-utils/kepler-table';
 
@@ -47,7 +47,7 @@ function NewFilterPanelFactory(
   SourceDataSelector: ReturnType<typeof SourceDataSelectorFactory>,
   FieldSelector: ReturnType<typeof FieldSelectorFactory>
 ) {
-  const NewFilterPanel: FilterPanelComponent<FilterBase> = React.memo(
+  const NewFilterPanel: FilterPanelComponent<FilterBase<LineChart>> = React.memo(
     ({idx, filter, datasets, allAvailableFields, setFilter, removeFilter}) => {
       const onFieldSelector = useCallback(field => setFilter(idx, 'name', field.name), [
         idx,
