@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import {PanelToggleFactory, Button, Icons, withState} from 'kepler.gl/components';
+import {PanelTabFactory, PanelToggleFactory, Button, Icons, withState} from 'kepler.gl/components';
 import {visStateLens} from 'kepler.gl/reducers';
 
 import {setMapConfig} from '../app-reducer';
@@ -37,7 +37,7 @@ const ButtonWrapper = styled.div`
   margin-bottom: 4px;
 `;
 
-const PanelToggle = PanelToggleFactory();
+const PanelToggle = PanelToggleFactory(PanelTabFactory());
 
 const PanelToggleWrapper = props => (
   <StyledPanelToggleWrapper>
