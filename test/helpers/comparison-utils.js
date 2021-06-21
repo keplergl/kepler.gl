@@ -20,6 +20,8 @@
 
 import {FILTER_TYPES} from '@kepler.gl/constants';
 import {toArray} from '../../src/utils/utils';
+import {getFieldValueAccessor} from '../../src/utils';
+import {getSampleData} from '../../src/utils/data-utils';
 import KeplerTable from '../../src/utils/table-utils/kepler-table';
 
 export function cmpObjectKeys(t, expectedObj, actualObj, name) {
@@ -353,14 +355,14 @@ export function cmpParsedAppConfigs(t, expectedConfig, actualConfig, {name} = {}
   });
 }
 
-export function cmpFields(t, expected, actual, name) {
+export function cmpFields(t, expected, actual, name, opt = {}) {
   t.equal(expected.length, actual.length, `dataset.${name} should have same number of fields`);
   actual.forEach((actualField, i) => {
-    cmpField(t, expected[i], actualField, `dataset.${name} fields ${actualField.name}`);
+    cmpField(t, expected[i], actualField, `dataset.${name} fields ${actualField.name}`, opt);
   });
 }
 
-export function cmpField(t, expected, actual, name) {
+export function cmpField(t, expected, actual, name, opt = {}) {
   if (expected && actual) {
     cmpObjectKeys(t, expected, actual, name);
 
@@ -385,7 +387,22 @@ export function cmpField(t, expected, actual, name) {
           });
         }
       } else if (k === 'valueAccessor') {
-        t.ok(typeof actual[k] === 'function', `${name}.valueAccessor should be a function`);
+        // compare value accessor
+        if (opt.dataset) {
+          // test valueAccessor with first value
+
+          t.equal(
+            actual.valueAccessor(opt.dataset.dataContainer.rowAsArray(0)),
+            getFieldValueAccessor(
+              expected,
+              expected.fieldIdx
+            )(opt.dataset.dataContainer.rowAsArray(0)),
+            `${name} have correct valueAccessor function`
+          );
+        } else {
+          // assert it is a
+          t.ok(typeof actual[k] === 'function', `${name}.valueAccessor should be a function`);
+        }
       } else {
         t.deepEqual(actual[k], expected[k], `${name}.${k} should be the same`);
       }

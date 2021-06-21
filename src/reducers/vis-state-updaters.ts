@@ -60,7 +60,10 @@ import {
   pinTableColumns,
   sortDatasetByColumn,
   copyTableAndUpdate,
-  Field
+  Field,
+  FieldPair,
+  FilterRecord,
+  GpuFilter
 } from 'utils/table-utils/kepler-table';
 import {set, toArray, arrayInsert, generateHashId} from 'utils/utils';
 
@@ -104,6 +107,8 @@ import {LoaderObject} from '@loaders.gl/loader-utils';
 import {KeplerTable} from '../utils';
 
 export {KeplerTable};
+export type {Field, FieldPair, FilterRecord, GpuFilter};
+
 export type HistogramBin = {
   x0: number | undefined;
   x1: number | undefined;
