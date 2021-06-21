@@ -1259,6 +1259,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
         }
       ],
       metadata: {id: 'smoothie', label: 'exciting dataset', album: 'taro_and_blue', format: ''},
+      type: '',
       supportedFilterTypes: null,
       disableDataOperation: false
     }
@@ -1409,6 +1410,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
         label: 'smoothie and milkshake',
         format: ''
       },
+      type: '',
       supportedFilterTypes: null,
       disableDataOperation: false,
       fields: expectedFields,
@@ -1534,6 +1536,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
       label: 'king milkshake',
       format: ''
     },
+    type: '',
     supportedFilterTypes: null,
     disableDataOperation: false,
     id: 'milkshake',
@@ -1745,6 +1748,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
         label: 'smoothie and milkshake',
         format: ''
       },
+      type: '',
       supportedFilterTypes: null,
       disableDataOperation: false,
       fields: expectedFields.map(f =>
@@ -2053,6 +2057,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
       label: 'queen smoothie',
       format: ''
     },
+    type: '',
     supportedFilterTypes: null,
     disableDataOperation: false,
     id: 'smoothie',
@@ -2140,6 +2145,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
       cpu: {[updatedFilterWValue.id]: 'added'},
       gpu: null
     },
+    type: '',
     supportedFilterTypes: null,
     disableDataOperation: false
   };
@@ -2366,6 +2372,7 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
       cpu: null,
       gpu: {[filterId]: 'value_changed'}
     },
+    type: '',
     supportedFilterTypes: null,
     disableDataOperation: false
   };
@@ -2566,6 +2573,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
       cpu: null,
       gpu: {[filterId]: 'value_changed'}
     },
+    type: '',
     supportedFilterTypes: null,
     disableDataOperation: false
   };
@@ -2638,6 +2646,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
       cpu: {[filterId1]: 'added'},
       gpu: null
     },
+    type: '',
     supportedFilterTypes: null,
     disableDataOperation: false
   };

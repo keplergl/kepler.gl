@@ -1535,6 +1535,7 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
         label: 'hello.csv',
         format: ''
       },
+      type: '',
       supportedFilterTypes: null,
       disableDataOperation: false,
       fields: tFields0,
@@ -1612,6 +1613,7 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
         label: 'zip.geojson',
         format: ''
       },
+      type: '',
       supportedFilterTypes: null,
       disableDataOperation: false,
       fields: tFields1,

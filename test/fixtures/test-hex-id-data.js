@@ -441,6 +441,7 @@ export const expectedMergedDataset = {
     label: 'new dataset',
     format: ''
   },
+  type: '',
   supportedFilterTypes: null,
   disableDataOperation: false,
   dataContainer,
