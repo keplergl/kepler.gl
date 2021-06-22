@@ -35,7 +35,10 @@ import {DataContainerInterface} from 'utils/table-utils/data-container-interface
 export function coordHasLength4(samples): boolean {
   let hasLength4 = true;
   for (let i = 0; i < samples.length; i += 1) {
-    hasLength4 = !samples[i].geometry.coordinates.find(c => c.length < 4);
+    hasLength4 =
+      Array.isArray(samples[i]?.geometry?.coordinates) &&
+      !samples[i].geometry.coordinates.find(c => c.length < 4);
+
     if (!hasLength4) {
       break;
     }
