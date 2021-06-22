@@ -1687,8 +1687,8 @@ export const mouseMoveUpdater = (
       ...state,
       mousePos: {
         ...state.mousePos,
-        mousePosition: [...evt.point],
-        coordinate: [...evt.lngLat]
+        ...(Array.isArray(evt.point) ? {mousePosition: [...evt.point]} : {}),
+        ...(Array.isArray(evt.lngLat) ? {coordinate: [...evt.lngLat]} : {})
       }
     };
   }
