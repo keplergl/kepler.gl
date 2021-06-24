@@ -384,11 +384,13 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
         mapboxApiUrl
       } = this.props;
 
-      let deckGlLayers = [];
+      // initialise layers from props if exists
+      let deckGlLayers = this.props.deckGlProps?.layers || [];
+
       // wait until data is ready before render data layers
       if (layerData && layerData.length) {
         // last layer render first
-        deckGlLayers = layerOrder
+        const dataLayers = layerOrder
           .slice()
           .reverse()
           .filter(
@@ -401,6 +403,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor) {
             const layerOverlay = renderDeckGlLayer(this.props, layerCallbacks, idx);
             return overlays.concat(layerOverlay || []);
           }, []);
+        deckGlLayers = deckGlLayers.concat(dataLayers);
       }
 
       if (mapStyle.visibleLayerGroups['3d building']) {
