@@ -261,7 +261,7 @@
   "peerDependencies": {
     "react": ">=16.3",
     "react-dom": ">=16.3",
-    "styled-components": "^4.x"
+    "styled-components": "^4.x || ^5.x" 
   },
   "nyc": {
     "sourceMap": false,
