@@ -285,7 +285,7 @@ export default class IconLayer extends Layer {
 
     const parameters = {
       // icons will be flat on the map when the altitude column is not used
-      depthTest: this.config.columns.altitude.fieldIdx > -1
+      depthTest: this.config.columns.altitude?.fieldIdx > -1
     };
 
     return !this.iconGeometry
