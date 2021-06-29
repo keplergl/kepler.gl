@@ -93,10 +93,7 @@ function App() {
   }, []);
 
   return (
-    <StyledContainer
-      ref={rootElm}
-      className="keplergl-widget-container"
-    >
+    <StyledContainer ref={rootElm} className="keplergl-widget-container">
       {Helmet ? (
         <Helmet>
           <meta charSet="utf-8" />
