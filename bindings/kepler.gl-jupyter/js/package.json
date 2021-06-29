@@ -63,7 +63,7 @@
   "dependencies": {
     "@jupyter-widgets/base": "^1.1.10 || ^2.0.0 || ^3.0.0",
     "global": "^4.3.0",
-    "kepler.gl": "^2.4.0",
+    "kepler.gl": "^2.5.2",
     "node-polyfill-webpack-plugin": "^1.1.2",
     "react": "^17.0.2",
     "react-copy-to-clipboard": "^5.0.2",
