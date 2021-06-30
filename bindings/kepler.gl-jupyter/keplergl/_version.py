@@ -1,4 +1,4 @@
-version_info = (0, 2, 2, 'final', 0)
+version_info = (0, 3, 0, 'final', 0)
 
 _specifier_ = {'alpha': 'a', 'beta': 'b', 'candidate': 'rc', 'final': ''}
 
@@ -12,4 +12,4 @@ __version__ = '%s.%s.%s%s'%(version_info[0], version_info[1], version_info[2],
 # the widget models, or if the serialized format changes.
 #
 # The major version needs to match that of the JS package.
-EXTENSION_SPEC_VERSION = '^0.2.2'
+EXTENSION_SPEC_VERSION = '^0.3.0'
