@@ -11,6 +11,7 @@ Current supported languages are:
 | ca          | Catalan    |          |
 | es          | Spanish    |          |
 | ja          | Japanese   |          |
+| cn          | Chinese    |          |
 
 ## Changing default language
 

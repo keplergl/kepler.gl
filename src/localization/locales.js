@@ -24,7 +24,8 @@ export const LOCALES = {
   pt: 'Português',
   es: 'Español',
   ca: 'Català',
-  ja: '日本語'
+  ja: '日本語',
+  cn: '简体中文'
 };
 
 /**

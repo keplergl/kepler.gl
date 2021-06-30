@@ -82,5 +82,19 @@ export const messages = {
     'loadRemoteMap.clickHere':
       '<a rel="noopener noreferrer" target="_blank" href="{corsLink}">haz clic aquí</a>',
     'loadRemoteMap.fetch': 'Busca'
+  },
+  cn: {
+    'modal.loadData.remote': '使用 URL 加载地图',
+    'sampleMapsTab.noData': '没有数据？',
+    'sampleMapsTab.trySampleData': '尝试样本数据',
+    'sampleDataViewer.rowCount': ' {rowCount} 行',
+    'loadRemoteMap.description': '使用自定义 URL 加载地图',
+    'loadRemoteMap.message':
+      '您可以使用以下格式：CSV | JSON | Kepler.gl 配置 json。 确保 url 包含文件扩展名。',
+    'loadRemoteMap.examples': '示例：',
+    'loadRemoteMap.cors': '* 必须在您的自定义 url 域上定义 CORS 策略才能访问。欲了解更多信息',
+    'loadRemoteMap.clickHere':
+      '<a rel="noopener noreferrer" target="_blank" href="{corsLink}">点击此处</a>',
+    'loadRemoteMap.fetch': '获取'
   }
 };
