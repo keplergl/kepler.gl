@@ -281,7 +281,7 @@ export default class PointLayer extends Layer {
         ...data,
         parameters: {
           // circles will be flat on the map when the altitude column is not used
-          depthTest: this.config.columns.altitude.fieldIdx > -1
+          depthTest: this.config.columns.altitude?.fieldIdx > -1
         },
         lineWidthUnits: 'pixels',
         updateTriggers,
