@@ -197,11 +197,9 @@ export const ECOSYSTEM = [
   },
   {
     title: 'Visual Studio Code',
-    description:
-      'Built on React & Redux, Kepler.gl can be embedded inside your own mapping applications.',
+    description: 'Geo Data Analytics tool for VS Code with Kepler.gl',
     image: unfoldedCdnUrl('ecosystem-vscode.png'),
-    githubUrl:
-      'https://marketplace.visualstudio.com/items?itemName=RandomFractalsInc.geo-data-viewer'
+    githubUrl: 'https://github.com/RandomFractals/geo-data-viewer'
   }
 ];
 
