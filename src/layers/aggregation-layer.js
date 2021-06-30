@@ -121,10 +121,11 @@ export default class AggregationLayer extends Layer {
   getVisualChannelDescription(key) {
     // e.g. label: Color, measure: Average of ETA
     const {range, field, defaultMeasure, aggregation} = this.visualChannels[key];
+    const fieldConfig = this.config[field];
     return {
       label: this.visConfigSettings[range].label,
-      measure: this.config[field]
-        ? `${this.config.visConfig[aggregation]} of ${this.config[field].displayName}`
+      measure: fieldConfig
+        ? `${this.config.visConfig[aggregation]} of ${fieldConfig.displayName || fieldConfig.name}`
         : defaultMeasure
     };
   }
