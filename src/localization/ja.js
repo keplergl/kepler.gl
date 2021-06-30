@@ -145,6 +145,9 @@ export default {
     sizeScale: 'サイズのスケール',
     worldUnitSize: 'World Unit Size',
     elevationScale: '標高のスケール',
+    enableElevationZoomFactor: '標高ズーム係数を使用する',
+    enableElevationZoomFactorDescription: '現在のズーム率に基づいて高さ/標高を調整します',
+    enableHeightZoomFactor: '高さズーム係数を使用する',
     heightScale: '高さのスケール',
     coverageRange: 'カバー率の範囲',
     highPrecisionRendering: '高精度レンダリング',
@@ -156,7 +159,8 @@ export default {
     showWireframe: 'ワイヤーフレームを表示',
     weightIntensity: '重みづけの強さ',
     zoomScale: 'ズームのスケール',
-    heightRange: '高さの範囲'
+    heightRange: '高さの範囲',
+    heightMultiplier: '高さ乗数'
   },
   layerManager: {
     addData: 'データ追加',

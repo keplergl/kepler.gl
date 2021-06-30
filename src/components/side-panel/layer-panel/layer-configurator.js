@@ -370,22 +370,28 @@ export default function LayerConfiguratorFactory(
               <VisConfigSlider
                 {...layer.visConfigSettings.elevationScale}
                 {...visConfiguratorProps}
+                label="layerVisConfigs.heightMultiplier"
               />
               <ConfigGroupCollapsibleContent>
-                <AggrScaleSelector
-                  {...layerConfiguratorProps}
-                  channel={layer.visualChannels.size}
-                />
-                <VisConfigSlider {...layer.visConfigSettings.sizeRange} {...visConfiguratorProps} />
                 <ChannelByValueSelector
                   {...layerChannelConfigProps}
                   channel={layer.visualChannels.size}
                   description={elevationByDescription}
                   disabled={!enable3d}
                 />
+                <AggrScaleSelector
+                  {...layerConfiguratorProps}
+                  channel={layer.visualChannels.size}
+                />
+                <VisConfigSlider
+                  {...layer.visConfigSettings.sizeRange}
+                  {...visConfiguratorProps}
+                  label="layerVisConfigs.heightRange"
+                />
                 <VisConfigSwitch
                   {...layer.visConfigSettings.enableElevationZoomFactor}
                   {...visConfiguratorProps}
+                  label="layerVisConfigs.enableHeightZoomFactor"
                 />
                 {layer.visConfigSettings.sizeAggregation.condition(layer.config) ? (
                   <AggregationTypeSelector

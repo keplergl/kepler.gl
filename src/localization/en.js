@@ -146,7 +146,8 @@ export default {
     worldUnitSize: 'World Unit Size',
     elevationScale: 'Elevation Scale',
     enableElevationZoomFactor: 'Use elevation zoom factor',
-    enableElevationZoomFactorDescription: 'Adjust elevation based on current zoom factor',
+    enableElevationZoomFactorDescription: 'Adjust height/elevation based on current zoom factor',
+    enableHeightZoomFactor: 'Use height zoom factor',
     heightScale: 'Height Scale',
     coverageRange: 'Coverage Range',
     highPrecisionRendering: 'High Precision Rendering',
@@ -158,7 +159,8 @@ export default {
     showWireframe: 'Show Wireframe',
     weightIntensity: 'Weight Intensity',
     zoomScale: 'Zoom Scale',
-    heightRange: 'Height Range'
+    heightRange: 'Height Range',
+    heightMultiplier: 'Height Multiplier'
   },
   layerManager: {
     addData: 'Add Data',

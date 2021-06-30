@@ -146,7 +146,9 @@ export default {
     worldUnitSize: 'Medida de la unidad mundial',
     elevationScale: 'Escala de elevación',
     enableElevationZoomFactor: 'Usar factor de zoom de elevación',
-    enableElevationZoomFactorDescription: 'Ajuste a elevação com base no fator de zoom atual',
+    enableElevationZoomFactorDescription:
+      'Ajuste la altura / elevación según el factor de zoom actual',
+    enableHeightZoomFactor: 'Usar factor de zoom de altura',
     heightScale: 'Escala de altura',
     coverageRange: 'Rango de cobertura',
     highPrecisionRendering: 'Representación de alta precisión',
@@ -159,7 +161,8 @@ export default {
     showWireframe: 'Muestra esquemàtico',
     weightIntensity: 'Intensidad de peso',
     zoomScale: 'Escala de zoom',
-    heightRange: 'Rango de alturas'
+    heightRange: 'Rango de alturas',
+    heightMultiplier: 'Multiplicador de altura'
   },
   layerManager: {
     addData: 'Añadir datos',
