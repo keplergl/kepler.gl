@@ -249,6 +249,45 @@ test('VisStateMerger.v1 -> mergeFilters -> toWorkingState', t => {
   t.end();
 });
 
+test('VisStateMerger.v1 -> mergeFilters -> empty filter', t => {
+  const savedConfig = cloneDeep(savedStateV1);
+  // set an empty filter
+  savedConfig.config.config.visState.filters[0].name = [];
+  const oldState = cloneDeep(InitialState);
+
+  const oldVisState = oldState.visState;
+  const oldFilters = [...oldState.visState.filters];
+
+  const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config, oldState);
+  const parsedFilters = parsedConfig.visState.filters;
+
+  const mergedState = mergeFilters(oldState.visState, parsedFilters);
+
+  Object.keys(oldVisState).forEach(key => {
+    if (key === 'filterToBeMerged') {
+      t.deepEqual(
+        mergedState.filterToBeMerged,
+        parsedFilters,
+        'Should save filters to filterToBeMerged before data loaded'
+      );
+    } else {
+      t.deepEqual(mergedState[key], oldVisState[key], 'Should keep the rest of state same');
+    }
+  });
+
+  const parsedData = SchemaManager.parseSavedData(savedConfig.datasets);
+
+  // load data into reducer
+  const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
+
+  // test parsed filters
+  cmpFilters(t, oldFilters, stateWData.filters);
+  t.deepEqual(stateWData.filterToBeMerged, [], 'should not pass fiter validate if tiler is empty');
+
+  // should filter data
+  t.end();
+});
+
 test('VisStateMerger -> mergeLayers -> invalid layer config', t => {
   const oldState = cloneDeep(InitialState);
   const oldVisState = oldState.visState;

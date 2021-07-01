@@ -25,7 +25,7 @@
 
 import window from 'global/window';
 import document from 'global/document';
-import console from 'global/console';
+import Console from 'global/console';
 import svgToMiniDataURI from 'mini-svg-data-uri';
 import {IMAGE_EXPORT_ERRORS} from '@kepler.gl/constants';
 import {
@@ -361,8 +361,8 @@ function newFontFaces() {
                 // Handle any error that occurred in any of the previous
                 // promises in the chain. stylesheet failed to load should not stop
                 // the process, hence result in only a warning, instead of reject
-                console.warn(IMAGE_EXPORT_ERRORS.styleSheet, sheet.href);
-                console.log(err);
+                Console.warn(IMAGE_EXPORT_ERRORS.styleSheet, sheet.href);
+                Console.log(err);
                 return;
               });
           }
@@ -431,7 +431,7 @@ function newFontFaces() {
         try {
           rules = sheet.rules || sheet.cssRules;
         } catch (e) {
-          console.log(`'Can't read the css rules of: ${sheet.href}`, e);
+          Console.log(`'Can't read the css rules of: ${sheet.href}`, e);
           return;
         }
 
@@ -439,11 +439,11 @@ function newFontFaces() {
           try {
             asArray(rules || []).forEach(cssRules.push.bind(cssRules));
           } catch (e) {
-            console.log(`Error while reading CSS rules from ${sheet.href}`, e);
+            Console.log(`Error while reading CSS rules from ${sheet.href}`, e);
             return;
           }
         } else {
-          console.log('getCssRules can not find cssRules');
+          Console.log('getCssRules can not find cssRules');
           return;
         }
       });

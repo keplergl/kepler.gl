@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import console from 'global/console';
+import Console from 'global/console';
 import window from 'global/window';
 import document from 'global/document';
 import {IMAGE_EXPORT_ERRORS} from '@kepler.gl/constants';
@@ -166,7 +166,7 @@ export function makeImage(uri) {
     };
     image.onerror = err => {
       const message = IMAGE_EXPORT_ERRORS.dataUri;
-      console.log(uri);
+      Console.log(uri);
       // error is an Event Object
       // https://www.w3schools.com/jsref/obj_event.asp
       reject({event: err, message});
@@ -347,7 +347,7 @@ export function getAndEncode(url, options) {
     }
 
     function fail(message) {
-      console.error(message);
+      Console.error(message);
       resolve('');
     }
   });

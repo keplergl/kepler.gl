@@ -37,6 +37,8 @@ import {
   testCsvDataId,
   testGeoJsonDataId
 } from 'test/helpers/mock-state';
+import keplerGlReducer from 'reducers/core';
+import * as VisStateActions from 'actions/vis-state-actions';
 
 test('#visStateSchema -> v1 -> save layers', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
@@ -120,6 +122,19 @@ test('#visStateSchema -> v1 -> save load filters', t => {
 
   cmpFilters(t, expectedSavedFilters, filtersToSave);
   cmpFilters(t, expectedSavedFilters, loadedFilters);
+
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save and validate filters', t => {
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+
+  // add empty filter
+  const nextStte = keplerGlReducer(initialState, VisStateActions.addFilter(testCsvDataId));
+  const savedState = SchemaManager.getConfigToSave(nextStte);
+
+  t.equal(nextStte.visState.filters.length, 3, 'should have 3 filters');
+  t.equal(savedState.config.visState.filters.length, 2, 'should only save 2 filters');
 
   t.end();
 });

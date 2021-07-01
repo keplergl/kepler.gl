@@ -20,7 +20,7 @@
 
 import pick from 'lodash.pick';
 import {VERSIONS} from './versions';
-import {isValidFilterValue} from 'utils/filter-utils';
+import {isFilterValidToSave} from 'utils/filter-utils';
 import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
@@ -610,8 +610,7 @@ export class FilterSchemaV0 extends Schema {
   save(filters: Filter[]): {filters: SavedFilter[]} {
     return {
       filters: filters
-        // @ts-expect-error should pass type of the layer instead?
-        .filter(isValidFilterValue)
+        .filter(isFilterValidToSave)
         .map(filter => this.savePropertiesOrApplySchema(filter).filters)
     };
   }
