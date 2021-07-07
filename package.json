@@ -18,7 +18,7 @@
     "url": "https://github.com/keplergl/kepler.gl.git"
   },
   "scripts": {
-    "install:example": "cd examples/demo-app && yarn",
+    "install:example": "cd examples/bautraeger-app && yarn",
     "install:web": "yarn install:example && cd website && yarn",
     "install-and-start": "node ./scripts/install-and-start",
     "fast-test": "npm run test-node && npm run test-browser",
@@ -28,7 +28,7 @@
     "test-e2e": "NODE_ENV=test HEADLESS=true SLOWMO=true jest",
     "test": "npm run lint && npm run test-node && npm run test-browser",
     "cover": "nyc --reporter=lcov --reporter html npm test",
-    "start": "npm run install-and-start -- examples/demo-app start-local",
+    "start": "npm run install-and-start -- examples/bautraeger-app start-local",
     "start:deck": "npm run install-and-start -- examples/demo-app start-local-deck",
     "start:deck-src": "npm run install-and-start -- examples/demo-app start-local-deck-src",
     "start:loaders-src": "npm run install-and-start -- examples/demo-app start-local-loaders-src",
