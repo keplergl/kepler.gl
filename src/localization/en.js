@@ -21,6 +21,9 @@
 import {LOCALES} from './locales';
 
 export default {
+  savedProperties: {
+    addSavedProperty: 'Add property'
+  },
   property: {
     weight: 'weight',
     label: 'label',
@@ -79,7 +82,8 @@ export default {
       layer: 'Layers',
       filter: 'Filters',
       interaction: 'Interactions',
-      basemap: 'Base map'
+      basemap: 'Base map',
+      'save-properties': 'Saved properties'
     }
   },
   layer: {
