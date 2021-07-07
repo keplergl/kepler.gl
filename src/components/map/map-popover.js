@@ -22,7 +22,7 @@ import React, {useState, useCallback, useRef, useLayoutEffect} from 'react';
 import styled from 'styled-components';
 import LayerHoverInfoFactory from './layer-hover-info';
 import CoordinateInfoFactory from './coordinate-info';
-import {Pin, ArrowLeft, ArrowRight} from 'components/common/icons';
+import {ArrowLeft, ArrowRight, Save2} from 'components/common/icons';
 import ErrorBoundary from 'components/common/error-boundary';
 import {injectIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';
@@ -180,6 +180,14 @@ export function usePosition({layerHoverProp, x, y, mapW, mapH}, popover) {
 
   return {moveLeft, moveRight, isLeft, pos};
 }
+
+function saveProperty(propertyData) {
+  return () => {
+      console.log("Here need to access the redux store and save the property, presumably");
+      console.log(propertyData);
+  };
+}
+
 export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
   /** @type {typeof import('./map-popover').MapPopover} */
   const MapPopover = ({
@@ -200,6 +208,8 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
       popover
     );
 
+    const saveCurrentProperty = saveProperty(layerHoverProp);
+
     return (
       <ErrorBoundary>
         <StyledMapPopover
@@ -219,8 +229,8 @@ export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
                   <ArrowLeft />
                 </StyledIcon>
               )}
-              <StyledIcon className="popover-pin" onClick={onClose}>
-                <Pin height="16px" />
+              <StyledIcon className="popover-save" onClick={saveCurrentProperty}>
+                <Save2 height="16px" />
               </StyledIcon>
               {isLeft && (
                 <StyledIcon className="popover-arrow-right" onClick={moveRight}>

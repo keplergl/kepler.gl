@@ -30,6 +30,7 @@ import LayerManagerFactory from './side-panel/layer-manager';
 import FilterManagerFactory from './side-panel/filter-manager';
 import InteractionManagerFactory from './side-panel/interaction-manager';
 import MapManagerFactory from './side-panel/map-manager';
+import SavedPropertiesManagerFactory from './side-panel/saved-properties-manager';
 import PanelToggleFactory from './side-panel/panel-toggle';
 import CustomPanelsFactory from './side-panel/custom-panel';
 
@@ -77,6 +78,7 @@ SidePanelFactory.deps = [
   FilterManagerFactory,
   InteractionManagerFactory,
   MapManagerFactory,
+  SavedPropertiesManagerFactory,
   CustomPanelsFactory
 ];
 
@@ -93,6 +95,7 @@ export default function SidePanelFactory(
   FilterManager,
   InteractionManager,
   MapManager,
+  SavedPropertiesManager,
   CustomPanels
 ) {
   const getCustomPanelProps = get(CustomPanels, ['defaultProps', 'getProps']) || (() => ({}));
@@ -189,6 +192,7 @@ export default function SidePanelFactory(
       } = this.props;
 
       const {activeSidePanel} = uiState;
+      console.log(`Active sidePanel is ${activeSidePanel}`);
       const isOpen = Boolean(activeSidePanel);
 
       const layerManagerActions = {
@@ -222,6 +226,11 @@ export default function SidePanelFactory(
 
       const interactionManagerActions = {
         onConfigChange: visStateActions.interactionConfigChange
+      };
+
+      const savedPropertiesManagerActions = {
+        addSavedProperty: visStateActions.addSavedProperty,
+        removeSavedProperty: visStateActions.removeSavedProperty
       };
 
       const mapManagerActions = {
@@ -300,6 +309,13 @@ export default function SidePanelFactory(
                 )}
                 {activeSidePanel === 'map' && (
                   <MapManager {...mapManagerActions} mapStyle={this.props.mapStyle} />
+                )}
+                {activeSidePanel === 'save-properties' && (
+                  <SavedPropertiesManager
+                    {...savedPropertiesManagerActions}
+                    layers={layers}
+                    savedProperties={this.props.savedProperties}
+                  />
                 )}
                 <CustomPanels
                   {...getCustomPanelProps(this.props)}
