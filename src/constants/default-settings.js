@@ -41,6 +41,7 @@ import {
   Clipboard,
   Cancel
 } from 'components/common/icons';
+import {House} from 'components/common/icons';
 import {getHTMLMapModeTileUrl} from 'utils/utils';
 import {TOOLTIP_FORMAT_TYPES} from './tooltip';
 import {LAYER_TYPES} from 'layers/types';
@@ -166,11 +167,11 @@ export const SIDEBAR_PANELS = [
     label: 'sidebar.panels.layer',
     iconComponent: Layers
   },
-  {
-    id: 'filter',
-    label: 'sidebar.panels.filter',
-    iconComponent: FilterFunnel
-  },
+  // {
+  //   id: 'filter',
+  //   label: 'sidebar.panels.filter',
+  //   iconComponent: FilterFunnel
+  // },
   {
     id: 'interaction',
     label: 'sidebar.panels.interaction',
@@ -180,6 +181,11 @@ export const SIDEBAR_PANELS = [
     id: 'map',
     label: 'sidebar.panels.basemap',
     iconComponent: Settings
+  },
+  {
+    id: 'save-properties',
+    label: 'sidebar.panels.save-properties',
+    iconComponent: House
   }
 ];
 
