@@ -273,19 +273,7 @@ export const rows = [
 ];
 
 // add index to properties
-export const datasetAllData = rows.map((row, index) =>
-  row.map((cell, i) =>
-    i === 0
-      ? {
-          ...cell,
-          properties: {
-            ...cell.properties,
-            index
-          }
-        }
-      : cell
-  )
-);
+export const datasetAllData = rows;
 
 export const geoJsonTripHistogram = [
   {count: 1, x0: 4, x1: 4.5},
