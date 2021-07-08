@@ -1,4 +1,4 @@
-import {Component, ComponentType} from 'react';
+import {ComponentType} from 'react';
 import {Datasets, Filter, InteractionConfig, MapStyle} from '../reducers';
 import {Layer, LayerClassesType} from '../layers';
 
@@ -9,7 +9,7 @@ import * as MapStateActions from 'actions/map-state-actions';
 export type SidePanelItem = {
   id: stirng;
   label: string;
-  iconComponent: ComponentType<any>
+  iconComponent: ComponentType<any>;
 };
 
 export type SidePanelProps = {
@@ -24,11 +24,10 @@ export type SidePanelProps = {
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
   mapStyleActions: typeof MapStyleActions;
-  availableProviders: object,
-  mapSaved?: string | null,
-  panels: SidePanelItem[]
-}
+  availableProviders: object;
+  mapSaved?: string | null;
+  panels: SidePanelItem[];
+};
 
-export const SidePanel = Component<SidePanelProps>();
-export default function SidePanelFactory():  Component<SidePanelProps>();
-
+export const SidePanel: PureComponent<SidePanelProps>;
+export default function SidePanelFactory(): PureComponent<SidePanelProps>;
