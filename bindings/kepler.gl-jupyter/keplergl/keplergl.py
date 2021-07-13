@@ -138,13 +138,14 @@ class KeplerGl(widgets.DOMWidget):
 
         self.data = copy
 
-    def _repr_html_(self, data=None, config=None, read_only=False, center_map=False):
+    def _repr_html_(self, data=None, config=None, read_only=False, center_map=False, iframe_safe=False):
         ''' Return current map in an html encoded string
 
         Inputs:
         - data: a data dictionary {"name": data}, if not provided, will use current map data
         - config: map config dictionary, if not provided, will use current map config
         - read_only: if read_only is True, hide side panel to disable map customization
+        - iframe_safe: if True, prepare html for sandbox
 
         Returns:
         - a html encoded string
@@ -172,9 +173,32 @@ class KeplerGl(widgets.DOMWidget):
         cmd = """window.__keplerglDataConfig = {};""".format(keplergl_data)
         frame_txt = keplergl_html[:k] + "<body><script>" + cmd + "</script>" + keplergl_html[k+6:]
 
+        if not iframe_safe:
+            ga = frame_txt.find('</body>')
+            ga_script = """<script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-64694404-19', {
+        'storage': 'none',
+        'clientId': localStorage.getItem('ga:clientId')
+    });
+    ga(function(tracker) {
+        localStorage.setItem('ga:clientId', tracker.get('clientId'));
+    });
+    ga('set', 'checkProtocolTask', null); // Disable file protocol checking.
+    ga('set', 'checkStorageTask', null); // Disable cookie storage checking.
+    ga('set', 'historyImportTask', null); // Disable history checking (requires reading from cookies).
+    ga('set', 'page', 'keplergl-jupyter-html');
+
+    ga('send', 'pageview');</script>"""
+
+            frame_txt = frame_txt[:ga] + ga_script + '</body>' + frame_txt[ga+7:]
+
         return frame_txt.encode('utf-8')
 
-    def save_to_html(self, data=None, config=None, file_name='keplergl_map.html', read_only=False, center_map=False):
+    def save_to_html(self, data=None, config=None, file_name='keplergl_map.html', read_only=False, center_map=False, iframe_safe=False):
         ''' Save current map to an interactive html
 
         Inputs:
@@ -194,7 +218,7 @@ class KeplerGl(widgets.DOMWidget):
             keplergl.save_to_html(file_name='first_map.html')
 
         '''
-        frame_txt = self._repr_html_(data=data, config=config, read_only=read_only, center_map=center_map)
+        frame_txt = self._repr_html_(data=data, config=config, read_only=read_only, center_map=center_map, iframe_safe=iframe_safe)
 
         with open(file_name, 'wb') as f:
             f.write(frame_txt)
