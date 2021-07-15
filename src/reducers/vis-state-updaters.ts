@@ -1846,20 +1846,20 @@ export function renameDatasetUpdater(
   const {dataId, label} = action;
   const {datasets} = state;
   const existing = datasets[dataId];
-  // @ts-ignore
-  return existing
-    ? {
-        ...state,
-        datasets: {
-          ...datasets,
-          [dataId]: {
-            ...existing,
-            label
-          }
-        }
+
+  if (existing) {
+    const newDataset = copyTableAndUpdate(existing, {label});
+    return {
+      ...state,
+      datasets: {
+        ...datasets,
+        [dataId]: newDataset
       }
-    : // No-op if the dataset doesn't exist
-      state;
+    };
+  }
+
+  // No-op if the dataset doesn't exist
+  return state;
 }
 
 /**
