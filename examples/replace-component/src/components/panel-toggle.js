@@ -37,22 +37,21 @@ const ButtonWrapper = styled.div`
   margin-bottom: 4px;
 `;
 
-const PanelToggle = PanelToggleFactory();
+const CustomPanelToggleFactory = (...deps) => {
+  const PanelToggle = PanelToggleFactory(...deps);
+  const PanelToggleWrapper = props => (
+    <StyledPanelToggleWrapper>
+      <PanelToggle {...props} />
+      <ButtonWrapper>
+        <Button onClick={() => props.onClickSaveConfig(props.mapState)} width="120px">
+          <Icons.Files height="12px" />
+          Save Config
+        </Button>
+      </ButtonWrapper>
+    </StyledPanelToggleWrapper>
+  );
 
-const PanelToggleWrapper = props => (
-  <StyledPanelToggleWrapper>
-    <PanelToggle {...props} />
-    <ButtonWrapper>
-      <Button onClick={() => props.onClickSaveConfig(props.mapState)} width="120px">
-        <Icons.Files height="12px" />
-        Save Config
-      </Button>
-    </ButtonWrapper>
-  </StyledPanelToggleWrapper>
-);
-
-const CustomPanelToggleFactory = () =>
-  withState(
+  return withState(
     // lenses
     [visStateLens],
     // mapStateToProps
@@ -61,5 +60,6 @@ const CustomPanelToggleFactory = () =>
       onClickSaveConfig: setMapConfig
     }
   )(PanelToggleWrapper);
-
+};
+CustomPanelToggleFactory.deps = PanelToggleFactory.deps;
 export default CustomPanelToggleFactory;

@@ -18,6 +18,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+export const config = {
+  version: 'v1',
+  config: {
+    visState: {
+      layers: [
+        {
+          type: 'point',
+          id: 'point_layer',
+          config: {
+            dataId: 'tree_data',
+            label: 'location',
+            hidden: true,
+            color: [18, 147, 154],
+            columns: {lat: 'Location_latitude', lng: 'Location_longitude', altitude: null},
+            isVisible: true
+          },
+          visualChannels: {
+            colorField: {name: 'Plan', type: 'integer'},
+            colorScale: 'quantile',
+            sizeField: {name: 'Plan', type: 'integer'}
+          }
+        }
+      ],
+      interactionConfig: {
+        tooltip: {
+          fieldsToShow: {tree_data: []},
+          compareMode: false,
+          compareType: 'absolute',
+          enabled: true
+        }
+      }
+    },
+    mapState: {
+      bearing: 0,
+      dragRotate: false,
+      latitude: 37.759775559999994,
+      longitude: -122.4423862,
+      pitch: 0,
+      zoom: 12,
+      isSplit: false
+    }
+  }
+};
+
 export default {
   info: {
     label: 'San Francisco Trees',

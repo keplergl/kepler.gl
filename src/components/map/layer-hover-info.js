@@ -151,7 +151,6 @@ const CellInfo = ({data, layer}) => {
 const LayerHoverInfoFactory = () => {
   const LayerHoverInfo = props => {
     const {data, layer} = props;
-
     if (!data || !layer) {
       return null;
     }
