@@ -24,6 +24,7 @@ import {LayerHoverInfoFactory} from 'kepler.gl/components';
 const CustomLayerHoverInfoFactory = (...deps) => {
   const LayerHoverInfo = LayerHoverInfoFactory(...deps);
   const LayerHoverInfoWrapper = props => {
+    // Disable tooltip for point layer
     if (props.layer?.id === 'point_layer') {
       return null;
     }
