@@ -25,7 +25,7 @@ import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import styled from 'styled-components';
 import {theme} from 'kepler.gl/styles';
 
-import sampleData from './data/sample-data';
+import sampleData, {config} from './data/sample-data';
 
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 
@@ -34,6 +34,7 @@ import {
   PanelHeaderFactory,
   PanelToggleFactory,
   CustomPanelsFactory,
+  LayerHoverInfoFactory,
   injectComponents
 } from 'kepler.gl/components';
 
@@ -41,6 +42,7 @@ import CustomPanelHeaderFactory from './components/panel-header';
 import CustomSidebarFactory from './components/side-bar';
 import CustomPanelToggleFactory from './components/panel-toggle';
 import CustomSidePanelFactory from './components/custom-panel';
+import CustomLayerHoverInfoFactory from './components/custom-layer-hover';
 
 const StyledMapConfigDisplay = styled.div`
   position: absolute;
@@ -61,12 +63,13 @@ const KeplerGl = injectComponents([
   [SidebarFactory, CustomSidebarFactory],
   [PanelHeaderFactory, CustomPanelHeaderFactory],
   [PanelToggleFactory, CustomPanelToggleFactory],
-  [CustomPanelsFactory, CustomSidePanelFactory]
+  [CustomPanelsFactory, CustomSidePanelFactory],
+  [LayerHoverInfoFactory, CustomLayerHoverInfoFactory]
 ]);
 
 class App extends Component {
   componentDidMount() {
-    this.props.dispatch(wrapTo('map1', addDataToMap({datasets: sampleData})));
+    this.props.dispatch(wrapTo('map1', addDataToMap({datasets: sampleData, config})));
   }
 
   render() {
