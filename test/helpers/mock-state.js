@@ -25,7 +25,13 @@ import {getInitialInputStyle} from 'reducers/map-style-updaters';
 
 import keplerGlReducer from 'reducers/core';
 import {addDataToMap} from 'actions/actions';
-import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_RANGE, DEFAULT_LAYER_OPACITY} from 'layers/layer-factory';
+import {
+  DEFAULT_TEXT_LABEL,
+  DEFAULT_COLOR_RANGE,
+  DEFAULT_LAYER_OPACITY,
+  DEFAULT_HIGHLIGHT_COLOR,
+  DEFAULT_LAYER_LABEL
+} from 'layers/layer-factory';
 import {DEFAULT_KEPLER_GL_PROPS} from 'components';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
@@ -449,7 +455,8 @@ export const expectedSavedLayer0 = {
   type: 'hexagon',
   config: {
     dataId: testCsvDataId,
-    label: 'new layer',
+    label: DEFAULT_LAYER_LABEL,
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [2, 2, 2],
     columns: {
       lat: 'gps_data.lat',
@@ -487,7 +494,8 @@ export const expectedLoadedLayer0 = {
   type: 'hexagon',
   config: {
     dataId: testCsvDataId,
-    label: 'new layer',
+    label: DEFAULT_LAYER_LABEL,
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [2, 2, 2],
     columns: {
       lat: 'gps_data.lat',
@@ -524,6 +532,7 @@ export const expectedSavedLayer1 = {
   config: {
     dataId: testCsvDataId,
     label: 'gps data',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
       lat: 'gps_data.lat',
@@ -579,6 +588,7 @@ export const expectedLoadedLayer1 = {
   config: {
     dataId: testCsvDataId,
     label: 'gps data',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
       lat: 'gps_data.lat',
@@ -632,6 +642,7 @@ export const expectedSavedLayer2 = {
   config: {
     dataId: testGeoJsonDataId,
     label: 'zip',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [1, 1, 1],
     columns: {
       geojson: '_geojson'
@@ -678,6 +689,7 @@ export const expectedLoadedLayer2 = {
   config: {
     dataId: testGeoJsonDataId,
     label: 'zip',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [1, 1, 1],
     columns: {
       geojson: '_geojson'
@@ -734,6 +746,7 @@ export const expectedSavedTripLayer = {
   config: {
     dataId: 'trip_data',
     label: 'Trip Data',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
       geojson: '_geojson'
