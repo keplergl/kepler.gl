@@ -483,14 +483,15 @@ export function validateLayerWithData(
   if (!type || !layerClasses.hasOwnProperty(type) || !savedLayer.config) {
     return null;
   }
-
+  console.log(savedLayer.config.highlightColor);
   let newLayer = new layerClasses[type]({
     id: savedLayer.id,
     dataId,
     label: savedLayer.config.label,
     color: savedLayer.config.color,
     isVisible: savedLayer.config.isVisible,
-    hidden: savedLayer.config.hidden
+    hidden: savedLayer.config.hidden,
+    highlightColor: savedLayer.config.highlightColor
   });
 
   // find column fieldIdx
