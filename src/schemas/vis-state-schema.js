@@ -441,6 +441,7 @@ export const layerPropsV1 = {
       dataId: null,
       label: null,
       color: null,
+      highlightColor: null,
       columns: new ColumnSchemaV1({
         version: VERSIONS.v1,
         key: 'columns'

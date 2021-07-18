@@ -43,7 +43,9 @@ import {
   LAYER_VIS_CONFIGS,
   DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_UI,
-  UNKNOWN_COLOR_KEY
+  UNKNOWN_COLOR_KEY,
+  DEFAULT_HIGHLIGHT_COLOR,
+  DEFAULT_LAYER_LABEL
 } from './layer-factory';
 
 import {generateHashId, isPlainObject} from 'utils/utils';
@@ -294,12 +296,12 @@ class Layer {
   getDefaultLayerConfig(props = {}) {
     return {
       dataId: props.dataId || null,
-      label: props.label || 'new layer',
+      label: props.label || DEFAULT_LAYER_LABEL,
       color: props.color || colorMaker.next().value,
       columns: props.columns || null,
       isVisible: props.isVisible || false,
       isConfigActive: props.isConfigActive || false,
-      highlightColor: props.highlightColor || [252, 242, 26, 255],
+      highlightColor: props.highlightColor || DEFAULT_HIGHLIGHT_COLOR,
       hidden: props.hidden || false,
 
       // TODO: refactor this into separate visual Channel config

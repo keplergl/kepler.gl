@@ -6,7 +6,8 @@ import {
   AnimationConfig,
   VisState,
   RGBColor,
-  Merge
+  Merge,
+  RGBAColor
 } from 'reducers';
 import {Schema} from './schema';
 
@@ -62,6 +63,7 @@ export type SavedLayer = {
     dataId: string;
     label: string;
     color: RGBColor;
+    highlightColor: RGBAColor;
     columns: {
       [key: string]: string;
     };
