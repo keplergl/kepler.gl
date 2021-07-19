@@ -92,7 +92,7 @@ import {createAction} from 'redux-actions';
  *       },
  *       data: sampleTripData
  *     },
- *     option: {
+ *     options: {
  *       centerMap: true,
  *       readOnly: false,
  *       keepExistingConfig: false
@@ -100,7 +100,7 @@ import {createAction} from 'redux-actions';
  *     info: {
  *       title: 'Taro and Blue',
  *       description: 'This is my map'
- *     }
+ *     },
  *     config: sampleConfig
  *   })
  * );
