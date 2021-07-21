@@ -50,7 +50,8 @@ import {
 
 import {generateHashId, isPlainObject} from 'utils/utils';
 
-import {getSampleData, getLatLngBounds, notNullorUndefined} from 'utils/data-utils';
+import {getLatLngBounds, notNullorUndefined} from 'utils/data-utils';
+import {getSampleData} from 'utils/table-utils/data-container-utils';
 
 import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
@@ -65,8 +66,9 @@ export const LAYER_ID_LENGTH = 6;
 const MAX_SAMPLE_SIZE = 5000;
 const defaultDomain = [0, 1];
 const dataFilterExtension = new DataFilterExtension({filterSize: MAX_GPU_FILTERS});
-const identity = d => d;
-const defaultDataAccessor = d => d.data;
+
+const defaultDataAccessor = dc => d => d;
+const defaultGetFieldValue = (field, d) => field.valueAccessor(d);
 
 export const OVERLAY_TYPE = keymirror({
   deckgl: null,
@@ -85,7 +87,6 @@ function* generateColor() {
 }
 
 export const colorMaker = generateColor();
-const defaultGetFieldValue = (field, d) => field.valueAccessor(d);
 
 /** @type {LayerClass} */
 class Layer {
@@ -421,14 +422,14 @@ class Layer {
     return [];
   }
 
-  getHoverData(object) {
+  getHoverData(object, dataContainer) {
     if (!object) {
       return null;
     }
-    // by default, each entry of layerData should have a data property points
-    // to the original item in the allData array
-    // each layer can implement its own getHoverData method
-    return object.data;
+
+    // By default, each entry of layerData should have an index of a row in the original data container.
+    // Each layer can implement its own getHoverData method
+    return dataContainer.row(object.index);
   }
 
   /**
@@ -734,10 +735,12 @@ class Layer {
 
   /**
    * Mapping from visual channels to deck.gl accesors
-   * @param {Function} dataAccessor - access kepler.gl layer data from deck.gl layer
+   * @param {Object} param Parameters
+   * @param {Function} param.dataAccessor Access kepler.gl layer data from deck.gl layer
+   * @param {import('utils/table-utils/data-container-interface').DataContainerInterface} param.dataContainer DataContainer to use use with dataAccessor
    * @return {Object} attributeAccessors - deck.gl layer attribute accessors
    */
-  getAttributeAccessors(dataAccessor = defaultDataAccessor) {
+  getAttributeAccessors({dataAccessor = defaultDataAccessor, dataContainer}) {
     const attributeAccessors = {};
 
     Object.keys(this.visualChannels).forEach(channel => {
@@ -768,7 +771,7 @@ class Layer {
         attributeAccessors[accessor] = d =>
           this.getEncodedChannelValue(
             scaleFunction,
-            dataAccessor(d),
+            dataAccessor(dataContainer)(d),
             this.config[field],
             nullValue
           );
@@ -780,7 +783,7 @@ class Layer {
       }
 
       if (!attributeAccessors[accessor]) {
-        Console.warn(`Failed to provide accesso function for ${accessor || channel}`);
+        Console.warn(`Failed to provide accessor function for ${accessor || channel}`);
       }
     });
 
@@ -793,12 +796,21 @@ class Layer {
       .range(fixed ? domain : range);
   }
 
-  getPointsBounds(allData, getPosition = identity) {
+  /**
+   * Get longitude and latitude bounds of the data.
+   * @param {import('utils/table-utils/data-container-interface').DataContainerInterface} dataContainer DataContainer to calculate bounds for.
+   * @param {(d: {index: number}, dc: import('utils/table-utils/data-container-interface').DataContainerInterface) => number[]} getPosition Access kepler.gl layer data from deck.gl layer
+   * @return {number[]|null} bounds of the data.
+   */
+  getPointsBounds(dataContainer, getPosition) {
     // no need to loop through the entire dataset
     // get a sample of data to calculate bounds
     const sampleData =
-      allData.length > MAX_SAMPLE_SIZE ? getSampleData(allData, MAX_SAMPLE_SIZE) : allData;
-    const points = sampleData.map(getPosition);
+      dataContainer.numRows() > MAX_SAMPLE_SIZE
+        ? getSampleData(dataContainer, MAX_SAMPLE_SIZE)
+        : dataContainer;
+
+    const points = sampleData.mapIndex(getPosition);
 
     const latBounds = getLatLngBounds(points, 1, [-90, 90]);
     const lngBounds = getLatLngBounds(points, 0, [-180, 180]);
@@ -872,14 +884,14 @@ class Layer {
       return {};
     }
     const layerDataset = datasets[this.config.dataId];
-    const {allData} = datasets[this.config.dataId];
+    const {dataContainer} = layerDataset;
 
-    const getPosition = this.getPositionAccessor();
+    const getPosition = this.getPositionAccessor(dataContainer);
     const dataUpdateTriggers = this.getDataUpdateTriggers(layerDataset);
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
     if (triggerChanged.getMeta) {
-      this.updateLayerMeta(allData, getPosition);
+      this.updateLayerMeta(dataContainer, getPosition);
     }
 
     let data = [];
@@ -893,6 +905,7 @@ class Layer {
 
     return {data, triggerChanged};
   }
+
   /**
    * helper function to update one layer domain when state.data changed
    * if state.data change is due ot update filter, newFiler will be passed
@@ -909,7 +922,7 @@ class Layer {
     Object.values(this.visualChannels).forEach(channel => {
       const {scale} = channel;
       const scaleType = this.config[scale];
-      // ordinal domain is based on allData, if only filter changed
+      // ordinal domain is based on dataContainer, if only filter changed
       // no need to update ordinal domain
       if (!newFilter || scaleType !== SCALE_TYPES.ordinal) {
         const {domain} = channel;
@@ -1137,16 +1150,16 @@ class Layer {
     }, []);
   }
 
-  calculateDataAttribute(dataset, getPosition) {
+  calculateDataAttribute(keplerTable, getPosition) {
     // implemented in subclasses
     return [];
   }
 
-  updateLayerMeta(allData, getPosition) {
+  updateLayerMeta(dataContainer, getPosition) {
     // implemented in subclasses
   }
 
-  getPositionAccessor() {
+  getPositionAccessor(dataContainer) {
     // implemented in subclasses
     return () => null;
   }

@@ -18,6 +18,8 @@ import {Layer} from 'layers';
 import {Field} from 'reducers/types';
 import {ParsedConfig} from 'schemas';
 import {FilterDatasetOpt} from './table-utils/kepler-table';
+import {DataContainerInterface} from './table-utils/data-container-interface';
+import {DataRow} from './table-utils/data-row';
 
 export function applyFilterFieldName(
   filter: Filter,
@@ -28,7 +30,7 @@ export function applyFilterFieldName(
 ): {
   filter: Filter | null;
   dataset: KeplerTable;
-}
+};
 
 export function getDefaultFilter(dataId: string | null | string[]): FilterBase;
 export function shouldApplyFilter(filter: Filter, datasetId: string): boolean;
@@ -64,14 +66,22 @@ export function getFilterRecord(
   option?: FilterDatasetOpt
 ): FilterRecord;
 
-function filterFunction(data: any[], index?: number): boolean;
+/**
+ * @param param An object that represents a row record.
+ * @param param.index Index of the row in data container.
+ * @returns Returns true to keep the element, or false otherwise.
+ */
+function filterFunction(
+  data: {index: number}
+): boolean;
 
 export function isValidFilterValue(type: string | null, value: any): boolean;
 export function getFilterFunction(
   field: Field | null,
   dataId: string,
   filter: Filter,
-  layers: Layer[]
+  layers: Layer[],
+  dataContainer: DataContainerInterface
 ): typeof filterFunction;
 
 export type FilterResult = {
@@ -86,7 +96,7 @@ export function filterDataByFilterTypes(
       [key: string]: typeof filterFunction;
     };
   },
-  allData: KeplerTable['allData']
+  dataContainer: DataContainerInterface
 ): FilterResult;
 
 export type FilterChanged = {
@@ -99,18 +109,14 @@ export function diffFilters(
   oldFilterRecord?: FilterRecord | {}
 ): FilterChanged;
 
-export type FilterDomain = any;
-
-export function getFieldDomain(allData: KeplerTable['allData'], filed: Field): FieldDomain;
-
-export function dataValueAccessor(data: any[]): number | null;
+export function dataValueAccessor(data: {index: number}): number | null;
 export function getTimestampFieldDomain(
-  data: KeplerTable['allData'],
+  dataContainer: DataContainerInterface,
   valueAccessor: typeof dataValueAccessor
 ): TimeRangeFieldDomain;
 
 export function getNumericFieldDomain(
-  data: KeplerTable['allData'],
+  dataContainer: DataContainerInterface,
   valueAccessor: typeof dataValueAccessor
 ): RangeFieldDomain;
 
@@ -157,11 +163,14 @@ export function getFilterPlot(
 export function getFilterIdInFeature(f: FeatureValue): string;
 export function isInRange(v: any, domain: number[]): boolean;
 export function updateFilterDataId(dataId: string): FilterBase;
-export function validateFiltersUpdateDatasets(state: VisState, filtersToValidate: ParsedConfig['visState']['filters']): {
-  validated:  Filter[],
-  failed: Filter[],
-  updatedDatasets: Datasets
-}
+export function validateFiltersUpdateDatasets(
+  state: VisState,
+  filtersToValidate: ParsedConfig['visState']['filters']
+): {
+  validated: Filter[];
+  failed: Filter[];
+  updatedDatasets: Datasets;
+};
 export function isInPolygon(point: number[], polygon: object): boolean;
 export function getIntervalBins(filter: TimeRangeFilter);
 export function getTimeWidgetHintFormatter(domain: [number, number]): string;

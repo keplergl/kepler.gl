@@ -28,7 +28,7 @@ import moment from 'moment';
  * @type {typeof import('./gpu-filter-utils').setFilterGpuMode}
  */
 export function setFilterGpuMode(filter, filters) {
-  // filter can be apply to multiple dataset, hence gpu filter mode should also be
+  // filter can be applied to multiple datasets, hence gpu filter mode should also be
   // an array, however, to keep us sane, for now, we only check if there is available channel for every dataId,
   // if all of them has, we set gpu mode to true
   // TODO: refactor filter so we don't keep an array of everything
@@ -152,17 +152,31 @@ function getEmptyFilterRange() {
   return new Array(MAX_GPU_FILTERS).fill(0).map(d => [0, 0]);
 }
 
-// By default filterValueAccessor expect each datum to be formated as {index, data}
-// data is the row in allData, and index is its index in allData
+/**
+ * Returns index of the data element.
+ * @param {any} d Data element with row index info.
+ * @returns number
+ */
 const defaultGetIndex = d => d.index;
-const defaultGetData = d => d.data;
 
 /**
- *
+ * Returns value at the specified row from the data container.
+ * @param {import('./table-utils/data-container-interface').DataContainerInterface} dc Data container.
+ * @param {any} d Data element with row index info.
+ * @param {number} fieldIndex Column index in the data container.
+ * @returns
+ */
+const defaultGetData = (dc, d, fieldIndex) => {
+  return dc.valueAt(d.index, fieldIndex);
+};
+
+/**
  * @param {Array<Object>} channels
+ * @param {string} dataId
+ * @param {Array<Object>} fields
  * @return {Function} getFilterValue
  */
-const getFilterValueAccessor = (channels, dataId, fields) => (
+const getFilterValueAccessor = (channels, dataId, fields) => dc => (
   getIndex = defaultGetIndex,
   getData = defaultGetData
 ) => d =>
@@ -178,8 +192,8 @@ const getFilterValueAccessor = (channels, dataId, fields) => (
       filter.type === FILTER_TYPES.timeRange
         ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
           ? field.filterProps.mappedValue[getIndex(d)]
-          : moment.utc(getData(d)[fieldIndex]).valueOf()
-        : getData(d)[fieldIndex];
+          : moment.utc(getData(dc, d, fieldIndex)).valueOf()
+        : getData(dc, d, fieldIndex);
 
     return notNullorUndefined(value) ? value - filter.domain[0] : Number.MIN_SAFE_INTEGER;
   });

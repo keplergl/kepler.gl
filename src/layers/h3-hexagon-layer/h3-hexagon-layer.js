@@ -27,10 +27,13 @@ import {getCentroid, idToPolygonGeo, h3IsValid, getHexFields} from './h3-utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {CHANNEL_SCALES, HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 
+import {createDataContainer} from 'utils/table-utils';
+
 const DEFAULT_LINE_SCALE_VALUE = 8;
 
 export const hexIdRequiredColumns = ['hex_id'];
-export const hexIdAccessor = ({hex_id}) => d => d.data[hex_id.fieldIdx];
+export const hexIdAccessor = ({hex_id}) => dc => d => dc.valueAt(d.index, hex_id.fieldIdx);
+
 export const defaultElevation = 500;
 export const defaultCoverage = 1;
 
@@ -49,7 +52,7 @@ export default class HexagonIdLayer extends Layer {
   constructor(props) {
     super(props);
     this.registerVisConfig(HexagonIdVisConfigs);
-    this.getPositionAccessor = () => hexIdAccessor(this.config.columns);
+    this.getPositionAccessor = dataContainer => hexIdAccessor(this.config.columns)(dataContainer);
   }
 
   get type() {
@@ -112,8 +115,8 @@ export default class HexagonIdLayer extends Layer {
     return this;
   }
 
-  static findDefaultLayerProps({fields = [], allData = []}) {
-    const hexFields = getHexFields(fields, allData);
+  static findDefaultLayerProps({fields = [], dataContainer}) {
+    const hexFields = getHexFields(fields, dataContainer);
     if (!hexFields.length) {
       return {props: []};
     }
@@ -143,19 +146,17 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({allData, filteredIndex}, getHexId) {
+  calculateDataAttribute({dataContainer, filteredIndex}, getHexId) {
     const data = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
-      const id = getHexId({data: allData[index]});
+      const id = getHexId({index});
       const centroid = this.dataToFeature.centroids[index];
 
       if (centroid) {
         data.push({
-          // keep a reference to the original data index
           index,
-          data: allData[index],
           id,
           centroid
         });
@@ -167,32 +168,36 @@ export default class HexagonIdLayer extends Layer {
   // TODO: fix complexity
   /* eslint-disable complexity */
   formatLayerData(datasets, oldLayerData, opt = {}) {
-    const {gpuFilter} = datasets[this.config.dataId];
-    const getHexId = this.getPositionAccessor();
+    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
+    const getHexId = this.getPositionAccessor(dataContainer);
     const {data} = this.updateData(datasets, oldLayerData);
-    const accessors = this.getAttributeAccessors();
+    const accessors = this.getAttributeAccessors({dataContainer});
 
     return {
       data,
       getHexId,
-      getFilterValue: gpuFilter.filterValueAccessor(),
+      getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
       ...accessors
     };
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(allData, getHexId) {
-    const centroids = allData.map((d, index) => {
-      const id = getHexId({data: d});
+  updateLayerMeta(dataContainer, getHexId) {
+    const centroids = dataContainer.map((d, index) => {
+      const id = getHexId({index});
       if (!h3IsValid(id)) {
         return null;
       }
       // save a reference of centroids to dataToFeature
       // so we don't have to re calculate it again
       return getCentroid({id});
-    });
+    }, true);
 
-    const bounds = this.getPointsBounds(centroids);
+    const centroidsDataContainer = createDataContainer(centroids);
+
+    const bounds = this.getPointsBounds(centroidsDataContainer, (d, dc) => {
+      return [dc.valueAt(d.index, 0), dc.valueAt(d.index, 1)];
+    });
     this.dataToFeature = {centroids};
     this.updateMeta({bounds});
   }

@@ -138,7 +138,7 @@ export function processCsvData(rawData, header) {
   cleanUpFalsyCsvValue(rows);
   // No need to run type detection on every data point
   // here we get a list of none null values to run analyze on
-  const sample = getSampleForTypeAnalyze({fields: headerRow, allData: rows});
+  const sample = getSampleForTypeAnalyze({fields: headerRow, rows});
   const fields = getFieldsFromData(sample, headerRow);
   const parsedRows = parseRowsByFields(rows, fields);
 
@@ -162,8 +162,8 @@ export function parseRowsByFields(rows, fields) {
  *
  * @type {typeof import('./data-processor').getSampleForTypeAnalyze}
  */
-export function getSampleForTypeAnalyze({fields, allData, sampleCount = 50}) {
-  const total = Math.min(sampleCount, allData.length);
+export function getSampleForTypeAnalyze({fields, rows, sampleCount = 50}) {
+  const total = Math.min(sampleCount, rows.length);
   // const fieldOrder = fields.map(f => f.name);
   const sample = range(0, total, 1).map(d => ({}));
 
@@ -175,15 +175,13 @@ export function getSampleForTypeAnalyze({fields, allData, sampleCount = 50}) {
     let j = 0;
 
     while (j < total) {
-      if (i >= allData.length) {
+      if (i >= rows.length) {
         // if depleted data pool
         sample[j][field] = null;
         j++;
-      } else if (notNullorUndefined(allData[i][fieldIdx])) {
-        sample[j][field] =
-          typeof allData[i][fieldIdx] === 'string'
-            ? allData[i][fieldIdx].trim()
-            : allData[i][fieldIdx];
+      } else if (notNullorUndefined(rows[i][fieldIdx])) {
+        const value = rows[i][fieldIdx];
+        sample[j][field] = typeof value === 'string' ? value.trim() : value;
         j++;
         i++;
       } else {
@@ -314,7 +312,9 @@ export function getFieldsFromData(data, fieldOrder) {
       fieldIdx: index,
       type: analyzerTypeToFieldType(type),
       analyzerType: type,
-      valueAccessor: values => values[index]
+      valueAccessor: dc => d => {
+        return dc.valueAt(d.index, index);
+      }
     };
   });
 
@@ -535,18 +535,18 @@ export function processGeojson(rawData) {
 
 /**
  * On export data to csv
- * @param {Array<Array>} data `dataset.allData` or filtered data `dataset.data`
+ * @param {import('utils/table-utils/data-container-interface').DataContainerInterface} dataContainer
  * @param {Array<Object>} fields `dataset.fields`
  * @returns {string} csv string
  */
-export function formatCsv(data, fields) {
+export function formatCsv(dataContainer, fields) {
   const columns = fields.map(f => f.displayName || f.name);
   const formattedData = [columns];
 
   // parse geojson object as string
-  data.forEach(row => {
+  for (const row of dataContainer.rows(true)) {
     formattedData.push(row.map((d, i) => parseFieldValue(d, fields[i].type)));
-  });
+  }
 
   return csvFormatRows(formattedData);
 }
@@ -610,7 +610,7 @@ export function validateInputData(data) {
   // because we simply lost faith in humanity
   const sampleData = getSampleForTypeAnalyze({
     fields: fields.map(f => f.name),
-    allData: rows
+    rows
   });
   const fieldOrder = fields.map(f => f.name);
   const meta = getFieldsFromData(sampleData, fieldOrder);
@@ -635,6 +635,7 @@ function findNonEmptyRowsAtField(rows, fieldIdx, total) {
   }
   return sample;
 }
+
 /**
  * Process saved kepler.gl json to be pass to [`addDataToMap`](../actions/actions.md#adddatatomap).
  * The json object should contain `datasets` and `config`.

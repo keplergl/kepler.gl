@@ -91,7 +91,6 @@ test('#ClusterLayer -> formatLayerData', t => {
         const {layerData, layer} = result;
         const expectedLayerData = {
           data: [0, 1, 4, 5, 7].map(index => ({
-            data: testRows[index],
             index
           })),
           _filterData: () => {},
@@ -171,7 +170,6 @@ test('#ClusterLayer -> formatLayerData', t => {
         const {layerData} = result;
         const expectedLayerData = {
           data: [0, 1, 4, 5, 7].map(index => ({
-            data: testRows[index],
             index
           })),
           _filterData: () => {},
@@ -285,8 +283,7 @@ test('#ClusterLayer -> renderLayer', t => {
           {
             points: [
               {
-                index: 4,
-                data: preparedDataset.allData[4]
+                index: 4
               }
             ],
             position: [-122.136795, 37.456535],
@@ -296,8 +293,7 @@ test('#ClusterLayer -> renderLayer', t => {
           {
             points: [
               {
-                index: 5,
-                data: preparedDataset.allData[5]
+                index: 5
               }
             ],
             position: [-122.10239, 37.40066],
@@ -307,8 +303,7 @@ test('#ClusterLayer -> renderLayer', t => {
           {
             points: [
               {
-                index: 7,
-                data: preparedDataset.allData[7]
+                index: 7
               }
             ],
             position: [-122.26108, 37.879066],

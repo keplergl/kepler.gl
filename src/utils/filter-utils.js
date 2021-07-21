@@ -353,20 +353,20 @@ export function getFilterProps(field, fieldDomain) {
   }
 }
 
-export const getPolygonFilterFunctor = (layer, filter) => {
-  const getPosition = layer.getPositionAccessor();
+export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
+  const getPosition = layer.getPositionAccessor(dataContainer);
 
   switch (layer.type) {
     case LAYER_TYPES.point:
     case LAYER_TYPES.icon:
       return data => {
-        const pos = getPosition({data});
+        const pos = getPosition(data);
         return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
       };
     case LAYER_TYPES.arc:
     case LAYER_TYPES.line:
       return data => {
-        const pos = getPosition({data});
+        const pos = getPosition(data);
         return (
           pos.every(Number.isFinite) &&
           [
@@ -377,14 +377,14 @@ export const getPolygonFilterFunctor = (layer, filter) => {
       };
     case LAYER_TYPES.hexagonId:
       if (layer.dataToFeature && layer.dataToFeature.centroids) {
-        return (data, index) => {
+        return data => {
           // null or getCentroid({id})
-          const centroid = layer.dataToFeature.centroids[index];
+          const centroid = layer.dataToFeature.centroids[data.index];
           return centroid && isInPolygon(centroid, filter.value);
         };
       }
       return data => {
-        const id = getPosition({data});
+        const id = getPosition(data);
         if (!h3IsValid(id)) {
           return false;
         }
@@ -401,10 +401,11 @@ export const getPolygonFilterFunctor = (layer, filter) => {
  * @param dataId Dataset id
  * @param filter Filter object
  * @param layers list of layers to filter upon
+ * @param dataContainer Data container
  * @return filterFunction
  * @type {typeof import('./filter-utils').getFilterFunction}
  */
-export function getFilterFunction(field, dataId, filter, layers) {
+export function getFilterFunction(field, dataId, filter, layers, dataContainer) {
   // field could be null in polygon filter
   const valueAccessor = field ? field.valueAccessor : data => null;
   const defaultFunc = d => true;
@@ -422,9 +423,9 @@ export function getFilterFunction(field, dataId, filter, layers) {
       }
       const mappedValue = get(field, ['filterProps', 'mappedValue']);
       const accessor = Array.isArray(mappedValue)
-        ? (data, index) => mappedValue[index]
+        ? data => mappedValue[data.index]
         : data => timeToUnixMilli(valueAccessor(data), field.format);
-      return (data, index) => isInRange(accessor(data, index), filter.value);
+      return data => isInRange(accessor(data), filter.value);
     case FILTER_TYPES.polygon:
       if (!layers || !layers.length) {
         return defaultFunc;
@@ -433,9 +434,9 @@ export function getFilterFunction(field, dataId, filter, layers) {
       const layerFilterFunctions = filter.layerId
         .map(id => layers.find(l => l.id === id))
         .filter(l => l && l.config.dataId === dataId)
-        .map(layer => getPolygonFilterFunctor(layer, filter));
+        .map(layer => getPolygonFilterFunctor(layer, filter, dataContainer));
 
-      return (data, index) => layerFilterFunctions.every(filterFunc => filterFunc(data, index));
+      return data => layerFilterFunctions.every(filterFunc => filterFunc(data));
     default:
       return defaultFunc;
   }
@@ -448,28 +449,32 @@ export function updateFilterDataId(dataId) {
 /**
  * @type {typeof import('./filter-utils').filterDataByFilterTypes}
  */
-export function filterDataByFilterTypes({dynamicDomainFilters, cpuFilters, filterFuncs}, allData) {
+export function filterDataByFilterTypes(
+  {dynamicDomainFilters, cpuFilters, filterFuncs},
+  dataContainer
+) {
   const result = {
     ...(dynamicDomainFilters ? {filteredIndexForDomain: []} : {}),
     ...(cpuFilters ? {filteredIndex: []} : {})
   };
 
-  for (let i = 0; i < allData.length; i++) {
-    const d = allData[i];
+  const filterContext = {index: -1, dataContainer};
+  const filterFuncCaller = filter => filterFuncs[filter.id](filterContext);
 
-    const matchForDomain =
-      dynamicDomainFilters && dynamicDomainFilters.every(filter => filterFuncs[filter.id](d, i));
+  const numRows = dataContainer.numRows();
+  for (let i = 0; i < numRows; ++i) {
+    filterContext.index = i;
 
+    const matchForDomain = dynamicDomainFilters && dynamicDomainFilters.every(filterFuncCaller);
     if (matchForDomain) {
       // @ts-ignore
-      result.filteredIndexForDomain.push(i);
+      result.filteredIndexForDomain.push(filterContext.index);
     }
 
-    const matchForRender = cpuFilters && cpuFilters.every(filter => filterFuncs[filter.id](d, i));
-
+    const matchForRender = cpuFilters && cpuFilters.every(filterFuncCaller);
     if (matchForRender) {
       // @ts-ignore
-      result.filteredIndex.push(i);
+      result.filteredIndex.push(filterContext.index);
     }
   }
 
@@ -588,13 +593,13 @@ export function adjustValueToFilterDomain(value, {domain, type}) {
  *
  * @type {typeof import('./filter-utils').getNumericFieldDomain}
  */
-export function getNumericFieldDomain(data, valueAccessor) {
+export function getNumericFieldDomain(dataContainer, valueAccessor) {
   let domain = [0, 1];
   let step = 0.1;
 
-  const mappedValue = Array.isArray(data) ? data.map(valueAccessor) : [];
+  const mappedValue = dataContainer.mapIndex(valueAccessor);
 
-  if (Array.isArray(data) && data.length > 1) {
+  if (dataContainer.numRows() > 1) {
     domain = ScaleUtils.getLinearDomain(mappedValue);
     const diff = domain[1] - domain[0];
 
@@ -647,14 +652,13 @@ export function getNumericStepSize(diff) {
 
 /**
  * Calculate timestamp domain and suitable step
- *
  * @type {typeof import('./filter-utils').getTimestampFieldDomain}
  */
-export function getTimestampFieldDomain(data, valueAccessor) {
+export function getTimestampFieldDomain(dataContainer, valueAccessor) {
   // to avoid converting string format time to epoch
   // every time we compare we store a value mapped to int in filter domain
 
-  const mappedValue = Array.isArray(data) ? data.map(valueAccessor) : [];
+  const mappedValue = dataContainer.mapIndex(valueAccessor);
   const domain = ScaleUtils.getLinearDomain(mappedValue);
   const defaultTimeFormat = getTimeWidgetTitleFormatter(domain);
 
@@ -823,11 +827,14 @@ export function getFilterPlot(filter, dataset) {
   }
 
   // return lineChart
-  const series = dataset.allData
-    .map((d, i) => ({
-      x: mappedValue[i],
-      y: d[fieldIdx]
-    }))
+  const series = dataset.dataContainer
+    .map(
+      (row, rowIndex) => ({
+        x: mappedValue[rowIndex],
+        y: row.valueAt(fieldIdx)
+      }),
+      true
+    )
     .filter(({x, y}) => Number.isFinite(x) && Number.isFinite(y))
     .sort((a, b) => ascending(a.x, b.x));
 

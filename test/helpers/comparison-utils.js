@@ -234,7 +234,12 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
         break;
       case 'gpuFilter':
         // test gpuFilter props
-        cmpGpuFilterProp(t, expectedDataset.gpuFilter, actualDataset.gpuFilter);
+        cmpGpuFilterProp(
+          t,
+          expectedDataset.gpuFilter,
+          actualDataset.gpuFilter,
+          actualDataset.dataContainer
+        );
         break;
       case 'filterRecord':
       case 'filterRecordCPU':
@@ -269,14 +274,14 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
   });
 }
 
-export function cmpGpuFilterProp(t, expectedGpuFilter, actualGpuFilter) {
+export function cmpGpuFilterProp(t, expectedGpuFilter, actualGpuFilter, dataContainer) {
   cmpObjectKeys(t, expectedGpuFilter, actualGpuFilter, 'gpu filter');
 
   Object.keys(expectedGpuFilter).forEach(key => {
     if (key === 'filterValueAccessor' && expectedGpuFilter.filterValueAccessor.inputs) {
       const {inputs, result} = expectedGpuFilter.filterValueAccessor;
       t.deepEqual(
-        actualGpuFilter.filterValueAccessor()(...inputs),
+        actualGpuFilter.filterValueAccessor(dataContainer)()(...inputs),
         result,
         'getFilterValue should be correct'
       );

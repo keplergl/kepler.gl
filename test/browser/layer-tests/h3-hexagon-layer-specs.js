@@ -90,13 +90,11 @@ test('#H3Layer -> formatLayerData', t => {
         const expectedLayerData = {
           data: [
             {
-              data: testRows[0],
               index: 0,
               id: '89283082c2fffff',
               centroid: getCentroid({id: '89283082c2fffff'})
             },
             {
-              data: testRows[4],
               index: 4,
               id: '89283082c3bffff',
               centroid: getCentroid({id: '89283082c3bffff'})

@@ -38,13 +38,10 @@ function fetch(url, {propName, layer}) {
   return fetch(url).then(response => response.json());
 }
 
-export const scenegraphPosAccessor = ({lat, lng, altitude}) => d => [
-  // lng
-  d.data[lng.fieldIdx],
-  // lat
-  d.data[lat.fieldIdx],
-  // altitude
-  altitude && altitude.fieldIdx > -1 ? d.data[altitude.fieldIdx] : 0
+export const scenegraphPosAccessor = ({lat, lng, altitude}) => dc => d => [
+  dc.valueAt(d.index, lng.fieldIdx),
+  dc.valueAt(d.index, lat.fieldIdx),
+  altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
 ];
 
 export const scenegraphVisConfigs = {
@@ -81,7 +78,8 @@ export default class ScenegraphLayer extends Layer {
     super(props);
 
     this.registerVisConfig(scenegraphVisConfigs);
-    this.getPositionAccessor = () => scenegraphPosAccessor(this.config.columns);
+    this.getPositionAccessor = dataContainer =>
+      scenegraphPosAccessor(this.config.columns)(dataContainer);
 
     // prepare layer info modal
     this._layerInfoModal = ScenegraphInfoModalFactory();
@@ -117,20 +115,18 @@ export default class ScenegraphLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({allData, filteredIndex}, getPosition) {
+  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
     const data = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
-      const pos = getPosition({data: allData[index]});
+      const pos = getPosition({index});
 
       // if doesn't have point lat or lng, do not add the point
       // deck.gl can't handle position = null
       if (pos.every(Number.isFinite)) {
         data.push({
-          data: allData[index],
           position: pos,
-          // index is important for filter
           index
         });
       }
@@ -139,18 +135,18 @@ export default class ScenegraphLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
-    const {gpuFilter} = datasets[this.config.dataId];
+    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);
-    const getPosition = this.getPositionAccessor();
+    const getPosition = this.getPositionAccessor(dataContainer);
     return {
       data,
       getPosition,
-      getFilterValue: gpuFilter.filterValueAccessor()
+      getFilterValue: gpuFilter.filterValueAccessor(dataContainer)()
     };
   }
 
-  updateLayerMeta(allData, getPosition) {
-    const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
+  updateLayerMeta(dataContainer, getPosition) {
+    const bounds = this.getPointsBounds(dataContainer, getPosition);
     this.updateMeta({bounds});
   }
 

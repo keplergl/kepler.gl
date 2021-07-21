@@ -129,12 +129,12 @@ export function timeToUnixMilli(value, format) {
  *
  * @type {typeof import('./data-utils').maybeToDate}
  */
-export function maybeToDate(isTime, fieldIdx, format, d) {
+export function maybeToDate(isTime, fieldIdx, format, dc, d) {
   if (isTime) {
-    return timeToUnixMilli(d[fieldIdx], format);
+    return timeToUnixMilli(dc.valueAt(d.index, fieldIdx), format);
   }
 
-  return d[fieldIdx];
+  return dc.valueAt(d.index, fieldIdx);
 }
 
 /**

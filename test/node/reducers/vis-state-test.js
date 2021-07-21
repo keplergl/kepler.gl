@@ -42,6 +42,8 @@ import {ALL_FIELD_TYPES, EDITOR_MODES} from 'constants/default-settings';
 
 const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
 
+import {createDataContainer} from 'utils/table-utils';
+
 // fixtures
 import testData, {mergedTimeFilter, testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {
@@ -365,7 +367,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
     isReversed: true,
     colors: ['a', 'b', 'c']
   };
-  const smoothie = createNewDataEntry({
+  const datasets = createNewDataEntry({
     info: {id: 'smoothie'},
     data: {
       rows: testAllData,
@@ -374,13 +376,17 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   });
   const oldState = {
     ...INITIAL_VIS_STATE,
-    datasets: smoothie,
+    datasets,
     layers: [pointLayer],
     layerData: []
   };
 
   // set point layer colorField to a string field
-  const stringField = testFields.find(f => f.type === 'string');
+  let stringField = testFields.find(f => f.type === 'string');
+  stringField = {
+    ...stringField,
+    valueAccessor: stringField.valueAccessor(datasets.smoothie.dataContainer)
+  };
   let nextState = reducer(
     oldState,
     VisStateActions.layerVisualChannelConfigChange(pointLayer, {colorField: stringField}, 'color')
@@ -402,7 +408,8 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.2', t => {
   t.equal(newLayer.config.visConfig.colorRange, mockColorRange, 'should update color range');
 
   // set point layer sizeField to a int field
-  const intField = testFields.find(f => f.type === 'integer');
+  let intField = testFields.find(f => f.type === 'integer');
+  intField = {...intField, valueAccessor: intField.valueAccessor(datasets.smoothie.dataContainer)};
   let nextState2 = reducer(
     nextState,
     VisStateActions.layerVisualChannelConfigChange(newLayer, {sizeField: intField}, 'size')
@@ -927,7 +934,6 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
       filterValueAccessor: {
         inputs: [
           {
-            data: dataset0.allData[0],
             index: 0
           }
         ],
@@ -959,7 +965,7 @@ test('#visStateReducer -> REMOVE_FILTER', t => {
   // remove smoothie filter - gpu: true, fixedDomain: false
   const newReducer = reducer(initialState, VisStateActions.removeFilter(1));
 
-  const expectedLayerData1 = {data: dataset1.allData.map(d => d)};
+  const expectedLayerData1 = {data: dataset1.dataContainer.mapIndex(d => d)};
   const expectedState = {
     ...initialState,
     filters: expectedFilters,
@@ -1194,7 +1200,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
       filteredIndex: mockRawData.rows.map((_, i) => i),
       filteredIndexForDomain: mockRawData.rows.map((_, i) => i),
       allIndexes: mockRawData.rows.map((_, i) => i),
-      allData: mockRawData.rows,
+      dataContainer: createDataContainer(mockRawData.rows, {fields: mockRawData.fields}),
       gpuFilter: {
         filterRange: [
           [0, 0],
@@ -1347,6 +1353,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
     }
   });
 
+  const testFields3 = [{id: 'a'}, {id: 'b'}];
   const oldState = {
     ...INITIAL_VIS_STATE,
     layers: [mockLayer],
@@ -1358,8 +1365,10 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
     ],
     datasets: {
       snowflake: {
-        fields: [{id: 'a'}, {id: 'b'}],
-        allData: [['something'], ['something_else']]
+        fields: testFields3,
+        dataContainer: createDataContainer([['something'], ['something_else']], {
+          fields: testFields3
+        })
       }
     },
     filters: [{name: 'hello'}, {name: 'world'}],
@@ -1378,10 +1387,13 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
     splitMaps: []
   };
 
+  const testFields2 = [{id: 'a'}, {id: 'b'}];
   const expectedDatasets = {
     snowflake: {
-      fields: [{id: 'a'}, {id: 'b'}],
-      allData: [['something'], ['something_else']]
+      fields: testFields2,
+      dataContainer: createDataContainer([['something'], ['something_else']], {
+        fields: testFields2
+      })
     },
     smoothie: {
       metadata: {
@@ -1389,7 +1401,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
         label: 'smoothie and milkshake'
       },
       fields: expectedFields,
-      allData: mockRawData.rows,
+      dataContainer: createDataContainer(mockRawData.rows, {fields: mockRawData.fields}),
       color: 'donnot test me',
       filteredIndex: mockRawData.rows.map((_, i) => i),
       filteredIndexForDomain: mockRawData.rows.map((_, i) => i),
@@ -1513,11 +1525,11 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
     id: 'milkshake',
     label: 'king milkshake',
     color: 'donnot test me',
-    allData: rows,
+    dataContainer: createDataContainer(rows, {fields}),
     filteredIndex: rows.map((_, i) => i),
     filteredIndexForDomain: rows.map((_, i) => i),
     allIndexes: rows.map((_, i) => i),
-    fields: fields.map((f, i) => ({...f, valueAccessor: values => values[i]})),
+    fields,
     fieldPairs: [],
     gpuFilter: {
       filterRange: [
@@ -1709,7 +1721,8 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     ])
   );
 
-  const allIndexes = mockRawData.rows.map((_, i) => i);
+  const dc = createDataContainer(mockRawData.rows, {fields: mockRawData.fields});
+  const allIndexes = dc.getPlainIndex();
 
   const expectedDatasets = {
     smoothie: {
@@ -1751,12 +1764,12 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
           gpuFilter_3: null
         },
         filterValueAccessor: {
-          inputs: [{data: mockRawData.rows[0], index: 1}],
+          inputs: [{index: 0}],
           result: [12.25 - expectedFilter.domain[0], 0, 0, 0]
         }
       },
       allIndexes,
-      allData: mockRawData.rows,
+      dataContainer: dc,
       color: 'donot test me',
       id: 'smoothie',
       label: 'smoothie and milkshake',
@@ -2013,7 +2026,8 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     }
   };
 
-  const {allData} = initialState.datasets.smoothie;
+  const fieldsEx = [...initialState.datasets.smoothie.fields.slice(0, 10), updatedField];
+  const {dataContainer} = initialState.datasets.smoothie;
 
   // test dataset
   const expectedDataset = {
@@ -2024,11 +2038,11 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     id: 'smoothie',
     label: 'queen smoothie',
     color: 'donnot test me',
-    allData,
-    fields: [...initialState.datasets.smoothie.fields.slice(0, 10), updatedField],
-    filteredIndex: allData.map((d, i) => i),
-    filteredIndexForDomain: allData.map((d, i) => i),
-    allIndexes: allData.map((d, i) => i),
+    dataContainer,
+    fields: fieldsEx,
+    filteredIndex: dataContainer.getPlainIndex(),
+    filteredIndexForDomain: dataContainer.getPlainIndex(),
+    allIndexes: dataContainer.getPlainIndex(),
     filterRecord: {
       dynamicDomain: [],
       fixedDomain: [],
@@ -2049,7 +2063,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
         gpuFilter_3: null
       },
       filterValueAccessor: {
-        inputs: [{data: allData[0], index: 0}],
+        inputs: [{index: 0}],
         result: [0, 0, 0, 0]
       }
     },
@@ -2097,7 +2111,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
       cpu: [updatedFilterWValue],
       gpu: []
     },
-    allData,
+    dataContainer,
     filteredIndex: [17, 18, 19, 20, 21, 22],
     filteredIndexForDomain: [17, 18, 19, 20, 21, 22],
     changedFilters: {
@@ -2112,12 +2126,12 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
   const expectedLayerData1 = {
     data: [
-      {data: allData[17], index: 17, position: [31.2165983, 30.0538936, 0]},
-      {data: allData[18], index: 18, position: [31.2148748, 30.060911, 0]},
-      {data: allData[19], index: 19, position: [31.2212278, 30.060334, 0]},
-      {data: allData[20], index: 20, position: [31.2288985, 30.0554663, 0]},
-      {data: allData[21], index: 21, position: [31.2187021, 30.0614122, 0]},
-      {data: allData[22], index: 22, position: [31.2191059, 30.0612697, 0]}
+      {index: 17, position: [31.2165983, 30.0538936, 0]},
+      {index: 18, position: [31.2148748, 30.060911, 0]},
+      {index: 19, position: [31.2212278, 30.060334, 0]},
+      {index: 20, position: [31.2288985, 30.0554663, 0]},
+      {index: 21, position: [31.2187021, 30.0614122, 0]},
+      {index: 22, position: [31.2191059, 30.0612697, 0]}
     ],
     getPosition: () => {},
     getColor: () => {},
@@ -2292,7 +2306,8 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
         // is time
         f.type === ALL_FIELD_TYPES.timestamp,
         i,
-        f.format
+        f.format,
+        initialState.datasets.milkshake.dataContainer
       ),
       ...(f.name === 'TRIPS' ? {filterProps: geoJsonTripFilterProps} : {})
     })),
@@ -2310,7 +2325,7 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
         gpuFilter_3: null
       },
       filterValueAccessor: {
-        inputs: [{data: initialState.datasets.milkshake.allData[0], index: 0}],
+        inputs: [{index: 0}],
         result: [7, 0, 0, 0]
       }
     },
@@ -2514,13 +2529,13 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
         gpuFilter_3: null
       },
       filterValueAccessor: {
-        inputs: [{data: datasetSmoothie.allData[1], index: 1}],
+        inputs: [{index: 1}],
         result: [61000, 0, 0, 0]
       }
     },
     // copy everything
-    filteredIndex: datasetSmoothie.allData.map((d, i) => i),
-    filteredIndexForDomain: datasetSmoothie.allData.map((d, i) => i),
+    filteredIndex: datasetSmoothie.dataContainer.getPlainIndex(),
+    filteredIndexForDomain: datasetSmoothie.dataContainer.getPlainIndex(),
     changedFilters: {
       dynamicDomain: null,
       fixedDomain: {[filterId]: 'value_changed'},
@@ -2579,7 +2594,7 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
         gpuFilter_3: null
       },
       filterValueAccessor: {
-        inputs: [{data: datasetSmoothie.allData[1], index: 1}],
+        inputs: [{index: 1}],
         result: [61000, 0, 0, 0]
       }
     },

@@ -232,11 +232,13 @@ const columnWidthFunction = (columns, cellSizeCache, ghost) => ({index}) => {
 /*
  * This is an accessor method used to generalize getting a cell from a data row
  */
-const getRowCell = ({rows, columns, column, colMeta, rowIndex, sortOrder}) => {
+const getRowCell = ({dataContainer, columns, column, colMeta, rowIndex, sortOrder}) => {
   const rowIdx = sortOrder && sortOrder.length ? get(sortOrder, rowIndex) : rowIndex;
   const {type} = colMeta[column];
 
-  return parseFieldValue(get(rows, [rowIdx, columns.indexOf(column)], 'Err'), type);
+  let value = dataContainer.valueAt(rowIdx, columns.indexOf(column));
+  if (value === undefined) value = 'Err';
+  return parseFieldValue(value, type);
 };
 
 export const TableSection = ({
@@ -300,7 +302,7 @@ DataTableFactory.deps = [FieldTokenFactory];
 function DataTableFactory(FieldToken) {
   class DataTable extends Component {
     static defaultProps = {
-      rows: [],
+      dataContainer: null,
       pinnedColumns: [],
       colMeta: {},
       cellSizeCache: {},
@@ -460,16 +462,18 @@ function DataTableFactory(FieldToken) {
     renderDataCell = (columns, isPinned, props) => {
       return cellInfo => {
         const {columnIndex, key, style, rowIndex} = cellInfo;
-        const {rows, colMeta} = props;
+        const {dataContainer, colMeta} = props;
         const column = columns[columnIndex];
         const isGhost = column.ghost;
 
         const rowCell = isGhost ? '' : getRowCell({...props, column, rowIndex});
         const type = isGhost ? null : colMeta[column].type;
 
+        const lastRowIndex = dataContainer ? dataContainer.numRows() - 1 : 0;
+
         const endCell = columnIndex === columns.length - 1;
         const firstCell = columnIndex === 0;
-        const bottomCell = rowIndex === rows.length - 1;
+        const bottomCell = rowIndex === lastRowIndex;
         const alignRight = fieldToAlignRight[type];
 
         const cell = (
@@ -496,7 +500,7 @@ function DataTableFactory(FieldToken) {
     };
 
     render() {
-      const {rows, pinnedColumns, theme = {}, fixedWidth, fixedHeight} = this.props;
+      const {dataContainer, pinnedColumns, theme = {}, fixedWidth, fixedHeight} = this.props;
       const unpinnedColumns = this.unpinnedColumns(this.props);
 
       const {cellSizeCache, moreOptionsColumn, ghost} = this.state;
@@ -521,7 +525,7 @@ function DataTableFactory(FieldToken) {
         cellSizeCache,
         overscanColumnCount,
         overscanRowCount,
-        rowCount: (rows || []).length,
+        rowCount: dataContainer ? dataContainer.numRows() : 0,
         rowHeight
       };
 

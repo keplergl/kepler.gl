@@ -39,6 +39,8 @@ import {getDatasetFieldIndexForFilter} from 'utils/gpu-filter-utils';
 import {FILTER_TYPES} from 'constants/default-settings';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
 
+import {createDataContainer} from 'utils/table-utils';
+
 /* eslint-disable max-statements */
 test('filterUtils -> adjustValueToFilterDomain', t => {
   // TODO: needs id
@@ -370,19 +372,20 @@ test('filterUtils -> Polygon getFilterFunction ', t => {
   const dataset = {
     id: 'puppy',
     data: mockPolygonData.data,
-    allData: mockPolygonData.data,
     fields: mockPolygonData.fields
   };
+
+  const dataContainer = createDataContainer(dataset.data);
 
   const {layers, data} = mockPolygonData;
 
   const polygonFilter = generatePolygonFilter(layers, mockPolygonFeature);
 
-  let filterFunction = getFilterFunction(null, dataset.id, polygonFilter, []);
+  let filterFunction = getFilterFunction(null, dataset.id, polygonFilter, [], dataContainer);
 
   t.equal(filterFunction(data[0], 0), true, `Should return true because layer list is empty`);
 
-  filterFunction = getFilterFunction(null, 'puppy-2', polygonFilter, layers);
+  filterFunction = getFilterFunction(null, 'puppy-2', polygonFilter, layers, dataContainer);
 
   t.equal(
     filterFunction(data[0], 0),
@@ -472,21 +475,7 @@ test('filterUtils -> diffFilters', t => {
 });
 
 test('filterUtils -> getTimestampFieldDomain', t => {
-  /* eslint-disable func-style */
-  const valueAccessor = d => moment.utc(d).valueOf();
-  /* eslint-enable func-style */
-
   const timeData = {
-    no: {
-      input: 0.5,
-      expect: {
-        domain: [0, 1],
-        step: 0.05,
-        ...getHistogram([0, 1], []),
-        mappedValue: [],
-        defaultTimeFormat: 'L LTS'
-      }
-    },
     zero: {
       input: ['2016-10-01 09:45:39', '2016-10-01 09:45:39'],
       expect: {
@@ -547,11 +536,14 @@ test('filterUtils -> getTimestampFieldDomain', t => {
   };
 
   Object.keys(timeData).forEach(key => {
-    const tsFieldDomain = getTimestampFieldDomain(timeData[key].input, valueAccessor);
+    const dataContainer = createDataContainer(timeData[key].input.map(d => [d]));
+    const valueAccessor = dc => d => moment.utc(dc.valueAt(d.index, 0)).valueOf();
+    const tsFieldDomain = getTimestampFieldDomain(dataContainer, valueAccessor(dataContainer));
+
     t.deepEqual(
       Object.keys(tsFieldDomain).sort(),
       Object.keys(timeData[key].expect).sort(),
-      'Should domain should have same keys'
+      'domain should have same keys'
     );
 
     Object.keys(timeData[key].expect).forEach(k => {

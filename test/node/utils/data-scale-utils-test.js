@@ -25,24 +25,22 @@ import {
   getLinearDomain,
   getLogDomain
 } from 'utils/data-scale-utils';
+import {createDataContainer} from 'utils/table-utils';
 
 function numberSort(a, b) {
   return a - b;
 }
 
 test('DataScaleUtils -> getOrdinalDomain', t => {
-  const data = ['a', 'a', 'b', undefined, null, 0];
-  function valueAccessor(d) {
-    return d.value;
+  const data = [['a'], ['a'], ['b'], [undefined], [null], [0], null];
+
+  function valueAccessor(d, dc) {
+    return dc.valueAt(d.index, 0);
   }
 
-  const values = [{value: 'a'}, {value: 'b'}, {value: 'b'}];
-
-  t.deepEqual(getOrdinalDomain(data), [0, 'a', 'b'], 'should get correct ordinal domain');
-
   t.deepEqual(
-    getOrdinalDomain(values, valueAccessor),
-    ['a', 'b'],
+    getOrdinalDomain(createDataContainer(data), valueAccessor),
+    [0, 'a', 'b'],
     'should get correct ordinal domain'
   );
 
