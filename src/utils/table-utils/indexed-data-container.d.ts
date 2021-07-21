@@ -1,5 +1,5 @@
 import {DataContainerInterface} from './data-container-interface';
-import {DataRow} from './data-row';
+import {DataRow, SharedRowOptions} from './data-row';
 
 /**
  * A data container wrapper around another data container.

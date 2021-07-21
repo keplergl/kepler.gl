@@ -23,7 +23,7 @@ import {DataRow} from './data-row';
 /**
  * @param {import('./data-container-interface').DataContainerInterface} dataContainer
  * @param {number[]} indices
- * @param {import('./data-container-interface').SharedRowOptions} sharedRow
+ * @param {import('./data-row').SharedRowOptions} sharedRow
  * @returns {Generator<DataRow, void, unknown>}
  */
 function* rowsIterator(dataContainer, indices, sharedRow) {
@@ -75,7 +75,7 @@ export class IndexedDataContainer {
     return this._parentDataContainer.valueAt(this._mappedRowIndex(rowIndex), columnIndex);
   }
 
-  row(rowIndex, sharedRow = false) {
+  row(rowIndex, sharedRow) {
     return this._parentDataContainer.row(this._mappedRowIndex(rowIndex), sharedRow);
   }
 
@@ -103,7 +103,7 @@ export class IndexedDataContainer {
     }, this);
   }
 
-  map(func, sharedRow = false, options = {}) {
+  map(func, sharedRow, options = {}) {
     const {start = 0, end = this.numRows()} = options;
     const endRow = Math.min(this.numRows(), end);
 
@@ -128,7 +128,7 @@ export class IndexedDataContainer {
     return out;
   }
 
-  find(func, sharedRow = false) {
+  find(func, sharedRow) {
     const tSharedRow = DataRow.createSharedRow(sharedRow);
 
     for (let rowIndex = 0; rowIndex < this.numRows(); ++rowIndex) {
@@ -140,7 +140,7 @@ export class IndexedDataContainer {
     return undefined;
   }
 
-  reduce(func, initialValue, sharedRow = false) {
+  reduce(func, initialValue, sharedRow) {
     const tSharedRow = DataRow.createSharedRow(sharedRow);
 
     for (let rowIndex = 0; rowIndex < this._indices.length; ++rowIndex) {

@@ -1,7 +1,7 @@
 import {ProcessorResult} from 'processors/data-processor';
 import {Field} from './kepler-table';
-import {DataContainerInterface, RangeOptions, SharedRowOptions} from './data-container-interface';
-import {DataRow} from './data-row';
+import {DataContainerInterface, RangeOptions} from './data-container-interface';
+import {DataRow, SharedRowOptions} from './data-row';
 
 type RowDataContainerInput = {
   rows: any[][],

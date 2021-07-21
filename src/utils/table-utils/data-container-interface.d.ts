@@ -1,4 +1,4 @@
-import {DataRow} from './data-row';
+import {DataRow, SharedRowOptions} from './data-row';
 
 /**
  * Specifies a range of rows of a data container that should be processed.
@@ -7,16 +7,6 @@ export type RangeOptions = {
   start?: number;
   end?: number;
 };
-
-/**
- * Setting for shared row optimization.
- * - False indicates that unique row objects should be used (default).
- * - True indicates that the method should create a single temporary row object and use it without extra allocations.
- * - A valid DataRow indicates that the row should be used as a temporary shared row.
- * When used, the content of the shared row isn't preserved between calls.
- */
-export type SharedRowOptions = DataRow | boolean | undefined;
-
 export interface DataContainerInterface {
   /**
    * Returns the number of rows in the data container.
@@ -41,7 +31,7 @@ export interface DataContainerInterface {
   /**
    * Returns the row at the specified index.
    * @param rowIndex Row index.
-   * @param sharedRow Passed row is filled with contents the specified index and returned. Default: false.
+   * @param sharedRow Passed row is filled with contents from the specified index and returned without extra row allocations.
    * @returns A row object.
    */
   row(rowIndex: number, sharedRow?: SharedRowOptions): DataRow;
