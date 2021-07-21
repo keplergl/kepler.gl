@@ -384,6 +384,7 @@ export function findPointFieldPairs(fields) {
   const allNames = fields.map(f => f.name.toLowerCase());
 
   // get list of all fields with matching suffixes
+  const acc = [];
   return allNames.reduce((carry, fieldName, idx) => {
     // This search for pairs will early exit if found.
     for (const suffixPair of TRIP_POINT_FIELDS) {
@@ -416,7 +417,7 @@ export function findPointFieldPairs(fields) {
       }
     }
     return carry;
-  }, []);
+  }, acc);
 }
 
 /**
