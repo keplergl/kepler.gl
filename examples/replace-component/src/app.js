@@ -34,7 +34,7 @@ import {
   PanelHeaderFactory,
   PanelToggleFactory,
   CustomPanelsFactory,
-  LayerHoverInfoFactory,
+  MapPopoverFactory,
   injectComponents
 } from 'kepler.gl/components';
 
@@ -42,7 +42,7 @@ import CustomPanelHeaderFactory from './components/panel-header';
 import CustomSidebarFactory from './components/side-bar';
 import CustomPanelToggleFactory from './components/panel-toggle';
 import CustomSidePanelFactory from './components/custom-panel';
-import CustomLayerHoverInfoFactory from './components/custom-layer-hover';
+import CustomMapPopoverFactory from './components/custom-map-popover';
 
 const StyledMapConfigDisplay = styled.div`
   position: absolute;
@@ -64,7 +64,7 @@ const KeplerGl = injectComponents([
   [PanelHeaderFactory, CustomPanelHeaderFactory],
   [PanelToggleFactory, CustomPanelToggleFactory],
   [CustomPanelsFactory, CustomSidePanelFactory],
-  [LayerHoverInfoFactory, CustomLayerHoverInfoFactory]
+  [MapPopoverFactory, CustomMapPopoverFactory]
 ]);
 
 class App extends Component {
