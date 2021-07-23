@@ -473,7 +473,7 @@ function newImages() {
 
   function newImage(element) {
     function inline(get) {
-      if (element.src) {
+      if (isDataUrl(element.src)) {
         return Promise.resolve();
       }
       return Promise.resolve(element.src)
