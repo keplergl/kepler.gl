@@ -100,8 +100,12 @@ class KeplerGl(widgets.DOMWidget):
     height = Int(400).tag(sync=True)
 
     def __init__(self, **kwargs):
+        if 'show_docs' not in kwargs:
+            kwargs['show_docs'] = True
+        if kwargs['show_docs']:
+            print('User Guide: {}'.format(documentation))
+        kwargs.pop('show_docs')
         super(KeplerGl, self).__init__(**kwargs)
-        print('User Guide: {}'.format(documentation))
 
     @validate('data')
     def _validate_data(self, proposal):
