@@ -469,6 +469,29 @@ export function sortDatasetByColumn(dataset, column, mode) {
   return dataset;
 }
 
+/**
+ * @type {typeof import('./kepler-table').pinTableColumns}
+ */
+export function pinTableColumns(dataset, column) {
+  const field = dataset.getColumnField(column);
+  if (!field) {
+    return dataset;
+  }
+
+  let pinnedColumns;
+  if (Array.isArray(dataset.pinnedColumns) && dataset.pinnedColumns.includes(field.name)) {
+    // unpin it
+    pinnedColumns = dataset.pinnedColumns.filter(co => co !== field.name);
+  } else {
+    pinnedColumns = (dataset.pinnedColumns || []).concat(field.name);
+  }
+
+  return copyTableAndUpdate(dataset, {pinnedColumns});
+}
+/**
+ *
+ * @type {typeof import('./kepler-table').copyTable}
+ */
 export function copyTable(original) {
   return Object.assign(Object.create(Object.getPrototypeOf(original)), original);
 }

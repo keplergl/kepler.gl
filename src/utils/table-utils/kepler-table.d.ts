@@ -112,5 +112,13 @@ export class KeplerTable {
   filterTableCPU(filters: Filter[], layers: Layer[]): KeplerTable;
 }
 
+export function copyTable<T extends {}>(original: T): T;
+export function copyTableAndUpdate<T extends {}>(original: T, options: Partial<T>): T;
+export function getFieldValueAccessor<
+  F extends {
+    type: Field['type'];
+    format: Field['format'];
+  }
+>(f: F, i: number): FieldValueAccessor;
+export function pinTableColumns(dataset: KeplerTable, column: string): KeplerTable;
 export default KeplerTable;
-export function copyTableAndUpdate(original: KeplerTable, options: {})
