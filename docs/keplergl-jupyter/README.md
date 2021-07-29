@@ -90,6 +90,16 @@ map_1
 
 ![empty map][empty_map]
 
+ By default, the User Guide URL (<https://docs.kepler.gl/docs/keplergl-jupyter>) will be printed when a map is created. To hide the User Guide URL, set `show_docs=False`.
+
+```python
+# Hide the User Guide URL
+from keplergl import KeplerGl
+map_1 = KeplerGl(show_docs=False)
+map_1
+```
+
+
 You can also create the map and pass in the data or data and config at the same time. Follow the instruction to [match config with data][match-config-w-data]
 
 ```python
