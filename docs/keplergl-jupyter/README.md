@@ -75,7 +75,12 @@ $ jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupy
       Datasets as a dictionary, key is the name of the dataset. Read more on [Accepted data format][data_format]
 
   - __`config`__ `dict` _optional_
+      
       Map config as a dictionary. The `dataId` in the layer and filter settings should match the `name` of the dataset they are created under
+
+  - __`show_docs`__ `bool` _optional_
+      
+      By default, the User Guide URL (<https://docs.kepler.gl/docs/keplergl-jupyter>) will be printed when a map is created. To hide the User Guide URL, set `show_docs=False`.   
 
 The following command will load kepler.gl widget below a cell.
 **The map object created here is `map_1` it will be used throughout the code example in this doc.**
@@ -89,6 +94,7 @@ map_1
 ```
 
 ![empty map][empty_map]
+
 
 You can also create the map and pass in the data or data and config at the same time. Follow the instruction to [match config with data][match-config-w-data]
 
