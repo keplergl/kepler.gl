@@ -176,19 +176,26 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           t.ok(hoverEvents[0].info.object, 'should have info.object');
           t.deepEqual(
             hoverEvents[0].info.object,
-            props.layerData[0].data[15],
+            props.visState.layerData[0].data[15],
             'object should be layer data'
           );
-          t.is(hoverEvents[0].info.layer.id, props.layers[0].id, 'layer id should be correct');
+          t.is(
+            hoverEvents[0].info.layer.id,
+            props.visState.layers[0].id,
+            'layer id should be correct'
+          );
 
           // asign info object to to state and test map popover
           const propsWithHoverInfo = {
             ...initialProps,
-            hoverInfo: hoverEvents[0].info,
-            mousePos: {
-              ...initialProps.mousePos,
-              coordinate: expectedCoordinate,
-              mousePosition: [200, 200]
+            visState: {
+              ...initialProps.visState,
+              hoverInfo: hoverEvents[0].info,
+              mousePos: {
+                ...initialProps.visState.mousePos,
+                coordinate: expectedCoordinate,
+                mousePosition: [200, 200]
+              }
             }
           };
 

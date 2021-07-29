@@ -73,3 +73,9 @@ export * from './gpu-filter-utils';
 export * from './interaction-utils';
 export * from './layer-utils';
 export * from './observe-dimensions';
+
+// Mapbox
+export {transformRequest} from './map-style-utils/mapbox-utils';
+
+// Map
+export {onViewPortChange} from './map-utils';

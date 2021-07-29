@@ -67,13 +67,6 @@ const StyledMapContainer = styled.div<StyledMapContainerProps>`
   display: flex;
 `;
 
-const deckGlProps = {
-  glOptions: {
-    preserveDrawingBuffer: true,
-    useDevicePixels: false
-  }
-};
-
 interface PlotContainerProps {
   width?: number;
   height?: number;
@@ -165,8 +158,10 @@ export default function PlotContainerFactory(
 
     render() {
       const {exportImageSetting, mapFields, splitMaps = []} = this.props;
+      const {mapState, visState} = mapFields;
+      const {layers, layerData} = visState;
       const {imageSize, legend} = exportImageSetting;
-      const {mapState} = mapFields;
+
       const isSplit = splitMaps && splitMaps.length > 1;
 
       const size = {
@@ -185,9 +180,8 @@ export default function PlotContainerFactory(
 
       // center and all layer bounds
       if (exportImageSetting.center) {
-        const renderedLayers = mapFields.layers.filter(
-          (layer, idx) =>
-            layer.id !== GEOCODER_LAYER_ID && layer.shouldRenderLayer(mapFields.layerData[idx])
+        const renderedLayers = layers.filter(
+          (layer, idx) => layer.id !== GEOCODER_LAYER_ID && layer.shouldRenderLayer(layerData[idx])
         );
         const bounds = findMapBounds(renderedLayers);
         const centerAndZoom = getCenterAndZoomFromBounds(bounds, {width, height});
@@ -216,21 +210,21 @@ export default function PlotContainerFactory(
         MapComponent: StaticMap,
         onMapRender: this._onMapRender,
         isExport: true,
-        deckGlProps
+        deckGlProps: {
+          ...mapFields.deckGlProps,
+          glOptions: {
+            preserveDrawingBuffer: true,
+            useDevicePixels: false
+          }
+        }
       };
 
       const mapContainers = !isSplit ? (
         <MapContainer index={0} primary={true} {...mapProps} />
       ) : (
-        <MapsLayout>
+        <MapsLayout className="plot-container-maps">
           {splitMaps.map((settings, index) => (
-            <MapContainer
-              key={index}
-              index={index}
-              primary={index === 1}
-              {...mapProps}
-              mapLayers={splitMaps[index].layers}
-            />
+            <MapContainer key={index} index={index} primary={index === 1} {...mapProps} />
           ))}
         </MapsLayout>
       );
