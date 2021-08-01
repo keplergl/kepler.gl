@@ -15,6 +15,12 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [2.5.4] - July 31 2021
+
+- 62d03ab2 [Examples] update replace-component example (#1557)
+- 089bb7a9 [Jupyter] Make showing User Guide link optional for jupyter widget (#1559)
+- 5985d201 [Bug] Fix screenshot with images (#1558)
+
 ## [2.5.3] - July 18 2021
 
 - a4a6734a [Docs] fix add data to map docs (#1551)
