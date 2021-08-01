@@ -31,7 +31,8 @@ export const config = {
             label: 'Trees',
             color: [69, 138, 70],
             columns: {lat: 'Location_latitude', lng: 'Location_longitude', altitude: null},
-            isVisible: true
+            isVisible: true,
+            highlightColor: [255, 0, 0, 255]
           },
           visualChannels: {
             sizeField: {name: 'Plan', type: 'integer'}

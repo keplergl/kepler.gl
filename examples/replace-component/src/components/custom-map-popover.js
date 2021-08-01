@@ -19,20 +19,20 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {LayerHoverInfoFactory} from 'kepler.gl/components';
+import {MapPopoverFactory} from 'kepler.gl/components';
 
-const CustomLayerHoverInfoFactory = (...deps) => {
-  const LayerHoverInfo = LayerHoverInfoFactory(...deps);
-  const LayerHoverInfoWrapper = props => {
+const CustomMapPopoverFactory = (...deps) => {
+  const MapPopover = MapPopoverFactory(...deps);
+  const MapPopoverWrapper = props => {
     // Disable tooltip for point layer
-    if (props.layer?.id === 'point_layer') {
+    if (props.layerHoverProp?.layer?.id === 'point_layer') {
       return null;
     }
 
-    return <LayerHoverInfo {...props} />;
+    return <MapPopover {...props} />;
   };
 
-  return LayerHoverInfoWrapper;
+  return MapPopoverWrapper;
 };
-CustomLayerHoverInfoFactory.deps = LayerHoverInfoFactory.deps;
-export default CustomLayerHoverInfoFactory;
+CustomMapPopoverFactory.deps = MapPopoverFactory.deps;
+export default CustomMapPopoverFactory;
