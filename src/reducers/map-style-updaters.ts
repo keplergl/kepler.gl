@@ -165,7 +165,6 @@ const getDefaultState = (): MapStyle => {
  * export default composedReducer;
  */
 /* eslint-disable no-unused-vars */
-// @ts-expect-error
 const mapStyleUpdaters = null;
 /* eslint-enable no-unused-vars */
 /**

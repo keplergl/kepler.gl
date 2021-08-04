@@ -25,7 +25,7 @@ import sinon from 'sinon';
 import sinonStubPromise from 'sinon-stub-promise';
 import {getDistanceScales} from 'viewport-mercator-project';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
+import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 
 sinonStubPromise(sinon);
 
@@ -474,7 +474,7 @@ test('#IconLayer -> renderLayer', t => {
           'Should calculate correct getPosition'
         );
         t.deepEqual(getColor, DEFAULT_TEXT_LABEL.color, 'Should calculate correct getColor');
-        t.deepEqual(getSize, 1, 'Should calculate correct getSize');
+        t.deepEqual(getSize, PROJECTED_PIXEL_SIZE_MULTIPLIER, 'Should calculate correct getSize');
         t.deepEqual(
           getPixelOffset,
           expectedPixelOffset0,

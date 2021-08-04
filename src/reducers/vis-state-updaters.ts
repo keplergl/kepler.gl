@@ -100,7 +100,7 @@ import {Millisecond} from '@kepler.gl/types';
 import {ReceiveMapConfigPayload} from '../actions/actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
-import {LoaderObject} from '@loaders.gl/loader-utils';
+import {Loader} from '@loaders.gl/loader-utils';
 import {KeplerTable} from '../utils';
 
 export {KeplerTable};
@@ -361,7 +361,7 @@ export type VisState = {
   splitMapsToBeMerged: SplitMap[];
   fileLoading: FileLoading | false;
   fileLoadingProgress: FileLoadingProgress;
-  loaders: LoaderObject[];
+  loaders: Loader[];
   loadOptions: object;
   initialState?: Partial<VisState>;
   mergers: VisStateMergers;
@@ -2000,7 +2000,7 @@ export function loadNextFileUpdater<S extends VisState>(state: S): S {
   );
 }
 
-export function makeLoadFileTask(file, fileCache, loaders: LoaderObject[] = [], loadOptions = {}) {
+export function makeLoadFileTask(file, fileCache, loaders: Loader[] = [], loadOptions = {}) {
   return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions}).bimap(
     // prettier ignore
     // success

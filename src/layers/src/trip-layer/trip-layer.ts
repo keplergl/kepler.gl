@@ -341,7 +341,8 @@ export default class TripLayer extends Layer {
         ...data,
         getTimestamps: d => (data.getTimestamps(d) || []).map(ts => ts - domain0),
         widthScale: this.config.visConfig.thickness * zoomFactor * zoomFactorValue,
-        rounded: true,
+        capRounded: true,
+        jointRounded: true,
         wrapLongitude: false,
         parameters: {
           depthTest: mapState.dragRotate,

@@ -72,6 +72,10 @@ export default class SvgIconLayer extends CompositeLayer<any, SvgIconLayerProps>
     });
   }
 
+  _updateAutoHighlight(info) {
+    info?.sourceLayer?.updateAutoHighlight(info);
+  }
+
   renderLayers() {
     const layerId = this.props.id;
 

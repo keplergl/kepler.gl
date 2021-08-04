@@ -32,6 +32,7 @@ import {
   arcLayerMeta
 } from 'test/helpers/layer-utils';
 
+import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 
@@ -336,7 +337,7 @@ test('#ArcLayer -> renderLayer', t => {
 
         const expectedProps = {
           opacity: layer.config.visConfig.opacity,
-          widthScale: layer.config.visConfig.thickness,
+          widthScale: layer.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER,
           filterRange: preparedDataset.gpuFilter.filterRange
         };
         Object.keys(expectedProps).forEach(key => {
