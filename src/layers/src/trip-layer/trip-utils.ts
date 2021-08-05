@@ -144,8 +144,9 @@ export function parseTripGeoJsonTimestamp(dataToFeature: any[]) {
   return {dataToTimeStamp, animationDomain};
 }
 
-function findMinFromSorted(list: number[] = []) {
-  return list.find(d => notNullorUndefined(d) && Number.isFinite(d)) || null;
+function findMinFromSorted(list: number[]) {
+  // check if list is null since the default value [] will only be applied when the param is undefined
+  return list?.find(d => notNullorUndefined(d) && Number.isFinite(d)) || null;
 }
 
 function findMaxFromSorted(list: number[] = []) {
