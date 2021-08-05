@@ -74,13 +74,14 @@ class DatasetSchema extends Schema {
   key = 'dataset';
 
   save(dataset) {
-    if (dataset.dataContainer) {
-      dataset = {
-        ...dataset,
-        allData: dataset.dataContainer.flattenData()
-      };
-    }
-    return this.savePropertiesOrApplySchema(dataset)[this.key];
+    const datasetFlattened = dataset.dataContainer
+      ? {
+          ...dataset,
+          allData: dataset.dataContainer.flattenData()
+        }
+      : dataset;
+
+    return this.savePropertiesOrApplySchema(datasetFlattened)[this.key];
   }
   load(dataset) {
     const {fields, allData} = dataset;

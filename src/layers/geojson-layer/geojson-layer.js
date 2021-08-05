@@ -157,10 +157,6 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
-  getPositionAccessor() {
-    return this.getFeature(this.config.columns);
-  }
-
   static findDefaultLayerProps({label, fields = []}) {
     const geojsonColumns = fields
       .filter(f => f.type === 'geojson' && SUPPORTED_ANALYZER_TYPES[f.analyzerType])
