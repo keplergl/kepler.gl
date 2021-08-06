@@ -90,7 +90,7 @@ module.exports = (rules, plugins) => ({
       filename: 'keplergl.html',
       inject: true,
       links: [
-        'http://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css',
+        'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css',
         'https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css'
       ],
       scripts: [
