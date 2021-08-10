@@ -22,18 +22,17 @@ import React, {ComponentType, useState} from 'react';
 import styled from 'styled-components';
 
 import {Legend} from 'components/common/icons';
-import {FormattedMessage} from '@kepler.gl/localization';
 import {MapControlButton} from 'components/common/styled-components';
+import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlPanelFactory from './map-control-panel';
 import MapLegendFactory from './map-legend';
 import Tippy from '@tippyjs/react/headless';
-import TippyTooltip from 'components/common/tippy-tooltip';
 import {createPortal} from 'react-dom';
 import {DIMENSIONS} from '@kepler.gl/constants';
 import {MapControl, MapControls} from 'reducers';
 import {Layer} from '@kepler.gl/layers';
 
-MapLegendPanelFactory.deps = [MapControlPanelFactory, MapLegendFactory];
+MapLegendPanelFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory, MapLegendFactory];
 
 const PinToBottom = styled.div`
   position: absolute;
@@ -56,7 +55,7 @@ export type MapLegendPanelProps = {
   mapHeight?: number;
 };
 
-function MapLegendPanelFactory(MapControlPanel, MapLegend) {
+function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
   const defaultActionIcons = {
     legend: Legend
   };
@@ -142,18 +141,11 @@ function MapLegendPanelFactory(MapControlPanel, MapLegend) {
           appendTo={document.body}
         >
           <div>
-            <TippyTooltip
-              placement="left"
-              render={() => (
-                <div id="show-legend">
-                  <FormattedMessage id="tooltip.showLegend" />
-                </div>
-              )}
-            >
+            <MapControlTooltip id="show-legend" message="tooltip.showLegend">
               <MapControlButton className="map-control-button show-legend" onClick={onClick}>
                 <actionIcons.legend height="22px" />
               </MapControlButton>
-            </TippyTooltip>
+            </MapControlTooltip>
           </div>
         </Tippy>
       </div>

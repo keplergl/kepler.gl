@@ -25,8 +25,6 @@ import ToolbarItem from 'components/common/toolbar-item';
 import {MapControlButton} from 'components/common/styled-components';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlToolbarFactory from './map-control-toolbar';
-import {FormattedMessage} from '@kepler.gl/localization';
-import TippyTooltip from 'components/common/tippy-tooltip';
 import {MapControls} from 'reducers';
 
 LocalePanelFactory.deps = [MapControlTooltipFactory, MapControlToolbarFactory];
@@ -43,7 +41,6 @@ function LocalePanelFactory(
   MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>,
   MapControlToolbar: ReturnType<typeof MapControlToolbarFactory>
 ) {
-  /** @type {import('./locale-panel').LocalePanelComponent} */
   const LocalePanel: React.FC<LocalePanelProps> = React.memo(
     ({availableLocales, onToggleMapControl, onSetLocale, locale: currentLocal, mapControls}) => {
       const {active: isActive, show} = mapControls.mapLocale || {};
@@ -81,14 +78,7 @@ function LocalePanelFactory(
               ))}
             </MapControlToolbar>
           ) : null}
-          <TippyTooltip
-            placement="left"
-            render={() => (
-              <div id="locale">
-                <FormattedMessage id="tooltip.selectLocale" />
-              </div>
-            )}
-          >
+          <MapControlTooltip id="locale" message="tooltip.selectLocale">
             <MapControlButton
               className={classnames('map-control-button', 'map-locale', {isActive})}
               onClick={onClickButton}
@@ -96,7 +86,7 @@ function LocalePanelFactory(
             >
               <span className="map-control-button__locale">{currentLocal.toUpperCase()}</span>
             </MapControlButton>
-          </TippyTooltip>
+          </MapControlTooltip>
         </div>
       );
     }
