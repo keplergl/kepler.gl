@@ -26,12 +26,12 @@ import {hexToRgb} from 'utils/color-utils';
 import ArcLayerIcon from './arc-layer-icon';
 import {DEFAULT_LAYER_COLOR} from 'constants/default-settings';
 
-export const arcPosAccessor = ({lat0, lng0, lat1, lng1}) => d => [
-  d.data[lng0.fieldIdx],
-  d.data[lat0.fieldIdx],
+export const arcPosAccessor = ({lat0, lng0, lat1, lng1}) => dc => d => [
+  dc.valueAt(d.index, lng0.fieldIdx),
+  dc.valueAt(d.index, lat0.fieldIdx),
   0,
-  d.data[lng1.fieldIdx],
-  d.data[lat1.fieldIdx],
+  dc.valueAt(d.index, lng1.fieldIdx),
+  dc.valueAt(d.index, lat1.fieldIdx),
   0
 ];
 
@@ -56,7 +56,7 @@ export default class ArcLayer extends Layer {
     super(props);
 
     this.registerVisConfig(arcVisConfigs);
-    this.getPositionAccessor = () => arcPosAccessor(this.config.columns);
+    this.getPositionAccessor = dataContainer => arcPosAccessor(this.config.columns)(dataContainer);
   }
 
   get type() {
@@ -127,11 +127,11 @@ export default class ArcLayer extends Layer {
     return {props: [props]};
   }
 
-  calculateDataAttribute({allData, filteredIndex}, getPosition) {
+  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
     const data = [];
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
-      const pos = getPosition({data: allData[index]});
+      const pos = getPosition({index});
 
       // if doesn't have point lat or lng, do not add the point
       // deck.gl can't handle position = null
@@ -139,8 +139,7 @@ export default class ArcLayer extends Layer {
         data.push({
           index,
           sourcePosition: [pos[0], pos[1], pos[2]],
-          targetPosition: [pos[3], pos[4], pos[5]],
-          data: allData[index]
+          targetPosition: [pos[3], pos[4], pos[5]]
         });
       }
     }
@@ -149,27 +148,27 @@ export default class ArcLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
-    const {gpuFilter} = datasets[this.config.dataId];
+    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);
-    const accessors = this.getAttributeAccessors();
+    const accessors = this.getAttributeAccessors({dataContainer});
     return {
       data,
-      getFilterValue: gpuFilter.filterValueAccessor(),
+      getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
       ...accessors
     };
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(allData) {
+  updateLayerMeta(dataContainer) {
     // get bounds from arcs
-    const getPosition = this.getPositionAccessor();
+    const getPosition = this.getPositionAccessor(dataContainer);
 
-    const sBounds = this.getPointsBounds(allData, d => {
-      const pos = getPosition({data: d});
+    const sBounds = this.getPointsBounds(dataContainer, (d, i) => {
+      const pos = getPosition(d);
       return [pos[0], pos[1]];
     });
-    const tBounds = this.getPointsBounds(allData, d => {
-      const pos = getPosition({data: d});
+    const tBounds = this.getPointsBounds(dataContainer, (d, i) => {
+      const pos = getPosition(d);
       return [pos[3], pos[4]];
     });
 

@@ -25,13 +25,13 @@ import LineLayerIcon from './line-layer-icon';
 import ArcLayer from '../arc-layer/arc-layer';
 import EnhancedLineLayer from 'deckgl-layers/line-layer/line-layer';
 
-export const linePosAccessor = ({lat0, lng0, lat1, lng1, alt0, alt1}) => d => [
-  d.data[lng0.fieldIdx],
-  d.data[lat0.fieldIdx],
-  alt0?.fieldIdx > -1 ? d.data[alt0.fieldIdx] : 0,
-  d.data[lng1.fieldIdx],
-  d.data[lat1.fieldIdx],
-  alt1?.fieldIdx > -1 ? d.data[alt1.fieldIdx] : 0
+export const linePosAccessor = ({lat0, lng0, lat1, lng1, alt0, alt1}) => dc => d => [
+  dc.valueAt(d.index, lng0.fieldIdx),
+  dc.valueAt(d.index, lat0.fieldIdx),
+  alt0?.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
+  dc.valueAt(d.index, lng1.fieldIdx),
+  dc.valueAt(d.index, lat1.fieldIdx),
+  alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
 ];
 
 export const lineRequiredColumns = ['lat0', 'lng0', 'lat1', 'lng1'];
@@ -63,7 +63,7 @@ export default class LineLayer extends ArcLayer {
     super(props);
 
     this.registerVisConfig(lineVisConfigs);
-    this.getPositionAccessor = () => linePosAccessor(this.config.columns);
+    this.getPositionAccessor = dataContainer => linePosAccessor(this.config.columns)(dataContainer);
   }
 
   get type() {

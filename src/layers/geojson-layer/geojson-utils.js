@@ -53,11 +53,11 @@ export function parseGeoJsonRawFeature(rawFeature) {
 }
 /**
  * Parse raw data to GeoJson feature
- * @param allData
+ * @param dataContainer
  * @param getFeature
  * @returns {{}}
  */
-export function getGeojsonDataMaps(allData, getFeature) {
+export function getGeojsonDataMaps(dataContainer, getFeature) {
   const acceptableTypes = [
     'Point',
     'MultiPoint',
@@ -70,8 +70,8 @@ export function getGeojsonDataMaps(allData, getFeature) {
 
   const dataToFeature = [];
 
-  for (let index = 0; index < allData.length; index++) {
-    const feature = parseGeoJsonRawFeature(getFeature(allData[index]));
+  for (let index = 0; index < dataContainer.numRows(); index++) {
+    const feature = parseGeoJsonRawFeature(getFeature({index}));
 
     if (feature && feature.geometry && acceptableTypes.includes(feature.geometry.type)) {
       const cleaned = {

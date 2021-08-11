@@ -1,6 +1,7 @@
 import {ProtoDataset} from '../actions';
 import {Field} from 'reducers/vis-state-updaters';
 import {SavedMap, ParsedDataset} from 'schemas';
+import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 
 type RowData = {
   [key: string]: any;
@@ -18,7 +19,7 @@ export function validateInputData(data: any): ProcessorResult;
 
 export function getSampleForTypeAnalyze(p: {
   fields: string[];
-  allData: any[][];
+  rows: any[][];
   sampleCount?: number;
 }): object[];
 
@@ -31,7 +32,7 @@ export function parseCsvRowsByFieldType(
   i: number
 ): void;
 
-export function formatCsv(data: any[][], fields: Field[]): string;
+export function formatCsv(data: DataContainerInterface, fields: Field[]): string;
 
 export function analyzerTypeToFieldType(aType: string): string;
 

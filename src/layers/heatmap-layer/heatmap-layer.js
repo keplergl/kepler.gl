@@ -27,11 +27,9 @@ import HeatmapLayerIcon from './heatmap-layer-icon';
 
 export const MAX_ZOOM_LEVEL = 18;
 
-export const pointPosAccessor = ({lat, lng}) => d => [
-  // lng
-  d[lng.fieldIdx],
-  // lat
-  d[lat.fieldIdx]
+export const pointPosAccessor = ({lat, lng}) => dc => d => [
+  dc.valueAt(d.index, lng.fieldIdx),
+  dc.valueAt(d.index, lat.fieldIdx)
 ];
 
 export const pointColResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
@@ -135,13 +133,13 @@ class HeatmapLayer extends MapboxGLLayer {
     return layerConfig;
   }
 
-  getPositionAccessor() {
-    return this.getPosition(this.config.columns);
+  getPositionAccessor(dataContainer) {
+    return this.getPosition(this.config.columns)(dataContainer);
   }
 
-  updateLayerMeta(allData) {
-    const getPosition = this.getPositionAccessor();
-    const bounds = this.getPointsBounds(allData, d => getPosition(d));
+  updateLayerMeta(dataContainer) {
+    const getPosition = this.getPositionAccessor(dataContainer);
+    const bounds = this.getPointsBounds(dataContainer, getPosition);
     this.updateMeta({bounds});
   }
 
@@ -208,7 +206,8 @@ class HeatmapLayer extends MapboxGLLayer {
 
   formatLayerData(datasets, oldLayerData) {
     const {weightField} = this.config;
-    const getPosition = this.getPositionAccessor();
+    const {dataContainer} = datasets[this.config.dataId];
+    const getPosition = this.getPositionAccessor(dataContainer);
     const {data} = this.updateData(datasets, oldLayerData);
 
     const newConfig = this.computeHeatmapConfiguration(this.config, datasets);

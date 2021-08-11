@@ -133,7 +133,6 @@ test('#IconLayer -> formatLayerData', t => {
         const expectedLayerData = {
           data: [
             {
-              data: testRows[0],
               index: 0,
               icon: 'accel'
             }

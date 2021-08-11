@@ -61,7 +61,8 @@ export const geojsonVisConfigs = {
 };
 
 export const geoJsonRequiredColumns = ['geojson'];
-export const featureAccessor = ({geojson}) => d => d[geojson.fieldIdx];
+export const featureAccessor = ({geojson}) => dc => d => dc.valueAt(d.index, geojson.fieldIdx);
+
 // access feature properties from geojson sub layer
 export const defaultElevation = 500;
 export const defaultLineWidth = 1;
@@ -73,7 +74,7 @@ export default class GeoJsonLayer extends Layer {
 
     this.dataToFeature = [];
     this.registerVisConfig(geojsonVisConfigs);
-    this.getPositionAccessor = () => featureAccessor(this.config.columns);
+    this.getPositionAccessor = dataContainer => featureAccessor(this.config.columns)(dataContainer);
   }
 
   get type() {
@@ -156,10 +157,6 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
-  getPositionAccessor() {
-    return this.getFeature(this.config.columns);
-  }
-
   static findDefaultLayerProps({label, fields = []}) {
     const geojsonColumns = fields
       .filter(f => f.type === 'geojson' && SUPPORTED_ANALYZER_TYPES[f.analyzerType])
@@ -204,32 +201,40 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
-  getHoverData(object, allData) {
-    // index of allData is saved to feature.properties
-    return allData[object.properties.index];
+  getHoverData(object, dataContainer) {
+    // index of dataContainer is saved to feature.properties
+    return dataContainer.row(object.properties.index);
   }
 
-  calculateDataAttribute({allData, filteredIndex}, getPosition) {
+  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
     return filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
   }
 
   formatLayerData(datasets, oldLayerData) {
-    const {allData, gpuFilter} = datasets[this.config.dataId];
+    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);
-    const valueAccessor = f => allData[f.properties.index];
+
+    const customFilterValueAccessor = (dc, d, fieldIndex) => {
+      return dc.valueAt(d.properties.index, fieldIndex);
+    };
     const indexAccessor = f => f.properties.index;
-    const accessors = this.getAttributeAccessors(valueAccessor);
+
+    const dataAccessor = dc => d => ({index: d.properties.index});
+    const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
 
     return {
       data,
-      getFilterValue: gpuFilter.filterValueAccessor(indexAccessor, valueAccessor),
+      getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
+        indexAccessor,
+        customFilterValueAccessor
+      ),
       ...accessors
     };
   }
 
-  updateLayerMeta(allData) {
-    const getFeature = this.getPositionAccessor();
-    this.dataToFeature = getGeojsonDataMaps(allData, getFeature);
+  updateLayerMeta(dataContainer) {
+    const getFeature = this.getPositionAccessor(dataContainer);
+    this.dataToFeature = getGeojsonDataMaps(dataContainer, getFeature);
 
     // get bounds from features
     const bounds = getGeojsonBounds(this.dataToFeature);
@@ -244,8 +249,8 @@ export default class GeoJsonLayer extends Layer {
     this.updateMeta({bounds, fixedRadius, featureTypes});
   }
 
-  setInitialLayerConfig({allData}) {
-    this.updateLayerMeta(allData);
+  setInitialLayerConfig({dataContainer}) {
+    this.updateLayerMeta(dataContainer);
 
     const {featureTypes} = this.meta;
     // default settings is stroke: true, filled: false

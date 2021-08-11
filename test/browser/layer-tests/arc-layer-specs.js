@@ -95,13 +95,11 @@ test('#ArcLayer -> formatLayerData', t => {
         const expectedLayerData = {
           data: [
             {
-              data: testRows[0],
               index: 0,
               sourcePosition: [testRows[0][2], testRows[0][1], 0],
               targetPosition: [testRows[0][4], testRows[0][3], 0]
             },
             {
-              data: testRows[4],
               index: 4,
               sourcePosition: [testRows[4][2], testRows[4][1], 0],
               targetPosition: [testRows[4][4], testRows[4][3], 0]
@@ -235,13 +233,11 @@ test('#ArcLayer -> formatLayerData', t => {
         const expectedLayerData = {
           data: [
             {
-              data: testRows[0],
               index: 0,
               sourcePosition: [testRows[0][2], testRows[0][1], 0],
               targetPosition: [testRows[0][4], testRows[0][3], 0]
             },
             {
-              data: testRows[4],
               index: 4,
               sourcePosition: [testRows[4][2], testRows[4][1], 0],
               targetPosition: [testRows[4][4], testRows[4][3], 0]

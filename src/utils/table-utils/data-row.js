@@ -18,28 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import styled from 'styled-components';
-import {format} from 'd3-format';
-import {FormattedMessage} from 'localization';
+export class DataRow {
+  constructor(dataContainer, rowIndex) {
+    this.setSource(dataContainer, rowIndex);
+  }
 
-const numFormat = format(',');
+  static createSharedRow(sharedRowDesc) {
+    if (sharedRowDesc === true) {
+      return new DataRow(null, 0);
+    }
+    return sharedRowDesc;
+  }
 
-const StyledDataRowCount = styled.div`
-  font-size: 11px;
-  color: ${props => props.theme.subtextColor};
-  padding-left: 19px;
-`;
+  valueAt(columnIndex) {
+    return this._dataContainer.valueAt(this._rowIndex, columnIndex);
+  }
 
-export default function DatasetInfoFactory() {
-  const DatasetInfo = ({dataset}) => (
-    <StyledDataRowCount className="source-data-rows">
-      <FormattedMessage
-        id={'datasetInfo.rowCount'}
-        values={{rowCount: numFormat(dataset.dataContainer.numRows())}}
-      />
-    </StyledDataRowCount>
-  );
+  values() {
+    return this._dataContainer.rowAsArray(this._rowIndex);
+  }
 
-  return DatasetInfo;
+  setSource(dataContainer, rowIndex) {
+    this._dataContainer = dataContainer;
+    this._rowIndex = rowIndex;
+  }
+
+  map(handler) {
+    const numColumns = this._dataContainer.numColumns();
+    const out = [];
+    for (let column = 0; column < numColumns; ++column) {
+      out[column] = handler(this.valueAt(column), column);
+    }
+    return out;
+  }
 }

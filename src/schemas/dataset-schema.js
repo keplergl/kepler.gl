@@ -74,7 +74,14 @@ class DatasetSchema extends Schema {
   key = 'dataset';
 
   save(dataset) {
-    return this.savePropertiesOrApplySchema(dataset)[this.key];
+    const datasetFlattened = dataset.dataContainer
+      ? {
+          ...dataset,
+          allData: dataset.dataContainer.flattenData()
+        }
+      : dataset;
+
+    return this.savePropertiesOrApplySchema(datasetFlattened)[this.key];
   }
   load(dataset) {
     const {fields, allData} = dataset;
@@ -90,7 +97,10 @@ class DatasetSchema extends Schema {
     if (needCalculateMeta) {
       const fieldOrder = fields.map(f => f.name);
 
-      const sampleData = getSampleForTypeAnalyze({fields: fieldOrder, allData});
+      const sampleData = getSampleForTypeAnalyze({
+        fields: fieldOrder,
+        rows: allData
+      });
       const meta = getFieldsFromData(sampleData, fieldOrder);
 
       updatedFields = meta.map((f, i) => ({
