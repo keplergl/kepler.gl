@@ -478,7 +478,7 @@ export default {
     primary: 'Первичный'
   },
   density: 'density',
-  'Bug Report': 'Отчет об ош.',
+  'Bug Report': 'Отчет об ошибках',
   'User Guide': 'Инструкции',
   Save: 'Сохранить',
   Share: 'Поделиться'
