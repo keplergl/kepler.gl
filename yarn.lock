@@ -2756,6 +2756,66 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@carto/toolkit-auth@npm:^0.0.1-rc.18":
+  version: 0.0.1-rc.18
+  resolution: "@carto/toolkit-auth@npm:0.0.1-rc.18"
+  dependencies:
+    "@carto/toolkit-core": ^0.0.1-rc.18
+    "@salte-auth/popup": 1.0.0-rc.2
+    "@salte-auth/salte-auth": 3.0.0-rc.8
+    mitt: ^1.1.3
+  checksum: 37b495c5f7ef7b662cf01c485a18627d75d34bf72b4b0c456ce36cadc7d6833b423d8e37f2bc0b67217780d8a44ddb192813f4fe1f98d32c8f36ca2db6fc04d9
+  languageName: node
+  linkType: hard
+
+"@carto/toolkit-core@npm:^0.0.1-rc.18":
+  version: 0.0.1-rc.18
+  resolution: "@carto/toolkit-core@npm:0.0.1-rc.18"
+  checksum: 66504b491279dcc3775681bc7ea6d4cba47a11d8ec66dbdf68179f250a0ee23c2778a086c13104fe8565ba03819adeed1e6eb3e977b32ac3bc2b1174f1245e40
+  languageName: node
+  linkType: hard
+
+"@carto/toolkit-custom-storage@npm:^0.0.1-rc.18":
+  version: 0.0.1-rc.18
+  resolution: "@carto/toolkit-custom-storage@npm:0.0.1-rc.18"
+  dependencies:
+    "@carto/toolkit-core": ^0.0.1-rc.18
+    "@carto/toolkit-sql": ^0.0.1-rc.18
+  checksum: a7f331fc63870d65df01b9af72044cfdcb967e4530fdc88d1285f4c7e3752555071e4e24b803240db384e241941072f66f18111dfa3ff4ac228cbf1a200ffc88
+  languageName: node
+  linkType: hard
+
+"@carto/toolkit-maps@npm:^0.0.1-rc.18":
+  version: 0.0.1-rc.18
+  resolution: "@carto/toolkit-maps@npm:0.0.1-rc.18"
+  dependencies:
+    "@carto/toolkit-core": ^0.0.1-rc.18
+  checksum: 032236410dab4a23f52e3db9db134dc90682383f0c2a58bff3391d725f03f1f0229be8ed8eec4ab2d15075539846d88e022522977785a61cc58971f42e1a50af
+  languageName: node
+  linkType: hard
+
+"@carto/toolkit-sql@npm:^0.0.1-rc.18":
+  version: 0.0.1-rc.18
+  resolution: "@carto/toolkit-sql@npm:0.0.1-rc.18"
+  dependencies:
+    "@carto/toolkit-core": ^0.0.1-rc.18
+  checksum: bb013426fe2be361888268d3faba8029760abefb45cd13b891da7b1dab61aa3b42c637f05b5259773a6668a593f584d2e509c93ce6a379069655b55fea4fc673
+  languageName: node
+  linkType: hard
+
+"@carto/toolkit@npm:0.0.1-rc.18":
+  version: 0.0.1-rc.18
+  resolution: "@carto/toolkit@npm:0.0.1-rc.18"
+  dependencies:
+    "@carto/toolkit-auth": ^0.0.1-rc.18
+    "@carto/toolkit-core": ^0.0.1-rc.18
+    "@carto/toolkit-custom-storage": ^0.0.1-rc.18
+    "@carto/toolkit-maps": ^0.0.1-rc.18
+    "@carto/toolkit-sql": ^0.0.1-rc.18
+  checksum: 0a68e73dd7ea33d60085e2cd4953a5cd63a97855f4319155480dec639ac618704ec68360a69e55f855b50551b9a282aa58cfd54a9ca1d2d0345e6d746e305fce
+  languageName: node
+  linkType: hard
+
 "@cnakazawa/watch@npm:^1.0.3":
   version: 1.0.4
   resolution: "@cnakazawa/watch@npm:1.0.4"
@@ -3745,6 +3805,22 @@ __metadata:
     probe.gl: 3.3.0
     puppeteer: ^1.16.0
   checksum: e2c94a668129a7e4d080e0ddb4bd2fef6836adc40937a54c354092ae1eec3c3d96d7b05664b8b74fd491eb0a5732a15d09ea7e0b895f9794c186975e41fef4ea
+  languageName: node
+  linkType: hard
+
+"@salte-auth/popup@npm:1.0.0-rc.2":
+  version: 1.0.0-rc.2
+  resolution: "@salte-auth/popup@npm:1.0.0-rc.2"
+  peerDependencies:
+    "@salte-auth/salte-auth": ^3.0.0-rc.5
+  checksum: b3843150da53c102db104e758a5d39233daf02cc03f5c756ff4fd00e908bdabc2399a7a24889d24901fca2af4a6646a875d2b8b3de39d826e47041309c2dfc6c
+  languageName: node
+  linkType: hard
+
+"@salte-auth/salte-auth@npm:3.0.0-rc.8":
+  version: 3.0.0-rc.8
+  resolution: "@salte-auth/salte-auth@npm:3.0.0-rc.8"
+  checksum: 60ca74ab48d365bb89c8515c17feebec76183abfa42b38d48f8803a186829790e1d96b72c8772cc1357d9689b35e36792f3adc2ea83cbdae69bb81bae5a7c72a
   languageName: node
   linkType: hard
 
@@ -5850,7 +5926,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"buffer@npm:^5.5.0":
+"buffer@npm:^5.0.8, buffer@npm:^5.5.0":
   version: 5.7.1
   resolution: "buffer@npm:5.7.1"
   dependencies:
@@ -6897,6 +6973,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"create-react-class@npm:^15.5.1":
+  version: 15.7.0
+  resolution: "create-react-class@npm:15.7.0"
+  dependencies:
+    loose-envify: ^1.3.1
+    object-assign: ^4.1.1
+  checksum: 0c5f43da705fa9f67ec289051dd5780792652d440dfa17cd2c7d8423c1f604609596f895dabf46fda1960ddd93ee96fe1b61ef4d55a94fc4271b07d515486714
+  languageName: node
+  linkType: hard
+
 "cross-spawn@npm:^6.0.0, cross-spawn@npm:^6.0.5":
   version: 6.0.5
   resolution: "cross-spawn@npm:6.0.5"
@@ -7590,6 +7676,42 @@ __metadata:
   languageName: node
   linkType: hard
 
+"demo-app-a7e461@workspace:examples/demo-app":
+  version: 0.0.0-use.local
+  resolution: "demo-app-a7e461@workspace:examples/demo-app"
+  dependencies:
+    "@babel/core": ^7.12.1
+    "@babel/plugin-proposal-class-properties": ^7.12.1
+    "@babel/preset-env": ^7.12.1
+    "@babel/preset-react": ^7.12.1
+    "@carto/toolkit": 0.0.1-rc.18
+    babel-loader: ^8.0.0
+    d3-request: ^1.0.6
+    dropbox: ^4.0.12
+    global: ^4.3.0
+    kepler.gl: ^2.5.3
+    lodash.debounce: ^4.0.8
+    lodash.get: ^4.4.2
+    react: ^16.8.4
+    react-copy-to-clipboard: ^5.0.1
+    react-dom: ^16.8.4
+    react-markdown: ^4.2.2
+    react-palm: ^3.3.6
+    react-redux: ^7.1.3
+    react-router: 3.2.5
+    react-router-redux: ^4.0.8
+    react-virtualized: ^9.21.0
+    redux-actions: ^2.2.1
+    redux-thunk: ^1.0.0
+    styled-components: ^4.1.3
+    webpack: ^4.29.0
+    webpack-cli: ^3.2.1
+    webpack-dev-middleware: ^3.5.1
+    webpack-dev-server: ^3.1.14
+    webpack-hot-middleware: ^2.24.3
+  languageName: unknown
+  linkType: soft
+
 "depd@npm:^1.1.2, depd@npm:~1.1.2":
   version: 1.1.2
   resolution: "depd@npm:1.1.2"
@@ -8058,6 +8180,16 @@ __metadata:
   version: 1.3.6
   resolution: "draco3d@npm:1.3.6"
   checksum: 8b5818c52def800ef72843a946697e4116da06e0590684f457c8305c1c98baddf861b93d72e9f1dbeb0d12e9057fc4cabdc17650202da7808835994202c8b3bb
+  languageName: node
+  linkType: hard
+
+"dropbox@npm:^4.0.12":
+  version: 4.0.30
+  resolution: "dropbox@npm:4.0.30"
+  dependencies:
+    buffer: ^5.0.8
+    moment: ^2.19.3
+  checksum: 29a91fe9dc14c36fb2909dca09b6bfb574cd534a557870c50c1af400c042b5fa6be771751bba79af7d308a5d4dcf5b6d4ca7cc5456471cd78af87f0a1812aa32
   languageName: node
   linkType: hard
 
@@ -10409,6 +10541,18 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
+"history@npm:^3.0.0":
+  version: 3.3.0
+  resolution: "history@npm:3.3.0"
+  dependencies:
+    invariant: ^2.2.1
+    loose-envify: ^1.2.0
+    query-string: ^4.2.2
+    warning: ^3.0.0
+  checksum: 1570a278a9821d81fba37db7460eb06416c13805df0a9802432ce3161b0fa6d3d4e50fb7c538d1bf84de0f1c697771e5f252d684a4931b25ccb0128cffbc08aa
+  languageName: node
+  linkType: hard
+
 "hmac-drbg@npm:^1.0.0":
   version: 1.0.1
   resolution: "hmac-drbg@npm:1.0.1"
@@ -10424,6 +10568,13 @@ fsevents@~2.1.2:
   version: 4.2.1
   resolution: "hoek@npm:4.2.1"
   checksum: 3f28857c9d4c29e0d4c0bfb0d73973529fdd700266e963f9964c59ad92a4bc08943b94c4ada97c105a20c78d4dec98e4fc2c08025660743722558e6da793fd0f
+  languageName: node
+  linkType: hard
+
+"hoist-non-react-statics@npm:^2.3.1":
+  version: 2.5.5
+  resolution: "hoist-non-react-statics@npm:2.5.5"
+  checksum: ee2d05e5c7e1398ad84a15b0327f66bd78f38a8e0015e852f954b36434e32eb7e942d5357505020a3a1147f247b165bf1e69d72393e3accab67cafdafeb86230
   languageName: node
   linkType: hard
 
@@ -11023,7 +11174,7 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
-"invariant@npm:^2.2.2, invariant@npm:^2.2.4":
+"invariant@npm:^2.2.1, invariant@npm:^2.2.2, invariant@npm:^2.2.4":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4"
   dependencies:
@@ -12548,7 +12699,7 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
-"kepler.gl@workspace:.":
+"kepler.gl@^2.5.3, kepler.gl@workspace:.":
   version: 0.0.0-use.local
   resolution: "kepler.gl@workspace:."
   dependencies:
@@ -13091,7 +13242,7 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
-"loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0, loose-envify@npm:^1.4.0":
+"loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0, loose-envify@npm:^1.2.0, loose-envify@npm:^1.3.1, loose-envify@npm:^1.4.0":
   version: 1.4.0
   resolution: "loose-envify@npm:1.4.0"
   dependencies:
@@ -13824,6 +13975,13 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
+"mitt@npm:^1.1.3":
+  version: 1.2.0
+  resolution: "mitt@npm:1.2.0"
+  checksum: 53abb94c6203250e2498e152ae096288c4866c6aab1dc093922084a7414af4aa6cda5a51d480267a8f0bd7908b0e896099bc953317aca8a18672dc67ee7e923d
+  languageName: node
+  linkType: hard
+
 "mixin-deep@npm:^1.2.0":
   version: 1.3.2
   resolution: "mixin-deep@npm:1.3.2"
@@ -13939,7 +14097,7 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
-"moment@npm:>= 2.9.0, moment@npm:^2.10.6":
+"moment@npm:>= 2.9.0, moment@npm:^2.10.6, moment@npm:^2.19.3":
   version: 2.29.1
   resolution: "moment@npm:2.29.1"
   checksum: 1e14d5f422a2687996be11dd2d50c8de3bd577c4a4ca79ba5d02c397242a933e5b941655de6c8cb90ac18f01cc4127e55b4a12ae3c527a6c0a274e455979345e
@@ -15963,7 +16121,7 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
-"query-string@npm:^4.1.0":
+"query-string@npm:^4.1.0, query-string@npm:^4.2.2":
   version: 4.3.4
   resolution: "query-string@npm:4.3.4"
   dependencies:
@@ -16127,6 +16285,18 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
+"react-copy-to-clipboard@npm:^5.0.1":
+  version: 5.0.3
+  resolution: "react-copy-to-clipboard@npm:5.0.3"
+  dependencies:
+    copy-to-clipboard: ^3
+    prop-types: ^15.5.8
+  peerDependencies:
+    react: ^15.3.0 || ^16.0.0 || ^17.0.0
+  checksum: b10d846ffa283d3de4cccc8e25927cb32d5ab8bf3d21586e1665459859653583971f7db6594176a807d42bce2a443c2c0a094b1657eb75cf04b95dfb64a22d84
+  languageName: node
+  linkType: hard
+
 "react-copy-to-clipboard@npm:^5.0.2":
   version: 5.0.2
   resolution: "react-copy-to-clipboard@npm:5.0.2"
@@ -16265,6 +16435,24 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
+"react-markdown@npm:^4.2.2":
+  version: 4.3.1
+  resolution: "react-markdown@npm:4.3.1"
+  dependencies:
+    html-to-react: ^1.3.4
+    mdast-add-list-metadata: 1.0.1
+    prop-types: ^15.7.2
+    react-is: ^16.8.6
+    remark-parse: ^5.0.0
+    unified: ^6.1.5
+    unist-util-visit: ^1.3.0
+    xtend: ^4.0.1
+  peerDependencies:
+    react: ^15.0.0 || ^16.0.0
+  checksum: 0e500c3ca24162ba693f73f4ce928d8a7cf038a8f806307f7fa6c095209625cf6f1434f07fe1bc6e9a43d376f70eda7ee7f697887dcf87f00832b762e827f7c8
+  languageName: node
+  linkType: hard
+
 "react-markdown@npm:^5.0.2":
   version: 5.0.3
   resolution: "react-markdown@npm:5.0.3"
@@ -16324,7 +16512,7 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
-"react-palm@npm:^3.3.7":
+"react-palm@npm:^3.3.6, react-palm@npm:^3.3.7":
   version: 3.3.7
   resolution: "react-palm@npm:3.3.7"
   dependencies:
@@ -16373,6 +16561,31 @@ fsevents@~2.1.2:
     react-native:
       optional: true
   checksum: c421df8a888a261aaecd9dab92b6d2c92712a7d4e4eab15a9ed5a47bafd0cac44d66cff6cfd6ef6563820887053af7641ba872012f41a415067274430e860e98
+  languageName: node
+  linkType: hard
+
+"react-router-redux@npm:^4.0.8":
+  version: 4.0.8
+  resolution: "react-router-redux@npm:4.0.8"
+  checksum: ed4befeebeaa506f64e6c9e74d6435151977c93580d5e4c4c06ed0e8e160c8d34131bfd48bbf16feeb144c3ef7869b85939f920267195a4ff1706d4495cbe90f
+  languageName: node
+  linkType: hard
+
+"react-router@npm:3.2.5":
+  version: 3.2.5
+  resolution: "react-router@npm:3.2.5"
+  dependencies:
+    create-react-class: ^15.5.1
+    history: ^3.0.0
+    hoist-non-react-statics: ^2.3.1
+    invariant: ^2.2.1
+    loose-envify: ^1.2.0
+    prop-types: ^15.7.2
+    react-is: ^16.8.6
+    warning: ^3.0.0
+  peerDependencies:
+    react: ^0.14.0 || ^15.0.0 || ^16.0.0
+  checksum: fddaf2b9d19c7db53043c43fa9306c79d724d80a06770edbf508181d3fdc5efd59633f17909f99196e48180c1353b492b0f82c754adb66b744a4a655b282ac30
   languageName: node
   linkType: hard
 
@@ -16425,6 +16638,23 @@ fsevents@~2.1.2:
     react: ^15.3.0 || ^16.0.0-alpha
     react-dom: ^15.3.0 || ^16.0.0-alpha
   checksum: e29dc664c3d1f151f799792b6b1c079a279aa13557c7beb8622d30f366a09c398c0d966d2f749861435e68b31309c76c3ac8640b132c4b346162a4253e022e23
+  languageName: node
+  linkType: hard
+
+"react-virtualized@npm:^9.21.0":
+  version: 9.22.3
+  resolution: "react-virtualized@npm:9.22.3"
+  dependencies:
+    "@babel/runtime": ^7.7.2
+    clsx: ^1.0.4
+    dom-helpers: ^5.1.3
+    loose-envify: ^1.4.0
+    prop-types: ^15.7.2
+    react-lifecycles-compat: ^3.0.4
+  peerDependencies:
+    react: ^15.3.0 || ^16.0.0-alpha
+    react-dom: ^15.3.0 || ^16.0.0-alpha
+  checksum: 5e3b566592293bc0057bc6be4f6ee29c58c8931421d2882a3ef45ca9b24c6f3ea78bbc5a182c2916af6520845e5a90f569b3a63c9b5e89428720913e6d6239cc
   languageName: node
   linkType: hard
 
@@ -16715,6 +16945,13 @@ fsevents@~2.1.2:
   dependencies:
     lodash.isplainobject: ^4.0.6
   checksum: 571eab2cca3e46321969025af865ddd780804c811be9db277fddf772d86e3ea67b4ef1b19ea3866417d41eb1b73605103020321f68cf68f379a52679a6823d12
+  languageName: node
+  linkType: hard
+
+"redux-thunk@npm:^1.0.0":
+  version: 1.0.3
+  resolution: "redux-thunk@npm:1.0.3"
+  checksum: f0990fe408f941213067a4c07fc5f7a6d74903665300a2b90afe066c8bf17e7383084cca58f005f29d6764b330719bde74588aef5895009f624583a4cdc8013b
   languageName: node
   linkType: hard
 
@@ -19773,7 +20010,7 @@ typescript@3.8.3:
   languageName: node
   linkType: hard
 
-"unified@npm:^6.0.0":
+"unified@npm:^6.0.0, unified@npm:^6.1.5":
   version: 6.2.0
   resolution: "unified@npm:6.2.0"
   dependencies:
@@ -20507,6 +20744,15 @@ typescript@3.8.3:
   dependencies:
     makeerror: 1.0.x
   checksum: 4038fcf92f6ab0288267ad05008aec9e089a759f1bd32e1ea45cc2eb498eb12095ec43cf8ca2bf23a465f4580a0d33b25b89f450ba521dd27083cbc695ee6bf5
+  languageName: node
+  linkType: hard
+
+"warning@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "warning@npm:3.0.0"
+  dependencies:
+    loose-envify: ^1.0.0
+  checksum: c9f99a12803aab81b29858e7dc3415bf98b41baee3a4c3acdeb680d98c47b6e17490f1087dccc54432deed5711a5ce0ebcda2b27e9b5eb054c32ae50acb4419c
   languageName: node
   linkType: hard
 
