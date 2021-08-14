@@ -1,11 +1,16 @@
 import {useEffect} from 'react';
+import {json as requestJson} from 'd3-request';
 import {generateHashId} from 'utils/utils';
+
+// Utils
+import {isValidStyleUrl, getStyleDownloadUrl} from 'utils/map-style-utils/mapbox-gl-style-editor';
 
 export default function RequestMapStyle({
   defaultMapStyles,
   mapStyles,
   loadMapStyles,
-  requestMapStyles
+  mapboxApiAccessToken,
+  mapboxApiUrl
 }) {
   useEffect(
     () => {
@@ -27,7 +32,7 @@ export default function RequestMapStyle({
       );
       loadMapStyles(allStyles.toLoad);
       // TODO: Make the side effect here and then call loadMapStyles
-      requestMapStyles(allStyles.toRequest);
+      requestMapStyles(allStyles.toRequest, {mapboxApiAccessToken, mapboxApiUrl, loadMapStyles});
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -35,4 +40,49 @@ export default function RequestMapStyle({
     ]
   );
   return null;
+}
+
+function requestMapStyles(mapStyles, {mapboxApiAccessToken, mapboxApiUrl, loadMapStyles}) {
+  return Promise.all(
+    Object.values(mapStyles)
+      .map(({id, url, accessToken}) => ({
+        id,
+        url: isValidStyleUrl(url)
+          ? getStyleDownloadUrl(url, accessToken || mapboxApiAccessToken, mapboxApiUrl)
+          : url
+      }))
+      .map(loadMapStyleTask)
+  ).then(
+    // success
+    results =>
+      loadMapStyles(
+        results.reduce(
+          (accu, {id, style}) => ({
+            ...accu,
+            [id]: {
+              ...mapStyles[id],
+              style
+            }
+          }),
+          {}
+        )
+      )
+    // error
+    // loadMapStyleErr
+  );
+}
+
+function loadMapStyleTask({url, id}) {
+  return new Promise((success, error) =>
+    requestJson(url, (err, result) => {
+      if (err) {
+        error(err);
+      } else {
+        if (!result) {
+          error(new Error('Map style response is empty'));
+        }
+        success({id, style: result});
+      }
+    })
+  );
 }

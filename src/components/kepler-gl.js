@@ -390,7 +390,8 @@ function KeplerGlFactory(
                   defaultMapStyles={this.props.mapStyle.mapStyles}
                   mapStyles={this.props.mapStyles}
                   loadMapStyles={this.props.mapStyleActions.loadMapStyles}
-                  requestMapStyles={this.props.mapStyleActions.requestMapStyles}
+                  mapboxApiAccessToken={this.props.mapboxApiAccessToken}
+                  mapboxApiUrl={this.props.mapboxApiUrl}
                 />
                 <NotificationPanel {...notificationPanelFields} />
                 {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
