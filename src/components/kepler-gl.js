@@ -50,8 +50,8 @@ import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
 import NotificationPanelFactory from './notification-panel';
 import GeoCoderPanelFactory from './geocoder-panel';
+import RequestMapStyle from './effectful/request-map-style';
 
-import {generateHashId} from 'utils/utils';
 import {validateToken} from 'utils/mapbox-utils';
 import {mergeMessages} from 'utils/locale-utils';
 
@@ -259,7 +259,6 @@ function KeplerGlFactory(
 
     componentDidMount() {
       this._validateMapboxToken();
-      this._loadMapStyle();
       this._handleResize(this.props);
       if (typeof this.props.onKeplerGlInitialized === 'function') {
         this.props.onKeplerGlInitialized();
@@ -332,28 +331,6 @@ function KeplerGlFactory(
       });
     }
 
-    _loadMapStyle = () => {
-      const defaultStyles = Object.values(this.props.mapStyle.mapStyles);
-      // add id to custom map styles if not given
-      const customStyles = (this.props.mapStyles || []).map(ms => ({
-        ...ms,
-        id: ms.id || generateHashId()
-      }));
-
-      const allStyles = [...customStyles, ...defaultStyles].reduce(
-        (accu, style) => {
-          const hasStyleObject = style.style && typeof style.style === 'object';
-          accu[hasStyleObject ? 'toLoad' : 'toRequest'][style.id] = style;
-
-          return accu;
-        },
-        {toLoad: {}, toRequest: {}}
-      );
-
-      this.props.mapStyleActions.loadMapStyles(allStyles.toLoad);
-      this.props.mapStyleActions.requestMapStyles(allStyles.toRequest);
-    };
-
     render() {
       const {
         id,
@@ -409,6 +386,12 @@ function KeplerGlFactory(
                 }}
                 ref={this.root}
               >
+                <RequestMapStyle
+                  defaultMapStyles={this.props.mapStyle.mapStyles}
+                  mapStyles={this.props.mapStyles}
+                  loadMapStyles={this.props.mapStyleActions.loadMapStyles}
+                  requestMapStyles={this.props.mapStyleActions.requestMapStyles}
+                />
                 <NotificationPanel {...notificationPanelFields} />
                 {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
                 <div className="maps" style={{display: 'flex'}}>
