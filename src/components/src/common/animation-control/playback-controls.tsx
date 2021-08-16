@@ -35,7 +35,7 @@ const DEFAULT_BUTTON_HEIGHT = '20px';
 const StyledAnimationControls = styled.div`
   display: flex;
   position: relative;
-
+  width: ${props => props.width}px;
   &.disabled {
     opacity: 0.4;
     pointer-events: none;
@@ -152,7 +152,7 @@ function PlaybackControlsFactory(
         className={classnames('playback-controls', {
           disabled: !isAnimatable
         })}
-        style={{width: `${width}px`}}
+        width={width}
       >
         {/** Window */}
         {playbackActionItems.map((ActionComponent, index) => (

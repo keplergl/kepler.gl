@@ -344,6 +344,7 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
             <StyledDropdownSelect {...dropdownSelectProps}>
               <DropdownSelectValue
                 hasPlaceholder={!hasValue}
+                disabled={disabled}
                 inputTheme={inputTheme}
                 className="item-selector__dropdown__value"
               >
@@ -351,6 +352,7 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
                   <DropDownLineItemRenderComponent
                     displayOption={displayOption}
                     value={selected[0]}
+                    disabled={disabled}
                     light={inputTheme === 'light'}
                   />
                 ) : (
