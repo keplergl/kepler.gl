@@ -21,7 +21,6 @@
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
-import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 import {render} from 'react-dom';
