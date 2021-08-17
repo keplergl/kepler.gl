@@ -76,9 +76,10 @@ function requestMapStyles(mapStyles, {mapboxApiAccessToken, mapboxApiUrl, loadMa
           }),
           {}
         )
-      )
+      ),
     // error
     // loadMapStyleErr
+    () => {}
   );
 }
 
