@@ -24,6 +24,9 @@ import {mount} from 'enzyme';
 import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
+import {render} from 'react-dom';
+import {act} from 'react-dom/test-utils';
+import sinon from 'sinon';
 
 import coreReducer from 'reducers/core';
 import {keplerGlInit} from 'actions/actions';
@@ -38,6 +41,7 @@ import {
   GeocoderPanelFactory
 } from 'components';
 import NotificationPanelFactory from 'components/notification-panel';
+import {TASKS as RequestMapStyleTasks} from 'components/effectful/request-map-style';
 import {ActionTypes} from 'actions';
 import {DEFAULT_MAP_STYLES, EXPORT_IMAGE_ID} from 'constants';
 
@@ -222,32 +226,49 @@ test('Components -> KeplerGl -> Mount -> Split Maps', t => {
   t.end();
 });
 
-test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
+test('Components -> KeplerGl -> Mount -> Load default map style task', async t => {
+  // setup
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const requestMapStylesStub = sinon.stub(RequestMapStyleTasks, 'requestMapStyles').callThrough();
+  const loadMapStyleTaskRetPromises = [];
+  const loadMapStylesStub = sinon.stub(RequestMapStyleTasks, 'loadMapStyleTask').callsFake(() => {
+    const p = new Promise(resolve => {
+      loadMapStyleTaskRetPromises.push(resolve);
+    });
+    return p;
+  });
+  const stateSelector = state => state.keplerGl.map;
+
   // mount with empty store
   const store = mockStore(initialState);
 
-  t.doesNotThrow(() => {
-    mount(
+  // t.doesNotThrow(async () => {
+  await act(async () =>
+    render(
       <Provider store={store}>
         <KeplerGl
           id="map"
           mapboxApiAccessToken="smoothie-the-cat"
-          selector={state => state.keplerGl.map}
+          selector={stateSelector}
           dispatch={store.dispatch}
         />
-      </Provider>
-    );
-  }, 'Should not throw error when mount KeplerGl');
+      </Provider>,
+      container
+    )
+  );
+  // }, 'Should not throw error when mount KeplerGl');
 
   const actions = store.getActions();
   const expectedActions = [
-    {type: ActionTypes.LOAD_MAP_STYLES, payload: {}},
-    {
-      type: ActionTypes.REQUEST_MAP_STYLES,
-      payload: DEFAULT_MAP_STYLES.reduce((accu, curr) => ({...accu, [curr.id]: curr}), {})
-    },
-    {type: ActionTypes.UPDATE_MAP, payload: {width: 800, height: 800}}
+    {type: ActionTypes.UPDATE_MAP, payload: {width: 800, height: 800}},
+    {type: ActionTypes.LOAD_MAP_STYLES, payload: {}}
   ];
+  t.deepEqual(
+    requestMapStylesStub.firstCall.args[0],
+    DEFAULT_MAP_STYLES.reduce((accu, curr) => ({...accu, [curr.id]: curr}), {}),
+    'Should call request map styles'
+  );
   t.deepEqual(
     actions,
     expectedActions,
@@ -255,8 +276,6 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
   );
 
   const resultState1 = coreReducer(initialCoreState, actions[1]);
-  const [task1, ...rest] = drainTasksForTesting();
-  t.equal(rest.length, 0, 'should dispatch 1 tasks');
 
   const expectedTask = {
     payload: [
@@ -288,19 +307,26 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
     ]
   };
 
-  t.deepEqual(task1.payload, expectedTask.payload, 'should create task to load map styles');
+  t.deepEqual(
+    loadMapStylesStub.getCalls().map(call => call.args[0]),
+    expectedTask.payload,
+    'should create task to load map styles'
+  );
   t.deepEqual(resultState1, initialCoreState, 'state should be the same');
 
-  const resultState2 = coreReducer(
-    resultState1,
-    succeedTaskWithValues(task1, [
-      {id: 'dark', style: {layers: [], name: 'dark'}},
-      {id: 'light', style: {layers: [], name: 'light'}},
-      {id: 'muted', style: {hello: 'world'}},
-      {id: 'muted_night', style: {world: 'hello'}},
-      {id: 'satellite', style: {satellite: 'yes'}}
-    ])
-  );
+  [
+    {id: 'dark', style: {layers: [], name: 'dark'}},
+    {id: 'light', style: {layers: [], name: 'light'}},
+    {id: 'muted', style: {hello: 'world'}},
+    {id: 'muted_night', style: {world: 'hello'}},
+    {id: 'satellite', style: {satellite: 'yes'}}
+  ].forEach((ret, i) => loadMapStyleTaskRetPromises[i](ret));
+
+  // Find the proper way to wait.
+  await new Promise(resolve => {
+    setTimeout(() => resolve(), 10);
+  });
+  const resultState2 = coreReducer(resultState1, store.getActions()[2]);
 
   const expectedStateMapStyles = {
     dark: {
@@ -331,6 +357,9 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
     expectedStateMapStyles,
     'should update state with loaded map styles'
   );
+
+  // teardown
+  document.body.removeChild(container);
 
   t.end();
 });

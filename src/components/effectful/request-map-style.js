@@ -5,6 +5,12 @@ import {generateHashId} from 'utils/utils';
 // Utils
 import {isValidStyleUrl, getStyleDownloadUrl} from 'utils/map-style-utils/mapbox-gl-style-editor';
 
+// This is exported to aid testing.
+export const TASKS = {
+  loadMapStyleTask,
+  requestMapStyles
+};
+
 export default function RequestMapStyle({
   defaultMapStyles,
   mapStyles,
@@ -32,7 +38,11 @@ export default function RequestMapStyle({
       );
       loadMapStyles(allStyles.toLoad);
       // TODO: Make the side effect here and then call loadMapStyles
-      requestMapStyles(allStyles.toRequest, {mapboxApiAccessToken, mapboxApiUrl, loadMapStyles});
+      TASKS.requestMapStyles(allStyles.toRequest, {
+        mapboxApiAccessToken,
+        mapboxApiUrl,
+        loadMapStyles
+      });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -51,7 +61,7 @@ function requestMapStyles(mapStyles, {mapboxApiAccessToken, mapboxApiUrl, loadMa
           ? getStyleDownloadUrl(url, accessToken || mapboxApiAccessToken, mapboxApiUrl)
           : url
       }))
-      .map(loadMapStyleTask)
+      .map(TASKS.loadMapStyleTask)
   ).then(
     // success
     results =>
