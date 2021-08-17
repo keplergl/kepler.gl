@@ -231,13 +231,16 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', async t =
   const container = document.createElement('div');
   document.body.appendChild(container);
   const requestMapStylesStub = sinon.stub(RequestMapStyleTasks, 'requestMapStyles').callThrough();
-  const loadMapStyleTaskRetPromises = [];
-  const loadMapStylesStub = sinon.stub(RequestMapStyleTasks, 'loadMapStyleTask').callsFake(() => {
-    const p = new Promise(resolve => {
-      loadMapStyleTaskRetPromises.push(resolve);
-    });
-    return p;
-  });
+  const loadMapStylesStub = sinon.stub(RequestMapStyleTasks, 'loadMapStyleTask');
+
+  [
+    {id: 'dark', style: {layers: [], name: 'dark'}},
+    {id: 'light', style: {layers: [], name: 'light'}},
+    {id: 'muted', style: {hello: 'world'}},
+    {id: 'muted_night', style: {world: 'hello'}},
+    {id: 'satellite', style: {satellite: 'yes'}}
+  ].forEach((ret, i) => loadMapStylesStub.onCall(i).resolves(ret));
+
   const stateSelector = state => state.keplerGl.map;
 
   // mount with empty store
@@ -270,7 +273,7 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', async t =
     'Should call request map styles'
   );
   t.deepEqual(
-    actions,
+    actions.slice(0, 2),
     expectedActions,
     'Should mount kepler.gl and dispatch 2 actions to load map styles'
   );
@@ -314,18 +317,6 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', async t =
   );
   t.deepEqual(resultState1, initialCoreState, 'state should be the same');
 
-  [
-    {id: 'dark', style: {layers: [], name: 'dark'}},
-    {id: 'light', style: {layers: [], name: 'light'}},
-    {id: 'muted', style: {hello: 'world'}},
-    {id: 'muted_night', style: {world: 'hello'}},
-    {id: 'satellite', style: {satellite: 'yes'}}
-  ].forEach((ret, i) => loadMapStyleTaskRetPromises[i](ret));
-
-  // Find the proper way to wait.
-  await new Promise(resolve => {
-    setTimeout(() => resolve(), 10);
-  });
   const resultState2 = coreReducer(resultState1, store.getActions()[2]);
 
   const expectedStateMapStyles = {
