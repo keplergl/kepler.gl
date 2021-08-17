@@ -351,11 +351,28 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', async t =
 
   // teardown
   document.body.removeChild(container);
+  requestMapStylesStub.restore();
+  loadMapStylesStub.restore();
 
   t.end();
 });
 
-test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
+test('Components -> KeplerGl -> Mount -> Load custom map style task', async t => {
+  // setup
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const requestMapStylesStub = sinon.spy(RequestMapStyleTasks, 'requestMapStyles');
+  // Intentionally use a promise that never resolves, since we don't care about the task
+  // TODO: This isn't great since there are calls still waiting for this promise after
+  // this test is torn down.
+  let tearDownReject;
+  const neverResolvedPromise = new Promise((_, reject) => {
+    tearDownReject = reject;
+  });
+  const loadMapStylesStub = sinon
+    .stub(RequestMapStyleTasks, 'loadMapStyleTask')
+    .returns(neverResolvedPromise);
+
   // mount with empty store
   const store = mockStore(initialState);
   // mount without id or a kepler.gl state
@@ -383,8 +400,10 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
       }
     ]
   };
-  t.doesNotThrow(() => {
-    mount(
+  // t.doesNotThrow(() => {
+  await act(async () =>
+    render(
+      // mount(
       <Provider store={store}>
         <KeplerGl
           id="map"
@@ -393,35 +412,39 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
           dispatch={store.dispatch}
           mapStyles={[customStyle1, customStyle2, customStyle3]}
         />
-      </Provider>
-    );
-  }, 'Should not throw error when mount KeplerGl');
+      </Provider>,
+      container
+    )
+  );
+  // );
+  // }, 'Should not throw error when mount KeplerGl');
 
   const actions = store.getActions();
   const expectedActions = [
+    {type: ActionTypes.UPDATE_MAP, payload: {width: 800, height: 800}},
     {
       type: ActionTypes.LOAD_MAP_STYLES,
       payload: {
         milkshake: customStyle2,
         chai: customStyle3
       }
-    },
-    {
-      type: ActionTypes.REQUEST_MAP_STYLES,
-      payload: DEFAULT_MAP_STYLES.reduce(
-        (accu, curr) => ({...accu, [curr.id]: curr, smoothie: customStyle1}),
-        {}
-      )
-    },
-    {type: ActionTypes.UPDATE_MAP, payload: {width: 800, height: 800}}
+    }
   ];
+  t.deepEqual(
+    requestMapStylesStub.firstCall.args[0],
+    DEFAULT_MAP_STYLES.reduce(
+      (accu, curr) => ({...accu, [curr.id]: curr, smoothie: customStyle1}),
+      {}
+    ),
+    'Should call request map styles'
+  );
   t.deepEqual(
     actions,
     expectedActions,
-    'Should mount kepler.gl and dispatch 2 actions to load map styles'
+    'Should mount kepler.gl and dispatch 1 action to load map styles'
   );
 
-  const resultState1 = coreReducer(initialCoreState, actions[0]);
+  const resultState1 = coreReducer(initialCoreState, actions[1]);
 
   const expectedMapStyleState1 = {
     ...initialCoreState.mapStyle,
@@ -444,12 +467,6 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
     expectedMapStyleState1,
     'Should load map style into reducer and create layer groups'
   );
-
-  // Do not remove this. Necessary for testing flow
-  // eslint-disable-next-line no-unused-vars
-  const resultState2 = coreReducer(resultState1, actions[1]);
-  const [task1, ...rest] = drainTasksForTesting();
-  t.equal(rest.length, 0, 'should dispatch 1 tasks');
 
   const expectedTask = {
     payload: [
@@ -486,7 +503,15 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
     ]
   };
 
-  t.deepEqual(task1.payload, expectedTask.payload, 'should create task to load map styles');
+  t.deepEqual(
+    loadMapStylesStub.getCalls().map(call => call.args[0]),
+    expectedTask.payload,
+    'should create task to load map styles'
+  );
 
-  t.end();
+  // teardown
+  document.body.removeChild(container);
+  requestMapStylesStub.restore();
+  loadMapStylesStub.restore();
+  tearDownReject();
 });
