@@ -35,4 +35,3 @@ import './geocoder-panel-test';
 import './tooltip-config-test';
 import './bottom-widget-test';
 import './plot-container-test';
-import './effectful';
