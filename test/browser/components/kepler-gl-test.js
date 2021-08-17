@@ -232,6 +232,7 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', async t =
   document.body.appendChild(container);
   const requestMapStylesStub = sinon.stub(RequestMapStyleTasks, 'requestMapStyles').callThrough();
   const loadMapStylesStub = sinon.stub(RequestMapStyleTasks, 'loadMapStyleTask');
+  t.plan(5);
 
   [
     {id: 'dark', style: {layers: [], name: 'dark'}},
@@ -353,12 +354,11 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', async t =
   document.body.removeChild(container);
   requestMapStylesStub.restore();
   loadMapStylesStub.restore();
-
-  t.end();
 });
 
 test('Components -> KeplerGl -> Mount -> Load custom map style task', async t => {
   // setup
+  t.plan(4);
   const container = document.createElement('div');
   document.body.appendChild(container);
   const requestMapStylesStub = sinon.spy(RequestMapStyleTasks, 'requestMapStyles');
