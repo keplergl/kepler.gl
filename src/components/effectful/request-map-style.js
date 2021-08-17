@@ -1,3 +1,4 @@
+import {default as Console} from 'global/console';
 import {useEffect} from 'react';
 import {json as requestJson} from 'd3-request';
 import {generateHashId} from 'utils/utils';
@@ -79,7 +80,9 @@ function requestMapStyles(mapStyles, {mapboxApiAccessToken, mapboxApiUrl, loadMa
       ),
     // error
     // loadMapStyleErr
-    () => {}
+    e => {
+      Console.warn('loadMapStyleErr', e);
+    }
   );
 }
 
