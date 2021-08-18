@@ -35,6 +35,9 @@ jobs:
       - name: Install Dependecies
         run: yarn
 
+      - name: Prettier
+        run: yarn run-prettier
+      
       - name: Test
         run: xvfb-run --auto-servernum yarn cover
 
