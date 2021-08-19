@@ -144,6 +144,21 @@ class KeplerGl(widgets.DOMWidget):
         self.data = copy
 
     def show(self, data=None, config=None, read_only=False, center_map=False):
+        ''' Display current map in Google Colab
+
+        Inputs:
+        - data: a data dictionary {"name": data}, if not provided, will use current map data
+        - config: map config dictionary, if not provided, will use current map config
+        - read_only: if read_only is True, hide side panel to disable map customization
+        - center_map: if center_map is True, the bound of the map will be updated acoording to the current map data
+
+        Example of use:
+            # this will display map in Google Colab
+            from keplergl import KeplerGL
+            map1 = KeplerGL()
+            map1.show()
+
+        '''
         keplergl_html = resource_string(__name__, 'static/keplergl.html').decode('utf-8')
         # find open of body
         k = keplergl_html.find("<body>")
@@ -168,6 +183,7 @@ class KeplerGl(widgets.DOMWidget):
         - data: a data dictionary {"name": data}, if not provided, will use current map data
         - config: map config dictionary, if not provided, will use current map config
         - read_only: if read_only is True, hide side panel to disable map customization
+        - center_map: if center_map is True, the bound of the map will be updated acoording to the current map data
 
         Returns:
         - a html encoded string
