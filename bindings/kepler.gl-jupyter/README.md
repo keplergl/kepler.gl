@@ -290,7 +290,7 @@ The output of the jupyter labextension is defined in the file `js/package.json`:
 
 Then, you can either install this labextension to test it:
 ```shell
-jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupyter
+jupyter labextension install .
 ```
 or, you can manually create a symbolic link for the folder `bindings/kepler.gl-jupyter/kepler-jupyter/labextension` under the jupyter's folder `labextensions`, e.g. `/Users/test/opt/anaconda3/envs/test37/share/jupyter/labextensions`. You will need to reload the jupyter lab page.
 

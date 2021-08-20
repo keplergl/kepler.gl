@@ -53,11 +53,25 @@ jobs:
           name: keplergl-pypi
           path: bindings/kepler.gl-jupyter/dist/
 
-      - name: Publish Pypi
-        if: github.event_name == 'release' && github.event.action == 'created'
+      - name: Check Release Tag
+        id: check-tag
+        run: |
+          if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+-jupyter$ ]]; then
+              echo ::set-output name=publish::true
+          fi
+      
+      - name: Publish KeplerGL to Pypi
+        if: steps.check-tag.outputs.publish == 'true'
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.npm_token }}
+          TWINE_PASSWORD: ${{ secrets.pypi_token }}
         run: |
           python -m twine upload bindings/kepler.gl-jupyter/dist/*.tar.gz 
-    
+
+      - name: Publish kepler-jupyter to NPM 
+        if: steps.check-tag.outputs.publish == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+        run: |
+          cd bindings/kepler.gl-jupyter/js
+          npm publish
