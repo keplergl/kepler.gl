@@ -286,5 +286,6 @@
   "workspaces": [
     "examples/demo-app",
     "website"
-  ]
+  ],
+  "packageManager": "yarn@3.0.1"
 }
