@@ -1,4 +1,4 @@
-name: Build KeplerGL Python Package
+name: Build KeplerGL Python and NPM Packages
 
 on: push
 

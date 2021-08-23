@@ -16,29 +16,29 @@ Table of contacts
 
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/keplergl/badges/version.svg)](https://anaconda.org/conda-forge/keplergl) [![PyPI version](https://badge.fury.io/py/keplergl.svg)](https://badge.fury.io/py/keplergl)
 
-### Using conda:
+### 1. For Jupyter Notebook
+
+#### Using conda:
 
 ```shell
 conda install -c conda-forge keplergl
 ```
 
-#### Prerequisites
+##### Prerequisites
   - Python >= 3.7
 
-### Using pip:
+#### Using pip:
 
 ```shell
 pip install keplergl
 ```
 
-#### Prerequisites
-  - For Kelplergl <= 0.3.0
+##### Prerequisites
+  - For kelplergl <= 0.3.0
     - Python >= 2
     - ipywidgets >= 7.0.0
 
-### Installation Issues:
-
-#### For Jupyter Notebook
+##### Common Issues:
 
 If you on Mac used `pip install` and running Notebook 5.3 and above, you don't need to run the following
 
@@ -48,33 +48,76 @@ jupyter nbextension install --py --sys-prefix keplergl # can be skipped for note
 jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
 ```
 
-#### For JupyterLab
+### 2. For Google Colab:
 
-Note: to work with JupyterLab3, you need to install KeplerGL > 0.3.0. Otherwise, you will get the following error message:
+`keplergl` (>0.3.0) works with Google Colab. You can install it using pip. 
 
-> Error displaying widget: model not found
-
-**For KeplerGL <= 0.3.0 and JupyterLab <=2:**
-
-If you are in JupyterLab, you will also need to install the JupyterLab extension. This require [node](https://nodejs.org/en/download/package-manager/#macos) `> 8.15.0`
-
-If you use [Homebrew](https://brew.sh/) on Mac:
-
-```shell
-brew install node@8
+```python
+# Install keplergl (>0.3.0)
+!pip install keplergl
 ```
 
-Then install jupyter labextension.
+### 3. For JupyterLab
 
+#### JupyterLab 3
+
+NOTE: `keplergl` <=0.3.0 doesn't work with JupyterLab 3. You need to make sure the python package `keplergl` > 0.3.0 is installed. 
+
+Installation using pip:
 ```shell
-jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupyter
+pip install keplergl
+```
+Installation using conda:
+```shell
+conda install keplergl
+```
+
+There is no need to use `jupyter labextension install` for `keplergl` > 0.3.0 with JupyterLab3.
+
+#### JupyterLab 1
+
+For JupyterLab1, you need to install `keplergl-jupyter` labextension from NPM registery. There is no need to install `KeplerGL` python package. 
+
+First, install `jupyterlab-manager` for JupyterLab1:
+```shell
+jupyter labextension install @jupyter-widgets/jupyterlab-manager@1.1
+```
+
+NOTE: only @jupyter-widgets/jupyterlab-manager@1.1 (version 1.1) works with JupyterLab1.
+
+Then, install `keplergl-jupyter` labextension from NPM registry:
+```shell
+jupyter labextension install keplergl-jupyter
 ```
 
 **Prerequisites for JupyterLab:**
-- Node > 8.15.0
+- Node >= 12
 - Python 3
-- JupyterLab >=1.0.0 || >=2.0.0
 
+#### JupyterLab 2
+
+For JupyterLab2, you need to install `keplergl-jupyter` labextension from NPM registery. There is no need to install `keplergl` python package. 
+
+First, install `jupyterlab-manager` for JupyterLab2:
+```shell
+jupyter labextension install @jupyter-widgets/jupyterlab-manager@2
+```
+
+To install `keplergl-jupyter` from NPM registry, JupyterLab2 has following requirements of dependencies:
+> JupyterLab             Extension               Package
+> '>=16.9.0 <16.10.0'   >=17.0.0 <18.0.0  react
+> '>=16.9.0 <16.10.0'  >=17.0.0 <18.0.0  react-dom
+
+However, `keplergl-jupyter`<=0.3.0 depends on react >= 17.0.2. Therefore, the latest `keplergl-jupyter` can’t be installed with JupyterLab2: if you use `jupyter labextension install keplergl-jupyter`, the version 0.2.2 as a fallback will be installed. Unfortunately, version 0.2.2 doesn’t work with JupyterLab2.
+
+A workaround is to modify the file `lib/python3.x/site-packages/jupyterlab/staging/package.json` and remove “react” and “react-dom” from “singletonPackages” object. Then, install keplergl-jupyter using this command:
+```
+jupyter labextension install keplergl-jupyter
+```
+
+**Prerequisites:**
+- Node >= 12
+- Python 3
 
 ## Quick Start
 
