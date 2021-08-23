@@ -223,7 +223,6 @@ class HeatmapLayer extends MapboxGLLayer {
         layout: {
           visibility: 'visible'
         },
-        maxzoom: MAX_ZOOM_LEVEL,
         paint,
         ...(this.isValidFilter(filter) ? {filter} : {})
       };

@@ -74,7 +74,6 @@ test('#Heatmaplayer -> formatLayerData -> w/ GpuFilter', t => {
     id: 'heatmap-test-1',
     source: `${dataId}-1-2`,
     layout: {visibility: 'visible'},
-    maxzoom: 18,
     filter: ['all', ['>=', 'gpu:utc_timestamp', 39000], ['<=', 'gpu:utc_timestamp', 552000]],
     paint: {
       'heatmap-weight': ['interpolate', ['linear'], ['get', 'id'], 1, 0, 345, 1],
@@ -208,7 +207,6 @@ test('#Heatmaplayer -> formatLayerData -> w/o GpuFilter', t => {
     id: 'heatmap-test-1',
     source: `${testCsvDataId}-1-2`,
     layout: {visibility: 'visible'},
-    maxzoom: 18,
     paint: {
       'heatmap-weight': 1,
       'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, MAX_ZOOM_LEVEL, 3],
