@@ -2,7 +2,7 @@
 
 ## Release a new version
 
-When release a new version, the `keplergl-jupyter` js module will be published to NPM and the `keplergl` python module will be published on PyPI.
+When release a new version, the `keplergl-jupyter` js module will be published on NPM and the `keplergl` python module will be published on PyPI.
 
 NOTE: __Version number of the js module **`kelergl-jupyter`** and the python module **`keplergl`** should match__
 
@@ -18,18 +18,18 @@ git commit -am "keplergl==<version>"
 
 ### Step2:
 
-Create a tags: <version>-jupyter e.g. v0.3.2-jupyter
+Create a tag: `<version>-jupyter` e.g. v0.3.2-jupyter
 
 ```
-git tag -a <version>-jupyter -m "<version>-jupyter
+git tag -a <version>-jupyter -m "<version>-jupyter"
 git push origin master && git push origin <version>-jupyter
 ```
 
-The new tag will trigger the Github Action `build-publish-pypi.yml`: __"Build KeplerGL Python and NPM packages"__. The packages will be built and tested, then publish to NPM and PyPI using the secret tokens.
+The new tag will trigger the Github Action `build-publish-pypi.yml`: __"Build KeplerGL Python and NPM packages"__. The packages will be built and tested, then published to NPM and PyPI using the secret tokens.
 
 ### Step3:
 
-For conda-forge realse: https://github.com/lixun910/staged-recipes/tree/keplergl-feedstock
+For conda-forge release, please use the repo: https://github.com/lixun910/staged-recipes/tree/keplergl-feedstock
 
 Edit `meta.yaml` under directory `staged-recipes/recipes/kepler/gl`:
 
