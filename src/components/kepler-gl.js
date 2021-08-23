@@ -50,6 +50,7 @@ import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
 import NotificationPanelFactory from './notification-panel';
 import GeoCoderPanelFactory from './geocoder-panel';
+import TaskRunner from './task-runner';
 
 import {generateHashId} from 'utils/utils';
 import {validateToken} from 'utils/mapbox-utils';
@@ -418,6 +419,7 @@ function KeplerGlFactory(
                 {interactionConfig.geocoder.enabled && <GeoCoderPanel {...geoCoderPanelFields} />}
                 <BottomWidget {...bottomWidgetFields} />
                 <ModalContainer {...modalContainerFields} />
+                <TaskRunner />
               </GlobalStyle>
             </ThemeProvider>
           </IntlProvider>
