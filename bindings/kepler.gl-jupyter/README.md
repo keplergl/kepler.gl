@@ -38,13 +38,10 @@ pip install keplergl
     - Python >= 2
     - ipywidgets >= 7.0.0
 
-##### Common Issues:
-
 If you on Mac used `pip install` and running Notebook 5.3 and above, you don't need to run the following
 
 ```shell
 jupyter nbextension install --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
-
 jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
 ```
 
@@ -76,23 +73,21 @@ There is no need to use `jupyter labextension install` for `keplergl` > 0.3.0 wi
 
 #### JupyterLab 1
 
-For JupyterLab1, you need to install `keplergl-jupyter` labextension from NPM registery. There is no need to install `KeplerGL` python package. 
+For JupyterLab1, you need to install `keplergl-jupyter` labextension from NPM registery. There is no need to install `keplergl` python package. 
 
 First, install `jupyterlab-manager` for JupyterLab1:
 ```shell
 jupyter labextension install @jupyter-widgets/jupyterlab-manager@1.1
 ```
 
-NOTE: only @jupyter-widgets/jupyterlab-manager@1.1 (version 1.1) works with JupyterLab1.
-
 Then, install `keplergl-jupyter` labextension from NPM registry:
 ```shell
 jupyter labextension install keplergl-jupyter
 ```
 
-**Prerequisites for JupyterLab:**
-- Node >= 12
-- Python 3
+##### Prerequisites:
+  - Node >= 12
+  - Python 3
 
 #### JupyterLab 2
 
@@ -104,20 +99,22 @@ jupyter labextension install @jupyter-widgets/jupyterlab-manager@2
 ```
 
 To install `keplergl-jupyter` from NPM registry, JupyterLab2 has following requirements of dependencies:
-> JupyterLab             Extension               Package
-> '>=16.9.0 <16.10.0'   >=17.0.0 <18.0.0  react
-> '>=16.9.0 <16.10.0'  >=17.0.0 <18.0.0  react-dom
+```
+JupyterLab             Extension      Package
+>=16.9.0 <16.10.0   >=17.0.0 <18.0.0  react
+>=16.9.0 <16.10.0   >=17.0.0 <18.0.0  react-dom
+```
 
-However, `keplergl-jupyter`<=0.3.0 depends on react >= 17.0.2. Therefore, the latest `keplergl-jupyter` can’t be installed with JupyterLab2: if you use `jupyter labextension install keplergl-jupyter`, the version 0.2.2 as a fallback will be installed. Unfortunately, version 0.2.2 doesn’t work with JupyterLab2.
+However, `keplergl-jupyter`<=0.3.0 depends on `react` >= 17.0.2. Therefore, the latest `keplergl-jupyter` can’t be installed with JupyterLab2: if you use `jupyter labextension install keplergl-jupyter`, the version 0.2.2 as a fallback will be installed. Unfortunately, version 0.2.2 does NOT work with JupyterLab2.
 
 A workaround is to modify the file `lib/python3.x/site-packages/jupyterlab/staging/package.json` and remove “react” and “react-dom” from “singletonPackages” object. Then, install keplergl-jupyter using this command:
 ```
 jupyter labextension install keplergl-jupyter
 ```
 
-**Prerequisites:**
-- Node >= 12
-- Python 3
+##### Prerequisites:
+  - Node >= 12
+  - Python 3
 
 ## Quick Start
 
@@ -149,11 +146,11 @@ map_1.save_to_html(file_name='keplergl_map.html')
 
 ### For Google Colab:
 
-KeplerGL (>0.3.0) works with Google Colab. You can install it using pip or conda. 
+Keplergl (>0.3.0) works with Google Colab. You can install it using pip.
 
 ```python
 # Install keplergl (>0.3.0)
-!conda install keplergl
+!pip install keplergl
 
 # Load Kepler.gl with an empty map
 from keplergl import KeplerGl
@@ -209,7 +206,7 @@ https://docs.kepler.gl/docs/keplergl-jupyter#1-load-keplergl-map
 You will need to install node, yarn and Jupyter Notebook.
 
 #### 1. Node and Yarn
-Install [node](https://nodejs.org/en/download/package-manager/#macos) `> 10.15.0`, and [yarn](https://yarnpkg.com/en/docs/install#mac-stable). Use [nvm](https://github.com/creationix/nvm) for better node version management e.g. `nvm install 10`.
+Install [node](https://nodejs.org/en/download/package-manager/#macos) `> 12`, and [yarn](https://yarnpkg.com/en/docs/install#mac-stable). Use [nvm](https://github.com/creationix/nvm) for better node version management e.g. `nvm install 12`.
 
 
 #### 2. Install Jupyter 
