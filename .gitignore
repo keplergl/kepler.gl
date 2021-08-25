@@ -23,3 +23,11 @@ package-lock.json
 /index.html
 
 npm-debug.log
+
+.yarn/*
+!.yarn/cache
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
