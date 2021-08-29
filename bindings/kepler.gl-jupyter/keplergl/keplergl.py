@@ -6,6 +6,7 @@ import geopandas
 import shapely.wkt
 import json
 from ._version import EXTENSION_SPEC_VERSION
+import sys
 
 documentation = 'https://docs.kepler.gl/docs/keplergl-jupyter'
 def _df_to_dict(df):
@@ -142,6 +143,39 @@ class KeplerGl(widgets.DOMWidget):
 
         self.data = copy
 
+    def show(self, data=None, config=None, read_only=False, center_map=False):
+        ''' Display current map in Google Colab
+
+        Inputs:
+        - data: a data dictionary {"name": data}, if not provided, will use current map data
+        - config: map config dictionary, if not provided, will use current map config
+        - read_only: if read_only is True, hide side panel to disable map customization
+        - center_map: if center_map is True, the bound of the map will be updated acoording to the current map data
+
+        Example of use:
+            # this will display map in Google Colab
+            from keplergl import KeplerGL
+            map1 = KeplerGL()
+            map1.show()
+
+        '''
+        keplergl_html = resource_string(__name__, 'static/keplergl.html').decode('utf-8')
+        # find open of body
+        k = keplergl_html.find("<body>")
+
+        data_to_add = data_to_json(self.data, None) if data == None else data_to_json(data, None)
+        config_to_add = self.config if config == None else config
+
+        keplergl_data = json.dumps({"config": config_to_add, "data": data_to_add, "options": {"readOnly": read_only, "centerMap": center_map}})
+
+        cmd = """window.__keplerglDataConfig = {};""".format(keplergl_data)
+        frame_txt = keplergl_html[:k] + "<body><script>" + cmd + "</script>" + keplergl_html[k+6:]
+
+        if "google.colab" in sys.modules:
+            from IPython.display import HTML, Javascript 
+            display(HTML(frame_txt))
+            display(Javascript(f"google.colab.output.setIframeHeight('{self.height}');"))
+
     def _repr_html_(self, data=None, config=None, read_only=False, center_map=False):
         ''' Return current map in an html encoded string
 
@@ -149,6 +183,7 @@ class KeplerGl(widgets.DOMWidget):
         - data: a data dictionary {"name": data}, if not provided, will use current map data
         - config: map config dictionary, if not provided, will use current map config
         - read_only: if read_only is True, hide side panel to disable map customization
+        - center_map: if center_map is True, the bound of the map will be updated acoording to the current map data
 
         Returns:
         - a html encoded string

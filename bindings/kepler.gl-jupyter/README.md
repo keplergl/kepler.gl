@@ -14,39 +14,111 @@ Table of contacts
 
 ## Installation
 
-### Prerequisites
-- Python >= 2
-- ipywidgets >= 7.0.0
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/keplergl/badges/version.svg)](https://anaconda.org/conda-forge/keplergl) [![PyPI version](https://badge.fury.io/py/keplergl.svg)](https://badge.fury.io/py/keplergl)
 
+### 1. For Jupyter Notebook
 
-To install use pip:
+#### Using conda:
 
-    $ pip install keplergl
+```shell
+conda install -c conda-forge keplergl
+```
 
+##### Prerequisites
+  - Python >= 3.7
+
+#### Using pip:
+
+```shell
+pip install keplergl
+```
+
+##### Prerequisites
+  - For kelplergl <= 0.3.0
+    - Python >= 2
+    - ipywidgets >= 7.0.0
 
 If you on Mac used `pip install` and running Notebook 5.3 and above, you don't need to run the following
 
-    $ jupyter nbextension install --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
+```shell
+jupyter nbextension install --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
+jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
+```
 
-    $ jupyter nbextension enable --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
+### 2. For Google Colab:
 
-If you are in JupyterLab, you will also need to install the JupyterLab extension. This require [node](https://nodejs.org/en/download/package-manager/#macos) `> 8.15.0`
+`keplergl` (>0.3.0) works with Google Colab. You can install it using pip. 
 
-If you use [Homebrew](https://brew.sh/) on Mac:
+```python
+# Install keplergl (>0.3.0)
+!pip install keplergl
+```
 
-    $ brew install node@8
+### 3. For JupyterLab
 
-Then install jupyter labextension.
+#### JupyterLab 3
 
-    $ jupyter labextension install @jupyter-widgets/jupyterlab-manager keplergl-jupyter
+NOTE: `keplergl` <=0.3.0 doesn't work with JupyterLab 3. You need to make sure the python package `keplergl` > 0.3.0 is installed. 
 
-**Prerequisites for JupyterLab:**
-- Node > 8.15.0
-- Python 3
-- JupyterLab >=1.0.0 || >=2.0.0
+Installation using pip:
+```shell
+pip install keplergl
+```
+Installation using conda:
+```shell
+conda install keplergl
+```
 
+There is no need to use `jupyter labextension install` for `keplergl` > 0.3.0 with JupyterLab3.
+
+#### JupyterLab 1
+
+For JupyterLab1, you need to install `keplergl-jupyter` labextension from NPM registery. There is no need to install `keplergl` python package. 
+
+First, install `jupyterlab-manager` for JupyterLab1:
+```shell
+jupyter labextension install @jupyter-widgets/jupyterlab-manager@1.1
+```
+
+Then, install `keplergl-jupyter` labextension from NPM registry:
+```shell
+jupyter labextension install keplergl-jupyter
+```
+
+##### Prerequisites:
+  - Node >= 12
+  - Python 3
+
+#### JupyterLab 2
+
+For JupyterLab2, you need to install `keplergl-jupyter` labextension from NPM registery. There is no need to install `keplergl` python package. 
+
+First, install `jupyterlab-manager` for JupyterLab2:
+```shell
+jupyter labextension install @jupyter-widgets/jupyterlab-manager@2
+```
+
+To install `keplergl-jupyter` from NPM registry, JupyterLab2 has following requirements of dependencies:
+```
+JupyterLab             Extension      Package
+>=16.9.0 <16.10.0   >=17.0.0 <18.0.0  react
+>=16.9.0 <16.10.0   >=17.0.0 <18.0.0  react-dom
+```
+
+However, `keplergl-jupyter`<=0.3.0 depends on `react` >= 17.0.2. Therefore, the latest `keplergl-jupyter` can’t be installed with JupyterLab2: if you use `jupyter labextension install keplergl-jupyter`, the version 0.2.2 as a fallback will be installed. Unfortunately, version 0.2.2 does NOT work with JupyterLab2.
+
+A workaround is to modify the file `lib/python3.x/site-packages/jupyterlab/staging/package.json` and remove “react” and “react-dom” from “singletonPackages” object. Then, install keplergl-jupyter using this command:
+```
+jupyter labextension install keplergl-jupyter
+```
+
+##### Prerequisites:
+  - Node >= 12
+  - Python 3
 
 ## Quick Start
+
+### For Jupyter Notebook and JupyterLab:
 
 ```python
 # Load kepler.gl with an empty map
@@ -72,6 +144,33 @@ map_1.config
 map_1.save_to_html(file_name='keplergl_map.html')
 ```
 
+### For Google Colab:
+
+Keplergl (>0.3.0) works with Google Colab. You can install it using pip.
+
+```python
+# Install keplergl (>0.3.0)
+!pip install keplergl
+
+# Load Kepler.gl with an empty map
+from keplergl import KeplerGl
+map_1 = KeplerGl()
+
+# Display map
+map_1.show()
+```
+
+The function `show()` is newly introduced for displaying map in Google Colab. The function is defined as:
+```python
+def show(self, data=None, config=None, read_only=False, center_map=False)
+```
+with input parameters:
+- data: a data dictionary {"name": data}, if not provided, will use current map data
+- config: map config dictionary, if not provided, will use current map config
+- read_only: if read_only is True, hide side panel to disable map customization
+- center_map: if center_map is True, the bound of the map will be updated acoording to the current map data
+
+Please note that the map is not interactive due to the limitation of Google Colab. For example, when applying config to the map in Colab, the map won't be updated and one needs to call `show()` again to render a new map in a new cell.
 
 ## Demo Notebooks
 - [Load kepler.gl](https://github.com/keplergl/kepler.gl/blob/master/bindings/kepler.gl-jupyter/notebooks/Load%20kepler.gl.ipynb): Load kepler.gl widget, add data and config
@@ -107,34 +206,48 @@ https://docs.kepler.gl/docs/keplergl-jupyter#1-load-keplergl-map
 You will need to install node, yarn and Jupyter Notebook.
 
 #### 1. Node and Yarn
-Install [node](https://nodejs.org/en/download/package-manager/#macos) `> 10.15.0`, and [yarn](https://yarnpkg.com/en/docs/install#mac-stable). Use [nvm](https://github.com/creationix/nvm) for better node version management e.g. `nvm install 10`.
+Install [node](https://nodejs.org/en/download/package-manager/#macos) `> 12`, and [yarn](https://yarnpkg.com/en/docs/install#mac-stable). Use [nvm](https://github.com/creationix/nvm) for better node version management e.g. `nvm install 12`.
 
 
-#### 2. Install Jupyter with pip
+#### 2. Install Jupyter 
 
-Python 3
-```bash
-$ python3 -m pip install --upgrade pip
-$ python3 -m pip install jupyter
+- Using conda
+```shell
+conda install jupyter
 ```
 
-Python 2
-```bash
-$ python -m pip install --upgrade pip
-$ python -m pip install jupyter
+- Using pip
+
+```shell
+pip install jupyter
+```
+
+#### 3. Install GeoPandas
+
+- Using conda
+```shell
+conda install geopandas
+```
+
+- Using pip
+
+```shell
+pip install geopandas
 ```
 
 ### Download and run keplergl in your local Jupyter Notebook
 
 #### Clone Repo
-    $ git clone https://github.com/keplergl/kepler.gl.git
+```shell
+git clone https://github.com/keplergl/kepler.gl.git
+```
 
 ### Setup JS
 #### 1. Install Js module
 ```sh
-    $ cd bindings/kepler.gl-jupyter
-    $ cd js
-    $ yarn
+cd bindings/kepler.gl-jupyter
+cd js
+yarn
 ```
 
 #### 2. Load mapbox token
@@ -145,7 +258,10 @@ export MapboxAccessTokenJupyter=<your_mapbox_token>
 ```
 
 #### 3. Build js module, start a local server to watch for changes
-    $ npm start
+
+```shell
+npm start
+```
 
 You need to run step 2 and 3 to restart the js program. And step 1-3 if any js dependency has changed (Usually after pulling new changes from master).
 
@@ -155,26 +271,68 @@ You need to run step 2 and 3 to restart the js program. And step 1-3 if any js d
 This command must be run **AFTER** the `js` setup, and folder `static/` was created. It only needs to be run once.
 
 ```sh
-    # dev install from folder containing setup.py
-    $ pip install -e .
+# dev install from folder containing setup.py
+pip install -e .
 
-    # only needed in dev mode, not in normal mode.
-    $ jupyter nbextension install --py --symlink --sys-prefix keplergl
+# only needed in dev mode, not in normal mode.
+jupyter nbextension install --py --symlink --sys-prefix keplergl
 
-    # only needed in dev mode, not in normal mode.
-    $ jupyter nbextension enable --py --sys-prefix keplergl
+# only needed in dev mode, not in normal mode.
+jupyter nbextension enable --py --sys-prefix keplergl
 ```
 
+NOTE: The above command `jupyter nbextension install -py --symlink --sys-prefix keplergl` is trying to create a symoblic link of the folder `bindings/kepler.gl-jupyter/keplergl/static` under the jupyter's folder `nbextensions`. Please check if there is already a folder "nbextensions/kepler-jupyter" existed, and you might need to remove it first. 
+
+To find the location of `nbextensions` folder, you can use the following command:
+```shell
+$ where jupyter
+/Users/test/opt/anaconda3/envs/test37/bin/jupyter
+
+# the nbextensions should be at: /Users/test/opt/anaconda3/envs/test37/share/jupyter/nbextensions
+```
+
+
 #### 2. Start jupyter notebook
-    $ cd notebooks
-    $ jupyter notebook
+
+```shell
+cd notebooks
+jupyter notebook
+```
 
 
-
-### Have fun!
+#### Have fun!
 
 You can now start editing the .js and .py files to see changes reflected in your local notebook. After changing files in the js folder, the local start script will recompile the js files and put them in to `keplergl/static` folder. You need to reload the jupyter notebook page to reload the files.
 
+
+#### 3. Development for JupyterLab
+
+To test the development work in previous 2 steps for JupyterLab. You can build the `keplergl labextension` under the `js` directory:
+
+```shell
+jupyter labextension build .
+```
+
+The output of the jupyter labextension is defined in the file `js/package.json`:
+```javascript
+...
+"jupyterlab": {
+  "extension": "babel/labplugin",
+  "outputDir": "../keplergl-jupyter/labextension",
+  "sharedPackages": {
+    "@jupyter-widgets/base": {
+      "bundled": false,
+      "singleton": true
+    }
+  }
+}
+```
+
+Then, you can either install this labextension to test it:
+```shell
+jupyter labextension install .
+```
+or, you can manually create a symbolic link for the folder `bindings/kepler.gl-jupyter/kepler-jupyter/labextension` under the jupyter's folder `labextensions`, e.g. `/Users/test/opt/anaconda3/envs/test37/share/jupyter/labextensions`. You will need to reload the jupyter lab page.
 
 [jupyter_widget]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_widget.png
 [empty_map]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/jupyter_empty_map.png
