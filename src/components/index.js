@@ -91,7 +91,11 @@ export {default as LayerSelectorPanelFactory} from './map/layer-selector-panel';
 export {default as LocalePanelFactory} from './map/locale-panel';
 export {default as MapControlPanelFactory} from './map/map-control-panel';
 export {default as MapControlTooltipFactory} from './map/map-control-tooltip';
-export {default as MapLegendFactory, LayerLegendHeaderFactory, LayerLegendContentFactory} from './map/map-legend';
+export {
+  default as MapLegendFactory,
+  LayerLegendHeaderFactory,
+  LayerLegendContentFactory
+} from './map/map-legend';
 export {default as MapDrawPanelFactory} from './map/map-draw-panel';
 export {default as SplitMapButtonFactory} from './map/split-map-button';
 export {default as MapLegendPanelFactory} from './map/map-legend-panel';

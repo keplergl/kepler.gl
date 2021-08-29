@@ -149,8 +149,8 @@ export function LayerLegendHeaderFactory() {
   const LayerLegendHeader = ({options, layer}) => {
     return options?.showLayerName !== false ? (
       <div className="legend--layer_name">{layer.config.label}</div>
-    ) : null
-  }
+    ) : null;
+  };
   return LayerLegendHeader;
 }
 
@@ -158,9 +158,7 @@ export function LayerLegendContentFactory() {
   /** @type {typeof import('./map-legend').LayerLegendContent }> */
   const LayerLegendContent = ({layer, containerW}) => {
     const colorChannels = Object.values(layer.visualChannels).filter(isColorChannel);
-    const nonColorChannels = Object.values(layer.visualChannels).filter(
-      vc => !isColorChannel(vc)
-    );
+    const nonColorChannels = Object.values(layer.visualChannels).filter(vc => !isColorChannel(vc));
 
     return (
       <>
@@ -176,8 +174,7 @@ export function LayerLegendContentFactory() {
           ) : null
         )}
         {nonColorChannels.map(visualChannel => {
-          const matchCondition =
-            !visualChannel.condition || visualChannel.condition(layer.config);
+          const matchCondition = !visualChannel.condition || visualChannel.condition(layer.config);
           const enabled = layer.config[visualChannel.field] || visualChannel.defaultMeasure;
 
           const description = layer.getVisualChannelDescription(visualChannel.key);
@@ -191,8 +188,8 @@ export function LayerLegendContentFactory() {
           ) : null;
         })}
       </>
-    )
-  }
+    );
+  };
 
   return LayerLegendContent;
 }
@@ -215,8 +212,8 @@ function MapLegendFactory(LayerLegendHeader, LayerLegendContent) {
             key={index}
             width={containerW}
           >
-            <LayerLegendHeader options={options} layer={layer}/>
-            <LayerLegendContent containerW={containerW} layer={layer}/>
+            <LayerLegendHeader options={options} layer={layer} />
+            <LayerLegendContent containerW={containerW} layer={layer} />
           </StyledMapControlLegend>
         );
       })}
