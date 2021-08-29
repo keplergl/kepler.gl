@@ -1,5 +1,6 @@
 import {FunctionComponent} from 'react';
 import {Layer, LayerConfig, VisualChannel, VisualChannelDescription} from 'layers';
+import {MapLegendPanelComponent} from './map-legend-panel';
 
 export type SingleColorLegendProps = {
   width: number,
@@ -25,5 +26,6 @@ export type MapLegendProps = {
   }
 };
 
-const MapLegend: FunctionComponent<MapLegendProps>;
-export default MapLegend;
+export const MapLegend: FunctionComponent<MapLegendProps>;
+
+export function MapLegendFactory(): MapLegend;

@@ -87,12 +87,15 @@ export {default as MapPopoverFactory} from './map/map-popover';
 export {default as MapControlFactory} from './map/map-control';
 export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as CoordinateInfoFactory} from './map/coordinate-info';
-export {
-  Toggle3dButtonFactory,
-  MapDrawPanelFactory,
-  SplitMapButtonFactory,
-  MapLegendPanelFactory
-} from './map/map-control';
+export {default as LayerSelectorPanelFactory} from './map/layer-selector-panel';
+export {default as LocalePanelFactory} from './map/locale-panel';
+export {default as MapControlPanelFactory} from './map/map-control-panel';
+export {default as MapControlTooltipFactory} from './map/map-control-tooltip';
+export {default as MapLegendFactory} from './map/map-legend';
+export {default as MapDrawPanelFactory} from './map/map-draw-panel';
+export {default as SplitMapButtonFactory} from './map/split-map-button';
+export {default as MapLegendPanelFactory} from './map/map-legend-panel';
+export {default as Toggle3dButtonFactory} from './map/toggle-3d-button';
 
 // // modal factories
 export {default as ModalDialogFactory} from './modals/modal-dialog';
@@ -187,6 +190,7 @@ export {default as MapLegend} from 'components/map/map-legend';
 
 export * from './common/styled-components';
 import * as Icons from './common/icons';
+
 export {Icons};
 
 // Individual Component from Dependency Tree

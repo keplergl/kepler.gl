@@ -23,7 +23,7 @@ import test from 'tape';
 import {mount} from 'enzyme';
 import cloneDeep from 'lodash.clonedeep';
 
-import MapLegend, {
+import MapLegendFactory, {
   StyledMapControlLegend,
   LayerColorLegend,
   VisualChannelMetric,
@@ -37,6 +37,9 @@ import {
   expectedSavedLayer2 as geojsonLayer
 } from 'test/helpers/mock-state';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {appInjector} from 'components';
+
+const MapLegend = appInjector.get(MapLegendFactory);
 
 test('Components -> MapLegend.render', t => {
   t.doesNotThrow(() => {
