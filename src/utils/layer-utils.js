@@ -17,6 +17,8 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+import {OVERLAY_TYPE} from 'layers/base-layer';
+import {GEOCODER_LAYER_ID} from 'constants/default-settings';
 
 /**
  * Find default layers from fields
@@ -120,14 +122,14 @@ export function renderDeckGlLayer(props, layerCallbacks, idx) {
     clicked,
     mapState,
     interactionConfig,
-    animationConfig
+    animationConfig,
+    mapLayers
   } = props;
   const layer = layers[idx];
   const data = layerData[idx];
   const {gpuFilter} = datasets[layer.config.dataId] || {};
-
   const objectHovered = clicked || hoverInfo;
-
+  const visible = !mapLayers || (mapLayers && mapLayers[layer.id]);
   // Layer is Layer class
   return layer.renderLayer({
     data,
@@ -137,6 +139,46 @@ export function renderDeckGlLayer(props, layerCallbacks, idx) {
     layerCallbacks,
     mapState,
     animationConfig,
-    objectHovered
+    objectHovered,
+    visible
   });
+}
+
+export function isLayerRenderable(layer, layerData) {
+  return layer.id !== GEOCODER_LAYER_ID && layer.shouldRenderLayer(layerData);
+}
+
+export function isLayerVisible(layer, mapLayers) {
+  return (
+    layer.config.isVisible &&
+    // if layer.id is not in mapLayers, don't render it
+    (!mapLayers || (mapLayers && mapLayers[layer.id]))
+  );
+}
+
+// Prepare a dict of layers rendered by the deck.gl
+// Note, isVisible: false layer is passed to deck.gl here
+// return {[id]: true \ false}
+export function prepareLayersForDeck(layers, layerData) {
+  return layers.reduce(
+    (accu, layer, idx) => ({
+      ...accu,
+      [layer.id]:
+        isLayerRenderable(layer, layerData[idx]) && layer.overlayType === OVERLAY_TYPE.deckgl
+    }),
+    {}
+  );
+}
+
+// Prepare a dict of rendered layers rendered in the map
+// This includes only the visibile layers for single map view and split map view
+// return {[id]: true \ false}
+export function prepareLayersToRender(layers, layerData, mapLayers) {
+  return layers.reduce(
+    (accu, layer, idx) => ({
+      ...accu,
+      [layer.id]: isLayerRenderable(layer, layerData[idx]) && isLayerVisible(layer, mapLayers)
+    }),
+    {}
+  );
 }

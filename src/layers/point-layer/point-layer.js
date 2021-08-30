@@ -267,6 +267,7 @@ export default class PointLayer extends Layer {
       getFilterValue: data.getFilterValue,
       extensions,
       filterRange: defaultLayerProps.filterRange,
+      visible: defaultLayerProps.visible,
       ...brushingProps
     };
     const hoveredObject = this.hasHoveredObject(objectHovered);

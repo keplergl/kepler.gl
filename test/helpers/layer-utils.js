@@ -168,6 +168,7 @@ export function testRenderLayerCases(t, LayerClass, testCases) {
             tc.datasets[layer.config.dataId].gpuFilter ||
             getGpuFilterProps([], layer.config.dataId, tc.datasets[layer.config.dataId].fields),
           interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+          visible: true,
           ...(tc.renderArgs || {})
         });
 

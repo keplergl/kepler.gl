@@ -30,7 +30,7 @@ export {createNewDataEntry, datasetColorMaker} from './dataset-utils';
 export {hexToRgb} from './color-utils';
 export {errorNotification} from './notifications-utils';
 export {dataURItoBlob, downloadFile} from './export-utils';
-export {calculateLayerData} from './layer-utils';
+export {calculateLayerData, prepareLayersToRender, prepareLayersForDeck} from './layer-utils';
 export {
   applyFilterFieldName,
   applyFiltersToDatasets,

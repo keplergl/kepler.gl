@@ -38,7 +38,12 @@ import EditorFactory from './editor/editor';
 import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
 import {setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
-import {getLayerHoverProp, renderDeckGlLayer} from 'utils/layer-utils';
+import {
+  getLayerHoverProp,
+  renderDeckGlLayer,
+  prepareLayersToRender,
+  prepareLayersForDeck
+} from 'utils/layer-utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
@@ -47,7 +52,6 @@ import {
   GEOCODER_LAYER_ID,
   THROTTLE_NOTIFICATION_TIME
 } from 'constants/default-settings';
-import {OVERLAY_TYPE} from 'layers/base-layer';
 
 import ErrorBoundary from 'components/common/error-boundary';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
@@ -102,21 +106,6 @@ export const Attribution = () => (
     </div>
   </StyledAttrbution>
 );
-
-// {[id]: true \ false}
-export function prepareLayersToRender(layers, layerData, mapLayers) {
-  return layers.reduce(
-    (accu, layer, idx) => ({
-      ...accu,
-      [layer.id]:
-        layer.id !== GEOCODER_LAYER_ID &&
-        layer.shouldRenderLayer(layerData[idx]) &&
-        // if layer.id is not in mapLayers, don't render it
-        (!mapLayers || (mapLayers && mapLayers[layer.id]))
-    }),
-    {}
-  );
-}
 
 MapContainerFactory.deps = [
   MapPopoverFactory,
@@ -211,7 +200,11 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor, MapL
       this.mapLayersSelector,
       prepareLayersToRender
     );
-
+    layersForDeckSelector = createSelector(
+      this.layersSelector,
+      this.layerDataSelector,
+      prepareLayersForDeck
+    );
     filtersSelector = props => props.filters;
     polygonFilters = createSelector(this.filtersSelector, filters =>
       filters.filter(f => f.type === FILTER_TYPES.polygon)
@@ -398,7 +391,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor, MapL
       return screenCoord && {x: screenCoord[0], y: screenCoord[1]};
     }
 
-    _renderDeckOverlay(layersToRender) {
+    _renderDeckOverlay(layersForDeck) {
       const {
         mapState,
         mapStyle,
@@ -419,9 +412,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor, MapL
         const dataLayers = layerOrder
           .slice()
           .reverse()
-          .filter(
-            idx => layers[idx].overlayType === OVERLAY_TYPE.deckgl && layersToRender[layers[idx].id]
-          )
+          .filter(idx => layersForDeck[layers[idx].id])
           .reduce((overlays, idx) => {
             const layerCallbacks = {
               onSetLayerDomain: val => this._onLayerSetDomain(idx, val)
@@ -528,6 +519,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor, MapL
       } = this.props;
 
       const layersToRender = this.layersToRenderSelector(this.props);
+      const layersForDeck = this.layersForDeckSelector(this.props);
 
       const mapProps = {
         ...mapState,
@@ -578,7 +570,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor, MapL
             getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
             onMouseMove={this.props.visStateActions.onMouseMove}
           >
-            {this._renderDeckOverlay(layersToRender)}
+            {this._renderDeckOverlay(layersForDeck)}
             {this._renderMapboxOverlays()}
             <Editor
               index={index}

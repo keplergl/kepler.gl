@@ -709,7 +709,6 @@ class Layer {
   shouldRenderLayer(data) {
     return (
       (this.type &&
-      this.config.isVisible &&
       this.hasAllColumns() &&
       this.hasLayerData(data) &&
       typeof this.renderLayer === 'function')
@@ -1077,7 +1076,7 @@ class Layer {
     };
   }
 
-  getDefaultDeckLayerProps({idx, gpuFilter, mapState}) {
+  getDefaultDeckLayerProps({idx, gpuFilter, mapState, visible}) {
     return {
       id: this.id,
       idx,
@@ -1091,7 +1090,10 @@ class Layer {
       highlightColor: this.config.highlightColor,
       // data filtering
       extensions: [dataFilterExtension],
-      filterRange: gpuFilter ? gpuFilter.filterRange : undefined
+      filterRange: gpuFilter ? gpuFilter.filterRange : undefined,
+
+      // layer should be visible and if splitMap, shown in to one of panel
+      visible: this.config.isVisible && visible
     };
   }
 
