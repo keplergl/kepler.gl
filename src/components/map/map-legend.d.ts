@@ -2,6 +2,13 @@ import {FunctionComponent} from 'react';
 import {Layer, LayerConfig, VisualChannel, VisualChannelDescription} from 'layers';
 import {MapLegendPanelComponent} from './map-legend-panel';
 
+export type LayerSizeLegendProps = {
+  label: string,
+  name: string
+};
+
+export const LayerSizeLegend: FunctionComponent<LayerSizeLegendProps>;
+
 export type SingleColorLegendProps = {
   width: number,
   color: string
@@ -17,6 +24,26 @@ export type LayerColorLegendProps = {
 };
 
 export const LayerColorLegend: FunctionComponent<LayerColorLegendProps>;
+
+export type LayerLegendHeaderProps = {
+  layer: Layer,
+  options?: {
+    showLayerName?: boolean
+  }
+};
+
+export const LayerLegendHeader: FunctionComponent<LayerLegendHeaderProps>;
+
+export function LayerLegendHeaderFactory(): LayerLegendHeader;
+
+export type LayerLegendContentProps = {
+  layer: Layer,
+  containerW: number,
+};
+
+export const LayerLegendContent: FunctionComponent<LayerLegendContentProps>;
+
+export function LayerLegendContentFactory(): LayerLegendContent;
 
 export type MapLegendProps = {
   layers?: ReadonlyArray<Layer>,

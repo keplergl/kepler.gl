@@ -75,6 +75,7 @@ export const VisualChannelMetric = ({name}) => {
   );
 };
 
+/** @type {typeof import('./map-legend').LayerSizeLegend} */
 export const LayerSizeLegend = ({label, name}) => (
   <div className="legend--layer_size-schema">
     <p>
@@ -143,7 +144,58 @@ LayerColorLegend.displayName = 'LayerColorLegend';
 const isColorChannel = visualChannel =>
   [CHANNEL_SCALES.color, CHANNEL_SCALES.colorAggr].includes(visualChannel.channelScaleType);
 
-function MapLegendFactory() {
+export function LayerLegendHeaderFactory() {
+  /** @type {typeof import('./map-legend').LayerLegendHeader }> */
+  const LayerLegendHeader = ({options, layer}) => {
+    return options?.showLayerName !== false ? (
+      <div className="legend--layer_name">{layer.config.label}</div>
+    ) : null;
+  };
+  return LayerLegendHeader;
+}
+
+export function LayerLegendContentFactory() {
+  /** @type {typeof import('./map-legend').LayerLegendContent }> */
+  const LayerLegendContent = ({layer, containerW}) => {
+    const colorChannels = Object.values(layer.visualChannels).filter(isColorChannel);
+    const nonColorChannels = Object.values(layer.visualChannels).filter(vc => !isColorChannel(vc));
+
+    return (
+      <>
+        {colorChannels.map(colorChannel =>
+          !colorChannel.condition || colorChannel.condition(layer.config) ? (
+            <LayerColorLegend
+              key={colorChannel.key}
+              description={layer.getVisualChannelDescription(colorChannel.key)}
+              config={layer.config}
+              width={containerW - 2 * DIMENSIONS.mapControl.padding}
+              colorChannel={colorChannel}
+            />
+          ) : null
+        )}
+        {nonColorChannels.map(visualChannel => {
+          const matchCondition = !visualChannel.condition || visualChannel.condition(layer.config);
+          const enabled = layer.config[visualChannel.field] || visualChannel.defaultMeasure;
+
+          const description = layer.getVisualChannelDescription(visualChannel.key);
+
+          return matchCondition && enabled ? (
+            <LayerSizeLegend
+              key={visualChannel.key}
+              label={description.label}
+              name={description.measure}
+            />
+          ) : null;
+        })}
+      </>
+    );
+  };
+
+  return LayerLegendContent;
+}
+
+MapLegendFactory.deps = [LayerLegendHeaderFactory, LayerLegendContentFactory];
+function MapLegendFactory(LayerLegendHeader, LayerLegendContent) {
   /** @type {typeof import('./map-legend').MapLegend }> */
   const MapLegend = ({layers = [], width, options}) => (
     <div className="map-legend">
@@ -152,10 +204,6 @@ function MapLegendFactory() {
           return null;
         }
         const containerW = width || DIMENSIONS.mapControl.width;
-        const colorChannels = Object.values(layer.visualChannels).filter(isColorChannel);
-        const nonColorChannels = Object.values(layer.visualChannels).filter(
-          vc => !isColorChannel(vc)
-        );
 
         return (
           <StyledMapControlLegend
@@ -164,35 +212,8 @@ function MapLegendFactory() {
             key={index}
             width={containerW}
           >
-            {options?.showLayerName !== false ? (
-              <div className="legend--layer_name">{layer.config.label}</div>
-            ) : null}
-            {colorChannels.map(colorChannel =>
-              !colorChannel.condition || colorChannel.condition(layer.config) ? (
-                <LayerColorLegend
-                  key={colorChannel.key}
-                  description={layer.getVisualChannelDescription(colorChannel.key)}
-                  config={layer.config}
-                  width={containerW - 2 * DIMENSIONS.mapControl.padding}
-                  colorChannel={colorChannel}
-                />
-              ) : null
-            )}
-            {nonColorChannels.map(visualChannel => {
-              const matchCondition =
-                !visualChannel.condition || visualChannel.condition(layer.config);
-              const enabled = layer.config[visualChannel.field] || visualChannel.defaultMeasure;
-
-              const description = layer.getVisualChannelDescription(visualChannel.key);
-
-              return matchCondition && enabled ? (
-                <LayerSizeLegend
-                  key={visualChannel.key}
-                  label={description.label}
-                  name={description.measure}
-                />
-              ) : null;
-            })}
+            <LayerLegendHeader options={options} layer={layer} />
+            <LayerLegendContent containerW={containerW} layer={layer} />
           </StyledMapControlLegend>
         );
       })}
