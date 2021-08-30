@@ -422,7 +422,7 @@ function KeplerGlFactory(
                 <MapsLayout className="maps">{mapContainers}</MapsLayout>
                 {isExportingImage && <PlotContainer {...plotContainerFields} />}
                 {interactionConfig.geocoder.enabled && <GeoCoderPanel {...geoCoderPanelFields} />}
-                <BottomWidgetOuter>
+                <BottomWidgetOuter absolute>
                   <BottomWidget
                     ref={this.bottomWidgetRef}
                     {...bottomWidgetFields}
