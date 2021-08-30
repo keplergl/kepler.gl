@@ -889,7 +889,6 @@ export const MAP_CONTROLS = keyMirror({
   visibleLayers: null,
   mapLegend: null,
   toggle3d: null,
-  toggleGlobe: null,
   splitMap: null,
   mapDraw: null,
   mapLocale: null

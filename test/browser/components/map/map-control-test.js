@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {shallow} from 'enzyme';
+import {mount} from 'enzyme';
 import sinon from 'sinon';
 import test from 'tape';
 import MapControlFactory from 'components/map/map-control';
@@ -35,7 +35,7 @@ test('MapControlFactory - display all options', t => {
   const onToggleEditorVisibility = sinon.spy();
   const onSetLocale = sinon.spy();
 
-  const $ = shallow(
+  const $ = mount(
     <MapControl
       mapControls={{
         splitMap: {show: true},
