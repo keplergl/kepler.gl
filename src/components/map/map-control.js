@@ -39,6 +39,11 @@ const StyledMapControl = styled.div`
   display: grid;
   row-gap: 8px;
   justify-items: end;
+  pointer-events: none; /* prevent padding from blocking input */
+  & > * {
+    /* all children should allow input */
+    pointer-events: all;
+  }
 `;
 
 const LegendLogo = <KeplerGlLogo version={false} appName="kepler.gl" />;

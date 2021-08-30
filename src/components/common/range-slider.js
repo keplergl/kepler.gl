@@ -28,6 +28,7 @@ import Slider from 'components/common/slider/slider';
 import {Input} from 'components/common/styled-components';
 
 import {roundValToStep, clamp} from 'utils/data-utils';
+import {observeDimensions, unobserveDimensions} from '../../utils/observe-dimensions';
 
 const SliderInput = styled(Input)`
   width: ${props => props.theme.sliderInputWidth}px;
@@ -98,8 +99,20 @@ export default function RangeSliderFactory(RangePlot) {
       width: 288
     };
 
+    componentDidMount() {
+      if (this.sliderContainer instanceof Element) {
+        observeDimensions(this.sliderContainer, this._resize);
+      }
+    }
+
     componentDidUpdate() {
       this._resize();
+    }
+
+    componentWillUnmount() {
+      if (this.sliderContainer instanceof Element) {
+        unobserveDimensions(this.sliderContainer);
+      }
     }
 
     sliderContainer = null;
@@ -203,73 +216,74 @@ export default function RangeSliderFactory(RangePlot) {
       const {width} = this.state;
       const plotWidth = Math.max(width - sliderHandleWidth, 0);
       const renderPlot = (histogram && histogram.length) || lineChart;
-      if (!Array.isArray(range) || !range.every(Number.isFinite)) {
-        return null;
-      }
       return (
         <div
           className="kg-range-slider"
           style={{width: '100%', padding: `0 ${sliderHandleWidth / 2}px`}}
           ref={this.setSliderContainer}
         >
-          {renderPlot ? (
-            <RangePlot
-              histogram={histogram}
-              lineChart={this.props.lineChart}
-              plotType={this.props.plotType}
-              isEnlarged={this.props.isEnlarged}
-              onBrush={(val0, val1) => onChange([val0, val1])}
-              marks={this.props.marks}
-              range={range}
-              value={this.props.plotValue || this.filterValueSelector(this.props)}
-              width={plotWidth}
-              isRanged={isRanged}
-              step={step}
-              timezone={timezone}
-              timeFormat={timeFormat}
-              playbackControlWidth={playbackControlWidth}
-            />
-          ) : null}
-          <SliderWrapper
-            className="kg-range-slider__slider"
-            isRanged={isRanged}
-            showInput={showInput}
-          >
-            {this.props.xAxis ? (
-              <div style={{height: '30px'}}>
-                <this.props.xAxis
-                  width={plotWidth}
-                  timezone={timezone}
-                  domain={range}
+          {Array.isArray(range) && range.every(Number.isFinite) && (
+            <>
+              {renderPlot ? (
+                <RangePlot
+                  histogram={histogram}
+                  lineChart={this.props.lineChart}
+                  plotType={this.props.plotType}
                   isEnlarged={this.props.isEnlarged}
+                  onBrush={(val0, val1) => onChange([val0, val1])}
+                  marks={this.props.marks}
+                  range={range}
+                  value={this.props.plotValue || this.filterValueSelector(this.props)}
+                  width={plotWidth}
+                  isRanged={isRanged}
+                  step={step}
+                  timezone={timezone}
+                  timeFormat={timeFormat}
+                  playbackControlWidth={playbackControlWidth}
                 />
-              </div>
-            ) : null}
-            <Slider
-              marks={this.props.marks}
-              showValues={false}
-              isRanged={isRanged}
-              minValue={range[0]}
-              maxValue={range[1]}
-              value0={this.props.value0}
-              value1={this.props.value1}
-              step={step}
-              handleWidth={sliderHandleWidth}
-              onSlider0Change={this._setRangeVal0}
-              onSlider1Change={this._setRangeVal1}
-              onSliderBarChange={(val0, val1) => {
-                onChange([val0, val1]);
-              }}
-              enableBarDrag
-            />
-            {!isRanged && showInput ? this._renderInput('value1') : null}
-          </SliderWrapper>
-          {isRanged && showInput ? (
-            <RangeInputWrapper className="range-slider__input-group">
-              {this._renderInput('value0')}
-              {this._renderInput('value1')}
-            </RangeInputWrapper>
-          ) : null}
+              ) : null}
+              <SliderWrapper
+                className="kg-range-slider__slider"
+                isRanged={isRanged}
+                showInput={showInput}
+              >
+                {this.props.xAxis ? (
+                  <div style={{height: '30px'}}>
+                    <this.props.xAxis
+                      width={plotWidth}
+                      timezone={timezone}
+                      domain={range}
+                      isEnlarged={this.props.isEnlarged}
+                    />
+                  </div>
+                ) : null}
+                <Slider
+                  marks={this.props.marks}
+                  showValues={false}
+                  isRanged={isRanged}
+                  minValue={range[0]}
+                  maxValue={range[1]}
+                  value0={this.props.value0}
+                  value1={this.props.value1}
+                  step={step}
+                  handleWidth={sliderHandleWidth}
+                  onSlider0Change={this._setRangeVal0}
+                  onSlider1Change={this._setRangeVal1}
+                  onSliderBarChange={(val0, val1) => {
+                    onChange([val0, val1]);
+                  }}
+                  enableBarDrag
+                />
+                {!isRanged && showInput ? this._renderInput('value1') : null}
+              </SliderWrapper>
+              {isRanged && showInput ? (
+                <RangeInputWrapper className="range-slider__input-group">
+                  {this._renderInput('value0')}
+                  {this._renderInput('value1')}
+                </RangeInputWrapper>
+              ) : null}
+            </>
+          )}
         </div>
       );
     }

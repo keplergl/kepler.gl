@@ -19,15 +19,22 @@
 // THE SOFTWARE.
 
 import styled from 'styled-components';
-import VerticalToolbar from '../common/vertical-toolbar';
+import React from 'react';
 
-function MapControlToolbar() {
-  const StyledToolbar = styled(VerticalToolbar)`
-    position: absolute;
-    right: 32px;
-  `;
+const Outer = styled.div`
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+`;
 
-  return StyledToolbar;
+MapsLayoutFactory.deps = [];
+
+export default function MapsLayoutFactory() {
+  class MapsLayout extends React.Component {
+    render() {
+      return <Outer>{this.props.children}</Outer>;
+    }
+  }
+  return MapsLayout;
 }
-
-export default MapControlToolbar;
