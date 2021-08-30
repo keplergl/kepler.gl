@@ -44,7 +44,6 @@ import {
   prepareLayersToRender,
   prepareLayersForDeck
 } from 'utils/layer-utils';
-import {hasMobileWidth} from 'utils/utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
@@ -53,7 +52,6 @@ import {
   GEOCODER_LAYER_ID,
   THROTTLE_NOTIFICATION_TIME
 } from 'constants/default-settings';
-import {OVERLAY_TYPE} from 'layers/base-layer';
 
 import ErrorBoundary from 'components/common/error-boundary';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
@@ -108,21 +106,6 @@ export const Attribution = () => (
     </div>
   </StyledAttrbution>
 );
-
-// {[id]: true \ false}
-export function prepareLayersToRender(layers, layerData, mapLayers) {
-  return layers.reduce(
-    (accu, layer, idx) => ({
-      ...accu,
-      [layer.id]:
-        layer.id !== GEOCODER_LAYER_ID &&
-        layer.shouldRenderLayer(layerData[idx]) &&
-        // if layer.id is not in mapLayers, don't render it
-        (!mapLayers || (mapLayers && mapLayers[layer.id]))
-    }),
-    {}
-  );
-}
 
 MapContainerFactory.deps = [
   MapPopoverFactory,
