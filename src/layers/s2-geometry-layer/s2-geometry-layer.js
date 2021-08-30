@@ -187,7 +187,10 @@ export default class S2GeometryLayer extends Layer {
     const centroids = dataContainer.reduce(
       (acc, entry, index) => {
         const s2Token = getS2Token({index});
-        return s2Token ? [...acc, getS2Center(s2Token)] : acc;
+        if (s2Token) {
+          acc.push(getS2Center(s2Token));
+        }
+        return acc;
       },
       [],
       true
