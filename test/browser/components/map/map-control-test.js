@@ -19,15 +19,20 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {shallow} from 'enzyme';
 import sinon from 'sinon';
 import test from 'tape';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+
 import MapControlFactory from 'components/map/map-control';
+import {MapControlButton} from 'components/common/styled-components';
+
+import {Cube3d, Split, Legend, DrawPolygon, Layers, Delete} from 'components/common/icons';
+
 import {appInjector} from 'components';
 
 const MapControl = appInjector.get(MapControlFactory);
 
-test('MapControlFactory - display all options', t => {
+test('MapControlFactory - display options', t => {
   const onToggleSplitMap = sinon.spy();
   const onTogglePerspective = sinon.spy();
   const onToggleMapControl = sinon.spy();
@@ -35,32 +40,72 @@ test('MapControlFactory - display all options', t => {
   const onToggleEditorVisibility = sinon.spy();
   const onSetLocale = sinon.spy();
 
-  const $ = shallow(
-    <MapControl
-      mapControls={{
-        splitMap: {show: true},
-        visibleLayers: {show: true},
-        toggle3d: {show: true},
-        mapLegend: {show: true},
-        mapDraw: {show: true},
-        mapLocale: {show: true}
-      }}
-      datasets={{}}
-      layers={[]}
-      locale={'en'}
-      layersToRender={{}}
-      dragRotate={true}
-      mapIndex={0}
-      onToggleSplitMap={onToggleSplitMap}
-      onTogglePerspective={onTogglePerspective}
-      onToggleMapControl={onToggleMapControl}
-      onSetEditorMode={onSetEditorMode}
-      onToggleEditorVisibility={onToggleEditorVisibility}
-      onSetLocale={onSetLocale}
-    />
-  );
+  const defaultProps = {
+    mapControls: {
+      splitMap: {show: true},
+      visibleLayers: {show: true},
+      toggle3d: {show: true},
+      mapLegend: {show: true},
+      mapDraw: {show: true},
+      mapLocale: {show: true}
+    },
+    datasets: {},
+    layers: [],
+    locale: 'en',
+    layersToRender: {},
+    dragRotate: true,
+    mapIndex: 0,
+    onToggleSplitMap,
+    onTogglePerspective,
+    onToggleMapControl,
+    onSetEditorMode,
+    onToggleEditorVisibility,
+    onSetLocale
+  };
 
-  t.equal($.find('.map-control-action').length, 6, 'Should show 6 action panels');
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <MapControl {...defaultProps} />{' '}
+      </IntlWrapper>
+    );
+  }, 'BottomWidget should not fail without props');
+
+  // layer selector is not active
+  t.equal(wrapper.find(MapControlButton).length, 5, 'Should show 5 MapControlButton');
+
+  t.equal(wrapper.find(Split).length, 1, 'Should show 1 split map button');
+  t.equal(wrapper.find(Cube3d).length, 1, 'Should show 1 toggle 3d button');
+  t.equal(wrapper.find(Legend).length, 1, 'Should show 1 map legend button');
+  t.equal(wrapper.find(DrawPolygon).length, 1, 'Should show 1 map draw button');
+  t.equal(wrapper.find('.map-control-button__locale').length, 1, 'Should show 1 locale  button');
+
+  // with split map and active layer selector
+  const nextProps = {
+    ...defaultProps,
+    isSplit: true,
+    mapControls: {
+      ...defaultProps.mapControls,
+      visibleLayers: {show: true, active: false}
+    }
+  };
+
+  wrapper.setProps({
+    children: <MapControl {...nextProps} />
+  });
+
+  t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 6 MapControlButton');
+  t.equal(wrapper.find(Split).length, 0, 'Should show 0 split map split button');
+  t.equal(wrapper.find(Delete).length, 1, 'Should show 1 split map delete button');
+  t.equal(wrapper.find(Layers).length, 1, 'Should show 1 Layer button');
+
+  // with 0 mapcontrols
+  wrapper.setProps({
+    children: <MapControl {...defaultProps} mapControls={{}} />
+  });
+
+  t.equal(wrapper.find(MapControlButton).length, 0, 'Should show 0 MapControlButton');
 
   t.end();
 });

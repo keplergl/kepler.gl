@@ -57,9 +57,22 @@ export type ToggleMapControlUpdaterAction = {
   };
 };
 export function toggleMapControl(
-  panelId,
-  index
+  panelId: string,
+  index: number
 ): Merge<ToggleMapControlUpdaterAction, {type: ActionTypes.TOGGLE_MAP_CONTROL}>;
+
+
+/** SET_MAP_CONTROL_VISIBILITY */
+export type setMapControlVisibilityUpdaterAction = {
+  payload: {
+    panelId: string;
+    show: boolean;
+  };
+};
+export function setMapControlVisibility(
+  panelId: string,
+  show: boolean
+): Merge<setMapControlVisibilityUpdaterAction, {type: ActionTypes.SET_MAP_CONTROL_VISIBILITY}>;
 
 /** OPEN_DELETE_MODAL */
 export type OpenDeleteModalUpdaterAction = {

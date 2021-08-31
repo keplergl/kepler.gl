@@ -87,6 +87,7 @@ export type ActionType = {
   HIDE_EXPORT_DROPDOWN: string;
   OPEN_DELETE_MODAL: string;
   TOGGLE_MAP_CONTROL: string;
+  SET_MAP_CONTROL_VISIBILITY: string;
   ADD_NOTIFICATION: string;
   REMOVE_NOTIFICATION: string;
   SET_LOCALE: string;

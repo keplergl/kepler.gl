@@ -884,3 +884,12 @@ export const DATASET_FORMATS = keyMirror({
   csv: null,
   keplergl: null
 });
+
+export const MAP_CONTROLS = keyMirror({
+  visibleLayers: null,
+  mapLegend: null,
+  toggle3d: null,
+  splitMap: null,
+  mapDraw: null,
+  mapLocale: null
+});

@@ -57,7 +57,7 @@ function LocalePanelFactory(MapControlTooltip, MapControlPanel, MapControlToolba
         return null;
       }
       return (
-        <div style={{position: 'relative'}}>
+        <>
           {isActive ? (
             <MapControlToolbar show={isActive}>
               {availableLocales.map(locale => (
@@ -77,10 +77,10 @@ function LocalePanelFactory(MapControlTooltip, MapControlPanel, MapControlToolba
             data-for="locale"
             disableClose={disableClose}
           >
-            {currentLocal.toUpperCase()}
+            <span className="map-control-button__locale">{currentLocal.toUpperCase()}</span>
             <MapControlTooltip id="locale" message="tooltip.selectLocale" />
           </MapControlButton>
-        </div>
+        </>
       );
     }
   );
