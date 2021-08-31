@@ -190,12 +190,14 @@ test('#composerStateReducer - addDataToMapUpdater: mapLegend', t => {
 
   const expectedUIState = {
     ...INITIAL_UI_STATE,
+    initialState: {},
+    currentModal: null,
     mapControls: {
       ...INITIAL_UI_STATE.mapControls,
       mapLegend: {
         show: true,
         active: true,
-        diableClose: false,
+        disableClose: false,
         activeMapIndex: 0
       }
     }
@@ -232,10 +234,9 @@ test('#composerStateReducer - addDataToMapUpdater: locale', t => {
 
   const expectedUIState = {
     ...INITIAL_UI_STATE,
-    mapControls: {
-      ...INITIAL_UI_STATE.mapControls,
-      locale: LOCALE_CODES.cn
-    }
+    initialState: {},
+    currentModal: null,
+    locale: LOCALE_CODES.es
   };
 
   t.deepEqual(

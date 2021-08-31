@@ -134,9 +134,10 @@ export const addDataToMapUpdater = (state, {payload}) => {
     parsedConfig = state.visState.schema.parseSavedConfig(config);
   }
 
-  const mapControls = parsedConfig.uiState ? parsedConfig.uiState.mapControls : undefined;
+  const newUiState = parsedConfig ? parsedConfig.uiState : undefined;
+  const newLocale = newUiState ? newUiState.locale : undefined;
+  const mapControls = newUiState ? newUiState.mapControls : undefined;
   const mapLenged = mapControls ? mapControls.mapLegend : undefined;
-  const mapLocale = mapControls ? mapControls.locale : undefined;
 
   const oldLayers = state.visState.layers;
   const filterNewlyAddedLayers = layers => layers.filter(nl => !oldLayers.find(ol => ol === nl));
@@ -187,7 +188,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
       )
     ),
 
-    if_(mapLocale, pick_('uiState')(apply_(setLocaleUpdater, payload_({locale: mapLocale})))),
+    if_(newLocale, pick_('uiState')(apply_(setLocaleUpdater, payload_({locale: newLocale})))),
 
     pick_('uiState')(merge_(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {}))
   ])(state);

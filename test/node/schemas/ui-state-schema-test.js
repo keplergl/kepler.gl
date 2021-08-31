@@ -32,17 +32,13 @@ test('#uiStateSchema -> v1 -> save load uiState', t => {
   const uiToSave = savedState.config.uiState;
   const uiLoaded = SchemaManager.parseSavedConfig(savedState).uiState;
 
-  t.deepEqual(
-    Object.keys(uiToSave),
-    ['mapControls', 'locale'],
-    'uiState should have 2 entries'
-  );
+  t.deepEqual(Object.keys(uiToSave), ['mapControls', 'locale'], 'uiState should have 2 entries');
 
   t.deepEqual(
     Object.keys(uiToSave.mapControls),
     ['visibleLayers', 'mapLegend', 'toggle3d', 'splitMap', 'mapDraw', 'mapLocale'],
     'uiState.mapControls should have 6 entries'
-  )
+  );
 
   const expected = {
     mapControls: {
