@@ -25,14 +25,8 @@ export type GpuFilter = {
     dc: DataContainerInterface
   ) => (
     getIndex?: (any) => number,
-    getData?: (
-      dc: DataContainerInterface,
-      d: any,
-      fieldIndex: number
-    ) => any
-  ) => (
-    d: any
-  ) => number;
+    getData?: (dc: DataContainerInterface, d: any, fieldIndex: number) => any
+  ) => (d: any) => number;
 };
 
 export type FieldPair = {
@@ -65,8 +59,16 @@ export function sortDatasetByColumn(dataset: Dataset, column: string, mode?: str
 export function findPointFieldPairs(fields: Field[]): FieldPair[];
 
 export class KeplerTable {
-  constructor(schema: {info?: object; data: any; color: RGBColor; metadata: any});
-  id: string;
+  readonly id: string;
+
+  constructor(schema: {
+    info?: ProtoDataset['info'];
+    data: ProtoDataset['data'];
+    color: RGBColor;
+    metadata?: ProtoDataset['metadata'];
+    supportedFilterTypes?: ProtoDataset['supportedFilterTypes'];
+  });
+  type?: string;
   label?: string;
   color: RGBColor;
 
@@ -93,6 +95,7 @@ export class KeplerTable {
   sortOrder?: number[] | null;
 
   pinnedColumns?: string[];
+  supportedFilterTypes?: string[];
   // table-injected metadata
   metadata?: object;
 

@@ -133,6 +133,8 @@ export function getHistogram(
 
 export function getNumericStepSize(diff: number): number;
 
+export function formatNumberByStep(val: number, step: number, bound: 'floor' | 'ceil'): number;
+
 export function mergeFilterDomainStep(filter: Filter, filterProps?: any): Filter | null;
 
 export function getFilterProps(

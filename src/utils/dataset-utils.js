@@ -76,7 +76,7 @@ export function getNewDatasetColor(datasets) {
  * Take datasets payload from addDataToMap, create datasets entry save to visState
  * @type {typeof import('./dataset-utils').createNewDataEntry}
  */
-export function createNewDataEntry({info, data, metadata}, datasets = {}) {
+export function createNewDataEntry({info, data, ...opts}, datasets = {}) {
   const validatedData = validateInputData(data);
   if (!validatedData) {
     return {};
@@ -85,7 +85,7 @@ export function createNewDataEntry({info, data, metadata}, datasets = {}) {
   info = info || {};
   const color = info.color || getNewDatasetColor(datasets);
 
-  const keplerTable = new KeplerTable({info, data: validatedData, color, metadata});
+  const keplerTable = new KeplerTable({info, data: validatedData, color, ...opts});
   return {
     [keplerTable.id]: keplerTable
   };

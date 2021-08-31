@@ -55,7 +55,7 @@ const FID_KEY = 'name';
  * @type {KeplerTableClass}
  */
 class KeplerTable {
-  constructor({info = {}, data, color, metadata}) {
+  constructor({info = {}, data, color, metadata, supportedFilterTypes}) {
     // TODO - what to do if validation fails? Can kepler handle exceptions?
     // const validatedData = validateInputData(data);
     // if (!validatedData) {
@@ -104,6 +104,9 @@ class KeplerTable {
     this.fieldPairs = findPointFieldPairs(fields);
     this.fields = fields;
     this.gpuFilter = getGpuFilterProps([], dataId, fields);
+    if (supportedFilterTypes) {
+      this.supportedFilterTypes = supportedFilterTypes;
+    }
   }
 
   /**
