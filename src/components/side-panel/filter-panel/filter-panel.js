@@ -25,7 +25,6 @@ import styled from 'styled-components';
 import get from 'lodash.get';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from 'constants/default-settings';
 
-import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
 import NewFilterPanelFactory from 'components/filters/filter-panels/new-filter-panel';
 import TimeRangeFilterPanelFactory from 'components/filters/filter-panels/time-range-filter-panel';
 import SingleSelectFilterPanelFactory from 'components/filters/filter-panels/single-select-filter-panel';
@@ -39,7 +38,6 @@ const StyledFilterPanel = styled.div`
 `;
 
 FilterPanelFactory.deps = [
-  FilterPanelHeaderFactory,
   NewFilterPanelFactory,
   TimeRangeFilterPanelFactory,
   SingleSelectFilterPanelFactory,
@@ -49,7 +47,6 @@ FilterPanelFactory.deps = [
 ];
 
 function FilterPanelFactory(
-  FilterPanelHeader,
   NewFilterPanel,
   TimeRangeFilterPanel,
   SingleSelectFilterPanel,
