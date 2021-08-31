@@ -535,7 +535,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor, MapL
       const isEdit = (mapControls.mapDraw || {}).active;
 
       const hasGeocoderLayer = layers.find(l => l.id === GEOCODER_LAYER_ID);
-      const isSplit = Boolean(index);
+      const isSplit = Boolean(mapState.isSplit);
 
       return (
         <>
