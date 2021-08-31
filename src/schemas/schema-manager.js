@@ -24,6 +24,7 @@ import visStateSchema from './vis-state-schema';
 import datasetSchema from './dataset-schema';
 import mapStyleSchema from './map-style-schema';
 import mapStateSchema from './map-state-schema';
+import uiStateSchema from './ui-state-schema';
 
 import {CURRENT_VERSION, VERSIONS} from './versions';
 import {isPlainObject} from 'utils/utils';
@@ -31,7 +32,8 @@ import {isPlainObject} from 'utils/utils';
 export const reducerSchema = {
   visState: visStateSchema,
   mapState: mapStateSchema,
-  mapStyle: mapStyleSchema
+  mapStyle: mapStyleSchema,
+  uiState: uiStateSchema
 };
 
 /** @type {typeof import('./schema-manager').KeplerGLSchema} */

@@ -20,7 +20,9 @@
 
 import {
   toggleModalUpdater,
-  loadFilesSuccessUpdater as uiStateLoadFilesSuccessUpdater
+  toggleMapControlUpdater,
+  loadFilesSuccessUpdater as uiStateLoadFilesSuccessUpdater,
+  setLocaleUpdater
 } from './ui-state-updaters';
 import {
   updateVisDataUpdater as visStateUpdateVisDataUpdater,
@@ -131,6 +133,11 @@ export const addDataToMapUpdater = (state, {payload}) => {
     // if passed in saved config
     parsedConfig = state.visState.schema.parseSavedConfig(config);
   }
+
+  const mapControls = parsedConfig.uiState ? parsedConfig.uiState.mapControls : undefined;
+  const mapLenged = mapControls ? mapControls.mapLegend : undefined;
+  const mapLocale = mapControls ? mapControls.locale : undefined;
+
   const oldLayers = state.visState.layers;
   const filterNewlyAddedLayers = layers => layers.filter(nl => !oldLayers.find(ol => ol === nl));
 
@@ -169,6 +176,18 @@ export const addDataToMapUpdater = (state, {payload}) => {
     pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null))),
 
     pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),
+
+    if_(
+      mapLenged,
+      pick_('uiState')(
+        apply_(
+          toggleMapControlUpdater,
+          payload_({panelId: 'mapLegend', index: mapLenged ? mapLenged.activeMapIndex : 0})
+        )
+      )
+    ),
+
+    if_(mapLocale, pick_('uiState')(apply_(setLocaleUpdater, payload_({locale: mapLocale})))),
 
     pick_('uiState')(merge_(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {}))
   ])(state);

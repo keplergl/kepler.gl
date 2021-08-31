@@ -12,7 +12,7 @@ import {
 import {Schema} from './schema';
 
 import {LayerTextLabel} from 'layers/layer-factory';
-import {datasetSchema, visStateSchema, mapStyleSchema, mapStateSchema} from 'schemas';
+import {datasetSchema, visStateSchema, mapStyleSchema, mapStateSchema, uiStateSchema} from 'schemas';
 
 export type SavedFilter = {
   dataId: Filter['dataId'];
@@ -203,7 +203,7 @@ export type SavedMap = {
 
 export type LoadedMap = {datasets?: ParsedDataset[] | null; config?: ParsedConfig | null};
 export const reducerSchema: {
-  [key: string]: typeof mapStateSchema | typeof visStateSchema | typeof mapStyleSchema;
+  [key: string]: typeof mapStateSchema | typeof visStateSchema | typeof mapStyleSchema | typeof uiStateSchema;
 };
 
 export class KeplerGLSchema {

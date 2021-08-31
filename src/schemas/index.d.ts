@@ -20,5 +20,6 @@ export const visStateSchema: {[key: string]: Schema};
 export const datasetSchema: {[key: string]: Schema};
 export const mapStyleSchema: {[key: string]: Schema};
 export const mapStateSchema: {[key: string]: Schema};
+export const uiStateSchema: {[key: string]: Schema};
 
 export {default as Schema} from './schema';
