@@ -193,8 +193,6 @@ const getFilterValueAccessor = (channels, dataId, fields) => dc => (
         ? field.filterProps && Array.isArray(field.filterProps.mappedValue)
           ? field.filterProps.mappedValue[getIndex(d)]
           : moment.utc(getData(dc, d, fieldIndex)).valueOf()
-        : typeof getData(dc, d) === 'function'
-        ? getData(dc, d)(field)
         : getData(dc, d, fieldIndex);
 
     return notNullorUndefined(value) ? value - filter.domain[0] : Number.MIN_SAFE_INTEGER;
