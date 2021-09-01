@@ -35,6 +35,8 @@ export const PROPERTY_GROUPS = keyMirror({
 });
 
 export const DEFAULT_LAYER_OPACITY = 0.8;
+export const DEFAULT_HIGHLIGHT_COLOR = [252, 242, 26, 255];
+export const DEFAULT_LAYER_LABEL = 'new layer';
 export {DEFAULT_COLOR_RANGE};
 
 /** @type {import('./layer-factory').LayerTextLabel} */

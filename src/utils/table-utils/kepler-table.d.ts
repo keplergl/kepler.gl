@@ -1,23 +1,32 @@
 import {RGBColor} from '../../reducers/types';
 import {Layer} from 'layers';
 import {Filter} from '../reducers/vis-state-updaters';
-import {Dataset, Feild} from '../../reducers/vis-state-updaters';
+import {Dataset} from '../../reducers/vis-state-updaters';
+import {DataContainerInterface} from './data-container-interface';
 
 export type Field = {
   analyzerType: string;
   id?: string;
   name: string;
+  displayName: string;
   format: string;
   type: string;
   fieldIdx: number;
-  valueAccessor(v: any[]): any;
+  valueAccessor(v: {index: number}): any;
   filterProps?: any;
+  metadata?: any;
+  displayName: string;
 };
 
 export type GpuFilter = {
   filterRange: number[][];
   filterValueUpdateTriggers: any;
-  filterValueAccessor: any;
+  filterValueAccessor: (
+    dc: DataContainerInterface
+  ) => (
+    getIndex?: (any) => number,
+    getData?: (dc: DataContainerInterface, d: any, fieldIndex: number) => any
+  ) => (d: any) => number;
 };
 
 export type FieldPair = {
@@ -45,23 +54,28 @@ export type FilterDatasetOpt = {
   ignoreDomain?: boolean;
 };
 
-export function sortDatasetByColumn(
-  dataset: Dataset,
-  column: string,
-  mode?: string
-): Dataset;
+export function sortDatasetByColumn(dataset: Dataset, column: string, mode?: string): Dataset;
 
-export function findPointFieldPairs(fields: Feild[]): FieldPair[];
+export function findPointFieldPairs(fields: Field[]): FieldPair[];
 
 export class KeplerTable {
-  constructor(schema: {info?: object; data: any; color: RGBColor; metadata: any});
-  id: string;
+  readonly id: string;
+
+  constructor(schema: {
+    info?: ProtoDataset['info'];
+    data: ProtoDataset['data'];
+    color: RGBColor;
+    metadata?: ProtoDataset['metadata'];
+    supportedFilterTypes?: ProtoDataset['supportedFilterTypes'];
+  });
+  type?: string;
   label?: string;
   color: RGBColor;
 
   // fields and data
   fields: Field[];
-  allData: any[][];
+
+  dataContainer: DataContainerInterface;
 
   allIndexes: number[];
   filteredIndex: number[];
@@ -81,6 +95,7 @@ export class KeplerTable {
   sortOrder?: number[] | null;
 
   pinnedColumns?: string[];
+  supportedFilterTypes?: string[];
   // table-injected metadata
   metadata?: object;
 

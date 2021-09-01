@@ -21,6 +21,7 @@
 import './data-utils-test';
 import './data-processor-test';
 import './kepler-table-test';
+import './data-container-test';
 import './filter-utils-test';
 import './gpu-filter-utils-test';
 import './layer-utils-test';

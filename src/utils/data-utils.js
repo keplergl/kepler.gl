@@ -38,12 +38,12 @@ const MIN_LONGITUDE = -180;
  */
 export function unique(values) {
   const results = [];
-  values.forEach(v => {
-    if (!results.includes(v) && notNullorUndefined(v)) {
+  const uniqueSet = new Set(values);
+  uniqueSet.forEach(v => {
+    if (notNullorUndefined(v)) {
       results.push(v);
     }
   });
-
   return results;
 }
 
@@ -129,12 +129,12 @@ export function timeToUnixMilli(value, format) {
  *
  * @type {typeof import('./data-utils').maybeToDate}
  */
-export function maybeToDate(isTime, fieldIdx, format, d) {
+export function maybeToDate(isTime, fieldIdx, format, dc, d) {
   if (isTime) {
-    return timeToUnixMilli(d[fieldIdx], format);
+    return timeToUnixMilli(dc.valueAt(d.index, fieldIdx), format);
   }
 
-  return d[fieldIdx];
+  return dc.valueAt(d.index, fieldIdx);
 }
 
 /**

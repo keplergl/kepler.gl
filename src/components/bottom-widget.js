@@ -20,38 +20,30 @@
 
 import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
-import PropTypes from 'prop-types';
 import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-control';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
 import {ANIMATION_WINDOW, FILTER_TYPES} from 'constants/default-settings';
 import {getIntervalBins} from 'utils/filter-utils';
-
-const propTypes = {
-  filters: PropTypes.arrayOf(PropTypes.object),
-  datasets: PropTypes.object,
-  uiState: PropTypes.object,
-  layers: PropTypes.arrayOf(PropTypes.object),
-  animationConfig: PropTypes.object,
-  visStateActions: PropTypes.object,
-  sidePanelWidth: PropTypes.number,
-  containerW: PropTypes.number
-};
+import {media} from 'styles/media-breakpoints';
 
 const maxWidth = 1080;
 
 const BottomWidgetContainer = styled.div`
-  position: absolute;
   display: flex;
   flex-direction: column;
   padding-top: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingTop : 0)}px;
   padding-right: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingRight : 0)}px;
   padding-bottom: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingBottom : 0)}px;
   padding-left: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingLeft : 0)}px;
+  pointer-events: none !important; /* prevent padding from blocking input */
+  & > * {
+    /* all children should allow input */
+    pointer-events: all;
+  }
   width: ${props => props.width}px;
-  bottom: 0;
-  right: 0;
   z-index: 1;
+  ${media.portable`padding: 0;`}
 `;
 
 FilterAnimationControllerFactory.deps = [AnimationControllerFactory];
@@ -124,6 +116,8 @@ BottomWidgetFactory.deps = [
   FilterAnimationControllerFactory,
   LayerAnimationControllerFactory
 ];
+
+/* eslint-disable complexity */
 export default function BottomWidgetFactory(
   TimeWidget,
   AnimationControl,
@@ -165,7 +159,8 @@ export default function BottomWidgetFactory(
       Array.isArray(animationConfig.domain) && Number.isFinite(animationConfig.currentTime);
     // if animation control is showing, hide time display in time slider
     const showFloatingTimeDisplay = !animatableLayer.length;
-    const showAnimationControl = animatableLayer.length && readyToAnimation;
+    const showAnimationControl =
+      animatableLayer.length && readyToAnimation && !animationConfig.hideControl;
     const showTimeWidget = enlargedFilterIdx > -1 && Object.keys(datasets).length > 0;
 
     // if filter is not animating, pass in enlarged filter here because
@@ -232,7 +227,6 @@ export default function BottomWidgetFactory(
     );
   };
 
-  BottomWidget.propTypes = propTypes;
-
   return BottomWidget;
 }
+/* eslint-enable complexity */

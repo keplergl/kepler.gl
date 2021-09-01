@@ -458,89 +458,133 @@ export const testFields = [
     type: 'timestamp',
     fieldIdx: 0,
     name: 'gps_data.utc_timestamp',
+    id: 'gps_data.utc_timestamp',
+    displayName: 'gps_data.utc_timestamp',
     format: 'YYYY-M-D H:m:s',
     analyzerType: 'DATETIME',
-    valueAccessor: values => values[0]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 0);
+    }
   },
   {
     type: 'real',
     fieldIdx: 1,
     name: 'gps_data.lat',
+    id: 'gps_data.lat',
+    displayName: 'gps_data.lat',
     format: '',
     analyzerType: 'FLOAT',
-    valueAccessor: values => values[1]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 1);
+    }
   },
   {
     type: 'real',
     fieldIdx: 2,
     name: 'gps_data.lng',
+    id: 'gps_data.lng',
+    displayName: 'gps_data.lng',
     format: '',
     analyzerType: 'FLOAT',
-    valueAccessor: values => values[2]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 2);
+    }
   },
   {
     type: 'string',
     fieldIdx: 3,
     name: 'gps_data.types',
+    id: 'gps_data.types',
+    displayName: 'gps_data.types',
     format: '',
     analyzerType: 'STRING',
-    valueAccessor: values => values[3]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 3);
+    }
   },
   {
     type: 'timestamp',
     fieldIdx: 4,
     name: 'epoch',
+    id: 'epoch',
+    displayName: 'epoch',
     format: 'X',
     analyzerType: 'TIME',
-    valueAccessor: values => values[4]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 4);
+    }
   },
   {
     type: 'boolean',
     fieldIdx: 5,
     name: 'has_result',
+    id: 'has_result',
+    displayName: 'has_result',
     format: '',
     analyzerType: 'BOOLEAN',
-    valueAccessor: values => values[5]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 5);
+    }
   },
   {
     type: 'integer',
     fieldIdx: 6,
     name: 'id',
+    id: 'id',
+    displayName: 'id',
     format: '',
     analyzerType: 'INT',
-    valueAccessor: values => values[6]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 6);
+    }
   },
   {
     type: 'timestamp',
     fieldIdx: 7,
     name: 'time',
+    id: 'time',
+    displayName: 'time',
     format: 'YYYY-M-DTHH:mm:ss.SSSS',
     analyzerType: 'DATETIME',
-    valueAccessor: values => values[7]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 7);
+    }
   },
   {
     type: 'timestamp',
     fieldIdx: 8,
     name: 'begintrip_ts_utc',
+    id: 'begintrip_ts_utc',
+    displayName: 'begintrip_ts_utc',
     format: 'YYYY-M-D HH:mm:ssZZ',
     analyzerType: 'DATETIME',
-    valueAccessor: values => values[8]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 8);
+    }
   },
   {
     type: 'timestamp',
     fieldIdx: 9,
     name: 'begintrip_ts_local',
+    id: 'begintrip_ts_local',
+    displayName: 'begintrip_ts_local',
     format: 'YYYY-M-D HH:mm:ssZZ',
     analyzerType: 'DATETIME',
-    valueAccessor: values => values[9]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 9);
+    }
   },
   {
     type: 'date',
     fieldIdx: 10,
     name: 'date',
+    id: 'date',
+    displayName: 'date',
     format: 'YYYY-M-D',
     analyzerType: 'DATE',
-    valueAccessor: values => values[10]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 10);
+    }
   }
 ];
 
@@ -882,50 +926,74 @@ export const wktCsvFields = [
   {
     type: 'integer',
     name: 'a_zip',
+    id: 'a_zip',
+    displayName: 'a_zip',
     format: '',
     fieldIdx: 0,
     analyzerType: 'INT',
-    valueAccessor: values => values[0]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 0);
+    }
   },
   {
     type: 'geojson',
     name: 'simplified_shape_v2',
+    id: 'simplified_shape_v2',
+    displayName: 'simplified_shape_v2',
     format: '',
     fieldIdx: 1,
     analyzerType: 'PAIR_GEOMETRY_FROM_STRING',
-    valueAccessor: values => values[1]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 1);
+    }
   },
   {
     type: 'geojson',
     name: 'simplified_shape',
+    id: 'simplified_shape',
+    displayName: 'simplified_shape',
     format: '',
     fieldIdx: 2,
     analyzerType: 'GEOMETRY_FROM_STRING',
-    valueAccessor: values => values[2]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 2);
+    }
   },
   {
     type: 'real',
     name: 'm_rate',
+    id: 'm_rate',
+    displayName: 'm_rate',
     format: '',
     fieldIdx: 3,
     analyzerType: 'FLOAT',
-    valueAccessor: values => values[3]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 3);
+    }
   },
   {
     type: 'string',
     name: 'c_zip_type',
+    id: 'c_zip_type',
+    displayName: 'c_zip_type',
     format: '',
     fieldIdx: 4,
     analyzerType: 'STRING',
-    valueAccessor: values => values[4]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 4);
+    }
   },
   {
     type: 'real',
     name: 'c_number',
+    id: 'c_number',
+    displayName: 'c_number',
     format: '',
     fieldIdx: 5,
     analyzerType: 'FLOAT',
-    valueAccessor: values => values[5]
+    valueAccessor: dc => d => {
+      return dc.valueAt(d.index, 5);
+    }
   }
 ];
 

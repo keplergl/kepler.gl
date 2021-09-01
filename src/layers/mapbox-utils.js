@@ -129,20 +129,15 @@ function updateSourceData(map, sourceId, data) {
     source.setData(data);
   }
 }
+
 /**
  *
- * @param allData
  * @param filteredIndex
- * @param getGeometry {(point: any) => any}
- * @param getProperties {(point: any, index: number) => any}
+ * @param getGeometry {({index: number}) => any}
+ * @param getProperties {({index: number}) => any}
  * @returns FeatureCollection
  */
-export function geoJsonFromData(
-  allData = [],
-  filteredIndex = [],
-  getGeometry,
-  getProperties = (d, i) => {}
-) {
+export function geoJsonFromData(filteredIndex = [], getGeometry, getProperties = d => {}) {
   const geojson = {
     type: 'FeatureCollection',
     /** @type {Feature[]} */
@@ -151,15 +146,15 @@ export function geoJsonFromData(
 
   for (let i = 0; i < filteredIndex.length; i++) {
     const index = filteredIndex[i];
-    const point = allData[index];
-    const geometry = getGeometry(point);
+    const rowIndex = {index};
+    const geometry = getGeometry(rowIndex);
 
     if (geometry) {
       geojson.features.push({
         type: 'Feature',
         properties: {
           index,
-          ...getProperties(point, index)
+          ...getProperties(rowIndex)
         },
         geometry
       });

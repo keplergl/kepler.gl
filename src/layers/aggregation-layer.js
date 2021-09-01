@@ -26,7 +26,10 @@ import {HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 
 import {CHANNEL_SCALES, FIELD_OPTS, DEFAULT_AGGREGATION} from 'constants/default-settings';
 
-export const pointPosAccessor = ({lat, lng}) => d => [d.data[lng.fieldIdx], d.data[lat.fieldIdx]];
+export const pointPosAccessor = ({lat, lng}) => dc => d => [
+  dc.valueAt(d.index, lng.fieldIdx),
+  dc.valueAt(d.index, lat.fieldIdx)
+];
 
 export const pointPosResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
 
@@ -34,7 +37,9 @@ export const getValueAggrFunc = (field, aggregation) => {
   return points => {
     return field
       ? aggregate(
-          points.map(p => field.valueAccessor(p.data)),
+          points.map(p => {
+            return field.valueAccessor(p);
+          }),
           aggregation
         )
       : points.length;
@@ -52,7 +57,8 @@ export default class AggregationLayer extends Layer {
   constructor(props) {
     super(props);
 
-    this.getPositionAccessor = () => pointPosAccessor(this.config.columns);
+    this.getPositionAccessor = dataContainer =>
+      pointPosAccessor(this.config.columns)(dataContainer);
     this.getColorRange = memoize(getLayerColorRange);
   }
 
@@ -138,7 +144,7 @@ export default class AggregationLayer extends Layer {
   /**
    * Aggregation layer handles visual channel aggregation inside deck.gl layer
    */
-  updateLayerVisualChannel({data, allData}, channel) {
+  updateLayerVisualChannel({data, dataContainer}, channel) {
     this.validateVisualChannel(channel);
   }
 
@@ -209,26 +215,25 @@ export default class AggregationLayer extends Layer {
     return this;
   }
 
-  updateLayerMeta(allData, getPosition) {
+  updateLayerMeta(dataContainer, getPosition) {
     // get bounds from points
-    const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
+    const bounds = this.getPointsBounds(dataContainer, getPosition);
 
     this.updateMeta({bounds});
   }
 
-  calculateDataAttribute({allData, filteredIndex}, getPosition) {
+  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
     const data = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
-      const pos = getPosition({data: allData[index]});
+      const pos = getPosition({index});
 
       // if doesn't have point lat or lng, do not add the point
       // deck.gl can't handle position = null
       if (pos.every(Number.isFinite)) {
         data.push({
-          index,
-          data: allData[index]
+          index
         });
       }
     }
@@ -237,8 +242,8 @@ export default class AggregationLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
-    const getPosition = this.getPositionAccessor(); // if (
-    const {gpuFilter} = datasets[this.config.dataId];
+    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
+    const getPosition = this.getPositionAccessor(dataContainer);
 
     const getColorValue = getValueAggrFunc(
       this.config.colorField,
@@ -250,7 +255,8 @@ export default class AggregationLayer extends Layer {
       this.config.visConfig.sizeAggregation
     );
     const hasFilter = Object.values(gpuFilter.filterRange).some(arr => arr.some(v => v !== 0));
-    const getFilterValue = gpuFilter.filterValueAccessor();
+
+    const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)();
     const filterData = hasFilter
       ? getFilterDataFunc(gpuFilter.filterRange, getFilterValue)
       : undefined;

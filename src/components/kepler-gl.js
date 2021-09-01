@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component, createRef} from 'react';
-import {console as Console} from 'global/window';
+import Console from 'global/console';
 import {bindActionCreators} from 'redux';
 import styled, {ThemeProvider, withTheme} from 'styled-components';
 import {createSelector} from 'reselect';
@@ -45,6 +45,7 @@ import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
 
 import SidePanelFactory from './side-panel';
 import MapContainerFactory from './map-container';
+import MapsLayoutFactory from './maps-layout';
 import BottomWidgetFactory from './bottom-widget';
 import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
@@ -56,6 +57,7 @@ import {validateToken} from 'utils/mapbox-utils';
 import {mergeMessages} from 'utils/locale-utils';
 
 import {theme as basicTheme, themeLT, themeBS} from 'styles/base';
+import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
 
 // Maybe we should think about exporting this or creating a variable
 // as part of the base.js theme
@@ -91,6 +93,16 @@ const GlobalStyle = styled.div`
     display: none;
   }
 `;
+
+const BottomWidgetOuter = styled.div(
+  ({absolute}) => `
+  ${absolute ? 'position: absolute; bottom: 0; right: 0;' : ''}
+  pointer-events: none; /* prevent padding from blocking input */
+  & > * {
+    /* all children should allow input */
+    pointer-events: all;
+  }`
+);
 
 export const mapFieldsSelector = props => ({
   getMapboxRef: props.getMapboxRef,
@@ -165,8 +177,6 @@ export const plotContainerSelector = props => ({
 
 export const isSplitSelector = props =>
   props.visState.splitMaps && props.visState.splitMaps.length > 1;
-export const containerWSelector = props =>
-  props.mapState.width * (Number(isSplitSelector(props)) + 1);
 
 export const bottomWidgetSelector = (props, theme) => ({
   filters: props.visState.filters,
@@ -175,11 +185,12 @@ export const bottomWidgetSelector = (props, theme) => ({
   layers: props.visState.layers,
   animationConfig: props.visState.animationConfig,
   visStateActions: props.visStateActions,
-  sidePanelWidth: props.uiState.readOnly ? 0 : props.sidePanelWidth + theme.sidePanel.margin.left,
-  containerW: containerWSelector(props)
+  toggleModal: props.uiStateActions.toggleModal,
+  sidePanelWidth: props.uiState.readOnly ? 0 : props.sidePanelWidth + theme.sidePanel.margin.left
 });
 
 export const modalContainerSelector = (props, rootNode) => ({
+  appName: props.appName,
   mapStyle: props.mapStyle,
   visState: props.visState,
   mapState: props.mapState,
@@ -194,8 +205,6 @@ export const modalContainerSelector = (props, rootNode) => ({
   providerActions: props.providerActions,
 
   rootNode,
-  containerW: containerWSelector(props),
-  containerH: props.mapState.height,
   // User defined cloud provider props
   cloudProviders: props.cloudProviders,
   onExportToCloudSuccess: props.onExportToCloudSuccess,
@@ -236,6 +245,7 @@ KeplerGlFactory.deps = [
   BottomWidgetFactory,
   GeoCoderPanelFactory,
   MapContainerFactory,
+  MapsLayoutFactory,
   ModalContainerFactory,
   SidePanelFactory,
   PlotContainerFactory,
@@ -246,6 +256,7 @@ function KeplerGlFactory(
   BottomWidget,
   GeoCoderPanel,
   MapContainer,
+  MapsLayout,
   ModalContainer,
   SidePanel,
   PlotContainer,
@@ -256,30 +267,35 @@ function KeplerGlFactory(
   class KeplerGL extends Component {
     static defaultProps = DEFAULT_KEPLER_GL_PROPS;
 
+    state = {
+      dimensions: null
+    };
+
     componentDidMount() {
       this._validateMapboxToken();
       this._loadMapStyle();
-      this._handleResize(this.props);
       if (typeof this.props.onKeplerGlInitialized === 'function') {
         this.props.onKeplerGlInitialized();
       }
-    }
-
-    componentDidUpdate(prevProps) {
-      if (
-        // if dimension props has changed
-        this.props.height !== prevProps.height ||
-        this.props.width !== prevProps.width ||
-        // react-map-gl will dispatch updateViewport after this._handleResize is called
-        // here we check if this.props.mapState.height is sync with props.height
-        this.props.height !== this.props.mapState.height
-      ) {
-        this._handleResize(this.props);
+      if (this.root.current instanceof HTMLElement) {
+        observeDimensions(this.root.current, this._handleResize);
       }
     }
+
+    componentWillUnmount() {
+      if (this.root.current instanceof HTMLElement) {
+        unobserveDimensions(this.root.current);
+      }
+    }
+
+    _handleResize = dimensions => {
+      this.setState({dimensions});
+    };
+
     static contextType = RootContext;
 
     root = createRef();
+    bottomWidgetRef = createRef();
 
     /* selectors */
     themeSelector = props => props.theme;
@@ -320,17 +336,6 @@ function KeplerGlFactory(
       }
     }
 
-    _handleResize({width, height}) {
-      if (!Number.isFinite(width) || !Number.isFinite(height)) {
-        Console.warn('width and height is required');
-        return;
-      }
-      this.props.mapStateActions.updateMap({
-        width: width / (1 + Number(this.props.mapState.isSplit)),
-        height
-      });
-    }
-
     _loadMapStyle = () => {
       const defaultStyles = Object.values(this.props.mapStyle.mapStyles);
       // add id to custom map styles if not given
@@ -364,6 +369,7 @@ function KeplerGlFactory(
         readOnly
       } = this.props;
 
+      const dimensions = this.state.dimensions || {width, height};
       const {
         splitMaps, // this will store support for split map view is necessary
         interactionConfig
@@ -384,11 +390,12 @@ function KeplerGlFactory(
       const notificationPanelFields = notificationPanelSelector(this.props);
 
       const mapContainers = !isSplit
-        ? [<MapContainer key={0} index={0} {...mapFields} mapLayers={null} />]
+        ? [<MapContainer primary={true} key={0} index={0} {...mapFields} mapLayers={null} />]
         : splitMaps.map((settings, index) => (
             <MapContainer
               key={index}
               index={index}
+              primary={index === 1}
               {...mapFields}
               mapLayers={splitMaps[index].layers}
             />
@@ -402,6 +409,8 @@ function KeplerGlFactory(
                 className="kepler-gl"
                 id={`kepler-gl__${id}`}
                 style={{
+                  display: 'flex',
+                  flexDirection: 'column',
                   position: 'relative',
                   width: `${width}px`,
                   height: `${height}px`
@@ -410,13 +419,21 @@ function KeplerGlFactory(
               >
                 <NotificationPanel {...notificationPanelFields} />
                 {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                <div className="maps" style={{display: 'flex'}}>
-                  {mapContainers}
-                </div>
+                <MapsLayout className="maps">{mapContainers}</MapsLayout>
                 {isExportingImage && <PlotContainer {...plotContainerFields} />}
                 {interactionConfig.geocoder.enabled && <GeoCoderPanel {...geoCoderPanelFields} />}
-                <BottomWidget {...bottomWidgetFields} />
-                <ModalContainer {...modalContainerFields} />
+                <BottomWidgetOuter absolute>
+                  <BottomWidget
+                    ref={this.bottomWidgetRef}
+                    {...bottomWidgetFields}
+                    containerW={dimensions.width}
+                  />
+                </BottomWidgetOuter>
+                <ModalContainer
+                  {...modalContainerFields}
+                  containerW={dimensions.width}
+                  containerH={dimensions.height}
+                />
               </GlobalStyle>
             </ThemeProvider>
           </IntlProvider>

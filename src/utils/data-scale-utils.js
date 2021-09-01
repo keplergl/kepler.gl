@@ -32,11 +32,11 @@ export function getQuantileDomain(data, valueAccessor, sortFunc) {
 }
 
 /**
- * return ordinal domain for an array of data
+ * return ordinal domain for a data container
  * @type {typeof import('./data-scale-utils').getOrdinalDomain}
  */
-export function getOrdinalDomain(data, valueAccessor) {
-  const values = typeof valueAccessor === 'function' ? data.map(valueAccessor) : data;
+export function getOrdinalDomain(dataContainer, valueAccessor) {
+  const values = dataContainer.mapIndex(valueAccessor);
 
   return unique(values)
     .filter(notNullorUndefined)
@@ -59,6 +59,5 @@ export function getLinearDomain(data, valueAccessor) {
  */
 export function getLogDomain(data, valueAccessor) {
   const [d0, d1] = getLinearDomain(data, valueAccessor);
-
   return [d0 === 0 ? 1e-5 : d0, d1];
 }

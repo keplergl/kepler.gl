@@ -525,6 +525,7 @@ test('#GeojsonLayer -> renderLayer', t => {
           columns: {
             geojson: '_geojson'
           },
+          isVisible: true,
           visConfig: {
             strokeColor: [4, 5, 6],
             strokeOpacity: 0.1

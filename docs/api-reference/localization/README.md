@@ -12,6 +12,7 @@ Current supported languages are:
 | es          | Spanish    |          |
 | ja          | Japanese   |          |
 | cn          | Chinese    |          |
+| ru          | Русский    |          |
 
 ## Changing default language
 

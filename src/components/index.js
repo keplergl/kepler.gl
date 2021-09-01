@@ -35,8 +35,10 @@ export {default as KeplerGl, default, injectComponents, ContainerFactory} from '
 
 // factories
 export {default as KeplerGlFactory, DEFAULT_KEPLER_GL_PROPS} from './kepler-gl';
-export {default as SidePanelFactory, PanelTitleFactory} from './side-panel';
-export {default as MapContainerFactory} from './map-container';
+export {default as SidePanelFactory} from './side-panel';
+export {default as PanelTitleFactory} from './side-panel/panel-title';
+export {default as MapContainerFactory, Attribution} from './map-container';
+export {default as MapsLayoutFactory} from './maps-layout';
 export {
   default as BottomWidgetFactory,
   LayerAnimationControllerFactory,
@@ -54,7 +56,8 @@ export {
 } from './side-panel/panel-header';
 export {default as PanelHeaderActionFactory} from './side-panel/panel-header-action';
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
-export {default as PanelToggleFactory, PanelTabFactory} from './side-panel/panel-toggle';
+export {default as PanelToggleFactory} from './side-panel/panel-toggle';
+export {default as PanelTabFactory} from './side-panel/panel-tab';
 
 export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel/layer-manager';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
@@ -80,18 +83,24 @@ export {default as MapManagerFactory} from './side-panel/map-manager';
 export {default as LayerGroupSelectorFactory} from './side-panel/map-style-panel/map-layer-selector';
 export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/map-style-selector';
 export {default as CustomPanelsFactory} from './side-panel/custom-panel';
-
 // // map factories
 export {default as MapPopoverFactory} from './map/map-popover';
 export {default as MapControlFactory} from './map/map-control';
 export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as CoordinateInfoFactory} from './map/coordinate-info';
+export {default as LayerSelectorPanelFactory} from './map/layer-selector-panel';
+export {default as LocalePanelFactory} from './map/locale-panel';
+export {default as MapControlPanelFactory} from './map/map-control-panel';
+export {default as MapControlTooltipFactory} from './map/map-control-tooltip';
 export {
-  Toggle3dButtonFactory,
-  MapDrawPanelFactory,
-  SplitMapButtonFactory,
-  MapLegendPanelFactory
-} from './map/map-control';
+  default as MapLegendFactory,
+  LayerLegendHeaderFactory,
+  LayerLegendContentFactory
+} from './map/map-legend';
+export {default as MapDrawPanelFactory} from './map/map-draw-panel';
+export {default as SplitMapButtonFactory} from './map/split-map-button';
+export {default as MapLegendPanelFactory} from './map/map-legend-panel';
+export {default as Toggle3dButtonFactory} from './map/toggle-3d-button';
 
 // // modal factories
 export {default as ModalDialogFactory} from './modals/modal-dialog';
@@ -161,6 +170,9 @@ export {DatasetSquare} from './common/styled-components';
 export {default as ActionPanel, ActionPanelItem} from './common/action-panel';
 export {default as DataTableFactory} from './common/data-table';
 export {default as CanvasHack} from './common/data-table/canvas';
+export {default as MapLayerSelector} from './common/map-layer-selector';
+export {default as VerticalToolbar} from './common/vertical-toolbar';
+export {default as ToolbarItem} from './common/toolbar-item';
 
 // side pane components
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
@@ -181,11 +193,9 @@ export {
   LayerColorSelector
 } from './side-panel/layer-panel/layer-configurator';
 
-// map components
-export {default as MapLegend} from 'components/map/map-legend';
-
 export * from './common/styled-components';
 import * as Icons from './common/icons';
+
 export {Icons};
 
 // Individual Component from Dependency Tree

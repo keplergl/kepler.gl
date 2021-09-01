@@ -26,6 +26,7 @@ import {
   openDeleteModal,
   setExportImageSetting,
   toggleMapControl,
+  setMapControlVisibility,
   setExportSelectedDataset,
   setExportDataType,
   setExportFiltered,
@@ -169,7 +170,7 @@ test('#uiStateReducer -> TOGGLE_MAP_CONTROL', t => {
     mapControls: {
       ...INITIAL_UI_STATE.mapControls,
       mapLegend: {
-        show: INITIAL_UI_STATE.mapControls.mapLegend.show,
+        ...INITIAL_UI_STATE.mapControls.mapLegend,
         active: !INITIAL_UI_STATE.mapControls.mapLegend.active,
         activeMapIndex: 0
       }
@@ -178,6 +179,36 @@ test('#uiStateReducer -> TOGGLE_MAP_CONTROL', t => {
 
   t.deepEqual(newReducer, expectedState, 'should set map legend to be seen');
 
+  t.end();
+});
+
+test('#uiStateReducer -> SET_MAP_CONTROL_VISIBILITY', t => {
+  const newReducer = reducer(INITIAL_UI_STATE, setMapControlVisibility('mapLegend', false));
+
+  const expectedMapControl = {
+    ...INITIAL_UI_STATE.mapControls,
+    mapLegend: {
+      ...INITIAL_UI_STATE.mapControls.mapLegend,
+      show: false
+    }
+  };
+
+  t.deepEqual(newReducer.mapControls, expectedMapControl, 'should set map legend show to be false');
+
+  const newReducer1 = reducer(newReducer, setMapControlVisibility('mapLegend', true));
+
+  const expectedMapControl1 = {
+    ...INITIAL_UI_STATE.mapControls,
+    mapLegend: {
+      ...INITIAL_UI_STATE.mapControls.mapLegend,
+      show: true
+    }
+  };
+
+  t.deepEqual(newReducer1.mapControls, expectedMapControl1, 'should set map legend show to true');
+
+  const newReducer2 = reducer(newReducer1, setMapControlVisibility('something', true));
+  t.equal(newReducer1, newReducer2, 'should note update state');
   t.end();
 });
 

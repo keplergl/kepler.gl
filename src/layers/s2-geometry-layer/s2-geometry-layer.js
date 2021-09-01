@@ -21,6 +21,7 @@
 import {S2Layer} from '@deck.gl/geo-layers';
 import {HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
+import {createDataContainer} from 'utils/table-utils';
 import Layer from '../base-layer';
 import S2LayerIcon from './s2-layer-icon';
 import {getS2Center} from './s2-utils';
@@ -32,7 +33,8 @@ export const S2_TOKEN_FIELDS = {
 };
 
 export const s2RequiredColumns = ['token'];
-export const S2TokenAccessor = ({token}) => d => d.data[token.fieldIdx];
+export const S2TokenAccessor = ({token}) => dc => d => dc.valueAt(d.index, token.fieldIdx);
+
 export const defaultElevation = 500;
 export const defaultLineWidth = 1;
 
@@ -71,7 +73,7 @@ export default class S2GeometryLayer extends Layer {
   constructor(props) {
     super(props);
     this.registerVisConfig(S2VisConfigs);
-    this.getPositionAccessor = () => S2TokenAccessor(this.config.columns);
+    this.getPositionAccessor = dataContainer => S2TokenAccessor(this.config.columns)(dataContainer);
   }
 
   get type() {
@@ -164,17 +166,15 @@ export default class S2GeometryLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({allData, filteredIndex}, getS2Token) {
+  calculateDataAttribute({dataContainer, filteredIndex}, getS2Token) {
     const data = [];
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
-      const token = getS2Token({data: allData[index]});
+      const token = getS2Token({index});
 
       if (token) {
         data.push({
-          // keep a reference to the original data index
           index,
-          data: allData[index],
           token
         });
       }
@@ -182,28 +182,40 @@ export default class S2GeometryLayer extends Layer {
     return data;
   }
 
-  updateLayerMeta(allData, getS2Token) {
-    const centroids = allData.reduce((acc, entry) => {
-      const s2Token = getS2Token({data: entry});
-      return s2Token ? [...acc, getS2Center(s2Token)] : acc;
-    }, []);
+  updateLayerMeta(dataContainer, getS2Token) {
+    // add safe row flag
+    const centroids = dataContainer.reduce(
+      (acc, entry, index) => {
+        const s2Token = getS2Token({index});
+        if (s2Token) {
+          acc.push(getS2Center(s2Token));
+        }
+        return acc;
+      },
+      [],
+      true
+    );
 
-    const bounds = this.getPointsBounds(centroids);
+    const centroidsDataContainer = createDataContainer(centroids);
+    const bounds = this.getPointsBounds(centroidsDataContainer, (d, dc) => [
+      dc.valueAt(d.index, 0),
+      dc.valueAt(d.index, 1)
+    ]);
     this.dataToFeature = {centroids};
     this.updateMeta({bounds});
   }
 
   formatLayerData(datasets, oldLayerData, opt = {}) {
-    const {gpuFilter} = datasets[this.config.dataId];
-    const getS2Token = this.getPositionAccessor();
+    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
+    const getS2Token = this.getPositionAccessor(dataContainer);
     const {data} = this.updateData(datasets, oldLayerData);
 
-    const accessors = this.getAttributeAccessors();
+    const accessors = this.getAttributeAccessors({dataContainer});
 
     return {
       data,
       getS2Token,
-      getFilterValue: gpuFilter.filterValueAccessor(),
+      getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
       ...accessors
     };
   }

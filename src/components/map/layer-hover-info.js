@@ -31,8 +31,6 @@ export const StyledLayerName = styled(CenterFlexbox)`
   font-size: 12px;
   letter-spacing: 0.43px;
   text-transform: capitalize;
-  padding: 0 14px;
-  margin-top: 12px;
 
   svg {
     margin-right: 4px;
@@ -120,7 +118,13 @@ const EntryInfoRow = ({item, fields, data, primaryData, compareType}) => {
     compareType
   });
 
-  return <Row name={field.name} value={displayValue} deltaValue={displayDeltaValue} />;
+  return (
+    <Row
+      name={field.displayName || field.name}
+      value={displayValue}
+      deltaValue={displayDeltaValue}
+    />
+  );
 };
 
 // TODO: supporting comparative value for aggregated cells as well

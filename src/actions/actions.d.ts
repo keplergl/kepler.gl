@@ -40,12 +40,15 @@ export type ProtoDataset = {
       name: string;
       type?: string;
       format?: string;
+      displayName?: string;
+      id?: string;
     }[];
     rows: any[][];
   };
 
   // table-injected metadata
   metadata?: any;
+  supportedFilterTypes?: string[];
 };
 
 export type AddDataToMapOptions = {
@@ -63,7 +66,7 @@ export type AddDataToMapPayload = {
   datasets: ProtoDataset[] | ProtoDataset;
   options?: AddDataToMapOptions;
   config?: ParsedConfig;
-  info?: Partial<MapInfo>
+  info?: Partial<MapInfo>;
 };
 
 export function addDataToMap(
@@ -93,7 +96,9 @@ export type KeplerGlInitPayload = {
   initialUiState?: Partial<UiState>;
 };
 
-export function keplerGlInit(options?: KeplerGlInitPayload): {
+export function keplerGlInit(
+  options?: KeplerGlInitPayload
+): {
   type: ActionTypes.INIT;
   payload: KeplerGlInitPayload;
 };

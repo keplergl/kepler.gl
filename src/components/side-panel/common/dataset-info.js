@@ -36,7 +36,7 @@ export default function DatasetInfoFactory() {
     <StyledDataRowCount className="source-data-rows">
       <FormattedMessage
         id={'datasetInfo.rowCount'}
-        values={{rowCount: numFormat(dataset.allData.length)}}
+        values={{rowCount: numFormat(dataset.dataContainer.numRows())}}
       />
     </StyledDataRowCount>
   );

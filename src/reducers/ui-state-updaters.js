@@ -28,7 +28,8 @@ import {
   EXPORT_HTML_MAP_MODES,
   EXPORT_IMG_RATIOS,
   EXPORT_MAP_FORMATS,
-  RESOLUTIONS
+  RESOLUTIONS,
+  MAP_CONTROLS
 } from 'constants/default-settings';
 import {LOCALE_CODES} from 'localization/locales';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
@@ -81,6 +82,7 @@ const uiStateUpdaters = null;
 const DEFAULT_MAP_CONTROLS_FEATURES = {
   show: true,
   active: false,
+  disableClose: false,
   // defines which map index users are interacting with (through map controls)
   activeMapIndex: 0
 };
@@ -98,14 +100,7 @@ const DEFAULT_MAP_CONTROLS_FEATURES = {
  * @type {import('./ui-state-updaters').MapControls}
  * @public
  */
-export const DEFAULT_MAP_CONTROLS = [
-  'visibleLayers',
-  'mapLegend',
-  'toggle3d',
-  'splitMap',
-  'mapDraw',
-  'mapLocale'
-].reduce(
+export const DEFAULT_MAP_CONTROLS = Object.keys(MAP_CONTROLS).reduce(
   (final, current) => ({
     ...final,
     [current]: DEFAULT_MAP_CONTROLS_FEATURES
@@ -357,6 +352,33 @@ export const toggleMapControlUpdater = (state, {payload: {panelId, index = 0}}) 
     }
   }
 });
+
+/**
+ * Toggle map control visibility
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action action
+ * @param action.payload map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').setMapControlVisibilityUpdater}
+ * @public
+ */
+export const setMapControlVisibilityUpdater = (state, {payload: {panelId, show}}) => {
+  if (!state.mapControls?.[panelId]) {
+    return state;
+  }
+
+  return {
+    ...state,
+    mapControls: {
+      ...state.mapControls,
+      [panelId]: {
+        ...state.mapControls[panelId],
+        show: Boolean(show)
+      }
+    }
+  };
+};
 
 /**
  * Toggle active map control panel

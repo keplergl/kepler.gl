@@ -44,7 +44,8 @@ export type ExportMap = {
 export type MapControl = {
   show: boolean;
   active: boolean;
-  activeMapIndex: number;
+  disableClose?: boolean;
+  activeMapIndex?: number;
 };
 export type MapControls = {
   visibleLayers: MapControl;
@@ -113,6 +114,10 @@ export function hideExportDropdownUpdater(
 export function toggleMapControlUpdater(
   state: UiState,
   action: UiStateActions.ToggleMapControlUpdaterAction
+): UiState;
+export function setMapControlVisibilityUpdater(
+  state: UiState,
+  action: UiStateActions.setMapControlVisibilityUpdaterAction
 ): UiState;
 export function openDeleteModalUpdater(
   state: UiState,

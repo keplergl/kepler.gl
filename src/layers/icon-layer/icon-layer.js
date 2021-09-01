@@ -32,12 +32,13 @@ const brushingExtension = new BrushingExtension();
 
 export const SVG_ICON_URL = `${CLOUDFRONT}/icons/svg-icons.json`;
 
-export const iconPosAccessor = ({lat, lng, altitude}) => d => [
-  d.data[lng.fieldIdx],
-  d.data[lat.fieldIdx],
-  altitude?.fieldIdx > -1 ? d.data[altitude.fieldIdx] : 0
+export const iconPosAccessor = ({lat, lng, altitude}) => dc => d => [
+  dc.valueAt(d.index, lng.fieldIdx),
+  dc.valueAt(d.index, lat.fieldIdx),
+  altitude?.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
 ];
-export const iconAccessor = ({icon}) => d => d.data[icon.fieldIdx];
+
+export const iconAccessor = ({icon}) => dc => d => dc.valueAt(d.index, icon.fieldIdx);
 
 export const iconRequiredColumns = ['lat', 'lng', 'icon'];
 export const iconOptionalColumns = ['altitude'];
@@ -67,8 +68,8 @@ export default class IconLayer extends Layer {
     super(props);
 
     this.registerVisConfig(pointVisConfigs);
-    this.getPositionAccessor = () => iconPosAccessor(this.config.columns);
-    this.getIconAccessor = () => iconAccessor(this.config.columns);
+    this.getPositionAccessor = dataContainer => iconPosAccessor(this.config.columns)(dataContainer);
+    this.getIconAccessor = dataContainer => iconAccessor(this.config.columns)(dataContainer);
 
     // prepare layer info modal
     this._layerInfoModal = IconInfoModalFactory();
@@ -187,22 +188,22 @@ export default class IconLayer extends Layer {
     return {props};
   }
 
-  calculateDataAttribute({allData, filteredIndex}, getPosition) {
-    const getIcon = this.getIconAccessor();
+  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
+    const getIcon = this.getIconAccessor(dataContainer);
     const data = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
-      const pos = getPosition({data: allData[index]});
-      const icon = getIcon({data: allData[index]});
+      const rowIndex = {index};
+      const pos = getPosition(rowIndex);
+      const icon = getIcon(rowIndex);
 
       // if doesn't have point lat or lng, do not add the point
       // deck.gl can't handle position = null
       if (pos.every(Number.isFinite) && typeof icon === 'string') {
         data.push({
           index,
-          icon,
-          data: allData[index]
+          icon
         });
       }
     }
@@ -212,9 +213,10 @@ export default class IconLayer extends Layer {
 
   formatLayerData(datasets, oldLayerData) {
     const {textLabel} = this.config;
-    const getPosition = this.getPositionAccessor();
+    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
 
-    const {gpuFilter} = datasets[this.config.dataId];
+    const getPosition = this.getPositionAccessor(dataContainer);
+
     const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
 
     // get all distinct characters in the text labels
@@ -222,22 +224,23 @@ export default class IconLayer extends Layer {
       textLabel,
       triggerChanged,
       oldLayerData,
-      data
+      data,
+      dataContainer
     });
 
-    const accessors = this.getAttributeAccessors();
+    const accessors = this.getAttributeAccessors({dataContainer});
 
     return {
       data,
       getPosition,
-      getFilterValue: gpuFilter.filterValueAccessor(),
+      getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
       textLabels,
       ...accessors
     };
   }
 
-  updateLayerMeta(allData, getPosition) {
-    const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
+  updateLayerMeta(dataContainer, getPosition) {
+    const bounds = this.getPointsBounds(dataContainer, getPosition);
     this.updateMeta({bounds});
   }
 

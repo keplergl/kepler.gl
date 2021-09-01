@@ -90,7 +90,6 @@ test('#GridLayer -> formatLayerData', t => {
         const {layerData, layer} = result;
         const expectedLayerData = {
           data: [0, 1, 4, 5, 7].map(index => ({
-            data: testRows[index],
             index
           })),
           _filterData: () => {},
@@ -170,7 +169,6 @@ test('#GridLayer -> formatLayerData', t => {
         const {layerData} = result;
         const expectedLayerData = {
           data: [0, 1, 4, 5, 7].map(index => ({
-            data: testRows[index],
             index
           })),
           _filterData: () => {},
@@ -291,12 +289,10 @@ test('#GridLayer -> renderLayer', t => {
             count: 2,
             points: [
               {
-                index: 0,
-                data: preparedDataset.allData[0]
+                index: 0
               },
               {
-                index: 1,
-                data: preparedDataset.allData[1]
+                index: 1
               }
             ],
             lonIdx: 253,
@@ -309,24 +305,20 @@ test('#GridLayer -> renderLayer', t => {
             count: 2,
             points: [
               {
-                index: 4,
-                data: preparedDataset.allData[4]
+                index: 4
               },
               {
-                index: 5,
-                data: preparedDataset.allData[5]
+                index: 5
               }
             ],
             lonIdx: 255,
             latIdx: 709,
             filteredPoints: [
               {
-                index: 4,
-                data: preparedDataset.allData[4]
+                index: 4
               },
               {
-                index: 5,
-                data: preparedDataset.allData[5]
+                index: 5
               }
             ]
           },
@@ -336,16 +328,14 @@ test('#GridLayer -> renderLayer', t => {
             count: 1,
             points: [
               {
-                index: 7,
-                data: preparedDataset.allData[7]
+                index: 7
               }
             ],
             lonIdx: 254,
             latIdx: 711,
             filteredPoints: [
               {
-                index: 7,
-                data: preparedDataset.allData[7]
+                index: 7
               }
             ]
           }

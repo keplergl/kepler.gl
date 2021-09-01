@@ -10,10 +10,10 @@ import {MapStyle} from 'reducers/map-style-updaters';
 import {UiState} from 'reducers/ui-state-updaters';
 import {VisState} from 'reducers/vis-state-updaters';
 import {ProviderState} from 'reducers/provider-state-updaters';
-import {OnSuccessCallBack} from 'actions';
 
 export type ModalContainerProps = {
-  rootNode: object;
+  appName: string;
+  rootNode: React.ReactNode;
   containerW: number;
   containerH: number;
   mapboxApiAccessToken: string;
@@ -27,12 +27,12 @@ export type ModalContainerProps = {
   uiStateActions: typeof UIStateActions;
   mapStyleActions: typeof MapStyleActions;
   providerActions: typeof ProviderActions;
-  onSaveToStorage: () => void,
-  cloudProviders: object[],
-  onLoadCloudMapSuccess: OnSuccessCallBack,
-  onLoadCloudMapError: OnErrorCallBack,
-  onExportToCloudSuccess:OnSuccessCallBack,
-  onExportToCloudError: OnErrorCallBack
+  onSaveToStorage: () => void;
+  cloudProviders: object[];
+  onLoadCloudMapSuccess: OnSuccessCallBack;
+  onLoadCloudMapError: OnErrorCallBack;
+  onExportToCloudSuccess: OnSuccessCallBack;
+  onExportToCloudError: OnErrorCallBack;
 };
 
 export default function ModalContainerFactory(): React.Component<ModelContainerProps>;

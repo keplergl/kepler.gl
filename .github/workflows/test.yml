@@ -42,6 +42,6 @@ jobs:
         run: xvfb-run --auto-servernum yarn cover
 
       - name: Coveralls
-        uses: coverallsapp/github-action@v1.1.2
+        uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

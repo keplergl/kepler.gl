@@ -490,7 +490,8 @@ export function validateLayerWithData(
     label: savedLayer.config.label,
     color: savedLayer.config.color,
     isVisible: savedLayer.config.isVisible,
-    hidden: savedLayer.config.hidden
+    hidden: savedLayer.config.hidden,
+    highlightColor: savedLayer.config.highlightColor
   });
 
   // find column fieldIdx

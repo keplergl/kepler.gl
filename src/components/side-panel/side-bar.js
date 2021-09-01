@@ -34,6 +34,11 @@ const StyledSidePanelContainer = styled.div`
   padding-right: ${props => props.theme.sidePanel.margin.right}px;
   padding-bottom: ${props => props.theme.sidePanel.margin.bottom}px;
   padding-left: ${props => props.theme.sidePanel.margin.left}px;
+  pointer-events: none; /* prevent padding from blocking input */
+  & > * {
+    /* all children should allow input */
+    pointer-events: all;
+  }
 `;
 
 const SideBarContainer = styled.div`

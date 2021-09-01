@@ -163,8 +163,10 @@ export type Editor = {
   selectedFeature: any;
   visible: boolean;
 };
+
+export type SplitMapLayers = {[key: string]: boolean};
 export type SplitMap = {
-  layers: {[key: string]: boolean};
+  layers: SplitMapLayers;
 };
 export type AnimationConfig = {
   domain: number[] | null;
@@ -177,6 +179,8 @@ export type AnimationConfig = {
   timeFormat?: string | null;
   // custom ui input
   timezone?: string | null;
+  // hide or show control
+  hideControl?: boolean;
 };
 
 export type BaseInteraction = {
@@ -320,6 +324,10 @@ export function updateLayerBlendingUpdater(
 export function toggleLayerAnimationUpdater(
   state: VisState,
   action: VisStateActions.ToggleLayerAnimationUpdaterAction
+): VisState;
+export function toggleLayerAnimationControlUpdater(
+  state: VisState,
+  action: VisStateActions.ToggleLayerAnimationControlUpdaterAction
 ): VisState;
 export function interactionConfigChangeUpdater(
   state: VisState,
@@ -521,3 +529,6 @@ export function receiveMapConfigUpdater(
 export const INITIAL_VIS_STATE: VisState;
 export const DEFAULT_ANIMATION_CONFIG: AnimationConfig;
 export const DEFAULT_EDITOR: Editor;
+
+export function computeSplitMapLayers(layers: Array<Layer>): Array<Layer>;
+export function closeSpecificMapAtIndex(state: VisState, action: unknown);

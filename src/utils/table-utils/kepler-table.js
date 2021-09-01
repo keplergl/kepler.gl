@@ -44,6 +44,8 @@ import {
 
 import {ALL_FIELD_TYPES, SCALE_TYPES} from 'constants/default-settings';
 
+import {createDataContainer} from './data-container-utils';
+
 // Unique identifier of each field
 const FID_KEY = 'name';
 
@@ -53,14 +55,15 @@ const FID_KEY = 'name';
  * @type {KeplerTableClass}
  */
 class KeplerTable {
-  constructor({info = {}, data, color, metadata}) {
+  constructor({info = {}, data, color, metadata, supportedFilterTypes}) {
     // TODO - what to do if validation fails? Can kepler handle exceptions?
     // const validatedData = validateInputData(data);
     // if (!validatedData) {
     //   return this;
     // }
 
-    const allData = data.rows;
+    const dataContainer = createDataContainer(data.rows, {fields: data.fields});
+
     const datasetInfo = {
       id: generateHashId(4),
       label: 'new dataset',
@@ -71,16 +74,19 @@ class KeplerTable {
     const fields = data.fields.map((f, i) => ({
       ...f,
       fieldIdx: i,
+      id: f.name,
+      displayName: f.displayName || f.name,
       valueAccessor: maybeToDate.bind(
         null,
         // is time
         f.type === ALL_FIELD_TYPES.timestamp,
         i,
-        f.format
+        f.format,
+        dataContainer
       )
     }));
 
-    const allIndexes = allData.map((_, i) => i);
+    const allIndexes = dataContainer.getPlainIndex();
 
     this.id = datasetInfo.id;
     this.label = datasetInfo.label;
@@ -90,13 +96,17 @@ class KeplerTable {
       id: datasetInfo.id,
       label: datasetInfo.label
     };
-    this.allData = allData;
+
+    this.dataContainer = dataContainer;
     this.allIndexes = allIndexes;
     this.filteredIndex = allIndexes;
     this.filteredIndexForDomain = allIndexes;
     this.fieldPairs = findPointFieldPairs(fields);
     this.fields = fields;
     this.gpuFilter = getGpuFilterProps([], dataId, fields);
+    if (supportedFilterTypes) {
+      this.supportedFilterTypes = supportedFilterTypes;
+    }
   }
 
   /**
@@ -124,7 +134,7 @@ class KeplerTable {
    */
   getValue(columnName, rowIdx) {
     const field = this.getColumnField(columnName);
-    return field ? field.valueAccessor(this.allData[rowIdx]) : null;
+    return field ? field.valueAccessor({index: rowIdx}) : null;
   }
 
   /**
@@ -167,14 +177,13 @@ class KeplerTable {
   }
 
   /**
-   *
    * Apply filters to dataset, return the filtered dataset with updated `gpuFilter`, `filterRecord`, `filteredIndex`, `filteredIndexForDomain`
    * @param filters
    * @param layers
    * @param opt
    */
   filterTable(filters, layers, opt) {
-    const {allData, id: dataId, filterRecord: oldFilterRecord, fields} = this;
+    const {dataContainer, id: dataId, filterRecord: oldFilterRecord, fields} = this;
 
     // if there is no filters
     const filterRecord = getFilterRecord(dataId, filters, opt || {});
@@ -209,13 +218,13 @@ class KeplerTable {
 
         return {
           ...acc,
-          [filter.id]: getFilterFunction(field, this.id, filter, layers)
+          [filter.id]: getFilterFunction(field, this.id, filter, layers, dataContainer)
         };
       }, {});
 
       filterResult = filterDataByFilterTypes(
         {dynamicDomainFilters, cpuFilters, filterFuncs},
-        allData
+        dataContainer
       );
     }
 
@@ -270,7 +279,7 @@ class KeplerTable {
    * for Filter
    */
   getColumnFilterDomain(field) {
-    const {allData} = this;
+    const {dataContainer} = this;
     const {valueAccessor} = field;
 
     let domain;
@@ -279,21 +288,21 @@ class KeplerTable {
       case ALL_FIELD_TYPES.real:
       case ALL_FIELD_TYPES.integer:
         // calculate domain and step
-        return getNumericFieldDomain(allData, valueAccessor);
+        return getNumericFieldDomain(dataContainer, valueAccessor);
 
       case ALL_FIELD_TYPES.boolean:
         return {domain: [true, false]};
 
       case ALL_FIELD_TYPES.string:
       case ALL_FIELD_TYPES.date:
-        domain = getOrdinalDomain(allData, valueAccessor);
+        domain = getOrdinalDomain(dataContainer, valueAccessor);
         return {domain};
 
       case ALL_FIELD_TYPES.timestamp:
-        return getTimestampFieldDomain(allData, valueAccessor);
+        return getTimestampFieldDomain(dataContainer, valueAccessor);
 
       default:
-        return {domain: getOrdinalDomain(allData, valueAccessor)};
+        return {domain: getOrdinalDomain(dataContainer, valueAccessor)};
     }
   }
 
@@ -301,7 +310,7 @@ class KeplerTable {
    *  Get the domain of this column based on scale type
    */
   getColumnLayerDomain(field, scaleType) {
-    const {allData, filteredIndexForDomain} = this;
+    const {dataContainer, filteredIndexForDomain} = this;
 
     if (!SCALE_TYPES[scaleType]) {
       Console.error(`scale type ${scaleType} not supported`);
@@ -309,7 +318,7 @@ class KeplerTable {
     }
 
     const {valueAccessor} = field;
-    const indexValueAccessor = i => valueAccessor(allData[i]);
+    const indexValueAccessor = i => valueAccessor({index: i});
     const sortFunction = getSortingFunction(field.type);
 
     switch (scaleType) {
@@ -317,7 +326,7 @@ class KeplerTable {
       case SCALE_TYPES.point:
         // do not recalculate ordinal domain based on filtered data
         // don't need to update ordinal domain every time
-        return getOrdinalDomain(allData, valueAccessor);
+        return getOrdinalDomain(dataContainer, valueAccessor);
 
       case SCALE_TYPES.quantile:
         return getQuantileDomain(filteredIndexForDomain, indexValueAccessor, sortFunction);
@@ -378,6 +387,7 @@ export function findPointFieldPairs(fields) {
   const allNames = fields.map(f => f.name.toLowerCase());
 
   // get list of all fields with matching suffixes
+  const acc = [];
   return allNames.reduce((carry, fieldName, idx) => {
     // This search for pairs will early exit if found.
     for (const suffixPair of TRIP_POINT_FIELDS) {
@@ -410,7 +420,7 @@ export function findPointFieldPairs(fields) {
       }
     }
     return carry;
-  }, []);
+  }, acc);
 }
 
 /**
@@ -421,7 +431,7 @@ export function findPointFieldPairs(fields) {
  * @type {typeof import('./kepler-table').sortDatasetByColumn}
  */
 export function sortDatasetByColumn(dataset, column, mode) {
-  const {allIndexes, fields, allData} = dataset;
+  const {allIndexes, fields, dataContainer} = dataset;
   const fieldIndex = fields.findIndex(f => f.name === column);
   if (fieldIndex < 0) {
     return dataset;
@@ -440,7 +450,9 @@ export function sortDatasetByColumn(dataset, column, mode) {
   const sortFunction = sortBy === SORT_ORDER.ASCENDING ? ascending : descending;
   const sortOrder = allIndexes
     .slice()
-    .sort((a, b) => sortFunction(allData[a][fieldIndex], allData[b][fieldIndex]));
+    .sort((a, b) =>
+      sortFunction(dataContainer.valueAt(a, fieldIndex), dataContainer.valueAt(b, fieldIndex))
+    );
 
   return {
     ...dataset,

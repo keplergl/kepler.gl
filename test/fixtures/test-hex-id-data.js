@@ -22,6 +22,8 @@ import {KeplerGlLayers} from 'layers';
 const {H3Layer} = KeplerGlLayers;
 import {DEFAULT_COLOR_UI} from 'layers/layer-factory';
 
+import {createDataContainer} from 'utils/table-utils';
+
 export default `hex_id,value
 89283082c2fffff,64
 8928308288fffff,73
@@ -184,6 +186,8 @@ export const mergedFilters = [
 const mergedFields = [
   {
     name: 'hex_id',
+    id: 'hex_id',
+    displayName: 'hex_id',
     format: '',
     fieldIdx: 0,
     type: 'string',
@@ -192,6 +196,8 @@ const mergedFields = [
   },
   {
     name: 'value',
+    id: 'value',
+    displayName: 'value',
     format: '',
     fieldIdx: 1,
     type: 'integer',
@@ -348,6 +354,8 @@ mergedH3Layer.config = {
   isConfigActive: false,
   colorField: {
     name: 'value',
+    id: 'value',
+    displayName: 'value',
     format: '',
     fieldIdx: 1,
     type: 'integer',
@@ -396,6 +404,34 @@ mergedH3Layer.config = {
   }
 };
 
+const expectedMergedDatasetData = [
+  ['89283082c2fffff', 64],
+  ['8928308288fffff', 73],
+  ['89283082c07ffff', 65],
+  ['89283082817ffff', 74],
+  ['89283082c3bffff', 66],
+  ['89283082883ffff', 76],
+  ['89283082c33ffff', 43],
+  ['89283082c23ffff', 40],
+  ['89283082887ffff', 36],
+  ['89283082ca7ffff', 27],
+  ['89283082cb3ffff', 32],
+  ['89283082c0bffff', 26],
+  ['89283082ca3ffff', 19],
+  ['89283082dcfffff', 18],
+  ['89283082d8fffff', 1],
+  ['89283095347ffff', 3],
+  ['89283095363ffff', 2],
+  ['8928309537bffff', 4],
+  ['89283082d93ffff', 6],
+  ['89283082d73ffff', 1],
+  ['8928309530bffff', 1],
+  ['8928309532bffff', 1]
+];
+
+const dataContainer = createDataContainer(expectedMergedDatasetData, {fields: mergedFields});
+const indices = dataContainer.getPlainIndex();
+
 export const expectedMergedDataset = {
   id: 'h3-hex-id',
   label: 'new dataset',
@@ -404,32 +440,9 @@ export const expectedMergedDataset = {
     id: 'h3-hex-id',
     label: 'new dataset'
   },
-  allData: [
-    ['89283082c2fffff', 64],
-    ['8928308288fffff', 73],
-    ['89283082c07ffff', 65],
-    ['89283082817ffff', 74],
-    ['89283082c3bffff', 66],
-    ['89283082883ffff', 76],
-    ['89283082c33ffff', 43],
-    ['89283082c23ffff', 40],
-    ['89283082887ffff', 36],
-    ['89283082ca7ffff', 27],
-    ['89283082cb3ffff', 32],
-    ['89283082c0bffff', 26],
-    ['89283082ca3ffff', 19],
-    ['89283082dcfffff', 18],
-    ['89283082d8fffff', 1],
-    ['89283095347ffff', 3],
-    ['89283095363ffff', 2],
-    ['8928309537bffff', 4],
-    ['89283082d93ffff', 6],
-    ['89283082d73ffff', 1],
-    ['8928309530bffff', 1],
-    ['8928309532bffff', 1]
-  ],
-  allIndexes: new Array(22).fill(0).map((d, i) => i),
-  filteredIndex: new Array(22).fill(0).map((d, i) => i),
+  dataContainer,
+  allIndexes: indices,
+  filteredIndex: indices,
   filteredIndexForDomain: [9, 11, 12, 13],
   fieldPairs: [],
   fields: mergedFields,
@@ -447,7 +460,7 @@ export const expectedMergedDataset = {
       gpuFilter_3: null
     },
     filterValueAccessor: {
-      inputs: [{data: ['89283082c33ffff', 43], index: 6}],
+      inputs: [{index: 6}],
       result: [42, 0, 0, 0]
     }
   },

@@ -780,6 +780,21 @@ export const toggleLayerAnimationUpdater = state => ({
     isAnimating: !state.animationConfig.isAnimating
   }
 });
+
+/**
+ * Hide and show layer animation control
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').toggleLayerAnimationControlUpdater}
+ * @public
+ */
+export const toggleLayerAnimationControlUpdater = state => ({
+  ...state,
+  animationConfig: {
+    ...state.animationConfig,
+    hideControl: !state.animationConfig.hideControl
+  }
+});
+
 /**
  * Change filter animation speed
  * @memberof visStateUpdaters
@@ -1307,9 +1322,9 @@ export const updateVisDataUpdater = (state, action) => {
   const datasets = toArray(action.datasets);
 
   const newDataEntries = datasets.reduce(
-    (accu, {info = {}, data, metadata} = {}) => ({
+    (accu, {info = {}, ...rest} = {}) => ({
       ...accu,
-      ...(createNewDataEntry({info, data, metadata}, state.datasets) || {})
+      ...(createNewDataEntry({info, ...rest}, state.datasets) || {})
     }),
     {}
   );
@@ -1419,7 +1434,7 @@ export function renameDatasetUpdater(state, action) {
  * @param {Object} action action
  * @returns {Object} nextState
  */
-function closeSpecificMapAtIndex(state, action) {
+export function closeSpecificMapAtIndex(state, action) {
   // retrieve layers meta data from the remaining map that we need to keep
   const indexToRetrieve = 1 - action.payload;
   const mapLayers = state.splitMaps[indexToRetrieve].layers;
@@ -2048,7 +2063,9 @@ export function copyTableColumnUpdater(state, {dataId, column}) {
     return state;
   }
   const {type} = dataset.fields[fieldIdx];
-  const text = dataset.allData.map(d => parseFieldValue(d[fieldIdx], type)).join('\n');
+  const text = dataset.dataContainer
+    .map(row => parseFieldValue(row.valueAt(fieldIdx), type), true)
+    .join('\n');
 
   copy(text);
 

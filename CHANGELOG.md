@@ -15,6 +15,29 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [2.5.4] - July 31 2021
+
+- 62d03ab2 [Examples] update replace-component example (#1557)
+- 089bb7a9 [Jupyter] Make showing User Guide link optional for jupyter widget (#1559)
+- 5985d201 [Bug] Fix screenshot with images (#1558)
+
+## [2.5.3] - July 18 2021
+
+- a4a6734a [Docs] fix add data to map docs (#1551)
+- 8524061e [Enhancement] add displayName to field and show displayName whenever available (#1538)
+- a0d2a76b [Feat] Save and load highlightColor from layer config (#1550)
+- a9b2ba07 [Examples] fix panel toggle exmaple, add layer hove info demo (#1549)
+- 9bcb3415 [feat] Using tippy for map popover (#1539)
+- 2e6f8b79 [Chore] refactored side-panel from class to functional component (#1536)
+- 16fab11c [Bug] Geojson layer is not updated when dataset updated (#1533)
+- 29cf0829 [Enhancement] add toggleLayerAnimationControl action (#1537)
+- 01e93966 [Enhancement] add disableClose to map control (#1529)
+- c6e5b8a6 [Feat] use appName in exported image html json map and csv data (#1528)
+- 72354560 [Bug] Fix geojson layer duplicated index (#1530)
+- 1ed0fd6d [Bug] fix histogram in range (#1531)
+- 305edfcd [Docs] Update Map Styles Link (#1512)
+- 1890133d [Chore] Update peer dependencies for styled-components (#1527)
+
 ## [2.5.2] - June 28 2021
 
 - 1c7521b1 [Bug] Fix center map accuracy (#1502)

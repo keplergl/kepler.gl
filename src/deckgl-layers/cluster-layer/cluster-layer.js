@@ -218,7 +218,7 @@ export default class ClusterLayer extends AggregationLayer {
     const {cpuAggregator} = this.state;
 
     // base layer props
-    const {opacity, pickable, autoHighlight, highlightColor} = this.props;
+    const {visible, opacity, pickable, autoHighlight, highlightColor} = this.props;
     const updateTriggers = this._getSublayerUpdateTriggers();
     const accessors = this._getSubLayerAccessors();
 
@@ -230,6 +230,7 @@ export default class ClusterLayer extends AggregationLayer {
       id: `${id}-cluster`,
       data: cpuAggregator.state.layerData.data,
       radiusScale: metersPerPixel * radiusScale,
+      visible,
       opacity,
       pickable,
       autoHighlight,

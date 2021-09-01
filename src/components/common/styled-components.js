@@ -476,6 +476,8 @@ export const StyledModalInputFootnote = styled.div.attrs({
  * This workaround will hide the error banner.
  */
 export const StyledMapContainer = styled.div`
+  width: 100%;
+  height: 100%;
   .mapboxgl-map {
     .mapboxgl-missing-css {
       display: none;

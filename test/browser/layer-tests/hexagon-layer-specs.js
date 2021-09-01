@@ -88,7 +88,6 @@ test('#HexagonLayer -> formatLayerData', t => {
         const {layerData, layer} = result;
         const expectedLayerData = {
           data: [0, 1, 4, 5, 7].map(index => ({
-            data: testRows[index],
             index
           })),
           _filterData: () => {},
@@ -172,7 +171,6 @@ test('#HexagonLayer -> formatLayerData', t => {
         const {layerData} = result;
         const expectedLayerData = {
           data: [0, 1, 4, 5, 7].map(index => ({
-            data: testRows[index],
             index
           })),
           _filterData: () => {},
@@ -226,7 +224,6 @@ test('#HexagonLayer -> formatLayerData', t => {
 test('#HexagonLayer -> renderLayer', t => {
   const filteredIndex = [0, 1, 2, 4, 5, 7];
   const spyLayerCallbacks = sinon.spy();
-  const {allData} = preparedDataset;
 
   const TEST_CASES = [
     {
@@ -271,28 +268,23 @@ test('#HexagonLayer -> renderLayer', t => {
         // deckGl default pointToHexbin reads viewport set to width: 1 and height: 1 on initial render
         const pt0 = {
           screenCoord: [81.93285590277779, 314.10787407420145],
-          index: 0,
-          data: allData[0]
+          index: 0
         };
         const pt1 = {
           screenCoord: [81.90728081597221, 314.125282797666],
-          index: 1,
-          data: allData[1]
+          index: 1
         };
         const pt4 = {
           screenCoord: [82.29433593749998, 313.5296684059477],
-          index: 4,
-          data: allData[4]
+          index: 4
         };
         const pt5 = {
           screenCoord: [82.34327256944445, 313.4296004913215],
-          index: 5,
-          data: allData[5]
+          index: 5
         };
         const pt7 = {
           screenCoord: [82.11757812499998, 314.2888411459387],
-          index: 7,
-          data: allData[7]
+          index: 7
         };
 
         const expectedHexCellData = [
@@ -412,10 +404,10 @@ function creatLayerObjectHovered({layerId, data, object}) {
 
 test('#HexagonLayer -> renderHover', t => {
   const filteredIndex = [0, 1, 2, 4, 5, 7];
-  const {allData} = preparedDataset;
+  const {dataContainer} = preparedDataset;
   const testObjectHovered = creatLayerObjectHovered({
     layerId: 'test_layer_1',
-    data: allData[0],
+    data: dataContainer.row(0),
     object: {
       colorValue: 1,
       elevationValue: 1,

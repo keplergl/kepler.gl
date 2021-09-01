@@ -393,7 +393,7 @@ export default {
   },
   header: {
     visibleLayers: 'Visible layers',
-    layerLegend: 'Layer Legend'
+    layerLegend: 'Legend'
   },
   interactions: {
     tooltip: 'Tooltip',

@@ -18,6 +18,69 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+export const config = {
+  version: 'v1',
+  config: {
+    visState: {
+      layers: [
+        {
+          type: 'point',
+          id: 'point_layer',
+          config: {
+            dataId: 'tree_data',
+            label: 'Trees',
+            color: [69, 138, 70],
+            columns: {lat: 'Location_latitude', lng: 'Location_longitude', altitude: null},
+            isVisible: true,
+            highlightColor: [255, 0, 0, 255]
+          },
+          visualChannels: {
+            sizeField: {name: 'Plan', type: 'integer'}
+          }
+        },
+        {
+          id: 'heatmap_layer',
+          type: 'heatmap',
+          config: {
+            dataId: 'tree_data',
+            label: 'Heatmap',
+            columns: {lat: 'Location_latitude', lng: 'Location_longitude'},
+            isVisible: true,
+            visConfig: {
+              opacity: 0.8,
+              colorRange: {
+                name: 'Global Warming',
+                type: 'sequential',
+                category: 'Uber',
+                colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+              },
+              radius: 46.4
+            }
+          },
+          visualChannels: {weightField: null, weightScale: 'linear'}
+        }
+      ],
+      interactionConfig: {
+        tooltip: {
+          fieldsToShow: {tree_data: []},
+          compareMode: false,
+          compareType: 'absolute',
+          enabled: true
+        }
+      }
+    },
+    mapState: {
+      bearing: 0,
+      dragRotate: false,
+      latitude: 37.759775559999994,
+      longitude: -122.4423862,
+      pitch: 0,
+      zoom: 12,
+      isSplit: false
+    }
+  }
+};
+
 export default {
   info: {
     label: 'San Francisco Trees',

@@ -27,7 +27,7 @@
     "clean": "rimraf dist/ && rimraf ../keplergl/static/",
     "cleanall": "npm run clean && rimraf node_modules/",
     "prepublish": "yarn build && yarn build:lab",
-    "build": "npm run clean && webpack --config ./webpack/build.js",
+    "build": "npm run clean && webpack --config ./webpack/build.js && jupyter labextension build .",
     "build:lab": "rimraf babel/ && mkdir babel && babel lib --out-dir babel",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint lib webpack --fix",
@@ -61,7 +61,8 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "dependencies": {
-    "@jupyter-widgets/base": "^1.1.10 || ^2.0.0 || ^3.0.0",
+    "@jupyter-widgets/base": "^2 || ^3 || ^4.0.0",
+    "@jupyterlab/builder": "^3.1.5",
     "global": "^4.3.0",
     "kepler.gl": "^2.5.2",
     "node-polyfill-webpack-plugin": "^1.1.2",
@@ -76,6 +77,13 @@
     "styled-components": "^4.1.3"
   },
   "jupyterlab": {
-    "extension": "babel/labplugin"
+    "extension": "babel/labplugin",
+    "outputDir": "../keplergl-jupyter/labextension",
+    "sharedPackages": {
+      "@jupyter-widgets/base": {
+        "bundled": false,
+        "singleton": true
+      }
+    }
   }
 }

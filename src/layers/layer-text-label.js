@@ -52,12 +52,18 @@ export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
   };
 }
 
-export const textLabelAccessor = textLabel => d => {
-  const val = textLabel.field.valueAccessor(d.data);
+export const textLabelAccessor = textLabel => dc => d => {
+  const val = textLabel.field.valueAccessor(d);
   return notNullorUndefined(val) ? String(val) : '';
 };
 
-export const formatTextLabelData = ({textLabel, triggerChanged, oldLayerData, data}) => {
+export const formatTextLabelData = ({
+  textLabel,
+  triggerChanged,
+  oldLayerData,
+  data,
+  dataContainer
+}) => {
   return textLabel.map((tl, i) => {
     if (!tl.field) {
       // if no field selected,
@@ -67,7 +73,7 @@ export const formatTextLabelData = ({textLabel, triggerChanged, oldLayerData, da
       };
     }
 
-    const getText = textLabelAccessor(tl);
+    const getText = textLabelAccessor(tl)(dataContainer);
     let characterSet;
 
     if (

@@ -20,12 +20,20 @@
 
 import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
+import {drainTasksForTesting} from 'react-palm/tasks';
+
 import {VizColorPalette} from 'constants/custom-color-ranges';
 import {getInitialInputStyle} from 'reducers/map-style-updaters';
 
 import keplerGlReducer from 'reducers/core';
 import {addDataToMap} from 'actions/actions';
-import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_RANGE, DEFAULT_LAYER_OPACITY} from 'layers/layer-factory';
+import {
+  DEFAULT_TEXT_LABEL,
+  DEFAULT_COLOR_RANGE,
+  DEFAULT_LAYER_OPACITY,
+  DEFAULT_HIGHLIGHT_COLOR,
+  DEFAULT_LAYER_LABEL
+} from 'layers/layer-factory';
 import {DEFAULT_KEPLER_GL_PROPS} from 'components';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
@@ -47,6 +55,7 @@ import {
 import tripGeojson, {tripDataInfo} from 'test/fixtures/trip-geojson';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 import {COMPARE_TYPES} from 'constants/tooltip';
+import {MOCK_MAP_STYLE} from './mock-map-styles';
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);
@@ -90,6 +99,10 @@ function mockStateWithFileUpload() {
   // load csv and geojson
   const updatedState = applyActions(keplerGlReducer, initialState, [
     {
+      action: MapStyleActions.loadMapStyles,
+      payload: [{dark: MOCK_MAP_STYLE}]
+    },
+    {
       action: VisStateActions.updateVisData,
       payload: [[{info: csvInfo, data: {fields: testFields, rows: testAllData}}]]
     },
@@ -98,7 +111,8 @@ function mockStateWithFileUpload() {
       payload: [[{info: geojsonInfo, data: {fields: geojsonFields, rows: geojsonRows}}]]
     }
   ]);
-
+  // cleanup tasks created during loadMapStyles
+  drainTasksForTesting();
   // replace layer id and color with controlled value for testing
   updatedState.visState.layers.forEach((l, i) => {
     l.id = `${l.type}-${i}`;
@@ -449,7 +463,8 @@ export const expectedSavedLayer0 = {
   type: 'hexagon',
   config: {
     dataId: testCsvDataId,
-    label: 'new layer',
+    label: DEFAULT_LAYER_LABEL,
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [2, 2, 2],
     columns: {
       lat: 'gps_data.lat',
@@ -487,7 +502,8 @@ export const expectedLoadedLayer0 = {
   type: 'hexagon',
   config: {
     dataId: testCsvDataId,
-    label: 'new layer',
+    label: DEFAULT_LAYER_LABEL,
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [2, 2, 2],
     columns: {
       lat: 'gps_data.lat',
@@ -524,6 +540,7 @@ export const expectedSavedLayer1 = {
   config: {
     dataId: testCsvDataId,
     label: 'gps data',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
       lat: 'gps_data.lat',
@@ -579,6 +596,7 @@ export const expectedLoadedLayer1 = {
   config: {
     dataId: testCsvDataId,
     label: 'gps data',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
       lat: 'gps_data.lat',
@@ -632,6 +650,7 @@ export const expectedSavedLayer2 = {
   config: {
     dataId: testGeoJsonDataId,
     label: 'zip',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [1, 1, 1],
     columns: {
       geojson: '_geojson'
@@ -678,6 +697,7 @@ export const expectedLoadedLayer2 = {
   config: {
     dataId: testGeoJsonDataId,
     label: 'zip',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [1, 1, 1],
     columns: {
       geojson: '_geojson'
@@ -734,6 +754,7 @@ export const expectedSavedTripLayer = {
   config: {
     dataId: 'trip_data',
     label: 'Trip Data',
+    highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
       geojson: '_geojson'

@@ -29,12 +29,10 @@ import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 
-export const pointPosAccessor = ({lat, lng, altitude}) => d => [
-  // lng
-  d.data[lng.fieldIdx],
-  // lat
-  d.data[lat.fieldIdx],
-  altitude && altitude.fieldIdx > -1 ? d.data[altitude.fieldIdx] : 0
+export const pointPosAccessor = ({lat, lng, altitude}) => dc => d => [
+  dc.valueAt(d.index, lng.fieldIdx),
+  dc.valueAt(d.index, lat.fieldIdx),
+  altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
 ];
 
 export const pointRequiredColumns = ['lat', 'lng'];
@@ -65,7 +63,8 @@ export default class PointLayer extends Layer {
     super(props);
 
     this.registerVisConfig(pointVisConfigs);
-    this.getPositionAccessor = () => pointPosAccessor(this.config.columns);
+    this.getPositionAccessor = dataContainer =>
+      pointPosAccessor(this.config.columns)(dataContainer);
   }
 
   get type() {
@@ -186,20 +185,18 @@ export default class PointLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({allData, filteredIndex}, getPosition) {
+  calculateDataAttribute({filteredIndex}, getPosition) {
     const data = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
-      const pos = getPosition({data: allData[index]});
+      const pos = getPosition({index});
 
       // if doesn't have point lat or lng, do not add the point
       // deck.gl can't handle position = null
       if (pos.every(Number.isFinite)) {
         data.push({
-          data: allData[index],
           position: pos,
-          // index is important for filter
           index
         });
       }
@@ -209,33 +206,34 @@ export default class PointLayer extends Layer {
 
   formatLayerData(datasets, oldLayerData) {
     const {textLabel} = this.config;
-    const {gpuFilter} = datasets[this.config.dataId];
+    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
-    const getPosition = this.getPositionAccessor();
+    const getPosition = this.getPositionAccessor(dataContainer);
 
     // get all distinct characters in the text labels
     const textLabels = formatTextLabelData({
       textLabel,
       triggerChanged,
       oldLayerData,
-      data
+      data,
+      dataContainer
     });
 
-    const accessors = this.getAttributeAccessors();
+    const accessors = this.getAttributeAccessors({dataContainer});
 
     return {
       data,
       getPosition,
-      getFilterValue: gpuFilter.filterValueAccessor(),
+      getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
       textLabels,
       ...accessors
     };
   }
   /* eslint-enable complexity */
 
-  updateLayerMeta(allData) {
-    const getPosition = this.getPositionAccessor();
-    const bounds = this.getPointsBounds(allData, d => getPosition({data: d}));
+  updateLayerMeta(dataContainer) {
+    const getPosition = this.getPositionAccessor(dataContainer);
+    const bounds = this.getPointsBounds(dataContainer, getPosition);
     this.updateMeta({bounds});
   }
 
@@ -269,6 +267,7 @@ export default class PointLayer extends Layer {
       getFilterValue: data.getFilterValue,
       extensions,
       filterRange: defaultLayerProps.filterRange,
+      visible: defaultLayerProps.visible,
       ...brushingProps
     };
     const hoveredObject = this.hasHoveredObject(objectHovered);

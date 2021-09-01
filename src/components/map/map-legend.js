@@ -75,6 +75,7 @@ export const VisualChannelMetric = ({name}) => {
   );
 };
 
+/** @type {typeof import('./map-legend').LayerSizeLegend} */
 export const LayerSizeLegend = ({label, name}) => (
   <div className="legend--layer_size-schema">
     <p>
@@ -143,60 +144,85 @@ LayerColorLegend.displayName = 'LayerColorLegend';
 const isColorChannel = visualChannel =>
   [CHANNEL_SCALES.color, CHANNEL_SCALES.colorAggr].includes(visualChannel.channelScaleType);
 
-/** @type {typeof import('./map-legend').default }> */
-const MapLegend = ({layers = [], width, options}) => (
-  <div className="map-legend">
-    {layers.map((layer, index) => {
-      if (!layer.isValidToSave() || layer.config.hidden) {
-        return null;
-      }
-      const containerW = width || DIMENSIONS.mapControl.width;
-      const colorChannels = Object.values(layer.visualChannels).filter(isColorChannel);
-      const nonColorChannels = Object.values(layer.visualChannels).filter(
-        vc => !isColorChannel(vc)
-      );
+export function LayerLegendHeaderFactory() {
+  /** @type {typeof import('./map-legend').LayerLegendHeader }> */
+  const LayerLegendHeader = ({options, layer}) => {
+    return options?.showLayerName !== false ? (
+      <div className="legend--layer_name">{layer.config.label}</div>
+    ) : null;
+  };
+  return LayerLegendHeader;
+}
 
-      return (
-        <StyledMapControlLegend
-          className="legend--layer"
-          last={index === layers.length - 1}
-          key={index}
-          width={containerW}
-        >
-          {options?.showLayerName !== false ? (
-            <div className="legend--layer_name">{layer.config.label}</div>
-          ) : null}
-          {colorChannels.map(colorChannel =>
-            !colorChannel.condition || colorChannel.condition(layer.config) ? (
-              <LayerColorLegend
-                key={colorChannel.key}
-                description={layer.getVisualChannelDescription(colorChannel.key)}
-                config={layer.config}
-                width={containerW - 2 * DIMENSIONS.mapControl.padding}
-                colorChannel={colorChannel}
-              />
-            ) : null
-          )}
-          {nonColorChannels.map(visualChannel => {
-            const matchCondition =
-              !visualChannel.condition || visualChannel.condition(layer.config);
-            const enabled = layer.config[visualChannel.field] || visualChannel.defaultMeasure;
+export function LayerLegendContentFactory() {
+  /** @type {typeof import('./map-legend').LayerLegendContent }> */
+  const LayerLegendContent = ({layer, containerW}) => {
+    const colorChannels = Object.values(layer.visualChannels).filter(isColorChannel);
+    const nonColorChannels = Object.values(layer.visualChannels).filter(vc => !isColorChannel(vc));
 
-            const description = layer.getVisualChannelDescription(visualChannel.key);
+    return (
+      <>
+        {colorChannels.map(colorChannel =>
+          !colorChannel.condition || colorChannel.condition(layer.config) ? (
+            <LayerColorLegend
+              key={colorChannel.key}
+              description={layer.getVisualChannelDescription(colorChannel.key)}
+              config={layer.config}
+              width={containerW - 2 * DIMENSIONS.mapControl.padding}
+              colorChannel={colorChannel}
+            />
+          ) : null
+        )}
+        {nonColorChannels.map(visualChannel => {
+          const matchCondition = !visualChannel.condition || visualChannel.condition(layer.config);
+          const enabled = layer.config[visualChannel.field] || visualChannel.defaultMeasure;
 
-            return matchCondition && enabled ? (
-              <LayerSizeLegend
-                key={visualChannel.key}
-                label={description.label}
-                name={description.measure}
-              />
-            ) : null;
-          })}
-        </StyledMapControlLegend>
-      );
-    })}
-  </div>
-);
+          const description = layer.getVisualChannelDescription(visualChannel.key);
 
-/** @type {typeof import('./map-legend').default }> */
-export default MapLegend;
+          return matchCondition && enabled ? (
+            <LayerSizeLegend
+              key={visualChannel.key}
+              label={description.label}
+              name={description.measure}
+            />
+          ) : null;
+        })}
+      </>
+    );
+  };
+
+  return LayerLegendContent;
+}
+
+MapLegendFactory.deps = [LayerLegendHeaderFactory, LayerLegendContentFactory];
+function MapLegendFactory(LayerLegendHeader, LayerLegendContent) {
+  /** @type {typeof import('./map-legend').MapLegend }> */
+  const MapLegend = ({layers = [], width, options}) => (
+    <div className="map-legend">
+      {layers.map((layer, index) => {
+        if (!layer.isValidToSave() || layer.config.hidden) {
+          return null;
+        }
+        const containerW = width || DIMENSIONS.mapControl.width;
+
+        return (
+          <StyledMapControlLegend
+            className="legend--layer"
+            last={index === layers.length - 1}
+            key={index}
+            width={containerW}
+          >
+            <LayerLegendHeader options={options} layer={layer} />
+            <LayerLegendContent containerW={containerW} layer={layer} />
+          </StyledMapControlLegend>
+        );
+      })}
+    </div>
+  );
+
+  MapLegend.displayName = 'MapLegend';
+
+  return MapLegend;
+}
+
+export default MapLegendFactory;
