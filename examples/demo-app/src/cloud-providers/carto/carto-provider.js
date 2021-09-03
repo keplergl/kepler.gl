@@ -23,6 +23,7 @@ import Console from 'global/console';
 import CartoIcon from './carto-icon';
 import {formatCsv} from 'kepler.gl/processors';
 import {Provider} from 'kepler.gl/cloud-providers';
+import {createDataContainer} from 'kepler.gl';
 
 const NAME = 'carto';
 const DISPLAY_NAME = 'CARTO';
@@ -45,7 +46,7 @@ export default class CartoProvider extends Provider {
     this._carto = new OAuthApp(
       {
         authorization: `https://${DOMAIN}/oauth2`,
-        scopes: 'schemas:c'
+        scopes: 'schemas:c datasets:rw:*'
       },
       {
         serverUrlTemplate: `https://{user}.${DOMAIN}/`,
@@ -332,7 +333,9 @@ export default class CartoProvider extends Provider {
       type: field.type
     }));
 
-    const file = formatCsv(allData, fields);
+    const dataContainer = createDataContainer([...allData]);
+
+    const file = formatCsv(dataContainer, fields);
 
     return {
       name: id,
