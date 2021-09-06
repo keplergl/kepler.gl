@@ -48,7 +48,9 @@ export default function DatasetTagFactory() {
       onClick={onClick}
       updateDatasetColor={updateDatasetColor}
     >
-      {updateDatasetColor ? null : <DatasetSquare className="dataset-color" color={dataset.color} /> }
+      {updateDatasetColor ? null : (
+        <DatasetSquare className="dataset-color" color={dataset.color} />
+      )}
       <div className="dataset-name" title={dataset.label}>
         {dataset.label}
       </div>
