@@ -24,15 +24,15 @@ import {editShader} from '../';
 function addInstanceCoverage(vs) {
   const addDecl = editShader(
     vs,
-    'hexagon cell vs add instance',
-    'attribute vec3 instancePickingColors;',
-    `attribute vec3 instancePickingColors;
-     attribute float instanceCoverage;`
+    'hexagon cell vs add instance 1',
+    'in vec3 instancePickingColors;',
+    `in vec3 instancePickingColors;
+     in float instanceCoverage;`
   );
 
   return editShader(
     addDecl,
-    'hexagon cell vs add instance',
+    'hexagon cell vs add instance 2',
     'float dotRadius = radius * coverage * shouldRender;',
     'float dotRadius = radius * coverage * instanceCoverage * shouldRender;'
   );
