@@ -122,7 +122,12 @@ test('MapControlFactory - click options', t => {
     setLocale: onSetLocale
   };
   const mapContainerProps = mapFieldsSelector(
-    mockKeplerPropsWithState({state: StateWFiles, visStateActions, mapStateActions, uiStateActions})
+    mockKeplerPropsWithState({
+      state: StateWSplitMaps,
+      visStateActions,
+      mapStateActions,
+      uiStateActions
+    })
   );
 
   let wrapper;
@@ -135,16 +140,16 @@ test('MapControlFactory - click options', t => {
   }, 'MapCnotainer should not fail without props');
 
   // layer selector is not active
-  t.equal(wrapper.find(MapControlButton).length, 5, 'Should show 5 MapControlButton');
+  t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 5 MapControlButton');
 
-  t.equal(wrapper.find(Split).length, 1, 'Should show 1 split map button');
+  t.equal(wrapper.find(Delete).length, 1, 'Should show 1 delete split map button');
   // click split Map
   wrapper
     .find('.map-control-button.split-map')
     .at(0)
     .simulate('click');
   t.ok(onToggleSplitMap.calledOnce, 'should call onToggleSplitMap');
-  t.deepEqual(onToggleSplitMap.args[0], [undefined], 'should call onToggleSplitMap with mapindex');
+  t.deepEqual(onToggleSplitMap.args[0], [0], 'should call onToggleSplitMap with mapindex');
 
   // click toggle3d
   wrapper
@@ -189,19 +194,14 @@ test('MapControlFactory - click options', t => {
     'should call onToggleMapControl with mapLocale'
   );
 
-  // show layer selector
-  const mapContainerProps1 = mapFieldsSelector(mockKeplerPropsWithState({state: StateWSplitMaps}));
-  wrapper.setProps({
-    children: <MapContainer {...mapContainerProps1} />
-  });
   // click layer selector
   wrapper
     .find('.map-control-button.toggle-layer')
     .at(0)
     .simulate('click');
-  t.ok(onToggleMapControl.calledTwice, 'should call onToggleMapControl');
+  t.equal(onToggleMapControl.callCount, 4, 'should call onToggleMapControl');
   t.deepEqual(
-    onToggleMapControl.args[1],
+    onToggleMapControl.args[3],
     ['visibleLayers', 0],
     'should call onToggleMapControl with visibleLayers'
   );

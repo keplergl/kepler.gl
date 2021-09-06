@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {useCallback} from 'react';
+import classnames from 'classnames';
 import {Legend} from 'components/common/icons';
 import {FormattedMessage} from 'localization';
 import {MapControlButton, Tooltip} from 'components/common/styled-components';
@@ -72,7 +73,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
       (<MapControlButton
         data-tip
         data-for="show-legend"
-        className="map-control-button show-legend"
+        className={classnames('map-control-button', 'show-legend', {isActive})}
         onClick={onClick}
       >
         <actionIcons.legend height="22px" />
