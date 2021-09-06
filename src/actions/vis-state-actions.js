@@ -339,6 +339,23 @@ export function showDatasetTable(dataId) {
 }
 
 /**
+ * Update dataset color to custom by means of color picker
+ * @memberof visStateActions
+ * @param dataId dataset `id` this custom color is associated with
+ * @param newColor custom color in RGBformat
+ * @returns action
+ * @type {typeof import('./vis-state-actions').updateDatasetColor}
+ * @public
+ */
+export function updateDatasetColor(dataId, newColor) {
+  return {
+    type: ActionTypes.UPDATE_DATASET_COLOR,
+    dataId,
+    newColor
+  };
+}
+
+/**
  * Sort dataset column, for table display
  * @memberof visStateActions
  * @param dataId

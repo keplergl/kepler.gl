@@ -351,8 +351,8 @@ export const ButtonGroup = styled.div`
 
 export const DatasetSquare = styled.div`
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   background-color: rgb(${props => props.color.join(',')});
   margin-right: 12px;
 `;

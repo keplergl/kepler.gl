@@ -110,6 +110,7 @@ export default function SidePanelFactory(
       appWebsite,
       availableProviders,
       datasets,
+      datasetUpdateNumbers,
       filters,
       layers,
       layerBlending,
@@ -131,7 +132,7 @@ export default function SidePanelFactory(
     } = props;
     const {openDeleteModal, toggleModal, toggleSidePanel} = uiStateActions;
     const {activeSidePanel} = uiState;
-    const {setMapInfo, showDatasetTable} = visStateActions;
+    const {setMapInfo, showDatasetTable, updateDatasetColor} = visStateActions;
     const {hasShare, hasStorage} = availableProviders;
 
     const {title} = mapInfo;
@@ -159,6 +160,10 @@ export default function SidePanelFactory(
     }, [title, setMapInfo, toggleModal]);
     const onClickShareMap = useCallback(() => toggleModal(SHARE_MAP_ID), [toggleModal]);
     const onShowDatasetTable = useCallback(dataId => showDatasetTable(dataId), [showDatasetTable]);
+    const onUpdateDatasetColor = useCallback(
+      (dataId, newColor) => updateDatasetColor(dataId, newColor),
+      [updateDatasetColor]
+    );
     const onShowAddDataModal = useCallback(() => toggleModal(ADD_DATA_ID), [toggleModal]);
     const onShowAddMapStyleModal = useCallback(() => toggleModal(ADD_MAP_STYLE_ID), [toggleModal]);
     const onRemoveDataset = useCallback(dataId => openDeleteModal(dataId), [openDeleteModal]);
@@ -214,6 +219,7 @@ export default function SidePanelFactory(
             {PanelComponent ? (
               <PanelComponent
                 datasets={datasets}
+                datasetUpdateNumbers={datasetUpdateNumbers}
                 filters={filters}
                 layers={layers}
                 layerClasses={layerClasses}
@@ -225,6 +231,7 @@ export default function SidePanelFactory(
                 interactionConfig={interactionConfig}
                 removeDataset={onRemoveDataset}
                 showDatasetTable={onShowDatasetTable}
+                updateDatasetColor={onUpdateDatasetColor}
                 showAddDataModal={onShowAddDataModal}
                 showAddMapStyleModal={onShowAddMapStyleModal}
                 uiStateActions={uiStateActions}
