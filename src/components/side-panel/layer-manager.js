@@ -136,13 +136,15 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
   class LayerManager extends Component {
     static propTypes = {
       datasets: PropTypes.object.isRequired,
+      datasetUpdateNumbers: PropTypes.object.isRequired,
       layerBlending: PropTypes.string.isRequired,
       layerClasses: PropTypes.object.isRequired,
       layers: PropTypes.arrayOf(PropTypes.any).isRequired,
       visStateActions: PropTypes.object.isRequired,
       // functions
       removeDataset: PropTypes.func.isRequired,
-      showDatasetTable: PropTypes.func.isRequired
+      showDatasetTable: PropTypes.func.isRequired,
+      updateDatasetColor: PropTypes.func.isRequired
     };
     state = {
       isSorting: false
@@ -189,9 +191,11 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       const {
         layers,
         datasets,
+        datasetUpdateNumbers,
         intl,
         layerOrder,
         showAddDataModal,
+        updateDatasetColor,
         showDatasetTable,
         removeDataset,
         uiStateActions,
@@ -214,6 +218,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
 
       const panelProps = {
         datasets,
+        datasetUpdateNumbers,
         openModal,
         layerTypeOptions
       };
@@ -222,7 +227,9 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
         <div className="layer-manager">
           <SourceDataCatalog
             datasets={datasets}
+            datasetUpdateNumbers={datasetUpdateNumbers}
             showDatasetTable={showDatasetTable}
+            updateDatasetColor={updateDatasetColor}
             removeDataset={removeDataset}
             showDeleteDataset
           />

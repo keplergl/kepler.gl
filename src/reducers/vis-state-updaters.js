@@ -181,6 +181,7 @@ export const INITIAL_VIS_STATE = {
 
   // a collection of multiple dataset
   datasets: {},
+  datasetUpdateNumbers: {},
   editingDataset: undefined,
 
   interactionConfig: getDefaultInteraction(),
@@ -1122,6 +1123,32 @@ export const showDatasetTableUpdater = (state, action) => {
     ...state,
     editingDataset: action.dataId
   };
+};
+
+/**
+ * When user clicks on colored square ..............
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').updateDatasetColorUpdater}
+ * @public
+ */
+export const updateDatasetColorUpdater = (state, action) => {
+  const {dataId, newColor} = action;
+  const {datasets} = state;
+
+  if (newColor) {
+    const existing = datasets[dataId];
+    existing.updateDatasetColor(newColor);
+    const datasetNumber = state.datasetUpdateNumbers[dataId] || 0;
+    // @ts-ignore
+    return {
+      ...state,
+      datasetUpdateNumbers: {
+        ...state.datasetUpdateNumbers,
+        [dataId]: datasetNumber + 1
+      }
+    };
+  }
+  return state;
 };
 
 /**

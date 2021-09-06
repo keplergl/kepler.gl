@@ -44,6 +44,7 @@ const nop = () => {};
 const defaultProps = {
   filters: [],
   datasets: {},
+  datasetUpdateNumbers: {},
   layers: [],
   showDatasetTable: nop,
   visStateActions: {
@@ -60,6 +61,7 @@ const defaultProps = {
 const filterManagerProps = {
   filters: StateWFilters.visState.filters,
   datasets: StateWFilters.visState.datasets,
+  datasetUpdateNumbers: StateWFilters.visState.datasetUpdateNumbers,
   layers: StateWFilters.visState.layers,
   showDatasetTable: nop,
   visStateActions: {

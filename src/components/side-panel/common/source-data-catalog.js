@@ -34,9 +34,11 @@ SourceDataCatalogFactory.deps = [DatasetTitleFactory, DatasetInfoFactory];
 function SourceDataCatalogFactory(DatasetTitle, DatasetInfo) {
   const SourceDataCatalog = ({
     datasets,
+    datasetUpdateNumbers,
     showDatasetTable,
     removeDataset,
     onTitleClick,
+    updateDatasetColor,
     showDeleteDataset = false
   }) => (
     <SourceDataCatalogWrapper className="source-data-catalog">
@@ -47,7 +49,9 @@ function SourceDataCatalogFactory(DatasetTitle, DatasetInfo) {
             showDeleteDataset={showDeleteDataset}
             removeDataset={removeDataset}
             dataset={dataset}
+            datasetUpdateNumber={datasetUpdateNumbers[dataset.id]}
             onTitleClick={onTitleClick}
+            updateDatasetColor={updateDatasetColor}
           />
           {showDatasetTable ? <DatasetInfo dataset={dataset} /> : null}
         </SidePanelSection>

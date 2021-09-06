@@ -247,6 +247,7 @@ export type VisState = {
   filters: Filter[];
   filterToBeMerged: any[];
   datasets: Datasets;
+  datasetUpdateNumbers: {[key:string]: number};
   editingDataset: string | undefined;
   interactionConfig: InteractionConfig;
   interactionToBeMerged: any;
@@ -376,6 +377,10 @@ export function removeDatasetUpdater(
 export function showDatasetTableUpdater(
   state: VisState,
   action: VisStateActions.ShowDatasetTableUpdaterAction
+): VisState;
+export function updateDatasetColorUpdater(
+  state: VisState,
+  action: VisStateActions.UpdateDatasetColorUpdater
 ): VisState;
 export function sortTableColumnUpdater(
   state: VisState,

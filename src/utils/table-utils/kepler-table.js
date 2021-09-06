@@ -144,6 +144,14 @@ class KeplerTable {
   }
 
   /**
+   * Update dataset color by custom color
+   * @param {[number, number, number]} newColor
+   */
+  updateDatasetColor(newColor) {
+    this.color = newColor;
+  }
+
+  /**
    * Save filterProps to field and retrieve it
    * @param {string} columnName
    */
