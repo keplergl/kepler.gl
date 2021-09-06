@@ -2782,6 +2782,7 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     datasets: {
       [testGeoJsonDataId]: oldState.datasets[testGeoJsonDataId]
     },
+    datasetUpdateNumbers: {},
     interactionConfig: {
       tooltip: {
         id: 'tooltip',
@@ -3028,6 +3029,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     datasets: {
       [testCsvDataId]: oldState.datasets[testCsvDataId]
     },
+    datasetUpdateNumbers: {},
     filters: [],
     interactionConfig: {
       tooltip: {

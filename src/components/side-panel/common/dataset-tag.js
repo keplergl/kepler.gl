@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {DatasetSquare} from 'components/common/styled-components';
+import {DatasetSquare} from 'components';
 
 const DatasetTagWrapper = styled.div`
   display: flex;
@@ -42,9 +42,13 @@ const DatasetTagWrapper = styled.div`
 `;
 
 export default function DatasetTagFactory() {
-  const DatasetTag = ({onClick, dataset}) => (
-    <DatasetTagWrapper className="source-data-tag" onClick={onClick}>
-      <DatasetSquare className="dataset-color" color={dataset.color} />
+  const DatasetTag = ({onClick, dataset, updateDatasetColor}) => (
+    <DatasetTagWrapper
+      className="source-data-tag"
+      onClick={onClick}
+      updateDatasetColor={updateDatasetColor}
+    >
+      {updateDatasetColor ? null : <DatasetSquare className="dataset-color" color={dataset.color} /> }
       <div className="dataset-name" title={dataset.label}>
         {dataset.label}
       </div>
