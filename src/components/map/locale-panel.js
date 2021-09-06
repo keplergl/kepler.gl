@@ -22,19 +22,14 @@ import React, {useCallback} from 'react';
 import ToolbarItem from 'components/common/toolbar-item';
 import {MapControlButton} from 'components/common/styled-components';
 import MapControlTooltipFactory from './map-control-tooltip';
-import MapControlPanelFactory from './map-control-panel';
 import MapControlToolbarFactory from './map-control-toolbar';
 
-LocalePanelFactory.deps = [
-  MapControlTooltipFactory,
-  MapControlPanelFactory,
-  MapControlToolbarFactory
-];
+LocalePanelFactory.deps = [MapControlTooltipFactory, MapControlToolbarFactory];
 
-function LocalePanelFactory(MapControlTooltip, MapControlPanel, MapControlToolbar) {
+function LocalePanelFactory(MapControlTooltip, MapControlToolbar) {
   /** @type {import('./locale-panel').LocalePanelComponent} */
   const LocalePanel = React.memo(
-    ({availableLocales, onToggleMenuPanel, onSetLocale, locale: currentLocal, mapControls}) => {
+    ({availableLocales, onToggleMapControl, onSetLocale, locale: currentLocal, mapControls}) => {
       const {active: isActive, disableClose, show} = mapControls.mapLocale || {};
 
       const onClickItem = useCallback(
@@ -47,9 +42,9 @@ function LocalePanelFactory(MapControlTooltip, MapControlPanel, MapControlToolba
       const onClickButton = useCallback(
         e => {
           e.preventDefault();
-          onToggleMenuPanel();
+          onToggleMapControl('mapLocale');
         },
-        [onToggleMenuPanel]
+        [onToggleMapControl]
       );
       const getLabel = useCallback(locale => `toolbar.${locale}`, []);
 
@@ -57,7 +52,7 @@ function LocalePanelFactory(MapControlTooltip, MapControlPanel, MapControlToolba
         return null;
       }
       return (
-        <>
+        <div className="map-locale-controls" style={{position: 'relative'}}>
           {isActive ? (
             <MapControlToolbar show={isActive}>
               {availableLocales.map(locale => (
@@ -80,7 +75,7 @@ function LocalePanelFactory(MapControlTooltip, MapControlPanel, MapControlToolba
             <span className="map-control-button__locale">{currentLocal.toUpperCase()}</span>
             <MapControlTooltip id="locale" message="tooltip.selectLocale" />
           </MapControlButton>
-        </>
+        </div>
       );
     }
   );
