@@ -19,6 +19,8 @@
 // THE SOFTWARE.
 
 import React, {useCallback} from 'react';
+import classnames from 'classnames';
+
 import ToolbarItem from 'components/common/toolbar-item';
 import {MapControlButton} from 'components/common/styled-components';
 import MapControlTooltipFactory from './map-control-tooltip';
@@ -67,6 +69,7 @@ function LocalePanelFactory(MapControlTooltip, MapControlToolbar) {
           ) : null}
           <MapControlButton
             onClick={onClickButton}
+            className={classnames('map-control-button', 'map-locale', {isActive})}
             active={isActive}
             data-tip
             data-for="locale"

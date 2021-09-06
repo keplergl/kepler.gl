@@ -92,7 +92,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     );
   };
 
-  MapLegendPanel.displayName = 'MapControlPanel';
+  MapLegendPanel.displayName = 'MapLegendPanel';
   return MapLegendPanel;
 }
 

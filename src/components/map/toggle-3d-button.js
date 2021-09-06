@@ -19,6 +19,8 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo} from 'react';
+import classnames from 'classnames';
+
 import {Cube3d} from 'components/common/icons';
 import {MapControlButton} from 'components/common/styled-components';
 import MapControlTooltipFactory from './map-control-tooltip';
@@ -50,7 +52,13 @@ function Toggle3dButtonFactory(MapControlTooltip) {
     }, [mapControls]);
 
     return isVisible ? (
-      (<MapControlButton onClick={onClick} active={dragRotate} data-tip data-for="action-3d">
+      (<MapControlButton
+        onClick={onClick}
+        className={classnames('map-control-button', 'toggle-3d', {map3d: dragRotate})}
+        active={dragRotate}
+        data-tip
+        data-for="action-3d"
+      >
         <actionIcons.cube height="22px" />
         <MapControlTooltip
           id="action-3d"

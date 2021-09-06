@@ -101,6 +101,7 @@ export {default as MapDrawPanelFactory} from './map/map-draw-panel';
 export {default as SplitMapButtonFactory} from './map/split-map-button';
 export {default as MapLegendPanelFactory} from './map/map-legend-panel';
 export {default as Toggle3dButtonFactory} from './map/toggle-3d-button';
+export {default as MapControlToolbarFactory} from './map/map-control-toolbar';
 
 // // modal factories
 export {default as ModalDialogFactory} from './modals/modal-dialog';

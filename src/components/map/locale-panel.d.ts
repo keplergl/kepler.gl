@@ -5,7 +5,7 @@ export type LocalePanelProps = {
   availableLocales: ReadonlyArray<string>;
   onSetLocale: (locale: string) => void;
   locale: string;
-  onToggleMapControl: () => void;
+  onToggleMapControl: (control: string) => void;
   mapControls: MapControls;
 };
 
