@@ -2,10 +2,10 @@ import React from 'react';
 import {MapControls} from '../../reducers';
 
 export type LocalePanelProps = {
-  availableLocales: ReadnlyArray<string>;
+  availableLocales: ReadonlyArray<string>;
   onSetLocale: (locale: string) => void;
   locale: string;
-  onToggleMenuPanel: () => void;
+  onToggleMapControl: (control: string) => void;
   mapControls: MapControls;
 };
 

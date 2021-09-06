@@ -19,6 +19,8 @@
 // THE SOFTWARE.
 
 import React, {useCallback} from 'react';
+import classnames from 'classnames';
+
 import {EDITOR_MODES} from 'constants/default-settings';
 import {
   CursorClick,
@@ -104,6 +106,7 @@ function MapDrawPanelFactory(MapControlTooltip, MapControlPanel, MapControlToolb
               onToggleMenuPanel();
             }}
             active={isActive}
+            className={classnames('map-control-button', 'map-draw', {isActive})}
             data-tip
             data-for="map-draw"
           >

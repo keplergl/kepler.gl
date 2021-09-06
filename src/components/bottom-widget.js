@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, forwardRef, useMemo} from 'react';
 import styled from 'styled-components';
 import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-control';
@@ -227,6 +227,9 @@ export default function BottomWidgetFactory(
     );
   };
 
-  return BottomWidget;
+  /* eslint-disable react/display-name */
+  // @ts-ignore
+  return forwardRef((props, ref) => <BottomWidget {...props} rootRef={ref} />);
+  /* eslint-enable react/display-name */
 }
 /* eslint-enable complexity */
