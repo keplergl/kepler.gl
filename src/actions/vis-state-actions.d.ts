@@ -206,11 +206,11 @@ export function showDatasetTable(
 
 export type UpdateDatasetColorUpdater = {
   dataId: string,
-  newColor: [number, number, number]
+  newColor: RGBColor
 }
 export function updateDatasetColor(
   dataId: string,
-  newColor: [number, number, number]
+  newColor: RGBColor
 ): Merge<UpdateDatasetColorUpdater, {type: ActionTypes.UPDATE_DATASET_COLOR}>;
 
 export type SortTableColumnUpdaterAction = {

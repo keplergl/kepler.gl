@@ -21,6 +21,7 @@
 import {console as Console} from 'global/console';
 import {TRIP_POINT_FIELDS, SORT_ORDER} from 'constants/default-settings';
 import {ascending, descending} from 'd3-array';
+import {RGBColor} from 'reducers';
 
 // import {validateInputData} from 'processors/data-processor';
 import {generateHashId} from 'utils/utils';
@@ -148,7 +149,7 @@ class KeplerTable {
 
   /**
    * Update dataset color by custom color
-   * @param {[number, number, number]} newColor
+   * @param {RGBColor} newColor
    */
   updateDatasetColor(newColor) {
     this.color = newColor;

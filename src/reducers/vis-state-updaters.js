@@ -82,6 +82,7 @@ import {pick_, merge_, swap_} from './composer-helpers';
 import {processFileContent} from 'actions/vis-state-actions';
 
 import KeplerGLSchema from 'schemas';
+import { isRGBColor } from 'utils/color-utils';
 
 // type imports
 /** @typedef {import('./vis-state-updaters').Field} Field */
@@ -1135,9 +1136,10 @@ export const updateDatasetColorUpdater = (state, action) => {
   const {dataId, newColor} = action;
   const {datasets} = state;
 
-  if (newColor) {
+  if (isRGBColor(newColor)) {
     const existing = datasets[dataId];
     existing.updateDatasetColor(newColor);
+
     const datasetNumber = state.datasetUpdateNumbers[dataId] || 0;
     // @ts-ignore
     return {
