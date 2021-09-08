@@ -22,7 +22,7 @@ import React, {createRef, PureComponent} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
 
-import {CenterFlexbox, Tooltip, DatasetSquare} from 'components/common/styled-components';
+import {CenterFlexbox, Tooltip} from 'components/common/styled-components';
 import {ArrowRight, Table, Trash} from 'components/common/icons';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
@@ -63,13 +63,6 @@ const DataTagAction = styled.div`
   opacity: 0;
 `;
 
-const DatasetColorPicker = styled.div`
-  display: flex;
-    flex-shrink: 0;
-    margin-top: 3px;
-  }
-`;
-
 const ShowDataTable = ({id, showDatasetTable = nop}) => (
   <DataTagAction className="dataset-action show-data-table" data-tip data-for={`data-table-${id}`}>
     <Table
@@ -108,25 +101,6 @@ const RemoveDataset = ({datasetKey, removeDataset = nop}) => (
   </DataTagAction>
 );
 
-const UpdateDatasetColor = ({id, updateDatasetColor = nop, children}) => (
-  <DatasetColorPicker
-    className="dataset-action update-color"
-    data-tip
-    data-for={`update-color-${id}`}
-    onClick={e => {
-      e.stopPropagation();
-      updateDatasetColor(id);
-    }}
-  >
-    {children}
-    <Tooltip id={`update-color-${id}`} effect="solid">
-      <span>
-        <FormattedMessage id={'Update color'} />
-      </span>
-    </Tooltip>
-  </DatasetColorPicker>
-);
-
 DatasetTitleFactory.deps = [DatasetTagFactory];
 
 export default function DatasetTitleFactory(DatasetTag) {
@@ -135,7 +109,7 @@ export default function DatasetTitleFactory(DatasetTag) {
       displayColorPicker: false
     };
 
-    handleClick = () => {
+    _handleClick = () => {
       this.setState({displayColorPicker: !this.state.displayColorPicker});
     };
 
@@ -168,33 +142,23 @@ export default function DatasetTitleFactory(DatasetTag) {
         <div className="custom-palette-panel" ref={this.root}>
           <StyledDatasetTitle
             className="source-data-title"
-            clickable={Boolean(showDatasetTable || onTitleClick || updateDatasetColor)}
+            clickable={Boolean(showDatasetTable || onTitleClick)}
           >
-            {updateDatasetColor ? (
-              <UpdateDatasetColor id={dataset.id} updateDatasetColor={updateDatasetColor}>
-                <DatasetSquare
-                  className="dataset-color"
-                  color={dataset.color}
-                  onClick={this.handleClick}
-                />
-                <Portaled isOpened={this.state.displayColorPicker !== false} left={280} top={-50}>
-                  <CustomPicker
-                    color={rgbToHex(dataset.color)}
-                    onChange={color =>
-                      updateDatasetColor(dataset.id, [color.rgb.r, color.rgb.g, color.rgb.b])
-                    }
-                    onSwatchClose={this._handleClosePicker}
-                  />
-                </Portaled>
-              </UpdateDatasetColor>
-            ) : null}
-
             <DatasetTag
               dataset={dataset}
               onClick={this._onClickTitle}
               updateDatasetColor={updateDatasetColor}
+              onClickSquare={this._handleClick}
             />
-
+            <Portaled isOpened={this.state.displayColorPicker !== false} left={110} top={-50}>
+              <CustomPicker
+                color={rgbToHex(dataset.color)}
+                onChange={color =>
+                  updateDatasetColor(dataset.id, [color.rgb.r, color.rgb.g, color.rgb.b])
+                }
+                onSwatchClose={this._handleClosePicker}
+              />
+            </Portaled>
             {showDatasetTable ? (
               <CenterFlexbox className="source-data-arrow">
                 <ArrowRight height="12px" />

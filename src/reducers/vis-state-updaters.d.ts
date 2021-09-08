@@ -247,7 +247,6 @@ export type VisState = {
   filters: Filter[];
   filterToBeMerged: any[];
   datasets: Datasets;
-  datasetUpdateNumbers: {[key:string]: number};
   editingDataset: string | undefined;
   interactionConfig: InteractionConfig;
   interactionToBeMerged: any;

@@ -111,22 +111,13 @@ export function createLinearGradient(direction, colors) {
  * @returns boolean
  */
 export function isRGBColor(color) {
-  if (
-    color && 
-    color instanceof Array && 
-    (color.length == 3)
-  ) {
+  if (color && color instanceof Array && color.length === 3) {
     for (const value of color) {
-      if (
-        typeof value === 'number' && 
-        value < 255 && 
-        value > 0
-        ) {
-        return true
+      if (typeof value === 'number' && value < 255 && value > 0) {
+        return true;
       }
     }
-  return true;
-  } else
+    return true;
+  }
   return false;
 }
-

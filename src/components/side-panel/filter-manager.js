@@ -32,7 +32,6 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
   const FilterManager = ({
     filters = [],
     datasets,
-    datasetUpdateNumbers,
     layers,
     showDatasetTable,
     updateDatasetColor,
@@ -65,7 +64,6 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
       <div className="filter-manager">
         <SourceDataCatalog
           datasets={datasets}
-          datasetUpdateNumbers={datasetUpdateNumbers}
           showDatasetTable={showDatasetTable}
           updateDatasetColor={updateDatasetColor}
         />
@@ -103,7 +101,6 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
 
   FilterManager.propTypes = {
     datasets: PropTypes.object,
-    datasetUpdateNumbers: PropTypes.object,
     layers: PropTypes.arrayOf(PropTypes.any).isRequired,
     filters: PropTypes.arrayOf(PropTypes.any).isRequired,
     showDatasetTable: PropTypes.func.isRequired,

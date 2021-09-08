@@ -111,7 +111,7 @@ export function layerVisConfigChange(oldLayer, newVisConfig) {
 
 /**
  * Set the color palette ui for layer color
- * @memberOf visStateActions
+ * @memberof visStateActions
  * @param oldLayer - layer to be updated
  * @param prop - which color prop
  * @param newConfig - to be merged

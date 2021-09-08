@@ -56,7 +56,7 @@ import {
 } from 'utils/filter-utils';
 import {assignGpuChannel, setFilterGpuMode} from 'utils/gpu-filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
-import {sortDatasetByColumn} from 'utils/table-utils/kepler-table';
+import {sortDatasetByColumn, copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 import {set, toArray, arrayInsert, generateHashId} from 'utils/utils';
 
 import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils';
@@ -182,7 +182,6 @@ export const INITIAL_VIS_STATE = {
 
   // a collection of multiple dataset
   datasets: {},
-  datasetUpdateNumbers: {},
   editingDataset: undefined,
 
   interactionConfig: getDefaultInteraction(),
@@ -1127,7 +1126,7 @@ export const showDatasetTableUpdater = (state, action) => {
 };
 
 /**
- * When user clicks on colored square ..............
+ * Add custom color for datasets and layers  
  * @memberof visStateUpdaters
  * @type {typeof import('./vis-state-updaters').updateDatasetColorUpdater}
  * @public
@@ -1140,15 +1139,14 @@ export const updateDatasetColorUpdater = (state, action) => {
     const existing = datasets[dataId];
     existing.updateDatasetColor(newColor);
 
-    const datasetNumber = state.datasetUpdateNumbers[dataId] || 0;
-    // @ts-ignore
+    const filteredIndex = [0, 2, 4];
     return {
       ...state,
-      datasetUpdateNumbers: {
-        ...state.datasetUpdateNumbers,
-        [dataId]: datasetNumber + 1
+      datasets: {
+        ...state.datasets,
+        [dataId]: copyTableAndUpdate(existing, {filteredIndex})
       }
-    };
+    }
   }
   return state;
 };

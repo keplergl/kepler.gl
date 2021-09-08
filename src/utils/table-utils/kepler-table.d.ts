@@ -113,3 +113,4 @@ export class KeplerTable {
 }
 
 export default KeplerTable;
+export function copyTableAndUpdate(original: KeplerTable, options: {})

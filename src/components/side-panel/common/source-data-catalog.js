@@ -34,7 +34,6 @@ SourceDataCatalogFactory.deps = [DatasetTitleFactory, DatasetInfoFactory];
 function SourceDataCatalogFactory(DatasetTitle, DatasetInfo) {
   const SourceDataCatalog = ({
     datasets,
-    datasetUpdateNumbers,
     showDatasetTable,
     removeDataset,
     onTitleClick,
@@ -49,7 +48,6 @@ function SourceDataCatalogFactory(DatasetTitle, DatasetInfo) {
             showDeleteDataset={showDeleteDataset}
             removeDataset={removeDataset}
             dataset={dataset}
-            datasetUpdateNumber={datasetUpdateNumbers[dataset.id]}
             onTitleClick={onTitleClick}
             updateDatasetColor={updateDatasetColor}
           />

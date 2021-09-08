@@ -19,8 +19,11 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import {FormattedMessage} from 'localization';
 import styled from 'styled-components';
-import {DatasetSquare} from 'components';
+import {DatasetSquare, Tooltip} from 'components';
+
+function nop(_) {}
 
 const DatasetTagWrapper = styled.div`
   display: flex;
@@ -31,7 +34,7 @@ const DatasetTagWrapper = styled.div`
 
   .dataset-color {
     flex-shrink: 0;
-    margin-top: 5px;
+    margin-top: 3px;
   }
 
   .dataset-name {
@@ -41,17 +44,43 @@ const DatasetTagWrapper = styled.div`
   }
 `;
 
+const DatasetColorPicker = styled.div`
+  display: flex;
+`;
+
+const UpdateDatasetColor = ({id, updateDatasetColor = nop, children}) => (
+  <DatasetColorPicker
+    className="dataset-action update-color"
+    data-tip
+    data-for={`update-color-${id}`}
+    onClick={e => {
+      e.stopPropagation();
+      updateDatasetColor(id);
+    }}
+  >
+    {children}
+    <Tooltip id={`update-color-${id}`} effect="solid">
+      <span>
+        <FormattedMessage id={'Update color'} />
+      </span>
+    </Tooltip>
+  </DatasetColorPicker>
+);
+
 export default function DatasetTagFactory() {
-  const DatasetTag = ({onClick, dataset, updateDatasetColor}) => (
+  const DatasetTag = ({onClick, onClickSquare, dataset, updateDatasetColor}) => (
     <DatasetTagWrapper
       className="source-data-tag"
-      onClick={onClick}
       updateDatasetColor={updateDatasetColor}
     >
-      {updateDatasetColor ? null : (
-        <DatasetSquare className="dataset-color" color={dataset.color} />
-      )}
-      <div className="dataset-name" title={dataset.label}>
+      <UpdateDatasetColor id={dataset.id} updateDatasetColor={updateDatasetColor}>
+        <DatasetSquare 
+          className="dataset-color" 
+          color={dataset.color} 
+          onClick={onClickSquare}
+        />
+      </UpdateDatasetColor>
+      <div className="dataset-name" title={dataset.label} onClick={onClick}>
         {dataset.label}
       </div>
     </DatasetTagWrapper>

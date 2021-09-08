@@ -21,7 +21,6 @@
 import {console as Console} from 'global/console';
 import {TRIP_POINT_FIELDS, SORT_ORDER} from 'constants/default-settings';
 import {ascending, descending} from 'd3-array';
-import {RGBColor} from 'reducers';
 
 // import {validateInputData} from 'processors/data-processor';
 import {generateHashId} from 'utils/utils';
@@ -149,7 +148,7 @@ class KeplerTable {
 
   /**
    * Update dataset color by custom color
-   * @param {RGBColor} newColor
+   * @param {import('reducers/types').RGBColor} newColor
    */
   updateDatasetColor(newColor) {
     this.color = newColor;
@@ -476,6 +475,12 @@ export function copyTable(original) {
   return Object.assign(Object.create(Object.getPrototypeOf(original)), original);
 }
 
+/**
+ * @type {typeof import('./kepler-table').copyTableAndUpdate}
+ * @param {KeplerTable} original
+ * @param {*} options
+ * @returns
+ */
 export function copyTableAndUpdate(original, options = {}) {
   return Object.entries(options).reduce((acc, entry) => {
     acc[entry[0]] = entry[1];

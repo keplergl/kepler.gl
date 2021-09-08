@@ -150,7 +150,6 @@ export const sidePanelSelector = (props, availableProviders) => ({
   uiStateActions: props.uiStateActions,
 
   datasets: props.visState.datasets,
-  datasetUpdateNumbers: props.visState.datasetUpdateNumbers,
   filters: props.visState.filters,
   layers: props.visState.layers,
   layerOrder: props.visState.layerOrder,

@@ -110,7 +110,6 @@ export default function SidePanelFactory(
       appWebsite,
       availableProviders,
       datasets,
-      datasetUpdateNumbers,
       filters,
       layers,
       layerBlending,
@@ -219,7 +218,6 @@ export default function SidePanelFactory(
             {PanelComponent ? (
               <PanelComponent
                 datasets={datasets}
-                datasetUpdateNumbers={datasetUpdateNumbers}
                 filters={filters}
                 layers={layers}
                 layerClasses={layerClasses}
