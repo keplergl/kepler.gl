@@ -18,14 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import JSONPretty from 'react-json-pretty';
-import {ADD_DATA_TO_MAP_DOC} from 'constants/user-guides';
+import { ADD_DATA_TO_MAP_DOC } from 'constants/user-guides';
 import styled from 'styled-components';
-import {StyledExportSection} from 'components/common/styled-components';
-import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';
-import {FormattedMessage} from 'localization';
+import { StyledExportSection, Button } from 'components/common/styled-components';
+import { StyledExportMapSection, StyledWarning, ExportMapLink } from './components';
+import { FormattedMessage } from 'localization';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
 
 const StyledJsonExportSection = styled(StyledExportSection)`
   .note {
@@ -34,6 +35,7 @@ const StyledJsonExportSection = styled(StyledExportSection)`
   }
 
   .viewer {
+    position: relative;
     border: 1px solid ${props => props.theme.selectBorderColorLT};
     background-color: white;
     border-radius: 2px;
@@ -51,43 +53,56 @@ const StyledJsonExportSection = styled(StyledExportSection)`
     word-wrap: break-word;
     max-width: 600px;
   }
+
+  .copy-button {
+    margin: 1em 1em 0 0;
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
 `;
 
 const exportJsonPropTypes = {
   options: PropTypes.object
 };
 
-const ExportJsonMapUnmemoized = ({config = {}}) => (
-  <div>
-    <StyledExportMapSection>
-      <div className="description" />
-      <div className="selection">
-        <FormattedMessage id={'modal.exportMap.json.selection'} />
-      </div>
-    </StyledExportMapSection>
-    <StyledJsonExportSection className="export-map-modal__json-options">
-      <div className="description">
-        <div className="title">
-          <FormattedMessage id={'modal.exportMap.json.configTitle'} />
+const ExportJsonMapUnmemoized = ({ config = {} }) => {
+  const [copied, setCopy] = useState(false);
+  return (
+    <div>
+      <StyledExportMapSection>
+        <div className="description" />
+        <div className="selection">
+          <FormattedMessage id={'modal.exportMap.json.selection'} />
         </div>
-        <div className="subtitle">
-          <FormattedMessage id={'modal.exportMap.json.configDisclaimer'} />
-          <ExportMapLink href={ADD_DATA_TO_MAP_DOC}>addDataToMap</ExportMapLink>.
+      </StyledExportMapSection>
+      <StyledJsonExportSection className="export-map-modal__json-options">
+        <div className="description">
+          <div className="title">
+            <FormattedMessage id={'modal.exportMap.json.configTitle'} />
+          </div>
+          <div className="subtitle">
+            <FormattedMessage id={'modal.exportMap.json.configDisclaimer'} />
+            <ExportMapLink href={ADD_DATA_TO_MAP_DOC}>addDataToMap</ExportMapLink>.
+          </div>
         </div>
-      </div>
-      <div className="selection">
-        <div className="viewer">
-          <JSONPretty id="json-pretty" json={config} />
+        <div className="selection">
+          <div className="viewer">
+            <JSONPretty id="json-pretty" json={config} />
+            <CopyToClipboard className="copy-button" text={config} onCopy={() => setCopy(true)}>
+              <Button width="80px">{copied ? 'Copied!' : 'Copy'}</Button>
+            </CopyToClipboard>
+          </div>
+          <div className="disclaimer">
+            <StyledWarning>
+              <FormattedMessage id={'modal.exportMap.json.disclaimer'} />
+            </StyledWarning>
+          </div>
         </div>
-        <div className="disclaimer">
-          <StyledWarning>
-            <FormattedMessage id={'modal.exportMap.json.disclaimer'} />
-          </StyledWarning>
-        </div>
-      </div>
-    </StyledJsonExportSection>
-  </div>
-);
+      </StyledJsonExportSection>
+    </div>
+  );
+};
 
 ExportJsonMapUnmemoized.propTypes = exportJsonPropTypes;
 
