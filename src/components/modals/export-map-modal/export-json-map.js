@@ -89,7 +89,7 @@ const ExportJsonMapUnmemoized = ({ config = {} }) => {
         <div className="selection">
           <div className="viewer">
             <JSONPretty id="json-pretty" json={config} />
-            <CopyToClipboard className="copy-button" text={config} onCopy={() => setCopy(true)}>
+            <CopyToClipboard className="copy-button" text={JSON.stringify(config)} onCopy={() => setCopy(true)}>
               <Button width="80px">{copied ? 'Copied!' : 'Copy'}</Button>
             </CopyToClipboard>
           </div>
