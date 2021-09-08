@@ -321,6 +321,7 @@
     "@deck.gl/react": "^8.5.4",
     "@deck.gl/test-utils": "^8.5.4",
     "@luma.gl/test-utils": "^8.5.4",
+    "browserslist": "^4.17.0",
     "d3-array": "^2.8.0",
     "d3-scale": "^3.2.3",
     "dot-prop": "6.0.0",
