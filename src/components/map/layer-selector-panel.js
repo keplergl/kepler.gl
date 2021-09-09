@@ -19,6 +19,8 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo} from 'react';
+import classnames from 'classnames';
+
 import {MapControlButton} from 'components/common/styled-components';
 import {Layers} from '../common/icons';
 import MapLayerSelector from '../common/map-layer-selector';
@@ -73,7 +75,7 @@ function LayerSelectorPanelFactory(MapControlTooltip, MapControlPanel) {
         <MapControlButton
           key={1}
           onClick={onToggleMenuPanel}
-          className="map-control-button toggle-layer"
+          className={classnames('map-control-button', 'toggle-layer', {isActive})}
           data-tip
           data-for="toggle-layer"
         >

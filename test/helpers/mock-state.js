@@ -778,12 +778,39 @@ export const expectedSavedTripLayer = {
   }
 };
 
-export const mockKeplerProps = {
-  ...StateWFiles,
-  ...DEFAULT_KEPLER_GL_PROPS,
-  visStateActions: VisStateActions,
-  mapStateActions: MapStateActions,
-  mapStyleActions: MapStyleActions,
-  uiStateActions: UIStateActions,
-  providerActions: ProviderActions
-};
+export function mockKeplerPropsWithState({
+  state,
+  keplerProps = DEFAULT_KEPLER_GL_PROPS,
+  visStateActions = {},
+  mapStateActions = {},
+  mapStyleActions = {},
+  uiStateActions = {},
+  providerActions = {}
+}) {
+  return {
+    ...state,
+    ...keplerProps,
+    visStateActions: {
+      ...VisStateActions,
+      ...visStateActions
+    },
+    mapStateActions: {
+      ...MapStateActions,
+      ...mapStateActions
+    },
+    mapStyleActions: {
+      ...MapStyleActions,
+      ...mapStyleActions
+    },
+    uiStateActions: {
+      ...UIStateActions,
+      ...uiStateActions
+    },
+    providerActions: {
+      ...ProviderActions,
+      ...providerActions
+    }
+  };
+}
+
+export const mockKeplerProps = mockKeplerPropsWithState({state: StateWFiles});

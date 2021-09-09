@@ -46,5 +46,6 @@ export {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
 export {updateAllLayerDomainData} from '../reducers/vis-state-updaters';
 export {getHexFields} from '../layers/h3-hexagon-layer/h3-utils';
 export {containValidTime} from '../layers/trip-layer/trip-utils';
+
 export {KeplerTable, findPointFieldPairs, copyTableAndUpdate} from './table-utils/kepler-table';
 export {createDataContainer, createIndexedDataContainer} from './table-utils/data-container-utils';

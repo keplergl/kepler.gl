@@ -76,7 +76,7 @@ export default {
   },
   sidebar: {
     panels: {
-      layer: '层',
+      layer: '图层',
       filter: '过滤器',
       interaction: '交互',
       basemap: '底图'

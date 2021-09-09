@@ -55,7 +55,7 @@ import {
 
 import ErrorBoundary from 'components/common/error-boundary';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
-import MapLegendPanelFactory from './map/map-legend-panel';
+import {LOCALE_CODES} from 'localization/locales';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE = {
@@ -107,14 +107,9 @@ export const Attribution = () => (
   </StyledAttrbution>
 );
 
-MapContainerFactory.deps = [
-  MapPopoverFactory,
-  MapControlFactory,
-  EditorFactory,
-  MapLegendPanelFactory
-];
+MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory];
 
-export default function MapContainerFactory(MapPopover, MapControl, Editor, MapLegendPanel) {
+export default function MapContainerFactory(MapPopover, MapControl, Editor) {
   class MapContainer extends Component {
     static propTypes = {
       // required
@@ -541,6 +536,7 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor, MapL
         <>
           <MapControl
             datasets={datasets}
+            availableLocales={Object.keys(LOCALE_CODES)}
             dragRotate={mapState.dragRotate}
             isSplit={isSplit}
             primary={primary}
