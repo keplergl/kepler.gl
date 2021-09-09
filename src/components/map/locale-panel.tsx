@@ -65,7 +65,7 @@ function LocalePanelFactory(
         return null;
       }
       return (
-        <div className="map-locale-controls" style={{position: 'relative'}}>
+        <div className="locale-panel-controls" style={{position: 'relative'}}>
           {isActive ? (
             <MapControlToolbar show={isActive}>
               {availableLocales.map(locale => (
@@ -80,7 +80,7 @@ function LocalePanelFactory(
           ) : null}
           <MapControlTooltip id="locale" message="tooltip.selectLocale">
             <MapControlButton
-              className={classnames('map-control-button', 'map-locale', {isActive})}
+              className={classnames('map-control-button', 'locale-panel', {isActive})}
               onClick={onClickButton}
               active={isActive}
             >

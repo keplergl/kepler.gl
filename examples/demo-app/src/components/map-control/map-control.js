@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {useState} from 'react';
+import classnames from 'classnames';
 import styled from 'styled-components';
 import {Icons, IconRoundSmall, MapControlButton} from 'kepler.gl/components';
 
@@ -156,6 +157,7 @@ export function SampleMapPanel(props) {
         </StyledProjectPanel>
       ) : (
         <MapControlButton
+          className={classnames('map-control-button', 'info-panel', {isActive})}
           onClick={e => {
             e.preventDefault();
             setActive(true);
