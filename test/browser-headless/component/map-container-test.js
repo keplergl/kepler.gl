@@ -215,7 +215,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           t.equal(wrapper.find('table').length, 1, 'should render 1 table');
 
           const table = wrapper.find('table').at(0);
-          const rows = table.find('.row');
+          const rows = table.find('.layer-hover-info__row');
           t.equal(rows.length, 5, 'should render 5 rows');
           const tippyProps = wrapper
             .find(Tippy)
