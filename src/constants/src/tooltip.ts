@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {ValueOf} from '@kepler.gl/types';
+
 export const TOOLTIP_FORMAT_TYPES = {
   NONE: 'none',
   DATE: 'date',
@@ -28,6 +30,13 @@ export const TOOLTIP_FORMAT_TYPES = {
 };
 
 export const TOOLTIP_KEY = 'format';
+
+export type TooltipFormat = {
+  id: string;
+  label: string;
+  format: null | string;
+  type: ValueOf<typeof TOOLTIP_FORMAT_TYPES>;
+};
 
 export const TOOLTIP_FORMATS = {
   NONE: {

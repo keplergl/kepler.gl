@@ -137,7 +137,7 @@ export function getTooltipDisplayDeltaValue({
       displayDeltaValue = getFormatter(deltaFormat)(deltaValue);
 
       // safely cast string
-      displayDeltaValue = defaultFormatter(displayDeltaValue);
+      displayDeltaValue = defaultFormatter(displayDeltaValue) as string;
       const deltaFirstChar = displayDeltaValue.charAt(0);
       if (deltaFirstChar !== '+' && deltaFirstChar !== TOOLTIP_MINUS_SIGN) {
         displayDeltaValue = `+${displayDeltaValue}`;

@@ -155,6 +155,7 @@ export type ItemSelectorProps = {
   DropDownLineItemRenderComponent?: ComponentType<any>;
   CustomChickletComponent?: ComponentType<any>;
   intl: IntlShape;
+  showDropdownOnMount?: boolean;
 };
 
 class ItemSelector extends Component<ItemSelectorProps> {
@@ -170,6 +171,12 @@ class ItemSelector extends Component<ItemSelectorProps> {
   state = {
     showTypeahead: false
   };
+
+  componentDidMount() {
+    if (this.props.showDropdownOnMount) {
+      this.setState({showTypeahead: true});
+    }
+  }
 
   handleClickOutside = () => {
     this._hideTypeahead();

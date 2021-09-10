@@ -23,7 +23,8 @@ import {
   ALL_FIELD_TYPES,
   TOOLTIP_FORMATS,
   TOOLTIP_FORMAT_TYPES,
-  TOOLTIP_KEY
+  TOOLTIP_KEY,
+  TooltipFormat
 } from '@kepler.gl/constants';
 import {format as d3Format} from 'd3-format';
 import {bisectLeft} from 'd3-array';
@@ -315,7 +316,7 @@ export function getFormatter(
   const tooltipFormat = Object.values(TOOLTIP_FORMATS).find(f => f[TOOLTIP_KEY] === format);
 
   if (tooltipFormat) {
-    return applyDefaultFormat(tooltipFormat);
+    return applyDefaultFormat(tooltipFormat as TooltipFormat);
   } else if (typeof format === 'string' && field) {
     return applyCustomFormat(format, field);
   }
@@ -323,7 +324,7 @@ export function getFormatter(
   return defaultFormatter;
 }
 
-export function applyDefaultFormat(tooltipFormat) {
+export function applyDefaultFormat(tooltipFormat: TooltipFormat): (v: any) => string {
   if (!tooltipFormat || !tooltipFormat.format) {
     return defaultFormatter;
   }
