@@ -69,16 +69,9 @@ const UpdateDatasetColor = ({id, updateDatasetColor = nop, children}) => (
 
 export default function DatasetTagFactory() {
   const DatasetTag = ({onClick, onClickSquare, dataset, updateDatasetColor}) => (
-    <DatasetTagWrapper
-      className="source-data-tag"
-      updateDatasetColor={updateDatasetColor}
-    >
+    <DatasetTagWrapper className="source-data-tag" updateDatasetColor={updateDatasetColor}>
       <UpdateDatasetColor id={dataset.id} updateDatasetColor={updateDatasetColor}>
-        <DatasetSquare 
-          className="dataset-color" 
-          color={dataset.color} 
-          onClick={onClickSquare}
-        />
+        <DatasetSquare className="dataset-color" color={dataset.color} onClick={onClickSquare} />
       </UpdateDatasetColor>
       <div className="dataset-name" title={dataset.label} onClick={onClick}>
         {dataset.label}
