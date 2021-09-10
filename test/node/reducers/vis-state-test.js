@@ -2782,7 +2782,7 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     datasets: {
       [testGeoJsonDataId]: oldState.datasets[testGeoJsonDataId]
     },
-    
+
     interactionConfig: {
       tooltip: {
         id: 'tooltip',
@@ -4614,7 +4614,6 @@ test('#visStateReducer -> APPLY_CPU_FILTER has multi datasets', t => {
 test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   const initialState = CloneDeep(StateWFiles.visState);
   const previousDataset1 = initialState.datasets[testCsvDataId];
-
   // sort with default mode
   const nextState = reducer(initialState, VisStateActions.sortTableColumn());
   t.equal(nextState, initialState, 'state should not change when input is given');
@@ -4713,8 +4712,28 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   t.end();
 });
 
+test('#visStateReducer -> updateDatasetColor', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const newColor=[ 150, 150, 150];
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.updateDatasetColor(testCsvDataId, newColor)
+  );
+
+  t.deepEqual(
+    nextState.datasets[testCsvDataId].color,
+    newColor,
+    'should update dataset color'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
   const initialState = CloneDeep(StateWFiles.visState);
+  console.log(initialState);
+
   const previousDataset1 = initialState.datasets[testCsvDataId];
 
   // pin with empty arg
@@ -4749,7 +4768,7 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
     [],
     'should remove from pinned columns'
   );
-
+  
   t.end();
 });
 

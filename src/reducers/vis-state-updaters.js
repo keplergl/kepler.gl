@@ -82,7 +82,7 @@ import {pick_, merge_, swap_} from './composer-helpers';
 import {processFileContent} from 'actions/vis-state-actions';
 
 import KeplerGLSchema from 'schemas';
-import { isRGBColor } from 'utils/color-utils';
+import {isRGBColor} from 'utils/color-utils';
 
 // type imports
 /** @typedef {import('./vis-state-updaters').Field} Field */
@@ -1126,7 +1126,7 @@ export const showDatasetTableUpdater = (state, action) => {
 };
 
 /**
- * Add custom color for datasets and layers  
+ * Add custom color for datasets and layers
  * @memberof visStateUpdaters
  * @type {typeof import('./vis-state-updaters').updateDatasetColorUpdater}
  * @public
@@ -1146,7 +1146,7 @@ export const updateDatasetColorUpdater = (state, action) => {
         ...state.datasets,
         [dataId]: copyTableAndUpdate(existing, {filteredIndex})
       }
-    }
+    };
   }
   return state;
 };
