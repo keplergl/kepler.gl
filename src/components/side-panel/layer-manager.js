@@ -143,7 +143,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       // functions
       removeDataset: PropTypes.func.isRequired,
       showDatasetTable: PropTypes.func.isRequired,
-      updateDatasetColor: PropTypes.func.isRequired
+      updateTableColor: PropTypes.func.isRequired
     };
     state = {
       isSorting: false
@@ -193,7 +193,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
         intl,
         layerOrder,
         showAddDataModal,
-        updateDatasetColor,
+        updateTableColor,
         showDatasetTable,
         removeDataset,
         uiStateActions,
@@ -225,7 +225,7 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
           <SourceDataCatalog
             datasets={datasets}
             showDatasetTable={showDatasetTable}
-            updateDatasetColor={updateDatasetColor}
+            updateTableColor={updateTableColor}
             removeDataset={removeDataset}
             showDeleteDataset
           />

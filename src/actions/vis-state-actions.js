@@ -344,12 +344,12 @@ export function showDatasetTable(dataId) {
  * @param dataId dataset `id` this custom color is associated with
  * @param newColor custom color in RGBformat
  * @returns action
- * @type {typeof import('./vis-state-actions').updateDatasetColor}
+ * @type {typeof import('./vis-state-actions').updateTableColor}
  * @public
  */
-export function updateDatasetColor(dataId, newColor) {
+export function updateTableColor(dataId, newColor) {
   return {
-    type: ActionTypes.UPDATE_DATASET_COLOR,
+    type: ActionTypes.UPDATE_TABLE_COLOR,
     dataId,
     newColor
   };

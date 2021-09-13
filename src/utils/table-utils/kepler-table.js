@@ -150,7 +150,7 @@ class KeplerTable {
    * Update dataset color by custom color
    * @param {import('reducers/types').RGBColor} newColor
    */
-  updateDatasetColor(newColor) {
+  updateTableColor(newColor) {
     this.color = newColor;
   }
 

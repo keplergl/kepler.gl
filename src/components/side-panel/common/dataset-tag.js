@@ -48,31 +48,39 @@ const DatasetColorPicker = styled.div`
   display: flex;
 `;
 
-const UpdateDatasetColor = ({id, updateDatasetColor = nop, children}) => (
+const UpdateTableColor = ({updateTableColor = nop, children, id}) => (
   <DatasetColorPicker
     className="dataset-action update-color"
     data-tip
     data-for={`update-color-${id}`}
     onClick={e => {
       e.stopPropagation();
-      updateDatasetColor(id);
+      updateTableColor(id);
     }}
   >
     {children}
-    <Tooltip id={`update-color-${id}`} effect="solid">
-      <span>
-        <FormattedMessage id={'Update color'} />
-      </span>
-    </Tooltip>
   </DatasetColorPicker>
 );
 
 export default function DatasetTagFactory() {
-  const DatasetTag = ({onClick, onClickSquare, dataset, updateDatasetColor}) => (
-    <DatasetTagWrapper className="source-data-tag" updateDatasetColor={updateDatasetColor}>
-      <UpdateDatasetColor id={dataset.id} updateDatasetColor={updateDatasetColor}>
-        <DatasetSquare className="dataset-color" color={dataset.color} onClick={onClickSquare} />
-      </UpdateDatasetColor>
+  const DatasetTag = ({onClick, onClickSquare, dataset, updateTableColor, id}) => (
+    <DatasetTagWrapper className="source-data-tag" updateTableColor={updateTableColor}>
+      <UpdateTableColor id={dataset.id} updateTableColor={updateTableColor}>
+        <DatasetSquare
+          className="dataset-color"
+          color={dataset.color}
+          onClick={onClickSquare}
+          data-tip
+          data-for={`update-color-${id}`}
+        />
+        {updateTableColor ? (
+          <Tooltip id={`update-color-${id}`} effect="solid">
+            <span>
+              <FormattedMessage id={'Update color'} />
+            </span>
+          </Tooltip>
+        ) : null}
+      </UpdateTableColor>
       <div className="dataset-name" title={dataset.label} onClick={onClick}>
         {dataset.label}
       </div>

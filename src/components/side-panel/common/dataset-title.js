@@ -135,7 +135,7 @@ export default function DatasetTitleFactory(DatasetTag) {
         onTitleClick,
         removeDataset,
         dataset,
-        updateDatasetColor
+        updateTableColor
       } = this.props;
 
       return (
@@ -147,14 +147,14 @@ export default function DatasetTitleFactory(DatasetTag) {
             <DatasetTag
               dataset={dataset}
               onClick={this._onClickTitle}
-              updateDatasetColor={updateDatasetColor}
+              updateTableColor={updateTableColor}
               onClickSquare={this._handleClick}
             />
             <Portaled isOpened={this.state.displayColorPicker !== false} left={110} top={-50}>
               <CustomPicker
                 color={rgbToHex(dataset.color)}
                 onChange={color =>
-                  updateDatasetColor(dataset.id, [color.rgb.r, color.rgb.g, color.rgb.b])
+                  updateTableColor(dataset.id, [color.rgb.r, color.rgb.g, color.rgb.b])
                 }
                 onSwatchClose={this._handleClosePicker}
               />

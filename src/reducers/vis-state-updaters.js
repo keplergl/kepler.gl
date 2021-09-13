@@ -1128,23 +1128,22 @@ export const showDatasetTableUpdater = (state, action) => {
 /**
  * Add custom color for datasets and layers
  * @memberof visStateUpdaters
- * @type {typeof import('./vis-state-updaters').updateDatasetColorUpdater}
+ * @type {typeof import('./vis-state-updaters').updateTableColorUpdater}
  * @public
  */
-export const updateDatasetColorUpdater = (state, action) => {
+export const updateTableColorUpdater = (state, action) => {
   const {dataId, newColor} = action;
   const {datasets} = state;
 
   if (isRGBColor(newColor)) {
     const existing = datasets[dataId];
-    existing.updateDatasetColor(newColor);
+    existing.updateTableColor(newColor);
 
-    const filteredIndex = [0, 2, 4];
     return {
       ...state,
       datasets: {
         ...state.datasets,
-        [dataId]: copyTableAndUpdate(existing, {filteredIndex})
+        [dataId]: copyTableAndUpdate(existing, {})
       }
     };
   }

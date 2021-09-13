@@ -81,6 +81,7 @@ import {
 } from 'test/helpers/mock-state';
 import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
+import {assertDatasetIsTable} from '../../helpers/comparison-utils';
 
 const mockData = {
   fields: [
@@ -4712,20 +4713,18 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   t.end();
 });
 
-test('#visStateReducer -> updateDatasetColor', t => {
+test('#visStateReducer -> updateTableColor', t => {
   const initialState = CloneDeep(StateWFiles.visState);
-  const newColor=[150, 150, 150];
+  const newColor = [150, 150, 150];
 
   const nextState = reducer(
     initialState,
-    VisStateActions.updateDatasetColor(testCsvDataId, newColor)
+    VisStateActions.updateTableColor(testCsvDataId, newColor)
   );
 
-  t.deepEqual(
-    nextState.datasets[testCsvDataId].color,
-    newColor,
-    'should update dataset color'
-  );
+  // test dataset is table
+  assertDatasetIsTable(t, nextState.datasets[testCsvDataId]);
+  t.deepEqual(nextState.datasets[testCsvDataId].color, newColor, 'should update dataset color');
 
   t.end();
 });
@@ -4767,7 +4766,7 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
     [],
     'should remove from pinned columns'
   );
-  
+
   t.end();
 });
 

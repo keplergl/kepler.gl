@@ -60,7 +60,7 @@ export type ActionType = {
   COPY_TABLE_COLUMN: string;
   NEXT_FILE_BATCH: string;
   PROCESS_FILE_CONTENT: string;
-  UPDATE_DATASET_COLOR: string;
+  UPDATE_TABLE_COLOR: string;
 
   // mapState
   UPDATE_MAP: string;

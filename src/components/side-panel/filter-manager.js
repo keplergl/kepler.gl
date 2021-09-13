@@ -34,7 +34,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
     datasets,
     layers,
     showDatasetTable,
-    updateDatasetColor,
+    updateTableColor,
     visStateActions
   }) => {
     const {
@@ -65,7 +65,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
         <SourceDataCatalog
           datasets={datasets}
           showDatasetTable={showDatasetTable}
-          updateDatasetColor={updateDatasetColor}
+          updateTableColor={updateTableColor}
         />
         <SidePanelDivider />
         <SidePanelSection>
@@ -104,7 +104,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
     layers: PropTypes.arrayOf(PropTypes.any).isRequired,
     filters: PropTypes.arrayOf(PropTypes.any).isRequired,
     showDatasetTable: PropTypes.func.isRequired,
-    updateDatasetColor: PropTypes.func.isRequired,
+    updateTableColor: PropTypes.func.isRequired,
     visStateActions: PropTypes.object.isRequired,
 
     // fields can be undefined when dataset is not selected

@@ -208,10 +208,10 @@ export type UpdateDatasetColorUpdater = {
   dataId: string,
   newColor: RGBColor
 }
-export function updateDatasetColor(
+export function updateTableColor(
   dataId: string,
   newColor: RGBColor
-): Merge<UpdateDatasetColorUpdater, {type: ActionTypes.UPDATE_DATASET_COLOR}>;
+): Merge<UpdateDatasetColorUpdater, {type: ActionTypes.UPDATE_TABLE_COLOR}>;
 
 export type SortTableColumnUpdaterAction = {
   dataId: string;
