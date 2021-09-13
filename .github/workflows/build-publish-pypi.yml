@@ -28,7 +28,7 @@ jobs:
 
       - name: Build KeplerGL
         env:
-          MapboxAccessTokenJupyter: ${{ secrets.MAPBOXTOKEN }}
+          MapboxAccessTokenJupyter: ${{ secrets.mapbox_jupyter_token }}
         run: |
           python -m virtualenv venv
           source venv/bin/activate
