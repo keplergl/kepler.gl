@@ -540,6 +540,33 @@ const customPalette = [
     type: SEQ,
     category: 'Uber',
     colors: ['#2B1E3E', '#383C65', '#3E5F7E', '#49838A', '#5EA28D', '#82BB92', '#AECEA1', '#D6DEBF']
+  },
+  {
+    name: 'Red to Blue',
+    type: DIV,
+    category: 'Uber',
+    colors: [
+      '#000064',
+      '#0000A5',
+      '#0000E6',
+      '#0021FF',
+      '#0057FF',
+      '#008CFF',
+      '#00C2FF',
+      '#00F8FF',
+      '#2EFFD0',
+      '#64FF9A',
+      '#9AFF78',
+      '#D0FF2E',
+      '#FFF800',
+      '#FFC200',
+      '#FF8C00',
+      '#FF5700',
+      '#FF2100',
+      '#E60000',
+      '#A50000',
+      '#640000'
+    ]
   }
 ];
 
