@@ -18,15 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import JSONPretty from 'react-json-pretty';
-import { ADD_DATA_TO_MAP_DOC } from 'constants/user-guides';
+import {ADD_DATA_TO_MAP_DOC} from 'constants/user-guides';
 import styled from 'styled-components';
-import { StyledExportSection, Button } from 'components/common/styled-components';
-import { StyledExportMapSection, StyledWarning, ExportMapLink } from './components';
-import { FormattedMessage } from 'localization';
-import { CopyToClipboard } from 'react-copy-to-clipboard';
+import {StyledExportSection, Button} from 'components/common/styled-components';
+import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';
+import {FormattedMessage} from 'localization';
+import {CopyToClipboard} from 'react-copy-to-clipboard';
 
 const StyledJsonExportSection = styled(StyledExportSection)`
   .note {
@@ -66,7 +66,7 @@ const exportJsonPropTypes = {
   options: PropTypes.object
 };
 
-const ExportJsonMapUnmemoized = ({ config = {} }) => {
+const ExportJsonMapUnmemoized = ({config = {}}) => {
   const [copied, setCopy] = useState(false);
   return (
     <div>
@@ -89,7 +89,11 @@ const ExportJsonMapUnmemoized = ({ config = {} }) => {
         <div className="selection">
           <div className="viewer">
             <JSONPretty id="json-pretty" json={config} />
-            <CopyToClipboard className="copy-button" text={JSON.stringify(config)} onCopy={() => setCopy(true)}>
+            <CopyToClipboard
+              className="copy-button"
+              text={JSON.stringify(config)}
+              onCopy={() => setCopy(true)}
+            >
               <Button width="80px">{copied ? 'Copied!' : 'Copy'}</Button>
             </CopyToClipboard>
           </div>
