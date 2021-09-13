@@ -28,7 +28,7 @@ jobs:
 
       - name: Build KeplerGL
         env:
-          MapboxAccessTokenJupyter: ${{ secrets.MAPBOXTOKEN }}
+          MapboxAccessTokenJupyter: ${{ secrets.mapbox_jupyter_token }}
         run: |
           python -m virtualenv venv
           source venv/bin/activate
@@ -72,6 +72,8 @@ jobs:
         if: steps.check-tag.outputs.publish == 'true'
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+          MapboxAccessTokenJupyter: ${{ secrets.mapbox_jupyter_token }}
         run: |
+          source venv/bin/activate
           cd bindings/kepler.gl-jupyter/js
           npm publish
