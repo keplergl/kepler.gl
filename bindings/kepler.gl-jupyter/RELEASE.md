@@ -29,9 +29,11 @@ The new tag will trigger the Github Action `build-publish-pypi.yml`: __"Build Ke
 
 ### Step3:
 
-For conda-forge release, please use the repo: https://github.com/lixun910/staged-recipes/tree/keplergl-feedstock
+For conda-forge release, please use the repo: https://github.com/conda-forge/keplergl-feedstock
 
-Edit `meta.yaml` under directory `staged-recipes/recipes/kepler/gl`:
+The new version should be automatically picked and built from PyPi by conda-forge. If you want to submit a manual build:
+
+Edit `meta.yaml` under directory `recipes/`:
 
 * Update the version number 
 
@@ -47,4 +49,4 @@ source:
   sha256: cb21047b2104413af1c00ef1ac75794a19e0b578e51c69c86713911d97370167
 ```
 
-* Create a pull request and wait for manual checking from conda-forge team.
+* Create a pull request and wait for checking from conda-forge team.

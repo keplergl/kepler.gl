@@ -64,7 +64,7 @@
     "@jupyter-widgets/base": "^2 || ^3 || ^4.0.0",
     "@jupyterlab/builder": "^3.1.5",
     "global": "^4.3.0",
-    "kepler.gl": "^2.5.2",
+    "kepler.gl": "^2.5.5",
     "node-polyfill-webpack-plugin": "^1.1.2",
     "react": "^17.0.2",
     "react-copy-to-clipboard": "^5.0.2",
