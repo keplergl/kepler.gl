@@ -19,10 +19,10 @@
 // THE SOFTWARE.
 
 import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-import {routerReducer} from 'react-router-redux';
+import {routerReducer, routerMiddleware} from 'react-router-redux';
 import {taskMiddleware} from 'react-palm/tasks';
 import thunk from 'redux-thunk';
-import {routerMiddleware} from 'react-router-redux';
+
 import {browserHistory} from 'react-router';
 import appReducer from './app';
 import demoReducer from '../../../examples/demo-app/src/reducers';

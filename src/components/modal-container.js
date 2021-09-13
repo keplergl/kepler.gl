@@ -26,7 +26,7 @@ import {createSelector} from 'reselect';
 import get from 'lodash.get';
 import document from 'global/document';
 
-import {EXPORT_DATA_TYPE_OPTIONS} from 'constants/default-settings';
+import {EXPORT_DATA_TYPE_OPTIONS, EXPORT_MAP_FORMATS} from 'constants/default-settings';
 import ModalDialogFactory from './modals/modal-dialog';
 import {exportJson, exportHtml, exportData, exportImage, exportMap} from 'utils/export-utils';
 import {isValidMapInfo} from 'utils/map-info-utils';
@@ -59,7 +59,7 @@ import {
   SHARE_MAP_ID,
   OVERWRITE_MAP_ID
 } from 'constants/default-settings';
-import {EXPORT_MAP_FORMATS} from 'constants/default-settings';
+
 import KeyEvent from 'constants/keyevent';
 import {getFileFormatNames, getFileExtensions} from '../reducers/vis-state-selectors';
 

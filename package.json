@@ -185,6 +185,7 @@
     "@probe.gl/test-utils": "^3.0.1",
     "@testing-library/react-hooks": "^3.4.2",
     "@types/d3-array": "^2.0.0",
+    "@types/d3-scale": "^3.2.2",
     "@types/geojson": "^7946.0.7",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.0.0",

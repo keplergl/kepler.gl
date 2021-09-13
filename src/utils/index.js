@@ -26,7 +26,7 @@ export {
   defaultFormatter,
   FIELD_DISPLAY_FORMAT
 } from './data-utils';
-export {createNewDataEntry, datasetColorMaker} from './dataset-utils';
+export {createNewDataEntry, datasetColorMaker, findDefaultColorField} from './dataset-utils';
 export {hexToRgb} from './color-utils';
 export {errorNotification} from './notifications-utils';
 export {dataURItoBlob, downloadFile} from './export-utils';

@@ -30,8 +30,8 @@ import OptionDropdown from './option-dropdown';
 
 import Grid from './grid';
 import Button from './button';
-import {ArrowUp, ArrowDown} from 'components/common/icons';
-import {VertThreeDots} from 'components/common/icons';
+import {ArrowUp, ArrowDown, VertThreeDots} from 'components/common/icons';
+
 import {parseFieldValue} from 'utils/data-utils';
 import {adjustCellsToContainer} from './cell-size';
 

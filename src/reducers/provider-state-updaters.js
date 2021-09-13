@@ -20,7 +20,7 @@
 
 import {withTask} from 'react-palm/tasks';
 import {default as Console} from 'global/console';
-import {generateHashId, getError, isPlainObject} from 'utils/utils';
+import {generateHashId, getError, isPlainObject, toArray} from 'utils/utils';
 import {
   EXPORT_FILE_TO_CLOUD_TASK,
   ACTION_TASK,
@@ -46,7 +46,7 @@ import {
   DATASET_FORMATS,
   OVERWRITE_MAP_ID
 } from 'constants/default-settings';
-import {toArray} from 'utils/utils';
+
 import {FILE_CONFLICT_MSG} from 'cloud-providers';
 import {DATASET_HANDLERS} from 'processors/data-processor';
 

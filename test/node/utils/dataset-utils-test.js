@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {findDefaultColorField} from 'utils/dataset-utils';
-import {createNewDataEntry} from 'utils/dataset-utils';
+import {findDefaultColorField, createNewDataEntry} from 'utils/dataset-utils';
+
 import {processCsvData} from 'processors/data-processor';
 
 import csvData from 'test/fixtures/test-layer-data';
