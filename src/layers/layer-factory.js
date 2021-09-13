@@ -84,7 +84,7 @@ export const LAYER_VIS_CONFIGS = {
     label: 'layerVisConfigs.strokeWidth',
     isRanged: false,
     range: [0, 100],
-    step: 0.1,
+    step: 0.01,
     group: PROPERTY_GROUPS.stroke,
     property: 'thickness'
   },
