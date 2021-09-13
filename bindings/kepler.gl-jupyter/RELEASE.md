@@ -8,10 +8,11 @@ NOTE: __Version number of the js module **`kelergl-jupyter`** and the python mod
 
 ### Step1:
 
-Update `version_info` in  keplergl/_version.py. in bindings/kepler.gl-jupyter folder. Update `EXTENSION_SPEC_VERSION` to match the js module version
+Update `version_info` in  keplergl/_version.py. in bindings/kepler.gl-jupyter folder. Update `EXTENSION_SPEC_VERSION` to match the js module version. Update `version` in js/package
 
 ```
 git add keplergl/_version.py
+git add js/package.json
 git commit -am "keplergl==<version>"
 ```
 
