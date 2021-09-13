@@ -2055,10 +2055,10 @@
   dependencies:
     prop-types "^15.6.0"
 
-"@deck.gl/test-utils@^8.2.0":
-  version "8.3.9"
-  resolved "https://registry.yarnpkg.com/@deck.gl/test-utils/-/test-utils-8.3.9.tgz#7e62f0e802b8c38b5a2695d6f4d2a6f17c543a01"
-  integrity sha512-RF9rGIdyf0JXUW1s7IECflsgKiEmGvN9Rri0uOZKkdJjO2xZjMGV7GHCPYOjNKg3RMURbJckBNhbzoeAvdO7jQ==
+"@deck.gl/test-utils@8.2.0":
+  version "8.2.0"
+  resolved "https://registry.yarnpkg.com/@deck.gl/test-utils/-/test-utils-8.2.0.tgz#1ddef602fc0fa4644fff2e789400a09a3d22abfb"
+  integrity sha512-aIT5n7whLuTD66i6ZgZ+/W6kdkdPQp85sABRPtOWSeyVVoDD8waJEY/+OzJo0HS3R9p3aEahR/PavRKNwLyRtA==
 
 "@emotion/is-prop-valid@^0.8.1":
   version "0.8.8"

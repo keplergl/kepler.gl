@@ -15,6 +15,25 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [2.5.5] - September 12 2021
+
+- 392e9a21 [Bug] lock deck.gl to 8.2.0 (#1602)
+- 6121a343 [Chore] Fix explicit src import (#1596)
+- 0b71f399 [Bug] fix locale panel (#1603)
+- 8b42be29 [Bug] Fix integration with CARTO (#1600)
+- e8ba7a05 [Feat] add setMapControlVisibility action to set mapControl visibility (#1590)
+- 78274562 [Feat] add supportedFilterTypes to dataset (#1594)
+- 41b364a6 [Enhancement] s2 updateLayerMeta: push instead of spread (#1593)
+- 1b5e0235 fix for long processing time of data-utils::unique (#1592)
+- 91a52b16 [Enhancement] Use layer.visible prop in deck.gl when toggle layer visibility (#1591)
+- c106ee06 [Chore] Create factory for LayerLegendHeader and LayerLegendContent (#1589)
+- 878750c4 [Feat] Add MapsLayoutFactory for custom split map layouts (#1588)
+- d8db8f6f [Chore] Refactored map control and decoupled action components (#1552)
+- 2f8b19f2 [Feat] update keplergl-jupyter widget for JupyterLab 3, add build for conda-forge (#1572)
+- 6947c8c8 [Feat] Added Russian localization (#1570)
+- 9726a400 [Docs] Data container upgrade notes (#1575)
+- 070b04b2 [Feature] Abstract Data Container (#1555)
+
 ## [2.5.4] - July 31 2021
 
 - 62d03ab2 [Examples] update replace-component example (#1557)
