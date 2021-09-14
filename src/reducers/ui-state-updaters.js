@@ -795,7 +795,10 @@ export const receiveMapConfigUpdater = (state, {payload: {config = {}, options =
         ...mergedState,
         mapControls: {
           ...mergedState.mapControls,
-          mapLegend
+          mapLegend: {
+            ...mergedState.mapControls.mapLegend,
+            ...mapLegend
+          }
         }
       };
     }
