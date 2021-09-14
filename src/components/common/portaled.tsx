@@ -268,13 +268,7 @@ class Portaled extends Component<PortaledProps, PortaledState> {
                 parentSelector={() => {
                   // React modal issue: https://github.com/reactjs/react-modal/issues/769
                   // failed to execute removeChild on parent node when it is already unmounted
-                  return (
-                    // @ts-ignore
-                    ((context && context.current) || {
-                      removeChild: () => {},
-                      appendChild: () => {}
-                    }) as HTMLElement
-                  );
+                  return (context && context.current) || document.body;
                 }}
                 onRequestClose={onClose}
               >
@@ -284,7 +278,7 @@ class Portaled extends Component<PortaledProps, PortaledState> {
                   style={{
                     position: 'fixed',
                     opacity: isVisible ? 1 : 0,
-                    transition: this.props.theme.transition,
+                    transition: this.props.theme.transitionFast,
                     marginTop: isVisible ? '0px' : '14px',
                     // @ts-ignore
                     ...pos

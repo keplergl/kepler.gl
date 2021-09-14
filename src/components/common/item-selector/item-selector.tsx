@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, ComponentType, MouseEventHandler} from 'react';
+import React, {Component, createRef, ComponentType, MouseEventHandler, RefObject} from 'react';
 import classnames from 'classnames';
 import uniqBy from 'lodash.uniqby';
 import listensToClickOutside from 'react-onclickoutside';
@@ -29,8 +29,9 @@ import ChickletedInput from './chickleted-input';
 import Typeahead from './typeahead';
 import {Delete, ArrowDown} from 'components/common/icons';
 import DropdownList, {ListItem} from './dropdown-list';
-
+import Portaled from 'components/common/portaled';
 import {toArray} from '@kepler.gl/utils';
+import {observeDimensions, unobserveDimensions} from '@kepler.gl/utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 
@@ -100,6 +101,7 @@ const DropdownSelectActionRight = styled.div`
 
 interface DropdownWrapperProps {
   placement?: string;
+  width: number;
 }
 
 const DropdownWrapper = styled.div<DropdownWrapperProps>`
@@ -107,12 +109,7 @@ const DropdownWrapper = styled.div<DropdownWrapperProps>`
   width: 100%;
   left: 0;
   z-index: ${props => props.theme.dropdownWrapperZ};
-  position: absolute;
-  bottom: ${props => (props.placement === 'top' ? props.theme.inputBoxHeight : 'auto')};
-  margin-top: ${props =>
-    props.placement === 'bottom' ? `${props.theme.dropdownWapperMargin}px` : 'auto'};
-  margin-bottom: ${props =>
-    props.placement === 'top' ? `${props.theme.dropdownWapperMargin}px` : 'auto'};
+  width: ${props => props.width}px;
 `;
 
 export type ItemSelectorProps = {
@@ -155,6 +152,7 @@ export type ItemSelectorProps = {
   DropDownLineItemRenderComponent?: ComponentType<any>;
   CustomChickletComponent?: ComponentType<any>;
   intl: IntlShape;
+  className?: string;
 };
 
 class ItemSelector extends Component<ItemSelectorProps> {
@@ -168,11 +166,37 @@ class ItemSelector extends Component<ItemSelectorProps> {
   };
 
   state = {
-    showTypeahead: false
+    showTypeahead: false,
+    dimensions: {
+      width: 200
+    }
   };
+
+  componentDidMount() {
+    // @ts-ignore merge prev upsteream
+    if (this.props.showDropdownOnMount) {
+      this.setState({showTypeahead: true});
+    }
+
+    if (this.root.current instanceof HTMLElement) {
+      observeDimensions(this.root.current, this._handleResize);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.root.current instanceof HTMLElement) {
+      unobserveDimensions(this.root.current);
+    }
+  }
+
+  root: RefObject<HTMLDivElement> = createRef();
 
   handleClickOutside = () => {
     this._hideTypeahead();
+  };
+
+  _handleResize = dimensions => {
+    this.setState({dimensions});
   };
 
   _hideTypeahead() {
@@ -248,34 +272,38 @@ class ItemSelector extends Component<ItemSelectorProps> {
 
   _renderDropdown(intl: IntlShape) {
     const {placement = 'bottom'} = this.props;
+    const {dimensions} = this.state;
+
     return (
-      <DropdownWrapper placement={placement}>
-        <Typeahead
-          customClasses={{
-            results: 'list-selector',
-            input: 'typeahead__input',
-            listItem: 'list__item',
-            listAnchor: 'list__item__anchor'
-          }}
-          options={this.props.options}
-          filterOption={this.props.filterOption}
-          fixedOptions={this.props.fixedOptions}
-          placeholder={
-            this.props.typeaheadPlaceholder || intl
-              ? intl.formatMessage({id: 'placeholder.search'})
-              : 'Search'
-          }
-          onOptionSelected={this._selectItem}
-          customListComponent={this.props.DropDownRenderComponent}
-          customListHeaderComponent={this.props.DropdownHeaderComponent}
-          customListItemComponent={this.props.DropDownLineItemRenderComponent}
-          displayOption={Accessor.generateOptionToStringFor(this.props.displayOption)}
-          searchable={this.props.searchable}
-          showOptionsWhenEmpty
-          selectedItems={toArray(this.props.selectedItems)}
-          light={this.props.inputTheme === 'light'}
-        />
-      </DropdownWrapper>
+      <Portaled left={0} top={0} isOpened={this.state.showTypeahead}>
+        <DropdownWrapper placement={placement} width={dimensions?.width}>
+          <Typeahead
+            customClasses={{
+              results: 'list-selector',
+              input: 'typeahead__input',
+              listItem: 'list__item',
+              listAnchor: 'list__item__anchor'
+            }}
+            options={this.props.options}
+            filterOption={this.props.filterOption}
+            fixedOptions={this.props.fixedOptions}
+            placeholder={
+              this.props.typeaheadPlaceholder || intl
+                ? intl.formatMessage({id: 'placeholder.search'})
+                : 'Search'
+            }
+            onOptionSelected={this._selectItem}
+            customListComponent={this.props.DropDownRenderComponent}
+            customListHeaderComponent={this.props.DropdownHeaderComponent}
+            customListItemComponent={this.props.DropDownLineItemRenderComponent}
+            displayOption={Accessor.generateOptionToStringFor(this.props.displayOption)}
+            searchable={this.props.searchable}
+            showOptionsWhenEmpty
+            selectedItems={toArray(this.props.selectedItems)}
+            light={this.props.inputTheme === 'light'}
+          />
+        </DropdownWrapper>
+      </Portaled>
     );
   }
 
@@ -299,7 +327,7 @@ class ItemSelector extends Component<ItemSelectorProps> {
     const intl = this.props.intl;
 
     return (
-      <div className="item-selector">
+      <div className={classnames('item-selector', this.props.className)} ref={this.root}>
         <div style={{position: 'relative'}}>
           {/* this part is used to display the label */}
           {this.props.multiSelect ? (
@@ -340,7 +368,7 @@ class ItemSelector extends Component<ItemSelectorProps> {
             </StyledDropdownSelect>
           )}
           {/* this part is used to built the list */}
-          {this.state.showTypeahead && this._renderDropdown(intl)}
+          {this._renderDropdown(intl)}
         </div>
       </div>
     );
