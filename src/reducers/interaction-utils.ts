@@ -39,9 +39,12 @@ import {
 
 /**
  * Minus sign used in tooltip formatting.
- * \u2212 is the minus sign that d3-format uses for decimal number formatting
+ * \u2212 or \u002D is the minus sign that d3-format uses for decimal number formatting
+ * d3-format 2.0 uses \u002D
  */
 export const TOOLTIP_MINUS_SIGN = '\u2212';
+// both are posible negative signs
+export const NEGATIVE_SIGNS = ['\u002D', '\u2212'];
 
 export const BRUSH_CONFIG: {
   range: [number, number];
@@ -134,12 +137,13 @@ export function getTooltipDisplayDeltaValue({
           ? TOOLTIP_FORMATS.DECIMAL_PERCENT_FULL_2[TOOLTIP_KEY]
           : item.format || TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_3[TOOLTIP_KEY];
 
-      displayDeltaValue = getFormatter(deltaFormat)(deltaValue);
+      displayDeltaValue = getFormatter(deltaFormat, field)(deltaValue);
 
       // safely cast string
       displayDeltaValue = defaultFormatter(displayDeltaValue);
       const deltaFirstChar = displayDeltaValue.charAt(0);
-      if (deltaFirstChar !== '+' && deltaFirstChar !== TOOLTIP_MINUS_SIGN) {
+
+      if (deltaFirstChar !== '+' && !NEGATIVE_SIGNS.includes(deltaFirstChar)) {
         displayDeltaValue = `+${displayDeltaValue}`;
       }
     } else {

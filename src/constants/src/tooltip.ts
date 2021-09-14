@@ -38,13 +38,19 @@ export const TOOLTIP_FORMATS = {
   },
   DECIMAL_SHORT: {
     id: 'DECIMAL_SHORT',
-    label: '10k',
+    label: '12345 → 10k',
     format: '.1s',
+    type: TOOLTIP_FORMAT_TYPES.DECIMAL
+  },
+  DECIMAL_COMMA: {
+    id: 'DECIMAL_COMMA',
+    label: '12345 → 12,345',
+    format: ',',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_SHORT_COMMA: {
     id: 'DECIMAL_SHORT_COMMA',
-    label: '12.3k',
+    label: '12345 → 12.3k',
     format: '.3~s',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
@@ -68,14 +74,14 @@ export const TOOLTIP_FORMATS = {
   },
   DECIMAL_DECIMAL_FIXED_2: {
     id: 'DECIMAL_DECIMAL_FIXED_2',
-    label: '1.23',
-    format: '.2f',
+    label: '1.2345 → 1.23',
+    format: '.2~f',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_DECIMAL_FIXED_3: {
     id: 'DECIMAL_DECIMAL_FIXED_3',
-    label: '1.234',
-    format: '.3f',
+    label: '1.2345 → 1.234',
+    format: '.3~f',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_INT: {
@@ -86,19 +92,19 @@ export const TOOLTIP_FORMATS = {
   },
   DECIMAL_THREE: {
     id: 'DECIMAL_THREE',
-    label: '12,345.432',
-    format: ',.3f',
+    label: '12345.4321 → 12,345.432',
+    format: ',.3~f',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_DELTA: {
     id: 'DECIMAL_DELTA',
-    label: '+12,345.432',
+    label: '12345.4321 → +12,345.432',
     format: '+,.3f',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_CURRENCY: {
     id: 'DECIMAL_CURRENCY',
-    label: '$12,345.43',
+    label: '12345.4321 → $12,345.43',
     format: '$,.2f',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
