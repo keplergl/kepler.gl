@@ -196,3 +196,10 @@ export function initUiStateUpdater(
     payload: KeplerGlInitPayload;
   }
 ): UiState;
+export function receiveMapConfigUpdater(
+  state: UiState,
+  action: {
+    type?: ActionTypes.RECEIVE_MAP_CONFIG;
+    payload: ReceiveMapConfigPayload;
+  }
+): UiState;

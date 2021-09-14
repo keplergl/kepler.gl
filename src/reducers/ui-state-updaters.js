@@ -764,3 +764,42 @@ export const setLocaleUpdater = (state, {payload: {locale}}) => ({
   ...state,
   locale
 });
+
+/**
+ * Load ui state object when pass in saved map config
+ *
+ * @memberof uiStateUpdaters
+ * @type {typeof import('./ui-state-updaters').receiveMapConfigUpdater}
+ * @public
+ */
+export const receiveMapConfigUpdater = (state, {payload: {config = {}, options = {}}}) => {
+  if (!config.uiState) {
+    return state;
+  }
+
+  // merge received uistate (mapLegend and mapLocale) with previous state
+  let mergedState = state;
+
+  if (config.uiState.locale) {
+    mergedState = setLocaleUpdater(mergedState, {
+      payload: {
+        locale: config.uiState.locale
+      }
+    });
+  }
+
+  if (config.uiState.mapControls) {
+    const mapLegend = config.uiState.mapControls.mapLegend;
+    if (mapLegend) {
+      mergedState = {
+        ...mergedState,
+        mapControls: {
+          ...mergedState.mapControls,
+          mapLegend
+        }
+      };
+    }
+  }
+
+  return mergedState;
+};

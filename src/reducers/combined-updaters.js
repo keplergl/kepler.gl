@@ -20,9 +20,7 @@
 
 import {
   toggleModalUpdater,
-  toggleMapControlUpdater,
-  loadFilesSuccessUpdater as uiStateLoadFilesSuccessUpdater,
-  setLocaleUpdater
+  loadFilesSuccessUpdater as uiStateLoadFilesSuccessUpdater
 } from './ui-state-updaters';
 import {
   updateVisDataUpdater as visStateUpdateVisDataUpdater,
@@ -30,6 +28,7 @@ import {
 } from './vis-state-updaters';
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
+import {receiveMapConfigUpdater as uiStateReceiveMapConfigUpdater} from './ui-state-updaters';
 import {findMapBounds} from 'utils/data-utils';
 import {isPlainObject} from 'utils/utils';
 import {filesToDataPayload} from 'processors/file-handler';
@@ -134,11 +133,6 @@ export const addDataToMapUpdater = (state, {payload}) => {
     parsedConfig = state.visState.schema.parseSavedConfig(config);
   }
 
-  const newUiState = parsedConfig ? parsedConfig.uiState : undefined;
-  const newLocale = newUiState ? newUiState.locale : undefined;
-  const mapControls = newUiState ? newUiState.mapControls : undefined;
-  const mapLenged = mapControls ? mapControls.mapLegend : undefined;
-
   const oldLayers = state.visState.layers;
   const filterNewlyAddedLayers = layers => layers.filter(nl => !oldLayers.find(ol => ol === nl));
 
@@ -174,21 +168,13 @@ export const addDataToMapUpdater = (state, {payload}) => {
 
     pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
 
+    pick_('uiState')(
+      apply_(uiStateReceiveMapConfigUpdater, payload_({config: parsedConfig, options}))
+    ),
+
     pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null))),
 
     pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),
-
-    if_(
-      mapLenged,
-      pick_('uiState')(
-        apply_(
-          toggleMapControlUpdater,
-          payload_({panelId: 'mapLegend', index: mapLenged ? mapLenged.activeMapIndex : 0})
-        )
-      )
-    ),
-
-    if_(newLocale, pick_('uiState')(apply_(setLocaleUpdater, payload_({locale: newLocale})))),
 
     pick_('uiState')(merge_(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {}))
   ])(state);
