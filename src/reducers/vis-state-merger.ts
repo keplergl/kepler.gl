@@ -155,21 +155,20 @@ export function insertLayerAtRightOrder(
   for (const newLayer of layersToInsert) {
     // find where to insert it
     const expectedIdx = preservedOrder.indexOf(newLayer.id);
-    // if cant find place to insert, insert at the font
+    // if cant find place to insert, insert at the front
     let insertAt = 0;
 
     if (expectedIdx > 0) {
       // look for layer to insert after
       let i = expectedIdx + 1;
-      let preceedIdx = null;
-      while (i-- > 0 && preceedIdx === null) {
-        const preceedLayer = preservedOrder[expectedIdx - 1];
+      let preceedIdx = -1;
+      while (i-- > 0 && preceedIdx < 0) {
+        // keep looking for preceed layer that is already loaded
+        const preceedLayer = preservedOrder[i - 1];
         preceedIdx = layerOrderQueue.indexOf(preceedLayer);
       }
-
-      // @ts-expect-error
       if (preceedIdx > -1) {
-        // @ts-expect-error
+        // if found
         insertAt = preceedIdx + 1;
       }
     }

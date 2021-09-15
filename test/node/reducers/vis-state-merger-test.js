@@ -1744,39 +1744,123 @@ test('VisStateMerger -> import polygon filter map', t => {
 });
 
 test('VisStateMerger -> insertLayerAtRightOrder -> to empty config', t => {
-  const preservedOrder = ['a', 'b', 'c', 'd'];
-
-  const batches = [
-    {load: [{id: 'b'}], expectedLayers: [{id: 'b'}], expectedOrder: [0]},
+  const testCases = [
     {
-      load: [{id: 'a'}, {id: 'c'}],
-      expectedLayers: [{id: 'b'}, {id: 'a'}, {id: 'c'}],
-      expectedOrder: [1, 0, 2]
-    },
-    {
-      load: [{id: 'd'}],
+      preservedOrder: ['a', 'b', 'c', 'd'],
+      batches: [
+        {
+          load: [{id: 'b'}],
+          expectedLayers: [{id: 'b'}],
+          expectedOrder: [0]
+        },
+        {
+          load: [{id: 'a'}, {id: 'c'}],
+          expectedLayers: [{id: 'b'}, {id: 'a'}, {id: 'c'}],
+          expectedOrder: [1, 0, 2]
+        },
+        {
+          load: [{id: 'd'}],
+          expectedLayers: [{id: 'b'}, {id: 'a'}, {id: 'c'}, {id: 'd'}],
+          expectedOrder: [1, 0, 2, 3]
+        }
+      ],
       expectedLayers: [{id: 'b'}, {id: 'a'}, {id: 'c'}, {id: 'd'}],
       expectedOrder: [1, 0, 2, 3]
+    },
+    {
+      preservedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h'],
+      batches: [
+        {
+          load: [{id: '6'}],
+          expectedLayers: [{id: '6'}],
+          expectedOrder: [0]
+        },
+        {
+          load: [{id: 'e'}],
+          expectedLayers: [{id: '6'}, {id: 'e'}],
+          expectedOrder: [1, 0]
+        },
+        {
+          load: [{id: 'x'}, {id: 'p'}, {id: 'w'}, {id: 'h'}],
+          expectedLayers: [{id: '6'}, {id: 'e'}, {id: 'x'}, {id: 'p'}, {id: 'w'}, {id: 'h'}],
+          expectedOrder: [2, 1, 3, 4, 0, 5]
+        },
+        {
+          load: [{id: 'm'}],
+          expectedLayers: [
+            {id: '6'},
+            {id: 'e'},
+            {id: 'x'},
+            {id: 'p'},
+            {id: 'w'},
+            {id: 'h'},
+            {id: 'm'}
+          ],
+          expectedOrder: [2, 6, 1, 3, 4, 0, 5]
+        }
+      ],
+      expectedLayers: [{id: '6'}, {id: 'e'}, {id: 'x'}, {id: 'p'}, {id: 'w'}, {id: 'h'}, {id: 'm'}],
+      expectedOrder: [2, 6, 1, 3, 4, 0, 5]
+    },
+    {
+      preservedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h'],
+      batches: [
+        {
+          load: [{id: 'x'}, {id: 'm'}],
+          expectedLayers: [{id: 'x'}, {id: 'm'}],
+          expectedOrder: [0, 1]
+        },
+        {
+          load: [{id: 'w'}],
+          expectedLayers: [{id: 'x'}, {id: 'm'}, {id: 'w'}],
+          expectedOrder: [0, 1, 2]
+        },
+        {
+          load: [{id: 'p'}],
+          expectedLayers: [{id: 'x'}, {id: 'm'}, {id: 'w'}, {id: 'p'}],
+          expectedOrder: [0, 1, 3, 2]
+        },
+        {
+          load: [{id: 'e'}, {id: 'h'}, {id: '6'}],
+          expectedLayers: [
+            {id: 'x'},
+            {id: 'm'},
+            {id: 'w'},
+            {id: 'p'},
+            {id: 'e'},
+            {id: 'h'},
+            {id: '6'}
+          ],
+          expectedOrder: [0, 1, 4, 3, 2, 6, 5]
+        }
+      ],
+      expectedOrder: [0, 1, 4, 3, 2, 6, 5],
+      expectedLayers: [{id: 'x'}, {id: 'm'}, {id: 'w'}, {id: 'p'}, {id: 'e'}, {id: 'h'}, {id: '6'}]
     }
   ];
 
-  let currentLayers = [];
-  let currentOrder = [];
+  testCases.forEach(({preservedOrder, batches, expectedOrder, expectedLayers}) => {
+    let currentLayers = [];
+    let currentOrder = [];
 
-  // add layers in batch
-  for (const batch of batches) {
-    const {newLayerOrder, newLayers} = insertLayerAtRightOrder(
-      currentLayers,
-      batch.load,
-      currentOrder,
-      preservedOrder
-    );
-    currentLayers = newLayers;
-    currentOrder = newLayerOrder;
+    // add layers in batch
+    for (const batch of batches) {
+      const {newLayerOrder, newLayers} = insertLayerAtRightOrder(
+        currentLayers,
+        batch.load,
+        currentOrder,
+        preservedOrder
+      );
+      currentLayers = newLayers;
+      currentOrder = newLayerOrder;
 
-    t.deepEqual(currentLayers, batch.expectedLayers, 'Should insert layer at correct Order');
-    t.deepEqual(currentOrder, batch.expectedOrder, 'Should reconstruct layer order');
-  }
+      t.deepEqual(currentLayers, batch.expectedLayers, 'Should insert layer at correct Order');
+      t.deepEqual(currentOrder, batch.expectedOrder, 'Should reconstruct layer order');
+    }
+
+    t.deepEqual(currentLayers, expectedLayers, 'Should insert layer at correct Order');
+    t.deepEqual(currentOrder, expectedOrder, 'Should reconstruct layer order');
+  });
 
   t.end();
 });
