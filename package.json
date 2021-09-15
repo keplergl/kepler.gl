@@ -259,8 +259,8 @@
     "minimist": "1.2.3",
     "node-fetch": "2.6.1",
     "tough-cookie": "4.0.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react": "17.0.2",
+    "react-dom": "17.0.2"
   },
   "peerDependencies": {
     "react": ">=16.3",
