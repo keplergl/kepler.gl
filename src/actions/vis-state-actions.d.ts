@@ -204,6 +204,15 @@ export function showDatasetTable(
   dataId: string
 ): Merge<ShowDatasetTableUpdaterAction, {type: ActionTypes.SHOW_DATASET_TABLE}>;
 
+export type UpdateDatasetColorUpdater = {
+  dataId: string,
+  newColor: RGBColor
+}
+export function updateTableColor(
+  dataId: string,
+  newColor: RGBColor
+): Merge<UpdateDatasetColorUpdater, {type: ActionTypes.UPDATE_TABLE_COLOR}>;
+
 export type SortTableColumnUpdaterAction = {
   dataId: string;
   column: string;

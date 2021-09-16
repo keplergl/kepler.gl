@@ -377,6 +377,10 @@ export function showDatasetTableUpdater(
   state: VisState,
   action: VisStateActions.ShowDatasetTableUpdaterAction
 ): VisState;
+export function updateTableColorUpdater(
+  state: VisState,
+  action: VisStateActions.UpdateDatasetColorUpdater
+): VisState;
 export function sortTableColumnUpdater(
   state: VisState,
   action: VisStateActions.SortTableColumnUpdaterAction

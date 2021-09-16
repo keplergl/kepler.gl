@@ -56,7 +56,7 @@ import {
 } from 'utils/filter-utils';
 import {assignGpuChannel, setFilterGpuMode} from 'utils/gpu-filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
-import {sortDatasetByColumn} from 'utils/table-utils/kepler-table';
+import {sortDatasetByColumn, copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 import {set, toArray, arrayInsert, generateHashId} from 'utils/utils';
 
 import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils';
@@ -82,6 +82,7 @@ import {pick_, merge_, swap_} from './composer-helpers';
 import {processFileContent} from 'actions/vis-state-actions';
 
 import KeplerGLSchema from 'schemas';
+import {isRGBColor} from 'utils/color-utils';
 
 // type imports
 /** @typedef {import('./vis-state-updaters').Field} Field */
@@ -1122,6 +1123,31 @@ export const showDatasetTableUpdater = (state, action) => {
     ...state,
     editingDataset: action.dataId
   };
+};
+
+/**
+ * Add custom color for datasets and layers
+ * @memberof visStateUpdaters
+ * @type {typeof import('./vis-state-updaters').updateTableColorUpdater}
+ * @public
+ */
+export const updateTableColorUpdater = (state, action) => {
+  const {dataId, newColor} = action;
+  const {datasets} = state;
+
+  if (isRGBColor(newColor)) {
+    const existing = datasets[dataId];
+    existing.updateTableColor(newColor);
+
+    return {
+      ...state,
+      datasets: {
+        ...state.datasets,
+        [dataId]: copyTableAndUpdate(existing, {})
+      }
+    };
+  }
+  return state;
 };
 
 /**

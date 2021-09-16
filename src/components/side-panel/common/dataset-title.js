@@ -18,13 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {PureComponent} from 'react';
+import React, {createRef, PureComponent} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
 
 import {CenterFlexbox, Tooltip} from 'components/common/styled-components';
 import {ArrowRight, Table, Trash} from 'components/common/icons';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
+import CustomPicker from '../layer-panel/custom-picker';
+import {Portaled} from 'components';
+import {rgbToHex} from 'utils/color-utils';
 
 function nop(_) {}
 
@@ -102,6 +105,20 @@ DatasetTitleFactory.deps = [DatasetTagFactory];
 
 export default function DatasetTitleFactory(DatasetTag) {
   class DatasetTitle extends PureComponent {
+    state = {
+      displayColorPicker: false
+    };
+
+    _handleClick = () => {
+      this.setState({displayColorPicker: !this.state.displayColorPicker});
+    };
+
+    _handleClosePicker = () => {
+      this.setState({displayColorPicker: false});
+    };
+
+    root = createRef();
+
     _onClickTitle = e => {
       e.stopPropagation();
       if (typeof this.props.onTitleClick === 'function') {
@@ -117,27 +134,44 @@ export default function DatasetTitleFactory(DatasetTag) {
         showDeleteDataset,
         onTitleClick,
         removeDataset,
-        dataset
+        dataset,
+        updateTableColor
       } = this.props;
 
       return (
-        <StyledDatasetTitle
-          className="source-data-title"
-          clickable={Boolean(showDatasetTable || onTitleClick)}
-        >
-          <DatasetTag dataset={dataset} onClick={this._onClickTitle} />
-          {showDatasetTable ? (
-            <CenterFlexbox className="source-data-arrow">
-              <ArrowRight height="12px" />
-            </CenterFlexbox>
-          ) : null}
-          {showDatasetTable ? (
-            <ShowDataTable id={dataset.id} showDatasetTable={showDatasetTable} />
-          ) : null}
-          {showDeleteDataset ? (
-            <RemoveDataset datasetKey={dataset.id} removeDataset={removeDataset} />
-          ) : null}
-        </StyledDatasetTitle>
+        <div className="custom-palette-panel" ref={this.root}>
+          <StyledDatasetTitle
+            className="source-data-title"
+            clickable={Boolean(showDatasetTable || onTitleClick)}
+          >
+            <DatasetTag
+              dataset={dataset}
+              onClick={this._onClickTitle}
+              updateTableColor={updateTableColor}
+              onClickSquare={this._handleClick}
+            />
+            <Portaled isOpened={this.state.displayColorPicker !== false} left={110} top={-50}>
+              <CustomPicker
+                color={rgbToHex(dataset.color)}
+                onChange={color =>
+                  updateTableColor(dataset.id, [color.rgb.r, color.rgb.g, color.rgb.b])
+                }
+                onSwatchClose={this._handleClosePicker}
+              />
+            </Portaled>
+            {showDatasetTable ? (
+              <CenterFlexbox className="source-data-arrow">
+                <ArrowRight height="12px" />
+              </CenterFlexbox>
+            ) : null}
+            {showDatasetTable ? (
+              <ShowDataTable id={dataset.id} showDatasetTable={showDatasetTable} />
+            ) : null}
+            {showDeleteDataset ? (
+              <RemoveDataset datasetKey={dataset.id} removeDataset={removeDataset} />
+            ) : null}
+          </StyledDatasetTitle>
+        </div>
       );
     }
   }

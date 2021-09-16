@@ -81,6 +81,7 @@ import {
 } from 'test/helpers/mock-state';
 import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
+import {assertDatasetIsTable} from '../../helpers/comparison-utils';
 
 const mockData = {
   fields: [
@@ -2782,6 +2783,7 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     datasets: {
       [testGeoJsonDataId]: oldState.datasets[testGeoJsonDataId]
     },
+
     interactionConfig: {
       tooltip: {
         id: 'tooltip',
@@ -3028,6 +3030,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
     datasets: {
       [testCsvDataId]: oldState.datasets[testCsvDataId]
     },
+
     filters: [],
     interactionConfig: {
       tooltip: {
@@ -4612,7 +4615,6 @@ test('#visStateReducer -> APPLY_CPU_FILTER has multi datasets', t => {
 test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   const initialState = CloneDeep(StateWFiles.visState);
   const previousDataset1 = initialState.datasets[testCsvDataId];
-
   // sort with default mode
   const nextState = reducer(initialState, VisStateActions.sortTableColumn());
   t.equal(nextState, initialState, 'state should not change when input is given');
@@ -4711,8 +4713,25 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   t.end();
 });
 
+test('#visStateReducer -> updateTableColor', t => {
+  const initialState = CloneDeep(StateWFiles.visState);
+  const newColor = [150, 150, 150];
+
+  const nextState = reducer(
+    initialState,
+    VisStateActions.updateTableColor(testCsvDataId, newColor)
+  );
+
+  // test dataset is table
+  assertDatasetIsTable(t, nextState.datasets[testCsvDataId]);
+  t.deepEqual(nextState.datasets[testCsvDataId].color, newColor, 'should update dataset color');
+
+  t.end();
+});
+
 test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
   const initialState = CloneDeep(StateWFiles.visState);
+
   const previousDataset1 = initialState.datasets[testCsvDataId];
 
   // pin with empty arg

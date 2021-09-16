@@ -96,6 +96,8 @@ const actionHandler = {
 
   [ActionTypes.SHOW_DATASET_TABLE]: visStateUpdaters.showDatasetTableUpdater,
 
+  [ActionTypes.UPDATE_TABLE_COLOR]: visStateUpdaters.updateTableColorUpdater,
+
   [ActionTypes.TOGGLE_FILTER_ANIMATION]: visStateUpdaters.toggleFilterAnimationUpdater,
 
   [ActionTypes.UPDATE_FILTER_ANIMATION_SPEED]: visStateUpdaters.updateFilterAnimationSpeedUpdater,

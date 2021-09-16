@@ -106,9 +106,11 @@ export class KeplerTable {
 
   getValue(columnName: string, rowIdx: number): any;
   updateColumnField(fieldIdx: number, newField: Field): void;
+  updateTableColor(newColor: RGBColor): void;
   getColumnFilterProps(fieldName: string): Field['filterProps'] | null | undefined;
   filterTable(filters: Filter[], layers: Layer[], opt?: FilterDatasetOpt): KeplerTable;
   filterTableCPU(filters: Filter[], layers: Layer[]): KeplerTable;
 }
 
 export default KeplerTable;
+export function copyTableAndUpdate(original: KeplerTable, options: {})
