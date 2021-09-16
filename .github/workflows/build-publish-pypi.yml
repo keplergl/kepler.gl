@@ -15,6 +15,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 12.x
+          registry-url: https://registry.npmjs.org/
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
