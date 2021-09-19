@@ -232,7 +232,7 @@
     "tape": "^4.9.2",
     "tape-catch": "^1.0.6",
     "typedoc-plugin-markdown": "^3.0.11",
-    "typescript": "3.8.3",
+    "typescript": "4.2.3",
     "uber-licence": "^3.1.1",
     "url-loader": "^4.1.1",
     "watchify": "^3.6.1",

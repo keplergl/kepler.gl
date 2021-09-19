@@ -1,6 +1,7 @@
-import {RGBColor, RGBAColor} from '../reducers/types';
-import {Field, Datasets, KeplerTable} from '../reducers/vis-state-updaters';
-import {LayerTextLabel, ColorRange, ColorUI, LayerVisConfig} from './layer-factory';
+import {RGBColor, RGBAColor, GpuFilter, MapState, Field, Filter, Datasets} from '../reducers';
+import {LayerTextLabel, ColorRange, ColorUI, VisConfigRange} from './layer-factory';
+
+export {LAYER_VIS_CONFIGS, LayerVisConfig} from './layer-factory';
 
 export type LayerColumns = {
   [key: string]: {value: string | null; fieldIdx: number; optional?: boolean};
@@ -38,6 +39,10 @@ export type LayerConfig = {
   animation: {
     enabled: boolean;
   };
+
+  heightField: VisualChannelField;
+  heightDomain: VisualChannelDomain;
+  heightScale: string;
 };
 
 export type VisualChannel = {
@@ -48,8 +53,8 @@ export type VisualChannel = {
   range: string;
   key: string;
   channelScaleType: string;
-  nullValue: any;
-  defaultMeasure: any;
+  nullValue?: any;
+  defaultMeasure?: any;
   accessor?: string;
   condition?: (config: any) => boolean;
   getAttributeValue?: (config: any) => (d: any) => any;
@@ -67,10 +72,11 @@ export class Layer {
     } & Partial<LayerConfig>
   );
   id: string;
-  type: string;
+  get type(): string;
+  get visualChannels(): {[key: string]: VisualChannel};
+
   config: LayerConfig;
   visConfigSettings: any;
-  visualChannels: {[key: string]: VisualChannel};
   _oldDataUpdateTriggers: any;
   hasAllColumns(): boolean;
   updateLayerConfig(p: Partial<LayerConfig>): Layer;
@@ -81,10 +87,33 @@ export class Layer {
   updateLayerColorUI(prop: string, newConfig: Partial<ColorUI>): Layer;
   isValidToSave(): boolean;
   validateVisualChannel(channel: string);
-  getVisualChannelDescription(key: string): {label: string, measure: string};
 
   static findDefaultLayerProps(dataset: KeplerTable, foundLayers?: any[]);
   // static findDefaultColumnField(defaultFields, allFields)
+  getVisualChannelDescription(key: string): VisualChannelDescription;
+  isLayerHovered(objectInfo: any): boolean;
+  hasHoveredObject(objectInfo: any): any | null;
+  getHoverData(object: any, allData?: KeplerTable['allData'], fields?: KeplerTable['fields']): any;
+  registerVisConfig(config: LayerVisConfig): any;
+  getDefaultLayerConfig(config: {[key: string]: any}): any;
+  getColorScale(
+    colorScale: string,
+    colorDomain: VisualChannelDomain,
+    colorRange: VisConfigRange
+  ): () => any | null;
+  getVisChannelScale(
+    heightScale: string,
+    heightDomain: VisualChannelDomain,
+    heightRange: VisConfigRange
+  ): () => any | null;
+  getEncodedChannelValue(
+    scale: (value) => any,
+    data: any[],
+    field: VisualChannelField,
+    nullValue: any,
+    getValue: (value) => any
+  ): any;
+  getDefaultDeckLayerProps(props: {idx: number; gpuFilter: GpuFilter; mapState: MapState}): any;
 }
 
 export type LayerClassesType = {
@@ -104,5 +133,5 @@ export type LayerClassesType = {
 };
 export const LayerClasses: LayerClassesType;
 
-export type OVERLAY_TYPE = {[key: string]: string}
+export type OVERLAY_TYPE = {[key: string]: string};
 export const LAYER_ID_LENGTH: number;

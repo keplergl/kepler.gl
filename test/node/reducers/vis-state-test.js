@@ -4615,6 +4615,8 @@ test('#visStateReducer -> APPLY_CPU_FILTER has multi datasets', t => {
 test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   const initialState = CloneDeep(StateWFiles.visState);
   const previousDataset1 = initialState.datasets[testCsvDataId];
+  const previousKeys = Object.keys(previousDataset1);
+
   // sort with default mode
   const nextState = reducer(initialState, VisStateActions.sortTableColumn());
   t.equal(nextState, initialState, 'state should not change when input is given');
@@ -4653,7 +4655,7 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
     21
   ];
   const newKeys = Object.keys(nextState2.datasets[testCsvDataId]);
-  const addedKeys = newKeys.filter(k => !Object.keys(previousDataset1).includes(k));
+  const addedKeys = newKeys.filter(k => !previousKeys.includes(k));
 
   t.deepEqual(
     addedKeys,
