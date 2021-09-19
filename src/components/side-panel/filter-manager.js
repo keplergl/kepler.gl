@@ -29,7 +29,14 @@ import FilterPanelFactory from './filter-panel/filter-panel';
 FilterManagerFactory.deps = [SourceDataCatalogFactory, FilterPanelFactory];
 
 function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
-  const FilterManager = ({filters = [], datasets, layers, showDatasetTable, visStateActions}) => {
+  const FilterManager = ({
+    filters = [],
+    datasets,
+    layers,
+    showDatasetTable,
+    updateTableColor,
+    visStateActions
+  }) => {
     const {
       addFilter,
       enlargeFilter,
@@ -55,7 +62,11 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
 
     return (
       <div className="filter-manager">
-        <SourceDataCatalog datasets={datasets} showDatasetTable={showDatasetTable} />
+        <SourceDataCatalog
+          datasets={datasets}
+          showDatasetTable={showDatasetTable}
+          updateTableColor={updateTableColor}
+        />
         <SidePanelDivider />
         <SidePanelSection>
           {reversedIndex.map(idx => (
@@ -93,6 +104,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
     layers: PropTypes.arrayOf(PropTypes.any).isRequired,
     filters: PropTypes.arrayOf(PropTypes.any).isRequired,
     showDatasetTable: PropTypes.func.isRequired,
+    updateTableColor: PropTypes.func.isRequired,
     visStateActions: PropTypes.object.isRequired,
 
     // fields can be undefined when dataset is not selected

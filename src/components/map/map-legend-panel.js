@@ -22,22 +22,14 @@ import React, {useCallback} from 'react';
 import classnames from 'classnames';
 import {Legend} from 'components/common/icons';
 import {FormattedMessage} from 'localization';
-import {MapControlButton, Tooltip} from 'components/common/styled-components';
-import MapControlTooltipFactory from './map-control-tooltip';
+import {MapControlButton} from 'components/common/styled-components';
 import MapControlPanelFactory from './map-control-panel';
 import MapLegendFactory from './map-legend';
+import TippyTooltip from 'components/common/tippy-tooltip';
 
-const MapLegendTooltip = ({id, message}) => (
-  <Tooltip id={id} place="left" effect="solid">
-    <span>
-      <FormattedMessage id={message} />
-    </span>
-  </Tooltip>
-);
+MapLegendPanelFactory.deps = [MapControlPanelFactory, MapLegendFactory];
 
-MapLegendPanelFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory, MapLegendFactory];
-
-function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
+function MapLegendPanelFactory(MapControlPanel, MapLegend) {
   const defaultActionIcons = {
     legend: Legend
   };
@@ -61,24 +53,33 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     const onClick = useCallback(
       e => {
         e.preventDefault();
+        if (mapControls?.mapDraw?.active) {
+          onToggleMapControl('mapDraw');
+        }
         onToggleMenuPanel();
       },
-      [onToggleMenuPanel]
+      [onToggleMenuPanel, onToggleMapControl, mapControls?.mapDraw?.active]
     );
 
     if (!mapLegend.show) {
       return null;
     }
     return !isActive ? (
-      (<MapControlButton
-        data-tip
-        data-for="show-legend"
-        className={classnames('map-control-button', 'show-legend', {isActive})}
-        onClick={onClick}
+      (<TippyTooltip
+        placement="left"
+        render={() => (
+          <div id="show-legend">
+            <FormattedMessage id="tooltip.showLegend" />
+          </div>
+        )}
       >
-        <actionIcons.legend height="22px" />
-        <MapLegendTooltip id="show-legend" message={'tooltip.showLegend'} />
-      </MapControlButton>)
+        <MapControlButton
+          onClick={onClick}
+          className={classnames('map-control-button', 'show-legend', {isActive})}
+        >
+          <actionIcons.legend height="22px" />
+        </MapControlButton>
+      </TippyTooltip>)
     ) : (
       (<MapControlPanel
         scale={scale}

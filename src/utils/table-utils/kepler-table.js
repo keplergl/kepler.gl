@@ -147,6 +147,14 @@ class KeplerTable {
   }
 
   /**
+   * Update dataset color by custom color
+   * @param {import('reducers/types').RGBColor} newColor
+   */
+  updateTableColor(newColor) {
+    this.color = newColor;
+  }
+
+  /**
    * Save filterProps to field and retrieve it
    * @param {string} columnName
    */
@@ -465,6 +473,12 @@ export function copyTable(original) {
   return Object.assign(Object.create(Object.getPrototypeOf(original)), original);
 }
 
+/**
+ * @type {typeof import('./kepler-table').copyTableAndUpdate}
+ * @param {KeplerTable} original
+ * @param {*} options
+ * @returns
+ */
 export function copyTableAndUpdate(original, options = {}) {
   return Object.entries(options).reduce((acc, entry) => {
     acc[entry[0]] = entry[1];

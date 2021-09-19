@@ -177,6 +177,7 @@ export {default as MapLayerSelector} from './common/map-layer-selector';
 export {default as VerticalToolbar} from './common/vertical-toolbar';
 export {default as ToolbarItem} from './common/toolbar-item';
 export {SharingUrl} from './modals/share-map-modal';
+export {default as TippyTooltip} from './common/tippy-tooltip';
 
 // side pane components
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';

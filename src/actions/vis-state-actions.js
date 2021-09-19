@@ -111,7 +111,7 @@ export function layerVisConfigChange(oldLayer, newVisConfig) {
 
 /**
  * Set the color palette ui for layer color
- * @memberOf visStateActions
+ * @memberof visStateActions
  * @param oldLayer - layer to be updated
  * @param prop - which color prop
  * @param newConfig - to be merged
@@ -335,6 +335,23 @@ export function showDatasetTable(dataId) {
   return {
     type: ActionTypes.SHOW_DATASET_TABLE,
     dataId
+  };
+}
+
+/**
+ * Update dataset color to custom by means of color picker
+ * @memberof visStateActions
+ * @param dataId dataset `id` this custom color is associated with
+ * @param newColor custom color in RGBformat
+ * @returns action
+ * @type {typeof import('./vis-state-actions').updateTableColor}
+ * @public
+ */
+export function updateTableColor(dataId, newColor) {
+  return {
+    type: ActionTypes.UPDATE_TABLE_COLOR,
+    dataId,
+    newColor
   };
 }
 

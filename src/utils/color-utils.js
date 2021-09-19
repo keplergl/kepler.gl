@@ -104,3 +104,20 @@ export function createLinearGradient(direction, colors) {
 
   return `linear-gradient(to ${direction}, ${bands.join(',')})`;
 }
+
+/**
+ * Checking if color is RGB
+ * @param {*} color
+ * @returns boolean
+ */
+export function isRGBColor(color) {
+  if (
+    color &&
+    Array.isArray(color) &&
+    color.length === 3 &&
+    color.every(n => Number.isFinite(n) && n <= 255 && n >= 0)
+  ) {
+    return true;
+  }
+  return false;
+}

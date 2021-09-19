@@ -37,6 +37,7 @@ function SourceDataCatalogFactory(DatasetTitle, DatasetInfo) {
     showDatasetTable,
     removeDataset,
     onTitleClick,
+    updateTableColor,
     showDeleteDataset = false
   }) => (
     <SourceDataCatalogWrapper className="source-data-catalog">
@@ -48,6 +49,7 @@ function SourceDataCatalogFactory(DatasetTitle, DatasetInfo) {
             removeDataset={removeDataset}
             dataset={dataset}
             onTitleClick={onTitleClick}
+            updateTableColor={updateTableColor}
           />
           {showDatasetTable ? <DatasetInfo dataset={dataset} /> : null}
         </SidePanelSection>
