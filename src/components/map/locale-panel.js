@@ -83,7 +83,7 @@ function LocalePanelFactory(MapControlTooltip, MapControlToolbar) {
               active={isActive}
               disableClose={disableClose}
             >
-              {currentLocal.toUpperCase()}
+              <span className="map-control-button__locale">{currentLocal.toUpperCase()}</span>
             </MapControlButton>
           </TippyTooltip>
         </div>

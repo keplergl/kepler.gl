@@ -69,7 +69,13 @@ Object.defineProperty(window, 'clipboardData', {
 });
 
 // These do not seem to be present under jsdom v16, even though the documentation suggests that should be the case
-['addEventListener', 'removeEventListener', 'dispatchEvent'].forEach(prop => {
+[
+  'addEventListener',
+  'removeEventListener',
+  'dispatchEvent',
+  'requestAnimationFrame',
+  'cancelAnimationFrame'
+].forEach(prop => {
   window[prop] = () => {};
 });
 
