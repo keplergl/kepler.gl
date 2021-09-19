@@ -23,12 +23,12 @@ import styled from 'styled-components';
 import {ChickletButton, ChickletTag} from 'components/common/item-selector/chickleted-input';
 import {Hash, Delete} from 'components/common/icons';
 import DropdownList from 'components/common/item-selector/dropdown-list';
-import {Tooltip} from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
 import onClickOutside from 'react-onclickoutside';
 import {FIELD_OPTS} from 'constants/default-settings';
 import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from 'constants/tooltip';
 import {getFormatter} from 'utils/data-utils';
+import TippyTooltip from 'components/common/tippy-tooltip';
 
 const TIME_DISPLAY = '2020-05-11 14:00';
 const getValue = fmt => fmt[TOOLTIP_KEY];
@@ -133,17 +133,9 @@ function TooltipChickletFactory(dataId, config, onChange, fields) {
           <ChickletTag>{displayOption(item)}</ChickletTag>
           {formatLabels.length > 1 && (
             <ChickletAddonWrapper>
-              <ChickletAddon data-tip data-for={`addon-${tooltipField.name}`}>
-                <IconDiv status={hashStyle}>
-                  <Hash
-                    height="8px"
-                    onClick={e => {
-                      e.stopPropagation();
-                      this.setState({show: Boolean(!show)});
-                    }}
-                  />
-                </IconDiv>
-                <Tooltip id={`addon-${tooltipField.name}`} effect="solid">
+              <TippyTooltip
+                placement="top"
+                render={() => (
                   <span>
                     {hasFormat ? (
                       getFormatTooltip(formatLabels, tooltipField.format)
@@ -151,8 +143,20 @@ function TooltipChickletFactory(dataId, config, onChange, fields) {
                       <FormattedMessage id={'fieldSelector.formatting'} />
                     )}
                   </span>
-                </Tooltip>
-              </ChickletAddon>
+                )}
+              >
+                <ChickletAddon>
+                  <IconDiv status={hashStyle}>
+                    <Hash
+                      height="8px"
+                      onClick={e => {
+                        e.stopPropagation();
+                        this.setState({show: Boolean(!show)});
+                      }}
+                    />
+                  </IconDiv>
+                </ChickletAddon>
+              </TippyTooltip>
               {show && (
                 <StyledPopover>
                   <DropdownList

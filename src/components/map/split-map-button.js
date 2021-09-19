@@ -24,6 +24,8 @@ import {MapControlButton} from 'components/common/styled-components';
 import {Delete, Split} from 'components/common/icons';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlPanelFactory from './map-control-panel';
+import {FormattedMessage} from '../../localization';
+import TippyTooltip from '../common/tippy-tooltip';
 
 SplitMapButtonFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory];
 
@@ -56,22 +58,23 @@ function SplitMapButtonFactory(MapControlTooltip) {
     if (!splitMap.show) {
       return null;
     }
-
     return isVisible ? (
-      (<MapControlButton
-        active={isSplit}
-        onClick={onClick}
-        key={`split-${isSplit}`}
-        className={classnames('map-control-button', 'split-map', {'close-map': isSplit})}
-        data-tip
-        data-for="action-toggle"
+      (<TippyTooltip
+        placement="left"
+        render={() => (
+          <div id="action-toggle">
+            <FormattedMessage id={isSplit ? 'tooltip.closePanel' : 'tooltip.switchToDualView'} />
+          </div>
+        )}
       >
-        {isSplit ? <actionIcons.delete height="18px" /> : <actionIcons.split height="18px" />}
-        <MapControlTooltip
-          id="action-toggle"
-          message={isSplit ? 'tooltip.closePanel' : 'tooltip.switchToDualView'}
-        />
-      </MapControlButton>)
+        <MapControlButton
+          active={isSplit}
+          onClick={onClick}
+          className={classnames('map-control-button', 'split-map', {'close-map': isSplit})}
+        >
+          {isSplit ? <actionIcons.delete height="18px" /> : <actionIcons.split height="18px" />}
+        </MapControlButton>
+      </TippyTooltip>)
     ) : null;
   };
 

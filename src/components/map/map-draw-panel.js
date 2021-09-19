@@ -35,6 +35,8 @@ import ToolbarItem from 'components/common/toolbar-item';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlPanelFactory from './map-control-panel';
 import MapControlToolbarFactory from './map-control-toolbar';
+import {FormattedMessage} from '../../localization';
+import TippyTooltip from 'components/common/tippy-tooltip';
 
 MapDrawPanelFactory.deps = [
   MapControlTooltipFactory,
@@ -100,19 +102,25 @@ function MapDrawPanelFactory(MapControlTooltip, MapControlPanel, MapControlToolb
               />
             </MapControlToolbar>
           ) : null}
-          <MapControlButton
-            onClick={e => {
-              e.preventDefault();
-              onToggleMenuPanel();
-            }}
-            active={isActive}
-            className={classnames('map-control-button', 'map-draw', {isActive})}
-            data-tip
-            data-for="map-draw"
+          <TippyTooltip
+            placement="left"
+            render={() => (
+              <div id="map-draw">
+                <FormattedMessage id="tooltip.DrawOnMap" />
+              </div>
+            )}
           >
-            <actionIcons.polygon height="22px" />
-            <MapControlTooltip id="map-draw" message="tooltip.DrawOnMap" />
-          </MapControlButton>
+            <MapControlButton
+              className={classnames('map-control-button', 'map-draw', {isActive})}
+              onClick={e => {
+                e.preventDefault();
+                onToggleMenuPanel();
+              }}
+              active={isActive}
+            >
+              <actionIcons.polygon height="22px" />
+            </MapControlButton>
+          </TippyTooltip>
         </div>
       );
     }
