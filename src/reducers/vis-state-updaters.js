@@ -77,7 +77,12 @@ import {
 
 import {Layer, LayerClasses, LAYER_ID_LENGTH} from 'layers';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
-import {EDITOR_MODES, SORT_ORDER, FILTER_TYPES} from 'constants/default-settings';
+import {
+  EDITOR_MODES,
+  SORT_ORDER,
+  FILTER_TYPES,
+  MAX_DEFAULT_TOOLTIPS
+} from 'constants/default-settings';
 import {pick_, merge_, swap_} from './composer-helpers';
 import {processFileContent} from 'actions/vis-state-actions';
 
@@ -191,6 +196,7 @@ export const INITIAL_VIS_STATE = {
   hoverInfo: undefined,
   clicked: undefined,
   mousePos: {},
+  maxDefaultTooltips: MAX_DEFAULT_TOOLTIPS,
 
   // this is used when user split maps
   splitMaps: [
@@ -1741,7 +1747,10 @@ export function addDefaultLayers(state, datasets) {
  * @returns {Object} nextState
  */
 export function addDefaultTooltips(state, dataset) {
-  const tooltipFields = findFieldsToShow(dataset);
+  const tooltipFields = findFieldsToShow({
+    ...dataset,
+    maxDefaultTooltips: state.maxDefaultTooltips
+  });
   const merged = {
     ...state.interactionConfig.tooltip.config.fieldsToShow,
     ...tooltipFields

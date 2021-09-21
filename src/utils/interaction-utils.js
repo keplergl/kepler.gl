@@ -20,7 +20,6 @@
 
 import {
   DEFAULT_TOOLTIP_FIELDS,
-  MAX_DEFAULT_TOOLTIPS,
   ALL_FIELD_TYPES,
   TRIP_POINT_FIELDS
 } from 'constants/default-settings';
@@ -87,7 +86,7 @@ export const BRUSH_CONFIG = {
 /**
  * @type {typeof import('./interaction-utils').findFieldsToShow}
  */
-export function findFieldsToShow({fields, id}) {
+export function findFieldsToShow({fields, id, maxDefaultTooltips}) {
   // first find default tooltip fields for trips
   const fieldsToShow = DEFAULT_TOOLTIP_FIELDS.reduce((prev, curr) => {
     if (fields.find(({name}) => curr.name === name)) {
@@ -97,11 +96,11 @@ export function findFieldsToShow({fields, id}) {
   }, []);
 
   return {
-    [id]: fieldsToShow.length ? fieldsToShow : autoFindTooltipFields(fields)
+    [id]: fieldsToShow.length ? fieldsToShow : autoFindTooltipFields(fields, maxDefaultTooltips)
   };
 }
 
-function autoFindTooltipFields(fields) {
+function autoFindTooltipFields(fields, maxDefaultTooltips) {
   const ptFields = _mergeFieldPairs(TRIP_POINT_FIELDS);
   // filter out the default fields that contains lat and lng and any geometry
   const fieldsToShow = fields.filter(
@@ -115,7 +114,7 @@ function autoFindTooltipFields(fields) {
       type !== 'object'
   );
 
-  return fieldsToShow.slice(0, MAX_DEFAULT_TOOLTIPS).map(({name}) => {
+  return fieldsToShow.slice(0, maxDefaultTooltips).map(({name}) => {
     return {
       name,
       format: null
