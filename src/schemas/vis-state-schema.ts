@@ -60,7 +60,7 @@ export type modifiedType = {
   stroked?: boolean;
 };
 
-export type VisState = {
+export interface VisState {
   mapInfo: MapInfo;
   layers: Layer[];
   layerData: any[];
@@ -90,7 +90,7 @@ export type VisState = {
   mergers: VisStateMergers;
   schema: typeof KeplerGLSchema;
   preserveLayerOrder?: number[];
-};
+}
 
 export type Merger = {
   merge: <S extends VisState>(state: S, config: any, fromConfig?: boolean) => S;

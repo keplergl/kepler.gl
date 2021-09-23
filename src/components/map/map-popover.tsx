@@ -139,7 +139,13 @@ function createVirtualReference(container, x, y, size = 0) {
     right: left + size,
     bottom: top + size,
     width: size,
-    height: size
+    height: size,
+    // These properties are present to meet the DOMRect interface
+    y: top,
+    x: left,
+    toJSON() {
+      return this;
+    }
   };
 }
 

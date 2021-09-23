@@ -153,6 +153,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
         name: 'hover',
         events: [{type: 'mousemove', x: 200, y: 200}, {wait: 50}],
         onBeforeEvents,
+        // eslint-disable-next-line max-statements
         onAfterEvents: ({deck, layers}) => {
           assert.is(hoverEvents.length, 1, 'onHover is called');
           assert.is(hoverEvents[0].info.index, 15, 'object is picked');
@@ -226,11 +227,15 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
             left: 200,
             right: 200,
             top: 200,
-            width: 0
+            width: 0,
+            y: 200,
+            x: 200
           };
 
+          const {toJSON, ...rect} = tippyProps.getReferenceClientRect();
+
           t.deepEqual(
-            tippyProps.getReferenceClientRect(),
+            rect,
             expectedClientRect,
             'getReferenceClientRect should return correct rect'
           );

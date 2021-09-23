@@ -298,7 +298,11 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
   }
 
   getSelection() {
-    let index = Number(this.state.selectionIndex);
+    let index: number | null = this.state.selectionIndex;
+    if (index === null) {
+      return null;
+    }
+    index = Number(index);
 
     if (this._hasCustomValue()) {
       if (index === 0) {

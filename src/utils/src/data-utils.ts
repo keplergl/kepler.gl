@@ -86,13 +86,17 @@ export function getSampleData(data, sampleSize = 500, getValue = d => d) {
 /**
  * Convert different time format to unix milliseconds
  */
-export function timeToUnixMilli(value: string | number, format: string): Millisecond | null {
+export function timeToUnixMilli(value: string | number | Date, format: string): Millisecond | null {
   if (notNullorUndefined(value)) {
-    return typeof value === 'string'
-      ? moment.utc(value, format).valueOf()
-      : format === 'x'
-      ? value * 1000
-      : value;
+    if (typeof value === 'string') {
+      return moment.utc(value, format).valueOf();
+    }
+    if (typeof value === 'number') {
+      return format === 'x' ? value * 1000 : value;
+    }
+    if (value instanceof Date) {
+      return value.valueOf();
+    }
   }
   return null;
 }

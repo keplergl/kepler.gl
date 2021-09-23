@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {ReactNode} from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import {Logout, Login} from 'components/common/icons';
 import {CenterVerticalFlexbox, Button, CheckMark} from 'components/common/styled-components';
@@ -97,7 +97,7 @@ const LogoutButton = ({onClick}: OnClickProps) => (
 
 interface ActionButtonProps {
   isConnected?: boolean;
-  actionName?: ReactNode | null;
+  actionName?: string | null;
   isReady?: boolean;
 }
 
@@ -111,15 +111,15 @@ const ActionButton = ({isConnected, actionName = null, isReady}: ActionButtonPro
 interface CloudTileProps {
   onSelect?: React.MouseEventHandler<HTMLDivElement>;
   // default to login
-  onConnect?: React.MouseEventHandler<HTMLDivElement> | null;
+  onConnect?: (() => void) | null;
   // default to logout
-  onLogout?: React.MouseEventHandler<HTMLDivElement> | null;
+  onLogout?: (() => void) | null;
   // action name
-  actionName?: ReactNode | null;
+  actionName?: string | null;
   // cloud provider class
   cloudProvider: Provider;
   // function to take after login or logout
-  onSetCloudProvider;
+  onSetCloudProvider: (providerName: string | null) => void;
   // whether provider is selected as currentProvider
   isSelected?: boolean;
   // whether user has logged in
