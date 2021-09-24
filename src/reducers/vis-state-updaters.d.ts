@@ -254,6 +254,7 @@ export type VisState = {
   hoverInfo: any;
   clicked: any;
   mousePos: any;
+  maxDefaultTooltips: number;
   layerClasses: LayerClassesType;
   animationConfig: AnimationConfig;
   editor: Editor;

@@ -15,6 +15,7 @@ export function getDefaultInteraction(): InteractionConfig;
 export function findFieldsToShow(p: {
   fields: Field[];
   id: string;
+  maxDefaultTooltips: number;
 }): {
   [key: string]: string[];
 };

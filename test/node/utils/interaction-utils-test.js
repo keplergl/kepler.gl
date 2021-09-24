@@ -118,22 +118,14 @@ test('interactionUtil -> autoFindTooltipFields', t => {
       {
         name: 'b',
         format: null
-      },
-      {
-        name: 'c',
-        format: null
-      },
-      {
-        name: 'd',
-        format: null
       }
     ]
   };
 
   t.deepEqual(
-    findFieldsToShow({fields, id: 'test'}),
+    findFieldsToShow({fields, id: 'test', maxDefaultTooltips: 3}),
     expectedFields,
-    'should filter out all default geometry fields and return first 5'
+    'should filter out all default geometry fields and return first 3'
   );
 
   t.end();
