@@ -79,7 +79,7 @@ class KeplerTable {
       valueAccessor: maybeToDate.bind(
         null,
         // is time
-        f.type === ALL_FIELD_TYPES.timestamp,
+        f.type === ALL_FIELD_TYPES.timestamp || f.type === ALL_FIELD_TYPES.date,
         i,
         f.format,
         dataContainer
@@ -302,11 +302,11 @@ class KeplerTable {
         return {domain: [true, false]};
 
       case ALL_FIELD_TYPES.string:
-      case ALL_FIELD_TYPES.date:
         domain = getOrdinalDomain(dataContainer, valueAccessor);
         return {domain};
 
       case ALL_FIELD_TYPES.timestamp:
+      case ALL_FIELD_TYPES.date:
         return getTimestampFieldDomain(dataContainer, valueAccessor);
 
       default:

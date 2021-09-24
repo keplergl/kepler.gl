@@ -330,7 +330,6 @@ export function getFilterProps(field, fieldDomain) {
       };
 
     case ALL_FIELD_TYPES.string:
-    case ALL_FIELD_TYPES.date:
       return {
         ...filterProps,
         type: FILTER_TYPES.multiSelect,
@@ -339,6 +338,7 @@ export function getFilterProps(field, fieldDomain) {
       };
 
     case ALL_FIELD_TYPES.timestamp:
+    case ALL_FIELD_TYPES.date:
       return {
         ...filterProps,
         type: FILTER_TYPES.timeRange,
@@ -949,13 +949,13 @@ export function mergeFilterDomainStep(filter, filterProps) {
 
   switch (filterProps.fieldType) {
     case ALL_FIELD_TYPES.string:
-    case ALL_FIELD_TYPES.date:
       return {
         ...newFilter,
         domain: unique(combinedDomain).sort()
       };
 
     case ALL_FIELD_TYPES.timestamp:
+    case ALL_FIELD_TYPES.date:
       // @ts-ignore
       const step = filter.step < filterProps.step ? filter.step : filterProps.step;
 
