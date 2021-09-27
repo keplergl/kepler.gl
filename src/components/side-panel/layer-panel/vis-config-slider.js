@@ -88,9 +88,9 @@ export default function VisConfigSliderFactory(RangeSlider) {
   }) => {
     const [custom, setCustom] = useState(false);
     const [values, setValues] = useState({
-      value: '',
-      value0: '',
-      value1: ''
+      value: config.visConfig[property],
+      value0: config.visConfig.radiusRange[0],
+      value1: config.visConfig.radiusRange[1]
     });
 
     const updateField = e => {
@@ -100,27 +100,26 @@ export default function VisConfigSliderFactory(RangeSlider) {
       });
     };
 
-    const onKeyPress = useCallback(
-      e => {
-        if (e.key === 'Enter') {
-          const val = e.target.value;
-          switch (e.target.name) {
-            case 'value':
-              config.visConfig[property] = range[1] = Number(val);
-              break;
-            case 'value0':
-              config.visConfig.radiusRange[0] = range[0] = Number(val);
-              break;
-            case 'value1':
-              config.visConfig.radiusRange[1] = range[1] = Number(val);
-              break;
-            default:
-              break;
-          }
+    const onKeyPress = (e) => {
+      if (e.key === 'Enter') {
+        let value = e.target.value;
+        value = Number(value);
+
+        switch(e.target.name) {
+          case 'value0':
+            value = [value, Number(values.value1)];
+            range = value;
+            break;
+          case 'value1':
+            value = [Number(values.value0), value];
+            range = value;
+            break;
+          default:
+            break;
         }
-      },
-      [config.visConfig, property, range]
-    );
+        onChange({[property]: value});
+      }
+    }
 
     const renderCustomInput = () => {
       return (
