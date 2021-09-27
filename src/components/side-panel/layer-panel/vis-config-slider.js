@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useState} from 'react';
+import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
@@ -100,12 +100,12 @@ export default function VisConfigSliderFactory(RangeSlider) {
       });
     };
 
-    const onKeyPress = (e) => {
+    const onKeyPress = e => {
       if (e.key === 'Enter') {
         let value = e.target.value;
         value = Number(value);
 
-        switch(e.target.name) {
+        switch (e.target.name) {
           case 'value0':
             value = [value, Number(values.value1)];
             range = value;
@@ -119,7 +119,7 @@ export default function VisConfigSliderFactory(RangeSlider) {
         }
         onChange({[property]: value});
       }
-    }
+    };
 
     const renderCustomInput = () => {
       return (
