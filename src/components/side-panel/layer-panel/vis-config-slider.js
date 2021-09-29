@@ -156,6 +156,7 @@ export default function VisConfigSliderFactory(RangeSlider) {
     range,
     step,
     isRanged,
+    allowCustomValue,
     disabled,
     onChange,
     inputTheme
@@ -189,10 +190,12 @@ export default function VisConfigSliderFactory(RangeSlider) {
           </PanelLabel>
         ) : null}
 
-        <InputWrapper>
-          <CustomInputLabel>custom input</CustomInputLabel>
-          <Checkbox id={`property.${property}`} checked={custom} onChange={onChangeCheckbox} />
-        </InputWrapper>
+        {allowCustomValue ? (
+          <InputWrapper>
+            <CustomInputLabel>custom input</CustomInputLabel>
+            <Checkbox id={`property.${property}`} checked={custom} onChange={onChangeCheckbox} />
+          </InputWrapper>
+        ) : null}
 
         {!custom ? (
           <RangeSlider
@@ -201,7 +204,7 @@ export default function VisConfigSliderFactory(RangeSlider) {
             value1={isRanged ? value[1] : value}
             step={step}
             isRanged={Boolean(isRanged)}
-            onChange={() => onChange({[property]: isRanged ? value : value[1]})}
+            onChange={v => onChange({[property]: isRanged ? v : v[1]})}
             inputTheme={inputTheme}
             showInput
           />
