@@ -18,14 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useState} from 'react';
+import React, {useState, useCallback, useEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import RangeSliderFactory from 'components/common/range-slider';
 import {FormattedMessage} from 'localization';
+import KeyEvent from 'constants/keyevent';
 import {Checkbox} from 'components';
+import {clamp} from 'utils/data-utils';
 
 const InputWrapper = styled.div`
   display: flex;
@@ -60,6 +62,78 @@ const RangeInput = styled.input`
   margin-top: 5px;
 `;
 
+const LazyInput = ({value, onChange, name}) => {
+  const [stateValue, setValue] = useState(value);
+  const inputRef = useRef(null);
+  useEffect(() => {
+    setValue(value);
+  }, [value]);
+
+  const onKeyDown = useCallback(
+    e => {
+      switch (e.keyCode) {
+        case KeyEvent.DOM_VK_ENTER:
+        case KeyEvent.DOM_VK_RETURN:
+          onChange(stateValue);
+          if (inputRef !== null) {
+            // @ts-ignore
+            inputRef?.current.blur();
+          }
+          break;
+        default:
+          break;
+      }
+    },
+    [onChange, stateValue]
+  );
+
+  const _onChange = useCallback(e => setValue(e.target.value), [setValue]);
+  const onBlur = useCallback(() => onChange(name, stateValue), [onChange, name, stateValue]);
+
+  return (
+    <RangeInput
+      type="number"
+      ref={inputRef}
+      value={stateValue}
+      onChange={_onChange}
+      onBlur={onBlur}
+      onKeyDown={onKeyDown}
+      id={name}
+    />
+  );
+};
+
+const CustomInput = ({isRanged, value, onChangeCustomInput}) => {
+  const onChangeInput = useCallback(
+    (name, v) => {
+      if (isRanged) onChangeCustomInput(name === 'value0' ? [v, value[1]] : [value[0], v]);
+      else onChangeCustomInput(v);
+    },
+    [isRanged, value, onChangeCustomInput]
+  );
+
+  return (
+    <CustomInputWrapper>
+      {isRanged ? (
+        <InputWrapper>
+          <CustomInputLabel>
+            min
+            <LazyInput name="value0" value={value[0]} onChange={onChangeInput} />
+          </CustomInputLabel>
+          <CustomInputLabel>
+            max
+            <LazyInput name="value1" value={value[1]} onChange={onChangeInput} />
+          </CustomInputLabel>
+        </InputWrapper>
+      ) : (
+        <InputWrapper>
+          <LazyInput name="value" value={value} onChange={onChangeInput} />
+        </InputWrapper>
+      )}
+    </CustomInputWrapper>
+  );
+};
+
 const propTypes = {
   layer: PropTypes.object.isRequired,
   property: PropTypes.string.isRequired,
@@ -87,80 +161,19 @@ export default function VisConfigSliderFactory(RangeSlider) {
     inputTheme
   }) => {
     const [custom, setCustom] = useState(false);
-    const [values, setValues] = useState({
-      value: config.visConfig[property],
-      value0: config.visConfig.radiusRange[0],
-      value1: config.visConfig.radiusRange[1]
-    });
+    const value = config.visConfig[property];
 
-    const updateField = e => {
-      setValues({
-        ...values,
-        [e.target.name]: e.target.value
-      });
-    };
-
-    const onKeyPress = e => {
-      if (e.key === 'Enter') {
-        let value = e.target.value;
-        value = Number(value);
-
-        switch (e.target.name) {
-          case 'value0':
-            value = [value, Number(values.value1)];
-            range = value;
-            break;
-          case 'value1':
-            value = [Number(values.value0), value];
-            range = value;
-            break;
-          default:
-            break;
-        }
-        onChange({[property]: value});
+    const onChangeCheckbox = useCallback(() => {
+      if (custom) {
+        // we are swithcing from custom to not custom
+        // adjust value to range
+        const adjustedValue = isRanged
+          ? [clamp(range, value[0]), clamp(range, value[1])]
+          : clamp(range, value);
+        onChange({[property]: adjustedValue});
       }
-    };
-
-    const renderCustomInput = () => {
-      return (
-        <CustomInputWrapper>
-          {isRanged ? (
-            <InputWrapper>
-              <CustomInputLabel>
-                min
-                <RangeInput
-                  type="number"
-                  name="value0"
-                  value={values.value0}
-                  onChange={updateField}
-                  onKeyPress={onKeyPress}
-                />
-              </CustomInputLabel>
-              <CustomInputLabel>
-                max
-                <RangeInput
-                  type="number"
-                  name="value1"
-                  value={values.value1}
-                  onChange={updateField}
-                  onKeyPress={onKeyPress}
-                />
-              </CustomInputLabel>
-            </InputWrapper>
-          ) : (
-            <InputWrapper>
-              <RangeInput
-                type="number"
-                name="value"
-                value={values.value}
-                onChange={updateField}
-                onKeyPress={onKeyPress}
-              />
-            </InputWrapper>
-          )}
-        </CustomInputWrapper>
-      );
-    };
+      setCustom(!custom);
+    }, [onChange, property, isRanged, value, range, custom, setCustom]);
 
     return (
       <SidePanelSection disabled={Boolean(disabled)}>
@@ -178,26 +191,26 @@ export default function VisConfigSliderFactory(RangeSlider) {
 
         <InputWrapper>
           <CustomInputLabel>custom input</CustomInputLabel>
-          <Checkbox
-            id={`property.${property}`}
-            checked={custom}
-            onChange={() => setCustom(!custom)}
-          />
+          <Checkbox id={`property.${property}`} checked={custom} onChange={onChangeCheckbox} />
         </InputWrapper>
 
         {!custom ? (
           <RangeSlider
             range={range}
-            value0={isRanged ? config.visConfig[property][0] : range[0]}
-            value1={isRanged ? config.visConfig[property][1] : config.visConfig[property]}
+            value0={isRanged ? value[0] : range[0]}
+            value1={isRanged ? value[1] : value}
             step={step}
             isRanged={Boolean(isRanged)}
-            onChange={value => onChange({[property]: isRanged ? value : value[1]})}
+            onChange={() => onChange({[property]: isRanged ? value : value[1]})}
             inputTheme={inputTheme}
             showInput
           />
         ) : (
-          renderCustomInput()
+          <CustomInput
+            isRanged={isRanged}
+            value={value}
+            onChangeCustomInput={v => onChange({[property]: v})}
+          />
         )}
       </SidePanelSection>
     );
