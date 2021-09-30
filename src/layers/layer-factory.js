@@ -172,7 +172,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 1],
     step: 0.01,
     group: PROPERTY_GROUPS.color,
-    property: 'opacity'
+    property: 'opacity',
+    allowCustomValue: false
   },
   coverage: {
     type: 'number',
@@ -182,7 +183,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 1],
     step: 0.01,
     group: PROPERTY_GROUPS.cell,
-    property: 'coverage'
+    property: 'coverage',
+    allowCustomValue: false
   },
   // used in point layer
   outline: {
@@ -256,7 +258,8 @@ export const LAYER_VIS_CONFIGS = {
     property: 'percentile',
 
     // percentile filter only makes sense with linear aggregation
-    condition: config => config.colorScale !== 'ordinal'
+    condition: config => config.colorScale !== 'ordinal',
+    allowCustomValue: false
   },
   elevationPercentile: {
     type: 'number',
@@ -271,7 +274,8 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.height,
     property: 'elevationPercentile',
     // percentile filter only makes sense with linear aggregation
-    condition: config => config.visConfig.enable3d && (config.colorField || config.sizeField)
+    condition: config => config.visConfig.enable3d && (config.colorField || config.sizeField),
+    allowCustomValue: false
   },
   resolution: {
     type: 'number',
@@ -366,7 +370,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 1],
     step: 0.01,
     group: PROPERTY_GROUPS.radius,
-    property: 'coverageRange'
+    property: 'coverageRange',
+    allowCustomValue: false
   },
   // hi precision is deprecated by deck.gl
   'hi-precision': {
