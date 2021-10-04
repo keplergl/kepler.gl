@@ -164,21 +164,20 @@ test('MapControlFactory - click options', t => {
     .find('.map-control-button.show-legend')
     .at(0)
     .simulate('click');
-  t.ok(onToggleMapControl.calledOnce, 'should call onToggleMapControl');
-  t.deepEqual(
-    onToggleMapControl.args[0],
-    ['mapLegend', 0],
-    'should call onToggleMapControl with mapLegend'
-  );
+
+  t.equal(wrapper.find(MapLegend).length, 1, 'should render MapLegend');
 
   // click map draw
   wrapper
     .find('.map-control-button.map-draw')
     .at(0)
     .simulate('click');
-  t.ok(onToggleMapControl.calledTwice, 'should call onToggleMapControl');
+
+  t.equal(wrapper.find(MapLegend).length, 1, 'should render MapLegend');
+
+  t.ok(onToggleMapControl.calledOnce, 'should call onToggleMapControl');
   t.deepEqual(
-    onToggleMapControl.args[1],
+    onToggleMapControl.args[0],
     ['mapDraw', 0],
     'should call onToggleMapControl with mapDraw'
   );
@@ -188,9 +187,9 @@ test('MapControlFactory - click options', t => {
     .find('.map-control-button.map-locale')
     .at(0)
     .simulate('click');
-  t.ok(onToggleMapControl.calledThrice, 'should call onToggleMapControl');
+  t.ok(onToggleMapControl.calledTwice, 'should call onToggleMapControl');
   t.deepEqual(
-    onToggleMapControl.args[2],
+    onToggleMapControl.args[1],
     ['mapLocale', 0],
     'should call onToggleMapControl with mapLocale'
   );
@@ -200,9 +199,9 @@ test('MapControlFactory - click options', t => {
     .find('.map-control-button.toggle-layer')
     .at(0)
     .simulate('click');
-  t.equal(onToggleMapControl.callCount, 4, 'should call onToggleMapControl');
+  t.ok(onToggleMapControl.calledThrice, 'should call onToggleMapControl');
   t.deepEqual(
-    onToggleMapControl.args[3],
+    onToggleMapControl.args[2],
     ['visibleLayers', 0],
     'should call onToggleMapControl with visibleLayers'
   );
