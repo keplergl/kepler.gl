@@ -3,33 +3,33 @@ import {Layer, LayerConfig, VisualChannel, VisualChannelDescription} from 'layer
 import {MapLegendPanelComponent} from './map-legend-panel';
 
 export type LayerSizeLegendProps = {
-  label: string,
-  name: string
+  label: string;
+  name: string;
 };
 
 export const LayerSizeLegend: FunctionComponent<LayerSizeLegendProps>;
 
 export type SingleColorLegendProps = {
-  width: number,
-  color: string
+  width: number;
+  color: string;
 };
 
 export const SingleColorLegend: FunctionComponent<SingleColorLegendProps>;
 
 export type LayerColorLegendProps = {
-  description: VisualChannelDescription,
-  config: LayerConfig,
-  width: number,
-  colorChannel: VisualChannel
+  description: VisualChannelDescription;
+  config: LayerConfig;
+  width: number;
+  colorChannel: VisualChannel;
 };
 
 export const LayerColorLegend: FunctionComponent<LayerColorLegendProps>;
 
 export type LayerLegendHeaderProps = {
-  layer: Layer,
+  layer: Layer;
   options?: {
-    showLayerName?: boolean
-  }
+    showLayerName?: boolean;
+  };
 };
 
 export const LayerLegendHeader: FunctionComponent<LayerLegendHeaderProps>;
@@ -37,8 +37,8 @@ export const LayerLegendHeader: FunctionComponent<LayerLegendHeaderProps>;
 export function LayerLegendHeaderFactory(): LayerLegendHeader;
 
 export type LayerLegendContentProps = {
-  layer: Layer,
-  containerW: number,
+  layer: Layer;
+  containerW: number;
 };
 
 export const LayerLegendContent: FunctionComponent<LayerLegendContentProps>;
@@ -46,11 +46,12 @@ export const LayerLegendContent: FunctionComponent<LayerLegendContentProps>;
 export function LayerLegendContentFactory(): LayerLegendContent;
 
 export type MapLegendProps = {
-  layers?: ReadonlyArray<Layer>,
-  width?: number,
+  layers?: ReadonlyArray<Layer>;
+  width?: number;
+  mapHeight?: number;
   options?: {
-    showLayerName?: boolean
-  }
+    showLayerName?: boolean;
+  };
 };
 
 export const MapLegend: FunctionComponent<MapLegendProps>;

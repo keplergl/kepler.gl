@@ -16,6 +16,7 @@ export type BottomWidgetProps = {
   containerW: number;
   uiState: UiState;
   sidePanelWidth: number;
+  legendWidth: number;
   toggleModal: typeof UIStateActions.toggleModal;
   children?: React.ReactNode;
 };

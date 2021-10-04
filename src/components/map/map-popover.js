@@ -118,10 +118,6 @@ const PopoverContent = styled.div`
 const StyledIcon = styled.div`
   color: ${props => props.theme.activeColor};
 
-  &.popover-pin {
-    transform: rotate(30deg);
-  }
-
   :hover {
     cursor: pointer;
     color: ${props => props.theme.linkBtnColor};

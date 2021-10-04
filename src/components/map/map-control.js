@@ -69,9 +69,9 @@ function MapControlFactory(
     SplitMapButton,
     LayerSelectorPanel,
     Toggle3dButton,
-    MapLegendPanel,
     MapDrawPanel,
-    LocalePanel
+    LocalePanel,
+    MapLegendPanel
   ];
 
   /** @type {import('./map-control').MapControl} */

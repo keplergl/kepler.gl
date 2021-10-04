@@ -29,10 +29,12 @@ export const StyledMapControlLegend = styled.div`
   padding: 10px ${props => props.theme.mapControl.padding}px 10px
     ${props => props.theme.mapControl.padding}px;
   font-size: 11px;
+  font-family: ${props => props.theme.fontFamily};
   border-bottom-color: ${props => props.theme.panelBorderColor};
   border-bottom-style: solid;
   border-bottom-width: ${props => (props.last ? 0 : '1px')};
   width: ${props => props.width}px;
+  box-sizing: border-box;
 
   .legend--layer_name {
     font-size: 12px;
@@ -197,8 +199,16 @@ export function LayerLegendContentFactory() {
 MapLegendFactory.deps = [LayerLegendHeaderFactory, LayerLegendContentFactory];
 function MapLegendFactory(LayerLegendHeader, LayerLegendContent) {
   /** @type {typeof import('./map-legend').MapLegend }> */
-  const MapLegend = ({layers = [], width, options}) => (
-    <div className="map-legend">
+  const MapLegend = ({layers = [], width, mapHeight, options}) => (
+    <div
+      className="map-legend"
+      {...(mapHeight && {
+        style: {
+          /* subtracting rough size of 4 map control buttons and padding */
+          maxHeight: mapHeight - 250
+        }
+      })}
+    >
       {layers.map((layer, index) => {
         if (!layer.isValidToSave() || layer.config.hidden) {
           return null;

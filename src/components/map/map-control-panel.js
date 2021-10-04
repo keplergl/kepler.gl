@@ -22,7 +22,7 @@ import React from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
 import {IconRoundSmall} from 'components/common/styled-components';
-import {Close} from 'components/common/icons';
+import {Close, Pin} from 'components/common/icons';
 
 const StyledMapControlPanel = styled.div`
   background-color: ${props => props.theme.mapPanelBackgroundColor};
@@ -51,9 +51,11 @@ const StyledMapControlPanelHeader = styled.div.attrs({
   background-color: ${props => props.theme.mapPanelHeaderBackgroundColor};
   height: 32px;
   padding: 6px 12px;
+  font-family: ${props => props.theme.fontFamily};
   font-size: 11px;
   color: ${props => props.theme.titleTextColor};
   position: relative;
+  box-sizing: border-box;
 
   button {
     width: 18px;
@@ -61,10 +63,31 @@ const StyledMapControlPanelHeader = styled.div.attrs({
   }
 `;
 
+const StyledIcon = styled(IconRoundSmall)`
+  color: ${props => props.theme.activeColor};
+  background-color: transparent;
+
+  :hover {
+    cursor: pointer;
+    background-color: transparent;
+    color: ${props => props.theme.linkBtnColor};
+  }
+`;
+
 function MapControlPanelFactory() {
   /** @type {import('./map-control-panel').MapControlPanelComponent} */
   const MapControlPanel = React.memo(
-    ({children, header, onClick, scale = 1, isExport, logoComponent}) => (
+    ({
+      children,
+      header,
+      pinnable,
+      disableClose,
+      onPinClick,
+      onClick,
+      scale = 1,
+      isExport,
+      logoComponent
+    }) => (
       <StyledMapControlPanel
         style={{
           transform: `scale(${scale})`,
@@ -80,9 +103,18 @@ function MapControlPanelFactory() {
             </span>
           ) : null}
           {isExport ? null : (
-            <IconRoundSmall className="close-map-control-item" onClick={onClick}>
-              <Close height="16px" />
-            </IconRoundSmall>
+            <>
+              {pinnable && (
+                <StyledIcon className="pin-map-control-item" onClick={onPinClick}>
+                  <Pin height="16px" />
+                </StyledIcon>
+              )}
+              {disableClose ? null : (
+                <StyledIcon className="close-map-control-item" onClick={onClick}>
+                  <Close height="16px" />
+                </StyledIcon>
+              )}
+            </>
           )}
         </StyledMapControlPanelHeader>
         <StyledMapControlPanelContent>{children}</StyledMapControlPanelContent>
