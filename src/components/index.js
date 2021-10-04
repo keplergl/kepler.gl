@@ -117,6 +117,9 @@ export {default as LoadStorageMapFactory} from './modals/load-storage-map';
 export {default as ExportJsonMapFactory} from './modals/export-map-modal/export-json-map';
 export {default as ExportHtmlMapFactory} from './modals/export-map-modal/export-html-map';
 
+// // notification panel
+export {default as NotificationItemFactory} from './notification-panel/notification-item';
+
 // // common factory
 export {default as AnimationControlFactory} from './common/animation-control/animation-control';
 export {default as AnimationControllerFactory} from './common/animation-control/animation-controller';

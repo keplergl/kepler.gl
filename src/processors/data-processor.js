@@ -435,8 +435,13 @@ export function analyzerTypeToFieldType(aType) {
  * }));
  */
 export function processRowObject(rawData) {
-  if (!Array.isArray(rawData) || !rawData.length) {
+  if (!Array.isArray(rawData)) {
     return null;
+  } else if (!rawData.length) {
+    // data is empty
+    return  {
+      fields: [], rows: []
+    }
   }
 
   const keys = Object.keys(rawData[0]);

@@ -65,6 +65,8 @@ export type Notifications = {
   type: string;
   topic: string;
   id: string;
+  count: number;
+  isExpanded?: boolean;
 };
 
 export type Locale = string;
