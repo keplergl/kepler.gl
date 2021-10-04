@@ -34,6 +34,7 @@ export const StyledMapControlLegend = styled.div`
   border-bottom-style: solid;
   border-bottom-width: ${props => (props.last ? 0 : '1px')};
   width: ${props => props.width}px;
+  box-sizing: border-box;
 
   .legend--layer_name {
     font-size: 12px;

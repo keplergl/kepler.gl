@@ -55,6 +55,7 @@ const StyledMapControlPanelHeader = styled.div.attrs({
   font-size: 11px;
   color: ${props => props.theme.titleTextColor};
   position: relative;
+  box-sizing: border-box;
 
   button {
     width: 18px;
@@ -64,9 +65,11 @@ const StyledMapControlPanelHeader = styled.div.attrs({
 
 const StyledIcon = styled(IconRoundSmall)`
   color: ${props => props.theme.activeColor};
+  background-color: transparent;
 
   :hover {
     cursor: pointer;
+    background-color: transparent;
     color: ${props => props.theme.linkBtnColor};
   }
 `;
