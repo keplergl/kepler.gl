@@ -28,6 +28,7 @@ import {FormattedMessage} from 'localization';
 import KeyEvent from 'constants/keyevent';
 import {Checkbox} from 'components';
 import {clamp} from 'utils/data-utils';
+import {isInRange} from 'utils/filter-utils';
 
 const InputWrapper = styled.div`
   display: flex;
@@ -190,7 +191,7 @@ export default function VisConfigSliderFactory(RangeSlider) {
           </PanelLabel>
         ) : null}
 
-        {allowCustomValue ? (
+        {allowCustomValue && !isInRange(value, range) ? (
           <InputWrapper>
             <CustomInputLabel>custom input</CustomInputLabel>
             <Checkbox id={`property.${property}`} checked={custom} onChange={onChangeCheckbox} />
