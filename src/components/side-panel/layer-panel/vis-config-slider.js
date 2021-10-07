@@ -162,8 +162,8 @@ export default function VisConfigSliderFactory(RangeSlider) {
     onChange,
     inputTheme
   }) => {
-    const [custom, setCustom] = useState(false);
     const value = config.visConfig[property];
+    const [custom, setCustom] = useState(false || !isInRange(value, range));
 
     const onChangeCheckbox = useCallback(() => {
       if (custom) {
@@ -191,7 +191,7 @@ export default function VisConfigSliderFactory(RangeSlider) {
           </PanelLabel>
         ) : null}
 
-        {allowCustomValue && !isInRange(value, range) ? (
+        {allowCustomValue ? (
           <InputWrapper>
             <CustomInputLabel>custom input</CustomInputLabel>
             <Checkbox id={`property.${property}`} checked={custom} onChange={onChangeCheckbox} />
