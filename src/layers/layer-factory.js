@@ -86,7 +86,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 100],
     step: 0.1,
     group: PROPERTY_GROUPS.stroke,
-    property: 'thickness'
+    property: 'thickness',
+    allowCustomValue: true
   },
   strokeWidthRange: {
     type: 'number',
@@ -96,7 +97,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 200],
     step: 0.1,
     group: PROPERTY_GROUPS.stroke,
-    property: 'sizeRange'
+    property: 'sizeRange',
+    allowCustomValue: true
   },
   trailLength: {
     type: 'number',
@@ -106,7 +108,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [1, 1000],
     step: 1,
     group: PROPERTY_GROUPS.stroke,
-    property: 'trailLength'
+    property: 'trailLength',
+    allowCustomValue: true
   },
   // radius is actually radiusScale in deck.gl
   radius: {
@@ -117,7 +120,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 100],
     step: 0.1,
     group: PROPERTY_GROUPS.radius,
-    property: 'radius'
+    property: 'radius',
+    allowCustomValue: true
   },
   fixedRadius: {
     defaultValue: false,
@@ -135,7 +139,8 @@ export const LAYER_VIS_CONFIGS = {
     step: 0.1,
     label: 'layerVisConfigs.radiusRange',
     group: PROPERTY_GROUPS.radius,
-    property: 'radiusRange'
+    property: 'radiusRange',
+    allowCustomValue: true
   },
   clusterRadius: {
     type: 'number',
@@ -145,7 +150,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [1, 500],
     step: 0.1,
     group: PROPERTY_GROUPS.radius,
-    property: 'clusterRadius'
+    property: 'clusterRadius',
+    allowCustomValue: true
   },
   clusterRadiusRange: {
     type: 'number',
@@ -155,7 +161,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [1, 150],
     step: 0.1,
     group: PROPERTY_GROUPS.radius,
-    property: 'radiusRange'
+    property: 'radiusRange',
+    allowCustomValue: true
   },
   opacity: {
     type: 'number',
@@ -165,7 +172,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 1],
     step: 0.01,
     group: PROPERTY_GROUPS.color,
-    property: 'opacity'
+    property: 'opacity',
+    allowCustomValue: false
   },
   coverage: {
     type: 'number',
@@ -175,7 +183,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 1],
     step: 0.01,
     group: PROPERTY_GROUPS.cell,
-    property: 'coverage'
+    property: 'coverage',
+    allowCustomValue: false
   },
   // used in point layer
   outline: {
@@ -249,7 +258,8 @@ export const LAYER_VIS_CONFIGS = {
     property: 'percentile',
 
     // percentile filter only makes sense with linear aggregation
-    condition: config => config.colorScale !== 'ordinal'
+    condition: config => config.colorScale !== 'ordinal',
+    allowCustomValue: false
   },
   elevationPercentile: {
     type: 'number',
@@ -264,7 +274,8 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.height,
     property: 'elevationPercentile',
     // percentile filter only makes sense with linear aggregation
-    condition: config => config.visConfig.enable3d && (config.colorField || config.sizeField)
+    condition: config => config.visConfig.enable3d && (config.colorField || config.sizeField),
+    allowCustomValue: false
   },
   resolution: {
     type: 'number',
@@ -274,7 +285,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 13],
     step: 1,
     group: PROPERTY_GROUPS.cell,
-    property: 'resolution'
+    property: 'resolution',
+    allowCustomValue: true
   },
   sizeScale: {
     type: 'number',
@@ -284,7 +296,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [1, 1000],
     step: 1,
     group: PROPERTY_GROUPS.stroke,
-    property: 'sizeScale'
+    property: 'sizeScale',
+    allowCustomValue: true
   },
   angle: {
     type: 'number',
@@ -294,7 +307,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 360],
     group: PROPERTY_GROUPS.angle,
     step: 1,
-    property: 'angle'
+    property: 'angle',
+    allowCustomValue: true
   },
   worldUnitSize: {
     type: 'number',
@@ -304,7 +318,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 500],
     step: 0.0001,
     group: PROPERTY_GROUPS.cell,
-    property: 'worldUnitSize'
+    property: 'worldUnitSize',
+    allowCustomValue: true
   },
   elevationScale: {
     type: 'number',
@@ -314,7 +329,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 100],
     step: 0.1,
     group: PROPERTY_GROUPS.height,
-    property: 'elevationScale'
+    property: 'elevationScale',
+    allowCustomValue: true
   },
   enableElevationZoomFactor: {
     type: 'boolean',
@@ -332,7 +348,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 1000],
     step: 0.01,
     group: PROPERTY_GROUPS.height,
-    property: 'sizeRange'
+    property: 'sizeRange',
+    allowCustomValue: true
   },
   heightRange: {
     type: 'number',
@@ -342,7 +359,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 1000],
     step: 0.01,
     group: PROPERTY_GROUPS.height,
-    property: 'heightRange'
+    property: 'heightRange',
+    allowCustomValue: true
   },
   coverageRange: {
     type: 'number',
@@ -352,7 +370,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 1],
     step: 0.01,
     group: PROPERTY_GROUPS.radius,
-    property: 'coverageRange'
+    property: 'coverageRange',
+    allowCustomValue: false
   },
   // hi precision is deprecated by deck.gl
   'hi-precision': {
@@ -409,7 +428,8 @@ export const LAYER_VIS_CONFIGS = {
     step: 0.01,
     group: PROPERTY_GROUPS.cell,
     property: 'weight',
-    condition: config => config.weightField
+    condition: config => config.weightField,
+    allowCustomValue: true
   },
   heatmapRadius: {
     type: 'number',
@@ -419,7 +439,8 @@ export const LAYER_VIS_CONFIGS = {
     range: [0, 100],
     step: 0.1,
     group: PROPERTY_GROUPS.cell,
-    property: 'radius'
+    property: 'radius',
+    allowCustomValue: true
   }
 };
 
