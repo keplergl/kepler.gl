@@ -795,7 +795,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
               format: null
             },
             {
-              name: 'id',
+              name: 'uid',
               format: null
             }
           ],
@@ -1034,7 +1034,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
                     format: null
                   },
                   {
-                    name: 'id',
+                    name: 'uid',
                     format: null
                   }
                 ],
@@ -1116,7 +1116,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
               format: null
             },
             {
-              name: 'id',
+              name: 'uid',
               format: null
             }
           ],

@@ -171,7 +171,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
             format: null
           },
           {
-            name: 'id',
+            name: 'uid',
             format: null
           }
         ],

@@ -24,7 +24,12 @@ import {csvFormatRows} from 'd3-dsv';
 import {EXPORT_DATA_TYPE} from '@kepler.gl/constants';
 import {Field} from '@kepler.gl/types';
 
-import {createIndexedDataContainer, DataContainerInterface, Datasets} from '@kepler.gl/table';
+import {
+  createIndexedDataContainer,
+  DataContainerInterface,
+  Datasets,
+  KeplerTable
+} from '@kepler.gl/table';
 import {parseFieldValue} from '@kepler.gl/utils';
 import {downloadFile, DEFAULT_DATA_NAME} from '@kepler.gl/utils';
 
@@ -48,7 +53,7 @@ export function exportData(state: StateType, options) {
   }
 
   selectedDatasets.forEach(selectedData => {
-    const {dataContainer, fields, label, filteredIdxCPU = []} = selectedData;
+    const {dataContainer, fields, label, filteredIdxCPU = []} = selectedData as KeplerTable;
     const toExport = filtered
       ? createIndexedDataContainer(dataContainer, filteredIdxCPU)
       : dataContainer;

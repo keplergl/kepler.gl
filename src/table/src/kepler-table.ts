@@ -22,7 +22,13 @@ import {console as Console} from 'global/console';
 import {ascending, descending} from 'd3-array';
 
 // import {validateInputData} from 'processors/data-processor';
-import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
+import {
+  TRIP_POINT_FIELDS,
+  SORT_ORDER,
+  ALL_FIELD_TYPES,
+  ALTITUDE_FIELDS,
+  SCALE_TYPES
+} from '@kepler.gl/constants';
 import {RGBColor, Field, FieldPair, FieldDomain, Filter, ProtoDataset} from '@kepler.gl/types';
 
 import {generateHashId, getSortingFunction, timeToUnixMilli} from '@kepler.gl/utils';
@@ -473,14 +479,25 @@ export type Datasets = {
 };
 
 // HELPER FUNCTIONS (MAINLY EXPORTED FOR TEST...)
+// have to double excape
+const specialCharacterSet = `[#_&@\\.\\-\\ ]`;
 
-export function removeSuffixAndDelimiters(layerName, suffix) {
-  return layerName
-    .replace(new RegExp(suffix, 'ig'), '')
-    .replace(/[_,.]+/g, ' ')
-    .trim();
+function foundMatchingFields(re, suffixPair, allNames, fieldName) {
+  const partnerIdx = allNames.findIndex(
+    d => d === fieldName.replace(re, match => match.replace(suffixPair[0], suffixPair[1]))
+  );
+  let altIdx = -1;
+  if (partnerIdx > -1) {
+    // if found partner, go on and look for altitude
+    ALTITUDE_FIELDS.some(alt => {
+      altIdx = allNames.findIndex(
+        d => d === fieldName.replace(re, match => match.replace(suffixPair[0], alt))
+      );
+      return altIdx > -1;
+    });
+  }
+  return {partnerIdx, altIdx};
 }
-
 /**
  * Find point fields pairs from fields
  *
@@ -495,18 +512,18 @@ export function findPointFieldPairs(fields: Field[]): FieldPair[] {
   return allNames.reduce((carry, fieldName, idx) => {
     // This search for pairs will early exit if found.
     for (const suffixPair of TRIP_POINT_FIELDS) {
-      // match first suffix```
-      if (fieldName.endsWith(suffixPair[0])) {
-        // match second suffix
-        const otherPattern = new RegExp(`${suffixPair[0]}\$`);
-        const partner = fieldName.replace(otherPattern, suffixPair[1]);
+      // match first suffix
+      // (^|[#_&@\.\-\ ])lat([#_&@\.\-\ ]|$)
+      const re = new RegExp(`(^|${specialCharacterSet})${suffixPair[0]}(${specialCharacterSet}|$)`);
 
-        const partnerIdx = allNames.findIndex(d => d === partner);
+      if (re.test(fieldName)) {
+        const {partnerIdx, altIdx} = foundMatchingFields(re, suffixPair, allNames, fieldName);
+
         if (partnerIdx > -1) {
-          const defaultName = removeSuffixAndDelimiters(fieldName, suffixPair[0]);
+          const trimName = fieldName.replace(re, '').trim();
 
           carry.push({
-            defaultName,
+            defaultName: trimName || 'point',
             pair: {
               lat: {
                 fieldIdx: idx,
@@ -515,7 +532,15 @@ export function findPointFieldPairs(fields: Field[]): FieldPair[] {
               lng: {
                 fieldIdx: partnerIdx,
                 value: fields[partnerIdx].name
-              }
+              },
+              ...(altIdx > -1
+                ? {
+                    alt: {
+                      fieldIdx: altIdx,
+                      value: fields[altIdx].name
+                    }
+                  }
+                : {})
             },
             suffix: suffixPair
           });

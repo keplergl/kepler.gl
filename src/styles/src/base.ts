@@ -752,6 +752,26 @@ const inputCheckbox = css`
   }
 `;
 
+const radioTrack = css`
+  ${props => props.theme.checkboxBox}
+  width: ${props => props.theme.radioRadius * 2}px;
+  height: ${props => props.theme.radioRadius * 2}px;
+  border-radius: ${props => props.theme.radioBorderRadius}px;
+  background-color: ${props => props.theme.switchTrackBgd};
+  border-color: ${props => props.theme.radioBorderColor};
+`;
+
+const radioButton = css`
+  border: 0;
+  display: table;
+  top: ${props => props.theme.radioRadius - props.theme.radioButtonRadius}px;
+  left: ${props => props.theme.radioRadius - props.theme.radioButtonRadius}px;
+  width: ${props => props.theme.radioButtonRadius * 2}px;
+  height: ${props => props.theme.radioButtonRadius * 2}px;
+  border-radius: ${props => props.theme.radioButtonRadius * 2}px;
+  background-color: ${props => props.theme.radioButtonBgdColor};
+`;
+
 const inputRadio = css`
   ${props => props.theme.inputCheckbox}
   padding-left: ${props => props.theme.radioRadius * 2 + 8}px;
@@ -762,23 +782,25 @@ const inputRadio = css`
   cursor: pointer;
 
   :before {
-    ${props => props.theme.checkboxBox}
-    width: ${props => props.theme.radioRadius * 2}px;
-    height: ${props => props.theme.radioRadius * 2}px;
-    border-radius: ${props => props.theme.radioBorderRadius}px;
-    background-color: ${props => props.theme.switchTrackBgd};
-    border-color: ${props => props.theme.radioBorderColor};
+    ${props => props.theme.radioTrack}
   }
 
   :after {
-    top: ${props => props.theme.radioRadius - props.theme.radioButtonRadius}px;
-    left: ${props => props.theme.radioRadius - props.theme.radioButtonRadius}px;
-    display: table;
-    width: ${props => props.theme.radioButtonRadius * 2}px;
-    height: ${props => props.theme.radioButtonRadius * 2}px;
-    border-radius: ${props => props.theme.radioButtonRadius * 2}px;
-    border: 0;
-    background-color: ${props => props.theme.radioButtonBgdColor};
+    ${props => props.theme.radioButton}
+  }
+`;
+
+const secondaryRadio = css<SwitchableProps>`
+  ${props => props.theme.inputRadio}
+
+  :before {
+    ${props => props.theme.radioTrack} background: ${props => props.theme.secondarySwitchTrackBgd};
+  }
+
+  :after {
+    ${props => props.theme.radioButton}
+    background: ${props =>
+      props.checked ? props.theme.switchBtnBgdActive : props.theme.secondarySwitchBtnBgd};
   }
 `;
 
@@ -1209,6 +1231,9 @@ export const theme = {
   radioBorderColor,
   radioButtonRadius,
   radioButtonBgdColor,
+  radioTrack,
+  radioButton,
+  secondaryRadio,
 
   // Button
   btnFontFamily,

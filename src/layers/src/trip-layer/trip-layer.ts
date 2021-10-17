@@ -136,6 +136,10 @@ export default class TripLayer extends Layer {
     return TripLayerIcon;
   }
 
+  get columnPairs() {
+    return this.defaultPointColumnPairs;
+  }
+
   get requiredLayerColumns() {
     return geoJsonRequiredColumns;
   }
@@ -194,29 +198,29 @@ export default class TripLayer extends Layer {
 
     const geoJsonColumns = this.findDefaultColumnField(defaultColumns, fields);
 
-    const tripColumns = (geoJsonColumns || []).filter(col =>
+    const tripGeojsonColumns = (geoJsonColumns || []).filter(col =>
       isTripGeoJsonField(dataContainer, fields[col.geojson.fieldIdx])
     );
 
-    if (!tripColumns.length) {
-      return {props: []};
+    if (tripGeojsonColumns.length) {
+      return {
+        props: tripGeojsonColumns.map(columns => ({
+          label: (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
+          columns,
+          isVisible: true
+        })),
+
+        // if a geojson layer is created from this column, delete it
+        foundLayers: foundLayers.filter(
+          prop =>
+            prop.type !== 'geojson' ||
+            prop.dataId !== id ||
+            !tripGeojsonColumns.find(c => prop.columns.geojson.name === c.geojson.name)
+        )
+      };
     }
 
-    return {
-      props: tripColumns.map(columns => ({
-        label: (typeof label === 'string' && label.replace(/\.[^/.]+$/, '')) || this.type,
-        columns,
-        isVisible: true
-      })),
-
-      // if a geojson layer is created from this column, delete it
-      foundLayers: foundLayers.filter(
-        prop =>
-          prop.type !== 'geojson' ||
-          prop.dataId !== id ||
-          !tripColumns.find(c => prop.columns.geojson.name === c.geojson.name)
-      )
-    };
+    return {props: []};
   }
 
   getDefaultLayerConfig(props) {

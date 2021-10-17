@@ -89,6 +89,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
     },
     // non layer
     //
+
     {
       name: 'non_layer_longitude.alt',
       fieldIdx: 10
@@ -96,6 +97,10 @@ test('layerUtils -> findDefaultLayer.1', t => {
     {
       name: 'non_layer_latitude.alt',
       fieldIdx: 11
+    },
+    {
+      name: 'non_layer_altitude.alt',
+      fieldIdx: 12
     }
   ];
 
@@ -123,7 +128,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
       }
     }),
     new PointLayer({
-      label: 'two two',
+      label: 'two_two',
       dataId,
       columns: {
         lat: {
@@ -161,7 +166,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
       }
     }),
     new PointLayer({
-      label: 'four',
+      label: 'four._',
       dataId,
       columns: {
         lat: {
@@ -180,7 +185,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
       }
     }),
     new PointLayer({
-      label: 'Point',
+      label: 'point',
       dataId,
       columns: {
         lat: {
@@ -198,8 +203,27 @@ test('layerUtils -> findDefaultLayer.1', t => {
         }
       }
     }),
+    new PointLayer({
+      label: 'non_layeralt',
+      dataId,
+      columns: {
+        lat: {
+          value: 'non_layer_latitude.alt',
+          fieldIdx: 11
+        },
+        lng: {
+          value: 'non_layer_longitude.alt',
+          fieldIdx: 10
+        },
+        altitude: {
+          value: 'non_layer_altitude.alt',
+          fieldIdx: 12,
+          optional: true
+        }
+      }
+    }),
     new ArcLayer({
-      label: 'one -> two two arc',
+      label: 'one -> two_two arc',
       dataId,
       columns: {
         lat0: {
@@ -221,7 +245,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
       }
     }),
     new LineLayer({
-      label: 'one -> two two line',
+      label: 'one -> two_two line',
       dataId,
       columns: {
         lat0: {

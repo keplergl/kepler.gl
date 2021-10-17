@@ -275,9 +275,11 @@ export const ICON_FIELDS = {
 export const TRIP_POINT_FIELDS: [string, string][] = [
   ['lat', 'lng'],
   ['lat', 'lon'],
+  ['lat', 'long'],
   ['latitude', 'longitude']
 ];
 
+export const ALTITUDE_FIELDS = ['alt', 'altitude'];
 export const TRIP_ARC_FIELDS = {
   lat0: 'begintrip',
   lng0: 'begintrip',

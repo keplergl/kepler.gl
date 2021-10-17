@@ -45,11 +45,11 @@ export type LayersToRender = {
 export type AggregationLayerHoverData = {points: any[]; colorValue?: any; elevationValue?: any};
 
 export type LayerHoverProp = {
-  data: any[] | AggregationLayerHoverData;
+  data: DataRow | AggregationLayerHoverData | null;
   fields: Field[];
   fieldsToShow: TooltipField[];
   layer: Layer;
-  primaryData?: any[] | AggregationLayerHoverData;
+  primaryData?: DataRow | AggregationLayerHoverData | null;
   compareType?: CompareType;
 };
 
@@ -150,7 +150,6 @@ export function getLayerHoverProp({
       const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
 
       return {
-        // @ts-expect-error
         data,
         fields,
         fieldsToShow,
@@ -346,4 +345,19 @@ export function computeDeckLayers(
   const [customBottomDeckLayers, customTopDeckLayers] = getCustomDeckLayers(deckGlProps);
 
   return [...customBottomDeckLayers, ...dataLayers, ...customTopDeckLayers];
+}
+
+export function assignPointPairToLayerColumn(pair, hasAlt) {
+  const {lat, lng, alt} = pair.pair;
+  if (!hasAlt) {
+    return {lat, lng};
+  }
+
+  const defaultAltColumn = {value: null, fieldIdx: -1, optional: true};
+
+  return {
+    lat,
+    lng,
+    altitude: alt ? {...defaultAltColumn, ...alt} : defaultAltColumn
+  };
 }

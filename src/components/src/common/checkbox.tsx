@@ -37,8 +37,8 @@ const StyledCheckboxInput = styled.label`
   ${props => props.theme.inputCheckbox};
 `;
 
-const StyledRadiuInput = styled.label`
-  ${props => props.theme.inputRadio};
+const StyledRadiuInput = styled.label<StyledSwitchInputProps>`
+  ${props => (props.secondary ? props.theme.secondaryRadio : props.theme.inputRadio)};
 `;
 
 const HiddenInput = styled.input`
@@ -100,7 +100,7 @@ export default class Checkbox extends Component<CheckboxProps> {
 
   render() {
     const inputProps = {
-      ...pick(this.props, ['checked', 'disabled', 'id', 'onChange', 'value']),
+      ...pick(this.props, ['checked', 'disabled', 'id', 'onChange', 'value', 'secondary']),
       type: 'checkbox',
       onFocus: this.handleFocus,
       onBlur: this.handleBlur

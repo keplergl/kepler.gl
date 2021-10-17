@@ -59,6 +59,7 @@ import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
 import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sample-s2-data';
 import sampleAnimateTrip from './data/sample-animate-trip-data';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
+import sampleGpsData from './data/sample-gps-data';
 
 import {processCsvData, processGeojson} from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
@@ -178,13 +179,14 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    this._loadPointData();
+    // this._loadPointData();
     // this._loadGeojsonData();
     this._loadTripGeoJson();
     // this._loadIconData();
     // this._loadH3HexagonData();
     // this._loadS2Data();
     // this._loadScenegraphLayer();
+    this._loadGpsData();
   }
 
   _loadPointData() {
@@ -334,6 +336,24 @@ class App extends Component {
     );
   }
 
+  _loadGpsData() {
+    this.props.dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              label: 'Gps Data',
+              id: 'gps-data'
+            },
+            data: processCsvData(sampleGpsData)
+          }
+        ],
+        options: {
+          keepExistingConfig: true
+        }
+      })
+    );
+  }
   _toggleCloudModal = () => {
     // TODO: this lives only in the demo hence we use the state for now
     // REFCOTOR using redux
