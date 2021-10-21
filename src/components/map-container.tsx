@@ -471,7 +471,9 @@ export default function MapContainerFactory(
         deckGlProps
       );
 
-      const views = deckGlProps?.views ? deckGlProps?.views() : new MapView({});
+      const views = deckGlProps?.views
+        ? deckGlProps?.views()
+        : new MapView({legacyMeterSizes: true});
 
       return (
         <DeckGL
