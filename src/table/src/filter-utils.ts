@@ -603,9 +603,14 @@ export function diffFilters(
  *
  * @returns value - adjusted value to match filter or null to remove filter
  */
-/* eslint-disable complexity */
+// eslint-disable-next-line complexity
 export function adjustValueToFilterDomain(value: Filter['value'], {domain, type}) {
-  if (!domain || !type) {
+  if (!type) {
+    return false;
+  }
+  // if the current filter is a polygon it will not have any domain
+  // all other filter types require domain
+  if (type !== FILTER_TYPES.polygon && !domain) {
     return false;
   }
 
@@ -627,6 +632,8 @@ export function adjustValueToFilterDomain(value: Filter['value'], {domain, type}
 
     case FILTER_TYPES.select:
       return domain.includes(value) ? value : true;
+    case FILTER_TYPES.polygon:
+      return value;
 
     default:
       return null;
@@ -810,7 +817,7 @@ export function isFilterValidToSave(filter: any): boolean {
   return (
     filter?.type &&
     Array.isArray(filter?.name) &&
-    filter?.name.length &&
+    (filter?.name.length || filter?.layerId.length) &&
     isValidFilterValue(filter?.type, filter?.value)
   );
 }
