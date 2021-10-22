@@ -84,6 +84,7 @@ interface PlaybackControlsProps {
   buttonStyle?: string;
   buttonHeight?: string;
   playbackActionItems?: any[];
+  className?: string;
 }
 
 PlaybackControlsFactory.deps = [

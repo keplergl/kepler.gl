@@ -55,8 +55,7 @@ const AnimationWidgetInner = styled.div`
     width: 100%;
   }
   .playback-controls {
-    margin-left: -8px;
-    margin-right: 16px;
+    margin-left: 16px;
   }
 
   ${media.palm`
@@ -140,15 +139,6 @@ function AnimationControlFactory(
     return (
       <BottomWidgetInner className="bottom-widget--inner">
         <AnimationWidgetInner className="animation-widget--inner">
-          <PlaybackControls
-            startAnimation={toggleAnimation}
-            isAnimating={isAnimating}
-            pauseAnimation={toggleAnimation}
-            resetAnimation={resetAnimation}
-            speed={speed}
-            isAnimatable={isAnimatable}
-            updateAnimationSpeed={updateAnimationSpeed}
-          />
           <div className="animation-control__time-slider">
             <StyledDomain className="domain-start">
               <span>{timeStart}</span>
@@ -168,6 +158,16 @@ function AnimationControlFactory(
               <span>{timeEnd}</span>
             </StyledDomain>
           </div>
+          <PlaybackControls
+            className="animation-control-playpause"
+            startAnimation={toggleAnimation}
+            isAnimating={isAnimating}
+            pauseAnimation={toggleAnimation}
+            resetAnimation={resetAnimation}
+            speed={speed}
+            isAnimatable={isAnimatable}
+            updateAnimationSpeed={updateAnimationSpeed}
+          />
         </AnimationWidgetInner>
         <FloatingTimeDisplay
           currentTime={currentTime}
