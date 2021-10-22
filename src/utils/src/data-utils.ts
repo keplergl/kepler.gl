@@ -377,7 +377,7 @@ function formatLargeNumber(n) {
   return d3Format('.4~s')(n);
 }
 
-export function formatNumber(n: number, type: string | undefined): string {
+export function formatNumber(n: number, type?: string): string {
   switch (type) {
     case ALL_FIELD_TYPES.integer:
       if (n < 0) {
@@ -398,7 +398,7 @@ export function formatNumber(n: number, type: string | undefined): string {
         return d3Format('.4~r')(n);
       }
       if (n < 10 * 1000) {
-        return d3Format(',')(Math.round(n));
+        return d3Format(',.2~f')(n);
       }
       return formatLargeNumber(n);
 
