@@ -161,6 +161,13 @@ interface PortaledState {
 }
 
 class Portaled extends Component<PortaledProps, PortaledState> {
+  // Make Portaled a component with Error Boundary, so React can recreate
+  // this component if the child 'ColorPicker' throws cross-origin error.
+  // see function componentDidCatch()
+  static getDerivedStateFromError() {
+    return {hasError: true};
+  }
+
   static defaultProps = {
     component: 'div',
     onClose: noop,
@@ -192,6 +199,16 @@ class Portaled extends Component<PortaledProps, PortaledState> {
     }
 
     this.handleScroll();
+  }
+
+  // ColorPicker will throw a cross-origin error when it is closed
+  // when the app is within an iframe.
+  // This is a known issue of react-color component:
+  // see: https://github.com/casesandberg/react-color/issues/806
+  componentDidCatch() {
+    // Do nothing here, since React will try to recreate this component
+    // tree from scratch using the error boundary, which is this component
+    // itself. This is a temporal fix for a crash.
   }
 
   componentWillUnmount() {
