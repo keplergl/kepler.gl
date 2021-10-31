@@ -157,7 +157,12 @@ export default function DatasetTitleFactory(
               updateTableColor={updateTableColor}
               onClickSquare={this._handleClick}
             />
-            <Portaled isOpened={this.state.displayColorPicker !== false} left={110} top={-50}>
+            <Portaled
+              isOpened={this.state.displayColorPicker !== false}
+              left={110}
+              top={-50}
+              onClose={this._handleClosePicker}
+            >
               <CustomPicker
                 color={rgbToHex(dataset.color)}
                 onChange={(color: {rgb: Record<string, number>}) =>
