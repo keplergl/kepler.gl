@@ -74,7 +74,8 @@
     "styles.js",
     "cloud-providers.js",
     "localization.js",
-    "umd"
+    "umd",
+    "utils.js"
   ],
   "dependencies": {
     "@deck.gl/aggregation-layers": "8.2.0",
