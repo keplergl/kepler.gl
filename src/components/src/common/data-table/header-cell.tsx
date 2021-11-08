@@ -1,4 +1,4 @@
-import React, {CSSProperties} from 'react';
+import React, {CSSProperties, useCallback} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import Button from './button';
@@ -48,6 +48,7 @@ const StyledHeaderCell = styled.div`
         display: flex;
         align-items: center;
         overflow: hidden;
+
         svg {
           margin-left: 6px;
         }
@@ -55,6 +56,7 @@ const StyledHeaderCell = styled.div`
       .col-name__name {
         overflow: hidden;
         white-space: nowrap;
+        text-overflow: ellipsis;
       }
     }
   }
@@ -80,6 +82,7 @@ type HeaderCellProps = {
   cellInfo: CellInfo;
   columns: DataTableProps['columns'];
   isPinned?: boolean;
+  showStats?: boolean;
   props: DataTableProps;
   toggleMoreOptions: (moreOptionsColumn: string) => void;
   moreOptionsColumn: null | string;
@@ -101,6 +104,13 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
     const isGhost = column.ghost;
     const isSorted = sortColumn[column];
     const firstCell = columnIndex === 0;
+    const onSortTable = useCallback(() => sortTableColumn(column), [sortTableColumn, column]);
+    const onToggleOptionMenu = useCallback(() => toggleMoreOptions(column), [
+      toggleMoreOptions,
+      column
+    ]);
+    const onPin = useCallback(() => pinTableColumn(column), [pinTableColumn, column]);
+    const onCopy = useCallback(() => copyTableColumn(column), [copyTableColumn, column]);
     return (
       <StyledHeaderCell
         className={classnames('header-cell', {
@@ -113,7 +123,7 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
         onClick={e => {
           e.shiftKey ? sortTableColumn(column) : null;
         }}
-        onDoubleClick={() => sortTableColumn(column)}
+        onDoubleClick={onSortTable}
         title={column}
       >
         {isGhost ? (
@@ -124,7 +134,7 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
               <div className="col-name">
                 <div className="col-name__left">
                   <div className="col-name__name">{colMeta[column].name}</div>
-                  <Button className="col-name__sort" onClick={() => sortTableColumn(column)}>
+                  <Button className="col-name__sort" onClick={onSortTable}>
                     {isSorted ? (
                       isSorted === SORT_ORDER.ASCENDING ? (
                         <ArrowUp height="14px" />
@@ -134,7 +144,7 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
                     ) : null}
                   </Button>
                 </div>
-                <Button className="more" onClick={() => toggleMoreOptions(column)}>
+                <Button className="more" onClick={onToggleOptionMenu}>
                   <VertThreeDots height="14px" />
                 </Button>
               </div>
@@ -147,8 +157,8 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
                 column={column}
                 toggleMoreOptions={toggleMoreOptions}
                 sortTableColumn={mode => sortTableColumn(column, mode)}
-                pinTableColumn={() => pinTableColumn(column)}
-                copyTableColumn={() => copyTableColumn(column)}
+                pinTableColumn={onPin}
+                copyTableColumn={onCopy}
               />
             </section>
           </>

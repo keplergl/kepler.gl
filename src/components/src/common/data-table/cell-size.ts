@@ -61,7 +61,7 @@ export function renderedSize({
   maxCellSize = 500,
   maxHeaderSize = 500,
   minCellSize = MIN_CELL_SIZE,
-  optionsButton = 30
+  optionsButton = 44
 }: RenderSizeParam): {row: number; header: number} {
   if (!document) {
     return {
