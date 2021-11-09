@@ -58,6 +58,8 @@ export type TimeWidgetTopProps = {
   setFilterPlot: ActionHandler<typeof setFilterPlot>;
   index: number;
   onClose: () => void;
+  onToggleMinify: () => void;
+  isMinified: boolean;
 };
 
 export type TimeWidgetProps = {

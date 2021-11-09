@@ -121,31 +121,32 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
     };
 
     _resetAnimationByDomain = () => {
-      const {domain, value, animationWindow} = this.props;
+      const {domain, value, animationWindow, updateAnimation} = this.props;
       if (!domain) {
         return;
       }
+
       if (Array.isArray(value)) {
         if (animationWindow === ANIMATION_WINDOW.incremental) {
-          this.props.updateAnimation([value[0], value[0] + 1] as T);
+          updateAnimation([value[0], value[0] + 1] as T);
         } else {
-          this.props.updateAnimation([domain[0], domain[0] + value[1] - value[0]] as T);
+          updateAnimation([domain[0], domain[0] + value[1] - value[0]] as T);
         }
       } else {
-        this.props.updateAnimation(domain[0] as T);
+        updateAnimation(domain[0] as T);
       }
     };
 
-    _resetAnimtionByTimeStep = () => {
-      const {steps = null} = this.props;
+    _resetAnimationByTimeStep = () => {
+      const {steps = null, updateAnimation} = this.props;
       if (!steps) return;
       // go to the first steps
-      this.props.updateAnimation([steps[0], 0] as T);
+      updateAnimation([steps[0], 0] as T);
     };
 
     _resetAnimation = () => {
       if (this.props.animationWindow === ANIMATION_WINDOW.interval) {
-        this._resetAnimtionByTimeStep();
+        this._resetAnimationByTimeStep();
       } else {
         this._resetAnimationByDomain();
       }

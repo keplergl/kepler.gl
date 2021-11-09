@@ -18,151 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useState} from 'react';
 import styled from 'styled-components';
-import {
-  CenterFlexbox,
-  SelectTextBold,
-  IconRoundSmall,
-  BottomWidgetInner
-} from '../common/styled-components';
-import {Close, Clock, LineChart} from '../common/icons';
+import {BottomWidgetInner} from '../common/styled-components';
 import TimeRangeSliderFactory from '../common/time-range-slider';
-import FieldSelectorFactory from '../common/field-selector';
 import FloatingTimeDisplayFactory from '../common/animation-control/floating-time-display';
-import {Field} from '@kepler.gl/types';
 import {timeRangeSliderFieldsSelector} from './time-range-filter';
-import {TimeWidgetProps, TimeWidgetTopProps, TopSectionWrapperProps} from './types';
-
-const TOP_SECTION_HEIGHT = '36px';
+import {TimeWidgetProps} from './types';
+import TimeWidgetTopFactory from './time-widget-top';
 
 const TimeBottomWidgetInner = styled(BottomWidgetInner)`
   padding: 6px 32px 24px 32px;
 `;
-const TopSectionWrapper = styled.div.attrs({
-  className: 'time-widget--top'
-})<TopSectionWrapperProps>`
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  color: ${props => props.theme.labelColor};
-  height: ${TOP_SECTION_HEIGHT};
-
-  .bottom-widget__y-axis {
-    flex-grow: 1;
-    margin-left: 20px;
-  }
-
-  .bottom-widget__field-select {
-    width: 160px;
-    display: inline-block;
-
-    .item-selector__dropdown {
-      background: transparent;
-      padding: 4px 10px 4px 4px;
-      border-color: transparent;
-
-      :active,
-      :focus,
-      &.focus,
-      &.active {
-        background: transparent;
-        border-color: transparent;
-      }
-    }
-
-    .item-selector__dropdown:hover {
-      background: transparent;
-      border-color: transparent;
-
-      .item-selector__dropdown__value {
-        color: ${props =>
-          props.hoverColor ? props.theme[props.hoverColor] : props.theme.textColorHl};
-      }
-    }
-  }
-
-  .animation-control__speed-control {
-    margin-right: -12px;
-
-    .animation-control__speed-slider {
-      right: calc(0% - 48px);
-    }
-  }
-`;
-
-const StyledTitle = styled(CenterFlexbox)`
-  flex-grow: 0;
-  color: ${props => props.theme.textColor};
-  margin-right: 10px;
-
-  .bottom-widget__icon {
-    margin-right: 6px;
-  }
-  .bottom-widget__icon.speed {
-    margin-right: 0;
-  }
-`;
-
-TimeWidgetTopFactory.deps = [FieldSelectorFactory];
-export function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFactory>) {
-  const TimeWidgetTop: React.FC<TimeWidgetTopProps> = ({
-    filter,
-    readOnly,
-    datasets,
-    setFilterPlot,
-    index,
-    onClose
-  }) => {
-    const yAxisFields = useMemo(
-      () =>
-        ((datasets[filter.dataId[0]] || {}).fields || []).filter(
-          (f: Field) => f.type === 'integer' || f.type === 'real'
-        ),
-      [datasets, filter.dataId]
-    );
-    const _setFilterPlotYAxis = useCallback(value => setFilterPlot(index, {yAxis: value}), [
-      setFilterPlot,
-      index
-    ]);
-    return (
-      <TopSectionWrapper>
-        <StyledTitle className="bottom-widget__field">
-          <CenterFlexbox className="bottom-widget__icon">
-            <Clock height="15px" />
-          </CenterFlexbox>
-          <SelectTextBold>{filter.name}</SelectTextBold>
-        </StyledTitle>
-        <StyledTitle className="bottom-widget__y-axis">
-          <CenterFlexbox className="bottom-widget__icon">
-            <LineChart height="15px" />
-          </CenterFlexbox>
-          <div className="bottom-widget__field-select">
-            <FieldSelector
-              fields={yAxisFields}
-              placement="top"
-              value={filter.yAxis ? filter.yAxis.name : null}
-              onSelect={_setFilterPlotYAxis}
-              placeholder="placeholder.yAxis"
-              erasable
-              showToken={false}
-            />
-          </div>
-        </StyledTitle>
-        {!readOnly ? (
-          <CenterFlexbox>
-            <IconRoundSmall>
-              <Close height="12px" onClick={onClose} />
-            </IconRoundSmall>
-          </CenterFlexbox>
-        ) : null}
-      </TopSectionWrapper>
-    );
-  };
-  return TimeWidgetTop;
-}
 
 TimeWidgetFactory.deps = [TimeRangeSliderFactory, FloatingTimeDisplayFactory, TimeWidgetTopFactory];
+
 function TimeWidgetFactory(
   TimeRangeSlider: ReturnType<typeof TimeRangeSliderFactory>,
   FloatingTimeDisplay: ReturnType<typeof FloatingTimeDisplayFactory>,
@@ -183,12 +53,16 @@ function TimeWidgetFactory(
     setFilterPlot,
     setFilterAnimationWindow
   }: TimeWidgetProps) => {
+    const [isMinified, setMinified] = useState(false);
+
     const _updateAnimationSpeed = useCallback(speed => updateAnimationSpeed(index, speed), [
       updateAnimationSpeed,
       index
     ]);
 
     const _toggleAnimation = useCallback(() => toggleAnimation(index), [toggleAnimation, index]);
+
+    const _onToggleMinify = useCallback(() => setMinified(!isMinified), [setMinified, isMinified]);
 
     const _setFilterAnimationWindow = useCallback(
       animationWindow => setFilterAnimationWindow({id: filter.id, animationWindow}),
@@ -209,7 +83,11 @@ function TimeWidgetFactory(
           setFilterPlot={setFilterPlot}
           index={index}
           onClose={onClose}
+          onToggleMinify={_onToggleMinify}
+          isMinified={isMinified}
         />
+        {/* Once AnimationControl is able to display large timeline*/}
+        {/* we can replace TimeRangeSlider with AnimationControl*/}
         <TimeRangeSlider
           {...timeRangeSliderFieldsSelector(filter)}
           onChange={timeSliderOnChange}
@@ -219,6 +97,7 @@ function TimeWidgetFactory(
           hideTimeTitle={showTimeDisplay}
           resetAnimation={resetAnimation}
           isAnimatable={isAnimatable}
+          isMinified={isMinified}
         />
         {showTimeDisplay ? (
           <FloatingTimeDisplay

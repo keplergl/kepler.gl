@@ -23,12 +23,12 @@ import styled from 'styled-components';
 import classnames from 'classnames';
 
 import Slider from '../slider/slider';
-import {BottomWidgetInner} from '../styled-components';
 import PlaybackControlsFactory from './playback-controls';
 import FloatingTimeDisplayFactory from './floating-time-display';
 import {datetimeFormatter, snapToMarks, toArray} from '@kepler.gl/utils';
 import {DEFAULT_TIME_FORMAT} from '@kepler.gl/constants';
 import {media} from '@kepler.gl/styles';
+import {AnimationConfig} from '@kepler.gl/types';
 
 const SLIDER_MARGIN_PALM = 6;
 
@@ -37,9 +37,21 @@ const SliderWrapper = styled.div`
   position: relative;
   flex-grow: 1;
   margin: 0 24px;
-
   ${media.palm`
     margin: 0 ${SLIDER_MARGIN_PALM}px;
+  `}
+`;
+
+const AnimationControlContainer = styled.div`
+  padding: ${props => `${props.theme.bottomInnerPdVert}px ${props.theme.bottomInnerPdSide}px`};
+  position: relative;
+  margin-top: ${props => props.theme.bottomPanelGap}px;
+
+  ${media.portable`
+    border-top: 1px solid ${props => props.theme.panelBorderColor};
+    border-left: 1px solid ${props => props.theme.panelBorderColor};
+    padding: 12px 12px;
+    margin-top: 0;
   `}
 `;
 
@@ -89,26 +101,44 @@ const StyledDomain = styled.div.attrs(props => ({
   font-size: 10px;
 `;
 
+type AnimationControlProps = {
+  animationConfig: AnimationConfig;
+  isAnimatable?: boolean;
+  isAnimating?: boolean;
+  updateAnimationSpeed?: (val: number) => void;
+  toggleAnimation: () => void;
+  resetAnimation?: () => void;
+  setLayerAnimationTime: (x: number) => void;
+  showTimeDisplay?: boolean;
+  className?: string;
+  style?: object;
+};
+
 AnimationControlFactory.deps = [PlaybackControlsFactory, FloatingTimeDisplayFactory];
 
 function AnimationControlFactory(
   PlaybackControls: ReturnType<typeof PlaybackControlsFactory>,
   FloatingTimeDisplay: ReturnType<typeof FloatingTimeDisplayFactory>
 ) {
-  const AnimationControl = ({
+  const AnimationControl: React.FC<AnimationControlProps> = ({
+    className,
+    style,
     isAnimatable,
     isAnimating,
     resetAnimation,
     toggleAnimation,
     setLayerAnimationTime,
     updateAnimationSpeed,
-    animationConfig
+    animationConfig,
+    showTimeDisplay
   }) => {
     const {
       currentTime,
       domain,
       speed,
+      // @ts-expect-error
       step,
+      // @ts-expect-error
       timeSteps,
       timeFormat,
       timezone,
@@ -121,7 +151,7 @@ function AnimationControlFactory(
           setLayerAnimationTime(snapToMarks(toArray(val)[0], timeSteps));
 
           // TODO: merge slider in to avoid this step
-        } else if (val >= domain[0] && val <= domain[1]) {
+        } else if (domain && val >= domain[0] && val <= domain[1]) {
           setLayerAnimationTime(val);
         }
       },
@@ -138,7 +168,10 @@ function AnimationControlFactory(
     const timeEnd = useMemo(() => (domain ? dateFunc(domain[1]) : ''), [domain, dateFunc]);
 
     return (
-      <BottomWidgetInner className="bottom-widget--inner">
+      <AnimationControlContainer
+        style={style}
+        className={classnames('animation-control-container', className)}
+      >
         <AnimationWidgetInner className="animation-widget--inner">
           <div className="animation-control__time-slider">
             <StyledDomain className="domain-start">
@@ -150,6 +183,7 @@ function AnimationControlFactory(
                 step={step}
                 minValue={domain ? domain[0] : 0}
                 maxValue={domain ? domain[1] : 1}
+                // @ts-expect-error
                 value1={currentTime}
                 onSlider1Change={onSlider1Change}
                 enableBarDrag={true}
@@ -170,13 +204,16 @@ function AnimationControlFactory(
             updateAnimationSpeed={updateAnimationSpeed}
           />
         </AnimationWidgetInner>
-        <FloatingTimeDisplay
-          currentTime={currentTime}
-          defaultTimeFormat={defaultTimeFormat}
-          timeFormat={timeFormat}
-          timezone={timezone}
-        />
-      </BottomWidgetInner>
+        {showTimeDisplay ? (
+          <FloatingTimeDisplay
+            // @ts-expect-error
+            currentTime={currentTime}
+            defaultTimeFormat={defaultTimeFormat}
+            timeFormat={timeFormat}
+            timezone={timezone}
+          />
+        ) : null}
+      </AnimationControlContainer>
     );
   };
 
@@ -184,6 +221,7 @@ function AnimationControlFactory(
     toggleAnimation: () => {},
     updateAnimationSpeed: () => {},
     animationControlProps: {},
+    // @ts-expect-error
     animationConfig: {}
   };
 

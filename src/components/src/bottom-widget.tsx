@@ -18,16 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, forwardRef, useMemo} from 'react';
+import React, {forwardRef, useMemo, useCallback} from 'react';
 import styled from 'styled-components';
-import TimeWidgetFactory from './filters/time-widget';
-import AnimationControlFactory from './common/animation-control/animation-control';
-import AnimationControllerFactory from './common/animation-control/animation-controller';
-import {ANIMATION_WINDOW, DIMENSIONS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
-import {getIntervalBins, hasPortableWidth, isSideFilter} from '@kepler.gl/utils';
+
+import {DIMENSIONS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {hasPortableWidth, isSideFilter} from '@kepler.gl/utils';
 import {media, breakPointValues} from '@kepler.gl/styles';
-import {AnimationConfig, TimeRangeFilter} from '@kepler.gl/types';
+import {TimeRangeFilter} from '@kepler.gl/types';
+
+import TimeWidgetFactory from './filters/time-widget';
 import {bottomWidgetSelector} from './kepler-gl';
+import FilterAnimationControllerFactory from './filter-animation-controller';
+import LayerAnimationControllerFactory from './layer-animation-controller';
+import AnimationControlFactory from './common/animation-control/animation-control';
 
 const maxWidth = 1080;
 
@@ -53,94 +56,6 @@ const BottomWidgetContainer = styled.div<BottomWidgetContainerProps>`
   ${media.portable`padding: 0;`}
 `;
 
-interface FilterAnimationControllerProps {
-  filter: TimeRangeFilter & {animationWindow?: string};
-  filterIdx: number;
-  setFilterAnimationTime: (idx: number, value: string, a: any[]) => void;
-}
-
-FilterAnimationControllerFactory.deps = [AnimationControllerFactory];
-export function FilterAnimationControllerFactory(
-  AnimationController: ReturnType<typeof AnimationControllerFactory>
-) {
-  const FilterAnimationController: React.FC<FilterAnimationControllerProps> = ({
-    filter,
-    filterIdx,
-    setFilterAnimationTime,
-    children
-  }) => {
-    const intervalBins = useMemo(() => getIntervalBins(filter), [filter]);
-
-    const steps = useMemo(() => (intervalBins ? intervalBins.map(x => x.x0) : null), [
-      intervalBins
-    ]);
-
-    const updateAnimation = useCallback(
-      value => {
-        switch (filter.animationWindow) {
-          case ANIMATION_WINDOW.interval:
-            const idx = value[1];
-            setFilterAnimationTime(filterIdx, 'value', [
-              intervalBins[idx].x0,
-              intervalBins[idx].x1 - 1
-            ]);
-            break;
-          default:
-            setFilterAnimationTime(filterIdx, 'value', value);
-            break;
-        }
-      },
-      [filterIdx, intervalBins, filter.animationWindow, setFilterAnimationTime]
-    );
-
-    return (
-      <AnimationController
-        key="filter-control"
-        value={filter.value}
-        domain={filter.domain}
-        speed={filter.speed}
-        isAnimating={filter.isAnimating}
-        animationWindow={filter.animationWindow}
-        steps={steps}
-        updateAnimation={updateAnimation}
-        children={children}
-      />
-    );
-  };
-  return FilterAnimationController;
-}
-
-interface LayerAnimationControllerProps {
-  animationConfig: AnimationConfig & {timeSteps?: number[] | null};
-  setLayerAnimationTime: (x: number) => void;
-}
-
-LayerAnimationControllerFactory.deps = [AnimationControllerFactory];
-export function LayerAnimationControllerFactory(
-  AnimationController: ReturnType<typeof AnimationControllerFactory>
-) {
-  const LayerAnimationController: React.FC<LayerAnimationControllerProps> = ({
-    animationConfig,
-    setLayerAnimationTime,
-    children
-  }) => (
-    <AnimationController<number>
-      key="layer-control"
-      value={Number(animationConfig.currentTime)}
-      domain={animationConfig.domain}
-      speed={animationConfig.speed}
-      isAnimating={animationConfig.isAnimating}
-      updateAnimation={setLayerAnimationTime}
-      steps={animationConfig.timeSteps}
-      animationWindow={
-        animationConfig.timeSteps ? ANIMATION_WINDOW.interval : ANIMATION_WINDOW.point
-      }
-      children={children}
-    />
-  );
-  return LayerAnimationController;
-}
-
 type BottomWidgetProps = {
   rootRef: React.ForwardedRef<HTMLDivElement>;
   containerW: number;
@@ -159,8 +74,12 @@ export default function BottomWidgetFactory(
   AnimationControl: ReturnType<typeof AnimationControlFactory>,
   FilterAnimationController: ReturnType<typeof FilterAnimationControllerFactory>,
   LayerAnimationController: ReturnType<typeof LayerAnimationControllerFactory>
-) {
-  const BottomWidget = (props: BottomWidgetProps) => {
+): React.FC<BottomWidgetProps> {
+  const LayerAnimationControl = styled(AnimationControl)`
+    background-color: ${props => props.theme.sidePanelBg};
+  `;
+
+  const BottomWidget: React.FC<BottomWidgetProps> = (props: BottomWidgetProps) => {
     const {
       datasets,
       filters,
@@ -228,21 +147,21 @@ export default function BottomWidgetFactory(
           animationConfig={animationConfig}
           setLayerAnimationTime={visStateActions.setLayerAnimationTime}
         >
-          {(isAnimating, start, pause, reset) =>
+          {(isAnimating, start, pause, resetAnimation) =>
             showAnimationControl ? (
-              <AnimationControl
+              <LayerAnimationControl
                 animationConfig={animationConfig}
                 setLayerAnimationTime={visStateActions.setLayerAnimationTime}
                 updateAnimationSpeed={visStateActions.updateLayerAnimationSpeed}
                 toggleAnimation={visStateActions.toggleLayerAnimation}
                 isAnimatable={!animatedFilter}
                 isAnimating={isAnimating}
-                resetAnimation={reset}
+                resetAnimation={resetAnimation}
               />
             ) : null
           }
         </LayerAnimationController>
-        {filter && (
+        {filter ? (
           <FilterAnimationController
             filter={filter}
             filterIdx={animatedFilterIdx > -1 ? animatedFilterIdx : enlargedFilterIdx}
@@ -270,7 +189,7 @@ export default function BottomWidgetFactory(
               ) : null
             }
           </FilterAnimationController>
-        )}
+        ) : null}
       </BottomWidgetContainer>
     );
   };

@@ -43,11 +43,9 @@ export {default as SidePanelFactory} from './side-panel';
 export {default as PanelTitleFactory} from './side-panel/panel-title';
 export {default as MapContainerFactory} from './map-container';
 export {default as MapsLayoutFactory} from './maps-layout';
-export {
-  default as BottomWidgetFactory,
-  LayerAnimationControllerFactory,
-  FilterAnimationControllerFactory
-} from './bottom-widget';
+export {default as BottomWidgetFactory} from './bottom-widget';
+export {default as LayerAnimationControllerFactory} from './layer-animation-controller';
+export {default as FilterAnimationControllerFactory} from './filter-animation-controller';
 export {default as ModalContainerFactory} from './modal-container';
 export {default as PlotContainerFactory} from './plot-container';
 export {default as GeocoderPanelFactory, getUpdateVisDataPayload} from './geocoder-panel';
@@ -176,7 +174,8 @@ export {default as TimeSliderMarkerFactory} from './common/time-slider-marker';
 export {default as TimeRangeSliderTimeTitleFactory} from './common/time-range-slider-time-title';
 export {default as IconButton} from './common/icon-button';
 // // Filters factory
-export {default as TimeWidgetFactory, TimeWidgetTopFactory} from './filters/time-widget';
+export {default as TimeWidgetFactory} from './filters/time-widget';
+export {default as TimeWidgetTopFactory} from './filters/time-widget-top';
 export {default as SingleSelectFilterFactory} from './filters/single-select-filter';
 export {default as MultiSelectFilterFactory} from './filters/multi-select-filter';
 export {default as NewFilterPanelFactory} from './filters/filter-panels/new-filter-panel';
