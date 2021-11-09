@@ -165,7 +165,7 @@ function DataTableModalFactory(
           [field.name]: renderedSize({
             text: {
               dataContainer,
-              column: field.name
+              column: field.displayName
             },
             colIdx,
             type: field.type,
@@ -235,7 +235,7 @@ function DataTableModalFactory(
                 copyTableColumn={this.copyTableColumn}
                 pinTableColumn={this.pinTableColumn}
                 sortTableColumn={this.sortTableColumn}
-                showStats
+                hasStats
               />
             ) : null}
           </TableContainer>

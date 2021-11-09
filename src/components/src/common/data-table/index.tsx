@@ -373,7 +373,8 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
       sortColumn: {},
       fixedWidth: null,
       fixedHeight: null,
-      theme: {}
+      theme: {},
+      hasStats: false
     };
 
     pinnedGrid = false;
@@ -507,7 +508,8 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
         pinnedColumns = [],
         theme = {},
         fixedWidth,
-        fixedHeight = 0
+        fixedHeight = 0,
+        hasStats
       } = this.props;
       const unpinnedColumns = this.unpinnedColumns(this.props);
 
@@ -531,9 +533,17 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
       const headerGridProps = {
         cellSizeCache,
         className: 'header-grid',
-        height: showStats ? headerRowWStatsHeight : headerRowHeight + headerStatsControlHeight,
+        height: !hasStats
+          ? headerRowHeight
+          : showStats
+          ? headerRowWStatsHeight
+          : headerRowHeight + headerStatsControlHeight,
         rowCount: 1,
-        rowHeight: showStats ? headerRowWStatsHeight : headerRowHeight + headerStatsControlHeight
+        rowHeight: !hasStats
+          ? headerRowHeight
+          : showStats
+          ? headerRowWStatsHeight
+          : headerRowHeight + headerStatsControlHeight
       };
 
       const dataGridProps = {
@@ -624,11 +634,13 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
                   );
                 }}
               </ScrollSync>
-              <StatsControl
-                top={headerRowHeight}
-                showStats={showStats}
-                toggleShowStats={this.toggleShowStats}
-              />
+              {hasStats ? (
+                <StatsControl
+                  top={headerRowHeight}
+                  showStats={showStats}
+                  toggleShowStats={this.toggleShowStats}
+                />
+              ) : null}
             </>
           ) : null}
         </Container>
