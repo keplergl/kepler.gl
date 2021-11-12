@@ -27,6 +27,14 @@ import {MapState} from '@kepler.gl/types';
 const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
 const httpRg = /^(?=(http:|https:))/;
 
+// Fallback style to use when styles are being fetched, or when
+// a style fails to fetch
+export const EMPTY_MAPBOX_STYLE = {
+  version: 8,
+  sources: {},
+  layers: []
+};
+
 export function getDefaultLayerGroupVisibility({layerGroups = []}: {layerGroups: LayerGroup[]}) {
   return layerGroups.reduce(
     (accu, layer) => ({
