@@ -1,6 +1,6 @@
-import {FILTER_TYPES} from '@kepler.gl/constants';
+import {FILTER_TYPES, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import get from 'lodash.get';
-import {TimeRangeFilter} from '@kepler.gl/types';
+import {TimeRangeFilter, Filter} from '@kepler.gl/types';
 
 export const durationSecond = 1000;
 export const durationMinute = durationSecond * 60;
@@ -71,4 +71,8 @@ export function getTimeWidgetHintFormatter(domain: [number, number]): string | u
     : diff > durationHour
     ? 'LT'
     : 'LTS';
+}
+
+export function isSideFilter(filter: Filter): boolean {
+  return filter.view === FILTER_VIEW_TYPES.side;
 }

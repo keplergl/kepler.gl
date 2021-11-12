@@ -67,6 +67,7 @@ import {
   EDITOR_MODES,
   SORT_ORDER,
   FILTER_TYPES,
+  FILTER_VIEW_TYPES,
   MAX_DEFAULT_TOOLTIPS,
   DEFAULT_TEXT_LABEL,
   COMPARE_TYPES
@@ -783,11 +784,11 @@ export function setFilterUpdater(
       break;
   }
 
-  const enlargedFilter = state.filters.find(f => f.enlarged);
+  const enlargedFilter = state.filters.find(f => f.view === FILTER_VIEW_TYPES.enlarged);
 
   if (enlargedFilter && enlargedFilter.id !== newFilter.id) {
     // there should be only one enlarged filter
-    newFilter.enlarged = false;
+    newFilter.view = FILTER_VIEW_TYPES.side;
   }
 
   // save new filters to newState
@@ -984,17 +985,18 @@ export const updateLayerAnimationSpeedUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const enlargeFilterUpdater = (
+export const setFilterViewUpdater = (
   state: VisState,
   action: VisStateActions.EnlargeFilterUpdaterAction
-): VisState => {
+) => {
+  const {view, idx} = action;
   return {
     ...state,
     filters: state.filters.map((f, i) =>
-      i === action.idx
+      i === idx
         ? {
             ...f,
-            enlarged: !f.enlarged
+            view
           }
         : f
     )

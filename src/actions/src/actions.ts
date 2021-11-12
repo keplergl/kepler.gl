@@ -87,7 +87,7 @@ export type ActionHandler<A extends (...args: any) => any> = (...args: Parameter
  *         dataId: 'test_trip_data',
  *         name: 'tpep_pickup_datetime',
  *         type: 'timeRange',
- *         enlarged: true
+ *         view: 'enlarged'
  *       }
  *     ]
  *   }

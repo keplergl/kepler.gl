@@ -44,7 +44,7 @@ function MultiSelectFilterPanelFactory(
             removeFilter={removeFilter}
             setFilter={setFilter}
           >
-            {filter.type && !filter.enlarged && (
+            {filter.type && (
               <div className="filter-panel__filter">
                 <MultiSelectFilterComponent filter={filter} setFilter={onSetFilter} />
               </div>

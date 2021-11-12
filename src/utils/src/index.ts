@@ -96,6 +96,7 @@ export {
   default as exporters
 } from './export-utils';
 export {
+  isSideFilter,
   isValidFilterValue, 
   isValidTimeDomain, 
   getIntervalBins, 

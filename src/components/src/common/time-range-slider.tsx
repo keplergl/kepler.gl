@@ -109,15 +109,17 @@ export default function TimeRangeSliderFactory(
     } = props;
     const throttledOnchange = useMemo(() => throttle(onChange, 20), [onChange]);
 
+    const style = useMemo(
+      () => ({
+        width: isEnlarged ? `calc(100% - ${animationControlWidth}px)` : '100%'
+      }),
+      [isEnlarged]
+    );
+
     return (
       <div className="time-range-slider">
-        {!hideTimeTitle ? (
-          <div
-            className="time-range-slider__title"
-            style={{
-              width: isEnlarged ? `calc(100% - ${animationControlWidth}px)` : '100%'
-            }}
-          >
+        {!hideTimeTitle && isEnlarged ? (
+          <div className="time-range-slider__title" style={style}>
             <TimeRangeSliderTimeTitle
               timeFormat={timeFormat}
               timezone={timezone}
@@ -129,9 +131,7 @@ export default function TimeRangeSliderFactory(
         <StyledSliderContainer className="time-range-slider__container" isEnlarged={isEnlarged}>
           <div
             className="timeline-container"
-            style={{
-              width: isEnlarged ? `calc(100% - ${animationControlWidth}px)` : '100%'
-            }}
+            style={style}
           >
             <RangeSlider
               range={domain}

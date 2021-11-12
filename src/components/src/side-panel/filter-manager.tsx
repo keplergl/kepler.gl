@@ -24,8 +24,10 @@ import {Button, SidePanelDivider, SidePanelSection} from '../common/styled-compo
 import {Add} from '../common/icons';
 import SourceDataCatalogFactory from './common/source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
+import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {Filter} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
+import {isSideFilter} from '@kepler.gl/utils';
 import {VisStateActions, ActionHandler} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 
@@ -54,11 +56,11 @@ function FilterManagerFactory(
   }: FilterManagerProps) => {
     const {
       addFilter,
-      enlargeFilter,
       removeFilter,
       setFilter,
       toggleFilterAnimation,
-      toggleFilterFeature
+      toggleFilterFeature,
+      setFilterView
     } = visStateActions;
     const isAnyFilterAnimating = filters.some(f => f.isAnimating);
     const hadEmptyFilter = filters.some(f => !f.name);
@@ -78,11 +80,15 @@ function FilterManagerFactory(
     const filterPanelCallbacks = useMemo(() => {
       return new Array(filters.length).fill(0).map((d, idx) => ({
         removeFilter: () => removeFilter(idx),
-        enlargeFilter: () => enlargeFilter(idx),
+        toggleFilterView: () =>
+          setFilterView(
+            idx,
+            isSideFilter(filters[idx]) ? FILTER_VIEW_TYPES.enlarged : FILTER_VIEW_TYPES.side
+          ),
         toggleAnimation: () => toggleFilterAnimation(idx),
         toggleFilterFeature: () => toggleFilterFeature(idx)
       }));
-    }, [filters.length, removeFilter, enlargeFilter, toggleFilterAnimation, toggleFilterFeature]);
+    }, [filters, removeFilter, setFilterView, toggleFilterAnimation, toggleFilterFeature]);
 
     return (
       <div className="filter-manager">
@@ -103,7 +109,7 @@ function FilterManagerFactory(
               layers={layers}
               isAnyFilterAnimating={isAnyFilterAnimating}
               removeFilter={filterPanelCallbacks[idx].removeFilter}
-              enlargeFilter={filterPanelCallbacks[idx].enlargeFilter}
+              enlargeFilter={filterPanelCallbacks[idx].toggleFilterView}
               toggleAnimation={filterPanelCallbacks[idx].toggleAnimation}
               toggleFilterFeature={filterPanelCallbacks[idx].toggleFilterFeature}
               setFilter={setFilter}

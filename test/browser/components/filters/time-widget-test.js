@@ -116,7 +116,7 @@ test('Components -> TimeWidget.mount -> with time filter', t => {
 });
 
 test('Components -> TimeWidget.mount -> test actions', t => {
-  const enlargeFilter = sinon.spy();
+  const onClose = sinon.spy();
   const toggleAnimation = sinon.spy();
   const updateAnimationSpeed = sinon.spy();
   const setFilterAnimationWindow = sinon.spy();
@@ -131,7 +131,7 @@ test('Components -> TimeWidget.mount -> test actions', t => {
       <IntlWrapper>
         <TimeWidget
           {...defaultProps}
-          enlargeFilter={enlargeFilter}
+          onClose={onClose}
           toggleAnimation={toggleAnimation}
           updateAnimationSpeed={updateAnimationSpeed}
           setFilterAnimationWindow={setFilterAnimationWindow}
@@ -255,7 +255,7 @@ test('Components -> TimeWidget.mount -> test actions', t => {
     .at(0)
     .simulate('click');
 
-  t.deepEqual(enlargeFilter.args[0], [0], 'should call enlarged fitler to close');
+  t.deepEqual(onClose.calledOnce, true, 'should call enlarged filter to close');
 
   wrapper.detach();
   clientSizeStub.restore();

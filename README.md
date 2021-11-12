@@ -172,7 +172,7 @@ overridden by the latest instance and reset to a blank state.
 
 By default, kepler.gl uses mapbox-gl.js to render its base maps. You can create a free account at [mapbox][mapbox] and create a token at [www.mapbox.com/account/access-tokens][mapbox-token].
 
-If you replaced kepler.gl default map styles with your own, and they are not Mapbox styles. `mapboxApiAccessToken` will not be reuiqred. 
+If you replaced kepler.gl default map styles with your own, and they are not Mapbox styles. `mapboxApiAccessToken` will not be reuiqred.
 
 Read more about [Custom Map Styles][custom-map-styles].
 
@@ -273,7 +273,7 @@ Each `mapStyles` should has the following properties:
 
 - `id` (String, required) unique string that should **not** be one of these reserved `dark` `light` `muted`. `muted_night`
 - `label` (String, required) name to be displayed in map style selection panel
-- `url` (String, required) mapbox style url or a url pointing to the map style json object written in [Mapbox GL Style Spec](https://docs.mapbox.com/mapbox-gl-js/style-spec/). 
+- `url` (String, required) mapbox style url or a url pointing to the map style json object written in [Mapbox GL Style Spec](https://docs.mapbox.com/mapbox-gl-js/style-spec/).
 - `icon` (String, optional) image icon of the style, it can be a url, or an [image data url](https://flaviocopes.com/data-urls/#how-does-a-data-url-look)
 - `layerGroups` (Array, optional)
 
@@ -609,7 +609,7 @@ const sampleConfig = {
         dataId: 'test_trip_data',
         name: 'tpep_pickup_datetime',
         type: 'timeRange',
-        enlarged: true
+        view: 'enlarged'
       }
     ]
   }

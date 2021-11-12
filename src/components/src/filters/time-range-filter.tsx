@@ -20,7 +20,7 @@
 
 import React from 'react';
 import TimeRangeSliderFactory from '../common/time-range-slider';
-import {DEFAULT_TIME_FORMAT} from '@kepler.gl/constants';
+import {DEFAULT_TIME_FORMAT, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {TimeRangeFilter} from '@kepler.gl/types';
 import {TimeRangeFilterProps} from './types';
 /*
@@ -41,12 +41,14 @@ export function timeRangeSliderFieldsSelector(filter: TimeRangeFilter) {
     yAxis: filter.yAxis,
     step: filter.step,
     speed: filter.speed,
-    histogram: filter.enlarged ? filter.enlargedHistogram : filter.histogram,
-    isEnlarged: filter.enlarged,
+    histogram:
+      filter.view === FILTER_VIEW_TYPES.enlarged ? filter.enlargedHistogram : filter.histogram,
     animationWindow: filter.animationWindow,
     isAnimating: filter.isAnimating,
     timezone: filter.timezone,
-    timeFormat
+    timeFormat,
+    isMinified: filter.view === FILTER_VIEW_TYPES.minified,
+    isEnlarged: filter.view === FILTER_VIEW_TYPES.enlarged
   };
 }
 

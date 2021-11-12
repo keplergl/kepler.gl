@@ -27,7 +27,13 @@ import isEqual from 'lodash.isequal';
 import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
-import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW, PLOT_TYPES} from '@kepler.gl/constants';
+import {
+  ALL_FIELD_TYPES,
+  FILTER_TYPES,
+  ANIMATION_WINDOW,
+  PLOT_TYPES,
+  FILTER_VIEW_TYPES
+} from '@kepler.gl/constants';
 import {Layer} from '@kepler.gl/layers';
 import {notNullorUndefined, unique, timeToUnixMilli} from '@kepler.gl/utils';
 import * as ScaleUtils from './data-scale-utils';
@@ -122,7 +128,7 @@ export const DEFAULT_FILTER_STRUCTURE = {
 
   // time range filter specific
   fixedDomain: false,
-  enlarged: false,
+  view: FILTER_VIEW_TYPES.side,
   isAnimating: false,
   animationWindow: ANIMATION_WINDOW.free,
   speed: 1,
@@ -260,8 +266,7 @@ export function validateFilter(
   }
 
   updatedFilter.value = adjustValueToFilterDomain(filter.value, updatedFilter);
-  updatedFilter.enlarged =
-    typeof filter.enlarged === 'boolean' ? filter.enlarged : updatedFilter.enlarged;
+  updatedFilter.view = filter.view ?? updatedFilter.view;
 
   if (updatedFilter.value === null) {
     // cannot adjust saved value to filter
@@ -372,7 +377,7 @@ export function getFilterProps(
       return {
         ...filterProps,
         type: FILTER_TYPES.timeRange,
-        enlarged: true,
+        view: FILTER_VIEW_TYPES.enlarged,
         fixedDomain: true,
         value: filterProps.domain,
         gpu: true
