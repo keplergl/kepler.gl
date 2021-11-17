@@ -230,6 +230,8 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
       const index = bisectLeft(steps, val);
       const nextIdx = index >= steps.length - 1 ? 0 : index + 1;
 
+      // why do we need to pass an array of two objects? are we reading nextIdx at some point?
+      // _nextFrameByDomain only returns one value
       return [steps[nextIdx], nextIdx];
     }
 

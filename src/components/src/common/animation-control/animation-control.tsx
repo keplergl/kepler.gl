@@ -26,7 +26,7 @@ import Slider from '../slider/slider';
 import {BottomWidgetInner} from '../styled-components';
 import PlaybackControlsFactory from './playback-controls';
 import FloatingTimeDisplayFactory from './floating-time-display';
-import {datetimeFormatter, snapToMarks} from '@kepler.gl/utils';
+import {datetimeFormatter, snapToMarks, toArray} from '@kepler.gl/utils';
 import {DEFAULT_TIME_FORMAT} from '@kepler.gl/constants';
 import {media} from '@kepler.gl/styles';
 
@@ -116,8 +116,9 @@ function AnimationControlFactory(
     } = animationConfig;
     const onSlider1Change = useCallback(
       val => {
+        // TODO: can we move this logic into setLayerAnimationTimeUpdater
         if (Array.isArray(timeSteps)) {
-          setLayerAnimationTime(snapToMarks(val, timeSteps));
+          setLayerAnimationTime(snapToMarks(toArray(val)[0], timeSteps));
 
           // TODO: merge slider in to avoid this step
         } else if (val >= domain[0] && val <= domain[1]) {
