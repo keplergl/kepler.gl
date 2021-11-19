@@ -926,6 +926,9 @@ export const PLOT_TYPES = keyMirror({
   lineChart: null
 });
 
+// Filter
+export const INIT_FILTER_ITEMS_IN_DROPDOWN = 100;
+
 // GPU Filtering
 /**
  * Max number of filter value buffers that deck.gl provides

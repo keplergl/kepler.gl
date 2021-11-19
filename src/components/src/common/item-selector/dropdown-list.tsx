@@ -21,6 +21,7 @@
 import React, {Component, ElementType} from 'react';
 import classNames from 'classnames';
 import styled from 'styled-components';
+import {INIT_FILTER_ITEMS_IN_DROPDOWN} from '@kepler.gl/constants';
 
 export const classList = {
   list: 'list-selector',
@@ -48,6 +49,10 @@ const DropdownListWrapper = styled.div<DropdownListWrapperProps>`
   ${props => (props.light ? props.theme.dropdownListLT : props.theme.dropdownList)};
 `;
 
+const DropdownFooterWrapper = styled.div`
+  height: '0px';
+`;
+
 interface DropdownListProps {
   options?: any[];
   allowCustomValues?: number;
@@ -66,7 +71,11 @@ interface DropdownListProps {
   fixedOptions?: any[];
 }
 
-export default class DropdownList extends Component<DropdownListProps> {
+interface DropdownListState {
+  options: Array<any> | null;
+}
+
+export default class DropdownList extends Component<DropdownListProps, DropdownListState> {
   static defaultProps = {
     customClasses: {},
     customListItemComponent: ListItem,
@@ -78,6 +87,87 @@ export default class DropdownList extends Component<DropdownListProps> {
     defaultClassNames: true,
     selectionIndex: null
   };
+
+  initNumberOfOptions: number;
+  page: number;
+  prevY: number;
+  loadingRef: React.RefObject<HTMLDivElement>;
+  observer: IntersectionObserver | undefined;
+
+  constructor(props) {
+    super(props);
+
+    this.state = {options: []};
+    this.initNumberOfOptions = INIT_FILTER_ITEMS_IN_DROPDOWN;
+    this.page = 0;
+    this.prevY = 0;
+    this.loadingRef = React.createRef();
+  }
+
+  componentDidMount() {
+    const options = this._getOptions(this.page);
+    this.setState({options});
+
+    const divOptions = {
+      root: null,
+      rootMargin: '0%',
+      threshold: 1.0
+    };
+
+    if (this.loadingRef.current) {
+      this.observer = new IntersectionObserver(this.handleObserver, divOptions);
+      this.observer.observe(this.loadingRef.current);
+    }
+  }
+
+  getSnapshotBeforeUpdate(prevProps: DropdownListProps, prevState: DropdownListState) {
+    if (prevProps.options?.length !== this.props.options?.length) {
+      // check if user searching, reset state.options at the first time
+      const options = this._getOptions(0);
+      this.setState({options});
+    }
+    return null;
+  }
+
+  // prevent console warning: getSnapshotBeforeUpdate() should be used with componentDidUpdate().
+  componentDidUpdate(prevProps, prevState, snapshot) {}
+
+  componentWillUnmount() {
+    if (this.loadingRef.current) {
+      this.observer?.unobserve(this.loadingRef.current);
+    }
+  }
+
+  handleObserver = entities => {
+    const y = entities[0].boundingClientRect.y;
+    if (this.prevY > y) {
+      const options = this._getOptions(this.page);
+      if (options) this.setState({options});
+    }
+    this.prevY = y;
+  };
+
+  _getOptions(page) {
+    if(!this.props.options){
+      return [];
+    }
+
+    const n = this.props.options.length;
+    if (n === 0) {
+      return [];
+    }
+    const start = page * this.initNumberOfOptions;
+    const end = start + this.initNumberOfOptions > n ? n : start + this.initNumberOfOptions;
+
+    if (start < end && end <= n) {
+      this.page = page + 1;
+      // in case of user searching, props.options will be updated
+      // so "page" value will be set to 0 and previous state.options will be discarded
+      return [...(page > 0 ? (this.state.options || []) : []), ...this.props.options.slice(start, end)];
+    }
+
+    return null;
+  }
 
   _onClick(result, event) {
     event.preventDefault();
@@ -95,7 +185,7 @@ export default class DropdownList extends Component<DropdownListProps> {
 
     // Don't render if there are no options to display
     if (!this.props.options?.length && allowCustomValues <= 0) {
-      return false;
+      return <div />;;
     }
 
     const valueOffset = Array.isArray(fixedOptions) ? fixedOptions.length : 0;
@@ -128,7 +218,7 @@ export default class DropdownList extends Component<DropdownListProps> {
           </div>
         ) : null}
 
-        {this.props.options?.map((value, i) => (
+        {this.state.options?.map((value, i) => (
           <div
             className={classNames(classList.listItem, {
               hover: this.props.selectionIndex === i + valueOffset
@@ -140,6 +230,8 @@ export default class DropdownList extends Component<DropdownListProps> {
             <CustomListItemComponent value={value} displayOption={display} />
           </div>
         ))}
+
+        <DropdownFooterWrapper ref={this.loadingRef} />
       </DropdownListWrapper>
     );
   }
