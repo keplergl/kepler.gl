@@ -478,7 +478,7 @@ test('filterUtils -> getTimestampFieldDomain', t => {
     zero: {
       input: ['2016-10-01 09:45:39', '2016-10-01 09:45:39'],
       expect: {
-        domain: [1475315139000, 1475315139000],
+        domain: [1475315139000, 1475315140000],
         mappedValue: [1475315139000, 1475315139000],
         histogram: [{count: 2, x0: 1475315139000, x1: 1475315139000}],
         enlargedHistogram: [{count: 2, x0: 1475315139000, x1: 1475315139000}],
