@@ -27,6 +27,7 @@ import {connect as keplerGlConnect} from 'connect/keplergl-connect';
 import {IntlProvider} from 'react-intl';
 import {messages} from '../localization';
 import {RootContext} from 'components/context';
+import cloneDeep from 'lodash.clonedeep';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
@@ -39,7 +40,8 @@ import {
   KEPLER_GL_NAME,
   KEPLER_GL_VERSION,
   THEME,
-  DEFAULT_MAPBOX_API_URL
+  DEFAULT_MAPBOX_API_URL,
+  GEOCODER_DATASET_NAME
 } from 'constants/default-settings';
 import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
 
@@ -138,30 +140,45 @@ export const mapFieldsSelector = props => ({
   locale: props.uiState.locale
 });
 
-export const sidePanelSelector = (props, availableProviders) => ({
-  appName: props.appName,
-  version: props.version,
-  appWebsite: props.appWebsite,
-  mapStyle: props.mapStyle,
-  onSaveMap: props.onSaveMap,
-  uiState: props.uiState,
-  mapStyleActions: props.mapStyleActions,
-  visStateActions: props.visStateActions,
-  uiStateActions: props.uiStateActions,
+export const sidePanelSelector = (props, availableProviders) => {
+  // We don't want Geocoder dataset to be present in SidePanel dataset list
+  const filteredDatasets = Object.fromEntries(
+    Object.entries(props.visState.datasets).filter(([key, value]) => key !== GEOCODER_DATASET_NAME)
+  );
 
-  datasets: props.visState.datasets,
-  filters: props.visState.filters,
-  layers: props.visState.layers,
-  layerOrder: props.visState.layerOrder,
-  layerClasses: props.visState.layerClasses,
-  interactionConfig: props.visState.interactionConfig,
-  mapInfo: props.visState.mapInfo,
-  layerBlending: props.visState.layerBlending,
+  // And we don't want Geocoder dataset to be present in the tooltip field picker
+  const interactionConfigClone = cloneDeep(props.visState.interactionConfig);
+  interactionConfigClone.tooltip.config.fieldsToShow = Object.fromEntries(
+    Object.entries(interactionConfigClone.tooltip.config.fieldsToShow).filter(
+      ([key, value]) => key !== GEOCODER_DATASET_NAME
+    )
+  );
 
-  width: props.sidePanelWidth,
-  availableProviders,
-  mapSaved: props.providerState.mapSaved
-});
+  return {
+    appName: props.appName,
+    version: props.version,
+    appWebsite: props.appWebsite,
+    mapStyle: props.mapStyle,
+    onSaveMap: props.onSaveMap,
+    uiState: props.uiState,
+    mapStyleActions: props.mapStyleActions,
+    visStateActions: props.visStateActions,
+    uiStateActions: props.uiStateActions,
+
+    datasets: filteredDatasets,
+    filters: props.visState.filters,
+    layers: props.visState.layers,
+    layerOrder: props.visState.layerOrder,
+    layerClasses: props.visState.layerClasses,
+    interactionConfig: interactionConfigClone,
+    mapInfo: props.visState.mapInfo,
+    layerBlending: props.visState.layerBlending,
+
+    width: props.sidePanelWidth,
+    availableProviders,
+    mapSaved: props.providerState.mapSaved
+  };
+};
 
 export const plotContainerSelector = props => ({
   width: props.width,
