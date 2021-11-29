@@ -79,12 +79,12 @@ export function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
         id: LOADING_METHODS.upload,
         label: 'modal.loadData.upload',
         elementType: FileUpload
-      },
-      {
-        id: LOADING_METHODS.storage,
-        label: 'modal.loadData.storage',
-        elementType: LoadStorageMap
       }
+      // {
+      //   id: LOADING_METHODS.storage,
+      //   label: 'modal.loadData.storage',
+      //   elementType: LoadStorageMap
+      // }
     ]
   };
 

@@ -39,7 +39,6 @@ const ModalTab = styled.div`
 
   .load-data-modal__tab__item.active {
     color: ${props => props.theme.textColorLT};
-    border-bottom: 3px solid ${props => props.theme.textColorLT};
     font-weight: 500;
   }
 

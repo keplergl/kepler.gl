@@ -27,7 +27,6 @@ import FileUploadProgress from 'components/common/file-uploader/file-upload-prog
 import FileDrop from './file-drop';
 
 import {isChrome} from 'utils/utils';
-import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
 import ReactMarkdown from 'react-markdown';
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
@@ -118,20 +117,6 @@ const StyledFileUpload = styled.div`
   }
 `;
 
-const StyledMessage = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 32px;
-
-  .loading-action {
-    margin-right: 10px;
-  }
-  .loading-spinner {
-    margin-left: 10px;
-  }
-`;
-
 const StyledDragFileWrapper = styled.div`
   margin-bottom: 32px;
   ${media.portable`
@@ -140,10 +125,6 @@ const StyledDragFileWrapper = styled.div`
   ${media.portable`
     margin-bottom: 16px;
   `};
-`;
-
-const StyledDisclaimer = styled(StyledMessage)`
-  margin: 0 auto;
 `;
 
 function FileUploadFactory() {
@@ -232,7 +213,7 @@ function FileUploadFactory() {
                     {
                       fileFormatNames: fileFormatNames.map(format => `**${format}**`).join(', ')
                     }
-                  )}(${GUIDES_FILE_FORMAT_DOC}).`}
+                  )}`}
                   renderers={{link: LinkRenderer}}
                 />
               </StyledUploadMessage>
@@ -276,10 +257,6 @@ function FileUploadFactory() {
                         </UploadButton>
                       </StyledDragFileWrapper>
                     ) : null}
-
-                    <StyledDisclaimer>
-                      <FormattedMessage id={'fileUploader.disclaimer'} />
-                    </StyledDisclaimer>
                   </>
                 )}
               </StyledFileDrop>
