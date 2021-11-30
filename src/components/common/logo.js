@@ -77,6 +77,16 @@ const KeplerGlLogo = ({appName, appWebsite = KEPLER_GL_WEBSITE, version}) => (
   </LogoWrapper>
 );
 
+export const ATHLogo = () => (
+  <LogoWrapper className="side-panel-logo">
+    <LogoTitle className="logo__title">
+      <LogoName className="logo__name">
+        <p className="logo__link">ATH Data Visualizer</p>
+      </LogoName>
+    </LogoTitle>
+  </LogoWrapper>
+);
+
 KeplerGlLogo.propTypes = {
   appName: PropTypes.string,
   version: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
