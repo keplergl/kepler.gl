@@ -42,6 +42,8 @@ import {
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 
+// @ts-ignore
+// eslint-disable-next-line no-unused-vars
 const LayerBlendingSelector = ({layerBlending, updateLayerBlending, intl}) => {
   const labeledLayerBlendings = Object.keys(LAYER_BLENDINGS).reduce(
     (acc, current) => ({
@@ -190,7 +192,6 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       const {
         layers,
         datasets,
-        intl,
         layerOrder,
         showAddDataModal,
         updateTableColor,
@@ -269,11 +270,6 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
               </Button>
             ) : null}
           </SidePanelSection>
-          <LayerBlendingSelector
-            layerBlending={this.props.layerBlending}
-            updateLayerBlending={visStateActions.updateLayerBlending}
-            intl={intl}
-          />
         </div>
       );
     }

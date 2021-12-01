@@ -91,9 +91,6 @@ export const Attribution = () => (
       />
     </div>
     <div className="attrition-link">
-      <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
-        © kepler.gl |{' '}
-      </a>
       <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
         © Mapbox |{' '}
       </a>

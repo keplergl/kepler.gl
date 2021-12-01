@@ -33,8 +33,8 @@ import {
 import {
   Layers,
   FilterFunnel,
-  Settings,
-  CursorClick,
+  // Settings,
+  // CursorClick,
   Pin,
   ArrowDown,
   ArrowUp,
@@ -178,19 +178,19 @@ export const SIDEBAR_PANELS = [
     label: 'sidebar.panels.filter',
     iconComponent: FilterFunnel,
     onClick: null
-  },
-  {
-    id: 'interaction',
-    label: 'sidebar.panels.interaction',
-    iconComponent: CursorClick,
-    onClick: null
-  },
-  {
-    id: 'map',
-    label: 'sidebar.panels.basemap',
-    iconComponent: Settings,
-    onClick: null
   }
+  // {
+  //   id: 'interaction',
+  //   label: 'sidebar.panels.interaction',
+  //   iconComponent: CursorClick,
+  //   onClick: null
+  // },
+  // {
+  //   id: 'map',
+  //   label: 'sidebar.panels.basemap',
+  //   iconComponent: Settings,
+  //   onClick: null
+  // }
 ];
 
 // backward compatibility
