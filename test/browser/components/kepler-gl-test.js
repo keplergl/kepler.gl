@@ -40,6 +40,10 @@ import {
 import NotificationPanelFactory from 'components/notification-panel';
 import {ActionTypes} from 'actions';
 import {DEFAULT_MAP_STYLES, EXPORT_IMAGE_ID} from 'constants';
+import {GEOCODER_DATASET_NAME} from 'constants/default-settings';
+import {filterOutGeocoderDataset, sidePanelSelector} from 'components/kepler-gl';
+// mock state
+import {StateWithGeocoderDataset} from 'test/helpers/mock-state';
 
 const KeplerGl = appInjector.get(KeplerGlFactory);
 const SidePanel = appInjector.get(SidePanelFactory);
@@ -471,6 +475,49 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
   };
 
   t.deepEqual(task1.payload, expectedTask.payload, 'should create task to load map styles');
+
+  t.end();
+});
+
+test('Components -> KeplerGl -> Helpers -> Filter out geocoder dataset', t => {
+  // Geocoder dataset mock can be an empty object since the filter function only cares about the key
+  // in the 'datasets' object and filters by it
+  const datasets = {
+    geocoder_dataset: {}
+  };
+
+  t.true(
+    datasets[GEOCODER_DATASET_NAME],
+    `${GEOCODER_DATASET_NAME} key should exist before being filtered`
+  );
+
+  const filteredResults = filterOutGeocoderDataset(datasets);
+
+  t.isEqual(
+    filteredResults[GEOCODER_DATASET_NAME],
+    undefined,
+    `Should not exist after filtering out ${GEOCODER_DATASET_NAME} key`
+  );
+
+  t.end();
+});
+
+test('Components -> KeplerGl -> sidePanelSelector -> Do not pass geocoder dataset to SidePanel', t => {
+  // We don't need available providers sinde we are not referencing them
+  const sideFields = sidePanelSelector(StateWithGeocoderDataset, undefined);
+
+  t.isEqual(
+    sideFields.datasets[GEOCODER_DATASET_NAME],
+    undefined,
+    `SidePanelSelector should filter out ${GEOCODER_DATASET_NAME} from datasets object`
+  );
+
+  // tooltip
+  t.isEqual(
+    sideFields.interactionConfig.tooltip.config.fieldsToShow[GEOCODER_DATASET_NAME],
+    undefined,
+    `SidePanelSelector should filter out ${GEOCODER_DATASET_NAME} from tooltip fields to be shown`
+  );
 
   t.end();
 });

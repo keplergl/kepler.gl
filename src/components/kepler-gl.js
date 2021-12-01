@@ -54,7 +54,7 @@ import PlotContainerFactory from './plot-container';
 import NotificationPanelFactory from './notification-panel';
 import GeoCoderPanelFactory from './geocoder-panel';
 
-import {generateHashId} from 'utils/utils';
+import {filterObjectByPredicate, generateHashId} from 'utils/utils';
 import {validateToken} from 'utils/mapbox-utils';
 import {mergeMessages} from 'utils/locale-utils';
 
@@ -140,18 +140,19 @@ export const mapFieldsSelector = props => ({
   locale: props.uiState.locale
 });
 
+export function filterOutGeocoderDataset(datasets) {
+  return filterObjectByPredicate(datasets, (key, value) => key !== GEOCODER_DATASET_NAME);
+}
+
 export const sidePanelSelector = (props, availableProviders) => {
   // We don't want Geocoder dataset to be present in SidePanel dataset list
-  const filteredDatasets = Object.fromEntries(
-    Object.entries(props.visState.datasets).filter(([key, value]) => key !== GEOCODER_DATASET_NAME)
-  );
+  const filteredDatasets = filterOutGeocoderDataset(props.visState.datasets);
 
   // And we don't want Geocoder dataset to be present in the tooltip field picker
   const interactionConfigClone = cloneDeep(props.visState.interactionConfig);
-  interactionConfigClone.tooltip.config.fieldsToShow = Object.fromEntries(
-    Object.entries(interactionConfigClone.tooltip.config.fieldsToShow).filter(
-      ([key, value]) => key !== GEOCODER_DATASET_NAME
-    )
+  interactionConfigClone.tooltip.config.fieldsToShow = filterObjectByPredicate(
+    interactionConfigClone.tooltip.config.fieldsToShow,
+    (key, value) => key !== GEOCODER_DATASET_NAME
   );
 
   return {

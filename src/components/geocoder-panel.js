@@ -97,6 +97,16 @@ function isValid(key) {
   return /pk\..*\..*/.test(key);
 }
 
+export function getUpdateVisDataPayload(lat, lon, text) {
+  return [
+    [generateGeocoderDataset(lat, lon, text)],
+    {
+      keepExistingConfig: true
+    },
+    PARSED_CONFIG
+  ];
+}
+
 export default function GeocoderPanelFactory() {
   class GeocoderPanel extends Component {
     static propTypes = {
@@ -122,13 +132,8 @@ export default function GeocoderPanelFactory() {
         bbox
       } = geoItem;
       this.removeGeocoderDataset();
-      this.props.updateVisData(
-        [generateGeocoderDataset(lat, lon, text)],
-        {
-          keepExistingConfig: true
-        },
-        PARSED_CONFIG
-      );
+      const updateVisDataPayload = getUpdateVisDataPayload(lat, lon, text);
+      this.props.updateVisData(...updateVisDataPayload);
       const bounds = bbox || [
         lon - GEOCODER_GEO_OFFSET,
         lat - GEOCODER_GEO_OFFSET,
