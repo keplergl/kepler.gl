@@ -21,21 +21,25 @@
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
+import sinon from 'sinon';
 import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 
 import coreReducer from 'reducers/core';
 import {keplerGlInit} from 'actions/actions';
+import * as UIStateActions from 'actions/ui-state-actions';
 import {
   appInjector,
+  // injectComponents,
   KeplerGlFactory,
   SidePanelFactory,
   MapContainerFactory,
   BottomWidgetFactory,
   ModalContainerFactory,
   PlotContainerFactory,
-  GeocoderPanelFactory
+  GeocoderPanelFactory,
+  PanelToggleFactory
 } from 'components';
 import NotificationPanelFactory from 'components/notification-panel';
 import {ActionTypes} from 'actions';
@@ -44,6 +48,7 @@ import {GEOCODER_DATASET_NAME} from 'constants/default-settings';
 import {filterOutGeocoderDataset, sidePanelSelector} from 'components/kepler-gl';
 // mock state
 import {StateWithGeocoderDataset} from 'test/helpers/mock-state';
+import {isEmptyObject} from 'utils/utils';
 
 const KeplerGl = appInjector.get(KeplerGlFactory);
 const SidePanel = appInjector.get(SidePanelFactory);
@@ -480,6 +485,7 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
 });
 
 test('Components -> KeplerGl -> Helpers -> Filter out geocoder dataset', t => {
+  drainTasksForTesting();
   // Geocoder dataset mock can be an empty object since the filter function only cares about the key
   // in the 'datasets' object and filters by it
   const datasets = {
@@ -503,6 +509,7 @@ test('Components -> KeplerGl -> Helpers -> Filter out geocoder dataset', t => {
 });
 
 test('Components -> KeplerGl -> sidePanelSelector -> Do not pass geocoder dataset to SidePanel', t => {
+  drainTasksForTesting();
   // We don't need available providers sinde we are not referencing them
   const sideFields = sidePanelSelector(StateWithGeocoderDataset, undefined);
 
@@ -517,6 +524,121 @@ test('Components -> KeplerGl -> sidePanelSelector -> Do not pass geocoder datase
     sideFields.interactionConfig.tooltip.config.fieldsToShow[GEOCODER_DATASET_NAME],
     undefined,
     `SidePanelSelector should filter out ${GEOCODER_DATASET_NAME} from tooltip fields to be shown`
+  );
+
+  t.end();
+});
+
+// TODO
+test.only('Components -> KeplerGl -> SidePanel -> Geocoder dataset display', t => {
+  drainTasksForTesting();
+  // const sidePanelProps = cloneDeep(defaultProps);
+  // const stateWithGeocoderDataset = cloneDeep(StateWithGeocoderDataset);
+  // sidePanelProps.datasets = stateWithGeocoderDataset.visState.datasets;
+  // sidePanelProps.interactionConfig = stateWithGeocoderDataset.visState.interactionConfig;
+
+  // Create custom PanelToggle that should be injected to SidePanel
+  const toggleSidePanel = sinon.spy();
+  const uiStateActions = {
+    ...UIStateActions,
+    toggleSidePanel
+  };
+  function CustomPanelToggleFactory(...deps) {
+    const CustomPanelToggle = PanelToggleFactory(...deps);
+    CustomPanelToggle.defaultProps = {
+      ...CustomPanelToggle.defaultProps,
+      togglePanel: toggleSidePanel
+    };
+    return CustomPanelToggle;
+  }
+  CustomPanelToggleFactory.deps = PanelToggleFactory.deps;
+
+  // Create custom SidePanel that will get PanelToggle injected and which will be injected in custom KeplerGl component
+  function CustomSidePanelFactory(...deps) {
+    const CustomSidePanel = SidePanelFactory(...deps);
+    CustomSidePanel.defaultProps = {
+      ...CustomSidePanel.defaultProps,
+      uiStateActions
+    };
+    return CustomSidePanel;
+  }
+  CustomSidePanelFactory.deps = SidePanelFactory.deps;
+
+  // Create custom KeplerGl component based on other custom components
+  // const CustomKeplerGl = injectComponents([[SidePanelFactory, CustomSidePanelFactory]]);
+  const CustomKeplerGl = appInjector
+    // .provide(PanelToggleFactory, CustomPanelToggleFactory)
+    .provide(SidePanelFactory, CustomSidePanelFactory)
+    .get(KeplerGlFactory);
+
+  // Create initial state based on mocked state with geocoder dataset and use that for mocking the store
+  const initialState = {
+    keplerGl: {
+      map: StateWithGeocoderDataset
+    }
+  };
+  const store = mockStore(initialState);
+
+  let wrapper;
+
+  t.doesNotThrow(() => {
+    wrapper = mount(
+      <Provider store={store}>
+        <CustomKeplerGl
+          id="map"
+          mapboxApiAccessToken="smoothie-the-cat"
+          selector={state => state.keplerGl.map}
+          dispatch={store.dispatch}
+        />
+      </Provider>
+    );
+  }, 'Should not throw error when mount KeplerGl');
+
+  // Check if we have 4 sidepanel tabs
+  t.equal(wrapper.find('.side-panel__tab').length, 4, 'should render 4 panel tabs');
+
+  // Test data has only the 'geocoder_dataset' dataset
+  // This function will return its name if it finds the dataset
+  // in other case it will return null
+  function findGeocoderDatasetName() {
+    const datasetTitleContainer = wrapper.find('.dataset-name');
+    let result;
+    try {
+      result = datasetTitleContainer.text();
+    } catch (e) {
+      result = null;
+    }
+    return result;
+  }
+
+  // click layer tab
+  const layerTab = wrapper.find('.side-panel__tab').at(0);
+  layerTab.simulate('click');
+  t.ok(toggleSidePanel.calledWith('layer'), 'should call toggleSidePanel with layer');
+  t.notEqual(
+    findGeocoderDatasetName(wrapper),
+    GEOCODER_DATASET_NAME,
+    `should not be equal to ${GEOCODER_DATASET_NAME}`
+  );
+
+  // click filters tab
+  const filterTab = wrapper.find('.side-panel__tab').at(1);
+  filterTab.simulate('click');
+  t.ok(toggleSidePanel.calledWith('filter'), 'should call toggleSidePanel with filter');
+  t.notEqual(
+    findGeocoderDatasetName(wrapper),
+    GEOCODER_DATASET_NAME,
+    `should not be equal to ${GEOCODER_DATASET_NAME}`
+  );
+
+  // click interaction tab
+  const interactionTab = wrapper.find('.side-panel__tab').at(2);
+  interactionTab.simulate('click');
+  t.ok(toggleSidePanel.calledWith('interaction'), 'should call toggleSidePanel with interaction');
+  t.notEqual(
+    findGeocoderDatasetName(wrapper),
+    GEOCODER_DATASET_NAME,
+    `should not be equal to ${GEOCODER_DATASET_NAME}`
   );
 
   t.end();
