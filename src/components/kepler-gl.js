@@ -140,12 +140,14 @@ export const mapFieldsSelector = props => ({
   locale: props.uiState.locale
 });
 
+// getVisibleDatasets
 export function filterOutGeocoderDataset(datasets) {
+  // We don't want Geocoder dataset to be present in SidePanel dataset list
   return filterObjectByPredicate(datasets, (key, value) => key !== GEOCODER_DATASET_NAME);
 }
 
 export const sidePanelSelector = (props, availableProviders) => {
-  // We don't want Geocoder dataset to be present in SidePanel dataset list
+  // visibleDatasets
   const filteredDatasets = filterOutGeocoderDataset(props.visState.datasets);
 
   // And we don't want Geocoder dataset to be present in the tooltip field picker
