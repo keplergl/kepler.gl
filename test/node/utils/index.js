@@ -34,4 +34,4 @@ import './color-util-test';
 import './util-test';
 import './export-utils-test';
 import './s2-utils-test';
-// TODO: nikola create a new file
+import './kepler-gl-utils-test';

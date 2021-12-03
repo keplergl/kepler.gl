@@ -201,7 +201,6 @@ export function isTest() {
   return process?.env?.NODE_ENV === 'test';
 }
 
-
 /**
  * Filters an object by an arbitrary predicate
  * Returns a new object containing all elements that match the predicate
@@ -214,6 +213,4 @@ export function filterObjectByPredicate(obj, predicate) {
     (acc, entry) => (predicate(entry[0], entry[1]) ? {...acc, [entry[0]]: entry[1]} : acc),
     {}
   );
-
-  // return Object.fromEntries(Object.entries(obj).filter(([key, value]) => predicate(key, value)));
 }
