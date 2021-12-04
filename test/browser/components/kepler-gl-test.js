@@ -479,7 +479,6 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
   t.end();
 });
 
-// TODO
 // Test data has only the 'geocoder_dataset' dataset
 // This function will return its name if it finds the dataset
 // in other case it will return null
