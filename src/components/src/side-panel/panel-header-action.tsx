@@ -52,13 +52,15 @@ const HeaderActionWrapper = styled.div<HeaderActionWrapperProps>`
   color: ${props =>
     props.active ? props.theme.panelHeaderIconActive : props.theme.panelHeaderIcon};
 
+  cursor: pointer;
+
   :hover {
-    cursor: pointer;
     color: ${props =>
       props.hoverColor ? props.theme[props.hoverColor] : props.theme.panelHeaderIconHover};
   }
 
   &.disabled {
+    cursor: none;
     pointer-events: none;
     opacity: 0.3;
   }
@@ -83,7 +85,7 @@ export default function PanelHeaderActionFactory(): React.FC<PanelHeaderActionPr
       <HeaderActionWrapper
         className={classnames('panel--header__action', {
           disabled,
-          ...(className ? {[className]: true} : {})
+          className
         })}
         active={active}
         hoverColor={hoverColor}
