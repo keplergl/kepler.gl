@@ -132,8 +132,7 @@ export default function GeocoderPanelFactory() {
         bbox
       } = geoItem;
       this.removeGeocoderDataset();
-      const updateVisDataPayload = getUpdateVisDataPayload(lat, lon, text);
-      this.props.updateVisData(...updateVisDataPayload);
+      this.props.updateVisData(...getUpdateVisDataPayload(lat, lon, text));
       const bounds = bbox || [
         lon - GEOCODER_GEO_OFFSET,
         lat - GEOCODER_GEO_OFFSET,
