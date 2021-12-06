@@ -27,7 +27,6 @@ import {connect as keplerGlConnect} from 'connect/keplergl-connect';
 import {IntlProvider} from 'react-intl';
 import {messages} from '../localization';
 import {RootContext} from 'components/context';
-import cloneDeep from 'lodash.clonedeep';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
@@ -149,13 +148,6 @@ export const sidePanelSelector = (props, availableProviders) => {
   // visibleDatasets
   const filteredDatasets = getVisibleDatasets(props.visState.datasets);
 
-  // And we don't want Geocoder dataset to be present in the tooltip field picker
-  const interactionConfigClone = cloneDeep(props.visState.interactionConfig);
-  interactionConfigClone.tooltip.config.fieldsToShow = filterObjectByPredicate(
-    interactionConfigClone.tooltip.config.fieldsToShow,
-    (key, value) => key !== GEOCODER_DATASET_NAME
-  );
-
   return {
     appName: props.appName,
     version: props.version,
@@ -172,7 +164,7 @@ export const sidePanelSelector = (props, availableProviders) => {
     layers: props.visState.layers,
     layerOrder: props.visState.layerOrder,
     layerClasses: props.visState.layerClasses,
-    interactionConfig: interactionConfigClone,
+    interactionConfig: props.visState.interactionConfig,
     mapInfo: props.visState.mapInfo,
     layerBlending: props.visState.layerBlending,
 

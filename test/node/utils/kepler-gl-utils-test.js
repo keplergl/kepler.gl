@@ -20,9 +20,7 @@
 
 import test from 'tape';
 import {GEOCODER_DATASET_NAME} from 'constants/default-settings';
-import {getVisibleDatasets, sidePanelSelector} from 'components/kepler-gl';
-// mock state
-import {StateWithGeocoderDataset} from 'test/helpers/mock-state';
+import {getVisibleDatasets} from 'components/kepler-gl';
 
 test('kepler-gl utils -> getVisibleDatasets', t => {
   // Geocoder dataset mock can be an empty object since the filter function only cares about the key
@@ -44,26 +42,6 @@ test('kepler-gl utils -> getVisibleDatasets', t => {
     filteredResults[GEOCODER_DATASET_NAME],
     undefined,
     `Should not exist after filtering out ${GEOCODER_DATASET_NAME} key`
-  );
-
-  t.end();
-});
-
-test('kepler-gl utils -> sidePanelSelector', t => {
-  // We don't need available providers sinde we are not referencing them
-  const sideFields = sidePanelSelector(StateWithGeocoderDataset, undefined);
-
-  t.isEqual(
-    sideFields.datasets[GEOCODER_DATASET_NAME],
-    undefined,
-    `SidePanelSelector should filter out ${GEOCODER_DATASET_NAME} from datasets object`
-  );
-
-  // tooltip
-  t.isEqual(
-    sideFields.interactionConfig.tooltip.config.fieldsToShow[GEOCODER_DATASET_NAME],
-    undefined,
-    `SidePanelSelector should filter out ${GEOCODER_DATASET_NAME} from tooltip fields to be shown`
   );
 
   t.end();
