@@ -19,4 +19,3 @@
 // THE SOFTWARE.
 
 import './feature-action-panel-test';
-import './feature-styles-test';

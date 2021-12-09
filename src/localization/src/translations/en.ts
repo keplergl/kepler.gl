@@ -43,7 +43,8 @@ export default {
     selectType: 'Select A Type',
     selectValue: 'Select A Value',
     enterValue: 'Enter a value',
-    empty: 'empty'
+    empty: 'empty',
+    selectLayer: 'Select a layer'
   },
   misc: {
     by: '',
@@ -233,7 +234,8 @@ export default {
   },
   editor: {
     filterLayer: 'Filter Layers',
-    copyGeometry: 'Copy Geometry'
+    copyGeometry: 'Copy Geometry',
+    noLayersToFilter: 'No layers to filter'
   },
 
   modal: {

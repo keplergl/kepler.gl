@@ -132,6 +132,7 @@ export type ItemSelectorProps = {
   fixedOptions?: ReadonlyArray<string | number | boolean | object> | null;
   erasable?: boolean;
   showArrow?: boolean;
+  searchOptions?: (value: any, opt: any) => any;
   searchable?: boolean;
   displayOption?: string | ((opt: any) => any);
   getOptionValue?: string | ((opt: any) => any);
@@ -297,6 +298,7 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
             customListItemComponent={this.props.DropDownLineItemRenderComponent}
             displayOption={Accessor.generateOptionToStringFor(this.props.displayOption)}
             searchable={this.props.searchable}
+            searchOptions={this.props.searchOptions}
             showOptionsWhenEmpty
             selectedItems={toArray(this.props.selectedItems)}
             light={this.props.inputTheme === 'light'}

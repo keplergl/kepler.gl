@@ -103,7 +103,7 @@ export {
   unobserveDimensions,
   default as useDimensions
 } from './observe-dimensions';
-export {validateBounds, getCenterAndZoomFromBounds} from './projection-utils';
+export {validateBounds, getCenterAndZoomFromBounds, normalizeEvent} from './projection-utils';
 export {validateToken} from './mapbox-utils';
 export {
   getDefaultLayerGroupVisibility,
@@ -146,7 +146,7 @@ export {
 export {transformRequest, isStyleUsingMapboxTiles} from './map-style-utils/mapbox-utils';
 
 // Map
-export {onViewPortChange, getMapLayersFromSplitMaps} from './map-utils';
+export {onViewPortChange, getMapLayersFromSplitMaps, getViewportFromMapState} from './map-utils';
 
 export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData} from './data-container-utils';
 export type {DataContainerInterface} from './data-container-interface';

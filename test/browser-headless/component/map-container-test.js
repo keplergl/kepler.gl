@@ -31,7 +31,7 @@ import {
   MapPopoverFactory,
   mapFieldsSelector
 } from '@kepler.gl/components';
-import MapboxGLMap from 'react-map-gl';
+import {StaticMap} from 'react-map-gl';
 import Tippy from '@tippyjs/react/headless';
 import {gl, InteractionTestRunner} from '@deck.gl/test-utils';
 
@@ -71,11 +71,11 @@ test('MapContainerFactory - display all options', t => {
 
   t.equal(wrapper.find(MapControl).length, 1, 'Should display 1 MapControl');
 
-  t.equal(wrapper.find(MapboxGLMap).length, 1, 'Should display 1 InteractiveMap');
+  t.equal(wrapper.find(StaticMap).length, 1, 'Should display 1 InteractiveMap');
   // Can't test overlay because mapboxgl is not supported in chromium
   t.equal(wrapper.find('Attribution').length, 1, 'Should display 1 Attribution');
 
-  const instance = wrapper.find(MapContainer).instance();
+  const instance = wrapper.find('MapContainer').instance();
 
   instance._onMapboxStyleUpdate();
 
@@ -101,7 +101,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
     );
   }, 'MapContainer should not fail');
 
-  const instance = wrapper.find(MapContainer).instance();
+  const instance = wrapper.find('MapContainer').instance();
   const _renderDeckOverlay = sinon.spy(instance, '_renderDeckOverlay');
   instance.forceUpdate();
   wrapper.update();
@@ -112,7 +112,8 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
   _renderDeckOverlay.restore();
 
   // Getting the DeckGl instance
-  const DeckGl = instance._renderDeckOverlay(...args);
+  const divWrapper = instance._renderDeckOverlay(...args);
+  const DeckGl = divWrapper.props.children;
 
   const clickEvents = [];
   const hoverEvents = [];
@@ -279,7 +280,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
     .then(() => t.end());
 });
 
-test('MapContainerFactory - _renderDrawEditor', t => {
+test('MapContainerFactory - _renderEditorContextMenu', t => {
   const props = {
     ...initialProps,
     mapboxApiAccessToken: 'pyx-11'
@@ -293,19 +294,19 @@ test('MapContainerFactory - _renderDrawEditor', t => {
     );
   }, 'MapContainer should not fail with intial props');
 
-  const instance = wrapper.find(MapContainer).instance();
-  const _renderDrawEditor = sinon.spy(instance, '_renderDrawEditor');
+  const instance = wrapper.find('MapContainer').instance();
+  const _renderEditorContextMenu = sinon.spy(instance, '_renderEditorContextMenu');
   instance.forceUpdate();
   wrapper.update();
 
-  t.ok(_renderDrawEditor.calledOnce, '_renderDrawEditor be called once');
+  t.ok(_renderEditorContextMenu.calledOnce, '_renderEditorContextMenu be called once');
 
-  const args = _renderDrawEditor.args[0];
-  _renderDrawEditor.restore();
+  const args = _renderEditorContextMenu.args[0];
+  _renderEditorContextMenu.restore();
 
   // React-map-gl doesnt render overlays when mapboxgl is not supported
   // here we manually calling the render function to test Editor
-  const editor = instance._renderDrawEditor(...args);
+  const editor = instance._renderEditorContextMenu(...args);
 
   let editorWrapper;
   t.doesNotThrow(() => {

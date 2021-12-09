@@ -324,6 +324,7 @@ export function processGeojson(rawData: unknown): ProcessorResult {
     fields.forEach(f => {
       if (!(f in d)) {
         d[f] = null;
+        // @ts-ignore
         d._geojson.properties[f] = null;
       }
     });

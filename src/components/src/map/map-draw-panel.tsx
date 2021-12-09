@@ -92,12 +92,6 @@ function MapDrawPanelFactory(MapControlTooltip, MapControlToolbar) {
                 icon={actionIcons.rectangle}
                 active={editor.mode === EDITOR_MODES.DRAW_RECTANGLE}
               />
-              <ToolbarItem
-                className="toggle-features"
-                onClick={onToggleEditorVisibility}
-                label={editor.visible ? 'toolbar.hide' : 'toolbar.show'}
-                icon={editor.visible ? actionIcons.visible : actionIcons.hidden}
-              />
             </MapControlToolbar>
           ) : null}
           <MapControlTooltip id="map-draw" message="tooltip.DrawOnMap">

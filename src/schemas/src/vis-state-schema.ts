@@ -760,7 +760,9 @@ export const filterPropsV1 = {
 
   // polygon filter properties
   layerId: null,
-  speed: null
+  speed: null,
+
+  enabled: null
 };
 
 export const propertiesV0 = {

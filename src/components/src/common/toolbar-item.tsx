@@ -44,7 +44,7 @@ const StyledDiv = styled.div.attrs(props => ({
   background-color: ${props =>
     props.active ? props.theme.toolbarItemBgdHover : props.theme.dropdownListBgd};
 
-  svg {
+  .toolbar-item__svg-container {
     margin-bottom: 4px;
   }
   .toolbar-item__title {
@@ -87,7 +87,11 @@ const ToolbarItem = React.memo((props: ToolbarItemProps) => (
       props.onClick?.(e);
     }}
   >
-    {props.icon && <props.icon />}
+    {props.icon && (
+      <div className="toolbar-item__svg-container">
+        <props.icon />
+      </div>
+    )}
     <div className="toolbar-item__title">
       <FormattedMessage id={props.label} />
     </div>

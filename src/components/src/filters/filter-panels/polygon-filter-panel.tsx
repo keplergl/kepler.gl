@@ -52,7 +52,7 @@ function PolygonFilterPanelFactory(
       const onSetLayers = useCallback(value => setFilter(idx, 'layerId', value), [setFilter, idx]);
 
       const isVisible = get(filter, ['value', 'properties', 'isVisible'], true);
-      const featureType = get(filter, ['value', 'properties', 'renderType'], true);
+      const featureType = get(filter, ['value', 'geometry', 'type'], 'Polygon');
 
       return (
         <div className="polygon-filter-panel">

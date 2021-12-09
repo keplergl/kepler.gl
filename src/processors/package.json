@@ -40,7 +40,7 @@
     "@loaders.gl/json": "^3.0.9",
     "@loaders.gl/loader-utils": "^3.0.9",
     "@mapbox/geojson-normalize": "0.0.1",
-    "@nebula.gl/edit-modes": "0.14.0",
+    "@nebula.gl/edit-modes": "1.0.2-alpha.0",
     "@turf/helpers": "^6.1.4",
     "d3-dsv": "^2.0.0"
   },

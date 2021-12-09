@@ -135,6 +135,7 @@ export const DEFAULT_FILTER_STRUCTURE = {
   dataId: [], // [string]
   freeze: false,
   id: null,
+  enabled: true,
 
   // time range filter specific
   fixedDomain: false,
@@ -476,6 +477,10 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
   // field could be null in polygon filter
   const valueAccessor = field ? field.valueAccessor : data => null;
   const defaultFunc = d => true;
+
+  if (filter.enabled === false) {
+    return defaultFunc;
+  }
 
   switch (filter.type) {
     case FILTER_TYPES.range:

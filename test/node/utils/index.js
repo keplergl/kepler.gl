@@ -35,4 +35,5 @@ import './color-util-test';
 import './util-test';
 import './export-utils-test';
 import './s2-utils-test';
+import './editor-utils-test';
 import './kepler-gl-utils-test';

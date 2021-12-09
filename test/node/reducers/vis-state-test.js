@@ -1944,6 +1944,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     dataId: ['smoothie'],
     freeze: false,
     id: 'donnot test me yet',
+    enabled: true,
     name: [],
     type: null,
     fixedDomain: false,
@@ -1973,6 +1974,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
     dataId: ['smoothie'],
     freeze: true,
     id: filterId,
+    enabled: true,
     name: ['date'],
     type: 'multiSelect',
     fieldIdx: [10],
@@ -2146,6 +2148,7 @@ test('#visStateReducer -> SET_FILTER.name', t => {
     dataId: [testGeoJsonDataId],
     freeze: true,
     id: 'RATE-1',
+    enabled: true,
     fixedDomain: false,
     view: FILTER_VIEW_TYPES.side,
     isAnimating: false,
@@ -2228,6 +2231,7 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
   const expectedFilterWName = {
     dataId: ['milkshake'],
     freeze: true,
+    enabled: true,
     id: stateWithFilter.filters[0].id,
     name: ['TRIPS'],
     type: 'range',
@@ -3909,6 +3913,7 @@ test('#visStateReducer -> POLYGON: Add/Remove new polygon feature', t => {
     {
       features: [],
       selectedFeature: null,
+      selectionContext: undefined,
       visible: true,
       mode: 'EDIT_VERTEX'
     },
@@ -3992,6 +3997,7 @@ test('#visStateReducer -> POLYGON: Create polygon filter', t => {
     id: newFilter.id,
     dataId: [firstDataset],
     freeze: false,
+    enabled: true,
     fixedDomain: true,
     view: FILTER_VIEW_TYPES.side,
     isAnimating: false,
@@ -4200,6 +4206,7 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
     id: newFilter.id,
     dataId: ['puppy'],
     freeze: false,
+    enabled: true,
     fixedDomain: true,
     view: FILTER_VIEW_TYPES.side,
     isAnimating: false,
@@ -4233,12 +4240,22 @@ test('#visStateReducer -> POLYGON: Toggle filter feature', t => {
     true,
     'Should have feature visibility set to true'
   );
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndex,
+    [0, 2],
+    'The polygon filter should be applied'
+  );
 
   newReducer = reducer(newReducer, VisStateActions.toggleFilterFeature(0));
 
   filterFeature = newReducer.filters[0].value;
-
   t.deepEqual(filterFeature.properties.isVisible, false, 'Should hide filter feature');
+  t.deepEqual(newReducer.filters[0].enabled, false, 'Should disable the filter');
+  t.deepEqual(
+    newReducer.datasets.puppy.filteredIndex,
+    [0, 1, 2, 3],
+    "The polygon filter shouldn't be applied"
+  );
 
   t.end();
 });
