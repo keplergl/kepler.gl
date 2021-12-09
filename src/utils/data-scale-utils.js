@@ -38,7 +38,7 @@ export function getQuantileDomain(data, valueAccessor, sortFunc) {
 export function getOrdinalDomain(data, valueAccessor) {
   const values = typeof valueAccessor === 'function' ? data.map(valueAccessor) : data;
 
-  return unique(values)
+  return unique(values.flat()) // Flatten in case values are of type array
     .filter(notNullorUndefined)
     .sort();
 }

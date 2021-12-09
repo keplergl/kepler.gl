@@ -286,6 +286,7 @@ class KeplerTable {
       case ALL_FIELD_TYPES.boolean:
         return {domain: [true, false]};
 
+      case ALL_FIELD_TYPES.array:
       case ALL_FIELD_TYPES.string:
       case ALL_FIELD_TYPES.date:
         domain = getOrdinalDomain(allData, valueAccessor);

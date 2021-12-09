@@ -421,6 +421,27 @@ test('Processor -> parseCsvRowsByFieldType -> boolean', t => {
   t.end();
 });
 
+test('Processor -> parseCsvRowsByFieldType -> array', t => {
+  const field = {
+    type: ALL_FIELD_TYPES.array
+  };
+
+  const rows = [
+    ['[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]'],
+    ['["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7"]']
+  ];
+
+  const expected = [
+    [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]],
+    [['tag1', 'tag2', 'tag3', 'tag4', 'tag5', 'tag6', 'tag7']]
+  ];
+
+  parseCsvRowsByFieldType(rows, -1, field, 0);
+
+  t.same(rows, expected, 'should parsed arrays properly');
+  t.end();
+});
+
 test('Processor -> getSampleForTypeAnalyze', t => {
   const fields = ['string', 'int', 'bool', 'time'];
 
