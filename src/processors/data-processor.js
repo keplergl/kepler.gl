@@ -70,6 +70,10 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
       ['x', 'X'].includes(field.format) ? typeof d === 'number' : typeof d === 'string',
     parse: (d, field) => (['x', 'X'].includes(field.format) ? Number(d) : d)
   },
+  [ALL_FIELD_TYPES.array]: {
+    valid: d => Array.isArray(d),
+    parse: d => JSON.parse(d)
+  },
   [ALL_FIELD_TYPES.real]: {
     valid: d => parseFloat(d) === d,
     // Note this will result in NaN for some string
@@ -290,6 +294,7 @@ export function getFieldsFromData(data, fieldOrder) {
   const metadata = Analyzer.computeColMeta(
     data,
     [
+      {regex: /.*array/g, dataType: 'ARRAY'},
       {regex: /.*geojson|all_points/g, dataType: 'GEOMETRY'},
       {regex: /.*census/g, dataType: 'STRING'}
     ],
@@ -393,12 +398,13 @@ export function analyzerTypeToFieldType(aType) {
       return ALL_FIELD_TYPES.integer;
     case BOOLEAN:
       return ALL_FIELD_TYPES.boolean;
+    case ARRAY:
+      return ALL_FIELD_TYPES.array;
     case GEOMETRY:
     case GEOMETRY_FROM_STRING:
     case PAIR_GEOMETRY_FROM_STRING:
-    case ARRAY:
     case OBJECT:
-      // TODO: create a new data type for objects and arrays
+      // TODO: create a new data type for objects
       return ALL_FIELD_TYPES.geojson;
     case NUMBER:
     case STRING:
@@ -439,9 +445,10 @@ export function processRowObject(rawData) {
     return null;
   } else if (!rawData.length) {
     // data is empty
-    return  {
-      fields: [], rows: []
-    }
+    return {
+      fields: [],
+      rows: []
+    };
   }
 
   const keys = Object.keys(rawData[0]);

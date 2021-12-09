@@ -557,7 +557,7 @@ export const geoStyleFields = [
     displayName: 'fillColor',
     format: '',
     fieldIdx: 1,
-    type: 'geojson',
+    type: 'array',
     analyzerType: 'ARRAY',
     valueAccessor: values => values[1]
   },
@@ -567,7 +567,7 @@ export const geoStyleFields = [
     displayName: 'lineColor',
     format: '',
     fieldIdx: 2,
-    type: 'geojson',
+    type: 'array',
     analyzerType: 'ARRAY',
     valueAccessor: values => values[2]
   },

@@ -329,6 +329,7 @@ export function getFilterProps(field, fieldDomain) {
         gpu: false
       };
 
+    case ALL_FIELD_TYPES.array:
     case ALL_FIELD_TYPES.string:
     case ALL_FIELD_TYPES.date:
       return {
@@ -948,6 +949,7 @@ export function mergeFilterDomainStep(filter, filterProps) {
   };
 
   switch (filterProps.fieldType) {
+    case ALL_FIELD_TYPES.array:
     case ALL_FIELD_TYPES.string:
     case ALL_FIELD_TYPES.date:
       return {

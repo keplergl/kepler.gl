@@ -295,6 +295,8 @@ export const FIELD_DISPLAY_FORMAT = {
   [ALL_FIELD_TYPES.real]: defaultFormatter,
   [ALL_FIELD_TYPES.boolean]: defaultFormatter,
   [ALL_FIELD_TYPES.date]: defaultFormatter,
+  [ALL_FIELD_TYPES.array]: d =>
+    typeof d === 'string' ? d : Array.isArray(d) ? `[${String(d)}]` : '',
   [ALL_FIELD_TYPES.geojson]: d =>
     typeof d === 'string'
       ? d

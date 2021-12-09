@@ -333,6 +333,7 @@ export const ALL_FIELD_TYPES = keyMirror({
   real: null,
   string: null,
   timestamp: null,
+  array: null,
   point: null
 });
 
@@ -388,6 +389,7 @@ const BLUE = '140, 210, 205';
 const BLUE2 = '106, 160, 206';
 const BLUE3 = '0, 172, 237';
 const GREEN = '106, 160, 56';
+const GREEN2 = '23, 207, 114';
 const RED = '237, 88, 106';
 
 export const FILED_TYPE_DISPLAY = {
@@ -418,6 +420,10 @@ export const FILED_TYPE_DISPLAY = {
   [ALL_FIELD_TYPES.timestamp]: {
     label: 'time',
     color: GREEN
+  },
+  [ALL_FIELD_TYPES.array]: {
+    label: 'array',
+    color: GREEN2
   },
   // field pairs
   [ALL_FIELD_TYPES.point]: {

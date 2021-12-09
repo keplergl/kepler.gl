@@ -38,6 +38,7 @@ import {maybeToDate, getSortingFunction} from 'utils/data-utils';
 import {
   getQuantileDomain,
   getOrdinalDomain,
+  getArrayOrdinalDomain,
   getLogDomain,
   getLinearDomain
 } from 'utils/data-scale-utils';
@@ -304,6 +305,10 @@ class KeplerTable {
       case ALL_FIELD_TYPES.string:
       case ALL_FIELD_TYPES.date:
         domain = getOrdinalDomain(dataContainer, valueAccessor);
+        return {domain};
+
+      case ALL_FIELD_TYPES.array:
+        domain = getArrayOrdinalDomain(dataContainer, valueAccessor);
         return {domain};
 
       case ALL_FIELD_TYPES.timestamp:
