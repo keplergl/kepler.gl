@@ -1,9 +1,8 @@
-import React, {useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import PropTypes from 'prop-types';
 
 import {arrayMove} from 'utils/data-utils';
 import styled from 'styled-components';
-import {createSelector} from 'reselect';
 import classnames from 'classnames';
 import {SortableContainer, SortableElement} from 'react-sortable-hoc';
 
@@ -66,20 +65,21 @@ function LayerListFactory(LayerPanel) {
     const {toggleModal: openModal} = uiStateActions;
     const [isSorting, setIsSorting] = useState(false);
 
-    const layerClassSelector = () => layerClasses;
-    const layerTypeOptionsSelector = createSelector(layerClassSelector, layerCls =>
-      Object.keys(layerCls).map(key => {
-        const layer = new layerCls[key]();
-        return {
-          id: key,
-          label: layer.name,
-          icon: layer.layerIcon,
-          requireData: layer.requireData
-        };
-      })
+    const layerTypeOptionsSelector = useCallback(
+      () =>
+        Object.keys(layerClasses).map(key => {
+          const layer = new layerClasses[key]();
+          return {
+            id: key,
+            label: layer.name,
+            icon: layer.layerIcon,
+            requireData: layer.requireData
+          };
+        }),
+      [layerClasses]
     );
 
-    const layerTypeOptions = layerTypeOptionsSelector(props);
+    const layerTypeOptions = useMemo(() => layerTypeOptionsSelector(), [layerTypeOptionsSelector]);
 
     const layerActions = {
       layerColorUIChange: visStateActions.layerColorUIChange,
@@ -98,21 +98,26 @@ function LayerListFactory(LayerPanel) {
       layerTypeOptions
     };
 
-    const _handleSort = ({oldIndex, newIndex}) => {
-      visStateActions.reorderLayer(arrayMove(props.layerOrder, oldIndex, newIndex));
-      setIsSorting(false);
-    };
+    const _handleSort = useCallback(
+      ({oldIndex, newIndex}) => {
+        visStateActions.reorderLayer(arrayMove(props.layerOrder, oldIndex, newIndex));
+        setIsSorting(false);
+      },
+      [props.layerOrder, visStateActions]
+    );
 
-    const _onSortStart = () => {
+    const _onSortStart = useCallback(() => {
       setIsSorting(true);
-    };
+    }, []);
 
-    const _updateBeforeSortStart = ({index}) => {
-      const layerIdx = layerOrder[index];
-      if (layers[layerIdx].config.isConfigActive) {
-        visStateActions.layerConfigChange(layers[layerIdx], {isConfigActive: false});
-      }
-    };
+    const _updateBeforeSortStart = useCallback(() => {
+      ({index}) => {
+        const layerIdx = layerOrder[index];
+        if (layers[layerIdx].config.isConfigActive) {
+          visStateActions.layerConfigChange(layers[layerIdx], {isConfigActive: false});
+        }
+      };
+    }, [layers, layerOrder, visStateActions]);
 
     return isSortable ? (
       <WrappedSortableContainer
