@@ -42,7 +42,7 @@ test('Components -> SidePanel -> LayerPanel -> LayerList -> render sortable list
     );
   }, 'LayerList should render');
 
-  t.notEqual(wrapper.find('.sortable-layer-items').length, 0, 'should render sortable items');
+  t.equal(wrapper.find('.sortable-layer-items').length, 3, 'should render 3 sortable items');
 
   const layers = wrapper.find('.layer-panel');
   t.equal(layers.length, 3, 'should render 3 layer panels');
