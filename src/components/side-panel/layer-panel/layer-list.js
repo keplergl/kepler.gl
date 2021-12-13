@@ -1,5 +1,4 @@
 import React, {useCallback, useMemo, useState} from 'react';
-import PropTypes from 'prop-types';
 
 import {arrayMove} from 'utils/data-utils';
 import styled from 'styled-components';
@@ -161,16 +160,6 @@ function LayerListFactory(LayerPanel) {
         )}
       </>
     );
-  };
-
-  LayerList.propTypes = {
-    datasets: PropTypes.object.isRequired,
-    layerClasses: PropTypes.object.isRequired,
-    layers: PropTypes.arrayOf(PropTypes.any).isRequired,
-    visStateActions: PropTypes.object.isRequired,
-    layerOrder: PropTypes.arrayOf(PropTypes.any).isRequired,
-    uiStateActions: PropTypes.object.isRequired,
-    isSortable: PropTypes.bool.isRequired
   };
 
   return LayerList;
