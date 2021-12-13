@@ -11,7 +11,7 @@ export type LayerListProps = {
   layerOrder: number[];
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
-  isSortable: Boolean;
+  isSortable?: Boolean;
 };
 
 export default function LayerListFactory(

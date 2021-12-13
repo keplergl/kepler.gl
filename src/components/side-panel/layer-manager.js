@@ -140,7 +140,6 @@ function LayerManagerFactory(AddDataButton, LayerList, SourceDataCatalog) {
               uiStateActions={uiStateActions}
               visStateActions={visStateActions}
               layerClasses={this.props.layerClasses}
-              isSortable
             />
           </SidePanelSection>
           <SidePanelSection>

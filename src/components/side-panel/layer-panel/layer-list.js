@@ -59,12 +59,12 @@ function LayerListFactory(LayerPanel) {
       uiStateActions,
       visStateActions,
       layerClasses,
-      isSortable
+      isSortable = true
     } = props;
     const {toggleModal: openModal} = uiStateActions;
     const [isSorting, setIsSorting] = useState(false);
 
-    const layerTypeOptionsSelector = useCallback(
+    const layerTypeOptions = useMemo(
       () =>
         Object.keys(layerClasses).map(key => {
           const layer = new layerClasses[key]();
@@ -78,24 +78,35 @@ function LayerListFactory(LayerPanel) {
       [layerClasses]
     );
 
-    const layerTypeOptions = useMemo(() => layerTypeOptionsSelector(), [layerTypeOptionsSelector]);
+    const layerActions = useMemo(() => {
+      return {
+        layerColorUIChange: visStateActions.layerColorUIChange,
+        layerConfigChange: visStateActions.layerConfigChange,
+        layerVisualChannelConfigChange: visStateActions.layerVisualChannelConfigChange,
+        layerTypeChange: visStateActions.layerTypeChange,
+        layerVisConfigChange: visStateActions.layerVisConfigChange,
+        layerTextLabelChange: visStateActions.layerTextLabelChange,
+        removeLayer: visStateActions.removeLayer,
+        duplicateLayer: visStateActions.duplicateLayer
+      };
+    }, [
+      visStateActions.layerColorUIChange,
+      visStateActions.layerConfigChange,
+      visStateActions.layerVisualChannelConfigChange,
+      visStateActions.layerTypeChange,
+      visStateActions.layerVisConfigChange,
+      visStateActions.layerTextLabelChange,
+      visStateActions.removeLayer,
+      visStateActions.duplicateLayer
+    ]);
 
-    const layerActions = {
-      layerColorUIChange: visStateActions.layerColorUIChange,
-      layerConfigChange: visStateActions.layerConfigChange,
-      layerVisualChannelConfigChange: visStateActions.layerVisualChannelConfigChange,
-      layerTypeChange: visStateActions.layerTypeChange,
-      layerVisConfigChange: visStateActions.layerVisConfigChange,
-      layerTextLabelChange: visStateActions.layerTextLabelChange,
-      removeLayer: visStateActions.removeLayer,
-      duplicateLayer: visStateActions.duplicateLayer
-    };
-
-    const panelProps = {
-      datasets,
-      openModal,
-      layerTypeOptions
-    };
+    const panelProps = useMemo(() => {
+      return {
+        datasets,
+        openModal,
+        layerTypeOptions
+      };
+    }, [datasets, openModal, layerTypeOptions]);
 
     const _handleSort = useCallback(
       ({oldIndex, newIndex}) => {
