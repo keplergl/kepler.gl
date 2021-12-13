@@ -18,20 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './data-utils-test';
-import './data-processor-test';
-import './kepler-table-test';
-import './data-container-test';
-import './filter-utils-test';
-import './gpu-filter-utils-test';
-import './layer-utils-test';
-import './data-scale-utils-test';
-import './interaction-utils-test';
-import './mapbox-gl-style-editor-test';
-import './notifications-utils-test';
-import './aggregate-utils-test';
-import './color-util-test';
-import './util-test';
-import './export-utils-test';
-import './s2-utils-test';
-import './kepler-gl-utils-test';
+import test from 'tape';
+import {GEOCODER_DATASET_NAME} from 'constants/default-settings';
+import {getVisibleDatasets} from 'components/kepler-gl';
+
+test('kepler-gl utils -> getVisibleDatasets', t => {
+  // Geocoder dataset mock can be an empty object since the filter function only cares about the key
+  // in the 'datasets' object and filters by it
+  const datasets = {
+    first: {},
+    second: {},
+    geocoder_dataset: {}
+  };
+
+  t.true(
+    datasets[GEOCODER_DATASET_NAME],
+    `${GEOCODER_DATASET_NAME} key should exist before being filtered`
+  );
+
+  const filteredResults = getVisibleDatasets(datasets);
+
+  t.isEqual(
+    filteredResults[GEOCODER_DATASET_NAME],
+    undefined,
+    `Should not exist after filtering out ${GEOCODER_DATASET_NAME} key`
+  );
+
+  t.end();
+});
