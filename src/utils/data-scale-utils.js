@@ -44,6 +44,20 @@ export function getOrdinalDomain(dataContainer, valueAccessor) {
 }
 
 /**
+ * return ordinal domain for a data container by flattening array values
+ * @type {typeof import('./data-scale-utils').getArrayOrdinalDomain}
+ */
+export function getArrayOrdinalDomain(dataContainer, valueAccessor) {
+  const values = dataContainer
+    .mapIndex(valueAccessor)
+    .reduce((_value, _acc) => [..._acc, ..._value], []);
+
+  return unique(values)
+    .filter(notNullorUndefined)
+    .sort();
+}
+
+/**
  * return linear domain for an array of data
  * @type {typeof import('./data-scale-utils').getLinearDomain}
  */

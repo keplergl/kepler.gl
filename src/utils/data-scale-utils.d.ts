@@ -15,6 +15,11 @@ export function getOrdinalDomain(
   valueAccessor: typeof dataContainerValueAccessor
 ): string[];
 
+export function getArrayOrdinalDomain(
+  dataContainer: DataContainerInterface,
+  valueAccessor: typeof dataContainerValueAccessor
+): string[];
+
 export function getLinearDomain(
   data: any[],
   valueAccessor?: typeof dataValueAccessor
