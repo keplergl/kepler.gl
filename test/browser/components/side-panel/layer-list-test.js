@@ -1,7 +1,7 @@
 import React from 'react';
 import test from 'tape';
 
-import {InitialState, StateWH3Layer} from 'test/helpers/mock-state';
+import {StateWH3Layer} from 'test/helpers/mock-state';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
@@ -13,7 +13,6 @@ import LayerListFactory from 'components/side-panel/layer-panel/layer-list';
 
 const LayerList = appInjector.get(LayerListFactory);
 
-// default props from initial state
 const defaultProps = {
   datasets: StateWH3Layer.visState.datasets,
   layerClasses: StateWH3Layer.visState.layerClasses,
