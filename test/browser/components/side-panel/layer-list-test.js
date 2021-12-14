@@ -15,29 +15,20 @@ const LayerList = appInjector.get(LayerListFactory);
 
 // default props from initial state
 const defaultProps = {
-  datasets: InitialState.visState.datasets,
-  layerClasses: InitialState.visState.layerClasses,
-  layerOrder: InitialState.visState.layerOrder,
-  layers: InitialState.visState.layers,
+  datasets: StateWH3Layer.visState.datasets,
+  layerClasses: StateWH3Layer.visState.layerClasses,
+  layerOrder: StateWH3Layer.visState.layerOrder,
+  layers: StateWH3Layer.visState.layers,
   uiStateActions: UIStateActions,
   visStateActions: VisStateActions
 };
 
 test('Components -> SidePanel -> LayerPanel -> LayerList -> render sortable list', t => {
-  const mock = StateWH3Layer;
-
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <LayerList
-          {...defaultProps}
-          isSortable
-          datasets={mock.visState.datasets}
-          layers={mock.visState.layers}
-          layerOrder={mock.visState.layerOrder}
-          layerClasses={mock.visState.layerClasses}
-        />
+        <LayerList {...defaultProps} isSortable />
       </IntlWrapper>
     );
   }, 'LayerList should render');
@@ -51,20 +42,11 @@ test('Components -> SidePanel -> LayerPanel -> LayerList -> render sortable list
 });
 
 test('Components -> SidePanel -> LayerPanel -> LayerList -> render non-sortable list', t => {
-  const mock = StateWH3Layer;
-
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <LayerList
-          {...defaultProps}
-          isSortable={false}
-          datasets={mock.visState.datasets}
-          layers={mock.visState.layers}
-          layerOrder={mock.visState.layerOrder}
-          layerClasses={mock.visState.layerClasses}
-        />
+        <LayerList {...defaultProps} isSortable={false} />
       </IntlWrapper>
     );
   }, 'LayerList should render');
