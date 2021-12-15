@@ -1,0 +1,301 @@
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.setLocale = exports.setExportHTMLMapMode = exports.setExportMapFormat = exports.setUserMapboxAccessToken = exports.setExportData = exports.setExportFiltered = exports.setExportDataType = exports.setExportSelectedDataset = exports.cleanupExportImage = exports.setExportImageError = exports.setExportImageDataUri = exports.startExportingImage = exports.setExportImageSetting = exports.removeNotification = exports.addNotification = exports.openDeleteModal = exports.toggleMapControl = exports.hideExportDropdown = exports.showExportDropdown = exports.toggleModal = exports.toggleSidePanel = void 0;
+
+var _reduxActions = require("redux-actions");
+
+var _actionTypes = _interopRequireDefault(require("../constants/action-types"));
+
+// Copyright (c) 2021 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+/**
+ * Toggle active side panel
+ * @memberof uiStateActions
+ * @param id  id of side panel to be shown, one of `layer`, `filter`, `interaction`, `map`
+ * @type {typeof import('./ui-state-actions').toggleSidePanel}
+ * @public
+ */
+var toggleSidePanel = (0, _reduxActions.createAction)(_actionTypes["default"].TOGGLE_SIDE_PANEL, function (id) {
+  return id;
+});
+/**
+ * Show and hide modal dialog
+ * @memberof uiStateActions
+ * @param id - id of modal to be shown, null to hide modals. One of:
+ *  - [`DATA_TABLE_ID`](../constants/default-settings.md#data_table_id)
+ *  - [`DELETE_DATA_ID`](../constants/default-settings.md#delete_data_id)
+ *  - [`ADD_DATA_ID`](../constants/default-settings.md#add_data_id)
+ *  - [`EXPORT_IMAGE_ID`](../constants/default-settings.md#export_image_id)
+ *  - [`EXPORT_DATA_ID`](../constants/default-settings.md#export_data_id)
+ *  - [`ADD_MAP_STYLE_ID`](../constants/default-settings.md#add_map_style_id)
+ * @type {typeof import('./ui-state-actions').toggleModal}
+ * @public
+ */
+
+exports.toggleSidePanel = toggleSidePanel;
+var toggleModal = (0, _reduxActions.createAction)(_actionTypes["default"].TOGGLE_MODAL, function (id) {
+  return id;
+});
+/**
+ * Hide and show side panel header dropdown, activated by clicking the share link on top of the side panel
+ * @memberof uiStateActions
+ * @param id - id of the dropdown
+ * @type {typeof import('./ui-state-actions').showExportDropdown}
+ * @public
+ */
+
+exports.toggleModal = toggleModal;
+var showExportDropdown = (0, _reduxActions.createAction)(_actionTypes["default"].SHOW_EXPORT_DROPDOWN, function (id) {
+  return id;
+});
+/**
+ * Hide side panel header dropdown, activated by clicking the share link on top of the side panel
+ * @memberof uiStateActions
+ * @type {typeof import('./ui-state-actions').hideExportDropdown}
+ * @public
+ */
+
+exports.showExportDropdown = showExportDropdown;
+var hideExportDropdown = (0, _reduxActions.createAction)(_actionTypes["default"].HIDE_EXPORT_DROPDOWN);
+/**
+ * Toggle active map control panel
+ * @memberof uiStateActions
+ * @param panelId - map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
+ * @type {typeof import('./ui-state-actions').toggleMapControl}
+ * @public
+ */
+
+exports.hideExportDropdown = hideExportDropdown;
+var toggleMapControl = (0, _reduxActions.createAction)(_actionTypes["default"].TOGGLE_MAP_CONTROL, function (panelId, index) {
+  return {
+    panelId: panelId,
+    index: index
+  };
+});
+/**
+ * Toggle active map control panel
+ * @memberof uiStateActions
+ * @param datasetId - `id` of the dataset to be deleted
+ * @type {typeof import('./ui-state-actions').openDeleteModal}
+ * @public
+ */
+
+exports.toggleMapControl = toggleMapControl;
+var openDeleteModal = (0, _reduxActions.createAction)(_actionTypes["default"].OPEN_DELETE_MODAL, function (datasetId) {
+  return datasetId;
+});
+/**
+ * Add a notification to be displayed.
+ * Existing notification will be updated in case of matching id.
+ * @memberof uiStateActions
+ * @param notification - The `notification` object to be added or updated
+ * @type {typeof import('./ui-state-actions').addNotification}
+ * @public
+ */
+
+exports.openDeleteModal = openDeleteModal;
+var addNotification = (0, _reduxActions.createAction)(_actionTypes["default"].ADD_NOTIFICATION, function (notification) {
+  return notification;
+});
+/**
+ * Remove a notification
+ * @memberof uiStateActions
+ * @param id - `id` of the notification to be removed
+ * @type {typeof import('./ui-state-actions').removeNotification}
+ * @public
+ */
+
+exports.addNotification = addNotification;
+var removeNotification = (0, _reduxActions.createAction)(_actionTypes["default"].REMOVE_NOTIFICATION, function (id) {
+  return id;
+});
+/**
+ * Set `exportImage` settings: ratio, resolution, legend
+ * @memberof uiStateActions
+ * @param newSetting - {ratio: '1x'}
+ * @type {typeof import('./ui-state-actions').setExportImageSetting}
+ * @public
+ */
+
+exports.removeNotification = removeNotification;
+var setExportImageSetting = (0, _reduxActions.createAction)(_actionTypes["default"].SET_EXPORT_IMAGE_SETTING, function (newSetting) {
+  return newSetting;
+});
+/**
+ * Start exporting image flow
+ * @memberof uiStateActions
+ * @type {typeof import('./ui-state-actions').startExportingImage}
+ * @public
+ */
+
+exports.setExportImageSetting = setExportImageSetting;
+var startExportingImage = (0, _reduxActions.createAction)(_actionTypes["default"].START_EXPORTING_IMAGE);
+/**
+ * Set `exportImage.setExportImageDataUri` to a dataUri
+ * @memberof uiStateActions
+ * @param dataUri - export image data uri
+ * @type {typeof import('./ui-state-actions').setExportImageDataUri}
+ * @public
+ */
+
+exports.startExportingImage = startExportingImage;
+var setExportImageDataUri = (0, _reduxActions.createAction)(_actionTypes["default"].SET_EXPORT_IMAGE_DATA_URI, function (dataUri) {
+  return dataUri;
+});
+/**
+ * Set Export image error
+ * @memberof uiStateActions
+ * @type {typeof import('./ui-state-actions').setExportImageError}
+ * @public
+ */
+
+exports.setExportImageDataUri = setExportImageDataUri;
+var setExportImageError = (0, _reduxActions.createAction)(_actionTypes["default"].SET_EXPORT_IMAGE_ERROR, function (error) {
+  return error;
+});
+/**
+ * Delete cached export image
+ * @memberof uiStateActions
+ * @type {typeof import('./ui-state-actions').cleanupExportImage}
+ * @public
+ */
+
+exports.setExportImageError = setExportImageError;
+var cleanupExportImage = (0, _reduxActions.createAction)(_actionTypes["default"].CLEANUP_EXPORT_IMAGE);
+/**
+ * Set selected dataset for export
+ * @memberof uiStateActions
+ * @param datasetId - dataset id
+ * @type {typeof import('./ui-state-actions').setExportSelectedDataset}
+ * @public
+ */
+
+exports.cleanupExportImage = cleanupExportImage;
+var setExportSelectedDataset = (0, _reduxActions.createAction)(_actionTypes["default"].SET_EXPORT_SELECTED_DATASET, function (datasetId) {
+  return datasetId;
+});
+/**
+ * Set data format for exporting data
+ * @memberof uiStateActions
+ * @param dataType - one of `'text/csv'`
+ * @type {typeof import('./ui-state-actions').setExportDataType}
+ * @public
+ */
+
+exports.setExportSelectedDataset = setExportSelectedDataset;
+var setExportDataType = (0, _reduxActions.createAction)(_actionTypes["default"].SET_EXPORT_DATA_TYPE, function (dataType) {
+  return dataType;
+});
+/**
+ * Whether to export filtered data, `true` or `false`
+ * @memberof uiStateActions
+ * @param payload - set `true` to ony export filtered data
+ * @type {typeof import('./ui-state-actions').setExportFiltered}
+ * @public
+ */
+
+exports.setExportDataType = setExportDataType;
+var setExportFiltered = (0, _reduxActions.createAction)(_actionTypes["default"].SET_EXPORT_FILTERED, function (payload) {
+  return payload;
+});
+/**
+ * Whether to including data in map config, toggle between `true` or `false`
+ * @memberof uiStateActions
+ * @type {typeof import('./ui-state-actions').setExportData}
+ * @public
+ */
+
+exports.setExportFiltered = setExportFiltered;
+var setExportData = (0, _reduxActions.createAction)(_actionTypes["default"].SET_EXPORT_DATA);
+/**
+ * Whether we export a mapbox access token used to create a single map html file
+ * @memberof uiStateActions
+ * @param payload - mapbox access token
+ * @type {typeof import('./ui-state-actions').setUserMapboxAccessToken}
+ * @public
+ */
+
+exports.setExportData = setExportData;
+var setUserMapboxAccessToken = (0, _reduxActions.createAction)(_actionTypes["default"].SET_USER_MAPBOX_ACCESS_TOKEN, function (payload) {
+  return payload;
+});
+/**
+ * Set the export map format (html, json)
+ * @memberOf uiStateActions
+ * @param payload - map format
+ * @type {typeof import('./ui-state-actions').setExportMapFormat}
+ * @public
+ */
+
+exports.setUserMapboxAccessToken = setUserMapboxAccessToken;
+var setExportMapFormat = (0, _reduxActions.createAction)(_actionTypes["default"].SET_EXPORT_MAP_FORMAT, function (payload) {
+  return payload;
+});
+/**
+ * Set the HTML mode to use to export HTML mode
+ * @memberOf uiStateActions
+ * @param payload - map mode
+ * @type {typeof import('./ui-state-actions').setExportHTMLMapMode}
+ */
+
+exports.setExportMapFormat = setExportMapFormat;
+var setExportHTMLMapMode = (0, _reduxActions.createAction)(_actionTypes["default"].SET_EXPORT_MAP_HTML_MODE, function (payload) {
+  return payload;
+});
+/**
+ * Set `locale` value
+ * @memberof uiStateActions
+ * @param locale - locale of the UI
+ * @type {typeof import('./ui-state-actions').setLocale}
+ * @public
+ */
+
+exports.setExportHTMLMapMode = setExportHTMLMapMode;
+var setLocale = (0, _reduxActions.createAction)(_actionTypes["default"].SET_LOCALE, function (locale) {
+  return {
+    locale: locale
+  };
+});
+/**
+ * This declaration is needed to group actions in docs
+ */
+
+/**
+ * Actions handled mostly by  `uiState` reducer.
+ * They manage UI changes in tha app, such as open and close side panel,
+ * switch between tabs in the side panel, open and close modal dialog for exporting data / images etc.
+ * It also manges which settings are selected during image and map export
+ *
+ * @public
+ */
+
+/* eslint-disable no-unused-vars */
+// @ts-ignore
+
+exports.setLocale = setLocale;
+var uiStateActions = null;
+/* eslint-enable no-unused-vars */
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9hY3Rpb25zL3VpLXN0YXRlLWFjdGlvbnMuanMiXSwibmFtZXMiOlsidG9nZ2xlU2lkZVBhbmVsIiwiQWN0aW9uVHlwZXMiLCJUT0dHTEVfU0lERV9QQU5FTCIsImlkIiwidG9nZ2xlTW9kYWwiLCJUT0dHTEVfTU9EQUwiLCJzaG93RXhwb3J0RHJvcGRvd24iLCJTSE9XX0VYUE9SVF9EUk9QRE9XTiIsImhpZGVFeHBvcnREcm9wZG93biIsIkhJREVfRVhQT1JUX0RST1BET1dOIiwidG9nZ2xlTWFwQ29udHJvbCIsIlRPR0dMRV9NQVBfQ09OVFJPTCIsInBhbmVsSWQiLCJpbmRleCIsIm9wZW5EZWxldGVNb2RhbCIsIk9QRU5fREVMRVRFX01PREFMIiwiZGF0YXNldElkIiwiYWRkTm90aWZpY2F0aW9uIiwiQUREX05PVElGSUNBVElPTiIsIm5vdGlmaWNhdGlvbiIsInJlbW92ZU5vdGlmaWNhdGlvbiIsIlJFTU9WRV9OT1RJRklDQVRJT04iLCJzZXRFeHBvcnRJbWFnZVNldHRpbmciLCJTRVRfRVhQT1JUX0lNQUdFX1NFVFRJTkciLCJuZXdTZXR0aW5nIiwic3RhcnRFeHBvcnRpbmdJbWFnZSIsIlNUQVJUX0VYUE9SVElOR19JTUFHRSIsInNldEV4cG9ydEltYWdlRGF0YVVyaSIsIlNFVF9FWFBPUlRfSU1BR0VfREFUQV9VUkkiLCJkYXRhVXJpIiwic2V0RXhwb3J0SW1hZ2VFcnJvciIsIlNFVF9FWFBPUlRfSU1BR0VfRVJST1IiLCJlcnJvciIsImNsZWFudXBFeHBvcnRJbWFnZSIsIkNMRUFOVVBfRVhQT1JUX0lNQUdFIiwic2V0RXhwb3J0U2VsZWN0ZWREYXRhc2V0IiwiU0VUX0VYUE9SVF9TRUxFQ1RFRF9EQVRBU0VUIiwic2V0RXhwb3J0RGF0YVR5cGUiLCJTRVRfRVhQT1JUX0RBVEFfVFlQRSIsImRhdGFUeXBlIiwic2V0RXhwb3J0RmlsdGVyZWQiLCJTRVRfRVhQT1JUX0ZJTFRFUkVEIiwicGF5bG9hZCIsInNldEV4cG9ydERhdGEiLCJTRVRfRVhQT1JUX0RBVEEiLCJzZXRVc2VyTWFwYm94QWNjZXNzVG9rZW4iLCJTRVRfVVNFUl9NQVBCT1hfQUNDRVNTX1RPS0VOIiwic2V0RXhwb3J0TWFwRm9ybWF0IiwiU0VUX0VYUE9SVF9NQVBfRk9STUFUIiwic2V0RXhwb3J0SFRNTE1hcE1vZGUiLCJTRVRfRVhQT1JUX01BUF9IVE1MX01PREUiLCJzZXRMb2NhbGUiLCJTRVRfTE9DQUxFIiwibG9jYWxlIiwidWlTdGF0ZUFjdGlvbnMiXSwibWFwcGluZ3MiOiI7Ozs7Ozs7OztBQW9CQTs7QUFDQTs7QUFyQkE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7O0FBS0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDTyxJQUFNQSxlQUFlLEdBQUcsZ0NBQWFDLHdCQUFZQyxpQkFBekIsRUFBNEMsVUFBQUMsRUFBRTtBQUFBLFNBQUlBLEVBQUo7QUFBQSxDQUE5QyxDQUF4QjtBQUVQO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBOzs7QUFDTyxJQUFNQyxXQUFXLEdBQUcsZ0NBQWFILHdCQUFZSSxZQUF6QixFQUF1QyxVQUFBRixFQUFFO0FBQUEsU0FBSUEsRUFBSjtBQUFBLENBQXpDLENBQXBCO0FBRVA7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7OztBQUNPLElBQU1HLGtCQUFrQixHQUFHLGdDQUFhTCx3QkFBWU0sb0JBQXpCLEVBQStDLFVBQUFKLEVBQUU7QUFBQSxTQUFJQSxFQUFKO0FBQUEsQ0FBakQsQ0FBM0I7QUFFUDtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7OztBQUNPLElBQU1LLGtCQUFrQixHQUFHLGdDQUFhUCx3QkFBWVEsb0JBQXpCLENBQTNCO0FBRVA7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7OztBQUNPLElBQU1D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Q0FDaEM5Qyx3QkFBWStDLHFCQURvQixFQUVoQyxVQUFBTixPQUFPO0FBQUEsU0FBSUEsT0FBSjtBQUFBLENBRnlCLENBQTNCO0FBS1A7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBOzs7QUFDTyxJQUFNTyxvQkFBb0IsR0FBRyxnQ0FDbENoRCx3QkFBWWlELHdCQURzQixFQUVsQyxVQUFBUixPQUFPO0FBQUEsU0FBSUEsT0FBSjtBQUFBLENBRjJCLENBQTdCO0FBS1A7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7OztBQUNPLElBQU1TLFNBQVMsR0FBRyxnQ0FBYWxELHdCQUFZbUQsVUFBekIsRUFBcUMsVUFBQUMsTUFBTTtBQUFBLFNBQUs7QUFDdkVBLElBQUFBLE1BQU0sRUFBTkE7QUFEdUUsR0FBTDtBQUFBLENBQTNDLENBQWxCO0FBSVA7QUFDQTtBQUNBOztBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7O0FBQ0E7QUFDQTs7O0FBQ0EsSUFBTUMsY0FBYyxHQUFHLElBQXZCO0FBQ0EiLCJzb3VyY2VzQ29udGVudCI6WyIvLyBDb3B5cmlnaHQgKGMpIDIwMjEgVWJlciBUZWNobm9sb2dpZXMsIEluYy5cbi8vXG4vLyBQZXJtaXNzaW9uIGlzIGhlcmVieSBncmFudGVkLCBmcmVlIG9mIGNoYXJnZSwgdG8gYW55IHBlcnNvbiBvYnRhaW5pbmcgYSBjb3B5XG4vLyBvZiB0aGlzIHNvZnR3YXJlIGFuZCBhc3NvY2lhdGVkIGRvY3VtZW50YXRpb24gZmlsZXMgKHRoZSBcIlNvZnR3YXJlXCIpLCB0byBkZWFsXG4vLyBpbiB0aGUgU29mdHdhcmUgd2l0aG91dCByZXN0cmljdGlvbiwgaW5jbHVkaW5nIHdpdGhvdXQgbGltaXRhdGlvbiB0aGUgcmlnaHRzXG4vLyB0byB1c2UsIGNvcHksIG1vZGlmeSwgbWVyZ2UsIHB1Ymxpc2gsIGRpc3RyaWJ1dGUsIHN1YmxpY2Vuc2UsIGFuZC9vciBzZWxsXG4vLyBjb3BpZXMgb2YgdGhlIFNvZnR3YXJlLCBhbmQgdG8gcGVybWl0IHBlcnNvbnMgdG8gd2hvbSB0aGUgU29mdHdhcmUgaXNcbi8vIGZ1cm5pc2hlZCB0byBkbyBzbywgc3ViamVjdCB0byB0aGUgZm9sbG93aW5nIGNvbmRpdGlvbnM6XG4vL1xuLy8gVGhlIGFib3ZlIGNvcHlyaWdodCBub3RpY2UgYW5kIHRoaXMgcGVybWlzc2lvbiBub3RpY2Ugc2hhbGwgYmUgaW5jbHVkZWQgaW5cbi8vIGFsbCBjb3BpZXMgb3Igc3Vic3RhbnRpYWwgcG9ydGlvbnMgb2YgdGhlIFNvZnR3YXJlLlxuLy9cbi8vIFRIRSBTT0ZUV0FSRSBJUyBQUk9WSURFRCBcIkFTIElTXCIsIFdJVEhPVVQgV0FSUkFOVFkgT0YgQU5ZIEtJTkQsIEVYUFJFU1MgT1Jcbi8vIElNUExJRUQsIElOQ0xVRElORyBCVVQgTk9UIExJTUlURUQgVE8gVEhFIFdBUlJBTlRJRVMgT0YgTUVSQ0hBTlRBQklMSVRZLFxuLy8gRklUTkVTUyBGT1IgQSBQQVJUSUNVTEFSIFBVUlBPU0UgQU5EIE5PTklORlJJTkdFTUVOVC4gSU4gTk8gRVZFTlQgU0hBTEwgVEhFXG4vLyBBVVRIT1JTIE9SIENPUFlSSUdIVCBIT0xERVJTIEJFIExJQUJMRSBGT1IgQU5ZIENMQUlNLCBEQU1BR0VTIE9SIE9USEVSXG4vLyBMSUFCSUxJVFksIFdIRVRIRVIgSU4gQU4gQUNUSU9OIE9GIENPTlRSQUNULCBUT1JUIE9SIE9USEVSV0lTRSwgQVJJU0lORyBGUk9NLFxuLy8gT1VUIE9GIE9SIElOIENPTk5FQ1RJT04gV0lUSCBUSEUgU09GVFdBUkUgT1IgVEhFIFVTRSBPUiBPVEhFUiBERUFMSU5HUyBJTlxuLy8gVEhFIFNPRlRXQVJFLlxuXG5pbXBvcnQge2NyZWF0ZUFjdGlvbn0gZnJvbSAncmVkdXgtYWN0aW9ucyc7XG5pbXBvcnQgQWN0aW9uVHlwZXMgZnJvbSAnY29uc3RhbnRzL2FjdGlvbi10eXBlcyc7XG5cbi8qKlxuICogVG9nZ2xlIGFjdGl2ZSBzaWRlIHBhbmVsXG4gKiBAbWVtYmVyb2YgdWlTdGF0ZUFjdGlvbnNcbiAqIEBwYXJhbSBpZCAgaWQgb2Ygc2lkZSBwYW5lbCB0byBiZSBzaG93biwgb25lIG9mIGBsYXllcmAsIGBmaWx0ZXJgLCBgaW50ZXJhY3Rpb25gLCBgbWFwYFxuICogQHR5cGUge3R5cGVvZiBpbXBvcnQoJy4vdWktc3RhdGUtYWN0aW9ucycpLnRvZ2dsZVNpZGVQYW5lbH1cbiAqIEBwdWJsaWNcbiAqL1xuZXhwb3J0IGNvbnN0IHRvZ2dsZVNpZGVQYW5lbCA9IGNyZWF0ZUFjdGlvbihBY3Rpb25UeXBlcy5UT0dHTEVfU0lERV9QQU5FTCwgaWQgPT4gaWQpO1xuXG4vKipcbiAqIFNob3cgYW5kIGhpZGUgbW9kYWwgZGlhbG9nXG4gKiBAbWVtYmVyb2YgdWlTdGF0ZUFjdGlvbnNcbiAqIEBwYXJhbSBpZCAtIGlkIG9mIG1vZGFsIHRvIGJlIHNob3duLCBudWxsIHRvIGhpZGUgbW9kYWxzLiBPbmUgb2Y6XG4gKiAgLSBbYERBVEFfVEFCTEVfSURgXSguLi9jb25zdGFudHMvZGVmYXVsdC1zZXR0aW5ncy5tZCNkYXRhX3RhYmxlX2lkKVxuICogIC0gW2BERUxFVEVfREFUQV9JRGBdKC4uL2NvbnN0YW50cy9kZWZhdWx0LXNldHRpbmdzLm1kI2RlbGV0ZV9kYXRhX2lkKVxuICogIC0gW2BBRERfREFUQV9JRGBdKC4uL2NvbnN0YW50cy9kZWZhdWx0LXNldHRpbmdzLm1kI2FkZF9kYXRhX2lkKVxuICogIC0gW2BFWFBPUlRfSU1BR0VfSURgXSguLi9jb25zdGFudHMvZGVmYXVsdC1zZXR0aW5ncy5tZCNleHBvcnRfaW1hZ2VfaWQpXG4gKiAgLSBbYEVYUE9SVF9EQVRBX0lEYF0oLi4vY29uc3RhbnRzL2RlZmF1bHQtc2V0dGluZ3MubWQjZXhwb3J0X2RhdGFfaWQpXG4gKiAgLSBbYEFERF9NQVBfU1RZTEVfSURgXSguLi9jb25zdGFudHMvZGVmYXVsdC1zZXR0aW5ncy5tZCNhZGRfbWFwX3N0eWxlX2lkKVxuICogQHR5cGUge3R5cGVvZiBpbXBvcnQoJy4vdWktc3RhdGUtYWN0aW9ucycpLnRvZ2dsZU1vZGFsfVxuICogQHB1YmxpY1xuICovXG5leHBvcnQgY29uc3QgdG9nZ2xlTW9kYWwgPSBjcmVhdGVBY3Rpb24oQWN0aW9uVHlwZXMuVE9HR0xFX01PREFMLCBpZCA9PiBpZCk7XG5cbi8qKlxuICogSGlkZSBhbmQgc2hvdyBzaWRlIHBhbmVsIGhlYWRlciBkcm9wZG93biwgYWN0aXZhdGVkIGJ5IGNsaWNraW5nIHRoZSBzaGFyZSBsaW5rIG9uIHRvcCBvZiB0aGUgc2lkZSBwYW5lbFxuICogQG1lbWJlcm9mIHVpU3RhdGVBY3Rpb25zXG4gKiBAcGFyYW0gaWQgLSBpZCBvZiB0aGUgZHJvcGRvd25cbiAqIEB0eXBlIHt0eXBlb2YgaW1wb3J0KCcuL3VpLXN0YXRlLWFjdGlvbnMnKS5zaG93RXhwb3J0RHJvcGRvd259XG4gKiBAcHVibGljXG4gKi9cbmV4cG9ydCBjb25zdCBzaG93RXhwb3J0RHJvcGRvd24gPSBjcmVhdGVBY3Rpb24oQWN0aW9uVHlwZXMuU0hPV19FWFBPUlRfRFJPUERPV04sIGlkID0+IGlkKTtcblxuLyoqXG4gKiBIaWRlIHNpZGUgcGFuZWwgaGVhZGVyIGRyb3Bkb3duLCBhY3RpdmF0ZWQgYnkgY2xpY2tpbmcgdGhlIHNoYXJlIGxpbmsgb24gdG9wIG9mIHRoZSBzaWRlIHBhbmVsXG4gKiBAbWVtYmVyb2YgdWlTdGF0ZUFjdGlvbnNcbiAqIEB0eXBlIHt0eXBlb2YgaW1wb3J0KCcuL3VpLXN0YXRlLWFjdGlvbnMnKS5oaWRlRXhwb3J0RHJvcGRvd259XG4gKiBAcHVibGljXG4gKi9cbmV4cG9ydCBjb25zdCBoaWRlRXhwb3J0RHJvcGRvd24gPSBjcmVhdGVBY3Rpb24oQWN0aW9uVHlwZXMuSElERV9FWFBPUlRfRFJPUERPV04pO1xuXG4vKipcbiAqIFRvZ2dsZSBhY3RpdmUgbWFwIGNvbnRyb2wgcGFuZWxcbiAqIEBtZW1iZXJvZiB1aVN0YXRlQWN0aW9uc1xuICogQHBhcmFtIHBhbmVsSWQgLSBtYXAgY29udHJvbCBwYW5lbCBpZCwgb25lIG9mIHRoZSBrZXlzIG9mOiBbYERFRkFVTFRfTUFQX0NPTlRST0xTYF0oI2RlZmF1bHRfbWFwX2NvbnRyb2xzKVxuICogQHR5cGUge3R5cGVvZiBpbXBvcnQoJy4vdWktc3RhdGUtYWN0aW9ucycpLnRvZ2dsZU1hcENvbnRyb2x9XG4gKiBAcHVibGljXG4gKi9cbmV4cG9ydCBjb25zdCB0b2dnbGVNYXBDb250cm9sID0gY3JlYXRlQWN0aW9uKEFjdGlvblR5cGVzLlRPR0dMRV9NQVBfQ09OVFJPTCwgKHBhbmVsSWQsIGluZGV4KSA9PiAoe1xuICBwYW5lbElkLFxuICBpbmRleFxufSkpO1xuXG4vKipcbiAqIFRvZ2dsZSBhY3RpdmUgbWFwIGNvbnRyb2wgcGFuZWxcbiAqIEBtZW1iZXJvZiB1aVN0YXRlQWN0aW9uc1xuICogQHBhcmFtIGRhdGFzZXRJZCAtIGBpZGAgb2YgdGhlIGRhdGFzZXQgdG8gYmUgZGVsZXRlZFxuICogQHR5cGUge3R5cGVvZiBpbXBvcnQoJy4vdWktc3RhdGUtYWN0aW9ucycpLm9wZW5EZWxldGVNb2RhbH1cbiAqIEBwdWJsaWNcbiAqL1xuZXhwb3J0IGNvbnN0IG9wZW5EZWxldGVNb2RhbCA9IGNyZWF0ZUFjdGlvbihBY3Rpb25UeXBlcy5PUEVOX0RFTEVURV9NT0RBTCwgZGF0YXNldElkID0+IGRhdGFzZXRJZCk7XG5cbi8qKlxuICogQWRkIGEgbm90aWZpY2F0aW9uIHRvIGJlIGRpc3BsYXllZC5cbiAqIEV4aXN0aW5nIG5vdGlmaWNhdGlvbiB3aWxsIGJlIHVwZGF0ZWQgaW4gY2FzZSBvZiBtYXRjaGluZyBpZC5cbiAqIEBtZW1iZXJvZiB1aVN0YXRlQWN0aW9uc1xuICogQHBhcmFtIG5vdGlmaWNhdGlvbiAtIFRoZSBgbm90aWZpY2F0aW9uYCBvYmplY3QgdG8gYmUgYWRkZWQgb3IgdXBkYXRlZFxuICogQHR5cGUge3R5cGVvZiBpbXBvcnQoJy4vdWktc3RhdGUtYWN0aW9ucycpLmFkZE5vdGlmaWNhdGlvbn1cbiAqIEBwdWJsaWNcbiAqL1xuZXhwb3J0IGNvbnN0IGFkZE5vdGlmaWNhdGlvbiA9IGNyZWF0ZUFjdGlvbihcbiAgQWN0aW9uVHlwZXMuQUREX05PVElGSUNBVElPTixcbiAgbm90aWZpY2F0aW9uID0+IG5vdGlmaWNhdGlvblxuKTtcblxuLyoqXG4gKiBSZW1vdmUgYSBub3RpZmljYXRpb25cbiAqIEBtZW1iZXJvZiB1aVN0YXRlQWN0aW9uc1xuICogQHBhcmFtIGlkIC0gYGlkYCBvZiB0aGUgbm90aWZpY2F0aW9uIHRvIGJlIHJlbW92ZWRcbiAqIEB0eXBlIHt0eXBlb2YgaW1wb3J0KCcuL3VpLXN0YXRlLWFjdGlvbnMnKS5yZW1vdmVOb3RpZmljYXRpb259XG4gKiBAcHVibGljXG4gKi9cbmV4cG9ydCBjb25zdCByZW1vdmVOb3RpZmljYXRpb24gPSBjcmVhdGVBY3Rpb24oQWN0aW9uVHlwZXMuUkVNT1ZFX05PVElGSUNBVElPTiwgaWQgPT4gaWQpO1xuXG4vKipcbiAqIFNldCBgZXhwb3J0SW1hZ2VgIHNldHRpbmdzOiByYXRpbywgcmVzb2x1dGlvbiwgbGVnZW5kXG4gKiBAbWVtYmVyb2YgdWlTdGF0ZUFjdGlvbnNcbiAqIEBwYXJhbSBuZXdTZXR0aW5nIC0ge3JhdGlvOiAnMXgnfVxuICogQHR5cGUge3R5cGVvZiBpbXBvcnQoJy4vdWktc3RhdGUtYWN0aW9ucycpLnNldEV4cG9ydEltYWdlU2V0dGluZ31cbiAqIEBwdWJsaWNcbiAqL1xuZXhwb3J0IGNvbnN0IHNldEV4cG9ydEltYWdlU2V0dGluZyA9IGNyZWF0ZUFjdGlvbihcbiAgQWN0aW9uVHlwZXMuU0VUX0VYUE9SVF9JTUFHRV9TRVRUSU5HLFxuICBuZXdTZXR0aW5nID0+IG5ld1NldHRpbmdcbik7XG5cbi8qKlxuICogU3RhcnQgZXhwb3J0aW5nIGltYWdlIGZsb3dcbiAqIEBtZW1iZXJvZiB1aVN0YXRlQWN0aW9uc1xuICogQHR5cGUge3R5cGVvZiBpbXBvcnQoJy4vdWktc3RhdGUtYWN0aW9ucycpLnN0YXJ0RXhwb3J0aW5nSW1hZ2V9XG4gKiBAcHVibGljXG4gKi9cbmV4cG9ydCBjb25zdCBzdGFydEV4cG9ydGluZ0ltYWdlID0gY3JlYXRlQWN0aW9uKEFjdGlvblR5cGVzLlNUQVJUX0VYUE9SVElOR19JTUFHRSk7XG5cbi8qKlxuICogU2V0IGBleHBvcnRJbWFnZS5zZXRFeHBvcnRJbWFnZURhdGFVcmlgIHRvIGEgZGF0YVVyaVxuICogQG1lbWJlcm9mIHVpU3RhdGVBY3Rpb25zXG4gKiBAcGFyYW0gZGF0YVVyaSAtIGV4cG9ydCBpbWFnZSBkYXRhIHVyaVxuICogQHR5cGUge3R5cGVvZiBpbXBvcnQoJy4vdWktc3RhdGUtYWN0aW9ucycpLnNldEV4cG9ydEltYWdlRGF0YVVyaX1cbiAqIEBwdWJsaWNcbiAqL1xuZXhwb3J0IGNvbnN0IHNldEV4cG9ydEltYWdlRGF0YVVyaSA9IGNyZWF0ZUFjdGlvbihcbiAgQWN0aW9uVHlwZXMuU0VUX0VYUE9SVF9JTUFHRV9EQVRBX1VSSSxcbiAgZGF0YVVyaSA9PiBkYXRhVXJpXG4pO1xuXG4vKipcbiAqIFNldCBFeHBvcnQgaW1hZ2UgZXJyb3JcbiAqIEBtZW1iZXJvZiB1aVN0YXRlQWN0aW9uc1xuICogQHR5cGUge3R5cGVvZiBpbXBvcnQoJy4vdWktc3RhdGUtYWN0aW9ucycpLnNldEV4cG9ydEltYWdlRXJyb3J9XG4gKiBAcHVibGljXG4gKi9cbmV4cG9ydCBjb25zdCBzZXRFeHBvcnRJbWFnZUVycm9yID0gY3JlYXRlQWN0aW9uKEFjdGlvblR5cGVzLlNFVF9FWFBPUlRfSU1BR0VfRVJST1IsIGVycm9yID0+IGVycm9yKTtcblxuLyoqXG4gKiBEZWxldGUgY2FjaGVkIGV4cG9ydCBpbWFnZVxuICogQG1lbWJlcm9mIHVpU3RhdGVBY3Rpb25zXG4gKiBAdHlwZSB7dHlwZW9mIGltcG9ydCgnLi91aS1zdGF0ZS1hY3Rpb25zJykuY2xlYW51cEV4cG9ydEltYWdlfVxuICogQHB1YmxpY1xuICovXG5leHBvcnQgY29uc3QgY2xlYW51cEV4cG9ydEltYWdlID0gY3JlYXRlQWN0aW9uKEFjdGlvblR5cGVzLkNMRUFOVVBfRVhQT1JUX0lNQUdFKTtcblxuLyoqXG4gKiBTZXQgc2VsZWN0ZWQgZGF0YXNldCBmb3IgZXhwb3J0XG4gKiBAbWVtYmVyb2YgdWlTdGF0ZUFjdGlvbnNcbiAqIEBwYXJhbSBkYXRhc2V0SWQgLSBkYXRhc2V0IGlkXG4gKiBAdHlwZSB7dHlwZW9mIGltcG9ydCgnLi91aS1zdGF0ZS1hY3Rpb25zJykuc2V0RXhwb3J0U2VsZWN0ZWREYXRhc2V0fVxuICogQHB1YmxpY1xuICovXG5leHBvcnQgY29uc3Qgc2V0RXhwb3J0U2VsZWN0ZWREYXRhc2V0ID0gY3JlYXRlQWN0aW9uKFxuICBBY3Rpb25UeXBlcy5TRVRfRVhQT1JUX1NFTEVDVEVEX0RBVEFTRVQsXG4gIGRhdGFzZXRJZCA9PiBkYXRhc2V0SWRcbik7XG5cbi8qKlxuICogU2V0IGRhdGEgZm9ybWF0IGZvciBleHBvcnRpbmcgZGF0YVxuICogQG1lbWJlcm9mIHVpU3RhdGVBY3Rpb25zXG4gKiBAcGFyYW0gZGF0YVR5cGUgLSBvbmUgb2YgYCd0ZXh0L2NzdidgXG4gKiBAdHlwZSB7dHlwZW9mIGltcG9ydCgnLi91aS1zdGF0ZS1hY3Rpb25zJykuc2V0RXhwb3J0RGF0YVR5cGV9XG4gKiBAcHVibGljXG4gKi9cbmV4cG9ydCBjb25zdCBzZXRFeHBvcnREYXRhVHlwZSA9IGNyZWF0ZUFjdGlvbihcbiAgQWN0aW9uVHlwZXMuU0VUX0VYUE9SVF9EQVRBX1RZUEUsXG4gIGRhdGFUeXBlID0+IGRhdGFUeXBlXG4pO1xuXG4vKipcbiAqIFdoZXRoZXIgdG8gZXhwb3J0IGZpbHRlcmVkIGRhdGEsIGB0cnVlYCBvciBgZmFsc2VgXG4gKiBAbWVtYmVyb2YgdWlTdGF0ZUFjdGlvbnNcbiAqIEBwYXJhbSBwYXlsb2FkIC0gc2V0IGB0cnVlYCB0byBvbnkgZXhwb3J0IGZpbHRlcmVkIGRhdGFcbiAqIEB0eXBlIHt0eXBlb2YgaW1wb3J0KCcuL3VpLXN0YXRlLWFjdGlvbnMnKS5zZXRFeHBvcnRGaWx0ZXJlZH1cbiAqIEBwdWJsaWNcbiAqL1xuZXhwb3J0IGNvbnN0IHNldEV4cG9ydEZpbHRlcmVkID0gY3JlYXRlQWN0aW9uKEFjdGlvblR5cGVzLlNFVF9FWFBPUlRfRklMVEVSRUQsIHBheWxvYWQgPT4gcGF5bG9hZCk7XG5cbi8qKlxuICogV2hldGhlciB0byBpbmNsdWRpbmcgZGF0YSBpbiBtYXAgY29uZmlnLCB0b2dnbGUgYmV0d2VlbiBgdHJ1ZWAgb3IgYGZhbHNlYFxuICogQG1lbWJlcm9mIHVpU3RhdGVBY3Rpb25zXG4gKiBAdHlwZSB7dHlwZW9mIGltcG9ydCgnLi91aS1zdGF0ZS1hY3Rpb25zJykuc2V0RXhwb3J0RGF0YX1cbiAqIEBwdWJsaWNcbiAqL1xuZXhwb3J0IGNvbnN0IHNldEV4cG9ydERhdGEgPSBjcmVhdGVBY3Rpb24oQWN0aW9uVHlwZXMuU0VUX0VYUE9SVF9EQVRBKTtcblxuLyoqXG4gKiBXaGV0aGVyIHdlIGV4cG9ydCBhIG1hcGJveCBhY2Nlc3MgdG9rZW4gdXNlZCB0byBjcmVhdGUgYSBzaW5nbGUgbWFwIGh0bWwgZmlsZVxuICogQG1lbWJlcm9mIHVpU3RhdGVBY3Rpb25zXG4gKiBAcGFyYW0gcGF5bG9hZCAtIG1hcGJveCBhY2Nlc3MgdG9rZW5cbiAqIEB0eXBlIHt0eXBlb2YgaW1wb3J0KCcuL3VpLXN0YXRlLWFjdGlvbnMnKS5zZXRVc2VyTWFwYm94QWNjZXNzVG9rZW59XG4gKiBAcHVibGljXG4gKi9cbmV4cG9ydCBjb25zdCBzZXRVc2VyTWFwYm94QWNjZXNzVG9rZW4gPSBjcmVhdGVBY3Rpb24oXG4gIEFjdGlvblR5cGVzLlNFVF9VU0VSX01BUEJPWF9BQ0NFU1NfVE9LRU4sXG4gIHBheWxvYWQgPT4gcGF5bG9hZFxuKTtcblxuLyoqXG4gKiBTZXQgdGhlIGV4cG9ydCBtYXAgZm9ybWF0IChodG1sLCBqc29uKVxuICogQG1lbWJlck9mIHVpU3RhdGVBY3Rpb25zXG4gKiBAcGFyYW0gcGF5bG9hZCAtIG1hcCBmb3JtYXRcbiAqIEB0eXBlIHt0eXBlb2YgaW1wb3J0KCcuL3VpLXN0YXRlLWFjdGlvbnMnKS5zZXRFeHBvcnRNYXBGb3JtYXR9XG4gKiBAcHVibGljXG4gKi9cbmV4cG9ydCBjb25zdCBzZXRFeHBvcnRNYXBGb3JtYXQgPSBjcmVhdGVBY3Rpb24oXG4gIEFjdGlvblR5cGVzLlNFVF9FWFBPUlRfTUFQX0ZPUk1BVCxcbiAgcGF5bG9hZCA9PiBwYXlsb2FkXG4pO1xuXG4vKipcbiAqIFNldCB0aGUgSFRNTCBtb2RlIHRvIHVzZSB0byBleHBvcnQgSFRNTCBtb2RlXG4gKiBAbWVtYmVyT2YgdWlTdGF0ZUFjdGlvbnNcbiAqIEBwYXJhbSBwYXlsb2FkIC0gbWFwIG1vZGVcbiAqIEB0eXBlIHt0eXBlb2YgaW1wb3J0KCcuL3VpLXN0YXRlLWFjdGlvbnMnKS5zZXRFeHBvcnRIVE1MTWFwTW9kZX1cbiAqL1xuZXhwb3J0IGNvbnN0IHNldEV4cG9ydEhUTUxNYXBNb2RlID0gY3JlYXRlQWN0aW9uKFxuICBBY3Rpb25UeXBlcy5TRVRfRVhQT1JUX01BUF9IVE1MX01PREUsXG4gIHBheWxvYWQgPT4gcGF5bG9hZFxuKTtcblxuLyoqXG4gKiBTZXQgYGxvY2FsZWAgdmFsdWVcbiAqIEBtZW1iZXJvZiB1aVN0YXRlQWN0aW9uc1xuICogQHBhcmFtIGxvY2FsZSAtIGxvY2FsZSBvZiB0aGUgVUlcbiAqIEB0eXBlIHt0eXBlb2YgaW1wb3J0KCcuL3VpLXN0YXRlLWFjdGlvbnMnKS5zZXRMb2NhbGV9XG4gKiBAcHVibGljXG4gKi9cbmV4cG9ydCBjb25zdCBzZXRMb2NhbGUgPSBjcmVhdGVBY3Rpb24oQWN0aW9uVHlwZXMuU0VUX0xPQ0FMRSwgbG9jYWxlID0+ICh7XG4gIGxvY2FsZVxufSkpO1xuXG4vKipcbiAqIFRoaXMgZGVjbGFyYXRpb24gaXMgbmVlZGVkIHRvIGdyb3VwIGFjdGlvbnMgaW4gZG9jc1xuICovXG4vKipcbiAqIEFjdGlvbnMgaGFuZGxlZCBtb3N0bHkgYnkgIGB1aVN0YXRlYCByZWR1Y2VyLlxuICogVGhleSBtYW5hZ2UgVUkgY2hhbmdlcyBpbiB0aGEgYXBwLCBzdWNoIGFzIG9wZW4gYW5kIGNsb3NlIHNpZGUgcGFuZWwsXG4gKiBzd2l0Y2ggYmV0d2VlbiB0YWJzIGluIHRoZSBzaWRlIHBhbmVsLCBvcGVuIGFuZCBjbG9zZSBtb2RhbCBkaWFsb2cgZm9yIGV4cG9ydGluZyBkYXRhIC8gaW1hZ2VzIGV0Yy5cbiAqIEl0IGFsc28gbWFuZ2VzIHdoaWNoIHNldHRpbmdzIGFyZSBzZWxlY3RlZCBkdXJpbmcgaW1hZ2UgYW5kIG1hcCBleHBvcnRcbiAqXG4gKiBAcHVibGljXG4gKi9cbi8qIGVzbGludC1kaXNhYmxlIG5vLXVudXNlZC12YXJzICovXG4vLyBAdHMtaWdub3JlXG5jb25zdCB1aVN0YXRlQWN0aW9ucyA9IG51bGw7XG4vKiBlc2xpbnQtZW5hYmxlIG5vLXVudXNlZC12YXJzICovXG4iXX0=

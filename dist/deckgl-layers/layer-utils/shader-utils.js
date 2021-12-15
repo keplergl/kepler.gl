@@ -1,0 +1,50 @@
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.editShader = editShader;
+
+var _window = require("global/window");
+
+// Copyright (c) 2021 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+/*
+ * Amendment to default layer vertex shader
+ * @param {string} vs
+ * @param {string} type
+ * @param {string} originalText
+ * @param {string} testToReplace
+ * @return {string} output shader
+ *
+ */
+function editShader(vs, type, originalText, testToReplace) {
+  if (!vs.includes(originalText)) {
+    // Here we call Console.error when we fail to edit deck.gl shader
+    // This should be caught by layer test
+    _window.console.error("Cannot edit ".concat(type, " layer shader"));
+
+    return vs;
+  }
+
+  return vs.replace(originalText, testToReplace);
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9kZWNrZ2wtbGF5ZXJzL2xheWVyLXV0aWxzL3NoYWRlci11dGlscy5qcyJdLCJuYW1lcyI6WyJlZGl0U2hhZGVyIiwidnMiLCJ0eXBlIiwib3JpZ2luYWxUZXh0IiwidGVzdFRvUmVwbGFjZSIsImluY2x1ZGVzIiwiQ29uc29sZSIsImVycm9yIiwicmVwbGFjZSJdLCJtYXBwaW5ncyI6Ijs7Ozs7OztBQW9CQTs7QUFwQkE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7O0FBSUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ08sU0FBU0EsVUFBVCxDQUFvQkMsRUFBcEIsRUFBd0JDLElBQXhCLEVBQThCQyxZQUE5QixFQUE0Q0MsYUFBNUMsRUFBMkQ7QUFDaEUsTUFBSSxDQUFDSCxFQUFFLENBQUNJLFFBQUgsQ0FBWUYsWUFBWixDQUFMLEVBQWdDO0FBQzlCO0FBQ0E7QUFDQUcsb0JBQVFDLEtBQVIsdUJBQTZCTCxJQUE3Qjs7QUFDQSxXQUFPRCxFQUFQO0FBQ0Q7O0FBRUQsU0FBT0EsRUFBRSxDQUFDTyxPQUFILENBQVdMLFlBQVgsRUFBeUJDLGFBQXpCLENBQVA7QUFDRCIsInNvdXJjZXNDb250ZW50IjpbIi8vIENvcHlyaWdodCAoYykgMjAyMSBVYmVyIFRlY2hub2xvZ2llcywgSW5jLlxuLy9cbi8vIFBlcm1pc3Npb24gaXMgaGVyZWJ5IGdyYW50ZWQsIGZyZWUgb2YgY2hhcmdlLCB0byBhbnkgcGVyc29uIG9idGFpbmluZyBhIGNvcHlcbi8vIG9mIHRoaXMgc29mdHdhcmUgYW5kIGFzc29jaWF0ZWQgZG9jdW1lbnRhdGlvbiBmaWxlcyAodGhlIFwiU29mdHdhcmVcIiksIHRvIGRlYWxcbi8vIGluIHRoZSBTb2Z0d2FyZSB3aXRob3V0IHJlc3RyaWN0aW9uLCBpbmNsdWRpbmcgd2l0aG91dCBsaW1pdGF0aW9uIHRoZSByaWdodHNcbi8vIHRvIHVzZSwgY29weSwgbW9kaWZ5LCBtZXJnZSwgcHVibGlzaCwgZGlzdHJpYnV0ZSwgc3VibGljZW5zZSwgYW5kL29yIHNlbGxcbi8vIGNvcGllcyBvZiB0aGUgU29mdHdhcmUsIGFuZCB0byBwZXJtaXQgcGVyc29ucyB0byB3aG9tIHRoZSBTb2Z0d2FyZSBpc1xuLy8gZnVybmlzaGVkIHRvIGRvIHNvLCBzdWJqZWN0IHRvIHRoZSBmb2xsb3dpbmcgY29uZGl0aW9uczpcbi8vXG4vLyBUaGUgYWJvdmUgY29weXJpZ2h0IG5vdGljZSBhbmQgdGhpcyBwZXJtaXNzaW9uIG5vdGljZSBzaGFsbCBiZSBpbmNsdWRlZCBpblxuLy8gYWxsIGNvcGllcyBvciBzdWJzdGFudGlhbCBwb3J0aW9ucyBvZiB0aGUgU29mdHdhcmUuXG4vL1xuLy8gVEhFIFNPRlRXQVJFIElTIFBST1ZJREVEIFwiQVMgSVNcIiwgV0lUSE9VVCBXQVJSQU5UWSBPRiBBTlkgS0lORCwgRVhQUkVTUyBPUlxuLy8gSU1QTElFRCwgSU5DTFVESU5HIEJVVCBOT1QgTElNSVRFRCBUTyBUSEUgV0FSUkFOVElFUyBPRiBNRVJDSEFOVEFCSUxJVFksXG4vLyBGSVRORVNTIEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRSBBTkQgTk9OSU5GUklOR0VNRU5ULiBJTiBOTyBFVkVOVCBTSEFMTCBUSEVcbi8vIEFVVEhPUlMgT1IgQ09QWVJJR0hUIEhPTERFUlMgQkUgTElBQkxFIEZPUiBBTlkgQ0xBSU0sIERBTUFHRVMgT1IgT1RIRVJcbi8vIExJQUJJTElUWSwgV0hFVEhFUiBJTiBBTiBBQ1RJT04gT0YgQ09OVFJBQ1QsIFRPUlQgT1IgT1RIRVJXSVNFLCBBUklTSU5HIEZST00sXG4vLyBPVVQgT0YgT1IgSU4gQ09OTkVDVElPTiBXSVRIIFRIRSBTT0ZUV0FSRSBPUiBUSEUgVVNFIE9SIE9USEVSIERFQUxJTkdTIElOXG4vLyBUSEUgU09GVFdBUkUuXG5cbmltcG9ydCB7Y29uc29sZSBhcyBDb25zb2xlfSBmcm9tICdnbG9iYWwvd2luZG93JztcblxuLypcbiAqIEFtZW5kbWVudCB0byBkZWZhdWx0IGxheWVyIHZlcnRleCBzaGFkZXJcbiAqIEBwYXJhbSB7c3RyaW5nfSB2c1xuICogQHBhcmFtIHtzdHJpbmd9IHR5cGVcbiAqIEBwYXJhbSB7c3RyaW5nfSBvcmlnaW5hbFRleHRcbiAqIEBwYXJhbSB7c3RyaW5nfSB0ZXN0VG9SZXBsYWNlXG4gKiBAcmV0dXJuIHtzdHJpbmd9IG91dHB1dCBzaGFkZXJcbiAqXG4gKi9cbmV4cG9ydCBmdW5jdGlvbiBlZGl0U2hhZGVyKHZzLCB0eXBlLCBvcmlnaW5hbFRleHQsIHRlc3RUb1JlcGxhY2UpIHtcbiAgaWYgKCF2cy5pbmNsdWRlcyhvcmlnaW5hbFRleHQpKSB7XG4gICAgLy8gSGVyZSB3ZSBjYWxsIENvbnNvbGUuZXJyb3Igd2hlbiB3ZSBmYWlsIHRvIGVkaXQgZGVjay5nbCBzaGFkZXJcbiAgICAvLyBUaGlzIHNob3VsZCBiZSBjYXVnaHQgYnkgbGF5ZXIgdGVzdFxuICAgIENvbnNvbGUuZXJyb3IoYENhbm5vdCBlZGl0ICR7dHlwZX0gbGF5ZXIgc2hhZGVyYCk7XG4gICAgcmV0dXJuIHZzO1xuICB9XG5cbiAgcmV0dXJuIHZzLnJlcGxhY2Uob3JpZ2luYWxUZXh0LCB0ZXN0VG9SZXBsYWNlKTtcbn1cbiJdfQ==

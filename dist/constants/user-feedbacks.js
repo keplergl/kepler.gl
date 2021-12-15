@@ -1,0 +1,33 @@
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.IMAGE_EXPORT_ERRORS = exports.MISSING_MAPBOX_TOKEN = void 0;
+// Copyright (c) 2021 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+var MISSING_MAPBOX_TOKEN = 'Mapbox Token not valid. ' + '[Click here](https://github.com/keplergl/kepler.gl#mapboxapiaccesstoken-string-required)';
+exports.MISSING_MAPBOX_TOKEN = MISSING_MAPBOX_TOKEN;
+var IMAGE_EXPORT_ERRORS = {
+  dataUri: "[kepler.gl] Failed to create image from data uri.\n  Copy the uri in the javascript console when reporting this bug.\n  The uri is the string starts with \"data:image/png\"",
+  styleSheet: "[kepler.gl] Failed to fetch stylesheet when exporting image.\n    This probably will not affect the map. It might affect the legend.\n    The stylesheet failed to load is: "
+};
+exports.IMAGE_EXPORT_ERRORS = IMAGE_EXPORT_ERRORS;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9jb25zdGFudHMvdXNlci1mZWVkYmFja3MuanMiXSwibmFtZXMiOlsiTUlTU0lOR19NQVBCT1hfVE9LRU4iLCJJTUFHRV9FWFBPUlRfRVJST1JTIiwiZGF0YVVyaSIsInN0eWxlU2hlZXQiXSwibWFwcGluZ3MiOiI7Ozs7OztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBRU8sSUFBTUEsb0JBQW9CLEdBQy9CLDZCQUNBLDBGQUZLOztBQUlBLElBQU1DLG1CQUFtQixHQUFHO0FBQ2pDQyxFQUFBQSxPQUFPLGdMQUQwQjtBQUlqQ0MsRUFBQUEsVUFBVTtBQUp1QixDQUE1QiIsInNvdXJjZXNDb250ZW50IjpbIi8vIENvcHlyaWdodCAoYykgMjAyMSBVYmVyIFRlY2hub2xvZ2llcywgSW5jLlxuLy9cbi8vIFBlcm1pc3Npb24gaXMgaGVyZWJ5IGdyYW50ZWQsIGZyZWUgb2YgY2hhcmdlLCB0byBhbnkgcGVyc29uIG9idGFpbmluZyBhIGNvcHlcbi8vIG9mIHRoaXMgc29mdHdhcmUgYW5kIGFzc29jaWF0ZWQgZG9jdW1lbnRhdGlvbiBmaWxlcyAodGhlIFwiU29mdHdhcmVcIiksIHRvIGRlYWxcbi8vIGluIHRoZSBTb2Z0d2FyZSB3aXRob3V0IHJlc3RyaWN0aW9uLCBpbmNsdWRpbmcgd2l0aG91dCBsaW1pdGF0aW9uIHRoZSByaWdodHNcbi8vIHRvIHVzZSwgY29weSwgbW9kaWZ5LCBtZXJnZSwgcHVibGlzaCwgZGlzdHJpYnV0ZSwgc3VibGljZW5zZSwgYW5kL29yIHNlbGxcbi8vIGNvcGllcyBvZiB0aGUgU29mdHdhcmUsIGFuZCB0byBwZXJtaXQgcGVyc29ucyB0byB3aG9tIHRoZSBTb2Z0d2FyZSBpc1xuLy8gZnVybmlzaGVkIHRvIGRvIHNvLCBzdWJqZWN0IHRvIHRoZSBmb2xsb3dpbmcgY29uZGl0aW9uczpcbi8vXG4vLyBUaGUgYWJvdmUgY29weXJpZ2h0IG5vdGljZSBhbmQgdGhpcyBwZXJtaXNzaW9uIG5vdGljZSBzaGFsbCBiZSBpbmNsdWRlZCBpblxuLy8gYWxsIGNvcGllcyBvciBzdWJzdGFudGlhbCBwb3J0aW9ucyBvZiB0aGUgU29mdHdhcmUuXG4vL1xuLy8gVEhFIFNPRlRXQVJFIElTIFBST1ZJREVEIFwiQVMgSVNcIiwgV0lUSE9VVCBXQVJSQU5UWSBPRiBBTlkgS0lORCwgRVhQUkVTUyBPUlxuLy8gSU1QTElFRCwgSU5DTFVESU5HIEJVVCBOT1QgTElNSVRFRCBUTyBUSEUgV0FSUkFOVElFUyBPRiBNRVJDSEFOVEFCSUxJVFksXG4vLyBGSVRORVNTIEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRSBBTkQgTk9OSU5GUklOR0VNRU5ULiBJTiBOTyBFVkVOVCBTSEFMTCBUSEVcbi8vIEFVVEhPUlMgT1IgQ09QWVJJR0hUIEhPTERFUlMgQkUgTElBQkxFIEZPUiBBTlkgQ0xBSU0sIERBTUFHRVMgT1IgT1RIRVJcbi8vIExJQUJJTElUWSwgV0hFVEhFUiBJTiBBTiBBQ1RJT04gT0YgQ09OVFJBQ1QsIFRPUlQgT1IgT1RIRVJXSVNFLCBBUklTSU5HIEZST00sXG4vLyBPVVQgT0YgT1IgSU4gQ09OTkVDVElPTiBXSVRIIFRIRSBTT0ZUV0FSRSBPUiBUSEUgVVNFIE9SIE9USEVSIERFQUxJTkdTIElOXG4vLyBUSEUgU09GVFdBUkUuXG5cbmV4cG9ydCBjb25zdCBNSVNTSU5HX01BUEJPWF9UT0tFTiA9XG4gICdNYXBib3ggVG9rZW4gbm90IHZhbGlkLiAnICtcbiAgJ1tDbGljayBoZXJlXShodHRwczovL2dpdGh1Yi5jb20va2VwbGVyZ2wva2VwbGVyLmdsI21hcGJveGFwaWFjY2Vzc3Rva2VuLXN0cmluZy1yZXF1aXJlZCknO1xuXG5leHBvcnQgY29uc3QgSU1BR0VfRVhQT1JUX0VSUk9SUyA9IHtcbiAgZGF0YVVyaTogYFtrZXBsZXIuZ2xdIEZhaWxlZCB0byBjcmVhdGUgaW1hZ2UgZnJvbSBkYXRhIHVyaS5cbiAgQ29weSB0aGUgdXJpIGluIHRoZSBqYXZhc2NyaXB0IGNvbnNvbGUgd2hlbiByZXBvcnRpbmcgdGhpcyBidWcuXG4gIFRoZSB1cmkgaXMgdGhlIHN0cmluZyBzdGFydHMgd2l0aCBcImRhdGE6aW1hZ2UvcG5nXCJgLFxuICBzdHlsZVNoZWV0OiBgW2tlcGxlci5nbF0gRmFpbGVkIHRvIGZldGNoIHN0eWxlc2hlZXQgd2hlbiBleHBvcnRpbmcgaW1hZ2UuXG4gICAgVGhpcyBwcm9iYWJseSB3aWxsIG5vdCBhZmZlY3QgdGhlIG1hcC4gSXQgbWlnaHQgYWZmZWN0IHRoZSBsZWdlbmQuXG4gICAgVGhlIHN0eWxlc2hlZXQgZmFpbGVkIHRvIGxvYWQgaXM6IGBcbn07XG4iXX0=
