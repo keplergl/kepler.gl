@@ -67,9 +67,11 @@ const resolver = ({
  */
 export const editTopMapStyle = memoize(
   ({
+    id,
     mapStyle,
     visibleLayerGroups
   }: {
+    id?: string;
     mapStyle: BaseMapStyle;
     visibleLayerGroups: {[id: string]: LayerGroup | boolean} | false;
   }) => {

@@ -264,7 +264,8 @@ export const DEFAULT_MAP_STYLES = [
     id: 'satellite',
     label: 'Satellite',
     url: `mapbox://styles/mapbox/satellite-v9`,
-    icon: `${ICON_PREFIX}/UBER_SATELLITE.png`
+    icon: `${ICON_PREFIX}/UBER_SATELLITE.png`,
+    layerGroups: []
   }
 ];
 

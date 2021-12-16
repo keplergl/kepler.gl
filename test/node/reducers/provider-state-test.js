@@ -64,7 +64,7 @@ test('#providerStateReducerFactory', t => {
 
 test('#providerStateReducer -> EXPORT_FILE_TO_CLOUD', t => {
   const errSpy = sinon.spy(Console, 'error');
-
+  drainTasksForTesting();
   // null
   reducer(undefined, exportFileToCloud({provider: null}));
   t.ok(errSpy.calledOnce, 'should call console.error if provider is undefined');
