@@ -33,7 +33,7 @@ import DropdownList from 'components/common/item-selector/dropdown-list';
 import Typeahead from 'components/common/item-selector/typeahead';
 
 import {Hash, Delete} from 'components/common/icons';
-import {StateWFiles} from 'test/helpers/mock-state';
+import {StateWFiles, StateWithGeocoderDataset} from 'test/helpers/mock-state';
 import {appInjector} from 'components/container';
 
 const TooltipConfig = appInjector.get(TooltipConfigFactory);
@@ -250,5 +250,31 @@ test('TooltipConfig - render -> tooltip format', t => {
     }
   };
   t.deepEqual(onChange.args[0], [expectedArgs0], 'should call onchange to set format');
+  t.end();
+});
+
+test('TooltipConfig -> render -> do not display Geocoder dataset fields', t => {
+  // Contains only a single dataset which is the geocoder_dataset
+  const datasets = StateWithGeocoderDataset.visState.datasets;
+  const tooltipConfig = StateWithGeocoderDataset.visState.interactionConfig.tooltip.config;
+
+  const FieldSelector = appInjector.get(FieldSelectorFactory);
+  const onChange = sinon.spy();
+  let wrapper;
+
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TooltipConfig onChange={onChange} config={tooltipConfig} datasets={datasets} />
+      </IntlWrapper>
+    );
+  }, 'Should render');
+
+  // Since only the geocoder_dataset is present, nothing should be rendered except the TooltipConfig
+  t.equal(wrapper.find(TooltipConfig).length, 1, 'Should render 1 TooltipConfig');
+  t.equal(wrapper.find(DatasetTag).length, 0, 'Should render 1 DatasetTag');
+  t.equal(wrapper.find(FieldSelector).length, 0, 'Should render 1 FieldSelector');
+  t.equal(wrapper.find(ChickletedInput).length, 0, 'Should render 1 ChickletedInput');
+
   t.end();
 });
