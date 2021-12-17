@@ -39,7 +39,8 @@ import {
   KEPLER_GL_NAME,
   KEPLER_GL_VERSION,
   THEME,
-  DEFAULT_MAPBOX_API_URL
+  DEFAULT_MAPBOX_API_URL,
+  GEOCODER_DATASET_NAME
 } from 'constants/default-settings';
 import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
 
@@ -52,7 +53,7 @@ import PlotContainerFactory from './plot-container';
 import NotificationPanelFactory from './notification-panel';
 import GeoCoderPanelFactory from './geocoder-panel';
 
-import {generateHashId} from 'utils/utils';
+import {filterObjectByPredicate, generateHashId} from 'utils/utils';
 import {validateToken} from 'utils/mapbox-utils';
 import {mergeMessages} from 'utils/locale-utils';
 
@@ -138,30 +139,40 @@ export const mapFieldsSelector = props => ({
   locale: props.uiState.locale
 });
 
-export const sidePanelSelector = (props, availableProviders) => ({
-  appName: props.appName,
-  version: props.version,
-  appWebsite: props.appWebsite,
-  mapStyle: props.mapStyle,
-  onSaveMap: props.onSaveMap,
-  uiState: props.uiState,
-  mapStyleActions: props.mapStyleActions,
-  visStateActions: props.visStateActions,
-  uiStateActions: props.uiStateActions,
+export function getVisibleDatasets(datasets) {
+  // We don't want Geocoder dataset to be present in SidePanel dataset list
+  return filterObjectByPredicate(datasets, (key, value) => key !== GEOCODER_DATASET_NAME);
+}
 
-  datasets: props.visState.datasets,
-  filters: props.visState.filters,
-  layers: props.visState.layers,
-  layerOrder: props.visState.layerOrder,
-  layerClasses: props.visState.layerClasses,
-  interactionConfig: props.visState.interactionConfig,
-  mapInfo: props.visState.mapInfo,
-  layerBlending: props.visState.layerBlending,
+export const sidePanelSelector = (props, availableProviders) => {
+  // visibleDatasets
+  const filteredDatasets = getVisibleDatasets(props.visState.datasets);
 
-  width: props.sidePanelWidth,
-  availableProviders,
-  mapSaved: props.providerState.mapSaved
-});
+  return {
+    appName: props.appName,
+    version: props.version,
+    appWebsite: props.appWebsite,
+    mapStyle: props.mapStyle,
+    onSaveMap: props.onSaveMap,
+    uiState: props.uiState,
+    mapStyleActions: props.mapStyleActions,
+    visStateActions: props.visStateActions,
+    uiStateActions: props.uiStateActions,
+
+    datasets: filteredDatasets,
+    filters: props.visState.filters,
+    layers: props.visState.layers,
+    layerOrder: props.visState.layerOrder,
+    layerClasses: props.visState.layerClasses,
+    interactionConfig: props.visState.interactionConfig,
+    mapInfo: props.visState.mapInfo,
+    layerBlending: props.visState.layerBlending,
+
+    width: props.sidePanelWidth,
+    availableProviders,
+    mapSaved: props.providerState.mapSaved
+  };
+};
 
 export const plotContainerSelector = props => ({
   width: props.width,

@@ -56,6 +56,7 @@ import tripGeojson, {tripDataInfo} from 'test/fixtures/trip-geojson';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 import {COMPARE_TYPES} from 'constants/tooltip';
 import {MOCK_MAP_STYLE} from './mock-map-styles';
+import {getUpdateVisDataPayload} from 'components/geocoder-panel';
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);
@@ -457,6 +458,52 @@ function mockStateWithTooltipFormat() {
   return prepareState;
 }
 
+function mockStateWithGeocoderDataset() {
+  const initialState = cloneDeep(InitialState);
+
+  const oldInteractionConfig = initialState.visState.interactionConfig.tooltip;
+  const newInteractionConfig = {
+    ...oldInteractionConfig,
+    config: {
+      ...oldInteractionConfig.config,
+      fieldsToShow: {
+        ...oldInteractionConfig.config.fieldsToShow,
+        geocoder_dataset: [
+          {
+            name: 'lt',
+            format: null
+          },
+          {
+            name: 'ln',
+            format: null
+          },
+          {
+            name: 'icon',
+            format: null
+          },
+          {
+            name: 'text',
+            format: null
+          }
+        ]
+      },
+      compareMode: false,
+      compareType: COMPARE_TYPES.ABSOLUTE
+    }
+  };
+  const geocoderDataset = getUpdateVisDataPayload(48.85658, 2.35183, 'Paris');
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: geocoderDataset
+    },
+    {action: VisStateActions.interactionConfigChange, payload: [newInteractionConfig]}
+  ]);
+
+  return prepareState;
+}
+
 // saved hexagon layer
 export const expectedSavedLayer0 = {
   id: 'hexagon-2',
@@ -747,6 +794,7 @@ export const StateWTrips = mockStateWithTripData();
 export const StateWTripGeojson = mockStateWithTripGeojson();
 export const StateWTooltipFormat = mockStateWithTooltipFormat();
 export const StateWH3Layer = mockStateWithH3Layer();
+export const StateWithGeocoderDataset = mockStateWithGeocoderDataset();
 
 export const expectedSavedTripLayer = {
   id: 'trip-0',

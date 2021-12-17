@@ -200,3 +200,17 @@ export function arrayInsert(arr, index, val) {
 export function isTest() {
   return process?.env?.NODE_ENV === 'test';
 }
+
+/**
+ * Filters an object by an arbitrary predicate
+ * Returns a new object containing all elements that match the predicate
+ * @param {Object} obj Object to be filtered
+ * @param {Function} predicate Predicate by which the object will be filtered
+ * @returns {Object}
+ */
+export function filterObjectByPredicate(obj, predicate) {
+  return Object.entries(obj).reduce(
+    (acc, entry) => (predicate(entry[0], entry[1]) ? {...acc, [entry[0]]: entry[1]} : acc),
+    {}
+  );
+}
