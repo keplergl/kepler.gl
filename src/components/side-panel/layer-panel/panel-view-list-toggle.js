@@ -28,7 +28,7 @@ export const StyledToggleOption = styled.div.attrs({
       : props.theme.layerPanelToggleOptionColor};
   :hover {
     cursor: pointer;
-    color: ${props => props.theme.textColorHl};
+    color: ${props => props.theme.layerPanelToggleOptionColorActive};
   }
 `;
 
