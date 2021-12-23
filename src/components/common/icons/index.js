@@ -92,3 +92,5 @@ export {default as Warning} from './warning';
 export {default as DrawPolygon} from './draw-polygon';
 export {default as Polygon} from './polygon';
 export {default as Rectangle} from './rectangle';
+export {default as List} from './list';
+export {default as OrderByDataset} from './order-by-dataset';

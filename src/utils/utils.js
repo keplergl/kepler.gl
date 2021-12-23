@@ -214,3 +214,19 @@ export function filterObjectByPredicate(obj, predicate) {
     {}
   );
 }
+
+/**
+ * Converts an array to an object with indexes as keys and items as values
+ * Returns an object that will have array indexes as keys and corresponding array items as values
+ * @param {Array} array Array to be converted to an object
+ * @returns {Object}
+ */
+export function convertArrayToObjectByIndex(array) {
+  const initialValue = {};
+  return array.reduce((obj, el, idx) => {
+    return {
+      ...obj,
+      [idx]: el
+    };
+  }, initialValue);
+}

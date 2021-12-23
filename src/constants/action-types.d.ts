@@ -25,7 +25,7 @@ export type ActionType = {
   REORDER_LAYER: string;
   SET_FILTER: string;
   SET_FILTER_ANIMATION_TIME: string;
-  SET_FILTER_ANIMATION_TIME_CONFIG:  string;
+  SET_FILTER_ANIMATION_TIME_CONFIG: string;
   SET_FILTER_ANIMATION_WINDOW: string;
   SHOW_DATASET_TABLE: string;
   UPDATE_LAYER_BLENDING: string;
@@ -92,6 +92,7 @@ export type ActionType = {
   ADD_NOTIFICATION: string;
   REMOVE_NOTIFICATION: string;
   SET_LOCALE: string;
+  TOGGLE_LAYER_PANEL_LIST_VIEW: string;
 
   // uiState > export image
   SET_EXPORT_IMAGE_SETTING: string;

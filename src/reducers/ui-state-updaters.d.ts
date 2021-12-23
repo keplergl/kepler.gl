@@ -71,6 +71,8 @@ export type Notifications = {
 
 export type Locale = string;
 
+export type LayerPanelListView = 'list' | 'sortByDataset'
+
 export type UiState = {
   readOnly: boolean;
   activeSidePanel: string;
@@ -91,6 +93,7 @@ export type UiState = {
   loadFiles: LoadFiles;
   // Locale of the UI
   locale: Locale;
+  layerPanelListView: LayerPanelListView;
 };
 
 export const DEFAULT_MAP_CONTROLS: MapControls;
@@ -185,6 +188,10 @@ export function showDatasetTableUpdater(state: UiState);
 export function setLocaleUpdater(
   state: UiState,
   action: UiStateActions.SetLocaleUpdaterAction
+): UiState;
+export function toggleLayerPanelListViewUpdater(
+  state: UiState,
+  action: UiStateActions.ToggleLayerPanelListViewAction
 ): UiState;
 
 export function loadFilesUpdater(state: UiState, action: LoadFilesUpdaterAction): UiState;

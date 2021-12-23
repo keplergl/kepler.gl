@@ -270,3 +270,15 @@ export const setLocale = createAction(ActionTypes.SET_LOCALE, locale => ({
 // @ts-ignore
 const uiStateActions = null;
 /* eslint-enable no-unused-vars */
+
+/**
+ * Toggle layer panel list view
+ * @memberof uiStateActions
+ * @param listView layer panel listView value. Can be 'list' or 'sortByDataset'
+ * @type {typeof import('./ui-state-actions').toggleLayerPanelListView}
+ * @public
+ */
+export const toggleLayerPanelListView = createAction(
+  ActionTypes.TOGGLE_LAYER_PANEL_LIST_VIEW,
+  listView => listView
+);

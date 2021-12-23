@@ -198,3 +198,11 @@ export type SetLocaleUpdaterAction = {
 export function setLocale(
   locale: string
 ): Merge<SetLocaleUpdaterAction, {type: ActionTypes.SET_LOCALE}>;
+
+/** TOGGLE_LAYER_PANEL_LIST_VIEW */
+export type ToggleLayerPanelListViewAction = {
+  payload: string;
+}
+export function toggleLayerPanelListView(
+  listView: string
+): Merge<ToggleLayerPanelListViewAction, {type: ActionTypes.TOGGLE_LAYER_PANEL_LIST_VIEW}>;

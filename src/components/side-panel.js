@@ -212,29 +212,56 @@ export default function SidePanelFactory(
         />
         <StyledSidePanelContent className="side-panel__content">
           <div className="side-panel__content__inner">
-            <PanelTitle className="side-panel__content__title">
-              <FormattedMessage id={currentPanel.label} />
-            </PanelTitle>
             {PanelComponent ? (
-              <PanelComponent
-                datasets={datasets}
-                filters={filters}
-                layers={layers}
-                layerClasses={layerClasses}
-                layerOrder={layerOrder}
-                layerBlending={layerBlending}
-                mapStyle={mapStyle}
-                mapStyleActions={mapStyleActions}
-                mapStateActions={mapStateActions}
-                interactionConfig={interactionConfig}
-                removeDataset={onRemoveDataset}
-                showDatasetTable={onShowDatasetTable}
-                updateTableColor={onUpdateTableColor}
-                showAddDataModal={onShowAddDataModal}
-                showAddMapStyleModal={onShowAddMapStyleModal}
-                uiStateActions={uiStateActions}
-                visStateActions={visStateActions}
-              />
+              currentPanel.id !== 'layer' ? (
+                <>
+                  <PanelTitle className="side-panel__content__title">
+                    <FormattedMessage id={currentPanel.label} />
+                  </PanelTitle>
+                  <PanelComponent
+                    datasets={datasets}
+                    filters={filters}
+                    layers={layers}
+                    layerClasses={layerClasses}
+                    layerOrder={layerOrder}
+                    layerBlending={layerBlending}
+                    mapStyle={mapStyle}
+                    mapStyleActions={mapStyleActions}
+                    mapStateActions={mapStateActions}
+                    interactionConfig={interactionConfig}
+                    removeDataset={onRemoveDataset}
+                    showDatasetTable={onShowDatasetTable}
+                    updateTableColor={onUpdateTableColor}
+                    showAddDataModal={onShowAddDataModal}
+                    showAddMapStyleModal={onShowAddMapStyleModal}
+                    uiStateActions={uiStateActions}
+                    visStateActions={visStateActions}
+                    panelMetadata={currentPanel}
+                  />
+                </>
+              ) : (
+                <PanelComponent
+                  datasets={datasets}
+                  filters={filters}
+                  layers={layers}
+                  layerClasses={layerClasses}
+                  layerOrder={layerOrder}
+                  layerBlending={layerBlending}
+                  mapStyle={mapStyle}
+                  mapStyleActions={mapStyleActions}
+                  mapStateActions={mapStateActions}
+                  interactionConfig={interactionConfig}
+                  removeDataset={onRemoveDataset}
+                  showDatasetTable={onShowDatasetTable}
+                  updateTableColor={onUpdateTableColor}
+                  showAddDataModal={onShowAddDataModal}
+                  showAddMapStyleModal={onShowAddMapStyleModal}
+                  uiStateActions={uiStateActions}
+                  visStateActions={visStateActions}
+                  panelMetadata={currentPanel}
+                  layerPanelListView={uiState.layerPanelListView}
+                />
+              )
             ) : null}
             <CustomPanels {...customPanelProps} activeSidePanel={activeSidePanel} />
           </div>
