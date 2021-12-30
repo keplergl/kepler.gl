@@ -24,3 +24,4 @@ import './map-state-schema-test';
 import './map-style-schema-test';
 import './dataset-schema-test';
 import './schema-conversion-test';
+import './ui-state-schema-test';

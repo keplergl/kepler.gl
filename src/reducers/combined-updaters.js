@@ -28,6 +28,7 @@ import {
 } from './vis-state-updaters';
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
+import {receiveMapConfigUpdater as uiStateReceiveMapConfigUpdater} from './ui-state-updaters';
 import {findMapBounds} from 'utils/data-utils';
 import {isPlainObject} from 'utils/utils';
 import {filesToDataPayload} from 'processors/file-handler';
@@ -131,6 +132,7 @@ export const addDataToMapUpdater = (state, {payload}) => {
     // if passed in saved config
     parsedConfig = state.visState.schema.parseSavedConfig(config);
   }
+
   const oldLayers = state.visState.layers;
   const filterNewlyAddedLayers = layers => layers.filter(nl => !oldLayers.find(ol => ol === nl));
 
@@ -165,6 +167,10 @@ export const addDataToMapUpdater = (state, {payload}) => {
     ),
 
     pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
+
+    pick_('uiState')(
+      apply_(uiStateReceiveMapConfigUpdater, payload_({config: parsedConfig, options}))
+    ),
 
     pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null))),
 

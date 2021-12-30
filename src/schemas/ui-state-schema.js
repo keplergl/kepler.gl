@@ -18,26 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Schemas
-export {
-  default,
-  default as KeplerGlSchema,
-  reducerSchema,
-  KeplerGLSchema as KeplerGLSchemaClass
-} from './schema-manager';
-export {CURRENT_VERSION, VERSIONS} from './versions';
-export {
-  visStateSchemaV1,
-  FilterSchemaV0,
-  LayerSchemaV0,
-  InteractionSchemaV1,
-  DimensionFieldSchema,
-  SplitMapsSchema,
-  filterPropsV1,
-  default as visStateSchema
-} from './vis-state-schema';
-export {default as datasetSchema} from './dataset-schema';
-export {default as mapStyleSchema} from './map-style-schema';
-export {default as mapStateSchema} from './map-state-schema';
-export {default as uiStateSchema} from './ui-state-schema';
-export {default as Schema} from './schema';
+import {VERSIONS} from './versions';
+import Schema from './schema';
+
+export class MapControlsSchemaV1 extends Schema {
+  key = 'mapControls';
+  save(mapControls) {
+    // save mapLegend
+    return {[this.key]: mapControls};
+  }
+  load(mapControls) {
+    return typeof mapControls === 'object' && Object.keys(mapControls).length
+      ? {[this.key]: mapControls}
+      : {};
+  }
+}
+
+// version v0
+export const propertiesV0 = {
+  mapControls: new MapControlsSchemaV1(),
+  locale: null
+};
+
+export const propertiesV1 = {
+  ...propertiesV0
+};
+
+const uiStateSchema = {
+  [VERSIONS.v0]: new Schema({
+    version: VERSIONS.v0,
+    properties: propertiesV0,
+    key: 'uiState'
+  }),
+  [VERSIONS.v1]: new Schema({
+    version: VERSIONS.v1,
+    properties: propertiesV1,
+    key: 'uiState'
+  })
+};
+
+export default uiStateSchema;

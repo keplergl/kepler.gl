@@ -35,6 +35,7 @@ import testHexIdData, {
 } from 'test/fixtures/test-hex-id-data';
 import {cmpLayers, cmpFilters, cmpDataset, cmpInteraction} from 'test/helpers/comparison-utils';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
+import {LOCALE_CODES} from 'localization/locales';
 
 const mockRawData = {
   fields: [
@@ -157,6 +158,91 @@ test('#composerStateReducer - addDataToMapUpdater: uiState', t => {
     newState.uiState,
     expectedUIState,
     'ui state should be set readOnly:false,currentModal: null'
+  );
+
+  t.end();
+});
+
+test('#composerStateReducer - addDataToMapUpdater: mapLegend', t => {
+  // init kepler.gl root and instance
+  const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+
+  const newState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {
+          id: 'foo'
+        }
+      },
+      config: {
+        uiState: {
+          mapControls: {
+            mapLegend: {
+              show: true,
+              active: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  const expectedUIState = {
+    ...INITIAL_UI_STATE,
+    initialState: {},
+    currentModal: null,
+    mapControls: {
+      ...INITIAL_UI_STATE.mapControls,
+      mapLegend: {
+        show: true,
+        active: true,
+        disableClose: false,
+        activeMapIndex: 0
+      }
+    }
+  };
+
+  t.deepEqual(
+    newState.uiState,
+    expectedUIState,
+    'ui state should be set with mapLegend being displayed by default'
+  );
+
+  t.end();
+});
+
+test('#composerStateReducer - addDataToMapUpdater: locale', t => {
+  // init kepler.gl root and instance
+  const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+
+  const newState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {
+          id: 'foo'
+        }
+      },
+      config: {
+        uiState: {
+          locale: LOCALE_CODES.es
+        }
+      }
+    }
+  });
+
+  const expectedUIState = {
+    ...INITIAL_UI_STATE,
+    initialState: {},
+    currentModal: null,
+    locale: LOCALE_CODES.es
+  };
+
+  t.deepEqual(
+    newState.uiState,
+    expectedUIState,
+    'ui state should be set with locale=Spanish by default'
   );
 
   t.end();
