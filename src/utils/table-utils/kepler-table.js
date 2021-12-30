@@ -445,7 +445,7 @@ export function sortDatasetByColumn(dataset, column, mode) {
     return dataset;
   }
 
-  const sortBy = SORT_ORDER[mode] || SORT_ORDER.ASCENDING;
+  const sortBy = SORT_ORDER[mode || ''] || SORT_ORDER.ASCENDING;
 
   if (sortBy === SORT_ORDER.UNSORT) {
     dataset.sortColumn = {};

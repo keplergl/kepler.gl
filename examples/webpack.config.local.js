@@ -104,10 +104,7 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
   return {
     // suppress warnings about bundle size
     devServer: {
-      historyApiFallback: true,
-      stats: {
-        warnings: false
-      }
+      historyApiFallback: true
     },
 
     devtool: 'source-map',

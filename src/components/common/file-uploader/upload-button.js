@@ -18,14 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef} from 'react';
+import React, {useCallback, useRef} from 'react';
 import styled from 'styled-components';
-
-/**
-@typedef {{
-  onUpload: (files: FileList, event: any) => void;
-}} UploadButtonProps
-*/
 
 const Wrapper = styled.div`
   display: inline-block;
@@ -38,46 +32,53 @@ const Wrapper = styled.div`
     font-weight: 500;
   }
 `;
+const inputStyle = {display: 'none'};
+
 /*
 Inspired by https://github.com/okonet/react-dropzone/blob/master/src/index.js
 */
-/** @augments React.Component<UploadButtonProps> */
-export class UploadButton extends Component {
-  _fileInput = createRef();
+/** @type {typeof import('./upload-button').UploadButton} */
+const UploadButton = ({onUpload, children}) => {
+  const _fileInput = useRef(null);
 
-  _onClick = () => {
-    this._fileInput.current.value = null;
-    this._fileInput.current.click();
-  };
-
-  _onChange = event => {
-    const {
-      target: {files}
-    } = event;
-
-    if (!files) {
-      return;
+  const _onClick = useCallback(() => {
+    if (_fileInput.current) {
+      // @ts-ignore create ref with useRef<HTMLInputElement>
+      _fileInput.current.value = null;
+      // @ts-ignore create ref with useRef<HTMLInputElement>
+      _fileInput.current.click();
     }
+  }, [_fileInput]);
 
-    this.props.onUpload(files, event);
-  };
+  const _onChange = useCallback(
+    event => {
+      const {
+        target: {files}
+      } = event;
 
-  render() {
-    return (
-      <Wrapper className="upload-button">
-        <input
-          type="file"
-          ref={this._fileInput}
-          style={{display: 'none'}}
-          onChange={this._onChange}
-          className="upload-button-input"
-        />
-        <span className="file-upload__upload-button-span" onClick={this._onClick}>
-          {this.props.children}
-        </span>
-      </Wrapper>
-    );
-  }
-}
+      if (!files) {
+        return;
+      }
+
+      onUpload(files, event);
+    },
+    [onUpload]
+  );
+
+  return (
+    <Wrapper className="upload-button">
+      <input
+        type="file"
+        ref={_fileInput}
+        style={inputStyle}
+        onChange={_onChange}
+        className="upload-button-input"
+      />
+      <span className="file-upload__upload-button-span" onClick={_onClick}>
+        {children}
+      </span>
+    </Wrapper>
+  );
+};
 
 export default UploadButton;

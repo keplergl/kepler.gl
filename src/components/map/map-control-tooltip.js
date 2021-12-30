@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {Tooltip} from '..';
+import {Tooltip} from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
 
 function MapControlTooltipFactory() {

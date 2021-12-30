@@ -15,5 +15,5 @@ export type FileDropProps = {
   onFrameDrop?: (event: any) => void;
 };
 
-const FileDrop: React.FunctionComponent<FileDropProps>;
+export const FileDrop: React.FunctionComponent<FileDropProps>;
 export default FileDrop;
