@@ -4,6 +4,9 @@ export declare const LOCALES: {
   pt: string;
   es: string;
   ca: string;
+  ja: string;
+  cn: string;
+  ru: string;
 };
 
 export declare const LOCALE_CODES: {[key: string]: string};

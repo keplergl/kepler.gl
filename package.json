@@ -49,7 +49,7 @@
     "analyze:bundle": "webpack --config ./webpack/bundle.js --progress --env.prod",
     "check-licence": "uber-licence --dry",
     "add-licence": "uber-licence",
-    "prepublish": "ber-licence && yarn build && yarn build:umd && yarn build:types",
+    "prepublish": "uber-licence && yarn build && yarn build:umd && yarn build:types",
     "docs": "babel-node ./scripts/documentation.js",
     "typedoc": "typedoc --theme markdown --out typedoc --inputFiles ./src/reducers --inputFiles ./src/actions --excludeExternals --excludeNotExported --excludePrivate",
     "example-version": "babel-node ./scripts/edit-version.js",

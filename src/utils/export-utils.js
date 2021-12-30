@@ -135,8 +135,13 @@ export function downloadFile(fileBlob, fileName) {
   }
 }
 
-export function exportImage(state, filename = DEFAULT_IMAGE_NAME) {
-  const {imageDataUri} = state.uiState.exportImage;
+/**
+ * Whether color is rgb
+ * @type {typeof import('./export-utils').exportImage}
+ * @returns
+ */
+export function exportImage(uiStateExportImage, filename = DEFAULT_IMAGE_NAME) {
+  const {imageDataUri} = uiStateExportImage;
   if (imageDataUri) {
     const file = dataURItoBlob(imageDataUri);
     downloadFile(file, filename);

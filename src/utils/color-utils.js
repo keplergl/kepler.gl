@@ -106,11 +106,11 @@ export function createLinearGradient(direction, colors) {
 }
 
 /**
- * Checking if color is RGB
- * @param {*} color
- * @returns boolean
+ * Whether color is rgb
+ * @type {typeof import('./color-utils').isRgbColor}
+ * @returns
  */
-export function isRGBColor(color) {
+export function isRgbColor(color) {
   if (
     color &&
     Array.isArray(color) &&

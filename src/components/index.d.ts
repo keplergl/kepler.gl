@@ -22,6 +22,7 @@ export * from './common/tippy-tooltip'
 export * as Icons from './common/icons';
 export * from './common/file-uploader/file-drop';
 export * from './common/file-uploader/upload-button';
+export {default as Portaled} from './common/portaled';
 
 export const PanelHeaderAction: (...props: any[]) => JSX.Element;
 export const TippyTooltip: (...props: any[]) => JSX.Element;

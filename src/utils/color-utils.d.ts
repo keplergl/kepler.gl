@@ -5,5 +5,5 @@ export const createLinearGradient: (string: direction, colors: number[]) => stri
 export const reverseColorRange: (reversed: boolean, colorRange: ColorRange) => object;
 export const rgbToHex: (colors: [number, number, number]) => string;
 
-
 export const getColorGroupByName: (ColorRange) => ColorRange;
+export function isRgbColor(color: unknown): color is RGBColor;
