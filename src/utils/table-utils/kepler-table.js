@@ -486,6 +486,7 @@ export function pinTableColumns(dataset, column) {
     pinnedColumns = (dataset.pinnedColumns || []).concat(field.name);
   }
 
+  // @ts-ignore
   return copyTableAndUpdate(dataset, {pinnedColumns});
 }
 /**
@@ -498,8 +499,6 @@ export function copyTable(original) {
 
 /**
  * @type {typeof import('./kepler-table').copyTableAndUpdate}
- * @param {KeplerTable} original
- * @param {*} options
  * @returns
  */
 export function copyTableAndUpdate(original, options = {}) {

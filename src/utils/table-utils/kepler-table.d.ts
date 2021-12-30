@@ -69,7 +69,7 @@ export class KeplerTable {
     supportedFilterTypes?: ProtoDataset['supportedFilterTypes'];
   });
   type?: string;
-  label?: string;
+  label: string;
   color: RGBColor;
 
   // fields and data
@@ -95,21 +95,24 @@ export class KeplerTable {
   sortOrder?: number[] | null;
 
   pinnedColumns?: string[];
-  supportedFilterTypes?: string[];
+  supportedFilterTypes: string[] | undefined;
   // table-injected metadata
-  metadata?: object;
+  metadata: object;
 
   // methods
   getColumnField(columnName: string): Field | undefined;
   getColumnFieldIdx(columnName: string): number;
-  getColumnDomain(columnName: string): any[];
-
+  getColumnFilterDomain(field: Field): FieldDomain;
+  getColumnLayerDomain(field: Field, scaleType: string): number[] | string[] | [number, number];
   getValue(columnName: string, rowIdx: number): any;
   updateColumnField(fieldIdx: number, newField: Field): void;
   updateTableColor(newColor: RGBColor): void;
   getColumnFilterProps(fieldName: string): Field['filterProps'] | null | undefined;
   filterTable(filters: Filter[], layers: Layer[], opt?: FilterDatasetOpt): KeplerTable;
   filterTableCPU(filters: Filter[], layers: Layer[]): KeplerTable;
+
+  // private methods
+  _assetField(fieldName: string, condition: any): void;
 }
 
 export function copyTable<T extends {}>(original: T): T;
