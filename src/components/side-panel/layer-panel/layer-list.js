@@ -164,16 +164,17 @@ function LayerListFactory(LayerPanel) {
       </WrappedSortableContainer>
     ) : (
       <>
-        {layers.map(
-          (layer, index) =>
-            !layer.config.hidden && (
+        {layerOrder.map(
+          (layerIdx, index) =>
+            layers[layerIdx] &&
+            !layers[layerIdx].config.hidden && (
               <LayerPanel
                 {...panelProps}
                 {...layerActions}
-                sortData={index}
-                key={layers[index].id}
-                idx={index}
-                layer={layers[index]}
+                sortData={layerIdx}
+                key={layers[layerIdx].id}
+                idx={layerIdx}
+                layer={layers[layerIdx]}
               />
             )
         )}
