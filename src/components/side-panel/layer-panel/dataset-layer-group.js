@@ -1,6 +1,6 @@
 import React, {useMemo} from 'react';
 
-import {convertArrayToObjectByIndex, filterObjectByPredicate} from 'utils/utils';
+import {convertArrayToObjectByIndex} from 'utils/utils';
 
 import DatasetLayerSectionFactory from './dataset-layer-section';
 
@@ -22,24 +22,28 @@ function DatasetLayerGroupFactory(DatasetLayerSection) {
     } = props;
 
     // Extracting the layer order for layers of each dataset is not necessary
-    // since the global layer order will be passed down to LayerList component
-    // this means the order will be kept when rendering the layers
+    // since getting the ordered array of layers will get them in correct order
     const datasetLayerSectionData = useMemo(() => {
       // Layers array converted to an object with indexes as keys
       const layersMap = convertArrayToObjectByIndex(layers);
+      // Order layer objects in correct global layer order
+      const orderedLayersArr = layerOrder.map(layer => layersMap[layer]);
+
       // Returns an array of all necessary data for each dataset to be displayed
       // dataset and dataset layers
       return Object.values(datasets).map(dataset => {
         // Extract layers for a dataset
-        const datasetLayersMap = filterObjectByPredicate(
-          layersMap,
-          (key, value) => value.config.dataId === dataset.id
+        // since we are extracting the layers from already ordered layers
+        // we know that the natural order of items in that array will be the correct
+        // order of layers to be displayed
+        const datasetLayersMap = orderedLayersArr.filter(
+          layer => layer.config.dataId === dataset.id
         );
         const datasetLayers = Object.values(datasetLayersMap);
 
         return {dataset, datasetLayers};
       });
-    }, [datasets, layers]);
+    }, [datasets, layers, layerOrder]);
 
     return datasetLayerSectionData.map(dlsData => (
       <DatasetLayerSection

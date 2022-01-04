@@ -98,35 +98,22 @@ function LayerListFactory(LayerPanel) {
       [layerClasses]
     );
 
-    const layerActions = useMemo(() => {
-      return {
-        layerColorUIChange: visStateActions.layerColorUIChange,
-        layerConfigChange: visStateActions.layerConfigChange,
-        layerVisualChannelConfigChange: visStateActions.layerVisualChannelConfigChange,
-        layerTypeChange: visStateActions.layerTypeChange,
-        layerVisConfigChange: visStateActions.layerVisConfigChange,
-        layerTextLabelChange: visStateActions.layerTextLabelChange,
-        removeLayer: visStateActions.removeLayer,
-        duplicateLayer: visStateActions.duplicateLayer
-      };
-    }, [
-      visStateActions.layerColorUIChange,
-      visStateActions.layerConfigChange,
-      visStateActions.layerVisualChannelConfigChange,
-      visStateActions.layerTypeChange,
-      visStateActions.layerVisConfigChange,
-      visStateActions.layerTextLabelChange,
-      visStateActions.removeLayer,
-      visStateActions.duplicateLayer
-    ]);
+    const layerActions = {
+      layerColorUIChange: visStateActions.layerColorUIChange,
+      layerConfigChange: visStateActions.layerConfigChange,
+      layerVisualChannelConfigChange: visStateActions.layerVisualChannelConfigChange,
+      layerTypeChange: visStateActions.layerTypeChange,
+      layerVisConfigChange: visStateActions.layerVisConfigChange,
+      layerTextLabelChange: visStateActions.layerTextLabelChange,
+      removeLayer: visStateActions.removeLayer,
+      duplicateLayer: visStateActions.duplicateLayer
+    };
 
-    const panelProps = useMemo(() => {
-      return {
-        datasets,
-        openModal,
-        layerTypeOptions
-      };
-    }, [datasets, openModal, layerTypeOptions]);
+    const panelProps = {
+      datasets,
+      openModal,
+      layerTypeOptions
+    };
 
     const _handleSort = useCallback(
       ({oldIndex, newIndex}) => {
@@ -177,17 +164,16 @@ function LayerListFactory(LayerPanel) {
       </WrappedSortableContainer>
     ) : (
       <>
-        {layerOrder.map(
-          (layerIdx, index) =>
-            layers[layerIdx] &&
-            !layers[layerIdx].config.hidden && (
+        {layers.map(
+          (layer, index) =>
+            !layer.config.hidden && (
               <LayerPanel
                 {...panelProps}
                 {...layerActions}
-                sortData={layerIdx}
-                key={layers[layerIdx].id}
-                idx={layerIdx}
-                layer={layers[layerIdx]}
+                sortData={index}
+                key={layers[index].id}
+                idx={index}
+                layer={layers[index]}
               />
             )
         )}
