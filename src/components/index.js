@@ -65,6 +65,7 @@ export {default as LayerPanelHeaderFactory} from './side-panel/layer-panel/layer
 export {default as LayerConfiguratorFactory} from './side-panel/layer-panel/layer-configurator';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
 export {LayerConfigGroupLabelFactory} from './side-panel/layer-panel/layer-config-group';
+export {default as LayerListFactory} from './side-panel/layer-panel/layer-list';
 
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
