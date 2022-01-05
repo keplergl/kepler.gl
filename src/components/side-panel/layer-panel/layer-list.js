@@ -19,23 +19,18 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo, useState} from 'react';
-
 import {arrayMove} from 'utils/data-utils';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {SortableContainer, SortableElement} from 'react-sortable-hoc';
-
 import LayerPanelFactory from './layer-panel';
-
 // make sure the element is always visible while is being dragged
 // item being dragged is appended in body, here to reset its global style
 const SortableStyledItem = styled.div`
   z-index: ${props => props.theme.dropdownWrapperZ + 1};
-
   &.sorting {
     pointer-events: none;
   }
-
   &.sorting-layers .layer-panel__header {
     background-color: ${props => props.theme.panelBackgroundHover};
     font-family: ${props => props.theme.fontFamily};
@@ -53,9 +48,7 @@ const SortableStyledItem = styled.div`
     }
   }
 `;
-
 LayerListFactory.deps = [LayerPanelFactory];
-
 function LayerListFactory(LayerPanel) {
   // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
   // Developers can provide any layer panel implementation and it will still be sortable
@@ -66,11 +59,9 @@ function LayerListFactory(LayerPanel) {
       </SortableStyledItem>
     );
   });
-
   const WrappedSortableContainer = SortableContainer(({children}) => {
     return <div>{children}</div>;
   });
-
   const LayerList = props => {
     const {
       layers,
@@ -83,7 +74,6 @@ function LayerListFactory(LayerPanel) {
     } = props;
     const {toggleModal: openModal} = uiStateActions;
     const [isSorting, setIsSorting] = useState(false);
-
     const layerTypeOptions = useMemo(
       () =>
         Object.keys(layerClasses).map(key => {
@@ -122,11 +112,9 @@ function LayerListFactory(LayerPanel) {
       },
       [props.layerOrder, visStateActions]
     );
-
     const _onSortStart = useCallback(() => {
       setIsSorting(true);
     }, []);
-
     const _updateBeforeSortStart = useCallback(() => {
       ({index}) => {
         const layerIdx = layerOrder[index];
@@ -135,7 +123,6 @@ function LayerListFactory(LayerPanel) {
         }
       };
     }, [layers, layerOrder, visStateActions]);
-
     return isSortable ? (
       <WrappedSortableContainer
         onSortEnd={_handleSort}
@@ -181,8 +168,6 @@ function LayerListFactory(LayerPanel) {
       </>
     );
   };
-
   return LayerList;
 }
-
 export default LayerListFactory;
