@@ -152,19 +152,26 @@ FeatureActionPanelFactory.deps = PureFeatureActionPanelFactory.deps;
 export default function FeatureActionPanelFactory() {
   const PureFeatureActionPanel = PureFeatureActionPanelFactory();
 
-  const ClickOutsideFeatureActionPanel: React.FC<FeatureActionPanelProps> = props => {
-    // @ts-ignore
-    ClickOutsideFeatureActionPanel.handleClickOutside = (e: Event) => {
+  /**
+   * FeatureActionPanel wrapped with a click-outside handler. Note that this needs to be a
+   * class component, as react-onclickoutside does not handle functional components.
+   * @typedef {Parameters<typeof PureFeatureActionPanel>[0] & {onClose: any}} Props
+   * @extends {React.Component<Props>}
+   */
+  class ClickOutsideFeatureActionPanel extends React.Component<FeatureActionPanelProps> {
+    handleClickOutside(e) {
       e.preventDefault();
       e.stopPropagation();
-      props.onClose?.();
-    };
-    return <PureFeatureActionPanel {...props} />;
-  };
+      this.props.onClose?.();
+    }
+
+    render() {
+      return <PureFeatureActionPanel {...this.props} />;
+    }
+  }
 
   const clickOutsideConfig = {
-    // @ts-ignore
-    handleClickOutside: () => ClickOutsideFeatureActionPanel.handleClickOutside
+    handleClickOutside: () => ClickOutsideFeatureActionPanel.prototype.handleClickOutside
   };
 
   return onClickOutside(ClickOutsideFeatureActionPanel, clickOutsideConfig);
