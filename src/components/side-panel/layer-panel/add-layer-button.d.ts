@@ -3,7 +3,7 @@ import {Datasets} from 'reducers/vis-state-updaters';
 
 export type AddLayerButtonProps = {
   datasets: Datasets;
-  onOptionSelected: (dataset, event) => {}
+  onOptionSelected: (dataset) => {}
 };
 
 export default function AddLayerButtonFactory(): React.Component<AddLayerButtonProps>;

@@ -103,7 +103,10 @@ function AddLayerButtonFactory() {
                 <DropdownList
                   displayOption={d => d.label}
                   options={Object.values(datasets)}
-                  onOptionSelected={(dataset, event) => onOptionSelected(dataset, event)}
+                  onOptionSelected={dataset => {
+                    onOptionSelected(dataset);
+                    setShowAddLayerDropdown(false);
+                  }}
                 />
               </DropdownContainer>
             </AddLayerMenu>
@@ -112,7 +115,7 @@ function AddLayerButtonFactory() {
       >
         <Button
           tabIndex={-1}
-          onBlur={toggleAddLayerDropdown}
+          onBlur={() => setShowAddLayerDropdown(false)}
           className="add-layer-button"
           width="105px"
           onClick={toggleAddLayerDropdown}

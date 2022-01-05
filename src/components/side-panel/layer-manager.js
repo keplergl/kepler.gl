@@ -106,13 +106,9 @@ function LayerManagerFactory(
       updateTableColor: PropTypes.func.isRequired
     };
 
-    _addEmptyNewLayer = (dataset, event) => {
-      // DropdownList executes onClick handler on both onClick and onMouseDown events
-      // so we need to execute this handler only on click
-      if (event.type === 'click') {
-        const {visStateActions} = this.props;
-        visStateActions.addLayer(undefined, dataset.id);
-      }
+    _addEmptyNewLayer = dataset => {
+      const {visStateActions} = this.props;
+      visStateActions.addLayer(undefined, dataset.id);
     };
 
     render() {
