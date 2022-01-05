@@ -30,17 +30,10 @@ import DatasetLayerGroupFactory from './layer-panel/dataset-layer-group';
 import PanelViewListToggleFactory from './layer-panel/panel-view-list-toggle';
 import PanelTitleFactory from './panel-title';
 import DatasetSectionFactory from './layer-panel/dataset-section';
+import AddLayerButtonFactory from './layer-panel/add-layer-button';
 
-import {Add} from 'components/common/icons';
 import ItemSelector from 'components/common/item-selector/item-selector';
-import DropdownList from 'components/common/item-selector/dropdown-list';
-import Tippy from '@tippyjs/react';
-import {
-  Button,
-  PanelLabel,
-  SidePanelDivider,
-  SidePanelSection
-} from 'components/common/styled-components';
+import {PanelLabel, SidePanelDivider, SidePanelSection} from 'components/common/styled-components';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 
@@ -83,60 +76,13 @@ const LayerBlendingSelector = ({layerBlending, updateLayerBlending, intl}) => {
   );
 };
 
-const DropdownContainer = styled.div`
-  .list-selector {
-    border-top: 0;
-    width: max-content;
-    padding: 8px 0;
-    /* disable scrolling, currently set to 280px internally */
-    max-height: unset;
-  }
-
-  .list__header {
-    padding: 8px 20px;
-  }
-
-  .list__item {
-    padding: 8px 20px;
-
-    &:hover {
-      background: ${props => `${props.theme.PURPLE2}22`};
-    }
-    &:hover > div {
-      color: ${props => props.theme.PURPLE2};
-    }
-  }
-
-  .list__item > div {
-    display: flex;
-    align-items: center;
-    flex-direction: row;
-    justify-content: flex-start;
-    line-height: 18px;
-    padding: 0;
-
-    svg {
-      margin-right: 10px;
-    }
-  }
-`;
-
-const AddLayerMenu = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  position: absolute;
-  top: 100%;
-  left: -53px;
-  z-index: 5;
-`;
-
 LayerManagerFactory.deps = [
   LayerListFactory,
   DatasetLayerGroupFactory,
   PanelViewListToggleFactory,
   PanelTitleFactory,
-  DatasetSectionFactory
+  DatasetSectionFactory,
+  AddLayerButtonFactory
 ];
 
 function LayerManagerFactory(
@@ -144,7 +90,8 @@ function LayerManagerFactory(
   DatasetLayerGroup,
   PanelViewListToggle,
   PanelTitle,
-  DatasetSection
+  DatasetSection,
+  AddLayerButton
 ) {
   class LayerManager extends Component {
     static propTypes = {
@@ -159,11 +106,6 @@ function LayerManagerFactory(
       updateTableColor: PropTypes.func.isRequired
     };
 
-    constructor(props) {
-      super(props);
-      this.state = {showAddLayerDropdown: false};
-    }
-
     _addEmptyNewLayer = (dataset, event) => {
       // DropdownList executes onClick handler on both onClick and onMouseDown events
       // so we need to execute this handler only on click
@@ -171,12 +113,6 @@ function LayerManagerFactory(
         const {visStateActions} = this.props;
         visStateActions.addLayer(undefined, dataset.id);
       }
-    };
-
-    toggleAddLayerDropdown = () => {
-      this.setState((state, props) => ({
-        showAddLayerDropdown: !state.showAddLayerDropdown
-      }));
     };
 
     render() {
@@ -220,40 +156,7 @@ function LayerManagerFactory(
                 <FormattedMessage id={panelMetadata.label} />
               </PanelTitle>
               {defaultDataset ? (
-                <Tippy
-                  visible={this.state.showAddLayerDropdown}
-                  arrow={false}
-                  interactive
-                  placement="bottom"
-                  appendTo="parent"
-                  duration={0}
-                  content={
-                    <div>
-                      <AddLayerMenu>
-                        <DropdownContainer>
-                          <DropdownList
-                            displayOption={d => d.label}
-                            options={Object.values(datasets)}
-                            onOptionSelected={(dataset, event) =>
-                              this._addEmptyNewLayer(dataset, event)
-                            }
-                          />
-                        </DropdownContainer>
-                      </AddLayerMenu>
-                    </div>
-                  }
-                >
-                  <Button
-                    tabIndex={-1}
-                    onBlur={this.toggleAddLayerDropdown}
-                    className="add-layer-button"
-                    width="105px"
-                    onClick={this.toggleAddLayerDropdown}
-                  >
-                    <Add height="12px" />
-                    <FormattedMessage id={'layerManager.addLayer'} />
-                  </Button>
-                </Tippy>
+                <AddLayerButton datasets={datasets} onOptionSelected={this._addEmptyNewLayer} />
               ) : null}
             </LayerHeader>
           </SidePanelSection>

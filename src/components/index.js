@@ -72,6 +72,7 @@ export {
 export {default as DatasetLayerSectionFactory} from './side-panel/layer-panel/dataset-layer-section';
 export {default as DatasetLayerGroupFactory} from './side-panel/layer-panel/dataset-layer-group';
 export {default as PanelViewListToggleFactory} from './side-panel/layer-panel/panel-view-list-toggle';
+export {default as AddLayerButtonFactory} from './side-panel/layer-panel/add-layer-button';
 
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
