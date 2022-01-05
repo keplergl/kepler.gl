@@ -1,7 +1,8 @@
 import React, {useMemo} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components';
-import {List, OrderByDataset} from 'components/common/icons';
+import OrderByList from 'components/common/icons/order-by-list';
+import OrderByDataset from 'components/common/icons/order-by-dataset';
 import {Tooltip} from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
 import {toggleLayerPanelListView} from 'actions/ui-state-actions';
@@ -55,7 +56,7 @@ function ToggleOptionFactory() {
 const TOGGLE_OPTIONS = [
   {
     id: 'list',
-    iconComponent: List,
+    iconComponent: OrderByList,
     value: 'list',
     label: 'List'
   },

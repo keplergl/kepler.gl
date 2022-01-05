@@ -67,7 +67,7 @@ export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-la
 export {LayerConfigGroupLabelFactory} from './side-panel/layer-panel/layer-config-group';
 export {
   AddDataButtonFactory,
-  default as DatasetSectionFactor
+  default as DatasetSectionFactory
 } from './side-panel/layer-panel/dataset-section';
 export {default as DatasetLayerSectionFactory} from './side-panel/layer-panel/dataset-layer-section';
 export {default as DatasetLayerGroupFactory} from './side-panel/layer-panel/dataset-layer-group';

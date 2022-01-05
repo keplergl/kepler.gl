@@ -161,7 +161,7 @@ export type AddLayerUpdaterAction = {
 };
 export function addLayer(
   config: object,
-  datasetId: string,
+  datasetId?: string,
 ): Merge<AddLayerUpdaterAction, {type: ActionTypes.ADD_LAYER}>;
 
 export type ReorderLayerUpdaterAction = {
