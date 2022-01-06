@@ -1,10 +1,12 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import styled from 'styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
 import LayerListFactory from './layer-list';
 
-const DatasetLayerSectionWrapper = styled.div`
+const DatasetLayerSectionWrapper = styled.div.attrs({
+  className: 'dataset-layer-section'
+})`
   margin-bottom: 16px;
 `;
 
@@ -25,7 +27,9 @@ function DatasetLayerSectionFactory(SourceDataCatalog, LayerList) {
       visStateActions
     } = props;
 
-    const datasets = {[dataset.id]: dataset};
+    const datasets = useMemo(() => {
+      return {[dataset.id]: dataset};
+    }, [dataset]);
 
     return (
       <DatasetLayerSectionWrapper>

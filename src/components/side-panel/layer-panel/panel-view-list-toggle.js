@@ -1,11 +1,9 @@
 import React, {useMemo} from 'react';
-import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components';
 import OrderByList from 'components/common/icons/order-by-list';
 import OrderByDataset from 'components/common/icons/order-by-dataset';
 import {Tooltip} from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
-import {toggleLayerPanelListView} from 'actions/ui-state-actions';
 
 const PanelViewListToggleContainer = styled.div.attrs({
   className: 'panel-view-list-toggle'
@@ -71,13 +69,10 @@ const TOGGLE_OPTIONS = [
 PanelViewListToggleFactory.deps = [ToggleOptionFactory];
 
 function PanelViewListToggleFactory(ToggleOption) {
-  const PanelViewListToggle = () => {
-    const layerPanelListViewMode = useSelector(
-      state => state.demo.keplerGl.map.uiState.layerPanelListView
-    );
-    const dispatch = useDispatch();
+  const PanelViewListToggle = props => {
+    const {layerPanelListViewMode, toggleLayerPanelListView} = props;
 
-    const toggleListView = listView => dispatch(toggleLayerPanelListView(listView));
+    const toggleListView = listView => toggleLayerPanelListView(listView);
     const options = useMemo(
       () =>
         TOGGLE_OPTIONS.map(opt => {

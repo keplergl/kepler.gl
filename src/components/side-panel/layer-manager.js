@@ -111,6 +111,11 @@ function LayerManagerFactory(
       visStateActions.addLayer(undefined, dataset.id);
     };
 
+    _toggleLayerPanelListView = listView => {
+      const {uiStateActions} = this.props;
+      uiStateActions.toggleLayerPanelListView(listView);
+    };
+
     render() {
       const {
         layers,
@@ -133,7 +138,10 @@ function LayerManagerFactory(
       return (
         <div className="layer-manager">
           <SidePanelSection>
-            <PanelViewListToggle />
+            <PanelViewListToggle
+              toggleLayerPanelListView={this._toggleLayerPanelListView}
+              layerPanelListViewMode={layerPanelListView}
+            />
           </SidePanelSection>
           <DatasetSection
             datasets={datasets}
