@@ -25,3 +25,4 @@ import './layer-panel-header-test';
 import './filter-manager-test';
 import './layer-configurator-test';
 import './layer-list-test';
+import './layer-manager-test';
