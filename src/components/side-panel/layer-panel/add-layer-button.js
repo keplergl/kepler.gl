@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
 
@@ -84,9 +84,21 @@ function AddLayerButtonFactory() {
     const {datasets, onOptionSelected} = props;
     const [showAddLayerDropdown, setShowAddLayerDropdown] = useState(false);
 
-    const toggleAddLayerDropdown = () => {
+    const toggleAddLayerDropdown = useCallback(() => {
       setShowAddLayerDropdown(!showAddLayerDropdown);
-    };
+    }, [showAddLayerDropdown, setShowAddLayerDropdown]);
+
+    const toggleSelectedOption = useCallback(
+      dataset => {
+        onOptionSelected(dataset);
+        setShowAddLayerDropdown(false);
+      },
+      [onOptionSelected]
+    );
+
+    const onButtonBlur = useCallback(() => {
+      () => setShowAddLayerDropdown(false);
+    }, []);
 
     return (
       <Tippy
@@ -103,10 +115,7 @@ function AddLayerButtonFactory() {
                 <DropdownList
                   displayOption={d => d.label}
                   options={Object.values(datasets)}
-                  onOptionSelected={dataset => {
-                    onOptionSelected(dataset);
-                    setShowAddLayerDropdown(false);
-                  }}
+                  onOptionSelected={toggleSelectedOption}
                 />
               </DropdownContainer>
             </AddLayerMenu>
@@ -115,7 +124,7 @@ function AddLayerButtonFactory() {
       >
         <Button
           tabIndex={-1}
-          onBlur={() => setShowAddLayerDropdown(false)}
+          onBlur={onButtonBlur}
           className="add-layer-button"
           width="105px"
           onClick={toggleAddLayerDropdown}
