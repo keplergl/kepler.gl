@@ -74,12 +74,7 @@ function PanelViewListToggleFactory(ToggleOption) {
 
     const toggleListView = listView => toggleLayerPanelListView(listView);
     const options = useMemo(
-      () =>
-        TOGGLE_OPTIONS.map(opt => {
-          return layerPanelListViewMode === opt.value
-            ? {...opt, isActive: true}
-            : {...opt, isActive: false};
-        }),
+      () => TOGGLE_OPTIONS.map(opt => ({...opt, isActive: layerPanelListViewMode === opt.value})),
       [layerPanelListViewMode]
     );
 
