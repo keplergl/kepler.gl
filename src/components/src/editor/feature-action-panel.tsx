@@ -53,9 +53,10 @@ export interface FeatureActionPanelProps {
   } | null;
   layers: Layer[];
   currentFilter?: Filter;
-  onToggleLayer: (l: Layer) => void;
+  onToggleLayer: (layer: Layer) => void;
   onDeleteFeature: () => void;
-  onClose: () => void;
+  onClose?: () => void;
+  children?: React.ReactNode;
 }
 
 export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProps> {
@@ -67,7 +68,8 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
     layers,
     currentFilter,
     onToggleLayer,
-    onDeleteFeature
+    onDeleteFeature,
+    children
   }: FeatureActionPanelProps) => {
     const [copied, setCopied] = useState(false);
     const {layerId = []} = currentFilter || {};
@@ -128,6 +130,7 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
             Icon={copied ? Checkmark : Copy}
             onClick={copyGeometry}
           />
+          {children}
           <ActionPanelItem
             label={intl.formatMessage({id: 'tooltip.delete', defaultMessage: 'Delete'})}
             className="delete-panel-item"
