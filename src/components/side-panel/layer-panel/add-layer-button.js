@@ -97,7 +97,7 @@ function AddLayerButtonFactory() {
     );
 
     const onButtonBlur = useCallback(() => {
-      () => setShowAddLayerDropdown(false);
+      setShowAddLayerDropdown(false);
     }, []);
 
     return (
