@@ -668,8 +668,6 @@ export default function MapContainerFactory(
       const {visState, visStateActions, index} = this.props;
       const {layers, datasets, editor} = visState;
 
-      const layersToRender = this.layersToRenderSelector(this.props);
-
       return (
         <Editor
           index={index}
@@ -677,7 +675,6 @@ export default function MapContainerFactory(
           editor={editor}
           filters={this.polygonFiltersSelector(this.props)}
           layers={layers}
-          layersToRender={layersToRender}
           onDeleteFeature={visStateActions.deleteFeature}
           onSelect={visStateActions.setSelectedFeature}
           onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
