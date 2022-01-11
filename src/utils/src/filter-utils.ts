@@ -358,7 +358,8 @@ export function getFilterProps(
 ): Partial<Filter> & {fieldType: string} {
   const filterProps = {
     ...fieldDomain,
-    fieldType: field.type
+    fieldType: field.type,
+    view: FILTER_VIEW_TYPES.side
   };
 
   switch (field.type) {

@@ -918,7 +918,8 @@ export const dateFilterProps = {
   fieldType: 'date',
   type: 'multiSelect',
   gpu: false,
-  value: []
+  value: [],
+  view: 'side'
 };
 
 export const mergedDateFilter = {

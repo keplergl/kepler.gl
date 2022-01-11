@@ -1687,6 +1687,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     histogram: [1], // test not empty
     enlargedHistogram: [2], // test not empty
     fieldType: 'real',
+    view: FILTER_VIEW_TYPES.side,
     type: mockFilter.type,
     gpu: true,
     typeOptions: ['range'],
@@ -2002,7 +2003,8 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
       value: [],
       fieldType: 'date',
       domain: ['2016-09-23', '2016-09-24', '2016-10-10'],
-      gpu: false
+      gpu: false,
+      view: FILTER_VIEW_TYPES.side
     }
   };
 
@@ -2558,7 +2560,8 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
               fieldType: 'date',
               type: 'multiSelect',
               value: [],
-              gpu: false
+              gpu: false,
+              view: FILTER_VIEW_TYPES.side
             }
           }
         : f
