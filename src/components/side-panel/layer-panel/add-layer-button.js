@@ -18,44 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
 
 import Tippy from '@tippyjs/react';
-import DropdownList from 'components/common/item-selector/dropdown-list';
 import {Add} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
+import {DatasetSquare} from 'components';
+import Typeahead from 'components/common/item-selector/typeahead';
+import Accessor from 'components/common/item-selector/accessor';
 
 const DropdownContainer = styled.div.attrs({
   className: 'add-layer-menu-dropdown'
 })`
   .list-selector {
-    border-top: 0;
-    width: max-content;
-    padding: 8px 0;
+    border-top: 1px solid ${props => props.theme.secondaryInputBorderColor};
+    width: 100%;
     /* disable scrolling, currently set to 280px internally */
     max-height: unset;
   }
 
-  .list__header {
-    padding: 8px 20px;
-  }
-
-  .list__item {
-    padding: 8px 20px;
-
-    &:hover {
-      background: ${props => `${props.theme.PURPLE2}22`};
-    }
-    &:hover > div {
-      color: ${props => props.theme.PURPLE2};
-    }
-  }
-
   .list__item > div {
     display: flex;
-    align-items: center;
     flex-direction: row;
     justify-content: flex-start;
     line-height: 18px;
@@ -72,33 +57,92 @@ const AddLayerMenu = styled.div.attrs({
 })`
   display: flex;
   flex-direction: column;
-  width: 100%;
+  min-width: 240px;
+  max-width: 240px;
   position: absolute;
   top: 100%;
   left: -53px;
   z-index: 5;
 `;
 
+const ListItemWrapper = styled.div.attrs({
+  className: 'add-layer-menu-list-item-wrapper'
+})`
+  display: flex;
+  color: ${props => props.theme.textColor};
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  overflow: auto;
+
+  .dataset-color {
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+
+  .dataset-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+
+const TYPEAHEAD_CLASS = 'typeahead';
+const TYPEAHEAD_INPUT_CLASS = 'typeahead__input';
+
 function AddLayerButtonFactory() {
+  const ListItem = ({value}) => (
+    <ListItemWrapper>
+      <DatasetSquare className="dataset-color" color={value.color} />
+      <div className="dataset-name" title={value.label}>
+        {value.label}
+      </div>
+    </ListItemWrapper>
+  );
+
   const AddLayerButton = props => {
-    const {datasets, onOptionSelected} = props;
+    const {datasets, onOptionSelected, typeaheadPlaceholder, intl} = props;
     const [showAddLayerDropdown, setShowAddLayerDropdown] = useState(false);
 
     const toggleAddLayerDropdown = useCallback(() => {
       setShowAddLayerDropdown(!showAddLayerDropdown);
     }, [showAddLayerDropdown, setShowAddLayerDropdown]);
 
-    const toggleSelectedOption = useCallback(
-      dataset => {
-        onOptionSelected(dataset);
-        setShowAddLayerDropdown(false);
-      },
-      [onOptionSelected]
-    );
-
-    const onButtonBlur = useCallback(() => {
+    const _onBlur = useCallback(() => {
       setShowAddLayerDropdown(false);
     }, []);
+
+    const toggleSelectedOption = useCallback(
+      option => {
+        onOptionSelected(option.value);
+        _onBlur();
+      },
+      [onOptionSelected, _onBlur]
+    );
+
+    const onButtonBlur = useCallback(
+      event => {
+        if (
+          [TYPEAHEAD_CLASS, TYPEAHEAD_INPUT_CLASS].every(
+            cls => !event?.relatedTarget?.classList.contains(cls)
+          )
+        ) {
+          _onBlur();
+        }
+      },
+      [_onBlur]
+    );
+
+    const onSearchBlur = useCallback(() => {
+      _onBlur();
+    }, [_onBlur]);
+
+    const options = useMemo(() => {
+      return Object.values(datasets).map(ds => ({
+        label: ds.label,
+        value: ds.id,
+        color: ds.color
+      }));
+    }, [datasets]);
 
     return (
       <Tippy
@@ -109,17 +153,32 @@ function AddLayerButtonFactory() {
         appendTo="parent"
         duration={0}
         content={
-          <div>
-            <AddLayerMenu>
-              <DropdownContainer>
-                <DropdownList
-                  displayOption={d => d.label}
-                  options={Object.values(datasets)}
-                  onOptionSelected={toggleSelectedOption}
-                />
-              </DropdownContainer>
-            </AddLayerMenu>
-          </div>
+          <AddLayerMenu>
+            <DropdownContainer>
+              <Typeahead
+                onBlur={onSearchBlur}
+                className={TYPEAHEAD_CLASS}
+                customClasses={{
+                  results: 'list-selector',
+                  input: TYPEAHEAD_INPUT_CLASS,
+                  listItem: 'list__item'
+                }}
+                placeholder={
+                  typeaheadPlaceholder || intl
+                    ? intl.formatMessage({id: 'placeholder.search'})
+                    : 'Search'
+                }
+                selectedItems={null}
+                options={options}
+                displayOption={Accessor.generateOptionToStringFor('label')}
+                getOptionValue={'value'}
+                filterOption={'label'}
+                searchable
+                onOptionSelected={toggleSelectedOption}
+                customListItemComponent={ListItem}
+              />
+            </DropdownContainer>
+          </AddLayerMenu>
         }
       >
         <Button

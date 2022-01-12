@@ -108,7 +108,7 @@ function LayerManagerFactory(
 
     _addEmptyNewLayer = dataset => {
       const {visStateActions} = this.props;
-      visStateActions.addLayer(undefined, dataset.id);
+      visStateActions.addLayer(undefined, dataset);
     };
 
     _toggleLayerPanelListView = listView => {
@@ -160,7 +160,12 @@ function LayerManagerFactory(
                 <FormattedMessage id={panelMetadata.label} />
               </PanelTitle>
               {defaultDataset ? (
-                <AddLayerButton datasets={datasets} onOptionSelected={this._addEmptyNewLayer} />
+                <AddLayerButton
+                  datasets={datasets}
+                  typeaheadPlaceholder="Search datasets"
+                  intl={intl}
+                  onOptionSelected={this._addEmptyNewLayer}
+                />
               ) : null}
             </LayerHeader>
           </SidePanelSection>
