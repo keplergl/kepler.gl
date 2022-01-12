@@ -162,6 +162,7 @@ function LayerListFactory(LayerPanel) {
                 key={layers[layerIdx].id}
                 idx={layerIdx}
                 layer={layers[layerIdx]}
+                isDraggable={false}
               />
             )
         )}

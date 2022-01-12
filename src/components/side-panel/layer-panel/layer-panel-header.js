@@ -58,6 +58,12 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
   .layer__remove-layer {
     opacity: 0;
   }
+
+  .layer__drag-handle__placeholder {
+    height: 20px;
+    padding: 10px;
+  }
+
   :hover {
     cursor: pointer;
     background-color: ${props => props.theme.panelBackgroundHover};
@@ -176,10 +182,12 @@ function LayerPanelHeaderFactory(LayerTitleSection, PanelHeaderAction) {
         onClick={toggleLayerConfigurator}
       >
         <HeaderLabelSection className="layer-panel__header__content">
-          {isDragNDropEnabled && (
+          {isDragNDropEnabled ? (
             <DragHandle className="layer__drag-handle">
               <VertDots height="20px" />
             </DragHandle>
+          ) : (
+            <div className="layer__drag-handle__placeholder" />
           )}
           <LayerTitleSection
             layerId={layerId}
