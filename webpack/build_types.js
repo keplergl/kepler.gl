@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Uber Technologies, Inc.
+// Copyright (c) 2020 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,6 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export {messages} from './messages';
-export {LOCALE_CODES, LOCALES} from './locales';
-export {default as FormattedMessage} from './formatted-message';
+const resolve = require('path').resolve;
+const DtsBundleWebpack = require('dts-bundle-webpack');
+
+const SRC_DIR = resolve(__dirname, '../src');
+const OUTPUT_DIR = resolve(__dirname, '../dist');
+
+const LIBRARY_BUNDLE_CONFIG = env => ({
+  // Silence warnings about big bundles
+  stats: {
+    warnings: false
+  },
+
+  // let's put everything in
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        loader: 'babel-loader',
+        include: [SRC_DIR]
+      }
+    ]
+  },
+
+  node: {
+    fs: 'empty'
+  },
+
+  plugins: [
+    new DtsBundleWebpack({
+      name: 'kepler.gl',
+      main: `${SRC_DIR}/index.d.ts`,
+      out: `${OUTPUT_DIR}/types.d.ts`,
+      outputAsModuleFolder: true
+    })
+  ]
+});
+
+module.exports = env => LIBRARY_BUNDLE_CONFIG(env);

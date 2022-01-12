@@ -5,6 +5,7 @@
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
+  "types": "./types.d.ts",
   "keywords": [
     "babel",
     "es6",
@@ -43,11 +44,12 @@
     "start:e2e": "npm run install-and-start -- examples/demo-app start-local-e2e",
     "build": "rm -fr dist && babel src --out-dir dist --source-maps inline",
     "build:umd": "webpack --config ./webpack/umd.js --progress --env.prod",
+    "build:types": "webpack --config ./webpack/build_types.js --progress",
     "analyze": "npm run analyze:bundle",
     "analyze:bundle": "webpack --config ./webpack/bundle.js --progress --env.prod",
     "check-licence": "uber-licence --dry",
     "add-licence": "uber-licence",
-    "prepublish": "uber-licence && yarn build && yarn build:umd",
+    "prepublish": "uber-licence && yarn build && yarn build:umd && yarn build:types",
     "docs": "babel-node ./scripts/documentation.js",
     "typedoc": "typedoc --theme markdown --out typedoc --inputFiles ./src/reducers --inputFiles ./src/actions --excludeExternals --excludeNotExported --excludePrivate",
     "example-version": "babel-node ./scripts/edit-version.js",
@@ -196,6 +198,7 @@
     "babel-tape-runner": "^3.0.0",
     "babelify": "^10.0.0",
     "documentation": "^9.1.1",
+    "dts-bundle-webpack": "^1.0.2",
     "enzyme": "^3.9.0",
     "enzyme-adapter-react-16": "^1.10.0",
     "eslint": "^5.16.0",
@@ -283,6 +286,7 @@
     "Giuseppe Macri <gmacri@uber.com>"
   ],
   "volta": {
-    "node": "12.19.0"
+    "node": "12.19.0",
+    "yarn": "1.22.17"
   }
 }

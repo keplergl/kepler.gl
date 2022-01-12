@@ -1,9 +1,9 @@
-import {FunctionComponent, PropsWithChildren, ComponentType, CSSProperties} from 'react';
+import {FunctionComponent, PropsWithChildren, ElementType, CSSProperties} from 'react';
 
 export type ActionPanelItemProps = PropsWithChildren<{
   color?: string,
   className?: string,
-  Icon?: ComponentType<any>,
+  Icon?: ElementType,
   label: string,
   onClick?: () => void,
   isSelection?: boolean,

@@ -41,7 +41,7 @@ const reducers = combineReducers({
 Let's say we want to add the Swedish language to kepler.gl. Easiest way to add translation of new language is to follow these 3 steps:
 
 - Find out the [language code][language-codes] for Swedish: `sv`
-- Add new translation file `src/localization/sv.js` by copying `src/localization/en.js` and translating the strings
+- Add new translation file `src/localization/translations/sv.js` by copying `src/localization/translations/en.js` and translating the strings
 
 - Update _LOCALES_ in `src/localization/locales.js` to include new language translation:
   ```javascript

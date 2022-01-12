@@ -56,7 +56,11 @@ import {
 } from 'utils/filter-utils';
 import {assignGpuChannel, setFilterGpuMode} from 'utils/gpu-filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
-import {sortDatasetByColumn, copyTableAndUpdate} from 'utils/table-utils/kepler-table';
+import {
+  pinTableColumns,
+  sortDatasetByColumn,
+  copyTableAndUpdate
+} from 'utils/table-utils/kepler-table';
 import {set, toArray, arrayInsert, generateHashId} from 'utils/utils';
 
 import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils';
@@ -87,7 +91,7 @@ import {pick_, merge_, swap_} from './composer-helpers';
 import {processFileContent} from 'actions/vis-state-actions';
 
 import KeplerGLSchema from 'schemas';
-import {isRGBColor} from 'utils/color-utils';
+import {isRgbColor} from 'utils/color-utils';
 
 // type imports
 /** @typedef {import('./vis-state-updaters').Field} Field */
@@ -1141,7 +1145,7 @@ export const updateTableColorUpdater = (state, action) => {
   const {dataId, newColor} = action;
   const {datasets} = state;
 
-  if (isRGBColor(newColor)) {
+  if (isRgbColor(newColor)) {
     const existing = datasets[dataId];
     existing.updateTableColor(newColor);
 
@@ -2066,20 +2070,9 @@ export function pinTableColumnUpdater(state, {dataId, column}) {
   if (!dataset) {
     return state;
   }
-  const field = dataset.fields.find(f => f.name === column);
-  if (!field) {
-    return state;
-  }
+  const newDataset = pinTableColumns(dataset, column);
 
-  let pinnedColumns;
-  if (Array.isArray(dataset.pinnedColumns) && dataset.pinnedColumns.includes(field.name)) {
-    // unpin it
-    pinnedColumns = dataset.pinnedColumns.filter(co => co !== field.name);
-  } else {
-    pinnedColumns = (dataset.pinnedColumns || []).concat(field.name);
-  }
-
-  return set(['datasets', dataId, 'pinnedColumns'], pinnedColumns, state);
+  return set(['datasets', dataId], newDataset, state);
 }
 
 /**

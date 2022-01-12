@@ -4714,6 +4714,8 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
     {'gps_data.lat': 'DESCENDING'},
     'should correctly sort'
   );
+  assertDatasetIsTable(t, nextState5.datasets[testCsvDataId]);
+
   t.end();
 });
 
@@ -4752,6 +4754,7 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
   const addedKeys = newKeys.filter(k => !Object.keys(previousDataset1).includes(k));
 
   t.deepEqual(addedKeys, ['pinnedColumns'], 'should add pinnedColumns to dataset');
+  assertDatasetIsTable(t, nextState1.datasets[testCsvDataId]);
 
   t.deepEqual(
     nextState1.datasets[testCsvDataId].pinnedColumns,
@@ -4764,6 +4767,7 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
     nextState1,
     VisStateActions.pinTableColumn(testCsvDataId, 'gps_data.lat')
   );
+  assertDatasetIsTable(t, nextState2.datasets[testCsvDataId]);
 
   t.deepEqual(
     nextState2.datasets[testCsvDataId].pinnedColumns,

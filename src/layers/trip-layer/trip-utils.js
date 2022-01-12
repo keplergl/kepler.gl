@@ -57,7 +57,7 @@ export function containValidTime(timestamps) {
   const analyzedType = Analyzer.computeColMeta(formattedTimeStamps, [], {ignoredDataTypes})[0];
 
   if (!analyzedType || analyzedType.category !== 'TIME') {
-    return false;
+    return null;
   }
   return analyzedType;
 }
