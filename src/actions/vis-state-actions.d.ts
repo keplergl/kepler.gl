@@ -157,9 +157,11 @@ export function addFilter(
 
 export type AddLayerUpdaterAction = {
   config: object;
+  datasetId?: string;
 };
 export function addLayer(
-  config: object
+  config: object,
+  datasetId?: string,
 ): Merge<AddLayerUpdaterAction, {type: ActionTypes.ADD_LAYER}>;
 
 export type ReorderLayerUpdaterAction = {

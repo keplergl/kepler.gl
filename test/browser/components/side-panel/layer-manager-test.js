@@ -21,38 +21,76 @@
 import React from 'react';
 import test from 'tape';
 
-import {StateWMultiH3Layers} from 'test/helpers/mock-state';
+import {
+  LayerManagerFactory,
+  LayerListFactory,
+  DatasetLayerGroupFactory,
+  DatasetSectionFactory,
+  PanelViewListToggleFactory,
+  PanelTitleFactory,
+  AddLayerButtonFactory
+} from 'components';
+
+import {appInjector} from 'components/container';
+import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 
-import {appInjector} from 'components/container';
-import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {StateWMultiH3Layers} from 'test/helpers/mock-state';
 
-import LayerListFactory from 'components/side-panel/layer-panel/layer-list';
+import {Layers} from 'components/common/icons';
 
+const LayerManager = appInjector.get(LayerManagerFactory);
 const LayerList = appInjector.get(LayerListFactory);
+const DatasetLayerGroup = appInjector.get(DatasetLayerGroupFactory);
+const DatasetSection = appInjector.get(DatasetSectionFactory);
+const PanelViewListToggle = appInjector.get(PanelViewListToggleFactory);
+const PanelTitle = appInjector.get(PanelTitleFactory);
+const AddLayerButton = appInjector.get(AddLayerButtonFactory);
+
+const nop = () => {};
 
 const defaultProps = {
   datasets: StateWMultiH3Layers.visState.datasets,
-  layerClasses: StateWMultiH3Layers.visState.layerClasses,
-  layerOrder: StateWMultiH3Layers.visState.layerOrder,
   layers: StateWMultiH3Layers.visState.layers,
+  layerOrder: StateWMultiH3Layers.visState.layerOrder,
+  layerClasses: StateWMultiH3Layers.visState.layerClasses,
+  intl: {},
+  showAddDataModal: nop,
+  updateTableColor: nop,
+  showDatasetTable: nop,
+  removeDataset: nop,
+  panelMetadata: {
+    id: 'layer',
+    label: 'sidebar.panels.layer',
+    iconComponent: Layers,
+    onClick: nop,
+    component: LayerManager
+  },
+  layerPanelListView: 'list',
   uiStateActions: UIStateActions,
-  visStateActions: VisStateActions
+  visStateActions: VisStateActions,
+  layerBlending: 'normal'
 };
 
-test('Components -> SidePanel -> LayerPanel -> LayerList -> render sortable list', t => {
+test('Components -> LayerManager -> render -> list view', t => {
+  // mount
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <LayerList {...defaultProps} isSortable />
+        <LayerManager {...defaultProps} />
       </IntlWrapper>
     );
-  }, 'LayerList should render');
+  }, 'LayerManager should not fail');
 
-  t.equal(wrapper.find('.sortable-layer-items').length, 6, 'should render 6 sortable items');
+  t.ok(wrapper.find(DatasetLayerGroup).length === 0, 'should not render DatasetLayerGroup');
+  t.ok(wrapper.find(LayerList).length === 1, 'should render LayerList');
+  t.ok(wrapper.find(AddLayerButton).length === 1, 'should render AddLayerButton');
+  t.ok(wrapper.find(DatasetSection).length === 1, 'should render DatasetSection');
+  t.ok(wrapper.find(PanelViewListToggle).length === 1, 'should render PanelViewListToggle');
+  t.ok(wrapper.find(PanelTitle).length === 1, 'should render PanelTitle');
 
   const titles = [];
   const expectedTitles = [
@@ -72,17 +110,23 @@ test('Components -> SidePanel -> LayerPanel -> LayerList -> render sortable list
   t.end();
 });
 
-test('Components -> SidePanel -> LayerPanel -> LayerList -> render non-sortable list', t => {
+test('Components -> LayerManager -> render -> order by dataset view', t => {
+  // mount
   let wrapper;
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <LayerList {...defaultProps} isSortable={false} />
+        <LayerManager {...defaultProps} layerPanelListView="sortByDataset" />
       </IntlWrapper>
     );
-  }, 'LayerList should render');
+  }, 'LayerManager should not fail');
 
-  t.equal(wrapper.find('.sortable-layer-items').length, 0, 'should not render sortable items');
+  t.ok(wrapper.find(DatasetLayerGroup).length === 1, 'should render DatasetLayerGroup');
+  t.ok(wrapper.find(LayerList).length === 1, 'should render LayerList');
+  t.ok(wrapper.find(AddLayerButton).length === 1, 'should render AddLayerButton');
+  t.ok(wrapper.find(DatasetSection).length === 1, 'should render DatasetSection');
+  t.ok(wrapper.find(PanelViewListToggle).length === 1, 'should render PanelViewListToggle');
+  t.ok(wrapper.find(PanelTitle).length === 1, 'should render PanelTitle');
 
   const titles = [];
   const expectedTitles = [

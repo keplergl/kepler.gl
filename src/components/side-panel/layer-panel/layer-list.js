@@ -17,6 +17,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 import React, {useCallback, useMemo, useState} from 'react';
 import {arrayMove} from 'utils/data-utils';
 import styled from 'styled-components';
@@ -86,6 +87,7 @@ function LayerListFactory(LayerPanel) {
         }),
       [layerClasses]
     );
+
     const layerActions = {
       layerColorUIChange: visStateActions.layerColorUIChange,
       layerConfigChange: visStateActions.layerConfigChange,
@@ -96,11 +98,13 @@ function LayerListFactory(LayerPanel) {
       removeLayer: visStateActions.removeLayer,
       duplicateLayer: visStateActions.duplicateLayer
     };
+
     const panelProps = {
       datasets,
       openModal,
       layerTypeOptions
     };
+
     const _handleSort = useCallback(
       ({oldIndex, newIndex}) => {
         visStateActions.reorderLayer(arrayMove(props.layerOrder, oldIndex, newIndex));
@@ -158,6 +162,7 @@ function LayerListFactory(LayerPanel) {
                 key={layers[layerIdx].id}
                 idx={layerIdx}
                 layer={layers[layerIdx]}
+                isDraggable={false}
               />
             )
         )}

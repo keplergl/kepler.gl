@@ -20,7 +20,9 @@
 
 import styled from 'styled-components';
 
-const PanelTitleFactory = () => styled.div`
+const PanelTitleFactory = () => styled.div.attrs({
+  className: 'panel-title'
+})`
   color: ${props => props.theme.titleTextColor};
   font-size: ${props => props.theme.sidePanelTitleFontsize};
   line-height: ${props => props.theme.sidePanelTitleLineHeight};

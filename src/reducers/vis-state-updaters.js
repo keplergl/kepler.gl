@@ -944,8 +944,8 @@ export const addLayerUpdater = (state, action) => {
     newLayer = result.layer;
     newLayerData = result.layerData;
   } else {
-    // create an empty layer with the first available dataset
-    const defaultDataset = Object.keys(state.datasets)[0];
+    // create an empty layer with a specific dataset or a default one
+    const defaultDataset = action.datasetId ?? Object.keys(state.datasets)[0];
     newLayer = new Layer({
       isVisible: true,
       isConfigActive: true,

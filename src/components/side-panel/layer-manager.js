@@ -23,19 +23,28 @@ import React, {Component, useCallback} from 'react';
 import PropTypes from 'prop-types';
 import {injectIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';
+import styled from 'styled-components';
 
-import SourceDataCatalogFactory from './common/source-data-catalog';
 import LayerListFactory from './layer-panel/layer-list';
-import {Add} from 'components/common/icons';
+import DatasetLayerGroupFactory from './layer-panel/dataset-layer-group';
+import PanelViewListToggleFactory from './layer-panel/panel-view-list-toggle';
+import PanelTitleFactory from './panel-title';
+import DatasetSectionFactory from './layer-panel/dataset-section';
+import AddLayerButtonFactory from './layer-panel/add-layer-button';
+
 import ItemSelector from 'components/common/item-selector/item-selector';
-import {
-  Button,
-  PanelLabel,
-  SidePanelDivider,
-  SidePanelSection
-} from 'components/common/styled-components';
+import {PanelLabel, SidePanelDivider, SidePanelSection} from 'components/common/styled-components';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
+
+const LayerHeader = styled.div.attrs({
+  className: 'layer-manager-header'
+})`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 16px;
+`;
 
 const LayerBlendingSelector = ({layerBlending, updateLayerBlending, intl}) => {
   const labeledLayerBlendings = Object.keys(LAYER_BLENDINGS).reduce(
@@ -67,26 +76,23 @@ const LayerBlendingSelector = ({layerBlending, updateLayerBlending, intl}) => {
   );
 };
 
-export function AddDataButtonFactory() {
-  const AddDataButton = ({onClick, isInactive}) => (
-    <Button
-      className="add-data-button"
-      onClick={onClick}
-      isInactive={!isInactive}
-      width="105px"
-      secondary
-    >
-      <Add height="12px" />
-      <FormattedMessage id={'layerManager.addData'} />
-    </Button>
-  );
+LayerManagerFactory.deps = [
+  LayerListFactory,
+  DatasetLayerGroupFactory,
+  PanelViewListToggleFactory,
+  PanelTitleFactory,
+  DatasetSectionFactory,
+  AddLayerButtonFactory
+];
 
-  return AddDataButton;
-}
-
-LayerManagerFactory.deps = [AddDataButtonFactory, LayerListFactory, SourceDataCatalogFactory];
-
-function LayerManagerFactory(AddDataButton, LayerList, SourceDataCatalog) {
+function LayerManagerFactory(
+  LayerList,
+  DatasetLayerGroup,
+  PanelViewListToggle,
+  PanelTitle,
+  DatasetSection,
+  AddLayerButton
+) {
   class LayerManager extends Component {
     static propTypes = {
       datasets: PropTypes.object.isRequired,
@@ -100,9 +106,14 @@ function LayerManagerFactory(AddDataButton, LayerList, SourceDataCatalog) {
       updateTableColor: PropTypes.func.isRequired
     };
 
-    _addEmptyNewLayer = () => {
+    _addEmptyNewLayer = dataset => {
       const {visStateActions} = this.props;
-      visStateActions.addLayer();
+      visStateActions.addLayer(undefined, dataset);
+    };
+
+    _toggleLayerPanelListView = listView => {
+      const {uiStateActions} = this.props;
+      uiStateActions.toggleLayerPanelListView(listView);
     };
 
     render() {
@@ -116,39 +127,72 @@ function LayerManagerFactory(AddDataButton, LayerList, SourceDataCatalog) {
         showDatasetTable,
         removeDataset,
         uiStateActions,
-        visStateActions
+        visStateActions,
+        layerPanelListView,
+        panelMetadata
       } = this.props;
 
       const defaultDataset = Object.keys(datasets)[0];
+      const isSortByDatasetMode = layerPanelListView === 'sortByDataset';
 
       return (
         <div className="layer-manager">
-          <SourceDataCatalog
+          <SidePanelSection>
+            <PanelViewListToggle
+              toggleLayerPanelListView={this._toggleLayerPanelListView}
+              layerPanelListViewMode={layerPanelListView}
+            />
+          </SidePanelSection>
+          <DatasetSection
             datasets={datasets}
             showDatasetTable={showDatasetTable}
             updateTableColor={updateTableColor}
             removeDataset={removeDataset}
             showDeleteDataset
+            showDatasetList={!isSortByDatasetMode}
+            showAddDataModal={showAddDataModal}
+            defaultDataset={defaultDataset}
           />
-          <AddDataButton onClick={showAddDataModal} isInactive={!defaultDataset} />
           <SidePanelDivider />
           <SidePanelSection>
-            <LayerList
-              layers={layers}
-              datasets={datasets}
-              layerOrder={layerOrder}
-              uiStateActions={uiStateActions}
-              visStateActions={visStateActions}
-              layerClasses={this.props.layerClasses}
-            />
+            <LayerHeader>
+              <PanelTitle className="layer-manager-title">
+                <FormattedMessage id={panelMetadata.label} />
+              </PanelTitle>
+              {defaultDataset ? (
+                <AddLayerButton
+                  datasets={datasets}
+                  typeaheadPlaceholder="Search datasets"
+                  intl={intl}
+                  onOptionSelected={this._addEmptyNewLayer}
+                />
+              ) : null}
+            </LayerHeader>
           </SidePanelSection>
           <SidePanelSection>
-            {defaultDataset ? (
-              <Button className="add-layer-button" onClick={this._addEmptyNewLayer} width="105px">
-                <Add height="12px" />
-                <FormattedMessage id={'layerManager.addLayer'} />
-              </Button>
-            ) : null}
+            {isSortByDatasetMode ? (
+              <DatasetLayerGroup
+                datasets={datasets}
+                showDatasetTable={showDatasetTable}
+                layers={layers}
+                updateTableColor={updateTableColor}
+                removeDataset={removeDataset}
+                layerOrder={layerOrder}
+                layerClasses={this.props.layerClasses}
+                uiStateActions={uiStateActions}
+                visStateActions={visStateActions}
+                showDeleteDataset
+              />
+            ) : (
+              <LayerList
+                layers={layers}
+                datasets={datasets}
+                layerOrder={layerOrder}
+                uiStateActions={uiStateActions}
+                visStateActions={visStateActions}
+                layerClasses={this.props.layerClasses}
+              />
+            )}
           </SidePanelSection>
           <LayerBlendingSelector
             layerBlending={this.props.layerBlending}

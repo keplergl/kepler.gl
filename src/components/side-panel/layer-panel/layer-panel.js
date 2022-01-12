@@ -55,7 +55,8 @@ function LayerPanelFactory(LayerConfigurator, LayerPanelHeader) {
       layerVisualChannelConfigChange: PropTypes.func.isRequired,
       layerColorUIChange: PropTypes.func.isRequired,
       setLayerAnimationTime: PropTypes.func,
-      updateLayerAnimationSpeed: PropTypes.func
+      updateLayerAnimationSpeed: PropTypes.func,
+      isDraggable: PropTypes.bool
     };
 
     updateLayerConfig = newProp => {
@@ -113,7 +114,7 @@ function LayerPanelFactory(LayerConfigurator, LayerPanelHeader) {
     };
 
     render() {
-      const {layer, datasets, layerTypeOptions} = this.props;
+      const {layer, datasets, isDraggable, layerTypeOptions} = this.props;
       const {config} = layer;
       const {isConfigActive} = config;
 
@@ -137,6 +138,7 @@ function LayerPanelFactory(LayerConfigurator, LayerPanelHeader) {
             onUpdateLayerLabel={this._updateLayerLabel}
             onRemoveLayer={this._removeLayer}
             onDuplicateLayer={this._duplicateLayer}
+            isDragNDropEnabled={isDraggable}
           />
           {isConfigActive && (
             <LayerConfigurator

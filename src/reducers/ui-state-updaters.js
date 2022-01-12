@@ -250,7 +250,8 @@ export const INITIAL_UI_STATE = {
   // load files
   loadFiles: DEFAULT_LOAD_FILES,
   // Locale of the UI
-  locale: LOCALE_CODES.en
+  locale: LOCALE_CODES.en,
+  layerPanelListView: 'list'
 };
 
 /* Updaters */
@@ -764,3 +765,22 @@ export const setLocaleUpdater = (state, {payload: {locale}}) => ({
   ...state,
   locale
 });
+
+/**
+ * Toggle layer panel list view
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload layer panel listView value. Can be 'list' or 'sortByDataset'
+ * @returns nextState
+ * @type {typeof import('./ui-state-updaters').toggleLayerPanelListViewUpdater}
+ * @public
+ */
+export const toggleLayerPanelListViewUpdater = (state, {payload: listView}) => {
+  return listView === state.layerPanelListView
+    ? state
+    : {
+        ...state,
+        layerPanelListView: listView
+      };
+};

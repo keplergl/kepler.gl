@@ -232,14 +232,16 @@ export function addFilter(dataId) {
  * Add a new layer
  * @memberof visStateActions
  * @param config - new layer config
+ * @param datasetId - dataset id used for creating an empty layer
  * @returns action
  * @type {typeof import('./vis-state-actions').addLayer}
  * @public
  */
-export function addLayer(config) {
+export function addLayer(config, datasetId) {
   return {
     type: ActionTypes.ADD_LAYER,
-    config
+    config,
+    datasetId
   };
 }
 
