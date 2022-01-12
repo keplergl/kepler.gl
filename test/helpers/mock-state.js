@@ -275,6 +275,57 @@ function mockStateWithH3Layer() {
   ]);
   return prepareState;
 }
+
+function mockStateWithMultipleH3Layers() {
+  const initialState = cloneDeep(InitialState);
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: {
+            info: {id: csvDataId},
+            data: processCsvData(testLayerData)
+          },
+          config: {
+            version: 'v1',
+            config: {
+              visState: {
+                layers: [
+                  {
+                    id: 'h3-layer-1',
+                    type: 'hexagonId',
+                    config: {
+                      dataId: csvDataId,
+                      label: 'H3 Hexagon 1',
+                      color: [255, 153, 31],
+                      columns: {hex_id: 'hex_id'},
+                      isVisible: true
+                    }
+                  },
+                  {
+                    id: 'h3-layer-2',
+                    type: 'hexagonId',
+                    config: {
+                      dataId: csvDataId,
+                      label: 'H3 Hexagon 2',
+                      color: [255, 153, 31],
+                      columns: {hex_id: 'hex_id'},
+                      isVisible: true
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]);
+  return prepareState;
+}
+
 /**
  * Mock state will contain 1 heatmap, 1 point and 1 arc layer, 1 hexbin layer and 1 time filter
  * @param {*} state
@@ -794,6 +845,7 @@ export const StateWTrips = mockStateWithTripData();
 export const StateWTripGeojson = mockStateWithTripGeojson();
 export const StateWTooltipFormat = mockStateWithTooltipFormat();
 export const StateWH3Layer = mockStateWithH3Layer();
+export const StateWMultiH3Layers = mockStateWithMultipleH3Layers();
 export const StateWithGeocoderDataset = mockStateWithGeocoderDataset();
 
 export const expectedSavedTripLayer = {
