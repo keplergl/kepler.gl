@@ -806,6 +806,14 @@ export const propertiesV1 = {
       speed: null
     },
     key: 'animationConfig'
+  }),
+  editor: new Schema({
+    version: VERSIONS.v1,
+    properties: {
+      features: null,
+      visible: null
+    },
+    key: 'editor'
   })
 };
 

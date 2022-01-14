@@ -40,6 +40,16 @@ import {
 import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 
+const expectedVisStateEntries = [
+  'filters',
+  'layers',
+  'interactionConfig',
+  'layerBlending',
+  'splitMaps',
+  'animationConfig',
+  'editor'
+];
+
 test('#visStateSchema -> v1 -> save layers', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
 
@@ -48,8 +58,8 @@ test('#visStateSchema -> v1 -> save layers', t => {
 
   t.deepEqual(
     Object.keys(vsToSave),
-    ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps', 'animationConfig'],
-    'visState should have all 5 entries'
+    expectedVisStateEntries,
+    `visState should have all ${expectedVisStateEntries.length} entries`
   );
 
   const exptectedSavedLayers = [expectedSavedLayer0, expectedSavedLayer1, expectedSavedLayer2];
@@ -69,8 +79,8 @@ test('#visStateSchema -> v1 -> load layers', t => {
 
   t.deepEqual(
     Object.keys(vsLoaded),
-    ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps', 'animationConfig'],
-    'visState should have all 5 entries'
+    expectedVisStateEntries,
+    `visState should have all ${expectedVisStateEntries.length} entries`
   );
 
   const loadedLayers = vsLoaded.layers;
@@ -300,8 +310,8 @@ test('#visStateSchema -> v1 -> save animation', t => {
 
   t.deepEqual(
     Object.keys(vsToSave),
-    ['filters', 'layers', 'interactionConfig', 'layerBlending', 'splitMaps', 'animationConfig'],
-    'visState should have all 5 entries'
+    expectedVisStateEntries,
+    `visState should have all ${expectedVisStateEntries.length} entries`
   );
 
   const expectedSavedLayers = [expectedSavedTripLayer];
