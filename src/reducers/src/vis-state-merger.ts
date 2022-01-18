@@ -30,7 +30,7 @@ import {
 } from '@kepler.gl/utils';
 
 import {LayerColumns, LayerColumn, Layer} from '@kepler.gl/layers';
-import {LAYER_BLENDINGS} from '@kepler.gl/constants';
+import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
 import {
   CURRENT_VERSION,
   Merger,
@@ -366,6 +366,24 @@ export function mergeLayerBlending<S extends VisState>(
 }
 
 /**
+ * Merge overlayBlending with saved
+ */
+export function mergeOverlayBlending<S extends VisState>(
+  state: S,
+  overlayBlending: NonNullable<ParsedConfig['visState']>['overlayBlending'],
+  fromConfig?: boolean
+): S {
+  if (overlayBlending && OVERLAY_BLENDINGS[overlayBlending]) {
+    return {
+      ...state,
+      overlayBlending
+    };
+  }
+
+  return state;
+}
+
+/**
  * Merge animation config
  */
 export function mergeAnimationConfig<S extends VisState>(
@@ -624,6 +642,7 @@ export const VIS_STATE_MERGERS: VisStateMergers = [
   {merge: mergeFilters, prop: 'filters', toMergeProp: 'filterToBeMerged'},
   {merge: mergeInteractions, prop: 'interactionConfig', toMergeProp: 'interactionToBeMerged'},
   {merge: mergeLayerBlending, prop: 'layerBlending'},
+  {merge: mergeOverlayBlending, prop: 'overlayBlending'},
   {merge: mergeSplitMaps, prop: 'splitMaps', toMergeProp: 'splitMapsToBeMerged'},
   {merge: mergeAnimationConfig, prop: 'animationConfig'},
   {merge: mergeEditor, prop: 'editor'}

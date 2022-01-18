@@ -658,6 +658,21 @@ export const NO_VALUE_COLOR: RGBAColor = [0, 0, 0, 0];
 
 export const DEFAULT_PICKING_RADIUS = 3;
 
+export const OVERLAY_BLENDINGS = {
+  normal: {
+    label: 'overlayBlending.normal',
+    value: 'normal'
+  },
+  screen: {
+    label: 'overlayBlending.screen',
+    value: 'screen'
+  },
+  darken: {
+    label: 'overlayBlending.darken',
+    value: 'darken'
+  }
+};
+
 export const LAYER_BLENDINGS = {
   additive: {
     label: 'layerBlending.additive',

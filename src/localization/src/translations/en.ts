@@ -166,7 +166,8 @@ export default {
   layerManager: {
     addData: 'Add Data',
     addLayer: 'Add Layer',
-    layerBlending: 'Layer Blending'
+    layerBlending: 'Layer Blending',
+    overlayBlending: 'Overlay Blending'
   },
   mapManager: {
     mapStyle: 'Map style',
@@ -409,6 +410,12 @@ export default {
     additive: 'additive',
     normal: 'normal',
     subtractive: 'subtractive'
+  },
+  overlayBlending: {
+    title: 'Map overlay blending',
+    screen: 'screen',
+    normal: 'normal',
+    darken: 'darken'
   },
   columns: {
     title: 'Columns',

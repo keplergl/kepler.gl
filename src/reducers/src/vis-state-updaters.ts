@@ -231,6 +231,7 @@ export const INITIAL_VIS_STATE: VisState = {
   interactionToBeMerged: undefined,
 
   layerBlending: 'normal',
+  overlayBlending: 'normal',
   hoverInfo: undefined,
   clicked: undefined,
   mousePos: {},
@@ -1278,6 +1279,19 @@ export const updateLayerBlendingUpdater = (
 ): VisState => ({
   ...state,
   layerBlending: action.mode
+});
+
+/**
+ * update overlay blending mode
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const updateOverlayBlendingUpdater = (
+  state: VisState,
+  action: VisStateActions.UpdateOverlayBlendingUpdaterAction
+): VisState => ({
+  ...state,
+  overlayBlending: action.mode
 });
 
 /**

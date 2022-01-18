@@ -45,6 +45,7 @@ const expectedVisStateEntries = [
   'layers',
   'interactionConfig',
   'layerBlending',
+  'overlayBlending',
   'splitMaps',
   'animationConfig',
   'editor'

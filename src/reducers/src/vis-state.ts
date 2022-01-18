@@ -112,6 +112,8 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_LAYER_BLENDING]: visStateUpdaters.updateLayerBlendingUpdater,
 
+  [ActionTypes.UPDATE_OVERLAY_BLENDING]: visStateUpdaters.updateOverlayBlendingUpdater,
+
   [ActionTypes.UPDATE_VIS_DATA]: visStateUpdaters.updateVisDataUpdater,
 
   [ActionTypes.RENAME_DATASET]: visStateUpdaters.renameDatasetUpdater,

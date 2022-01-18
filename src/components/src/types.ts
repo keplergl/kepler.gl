@@ -24,6 +24,7 @@ export type SidePanelProps = {
   filters: Filter[];
   interactionConfig: InteractionConfig;
   layerBlending: string;
+  overlayBlending: string;
   layers: Layer[];
   layerClasses: LayerClassesType;
   layerOrder: number[];

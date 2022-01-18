@@ -208,6 +208,26 @@ export function updateLayerBlending(
   };
 }
 
+export type UpdateOverlayBlendingUpdaterAction = {
+  mode: 'screen' | 'normal' | 'darken';
+};
+
+/**
+ * Update overlay blending mode
+ * @memberof visStateActions
+ * @param mode one of `screen`, `normal` and `darken`
+ * @returns action
+ * @public
+ */
+export function updateOverlayBlending(
+  mode: 'screen' | 'normal' | 'darken'
+): Merge<UpdateOverlayBlendingUpdaterAction, {type: typeof ActionTypes.UPDATE_OVERLAY_BLENDING}> {
+  return {
+    type: ActionTypes.UPDATE_OVERLAY_BLENDING,
+    mode
+  };
+}
+
 export type InteractionConfigChangeUpdaterAction = {
   config: ValueOf<InteractionConfig>;
 };
