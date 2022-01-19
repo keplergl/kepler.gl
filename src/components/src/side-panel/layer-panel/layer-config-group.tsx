@@ -53,10 +53,10 @@ export const StyledLayerConfigGroupAction = styled.div`
 export const ConfigGroupCollapsibleContent = styled.div.attrs({
   className: 'layer-config-group__content__collapsible'
 })`
-  overflow: visible;
   transition: max-height 0.3s ease-out;
   height: max-content;
-  max-height: 600px;
+  max-height: 1200px;
+  overflow: scroll;
 `;
 
 export const ConfigGroupCollapsibleHeader = styled.div.attrs({
