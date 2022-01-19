@@ -91,7 +91,9 @@ export default function EditorFactory(
     );
 
     availableLayersSelector = createSelector(this.layerSelector, layers =>
-      layers.filter(editorLayerFilter).filter(layer => layer.id !== GEOCODER_LAYER_ID)
+      layers
+        .filter(editorLayerFilter)
+        .filter(layer => layer.config?.isVisible && layer.id !== GEOCODER_LAYER_ID)
     );
 
     allFeaturesSelector = createSelector(
