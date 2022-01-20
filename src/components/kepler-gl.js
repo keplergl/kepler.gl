@@ -144,35 +144,30 @@ export function getVisibleDatasets(datasets) {
   return filterObjectByPredicate(datasets, (key, value) => key !== GEOCODER_DATASET_NAME);
 }
 
-export const sidePanelSelector = (props, availableProviders) => {
-  // visibleDatasets
-  const filteredDatasets = getVisibleDatasets(props.visState.datasets);
+export const sidePanelSelector = (props, availableProviders, filteredDatasets) => ({
+  appName: props.appName,
+  version: props.version,
+  appWebsite: props.appWebsite,
+  mapStyle: props.mapStyle,
+  onSaveMap: props.onSaveMap,
+  uiState: props.uiState,
+  mapStyleActions: props.mapStyleActions,
+  visStateActions: props.visStateActions,
+  uiStateActions: props.uiStateActions,
 
-  return {
-    appName: props.appName,
-    version: props.version,
-    appWebsite: props.appWebsite,
-    mapStyle: props.mapStyle,
-    onSaveMap: props.onSaveMap,
-    uiState: props.uiState,
-    mapStyleActions: props.mapStyleActions,
-    visStateActions: props.visStateActions,
-    uiStateActions: props.uiStateActions,
+  datasets: filteredDatasets,
+  filters: props.visState.filters,
+  layers: props.visState.layers,
+  layerOrder: props.visState.layerOrder,
+  layerClasses: props.visState.layerClasses,
+  interactionConfig: props.visState.interactionConfig,
+  mapInfo: props.visState.mapInfo,
+  layerBlending: props.visState.layerBlending,
 
-    datasets: filteredDatasets,
-    filters: props.visState.filters,
-    layers: props.visState.layers,
-    layerOrder: props.visState.layerOrder,
-    layerClasses: props.visState.layerClasses,
-    interactionConfig: props.visState.interactionConfig,
-    mapInfo: props.visState.mapInfo,
-    layerBlending: props.visState.layerBlending,
-
-    width: props.sidePanelWidth,
-    availableProviders,
-    mapSaved: props.providerState.mapSaved
-  };
-};
+  width: props.sidePanelWidth,
+  availableProviders,
+  mapSaved: props.providerState.mapSaved
+});
 
 export const plotContainerSelector = props => ({
   width: props.width,
@@ -323,6 +318,9 @@ function KeplerGlFactory(
         : theme
     );
 
+    datasetsSelector = props => props.visState.datasets;
+    filteredDatasetsSelector = createSelector(this.datasetsSelector, getVisibleDatasets);
+
     availableProviders = createSelector(
       props => props.cloudProviders,
       providers =>
@@ -393,7 +391,8 @@ function KeplerGlFactory(
       const availableProviders = this.availableProviders(this.props);
 
       const mapFields = mapFieldsSelector(this.props);
-      const sideFields = sidePanelSelector(this.props, availableProviders);
+      const filteredDatasets = this.filteredDatasetsSelector(this.props);
+      const sideFields = sidePanelSelector(this.props, availableProviders, filteredDatasets);
       const plotContainerFields = plotContainerSelector(this.props);
       const bottomWidgetFields = bottomWidgetSelector(this.props, theme);
       const modalContainerFields = modalContainerSelector(this.props, this.root.current);
