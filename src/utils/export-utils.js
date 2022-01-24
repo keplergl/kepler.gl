@@ -135,8 +135,13 @@ export function downloadFile(fileBlob, fileName) {
   }
 }
 
-export function exportImage(state, filename = DEFAULT_IMAGE_NAME) {
-  const {imageDataUri} = state.uiState.exportImage;
+/**
+ * Whether color is rgb
+ * @type {typeof import('./export-utils').exportImage}
+ * @returns
+ */
+export function exportImage(uiStateExportImage, filename = DEFAULT_IMAGE_NAME) {
+  const {imageDataUri} = uiStateExportImage;
   if (imageDataUri) {
     const file = dataURItoBlob(imageDataUri);
     downloadFile(file, filename);
@@ -190,10 +195,10 @@ export function exportHtml(state, options) {
   downloadFile(fileBlob, state.appName ? `${state.appName}.html` : DEFAULT_HTML_NAME);
 }
 
-export function exportData(state, option) {
+export function exportData(state, options) {
   const {visState, appName} = state;
   const {datasets} = visState;
-  const {selectedDataset, dataType, filtered} = option;
+  const {selectedDataset, dataType, filtered} = options;
   // get the selected data
   const filename = appName ? appName : DEFAULT_DATA_NAME;
   const selectedDatasets = datasets[selectedDataset]
@@ -226,10 +231,10 @@ export function exportData(state, option) {
   });
 }
 
-export function exportMap(state, option) {
+export function exportMap(state, options) {
   const {imageDataUri} = state.uiState.exportImage;
   const thumbnail = imageDataUri ? dataURItoBlob(imageDataUri) : null;
-  const mapToSave = getMapJSON(state, option);
+  const mapToSave = getMapJSON(state, options);
 
   return {
     map: mapToSave,

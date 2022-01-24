@@ -212,9 +212,11 @@ export default function SidePanelFactory(
         />
         <StyledSidePanelContent className="side-panel__content">
           <div className="side-panel__content__inner">
-            <PanelTitle className="side-panel__content__title">
-              <FormattedMessage id={currentPanel.label} />
-            </PanelTitle>
+            {currentPanel.id !== 'layer' ? (
+              <PanelTitle className="side-panel__content__title">
+                <FormattedMessage id={currentPanel.label} />
+              </PanelTitle>
+            ) : null}
             {PanelComponent ? (
               <PanelComponent
                 datasets={datasets}
@@ -234,6 +236,8 @@ export default function SidePanelFactory(
                 showAddMapStyleModal={onShowAddMapStyleModal}
                 uiStateActions={uiStateActions}
                 visStateActions={visStateActions}
+                panelMetadata={currentPanel}
+                layerPanelListView={currentPanel.id === 'layer' && uiState.layerPanelListView}
               />
             ) : null}
             <CustomPanels {...customPanelProps} activeSidePanel={activeSidePanel} />

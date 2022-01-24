@@ -35,6 +35,7 @@ import Switch from 'components/common/switch';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {COMPARE_TYPES} from 'constants/tooltip';
 import FieldSelectorFactory from '../../common/field-selector';
+import {GEOCODER_DATASET_NAME} from 'constants/default-settings';
 
 const TooltipConfigWrapper = styled.div`
   .item-selector > div > div {
@@ -131,14 +132,16 @@ function TooltipConfigFactory(DatasetTag, FieldSelector) {
   const TooltipConfig = ({config, datasets, onChange, intl}) => {
     return (
       <TooltipConfigWrapper>
-        {Object.keys(config.fieldsToShow).map(dataId => (
-          <DatasetTooltipConfig
-            key={dataId}
-            config={config}
-            onChange={onChange}
-            dataset={datasets[dataId]}
-          />
-        ))}
+        {Object.keys(config.fieldsToShow).map(dataId =>
+          dataId === GEOCODER_DATASET_NAME ? null : (
+            <DatasetTooltipConfig
+              key={dataId}
+              config={config}
+              onChange={onChange}
+              dataset={datasets[dataId]}
+            />
+          )
+        )}
         <CompareSwitchWrapper>
           <FormattedMessage id="compare.modeLabel" />
           <Switch

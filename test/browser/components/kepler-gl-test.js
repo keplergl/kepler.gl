@@ -21,6 +21,7 @@
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
+import sinon from 'sinon';
 import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
@@ -40,6 +41,9 @@ import {
 import NotificationPanelFactory from 'components/notification-panel';
 import {ActionTypes} from 'actions';
 import {DEFAULT_MAP_STYLES, EXPORT_IMAGE_ID} from 'constants';
+import {GEOCODER_DATASET_NAME} from 'constants/default-settings';
+// mock state
+import {StateWithGeocoderDataset} from 'test/helpers/mock-state';
 
 const KeplerGl = appInjector.get(KeplerGlFactory);
 const SidePanel = appInjector.get(SidePanelFactory);
@@ -471,6 +475,101 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
   };
 
   t.deepEqual(task1.payload, expectedTask.payload, 'should create task to load map styles');
+
+  t.end();
+});
+
+// Test data has only the 'geocoder_dataset' dataset
+// This function will return its name if it finds the dataset
+// in other case it will return null
+function findGeocoderDatasetName(wrapper) {
+  const datasetTitleContainer = wrapper.find('.dataset-name');
+  let result;
+  try {
+    result = datasetTitleContainer.text();
+  } catch (e) {
+    result = null;
+  }
+  return result;
+}
+
+test('Components -> KeplerGl -> SidePanel -> Geocoder dataset display', t => {
+  drainTasksForTesting();
+
+  const toggleSidePanel = sinon.spy();
+
+  // Create custom SidePanel that will accept toggleSidePanel as a spy
+  function CustomSidePanelFactory(...deps) {
+    const OriginalSidePanel = SidePanelFactory(...deps);
+    const CustomSidePanel = props => {
+      const customUIStateActions = {
+        ...props.uiStateActions,
+        toggleSidePanel
+      };
+      return <OriginalSidePanel {...props} uiStateActions={customUIStateActions} />;
+    };
+    return CustomSidePanel;
+  }
+  CustomSidePanelFactory.deps = SidePanelFactory.deps;
+
+  const CustomKeplerGl = appInjector
+    .provide(SidePanelFactory, CustomSidePanelFactory)
+    .get(KeplerGlFactory);
+
+  // Create initial state based on mocked state with geocoder dataset and use that for mocking the store
+  const store = mockStore({
+    keplerGl: {
+      map: StateWithGeocoderDataset
+    }
+  });
+
+  let wrapper;
+
+  t.doesNotThrow(() => {
+    wrapper = mount(
+      <Provider store={store}>
+        <CustomKeplerGl
+          id="map"
+          mapboxApiAccessToken="smoothie-the-cat"
+          selector={state => state.keplerGl.map}
+          dispatch={store.dispatch}
+        />
+      </Provider>
+    );
+  }, 'Should not throw error when mount KeplerGl');
+
+  // Check if we have 4 sidepanel tabs
+  t.equal(wrapper.find('.side-panel__tab').length, 4, 'should render 4 panel tabs');
+
+  // click layer tab
+  const layerTab = wrapper.find('.side-panel__tab').at(0);
+  layerTab.simulate('click');
+  t.ok(toggleSidePanel.calledWith('layer'), 'should call toggleSidePanel with layer');
+  t.notEqual(
+    findGeocoderDatasetName(wrapper),
+    GEOCODER_DATASET_NAME,
+    `should not be equal to ${GEOCODER_DATASET_NAME}`
+  );
+
+  // click filters tab
+  const filterTab = wrapper.find('.side-panel__tab').at(1);
+  filterTab.simulate('click');
+  t.ok(toggleSidePanel.calledWith('filter'), 'should call toggleSidePanel with filter');
+  t.notEqual(
+    findGeocoderDatasetName(wrapper),
+    GEOCODER_DATASET_NAME,
+    `should not be equal to ${GEOCODER_DATASET_NAME}`
+  );
+
+  // click interaction tab
+  const interactionTab = wrapper.find('.side-panel__tab').at(2);
+  interactionTab.simulate('click');
+  t.ok(toggleSidePanel.calledWith('interaction'), 'should call toggleSidePanel with interaction');
+  t.notEqual(
+    findGeocoderDatasetName(wrapper),
+    GEOCODER_DATASET_NAME,
+    `should not be equal to ${GEOCODER_DATASET_NAME}`
+  );
 
   t.end();
 });

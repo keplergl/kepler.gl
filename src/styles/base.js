@@ -273,6 +273,9 @@ export const layerTypeIconSizeL = 50;
 export const layerTypeIconPdL = 12;
 export const layerTypeIconSizeSM = 28;
 
+export const layerPanelToggleOptionColor = '#6A7485';
+export const layerPanelToggleOptionColorActive = '#F0F0F0';
+
 // Sidepanel divider
 export const sidepanelDividerBorder = '1px';
 export const sidepanelDividerMargin = 12;
@@ -1310,6 +1313,9 @@ export const theme = {
   layerTypeIconSizeL,
   layerTypeIconPdL,
   layerTypeIconSizeSM,
+
+  layerPanelToggleOptionColor,
+  layerPanelToggleOptionColorActive,
 
   // Text
   fontFamily,

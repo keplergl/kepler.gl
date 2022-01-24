@@ -56,6 +56,7 @@ import tripGeojson, {tripDataInfo} from 'test/fixtures/trip-geojson';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 import {COMPARE_TYPES} from 'constants/tooltip';
 import {MOCK_MAP_STYLE} from './mock-map-styles';
+import {getUpdateVisDataPayload} from 'components/geocoder-panel';
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);
@@ -274,6 +275,57 @@ function mockStateWithH3Layer() {
   ]);
   return prepareState;
 }
+
+function mockStateWithMultipleH3Layers() {
+  const initialState = cloneDeep(InitialState);
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: addDataToMap,
+      payload: [
+        {
+          datasets: {
+            info: {id: csvDataId},
+            data: processCsvData(testLayerData)
+          },
+          config: {
+            version: 'v1',
+            config: {
+              visState: {
+                layers: [
+                  {
+                    id: 'h3-layer-1',
+                    type: 'hexagonId',
+                    config: {
+                      dataId: csvDataId,
+                      label: 'H3 Hexagon 1',
+                      color: [255, 153, 31],
+                      columns: {hex_id: 'hex_id'},
+                      isVisible: true
+                    }
+                  },
+                  {
+                    id: 'h3-layer-2',
+                    type: 'hexagonId',
+                    config: {
+                      dataId: csvDataId,
+                      label: 'H3 Hexagon 2',
+                      color: [255, 153, 31],
+                      columns: {hex_id: 'hex_id'},
+                      isVisible: true
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]);
+  return prepareState;
+}
+
 /**
  * Mock state will contain 1 heatmap, 1 point and 1 arc layer, 1 hexbin layer and 1 time filter
  * @param {*} state
@@ -452,6 +504,52 @@ function mockStateWithTooltipFormat() {
 
   const prepareState = applyActions(keplerGlReducer, initialState, [
     {action: VisStateActions.interactionConfigChange, payload: [newConfig]}
+  ]);
+
+  return prepareState;
+}
+
+function mockStateWithGeocoderDataset() {
+  const initialState = cloneDeep(InitialState);
+
+  const oldInteractionConfig = initialState.visState.interactionConfig.tooltip;
+  const newInteractionConfig = {
+    ...oldInteractionConfig,
+    config: {
+      ...oldInteractionConfig.config,
+      fieldsToShow: {
+        ...oldInteractionConfig.config.fieldsToShow,
+        geocoder_dataset: [
+          {
+            name: 'lt',
+            format: null
+          },
+          {
+            name: 'ln',
+            format: null
+          },
+          {
+            name: 'icon',
+            format: null
+          },
+          {
+            name: 'text',
+            format: null
+          }
+        ]
+      },
+      compareMode: false,
+      compareType: COMPARE_TYPES.ABSOLUTE
+    }
+  };
+  const geocoderDataset = getUpdateVisDataPayload(48.85658, 2.35183, 'Paris');
+
+  const prepareState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: geocoderDataset
+    },
+    {action: VisStateActions.interactionConfigChange, payload: [newInteractionConfig]}
   ]);
 
   return prepareState;
@@ -747,6 +845,8 @@ export const StateWTrips = mockStateWithTripData();
 export const StateWTripGeojson = mockStateWithTripGeojson();
 export const StateWTooltipFormat = mockStateWithTooltipFormat();
 export const StateWH3Layer = mockStateWithH3Layer();
+export const StateWMultiH3Layers = mockStateWithMultipleH3Layers();
+export const StateWithGeocoderDataset = mockStateWithGeocoderDataset();
 
 export const expectedSavedTripLayer = {
   id: 'trip-0',

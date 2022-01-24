@@ -439,9 +439,10 @@ export function processRowObject(rawData) {
     return null;
   } else if (!rawData.length) {
     // data is empty
-    return  {
-      fields: [], rows: []
-    }
+    return {
+      fields: [],
+      rows: []
+    };
   }
 
   const keys = Object.keys(rawData[0]);

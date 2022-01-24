@@ -19,31 +19,33 @@
 // THE SOFTWARE.
 
 import React, {Component, useCallback} from 'react';
-import classnames from 'classnames';
 
 import PropTypes from 'prop-types';
-import {SortableContainer, SortableElement} from 'react-sortable-hoc';
-import styled from 'styled-components';
-import {createSelector} from 'reselect';
 import {injectIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';
-import {arrayMove} from 'utils/data-utils';
+import styled from 'styled-components';
 
-import LayerPanelFactory from './layer-panel/layer-panel';
-import SourceDataCatalogFactory from './common/source-data-catalog';
-import {Add} from 'components/common/icons';
+import LayerListFactory from './layer-panel/layer-list';
+import DatasetLayerGroupFactory from './layer-panel/dataset-layer-group';
+import PanelViewListToggleFactory from './layer-panel/panel-view-list-toggle';
+import PanelTitleFactory from './panel-title';
+import DatasetSectionFactory from './layer-panel/dataset-section';
+import AddLayerButtonFactory from './layer-panel/add-layer-button';
+
 import ItemSelector from 'components/common/item-selector/item-selector';
-import {
-  Button,
-  PanelLabel,
-  SidePanelDivider,
-  SidePanelSection
-} from 'components/common/styled-components';
+import {PanelLabel, SidePanelDivider, SidePanelSection} from 'components/common/styled-components';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 
-// @ts-ignore
-// eslint-disable-next-line no-unused-vars
+const LayerHeader = styled.div.attrs({
+  className: 'layer-manager-header'
+})`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 16px;
+`;
+
 const LayerBlendingSelector = ({layerBlending, updateLayerBlending, intl}) => {
   const labeledLayerBlendings = Object.keys(LAYER_BLENDINGS).reduce(
     (acc, current) => ({
@@ -74,67 +76,23 @@ const LayerBlendingSelector = ({layerBlending, updateLayerBlending, intl}) => {
   );
 };
 
-// make sure the element is always visible while is being dragged
-// item being dragged is appended in body, here to reset its global style
-const SortableStyledItem = styled.div`
-  z-index: ${props => props.theme.dropdownWrapperZ + 1};
+LayerManagerFactory.deps = [
+  LayerListFactory,
+  DatasetLayerGroupFactory,
+  PanelViewListToggleFactory,
+  PanelTitleFactory,
+  DatasetSectionFactory,
+  AddLayerButtonFactory
+];
 
-  &.sorting {
-    pointer-events: none;
-  }
-
-  &.sorting-layers .layer-panel__header {
-    background-color: ${props => props.theme.panelBackgroundHover};
-    font-family: ${props => props.theme.fontFamily};
-    font-weight: ${props => props.theme.fontWeight};
-    font-size: ${props => props.theme.fontSize};
-    line-height: ${props => props.theme.lineHeight};
-    *,
-    *:before,
-    *:after {
-      box-sizing: border-box;
-    }
-    .layer__drag-handle {
-      opacity: 1;
-      color: ${props => props.theme.textColorHl};
-    }
-  }
-`;
-
-export function AddDataButtonFactory() {
-  const AddDataButton = ({onClick, isInactive}) => (
-    <Button
-      className="add-data-button"
-      onClick={onClick}
-      isInactive={!isInactive}
-      width="105px"
-      secondary
-    >
-      <Add height="12px" />
-      <FormattedMessage id={'layerManager.addData'} />
-    </Button>
-  );
-
-  return AddDataButton;
-}
-
-LayerManagerFactory.deps = [AddDataButtonFactory, LayerPanelFactory, SourceDataCatalogFactory];
-
-function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
-  // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
-  // Developers can provide any layer panel implementation and it will still be sortable
-  const SortableItem = SortableElement(({children, isSorting}) => {
-    return (
-      <SortableStyledItem className={classnames('sortable-layer-items', {sorting: isSorting})}>
-        {children}
-      </SortableStyledItem>
-    );
-  });
-
-  const WrappedSortableContainer = SortableContainer(({children}) => {
-    return <div>{children}</div>;
-  });
-
+function LayerManagerFactory(
+  LayerList,
+  DatasetLayerGroup,
+  PanelViewListToggle,
+  PanelTitle,
+  DatasetSection,
+  AddLayerButton
+) {
   class LayerManager extends Component {
     static propTypes = {
       datasets: PropTypes.object.isRequired,
@@ -147,45 +105,15 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
       showDatasetTable: PropTypes.func.isRequired,
       updateTableColor: PropTypes.func.isRequired
     };
-    state = {
-      isSorting: false
-    };
 
-    layerClassSelector = props => props.layerClasses;
-    layerTypeOptionsSelector = createSelector(this.layerClassSelector, layerClasses =>
-      Object.keys(layerClasses).map(key => {
-        const layer = new layerClasses[key]();
-        return {
-          id: key,
-          label: layer.name,
-          icon: layer.layerIcon,
-          requireData: layer.requireData
-        };
-      })
-    );
-
-    _addEmptyNewLayer = () => {
+    _addEmptyNewLayer = dataset => {
       const {visStateActions} = this.props;
-      visStateActions.addLayer();
+      visStateActions.addLayer(undefined, dataset);
     };
 
-    _handleSort = ({oldIndex, newIndex}) => {
-      const {visStateActions} = this.props;
-      visStateActions.reorderLayer(arrayMove(this.props.layerOrder, oldIndex, newIndex));
-      this.setState({isSorting: false});
-    };
-
-    _onSortStart = () => {
-      this.setState({isSorting: true});
-    };
-
-    _updateBeforeSortStart = ({index}) => {
-      // if layer config is active, close it
-      const {layerOrder, layers, visStateActions} = this.props;
-      const layerIdx = layerOrder[index];
-      if (layers[layerIdx].config.isConfigActive) {
-        visStateActions.layerConfigChange(layers[layerIdx], {isConfigActive: false});
-      }
+    _toggleLayerPanelListView = listView => {
+      const {uiStateActions} = this.props;
+      uiStateActions.toggleLayerPanelListView(listView);
     };
 
     render() {
@@ -198,77 +126,72 @@ function LayerManagerFactory(AddDataButton, LayerPanel, SourceDataCatalog) {
         showDatasetTable,
         removeDataset,
         uiStateActions,
-        visStateActions
+        visStateActions,
+        layerPanelListView,
+        panelMetadata
       } = this.props;
-      const {toggleModal: openModal} = uiStateActions;
+
       const defaultDataset = Object.keys(datasets)[0];
-      const layerTypeOptions = this.layerTypeOptionsSelector(this.props);
-
-      const layerActions = {
-        layerColorUIChange: visStateActions.layerColorUIChange,
-        layerConfigChange: visStateActions.layerConfigChange,
-        layerVisualChannelConfigChange: visStateActions.layerVisualChannelConfigChange,
-        layerTypeChange: visStateActions.layerTypeChange,
-        layerVisConfigChange: visStateActions.layerVisConfigChange,
-        layerTextLabelChange: visStateActions.layerTextLabelChange,
-        removeLayer: visStateActions.removeLayer,
-        duplicateLayer: visStateActions.duplicateLayer
-      };
-
-      const panelProps = {
-        datasets,
-        openModal,
-        layerTypeOptions
-      };
+      const isSortByDatasetMode = layerPanelListView === 'sortByDataset';
 
       return (
         <div className="layer-manager">
-          <SourceDataCatalog
+          <SidePanelSection>
+            <PanelViewListToggle
+              toggleLayerPanelListView={this._toggleLayerPanelListView}
+              layerPanelListViewMode={layerPanelListView}
+            />
+          </SidePanelSection>
+          <DatasetSection
             datasets={datasets}
             showDatasetTable={showDatasetTable}
             updateTableColor={updateTableColor}
             removeDataset={removeDataset}
             showDeleteDataset
+            showDatasetList={!isSortByDatasetMode}
+            showAddDataModal={showAddDataModal}
+            defaultDataset={defaultDataset}
           />
-          <AddDataButton onClick={showAddDataModal} isInactive={!defaultDataset} />
           <SidePanelDivider />
           <SidePanelSection>
-            <WrappedSortableContainer
-              onSortEnd={this._handleSort}
-              onSortStart={this._onSortStart}
-              updateBeforeSortStart={this._updateBeforeSortStart}
-              lockAxis="y"
-              helperClass="sorting-layers"
-              useDragHandle
-            >
-              {layerOrder.map(
-                (layerIdx, index) =>
-                  !layers[layerIdx].config.hidden && (
-                    <SortableItem
-                      key={`layer-${layerIdx}`}
-                      index={index}
-                      isSorting={this.state.isSorting}
-                    >
-                      <LayerPanel
-                        {...panelProps}
-                        {...layerActions}
-                        sortData={layerIdx}
-                        key={layers[layerIdx].id}
-                        idx={layerIdx}
-                        layer={layers[layerIdx]}
-                      />
-                    </SortableItem>
-                  )
-              )}
-            </WrappedSortableContainer>
+            <LayerHeader>
+              <PanelTitle className="layer-manager-title">
+                <FormattedMessage id={panelMetadata.label} />
+              </PanelTitle>
+              {defaultDataset ? (
+                <AddLayerButton
+                  datasets={datasets}
+                  typeaheadPlaceholder="Search datasets"
+                  intl={intl}
+                  onOptionSelected={this._addEmptyNewLayer}
+                />
+              ) : null}
+            </LayerHeader>
           </SidePanelSection>
           <SidePanelSection>
-            {defaultDataset ? (
-              <Button className="add-layer-button" onClick={this._addEmptyNewLayer} width="105px">
-                <Add height="12px" />
-                <FormattedMessage id={'layerManager.addLayer'} />
-              </Button>
-            ) : null}
+            {isSortByDatasetMode ? (
+              <DatasetLayerGroup
+                datasets={datasets}
+                showDatasetTable={showDatasetTable}
+                layers={layers}
+                updateTableColor={updateTableColor}
+                removeDataset={removeDataset}
+                layerOrder={layerOrder}
+                layerClasses={this.props.layerClasses}
+                uiStateActions={uiStateActions}
+                visStateActions={visStateActions}
+                showDeleteDataset
+              />
+            ) : (
+              <LayerList
+                layers={layers}
+                datasets={datasets}
+                layerOrder={layerOrder}
+                uiStateActions={uiStateActions}
+                visStateActions={visStateActions}
+                layerClasses={this.props.layerClasses}
+              />
+            )}
           </SidePanelSection>
         </div>
       );

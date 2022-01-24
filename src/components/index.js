@@ -59,12 +59,21 @@ export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/sid
 export {default as PanelToggleFactory} from './side-panel/panel-toggle';
 export {default as PanelTabFactory} from './side-panel/panel-tab';
 
-export {AddDataButtonFactory, default as LayerManagerFactory} from './side-panel/layer-manager';
+export {default as LayerManagerFactory} from './side-panel/layer-manager';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
 export {default as LayerPanelHeaderFactory} from './side-panel/layer-panel/layer-panel-header';
 export {default as LayerConfiguratorFactory} from './side-panel/layer-panel/layer-configurator';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
 export {LayerConfigGroupLabelFactory} from './side-panel/layer-panel/layer-config-group';
+export {
+  AddDataButtonFactory,
+  default as DatasetSectionFactory
+} from './side-panel/layer-panel/dataset-section';
+export {default as DatasetLayerSectionFactory} from './side-panel/layer-panel/dataset-layer-section';
+export {default as DatasetLayerGroupFactory} from './side-panel/layer-panel/dataset-layer-group';
+export {default as PanelViewListToggleFactory} from './side-panel/layer-panel/panel-view-list-toggle';
+export {default as AddLayerButtonFactory} from './side-panel/layer-panel/add-layer-button';
+export {default as LayerListFactory} from './side-panel/layer-panel/layer-list';
 
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
