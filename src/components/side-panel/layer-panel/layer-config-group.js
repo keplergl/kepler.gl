@@ -105,7 +105,7 @@ LayerConfigGroupLabelFactory.deps = [InfoHelperFactory];
 export function LayerConfigGroupLabelFactory(InfoHelper) {
   const StyledLayerConfigGroupLabel = styled.div`
     border-left: ${props => props.theme.layerConfigGroupLabelBorderLeft} solid
-      ${props => props.theme.labelColor};
+      ${props => props.theme.layerConfigGroupLabelBorderColor || props.theme.labelColor};
     line-height: 12px;
     margin-left: ${props => props.theme.layerConfigGroupLabelMargin};
     padding-left: ${props => props.theme.layerConfigGroupLabelPadding};
