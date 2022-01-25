@@ -1,7 +1,7 @@
 {
   "name": "erasme-kepler.gl",
   "author": "Shan He <shan@uber.com>",
-  "version": "2.5.4.1",
+  "version": "2.5.5",
   "description": "forked version of kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
