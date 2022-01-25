@@ -46,7 +46,7 @@ import {TOOLTIP_FORMAT_TYPES} from './tooltip';
 import {LAYER_TYPES} from 'layers/types';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
-export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
+export const CLOUDFRONT = 'https://raw.githubusercontent.com/datatlas-erasme/front/master/src/src/static/';
 export const ICON_PREFIX = `${CLOUDFRONT}/geodude`;
 export const DEFAULT_MAPBOX_API_URL = 'https://api.mapbox.com';
 
