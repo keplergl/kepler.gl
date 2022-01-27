@@ -227,7 +227,6 @@ export function getGpuFilterProps(filters: Filter[], dataId: string, fields: Fie
   return {
     filterRange,
     filterValueUpdateTriggers: triggers,
-    // @ts-expect-error
     filterValueAccessor
   };
 }

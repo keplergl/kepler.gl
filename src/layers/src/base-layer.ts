@@ -160,10 +160,9 @@ export type VisualChannel = {
   defaultMeasure?: any;
   accessor?: string;
   condition?: (config: any) => boolean;
+  defaultValue?: ((config: any) => any) | any;
   getAttributeValue?: (config: any) => (d: any) => any;
 
-  // TODO: define defaultValue
-  defaultValue?: any;
   // TODO: define fixed
   fixed?: any;
 
@@ -177,7 +176,12 @@ export type VisualChannelDescription = {
   measure: string | undefined;
 };
 
-export type ColumnPairs = {[key: string]: {pair: string; fieldPairKey: string}};
+export type ColumnPair = {
+  pair: string;
+  fieldPairKey: string;
+};
+
+export type ColumnPairs = {[key: string]: ColumnPair};
 
 type ColumnValidator = (column: LayerColumn, columns: LayerColumns, allFields: Field[]) => boolean;
 
@@ -221,8 +225,7 @@ export const colorMaker = generateColor();
 
 class Layer {
   id: string;
-  // TODO: define meta
-  meta: {};
+  meta: Record<string, any>;
   visConfigSettings: {
     [key: string]: ValueOf<LayerVisConfigSettings>;
   };
@@ -541,7 +544,7 @@ class Layer {
    * @param pair - field Pair
    * @returns {object} - Column config
    */
-  assignColumnPairs(key, pair) {
+  assignColumnPairs(key: string, pair: string): LayerColumns {
     if (!this.columnPairs || !this.columnPairs?.[key]) {
       // should not end in this state
       return this.config.columns;
@@ -1000,7 +1003,10 @@ class Layer {
    * @param {(d: {index: number}, dc: import('utils/table-utils/data-container-interface').DataContainerInterface) => number[]} getPosition Access kepler.gl layer data from deck.gl layer
    * @return {number[]|null} bounds of the data.
    */
-  getPointsBounds(dataContainer, getPosition) {
+  getPointsBounds(
+    dataContainer: DataContainerInterface,
+    getPosition?: (x: any, dc: DataContainerInterface) => number[]
+  ): number[] | null {
     // no need to loop through the entire dataset
     // get a sample of data to calculate bounds
     const sampleData =
@@ -1008,7 +1014,7 @@ class Layer {
         ? getSampleContainerData(dataContainer, MAX_SAMPLE_SIZE)
         : dataContainer;
 
-    const points = sampleData.mapIndex(getPosition);
+    const points = getPosition ? sampleData.mapIndex(getPosition) : [];
 
     const latBounds = getLatLngBounds(points, 1, [-90, 90]);
     const lngBounds = getLatLngBounds(points, 0, [-180, 180]);
@@ -1058,7 +1064,7 @@ class Layer {
     return attributeValue;
   }
 
-  updateMeta(meta) {
+  updateMeta(meta: Layer['meta']) {
     this.meta = {...this.meta, ...meta};
   }
 
@@ -1078,7 +1084,7 @@ class Layer {
     };
   }
 
-  updateData(datasets, oldLayerData) {
+  updateData(datasets: Datasets, oldLayerData: any) {
     if (!this.config.dataId) {
       return {};
     }

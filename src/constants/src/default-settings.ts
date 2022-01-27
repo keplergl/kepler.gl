@@ -231,41 +231,52 @@ export const DEFAULT_LAYER_GROUPS: DEFAULT_LAYER_GROUP[] = [
   }
 ];
 
+export const BASE_MAP_COLOR_MODES = keyMirror({
+  NONE: null,
+  DARK: null,
+  LIGHT: null
+});
+
 export const DEFAULT_MAP_STYLES = [
   {
     id: 'dark',
     label: 'Dark',
     url: 'mapbox://styles/uberdata/cjoqbbf6l9k302sl96tyvka09',
     icon: `${ICON_PREFIX}/UBER_DARK_V2.png`,
-    layerGroups: DEFAULT_LAYER_GROUPS
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.DARK
   },
   {
     id: 'light',
     label: 'Light',
     url: 'mapbox://styles/uberdata/cjoqb9j339k1f2sl9t5ic5bn4',
     icon: `${ICON_PREFIX}/UBER_LIGHT_V2.png`,
-    layerGroups: DEFAULT_LAYER_GROUPS
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.LIGHT
   },
   {
     id: 'muted',
     label: 'Muted Light',
     url: 'mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4',
     icon: `${ICON_PREFIX}/UBER_MUTED_LIGHT.png`,
-    layerGroups: DEFAULT_LAYER_GROUPS
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.LIGHT
   },
   {
     id: 'muted_night',
     label: 'Muted Night',
     url: 'mapbox://styles/uberdata/cjfxhlikmaj1b2soyzevnywgs',
     icon: `${ICON_PREFIX}/UBER_MUTED_NIGHT.png`,
-    layerGroups: DEFAULT_LAYER_GROUPS
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.DARK
   },
   {
     id: 'satellite',
     label: 'Satellite',
     url: `mapbox://styles/mapbox/satellite-v9`,
     icon: `${ICON_PREFIX}/UBER_SATELLITE.png`,
-    layerGroups: []
+    layerGroups: [],
+    colorMode: BASE_MAP_COLOR_MODES.NONE
   }
 ];
 

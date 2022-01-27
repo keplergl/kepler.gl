@@ -288,6 +288,7 @@ export type BaseMapStyle = {
   layerGroups: LayerGroup[];
   accessToken?: string;
   custom?: boolean;
+  colorMode?: BASE_MAP_COLOR_MODES;
 };
 
 export declare type ExportImage = {

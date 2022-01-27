@@ -21,6 +21,7 @@
 import React, {Component, useCallback} from 'react';
 
 import {injectIntl, WrappedComponentProps} from 'react-intl';
+import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 import LayerListFactory from './layer-panel/layer-list';
@@ -32,6 +33,7 @@ import AddLayerButtonFactory from './layer-panel/add-layer-button';
 
 import ItemSelector from '../common/item-selector/item-selector';
 import {PanelLabel, SidePanelDivider, SidePanelSection} from '../common/styled-components';
+import InfoHelperFactory from '../common/info-helper';
 
 import {LAYER_BLENDINGS, OVERLAY_BLENDINGS, PANEL_VIEW_TOGGLES} from '@kepler.gl/constants';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
@@ -48,6 +50,7 @@ type LayerBlendingSelectorProps = {
 type OverlayBlendingSelectorProps = {
   overlayBlending: string;
   updateOverlayBlending: ActionHandler<typeof VisStateActions.updateOverlayBlending>;
+  infoHelper: React.ReactNode;
 } & WrappedComponentProps;
 
 type LayerManagerProps = {
@@ -100,8 +103,18 @@ const LayerBlendingSelector = React.memo(
 );
 LayerBlendingSelector.displayName = 'LayerBlendingSelector';
 
+const InfoHelperWrapper = styled.div`
+  float: right;
+`;
+
+const OverlayBlendingSelectorTitleRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+`;
+
 const OverlayBlendingSelector = React.memo(
-  ({overlayBlending, updateOverlayBlending, intl}: OverlayBlendingSelectorProps) => {
+  ({overlayBlending, updateOverlayBlending, intl, infoHelper}: OverlayBlendingSelectorProps) => {
     const labeledOverlayBlendings = Object.keys(OVERLAY_BLENDINGS).reduce(
       (acc, current) => ({
         ...acc,
@@ -117,9 +130,12 @@ const OverlayBlendingSelector = React.memo(
 
     return (
       <SidePanelSection>
-        <PanelLabel>
-          <FormattedMessage id="overlayBlending.title" />
-        </PanelLabel>
+        <OverlayBlendingSelectorTitleRow>
+          <PanelLabel>
+            <FormattedMessage id="overlayBlending.title" />
+          </PanelLabel>
+          <InfoHelperWrapper>{infoHelper}</InfoHelperWrapper>
+        </OverlayBlendingSelectorTitleRow>
         <ItemSelector
           selectedItems={intl.formatMessage({id: OVERLAY_BLENDINGS[overlayBlending].label})}
           options={Object.keys(labeledOverlayBlendings)}
@@ -139,7 +155,8 @@ LayerManagerFactory.deps = [
   PanelViewListToggleFactory,
   PanelTitleFactory,
   DatasetSectionFactory,
-  AddLayerButtonFactory
+  AddLayerButtonFactory,
+  InfoHelperFactory
 ];
 
 function LayerManagerFactory(
@@ -148,7 +165,8 @@ function LayerManagerFactory(
   PanelViewListToggle: ReturnType<typeof PanelViewListToggleFactory>,
   PanelTitle: ReturnType<typeof PanelTitleFactory>,
   DatasetSection: ReturnType<typeof DatasetSectionFactory>,
-  AddLayerButton: ReturnType<typeof AddLayerButtonFactory>
+  AddLayerButton: ReturnType<typeof AddLayerButtonFactory>,
+  InfoHelper: ReturnType<typeof InfoHelperFactory>
 ) {
   class LayerManager extends Component<LayerManagerProps> {
     _addLayer = (dataset: string) => {
@@ -241,6 +259,12 @@ function LayerManagerFactory(
             overlayBlending={this.props.overlayBlending}
             updateOverlayBlending={visStateActions.updateOverlayBlending}
             intl={intl}
+            infoHelper={
+              <InfoHelper
+                id={`overlayBlending-description`}
+                description={'overlayBlending.description'}
+              />
+            }
           />
         </div>
       );

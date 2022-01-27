@@ -239,11 +239,11 @@ export default class ArcLayer extends Layer {
     // get bounds from arcs
     const getPosition = this.getPositionAccessor(dataContainer);
 
-    const sBounds = this.getPointsBounds(dataContainer, (d, i) => {
+    const sBounds = this.getPointsBounds(dataContainer, d => {
       const pos = getPosition(d);
       return [pos[0], pos[1]];
     });
-    const tBounds = this.getPointsBounds(dataContainer, (d, i) => {
+    const tBounds = this.getPointsBounds(dataContainer, d => {
       const pos = getPosition(d);
       return [pos[3], pos[4]];
     });

@@ -34,7 +34,6 @@ export function findMapBounds(layers: Layer[]): Bounds | null {
   // find bounds in formatted layerData
   // take ALL layers into account when finding map bounds
   const availableLayerBounds: Bounds | [] = layers.reduce((res, l) => {
-    // @ts-expect-error
     if (l.meta && l.meta.bounds) {
       // @ts-expect-error
       res.push(l.meta.bounds);

@@ -63,7 +63,10 @@ export const getValueAggrFunc = getPointData => (field, aggregation) => points =
       )
     : points.length;
 
-export const getFilterDataFunc = (filterRange, getFilterValue) => pt =>
+export const getFilterDataFunc = (
+  filterRange,
+  getFilterValue: (d: any) => number[]
+): ((d: any) => boolean) => pt =>
   getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
 
 const getLayerColorRange = (colorRange: ColorRange) => colorRange.colors.map(hexToRgb);
