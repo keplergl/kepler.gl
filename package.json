@@ -1,8 +1,8 @@
 {
-  "name": "erasme-kepler.gl",
+  "name": "kepler.gl",
   "author": "Shan He <shan@uber.com>",
-  "version": "2.5.6",
-  "description": "forked version of kepler.gl is a webgl based application to visualize large scale location data in the browser",
+  "version": "2.5.4",
+  "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "main": "dist/index.js",
   "keywords": [
@@ -15,7 +15,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/datatlas-erasme/kepler.gl"
+    "url": "https://github.com/keplergl/kepler.gl.git"
   },
   "scripts": {
     "install:example": "cd examples/demo-app && yarn",
