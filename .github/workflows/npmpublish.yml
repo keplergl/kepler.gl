@@ -1,10 +1,9 @@
 name: Node.js Package
 
 on:
-  push:
-    branches:
-      - 'add-multiple-value-column'
-  workflow_dispatch:
+  release:
+    types: [created]
+    workflow_dispatch:
 
 jobs:
   publish-npm:
