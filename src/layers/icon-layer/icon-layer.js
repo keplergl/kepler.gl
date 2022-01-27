@@ -30,7 +30,7 @@ import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 
 const brushingExtension = new BrushingExtension();
 
-export const SVG_ICON_URL = `${CLOUDFRONT}/icons.json`;
+export const SVG_ICON_URL = `${CLOUDFRONT}/icons/svg-icons.json`;
 
 export const iconPosAccessor = ({lat, lng, altitude}) => d => [
   d.data[lng.fieldIdx],
