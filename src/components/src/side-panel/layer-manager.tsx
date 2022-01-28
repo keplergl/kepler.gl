@@ -166,7 +166,7 @@ function LayerManagerFactory(
       visStateActions.addLayer(undefined, dataset);
     };
 
-    _toggleLayerPanelListView = (listView: string) => {
+    _toggleLayerPanelListView = (listView: LayerPanelListView) => {
       const {uiStateActions} = this.props;
       uiStateActions.toggleLayerPanelListView(listView);
     };
@@ -214,16 +214,13 @@ function LayerManagerFactory(
               <PanelTitle className="layer-manager-title">
                 <FormattedMessage id={panelMetadata.label} />
               </PanelTitle>
-              {defaultDataset ? (
-                // TODO replace ignore
-                // @ts-ignore
-                <AddLayerButton
-                  datasets={datasets}
-                  typeaheadPlaceholder="Search datasets"
-                  intl={intl}
-                  onOptionSelected={this._addEmptyNewLayer}
-                />
-              ) : null}
+              <AddLayerButton
+                datasets={datasets}
+                typeaheadPlaceholder="Search datasets"
+                intl={intl}
+                onOptionSelected={this._addEmptyNewLayer}
+                disabled={!defaultDataset}
+              />
             </LayerHeader>
           </SidePanelSection>
           <SidePanelSection>

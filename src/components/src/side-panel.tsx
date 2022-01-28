@@ -224,7 +224,7 @@ export default function SidePanelFactory(
         <StyledSidePanelContent className="side-panel__content">
           <div className="side-panel__content__inner">
             {currentPanel?.id !== 'layer' ? (
-              <PanelTitle>
+              <PanelTitle className="side-panel__content__title">
                 <FormattedMessage id={currentPanel?.label} />
               </PanelTitle>
             ) : null}
