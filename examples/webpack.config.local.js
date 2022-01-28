@@ -110,6 +110,7 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
     devtool: 'source-map',
 
     resolve: {
+      extensions: ['.tsx', '.ts', '.js'],
       alias: resolveAlias
     },
 
@@ -117,7 +118,7 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
       rules: [
         {
           // Unfortunately, webpack doesn't import library source maps on its own...
-          test: /\.js$/,
+          test: /\.(js|ts|tsx)$/,
           use: ['source-map-loader'],
           enforce: 'pre',
           exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/]
@@ -139,7 +140,7 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
 function makeBabelRule(env, exampleDir) {
   return {
     // Compile source using babel
-    test: /\.js$/,
+    test: /\.(js|ts|tsx)$/,
     loader: 'babel-loader',
     include: [
       ...(env.deck || env.deck_src
@@ -164,7 +165,7 @@ function makeBabelRule(env, exampleDir) {
         ? [/node_modules\/(?!(@deck\.gl|@luma\.gl|@probe\.gl|probe.gl|@loaders\.gl)\/).*/]
         : [/node_modules/],
     options: {
-      presets: ['@babel/preset-env', '@babel/preset-react'],
+      presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
       plugins: [
         '@babel/plugin-proposal-class-properties',
         '@babel/plugin-proposal-optional-chaining',

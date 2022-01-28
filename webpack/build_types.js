@@ -30,11 +30,15 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
     warnings: false
   },
 
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js']
+  },
+
   // let's put everything in
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts|tsx)$/,
         loader: 'babel-loader',
         include: [SRC_DIR]
       }

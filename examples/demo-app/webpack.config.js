@@ -37,12 +37,16 @@ const CONFIG = {
     publicPath: '/'
   },
 
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js']
+  },
+
   devtool: 'source-map',
 
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts|tsx)$/,
         loader: 'babel-loader',
         include: [join(__dirname, 'src')],
         exclude: [/node_modules/]

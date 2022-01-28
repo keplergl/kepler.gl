@@ -29,7 +29,7 @@ const libSources = join(rootDir, 'src');
 const console = require('global/console');
 
 const BABEL_CONFIG = {
-  presets: ['@babel/preset-env', '@babel/preset-react'],
+  presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
   plugins: [
     '@babel/plugin-proposal-class-properties',
     '@babel/plugin-proposal-export-namespace-from',
@@ -66,6 +66,7 @@ const COMMON_CONFIG = {
   },
 
   resolve: {
+    extensions: ['.tsx', '.ts', '.js', '.jsx', '.json'],
     alias: {
       'kepler.gl/dist': libSources,
       // Imports the kepler.gl library from the src directory in this repo
@@ -82,7 +83,7 @@ const COMMON_CONFIG = {
     rules: [
       {
         // Compile ES2015 using bable
-        test: /\.js$/,
+        test: /\.(js|jsx|ts|tsx)$/,
         loader: 'babel-loader',
         options: BABEL_CONFIG,
         exclude: [/node_modules/]

@@ -83,11 +83,13 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
       root: 'styled'
     }
   },
-
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js']
+  },
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts|tsx)$/,
         loader: 'babel-loader',
         include: [SRC_DIR],
         options: {

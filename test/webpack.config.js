@@ -38,21 +38,25 @@ const COMMON_CONFIG = {
   },
   devtool: 'inline-source-maps',
 
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js']
+  },
+
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts|tsx)$/,
         use: ['source-map-loader'],
         enforce: 'pre'
       },
       {
-        test: /\.js$/,
+        test: /\.(js|ts|tsx)$/,
         loader: 'babel-loader',
         include: [SRC_DIR, TEST_DIR],
         exclude: [/node_modules/],
         options: {
           rootMode: 'upward',
-          presets: ['@babel/preset-env', '@babel/preset-react'],
+          presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
           plugins: [
             '@babel/plugin-proposal-class-properties',
             '@babel/plugin-proposal-export-namespace-from',

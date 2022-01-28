@@ -42,6 +42,7 @@
     "@babel/plugin-proposal-export-namespace-from": "^7.2.0",
     "@babel/preset-env": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
+    "@babel/preset-typescript": "^7.16.7",
     "babel-eslint": "^9.0.0",
     "babel-loader": "^8.0.0",
     "babel-plugin-module-resolver": "^3.0.0",
