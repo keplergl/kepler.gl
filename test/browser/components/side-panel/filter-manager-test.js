@@ -29,7 +29,8 @@ import {
   Button,
   FilterPanelHeaderFactory,
   NewFilterPanelFactory,
-  appInjector
+  appInjector,
+  AddFilterButtonFactory
 } from '@kepler.gl/components';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
@@ -45,9 +46,11 @@ const FilterPanel = appInjector.get(FilterPanelFactory);
 const NewFilterPanel = appInjector.get(NewFilterPanelFactory);
 const FilterPanelHeader = appInjector.get(FilterPanelHeaderFactory);
 const FieldSelector = appInjector.get(FieldSelectorFactory);
+const AddFilterButton = appInjector.get(AddFilterButtonFactory);
 
 // mock state
 import {StateWFilters, InitialState, applyActions, csvInfo} from 'test/helpers/mock-state';
+import {clickItemSelectList} from '../../../helpers/component-utils';
 
 const nop = () => {};
 // default props from initial state
@@ -56,6 +59,13 @@ const defaultProps = {
   datasets: {},
   layers: [],
   showDatasetTable: nop,
+  updateTableColor: nop,
+  removeDataset: nop,
+  showAddDataModal: nop,
+  panelMetadata: {
+    label: 'sidebar.panels.filter'
+  },
+  panelListView: 'list',
   visStateActions: {
     addFilter: nop,
     setFilter: nop,
@@ -63,23 +73,18 @@ const defaultProps = {
     enlargeFilter: nop,
     toggleAnimation: nop,
     toggleFilterFeature: nop
+  },
+  uiStateActions: {
+    togglePanelListView: nop
   }
 };
 
 // components
 const filterManagerProps = {
+  ...defaultProps,
   filters: StateWFilters.visState.filters,
   datasets: StateWFilters.visState.datasets,
-  layers: StateWFilters.visState.layers,
-  showDatasetTable: nop,
-  visStateActions: {
-    addFilter: nop,
-    setFilter: nop,
-    removeFilter: nop,
-    enlargeFilter: nop,
-    toggleAnimation: nop,
-    toggleFilterFeature: nop
-  }
+  layers: StateWFilters.visState.layers
 };
 
 test('Components -> FilterManager.mount -> no prop', t => {
@@ -95,15 +100,7 @@ test('Components -> FilterManager.mount -> no prop', t => {
 
   t.ok(wrapper.find('.filter-manager').length === 1, 'should render Filter Manager');
   t.ok(wrapper.find(SourceDataCatalog).length === 1, 'should render SourceDataCatalog');
-  t.ok(wrapper.find(Button).length === 1, 'should render add filter button');
-  t.equal(
-    wrapper
-      .find(Button)
-      .at(0)
-      .props().inactive,
-    true,
-    'inactive should be true'
-  );
+  t.equal(wrapper.find(AddFilterButton).length, 1, 'should render add filter button');
 
   t.end();
 });
@@ -125,11 +122,11 @@ test('Components -> FilterManager.mount -> with prop', t => {
         <FilterManager {...newProps} />
       </IntlWrapper>
     );
-  }, 'FilterManager should not fail without props');
+  }, 'FilterManager should not fail w/ props');
 
   t.ok(wrapper.find('.filter-manager').length === 1, 'should render Filter Manager');
   t.ok(wrapper.find(SourceDataCatalog).length === 1, 'should render SourceDataCatalog');
-  t.ok(wrapper.find(Button).length === 1, 'should render add filter button');
+  t.equal(wrapper.find(Button).length, 2, 'should render 2 buttons');
   t.ok(wrapper.find(FilterPanel).length === 2, 'should render 2 FilterPanel');
 
   // stateless component don't have a instance()
@@ -140,15 +137,34 @@ test('Components -> FilterManager.mount -> with prop', t => {
 
   t.equal(filter1Props.filter, filterManagerProps.filters[1], 'should render last filter first');
   t.equal(filter1Props.isAnyFilterAnimating, false, 'isAnyFilterAnimating is false');
-  const addFilterButton = wrapper.find(Button).at(0);
-  // .instance();
-  addFilterButton.simulate('click');
+
+  t.equal(wrapper.find('.list__item').length, 2, 'should render 2 options');
+  clickItemSelectList(wrapper, 1);
 
   t.deepEqual(
     addFilter.args,
-    [[Object.keys(StateWFilters.visState.datasets)[0]]],
+    [[Object.keys(StateWFilters.visState.datasets)[1]]],
     'Should call addFilter with 1st dataset'
   );
+
+  t.end();
+});
+
+test('Components -> FilterManager.mount -> order by dataset view', t => {
+  const newProps = {
+    ...filterManagerProps,
+    panelListView: 'byDataset'
+  };
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <FilterManager {...newProps} />
+      </IntlWrapper>
+    );
+  }, 'FilterManager should not fail w/ props');
+
+  t.equal(wrapper.find('DatasetFilterSection').length, 2, 'should render 2 DatasetFilterSection');
 
   t.end();
 });
@@ -188,6 +204,9 @@ test('Components -> FilterManager.mount -> with supportedFilterTypes', t => {
     datasets: stateWithEmptyFilter.visState.datasets,
     layers: stateWithEmptyFilter.visState.layers,
     showDatasetTable: nop,
+    panelMetadata: {
+      label: 'sidebar.panels.filter'
+    },
     visStateActions: {
       addFilter: nop,
       setFilter: nop,
@@ -195,6 +214,9 @@ test('Components -> FilterManager.mount -> with supportedFilterTypes', t => {
       enlargeFilter: nop,
       toggleAnimation: nop,
       toggleFilterFeature: nop
+    },
+    uiStateActions: {
+      togglePanelListView: nop
     }
   };
 

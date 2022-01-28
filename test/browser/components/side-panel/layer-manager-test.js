@@ -115,7 +115,7 @@ test('Components -> LayerManager -> render -> order by dataset view', t => {
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <LayerManager {...defaultProps} layerPanelListView="sortByDataset" />
+        <LayerManager {...defaultProps} panelListView="byDataset" />
       </IntlWrapper>
     );
   }, 'LayerManager should not fail');

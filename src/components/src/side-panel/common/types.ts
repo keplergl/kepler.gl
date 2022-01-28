@@ -1,7 +1,20 @@
-import React, {MouseEvent} from 'react';
+import React from 'react';
 import {openDeleteModal, VisStateActions, ActionHandler} from '@kepler.gl/actions';
 import {RGBColor} from '@kepler.gl/types';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
+
+type MiniDataset = {
+  id: string;
+  color: RGBColor;
+  label?: string;
+};
+
+export type PanelMeta = {
+  id: string;
+  label: string;
+  iconComponent: React.ElementType;
+  onClick: null;
+};
 
 export type DatasetInfoProps = {
   dataset: KeplerTable;
@@ -14,10 +27,10 @@ export type UpdateTableColorTypes = {
 
 export type DatasetTagProps = {
   id?: string;
-  dataset: KeplerTable;
+  dataset: MiniDataset;
   updateTableColor?: ActionHandler<typeof VisStateActions.updateTableColor>;
-  onClick?: (e: MouseEvent) => void;
-  onClickSquare?: (e: MouseEvent) => void;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
+  onClickSquare?: React.MouseEventHandler<HTMLDivElement>;
 };
 
 export type ShowDataTableProps = {

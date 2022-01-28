@@ -19,29 +19,44 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import {useIntl} from 'react-intl';
+
 import {InteractionConfig} from '@kepler.gl/types';
-import InteractionPanelFactory from './interaction-panel/interaction-panel';
 import {VisStateActions} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
+
+import InteractionPanelFactory from './interaction-panel/interaction-panel';
+import PanelTitleFactory from './panel-title';
+
+import {PanelMeta} from './common/types';
 
 type InteractionManagerProps = {
   interactionConfig: InteractionConfig;
   datasets: Datasets;
   visStateActions: typeof VisStateActions;
+  panelMetadata: PanelMeta;
 };
 
-InteractionManagerFactory.deps = [InteractionPanelFactory];
+InteractionManagerFactory.deps = [InteractionPanelFactory, PanelTitleFactory];
 
-function InteractionManagerFactory(InteractionPanel: ReturnType<typeof InteractionPanelFactory>) {
+function InteractionManagerFactory(
+  InteractionPanel: ReturnType<typeof InteractionPanelFactory>,
+  PanelTitle: ReturnType<typeof PanelTitleFactory>
+) {
   const InteractionManager: React.FC<InteractionManagerProps> = ({
     interactionConfig,
     datasets,
-    visStateActions
+    visStateActions,
+    panelMetadata
   }) => {
     const {interactionConfigChange: onConfigChange} = visStateActions;
-
+    const intl = useIntl();
     return (
       <div className="interaction-manager">
+        <PanelTitle
+          className="interaction-manager-title"
+          title={intl.formatMessage({id: panelMetadata.label})}
+        />
         {Object.keys(interactionConfig).map(key => (
           <InteractionPanel
             datasets={datasets}

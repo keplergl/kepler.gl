@@ -23,7 +23,7 @@ import React, {useMemo} from 'react';
 import DatasetLayerSectionFactory from './dataset-layer-section';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
-import {Datasets} from '@kepler.gl/table';
+import {KeplerTable, Datasets} from '@kepler.gl/table';
 
 type DatasetLayerGroupProps = {
   datasets: Datasets;
@@ -58,7 +58,7 @@ function DatasetLayerGroupFactory(
     } = props;
 
     const datasetLayerSectionData = useMemo(() => {
-      return Object.values(datasets).map(dataset => {
+      return Object.values(datasets).map((dataset: KeplerTable) => {
         // Global layer order will contain the correct order of layers
         // We just empty the positions in layers array (for each dataset)
         // where the layer doesn't belong to a dataset and set it to null
@@ -77,6 +77,7 @@ function DatasetLayerGroupFactory(
             key={dlsData.dataset.id}
             dataset={dlsData.dataset}
             layers={dlsData.datasetLayers as Layer[]}
+            datasets={datasets}
             showDatasetTable={showDatasetTable}
             updateTableColor={updateTableColor}
             showDeleteDataset={showDeleteDataset}

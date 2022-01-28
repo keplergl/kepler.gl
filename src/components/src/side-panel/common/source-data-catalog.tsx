@@ -36,7 +36,7 @@ function SourceDataCatalogFactory(
   DatasetTitle: ReturnType<typeof DatasetTitleFactory>,
   DatasetInfo: ReturnType<typeof DatasetInfoFactory>
 ) {
-  const SourceDataCatalog = ({
+  const SourceDataCatalog: React.FC<SourceDataCatalogProps> = ({
     datasets,
     showDatasetTable,
     removeDataset,

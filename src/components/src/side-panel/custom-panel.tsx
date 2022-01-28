@@ -19,10 +19,16 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import {SidePanelItem} from '../types';
+
+export type CustomPanelsProps<P> = {
+  panels: SidePanelItem[];
+  getProps?: (props: SidePanelItem) => P;
+};
 
 // This is a dummy component that can be replaced to inject more side panel sub panels into the side bar
-function CustomPanelsFactory() {
-  const CustomPanels = props => {
+function CustomPanelsFactory<P>() {
+  const CustomPanels: React.FC<CustomPanelsProps<P>> = props => {
     return <div />;
   };
 
@@ -41,7 +47,7 @@ function CustomPanelsFactory() {
       // }
     ],
     // prop selector from side panel props
-    getProps: sidePanelProps => ({})
+    getProps: (sidePanelProps: SidePanelItem) => ({} as P)
   };
 
   return CustomPanels;

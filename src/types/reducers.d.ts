@@ -356,7 +356,7 @@ export type Notifications = {
 
 export type Locale = string;
 
-export type LayerPanelListView = 'list' | 'sortByDataset';
+export type PanelListView = string;
 
 export type UiState = {
   readOnly: boolean;
@@ -378,7 +378,10 @@ export type UiState = {
   loadFiles: LoadFiles;
   // Locale of the UI
   locale: Locale;
-  layerPanelListView: LayerPanelListView;
+  // view layers by list or dataset
+  layerPanelListView: PanelListView;
+  // view filters by list or dataset
+  filterPanelListView: PanelListView;
 };
 
 /** Width of viewport */

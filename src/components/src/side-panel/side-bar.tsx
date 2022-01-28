@@ -24,14 +24,14 @@ import {ArrowRight} from '../common/icons';
 
 type CollapseButtonProps = {
   isOpen: boolean;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent<HTMLDivElement>) => void;
 };
 
 type SideBarProps = {
   width: number;
   isOpen: boolean;
   minifiedWidth: number;
-  onOpenOrClose: (v: {isOpen: boolean}) => void;
+  onOpenOrClose: (arg: {isOpen: boolean}) => void;
 };
 
 const StyledSidePanelContainer = styled.div<{width: number}>`

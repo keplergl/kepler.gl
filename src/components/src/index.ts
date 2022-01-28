@@ -86,7 +86,7 @@ export {
 } from './side-panel/layer-panel/dataset-section';
 export {default as DatasetLayerSectionFactory} from './side-panel/layer-panel/dataset-layer-section';
 export {default as DatasetLayerGroupFactory} from './side-panel/layer-panel/dataset-layer-group';
-export {default as PanelViewListToggleFactory} from './side-panel/layer-panel/panel-view-list-toggle';
+export {default as PanelViewListToggleFactory} from './side-panel/panel-view-list-toggle';
 export {default as AddLayerButtonFactory} from './side-panel/layer-panel/add-layer-button';
 export {default as LayerListFactory} from './side-panel/layer-panel/layer-list';
 export {default as CustomPicker} from './side-panel/layer-panel/custom-picker';
@@ -100,6 +100,7 @@ export {default as DatasetTagFactory} from './side-panel/common/dataset-tag';
 
 export {default as FilterManagerFactory} from './side-panel/filter-manager';
 export {default as FilterPanelFactory} from './side-panel/filter-panel/filter-panel';
+export {default as AddFilterButtonFactory} from './side-panel/filter-panel/add-filter-button';
 
 export {default as InteractionManagerFactory} from './side-panel/interaction-manager';
 export {default as BrushConfigFactory} from './side-panel/interaction-panel/brush-config';

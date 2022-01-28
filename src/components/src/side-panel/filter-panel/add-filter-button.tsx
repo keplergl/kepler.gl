@@ -19,28 +19,28 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import styled from 'styled-components';
-import {format} from 'd3-format';
-import {FormattedMessage} from '@kepler.gl/localization';
-import {DatasetInfoProps} from './types';
+import {Datasets} from '@kepler.gl/table';
+import AddByDatasetButton from '../add-by-dataset-button';
 
-const numFormat = format(',');
+export type AddFilterButtonProps = {
+  datasets: Datasets;
+  onAdd: (dataId: string) => void;
+};
 
-const StyledDataRowCount = styled.div`
-  font-size: 11px;
-  color: ${props => props.theme.subtextColor};
-  padding-left: 19px;
-`;
-
-export default function DatasetInfoFactory() {
-  const DatasetInfo: React.FC<DatasetInfoProps> = ({dataset}: DatasetInfoProps) => (
-    <StyledDataRowCount className="source-data-rows">
-      <FormattedMessage
-        id={'datasetInfo.rowCount'}
-        values={{rowCount: numFormat(dataset.dataContainer.numRows())}}
+function AddFilterButtonFactory() {
+  const AddFilterButton: React.FC<AddFilterButtonProps> = ({datasets, onAdd}) => {
+    return (
+      <AddByDatasetButton
+        datasets={datasets}
+        className="add-filter-button"
+        width="105px"
+        onAdd={onAdd}
+        buttonIntlId="filterManager.addFilter"
       />
-    </StyledDataRowCount>
-  );
+    );
+  };
 
-  return DatasetInfo;
+  return AddFilterButton;
 }
+
+export default AddFilterButtonFactory;

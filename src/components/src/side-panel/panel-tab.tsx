@@ -37,7 +37,7 @@ export type PanelItem = {
 type PanelTabProps = {
   isActive: boolean;
   panel: PanelItem;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent<HTMLDivElement>) => void;
 };
 
 export const StyledPanelTab = styled.div.attrs({

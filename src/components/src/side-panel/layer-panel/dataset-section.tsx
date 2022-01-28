@@ -35,16 +35,15 @@ type AddDataButtonProps = {
 
 type DatasetSectionProps = {
   datasets: Datasets;
-  defaultDataset: string;
-  showDatasetList: boolean;
-  showDeleteDataset: boolean;
+  showDatasetList?: boolean;
+  showDeleteDataset?: boolean;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
   showAddDataModal: () => void;
 };
 
-const StyledDatasetTitle = styled.div<{showDatasetList: boolean}>`
+const StyledDatasetTitle = styled.div<{showDatasetList?: boolean}>`
   line-height: ${props => props.theme.sidePanelTitleLineHeight};
   font-weight: 400;
   letter-spacing: 1.25px;
@@ -93,16 +92,15 @@ function DatasetSectionFactory(
       showDeleteDataset,
       removeDataset,
       showDatasetList,
-      showAddDataModal,
-      defaultDataset
+      showAddDataModal
     } = props;
     const datasetCount = Object.keys(datasets).length;
 
     return (
       <StyledDatasetSection>
         <StyledDatasetTitle showDatasetList={showDatasetList}>
-          <span>Datasets ({datasetCount})</span>
-          <AddDataButton onClick={showAddDataModal} isInactive={!defaultDataset} />
+          <span>Datasets{datasetCount ? `(${datasetCount})` : ''}</span>
+          <AddDataButton onClick={showAddDataModal} isInactive={!datasetCount} />
         </StyledDatasetTitle>
         {showDatasetList && (
           <SourceDataCatalog

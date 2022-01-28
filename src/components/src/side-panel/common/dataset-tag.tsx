@@ -24,6 +24,8 @@ import styled from 'styled-components';
 import {DatasetSquare, Tooltip} from '../..';
 import {DatasetTagProps, UpdateTableColorTypes} from './types';
 
+function nop(_) {}
+
 const DatasetTagWrapper = styled.div`
   display: flex;
   color: ${props => props.theme.textColor};
@@ -58,7 +60,12 @@ const UpdateTableColor = ({children, id}: UpdateTableColorTypes) => (
 );
 
 export default function DatasetTagFactory(): React.FC<DatasetTagProps> {
-  const DatasetTag = ({onClick, onClickSquare, dataset, updateTableColor, id}: DatasetTagProps) => (
+  const DatasetTag = ({
+    onClick = nop,
+    onClickSquare = nop,
+    dataset,
+    updateTableColor
+  }: DatasetTagProps) => (
     <DatasetTagWrapper className="source-data-tag">
       <UpdateTableColor id={dataset.id}>
         <DatasetSquare
@@ -66,10 +73,10 @@ export default function DatasetTagFactory(): React.FC<DatasetTagProps> {
           backgroundColor={dataset.color}
           onClick={onClickSquare}
           data-tip
-          data-for={`update-color-${id}`}
+          data-for={`update-color-${dataset.id}`}
         />
         {updateTableColor ? (
-          <Tooltip id={`update-color-${id}`} effect="solid">
+          <Tooltip id={`update-color-${dataset.id}`} effect="solid">
             <span>
               <FormattedMessage id={'Update color'} />
             </span>

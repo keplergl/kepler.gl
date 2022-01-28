@@ -20,11 +20,12 @@
 
 import React, {useMemo} from 'react';
 import styled from 'styled-components';
-import OrderByList from '../../common/icons/order-by-list';
-import OrderByDataset from '../../common/icons/order-by-dataset';
-import {Tooltip} from '../../common/styled-components';
+import OrderByList from '../common/icons/order-by-list';
+import OrderByDataset from '../common/icons/order-by-dataset';
+import {Tooltip} from '../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {LayerPanelListView} from '@kepler.gl/types';
+import {PanelListView} from '@kepler.gl/types';
+import {PANEL_VIEW_TOGGLES} from '@kepler.gl/constants';
 
 type ToggleOptionProps = {
   isActive: boolean;
@@ -33,8 +34,8 @@ type ToggleOptionProps = {
 };
 
 type PanelViewListToggleProps = {
-  layerPanelListViewMode: LayerPanelListView;
-  toggleLayerPanelListView: (view: string) => void;
+  mode: PanelListView;
+  togglePanelListView: (view: string) => void;
 };
 
 const PanelViewListToggleContainer = styled.div.attrs({
@@ -53,13 +54,10 @@ const PanelViewListToggleWrapper = styled.div.attrs({
 export const StyledToggleOption = styled.div.attrs({
   className: 'layer-panel-toggle-option'
 })<{active: boolean}>`
-  color: ${props =>
-    props.active
-      ? props.theme.layerPanelToggleOptionColorActive
-      : props.theme.layerPanelToggleOptionColor};
+  color: ${props => (props.active ? props.theme.subtextColorActive : props.theme.panelTabColor)};
   :hover {
     cursor: pointer;
-    color: ${props => props.theme.layerPanelToggleOptionColorActive};
+    color: ${props => props.theme.subtextColorActive};
   }
 `;
 
@@ -85,29 +83,26 @@ function ToggleOptionFactory() {
 
 const TOGGLE_OPTIONS = [
   {
-    id: 'list',
+    id: PANEL_VIEW_TOGGLES.list,
     iconComponent: OrderByList,
-    value: 'list',
-    label: 'List'
+    label: 'sidebar.panelViewToggle.list'
   },
   {
-    id: 'sort-by-dataset',
+    id: PANEL_VIEW_TOGGLES.byDataset,
     iconComponent: OrderByDataset,
-    value: 'sortByDataset',
-    label: 'Sort by dataset'
+    label: 'sidebar.panelViewToggle.byDataset'
   }
 ];
 
 PanelViewListToggleFactory.deps = [ToggleOptionFactory];
 
 function PanelViewListToggleFactory(ToggleOption: ReturnType<typeof ToggleOptionFactory>) {
-  const PanelViewListToggle: React.FC<PanelViewListToggleProps> = props => {
-    const {layerPanelListViewMode, toggleLayerPanelListView} = props;
+  const PanelViewListToggle: React.FC<PanelViewListToggleProps> = ({mode, togglePanelListView}) => {
+    const toggleListView = listView => togglePanelListView(listView);
 
-    const toggleListView = (listView: string) => toggleLayerPanelListView(listView);
     const options = useMemo(
-      () => TOGGLE_OPTIONS.map(opt => ({...opt, isActive: layerPanelListViewMode === opt.value})),
-      [layerPanelListViewMode]
+      () => TOGGLE_OPTIONS.map(opt => ({...opt, isActive: mode === opt.id})),
+      [mode]
     );
 
     return (
@@ -116,7 +111,7 @@ function PanelViewListToggleFactory(ToggleOption: ReturnType<typeof ToggleOption
           {options.map(opt => (
             <ToggleOption
               key={opt.id}
-              onClick={() => toggleListView(opt.value)}
+              onClick={() => toggleListView(opt.id)}
               option={opt}
               isActive={opt.isActive}
             />

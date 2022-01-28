@@ -453,24 +453,30 @@ export const setLocale: (
   })
 );
 
-/** TOGGLE_LAYER_PANEL_LIST_VIEW */
-export type ToggleLayerPanelListViewAction = {
-  payload: string;
+/** TOGGLE_PANEL_LIST_VIEW */
+export type TogglePanelListViewAction = {
+  payload: {
+    panelId: string;
+    listView: string;
+  };
 };
+
 /**
  * Toggle layer panel list view
  * @memberof uiStateActions
- * @param listView layer panel listView value. Can be 'list' or 'sortByDataset'
+ * @param payload
+ * @param payload.panelId panel id.
+ * @param payload.listView layer panel listView value. Can be 'list' or 'sortByDataset'
  * @public
  */
-export const toggleLayerPanelListView: (
-  listView: ToggleLayerPanelListViewAction['payload']
+export const togglePanelListView: (
+  payload: TogglePanelListViewAction['payload']
 ) => Merge<
-  ToggleLayerPanelListViewAction,
-  {type: typeof ActionTypes.TOGGLE_LAYER_PANEL_LIST_VIEW}
+  TogglePanelListViewAction,
+  {type: typeof ActionTypes.TOGGLE_PANEL_LIST_VIEW}
 > = createAction(
-  ActionTypes.TOGGLE_LAYER_PANEL_LIST_VIEW,
-  (listView: ToggleLayerPanelListViewAction['payload']) => ({payload: listView})
+  ActionTypes.TOGGLE_PANEL_LIST_VIEW,
+  (payload: TogglePanelListViewAction['payload']) => ({payload})
 );
 
 /**
