@@ -152,6 +152,9 @@ export function getLayerHoverProp({
       }
       const {dataContainer, fields} = datasets[dataId];
       const data: DataRow | null = layer.getHoverData(object, dataContainer, fields);
+      if (!data) {
+        return null;
+      }
       const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
 
       return {

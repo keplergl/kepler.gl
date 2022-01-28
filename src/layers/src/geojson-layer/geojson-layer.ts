@@ -322,7 +322,11 @@ export default class GeoJsonLayer extends Layer {
 
   getHoverData(object, dataContainer) {
     // index of dataContainer is saved to feature.properties
-    return dataContainer.row(object.properties.index);
+    const index = object?.properties?.index;
+    if (index >= 0) {
+      return dataContainer.row(index);
+    }
+    return null;
   }
 
   calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
