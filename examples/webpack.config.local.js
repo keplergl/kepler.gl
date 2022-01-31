@@ -111,6 +111,7 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
 
     resolve: {
       extensions: ['.tsx', '.ts', '.js'],
+      modules: ['node_modules', SRC_DIR],
       alias: resolveAlias
     },
 
@@ -170,12 +171,6 @@ function makeBabelRule(env, exampleDir) {
         '@babel/plugin-proposal-class-properties',
         '@babel/plugin-proposal-optional-chaining',
         '@babel/plugin-proposal-export-namespace-from',
-        [
-          'module-resolver',
-          {
-            root: [SRC_DIR]
-          }
-        ],
         [
           'search-and-replace',
           {
@@ -260,6 +255,8 @@ module.exports = (exampleConfig, exampleDir) => env => {
     }))
     .then(externals => {
       const config = addLocalDevSettings(env, exampleConfig, exampleDir, externals);
-      return addBabelSettings(env, config, exampleDir, externals);
+      const babelSettings = addBabelSettings(env, config, exampleDir, externals);
+      console.log("babel settings:", babelSettings.module.rules.find(el => el.loader === 'babel-loader').options)
+      return babelSettings
     });
 };

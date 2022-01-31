@@ -35,15 +35,6 @@ const BABEL_CONFIG = {
     '@babel/plugin-proposal-export-namespace-from',
     '@babel/plugin-proposal-optional-chaining',
     [
-      'module-resolver',
-      {
-        root: ['../src'],
-        alias: {
-          test: '../test'
-        }
-      }
-    ],
-    [
       'search-and-replace',
       {
         rules: [
@@ -66,7 +57,8 @@ const COMMON_CONFIG = {
   },
 
   resolve: {
-    extensions: ['.tsx', '.ts', '.js', '.jsx', '.json'],
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+    modules: ['node_modules', libSources],
     alias: {
       'kepler.gl/dist': libSources,
       // Imports the kepler.gl library from the src directory in this repo
