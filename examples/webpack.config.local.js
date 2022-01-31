@@ -255,8 +255,6 @@ module.exports = (exampleConfig, exampleDir) => env => {
     }))
     .then(externals => {
       const config = addLocalDevSettings(env, exampleConfig, exampleDir, externals);
-      const babelSettings = addBabelSettings(env, config, exampleDir, externals);
-      console.log("babel settings:", babelSettings.module.rules.find(el => el.loader === 'babel-loader').options)
-      return babelSettings
+      return addBabelSettings(env, config, exampleDir, externals);
     });
 };
