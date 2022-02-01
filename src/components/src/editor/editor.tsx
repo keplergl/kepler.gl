@@ -24,7 +24,6 @@ import window from 'global/window';
 import classnames from 'classnames';
 import get from 'lodash.get';
 import {createSelector} from 'reselect';
-
 import FeatureActionPanelFactory, {FeatureActionPanelProps} from './feature-action-panel';
 import {
   EDITOR_AVAILABLE_LAYERS,
@@ -38,7 +37,9 @@ import {Filter, FeatureSelectionContext} from '@kepler.gl/types';
 import {Feature} from '@nebula.gl/edit-modes';
 import {Datasets} from '@kepler.gl/table';
 
-const StyledWrapper = styled.div<{editor: any}>`
+const DECKGL_RENDER_LAYER = 'default-deckgl-overlay-wrapper';
+
+const StyledWrapper = styled.div`
   position: relative;
 `;
 
@@ -106,28 +107,35 @@ export default function EditorFactory(
           .concat(editorFeatures)
     );
 
-    _onKeyPressed = (event: KeyboardEvent) => {
-      switch (event.keyCode) {
-        case KeyEvent.DOM_VK_DELETE:
-        case KeyEvent.DOM_VK_BACK_SPACE:
-          this._onDeleteSelectedFeature();
-          break;
-        case KeyEvent.DOM_VK_ESCAPE:
-          // reset active drawing
-          if (EditorLayerUtils.isDrawingActive(true, this.props.editor.mode)) {
-            this.props.onSetEditorMode(EDITOR_MODES.EDIT);
-          }
+    isInFocus = () => document.activeElement?.id === DECKGL_RENDER_LAYER;
 
-          this.props.onSelect(null);
-          break;
-        default:
-          break;
+    _onKeyPressed = (event: KeyboardEvent) => {
+      if (this.isInFocus()) {
+        switch (event.keyCode) {
+          case KeyEvent.DOM_VK_DELETE:
+          case KeyEvent.DOM_VK_BACK_SPACE:
+            this._onDeleteSelectedFeature();
+            break;
+          case KeyEvent.DOM_VK_ESCAPE:
+            // reset active drawing
+            if (EditorLayerUtils.isDrawingActive(true, this.props.editor.mode)) {
+              this.props.onSetEditorMode(EDITOR_MODES.EDIT);
+            }
+
+            this.props.onSelect(null);
+            break;
+          default:
+            break;
+        }
       }
     };
 
     _onDeleteSelectedFeature = () => {
       const {editor} = this.props;
-      this.props.onDeleteFeature(editor.selectedFeature || {});
+      const {selectedFeature} = editor;
+      if (selectedFeature) {
+        this.props.onDeleteFeature(selectedFeature);
+      }
     };
 
     _closeFeatureAction = () => {
@@ -138,11 +146,9 @@ export default function EditorFactory(
 
     _togglePolygonFilter = (layer: Layer) => {
       const {selectedFeature} = this.props.editor;
-      if (!selectedFeature) {
-        return;
+      if (selectedFeature) {
+        this.props.onTogglePolygonFilter(layer, selectedFeature);
       }
-
-      this.props.onTogglePolygonFilter(layer, selectedFeature);
     };
 
     render() {
@@ -154,7 +160,7 @@ export default function EditorFactory(
       const {rightClick, position, mapIndex} = selectionContext || {};
 
       return (
-        <StyledWrapper editor={editor} className={classnames('editor', className)} style={style}>
+        <StyledWrapper className={classnames('editor', className)} style={style}>
           {Boolean(rightClick) && selectedFeature && index === mapIndex ? (
             <FeatureActionPanel
               selectedFeature={selectedFeature}
