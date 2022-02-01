@@ -43,7 +43,8 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
     publicPath: '/'
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js']
+    extensions: ['.tsx', '.ts', '.js'],
+    modules: ['node_modules', SRC_DIR]
   },
   // let's put everything in
   module: {

@@ -84,7 +84,8 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
     }
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js']
+    extensions: ['.tsx', '.ts', '.js'],
+    modules: ['node_modules', SRC_DIR]
   },
   module: {
     rules: [
