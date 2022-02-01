@@ -582,7 +582,8 @@ export function layerTypeChangeUpdater(
   let newLayer = new state.layerClasses[newType]({
     // keep old layer lable and isConfigActive
     label: oldLayer.config.label,
-    isConfigActive: oldLayer.config.isConfigActive
+    isConfigActive: oldLayer.config.isConfigActive,
+    dataId: oldLayer.config.dataId
   });
 
   if (!oldLayer.type) {
@@ -1142,7 +1143,8 @@ export const addLayerUpdater = (
     ...state,
     layers: [...state.layers, newLayer],
     layerData: [...state.layerData, newLayerData],
-    layerOrder: [...state.layerOrder, state.layerOrder.length],
+    // add new layer at the top
+    layerOrder: [state.layerOrder.length, ...state.layerOrder],
     splitMaps: addNewLayersToSplitMap(state.splitMaps, newLayer)
   };
 };
@@ -1210,11 +1212,13 @@ export const duplicateLayerUpdater = (
 
   // add layer to state
   let nextState = addLayerUpdater(state, {config: loadedLayer});
-
-  // new added layer are at the end, move it to be on top of original layer
-  const newLayerOrderIdx = nextState.layerOrder.length - 1;
+  // lahyers: ['a', 'b', 'c', 'd']
+  // order: [3, 0, 1, 2]
+  // [0, 3, 1, 2]
+  // new added layer are at the top, move it to be on top of original layer
+  const newLayerOrderIdx = nextState.layers.length - 1;
   const newLayerOrder = arrayInsert(
-    nextState.layerOrder.slice(0, newLayerOrderIdx),
+    nextState.layerOrder.slice(1, nextState.layerOrder.length),
     originalLayerOrderIdx,
     newLayerOrderIdx
   );
