@@ -198,7 +198,13 @@ export const PANELS = SIDEBAR_PANELS;
 
 // MAP STYLES
 
-export const DEFAULT_LAYER_GROUPS = [
+type DEFAULT_LAYER_GROUP = {
+  slug: string;
+  filter: (value) => boolean;
+  defaultVisibility: boolean;
+};
+
+export const DEFAULT_LAYER_GROUPS: DEFAULT_LAYER_GROUP[] = [
   {
     slug: 'label',
     filter: ({id}) => id.match(/(?=(label|place-|poi-))/),
@@ -281,7 +287,7 @@ export const ICON_FIELDS = {
   icon: ['icon']
 };
 
-export const TRIP_POINT_FIELDS = [
+export const TRIP_POINT_FIELDS: [string, string][] = [
   ['lat', 'lng'],
   ['lat', 'lon'],
   ['latitude', 'longitude']
@@ -632,9 +638,9 @@ export const DEFAULT_LAYER_COLOR = {
 };
 
 // let user pass in default tooltip fields
-export const DEFAULT_TOOLTIP_FIELDS = [];
+export const DEFAULT_TOOLTIP_FIELDS: any[] = [];
 
-export const NO_VALUE_COLOR = [0, 0, 0, 0];
+export const NO_VALUE_COLOR: [number, number, number, number] = [0, 0, 0, 0];
 
 export const LAYER_BLENDINGS = {
   additive: {
@@ -771,13 +777,13 @@ export const EXPORT_HTML_MAP_MODES = keyMirror({
 });
 
 // Export map options
-export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS).map(entry => ({
+export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS).map((entry: [string, any]) => ({
   id: entry[0],
   label: entry[1].toLowerCase(),
   available: true
 }));
 
-export const EXPORT_HTML_MAP_MODE_OPTIONS = Object.entries(EXPORT_HTML_MAP_MODES).map(entry => ({
+export const EXPORT_HTML_MAP_MODE_OPTIONS = Object.entries(EXPORT_HTML_MAP_MODES).map((entry: [string, any]) => ({
   id: entry[0],
   label: `modal.exportMap.html.${entry[1].toLowerCase()}`,
   available: true,
@@ -836,14 +842,14 @@ export const ANIMATION_WINDOW = keyMirror({
   interval: null
 });
 export const DEFAULT_TIME_FORMAT = 'MM/DD/YY HH:mm:ssa';
-export const SPEED_CONTROL_RANGE = [0, 10];
+export const SPEED_CONTROL_RANGE: [number, number] = [0, 10];
 export const SPEED_CONTROL_STEP = 0.001;
 
 // Geocoder
 export const GEOCODER_DATASET_NAME = 'geocoder_dataset';
 export const GEOCODER_LAYER_ID = 'geocoder_layer';
 export const GEOCODER_GEO_OFFSET = 0.05;
-export const GEOCODER_ICON_COLOR = [255, 0, 0];
+export const GEOCODER_ICON_COLOR: [number, number, number] = [255, 0, 0];
 export const GEOCODER_ICON_SIZE = 80;
 
 // We could use directly react-map-gl-draw EditorMode but this would

@@ -25,7 +25,7 @@ import {VizColorPalette} from './custom-color-ranges';
 // See http://colorbrewer2.org/
 
 const colorBrewerMap = Object.entries(colorbrewer.schemeGroups).reduce(
-  (accu, [type, palettes]) => ({
+  (accu, [type, palettes]: [string, any]) => ({
     ...accu,
     ...palettes.reduce(
       (group, name) => ({
@@ -42,12 +42,12 @@ const colorRanges = [...VizColorPalette];
 
 for (const [keyName, colorScheme] of Object.entries(colorbrewer)) {
   if (keyName !== 'schemeGroups') {
-    for (const [lenKey, colors] of Object.entries(colorScheme)) {
+    for (const [lenKey, colors] of Object.entries(colorScheme as any)) {
       colorRanges.push({
         name: `ColorBrewer ${keyName}-${lenKey}`,
         type: colorBrewerMap[keyName],
         category: 'ColorBrewer',
-        colors
+        colors: colors as any
       });
     }
   }
