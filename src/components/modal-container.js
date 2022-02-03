@@ -173,6 +173,7 @@ export default function ModalContainerFactory(
     };
 
     _onFileUpload = fileList => {
+      // @ts-expect-error
       this.props.visStateActions.loadFiles(fileList);
     };
 
