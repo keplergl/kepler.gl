@@ -19,6 +19,7 @@
     "@babel/plugin-proposal-class-properties": "^7.3.0",
     "@babel/preset-env": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
+    "@babel/preset-typescript": "^7.16.7",
     "babel-loader": "^8.0.0",
     "webpack": "^4.29.0",
     "webpack-cli": "^3.2.1",

@@ -20,7 +20,7 @@
 
 const KeplerPackage = require('./package');
 
-const PRESETS = ['@babel/preset-env', '@babel/preset-react'];
+const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
 const PLUGINS = [
   '@babel/plugin-transform-modules-commonjs',
   '@babel/plugin-proposal-class-properties',
