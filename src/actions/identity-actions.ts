@@ -20,7 +20,18 @@
 
 import {createAction} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
+import {UiState} from 'reducers/ui-state-updaters';
 
+export type RegisterEntryUpdaterAction = {
+  payload: {
+    id: string;
+    mint?: boolean;
+    mapboxApiAccessToken?: string;
+    mapboxApiUrl?: string;
+    mapStylesReplaceDefault?: boolean;
+    initialUiState?: Partial<UiState>;
+  };
+};
 /**
  *
  * Add a new kepler.gl instance in `keplerGlReducer`. This action is called under-the-hood when a `KeplerGl` component is **mounted** to the dom.
@@ -38,7 +49,15 @@ import ActionTypes from 'constants/action-types';
  * @type {typeof import('./identity-actions').registerEntry}
  * @public
  */
-export const registerEntry = createAction(ActionTypes.REGISTER_ENTRY, payload => payload);
+export const registerEntry: (
+  entry: RegisterEntryUpdaterAction['payload']
+) => {
+  type: typeof ActionTypes.REGISTER_ENTRY;
+  payload: RegisterEntryUpdaterAction['payload'];
+} = createAction(
+  ActionTypes.REGISTER_ENTRY,
+  (payload: RegisterEntryUpdaterAction['payload']) => payload
+);
 
 /**
  *
@@ -49,7 +68,12 @@ export const registerEntry = createAction(ActionTypes.REGISTER_ENTRY, payload =>
  * @param {string} id - the id of the instance to be deleted
  * @public
  */
-export const deleteEntry = createAction(ActionTypes.DELETE_ENTRY, id => id);
+export const deleteEntry: (
+  id: string
+) => {type: typeof ActionTypes.DELETE_ENTRY; payload: string} = createAction(
+  ActionTypes.DELETE_ENTRY,
+  (id: string) => id
+);
 
 /**
  *
@@ -60,7 +84,16 @@ export const deleteEntry = createAction(ActionTypes.DELETE_ENTRY, id => id);
  * @param {string} newId - ***required** new id
  * @public
  */
-export const renameEntry = createAction(ActionTypes.RENAME_ENTRY, (oldId, newId) => ({
+export const renameEntry: (
+  oldId: string,
+  newId: string
+) => {
+  type: typeof ActionTypes.RENAME_ENTRY;
+  payload: {
+    oldId: string;
+    newId: string;
+  };
+} = createAction(ActionTypes.RENAME_ENTRY, (oldId: string, newId: string) => ({
   oldId,
   newId
 }));
