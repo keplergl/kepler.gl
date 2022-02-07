@@ -18,13 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {createAction} from 'redux-actions';
+import {createAction} from '@reduxjs/toolkit';
 import {ACTION_PREFIX} from 'constants/action-types';
 import {SavedMap} from 'schemas';
 import {MapListItem, Provider} from 'cloud-providers';
 
-// const assignType = <T>(obj: T): { [K in keyof T]: `${typeof ACTION_PREFIX}${string & K}`; } => obj as any
-export const ActionTypes = {
+const assignType = <T>(obj: T): { [K in keyof T]: `${typeof ACTION_PREFIX}${string & K}`; } => obj as any
+export const ActionTypes = assignType({
   EXPORT_FILE_TO_CLOUD: `${ACTION_PREFIX}EXPORT_FILE_TO_CLOUD`,
   EXPORT_FILE_SUCCESS: `${ACTION_PREFIX}EXPORT_FILE_SUCCESS`,
   EXPORT_FILE_ERROR: `${ACTION_PREFIX}EXPORT_FILE_ERROR`,
@@ -37,7 +37,7 @@ export const ActionTypes = {
   GET_SAVED_MAPS: `${ACTION_PREFIX}GET_SAVED_MAPS`,
   GET_SAVED_MAPS_SUCCESS: `${ACTION_PREFIX}GET_SAVED_MAPS_SUCCESS`,
   GET_SAVED_MAPS_ERROR: `${ACTION_PREFIX}GET_SAVED_MAPS_ERROR`
-};
+});
 
 /** EXPORT_FILE_TO_CLOUD */
 export type MapData = {
@@ -77,7 +77,7 @@ export const exportFileToCloud: (
 ) => {
   type: typeof ActionTypes.EXPORT_FILE_TO_CLOUD;
   payload: ExportFileToCloudPayload;
-} = createAction(ActionTypes.EXPORT_FILE_TO_CLOUD, (payload: ExportFileToCloudPayload) => payload);
+} = createAction(ActionTypes.EXPORT_FILE_TO_CLOUD, (payload: ExportFileToCloudPayload) => ({payload}));
 
 /** EXPORT_FILE_SUCCESS */
 export type ExportFileSuccessPayload = {
@@ -93,7 +93,7 @@ export const exportFileSuccess: (
 ) => {
   type: typeof ActionTypes.EXPORT_FILE_SUCCESS;
   payload: ExportFileSuccessPayload;
-} = createAction(ActionTypes.EXPORT_FILE_SUCCESS, (payload: ExportFileSuccessPayload) => payload);
+} = createAction(ActionTypes.EXPORT_FILE_SUCCESS, (payload: ExportFileSuccessPayload) => ({payload}));
 
 /** EXPORT_FILE_ERROR */
 export type ExportFileErrorPayload = {
@@ -108,7 +108,7 @@ export const exportFileError: (
 ) => {
   type: typeof ActionTypes.EXPORT_FILE_ERROR;
   payload: ExportFileErrorPayload;
-} = createAction(ActionTypes.EXPORT_FILE_ERROR, (payload: ExportFileErrorPayload) => payload);
+} = createAction(ActionTypes.EXPORT_FILE_ERROR, (payload: ExportFileErrorPayload) => ({payload}));
 
 /** POST_SAVE_LOAD_SUCCESS */
 export type PostSaveLoadSuccessPayload = string;
@@ -119,7 +119,7 @@ export const postSaveLoadSuccess: (
   payload: PostSaveLoadSuccessPayload;
 } = createAction(
   ActionTypes.POST_SAVE_LOAD_SUCCESS,
-  (message: PostSaveLoadSuccessPayload) => message
+  (message: PostSaveLoadSuccessPayload) => ({payload : message})
 );
 
 export const resetProviderStatus: () => {
@@ -133,7 +133,7 @@ export const setCloudProvider: (
 ) => {
   type: typeof ActionTypes.SET_CLOUD_PROVIDER;
   payload: SetCloudProviderPayload;
-} = createAction(ActionTypes.SET_CLOUD_PROVIDER, (provider: SetCloudProviderPayload) => provider);
+} = createAction(ActionTypes.SET_CLOUD_PROVIDER, (provider: SetCloudProviderPayload) => ({payload : provider}));
 
 /** LOAD_CLOUD_MAP */
 export type LoadCloudMapPayload = {
@@ -147,7 +147,7 @@ export const loadCloudMap: (
 ) => {
   type: typeof ActionTypes.LOAD_CLOUD_MAP;
   payload: LoadCloudMapPayload;
-} = createAction(ActionTypes.LOAD_CLOUD_MAP, payload => payload);
+} = createAction(ActionTypes.LOAD_CLOUD_MAP, payload => ({payload : payload}));
 
 /** LOAD_CLOUD_MAP_SUCCESS */
 type LoadCloudMapSuccessCallback = (p: {response: any; loadParams: any; provider: Provider}) => any;
@@ -165,7 +165,7 @@ export const loadCloudMapSuccess: (
   payload: LoadCloudMapSuccessPayload;
 } = createAction(
   ActionTypes.LOAD_CLOUD_MAP_SUCCESS,
-  (payload: LoadCloudMapSuccessPayload) => payload
+  (payload: LoadCloudMapSuccessPayload) => ({payload : payload})
 );
 
 /** LOAD_CLOUD_MAP_ERROR */
@@ -179,7 +179,7 @@ export const loadCloudMapError: (
 ) => {
   type: typeof ActionTypes.LOAD_CLOUD_MAP_ERROR;
   payload: LoadCloudMapErrorPayload;
-} = createAction(ActionTypes.LOAD_CLOUD_MAP_ERROR, (payload: LoadCloudMapErrorPayload) => payload);
+} = createAction(ActionTypes.LOAD_CLOUD_MAP_ERROR, (payload: LoadCloudMapErrorPayload) => ({payload : payload}));
 
 /** GET_SAVED_MAPS */
 export type GetSavedMapsPayload = string;
@@ -188,7 +188,7 @@ export const getSavedMaps: (
 ) => {
   type: typeof ActionTypes.GET_SAVED_MAPS;
   payload: GetSavedMapsPayload;
-} = createAction(ActionTypes.GET_SAVED_MAPS, (provider: GetSavedMapsPayload) => provider);
+} = createAction(ActionTypes.GET_SAVED_MAPS, (provider: GetSavedMapsPayload) => ({payload : provider}));
 
 /** GET_SAVED_MAPS_SUCCESS */
 export type GetSavedMapsSuccessPayload = {
@@ -202,7 +202,7 @@ export const getSavedMapsSuccess: (
   payload: GetSavedMapsSuccessPayload;
 } = createAction(
   ActionTypes.GET_SAVED_MAPS_SUCCESS,
-  (payload: GetSavedMapsSuccessPayload) => payload
+  (payload: GetSavedMapsSuccessPayload) => ({payload : payload})
 );
 
 /** GET_SAVED_MAPS_ERROR */
@@ -215,4 +215,4 @@ export const getSavedMapsError: (
 ) => {
   type: typeof ActionTypes.GET_SAVED_MAPS_ERROR;
   payload: GetSavedMapsErrorPayload;
-} = createAction(ActionTypes.GET_SAVED_MAPS_ERROR, payload => payload);
+} = createAction(ActionTypes.GET_SAVED_MAPS_ERROR, payload => ({payload : payload}));

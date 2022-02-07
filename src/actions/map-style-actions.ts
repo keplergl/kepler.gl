@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {createAction} from 'redux-actions';
+import {createAction} from '@reduxjs/toolkit';
 import ActionTypes from 'constants/action-types';
 import {Merge, RGBColor} from '../reducers/types';
 import {InputStyle, MapStyles, VisibleLayerGroups} from '../reducers/map-style-updaters';
@@ -65,8 +65,10 @@ export const inputMapStyle: (
     inputStyle: InputMapStyleUpdaterAction['payload']['inputStyle'],
     mapState: InputMapStyleUpdaterAction['payload']['mapState']
   ) => ({
-    inputStyle,
-    mapState
+    payload: {
+      inputStyle,
+      mapState
+    }
   })
 );
 
@@ -90,7 +92,7 @@ export const mapConfigChange: (
   {type: typeof ActionTypes.MAP_CONFIG_CHANGE}
 > = createAction(
   ActionTypes.MAP_CONFIG_CHANGE,
-  (mapStyle: MapConfigChangeUpdaterAction['payload']) => mapStyle
+  (mapStyle: MapConfigChangeUpdaterAction['payload']) => ({payload: mapStyle})
 );
 
 /** REQUEST_MAP_STYLES */
@@ -117,7 +119,7 @@ export const requestMapStyles: (
   {type: typeof ActionTypes.REQUEST_MAP_STYLES}
 > = createAction(
   ActionTypes.REQUEST_MAP_STYLES,
-  (mapStyles: RequestMapStylesUpdaterAction['payload']) => mapStyles
+  (mapStyles: RequestMapStylesUpdaterAction['payload']) => ({payload: mapStyles})
 );
 
 /** LOAD_MAP_STYLES */
@@ -132,9 +134,12 @@ export type LoadMapStylesUpdaterAction = {
  */
 export const loadMapStyles: (
   newStyles: LoadMapStylesUpdaterAction['payload']
-) => Merge<LoadMapStylesUpdaterAction, {type: typeof ActionTypes.LOAD_MAP_STYLES}> = createAction(
+) => Merge<
+  LoadMapStylesUpdaterAction,
+  {type: typeof ActionTypes.LOAD_MAP_STYLES}
+> = createAction(
   ActionTypes.LOAD_MAP_STYLES,
-  (newStyles: LoadMapStylesUpdaterAction['payload']) => newStyles
+  (newStyles: LoadMapStylesUpdaterAction['payload']) => ({payload: newStyles})
 );
 
 /** LOAD_MAP_STYLE_ERR */
@@ -154,7 +159,7 @@ export const loadMapStyleErr: (
   {type: typeof ActionTypes.LOAD_MAP_STYLE_ERR}
 > = createAction(
   ActionTypes.LOAD_MAP_STYLE_ERR,
-  (error: LoadMapStyleErrUpdaterAction['payload']) => error
+  (error: LoadMapStyleErrUpdaterAction['payload']) => ({payload: error})
 );
 
 /** MAP_STYLE_CHANGE */
@@ -169,9 +174,12 @@ export type MapStyleChangeUpdaterAction = {
  */
 export const mapStyleChange: (
   styleType: MapStyleChangeUpdaterAction['payload']
-) => Merge<MapStyleChangeUpdaterAction, {type: typeof ActionTypes.MAP_STYLE_CHANGE}> = createAction(
+) => Merge<
+  MapStyleChangeUpdaterAction,
+  {type: typeof ActionTypes.MAP_STYLE_CHANGE}
+> = createAction(
   ActionTypes.MAP_STYLE_CHANGE,
-  (styleType: MapStyleChangeUpdaterAction['payload']) => styleType
+  (styleType: MapStyleChangeUpdaterAction['payload']) => ({payload: styleType})
 );
 
 /** LOAD_CUSTOM_MAP_STYLE */
@@ -198,7 +206,7 @@ export const loadCustomMapStyle: (
   {type: typeof ActionTypes.LOAD_CUSTOM_MAP_STYLE}
 > = createAction(
   ActionTypes.LOAD_CUSTOM_MAP_STYLE,
-  (customMapStyle: LoadCustomMapStyleUpdaterAction['payload']) => customMapStyle
+  (customMapStyle: LoadCustomMapStyleUpdaterAction['payload']) => ({payload: customMapStyle})
 );
 
 /** SET_3D_BUILDING_COLOR */
@@ -219,7 +227,7 @@ export const set3dBuildingColor: (
   {type: typeof ActionTypes.SET_3D_BUILDING_COLOR}
 > = createAction(
   ActionTypes.SET_3D_BUILDING_COLOR,
-  (color: Set3dBuildingColorUpdaterAction['payload']) => color
+  (color: Set3dBuildingColorUpdaterAction['payload']) => ({payload: color})
 );
 
 /**

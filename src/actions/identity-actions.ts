@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {createAction} from 'redux-actions';
+import {createAction} from '@reduxjs/toolkit';
 import ActionTypes from 'constants/action-types';
 import {UiState} from 'reducers/ui-state-updaters';
 
@@ -53,10 +53,9 @@ export const registerEntry: (
 ) => {
   type: typeof ActionTypes.REGISTER_ENTRY;
   payload: RegisterEntryUpdaterAction['payload'];
-} = createAction(
-  ActionTypes.REGISTER_ENTRY,
-  (payload: RegisterEntryUpdaterAction['payload']) => payload
-);
+} = createAction(ActionTypes.REGISTER_ENTRY, (payload: RegisterEntryUpdaterAction['payload']) => ({
+  payload
+}));
 
 /**
  *
@@ -69,10 +68,10 @@ export const registerEntry: (
  */
 export const deleteEntry: (
   id: string
-) => {type: typeof ActionTypes.DELETE_ENTRY; payload: string} = createAction(
-  ActionTypes.DELETE_ENTRY,
-  (id: string) => id
-);
+) => {
+  type: typeof ActionTypes.DELETE_ENTRY;
+  payload: string;
+} = createAction(ActionTypes.DELETE_ENTRY, (id: string) => ({payload: id}));
 
 /**
  *
@@ -93,8 +92,10 @@ export const renameEntry: (
     newId: string;
   };
 } = createAction(ActionTypes.RENAME_ENTRY, (oldId: string, newId: string) => ({
-  oldId,
-  newId
+  payload: {
+    oldId,
+    newId
+  }
 }));
 
 /**

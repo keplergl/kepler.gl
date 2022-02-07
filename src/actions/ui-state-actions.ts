@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {createAction} from 'redux-actions';
+import {createAction} from '@reduxjs/toolkit';
 import ActionTypes from 'constants/action-types';
 import {Merge} from '../reducers/types';
 import {ExportImage} from '../reducers/ui-state-updaters';
@@ -38,7 +38,7 @@ export const toggleSidePanel: (
 ) => Merge<
   ToggleSidePanelUpdaterAction,
   {type: typeof ActionTypes.TOGGLE_SIDE_PANEL}
-> = createAction(ActionTypes.TOGGLE_SIDE_PANEL, (id: string) => id);
+> = createAction(ActionTypes.TOGGLE_SIDE_PANEL, (id: string) => ({payload: id}));
 
 /** TOGGLE_MODAL */
 export type ToggleModalUpdaterAction = {
@@ -60,7 +60,9 @@ export const toggleModal: (
   id: ToggleModalUpdaterAction['payload']
 ) => Merge<ToggleModalUpdaterAction, {type: typeof ActionTypes.TOGGLE_MODAL}> = createAction(
   ActionTypes.TOGGLE_MODAL,
-  (id: ToggleModalUpdaterAction['payload']) => id
+  (id: ToggleModalUpdaterAction['payload']) => ({
+    payload: id
+  })
 );
 
 /** SHOW_EXPORT_DROPDOWN */
@@ -80,7 +82,7 @@ export const showExportDropdown: (
   {type: typeof ActionTypes.SHOW_EXPORT_DROPDOWN}
 > = createAction(
   ActionTypes.SHOW_EXPORT_DROPDOWN,
-  (id: ShowExportDropdownUpdaterAction['payload']) => id
+  (id: ShowExportDropdownUpdaterAction['payload']) => ({payload: id})
 );
 
 /**
@@ -117,8 +119,10 @@ export const toggleMapControl: (
     panelId: ToggleMapControlUpdaterAction['payload']['panelId'],
     index: ToggleMapControlUpdaterAction['payload']['index']
   ) => ({
-    panelId,
-    index
+    payload: {
+      panelId,
+      index
+    }
   })
 );
 
@@ -147,8 +151,10 @@ export const setMapControlVisibility: (
     panelId: setMapControlVisibilityUpdaterAction['payload']['panelId'],
     show: setMapControlVisibilityUpdaterAction['payload']['show']
   ) => ({
-    panelId,
-    show
+    payload: {
+      panelId,
+      show
+    }
   })
 );
 
@@ -169,7 +175,7 @@ export const openDeleteModal: (
   {type: typeof ActionTypes.OPEN_DELETE_MODAL}
 > = createAction(
   ActionTypes.OPEN_DELETE_MODAL,
-  (datasetId: OpenDeleteModalUpdaterAction['payload']) => datasetId
+  (datasetId: OpenDeleteModalUpdaterAction['payload']) => ({payload: datasetId})
 );
 
 /** ADD_NOTIFICATION */
@@ -192,7 +198,7 @@ export const addNotification: (
   }
 > = createAction(
   ActionTypes.ADD_NOTIFICATION,
-  (notification: AddNotificationUpdaterAction['payload']) => notification
+  (notification: AddNotificationUpdaterAction['payload']) => ({payload: notification})
 );
 
 /** REMOVE_NOTIFICATION */
@@ -212,7 +218,7 @@ export const removeNotification: (
   {type: typeof ActionTypes.REMOVE_NOTIFICATION}
 > = createAction(
   ActionTypes.REMOVE_NOTIFICATION,
-  (id: RemoveNotificationUpdaterAction['payload']) => id
+  (id: RemoveNotificationUpdaterAction['payload']) => ({payload: id})
 );
 
 /** SET_EXPORT_IMAGE_SETTING */
@@ -232,7 +238,7 @@ export const setExportImageSetting: (
   {type: typeof ActionTypes.SET_EXPORT_IMAGE_SETTING}
 > = createAction(
   ActionTypes.SET_EXPORT_IMAGE_SETTING,
-  (newSetting: SetExportImageSettingUpdaterAction['payload']) => newSetting
+  (newSetting: SetExportImageSettingUpdaterAction['payload']) => ({payload: newSetting})
 );
 
 /**
@@ -248,7 +254,7 @@ export const startExportingImage: (options?: {
 }) => Merge<
   SetExportImageSettingUpdaterAction,
   {type: typeof ActionTypes.START_EXPORTING_IMAGE}
-> = createAction(ActionTypes.START_EXPORTING_IMAGE);
+> = createAction(ActionTypes.START_EXPORTING_IMAGE, (payload: any) => ({payload}));
 
 /** SET_EXPORT_IMAGE_DATA_URI */
 export type SetExportImageDataUriUpdaterAction = {
@@ -267,7 +273,7 @@ export const setExportImageDataUri: (
   {type: typeof ActionTypes.SET_EXPORT_IMAGE_DATA_URI}
 > = createAction(
   ActionTypes.SET_EXPORT_IMAGE_DATA_URI,
-  (dataUri: SetExportImageDataUriUpdaterAction['payload']) => dataUri
+  (dataUri: SetExportImageDataUriUpdaterAction['payload']) => ({payload: dataUri})
 );
 
 /** SET_EXPORT_IMAGE_ERROR */
@@ -286,7 +292,7 @@ export const setExportImageError: (
   {type: typeof ActionTypes.SET_EXPORT_IMAGE_ERROR}
 > = createAction(
   ActionTypes.SET_EXPORT_IMAGE_ERROR,
-  (error: SetExportImageErrorUpdaterAction['payload']) => error
+  (error: SetExportImageErrorUpdaterAction['payload']) => ({payload: error})
 );
 
 /**
@@ -315,7 +321,7 @@ export const setExportSelectedDataset: (
   {type: typeof ActionTypes.SET_EXPORT_SELECTED_DATASET}
 > = createAction(
   ActionTypes.SET_EXPORT_SELECTED_DATASET,
-  (datasetId: SetExportSelectedDatasetUpdaterAction['payload']) => datasetId
+  (datasetId: SetExportSelectedDatasetUpdaterAction['payload']) => ({payload: datasetId})
 );
 
 /** SET_EXPORT_DATA_TYPE */
@@ -335,7 +341,7 @@ export const setExportDataType: (
   {type: typeof ActionTypes.SET_EXPORT_DATA_TYPE}
 > = createAction(
   ActionTypes.SET_EXPORT_DATA_TYPE,
-  (dataType: SetExportDataTypeUpdaterAction['payload']) => dataType
+  (dataType: SetExportDataTypeUpdaterAction['payload']) => ({payload: dataType})
 );
 
 /** SET_EXPORT_FILTERED */
@@ -355,7 +361,7 @@ export const setExportFiltered: (
   {type: typeof ActionTypes.SET_EXPORT_FILTERED}
 > = createAction(
   ActionTypes.SET_EXPORT_FILTERED,
-  (payload: SetExportFilteredUpdaterAction['payload']) => payload
+  (payload: SetExportFilteredUpdaterAction['payload']) => ({payload})
 );
 
 /**
@@ -384,7 +390,7 @@ export const setUserMapboxAccessToken: (
   {type: typeof ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN}
 > = createAction(
   ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN,
-  (payload: SetUserMapboxAccessTokenUpdaterAction['payload']) => payload
+  (payload: SetUserMapboxAccessTokenUpdaterAction['payload']) => ({payload})
 );
 
 /** SET_EXPORT_MAP_FORMAT */
@@ -404,7 +410,7 @@ export const setExportMapFormat: (
   {type: typeof ActionTypes.SET_EXPORT_MAP_FORMAT}
 > = createAction(
   ActionTypes.SET_EXPORT_MAP_FORMAT,
-  (payload: SetExportMapFormatUpdaterAction['payload']) => payload
+  (payload: SetExportMapFormatUpdaterAction['payload']) => ({payload})
 );
 
 /** SET_EXPORT_MAP_HTML_MODE */
@@ -423,7 +429,7 @@ export const setExportHTMLMapMode: (
   {type: typeof ActionTypes.SET_EXPORT_MAP_HTML_MODE}
 > = createAction(
   ActionTypes.SET_EXPORT_MAP_HTML_MODE,
-  (payload: SetExportHTMLMapModeUpdaterAction['payload']) => payload
+  (payload: SetExportHTMLMapModeUpdaterAction['payload']) => ({payload})
 );
 
 /** SET_LOCALE */
@@ -441,7 +447,9 @@ export const setLocale: (
 ) => Merge<SetLocaleUpdaterAction, {type: typeof ActionTypes.SET_LOCALE}> = createAction(
   ActionTypes.SET_LOCALE,
   (locale: SetLocaleUpdaterAction['payload']['locale']) => ({
-    locale
+    payload: {
+      locale
+    }
   })
 );
 
@@ -462,7 +470,7 @@ export const toggleLayerPanelListView: (
   {type: typeof ActionTypes.TOGGLE_LAYER_PANEL_LIST_VIEW}
 > = createAction(
   ActionTypes.TOGGLE_LAYER_PANEL_LIST_VIEW,
-  (listView: ToggleLayerPanelListViewAction['payload']) => listView
+  (listView: ToggleLayerPanelListViewAction['payload']) => ({payload: listView})
 );
 
 /**

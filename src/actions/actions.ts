@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import ActionTypes from 'constants/action-types';
-import {createAction} from 'redux-actions';
+import {createAction} from '@reduxjs/toolkit';
 
 import {ParsedConfig} from '../schemas';
 import {RGBColor} from 'reducers/types';
@@ -157,10 +157,10 @@ export type AddDataToMapPayload = {
  */
 export const addDataToMap: (
   data: AddDataToMapPayload
-) => {type: typeof ActionTypes.ADD_DATA_TO_MAP; payload: AddDataToMapPayload} = createAction(
-  ActionTypes.ADD_DATA_TO_MAP,
-  (data: AddDataToMapPayload) => data
-);
+) => {
+  type: typeof ActionTypes.ADD_DATA_TO_MAP;
+  payload: AddDataToMapPayload;
+} = createAction(ActionTypes.ADD_DATA_TO_MAP, (data: AddDataToMapPayload) => ({payload: data}));
 
 /**
  * Reset all sub-reducers to its initial state. This can be used to clear out all configuration in the reducer.
@@ -205,15 +205,20 @@ export type ReceiveMapConfigPayload = {
  * this.props.dispatch(receiveMapConfig(parsedConfig));
  */
 export const receiveMapConfig: (
-  config: ParsedConfig,
-  options: AddDataToMapOptions
+  config: ReceiveMapConfigPayload['config'],
+  options: ReceiveMapConfigPayload['options']
 ) => {
   type: typeof ActionTypes.RECEIVE_MAP_CONFIG;
   payload: ReceiveMapConfigPayload;
-} = createAction(ActionTypes.RECEIVE_MAP_CONFIG, (config, options) => ({
-  config,
-  options
-}));
+} = createAction(
+  ActionTypes.RECEIVE_MAP_CONFIG,
+  (config: ReceiveMapConfigPayload['config'], options: ReceiveMapConfigPayload['options']) => ({
+    payload: {
+      config,
+      options
+    }
+  })
+);
 
 export type KeplerGlInitPayload = {
   mapboxApiAccessToken?: string;
@@ -237,7 +242,7 @@ export const keplerGlInit: (
 ) => {
   type: typeof ActionTypes.INIT;
   payload: KeplerGlInitPayload;
-} = createAction(ActionTypes.INIT, (payload: KeplerGlInitPayload) => payload);
+} = createAction(ActionTypes.INIT, (payload: KeplerGlInitPayload) => ({payload}));
 
 /**
  * This declaration is needed to group actions in docs

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {createAction} from 'redux-actions';
+import {createAction} from '@reduxjs/toolkit';
 import ActionTypes from 'constants/action-types';
 import {Merge} from '../reducers/types';
 import {Bounds, Viewport} from '../reducers/map-state-updaters';
@@ -50,10 +50,10 @@ export type FitBoundsUpdaterAction = {payload: Bounds};
  */
 export const fitBounds: (
   payload: Bounds
-) => Merge<FitBoundsUpdaterAction, {type: typeof ActionTypes.FIT_BOUNDS}> = createAction(
-  ActionTypes.FIT_BOUNDS,
-  (bounds: Bounds) => bounds
-);
+) => Merge<
+  FitBoundsUpdaterAction,
+  {type: typeof ActionTypes.FIT_BOUNDS}
+> = createAction(ActionTypes.FIT_BOUNDS, (bounds: Bounds) => ({payload: bounds}));
 
 export type UpdateMapUpdaterAction = {payload: Viewport};
 /**
@@ -76,10 +76,10 @@ export type UpdateMapUpdaterAction = {payload: Viewport};
 
 export const updateMap: (
   payload: Viewport
-) => Merge<UpdateMapUpdaterAction, {type: typeof ActionTypes.UPDATE_MAP}> = createAction(
-  ActionTypes.UPDATE_MAP,
-  (viewport: Viewport) => viewport
-);
+) => Merge<
+  UpdateMapUpdaterAction,
+  {type: typeof ActionTypes.UPDATE_MAP}
+> = createAction(ActionTypes.UPDATE_MAP, (viewport: Viewport) => ({payload: viewport}));
 
 export type ToggleSplitMapUpdaterAction = {
   payload: number;
@@ -95,10 +95,10 @@ export type ToggleSplitMapUpdaterAction = {
  */
 export const toggleSplitMap: (
   payload: number
-) => Merge<ToggleSplitMapUpdaterAction, {type: typeof ActionTypes.TOGGLE_SPLIT_MAP}> = createAction(
-  ActionTypes.TOGGLE_SPLIT_MAP,
-  (index: number) => index
-);
+) => Merge<
+  ToggleSplitMapUpdaterAction,
+  {type: typeof ActionTypes.TOGGLE_SPLIT_MAP}
+> = createAction(ActionTypes.TOGGLE_SPLIT_MAP, (index: number) => ({payload: index}));
 
 /**
  * This declaration is needed to group actions in docs
