@@ -26,20 +26,29 @@ const breakPoints = {
   desk: 768
 };
 
+/**
+ * Contains media rules for different device types
+ * @namespace
+ * @property {object}  media 
+ * @property {string}  media.palm - rule for palm devices
+ * @property {string}  media.portable - rule for portable devices
+ * @property {string}  media.desk - rule for desktops
+ */
+
 export const media = {
-  palm: (...args) => css`
+  palm: (...args): string => css`
     @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
       ${css(...args)};
     }
   `,
 
-  portable: (...args) => css`
+  portable: (...args): string => css`
     @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
       ${css(...args)};
     }
   `,
 
-  desk: (...args) => css`
+  desk: (...args): string => css`
     @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
       ${css(...args)};
     }
