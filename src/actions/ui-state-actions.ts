@@ -31,7 +31,6 @@ export type ToggleSidePanelUpdaterAction = {
  * Toggle active side panel
  * @memberof uiStateActions
  * @param id  id of side panel to be shown, one of `layer`, `filter`, `interaction`, `map`
- * @type {typeof import('./ui-state-actions').toggleSidePanel}
  * @public
  */
 export const toggleSidePanel: (
@@ -55,7 +54,6 @@ export type ToggleModalUpdaterAction = {
  *  - [`EXPORT_IMAGE_ID`](../constants/default-settings.md#export_image_id)
  *  - [`EXPORT_DATA_ID`](../constants/default-settings.md#export_data_id)
  *  - [`ADD_MAP_STYLE_ID`](../constants/default-settings.md#add_map_style_id)
- * @type {typeof import('./ui-state-actions').toggleModal}
  * @public
  */
 export const toggleModal: (
@@ -73,7 +71,6 @@ export type ShowExportDropdownUpdaterAction = {
  * Hide and show side panel header dropdown, activated by clicking the share link on top of the side panel
  * @memberof uiStateActions
  * @param id - id of the dropdown
- * @type {typeof import('./ui-state-actions').showExportDropdown}
  * @public
  */
 export const showExportDropdown: (
@@ -89,7 +86,6 @@ export const showExportDropdown: (
 /**
  * Hide side panel header dropdown, activated by clicking the share link on top of the side panel
  * @memberof uiStateActions
- * @type {typeof import('./ui-state-actions').hideExportDropdown}
  * @public
  */
 export const hideExportDropdown: () => {
@@ -107,7 +103,6 @@ export type ToggleMapControlUpdaterAction = {
  * Toggle active map control panel
  * @memberof uiStateActions
  * @param panelId - map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
- * @type {typeof import('./ui-state-actions').toggleMapControl}
  * @public
  */
 export const toggleMapControl: (
@@ -138,7 +133,6 @@ export type setMapControlVisibilityUpdaterAction = {
  * Toggle active map control panel
  * @memberof uiStateActions
  * @param panelId - map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
- * @type {typeof import('./ui-state-actions').setMapControlVisibility}
  * @public
  */
 export const setMapControlVisibility: (
@@ -166,7 +160,6 @@ export type OpenDeleteModalUpdaterAction = {
  * Toggle active map control panel
  * @memberof uiStateActions
  * @param datasetId - `id` of the dataset to be deleted
- * @type {typeof import('./ui-state-actions').openDeleteModal}
  * @public
  */
 export const openDeleteModal: (
@@ -188,7 +181,6 @@ export type AddNotificationUpdaterAction = {
  * Existing notification will be updated in case of matching id.
  * @memberof uiStateActions
  * @param notification - The `notification` object to be added or updated
- * @type {typeof import('./ui-state-actions').addNotification}
  * @public
  */
 export const addNotification: (
@@ -211,7 +203,6 @@ export type RemoveNotificationUpdaterAction = {
  * Remove a notification
  * @memberof uiStateActions
  * @param id - `id` of the notification to be removed
- * @type {typeof import('./ui-state-actions').removeNotification}
  * @public
  */
 export const removeNotification: (
@@ -232,7 +223,6 @@ export type SetExportImageSettingUpdaterAction = {
  * Set `exportImage` settings: ratio, resolution, legend
  * @memberof uiStateActions
  * @param newSetting - {ratio: '1x'}
- * @type {typeof import('./ui-state-actions').setExportImageSetting}
  * @public
  */
 export const setExportImageSetting: (
@@ -248,7 +238,6 @@ export const setExportImageSetting: (
 /**
  * Start exporting image flow
  * @memberof uiStateActions
- * @type {typeof import('./ui-state-actions').startExportingImage}
  * @public
  */
 export const startExportingImage: (options?: {
@@ -269,7 +258,6 @@ export type SetExportImageDataUriUpdaterAction = {
  * Set `exportImage.setExportImageDataUri` to a dataUri
  * @memberof uiStateActions
  * @param dataUri - export image data uri
- * @type {typeof import('./ui-state-actions').setExportImageDataUri}
  * @public
  */
 export const setExportImageDataUri: (
@@ -289,7 +277,6 @@ export type SetExportImageErrorUpdaterAction = {
 /**
  * Set Export image error
  * @memberof uiStateActions
- * @type {typeof import('./ui-state-actions').setExportImageError}
  * @public
  */
 export const setExportImageError: (
@@ -305,7 +292,6 @@ export const setExportImageError: (
 /**
  * Delete cached export image
  * @memberof uiStateActions
- * @type {typeof import('./ui-state-actions').cleanupExportImage}
  * @public
  */
 export const cleanupExportImage: () => {
@@ -320,7 +306,6 @@ export type SetExportSelectedDatasetUpdaterAction = {
  * Set selected dataset for export
  * @memberof uiStateActions
  * @param datasetId - dataset id
- * @type {typeof import('./ui-state-actions').setExportSelectedDataset}
  * @public
  */
 export const setExportSelectedDataset: (
@@ -341,7 +326,6 @@ export type SetExportDataTypeUpdaterAction = {
  * Set data format for exporting data
  * @memberof uiStateActions
  * @param dataType - one of `'text/csv'`
- * @type {typeof import('./ui-state-actions').setExportDataType}
  * @public
  */
 export const setExportDataType: (
@@ -362,7 +346,6 @@ export type SetExportFilteredUpdaterAction = {
  * Whether to export filtered data, `true` or `false`
  * @memberof uiStateActions
  * @param payload - set `true` to ony export filtered data
- * @type {typeof import('./ui-state-actions').setExportFiltered}
  * @public
  */
 export const setExportFiltered: (
@@ -378,7 +361,6 @@ export const setExportFiltered: (
 /**
  * Whether to including data in map config, toggle between `true` or `false`
  * @memberof uiStateActions
- * @type {typeof import('./ui-state-actions').setExportData}
  * @public
  */
 export const setExportData: () => {type: typeof ActionTypes.SET_EXPORT_DATA} = createAction(
@@ -393,7 +375,6 @@ export type SetUserMapboxAccessTokenUpdaterAction = {
  * Whether we export a mapbox access token used to create a single map html file
  * @memberof uiStateActions
  * @param payload - mapbox access token
- * @type {typeof import('./ui-state-actions').setUserMapboxAccessToken}
  * @public
  */
 export const setUserMapboxAccessToken: (
@@ -414,7 +395,6 @@ export type SetExportMapFormatUpdaterAction = {
  * Set the export map format (html, json)
  * @memberOf uiStateActions
  * @param payload - map format
- * @type {typeof import('./ui-state-actions').setExportMapFormat}
  * @public
  */
 export const setExportMapFormat: (
@@ -435,7 +415,6 @@ export type SetExportHTMLMapModeUpdaterAction = {
  * Set the HTML mode to use to export HTML mode
  * @memberOf uiStateActions
  * @param payload - map mode
- * @type {typeof import('./ui-state-actions').setExportHTMLMapMode}
  */
 export const setExportHTMLMapMode: (
   mode: SetExportHTMLMapModeUpdaterAction['payload']
@@ -455,7 +434,6 @@ export type SetLocaleUpdaterAction = {
  * Set `locale` value
  * @memberof uiStateActions
  * @param locale - locale of the UI
- * @type {typeof import('./ui-state-actions').setLocale}
  * @public
  */
 export const setLocale: (
@@ -475,7 +453,6 @@ export type ToggleLayerPanelListViewAction = {
  * Toggle layer panel list view
  * @memberof uiStateActions
  * @param listView layer panel listView value. Can be 'list' or 'sortByDataset'
- * @type {typeof import('./ui-state-actions').toggleLayerPanelListView}
  * @public
  */
 export const toggleLayerPanelListView: (

@@ -87,9 +87,7 @@ export type ExportFileSuccessPayload = {
   onSuccess?: OnSuccessCallBack;
   closeModal?: boolean;
 };
-/**
- * @type {typeof import('./provider-actions').exportFileSuccess}
- */
+
 export const exportFileSuccess: (
   p: ExportFileSuccessPayload
 ) => {
@@ -104,7 +102,7 @@ export type ExportFileErrorPayload = {
   options?: ExportFileOptions;
   onError?: OnErrorCallBack;
 };
-/** @type {typeof import('./provider-actions').exportFileError} */
+
 export const exportFileError: (
   p: ExportFileErrorPayload
 ) => {

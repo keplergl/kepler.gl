@@ -46,7 +46,6 @@ export type RegisterEntryUpdaterAction = {
  * @param payload.mapboxApiUrl - mapboxApiUrl to be saved in `map-style` reducer.
  * @param payload.mapStylesReplaceDefault - mapStylesReplaceDefault to be saved in `map-style` reducer.
  * @param payload.initialUiState - initial ui state
- * @type {typeof import('./identity-actions').registerEntry}
  * @public
  */
 export const registerEntry: (

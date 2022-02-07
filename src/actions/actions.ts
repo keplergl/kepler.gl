@@ -229,7 +229,6 @@ export type KeplerGlInitPayload = {
  * @param payload.mapboxApiUrl - mapboxApiUrl to be saved to mapStyle reducer.
  * @param payload.mapStylesReplaceDefault - mapStylesReplaceDefault to be saved to mapStyle reducer
  * @param payload.initialUiState - initial ui state
- * @type {typeof import('./actions').keplerGlInit}
  * @public
  */
 // @ts-expect-error
