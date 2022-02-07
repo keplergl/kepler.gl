@@ -20,7 +20,7 @@
 
 import {createAction} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
-import {ValueOf, Merge} from '../reducers/types';
+import {Merge} from '../reducers/types';
 import {Bounds, Viewport} from '../reducers/map-state-updaters';
 
 export type TogglePerspectiveUpdaterAction = {};
