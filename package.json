@@ -171,6 +171,8 @@
   "devDependencies": {
     "@babel/cli": "^7.12.1",
     "@babel/core": "^7.12.1",
+    "@babel/eslint-parser": "^7.17.0",
+    "@babel/eslint-plugin": "^7.16.5",
     "@babel/node": "^7.12.1",
     "@babel/parser": "^7.12.1",
     "@babel/plugin-proposal-class-properties": "^7.12.1",

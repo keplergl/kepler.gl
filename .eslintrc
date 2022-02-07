@@ -19,9 +19,9 @@
     "context": true,
     "jestPuppeteer": true
   },
-  "parser": "babel-eslint",
+  "parser": "@babel/eslint-parser",
   "plugins": [
-    "babel",
+    "@babel",
     "prettier",
     "react"
   ],

@@ -20,22 +20,41 @@
 
 // vis-state-reducer
 import ActionTypes from 'constants/action-types';
+import {AddDataToMapPayload} from '../actions/actions';
+import {FileCacheItem} from '../processors/file-handler';
+import {Layer, LayerConfig, LayerVisConfig} from 'layers';
+import {Feature, InteractionConfig} from 'reducers/vis-state-updaters';
+import {ValueOf, Merge, RGBColor} from '../reducers/types';
+// TODO - import LoaderObject type from @loaders.gl/core when supported
+// TODO - import LoadOptions type from @loaders.gl/core when supported
 
+type LayerConfigChangeUpdaterAction = {
+  oldLayer: Layer;
+  newConfig: Partial<LayerConfig>;
+};
 /**
  * Update layer base config: dataId, label, column, isVisible
  * @param oldLayer - layer to be updated
  * @param newConfig - new config to be merged with old config
  * @returns action
- * @type {typeof import('./vis-state-actions').layerConfigChange}
  * @public
  */
-export function layerConfigChange(oldLayer, newConfig) {
+export function layerConfigChange(
+  oldLayer: Layer,
+  newConfig: Partial<LayerConfig>
+): Merge<LayerConfigChangeUpdaterAction, {type: typeof ActionTypes.LAYER_CONFIG_CHANGE}> {
   return {
     type: ActionTypes.LAYER_CONFIG_CHANGE,
     oldLayer,
     newConfig
   };
 }
+export type LayerTextLabelChangeUpdaterAction = {
+  oldLayer: Layer;
+  idx: number | 'all';
+  prop: string;
+  value: any;
+};
 
 /**
  * Update layer text label
@@ -44,10 +63,14 @@ export function layerConfigChange(oldLayer, newConfig) {
  * @param prop - `prop` of text label, e,g, `anchor`, `alignment`, `color`, `size`, `field`
  * @param value - new value
  * @returns action
- * @type {typeof import('./vis-state-actions').layerTextLabelChange}
  * @public
  */
-export function layerTextLabelChange(oldLayer, idx, prop, value) {
+export function layerTextLabelChange(
+  oldLayer: Layer,
+  idx: number | 'all',
+  prop: string,
+  value: any
+): Merge<LayerTextLabelChangeUpdaterAction, {type: typeof ActionTypes.LAYER_TEXT_LABEL_CHANGE}> {
   return {
     type: ActionTypes.LAYER_TEXT_LABEL_CHANGE,
     oldLayer,
@@ -56,23 +79,32 @@ export function layerTextLabelChange(oldLayer, idx, prop, value) {
     value
   };
 }
-
+export type LayerTypeChangeUpdaterAction = {
+  oldLayer: Layer;
+  newType: string;
+};
 /**
  * Update layer type. Previews layer config will be copied if applicable.
  * @param oldLayer - layer to be updated
  * @param newType - new type
  * @returns action
- * @type {typeof import('./vis-state-actions').layerTypeChange}
  * @public
  */
-export function layerTypeChange(oldLayer, newType) {
+export function layerTypeChange(
+  oldLayer: Layer,
+  newType: string
+): Merge<LayerTypeChangeUpdaterAction, {type: typeof ActionTypes.LAYER_TYPE_CHANGE}> {
   return {
     type: ActionTypes.LAYER_TYPE_CHANGE,
     oldLayer,
     newType
   };
 }
-
+export type LayerVisualChannelConfigChangeUpdaterAction = {
+  oldLayer: Layer;
+  newConfig: Partial<LayerConfig>;
+  channel: string;
+};
 /**
  * Update layer visual channel
  * @memberof visStateActions
@@ -80,10 +112,16 @@ export function layerTypeChange(oldLayer, newType) {
  * @param newConfig - new visual channel config
  * @param channel - channel to be updated
  * @returns action
- * @type {typeof import('./vis-state-actions').layerVisualChannelConfigChange}
  * @public
  */
-export function layerVisualChannelConfigChange(oldLayer, newConfig, channel) {
+export function layerVisualChannelConfigChange(
+  oldLayer: Layer,
+  newConfig: Partial<LayerConfig>,
+  channel: string
+): Merge<
+  LayerVisualChannelConfigChangeUpdaterAction,
+  {type: typeof ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE}
+> {
   return {
     type: ActionTypes.LAYER_VISUAL_CHANNEL_CHANGE,
     oldLayer,
@@ -91,23 +129,33 @@ export function layerVisualChannelConfigChange(oldLayer, newConfig, channel) {
     channel
   };
 }
-
+export type LayerVisConfigChangeUpdaterAction = {
+  oldLayer: Layer;
+  newVisConfig: Partial<LayerVisConfig>;
+};
 /**
  * Update layer `visConfig`
  * @memberof visStateActions
  * @param oldLayer - layer to be updated
  * @param newVisConfig - new visConfig as a key value map: e.g. `{opacity: 0.8}`
  * @returns action
- * @type {typeof import('./vis-state-actions').layerVisConfigChange}
  * @public
  */
-export function layerVisConfigChange(oldLayer, newVisConfig) {
+export function layerVisConfigChange(
+  oldLayer: Layer,
+  newVisConfig: Partial<LayerVisConfig>
+): Merge<LayerVisConfigChangeUpdaterAction, {type: typeof ActionTypes.LAYER_VIS_CONFIG_CHANGE}> {
   return {
     type: ActionTypes.LAYER_VIS_CONFIG_CHANGE,
     oldLayer,
     newVisConfig
   };
 }
+export type LayerColorUIChangeUpdaterAction = {
+  oldLayer: Layer;
+  prop: string;
+  newConfig: object;
+};
 
 /**
  * Set the color palette ui for layer color
@@ -116,10 +164,13 @@ export function layerVisConfigChange(oldLayer, newVisConfig) {
  * @param prop - which color prop
  * @param newConfig - to be merged
  * @returns action
- * @type {typeof import('./vis-state-actions').layerColorUIChange}
  * @public
  */
-export function layerColorUIChange(oldLayer, prop, newConfig) {
+export function layerColorUIChange(
+  oldLayer: Layer,
+  prop: string,
+  newConfig: object
+): Merge<LayerColorUIChangeUpdaterAction, {type: typeof ActionTypes.LAYER_COLOR_UI_CHANGE}> {
   return {
     type: ActionTypes.LAYER_COLOR_UI_CHANGE,
     oldLayer,
@@ -128,36 +179,53 @@ export function layerColorUIChange(oldLayer, prop, newConfig) {
   };
 }
 
+export type UpdateLayerBlendingUpdaterAction = {
+  mode: 'additive' | 'normal' | 'subtractive';
+};
 /**
  * Update layer blending mode
  * @memberof visStateActions
  * @param mode one of `additive`, `normal` and `subtractive`
  * @returns action
- * @type {typeof import('./vis-state-actions').updateLayerBlending}
  * @public
  */
-export function updateLayerBlending(mode) {
+export function updateLayerBlending(
+  mode: 'additive' | 'normal' | 'subtractive'
+): Merge<UpdateLayerBlendingUpdaterAction, {type: typeof ActionTypes.UPDATE_LAYER_BLENDING}> {
   return {
     type: ActionTypes.UPDATE_LAYER_BLENDING,
     mode
   };
 }
 
+export type InteractionConfigChangeUpdaterAction = {
+  config: ValueOf<InteractionConfig>;
+};
 /**
  * Update `interactionConfig`
  * @memberof visStateActions
  * @param config - new config as key value map: `{tooltip: {enabled: true}}`
  * @returns action
- * @type {typeof import('./vis-state-actions').interactionConfigChange}
  * @public
  */
-export function interactionConfigChange(config) {
+export function interactionConfigChange(
+  config: ValueOf<InteractionConfig>
+): Merge<
+  InteractionConfigChangeUpdaterAction,
+  {type: typeof ActionTypes.INTERACTION_CONFIG_CHANGE}
+> {
   return {
     type: ActionTypes.INTERACTION_CONFIG_CHANGE,
     config
   };
 }
 
+export type SetFilterUpdaterAction = {
+  idx: number;
+  prop: string;
+  value: any;
+  valueIndex?: number;
+};
 /**
  * Update filter property
  * @memberof visStateActions
@@ -166,10 +234,14 @@ export function interactionConfigChange(config) {
  * @param value - new value
  * @param valueIndex - dataId index
  * @returns action
- * @type {typeof import('./vis-state-actions').setFilter}
  * @public
  */
-export function setFilter(idx, prop, value, valueIndex) {
+export function setFilter(
+  idx: number,
+  prop: string,
+  value: any,
+  valueIndex: number
+): Merge<SetFilterUpdaterAction, {type: typeof ActionTypes.SET_FILTER}> {
   return {
     type: ActionTypes.SET_FILTER,
     idx,
@@ -179,6 +251,12 @@ export function setFilter(idx, prop, value, valueIndex) {
   };
 }
 
+export type SetFilterAnimationTimeUpdaterAction = {
+  idx: number;
+  prop: string;
+  value: any;
+  valueIndex?: number;
+};
 /**
  * Same as Update filter
  * @memberof visStateActions
@@ -190,7 +268,15 @@ export function setFilter(idx, prop, value, valueIndex) {
  * @type {typeof import('./vis-state-actions').setFilterAnimationTime}
  * @public
  */
-export function setFilterAnimationTime(idx, prop, value, valueIndex) {
+export function setFilterAnimationTime(
+  idx: number,
+  prop: string,
+  value: any,
+  valueIndex?: number
+): Merge<
+  SetFilterAnimationTimeUpdaterAction,
+  {type: typeof ActionTypes.SET_FILTER_ANIMATION_TIME}
+> {
   return {
     type: ActionTypes.SET_FILTER_ANIMATION_TIME,
     idx,
@@ -200,19 +286,33 @@ export function setFilterAnimationTime(idx, prop, value, valueIndex) {
   };
 }
 
+export type SetFilterAnimationWindowUpdaterAction = {
+  id: string;
+  animationWindow: string;
+};
 /**
  * Same as Update filter
  * @memberof visStateActions
  * @type {typeof import('./vis-state-actions').setFilterAnimationWindow}
  * @public
  */
-export function setFilterAnimationWindow({id, animationWindow}) {
+export function setFilterAnimationWindow({
+  id,
+  animationWindow
+}: SetFilterAnimationWindowUpdaterAction): Merge<
+  SetFilterAnimationWindowUpdaterAction,
+  {type: typeof ActionTypes.SET_FILTER_ANIMATION_WINDOW}
+> {
   return {
     type: ActionTypes.SET_FILTER_ANIMATION_WINDOW,
     id,
     animationWindow
   };
 }
+
+export type AddFilterUpdaterAction = {
+  dataId: string;
+};
 /**
  * Add a new filter
  * @memberof visStateActions
@@ -221,13 +321,19 @@ export function setFilterAnimationWindow({id, animationWindow}) {
  * @type {typeof import('./vis-state-actions').addFilter}
  * @public
  */
-export function addFilter(dataId) {
+export function addFilter(
+  dataId: string
+): Merge<AddFilterUpdaterAction, {type: typeof ActionTypes.ADD_FILTER}> {
   return {
     type: ActionTypes.ADD_FILTER,
     dataId
   };
 }
 
+export type AddLayerUpdaterAction = {
+  config: object;
+  datasetId?: string;
+};
 /**
  * Add a new layer
  * @memberof visStateActions
@@ -237,7 +343,10 @@ export function addFilter(dataId) {
  * @type {typeof import('./vis-state-actions').addLayer}
  * @public
  */
-export function addLayer(config, datasetId) {
+export function addLayer(
+  config: object,
+  datasetId?: string
+): Merge<AddLayerUpdaterAction, {type: typeof ActionTypes.ADD_LAYER}> {
   return {
     type: ActionTypes.ADD_LAYER,
     config,
@@ -245,6 +354,9 @@ export function addLayer(config, datasetId) {
   };
 }
 
+export type ReorderLayerUpdaterAction = {
+  order: number[];
+};
 /**
  * Reorder layer, order is an array of layer indexes, index 0 will be the one at the bottom
  * @memberof visStateActions
@@ -258,28 +370,37 @@ export function addLayer(config, datasetId) {
  * // `1` will be at the bottom, `3` will be at the top.
  * this.props.dispatch(reorderLayer([1, 0, 2, 3]));
  */
-export function reorderLayer(order) {
+export function reorderLayer(
+  order: number[]
+): Merge<ReorderLayerUpdaterAction, {type: typeof ActionTypes.REORDER_LAYER}> {
   return {
     type: ActionTypes.REORDER_LAYER,
     order
   };
 }
 
+export type RemoveFilterUpdaterAction = {
+  idx: number;
+};
 /**
  * Remove a filter from `visState.filters`, once a filter is removed, data will be re-filtered and layer will be updated
  * @memberof visStateActions
  * @param idx idx of filter to be removed
  * @returns action
- * @type {typeof import('./vis-state-actions').removeFilter}
  * @public
  */
-export function removeFilter(idx) {
+export function removeFilter(
+  idx: number
+): Merge<RemoveFilterUpdaterAction, {type: typeof ActionTypes.REMOVE_FILTER}> {
   return {
     type: ActionTypes.REMOVE_FILTER,
     idx
   };
 }
 
+export type RemoveLayerUpdaterAction = {
+  idx: number;
+};
 /**
  * Remove a layer
  * @memberof visStateActions
@@ -288,13 +409,18 @@ export function removeFilter(idx) {
  * @type {typeof import('./vis-state-actions').removeLayer}
  * @public
  */
-export function removeLayer(idx) {
+export function removeLayer(
+  idx: number
+): Merge<RemoveLayerUpdaterAction, {type: typeof ActionTypes.REMOVE_LAYER}> {
   return {
     type: ActionTypes.REMOVE_LAYER,
     idx
   };
 }
 
+export type DuplicateLayerUpdaterAction = {
+  idx: number;
+};
 /**
  * Duplicate a layer
  * @memberof visStateActions
@@ -303,13 +429,18 @@ export function removeLayer(idx) {
  * @type {typeof import('./vis-state-actions').duplicateLayer}
  * @public
  */
-export function duplicateLayer(idx) {
+export function duplicateLayer(
+  idx: number
+): Merge<DuplicateLayerUpdaterAction, {type: typeof ActionTypes.DUPLICATE_LAYER}> {
   return {
     type: ActionTypes.DUPLICATE_LAYER,
     idx
   };
 }
 
+export type RemoveDatasetUpdaterAction = {
+  dataId: string;
+};
 /**
  * Remove a dataset and all layers, filters, tooltip configs that based on it
  * @memberof visStateActions
@@ -318,13 +449,18 @@ export function duplicateLayer(idx) {
  * @type {typeof import('./vis-state-actions').removeDataset}
  * @public
  */
-export function removeDataset(dataId) {
+export function removeDataset(
+  dataId: string
+): Merge<RemoveDatasetUpdaterAction, {type: typeof ActionTypes.REMOVE_DATASET}> {
   return {
     type: ActionTypes.REMOVE_DATASET,
     dataId
   };
 }
 
+export type ShowDatasetTableUpdaterAction = {
+  dataId: string;
+};
 /**
  * Display dataset table in a modal
  * @memberof visStateActions
@@ -333,13 +469,19 @@ export function removeDataset(dataId) {
  * @type {typeof import('./vis-state-actions').showDatasetTable}
  * @public
  */
-export function showDatasetTable(dataId) {
+export function showDatasetTable(
+  dataId: string
+): Merge<ShowDatasetTableUpdaterAction, {type: typeof ActionTypes.SHOW_DATASET_TABLE}> {
   return {
     type: ActionTypes.SHOW_DATASET_TABLE,
     dataId
   };
 }
 
+export type UpdateDatasetColorUpdater = {
+  dataId: string;
+  newColor: RGBColor;
+};
 /**
  * Update dataset color to custom by means of color picker
  * @memberof visStateActions
@@ -349,7 +491,10 @@ export function showDatasetTable(dataId) {
  * @type {typeof import('./vis-state-actions').updateTableColor}
  * @public
  */
-export function updateTableColor(dataId, newColor) {
+export function updateTableColor(
+  dataId: string,
+  newColor: RGBColor
+): Merge<UpdateDatasetColorUpdater, {type: typeof ActionTypes.UPDATE_TABLE_COLOR}> {
   return {
     type: ActionTypes.UPDATE_TABLE_COLOR,
     dataId,
@@ -357,6 +502,11 @@ export function updateTableColor(dataId, newColor) {
   };
 }
 
+export type SortTableColumnUpdaterAction = {
+  dataId: string;
+  column: string;
+  mode: string;
+};
 /**
  * Sort dataset column, for table display
  * @memberof visStateActions
@@ -367,7 +517,11 @@ export function updateTableColor(dataId, newColor) {
  * @type {typeof import('./vis-state-actions').sortTableColumn}
  * @public
  */
-export function sortTableColumn(dataId, column, mode) {
+export function sortTableColumn(
+  dataId: string,
+  column: string,
+  mode: string
+): Merge<SortTableColumnUpdaterAction, {type: typeof ActionTypes.SORT_TABLE_COLUMN}> {
   return {
     type: ActionTypes.SORT_TABLE_COLUMN,
     dataId,
@@ -376,6 +530,10 @@ export function sortTableColumn(dataId, column, mode) {
   };
 }
 
+export type PinTableColumnUpdaterAction = {
+  dataId: string;
+  column: string;
+};
 /**
  * Pin dataset column, for table display
  * @param dataId
@@ -384,7 +542,10 @@ export function sortTableColumn(dataId, column, mode) {
  * @type {typeof import('./vis-state-actions').pinTableColumn}
  * @public
  */
-export function pinTableColumn(dataId, column) {
+export function pinTableColumn(
+  dataId: string,
+  column: string
+): Merge<PinTableColumnUpdaterAction, {type: typeof ActionTypes.PIN_TABLE_COLUMN}> {
   return {
     type: ActionTypes.PIN_TABLE_COLUMN,
     dataId,
@@ -392,6 +553,10 @@ export function pinTableColumn(dataId, column) {
   };
 }
 
+export type CopyTableColumnUpdaterAction = {
+  dataId: string;
+  column: string;
+};
 /**
  * Copy column, for table display
  * @param dataId
@@ -400,7 +565,10 @@ export function pinTableColumn(dataId, column) {
  * @type {typeof import('./vis-state-actions').copyTableColumn}
  * @public
  */
-export function copyTableColumn(dataId, column) {
+export function copyTableColumn(
+  dataId: string,
+  column: string
+): Merge<CopyTableColumnUpdaterAction, {type: typeof ActionTypes.COPY_TABLE_COLUMN}> {
   return {
     type: ActionTypes.COPY_TABLE_COLUMN,
     dataId,
@@ -408,6 +576,17 @@ export function copyTableColumn(dataId, column) {
   };
 }
 
+export type AddDataToMapUpdaterOptions = {
+  centrMap?: boolean;
+  readOnly?: boolean;
+  keepExistingConfig?: boolean;
+};
+
+export type UpdateVisDataUpdaterAction = {
+  datasets: AddDataToMapPayload['datasets'];
+  options: AddDataToMapPayload['options'];
+  config: AddDataToMapPayload['config'];
+} & AddDataToMapPayload;
 // * @param dataset.info -info of a dataset
 // * @param dataset.info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
 // * @param dataset.info.label - A display name of this dataset
@@ -430,7 +609,11 @@ export function copyTableColumn(dataId, column) {
  * @type {typeof import('./vis-state-actions').updateVisData}
  * @public
  */
-export function updateVisData(datasets, options, config) {
+export function updateVisData(
+  datasets: AddDataToMapPayload['datasets'],
+  options: AddDataToMapPayload['options'],
+  config: AddDataToMapPayload['config']
+): Merge<UpdateVisDataUpdaterAction, {type: typeof ActionTypes.UPDATE_VIS_DATA}> {
   return {
     type: ActionTypes.UPDATE_VIS_DATA,
     datasets,
@@ -439,6 +622,10 @@ export function updateVisData(datasets, options, config) {
   };
 }
 
+export type RenameDatasetUpdaterAction = {
+  dataId: string;
+  label: string;
+};
 /**
  * Rename an existing dataset in `visState`
  * @memberof visStateActions
@@ -448,7 +635,10 @@ export function updateVisData(datasets, options, config) {
  * @type {typeof import('./vis-state-actions').renameDataset}
  * @public
  */
-export function renameDataset(dataId, label) {
+export function renameDataset(
+  dataId: string,
+  label: string
+): Merge<RenameDatasetUpdaterAction, {type: typeof ActionTypes.RENAME_DATASET}> {
   return {
     type: ActionTypes.RENAME_DATASET,
     dataId,
@@ -456,6 +646,9 @@ export function renameDataset(dataId, label) {
   };
 }
 
+export type ToggleFilterAnimationUpdaterAction = {
+  idx: number;
+};
 /**
  * Start and end filter animation
  * @memberof visStateActions
@@ -464,13 +657,19 @@ export function renameDataset(dataId, label) {
  * @returns action
  * @public
  */
-export function toggleFilterAnimation(idx) {
+export function toggleFilterAnimation(
+  idx: number
+): Merge<ToggleFilterAnimationUpdaterAction, {type: typeof ActionTypes.TOGGLE_FILTER_ANIMATION}> {
   return {
     type: ActionTypes.TOGGLE_FILTER_ANIMATION,
     idx
   };
 }
 
+export type UpdateFilterAnimationSpeedUpdaterAction = {
+  idx: number;
+  speed: number;
+};
 /**
  * Change filter animation speed
  * @memberof visStateActions
@@ -480,7 +679,13 @@ export function toggleFilterAnimation(idx) {
  * @returns action
  * @public
  */
-export function updateFilterAnimationSpeed(idx, speed) {
+export function updateFilterAnimationSpeed(
+  idx: number,
+  speed: number
+): Merge<
+  UpdateFilterAnimationSpeedUpdaterAction,
+  {type: typeof ActionTypes.UPDATE_FILTER_ANIMATION_SPEED}
+> {
   return {
     type: ActionTypes.UPDATE_FILTER_ANIMATION_SPEED,
     idx,
@@ -488,6 +693,9 @@ export function updateFilterAnimationSpeed(idx, speed) {
   };
 }
 
+export type SetLayerAnimationTimeUpdaterAction = {
+  value: number;
+};
 /**
  * Reset animation
  * @memberof visStateActions
@@ -496,13 +704,18 @@ export function updateFilterAnimationSpeed(idx, speed) {
  * @returns action
  * @public
  */
-export function setLayerAnimationTime(value) {
+export function setLayerAnimationTime(
+  value: number
+): Merge<SetLayerAnimationTimeUpdaterAction, {type: typeof ActionTypes.SET_LAYER_ANIMATION_TIME}> {
   return {
     type: ActionTypes.SET_LAYER_ANIMATION_TIME,
     value
   };
 }
 
+export type UpdateLayerAnimationSpeedUpdaterAction = {
+  speed: number;
+};
 /**
  * update trip layer animation speed
  * @memberof visStateActions
@@ -511,26 +724,34 @@ export function setLayerAnimationTime(value) {
  * @returns action
  * @public
  */
-export function updateLayerAnimationSpeed(speed) {
+export function updateLayerAnimationSpeed(
+  speed: number
+): Merge<
+  UpdateLayerAnimationSpeedUpdaterAction,
+  {type: typeof ActionTypes.UPDATE_LAYER_ANIMATION_SPEED}
+> {
   return {
     type: ActionTypes.UPDATE_LAYER_ANIMATION_SPEED,
     speed
   };
 }
-
+export type ToggleLayerAnimationUpdaterAction = {};
 /**
  * start end end layer animation
  * @memberof visStateActions
- * @type {typeof import('./vis-state-actions').toggleLayerAnimation}
  * @returns action
  * @public
  */
-export function toggleLayerAnimation() {
+export function toggleLayerAnimation(): Merge<
+  ToggleLayerAnimationUpdaterAction,
+  {type: typeof ActionTypes.TOGGLE_LAYER_ANIMATION}
+> {
   return {
     type: ActionTypes.TOGGLE_LAYER_ANIMATION
   };
 }
 
+export type ToggleLayerAnimationControlUpdaterAction = {};
 /**
  * hide and show layer animation control
  * @memberof visStateActions
@@ -538,12 +759,18 @@ export function toggleLayerAnimation() {
  * @returns action
  * @public
  */
-export function toggleLayerAnimationControl() {
+export function toggleLayerAnimationControl(): Merge<
+  ToggleLayerAnimationControlUpdaterAction,
+  {type: typeof ActionTypes.TOGGLE_LAYER_ANIMATION_CONTROL}
+> {
   return {
     type: ActionTypes.TOGGLE_LAYER_ANIMATION_CONTROL
   };
 }
 
+export type EnlargeFilterUpdaterAction = {
+  idx: number;
+};
 /**
  * Show larger time filter at bottom for time playback (apply to time filter only)
  * @memberof visStateActions
@@ -552,13 +779,18 @@ export function toggleLayerAnimationControl() {
  * @returns action
  * @public
  */
-export function enlargeFilter(idx) {
+export function enlargeFilter(
+  idx: number
+): Merge<EnlargeFilterUpdaterAction, {type: typeof ActionTypes.ENLARGE_FILTER}> {
   return {
     type: ActionTypes.ENLARGE_FILTER,
     idx
   };
 }
 
+export type ToggleFilterFeatureUpdaterAction = {
+  idx: number;
+};
 /**
  * Show/hide filter feature on map
  * @memberof visStateActions
@@ -566,13 +798,18 @@ export function enlargeFilter(idx) {
  * @type {typeof import('./vis-state-actions').toggleFilterFeature}
  * @return action
  */
-export function toggleFilterFeature(idx) {
+export function toggleFilterFeature(
+  idx: number
+): Merge<ToggleFilterFeatureUpdaterAction, {type: typeof ActionTypes.TOGGLE_FILTER_FEATURE}> {
   return {
     type: ActionTypes.TOGGLE_FILTER_FEATURE,
     idx
   };
 }
 
+export type OnLayerHoverUpdaterAction = {
+  info: {picked?: boolean} | null;
+};
 /**
  * Trigger layer hover event with hovered object
  * @memberof visStateActions
@@ -581,13 +818,18 @@ export function toggleFilterFeature(idx) {
  * @returns action
  * @public
  */
-export function onLayerHover(info) {
+export function onLayerHover(
+  info: {picked?: boolean} | null
+): Merge<OnLayerHoverUpdaterAction, {type: typeof ActionTypes.LAYER_HOVER}> {
   return {
     type: ActionTypes.LAYER_HOVER,
     info
   };
 }
 
+export type OnLayerClickUpdaterAction = {
+  info: {picked?: boolean} | null;
+};
 /**
  * Trigger layer click event with clicked object
  * @memberof visStateActions
@@ -596,13 +838,16 @@ export function onLayerHover(info) {
  * @returns action
  * @public
  */
-export function onLayerClick(info) {
+export function onLayerClick(
+  info: {picked?: boolean} | null
+): Merge<OnLayerClickUpdaterAction, {type: typeof ActionTypes.LAYER_CLICK}> {
   return {
     type: ActionTypes.LAYER_CLICK,
     info
   };
 }
 
+export type OnMapClickUpdaterAction = {};
 /**
  * Trigger map click event, unselect clicked object
  * @memberof visStateActions
@@ -610,12 +855,15 @@ export function onLayerClick(info) {
  * @returns action
  * @public
  */
-export function onMapClick() {
+export function onMapClick(): Merge<OnMapClickUpdaterAction, {type: typeof ActionTypes.MAP_CLICK}> {
   return {
     type: ActionTypes.MAP_CLICK
   };
 }
 
+export type OnMouseMoveUpdaterAction = {
+  evt;
+};
 /**
  * Trigger map mouse moveevent, payload would be
  * React-map-gl PointerEvent
@@ -627,13 +875,19 @@ export function onMapClick() {
  * @returns action
  * @public
  */
-export function onMouseMove(evt) {
+export function onMouseMove(
+  evt
+): Merge<OnMouseMoveUpdaterAction, {type: typeof ActionTypes.MOUSE_MOVE}> {
   return {
     type: ActionTypes.MOUSE_MOVE,
     evt
   };
 }
 
+export type ToggleLayerForMapUpdaterAction = {
+  mapIndex: number;
+  layerId: string;
+};
 /**
  * Toggle visibility of a layer in a split map
  * @memberof visStateActions
@@ -643,7 +897,10 @@ export function onMouseMove(evt) {
  * @returns action
  * @public
  */
-export function toggleLayerForMap(mapIndex, layerId) {
+export function toggleLayerForMap(
+  mapIndex: number,
+  layerId: string
+): Merge<ToggleLayerForMapUpdaterAction, {type: typeof ActionTypes.TOGGLE_LAYER_FOR_MAP}> {
   return {
     type: ActionTypes.TOGGLE_LAYER_FOR_MAP,
     mapIndex,
@@ -651,6 +908,11 @@ export function toggleLayerForMap(mapIndex, layerId) {
   };
 }
 
+export type SetFilterPlotUpdaterAction = {
+  idx: number;
+  newProp: object;
+  valueIndex?: number;
+};
 /**
  * Set the property of a filter plot
  * @memberof visStateActions
@@ -661,7 +923,11 @@ export function toggleLayerForMap(mapIndex, layerId) {
  * @returns action
  * @public
  */
-export function setFilterPlot(idx, newProp, valueIndex) {
+export function setFilterPlot(
+  idx: number,
+  newProp: object,
+  valueIndex?: number
+): Merge<SetFilterPlotUpdaterAction, {type: typeof ActionTypes.SET_FILTER_PLOT}> {
   return {
     type: ActionTypes.SET_FILTER_PLOT,
     idx,
@@ -670,6 +936,9 @@ export function setFilterPlot(idx, newProp, valueIndex) {
   };
 }
 
+export type SetMapInfoUpdaterAction = {
+  info: any;
+};
 /**
  * Set the property of a filter plot
  * @memberof visStateActions
@@ -678,13 +947,19 @@ export function setFilterPlot(idx, newProp, valueIndex) {
  * @returns action
  * @public
  */
-export function setMapInfo(info) {
+export function setMapInfo(
+  info: any
+): Merge<SetMapInfoUpdaterAction, {type: typeof ActionTypes.SET_MAP_INFO}> {
   return {
     type: ActionTypes.SET_MAP_INFO,
     info
   };
 }
 
+export type LoadFilesUpdaterAction = {
+  files: File[];
+  onFinish?(result: any): any;
+};
 /**
  * Trigger file loading dispatch `addDataToMap` if succeed, or `loadFilesErr` if failed
  * @memberof visStateActions
@@ -693,7 +968,10 @@ export function setMapInfo(info) {
  * @returns action
  * @public
  */
-export function loadFiles(files, onFinish) {
+export function loadFiles(
+  files: File[],
+  onFinish?: (result: any) => any
+): Merge<LoadFilesUpdaterAction, {type: typeof ActionTypes.LOAD_FILES}> {
   return {
     type: ActionTypes.LOAD_FILES,
     files,
@@ -708,12 +986,15 @@ export function loadFiles(files, onFinish) {
  * @returns action
  * @public
  */
-export function loadNextFile() {
+export function loadNextFile(): {type: typeof ActionTypes.LOAD_NEXT_FILE} {
   return {
     type: ActionTypes.LOAD_NEXT_FILE
   };
 }
 
+export type loadFilesSuccessUpdaterAction = {
+  result: FileCacheItem[];
+};
 /**
  * called when all files are processed and loaded
  * @memberof visStateActions
@@ -721,13 +1002,19 @@ export function loadNextFile() {
  * @type {typeof import('./vis-state-actions').loadFilesSuccess}
  * @returns action
  */
-export function loadFilesSuccess(result) {
+export function loadFilesSuccess(
+  result: FileCacheItem[]
+): Merge<loadFilesSuccessUpdaterAction, {type: typeof ActionTypes.LOAD_FILES_SUCCESS}> {
   return {
     type: ActionTypes.LOAD_FILES_SUCCESS,
     result
   };
 }
 
+export type LoadFileStepSuccessAction = {
+  fileName: string;
+  fileCache: FileCacheItem[];
+};
 /**
  * called when successfully loaded one file, ready to move on to the next one
  * @memberof visStateActions
@@ -735,7 +1022,13 @@ export function loadFilesSuccess(result) {
  * @type {typeof import('./vis-state-actions').loadFileStepSuccess}
  * @returns action
  */
-export function loadFileStepSuccess({fileName, fileCache}) {
+export function loadFileStepSuccess({
+  fileName,
+  fileCache
+}: {
+  fileName: string;
+  fileCache: FileCacheItem[];
+}): Merge<LoadFileStepSuccessAction, {type: typeof ActionTypes.LOAD_FILE_STEP_SUCCESS}> {
   return {
     type: ActionTypes.LOAD_FILE_STEP_SUCCESS,
     fileName,
@@ -743,6 +1036,10 @@ export function loadFileStepSuccess({fileName, fileCache}) {
   };
 }
 
+export type loadFilesErrUpdaterAction = {
+  fileName: string;
+  error: any;
+};
 /**
  * Trigger loading file error
  * @memberof visStateActions
@@ -751,7 +1048,11 @@ export function loadFileStepSuccess({fileName, fileCache}) {
  * @returns action
  * @public
  */
-export function loadFilesErr(fileName, error) {
+
+export function loadFilesErr(
+  fileName: string,
+  error: any
+): Merge<loadFilesErrUpdaterAction, {type: typeof ActionTypes.LOAD_FILES_ERR}> {
   return {
     type: ActionTypes.LOAD_FILES_ERR,
     fileName,
@@ -759,6 +1060,9 @@ export function loadFilesErr(fileName, error) {
   };
 }
 
+export type SetFeaturesUpdaterAction = {
+  features: Feature[];
+};
 /**
  * Store features to state
  * @memberof visStateActions
@@ -766,13 +1070,19 @@ export function loadFilesErr(fileName, error) {
  * @type {typeof import('./vis-state-actions').setFeatures}
  * @returns action
  */
-export function setFeatures(features) {
+export function setFeatures(
+  features: Feature[]
+): Merge<SetFeaturesUpdaterAction, {type: typeof ActionTypes.SET_FEATURES}> {
   return {
     type: ActionTypes.SET_FEATURES,
     features
   };
 }
 
+export type SetPolygonFilterLayerUpdaterAction = {
+  layer: Layer;
+  feature: Feature;
+};
 /**
  * It will apply the provide feature as filter to the given layer.
  * If the given feature is already applied as filter to the layer, it will remove the layer from the filter
@@ -782,7 +1092,10 @@ export function setFeatures(features) {
  * @type {typeof import('./vis-state-actions').setPolygonFilterLayer}
  * @returns action
  */
-export function setPolygonFilterLayer(layer, feature) {
+export function setPolygonFilterLayer(
+  layer: Layer,
+  feature: Feature
+): Merge<SetPolygonFilterLayerUpdaterAction, {type: typeof ActionTypes.SET_POLYGON_FILTER_LAYER}> {
   return {
     type: ActionTypes.SET_POLYGON_FILTER_LAYER,
     layer,
@@ -790,6 +1103,9 @@ export function setPolygonFilterLayer(layer, feature) {
   };
 }
 
+export type SetSelectedFeatureUpdaterAction = {
+  feature: Feature;
+};
 /**
  * Set the current feature to be edited/deleted
  * @memberof visStateActions
@@ -797,13 +1113,18 @@ export function setPolygonFilterLayer(layer, feature) {
  * @type {typeof import('./vis-state-actions').setSelectedFeature}
  * @returns action
  */
-export function setSelectedFeature(feature) {
+export function setSelectedFeature(
+  feature: Feature
+): Merge<SetSelectedFeatureUpdaterAction, {type: typeof ActionTypes.SET_SELECTED_FEATURE}> {
   return {
     type: ActionTypes.SET_SELECTED_FEATURE,
     feature
   };
 }
 
+export type DeleteFeatureUpdaterAction = {
+  feature: Feature;
+};
 /**
  * Delete the given feature
  * @memberof visStateActions
@@ -811,13 +1132,18 @@ export function setSelectedFeature(feature) {
  * @type {typeof import('./vis-state-actions').deleteFeature}
  * @returns action
  */
-export function deleteFeature(feature) {
+export function deleteFeature(
+  feature: Feature
+): Merge<DeleteFeatureUpdaterAction, {type: typeof ActionTypes.DELETE_FEATURE}> {
   return {
     type: ActionTypes.DELETE_FEATURE,
     feature
   };
 }
 
+export type SetEditorModeUpdaterAction = {
+  mode: string;
+};
 /** Set the map mode
  * @memberof visStateActions
  * @param mode one of EDITOR_MODES
@@ -830,13 +1156,18 @@ export function deleteFeature(feature) {
  *
  * this.props.dispatch(setMapMode(EDITOR_MODES.DRAW_POLYGON));
  */
-export function setEditorMode(mode) {
+export function setEditorMode(
+  mode: string
+): Merge<SetEditorModeUpdaterAction, {type: typeof ActionTypes.SET_EDITOR_MODE}> {
   return {
     type: ActionTypes.SET_EDITOR_MODE,
     mode
   };
 }
 
+export type ApplyCPUFilterUpdaterAction = {
+  dataId: string | string[];
+};
 /**
  * Trigger CPU filter of selected dataset
  * @memberof visStateActions
@@ -845,25 +1176,45 @@ export function setEditorMode(mode) {
  * @returns action
  * @public
  */
-export function applyCPUFilter(dataId) {
+export function applyCPUFilter(
+  dataId: string | string[]
+): Merge<ApplyCPUFilterUpdaterAction, {type: typeof ActionTypes.APPLY_CPU_FILTER}> {
   return {
     type: ActionTypes.APPLY_CPU_FILTER,
     dataId
   };
 }
 
+export type ToggleEditorVisibilityUpdaterAction = {};
 /**
  * Toggle editor layer visibility
  * @memberof visStateActions
  * @type {typeof import('./vis-state-actions').toggleEditorVisibility}
  * @return action
  */
-export function toggleEditorVisibility() {
+export function toggleEditorVisibility(): Merge<
+  ToggleEditorVisibilityUpdaterAction,
+  {type: typeof ActionTypes.TOGGLE_EDITOR_VISIBILITY}
+> {
   return {
     type: ActionTypes.TOGGLE_EDITOR_VISIBILITY
   };
 }
 
+type FileContent = {
+  fileName: string;
+  header: string[];
+  data: any;
+};
+export type NextFileBatchUpdaterAction = {
+  payload: {
+    gen: AsyncGenerator<FileContent>;
+    fileName: string;
+    progress?: any;
+    accumulated?: any;
+    onFinish: (result: any) => any;
+  };
+};
 /**
  * Process the next file batch
  * @memberof visStateActions
@@ -871,13 +1222,21 @@ export function toggleEditorVisibility() {
  * @type {typeof import('./vis-state-actions').nextFileBatch}
  * @return action
  */
-export function nextFileBatch(payload) {
+export function nextFileBatch(
+  payload: NextFileBatchUpdaterAction['payload']
+): Merge<NextFileBatchUpdaterAction, {type: typeof ActionTypes.NEXT_FILE_BATCH}> {
   return {
     type: ActionTypes.NEXT_FILE_BATCH,
     payload
   };
 }
 
+export type ProcessFileContentUpdaterAction = {
+  payload: {
+    content: FileContent;
+    fileCache: FileCacheItem[];
+  };
+};
 /**
  * Process the file content
  * @memberof visStateActions
@@ -885,13 +1244,21 @@ export function nextFileBatch(payload) {
  * @type {typeof import('./vis-state-actions').processFileContent}
  * @return action
  */
-export function processFileContent(payload) {
+export function processFileContent(
+  payload: ProcessFileContentUpdaterAction['payload']
+): Merge<ProcessFileContentUpdaterAction, {type: typeof ActionTypes.PROCESS_FILE_CONTENT}> {
   return {
     type: ActionTypes.PROCESS_FILE_CONTENT,
     payload
   };
 }
 
+export type SetLayerAnimationTimeConfigAction = {
+  config: {
+    timezone?: string;
+    timeFormat?: string;
+  };
+};
 /**
  * Set layer animation time format and timezone
  * @memberof visStateActions
@@ -899,13 +1266,25 @@ export function processFileContent(payload) {
  * @type {typeof import('./vis-state-actions').setLayerAnimationTimeConfig}
  * @return action
  */
-export function setLayerAnimationTimeConfig(config) {
+export function setLayerAnimationTimeConfig(
+  config: SetLayerAnimationTimeConfigAction['config']
+): Merge<
+  SetLayerAnimationTimeConfigAction,
+  {type: typeof ActionTypes.SET_LAYER_ANIMATION_TIME_CONFIG}
+> {
   return {
     type: ActionTypes.SET_LAYER_ANIMATION_TIME_CONFIG,
     config
   };
 }
 
+export type SetFilterAnimationTimeConfigAction = {
+  idx: number;
+  config: {
+    timezone?: string;
+    timeFormat?: string;
+  };
+};
 /**
  * Set Filter animation time format and timezone
  * @memberof visStateActions
@@ -914,7 +1293,13 @@ export function setLayerAnimationTimeConfig(config) {
  * @type {typeof import('./vis-state-actions').setFilterAnimationTimeConfig}
  * @return action
  */
-export function setFilterAnimationTimeConfig(idx, config) {
+export function setFilterAnimationTimeConfig(
+  idx: SetFilterAnimationTimeConfigAction['idx'],
+  config: SetFilterAnimationTimeConfigAction['config']
+): Merge<
+  SetFilterAnimationTimeConfigAction,
+  {type: typeof ActionTypes.SET_FILTER_ANIMATION_TIME_CONFIG}
+> {
   return {
     type: ActionTypes.SET_FILTER_ANIMATION_TIME_CONFIG,
     idx,

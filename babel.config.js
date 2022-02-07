@@ -38,7 +38,8 @@ const PLUGINS = [
       root: ['./src'],
       alias: {
         test: './test'
-      }
+      },
+      extensions: ['.js', '.ts', '.tsx', '.json']
     }
   ],
   [
