@@ -27,8 +27,8 @@ const defaultMapDispatchToProps = () => (dispatch, _, __) => ({dispatch});
 export const connect = (
   mapStateToProps = defaultMapStateToProps,
   makeMapDispatchToProps = defaultMapDispatchToProps,
-  reduxMergeProps,
-  options
+  reduxMergeProps?,
+  options?
 ) => BaseComponent => {
   const mapDispatchToProps = makeMapDispatchToProps();
   const reduxMapState = (state, props) => mapStateToProps(props.selector(state), props, state);
