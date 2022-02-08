@@ -22,6 +22,7 @@
 // We are exposing this secause react-palm has no UMD module and
 // users need taskMiddleware to initiate their redux middle ware
 import {taskMiddleware} from 'react-palm/tasks';
+import {Middleware} from 'redux';
 
 /**
  * This method is used to enhance redux middleware and provide
@@ -29,6 +30,6 @@ import {taskMiddleware} from 'react-palm/tasks';
  * @param middlewares current redux middlewares
  * @returns {*[]} the original list of middlewares plus the react-palm middleware
  */
-export function enhanceReduxMiddleware(middlewares = []) {
+export function enhanceReduxMiddleware(middlewares: Middleware[] = []): Middleware[] {
   return [...middlewares, taskMiddleware];
 }
