@@ -30,7 +30,7 @@ export const messages = Object.keys(LOCALE_CODES).reduce(
     [key]:
       key === 'en'
         ? enFlat
-        : {...enFlat, ...flattenMessages(require(`./translations/${key}.js`).default)}
+        : {...enFlat, ...flattenMessages(require(`./translations/${key}.ts`).default)}
   }),
   {}
 );
