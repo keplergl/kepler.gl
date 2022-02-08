@@ -21,7 +21,17 @@
 import React from 'react';
 import {FormattedMessage} from 'react-intl';
 
-const EnhancedFormattedMessage = props => (
+type FormattedMessageType = {
+  id: string;
+  defaultMessage?: string;
+  defaultValue?: string;
+  values?: {
+    [key: string]: string | number;
+  };
+  children?: () => React.ReactElement;
+};
+
+const EnhancedFormattedMessage: React.FC<FormattedMessageType> = props => (
   <FormattedMessage
     // Us id as default Message to prevent error being thrown
     defaultMessage={props.defaultMessage || props.id}
