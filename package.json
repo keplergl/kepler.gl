@@ -136,7 +136,7 @@
     "@deck.gl/test-utils": "^8.6.0",
     "@loaders.gl/polyfills": "^3.0.9",
     "@luma.gl/test-utils": "^8.5.10",
-    "@nebula.gl/layers": "1.0.2-alpha.0",
+    "@nebula.gl/layers": "1.0.2-alpha.1",
     "@probe.gl/env": "^3.0.1",
     "@probe.gl/test-utils": "^3.0.1",
     "@testing-library/react-hooks": "^3.4.2",
