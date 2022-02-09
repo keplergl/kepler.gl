@@ -18,15 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import {FormattedMessage} from 'react-intl';
+export const LOCALES = {
+  en: 'English',
+  fi: 'Suomi',
+  pt: 'Português',
+  es: 'Español',
+  ca: 'Català',
+  ja: '日本語',
+  cn: '简体中文',
+  ru: 'Русский'
+};
 
-const EnhancedFormattedMessage = props => (
-  <FormattedMessage
-    // Us id as default Message to prevent error being thrown
-    defaultMessage={props.defaultMessage || props.id}
-    {...props}
-  />
+/**
+ * Localization can be passed to `KeplerGl` via uiState `locale`.
+ * Available languages are `en` and `fi`. Default language is `en`
+ * @constant
+ * @public
+ * @example
+ * ```js
+ * import {combineReducers} from 'redux';
+ * import {LOCALE_CODES} from 'kepler.gl/localization/locales';
+ *
+ * const customizedKeplerGlReducer = keplerGlReducer
+ *   .initialState({
+ *     uiState: {
+ *       // use Finnish locale
+ *       locale: LOCALE_CODES.fi
+ *     }
+ *   });
+ *
+ * ```
+ */
+
+export type LocaleCodesType = {
+  [key: string]: string;
+};
+
+export const LOCALE_CODES: LocaleCodesType = Object.keys(LOCALES).reduce(
+  (acc, key) => ({...acc, [key]: key}),
+  {}
 );
-
-export default EnhancedFormattedMessage;

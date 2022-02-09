@@ -18,36 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export const LOCALES = {
-  en: 'English',
-  fi: 'Suomi',
-  pt: 'Português',
-  es: 'Español',
-  ca: 'Català',
-  ja: '日本語',
-  cn: '简体中文',
-  ru: 'Русский'
-};
+import en from './translations/en';
+import {flattenMessages} from '../utils/locale-utils';
+import {LOCALE_CODES} from './locales';
 
-/**
- * Localization can be passed to `KeplerGl` via uiState `locale`.
- * Available languages are `en` and `fi`. Default language is `en`
- * @constant
- * @public
- * @example
- * ```js
- * import {combineReducers} from 'redux';
- * import {LOCALE_CODES} from 'kepler.gl/localization/locales';
- *
- * const customizedKeplerGlReducer = keplerGlReducer
- *   .initialState({
- *     uiState: {
- *       // use Finnish locale
- *       locale: LOCALE_CODES.fi
- *     }
- *   });
- *
- * ```
- */
+const enFlat = flattenMessages(en);
 
-export const LOCALE_CODES = Object.keys(LOCALES).reduce((acc, key) => ({...acc, [key]: key}), {});
+export const messages: {
+  [key: string]: string;
+} = Object.keys(LOCALE_CODES).reduce(
+  (acc, key) => ({
+    ...acc,
+    [key]:
+      key === 'en'
+        ? enFlat
+        : {...enFlat, ...flattenMessages(require(`./translations/${key}.ts`).default)}
+  }),
+  {}
+);
+
+export default messages;
