@@ -193,7 +193,7 @@ export default class HexagonIdLayer extends Layer {
     return this;
   }
 
-  static findDefaultLayerProps({fields = [], dataContainer}: KeplerTable) {
+  static findDefaultLayerProps({fields = [], dataContainer, label}: KeplerTable) {
     const hexFields = getHexFields(fields, dataContainer);
     if (!hexFields.length) {
       return {props: []};
@@ -202,7 +202,8 @@ export default class HexagonIdLayer extends Layer {
     return {
       props: hexFields.map(f => ({
         isVisible: true,
-        label: f.displayName || f.name,
+        // default layer name should be dataset name
+        label,
         columns: {
           hex_id: {
             value: f.name,
