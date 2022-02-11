@@ -40,7 +40,12 @@ const StyledActionsLayer = styled.div`
     color: ${props => props.theme.textColor};
   }
 `;
-
+const defaultActionIcons = {
+  remove: Trash,
+  layer: Layers,
+  copy: Copy,
+  copied: Checkmark
+};
 PureFeatureActionPanelFactory.deps = [];
 
 export interface FeatureActionPanelProps {
@@ -57,6 +62,9 @@ export interface FeatureActionPanelProps {
   onDeleteFeature: () => void;
   onClose?: () => void;
   children?: React.ReactNode;
+  actionIcons?: {
+    [id: string]: React.ElementType;
+  };
 }
 
 export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProps> {
@@ -69,6 +77,7 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
     currentFilter,
     onToggleLayer,
     onDeleteFeature,
+    actionIcons = defaultActionIcons,
     children
   }: FeatureActionPanelProps) => {
     const [copied, setCopied] = useState(false);
@@ -96,7 +105,7 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
           <ActionPanelItem
             className="editor-layers-list"
             label={intl.formatMessage({id: 'editor.filterLayer', defaultMessage: 'Filter layers'})}
-            Icon={Layers}
+            Icon={actionIcons.layer}
           >
             {layers.length ? (
               layers.map((layer, index) => (
@@ -127,14 +136,14 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
           <ActionPanelItem
             label={intl.formatMessage({id: 'editor.copyGeometry', defaultMessage: 'Copy Geometry'})}
             className="delete-panel-item"
-            Icon={copied ? Checkmark : Copy}
+            Icon={copied ? actionIcons.copied : actionIcons.copy}
             onClick={copyGeometry}
           />
           {children}
           <ActionPanelItem
             label={intl.formatMessage({id: 'tooltip.delete', defaultMessage: 'Delete'})}
             className="delete-panel-item"
-            Icon={Trash}
+            Icon={actionIcons.remove}
             onClick={onDeleteFeature}
           />
         </ActionPanel>
@@ -144,7 +153,8 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
 
   FeatureActionPanel.displayName = 'FeatureActionPanel';
   FeatureActionPanel.defaultProps = {
-    position: null
+    position: null,
+    actionIcons: defaultActionIcons
   };
 
   return FeatureActionPanel;
