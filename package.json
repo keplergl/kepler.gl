@@ -171,6 +171,7 @@
   "devDependencies": {
     "@babel/cli": "^7.12.1",
     "@babel/core": "^7.12.1",
+    "@babel/eslint-parser": "^7.17.0",
     "@babel/node": "^7.12.1",
     "@babel/parser": "^7.12.1",
     "@babel/plugin-proposal-class-properties": "^7.12.1",
@@ -192,6 +193,7 @@
     "@types/d3-array": "^2.0.0",
     "@types/d3-scale": "^3.2.2",
     "@types/geojson": "^7946.0.7",
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.0.0",
     "babel-plugin-istanbul": "^6.0.0",

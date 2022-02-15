@@ -32,6 +32,22 @@ import {findMapBounds} from 'utils/data-utils';
 import {isPlainObject} from 'utils/utils';
 import {filesToDataPayload} from 'processors/file-handler';
 import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-helpers';
+import {VisState} from './vis-state-updaters';
+import {MapState} from './map-state-updaters';
+import {UiState} from './ui-state-updaters';
+import {MapStyle} from './map-style-updaters';
+import {ProviderState} from './provider-state-updaters';
+import {AddDataToMapPayload} from 'actions/actions';
+import {loadFilesSuccessUpdaterAction} from 'actions/vis-state-actions';
+import {ParsedConfig} from 'schemas';
+
+export type KeplerGlState = {
+  visState: VisState;
+  mapState: MapState;
+  mapStyle: MapStyle;
+  uiState: UiState;
+  providerState: ProviderState;
+};
 
 // compose action to apply result multiple reducers, with the output of one
 
@@ -117,7 +133,10 @@ export const defaultAddDataToMapOptions = {
  * @type {typeof import('./combined-updaters').addDataToMapUpdater}
  * @public
  */
-export const addDataToMapUpdater = (state, {payload}) => {
+export const addDataToMapUpdater = (
+  state: KeplerGlState,
+  {payload}: {payload: AddDataToMapPayload}
+): KeplerGlState => {
   const {datasets, config, info} = payload;
 
   const options = {
@@ -125,7 +144,8 @@ export const addDataToMapUpdater = (state, {payload}) => {
     ...payload.options
   };
 
-  let parsedConfig = config;
+  // @ts-expect-error
+  let parsedConfig: ParsedConfig = config;
 
   if (isValidConfig(config)) {
     // if passed in saved config
@@ -140,8 +160,8 @@ export const addDataToMapUpdater = (state, {payload}) => {
     return bounds ? bounds : undefined;
   };
 
-  return compose_([
-    pick_('visState')(
+  return compose_<KeplerGlState>([
+    pick_<KeplerGlState, 'visState'>('visState')(
       apply_(visStateUpdateVisDataUpdater, {
         datasets,
         options,
@@ -149,11 +169,17 @@ export const addDataToMapUpdater = (state, {payload}) => {
       })
     ),
 
-    if_(info, pick_('visState')(apply_(setMapInfoUpdater, {info}))),
+    if_<KeplerGlState>(
+      Boolean(info),
+      pick_<KeplerGlState, 'visState'>('visState')(apply_(setMapInfoUpdater, {info}))
+    ),
 
-    with_(({visState}) =>
-      pick_('mapState')(
-        apply_(
+    // @ts-expect-error
+    with_<KeplerGlState>(({visState}) => {
+      return pick_<KeplerGlState, 'mapState'>('mapState')(
+        // @ts-expect-error
+        apply_<KeplerGlState, any>(
+          // @ts-expect-error
           stateMapConfigUpdater,
           payload_({
             config: parsedConfig,
@@ -161,27 +187,29 @@ export const addDataToMapUpdater = (state, {payload}) => {
             bounds: findMapBoundsIfCentered(filterNewlyAddedLayers(visState.layers))
           })
         )
-      )
+      );
+    }),
+    pick_<KeplerGlState, 'mapStyle'>('mapStyle')(
+      apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))
     ),
-
-    pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
-
-    pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null))),
-
-    pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),
-
-    pick_('uiState')(merge_(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {}))
+    pick_<KeplerGlState, 'uiState'>('uiState')(
+      apply_(uiStateLoadFilesSuccessUpdater, payload_(null))
+    ),
+    pick_<KeplerGlState, 'uiState'>('uiState')(apply_(toggleModalUpdater, payload_(null))),
+    pick_<KeplerGlState, 'uiState'>('uiState')(
+      merge_(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {})
+    )
   ])(state);
 };
 
-/**
- * @type {typeof import('./combined-updaters').loadFilesSuccessUpdater}
- */
-export const loadFilesSuccessUpdater = (state, action) => {
+export const loadFilesSuccessUpdater = (
+  state: KeplerGlState,
+  action: loadFilesSuccessUpdaterAction
+): KeplerGlState => {
   // still more to load
   const payloads = filesToDataPayload(action.result);
   const nextState = compose_([
-    pick_('visState')(
+    pick_<KeplerGlState, 'visState'>('visState')(
       merge_({
         fileLoading: false,
         fileLoadingProgress: {}
