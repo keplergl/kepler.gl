@@ -32,14 +32,15 @@ export function payload_<P>(payload: P) {
 }
 /** Wraps a value in an object and stores it the `payload` field */
 export function apply_<State, P>(
-  updater: (s: State, p: P) => State,
+  updater: (state: State, payload: P) => State,
   payload: P
-): (s: State) => State {
+): (state: State) => State {
   return state => updater(state, payload);
 }
 
-export function with_<State>(fn: (state: State) => State): (state: State) => State {
-  // @ts-expect-error
+export function with_<State>(
+  fn: (state: State) => (state: State) => State
+): (state: State) => State {
   return state => fn(state)(state);
 }
 

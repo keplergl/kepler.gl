@@ -174,12 +174,9 @@ export const addDataToMapUpdater = (
       pick_<KeplerGlState, 'visState'>('visState')(apply_(setMapInfoUpdater, {info}))
     ),
 
-    // @ts-expect-error
-    with_<KeplerGlState>(({visState}) => {
-      return pick_<KeplerGlState, 'mapState'>('mapState')(
-        // @ts-expect-error
-        apply_<KeplerGlState, any>(
-          // @ts-expect-error
+    with_<KeplerGlState>(({visState}) =>
+      pick_<KeplerGlState, 'mapState'>('mapState')(
+        apply_(
           stateMapConfigUpdater,
           payload_({
             config: parsedConfig,
@@ -187,8 +184,8 @@ export const addDataToMapUpdater = (
             bounds: findMapBoundsIfCentered(filterNewlyAddedLayers(visState.layers))
           })
         )
-      );
-    }),
+      )
+    ),
     pick_<KeplerGlState, 'mapStyle'>('mapStyle')(
       apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))
     ),
