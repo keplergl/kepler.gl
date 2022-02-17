@@ -19,8 +19,43 @@
 // THE SOFTWARE.
 
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
+import * as MapStateActions from 'actions/map-state-actions';
+import {ReceiveMapConfigPayload} from '../actions/actions';
+import ActionTypes from '../constants/action-types';
 
-/** @typedef {import('./map-state-updaters').MapState} MapState */
+export type MapState = {
+  pitch: number;
+  bearing: number;
+  latitude: number;
+  longitude: number;
+  zoom: number;
+  dragRotate: boolean;
+  width: number;
+  height: number;
+  isSplit: boolean;
+  initialState?: any;
+};
+
+export type Bounds = [number, number, number, number];
+/** Width of viewport */
+export type Viewport = {
+  /**  Width of viewport */
+  width?: number;
+  /**  Height of viewport */
+  height?: number;
+  /**  Zoom of viewport */
+  zoom?: number;
+  /**  Camera angle in degrees (0 is straight down) */
+  pitch?: number;
+  /**  Map rotation in degrees (0 means north is up) */
+  bearing?: number;
+  /**  Latitude center of viewport on map in mercator projection */
+  latitude?: number;
+  /**  Longitude Center of viewport on map in mercator projection */
+  longitude?: number;
+  /**  Whether to enable drag and rotate map into perspective viewport */
+  dragRotate?: boolean;
+};
 
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
@@ -75,10 +110,9 @@ const mapStateUpdaters = null;
  * @property width Default: `800`
  * @property height Default: `800`
  * @property isSplit Default: `false`
- * @type {MapState}
  * @public
  */
-export const INITIAL_MAP_STATE = {
+export const INITIAL_MAP_STATE: MapState = {
   pitch: 0,
   bearing: 0,
   latitude: 37.75043,
@@ -94,10 +128,12 @@ export const INITIAL_MAP_STATE = {
 /**
  * Update map viewport
  * @memberof mapStateUpdaters
- * @type {typeof import('./map-state-updaters').updateMapUpdater}
  * @public
  */
-export const updateMapUpdater = (state, action) => ({
+export const updateMapUpdater = (
+  state: MapState,
+  action: MapStateActions.UpdateMapUpdaterAction
+): MapState => ({
   ...state,
   ...(action.payload || {})
 });
@@ -105,10 +141,12 @@ export const updateMapUpdater = (state, action) => ({
 /**
  * Fit map viewport to bounds
  * @memberof mapStateUpdaters
- * @type {typeof import('./map-state-updaters').fitBoundsUpdater}
  * @public
  */
-export const fitBoundsUpdater = (state, action) => {
+export const fitBoundsUpdater = (
+  state: MapState,
+  action: MapStateActions.FitBoundsUpdaterAction
+): MapState => {
   const centerAndZoom = getCenterAndZoomFromBounds(action.payload, {
     width: state.width,
     height: state.height
@@ -131,10 +169,12 @@ export const fitBoundsUpdater = (state, action) => {
 /**
  * Toggle between 3d and 2d map.
  * @memberof mapStateUpdaters
- * @type {typeof import('./map-state-updaters').togglePerspectiveUpdater}
  * @public
  */
-export const togglePerspectiveUpdater = state => ({
+export const togglePerspectiveUpdater = (
+  state: MapState,
+  action: MapStateActions.TogglePerspectiveUpdaterAction
+): MapState => ({
   ...state,
   ...{
     pitch: state.dragRotate ? 0 : 50,
@@ -146,10 +186,9 @@ export const togglePerspectiveUpdater = state => ({
 /**
  * reset mapState to initial State
  * @memberof mapStateUpdaters
- * @type {typeof import('./map-state-updaters').resetMapConfigUpdater}
  * @public
  */
-export const resetMapConfigUpdater = state => ({
+export const resetMapConfigUpdater = (state: MapState): MapState => ({
   ...INITIAL_MAP_STATE,
   ...state.initialState,
   initialState: state.initialState
@@ -159,12 +198,17 @@ export const resetMapConfigUpdater = state => ({
 /**
  * Update `mapState` to propagate a new config
  * @memberof mapStateUpdaters
- * @type {typeof import('./map-state-updaters').receiveMapConfigUpdater}
  * @public
  */
 export const receiveMapConfigUpdater = (
-  state,
-  {payload: {config = {}, options = {}, bounds = null}}
+  state: MapState,
+  {
+    // @ts-expect-error
+    payload: {config = {}, options = {}, bounds = null}
+  }: {
+    type?: typeof ActionTypes.RECEIVE_MAP_CONFIG;
+    payload: ReceiveMapConfigPayload;
+  }
 ) => {
   const {mapState} = config || {};
 
@@ -189,10 +233,12 @@ export const receiveMapConfigUpdater = (
 /**
  * Toggle between one or split maps
  * @memberof mapStateUpdaters
- * @type {typeof import('./map-state-updaters').toggleSplitMapUpdater}
  * @public
  */
-export const toggleSplitMapUpdater = state => ({
+export const toggleSplitMapUpdater = (
+  state: MapState,
+  action: MapStateActions.ToggleSplitMapUpdaterAction
+): MapState => ({
   ...state,
   isSplit: !state.isSplit,
   ...getMapDimForSplitMap(!state.isSplit, state)

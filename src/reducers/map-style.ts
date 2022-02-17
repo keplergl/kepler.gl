@@ -43,7 +43,6 @@ const actionHandler = {
 };
 
 export const mapStyleReducerFactory = (initialState = {}) =>
-  // @ts-ignore
   handleActions(actionHandler, {
     ...mapStyleUpdaters.INITIAL_MAP_STYLE,
     ...initialState,
