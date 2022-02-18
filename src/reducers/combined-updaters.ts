@@ -161,7 +161,7 @@ export const addDataToMapUpdater = (
   };
 
   return compose_<KeplerGlState>([
-    pick_<KeplerGlState, 'visState'>('visState')(
+    pick_('visState')(
       apply_(visStateUpdateVisDataUpdater, {
         datasets,
         options,
@@ -169,13 +169,10 @@ export const addDataToMapUpdater = (
       })
     ),
 
-    if_<KeplerGlState>(
-      Boolean(info),
-      pick_<KeplerGlState, 'visState'>('visState')(apply_(setMapInfoUpdater, {info}))
-    ),
+    if_(Boolean(info), pick_('visState')(apply_(setMapInfoUpdater, {info}))),
 
-    with_<KeplerGlState>(({visState}) =>
-      pick_<KeplerGlState, 'mapState'>('mapState')(
+    with_(({visState}) =>
+      pick_('mapState')(
         apply_(
           stateMapConfigUpdater,
           payload_({
@@ -186,16 +183,10 @@ export const addDataToMapUpdater = (
         )
       )
     ),
-    pick_<KeplerGlState, 'mapStyle'>('mapStyle')(
-      apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))
-    ),
-    pick_<KeplerGlState, 'uiState'>('uiState')(
-      apply_(uiStateLoadFilesSuccessUpdater, payload_(null))
-    ),
-    pick_<KeplerGlState, 'uiState'>('uiState')(apply_(toggleModalUpdater, payload_(null))),
-    pick_<KeplerGlState, 'uiState'>('uiState')(
-      merge_(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {})
-    )
+    pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
+    pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null))),
+    pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),
+    pick_('uiState')(merge_(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {}))
   ])(state);
 };
 
@@ -206,7 +197,7 @@ export const loadFilesSuccessUpdater = (
   // still more to load
   const payloads = filesToDataPayload(action.result);
   const nextState = compose_([
-    pick_<KeplerGlState, 'visState'>('visState')(
+    pick_('visState')(
       merge_({
         fileLoading: false,
         fileLoadingProgress: {}

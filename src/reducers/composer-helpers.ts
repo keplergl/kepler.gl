@@ -52,13 +52,13 @@ export function compose_<State>(fns: Array<(s: State) => State>): (s: State) => 
   return state => fns.reduce((state2, fn) => fn(state2), state);
 }
 /** Returns a reducer function that merges props with state */
-export function merge_<State, Props>(obj: Props): (state: State) => State & Props {
+export function merge_<Props>(obj: Props): <State>(state: State) => State {
   return state => ({...state, ...obj});
 }
 
-export function pick_<State, Prop extends keyof State>(
+export function pick_<Prop extends string>(
   prop: Prop
-): (fn: (p: State[Prop]) => State[Prop]) => (state: State) => State {
+): <Value>(fn: (p: Value) => Value) => <State extends Record<Prop, Value>>(state: State) => State {
   return fn => state => ({...state, [prop]: fn(state[prop])});
 }
 
@@ -70,6 +70,6 @@ export function findById<X extends {id: string}>(id: string): (arr: X[]) => X | 
   return arr => arr.find(a => a.id === id);
 }
 
-export function map_<X, Y>(fn: (e: X) => Y): (arr: X[]) => Y[] {
+export function map_<X>(fn: (state: X) => X): (arr: X[]) => X[] {
   return arr => arr.map(e => fn(e));
 }
