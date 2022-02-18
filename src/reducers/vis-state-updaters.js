@@ -1574,6 +1574,7 @@ export function loadNextFileUpdater(state) {
   const {loaders, loadOptions} = state;
   return withTask(
     stateWithProgress,
+    // @ts-expect-error
     makeLoadFileTask(file, nextState.fileLoading.fileCache, loaders, loadOptions)
   );
 }
