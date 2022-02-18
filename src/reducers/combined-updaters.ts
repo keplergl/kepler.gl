@@ -130,7 +130,6 @@ export const defaultAddDataToMapOptions = {
  * @property data.fields.name - ***required** Name of the field,
  * @property data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
  *
- * @type {typeof import('./combined-updaters').addDataToMapUpdater}
  * @public
  */
 export const addDataToMapUpdater = (
