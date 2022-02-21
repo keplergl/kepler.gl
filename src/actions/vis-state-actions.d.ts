@@ -21,7 +21,7 @@
 // vis-state-reducer
 import ActionTypes, {ActionType} from 'constants/action-types';
 import {ProtoDataset, AddDataToMapPayload} from '../actions/actions';
-import {ParsedConfig} from '../schemas';
+import {ParsedConfig} from 'schemas';
 import {FileCacheItem} from '../processors/file-handler';
 import {Layer, LayerConfig, LayerVisConfig} from 'layers';
 import {Feature, InteractionConfig} from 'reducers/vis-state-updaters';
@@ -124,7 +124,6 @@ export function setFilter(
   valueIndex: number
 ): Merge<SetFilterUpdaterAction, {type: ActionTypes.SET_FILTER}>;
 
-
 export type SetFilterAnimationTimeUpdaterAction = {
   idx: number;
   prop: string;
@@ -144,9 +143,8 @@ export type SetFilterAnimationWindowUpdaterAction = {
 };
 export function setFilterAnimationWindow({
   id: string,
-  animationWindow: string,
+  animationWindow: string
 }): Merge<SetFilterAnimationWindowUpdaterAction, {type: ActionTypes.SET_FILTER_ANIMATION_WINDOW}>;
-
 
 export type AddFilterUpdaterAction = {
   dataId: string;
@@ -161,7 +159,7 @@ export type AddLayerUpdaterAction = {
 };
 export function addLayer(
   config: object,
-  datasetId?: string,
+  datasetId?: string
 ): Merge<AddLayerUpdaterAction, {type: ActionTypes.ADD_LAYER}>;
 
 export type ReorderLayerUpdaterAction = {
@@ -207,9 +205,9 @@ export function showDatasetTable(
 ): Merge<ShowDatasetTableUpdaterAction, {type: ActionTypes.SHOW_DATASET_TABLE}>;
 
 export type UpdateDatasetColorUpdater = {
-  dataId: string,
-  newColor: RGBColor
-}
+  dataId: string;
+  newColor: RGBColor;
+};
 export function updateTableColor(
   dataId: string,
   newColor: RGBColor
@@ -266,7 +264,7 @@ export type RenameDatasetUpdaterAction = {
   label: string;
 };
 export function renameDataset(
-  dataId: string, 
+  dataId: string,
   label: string
 ): Merge<RenameDatasetUpdaterAction, {type: ActionTypes.RENAME_DATASET}>;
 
@@ -304,12 +302,16 @@ export function updateLayerAnimationSpeed(
 ): Merge<UpdateLayerAnimationSpeedUpdaterAction, {type: ActionTypes.UPDATE_LAYER_ANIMATION_SPEED}>;
 
 export type ToggleLayerAnimationUpdaterAction = {};
-export function toggleLayerAnimation(): 
-  Merge<ToggleLayerAnimationUpdaterAction, {type: ActionTypes.TOGGLE_LAYER_ANIMATION}>;
+export function toggleLayerAnimation(): Merge<
+  ToggleLayerAnimationUpdaterAction,
+  {type: ActionTypes.TOGGLE_LAYER_ANIMATION}
+>;
 
 export type ToggleLayerAnimationControlUpdaterAction = {};
-export function toggleLayerAnimationControl(): 
-  Merge<ToggleLayerAnimationControlUpdaterAction, {type: ActionTypes.TOGGLE_LAYER_ANIMATION_CONTROL}>;
+export function toggleLayerAnimationControl(): Merge<
+  ToggleLayerAnimationControlUpdaterAction,
+  {type: ActionTypes.TOGGLE_LAYER_ANIMATION_CONTROL}
+>;
 
 export type EnlargeFilterUpdaterAction = {
   idx: number;
@@ -506,7 +508,7 @@ export type SetFilterAnimationTimeConfigAction = {
     timezone?: string;
     timeFormat?: string;
   };
-}
+};
 export function setFilterAnimationTimeConfig(
   idx: SetFilterAnimationTimeConfigAction['idx'],
   config: SetFilterAnimationTimeConfigAction['config']

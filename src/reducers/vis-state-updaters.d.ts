@@ -1,6 +1,6 @@
 import {RGBColor, RGBAColor, Millisecond} from './types';
 import {AddDataToMapOptions, ReceiveMapConfigPayload} from '../actions/actions';
-import {ParsedConfig} from '../schemas';
+import {ParsedConfig} from 'schemas';
 import * as VisStateActions from 'actions/vis-state-actions';
 import ActionTypes from 'constants/action-types';
 import {LoaderObject} from '@loaders.gl/loader-utils';

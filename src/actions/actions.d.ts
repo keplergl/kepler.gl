@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import ActionTypes from 'constants/action-types';
-import {ParsedConfig} from '../schemas';
+import {ParsedConfig} from 'schemas';
 import {RGBColor} from 'reducers/types';
 import {Bounds} from 'reducers/map-state-updaters';
 import {MapInfo} from 'reducers/vis-state-updaters';
