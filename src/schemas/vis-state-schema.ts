@@ -32,6 +32,13 @@ import {notNullorUndefined} from 'utils/data-utils';
 
 export const dimensionPropsV0 = ['name', 'type'];
 
+export type modifiedType = {
+  strokeColor?: any;
+  strokeColorRange?: any;
+  filled?: boolean;
+  stroked?: boolean;
+};
+
 // in v0 geojson there is only sizeField
 
 // in v1 geojson
@@ -366,7 +373,7 @@ class VisualChannelSchemaV1 extends Schema {
 }
 const visConfigModificationV1 = {
   point: (visConfig, parents, accumulated) => {
-    const modified = {};
+    const modified: modifiedType = {};
     const [layer] = parents.slice(-2, -1);
     const isOld =
       !visConfig.hasOwnProperty('filled') && !visConfig.strokeColor && !visConfig.strokeColorRange;
@@ -386,7 +393,7 @@ const visConfigModificationV1 = {
   },
   geojson: (visConfig, parents, accumulated) => {
     // is points?
-    const modified = {};
+    const modified: modifiedType = {};
     const [layer] = parents.slice(-2, -1);
     const isOld =
       layer.visualChannels &&

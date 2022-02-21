@@ -25,6 +25,16 @@ export {
   reducerSchema,
   KeplerGLSchema as KeplerGLSchemaClass
 } from './schema-manager';
+
+export type {
+  ParsedConfig,
+  ParsedDataset,
+  ParsedLayer,
+  ParsedFilter,
+  SavedConfigV1,
+  SavedDatasetV1,
+  SavedMap
+} from './schema-manager';
 export {CURRENT_VERSION, VERSIONS} from './versions';
 export {
   visStateSchemaV1,
