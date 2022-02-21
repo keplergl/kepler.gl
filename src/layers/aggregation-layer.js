@@ -39,8 +39,7 @@ export const pointPosResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}
 export const getValueAggrFunc = getPointData => (field, aggregation) => points =>
   field
     ? aggregate(
-        // TODO: fix for data container
-        points.map(p => field.valueAccessor(getPointData(p).data)),
+        points.map(p => field.valueAccessor(getPointData(p))),
         aggregation
       )
     : points.length;
@@ -70,7 +69,7 @@ export default class AggregationLayer extends Layer {
     this.getPointData = pt => pt.source;
 
     this.gpufilterGetIndex = pt => this.getPointData(pt).index;
-    this.gpuFilterGetData = pt => this.getPointData(pt).data;
+    this.gpuFilterGetData = (dc, d, fieldIndex) => dc.valueAt(d.index, fieldIndex);
   }
 
   get isAggregated() {

@@ -45,40 +45,35 @@ const pt0 = {
   screenCoord: [81.93285590277779, 314.10787407420145],
   index: 0,
   source: {
-    index: 0,
-    data: dataContainer[0]
+    index: 0
   }
 };
 const pt1 = {
   screenCoord: [81.90728081597221, 314.125282797666],
   index: 1,
   source: {
-    index: 1,
-    data: dataContainer[1]
+    index: 1
   }
 };
 const pt4 = {
   screenCoord: [82.29433593749998, 313.5296684059477],
   index: 2,
   source: {
-    index: 4,
-    data: dataContainer[4]
+    index: 4
   }
 };
 const pt5 = {
   screenCoord: [82.34327256944445, 313.4296004913215],
   index: 3,
   source: {
-    index: 5,
-    data: dataContainer[5]
+    index: 5
   }
 };
 const pt7 = {
   screenCoord: [82.11757812499998, 314.2888411459387],
   index: 4,
   source: {
-    index: 7,
-    data: dataContainer[7]
+    index: 7
   }
 };
 

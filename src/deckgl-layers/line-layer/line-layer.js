@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Uber Technologies, Inc.
+// Copyright (c) 2022 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -47,7 +47,7 @@ function addInstanceColorShader(vs) {
 function addElevationScale(vs) {
   let elevationVs = editShader(
     vs,
-    'line elevation scale 1 vs',
+    'line elevation scale 1 vs - inject elevation scale',
     'uniform float widthMaxPixels;',
     `uniform float widthMaxPixels;
      uniform float elevationScale;`
@@ -55,30 +55,21 @@ function addElevationScale(vs) {
 
   elevationVs = editShader(
     elevationVs,
-    'line elevation scale 2 vs',
+    'line elevation scale 2 vs - multiply by elevation scale',
     `geometry.worldPosition = instanceSourcePositions;
-  geometry.worldPositionAlt = instanceTargetPositions;`,
-    `vec3 sourcePosAdjusted = instanceSourcePositions;
-     vec3 targetPosAdjusted = instanceTargetPositions;
-     sourcePosAdjusted.z *= elevationScale;
-     targetPosAdjusted.z *= elevationScale;
+  geometry.worldPositionAlt = instanceTargetPositions;
+
+  vec3 source_world = instanceSourcePositions;
+  vec3 target_world = instanceTargetPositions;`,
+
+    `vec3 source_world = instanceSourcePositions;
+     vec3 target_world = instanceTargetPositions;
+     source_world.z *= elevationScale;
+     target_world.z *= elevationScale;
      
-     geometry.worldPosition = sourcePosAdjusted;
-     geometry.worldPositionAlt = sourcePosAdjusted;`
-  );
-
-  elevationVs = editShader(
-    elevationVs,
-    'line elevation scale 3 vs',
-    'vec4 source = project_position_to_clipspace(instanceSourcePositions, instanceSourcePositions64Low, vec3(0.), source_commonspace);',
-    'vec4 source = project_position_to_clipspace(sourcePosAdjusted, instanceSourcePositions64Low, vec3(0.), source_commonspace);'
-  );
-
-  elevationVs = editShader(
-    elevationVs,
-    'line elevation scale 4 vs',
-    'vec4 target = project_position_to_clipspace(instanceTargetPositions, instanceTargetPositions64Low, vec3(0.), target_commonspace);',
-    'vec4 target = project_position_to_clipspace(targetPosAdjusted, instanceTargetPositions64Low, vec3(0.), target_commonspace);'
+     geometry.worldPosition = source_world;
+     geometry.worldPositionAlt = target_world;
+     `
   );
 
   return elevationVs;
