@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// @ts-nocheck
 import Task, {withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
 
@@ -96,6 +95,8 @@ export type MapStyle = {
   inputStyle: InputStyle;
   threeDBuildingColor: RGBColor;
   custom3DBuildingColor: boolean;
+
+  initialState?: MapStyle;
 };
 
 const DEFAULT_BLDG_COLOR = '#D1CEC7';
@@ -163,6 +164,7 @@ const getDefaultState = (): MapStyle => {
  * export default composedReducer;
  */
 /* eslint-disable no-unused-vars */
+// @ts-expect-error
 const mapStyleUpdaters = null;
 /* eslint-enable no-unused-vars */
 /**
@@ -237,7 +239,7 @@ function findLayerFillColor(layer) {
   return layer && layer.paint && layer.paint['background-color'];
 }
 
-function get3DBuildingColor(style) {
+function get3DBuildingColor(style): RGBColor {
   // set building color to be the same as the background color.
   if (!style.style) {
     return hexToRgb(DEFAULT_BLDG_COLOR);
@@ -278,7 +280,7 @@ export const initMapStyleUpdater = (
   {
     payload = {}
   }: {
-    type?: ActionTypes.INIT;
+    type?: typeof ActionTypes.INIT;
     payload: KeplerGlInitPayload;
   }
 ): MapStyle => ({
@@ -328,7 +330,7 @@ export const mapStyleChangeUpdater = (
     state.visibleLayerGroups
   );
 
-  const threeDBuildingColor = state.custom3DBuildingColor
+  const threeDBuildingColor: RGBColor = state.custom3DBuildingColor
     ? state.threeDBuildingColor
     : get3DBuildingColor(state.mapStyles[styleType]);
 
@@ -418,9 +420,9 @@ export const requestMapStylesUpdater = (
 export const receiveMapConfigUpdater = (
   state: MapStyle,
   {
-    payload: {config = {}}
+    payload: {config}
   }: {
-    type?: ActionTypes.RECEIVE_MAP_CONFIG;
+    type?: typeof ActionTypes.RECEIVE_MAP_CONFIG;
     payload: ReceiveMapConfigPayload;
   }
 ): MapStyle => {
@@ -447,7 +449,9 @@ export const receiveMapConfigUpdater = (
     : mapStyle;
 
   // set custom3DBuildingColor: true if mapStyle contains threeDBuildingColor
+  // @ts-expect-error
   merged.custom3DBuildingColor =
+    // @ts-expect-error
     Boolean(mapStyle.threeDBuildingColor) || merged.custom3DBuildingColor;
   const newState = mapConfigChangeUpdater(state, {payload: merged});
 
@@ -458,6 +462,7 @@ function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken, mapboxApiUrl) {
   return [
     Task.all(
       Object.values(mapStyles)
+        // @ts-expect-error
         .map(({id, url, accessToken}) => ({
           id,
           url: isValidStyleUrl(url)
@@ -516,14 +521,17 @@ export const loadCustomMapStyleUpdater = (
   {payload: {icon, style, error}}: MapStyleActions.LoadCustomMapStyleUpdaterAction
 ): MapStyle => ({
   ...state,
+  // @ts-expect-error
   inputStyle: {
     ...state.inputStyle,
     // style json and icon will load asynchronously
     ...(style
       ? {
+          // @ts-expect-error
           id: style.id || generateHashId(),
           // make a copy of the style object
           style: cloneDeep(style),
+          // @ts-expect-error
           label: style.name,
           // gathering layer group info from style json
           layerGroups: getLayerGroupsFromStyle(style)
@@ -552,7 +560,9 @@ export const inputMapStyleUpdater = (
   const icon = isValid
     ? getStyleImageIcon({
         mapState,
+        // @ts-expect-error
         styleUrl: updated.url,
+        // @ts-expect-error
         mapboxApiAccessToken: updated.accessToken || state.mapboxApiAccessToken,
         mapboxApiUrl: state.mapboxApiUrl || DEFAULT_MAPBOX_API_URL
       })
@@ -574,10 +584,8 @@ export const inputMapStyleUpdater = (
  * It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
  * @memberof mapStyleUpdaters
  */
-export const addCustomMapStyleUpdater = (
-  state: MapStyle,
-  action: MapStyleActions.AddCustomMapStyleUpdaterAction
-): MapStyle => {
+export const addCustomMapStyleUpdater = (state: MapStyle): MapStyle => {
+  // @ts-expect-error
   const styleId = state.inputStyle.id;
   const newState = {
     ...state,
