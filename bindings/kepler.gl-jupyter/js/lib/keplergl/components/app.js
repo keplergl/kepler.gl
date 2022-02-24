@@ -97,7 +97,6 @@ function App() {
       {Helmet ? (
         <Helmet>
           <meta charSet="utf-8" />
-          <title>Kepler.gl Jupyter</title>
           <link
             rel="stylesheet"
             href="http://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css"
