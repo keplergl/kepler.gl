@@ -209,7 +209,7 @@ export const receiveMapConfigUpdater = (
     type?: typeof ActionTypes.RECEIVE_MAP_CONFIG;
     payload: ReceiveMapConfigPayload;
   }
-) => {
+): MapState => {
   const {mapState} = config || {};
 
   // merged received mapstate with previous state
