@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
+// Copyright (c) 2022 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,6 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export const VERSIONS: {[key: string]: string};
+// Schemas
+export {
+  default,
+  default as KeplerGlSchema,
+  reducerSchema,
+  KeplerGLSchema as KeplerGLSchemaClass
+} from './schema-manager';
 
-export const CURRENT_VERSION: string;
+export type {
+  ParsedConfig,
+  ParsedDataset,
+  ParsedLayer,
+  ParsedFilter,
+  SavedConfigV1,
+  SavedDatasetV1,
+  SavedMap
+} from './schema-manager';
+export {CURRENT_VERSION, VERSIONS} from './versions';
+export {
+  visStateSchemaV1,
+  FilterSchemaV0,
+  LayerSchemaV0,
+  InteractionSchemaV1,
+  DimensionFieldSchema,
+  SplitMapsSchema,
+  filterPropsV1,
+  default as visStateSchema
+} from './vis-state-schema';
+export {default as datasetSchema} from './dataset-schema';
+export {default as mapStyleSchema} from './map-style-schema';
+export {default as mapStateSchema} from './map-state-schema';
+export {default as Schema} from './schema';
