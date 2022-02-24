@@ -37,6 +37,7 @@ const actionHandler = {
 
 /* Reducer */
 export const mapStateReducerFactory = (initialState = {}) =>
+  // @ts-expect-error
   handleActions(actionHandler, {
     ...mapStateUpdaters.INITIAL_MAP_STATE,
     ...initialState,

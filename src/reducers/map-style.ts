@@ -43,6 +43,7 @@ const actionHandler = {
 };
 
 export const mapStyleReducerFactory = (initialState = {}) =>
+  // @ts-expect-error
   handleActions(actionHandler, {
     ...mapStyleUpdaters.INITIAL_MAP_STYLE,
     ...initialState,
