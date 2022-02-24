@@ -23,7 +23,7 @@ import {console as globalConsole} from 'global/window';
 
 import {VERSIONS} from './versions';
 import Schema from './schema';
-import {getFieldsFromData, getSampleForTypeAnalyze} from 'processors/data-processor';
+import {getFieldsFromData, getSampleForTypeAnalyze} from '../processors/data-processor';
 
 // version v0
 const fieldPropertiesV0 = {

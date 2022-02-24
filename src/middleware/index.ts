@@ -18,36 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export const LOCALES = {
-  en: 'English',
-  fi: 'Suomi',
-  pt: 'Português',
-  es: 'Español',
-  ca: 'Català',
-  ja: '日本語',
-  cn: '简体中文',
-  ru: 'Русский'
-};
+// Extra helpers for redux
+// We are exposing this secause react-palm has no UMD module and
+// users need taskMiddleware to initiate their redux middle ware
+import {taskMiddleware} from 'react-palm/tasks';
+import {Middleware} from 'redux';
 
 /**
- * Localization can be passed to `KeplerGl` via uiState `locale`.
- * Available languages are `en` and `fi`. Default language is `en`
- * @constant
- * @public
- * @example
- * ```js
- * import {combineReducers} from 'redux';
- * import {LOCALE_CODES} from 'kepler.gl/localization/locales';
- *
- * const customizedKeplerGlReducer = keplerGlReducer
- *   .initialState({
- *     uiState: {
- *       // use Finnish locale
- *       locale: LOCALE_CODES.fi
- *     }
- *   });
- *
- * ```
+ * This method is used to enhance redux middleware and provide
+ * functionality to support react-palm
+ * @param middlewares current redux middlewares
+ * @returns {*[]} the original list of middlewares plus the react-palm middleware
  */
-
-export const LOCALE_CODES = Object.keys(LOCALES).reduce((acc, key) => ({...acc, [key]: key}), {});
+export function enhanceReduxMiddleware(middlewares: Middleware[] = []): Middleware[] {
+  return [...middlewares, taskMiddleware];
+}

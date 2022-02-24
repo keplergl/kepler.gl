@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
+// Copyright (c) 2022 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,6 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export const VERSIONS: {[key: string]: string};
+import {css} from 'styled-components';
 
-export const CURRENT_VERSION: string;
+// These are useful for test or when theme doesn't define them
+const breakPoints = {
+  palm: 588,
+  desk: 768
+};
+
+/**
+ * Contains media rules for different device types
+ * @namespace
+ * @property {object}  media 
+ * @property {string}  media.palm - rule for palm devices
+ * @property {string}  media.portable - rule for portable devices
+ * @property {string}  media.desk - rule for desktops
+ */
+
+export const media = {
+  palm: (...args): string => css`
+    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
+      ${css(...args)};
+    }
+  `,
+
+  portable: (...args): string => css`
+    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
+      ${css(...args)};
+    }
+  `,
+
+  desk: (...args): string => css`
+    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
+      ${css(...args)};
+    }
+  `
+};

@@ -18,53 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Console from 'global/console';
+export const LOCALES = {
+  en: 'English',
+  fi: 'Suomi',
+  pt: 'Português',
+  es: 'Español',
+  ca: 'Català',
+  ja: '日本語',
+  cn: '简体中文',
+  ru: 'Русский'
+};
 
-const identity = state => state;
+/**
+ * Localization can be passed to `KeplerGl` via uiState `locale`.
+ * Available languages are `en` and `fi`. Default language is `en`
+ * @constant
+ * @public
+ * @example
+ * ```js
+ * import {combineReducers} from 'redux';
+ * import {LOCALE_CODES} from 'kepler.gl/localization/locales';
+ *
+ * const customizedKeplerGlReducer = keplerGlReducer
+ *   .initialState({
+ *     uiState: {
+ *       // use Finnish locale
+ *       locale: LOCALE_CODES.fi
+ *     }
+ *   });
+ *
+ * ```
+ */
 
-/* eslint-disable no-unused-vars */
-// @ts-ignore
-export function log(text) {
-  return value => Console.log(text, value);
-}
-/* eslint-enable no-unused-vars */
+export type LocaleCodesType = {
+  [key: string]: string;
+};
 
-export function payload_(p) {
-  return {payload: p};
-}
-
-export function apply_(updater, payload) {
-  return state => updater(state, payload);
-}
-
-export function with_(fn) {
-  return state => fn(state)(state);
-}
-
-export function if_(pred, fn) {
-  return pred ? fn : identity;
-}
-
-export function compose_(fns) {
-  return state => fns.reduce((state2, fn) => fn(state2), state);
-}
-
-export function merge_(obj) {
-  return state => ({...state, ...obj});
-}
-
-export function pick_(prop) {
-  return fn => state => ({...state, [prop]: fn(state[prop])});
-}
-
-export function swap_(item) {
-  return arr => arr.map(a => (a.id === item.id ? item : a));
-}
-
-export function findById(id) {
-  return arr => arr.find(a => a.id === id);
-}
-
-export function map_(fn) {
-  return arr => arr.map(e => fn(e));
-}
+export const LOCALE_CODES: LocaleCodesType = Object.keys(LOCALES).reduce(
+  (acc, key) => ({...acc, [key]: key}),
+  {}
+);

@@ -18,30 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {css} from 'styled-components';
+import {connect as reduxConnect} from 'react-redux';
+import withLocalSelector from './with-local-selector';
 
-// These are useful for test or when theme doesn't define them
-const breakPoints = {
-  palm: 588,
-  desk: 768
-};
+const defaultMapStateToProps = (state, _, __) => state;
+const defaultMapDispatchToProps = () => (dispatch, _, __) => ({dispatch});
 
-export const media = {
-  palm: (...args) => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
-      ${css(...args)};
-    }
-  `,
+export const connect = (
+  mapStateToProps = defaultMapStateToProps,
+  makeMapDispatchToProps = defaultMapDispatchToProps,
+  reduxMergeProps?,
+  options?
+) => BaseComponent => {
+  const mapDispatchToProps = makeMapDispatchToProps();
+  const reduxMapState = (state, props) => mapStateToProps(props.selector(state), props, state);
 
-  portable: (...args) => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
-      ${css(...args)};
-    }
-  `,
+  const reduxMapDispatch = (dispatch, props) => mapDispatchToProps(props.dispatch, props, dispatch);
 
-  desk: (...args) => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
-      ${css(...args)};
-    }
-  `
+  const ReduxComponent = reduxConnect(
+    reduxMapState,
+    reduxMapDispatch,
+    reduxMergeProps,
+    options
+  )(BaseComponent);
+
+  // save selector to context so it can be accessed by its children
+  return withLocalSelector(ReduxComponent);
 };

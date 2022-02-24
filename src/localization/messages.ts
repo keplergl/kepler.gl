@@ -18,15 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import {FormattedMessage} from 'react-intl';
+import en from './translations/en';
+import {flattenMessages} from '../utils/locale-utils';
+import {LOCALE_CODES} from './locales';
 
-const EnhancedFormattedMessage = props => (
-  <FormattedMessage
-    // Us id as default Message to prevent error being thrown
-    defaultMessage={props.defaultMessage || props.id}
-    {...props}
-  />
+const enFlat = flattenMessages(en);
+
+export const messages: {
+  [key: string]: string;
+} = Object.keys(LOCALE_CODES).reduce(
+  (acc, key) => ({
+    ...acc,
+    [key]:
+      key === 'en'
+        ? enFlat
+        : {...enFlat, ...flattenMessages(require(`./translations/${key}.ts`).default)}
+  }),
+  {}
 );
 
-export default EnhancedFormattedMessage;
+export default messages;

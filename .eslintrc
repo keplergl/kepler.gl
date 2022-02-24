@@ -20,11 +20,7 @@
     "jestPuppeteer": true
   },
   "parser": "@babel/eslint-parser",
-  "plugins": [
-    "@babel",
-    "prettier",
-    "react"
-  ],
+  "plugins": ["babel", "prettier", "react", "@typescript-eslint"],
   "rules": {
     "valid-jsdoc": 0,
     "no-var": 0,

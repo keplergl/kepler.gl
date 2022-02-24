@@ -18,30 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {connect as reduxConnect} from 'react-redux';
-import withLocalSelector from './with-local-selector';
+import React from 'react';
+import {FormattedMessage} from 'react-intl';
 
-const defaultMapStateToProps = (state, _, __) => state;
-const defaultMapDispatchToProps = () => (dispatch, _, __) => ({dispatch});
-
-export const connect = (
-  mapStateToProps = defaultMapStateToProps,
-  makeMapDispatchToProps = defaultMapDispatchToProps,
-  reduxMergeProps,
-  options
-) => BaseComponent => {
-  const mapDispatchToProps = makeMapDispatchToProps();
-  const reduxMapState = (state, props) => mapStateToProps(props.selector(state), props, state);
-
-  const reduxMapDispatch = (dispatch, props) => mapDispatchToProps(props.dispatch, props, dispatch);
-
-  const ReduxComponent = reduxConnect(
-    reduxMapState,
-    reduxMapDispatch,
-    reduxMergeProps,
-    options
-  )(BaseComponent);
-
-  // save selector to context so it can be accessed by its children
-  return withLocalSelector(ReduxComponent);
+type EnhancedFormattedMessageProps = {
+  id: string;
+  defaultMessage?: string;
+  defaultValue?: string;
+  values?: {
+    [key: string]: string | number;
+  };
+  children?: () => React.ReactElement;
 };
+
+const EnhancedFormattedMessage: React.FC<EnhancedFormattedMessageProps> = props => (
+  <FormattedMessage
+    // Us id as default Message to prevent error being thrown
+    defaultMessage={props.defaultMessage || props.id}
+    {...props}
+  />
+);
+
+export default EnhancedFormattedMessage;

@@ -20,28 +20,33 @@
 
 import {handleActions} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
-import * as mapStateUpdaters from './map-state-updaters';
+import * as mapStyleUpdaters from './map-style-updaters';
 
 /**
  * Important: Do not rename `actionHandler` or the assignment pattern of property value.
  * It is used to generate documentation
  */
 const actionHandler = {
-  [ActionTypes.UPDATE_MAP]: mapStateUpdaters.updateMapUpdater,
-  [ActionTypes.FIT_BOUNDS]: mapStateUpdaters.fitBoundsUpdater,
-  [ActionTypes.TOGGLE_PERSPECTIVE]: mapStateUpdaters.togglePerspectiveUpdater,
-  [ActionTypes.RECEIVE_MAP_CONFIG]: mapStateUpdaters.receiveMapConfigUpdater,
-  [ActionTypes.RESET_MAP_CONFIG]: mapStateUpdaters.resetMapConfigUpdater,
-  [ActionTypes.TOGGLE_SPLIT_MAP]: mapStateUpdaters.toggleSplitMapUpdater
+  [ActionTypes.INIT]: mapStyleUpdaters.initMapStyleUpdater,
+  [ActionTypes.INPUT_MAP_STYLE]: mapStyleUpdaters.inputMapStyleUpdater,
+  [ActionTypes.MAP_CONFIG_CHANGE]: mapStyleUpdaters.mapConfigChangeUpdater,
+  [ActionTypes.MAP_STYLE_CHANGE]: mapStyleUpdaters.mapStyleChangeUpdater,
+  [ActionTypes.REQUEST_MAP_STYLES]: mapStyleUpdaters.requestMapStylesUpdater,
+  [ActionTypes.LOAD_MAP_STYLES]: mapStyleUpdaters.loadMapStylesUpdater,
+  [ActionTypes.LOAD_MAP_STYLE_ERR]: mapStyleUpdaters.loadMapStyleErrUpdater,
+  [ActionTypes.RECEIVE_MAP_CONFIG]: mapStyleUpdaters.receiveMapConfigUpdater,
+  [ActionTypes.LOAD_CUSTOM_MAP_STYLE]: mapStyleUpdaters.loadCustomMapStyleUpdater,
+  [ActionTypes.ADD_CUSTOM_MAP_STYLE]: mapStyleUpdaters.addCustomMapStyleUpdater,
+  [ActionTypes.RESET_MAP_CONFIG]: mapStyleUpdaters.resetMapConfigMapStyleUpdater,
+  [ActionTypes.SET_3D_BUILDING_COLOR]: mapStyleUpdaters.set3dBuildingColorUpdater,
+  [ActionTypes.RESET_MAP_CONFIG]: mapStyleUpdaters.resetMapConfigMapStyleUpdater
 };
 
-/* Reducer */
-export const mapStateReducerFactory = (initialState = {}) =>
-  // @ts-ignore
+export const mapStyleReducerFactory = (initialState = {}) =>
   handleActions(actionHandler, {
-    ...mapStateUpdaters.INITIAL_MAP_STATE,
+    ...mapStyleUpdaters.INITIAL_MAP_STYLE,
     ...initialState,
     initialState
   });
 
-export default mapStateReducerFactory();
+export default mapStyleReducerFactory();
