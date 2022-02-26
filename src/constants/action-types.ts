@@ -183,4 +183,6 @@ const ActionTypes = {
   START_SAVE_STORAGE: `${ACTION_PREFIX}START_SAVE_STORAGE`
 };
 
-export default ActionTypes;
+const assignType = <T>(obj: T): { [K in keyof T]: `${typeof ACTION_PREFIX}${string & K}`; } => obj as any
+
+export default assignType(ActionTypes);

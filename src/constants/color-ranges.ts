@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import colorbrewer from 'colorbrewer';
+import {HexColor} from 'reducers';
 import {VizColorPalette} from './custom-color-ranges';
 
 // Add colorbrewer color schemes (Data Science requirement)
@@ -47,7 +48,7 @@ for (const [keyName, colorScheme] of Object.entries(colorbrewer)) {
         name: `ColorBrewer ${keyName}-${lenKey}`,
         type: colorBrewerMap[keyName],
         category: 'ColorBrewer',
-        colors: colors as any
+        colors: colors as HexColor[]
       });
     }
   }

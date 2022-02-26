@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// @ts-nocheck
 import ActionTypes from 'constants/action-types';
 import {Merge} from '../reducers/types';
 import {ExportImage} from '../reducers/ui-state-updaters';

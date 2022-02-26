@@ -68,6 +68,7 @@ export const uiStateReducerFactory = (initialState = {}) =>
   handleActions(actionHandler, {
     ...uiStateUpdaters.INITIAL_UI_STATE,
     ...initialState,
+    // @ts-ignore
     initialState
   });
 

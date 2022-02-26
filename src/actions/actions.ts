@@ -19,7 +19,57 @@
 // THE SOFTWARE.
 
 import ActionTypes from 'constants/action-types';
-import {createAction} from 'redux-actions';
+import {createAction} from '@reduxjs/toolkit';
+
+import {ParsedConfig} from '../schemas';
+import {RGBColor} from 'reducers/types';
+import {Bounds} from 'reducers/map-state-updaters';
+import {MapInfo} from 'reducers/vis-state-updaters';
+import {UiState} from 'reducers/ui-state-updaters';
+
+/**
+ * Input dataest parsed to addDataToMap
+ */
+export type ProtoDataset = {
+  info: {
+    id?: string;
+    label?: string;
+    format?: string;
+    color?: RGBColor;
+  };
+  data: {
+    fields: {
+      name: string;
+      type?: string;
+      format?: string;
+      displayName?: string;
+      id?: string;
+    }[];
+    rows: any[][];
+  };
+
+  // table-injected metadata
+  metadata?: any;
+  supportedFilterTypes?: string[];
+};
+
+export type AddDataToMapOptions = {
+  centerMap?: boolean;
+  readOnly?: boolean;
+  keepExistingConfig?: boolean;
+  autoCreateLayers?: boolean;
+};
+
+export type AddDataToMapPayload = {
+  // TODO/ib - internally the code calls `toArray` a couple of layers deep
+  // so this function can actually accept both an array and an object
+  // recommend dropping such "sloppy typing" and enforcing array type
+  // as the field is called `datasets`
+  datasets: ProtoDataset[] | ProtoDataset;
+  options?: AddDataToMapOptions;
+  config?: ParsedConfig;
+  info?: Partial<MapInfo>;
+};
 
 /**
  * Add data to kepler.gl reducer, prepare map with preset configuration if config is passed.
@@ -105,15 +155,27 @@ import {createAction} from 'redux-actions';
  *   })
  * );
  */
-export const addDataToMap = createAction(ActionTypes.ADD_DATA_TO_MAP, data => data);
+export const addDataToMap: (
+  data: AddDataToMapPayload
+) => {
+  type: typeof ActionTypes.ADD_DATA_TO_MAP;
+  payload: AddDataToMapPayload;
+} = createAction(ActionTypes.ADD_DATA_TO_MAP, (data: AddDataToMapPayload) => ({payload: data}));
 
 /**
  * Reset all sub-reducers to its initial state. This can be used to clear out all configuration in the reducer.
  * @memberof main
  * @public
  */
-export const resetMapConfig = createAction(ActionTypes.RESET_MAP_CONFIG);
+export const resetMapConfig: () => {type: typeof ActionTypes.RESET_MAP_CONFIG} = createAction(
+  ActionTypes.RESET_MAP_CONFIG
+);
 
+export type ReceiveMapConfigPayload = {
+  config: ParsedConfig;
+  options?: AddDataToMapOptions;
+  bounds?: Bounds;
+};
 /**
  * Pass config to kepler.gl instance, prepare the state with preset configs.
  * Calling `KeplerGlSchema.parseSavedConfig` to convert saved config before passing it in is required.
@@ -142,11 +204,28 @@ export const resetMapConfig = createAction(ActionTypes.RESET_MAP_CONFIG);
  * const parsedConfig = KeplerGlSchema.parseSavedConfig(config);
  * this.props.dispatch(receiveMapConfig(parsedConfig));
  */
-export const receiveMapConfig = createAction(ActionTypes.RECEIVE_MAP_CONFIG, (config, options) => ({
-  config,
-  options
-}));
+export const receiveMapConfig: (
+  config: ReceiveMapConfigPayload['config'],
+  options: ReceiveMapConfigPayload['options']
+) => {
+  type: typeof ActionTypes.RECEIVE_MAP_CONFIG;
+  payload: ReceiveMapConfigPayload;
+} = createAction(
+  ActionTypes.RECEIVE_MAP_CONFIG,
+  (config: ReceiveMapConfigPayload['config'], options: ReceiveMapConfigPayload['options']) => ({
+    payload: {
+      config,
+      options
+    }
+  })
+);
 
+export type KeplerGlInitPayload = {
+  mapboxApiAccessToken?: string;
+  mapboxApiUrl?: string;
+  mapStylesReplaceDefault?: boolean;
+  initialUiState?: Partial<UiState>;
+};
 /**
  * Initialize kepler.gl reducer. It is used to pass in `mapboxApiAccessToken` to `mapStyle` reducer.
  * @memberof main
@@ -155,14 +234,15 @@ export const receiveMapConfig = createAction(ActionTypes.RECEIVE_MAP_CONFIG, (co
  * @param payload.mapboxApiUrl - mapboxApiUrl to be saved to mapStyle reducer.
  * @param payload.mapStylesReplaceDefault - mapStylesReplaceDefault to be saved to mapStyle reducer
  * @param payload.initialUiState - initial ui state
- * @type {typeof import('./actions').keplerGlInit}
  * @public
  */
-export const keplerGlInit = createAction(
-  ActionTypes.INIT,
-  // @ts-ignore
-  payload => payload
-);
+// @ts-expect-error
+export const keplerGlInit: (
+  options?: KeplerGlInitPayload
+) => {
+  type: typeof ActionTypes.INIT;
+  payload: KeplerGlInitPayload;
+} = createAction(ActionTypes.INIT, (payload: KeplerGlInitPayload) => ({payload}));
 
 /**
  * This declaration is needed to group actions in docs
