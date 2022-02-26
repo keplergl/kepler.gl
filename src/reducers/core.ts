@@ -28,8 +28,6 @@ import {providerStateReducerFactory} from './provider-state';
 
 import composers from './composers';
 
-import {Reducer} from 'redux';
-import {ReduxCompatibleReducer} from 'redux-actions';
 import {VisState} from './vis-state-updaters';
 import {MapState} from './map-state-updaters';
 import {MapStyle} from './map-style-updaters';
@@ -44,12 +42,8 @@ export type KeplerGlState = {
   providerState: ProviderState;
 };
 
-const combineReducers_: (r: {
-  [key: string]: ReduxCompatibleReducer<any>;
-}) => Reducer<any> = combineReducers;
-
 const combined = (initialState: Partial<KeplerGlState> = {}) =>
-  combineReducers_({
+  combineReducers({
     visState: visStateReducerFactory(initialState.visState),
     mapState: mapStateReducerFactory(initialState.mapState),
     mapStyle: mapStyleReducerFactory(initialState.mapStyle),

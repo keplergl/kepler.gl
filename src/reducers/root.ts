@@ -90,6 +90,8 @@ export function provideInitialState(initialState) {
       [ActionTypes.RENAME_ENTRY]: handleRenameEntry
     };
 
+    // TODO: Understand why the Lint sees an error here, while the IDE does not.
+    // @ts-expect-error
     return handleActions(handlers, initialCoreState)(state, action);
   };
 }
