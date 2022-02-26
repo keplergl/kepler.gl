@@ -28,12 +28,27 @@ import {providerStateReducerFactory} from './provider-state';
 
 import composers from './composers';
 
-/**
- * @type {typeof import('./core').combineReducers_}
- */
-const combineReducers_ = combineReducers;
+import {Reducer} from 'redux';
+import {ReduxCompatibleReducer} from 'redux-actions';
+import {VisState} from './vis-state-updaters';
+import {MapState} from './map-state-updaters';
+import {MapStyle} from './map-style-updaters';
+import {ProviderState} from './provider-state-updaters';
+import {UiState} from './ui-state-updaters';
 
-const combined = (initialState = {}) =>
+export type KeplerGlState = {
+  visState: VisState;
+  mapState: MapState;
+  mapStyle: MapStyle;
+  uiState: UiState;
+  providerState: ProviderState;
+};
+
+const combineReducers_: (r: {
+  [key: string]: ReduxCompatibleReducer<any>;
+}) => Reducer<any> = combineReducers;
+
+const combined = (initialState: Partial<KeplerGlState> = {}) =>
   combineReducers_({
     visState: visStateReducerFactory(initialState.visState),
     mapState: mapStateReducerFactory(initialState.mapState),
@@ -42,7 +57,10 @@ const combined = (initialState = {}) =>
     providerState: providerStateReducerFactory(initialState.providerState)
   });
 
-export const coreReducerFactory = (initialState = {}) => (state, action) => {
+export const coreReducerFactory = (initialState: Partial<KeplerGlState> = {}) => (
+  state,
+  action
+) => {
   if (composers[action.type]) {
     return composers[action.type](state, action);
   }
@@ -58,7 +76,7 @@ export default coreReducerFactory();
  * @param {*} reduxState
  * @public
  */
-export const mapStateLens = reduxState => ({mapState: reduxState.mapState});
+export const mapStateLens = (reduxState: KeplerGlState) => ({mapState: reduxState.mapState});
 
 /**
  * Connect subreducer `mapStyle`, used with `injectComponents`. Learn more at
@@ -67,7 +85,7 @@ export const mapStateLens = reduxState => ({mapState: reduxState.mapState});
  * @param {*} reduxState
  * @public
  */
-export const mapStyleLens = reduxState => ({mapStyle: reduxState.mapStyle});
+export const mapStyleLens = (reduxState: KeplerGlState) => ({mapStyle: reduxState.mapStyle});
 
 /**
  * Connect subreducer `visState`, used with `injectComponents`. Learn more at
@@ -76,7 +94,7 @@ export const mapStyleLens = reduxState => ({mapStyle: reduxState.mapStyle});
  * @param {*} reduxState
  * @public
  */
-export const visStateLens = reduxState => ({visState: reduxState.visState});
+export const visStateLens = (reduxState: KeplerGlState) => ({visState: reduxState.visState});
 
 /**
  * Connect subreducer `uiState`, used with `injectComponents`. Learn more at
@@ -85,7 +103,7 @@ export const visStateLens = reduxState => ({visState: reduxState.visState});
  * @param {*} reduxState
  * @public
  */
-export const uiStateLens = reduxState => ({uiState: reduxState.uiState});
+export const uiStateLens = (reduxState: KeplerGlState) => ({uiState: reduxState.uiState});
 
 /**
  * Connect subreducer `providerState`, used with `injectComponents`. Learn more at
@@ -94,4 +112,6 @@ export const uiStateLens = reduxState => ({uiState: reduxState.uiState});
  * @param {*} reduxState
  * @public
  */
-export const providerStateLens = reduxState => ({providerState: reduxState.providerState});
+export const providerStateLens = (reduxState: KeplerGlState) => ({
+  providerState: reduxState.providerState
+});
