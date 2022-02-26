@@ -64,6 +64,7 @@ const actionHandler = {
 
 /* Reducer */
 export const uiStateReducerFactory = (initialState = {}) =>
+  // @ts-expect-error
   handleActions(actionHandler, {
     ...uiStateUpdaters.INITIAL_UI_STATE,
     ...initialState,
