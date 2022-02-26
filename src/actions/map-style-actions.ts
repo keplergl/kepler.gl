@@ -18,11 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {createAction} from '@reduxjs/toolkit';
+import {createAction} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
-import {Merge, RGBColor} from '../reducers/types';
-import {InputStyle, MapStyles, VisibleLayerGroups} from '../reducers/map-style-updaters';
-import {MapState} from '../reducers/map-state-updaters';
 
 /**
  * Add map style from user input to reducer and set it to current style
@@ -30,19 +27,11 @@ import {MapState} from '../reducers/map-state-updaters';
  * It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
  * param {void}
  * @memberof mapStyleActions
+ * @type {typeof import('./map-style-actions').addCustomMapStyle}
  * @public
  */
-export const addCustomMapStyle: () => {
-  type: typeof ActionTypes.ADD_CUSTOM_MAP_STYLE;
-} = createAction(ActionTypes.ADD_CUSTOM_MAP_STYLE);
+export const addCustomMapStyle = createAction(ActionTypes.ADD_CUSTOM_MAP_STYLE);
 
-/** INPUT_MAP_STYLE */
-export type InputMapStyleUpdaterAction = {
-  payload: {
-    inputStyle: Partial<InputStyle>;
-    mapState?: MapState;
-  };
-};
 /**
  * Input a custom map style object
  * @memberof mapStyleActions
@@ -54,142 +43,60 @@ export type InputMapStyleUpdaterAction = {
  * @param inputStyle.accessToken - mapbox access token
  * @param inputStyle.icon - icon image data url
  * @param [mapState] - mapState is optional
+ * @type {typeof import('./map-style-actions').inputMapStyle}
  * @public
  */
-export const inputMapStyle: (
-  inputStyle: InputMapStyleUpdaterAction['payload']['inputStyle'],
-  mapState?: InputMapStyleUpdaterAction['payload']['mapState']
-) => Merge<InputMapStyleUpdaterAction, {type: typeof ActionTypes.INPUT_MAP_STYLE}> = createAction(
-  ActionTypes.INPUT_MAP_STYLE,
-  (
-    inputStyle: InputMapStyleUpdaterAction['payload']['inputStyle'],
-    mapState: InputMapStyleUpdaterAction['payload']['mapState']
-  ) => ({
-    payload: {
-      inputStyle,
-      mapState
-    }
-  })
-);
+export const inputMapStyle = createAction(ActionTypes.INPUT_MAP_STYLE, (inputStyle, mapState) => ({
+  inputStyle,
+  mapState
+}));
 
-/** MAP_CONFIG_CHANGE */
-export type MapConfigChangeUpdaterAction = {
-  payload: {
-    visibleLayerGroups?: VisibleLayerGroups;
-    topLayerGroups?: VisibleLayerGroups;
-  };
-};
 /**
  * Update `visibleLayerGroups`to change layer group visibility
  * @memberof mapStyleActions
  * @param mapStyle new config `{visibleLayerGroups: {label: false, road: true, background: true}}`
+ * @type {typeof import('./map-style-actions').mapConfigChange}
  * @public
  */
-export const mapConfigChange: (
-  mapStyle: MapConfigChangeUpdaterAction['payload']
-) => Merge<
-  MapConfigChangeUpdaterAction,
-  {type: typeof ActionTypes.MAP_CONFIG_CHANGE}
-> = createAction(
-  ActionTypes.MAP_CONFIG_CHANGE,
-  (mapStyle: MapConfigChangeUpdaterAction['payload']) => ({payload: mapStyle})
-);
+export const mapConfigChange = createAction(ActionTypes.MAP_CONFIG_CHANGE, mapStyle => mapStyle);
 
-/** REQUEST_MAP_STYLES */
-export type RequestMapStylesUpdaterAction = {
-  payload: {
-    [key: string]: {
-      id: string;
-      label?: string;
-      url: string;
-      icon?: string;
-      layerGroups?: string;
-    };
-  };
-};
 /**
  * Request map style style object based on style.url.
  * @memberof mapStyleActions
+ * @type {typeof import('./map-style-actions').requestMapStyles}
  * @public
  */
-export const requestMapStyles: (
-  mapStyles: RequestMapStylesUpdaterAction['payload']
-) => Merge<
-  RequestMapStylesUpdaterAction,
-  {type: typeof ActionTypes.REQUEST_MAP_STYLES}
-> = createAction(
+export const requestMapStyles = createAction(
   ActionTypes.REQUEST_MAP_STYLES,
-  (mapStyles: RequestMapStylesUpdaterAction['payload']) => ({payload: mapStyles})
+  mapStyles => mapStyles
 );
-
-/** LOAD_MAP_STYLES */
-export type LoadMapStylesUpdaterAction = {
-  payload: MapStyles;
-};
 /**
  * Callback when load map style success
  * @memberof mapStyleActions
  * @param newStyles a `{[id]: style}` mapping
+ * @type {typeof import('./map-style-actions').loadMapStyles}
  * @public
  */
-export const loadMapStyles: (
-  newStyles: LoadMapStylesUpdaterAction['payload']
-) => Merge<
-  LoadMapStylesUpdaterAction,
-  {type: typeof ActionTypes.LOAD_MAP_STYLES}
-> = createAction(
-  ActionTypes.LOAD_MAP_STYLES,
-  (newStyles: LoadMapStylesUpdaterAction['payload']) => ({payload: newStyles})
-);
+export const loadMapStyles = createAction(ActionTypes.LOAD_MAP_STYLES, newStyles => newStyles);
 
-/** LOAD_MAP_STYLE_ERR */
-export type LoadMapStyleErrUpdaterAction = {
-  payload: Error;
-};
 /**
  * Callback when load map style error
  * @memberof mapStyleActions
  * @param error
+ * @type {typeof import('./map-style-actions').loadMapStyleErr}
  * @public
  */
-export const loadMapStyleErr: (
-  error: LoadMapStyleErrUpdaterAction['payload']
-) => Merge<
-  LoadMapStyleErrUpdaterAction,
-  {type: typeof ActionTypes.LOAD_MAP_STYLE_ERR}
-> = createAction(
-  ActionTypes.LOAD_MAP_STYLE_ERR,
-  (error: LoadMapStyleErrUpdaterAction['payload']) => ({payload: error})
-);
+export const loadMapStyleErr = createAction(ActionTypes.LOAD_MAP_STYLE_ERR, error => error);
 
-/** MAP_STYLE_CHANGE */
-export type MapStyleChangeUpdaterAction = {
-  payload: string;
-};
 /**
  * Change to another map style. The selected style should already been loaded into `mapStyle.mapStyles`
  * @memberof mapStyleActions
  * @param styleType the style to change to
+ * @type {typeof import('./map-style-actions').mapStyleChange}
  * @public
  */
-export const mapStyleChange: (
-  styleType: MapStyleChangeUpdaterAction['payload']
-) => Merge<
-  MapStyleChangeUpdaterAction,
-  {type: typeof ActionTypes.MAP_STYLE_CHANGE}
-> = createAction(
-  ActionTypes.MAP_STYLE_CHANGE,
-  (styleType: MapStyleChangeUpdaterAction['payload']) => ({payload: styleType})
-);
+export const mapStyleChange = createAction(ActionTypes.MAP_STYLE_CHANGE, styleType => styleType);
 
-/** LOAD_CUSTOM_MAP_STYLE */
-export type LoadCustomMapStyleUpdaterAction = {
-  payload: {
-    icon?: string;
-    style?: object;
-    error?: Error;
-  };
-};
 /**
  * Callback when a custom map style object is received
  * @memberof mapStyleActions
@@ -197,38 +104,23 @@ export type LoadCustomMapStyleUpdaterAction = {
  * @param customMapStyle.icon
  * @param customMapStyle.style
  * @param customMapStyle.error
+ * @type {typeof import('./map-style-actions').loadCustomMapStyle}
  * @public
  */
-export const loadCustomMapStyle: (
-  customMapStyle: LoadCustomMapStyleUpdaterAction['payload']
-) => Merge<
-  LoadCustomMapStyleUpdaterAction,
-  {type: typeof ActionTypes.LOAD_CUSTOM_MAP_STYLE}
-> = createAction(
+export const loadCustomMapStyle = createAction(
   ActionTypes.LOAD_CUSTOM_MAP_STYLE,
-  (customMapStyle: LoadCustomMapStyleUpdaterAction['payload']) => ({payload: customMapStyle})
+  customMapStyle => customMapStyle
 );
 
-/** SET_3D_BUILDING_COLOR */
-export type Set3dBuildingColorUpdaterAction = {
-  payload: RGBColor;
-};
 // SET_3D_BUILDING_COLOR
 /**
  * Set 3d building layer group color
  * @memberof mapStyleActions
  * @param color - [r, g, b]
+ * @type {typeof import('./map-style-actions').set3dBuildingColor}
  * @public
  */
-export const set3dBuildingColor: (
-  color: Set3dBuildingColorUpdaterAction['payload']
-) => Merge<
-  Set3dBuildingColorUpdaterAction,
-  {type: typeof ActionTypes.SET_3D_BUILDING_COLOR}
-> = createAction(
-  ActionTypes.SET_3D_BUILDING_COLOR,
-  (color: Set3dBuildingColorUpdaterAction['payload']) => ({payload: color})
-);
+export const set3dBuildingColor = createAction(ActionTypes.SET_3D_BUILDING_COLOR, color => color);
 
 /**
  * Actions handled mostly by  `mapStyle` reducer.

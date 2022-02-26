@@ -18,32 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {createAction} from '@reduxjs/toolkit';
+import {createAction} from 'redux-actions';
 import ActionTypes from 'constants/action-types';
-import {Merge} from '../reducers/types';
-import {ExportImage} from '../reducers/ui-state-updaters';
 
-/** TOGGLE_SIDE_PANEL */
-export type ToggleSidePanelUpdaterAction = {
-  payload: string;
-};
 /**
  * Toggle active side panel
  * @memberof uiStateActions
  * @param id  id of side panel to be shown, one of `layer`, `filter`, `interaction`, `map`
+ * @type {typeof import('./ui-state-actions').toggleSidePanel}
  * @public
  */
-export const toggleSidePanel: (
-  id: string
-) => Merge<
-  ToggleSidePanelUpdaterAction,
-  {type: typeof ActionTypes.TOGGLE_SIDE_PANEL}
-> = createAction(ActionTypes.TOGGLE_SIDE_PANEL, (id: string) => ({payload: id}));
+export const toggleSidePanel = createAction(ActionTypes.TOGGLE_SIDE_PANEL, id => id);
 
-/** TOGGLE_MODAL */
-export type ToggleModalUpdaterAction = {
-  payload: string | null;
-};
 /**
  * Show and hide modal dialog
  * @memberof uiStateActions
@@ -54,424 +40,220 @@ export type ToggleModalUpdaterAction = {
  *  - [`EXPORT_IMAGE_ID`](../constants/default-settings.md#export_image_id)
  *  - [`EXPORT_DATA_ID`](../constants/default-settings.md#export_data_id)
  *  - [`ADD_MAP_STYLE_ID`](../constants/default-settings.md#add_map_style_id)
+ * @type {typeof import('./ui-state-actions').toggleModal}
  * @public
  */
-export const toggleModal: (
-  id: ToggleModalUpdaterAction['payload']
-) => Merge<ToggleModalUpdaterAction, {type: typeof ActionTypes.TOGGLE_MODAL}> = createAction(
-  ActionTypes.TOGGLE_MODAL,
-  (id: ToggleModalUpdaterAction['payload']) => ({
-    payload: id
-  })
-);
+export const toggleModal = createAction(ActionTypes.TOGGLE_MODAL, id => id);
 
-/** SHOW_EXPORT_DROPDOWN */
-export type ShowExportDropdownUpdaterAction = {
-  payload: string;
-};
 /**
  * Hide and show side panel header dropdown, activated by clicking the share link on top of the side panel
  * @memberof uiStateActions
  * @param id - id of the dropdown
+ * @type {typeof import('./ui-state-actions').showExportDropdown}
  * @public
  */
-export const showExportDropdown: (
-  id: ShowExportDropdownUpdaterAction['payload']
-) => Merge<
-  ShowExportDropdownUpdaterAction,
-  {type: typeof ActionTypes.SHOW_EXPORT_DROPDOWN}
-> = createAction(
-  ActionTypes.SHOW_EXPORT_DROPDOWN,
-  (id: ShowExportDropdownUpdaterAction['payload']) => ({payload: id})
-);
+export const showExportDropdown = createAction(ActionTypes.SHOW_EXPORT_DROPDOWN, id => id);
 
 /**
  * Hide side panel header dropdown, activated by clicking the share link on top of the side panel
  * @memberof uiStateActions
+ * @type {typeof import('./ui-state-actions').hideExportDropdown}
  * @public
  */
-export const hideExportDropdown: () => {
-  type: typeof ActionTypes.HIDE_EXPORT_DROPDOWN;
-} = createAction(ActionTypes.HIDE_EXPORT_DROPDOWN);
+export const hideExportDropdown = createAction(ActionTypes.HIDE_EXPORT_DROPDOWN);
 
-/** TOGGLE_MAP_CONTROL */
-export type ToggleMapControlUpdaterAction = {
-  payload: {
-    panelId: string;
-    index: number;
-  };
-};
 /**
  * Toggle active map control panel
  * @memberof uiStateActions
  * @param panelId - map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
+ * @type {typeof import('./ui-state-actions').toggleMapControl}
  * @public
  */
-export const toggleMapControl: (
-  panelId: ToggleMapControlUpdaterAction['payload']['panelId'],
-  index: ToggleMapControlUpdaterAction['payload']['index']
-) => Merge<
-  ToggleMapControlUpdaterAction,
-  {type: typeof ActionTypes.TOGGLE_MAP_CONTROL}
-> = createAction(
-  ActionTypes.TOGGLE_MAP_CONTROL,
-  (
-    panelId: ToggleMapControlUpdaterAction['payload']['panelId'],
-    index: ToggleMapControlUpdaterAction['payload']['index']
-  ) => ({
-    payload: {
-      panelId,
-      index
-    }
-  })
-);
+export const toggleMapControl = createAction(ActionTypes.TOGGLE_MAP_CONTROL, (panelId, index) => ({
+  panelId,
+  index
+}));
 
-/** SET_MAP_CONTROL_VISIBILITY */
-export type setMapControlVisibilityUpdaterAction = {
-  payload: {
-    panelId: string;
-    show: boolean;
-  };
-};
 /**
  * Toggle active map control panel
  * @memberof uiStateActions
  * @param panelId - map control panel id, one of the keys of: [`DEFAULT_MAP_CONTROLS`](#default_map_controls)
+ * @type {typeof import('./ui-state-actions').setMapControlVisibility}
  * @public
  */
-export const setMapControlVisibility: (
-  panelId: setMapControlVisibilityUpdaterAction['payload']['panelId'],
-  show: setMapControlVisibilityUpdaterAction['payload']['show']
-) => Merge<
-  setMapControlVisibilityUpdaterAction,
-  {type: typeof ActionTypes.SET_MAP_CONTROL_VISIBILITY}
-> = createAction(
+export const setMapControlVisibility = createAction(
   ActionTypes.SET_MAP_CONTROL_VISIBILITY,
-  (
-    panelId: setMapControlVisibilityUpdaterAction['payload']['panelId'],
-    show: setMapControlVisibilityUpdaterAction['payload']['show']
-  ) => ({
-    payload: {
-      panelId,
-      show
-    }
+  (panelId, show) => ({
+    panelId,
+    show
   })
 );
 
-/** OPEN_DELETE_MODAL */
-export type OpenDeleteModalUpdaterAction = {
-  payload: string;
-};
 /**
  * Toggle active map control panel
  * @memberof uiStateActions
  * @param datasetId - `id` of the dataset to be deleted
+ * @type {typeof import('./ui-state-actions').openDeleteModal}
  * @public
  */
-export const openDeleteModal: (
-  datasetId: OpenDeleteModalUpdaterAction['payload']
-) => Merge<
-  OpenDeleteModalUpdaterAction,
-  {type: typeof ActionTypes.OPEN_DELETE_MODAL}
-> = createAction(
-  ActionTypes.OPEN_DELETE_MODAL,
-  (datasetId: OpenDeleteModalUpdaterAction['payload']) => ({payload: datasetId})
-);
+export const openDeleteModal = createAction(ActionTypes.OPEN_DELETE_MODAL, datasetId => datasetId);
 
-/** ADD_NOTIFICATION */
-export type AddNotificationUpdaterAction = {
-  payload: object;
-};
 /**
  * Add a notification to be displayed.
  * Existing notification will be updated in case of matching id.
  * @memberof uiStateActions
  * @param notification - The `notification` object to be added or updated
+ * @type {typeof import('./ui-state-actions').addNotification}
  * @public
  */
-export const addNotification: (
-  notification: AddNotificationUpdaterAction['payload']
-) => Merge<
-  AddNotificationUpdaterAction,
-  {
-    type: typeof ActionTypes.ADD_NOTIFICATION;
-  }
-> = createAction(
+export const addNotification = createAction(
   ActionTypes.ADD_NOTIFICATION,
-  (notification: AddNotificationUpdaterAction['payload']) => ({payload: notification})
+  notification => notification
 );
 
-/** REMOVE_NOTIFICATION */
-export type RemoveNotificationUpdaterAction = {
-  payload: string;
-};
 /**
  * Remove a notification
  * @memberof uiStateActions
  * @param id - `id` of the notification to be removed
+ * @type {typeof import('./ui-state-actions').removeNotification}
  * @public
  */
-export const removeNotification: (
-  id: RemoveNotificationUpdaterAction['payload']
-) => Merge<
-  RemoveNotificationUpdaterAction,
-  {type: typeof ActionTypes.REMOVE_NOTIFICATION}
-> = createAction(
-  ActionTypes.REMOVE_NOTIFICATION,
-  (id: RemoveNotificationUpdaterAction['payload']) => ({payload: id})
-);
+export const removeNotification = createAction(ActionTypes.REMOVE_NOTIFICATION, id => id);
 
-/** SET_EXPORT_IMAGE_SETTING */
-export type SetExportImageSettingUpdaterAction = {
-  payload: Partial<ExportImage>;
-};
 /**
  * Set `exportImage` settings: ratio, resolution, legend
  * @memberof uiStateActions
  * @param newSetting - {ratio: '1x'}
+ * @type {typeof import('./ui-state-actions').setExportImageSetting}
  * @public
  */
-export const setExportImageSetting: (
-  newSetting: SetExportImageSettingUpdaterAction['payload']
-) => Merge<
-  SetExportImageSettingUpdaterAction,
-  {type: typeof ActionTypes.SET_EXPORT_IMAGE_SETTING}
-> = createAction(
+export const setExportImageSetting = createAction(
   ActionTypes.SET_EXPORT_IMAGE_SETTING,
-  (newSetting: SetExportImageSettingUpdaterAction['payload']) => ({payload: newSetting})
+  newSetting => newSetting
 );
 
 /**
  * Start exporting image flow
  * @memberof uiStateActions
+ * @type {typeof import('./ui-state-actions').startExportingImage}
  * @public
  */
-export const startExportingImage: (options?: {
-  ratio?: string;
-  resolution?: string;
-  legend?: string;
-  center?: boolean;
-}) => Merge<
-  SetExportImageSettingUpdaterAction,
-  {type: typeof ActionTypes.START_EXPORTING_IMAGE}
-> = createAction(ActionTypes.START_EXPORTING_IMAGE, (payload: any) => ({payload}));
+export const startExportingImage = createAction(ActionTypes.START_EXPORTING_IMAGE);
 
-/** SET_EXPORT_IMAGE_DATA_URI */
-export type SetExportImageDataUriUpdaterAction = {
-  payload: string;
-};
 /**
  * Set `exportImage.setExportImageDataUri` to a dataUri
  * @memberof uiStateActions
  * @param dataUri - export image data uri
+ * @type {typeof import('./ui-state-actions').setExportImageDataUri}
  * @public
  */
-export const setExportImageDataUri: (
-  dataUri: SetExportImageDataUriUpdaterAction['payload']
-) => Merge<
-  SetExportImageDataUriUpdaterAction,
-  {type: typeof ActionTypes.SET_EXPORT_IMAGE_DATA_URI}
-> = createAction(
+export const setExportImageDataUri = createAction(
   ActionTypes.SET_EXPORT_IMAGE_DATA_URI,
-  (dataUri: SetExportImageDataUriUpdaterAction['payload']) => ({payload: dataUri})
+  dataUri => dataUri
 );
 
-/** SET_EXPORT_IMAGE_ERROR */
-export type SetExportImageErrorUpdaterAction = {
-  payload: Error;
-};
 /**
  * Set Export image error
  * @memberof uiStateActions
+ * @type {typeof import('./ui-state-actions').setExportImageError}
  * @public
  */
-export const setExportImageError: (
-  error: SetExportImageErrorUpdaterAction['payload']
-) => Merge<
-  SetExportImageErrorUpdaterAction,
-  {type: typeof ActionTypes.SET_EXPORT_IMAGE_ERROR}
-> = createAction(
-  ActionTypes.SET_EXPORT_IMAGE_ERROR,
-  (error: SetExportImageErrorUpdaterAction['payload']) => ({payload: error})
-);
+export const setExportImageError = createAction(ActionTypes.SET_EXPORT_IMAGE_ERROR, error => error);
 
 /**
  * Delete cached export image
  * @memberof uiStateActions
+ * @type {typeof import('./ui-state-actions').cleanupExportImage}
  * @public
  */
-export const cleanupExportImage: () => {
-  type: typeof ActionTypes.CLEANUP_EXPORT_IMAGE;
-} = createAction(ActionTypes.CLEANUP_EXPORT_IMAGE);
+export const cleanupExportImage = createAction(ActionTypes.CLEANUP_EXPORT_IMAGE);
 
-/** SET_EXPORT_SELECTED_DATASET */
-export type SetExportSelectedDatasetUpdaterAction = {
-  payload: string;
-};
 /**
  * Set selected dataset for export
  * @memberof uiStateActions
  * @param datasetId - dataset id
+ * @type {typeof import('./ui-state-actions').setExportSelectedDataset}
  * @public
  */
-export const setExportSelectedDataset: (
-  datasetId: SetExportSelectedDatasetUpdaterAction['payload']
-) => Merge<
-  SetExportSelectedDatasetUpdaterAction,
-  {type: typeof ActionTypes.SET_EXPORT_SELECTED_DATASET}
-> = createAction(
+export const setExportSelectedDataset = createAction(
   ActionTypes.SET_EXPORT_SELECTED_DATASET,
-  (datasetId: SetExportSelectedDatasetUpdaterAction['payload']) => ({payload: datasetId})
+  datasetId => datasetId
 );
 
-/** SET_EXPORT_DATA_TYPE */
-export type SetExportDataTypeUpdaterAction = {
-  payload: string;
-};
 /**
  * Set data format for exporting data
  * @memberof uiStateActions
  * @param dataType - one of `'text/csv'`
+ * @type {typeof import('./ui-state-actions').setExportDataType}
  * @public
  */
-export const setExportDataType: (
-  dataType: SetExportDataTypeUpdaterAction['payload']
-) => Merge<
-  SetExportDataTypeUpdaterAction,
-  {type: typeof ActionTypes.SET_EXPORT_DATA_TYPE}
-> = createAction(
+export const setExportDataType = createAction(
   ActionTypes.SET_EXPORT_DATA_TYPE,
-  (dataType: SetExportDataTypeUpdaterAction['payload']) => ({payload: dataType})
+  dataType => dataType
 );
 
-/** SET_EXPORT_FILTERED */
-export type SetExportFilteredUpdaterAction = {
-  payload: boolean;
-};
 /**
  * Whether to export filtered data, `true` or `false`
  * @memberof uiStateActions
  * @param payload - set `true` to ony export filtered data
+ * @type {typeof import('./ui-state-actions').setExportFiltered}
  * @public
  */
-export const setExportFiltered: (
-  exportFiltered: SetExportFilteredUpdaterAction['payload']
-) => Merge<
-  SetExportFilteredUpdaterAction,
-  {type: typeof ActionTypes.SET_EXPORT_FILTERED}
-> = createAction(
-  ActionTypes.SET_EXPORT_FILTERED,
-  (payload: SetExportFilteredUpdaterAction['payload']) => ({payload})
-);
+export const setExportFiltered = createAction(ActionTypes.SET_EXPORT_FILTERED, payload => payload);
 
 /**
  * Whether to including data in map config, toggle between `true` or `false`
  * @memberof uiStateActions
+ * @type {typeof import('./ui-state-actions').setExportData}
  * @public
  */
-export const setExportData: () => {type: typeof ActionTypes.SET_EXPORT_DATA} = createAction(
-  ActionTypes.SET_EXPORT_DATA
-);
+export const setExportData = createAction(ActionTypes.SET_EXPORT_DATA);
 
-/** SET_USER_MAPBOX_ACCESS_TOKEN */
-export type SetUserMapboxAccessTokenUpdaterAction = {
-  payload: string;
-};
 /**
  * Whether we export a mapbox access token used to create a single map html file
  * @memberof uiStateActions
  * @param payload - mapbox access token
+ * @type {typeof import('./ui-state-actions').setUserMapboxAccessToken}
  * @public
  */
-export const setUserMapboxAccessToken: (
-  payload: SetUserMapboxAccessTokenUpdaterAction['payload']
-) => Merge<
-  SetUserMapboxAccessTokenUpdaterAction,
-  {type: typeof ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN}
-> = createAction(
+export const setUserMapboxAccessToken = createAction(
   ActionTypes.SET_USER_MAPBOX_ACCESS_TOKEN,
-  (payload: SetUserMapboxAccessTokenUpdaterAction['payload']) => ({payload})
+  payload => payload
 );
 
-/** SET_EXPORT_MAP_FORMAT */
-export type SetExportMapFormatUpdaterAction = {
-  payload: string;
-};
 /**
  * Set the export map format (html, json)
  * @memberOf uiStateActions
  * @param payload - map format
+ * @type {typeof import('./ui-state-actions').setExportMapFormat}
  * @public
  */
-export const setExportMapFormat: (
-  mapFormat: SetExportMapFormatUpdaterAction['payload']
-) => Merge<
-  SetExportMapFormatUpdaterAction,
-  {type: typeof ActionTypes.SET_EXPORT_MAP_FORMAT}
-> = createAction(
+export const setExportMapFormat = createAction(
   ActionTypes.SET_EXPORT_MAP_FORMAT,
-  (payload: SetExportMapFormatUpdaterAction['payload']) => ({payload})
+  payload => payload
 );
 
-/** SET_EXPORT_MAP_HTML_MODE */
-export type SetExportHTMLMapModeUpdaterAction = {
-  payload: string;
-};
 /**
  * Set the HTML mode to use to export HTML mode
  * @memberOf uiStateActions
  * @param payload - map mode
+ * @type {typeof import('./ui-state-actions').setExportHTMLMapMode}
  */
-export const setExportHTMLMapMode: (
-  mode: SetExportHTMLMapModeUpdaterAction['payload']
-) => Merge<
-  SetExportHTMLMapModeUpdaterAction,
-  {type: typeof ActionTypes.SET_EXPORT_MAP_HTML_MODE}
-> = createAction(
+export const setExportHTMLMapMode = createAction(
   ActionTypes.SET_EXPORT_MAP_HTML_MODE,
-  (payload: SetExportHTMLMapModeUpdaterAction['payload']) => ({payload})
+  payload => payload
 );
 
-/** SET_LOCALE */
-export type SetLocaleUpdaterAction = {
-  payload: {locale: string};
-};
 /**
  * Set `locale` value
  * @memberof uiStateActions
  * @param locale - locale of the UI
+ * @type {typeof import('./ui-state-actions').setLocale}
  * @public
  */
-export const setLocale: (
-  locale: SetLocaleUpdaterAction['payload']['locale']
-) => Merge<SetLocaleUpdaterAction, {type: typeof ActionTypes.SET_LOCALE}> = createAction(
-  ActionTypes.SET_LOCALE,
-  (locale: SetLocaleUpdaterAction['payload']['locale']) => ({
-    payload: {
-      locale
-    }
-  })
-);
-
-/** TOGGLE_LAYER_PANEL_LIST_VIEW */
-export type ToggleLayerPanelListViewAction = {
-  payload: string;
-};
-/**
- * Toggle layer panel list view
- * @memberof uiStateActions
- * @param listView layer panel listView value. Can be 'list' or 'sortByDataset'
- * @public
- */
-export const toggleLayerPanelListView: (
-  listView: ToggleLayerPanelListViewAction['payload']
-) => Merge<
-  ToggleLayerPanelListViewAction,
-  {type: typeof ActionTypes.TOGGLE_LAYER_PANEL_LIST_VIEW}
-> = createAction(
-  ActionTypes.TOGGLE_LAYER_PANEL_LIST_VIEW,
-  (listView: ToggleLayerPanelListViewAction['payload']) => ({payload: listView})
-);
+export const setLocale = createAction(ActionTypes.SET_LOCALE, locale => ({
+  locale
+}));
 
 /**
  * This declaration is needed to group actions in docs
@@ -488,3 +270,15 @@ export const toggleLayerPanelListView: (
 // @ts-ignore
 const uiStateActions = null;
 /* eslint-enable no-unused-vars */
+
+/**
+ * Toggle layer panel list view
+ * @memberof uiStateActions
+ * @param listView layer panel listView value. Can be 'list' or 'sortByDataset'
+ * @type {typeof import('./ui-state-actions').toggleLayerPanelListView}
+ * @public
+ */
+export const toggleLayerPanelListView = createAction(
+  ActionTypes.TOGGLE_LAYER_PANEL_LIST_VIEW,
+  listView => listView
+);
