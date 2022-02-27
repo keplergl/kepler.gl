@@ -59,7 +59,6 @@ export {
   Editor,
   Feature,
   FeatureValue,
-  Field,
   FieldDomain,
   FieldPair,
   Filter,
