@@ -21,11 +21,12 @@
 import memoize from 'lodash.memoize';
 import clondDeep from 'lodash.clonedeep';
 import {DEFAULT_LAYER_GROUPS, DEFAULT_MAPBOX_API_URL} from 'constants/default-settings';
+import {LayerGroup} from 'reducers';
 
 const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
 const httpRg = /^(?=(http:|https:))/;
 
-export function getDefaultLayerGroupVisibility({layerGroups = []}) {
+export function getDefaultLayerGroupVisibility({layerGroups = []}: {layerGroups: LayerGroup[]}) {
   return layerGroups.reduce(
     (accu, layer) => ({
       ...accu,

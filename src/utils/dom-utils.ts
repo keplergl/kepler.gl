@@ -141,7 +141,7 @@ export function processClone(original, clone) {
  * UTILS
  ****/
 export function asArray(arrayLike) {
-  const array = [];
+  const array: any[] = [];
   const length = arrayLike.length;
   for (let i = 0; i < length; i++) array.push(arrayLike[i]);
   return array;
