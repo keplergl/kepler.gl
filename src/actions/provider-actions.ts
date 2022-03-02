@@ -18,11 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {createAction} from 'redux-actions';
+import {createAction} from '@reduxjs/toolkit';
 import {ACTION_PREFIX} from 'constants/action-types';
+import {SavedMap} from 'schemas';
+import {MapListItem, Provider} from 'cloud-providers';
 
-/** @type {import('./provider-actions').ProviderActionTypes} */
-export const ActionTypes = {
+const assignType = <T>(obj: T): { [K in keyof T]: `${typeof ACTION_PREFIX}${string & K}`; } => obj as any
+export const ActionTypes = assignType({
   EXPORT_FILE_TO_CLOUD: `${ACTION_PREFIX}EXPORT_FILE_TO_CLOUD`,
   EXPORT_FILE_SUCCESS: `${ACTION_PREFIX}EXPORT_FILE_SUCCESS`,
   EXPORT_FILE_ERROR: `${ACTION_PREFIX}EXPORT_FILE_ERROR`,
@@ -35,8 +37,32 @@ export const ActionTypes = {
   GET_SAVED_MAPS: `${ACTION_PREFIX}GET_SAVED_MAPS`,
   GET_SAVED_MAPS_SUCCESS: `${ACTION_PREFIX}GET_SAVED_MAPS_SUCCESS`,
   GET_SAVED_MAPS_ERROR: `${ACTION_PREFIX}GET_SAVED_MAPS_ERROR`
-};
+});
 
+/** EXPORT_FILE_TO_CLOUD */
+export type MapData = {
+  map: SavedMap;
+  thumbnail: Blob | null;
+};
+export type ExportFileOptions = {
+  isPublic?: boolean;
+  overwrite?: boolean;
+};
+export type OnErrorCallBack = (error: Error) => any;
+export type OnSuccessCallBack = (p: {
+  response: any;
+  provider: Provider;
+  options: ExportFileOptions;
+}) => any;
+
+export type ExportFileToCloudPayload = {
+  mapData: MapData;
+  provider: Provider;
+  options: ExportFileOptions;
+  onSuccess?: OnSuccessCallBack;
+  onError?: OnErrorCallBack;
+  closeModal?: boolean;
+};
 /**
  * Call provider to upload file to cloud
  * @param mapData
@@ -45,50 +71,148 @@ export const ActionTypes = {
  * @param onSuccess
  * @param onError
  * @param closeModal
- * @type {typeof import('./provider-actions').exportFileToCloud}
  */
-export const exportFileToCloud = createAction(ActionTypes.EXPORT_FILE_TO_CLOUD, payload => payload);
+export const exportFileToCloud: (
+  p: ExportFileToCloudPayload
+) => {
+  type: typeof ActionTypes.EXPORT_FILE_TO_CLOUD;
+  payload: ExportFileToCloudPayload;
+} = createAction(ActionTypes.EXPORT_FILE_TO_CLOUD, (payload: ExportFileToCloudPayload) => ({payload}));
 
-/**
- * @type {typeof import('./provider-actions').exportFileSuccess}
- */
-export const exportFileSuccess = createAction(ActionTypes.EXPORT_FILE_SUCCESS, payload => payload);
+/** EXPORT_FILE_SUCCESS */
+export type ExportFileSuccessPayload = {
+  response: any;
+  provider: Provider;
+  options?: ExportFileOptions;
+  onSuccess?: OnSuccessCallBack;
+  closeModal?: boolean;
+};
 
-/** @type {typeof import('./provider-actions').exportFileError} */
-export const exportFileError = createAction(ActionTypes.EXPORT_FILE_ERROR, payload => payload);
+export const exportFileSuccess: (
+  p: ExportFileSuccessPayload
+) => {
+  type: typeof ActionTypes.EXPORT_FILE_SUCCESS;
+  payload: ExportFileSuccessPayload;
+} = createAction(ActionTypes.EXPORT_FILE_SUCCESS, (payload: ExportFileSuccessPayload) => ({payload}));
 
-/** @type {typeof import('./provider-actions').postSaveLoadSuccess} */
-export const postSaveLoadSuccess = createAction(
+/** EXPORT_FILE_ERROR */
+export type ExportFileErrorPayload = {
+  error: any;
+  provider: Provider;
+  options?: ExportFileOptions;
+  onError?: OnErrorCallBack;
+};
+
+export const exportFileError: (
+  p: ExportFileErrorPayload
+) => {
+  type: typeof ActionTypes.EXPORT_FILE_ERROR;
+  payload: ExportFileErrorPayload;
+} = createAction(ActionTypes.EXPORT_FILE_ERROR, (payload: ExportFileErrorPayload) => ({payload}));
+
+/** POST_SAVE_LOAD_SUCCESS */
+export type PostSaveLoadSuccessPayload = string;
+export const postSaveLoadSuccess: (
+  p: PostSaveLoadSuccessPayload
+) => {
+  type: typeof ActionTypes.POST_SAVE_LOAD_SUCCESS;
+  payload: PostSaveLoadSuccessPayload;
+} = createAction(
   ActionTypes.POST_SAVE_LOAD_SUCCESS,
-  message => message
+  (message: PostSaveLoadSuccessPayload) => ({payload : message})
 );
 
-/** @type {typeof import('./provider-actions').resetProviderStatus} */
-export const resetProviderStatus = createAction(ActionTypes.RESET_PROVIDER_STATUS);
+export const resetProviderStatus: () => {
+  type: typeof ActionTypes.RESET_PROVIDER_STATUS;
+} = createAction(ActionTypes.RESET_PROVIDER_STATUS);
 
-/** @type {typeof import('./provider-actions').setCloudProvider} */
-export const setCloudProvider = createAction(ActionTypes.SET_CLOUD_PROVIDER, provider => provider);
+/** SET_CLOUD_PROVIDER */
+export type SetCloudProviderPayload = string;
+export const setCloudProvider: (
+  p: SetCloudProviderPayload
+) => {
+  type: typeof ActionTypes.SET_CLOUD_PROVIDER;
+  payload: SetCloudProviderPayload;
+} = createAction(ActionTypes.SET_CLOUD_PROVIDER, (provider: SetCloudProviderPayload) => ({payload : provider}));
 
-/** @type {typeof import('./provider-actions').loadCloudMap} */
-export const loadCloudMap = createAction(ActionTypes.LOAD_CLOUD_MAP, payload => payload);
+/** LOAD_CLOUD_MAP */
+export type LoadCloudMapPayload = {
+  loadParams: any;
+  provider: string;
+  onSuccess?: any;
+  onError?: OnErrorCallBack;
+};
+export const loadCloudMap: (
+  p: LoadCloudMapPayload
+) => {
+  type: typeof ActionTypes.LOAD_CLOUD_MAP;
+  payload: LoadCloudMapPayload;
+} = createAction(ActionTypes.LOAD_CLOUD_MAP, payload => ({payload : payload}));
 
-/** @type {typeof import('./provider-actions').loadCloudMapSuccess} */
-export const loadCloudMapSuccess = createAction(
+/** LOAD_CLOUD_MAP_SUCCESS */
+type LoadCloudMapSuccessCallback = (p: {response: any; loadParams: any; provider: Provider}) => any;
+export type LoadCloudMapSuccessPayload = {
+  response: any;
+  loadParams: any;
+  provider: Provider;
+  onSuccess?: LoadCloudMapSuccessCallback;
+  onError?: OnErrorCallBack;
+};
+export const loadCloudMapSuccess: (
+  p: LoadCloudMapSuccessPayload
+) => {
+  type: typeof ActionTypes.LOAD_CLOUD_MAP_SUCCESS;
+  payload: LoadCloudMapSuccessPayload;
+} = createAction(
   ActionTypes.LOAD_CLOUD_MAP_SUCCESS,
-  payload => payload
+  (payload: LoadCloudMapSuccessPayload) => ({payload : payload})
 );
 
-/** @type {typeof import('./provider-actions').loadCloudMapError} */
-export const loadCloudMapError = createAction(ActionTypes.LOAD_CLOUD_MAP_ERROR, payload => payload);
+/** LOAD_CLOUD_MAP_ERROR */
+export type LoadCloudMapErrorPayload = {
+  error: any;
+  provider: Provider;
+  onError?: OnErrorCallBack;
+};
+export const loadCloudMapError: (
+  p: LoadCloudMapErrorPayload
+) => {
+  type: typeof ActionTypes.LOAD_CLOUD_MAP_ERROR;
+  payload: LoadCloudMapErrorPayload;
+} = createAction(ActionTypes.LOAD_CLOUD_MAP_ERROR, (payload: LoadCloudMapErrorPayload) => ({payload : payload}));
 
-/** @type {typeof import('./provider-actions').getSavedMaps} */
-export const getSavedMaps = createAction(ActionTypes.GET_SAVED_MAPS, provider => provider);
+/** GET_SAVED_MAPS */
+export type GetSavedMapsPayload = string;
+export const getSavedMaps: (
+  p: GetSavedMapsPayload
+) => {
+  type: typeof ActionTypes.GET_SAVED_MAPS;
+  payload: GetSavedMapsPayload;
+} = createAction(ActionTypes.GET_SAVED_MAPS, (provider: GetSavedMapsPayload) => ({payload : provider}));
 
-/** @type {typeof import('./provider-actions').getSavedMapsSuccess} */
-export const getSavedMapsSuccess = createAction(
+/** GET_SAVED_MAPS_SUCCESS */
+export type GetSavedMapsSuccessPayload = {
+  visualizations: MapListItem[];
+  provider: string;
+};
+export const getSavedMapsSuccess: (
+  p: GetSavedMapsSuccessPayload
+) => {
+  type: typeof ActionTypes.GET_SAVED_MAPS_SUCCESS;
+  payload: GetSavedMapsSuccessPayload;
+} = createAction(
   ActionTypes.GET_SAVED_MAPS_SUCCESS,
-  payload => payload
+  (payload: GetSavedMapsSuccessPayload) => ({payload : payload})
 );
 
-/** @type {typeof import('./provider-actions').getSavedMapsError} */
-export const getSavedMapsError = createAction(ActionTypes.GET_SAVED_MAPS_ERROR, payload => payload);
+/** GET_SAVED_MAPS_ERROR */
+export type GetSavedMapsErrorPayload = {
+  error: any;
+  provider: string;
+};
+export const getSavedMapsError: (
+  p: GetSavedMapsErrorPayload
+) => {
+  type: typeof ActionTypes.GET_SAVED_MAPS_ERROR;
+  payload: GetSavedMapsErrorPayload;
+} = createAction(ActionTypes.GET_SAVED_MAPS_ERROR, payload => ({payload : payload}));
