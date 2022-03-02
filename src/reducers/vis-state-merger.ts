@@ -33,6 +33,8 @@ import {VisState, Datasets} from './vis-state-updaters';
 import {KeplerTable} from 'utils';
 import {ParsedConfig, ParsedLayer} from 'schemas';
 import {Layer} from 'layers';
+import {TooltipInfo} from './vis-state-updaters';
+import {SavedInteractionConfig} from 'schemas/schema-manager';
 
 export type Merger = {
   merge: (state: VisState, config: any, fromConfig?: boolean) => VisState;
@@ -198,42 +200,49 @@ export function insertLayerAtRightOrder(
  */
 export function mergeInteractions(
   state: VisState,
-  interactionToBeMerged: NonNullable<ParsedConfig['visState']>['interactionConfig'],
+  interactionToBeMerged: Partial<SavedInteractionConfig> | undefined,
   fromConfig?: boolean
 ): VisState {
-  const merged = {};
-  const unmerged: {tooltip?: any} = {};
+  const merged: Partial<SavedInteractionConfig> = {};
+  const unmerged: Partial<SavedInteractionConfig> = {};
 
   if (interactionToBeMerged) {
-    Object.keys(interactionToBeMerged).forEach(key => {
+    (Object.keys(interactionToBeMerged) as Array<keyof SavedInteractionConfig>).forEach(key => {
       if (!state.interactionConfig[key]) {
         return;
       }
 
-      const currentConfig = state.interactionConfig[key].config;
+      const currentConfig =
+        key === 'tooltip' || key === 'brush' ? state.interactionConfig[key].config : null;
 
       const {enabled, ...configSaved} = interactionToBeMerged[key] || {};
+
       let configToMerge = configSaved;
 
       if (key === 'tooltip') {
-        const {mergedTooltip, unmergedTooltip} = mergeInteractionTooltipConfig(state, configSaved);
+        const {mergedTooltip, unmergedTooltip} = mergeInteractionTooltipConfig(
+          state,
+          configSaved as SavedInteractionConfig['tooltip']
+        );
 
         // merge new dataset tooltips with original dataset tooltips
         configToMerge = {
           fieldsToShow: {
-            ...currentConfig.fieldsToShow,
+            ...(currentConfig as TooltipInfo['config']).fieldsToShow,
             ...mergedTooltip
           }
         };
 
         if (Object.keys(unmergedTooltip).length) {
-          unmerged.tooltip = {fieldsToShow: unmergedTooltip, enabled};
+          // @ts-expect-error
+          unmerged.tooltip = {fieldsToShow: unmergedTooltip, enabled: Boolean(enabled)};
         }
       }
 
+      // @ts-expect-error
       merged[key] = {
         ...state.interactionConfig[key],
-        enabled,
+        enabled: Boolean(enabled),
         ...(currentConfig
           ? {
               config: pick(
@@ -251,6 +260,7 @@ export function mergeInteractions(
 
   return {
     ...state,
+    // @ts-expect-error
     interactionConfig: {
       ...state.interactionConfig,
       ...merged
@@ -300,15 +310,22 @@ export function mergeSplitMaps(
  * Merge interactionConfig.tooltip with saved config,
  * validate fieldsToShow
  *
- * @param {object} state
- * @param {object} tooltipConfig
- * @return {object} - {mergedTooltip: {}, unmergedTooltip: {}}
+ * @param state
+ * @param tooltipConfig
+ * @return - {mergedTooltip: {}, unmergedTooltip: {}}
  */
-export function mergeInteractionTooltipConfig(state: VisState, tooltipConfig: any = {}) {
-  const unmergedTooltip = {};
-  const mergedTooltip = {};
+export function mergeInteractionTooltipConfig(
+  state: VisState,
+  tooltipConfig: Pick<TooltipInfo['config'], 'fieldsToShow'> | null = null
+) {
+  const unmergedTooltip: TooltipInfo['config']['fieldsToShow'] = {};
+  const mergedTooltip: TooltipInfo['config']['fieldsToShow'] = {};
 
-  if (!tooltipConfig.fieldsToShow || !Object.keys(tooltipConfig.fieldsToShow).length) {
+  if (
+    !tooltipConfig ||
+    !tooltipConfig.fieldsToShow ||
+    !Object.keys(tooltipConfig.fieldsToShow).length
+  ) {
     return {mergedTooltip, unmergedTooltip};
   }
 
@@ -374,13 +391,19 @@ export function mergeAnimationConfig(
  * Validate saved layer columns with new data,
  * update fieldIdx based on new fields
  *
- * @param {Array<Object>} fields
- * @param {Object} savedCols
- * @param {Object} emptyCols
- * @return {null | Object} - validated columns or null
+ * @param fields
+ * @param savedCols
+ * @param emptyCols
+ * @return - validated columns or null
  */
 
-export function validateSavedLayerColumns(fields, savedCols = {}, emptyCols) {
+export function validateSavedLayerColumns(
+  fields: KeplerTable['fields'],
+  savedCols: {
+    [key: string]: string;
+  } = {},
+  emptyCols
+) {
   // Prepare columns for the validator
   const columns: typeof emptyCols = {};
   for (const key of Object.keys(emptyCols)) {
@@ -388,7 +411,7 @@ export function validateSavedLayerColumns(fields, savedCols = {}, emptyCols) {
 
     const saved = savedCols[key];
     if (saved) {
-      const fieldIdx = fields.findIndex(({name}) => name === saved);
+      const fieldIdx: number = fields.findIndex(({name}) => name === saved);
 
       if (fieldIdx > -1) {
         // update found columns
