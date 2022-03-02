@@ -51,3 +51,66 @@ export * as visStateMergers from './vis-state-merger';
 
 // Helpers
 export * from './composer-helpers';
+
+// export types
+export type {
+  AnimationConfig,
+  Brush,
+  Coordinate,
+  Datasets,
+  Editor,
+  Feature,
+  FeatureValue,
+  FieldDomain,
+  Filter,
+  FilterBase,
+  Geocoder,
+  HistogramBin,
+  InteractionConfig,
+  LineChart,
+  MapInfo,
+  MultiSelectFieldDomain,
+  MultiSelectFilter,
+  PolygonFilter,
+  RangeFieldDomain,
+  RangeFilter,
+  SelectFieldDomain,
+  SelectFilter,
+  SplitMap,
+  TimeRangeFieldDomain,
+  TimeRangeFilter,
+  TooltipInfo,
+  VisState
+} from './vis-state-updaters';
+
+export type {
+  BaseMapStyle,
+  InputStyle,
+  LayerGroup,
+  MapboxStyleUrl,
+  MapStyle,
+  MapStyles,
+  VisibleLayerGroups
+} from './map-style-updaters';
+
+export type {
+  Bounds,
+  MapState,
+  Viewport
+} from './map-state-updaters';
+
+export type {
+  ExportData,
+  ExportHtml,
+  ExportImage,
+  ExportJson,
+  ExportMap,
+  LoadFiles,
+  Locale,
+  MapControl,
+  MapControls,
+  Notifications,
+  UiState
+} from './ui-state-updaters';
+
+export * from './types';

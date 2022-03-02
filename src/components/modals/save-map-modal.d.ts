@@ -1,6 +1,6 @@
 import React from 'react';
 import {Provider} from '../../cloud-providers';
-import {MapInfo, ExportImage} from '../../reducers';
+import {MapInfo, ExportImage} from 'reducers';
 import {
   setMapInfo
 } from '../../actions';

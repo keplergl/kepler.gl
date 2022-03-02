@@ -1,5 +1,5 @@
 import React from 'react';
-import {Editor, MapControls} from '../../reducers';
+import {Editor, MapControls} from 'reducers';
 import {MapDrawPanelIcons} from './map-control';
 
 export type MapDrawPanelProps = {

@@ -1,4 +1,4 @@
-import {RGBColor, RGBAColor, GpuFilter, MapState, Field, Filter, Datasets} from '../reducers';
+import {RGBColor, RGBAColor, GpuFilter, MapState, Field, Filter, Datasets} from 'reducers';
 import {LayerTextLabel, ColorRange, ColorUI, VisConfigRange} from './layer-factory';
 
 export {LAYER_VIS_CONFIGS, LayerVisConfig} from './layer-factory';

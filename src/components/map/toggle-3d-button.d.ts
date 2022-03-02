@@ -1,5 +1,5 @@
 import React from 'react';
-import {MapControls} from '../../reducers';
+import {MapControls} from 'reducers';
 
 interface Toggle3dButtonIcons {
   cube: ComponentType<any>;
