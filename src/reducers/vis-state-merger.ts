@@ -437,7 +437,7 @@ export function validateColumn(
   column: LayerColumn & {validator?: typeof validateColumn},
   columns: LayerColumns,
   allFields: KeplerTable['fields']
-) {
+): boolean {
   if (column.optional || column.value) {
     return true;
   }
