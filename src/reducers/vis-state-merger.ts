@@ -32,7 +32,7 @@ import {CURRENT_VERSION, visStateSchema} from 'schemas';
 import {VisState, Datasets} from './vis-state-updaters';
 import {KeplerTable} from 'utils';
 import {ParsedConfig, ParsedLayer} from 'schemas';
-import {Layer} from 'layers';
+import {Layer, LayerColumns, LayerColumn} from 'layers';
 import {TooltipInfo} from './vis-state-updaters';
 import {SavedInteractionConfig} from 'schemas/schema-manager';
 
@@ -402,7 +402,7 @@ export function validateSavedLayerColumns(
   savedCols: {
     [key: string]: string;
   } = {},
-  emptyCols
+  emptyCols: LayerColumns
 ) {
   // Prepare columns for the validator
   const columns: typeof emptyCols = {};
@@ -411,7 +411,7 @@ export function validateSavedLayerColumns(
 
     const saved = savedCols[key];
     if (saved) {
-      const fieldIdx: number = fields.findIndex(({name}) => name === saved);
+      const fieldIdx = fields.findIndex(({name}) => name === saved);
 
       if (fieldIdx > -1) {
         // update found columns
@@ -434,11 +434,10 @@ export function validateSavedLayerColumns(
 }
 
 export function validateColumn(
-  // TODO: Better types here
-  column: any,
-  columns: any[],
+  column: LayerColumn & {validator?: typeof validateColumn},
+  columns: LayerColumns,
   allFields: KeplerTable['fields']
-): boolean {
+) {
   if (column.optional || column.value) {
     return true;
   }
