@@ -1,5 +1,5 @@
 import React from 'react';
-import {Editor, MapControls} from '../../reducers';
+import {Editor, MapControls} from 'reducers';
 import {Datasets} from 'reducers/vis-state-updaters';
 import {FeatureFlags} from '../context';
 import {Layer} from 'layers';

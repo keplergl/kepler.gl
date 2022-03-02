@@ -1,5 +1,5 @@
 import React from 'react';
-import {MapControls} from '../../reducers';
+import {MapControls} from 'reducers';
 
 export type LocalePanelProps = {
   availableLocales: ReadonlyArray<string>;

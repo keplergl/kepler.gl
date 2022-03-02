@@ -1,6 +1,6 @@
 import {FunctionComponent} from 'react';
 import {SetExportImageSettingUpdaterAction} from '../../actions';
-import {ExportImage} from '../../reducers';
+import {ExportImage} from 'reducers';
 import {IntlShape} from 'react-intl';
 
 export type ExportImageModalProps = {
