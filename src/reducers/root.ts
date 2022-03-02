@@ -90,12 +90,13 @@ export function provideInitialState(initialState) {
       [ActionTypes.RENAME_ENTRY]: handleRenameEntry
     };
 
-    // @ts-ignore
+    // TODO: Understand why the Lint sees an error here, while the IDE does not.
+    // @ts-expect-error
     return handleActions(handlers, initialCoreState)(state, action);
   };
 }
 
-const _keplerGlReducer = provideInitialState();
+const _keplerGlReducer = provideInitialState(initialCoreState);
 
 function mergeInitialState(saved = {}, provided = {}) {
   const keys = ['mapState', 'mapStyle', 'visState', 'uiState'];

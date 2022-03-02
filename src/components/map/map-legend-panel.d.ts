@@ -1,6 +1,6 @@
 import React, {Element} from 'react';
 import {Layer} from 'layers';
-import {MapControls} from '../../reducers';
+import {MapControls} from 'reducers';
 
 interface MapLegendPanelIcons {
   legend: ComponentType<any>;

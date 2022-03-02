@@ -1,5 +1,5 @@
 import {ComponentType} from 'react';
-import {Datasets, Filter, InteractionConfig, MapStyle} from '../reducers';
+import {Datasets, Filter, InteractionConfig, MapStyle} from 'reducers';
 import {Layer, LayerClassesType} from '../layers';
 
 import * as MapStyleActions from 'actions/map-style-actions';
