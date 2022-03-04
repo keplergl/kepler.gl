@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 import assert from 'assert';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
-import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from 'constants/tooltip';
+import {ALL_FIELD_TYPES} from '../constants/default-settings';
+import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from '../constants/tooltip';
 import {format as d3Format} from 'd3-format';
 import {bisectLeft} from 'd3-array';
 import moment from 'moment-timezone';
