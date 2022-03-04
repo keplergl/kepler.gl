@@ -43,7 +43,7 @@ const actionHandler = {
 
 // construct provider-state reducer
 export const providerStateReducerFactory = (initialState = {}) =>
-  // @ts-ignore
+  // @ts-expect-error
   handleActions(actionHandler, {
     ...providerStateUpdaters.INITIAL_PROVIDER_STATE,
     ...initialState,

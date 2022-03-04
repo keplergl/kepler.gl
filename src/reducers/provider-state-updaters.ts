@@ -20,14 +20,14 @@
 
 import {withTask} from 'react-palm/tasks';
 import {default as Console} from 'global/console';
-import {generateHashId, getError, isPlainObject, toArray} from 'utils/utils';
+import {generateHashId, getError, isPlainObject, toArray} from '../utils/utils';
 import {
   EXPORT_FILE_TO_CLOUD_TASK,
   ACTION_TASK,
   DELAY_TASK,
   LOAD_CLOUD_MAP_TASK,
   GET_SAVED_MAPS_TASK
-} from 'tasks/tasks';
+} from '../tasks/tasks';
 import {
   exportFileSuccess,
   exportFileError,
@@ -37,20 +37,39 @@ import {
   getSavedMapsError,
   loadCloudMapError,
   resetProviderStatus
-} from 'actions/provider-actions';
-import {removeNotification, toggleModal, addNotification} from 'actions/ui-state-actions';
-import {addDataToMap} from 'actions/actions';
+} from '../actions/provider-actions';
+import {removeNotification, toggleModal, addNotification} from '../actions/ui-state-actions';
+import {addDataToMap} from '../actions/actions';
 import {
   DEFAULT_NOTIFICATION_TYPES,
   DEFAULT_NOTIFICATION_TOPICS,
   DATASET_FORMATS,
   OVERWRITE_MAP_ID
-} from 'constants/default-settings';
+} from '../constants/default-settings';
 
-import {FILE_CONFLICT_MSG} from 'cloud-providers';
-import {DATASET_HANDLERS} from 'processors/data-processor';
+import {FILE_CONFLICT_MSG} from '../cloud-providers';
+import {DATASET_HANDLERS} from '../processors/data-processor';
 
-export const INITIAL_PROVIDER_STATE = {
+import * as ProviderActions from '../actions/provider-actions';
+import {MapListItem} from '../cloud-providers';
+
+type ActionPayload<P> = {
+  type?: string;
+  payload: P;
+};
+
+export type ProviderState = {
+  isProviderLoading: boolean;
+  isCloudMapLoading: boolean;
+  providerError: any;
+  currentProvider: string | null;
+  successInfo: any;
+  mapSaved: null | string;
+  initialState?: any;
+  visualizations: MapListItem[];
+};
+
+export const INITIAL_PROVIDER_STATE: ProviderState = {
   isProviderLoading: false,
   isCloudMapLoading: false,
   providerError: null,
@@ -59,6 +78,8 @@ export const INITIAL_PROVIDER_STATE = {
   mapSaved: null,
   visualizations: []
 };
+
+declare function withTask<T>(s: T, any: any): T;
 
 function createActionTask(action, payload) {
   if (typeof action === 'function') {
@@ -82,10 +103,15 @@ function _validateProvider(provider, method) {
   return true;
 }
 
-/**
- * @type {typeof import('./provider-state-updaters').createGlobalNotificationTasks}
- */
-function createGlobalNotificationTasks({type, message, delayClose = true}) {
+function createGlobalNotificationTasks({
+  type,
+  message,
+  delayClose = true
+}: {
+  type?: string;
+  message: string;
+  delayClose?: boolean;
+}) {
   const id = generateHashId();
   const successNote = {
     id,
@@ -101,9 +127,11 @@ function createGlobalNotificationTasks({type, message, delayClose = true}) {
  * This method will export the current kepler config file to the chosen cloud proder
  * add returns a share URL
  *
- * @type {typeof import('./provider-state-updaters').exportFileToCloudUpdater}
  */
-export const exportFileToCloudUpdater = (state, action) => {
+export const exportFileToCloudUpdater = (
+  state: ProviderState,
+  action: ActionPayload<ProviderActions.ExportFileToCloudPayload>
+): ProviderState => {
   const {mapData, provider, options = {}, onSuccess, onError, closeModal} = action.payload;
 
   if (!_validateProvider(provider, 'uploadMap')) {
@@ -131,11 +159,10 @@ export const exportFileToCloudUpdater = (state, action) => {
   return withTask(newState, uploadFileTask);
 };
 
-/**
- *
- * @type {typeof import('./provider-state-updaters').exportFileSuccessUpdater}
- */
-export const exportFileSuccessUpdater = (state, action) => {
+export const exportFileSuccessUpdater = (
+  state: ProviderState,
+  action: ActionPayload<ProviderActions.ExportFileSuccessPayload>
+): ProviderState => {
   const {response, provider, options = {}, onSuccess, closeModal} = action.payload;
 
   const newState = {
@@ -161,9 +188,11 @@ export const exportFileSuccessUpdater = (state, action) => {
 
 /**
  * Close modal on success and display notification
- * @type {typeof import('./provider-state-updaters').postSaveLoadSuccessUpdater}
  */
-export const postSaveLoadSuccessUpdater = (state, action) => {
+export const postSaveLoadSuccessUpdater = (
+  state: ProviderState,
+  action: ActionPayload<ProviderActions.PostSaveLoadSuccessPayload>
+): ProviderState => {
   const message = action.payload || `Saved / Load to ${state.currentProvider} Success`;
 
   const tasks = [
@@ -175,11 +204,10 @@ export const postSaveLoadSuccessUpdater = (state, action) => {
   return withTask(state, tasks);
 };
 
-/**
- *
- * @type {typeof import('./provider-state-updaters').exportFileErrorUpdater}
- */
-export const exportFileErrorUpdater = (state, action) => {
+export const exportFileErrorUpdater = (
+  state: ProviderState,
+  action: ActionPayload<ProviderActions.ExportFileErrorPayload>
+): ProviderState => {
   const {error, provider, onError} = action.payload;
 
   const newState = {
@@ -198,7 +226,10 @@ export const exportFileErrorUpdater = (state, action) => {
   return task ? withTask(newState, task) : newState;
 };
 
-export const loadCloudMapUpdater = (state, action) => {
+export const loadCloudMapUpdater = (
+  state: ProviderState,
+  action: ActionPayload<ProviderActions.LoadCloudMapPayload>
+): ProviderState => {
   const {loadParams, provider, onSuccess, onError} = action.payload;
   if (!loadParams) {
     Console.warn('load map error: loadParams is undefined');
@@ -217,8 +248,10 @@ export const loadCloudMapUpdater = (state, action) => {
   // payload called by provider.downloadMap
   const uploadFileTask = LOAD_CLOUD_MAP_TASK({provider, payload: loadParams}).bimap(
     // success
+    // @ts-expect-error
     response => loadCloudMapSuccess({response, loadParams, provider, onSuccess, onError}),
     // error
+    // @ts-expect-error
     error => loadCloudMapError({error, provider, onError})
   );
 
@@ -289,11 +322,10 @@ function parseLoadMapResponse(response, loadParams, provider) {
   };
 }
 
-/**
- *
- * @type {typeof import('./provider-state-updaters').loadCloudMapSuccessUpdater}
- */
-export const loadCloudMapSuccessUpdater = (state, action) => {
+export const loadCloudMapSuccessUpdater = (
+  state: ProviderState,
+  action: ActionPayload<ProviderActions.LoadCloudMapSuccessPayload>
+): ProviderState => {
   const {response, loadParams, provider, onSuccess, onError} = action.payload;
 
   const formatError = checkLoadMapResponseError(response);
@@ -323,11 +355,10 @@ export const loadCloudMapSuccessUpdater = (state, action) => {
   return tasks.length ? withTask(newState, tasks) : newState;
 };
 
-/**
- *
- * @type {typeof import('./provider-state-updaters').loadCloudMapErrorUpdater}
- */
-export const loadCloudMapErrorUpdater = (state, action) => {
+export const loadCloudMapErrorUpdater = (
+  state: ProviderState,
+  action: ActionPayload<ProviderActions.LoadCloudMapErrorPayload>
+): ProviderState => {
   const message = getError(action.payload.error) || `Error loading saved map`;
 
   Console.warn(message);
@@ -345,11 +376,7 @@ export const loadCloudMapErrorUpdater = (state, action) => {
   );
 };
 
-/**
- *
- * @type {typeof import('./provider-state-updaters').resetProviderStatusUpdater}
- */
-export const resetProviderStatusUpdater = (state, action) => ({
+export const resetProviderStatusUpdater = (state: ProviderState): ProviderState => ({
   ...state,
   isProviderLoading: false,
   providerError: null,
@@ -359,9 +386,11 @@ export const resetProviderStatusUpdater = (state, action) => ({
 
 /**
  * Set current cloudProvider
- * @type {typeof import('./provider-state-updaters').setCloudProviderUpdater}
  */
-export const setCloudProviderUpdater = (state, action) => ({
+export const setCloudProviderUpdater = (
+  state: ProviderState,
+  action: ActionPayload<ProviderActions.SetCloudProviderPayload>
+): ProviderState => ({
   ...state,
   isProviderLoading: false,
   providerError: null,
@@ -369,11 +398,10 @@ export const setCloudProviderUpdater = (state, action) => ({
   currentProvider: action.payload
 });
 
-/**
- *
- * @type {typeof import('./provider-state-updaters').getSavedMapsUpdater}
- */
-export const getSavedMapsUpdater = (state, action) => {
+export const getSavedMapsUpdater = (
+  state: ProviderState,
+  action: ActionPayload<ProviderActions.GetSavedMapsPayload>
+): ProviderState => {
   const provider = action.payload;
   if (!_validateProvider(provider, 'listMaps')) {
     return state;
@@ -395,21 +423,19 @@ export const getSavedMapsUpdater = (state, action) => {
   );
 };
 
-/**
- *
- * @type {typeof import('./provider-state-updaters').getSavedMapsSuccessUpdater}
- */
-export const getSavedMapsSuccessUpdater = (state, action) => ({
+export const getSavedMapsSuccessUpdater = (
+  state: ProviderState,
+  action: ActionPayload<ProviderActions.GetSavedMapsSuccessPayload>
+): ProviderState => ({
   ...state,
   isProviderLoading: false,
   visualizations: action.payload.visualizations
 });
 
-/**
- *
- * @type {typeof import('./provider-state-updaters').getSavedMapsErrorUpdater}
- */
-export const getSavedMapsErrorUpdater = (state, action) => {
+export const getSavedMapsErrorUpdater = (
+  state: ProviderState,
+  action: ActionPayload<ProviderActions.GetSavedMapsErrorPayload>
+): ProviderState => {
   const message =
     getError(action.payload.error) || `Error getting saved maps from ${state.currentProvider}`;
 
