@@ -67,7 +67,7 @@ const domtoimage = {
     fontFaces,
     images,
     inliner,
-    options: {}
+    options: {} as any
   }
 };
 
@@ -213,7 +213,7 @@ function cloneNode(node, filter, root) {
     let done = Promise.resolve();
     arrChildren.forEach(child => {
       done = done
-        .then(() => cloneNode(child, flt))
+        .then(() => cloneNode(child, flt, null))
         .then(childClone => {
           if (childClone) {
             parent.appendChild(childClone);
@@ -280,8 +280,8 @@ function newInliner() {
   }
 
   function readUrls(string) {
-    const result = [];
-    let match;
+    const result: string[] = [];
+    let match: null | RegExpExecArray;
     while ((match = URL_REGEX.exec(string)) !== null) {
       result.push(match[1]);
     }
@@ -382,9 +382,9 @@ function newFontFaces() {
 
         // Source: http://stackoverflow.com/a/2676231/3786856
         function concatAndResolveUrl(url, concat) {
-          const url1 = url.split('/');
-          const url2 = concat.split('/');
-          const url3 = [];
+          const url1: string[] = url.split('/');
+          const url2: string[] = concat.split('/');
+          const url3: string[] = [];
           for (let i = 0, l = url1.length; i < l; i++) {
             if (url1[i] === '..') {
               url3.pop();
@@ -421,7 +421,7 @@ function newFontFaces() {
     }
 
     function getCssRules(styleSheets) {
-      const cssRules = [];
+      const cssRules: any[] = [];
       styleSheets.forEach(sheet => {
         // try...catch because browser may not able to enumerate rules for cross-domain sheets
         if (!sheet) {
@@ -455,7 +455,7 @@ function newFontFaces() {
       return {
         resolve: () => {
           const baseUrl = (webFontRule.parentStyleSheet || {}).href;
-          return inliner.inlineAll(webFontRule.cssText, baseUrl);
+          return inliner.inlineAll(webFontRule.cssText, baseUrl, null);
         },
         src: () => webFontRule.style.getPropertyValue('src')
       };
@@ -503,7 +503,7 @@ function newImages() {
 
     return inlineBackground(node).then(() => {
       if (node instanceof HTMLImageElement) {
-        return newImage(node).inline();
+        return newImage(node).inline(null);
       }
       return Promise.all(asArray(node.childNodes).map(child => inlineAll(child)));
     });
@@ -516,7 +516,7 @@ function newImages() {
       }
 
       return inliner
-        .inlineAll(background)
+        .inlineAll(background, null, null)
         .then(inlined => {
           nd.style.setProperty('background', inlined, nd.style.getPropertyPriority('background'));
         })
