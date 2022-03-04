@@ -21,7 +21,7 @@
 import memoize from 'lodash.memoize';
 import clondDeep from 'lodash.clonedeep';
 import {DEFAULT_LAYER_GROUPS, DEFAULT_MAPBOX_API_URL} from 'constants/default-settings';
-import {LayerGroup} from 'reducers';
+import {BaseMapStyle, LayerGroup, MapState} from 'reducers';
 
 const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
 const httpRg = /^(?=(http:|https:))/;
@@ -45,26 +45,30 @@ const resolver = ({id, mapStyle, visibleLayerGroups = {}}) =>
 /**
  * Edit preset map style to keep only visible layers
  *
- * @param {Object} mapStyle - preset map style
- * @param {Object} visibleLayerGroups - visible layers of top map
- * @returns {Object} top map style
+ * @param mapStyle - preset map style
+ * @param visibleLayerGroups - visible layers of top map
+ * @returns top map style
  */
-export const editTopMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
-  const visibleFilters = (mapStyle.layerGroups || [])
-    .filter(lg => visibleLayerGroups[lg.slug])
-    .map(lg => lg.filter);
+export const editTopMapStyle = memoize(
+  ({mapStyle, visibleLayerGroups}: {mapStyle: BaseMapStyle; visibleLayerGroups: LayerGroup[]}) => {
+    const visibleFilters = (mapStyle.layerGroups || [])
+      .filter(lg => visibleLayerGroups[lg.slug])
+      .map(lg => lg.filter);
 
-  // if top map
-  // keep only visible layers
-  const filteredLayers = mapStyle.style.layers.filter(layer =>
-    visibleFilters.some(match => match(layer))
-  );
+    // if top map
+    // keep only visible layers
+    // @ts-expect-error
+    const filteredLayers = mapStyle.style.layers.filter(layer =>
+      visibleFilters.some(match => match(layer))
+    );
 
-  return {
-    ...mapStyle.style,
-    layers: filteredLayers
-  };
-}, resolver);
+    return {
+      ...mapStyle.style,
+      layers: filteredLayers
+    };
+  },
+  resolver
+);
 
 /**
  * Edit preset map style to filter out invisible layers
@@ -117,13 +121,13 @@ export function getStyleDownloadUrl(styleUrl, accessToken, mapboxApiUrl) {
 
 /**
  * Generate static map image from style Url to be used as icon
- * @param {Object} param
- * @param {string} param.styleUrl
- * @param {string} param.mapboxApiAccessToken
- * @param {string} param.mapboxApiUrl
- * @param {Object} param.mapState
- * @param {number} param.mapW
- * @param {number} param.mapH
+ * @param param
+ * @param param.styleUrl
+ * @param param.mapboxApiAccessToken
+ * @param param.mapboxApiUrl
+ * @param param.mapState
+ * @param param.mapW
+ * @param param.mapH
  */
 export function getStyleImageIcon({
   styleUrl,
@@ -136,6 +140,13 @@ export function getStyleImageIcon({
   },
   mapW = 400,
   mapH = 300
+}: {
+  styleUrl: string;
+  mapboxApiAccessToken: string;
+  mapboxApiUrl: string;
+  mapState?: Partial<MapState>;
+  mapW: number;
+  mapH: number;
 }) {
   const styleId = styleUrl.replace('mapbox://styles/', '');
 

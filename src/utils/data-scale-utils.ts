@@ -20,12 +20,19 @@
 
 import {notNullorUndefined, unique} from './data-utils';
 import {extent} from 'd3-array';
+import {DataContainerInterface} from './table-utils/data-container-interface';
 
+type dataValueAccessor = <T>(param: T) => T;
+type dataContainerValueAccessor = (d: {index: number}, dc: DataContainerInterface) => any;
+type sort = (a: any, b: any) => any;
 /**
  * return quantile domain for an array of data
- * @type {typeof import('./data-scale-utils').getQuantileDomain}
  */
-export function getQuantileDomain(data, valueAccessor, sortFunc) {
+export function getQuantileDomain(
+  data: any[],
+  valueAccessor?: dataValueAccessor,
+  sortFunc?: sort
+): number[] {
   const values = typeof valueAccessor === 'function' ? data.map(valueAccessor) : data;
 
   return values.filter(notNullorUndefined).sort(sortFunc);
@@ -33,9 +40,11 @@ export function getQuantileDomain(data, valueAccessor, sortFunc) {
 
 /**
  * return ordinal domain for a data container
- * @type {typeof import('./data-scale-utils').getOrdinalDomain}
  */
-export function getOrdinalDomain(dataContainer, valueAccessor) {
+export function getOrdinalDomain(
+  dataContainer: DataContainerInterface,
+  valueAccessor: dataContainerValueAccessor
+): string[] {
   const values = dataContainer.mapIndex(valueAccessor);
 
   return unique(values)
@@ -45,19 +54,22 @@ export function getOrdinalDomain(dataContainer, valueAccessor) {
 
 /**
  * return linear domain for an array of data
- * @type {typeof import('./data-scale-utils').getLinearDomain}
  */
-export function getLinearDomain(data, valueAccessor) {
+export function getLinearDomain(
+  data: number[],
+  valueAccessor?: dataValueAccessor
+): [number, number] {
   const range = typeof valueAccessor === 'function' ? extent(data, valueAccessor) : extent(data);
-  // @ts-ignore
-  return range.map((d, i) => (d === undefined ? i : d));
+  return range.map((d: undefined | number, i: number) => (d === undefined ? i : d)) as [
+    number,
+    number
+  ];
 }
 
 /**
  * return linear domain for an array of data. A log scale domain cannot contain 0
- * @type {typeof import('./data-scale-utils').getLogDomain}
  */
-export function getLogDomain(data, valueAccessor) {
+export function getLogDomain(data: any[], valueAccessor: dataValueAccessor): [number, number] {
   const [d0, d1] = getLinearDomain(data, valueAccessor);
   return [d0 === 0 ? 1e-5 : d0, d1];
 }
