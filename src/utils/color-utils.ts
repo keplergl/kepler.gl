@@ -18,13 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {ColorRange} from 'layers/layer-factory';
+import {HexColor, RGBColor} from 'reducers';
+
 /**
  * get r g b from hex code
  *
- * @param {string} hex
- * @returns {import('reducers/types').RGBColor} array of r g bs
+ * @param hex
+ * @returns array of r g bs
  */
-export function hexToRgb(hex) {
+export function hexToRgb(hex: string): RGBColor {
   const result = isHexColor(hex);
 
   if (!result) {
@@ -38,7 +41,7 @@ export function hexToRgb(hex) {
   return [r, g, b];
 }
 
-export function isHexColor(hex) {
+export function isHexColor(hex: string) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 
   return result;
@@ -52,10 +55,10 @@ function PadNum(c) {
 /**
  * get hex from r g b
  *
- * @param {array} rgb
- * @returns {string} hex string
+ * @param rgb
+ * @returns hex string
  */
-export function rgbToHex([r, g, b]) {
+export function rgbToHex([r, g, b]: RGBColor): HexColor {
   return `#${[r, g, b].map(n => PadNum(n)).join('')}`.toUpperCase();
 }
 
@@ -66,7 +69,7 @@ export function rgbToHex([r, g, b]) {
  * @param {Object} colorRange
  * @return {string | null}
  */
-export function getColorGroupByName(colorRange) {
+export function getColorGroupByName(colorRange: ColorRange): string | null {
   if (!colorRange || typeof colorRange.name !== 'string') {
     return null;
   }
@@ -76,10 +79,10 @@ export function getColorGroupByName(colorRange) {
 
 /**
  * Get a reversed colorRange
- * @param {Boolean} reversed
- * @param {Object} colorRange
+ * @param reversed
+ * @param colorRange
  */
-export function reverseColorRange(reversed, colorRange) {
+export function reverseColorRange(reversed: boolean, colorRange: ColorRange): ColorRange | null {
   if (!colorRange) return null;
   // if (colorRange.reversed) return colorRange;
   return {
@@ -92,10 +95,10 @@ export function reverseColorRange(reversed, colorRange) {
 /**
  * given a list of rgb arrays it will generate a linear gradient css rule
  * @param direction
- * @param {Array} colors
- * @return {string}
+ * @param colors
+ * @return
  */
-export function createLinearGradient(direction, colors) {
+export function createLinearGradient(direction: string, colors: RGBColor[]) {
   const step = parseFloat((100.0 / colors.length).toFixed(2));
   const bands = colors.map((rgb, index) => {
     return `rgba(${rgb.join(',')}, 1) ${step * index}%, rgba(${rgb.join(',')}, 1) ${step *
@@ -107,10 +110,9 @@ export function createLinearGradient(direction, colors) {
 
 /**
  * Whether color is rgb
- * @type {typeof import('./color-utils').isRgbColor}
  * @returns
  */
-export function isRgbColor(color) {
+export function isRgbColor(color: unknown): color is RGBColor {
   if (
     color &&
     Array.isArray(color) &&

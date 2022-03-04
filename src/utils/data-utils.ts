@@ -19,11 +19,19 @@
 // THE SOFTWARE.
 
 import assert from 'assert';
-import {ALL_FIELD_TYPES} from '../constants/default-settings';
-import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from '../constants/tooltip';
+import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from 'constants/tooltip';
 import {format as d3Format} from 'd3-format';
 import {bisectLeft} from 'd3-array';
 import moment from 'moment-timezone';
+
+import {Millisecond} from 'reducers/types';
+import {Field} from 'reducers/vis-state-updaters';
+import {Layer} from 'layers';
+import {Bounds} from 'reducers/map-state-updaters';
+import {DataContainerInterface} from './table-utils/data-container-interface';
+
+export type FieldFormatter = (value: any) => string;
 
 const MAX_LATITUDE = 90;
 const MIN_LATITUDE = -90;
@@ -33,11 +41,11 @@ const MIN_LONGITUDE = -180;
 /**
  * simple getting unique values of an array
  *
- * @param {array} values
- * @returns {array} unique values
+ * @param values
+ * @returns unique values
  */
-export function unique(values) {
-  const results = [];
+export function unique<T>(values: T[]) {
+  const results: T[] = [];
   const uniqueSet = new Set(values);
   uniqueSet.forEach(v => {
     if (notNullorUndefined(v)) {
@@ -47,17 +55,18 @@ export function unique(values) {
   return results;
 }
 
-/* eslint-disable max-statements */
 /**
  * return center of map from given points
- * @param {array} layers
- * @returns {object} coordinates of map center, empty if not found
+ * @param layers
+ * @returns coordinates of map center, empty if not found
  */
-export function findMapBounds(layers) {
+export function findMapBounds(layers: Layer[]): Bounds | null {
   // find bounds in formatted layerData
   // take ALL layers into account when finding map bounds
-  const availableLayerBounds = layers.reduce((res, l) => {
+  const availableLayerBounds: Bounds | [] = layers.reduce((res, l) => {
+    // @ts-expect-error
     if (l.meta && l.meta.bounds) {
+      // @ts-expect-error
       res.push(l.meta.bounds);
     }
     return res;
@@ -67,7 +76,7 @@ export function findMapBounds(layers) {
     return null;
   }
   // merge bounds in each layer
-  const newBounds = availableLayerBounds.reduce(
+  const newBounds = (availableLayerBounds as Bounds).reduce(
     (res, b) => {
       return [
         Math.min(res[0], b[0]),
@@ -78,13 +87,17 @@ export function findMapBounds(layers) {
     },
     [MAX_LONGITUDE, MAX_LATITUDE, MIN_LONGITUDE, MIN_LATITUDE]
   );
+  // @ts-expect-error
   return newBounds;
 }
-/* eslint-enable max-statements */
 
-export function getLatLngBounds(points, idx, limit) {
+export function getLatLngBounds(
+  points: number[][],
+  idx: number,
+  limit: [number, number]
+): [number, number] | null {
   const lats = points
-    .map(d => Array.isArray(d) && d[idx])
+    .map(d => Number(Array.isArray(d)) && d[idx])
     .filter(Number.isFinite)
     .sort(numberSort);
 
@@ -96,13 +109,13 @@ export function getLatLngBounds(points, idx, limit) {
   return [Math.max(lats[0], limit[0]), Math.min(lats[lats.length - 1], limit[1])];
 }
 
-export function clamp([min, max], val) {
+export function clamp([min, max]: [number, number], val: number): number {
   return val <= min ? min : val >= max ? max : val;
 }
 
 export function getSampleData(data, sampleSize = 500, getValue = d => d) {
   const sampleStep = Math.max(Math.floor(data.length / sampleSize), 1);
-  const output = [];
+  const output: any[] = [];
   for (let i = 0; i < data.length; i += sampleStep) {
     output.push(getValue(data[i]));
   }
@@ -112,9 +125,8 @@ export function getSampleData(data, sampleSize = 500, getValue = d => d) {
 
 /**
  * Convert different time format to unix milliseconds
- * @type {typeof import('./data-utils').timeToUnixMilli}
  */
-export function timeToUnixMilli(value, format) {
+export function timeToUnixMilli(value: string | number, format: string): Millisecond | null {
   if (notNullorUndefined(value)) {
     return typeof value === 'string'
       ? moment.utc(value, format).valueOf()
@@ -125,11 +137,13 @@ export function timeToUnixMilli(value, format) {
   return null;
 }
 
-/**
- *
- * @type {typeof import('./data-utils').maybeToDate}
- */
-export function maybeToDate(isTime, fieldIdx, format, dc, d) {
+export function maybeToDate(
+  isTime: boolean,
+  fieldIdx: number,
+  format: string,
+  dc: DataContainerInterface,
+  d: {index: number}
+) {
   if (isTime) {
     return timeToUnixMilli(dc.valueAt(d.index, fieldIdx), format);
   }
@@ -139,37 +153,29 @@ export function maybeToDate(isTime, fieldIdx, format, dc, d) {
 
 /**
  * whether null or undefined
- * @type {typeof import('./data-utils').notNullorUndefined}
  */
-export function notNullorUndefined(d) {
+export function notNullorUndefined<T extends NonNullable<any>>(d: T | null | undefined): d is T {
   return d !== undefined && d !== null;
 }
 
 /**
  * Whether d is a number, this filtered out NaN as well
- * @type {typeof import('./data-utils').notNullorUndefined}
  */
-export function isNumber(d) {
+export function isNumber(d: any): boolean {
   return Number.isFinite(d);
 }
 /**
  * whether null or undefined
  */
-export function isPlainObject(obj) {
+export function isPlainObject(obj: any): boolean {
   return obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj);
 }
 
-/**
- * @type {typeof import('./data-utils').numberSort}
- */
-export function numberSort(a, b) {
+export function numberSort(a: number, b: number): number {
   return a - b;
 }
 
-/**
- * @type {typeof import('./data-utils').getSortingFunction}
- */
-export function getSortingFunction(fieldType) {
+export function getSortingFunction(fieldType: string): typeof numberSort | undefined {
   switch (fieldType) {
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
@@ -183,9 +189,8 @@ export function getSortingFunction(fieldType) {
 /**
  * round number with exact number of decimals
  * return as a string
- * @type {typeof import('./data-utils').preciseRound}
  */
-export function preciseRound(num, decimals) {
+export function preciseRound(num: number, decimals: number): string {
   const t = Math.pow(10, decimals);
   return (
     Math.round(
@@ -196,10 +201,10 @@ export function preciseRound(num, decimals) {
 
 /**
  * get number of decimals to round to for slider from step
- * @param {number} step
- * @returns {number} - number of decimal
+ * @param step
+ * @returns- number of decimal
  */
-export function getRoundingDecimalFromStep(step) {
+export function getRoundingDecimalFromStep(step: number): number {
   if (isNaN(step)) {
     assert('step is not a number');
     assert(step);
@@ -214,11 +219,10 @@ export function getRoundingDecimalFromStep(step) {
 
 /**
  * Use in slider, given a number and an array of numbers, return the nears number from the array
- * @type {typeof import('./data-utils').snapToMarks}
  * @param value
  * @param marks
  */
-export function snapToMarks(value, marks) {
+export function snapToMarks(value: number, marks: number[]): number {
   // always use bin x0
   const i = bisectLeft(marks, value);
   if (i === 0) {
@@ -232,13 +236,17 @@ export function snapToMarks(value, marks) {
 
 /**
  * If marks is provided, snap to marks, if not normalize to step
- * @type {typeof import('./data-utils').normalizeSliderValue}
  * @param val
  * @param minValue
  * @param step
  * @param marks
  */
-export function normalizeSliderValue(val, minValue, step, marks) {
+export function normalizeSliderValue(
+  val: number,
+  minValue: number,
+  step: number,
+  marks?: number[]
+): number {
   if (marks && marks.length) {
     return snapToMarks(val, marks);
   }
@@ -248,13 +256,12 @@ export function normalizeSliderValue(val, minValue, step, marks) {
 
 /**
  * round the value to step for the slider
- * @type {typeof import('./data-utils').roundValToStep}
  * @param minValue
  * @param step
  * @param val
  * @returns - rounded number
  */
-export function roundValToStep(minValue, step, val) {
+export function roundValToStep(minValue: number, step: number, val: number): number {
   if (!isNumber(step) || !isNumber(minValue)) {
     return val;
   }
@@ -266,7 +273,7 @@ export function roundValToStep(minValue, step, val) {
   // has to round because javascript turns 0.1 into 0.9999999999999987
   remain = Number(preciseRound(remain, 8));
 
-  let closest;
+  let closest: number;
   if (remain === 0) {
     closest = val;
   } else if (remain < step / 2) {
@@ -284,11 +291,12 @@ export function roundValToStep(minValue, step, val) {
 /**
  * Get the value format based on field and format options
  * Used in render tooltip value
- * @type {typeof import('./data-utils').defaultFormatter}
  */
-export const defaultFormatter = v => (notNullorUndefined(v) ? String(v) : '');
+export const defaultFormatter: FieldFormatter = v => (notNullorUndefined(v) ? String(v) : '');
 
-export const FIELD_DISPLAY_FORMAT = {
+export const FIELD_DISPLAY_FORMAT: {
+  [key: string]: FieldFormatter;
+} = {
   [ALL_FIELD_TYPES.string]: defaultFormatter,
   [ALL_FIELD_TYPES.timestamp]: defaultFormatter,
   [ALL_FIELD_TYPES.integer]: defaultFormatter,
@@ -307,9 +315,8 @@ export const FIELD_DISPLAY_FORMAT = {
 
 /**
  * Parse field value and type and return a string representation
- * @type {typeof import('./data-utils').parseFieldValue}
  */
-export const parseFieldValue = (value, type) => {
+export const parseFieldValue = (value: any, type: string): string => {
   if (!notNullorUndefined(value)) {
     return '';
   }
@@ -317,17 +324,17 @@ export const parseFieldValue = (value, type) => {
   return FIELD_DISPLAY_FORMAT[type] ? FIELD_DISPLAY_FORMAT[type](value) : String(value);
 };
 
-const arrayMoveMutate = (array, from, to) => {
+const arrayMoveMutate = <T>(array: T[], from: number, to: number) => {
   array.splice(to < 0 ? array.length + to : to, 0, array.splice(from, 1)[0]);
 };
 
 /**
  *
- * @param {*} array
- * @param {*} from
- * @param {*} to
+ * @param array
+ * @param from
+ * @param to
  */
-export const arrayMove = (array, from, to) => {
+export const arrayMove = <T>(array: T[], from: number, to: number) => {
   array = array.slice();
   arrayMoveMutate(array, from, to);
   return array;
@@ -336,11 +343,10 @@ export const arrayMove = (array, from, to) => {
 /**
  * Get the value format based on field and format options
  * Used in render tooltip value
- * @type {typeof import('./data-utils').getFormatter}
  * @param format
  * @param field
  */
-export function getFormatter(format, field) {
+export function getFormatter(format: any, field?: Field): FieldFormatter {
   if (!format) {
     return defaultFormatter;
   }
@@ -375,18 +381,18 @@ export function applyDefaultFormat(tooltipFormat) {
   }
 }
 
-export function getBooleanFormatter(format) {
+export function getBooleanFormatter(format: string): FieldFormatter {
   switch (format) {
     case '01':
-      return v => (v ? '1' : '0');
+      return (v: Boolean) => (v ? '1' : '0');
     case 'yn':
-      return v => (v ? 'yes' : 'no');
+      return (v: Boolean) => (v ? 'yes' : 'no');
     default:
       return defaultFormatter;
   }
 }
 // Allow user to specify custom tooltip format via config
-export function applyCustomFormat(format, field) {
+export function applyCustomFormat(format, field): FieldFormatter {
   switch (field.type) {
     case ALL_FIELD_TYPES.real:
     case ALL_FIELD_TYPES.integer:
@@ -401,9 +407,11 @@ export function applyCustomFormat(format, field) {
 
 /**
  * Format epoch milliseconds with a format string
- * @type {typeof import('./data-utils').datetimeFormatter} timezone
+ * @type timezone
  */
-export function datetimeFormatter(timezone) {
+export function datetimeFormatter(
+  timezone?: string | null
+): (format: string) => (ts: number) => string {
   return timezone
     ? format => ts =>
         moment
