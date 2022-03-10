@@ -221,6 +221,7 @@
     "@deck.gl/test-utils": "^8.6.0",
     "@luma.gl/test-utils": "^8.5.10",
     "browserslist": "^4.17.0",
+    "caniuse-lite": "^1.0.30001361",
     "d3-array": "^2.8.0",
     "d3-scale": "^3.2.3",
     "dot-prop": "6.0.0",
@@ -229,8 +230,7 @@
     "lodash": "4.17.19",
     "minimist": "1.2.3",
     "node-fetch": "2.6.1",
-    "tough-cookie": "4.0.0",
-    "caniuse-lite": "^1.0.30001361"
+    "tough-cookie": "4.0.0"
   },
   "peerDependencies": {
     "react": ">=16.3",
