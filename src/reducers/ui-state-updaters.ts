@@ -37,7 +37,7 @@ import {payload_, apply_, compose_} from './composer-helpers';
 
 import ActionTypes from '../constants/action-types';
 import * as UiStateActions from 'actions/ui-state-actions';
-import {KeplerGlInitPayload, loadFilesErrUpdaterAction} from '../actions';
+import {KeplerGlInitPayload, LoadFilesErrUpdaterAction} from '../actions';
 
 export type ExportImage = {
   ratio: string;
@@ -770,11 +770,9 @@ export const addNotificationUpdater = (
   const notificationToUpdate = payloadId ? state.notifications.find(n => n.id === payloadId) : null;
   if (notificationToUpdate) {
     notifications = state.notifications.map(n =>
-      // @ts-expect-error
       n.id === payloadId ? createNotification(payload) : n
     );
   } else {
-    // @ts-expect-error
     notifications = [...(state.notifications || []), createNotification(payload)];
   }
 
@@ -836,7 +834,7 @@ export const loadFilesSuccessUpdater = (state: UiState): UiState => ({
  * @returns nextState
  * @public
  */
-export const loadFilesErrUpdater = (state: UiState, {error}: loadFilesErrUpdaterAction): UiState =>
+export const loadFilesErrUpdater = (state: UiState, {error}: LoadFilesErrUpdaterAction): UiState =>
   addNotificationUpdater(
     {
       ...state,

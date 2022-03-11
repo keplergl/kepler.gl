@@ -28,7 +28,7 @@ import {ValueOf, Merge, RGBColor} from '../reducers/types';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
 
-type LayerConfigChangeUpdaterAction = {
+export type LayerConfigChangeUpdaterAction = {
   oldLayer: Layer;
   newConfig: Partial<LayerConfig>;
 };
@@ -1003,7 +1003,7 @@ export function loadFileStepSuccess({
   };
 }
 
-export type loadFilesErrUpdaterAction = {
+export type LoadFilesErrUpdaterAction = {
   fileName: string;
   error: any;
 };
@@ -1018,7 +1018,7 @@ export type loadFilesErrUpdaterAction = {
 export function loadFilesErr(
   fileName: string,
   error: any
-): Merge<loadFilesErrUpdaterAction, {type: typeof ActionTypes.LOAD_FILES_ERR}> {
+): Merge<LoadFilesErrUpdaterAction, {type: typeof ActionTypes.LOAD_FILES_ERR}> {
   return {
     type: ActionTypes.LOAD_FILES_ERR,
     fileName,

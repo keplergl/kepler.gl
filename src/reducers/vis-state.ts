@@ -147,7 +147,7 @@ const actionHandler = {
 
 // construct vis-state reducer
 export const visStateReducerFactory = (initialState = {}) =>
-  // @ts-ignore
+  // @ts-expect-error
   handleActions(actionHandler, {
     ...visStateUpdaters.INITIAL_VIS_STATE,
     ...initialState,
