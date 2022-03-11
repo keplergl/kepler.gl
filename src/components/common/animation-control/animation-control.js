@@ -118,7 +118,6 @@ function AnimationControlFactory(PlaybackControls, FloatingTimeDisplay) {
           </StyledDomain>
           <SliderWrapper className="animation-control__slider">
             <Slider
-              showValues={false}
               isRanged={false}
               step={step}
               minValue={domain ? domain[0] : 0}

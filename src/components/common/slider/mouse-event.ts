@@ -19,79 +19,95 @@
 // THE SOFTWARE.
 
 import document from 'global/document';
+import {RefObject} from 'react';
+import {StyleRangeSliderType} from './slider';
 
 function nope(...args) {}
 
+type MouseEventHandlerProps = {
+  vertical: boolean;
+  valueListener: (distance: number) => void;
+  toggleMouseOver: () => void;
+  track: RefObject<StyleRangeSliderType>;
+  setAnchor?: null | ((distance: number) => void);
+};
+
 export default class MouseEventHandler {
+  private vertical: boolean;
+  private valueListener: (distance: number) => void;
+  private toggleMouseOver: () => void;
+  private track: RefObject<StyleRangeSliderType>; // Set correct type
+  private setAnchor: null | ((distance: number) => void); // Set correct type
+
   constructor({
     vertical = false,
     valueListener = nope,
     toggleMouseOver = nope,
     track,
     setAnchor = null
-  }) {
-    this._vertical = vertical;
-    this._valueListener = valueListener;
-    this._toggleMouseOver = toggleMouseOver;
-    this._track = track;
-    this._setAnchor = setAnchor;
+  }: MouseEventHandlerProps) {
+    this.vertical = vertical;
+    this.valueListener = valueListener;
+    this.toggleMouseOver = toggleMouseOver;
+    this.track = track;
+    this.setAnchor = setAnchor;
   }
 
-  handleMouseDown = e => {
-    document.addEventListener('mouseup', this._mouseup);
-    document.addEventListener('mousemove', this._mousemove);
-    if (this._setAnchor) {
-      const pos = this._getMousePos(e);
-      this._setAnchor(this._getDistanceToTrack(pos));
+  handleMouseDown = (e: MouseEvent) => {
+    document.addEventListener('mouseup', this.mouseup);
+    document.addEventListener('mousemove', this.mousemove);
+    if (this.setAnchor) {
+      const pos = this.getMousePos(e);
+      this.setAnchor(this.getDistanceToTrack(pos));
     }
-    this._toggleMouseOver();
+    this.toggleMouseOver();
   };
 
-  _getMousePos(e) {
-    return this._vertical ? e.clientY : e.clientX;
+  private getMousePos(e: MouseEvent) {
+    return this.vertical ? e.clientY : e.clientX;
   }
 
-  _getTouchPosition(e) {
-    return this._vertical ? e.touches[0].clientY : e.touches[0].clientX;
+  private getTouchPosition(e: TouchEvent) {
+    return this.vertical ? e.touches[0].clientY : e.touches[0].clientX;
   }
 
-  _mouseup = () => {
-    document.removeEventListener('mouseup', this._mouseup);
-    document.removeEventListener('mousemove', this._mousemove);
-    this._toggleMouseOver();
+  private mouseup = () => {
+    document.removeEventListener('mouseup', this.mouseup);
+    document.removeEventListener('mousemove', this.mousemove);
+    this.toggleMouseOver();
   };
 
-  _getDistanceToTrack(pos) {
-    const trackRect = this._track.current.getBoundingClientRect();
-    return pos - (this._vertical ? trackRect.bottom : trackRect.left);
+  private getDistanceToTrack(pos: number) {
+    const trackRect = this.track.current.getBoundingClientRect();
+    return pos - (this.vertical ? trackRect.bottom : trackRect.left);
   }
 
-  _mousemove = e => {
+  private mousemove = (e: MouseEvent) => {
     e.preventDefault();
-    const pos = this._getMousePos(e);
-    this._valueListener(this._getDistanceToTrack(pos));
+    const pos = this.getMousePos(e);
+    this.valueListener(this.getDistanceToTrack(pos));
   };
 
-  handleTouchStart = e => {
+  handleTouchStart = (e: TouchEvent) => {
     // TODO: fix touch event
-    document.addEventListener('touchend', this._touchend);
-    document.addEventListener('touchmove', this._touchmove);
-    if (this._setAnchor) {
-      const pos = this._getTouchPosition(e);
-      this._setAnchor(this._getDistanceToTrack(pos));
+    document.addEventListener('touchend', this.touchend);
+    document.addEventListener('touchmove', this.touchmove);
+    if (this.setAnchor) {
+      const pos = this.getTouchPosition(e);
+      this.setAnchor(this.getDistanceToTrack(pos));
     }
-    this._toggleMouseOver();
+    this.toggleMouseOver();
   };
 
-  _touchmove = e => {
+  private touchmove = (e: TouchEvent) => {
     // TODO: touch not tested
-    const pos = this._getTouchPosition(e);
-    this._valueListener(this._getDistanceToTrack(pos));
+    const pos = this.getTouchPosition(e);
+    this.valueListener(this.getDistanceToTrack(pos));
   };
 
-  _touchend = () => {
-    document.removeEventListener('touchend', this._touchend);
-    document.removeEventListener('touchmove', this._touchmove);
-    this._toggleMouseOver();
+  private touchend = () => {
+    document.removeEventListener('touchend', this.touchend);
+    document.removeEventListener('touchmove', this.touchmove);
+    this.toggleMouseOver();
   };
 }

@@ -18,11 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, RefObject } from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import MouseEventHandler from './mouse-event';
+import { StyleRangeSliderType } from './slider';
 
 const StyledSlider = styled.div`
   position: relative;
@@ -35,24 +35,28 @@ const StyledSlider = styled.div`
   }
 `;
 
-function nope() {}
+function nope() { }
+
+type SliderBarHandleProps = {
+  width: number;
+  v0Left: number;
+  sliderBarListener: (distance: number) => void;
+  enableBarDrag: boolean;
+  vertical: boolean;
+  track: RefObject<StyleRangeSliderType>;
+  setAnchor: (distance: number) => void;
+}
 
 export default class SliderBarHandle extends Component {
-  static propTypes = {
-    width: PropTypes.number,
-    left: PropTypes.string,
-    sliderBarListener: PropTypes.func,
-    enableBarDrag: PropTypes.bool,
-    vertical: PropTypes.bool
-  };
-
   static defaultProps = {
     sliderBarListener: nope,
     enableBarDrag: false,
     vertical: false
   };
 
-  constructor(props) {
+  public mouseEvent: MouseEventHandler;
+
+  constructor(public props: SliderBarHandleProps) {
     super(props);
     this.mouseEvent = new MouseEventHandler({
       vertical: props.vertical,
@@ -63,24 +67,24 @@ export default class SliderBarHandle extends Component {
     });
   }
 
-  state = {mouseOver: false};
+  state = { mouseOver: false };
 
   toggleMouseOver = () => {
-    this.setState({mouseOver: !this.state.mouseOver});
+    this.setState({ mouseOver: !this.state.mouseOver });
   };
 
   render() {
-    const {width, v0Left} = this.props;
+    const { width, v0Left } = this.props;
 
     const style = this.props.vertical
       ? {
-          height: `${width}%`,
-          bottom: `${-100 + width + v0Left}%`
-        }
+        height: `${width}%`,
+        bottom: `${-100 + width + v0Left}%`
+      }
       : {
-          width: `${width}%`,
-          left: `${v0Left}%`
-        };
+        width: `${width}%`,
+        left: `${v0Left}%`
+      };
 
     return (
       <StyledSlider

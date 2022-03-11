@@ -259,14 +259,13 @@ export default function RangeSliderFactory(RangePlot) {
                 ) : null}
                 <Slider
                   marks={this.props.marks}
-                  showValues={false}
                   isRanged={isRanged}
                   minValue={range[0]}
                   maxValue={range[1]}
                   value0={this.props.value0}
                   value1={this.props.value1}
                   step={step}
-                  handleWidth={sliderHandleWidth}
+                  sliderHandleWidth={sliderHandleWidth}
                   onSlider0Change={this._setRangeVal0}
                   onSlider1Change={this._setRangeVal1}
                   onSliderBarChange={(val0, val1) => {

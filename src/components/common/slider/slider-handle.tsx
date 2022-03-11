@@ -18,11 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef} from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, createRef, CSSProperties, RefObject } from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import MouseEventHandler from './mouse-event';
+import { StyleRangeSliderType } from './slider';
 
 const StyledSliderHandle = styled.span.attrs({
   className: 'kg-range-slider__handle'
@@ -30,7 +30,7 @@ const StyledSliderHandle = styled.span.attrs({
   position: absolute;
   z-index: 10;
   ${props => (props.vertical ? 'margin-left' : 'margin-top')}: -${props =>
-  (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
+    (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
 
   height: ${props =>
     Number.isFinite(props.sliderHandleWidth)
@@ -107,7 +107,14 @@ const StyledSliderTooltip = styled.div`
   }
 `;
 
-const SliderTooltip = ({value, format = val => val, style, sliderHandleWidth}) => {
+type SliderTooltipProps = {
+  value?: number | null;
+  format?: (value: number | null | undefined) => number | null | undefined;
+  style: CSSProperties;
+  sliderHandleWidth: number;
+};
+
+const SliderTooltip = ({ value, format = val => val, style, sliderHandleWidth }: SliderTooltipProps) => {
   return (
     <StyledSliderTooltip sliderHandleWidth={sliderHandleWidth} style={style}>
       {format(value)}
@@ -115,25 +122,30 @@ const SliderTooltip = ({value, format = val => val, style, sliderHandleWidth}) =
   );
 };
 
-export default class SliderHandle extends Component {
-  static propTypes = {
-    sliderHandleWidth: PropTypes.number,
-    left: PropTypes.string,
-    display: PropTypes.bool,
-    valueListener: PropTypes.func,
-    vertical: PropTypes.bool
-  };
+type SliderHandleProps = {
+  sliderHandleWidth: number;
+  left: string;
+  display: boolean;
+  valueListener: (distance: number) => void;
+  vertical: boolean;
+  track: RefObject<StyleRangeSliderType>;
+  showTooltip: boolean;
+  value?: number;
+}
 
+export default class SliderHandle extends Component {
   static defaultProps = {
     sliderHandleWidth: 12,
     left: '50%',
     display: true,
     vertical: false,
-    valueListener: function valueListenerFn() {},
+    valueListener: function valueListenerFn() { },
     showTooltip: false
   };
 
-  constructor(props) {
+  public mouseEvent: MouseEventHandler;
+
+  constructor(public props: SliderHandleProps) {
     super(props);
 
     this.mouseEvent = new MouseEventHandler({
@@ -144,18 +156,18 @@ export default class SliderHandle extends Component {
     });
   }
 
-  state = {mouseOver: false};
+  state = { mouseOver: false };
   ref = createRef();
 
   toggleMouseOver = () => {
-    this.setState({mouseOver: !this.state.mouseOver});
+    this.setState({ mouseOver: !this.state.mouseOver });
   };
 
   render() {
-    const style = {[this.props.vertical ? 'bottom' : 'left']: this.props.left};
+    const style = { [this.props.vertical ? 'bottom' : 'left']: this.props.left };
 
     return (
-      <div style={{display: this.props.display ? 'block' : 'none'}}>
+      <div style={{ display: this.props.display ? 'block' : 'none' }}>
         {this.props.showTooltip && this.state.mouseOver ? (
           <SliderTooltip
             style={style}
