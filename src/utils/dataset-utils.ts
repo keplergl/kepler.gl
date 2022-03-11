@@ -22,9 +22,9 @@ import {hexToRgb} from './color-utils';
 import uniq from 'lodash.uniq';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {validateInputData} from 'processors/data-processor';
-import KeplerTable from './table-utils/kepler-table';
+import KeplerTable, {Field} from './table-utils/kepler-table';
 
-import {Datasets, Field} from '../reducers/vis-state-updaters';
+import {Datasets} from '../reducers/vis-state-updaters';
 import {ProtoDataset} from '../actions';
 import {RGBColor} from 'reducers/types';
 
