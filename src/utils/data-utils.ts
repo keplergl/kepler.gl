@@ -346,7 +346,10 @@ export const arrayMove = <T>(array: T[], from: number, to: number) => {
  * @param format
  * @param field
  */
-export function getFormatter(format: any, field?: Field): FieldFormatter {
+export function getFormatter(
+  format: string | Record<string, string>,
+  field?: Field
+): FieldFormatter {
   if (!format) {
     return defaultFormatter;
   }
