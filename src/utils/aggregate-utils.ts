@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {deviation, min, max, mean, median, sum, variance} from 'd3-array';
-import {AGGREGATION_TYPES} from 'constants/default-settings';
+import {AGGREGATION_TYPES} from '../constants/default-settings';
 
 export const getFrequency = data =>
   data.reduce(

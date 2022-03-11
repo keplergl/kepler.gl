@@ -14,3 +14,5 @@ export const getScaleFromImageSize: (
   mapH: number
 ) => number;
 export const dataURItoBlob: (dataURI: string) => Blob;
+
+export const calculateExportImageSize: ({mapW, mapH, ratio, resolution}) => any;
