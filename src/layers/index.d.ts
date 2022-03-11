@@ -3,8 +3,9 @@ import {LayerTextLabel, ColorRange, ColorUI, VisConfigRange} from './layer-facto
 
 export {LAYER_VIS_CONFIGS, LayerVisConfig} from './layer-factory';
 
+export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 export type LayerColumns = {
-  [key: string]: {value: string | null; fieldIdx: number; optional?: boolean};
+  [key: string]: LayerColumn;
 };
 export type VisualChannelDomain = number[] | string[];
 export type VisualChannelField = Field | null;

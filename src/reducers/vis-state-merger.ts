@@ -29,13 +29,30 @@ import {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
 import {LAYER_BLENDINGS} from 'constants/default-settings';
 import {CURRENT_VERSION, visStateSchema} from 'schemas';
 
+import {VisState, Datasets} from './vis-state-updaters';
+import {KeplerTable} from 'utils';
+import {ParsedConfig, ParsedLayer} from 'schemas';
+import {Layer, LayerColumns, LayerColumn} from 'layers';
+import {TooltipInfo} from './vis-state-updaters';
+import {SavedInteractionConfig} from 'schemas/schema-manager';
+
+export type Merger = {
+  merge: (state: VisState, config: any, fromConfig?: boolean) => VisState;
+  prop: string;
+  toMergeProp?: string;
+};
+export type VisStateMergers = Merger[];
+
 /**
  * Merge loaded filters with current state, if no fields or data are loaded
  * save it for later
  *
- * @type {typeof import('./vis-state-merger').mergeFilters}
  */
-export function mergeFilters(state, filtersToMerge) {
+export function mergeFilters(
+  state: VisState,
+  filtersToMerge: NonNullable<ParsedConfig['visState']>['filters'],
+  fromConfig?: boolean
+): VisState {
   if (!Array.isArray(filtersToMerge) || !filtersToMerge.length) {
     return state;
   }
@@ -64,13 +81,13 @@ export function mergeFilters(state, filtersToMerge) {
   };
 }
 
-export function createLayerFromConfig(state, layerConfig) {
+export function createLayerFromConfig(state: VisState, layerConfig: any): Layer | null {
   // first validate config against dataset
   const {validated, failed} = validateLayersByDatasets(state.datasets, state.layerClasses, [
     layerConfig
   ]);
 
-  if (failed.length || !validated.length) {
+  if (failed?.length || !validated.length) {
     // failed
     return null;
   }
@@ -80,7 +97,7 @@ export function createLayerFromConfig(state, layerConfig) {
   return newLayer;
 }
 
-export function serializeLayer(newLayer) {
+export function serializeLayer(newLayer): ParsedLayer {
   const savedVisState = visStateSchema[CURRENT_VERSION].save({
     layers: [newLayer],
     layerOrder: [0]
@@ -93,9 +110,12 @@ export function serializeLayer(newLayer) {
  * Merge layers from de-serialized state, if no fields or data are loaded
  * save it for later
  *
- * @type {typeof import('./vis-state-merger').mergeLayers}
  */
-export function mergeLayers(state, layersToMerge, fromConfig) {
+export function mergeLayers(
+  state: VisState,
+  layersToMerge: NonNullable<ParsedConfig['visState']>['layers'] = [],
+  fromConfig?: boolean
+): VisState {
   const preserveLayerOrder = fromConfig ? layersToMerge.map(l => l.id) : state.preserveLayerOrder;
 
   if (!Array.isArray(layersToMerge) || !layersToMerge.length) {
@@ -113,6 +133,7 @@ export function mergeLayers(state, layersToMerge, fromConfig) {
     state.layers,
     mergedLayer,
     state.layerOrder,
+    // @ts-expect-error
     preserveLayerOrder
   );
 
@@ -120,6 +141,7 @@ export function mergeLayers(state, layersToMerge, fromConfig) {
     ...state,
     layers: newLayers,
     layerOrder: newLayerOrder,
+    // @ts-expect-error
     preserveLayerOrder,
     layerToBeMerged: [...state.layerToBeMerged, ...unmerged]
   };
@@ -129,7 +151,7 @@ export function insertLayerAtRightOrder(
   currentLayers,
   layersToInsert,
   currentOrder,
-  preservedOrder = []
+  preservedOrder: string[] = []
 ) {
   // perservedOrder ['a', 'b', 'c'];
   // layerOrder [1, 0, 3]
@@ -152,7 +174,9 @@ export function insertLayerAtRightOrder(
         preceedIdx = layerOrderQueue.indexOf(preceedLayer);
       }
 
+      // @ts-expect-error
       if (preceedIdx > -1) {
+        // @ts-expect-error
         insertAt = preceedIdx + 1;
       }
     }
@@ -173,42 +197,52 @@ export function insertLayerAtRightOrder(
 /**
  * Merge interactions with saved config
  *
- * @type {typeof import('./vis-state-merger').mergeInteractions}
  */
-export function mergeInteractions(state, interactionToBeMerged) {
-  const merged = {};
-  const unmerged = {};
+export function mergeInteractions(
+  state: VisState,
+  interactionToBeMerged: Partial<SavedInteractionConfig> | undefined,
+  fromConfig?: boolean
+): VisState {
+  const merged: Partial<SavedInteractionConfig> = {};
+  const unmerged: Partial<SavedInteractionConfig> = {};
 
   if (interactionToBeMerged) {
-    Object.keys(interactionToBeMerged).forEach(key => {
+    (Object.keys(interactionToBeMerged) as Array<keyof SavedInteractionConfig>).forEach(key => {
       if (!state.interactionConfig[key]) {
         return;
       }
 
-      const currentConfig = state.interactionConfig[key].config;
+      const currentConfig =
+        key === 'tooltip' || key === 'brush' ? state.interactionConfig[key].config : null;
 
       const {enabled, ...configSaved} = interactionToBeMerged[key] || {};
+
       let configToMerge = configSaved;
 
       if (key === 'tooltip') {
-        const {mergedTooltip, unmergedTooltip} = mergeInteractionTooltipConfig(state, configSaved);
+        const {mergedTooltip, unmergedTooltip} = mergeInteractionTooltipConfig(
+          state,
+          configSaved as SavedInteractionConfig['tooltip']
+        );
 
         // merge new dataset tooltips with original dataset tooltips
         configToMerge = {
           fieldsToShow: {
-            ...currentConfig.fieldsToShow,
+            ...(currentConfig as TooltipInfo['config']).fieldsToShow,
             ...mergedTooltip
           }
         };
 
         if (Object.keys(unmergedTooltip).length) {
-          unmerged.tooltip = {fieldsToShow: unmergedTooltip, enabled};
+          // @ts-expect-error
+          unmerged.tooltip = {fieldsToShow: unmergedTooltip, enabled: Boolean(enabled)};
         }
       }
 
+      // @ts-expect-error
       merged[key] = {
         ...state.interactionConfig[key],
-        enabled,
+        enabled: Boolean(enabled),
         ...(currentConfig
           ? {
               config: pick(
@@ -226,6 +260,7 @@ export function mergeInteractions(state, interactionToBeMerged) {
 
   return {
     ...state,
+    // @ts-expect-error
     interactionConfig: {
       ...state.interactionConfig,
       ...merged
@@ -240,9 +275,12 @@ export function mergeInteractions(state, interactionToBeMerged) {
  *    : don't merge anything
  * 2. if current map is NOT split, but splitMaps contain maps
  *    : add to splitMaps, and add current layers to splitMaps
- * @type {typeof import('./vis-state-merger').mergeInteractions}
  */
-export function mergeSplitMaps(state, splitMaps = []) {
+export function mergeSplitMaps(
+  state: VisState,
+  splitMaps: NonNullable<ParsedConfig['visState']>['splitMaps'] = [],
+  fromConfig?: boolean
+): VisState {
   const merged = [...state.splitMaps];
   const unmerged = [];
   splitMaps.forEach((sm, i) => {
@@ -272,15 +310,22 @@ export function mergeSplitMaps(state, splitMaps = []) {
  * Merge interactionConfig.tooltip with saved config,
  * validate fieldsToShow
  *
- * @param {object} state
- * @param {object} tooltipConfig
- * @return {object} - {mergedTooltip: {}, unmergedTooltip: {}}
+ * @param state
+ * @param tooltipConfig
+ * @return - {mergedTooltip: {}, unmergedTooltip: {}}
  */
-export function mergeInteractionTooltipConfig(state, tooltipConfig = {}) {
-  const unmergedTooltip = {};
-  const mergedTooltip = {};
+export function mergeInteractionTooltipConfig(
+  state: VisState,
+  tooltipConfig: Pick<TooltipInfo['config'], 'fieldsToShow'> | null = null
+) {
+  const unmergedTooltip: TooltipInfo['config']['fieldsToShow'] = {};
+  const mergedTooltip: TooltipInfo['config']['fieldsToShow'] = {};
 
-  if (!tooltipConfig.fieldsToShow || !Object.keys(tooltipConfig.fieldsToShow).length) {
+  if (
+    !tooltipConfig ||
+    !tooltipConfig.fieldsToShow ||
+    !Object.keys(tooltipConfig.fieldsToShow).length
+  ) {
     return {mergedTooltip, unmergedTooltip};
   }
 
@@ -304,9 +349,12 @@ export function mergeInteractionTooltipConfig(state, tooltipConfig = {}) {
 /**
  * Merge layerBlending with saved
  *
- * @type {typeof import('./vis-state-merger').mergeLayerBlending}
  */
-export function mergeLayerBlending(state, layerBlending) {
+export function mergeLayerBlending(
+  state: VisState,
+  layerBlending: NonNullable<ParsedConfig['visState']>['layerBlending'],
+  fromConfig?: boolean
+): VisState {
   if (layerBlending && LAYER_BLENDINGS[layerBlending]) {
     return {
       ...state,
@@ -319,9 +367,12 @@ export function mergeLayerBlending(state, layerBlending) {
 
 /**
  * Merge animation config
- * @type {typeof import('./vis-state-merger').mergeAnimationConfig}
  */
-export function mergeAnimationConfig(state, animation) {
+export function mergeAnimationConfig(
+  state: VisState,
+  animation: NonNullable<ParsedConfig['visState']>['animationConfig'],
+  fromConfig?: boolean
+): VisState {
   if (animation && animation.currentTime) {
     return {
       ...state,
@@ -340,15 +391,21 @@ export function mergeAnimationConfig(state, animation) {
  * Validate saved layer columns with new data,
  * update fieldIdx based on new fields
  *
- * @param {Array<Object>} fields
- * @param {Object} savedCols
- * @param {Object} emptyCols
- * @return {null | Object} - validated columns or null
+ * @param fields
+ * @param savedCols
+ * @param emptyCols
+ * @return - validated columns or null
  */
 
-export function validateSavedLayerColumns(fields, savedCols = {}, emptyCols) {
+export function validateSavedLayerColumns(
+  fields: KeplerTable['fields'],
+  savedCols: {
+    [key: string]: string;
+  } = {},
+  emptyCols: LayerColumns
+) {
   // Prepare columns for the validator
-  const columns = {};
+  const columns: typeof emptyCols = {};
   for (const key of Object.keys(emptyCols)) {
     columns[key] = {...emptyCols[key]};
 
@@ -376,7 +433,11 @@ export function validateSavedLayerColumns(fields, savedCols = {}, emptyCols) {
   return null;
 }
 
-export function validateColumn(column, columns, allFields) {
+export function validateColumn(
+  column: LayerColumn & {validator?: typeof validateColumn},
+  columns: LayerColumns,
+  allFields: KeplerTable['fields']
+): boolean {
   if (column.optional || column.value) {
     return true;
   }
@@ -418,9 +479,12 @@ export function validateSavedTextLabel(fields, [layerTextLabel], savedTextLabel)
 /**
  * Validate saved visual channels config with new data,
  * refer to vis-state-schema.js VisualChannelSchemaV1
- * @type {typeof import('./vis-state-merger').validateSavedVisualChannels}
  */
-export function validateSavedVisualChannels(fields, newLayer, savedLayer) {
+export function validateSavedVisualChannels(
+  fields: KeplerTable['fields'],
+  newLayer: Layer,
+  savedLayer: ParsedLayer
+): null | Layer {
   Object.values(newLayer.visualChannels).forEach(({field, scale, key}) => {
     let foundField;
     if (savedLayer.config) {
@@ -444,17 +508,22 @@ export function validateSavedVisualChannels(fields, newLayer, savedLayer) {
   return newLayer;
 }
 
-export function validateLayersByDatasets(datasets, layerClasses, layers) {
-  const validated = [];
-  const failed = [];
+export function validateLayersByDatasets(
+  datasets: Datasets,
+  layerClasses: VisState['layerClasses'],
+  layers: NonNullable<ParsedConfig['visState']>['layers'] = []
+) {
+  const validated: Layer[] = [];
+  const failed: NonNullable<ParsedConfig['visState']>['layers'] = [];
 
   layers.forEach(layer => {
-    let validateLayer;
-    if (!layer || !layer.config) {
-      validateLayer = null;
-    } else if (datasets[layer.config.dataId]) {
-      // datasets are already loaded
-      validateLayer = validateLayerWithData(datasets[layer.config.dataId], layer, layerClasses);
+    let validateLayer: Layer | null = null;
+
+    if (layer?.config?.dataId) {
+      if (datasets[layer.config.dataId]) {
+        // datasets are already loaded
+        validateLayer = validateLayerWithData(datasets[layer.config.dataId], layer, layerClasses);
+      }
     }
 
     if (validateLayer) {
@@ -470,14 +539,15 @@ export function validateLayersByDatasets(datasets, layerClasses, layers) {
 /**
  * Validate saved layer config with new data,
  * update fieldIdx based on new fields
- * @type {typeof import('./vis-state-merger').validateLayerWithData}
  */
 export function validateLayerWithData(
-  {fields, id: dataId},
-  savedLayer,
-  layerClasses,
-  options = {}
-) {
+  {fields, id: dataId}: KeplerTable,
+  savedLayer: ParsedLayer,
+  layerClasses: VisState['layerClasses'],
+  options: {
+    allowEmptyColumn?: boolean;
+  } = {}
+): Layer | null {
   const {type} = savedLayer;
   // layer doesnt have a valid type
   if (!type || !layerClasses.hasOwnProperty(type) || !savedLayer.config) {
@@ -530,11 +600,11 @@ export function validateLayerWithData(
   return newLayer;
 }
 
-export function isValidMerger(merger) {
+export function isValidMerger(merger: Merger): boolean {
   return isObject(merger) && typeof merger.merge === 'function' && typeof merger.prop === 'string';
 }
 
-export const VIS_STATE_MERGERS = [
+export const VIS_STATE_MERGERS: VisStateMergers = [
   {merge: mergeLayers, prop: 'layers', toMergeProp: 'layerToBeMerged'},
   {merge: mergeFilters, prop: 'filters', toMergeProp: 'filterToBeMerged'},
   {merge: mergeInteractions, prop: 'interactionConfig', toMergeProp: 'interactionToBeMerged'},

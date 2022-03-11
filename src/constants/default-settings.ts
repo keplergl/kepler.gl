@@ -676,57 +676,81 @@ export const EXPORT_IMG_RATIOS = keyMirror({
   CUSTOM: null
 });
 
-export const EXPORT_IMG_RATIO_OPTIONS = [
-  {
-    id: EXPORT_IMG_RATIOS.SCREEN,
-    label: 'modal.exportImage.ratioOriginalScreen',
-    getSize: (screenW, screenH) => ({width: screenW, height: screenH})
-  },
-  {
-    id: EXPORT_IMG_RATIOS.CUSTOM,
-    hidden: true,
-    label: 'modal.exportImage.ratioCustom',
-    getSize: (mapW, mapH) => ({width: mapW, height: mapH})
-  },
-  {
-    id: EXPORT_IMG_RATIOS.FOUR_BY_THREE,
-    label: 'modal.exportImage.ratio4_3',
-    getSize: (screenW, screenH) => ({
-      width: screenW,
-      height: Math.round(screenW * 0.75)
-    })
-  },
-  {
-    id: EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE,
-    label: 'modal.exportImage.ratio16_9',
-    getSize: (screenW, screenH) => ({
-      width: screenW,
-      height: Math.round(screenW * 0.5625)
-    })
-  }
+export type ImageRatioOption = {
+  id: keyof typeof EXPORT_IMG_RATIOS;
+  label: string;
+  hidden?: boolean;
+  getSize: (screenW: number, screenH: number) => {width: number; height: number};
+};
+
+export const ScreenRatioOption: ImageRatioOption = {
+  id: EXPORT_IMG_RATIOS.SCREEN,
+  label: 'modal.exportImage.ratioOriginalScreen',
+  getSize: (screenW, screenH) => ({width: screenW, height: screenH})
+};
+export const CustomRatioOption: ImageRatioOption = {
+  id: EXPORT_IMG_RATIOS.CUSTOM,
+  hidden: true,
+  label: 'modal.exportImage.ratioCustom',
+  getSize: (mapW, mapH) => ({width: mapW, height: mapH})
+};
+export const FourByThreeRatioOption: ImageRatioOption = {
+  id: EXPORT_IMG_RATIOS.FOUR_BY_THREE,
+  label: 'modal.exportImage.ratio4_3',
+  getSize: (screenW, screenH) => ({
+    width: screenW,
+    height: Math.round(screenW * 0.75)
+  })
+};
+export const SixteenByNineRatioOption: ImageRatioOption = {
+  id: EXPORT_IMG_RATIOS.SIXTEEN_BY_NINE,
+  label: 'modal.exportImage.ratio16_9',
+  getSize: (screenW, screenH) => ({
+    width: screenW,
+    height: Math.round(screenW * 0.5625)
+  })
+};
+
+export const EXPORT_IMG_RATIO_OPTIONS: ReadonlyArray<ImageRatioOption> = [
+  ScreenRatioOption,
+  CustomRatioOption,
+  FourByThreeRatioOption,
+  SixteenByNineRatioOption
 ];
 
-export const EXPORT_IMG_RESOLUTION_OPTIONS = [
-  {
-    id: RESOLUTIONS.ONE_X,
-    label: '1x',
-    available: true,
-    scale: 1,
-    getSize: (screenW, screenH) => ({
-      width: screenW,
-      height: screenH
-    })
-  },
-  {
-    id: RESOLUTIONS.TWO_X,
-    label: '2x',
-    available: true,
-    scale: 2,
-    getSize: (screenW, screenH) => ({
-      width: screenW * 2,
-      height: screenH * 2
-    })
-  }
+export type ImageResolutionOption = {
+  id: keyof typeof RESOLUTIONS;
+  label: string;
+  available: boolean;
+  scale: number;
+  getSize: (screenW: number, screenH: number) => {width: number; height: number};
+};
+
+export const OneXResolutionOption: ImageResolutionOption = {
+  id: RESOLUTIONS.ONE_X,
+  label: '1x',
+  available: true,
+  scale: 1,
+  getSize: (screenW, screenH) => ({
+    width: screenW,
+    height: screenH
+  })
+};
+
+export const TwoXResolutionOption: ImageResolutionOption = {
+  id: RESOLUTIONS.TWO_X,
+  label: '2x',
+  available: true,
+  scale: 2,
+  getSize: (screenW, screenH) => ({
+    width: screenW * 2,
+    height: screenH * 2
+  })
+};
+
+export const EXPORT_IMG_RESOLUTION_OPTIONS: ReadonlyArray<ImageResolutionOption> = [
+  OneXResolutionOption,
+  TwoXResolutionOption
 ];
 
 export const EXPORT_DATA_TYPE = keyMirror({
@@ -777,18 +801,22 @@ export const EXPORT_HTML_MAP_MODES = keyMirror({
 });
 
 // Export map options
-export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS).map((entry: [string, any]) => ({
-  id: entry[0],
-  label: entry[1].toLowerCase(),
-  available: true
-}));
+export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS).map(
+  (entry: [string, any]) => ({
+    id: entry[0],
+    label: entry[1].toLowerCase(),
+    available: true
+  })
+);
 
-export const EXPORT_HTML_MAP_MODE_OPTIONS = Object.entries(EXPORT_HTML_MAP_MODES).map((entry: [string, any]) => ({
-  id: entry[0],
-  label: `modal.exportMap.html.${entry[1].toLowerCase()}`,
-  available: true,
-  url: getHTMLMapModeTileUrl(entry[1])
-}));
+export const EXPORT_HTML_MAP_MODE_OPTIONS = Object.entries(EXPORT_HTML_MAP_MODES).map(
+  (entry: [string, any]) => ({
+    id: entry[0],
+    label: `modal.exportMap.html.${entry[1].toLowerCase()}`,
+    available: true,
+    url: getHTMLMapModeTileUrl(entry[1])
+  })
+);
 
 export const DEFAULT_UUID_COUNT = 6;
 

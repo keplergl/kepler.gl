@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// @ts-nocheck
 import domtoimage from 'utils/dom-to-image';
 import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
 import {
@@ -26,7 +25,9 @@ import {
   EXPORT_IMG_RATIO_OPTIONS,
   RESOLUTIONS,
   EXPORT_IMG_RATIOS,
-  EXPORT_DATA_TYPE
+  EXPORT_DATA_TYPE,
+  FourByThreeRatioOption,
+  OneXResolutionOption
 } from 'constants/default-settings';
 import {exportMapToHTML} from 'templates/export-map-html';
 import {formatCsv} from 'processors/data-processor';
@@ -34,6 +35,7 @@ import get from 'lodash.get';
 import {set, generateHashId} from 'utils/utils';
 
 import {createIndexedDataContainer} from './table-utils/data-container-utils';
+import {ExportImage} from 'reducers/ui-state-updaters';
 
 /**
  * Default file names
@@ -45,17 +47,17 @@ export const DEFAULT_DATA_NAME = 'kepler.gl';
 
 /**
  * Default json export settings
- * @type {{hasData: boolean}}
  */
 export const DEFAULT_EXPORT_JSON_SETTINGS = {
   hasData: true
 };
 
-const defaultResolution = EXPORT_IMG_RESOLUTION_OPTIONS.find(op => op.id === RESOLUTIONS.ONE_X);
+const defaultResolution = OneXResolutionOption;
 
-const defaultRatio = EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === EXPORT_IMG_RATIOS.FOUR_BY_THREE);
+const defaultRatio = FourByThreeRatioOption;
 
-export function isMSEdge(window) {
+export function isMSEdge(window: Window): boolean {
+  // @ts-ignore msSaveOrOpenBlob was a proprietary addition to the Navigator object, added by Microsoft for Internet Explorer.
   return Boolean(window.navigator && window.navigator.msSaveOrOpenBlob);
 }
 
@@ -69,7 +71,17 @@ export function getScaleFromImageSize(imageW = 0, imageH = 0, mapW = 0, mapH = 0
   return base / mapBase;
 }
 
-export function calculateExportImageSize({mapW, mapH, ratio, resolution}) {
+export function calculateExportImageSize({
+  mapW,
+  mapH,
+  ratio,
+  resolution
+}: {
+  mapW: number;
+  mapH: number;
+  ratio: keyof typeof EXPORT_IMG_RATIOS;
+  resolution: keyof typeof RESOLUTIONS;
+}) {
   if (mapW <= 0 || mapH <= 0) {
     return null;
   }
@@ -83,7 +95,7 @@ export function calculateExportImageSize({mapW, mapH, ratio, resolution}) {
 
   const {width: imageW, height: imageH} = ratioItem.getSize(scaledWidth, scaledHeight);
 
-  const {scale} = ratioItem.id === EXPORT_IMG_RATIOS.CUSTOM ? {} : resolutionItem;
+  const {scale} = ratioItem.id === EXPORT_IMG_RATIOS.CUSTOM ? {scale: undefined} : resolutionItem;
 
   return {
     scale,
@@ -92,11 +104,11 @@ export function calculateExportImageSize({mapW, mapH, ratio, resolution}) {
   };
 }
 
-export function convertToPng(sourceElem, options) {
+export function convertToPng(sourceElem: HTMLElement, options) {
   return domtoimage.toPng(sourceElem, options);
 }
 
-export function dataURItoBlob(dataURI) {
+export function dataURItoBlob(dataURI: string): Blob {
   const binary = atob(dataURI.split(',')[1]);
 
   // separate out the mime component
@@ -118,9 +130,9 @@ export function dataURItoBlob(dataURI) {
   return new Blob([ab], {type: mimeString});
 }
 
-export function downloadFile(fileBlob, fileName) {
+export function downloadFile(fileBlob: Blob, fileName: string) {
   if (isMSEdge(window)) {
-    window.navigator.msSaveOrOpenBlob(fileBlob, fileName);
+    (window.navigator as any).msSaveOrOpenBlob(fileBlob, fileName);
   } else {
     const url = URL.createObjectURL(fileBlob);
 
@@ -137,10 +149,9 @@ export function downloadFile(fileBlob, fileName) {
 
 /**
  * Whether color is rgb
- * @type {typeof import('./export-utils').exportImage}
  * @returns
  */
-export function exportImage(uiStateExportImage, filename = DEFAULT_IMAGE_NAME) {
+export function exportImage(uiStateExportImage: ExportImage, filename = DEFAULT_IMAGE_NAME) {
   const {imageDataUri} = uiStateExportImage;
   if (imageDataUri) {
     const file = dataURItoBlob(imageDataUri);
@@ -152,7 +163,9 @@ export function exportToJsonString(data) {
   try {
     return JSON.stringify(data);
   } catch (e) {
-    return e.description;
+    if (e instanceof TypeError) return e.message;
+    // Non-Standard Error Object Property
+    return (e as any).description;
   }
 }
 
@@ -173,7 +186,7 @@ export function getMapJSON(state, options = DEFAULT_EXPORT_JSON_SETTINGS) {
   return mapToSave;
 }
 
-export function exportJson(state, options = {}) {
+export function exportJson(state, options: any = {}) {
   const map = getMapJSON(state, options);
 
   const fileBlob = new Blob([exportToJsonString(map)], {type: 'application/json'});
@@ -231,9 +244,9 @@ export function exportData(state, options) {
   });
 }
 
-export function exportMap(state, options) {
+export function exportMap(state, options = DEFAULT_EXPORT_JSON_SETTINGS) {
   const {imageDataUri} = state.uiState.exportImage;
-  const thumbnail = imageDataUri ? dataURItoBlob(imageDataUri) : null;
+  const thumbnail: Blob | null = imageDataUri ? dataURItoBlob(imageDataUri) : null;
   const mapToSave = getMapJSON(state, options);
 
   return {

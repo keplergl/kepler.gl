@@ -560,9 +560,7 @@ export const inputMapStyleUpdater = (
   const icon = isValid
     ? getStyleImageIcon({
         mapState,
-        // @ts-expect-error
         styleUrl: updated.url,
-        // @ts-expect-error
         mapboxApiAccessToken: updated.accessToken || state.mapboxApiAccessToken,
         mapboxApiUrl: state.mapboxApiUrl || DEFAULT_MAPBOX_API_URL
       })

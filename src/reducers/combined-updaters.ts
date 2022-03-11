@@ -149,6 +149,7 @@ export const addDataToMapUpdater = (
 
   if (isValidConfig(config)) {
     // if passed in saved config
+    // @ts-expect-error
     parsedConfig = state.visState.schema.parseSavedConfig(config);
   }
   const oldLayers = state.visState.layers;
