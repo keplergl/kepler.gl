@@ -770,11 +770,9 @@ export const addNotificationUpdater = (
   const notificationToUpdate = payloadId ? state.notifications.find(n => n.id === payloadId) : null;
   if (notificationToUpdate) {
     notifications = state.notifications.map(n =>
-      // @ts-expect-error
       n.id === payloadId ? createNotification(payload) : n
     );
   } else {
-    // @ts-expect-error
     notifications = [...(state.notifications || []), createNotification(payload)];
   }
 
