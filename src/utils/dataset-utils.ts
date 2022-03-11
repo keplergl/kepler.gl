@@ -22,7 +22,11 @@ import {hexToRgb} from './color-utils';
 import uniq from 'lodash.uniq';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {validateInputData} from 'processors/data-processor';
-import KeplerTable from './table-utils/kepler-table';
+import KeplerTable, {Field} from './table-utils/kepler-table';
+
+import {Datasets} from '../reducers/vis-state-updaters';
+import {ProtoDataset} from '../actions';
+import {RGBColor} from 'reducers/types';
 
 // apply a color for each dataset
 // to use as label colors
@@ -38,9 +42,8 @@ const datasetColors = [
 
 /**
  * Random color generator
- * @return {Generator<import('reducers/types').RGBColor>}
  */
-function* generateColor() {
+function* generateColor(): Generator<RGBColor> {
   let index = 0;
   while (index < datasetColors.length + 1) {
     if (index === datasetColors.length) {
@@ -53,7 +56,7 @@ function* generateColor() {
 export const datasetColorMaker = generateColor();
 
 /** @type {typeof import('./dataset-utils').getNewDatasetColor} */
-export function getNewDatasetColor(datasets) {
+export function getNewDatasetColor(datasets: Datasets): RGBColor {
   const presetColors = datasetColors.map(String);
   const usedColors = uniq(Object.values(datasets).map(d => String(d.color))).filter(c =>
     presetColors.includes(c)
@@ -74,9 +77,11 @@ export function getNewDatasetColor(datasets) {
 
 /**
  * Take datasets payload from addDataToMap, create datasets entry save to visState
- * @type {typeof import('./dataset-utils').createNewDataEntry}
  */
-export function createNewDataEntry({info, data, ...opts}, datasets = {}) {
+export function createNewDataEntry(
+  {info, data, ...opts}: ProtoDataset,
+  datasets: Datasets = {}
+): Datasets {
   const validatedData = validateInputData(data);
   if (!validatedData) {
     return {};
@@ -182,7 +187,7 @@ const METRIC_DEFAULT_FIELDS = [
  *
  * @param dataset
  */
-export function findDefaultColorField({fields, fieldPairs = []}) {
+export function findDefaultColorField({fields, fieldPairs = []}: KeplerTable): null | Field {
   const fieldsWithoutExcluded = fields.filter(field => {
     if (field.type !== ALL_FIELD_TYPES.real && field.type !== ALL_FIELD_TYPES.integer) {
       // Only select numeric fields.
@@ -243,6 +248,7 @@ export function findDefaultColorField({fields, fieldPairs = []}) {
     }
 
     // Finally, order based on the order in the datasets columns
+    // @ts-expect-error
     return left.index - right.index;
   });
 
