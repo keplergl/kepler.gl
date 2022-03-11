@@ -151,7 +151,7 @@ export function insertLayerAtRightOrder(
   currentLayers,
   layersToInsert,
   currentOrder,
-  preservedOrder: number[] = []
+  preservedOrder: string[] = []
 ) {
   // perservedOrder ['a', 'b', 'c'];
   // layerOrder [1, 0, 3]

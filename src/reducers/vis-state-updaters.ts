@@ -513,7 +513,7 @@ export function updateStateWithLayerAndData(
   };
 }
 
-export function updateStateOnLayerVisibilityChange(state: VisState, layer) {
+export function updateStateOnLayerVisibilityChange(state: VisState, layer: Layer): VisState {
   let newState = state;
   if (state.splitMaps.length) {
     newState = {
@@ -1819,7 +1819,10 @@ export function renameDatasetUpdater(
  * @param {Object} action action
  * @returns {Object} nextState
  */
-export function closeSpecificMapAtIndex(state: VisState, action: any): VisState {
+export function closeSpecificMapAtIndex(
+  state: VisState,
+  action: MapStateActions.ToggleSplitMapUpdaterAction
+): VisState {
   // retrieve layers meta data from the remaining map that we need to keep
   const indexToRetrieve = 1 - action.payload;
   const mapLayers = state.splitMaps[indexToRetrieve].layers;
