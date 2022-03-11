@@ -143,10 +143,10 @@ export function getStyleImageIcon({
 }: {
   styleUrl: string;
   mapboxApiAccessToken: string;
-  mapboxApiUrl: string;
+  mapboxApiUrl?: string;
   mapState?: Partial<MapState>;
-  mapW: number;
-  mapH: number;
+  mapW?: number;
+  mapH?: number;
 }) {
   const styleId = styleUrl.replace('mapbox://styles/', '');
 

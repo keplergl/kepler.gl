@@ -26,10 +26,10 @@ import {bisectLeft} from 'd3-array';
 import moment from 'moment-timezone';
 
 import {Millisecond} from 'reducers/types';
-import {Field} from 'reducers/vis-state-updaters';
 import {Layer} from 'layers';
 import {Bounds} from 'reducers/map-state-updaters';
 import {DataContainerInterface} from './table-utils/data-container-interface';
+import {Field} from './table-utils/kepler-table';
 
 export type FieldFormatter = (value: any) => string;
 
