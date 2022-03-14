@@ -34,9 +34,43 @@ import {LAYER_TYPES} from 'layers/types';
 import {generateHashId, set, toArray} from './utils';
 import {getCentroid, h3IsValid} from 'layers/h3-hexagon-layer/h3-utils';
 
-// TYPE
-/** @typedef {import('./table-utils/kepler-table').FilterRecord} FilterRecord */
-/** @typedef {import('./filter-utils').FilterResult} FilterResult */
+import {
+  Filter,
+  FilterBase,
+  PolygonFilter,
+  KeplerTable,
+  Datasets,
+  FieldDomain,
+  TimeRangeFieldDomain,
+  HistogramBin,
+  Feature,
+  FeatureValue,
+  VisState,
+  LineChart,
+  TimeRangeFilter,
+  RangeFieldDomain
+} from '../reducers/vis-state-updaters';
+import {FilterRecord} from './table-utils/kepler-table';
+import {Layer} from 'layers';
+// import {Field} from 'reducers';
+import {ParsedFilter} from 'schemas';
+import {FilterDatasetOpt} from './table-utils/kepler-table';
+import {DataContainerInterface} from './table-utils/data-container-interface';
+import {Millisecond} from 'cloud-providers';
+import {Field} from 'reducers/vis-state-updaters';
+
+export type FilterResult = {
+  filteredIndexForDomain?: number[];
+  filteredIndex?: number[];
+};
+
+export type FilterChanged = {
+  [key in keyof FilterRecord]: {
+    [key: string]: 'added' | 'deleted' | 'name_changed' | 'value_changed' | 'dataId_changed';
+  } | null;
+};
+
+export type dataValueAccessor = (data: {index: number}) => number | null;
 
 export const TimestampStepMap = [
   {max: 1, step: 0.05},
@@ -131,9 +165,8 @@ export const LAYER_FILTERS = [FILTER_TYPES.polygon];
 
 /**
  * Generates a filter with a dataset id as dataId
- * @type {typeof import('./filter-utils').getDefaultFilter}
  */
-export function getDefaultFilter(dataId) {
+export function getDefaultFilter(dataId: string | null | string[]): FilterBase {
   return {
     ...DEFAULT_FILTER_STRUCTURE,
     // store it as dataId and it could be one or many
@@ -147,9 +180,8 @@ export function getDefaultFilter(dataId) {
  * @param  filter to validate
  * @param  datasetId id to validate filter against
  * @return true if a filter is valid, false otherwise
- * @type {typeof import('./filter-utils').shouldApplyFilter}
  */
-export function shouldApplyFilter(filter, datasetId) {
+export function shouldApplyFilter(filter: Filter, datasetId: string): boolean {
   const dataIds = toArray(filter.dataId);
   return dataIds.includes(datasetId) && filter.value !== null;
 }
@@ -160,9 +192,12 @@ export function shouldApplyFilter(filter, datasetId) {
  * @param filter
  * @param layers
  * @return - {filter, dataset}
- * @type {typeof import('./filter-utils').validatePolygonFilter}
  */
-export function validatePolygonFilter(dataset, filter, layers) {
+export function validatePolygonFilter(
+  dataset: KeplerTable,
+  filter: PolygonFilter,
+  layers: Layer[]
+): {filter: PolygonFilter | null; dataset: KeplerTable} {
   const failed = {dataset, filter: null};
   const {value, layerId, type, dataId} = filter;
 
@@ -204,9 +239,11 @@ const filterValidators = {
  * @param dataset
  * @param filter
  * @return - {filter, dataset}
- * @type {typeof import('./filter-utils').validateFilter}
  */
-export function validateFilter(dataset, filter) {
+export function validateFilter(
+  dataset: KeplerTable,
+  filter: Filter
+): {filter: PolygonFilter | null; dataset: KeplerTable} {
   // match filter.dataId
   const failed = {dataset, filter: null};
   const filterDataId = toArray(filter.dataId);
@@ -260,10 +297,13 @@ export function validateFilter(dataset, filter) {
  * @param filter - filter to be validate
  * @param layers - layers
  * @return validated filter
- * @type {typeof import('./filter-utils').validateFilterWithData}
  */
-export function validateFilterWithData(dataset, filter, layers) {
-  return filterValidators.hasOwnProperty(filter.type)
+export function validateFilterWithData(
+  dataset: KeplerTable,
+  filter: Filter,
+  layers: Layer[]
+): {filter: Filter; dataset: KeplerTable} {
+  return filter.type && filterValidators.hasOwnProperty(filter.type)
     ? filterValidators[filter.type](dataset, filter, layers)
     : validateFilter(dataset, filter);
 }
@@ -301,9 +341,11 @@ function validateFilterYAxis(filter, dataset) {
  * @param field
  * @param fieldDomain
  * @returns default filter
- * @type {typeof import('./filter-utils').getFilterProps}
  */
-export function getFilterProps(field, fieldDomain) {
+export function getFilterProps(
+  field: Field,
+  fieldDomain: FieldDomain
+): Partial<Filter> & {fieldType: string} {
   const filterProps = {
     ...fieldDomain,
     fieldType: field.type
@@ -316,11 +358,13 @@ export function getFilterProps(field, fieldDomain) {
         ...filterProps,
         value: fieldDomain.domain,
         type: FILTER_TYPES.range,
+        // @ts-expect-error
         typeOptions: [FILTER_TYPES.range],
         gpu: true
       };
 
     case ALL_FIELD_TYPES.boolean:
+      // @ts-expect-error
       return {
         ...filterProps,
         type: FILTER_TYPES.select,
@@ -330,6 +374,7 @@ export function getFilterProps(field, fieldDomain) {
 
     case ALL_FIELD_TYPES.string:
     case ALL_FIELD_TYPES.date:
+      // @ts-expect-error
       return {
         ...filterProps,
         type: FILTER_TYPES.multiSelect,
@@ -338,6 +383,7 @@ export function getFilterProps(field, fieldDomain) {
       };
 
     case ALL_FIELD_TYPES.timestamp:
+      // @ts-expect-error
       return {
         ...filterProps,
         type: FILTER_TYPES.timeRange,
@@ -348,6 +394,7 @@ export function getFilterProps(field, fieldDomain) {
       };
 
     default:
+      // @ts-expect-error
       return {};
   }
 }
@@ -396,15 +443,26 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
 };
 
 /**
+ * @param param An object that represents a row record.
+ * @param param.index Index of the row in data container.
+ * @returns Returns true to keep the element, or false otherwise.
+ */
+type filterFunction = (data: {index: number}) => boolean;
+/**
  * @param field dataset Field
  * @param dataId Dataset id
  * @param filter Filter object
  * @param layers list of layers to filter upon
  * @param dataContainer Data container
  * @return filterFunction
- * @type {typeof import('./filter-utils').getFilterFunction}
  */
-export function getFilterFunction(field, dataId, filter, layers, dataContainer) {
+export function getFilterFunction(
+  field: Field | null,
+  dataId: string,
+  filter: Filter,
+  layers: Layer[],
+  dataContainer: DataContainerInterface
+): filterFunction {
   // field could be null in polygon filter
   const valueAccessor = field ? field.valueAccessor : data => null;
   const defaultFunc = d => true;
@@ -426,7 +484,7 @@ export function getFilterFunction(field, dataId, filter, layers, dataContainer) 
         : data => timeToUnixMilli(valueAccessor(data), field.format);
       return data => isInRange(accessor(data), filter.value);
     case FILTER_TYPES.polygon:
-      if (!layers || !layers.length) {
+      if (!layers || !layers.length || !filter.layerId) {
         return defaultFunc;
       }
       const layerFilterFunctions = filter.layerId
@@ -440,24 +498,29 @@ export function getFilterFunction(field, dataId, filter, layers, dataContainer) 
   }
 }
 
-export function updateFilterDataId(dataId) {
+export function updateFilterDataId(dataId: string): FilterBase {
   return getDefaultFilter(dataId);
 }
 
-/**
- * @type {typeof import('./filter-utils').filterDataByFilterTypes}
- */
 export function filterDataByFilterTypes(
-  {dynamicDomainFilters, cpuFilters, filterFuncs},
-  dataContainer
-) {
-  const result = {
-    ...(dynamicDomainFilters ? {filteredIndexForDomain: []} : {}),
-    ...(cpuFilters ? {filteredIndex: []} : {})
-  };
+  {
+    dynamicDomainFilters,
+    cpuFilters,
+    filterFuncs
+  }: {
+    dynamicDomainFilters: Filter[] | null;
+    cpuFilters: Filter[] | null;
+    filterFuncs: {
+      [key: string]: filterFunction;
+    };
+  },
+  dataContainer: DataContainerInterface
+): FilterResult {
+  const filteredIndexForDomain: number[] = [];
+  const filteredIndex: number[] = [];
 
   const filterContext = {index: -1, dataContainer};
-  const filterFuncCaller = filter => filterFuncs[filter.id](filterContext);
+  const filterFuncCaller = (filter: Filter) => filterFuncs[filter.id](filterContext);
 
   const numRows = dataContainer.numRows();
   for (let i = 0; i < numRows; ++i) {
@@ -465,27 +528,30 @@ export function filterDataByFilterTypes(
 
     const matchForDomain = dynamicDomainFilters && dynamicDomainFilters.every(filterFuncCaller);
     if (matchForDomain) {
-      result.filteredIndexForDomain.push(filterContext.index);
+      filteredIndexForDomain.push(filterContext.index);
     }
 
     const matchForRender = cpuFilters && cpuFilters.every(filterFuncCaller);
     if (matchForRender) {
-      result.filteredIndex.push(filterContext.index);
+      filteredIndex.push(filterContext.index);
     }
   }
 
-  return result;
+  return {
+    ...(dynamicDomainFilters ? {filteredIndexForDomain} : {}),
+    ...(cpuFilters ? {filteredIndex} : {})
+  };
 }
 
 /**
  * Get a record of filters based on domain type and gpu / cpu
- * @type {typeof import('./filter-utils').getFilterRecord}
  */
-export function getFilterRecord(dataId, filters, opt = {}) {
-  /**
-   * @type {FilterRecord}
-   */
-  const filterRecord = {
+export function getFilterRecord(
+  dataId: string,
+  filters: Filter[],
+  opt: FilterDatasetOpt = {}
+): FilterRecord {
+  const filterRecord: FilterRecord = {
     dynamicDomain: [],
     fixedDomain: [],
     cpu: [],
@@ -506,16 +572,24 @@ export function getFilterRecord(dataId, filters, opt = {}) {
   return filterRecord;
 }
 
+type Entries<T> = {
+  [K in keyof T]: [K, T[K]];
+}[keyof T][];
+
 /**
  * Compare filter records to get what has changed
- * @type {typeof import('./filter-utils').diffFilters}
  */
-export function diffFilters(filterRecord, oldFilterRecord = {}) {
-  let filterChanged = {};
+export function diffFilters(
+  filterRecord: FilterRecord,
+  oldFilterRecord: FilterRecord | {} = {}
+): FilterChanged {
+  let filterChanged: Partial<FilterChanged> = {};
 
-  Object.entries(filterRecord).forEach(([record, items]) => {
+  (Object.entries(filterRecord) as Entries<FilterRecord>).forEach(([record, items]) => {
     items.forEach(filter => {
-      const oldFilter = (oldFilterRecord[record] || []).find(f => f.id === filter.id);
+      const oldFilter: Filter = (oldFilterRecord[record] || []).find(
+        (f: Filter) => f.id === filter.id
+      );
 
       if (!oldFilter) {
         // added
@@ -530,30 +604,25 @@ export function diffFilters(filterRecord, oldFilterRecord = {}) {
       }
     });
 
-    (oldFilterRecord[record] || []).forEach(oldFilter => {
+    (oldFilterRecord[record] || []).forEach((oldFilter: Filter) => {
       // deleted
       if (!items.find(f => f.id === oldFilter.id)) {
         filterChanged = set([record, oldFilter.id], 'deleted', filterChanged);
       }
     });
-
-    if (!filterChanged[record]) {
-      filterChanged[record] = null;
-    }
   });
 
-  return filterChanged;
+  return {...{dynamicDomain: null, fixedDomain: null, cpu: null, gpu: null}, ...filterChanged};
 }
 /**
  * Call by parsing filters from URL
  * Check if value of filter within filter domain, if not adjust it to match
  * filter domain
  *
- * @type {typeof import('./filter-utils').adjustValueToFilterDomain}
  * @returns value - adjusted value to match filter or null to remove filter
  */
 /* eslint-disable complexity */
-export function adjustValueToFilterDomain(value, {domain, type}) {
+export function adjustValueToFilterDomain(value: Filter['value'], {domain, type}) {
   if (!domain || !type) {
     return false;
   }
@@ -585,11 +654,12 @@ export function adjustValueToFilterDomain(value, {domain, type}) {
 
 /**
  * Calculate numeric domain and suitable step
- *
- * @type {typeof import('./filter-utils').getNumericFieldDomain}
  */
-export function getNumericFieldDomain(dataContainer, valueAccessor) {
-  let domain = [0, 1];
+export function getNumericFieldDomain(
+  dataContainer: DataContainerInterface,
+  valueAccessor: dataValueAccessor
+): RangeFieldDomain {
+  let domain: [number, number] = [0, 1];
   let step = 0.1;
 
   const mappedValue = dataContainer.mapIndex(valueAccessor);
@@ -615,10 +685,8 @@ export function getNumericFieldDomain(dataContainer, valueAccessor) {
 
 /**
  * Calculate step size for range and timerange filter
- *
- * @type {typeof import('./filter-utils').getNumericStepSize}
  */
-export function getNumericStepSize(diff) {
+export function getNumericStepSize(diff: number): number {
   diff = Math.abs(diff);
 
   if (diff > 100) {
@@ -646,9 +714,11 @@ export function getNumericStepSize(diff) {
 
 /**
  * Calculate timestamp domain and suitable step
- * @type {typeof import('./filter-utils').getTimestampFieldDomain}
  */
-export function getTimestampFieldDomain(dataContainer, valueAccessor) {
+export function getTimestampFieldDomain(
+  dataContainer: DataContainerInterface,
+  valueAccessor: dataValueAccessor
+): TimeRangeFieldDomain {
   // to avoid converting string format time to epoch
   // every time we compare we store a value mapped to int in filter domain
 
@@ -676,11 +746,11 @@ export function getTimestampFieldDomain(dataContainer, valueAccessor) {
   };
 }
 
-/**
- *
- * @type {typeof import('./filter-utils').histogramConstruct}
- */
-export function histogramConstruct(domain, mappedValue, bins) {
+export function histogramConstruct(
+  domain: [number, number],
+  mappedValue: (Millisecond | number)[],
+  bins: number
+): HistogramBin[] {
   return d3Histogram()
     .thresholds(ticks(domain[0], domain[1], bins))
     .domain(domain)(mappedValue)
@@ -692,10 +762,11 @@ export function histogramConstruct(domain, mappedValue, bins) {
 }
 /**
  * Calculate histogram from domain and array of values
- *
- * @type {typeof import('./filter-utils').getHistogram}
  */
-export function getHistogram(domain, mappedValue) {
+export function getHistogram(
+  domain: [number, number],
+  mappedValue: (Millisecond | number)[]
+): {histogram: HistogramBin[]; enlargedHistogram: HistogramBin[]} {
   const histogram = histogramConstruct(domain, mappedValue, histogramBins);
   const enlargedHistogram = histogramConstruct(domain, mappedValue, enlargedHistogramBins);
 
@@ -710,7 +781,7 @@ export function getHistogram(domain, mappedValue) {
  * @param {string} bound
  * @returns {Number} rounded number
  */
-export function formatNumberByStep(val, step, bound) {
+export function formatNumberByStep(val: number, step: number, bound: 'floor' | 'ceil'): number {
   if (bound === 'floor') {
     return Math.floor(val * (1 / step)) / (1 / step);
   }
@@ -718,11 +789,7 @@ export function formatNumberByStep(val, step, bound) {
   return Math.ceil(val * (1 / step)) / (1 / step);
 }
 
-/**
- *
- * @type {typeof import('./filter-utils').isInRange}
- */
-export function isInRange(val, domain) {
+export function isInRange(val: any, domain: number[]): boolean {
   if (!Array.isArray(domain)) {
     return false;
   }
@@ -737,13 +804,13 @@ export function isInRange(val, domain) {
  * @param polygon Points must be within these (Multi)Polygon(s)
  * @return {boolean}
  */
-export function isInPolygon(point, polygon) {
+export function isInPolygon(point: number[], polygon: any): boolean {
   return booleanWithin(turfPoint(point), polygon);
 }
 export function isValidTimeDomain(domain) {
   return Array.isArray(domain) && domain.every(Number.isFinite);
 }
-export function getTimeWidgetTitleFormatter(domain) {
+export function getTimeWidgetTitleFormatter(domain: [number, number]): string | null {
   if (!isValidTimeDomain(domain)) {
     return null;
   }
@@ -755,9 +822,9 @@ export function getTimeWidgetTitleFormatter(domain) {
   return diff > durationYear ? 'L' : diff > durationDay ? 'L LT' : 'L LTS';
 }
 
-export function getTimeWidgetHintFormatter(domain) {
+export function getTimeWidgetHintFormatter(domain: [number, number]): string | undefined {
   if (!isValidTimeDomain(domain)) {
-    return null;
+    return undefined;
   }
 
   const diff = domain[1] - domain[0];
@@ -772,10 +839,9 @@ export function getTimeWidgetHintFormatter(domain) {
 
 /**
  * Sanity check on filters to prepare for save
- * @type {typeof import('./filter-utils').isValidFilterValue}
  */
 /* eslint-disable complexity */
-export function isValidFilterValue(type, value) {
+export function isValidFilterValue(type: string | null, value: any): boolean {
   if (!type) {
     return false;
   }
@@ -802,11 +868,10 @@ export function isValidFilterValue(type, value) {
   }
 }
 
-/**
- *
- * @type {typeof import('./filter-utils').getFilterPlot}
- */
-export function getFilterPlot(filter, dataset) {
+export function getFilterPlot(
+  filter: Filter,
+  dataset: KeplerTable
+): {lineChart: LineChart; yAxs: Field} | {} {
   if (filter.plotType === PLOT_TYPES.histogram || !filter.yAxis) {
     // histogram should be calculated when create filter
     return {};
@@ -838,8 +903,9 @@ export function getFilterPlot(filter, dataset) {
   return {lineChart: {series, yDomain, xDomain}, yAxis};
 }
 
-export function getDefaultFilterPlotType(filter) {
-  const filterPlotTypes = SupportedPlotType[filter.type];
+export function getDefaultFilterPlotType(filter: Filter): string | null {
+  const filterPlotTypes: typeof SupportedPlotType[keyof typeof SupportedPlotType] | null =
+    filter.type && SupportedPlotType[filter.type];
   if (!filterPlotTypes) {
     return null;
   }
@@ -857,9 +923,13 @@ export function getDefaultFilterPlotType(filter) {
  * @param datasets all datasets
  * @param filters all filters to be applied to datasets
  * @return datasets - new updated datasets
- * @type {typeof import('./filter-utils').applyFiltersToDatasets}
  */
-export function applyFiltersToDatasets(datasetIds, datasets, filters, layers) {
+export function applyFiltersToDatasets(
+  datasetIds: string[],
+  datasets: Datasets,
+  filters: Filter[],
+  layers?: Layer[]
+): Datasets {
   const dataIds = toArray(datasetIds);
   return dataIds.reduce((acc, dataId) => {
     const layersToFilter = (layers || []).filter(l => l.config.dataId === dataId);
@@ -881,9 +951,17 @@ export function applyFiltersToDatasets(datasetIds, datasets, filters, layers) {
  * @param filterDatasetIndex - field.name
  * @param option
  * @return - {filter, datasets}
- * @type {typeof import('./filter-utils').applyFilterFieldName}
  */
-export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIndex = 0, option) {
+export function applyFilterFieldName(
+  filter: Filter,
+  dataset: KeplerTable,
+  fieldName: string,
+  filterDatasetIndex = 0,
+  option?: {mergeDomain: boolean}
+): {
+  filter: Filter | null;
+  dataset: KeplerTable;
+} {
   // using filterDatasetIndex we can filter only the specified dataset
   const mergeDomain = option && option.hasOwnProperty('mergeDomain') ? option.mergeDomain : false;
 
@@ -915,10 +993,9 @@ export function applyFilterFieldName(filter, dataset, fieldName, filterDatasetIn
 
 /**
  * Merge one filter with other filter prop domain
- * @type {typeof import('./filter-utils').mergeFilterDomainStep}
  */
 /* eslint-disable complexity */
-export function mergeFilterDomainStep(filter, filterProps) {
+export function mergeFilterDomainStep(filter: Filter, filterProps?: any): Filter | null {
   if (!filter) {
     return null;
   }
@@ -950,7 +1027,10 @@ export function mergeFilterDomainStep(filter, filterProps) {
       };
 
     case ALL_FIELD_TYPES.timestamp:
-      const step = filter.step < filterProps.step ? filter.step : filterProps.step;
+      const step =
+        (filter as TimeRangeFilter).step < filterProps.step
+          ? (filter as TimeRangeFilter).step
+          : filterProps.step;
 
       return {
         ...newFilter,
@@ -966,9 +1046,12 @@ export function mergeFilterDomainStep(filter, filterProps) {
 
 /**
  * Generates polygon filter
- * @type {typeof import('./filter-utils').featureToFilterValue}
  */
-export const featureToFilterValue = (feature, filterId, properties = {}) => ({
+export const featureToFilterValue = (
+  feature: Feature,
+  filterId: string,
+  properties?: {}
+): FeatureValue => ({
   ...feature,
   id: feature.id,
   properties: {
@@ -978,17 +1061,13 @@ export const featureToFilterValue = (feature, filterId, properties = {}) => ({
   }
 });
 
-/**
- * @type {typeof import('./filter-utils').getFilterIdInFeature}
- */
-export const getFilterIdInFeature = f => get(f, ['properties', 'filterId']);
+export const getFilterIdInFeature = (f: FeatureValue): string => get(f, ['properties', 'filterId']);
 
 /**
  * Generates polygon filter
- * @type {typeof import('./filter-utils').generatePolygonFilter}
  */
-export function generatePolygonFilter(layers, feature) {
-  const dataId = layers.map(l => l.config.dataId).filter(d => d);
+export function generatePolygonFilter(layers: Layer[], feature: Feature): PolygonFilter {
+  const dataId = layers.map(l => l.config.dataId).filter(notNullorUndefined);
   const layerId = layers.map(l => l.id);
   const name = layers.map(l => l.config.label);
   const filter = getDefaultFilter(dataId);
@@ -1004,9 +1083,8 @@ export function generatePolygonFilter(layers, feature) {
 
 /**
  * Run filter entirely on CPU
- * @type {typeof import('./filter-utils').filterDatasetCPU}
  */
-export function filterDatasetCPU(state, dataId) {
+export function filterDatasetCPU(state: VisState, dataId: string): VisState {
   const datasetFilters = state.filters.filter(f => f.dataId.includes(dataId));
   const dataset = state.datasets[dataId];
 
@@ -1021,11 +1099,18 @@ export function filterDatasetCPU(state, dataId) {
 
 /**
  * Validate parsed filters with datasets and add filterProps to field
- * @type {typeof import('./filter-utils').validateFiltersUpdateDatasets}
  */
-export function validateFiltersUpdateDatasets(state, filtersToValidate = []) {
-  const validated = [];
-  const failed = [];
+export function validateFiltersUpdateDatasets(
+  state: VisState,
+  filtersToValidate: ParsedFilter[] = []
+): {
+  validated: Filter[];
+  failed: Filter[];
+  updatedDatasets: Datasets;
+} {
+  // TODO Better Typings here
+  const validated: any[] = [];
+  const failed: any[] = [];
   const {datasets} = state;
   let updatedDatasets = datasets;
 
@@ -1043,6 +1128,7 @@ export function validateFiltersUpdateDatasets(state, filtersToValidate = []) {
           const layers = state.layers.filter(l => l.config.dataId === dataset.id);
           const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(
             acc.augmentedDatasets[datasetId] || dataset,
+            // @ts-expect-error
             filter,
             layers
           );
@@ -1093,9 +1179,8 @@ export function validateFiltersUpdateDatasets(state, filtersToValidate = []) {
 
 /**
  * Retrieve interval bins for time filter
- * @type {typeof import('./filter-utils').getIntervalBins}
  */
-export function getIntervalBins(filter) {
+export function getIntervalBins(filter: TimeRangeFilter) {
   const {bins} = filter;
   const interval = filter.plotType?.interval;
   if (!interval || !bins || Object.keys(bins).length === 0) {
