@@ -41,10 +41,10 @@ export function hexToRgb(hex: string): RGBColor {
   return [r, g, b];
 }
 
-export function isHexColor(hex: string): hex is HexColor {
+export function isHexColor(hex: string) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 
-  return Boolean(result);
+  return result;
 }
 
 function PadNum(c) {
