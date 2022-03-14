@@ -909,7 +909,7 @@ test('#visStateReducer -> UPDATE_LAYER_BLENDING', t => {
   t.end();
 });
 
-test.only('#visStateReducer -> REMOVE_FILTER', t => {
+test('#visStateReducer -> REMOVE_FILTER', t => {
   const initialState = CloneDeep(StateWFilters.visState);
   // filter[0]: 'time' testCsvData
   // filter[1]: 'RATE' testGeoJsonData
@@ -4616,8 +4616,6 @@ test('#visStateReducer -> APPLY_CPU_FILTER has multi datasets', t => {
 
 test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
   const initialState = CloneDeep(StateWFiles.visState);
-  const previousDataset1 = initialState.datasets[testCsvDataId];
-  const previousKeys = Object.keys(previousDataset1);
 
   // sort with default mode
   const nextState = reducer(initialState, VisStateActions.sortTableColumn());
@@ -4656,14 +4654,6 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
     22,
     21
   ];
-  const newKeys = Object.keys(nextState2.datasets[testCsvDataId]);
-  const addedKeys = newKeys.filter(k => !previousKeys.includes(k));
-
-  t.deepEqual(
-    addedKeys,
-    ['sortColumn', 'sortOrder'],
-    'should add sortColumn and sortOrder to dataset'
-  );
   t.deepEqual(nextState2.datasets[testCsvDataId].sortOrder, expectedOrder, 'should sort correctly');
   t.deepEqual(
     nextState2.datasets[testCsvDataId].sortColumn,
@@ -4738,8 +4728,6 @@ test('#visStateReducer -> updateTableColor', t => {
 test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
   const initialState = CloneDeep(StateWFiles.visState);
 
-  // const previousDataset1 = initialState.datasets[testCsvDataId];
-
   // pin with empty arg
   const nextState = reducer(initialState, VisStateActions.pinTableColumn());
   t.equal(nextState, initialState, 'state should not change when input is not given');
@@ -4750,10 +4738,6 @@ test('#visStateReducer -> PIN_TABLE_COLUMN', t => {
     VisStateActions.pinTableColumn(testCsvDataId, 'gps_data.lat')
   );
 
-  // const newKeys = Object.keys(nextState1.datasets[testCsvDataId]);
-  // const addedKeys = newKeys.filter(k => !Object.keys(previousDataset1).includes(k));
-
-  // t.deepEqual(addedKeys, ['pinnedColumns'], 'should add pinnedColumns to dataset');
   assertDatasetIsTable(t, nextState1.datasets[testCsvDataId]);
 
   t.deepEqual(

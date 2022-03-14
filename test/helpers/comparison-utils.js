@@ -24,8 +24,12 @@ import KeplerTable from '../../src/utils/table-utils/kepler-table';
 
 export function cmpObjectKeys(t, expectedObj, actualObj, name) {
   t.deepEqual(
-    Object.keys(actualObj).sort(),
-    Object.keys(expectedObj).sort(),
+    Object.keys(actualObj)
+      .filter(key => actualObj[key] !== undefined)
+      .sort(),
+    Object.keys(expectedObj)
+      .filter(key => expectedObj[key] !== undefined)
+      .sort(),
     `${name} should have same keys`
   );
 }
@@ -231,51 +235,53 @@ export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
   cmpObjectKeys(t, expectedDataset, actualDataset, `dataset:${expectedDataset.id}`);
 
   // test everything except auto generated color
-  Object.keys(actualDataset).forEach(key => {
-    switch (key) {
-      case 'fields':
-        cmpFields(t, expectedDataset.fields, actualDataset.fields, expectedDataset.id);
-        break;
-      case 'gpuFilter':
-        // test gpuFilter props
-        cmpGpuFilterProp(
-          t,
-          expectedDataset.gpuFilter,
-          actualDataset.gpuFilter,
-          actualDataset.dataContainer
-        );
-        break;
-      case 'filterRecord':
-      case 'filterRecordCPU':
-        cmpObjectKeys(
-          t,
-          expectedDataset[key],
-          actualDataset[key],
-          `dataset.${expectedDataset.id}.${key}`
-        );
-        Object.keys(expectedDataset[key]).forEach(item => {
-          t.ok(
-            Array.isArray(expectedDataset[key][item]),
-            `dataset.${expectedDataset.id}[key].${item} should be an array`
+  Object.keys(actualDataset)
+    .filter(key => actualDataset[key] !== undefined)
+    .forEach(key => {
+      switch (key) {
+        case 'fields':
+          cmpFields(t, expectedDataset.fields, actualDataset.fields, expectedDataset.id);
+          break;
+        case 'gpuFilter':
+          // test gpuFilter props
+          cmpGpuFilterProp(
+            t,
+            expectedDataset.gpuFilter,
+            actualDataset.gpuFilter,
+            actualDataset.dataContainer
           );
-          // compare filter name
-          t.deepEqual(
-            actualDataset[key][item].map(f => f.name),
-            expectedDataset[key][item].map(f => f.name),
-            `dataset.${expectedDataset.id}.${key}.${item} should contain correct filter`
-          );
-        });
-        break;
-      default:
-        if (key !== 'color' || opt.color) {
-          t.deepEqual(
-            actualDataset[key],
+          break;
+        case 'filterRecord':
+        case 'filterRecordCPU':
+          cmpObjectKeys(
+            t,
             expectedDataset[key],
-            `dataset.${expectedDataset.id}.${key} should be correct`
+            actualDataset[key],
+            `dataset.${expectedDataset.id}.${key}`
           );
-        }
-    }
-  });
+          Object.keys(expectedDataset[key]).forEach(item => {
+            t.ok(
+              Array.isArray(expectedDataset[key][item]),
+              `dataset.${expectedDataset.id}[key].${item} should be an array`
+            );
+            // compare filter name
+            t.deepEqual(
+              actualDataset[key][item].map(f => f.name),
+              expectedDataset[key][item].map(f => f.name),
+              `dataset.${expectedDataset.id}.${key}.${item} should contain correct filter`
+            );
+          });
+          break;
+        default:
+          if (key !== 'color' || opt.color) {
+            t.deepEqual(
+              actualDataset[key],
+              expectedDataset[key],
+              `dataset.${expectedDataset.id}.${key} should be correct`
+            );
+          }
+      }
+    });
 }
 
 export function cmpGpuFilterProp(t, expectedGpuFilter, actualGpuFilter, dataContainer) {
