@@ -22,9 +22,9 @@ import {set, toArray} from './utils';
 import {MAX_GPU_FILTERS, FILTER_TYPES} from 'constants/default-settings';
 import {notNullorUndefined} from './data-utils';
 import moment from 'moment';
-import {Filter, Field} from 'reducers/vis-state-updaters';
+import {Filter} from 'reducers/vis-state-updaters';
 import {DataContainerInterface} from './table-utils/data-container-interface';
-import {GpuFilter} from './table-utils/kepler-table';
+import {Field, GpuFilter} from './table-utils/kepler-table';
 
 /**
  * Set gpu mode based on current number of gpu filters exists

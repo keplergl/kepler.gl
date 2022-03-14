@@ -38,7 +38,6 @@ import {
   Filter,
   FilterBase,
   PolygonFilter,
-  KeplerTable,
   Datasets,
   FieldDomain,
   TimeRangeFieldDomain,
@@ -50,14 +49,13 @@ import {
   TimeRangeFilter,
   RangeFieldDomain
 } from '../reducers/vis-state-updaters';
-import {FilterRecord} from './table-utils/kepler-table';
+import KeplerTable, {Field, FilterRecord} from './table-utils/kepler-table';
 import {Layer} from 'layers';
 // import {Field} from 'reducers';
 import {ParsedFilter} from 'schemas';
 import {FilterDatasetOpt} from './table-utils/kepler-table';
 import {DataContainerInterface} from './table-utils/data-container-interface';
 import {Millisecond} from 'cloud-providers';
-import {Field} from 'reducers/vis-state-updaters';
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];
