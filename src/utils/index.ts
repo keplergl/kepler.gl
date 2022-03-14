@@ -53,3 +53,12 @@ export {
   copyTableAndUpdate
 } from './table-utils/kepler-table';
 export {createDataContainer, createIndexedDataContainer} from './table-utils/data-container-utils';
+
+export * from './color-utils';
+export * from './data-scale-utils';
+export * from './data-utils';
+export * from './dataset-utils';
+export * from './gpu-filter-utils';
+export * from './interaction-utils';
+export * from './layer-utils';
+export * from './observe-dimensions';

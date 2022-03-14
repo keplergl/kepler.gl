@@ -21,6 +21,12 @@
 import throttle from 'lodash.throttle';
 import {useEffect, useRef, useState} from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
+import {RefObject} from 'react';
+
+export interface Dimensions {
+  readonly height: number;
+  readonly width: number;
+}
 
 const DEFAULT_THROTTLE_DELAY = 100;
 
@@ -51,13 +57,17 @@ function getObserverRegistry() {
   return _observerRegistry;
 }
 
-export function observeDimensions(target, handleResize, throttleDelay = DEFAULT_THROTTLE_DELAY) {
+export function observeDimensions(
+  target: Element,
+  handleResize: (size: Dimensions) => void,
+  throttleDelay = DEFAULT_THROTTLE_DELAY
+) {
   const registry = getObserverRegistry();
   const handler = throttleDelay > 0 ? throttle(handleResize, throttleDelay) : handleResize;
   registry.subscribe(target, entry => handler(getSize(target, entry)));
 }
 
-export function unobserveDimensions(target) {
+export function unobserveDimensions(target: Element) {
   const registry = getObserverRegistry();
   registry.unsubscribe(target);
 }
@@ -79,9 +89,11 @@ function getSize(node, entry) {
  * const [ref, dimensions] = useDimensions<HTMLDivElement>();
  *
  * @param throttleDelay
- * @returns {[React.RefObject<Element>, {width: number, height: number} | null]}
+ * @returns
  */
-export default function useDimensions(throttleDelay = DEFAULT_THROTTLE_DELAY) {
+export default function useDimensions<T extends Element>(
+  throttleDelay = DEFAULT_THROTTLE_DELAY
+): [RefObject<T>, Dimensions | null] {
   const ref = useRef(null);
   const [size, setSize] = useState(null);
 

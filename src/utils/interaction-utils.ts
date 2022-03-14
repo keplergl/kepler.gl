@@ -33,13 +33,16 @@ import {
 import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons/index';
 import {TOOLTIP_FORMATS, TOOLTIP_KEY, COMPARE_TYPES} from 'constants/tooltip';
 
-// \u2212 is the minus sign that d3-format uses for decimal number formatting
-export const TOOLTIP_MINUS_SIGN = '\u2212';
+import {InteractionConfig, Field, TooltipField, CompareType} from '../reducers/vis-state-updaters';
+import {DataRow} from './table-utils/data-row';
 
 /**
- * @type {typeof import('./interaction-utils').getDefaultInteraction}
+ * Minus sign used in tooltip formatting.
+ * \u2212 is the minus sign that d3-format uses for decimal number formatting
  */
-export function getDefaultInteraction() {
+export const TOOLTIP_MINUS_SIGN = '\u2212';
+
+export function getDefaultInteraction(): InteractionConfig {
   return {
     tooltip: {
       id: 'tooltip',
@@ -79,14 +82,23 @@ export function getDefaultInteraction() {
   };
 }
 
-export const BRUSH_CONFIG = {
+export const BRUSH_CONFIG: {
+  range: [number, number];
+} = {
   range: [0, 50]
 };
 
-/**
- * @type {typeof import('./interaction-utils').findFieldsToShow}
- */
-export function findFieldsToShow({fields, id, maxDefaultTooltips}) {
+export function findFieldsToShow({
+  fields,
+  id,
+  maxDefaultTooltips
+}: {
+  fields: Field[];
+  id: string;
+  maxDefaultTooltips: number;
+}): {
+  [key: string]: string[];
+} {
   // first find default tooltip fields for trips
   const fieldsToShow = DEFAULT_TOOLTIP_FIELDS.reduce((prev, curr) => {
     if (fields.find(({name}) => curr.name === name)) {
@@ -137,8 +149,15 @@ export function getTooltipDisplayDeltaValue({
   data,
   fieldIdx,
   item
-}) {
-  let displayDeltaValue = null;
+}: {
+  item: TooltipField;
+  field: Field;
+  data: DataRow;
+  fieldIdx: number;
+  primaryData: DataRow;
+  compareType: CompareType;
+}): string | null {
+  let displayDeltaValue: string | null = null;
 
   if (
     primaryData &&
@@ -170,10 +189,17 @@ export function getTooltipDisplayDeltaValue({
   return displayDeltaValue;
 }
 
-/**
- * @type {typeof import('./interaction-utils').getTooltipDisplayValue}
- */
-export function getTooltipDisplayValue({item, field, data, fieldIdx}) {
+export function getTooltipDisplayValue({
+  item,
+  field,
+  data,
+  fieldIdx
+}: {
+  item: TooltipField;
+  field: Field;
+  data: DataRow;
+  fieldIdx: number;
+}): string {
   const dataValue = data.valueAt(fieldIdx);
   if (!notNullorUndefined(dataValue)) {
     return '';
