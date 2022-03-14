@@ -53,8 +53,10 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
   const layerProps = (Object.keys(layerClasses) as Array<keyof LayerClassesType>).reduce(
     (previous, lc) => {
       const result =
-        typeof Layer.findDefaultLayerProps === 'function'
-          ? Layer.findDefaultLayerProps(dataset, previous)
+        // @ts-expect-error
+        typeof layerClasses[lc].findDefaultLayerProps === 'function'
+          ? // @ts-expect-error
+            layerClasses[lc].findDefaultLayerProps(dataset, previous)
           : {props: []};
 
       const props = Array.isArray(result) ? result : result.props || [];
