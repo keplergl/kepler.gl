@@ -263,7 +263,6 @@ export function validateFilter(dataset, filter) {
  * @type {typeof import('./filter-utils').validateFilterWithData}
  */
 export function validateFilterWithData(dataset, filter, layers) {
-  // @ts-ignore
   return filterValidators.hasOwnProperty(filter.type)
     ? filterValidators[filter.type](dataset, filter, layers)
     : validateFilter(dataset, filter);
@@ -430,7 +429,6 @@ export function getFilterFunction(field, dataId, filter, layers, dataContainer) 
       if (!layers || !layers.length) {
         return defaultFunc;
       }
-      // @ts-ignore
       const layerFilterFunctions = filter.layerId
         .map(id => layers.find(l => l.id === id))
         .filter(l => l && l.config.dataId === dataId)
@@ -467,13 +465,11 @@ export function filterDataByFilterTypes(
 
     const matchForDomain = dynamicDomainFilters && dynamicDomainFilters.every(filterFuncCaller);
     if (matchForDomain) {
-      // @ts-ignore
       result.filteredIndexForDomain.push(filterContext.index);
     }
 
     const matchForRender = cpuFilters && cpuFilters.every(filterFuncCaller);
     if (matchForRender) {
-      // @ts-ignore
       result.filteredIndex.push(filterContext.index);
     }
   }
@@ -546,7 +542,6 @@ export function diffFilters(filterRecord, oldFilterRecord = {}) {
     }
   });
 
-  // @ts-ignore
   return filterChanged;
 }
 /**
@@ -613,7 +608,6 @@ export function getNumericFieldDomain(dataContainer, valueAccessor) {
     domain[1] = formatNumberByStep(domain[1], step, 'ceil');
   }
 
-  // @ts-ignore
   const {histogram, enlargedHistogram} = getHistogram(domain, mappedValue);
 
   return {domain, step, histogram, enlargedHistogram};
@@ -956,7 +950,6 @@ export function mergeFilterDomainStep(filter, filterProps) {
       };
 
     case ALL_FIELD_TYPES.timestamp:
-      // @ts-ignore
       const step = filter.step < filterProps.step ? filter.step : filterProps.step;
 
       return {
@@ -998,7 +991,6 @@ export function generatePolygonFilter(layers, feature) {
   const dataId = layers.map(l => l.config.dataId).filter(d => d);
   const layerId = layers.map(l => l.id);
   const name = layers.map(l => l.config.label);
-  // @ts-ignore
   const filter = getDefaultFilter(dataId);
   return {
     ...filter,

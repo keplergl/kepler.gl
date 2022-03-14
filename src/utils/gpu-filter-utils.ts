@@ -218,9 +218,7 @@ export function getGpuFilterProps(filters, dataId, fields) {
         f.gpuChannel[f.dataId.indexOf(dataId)] === i
     );
 
-    // @ts-ignore
     filterRange[i][0] = filter ? filter.value[0] - filter.domain[0] : 0;
-    // @ts-ignore
     filterRange[i][1] = filter ? filter.value[1] - filter.domain[0] : 0;
 
     triggers[`gpuFilter_${i}`] = filter ? filter.name[filter.dataId.indexOf(dataId)] : null;
