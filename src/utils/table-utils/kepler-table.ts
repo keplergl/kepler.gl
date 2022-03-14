@@ -47,11 +47,12 @@ import {ALL_FIELD_TYPES, SCALE_TYPES} from 'constants/default-settings';
 
 import {createDataContainer} from './data-container-utils';
 
-import {RGBColor} from '../../reducers/types';
+import {RGBColor} from 'reducers/types';
 import {Layer} from 'layers';
-import {Filter} from '../../reducers/vis-state-updaters';
-import {FieldDomain, ProtoDataset} from '../../reducers/vis-state-updaters';
+import {Filter} from 'reducers/vis-state-updaters';
+import {FieldDomain} from 'reducers/vis-state-updaters';
 import {DataContainerInterface} from './data-container-interface';
+import {ProtoDataset} from 'actions';
 
 export type Field = {
   analyzerType: string;
