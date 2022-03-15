@@ -2,6 +2,22 @@
 // @ts-nocheck
 import {DataContainerInterface} from './data-container-interface';
 
+/**
+ * Setting for shared row optimization.
+ * - False/undefined indicates that unique row objects should be used (default).
+ * - True indicates that a single temporary row object should be created and used without extra allocations.
+ * - A DataRow object indicates that the row should be used as a temporary shared row.
+ * When used, the content of the shared row isn't preserved between calls.
+ */
+export type SharedRowOptions = DataRow | boolean | undefined;
+
+/**
+ * Return type for createSharedRow:
+ * - DataRow object that should be used as shared row.
+ * - Falsy values indicate that shared row object shouldn't be used.
+ */
+export type SharedRowOptionsResult = DataRow | false | undefined;
+
 export class DataRow {
   /**
    * Creates new DataRow.
