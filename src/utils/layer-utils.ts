@@ -21,14 +21,8 @@
 import {OVERLAY_TYPE} from 'layers/base-layer';
 import {GEOCODER_LAYER_ID} from 'constants/default-settings';
 import {Layer, LayerClassesType} from 'layers';
-import {
-  VisState,
-  KeplerTable,
-  TooltipField,
-  CompareType,
-  SplitMapLayers
-} from 'reducers/vis-state-updaters';
-import {Field} from 'reducers/vis-state-updaters';
+import {VisState, TooltipField, CompareType, SplitMapLayers} from 'reducers/vis-state-updaters';
+import KeplerTable, {Field} from './table-utils/kepler-table';
 
 export type LayersToRender = {
   [layerId: string]: boolean;

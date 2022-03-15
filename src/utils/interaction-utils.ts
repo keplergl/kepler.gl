@@ -33,8 +33,9 @@ import {
 import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons/index';
 import {TOOLTIP_FORMATS, TOOLTIP_KEY, COMPARE_TYPES} from 'constants/tooltip';
 
-import {InteractionConfig, Field, TooltipField, CompareType} from '../reducers/vis-state-updaters';
+import {InteractionConfig, TooltipField, CompareType} from '../reducers/vis-state-updaters';
 import {DataRow} from './table-utils/data-row';
+import {Field} from './table-utils/kepler-table';
 
 /**
  * Minus sign used in tooltip formatting.
