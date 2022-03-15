@@ -38,7 +38,9 @@ export type SharedRowOptionsResult = DataRow | false | undefined;
 
 export class DataRow {
   _dataContainer: DataContainerInterface | null;
+
   _rowIndex: number;
+
   /**
    * Creates new DataRow.
    * @param dataContainer Data container where data is stored. Can be initialized with null for shared rows.
