@@ -431,6 +431,8 @@ export const actionPanelHeight = 32;
 
 // Styled Token
 export const fieldTokenRightMargin = 4;
+export const fieldTokenHeight = 20;
+export const fieldTokenWidth = 40;
 
 export const textTruncate = {
   maxWidth: '100%',
@@ -1524,7 +1526,9 @@ export const theme = {
   layerConfiguratorPadding,
 
   // Styled token
-  fieldTokenRightMargin
+  fieldTokenRightMargin,
+  fieldTokenHeight,
+  fieldTokenWidth
 };
 
 export const themeLT = {

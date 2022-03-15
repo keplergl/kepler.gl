@@ -26,6 +26,10 @@ const MIN_CELL_SIZE = 45;
 // first column have padding on the left
 const EDGE_COLUMN_PADDING = 10;
 
+// in case cell content is small, column name is big, we allow max empty space to
+// be added to min cell width in order to show column name
+const MAX_EMPTY_COLUMN_SPACE = 60;
+
 type RenderSizeParam = {
   text: {dataContainer: DataContainerInterface; column: string};
   type?: string;
@@ -100,7 +104,9 @@ export function renderedSize({
   const headerWidth =
     Math.ceil(context.measureText(column).width) + cellPadding / 2 + optionsButton;
 
+  // min row width is measured by cell content
   const minRowWidth = minCellSize + cellPadding;
+  // min header width is measured by cell
   const minHeaderWidth = minCellSize + cellPadding / 2 + optionsButton;
 
   const clampedRowWidth = clamp(minRowWidth, maxCellSize, rowWidth);
@@ -123,11 +129,17 @@ function getColumnOrder(pinnedColumns: string[] = [], unpinnedColumns: string[] 
   return [...pinnedColumns, ...unpinnedColumns];
 }
 
+// If total min cell size is bigger than containerWidth adjust column
 function getMinCellSize(cellSizeCache: CellSizeCache) {
   return Object.keys(cellSizeCache).reduce(
     (accu, col) => ({
       ...accu,
-      [col]: cellSizeCache[col].row
+      // if row is larger than header, use row
+      [col]:
+        cellSizeCache[col].row > cellSizeCache[col].header
+          ? cellSizeCache[col].row
+          : // if row is smaller than header, use the smaller of MAX_EMPTY_COLUMN_SPACE + row width and header
+            Math.min(cellSizeCache[col].header, cellSizeCache[col].row + MAX_EMPTY_COLUMN_SPACE)
     }),
     {}
   );

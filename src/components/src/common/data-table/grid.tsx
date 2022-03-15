@@ -25,6 +25,35 @@ import isEqual from 'lodash.isequal';
 export default class GridHack extends PureComponent<GridProps> {
   grid: Grid | null = null;
 
+  _preventScrollBack = e => {
+    const {scrollLeft} = this.props;
+    if (scrollLeft <= 0 && e.deltaX < 0) {
+      // Prevent Scroll On Scrollable Elements, avoid browser backward navigation
+      // https://alvarotrigo.com/blog/prevent-scroll-on-scrollable-element-js/
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+    return;
+  };
+  _updateRef = x => {
+    if (!this.grid && x) {
+      this.grid = x;
+      /*
+       * This hack exists because we need to add wheel event listener to the div rendered by Grid
+       *
+       */
+      this.grid?._scrollingContainer?.addEventListener('wheel', this._preventScrollBack, {
+        passive: false
+      });
+    }
+  };
+  componentWillUnmount() {
+    this.grid?._scrollingContainer?.removeEventListener('wheel', this._preventScrollBack, {
+      passive: false
+    });
+  }
+
   componentDidUpdate(preProps) {
     /*
      * This hack exists because in react-virtualized the
@@ -47,7 +76,7 @@ export default class GridHack extends PureComponent<GridProps> {
       <Grid
         ref={x => {
           if (setGridRef) setGridRef(x);
-          this.grid = x;
+          this._updateRef(x);
         }}
         key="grid-hack"
         {...rest}

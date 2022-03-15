@@ -65,19 +65,19 @@ const expectedCellSizeCache = {
 
 const expectedExpandedCellSize = {
   cellSizeCache: {
-    'gps_data.utc_timestamp': 155,
-    'gps_data.lat': 96,
-    'gps_data.lng': 96,
+    'gps_data.utc_timestamp': 160,
+    'gps_data.lat': 108,
+    'gps_data.lng': 110,
     'gps_data.types': 125,
     epoch: 121,
-    has_result: 75,
-    uid: 75,
+    has_result: 99,
+    uid: 90,
     time: 180,
     begintrip_ts_utc: 182,
     begintrip_ts_local: 182,
-    date: 95
+    date: 143
   },
-  ghost: undefined
+  ghost: null
 };
 
 // This is to Mock Canvas.measureText response which we will not be testing
@@ -275,7 +275,7 @@ test('Components -> DataTableModal -> render DataTable: csv 1', t => {
   const enriched = {
     ...props,
     cellSizeCache: expectedCellSizeCache,
-    fixedWidth: 1300,
+    fixedWidth: 1500,
     fixedHeight: 800,
     theme: {}
   };
@@ -545,9 +545,9 @@ test('Components -> cellSize -> renderedSize', t => {
     .props();
 
   const expected = {
-    _geojson: {row: 500, header: 206},
-    'income level of people over 65': {row: 182, header: 223},
-    engagement: {row: 182, header: 206}
+    _geojson: {row: 500, header: 186},
+    'income level of people over 65': {row: 162, header: 223},
+    engagement: {row: 162, header: 186}
   };
 
   t.deepEqual(

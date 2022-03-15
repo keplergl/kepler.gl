@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef} from 'react';
+import React, {Component, createRef, useMemo} from 'react';
 import {ScrollSync, AutoSizer, OnScrollParams, GridProps, Index} from 'react-virtualized';
 import styled, {withTheme} from 'styled-components';
 import classnames from 'classnames';
@@ -42,9 +42,21 @@ const defaultHeaderStatsControlHeight = 40;
 const defaultRowHeight = 32;
 const overscanColumnCount = 10;
 const overscanRowCount = 10;
+// The default scrollbar width can range anywhere from 12px to 17px
+const browserScrollBarWidth = 17;
 const fieldToAlignRight = {
   [ALL_FIELD_TYPES.integer]: true,
   [ALL_FIELD_TYPES.real]: true
+};
+
+const pinnedClassList = {
+  header: 'pinned-columns--header pinned-grid-container',
+  rows: 'pinned-columns--rows pinned-grid-container'
+};
+
+const unpinnedClassList = {
+  header: 'unpinned-columns--header unpinned-grid-container',
+  rows: 'unpinned-columns--rows unpinned-grid-container'
 };
 
 export const Container = styled.div`
@@ -78,6 +90,15 @@ export const Container = styled.div`
     flex-grow: 1;
     overflow: hidden;
     border-top: none;
+
+    .scroll-in-ui-thread.pinned-columns--header,
+    .scroll-in-ui-thread.unpinned-columns--header {
+      width: 100vw;
+      overflow: hidden;
+      border-bottom: 1px solid ${props => props.theme.cellBorderColor};
+      // leave room for scrollbar
+      padding-bottom: ${browserScrollBarWidth}px;
+    }
 
     .scroll-in-ui-thread::after {
       content: '';
@@ -123,7 +144,8 @@ export const Container = styled.div`
       align-items: flex-start;
       text-align: center;
       overflow: hidden;
-
+      // header border is rendered by header container
+      border-bottom: 0;
       .n-sort-idx {
         font-size: 9px;
       }
@@ -301,49 +323,69 @@ export const TableSection = ({
   headerCellRender,
   dataCellRender,
   scrollLeft = 0
-}: TableSectionProps) => (
-  <AutoSizer>
-    {({width, height}) => {
-      const gridDimension = {
-        columnCount: columns.length,
-        columnWidth,
-        width: fixedWidth || width
-      };
-      const dataGridHeight = fixedHeight || height;
-      return (
-        <>
-          <div className={classnames('scroll-in-ui-thread', classList?.header)}>
-            <Grid
-              cellRenderer={headerCellRender}
-              {...headerGridProps}
-              {...gridDimension}
-              scrollLeft={scrollLeft}
-              onScroll={onScroll}
-            />
-          </div>
-          <div
-            className={classnames('scroll-in-ui-thread', classList?.rows)}
-            style={{
-              top: headerGridProps.height
-            }}
-          >
-            <Grid
-              cellRenderer={dataCellRender}
-              {...dataGridProps}
-              {...gridDimension}
-              className={isPinned ? 'pinned-grid' : 'body-grid'}
-              height={dataGridHeight - headerGridProps.height}
-              onScroll={onScroll}
-              scrollLeft={scrollLeft}
-              scrollTop={scrollTop}
-              setGridRef={setGridRef}
-            />
-          </div>
-        </>
-      );
-    }}
-  </AutoSizer>
-);
+}: TableSectionProps) => {
+  const headerHeight = headerGridProps.height;
+
+  const headerStyle = useMemo(
+    () => ({
+      height: `${headerHeight}px`
+    }),
+    [headerHeight]
+  );
+  const contentStyle = useMemo(
+    () => ({
+      top: `${headerHeight}px`
+    }),
+    [headerHeight]
+  );
+
+  return (
+    <AutoSizer>
+      {({width, height}) => {
+        const gridDimension = {
+          columnCount: columns.length,
+          columnWidth,
+          width: fixedWidth || width
+        };
+        const dataGridHeight = fixedHeight || height;
+
+        return (
+          <>
+            <div
+              className={classnames('scroll-in-ui-thread', classList?.header)}
+              style={headerStyle}
+            >
+              <Grid
+                cellRenderer={headerCellRender}
+                {...headerGridProps}
+                {...gridDimension}
+                height={headerGridProps.height + browserScrollBarWidth}
+                scrollLeft={scrollLeft}
+                onScroll={onScroll}
+              />
+            </div>
+            <div
+              className={classnames('scroll-in-ui-thread', classList?.rows)}
+              style={contentStyle}
+            >
+              <Grid
+                cellRenderer={dataCellRender}
+                {...dataGridProps}
+                {...gridDimension}
+                className={isPinned ? 'pinned-grid' : 'body-grid'}
+                height={dataGridHeight - headerGridProps.height}
+                onScroll={onScroll}
+                scrollLeft={scrollLeft}
+                scrollTop={scrollTop}
+                setGridRef={setGridRef}
+              />
+            </div>
+          </>
+        );
+      }}
+    </AutoSizer>
+  );
+};
 
 export interface DataTableProps {
   dataId?: string;
@@ -574,16 +616,14 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
                       {hasPinnedColumns && (
                         <div key="pinned-columns" className="pinned-columns grid-row">
                           <TableSection
-                            classList={{
-                              header: 'pinned-columns--header pinned-grid-container',
-                              rows: 'pinned-columns--rows pinned-grid-container'
-                            }}
+                            classList={pinnedClassList}
                             isPinned
                             columns={pinnedColumns}
                             headerGridProps={headerGridProps}
                             fixedWidth={pinnedColumnsWidth}
                             onScroll={args => onScroll({...args, scrollLeft})}
                             scrollTop={scrollTop}
+                            scrollLeft={scrollLeft}
                             dataGridProps={dataGridProps}
                             setGridRef={pinnedGrid => (this.pinnedGrid = pinnedGrid)}
                             columnWidth={columnWidthFunction(pinnedColumns, cellSizeCache)}
@@ -606,10 +646,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
                         className="unpinned-columns grid-column"
                       >
                         <TableSection
-                          classList={{
-                            header: 'unpinned-columns--header unpinned-grid-container',
-                            rows: 'unpinned-columns--rows unpinned-grid-container'
-                          }}
+                          classList={unpinnedClassList}
                           isPinned={false}
                           columns={unpinnedColumnsGhost}
                           headerGridProps={headerGridProps}
