@@ -140,7 +140,7 @@ export const ModalFooter = ({cancel, confirm, cancelButton, confirmButton}) => {
   );
 };
 
-interface ModalDialogProps {
+export interface ModalDialogProps {
   footer: boolean;
   close: boolean;
   isOpen: boolean;

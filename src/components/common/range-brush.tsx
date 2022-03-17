@@ -48,7 +48,7 @@ function moveRight(startSel, selection) {
 }
 // style brush resize handle
 // https://github.com/crossfilter/crossfilter/blob/gh-pages/index.html#L466
-const getHandlePath = props => {
+const getHandlePath = (props: RangeBrushProps) => {
   return function brushResizePath(d) {
     const e = Number(d.type === 'e');
     const x = e ? 1 : -1;
@@ -70,6 +70,7 @@ export interface RangeBrushProps {
   onBrushStart: () => void;
   onBrushEnd: () => void;
   width: number;
+  height: number;
   onBrush: OnBrush;
   step?: number;
   marks?: number[];

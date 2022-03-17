@@ -36,9 +36,9 @@ interface StyledSliderContainerProps {
 
 const StyledSliderContainer = styled.div<StyledSliderContainerProps>`
   align-items: flex-end;
-  edisplay: flex;
+  display: flex;
   flex-direction: row;
-  eejustify-content: space-between;
+  justify-content: space-between;
   padding-left: ${props => (props.isEnlarged ? 24 : 0)}px;
 
   .timeline-container .kg-slider {

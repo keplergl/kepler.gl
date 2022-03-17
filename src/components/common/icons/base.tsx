@@ -75,6 +75,8 @@ export default class Base extends Component<BaseProps> {
     const fillStyle =
       Array.isArray(colors) && totalColor && getStyleClassFromColor(totalColor, colors);
 
+    const nop = () => {};
+
     return (
       <svg
         viewBox={viewBox}
@@ -82,7 +84,7 @@ export default class Base extends Component<BaseProps> {
         height={svgHeight}
         style={style}
         className={`${predefinedClassName} ${className}`}
-        onClick={() => {}}
+        onClick={nop}
         {...props}
       >
         {fillStyle ? <style type="text/css">{fillStyle}</style> : null}
