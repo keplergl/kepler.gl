@@ -20,8 +20,150 @@
 
 import keyMirror from 'keymirror';
 
-import {AGGREGATION_TYPES} from 'constants/default-settings';
-import {DEFAULT_COLOR_RANGE} from 'constants/color-ranges';
+import {AGGREGATION_TYPES} from '../constants/default-settings';
+import {DEFAULT_COLOR_RANGE} from '../constants/color-ranges';
+
+import {RGBColor, RGBAColor, HexColor} from '../reducers';
+import {Field} from '../utils/table-utils/kepler-table';
+
+export type ColorRange = {
+  name: string;
+  type: string;
+  category: string;
+  colors: HexColor[];
+  reversed?: boolean;
+  colorMap?: Map | object;
+};
+
+export type LayerTextLabel = {
+  field: Field | null;
+  color: RGBColor;
+  size: number;
+  offset: [number, number];
+  anchor: string;
+  alignment: string;
+};
+
+export type ColorUI = {
+  // customPalette in edit
+  customPalette: ColorRange;
+  // show color sketcher modal
+  showSketcher: boolean;
+  // show color range selection panel
+  showDropdown: boolean;
+  // color range selector config
+  colorRangeConfig: {
+    type: string;
+    steps: number;
+    reversed: boolean;
+    custom: boolean;
+  };
+};
+
+export type VisConfig = {
+  label: string | ((config: LayerCofig) => string);
+  group: string;
+  property: string;
+  description?: string;
+  condition?: (config: LayerConfig) => boolean;
+};
+
+export type VisConfigNumber = VisConfig & {
+  type: 'number';
+  isRanged: false;
+  defaultValue: number;
+  range: [number, number];
+  step: number;
+};
+
+export type VisConfigBoolean = VisConfig & {
+  type: 'boolean';
+  defaultValue: boolean;
+};
+
+export type VisConfigSelection = VisConfig & {
+  type: 'select';
+  defaultValue: string;
+  options: string[];
+};
+
+export type VisConfigRange = VisConfig & {
+  type: 'number';
+  isRanged: boolean;
+  range: [number, number];
+  defaultValue: [number, number];
+  step: number;
+};
+
+export type VisConfigColorSelect = VisConfig & {
+  type: 'color-select';
+  defaultValue: null;
+};
+
+export type VisConfigColorRange = VisConfig & {
+  type: 'color-range-select';
+  defaultValue: ColorRange;
+};
+
+export type LayerVisConfig = {
+  thickness: VisConfigNumber;
+  strokeWidthRange: VisConfigRange;
+  trailLength: VisConfigNumber;
+  radius: VisConfigNumber;
+  fixedRadius: VisConfigBoolean;
+  radiusRange: VisConfigRange;
+  clusterRadius: VisConfigNumber;
+  clusterRadiusRange: VisConfigRange;
+  opacity: VisConfigNumber;
+  coverage: VisConfigNumber;
+  outline: VisConfigBoolean;
+  colorRange: VisConfigColorRange;
+  strokeColorRange: VisConfigColorRange;
+  targetColor: VisConfigColorSelect;
+  strokeColor: VisConfigColorSelect;
+  aggregation: VisConfigSelect;
+  sizeAggregation: VisConfigSelect;
+  percentile: VisConfigRange;
+  elevationPercentile: VisConfigRange;
+  resolution: VisConfigNumber;
+  sizeScale: VisConfigNumber;
+  angle: VisConfigNumber;
+  worldUnitSize: VisConfigNumber;
+  elevationScale: VisConfigNumber;
+  enableElevationZoomFactor: VisConfigBoolean;
+  elevationRange: VisConfigRange;
+  heightRange: VisConfigRange;
+  coverageRange: VisConfigRange;
+  'hi-precision': VisConfigBoolean;
+  enable3d: VisConfigBoolean;
+  stroked: VisConfigBoolean;
+  filled: VisConfigBoolean;
+  extruded: VisConfigBoolean;
+  wireframe: VisConfigBoolean;
+  weight: VisConfigNumber;
+  heatmapRadius: VisConfigNumber;
+};
+
+export type TextConfigSelect = {
+  type: 'select';
+  options: string[];
+  multiSelect: boolean;
+  searchable: boolean;
+};
+export type TextConfigNumber = {
+  type: 'number';
+  range: number[];
+  value0: number;
+  step: number;
+  isRanged: boolean;
+  label: string;
+  showInput: boolean;
+};
+export type LayerTextConfig = {
+  fontSize: TextConfigNumber;
+  textAnchor: TextConfigSelect;
+  textAlignment: TextConfigSelect;
+};
 
 export const PROPERTY_GROUPS = keyMirror({
   color: null,
@@ -35,12 +177,11 @@ export const PROPERTY_GROUPS = keyMirror({
 });
 
 export const DEFAULT_LAYER_OPACITY = 0.8;
-export const DEFAULT_HIGHLIGHT_COLOR = [252, 242, 26, 255];
+export const DEFAULT_HIGHLIGHT_COLOR: RGBAColor = [252, 242, 26, 255];
 export const DEFAULT_LAYER_LABEL = 'new layer';
 export {DEFAULT_COLOR_RANGE};
 
-/** @type {import('./layer-factory').LayerTextLabel} */
-export const DEFAULT_TEXT_LABEL = {
+export const DEFAULT_TEXT_LABEL: LayerTextLabel = {
   field: null,
   color: [255, 255, 255],
   size: 18,
@@ -49,8 +190,7 @@ export const DEFAULT_TEXT_LABEL = {
   alignment: 'center'
 };
 
-/** @type {import('./layer-factory').ColorRange} */
-export const DEFAULT_CUSTOM_PALETTE = {
+export const DEFAULT_CUSTOM_PALETTE: ColorRange = {
   name: 'color.customPalette',
   type: 'custom',
   category: 'Custom',
@@ -59,8 +199,7 @@ export const DEFAULT_CUSTOM_PALETTE = {
 
 export const UNKNOWN_COLOR_KEY = '__unknownColor__';
 
-/** @type {import('./layer-factory').ColorUI} */
-export const DEFAULT_COLOR_UI = {
+export const DEFAULT_COLOR_UI: ColorUI = {
   // customPalette in edit
   customPalette: DEFAULT_CUSTOM_PALETTE,
   // show color sketcher modal
@@ -76,8 +215,7 @@ export const DEFAULT_COLOR_UI = {
   }
 };
 
-/** @type {import('./layer-factory').LayerVisConfig} */
-export const LAYER_VIS_CONFIGS = {
+export const LAYER_VIS_CONFIGS: LayerVisConfig = {
   thickness: {
     type: 'number',
     defaultValue: 2,
@@ -444,8 +582,7 @@ export const LAYER_VIS_CONFIGS = {
   }
 };
 
-/** @type {import('./layer-factory').LayerTextConfig} */
-export const LAYER_TEXT_CONFIGS = {
+export const LAYER_TEXT_CONFIGS: LayerTextConfig = {
   fontSize: {
     type: 'number',
     range: [1, 100],
