@@ -18,15 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Layer from '../base-layer';
+import Layer, {LayerColumns} from '../base-layer';
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
 
-import {hexToRgb} from 'utils/color-utils';
+import {hexToRgb} from '../../utils/color-utils';
 import ArcLayerIcon from './arc-layer-icon';
-import {DEFAULT_LAYER_COLOR} from 'constants/default-settings';
+import {DEFAULT_LAYER_COLOR} from '../../constants/default-settings';
+import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
+import {RGBColor, RGBAColor, MapState, Filter, Datasets} from '../../reducers';
 
-export const arcPosAccessor = ({lat0, lng0, lat1, lng1}) => dc => d => [
+export const arcPosAccessor = ({lat0, lng0, lat1, lng1}: LayerColumns) => (
+  dc: DataContainerInterface
+) => d => [
   dc.valueAt(d.index, lng0.fieldIdx),
   dc.valueAt(d.index, lat0.fieldIdx),
   0,
@@ -111,18 +115,17 @@ export default class ArcLayer extends Layer {
       return {props: []};
     }
 
-    const props = {
-      color: hexToRgb(DEFAULT_LAYER_COLOR.tripArc)
+    const props: {color: RGBColor; columns: LayerColumns; label: string} = {
+      color: hexToRgb(DEFAULT_LAYER_COLOR.tripArc),
+      // connect the first two point layer with arc
+      columns: {
+        lat0: fieldPairs[0].pair.lat,
+        lng0: fieldPairs[0].pair.lng,
+        lat1: fieldPairs[1].pair.lat,
+        lng1: fieldPairs[1].pair.lng
+      },
+      label: `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} arc`
     };
-
-    // connect the first two point layer with arc
-    props.columns = {
-      lat0: fieldPairs[0].pair.lat,
-      lng0: fieldPairs[0].pair.lng,
-      lat1: fieldPairs[1].pair.lat,
-      lng1: fieldPairs[1].pair.lng
-    };
-    props.label = `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} arc`;
 
     return {props: [props]};
   }
