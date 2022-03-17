@@ -54,7 +54,7 @@
     "docs": "babel-node ./scripts/documentation.js",
     "typedoc": "typedoc --theme markdown --out typedoc --inputFiles ./src/reducers --inputFiles ./src/actions --excludeExternals --excludeNotExported --excludePrivate",
     "example-version": "babel-node ./scripts/edit-version.js",
-    "prettier-all": "prettier --write '{src,examples,test}/**/*.js'",
+    "prettier-all": "prettier --write '{src,examples,test}/**/*.{js,tsx,ts}'",
     "lint": "yarn typescript && eslint src test webpack examples/*.js examples/**/src website/*.js website/src --fix",
     "lint:css": "stylelint './src/**/*.js'",
     "typescript": "tsc --noEmit",

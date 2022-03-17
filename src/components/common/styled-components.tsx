@@ -301,7 +301,7 @@ export const Button = styled.div.attrs(props => ({
 `;
 
 interface InputProps {
-  secondary?: boolean
+  secondary?: boolean;
 }
 
 export const Input = styled.input<InputProps>`

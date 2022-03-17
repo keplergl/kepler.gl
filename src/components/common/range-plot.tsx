@@ -20,11 +20,11 @@
 
 import React, {useState, useCallback} from 'react';
 import styled, {withTheme} from 'styled-components';
-import RangeBrushFactory, { OnBrush, RangeBrushProps } from './range-brush';
+import RangeBrushFactory, {OnBrush, RangeBrushProps} from './range-brush';
 import HistogramPlotFactory from './histogram-plot';
-import LineChartFactory, { HoverDP } from './line-chart';
+import LineChartFactory, {HoverDP} from './line-chart';
 import {isTest} from 'utils/utils';
-import { LineChart } from 'reducers';
+import {LineChart} from 'reducers';
 
 const StyledRangePlot = styled.div`
   margin-bottom: ${props => props.theme.sliderBarHeight}px;
@@ -33,16 +33,16 @@ const StyledRangePlot = styled.div`
 `;
 
 interface RangePlotProps {
-  onBrush: OnBrush,
-  range: number[],
-  value: number[],
-  width: number,
-  plotType?: string,
-  lineChart: LineChart,
-  histogram?: {x0: number, x1: number}[],
-  isEnlarged?: boolean,
-  isRanged?: boolean,
-  theme: any,
+  onBrush: OnBrush;
+  range: number[];
+  value: number[];
+  width: number;
+  plotType?: string;
+  lineChart: LineChart;
+  histogram?: {x0: number; x1: number}[];
+  isEnlarged?: boolean;
+  isRanged?: boolean;
+  theme: any;
   timeFormat: string;
   timezone?: string;
   playbackControlWidth?: number;
@@ -51,10 +51,10 @@ interface RangePlotProps {
 RangePlotFactory.deps = [RangeBrushFactory, HistogramPlotFactory, LineChartFactory];
 
 export default function RangePlotFactory(
-    RangeBrush: ReturnType<typeof RangeBrushFactory>, 
-    HistogramPlot: ReturnType<typeof HistogramPlotFactory>, 
-    LineChart: ReturnType<typeof LineChartFactory>
-  ) {
+  RangeBrush: ReturnType<typeof RangeBrushFactory>,
+  HistogramPlot: ReturnType<typeof HistogramPlotFactory>,
+  LineChart: ReturnType<typeof LineChartFactory>
+) {
   const RangePlot = ({
     onBrush,
     range,
@@ -139,7 +139,6 @@ export default function RangePlotFactory(
       </StyledRangePlot>
     );
   };
-
 
   return withTheme(RangePlot);
 }

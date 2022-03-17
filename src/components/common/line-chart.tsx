@@ -30,7 +30,7 @@ import {
   LineSeriesPoint,
   RVNearestXData
 } from 'react-vis';
-import { LineChart } from 'reducers';
+import {LineChart} from 'reducers';
 import styled from 'styled-components';
 import {datetimeFormatter} from 'utils/data-utils';
 
@@ -90,19 +90,19 @@ export interface HoverDP {
 }
 
 interface LineChartProps {
-  brushComponent?: any,
-  brushing?: boolean,
-  color?: string,
-  enableChartHover?: boolean,
-  height: number,
-  hoveredDP?: HoverDP | null,
-  isEnlarged?: boolean,
-  lineChart: LineChart,
-  margin: {top?: number, bottom?: number, left?: number, right?: number},
-  onMouseMove: (datapoint: LineSeriesPoint | null, data?: RVNearestXData<LineSeriesPoint>) => void,
-  width: number,
-  timezone?: string | null,
-  timeFormat: string
+  brushComponent?: any;
+  brushing?: boolean;
+  color?: string;
+  enableChartHover?: boolean;
+  height: number;
+  hoveredDP?: HoverDP | null;
+  isEnlarged?: boolean;
+  lineChart: LineChart;
+  margin: {top?: number; bottom?: number; left?: number; right?: number};
+  onMouseMove: (datapoint: LineSeriesPoint | null, data?: RVNearestXData<LineSeriesPoint>) => void;
+  width: number;
+  timezone?: string | null;
+  timeFormat: string;
 }
 
 const MARGIN = {top: 0, bottom: 0, left: 0, right: 0};

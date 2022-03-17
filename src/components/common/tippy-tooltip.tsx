@@ -20,7 +20,7 @@
 
 import styled from 'styled-components';
 import React, {useState} from 'react';
-import Tippy, { TippyProps } from '@tippyjs/react';
+import Tippy, {TippyProps} from '@tippyjs/react';
 
 const TippyArrow = styled.div`
   position: absolute;
@@ -87,8 +87,6 @@ const TippyTooltipContent = styled(({children, ...props}) => (
   }
 `;
 
-
-
 const TippyTooltip = ({children, render, duration = 200, ...rest}: TippyProps) => {
   const [opacity, setOpacity] = useState(0);
   const [timer, setTimer] = useState(null);
@@ -106,7 +104,7 @@ const TippyTooltip = ({children, render, duration = 200, ...rest}: TippyProps) =
       if (!instance.state?.isDestroyed) {
         unmount();
       }
-    }, duration[0]||duration);
+    }, duration[0] || duration);
     // @ts-ignore
     setTimer(timeout);
     setOpacity(0);
@@ -118,7 +116,7 @@ const TippyTooltip = ({children, render, duration = 200, ...rest}: TippyProps) =
       animation={true}
       render={attrs => (
         <TippyTooltipContent {...attrs} style={{opacity, transition: `opacity ${duration}ms`}}>
-          {render&&render(attrs)}
+          {render && render(attrs)}
         </TippyTooltipContent>
       )}
       onMount={onMount}

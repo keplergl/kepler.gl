@@ -18,21 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, { ChangeEventHandler, FocusEventHandler, ReactNode } from 'react';
+import React, {ChangeEventHandler, FocusEventHandler, ReactNode} from 'react';
 import Checkbox from './checkbox';
 
 interface SwitchProps {
-  checked?: boolean,
-  type?: string,
-  id: string,
-  label?: ReactNode,
-  error?: string,
+  checked?: boolean;
+  type?: string;
+  id: string;
+  label?: ReactNode;
+  error?: string;
   onBlur?: FocusEventHandler<HTMLInputElement>;
   onChange?: ChangeEventHandler<HTMLInputElement>;
   onFocus?: FocusEventHandler<HTMLInputElement>;
-  value?: string,
-  secondary?: boolean
-};
+  value?: string;
+  secondary?: boolean;
+}
 
 const Switch = (props: SwitchProps) => {
   const switchProps = {

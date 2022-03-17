@@ -25,7 +25,7 @@ import {BrushBehavior, brushX} from 'd3-brush';
 import {normalizeSliderValue} from 'utils/data-utils';
 
 interface StyledGProps {
-  isRanged?: boolean
+  isRanged?: boolean;
 }
 
 const StyledG = styled.g<StyledGProps>`
@@ -73,13 +73,12 @@ export interface RangeBrushProps {
   onBrush: OnBrush;
   step?: number;
   marks?: number[];
-  onMouseoverHandle: ()=>void;
-  onMouseoutHandle: ()=>void;
+  onMouseoverHandle: () => void;
+  onMouseoutHandle: () => void;
 }
 
 function RangeBrushFactory() {
   class RangeBrush extends Component<RangeBrushProps> {
-
     static defaultProps = {
       isRanged: true
     };
@@ -89,12 +88,12 @@ function RangeBrushFactory() {
     brushing: boolean = false;
     moving: boolean = false;
 
-    root = this.rootContainer.current?select(this.rootContainer.current):undefined
-    brush: BrushBehavior<any> | undefined
-    _startSel: number[] | undefined
-    _lastSel: number[] | undefined
+    root = this.rootContainer.current ? select(this.rootContainer.current) : undefined;
+    brush: BrushBehavior<any> | undefined;
+    _startSel: number[] | undefined;
+    _lastSel: number[] | undefined;
 
-    handle: Selection<SVGPathElement, {type: string;}, SVGGElement | null, unknown> | undefined
+    handle: Selection<SVGPathElement, {type: string}, SVGGElement | null, unknown> | undefined;
 
     componentDidMount() {
       // We want the React app to respond to brush state and vice-versa
@@ -105,7 +104,7 @@ function RangeBrushFactory() {
       // We don't use state because that would trigger another `componentDidUpdate`
       const {theme, isRanged, onMouseoverHandle, onMouseoutHandle} = this.props;
 
-      this.root = this.rootContainer.current?select(this.rootContainer.current):undefined;
+      this.root = this.rootContainer.current ? select(this.rootContainer.current) : undefined;
       this.brush = brushX()
         .handleSize(3)
         .on('start', event => {
@@ -141,7 +140,8 @@ function RangeBrushFactory() {
 
       this.root?.call(this.brush);
       const brushResizePath = getHandlePath(this.props);
-      this.handle = this.root?.selectAll('.handle--custom')
+      this.handle = this.root
+        ?.selectAll('.handle--custom')
         .data([{type: 'w'}, {type: 'e'}])
         .enter()
         .append('path')
@@ -190,7 +190,6 @@ function RangeBrushFactory() {
       }
     }
 
-
     _click(selection) {
       // fake brush
       this.brushing = true;
@@ -218,12 +217,8 @@ function RangeBrushFactory() {
         }
       }
     }
-    
 
-    _brushed = (evt: {
-      sourceEvent: any,
-      selection: number[]
-    }) => {
+    _brushed = (evt: {sourceEvent: any; selection: number[]}) => {
       // Ignore brush events which don't have an underlying sourceEvent
       if (!evt.sourceEvent) return;
       const [sel0, sel1] = evt.selection;

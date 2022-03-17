@@ -62,17 +62,17 @@ const StyledDiv = styled.div.attrs({
 `;
 
 export type ToolbarItemProps = {
-  id?: string,
-  label: string,
-  className?: string,
-  active?: boolean,
-  onClose?: () => void,
-  onClick: (event: MouseEvent<HTMLDivElement>) => void,
-  icon?: ComponentType<any>
+  id?: string;
+  label: string;
+  className?: string;
+  active?: boolean;
+  onClose?: () => void;
+  onClick: (event: MouseEvent<HTMLDivElement>) => void;
+  icon?: ComponentType<any>;
 };
 
 /** @type {typeof import('./toolbar-item').ToolbarItem} */
-const ToolbarItem = React.memo((props:ToolbarItemProps) => (
+const ToolbarItem = React.memo((props: ToolbarItemProps) => (
   <StyledDiv
     id={props.id}
     className={props.className}

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, { Component, createRef, ElementType } from 'react';
+import React, {Component, createRef, ElementType} from 'react';
 import debounce from 'lodash.debounce';
 import isEqual from 'lodash.isequal';
 
@@ -61,7 +61,7 @@ interface GetChildPosProps {
   pageOffset: {
     x: number;
     y: number;
-  }; 
+  };
   padding: number;
 }
 
@@ -133,26 +133,31 @@ const noop = () => {};
 
 interface PortaledProps {
   component: ElementType;
-  onClose?: (event: React.MouseEvent<Element, globalThis.MouseEvent> | React.KeyboardEvent<Element>) => void;
+  onClose?: (
+    event: React.MouseEvent<Element, globalThis.MouseEvent> | React.KeyboardEvent<Element>
+  ) => void;
   theme?: any;
   isOpened: boolean;
   top: number;
-  left: number; 
+  left: number;
   right: number;
-  overlayZIndex?: number
-  modalProps: Partial<ReactModal.Props>
-  modalStyle?: Partial<typeof defaultModalStyle>
+  overlayZIndex?: number;
+  modalProps: Partial<ReactModal.Props>;
+  modalStyle?: Partial<typeof defaultModalStyle>;
 }
 
 interface PortaledState {
-    pos: {
+  pos:
+    | {
         left: number;
         top: number;
-    } | {
+      }
+    | {
         right: number;
         top: number;
-    } | null,
-    isVisible: boolean
+      }
+    | null;
+  isVisible: boolean;
 }
 
 class Portaled extends Component<PortaledProps, PortaledState> {
@@ -167,8 +172,8 @@ class Portaled extends Component<PortaledProps, PortaledState> {
     isVisible: false
   };
 
-  unsubscribe: (() => boolean) | undefined = undefined
-  _unmounted: boolean = false
+  unsubscribe: (() => boolean) | undefined = undefined;
+  _unmounted: boolean = false;
 
   componentDidMount() {
     // relative

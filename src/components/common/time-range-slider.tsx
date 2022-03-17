@@ -35,10 +35,10 @@ interface StyledSliderContainerProps {
 }
 
 const StyledSliderContainer = styled.div<StyledSliderContainerProps>`
-  align-items: flex-end;e
-  display: flex;
-  flex-direction: row;ee
-  justify-content: space-between;
+  align-items: flex-end;
+  edisplay: flex;
+  flex-direction: row;
+  eejustify-content: space-between;
   padding-left: ${props => (props.isEnlarged ? 24 : 0)}px;
 
   .timeline-container .kg-slider {

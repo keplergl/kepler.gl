@@ -23,7 +23,7 @@ import styled from 'styled-components';
 
 /** @typedef {import('./progress-bar').ProgressBarProps} ProgressBarProps */
 
-interface StyledBarProps{
+interface StyledBarProps {
   barColor?: string;
 }
 
@@ -35,7 +35,7 @@ const StyledBar = styled.span.attrs({
   display: block;
 `;
 
-interface StyledTrackProps{
+interface StyledTrackProps {
   trackColor?: string;
 }
 
@@ -46,16 +46,23 @@ const StyledTrack = styled.div.attrs({
 `;
 
 export type ProgressBarProps = {
-  percent: string,
-  height?: number,
-  isLoading: boolean,
+  percent: string;
+  height?: number;
+  isLoading: boolean;
   barColor: string;
   trackColor?: string;
   theme: any;
 };
 
 /** @type {React.FunctionComponent<ProgressBarProps>} */
-const ProgressBar = ({percent, height = 4, isLoading, barColor, trackColor, theme}: ProgressBarProps) => (
+const ProgressBar = ({
+  percent,
+  height = 4,
+  isLoading,
+  barColor,
+  trackColor,
+  theme
+}: ProgressBarProps) => (
   <StyledTrack trackColor={trackColor} theme={theme}>
     <StyledBar
       barColor={barColor}

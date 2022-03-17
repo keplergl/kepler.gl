@@ -28,7 +28,7 @@ import {Input} from 'components/common/styled-components';
 
 import {roundValToStep, clamp} from 'utils/data-utils';
 import {observeDimensions, unobserveDimensions} from '../../utils/observe-dimensions';
-import { LineChart } from 'reducers';
+import {LineChart} from 'reducers';
 
 interface SliderInputProps {
   flush?: boolean;
@@ -59,35 +59,33 @@ const RangeInputWrapper = styled.div`
   justify-content: space-between;
 `;
 
-
 interface RangeSliderProps {
   range?: number[];
   value0: number;
   value1: number;
-  onChange: (val: number[]) => void; //TODO 
+  onChange: (val: number[]) => void; //TODO
   histogram?: any[];
-  isRanged?: boolean,
-  isEnlarged?: boolean,
-  showInput?: boolean,
-  inputTheme?: string,
-  inputSize?: string,
-  step?: number,
-  sliderHandleWidth?: number,
+  isRanged?: boolean;
+  isEnlarged?: boolean;
+  showInput?: boolean;
+  inputTheme?: string;
+  inputSize?: string;
+  step?: number;
+  sliderHandleWidth?: number;
   xAxis?: ElementType;
-  timezone?: string,
+  timezone?: string;
   timeFormat: string;
   playbackControlWidth?: number;
   lineChart: LineChart;
   marks?: number[];
   plotType?: string;
   plotValue?: number[];
-};
+}
 
 RangeSliderFactory.deps = [RangePlotFactory];
 
 export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlotFactory>) {
   class RangeSlider extends Component<RangeSliderProps> {
-
     static defaultProps = {
       isEnlarged: false,
       isRanged: true,
@@ -99,7 +97,7 @@ export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlo
     };
 
     static getDerivedStateFromProps(props, state) {
-      let update: { value1?: any; prevValue1?: any; value0?: any; prevValue0?: any; } | null = null;
+      let update: {value1?: any; prevValue1?: any; value0?: any; prevValue0?: any} | null = null;
       const {value0, value1} = props;
       if (props.value0 !== state.prevValue0 && !isNaN(value0)) {
         update = {...(update || {}), value0, prevValue0: value0};
@@ -118,7 +116,7 @@ export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlo
       width: 288
     };
 
-    sliderContainer: HTMLDivElement | null = null
+    sliderContainer: HTMLDivElement | null = null;
 
     componentDidMount() {
       if (this.sliderContainer instanceof Element) {
@@ -152,13 +150,13 @@ export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlo
 
     _roundValToStep = val => {
       const {range, step} = this.props;
-      if (!range || !step) return
+      if (!range || !step) return;
       return roundValToStep(range[0], step, val);
     };
 
     _setRangeVal1 = val => {
       const {value0, range, onChange} = this.props;
-      if (!range) return
+      if (!range) return;
       const val1 = Number(val);
       onChange([value0, clamp([value0, range[1]], this._roundValToStep(val1))]);
       return true;
@@ -166,7 +164,7 @@ export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlo
 
     _setRangeVal0 = val => {
       const {value1, range, onChange} = this.props;
-      if (!range) return
+      if (!range) return;
       const val0 = Number(val);
       onChange([clamp([range[0], value1], this._roundValToStep(val0)), value1]);
       return true;

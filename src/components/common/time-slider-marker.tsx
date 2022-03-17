@@ -106,7 +106,12 @@ export function getTickFormat(timezone: string) {
 }
 
 // create a helper function so we can test it
-export function getXAxis(domain: Date[] | NumberValue[], width: number, isEnlarged: boolean, timezone: string) {
+export function getXAxis(
+  domain: Date[] | NumberValue[],
+  width: number,
+  isEnlarged: boolean,
+  timezone: string
+) {
   if (!Array.isArray(domain) || !domain.every(Number.isFinite)) {
     return null;
   }
@@ -139,15 +144,21 @@ export function updateAxis(xAxisRef, xAxis) {
 }
 
 interface TimeSliderMarkerProps {
-  width: number, 
-  domain: Date[] | NumberValue[], 
-  isEnlarged?: boolean, 
-  height?: number, 
-  timezone: string
+  width: number;
+  domain: Date[] | NumberValue[];
+  isEnlarged?: boolean;
+  height?: number;
+  timezone: string;
 }
 
 function TimeSliderMarkerFactory() {
-  const TimeSliderMarker = ({width, domain, isEnlarged = true, height = HEIGHT, timezone}: TimeSliderMarkerProps) => {
+  const TimeSliderMarker = ({
+    width,
+    domain,
+    isEnlarged = true,
+    height = HEIGHT,
+    timezone
+  }: TimeSliderMarkerProps) => {
     const xAxisRef = useRef(null);
     const xAxis = useMemo(() => getXAxis(domain, width, isEnlarged, timezone), [
       domain,
