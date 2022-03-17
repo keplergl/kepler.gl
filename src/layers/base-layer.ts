@@ -294,7 +294,10 @@ class Layer {
    * and return the props and previous found layers.
    * By default, no layers will be found
    */
-  static findDefaultLayerProps(dataset: KeplerTable, foundLayers: any[]) {
+  static findDefaultLayerProps(
+    dataset: KeplerTable,
+    foundLayers?: any[]
+  ): {props: any[]; foundLayers?: any[]} {
     return {props: [], foundLayers};
   }
 
@@ -499,7 +502,7 @@ class Layer {
     return {};
   }
 
-  renderLayer() {
+  renderLayer(...args: any[]): any[] {
     return [];
   }
 
@@ -592,7 +595,9 @@ class Layer {
     return copied;
   }
 
-  registerVisConfig(layerVisConfigs: LayerVisConfig) {
+  registerVisConfig(
+    layerVisConfigs: Partial<LayerVisConfig> | {[key in keyof Partial<LayerVisConfig>]: string}
+  ) {
     Object.keys(layerVisConfigs).forEach(item => {
       if (typeof item === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {
         // if assigned one of default LAYER_CONFIGS
@@ -828,7 +833,7 @@ class Layer {
     dataAccessor = defaultDataAccessor,
     dataContainer
   }: {
-    dataAccessor: typeof defaultDataAccessor;
+    dataAccessor?: typeof defaultDataAccessor;
     dataContainer: DataContainerInterface;
   }) {
     const attributeAccessors: {[key: string]: any} = {};
@@ -1272,16 +1277,16 @@ class Layer {
     }, []);
   }
 
-  calculateDataAttribute(keplerTable, getPosition) {
+  calculateDataAttribute(keplerTable: KeplerTable, getPosition) {
     // implemented in subclasses
     return [];
   }
 
-  updateLayerMeta(dataContainer, getPosition) {
+  updateLayerMeta(dataContainer: DataContainerInterface, getPosition) {
     // implemented in subclasses
   }
 
-  getPositionAccessor(dataContainer) {
+  getPositionAccessor(dataContainer?: DataContainerInterface): (...args: any[]) => any {
     // implemented in subclasses
     return () => null;
   }
