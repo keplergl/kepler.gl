@@ -25,6 +25,7 @@ import {DEFAULT_COLOR_RANGE} from '../constants/color-ranges';
 
 import {RGBColor, RGBAColor, HexColor} from '../reducers';
 import {Field} from '../utils/table-utils/kepler-table';
+import {LayerBaseConfig} from './base-layer';
 
 export type ColorRange = {
   name: string;
@@ -32,7 +33,7 @@ export type ColorRange = {
   category: string;
   colors: HexColor[];
   reversed?: boolean;
-  colorMap?: Map | object;
+  colorMap?: Map<string, HexColor> | object;
 };
 
 export type LayerTextLabel = {
@@ -61,11 +62,13 @@ export type ColorUI = {
 };
 
 export type VisConfig = {
-  label: string | ((config: LayerCofig) => string);
+  label: string | ((config: LayerBaseConfig) => string);
   group: string;
   property: string;
   description?: string;
-  condition?: (config: LayerConfig) => boolean;
+  condition?: (config: LayerBaseConfig) => boolean;
+
+  allowCustomValue?: boolean;
 };
 
 export type VisConfigNumber = VisConfig & {
@@ -121,8 +124,8 @@ export type LayerVisConfig = {
   strokeColorRange: VisConfigColorRange;
   targetColor: VisConfigColorSelect;
   strokeColor: VisConfigColorSelect;
-  aggregation: VisConfigSelect;
-  sizeAggregation: VisConfigSelect;
+  aggregation: VisConfigSelection;
+  sizeAggregation: VisConfigSelection;
   percentile: VisConfigRange;
   elevationPercentile: VisConfigRange;
   resolution: VisConfigNumber;
