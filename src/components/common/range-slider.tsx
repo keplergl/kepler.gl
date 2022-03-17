@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef} from 'react';
+import React, {Component, createRef, ElementType} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
 import {createSelector} from 'reselect';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import RangePlotFactory from './range-plot';
 import Slider from 'components/common/slider/slider';
@@ -29,15 +28,26 @@ import {Input} from 'components/common/styled-components';
 
 import {roundValToStep, clamp} from 'utils/data-utils';
 import {observeDimensions, unobserveDimensions} from '../../utils/observe-dimensions';
+import { LineChart } from 'reducers';
 
-const SliderInput = styled(Input)`
+interface SliderInputProps {
+  flush?: boolean;
+  elementSize?: string;
+}
+
+const SliderInput = styled(Input)<SliderInputProps>`
   width: ${props => props.theme.sliderInputWidth}px;
-  margin-left: ${props => (props.flush ? 0 : props.size === 'tiny' ? 12 : 18)}px;
+  margin-left: ${props => (props.flush ? 0 : props.elementSize === 'tiny' ? 12 : 18)}px;
   font-size: ${props => props.theme.sliderInputFontSize}; // 10px // 12px;
   padding: ${props => props.theme.sliderInputPadding}; // 4px 6px; // 6px 12px;
 `;
 
-const SliderWrapper = styled.div`
+interface SliderWrapperProps {
+  isRanged?: boolean;
+  showInput?: boolean;
+}
+
+const SliderWrapper = styled.div<SliderWrapperProps>`
   display: flex;
   position: relative;
   align-items: ${props => (!props.isRanged && props.showInput ? 'center' : 'flex-start')};
@@ -49,25 +59,34 @@ const RangeInputWrapper = styled.div`
   justify-content: space-between;
 `;
 
+
+interface RangeSliderProps {
+  range?: number[];
+  value0: number;
+  value1: number;
+  onChange: (val: number[]) => void; //TODO 
+  histogram?: any[];
+  isRanged?: boolean,
+  isEnlarged?: boolean,
+  showInput?: boolean,
+  inputTheme?: string,
+  inputSize?: string,
+  step?: number,
+  sliderHandleWidth?: number,
+  xAxis?: ElementType;
+  timezone?: string,
+  timeFormat: string;
+  playbackControlWidth?: number;
+  lineChart: LineChart;
+  marks?: number[];
+  plotType?: string;
+  plotValue?: number[];
+};
+
 RangeSliderFactory.deps = [RangePlotFactory];
 
-export default function RangeSliderFactory(RangePlot) {
-  class RangeSlider extends Component {
-    static propTypes = {
-      range: PropTypes.arrayOf(PropTypes.number),
-      value0: PropTypes.number.isRequired,
-      value1: PropTypes.number.isRequired,
-      onChange: PropTypes.func.isRequired,
-      histogram: PropTypes.arrayOf(PropTypes.any),
-      isRanged: PropTypes.bool,
-      isEnlarged: PropTypes.bool,
-      showInput: PropTypes.bool,
-      inputTheme: PropTypes.string,
-      inputSize: PropTypes.string,
-      step: PropTypes.number,
-      sliderHandleWidth: PropTypes.number,
-      xAxis: PropTypes.elementType
-    };
+export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlotFactory>) {
+  class RangeSlider extends Component<RangeSliderProps> {
 
     static defaultProps = {
       isEnlarged: false,
@@ -80,7 +99,7 @@ export default function RangeSliderFactory(RangePlot) {
     };
 
     static getDerivedStateFromProps(props, state) {
-      let update = null;
+      let update: { value1?: any; prevValue1?: any; value0?: any; prevValue0?: any; } | null = null;
       const {value0, value1} = props;
       if (props.value0 !== state.prevValue0 && !isNaN(value0)) {
         update = {...(update || {}), value0, prevValue0: value0};
@@ -99,6 +118,8 @@ export default function RangeSliderFactory(RangePlot) {
       width: 288
     };
 
+    sliderContainer: HTMLDivElement | null = null
+
     componentDidMount() {
       if (this.sliderContainer instanceof Element) {
         observeDimensions(this.sliderContainer, this._resize);
@@ -115,13 +136,12 @@ export default function RangeSliderFactory(RangePlot) {
       }
     }
 
-    sliderContainer = null;
-    setSliderContainer = element => {
+    setSliderContainer: React.LegacyRef<HTMLDivElement> = element => {
       this.sliderContainer = element;
       this._resize();
     };
-    inputValue0 = createRef();
-    inputValue1 = createRef();
+    inputValue0 = createRef<HTMLInputElement>();
+    inputValue1 = createRef<HTMLInputElement>();
     value0Selector = props => props.value0;
     value1Selector = props => props.value1;
     filterValueSelector = createSelector(
@@ -132,12 +152,13 @@ export default function RangeSliderFactory(RangePlot) {
 
     _roundValToStep = val => {
       const {range, step} = this.props;
-
+      if (!range || !step) return
       return roundValToStep(range[0], step, val);
     };
 
     _setRangeVal1 = val => {
       const {value0, range, onChange} = this.props;
+      if (!range) return
       const val1 = Number(val);
       onChange([value0, clamp([value0, range[1]], this._roundValToStep(val1))]);
       return true;
@@ -145,6 +166,7 @@ export default function RangeSliderFactory(RangePlot) {
 
     _setRangeVal0 = val => {
       const {value1, range, onChange} = this.props;
+      if (!range) return
       const val0 = Number(val);
       onChange([clamp([range[0], value1], this._roundValToStep(val0)), value1]);
       return true;
@@ -186,12 +208,12 @@ export default function RangeSliderFactory(RangePlot) {
           onKeyPress={e => {
             if (e.key === 'Enter') {
               update(e);
-              ref.current.blur();
+              (ref.current as any).blur();
             }
           }}
           onBlur={update}
           flush={key === 'value0'}
-          size={this.props.inputSize}
+          elementSize={this.props.inputSize}
           secondary={this.props.inputTheme === 'secondary'}
         />
       );
@@ -214,12 +236,12 @@ export default function RangeSliderFactory(RangePlot) {
       } = this.props;
 
       const {width} = this.state;
-      const plotWidth = Math.max(width - sliderHandleWidth, 0);
+      const plotWidth = Math.max(width - Number(sliderHandleWidth), 0);
       const renderPlot = (histogram && histogram.length) || lineChart;
       return (
         <div
           className="kg-range-slider"
-          style={{width: '100%', padding: `0 ${sliderHandleWidth / 2}px`}}
+          style={{width: '100%', padding: `0 ${Number(sliderHandleWidth) / 2}px`}}
           ref={this.setSliderContainer}
         >
           {Array.isArray(range) && range.every(Number.isFinite) && (

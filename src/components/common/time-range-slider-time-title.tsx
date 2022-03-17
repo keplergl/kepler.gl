@@ -23,7 +23,11 @@ import styled from 'styled-components';
 import {Minus} from 'components/common/icons';
 import {datetimeFormatter} from 'utils/data-utils';
 
-const TimeValueWrapper = styled.div`
+interface TimeValueWrapperProps {
+  isEnlarged?: boolean;
+}
+
+const TimeValueWrapper = styled.div<TimeValueWrapperProps>`
   display: flex;
   align-items: center;
   font-size: ${props => props.theme.timeTitleFontSize};
@@ -57,8 +61,15 @@ const TimeValue = ({value}) => (
   </div>
 );
 
+interface TimeTitleProps {
+  value: number[];
+  isEnlarged?: boolean;
+  timezone?: string;
+  timeFormat: string;
+}
+
 function TimeRangeSliderTimeTitleFactory() {
-  const TimeTitle = ({value, isEnlarged, timezone, timeFormat}) => (
+  const TimeTitle = ({value, isEnlarged, timezone, timeFormat}: TimeTitleProps) => (
     <TimeValueWrapper isEnlarged={isEnlarged} className="time-range-slider__time-title">
       <TimeValue key={0} value={datetimeFormatter(timezone)(timeFormat)(value[0])} />
       {isEnlarged ? (

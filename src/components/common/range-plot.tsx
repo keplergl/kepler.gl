@@ -19,12 +19,12 @@
 // THE SOFTWARE.
 
 import React, {useState, useCallback} from 'react';
-import PropTypes from 'prop-types';
 import styled, {withTheme} from 'styled-components';
-import RangeBrushFactory from './range-brush';
+import RangeBrushFactory, { OnBrush, RangeBrushProps } from './range-brush';
 import HistogramPlotFactory from './histogram-plot';
-import LineChartFactory from './line-chart';
+import LineChartFactory, { HoverDP } from './line-chart';
 import {isTest} from 'utils/utils';
+import { LineChart } from 'reducers';
 
 const StyledRangePlot = styled.div`
   margin-bottom: ${props => props.theme.sliderBarHeight}px;
@@ -32,9 +32,29 @@ const StyledRangePlot = styled.div`
   position: 'relative';
 `;
 
+interface RangePlotProps {
+  onBrush: OnBrush,
+  range: number[],
+  value: number[],
+  width: number,
+  plotType?: string,
+  lineChart: LineChart,
+  histogram?: {x0: number, x1: number}[],
+  isEnlarged?: boolean,
+  isRanged?: boolean,
+  theme: any,
+  timeFormat: string;
+  timezone?: string;
+  playbackControlWidth?: number;
+}
+
 RangePlotFactory.deps = [RangeBrushFactory, HistogramPlotFactory, LineChartFactory];
 
-export default function RangePlotFactory(RangeBrush, HistogramPlot, LineChart) {
+export default function RangePlotFactory(
+    RangeBrush: ReturnType<typeof RangeBrushFactory>, 
+    HistogramPlot: ReturnType<typeof HistogramPlotFactory>, 
+    LineChart: ReturnType<typeof LineChartFactory>
+  ) {
   const RangePlot = ({
     onBrush,
     range,
@@ -47,9 +67,9 @@ export default function RangePlotFactory(RangeBrush, HistogramPlot, LineChart) {
     isRanged,
     theme,
     ...chartProps
-  }) => {
+  }: RangePlotProps & Partial<RangeBrushProps>) => {
     const [brushing, setBrushing] = useState(false);
-    const [hoveredDP, onMouseMove] = useState(null);
+    const [hoveredDP, onMouseMove] = useState<HoverDP | null>(null);
     const [enableChartHover, setEnableChartHover] = useState(false);
     const height = isEnlarged ? theme.rangePlotHLarge : theme.rangePlotH;
 
@@ -82,7 +102,6 @@ export default function RangePlotFactory(RangeBrush, HistogramPlot, LineChart) {
         range={range}
         value={value}
         width={width}
-        height={height}
         isRanged={isRanged}
         onMouseoverHandle={onMouseoverHandle}
         onMouseoutHandle={onMouseoutHandle}
@@ -121,19 +140,6 @@ export default function RangePlotFactory(RangeBrush, HistogramPlot, LineChart) {
     );
   };
 
-  RangePlot.propTypes = {
-    value: PropTypes.arrayOf(PropTypes.number).isRequired,
-    histogram: PropTypes.arrayOf(
-      PropTypes.shape({
-        x0: PropTypes.number,
-        x1: PropTypes.number
-      })
-    ),
-    lineChart: PropTypes.object,
-    plotType: PropTypes.string,
-    isEnlarged: PropTypes.bool,
-    onBlur: PropTypes.func,
-    width: PropTypes.number.isRequired
-  };
+
   return withTheme(RangePlot);
 }

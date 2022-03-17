@@ -134,9 +134,13 @@ export const PanelContent = styled.div.attrs({
   padding: 12px;
 `;
 
+interface SidePanelSectionProps {
+  disabled?: boolean;
+}
+
 export const SidePanelSection = styled.div.attrs({
   className: 'side-panel-section'
-})`
+})<SidePanelSectionProps>`
   margin-bottom: 12px;
 
   opacity: ${props => (props.disabled ? 0.4 : 1)};
@@ -189,9 +193,21 @@ export const Tooltip = styled(ReactTooltip)`
   }
 `;
 
+interface ButtonProps {
+  negative?: boolean;
+  secondary?: boolean;
+  link?: boolean;
+  floating?: boolean;
+  cta?: boolean;
+  large?: boolean;
+  small?: boolean;
+  disabled?: boolean;
+  width?: string;
+}
+
 export const Button = styled.div.attrs(props => ({
   className: classnames('button', props.className)
-}))`
+}))<ButtonProps>`
   align-items: center;
   background-color: ${props =>
     props.negative
@@ -284,7 +300,11 @@ export const Button = styled.div.attrs(props => ({
   }
 `;
 
-export const Input = styled.input`
+interface InputProps {
+  secondary?: boolean
+}
+
+export const Input = styled.input<InputProps>`
   ${props => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
 `;
 
@@ -292,7 +312,7 @@ export const InputLight = styled.input`
   ${props => props.theme.inputLT};
 `;
 
-export const TextArea = styled.textarea`
+export const TextArea = styled.textarea<InputProps>`
   ${props => (props.secondary ? props.theme.secondaryInput : props.theme.input)};
 `;
 export const TextAreaLight = styled.textarea`
@@ -304,7 +324,12 @@ export const InlineInput = styled(Input)`
   ${props => props.theme.inlineInput};
 `;
 
-export const StyledPanelHeader = styled.div`
+interface StyledPanelHeaderProps {
+  active?: boolean;
+  labelRCGColorValues?: string[];
+}
+
+export const StyledPanelHeader = styled.div<StyledPanelHeaderProps>`
   background-color: ${props =>
     props.active ? props.theme.panelBackgroundHover : props.theme.panelBackground};
   border-left: 3px solid
@@ -320,7 +345,11 @@ export const StyledPanelHeader = styled.div`
   transition: ${props => props.theme.transition};
 `;
 
-export const StyledPanelDropdown = styled.div`
+interface StyledPanelDropdownProps {
+  type?: string;
+}
+
+export const StyledPanelDropdown = styled.div<StyledPanelDropdownProps>`
   ${props => props.theme.panelDropdownScrollBar}
   background-color: ${props =>
     props.type === 'light' ? props.theme.modalDropdownBackground : props.theme.panelBackground};
@@ -349,7 +378,11 @@ export const ButtonGroup = styled.div`
   }
 `;
 
-export const DatasetSquare = styled.div`
+interface StyledPanelHeaderProps {
+  color: string[];
+}
+
+export const DatasetSquare = styled.div<StyledPanelHeaderProps>`
   display: inline-block;
   width: 10px;
   height: 10px;
@@ -357,7 +390,11 @@ export const DatasetSquare = styled.div`
   margin-right: 12px;
 `;
 
-export const SelectionButton = styled.div`
+interface SelectionButtonProps {
+  selected?: boolean;
+}
+
+export const SelectionButton = styled.div<SelectionButtonProps>`
   position: relative;
   border-radius: 2px;
   border: 1px solid
@@ -462,9 +499,13 @@ export const StyledModalSection = styled.div.attrs({
   `};
 `;
 
+interface StyledModalInputFootnoteProps {
+  error?: boolean;
+}
+
 export const StyledModalInputFootnote = styled.div.attrs({
   className: 'modal-input__footnote'
-})`
+})<StyledModalInputFootnoteProps>`
   display: flex;
   justify-content: flex-end;
   color: ${props => (props.error ? props.theme.errorColor : props.theme.subtextColorLT)};
@@ -516,7 +557,11 @@ export const StyledAttrbution = styled.div.attrs({
   }
 `;
 
-export const StyledExportSection = styled.div`
+interface StyledExportSectionProps {
+  disabled?: boolean;
+}
+
+export const StyledExportSection = styled.div<StyledExportSectionProps>`
   display: flex;
   flex-direction: row;
   margin: 35px 0;
@@ -620,9 +665,13 @@ export const BottomWidgetInner = styled.div`
   margin-top: ${props => props.theme.bottomPanelGap}px;
 `;
 
+interface MapControlButtonProps {
+  active?: boolean;
+}
+
 export const MapControlButton = styled(Button).attrs({
   className: 'map-control-button'
-})`
+})<MapControlButtonProps>`
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
   height: 32px;
   width: 32px;

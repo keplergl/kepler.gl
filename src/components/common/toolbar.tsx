@@ -18,32 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import PropTypes from 'prop-types';
-import Checkbox from './checkbox';
+import styled from 'styled-components';
 
-const propTypes = {
-  checked: PropTypes.bool,
-  type: PropTypes.string,
-  id: PropTypes.string.isRequired,
-  label: PropTypes.node,
-  error: PropTypes.string,
-  onBlur: PropTypes.func,
-  onChange: PropTypes.func,
-  onFocus: PropTypes.func,
-  value: PropTypes.string,
-  secondary: PropTypes.bool
-};
+interface ToolbarProps {
+  show?: boolean;
+}
 
-const Switch = props => {
-  const switchProps = {
-    ...props,
-    switch: props.type !== 'checkbox'
-  };
+const Toolbar = styled.div<ToolbarProps>`
+  display: flex;
+  flex-direction: row;
+  background-color: ${props => props.theme.dropdownListBgd};
+  box-shadow: ${props => props.theme.dropdownListShadow};
+  font-size: 12px;
+  transition: ${props => props.theme.transitionSlow};
+  margin-top: ${props => (props.show ? '6px' : '20px')};
+  opacity: ${props => (props.show ? 1 : 0)};
+  transform: translateX(calc(-50% + 20px));
+  pointer-events: ${props => (props.show ? 'all' : 'none')};
+  z-index: 1000;
 
-  return <Checkbox {...switchProps} />;
-};
+  .panel-header-dropdown__inner {
+    box-shadow: none;
+    background-color: transparent;
+    display: flex;
+  }
+`;
 
-Switch.propTypes = propTypes;
+Toolbar.displayName = 'Toolbar';
 
-export default Switch;
+export default Toolbar;

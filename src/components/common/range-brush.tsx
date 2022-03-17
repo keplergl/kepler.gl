@@ -19,13 +19,16 @@
 // THE SOFTWARE.
 
 import React, {Component, createRef} from 'react';
-import PropTypes from 'prop-types';
 import styled, {withTheme} from 'styled-components';
-import {select} from 'd3-selection';
-import {brushX} from 'd3-brush';
+import {select, Selection} from 'd3-selection';
+import {BrushBehavior, brushX} from 'd3-brush';
 import {normalizeSliderValue} from 'utils/data-utils';
 
-const StyledG = styled.g`
+interface StyledGProps {
+  isRanged?: boolean
+}
+
+const StyledG = styled.g<StyledGProps>`
   .selection {
     stroke: none;
     fill: ${props => (props.isRanged ? props.theme.rangeBrushBgd : props.theme.BLUE2)};
@@ -57,19 +60,41 @@ const getHandlePath = props => {
   };
 };
 
+export type OnBrush = (val0: number, val1: number) => void;
+
+export interface RangeBrushProps {
+  isRanged?: boolean;
+  theme: any;
+  range: number[];
+  value: number[];
+  onBrushStart: () => void;
+  onBrushEnd: () => void;
+  width: number;
+  onBrush: OnBrush;
+  step?: number;
+  marks?: number[];
+  onMouseoverHandle: ()=>void;
+  onMouseoutHandle: ()=>void;
+}
+
 function RangeBrushFactory() {
-  class RangeBrush extends Component {
-    static propTypes = {
-      onBrush: PropTypes.func.isRequired,
-      range: PropTypes.arrayOf(PropTypes.number).isRequired,
-      value: PropTypes.arrayOf(PropTypes.number).isRequired,
-      width: PropTypes.number.isRequired,
-      isRanged: PropTypes.bool
-    };
+  class RangeBrush extends Component<RangeBrushProps> {
 
     static defaultProps = {
       isRanged: true
     };
+
+    rootContainer = createRef<SVGGElement>();
+
+    brushing: boolean = false;
+    moving: boolean = false;
+
+    root = this.rootContainer.current?select(this.rootContainer.current):undefined
+    brush: BrushBehavior<any> | undefined
+    _startSel: number[] | undefined
+    _lastSel: number[] | undefined
+
+    handle: Selection<SVGPathElement, {type: string;}, SVGGElement | null, unknown> | undefined
 
     componentDidMount() {
       // We want the React app to respond to brush state and vice-versa
@@ -80,10 +105,7 @@ function RangeBrushFactory() {
       // We don't use state because that would trigger another `componentDidUpdate`
       const {theme, isRanged, onMouseoverHandle, onMouseoutHandle} = this.props;
 
-      this.brushing = false;
-      this.moving = false;
-
-      this.root = select(this.rootContainer.current);
+      this.root = this.rootContainer.current?select(this.rootContainer.current):undefined;
       this.brush = brushX()
         .handleSize(3)
         .on('start', event => {
@@ -117,10 +139,9 @@ function RangeBrushFactory() {
           this.moving = false;
         });
 
-      this.root.call(this.brush);
+      this.root?.call(this.brush);
       const brushResizePath = getHandlePath(this.props);
-      this.handle = this.root
-        .selectAll('.handle--custom')
+      this.handle = this.root?.selectAll('.handle--custom')
         .data([{type: 'w'}, {type: 'e'}])
         .enter()
         .append('path')
@@ -153,7 +174,7 @@ function RangeBrushFactory() {
       if (prevProps.width !== width) {
         // width change should not trigger this._brushed
         this.moving = true;
-        this.root.call(this.brush);
+        if (this.brush) this.root?.call(this.brush);
         this._move(val0, val1);
       }
 
@@ -164,12 +185,11 @@ function RangeBrushFactory() {
         }
       }
 
-      if (!this.props.isRanged) {
+      if (!this.props.isRanged && this.handle) {
         this.handle.attr('display', 'none');
       }
     }
 
-    rootContainer = createRef();
 
     _click(selection) {
       // fake brush
@@ -177,20 +197,20 @@ function RangeBrushFactory() {
       this._brushed({sourceEvent: {}, selection});
     }
 
-    _move(val0, val1) {
+    _move(val0: number = 0, val1: number = 0) {
       const {
         range: [min, max],
         width,
         isRanged
       } = this.props;
 
-      if (width && max - min) {
-        const scale = x => ((x - min) * width) / (max - min);
+      if (width && max - min && this.brush && this.handle) {
+        const scale = (x: number) => ((x - min) * width) / (max - min);
         if (!isRanged) {
           // only draw a 1 pixel line
-          this.brush.move(this.root, [scale(val0), scale(val0) + 1]);
+          if (this.root) this.brush.move(this.root, [scale(val0), scale(val0) + 1]);
         } else {
-          this.brush.move(this.root, [scale(val0), scale(val1)]);
+          if (this.root) this.brush.move(this.root, [scale(val0), scale(val1)]);
 
           this.handle
             .attr('display', null)
@@ -198,8 +218,12 @@ function RangeBrushFactory() {
         }
       }
     }
+    
 
-    _brushed = evt => {
+    _brushed = (evt: {
+      sourceEvent: any,
+      selection: number[]
+    }) => {
       // Ignore brush events which don't have an underlying sourceEvent
       if (!evt.sourceEvent) return;
       const [sel0, sel1] = evt.selection;
@@ -207,12 +231,12 @@ function RangeBrushFactory() {
 
       const {
         range: [min, max],
-        step,
+        step = 0,
         width,
         marks,
         isRanged
       } = this.props;
-      const invert = x => (x * (max - min)) / width + min;
+      const invert = (x: number) => (x * (max - min)) / width + min;
       let d0 = invert(sel0);
       let d1 = invert(sel1);
 
@@ -226,7 +250,7 @@ function RangeBrushFactory() {
       else this._onBrush(right ? d1 : d0);
     };
 
-    _onBrush(val0, val1) {
+    _onBrush(val0: number = 0, val1: number = 0) {
       const {
         isRanged,
         value: [currentVal0, currentVal1]

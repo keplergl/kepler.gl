@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef} from 'react';
+import React, { Component, createRef, ElementType } from 'react';
 import debounce from 'lodash.debounce';
 import isEqual from 'lodash.isequal';
 
@@ -50,7 +50,22 @@ const addEventListeners = () => {
   window.addEventListener('resize', debounce(startListening, 50, true));
 };
 
-export const getChildPos = ({offsets, rect, childRect, pageOffset, padding}) => {
+interface GetChildPosProps {
+  offsets: {
+    topOffset: number;
+    leftOffset: number;
+    rightOffset: number;
+  };
+  rect: DOMRect;
+  childRect: DOMRect;
+  pageOffset: {
+    x: number;
+    y: number;
+  }; 
+  padding: number;
+}
+
+export const getChildPos = ({offsets, rect, childRect, pageOffset, padding}: GetChildPosProps) => {
   const {topOffset, leftOffset, rightOffset} = offsets;
 
   const anchorLeft = leftOffset !== undefined;
@@ -116,7 +131,31 @@ const WINDOW_PAD = 40;
 
 const noop = () => {};
 
-class Portaled extends Component {
+interface PortaledProps {
+  component: ElementType;
+  onClose?: (event: React.MouseEvent<Element, globalThis.MouseEvent> | React.KeyboardEvent<Element>) => void;
+  theme?: any;
+  isOpened: boolean;
+  top: number;
+  left: number; 
+  right: number;
+  overlayZIndex?: number
+  modalProps: Partial<ReactModal.Props>
+  modalStyle?: Partial<typeof defaultModalStyle>
+}
+
+interface PortaledState {
+    pos: {
+        left: number;
+        top: number;
+    } | {
+        right: number;
+        top: number;
+    } | null,
+    isVisible: boolean
+}
+
+class Portaled extends Component<PortaledProps, PortaledState> {
   static defaultProps = {
     component: 'div',
     onClose: noop,
@@ -127,6 +166,9 @@ class Portaled extends Component {
     pos: null,
     isVisible: false
   };
+
+  unsubscribe: (() => boolean) | undefined = undefined
+  _unmounted: boolean = false
 
   componentDidMount() {
     // relative
@@ -153,14 +195,14 @@ class Portaled extends Component {
     this.unsubscribe();
   }
 
-  element = createRef();
-  child = createRef();
+  element = createRef<HTMLDivElement>();
+  child = createRef<HTMLDivElement>();
 
   // eslint-disable-next-line complexity
   handleScroll = () => {
-    if (this.child.current) {
+    if (this.child.current && this.element.current) {
       const rect = this.element.current.getBoundingClientRect();
-      const childRect = this.child.current && this.child.current.getBoundingClientRect();
+      const childRect = this.child.current.getBoundingClientRect();
       const pageOffset = getPageOffset();
       const {top: topOffset, left: leftOffset, right: rightOffset} = this.props;
 
@@ -237,7 +279,6 @@ class Portaled extends Component {
                   style={{
                     position: 'fixed',
                     opacity: isVisible ? 1 : 0,
-                    top: this.state.top,
                     transition: this.props.theme.transition,
                     marginTop: isVisible ? '0px' : '14px',
                     // @ts-ignore

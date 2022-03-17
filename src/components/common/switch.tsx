@@ -18,28 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import styled from 'styled-components';
+import React, { ChangeEventHandler, FocusEventHandler, ReactNode } from 'react';
+import Checkbox from './checkbox';
 
-const Toolbar = styled.div`
-  display: flex;
-  flex-direction: row;
-  background-color: ${props => props.theme.dropdownListBgd};
-  box-shadow: ${props => props.theme.dropdownListShadow};
-  font-size: 12px;
-  transition: ${props => props.theme.transitionSlow};
-  margin-top: ${props => (props.show ? '6px' : '20px')};
-  opacity: ${props => (props.show ? 1 : 0)};
-  transform: translateX(calc(-50% + 20px));
-  pointer-events: ${props => (props.show ? 'all' : 'none')};
-  z-index: 1000;
+interface SwitchProps {
+  checked?: boolean,
+  type?: string,
+  id: string,
+  label?: ReactNode,
+  error?: string,
+  onBlur?: FocusEventHandler<HTMLInputElement>;
+  onChange?: ChangeEventHandler<HTMLInputElement>;
+  onFocus?: FocusEventHandler<HTMLInputElement>;
+  value?: string,
+  secondary?: boolean
+};
 
-  .panel-header-dropdown__inner {
-    box-shadow: none;
-    background-color: transparent;
-    display: flex;
-  }
-`;
+const Switch = (props: SwitchProps) => {
+  const switchProps = {
+    ...props,
+    switch: props.type !== 'checkbox'
+  };
 
-Toolbar.displayName = 'Toolbar';
+  return <Checkbox {...switchProps} />;
+};
 
-export default Toolbar;
+export default Switch;

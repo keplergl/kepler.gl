@@ -26,8 +26,11 @@ import {
   CustomSVGSeries,
   Hint,
   YAxis,
-  MarkSeries
+  MarkSeries,
+  LineSeriesPoint,
+  RVNearestXData
 } from 'react-vis';
+import { LineChart } from 'reducers';
 import styled from 'styled-components';
 import {datetimeFormatter} from 'utils/data-utils';
 
@@ -63,12 +66,44 @@ const StyledHint = styled.div`
   user-select: none;
 `;
 
-const HintContent = ({x, y, format}) => (
+interface HintContentProps {
+  x: number;
+  y: number;
+  format: (ts: number) => string;
+}
+
+const HintContent = ({x, y, format}: HintContentProps) => (
   <StyledHint>
     <div className="hint--x">{format(x)}</div>
     <div className="row">{y}</div>
   </StyledHint>
 );
+
+export interface HoverDP {
+  x: number;
+  y: number;
+  color?: string | number;
+  opacity?: string | number;
+  stroke?: string | number;
+  fill?: string | number;
+  size?: string | number;
+}
+
+interface LineChartProps {
+  brushComponent?: any,
+  brushing?: boolean,
+  color?: string,
+  enableChartHover?: boolean,
+  height: number,
+  hoveredDP?: HoverDP | null,
+  isEnlarged?: boolean,
+  lineChart: LineChart,
+  margin: {top?: number, bottom?: number, left?: number, right?: number},
+  onMouseMove: (datapoint: LineSeriesPoint | null, data?: RVNearestXData<LineSeriesPoint>) => void,
+  width: number,
+  timezone?: string | null,
+  timeFormat: string
+}
 
 const MARGIN = {top: 0, bottom: 0, left: 0, right: 0};
 function LineChartFactory() {
@@ -86,7 +121,7 @@ function LineChartFactory() {
     width,
     timezone,
     timeFormat
-  }) => {
+  }: LineChartProps) => {
     const {series, yDomain} = lineChart;
 
     const brushData = useMemo(() => {
@@ -111,12 +146,11 @@ function LineChartFactory() {
           <HorizontalGridLines tickTotal={3} />
           <LineSeries
             style={{fill: 'none'}}
-            strokeWidth={2}
             color={color}
             data={series}
-            onNearestX={enableChartHover ? onMouseMove : null}
+            onNearestX={enableChartHover ? onMouseMove : undefined}
           />
-          <MarkSeries data={hoveredDP ? [hoveredDP] : []} color={color} size={3} />
+          <MarkSeries data={hoveredDP ? [hoveredDP] : []} color={color} />
           <CustomSVGSeries data={brushData} />
           {isEnlarged && <YAxis tickTotal={3} />}
           {hoveredDP && enableChartHover && !brushing ? (

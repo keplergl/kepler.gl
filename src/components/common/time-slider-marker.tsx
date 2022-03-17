@@ -21,7 +21,7 @@
 import React, {useRef, useEffect, useMemo} from 'react';
 import moment from 'moment-timezone';
 import PropTypes from 'prop-types';
-import {scaleUtc} from 'd3-scale';
+import {NumberValue, scaleUtc} from 'd3-scale';
 import {select} from 'd3-selection';
 import {axisBottom} from 'd3-axis';
 import styled from 'styled-components';
@@ -82,7 +82,7 @@ const TICK_FORMATS = {
 
 // timezone sensitive tick formatter based on moment
 // adapted based on d3 time scale tick format https://github.com/d3/d3-scale/blob/master/src/time.js#L59
-export function getTickFormat(timezone) {
+export function getTickFormat(timezone: string) {
   // date is js date object
   const toMoment = timezone ? date => moment(date).tz(timezone) : moment;
   const formatter = datetimeFormatter(timezone);
@@ -106,7 +106,7 @@ export function getTickFormat(timezone) {
 }
 
 // create a helper function so we can test it
-export function getXAxis(domain, width, isEnlarged, timezone) {
+export function getXAxis(domain: Date[] | NumberValue[], width: number, isEnlarged: boolean, timezone: string) {
   if (!Array.isArray(domain) || !domain.every(Number.isFinite)) {
     return null;
   }
@@ -138,8 +138,16 @@ export function updateAxis(xAxisRef, xAxis) {
   select(xAxisRef.current).call(xAxis);
 }
 
+interface TimeSliderMarkerProps {
+  width: number, 
+  domain: Date[] | NumberValue[], 
+  isEnlarged?: boolean, 
+  height?: number, 
+  timezone: string
+}
+
 function TimeSliderMarkerFactory() {
-  const TimeSliderMarker = ({width, domain, isEnlarged = true, height = HEIGHT, timezone}) => {
+  const TimeSliderMarker = ({width, domain, isEnlarged = true, height = HEIGHT, timezone}: TimeSliderMarkerProps) => {
     const xAxisRef = useRef(null);
     const xAxis = useMemo(() => getXAxis(domain, width, isEnlarged, timezone), [
       domain,

@@ -3149,12 +3149,24 @@
   resolved "https://registry.yarnpkg.com/@types/d3-array/-/d3-array-2.8.0.tgz#4b70ccb0c6d2ef28dac1e7e653b3ecd1f4b1d1ee"
   integrity sha512-Q0ubcGHAmCRPh90/hoYB4eKWhxYKUxphwSeQrlz2tiabQ8S9zqhaE2CZJtCaLH2cjqKcjr52WPvmOA7ha0O4ZA==
 
+"@types/d3-brush@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@types/d3-brush/-/d3-brush-3.0.1.tgz#ae5f17ce391935ca88b29000e60ee20452c6357c"
+  integrity sha512-B532DozsiTuQMHu2YChdZU0qsFJSio3Q6jmBYGYNp3gMDzBmuFFgPt9qKA4VYuLZMp4qc6eX7IUFUEsvHiXZAw==
+  dependencies:
+    "@types/d3-selection" "*"
+
 "@types/d3-scale@^3.2.2":
   version "3.3.2"
   resolved "https://registry.yarnpkg.com/@types/d3-scale/-/d3-scale-3.3.2.tgz#18c94e90f4f1c6b1ee14a70f14bfca2bd1c61d06"
   integrity sha512-gGqr7x1ost9px3FvIfUMi5XA/F/yAf4UkUDtdQhpH92XCT0Oa7zkkRzY61gPVJq+DxpHn/btouw5ohWkbBsCzQ==
   dependencies:
     "@types/d3-time" "^2"
+
+"@types/d3-selection@*", "@types/d3-selection@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@types/d3-selection/-/d3-selection-3.0.2.tgz#23e48a285b24063630bbe312cc0cfe2276de4a59"
+  integrity sha512-d29EDd0iUBrRoKhPndhDY6U/PYxOWqgIZwKTooy2UkBfU7TNZNpRho0yLWPxlatQrFWk2mnTu71IZQ4+LRgKlQ==
 
 "@types/d3-time@^2":
   version "2.1.1"
@@ -3165,6 +3177,11 @@
   version "0.1.30"
   resolved "https://registry.yarnpkg.com/@types/detect-indent/-/detect-indent-0.1.30.tgz#dc682bb412b4e65ba098e70edad73b4833fb910d"
   integrity sha1-3GgrtBK05lugmOcO2tc7SDP7kQ0=
+
+"@types/exenv@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@types/exenv/-/exenv-1.2.0.tgz#84ff936feeafc917c3c66f80b43e917f56eed00b"
+  integrity sha512-kSyh9q6bvrOGEnJ9X9Io5gjXaakcSRQTax/Nj2ZKJHuOZ7bH4uvUgLyXA9uV2QBCP7+T8KS0JHbPfP1/79ckKw==
 
 "@types/geojson@^7946.0.7":
   version "7946.0.7"
@@ -3315,6 +3332,13 @@
   resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.3.tgz#2ab0d5da2e5815f94b0b9d4b95d1e5f243ab2ca7"
   integrity sha512-KfRL3PuHmqQLOG+2tGpRO26Ctg+Cq1E01D2DMriKEATHgWLfeNDmq9e29Q9WIky0dQ3NPkd1mzYH8Lm936Z9qw==
 
+"@types/react-lifecycles-compat@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@types/react-lifecycles-compat/-/react-lifecycles-compat-3.0.1.tgz#a0b1fe18cfb9435bd52737829a69cbe93faf32e2"
+  integrity sha512-4KiU5s1Go4xRbf7t6VxUUpBeN5PGjpjpBv9VvET4uiPHC500VNYBclU13f8ehHkHoZL39b2cfwHu6RzbV3b44A==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-modal@^3.13.1":
   version "3.13.1"
   resolved "https://registry.yarnpkg.com/@types/react-modal/-/react-modal-3.13.1.tgz#5b9845c205fccc85d9a77966b6e16dc70a60825a"
@@ -3326,6 +3350,13 @@
   version "17.0.0"
   resolved "https://registry.yarnpkg.com/@types/react-test-renderer/-/react-test-renderer-17.0.0.tgz#9be47b375eeb906fced37049e67284a438d56620"
   integrity sha512-nvw+F81OmyzpyIE1S0xWpLonLUZCMewslPuA8BtjSKc5XEbn8zEQBXS7KuOLHTNnSOEM2Pum50gHOoZ62tqTRg==
+  dependencies:
+    "@types/react" "*"
+
+"@types/react-vis@^1.8.0":
+  version "1.11.10"
+  resolved "https://registry.yarnpkg.com/@types/react-vis/-/react-vis-1.11.10.tgz#eb281db2366215665a14f7f5161f377e90da34b7"
+  integrity sha512-QQiBRQ4pfLue9dPhd20v3kpgB4U5TyW4dMcP231/y0b5qaxpaIXDDMZpEqYtNgqeGV566G0vVy9521p1s1tyww==
   dependencies:
     "@types/react" "*"
 

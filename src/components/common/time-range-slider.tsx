@@ -30,10 +30,14 @@ import TimeRangeSliderTimeTitleFactory from 'components/common/time-range-slider
 
 const animationControlWidth = 176;
 
-const StyledSliderContainer = styled.div`
-  align-items: flex-end;
+interface StyledSliderContainerProps {
+  isEnlarged?: boolean;
+}
+
+const StyledSliderContainer = styled.div<StyledSliderContainerProps>`
+  align-items: flex-end;e
   display: flex;
-  flex-direction: row;
+  flex-direction: row;ee
   justify-content: space-between;
   padding-left: ${props => (props.isEnlarged ? 24 : 0)}px;
 
@@ -54,10 +58,10 @@ TimeRangeSliderFactory.deps = [
 ];
 
 export default function TimeRangeSliderFactory(
-  PlaybackControls,
-  RangeSlider,
-  TimeSliderMarker,
-  TimeRangeSliderTimeTitle
+  PlaybackControls: ReturnType<typeof PlaybackControlsFactory>,
+  RangeSlider: ReturnType<typeof RangeSliderFactory>,
+  TimeSliderMarker: ReturnType<typeof TimeSliderMarkerFactory>,
+  TimeRangeSliderTimeTitle: ReturnType<typeof TimeRangeSliderTimeTitleFactory>
 ) {
   const TimeRangeSlider = props => {
     const {

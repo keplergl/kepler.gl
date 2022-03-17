@@ -18,12 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useMemo} from 'react';
+import React, {ReactElement, useMemo} from 'react';
 import {scaleLinear} from 'd3-scale';
 import {max} from 'd3-array';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import {ReactElement} from './styled-components';
 import {HistogramBin} from 'reducers';
 
 const histogramStyle = {
