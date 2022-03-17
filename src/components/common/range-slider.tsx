@@ -32,12 +32,12 @@ import {LineChart} from 'reducers';
 
 interface SliderInputProps {
   flush?: boolean;
-  elementSize?: string;
+  inputSize?: string;
 }
 
 const SliderInput = styled(Input)<SliderInputProps>`
   width: ${props => props.theme.sliderInputWidth}px;
-  margin-left: ${props => (props.flush ? 0 : props.elementSize === 'tiny' ? 12 : 18)}px;
+  margin-left: ${props => (props.flush ? 0 : props.inputSize === 'tiny' ? 12 : 18)}px;
   font-size: ${props => props.theme.sliderInputFontSize}; // 10px // 12px;
   padding: ${props => props.theme.sliderInputPadding}; // 4px 6px; // 6px 12px;
 `;
@@ -211,7 +211,7 @@ export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlo
           }}
           onBlur={update}
           flush={key === 'value0'}
-          elementSize={this.props.inputSize}
+          inputSize={this.props.inputSize}
           secondary={this.props.inputTheme === 'secondary'}
         />
       );

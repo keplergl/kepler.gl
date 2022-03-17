@@ -102,6 +102,7 @@ export default function RangePlotFactory(
         range={range}
         value={value}
         width={width}
+        height={height}
         isRanged={isRanged}
         onMouseoverHandle={onMouseoverHandle}
         onMouseoutHandle={onMouseoutHandle}

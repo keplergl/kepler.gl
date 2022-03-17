@@ -116,7 +116,7 @@ const TippyTooltip = ({children, render, duration = 200, ...rest}: TippyProps) =
       animation={true}
       render={attrs => (
         <TippyTooltipContent {...attrs} style={{opacity, transition: `opacity ${duration}ms`}}>
-          {render && render(attrs)}
+          {render?.(attrs)}
         </TippyTooltipContent>
       )}
       onMount={onMount}
