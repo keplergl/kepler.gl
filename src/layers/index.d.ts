@@ -2,7 +2,7 @@ import Layer from './base-layer';
 export {LAYER_VIS_CONFIGS, LayerVisConfig} from './layer-factory';
 
 export {default as Layer, OVERLAY_TYPE, LAYER_ID_LENGTH, colorMaker} from './base-layer';
-export type {LayerConfig, LayerColumns, LayerColumn} from './base-layer';
+export type {LayerBaseConfig, LayerColumns, LayerColumn} from './base-layer';
 export type {LayerVisConfig} from './layer-factory';
 
 export type LayerClassesType = {

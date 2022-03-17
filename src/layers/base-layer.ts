@@ -73,7 +73,7 @@ export type LayerColumns = {
 export type VisualChannelDomain = number[] | string[];
 export type VisualChannelField = Field | null;
 
-export type LayerConfig = {
+export type LayerBaseConfig = {
   dataId: string | null;
   label: string;
   color: RGBColor;
@@ -83,15 +83,6 @@ export type LayerConfig = {
   isConfigActive: boolean;
   highlightColor: RGBColor | RGBAColor;
   hidden: boolean;
-
-  colorField: VisualChannelField;
-  colorDomain: VisualChannelDomain;
-  colorScale: string;
-
-  // color by size, domain is set by filters, field, scale type
-  sizeDomain: VisualChannelDomain;
-  sizeScale: string;
-  sizeField: VisualChannelField;
 
   visConfig: LayerVisConfig;
   textLabel: LayerTextLabel[];
@@ -103,10 +94,6 @@ export type LayerConfig = {
   animation: {
     enabled: boolean;
   };
-
-  heightField: VisualChannelField;
-  heightDomain: VisualChannelDomain;
-  heightScale: string;
 };
 
 export type VisualChannel = {
@@ -174,14 +161,14 @@ class Layer {
   meta: {};
   // TODO: define visConfigSettings
   visConfigSettings: {};
-  config: LayerConfig;
+  config: LayerBaseConfig;
   // TODO: define _oldDataUpdateTriggers
   _oldDataUpdateTriggers: any;
 
   constructor(
     props: {
       id?: string;
-    } & Partial<LayerConfig> = {}
+    } & Partial<LayerBaseConfig> = {}
   ) {
     this.id = props.id || generateHashId(LAYER_ID_LENGTH);
 
@@ -387,7 +374,7 @@ class Layer {
     return hexToRgb(c);
   }
 
-  getDefaultLayerConfig(props: Partial<LayerConfig> = {}): LayerConfig {
+  getDefaultLayerConfig(props: Partial<LayerBaseConfig> = {}): LayerBaseConfig {
     return {
       dataId: props.dataId || null,
       label: props.label || DEFAULT_LAYER_LABEL,
@@ -444,7 +431,7 @@ class Layer {
    * @param field - Selected field
    * @returns {{}} - Column config
    */
-  assignColumn(key: string, field): LayerColumns {
+  assignColumn(key: string, field: Field): LayerColumns {
     // field value could be null for optional columns
     const update = field
       ? {
@@ -516,7 +503,7 @@ class Layer {
     return [];
   }
 
-  getHoverData(object, dataContainer: DataContainerInterface) {
+  getHoverData(object, dataContainer: DataContainerInterface, fields: Field[]) {
     if (!object) {
       return null;
     }
@@ -642,7 +629,7 @@ class Layer {
     return {...required, ...optional};
   }
 
-  updateLayerConfig(newConfig: Partial<LayerConfig>): Layer {
+  updateLayerConfig(newConfig: Partial<LayerBaseConfig>): Layer {
     this.config = {...this.config, ...newConfig};
     return this;
   }
