@@ -60,12 +60,16 @@ const LogoSvg = () => (
   </svg>
 );
 interface KeplerGlLogoProps {
-  appName?: string,
-  version?: string | boolean,
-  appWebsite?: string
-};
+  appName?: string;
+  version?: string | boolean;
+  appWebsite?: string;
+}
 
-const KeplerGlLogo = ({appName = KEPLER_GL_NAME, appWebsite = KEPLER_GL_WEBSITE, version = KEPLER_GL_VERSION}: KeplerGlLogoProps) => (
+const KeplerGlLogo = ({
+  appName = KEPLER_GL_NAME,
+  appWebsite = KEPLER_GL_WEBSITE,
+  version = KEPLER_GL_VERSION
+}: KeplerGlLogoProps) => (
   <LogoWrapper className="side-panel-logo">
     <LogoSvgWrapper>
       <LogoSvg />

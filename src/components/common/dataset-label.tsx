@@ -32,9 +32,9 @@ const DatasetName = styled.div.attrs({
 
 interface DatasetLabelType {
   dataset: {
-    color?: string,
-    label?: string
-  }
+    color?: string;
+    label?: string;
+  };
 }
 
 const DatasetLabel = ({dataset}: DatasetLabelType) => (

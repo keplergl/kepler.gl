@@ -21,14 +21,14 @@
 import React, {Component} from 'react';
 import {FormattedMessage} from 'localization';
 
-import styled, { FlattenSimpleInterpolation } from 'styled-components';
+import styled, {FlattenSimpleInterpolation} from 'styled-components';
 import Modal from 'react-modal';
 import {Delete} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
 import {media} from 'styles/media-breakpoints';
 
-interface ModalContentWrapperProps{
-  cssStyle?: FlattenSimpleInterpolation | string
+interface ModalContentWrapperProps {
+  cssStyle?: FlattenSimpleInterpolation | string;
 }
 
 const ModalContentWrapper = styled.div<ModalContentWrapperProps>`
@@ -141,24 +141,23 @@ export const ModalFooter = ({cancel, confirm, cancelButton, confirmButton}) => {
 };
 
 interface ModalDialogProps {
-  footer: boolean
-  close: boolean
-  isOpen: boolean
-  title?: string
-  className?: string
-  onConfirm: (...args: any) => any
-  onCancel: (...args: any) => any
-  confirmButton: object
-  confirmButtonLabel: string
-  cancelButton: object
-  cancelButtonLabel: string
-  cssStyle?: FlattenSimpleInterpolation | string
-  style?: React.CSSProperties 
-  theme: any
+  footer: boolean;
+  close: boolean;
+  isOpen: boolean;
+  title?: string;
+  className?: string;
+  onConfirm: (...args: any) => any;
+  onCancel: (...args: any) => any;
+  confirmButton: object;
+  confirmButtonLabel: string;
+  cancelButton: object;
+  cancelButtonLabel: string;
+  cssStyle?: FlattenSimpleInterpolation | string;
+  style?: React.CSSProperties;
+  theme: any;
 }
 
 class ModalDialog extends Component<ModalDialogProps> {
-
   static defaultProps = {
     footer: false,
     close: true,
@@ -185,10 +184,7 @@ class ModalDialog extends Component<ModalDialogProps> {
           }
         }}
       >
-        <ModalContentWrapper
-          className="modal--wrapper"
-          cssStyle={props.cssStyle}
-        >
+        <ModalContentWrapper className="modal--wrapper" cssStyle={props.cssStyle}>
           {props.close && (
             <CloseButton className="modal--close" onClick={props.onCancel}>
               <Delete height="14px" />

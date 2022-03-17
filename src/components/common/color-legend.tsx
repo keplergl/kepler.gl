@@ -99,23 +99,22 @@ const getQuantLegends = (scale, labelFormat) => {
 };
 
 type RangeType = {
-  colorMap?: [string, string][]
-  colorLegends?: {[key: string]: string},
-  colors: string[]
-}
-
-interface ColorLegendProps {
-  width: number,
-  scaleType?: string,
-  domain?: any[] | object,
-  fieldType?: string | null,
-  range?: RangeType,
-  labelFormat?: Function,
-  displayLabel?: boolean
+  colorMap?: [string, string][];
+  colorLegends?: {[key: string]: string};
+  colors: string[];
 };
 
-export default class ColorLegend extends Component<ColorLegendProps> {
+interface ColorLegendProps {
+  width: number;
+  scaleType?: string;
+  domain?: any[] | object;
+  fieldType?: string | null;
+  range?: RangeType;
+  labelFormat?: Function;
+  displayLabel?: boolean;
+}
 
+export default class ColorLegend extends Component<ColorLegendProps> {
   domainSelector = props => props.domain;
   rangeSelector = props => props.range;
   labelFormatSelector = props => props.labelFormat;

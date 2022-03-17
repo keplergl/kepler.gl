@@ -44,7 +44,7 @@ const Loader = styled.span`
 }`;
 
 interface LoadingWrapper {
-  borderColor?: string
+  borderColor?: string;
 }
 
 const LoadingWrapper = styled.div<LoadingWrapper>`
@@ -54,10 +54,10 @@ const LoadingWrapper = styled.div<LoadingWrapper>`
 `;
 
 interface LoadingSpinnerProps {
-  size?: number
-  color?: string
-  strokeWidth?: number
-  gap?: number
+  size?: number;
+  color?: string;
+  strokeWidth?: number;
+  gap?: number;
 }
 
 const LoadingSpinner = ({size = 32, color = '', strokeWidth = 3, gap = 2}: LoadingSpinnerProps) => (

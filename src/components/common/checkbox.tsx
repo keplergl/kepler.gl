@@ -26,7 +26,7 @@ import classnames from 'classnames';
 function noop() {}
 
 interface StyledSwitchInputProps {
-  secondary?: boolean
+  secondary?: boolean;
 }
 
 const StyledSwitchInput = styled.label<StyledSwitchInputProps>`
@@ -47,7 +47,7 @@ const HiddenInput = styled.input`
 `;
 
 interface StyledCheckboxProps {
-  type?: string
+  type?: string;
 }
 
 const StyledCheckbox = styled.div<StyledCheckboxProps>`
@@ -57,25 +57,24 @@ const StyledCheckbox = styled.div<StyledCheckboxProps>`
 `;
 
 interface CheckboxProps {
-  id: string
-  type?: string
-  label?: ReactNode
-  className?: string
-  value?: string | 'indeterminate'
-  checked?: boolean
-  disabled?: boolean
+  id: string;
+  type?: string;
+  label?: ReactNode;
+  className?: string;
+  value?: string | 'indeterminate';
+  checked?: boolean;
+  disabled?: boolean;
 
-  error?: string
-  switch?: boolean
-  activeColor?: string
-  secondary?: boolean
-  onBlur: FocusEventHandler<HTMLInputElement>
-  onChange?: ChangeEventHandler<HTMLInputElement>
-  onFocus: FocusEventHandler<HTMLInputElement>
+  error?: string;
+  switch?: boolean;
+  activeColor?: string;
+  secondary?: boolean;
+  onBlur: FocusEventHandler<HTMLInputElement>;
+  onChange?: ChangeEventHandler<HTMLInputElement>;
+  onFocus: FocusEventHandler<HTMLInputElement>;
 }
 
 export default class Checkbox extends Component<CheckboxProps> {
-
   static defaultProps = {
     disabled: false,
     checked: false,

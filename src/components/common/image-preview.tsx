@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import LoadingSpinner from 'components/common/loading-spinner';
-import { ExportImage } from 'reducers';
+import {ExportImage} from 'reducers';
 
 /** @typedef {import('../../reducers/ui-state-updaters').ExportImage} ExportImage */
 
@@ -71,9 +71,9 @@ const StyledImagePreview = styled.div.attrs({
 `;
 
 interface ImagePreviewProps {
-  exportImage?: ExportImage
-  width?: number
-  showDimension?: false
+  exportImage?: ExportImage;
+  width?: number;
+  showDimension?: false;
 }
 
 /**

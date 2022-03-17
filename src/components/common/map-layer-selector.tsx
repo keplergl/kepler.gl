@@ -31,15 +31,15 @@ const MapLayerSelect = styled.div`
   }
 `;
 interface Layer {
-  id: string,
-  name: string,
-  isVisible: boolean
+  id: string;
+  name: string;
+  isVisible: boolean;
 }
 
 interface MapLayerSelectorProps {
-  layers: Layer[],
-  onMapToggleLayer: (layerId: string) => void
-};
+  layers: Layer[];
+  onMapToggleLayer: (layerId: string) => void;
+}
 
 /** @type {typeof import('./map-layer-selector').default} */
 const MapLayerSelector = ({layers, onMapToggleLayer}: MapLayerSelectorProps) => (

@@ -60,43 +60,43 @@ export function FieldListItemFactoryFactory(FieldToken) {
 
 const SuggestedFieldHeader = () => <div>Suggested Field</div>;
 
-type FieldType = 
-  string |
-  string[] |
-  {
-    name?: string,
-    format?: string
-  }[] |
-  {
-    format?: string,
-    id?: string,
-    name?: string,
-    fieldIdx?: number,
-    type?: number
-  }
-
+type FieldType =
+  | string
+  | string[]
+  | {
+      name?: string;
+      format?: string;
+    }[]
+  | {
+      format?: string;
+      id?: string;
+      name?: string;
+      fieldIdx?: number;
+      type?: number;
+    };
 
 interface FieldSelectorFactoryProps {
-  fields?: FieldType[],
-  onSelect: (items: readonly (string | number | boolean | object)[]) => void,
-  placement?: string,
-  value?: FieldType,
-  filterFieldTypes?: FieldType | FieldType[],
-  inputTheme?: string,
-  placeholder?: string,
-  erasable?: boolean,
-  error?: boolean,
-  multiSelect?: boolean,
-  closeOnSelect?: boolean,
-  showToken?: boolean,
-  suggested?: any[], //TODO
-  CustomChickletComponent?: ComponentType,
-  size?: string
-};
+  fields?: FieldType[];
+  onSelect: (items: readonly (string | number | boolean | object)[]) => void;
+  placement?: string;
+  value?: FieldType;
+  filterFieldTypes?: FieldType | FieldType[];
+  inputTheme?: string;
+  placeholder?: string;
+  erasable?: boolean;
+  error?: boolean;
+  multiSelect?: boolean;
+  closeOnSelect?: boolean;
+  showToken?: boolean;
+  suggested?: any[]; //TODO
+  CustomChickletComponent?: ComponentType;
+  size?: string;
+}
 
-function FieldSelectorFactory(FieldListItemFactory: ReturnType<typeof FieldListItemFactoryFactory>) {
+function FieldSelectorFactory(
+  FieldListItemFactory: ReturnType<typeof FieldListItemFactoryFactory>
+) {
   class FieldSelector extends Component<FieldSelectorFactoryProps> {
-
     static defaultProps = {
       erasable: true,
       error: false,

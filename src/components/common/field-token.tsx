@@ -22,7 +22,10 @@ import React from 'react';
 import styled from 'styled-components';
 import {FILED_TYPE_DISPLAY, FIELD_COLORS} from 'constants/default-settings';
 
-function FieldTokenFactory(fieldTypeDisplay: ReturnType<typeof getFieldTypes>, fieldColors: ReturnType<typeof getFieldColors>) {
+function FieldTokenFactory(
+  fieldTypeDisplay: ReturnType<typeof getFieldTypes>,
+  fieldColors: ReturnType<typeof getFieldColors>
+) {
   const FieldTag = styled.div`
     background-color: rgba(${props => props.color}, 0.2);
     border-radius: 2px;

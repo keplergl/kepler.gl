@@ -24,27 +24,25 @@ import classnames from 'classnames';
 import {ArrowRight} from 'components/common/icons';
 import Checkbox from 'components/common/switch';
 
-
 export type ActionPanelProps = PropsWithChildren<{
-  color?: string,
-  className?: string,
-  direction?: string
+  color?: string;
+  className?: string;
+  direction?: string;
 }>;
 
-
 export type ActionPanelItemProps = PropsWithChildren<{
-  color?: string,
-  className?: string,
-  Icon?: ElementType,
-  label: string,
-  onClick?: () => void,
-  isSelection?: boolean,
-  isActive?: boolean,
-  style?: CSSProperties
+  color?: string;
+  className?: string;
+  Icon?: ElementType;
+  label: string;
+  onClick?: () => void;
+  isSelection?: boolean;
+  isActive?: boolean;
+  style?: CSSProperties;
 }>;
 
 export interface DirectionProp {
-  direction: string
+  direction: string;
 }
 
 const StyledItem = styled.div`
@@ -113,8 +111,9 @@ const StyledCheckedbox = styled(Checkbox)`
   }
 `;
 
-const renderChildren = (child: ReactNode, index: number) => 
-  React.isValidElement<any>(child) && React.cloneElement(child, {
+const renderChildren = (child: ReactNode, index: number) =>
+  React.isValidElement<any>(child) &&
+  React.cloneElement(child, {
     onClick: () => {
       if (child.props.onClick) {
         child.props.onClick(index);
@@ -125,7 +124,17 @@ const renderChildren = (child: ReactNode, index: number) =>
 
 /** @type {typeof import('./action-panel').ActionPanelItem} */
 export const ActionPanelItem = React.memo(
-  ({children, color, className, Icon, label, onClick, isSelection, isActive, style}: ActionPanelItemProps) => {
+  ({
+    children,
+    color,
+    className,
+    Icon,
+    label,
+    onClick,
+    isSelection,
+    isActive,
+    style
+  }: ActionPanelItemProps) => {
     const onClickCallback = useCallback(
       event => {
         event.preventDefault();
