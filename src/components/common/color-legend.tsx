@@ -19,14 +19,12 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
 import {format} from 'd3-format';
 import moment from 'moment';
 import {SCALE_TYPES, SCALE_FUNC, ALL_FIELD_TYPES} from 'constants/default-settings';
 import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
-import {isObject} from 'utils/utils';
 
 const ROW_H = 10;
 const GAP = 4;
@@ -100,15 +98,23 @@ const getQuantLegends = (scale, labelFormat) => {
   };
 };
 
-export default class ColorLegend extends Component {
-  static propTypes = {
-    width: PropTypes.number.isRequired,
-    scaleType: PropTypes.string,
-    domain: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
-    fieldType: PropTypes.string,
-    range: PropTypes.object,
-    labelFormat: PropTypes.func
-  };
+type RangeType = {
+  colorMap?: [string, string][]
+  colorLegends?: {[key: string]: string},
+  colors: string[]
+}
+
+interface ColorLegendProps {
+  width: number,
+  scaleType?: string,
+  domain?: any[] | object,
+  fieldType?: string | null,
+  range?: RangeType,
+  labelFormat?: Function,
+  displayLabel?: boolean
+};
+
+export default class ColorLegend extends Component<ColorLegendProps> {
 
   domainSelector = props => props.domain;
   rangeSelector = props => props.range;
@@ -130,7 +136,7 @@ export default class ColorLegend extends Component {
       if (!range) {
         return empty;
       }
-      if (isObject(range.colorLegends)) {
+      if (range.colorLegends) {
         return {
           data: Object.keys(range.colorLegends),
           labels: Object.values(range.colorLegends)

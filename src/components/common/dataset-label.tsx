@@ -20,35 +20,28 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import Checkbox from 'components/common/checkbox';
-import {generateHashId} from '../../utils/utils';
+import {CenterFlexbox, DatasetSquare} from 'components/common/styled-components';
 
-const MapLayerSelect = styled.div`
-  padding: 12px;
-
-  .map-layer-selector__item {
-    margin: 12px 0;
-  }
+const DatasetName = styled.div.attrs({
+  className: 'dataset-name'
+})`
+  font-weight: 500;
+  font-size: 12px;
+  color: ${props => props.theme.titleColorLT};
 `;
 
-/** @type {typeof import('./map-layer-selector').default} */
-const MapLayerSelector = ({layers, onMapToggleLayer}) => (
-  <MapLayerSelect className="map-layer-selector">
-    {layers.map((layer, index) => (
-      <div key={layer.id} className="map-layer-selector__item">
-        <Checkbox
-          type="radio"
-          checked={layer.isVisible}
-          id={`${layer.id}-toggle-${generateHashId(4)}`}
-          label={layer.name}
-          onChange={e => {
-            e.preventDefault();
-            onMapToggleLayer(layer.id);
-          }}
-        />
-      </div>
-    ))}
-  </MapLayerSelect>
+interface DatasetLabelType {
+  dataset: {
+    color?: string,
+    label?: string
+  }
+}
+
+const DatasetLabel = ({dataset}: DatasetLabelType) => (
+  <CenterFlexbox>
+    <DatasetSquare className="dataset-clolor" color={dataset.color} />
+    <DatasetName>{dataset.label}</DatasetName>
+  </CenterFlexbox>
 );
 
-export default MapLayerSelector;
+export default DatasetLabel;

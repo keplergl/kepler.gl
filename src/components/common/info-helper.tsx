@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import {useIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';
 import {Tooltip} from './styled-components';
@@ -27,7 +26,11 @@ import {Docs} from 'components/common/icons';
 import styled from 'styled-components';
 import {camelize} from 'utils/utils';
 
-const StyledInfoHelper = styled.div`
+interface StyledInfoHelperProps {
+  width: number
+}
+
+const StyledInfoHelper = styled.div<StyledInfoHelperProps>`
   align-items: center;
   margin-left: 10px;
   color: ${props => props.theme.labelColor};
@@ -42,12 +45,16 @@ const StyledInfoHelper = styled.div`
   }
 `;
 
-function InfoHelperFactory() {
-  const propTypes = {
-    description: PropTypes.string.isRequired,
-    containerClass: PropTypes.string
+interface InfoHelperProps{
+    description: string,
+    containerClass?: string
+    width: number
+    property?: string
+    id: string
   };
-  const InfoHelper = ({description, property, containerClass, width, id}) => {
+
+function InfoHelperFactory() {
+  const InfoHelper = ({description, property, containerClass, width, id}: InfoHelperProps) => {
     // TODO: move intl out
     const intl = useIntl();
 
@@ -77,7 +84,6 @@ function InfoHelperFactory() {
       </StyledInfoHelper>
     );
   };
-  InfoHelper.propTypes = propTypes;
   return InfoHelper;
 }
 

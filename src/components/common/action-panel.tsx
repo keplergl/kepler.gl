@@ -18,11 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback} from 'react';
+import React, {useCallback, PropsWithChildren, ElementType, CSSProperties, ReactNode} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {ArrowRight} from 'components/common/icons';
 import Checkbox from 'components/common/switch';
+
+
+export type ActionPanelProps = PropsWithChildren<{
+  color?: string,
+  className?: string,
+  direction?: string
+}>;
+
+
+export type ActionPanelItemProps = PropsWithChildren<{
+  color?: string,
+  className?: string,
+  Icon?: ElementType,
+  label: string,
+  onClick?: () => void,
+  isSelection?: boolean,
+  isActive?: boolean,
+  style?: CSSProperties
+}>;
+
+export interface DirectionProp {
+  direction: string
+}
 
 const StyledItem = styled.div`
   display: flex;
@@ -90,13 +113,11 @@ const StyledCheckedbox = styled(Checkbox)`
   }
 `;
 
-const renderChildren = (child, index) =>
-  React.cloneElement(child, {
+const renderChildren = (child: ReactNode, index: number) => 
+  React.isValidElement<any>(child) && React.cloneElement(child, {
     onClick: () => {
-      if (React.isValidElement(child)) {
-        if (child.props.onClick) {
-          child.props.onClick(index);
-        }
+      if (child.props.onClick) {
+        child.props.onClick(index);
       }
     },
     className: classnames('action-panel-item', child.props.className)
@@ -104,7 +125,7 @@ const renderChildren = (child, index) =>
 
 /** @type {typeof import('./action-panel').ActionPanelItem} */
 export const ActionPanelItem = React.memo(
-  ({children, color, className, Icon, label, onClick, isSelection, isActive, style}) => {
+  ({children, color, className, Icon, label, onClick, isSelection, isActive, style}: ActionPanelItemProps) => {
     const onClickCallback = useCallback(
       event => {
         event.preventDefault();
@@ -147,7 +168,7 @@ export const ActionPanelItem = React.memo(
 
 ActionPanelItem.displayName = 'ActionPanelItem';
 
-const StyledActionPanel = styled.div`
+const StyledActionPanel = styled.div<DirectionProp>`
   display: flex;
   flex-direction: ${props => props.direction};
   box-shadow: ${props => props.theme.dropdownListShadow};
@@ -166,7 +187,7 @@ const StyledActionPanel = styled.div`
 
 // React compound element https://medium.com/@Dane_s/react-js-compound-components-a6e54b5c9992
 /** @type {typeof import('./action-panel').ActionPanel} */
-const ActionPanel = ({children, className, direction = 'column'}) => (
+const ActionPanel = ({children, className, direction = 'column'}: ActionPanelProps) => (
   <StyledActionPanel className={className} direction={direction}>
     {React.Children.map(children, renderChildren)}
   </StyledActionPanel>

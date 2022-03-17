@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
-import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 
 import ItemSelector from './item-selector/item-selector';
@@ -61,42 +60,42 @@ export function FieldListItemFactoryFactory(FieldToken) {
 
 const SuggestedFieldHeader = () => <div>Suggested Field</div>;
 
-const FieldType = PropTypes.oneOfType([
-  PropTypes.string,
-  PropTypes.arrayOf(PropTypes.string),
-  PropTypes.arrayOf(
-    PropTypes.shape({
-      name: PropTypes.string,
-      format: PropTypes.string
-    })
-  ),
-  PropTypes.shape({
-    format: PropTypes.string,
-    id: PropTypes.string,
-    name: PropTypes.string,
-    fieldIdx: PropTypes.number,
-    type: PropTypes.number
-  })
-]);
+type FieldType = 
+  string |
+  string[] |
+  {
+    name?: string,
+    format?: string
+  }[] |
+  {
+    format?: string,
+    id?: string,
+    name?: string,
+    fieldIdx?: number,
+    type?: number
+  }
 
-function FieldSelectorFactory(FieldListItemFactory) {
-  class FieldSelector extends Component {
-    static propTypes = {
-      fields: PropTypes.oneOfType([PropTypes.array, PropTypes.arrayOf(FieldType)]),
-      onSelect: PropTypes.func.isRequired,
-      placement: PropTypes.string,
-      value: FieldType,
-      filterFieldTypes: PropTypes.oneOfType([FieldType, PropTypes.arrayOf(FieldType)]),
-      inputTheme: PropTypes.string,
-      placeholder: PropTypes.string,
-      erasable: PropTypes.bool,
-      error: PropTypes.bool,
-      multiSelect: PropTypes.bool,
-      closeOnSelect: PropTypes.bool,
-      showToken: PropTypes.bool,
-      suggested: PropTypes.arrayOf(PropTypes.any),
-      CustomChickletComponent: PropTypes.func
-    };
+
+interface FieldSelectorFactoryProps {
+  fields?: FieldType[],
+  onSelect: (items: readonly (string | number | boolean | object)[]) => void,
+  placement?: string,
+  value?: FieldType,
+  filterFieldTypes?: FieldType | FieldType[],
+  inputTheme?: string,
+  placeholder?: string,
+  erasable?: boolean,
+  error?: boolean,
+  multiSelect?: boolean,
+  closeOnSelect?: boolean,
+  showToken?: boolean,
+  suggested?: any[], //TODO
+  CustomChickletComponent?: ComponentType,
+  size?: string
+};
+
+function FieldSelectorFactory(FieldListItemFactory: ReturnType<typeof FieldListItemFactoryFactory>) {
+  class FieldSelector extends Component<FieldSelectorFactoryProps> {
 
     static defaultProps = {
       erasable: true,

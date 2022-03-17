@@ -43,13 +43,24 @@ const Loader = styled.span`
     animation-name: ${animationName};
 }`;
 
-const LoadingWrapper = styled.div`
+interface LoadingWrapper {
+  borderColor?: string
+}
+
+const LoadingWrapper = styled.div<LoadingWrapper>`
   border-radius: 50%;
   border: 3px solid ${props => props.borderColor || props.theme.borderColorLT};
   padding: 2px;
 `;
 
-const LoadingSpinner = ({size = 32, color = '', borderColor = '', strokeWidth = 3, gap = 2}) => (
+interface LoadingSpinnerProps {
+  size?: number
+  color?: string
+  strokeWidth?: number
+  gap?: number
+}
+
+const LoadingSpinner = ({size = 32, color = '', strokeWidth = 3, gap = 2}: LoadingSpinnerProps) => (
   <LoadingWrapper style={{width: `${size}px`, height: `${size}px`, padding: `${gap}px`}}>
     <Loader
       color={color}

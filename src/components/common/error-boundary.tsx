@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {ErrorInfo} from 'react';
 import console from 'global/console';
 
 export default class ErrorBoundary extends React.Component {
@@ -27,7 +27,7 @@ export default class ErrorBoundary extends React.Component {
     return {hasError: true, error};
   }
   state = {hasError: false};
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // You can also log the error to an error reporting service
     console.error(error, errorInfo);
   }

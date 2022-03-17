@@ -18,15 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import React, {ChangeEventHandler, Component, FocusEventHandler, ReactNode} from 'react';
 import styled from 'styled-components';
 import pick from 'lodash.pick';
 import classnames from 'classnames';
 
 function noop() {}
 
-const StyledSwitchInput = styled.label`
+interface StyledSwitchInputProps {
+  secondary?: boolean
+}
+
+const StyledSwitchInput = styled.label<StyledSwitchInputProps>`
   ${props => (props.secondary ? props.theme.secondarySwitch : props.theme.inputSwitch)};
 `;
 
@@ -43,28 +46,35 @@ const HiddenInput = styled.input`
   display: none;
 `;
 
-const StyledCheckbox = styled.div`
+interface StyledCheckboxProps {
+  type?: string
+}
+
+const StyledCheckbox = styled.div<StyledCheckboxProps>`
   display: flex;
   min-height: ${props => props.theme.switchHeight}px;
   margin-left: ${props => (props.type === 'radio' ? 0 : props.theme.switchLabelMargin)}px;
 `;
 
-export default class Checkbox extends Component {
-  static propTypes = {
-    id: PropTypes.string.isRequired,
-    label: PropTypes.node,
-    value: PropTypes.oneOf([true, false, 'indeterminate']),
-    checked: PropTypes.bool,
-    disabled: PropTypes.bool,
+interface CheckboxProps {
+  id: string
+  type?: string
+  label?: ReactNode
+  className?: string
+  value?: string | 'indeterminate'
+  checked?: boolean
+  disabled?: boolean
 
-    error: PropTypes.string,
-    switch: PropTypes.bool,
-    activeColor: PropTypes.string,
-    secondary: PropTypes.bool,
-    onBlur: PropTypes.func,
-    onChange: PropTypes.func,
-    onFocus: PropTypes.func
-  };
+  error?: string
+  switch?: boolean
+  activeColor?: string
+  secondary?: boolean
+  onBlur: FocusEventHandler<HTMLInputElement>
+  onChange?: ChangeEventHandler<HTMLInputElement>
+  onFocus: FocusEventHandler<HTMLInputElement>
+}
+
+export default class Checkbox extends Component<CheckboxProps> {
 
   static defaultProps = {
     disabled: false,
@@ -79,12 +89,12 @@ export default class Checkbox extends Component {
     focused: false
   };
 
-  handleFocus = args => {
+  handleFocus: FocusEventHandler<HTMLInputElement> = args => {
     this.setState({focused: true});
     this.props.onFocus(args);
   };
 
-  handleBlur = args => {
+  handleBlur: FocusEventHandler<HTMLInputElement> = args => {
     this.setState({focused: false});
     this.props.onBlur(args);
   };

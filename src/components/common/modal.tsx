@@ -19,16 +19,19 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 import {FormattedMessage} from 'localization';
 
-import styled from 'styled-components';
+import styled, { FlattenSimpleInterpolation } from 'styled-components';
 import Modal from 'react-modal';
 import {Delete} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
 import {media} from 'styles/media-breakpoints';
 
-const ModalContentWrapper = styled.div`
+interface ModalContentWrapperProps{
+  cssStyle?: FlattenSimpleInterpolation | string
+}
+
+const ModalContentWrapper = styled.div<ModalContentWrapperProps>`
   overflow-y: auto;
   max-width: 70vw;
   max-height: 85vh;
@@ -137,18 +140,24 @@ export const ModalFooter = ({cancel, confirm, cancelButton, confirmButton}) => {
   );
 };
 
-class ModalDialog extends Component {
-  static propTypes = {
-    footer: PropTypes.bool,
-    close: PropTypes.bool,
-    onConfirm: PropTypes.func,
-    onCancel: PropTypes.func,
-    confirmButton: PropTypes.object,
-    confirmButtonLabel: PropTypes.string,
-    cancelButton: PropTypes.object,
-    cancelButtonLabel: PropTypes.string,
-    cssStyle: PropTypes.arrayOf(PropTypes.any)
-  };
+interface ModalDialogProps {
+  footer: boolean
+  close: boolean
+  isOpen: boolean
+  title?: string
+  className?: string
+  onConfirm: (...args: any) => any
+  onCancel: (...args: any) => any
+  confirmButton: object
+  confirmButtonLabel: string
+  cancelButton: object
+  cancelButtonLabel: string
+  cssStyle?: FlattenSimpleInterpolation | string
+  style?: React.CSSProperties 
+  theme: any
+}
+
+class ModalDialog extends Component<ModalDialogProps> {
 
   static defaultProps = {
     footer: false,
@@ -179,7 +188,6 @@ class ModalDialog extends Component {
         <ModalContentWrapper
           className="modal--wrapper"
           cssStyle={props.cssStyle}
-          footer={props.footer}
         >
           {props.close && (
             <CloseButton className="modal--close" onClick={props.onCancel}>
