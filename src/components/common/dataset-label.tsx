@@ -18,39 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {css} from 'styled-components';
+import React from 'react';
+import styled from 'styled-components';
+import {CenterFlexbox, DatasetSquare} from 'components/common/styled-components';
 
-// These are useful for test or when theme doesn't define them
-const breakPoints = {
-  palm: 588,
-  desk: 768
-};
+const DatasetName = styled.div.attrs({
+  className: 'dataset-name'
+})`
+  font-weight: 500;
+  font-size: 12px;
+  color: ${props => props.theme.titleColorLT};
+`;
 
-/**
- * Contains media rules for different device types
- * @namespace
- * @property {object}  media
- * @property {string}  media.palm - rule for palm devices
- * @property {string}  media.portable - rule for portable devices
- * @property {string}  media.desk - rule for desktops
- */
+interface DatasetLabelType {
+  dataset: {
+    color?: string;
+    label?: string;
+  };
+}
 
-export const media = {
-  palm: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
-      ${css(...args)};
-    }
-  `,
+const DatasetLabel = ({dataset}: DatasetLabelType) => (
+  <CenterFlexbox>
+    <DatasetSquare className="dataset-clolor" color={dataset.color} />
+    <DatasetName>{dataset.label}</DatasetName>
+  </CenterFlexbox>
+);
 
-  portable: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
-      ${css(...args)};
-    }
-  `,
-
-  desk: (...args): string => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
-      ${css(...args)};
-    }
-  `
-};
+export default DatasetLabel;

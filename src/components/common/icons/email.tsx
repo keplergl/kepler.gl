@@ -18,39 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {css} from 'styled-components';
+import React, {Component} from 'react';
+import Base, {BaseProps} from './base';
 
-// These are useful for test or when theme doesn't define them
-const breakPoints = {
-  palm: 588,
-  desk: 768
-};
+export default class Email extends Component<Partial<BaseProps>> {
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-email'
+  };
 
-/**
- * Contains media rules for different device types
- * @namespace
- * @property {object}  media
- * @property {string}  media.palm - rule for palm devices
- * @property {string}  media.portable - rule for portable devices
- * @property {string}  media.desk - rule for desktops
- */
-
-export const media = {
-  palm: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
-      ${css(...args)};
-    }
-  `,
-
-  portable: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
-      ${css(...args)};
-    }
-  `,
-
-  desk: (...args): string => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
-      ${css(...args)};
-    }
-  `
-};
+  render() {
+    return (
+      <Base {...this.props}>
+        <path d="M23.85,23a1,1,0,0,1,.38.08,1,1,0,0,0-.76,0A1,1,0,0,1,23.85,23Z" />
+        <path d="M8.35,24.41V47.18a3.37,3.37,0,0,0,3.37,3.37H52.2a3.37,3.37,0,0,0,3.37-3.37V24.41L32,37.9Z" />
+        <path d="M55.57,16.82a3.37,3.37,0,0,0-3.37-3.37H11.72a3.37,3.37,0,0,0-3.37,3.37L32,30.31Z" />
+      </Base>
+    );
+  }
+}

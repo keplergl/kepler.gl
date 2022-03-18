@@ -18,39 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {css} from 'styled-components';
+import React, {Component} from 'react';
+import Base, {BaseProps} from './base';
 
-// These are useful for test or when theme doesn't define them
-const breakPoints = {
-  palm: 588,
-  desk: 768
-};
+export default class Crosshairs extends Component<Partial<BaseProps>> {
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-crosshairs'
+  };
 
-/**
- * Contains media rules for different device types
- * @namespace
- * @property {object}  media
- * @property {string}  media.palm - rule for palm devices
- * @property {string}  media.portable - rule for portable devices
- * @property {string}  media.desk - rule for desktops
- */
-
-export const media = {
-  palm: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
-      ${css(...args)};
-    }
-  `,
-
-  portable: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
-      ${css(...args)};
-    }
-  `,
-
-  desk: (...args): string => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
-      ${css(...args)};
-    }
-  `
-};
+  render() {
+    return (
+      <Base viewBox="0 0 64 64" {...this.props}>
+        <path d="M60.015 30h-4.12c-.961-11.648-10.237-20.932-21.88-21.908V4h-4v4.087C18.343 9.037 9.038 18.332 8.075 30h-4.06v4h4.06c.963 11.668 10.268 20.964 21.94 21.913V60h4v-4.092c11.643-.976 20.919-10.26 21.88-21.908h4.12v-4zm-8.131 0H39.723a8 8 0 0 0-5.708-5.73V12.103c9.42.954 16.928 8.473 17.869 17.897zm-21.87-17.9v12.155A7.999 7.999 0 0 0 24.248 30H12.086c.942-9.444 8.48-16.972 17.929-17.9zM12.087 34h12.161a7.999 7.999 0 0 0 5.768 5.745V51.9c-9.448-.928-16.987-8.456-17.93-17.9zm21.929 17.897V39.73A8 8 0 0 0 39.723 34h12.16c-.94 9.424-8.448 16.943-17.868 17.897z" />
+      </Base>
+    );
+  }
+}

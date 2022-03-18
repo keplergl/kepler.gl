@@ -18,39 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {css} from 'styled-components';
+import React, {Component} from 'react';
+import Base, {BaseProps} from './base';
 
-// These are useful for test or when theme doesn't define them
-const breakPoints = {
-  palm: 588,
-  desk: 768
-};
+export default class Add extends Component<Partial<BaseProps>> {
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-add'
+  };
 
-/**
- * Contains media rules for different device types
- * @namespace
- * @property {object}  media
- * @property {string}  media.palm - rule for palm devices
- * @property {string}  media.portable - rule for portable devices
- * @property {string}  media.desk - rule for desktops
- */
-
-export const media = {
-  palm: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
-      ${css(...args)};
-    }
-  `,
-
-  portable: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
-      ${css(...args)};
-    }
-  `,
-
-  desk: (...args): string => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
-      ${css(...args)};
-    }
-  `
-};
+  render() {
+    return (
+      <Base {...this.props}>
+        <path d="M35.93,28.57V9.89a1,1,0,0,0-1-1h-5.9a1,1,0,0,0-1,1V28.57H9.39a1,1,0,0,0-1,1v5.9a1,1,0,0,0,1,1H28.07V55.11a1,1,0,0,0,1,1h5.9a1,1,0,0,0,1-1V36.43H54.61a1,1,0,0,0,1-1v-5.9a1,1,0,0,0-1-1Z" />
+      </Base>
+    );
+  }
+}

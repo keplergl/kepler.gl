@@ -18,39 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {css} from 'styled-components';
+import React, {Component} from 'react';
+import Base, {BaseProps} from './base';
 
-// These are useful for test or when theme doesn't define them
-const breakPoints = {
-  palm: 588,
-  desk: 768
-};
+export default class ArrowRight extends Component<Partial<BaseProps>> {
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-arrowright'
+  };
 
-/**
- * Contains media rules for different device types
- * @namespace
- * @property {object}  media
- * @property {string}  media.palm - rule for palm devices
- * @property {string}  media.portable - rule for portable devices
- * @property {string}  media.desk - rule for desktops
- */
-
-export const media = {
-  palm: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
-      ${css(...args)};
-    }
-  `,
-
-  portable: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
-      ${css(...args)};
-    }
-  `,
-
-  desk: (...args): string => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
-      ${css(...args)};
-    }
-  `
-};
+  render() {
+    return (
+      <Base {...this.props}>
+        <path
+          d="M26.7,54.7l-4.5-4.4c-0.4-0.4-0.4-1,0-1.4L38.6,33L22.2,17c-0.4-0.4-0.4-1,0-1.5l4.5-4.4c0.4-0.4,1.1-0.4,1.5,0
+	l17.1,16.7l4.5,4.4c0.4,0.4,0.4,1,0,1.4L45.2,38L28.2,54.7C27.8,55.1,27.1,55.1,26.7,54.7"
+        />
+      </Base>
+    );
+  }
+}

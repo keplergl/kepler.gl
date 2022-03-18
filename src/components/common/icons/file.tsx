@@ -18,39 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {css} from 'styled-components';
+import React, {Component} from 'react';
+import Base, {BaseProps} from './base';
 
-// These are useful for test or when theme doesn't define them
-const breakPoints = {
-  palm: 588,
-  desk: 768
-};
+export default class File extends Component<Partial<BaseProps>> {
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-file'
+  };
 
-/**
- * Contains media rules for different device types
- * @namespace
- * @property {object}  media
- * @property {string}  media.palm - rule for palm devices
- * @property {string}  media.portable - rule for portable devices
- * @property {string}  media.desk - rule for desktops
- */
-
-export const media = {
-  palm: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
-      ${css(...args)};
-    }
-  `,
-
-  portable: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
-      ${css(...args)};
-    }
-  `,
-
-  desk: (...args): string => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
-      ${css(...args)};
-    }
-  `
-};
+  render() {
+    return (
+      <Base {...this.props}>
+        <path d="M49.61,20.51,36.56,7.46a1.36,1.36,0,0,0-.32-.24,1.6,1.6,0,0,0-.39-.14,1.53,1.53,0,0,0-.26,0H15.38A1.39,1.39,0,0,0,14,8.45v47.1a1.39,1.39,0,0,0,1.39,1.39H48.63A1.39,1.39,0,0,0,50,55.55V21.48A1.4,1.4,0,0,0,49.61,20.51Zm-1,35H15.38V8.45h19.4V20.92a1.39,1.39,0,0,0,1.39,1.39H48.63Z" />
+      </Base>
+    );
+  }
+}

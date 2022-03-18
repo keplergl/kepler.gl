@@ -18,39 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {css} from 'styled-components';
+import styled from 'styled-components';
 
-// These are useful for test or when theme doesn't define them
-const breakPoints = {
-  palm: 588,
-  desk: 768
-};
+interface ToolbarProps {
+  show?: boolean;
+}
 
-/**
- * Contains media rules for different device types
- * @namespace
- * @property {object}  media
- * @property {string}  media.palm - rule for palm devices
- * @property {string}  media.portable - rule for portable devices
- * @property {string}  media.desk - rule for desktops
- */
+const Toolbar = styled.div<ToolbarProps>`
+  display: flex;
+  flex-direction: row;
+  background-color: ${props => props.theme.dropdownListBgd};
+  box-shadow: ${props => props.theme.dropdownListShadow};
+  font-size: 12px;
+  transition: ${props => props.theme.transitionSlow};
+  margin-top: ${props => (props.show ? '6px' : '20px')};
+  opacity: ${props => (props.show ? 1 : 0)};
+  transform: translateX(calc(-50% + 20px));
+  pointer-events: ${props => (props.show ? 'all' : 'none')};
+  z-index: 1000;
 
-export const media = {
-  palm: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
-      ${css(...args)};
-    }
-  `,
+  .panel-header-dropdown__inner {
+    box-shadow: none;
+    background-color: transparent;
+    display: flex;
+  }
+`;
 
-  portable: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
-      ${css(...args)};
-    }
-  `,
+Toolbar.displayName = 'Toolbar';
 
-  desk: (...args): string => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
-      ${css(...args)};
-    }
-  `
-};
+export default Toolbar;

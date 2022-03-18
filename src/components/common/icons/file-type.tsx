@@ -18,39 +18,54 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {css} from 'styled-components';
+import React, {ReactNode} from 'react';
+import styled from 'styled-components';
 
-// These are useful for test or when theme doesn't define them
-const breakPoints = {
-  palm: 588,
-  desk: 768
-};
+import {File} from 'components/common/icons';
 
-/**
- * Contains media rules for different device types
- * @namespace
- * @property {object}  media
- * @property {string}  media.palm - rule for palm devices
- * @property {string}  media.portable - rule for portable devices
- * @property {string}  media.desk - rule for desktops
- */
+interface FileNameTagProps {
+  fontSize: string;
+}
 
-export const media = {
-  palm: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
-      ${css(...args)};
-    }
-  `,
+const FileNameTag = styled.div<FileNameTagProps>`
+  background-color: currentColor;
+  border-radius: 1px;
+  display: inline-block;
+  padding: 0 4px;
+  position: absolute;
+  top: 45%;
+  left: 10%;
 
-  portable: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
-      ${css(...args)};
-    }
-  `,
+  .text {
+    color: white;
+    font-size: ${props => props.fontSize};
+  }
+`;
 
-  desk: (...args): string => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
-      ${css(...args)};
-    }
-  `
-};
+interface FileTypeIconWrapperProps {
+  height: string;
+}
+
+const FileTypeIconWrapper = styled.div<FileTypeIconWrapperProps>`
+  display: inline-block;
+  position: relative;
+  color: currentColor;
+  height: ${props => props.height};
+`;
+
+interface FileTypeIconProps {
+  ext?: ReactNode;
+  height: string;
+  fontSize: string;
+}
+
+const FileTypeIcon = ({ext, height, fontSize}: FileTypeIconProps) => (
+  <FileTypeIconWrapper height={height}>
+    <File height={height} />
+    <FileNameTag fontSize={fontSize}>
+      <div className="text">{ext}</div>
+    </FileNameTag>
+  </FileTypeIconWrapper>
+);
+
+export default FileTypeIcon;

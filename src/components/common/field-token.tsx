@@ -18,39 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {css} from 'styled-components';
+import React from 'react';
+import styled from 'styled-components';
+import {FILED_TYPE_DISPLAY, FIELD_COLORS} from 'constants/default-settings';
 
-// These are useful for test or when theme doesn't define them
-const breakPoints = {
-  palm: 588,
-  desk: 768
-};
+function FieldTokenFactory(
+  fieldTypeDisplay: ReturnType<typeof getFieldTypes>,
+  fieldColors: ReturnType<typeof getFieldColors>
+) {
+  const FieldTag = styled.div`
+    background-color: rgba(${props => props.color}, 0.2);
+    border-radius: 2px;
+    border: 1px solid rgb(${props => props.color});
+    color: rgb(${props => props.color});
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 400;
+    padding: 0 5px;
+    text-align: center;
+    width: 40px;
+    line-height: 20px;
+  `;
 
-/**
- * Contains media rules for different device types
- * @namespace
- * @property {object}  media
- * @property {string}  media.palm - rule for palm devices
- * @property {string}  media.portable - rule for portable devices
- * @property {string}  media.desk - rule for desktops
- */
+  const FieldToken = ({type}) => (
+    <FieldTag
+      color={(fieldTypeDisplay[type] && fieldTypeDisplay[type].color) || fieldColors.default}
+    >
+      {fieldTypeDisplay[type].label}
+    </FieldTag>
+  );
+  return FieldToken;
+}
 
-export const media = {
-  palm: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
-      ${css(...args)};
-    }
-  `,
+function getFieldTypes() {
+  return FILED_TYPE_DISPLAY;
+}
 
-  portable: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
-      ${css(...args)};
-    }
-  `,
-
-  desk: (...args): string => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
-      ${css(...args)};
-    }
-  `
-};
+function getFieldColors() {
+  return FIELD_COLORS;
+}
+FieldTokenFactory.deps = [getFieldTypes, getFieldColors];
+export default FieldTokenFactory;

@@ -18,39 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {css} from 'styled-components';
+import React, {Component} from 'react';
+import Base, {BaseProps} from './base';
 
-// These are useful for test or when theme doesn't define them
-const breakPoints = {
-  palm: 588,
-  desk: 768
-};
+export default class Share extends Component<Partial<BaseProps>> {
+  static defaultProps = {
+    height: '16px',
+    predefinedClassName: 'data-ex-icons-share'
+  };
 
-/**
- * Contains media rules for different device types
- * @namespace
- * @property {object}  media
- * @property {string}  media.palm - rule for palm devices
- * @property {string}  media.portable - rule for portable devices
- * @property {string}  media.desk - rule for desktops
- */
-
-export const media = {
-  palm: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
-      ${css(...args)};
-    }
-  `,
-
-  portable: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
-      ${css(...args)};
-    }
-  `,
-
-  desk: (...args): string => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
-      ${css(...args)};
-    }
-  `
-};
+  render() {
+    return (
+      <Base {...this.props}>
+        <path d="M58 50c0 5.523-4.477 10-10 10s-10-4.477-10-10c0-.432.037-.854.09-1.272L22.236 39.81A9.95 9.95 0 0 1 16 42c-5.523 0-10-4.477-10-10s4.477-10 10-10a9.95 9.95 0 0 1 6.236 2.19l15.854-8.918A10.03 10.03 0 0 1 38 14c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10a9.95 9.95 0 0 1-6.236-2.19L25.91 30.728c.053.418.09.84.09 1.272s-.037.854-.09 1.272l15.854 8.918A9.95 9.95 0 0 1 48 40c5.523 0 10 4.477 10 10z" />
+      </Base>
+    );
+  }
+}

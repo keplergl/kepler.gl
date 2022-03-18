@@ -18,39 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {css} from 'styled-components';
+import React from 'react';
+import styled from 'styled-components';
+import Checkbox from 'components/common/checkbox';
+import {generateHashId} from '../../utils/utils';
 
-// These are useful for test or when theme doesn't define them
-const breakPoints = {
-  palm: 588,
-  desk: 768
-};
+const MapLayerSelect = styled.div`
+  padding: 12px;
 
-/**
- * Contains media rules for different device types
- * @namespace
- * @property {object}  media
- * @property {string}  media.palm - rule for palm devices
- * @property {string}  media.portable - rule for portable devices
- * @property {string}  media.desk - rule for desktops
- */
+  .map-layer-selector__item {
+    margin: 12px 0;
+  }
+`;
+interface Layer {
+  id: string;
+  name: string;
+  isVisible: boolean;
+}
 
-export const media = {
-  palm: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
-      ${css(...args)};
-    }
-  `,
+interface MapLayerSelectorProps {
+  layers: Layer[];
+  onMapToggleLayer: (layerId: string) => void;
+}
 
-  portable: (...args): string => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
-      ${css(...args)};
-    }
-  `,
+/** @type {typeof import('./map-layer-selector').default} */
+const MapLayerSelector = ({layers, onMapToggleLayer}: MapLayerSelectorProps) => (
+  <MapLayerSelect className="map-layer-selector">
+    {layers.map((layer, index) => (
+      <div key={layer.id} className="map-layer-selector__item">
+        <Checkbox
+          type="radio"
+          checked={layer.isVisible}
+          id={`${layer.id}-toggle-${generateHashId(4)}`}
+          label={layer.name}
+          onChange={e => {
+            e.preventDefault();
+            onMapToggleLayer(layer.id);
+          }}
+        />
+      </div>
+    ))}
+  </MapLayerSelect>
+);
 
-  desk: (...args): string => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
-      ${css(...args)};
-    }
-  `
-};
+export default MapLayerSelector;

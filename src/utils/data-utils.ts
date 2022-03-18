@@ -109,7 +109,7 @@ export function getLatLngBounds(
   return [Math.max(lats[0], limit[0]), Math.min(lats[lats.length - 1], limit[1])];
 }
 
-export function clamp([min, max]: [number, number], val: number): number {
+export function clamp([min, max]: [number, number], val: number = 0): number {
   return val <= min ? min : val >= max ? max : val;
 }
 
