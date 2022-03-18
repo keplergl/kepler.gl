@@ -125,6 +125,7 @@ export type VisualChannelDescription = {
 
 export type ColumnPairs = {[key: string]: {pair: string; fieldPairKey: string}};
 
+type ColumnValidator = (column: LayerColumn, columns: LayerColumns, allFields: Field[]) => boolean;
 /**
  * Approx. number of points to sample in a large data set
  */
@@ -244,6 +245,9 @@ class Layer {
     };
   }
 
+  get columnValidators(): {[key: string]: ColumnValidator} {
+    return {};
+  }
   /*
    * Column pairs maps layer column to a specific field pairs,
    * By default, it is set to null
@@ -613,7 +617,7 @@ class Layer {
   }
 
   getLayerColumns() {
-    const columnValidators = {};
+    const columnValidators = this.columnValidators;
     const required = this.requiredLayerColumns.reduce(
       (accu, key) => ({
         ...accu,
