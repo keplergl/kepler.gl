@@ -144,7 +144,7 @@ export type LayerVisConfig = {
   strokeColorRange: VisConfigColorRange;
   targetColor: VisConfigColorSelect;
   strokeColor: VisConfigColorSelect;
-  aggregation: VisConfigSelection;
+  colorAggregation: VisConfigSelection;
   sizeAggregation: VisConfigSelection;
   percentile: VisConfigRange;
   elevationPercentile: VisConfigRange;
@@ -384,7 +384,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfig = {
     group: PROPERTY_GROUPS.color,
     property: 'strokeColor'
   },
-  aggregation: {
+  colorAggregation: {
     type: 'select',
     defaultValue: AGGREGATION_TYPES.average,
     label: 'layerVisConfigs.colorAggregation',
@@ -409,7 +409,9 @@ export const LAYER_VIS_CONFIGS: LayerVisConfig = {
     defaultValue: [0, 100],
     label: config =>
       `Filter by ${
-        config.colorField ? `${config.visConfig.aggregation} ${config.colorField.name}` : 'count'
+        config.colorField
+          ? `${config.visConfig.colorAggregation} ${config.colorField.name}`
+          : 'count'
       } percentile`,
     isRanged: true,
     range: [0, 100],
