@@ -18,13 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {DataRow} from './data-row';
+import {DataRow, SharedRowOptions} from './data-row';
+import {Field} from './kepler-table';
+import {DataContainerInterface, RangeOptions} from './data-container-interface';
+
+type RowDataContainerInput = {
+  rows: any[][];
+  fields?: Field[];
+};
 
 /**
- * @param {import('./data-container-interface').DataContainerInterface} dataContainer
- * @param {import('./data-row').SharedRowOptions} sharedRow
+ * @param dataContainer
+ * @param sharedRow
  */
-function* rowsIterator(dataContainer, sharedRow) {
+function* rowsIterator(dataContainer: DataContainerInterface, sharedRow: SharedRowOptions) {
   const numRows = dataContainer.numRows();
   for (let rowIndex = 0; rowIndex < numRows; ++rowIndex) {
     yield dataContainer.row(rowIndex, sharedRow);
@@ -32,18 +39,24 @@ function* rowsIterator(dataContainer, sharedRow) {
 }
 
 /**
- * @param {import('./data-container-interface').DataContainerInterface} dataContainer
- * @param {number} columnIndex
+ * @param dataContainer
+ * @param columnIndex
  */
-function* columnIterator(dataContainer, columnIndex) {
+function* columnIterator(dataContainer: DataContainerInterface, columnIndex: number) {
   const numRows = dataContainer.numRows();
   for (let rowIndex = 0; rowIndex < numRows; ++rowIndex) {
     yield dataContainer.valueAt(rowIndex, columnIndex);
   }
 }
 
-export class RowDataContainer {
-  constructor(data) {
+/**
+ * A data container where all data is stored internally as a 2D array.
+ */
+export class RowDataContainer implements DataContainerInterface {
+  _rows: any[][];
+  _numColumns: number;
+
+  constructor(data: RowDataContainerInput) {
     if (!data.rows) {
       throw Error('RowDataContainer: no rows provided');
     }
@@ -56,22 +69,22 @@ export class RowDataContainer {
     this._numColumns = data.rows[0]?.length || 0;
   }
 
-  numRows() {
+  numRows(): number {
     return this._rows.length;
   }
 
-  numColumns() {
+  numColumns(): number {
     return this._numColumns;
   }
 
-  valueAt(rowIndex, columnIndex) {
+  valueAt(rowIndex: number, columnIndex: number): any {
     if (this._rows[rowIndex] === null) {
       return null;
     }
     return this._rows[rowIndex][columnIndex];
   }
 
-  row(rowIndex, sharedRow) {
+  row(rowIndex: number, sharedRow?: SharedRowOptions): DataRow {
     const tSharedRow = DataRow.createSharedRow(sharedRow);
     if (tSharedRow) {
       tSharedRow.setSource(this, rowIndex);
@@ -81,34 +94,38 @@ export class RowDataContainer {
     return new DataRow(this, rowIndex);
   }
 
-  rowAsArray(rowIndex) {
+  rowAsArray(rowIndex: number): any[] {
     return this._rows[rowIndex];
   }
 
-  rows(sharedRow) {
+  rows(sharedRow: SharedRowOptions) {
     const tSharedRow = DataRow.createSharedRow(sharedRow);
     return rowsIterator(this, tSharedRow);
   }
 
-  column(columnIndex) {
+  column(columnIndex: number) {
     return columnIterator(this, columnIndex);
   }
 
-  flattenData() {
+  flattenData(): any[][] {
     return this._rows;
   }
 
-  getPlainIndex(valid) {
+  getPlainIndex(): number[] {
     return this._rows.map((_, i) => i);
   }
 
-  map(func, sharedRow, options = {}) {
+  map<T>(
+    func: (row: DataRow, index: number) => T,
+    sharedRow?: SharedRowOptions,
+    options: RangeOptions = {}
+  ): T[] {
     const tSharedRow = DataRow.createSharedRow(sharedRow);
 
     const {start = 0, end = this.numRows()} = options;
     const endRow = Math.min(this.numRows(), end);
 
-    const out = [];
+    const out: T[] = [];
     for (let rowIndex = start; rowIndex < endRow; ++rowIndex) {
       const row = this.row(rowIndex, tSharedRow);
       out.push(func(row, rowIndex));
@@ -116,18 +133,24 @@ export class RowDataContainer {
     return out;
   }
 
-  mapIndex(func, options = {}) {
+  mapIndex<T>(
+    func: ({index: number}, dc: DataContainerInterface) => T,
+    options: RangeOptions = {}
+  ): T[] {
     const {start = 0, end = this.numRows()} = options;
     const endRow = Math.min(this.numRows(), end);
 
-    const out = [];
+    const out: T[] = [];
     for (let rowIndex = start; rowIndex < endRow; ++rowIndex) {
       out.push(func({index: rowIndex}, this));
     }
     return out;
   }
 
-  find(func, sharedRow) {
+  find(
+    func: (row: DataRow, index: number) => boolean,
+    sharedRow?: SharedRowOptions
+  ): DataRow | undefined {
     const tSharedRow = DataRow.createSharedRow(sharedRow);
 
     for (let rowIndex = 0; rowIndex < this._rows.length; ++rowIndex) {
@@ -139,7 +162,11 @@ export class RowDataContainer {
     return undefined;
   }
 
-  reduce(func, initialValue, sharedRow) {
+  reduce<T>(
+    func: (acc: T, row: DataRow, index: number) => T,
+    initialValue: T,
+    sharedRow?: SharedRowOptions
+  ): T {
     const tSharedRow = DataRow.createSharedRow(sharedRow);
 
     for (let rowIndex = 0; rowIndex < this._rows.length; ++rowIndex) {

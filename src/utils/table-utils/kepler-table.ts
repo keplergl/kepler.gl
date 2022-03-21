@@ -32,7 +32,8 @@ import {
   getFilterFunction,
   filterDataByFilterTypes,
   getNumericFieldDomain,
-  getTimestampFieldDomain
+  getTimestampFieldDomain,
+  FilterResult
 } from 'utils/filter-utils';
 import {maybeToDate, getSortingFunction} from 'utils/data-utils';
 import {
@@ -46,22 +47,118 @@ import {ALL_FIELD_TYPES, SCALE_TYPES} from 'constants/default-settings';
 
 import {createDataContainer} from './data-container-utils';
 
+import {RGBColor} from 'reducers/types';
+import {Layer} from 'layers';
+import {FieldDomain, Filter} from 'reducers/vis-state-updaters';
+import {DataContainerInterface} from './data-container-interface';
+import {ProtoDataset} from 'actions';
+
+export type Field = {
+  analyzerType: string;
+  id?: string;
+  name: string;
+  displayName: string;
+  format: string;
+  type: string;
+  fieldIdx: number;
+  valueAccessor(v: {index: number}): any;
+  filterProps?: any;
+  metadata?: any;
+};
+
+export type GpuFilter = {
+  filterRange: number[][];
+  filterValueUpdateTriggers: any;
+  filterValueAccessor: (
+    dc: DataContainerInterface
+  ) => (
+    getIndex?: (any) => number,
+    getData?: (dc: DataContainerInterface, d: any, fieldIndex: number) => any
+  ) => (d: any) => number;
+};
+
+export type FieldPair = {
+  defaultName: string;
+  pair: {
+    [key: string]: {
+      fieldIdx: number;
+      value: string;
+    };
+  };
+  suffix: string[];
+};
+
+export type FilterRecord = {
+  dynamicDomain: Filter[];
+  fixedDomain: Filter[];
+  cpu: Filter[];
+  gpu: Filter[];
+};
+
+export type FilterDatasetOpt = {
+  // only allow cpu filtering
+  cpuOnly?: boolean;
+  // ignore filter for domain calculation
+  ignoreDomain?: boolean;
+};
+
 // Unique identifier of each field
 const FID_KEY = 'name';
 
-/** @typedef {import('./kepler-table').KeplerTable} KeplerTableClass} */
-
-/**
- * @type {KeplerTableClass}
- */
 class KeplerTable {
-  constructor({info = {}, data, color, metadata, supportedFilterTypes}) {
+  readonly id: string;
+
+  type?: string;
+  label: string;
+  color: RGBColor;
+
+  // fields and data
+  fields: Field[];
+
+  dataContainer: DataContainerInterface;
+
+  allIndexes: number[];
+  filteredIndex: number[];
+  filteredIdxCPU?: number[];
+  filteredIndexForDomain: number[];
+  fieldPairs: FieldPair[];
+  gpuFilter: GpuFilter;
+  filterRecord?: FilterRecord;
+  filterRecordCPU?: FilterRecord;
+  changedFilters?: any;
+
+  // table-injected metadata
+  sortColumn?: {
+    // column name: sorted idx
+    [key: string]: string; // ASCENDING | DESCENDING | UNSORT
+  };
+  sortOrder?: number[] | null;
+
+  pinnedColumns?: string[];
+  supportedFilterTypes: string[] | undefined;
+  // table-injected metadata
+  metadata: object;
+
+  constructor({
+    info = {},
+    data,
+    color,
+    metadata,
+    supportedFilterTypes
+  }: {
+    info?: ProtoDataset['info'];
+    data: ProtoDataset['data'];
+    color: RGBColor;
+    metadata?: ProtoDataset['metadata'];
+    supportedFilterTypes?: ProtoDataset['supportedFilterTypes'];
+  }) {
     // TODO - what to do if validation fails? Can kepler handle exceptions?
     // const validatedData = validateInputData(data);
     // if (!validatedData) {
     //   return this;
     // }
 
+    // @ts-expect-error
     const dataContainer = createDataContainer(data.rows, {fields: data.fields});
 
     const datasetInfo = {
@@ -70,12 +167,13 @@ class KeplerTable {
       ...(info || {})
     };
     const dataId = datasetInfo.id;
-
-    const fields = data.fields.map((f, i) => ({
+    // @ts-expect-error
+    const fields: Field[] = data.fields.map((f, i) => ({
       ...f,
       fieldIdx: i,
       id: f.name,
       displayName: f.displayName || f.name,
+      // @ts-expect-error
       valueAccessor: maybeToDate.bind(
         null,
         // is time
@@ -113,7 +211,7 @@ class KeplerTable {
    * Get field
    * @param columnName
    */
-  getColumnField(columnName) {
+  getColumnField(columnName: string): Field | undefined {
     const field = this.fields.find(fd => fd[FID_KEY] === columnName);
     this._assetField(columnName, field);
     return field;
@@ -123,7 +221,7 @@ class KeplerTable {
    * Get fieldIdx
    * @param columnName
    */
-  getColumnFieldIdx(columnName) {
+  getColumnFieldIdx(columnName: string): number {
     const fieldIdx = this.fields.findIndex(fd => fd[FID_KEY] === columnName);
     this._assetField(columnName, Boolean(fieldIdx > -1));
     return fieldIdx;
@@ -132,7 +230,7 @@ class KeplerTable {
   /**
    * Get the value of a cell
    */
-  getValue(columnName, rowIdx) {
+  getValue(columnName: string, rowIdx: number): any {
     const field = this.getColumnField(columnName);
     return field ? field.valueAccessor({index: rowIdx}) : null;
   }
@@ -142,23 +240,23 @@ class KeplerTable {
    * @param fieldIdx
    * @param newField
    */
-  updateColumnField(fieldIdx, newField) {
+  updateColumnField(fieldIdx: number, newField: Field): void {
     this.fields = Object.assign([...this.fields], {[fieldIdx]: newField});
   }
 
   /**
    * Update dataset color by custom color
-   * @param {import('reducers/types').RGBColor} newColor
+   * @param newColor
    */
-  updateTableColor(newColor) {
+  updateTableColor(newColor: RGBColor): void {
     this.color = newColor;
   }
 
   /**
    * Save filterProps to field and retrieve it
-   * @param {string} columnName
+   * @param columnName
    */
-  getColumnFilterProps(columnName) {
+  getColumnFilterProps(columnName: string): Field['filterProps'] | null | undefined {
     const fieldIdx = this.getColumnFieldIdx(columnName);
     if (fieldIdx < 0) {
       return null;
@@ -173,7 +271,6 @@ class KeplerTable {
       return null;
     }
 
-    // @ts-expect-error
     const filterProps = getFilterProps(field, fieldDomain);
     const newField = {
       ...field,
@@ -191,7 +288,7 @@ class KeplerTable {
    * @param layers
    * @param opt
    */
-  filterTable(filters, layers, opt) {
+  filterTable(filters: Filter[], layers: Layer[], opt?: FilterDatasetOpt): KeplerTable {
     const {dataContainer, id: dataId, filterRecord: oldFilterRecord, fields} = this;
 
     // if there is no filters
@@ -216,7 +313,7 @@ class KeplerTable {
     const shouldCalDomain = Boolean(this.changedFilters.dynamicDomain);
     const shouldCalIndex = Boolean(this.changedFilters.cpu);
 
-    let filterResult = {};
+    let filterResult: FilterResult = {};
     if (shouldCalDomain || shouldCalIndex) {
       const dynamicDomainFilters = shouldCalDomain ? filterRecord.dynamicDomain : null;
       const cpuFilters = shouldCalIndex ? filterRecord.cpu : null;
@@ -249,7 +346,7 @@ class KeplerTable {
    * @param filters
    * @param layers
    */
-  filterTableCPU(filters, layers) {
+  filterTableCPU(filters: Filter[], layers: Layer[]): KeplerTable {
     const opt = {
       cpuOnly: true,
       ignoreDomain: true
@@ -287,7 +384,7 @@ class KeplerTable {
    * Calculate field domain based on field type and data
    * for Filter
    */
-  getColumnFilterDomain(field) {
+  getColumnFilterDomain(field: Field): FieldDomain {
     const {dataContainer} = this;
     const {valueAccessor} = field;
 
@@ -318,7 +415,10 @@ class KeplerTable {
   /**
    *  Get the domain of this column based on scale type
    */
-  getColumnLayerDomain(field, scaleType) {
+  getColumnLayerDomain(
+    field: Field,
+    scaleType: string
+  ): number[] | string[] | [number, number] | null {
     const {dataContainer, filteredIndexForDomain} = this;
 
     if (!SCALE_TYPES[scaleType]) {
@@ -369,7 +469,7 @@ class KeplerTable {
    * @param fieldName
    * @param condition
    */
-  _assetField(fieldName, condition) {
+  _assetField(fieldName: string, condition: any): void {
     if (!condition) {
       Console.error(`${fieldName} doesnt exist in dataset ${this.id}`);
     }
@@ -390,13 +490,12 @@ export function removeSuffixAndDelimiters(layerName, suffix) {
  *
  * @param fields
  * @returns found point fields
- * @type {typeof import('./kepler-table').findPointFieldPairs}
  */
-export function findPointFieldPairs(fields) {
+export function findPointFieldPairs(fields: Field[]): FieldPair[] {
   const allNames = fields.map(f => f.name.toLowerCase());
 
   // get list of all fields with matching suffixes
-  const acc = [];
+  const acc: FieldPair[] = [];
   return allNames.reduce((carry, fieldName, idx) => {
     // This search for pairs will early exit if found.
     for (const suffixPair of TRIP_POINT_FIELDS) {
@@ -437,9 +536,13 @@ export function findPointFieldPairs(fields) {
  * @param dataset
  * @param column
  * @param mode
- * @type {typeof import('./kepler-table').sortDatasetByColumn}
+ * @type
  */
-export function sortDatasetByColumn(dataset, column, mode) {
+export function sortDatasetByColumn(
+  dataset: KeplerTable,
+  column: string,
+  mode?: string
+): KeplerTable {
   const {allIndexes, fields, dataContainer} = dataset;
   const fieldIndex = fields.findIndex(f => f.name === column);
   if (fieldIndex < 0) {
@@ -470,10 +573,7 @@ export function sortDatasetByColumn(dataset, column, mode) {
   return dataset;
 }
 
-/**
- * @type {typeof import('./kepler-table').pinTableColumns}
- */
-export function pinTableColumns(dataset, column) {
+export function pinTableColumns(dataset: KeplerTable, column: string): KeplerTable {
   const field = dataset.getColumnField(column);
   if (!field) {
     return dataset;
@@ -490,19 +590,15 @@ export function pinTableColumns(dataset, column) {
   // @ts-ignore
   return copyTableAndUpdate(dataset, {pinnedColumns});
 }
-/**
- *
- * @type {typeof import('./kepler-table').copyTable}
- */
-export function copyTable(original) {
+export function copyTable<T extends {}>(original: T): T {
   return Object.assign(Object.create(Object.getPrototypeOf(original)), original);
 }
 
 /**
- * @type {typeof import('./kepler-table').copyTableAndUpdate}
+ * @type
  * @returns
  */
-export function copyTableAndUpdate(original, options = {}) {
+export function copyTableAndUpdate<T extends {}>(original: T, options: Partial<T> = {}): T {
   return Object.entries(options).reduce((acc, entry) => {
     acc[entry[0]] = entry[1];
     return acc;

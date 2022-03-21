@@ -18,34 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {DataContainerInterface} from './data-container-interface';
+
+export type SharedRowOptions = DataRow | boolean | undefined;
+export type SharedRowOptionsResult = DataRow | false | undefined;
+
 export class DataRow {
-  constructor(dataContainer, rowIndex) {
-    this.setSource(dataContainer, rowIndex);
+  _dataContainer: DataContainerInterface | null;
+
+  _rowIndex: number;
+
+  constructor(dataContainer: DataContainerInterface | null, rowIndex: number) {
+    this._dataContainer = dataContainer;
+    this._rowIndex = rowIndex;
   }
 
-  static createSharedRow(sharedRowDesc) {
+  static createSharedRow(sharedRowDesc: SharedRowOptions): SharedRowOptionsResult {
     if (sharedRowDesc === true) {
       return new DataRow(null, 0);
     }
     return sharedRowDesc;
   }
 
-  valueAt(columnIndex) {
-    return this._dataContainer.valueAt(this._rowIndex, columnIndex);
+  valueAt(columnIndex: number): any {
+    return this._dataContainer?.valueAt(this._rowIndex, columnIndex);
   }
 
-  values() {
-    return this._dataContainer.rowAsArray(this._rowIndex);
+  values(): any[] {
+    return this._dataContainer ? this._dataContainer.rowAsArray(this._rowIndex) : [];
   }
 
-  setSource(dataContainer, rowIndex) {
+  setSource(dataContainer: DataContainerInterface, rowIndex: number): void {
     this._dataContainer = dataContainer;
     this._rowIndex = rowIndex;
   }
 
-  map(handler) {
-    const numColumns = this._dataContainer.numColumns();
-    const out = [];
+  map(handler: (elem: any, index: number) => any): any[] {
+    const numColumns = this._dataContainer?.numColumns() || 0;
+    const out: any[] = [];
     for (let column = 0; column < numColumns; ++column) {
       out[column] = handler(this.valueAt(column), column);
     }

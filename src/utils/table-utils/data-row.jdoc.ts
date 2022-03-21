@@ -1,3 +1,5 @@
+// TODO: Move JDoc to correct place
+// @ts-nocheck
 import {DataContainerInterface} from './data-container-interface';
 
 /**
@@ -25,12 +27,12 @@ export class DataRow {
   constructor(dataContainer: DataContainerInterface | null, rowIndex: number);
 
   /**
- * Conditionally creates a DataRow object.
- * @param sharedRowDesc Accepts forllowing options:
- * - true indicates that new DataRow should be created.
- * - falsy value or a DataRow object is passed through without any change.
- * @returns A new DataRow object or unchanged input argument.
- */
+   * Conditionally creates a DataRow object.
+   * @param sharedRowDesc Accepts forllowing options:
+   * - true indicates that new DataRow should be created.
+   * - falsy value or a DataRow object is passed through without any change.
+   * @returns A new DataRow object or unchanged input argument.
+   */
   static createSharedRow(sharedRowDesc: SharedRowOptions): SharedRowOptionsResult;
 
   /**

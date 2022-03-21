@@ -18,15 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {DataRow} from './data-row';
+import {DataContainerInterface, RangeOptions} from './data-container-interface';
+import {DataRow, SharedRowOptions} from './data-row';
 
 /**
- * @param {import('./data-container-interface').DataContainerInterface} dataContainer
- * @param {number[]} indices
- * @param {import('./data-row').SharedRowOptions} sharedRow
- * @returns {Generator<DataRow, void, unknown>}
+ * @param dataContainer
+ * @param indices
+ * @param sharedRow
+ * @returns
  */
-function* rowsIterator(dataContainer, indices, sharedRow) {
+function* rowsIterator(
+  dataContainer: DataContainerInterface,
+  indices: number[],
+  sharedRow: SharedRowOptions
+): Generator<DataRow> {
   const numRows = indices.length;
   for (let rowIndex = 0; rowIndex < numRows; ++rowIndex) {
     const mappedRowIndex = indices[rowIndex];
@@ -35,12 +40,16 @@ function* rowsIterator(dataContainer, indices, sharedRow) {
 }
 
 /**
- * @param {import('./data-container-interface').DataContainerInterface} dataContainer
- * @param {number[]} indices
- * @param {number} columnIndex
- * @returns {Generator<any, void, unknown>}
+ * @param dataContainer
+ * @param indices
+ * @param columnIndex
+ * @returns
  */
-function* columnIterator(dataContainer, indices, columnIndex) {
+function* columnIterator(
+  dataContainer: DataContainerInterface,
+  indices: number[],
+  columnIndex: number
+): Generator<any> {
   const numRows = indices.length;
   for (let rowIndex = 0; rowIndex < numRows; ++rowIndex) {
     const mappedRowIndex = indices[rowIndex];
@@ -48,54 +57,63 @@ function* columnIterator(dataContainer, indices, columnIndex) {
   }
 }
 
-export class IndexedDataContainer {
-  constructor(parentDataContainer, indices) {
+/**
+ * A data container wrapper around another data container.
+ * You have to pass an array of indices to reference rows in the parent data container.
+ * For example indices [3, 4, 6, 8] means that IndexedDataContainer is going to have
+ * 4 rows and row(2) points to 6th row in the referenced data container.
+ */
+export class IndexedDataContainer implements DataContainerInterface {
+  _parentDataContainer: DataContainerInterface;
+  _indices: number[];
+
+  constructor(parentDataContainer: DataContainerInterface, indices: number[]) {
     this._parentDataContainer = parentDataContainer;
     this._indices = indices;
   }
 
-  numRows() {
+  numRows(): number {
     return this._indices.length;
   }
 
-  numColumns() {
+  numColumns(): number {
     return this._parentDataContainer.numColumns();
   }
 
   /**
    * Remaps a local index to an index in the parent dataset
-   * @param {number} rowIndex
+   * @param rowIndex
    * @returns number
    */
-  _mappedRowIndex(rowIndex) {
+  _mappedRowIndex(rowIndex: number): number {
     return this._indices[rowIndex];
   }
 
-  valueAt(rowIndex, columnIndex) {
+  valueAt(rowIndex: number, columnIndex: number): any {
     return this._parentDataContainer.valueAt(this._mappedRowIndex(rowIndex), columnIndex);
   }
 
-  row(rowIndex, sharedRow) {
+  row(rowIndex: number, sharedRow?: SharedRowOptions): DataRow {
     return this._parentDataContainer.row(this._mappedRowIndex(rowIndex), sharedRow);
   }
 
-  rowAsArray(rowIndex) {
+  rowAsArray(rowIndex: number): any[] {
     return this._parentDataContainer.rowAsArray(this._mappedRowIndex(rowIndex));
   }
 
-  rows(sharedRow) {
+  rows(sharedRow?: SharedRowOptions) {
     return rowsIterator(this._parentDataContainer, this._indices, sharedRow);
   }
 
-  column(columnIndex) {
+  column(columnIndex: number) {
     return columnIterator(this._parentDataContainer, this._indices, columnIndex);
   }
 
-  getPlainIndex() {
+  getPlainIndex(): number[] {
     return this._indices.map((_, i) => i);
   }
 
-  flattenData() {
+  flattenData(): any[][] {
     const tSharedRow = DataRow.createSharedRow(true);
 
     return this._indices.map((_, i) => {
@@ -103,13 +121,17 @@ export class IndexedDataContainer {
     }, this);
   }
 
-  map(func, sharedRow, options = {}) {
+  map<T>(
+    func: (row: DataRow, index: number) => T,
+    sharedRow?: SharedRowOptions,
+    options: RangeOptions = {}
+  ): T[] {
     const {start = 0, end = this.numRows()} = options;
     const endRow = Math.min(this.numRows(), end);
 
     const tSharedRow = DataRow.createSharedRow(sharedRow);
 
-    const out = [];
+    const out: T[] = [];
     for (let rowIndex = start; rowIndex < endRow; ++rowIndex) {
       const row = this.row(rowIndex, tSharedRow);
       out.push(func(row, rowIndex));
@@ -117,18 +139,24 @@ export class IndexedDataContainer {
     return out;
   }
 
-  mapIndex(func, options = {}) {
+  mapIndex<T>(
+    func: ({index: number}, dc: DataContainerInterface) => T,
+    options: RangeOptions = {}
+  ): T[] {
     const {start = 0, end = this.numRows()} = options;
     const endRow = Math.min(this.numRows(), end);
 
-    const out = [];
+    const out: T[] = [];
     for (let rowIndex = start; rowIndex < endRow; ++rowIndex) {
       out.push(func({index: this._mappedRowIndex(rowIndex)}, this._parentDataContainer));
     }
     return out;
   }
 
-  find(func, sharedRow) {
+  find(
+    func: (row: DataRow, index: number) => boolean,
+    sharedRow?: SharedRowOptions
+  ): DataRow | undefined {
     const tSharedRow = DataRow.createSharedRow(sharedRow);
 
     for (let rowIndex = 0; rowIndex < this.numRows(); ++rowIndex) {
@@ -140,7 +168,11 @@ export class IndexedDataContainer {
     return undefined;
   }
 
-  reduce(func, initialValue, sharedRow) {
+  reduce<T>(
+    func: (acc: T, row: DataRow, index: number) => T,
+    initialValue: T,
+    sharedRow?: SharedRowOptions
+  ): T {
     const tSharedRow = DataRow.createSharedRow(sharedRow);
 
     for (let rowIndex = 0; rowIndex < this._indices.length; ++rowIndex) {
