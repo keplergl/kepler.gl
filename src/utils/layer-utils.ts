@@ -20,32 +20,52 @@
 
 import {OVERLAY_TYPE} from 'layers/base-layer';
 import {GEOCODER_LAYER_ID} from 'constants/default-settings';
+import {Layer, LayerClassesType} from 'layers';
+import {VisState, TooltipField, CompareType, SplitMapLayers} from 'reducers/vis-state-updaters';
+import KeplerTable, {Field} from './table-utils/kepler-table';
+
+export type LayersToRender = {
+  [layerId: string]: boolean;
+};
+
+export type LayerHoverProp = {
+  data: any[];
+  fields: Field[];
+  fieldsToShow: TooltipField[];
+  layer: Layer;
+  primaryData?: any[];
+  compareType?: CompareType;
+};
 
 /**
  * Find default layers from fields
- * @type {typeof import('./layer-utils').findDefaultLayer}
  */
-export function findDefaultLayer(dataset, layerClasses) {
+export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClassesType): Layer[] {
   if (!dataset) {
     return [];
   }
-  const layerProps = Object.keys(layerClasses).reduce((previous, lc) => {
-    const result =
-      typeof layerClasses[lc].findDefaultLayerProps === 'function'
-        ? layerClasses[lc].findDefaultLayerProps(dataset, previous)
-        : {props: []};
+  const layerProps = (Object.keys(layerClasses) as Array<keyof LayerClassesType>).reduce(
+    (previous, lc) => {
+      const result =
+        // @ts-expect-error
+        typeof layerClasses[lc].findDefaultLayerProps === 'function'
+          ? // @ts-expect-error
+            layerClasses[lc].findDefaultLayerProps(dataset, previous)
+          : {props: []};
 
-    const props = Array.isArray(result) ? result : result.props || [];
-    const foundLayers = result.foundLayers || previous;
+      const props = Array.isArray(result) ? result : result.props || [];
+      const foundLayers = result.foundLayers || previous;
 
-    return foundLayers.concat(
-      props.map(p => ({
-        ...p,
-        type: lc,
-        dataId: dataset.id
-      }))
-    );
-  }, []);
+      return foundLayers.concat(
+        props.map(p => ({
+          ...p,
+          type: lc,
+          dataId: dataset.id
+        }))
+      );
+    },
+    [] as LayerClassesType[keyof LayerClassesType][]
+  );
 
   // go through all layerProps to create layer
   return layerProps.map(props => {
@@ -59,9 +79,15 @@ export function findDefaultLayer(dataset, layerClasses) {
 /**
  * calculate layer data based on layer type, col Config,
  * return updated layer if colorDomain, dataMap has changed
- * @type {typeof import('./layer-utils').calculateLayerData}
  */
-export function calculateLayerData(layer, state, oldLayerData) {
+export function calculateLayerData(
+  layer: Layer,
+  state: VisState,
+  oldLayerData?: any
+): {
+  layerData: any;
+  layer: Layer;
+} {
   const {type} = layer;
 
   if (!type || !layer.hasAllColumns() || !layer.config.dataId) {
@@ -82,7 +108,13 @@ export function getLayerHoverProp({
   layers,
   layersToRender,
   datasets
-}) {
+}: {
+  interactionConfig: VisState['interactionConfig'];
+  hoverInfo: VisState['hoverInfo'];
+  layers: VisState['layers'];
+  layersToRender: LayersToRender;
+  datasets: VisState['datasets'];
+}): LayerHoverProp | null {
   if (interactionConfig.tooltip.enabled && hoverInfo && hoverInfo.picked) {
     // if anything hovered
     const {object, layer: overlay} = hoverInfo;
@@ -114,7 +146,7 @@ export function getLayerHoverProp({
   return null;
 }
 
-export function renderDeckGlLayer(props, layerCallbacks, idx) {
+export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: any}, idx: number) {
   const {
     datasets,
     layers,
@@ -160,11 +192,17 @@ export function isLayerVisible(layer, mapLayers) {
 // Prepare a dict of layers rendered by the deck.gl
 // Note, isVisible: false layer is passed to deck.gl here
 // return {[id]: true \ false}
-export function prepareLayersForDeck(layers, layerData) {
+export function prepareLayersForDeck(
+  layers: Layer[],
+  layerData: VisState['layerData']
+): {
+  [key: string]: boolean;
+} {
   return layers.reduce(
     (accu, layer, idx) => ({
       ...accu,
       [layer.id]:
+        // @ts-expect-error
         isLayerRenderable(layer, layerData[idx]) && layer.overlayType === OVERLAY_TYPE.deckgl
     }),
     {}
@@ -174,7 +212,13 @@ export function prepareLayersForDeck(layers, layerData) {
 // Prepare a dict of rendered layers rendered in the map
 // This includes only the visibile layers for single map view and split map view
 // return {[id]: true \ false}
-export function prepareLayersToRender(layers, layerData, mapLayers) {
+export function prepareLayersToRender(
+  layers: Layer[],
+  layerData: VisState['layerData'],
+  mapLayers?: SplitMapLayers
+): {
+  [key: string]: boolean;
+} {
   return layers.reduce(
     (accu, layer, idx) => ({
       ...accu,
