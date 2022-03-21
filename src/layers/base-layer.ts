@@ -72,6 +72,7 @@ export type LayerColumns = {
 };
 export type VisualChannelDomain = number[] | string[];
 export type VisualChannelField = Field | null;
+export type VisualChannelScale = keyof typeof SCALE_TYPES;
 
 export type LayerBaseConfig = {
   dataId: string | null;
@@ -94,6 +95,27 @@ export type LayerBaseConfig = {
   animation: {
     enabled: boolean;
   };
+};
+
+export type LayerColorConfig = {
+  colorField: VisualChannelField;
+  colorDomain: VisualChannelDomain;
+  colorScale: VisualChannelScale;
+};
+export type LayerSizeConfig = {
+  // color by size, domain is set by filters, field, scale type
+  sizeDomain: VisualChannelDomain;
+  sizeScale: VisualChannelScale;
+  sizeField: VisualChannelField;
+};
+export type LayerHeightConfig = {
+  heightField: VisualChannelField;
+  heightDomain: VisualChannelDomain;
+  heightScale: VisualChannelScale;
+};
+
+export type LayerWeightConfig = {
+  weightField: VisualChannelField;
 };
 
 export type VisualChannel = {
@@ -381,7 +403,9 @@ class Layer {
     return hexToRgb(c);
   }
 
-  getDefaultLayerConfig(props: Partial<LayerBaseConfig> = {}): LayerBaseConfig {
+  getDefaultLayerConfig(
+    props: Partial<LayerBaseConfig> = {}
+  ): LayerBaseConfig & LayerColorConfig & LayerHeightConfig & LayerSizeConfig {
     return {
       dataId: props.dataId || null,
       label: props.label || DEFAULT_LAYER_LABEL,

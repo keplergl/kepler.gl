@@ -25,7 +25,13 @@ import {DEFAULT_COLOR_RANGE} from '../constants/color-ranges';
 
 import {RGBColor, RGBAColor, HexColor} from '../reducers';
 import {Field} from '../utils/table-utils/kepler-table';
-import {LayerBaseConfig} from './base-layer';
+import {
+  LayerBaseConfig,
+  LayerColorConfig,
+  LayerHeightConfig,
+  LayerSizeConfig,
+  LayerWeightConfig
+} from './base-layer';
 
 export type ColorRange = {
   name: string;
@@ -62,11 +68,25 @@ export type ColorUI = {
 };
 
 export type VisConfig = {
-  label: string | ((config: LayerBaseConfig) => string);
-  group: string;
+  label:
+    | string
+    | ((
+        config: LayerBaseConfig &
+          LayerColorConfig &
+          LayerHeightConfig &
+          LayerSizeConfig &
+          LayerWeightConfig
+      ) => string);
+  group: keyof typeof PROPERTY_GROUPS;
   property: string;
   description?: string;
-  condition?: (config: LayerBaseConfig) => boolean;
+  condition?: (
+    config: LayerBaseConfig &
+      LayerColorConfig &
+      LayerHeightConfig &
+      LayerSizeConfig &
+      LayerWeightConfig
+  ) => boolean;
 
   allowCustomValue?: boolean;
 };
@@ -176,7 +196,8 @@ export const PROPERTY_GROUPS = keyMirror({
   angle: null,
   // for heatmap aggregation
   cell: null,
-  precision: null
+  precision: null,
+  display: null
 });
 
 export const DEFAULT_LAYER_OPACITY = 0.8;
@@ -371,7 +392,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfig = {
     options: Object.keys(AGGREGATION_TYPES),
     group: PROPERTY_GROUPS.color,
     property: 'colorAggregation',
-    condition: config => config.colorField
+    condition: config => Boolean(config.colorField)
   },
   sizeAggregation: {
     type: 'select',
@@ -381,16 +402,14 @@ export const LAYER_VIS_CONFIGS: LayerVisConfig = {
     options: Object.keys(AGGREGATION_TYPES),
     group: PROPERTY_GROUPS.height,
     property: 'sizeAggregation',
-    condition: config => config.sizeField
+    condition: config => Boolean(config.sizeField)
   },
   percentile: {
     type: 'number',
     defaultValue: [0, 100],
     label: config =>
       `Filter by ${
-        config.colorField
-          ? `${config.visConfig.colorAggregation} ${config.colorField.name}`
-          : 'count'
+        config.colorField ? `${config.visConfig.aggregation} ${config.colorField.name}` : 'count'
       } percentile`,
     isRanged: true,
     range: [0, 100],
@@ -415,7 +434,8 @@ export const LAYER_VIS_CONFIGS: LayerVisConfig = {
     group: PROPERTY_GROUPS.height,
     property: 'elevationPercentile',
     // percentile filter only makes sense with linear aggregation
-    condition: config => config.visConfig.enable3d && (config.colorField || config.sizeField),
+    condition: config =>
+      Boolean(config.visConfig.enable3d && (config.colorField || config.sizeField)),
     allowCustomValue: false
   },
   resolution: {
@@ -569,7 +589,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfig = {
     step: 0.01,
     group: PROPERTY_GROUPS.cell,
     property: 'weight',
-    condition: config => config.weightField,
+    condition: config => Boolean(config.weightField),
     allowCustomValue: true
   },
   heatmapRadius: {
