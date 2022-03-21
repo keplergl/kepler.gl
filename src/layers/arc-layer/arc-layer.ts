@@ -131,7 +131,11 @@ export default class ArcLayer extends Layer {
   }
 
   calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
-    const data = [];
+    const data: {
+      index: number;
+      sourcePosition: [number, number, number];
+      targetPosition: [number, number, number];
+    }[] = [];
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
       const pos = getPosition({index});
