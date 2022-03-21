@@ -22,12 +22,14 @@ import {set, toArray} from './utils';
 import {MAX_GPU_FILTERS, FILTER_TYPES} from 'constants/default-settings';
 import {notNullorUndefined} from './data-utils';
 import moment from 'moment';
+import {Filter} from 'reducers/vis-state-updaters';
+import {DataContainerInterface} from './table-utils/data-container-interface';
+import {Field, GpuFilter} from './table-utils/kepler-table';
 
 /**
  * Set gpu mode based on current number of gpu filters exists
- * @type {typeof import('./gpu-filter-utils').setFilterGpuMode}
  */
-export function setFilterGpuMode(filter, filters) {
+export function setFilterGpuMode(filter: Filter, filters: Filter[]) {
   // filter can be applied to multiple datasets, hence gpu filter mode should also be
   // an array, however, to keep us sane, for now, we only check if there is available channel for every dataId,
   // if all of them has, we set gpu mode to true
@@ -46,9 +48,8 @@ export function setFilterGpuMode(filter, filters) {
 
 /**
  * Scan though all filters and assign gpu chanel to gpu filter
- * @type {typeof import('./gpu-filter-utils').assignGpuChannels}
  */
-export function assignGpuChannels(allFilters) {
+export function assignGpuChannels(allFilters: Filter[]) {
   return allFilters.reduce((accu, f, index) => {
     let filters = accu;
 
@@ -63,9 +64,8 @@ export function assignGpuChannels(allFilters) {
 }
 /**
  * Assign a new gpu filter a channel based on first availability
- * @type {typeof import('./gpu-filter-utils').assignGpuChannel}
  */
-export function assignGpuChannel(filter, filters) {
+export function assignGpuChannel(filter: Filter, filters: Filter[]) {
   // find first available channel
   if (!filter.gpu) {
     return filter;
@@ -117,9 +117,8 @@ export function assignGpuChannel(filter, filters) {
 /**
  * Edit filter.gpu to ensure that only
  * X number of gpu filers can coexist.
- * @type {typeof import('./gpu-filter-utils').resetFilterGpuMode}
  */
-export function resetFilterGpuMode(filters) {
+export function resetFilterGpuMode(filters: Filter[]): Filter[] {
   const gpuPerDataset = {};
 
   return filters.map((f, i) => {
@@ -146,7 +145,6 @@ export function resetFilterGpuMode(filters) {
 
 /**
  * Initial filter uniform
- * @returns {Array<Array<Number>>}
  */
 function getEmptyFilterRange() {
   return new Array(MAX_GPU_FILTERS).fill(0).map(d => [0, 0]);
@@ -161,25 +159,26 @@ const defaultGetIndex = d => d.index;
 
 /**
  * Returns value at the specified row from the data container.
- * @param {import('./table-utils/data-container-interface').DataContainerInterface} dc Data container.
- * @param {any} d Data element with row index info.
- * @param {number} fieldIndex Column index in the data container.
+ * @param dc Data container.
+ * @param d Data element with row index info.
+ * @param fieldIndex Column index in the data container.
  * @returns
  */
-const defaultGetData = (dc, d, fieldIndex) => {
+const defaultGetData = (dc: DataContainerInterface, d: any, fieldIndex: number) => {
   return dc.valueAt(d.index, fieldIndex);
 };
 
 /**
- * @param {Array<Object>} channels
- * @param {string} dataId
- * @param {Array<Object>} fields
+ * @param channels
+ * @param dataId
+ * @param fields
  * @return {Function} getFilterValue
  */
-const getFilterValueAccessor = (channels, dataId, fields) => dc => (
-  getIndex = defaultGetIndex,
-  getData = defaultGetData
-) => d =>
+const getFilterValueAccessor = (
+  channels: (Filter | undefined)[],
+  dataId: string,
+  fields: any[]
+) => (dc: DataContainerInterface) => (getIndex = defaultGetIndex, getData = defaultGetData) => d =>
   // for empty channel, value is 0 and min max would be [0, 0]
   channels.map(filter => {
     if (!filter) {
@@ -195,19 +194,18 @@ const getFilterValueAccessor = (channels, dataId, fields) => dc => (
           : moment.utc(getData(dc, d, fieldIndex)).valueOf()
         : getData(dc, d, fieldIndex);
 
-    return notNullorUndefined(value) ? value - filter.domain[0] : Number.MIN_SAFE_INTEGER;
+    return notNullorUndefined(value) ? value - filter.domain?.[0] : Number.MIN_SAFE_INTEGER;
   });
 
 /**
  * Get filter properties for gpu filtering
- * @type {typeof import('./gpu-filter-utils').getGpuFilterProps}
  */
-export function getGpuFilterProps(filters, dataId, fields) {
+export function getGpuFilterProps(filters: Filter[], dataId: string, fields: Field[]): GpuFilter {
   const filterRange = getEmptyFilterRange();
   const triggers = {};
 
   // array of filter for each channel, undefined, if no filter is assigned to that channel
-  const channels = [];
+  const channels: (Filter | undefined)[] = [];
 
   for (let i = 0; i < MAX_GPU_FILTERS; i++) {
     const filter = filters.find(
@@ -218,10 +216,8 @@ export function getGpuFilterProps(filters, dataId, fields) {
         f.gpuChannel[f.dataId.indexOf(dataId)] === i
     );
 
-    // @ts-ignore
-    filterRange[i][0] = filter ? filter.value[0] - filter.domain[0] : 0;
-    // @ts-ignore
-    filterRange[i][1] = filter ? filter.value[1] - filter.domain[0] : 0;
+    filterRange[i][0] = filter ? filter.value[0] - filter.domain?.[0] : 0;
+    filterRange[i][1] = filter ? filter.value[1] - filter.domain?.[0] : 0;
 
     triggers[`gpuFilter_${i}`] = filter ? filter.name[filter.dataId.indexOf(dataId)] : null;
     channels.push(filter);
@@ -232,6 +228,7 @@ export function getGpuFilterProps(filters, dataId, fields) {
   return {
     filterRange,
     filterValueUpdateTriggers: triggers,
+    // @ts-expect-error
     filterValueAccessor
   };
 }
@@ -239,9 +236,8 @@ export function getGpuFilterProps(filters, dataId, fields) {
 /**
  * Return dataset field index from filter.fieldIdx
  * The index matches the same dataset index for filter.dataId
- * @type {typeof import('./gpu-filter-utils').getDatasetFieldIndexForFilter}
  */
-export function getDatasetFieldIndexForFilter(dataId, filter) {
+export function getDatasetFieldIndexForFilter(dataId: string, filter: Filter): number {
   const datasetIndex = toArray(filter.dataId).indexOf(dataId);
   if (datasetIndex < 0) {
     return -1;
