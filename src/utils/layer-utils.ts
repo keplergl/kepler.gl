@@ -178,7 +178,7 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
   });
 }
 
-export function isLayerRenderable(layer, layerData) {
+export function isLayerRenderable(layer: Layer, layerData) {
   return layer.id !== GEOCODER_LAYER_ID && layer.shouldRenderLayer(layerData);
 }
 
@@ -203,7 +203,6 @@ export function prepareLayersForDeck(
     (accu, layer, idx) => ({
       ...accu,
       [layer.id]:
-        // @ts-expect-error
         isLayerRenderable(layer, layerData[idx]) && layer.overlayType === OVERLAY_TYPE.deckgl
     }),
     {}

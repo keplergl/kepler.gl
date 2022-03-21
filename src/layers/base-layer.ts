@@ -59,9 +59,9 @@ import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-util
 
 import {RGBColor, RGBAColor, MapState, Filter, Datasets} from 'reducers';
 import {LayerTextLabel, ColorUI} from './layer-factory';
-import {Field, KeplerTable} from 'utils';
+import {KeplerTable} from 'utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
-import {GpuFilter} from 'utils/table-utils/kepler-table';
+import {Field, GpuFilter} from 'utils/table-utils/kepler-table';
 
 export {LAYER_VIS_CONFIGS} from './layer-factory';
 
@@ -801,9 +801,9 @@ class Layer {
     return Boolean(this.type && this.hasAllColumns());
   }
 
-  shouldRenderLayer(data) {
+  shouldRenderLayer(data): boolean {
     return (
-      this.type &&
+      Boolean(this.type) &&
       this.hasAllColumns() &&
       this.hasLayerData(data) &&
       typeof this.renderLayer === 'function'
