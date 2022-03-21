@@ -1,0 +1,74 @@
+// Copyright (c) 2022 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+import React from 'react';
+import styled from 'styled-components';
+
+/** @typedef {import('./progress-bar').ProgressBarProps} ProgressBarProps */
+
+interface StyledBarProps {
+  barColor?: string;
+}
+
+const StyledBar = styled.span.attrs({
+  className: 'progress-bar__bar'
+})<StyledBarProps>`
+  background-color: ${props => props.barColor || props.theme.progressBarColor};
+  /* transition: width 200ms; */
+  display: block;
+`;
+
+interface StyledTrackProps {
+  trackColor?: string;
+}
+
+const StyledTrack = styled.div.attrs({
+  className: 'progress-bar'
+})<StyledTrackProps>`
+  background-color: ${props => props.trackColor || props.theme.progressBarTrackColor};
+`;
+
+export type ProgressBarProps = {
+  percent: string;
+  height?: number;
+  isLoading: boolean;
+  barColor: string;
+  trackColor?: string;
+  theme: any;
+};
+
+/** @type {React.FunctionComponent<ProgressBarProps>} */
+const ProgressBar = ({
+  percent,
+  height = 4,
+  isLoading,
+  barColor,
+  trackColor,
+  theme
+}: ProgressBarProps) => (
+  <StyledTrack trackColor={trackColor} theme={theme}>
+    <StyledBar
+      barColor={barColor}
+      style={{width: percent, height: `${height}px`, opacity: isLoading ? 1 : 0}}
+    />
+  </StyledTrack>
+);
+
+export default ProgressBar;

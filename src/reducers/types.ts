@@ -8,3 +8,7 @@ export type ValueOf<T> = T[keyof T];
 export type Merge<A, B> = {[K in keyof A]: K extends keyof B ? B[K] : A[K]} & B extends infer O
   ? {[K in keyof O]: O[K]}
   : never;
+
+export type Entries<T> = {
+  [K in keyof T]: [K, T[K]];
+}[keyof T][];
