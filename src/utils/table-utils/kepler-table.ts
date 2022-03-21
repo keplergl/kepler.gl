@@ -271,6 +271,7 @@ class KeplerTable {
       return null;
     }
 
+    // @ts-expect-error
     const filterProps = getFilterProps(field, fieldDomain);
     const newField = {
       ...field,

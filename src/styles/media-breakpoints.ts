@@ -29,7 +29,7 @@ const breakPoints = {
 /**
  * Contains media rules for different device types
  * @namespace
- * @property {object}  media 
+ * @property {object}  media
  * @property {string}  media.palm - rule for palm devices
  * @property {string}  media.portable - rule for portable devices
  * @property {string}  media.desk - rule for desktops
