@@ -49,8 +49,7 @@ import {createDataContainer} from './data-container-utils';
 
 import {RGBColor} from 'reducers/types';
 import {Layer} from 'layers';
-import {Filter} from 'reducers/vis-state-updaters';
-import {FieldDomain} from 'reducers/vis-state-updaters';
+import {FieldDomain, Filter} from 'reducers/vis-state-updaters';
 import {DataContainerInterface} from './data-container-interface';
 import {ProtoDataset} from 'actions';
 

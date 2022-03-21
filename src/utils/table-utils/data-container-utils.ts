@@ -45,7 +45,7 @@ const defaultOptions: DataContainerOptions = {
  */
 export function createDataContainer(
   data: any[],
-  options: Partial<DataContainerOptions> = defaultOptions
+  options: DataContainerOptions = defaultOptions
 ): DataContainerInterface {
   options = {...defaultOptions, ...options};
 
