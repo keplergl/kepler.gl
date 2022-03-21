@@ -49,13 +49,12 @@ import {
   TimeRangeFilter,
   RangeFieldDomain
 } from '../reducers/vis-state-updaters';
-import KeplerTable, {Field, FilterRecord} from './table-utils/kepler-table';
+import KeplerTable, {Field, FilterRecord, FilterDatasetOpt} from './table-utils/kepler-table';
 import {Layer} from 'layers';
-// import {Field} from 'reducers';
 import {ParsedFilter} from 'schemas';
-import {FilterDatasetOpt} from './table-utils/kepler-table';
 import {DataContainerInterface} from './table-utils/data-container-interface';
 import {Millisecond} from 'cloud-providers';
+import {Entries} from 'reducers';
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];
@@ -240,8 +239,8 @@ const filterValidators = {
  */
 export function validateFilter(
   dataset: KeplerTable,
-  filter: Filter
-): {filter: PolygonFilter | null; dataset: KeplerTable} {
+  filter: ParsedFilter
+): {filter: Filter | null; dataset: KeplerTable} {
   // match filter.dataId
   const failed = {dataset, filter: null};
   const filterDataId = toArray(filter.dataId);
@@ -252,7 +251,9 @@ export function validateFilter(
     return failed;
   }
 
-  const initializeFilter = {
+  // @ts-expect-error
+  const initializeFilter: Filter = {
+    // @ts-expect-error
     ...getDefaultFilter(filter.dataId),
     ...filter,
     dataId: filterDataId,
@@ -298,7 +299,7 @@ export function validateFilter(
  */
 export function validateFilterWithData(
   dataset: KeplerTable,
-  filter: Filter,
+  filter: ParsedFilter,
   layers: Layer[]
 ): {filter: Filter; dataset: KeplerTable} {
   return filter.type && filterValidators.hasOwnProperty(filter.type)
@@ -569,10 +570,6 @@ export function getFilterRecord(
 
   return filterRecord;
 }
-
-type Entries<T> = {
-  [K in keyof T]: [K, T[K]];
-}[keyof T][];
 
 /**
  * Compare filter records to get what has changed
@@ -1126,7 +1123,6 @@ export function validateFiltersUpdateDatasets(
           const layers = state.layers.filter(l => l.config.dataId === dataset.id);
           const {filter: updatedFilter, dataset: updatedDataset} = validateFilterWithData(
             acc.augmentedDatasets[datasetId] || dataset,
-            // @ts-expect-error
             filter,
             layers
           );
