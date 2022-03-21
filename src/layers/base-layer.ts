@@ -45,7 +45,9 @@ import {
   DEFAULT_COLOR_UI,
   UNKNOWN_COLOR_KEY,
   DEFAULT_HIGHLIGHT_COLOR,
-  DEFAULT_LAYER_LABEL
+  DEFAULT_LAYER_LABEL,
+  LayerVisConfig,
+  ColorRange
 } from './layer-factory';
 
 import {generateHashId, isPlainObject} from 'utils/utils';
@@ -55,16 +57,82 @@ import {getSampleData} from 'utils/table-utils/data-container-utils';
 
 import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
-/** @typedef {import('./index').Layer} LayerClass} */
+import {RGBColor, RGBAColor, MapState, Filter, Datasets} from 'reducers';
+import {LayerTextLabel, ColorUI} from './layer-factory';
+import {KeplerTable} from 'utils';
+import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
+import {Field, GpuFilter} from 'utils/table-utils/kepler-table';
 
+export {LAYER_VIS_CONFIGS} from './layer-factory';
+
+export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
+
+export type LayerColumns = {
+  [key: string]: LayerColumn;
+};
+export type VisualChannelDomain = number[] | string[];
+export type VisualChannelField = Field | null;
+
+export type LayerBaseConfig = {
+  dataId: string | null;
+  label: string;
+  color: RGBColor;
+
+  columns: LayerColumns;
+  isVisible: boolean;
+  isConfigActive: boolean;
+  highlightColor: RGBColor | RGBAColor;
+  hidden: boolean;
+
+  visConfig: LayerVisConfig;
+  textLabel: LayerTextLabel[];
+
+  colorUI: {
+    color: ColorUI;
+    colorRange: ColorUI;
+  };
+  animation: {
+    enabled: boolean;
+  };
+};
+
+export type VisualChannel = {
+  property: string;
+  field: string;
+  scale: string;
+  domain: string;
+  range: string;
+  key: string;
+  channelScaleType: string;
+  nullValue?: any;
+  defaultMeasure?: any;
+  accessor?: string;
+  condition?: (config: any) => boolean;
+  getAttributeValue?: (config: any) => (d: any) => any;
+
+  // TODO: define defaultValue
+  defaultValue?: any;
+  // TODO: define fixed
+  fixed?: any;
+
+  supportedFieldTypes?: boolean;
+};
+
+export type VisualChannelDescription = {
+  label: string;
+  measure: string;
+};
+
+export type ColumnPairs = {[key: string]: {pair: string; fieldPairKey: string}};
+
+type ColumnValidator = (column: LayerColumn, columns: LayerColumns, allFields: Field[]) => boolean;
 /**
  * Approx. number of points to sample in a large data set
- * @type {number}
  */
 export const LAYER_ID_LENGTH = 6;
 
 const MAX_SAMPLE_SIZE = 5000;
-const defaultDomain = [0, 1];
+const defaultDomain: [number, number] = [0, 1];
 const dataFilterExtension = new DataFilterExtension({filterSize: MAX_GPU_FILTERS});
 
 const defaultDataAccessor = dc => d => d;
@@ -76,7 +144,7 @@ export const OVERLAY_TYPE = keymirror({
 });
 
 export const layerColors = Object.values(DataVizColors).map(hexToRgb);
-function* generateColor() {
+function* generateColor(): Generator<RGBColor> {
   let index = 0;
   while (index < layerColors.length + 1) {
     if (index === layerColors.length) {
@@ -88,9 +156,21 @@ function* generateColor() {
 
 export const colorMaker = generateColor();
 
-/** @type {LayerClass} */
 class Layer {
-  constructor(props = {}) {
+  id: string;
+  // TODO: define meta
+  meta: {};
+  // TODO: define visConfigSettings
+  visConfigSettings: {};
+  config: LayerBaseConfig;
+  // TODO: define _oldDataUpdateTriggers
+  _oldDataUpdateTriggers: any;
+
+  constructor(
+    props: {
+      id?: string;
+    } & Partial<LayerBaseConfig> = {}
+  ) {
     this.id = props.id || generateHashId(LAYER_ID_LENGTH);
 
     // meta
@@ -99,7 +179,6 @@ class Layer {
     // visConfigSettings
     this.visConfigSettings = {};
 
-    // @ts-ignore
     this.config = this.getDefaultLayerConfig({
       columns: this.getLayerColumns(),
       ...props
@@ -110,11 +189,12 @@ class Layer {
     return DefaultLayerIcon;
   }
 
-  get overlayType() {
+  get overlayType(): keyof typeof OVERLAY_TYPE {
     return OVERLAY_TYPE.deckgl;
   }
 
-  get type() {
+  get type(): string {
+    // @ts-expect-error
     return null;
   }
 
@@ -138,7 +218,7 @@ class Layer {
     return ['label', 'opacity', 'thickness', 'isVisible', 'hidden'];
   }
 
-  get visualChannels() {
+  get visualChannels(): {[key: string]: VisualChannel} {
     return {
       color: {
         property: 'color',
@@ -165,18 +245,21 @@ class Layer {
     };
   }
 
+  get columnValidators(): {[key: string]: ColumnValidator} {
+    return {};
+  }
   /*
    * Column pairs maps layer column to a specific field pairs,
    * By default, it is set to null
    */
-  get columnPairs() {
+  get columnPairs(): ColumnPairs | null {
     return null;
   }
 
   /*
    * Default point column pairs, can be used for point based layers: point, icon etc.
    */
-  get defaultPointColumnPairs() {
+  get defaultPointColumnPairs(): ColumnPairs {
     return {
       lat: {pair: 'lng', fieldPairKey: 'lat'},
       lng: {pair: 'lat', fieldPairKey: 'lng'}
@@ -186,7 +269,7 @@ class Layer {
   /*
    * Default link column pairs, can be used for link based layers: arc, line etc
    */
-  get defaultLinkColumnPairs() {
+  get defaultLinkColumnPairs(): ColumnPairs {
     return {
       lat0: {pair: 'lng0', fieldPairKey: 'lat'},
       lng0: {pair: 'lat0', fieldPairKey: 'lng'},
@@ -215,7 +298,10 @@ class Layer {
    * and return the props and previous found layers.
    * By default, no layers will be found
    */
-  static findDefaultLayerProps(dataset, foundLayers) {
+  static findDefaultLayerProps(
+    dataset: KeplerTable,
+    foundLayers?: any[]
+  ): {props: any[]; foundLayers?: any[]} {
     return {props: [], foundLayers};
   }
 
@@ -256,9 +342,10 @@ class Layer {
     // combinations, e. g. if column a has 2 matched, column b has 3 matched
     // 6 possible column pairs will be returned
     const allKeys = Object.keys(requiredColumns);
-    const pointers = allKeys.map((k, i) => ((i === allKeys.length - 1 ? -1 : 0)));
+    const pointers = allKeys.map((k, i) => (i === allKeys.length - 1 ? -1 : 0));
     const countPerKey = allKeys.map(k => requiredColumns[k].length);
-    const pairs = [];
+    // TODO: Better typings
+    const pairs: any[] = [];
 
     /* eslint-disable no-loop-func */
     while (incrementPointers(pointers, countPerKey, pointers.length - 1)) {
@@ -294,12 +381,12 @@ class Layer {
     return hexToRgb(c);
   }
 
-  getDefaultLayerConfig(props = {}) {
+  getDefaultLayerConfig(props: Partial<LayerBaseConfig> = {}): LayerBaseConfig {
     return {
       dataId: props.dataId || null,
       label: props.label || DEFAULT_LAYER_LABEL,
       color: props.color || colorMaker.next().value,
-      columns: props.columns || null,
+      columns: props.columns || {},
       isVisible: props.isVisible || false,
       isConfigActive: props.isConfigActive || false,
       highlightColor: props.highlightColor || DEFAULT_HIGHLIGHT_COLOR,
@@ -316,6 +403,7 @@ class Layer {
       sizeScale: SCALE_TYPES.linear,
       sizeField: null,
 
+      // @ts-expect-error
       visConfig: {},
 
       textLabel: [DEFAULT_TEXT_LABEL],
@@ -331,15 +419,15 @@ class Layer {
   /**
    * Get the description of a visualChannel config
    * @param key
-   * @returns {{label: string, measure: (string|string)}}
+   * @returns
    */
-  getVisualChannelDescription(key) {
+  getVisualChannelDescription(key: string): VisualChannelDescription {
     // e.g. label: Color, measure: Vehicle Type
     return {
       label: this.visConfigSettings[this.visualChannels[key].range].label,
       measure: this.config[this.visualChannels[key].field]
-        ? (this.config[this.visualChannels[key].field].displayName ||
-          this.config[this.visualChannels[key].field].name)
+        ? this.config[this.visualChannels[key].field].displayName ||
+          this.config[this.visualChannels[key].field].name
         : this.visualChannels[key].defaultMeasure
     };
   }
@@ -350,7 +438,7 @@ class Layer {
    * @param field - Selected field
    * @returns {{}} - Column config
    */
-  assignColumn(key, field) {
+  assignColumn(key: string, field: Field): LayerColumns {
     // field value could be null for optional columns
     const update = field
       ? {
@@ -408,21 +496,21 @@ class Layer {
    * @param {number | void} mapState.zoomOffset - zoomOffset when render in the plot container for export image
    * @returns {number}
    */
-  getElevationZoomFactor({zoom, zoomOffset = 0}) {
+  getElevationZoomFactor({zoom, zoomOffset = 0}: {zoom: number; zoomOffset?: number}) {
     return this.config.visConfig.enableElevationZoomFactor
       ? Math.pow(2, Math.max(8 - zoom + zoomOffset, 0))
       : 1;
   }
 
-  formatLayerData(datasets, filteredIndex) {
+  formatLayerData(datasets: Datasets, oldLayerData?: any) {
     return {};
   }
 
-  renderLayer() {
+  renderLayer(...args: any[]): any[] {
     return [];
   }
 
-  getHoverData(object, dataContainer) {
+  getHoverData(object, dataContainer: DataContainerInterface, fields: Field[]) {
     if (!object) {
       return null;
     }
@@ -481,7 +569,11 @@ class Layer {
    * @param {string[]} notToCopy - array of properties not to copy
    * @returns {object} - copied config
    */
-  copyLayerConfig(currentConfig, configToCopy, {shallowCopy = [], notToCopy = []} = {}) {
+  copyLayerConfig(
+    currentConfig,
+    configToCopy,
+    {shallowCopy = [], notToCopy = []}: {shallowCopy?: string[]; notToCopy?: string[]} = {}
+  ) {
     const copied = {};
     Object.keys(currentConfig).forEach(key => {
       if (
@@ -507,7 +599,9 @@ class Layer {
     return copied;
   }
 
-  registerVisConfig(layerVisConfigs) {
+  registerVisConfig(
+    layerVisConfigs: Partial<LayerVisConfig> | {[key in keyof Partial<LayerVisConfig>]: string}
+  ) {
     Object.keys(layerVisConfigs).forEach(item => {
       if (typeof item === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {
         // if assigned one of default LAYER_CONFIGS
@@ -523,7 +617,7 @@ class Layer {
   }
 
   getLayerColumns() {
-    const columnValidators = this.columnValidators || {};
+    const columnValidators = this.columnValidators;
     const required = this.requiredLayerColumns.reduce(
       (accu, key) => ({
         ...accu,
@@ -544,7 +638,7 @@ class Layer {
     return {...required, ...optional};
   }
 
-  updateLayerConfig(newConfig) {
+  updateLayerConfig(newConfig: Partial<LayerBaseConfig>): Layer {
     this.config = {...this.config, ...newConfig};
     return this;
   }
@@ -554,7 +648,7 @@ class Layer {
     return this;
   }
 
-  updateLayerColorUI(prop, newConfig) {
+  updateLayerColorUI(prop: string, newConfig: Partial<ColorUI>): Layer {
     const {colorUI: previous, visConfig} = this.config;
 
     if (!isPlainObject(newConfig) || typeof prop !== 'string') {
@@ -564,6 +658,7 @@ class Layer {
     const colorUIProp = Object.entries(newConfig).reduce((accu, [key, value]) => {
       return {
         ...accu,
+        // @ts-expect-error TODO: better type guard for isPlainObject
         [key]: isPlainObject(accu[key]) && isPlainObject(value) ? {...accu[key], ...value} : value
       };
     }, previous[prop] || DEFAULT_COLOR_UI);
@@ -677,15 +772,15 @@ class Layer {
 
   /**
    * Check whether layer has all columns
-   * @returns {boolean} yes or no
+   * @returns yes or no
    */
-  hasAllColumns() {
+  hasAllColumns(): boolean {
     const {columns} = this.config;
     return (
-      (columns &&
+      columns &&
       Object.values(columns).every(v => {
         return Boolean(v.optional || (v.value && v.fieldIdx > -1));
-      }))
+      })
     );
   }
 
@@ -702,34 +797,32 @@ class Layer {
     return Boolean(layerData.data && layerData.data.length);
   }
 
-  isValidToSave() {
-    return this.type && this.hasAllColumns();
+  isValidToSave(): boolean {
+    return Boolean(this.type && this.hasAllColumns());
   }
 
-  shouldRenderLayer(data) {
+  shouldRenderLayer(data): boolean {
     return (
-      (this.type &&
+      Boolean(this.type) &&
       this.hasAllColumns() &&
       this.hasLayerData(data) &&
-      typeof this.renderLayer === 'function')
+      typeof this.renderLayer === 'function'
     );
   }
 
-  getColorScale(colorScale, colorDomain, colorRange) {
+  getColorScale(colorScale: string, colorDomain: VisualChannelDomain, colorRange: ColorRange) {
     if (Array.isArray(colorRange.colorMap)) {
       const cMap = new Map();
       colorRange.colorMap.forEach(([k, v]) => {
         cMap.set(k, typeof v === 'string' ? hexToRgb(v) : v);
       });
 
-      // @ts-ignore d3 scale
       const scale = SCALE_FUNC[SCALE_TYPES.ordinal]()
         .domain(cMap.keys())
         .range(cMap.values())
         .unknown(cMap.get(UNKNOWN_COLOR_KEY) || NO_VALUE_COLOR);
       return scale;
     }
-
     return this.getVisChannelScale(colorScale, colorDomain, colorRange.colors.map(hexToRgb));
   }
 
@@ -740,8 +833,14 @@ class Layer {
    * @param {import('utils/table-utils/data-container-interface').DataContainerInterface} param.dataContainer DataContainer to use use with dataAccessor
    * @return {Object} attributeAccessors - deck.gl layer attribute accessors
    */
-  getAttributeAccessors({dataAccessor = defaultDataAccessor, dataContainer}) {
-    const attributeAccessors = {};
+  getAttributeAccessors({
+    dataAccessor = defaultDataAccessor,
+    dataContainer
+  }: {
+    dataAccessor?: typeof defaultDataAccessor;
+    dataContainer: DataContainerInterface;
+  }) {
+    const attributeAccessors: {[key: string]: any} = {};
 
     Object.keys(this.visualChannels).forEach(channel => {
       const {
@@ -757,41 +856,55 @@ class Layer {
         channelScaleType
       } = this.visualChannels[channel];
 
-      const shouldGetScale = this.config[field];
+      if (accessor) {
+        const shouldGetScale = this.config[field];
 
-      if (shouldGetScale) {
-        const args = [this.config[scale], this.config[domain], this.config.visConfig[range]];
-        const isFixed = fixed && this.config.visConfig[fixed];
+        if (shouldGetScale) {
+          const isFixed = fixed && this.config.visConfig[fixed];
 
-        const scaleFunction =
-          channelScaleType === CHANNEL_SCALES.color
-            ? this.getColorScale(...args)
-            : this.getVisChannelScale(...args, isFixed);
+          const scaleFunction =
+            channelScaleType === CHANNEL_SCALES.color
+              ? this.getColorScale(
+                  this.config[scale],
+                  this.config[domain],
+                  this.config.visConfig[range]
+                )
+              : this.getVisChannelScale(
+                  this.config[scale],
+                  this.config[domain],
+                  this.config.visConfig[range],
+                  isFixed
+                );
 
-        attributeAccessors[accessor] = d =>
-          this.getEncodedChannelValue(
-            scaleFunction,
-            dataAccessor(dataContainer)(d),
-            this.config[field],
-            nullValue
-          );
-      } else if (typeof getAttributeValue === 'function') {
-        attributeAccessors[accessor] = getAttributeValue(this.config);
-      } else {
-        attributeAccessors[accessor] =
-          typeof defaultValue === 'function' ? defaultValue(this.config) : defaultValue;
-      }
+          attributeAccessors[accessor] = d =>
+            this.getEncodedChannelValue(
+              scaleFunction,
+              dataAccessor(dataContainer)(d),
+              this.config[field],
+              nullValue
+            );
+        } else if (typeof getAttributeValue === 'function') {
+          attributeAccessors[accessor] = getAttributeValue(this.config);
+        } else {
+          attributeAccessors[accessor] =
+            typeof defaultValue === 'function' ? defaultValue(this.config) : defaultValue;
+        }
 
-      if (!attributeAccessors[accessor]) {
-        Console.warn(`Failed to provide accessor function for ${accessor || channel}`);
+        if (!attributeAccessors[accessor]) {
+          Console.warn(`Failed to provide accessor function for ${accessor || channel}`);
+        }
       }
     });
 
     return attributeAccessors;
   }
 
-  getVisChannelScale(scale, domain, range, fixed) {
-    // @ts-ignore d3-scale type
+  getVisChannelScale(
+    scale: string,
+    domain: VisualChannelDomain,
+    range: any,
+    fixed?: boolean
+  ): () => any | null {
     return SCALE_FUNC[fixed ? 'linear' : scale]()
       .domain(domain)
       .range(fixed ? domain : range);
@@ -831,12 +944,13 @@ class Layer {
   }
 
   getEncodedChannelValue(
-    scale,
-    data,
-    field,
+    scale: (value) => any,
+    data: any[],
+    field: VisualChannelField,
     nullValue = NO_VALUE_COLOR,
     getValue = defaultGetFieldValue
   ) {
+    // @ts-expect-error TODO: VisualChannelField better typing
     const {type} = field;
     const value = getValue(field, data);
 
@@ -911,11 +1025,11 @@ class Layer {
    * helper function to update one layer domain when state.data changed
    * if state.data change is due ot update filter, newFiler will be passed
    * called by updateAllLayerDomainData
-   * @param {Object} datasets
-   * @param {Object} newFilter
-   * @returns {object} layer
+   * @param datasets
+   * @param newFilter
+   * @returns layer
    */
-  updateLayerDomain(datasets, newFilter) {
+  updateLayerDomain(datasets: Datasets, newFilter?: Filter): Layer {
     const table = this.getDataset(datasets);
     if (!table) {
       return this;
@@ -943,7 +1057,7 @@ class Layer {
    * Validate visual channel field and scales based on supported field & scale type
    * @param channel
    */
-  validateVisualChannel(channel) {
+  validateVisualChannel(channel: string) {
     this.validateFieldType(channel);
     this.validateScale(channel);
   }
@@ -951,7 +1065,7 @@ class Layer {
   /**
    * Validate field type based on channelScaleType
    */
-  validateFieldType(channel) {
+  validateFieldType(channel: string) {
     const visualChannel = this.visualChannels[channel];
     const {field, channelScaleType, supportedFieldTypes} = visualChannel;
 
@@ -1000,7 +1114,7 @@ class Layer {
       : [this.getDefaultLayerConfig()[scale]];
   }
 
-  updateLayerVisualChannel(dataset, channel) {
+  updateLayerVisualChannel(dataset: KeplerTable, channel: string) {
     const visualChannel = this.visualChannels[channel];
     this.validateVisualChannel(channel);
     // calculate layer channel domain
@@ -1014,14 +1128,17 @@ class Layer {
       // field range scale domain
       const {accessor, field, scale, domain, range, defaultValue, fixed} = visualChannel;
 
-      updateTriggers[accessor] = {
-        [field]: this.config[field],
-        [scale]: this.config[scale],
-        [domain]: this.config[domain],
-        [range]: this.config.visConfig[range],
-        defaultValue: typeof defaultValue === 'function' ? defaultValue(this.config) : defaultValue,
-        ...(fixed ? {[fixed]: this.config.visConfig[fixed]} : {})
-      };
+      if (accessor) {
+        updateTriggers[accessor] = {
+          [field]: this.config[field],
+          [scale]: this.config[scale],
+          [domain]: this.config[domain],
+          [range]: this.config.visConfig[range],
+          defaultValue:
+            typeof defaultValue === 'function' ? defaultValue(this.config) : defaultValue,
+          ...(fixed ? {[fixed]: this.config.visConfig[fixed]} : {})
+        };
+      }
     });
     return updateTriggers;
   }
@@ -1039,11 +1156,11 @@ class Layer {
     return dataset.getColumnLayerDomain(field, scaleType) || defaultDomain;
   }
 
-  hasHoveredObject(objectInfo) {
+  hasHoveredObject(objectInfo): boolean {
     return this.isLayerHovered(objectInfo) && objectInfo.object ? objectInfo.object : null;
   }
 
-  isLayerHovered(objectInfo) {
+  isLayerHovered(objectInfo): boolean {
     return objectInfo?.picked && objectInfo?.layer?.props?.id === this.id;
   }
 
@@ -1062,11 +1179,11 @@ class Layer {
     return fixed ? 1 : (this.config[field] ? 1 : radius) * this.getZoomFactor(mapState);
   }
 
-  shouldCalculateLayerData(props) {
+  shouldCalculateLayerData(props: string[]) {
     return props.some(p => !this.noneLayerDataAffectingProps.includes(p));
   }
 
-  getBrushingExtensionProps(interactionConfig, brushingTarget) {
+  getBrushingExtensionProps(interactionConfig, brushingTarget?) {
     const {brush} = interactionConfig;
 
     return {
@@ -1078,7 +1195,17 @@ class Layer {
     };
   }
 
-  getDefaultDeckLayerProps({idx, gpuFilter, mapState, visible}) {
+  getDefaultDeckLayerProps({
+    idx,
+    gpuFilter,
+    mapState,
+    visible
+  }: {
+    idx: number;
+    gpuFilter: GpuFilter;
+    mapState: MapState;
+    visible: boolean;
+  }) {
     return {
       id: this.id,
       idx,
@@ -1154,16 +1281,16 @@ class Layer {
     }, []);
   }
 
-  calculateDataAttribute(keplerTable, getPosition) {
+  calculateDataAttribute(keplerTable: KeplerTable, getPosition) {
     // implemented in subclasses
     return [];
   }
 
-  updateLayerMeta(dataContainer, getPosition) {
+  updateLayerMeta(dataContainer: DataContainerInterface, getPosition) {
     // implemented in subclasses
   }
 
-  getPositionAccessor(dataContainer) {
+  getPositionAccessor(dataContainer?: DataContainerInterface): (...args: any[]) => any {
     // implemented in subclasses
     return () => null;
   }
