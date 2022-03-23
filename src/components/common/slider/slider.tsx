@@ -18,15 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, { Component, createRef, RefObject } from 'react';
+import React, {Component, createRef, RefObject} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 
 import SliderHandle from './slider-handle';
 import SliderBarHandle from './slider-bar-handle';
-import { normalizeSliderValue, clamp } from 'utils/data-utils';
+import {normalizeSliderValue, clamp} from 'utils/data-utils';
 
-function noop() { }
+function noop() {}
 
 const StyledRangeSlider = styled.div`
   position: relative;
@@ -57,12 +57,11 @@ type SliderProps = {
   showTooltip: boolean;
   vertical: boolean;
   marks?: number[];
-  classSet?: { [key: string]: boolean };
+  classSet?: {[key: string]: boolean};
   disabled: boolean;
-}
+};
 
 export default class Slider extends Component {
-
   static defaultProps = {
     title: '',
     isRanged: true,
@@ -118,24 +117,24 @@ export default class Slider extends Component {
   }
 
   private normalizeValue(val: number) {
-    const { minValue, step, marks } = this.props;
+    const {minValue, step, marks} = this.props;
     return normalizeSliderValue(val, minValue, step, marks);
   }
 
   slide0Listener = (x: number) => {
-    const { value1, minValue } = this.props;
+    const {value1, minValue} = this.props;
     const val = this.getValue(minValue, x);
     this.props.onSlider0Change(clamp([minValue, value1], val));
   };
 
   slide1Listener = (x: number) => {
-    const { minValue, maxValue, value0 } = this.props;
+    const {minValue, maxValue, value0} = this.props;
     const val = this.getValue(minValue, x);
     this.props.onSlider1Change(clamp([value0, maxValue], val));
   };
 
   sliderBarListener = (x: number) => {
-    const { value0, value1, minValue, maxValue } = this.props;
+    const {value0, value1, minValue, maxValue} = this.props;
     // for slider bar, we use distance delta
     const anchor = this.anchor;
     const length = value1 - value0; // the length of the selected range shouldn't change when clamping
@@ -181,7 +180,7 @@ export default class Slider extends Component {
 
     return (
       <SliderWrapper
-        className={classnames('kg-slider', { ...classSet, disabled })}
+        className={classnames('kg-slider', {...classSet, disabled})}
         ref={this.ref}
         isRanged={isRanged}
         vertical={vertical}

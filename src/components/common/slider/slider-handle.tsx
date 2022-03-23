@@ -18,11 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, { Component, createRef, CSSProperties, RefObject } from 'react';
+import React, {Component, createRef, CSSProperties, RefObject} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import MouseEventHandler from './mouse-event';
-import { StyleRangeSliderType } from './slider';
+import {StyleRangeSliderType} from './slider';
 
 const StyledSliderHandle = styled.span.attrs({
   className: 'kg-range-slider__handle'
@@ -30,7 +30,7 @@ const StyledSliderHandle = styled.span.attrs({
   position: absolute;
   z-index: 10;
   ${props => (props.vertical ? 'margin-left' : 'margin-top')}: -${props =>
-    (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
+  (props.sliderHandleWidth - props.theme.sliderBarHeight) / 2}px;
 
   height: ${props =>
     Number.isFinite(props.sliderHandleWidth)
@@ -114,7 +114,12 @@ type SliderTooltipProps = {
   sliderHandleWidth: number;
 };
 
-const SliderTooltip = ({ value, format = val => val, style, sliderHandleWidth }: SliderTooltipProps) => {
+const SliderTooltip = ({
+  value,
+  format = val => val,
+  style,
+  sliderHandleWidth
+}: SliderTooltipProps) => {
   return (
     <StyledSliderTooltip sliderHandleWidth={sliderHandleWidth} style={style}>
       {format(value)}
@@ -131,7 +136,7 @@ type SliderHandleProps = {
   track: RefObject<StyleRangeSliderType>;
   showTooltip: boolean;
   value?: number;
-}
+};
 
 export default class SliderHandle extends Component {
   static defaultProps = {
@@ -139,7 +144,7 @@ export default class SliderHandle extends Component {
     left: '50%',
     display: true,
     vertical: false,
-    valueListener: function valueListenerFn() { },
+    valueListener: function valueListenerFn() {},
     showTooltip: false
   };
 
@@ -156,18 +161,18 @@ export default class SliderHandle extends Component {
     });
   }
 
-  state = { mouseOver: false };
+  state = {mouseOver: false};
   ref = createRef();
 
   toggleMouseOver = () => {
-    this.setState({ mouseOver: !this.state.mouseOver });
+    this.setState({mouseOver: !this.state.mouseOver});
   };
 
   render() {
-    const style = { [this.props.vertical ? 'bottom' : 'left']: this.props.left };
+    const style = {[this.props.vertical ? 'bottom' : 'left']: this.props.left};
 
     return (
-      <div style={{ display: this.props.display ? 'block' : 'none' }}>
+      <div style={{display: this.props.display ? 'block' : 'none'}}>
         {this.props.showTooltip && this.state.mouseOver ? (
           <SliderTooltip
             style={style}
