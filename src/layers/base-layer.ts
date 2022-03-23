@@ -37,7 +37,7 @@ import {
   CHANNEL_SCALE_SUPPORTED_FIELDS,
   MAX_GPU_FILTERS
 } from 'constants/default-settings';
-import {COLOR_RANGES} from 'constants/color-ranges';
+import {ColorRange, COLOR_RANGES} from 'constants/color-ranges';
 import {DataVizColors} from 'constants/custom-color-ranges';
 import {
   LAYER_VIS_CONFIGS,
@@ -47,7 +47,7 @@ import {
   DEFAULT_HIGHLIGHT_COLOR,
   DEFAULT_LAYER_LABEL,
   LayerVisConfig,
-  ColorRange
+  LayerVisConfigSettings
 } from './layer-factory';
 
 import {generateHashId, isPlainObject} from 'utils/utils';
@@ -62,8 +62,6 @@ import {LayerTextLabel, ColorUI} from './layer-factory';
 import {KeplerTable} from 'utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 import {Field, GpuFilter} from 'utils/table-utils/kepler-table';
-
-export {LAYER_VIS_CONFIGS} from './layer-factory';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 
@@ -182,8 +180,7 @@ class Layer<LayerConfig extends LayerBaseConfig = LayerBaseConfig> {
   id: string;
   // TODO: define meta
   meta: {};
-  // TODO: define visConfigSettings
-  visConfigSettings: {};
+  visConfigSettings: Partial<LayerVisConfigSettings>;
   config: LayerConfig;
   // TODO: define _oldDataUpdateTriggers
   _oldDataUpdateTriggers: any;
@@ -625,7 +622,9 @@ class Layer<LayerConfig extends LayerBaseConfig = LayerBaseConfig> {
   }
 
   registerVisConfig(
-    layerVisConfigs: Partial<LayerVisConfig> | {[key in keyof Partial<LayerVisConfig>]: string}
+    layerVisConfigs:
+      | Partial<LayerVisConfigSettings>
+      | {[key in keyof Partial<LayerVisConfig>]: string}
   ) {
     Object.keys(layerVisConfigs).forEach(item => {
       if (typeof item === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {

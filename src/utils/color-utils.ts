@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ColorRange} from 'layers/layer-factory';
+import {ColorRange} from 'constants/color-ranges';
 import {HexColor, RGBColor} from 'reducers';
 
 /**

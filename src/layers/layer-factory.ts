@@ -21,9 +21,9 @@
 import keyMirror from 'keymirror';
 
 import {AGGREGATION_TYPES} from '../constants/default-settings';
-import {DEFAULT_COLOR_RANGE} from '../constants/color-ranges';
+import {ColorRange, DEFAULT_COLOR_RANGE} from '../constants/color-ranges';
 
-import {RGBColor, RGBAColor, HexColor} from '../reducers';
+import {RGBColor, RGBAColor} from '../reducers';
 import {Field} from '../utils/table-utils/kepler-table';
 import {
   LayerBaseConfig,
@@ -32,15 +32,6 @@ import {
   LayerSizeConfig,
   LayerWeightConfig
 } from './base-layer';
-
-export type ColorRange = {
-  name: string;
-  type: string;
-  category: string;
-  colors: HexColor[];
-  reversed?: boolean;
-  colorMap?: Map<string, HexColor> | object;
-};
 
 export type LayerTextLabel = {
   field: Field | null;
@@ -128,7 +119,7 @@ export type VisConfigColorRange = VisConfig & {
   defaultValue: ColorRange;
 };
 
-export type LayerVisConfig = {
+export type LayerVisConfigSettings = {
   thickness: VisConfigNumber;
   strokeWidthRange: VisConfigRange;
   trailLength: VisConfigNumber;
@@ -165,6 +156,42 @@ export type LayerVisConfig = {
   wireframe: VisConfigBoolean;
   weight: VisConfigNumber;
   heatmapRadius: VisConfigNumber;
+};
+// TODO: This type is not coplete yet
+export type LayerVisConfig = {
+  thickness: number;
+  sizeRange: number;
+  trailLength: number;
+  radius: number;
+  fixedRadius: boolean;
+  radiusRange: [number, number];
+  clusterRadius: number;
+  opacity: number;
+  coverage: number;
+  outline: boolean;
+  colorRange: ColorRange;
+  strokeColorRange: ColorRange;
+  targetColor: any;
+  strokeColor: any;
+  colorAggregation: keyof typeof AGGREGATION_TYPES;
+  sizeAggregation: keyof typeof AGGREGATION_TYPES;
+  percentile: [number, number];
+  elevationPercentile: [number, number];
+  resolution: number;
+  sizeScale: number;
+  angle: number;
+  worldUnitSize: number;
+  elevationScale: number;
+  enableElevationZoomFactor: boolean;
+  heightRange: [number, number];
+  coverageRange: [number, number];
+  'hi-precision': boolean;
+  enable3d: boolean;
+  stroked: boolean;
+  filled: boolean;
+  extruded: boolean;
+  wireframe: boolean;
+  weight: number;
 };
 
 export type TextConfigSelect = {
@@ -239,7 +266,7 @@ export const DEFAULT_COLOR_UI: ColorUI = {
   }
 };
 
-export const LAYER_VIS_CONFIGS: LayerVisConfig = {
+export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
   thickness: {
     type: 'number',
     defaultValue: 2,
