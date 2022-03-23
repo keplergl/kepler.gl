@@ -21,7 +21,7 @@
 import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
-import Layer, {colorMaker} from '../base-layer';
+import Layer, {colorMaker, LayerColumns} from '../base-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {getGeojsonDataMaps, getGeojsonBounds, getGeojsonFeatureTypes} from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
@@ -61,7 +61,8 @@ export const geojsonVisConfigs = {
 };
 
 export const geoJsonRequiredColumns = ['geojson'];
-export const featureAccessor = ({geojson}) => dc => d => dc.valueAt(d.index, geojson.fieldIdx);
+export const featureAccessor = ({geojson}: LayerColumns) => dc => d =>
+  dc.valueAt(d.index, geojson.fieldIdx);
 
 // access feature properties from geojson sub layer
 export const defaultElevation = 500;
@@ -69,6 +70,8 @@ export const defaultLineWidth = 1;
 export const defaultRadius = 1;
 
 export default class GeoJsonLayer extends Layer {
+  dataToFeature: {properties?: {radius?: number}}[];
+
   constructor(props) {
     super(props);
 
@@ -78,6 +81,9 @@ export default class GeoJsonLayer extends Layer {
   }
 
   get type() {
+    return GeoJsonLayer.type;
+  }
+  static get type(): 'geojson' {
     return 'geojson';
   }
 
