@@ -57,7 +57,7 @@ import {getSampleData} from 'utils/table-utils/data-container-utils';
 
 import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
-import {RGBColor, RGBAColor, MapState, Filter, Datasets} from 'reducers';
+import {RGBColor, RGBAColor, MapState, Filter, Datasets, ValueOf} from 'reducers';
 import {LayerTextLabel, ColorUI} from './layer-factory';
 import {KeplerTable} from 'utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
@@ -622,12 +622,14 @@ class Layer<LayerConfig extends LayerBaseConfig = LayerBaseConfig> {
   }
 
   registerVisConfig(
-    layerVisConfigs:
-      | Partial<LayerVisConfigSettings>
-      | {[key in keyof Partial<LayerVisConfig>]: string}
+    layerVisConfigs: {
+      [key in keyof Partial<LayerVisConfig>]:
+        | keyof LayerVisConfigSettings
+        | ValueOf<LayerVisConfigSettings>;
+    }
   ) {
     Object.keys(layerVisConfigs).forEach(item => {
-      if (typeof item === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {
+      if (typeof layerVisConfigs[item] === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {
         // if assigned one of default LAYER_CONFIGS
         this.config.visConfig[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]].defaultValue;
         this.visConfigSettings[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]];
