@@ -40,6 +40,7 @@ import {ProviderState} from './provider-state-updaters';
 import {AddDataToMapPayload} from 'actions/actions';
 import {loadFilesSuccessUpdaterAction} from 'actions/vis-state-actions';
 import {ParsedConfig} from 'schemas';
+import {Layer} from 'layers';
 
 export type KeplerGlState = {
   visState: VisState;
@@ -152,10 +153,11 @@ export const addDataToMapUpdater = (
     parsedConfig = state.visState.schema.parseSavedConfig(config);
   }
   const oldLayers = state.visState.layers;
-  const filterNewlyAddedLayers = layers => layers.filter(nl => !oldLayers.find(ol => ol === nl));
+  const filterNewlyAddedLayers = (layers: Layer[]) =>
+    layers.filter(nl => !oldLayers.find(ol => ol === nl));
 
   // Returns undefined if not found, to make typescript happy
-  const findMapBoundsIfCentered = layers => {
+  const findMapBoundsIfCentered = (layers: Layer[]) => {
     const bounds = options.centerMap && findMapBounds(layers);
     return bounds ? bounds : undefined;
   };

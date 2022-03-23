@@ -22,7 +22,7 @@
 import ActionTypes from 'constants/action-types';
 import {AddDataToMapPayload} from '../actions/actions';
 import {FileCacheItem} from '../processors/file-handler';
-import {Layer, LayerConfig, LayerVisConfig} from 'layers';
+import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';
 import {Feature, InteractionConfig} from 'reducers/vis-state-updaters';
 import {ValueOf, Merge, RGBColor} from '../reducers/types';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
@@ -30,7 +30,7 @@ import {ValueOf, Merge, RGBColor} from '../reducers/types';
 
 export type LayerConfigChangeUpdaterAction = {
   oldLayer: Layer;
-  newConfig: Partial<LayerConfig>;
+  newConfig: Partial<LayerBaseConfig>;
 };
 /**
  * Update layer base config: dataId, label, column, isVisible
@@ -41,7 +41,7 @@ export type LayerConfigChangeUpdaterAction = {
  */
 export function layerConfigChange(
   oldLayer: Layer,
-  newConfig: Partial<LayerConfig>
+  newConfig: Partial<LayerBaseConfig>
 ): Merge<LayerConfigChangeUpdaterAction, {type: typeof ActionTypes.LAYER_CONFIG_CHANGE}> {
   return {
     type: ActionTypes.LAYER_CONFIG_CHANGE,
@@ -102,7 +102,7 @@ export function layerTypeChange(
 }
 export type LayerVisualChannelConfigChangeUpdaterAction = {
   oldLayer: Layer;
-  newConfig: Partial<LayerConfig>;
+  newConfig: Partial<LayerBaseConfig>;
   channel: string;
 };
 /**
@@ -116,7 +116,7 @@ export type LayerVisualChannelConfigChangeUpdaterAction = {
  */
 export function layerVisualChannelConfigChange(
   oldLayer: Layer,
-  newConfig: Partial<LayerConfig>,
+  newConfig: Partial<LayerBaseConfig>,
   channel: string
 ): Merge<
   LayerVisualChannelConfigChangeUpdaterAction,

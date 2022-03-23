@@ -32,7 +32,7 @@ import {
 } from 'constants/default-settings';
 import {LOCALE_CODES} from 'localization/locales';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
-import {calculateExportImageSize} from '../utils/export-utils.js';
+import {calculateExportImageSize} from '../utils/export-utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
 import ActionTypes from '../constants/action-types';
@@ -40,8 +40,8 @@ import * as UiStateActions from 'actions/ui-state-actions';
 import {KeplerGlInitPayload, LoadFilesErrUpdaterAction} from '../actions';
 
 export type ExportImage = {
-  ratio: string;
-  resolution: string;
+  ratio: keyof typeof EXPORT_IMG_RATIOS;
+  resolution: keyof typeof RESOLUTIONS;
   legend: boolean;
   mapH: number;
   mapW: number;
@@ -527,6 +527,9 @@ export const setExportImageSettingUpdater = (
     ...state,
     exportImage: {
       ...updated,
+      // @ts-expect-error
+      // TODO: calculateExportImageSize does not return imageSize.zoomOffset,
+      // do we need take this value from current state, or return defaul value = 0
       imageSize
     }
   };
