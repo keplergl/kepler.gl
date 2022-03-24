@@ -333,7 +333,9 @@ export const ALL_FIELD_TYPES = keyMirror({
   real: null,
   string: null,
   timestamp: null,
-  point: null
+  point: null,
+  array: null,
+  object: null
 });
 
 // Data Table
@@ -386,14 +388,16 @@ export const TABLE_OPTION_LIST = [
   {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: 'Clipboard'}
 ];
 
-const ORANGE = '248, 194, 28';
-const PINK = '231, 189, 194';
+const YELLOW = '248, 194, 28';
+const PINK = '242, 152, 163';
 const PURPLE = '160, 106, 206';
 const BLUE = '140, 210, 205';
 const BLUE2 = '106, 160, 206';
 const BLUE3 = '0, 172, 237';
 const GREEN = '106, 160, 56';
+const GREEN2 = '74, 165, 150';
 const RED = '237, 88, 106';
+const ORANGE = '231, 110, 58';
 
 export const FIELD_TYPE_DISPLAY = {
   [ALL_FIELD_TYPES.boolean]: {
@@ -410,11 +414,11 @@ export const FIELD_TYPE_DISPLAY = {
   },
   [ALL_FIELD_TYPES.integer]: {
     label: 'int',
-    color: ORANGE
+    color: YELLOW
   },
   [ALL_FIELD_TYPES.real]: {
     label: 'float',
-    color: ORANGE
+    color: YELLOW
   },
   [ALL_FIELD_TYPES.string]: {
     label: 'string',
@@ -428,6 +432,14 @@ export const FIELD_TYPE_DISPLAY = {
   [ALL_FIELD_TYPES.point]: {
     label: 'point',
     color: BLUE3
+  },
+  [ALL_FIELD_TYPES.array]: {
+    label: 'array',
+    color: ORANGE
+  },
+  [ALL_FIELD_TYPES.object]: {
+    label: 'object',
+    color: GREEN2
   }
 };
 
@@ -545,7 +557,7 @@ export const DEFAULT_AGGREGATION = {
  * Define what type of scale operation is allowed on each type of fields
  */
 export const FIELD_OPTS = {
-  string: {
+  [ALL_FIELD_TYPES.string]: {
     type: 'categorical',
     scale: {
       ...ordinalFieldScaleFunctions,
@@ -556,7 +568,7 @@ export const FIELD_OPTS = {
       tooltip: []
     }
   },
-  real: {
+  [ALL_FIELD_TYPES.real]: {
     type: 'numerical',
     scale: {
       ...linearFieldScaleFunctions,
@@ -571,7 +583,7 @@ export const FIELD_OPTS = {
       ]
     }
   },
-  timestamp: {
+  [ALL_FIELD_TYPES.timestamp]: {
     type: 'time',
     scale: {
       ...linearFieldScaleFunctions,
@@ -586,7 +598,7 @@ export const FIELD_OPTS = {
       ]
     }
   },
-  integer: {
+  [ALL_FIELD_TYPES.integer]: {
     type: 'numerical',
     scale: {
       ...linearFieldScaleFunctions,
@@ -601,7 +613,7 @@ export const FIELD_OPTS = {
       ]
     }
   },
-  boolean: {
+  [ALL_FIELD_TYPES.boolean]: {
     type: 'boolean',
     scale: {
       ...ordinalFieldScaleFunctions,
@@ -612,7 +624,7 @@ export const FIELD_OPTS = {
       tooltip: [TOOLTIP_FORMAT_TYPES.NONE, TOOLTIP_FORMAT_TYPES.BOOLEAN]
     }
   },
-  date: {
+  [ALL_FIELD_TYPES.date]: {
     type: 'time',
     scale: {
       ...ordinalFieldScaleFunctions,
@@ -623,11 +635,33 @@ export const FIELD_OPTS = {
       tooltip: [TOOLTIP_FORMAT_TYPES.NONE, TOOLTIP_FORMAT_TYPES.DATE]
     }
   },
-  geojson: {
+  [ALL_FIELD_TYPES.geojson]: {
     type: 'geometry',
     scale: {
       ...notSupportedScaleOpts,
       ...notSupportAggrOpts
+    },
+    format: {
+      legend: d => '...',
+      tooltip: []
+    }
+  },
+  [ALL_FIELD_TYPES.object]: {
+    type: 'categorical',
+    scale: {
+      ...ordinalFieldScaleFunctions,
+      ...ordinalFieldAggrScaleFunctions
+    },
+    format: {
+      legend: d => '...',
+      tooltip: []
+    }
+  },
+  [ALL_FIELD_TYPES.array]: {
+    type: 'categorical',
+    scale: {
+      ...ordinalFieldScaleFunctions,
+      ...ordinalFieldAggrScaleFunctions
     },
     format: {
       legend: d => '...',

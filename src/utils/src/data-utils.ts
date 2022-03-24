@@ -274,7 +274,9 @@ export const FIELD_DISPLAY_FORMAT: {
       ? JSON.stringify(d)
       : Array.isArray(d)
       ? `[${String(d)}]`
-      : ''
+      : '',
+  [ALL_FIELD_TYPES.object]: JSON.stringify,
+  [ALL_FIELD_TYPES.array]: JSON.stringify
 };
 
 /**

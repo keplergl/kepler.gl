@@ -15856,10 +15856,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
 
-type-analyzer@0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/type-analyzer/-/type-analyzer-0.3.0.tgz#b62a226deb4e9ca46b8cc86e14a93344154377d0"
-  integrity sha512-C2A/rZcoP03dAmv1/hCo2AjD7q2BHfZEp62Fn52BXgHoAEDVTobRbtR6UcEOhNy7g9/sh17MHq3ThxAp3578zw==
+type-analyzer@0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/type-analyzer/-/type-analyzer-0.4.0.tgz#56621f23b832468d358080466a2d41e142c8078a"
+  integrity sha512-vLj0uKCCZYqtkFoQwf7mIvRQopDc2R4mdADLuX1uhtOm5MjtksHMiatI1TW+n0r7vDZLAMgW5VKGKlVTwbcAhg==
 
 type-check@~0.3.2:
   version "0.3.2"

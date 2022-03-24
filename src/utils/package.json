@@ -59,8 +59,8 @@
     "moment-timezone": "^0.5.35",
     "react": "^16.8.4",
     "resize-observer-polyfill": "^1.5.1",
-    "type-analyzer": "0.3.0"
-},
+    "type-analyzer": "0.4.0"
+  },
   "nyc": {
     "sourceMap": false,
     "instrument": false
