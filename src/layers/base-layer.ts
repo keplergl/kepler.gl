@@ -176,12 +176,14 @@ function* generateColor(): Generator<RGBColor> {
 
 export const colorMaker = generateColor();
 
-class Layer<LayerConfig extends LayerBaseConfig = LayerBaseConfig> {
+class Layer {
   id: string;
   // TODO: define meta
   meta: {};
-  visConfigSettings: Partial<LayerVisConfigSettings>;
-  config: LayerConfig;
+  visConfigSettings: {
+    [key in keyof Partial<LayerVisConfig>]: ValueOf<LayerVisConfigSettings>;
+  };
+  config: LayerBaseConfig;
   // TODO: define _oldDataUpdateTriggers
   _oldDataUpdateTriggers: any;
 
@@ -198,7 +200,6 @@ class Layer<LayerConfig extends LayerBaseConfig = LayerBaseConfig> {
     // visConfigSettings
     this.visConfigSettings = {};
 
-    // @ts-expect-error
     this.config = this.getDefaultLayerConfig({
       columns: this.getLayerColumns(),
       ...props
