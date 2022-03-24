@@ -23,7 +23,8 @@ import {HexColor} from 'reducers';
 import {VizColorPalette} from './custom-color-ranges';
 
 export type ColorMap = [string | number | null, HexColor][];
-export type ColorLegends = {[key: HexColor]: string};
+// Key is HexColor but as key we can use only string
+export type ColorLegends = {[key: string]: string};
 
 export type ColorRange = {
   name: string;
