@@ -22,13 +22,17 @@ import colorbrewer from 'colorbrewer';
 import {HexColor} from 'reducers';
 import {VizColorPalette} from './custom-color-ranges';
 
+export type ColorMap = [string | number | null, HexColor][];
+export type ColorLegends = {[key: HexColor]: string};
+
 export type ColorRange = {
   name: string;
   type: string;
   category: string;
   colors: HexColor[];
   reversed?: boolean;
-  colorMap?: Map<string, HexColor> | object;
+  colorMap?: ColorMap;
+  colorLegends?: ColorLegends;
 };
 
 // Add colorbrewer color schemes (Data Science requirement)
