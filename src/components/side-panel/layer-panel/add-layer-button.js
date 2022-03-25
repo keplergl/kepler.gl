@@ -171,7 +171,6 @@ function AddLayerButtonFactory() {
                 selectedItems={null}
                 options={options}
                 displayOption={Accessor.generateOptionToStringFor('label')}
-                getOptionValue={'value'}
                 filterOption={'label'}
                 searchable
                 onOptionSelected={toggleSelectedOption}

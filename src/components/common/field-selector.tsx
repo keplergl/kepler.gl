@@ -77,7 +77,7 @@ type FieldType =
 
 interface FieldSelectorFactoryProps {
   fields?: FieldType[];
-  onSelect: (items: readonly (string | number | boolean | object)[]) => void;
+  onSelect: (items: readonly (string | number | boolean | object)[] | null) => void;
   placement?: string;
   value?: FieldType;
   filterFieldTypes?: FieldType | FieldType[];

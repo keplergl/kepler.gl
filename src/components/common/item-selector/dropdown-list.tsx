@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import React, {Component, ElementType} from 'react';
 import classNames from 'classnames';
 import styled from 'styled-components';
 
@@ -32,11 +31,15 @@ export const classList = {
 };
 
 const defaultDisplay = d => d;
-export const ListItem = ({value, displayOption = defaultDisplay}) => (
+export const ListItem = ({value, displayOption = defaultDisplay, light}) => (
   <span className={classList.listItemAnchor}>{displayOption(value)}</span>
 );
 
-const DropdownListWrapper = styled.div`
+interface DropdownListWrapperProps {
+  light?: boolean;
+}
+
+const DropdownListWrapper = styled.div<DropdownListWrapperProps>`
   background-color: ${props =>
     props.light ? props.theme.dropdownListBgdLT : props.theme.dropdownListBgd};
   border-top: 1px solid
@@ -45,22 +48,26 @@ const DropdownListWrapper = styled.div`
   ${props => (props.light ? props.theme.dropdownListLT : props.theme.dropdownList)};
 `;
 
-export default class DropdownList extends Component {
-  static propTypes = {
-    options: PropTypes.arrayOf(PropTypes.any),
-    allowCustomValues: PropTypes.number,
-    customClasses: PropTypes.object,
-    customValues: PropTypes.arrayOf(PropTypes.any),
-    customListItemComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-    customListHeaderComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-    selectionIndex: PropTypes.number,
-    onOptionSelected: PropTypes.func,
-    displayOption: PropTypes.func.isRequired,
-    defaultClassNames: PropTypes.bool,
-    areResultsTruncated: PropTypes.bool,
-    resultsTruncatedMessage: PropTypes.string,
-    listItemComponent: PropTypes.func
-  };
+
+interface DropdownListProps {
+  options?: any[];
+  allowCustomValues?: number;
+  customClasses?: object,
+  customValues?: any[],
+  customListItemComponent?: ElementType,
+  customListHeaderComponent?: ElementType
+  selectionIndex?: number,
+  onOptionSelected?: Function,
+  displayOption?: Function,
+  defaultClassNames?: boolean,
+  areResultsTruncated?: boolean,
+  resultsTruncatedMessage?: string,
+  listItemComponent?: Function;
+  light?: boolean;
+  fixedOptions?: any[]
+};
+
+export default class DropdownList extends Component<DropdownListProps> {
 
   static defaultProps = {
     customClasses: {},
@@ -76,15 +83,15 @@ export default class DropdownList extends Component {
 
   _onClick(result, event) {
     event.preventDefault();
-    this.props.onOptionSelected(result, event);
+    this.props.onOptionSelected?.(result, event);
   }
 
   render() {
-    const {fixedOptions, light} = this.props;
-    const display = this.props.displayOption;
+    const {fixedOptions, light, allowCustomValues = 0, customListItemComponent: CustomListItemComponent = ListItem} = this.props;
+    const {displayOption: display = defaultDisplay} = this.props;
 
     // Don't render if there are no options to display
-    if (!this.props.options.length && this.props.allowCustomValues <= 0) {
+    if (!this.props.options?.length && allowCustomValues <= 0) {
       return false;
     }
 
@@ -102,7 +109,7 @@ export default class DropdownList extends Component {
 
         {valueOffset > 0 ? (
           <div className={classList.listSection}>
-            {fixedOptions.map((value, i) => (
+            {fixedOptions?.map((value, i) => (
               <div
                 className={classNames(classList.listItem, {
                   hover: this.props.selectionIndex === i,
@@ -112,13 +119,13 @@ export default class DropdownList extends Component {
                 onMouseDown={e => this._onClick(value, e)}
                 onClick={e => this._onClick(value, e)}
               >
-                <this.props.customListItemComponent value={value} displayOption={display} />
+                <CustomListItemComponent value={value} displayOption={display} />
               </div>
             ))}
           </div>
         ) : null}
 
-        {this.props.options.map((value, i) => (
+        {this.props.options?.map((value, i) => (
           <div
             className={classNames(classList.listItem, {
               hover: this.props.selectionIndex === i + valueOffset
@@ -127,7 +134,7 @@ export default class DropdownList extends Component {
             onMouseDown={e => this._onClick(value, e)}
             onClick={e => this._onClick(value, e)}
           >
-            <this.props.customListItemComponent value={value} displayOption={display} />
+            <CustomListItemComponent value={value} displayOption={display} />
           </div>
         ))}
       </DropdownListWrapper>

@@ -20,11 +20,13 @@
 
 import React, {Component, createRef} from 'react';
 import styled from 'styled-components';
-import {injectIntl} from 'react-intl';
+import {injectIntl, WrappedComponentProps} from 'react-intl';
 import UploadButton from './upload-button';
 import {DragNDrop, FileType} from 'components/common/icons';
 import FileUploadProgress from 'components/common/file-uploader/file-upload-progress';
 import FileDrop from './file-drop';
+import {FileLoading, FileLoadingProgress} from 'reducers/vis-state-updaters';
+
 
 import {isChrome} from 'utils/utils';
 import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
@@ -60,7 +62,11 @@ export const WarningMsg = styled.span`
   font-weight: 500;
 `;
 
-const StyledFileDrop = styled.div`
+interface StyledFileDropProps {
+  dragOver?: boolean;
+}
+
+const StyledFileDrop = styled.div<StyledFileDropProps>`
   background-color: white;
   border-radius: 4px;
   border-style: ${props => (props.dragOver ? 'solid' : 'dashed')};
@@ -146,9 +152,22 @@ const StyledDisclaimer = styled(StyledMessage)`
   margin: 0 auto;
 `;
 
+type FileUploadProps = {
+  onFileUpload: (files: File[]) => void;
+  fileLoading: FileLoading | false;
+  fileLoadingProgress: FileLoadingProgress;
+  theme: object;
+  /** A list of names of supported formats suitable to present to user */
+  fileFormatNames?: string[];
+  /** A list of typically 3 letter extensions (without '.') for file matching */
+  fileExtensions?: string[];
+  /** Set to true if app wants to do its own file filtering */
+  disableExtensionFilter?: boolean;
+} & WrappedComponentProps
+
 function FileUploadFactory() {
   /** @augments {Component<FileUploadProps>} */
-  class FileUpload extends Component {
+  class FileUpload extends Component<FileUploadProps> {
     state = {
       dragOver: false,
       fileLoading: false,
@@ -168,7 +187,7 @@ function FileUploadFactory() {
       };
     }
 
-    frame = createRef();
+    frame = createRef<HTMLDivElement>();
 
     _isValidFileType = filename => {
       const {fileExtensions = []} = this.props;
@@ -178,7 +197,7 @@ function FileUploadFactory() {
     };
 
     /** @param {FileList} fileList */
-    _handleFileInput = (fileList, event) => {
+    _handleFileInput = (fileList: FileList, event: any) => {
       if (event) {
         event.stopPropagation();
       }
@@ -188,8 +207,8 @@ function FileUploadFactory() {
       const {disableExtensionFilter = false} = this.props;
 
       // TODO - move this code out of the component
-      const filesToLoad = [];
-      const errorFiles = [];
+      const filesToLoad: File[] = [];
+      const errorFiles: string[] = [];
       for (const file of files) {
         if (disableExtensionFilter || this._isValidFileType(file.name)) {
           filesToLoad.push(file);

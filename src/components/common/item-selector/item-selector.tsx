@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import React, {Component, ComponentType, ReactNode} from 'react';
 import classnames from 'classnames';
 import uniqBy from 'lodash.uniqby';
 import listensToClickOutside from 'react-onclickoutside';
@@ -32,12 +31,17 @@ import {Delete, ArrowDown} from 'components/common/icons';
 import DropdownList, {ListItem} from './dropdown-list';
 
 import {toArray} from 'utils/utils';
-import {injectIntl} from 'react-intl';
+import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from 'localization';
+
+interface StyledDropdownSelect {
+  inputTheme?: string;
+  size?: string;
+}
 
 export const StyledDropdownSelect = styled.div.attrs({
   className: 'item-selector__dropdown'
-})`
+})<StyledDropdownSelect>`
   ${props =>
     props.inputTheme === 'secondary'
       ? props.theme.secondaryInput
@@ -53,7 +57,12 @@ export const StyledDropdownSelect = styled.div.attrs({
   }
 `;
 
-const DropdownSelectValue = styled.span`
+interface DropdownSelectValueProps {
+  hasPlaceholder?: boolean;
+  inputTheme?: string;
+}
+
+const DropdownSelectValue = styled.span<DropdownSelectValueProps>`
   color: ${props =>
     props.hasPlaceholder && props.inputTheme === 'light'
       ? props.theme.selectColorPlaceHolderLT
@@ -89,7 +98,11 @@ const DropdownSelectActionRight = styled.div`
   }
 `;
 
-const DropdownWrapper = styled.div`
+interface DropdownWrapperProps {
+  placement?: string;
+}
+
+const DropdownWrapper = styled.div<DropdownWrapperProps>`
   border: 0;
   width: 100%;
   left: 0;
@@ -102,57 +115,42 @@ const DropdownWrapper = styled.div`
     props.placement === 'top' ? `${props.theme.dropdownWapperMargin}px` : 'auto'};
 `;
 
-class ItemSelector extends Component {
-  static propTypes = {
-    // required properties
-    selectedItems: PropTypes.oneOfType([
-      PropTypes.array,
-      PropTypes.string,
-      PropTypes.number,
-      PropTypes.bool,
-      PropTypes.object
-    ]),
-    onChange: PropTypes.func.isRequired,
-    options: PropTypes.arrayOf(PropTypes.any).isRequired,
+type ItemSelectorProps = {
+  selectedItems: ReadonlyArray<string | number | boolean | object>,
+  options: ReadonlyArray<string | number | boolean | object>,
+  onChange: (items: ReadonlyArray<string | number | boolean | object> | null) => void,
+  fixedOptions?: any[],
+  erasable?: boolean,
+  showArrow?: boolean,
+  searchable?: boolean,
+  displayOption?: string | ((opt: any) => any),
+  getOptionValue?: string | ((opt: any) => any),
+  filterOption?: string | ((opt: any) => any),
+  placement?: string,
+  disabled?: boolean,
+  isError?: boolean,
+  multiSelect?: boolean,
+  inputTheme?: string,
+  size?: string,
+  onBlur?: () => void,
+  placeholder?: string,
+  closeOnSelect?: boolean,
+  typeaheadPlaceholder?: string,
+  DropdownHeaderComponent?: ComponentType<any> | null,
+  DropDownRenderComponent?: ComponentType<any>,
+  DropDownLineItemRenderComponent?: ComponentType<any>,
+  CustomChickletComponent?: ComponentType<any>;
+  intl: IntlShape;
+  children?: ReactNode; 
+};
 
-    // optional properties
-    fixedOptions: PropTypes.arrayOf(PropTypes.any),
-    erasable: PropTypes.bool,
-    showArrow: PropTypes.bool,
-    displayOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-    getOptionValue: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-    filterOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-    placement: PropTypes.string,
-    disabled: PropTypes.bool,
-    isError: PropTypes.bool,
-    multiSelect: PropTypes.bool,
-    inputTheme: PropTypes.string,
-    onBlur: PropTypes.func,
-    placeholder: PropTypes.string,
-    closeOnSelect: PropTypes.bool,
-    typeaheadPlaceholder: PropTypes.string,
-    DropdownHeaderComponent: PropTypes.func,
-    DropDownRenderComponent: PropTypes.func,
-    DropDownLineItemRenderComponent: PropTypes.func,
-    CustomChickletComponent: PropTypes.func
-  };
+class ItemSelector extends Component<ItemSelectorProps> {
 
   static defaultProps = {
-    erasable: false,
-    showArrow: false,
-    placement: 'bottom',
-    selectedItems: [],
-    displayOption: null,
-    getOptionValue: null,
-    filterOption: null,
-    fixedOptions: null,
-    inputTheme: 'primary',
     multiSelect: true,
     placeholder: 'placeholder.enterValue',
     closeOnSelect: true,
     searchable: true,
-    dropdownHeader: null,
-    DropdownHeaderComponent: null,
     DropDownRenderComponent: DropdownList,
     DropDownLineItemRenderComponent: ListItem
   };
@@ -236,9 +234,10 @@ class ItemSelector extends Component {
     }
   };
 
-  _renderDropdown(intl) {
+  _renderDropdown(intl: IntlShape) {
+    const {placement = 'bottom'} = this.props
     return (
-      <DropdownWrapper placement={this.props.placement}>
+      <DropdownWrapper placement={placement}>
         <Typeahead
           customClasses={{
             results: 'list-selector',
@@ -272,6 +271,7 @@ class ItemSelector extends Component {
     const selected = toArray(this.props.selectedItems);
     const hasValue = selected.length;
     const displayOption = Accessor.generateOptionToStringFor(this.props.displayOption);
+    const {inputTheme = 'primary', DropDownLineItemRenderComponent = ListItem} = this.props
 
     const dropdownSelectProps = {
       className: classnames({
@@ -281,7 +281,7 @@ class ItemSelector extends Component {
       disabled: this.props.disabled,
       onClick: this._showTypeahead,
       error: this.props.isError,
-      inputTheme: this.props.inputTheme,
+      inputTheme: inputTheme,
       size: this.props.size
     };
     const intl = this.props.intl;
@@ -297,20 +297,20 @@ class ItemSelector extends Component {
               placeholder={this.props.placeholder}
               removeItem={this._removeItem}
               CustomChickletComponent={this.props.CustomChickletComponent}
-              inputTheme={this.props.inputTheme}
+              inputTheme={inputTheme}
             />
           ) : (
             <StyledDropdownSelect {...dropdownSelectProps}>
               <DropdownSelectValue
                 hasPlaceholder={!hasValue}
-                inputTheme={this.props.inputTheme}
+                inputTheme={inputTheme}
                 className="item-selector__dropdown__value"
               >
                 {hasValue ? (
-                  <this.props.DropDownLineItemRenderComponent
+                  <DropDownLineItemRenderComponent
                     displayOption={displayOption}
                     value={selected[0]}
-                    light={this.props.inputTheme === 'light'}
+                    light={inputTheme === 'light'}
                   />
                 ) : (
                   <FormattedMessage id={this.props.placeholder || 'placeholder.selectValue'} />

@@ -18,28 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const Accessor = {
-  IDENTITY_FN: input => input,
+import React, { MouseEventHandler, ReactNode } from 'react';
+import styled from 'styled-components';
 
-  generateAccessor: field => object => object[field],
+const StyledButton = styled.button`
+  color: ${props => props.theme.optionButtonColor};
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  transition: ${props => props.theme.transition};
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  padding: 0;
 
-  generateOptionToStringFor: function generateOptionToStringFor(prop) {
-    if (typeof prop === 'string') {
-      return this.generateAccessor(prop);
-    } else if (typeof prop === 'function') {
-      return prop;
-    }
-    return this.IDENTITY_FN;
-  },
-
-  valueForOption: (option, object) => {
-    if (typeof option === 'string') {
-      return object[option];
-    } else if (typeof option === 'function') {
-      return option(object);
-    }
-    return object;
+  &:hover {
+    opacity: 0.8;
   }
-};
+`;
 
-export default Accessor;
+type ButtonProps = {
+  onClick?: MouseEventHandler<HTMLButtonElement>, 
+  disabled?: boolean, 
+  text?: string, 
+  children?: ReactNode
+} & React.ButtonHTMLAttributes<HTMLButtonElement>
+
+const noop = () => {};
+const Button = ({onClick = noop, disabled = false, text = '', children, ...props}: ButtonProps) => (
+  <StyledButton {...props} onClick={disabled ? undefined : onClick}>
+    {text || children}
+  </StyledButton>
+);
+
+export default Button;

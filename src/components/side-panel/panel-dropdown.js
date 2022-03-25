@@ -27,7 +27,8 @@ class ClickOutsideCloseDropdown extends Component {
   static propTypes = {
     onClose: PropTypes.func,
     show: PropTypes.bool,
-    type: PropTypes.string
+    type: PropTypes.string,
+    className: PropTypes.string
   };
 
   static defaultProps = {

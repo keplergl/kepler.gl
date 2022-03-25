@@ -58,7 +58,7 @@ const StyledDomain = styled.div.attrs({
 
 AnimationControlFactory.deps = [PlaybackControlsFactory, FloatingTimeDisplayFactory];
 
-function AnimationControlFactory(PlaybackControls, FloatingTimeDisplay) {
+function AnimationControlFactory(PlaybackControls: ReturnType<typeof PlaybackControlsFactory>, FloatingTimeDisplay: ReturnType<typeof FloatingTimeDisplayFactory>) {
   const AnimationControl = ({
     isAnimatable,
     isAnimating,
@@ -104,7 +104,6 @@ function AnimationControlFactory(PlaybackControls, FloatingTimeDisplay) {
       <BottomWidgetInner className="bottom-widget--inner">
         <AnimationWidgetInner className="animation-widget--inner">
           <PlaybackControls
-            className="animation-control-playpause"
             startAnimation={toggleAnimation}
             isAnimating={isAnimating}
             pauseAnimation={toggleAnimation}

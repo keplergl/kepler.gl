@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef} from 'react';
+import React, {Component, createRef, ElementType, KeyboardEventHandler} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
-import PropTypes from 'prop-types';
 import fuzzy from 'fuzzy';
 import classNames from 'classnames';
 import styled from 'styled-components';
@@ -39,7 +38,11 @@ const DEFAULT_CLASS = 'typeahead';
  * keyboard or mouse to select.
  */
 
-const TypeaheadWrapper = styled.div`
+interface TypeaheadWrapperProps {
+  light?: boolean;
+}
+
+const TypeaheadWrapper = styled.div<TypeaheadWrapperProps>`
   display: flex;
   flex-direction: column;
   background-color: ${props =>
@@ -57,7 +60,7 @@ const InputBox = styled.div.attrs({
   padding: 8px;
 `;
 
-const TypeaheadInput = styled.input`
+const TypeaheadInput = styled.input<TypeaheadWrapperProps>`
   ${props => (props.light ? props.theme.inputLT : props.theme.secondaryInput)} :hover {
     cursor: pointer;
     background-color: ${props =>
@@ -74,7 +77,7 @@ const InputIcon = styled.div.attrs({
   color: ${props => props.theme.inputPlaceholderColor};
 `;
 
-function generateSearchFunction(props) {
+function generateSearchFunction(props: TypeaheadProps) {
   const {searchOptions, filterOption} = props;
   if (typeof searchOptions === 'function') {
     if (filterOption !== null) {
@@ -119,40 +122,63 @@ function shouldSkipSearch(input, state, showOptionsWhenEmpty) {
   return !(showOptionsWhenEmpty && isFocused) && emptyValue;
 }
 
-class Typeahead extends Component {
-  static propTypes = {
-    name: PropTypes.string,
-    customClasses: PropTypes.object,
-    maxVisible: PropTypes.number,
-    resultsTruncatedMessage: PropTypes.string,
-    options: PropTypes.arrayOf(PropTypes.any),
-    fixedOptions: PropTypes.arrayOf(PropTypes.any),
-    allowCustomValues: PropTypes.number,
-    initialValue: PropTypes.string,
-    value: PropTypes.string,
-    placeholder: PropTypes.string,
-    disabled: PropTypes.bool,
-    textarea: PropTypes.bool,
-    inputProps: PropTypes.object,
-    onOptionSelected: PropTypes.func,
-    onChange: PropTypes.func,
-    onKeyDown: PropTypes.func,
-    onKeyPress: PropTypes.func,
-    onKeyUp: PropTypes.func,
-    onFocus: PropTypes.func,
-    onBlur: PropTypes.func,
-    filterOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-    searchOptions: PropTypes.func,
-    displayOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-    inputDisplayOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-    formInputOption: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-    defaultClassNames: PropTypes.bool,
-    customListComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-    customListItemComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-    customListHeaderComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-    showOptionsWhenEmpty: PropTypes.bool,
-    searchable: PropTypes.bool
-  };
+interface TypeaheadProps {
+  name?: string,
+  customClasses?: any,
+  maxVisible?: number,
+  resultsTruncatedMessage?: string,
+  options?: ReadonlyArray<string | number | boolean | object>,
+  fixedOptions?: ReadonlyArray<string | number | boolean | object>,
+  allowCustomValues?: number,
+  initialValue?: string,
+  value?: string,
+  placeholder?: string,
+  disabled?: boolean,
+  textarea?: boolean,
+  inputProps?: object,
+  onOptionSelected?: (option: any, event: any) => any,
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void,
+  onKeyDown?: (event: React.KeyboardEvent<HTMLDivElement>) => void,
+  onKeyPress?: KeyboardEventHandler<HTMLDivElement>,
+  onKeyUp?: KeyboardEventHandler<HTMLDivElement>,
+  onFocus?: (event: React.FocusEvent<HTMLDivElement>) => void,
+  onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void,
+  filterOption?: string | Function,
+  searchOptions?: Function,
+  displayOption?: string | Function,
+  inputDisplayOption?: string | Function,
+  formInputOption?: string | Function,
+  defaultClassNames?: boolean,
+  customListComponent?: ElementType,
+  customListItemComponent?: ElementType | Function
+  customListHeaderComponent?: ElementType | Function | null,
+  showOptionsWhenEmpty?: boolean,
+  searchable?: boolean;
+  light?: boolean;
+  inputIcon: ElementType;
+  className?: string;
+  selectedItems?: any[] | null;
+};
+
+interface TypeaheadState {
+  /** @type {ReadonlyArray<string>} */
+  searchResults: (string | undefined)[];
+
+  // This should be called something else, 'entryValue'
+  entryValue?: string;
+
+  // A valid typeahead value
+  selection?: string;
+
+  // Index of the selection
+  selectionIndex: null;
+
+  // Keep track of the focus state of the input element, to determine
+  // whether to show options when empty (if showOptionsWhenEmpty is true)
+  isFocused: boolean;
+}
+
+class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
 
   static defaultProps = {
     options: [],
@@ -218,12 +244,12 @@ class Typeahead extends Component {
     if (this.entry.current) {
       this.entry.current.focus();
     } else {
-      this.root.current.focus();
+      this.root.current?.focus();
     }
   }
 
-  root = createRef();
-  entry = createRef();
+  root = createRef<HTMLDivElement>();
+  entry = createRef<HTMLInputElement>();
 
   focus = () => {
     if (this.entry.current) {
@@ -233,8 +259,8 @@ class Typeahead extends Component {
 
   _hasCustomValue = () => {
     return (
-      this.props.allowCustomValues > 0 &&
-      this.state.entryValue.length >= this.props.allowCustomValues &&
+      Number(this.props.allowCustomValues) > 0 &&
+      Number(this.state.entryValue?.length) >= Number(this.props.allowCustomValues) &&
       this.state.searchResults.indexOf(this.state.entryValue) < 0
     );
   };
@@ -244,8 +270,9 @@ class Typeahead extends Component {
   };
 
   _renderIncrementalSearchResults() {
+    const {customListComponent: CustomListComponent = DropdownList} = this.props
     return (
-      <this.props.customListComponent
+      <CustomListComponent
         fixedOptions={this.props.fixedOptions}
         options={
           this.props.maxVisible
@@ -272,7 +299,7 @@ class Typeahead extends Component {
   }
 
   getSelection() {
-    let index = this.state.selectionIndex;
+    let index = Number(this.state.selectionIndex);
 
     if (this._hasCustomValue()) {
       if (index === 0) {
@@ -281,9 +308,9 @@ class Typeahead extends Component {
       index--;
     }
     if (this._hasFixedOptions()) {
-      return index < this.props.fixedOptions.length
-        ? this.props.fixedOptions[index]
-        : this.state.searchResults[index - this.props.fixedOptions.length];
+      return index < Number(this.props.fixedOptions?.length)
+        ? this.props.fixedOptions?.[index]
+        : this.state.searchResults[index - Number(this.props.fixedOptions?.length)];
     }
     return this.state.searchResults[index];
   }
@@ -298,13 +325,13 @@ class Typeahead extends Component {
       });
     }
 
-    return this.props.onOptionSelected(option, event);
+    return this.props.onOptionSelected?.(option, event);
   };
 
   // use () => {} to avoid binding 'this'
   _onTextEntryUpdated = () => {
     if (this.props.searchable) {
-      const value = this.entry.current.value;
+      const value = this.entry.current?.value;
 
       this.setState({
         searchResults: getOptionsForValue(value, this.props, this.state),
@@ -317,7 +344,7 @@ class Typeahead extends Component {
   _onEnter = event => {
     const selection = this.getSelection();
     if (!selection) {
-      return this.props.onKeyDown(event);
+      return this.props.onKeyDown?.(event);
     }
     return this._onOptionSelected(selection, event);
   };
@@ -345,7 +372,7 @@ class Typeahead extends Component {
     }
   };
 
-  eventMap = event => {
+  eventMap = () => {
     const events = {};
 
     events[KeyEvent.DOM_VK_UP] = this.navUp;
@@ -391,7 +418,7 @@ class Typeahead extends Component {
     this._nav(-1);
   };
 
-  _onChange = event => {
+  _onChange: React.ChangeEventHandler<HTMLInputElement> = event => {
     if (this.props.onChange) {
       this.props.onChange(event);
     }
@@ -399,12 +426,12 @@ class Typeahead extends Component {
     this._onTextEntryUpdated();
   };
 
-  _onKeyDown = event => {
+  _onKeyDown: React.KeyboardEventHandler<HTMLDivElement> = event => {
     // If there are no visible elements, don't perform selector navigation.
     // Just pass this up to the upstream onKeydown handler.
     // Also skip if the user is pressing the shift key, since none of our handlers are looking for shift
     if (!this._hasHint() || event.shiftKey) {
-      return this.props.onKeyDown(event);
+      return this.props.onKeyDown?.(event);
     }
 
     const handler = this.eventMap()[event.keyCode];
@@ -412,20 +439,20 @@ class Typeahead extends Component {
     if (handler) {
       handler(event);
     } else {
-      return this.props.onKeyDown(event);
+      return this.props.onKeyDown?.(event);
     }
     // Don't propagate the keystroke back to the DOM/browser
     event.preventDefault();
   };
 
-  _onFocus = event => {
+  _onFocus: React.FocusEventHandler<HTMLDivElement> = event => {
     this.setState({isFocused: true});
     if (this.props.onFocus) {
       return this.props.onFocus(event);
     }
   };
 
-  _onBlur = event => {
+  _onBlur: React.FocusEventHandler<HTMLInputElement> = event => {
     this.setState({isFocused: false});
     if (this.props.onBlur) {
       return this.props.onBlur(event);
@@ -450,20 +477,20 @@ class Typeahead extends Component {
 
   render() {
     const inputClasses = {};
-    inputClasses[this.props.customClasses.input] = Boolean(this.props.customClasses.input);
+    inputClasses[this.props.customClasses?.input] = Boolean(this.props.customClasses?.input);
     const inputClassList = classNames(inputClasses);
 
     const classes = {
       [DEFAULT_CLASS]: this.props.defaultClassNames
     };
-    classes[this.props.className] = Boolean(this.props.className);
+    classes[this.props.className?this.props.className:''] = Boolean(this.props.className);
     const classList = classNames(classes);
 
     return (
       <TypeaheadWrapper
         className={classList}
         ref={this.root}
-        tabIndex="0"
+        tabIndex={0}
         onKeyDown={this._onKeyDown}
         onKeyPress={this.props.onKeyPress}
         onKeyUp={this.props.onKeyUp}
