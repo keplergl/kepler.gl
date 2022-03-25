@@ -29,7 +29,7 @@ type AnimationControllerProps = {
   speed?: number;
   updateAnimation: Function;
   animationWindow?: string;
-  steps?: number[];
+  steps?: number[] | null;
   domain: number[];
   value: number[];
   baseSpeed?: number;
@@ -59,8 +59,14 @@ function AnimationControllerFactory() {
    * animate a moving point jumps to the next step
    */
   class AnimationController extends Component<AnimationControllerProps> {
-    // TODO: convert the entire component to use hooks in the next PR
 
+    static defaultProps = {
+      baseSpeed: BASE_SPEED,
+      speed: 1,
+      steps: null,
+      animationWindow: ANIMATION_WINDOW.free
+    };
+    
     state = {
       isAnimating: false
     };
@@ -124,7 +130,8 @@ function AnimationControllerFactory() {
     };
 
     _resetAnimtionByTimeStep = () => {
-      const {steps = []} = this.props
+      const {steps = null} = this.props
+      if (!steps) return;
       // go to the first steps
       this.props.updateAnimation([steps[0], 0]);
     };
@@ -207,7 +214,8 @@ function AnimationControllerFactory() {
     }
 
     _nextFrameByTimeStep() {
-      const {steps = [], value} = this.props;
+      const {steps = null, value} = this.props;
+      if (!steps) return;
       const val = Array.isArray(value) ? value[0] : value;
       const index = bisectLeft(steps, val);
       const nextIdx = index >= steps.length - 1 ? 0 : index + 1;
