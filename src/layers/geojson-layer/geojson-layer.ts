@@ -21,7 +21,7 @@
 import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
-import Layer, {colorMaker, LayerColumns} from '../base-layer';
+import Layer, {colorMaker, LayerBaseConfig, LayerColumns} from '../base-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {getGeojsonDataMaps, getGeojsonBounds, getGeojsonFeatureTypes} from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
@@ -70,6 +70,12 @@ export const defaultLineWidth = 1;
 export const defaultRadius = 1;
 
 export default class GeoJsonLayer extends Layer {
+  declare config: LayerBaseConfig & {
+    visConfig: {
+      // This field appears only at GeoJsonLayer
+      strokeOpacity: number;
+    };
+  };
   dataToFeature: {properties?: {radius?: number}}[];
 
   constructor(props) {

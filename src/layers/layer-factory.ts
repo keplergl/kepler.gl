@@ -192,8 +192,6 @@ export type LayerVisConfig = {
   extruded: boolean;
   wireframe: boolean;
   weight: number;
-  // This field appears only at GeoJsonLayer
-  strokeOpacity: number;
 };
 
 export type TextConfigSelect = {
