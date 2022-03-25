@@ -90,10 +90,9 @@ export function renderedSize({
       // measuring large text cause slow performance
       if (value.length > maxCellSize) {
         return maxCellSize;
-      } else {
-        const textWidth = context.measureText(value).width;
-        return Math.ceil(textWidth) + cellPadding;
       }
+      const textWidth = context.measureText(value).width;
+      return Math.ceil(textWidth) + cellPadding;
     })
   );
   // header cell only has left padding
