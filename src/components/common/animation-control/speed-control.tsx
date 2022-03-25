@@ -40,7 +40,7 @@ const StyledSpeedText = styled.div`
 
 SpeedControlFactory.deps = [AnimationSpeedSliderFactory];
 
-function SpeedControlFactory(AnimationSpeedSlider) {
+function SpeedControlFactory(AnimationSpeedSlider: ReturnType<typeof AnimationSpeedSliderFactory>) {
   const SpeedControl = ({
     onClick,
     updateAnimationSpeed,

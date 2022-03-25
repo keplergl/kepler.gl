@@ -27,6 +27,7 @@ import AnimationSpeedSliderFactory from './animation-speed-slider';
 import {Reset, Play, Pause, Rocket, AnchorWindow, FreeWindow} from 'components/common/icons';
 import {ANIMATION_WINDOW} from 'constants/default-settings';
 import {preciseRound} from 'utils/data-utils';
+import { ReactComponentLike } from 'prop-types';
 
 const DELAY_SHOW = 500;
 const DEFAULT_BUTTON_HEIGHT = '20px';
@@ -50,7 +51,11 @@ const StyledSpeedControl = styled.div`
   }
 `;
 
-export const IconButton = styled(Button)`
+interface IconButtonProps {
+  collapsed?: boolean;
+}
+
+export const IconButton = styled(Button)<IconButtonProps>`
   width: ${props => (props.collapsed ? 0 : 32)}px;
   height: 32px;
   color: ${props => props.theme.playbackButtonColor};
@@ -96,6 +101,21 @@ const DEFAULT_ANIMATE_ITEMS = {
   }
 };
 
+interface AnimationItem {
+  id: string,
+  icon: ReactComponentLike,
+  tooltip: string
+}
+
+interface AnimationWindowControlProps {
+  onClick?: (id: string) => void,
+  selected?: string,
+  onHide: ()=>void,
+  height?: string,
+  animationItems: {[key: string]: AnimationItem};
+  btnStyle
+}
+
 export const AnimationWindowControl = ({
   onClick,
   selected,
@@ -103,7 +123,7 @@ export const AnimationWindowControl = ({
   height,
   animationItems,
   btnStyle = {}
-}) => (
+}: AnimationWindowControlProps) => (
   <div>
     {Object.values(animationItems)
       .filter(item => item.id !== selected)
@@ -114,7 +134,7 @@ export const AnimationWindowControl = ({
           data-for={`${item.id}-tooltip`}
           className="playback-control-button"
           onClick={() => {
-            onClick(item.id);
+            onClick&&onClick(item.id);
             onHide();
           }}
           {...btnStyle}
@@ -130,8 +150,25 @@ export const AnimationWindowControl = ({
   </div>
 );
 
+interface PlaybackControls {
+  isAnimatable?: boolean;
+  isAnimating?: boolean,
+  width?: number | string,
+  speed: number,
+  animationWindow?: string
+  setFilterAnimationWindow?: (id: string) => void,
+  updateAnimationSpeed,
+  pauseAnimation?: () => void;
+  resetAnimation: () => void;
+  startAnimation: () => void;
+  playbackIcons?: typeof DEFAULT_ICONS;
+  animationItems?: {[key: string]: AnimationItem};
+  buttonStyle?: string;
+  buttonHeight?: string;
+}
+
 PlaybackControlsFactory.deps = [AnimationSpeedSliderFactory];
-function PlaybackControlsFactory(AnimationSpeedSlider) {
+function PlaybackControlsFactory(AnimationSpeedSlider: ReturnType<typeof AnimationSpeedSliderFactory>) {
   // eslint-disable-next-line complexity
   const PlaybackControls = ({
     isAnimatable = true,
@@ -148,7 +185,7 @@ function PlaybackControlsFactory(AnimationSpeedSlider) {
     animationItems = DEFAULT_ANIMATE_ITEMS,
     buttonStyle = 'secondary',
     buttonHeight = DEFAULT_BUTTON_HEIGHT
-  }) => {
+  }: PlaybackControls) => {
     const [isSpeedControlVisible, toggleSpeedControl] = useState(false);
     const [showAnimationWindowControl, setShowAnimationWindowControl] = useState(false);
 
@@ -256,7 +293,6 @@ function PlaybackControlsFactory(AnimationSpeedSlider) {
             data-for="animate-play-pause"
             className={classnames('playback-control-button', {active: isAnimating})}
             onClick={isAnimating ? pauseAnimation : startAnimation}
-            hide={isSpeedControlVisible}
             {...btnStyle}
           >
             {isAnimating ? (

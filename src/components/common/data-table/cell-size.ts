@@ -90,7 +90,7 @@ function clamp(min, max, value) {
   return Math.max(Math.min(max, value), min);
 }
 
-function getColumnOrder(pinnedColumns = [], unpinnedColumns = []) {
+function getColumnOrder(pinnedColumns: string[] = [], unpinnedColumns: string[] = []) {
   return [...pinnedColumns, ...unpinnedColumns];
 }
 
@@ -119,7 +119,7 @@ function getSizeSum(sizeCache, key) {
  * @param {number} containerWidth
  * @param {number} roomToFill
  */
-function expandCellSize(cellSizeCache, columnOrder, containerWidth, roomToFill) {
+function expandCellSize(cellSizeCache: object, columnOrder: string[], containerWidth: number, roomToFill: number) {
   let remaining = roomToFill;
 
   const expandedCellSize = columnOrder.reduce((accu, col) => {
@@ -139,7 +139,7 @@ function expandCellSize(cellSizeCache, columnOrder, containerWidth, roomToFill) 
     };
   }, {});
 
-  let ghost = null;
+  let ghost: number | null = null;
   if (remaining > 0 && remaining < MIN_GHOST_CELL_SIZE) {
     // expand last cell
     const lastCell = columnOrder[columnOrder.length - 1];
@@ -163,10 +163,10 @@ function expandCellSize(cellSizeCache, columnOrder, containerWidth, roomToFill) 
  * @param {string[]} unpinnedColumns
  */
 export function adjustCellsToContainer(
-  containerWidth,
-  cellSizeCache,
-  pinnedColumns,
-  unpinnedColumns
+  containerWidth: number,
+  cellSizeCache: object,
+  pinnedColumns: string[],
+  unpinnedColumns: string[]
 ) {
   const minRowSum = getSizeSum(cellSizeCache, 'row');
   if (minRowSum >= containerWidth) {

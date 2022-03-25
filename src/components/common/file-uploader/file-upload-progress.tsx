@@ -23,6 +23,7 @@ import styled, {withTheme} from 'styled-components';
 import ProgressBar from '../progress-bar';
 import {TruncatedTitleText} from 'components/common/styled-components';
 import {getError} from 'utils/utils';
+import {FileLoadingProgress} from 'reducers/vis-state-updaters';
 
 /** @typedef {import('./file-upload-progress').FileUploadProgressProps} FileUploadProgressProps*/
 
@@ -66,6 +67,14 @@ const StyledContainer = styled.div`
 
 const formatPercent = percent => `${Math.floor(percent * 100)}%`;
 
+interface UploadProgressProps {
+  message?: string;
+  fileName?: string;
+  percent: number;
+  error?: any;
+  theme: any;
+} 
+
 /**
  * @param {object} params
  * @param {string} params.message
@@ -74,7 +83,7 @@ const formatPercent = percent => `${Math.floor(percent * 100)}%`;
  * @param {any} params.error
  * @param {object} params.theme
  */
-const UploadProgress = ({message, fileName, percent, error, theme}) => {
+const UploadProgress = ({message, fileName, percent, error, theme}: UploadProgressProps) => {
   const percentStr = formatPercent(percent);
   const barColor = error ? theme.errorColor : theme.activeColorLT;
 
@@ -96,8 +105,14 @@ const UploadProgress = ({message, fileName, percent, error, theme}) => {
   );
 };
 
+
+interface FileUploadProgressProps {
+  fileLoadingProgress: FileLoadingProgress;
+  theme: any;
+};
+
 /** @type {React.FunctionComponent<FileUploadProgressProps>} */
-const FileUploadProgress = ({fileLoadingProgress, theme}) => (
+const FileUploadProgress = ({fileLoadingProgress, theme}: FileUploadProgressProps) => (
   <StyledContainer>
     <StyledProgressWrapper>
       {Object.values(fileLoadingProgress).map(item => (

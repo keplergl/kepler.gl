@@ -225,7 +225,7 @@ export const Container = styled.div`
 
 const defaultColumnWidth = 200;
 
-const columnWidthFunction = (columns, cellSizeCache, ghost) => ({index}) => {
+const columnWidthFunction = (columns, cellSizeCache, ghost?) => ({index}) => {
   return (columns[index] || {}).ghost ? ghost : cellSizeCache[columns[index]] || defaultColumnWidth;
 };
 
@@ -252,10 +252,10 @@ export const TableSection = ({
   scrollTop,
   dataGridProps,
   columnWidth,
-  setGridRef,
+  setGridRef = undefined,
   headerCellRender,
   dataCellRender,
-  scrollLeft = undefined
+  scrollLeft = 0
 }) => (
   <AutoSizer>
     {({width, height}) => {
@@ -267,7 +267,7 @@ export const TableSection = ({
       const dataGridHeight = fixedHeight || height;
       return (
         <>
-          <div className={classnames('scroll-in-ui-thread', classList.header)}>
+          <div className={classnames('scroll-in-ui-thread', classList?.header)}>
             <Grid
               cellRenderer={headerCellRender}
               {...headerGridProps}
@@ -276,7 +276,7 @@ export const TableSection = ({
             />
           </div>
           <div
-            className={classnames('scroll-in-ui-thread', classList.rows)}
+            className={classnames('scroll-in-ui-thread', classList?.rows)}
             style={{
               top: headerGridProps.height
             }}
@@ -287,7 +287,7 @@ export const TableSection = ({
               {...gridDimension}
               className={isPinned ? 'pinned-grid' : 'body-grid'}
               height={dataGridHeight - headerGridProps.height}
-              onScroll={onScroll}
+              onScroll={onScroll} 
               scrollTop={scrollTop}
               setGridRef={setGridRef}
             />
@@ -298,9 +298,26 @@ export const TableSection = ({
   </AutoSizer>
 );
 
+type CellSizeCache = {[id: string]: number}
+
+interface DataTableProps {
+  cellSizeCache?: CellSizeCache;
+  pinnedColumns?: string[];
+  fixedWidth?: number;
+  theme?: any;
+  dataContainer;
+  fixedHeight;
+}
+
+interface DataTableState {
+  cellSizeCache?: CellSizeCache, 
+  moreOptionsColumn?, 
+  ghost?
+}
+
 DataTableFactory.deps = [FieldTokenFactory];
-function DataTableFactory(FieldToken) {
-  class DataTable extends Component {
+function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
+  class DataTable extends Component<DataTableProps, DataTableState> {
     static defaultProps = {
       dataContainer: null,
       pinnedColumns: [],
@@ -312,7 +329,7 @@ function DataTableFactory(FieldToken) {
       theme: {}
     };
 
-    state = {
+    state: DataTableState = {
       cellSizeCache: {},
       moreOptionsColumn: null
     };
@@ -339,7 +356,7 @@ function DataTableFactory(FieldToken) {
       };
     }
 
-    root = createRef();
+    root = createRef<HTMLDivElement>();
     columns = props => props.columns;
     pinnedColumns = props => props.pinnedColumns;
     unpinnedColumns = createSelector(this.columns, this.pinnedColumns, (columns, pinnedColumns) =>
@@ -353,7 +370,7 @@ function DataTableFactory(FieldToken) {
       });
 
     getCellSizeCache = () => {
-      const {cellSizeCache: propsCache, fixedWidth, pinnedColumns} = this.props;
+      const {cellSizeCache: propsCache = {}, fixedWidth, pinnedColumns = []} = this.props;
       const unpinnedColumns = this.unpinnedColumns(this.props);
 
       const width = fixedWidth ? fixedWidth : this.root.current ? this.root.current.clientWidth : 0;
@@ -365,7 +382,7 @@ function DataTableFactory(FieldToken) {
         propsCache,
         pinnedColumns,
         unpinnedColumns
-      );
+      ) as {cellSizeCache: {}, ghost: number | null | undefined};
 
       return {
         cellSizeCache,
@@ -384,8 +401,7 @@ function DataTableFactory(FieldToken) {
       isPinned,
       props,
       toggleMoreOptions,
-      moreOptionsColumn,
-      TokenComponent
+      moreOptionsColumn
     ) => {
       // eslint-disable-next-line react/display-name
       return cellInfo => {
@@ -441,7 +457,6 @@ function DataTableFactory(FieldToken) {
                 <section className="options">
                   <OptionDropdown
                     isOpened={moreOptionsColumn === column}
-                    type={colMeta[column].type}
                     column={column}
                     toggleMoreOptions={toggleMoreOptions}
                     sortTableColumn={mode => sortTableColumn(column, mode)}
@@ -500,10 +515,10 @@ function DataTableFactory(FieldToken) {
     };
 
     render() {
-      const {dataContainer, pinnedColumns, theme = {}, fixedWidth, fixedHeight} = this.props;
+      const {dataContainer, pinnedColumns = [], theme = {}, fixedWidth, fixedHeight} = this.props;
       const unpinnedColumns = this.unpinnedColumns(this.props);
 
-      const {cellSizeCache, moreOptionsColumn, ghost} = this.state;
+      const {cellSizeCache = {}, moreOptionsColumn, ghost} = this.state;
       const unpinnedColumnsGhost = ghost ? [...unpinnedColumns, {ghost: true}] : unpinnedColumns;
       const pinnedColumnsWidth = pinnedColumns.reduce(
         (acc, val) => acc + get(cellSizeCache, val, 0),
@@ -550,7 +565,6 @@ function DataTableFactory(FieldToken) {
                           onScroll={args => onScroll({...args, scrollLeft})}
                           scrollTop={scrollTop}
                           dataGridProps={dataGridProps}
-                          setGridRef={pinnedGrid => (this.pinnedGrid = pinnedGrid)}
                           columnWidth={columnWidthFunction(pinnedColumns, cellSizeCache)}
                           headerCellRender={this.renderHeaderCell(
                             pinnedColumns,
@@ -584,7 +598,6 @@ function DataTableFactory(FieldToken) {
                         scrollTop={scrollTop}
                         scrollLeft={scrollLeft}
                         dataGridProps={dataGridProps}
-                        setGridRef={unpinnedGrid => (this.unpinnedGrid = unpinnedGrid)}
                         columnWidth={columnWidthFunction(
                           unpinnedColumnsGhost,
                           cellSizeCache,

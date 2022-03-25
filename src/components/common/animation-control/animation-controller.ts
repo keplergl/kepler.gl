@@ -24,6 +24,17 @@ import {requestAnimationFrame, cancelAnimationFrame} from 'global/window';
 import Console from 'global/console';
 import {BASE_SPEED, FPS, ANIMATION_WINDOW} from 'constants/default-settings';
 
+type AnimationControllerProps = {
+  isAnimating?: boolean;
+  speed?: number;
+  updateAnimation: Function;
+  animationWindow?: string;
+  steps?: number[] | null;
+  domain: number[];
+  value: number[];
+  baseSpeed?: number;
+}
+
 function AnimationControllerFactory() {
   /**
    * 4 Animation Window Types
@@ -47,15 +58,15 @@ function AnimationControllerFactory() {
    * Current time is a point. An array of sorted time steps are provided,
    * animate a moving point jumps to the next step
    */
-  class AnimationController extends Component {
-    // TODO: convert the entire component to use hooks in the next PR
+  class AnimationController extends Component<AnimationControllerProps> {
+
     static defaultProps = {
       baseSpeed: BASE_SPEED,
       speed: 1,
       steps: null,
       animationWindow: ANIMATION_WINDOW.free
     };
-
+    
     state = {
       isAnimating: false
     };
@@ -75,9 +86,10 @@ function AnimationControllerFactory() {
     }
 
     _timer = null;
+    _startTime: number | undefined;
 
     _startOrPauseAnimation() {
-      const {isAnimating, speed} = this.props;
+      const {isAnimating, speed = 1} = this.props;
       if (!this._timer && isAnimating && speed > 0) {
         this._startAnimation();
       } else if (this._timer && !isAnimating) {
@@ -118,8 +130,10 @@ function AnimationControllerFactory() {
     };
 
     _resetAnimtionByTimeStep = () => {
+      const {steps = null} = this.props
+      if (!steps) return;
       // go to the first steps
-      this.props.updateAnimation([this.props.steps[0], 0]);
+      this.props.updateAnimation([steps[0], 0]);
     };
 
     _resetAnimation = () => {
@@ -131,7 +145,7 @@ function AnimationControllerFactory() {
     };
 
     _startAnimation = () => {
-      const {speed} = this.props;
+      const {speed = 1} = this.props;
       this._clearTimer();
       if (speed > 0) {
         if (this.props.animationWindow === ANIMATION_WINDOW.interval) {
@@ -176,7 +190,7 @@ function AnimationControllerFactory() {
     };
 
     _nextFrameByDomain() {
-      const {domain, value, speed, baseSpeed, animationWindow} = this.props;
+      const {domain, value, speed = 1, baseSpeed = 600, animationWindow} = this.props;
       const delta = ((domain[1] - domain[0]) / baseSpeed) * speed;
 
       // loop when reaches the end
@@ -200,7 +214,8 @@ function AnimationControllerFactory() {
     }
 
     _nextFrameByTimeStep() {
-      const {steps, value} = this.props;
+      const {steps = null, value} = this.props;
+      if (!steps) return;
       const val = Array.isArray(value) ? value[0] : value;
       const index = bisectLeft(steps, val);
       const nextIdx = index >= steps.length - 1 ? 0 : index + 1;

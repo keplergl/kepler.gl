@@ -51,7 +51,19 @@ const StyledOptionsDropdown = styled.div`
   }
 `;
 
-const OptionDropdown = props => {
+interface OptionDropdownProps {
+  isOpened?: boolean;
+  column: string;
+  toggleMoreOptions: (order: string)=>void;
+  sortTableColumn: (order: string)=>void;
+  pinTableColumn: () => void;
+  copyTableColumn: () => void;
+  sortMode?: string;
+  isSorted?: boolean;
+  isPinned?: boolean;
+}
+
+const OptionDropdown = (props: OptionDropdownProps) => {
   const {
     isOpened,
     column,

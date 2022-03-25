@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useRef} from 'react';
+import React, {ReactNode, useCallback, useRef} from 'react';
 import styled from 'styled-components';
 
 const Wrapper = styled.div`
@@ -34,11 +34,16 @@ const Wrapper = styled.div`
 `;
 const inputStyle = {display: 'none'};
 
+interface UploadButtonProps {
+  onUpload: (files: FileList, event: any) => void;
+  children?: ReactNode;
+}
+
 /*
 Inspired by https://github.com/okonet/react-dropzone/blob/master/src/index.js
 */
 /** @type {typeof import('./upload-button').UploadButton} */
-const UploadButton = ({onUpload, children}) => {
+const UploadButton = ({onUpload, children}: UploadButtonProps) => {
   const _fileInput = useRef(null);
 
   const _onClick = useCallback(() => {
