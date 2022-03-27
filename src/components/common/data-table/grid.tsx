@@ -18,30 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import styled from 'styled-components';
+import React, {PureComponent} from 'react';
+import {Grid, GridProps} from 'react-virtualized';
+import isEqual from 'lodash.isequal';
 
-const StyledButton = styled.button`
-  color: ${props => props.theme.optionButtonColor};
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  outline: none;
-  transition: ${props => props.theme.transition};
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  padding: 0;
+export default class GridHack extends PureComponent<GridProps> {
 
-  &:hover {
-    opacity: 0.8;
+  grid: Grid | null = null
+
+  componentDidUpdate(preProps) {
+    /*
+     * This hack exists because in react-virtualized the
+     * _columnWidthGetter is only called in the constructor
+     * even though it is reassigned with new props resulting in
+     * a new width for cells not being calculated so we must
+     * force trigger a resize.
+     *
+     * https://github.com/bvaughn/react-virtualized/blob/master/source/Grid/Grid.js#L322
+     *
+     */
+    if (!isEqual(preProps.cellSizeCache, this.props.cellSizeCache)) {
+      this.grid?.recomputeGridSize();
+    }
   }
-`;
-const noop = () => {};
-const Button = ({onClick = noop, disabled = false, text = '', children, ...props}) => (
-  <StyledButton {...props} onClick={disabled ? null : onClick}>
-    {text || children}
-  </StyledButton>
-);
 
-export default Button;
+  render() {
+    const {setGridRef, ...rest} = this.props;
+    return (
+      <Grid
+        ref={x => {
+          if (setGridRef) setGridRef(x);
+          this.grid = x;
+        }}
+        key="grid-hack"
+        {...rest}
+      />
+    );
+  }
+}

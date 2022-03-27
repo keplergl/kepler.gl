@@ -47,7 +47,7 @@ const BottomWidgetContainer = styled.div`
 `;
 
 FilterAnimationControllerFactory.deps = [AnimationControllerFactory];
-export function FilterAnimationControllerFactory(AnimationController) {
+export function FilterAnimationControllerFactory(AnimationController: ReturnType<typeof AnimationControllerFactory>) {
   const FilterAnimationController = ({filter, filterIdx, setFilterAnimationTime, children}) => {
     const intervalBins = useMemo(() => getIntervalBins(filter), [filter]);
 
@@ -91,7 +91,7 @@ export function FilterAnimationControllerFactory(AnimationController) {
 }
 
 LayerAnimationControllerFactory.deps = [AnimationControllerFactory];
-export function LayerAnimationControllerFactory(AnimationController) {
+export function LayerAnimationControllerFactory(AnimationController: ReturnType<typeof AnimationControllerFactory>) {
   const LayerAnimationController = ({animationConfig, setLayerAnimationTime, children}) => (
     <AnimationController
       key="layer-control"
@@ -119,10 +119,10 @@ BottomWidgetFactory.deps = [
 
 /* eslint-disable complexity */
 export default function BottomWidgetFactory(
-  TimeWidget,
-  AnimationControl,
-  FilterAnimationController,
-  LayerAnimationController
+  TimeWidget: ReturnType<typeof TimeWidgetFactory>,
+  AnimationControl: ReturnType<typeof AnimationControlFactory>,
+  FilterAnimationController: ReturnType<typeof FilterAnimationControllerFactory>,
+  LayerAnimationController: ReturnType<typeof LayerAnimationControllerFactory>
 ) {
   const BottomWidget = props => {
     const {
@@ -210,15 +210,12 @@ export default function BottomWidgetFactory(
                 <TimeWidget
                   // TimeWidget uses React.memo, here we pass width
                   // even though it doesnt use it, to force rerender
-                  width={enlargedFilterWidth}
                   filter={filters[enlargedFilterIdx]}
                   index={enlargedFilterIdx}
-                  isAnyFilterAnimating={Boolean(animatedFilter)}
                   datasets={datasets}
                   readOnly={readOnly}
                   showTimeDisplay={showFloatingTimeDisplay}
                   setFilterPlot={visStateActions.setFilterPlot}
-                  setFilter={visStateActions.setFilter}
                   setFilterAnimationTime={visStateActions.setFilterAnimationTime}
                   setFilterAnimationWindow={visStateActions.setFilterAnimationWindow}
                   toggleAnimation={visStateActions.toggleFilterAnimation}

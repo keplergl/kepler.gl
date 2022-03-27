@@ -45,8 +45,14 @@ const SpeedSliderContainer = styled.div`
 
 AnimationSpeedSliderFactory.deps = [RangeSliderFactory];
 
-export default function AnimationSpeedSliderFactory(RangeSlider) {
-  class AnimationSpeedSlider extends Component {
+interface AnimationSpeedSliderProps {
+  onHide: () => void;
+  speed: number;
+  updateAnimationSpeed: (val: number) => void
+}
+
+export default function AnimationSpeedSliderFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
+  class AnimationSpeedSlider extends Component<AnimationSpeedSliderProps> {
     handleClickOutside = e => {
       this.props.onHide();
     };
@@ -64,7 +70,6 @@ export default function AnimationSpeedSliderFactory(RangeSlider) {
               value1={this.props.speed}
               onChange={this._onChange}
               isRanged={false}
-              showTooltip
               showInput
               inputTheme="secondary"
               inputSize="tiny"

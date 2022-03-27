@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef} from 'react';
-import PropTypes from 'prop-types';
+import React, {Component, createRef, RefObject} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 
@@ -36,29 +35,33 @@ const StyledRangeSlider = styled.div`
   ${props => `${props.vertical ? 'height' : 'width'}: 100%`};
 `;
 
+export type StyleRangeSliderType = typeof StyledRangeSlider;
+
 const SliderWrapper = styled.div`
   flex-grow: 1;
 `;
 
-export default class Slider extends Component {
-  static propTypes = {
-    title: PropTypes.string,
-    isRanged: PropTypes.bool,
-    value0: PropTypes.number,
-    value1: PropTypes.number,
-    minValue: PropTypes.number,
-    maxValue: PropTypes.number,
-    sliderHandleWidth: PropTypes.number,
-    onSlider0Change: PropTypes.func,
-    onInput0Change: PropTypes.func,
-    onSlider1Change: PropTypes.func,
-    onInput1Change: PropTypes.func,
-    onSliderBarChange: PropTypes.func,
-    step: PropTypes.number,
-    enableBarDrag: PropTypes.bool,
-    showTooltip: PropTypes.bool
-  };
+type SliderProps = {
+  title: string;
+  isRanged: boolean;
+  value0: number;
+  value1: number;
+  minValue: number;
+  maxValue: number;
+  sliderHandleWidth: number;
+  onSlider0Change: (val: number) => void;
+  onSlider1Change: (val: number) => void;
+  onSliderBarChange: (val0: number, val1: number) => void;
+  step: number;
+  enableBarDrag: boolean;
+  showTooltip: boolean;
+  vertical: boolean;
+  marks?: number[];
+  classSet?: {[key: string]: boolean};
+  disabled: boolean;
+};
 
+export default class Slider extends Component {
   static defaultProps = {
     title: '',
     isRanged: true,
@@ -70,83 +73,87 @@ export default class Slider extends Component {
     sliderHandleWidth: 12,
     enableBarDrag: false,
     onSlider0Change: noop,
-    onInput0Change: noop,
     onSlider1Change: noop,
-    onInput1Change: noop,
     onSliderBarChange: noop,
     disabled: false,
     vertical: false,
     showTooltip: false
   };
 
-  ref = createRef();
-  track = createRef();
+  private anchor: number = 0;
 
-  _setAnchor = x => {
+  public ref: RefObject<typeof SliderWrapper> = createRef<typeof SliderWrapper>();
+  public track: RefObject<StyleRangeSliderType> = createRef<StyleRangeSliderType>();
+
+  constructor(public props: SliderProps) {
+    super(props);
+  }
+
+  private setAnchor = (x: number) => {
     // used to calculate delta
-    this._anchor = x;
+    this.anchor = x;
   };
 
-  _getBaseDistance() {
+  private getBaseDistance() {
     return this.props.vertical ? this.ref.current.offsetHeight : this.ref.current.offsetWidth;
   }
 
-  _getDeltaVal(x) {
-    const percent = x / this._getBaseDistance();
+  private getDeltaVal(x: number) {
+    const percent = x / this.getBaseDistance();
     const maxDelta = this.props.maxValue - this.props.minValue;
     return percent * maxDelta;
   }
-  _getDeltaX(v) {
+  private getDeltaX(v: number) {
     const percent = v / (this.props.maxValue - this.props.minValue);
-    const maxDelta = this._getBaseDistance();
+    const maxDelta = this.getBaseDistance();
     return percent * maxDelta;
   }
 
-  _getValue(baseV, offset) {
+  private getValue(baseV: number, offset: number) {
     // offset is the distance between slider handle and track left
-    const rawValue = baseV + this._getDeltaVal(offset);
+    const rawValue = baseV + this.getDeltaVal(offset);
 
-    return this._normalizeValue(rawValue);
+    return this.normalizeValue(rawValue);
   }
 
-  _normalizeValue(val) {
+  private normalizeValue(val: number) {
     const {minValue, step, marks} = this.props;
     return normalizeSliderValue(val, minValue, step, marks);
   }
 
-  slide0Listener = x => {
+  slide0Listener = (x: number) => {
     const {value1, minValue} = this.props;
-    const val = this._getValue(minValue, x);
+    const val = this.getValue(minValue, x);
     this.props.onSlider0Change(clamp([minValue, value1], val));
   };
 
-  slide1Listener = x => {
+  slide1Listener = (x: number) => {
     const {minValue, maxValue, value0} = this.props;
-    const val = this._getValue(minValue, x);
+    const val = this.getValue(minValue, x);
     this.props.onSlider1Change(clamp([value0, maxValue], val));
   };
 
-  sliderBarListener = x => {
+  sliderBarListener = (x: number) => {
     const {value0, value1, minValue, maxValue} = this.props;
     // for slider bar, we use distance delta
-    const anchor = this._anchor;
+    const anchor = this.anchor;
     const length = value1 - value0; // the length of the selected range shouldn't change when clamping
-    const val0 = clamp([minValue, maxValue - length], this._getValue(value0, x - anchor));
-    const val1 = clamp([val0 + length, maxValue], this._getValue(value1, x - anchor));
+    const val0 = clamp([minValue, maxValue - length], this.getValue(value0, x - anchor));
+    const val1 = clamp([val0 + length, maxValue], this.getValue(value1, x - anchor));
 
-    const deltaX = this._getDeltaX(val0 - this.props.value0);
+    const deltaX = this.getDeltaX(val0 - this.props.value0);
     this.props.onSliderBarChange(val0, val1);
     // update anchor
-    this._anchor = this._anchor + deltaX;
+    this.anchor = this.anchor + deltaX;
   };
 
-  calcHandleLeft0 = (w, l, num) => {
+  calcHandleLeft0 = (w: number, l: number) => {
     return w === 0
       ? `calc(${l}% - ${this.props.sliderHandleWidth / 2}px)`
       : `calc(${l}% - ${this.props.sliderHandleWidth / 2}px)`;
   };
 
-  calcHandleLeft1 = (w, l) => {
+  calcHandleLeft1 = (w: number, l: number) => {
     return this.props.isRanged && w === 0
       ? `${l}%`
       : `calc(${l + w}% - ${this.props.sliderHandleWidth / 2}px)`;
@@ -204,7 +211,7 @@ export default class Slider extends Component {
             sliderBarListener={this.sliderBarListener}
             vertical={vertical}
             track={this.track}
-            setAnchor={this._setAnchor}
+            setAnchor={this.setAnchor}
           />
         </StyledRangeSlider>
       </SliderWrapper>

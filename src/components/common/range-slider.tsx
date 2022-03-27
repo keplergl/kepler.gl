@@ -63,7 +63,7 @@ interface RangeSliderProps {
   range?: number[];
   value0: number;
   value1: number;
-  onChange: (val: number[]) => void; //TODO
+  onChange?: (val: number[]) => void; //TODO
   histogram?: any[];
   isRanged?: boolean;
   isEnlarged?: boolean;
@@ -74,9 +74,9 @@ interface RangeSliderProps {
   sliderHandleWidth?: number;
   xAxis?: ElementType;
   timezone?: string;
-  timeFormat: string;
+  timeFormat?: string;
   playbackControlWidth?: number;
-  lineChart: LineChart;
+  lineChart?: LineChart;
   marks?: number[];
   plotType?: string;
   plotValue?: number[];
@@ -155,7 +155,7 @@ export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlo
     };
 
     _setRangeVal1 = val => {
-      const {value0, range, onChange} = this.props;
+      const {value0, range, onChange = () => {}} = this.props;
       if (!range) return;
       const val1 = Number(val);
       onChange([value0, clamp([value0, range[1]], this._roundValToStep(val1))]);
@@ -163,7 +163,7 @@ export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlo
     };
 
     _setRangeVal0 = val => {
-      const {value1, range, onChange} = this.props;
+      const {value1, range, onChange = () => {}} = this.props;
       if (!range) return;
       const val0 = Number(val);
       onChange([clamp([range[0], value1], this._roundValToStep(val0)), value1]);
@@ -225,7 +225,7 @@ export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlo
         histogram,
         lineChart,
         range,
-        onChange,
+        onChange = () => {},
         sliderHandleWidth,
         step,
         timezone,
@@ -279,14 +279,13 @@ export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlo
                 ) : null}
                 <Slider
                   marks={this.props.marks}
-                  showValues={false}
                   isRanged={isRanged}
                   minValue={range[0]}
                   maxValue={range[1]}
                   value0={this.props.value0}
                   value1={this.props.value1}
                   step={step}
-                  handleWidth={sliderHandleWidth}
+                  sliderHandleWidth={sliderHandleWidth}
                   onSlider0Change={this._setRangeVal0}
                   onSlider1Change={this._setRangeVal1}
                   onSliderBarChange={(val0, val1) => {

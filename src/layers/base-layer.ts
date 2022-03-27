@@ -37,7 +37,7 @@ import {
   CHANNEL_SCALE_SUPPORTED_FIELDS,
   MAX_GPU_FILTERS
 } from 'constants/default-settings';
-import {COLOR_RANGES} from 'constants/color-ranges';
+import {ColorRange, COLOR_RANGES} from 'constants/color-ranges';
 import {DataVizColors} from 'constants/custom-color-ranges';
 import {
   LAYER_VIS_CONFIGS,
@@ -47,7 +47,7 @@ import {
   DEFAULT_HIGHLIGHT_COLOR,
   DEFAULT_LAYER_LABEL,
   LayerVisConfig,
-  ColorRange
+  LayerVisConfigSettings
 } from './layer-factory';
 
 import {generateHashId, isPlainObject} from 'utils/utils';
@@ -57,13 +57,11 @@ import {getSampleData} from 'utils/table-utils/data-container-utils';
 
 import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
-import {RGBColor, RGBAColor, MapState, Filter, Datasets} from 'reducers';
+import {RGBColor, RGBAColor, MapState, Filter, Datasets, ValueOf} from 'reducers';
 import {LayerTextLabel, ColorUI} from './layer-factory';
 import {KeplerTable} from 'utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 import {Field, GpuFilter} from 'utils/table-utils/kepler-table';
-
-export {LAYER_VIS_CONFIGS} from './layer-factory';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 
@@ -72,6 +70,7 @@ export type LayerColumns = {
 };
 export type VisualChannelDomain = number[] | string[];
 export type VisualChannelField = Field | null;
+export type VisualChannelScale = keyof typeof SCALE_TYPES;
 
 export type LayerBaseConfig = {
   dataId: string | null;
@@ -94,6 +93,27 @@ export type LayerBaseConfig = {
   animation: {
     enabled: boolean;
   };
+};
+
+export type LayerColorConfig = {
+  colorField: VisualChannelField;
+  colorDomain: VisualChannelDomain;
+  colorScale: VisualChannelScale;
+};
+export type LayerSizeConfig = {
+  // color by size, domain is set by filters, field, scale type
+  sizeDomain: VisualChannelDomain;
+  sizeScale: VisualChannelScale;
+  sizeField: VisualChannelField;
+};
+export type LayerHeightConfig = {
+  heightField: VisualChannelField;
+  heightDomain: VisualChannelDomain;
+  heightScale: VisualChannelScale;
+};
+
+export type LayerWeightConfig = {
+  weightField: VisualChannelField;
 };
 
 export type VisualChannel = {
@@ -160,8 +180,9 @@ class Layer {
   id: string;
   // TODO: define meta
   meta: {};
-  // TODO: define visConfigSettings
-  visConfigSettings: {};
+  visConfigSettings: {
+    [key: string]: ValueOf<LayerVisConfigSettings>;
+  };
   config: LayerBaseConfig;
   // TODO: define _oldDataUpdateTriggers
   _oldDataUpdateTriggers: any;
@@ -381,7 +402,9 @@ class Layer {
     return hexToRgb(c);
   }
 
-  getDefaultLayerConfig(props: Partial<LayerBaseConfig> = {}): LayerBaseConfig {
+  getDefaultLayerConfig(
+    props: Partial<LayerBaseConfig> = {}
+  ): LayerBaseConfig & LayerColorConfig & LayerHeightConfig & LayerSizeConfig {
     return {
       dataId: props.dataId || null,
       label: props.label || DEFAULT_LAYER_LABEL,
@@ -422,9 +445,10 @@ class Layer {
    * @returns
    */
   getVisualChannelDescription(key: string): VisualChannelDescription {
+    const label = this.visConfigSettings[this.visualChannels[key].range].label;
     // e.g. label: Color, measure: Vehicle Type
     return {
-      label: this.visConfigSettings[this.visualChannels[key].range].label,
+      label: typeof label === 'function' ? label(this.config) : label,
       measure: this.config[this.visualChannels[key].field]
         ? this.config[this.visualChannels[key].field].displayName ||
           this.config[this.visualChannels[key].field].name
@@ -600,10 +624,14 @@ class Layer {
   }
 
   registerVisConfig(
-    layerVisConfigs: Partial<LayerVisConfig> | {[key in keyof Partial<LayerVisConfig>]: string}
+    layerVisConfigs: {
+      [key in keyof Partial<LayerVisConfig>]:
+        | keyof LayerVisConfigSettings
+        | ValueOf<LayerVisConfigSettings>;
+    }
   ) {
     Object.keys(layerVisConfigs).forEach(item => {
-      if (typeof item === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {
+      if (typeof layerVisConfigs[item] === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {
         // if assigned one of default LAYER_CONFIGS
         this.config.visConfig[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]].defaultValue;
         this.visConfigSettings[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]];

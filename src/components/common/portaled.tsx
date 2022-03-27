@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef, ElementType} from 'react';
+import React, {Component, createRef, ElementType, ReactNode} from 'react';
 import debounce from 'lodash.debounce';
 import isEqual from 'lodash.isequal';
 
@@ -137,13 +137,14 @@ interface PortaledProps {
     event: React.MouseEvent<Element, globalThis.MouseEvent> | React.KeyboardEvent<Element>
   ) => void;
   theme?: any;
-  isOpened: boolean;
+  isOpened?: boolean;
   top: number;
-  left: number;
+  left?: number;
   right: number;
   overlayZIndex?: number;
-  modalProps: Partial<ReactModal.Props>;
+  modalProps?: Partial<ReactModal.Props>;
   modalStyle?: Partial<typeof defaultModalStyle>;
+  children?: ReactNode;
 }
 
 interface PortaledState {
@@ -187,7 +188,7 @@ class Portaled extends Component<PortaledProps, PortaledState> {
     if (didOpen || didClose) {
       window.requestAnimationFrame(() => {
         if (this._unmounted) return;
-        this.setState({isVisible: didOpen});
+        this.setState({isVisible: Boolean(didOpen)});
       });
     }
 
@@ -209,7 +210,7 @@ class Portaled extends Component<PortaledProps, PortaledState> {
       const rect = this.element.current.getBoundingClientRect();
       const childRect = this.child.current.getBoundingClientRect();
       const pageOffset = getPageOffset();
-      const {top: topOffset, left: leftOffset, right: rightOffset} = this.props;
+      const {top: topOffset, left: leftOffset = 0, right: rightOffset} = this.props;
 
       const pos = getChildPos({
         offsets: {topOffset, leftOffset, rightOffset},

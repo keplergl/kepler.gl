@@ -25,10 +25,25 @@
 import React from 'react';
 import window from 'global/window';
 
+export type FileDropProps = {
+  dropEffect?: 'copy' | 'move' | 'link' | 'none';
+  frame?: typeof document | typeof window | HTMLElement;
+  className?: string;
+  targetClassName?: string;
+  draggingOverFrameClassName?: string;
+  draggingOverTargetClassName?: string;
+  onDragOver?: (event: any) => void;
+  onDragLeave?: (event: any) => void;
+  onDrop?: (fileList: FileList, event: any) => void;
+  onFrameDragEnter?: (event: any) => void;
+  onFrameDragLeave?: (event: any) => void;
+  onFrameDrop?: (event: any) => void;
+};
+
 /** @typedef {import('./file-drop').FileDropProps} FileDropProps */
 
 /** @augments React.PureComponent<FileDropProps> */
-class FileDrop extends React.PureComponent {
+class FileDrop extends React.PureComponent<FileDropProps> {
   static isIE = () =>
     window &&
     window.navigator &&
@@ -60,11 +75,9 @@ class FileDrop extends React.PureComponent {
     draggingOverTargetClassName: 'file-drop-dragging-over-target'
   };
 
-  constructor(props) {
-    super(props);
-    this.frameDragCounter = 0;
-    this.state = {draggingOverFrame: false, draggingOverTarget: false};
-  }
+
+  frameDragCounter = 0;
+  state = {draggingOverFrame: false, draggingOverTarget: false};
 
   componentDidMount() {
     this.startFrameListeners(this.props.frame);

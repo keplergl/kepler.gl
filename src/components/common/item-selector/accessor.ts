@@ -18,38 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {PureComponent} from 'react';
-import {Grid} from 'react-virtualized';
-import isEqual from 'lodash.isequal';
+const Accessor = {
+  IDENTITY_FN: input => input,
 
-export default class GridHack extends PureComponent {
-  componentDidUpdate(preProps) {
-    /*
-     * This hack exists because in react-virtualized the
-     * _columnWidthGetter is only called in the constructor
-     * even though it is reassigned with new props resulting in
-     * a new width for cells not being calculated so we must
-     * force trigger a resize.
-     *
-     * https://github.com/bvaughn/react-virtualized/blob/master/source/Grid/Grid.js#L322
-     *
-     */
-    if (!isEqual(preProps.cellSizeCache, this.props.cellSizeCache)) {
-      this.grid.recomputeGridSize();
+  generateAccessor: (field: string) => (object: object) => object[field],
+
+  generateOptionToStringFor: function generateOptionToStringFor(prop) {
+    if (typeof prop === 'string') {
+      return this.generateAccessor(prop);
+    } else if (typeof prop === 'function') {
+      return prop;
     }
-  }
+    return this.IDENTITY_FN;
+  },
 
-  render() {
-    const {setGridRef, ...rest} = this.props;
-    return (
-      <Grid
-        ref={x => {
-          if (setGridRef) setGridRef(x);
-          this.grid = x;
-        }}
-        key="grid-hack"
-        {...rest}
-      />
-    );
+  valueForOption: (option, object) => {
+    if (typeof option === 'string') {
+      return object[option];
+    } else if (typeof option === 'function') {
+      return option(object);
+    }
+    return object;
   }
-}
+};
+
+export default Accessor;
