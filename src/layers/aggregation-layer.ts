@@ -63,8 +63,9 @@ const getLayerColorRange = colorRange => colorRange.colors.map(hexToRgb);
 export const aggregateRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
 
 export type AggregationLayerConfig = LayerBaseConfig & LayerColorConfig & LayerSizeConfig;
-export default class AggregationLayer extends Layer<AggregationLayerConfig> {
+export default class AggregationLayer extends Layer {
   getColorRange: any;
+  declare config: AggregationLayerConfig;
 
   constructor(
     props?: {
