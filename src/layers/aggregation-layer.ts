@@ -19,7 +19,12 @@
 // THE SOFTWARE.
 
 import memoize from 'lodash.memoize';
-import Layer, {LayerBaseConfig, LayerColumns} from './base-layer';
+import Layer, {
+  LayerBaseConfig,
+  LayerColorConfig,
+  LayerColumns,
+  LayerSizeConfig
+} from './base-layer';
 import {hexToRgb} from '../utils/color-utils';
 import {aggregate} from '../utils/aggregate-utils';
 import {
@@ -28,6 +33,7 @@ import {
   FIELD_OPTS,
   DEFAULT_AGGREGATION
 } from '../constants/default-settings';
+import {Datasets} from '../reducers';
 
 export const pointPosAccessor = ({lat, lng}: LayerColumns) => dc => d => [
   dc.valueAt(d.index, lng.fieldIdx),
@@ -54,9 +60,10 @@ export const getFilterDataFunc = (filterRange, getFilterValue) => pt =>
 
 const getLayerColorRange = colorRange => colorRange.colors.map(hexToRgb);
 
-export const aggregateRequiredColumns = ['lat', 'lng'];
+export const aggregateRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
 
-export default class AggregationLayer extends Layer {
+export type AggregationLayerConfig = LayerBaseConfig & LayerColorConfig & LayerSizeConfig;
+export default class AggregationLayer extends Layer<AggregationLayerConfig> {
   getColorRange: any;
 
   constructor(
@@ -250,7 +257,7 @@ export default class AggregationLayer extends Layer {
     return data;
   }
 
-  formatLayerData(datasets, oldLayerData) {
+  formatLayerData(datasets: Datasets, oldLayerData) {
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getPosition = this.getPositionAccessor(dataContainer);
 
