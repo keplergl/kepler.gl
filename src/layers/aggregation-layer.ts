@@ -19,17 +19,17 @@
 // THE SOFTWARE.
 
 import memoize from 'lodash.memoize';
-import Layer from './base-layer';
-import {hexToRgb} from 'utils/color-utils';
-import {aggregate} from 'utils/aggregate-utils';
+import Layer, {LayerBaseConfig, LayerColumns} from './base-layer';
+import {hexToRgb} from '../utils/color-utils';
+import {aggregate} from '../utils/aggregate-utils';
 import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
   FIELD_OPTS,
   DEFAULT_AGGREGATION
-} from 'constants/default-settings';
+} from '../constants/default-settings';
 
-export const pointPosAccessor = ({lat, lng}) => dc => d => [
+export const pointPosAccessor = ({lat, lng}: LayerColumns) => dc => d => [
   dc.valueAt(d.index, lng.fieldIdx),
   dc.valueAt(d.index, lat.fieldIdx)
 ];
@@ -57,7 +57,13 @@ const getLayerColorRange = colorRange => colorRange.colors.map(hexToRgb);
 export const aggregateRequiredColumns = ['lat', 'lng'];
 
 export default class AggregationLayer extends Layer {
-  constructor(props) {
+  getColorRange: any;
+
+  constructor(
+    props?: {
+      id?: string;
+    } & Partial<LayerBaseConfig>
+  ) {
     super(props);
 
     this.getPositionAccessor = dataContainer =>
