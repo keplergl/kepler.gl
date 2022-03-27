@@ -27,6 +27,12 @@ import ArcLayerIcon from './arc-layer-icon';
 import {DEFAULT_LAYER_COLOR} from '../../constants/default-settings';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import {RGBColor, RGBAColor, MapState, Filter, Datasets} from '../../reducers';
+import {
+  VisConfigColorRange,
+  VisConfigColorSelect,
+  VisConfigNumber,
+  VisConfigRange
+} from '../layer-factory';
 
 export const arcPosAccessor = ({lat0, lng0, lat1, lng1}: LayerColumns) => (
   dc: DataContainerInterface
@@ -55,7 +61,16 @@ export const arcVisConfigs = {
   targetColor: 'targetColor'
 };
 
+export type ArcLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  thickness: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  sizeRange: VisConfigRange;
+  targetColor: VisConfigColorSelect;
+};
+
 export default class ArcLayer extends Layer {
+  declare visConfigSettings: ArcLayerVisConfigSettings;
   constructor(props) {
     super(props);
 
