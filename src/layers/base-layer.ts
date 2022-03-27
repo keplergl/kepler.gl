@@ -116,6 +116,8 @@ export type LayerWeightConfig = {
   weightField: VisualChannelField;
 };
 
+export type VisualChannels = {[key: string]: VisualChannel};
+
 export type VisualChannel = {
   property: string;
   field: string;
@@ -239,7 +241,7 @@ class Layer {
     return ['label', 'opacity', 'thickness', 'isVisible', 'hidden'];
   }
 
-  get visualChannels(): {[key: string]: VisualChannel} {
+  get visualChannels(): VisualChannels {
     return {
       color: {
         property: 'color',
@@ -1006,7 +1008,8 @@ class Layer {
     this.meta = {...this.meta, ...meta};
   }
 
-  getDataUpdateTriggers({filteredIndex, id, allData}) {
+  // @ts-expect-error
+  getDataUpdateTriggers({filteredIndex, id, allData}: KeplerTable): any {
     const {columns} = this.config;
 
     return {
@@ -1309,7 +1312,7 @@ class Layer {
     }, []);
   }
 
-  calculateDataAttribute(keplerTable: KeplerTable, getPosition) {
+  calculateDataAttribute(keplerTable: KeplerTable, getPosition): any {
     // implemented in subclasses
     return [];
   }

@@ -18,10 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Layer, {OVERLAY_TYPE} from './base-layer';
+import Layer, {OVERLAY_TYPE, VisualChannels} from './base-layer';
 import {createSelector} from 'reselect';
 
 import {geoJsonFromData, prefixGpuField, gpuFilterToMapboxFilter} from './mapbox-utils';
+import KeplerTable from '../utils/table-utils/kepler-table';
 
 export const mapboxRequiredColumns = ['lat', 'lng'];
 
@@ -52,7 +53,7 @@ class MapboxLayerGL extends Layer {
     return [];
   }
 
-  get visualChannels() {
+  get visualChannels(): VisualChannels {
     return {};
   }
   datasetSelector = config => config.dataId;
@@ -74,7 +75,7 @@ class MapboxLayerGL extends Layer {
     return Array.isArray(filter) && filter.length;
   }
 
-  getDataUpdateTriggers({filteredIndex, gpuFilter, id}) {
+  getDataUpdateTriggers({filteredIndex, gpuFilter, id}: KeplerTable): any {
     const {columns} = this.config;
 
     const visualChannelFields = Object.values(this.visualChannels).reduce(
@@ -99,7 +100,16 @@ class MapboxLayerGL extends Layer {
     return updateTriggers;
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex, gpuFilter}, getPosition) {
+  getGeometry(position) {
+    return position.every(Number.isFinite)
+      ? {
+          type: 'Point',
+          coordinates: position
+        }
+      : null;
+  }
+
+  calculateDataAttribute({dataContainer, filteredIndex, gpuFilter}: KeplerTable, getPosition) {
     const getGeometry = d => this.getGeometry(getPosition(d));
 
     const vcFields = Object.values(this.visualChannels)
@@ -127,14 +137,14 @@ class MapboxLayerGL extends Layer {
       ? d => {
           const filterValue = valueAccessor(d);
           return Object.values(filterValueUpdateTriggers).reduce(
-            (accu, name, i) => ({
+            (accu: any, name, i) => ({
               ...accu,
               ...(name ? {[prefixGpuField(name)]: filterValue[i]} : {})
             }),
             {}
-          );
+          ) as any;
         }
-      : d => ({});
+      : d => ({} as any);
 
     const getProperties = d => ({
       ...getPropertyFromVisualChanel(d),
