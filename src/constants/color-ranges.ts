@@ -22,6 +22,20 @@ import colorbrewer from 'colorbrewer';
 import {HexColor} from 'reducers';
 import {VizColorPalette} from './custom-color-ranges';
 
+export type ColorMap = [string | number | null, HexColor][];
+// Key is HexColor but as key we can use only string
+export type ColorLegends = {[key: string]: string};
+
+export type ColorRange = {
+  name: string;
+  type: string;
+  category: string;
+  colors: HexColor[];
+  reversed?: boolean;
+  colorMap?: ColorMap;
+  colorLegends?: ColorLegends;
+};
+
 // Add colorbrewer color schemes (Data Science requirement)
 // See http://colorbrewer2.org/
 
@@ -39,7 +53,7 @@ const colorBrewerMap = Object.entries(colorbrewer.schemeGroups).reduce(
   {}
 );
 
-const colorRanges = [...VizColorPalette];
+const colorRanges: ColorRange[] = [...VizColorPalette];
 
 for (const [keyName, colorScheme] of Object.entries(colorbrewer)) {
   if (keyName !== 'schemeGroups') {

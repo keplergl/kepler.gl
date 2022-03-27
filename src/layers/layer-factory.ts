@@ -20,8 +20,200 @@
 
 import keyMirror from 'keymirror';
 
-import {AGGREGATION_TYPES} from 'constants/default-settings';
-import {DEFAULT_COLOR_RANGE} from 'constants/color-ranges';
+import {AGGREGATION_TYPES} from '../constants/default-settings';
+import {ColorRange, DEFAULT_COLOR_RANGE} from '../constants/color-ranges';
+
+import {RGBColor, RGBAColor} from '../reducers';
+import {Field} from '../utils/table-utils/kepler-table';
+import {
+  LayerBaseConfig,
+  LayerColorConfig,
+  LayerHeightConfig,
+  LayerSizeConfig,
+  LayerWeightConfig
+} from './base-layer';
+
+export type LayerTextLabel = {
+  field: Field | null;
+  color: RGBColor;
+  size: number;
+  offset: [number, number];
+  anchor: string;
+  alignment: string;
+};
+
+export type ColorUI = {
+  // customPalette in edit
+  customPalette: ColorRange;
+  // show color sketcher modal
+  showSketcher: boolean;
+  // show color range selection panel
+  showDropdown: boolean;
+  // color range selector config
+  colorRangeConfig: {
+    type: string;
+    steps: number;
+    reversed: boolean;
+    custom: boolean;
+  };
+};
+
+export type VisConfig = {
+  label:
+    | string
+    | ((
+        config: LayerBaseConfig &
+          Partial<LayerColorConfig> &
+          Partial<LayerHeightConfig> &
+          Partial<LayerSizeConfig> &
+          Partial<LayerWeightConfig>
+      ) => string);
+  group: keyof typeof PROPERTY_GROUPS;
+  property: string;
+  description?: string;
+  condition?: (
+    config: LayerBaseConfig &
+      Partial<LayerColorConfig> &
+      Partial<LayerHeightConfig> &
+      Partial<LayerSizeConfig> &
+      Partial<LayerWeightConfig>
+  ) => boolean;
+
+  allowCustomValue?: boolean;
+};
+
+export type VisConfigNumber = VisConfig & {
+  type: 'number';
+  isRanged: false;
+  defaultValue: number;
+  range: [number, number];
+  step: number;
+};
+
+export type VisConfigBoolean = VisConfig & {
+  type: 'boolean';
+  defaultValue: boolean;
+};
+
+export type VisConfigSelection = VisConfig & {
+  type: 'select';
+  defaultValue: string;
+  options: string[];
+};
+
+export type VisConfigRange = VisConfig & {
+  type: 'number';
+  isRanged: boolean;
+  range: [number, number];
+  defaultValue: [number, number];
+  step: number;
+};
+
+export type VisConfigColorSelect = VisConfig & {
+  type: 'color-select';
+  defaultValue: null;
+};
+
+export type VisConfigColorRange = VisConfig & {
+  type: 'color-range-select';
+  defaultValue: ColorRange;
+};
+
+export type LayerVisConfigSettings = {
+  thickness: VisConfigNumber;
+  strokeWidthRange: VisConfigRange;
+  trailLength: VisConfigNumber;
+  radius: VisConfigNumber;
+  fixedRadius: VisConfigBoolean;
+  radiusRange: VisConfigRange;
+  clusterRadius: VisConfigNumber;
+  clusterRadiusRange: VisConfigRange;
+  opacity: VisConfigNumber;
+  coverage: VisConfigNumber;
+  outline: VisConfigBoolean;
+  colorRange: VisConfigColorRange;
+  strokeColorRange: VisConfigColorRange;
+  targetColor: VisConfigColorSelect;
+  strokeColor: VisConfigColorSelect;
+  colorAggregation: VisConfigSelection;
+  sizeAggregation: VisConfigSelection;
+  percentile: VisConfigRange;
+  elevationPercentile: VisConfigRange;
+  resolution: VisConfigNumber;
+  sizeScale: VisConfigNumber;
+  angle: VisConfigNumber;
+  worldUnitSize: VisConfigNumber;
+  elevationScale: VisConfigNumber;
+  enableElevationZoomFactor: VisConfigBoolean;
+  elevationRange: VisConfigRange;
+  heightRange: VisConfigRange;
+  coverageRange: VisConfigRange;
+  'hi-precision': VisConfigBoolean;
+  enable3d: VisConfigBoolean;
+  stroked: VisConfigBoolean;
+  filled: VisConfigBoolean;
+  extruded: VisConfigBoolean;
+  wireframe: VisConfigBoolean;
+  weight: VisConfigNumber;
+  heatmapRadius: VisConfigNumber;
+};
+// TODO: This type is not coplete yet
+export type LayerVisConfig = {
+  thickness: number;
+  sizeRange: number;
+  trailLength: number;
+  radius: number;
+  fixedRadius: boolean;
+  radiusRange: [number, number];
+  clusterRadius: number;
+  opacity: number;
+  coverage: number;
+  outline: boolean;
+  colorRange: ColorRange;
+  strokeColorRange: ColorRange;
+  targetColor: any;
+  strokeColor: any;
+  colorAggregation: keyof typeof AGGREGATION_TYPES;
+  sizeAggregation: keyof typeof AGGREGATION_TYPES;
+  percentile: [number, number];
+  elevationPercentile: [number, number];
+  resolution: number;
+  sizeScale: number;
+  angle: number;
+  worldUnitSize: number;
+  elevationScale: number;
+  enableElevationZoomFactor: boolean;
+  heightRange: [number, number];
+  coverageRange: [number, number];
+  'hi-precision': boolean;
+  enable3d: boolean;
+  stroked: boolean;
+  filled: boolean;
+  extruded: boolean;
+  wireframe: boolean;
+  weight: number;
+};
+
+export type TextConfigSelect = {
+  type: 'select';
+  options: string[];
+  multiSelect: boolean;
+  searchable: boolean;
+};
+export type TextConfigNumber = {
+  type: 'number';
+  range: number[];
+  value0: number;
+  step: number;
+  isRanged: boolean;
+  label: string;
+  showInput: boolean;
+};
+export type LayerTextConfig = {
+  fontSize: TextConfigNumber;
+  textAnchor: TextConfigSelect;
+  textAlignment: TextConfigSelect;
+};
 
 export const PROPERTY_GROUPS = keyMirror({
   color: null,
@@ -31,16 +223,16 @@ export const PROPERTY_GROUPS = keyMirror({
   angle: null,
   // for heatmap aggregation
   cell: null,
-  precision: null
+  precision: null,
+  display: null
 });
 
 export const DEFAULT_LAYER_OPACITY = 0.8;
-export const DEFAULT_HIGHLIGHT_COLOR = [252, 242, 26, 255];
+export const DEFAULT_HIGHLIGHT_COLOR: RGBAColor = [252, 242, 26, 255];
 export const DEFAULT_LAYER_LABEL = 'new layer';
 export {DEFAULT_COLOR_RANGE};
 
-/** @type {import('./layer-factory').LayerTextLabel} */
-export const DEFAULT_TEXT_LABEL = {
+export const DEFAULT_TEXT_LABEL: LayerTextLabel = {
   field: null,
   color: [255, 255, 255],
   size: 18,
@@ -49,8 +241,7 @@ export const DEFAULT_TEXT_LABEL = {
   alignment: 'center'
 };
 
-/** @type {import('./layer-factory').ColorRange} */
-export const DEFAULT_CUSTOM_PALETTE = {
+export const DEFAULT_CUSTOM_PALETTE: ColorRange = {
   name: 'color.customPalette',
   type: 'custom',
   category: 'Custom',
@@ -59,8 +250,7 @@ export const DEFAULT_CUSTOM_PALETTE = {
 
 export const UNKNOWN_COLOR_KEY = '__unknownColor__';
 
-/** @type {import('./layer-factory').ColorUI} */
-export const DEFAULT_COLOR_UI = {
+export const DEFAULT_COLOR_UI: ColorUI = {
   // customPalette in edit
   customPalette: DEFAULT_CUSTOM_PALETTE,
   // show color sketcher modal
@@ -76,8 +266,7 @@ export const DEFAULT_COLOR_UI = {
   }
 };
 
-/** @type {import('./layer-factory').LayerVisConfig} */
-export const LAYER_VIS_CONFIGS = {
+export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
   thickness: {
     type: 'number',
     defaultValue: 2,
@@ -222,7 +411,7 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.color,
     property: 'strokeColor'
   },
-  aggregation: {
+  colorAggregation: {
     type: 'select',
     defaultValue: AGGREGATION_TYPES.average,
     label: 'layerVisConfigs.colorAggregation',
@@ -230,7 +419,7 @@ export const LAYER_VIS_CONFIGS = {
     options: Object.keys(AGGREGATION_TYPES),
     group: PROPERTY_GROUPS.color,
     property: 'colorAggregation',
-    condition: config => config.colorField
+    condition: config => Boolean(config.colorField)
   },
   sizeAggregation: {
     type: 'select',
@@ -240,7 +429,7 @@ export const LAYER_VIS_CONFIGS = {
     options: Object.keys(AGGREGATION_TYPES),
     group: PROPERTY_GROUPS.height,
     property: 'sizeAggregation',
-    condition: config => config.sizeField
+    condition: config => Boolean(config.sizeField)
   },
   percentile: {
     type: 'number',
@@ -274,7 +463,8 @@ export const LAYER_VIS_CONFIGS = {
     group: PROPERTY_GROUPS.height,
     property: 'elevationPercentile',
     // percentile filter only makes sense with linear aggregation
-    condition: config => config.visConfig.enable3d && (config.colorField || config.sizeField),
+    condition: config =>
+      Boolean(config.visConfig.enable3d && (config.colorField || config.sizeField)),
     allowCustomValue: false
   },
   resolution: {
@@ -428,7 +618,7 @@ export const LAYER_VIS_CONFIGS = {
     step: 0.01,
     group: PROPERTY_GROUPS.cell,
     property: 'weight',
-    condition: config => config.weightField,
+    condition: config => Boolean(config.weightField),
     allowCustomValue: true
   },
   heatmapRadius: {
@@ -444,8 +634,7 @@ export const LAYER_VIS_CONFIGS = {
   }
 };
 
-/** @type {import('./layer-factory').LayerTextConfig} */
-export const LAYER_TEXT_CONFIGS = {
+export const LAYER_TEXT_CONFIGS: LayerTextConfig = {
   fontSize: {
     type: 'number',
     range: [1, 100],
