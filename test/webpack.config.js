@@ -58,6 +58,7 @@ const COMMON_CONFIG = {
           rootMode: 'upward',
           presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
           plugins: [
+            ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
             '@babel/plugin-proposal-class-properties',
             '@babel/plugin-proposal-export-namespace-from',
             [
