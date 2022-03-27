@@ -181,7 +181,7 @@ class Layer {
   // TODO: define meta
   meta: {};
   visConfigSettings: {
-    [key in keyof Partial<LayerVisConfig>]: ValueOf<LayerVisConfigSettings>;
+    [key: string]: ValueOf<LayerVisConfigSettings>;
   };
   config: LayerBaseConfig;
   // TODO: define _oldDataUpdateTriggers
@@ -445,9 +445,10 @@ class Layer {
    * @returns
    */
   getVisualChannelDescription(key: string): VisualChannelDescription {
+    const label = this.visConfigSettings[this.visualChannels[key].range].label;
     // e.g. label: Color, measure: Vehicle Type
     return {
-      label: this.visConfigSettings[this.visualChannels[key].range].label,
+      label: typeof label === 'function' ? label(this.config) : label,
       measure: this.config[this.visualChannels[key].field]
         ? this.config[this.visualChannels[key].field].displayName ||
           this.config[this.visualChannels[key].field].name

@@ -63,20 +63,20 @@ export type VisConfig = {
     | string
     | ((
         config: LayerBaseConfig &
-          LayerColorConfig &
-          LayerHeightConfig &
-          LayerSizeConfig &
-          LayerWeightConfig
+          Partial<LayerColorConfig> &
+          Partial<LayerHeightConfig> &
+          Partial<LayerSizeConfig> &
+          Partial<LayerWeightConfig>
       ) => string);
   group: keyof typeof PROPERTY_GROUPS;
   property: string;
   description?: string;
   condition?: (
     config: LayerBaseConfig &
-      LayerColorConfig &
-      LayerHeightConfig &
-      LayerSizeConfig &
-      LayerWeightConfig
+      Partial<LayerColorConfig> &
+      Partial<LayerHeightConfig> &
+      Partial<LayerSizeConfig> &
+      Partial<LayerWeightConfig>
   ) => boolean;
 
   allowCustomValue?: boolean;
