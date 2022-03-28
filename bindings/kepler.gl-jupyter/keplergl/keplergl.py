@@ -41,7 +41,7 @@ def _gdf_to_dict(gdf):
     # convert geodataframe to dataframe
     df = pd.DataFrame(gdf)
     # convert geometry to wkt
-    df[name] = df.geometry.apply(lambda x: shapely.wkt.dumps(x))
+    df[name] = gdf.geometry.apply(lambda x: shapely.wkt.dumps(x))
 
     return _df_to_dict(df)
 
