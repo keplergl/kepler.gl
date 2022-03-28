@@ -26,7 +26,14 @@ import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {getGeojsonDataMaps, getGeojsonBounds, getGeojsonFeatureTypes} from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
 import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from '../../constants/default-settings';
-import {LAYER_VIS_CONFIGS} from '../layer-factory';
+import {
+  LAYER_VIS_CONFIGS,
+  VisConfigNumber,
+  VisConfigColorSelect,
+  VisConfigColorRange,
+  VisConfigRange,
+  VisConfigBoolean
+} from '../layer-factory';
 
 const SUPPORTED_ANALYZER_TYPES = {
   [DATA_TYPES.GEOMETRY]: true,
@@ -60,6 +67,26 @@ export const geojsonVisConfigs = {
   wireframe: 'wireframe'
 };
 
+export type GeoJsonVisConfigSettings = {
+  opacity: VisConfigNumber;
+  strokeOpacity: VisConfigNumber;
+  thickness: VisConfigNumber;
+  strokeColor: VisConfigColorSelect;
+  colorRange: VisConfigColorRange;
+  strokeColorRange: VisConfigColorRange;
+  radius: VisConfigNumber;
+
+  sizeRange: VisConfigRange;
+  radiusRange: VisConfigRange;
+  heightRange: VisConfigRange;
+  elevationScale: VisConfigNumber;
+  enableElevationZoomFactor: VisConfigBoolean;
+  stroked: VisConfigBoolean;
+  filled: VisConfigBoolean;
+  enable3d: VisConfigBoolean;
+  wireframe: VisConfigBoolean;
+};
+
 export const geoJsonRequiredColumns = ['geojson'];
 export const featureAccessor = ({geojson}: LayerColumns) => dc => d =>
   dc.valueAt(d.index, geojson.fieldIdx);
@@ -76,6 +103,7 @@ export default class GeoJsonLayer extends Layer {
       strokeOpacity: number;
     };
   };
+  declare visConfigSettings: GeoJsonVisConfigSettings;
   dataToFeature: {properties?: {radius?: number}}[];
 
   constructor(props) {
