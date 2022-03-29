@@ -18,12 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Layer from '../base-layer';
+import Layer, {
+  LayerBaseConfig,
+  LayerColorConfig,
+  LayerColumns,
+  LayerSizeConfig
+} from '../base-layer';
 import {findDefaultColorField} from 'utils/dataset-utils';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
 import EnhancedColumnLayer from 'deckgl-layers/column-layer/enhanced-column-layer';
-import {getCentroid, idToPolygonGeo, h3IsValid, getHexFields} from './h3-utils';
+import {getCentroid, idToPolygonGeo, h3IsValid, getHexFields, Centroid} from './h3-utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {CHANNEL_SCALES, HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 
@@ -32,7 +37,8 @@ import {createDataContainer} from 'utils/table-utils';
 const DEFAULT_LINE_SCALE_VALUE = 8;
 
 export const hexIdRequiredColumns = ['hex_id'];
-export const hexIdAccessor = ({hex_id}) => dc => d => dc.valueAt(d.index, hex_id.fieldIdx);
+export const hexIdAccessor = ({hex_id}: LayerColumns) => dc => d =>
+  dc.valueAt(d.index, hex_id.fieldIdx);
 
 export const defaultElevation = 500;
 export const defaultCoverage = 1;
@@ -48,7 +54,15 @@ export const HexagonIdVisConfigs = {
   enableElevationZoomFactor: 'enableElevationZoomFactor'
 };
 
+export type HexagonIdLayerConfig = LayerBaseConfig &
+  LayerColorConfig &
+  LayerSizeConfig & {coverageField: number};
+
 export default class HexagonIdLayer extends Layer {
+  dataToFeature: {centroids: Centroid[]};
+
+  declare config: HexagonIdLayerConfig;
+
   constructor(props) {
     super(props);
     this.registerVisConfig(HexagonIdVisConfigs);
@@ -106,7 +120,7 @@ export default class HexagonIdLayer extends Layer {
     const defaultColorField = findDefaultColorField(dataset);
 
     if (defaultColorField) {
-      this.updateLayerConfig({
+      this.updateLayerConfig<HexagonIdLayerConfig>({
         colorField: defaultColorField
       });
       this.updateLayerVisualChannel(dataset, 'color');
