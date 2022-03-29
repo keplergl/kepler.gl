@@ -22,7 +22,7 @@ import React from 'react';
 import {FormattedMessage} from 'react-intl';
 
 type EnhancedFormattedMessageProps = {
-  id: string;
+  id: string | undefined;
   defaultMessage?: string;
   defaultValue?: string;
   values?: {
