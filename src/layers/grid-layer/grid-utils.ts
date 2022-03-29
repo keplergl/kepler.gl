@@ -19,20 +19,33 @@
 // THE SOFTWARE.
 
 import {WebMercatorViewport} from '@deck.gl/core';
+import {MapState} from '../../reducers';
 
 /**
  * top left of the grid to a square polygon for the hover layer
  * and current latitude
- * @param {object} object
- * @param {number} cellSize
- * @param {number} coverage
- * @param {object} properties
- * @param {object} mapState
- * @returns {object} - geojson feature
+ * @param object
+ * @param cellSize
+ * @param coverage
+ * @param properties
+ * @param mapState
+ * @returns - geojson feature
  */
 
 // TODO: TEST
-export function pointToPolygonGeo({object, cellSize, coverage, properties, mapState}) {
+export function pointToPolygonGeo({
+  object,
+  cellSize,
+  coverage,
+  properties,
+  mapState
+}: {
+  object: any;
+  cellSize: number;
+  coverage: number;
+  properties?: any;
+  mapState: MapState;
+}) {
   const {position} = object;
   const viewport = new WebMercatorViewport(mapState);
 

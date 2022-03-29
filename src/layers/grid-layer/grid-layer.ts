@@ -64,6 +64,8 @@ export default class GridLayer extends AggregationLayer {
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
+      // @ts-expect-error for some reasons EnhancedGridLayer dont have constructor
+      // that expected 1 argument
       new EnhancedGridLayer({
         ...this.getDefaultAggregationLayerProp(opts),
         ...data,
