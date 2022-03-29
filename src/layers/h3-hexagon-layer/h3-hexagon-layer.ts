@@ -33,6 +33,13 @@ import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {CHANNEL_SCALES, HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 
 import {createDataContainer} from 'utils/table-utils';
+import {
+  LayerVisConfigSettings,
+  VisConfigBoolean,
+  VisConfigColorRange,
+  VisConfigNumber,
+  VisConfigRange
+} from '../layer-factory';
 
 const DEFAULT_LINE_SCALE_VALUE = 8;
 
@@ -54,6 +61,17 @@ export const HexagonIdVisConfigs = {
   enableElevationZoomFactor: 'enableElevationZoomFactor'
 };
 
+export type HexagonIdLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  coverage: VisConfigNumber;
+  enable3d: VisConfigBoolean;
+  sizeRange: VisConfigRange;
+  coverageRange: VisConfigRange;
+  elevationScale: VisConfigNumber;
+  enableElevationZoomFactor: VisConfigBoolean;
+};
+
 export type HexagonIdLayerConfig = LayerBaseConfig &
   LayerColorConfig &
   LayerSizeConfig & {coverageField: number};
@@ -62,7 +80,7 @@ export default class HexagonIdLayer extends Layer {
   dataToFeature: {centroids: Centroid[]};
 
   declare config: HexagonIdLayerConfig;
-
+  declare visConfigSettings: HexagonIdLayerVisConfigSettings;
   constructor(props) {
     super(props);
     this.registerVisConfig(HexagonIdVisConfigs);
