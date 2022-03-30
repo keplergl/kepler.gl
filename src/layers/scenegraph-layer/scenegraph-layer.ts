@@ -22,15 +22,16 @@ import {ScenegraphLayer as DeckScenegraphLayer} from '@deck.gl/mesh-layers';
 import {load} from '@loaders.gl/core';
 import {GLTFLoader} from '@loaders.gl/gltf';
 
-import Layer from '../base-layer';
+import Layer, {LayerBaseConfig, LayerColumns} from '../base-layer';
 import ScenegraphLayerIcon from './scenegraph-layer-icon';
 import ScenegraphInfoModalFactory from './scenegraph-info-modal';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
+import {LayerVisConfigSettings, VisConfigColorRange, VisConfigNumber} from '../layer-factory';
 
-export const scenegraphRequiredColumns = ['lat', 'lng'];
-export const scenegraphOptionalColumns = ['altitude'];
+export const scenegraphRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
+export const scenegraphOptionalColumns: ['altitude'] = ['altitude'];
 
-function fetch(url, {propName, layer}) {
+function fetch(url, {propName, layer}: {propName?: string; layer?: any} = {}) {
   if (propName === 'scenegraph') {
     return load(url, GLTFLoader, layer.getLoadOptions());
   }
@@ -38,7 +39,7 @@ function fetch(url, {propName, layer}) {
   return fetch(url).then(response => response.json());
 }
 
-export const scenegraphPosAccessor = ({lat, lng, altitude}) => dc => d => [
+export const scenegraphPosAccessor = ({lat, lng, altitude}: LayerColumns) => dc => d => [
   dc.valueAt(d.index, lng.fieldIdx),
   dc.valueAt(d.index, lat.fieldIdx),
   altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
@@ -67,13 +68,33 @@ export const scenegraphVisConfigs = {
   }
 };
 
+export type ScenegraphLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  sizeScale: VisConfigNumber;
+  angleX: VisConfigNumber;
+  angleY: VisConfigNumber;
+  angleZ: VisConfigNumber;
+};
+
 const DEFAULT_MODEL =
   'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb';
-const DEFAULT_TRANSITION = [0, 0, 0];
-const DEFAULT_SCALE = [1, 1, 1];
-const DEFAULT_COLOR = [255, 255, 255, 255];
+const DEFAULT_TRANSITION: [0, 0, 0] = [0, 0, 0];
+const DEFAULT_SCALE: [1, 1, 1] = [1, 1, 1];
+const DEFAULT_COLOR: [255, 255, 255, 255] = [255, 255, 255, 255];
 
 export default class ScenegraphLayer extends Layer {
+  _layerInfoModal: () => JSX.Element;
+  declare config: LayerBaseConfig & {
+    visConfig: {
+      angleX?: number;
+      angleY?: number;
+      angleZ?: number;
+      scenegraph?: string;
+    };
+  };
+  declare visConfigSettings: ScenegraphLayerVisConfigSettings;
+
   constructor(props) {
     super(props);
 
@@ -85,7 +106,7 @@ export default class ScenegraphLayer extends Layer {
     this._layerInfoModal = ScenegraphInfoModalFactory();
   }
 
-  get type() {
+  get type(): '3D' {
     return '3D';
   }
 
