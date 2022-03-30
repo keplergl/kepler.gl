@@ -22,18 +22,29 @@ import {S2Layer} from '@deck.gl/geo-layers';
 import {HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import {createDataContainer} from 'utils/table-utils';
-import Layer from '../base-layer';
+import Layer, {LayerColumns} from '../base-layer';
+import {
+  LayerVisConfigSettings,
+  VisConfigBoolean,
+  VisConfigColorRange,
+  VisConfigColorSelect,
+  VisConfigNumber,
+  VisConfigRange
+} from '../layer-factory';
 import S2LayerIcon from './s2-layer-icon';
 import {getS2Center} from './s2-utils';
 
 const zoomFactorValue = 8;
 
-export const S2_TOKEN_FIELDS = {
+export const S2_TOKEN_FIELDS: {
+  token: ['s2', 's2_token'];
+} = {
   token: ['s2', 's2_token']
 };
 
-export const s2RequiredColumns = ['token'];
-export const S2TokenAccessor = ({token}) => dc => d => dc.valueAt(d.index, token.fieldIdx);
+export const s2RequiredColumns: ['token'] = ['token'];
+export const S2TokenAccessor = ({token}: LayerColumns) => dc => d =>
+  dc.valueAt(d.index, token.fieldIdx);
 
 export const defaultElevation = 500;
 export const defaultLineWidth = 1;
@@ -68,19 +79,36 @@ export const S2VisConfigs = {
   // wireframe
   wireframe: 'wireframe'
 };
+export type S2GeometryLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  filled: VisConfigBoolean;
+  thickness: VisConfigNumber;
+  strokeColor: VisConfigColorSelect;
+  strokeColorRange: VisConfigColorRange;
+  sizeRange: VisConfigRange;
+  stroked: VisConfigBoolean;
+  enable3d: VisConfigBoolean;
+  elevationScale: VisConfigNumber;
+  enableElevationZoomFactor: VisConfigBoolean;
+  heightRange: VisConfigRange;
+  wireframe: VisConfigBoolean;
+};
 
 export default class S2GeometryLayer extends Layer {
+  dataToFeature: any;
+  declare visConfigSettings: S2GeometryLayerVisConfigSettings;
   constructor(props) {
     super(props);
     this.registerVisConfig(S2VisConfigs);
     this.getPositionAccessor = dataContainer => S2TokenAccessor(this.config.columns)(dataContainer);
   }
 
-  get type() {
+  get type(): 's2' {
     return 's2';
   }
 
-  get name() {
+  get name(): 'S2' {
     return 'S2';
   }
 
