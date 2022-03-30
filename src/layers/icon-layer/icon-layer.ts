@@ -28,6 +28,13 @@ import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerColumns} from '../base-layer';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
+import {
+  LayerVisConfigSettings,
+  VisConfigBoolean,
+  VisConfigColorRange,
+  VisConfigNumber,
+  VisConfigRange
+} from '../layer-factory';
 
 const brushingExtension = new BrushingExtension();
 
@@ -64,16 +71,25 @@ function flatterIconPositions(icon) {
   }, []);
 }
 
-type iconGeometry = {};
+type IconGeometry = {};
+export type IconLayerVisConfigSettings = {
+  radius: VisConfigNumber;
+  fixedRadius: VisConfigBoolean;
+  opacity: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  radiusRange: VisConfigRange;
+};
 export default class IconLayer extends Layer {
   getIconAccessor: (dataContainer: DataContainerInterface) => (d: any) => any;
   _layerInfoModal: () => JSX.Element;
-  iconGeometry: iconGeometry;
+  iconGeometry: IconGeometry;
+
+  declare visConfigSettings: IconLayerVisConfigSettings;
 
   constructor(
     props: {
       id?: string;
-      iconGeometry?: iconGeometry;
+      iconGeometry?: IconGeometry;
     } & Partial<LayerBaseConfig> = {}
   ) {
     super(props);
