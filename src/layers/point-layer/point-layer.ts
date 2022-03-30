@@ -21,22 +21,28 @@
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
-import Layer from '../base-layer';
+import Layer, {
+  LayerBaseConfig,
+  LayerColorConfig,
+  LayerColumns,
+  LayerSizeConfig
+} from '../base-layer';
 import {hexToRgb} from 'utils/color-utils';
 import {findDefaultColorField} from 'utils/dataset-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
+import {RGBColor} from '../../reducers';
 
-export const pointPosAccessor = ({lat, lng, altitude}) => dc => d => [
+export const pointPosAccessor = ({lat, lng, altitude}: LayerColumns) => dc => d => [
   dc.valueAt(d.index, lng.fieldIdx),
   dc.valueAt(d.index, lat.fieldIdx),
   altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
 ];
 
-export const pointRequiredColumns = ['lat', 'lng'];
-export const pointOptionalColumns = ['altitude'];
+export const pointRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
+export const pointOptionalColumns: ['altitude'] = ['altitude'];
 
 const brushingExtension = new BrushingExtension();
 
@@ -58,7 +64,9 @@ export const pointVisConfigs = {
   }
 };
 
+export type PointLayerConfig = LayerBaseConfig & LayerColorConfig & LayerSizeConfig;
 export default class PointLayer extends Layer {
+  declare config: PointLayerConfig;
   constructor(props) {
     super(props);
 
@@ -67,11 +75,11 @@ export default class PointLayer extends Layer {
       pointPosAccessor(this.config.columns)(dataContainer);
   }
 
-  get type() {
+  get type(): 'point' {
     return 'point';
   }
 
-  get isAggregated() {
+  get isAggregated(): false {
     return false;
   }
 
@@ -131,6 +139,7 @@ export default class PointLayer extends Layer {
 
     if (defaultColorField) {
       this.updateLayerConfig({
+        // @ts-expect-error Remove this after updateLayerConfig converted into generic function
         colorField: defaultColorField
       });
       this.updateLayerVisualChannel(dataset, 'color');
@@ -140,7 +149,12 @@ export default class PointLayer extends Layer {
   }
 
   static findDefaultLayerProps({fieldPairs = []}) {
-    const props = [];
+    const props: {
+      label: string;
+      color?: RGBColor;
+      isVisible?: boolean;
+      columns?: LayerColumns;
+    }[] = [];
 
     // Make layer for each pair
     fieldPairs.forEach(pair => {
@@ -148,7 +162,12 @@ export default class PointLayer extends Layer {
       const lngField = pair.pair.lng;
       const layerName = pair.defaultName;
 
-      const prop = {
+      const prop: {
+        label: string;
+        color?: RGBColor;
+        isVisible?: boolean;
+        columns?: LayerColumns;
+      } = {
         label: layerName.length ? layerName : 'Point'
       };
 
