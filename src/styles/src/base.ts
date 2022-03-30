@@ -132,7 +132,9 @@ export const selectionBtnBgdHover = '#0F9668';
 export const selectionBtnBorder = '1';
 export const selectionBtnBorderColor = '#D3D8E0';
 export const selectionBtnBorderActColor = '#0F9668';
-
+// Scrollbar
+export const scrollbarThumbColorLT = labelColorLT;
+export const scrollbarThumbColorHoverLT = textColorHlLT;
 // Input
 export const inputBoxHeight = '34px';
 export const inputBoxHeightSmall = '24px';
@@ -863,12 +865,12 @@ const dropdownScrollBarLT = css`
 
   ::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: ${props => props.theme.labelColorLT};
+    background: ${props => props.theme.scrollbarThumbColorLT};
     border: 3px solid ${props => props.theme.dropdownListBgdLT};
   }
 
   :vertical:hover {
-    background: ${props => props.theme.textColorHlLT};
+    background: ${props => props.theme.scrollbarThumbColorHoverLT};
     cursor: pointer;
   }
 `;
@@ -1066,7 +1068,7 @@ export const modalScrollBar = css`
     background: ${props => props.theme.textColorHl};
   }
   ::-webkit-scrollbar-thumb {
-    background: ${props => props.theme.labelColorLT};
+    background: ${props => props.theme.scrollbarThumbColorLT};
     border: 4px solid white;
   }
 
@@ -1075,7 +1077,7 @@ export const modalScrollBar = css`
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #969da9;
+    background: ${props => props.theme.scrollbarThumbColorHoverLT};
   }
 
   ::-webkit-scrollbar-thumb:vertical {
@@ -1302,6 +1304,9 @@ export const theme = {
   selectionBtnBorder,
   selectionBtnBorderColor,
   selectionBtnBorderActColor,
+
+  scrollbarThumbColorLT,
+  scrollbarThumbColorHoverLT,
 
   // Modal
   modalTitleColor,

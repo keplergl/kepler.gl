@@ -58,6 +58,9 @@ export const Container = styled.div`
   .ReactVirtualized__Grid:active {
     outline: 0;
   }
+  .body-grid {
+    ${props => props.theme.modalScrollBar}
+  }
 
   .cell {
     &::-webkit-scrollbar {
