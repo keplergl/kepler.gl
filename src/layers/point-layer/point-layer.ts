@@ -34,6 +34,14 @@ import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {RGBColor} from '../../reducers';
+import {
+  LayerVisConfigSettings,
+  VisConfigBoolean,
+  VisConfigColorRange,
+  VisConfigColorSelect,
+  VisConfigNumber,
+  VisConfigRange
+} from '../layer-factory';
 
 export const pointPosAccessor = ({lat, lng, altitude}: LayerColumns) => dc => d => [
   dc.valueAt(d.index, lng.fieldIdx),
@@ -63,10 +71,23 @@ export const pointVisConfigs = {
     property: 'filled'
   }
 };
+export type PointLayerVisConfigSettings = {
+  radius: VisConfigNumber;
+  fixedRadius: VisConfigBoolean;
+  opacity: VisConfigNumber;
+  outline: VisConfigBoolean;
+  thickness: VisConfigNumber;
+  strokeColor: VisConfigColorSelect;
+  colorRange: VisConfigColorRange;
+  strokeColorRange: VisConfigColorRange;
+  radiusRange: VisConfigRange;
+  filled: VisConfigBoolean;
+};
 
 export type PointLayerConfig = LayerBaseConfig & LayerColorConfig & LayerSizeConfig;
 export default class PointLayer extends Layer {
   declare config: PointLayerConfig;
+  declare visConfigSettings: PointLayerVisConfigSettings;
   constructor(props) {
     super(props);
 
