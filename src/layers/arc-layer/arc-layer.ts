@@ -20,10 +20,10 @@
 
 import Layer, {
   LayerColumn,
-  LayerColumns,
   LayerBaseConfig,
   LayerColorConfig,
-  LayerSizeConfig
+  LayerSizeConfig,
+  LayerBounds
 } from '../base-layer';
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
@@ -32,8 +32,7 @@ import {hexToRgb} from '../../utils/color-utils';
 import ArcLayerIcon from './arc-layer-icon';
 import {DEFAULT_LAYER_COLOR} from '../../constants/default-settings';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
-import {RGBColor, RGBAColor, MapState, Filter, Datasets} from '../../reducers';
-import {Merge} from '../../reducers';
+import {RGBColor, Merge} from '../../reducers';
 
 import {
   VisConfigColorRange,
@@ -42,33 +41,6 @@ import {
   VisConfigRange
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
-
-export const arcPosAccessor = ({lat0, lng0, lat1, lng1}: LayerColumns) => (
-  dc: DataContainerInterface
-) => d => [
-  dc.valueAt(d.index, lng0.fieldIdx),
-  dc.valueAt(d.index, lat0.fieldIdx),
-  0,
-  dc.valueAt(d.index, lng1.fieldIdx),
-  dc.valueAt(d.index, lat1.fieldIdx),
-  0
-];
-
-export const arcRequiredColumns = ['lat0', 'lng0', 'lat1', 'lng1'];
-export const arcColumnLabels = {
-  lat0: 'arc.lat0',
-  lng0: 'arc.lng0',
-  lat1: 'arc.lat1',
-  lng1: 'arc.lng1'
-};
-
-export const arcVisConfigs = {
-  opacity: 'opacity',
-  thickness: 'thickness',
-  colorRange: 'colorRange',
-  sizeRange: 'strokeWidthRange',
-  targetColor: 'targetColor'
-};
 
 export type ArcLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -99,9 +71,47 @@ export type ArcLayerConfig = Merge<
   {columns: ArcLayerColumnsConfig; visConfig: ArcLayerVisConfig}
 > &
   ArcLayerVisualChannelConfig;
+
+export type ArcLayerData = {
+  index: number;
+  sourcePosition: [number, number, number];
+  targetPosition: [number, number, number];
+};
+
+export type ArcLayerMeta = {
+  bounds: LayerBounds;
+};
+export const arcPosAccessor = ({lat0, lng0, lat1, lng1}: ArcLayerColumnsConfig) => (
+  dc: DataContainerInterface
+) => d => [
+  dc.valueAt(d.index, lng0.fieldIdx),
+  dc.valueAt(d.index, lat0.fieldIdx),
+  0,
+  dc.valueAt(d.index, lng1.fieldIdx),
+  dc.valueAt(d.index, lat1.fieldIdx),
+  0
+];
+
+export const arcRequiredColumns = ['lat0', 'lng0', 'lat1', 'lng1'];
+export const arcColumnLabels = {
+  lat0: 'arc.lat0',
+  lng0: 'arc.lng0',
+  lat1: 'arc.lat1',
+  lng1: 'arc.lng1'
+};
+
+export const arcVisConfigs = {
+  opacity: 'opacity',
+  thickness: 'thickness',
+  colorRange: 'colorRange',
+  sizeRange: 'strokeWidthRange',
+  targetColor: 'targetColor'
+};
+
 export default class ArcLayer extends Layer {
   declare visConfigSettings: ArcLayerVisConfigSettings;
   declare config: ArcLayerConfig;
+  declare meta: ArcLayerMeta;
 
   constructor(props) {
     super(props);
@@ -162,7 +172,7 @@ export default class ArcLayer extends Layer {
       return {props: []};
     }
 
-    const props: {color: RGBColor; columns: LayerColumns; label: string} = {
+    const props: {color: RGBColor; columns: ArcLayerColumnsConfig; label: string} = {
       color: hexToRgb(DEFAULT_LAYER_COLOR.tripArc),
       // connect the first two point layer with arc
       columns: {
@@ -178,11 +188,7 @@ export default class ArcLayer extends Layer {
   }
 
   calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
-    const data: {
-      index: number;
-      sourcePosition: [number, number, number];
-      targetPosition: [number, number, number];
-    }[] = [];
+    const data: ArcLayerData[] = [];
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
       const pos = getPosition({index});
