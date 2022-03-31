@@ -21,7 +21,7 @@
 import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
-import Layer, {colorMaker, LayerBaseConfig, LayerColumns} from '../base-layer';
+import Layer, {colorMaker, LayerBaseConfig, LayerColumn} from '../base-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {getGeojsonDataMaps, getGeojsonBounds, getGeojsonFeatureTypes} from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
@@ -34,6 +34,9 @@ import {
   VisConfigRange,
   VisConfigBoolean
 } from '../layer-factory';
+import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
+import {Merge, RGBColor} from '../../reducers';
+import {ColorRange} from '../../constants/color-ranges';
 
 const SUPPORTED_ANALYZER_TYPES = {
   [DATA_TYPES.GEOMETRY]: true,
@@ -87,9 +90,39 @@ export type GeoJsonVisConfigSettings = {
   wireframe: VisConfigBoolean;
 };
 
-export const geoJsonRequiredColumns = ['geojson'];
-export const featureAccessor = ({geojson}: LayerColumns) => dc => d =>
-  dc.valueAt(d.index, geojson.fieldIdx);
+export type GeoJsonLayerColumnsConfig = {
+  geojson: LayerColumn;
+};
+
+export type GeoJsonLayerVisConfig = {
+  opacity: number;
+  strokeOpacity: number;
+  thickness: number;
+  strokeColor: RGBColor;
+  colorRange: ColorRange;
+  strokeColorRange: ColorRange;
+  radius: number;
+
+  sizeRange: [number, number];
+  radiusRange: [number, number];
+  heightRange: [number, number];
+  elevationScale: number;
+  enableElevationZoomFactor: boolean;
+  stroked: boolean;
+  filled: boolean;
+  enable3d: boolean;
+  wireframe: boolean;
+};
+
+export type GeoJsonLayerConfig = Merge<
+  LayerBaseConfig,
+  {columns: GeoJsonLayerColumnsConfig; visConfig: GeoJsonLayerVisConfig}
+>;
+
+export const geoJsonRequiredColumns: ['geojson'] = ['geojson'];
+export const featureAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
+  dc: DataContainerInterface
+) => d => dc.valueAt(d.index, geojson.fieldIdx);
 
 // access feature properties from geojson sub layer
 export const defaultElevation = 500;
@@ -97,12 +130,7 @@ export const defaultLineWidth = 1;
 export const defaultRadius = 1;
 
 export default class GeoJsonLayer extends Layer {
-  declare config: LayerBaseConfig & {
-    visConfig: {
-      // This field appears only at GeoJsonLayer
-      strokeOpacity: number;
-    };
-  };
+  declare config: GeoJsonLayerConfig;
   declare visConfigSettings: GeoJsonVisConfigSettings;
   dataToFeature: {properties?: {radius?: number}}[];
 
@@ -121,7 +149,7 @@ export default class GeoJsonLayer extends Layer {
     return 'geojson';
   }
 
-  get name() {
+  get name(): 'Polygon' {
     return 'Polygon';
   }
 
