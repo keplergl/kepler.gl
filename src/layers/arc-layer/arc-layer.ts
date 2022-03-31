@@ -18,7 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Layer, {LayerColumns} from '../base-layer';
+import Layer, {
+  LayerColumn,
+  LayerColumns,
+  LayerBaseConfig,
+  LayerColorConfig,
+  LayerSizeConfig
+} from '../base-layer';
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
 
@@ -27,12 +33,15 @@ import ArcLayerIcon from './arc-layer-icon';
 import {DEFAULT_LAYER_COLOR} from '../../constants/default-settings';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import {RGBColor, RGBAColor, MapState, Filter, Datasets} from '../../reducers';
+import {Merge} from '../../reducers';
+
 import {
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
   VisConfigRange
 } from '../layer-factory';
+import {ColorRange} from '../../constants/color-ranges';
 
 export const arcPosAccessor = ({lat0, lng0, lat1, lng1}: LayerColumns) => (
   dc: DataContainerInterface
@@ -69,8 +78,31 @@ export type ArcLayerVisConfigSettings = {
   targetColor: VisConfigColorSelect;
 };
 
+export type ArcLayerColumnsConfig = {
+  lat0: LayerColumn;
+  lat1: LayerColumn;
+  lng0: LayerColumn;
+  lng1: LayerColumn;
+};
+
+export type ArcLayerVisConfig = {
+  colorRange: ColorRange;
+  opacity: number;
+  sizeRange: [number, number];
+  targetColor: RGBColor;
+  thickness: number;
+};
+
+export type ArcLayerVisualChannelConfig = LayerColorConfig & LayerSizeConfig;
+export type ArcLayerConfig = Merge<
+  LayerBaseConfig,
+  {columns: ArcLayerColumnsConfig; visConfig: ArcLayerVisConfig}
+> &
+  ArcLayerVisualChannelConfig;
 export default class ArcLayer extends Layer {
   declare visConfigSettings: ArcLayerVisConfigSettings;
+  declare config: ArcLayerConfig;
+
   constructor(props) {
     super(props);
 
