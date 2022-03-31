@@ -21,6 +21,7 @@
 import Layer, {
   LayerBaseConfig,
   LayerColorConfig,
+  LayerColumn,
   LayerColumns,
   LayerSizeConfig
 } from '../base-layer';
@@ -40,12 +41,20 @@ import {
   VisConfigNumber,
   VisConfigRange
 } from '../layer-factory';
+import {Merge} from '../../reducers';
+import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
+import {ColorRange} from '../../constants/color-ranges';
+
+export type HexagonIdLayerColumnsConfig = {
+  hex_id: LayerColumn;
+};
 
 const DEFAULT_LINE_SCALE_VALUE = 8;
 
-export const hexIdRequiredColumns = ['hex_id'];
-export const hexIdAccessor = ({hex_id}: LayerColumns) => dc => d =>
-  dc.valueAt(d.index, hex_id.fieldIdx);
+export const hexIdRequiredColumns: ['hex_id'] = ['hex_id'];
+export const hexIdAccessor = ({hex_id}: HexagonIdLayerColumnsConfig) => (
+  dc: DataContainerInterface
+) => d => dc.valueAt(d.index, hex_id.fieldIdx);
 
 export const defaultElevation = 500;
 export const defaultCoverage = 1;
@@ -72,9 +81,24 @@ export type HexagonIdLayerVisConfigSettings = {
   enableElevationZoomFactor: VisConfigBoolean;
 };
 
-export type HexagonIdLayerConfig = LayerBaseConfig &
-  LayerColorConfig &
+export type HexagonIdLayerVisConfig = {
+  opacity: number;
+  colorRange: ColorRange;
+  coverage: number;
+  enable3d: boolean;
+  sizeRange: [number, number];
+  coverageRange: [number, number];
+  elevationScale: number;
+  enableElevationZoomFactor: boolean;
+};
+
+export type HexagonIdLayerVisualChannelConfig = LayerColorConfig &
   LayerSizeConfig & {coverageField: number};
+export type HexagonIdLayerConfig = Merge<
+  LayerBaseConfig,
+  {columns: HexagonIdLayerColumnsConfig; visConfig: HexagonIdLayerVisConfig}
+> &
+  HexagonIdLayerVisualChannelConfig;
 
 export default class HexagonIdLayer extends Layer {
   dataToFeature: {centroids: Centroid[]};
@@ -87,11 +111,11 @@ export default class HexagonIdLayer extends Layer {
     this.getPositionAccessor = dataContainer => hexIdAccessor(this.config.columns)(dataContainer);
   }
 
-  get type() {
+  get type(): 'hexagonId' {
     return 'hexagonId';
   }
 
-  get name() {
+  get name(): 'H3' {
     return 'H3';
   }
 
