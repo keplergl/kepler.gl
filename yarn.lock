@@ -2903,21 +2903,13 @@
   dependencies:
     "@math.gl/core" "3.5.4"
 
-"@math.gl/web-mercator@^3.1.3", "@math.gl/web-mercator@^3.3.0":
-  version "3.3.1"
-  resolved "https://registry.yarnpkg.com/@math.gl/web-mercator/-/web-mercator-3.3.1.tgz#7f9e9af504a6bd6b2057d39e174641ab5e656421"
-  integrity sha512-gUOs7jJgTQi4DGLeX4NwiWn8R3Awg3HJxQyJeLpJ065xVREQAaXWnPbk7BcZlm+XLK0CzNLl3zHOQ4gLWGfW7g==
-  dependencies:
-    "@babel/runtime" "^7.0.0"
-    gl-matrix "^3.0.0"
-
-"@math.gl/web-mercator@^3.2.1":
-  version "3.5.4"
-  resolved "https://registry.yarnpkg.com/@math.gl/web-mercator/-/web-mercator-3.5.4.tgz#2eca3136d33a66be665c08de01671c2ebd46867b"
-  integrity sha512-oSicpji8Rdyil2xWC5G3UrVVONl3vEvH8F0f6HgZHyQDw1LDiauthnTNIUbdWIvm6TF+WGd+GZ/mMLCmlKs+6w==
+"@math.gl/web-mercator@^3.2.1", "@math.gl/web-mercator@^3.3.0", "@math.gl/web-mercator@^3.5.5":
+  version "3.5.7"
+  resolved "https://unpm.uberinternal.com/@math.gl%2fweb-mercator/-/web-mercator-3.5.7.tgz#180a1057ea622bd857c6931f67268c2e98f174c6"
+  integrity sha512-i0w6AcV2b5+yeUQOA/KdnnzTYMUZvEKzHbbxI+ZyCuFs3p9S/IUt/EWVw4KGGOjVbf3UrGFlWSM70Th+0KyrsA==
   dependencies:
     "@babel/runtime" "^7.12.0"
-    gl-matrix "^3.0.0"
+    gl-matrix "~3.3.0"
 
 "@nebula.gl/edit-modes@0.14.0":
   version "0.14.0"
@@ -7861,7 +7853,7 @@ github-slugger@^1.0.0, github-slugger@^1.2.1:
   dependencies:
     emoji-regex ">=6.0.0 <=6.1.1"
 
-gl-matrix@^3.0.0, gl-matrix@^3.2.1:
+gl-matrix@^3.0.0, gl-matrix@^3.2.1, gl-matrix@~3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/gl-matrix/-/gl-matrix-3.3.0.tgz#232eef60b1c8b30a28cbbe75b2caf6c48fd6358b"
   integrity sha512-COb7LDz+SXaHtl/h4LeaFcNdJdAQSDeVqjiIihSXNrkWObZLhDI4hIkZC11Aeqp7bcE72clzB0BnDXr2SmslRA==
@@ -15650,20 +15642,12 @@ vfile@^4.0.0:
     unist-util-stringify-position "^2.0.0"
     vfile-message "^2.0.0"
 
-viewport-mercator-project@>=5.0.0, "viewport-mercator-project@^6.2.3 || ^7.0.1":
-  version "7.0.1"
-  resolved "https://registry.yarnpkg.com/viewport-mercator-project/-/viewport-mercator-project-7.0.1.tgz#9d7248072f2cbb122f93b63d2b346a5763b8d79a"
-  integrity sha512-WKTuTL7o6WKdPQ+gmZhlXL7UpSdCdPUjxkDTBd/3AayBdAFSQGHxsqdbmPBvmoGwvo9KWo/30HTkNo/Z7ORJpw==
+viewport-mercator-project@>=5.0.0, "viewport-mercator-project@^6.2.3 || ^7.0.1", viewport-mercator-project@^7.0.0:
+  version "7.0.4"
+  resolved "https://unpm.uberinternal.com/viewport-mercator-project/-/viewport-mercator-project-7.0.4.tgz#67feec04135484bf424dd4890d630e82116b31e6"
+  integrity sha512-0jzpL6pIMocCKWg1C3mqi/N4UPgZC3FzwghEm1H+XsUo8hNZAyJc3QR7YqC816ibOR8aWT5pCsV+gCu8/BMJgg==
   dependencies:
-    "@math.gl/web-mercator" "^3.1.3"
-
-viewport-mercator-project@^6.0.0:
-  version "6.2.3"
-  resolved "https://registry.yarnpkg.com/viewport-mercator-project/-/viewport-mercator-project-6.2.3.tgz#4122040f51ef9553fa41a46bcc6502977b3909c6"
-  integrity sha512-QQb0/qCLlP4DdfbHHSWVYXpghB2wkLIiiZQnoelOB59mXKQSyZVxjreq1S+gaBJFpcGkWEcyVtre0+2y2DTl/Q==
-  dependencies:
-    "@babel/runtime" "^7.0.0"
-    gl-matrix "^3.0.0"
+    "@math.gl/web-mercator" "^3.5.5"
 
 vinyl-fs@^3.0.2:
   version "3.0.3"

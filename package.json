@@ -178,7 +178,7 @@
     "supercluster": "^7.1.0",
     "type-analyzer": "0.3.0",
     "typedoc": "^0.19.2",
-    "viewport-mercator-project": "^6.0.0",
+    "viewport-mercator-project": "^7.0.0",
     "wellknown": "^0.5.0"
   },
   "devDependencies": {

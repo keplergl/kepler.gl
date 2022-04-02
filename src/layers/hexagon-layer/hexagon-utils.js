@@ -27,7 +27,7 @@ export function hexagonToPolygonGeo(object, properties, radius, mapState) {
     return null;
   }
 
-  const screenCenter = viewport.projectFlat(object.position);
+  const screenCenter = viewport.lngLatToWorld(object.position);
   const {unitsPerMeter} = viewport.getDistanceScales(object.position);
 
   if (!Array.isArray(unitsPerMeter)) {
@@ -41,7 +41,7 @@ export function hexagonToPolygonGeo(object, properties, radius, mapState) {
 
   for (let i = 0; i < 6; i++) {
     const vertex = hex_corner(screenCenter, pixRadius, i);
-    coordinates.push(viewport.unprojectFlat(vertex));
+    coordinates.push(viewport.worldToLngLat(vertex));
   }
 
   coordinates.push(coordinates[0]);
