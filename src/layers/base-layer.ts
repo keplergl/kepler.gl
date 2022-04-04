@@ -146,6 +146,8 @@ export type VisualChannelDescription = {
 export type ColumnPairs = {[key: string]: {pair: string; fieldPairKey: string}};
 
 type ColumnValidator = (column: LayerColumn, columns: LayerColumns, allFields: Field[]) => boolean;
+
+export type LayerBounds = [number, number, number, number];
 /**
  * Approx. number of points to sample in a large data set
  */
@@ -404,7 +406,7 @@ class Layer {
 
   getDefaultLayerConfig(
     props: Partial<LayerBaseConfig> = {}
-  ): LayerBaseConfig & LayerColorConfig & LayerHeightConfig & LayerSizeConfig {
+  ): LayerBaseConfig & LayerColorConfig & LayerSizeConfig {
     return {
       dataId: props.dataId || null,
       label: props.label || DEFAULT_LAYER_LABEL,
@@ -426,7 +428,6 @@ class Layer {
       sizeScale: SCALE_TYPES.linear,
       sizeField: null,
 
-      // @ts-expect-error
       visConfig: {},
 
       textLabel: [DEFAULT_TEXT_LABEL],
@@ -623,23 +624,23 @@ class Layer {
     return copied;
   }
 
-  registerVisConfig(
-    layerVisConfigs: {
-      [key in keyof Partial<LayerVisConfig>]:
-        | keyof LayerVisConfigSettings
-        | ValueOf<LayerVisConfigSettings>;
-    }
-  ) {
+  registerVisConfig(layerVisConfigs: {
+    [key: string]: keyof LayerVisConfigSettings | ValueOf<LayerVisConfigSettings>;
+  }) {
     Object.keys(layerVisConfigs).forEach(item => {
-      if (typeof layerVisConfigs[item] === 'string' && LAYER_VIS_CONFIGS[layerVisConfigs[item]]) {
+      const configItem = layerVisConfigs[item];
+      if (typeof configItem === 'string' && LAYER_VIS_CONFIGS[configItem]) {
         // if assigned one of default LAYER_CONFIGS
-        this.config.visConfig[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]].defaultValue;
-        this.visConfigSettings[item] = LAYER_VIS_CONFIGS[layerVisConfigs[item]];
-      } else if (['type', 'defaultValue'].every(p => layerVisConfigs[item].hasOwnProperty(p))) {
+        this.config.visConfig[item] = LAYER_VIS_CONFIGS[configItem].defaultValue;
+        this.visConfigSettings[item] = LAYER_VIS_CONFIGS[configItem];
+      } else if (
+        typeof configItem === 'object' &&
+        ['type', 'defaultValue'].every(p => configItem.hasOwnProperty(p))
+      ) {
         // if provided customized visConfig, and has type && defaultValue
         // TODO: further check if customized visConfig is valid
-        this.config.visConfig[item] = layerVisConfigs[item].defaultValue;
-        this.visConfigSettings[item] = layerVisConfigs[item];
+        this.config.visConfig[item] = configItem.defaultValue;
+        this.visConfigSettings[item] = configItem;
       }
     });
   }
