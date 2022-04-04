@@ -18,16 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Layer, {OVERLAY_TYPE} from './base-layer';
+import Layer, {LayerBaseConfig, LayerColumn, OVERLAY_TYPE, VisualChannels} from './base-layer';
 import {createSelector} from 'reselect';
 
 import {geoJsonFromData, prefixGpuField, gpuFilterToMapboxFilter} from './mapbox-utils';
+import KeplerTable from '../utils/table-utils/kepler-table';
+import {Merge} from '../reducers';
 
-export const mapboxRequiredColumns = ['lat', 'lng'];
+type MapboxLayerGLColumns = {
+  lat: LayerColumn;
+  lng: LayerColumn;
+};
 
-export const pointColResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
+export type MapboxLayerGLConfig = Merge<LayerBaseConfig, {columns: MapboxLayerGLColumns}>;
+
+export const mapboxRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
+
+export const pointColResolver = ({lat, lng}: MapboxLayerGLColumns) =>
+  `${lat.fieldIdx}-${lng.fieldIdx}`;
 
 class MapboxLayerGL extends Layer {
+  declare config: MapboxLayerGLConfig;
+
   get overlayType() {
     return OVERLAY_TYPE.mapboxgl;
   }
@@ -36,7 +48,7 @@ class MapboxLayerGL extends Layer {
     return null;
   }
 
-  get isAggregated() {
+  get isAggregated(): true {
     return true;
   }
 
@@ -52,12 +64,13 @@ class MapboxLayerGL extends Layer {
     return [];
   }
 
-  get visualChannels() {
+  get visualChannels(): VisualChannels {
     return {};
   }
-  datasetSelector = config => config.dataId;
-  gpuFilterSelector = (config, datasets) => (datasets[config.dataId] || {}).gpuFilter;
-  columnsSelector = config => pointColResolver(config.columns);
+  datasetSelector = (config: MapboxLayerGLConfig) => config.dataId;
+  gpuFilterSelector = (config: MapboxLayerGLConfig, datasets) =>
+    (datasets[config.dataId] || {}).gpuFilter;
+  columnsSelector = (config: MapboxLayerGLConfig) => pointColResolver(config.columns);
 
   sourceSelector = createSelector(
     this.datasetSelector,
@@ -74,7 +87,7 @@ class MapboxLayerGL extends Layer {
     return Array.isArray(filter) && filter.length;
   }
 
-  getDataUpdateTriggers({filteredIndex, gpuFilter, id}) {
+  getDataUpdateTriggers({filteredIndex, gpuFilter, id}: KeplerTable): any {
     const {columns} = this.config;
 
     const visualChannelFields = Object.values(this.visualChannels).reduce(
@@ -99,7 +112,16 @@ class MapboxLayerGL extends Layer {
     return updateTriggers;
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex, gpuFilter}, getPosition) {
+  getGeometry(position) {
+    return position.every(Number.isFinite)
+      ? {
+          type: 'Point',
+          coordinates: position
+        }
+      : null;
+  }
+
+  calculateDataAttribute({dataContainer, filteredIndex, gpuFilter}: KeplerTable, getPosition) {
     const getGeometry = d => this.getGeometry(getPosition(d));
 
     const vcFields = Object.values(this.visualChannels)
@@ -127,14 +149,14 @@ class MapboxLayerGL extends Layer {
       ? d => {
           const filterValue = valueAccessor(d);
           return Object.values(filterValueUpdateTriggers).reduce(
-            (accu, name, i) => ({
+            (accu: any, name, i) => ({
               ...accu,
               ...(name ? {[prefixGpuField(name)]: filterValue[i]} : {})
             }),
             {}
-          );
+          ) as any;
         }
-      : d => ({});
+      : d => ({} as any);
 
     const getProperties = d => ({
       ...getPropertyFromVisualChanel(d),

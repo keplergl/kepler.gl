@@ -9,7 +9,6 @@ export * from './kepler-gl';
 export * from './map-container';
 export * from './maps-layout';
 export * from './modal-container';
-export * from './side-panel';
 export * from './container';
 
 // TODO: we need more specific types for the following components
