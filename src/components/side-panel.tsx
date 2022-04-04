@@ -18,8 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useMemo, ComponentType} from 'react';
 import {FormattedMessage} from 'localization';
+import {Datasets, Filter, InteractionConfig, MapStyle} from '../reducers';
+import {Layer, LayerClassesType} from '../layers';
+import {UiState} from 'reducers/ui-state-updaters';
 
 import {
   EXPORT_DATA_ID,
@@ -45,6 +48,43 @@ import PanelTitleFactory from './side-panel/panel-title';
 
 import styled from 'styled-components';
 import get from 'lodash.get';
+
+import * as MapStyleActions from 'actions/map-style-actions';
+import * as VisStateActions from 'actions/vis-state-actions';
+import * as MapStateActions from 'actions/map-state-actions';
+import * as UIStateActions from 'actions/ui-state-actions';
+
+type SidePanelItem = {
+  id: string;
+  label: string;
+  iconComponent: ComponentType<any>;
+  component?: ComponentType<any>
+};
+
+type SidePanelProps = {
+  appName: string;
+  appWebsite: string;
+  filters: Filter;
+  interactionConfig: InteractionConfig;
+  layerBlending: string;
+  layers: Layer;
+  layerClasses: LayerClassesType;
+  layerOrder: number[];
+  mapStyle: MapStyle;
+  onSaveMap: Function;
+  width: number;
+  mapInfo: {title: string, description: string}
+  datasets: Datasets;
+  uiStateActions: typeof UIStateActions;
+  visStateActions: typeof VisStateActions;
+  mapStateActions: typeof MapStateActions;
+  mapStyleActions: typeof MapStyleActions;
+  uiState: UiState;
+  availableProviders: {hasShare: boolean, hasStorage: boolean};
+  mapSaved?: string | null;
+  panels: SidePanelItem[];
+  version: string;
+};
 
 export const StyledSidePanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
@@ -76,15 +116,15 @@ SidePanelFactory.deps = [
  * Vertical sidebar containing input components for the rendering layers
  */
 export default function SidePanelFactory(
-  Sidebar,
-  PanelHeader,
-  PanelToggle,
-  PanelTitle,
-  LayerManager,
-  FilterManager,
-  InteractionManager,
-  MapManager,
-  CustomPanels
+  Sidebar: ReturnType<typeof SidebarFactory>,
+  PanelHeader: ReturnType<typeof PanelHeaderFactory>,
+  PanelToggle: ReturnType<typeof PanelToggleFactory>,
+  PanelTitle: ReturnType<typeof PanelTitleFactory>,
+  LayerManager: ReturnType<typeof LayerManagerFactory>,
+  FilterManager: ReturnType<typeof FilterManagerFactory>,
+  InteractionManager: ReturnType<typeof InteractionManagerFactory>,
+  MapManager: ReturnType<typeof MapManagerFactory>,
+  CustomPanels: ReturnType<typeof CustomPanelsFactory>
 ) {
   // inject components
   const SIDEBAR_COMPONENTS = {
@@ -102,9 +142,7 @@ export default function SidePanelFactory(
 
   const getCustomPanelProps = get(CustomPanels, ['defaultProps', 'getProps']) || (() => ({}));
 
-  /** @type {typeof import('./side-panel').SidePanel} */
-  // eslint-disable-next-line max-statements
-  const SidePanel = props => {
+  const SidePanel = (props: SidePanelProps) => {
     const {
       appName,
       appWebsite,
@@ -138,7 +176,7 @@ export default function SidePanelFactory(
 
     const isOpen = Boolean(activeSidePanel);
 
-    const _onOpenOrClose = useCallback(() => toggleSidePanel(activeSidePanel ? null : 'layer'), [
+    const _onOpenOrClose = useCallback(() => toggleSidePanel(activeSidePanel ? '' : 'layer'), [
       activeSidePanel,
       toggleSidePanel
     ]);
@@ -174,7 +212,7 @@ export default function SidePanelFactory(
       () => ((hasStorage && mapSaved ? onClickSaveAsToStorage : null)),
       [hasStorage, mapSaved, onClickSaveAsToStorage]
     );
-    const currentPanel = useMemo(() => panels.find(({id}) => id === activeSidePanel) || {}, [
+    const currentPanel = useMemo(() => panels.find(({id}) => id === activeSidePanel), [
       activeSidePanel,
       panels
     ]);
@@ -184,7 +222,7 @@ export default function SidePanelFactory(
     ]);
     const customPanelProps = useMemo(() => getCustomPanelProps(props), [props]);
 
-    const PanelComponent = currentPanel.component;
+    const PanelComponent = currentPanel?.component;
 
     return (
       <Sidebar width={width} isOpen={isOpen} minifiedWidth={0} onOpenOrClose={_onOpenOrClose}>
@@ -212,9 +250,9 @@ export default function SidePanelFactory(
         />
         <StyledSidePanelContent className="side-panel__content">
           <div className="side-panel__content__inner">
-            {currentPanel.id !== 'layer' ? (
-              <PanelTitle className="side-panel__content__title">
-                <FormattedMessage id={currentPanel.label} />
+            {currentPanel?.id !== 'layer' ? (
+              <PanelTitle>
+                <FormattedMessage id={currentPanel?.label} />
               </PanelTitle>
             ) : null}
             {PanelComponent ? (
@@ -237,7 +275,7 @@ export default function SidePanelFactory(
                 uiStateActions={uiStateActions}
                 visStateActions={visStateActions}
                 panelMetadata={currentPanel}
-                layerPanelListView={currentPanel.id === 'layer' && uiState.layerPanelListView}
+                layerPanelListView={currentPanel?.id === 'layer' && uiState.layerPanelListView}
               />
             ) : null}
             <CustomPanels {...customPanelProps} activeSidePanel={activeSidePanel} />
