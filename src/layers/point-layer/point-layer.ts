@@ -24,7 +24,7 @@ import {ScatterplotLayer} from '@deck.gl/layers';
 import Layer, {
   LayerBaseConfig,
   LayerColorConfig,
-  LayerColumns,
+  LayerColumn,
   LayerSizeConfig
 } from '../base-layer';
 import {hexToRgb} from 'utils/color-utils';
@@ -33,17 +33,55 @@ import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
-import {RGBColor} from '../../reducers';
+import {Merge, RGBColor} from '../../reducers';
 import {
-  LayerVisConfigSettings,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
   VisConfigRange
 } from '../layer-factory';
+import {ColorRange} from '../../constants/color-ranges';
 
-export const pointPosAccessor = ({lat, lng, altitude}: LayerColumns) => dc => d => [
+export type PointLayerVisConfigSettings = {
+  radius: VisConfigNumber;
+  fixedRadius: VisConfigBoolean;
+  opacity: VisConfigNumber;
+  outline: VisConfigBoolean;
+  thickness: VisConfigNumber;
+  strokeColor: VisConfigColorSelect;
+  colorRange: VisConfigColorRange;
+  strokeColorRange: VisConfigColorRange;
+  radiusRange: VisConfigRange;
+  filled: VisConfigBoolean;
+};
+
+export type PointLayerColumnsConfig = {
+  lat: LayerColumn;
+  lng: LayerColumn;
+  altitude: LayerColumn;
+};
+
+export type PointLayerVisConfig = {
+  radius: number;
+  fixedRadius: boolean;
+  opacity: number;
+  outline: boolean;
+  thickness: number;
+  strokeColor: RGBColor;
+  colorRange: ColorRange;
+  strokeColorRange: ColorRange;
+  radiusRange: [number, number];
+  filled: boolean;
+};
+export type PointLayerVisualChannelConfig = LayerColorConfig & LayerSizeConfig;
+export type PointLayerConfig = Merge<
+  LayerBaseConfig,
+  {columns: PointLayerColumnsConfig; visConfig: PointLayerVisConfig}
+> &
+  PointLayerVisualChannelConfig;
+
+export const pointPosAccessor = ({lat, lng, altitude}: PointLayerColumnsConfig) => dc => d => [
   dc.valueAt(d.index, lng.fieldIdx),
   dc.valueAt(d.index, lat.fieldIdx),
   altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
@@ -71,20 +109,7 @@ export const pointVisConfigs = {
     property: 'filled'
   }
 };
-export type PointLayerVisConfigSettings = {
-  radius: VisConfigNumber;
-  fixedRadius: VisConfigBoolean;
-  opacity: VisConfigNumber;
-  outline: VisConfigBoolean;
-  thickness: VisConfigNumber;
-  strokeColor: VisConfigColorSelect;
-  colorRange: VisConfigColorRange;
-  strokeColorRange: VisConfigColorRange;
-  radiusRange: VisConfigRange;
-  filled: VisConfigBoolean;
-};
 
-export type PointLayerConfig = LayerBaseConfig & LayerColorConfig & LayerSizeConfig;
 export default class PointLayer extends Layer {
   declare config: PointLayerConfig;
   declare visConfigSettings: PointLayerVisConfigSettings;
@@ -174,7 +199,7 @@ export default class PointLayer extends Layer {
       label: string;
       color?: RGBColor;
       isVisible?: boolean;
-      columns?: LayerColumns;
+      columns?: PointLayerColumnsConfig;
     }[] = [];
 
     // Make layer for each pair
@@ -187,7 +212,7 @@ export default class PointLayer extends Layer {
         label: string;
         color?: RGBColor;
         isVisible?: boolean;
-        columns?: LayerColumns;
+        columns?: PointLayerColumnsConfig;
       } = {
         label: layerName.length ? layerName : 'Point'
       };
