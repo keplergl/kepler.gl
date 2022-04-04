@@ -18,25 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {OVERLAY_TYPE} from './base-layer';
-
-/** @typedef {import("geojson").FeatureCollection} FeatureCollection */
-/** @typedef {import("geojson").Feature} Feature */
+import Layer, {OVERLAY_TYPE} from './base-layer';
+import {Feature} from 'geojson';
 
 /**
  * This function will convert layers to mapbox layers
- * @param {Array<Object>} layers the layers to be converted
- * @param {Array<Object>} layerData extra layer information
- * @param {Array<Number>} layerOrder the order by which we should convert layers
- * @param {Object} layersToRender {[id]: true | false} object whether each layer should be rendered
- * @returns {Object} {[id]: layer}
+ * @param layers the layers to be converted
+ * @param layerData extra layer information
+ * @param layerOrder the order by which we should convert layers
+ * @param layersToRender {[id]: true | false} object whether each layer should be rendered
+ * @returns
  */
 export function generateMapboxLayers(
-  layers = [],
-  layerData = [],
-  layerOrder = [],
-  layersToRender = {}
-) {
+  layers: Layer[] = [],
+  layerData: any[] = [],
+  layerOrder: number[] = [],
+  layersToRender: {[key: string]: boolean} = {}
+): {[key: string]: Layer} {
   if (layerData.length > 0) {
     return layerOrder
       .slice()
@@ -63,14 +61,22 @@ export function generateMapboxLayers(
   return {};
 }
 
+type newLayersType = {
+  [key: string]: Layer & Partial<{data: any; sourceId: any; isVisible: boolean}>;
+};
+type oldLayersType = {[key: string]: Layer & {data?: any}};
 /**
  * Update mapbox layers on the given map
- * @param {Object} map
- * @param {Object} newLayers Map of new mapbox layers to be displayed
- * @param {Object} oldLayers Map of the old layers to be compare with the current ones to detect deleted layers
+ * @param map
+ * @param newLayers Map of new mapbox layers to be displayed
+ * @param oldLayers Map of the old layers to be compare with the current ones to detect deleted layers
  *                  {layerId: sourceId}
  */
-export function updateMapboxLayers(map, newLayers = {}, oldLayers = null) {
+export function updateMapboxLayers(
+  map,
+  newLayers: newLayersType = {},
+  oldLayers: oldLayersType | null = null
+) {
   // delete no longer existed old layers
   if (oldLayers) {
     checkAndRemoveOldLayers(map, oldLayers, newLayers);
@@ -96,7 +102,7 @@ export function updateMapboxLayers(map, newLayers = {}, oldLayers = null) {
   });
 }
 
-function checkAndRemoveOldLayers(map, oldLayers, newLayers) {
+function checkAndRemoveOldLayers(map, oldLayers: oldLayersType, newLayers: newLayersType) {
   Object.keys(oldLayers).forEach(layerId => {
     if (!newLayers[layerId]) {
       map.removeLayer(layerId);
@@ -137,10 +143,13 @@ function updateSourceData(map, sourceId, data) {
  * @param getProperties {({index: number}) => any}
  * @returns FeatureCollection
  */
-export function geoJsonFromData(filteredIndex = [], getGeometry, getProperties = d => {}) {
-  const geojson = {
+export function geoJsonFromData(
+  filteredIndex = [],
+  getGeometry: {({index: number}): any},
+  getProperties: {({index: number}): any} = d => {}
+) {
+  const geojson: {type: string; features: Feature[]} = {
     type: 'FeatureCollection',
-    /** @type {Feature[]} */
     features: []
   };
 
@@ -180,7 +189,7 @@ export function gpuFilterToMapboxFilter(gpuFilter) {
   // [">=", key, value]
   // ["<=", key, value]
   const expressions = Object.values(filterValueUpdateTriggers).reduce(
-    (accu, name, i) =>
+    (accu: any[], name, i) =>
       name
         ? [
             ...accu,
