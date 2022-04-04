@@ -18,17 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Layer, {OVERLAY_TYPE, VisualChannels} from './base-layer';
+import Layer, {LayerBaseConfig, LayerColumn, OVERLAY_TYPE, VisualChannels} from './base-layer';
 import {createSelector} from 'reselect';
 
 import {geoJsonFromData, prefixGpuField, gpuFilterToMapboxFilter} from './mapbox-utils';
 import KeplerTable from '../utils/table-utils/kepler-table';
+import {Merge} from '../reducers';
 
-export const mapboxRequiredColumns = ['lat', 'lng'];
+type MapboxLayerGLColumns = {
+  lat: LayerColumn;
+  lng: LayerColumn;
+};
 
-export const pointColResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
+export type MapboxLayerGLConfig = Merge<LayerBaseConfig, {columns: MapboxLayerGLColumns}>;
+
+export const mapboxRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
+
+export const pointColResolver = ({lat, lng}: MapboxLayerGLColumns) =>
+  `${lat.fieldIdx}-${lng.fieldIdx}`;
 
 class MapboxLayerGL extends Layer {
+  declare config: MapboxLayerGLConfig;
+
   get overlayType() {
     return OVERLAY_TYPE.mapboxgl;
   }
@@ -37,7 +48,7 @@ class MapboxLayerGL extends Layer {
     return null;
   }
 
-  get isAggregated() {
+  get isAggregated(): true {
     return true;
   }
 
@@ -56,9 +67,10 @@ class MapboxLayerGL extends Layer {
   get visualChannels(): VisualChannels {
     return {};
   }
-  datasetSelector = config => config.dataId;
-  gpuFilterSelector = (config, datasets) => (datasets[config.dataId] || {}).gpuFilter;
-  columnsSelector = config => pointColResolver(config.columns);
+  datasetSelector = (config: MapboxLayerGLConfig) => config.dataId;
+  gpuFilterSelector = (config: MapboxLayerGLConfig, datasets) =>
+    (datasets[config.dataId] || {}).gpuFilter;
+  columnsSelector = (config: MapboxLayerGLConfig) => pointColResolver(config.columns);
 
   sourceSelector = createSelector(
     this.datasetSelector,
