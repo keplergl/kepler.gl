@@ -19,7 +19,13 @@
 // THE SOFTWARE.
 
 import memoize from 'lodash.memoize';
-import Layer, {LayerBaseConfig, LayerColorConfig, LayerColumn, LayerSizeConfig} from './base-layer';
+import Layer, {
+  LayerBaseConfig,
+  LayerColorConfig,
+  LayerColumn,
+  LayerSizeConfig,
+  VisualChannels
+} from './base-layer';
 import {hexToRgb} from '../utils/color-utils';
 import {aggregate} from '../utils/aggregate-utils';
 import {
@@ -112,7 +118,7 @@ export default class AggregationLayer extends Layer {
     ];
   }
 
-  get visualChannels() {
+  get visualChannels(): VisualChannels {
     return {
       color: {
         aggregation: 'colorAggregation',
