@@ -195,15 +195,6 @@ class HeatmapLayer extends MapboxGLLayer {
     }
   );
 
-  getGeometry(position) {
-    return position.every(Number.isFinite)
-      ? {
-          type: 'Point',
-          coordinates: position
-        }
-      : null;
-  }
-
   formatLayerData(datasets, oldLayerData) {
     const {weightField} = this.config;
     const {dataContainer} = datasets[this.config.dataId];

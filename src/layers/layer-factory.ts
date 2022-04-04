@@ -157,41 +157,45 @@ export type LayerVisConfigSettings = {
   weight: VisConfigNumber;
   heatmapRadius: VisConfigNumber;
 };
-// TODO: This type is not coplete yet
+
+// TODO: Move this to individual layers
 export type LayerVisConfig = {
-  thickness: number;
-  sizeRange: number;
-  trailLength: number;
-  radius: number;
-  fixedRadius: boolean;
-  radiusRange: [number, number];
-  clusterRadius: number;
-  opacity: number;
-  coverage: number;
-  outline: boolean;
-  colorRange: ColorRange;
-  strokeColorRange: ColorRange;
-  targetColor: any;
-  strokeColor: any;
-  colorAggregation: keyof typeof AGGREGATION_TYPES;
-  sizeAggregation: keyof typeof AGGREGATION_TYPES;
-  percentile: [number, number];
-  elevationPercentile: [number, number];
-  resolution: number;
-  sizeScale: number;
-  angle: number;
-  worldUnitSize: number;
-  elevationScale: number;
-  enableElevationZoomFactor: boolean;
-  heightRange: [number, number];
-  coverageRange: [number, number];
-  'hi-precision': boolean;
-  enable3d: boolean;
-  stroked: boolean;
-  filled: boolean;
-  extruded: boolean;
-  wireframe: boolean;
-  weight: number;
+  [key: string]: any;
+  // possible visConfigs
+
+  // thickness: number;
+  // sizeRange: number;
+  // trailLength: number;
+  // radius: number;
+  // fixedRadius: boolean;
+  // radiusRange: [number, number];
+  // clusterRadius: number;
+  // opacity: number;
+  // coverage: number;
+  // outline: boolean;
+  // colorRange: ColorRange;
+  // strokeColorRange: ColorRange;
+  // targetColor: any;
+  // strokeColor: any;
+  // colorAggregation: keyof typeof AGGREGATION_TYPES;
+  // sizeAggregation: keyof typeof AGGREGATION_TYPES;
+  // percentile: [number, number];
+  // elevationPercentile: [number, number];
+  // resolution: number;
+  // sizeScale: number;
+  // angle: number;
+  // worldUnitSize: number;
+  // elevationScale: number;
+  // enableElevationZoomFactor: boolean;
+  // heightRange: [number, number];
+  // coverageRange: [number, number];
+  // 'hi-precision': boolean;
+  // enable3d: boolean;
+  // stroked: boolean;
+  // filled: boolean;
+  // extruded: boolean;
+  // wireframe: boolean;
+  // weight: number;
 };
 
 export type TextConfigSelect = {
