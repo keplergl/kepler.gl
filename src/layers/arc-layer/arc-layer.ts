@@ -167,7 +167,9 @@ export default class ArcLayer extends Layer {
     };
   }
 
-  static findDefaultLayerProps({fieldPairs = []}) {
+  static findDefaultLayerProps({
+    fieldPairs = []
+  }): {props: {color?: RGBColor; columns: ArcLayerColumnsConfig; label: string}[]} {
     if (fieldPairs.length < 2) {
       return {props: []};
     }
