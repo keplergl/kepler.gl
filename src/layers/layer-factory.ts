@@ -97,6 +97,7 @@ export type VisConfigBoolean = VisConfig & {
 
 export type VisConfigSelection = VisConfig & {
   type: 'select';
+  // TODO: replace string with keyof typeof AGGREGATION_TYPES;
   defaultValue: string;
   options: string[];
 };

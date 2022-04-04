@@ -55,7 +55,7 @@ export function hexagonToPolygonGeo(object, properties, radius, mapState) {
   };
 }
 
-function hex_corner(center, radius, i) {
+function hex_corner(center, radius: number, i: number) {
   const angle_deg = 60 * i + 30;
   const angle_rad = (Math.PI / 180) * angle_deg;
 
