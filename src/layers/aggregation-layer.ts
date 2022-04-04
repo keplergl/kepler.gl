@@ -19,22 +19,30 @@
 // THE SOFTWARE.
 
 import memoize from 'lodash.memoize';
-import Layer from './base-layer';
-import {hexToRgb} from 'utils/color-utils';
-import {aggregate} from 'utils/aggregate-utils';
+import Layer, {LayerBaseConfig, LayerColorConfig, LayerColumn, LayerSizeConfig} from './base-layer';
+import {hexToRgb} from '../utils/color-utils';
+import {aggregate} from '../utils/aggregate-utils';
 import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
   FIELD_OPTS,
   DEFAULT_AGGREGATION
-} from 'constants/default-settings';
+} from '../constants/default-settings';
+import {Datasets, Merge} from '../reducers';
+import {ColorRange} from '../constants/color-ranges';
 
-export const pointPosAccessor = ({lat, lng}) => dc => d => [
+type AggregationLayerColumns = {
+  lat: LayerColumn;
+  lng: LayerColumn;
+};
+
+export const pointPosAccessor = ({lat, lng}: AggregationLayerColumns) => dc => d => [
   dc.valueAt(d.index, lng.fieldIdx),
   dc.valueAt(d.index, lat.fieldIdx)
 ];
 
-export const pointPosResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
+export const pointPosResolver = ({lat, lng}: AggregationLayerColumns) =>
+  `${lat.fieldIdx}-${lng.fieldIdx}`;
 
 export const getValueAggrFunc = (field, aggregation) => {
   return points => {
@@ -52,12 +60,22 @@ export const getValueAggrFunc = (field, aggregation) => {
 export const getFilterDataFunc = (filterRange, getFilterValue) => pt =>
   getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
 
-const getLayerColorRange = colorRange => colorRange.colors.map(hexToRgb);
+const getLayerColorRange = (colorRange: ColorRange) => colorRange.colors.map(hexToRgb);
 
-export const aggregateRequiredColumns = ['lat', 'lng'];
+export const aggregateRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
 
+export type AggregationLayerVisualChannelConfig = LayerColorConfig & LayerSizeConfig;
+export type AggregationLayerConfig = Merge<LayerBaseConfig, {columns: AggregationLayerColumns}> &
+  AggregationLayerVisualChannelConfig;
 export default class AggregationLayer extends Layer {
-  constructor(props) {
+  getColorRange: any;
+  declare config: AggregationLayerConfig;
+
+  constructor(
+    props?: {
+      id?: string;
+    } & Partial<LayerBaseConfig>
+  ) {
     super(props);
 
     this.getPositionAccessor = dataContainer =>
@@ -65,7 +83,7 @@ export default class AggregationLayer extends Layer {
     this.getColorRange = memoize(getLayerColorRange);
   }
 
-  get isAggregated() {
+  get isAggregated(): true {
     return true;
   }
 
@@ -197,10 +215,10 @@ export default class AggregationLayer extends Layer {
 
   /**
    * Get scale options based on current field and aggregation type
-   * @param {string} channel
-   * @returns {string[]}
+   * @param channel
+   * @returns
    */
-  getScaleOptions(channel) {
+  getScaleOptions(channel: string): string[] {
     const visualChannel = this.visualChannels[channel];
     const {field, aggregation, channelScaleType} = visualChannel;
     const aggregationType = this.config.visConfig[aggregation];
@@ -244,7 +262,7 @@ export default class AggregationLayer extends Layer {
     return data;
   }
 
-  formatLayerData(datasets, oldLayerData) {
+  formatLayerData(datasets: Datasets, oldLayerData) {
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getPosition = this.getPositionAccessor(dataContainer);
 
