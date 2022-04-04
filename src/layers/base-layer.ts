@@ -137,7 +137,7 @@ export type VisualChannel = {
   // TODO: define fixed
   fixed?: any;
 
-  supportedFieldTypes?: boolean;
+  supportedFieldTypes?: Array<keyof typeof ALL_FIELD_TYPES>;
 };
 
 export type VisualChannelDescription = {
@@ -408,7 +408,7 @@ class Layer {
 
   getDefaultLayerConfig(
     props: Partial<LayerBaseConfig> = {}
-  ): LayerBaseConfig & LayerColorConfig & LayerSizeConfig {
+  ): LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig> {
     return {
       dataId: props.dataId || null,
       label: props.label || DEFAULT_LAYER_LABEL,

@@ -22,17 +22,43 @@ import {createSelector} from 'reselect';
 import memoize from 'lodash.memoize';
 import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES} from 'constants/default-settings';
 import {hexToRgb} from 'utils/color-utils';
-import MapboxGLLayer from '../mapboxgl-layer';
+import MapboxGLLayer, {MapboxLayerGLConfig} from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
+import {LayerColumn, LayerWeightConfig, VisualChannels} from '../base-layer';
+import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
+import {VisConfigColorRange, VisConfigNumber} from '../layer-factory';
+import {ColorRange} from 'constants/color-ranges';
+import {HexColor, Merge} from 'reducers';
+
+export type HeatmapLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  radius: VisConfigNumber;
+};
+
+export type HeatmapLayerColumnsConfig = {lat: LayerColumn; lng: LayerColumn};
+
+export type HeatmapLayerVisConfig = {
+  opacity: number;
+  colorRange: ColorRange;
+  radius: number;
+};
+
+// export type HeatmapLayerVisualChannelConfig = LayerColorConfig & LayerSizeConfig;
+export type HeatmapLayerConfig = Merge<
+  MapboxLayerGLConfig,
+  {columns: HeatmapLayerColumnsConfig; visConfig: HeatmapLayerVisConfig}
+> &
+  LayerWeightConfig;
 
 export const MAX_ZOOM_LEVEL = 18;
 
-export const pointPosAccessor = ({lat, lng}) => dc => d => [
-  dc.valueAt(d.index, lng.fieldIdx),
-  dc.valueAt(d.index, lat.fieldIdx)
-];
+export const pointPosAccessor = ({lat, lng}: HeatmapLayerColumnsConfig) => (
+  dc: DataContainerInterface
+) => d => [dc.valueAt(d.index, lng.fieldIdx), dc.valueAt(d.index, lat.fieldIdx)];
 
-export const pointColResolver = ({lat, lng}) => `${lat.fieldIdx}-${lng.fieldIdx}`;
+export const pointColResolver = ({lat, lng}: HeatmapLayerColumnsConfig) =>
+  `${lat.fieldIdx}-${lng.fieldIdx}`;
 
 export const heatmapVisConfigs = {
   opacity: 'opacity',
@@ -42,8 +68,8 @@ export const heatmapVisConfigs = {
 
 /**
  *
- * @param {Object} colorRange
- * @return {Array} [
+ * @param colorRange
+ * @return [
  *  0, "rgba(33,102,172,0)",
  *  0.2, "rgb(103,169,207)",
  *  0.4, "rgb(209,229,240)",
@@ -52,12 +78,12 @@ export const heatmapVisConfigs = {
  *  1, "rgb(178,24,43)"
  * ]
  */
-const heatmapDensity = colorRange => {
+const heatmapDensity = (colorRange: ColorRange): string[] => {
   const scaleFunction = SCALE_FUNC.quantize;
 
-  const colors = ['#000000', ...colorRange.colors];
+  const colors: HexColor[] = ['#000000', ...colorRange.colors];
 
-  const scale = scaleFunction()
+  const scale = scaleFunction<HexColor>()
     .domain([0, 1])
     .range(colors);
 
@@ -74,18 +100,24 @@ const heatmapDensity = colorRange => {
 };
 
 class HeatmapLayer extends MapboxGLLayer {
+  declare visConfigSettings: HeatmapLayerVisConfigSettings;
+  declare config: HeatmapLayerConfig;
+
+  getPosition: (config: HeatmapLayerColumnsConfig) => any;
+
   constructor(props) {
     super(props);
     this.registerVisConfig(heatmapVisConfigs);
     this.getPosition = memoize(pointPosAccessor, pointColResolver);
   }
 
-  get type() {
+  get type(): 'heatmap' {
     return 'heatmap';
   }
 
-  get visualChannels() {
+  get visualChannels(): VisualChannels {
     return {
+      // @ts-expect-error
       weight: {
         property: 'weight',
         field: 'weightField',
@@ -117,10 +149,9 @@ class HeatmapLayer extends MapboxGLLayer {
         };
   }
 
-  getDefaultLayerConfig(props = {}) {
+  getDefaultLayerConfig(props = {}): HeatmapLayerConfig {
     // mapbox heatmap layer color is always based on density
     // no need to set colorField, colorDomain and colorScale
-    /* eslint-disable no-unused-vars */
     const {colorField, colorDomain, colorScale, ...layerConfig} = {
       ...super.getDefaultLayerConfig(props),
 
@@ -128,8 +159,8 @@ class HeatmapLayer extends MapboxGLLayer {
       weightDomain: [0, 1],
       weightScale: 'linear'
     };
-    /* eslint-enable no-unused-vars */
 
+    // @ts-expect-error
     return layerConfig;
   }
 
