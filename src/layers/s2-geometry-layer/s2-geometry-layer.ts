@@ -22,7 +22,10 @@ import {S2Layer} from '@deck.gl/geo-layers';
 import {HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import {createDataContainer} from 'utils/table-utils';
-import Layer, {LayerColumns} from '../base-layer';
+import {ColorRange} from '../../constants/color-ranges';
+import {Merge, RGBColor} from '../../reducers';
+import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
+import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
 import {
   LayerVisConfigSettings,
   VisConfigBoolean,
@@ -34,6 +37,47 @@ import {
 import S2LayerIcon from './s2-layer-icon';
 import {getS2Center} from './s2-utils';
 
+export type S2GeometryLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  filled: VisConfigBoolean;
+  thickness: VisConfigNumber;
+  strokeColor: VisConfigColorSelect;
+  strokeColorRange: VisConfigColorRange;
+  sizeRange: VisConfigRange;
+  stroked: VisConfigBoolean;
+  enable3d: VisConfigBoolean;
+  elevationScale: VisConfigNumber;
+  enableElevationZoomFactor: VisConfigBoolean;
+  heightRange: VisConfigRange;
+  wireframe: VisConfigBoolean;
+};
+
+export type S2GeometryLayerColumnsConfig = {
+  token: LayerColumn;
+};
+
+export type S2GeometryLayerVisConfig = {
+  opacity: number;
+  colorRange: ColorRange;
+  filled: boolean;
+  thickness: number;
+  strokeColor: RGBColor;
+  strokeColorRange: ColorRange;
+  sizeRange: [number, number];
+  stroked: boolean;
+  enable3d: boolean;
+  elevationScale: number;
+  enableElevationZoomFactor: boolean;
+  heightRange: [number, number];
+  wireframe: boolean;
+};
+
+export type S2GeometryLayerConfig = Merge<
+  LayerBaseConfig,
+  {columns: S2GeometryLayerColumnsConfig; visConfig: S2GeometryLayerVisConfig}
+>;
+
 const zoomFactorValue = 8;
 
 export const S2_TOKEN_FIELDS: {
@@ -43,8 +87,9 @@ export const S2_TOKEN_FIELDS: {
 };
 
 export const s2RequiredColumns: ['token'] = ['token'];
-export const S2TokenAccessor = ({token}: LayerColumns) => dc => d =>
-  dc.valueAt(d.index, token.fieldIdx);
+export const S2TokenAccessor = ({token}: S2GeometryLayerColumnsConfig) => (
+  dc: DataContainerInterface
+) => d => dc.valueAt(d.index, token.fieldIdx);
 
 export const defaultElevation = 500;
 export const defaultLineWidth = 1;
@@ -79,25 +124,11 @@ export const S2VisConfigs = {
   // wireframe
   wireframe: 'wireframe'
 };
-export type S2GeometryLayerVisConfigSettings = {
-  opacity: VisConfigNumber;
-  colorRange: VisConfigColorRange;
-  filled: VisConfigBoolean;
-  thickness: VisConfigNumber;
-  strokeColor: VisConfigColorSelect;
-  strokeColorRange: VisConfigColorRange;
-  sizeRange: VisConfigRange;
-  stroked: VisConfigBoolean;
-  enable3d: VisConfigBoolean;
-  elevationScale: VisConfigNumber;
-  enableElevationZoomFactor: VisConfigBoolean;
-  heightRange: VisConfigRange;
-  wireframe: VisConfigBoolean;
-};
 
 export default class S2GeometryLayer extends Layer {
   dataToFeature: any;
   declare visConfigSettings: S2GeometryLayerVisConfigSettings;
+  declare config: S2GeometryLayerConfig;
   constructor(props) {
     super(props);
     this.registerVisConfig(S2VisConfigs);
