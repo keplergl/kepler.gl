@@ -20,7 +20,7 @@
 
 import memoize from 'lodash.memoize';
 import uniq from 'lodash.uniq';
-import Layer from '../base-layer';
+import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
 import {TripsLayer as DeckGLTripsLayer} from '@deck.gl/geo-layers';
 
 import {GEOJSON_FIELDS} from 'constants/default-settings';
@@ -34,6 +34,39 @@ import {
 
 import {isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
 import TripInfoModalFactory from './trip-info-modal';
+import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
+import {ColorRange} from '../../constants/color-ranges';
+import {VisConfigColorRange, VisConfigNumber, VisConfigRange} from '../layer-factory';
+import {Merge} from '../../reducers';
+
+export type TripLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  thickness: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  trailLength: VisConfigNumber;
+  sizeRange: VisConfigRange;
+};
+
+export type TripLayerColumnsConfig = {
+  geojson: LayerColumn;
+};
+
+export type TripLayerVisConfig = {
+  opacity: number;
+  thickness: number;
+  colorRange: ColorRange;
+  trailLength: number;
+  sizeRange: [number, number];
+};
+
+export type TripLayerConfig = Merge<
+  LayerBaseConfig,
+  {columns: TripLayerColumnsConfig; visConfig: TripLayerVisConfig}
+>;
+
+export type TripLayerMeta = {
+  getFeature: any;
+};
 
 const zoomFactorValue = 8;
 
@@ -57,11 +90,22 @@ export const tripVisConfigs = {
   sizeRange: 'strokeWidthRange'
 };
 
-export const geoJsonRequiredColumns = ['geojson'];
-export const featureAccessor = ({geojson}) => dc => d => dc.valueAt(d.index, geojson.fieldIdx);
-export const featureResolver = ({geojson}) => geojson.fieldIdx;
+export const geoJsonRequiredColumns: ['geojson'] = ['geojson'];
+export const featureAccessor = ({geojson}: TripLayerColumnsConfig) => (
+  dc: DataContainerInterface
+) => d => dc.valueAt(d.index, geojson.fieldIdx);
+export const featureResolver = ({geojson}: TripLayerColumnsConfig) => geojson.fieldIdx;
 
 export default class TripLayer extends Layer {
+  declare visConfigSettings: TripLayerVisConfigSettings;
+  declare config: TripLayerConfig;
+  declare meta: TripLayerMeta;
+
+  dataToFeature: {}[];
+  dataToTimeStamp: {}[];
+  getFeature: (columns: TripLayerColumnsConfig) => (dataContainer: DataContainerInterface) => any;
+  _layerInfoModal: () => JSX.Element;
+
   constructor(props) {
     super(props);
 
@@ -72,11 +116,14 @@ export default class TripLayer extends Layer {
     this._layerInfoModal = TripInfoModalFactory();
   }
 
-  get type() {
+  static get type(): 'trip' {
     return 'trip';
   }
+  get type() {
+    return TripLayer.type;
+  }
 
-  get name() {
+  get name(): 'Trip' {
     return 'Trip';
   }
 
@@ -126,7 +173,7 @@ export default class TripLayer extends Layer {
     };
   }
 
-  getPositionAccessor(dataContainer) {
+  getPositionAccessor(dataContainer: DataContainerInterface) {
     return this.getFeature(this.config.columns)(dataContainer);
   }
 
