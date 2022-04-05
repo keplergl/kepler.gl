@@ -99,8 +99,8 @@ export type VisConfigBoolean = VisConfig & {
 
 export type VisConfigSelection = VisConfig & {
   type: 'select';
-  defaultValue: AggregationTypes;
-  options: AggregationTypes[];
+  defaultValue: string;
+  options: string[];
 };
 
 export type VisConfigRange = VisConfig & {
