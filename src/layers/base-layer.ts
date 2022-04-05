@@ -92,6 +92,7 @@ export type LayerBaseConfig = {
   };
   animation: {
     enabled: boolean;
+    domain?: null;
   };
 };
 
