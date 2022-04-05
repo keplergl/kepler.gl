@@ -100,7 +100,7 @@ export type VisConfigBoolean = VisConfig & {
 export type VisConfigSelection = VisConfig & {
   type: 'select';
   defaultValue: AggregationTypes;
-  options: Array<AggregationTypes>;
+  options: AggregationTypes[];
 };
 
 export type VisConfigRange = VisConfig & {
@@ -422,7 +422,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     defaultValue: AGGREGATION_TYPES.average,
     label: 'layerVisConfigs.colorAggregation',
     // aggregation options are based on color field types
-    options: Object.keys(AGGREGATION_TYPES) as Array<AggregationTypes>,
+    options: Object.keys(AGGREGATION_TYPES) as AggregationTypes[],
     group: PROPERTY_GROUPS.color,
     property: 'colorAggregation',
     condition: config => Boolean(config.colorField)
@@ -432,7 +432,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     defaultValue: AGGREGATION_TYPES.average,
     label: 'layerVisConfigs.heightAggregation',
     // aggregation options are based on color field types
-    options: Object.keys(AGGREGATION_TYPES) as Array<AggregationTypes>,
+    options: Object.keys(AGGREGATION_TYPES) as AggregationTypes[],
     group: PROPERTY_GROUPS.height,
     property: 'sizeAggregation',
     condition: config => Boolean(config.sizeField)
