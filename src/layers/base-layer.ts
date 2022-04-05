@@ -203,10 +203,7 @@ export const colorMaker = generateColor();
 class Layer {
   id: string;
   // TODO: define meta
-  meta: {
-    featureTypes?: {polygon: boolean; point: boolean; line: boolean};
-    fixedRadius?: {};
-  };
+  meta: {};
   visConfigSettings: {
     [key: string]: ValueOf<LayerVisConfigSettings>;
   };

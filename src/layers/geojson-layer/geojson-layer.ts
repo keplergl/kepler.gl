@@ -21,9 +21,22 @@
 import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
-import Layer, {colorMaker, LayerBaseConfig, LayerColumn} from '../base-layer';
+import Layer, {
+  colorMaker,
+  LayerBaseConfig,
+  LayerColorConfig,
+  LayerColumn,
+  LayerHeightConfig,
+  LayerSizeConfig,
+  LayerStrokeColorConfig
+} from '../base-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
-import {getGeojsonDataMaps, getGeojsonBounds, getGeojsonFeatureTypes} from './geojson-utils';
+import {
+  getGeojsonDataMaps,
+  getGeojsonBounds,
+  getGeojsonFeatureTypes,
+  GeojsonDataMaps
+} from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
 import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from '../../constants/default-settings';
 import {
@@ -37,6 +50,7 @@ import {
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import {Merge, RGBColor} from '../../reducers';
 import {ColorRange} from '../../constants/color-ranges';
+import {Feature} from 'geojson';
 
 const SUPPORTED_ANALYZER_TYPES = {
   [DATA_TYPES.GEOMETRY]: true,
@@ -114,10 +128,20 @@ export type GeoJsonLayerVisConfig = {
   wireframe: boolean;
 };
 
+type GeoJsonLayerVisualChannelConfig = LayerColorConfig &
+  LayerStrokeColorConfig &
+  LayerSizeConfig &
+  LayerHeightConfig;
 export type GeoJsonLayerConfig = Merge<
   LayerBaseConfig,
   {columns: GeoJsonLayerColumnsConfig; visConfig: GeoJsonLayerVisConfig}
->;
+> &
+  GeoJsonLayerVisualChannelConfig;
+
+export type GeoJsonLayerMeta = {
+  featureTypes?: {polygon: boolean; point: boolean; line: boolean};
+  fixedRadius?: boolean;
+};
 
 export const geoJsonRequiredColumns: ['geojson'] = ['geojson'];
 export const featureAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
@@ -132,7 +156,8 @@ export const defaultRadius = 1;
 export default class GeoJsonLayer extends Layer {
   declare config: GeoJsonLayerConfig;
   declare visConfigSettings: GeoJsonVisConfigSettings;
-  dataToFeature: {properties?: {radius?: number}}[];
+  declare meta: GeoJsonLayerMeta;
+  dataToFeature: GeojsonDataMaps;
 
   constructor(props) {
     super(props);
