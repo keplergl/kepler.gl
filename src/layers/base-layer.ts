@@ -147,6 +147,8 @@ export type VisualChannel = {
   fixed?: any;
 
   supportedFieldTypes?: boolean;
+
+  aggregation?: 'colorAggregation' | 'sizeAggregation';
 };
 
 export type VisualChannelDescription = {
