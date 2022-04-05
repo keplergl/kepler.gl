@@ -18,21 +18,75 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Layer from '../base-layer';
+import Layer, {
+  LayerBaseConfig,
+  LayerColorConfig,
+  LayerColumn,
+  LayerColumns,
+  LayerCoverageConfig,
+  LayerSizeConfig
+} from '../base-layer';
 import {findDefaultColorField} from 'utils/dataset-utils';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
 import EnhancedColumnLayer from 'deckgl-layers/column-layer/enhanced-column-layer';
-import {getCentroid, idToPolygonGeo, h3IsValid, getHexFields} from './h3-utils';
+import {getCentroid, idToPolygonGeo, h3IsValid, getHexFields, Centroid} from './h3-utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {CHANNEL_SCALES, HIGHLIGH_COLOR_3D} from 'constants/default-settings';
 
 import {createDataContainer} from 'utils/table-utils';
+import {
+  LayerVisConfigSettings,
+  VisConfigBoolean,
+  VisConfigColorRange,
+  VisConfigNumber,
+  VisConfigRange
+} from '../layer-factory';
+import {Merge} from '../../reducers';
+import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
+import {ColorRange} from '../../constants/color-ranges';
+
+export type HexagonIdLayerColumnsConfig = {
+  hex_id: LayerColumn;
+};
+
+export type HexagonIdLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  coverage: VisConfigNumber;
+  enable3d: VisConfigBoolean;
+  sizeRange: VisConfigRange;
+  coverageRange: VisConfigRange;
+  elevationScale: VisConfigNumber;
+  enableElevationZoomFactor: VisConfigBoolean;
+};
+
+export type HexagonIdLayerVisConfig = {
+  opacity: number;
+  colorRange: ColorRange;
+  coverage: number;
+  enable3d: boolean;
+  sizeRange: [number, number];
+  coverageRange: [number, number];
+  elevationScale: number;
+  enableElevationZoomFactor: boolean;
+};
+
+export type HexagonIdLayerVisualChannelConfig = LayerColorConfig &
+  LayerSizeConfig &
+  LayerCoverageConfig;
+export type HexagonIdLayerConfig = Merge<
+  LayerBaseConfig,
+  {columns: HexagonIdLayerColumnsConfig; visConfig: HexagonIdLayerVisConfig}
+> &
+  HexagonIdLayerVisualChannelConfig;
 
 const DEFAULT_LINE_SCALE_VALUE = 8;
 
-export const hexIdRequiredColumns = ['hex_id'];
-export const hexIdAccessor = ({hex_id}) => dc => d => dc.valueAt(d.index, hex_id.fieldIdx);
+export const hexIdRequiredColumns: ['hex_id'] = ['hex_id'];
+export const hexIdAccessor = ({hex_id}: HexagonIdLayerColumnsConfig) => (
+  dc: DataContainerInterface
+) => d => dc.valueAt(d.index, hex_id.fieldIdx);
 
 export const defaultElevation = 500;
 export const defaultCoverage = 1;
@@ -49,17 +103,21 @@ export const HexagonIdVisConfigs = {
 };
 
 export default class HexagonIdLayer extends Layer {
+  dataToFeature: {centroids: Centroid[]};
+
+  declare config: HexagonIdLayerConfig;
+  declare visConfigSettings: HexagonIdLayerVisConfigSettings;
   constructor(props) {
     super(props);
     this.registerVisConfig(HexagonIdVisConfigs);
     this.getPositionAccessor = dataContainer => hexIdAccessor(this.config.columns)(dataContainer);
   }
 
-  get type() {
+  get type(): 'hexagonId' {
     return 'hexagonId';
   }
 
-  get name() {
+  get name(): 'H3' {
     return 'H3';
   }
 
@@ -106,7 +164,7 @@ export default class HexagonIdLayer extends Layer {
     const defaultColorField = findDefaultColorField(dataset);
 
     if (defaultColorField) {
-      this.updateLayerConfig({
+      this.updateLayerConfig<HexagonIdLayerConfig>({
         colorField: defaultColorField
       });
       this.updateLayerVisualChannel(dataset, 'color');

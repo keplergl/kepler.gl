@@ -18,26 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {h3GetResolution, h3IsValid, h3ToGeo, h3ToGeoBoundary} from 'h3-js';
+import {h3GetResolution, H3Index, h3IsValid, h3ToGeo, h3ToGeoBoundary} from 'h3-js';
 import {ALL_FIELD_TYPES} from 'constants/default-settings';
 import {notNullorUndefined} from 'utils/data-utils';
 
 export {h3GetResolution, h3IsValid};
 
+export type Centroid = [number, number];
+
 // get vertices should return [lon, lat]
-export function getVertices({id}) {
+export function getVertices({id}: {id: H3Index}) {
   // always reverse it
   return h3ToGeoBoundary(id, true);
 }
 
 // get centroid should return [lon, lat]
-export function getCentroid({id}) {
+export function getCentroid({id}: {id: H3Index}): Centroid {
   // always reverse it to [lng, lat]
-  return h3ToGeo(id).reverse();
+  return h3ToGeo(id).reverse() as Centroid;
 }
 
-export function idToPolygonGeo(object, properties) {
-  if (!object || !object.id) {
+export function idToPolygonGeo(object?: {id: H3Index}, properties?: any) {
+  if (!object?.id) {
     return null;
   }
 
