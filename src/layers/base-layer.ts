@@ -116,6 +116,11 @@ export type LayerStrokeColorConfig = {
   strokeColorDomain: VisualChannelDomain;
   strokeColorScale: VisualChannelScale;
 };
+export type LayerCoverageConfig = {
+  coverageField: VisualChannelField;
+  coverageDomain: VisualChannelDomain;
+  coverageScale: VisualChannelScale;
+};
 export type LayerWeightConfig = {
   weightField: VisualChannelField;
 };
@@ -153,6 +158,12 @@ export type ColumnPairs = {[key: string]: {pair: string; fieldPairKey: string}};
 
 type ColumnValidator = (column: LayerColumn, columns: LayerColumns, allFields: Field[]) => boolean;
 
+export type UpdateTriggers = {
+  [key: string]: UpdateTrigger;
+};
+export type UpdateTrigger = {
+  [key: string]: {};
+};
 export type LayerBounds = [number, number, number, number];
 /**
  * Approx. number of points to sample in a large data set
@@ -673,7 +684,9 @@ class Layer {
     return {...required, ...optional};
   }
 
-  updateLayerConfig(newConfig: Partial<LayerBaseConfig>): Layer {
+  updateLayerConfig<LayerConfig extends LayerBaseConfig = LayerBaseConfig>(
+    newConfig: Partial<LayerConfig>
+  ): Layer {
     this.config = {...this.config, ...newConfig};
     return this;
   }
@@ -1158,8 +1171,8 @@ class Layer {
     this.updateLayerConfig({[visualChannel.domain]: updatedDomain});
   }
 
-  getVisualChannelUpdateTriggers() {
-    const updateTriggers = {};
+  getVisualChannelUpdateTriggers(): UpdateTriggers {
+    const updateTriggers: UpdateTriggers = {};
     Object.values(this.visualChannels).forEach(visualChannel => {
       // field range scale domain
       const {accessor, field, scale, domain, range, defaultValue, fixed} = visualChannel;
@@ -1192,7 +1205,7 @@ class Layer {
     return dataset.getColumnLayerDomain(field, scaleType) || defaultDomain;
   }
 
-  hasHoveredObject(objectInfo): boolean {
+  hasHoveredObject(objectInfo) {
     return this.isLayerHovered(objectInfo) && objectInfo.object ? objectInfo.object : null;
   }
 
