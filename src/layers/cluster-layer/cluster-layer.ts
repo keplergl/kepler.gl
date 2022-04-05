@@ -18,12 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import AggregationLayer from '../aggregation-layer';
+import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
 import DeckGLClusterLayer from 'deckgl-layers/cluster-layer/cluster-layer';
 import {CHANNEL_SCALES} from 'constants/default-settings';
 import ClusterLayerIcon from './cluster-layer-icon';
+import {
+  VisConfigColorRange,
+  VisConfigNumber,
+  VisConfigRange,
+  VisConfigSelection
+} from '../layer-factory';
+import {ColorRange} from '../../constants/color-ranges';
+import {AGGREGATION_TYPES} from '../../constants/default-settings';
+import {Merge} from '../../reducers';
+import {VisualChannels} from '../base-layer';
+
+export type ClusterLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  clusterRadius: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  radiusRange: VisConfigRange;
+  colorAggregation: VisConfigSelection;
+};
+
+export type ClusterLayerVisConfig = {
+  opacity: number;
+  clusterRadius: number;
+  colorRange: ColorRange;
+  radiusRange: [number, number];
+  colorAggregation: keyof typeof AGGREGATION_TYPES;
+};
+
+export type ClusterLayerConfig = Merge<AggregationLayerConfig, {visConfig: ClusterLayerVisConfig}>;
 
 export const clusterVisConfigs = {
   opacity: 'opacity',
@@ -34,12 +62,15 @@ export const clusterVisConfigs = {
 };
 
 export default class ClusterLayer extends AggregationLayer {
+  declare visConfigSettings: ClusterLayerVisConfigSettings;
+  declare config: ClusterLayerConfig;
+
   constructor(props) {
     super(props);
     this.registerVisConfig(clusterVisConfigs);
   }
 
-  get type() {
+  get type(): 'cluster' {
     return 'cluster';
   }
 
@@ -47,7 +78,7 @@ export default class ClusterLayer extends AggregationLayer {
     return ClusterLayerIcon;
   }
 
-  get visualChannels() {
+  get visualChannels(): VisualChannels {
     return {
       color: {
         aggregation: 'colorAggregation',

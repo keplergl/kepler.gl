@@ -19,10 +19,52 @@
 // THE SOFTWARE.
 
 import {GeoJsonLayer} from '@deck.gl/layers';
-import EnhancedGridLayer from 'deckgl-layers/grid-layer/enhanced-cpu-grid-layer';
-import AggregationLayer from '../aggregation-layer';
+import EnhancedGridLayer from '../../deckgl-layers/grid-layer/enhanced-cpu-grid-layer';
+import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import {pointToPolygonGeo} from './grid-utils';
 import GridLayerIcon from './grid-layer-icon';
+import {
+  VisConfigBoolean,
+  VisConfigColorRange,
+  VisConfigNumber,
+  VisConfigRange,
+  VisConfigSelection
+} from '../layer-factory';
+import {ColorRange} from '../../constants/color-ranges';
+import {AGGREGATION_TYPES} from '../../constants/default-settings';
+import {Merge} from '../../reducers';
+
+export type GridLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  worldUnitSize: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  coverage: VisConfigNumber;
+  sizeRange: VisConfigRange;
+  percentile: VisConfigRange;
+  elevationPercentile: VisConfigRange;
+  elevationScale: VisConfigNumber;
+  enableElevationZoomFactor: VisConfigBoolean;
+  colorAggregation: VisConfigSelection;
+  sizeAggregation: VisConfigSelection;
+  enable3d: VisConfigBoolean;
+};
+
+export type GridLayerVisConfig = {
+  opacity: number;
+  worldUnitSize: number;
+  colorRange: ColorRange;
+  coverage: number;
+  sizeRange: [number, number];
+  percentile: [number, number];
+  elevationPercentile: [number, number];
+  elevationScale: number;
+  enableElevationZoomFactor: boolean;
+  colorAggregation: keyof typeof AGGREGATION_TYPES;
+  sizeAggregation: keyof typeof AGGREGATION_TYPES;
+  enable3d: boolean;
+};
+
+export type GridLayerConfig = Merge<AggregationLayerConfig, {visConfig: GridLayerVisConfig}>;
 
 export const gridVisConfigs = {
   opacity: 'opacity',
@@ -40,6 +82,9 @@ export const gridVisConfigs = {
 };
 
 export default class GridLayer extends AggregationLayer {
+  declare visConfigSettings: GridLayerVisConfigSettings;
+  declare config: GridLayerConfig;
+
   constructor(props) {
     super(props);
 
@@ -47,7 +92,7 @@ export default class GridLayer extends AggregationLayer {
     this.visConfigSettings.worldUnitSize.label = 'columns.grid.worldUnitSize';
   }
 
-  get type() {
+  get type(): 'grid' {
     return 'grid';
   }
 
@@ -64,6 +109,8 @@ export default class GridLayer extends AggregationLayer {
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
+      // @ts-expect-error for some reasons EnhancedGridLayer dont have constructor
+      // that expected 1 argument
       new EnhancedGridLayer({
         ...this.getDefaultAggregationLayerProp(opts),
         ...data,

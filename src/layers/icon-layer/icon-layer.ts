@@ -25,23 +25,66 @@ import SvgIconLayer from 'deckgl-layers/svg-icon-layer/svg-icon-layer';
 import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS, CLOUDFRONT} from 'constants/default-settings';
 import IconInfoModalFactory from './icon-info-modal';
-import Layer from '../base-layer';
+import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
+import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
+import {
+  LayerVisConfigSettings,
+  VisConfigBoolean,
+  VisConfigColorRange,
+  VisConfigNumber,
+  VisConfigRange
+} from '../layer-factory';
+import {ColorRange} from '../../constants/color-ranges';
+import {Merge} from '../../reducers';
+
+export type IconLayerColumnsConfig = {
+  lat: LayerColumn;
+  lng: LayerColumn;
+  altitude: LayerColumn;
+  icon: LayerColumn;
+};
+
+type IconGeometry = {};
+
+export type IconLayerVisConfigSettings = {
+  radius: VisConfigNumber;
+  fixedRadius: VisConfigBoolean;
+  opacity: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  radiusRange: VisConfigRange;
+};
+
+export type IconLayerVisConfig = {
+  radius: number;
+  fixedRadius: boolean;
+  opacity: number;
+  colorRange: ColorRange;
+  radiusRange: [number, number];
+};
+
+export type IconLayerConfig = Merge<
+  LayerBaseConfig,
+  {columns: IconLayerColumnsConfig; visConfig: IconLayerVisConfig}
+>;
 
 const brushingExtension = new BrushingExtension();
 
 export const SVG_ICON_URL = `${CLOUDFRONT}/icons/svg-icons.json`;
 
-export const iconPosAccessor = ({lat, lng, altitude}) => dc => d => [
+export const iconPosAccessor = ({lat, lng, altitude}: IconLayerColumnsConfig) => (
+  dc: DataContainerInterface
+) => d => [
   dc.valueAt(d.index, lng.fieldIdx),
   dc.valueAt(d.index, lat.fieldIdx),
   altitude?.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
 ];
 
-export const iconAccessor = ({icon}) => dc => d => dc.valueAt(d.index, icon.fieldIdx);
+export const iconAccessor = ({icon}: IconLayerColumnsConfig) => (dc: DataContainerInterface) => d =>
+  dc.valueAt(d.index, icon.fieldIdx);
 
-export const iconRequiredColumns = ['lat', 'lng', 'icon'];
-export const iconOptionalColumns = ['altitude'];
+export const iconRequiredColumns: ['lat', 'lng', 'icon'] = ['lat', 'lng', 'icon'];
+export const iconOptionalColumns: ['altitude'] = ['altitude'];
 
 export const pointVisConfigs = {
   radius: 'radius',
@@ -64,7 +107,19 @@ function flatterIconPositions(icon) {
 }
 
 export default class IconLayer extends Layer {
-  constructor(props = {}) {
+  getIconAccessor: (dataContainer: DataContainerInterface) => (d: any) => any;
+  _layerInfoModal: () => JSX.Element;
+  iconGeometry: IconGeometry;
+
+  declare visConfigSettings: IconLayerVisConfigSettings;
+  declare config: IconLayerConfig;
+
+  constructor(
+    props: {
+      id?: string;
+      iconGeometry?: IconGeometry;
+    } & Partial<LayerBaseConfig> = {}
+  ) {
     super(props);
 
     this.registerVisConfig(pointVisConfigs);
@@ -77,7 +132,7 @@ export default class IconLayer extends Layer {
     this.getSvgIcons();
   }
 
-  get type() {
+  get type(): 'icon' {
     return 'icon';
   }
 
@@ -136,7 +191,7 @@ export default class IconLayer extends Layer {
       window
         .fetch(SVG_ICON_URL, fetchConfig)
         .then(response => response.json())
-        .then((parsed = {}) => {
+        .then((parsed: {svgIcons?: any[]} = {}) => {
           const {svgIcons = []} = parsed;
           this.iconGeometry = svgIcons.reduce(
             (accu, curr) => ({
