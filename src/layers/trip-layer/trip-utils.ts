@@ -24,13 +24,15 @@ import {timeToUnixMilli, notNullorUndefined} from 'utils/data-utils';
 import {getSampleData} from 'utils/table-utils/data-container-utils';
 
 import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from 'layers/geojson-layer/geojson-utils';
+import {Field} from '../../utils/table-utils/kepler-table';
+import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 
 /**
  * Parse geojson from string
  * @param {array} samples feature object values
- * @returns {boolean} whether the geometry coordinates has length of 4
+ * @returns whether the geometry coordinates has length of 4
  */
-export function coordHasLength4(samples) {
+export function coordHasLength4(samples): boolean {
   let hasLength4 = true;
   for (let i = 0; i < samples.length; i += 1) {
     hasLength4 = !samples[i].geometry.coordinates.find(c => c.length < 4);
@@ -43,11 +45,10 @@ export function coordHasLength4(samples) {
 
 /**
  * Check whether geojson linestring's 4th coordinate is 1) not timestamp 2) unix time stamp 3) real date time
- * @param {array} timestamps array to be tested if its elements are timestamp
- * @returns {object | boolean} the type of timestamp: unix/datetime/invalid(not timestamp)
+ * @param timestamps array to be tested if its elements are timestamp
+ * @returns the type of timestamp: unix/datetime/invalid(not timestamp)
  */
-
-export function containValidTime(timestamps) {
+export function containValidTime(timestamps: string[]): Field | null {
   const formattedTimeStamps = timestamps.map(ts => ({ts}));
   const ignoredDataTypes = Object.keys(DATA_TYPES).filter(
     type => ![DATA_TYPES.TIME, DATA_TYPES.DATETIME].includes(type)
@@ -64,11 +65,11 @@ export function containValidTime(timestamps) {
 
 /**
  * Check if geojson features are trip layer animatable by meeting 3 conditions
- * @param {import('utils/table-utils/data-container-interface').DataContainerInterface} dataContainer geojson feature objects container
+ * @param dataContainer geojson feature objects container
  * @param {object} field array of geojson feature objects
- * @returns {boolean} whether it is trip layer animatable
+ * @returns whether it is trip layer animatable
  */
-export function isTripGeoJsonField(dataContainer, field) {
+export function isTripGeoJsonField(dataContainer: DataContainerInterface, field): boolean {
   if (dataContainer.numRows() < 1) {
     return false;
   }
@@ -101,10 +102,10 @@ export function isTripGeoJsonField(dataContainer, field) {
 
 /**
  * Get unix timestamp from animatable geojson for deck.gl trip layer
- * @param {Array<Object>} dataToFeature array of geojson feature objects, can be null
- * @returns {{dataToTimeStamp: Array[Number], animationDomain: null | Array<Number>}} {dataToTimeStamp: [], animationDomain: null}
+ * @param dataToFeature array of geojson feature objects, can be null
+ * @returns
  */
-export function parseTripGeoJsonTimestamp(dataToFeature) {
+export function parseTripGeoJsonTimestamp(dataToFeature: any[]) {
   // Analyze type based on coordinates of the 1st lineString
   // select a sample trip to analyze time format
   const empty = {dataToTimeStamp: [], animationDomain: null};
@@ -127,7 +128,7 @@ export function parseTripGeoJsonTimestamp(dataToFeature) {
   const getTimeValue = coord =>
     coord && notNullorUndefined(coord[3]) ? timeToUnixMilli(coord[3], format) : null;
 
-  const dataToTimeStamp = dataToFeature.map(f =>
+  const dataToTimeStamp: number[][] = dataToFeature.map(f =>
     f && f.geometry && Array.isArray(f.geometry.coordinates)
       ? f.geometry.coordinates.map(getTimeValue)
       : null
@@ -138,11 +139,11 @@ export function parseTripGeoJsonTimestamp(dataToFeature) {
   return {dataToTimeStamp, animationDomain};
 }
 
-function findMinFromSorted(list = []) {
+function findMinFromSorted(list: number[] = []) {
   return list.find(d => notNullorUndefined(d) && Number.isFinite(d)) || null;
 }
 
-function findMaxFromSorted(list = []) {
+function findMaxFromSorted(list: number[] = []) {
   let i = list.length - 1;
   while (i > 0) {
     if (notNullorUndefined(list[i]) && Number.isFinite(list[i])) {
@@ -153,12 +154,17 @@ function findMaxFromSorted(list = []) {
   return null;
 }
 
-export function getAnimationDomainFromTimestamps(dataToTimeStamp = []) {
+export function getAnimationDomainFromTimestamps(dataToTimeStamp: number[][] = []) {
   return dataToTimeStamp.reduce(
-    (accu, tss) => {
+    (accu: [number, number], tss) => {
       const tsMin = findMinFromSorted(tss);
       const tsMax = findMaxFromSorted(tss);
-      if (Number.isFinite(tsMin) && Number.isFinite(tsMax)) {
+      if (
+        notNullorUndefined(tsMin) &&
+        notNullorUndefined(tsMax) &&
+        Number.isFinite(tsMin) &&
+        Number.isFinite(tsMax)
+      ) {
         accu[0] = Math.min(accu[0], tsMin);
         accu[1] = Math.max(accu[1], tsMax);
       }

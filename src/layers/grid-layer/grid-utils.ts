@@ -19,45 +19,66 @@
 // THE SOFTWARE.
 
 import {WebMercatorViewport} from '@deck.gl/core';
-import Console from 'global/console';
+import {MapState} from '../../reducers';
 
-export function hexagonToPolygonGeo(object, properties, radius, mapState) {
+/**
+ * top left of the grid to a square polygon for the hover layer
+ * and current latitude
+ * @param object
+ * @param cellSize
+ * @param coverage
+ * @param properties
+ * @param mapState
+ * @returns - geojson feature
+ */
+
+// TODO: TEST
+export function pointToPolygonGeo({
+  object,
+  cellSize,
+  coverage,
+  properties,
+  mapState
+}: {
+  object: any;
+  cellSize: number;
+  coverage: number;
+  properties?: any;
+  mapState: MapState;
+}) {
+  const {position} = object;
   const viewport = new WebMercatorViewport(mapState);
-  if (!Array.isArray(object.position)) {
+
+  if (!position) {
     return null;
   }
-
-  const screenCenter = viewport.projectFlat(object.position);
-  const {unitsPerMeter} = viewport.getDistanceScales(object.position);
-
-  if (!Array.isArray(unitsPerMeter)) {
-    Console.warn(`unitsPerMeter is undefined`);
-    return null;
-  }
-
-  const pixRadius = radius * unitsPerMeter[0];
-
-  const coordinates = [];
-
-  for (let i = 0; i < 6; i++) {
-    const vertex = hex_corner(screenCenter, pixRadius, i);
-    coordinates.push(viewport.unprojectFlat(vertex));
-  }
-
-  coordinates.push(coordinates[0]);
 
   return {
     geometry: {
-      coordinates,
+      coordinates: [
+        viewport.addMetersToLngLat(position, [
+          cellSize * (0.5 - coverage / 2),
+          cellSize * (0.5 - coverage / 2)
+        ]),
+        viewport.addMetersToLngLat(position, [
+          cellSize * (0.5 + coverage / 2),
+          cellSize * (0.5 - coverage / 2)
+        ]),
+        viewport.addMetersToLngLat(position, [
+          cellSize * (0.5 + coverage / 2),
+          cellSize * (0.5 + coverage / 2)
+        ]),
+        viewport.addMetersToLngLat(position, [
+          cellSize * (0.5 - coverage / 2),
+          cellSize * (0.5 + coverage / 2)
+        ]),
+        viewport.addMetersToLngLat(position, [
+          cellSize * (0.5 - coverage / 2),
+          cellSize * (0.5 - coverage / 2)
+        ])
+      ],
       type: 'LineString'
     },
     properties
   };
-}
-
-function hex_corner(center, radius, i) {
-  const angle_deg = 60 * i + 30;
-  const angle_rad = (Math.PI / 180) * angle_deg;
-
-  return [center[0] + radius * Math.cos(angle_rad), center[1] + radius * Math.sin(angle_rad)];
 }

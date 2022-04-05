@@ -22,10 +22,58 @@ import {BrushingExtension} from '@deck.gl/extensions';
 
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import LineLayerIcon from './line-layer-icon';
-import ArcLayer from '../arc-layer/arc-layer';
+import ArcLayer, {ArcLayerConfig} from '../arc-layer/arc-layer';
 import EnhancedLineLayer from 'deckgl-layers/line-layer/line-layer';
+import {LayerColumn} from '../base-layer';
+import {
+  VisConfigColorRange,
+  VisConfigColorSelect,
+  VisConfigNumber,
+  VisConfigRange
+} from '../layer-factory';
+import {ColorRange} from '../../constants/color-ranges';
+import {Merge, RGBColor} from '../../reducers';
 
-export const linePosAccessor = ({lat0, lng0, lat1, lng1, alt0, alt1}) => dc => d => [
+export type LineLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  thickness: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  sizeRange: VisConfigRange;
+  targetColor: VisConfigColorSelect;
+  elevationScale: VisConfigNumber;
+};
+
+export type LineLayerColumnsConfig = {
+  lat0: LayerColumn;
+  lng0: LayerColumn;
+  lat1: LayerColumn;
+  lng1: LayerColumn;
+  alt0?: LayerColumn;
+  alt1?: LayerColumn;
+};
+
+export type LineLayerVisConfig = {
+  colorRange: ColorRange;
+  opacity: number;
+  sizeRange: [number, number];
+  targetColor: RGBColor;
+  thickness: number;
+  elevationScale: number;
+};
+
+export type LineLayerConfig = Merge<
+  ArcLayerConfig,
+  {columns: LineLayerColumnsConfig; visConfig: LineLayerVisConfig}
+>;
+
+export const linePosAccessor = ({
+  lat0,
+  lng0,
+  lat1,
+  lng1,
+  alt0,
+  alt1
+}: LineLayerColumnsConfig) => dc => d => [
   dc.valueAt(d.index, lng0.fieldIdx),
   dc.valueAt(d.index, lat0.fieldIdx),
   alt0?.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
@@ -34,8 +82,13 @@ export const linePosAccessor = ({lat0, lng0, lat1, lng1, alt0, alt1}) => dc => d
   alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
 ];
 
-export const lineRequiredColumns = ['lat0', 'lng0', 'lat1', 'lng1'];
-export const lineOptionalColumns = ['alt0', 'alt1'];
+export const lineRequiredColumns: ['lat0', 'lng0', 'lat1', 'lng1'] = [
+  'lat0',
+  'lng0',
+  'lat1',
+  'lng1'
+];
+export const lineOptionalColumns: ['alt0', 'alt1'] = ['alt0', 'alt1'];
 
 export const lineColumnLabels = {
   lat0: 'arc.lat0',
@@ -59,6 +112,9 @@ export const lineVisConfigs = {
 };
 
 export default class LineLayer extends ArcLayer {
+  declare visConfigSettings: LineLayerVisConfigSettings;
+  declare config: LineLayerConfig;
+
   constructor(props) {
     super(props);
 
@@ -101,18 +157,18 @@ export default class LineLayer extends ArcLayer {
     if (fieldPairs.length < 2) {
       return {props: []};
     }
-    const props = {};
-
-    // connect the first two point layer with line
-    props.columns = {
-      lat0: fieldPairs[0].pair.lat,
-      lng0: fieldPairs[0].pair.lng,
-      alt0: {value: null, fieldIdx: -1, optional: true},
-      lat1: fieldPairs[1].pair.lat,
-      lng1: fieldPairs[1].pair.lng,
-      alt1: {value: null, fieldIdx: -1, optional: true}
+    const props: {columns: LineLayerColumnsConfig; label: string} = {
+      // connect the first two point layer with line
+      columns: {
+        lat0: fieldPairs[0].pair.lat,
+        lng0: fieldPairs[0].pair.lng,
+        alt0: {value: null, fieldIdx: -1, optional: true},
+        lat1: fieldPairs[1].pair.lat,
+        lng1: fieldPairs[1].pair.lng,
+        alt1: {value: null, fieldIdx: -1, optional: true}
+      },
+      label: `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} line`
     };
-    props.label = `${fieldPairs[0].defaultName} -> ${fieldPairs[1].defaultName} line`;
 
     return {props: [props]};
   }

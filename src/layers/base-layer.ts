@@ -92,6 +92,7 @@ export type LayerBaseConfig = {
   };
   animation: {
     enabled: boolean;
+    domain?: null;
   };
 };
 
@@ -111,12 +112,23 @@ export type LayerHeightConfig = {
   heightDomain: VisualChannelDomain;
   heightScale: VisualChannelScale;
 };
-
+export type LayerStrokeColorConfig = {
+  strokeColorField: VisualChannelField;
+  strokeColorDomain: VisualChannelDomain;
+  strokeColorScale: VisualChannelScale;
+};
+export type LayerCoverageConfig = {
+  coverageField: VisualChannelField;
+  coverageDomain: VisualChannelDomain;
+  coverageScale: VisualChannelScale;
+};
 export type LayerWeightConfig = {
   weightField: VisualChannelField;
 };
 
 export type VisualChannels = {[key: string]: VisualChannel};
+
+export type VisualChannelAggregation = 'colorAggregation' | 'sizeAggregation';
 
 export type VisualChannel = {
   property: string;
@@ -137,7 +149,9 @@ export type VisualChannel = {
   // TODO: define fixed
   fixed?: any;
 
-  supportedFieldTypes?: boolean;
+  supportedFieldTypes?: Array<keyof typeof ALL_FIELD_TYPES>;
+
+  aggregation?: VisualChannelAggregation;
 };
 
 export type VisualChannelDescription = {
@@ -149,6 +163,12 @@ export type ColumnPairs = {[key: string]: {pair: string; fieldPairKey: string}};
 
 type ColumnValidator = (column: LayerColumn, columns: LayerColumns, allFields: Field[]) => boolean;
 
+export type UpdateTriggers = {
+  [key: string]: UpdateTrigger;
+};
+export type UpdateTrigger = {
+  [key: string]: {};
+};
 export type LayerBounds = [number, number, number, number];
 /**
  * Approx. number of points to sample in a large data set
@@ -411,7 +431,7 @@ class Layer {
 
   getDefaultLayerConfig(
     props: Partial<LayerBaseConfig> = {}
-  ): LayerBaseConfig & LayerColorConfig & LayerSizeConfig {
+  ): LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig> {
     return {
       dataId: props.dataId || null,
       label: props.label || DEFAULT_LAYER_LABEL,
@@ -672,7 +692,9 @@ class Layer {
     return {...required, ...optional};
   }
 
-  updateLayerConfig(newConfig: Partial<LayerBaseConfig>): Layer {
+  updateLayerConfig<LayerConfig extends LayerBaseConfig = LayerBaseConfig>(
+    newConfig: Partial<LayerConfig>
+  ): Layer {
     this.config = {...this.config, ...newConfig};
     return this;
   }
@@ -1157,8 +1179,8 @@ class Layer {
     this.updateLayerConfig({[visualChannel.domain]: updatedDomain});
   }
 
-  getVisualChannelUpdateTriggers() {
-    const updateTriggers = {};
+  getVisualChannelUpdateTriggers(): UpdateTriggers {
+    const updateTriggers: UpdateTriggers = {};
     Object.values(this.visualChannels).forEach(visualChannel => {
       // field range scale domain
       const {accessor, field, scale, domain, range, defaultValue, fixed} = visualChannel;
@@ -1191,7 +1213,7 @@ class Layer {
     return dataset.getColumnLayerDomain(field, scaleType) || defaultDomain;
   }
 
-  hasHoveredObject(objectInfo): boolean {
+  hasHoveredObject(objectInfo) {
     return this.isLayerHovered(objectInfo) && objectInfo.object ? objectInfo.object : null;
   }
 
@@ -1199,7 +1221,7 @@ class Layer {
     return objectInfo?.picked && objectInfo?.layer?.props?.id === this.id;
   }
 
-  getRadiusScaleByZoom(mapState, fixedRadius) {
+  getRadiusScaleByZoom(mapState: MapState, fixedRadius?: boolean) {
     const radiusChannel = Object.values(this.visualChannels).find(vc => vc.property === 'radius');
 
     if (!radiusChannel) {
@@ -1210,7 +1232,6 @@ class Layer {
     const fixed = fixedRadius === undefined ? this.config.visConfig.fixedRadius : fixedRadius;
     const {radius} = this.config.visConfig;
 
-    // @ts-ignore
     return fixed ? 1 : (this.config[field] ? 1 : radius) * this.getZoomFactor(mapState);
   }
 

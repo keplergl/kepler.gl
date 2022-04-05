@@ -19,11 +19,56 @@
 // THE SOFTWARE.
 
 import {GeoJsonLayer} from '@deck.gl/layers';
-import AggregationLayer from '../aggregation-layer';
+import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import EnhancedHexagonLayer from 'deckgl-layers/hexagon-layer/enhanced-hexagon-layer';
 import {hexagonToPolygonGeo} from './hexagon-utils';
 import HexagonLayerIcon from './hexagon-layer-icon';
 import {clamp} from 'utils/data-utils';
+import {Merge} from '../../reducers';
+import {
+  AggregationTypes,
+  VisConfigBoolean,
+  VisConfigColorRange,
+  VisConfigNumber,
+  VisConfigRange,
+  VisConfigSelection
+} from '../layer-factory';
+import {ColorRange} from '../../constants/color-ranges';
+import {AGGREGATION_TYPES} from '../../constants/default-settings';
+
+export type HexagonLayerVisConfigSettings = {
+  opacity: VisConfigNumber;
+  worldUnitSize: VisConfigNumber;
+  resolution: VisConfigNumber;
+  colorRange: VisConfigColorRange;
+  coverage: VisConfigNumber;
+  sizeRange: VisConfigRange;
+  percentile: VisConfigRange;
+  elevationPercentile: VisConfigRange;
+  elevationScale: VisConfigNumber;
+  enableElevationZoomFactor: VisConfigBoolean;
+  colorAggregation: VisConfigSelection;
+  sizeAggregation: VisConfigSelection;
+  enable3d: VisConfigBoolean;
+};
+
+export type HexagonLayerVisConfig = {
+  opacity: number;
+  worldUnitSize: number;
+  resolution: number;
+  colorRange: ColorRange;
+  coverage: number;
+  sizeRange: [number, number];
+  percentile: [number, number];
+  elevationPercentile: [number, number];
+  elevationScale: number;
+  enableElevationZoomFactor: boolean;
+  colorAggregation: AggregationTypes;
+  sizeAggregation: AggregationTypes;
+  enable3d: boolean;
+};
+
+export type HexagonLayerConfig = Merge<AggregationLayerConfig, {visConfig: HexagonLayerVisConfig}>;
 
 export const hexagonVisConfigs = {
   opacity: 'opacity',
@@ -42,6 +87,9 @@ export const hexagonVisConfigs = {
 };
 
 export default class HexagonLayer extends AggregationLayer {
+  declare visConfigSettings: HexagonLayerVisConfigSettings;
+  declare config: HexagonLayerConfig;
+
   constructor(props) {
     super(props);
 
@@ -49,11 +97,11 @@ export default class HexagonLayer extends AggregationLayer {
     this.visConfigSettings.worldUnitSize.label = 'columns.hexagon.worldUnitSize';
   }
 
-  get type() {
+  get type(): 'hexagon' {
     return 'hexagon';
   }
 
-  get name() {
+  get name(): 'Hexbin' {
     return 'Hexbin';
   }
 
