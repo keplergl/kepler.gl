@@ -25,9 +25,15 @@ import {createDataContainer} from 'utils/table-utils';
 import {ColorRange} from '../../constants/color-ranges';
 import {Merge, RGBColor} from '../../reducers';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
-import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
+import Layer, {
+  LayerBaseConfig,
+  LayerColorConfig,
+  LayerColumn,
+  LayerSizeConfig,
+  LayerStrokeColorConfig,
+  LayerHeightConfig
+} from '../base-layer';
 import {
-  LayerVisConfigSettings,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigColorSelect,
@@ -73,10 +79,15 @@ export type S2GeometryLayerVisConfig = {
   wireframe: boolean;
 };
 
+export type S2GeometryLayerVisualChannelConfig = LayerColorConfig &
+  LayerSizeConfig &
+  LayerStrokeColorConfig &
+  LayerHeightConfig;
 export type S2GeometryLayerConfig = Merge<
   LayerBaseConfig,
   {columns: S2GeometryLayerColumnsConfig; visConfig: S2GeometryLayerVisConfig}
->;
+> &
+  S2GeometryLayerVisualChannelConfig;
 
 const zoomFactorValue = 8;
 
