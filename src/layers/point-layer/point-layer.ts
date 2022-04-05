@@ -25,7 +25,8 @@ import Layer, {
   LayerBaseConfig,
   LayerColorConfig,
   LayerColumn,
-  LayerSizeConfig
+  LayerSizeConfig,
+  LayerStrokeColorConfig
 } from '../base-layer';
 import {hexToRgb} from 'utils/color-utils';
 import {findDefaultColorField} from 'utils/dataset-utils';
@@ -74,7 +75,9 @@ export type PointLayerVisConfig = {
   radiusRange: [number, number];
   filled: boolean;
 };
-export type PointLayerVisualChannelConfig = LayerColorConfig & LayerSizeConfig;
+export type PointLayerVisualChannelConfig = LayerColorConfig &
+  LayerSizeConfig &
+  LayerStrokeColorConfig;
 export type PointLayerConfig = Merge<
   LayerBaseConfig,
   {columns: PointLayerColumnsConfig; visConfig: PointLayerVisConfig}
