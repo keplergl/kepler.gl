@@ -20,6 +20,39 @@
 
 import {Upload} from 'components/common/icons';
 
+// import {} from 'prop-types';
+import {MapData, ExportFileOptions} from 'actions/provider-actions';
+import {ComponentType} from 'react';
+
+export type Millisecond = number;
+
+export type MapListItem = {
+  id: string;
+  title: string;
+  description: string;
+  loadParams: any;
+  imageUrl?: string;
+  lastModification?: Millisecond;
+  privateMap?: boolean;
+};
+
+export type Thumbnail = {
+  width: number;
+  height: number;
+};
+
+export type ProviderProps = {
+  name?: string;
+  displayName?: string;
+  icon?: ComponentType<IconProps>;
+  thumbnail?: Thumbnail;
+};
+
+interface IconProps {
+  height?: number | string;
+  width?: number | string;
+}
+
 const NAME = 'cloud-provider';
 const DISPLAY_NAME = 'Cloud Provider';
 const THUMBNAIL = {width: 300, height: 200};
@@ -45,7 +78,13 @@ export const FILE_CONFLICT_MSG = 'file_conflict';
  * })
  */
 export default class Provider {
-  constructor(props) {
+  name: string;
+  displayName: string;
+  icon: ComponentType<IconProps>;
+  thumbnail: Thumbnail;
+  getManagementUrl?: () => string;
+
+  constructor(props: ProviderProps) {
     this.name = props.name || NAME;
     this.displayName = props.displayName || DISPLAY_NAME;
     this.icon = props.icon || ICON;
@@ -54,57 +93,57 @@ export default class Provider {
 
   /**
    * Whether this provider support upload map to a private storage. If truthy, user will be displayed with the storage save icon on the top right of the side bar.
-   * @returns {boolean}
+   * @returns
    * @public
    */
-  hasPrivateStorage() {
+  hasPrivateStorage(): boolean {
     return true;
   }
 
   /**
    * Whether this provider support share map via a public url, if truthy, user will be displayed with a share map via url under the export map option on the top right of the side bar
-   * @returns {boolean}
+   * @returns
    * @public
    */
-  hasSharingUrl() {
+  hasSharingUrl(): boolean {
     return true;
   }
 
   /**
    * This method is called after user share a map, to display the share url.
-   * @param {boolean} fullUrl - Whether to return the full url with domain, or just the location
-   * @returns {string} shareUrl
+   * @param fullUrl - Whether to return the full url with domain, or just the location
+   * @returns shareUrl
    * @public
    */
-  getShareUrl(fullUrl = false) {
+  getShareUrl(fullUrl: boolean = false): string {
     return '';
   }
 
   /**
    * This method is called by kepler.gl demo app to pushes a new location to history, becoming the current location.
-   * @param {boolean} fullURL - Whether to return the full url with domain, or just the location
-   * @returns {string} mapUrl
+   * @param fullURL - Whether to return the full url with domain, or just the location
+   * @returns mapUrl
    * @public
    */
-  getMapUrl(fullURL = true) {
+  getMapUrl(fullURL: boolean = true): string {
     return '';
   }
 
   /**
    * This method is called to determine whether user already logged in to this provider
    * @public
-   * @returns {boolean} true if a user already logged in
+   * @returns true if a user already logged in
    */
-  getAccessToken() {
+  getAccessToken(): boolean {
     return true;
   }
 
   /**
    * This method is called to get the user name of the current user. It will be displayed in the cloud provider tile.
    * @public
-   * @returns {string} true if a user already logged in
+   * @returns true if a user already logged in
    */
-  getUserName() {
+  getUserName(): string {
     return '';
   }
 
@@ -150,7 +189,13 @@ export default class Provider {
    * @param {boolean} [param.options.isPublic] - whether user wish to share the map with others. if isPublic is truthy, kepler will call this.getShareUrl() to display an URL they can share with others
    * @public
    */
-  async uploadMap({mapData, options = {}}) {
+  async uploadMap({
+    mapData,
+    options = {}
+  }: {
+    mapData: MapData;
+    options: ExportFileOptions;
+  }): Promise<any> {
     return;
   }
 
@@ -173,7 +218,7 @@ export default class Provider {
    *    ];
    *  }
    */
-  async listMaps() {
+  async listMaps(): Promise<MapListItem[]> {
     return [];
   }
 
@@ -202,7 +247,8 @@ export default class Provider {
    *  return downloadMap;
    * }
    */
-  async downloadMap(loadParams) {
+  async downloadMap(loadParams): Promise<{map: MapData; format: string}> {
+    // @ts-expect-error
     return;
   }
 
