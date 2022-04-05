@@ -19,8 +19,6 @@
 // THE SOFTWARE.
 
 import {Upload} from 'components/common/icons';
-
-// import {} from 'prop-types';
 import {MapData, ExportFileOptions} from 'actions/provider-actions';
 import {ComponentType} from 'react';
 
