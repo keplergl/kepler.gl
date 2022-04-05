@@ -444,7 +444,21 @@ export const CHANNEL_SCALES = keyMirror({
   sizeAggr: null
 });
 
-export const AGGREGATION_TYPES = {
+export const AGGREGATION_TYPES: {
+  // default
+  count: 'count';
+  // linear
+  average: 'average';
+  maximum: 'maximum';
+  minimum: 'minimum';
+  median: 'median';
+  stdev: 'stdev';
+  sum: 'sum';
+  variance: 'variance';
+  // ordinal
+  mode: 'mode';
+  countUnique: 'count unique';
+} = {
   // default
   count: 'count',
   // linear

@@ -24,6 +24,7 @@ import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import {pointToPolygonGeo} from './grid-utils';
 import GridLayerIcon from './grid-layer-icon';
 import {
+  AggregationTypes,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigNumber,
@@ -59,8 +60,8 @@ export type GridLayerVisConfig = {
   elevationPercentile: [number, number];
   elevationScale: number;
   enableElevationZoomFactor: boolean;
-  colorAggregation: keyof typeof AGGREGATION_TYPES;
-  sizeAggregation: keyof typeof AGGREGATION_TYPES;
+  colorAggregation: AggregationTypes;
+  sizeAggregation: AggregationTypes;
   enable3d: boolean;
 };
 
