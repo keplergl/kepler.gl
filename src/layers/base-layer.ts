@@ -1213,7 +1213,7 @@ class Layer {
     return objectInfo?.picked && objectInfo?.layer?.props?.id === this.id;
   }
 
-  getRadiusScaleByZoom(mapState, fixedRadius) {
+  getRadiusScaleByZoom(mapState: MapState, fixedRadius?: boolean) {
     const radiusChannel = Object.values(this.visualChannels).find(vc => vc.property === 'radius');
 
     if (!radiusChannel) {
@@ -1224,7 +1224,6 @@ class Layer {
     const fixed = fixedRadius === undefined ? this.config.visConfig.fixedRadius : fixedRadius;
     const {radius} = this.config.visConfig;
 
-    // @ts-ignore
     return fixed ? 1 : (this.config[field] ? 1 : radius) * this.getZoomFactor(mapState);
   }
 
