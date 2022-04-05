@@ -26,6 +26,7 @@ import HexagonLayerIcon from './hexagon-layer-icon';
 import {clamp} from 'utils/data-utils';
 import {Merge} from '../../reducers';
 import {
+  AggregationTypes,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigNumber,
@@ -62,8 +63,8 @@ export type HexagonLayerVisConfig = {
   elevationPercentile: [number, number];
   elevationScale: number;
   enableElevationZoomFactor: boolean;
-  colorAggregation: keyof typeof AGGREGATION_TYPES;
-  sizeAggregation: keyof typeof AGGREGATION_TYPES;
+  colorAggregation: AggregationTypes;
+  sizeAggregation: AggregationTypes;
   enable3d: boolean;
 };
 

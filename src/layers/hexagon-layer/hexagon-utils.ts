@@ -20,6 +20,7 @@
 
 import {WebMercatorViewport} from '@deck.gl/core';
 import Console from 'global/console';
+import {Centroid} from '../h3-hexagon-layer/h3-utils';
 
 export function hexagonToPolygonGeo(object, properties, radius, mapState) {
   const viewport = new WebMercatorViewport(mapState);
@@ -55,7 +56,7 @@ export function hexagonToPolygonGeo(object, properties, radius, mapState) {
   };
 }
 
-function hex_corner(center, radius: number, i: number) {
+function hex_corner(center: Centroid, radius: number, i: number) {
   const angle_deg = 60 * i + 30;
   const angle_rad = (Math.PI / 180) * angle_deg;
 

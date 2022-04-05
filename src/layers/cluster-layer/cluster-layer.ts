@@ -25,6 +25,7 @@ import DeckGLClusterLayer from 'deckgl-layers/cluster-layer/cluster-layer';
 import {CHANNEL_SCALES} from 'constants/default-settings';
 import ClusterLayerIcon from './cluster-layer-icon';
 import {
+  AggregationTypes,
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
@@ -48,7 +49,7 @@ export type ClusterLayerVisConfig = {
   clusterRadius: number;
   colorRange: ColorRange;
   radiusRange: [number, number];
-  colorAggregation: keyof typeof AGGREGATION_TYPES;
+  colorAggregation: AggregationTypes;
 };
 
 export type ClusterLayerConfig = Merge<AggregationLayerConfig, {visConfig: ClusterLayerVisConfig}>;

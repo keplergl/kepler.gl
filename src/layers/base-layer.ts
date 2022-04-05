@@ -128,6 +128,8 @@ export type LayerWeightConfig = {
 
 export type VisualChannels = {[key: string]: VisualChannel};
 
+export type VisualChannelAggregation = 'colorAggregation' | 'sizeAggregation';
+
 export type VisualChannel = {
   property: string;
   field: string;
@@ -149,7 +151,7 @@ export type VisualChannel = {
 
   supportedFieldTypes?: Array<keyof typeof ALL_FIELD_TYPES>;
 
-  aggregation?: 'colorAggregation' | 'sizeAggregation';
+  aggregation?: VisualChannelAggregation;
 };
 
 export type VisualChannelDescription = {

@@ -42,6 +42,8 @@ export type LayerTextLabel = {
   alignment: string;
 };
 
+export type AggregationTypes = keyof typeof AGGREGATION_TYPES;
+
 export type ColorUI = {
   // customPalette in edit
   customPalette: ColorRange;
@@ -97,9 +99,8 @@ export type VisConfigBoolean = VisConfig & {
 
 export type VisConfigSelection = VisConfig & {
   type: 'select';
-  // TODO: replace string with keyof typeof AGGREGATION_TYPES;
-  defaultValue: string;
-  options: string[];
+  defaultValue: AggregationTypes;
+  options: Array<AggregationTypes>;
 };
 
 export type VisConfigRange = VisConfig & {
@@ -421,7 +422,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     defaultValue: AGGREGATION_TYPES.average,
     label: 'layerVisConfigs.colorAggregation',
     // aggregation options are based on color field types
-    options: Object.keys(AGGREGATION_TYPES),
+    options: Object.keys(AGGREGATION_TYPES) as Array<AggregationTypes>,
     group: PROPERTY_GROUPS.color,
     property: 'colorAggregation',
     condition: config => Boolean(config.colorField)
@@ -431,7 +432,7 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     defaultValue: AGGREGATION_TYPES.average,
     label: 'layerVisConfigs.heightAggregation',
     // aggregation options are based on color field types
-    options: Object.keys(AGGREGATION_TYPES),
+    options: Object.keys(AGGREGATION_TYPES) as Array<AggregationTypes>,
     group: PROPERTY_GROUPS.height,
     property: 'sizeAggregation',
     condition: config => Boolean(config.sizeField)
