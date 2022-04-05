@@ -111,7 +111,11 @@ export type LayerHeightConfig = {
   heightDomain: VisualChannelDomain;
   heightScale: VisualChannelScale;
 };
-
+export type LayerStrokeColorConfig = {
+  strokeColorField: VisualChannelField;
+  strokeColorDomain: VisualChannelDomain;
+  strokeColorScale: VisualChannelScale;
+};
 export type LayerWeightConfig = {
   weightField: VisualChannelField;
 };
