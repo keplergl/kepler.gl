@@ -25,8 +25,8 @@ import bbox from '@turf/bbox';
 import {getSampleData} from '../../utils/data-utils';
 import {Feature, BBox} from 'geojson';
 
-type GetFeature = (d: any) => Feature;
-type GeojsonDataMaps = Array<Feature | null>;
+export type GetFeature = (d: any) => Feature;
+export type GeojsonDataMaps = Array<Feature | null>;
 
 export enum FeatureTypes {
   Point = 'Point',
