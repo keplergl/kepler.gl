@@ -43,7 +43,7 @@ export type ScenegraphLayerVisConfigSettings = {
 export type ScenegraphLayerColumnsConfig = {
   lat: LayerColumn;
   lng: LayerColumn;
-  altitude: LayerColumn;
+  altitude?: LayerColumn;
 };
 
 export type ScenegraphLayerVisConfig = {
