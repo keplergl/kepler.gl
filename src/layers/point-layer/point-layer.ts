@@ -21,22 +21,77 @@
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
-import Layer from '../base-layer';
+import Layer, {
+  LayerBaseConfig,
+  LayerColorConfig,
+  LayerColumn,
+  LayerSizeConfig,
+  LayerStrokeColorConfig
+} from '../base-layer';
 import {hexToRgb} from 'utils/color-utils';
 import {findDefaultColorField} from 'utils/dataset-utils';
 import PointLayerIcon from './point-layer-icon';
 import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
+import {Merge, RGBColor} from '../../reducers';
+import {
+  VisConfigBoolean,
+  VisConfigColorRange,
+  VisConfigColorSelect,
+  VisConfigNumber,
+  VisConfigRange
+} from '../layer-factory';
+import {ColorRange} from '../../constants/color-ranges';
 
-export const pointPosAccessor = ({lat, lng, altitude}) => dc => d => [
+export type PointLayerVisConfigSettings = {
+  radius: VisConfigNumber;
+  fixedRadius: VisConfigBoolean;
+  opacity: VisConfigNumber;
+  outline: VisConfigBoolean;
+  thickness: VisConfigNumber;
+  strokeColor: VisConfigColorSelect;
+  colorRange: VisConfigColorRange;
+  strokeColorRange: VisConfigColorRange;
+  radiusRange: VisConfigRange;
+  filled: VisConfigBoolean;
+};
+
+export type PointLayerColumnsConfig = {
+  lat: LayerColumn;
+  lng: LayerColumn;
+  altitude: LayerColumn;
+};
+
+export type PointLayerVisConfig = {
+  radius: number;
+  fixedRadius: boolean;
+  opacity: number;
+  outline: boolean;
+  thickness: number;
+  strokeColor: RGBColor;
+  colorRange: ColorRange;
+  strokeColorRange: ColorRange;
+  radiusRange: [number, number];
+  filled: boolean;
+};
+export type PointLayerVisualChannelConfig = LayerColorConfig &
+  LayerSizeConfig &
+  LayerStrokeColorConfig;
+export type PointLayerConfig = Merge<
+  LayerBaseConfig,
+  {columns: PointLayerColumnsConfig; visConfig: PointLayerVisConfig}
+> &
+  PointLayerVisualChannelConfig;
+
+export const pointPosAccessor = ({lat, lng, altitude}: PointLayerColumnsConfig) => dc => d => [
   dc.valueAt(d.index, lng.fieldIdx),
   dc.valueAt(d.index, lat.fieldIdx),
   altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
 ];
 
-export const pointRequiredColumns = ['lat', 'lng'];
-export const pointOptionalColumns = ['altitude'];
+export const pointRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
+export const pointOptionalColumns: ['altitude'] = ['altitude'];
 
 const brushingExtension = new BrushingExtension();
 
@@ -59,6 +114,8 @@ export const pointVisConfigs = {
 };
 
 export default class PointLayer extends Layer {
+  declare config: PointLayerConfig;
+  declare visConfigSettings: PointLayerVisConfigSettings;
   constructor(props) {
     super(props);
 
@@ -67,11 +124,11 @@ export default class PointLayer extends Layer {
       pointPosAccessor(this.config.columns)(dataContainer);
   }
 
-  get type() {
+  get type(): 'point' {
     return 'point';
   }
 
-  get isAggregated() {
+  get isAggregated(): false {
     return false;
   }
 
@@ -131,6 +188,7 @@ export default class PointLayer extends Layer {
 
     if (defaultColorField) {
       this.updateLayerConfig({
+        // @ts-expect-error Remove this after updateLayerConfig converted into generic function
         colorField: defaultColorField
       });
       this.updateLayerVisualChannel(dataset, 'color');
@@ -140,7 +198,12 @@ export default class PointLayer extends Layer {
   }
 
   static findDefaultLayerProps({fieldPairs = []}) {
-    const props = [];
+    const props: {
+      label: string;
+      color?: RGBColor;
+      isVisible?: boolean;
+      columns?: PointLayerColumnsConfig;
+    }[] = [];
 
     // Make layer for each pair
     fieldPairs.forEach(pair => {
@@ -148,7 +211,12 @@ export default class PointLayer extends Layer {
       const lngField = pair.pair.lng;
       const layerName = pair.defaultName;
 
-      const prop = {
+      const prop: {
+        label: string;
+        color?: RGBColor;
+        isVisible?: boolean;
+        columns?: PointLayerColumnsConfig;
+      } = {
         label: layerName.length ? layerName : 'Point'
       };
 
