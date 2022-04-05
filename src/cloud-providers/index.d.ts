@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import {ComponentType} from 'prop-types';
 import {MapData, ExportFileOptions} from 'actions/provider-actions';
 

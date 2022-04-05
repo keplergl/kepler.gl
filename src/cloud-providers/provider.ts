@@ -49,8 +49,8 @@ export type ProviderProps = {
 };
 
 interface IconProps {
-  height?: number | string;
-  width?: number | string;
+  height?: string;
+  width?: string;
 }
 
 const NAME = 'cloud-provider';
