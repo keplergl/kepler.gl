@@ -44,12 +44,12 @@ export type HeatmapLayerVisConfig = {
   radius: number;
 };
 
-// export type HeatmapLayerVisualChannelConfig = LayerColorConfig & LayerSizeConfig;
+export type HeatmapLayerVisualChannelConfig = LayerWeightConfig;
 export type HeatmapLayerConfig = Merge<
   MapboxLayerGLConfig,
   {columns: HeatmapLayerColumnsConfig; visConfig: HeatmapLayerVisConfig}
 > &
-  LayerWeightConfig;
+  HeatmapLayerVisualChannelConfig;
 
 export const MAX_ZOOM_LEVEL = 18;
 
@@ -160,7 +160,6 @@ class HeatmapLayer extends MapboxGLLayer {
       weightScale: 'linear'
     };
 
-    // @ts-expect-error
     return layerConfig;
   }
 
