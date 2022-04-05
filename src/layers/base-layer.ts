@@ -116,6 +116,11 @@ export type LayerStrokeColorConfig = {
   strokeColorDomain: VisualChannelDomain;
   strokeColorScale: VisualChannelScale;
 };
+export type LayerCoverageConfig = {
+  coverageField: VisualChannelField;
+  coverageDomain: VisualChannelDomain;
+  coverageScale: VisualChannelScale;
+};
 export type LayerWeightConfig = {
   weightField: VisualChannelField;
 };

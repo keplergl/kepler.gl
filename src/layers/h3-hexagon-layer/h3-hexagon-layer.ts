@@ -23,6 +23,7 @@ import Layer, {
   LayerColorConfig,
   LayerColumn,
   LayerColumns,
+  LayerCoverageConfig,
   LayerSizeConfig
 } from '../base-layer';
 import {findDefaultColorField} from 'utils/dataset-utils';
@@ -49,27 +50,6 @@ export type HexagonIdLayerColumnsConfig = {
   hex_id: LayerColumn;
 };
 
-const DEFAULT_LINE_SCALE_VALUE = 8;
-
-export const hexIdRequiredColumns: ['hex_id'] = ['hex_id'];
-export const hexIdAccessor = ({hex_id}: HexagonIdLayerColumnsConfig) => (
-  dc: DataContainerInterface
-) => d => dc.valueAt(d.index, hex_id.fieldIdx);
-
-export const defaultElevation = 500;
-export const defaultCoverage = 1;
-
-export const HexagonIdVisConfigs = {
-  opacity: 'opacity',
-  colorRange: 'colorRange',
-  coverage: 'coverage',
-  enable3d: 'enable3d',
-  sizeRange: 'elevationRange',
-  coverageRange: 'coverageRange',
-  elevationScale: 'elevationScale',
-  enableElevationZoomFactor: 'enableElevationZoomFactor'
-};
-
 export type HexagonIdLayerVisConfigSettings = {
   opacity: VisConfigNumber;
   colorRange: VisConfigColorRange;
@@ -93,12 +73,34 @@ export type HexagonIdLayerVisConfig = {
 };
 
 export type HexagonIdLayerVisualChannelConfig = LayerColorConfig &
-  LayerSizeConfig & {coverageField: number};
+  LayerSizeConfig &
+  LayerCoverageConfig;
 export type HexagonIdLayerConfig = Merge<
   LayerBaseConfig,
   {columns: HexagonIdLayerColumnsConfig; visConfig: HexagonIdLayerVisConfig}
 > &
   HexagonIdLayerVisualChannelConfig;
+
+const DEFAULT_LINE_SCALE_VALUE = 8;
+
+export const hexIdRequiredColumns: ['hex_id'] = ['hex_id'];
+export const hexIdAccessor = ({hex_id}: HexagonIdLayerColumnsConfig) => (
+  dc: DataContainerInterface
+) => d => dc.valueAt(d.index, hex_id.fieldIdx);
+
+export const defaultElevation = 500;
+export const defaultCoverage = 1;
+
+export const HexagonIdVisConfigs = {
+  opacity: 'opacity',
+  colorRange: 'colorRange',
+  coverage: 'coverage',
+  enable3d: 'enable3d',
+  sizeRange: 'elevationRange',
+  coverageRange: 'coverageRange',
+  elevationScale: 'elevationScale',
+  enableElevationZoomFactor: 'enableElevationZoomFactor'
+};
 
 export default class HexagonIdLayer extends Layer {
   dataToFeature: {centroids: Centroid[]};
