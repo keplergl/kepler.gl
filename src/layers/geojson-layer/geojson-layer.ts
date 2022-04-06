@@ -27,6 +27,7 @@ import Layer, {
   LayerColorConfig,
   LayerColumn,
   LayerHeightConfig,
+  LayerRadiusConfig,
   LayerSizeConfig,
   LayerStrokeColorConfig
 } from '../base-layer';
@@ -131,7 +132,8 @@ export type GeoJsonLayerVisConfig = {
 type GeoJsonLayerVisualChannelConfig = LayerColorConfig &
   LayerStrokeColorConfig &
   LayerSizeConfig &
-  LayerHeightConfig;
+  LayerHeightConfig &
+  LayerRadiusConfig;
 export type GeoJsonLayerConfig = Merge<
   LayerBaseConfig,
   {columns: GeoJsonLayerColumnsConfig; visConfig: GeoJsonLayerVisConfig}
