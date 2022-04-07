@@ -23,7 +23,7 @@ import geoViewport from '@mapbox/geo-viewport';
 import WebMercatorViewport from 'viewport-mercator-project';
 import Console from 'global/console';
 
-const MAPBOX_TILE_SIZE = 512;
+export const MAPBOX_TILE_SIZE = 512;
 
 function isLat(num) {
   return Number.isFinite(num) && num <= 90 && num >= -90;

@@ -106,7 +106,7 @@ export {
   unobserveDimensions,
   default as useDimensions
 } from './observe-dimensions';
-export {validateBounds, getCenterAndZoomFromBounds, normalizeEvent} from './projection-utils';
+export {validateBounds, getCenterAndZoomFromBounds, normalizeEvent, MAPBOX_TILE_SIZE} from './projection-utils';
 export {validateToken} from './mapbox-utils';
 export {
   getDefaultLayerGroupVisibility,
