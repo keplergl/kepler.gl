@@ -647,22 +647,16 @@ export const FIELD_OPTS = {
     }
   },
   [ALL_FIELD_TYPES.object]: {
-    type: 'categorical',
-    scale: {
-      ...ordinalFieldScaleFunctions,
-      ...ordinalFieldAggrScaleFunctions
-    },
+    type: 'numerical',
+    scale: {},
     format: {
       legend: d => '...',
       tooltip: []
     }
   },
   [ALL_FIELD_TYPES.array]: {
-    type: 'categorical',
-    scale: {
-      ...ordinalFieldScaleFunctions,
-      ...ordinalFieldAggrScaleFunctions
-    },
+    type: 'numerical',
+    scale: {},
     format: {
       legend: d => '...',
       tooltip: []
