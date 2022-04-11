@@ -32,12 +32,9 @@ import {default as ScenegraphLayer} from './scenegraph-layer/scenegraph-layer';
 import {default as TripLayer} from './trip-layer/trip-layer';
 import {default as S2GeometryLayer} from './s2-geometry-layer/s2-geometry-layer';
 import {LAYER_TYPES} from './types';
-import Layer from './base-layer';
 
 // base layer
 export {default as Layer, OVERLAY_TYPE, LAYER_ID_LENGTH, colorMaker} from './base-layer';
-export type {LayerBaseConfig, LayerColumns, LayerColumn} from './base-layer';
-export type {LayerVisConfig} from './layer-factory';
 
 // individual layers
 export const KeplerGlLayers = {
@@ -56,23 +53,7 @@ export const KeplerGlLayers = {
   S2GeometryLayer
 };
 
-export type LayerClassesType = {
-  point: Layer;
-  arc: Layer;
-  line: Layer;
-  grid: Layer;
-  hexagon: Layer;
-  geojson: Layer;
-  cluster: Layer;
-  icon: Layer;
-  heatmap: Layer;
-  hexagonId: Layer;
-  '3D': Layer;
-  trip: Layer;
-  s2: Layer;
-};
-
-export const LayerClasses: LayerClassesType = {
+export const LayerClasses = {
   // @ts-expect-error
   [LAYER_TYPES.point]: PointLayer,
   // @ts-expect-error
