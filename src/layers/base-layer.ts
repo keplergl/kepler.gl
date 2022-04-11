@@ -256,11 +256,11 @@ class Layer {
     return false;
   }
 
-  get requiredLayerColumns() {
+  get requiredLayerColumns(): string[] {
     return [];
   }
 
-  get optionalColumns() {
+  get optionalColumns(): string[] {
     return [];
   }
 
