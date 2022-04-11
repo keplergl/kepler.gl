@@ -42,6 +42,7 @@ import {
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
 import {FieldPair} from 'utils/table-utils/kepler-table';
+import KeplerTable from '../../utils/table-utils/kepler-table';
 
 export type ArcLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -177,9 +178,7 @@ export default class ArcLayer extends Layer {
 
   static findDefaultLayerProps({
     fieldPairs = []
-  }: {
-    fieldPairs: FieldPair[];
-  }): {props: {color?: RGBColor; columns: ArcLayerColumnsConfig; label: string}[]} {
+  }: KeplerTable): {props: {color?: RGBColor; columns: ArcLayerColumnsConfig; label: string}[]} {
     if (fieldPairs.length < 2) {
       return {props: []};
     }

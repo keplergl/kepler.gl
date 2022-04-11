@@ -82,7 +82,7 @@ export const heatmapVisConfigs: {
  *  1, "rgb(178,24,43)"
  * ]
  */
-const heatmapDensity = (colorRange: ColorRange): string[] => {
+const heatmapDensity = (colorRange: ColorRange): (string | number)[] => {
   const scaleFunction = SCALE_FUNC.quantize;
 
   const colors: HexColor[] = ['#000000', ...colorRange.colors];
@@ -95,7 +95,7 @@ const heatmapDensity = (colorRange: ColorRange): string[] => {
     const invert = scale.invertExtent(level);
     return [
       ...bands,
-      invert[0].toString(), // first value in the range
+      invert[0], // first value in the range
       `rgb(${hexToRgb(level).join(',')})` // color
     ];
   }, []);
