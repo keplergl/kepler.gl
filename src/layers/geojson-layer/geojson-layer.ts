@@ -21,12 +21,37 @@
 import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
-import Layer, {colorMaker} from '../base-layer';
+import Layer, {
+  colorMaker,
+  LayerBaseConfig,
+  LayerColorConfig,
+  LayerColumn,
+  LayerHeightConfig,
+  LayerRadiusConfig,
+  LayerSizeConfig,
+  LayerStrokeColorConfig
+} from '../base-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
-import {getGeojsonDataMaps, getGeojsonBounds, getGeojsonFeatureTypes} from './geojson-utils';
+import {
+  getGeojsonDataMaps,
+  getGeojsonBounds,
+  getGeojsonFeatureTypes,
+  GeojsonDataMaps
+} from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
-import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
-import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
+import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from '../../constants/default-settings';
+import {
+  LAYER_VIS_CONFIGS,
+  VisConfigNumber,
+  VisConfigColorSelect,
+  VisConfigColorRange,
+  VisConfigRange,
+  VisConfigBoolean
+} from '../layer-factory';
+import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
+import {Merge, RGBColor} from '../../reducers';
+import {ColorRange} from '../../constants/color-ranges';
+import {Feature} from 'geojson';
 
 const SUPPORTED_ANALYZER_TYPES = {
   [DATA_TYPES.GEOMETRY]: true,
@@ -60,8 +85,70 @@ export const geojsonVisConfigs = {
   wireframe: 'wireframe'
 };
 
-export const geoJsonRequiredColumns = ['geojson'];
-export const featureAccessor = ({geojson}) => dc => d => dc.valueAt(d.index, geojson.fieldIdx);
+export type GeoJsonVisConfigSettings = {
+  opacity: VisConfigNumber;
+  strokeOpacity: VisConfigNumber;
+  thickness: VisConfigNumber;
+  strokeColor: VisConfigColorSelect;
+  colorRange: VisConfigColorRange;
+  strokeColorRange: VisConfigColorRange;
+  radius: VisConfigNumber;
+
+  sizeRange: VisConfigRange;
+  radiusRange: VisConfigRange;
+  heightRange: VisConfigRange;
+  elevationScale: VisConfigNumber;
+  enableElevationZoomFactor: VisConfigBoolean;
+  stroked: VisConfigBoolean;
+  filled: VisConfigBoolean;
+  enable3d: VisConfigBoolean;
+  wireframe: VisConfigBoolean;
+};
+
+export type GeoJsonLayerColumnsConfig = {
+  geojson: LayerColumn;
+};
+
+export type GeoJsonLayerVisConfig = {
+  opacity: number;
+  strokeOpacity: number;
+  thickness: number;
+  strokeColor: RGBColor;
+  colorRange: ColorRange;
+  strokeColorRange: ColorRange;
+  radius: number;
+
+  sizeRange: [number, number];
+  radiusRange: [number, number];
+  heightRange: [number, number];
+  elevationScale: number;
+  enableElevationZoomFactor: boolean;
+  stroked: boolean;
+  filled: boolean;
+  enable3d: boolean;
+  wireframe: boolean;
+};
+
+type GeoJsonLayerVisualChannelConfig = LayerColorConfig &
+  LayerStrokeColorConfig &
+  LayerSizeConfig &
+  LayerHeightConfig &
+  LayerRadiusConfig;
+export type GeoJsonLayerConfig = Merge<
+  LayerBaseConfig,
+  {columns: GeoJsonLayerColumnsConfig; visConfig: GeoJsonLayerVisConfig}
+> &
+  GeoJsonLayerVisualChannelConfig;
+
+export type GeoJsonLayerMeta = {
+  featureTypes?: {polygon: boolean; point: boolean; line: boolean};
+  fixedRadius?: boolean;
+};
+
+export const geoJsonRequiredColumns: ['geojson'] = ['geojson'];
+export const featureAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
+  dc: DataContainerInterface
+) => d => dc.valueAt(d.index, geojson.fieldIdx);
 
 // access feature properties from geojson sub layer
 export const defaultElevation = 500;
@@ -69,6 +156,11 @@ export const defaultLineWidth = 1;
 export const defaultRadius = 1;
 
 export default class GeoJsonLayer extends Layer {
+  declare config: GeoJsonLayerConfig;
+  declare visConfigSettings: GeoJsonVisConfigSettings;
+  declare meta: GeoJsonLayerMeta;
+  dataToFeature: GeojsonDataMaps;
+
   constructor(props) {
     super(props);
 
@@ -78,10 +170,13 @@ export default class GeoJsonLayer extends Layer {
   }
 
   get type() {
+    return GeoJsonLayer.type;
+  }
+  static get type(): 'geojson' {
     return 'geojson';
   }
 
-  get name() {
+  get name(): 'Polygon' {
     return 'Polygon';
   }
 

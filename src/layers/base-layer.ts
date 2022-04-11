@@ -122,6 +122,11 @@ export type LayerCoverageConfig = {
   coverageDomain: VisualChannelDomain;
   coverageScale: VisualChannelScale;
 };
+export type LayerRadiusConfig = {
+  radiusField: VisualChannelField;
+  radiusDomain: VisualChannelDomain;
+  radiusScale: VisualChannelScale;
+};
 export type LayerWeightConfig = {
   weightField: VisualChannelField;
 };

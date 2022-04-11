@@ -22,9 +22,26 @@ import wktParser from 'wellknown';
 import normalize from '@mapbox/geojson-normalize';
 import bbox from '@turf/bbox';
 
-import {getSampleData} from 'utils/data-utils';
+import {getSampleData} from '../../utils/data-utils';
+import {Feature, BBox} from 'geojson';
 
-export function parseGeoJsonRawFeature(rawFeature) {
+export type GetFeature = (d: any) => Feature;
+export type GeojsonDataMaps = Array<Feature | null>;
+
+export enum FeatureTypes {
+  Point = 'Point',
+  MultiPoint = 'MultiPoint',
+  LineString = 'LineString',
+  MultiLineString = 'MultiLineString',
+  Polygon = 'Polygon',
+  MultiPolygon = 'MultiPolygon'
+}
+
+type FeatureTypeMap = {
+  [key in FeatureTypes]: boolean;
+};
+
+export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
   if (typeof rawFeature === 'object') {
     // Support GeoJson feature as object
     // probably need to normalize it as well
@@ -45,7 +62,8 @@ export function parseGeoJsonRawFeature(rawFeature) {
         // why do we need to flip it...
         coordinates: rawFeature.map(pts => [pts[1], pts[0]]),
         type: 'LineString'
-      }
+      },
+      properties: {}
     };
   }
 
@@ -57,7 +75,7 @@ export function parseGeoJsonRawFeature(rawFeature) {
  * @param getFeature
  * @returns {{}}
  */
-export function getGeojsonDataMaps(dataContainer, getFeature) {
+export function getGeojsonDataMaps(dataContainer: any, getFeature: GetFeature): GeojsonDataMaps {
   const acceptableTypes = [
     'Point',
     'MultiPoint',
@@ -68,7 +86,7 @@ export function getGeojsonDataMaps(dataContainer, getFeature) {
     'GeometryCollection'
   ];
 
-  const dataToFeature = [];
+  const dataToFeature: (Feature | null)[] = [];
 
   for (let index = 0; index < dataContainer.numRows(); index++) {
     const feature = parseGeoJsonRawFeature(getFeature({index}));
@@ -97,7 +115,7 @@ export function getGeojsonDataMaps(dataContainer, getFeature) {
  * @param {String} geoString
  * @returns {null | Object} geojson object or null if failed
  */
-export function parseGeometryFromString(geoString) {
+export function parseGeometryFromString(geoString: string): Feature | null {
   let parsedGeo;
 
   // try parse as geojson string
@@ -131,7 +149,7 @@ export function parseGeometryFromString(geoString) {
   return normalized.features[0];
 }
 
-export function getGeojsonBounds(features = []) {
+export function getGeojsonBounds(features: Feature[] = []): BBox | null {
   // 70 ms for 10,000 polygons
   // here we only pick couple
   const maxCount = 10000;
@@ -165,8 +183,9 @@ export const featureToDeckGlGeoType = {
  * @param {Array<Object>} allFeatures
  * @returns {Object} mapping of feature type existence
  */
-export function getGeojsonFeatureTypes(allFeatures) {
-  const featureTypes = {};
+export function getGeojsonFeatureTypes(allFeatures: Feature[]): FeatureTypeMap {
+  // @ts-expect-error
+  const featureTypes: FeatureTypeMap = {};
   for (let f = 0; f < allFeatures.length; f++) {
     const feature = allFeatures[f];
     const geoType = featureToDeckGlGeoType[feature && feature.geometry && feature.geometry.type];
