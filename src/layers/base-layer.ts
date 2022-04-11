@@ -1064,13 +1064,13 @@ class Layer {
     const dataUpdateTriggers = this.getDataUpdateTriggers(layerDataset);
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
-    if (triggerChanged.getMeta) {
+    if (triggerChanged && triggerChanged.getMeta) {
       this.updateLayerMeta(dataContainer, getPosition);
     }
 
     let data = [];
 
-    if (!triggerChanged.getData && oldLayerData && oldLayerData.data) {
+    if (!(triggerChanged && triggerChanged.getData) && oldLayerData && oldLayerData.data) {
       // same data
       data = oldLayerData.data;
     } else {
