@@ -72,19 +72,32 @@ export type LayerClassesType = {
   s2: Layer;
 };
 
-export const LayerClasses = {
+export const LayerClasses: LayerClassesType = {
+  // @ts-expect-error
   [LAYER_TYPES.point]: PointLayer,
+  // @ts-expect-error
   [LAYER_TYPES.arc]: ArcLayer,
+  // @ts-expect-error
   [LAYER_TYPES.line]: LineLayer,
+  // @ts-expect-error
   [LAYER_TYPES.grid]: GridLayer,
+  // @ts-expect-error
   [LAYER_TYPES.hexagon]: HexagonLayer,
+  // @ts-expect-error
   [LAYER_TYPES.geojson]: GeojsonLayer,
+  // @ts-expect-error
   [LAYER_TYPES.cluster]: ClusterLayer,
+  // @ts-expect-error
   [LAYER_TYPES.icon]: IconLayer,
+  // @ts-expect-error
   [LAYER_TYPES.heatmap]: HeatmapLayer,
+  // @ts-expect-error
   [LAYER_TYPES.hexagonId]: H3Layer,
+  // @ts-expect-error
   [LAYER_TYPES['3D']]: ScenegraphLayer,
+  // @ts-expect-error
   [LAYER_TYPES.trip]: TripLayer,
+  // @ts-expect-error
   [LAYER_TYPES.s2]: S2GeometryLayer
 };
 

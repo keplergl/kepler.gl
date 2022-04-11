@@ -41,6 +41,7 @@ import {
   VisConfigRange
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
+import {FieldPair} from 'utils/table-utils/kepler-table';
 
 export type ArcLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -100,7 +101,13 @@ export const arcColumnLabels = {
   lng1: 'arc.lng1'
 };
 
-export const arcVisConfigs = {
+export const arcVisConfigs: {
+  opacity: 'opacity';
+  thickness: 'thickness';
+  colorRange: 'colorRange';
+  sizeRange: 'strokeWidthRange';
+  targetColor: 'targetColor';
+} = {
   opacity: 'opacity',
   thickness: 'thickness',
   colorRange: 'colorRange',
@@ -117,7 +124,8 @@ export default class ArcLayer extends Layer {
     super(props);
 
     this.registerVisConfig(arcVisConfigs);
-    this.getPositionAccessor = dataContainer => arcPosAccessor(this.config.columns)(dataContainer);
+    this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
+      arcPosAccessor(this.config.columns)(dataContainer);
   }
 
   get type() {
@@ -169,6 +177,8 @@ export default class ArcLayer extends Layer {
 
   static findDefaultLayerProps({
     fieldPairs = []
+  }: {
+    fieldPairs: FieldPair[];
   }): {props: {color?: RGBColor; columns: ArcLayerColumnsConfig; label: string}[]} {
     if (fieldPairs.length < 2) {
       return {props: []};

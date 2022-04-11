@@ -73,7 +73,8 @@ export type VisualChannelField = Field | null;
 export type VisualChannelScale = keyof typeof SCALE_TYPES;
 
 export type LayerBaseConfig = {
-  dataId: string | null;
+  // TODO: Decide can dataId be null
+  dataId: string;
   label: string;
   color: RGBColor;
 
@@ -340,7 +341,7 @@ class Layer {
    *   };
    * }
    */
-  get layerInfoModal() {
+  get layerInfoModal(): any {
     return null;
   }
   /*
@@ -435,6 +436,7 @@ class Layer {
     props: Partial<LayerBaseConfig> = {}
   ): LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig> {
     return {
+      // @ts-expect-error
       dataId: props.dataId || null,
       label: props.label || DEFAULT_LAYER_LABEL,
       color: props.color || colorMaker.next().value,

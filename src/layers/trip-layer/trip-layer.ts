@@ -29,7 +29,8 @@ import TripLayerIcon from './trip-layer-icon';
 import {
   getGeojsonDataMaps,
   getGeojsonBounds,
-  getGeojsonFeatureTypes
+  getGeojsonFeatureTypes,
+  GeojsonDataMaps
 } from 'layers/geojson-layer/geojson-utils';
 
 import {isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
@@ -38,6 +39,7 @@ import {DataContainerInterface} from '../../utils/table-utils/data-container-int
 import {ColorRange} from '../../constants/color-ranges';
 import {VisConfigColorRange, VisConfigNumber, VisConfigRange} from '../layer-factory';
 import {Merge} from '../../reducers';
+import {KeplerTable} from 'utils';
 
 export type TripLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -73,7 +75,13 @@ const zoomFactorValue = 8;
 export const defaultThickness = 0.5;
 export const defaultLineWidth = 1;
 
-export const tripVisConfigs = {
+export const tripVisConfigs: {
+  opacity: 'opacity';
+  thickness: VisConfigNumber;
+  colorRange: 'colorRange';
+  trailLength: 'trailLength';
+  sizeRange: 'strokeWidthRange';
+} = {
   opacity: 'opacity',
   thickness: {
     type: 'number',
@@ -101,7 +109,7 @@ export default class TripLayer extends Layer {
   declare config: TripLayerConfig;
   declare meta: TripLayerMeta;
 
-  dataToFeature: {}[];
+  dataToFeature: GeojsonDataMaps;
   dataToTimeStamp: {}[];
   getFeature: (columns: TripLayerColumnsConfig) => (dataContainer: DataContainerInterface) => any;
   _layerInfoModal: () => JSX.Element;
@@ -177,7 +185,10 @@ export default class TripLayer extends Layer {
     return this.getFeature(this.config.columns)(dataContainer);
   }
 
-  static findDefaultLayerProps({label, fields = [], dataContainer, id}, foundLayers) {
+  static findDefaultLayerProps(
+    {label, fields = [], dataContainer, id}: KeplerTable,
+    foundLayers: any[]
+  ) {
     const geojsonColumns = fields.filter(f => f.type === 'geojson').map(f => f.name);
 
     const defaultColumns = {
