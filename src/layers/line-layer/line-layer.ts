@@ -33,6 +33,8 @@ import {
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
 import {Merge, RGBColor} from '../../reducers';
+import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
+import {KeplerTable} from 'utils';
 
 export type LineLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -66,20 +68,15 @@ export type LineLayerConfig = Merge<
   {columns: LineLayerColumnsConfig; visConfig: LineLayerVisConfig}
 >;
 
-export const linePosAccessor = ({
-  lat0,
-  lng0,
-  lat1,
-  lng1,
-  alt0,
-  alt1
-}: LineLayerColumnsConfig) => dc => d => [
+export const linePosAccessor = ({lat0, lng0, lat1, lng1, alt0, alt1}: LineLayerColumnsConfig) => (
+  dc: DataContainerInterface
+) => d => [
   dc.valueAt(d.index, lng0.fieldIdx),
   dc.valueAt(d.index, lat0.fieldIdx),
-  alt0?.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
+  alt0?.fieldIdx && alt0.fieldIdx > -1 ? dc.valueAt(d.index, alt0.fieldIdx) : 0,
   dc.valueAt(d.index, lng1.fieldIdx),
   dc.valueAt(d.index, lat1.fieldIdx),
-  alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
+  alt1?.fieldIdx && alt1?.fieldIdx > -1 ? dc.valueAt(d.index, alt1.fieldIdx) : 0
 ];
 
 export const lineRequiredColumns: ['lat0', 'lng0', 'lat1', 'lng1'] = [
@@ -99,7 +96,14 @@ export const lineColumnLabels = {
   alt1: 'line.alt1'
 };
 
-export const lineVisConfigs = {
+export const lineVisConfigs: {
+  opacity: 'opacity';
+  thickness: 'thickness';
+  colorRange: 'colorRange';
+  sizeRange: 'strokeWidthRange';
+  targetColor: 'targetColor';
+  elevationScale: VisConfigNumber;
+} = {
   opacity: 'opacity',
   thickness: 'thickness',
   colorRange: 'colorRange',
@@ -119,7 +123,8 @@ export default class LineLayer extends ArcLayer {
     super(props);
 
     this.registerVisConfig(lineVisConfigs);
-    this.getPositionAccessor = dataContainer => linePosAccessor(this.config.columns)(dataContainer);
+    this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
+      linePosAccessor(this.config.columns)(dataContainer);
   }
 
   get type() {
@@ -153,7 +158,7 @@ export default class LineLayer extends ArcLayer {
     };
   }
 
-  static findDefaultLayerProps({fieldPairs = []}) {
+  static findDefaultLayerProps({fieldPairs = []}: KeplerTable) {
     if (fieldPairs.length < 2) {
       return {props: []};
     }
@@ -191,6 +196,7 @@ export default class LineLayer extends ArcLayer {
 
     return [
       // base layer
+      // @ts-expect-error
       new EnhancedLineLayer({
         ...defaultLayerProps,
         ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
@@ -202,6 +208,7 @@ export default class LineLayer extends ArcLayer {
       // hover layer
       ...(hoveredObject
         ? [
+            // @ts-expect-error
             new EnhancedLineLayer({
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,

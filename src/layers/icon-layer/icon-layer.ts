@@ -29,7 +29,6 @@ import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import {
-  LayerVisConfigSettings,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigNumber,
@@ -37,6 +36,7 @@ import {
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
 import {Merge} from '../../reducers';
+import {KeplerTable} from 'utils';
 
 export type IconLayerColumnsConfig = {
   lat: LayerColumn;
@@ -45,7 +45,7 @@ export type IconLayerColumnsConfig = {
   icon: LayerColumn;
 };
 
-type IconGeometry = {};
+type IconGeometry = {} | null;
 
 export type IconLayerVisConfigSettings = {
   radius: VisConfigNumber;
@@ -68,6 +68,8 @@ export type IconLayerConfig = Merge<
   {columns: IconLayerColumnsConfig; visConfig: IconLayerVisConfig}
 >;
 
+export type IconLayerData = {index: number; icon: string};
+
 const brushingExtension = new BrushingExtension();
 
 export const SVG_ICON_URL = `${CLOUDFRONT}/icons/svg-icons.json`;
@@ -86,7 +88,13 @@ export const iconAccessor = ({icon}: IconLayerColumnsConfig) => (dc: DataContain
 export const iconRequiredColumns: ['lat', 'lng', 'icon'] = ['lat', 'lng', 'icon'];
 export const iconOptionalColumns: ['altitude'] = ['altitude'];
 
-export const pointVisConfigs = {
+export const pointVisConfigs: {
+  radius: 'radius';
+  fixedRadius: 'fixedRadius';
+  opacity: 'opacity';
+  colorRange: 'colorRange';
+  radiusRange: 'radiusRange';
+} = {
   radius: 'radius',
   fixedRadius: 'fixedRadius',
   opacity: 'opacity',
@@ -123,7 +131,8 @@ export default class IconLayer extends Layer {
     super(props);
 
     this.registerVisConfig(pointVisConfigs);
-    this.getPositionAccessor = dataContainer => iconPosAccessor(this.config.columns)(dataContainer);
+    this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
+      iconPosAccessor(this.config.columns)(dataContainer);
     this.getIconAccessor = dataContainer => iconAccessor(this.config.columns)(dataContainer);
 
     // prepare layer info modal
@@ -206,7 +215,7 @@ export default class IconLayer extends Layer {
     }
   }
 
-  static findDefaultLayerProps({fieldPairs = [], fields = []}) {
+  static findDefaultLayerProps({fieldPairs = [], fields = []}: KeplerTable) {
     const notFound = {props: []};
     if (!fieldPairs.length || !fields.length) {
       return notFound;
@@ -243,9 +252,9 @@ export default class IconLayer extends Layer {
     return {props};
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
+  calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getPosition) {
     const getIcon = this.getIconAccessor(dataContainer);
-    const data = [];
+    const data: IconLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
@@ -355,7 +364,7 @@ export default class IconLayer extends Layer {
             ...layerProps,
             ...data,
             parameters,
-            getIconGeometry: id => this.iconGeometry[id],
+            getIconGeometry: id => this.iconGeometry?.[id],
 
             // update triggers
             updateTriggers,
@@ -372,7 +381,7 @@ export default class IconLayer extends Layer {
                   getPosition: data.getPosition,
                   getRadius: data.getRadius,
                   getFillColor: this.config.highlightColor,
-                  getIconGeometry: id => this.iconGeometry[id]
+                  getIconGeometry: id => this.iconGeometry?.[id]
                 })
               ]
             : []),

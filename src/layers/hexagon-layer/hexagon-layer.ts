@@ -34,7 +34,6 @@ import {
   VisConfigSelection
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
-import {AGGREGATION_TYPES} from '../../constants/default-settings';
 
 export type HexagonLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -70,7 +69,21 @@ export type HexagonLayerVisConfig = {
 
 export type HexagonLayerConfig = Merge<AggregationLayerConfig, {visConfig: HexagonLayerVisConfig}>;
 
-export const hexagonVisConfigs = {
+export const hexagonVisConfigs: {
+  opacity: 'opacity';
+  worldUnitSize: 'worldUnitSize';
+  resolution: 'resolution';
+  colorRange: 'colorRange';
+  coverage: 'coverage';
+  sizeRange: 'elevationRange';
+  percentile: 'percentile';
+  elevationPercentile: 'elevationPercentile';
+  elevationScale: 'elevationScale';
+  enableElevationZoomFactor: 'enableElevationZoomFactor';
+  colorAggregation: 'colorAggregation';
+  sizeAggregation: 'sizeAggregation';
+  enable3d: 'enable3d';
+} = {
   opacity: 'opacity',
   worldUnitSize: 'worldUnitSize',
   resolution: 'resolution',
@@ -81,7 +94,7 @@ export const hexagonVisConfigs = {
   elevationPercentile: 'elevationPercentile',
   elevationScale: 'elevationScale',
   enableElevationZoomFactor: 'enableElevationZoomFactor',
-  colorAggregation: 'aggregation',
+  colorAggregation: 'colorAggregation',
   sizeAggregation: 'sizeAggregation',
   enable3d: 'enable3d'
 };
@@ -117,6 +130,7 @@ export default class HexagonLayer extends AggregationLayer {
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
+      // @ts-expect-error
       new EnhancedHexagonLayer({
         ...this.getDefaultAggregationLayerProp(opts),
         ...data,

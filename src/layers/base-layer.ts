@@ -62,6 +62,7 @@ import {LayerTextLabel, ColorUI} from './layer-factory';
 import {KeplerTable} from 'utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 import {Field, GpuFilter} from 'utils/table-utils/kepler-table';
+import {Component} from 'react';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 
@@ -236,7 +237,7 @@ class Layer {
     });
   }
 
-  get layerIcon() {
+  get layerIcon(): typeof Component {
     return DefaultLayerIcon;
   }
 

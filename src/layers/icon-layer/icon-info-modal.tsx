@@ -120,7 +120,7 @@ const IconTable = styled.div`
   flex-wrap: wrap;
 `;
 
-const IconInfoModalFactory = (svgIcons = []) => {
+const IconInfoModalFactory = (svgIcons: any[] = []) => {
   const IconInfoModal = () => (
     <div className="icon-info-modal">
       <div className="icon-info-modal__description">

@@ -32,7 +32,6 @@ import {
   VisConfigSelection
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
-import {AGGREGATION_TYPES} from '../../constants/default-settings';
 import {Merge} from '../../reducers';
 import {VisualChannels} from '../base-layer';
 
@@ -54,12 +53,18 @@ export type ClusterLayerVisConfig = {
 
 export type ClusterLayerConfig = Merge<AggregationLayerConfig, {visConfig: ClusterLayerVisConfig}>;
 
-export const clusterVisConfigs = {
+export const clusterVisConfigs: {
+  opacity: 'opacity';
+  clusterRadius: 'clusterRadius';
+  colorRange: 'colorRange';
+  radiusRange: 'clusterRadiusRange';
+  colorAggregation: 'colorAggregation';
+} = {
   opacity: 'opacity',
   clusterRadius: 'clusterRadius',
   colorRange: 'colorRange',
   radiusRange: 'clusterRadiusRange',
-  colorAggregation: 'aggregation'
+  colorAggregation: 'colorAggregation'
 };
 
 export default class ClusterLayer extends AggregationLayer {
@@ -113,6 +118,7 @@ export default class ClusterLayer extends AggregationLayer {
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
+      // @ts-expect-error
       new DeckGLClusterLayer({
         ...this.getDefaultDeckLayerProps(opts),
         ...clusterData,

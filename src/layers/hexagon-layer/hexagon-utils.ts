@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// @ts-expect-error
 import {WebMercatorViewport} from '@deck.gl/core';
 import Console from 'global/console';
 import {Centroid} from '../h3-hexagon-layer/h3-utils';
@@ -38,7 +39,7 @@ export function hexagonToPolygonGeo(object, properties, radius, mapState) {
 
   const pixRadius = radius * unitsPerMeter[0];
 
-  const coordinates = [];
+  const coordinates: any[] = [];
 
   for (let i = 0; i < 6; i++) {
     const vertex = hex_corner(screenCenter, pixRadius, i);

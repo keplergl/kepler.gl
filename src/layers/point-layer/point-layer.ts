@@ -43,6 +43,8 @@ import {
   VisConfigRange
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
+import {LAYER_VIS_CONFIGS} from '../layer-factory';
+import {KeplerTable} from 'utils';
 
 export type PointLayerVisConfigSettings = {
   radius: VisConfigNumber;
@@ -84,6 +86,11 @@ export type PointLayerConfig = Merge<
 > &
   PointLayerVisualChannelConfig;
 
+export type PointLayerData = {
+  position: number[];
+  index: number;
+};
+
 export const pointPosAccessor = ({lat, lng, altitude}: PointLayerColumnsConfig) => dc => d => [
   dc.valueAt(d.index, lng.fieldIdx),
   dc.valueAt(d.index, lat.fieldIdx),
@@ -95,7 +102,18 @@ export const pointOptionalColumns: ['altitude'] = ['altitude'];
 
 const brushingExtension = new BrushingExtension();
 
-export const pointVisConfigs = {
+export const pointVisConfigs: {
+  radius: 'radius';
+  fixedRadius: 'fixedRadius';
+  opacity: 'opacity';
+  outline: 'outline';
+  thickness: 'thickness';
+  strokeColor: 'strokeColor';
+  colorRange: 'colorRange';
+  strokeColorRange: 'strokeColorRange';
+  radiusRange: 'radiusRange';
+  filled: VisConfigBoolean;
+} = {
   radius: 'radius',
   fixedRadius: 'fixedRadius',
   opacity: 'opacity',
@@ -106,6 +124,7 @@ export const pointVisConfigs = {
   strokeColorRange: 'strokeColorRange',
   radiusRange: 'radiusRange',
   filled: {
+    ...LAYER_VIS_CONFIGS.filled,
     type: 'boolean',
     label: 'layer.fillColor',
     defaultValue: true,
@@ -197,7 +216,7 @@ export default class PointLayer extends Layer {
     return this;
   }
 
-  static findDefaultLayerProps({fieldPairs = []}) {
+  static findDefaultLayerProps({fieldPairs = []}: KeplerTable) {
     const props: {
       label: string;
       color?: RGBColor;
@@ -253,8 +272,8 @@ export default class PointLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({filteredIndex}, getPosition) {
-    const data = [];
+  calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
+    const data: PointLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];

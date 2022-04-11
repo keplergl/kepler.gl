@@ -21,6 +21,7 @@
 import {S2Layer} from '@deck.gl/geo-layers';
 import {HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
+import {KeplerTable} from 'utils';
 import {createDataContainer} from 'utils/table-utils';
 import {ColorRange} from '../../constants/color-ranges';
 import {Merge, RGBColor} from '../../reducers';
@@ -89,6 +90,11 @@ export type S2GeometryLayerConfig = Merge<
 > &
   S2GeometryLayerVisualChannelConfig;
 
+export type S2GeometryLayerData = {
+  index: number;
+  token: any;
+};
+
 const zoomFactorValue = 8;
 
 export const S2_TOKEN_FIELDS: {
@@ -105,11 +111,33 @@ export const S2TokenAccessor = ({token}: S2GeometryLayerColumnsConfig) => (
 export const defaultElevation = 500;
 export const defaultLineWidth = 1;
 
-export const S2VisConfigs = {
+export const S2VisConfigs: {
+  // Filled color
+  opacity: 'opacity';
+  colorRange: 'colorRange';
+  filled: VisConfigBoolean;
+
+  // stroke
+  thickness: VisConfigNumber;
+  strokeColor: 'strokeColor';
+  strokeColorRange: 'strokeColorRange';
+  sizeRange: 'strokeWidthRange';
+  stroked: 'stroked';
+
+  // height
+  enable3d: 'enable3d';
+  elevationScale: 'elevationScale';
+  enableElevationZoomFactor: 'enableElevationZoomFactor';
+  heightRange: 'elevationRange';
+
+  // wireframe
+  wireframe: 'wireframe';
+} = {
   // Filled color
   opacity: 'opacity',
   colorRange: 'colorRange',
   filled: {
+    ...LAYER_VIS_CONFIGS.filled,
     type: 'boolean',
     label: 'Fill Color',
     defaultValue: true,
@@ -143,7 +171,8 @@ export default class S2GeometryLayer extends Layer {
   constructor(props) {
     super(props);
     this.registerVisConfig(S2VisConfigs);
-    this.getPositionAccessor = dataContainer => S2TokenAccessor(this.config.columns)(dataContainer);
+    this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
+      S2TokenAccessor(this.config.columns)(dataContainer);
   }
 
   get type(): 's2' {
@@ -221,7 +250,7 @@ export default class S2GeometryLayer extends Layer {
     };
   }
 
-  static findDefaultLayerProps({fields = []}) {
+  static findDefaultLayerProps({fields = []}: KeplerTable) {
     const foundColumns = this.findDefaultColumnField(S2_TOKEN_FIELDS, fields);
     if (!foundColumns || !foundColumns.length) {
       return {props: []};
@@ -236,8 +265,8 @@ export default class S2GeometryLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}, getS2Token) {
-    const data = [];
+  calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getS2Token) {
+    const data: S2GeometryLayerData[] = [];
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
       const token = getS2Token({index});

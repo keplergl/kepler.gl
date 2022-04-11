@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// @ts-expect-error
 import {ScenegraphLayer as DeckScenegraphLayer} from '@deck.gl/mesh-layers';
 import {load} from '@loaders.gl/core';
 import {GLTFLoader} from '@loaders.gl/gltf';
@@ -61,6 +62,8 @@ export type ScenegraphLayerConfig = Merge<
   LayerBaseConfig,
   {columns: ScenegraphLayerColumnsConfig; visConfig: ScenegraphLayerVisConfig}
 >;
+
+export type ScenegraphLayerData = {position: number[]; index: number};
 
 export const scenegraphRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
 export const scenegraphOptionalColumns: ['altitude'] = ['altitude'];
@@ -128,7 +131,7 @@ export default class ScenegraphLayer extends Layer {
     super(props);
 
     this.registerVisConfig(scenegraphVisConfigs);
-    this.getPositionAccessor = dataContainer =>
+    this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
       scenegraphPosAccessor(this.config.columns)(dataContainer);
 
     // prepare layer info modal
@@ -166,7 +169,7 @@ export default class ScenegraphLayer extends Layer {
   }
 
   calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getPosition) {
-    const data: {position: number[]; index: number}[] = [];
+    const data: ScenegraphLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
