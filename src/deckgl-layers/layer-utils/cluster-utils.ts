@@ -53,6 +53,8 @@ const getClusterer = ({clusterRadius, geoJSON}) =>
   }).load(geoJSON);
 
 export default class ClusterBuilder {
+  clusterer: any;
+
   constructor() {
     this.clusterer = memoize(getClusterer, clusterResolver);
   }
