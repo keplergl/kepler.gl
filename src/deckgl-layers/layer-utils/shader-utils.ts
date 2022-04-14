@@ -29,7 +29,7 @@ import {console as Console} from 'global/window';
  * @return {string} output shader
  *
  */
-export function editShader(vs, type, originalText, testToReplace) {
+export function editShader(vs: string, type: string, originalText: string, testToReplace: string) {
   if (!vs.includes(originalText)) {
     // Here we call Console.error when we fail to edit deck.gl shader
     // This should be caught by layer test
