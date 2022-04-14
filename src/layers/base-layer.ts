@@ -59,7 +59,7 @@ import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-util
 
 import {RGBColor, RGBAColor, MapState, Filter, Datasets, ValueOf} from 'reducers';
 import {LayerTextLabel, ColorUI} from './layer-factory';
-import {KeplerTable} from 'utils';
+import {KeplerTable} from '../utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 import {Field, GpuFilter} from 'utils/table-utils/kepler-table';
 
@@ -121,6 +121,11 @@ export type LayerCoverageConfig = {
   coverageField: VisualChannelField;
   coverageDomain: VisualChannelDomain;
   coverageScale: VisualChannelScale;
+};
+export type LayerRadiusConfig = {
+  radiusField: VisualChannelField;
+  radiusDomain: VisualChannelDomain;
+  radiusScale: VisualChannelScale;
 };
 export type LayerWeightConfig = {
   weightField: VisualChannelField;

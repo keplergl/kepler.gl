@@ -81,10 +81,11 @@ export function isTripGeoJsonField(dataContainer: DataContainerInterface, field)
   const features = sampleRawFeatures
     .mapIndex(field.valueAccessor)
     .map(parseGeoJsonRawFeature)
-    .filter(f => f);
+    .filter(notNullorUndefined);
   const featureTypes = getGeojsonFeatureTypes(features);
 
   // condition 1: contain line string
+  // @ts-expect-error
   if (!featureTypes.line) {
     return false;
   }
@@ -95,6 +96,7 @@ export function isTripGeoJsonField(dataContainer: DataContainerInterface, field)
   }
 
   // condition 3:the 4th coordinate of the first feature line strings is valid time
+  // @ts-expect-error
   const tsHolder = features[0].geometry.coordinates.map(coord => coord[3]);
 
   return Boolean(containValidTime(tsHolder));
