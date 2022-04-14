@@ -30,7 +30,7 @@ import {LAYER_BLENDINGS} from 'constants/default-settings';
 import {CURRENT_VERSION, visStateSchema} from 'schemas';
 
 import {VisState, Datasets} from './vis-state-updaters';
-import {KeplerTable} from 'utils';
+import {KeplerTable} from '../utils';
 import {ParsedConfig, ParsedLayer} from 'schemas';
 import {Layer, LayerColumns, LayerColumn} from 'layers';
 import {TooltipInfo} from './vis-state-updaters';
