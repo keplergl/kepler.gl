@@ -101,7 +101,7 @@ import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import ActionTypes from 'constants/action-types';
 import {LoaderObject} from '@loaders.gl/loader-utils';
-import {KeplerTable} from 'utils';
+import {KeplerTable} from '../utils';
 
 export type HistogramBin = {
   x0: number | undefined;
