@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// @ts-expect-error
 import {WebMercatorViewport} from '@deck.gl/core';
 import Console from 'global/console';
 import {Centroid} from '../h3-hexagon-layer/h3-utils';

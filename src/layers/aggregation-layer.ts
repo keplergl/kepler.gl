@@ -37,7 +37,7 @@ import {
 } from '../constants/default-settings';
 import {Datasets, Merge} from '../reducers';
 import {ColorRange} from '../constants/color-ranges';
-import {KeplerTable} from 'utils';
+import {KeplerTable} from '../utils';
 
 type AggregationLayerColumns = {
   lat: LayerColumn;

@@ -91,7 +91,7 @@ const heatmapDensity = (colorRange: ColorRange): (string | number)[] => {
     .domain([0, 1])
     .range(colors);
 
-  const colorDensity = scale.range().reduce((bands: string[], level) => {
+  const colorDensity = scale.range().reduce((bands: (string | number)[], level) => {
     const invert = scale.invertExtent(level);
     return [
       ...bands,

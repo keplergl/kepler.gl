@@ -130,7 +130,6 @@ export default class HexagonLayer extends AggregationLayer {
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
-      // @ts-expect-error
       new EnhancedHexagonLayer({
         ...this.getDefaultAggregationLayerProp(opts),
         ...data,

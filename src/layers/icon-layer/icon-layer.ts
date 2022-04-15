@@ -36,7 +36,7 @@ import {
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
 import {Merge} from '../../reducers';
-import {KeplerTable} from 'utils';
+import {KeplerTable} from '../../utils';
 
 export type IconLayerColumnsConfig = {
   lat: LayerColumn;

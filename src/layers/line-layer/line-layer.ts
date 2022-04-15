@@ -34,7 +34,7 @@ import {
 import {ColorRange} from '../../constants/color-ranges';
 import {Merge, RGBColor} from '../../reducers';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
-import {KeplerTable} from 'utils';
+import {KeplerTable} from '../../utils';
 
 export type LineLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -196,7 +196,6 @@ export default class LineLayer extends ArcLayer {
 
     return [
       // base layer
-      // @ts-expect-error
       new EnhancedLineLayer({
         ...defaultLayerProps,
         ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
@@ -208,7 +207,6 @@ export default class LineLayer extends ArcLayer {
       // hover layer
       ...(hoveredObject
         ? [
-            // @ts-expect-error
             new EnhancedLineLayer({
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,

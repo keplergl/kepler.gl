@@ -44,7 +44,7 @@ import {
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
 import {LAYER_VIS_CONFIGS} from '../layer-factory';
-import {KeplerTable} from 'utils';
+import {KeplerTable} from '../../utils';
 
 export type PointLayerVisConfigSettings = {
   radius: VisConfigNumber;

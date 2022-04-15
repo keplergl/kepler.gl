@@ -26,11 +26,6 @@
       "*": ["*"]
     }
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "src/deckgl-layers",
-    "src/layers"
-  ]
+  "include": ["src"],
+  "exclude": ["src/deckgl-layers"]
 }

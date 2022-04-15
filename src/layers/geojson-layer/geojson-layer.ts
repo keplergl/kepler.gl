@@ -51,7 +51,7 @@ import {
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import {Merge, RGBColor} from '../../reducers';
 import {ColorRange} from '../../constants/color-ranges';
-import {KeplerTable} from 'utils';
+import {KeplerTable} from '../../utils';
 
 const SUPPORTED_ANALYZER_TYPES = {
   [DATA_TYPES.GEOMETRY]: true,

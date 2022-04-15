@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// @ts-expect-error
 import {ScenegraphLayer as DeckScenegraphLayer} from '@deck.gl/mesh-layers';
 import {load} from '@loaders.gl/core';
 import {GLTFLoader} from '@loaders.gl/gltf';
@@ -31,7 +30,7 @@ import {VisConfigColorRange, VisConfigNumber} from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
 import {Merge} from '../../reducers';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
-import {KeplerTable} from 'utils';
+import {KeplerTable} from '../../utils';
 
 export type ScenegraphLayerVisConfigSettings = {
   opacity: VisConfigNumber;

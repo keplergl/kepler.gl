@@ -21,7 +21,7 @@
 import {S2Layer} from '@deck.gl/geo-layers';
 import {HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
-import {KeplerTable} from 'utils';
+import {KeplerTable} from '../../utils';
 import {createDataContainer} from 'utils/table-utils';
 import {ColorRange} from '../../constants/color-ranges';
 import {Merge, RGBColor} from '../../reducers';
@@ -339,7 +339,7 @@ export default class S2GeometryLayer extends Layer {
         ...defaultLayerProps,
         ...interactionConfig,
         ...data,
-        getS2Token: d => d.token,
+        getS2Token: (d: any) => d.token,
 
         autoHighlight: visConfig.enable3d,
         highlightColor: HIGHLIGH_COLOR_3D,

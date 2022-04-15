@@ -39,7 +39,7 @@ import {DataContainerInterface} from '../../utils/table-utils/data-container-int
 import {ColorRange} from '../../constants/color-ranges';
 import {VisConfigColorRange, VisConfigNumber, VisConfigRange} from '../layer-factory';
 import {Merge} from '../../reducers';
-import {KeplerTable} from 'utils';
+import {KeplerTable} from '../../utils';
 
 export type TripLayerVisConfigSettings = {
   opacity: VisConfigNumber;

@@ -41,7 +41,6 @@ import {
   VisConfigRange
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
-import {FieldPair} from 'utils/table-utils/kepler-table';
 import KeplerTable from '../../utils/table-utils/kepler-table';
 
 export type ArcLayerVisConfigSettings = {

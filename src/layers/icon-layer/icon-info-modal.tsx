@@ -28,7 +28,7 @@ const lineFunction = line()
   .x(d => d[0] * 10)
   .y(d => d[1] * 10);
 
-const IconShape = ({mesh}) => (
+const IconShape = ({mesh, className}) => (
   <svg width="20px" height="20px">
     <g transform="translate(10, 10)">
       {mesh.cells.map((cell, i) => (

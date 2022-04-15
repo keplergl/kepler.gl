@@ -43,7 +43,7 @@ import {
 import {Merge} from '../../reducers';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import {ColorRange} from '../../constants/color-ranges';
-import {KeplerTable} from 'utils';
+import {KeplerTable} from '../../utils';
 
 export type HexagonIdLayerColumnsConfig = {
   hex_id: LayerColumn;
@@ -301,7 +301,7 @@ export default class HexagonIdLayer extends Layer {
         ...data,
         wrapLongitude: false,
 
-        getHexagon: x => x.id,
+        getHexagon: (x: any) => x.id,
 
         // coverage
         coverage: config.coverageField ? 1 : visConfig.coverage,
