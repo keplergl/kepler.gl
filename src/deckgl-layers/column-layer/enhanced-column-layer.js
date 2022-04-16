@@ -25,8 +25,8 @@ function addInstanceCoverage(vs) {
   const addDecl = editShader(
     vs,
     'hexagon cell vs add instance',
-    'attribute vec3 instancePickingColors;',
-    `attribute vec3 instancePickingColors;
+    'in vec3 instancePickingColors;',
+    `in vec3 instancePickingColors;
      attribute float instanceCoverage;`
   );
 
