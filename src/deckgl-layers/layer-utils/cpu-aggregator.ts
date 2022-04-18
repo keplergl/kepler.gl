@@ -436,7 +436,7 @@ export default class CPUAggregator {
 
   updateState(opts, aggregationParams) {
     const {oldProps, props, changeFlags} = opts;
-    let dimensionChanges = [];
+    let dimensionChanges: BindedUpdaterType[] = [];
 
     if (changeFlags.dataChanged) {
       // if data changed update everything
@@ -486,7 +486,12 @@ export default class CPUAggregator {
     });
   }
 
-  _needUpdateStep(dimensionStep: UpdateStepsType, oldProps, props, changeFlags) {
+  _needUpdateStep(
+    dimensionStep: UpdateStepsType | AggregationUpdateStepsType,
+    oldProps,
+    props,
+    changeFlags
+  ) {
     // whether need to update current dimension step
     // dimension step is the value, domain, scaleFunction of each dimension
     // each step is an object with properties links to layer prop and whether the prop is
@@ -505,12 +510,20 @@ export default class CPUAggregator {
     });
   }
 
-  _accumulateUpdaters(step, props, dimension: DimensionType) {
-    const updaters: BindedUpdaterType[] = [];
+  _accumulateUpdaters<UpdaterObjectType extends DimensionType | AggregationType>(
+    step,
+    props,
+    dimension: UpdaterObjectType
+  ) {
+    type UpdaterType = UpdaterObjectType extends DimensionType
+      ? BindedUpdaterType
+      : BindedAggregatedUpdaterType;
+    const updaters: UpdaterType[] = [];
     for (let i = step; i < dimension.updateSteps.length; i++) {
-      if (typeof dimension.updateSteps[i].updater === 'function') {
+      const updater = dimension.updateSteps[i].updater;
+      if (typeof updater === 'function') {
         updaters.push(
-          dimension.updateSteps[i].updater.bind(this, dimension.updateSteps[i], props, dimension)
+          updater.bind(this, dimension.updateSteps[i], props, dimension) as UpdaterType
         );
       }
     }
@@ -518,8 +531,16 @@ export default class CPUAggregator {
     return updaters;
   }
 
-  _getAllUpdaters(dimension, oldProps, props, changeFlags) {
-    let updaters: BindedUpdaterType[] = [];
+  _getAllUpdaters<UpdaterObjectType extends DimensionType | AggregationType>(
+    dimension: UpdaterObjectType,
+    oldProps,
+    props,
+    changeFlags
+  ) {
+    type UpdaterType = UpdaterObjectType extends DimensionType
+      ? BindedUpdaterType
+      : BindedAggregatedUpdaterType;
+    let updaters: UpdaterType[] = [];
     const needUpdateStep = dimension.updateSteps.findIndex(step =>
       this._needUpdateStep(step, oldProps, props, changeFlags)
     );
