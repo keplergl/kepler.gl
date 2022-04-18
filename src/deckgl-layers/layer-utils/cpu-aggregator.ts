@@ -26,13 +26,22 @@ import {aggregate} from '../../utils/aggregate-utils';
 import {AGGREGATION_TYPES, SCALE_FUNC} from '../../constants/default-settings';
 import {RGBAColor} from '../../reducers';
 
-export type UpdaterType = (step, props, dimensionUpdater) => void;
+export type UpdaterType = (this: CPUAggregator, step, props, dimensionUpdater) => void;
+export type BindedUpdaterType = () => void;
+export type AggregatedUpdaterType = (
+  this: CPUAggregator,
+  step,
+  props,
+  aggregation,
+  aggregationParams
+) => void;
+export type BindedAggregatedUpdaterType = (aggregationParams) => void;
 
 export type UpdateStepsType = {
   key: string;
   triggers: {
     [key: string]: {
-      prop?: string;
+      prop: string;
       updateTrigger?: string;
     };
   };
@@ -42,13 +51,29 @@ export type UpdateStepsType = {
   updater: UpdaterType;
 };
 
-export type DimensionType<ValueType> = {
+export type DimensionType<ValueType = any> = {
   key: string;
   accessor: string;
-  getPickingInfo: (dimensionState, cell) => any;
+  getPickingInfo: (dimensionState, cell, layerProps?) => any;
   nullValue: ValueType;
   updateSteps: UpdateStepsType[];
   getSubLayerAccessor;
+};
+
+export type AggregationUpdateStepsType = {
+  key: string;
+  triggers: {
+    [key: string]: {
+      prop: string;
+      updateTrigger?: string;
+    };
+  };
+  updater: AggregatedUpdaterType;
+};
+
+export type AggregationType = {
+  key: string;
+  updateSteps: AggregationUpdateStepsType[];
 };
 
 export const DECK_AGGREGATION_MAP = {
@@ -78,7 +103,7 @@ export function getScaleFunctor(scaleType) {
 
 function nop() {}
 
-export function getGetValue(step, props, dimensionUpdater) {
+export function getGetValue(this: CPUAggregator, step, props, dimensionUpdater) {
   const {key} = dimensionUpdater;
   const {value, weight, aggregation} = step.triggers;
 
@@ -94,10 +119,10 @@ export function getGetValue(step, props, dimensionUpdater) {
   }
 }
 
-export function getDimensionSortedBins(step, props, dimensionUpdater) {
+export function getDimensionSortedBins(this: CPUAggregator, step, props, dimensionUpdater) {
   const {key} = dimensionUpdater;
   const {getValue} = this.state.dimensions[key];
-
+  // @ts-expect-error
   const sortedBins = new BinSorter(this.state.layerData.data || [], {
     getValue,
     filterData: props._filterData
@@ -105,7 +130,7 @@ export function getDimensionSortedBins(step, props, dimensionUpdater) {
   this._setDimensionState(key, {sortedBins});
 }
 
-export function getDimensionValueDomain(step, props, dimensionUpdater) {
+export function getDimensionValueDomain(this: CPUAggregator, step, props, dimensionUpdater) {
   const {key} = dimensionUpdater;
   const {
     triggers: {lowerPercentile, upperPercentile, scaleType}
@@ -126,7 +151,7 @@ export function getDimensionValueDomain(step, props, dimensionUpdater) {
   this._setDimensionState(key, {valueDomain});
 }
 
-export function getDimensionScale(step, props, dimensionUpdater) {
+export function getDimensionScale(this: CPUAggregator, step, props, dimensionUpdater) {
   const {key} = dimensionUpdater;
   const {domain, range, scaleType} = step.triggers;
   const {onSet} = step;
@@ -159,7 +184,13 @@ function normalizeResult(result: {hexagons?; layerData?} = {}) {
   return result;
 }
 
-export function getAggregatedData(step, props, aggregation, aggregationParams) {
+export function getAggregatedData(
+  this: CPUAggregator,
+  step,
+  props,
+  aggregation,
+  aggregationParams
+) {
   const {
     triggers: {aggregator: aggr}
   } = step;
@@ -173,7 +204,7 @@ export function getAggregatedData(step, props, aggregation, aggregationParams) {
   });
 }
 
-export const defaultAggregation = {
+export const defaultAggregation: AggregationType = {
   key: 'position',
   updateSteps: [
     {
@@ -349,20 +380,15 @@ export const defaultElevationDimension: DimensionType<number> = {
 
 export const defaultDimensions = [defaultColorDimension, defaultElevationDimension];
 
-export type CPUAggregatorState = {layerData: {data}; dimensions: {}};
+export type CPUAggregatorState = {layerData: {data?}; dimensions: {}};
 
 export default class CPUAggregator {
   static getDimensionScale: any;
   state: CPUAggregatorState;
   dimensionUpdaters: {
-    [key: string]: {
-      updateSteps: UpdateStepsType[];
-      accessor: string;
-      getPickingInfo;
-      getSubLayerAccessor;
-    };
+    [key: string]: DimensionType;
   };
-  aggregationUpdater: {};
+  aggregationUpdater: AggregationType;
 
   constructor(opts: {initialState?: CPUAggregatorState; dimensions?; aggregation?} = {}) {
     this.state = {
@@ -383,11 +409,9 @@ export default class CPUAggregator {
       },
       ...opts.initialState
     };
-    this.dimensionUpdaters = {};
-    this.aggregationUpdater = {};
 
-    this._addDimension(opts.dimensions || defaultDimensions);
-    this._addAggregation(opts.aggregation || defaultAggregation);
+    this.dimensionUpdaters = opts.dimensions || defaultDimensions;
+    this.aggregationUpdater = opts.aggregation || defaultAggregation;
   }
 
   static defaultDimensions() {
@@ -395,7 +419,7 @@ export default class CPUAggregator {
   }
 
   updateAllDimensions(props) {
-    let dimensionChanges = [];
+    let dimensionChanges: BindedUpdaterType[] = [];
     // update all dimensions
     for (const dim in this.dimensionUpdaters) {
       const updaters = this._accumulateUpdaters(0, props, this.dimensionUpdaters[dim]);
@@ -451,7 +475,7 @@ export default class CPUAggregator {
     });
   }
 
-  _addAggregation(aggregation) {
+  _addAggregation(aggregation: AggregationType) {
     this.aggregationUpdater = aggregation;
   }
 
@@ -481,8 +505,8 @@ export default class CPUAggregator {
     });
   }
 
-  _accumulateUpdaters(step, props, dimension) {
-    const updaters = [];
+  _accumulateUpdaters(step, props, dimension: DimensionType) {
+    const updaters: BindedUpdaterType[] = [];
     for (let i = step; i < dimension.updateSteps.length; i++) {
       if (typeof dimension.updateSteps[i].updater === 'function') {
         updaters.push(
@@ -495,7 +519,7 @@ export default class CPUAggregator {
   }
 
   _getAllUpdaters(dimension, oldProps, props, changeFlags) {
-    let updaters = [];
+    let updaters: BindedUpdaterType[] = [];
     const needUpdateStep = dimension.updateSteps.findIndex(step =>
       this._needUpdateStep(step, oldProps, props, changeFlags)
     );
@@ -513,7 +537,7 @@ export default class CPUAggregator {
   }
 
   _getDimensionChanges(oldProps, props, changeFlags) {
-    let updaters = [];
+    let updaters: BindedUpdaterType[] = [];
 
     // get dimension to be updated
     for (const key in this.dimensionUpdaters) {
