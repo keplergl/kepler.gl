@@ -385,12 +385,16 @@ export type CPUAggregatorState = {layerData: {data?}; dimensions: {}};
 export default class CPUAggregator {
   static getDimensionScale: any;
   state: CPUAggregatorState;
-  dimensionUpdaters: {
-    [key: string]: DimensionType;
-  };
+  dimensionUpdaters: DimensionType[];
   aggregationUpdater: AggregationType;
 
-  constructor(opts: {initialState?: CPUAggregatorState; dimensions?; aggregation?} = {}) {
+  constructor(
+    opts: {
+      initialState?: CPUAggregatorState;
+      dimensions?: DimensionType[];
+      aggregation?: AggregationType;
+    } = {}
+  ) {
     this.state = {
       layerData: {},
       dimensions: {
@@ -479,7 +483,7 @@ export default class CPUAggregator {
     this.aggregationUpdater = aggregation;
   }
 
-  _addDimension(dimensions = []) {
+  _addDimension(dimensions: DimensionType[] = []) {
     dimensions.forEach(dimension => {
       const {key} = dimension;
       this.dimensionUpdaters[key] = dimension;
