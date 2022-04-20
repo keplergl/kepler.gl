@@ -385,7 +385,7 @@ export type CPUAggregatorState = {layerData: {data?}; dimensions: {}};
 export default class CPUAggregator {
   static getDimensionScale: any;
   state: CPUAggregatorState;
-  dimensionUpdaters: DimensionType[];
+  dimensionUpdaters: {[key: string]: DimensionType};
   aggregationUpdater: AggregationType;
 
   constructor(
@@ -414,8 +414,10 @@ export default class CPUAggregator {
       ...opts.initialState
     };
 
-    this.dimensionUpdaters = opts.dimensions || defaultDimensions;
+    this.dimensionUpdaters = {};
     this.aggregationUpdater = opts.aggregation || defaultAggregation;
+
+    this._addDimension(opts.dimensions || defaultDimensions);
   }
 
   static defaultDimensions() {
