@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef, ElementType} from 'react';
+import React, {Component, ComponentType, createRef, ElementType} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
@@ -84,7 +84,7 @@ interface RangeSliderProps {
 
 RangeSliderFactory.deps = [RangePlotFactory];
 
-export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlotFactory>) {
+export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlotFactory>): ComponentType<RangeSliderProps> {
   class RangeSlider extends Component<RangeSliderProps> {
     static defaultProps = {
       isEnlarged: false,

@@ -64,14 +64,14 @@ type SidePanelItem = {
 type SidePanelProps = {
   appName: string;
   appWebsite: string;
-  filters: Filter;
+  filters: Filter[];
   interactionConfig: InteractionConfig;
   layerBlending: string;
-  layers: Layer;
+  layers: Layer[];
   layerClasses: LayerClassesType;
   layerOrder: number[];
   mapStyle: MapStyle;
-  onSaveMap: Function;
+  onSaveMap?: Function;
   width: number;
   mapInfo: {title: string, description: string}
   datasets: Datasets;

@@ -271,10 +271,10 @@ class Portaled extends Component<PortaledProps, PortaledState> {
                   // failed to execute removeChild on parent node when it is already unmounted
                   return (
                     // @ts-ignore
-                    (context && context.current) || {
+                    ((context && context.current) || {
                       removeChild: () => {},
                       appendChild: () => {}
-                    }
+                    }) as HTMLElement
                   );
                 }}
                 onRequestClose={onClose}

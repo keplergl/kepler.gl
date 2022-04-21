@@ -19,9 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 import {css} from 'styled-components';
-import {findDOMNode} from 'react-dom';
 import {createSelector} from 'reselect';
 import get from 'lodash.get';
 import document from 'global/document';
@@ -62,6 +60,15 @@ import {
 
 import KeyEvent from 'constants/keyevent';
 import {getFileFormatNames, getFileExtensions} from '../reducers/vis-state-selectors';
+import { MapState, MapStyle, UiState, VisState } from 'reducers';
+import { OnSuccessCallBack, OnErrorCallBack } from 'actions';
+import { ProviderState } from 'reducers/provider-state-updaters';
+
+import * as VisStateActions from 'actions/vis-state-actions'
+import * as UIStateActions from 'actions/ui-state-actions'
+import * as MapStyleActions from 'actions/map-style-actions'
+import * as ProviderActions from 'actions/provider-actions'
+import { ModalDialogProps } from './common/modal';
 
 const DataTableModalStyle = css`
   top: 80px;
@@ -89,6 +96,30 @@ const DefaultStyle = css`
   max-width: 960px;
 `;
 
+export type ModalContainerProps = {
+  appName: string;
+  rootNode: React.ReactNode;
+  containerW: number;
+  containerH: number;
+  mapboxApiAccessToken: string;
+  mapboxApiUrl?: string;
+  mapState: MapState;
+  mapStyle: MapStyle;
+  uiState: UiState;
+  visState: VisState;
+  providerState: ProviderState;
+  visStateActions: typeof VisStateActions;
+  uiStateActions: typeof UIStateActions;
+  mapStyleActions: typeof MapStyleActions;
+  providerActions: typeof ProviderActions;
+  onSaveToStorage?: () => void;
+  cloudProviders: object[];
+  onLoadCloudMapSuccess?: OnSuccessCallBack;
+  onLoadCloudMapError?: OnErrorCallBack;
+  onExportToCloudSuccess?: OnSuccessCallBack;
+  onExportToCloudError?: OnErrorCallBack;
+};
+
 ModalContainerFactory.deps = [
   DeleteDatasetModalFactory,
   OverWriteMapModalFactory,
@@ -104,38 +135,22 @@ ModalContainerFactory.deps = [
 ];
 
 export default function ModalContainerFactory(
-  DeleteDatasetModal,
-  OverWriteMapModal,
-  DataTableModal,
-  LoadDataModal,
-  ExportImageModal,
-  ExportDataModal,
-  ExportMapModal,
-  AddMapStyleModal,
-  ModalDialog,
-  SaveMapModal,
-  ShareMapModal
-) {
+  DeleteDatasetModal: ReturnType<typeof DeleteDatasetModalFactory>,
+  OverWriteMapModal: ReturnType<typeof OverWriteMapModalFactory>,
+  DataTableModal: ReturnType<typeof DataTableModalFactory>,
+  LoadDataModal: ReturnType<typeof LoadDataModalFactory>,
+  ExportImageModal: ReturnType<typeof ExportImageModalFactory>,
+  ExportDataModal: ReturnType<typeof ExportDataModalFactory>,
+  ExportMapModal: ReturnType<typeof ExportMapModalFactory>,
+  AddMapStyleModal: ReturnType<typeof AddMapStyleModalFactory>,
+  ModalDialog: ReturnType<typeof ModalDialogFactory>,
+  SaveMapModal: ReturnType<typeof SaveMapModalFactory>,
+  ShareMapModal: ReturnType<typeof ShareMapModalFactory>
+): React.ElementType<ModalContainerProps> {
   /** @typedef {import('./modal-container').ModalContainerProps} ModalContainerProps */
   /** @augments React.Component<ModalContainerProps> */
-  class ModalContainer extends Component {
+  class ModalContainer extends Component<ModalContainerProps> {
     // TODO - remove when prop types are fully exported
-    static propTypes = {
-      rootNode: PropTypes.object,
-      containerW: PropTypes.number,
-      containerH: PropTypes.number,
-      mapboxApiAccessToken: PropTypes.string.isRequired,
-      mapboxApiUrl: PropTypes.string,
-      mapState: PropTypes.object.isRequired,
-      mapStyle: PropTypes.object.isRequired,
-      uiState: PropTypes.object.isRequired,
-      visState: PropTypes.object.isRequired,
-      visStateActions: PropTypes.object.isRequired,
-      uiStateActions: PropTypes.object.isRequired,
-      mapStyleActions: PropTypes.object.isRequired,
-      onSaveToStorage: PropTypes.func,
-      cloudProviders: PropTypes.arrayOf(PropTypes.object)
-    };
     componentDidMount = () => {
       document.addEventListener('keyup', this._onKeyUp);
     };
@@ -259,7 +274,6 @@ export default function ModalContainerFactory(
         mapState,
         uiState,
         visState,
-        rootNode,
         visStateActions,
         uiStateActions,
         providerState
@@ -267,8 +281,8 @@ export default function ModalContainerFactory(
       const {currentModal, datasetKeyToRemove} = uiState;
       const {datasets, layers, editingDataset} = visState;
 
-      let template = null;
-      let modalProps = {};
+      let template: JSX.Element | null = null;
+      let modalProps: Partial<ModalDialogProps> = {};
 
       // TODO - currentModal is a string
       // @ts-ignore
@@ -328,6 +342,7 @@ export default function ModalContainerFactory(
             template = (
               <LoadDataModal
                 {...providerState}
+                //@ts-expect-error //TODO Remove it once LoadDataModal is translated
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
                 onLoadCloudMap={this._onLoadCloudMap}
@@ -450,6 +465,7 @@ export default function ModalContainerFactory(
             break;
           case SAVE_MAP_ID:
             template = (
+              //@ts-expect-error //TODO Remove it once SaveMapModal is translated
               <SaveMapModal
                 {...providerState}
                 exportImage={uiState.exportImage}
@@ -529,7 +545,6 @@ export default function ModalContainerFactory(
 
       return this.props.rootNode ? (
         <ModalDialog
-          parentSelector={() => findDOMNode(rootNode)}
           isOpen={Boolean(currentModal)}
           onCancel={this._closeModal}
           {...modalProps}

@@ -20,7 +20,6 @@
 
 // libraries
 import React, {Component, createRef} from 'react';
-import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 import {StaticMap} from 'react-map-gl';
@@ -34,22 +33,13 @@ import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-e
 import {findMapBounds} from 'utils/data-utils';
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
 import {GEOCODER_LAYER_ID} from 'constants/default-settings';
+import { ExportImage, SplitMap } from 'reducers';
+import { setExportImageDataUri, setExportImageError, setExportImageSetting } from 'actions';
+import { mapFieldsSelector } from './kepler-gl';
 
 const CLASS_FILTER = ['mapboxgl-control-container', 'attrition-link', 'attrition-logo'];
 const DOM_FILTER_FUNC = node => !CLASS_FILTER.includes(node.className);
 const OUT_OF_SCREEN_POSITION = -9999;
-
-const propTypes = {
-  width: PropTypes.number.isRequired,
-  height: PropTypes.number.isRequired,
-  exportImageSetting: PropTypes.object.isRequired,
-  addNotification: PropTypes.func.isRequired,
-  mapFields: PropTypes.object.isRequired,
-  setExportImageSetting: PropTypes.object.isRequired,
-  setExportImageDataUri: PropTypes.func.isRequired,
-  setExportImageError: PropTypes.func.isRequired,
-  splitMaps: PropTypes.arrayOf(PropTypes.object)
-};
 
 PlotContainerFactory.deps = [MapContainerFactory, MapsLayoutFactory];
 
@@ -66,7 +56,12 @@ const StyledPlotContainer = styled.div`
   left: ${OUT_OF_SCREEN_POSITION}px;
 `;
 
-const StyledMapContainer = styled.div`
+interface StyledMapContainerProps {
+  width?: number;
+  height?: number;
+}
+
+const StyledMapContainer = styled.div<StyledMapContainerProps>`
   width: ${props => props.width}px;
   height: ${props => props.height}px;
   display: flex;
@@ -79,8 +74,24 @@ const deckGlProps = {
   }
 };
 
-export default function PlotContainerFactory(MapContainer, MapsLayout) {
-  class PlotContainer extends Component {
+interface PlotContainerProps {
+  width?: number,
+  height?: number,
+  exportImageSetting: ExportImage,
+  addNotification: Function,
+  mapFields: ReturnType<typeof mapFieldsSelector>,
+  setExportImageSetting: typeof setExportImageSetting,
+  setExportImageDataUri: typeof setExportImageDataUri,
+  setExportImageError: typeof setExportImageError,
+  splitMaps?: SplitMap[];
+  enableErrorNotification?: boolean;
+};
+
+export default function PlotContainerFactory(
+    MapContainer: ReturnType<typeof MapContainerFactory>, 
+    MapsLayout: ReturnType<typeof MapsLayoutFactory>
+  ): React.ComponentType<PlotContainerProps> {
+  class PlotContainer extends Component<PlotContainerProps> {
     constructor(props) {
       super(props);
       this._onMapRender = debounce(this._onMapRender, 500);
@@ -103,7 +114,7 @@ export default function PlotContainerFactory(MapContainer, MapsLayout) {
       }
     }
 
-    plottingAreaRef = createRef();
+    plottingAreaRef = createRef<HTMLDivElement>();
 
     mapStyleSelector = props => props.mapFields.mapStyle;
     mapScaleSelector = props => {
@@ -153,14 +164,14 @@ export default function PlotContainerFactory(MapContainer, MapsLayout) {
     };
 
     render() {
-      const {exportImageSetting, mapFields, splitMaps} = this.props;
-      const {imageSize = {}, legend} = exportImageSetting;
+      const {exportImageSetting, mapFields, splitMaps = []} = this.props;
+      const {imageSize, legend} = exportImageSetting;
       const {mapState} = mapFields;
       const isSplit = splitMaps && splitMaps.length > 1;
 
       const size = {
-        width: imageSize.imageW || 1,
-        height: imageSize.imageH || 1
+        width: imageSize?.imageW || 1,
+        height: imageSize?.imageH || 1
       };
       const width = size.width / (isSplit ? 2 : 1);
       const height = size.height;
@@ -232,7 +243,5 @@ export default function PlotContainerFactory(MapContainer, MapsLayout) {
       );
     }
   }
-
-  PlotContainer.propsTypes = propTypes;
   return PlotContainer;
 }

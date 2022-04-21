@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import {connect} from 'react-redux';
+import React, {Component, ComponentType, Dispatch} from 'react';
+import {connect, ConnectedProps} from 'react-redux';
 import memoize from 'lodash.memoize';
 import {console as Console} from 'global/window';
 import {injector, provideRecipesToInjector, flattenDeps} from './injector';
@@ -28,6 +28,7 @@ import {forwardTo} from 'actions/action-wrapper';
 
 import {registerEntry, deleteEntry, renameEntry} from 'actions/identity-actions';
 import {notNullorUndefined} from 'utils/data-utils';
+import { KeplerGlState } from 'reducers/core';
 
 export const ERROR_MSG = {
   noState:
@@ -36,9 +37,26 @@ export const ERROR_MSG = {
     `If it is not mounted as state.keplerGl by default, you need to provide getState as a prop`
 };
 
+const mapStateToProps = (state: any, props: ContainerProps) => ({state, ...props});
+const dispatchToProps = (dispatch: Dispatch<any>) => ({dispatch});
+const connector = connect(mapStateToProps, dispatchToProps);
+
+type ContainerProps = {
+  id: string;
+  mapboxApiAccessToken: string;
+  mapboxApiUrl?: string;
+  mapStylesReplaceDefault?: boolean;
+  initialUiState?: object;
+  width: number;
+  mint?: boolean;
+  getState: (state: any) => KeplerGlState
+}
+
+type PropsFromRedux = ConnectedProps<typeof connector> & ContainerProps
+
 ContainerFactory.deps = [KeplerGlFactory];
 
-export function ContainerFactory(KeplerGl) {
+export function ContainerFactory(KeplerGl: ReturnType<typeof KeplerGlFactory>): ComponentType<PropsFromRedux> {
   /** @lends KeplerGl */
   /**
     * Main Kepler.gl Component
@@ -66,7 +84,8 @@ export function ContainerFactory(KeplerGl) {
     * @param {Number} props.width - _required_ Width of the KeplerGl UI.
     * @public
    */
-  class Container extends Component {
+
+  class Container extends Component<PropsFromRedux> {
     // default id and address if not provided
     static defaultProps = {
       id: 'map',
@@ -74,20 +93,17 @@ export function ContainerFactory(KeplerGl) {
       mint: true
     };
 
-    constructor(props, ctx) {
-      super(props, ctx);
 
-      this.getSelector = memoize((id, getState) => state => {
-        if (!getState(state)) {
-          // log error
-          Console.error(ERROR_MSG.noState);
+    getSelector = memoize((id, getState) => state => {
+      if (!getState(state)) {
+        // log error
+        Console.error(ERROR_MSG.noState);
 
-          return null;
-        }
-        return getState(state)[id];
-      });
-      this.getDispatch = memoize((id, dispatch) => forwardTo(id, dispatch));
-    }
+        return null;
+      }
+      return getState(state)[id];
+    });
+    getDispatch = memoize((id, dispatch) => forwardTo(id, dispatch));
 
     componentDidMount() {
       const {
@@ -150,9 +166,7 @@ export function ContainerFactory(KeplerGl) {
     }
   }
 
-  const mapStateToProps = (state, props) => ({state, ...props});
-  const dispatchToProps = dispatch => ({dispatch});
-  return connect(mapStateToProps, dispatchToProps)(Container);
+  return connector(Container);
 }
 
 const allDependencies = flattenDeps([], ContainerFactory);

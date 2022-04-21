@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, forwardRef, useMemo} from 'react';
+import React, {useCallback, forwardRef, useMemo, ReactNode} from 'react';
 import styled from 'styled-components';
 import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-control';
@@ -26,10 +26,17 @@ import AnimationControllerFactory from './common/animation-control/animation-con
 import {ANIMATION_WINDOW, DIMENSIONS, FILTER_TYPES} from 'constants/default-settings';
 import {getIntervalBins} from 'utils/filter-utils';
 import {media} from 'styles/media-breakpoints';
+import { AnimationConfig, TimeRangeFilter } from 'reducers';
+import { bottomWidgetSelector } from './kepler-gl';
 
 const maxWidth = 1080;
 
-const BottomWidgetContainer = styled.div`
+interface BottomWidgetContainer {
+  hasPadding?: boolean;
+  width: number;
+}
+
+const BottomWidgetContainer = styled.div<BottomWidgetContainer>`
   display: flex;
   flex-direction: column;
   padding-top: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingTop : 0)}px;
@@ -46,9 +53,16 @@ const BottomWidgetContainer = styled.div`
   ${media.portable`padding: 0;`}
 `;
 
+interface FilterAnimationControllerProps {
+  filter: TimeRangeFilter & {animationWindow?: string};
+  children?: ReactNode;
+  filterIdx: number;
+  setFilterAnimationTime: (idx: number, value: string, a: any[]) => void;
+}
+
 FilterAnimationControllerFactory.deps = [AnimationControllerFactory];
 export function FilterAnimationControllerFactory(AnimationController: ReturnType<typeof AnimationControllerFactory>) {
-  const FilterAnimationController = ({filter, filterIdx, setFilterAnimationTime, children}) => {
+  const FilterAnimationController = ({filter, filterIdx, setFilterAnimationTime, children}: FilterAnimationControllerProps) => {
     const intervalBins = useMemo(() => getIntervalBins(filter), [filter]);
 
     const steps = useMemo(() => (intervalBins ? intervalBins.map(x => x.x0) : null), [
@@ -90,12 +104,18 @@ export function FilterAnimationControllerFactory(AnimationController: ReturnType
   return FilterAnimationController;
 }
 
+interface LayerAnimationControllerProps {
+  children?: ReactNode;
+  animationConfig: AnimationConfig & {timeSteps?: number[] | null}
+  setLayerAnimationTime: (x: number) => void;
+}
+
 LayerAnimationControllerFactory.deps = [AnimationControllerFactory];
 export function LayerAnimationControllerFactory(AnimationController: ReturnType<typeof AnimationControllerFactory>) {
-  const LayerAnimationController = ({animationConfig, setLayerAnimationTime, children}) => (
-    <AnimationController
+  const LayerAnimationController = ({animationConfig, setLayerAnimationTime, children}: LayerAnimationControllerProps) => (
+    <AnimationController<number>
       key="layer-control"
-      value={animationConfig.currentTime}
+      value={Number(animationConfig.currentTime)}
       domain={animationConfig.domain}
       speed={animationConfig.speed}
       isAnimating={animationConfig.isAnimating}
@@ -109,6 +129,10 @@ export function LayerAnimationControllerFactory(AnimationController: ReturnType<
   );
   return LayerAnimationController;
 }
+
+type BottomWidgetProps = {
+  containerW: number;
+} & ReturnType<typeof bottomWidgetSelector>
 
 BottomWidgetFactory.deps = [
   TimeWidgetFactory,
@@ -124,7 +148,7 @@ export default function BottomWidgetFactory(
   FilterAnimationController: ReturnType<typeof FilterAnimationControllerFactory>,
   LayerAnimationController: ReturnType<typeof LayerAnimationControllerFactory>
 ) {
-  const BottomWidget = props => {
+  const BottomWidget = (props: BottomWidgetProps) => {
     const {
       datasets,
       filters,
@@ -172,7 +196,7 @@ export default function BottomWidgetFactory(
 
     // if filter is not animating, pass in enlarged filter here because
     // animation controller needs to call reset on it
-    const filter = animatedFilter || filters[enlargedFilterIdx];
+    const filter = animatedFilter as TimeRangeFilter || filters[enlargedFilterIdx];
 
     return (
       <BottomWidgetContainer
@@ -234,7 +258,7 @@ export default function BottomWidgetFactory(
 
   /* eslint-disable react/display-name */
   // @ts-ignore
-  return forwardRef((props, ref) => <BottomWidget {...props} rootRef={ref} />);
+  return forwardRef((props: BottomWidgetProps, ref) => <BottomWidget {...props} rootRef={ref} />);
   /* eslint-enable react/display-name */
 }
 /* eslint-enable complexity */

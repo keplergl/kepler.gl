@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
 import RangeSliderFactory from 'components/common/range-slider';
 import onClickOutside from 'react-onclickoutside';
@@ -51,7 +51,7 @@ interface AnimationSpeedSliderProps {
   updateAnimationSpeed: (val: number) => void
 }
 
-export default function AnimationSpeedSliderFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
+export default function AnimationSpeedSliderFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>): ComponentType<AnimationSpeedSliderProps> {
   class AnimationSpeedSlider extends Component<AnimationSpeedSliderProps> {
     handleClickOutside = e => {
       this.props.onHide();

@@ -18,18 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {connect as reduxConnect} from 'react-redux';
+import { JSXElementConstructor } from 'react';
+import {connect as reduxConnect, GetProps, Matching} from 'react-redux';
 import withLocalSelector from './with-local-selector';
 
 const defaultMapStateToProps = (state, _, __) => state;
 const defaultMapDispatchToProps = () => (dispatch, _, __) => ({dispatch});
 
-export const connect = (
+
+
+export const connect = <T extends JSXElementConstructor<Matching<any, GetProps<T>>>>(
   mapStateToProps = defaultMapStateToProps,
   makeMapDispatchToProps = defaultMapDispatchToProps,
   reduxMergeProps?,
   options?
-) => BaseComponent => {
+) => (BaseComponent: T) => {
   const mapDispatchToProps = makeMapDispatchToProps();
   const reduxMapState = (state, props) => mapStateToProps(props.selector(state), props, state);
 

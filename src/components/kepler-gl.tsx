@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef} from 'react';
+import React, {Component, createRef, Dispatch} from 'react';
 import Console from 'global/console';
 import {bindActionCreators} from 'redux';
 import styled, {ThemeProvider, withTheme} from 'styled-components';
@@ -27,12 +27,23 @@ import {connect as keplerGlConnect} from 'connect/keplergl-connect';
 import {IntlProvider} from 'react-intl';
 import {messages} from '../localization';
 import {RootContext} from 'components/context';
+import {OnErrorCallBack, OnSuccessCallBack} from 'actions/provider-actions';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 import * as ProviderActions from 'actions/provider-actions';
+
+
+type KeplerGlActions = {
+  visStateActions: typeof VisStateActions;
+  mapStateActions: typeof MapStateActions;
+  mapStyleActions: typeof MapStyleActions;
+  uiStateActions: typeof UIStateActions;
+  providerActions: typeof ProviderActions;
+}
+
 
 import {
   DIMENSIONS,
@@ -59,6 +70,9 @@ import {mergeMessages} from 'utils/locale-utils';
 
 import {theme as basicTheme, themeLT, themeBS} from 'styles/base';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
+import { KeplerGlState } from 'reducers/core';
+import { Provider } from 'cloud-providers';
+
 
 // Maybe we should think about exporting this or creating a variable
 // as part of the base.js theme
@@ -95,7 +109,11 @@ const GlobalStyle = styled.div`
   }
 `;
 
-const BottomWidgetOuter = styled.div(
+interface BottomWidgetOuterProps {
+  absolute?: boolean;
+}
+
+const BottomWidgetOuter = styled.div<BottomWidgetOuterProps>(
   ({absolute}) => `
   ${absolute ? 'position: absolute; bottom: 0; right: 0;' : ''}
   pointer-events: none; /* prevent padding from blocking input */
@@ -105,10 +123,10 @@ const BottomWidgetOuter = styled.div(
   }`
 );
 
-export const mapFieldsSelector = props => ({
+export const mapFieldsSelector = (props: KeplerGLProps) => ({
   getMapboxRef: props.getMapboxRef,
   mapboxApiAccessToken: props.mapboxApiAccessToken,
-  mapboxApiUrl: props.mapboxApiUrl,
+  mapboxApiUrl: props.mapboxApiUrl?props.mapboxApiUrl:DEFAULT_KEPLER_GL_PROPS.mapboxApiUrl,
   mapState: props.mapState,
   mapStyle: props.mapStyle,
   onDeckInitialized: props.onDeckInitialized,
@@ -144,9 +162,9 @@ export function getVisibleDatasets(datasets) {
   return filterObjectByPredicate(datasets, (key, value) => key !== GEOCODER_DATASET_NAME);
 }
 
-export const sidePanelSelector = (props, availableProviders, filteredDatasets) => ({
-  appName: props.appName,
-  version: props.version,
+export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filteredDatasets) => ({
+  appName: props.appName?props.appName:DEFAULT_KEPLER_GL_PROPS.appName,
+  version: props.version?props.version:DEFAULT_KEPLER_GL_PROPS.version,
   appWebsite: props.appWebsite,
   mapStyle: props.mapStyle,
   onSaveMap: props.onSaveMap,
@@ -154,6 +172,7 @@ export const sidePanelSelector = (props, availableProviders, filteredDatasets) =
   mapStyleActions: props.mapStyleActions,
   visStateActions: props.visStateActions,
   uiStateActions: props.uiStateActions,
+  mapStateActions: props.mapStateActions,
 
   datasets: filteredDatasets,
   filters: props.visState.filters,
@@ -164,12 +183,12 @@ export const sidePanelSelector = (props, availableProviders, filteredDatasets) =
   mapInfo: props.visState.mapInfo,
   layerBlending: props.visState.layerBlending,
 
-  width: props.sidePanelWidth,
+  width: props.sidePanelWidth?props.sidePanelWidth:DEFAULT_KEPLER_GL_PROPS.width,
   availableProviders,
   mapSaved: props.providerState.mapSaved
 });
 
-export const plotContainerSelector = props => ({
+export const plotContainerSelector = (props: KeplerGLProps) => ({
   width: props.width,
   height: props.height,
   exportImageSetting: props.uiState.exportImage,
@@ -181,10 +200,10 @@ export const plotContainerSelector = props => ({
   splitMaps: props.visState.splitMaps
 });
 
-export const isSplitSelector = props =>
+export const isSplitSelector = (props: KeplerGLProps) =>
   props.visState.splitMaps && props.visState.splitMaps.length > 1;
 
-export const bottomWidgetSelector = (props, theme) => ({
+export const bottomWidgetSelector = (props: KeplerGLProps, theme) => ({
   filters: props.visState.filters,
   datasets: props.visState.datasets,
   uiState: props.uiState,
@@ -195,8 +214,8 @@ export const bottomWidgetSelector = (props, theme) => ({
   sidePanelWidth: props.uiState.readOnly ? 0 : props.sidePanelWidth + theme.sidePanel.margin.left
 });
 
-export const modalContainerSelector = (props, rootNode) => ({
-  appName: props.appName,
+export const modalContainerSelector = (props: KeplerGLProps, rootNode) => ({
+  appName: props.appName?props.appName:DEFAULT_KEPLER_GL_PROPS.appName,
   mapStyle: props.mapStyle,
   visState: props.visState,
   mapState: props.mapState,
@@ -212,14 +231,14 @@ export const modalContainerSelector = (props, rootNode) => ({
 
   rootNode,
   // User defined cloud provider props
-  cloudProviders: props.cloudProviders,
+  cloudProviders: props.cloudProviders?props.cloudProviders:DEFAULT_KEPLER_GL_PROPS.cloudProviders,
   onExportToCloudSuccess: props.onExportToCloudSuccess,
   onLoadCloudMapSuccess: props.onLoadCloudMapSuccess,
   onLoadCloudMapError: props.onLoadCloudMapError,
   onExportToCloudError: props.onExportToCloudError
 });
 
-export const geoCoderPanelSelector = props => ({
+export const geoCoderPanelSelector = (props: KeplerGLProps) => ({
   isGeocoderEnabled: props.visState.interactionConfig.geocoder.enabled,
   mapboxApiAccessToken: props.mapboxApiAccessToken,
   mapState: props.mapState,
@@ -228,7 +247,7 @@ export const geoCoderPanelSelector = props => ({
   updateMap: props.mapStateActions.updateMap
 });
 
-export const notificationPanelSelector = props => ({
+export const notificationPanelSelector = (props: KeplerGLProps) => ({
   removeNotification: props.uiStateActions.removeNotification,
   notifications: props.uiState.notifications
 });
@@ -247,6 +266,40 @@ export const DEFAULT_KEPLER_GL_PROPS = {
   readOnly: false
 };
 
+type KeplerGLBasicProps= {
+  mapboxApiAccessToken: string;
+  mapboxApiUrl?: string;
+  id: string;
+  width?: number;
+  height?: number;
+
+
+  appWebsite?: any;
+  onSaveMap?: () => void;
+  onViewStateChange?: () => void;
+  onDeckInitialized?: () => void;
+  onKeplerGlInitialized?: () => void;
+  getMapboxRef?: () => React.RefObject<any>;
+  mapStyles?: {id: string; style?: object}[];
+  mapStylesReplaceDefault?: boolean;
+  appName?: string;
+  version?: string;
+  sidePanelWidth?: number;
+  theme?: object;
+  cloudProviders?: Provider[];
+  deckGlProps?: object;
+  onLoadCloudMapSuccess?: OnSuccessCallBack;
+  onLoadCloudMapError?: OnErrorCallBack;
+  onExportToCloudSuccess?: OnSuccessCallBack;
+  onExportToCloudError?: OnErrorCallBack;
+  readOnly?: boolean;
+
+  localeMessages?: {[key: string]: {[key: string]: string}};
+  dispatch: Dispatch<any>;
+}
+
+type KeplerGLProps =  KeplerGlState & KeplerGlActions & KeplerGLBasicProps
+
 KeplerGlFactory.deps = [
   BottomWidgetFactory,
   GeoCoderPanelFactory,
@@ -259,18 +312,18 @@ KeplerGlFactory.deps = [
 ];
 
 function KeplerGlFactory(
-  BottomWidget,
-  GeoCoderPanel,
-  MapContainer,
-  MapsLayout,
-  ModalContainer,
-  SidePanel,
-  PlotContainer,
-  NotificationPanel
-) {
+  BottomWidget: ReturnType<typeof BottomWidgetFactory>,
+  GeoCoderPanel: ReturnType<typeof GeoCoderPanelFactory>,
+  MapContainer: ReturnType<typeof MapContainerFactory>,
+  MapsLayout: ReturnType<typeof MapsLayoutFactory>,
+  ModalContainer: ReturnType<typeof ModalContainerFactory>,
+  SidePanel: ReturnType<typeof SidePanelFactory>,
+  PlotContainer: ReturnType<typeof PlotContainerFactory>,
+  NotificationPanel: ReturnType<typeof NotificationPanelFactory>
+): React.ComponentType<KeplerGLBasicProps & {selector: (...args: any[]) => KeplerGlState}> {
   /** @typedef {import('./kepler-gl').UnconnectedKeplerGlProps} KeplerGlProps */
   /** @augments React.Component<KeplerGlProps> */
-  class KeplerGL extends Component {
+  class KeplerGL extends Component<KeplerGLProps & {selector: (...args: any[]) => KeplerGlState}> {
     static defaultProps = DEFAULT_KEPLER_GL_PROPS;
 
     state = {
@@ -300,7 +353,7 @@ function KeplerGlFactory(
 
     static contextType = RootContext;
 
-    root = createRef();
+    root = createRef<HTMLDivElement>();
     bottomWidgetRef = createRef();
 
     /* selectors */
@@ -322,7 +375,7 @@ function KeplerGlFactory(
     filteredDatasetsSelector = createSelector(this.datasetsSelector, getVisibleDatasets);
 
     availableProviders = createSelector(
-      props => props.cloudProviders,
+      (props: KeplerGLProps) => props.cloudProviders,
       providers =>
         Array.isArray(providers) && providers.length
           ? {
@@ -333,7 +386,7 @@ function KeplerGlFactory(
     );
 
     localeMessagesSelector = createSelector(
-      props => props.localeMessages,
+      (props: KeplerGLProps) => props.localeMessages,
       customMessages => (customMessages ? mergeMessages(messages, customMessages) : messages)
     );
 
@@ -369,9 +422,9 @@ function KeplerGlFactory(
 
     render() {
       const {
-        id,
-        width,
-        height,
+        id = 'map',
+        width = DEFAULT_KEPLER_GL_PROPS.width,
+        height = DEFAULT_KEPLER_GL_PROPS.height,
         uiState,
         visState,
         // readOnly override
@@ -429,7 +482,7 @@ function KeplerGlFactory(
               >
                 <NotificationPanel {...notificationPanelFields} />
                 {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                <MapsLayout className="maps">{mapContainers}</MapsLayout>
+                <MapsLayout>{mapContainers}</MapsLayout>
                 {isExportingImage && <PlotContainer {...plotContainerFields} />}
                 {interactionConfig.geocoder.enabled && <GeoCoderPanel {...geoCoderPanelFields} />}
                 <BottomWidgetOuter absolute>
@@ -455,7 +508,7 @@ function KeplerGlFactory(
   return keplerGlConnect(mapStateToProps, makeMapDispatchToProps)(withTheme(KeplerGL));
 }
 
-export function mapStateToProps(state = {}, props) {
+export function mapStateToProps(state: KeplerGlState, props: KeplerGLProps) {
   return {
     ...props,
     visState: state.visState,
