@@ -27,12 +27,12 @@ import KeplerGlContext from 'components/context';
 export type FactoryElement = (...args) => React.Component;
 export type Factory = FactoryElement & {
   deps: FactoryElement[];
-}
+};
 
 export type InjectorType = {
   provide: (factory: any, replacement: any) => InjectorType;
   get: (fac: any, parent?: any) => any;
-}
+};
 
 const MissingComp = () => <div />;
 

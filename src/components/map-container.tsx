@@ -26,7 +26,6 @@ import {createSelector} from 'reselect';
 import WebMercatorViewport from 'viewport-mercator-project';
 import {errorNotification} from 'utils/notifications-utils';
 
-
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
@@ -61,24 +60,32 @@ import {
 import ErrorBoundary from 'components/common/error-boundary';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
 import {LOCALE_CODES} from 'localization/locales';
-import { Datasets, Filter, InteractionConfig, MapControls, MapState, MapStyle, Viewport } from 'reducers';
-import { Layer } from 'layers';
-import { SplitMapLayers } from 'reducers/vis-state-updaters';
-import { LayerBaseConfig, VisualChannelDomain } from 'layers/base-layer';
-import { Property } from 'csstype';
+import {
+  Datasets,
+  Filter,
+  InteractionConfig,
+  MapControls,
+  MapState,
+  MapStyle,
+  Viewport
+} from 'reducers';
+import {Layer} from 'layers';
+import {SplitMapLayers} from 'reducers/vis-state-updaters';
+import {LayerBaseConfig, VisualChannelDomain} from 'layers/base-layer';
+import {Property} from 'csstype';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE = {
   container: {
     display: 'inline-block',
-    position: ('relative' as Property.Position),
+    position: 'relative' as Property.Position,
     width: '100%',
     height: '100%'
   },
   top: {
-    position: ('absolute' as Property.Position),
+    position: 'absolute' as Property.Position,
     top: '0px',
-    pointerEvents: ('none' as Property.PointerEvents),
+    pointerEvents: 'none' as Property.PointerEvents,
     width: '100%',
     height: '100%'
   }
@@ -87,7 +94,7 @@ const MAP_STYLE = {
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
 const TRANSITION_DURATION = 0;
-const nop = ()=>{};
+const nop = () => {};
 
 export const Attribution = () => (
   <StyledAttrbution>
@@ -123,49 +130,52 @@ MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory]
 type MapboxStyle = string | object | undefined;
 
 interface MapContainerProps {
-  datasets: Datasets,
-  interactionConfig: InteractionConfig,
-  layerBlending: string,
-  layerOrder: number[],
-  layerData: any[],
-  layers: Layer[],
-  filters: Filter[],
-  mapState: MapState,
-  mapControls: MapControls,
-  mapStyle: {bottomMapStyle?: MapboxStyle, topMapStyle?: MapboxStyle} & MapStyle,
-  mousePos: any,
-  mapboxApiAccessToken: string,
-  mapboxApiUrl: string,
-  visStateActions: typeof VisStateActions,
-  mapStateActions: typeof MapStateActions,
-  uiStateActions: typeof UIStateActions,
+  datasets: Datasets;
+  interactionConfig: InteractionConfig;
+  layerBlending: string;
+  layerOrder: number[];
+  layerData: any[];
+  layers: Layer[];
+  filters: Filter[];
+  mapState: MapState;
+  mapControls: MapControls;
+  mapStyle: {bottomMapStyle?: MapboxStyle; topMapStyle?: MapboxStyle} & MapStyle;
+  mousePos: any;
+  mapboxApiAccessToken: string;
+  mapboxApiUrl: string;
+  visStateActions: typeof VisStateActions;
+  mapStateActions: typeof MapStateActions;
+  uiStateActions: typeof UIStateActions;
 
   // optional
-  primary?: boolean, // primary one will be reporting its size to appState
-  readOnly?: boolean,
-  isExport?: boolean,
-  clicked?: any,
-  hoverInfo?: any,
-  mapLayers?: SplitMapLayers | null,
-  onMapToggleLayer?: Function,
-  onMapStyleLoaded?: Function,
-  onMapRender?: Function,
-  getMapboxRef?: (mapbox?: MapboxGLMap | null, index?: number) => void,
-  index?: number
+  primary?: boolean; // primary one will be reporting its size to appState
+  readOnly?: boolean;
+  isExport?: boolean;
+  clicked?: any;
+  hoverInfo?: any;
+  mapLayers?: SplitMapLayers | null;
+  onMapToggleLayer?: Function;
+  onMapStyleLoaded?: Function;
+  onMapRender?: Function;
+  getMapboxRef?: (mapbox?: MapboxGLMap | null, index?: number) => void;
+  index?: number;
 
   locale?: any;
   editor?: any;
-  MapComponent?: typeof MapboxGLMap,
-  deckGlProps?: any,
-  onDeckInitialized?: ((a: any, b: any) => void)
-  onViewStateChange?: ((viewport: Viewport) => void)
+  MapComponent?: typeof MapboxGLMap;
+  deckGlProps?: any;
+  onDeckInitialized?: (a: any, b: any) => void;
+  onViewStateChange?: (viewport: Viewport) => void;
 }
 
-export default function MapContainerFactory(MapPopover, MapControl, Editor): React.ComponentType<MapContainerProps> {
+export default function MapContainerFactory(
+  MapPopover,
+  MapControl,
+  Editor
+): React.ComponentType<MapContainerProps> {
   class MapContainer extends Component<MapContainerProps> {
     static propTypes = {
       // required
-      
     };
 
     static defaultProps = {
@@ -174,7 +184,6 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor): Rea
       index: 0,
       primary: true
     };
-
 
     previousLayers = {
       // [layers.id]: mapboxLayerConfig
@@ -185,11 +194,10 @@ export default function MapContainerFactory(MapPopover, MapControl, Editor): Rea
     _deck: any = null;
     _map: mapboxgl.Map | null = null;
     _ref = createRef<HTMLDivElement>();
-    _deckGLErrorsElapsed: {[id:string]: number} = {}
+    _deckGLErrorsElapsed: {[id: string]: number} = {};
 
     constructor(props) {
       super(props);
-
     }
 
     componentDidMount() {

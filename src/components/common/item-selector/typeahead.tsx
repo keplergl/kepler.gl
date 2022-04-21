@@ -123,42 +123,42 @@ function shouldSkipSearch(input, state, showOptionsWhenEmpty) {
 }
 
 interface TypeaheadProps {
-  name?: string,
-  customClasses?: any,
-  maxVisible?: number,
-  resultsTruncatedMessage?: string,
-  options?: ReadonlyArray<string | number | boolean | object>,
-  fixedOptions?: ReadonlyArray<string | number | boolean | object>,
-  allowCustomValues?: number,
-  initialValue?: string,
-  value?: string,
-  placeholder?: string,
-  disabled?: boolean,
-  textarea?: boolean,
-  inputProps?: object,
-  onOptionSelected?: (option: any, event: any) => any,
-  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void,
-  onKeyDown?: (event: React.KeyboardEvent<HTMLDivElement>) => void,
-  onKeyPress?: KeyboardEventHandler<HTMLDivElement>,
-  onKeyUp?: KeyboardEventHandler<HTMLDivElement>,
-  onFocus?: (event: React.FocusEvent<HTMLDivElement>) => void,
-  onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void,
-  filterOption?: string | Function,
-  searchOptions?: Function,
-  displayOption?: string | Function,
-  inputDisplayOption?: string | Function,
-  formInputOption?: string | Function,
-  defaultClassNames?: boolean,
-  customListComponent?: ElementType,
-  customListItemComponent?: ElementType | Function
-  customListHeaderComponent?: ElementType | Function | null,
-  showOptionsWhenEmpty?: boolean,
+  name?: string;
+  customClasses?: any;
+  maxVisible?: number;
+  resultsTruncatedMessage?: string;
+  options?: ReadonlyArray<string | number | boolean | object>;
+  fixedOptions?: ReadonlyArray<string | number | boolean | object>;
+  allowCustomValues?: number;
+  initialValue?: string;
+  value?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  textarea?: boolean;
+  inputProps?: object;
+  onOptionSelected?: (option: any, event: any) => any;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
+  onKeyPress?: KeyboardEventHandler<HTMLDivElement>;
+  onKeyUp?: KeyboardEventHandler<HTMLDivElement>;
+  onFocus?: (event: React.FocusEvent<HTMLDivElement>) => void;
+  onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
+  filterOption?: string | Function;
+  searchOptions?: Function;
+  displayOption?: string | Function;
+  inputDisplayOption?: string | Function;
+  formInputOption?: string | Function;
+  defaultClassNames?: boolean;
+  customListComponent?: ElementType;
+  customListItemComponent?: ElementType | Function;
+  customListHeaderComponent?: ElementType | Function | null;
+  showOptionsWhenEmpty?: boolean;
   searchable?: boolean;
   light?: boolean;
   inputIcon: ElementType;
   className?: string;
   selectedItems?: any[] | null;
-};
+}
 
 interface TypeaheadState {
   /** @type {ReadonlyArray<string>} */
@@ -179,7 +179,6 @@ interface TypeaheadState {
 }
 
 class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
-
   static defaultProps = {
     options: [],
     customClasses: {},
@@ -270,7 +269,7 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
   };
 
   _renderIncrementalSearchResults() {
-    const {customListComponent: CustomListComponent = DropdownList} = this.props
+    const {customListComponent: CustomListComponent = DropdownList} = this.props;
     return (
       <CustomListComponent
         fixedOptions={this.props.fixedOptions}
@@ -483,7 +482,7 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     const classes = {
       [DEFAULT_CLASS]: this.props.defaultClassNames
     };
-    classes[this.props.className?this.props.className:''] = Boolean(this.props.className);
+    classes[this.props.className ? this.props.className : ''] = Boolean(this.props.className);
     const classList = classNames(classes);
 
     return (

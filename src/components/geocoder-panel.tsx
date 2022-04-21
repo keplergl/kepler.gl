@@ -33,7 +33,7 @@ import {
   GEOCODER_ICON_COLOR,
   GEOCODER_ICON_SIZE
 } from 'constants/default-settings';
-import { MapState } from 'reducers';
+import {MapState} from 'reducers';
 
 const ICON_LAYER = {
   id: GEOCODER_LAYER_ID,
@@ -114,18 +114,17 @@ export function getUpdateVisDataPayload(lat, lon, text) {
 interface GeocoderPanelProps {
   isGeocoderEnabled: boolean;
   mapState: MapState;
-  mapboxApiAccessToken: string,
-  updateVisData: Function,
-  removeDataset: Function,
-  updateMap: Function,
+  mapboxApiAccessToken: string;
+  updateVisData: Function;
+  removeDataset: Function;
+  updateMap: Function;
 
-  transitionDuration?: number,
-  width?: number
+  transitionDuration?: number;
+  width?: number;
 }
 
-export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps>{
+export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps> {
   class GeocoderPanel extends Component<GeocoderPanelProps> {
-
     defaultProps = {
       transitionDuration: 3000
     };

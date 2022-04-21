@@ -58,7 +58,10 @@ const StyledDomain = styled.div.attrs({
 
 AnimationControlFactory.deps = [PlaybackControlsFactory, FloatingTimeDisplayFactory];
 
-function AnimationControlFactory(PlaybackControls: ReturnType<typeof PlaybackControlsFactory>, FloatingTimeDisplay: ReturnType<typeof FloatingTimeDisplayFactory>) {
+function AnimationControlFactory(
+  PlaybackControls: ReturnType<typeof PlaybackControlsFactory>,
+  FloatingTimeDisplay: ReturnType<typeof FloatingTimeDisplayFactory>
+) {
   const AnimationControl = ({
     isAnimatable,
     isAnimating,

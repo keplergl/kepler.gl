@@ -33,9 +33,9 @@ import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-e
 import {findMapBounds} from 'utils/data-utils';
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
 import {GEOCODER_LAYER_ID} from 'constants/default-settings';
-import { ExportImage, SplitMap } from 'reducers';
-import { setExportImageDataUri, setExportImageError, setExportImageSetting } from 'actions';
-import { mapFieldsSelector } from './kepler-gl';
+import {ExportImage, SplitMap} from 'reducers';
+import {setExportImageDataUri, setExportImageError, setExportImageSetting} from 'actions';
+import {mapFieldsSelector} from './kepler-gl';
 
 const CLASS_FILTER = ['mapboxgl-control-container', 'attrition-link', 'attrition-logo'];
 const DOM_FILTER_FUNC = node => !CLASS_FILTER.includes(node.className);
@@ -75,22 +75,22 @@ const deckGlProps = {
 };
 
 interface PlotContainerProps {
-  width?: number,
-  height?: number,
-  exportImageSetting: ExportImage,
-  addNotification: Function,
-  mapFields: ReturnType<typeof mapFieldsSelector>,
-  setExportImageSetting: typeof setExportImageSetting,
-  setExportImageDataUri: typeof setExportImageDataUri,
-  setExportImageError: typeof setExportImageError,
+  width?: number;
+  height?: number;
+  exportImageSetting: ExportImage;
+  addNotification: Function;
+  mapFields: ReturnType<typeof mapFieldsSelector>;
+  setExportImageSetting: typeof setExportImageSetting;
+  setExportImageDataUri: typeof setExportImageDataUri;
+  setExportImageError: typeof setExportImageError;
   splitMaps?: SplitMap[];
   enableErrorNotification?: boolean;
-};
+}
 
 export default function PlotContainerFactory(
-    MapContainer: ReturnType<typeof MapContainerFactory>, 
-    MapsLayout: ReturnType<typeof MapsLayoutFactory>
-  ): React.ComponentType<PlotContainerProps> {
+  MapContainer: ReturnType<typeof MapContainerFactory>,
+  MapsLayout: ReturnType<typeof MapsLayoutFactory>
+): React.ComponentType<PlotContainerProps> {
   class PlotContainer extends Component<PlotContainerProps> {
     constructor(props) {
       super(props);

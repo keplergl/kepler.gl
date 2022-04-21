@@ -60,15 +60,15 @@ import {
 
 import KeyEvent from 'constants/keyevent';
 import {getFileFormatNames, getFileExtensions} from '../reducers/vis-state-selectors';
-import { MapState, MapStyle, UiState, VisState } from 'reducers';
-import { OnSuccessCallBack, OnErrorCallBack } from 'actions';
-import { ProviderState } from 'reducers/provider-state-updaters';
+import {MapState, MapStyle, UiState, VisState} from 'reducers';
+import {OnSuccessCallBack, OnErrorCallBack} from 'actions';
+import {ProviderState} from 'reducers/provider-state-updaters';
 
-import * as VisStateActions from 'actions/vis-state-actions'
-import * as UIStateActions from 'actions/ui-state-actions'
-import * as MapStyleActions from 'actions/map-style-actions'
-import * as ProviderActions from 'actions/provider-actions'
-import { ModalDialogProps } from './common/modal';
+import * as VisStateActions from 'actions/vis-state-actions';
+import * as UIStateActions from 'actions/ui-state-actions';
+import * as MapStyleActions from 'actions/map-style-actions';
+import * as ProviderActions from 'actions/provider-actions';
+import {ModalDialogProps} from './common/modal';
 
 const DataTableModalStyle = css`
   top: 80px;

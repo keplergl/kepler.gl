@@ -35,15 +35,13 @@ import * as MapStyleActions from 'actions/map-style-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 import * as ProviderActions from 'actions/provider-actions';
 
-
 type KeplerGlActions = {
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
   mapStyleActions: typeof MapStyleActions;
   uiStateActions: typeof UIStateActions;
   providerActions: typeof ProviderActions;
-}
-
+};
 
 import {
   DIMENSIONS,
@@ -70,9 +68,8 @@ import {mergeMessages} from 'utils/locale-utils';
 
 import {theme as basicTheme, themeLT, themeBS} from 'styles/base';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
-import { KeplerGlState } from 'reducers/core';
-import { Provider } from 'cloud-providers';
-
+import {KeplerGlState} from 'reducers/core';
+import {Provider} from 'cloud-providers';
 
 // Maybe we should think about exporting this or creating a variable
 // as part of the base.js theme
@@ -126,7 +123,7 @@ const BottomWidgetOuter = styled.div<BottomWidgetOuterProps>(
 export const mapFieldsSelector = (props: KeplerGLProps) => ({
   getMapboxRef: props.getMapboxRef,
   mapboxApiAccessToken: props.mapboxApiAccessToken,
-  mapboxApiUrl: props.mapboxApiUrl?props.mapboxApiUrl:DEFAULT_KEPLER_GL_PROPS.mapboxApiUrl,
+  mapboxApiUrl: props.mapboxApiUrl ? props.mapboxApiUrl : DEFAULT_KEPLER_GL_PROPS.mapboxApiUrl,
   mapState: props.mapState,
   mapStyle: props.mapStyle,
   onDeckInitialized: props.onDeckInitialized,
@@ -163,8 +160,8 @@ export function getVisibleDatasets(datasets) {
 }
 
 export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filteredDatasets) => ({
-  appName: props.appName?props.appName:DEFAULT_KEPLER_GL_PROPS.appName,
-  version: props.version?props.version:DEFAULT_KEPLER_GL_PROPS.version,
+  appName: props.appName ? props.appName : DEFAULT_KEPLER_GL_PROPS.appName,
+  version: props.version ? props.version : DEFAULT_KEPLER_GL_PROPS.version,
   appWebsite: props.appWebsite,
   mapStyle: props.mapStyle,
   onSaveMap: props.onSaveMap,
@@ -183,7 +180,7 @@ export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filt
   mapInfo: props.visState.mapInfo,
   layerBlending: props.visState.layerBlending,
 
-  width: props.sidePanelWidth?props.sidePanelWidth:DEFAULT_KEPLER_GL_PROPS.width,
+  width: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
   availableProviders,
   mapSaved: props.providerState.mapSaved
 });
@@ -215,7 +212,7 @@ export const bottomWidgetSelector = (props: KeplerGLProps, theme) => ({
 });
 
 export const modalContainerSelector = (props: KeplerGLProps, rootNode) => ({
-  appName: props.appName?props.appName:DEFAULT_KEPLER_GL_PROPS.appName,
+  appName: props.appName ? props.appName : DEFAULT_KEPLER_GL_PROPS.appName,
   mapStyle: props.mapStyle,
   visState: props.visState,
   mapState: props.mapState,
@@ -231,7 +228,9 @@ export const modalContainerSelector = (props: KeplerGLProps, rootNode) => ({
 
   rootNode,
   // User defined cloud provider props
-  cloudProviders: props.cloudProviders?props.cloudProviders:DEFAULT_KEPLER_GL_PROPS.cloudProviders,
+  cloudProviders: props.cloudProviders
+    ? props.cloudProviders
+    : DEFAULT_KEPLER_GL_PROPS.cloudProviders,
   onExportToCloudSuccess: props.onExportToCloudSuccess,
   onLoadCloudMapSuccess: props.onLoadCloudMapSuccess,
   onLoadCloudMapError: props.onLoadCloudMapError,
@@ -266,13 +265,12 @@ export const DEFAULT_KEPLER_GL_PROPS = {
   readOnly: false
 };
 
-type KeplerGLBasicProps= {
+type KeplerGLBasicProps = {
   mapboxApiAccessToken: string;
   mapboxApiUrl?: string;
   id: string;
   width?: number;
   height?: number;
-
 
   appWebsite?: any;
   onSaveMap?: () => void;
@@ -296,9 +294,9 @@ type KeplerGLBasicProps= {
 
   localeMessages?: {[key: string]: {[key: string]: string}};
   dispatch: Dispatch<any>;
-}
+};
 
-type KeplerGLProps =  KeplerGlState & KeplerGlActions & KeplerGLBasicProps
+type KeplerGLProps = KeplerGlState & KeplerGlActions & KeplerGLBasicProps;
 
 KeplerGlFactory.deps = [
   BottomWidgetFactory,

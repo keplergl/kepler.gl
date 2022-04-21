@@ -48,10 +48,12 @@ AnimationSpeedSliderFactory.deps = [RangeSliderFactory];
 interface AnimationSpeedSliderProps {
   onHide: () => void;
   speed: number;
-  updateAnimationSpeed: (val: number) => void
+  updateAnimationSpeed: (val: number) => void;
 }
 
-export default function AnimationSpeedSliderFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>): ComponentType<AnimationSpeedSliderProps> {
+export default function AnimationSpeedSliderFactory(
+  RangeSlider: ReturnType<typeof RangeSliderFactory>
+): ComponentType<AnimationSpeedSliderProps> {
   class AnimationSpeedSlider extends Component<AnimationSpeedSliderProps> {
     handleClickOutside = e => {
       this.props.onHide();

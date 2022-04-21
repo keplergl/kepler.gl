@@ -28,7 +28,7 @@ import {forwardTo} from 'actions/action-wrapper';
 
 import {registerEntry, deleteEntry, renameEntry} from 'actions/identity-actions';
 import {notNullorUndefined} from 'utils/data-utils';
-import { KeplerGlState } from 'reducers/core';
+import {KeplerGlState} from 'reducers/core';
 
 export const ERROR_MSG = {
   noState:
@@ -49,14 +49,16 @@ type ContainerProps = {
   initialUiState?: object;
   width: number;
   mint?: boolean;
-  getState: (state: any) => KeplerGlState
-}
+  getState: (state: any) => KeplerGlState;
+};
 
-type PropsFromRedux = ConnectedProps<typeof connector> & ContainerProps
+type PropsFromRedux = ConnectedProps<typeof connector> & ContainerProps;
 
 ContainerFactory.deps = [KeplerGlFactory];
 
-export function ContainerFactory(KeplerGl: ReturnType<typeof KeplerGlFactory>): ComponentType<PropsFromRedux> {
+export function ContainerFactory(
+  KeplerGl: ReturnType<typeof KeplerGlFactory>
+): ComponentType<PropsFromRedux> {
   /** @lends KeplerGl */
   /**
     * Main Kepler.gl Component
@@ -92,7 +94,6 @@ export function ContainerFactory(KeplerGl: ReturnType<typeof KeplerGlFactory>): 
       getState: state => state.keplerGl,
       mint: true
     };
-
 
     getSelector = memoize((id, getState) => state => {
       if (!getState(state)) {

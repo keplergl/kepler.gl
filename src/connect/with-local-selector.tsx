@@ -21,7 +21,7 @@
 import React, {Component} from 'react';
 import {createSelector} from 'reselect';
 import KeplerGlContext from 'components/context';
-import { KeplerGlState } from 'reducers/combined-updaters';
+import {KeplerGlState} from 'reducers/combined-updaters';
 
 const identity = state => state;
 
@@ -34,8 +34,9 @@ const mergeSelectors = (parentSelector, childSelector) => state =>
 // it will be stored in the context and passed down to child components,
 // as well as prop to the given component
 
-
-const withLocalSelector = <P extends {}>(ParentComponent: React.ComponentType<P>): React.ComponentType<P & {selector: (...args: any[]) => KeplerGlState}> => {
+const withLocalSelector = <P extends {}>(
+  ParentComponent: React.ComponentType<P>
+): React.ComponentType<P & {selector: (...args: any[]) => KeplerGlState}> => {
   class WithConnectSelector extends Component<P & {selector: (...args: any[]) => KeplerGlState}> {
     static contextType = KeplerGlContext;
 

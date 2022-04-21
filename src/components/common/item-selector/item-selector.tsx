@@ -116,36 +116,35 @@ const DropdownWrapper = styled.div<DropdownWrapperProps>`
 `;
 
 type ItemSelectorProps = {
-  selectedItems: ReadonlyArray<string | number | boolean | object>,
-  options: ReadonlyArray<string | number | boolean | object>,
-  onChange: (items: ReadonlyArray<string | number | boolean | object> | null) => void,
-  fixedOptions?: any[],
-  erasable?: boolean,
-  showArrow?: boolean,
-  searchable?: boolean,
-  displayOption?: string | ((opt: any) => any),
-  getOptionValue?: string | ((opt: any) => any),
-  filterOption?: string | ((opt: any) => any),
-  placement?: string,
-  disabled?: boolean,
-  isError?: boolean,
-  multiSelect?: boolean,
-  inputTheme?: string,
-  size?: string,
-  onBlur?: () => void,
-  placeholder?: string,
-  closeOnSelect?: boolean,
-  typeaheadPlaceholder?: string,
-  DropdownHeaderComponent?: ComponentType<any> | null,
-  DropDownRenderComponent?: ComponentType<any>,
-  DropDownLineItemRenderComponent?: ComponentType<any>,
+  selectedItems: ReadonlyArray<string | number | boolean | object>;
+  options: ReadonlyArray<string | number | boolean | object>;
+  onChange: (items: ReadonlyArray<string | number | boolean | object> | null) => void;
+  fixedOptions?: any[];
+  erasable?: boolean;
+  showArrow?: boolean;
+  searchable?: boolean;
+  displayOption?: string | ((opt: any) => any);
+  getOptionValue?: string | ((opt: any) => any);
+  filterOption?: string | ((opt: any) => any);
+  placement?: string;
+  disabled?: boolean;
+  isError?: boolean;
+  multiSelect?: boolean;
+  inputTheme?: string;
+  size?: string;
+  onBlur?: () => void;
+  placeholder?: string;
+  closeOnSelect?: boolean;
+  typeaheadPlaceholder?: string;
+  DropdownHeaderComponent?: ComponentType<any> | null;
+  DropDownRenderComponent?: ComponentType<any>;
+  DropDownLineItemRenderComponent?: ComponentType<any>;
   CustomChickletComponent?: ComponentType<any>;
   intl: IntlShape;
-  children?: ReactNode; 
+  children?: ReactNode;
 };
 
 class ItemSelector extends Component<ItemSelectorProps> {
-
   static defaultProps = {
     multiSelect: true,
     placeholder: 'placeholder.enterValue',
@@ -235,7 +234,7 @@ class ItemSelector extends Component<ItemSelectorProps> {
   };
 
   _renderDropdown(intl: IntlShape) {
-    const {placement = 'bottom'} = this.props
+    const {placement = 'bottom'} = this.props;
     return (
       <DropdownWrapper placement={placement}>
         <Typeahead
@@ -271,7 +270,7 @@ class ItemSelector extends Component<ItemSelectorProps> {
     const selected = toArray(this.props.selectedItems);
     const hasValue = selected.length;
     const displayOption = Accessor.generateOptionToStringFor(this.props.displayOption);
-    const {inputTheme = 'primary', DropDownLineItemRenderComponent = ListItem} = this.props
+    const {inputTheme = 'primary', DropDownLineItemRenderComponent = ListItem} = this.props;
 
     const dropdownSelectProps = {
       className: classnames({

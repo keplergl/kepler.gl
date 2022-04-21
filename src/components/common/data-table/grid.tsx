@@ -23,8 +23,7 @@ import {Grid, GridProps} from 'react-virtualized';
 import isEqual from 'lodash.isequal';
 
 export default class GridHack extends PureComponent<GridProps> {
-
-  grid: Grid | null = null
+  grid: Grid | null = null;
 
   componentDidUpdate(preProps) {
     /*

@@ -84,7 +84,9 @@ interface RangeSliderProps {
 
 RangeSliderFactory.deps = [RangePlotFactory];
 
-export default function RangeSliderFactory(RangePlot: ReturnType<typeof RangePlotFactory>): ComponentType<RangeSliderProps> {
+export default function RangeSliderFactory(
+  RangePlot: ReturnType<typeof RangePlotFactory>
+): ComponentType<RangeSliderProps> {
   class RangeSlider extends Component<RangeSliderProps> {
     static defaultProps = {
       isEnlarged: false,

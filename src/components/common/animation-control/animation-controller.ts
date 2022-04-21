@@ -35,7 +35,9 @@ interface AnimationControllerProps<T extends number | number[]> {
   baseSpeed?: number;
 }
 
-class AnimationControllerType<T extends number | number[]> extends Component<AnimationControllerProps<T>>{}
+class AnimationControllerType<T extends number | number[]> extends Component<
+  AnimationControllerProps<T>
+> {}
 
 function AnimationControllerFactory(): typeof AnimationControllerType {
   /**
@@ -60,15 +62,16 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
    * Current time is a point. An array of sorted time steps are provided,
    * animate a moving point jumps to the next step
    */
-  class AnimationController<T extends number | number[]> extends Component<AnimationControllerProps<T>> {
-
+  class AnimationController<T extends number | number[]> extends Component<
+    AnimationControllerProps<T>
+  > {
     static defaultProps = {
       baseSpeed: BASE_SPEED,
       speed: 1,
       steps: null,
       animationWindow: ANIMATION_WINDOW.free
     };
-    
+
     state = {
       isAnimating: false
     };
@@ -134,7 +137,7 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
     };
 
     _resetAnimtionByTimeStep = () => {
-      const {steps = null} = this.props
+      const {steps = null} = this.props;
       if (!steps) return;
       // go to the first steps
       this.props.updateAnimation([steps[0], 0] as T);

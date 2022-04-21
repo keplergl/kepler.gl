@@ -26,8 +26,8 @@ import AnimationControllerFactory from './common/animation-control/animation-con
 import {ANIMATION_WINDOW, DIMENSIONS, FILTER_TYPES} from 'constants/default-settings';
 import {getIntervalBins} from 'utils/filter-utils';
 import {media} from 'styles/media-breakpoints';
-import { AnimationConfig, TimeRangeFilter } from 'reducers';
-import { bottomWidgetSelector } from './kepler-gl';
+import {AnimationConfig, TimeRangeFilter} from 'reducers';
+import {bottomWidgetSelector} from './kepler-gl';
 
 const maxWidth = 1080;
 
@@ -61,8 +61,15 @@ interface FilterAnimationControllerProps {
 }
 
 FilterAnimationControllerFactory.deps = [AnimationControllerFactory];
-export function FilterAnimationControllerFactory(AnimationController: ReturnType<typeof AnimationControllerFactory>) {
-  const FilterAnimationController = ({filter, filterIdx, setFilterAnimationTime, children}: FilterAnimationControllerProps) => {
+export function FilterAnimationControllerFactory(
+  AnimationController: ReturnType<typeof AnimationControllerFactory>
+) {
+  const FilterAnimationController = ({
+    filter,
+    filterIdx,
+    setFilterAnimationTime,
+    children
+  }: FilterAnimationControllerProps) => {
     const intervalBins = useMemo(() => getIntervalBins(filter), [filter]);
 
     const steps = useMemo(() => (intervalBins ? intervalBins.map(x => x.x0) : null), [
@@ -106,13 +113,19 @@ export function FilterAnimationControllerFactory(AnimationController: ReturnType
 
 interface LayerAnimationControllerProps {
   children?: ReactNode;
-  animationConfig: AnimationConfig & {timeSteps?: number[] | null}
+  animationConfig: AnimationConfig & {timeSteps?: number[] | null};
   setLayerAnimationTime: (x: number) => void;
 }
 
 LayerAnimationControllerFactory.deps = [AnimationControllerFactory];
-export function LayerAnimationControllerFactory(AnimationController: ReturnType<typeof AnimationControllerFactory>) {
-  const LayerAnimationController = ({animationConfig, setLayerAnimationTime, children}: LayerAnimationControllerProps) => (
+export function LayerAnimationControllerFactory(
+  AnimationController: ReturnType<typeof AnimationControllerFactory>
+) {
+  const LayerAnimationController = ({
+    animationConfig,
+    setLayerAnimationTime,
+    children
+  }: LayerAnimationControllerProps) => (
     <AnimationController<number>
       key="layer-control"
       value={Number(animationConfig.currentTime)}
@@ -132,7 +145,7 @@ export function LayerAnimationControllerFactory(AnimationController: ReturnType<
 
 type BottomWidgetProps = {
   containerW: number;
-} & ReturnType<typeof bottomWidgetSelector>
+} & ReturnType<typeof bottomWidgetSelector>;
 
 BottomWidgetFactory.deps = [
   TimeWidgetFactory,
@@ -196,7 +209,7 @@ export default function BottomWidgetFactory(
 
     // if filter is not animating, pass in enlarged filter here because
     // animation controller needs to call reset on it
-    const filter = animatedFilter as TimeRangeFilter || filters[enlargedFilterIdx];
+    const filter = (animatedFilter as TimeRangeFilter) || filters[enlargedFilterIdx];
 
     return (
       <BottomWidgetContainer
