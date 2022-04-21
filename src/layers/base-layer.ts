@@ -245,8 +245,7 @@ class Layer {
     return OVERLAY_TYPE.deckgl;
   }
 
-  get type(): string {
-    // @ts-expect-error
+  get type(): string | null {
     return null;
   }
 
