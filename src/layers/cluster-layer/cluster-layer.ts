@@ -59,7 +59,7 @@ export const clusterVisConfigs = {
   clusterRadius: 'clusterRadius',
   colorRange: 'colorRange',
   radiusRange: 'clusterRadiusRange',
-  colorAggregation: 'aggregation'
+  colorAggregation: 'colorAggregation'
 };
 
 export default class ClusterLayer extends AggregationLayer {
