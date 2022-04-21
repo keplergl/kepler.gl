@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef, ElementType, ReactNode} from 'react';
+import React, {Component, createRef, ElementType} from 'react';
 import debounce from 'lodash.debounce';
 import isEqual from 'lodash.isequal';
 
@@ -144,7 +144,6 @@ interface PortaledProps {
   overlayZIndex?: number;
   modalProps?: Partial<ReactModal.Props>;
   modalStyle?: Partial<typeof defaultModalStyle>;
-  children?: ReactNode;
 }
 
 interface PortaledState {

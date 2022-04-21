@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, forwardRef, useMemo, ReactNode} from 'react';
+import React, {useCallback, forwardRef, useMemo} from 'react';
 import styled from 'styled-components';
 import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-control';
@@ -31,12 +31,12 @@ import {bottomWidgetSelector} from './kepler-gl';
 
 const maxWidth = 1080;
 
-interface BottomWidgetContainer {
+interface BottomWidgetContainerProps {
   hasPadding?: boolean;
   width: number;
 }
 
-const BottomWidgetContainer = styled.div<BottomWidgetContainer>`
+const BottomWidgetContainer = styled.div<BottomWidgetContainerProps>`
   display: flex;
   flex-direction: column;
   padding-top: ${props => (props.hasPadding ? props.theme.bottomWidgetPaddingTop : 0)}px;
@@ -55,7 +55,6 @@ const BottomWidgetContainer = styled.div<BottomWidgetContainer>`
 
 interface FilterAnimationControllerProps {
   filter: TimeRangeFilter & {animationWindow?: string};
-  children?: ReactNode;
   filterIdx: number;
   setFilterAnimationTime: (idx: number, value: string, a: any[]) => void;
 }
@@ -64,12 +63,12 @@ FilterAnimationControllerFactory.deps = [AnimationControllerFactory];
 export function FilterAnimationControllerFactory(
   AnimationController: ReturnType<typeof AnimationControllerFactory>
 ) {
-  const FilterAnimationController = ({
+  const FilterAnimationController: React.FC<FilterAnimationControllerProps> = ({
     filter,
     filterIdx,
     setFilterAnimationTime,
     children
-  }: FilterAnimationControllerProps) => {
+  }) => {
     const intervalBins = useMemo(() => getIntervalBins(filter), [filter]);
 
     const steps = useMemo(() => (intervalBins ? intervalBins.map(x => x.x0) : null), [
@@ -112,7 +111,6 @@ export function FilterAnimationControllerFactory(
 }
 
 interface LayerAnimationControllerProps {
-  children?: ReactNode;
   animationConfig: AnimationConfig & {timeSteps?: number[] | null};
   setLayerAnimationTime: (x: number) => void;
 }
@@ -121,11 +119,11 @@ LayerAnimationControllerFactory.deps = [AnimationControllerFactory];
 export function LayerAnimationControllerFactory(
   AnimationController: ReturnType<typeof AnimationControllerFactory>
 ) {
-  const LayerAnimationController = ({
+  const LayerAnimationController: React.FC<LayerAnimationControllerProps> = ({
     animationConfig,
     setLayerAnimationTime,
     children
-  }: LayerAnimationControllerProps) => (
+  }) => (
     <AnimationController<number>
       key="layer-control"
       value={Number(animationConfig.currentTime)}

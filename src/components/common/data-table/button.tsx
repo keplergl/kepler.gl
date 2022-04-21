@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {MouseEventHandler, ReactNode} from 'react';
+import React, {MouseEventHandler} from 'react';
 import styled from 'styled-components';
 
 const StyledButton = styled.button`
@@ -42,7 +42,6 @@ type ButtonProps = {
   onClick?: MouseEventHandler<HTMLButtonElement>;
   disabled?: boolean;
   text?: string;
-  children?: ReactNode;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 const noop = () => {};

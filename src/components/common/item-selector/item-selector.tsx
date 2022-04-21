@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, ComponentType, ReactNode} from 'react';
+import React, {Component, ComponentType} from 'react';
 import classnames from 'classnames';
 import uniqBy from 'lodash.uniqby';
 import listensToClickOutside from 'react-onclickoutside';
@@ -141,7 +141,6 @@ type ItemSelectorProps = {
   DropDownLineItemRenderComponent?: ComponentType<any>;
   CustomChickletComponent?: ComponentType<any>;
   intl: IntlShape;
-  children?: ReactNode;
 };
 
 class ItemSelector extends Component<ItemSelectorProps> {
