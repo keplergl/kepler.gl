@@ -69,6 +69,7 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
 
   // go through all layerProps to create layer
   return layerProps.map(props => {
+    // @ts-expect-error TODO: checking props.type !== null
     const layer = new layerClasses[props.type](props);
     return typeof layer.setInitialLayerConfig === 'function' && dataset.dataContainer
       ? layer.setInitialLayerConfig(dataset)
