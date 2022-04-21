@@ -26,9 +26,14 @@ import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES, DATASET_FORMATS} from 'constants/default-settings';
 import {notNullorUndefined, parseFieldValue} from 'utils/data-utils';
-import KeplerGlSchema from 'schemas';
+import KeplerGlSchema, {SavedMap, ParsedDataset} from 'schemas';
+import {LoadedMap} from 'schemas/schema-manager';
 import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
 import {isPlainObject, toArray} from 'utils/utils';
+import {Field} from 'utils/table-utils/kepler-table';
+import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
+import {ProcessorResult, RowData} from './types';
+import {Feature} from '@nebula.gl/edit-modes';
 
 export const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.DATE,
@@ -58,20 +63,20 @@ const IGNORE_DATA_TYPES = Object.keys(AnalyzerDATA_TYPES).filter(
 
 export const PARSE_FIELD_VALUE_FROM_STRING = {
   [ALL_FIELD_TYPES.boolean]: {
-    valid: d => typeof d === 'boolean',
-    parse: d => d === 'true' || d === 'True' || d === 'TRUE' || d === '1'
+    valid: (d: any) => typeof d === 'boolean',
+    parse: (d: any) => d === 'true' || d === 'True' || d === 'TRUE' || d === '1'
   },
   [ALL_FIELD_TYPES.integer]: {
-    valid: d => parseInt(d, 10) === d,
-    parse: d => parseInt(d, 10)
+    valid: (d: any) => parseInt(d, 10) === d,
+    parse: (d: any) => parseInt(d, 10)
   },
   [ALL_FIELD_TYPES.timestamp]: {
-    valid: (d, field) =>
+    valid: (d: any, field: Field) =>
       ['x', 'X'].includes(field.format) ? typeof d === 'number' : typeof d === 'string',
-    parse: (d, field) => (['x', 'X'].includes(field.format) ? Number(d) : d)
+    parse: (d: any, field: Field) => (['x', 'X'].includes(field.format) ? Number(d) : d)
   },
   [ALL_FIELD_TYPES.real]: {
-    valid: d => parseFloat(d) === d,
+    valid: (d: any) => parseFloat(d) === d,
     // Note this will result in NaN for some string
     parse: parseFloat
   }
@@ -81,8 +86,7 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
  * Process csv data, output a data object with `{fields: [], rows: []}`.
  * The data object can be wrapped in a `dataset` and pass to [`addDataToMap`](../actions/actions.md#adddatatomap)
  * @param rawData raw csv string
- * @returns  data object `{fields: [], rows: []}` can be passed to addDataToMaps
- * @type {typeof import('./data-processor').processCsvData}
+ * @returns data object `{fields: [], rows: []}` can be passed to addDataToMaps
  * @public
  * @example
  * import {processCsvData} from 'kepler.gl/processors';
@@ -103,12 +107,12 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
  *  options: {centerMap: true, readOnly: true}
  * }));
  */
-export function processCsvData(rawData, header) {
-  let rows;
-  let headerRow;
+export function processCsvData(rawData: unknown[][], header?: string[]): ProcessorResult {
+  let rows: unknown[][] | undefined;
+  let headerRow: string[] | undefined;
 
   if (typeof rawData === 'string') {
-    const parsedRows = csvParseRows(rawData);
+    const parsedRows: string[][] = csvParseRows(rawData);
 
     if (!Array.isArray(parsedRows) || parsedRows.length < 2) {
       // looks like an empty file, throw error to be catch
@@ -123,6 +127,7 @@ export function processCsvData(rawData, header) {
     if (!Array.isArray(headerRow)) {
       // if data is passed in as array of rows and missing header
       // assume first row is header
+      // @ts-ignore
       headerRow = rawData[0];
       rows = rawData.slice(1);
     }
@@ -147,10 +152,10 @@ export function processCsvData(rawData, header) {
 
 /**
  * Parse rows of csv by analyzed field types. So that `'1'` -> `1`, `'True'` -> `true`
- * @param {Array<Array>} rows
- * @param {Array<Object>} fields
+ * @param rows
+ * @param fields
  */
-export function parseRowsByFields(rows, fields) {
+export function parseRowsByFields(rows: any[][], fields: Field[]) {
   // Edit rows in place
   const geojsonFieldIdx = fields.findIndex(f => f.name === '_geojson');
   fields.forEach(parseCsvRowsByFieldType.bind(null, rows, geojsonFieldIdx));
@@ -159,10 +164,16 @@ export function parseRowsByFields(rows, fields) {
 }
 /**
  * Getting sample data for analyzing field type.
- *
- * @type {typeof import('./data-processor').getSampleForTypeAnalyze}
  */
-export function getSampleForTypeAnalyze({fields, rows, sampleCount = 50}) {
+export function getSampleForTypeAnalyze({
+  fields,
+  rows,
+  sampleCount = 50
+}: {
+  fields: string[];
+  rows: any[][];
+  sampleCount?: number;
+}): RowData {
   const total = Math.min(sampleCount, rows.length);
   // const fieldOrder = fields.map(f => f.name);
   const sample = range(0, total, 1).map(d => ({}));
@@ -197,9 +208,9 @@ export function getSampleForTypeAnalyze({fields, rows, sampleCount = 50}) {
  * Convert falsy value in csv including `'', 'null', 'NULL', 'Null', 'NaN'` to `null`,
  * so that type-analyzer won't detect it as string
  *
- * @param {Array<Array>} rows
+ * @param rows
  */
-function cleanUpFalsyCsvValue(rows) {
+function cleanUpFalsyCsvValue(rows: any[][]): void {
   const re = new RegExp(CSV_NULLS, 'g');
   for (let i = 0; i < rows.length; i++) {
     for (let j = 0; j < rows[i].length; j++) {
@@ -221,9 +232,13 @@ function cleanUpFalsyCsvValue(rows) {
  * @param geoFieldIdx field index
  * @param field
  * @param i
- * @type {typeof import('./data-processor').parseCsvRowsByFieldType}
  */
-export function parseCsvRowsByFieldType(rows, geoFieldIdx, field, i) {
+export function parseCsvRowsByFieldType(
+  rows: any[][],
+  geoFieldIdx: number,
+  field: Field,
+  i: number
+): void {
   const parser = PARSE_FIELD_VALUE_FROM_STRING[field.type];
   if (parser) {
     // check first not null value of it's already parsed
@@ -250,7 +265,6 @@ export function parseCsvRowsByFieldType(rows, geoFieldIdx, field, i) {
  * @param data array of row object
  * @param fieldOrder array of field names as string
  * @returns formatted fields
- * @type {typeof import('./data-processor').getFieldsFromData}
  * @public
  * @example
  *
@@ -285,7 +299,7 @@ export function parseCsvRowsByFieldType(rows, geoFieldIdx, field, i) {
  * // {name: 'zeroOnes', format: '', fieldIdx: 7, type: 'integer'}];
  *
  */
-export function getFieldsFromData(data, fieldOrder) {
+export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] {
   // add a check for epoch timestamp
   const metadata = Analyzer.computeColMeta(
     data,
@@ -318,7 +332,6 @@ export function getFieldsFromData(data, fieldOrder) {
     };
   });
 
-  // @ts-ignore
   return result;
 }
 
@@ -326,11 +339,13 @@ export function getFieldsFromData(data, fieldOrder) {
  * pass in an array of field names, rename duplicated one
  * and return a map from old field index to new name
  *
- * @param {Array} fieldOrder
- * @returns {Object} new field name by index
+ * @param fieldOrder
+ * @returns new field name by index
  */
-export function renameDuplicateFields(fieldOrder) {
-  return fieldOrder.reduce(
+export function renameDuplicateFields(
+  fieldOrder: string[]
+): {allNames: string[]; fieldByIndex: string[]} {
+  return fieldOrder.reduce<{allNames: string[]; fieldByIndex: string[]}>(
     (accu, field, i) => {
       const {allNames} = accu;
       let fieldName = field;
@@ -349,7 +364,7 @@ export function renameDuplicateFields(fieldOrder) {
 
       return accu;
     },
-    {allNames: [], fieldByIndex: {}}
+    {allNames: [], fieldByIndex: []}
   );
 }
 
@@ -358,10 +373,9 @@ export function renameDuplicateFields(fieldOrder) {
  *
  * @param aType
  * @returns corresponding type in `ALL_FIELD_TYPES`
- * @type {typeof import('./data-processor').analyzerTypeToFieldType}}
  */
 /* eslint-disable complexity */
-export function analyzerTypeToFieldType(aType) {
+export function analyzerTypeToFieldType(aType: string): string {
   const {
     DATE,
     TIME,
@@ -416,7 +430,6 @@ export function analyzerTypeToFieldType(aType) {
  * NOTE: This function may mutate input.
  * @param rawData an array of row object, each object should have the same number of keys
  * @returns dataset containing `fields` and `rows`
- * @type {typeof import('./data-processor').processRowObject}
  * @public
  * @example
  * import {addDataToMap} from 'kepler.gl/actions';
@@ -434,7 +447,7 @@ export function analyzerTypeToFieldType(aType) {
  *  }
  * }));
  */
-export function processRowObject(rawData) {
+export function processRowObject(rawData: unknown[]): ProcessorResult {
   if (!Array.isArray(rawData)) {
     return null;
   } else if (!rawData.length) {
@@ -445,8 +458,8 @@ export function processRowObject(rawData) {
     };
   }
 
-  const keys = Object.keys(rawData[0]);
-  const rows = rawData.map(d => keys.map(key => d[key]));
+  const keys = Object.keys(rawData[0]); // [lat, lng, value]
+  const rows = rawData.map(d => keys.map(key => d[key])); // [[31.27, 127.56, 3]]
 
   // row object an still contain values like `Null` or `N/A`
   cleanUpFalsyCsvValue(rows);
@@ -460,9 +473,8 @@ export function processRowObject(rawData) {
  * The data object can be wrapped in a `dataset` and passed to [`addDataToMap`](../actions/actions.md#adddatatomap)
  * NOTE: This function may mutate input.
  *
- * @param  rawData raw geojson feature collection
- * @returns  dataset containing `fields` and `rows`
- * @type {typeof import('./data-processor').processGeojson}
+ * @param rawData raw geojson feature collection
+ * @returns dataset containing `fields` and `rows`
  * @public
  * @example
  * import {addDataToMap} from 'kepler.gl/actions';
@@ -493,7 +505,7 @@ export function processRowObject(rawData) {
  *  }
  * }));
  */
-export function processGeojson(rawData) {
+export function processGeojson(rawData: unknown): ProcessorResult {
   const normalizedGeojson = normalize(rawData);
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {
@@ -505,7 +517,7 @@ export function processGeojson(rawData) {
   }
 
   // getting all feature fields
-  const allDataRows = [];
+  const allDataRows: Array<{_geojson: Feature} & keyof Feature> = [];
   for (let i = 0; i < normalizedGeojson.features.length; i++) {
     const f = normalizedGeojson.features[i];
     if (f.geometry) {
@@ -517,13 +529,13 @@ export function processGeojson(rawData) {
     }
   }
   // get all the field
-  const fields = allDataRows.reduce((prev, curr) => {
+  const fields = allDataRows.reduce<string[]>((accu, curr) => {
     Object.keys(curr).forEach(key => {
-      if (!prev.includes(key)) {
-        prev.push(key);
+      if (!accu.includes(key)) {
+        accu.push(key);
       }
     });
-    return prev;
+    return accu;
   }, []);
 
   // make sure each feature has exact same fields
@@ -541,16 +553,16 @@ export function processGeojson(rawData) {
 
 /**
  * On export data to csv
- * @param {import('utils/table-utils/data-container-interface').DataContainerInterface} dataContainer
- * @param {Array<Object>} fields `dataset.fields`
- * @returns {string} csv string
+ * @param dataContainer
+ * @param fields `dataset.fields`
+ * @returns csv string
  */
-export function formatCsv(dataContainer, fields) {
+export function formatCsv(data: DataContainerInterface, fields: Field[]): string {
   const columns = fields.map(f => f.displayName || f.name);
   const formattedData = [columns];
 
   // parse geojson object as string
-  for (const row of dataContainer.rows(true)) {
+  for (const row of data.rows(true)) {
     formattedData.push(row.map((d, i) => parseFieldValue(d, fields[i].type)));
   }
 
@@ -559,9 +571,8 @@ export function formatCsv(dataContainer, fields) {
 
 /**
  * Validate input data, adding missing field types, rename duplicate columns
- * @type {typeof import('./data-processor').validateInputData}
  */
-export function validateInputData(data) {
+export function validateInputData(data: Record<string, unknown>): ProcessorResult {
   if (!isPlainObject(data)) {
     assert('addDataToMap Error: dataset.data cannot be null');
     return null;
@@ -630,11 +641,15 @@ export function validateInputData(data) {
   return {fields: updatedFields, rows};
 }
 
-function findNonEmptyRowsAtField(rows, fieldIdx, total) {
-  const sample = [];
+function findNonEmptyRowsAtField(
+  rows: Record<number, unknown>[],
+  fieldIdx: number,
+  total: number
+): any[] {
+  const sample: any[] = [];
   let i = 0;
   while (sample.length < total && i < rows.length) {
-    if (notNullorUndefined(rows[i][fieldIdx])) {
+    if (notNullorUndefined(rows[i]?.[fieldIdx])) {
       sample.push(rows[i]);
     }
     i++;
@@ -645,10 +660,8 @@ function findNonEmptyRowsAtField(rows, fieldIdx, total) {
 /**
  * Process saved kepler.gl json to be pass to [`addDataToMap`](../actions/actions.md#adddatatomap).
  * The json object should contain `datasets` and `config`.
- * @param {Object} rawData
- * @param {Array} rawData.datasets
- * @param {Object} rawData.config
- * @returns {Object} datasets and config `{datasets: {}, config: {}}`
+ * @param rawData
+ * @returns datasets and config `{datasets: {}, config: {}}`
  * @public
  * @example
  * import {addDataToMap} from 'kepler.gl/actions';
@@ -656,15 +669,15 @@ function findNonEmptyRowsAtField(rows, fieldIdx, total) {
  *
  * dispatch(addDataToMap(processKeplerglJSON(keplerGlJson)));
  */
-export function processKeplerglJSON(rawData) {
+export function processKeplerglJSON(rawData: SavedMap): LoadedMap | null {
   return rawData ? KeplerGlSchema.load(rawData.datasets, rawData.config) : null;
 }
 
 /**
  * Parse a single or an array of datasets saved using kepler.gl schema
- * @param {Array | Array<Object>} rawData
+ * @param rawData
  */
-export function processKeplerglDataset(rawData) {
+export function processKeplerglDataset(rawData: unknown): ParsedDataset | ParsedDataset[] | null {
   if (!rawData) {
     return null;
   }
@@ -676,14 +689,29 @@ export function processKeplerglDataset(rawData) {
   return Array.isArray(rawData) ? results : results[0];
 }
 
-export const DATASET_HANDLERS = {
+export const DATASET_HANDLERS: {
+  row: typeof processRowObject;
+  geojson: typeof processGeojson;
+  csv: typeof processCsvData;
+  keplergl: typeof processKeplerglDataset;
+} = {
   [DATASET_FORMATS.row]: processRowObject,
   [DATASET_FORMATS.geojson]: processGeojson,
   [DATASET_FORMATS.csv]: processCsvData,
   [DATASET_FORMATS.keplergl]: processKeplerglDataset
 };
 
-export const Processors = {
+export const Processors: {
+  processGeojson: typeof processGeojson;
+  processCsvData: typeof processCsvData;
+  processRowObject: typeof processRowObject;
+  processKeplerglJSON: typeof processKeplerglJSON;
+  processKeplerglDataset: typeof processKeplerglDataset;
+  analyzerTypeToFieldType: typeof analyzerTypeToFieldType;
+  getFieldsFromData: typeof getFieldsFromData;
+  parseCsvRowsByFieldType: typeof parseCsvRowsByFieldType;
+  formatCsv: typeof formatCsv;
+} = {
   processGeojson,
   processCsvData,
   processRowObject,

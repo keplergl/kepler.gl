@@ -21,7 +21,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import Processors from 'processors';
+import {processRowObject} from 'processors';
 import {FlyToInterpolator} from '@deck.gl/core';
 import KeplerGlSchema from 'schemas';
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
@@ -76,7 +76,7 @@ const StyledGeocoderPanel = styled.div`
 
 function generateGeocoderDataset(lat, lon, text) {
   return {
-    data: Processors.processRowObject([
+    data: processRowObject([
       {
         lt: lat,
         ln: lon,

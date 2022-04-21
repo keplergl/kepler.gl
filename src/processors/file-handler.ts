@@ -25,6 +25,9 @@ import {CSVLoader} from '@loaders.gl/csv';
 import {processGeojson, processKeplerglJSON, processRowObject} from './data-processor';
 import {isPlainObject, generateHashId} from 'utils/utils';
 import {DATASET_FORMATS} from 'constants/default-settings';
+import {LoaderObject} from '@loaders.gl/loader-utils';
+import {AddDataToMapPayload} from 'actions/actions';
+import {FileCacheItem} from './types';
 
 const BATCH_TYPE = {
   METADATA: 'metadata',
@@ -47,25 +50,25 @@ const JSON_LOADER_OPTIONS = {
   ]
 };
 
-export function isGeoJson(json) {
+export function isGeoJson(json: any): boolean {
   // json can be feature collection
   // or single feature
   return isPlainObject(json) && (isFeature(json) || isFeatureCollection(json));
 }
 
-export function isFeature(json) {
+export function isFeature(json: any): boolean {
   return json.type === 'Feature' && json.geometry;
 }
 
-export function isFeatureCollection(json) {
+export function isFeatureCollection(json: any): boolean {
   return json.type === 'FeatureCollection' && json.features;
 }
 
-export function isRowObject(json) {
+export function isRowObject(json: any): boolean {
   return Array.isArray(json) && isPlainObject(json[0]);
 }
 
-export function isKeplerGlMap(json) {
+export function isKeplerGlMap(json: any): Boolean {
   return Boolean(
     isPlainObject(json) &&
       json.datasets &&
@@ -75,7 +78,10 @@ export function isKeplerGlMap(json) {
   );
 }
 
-export async function* makeProgressIterator(asyncIterator, info) {
+export async function* makeProgressIterator(
+  asyncIterator: AsyncIterable<any>,
+  info: {size: number}
+): AsyncGenerator {
   let rowCount = 0;
 
   for await (const batch of asyncIterator) {
@@ -87,7 +93,6 @@ export async function* makeProgressIterator(asyncIterator, info) {
     const progress = {
       rowCount,
       rowCountInBatch,
-      // @ts-ignore
       ...(Number.isFinite(percent) ? {percent} : {})
     };
 
@@ -96,9 +101,12 @@ export async function* makeProgressIterator(asyncIterator, info) {
 }
 
 // eslint-disable-next-line complexity
-export async function* readBatch(asyncIterator, fileName) {
+export async function* readBatch(
+  asyncIterator: AsyncIterable<any>,
+  fileName: string
+): AsyncGenerator {
   let result = null;
-  const batches = [];
+  const batches = <any>[];
 
   for await (const batch of asyncIterator) {
     // Last batch will have this special type and will provide all the root
@@ -134,7 +142,16 @@ export async function* readBatch(asyncIterator, fileName) {
   }
 }
 
-export async function readFileInBatches({file, fileCache = [], loaders = [], loadOptions = {}}) {
+export async function readFileInBatches({
+  file,
+  loaders = [],
+  loadOptions = {}
+}: {
+  file: File;
+  fileCache: FileCacheItem[];
+  loaders: LoaderObject[];
+  loadOptions: any;
+}): Promise<AsyncGenerator> {
   loaders = [JSONLoader, CSVLoader, ...loaders];
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
@@ -149,12 +166,18 @@ export async function readFileInBatches({file, fileCache = [], loaders = [], loa
   return readBatch(progressIterator, file.name);
 }
 
-export function processFileData({content, fileCache}) {
+export function processFileData({
+  content,
+  fileCache
+}: {
+  content: {data: unknown; fileName: string};
+  fileCache: FileCacheItem[];
+}): Promise<FileCacheItem[]> {
   return new Promise((resolve, reject) => {
     const {data} = content;
 
-    let format;
-    let processor;
+    let format: string | undefined;
+    let processor: Function | undefined;
     if (isKeplerGlMap(data)) {
       format = DATASET_FORMATS.keplergl;
       processor = processKeplerglJSON;
@@ -181,17 +204,19 @@ export function processFileData({content, fileCache}) {
       ]);
     }
 
-    reject('Unknow File Format');
+    reject('Unknown File Format');
   });
 }
 
-export function filesToDataPayload(fileCache) {
+export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayload[] {
   // seperate out files which could be a single datasets. or a keplergl map json
-  const collection = fileCache.reduce(
+  const collection = fileCache.reduce<{
+    datasets: FileCacheItem[];
+    keplerMaps: AddDataToMapPayload[];
+  }>(
     (accu, file) => {
-      const {data, info = {}} = file;
-      const {format} = info;
-      if (format === DATASET_FORMATS.keplergl) {
+      const {data, info} = file;
+      if (info?.format === DATASET_FORMATS.keplergl) {
         // if file contains a single kepler map dataset & config
         accu.keplerMaps.push({
           ...data,
@@ -199,13 +224,13 @@ export function filesToDataPayload(fileCache) {
             centerMap: !(data.config && data.config.mapState)
           }
         });
-      } else if (DATASET_FORMATS[format]) {
+      } else if (DATASET_FORMATS[info?.format]) {
         // if file contains only data
         const newDataset = {
           data,
           info: {
-            id: info.id || generateHashId(4),
-            ...info
+            id: info?.id || generateHashId(4),
+            ...(info || {})
           }
         };
         accu.datasets.push(newDataset);
