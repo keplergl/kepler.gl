@@ -22,8 +22,34 @@
 import {AGGREGATION_OPERATION, _BinSorter as BinSorter} from '@deck.gl/aggregation-layers';
 import {console as Console} from 'global/window';
 
-import {aggregate} from 'utils/aggregate-utils';
-import {AGGREGATION_TYPES, SCALE_FUNC} from 'constants/default-settings';
+import {aggregate} from '../../utils/aggregate-utils';
+import {AGGREGATION_TYPES, SCALE_FUNC} from '../../constants/default-settings';
+import {RGBAColor} from '../../reducers';
+
+export type UpdaterType = (step, props, dimensionUpdater) => void;
+
+export type UpdateStepsType = {
+  key: string;
+  triggers: {
+    [key: string]: {
+      prop?: string;
+      updateTrigger?: string;
+    };
+  };
+  onSet?: {
+    props: string;
+  };
+  updater: UpdaterType;
+};
+
+export type DimensionType<ValueType> = {
+  key: string;
+  accessor: string;
+  getPickingInfo: (dimensionState, cell) => any;
+  nullValue: ValueType;
+  updateSteps: UpdateStepsType[];
+  getSubLayerAccessor;
+};
 
 export const DECK_AGGREGATION_MAP = {
   [AGGREGATION_OPERATION.SUM]: AGGREGATION_TYPES.sum,
@@ -122,7 +148,7 @@ export function getDimensionScale(step, props, dimensionUpdater) {
   this._setDimensionState(key, {scaleFunc});
 }
 
-function normalizeResult(result = {}) {
+function normalizeResult(result: {hexagons?; layerData?} = {}) {
   // support previous hexagonAggregator API
   if (result.hexagons) {
     return Object.assign({data: result.hexagons}, result);
@@ -189,7 +215,7 @@ function getSubLayerAccessor(dimensionState, dimension, layerProps) {
   };
 }
 
-export const defaultColorDimension = {
+export const defaultColorDimension: DimensionType<RGBAColor> = {
   key: 'fillColor',
   accessor: 'getFillColor',
   getPickingInfo: (dimensionState, cell) => {
@@ -255,7 +281,7 @@ export const defaultColorDimension = {
   getSubLayerAccessor
 };
 
-export const defaultElevationDimension = {
+export const defaultElevationDimension: DimensionType<number> = {
   key: 'elevation',
   accessor: 'getElevation',
   getPickingInfo: (dimensionState, cell) => {
@@ -323,8 +349,22 @@ export const defaultElevationDimension = {
 
 export const defaultDimensions = [defaultColorDimension, defaultElevationDimension];
 
+export type CPUAggregatorState = {layerData: {data}; dimensions: {}};
+
 export default class CPUAggregator {
-  constructor(opts = {}) {
+  static getDimensionScale: any;
+  state: CPUAggregatorState;
+  dimensionUpdaters: {
+    [key: string]: {
+      updateSteps: UpdateStepsType[];
+      accessor: string;
+      getPickingInfo;
+      getSubLayerAccessor;
+    };
+  };
+  aggregationUpdater: {};
+
+  constructor(opts: {initialState?: CPUAggregatorState; dimensions?; aggregation?} = {}) {
     this.state = {
       layerData: {},
       dimensions: {
@@ -422,7 +462,7 @@ export default class CPUAggregator {
     });
   }
 
-  _needUpdateStep(dimensionStep, oldProps, props, changeFlags) {
+  _needUpdateStep(dimensionStep: UpdateStepsType, oldProps, props, changeFlags) {
     // whether need to update current dimension step
     // dimension step is the value, domain, scaleFunction of each dimension
     // each step is an object with properties links to layer prop and whether the prop is
@@ -491,7 +531,10 @@ export default class CPUAggregator {
     const updateTriggers = {};
 
     for (const key in this.dimensionUpdaters) {
-      const {accessor, updateSteps} = this.dimensionUpdaters[key];
+      const {
+        accessor,
+        updateSteps
+      }: {accessor; updateSteps: UpdateStepsType[]} = this.dimensionUpdaters[key];
       // fold dimension triggers into each accessor
       updateTriggers[accessor] = {};
 
