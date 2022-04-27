@@ -36,7 +36,7 @@ export function getS2Center(s2Token) {
 }
 
 const re = new RegExp('^[0-9a-z]*$', 'g');
-// simple test to see if token only contains numbers
+// simple test to see if token only contains numbers and letters
 export function validS2Token(token) {
   return typeof token === 'string' && Boolean(token.match(re));
 }
