@@ -241,8 +241,7 @@ export default class S2GeometryLayer extends Layer {
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
       const token = getS2Token({index});
-
-      if (validS2Token(s2Token)) {
+      if (validS2Token(token)) {
         data.push({
           index,
           token
