@@ -34,3 +34,10 @@ export function getS2Center(s2Token) {
   const {lat, lng} = S2.idToLatLng(s2Id.toString());
   return [lng, lat];
 }
+
+// only numbers
+const re = /^[0-9]*$/g;
+// simple test to see if token only contains numbers
+export function validS2Token(token) {
+  return typeof token === 'string' && re.test(token);
+}
