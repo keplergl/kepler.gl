@@ -106,8 +106,8 @@ const TimeDivider = () => (
   </StyledHorizontalBar>
 );
 
-interface TimeDisplayRowProps{
-  timeValues?: string[]
+interface TimeDisplayRowProps {
+  timeValues?: string[];
 }
 
 const TimeDisplayRow = ({timeValues = []}: TimeDisplayRowProps) => (
@@ -119,14 +119,19 @@ const TimeDisplayRow = ({timeValues = []}: TimeDisplayRowProps) => (
 );
 
 interface FloatingTimeDisplayProps {
-  currentTime: number | number[], 
-  defaultTimeFormat?: string, 
-  timeFormat?: string, 
-  timezone?: string
+  currentTime: number | number[];
+  defaultTimeFormat?: string | null;
+  timeFormat?: string | null;
+  timezone?: string | null;
 }
 
 export default function FloatingTimeDisplayFactory() {
-  const FloatingTimeDisplay = ({currentTime, defaultTimeFormat, timeFormat, timezone}: FloatingTimeDisplayProps) => {
+  const FloatingTimeDisplay = ({
+    currentTime,
+    defaultTimeFormat,
+    timeFormat,
+    timezone
+  }: FloatingTimeDisplayProps) => {
     const {displayDate, displayTime} = useMemo(() => {
       const groupTime = Array.isArray(currentTime) ? currentTime : [currentTime];
       const hasUserFormat = typeof timeFormat === 'string';
@@ -140,7 +145,7 @@ export default function FloatingTimeDisplayFactory() {
           displayTime: []
         };
       }
-      return groupTime.reduce<{displayDate: string[], displayTime: string[]}>(
+      return groupTime.reduce<{displayDate: string[]; displayTime: string[]}>(
         (accu, curr) => {
           const [dateFormat, datetimeFormat] = currentFormat.split(' ');
           const dateString = dateFunc(dateFormat)(curr);

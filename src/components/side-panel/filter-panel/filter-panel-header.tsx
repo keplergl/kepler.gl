@@ -24,8 +24,12 @@ import PanelHeaderActionFactory from 'components/side-panel/panel-header-action'
 import {Trash} from 'components/common/icons';
 import {createLinearGradient} from 'utils/color-utils';
 import {StyledPanelHeader} from 'components/common/styled-components';
+import {FilterPanelHeaderProps} from './types';
+import {RGBColor} from 'reducers';
 
-export const StyledFilterHeader = styled(StyledPanelHeader)`
+export const StyledFilterHeader = styled(StyledPanelHeader)<{
+  labelRCGColorValues: RGBColor[];
+}>`
   cursor: pointer;
   padding: 10px 12px;
 
@@ -47,16 +51,13 @@ const StyledChildrenContainer = styled.div`
 
 FilterPanelHeaderFactory.deps = [PanelHeaderActionFactory];
 
-function FilterPanelHeaderFactory(PanelHeaderAction) {
+function FilterPanelHeaderFactory(PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>) {
   const defaultActionIcons = {
     delete: Trash
   };
-  const FilterPanelHeader = ({
+  const FilterPanelHeader: React.FunctionComponent<FilterPanelHeaderProps> = ({
     children,
     datasets,
-    allAvailableFields,
-    setFilter,
-    idx,
     filter,
     removeFilter,
     actionIcons = defaultActionIcons

@@ -18,49 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useMemo} from 'react';
-import TimeRangeFilterFactory from 'components/filters/time-range-filter';
-import {Clock} from 'components/common/icons';
-import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
+import React, {useCallback} from 'react';
+import MultiSelectFilterFactory from 'components/filters/multi-select-filter';
+import {MultiSelectFilter} from 'reducers';
 import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/filter-panel-with-field-select';
+import {FilterPanelComponent} from './types';
 
-TimeRangeFilterPanelFactory.deps = [
-  FieldPanelWithFieldSelectFactory,
-  TimeRangeFilterFactory,
-  SourceDataSelectorFactory
-];
+MultiSelectFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, MultiSelectFilterFactory];
 
-function TimeRangeFilterPanelFactory(FieldPanelWithFieldSelect, TimeRangeFilter) {
-  /** @type {import('./filter-panel-types').FilterPanelComponent} */
-  const TimeRangeFilterPanel = React.memo(
-    ({
-      idx,
-      datasets,
-      allAvailableFields,
-      filter,
-      isAnyFilterAnimating,
-      enlargeFilter,
-      setFilter,
-      removeFilter,
-      toggleAnimation
-    }) => {
+function MultiSelectFilterPanelFactory(
+  FieldPanelWithFieldSelect: ReturnType<typeof FieldPanelWithFieldSelectFactory>,
+  MultiSelectFilter: ReturnType<typeof MultiSelectFilterFactory>
+) {
+  const MultiSelectFilterPanel: FilterPanelComponent<MultiSelectFilter> = React.memo(
+    ({idx, datasets, allAvailableFields, filter, setFilter, removeFilter}) => {
       const onSetFilter = useCallback(value => setFilter(idx, 'value', value), [idx, setFilter]);
 
-      const panelActions = useMemo(
-        () => [
-          {
-            id: filter.id,
-            onClick: enlargeFilter,
-            tooltip: 'tooltip.timePlayback',
-            iconComponent: Clock,
-            active: filter.enlarged
-          }
-        ],
-        [filter.id, filter.enlarged, enlargeFilter]
-      );
-
       return (
-        <>
+        <div className="multi-select-filter-panel">
           <FieldPanelWithFieldSelect
             allAvailableFields={allAvailableFields}
             datasets={datasets}
@@ -68,28 +43,21 @@ function TimeRangeFilterPanelFactory(FieldPanelWithFieldSelect, TimeRangeFilter)
             idx={idx}
             removeFilter={removeFilter}
             setFilter={setFilter}
-            panelActions={panelActions}
           >
             {filter.type && !filter.enlarged && (
               <div className="filter-panel__filter">
-                <TimeRangeFilter
-                  filter={filter}
-                  idx={idx}
-                  isAnyFilterAnimating={isAnyFilterAnimating}
-                  toggleAnimation={toggleAnimation}
-                  setFilter={onSetFilter}
-                />
+                <MultiSelectFilter filter={filter} setFilter={onSetFilter} />
               </div>
             )}
           </FieldPanelWithFieldSelect>
-        </>
+        </div>
       );
     }
   );
 
-  TimeRangeFilterPanel.displayName = 'TimeRangeFilterPanel';
+  MultiSelectFilterPanel.displayName = 'MultiSelectFilterPanel';
 
-  return TimeRangeFilterPanel;
+  return MultiSelectFilterPanel;
 }
 
-export default TimeRangeFilterPanelFactory;
+export default MultiSelectFilterPanelFactory;

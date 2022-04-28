@@ -22,9 +22,10 @@ import React from 'react';
 import ItemSelector from '../common/item-selector/item-selector';
 import {PanelLabel, SidePanelSection} from '../common/styled-components';
 import {FormattedMessage} from 'localization';
+import {SingleSelectFilterProps} from './types';
 
 export default function SingleSelectFilterFactory() {
-  const SingleSelectFilter = ({filter, setFilter}) => (
+  const SingleSelectFilter = ({filter, setFilter}: SingleSelectFilterProps) => (
     <SidePanelSection>
       <PanelLabel>
         <FormattedMessage id={'misc.valueEquals'} />

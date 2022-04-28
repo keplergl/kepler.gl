@@ -214,6 +214,7 @@ export type TimeRangeFilter = FilterBase &
     plotType: {
       [key: string]: any;
     };
+    animationWindow: string;
   };
 
 export type PolygonFilter = FilterBase & {

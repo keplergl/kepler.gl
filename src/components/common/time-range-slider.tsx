@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {useMemo} from 'react';
-import PropTypes from 'prop-types';
 import throttle from 'lodash.throttle';
 import styled from 'styled-components';
 
@@ -27,12 +26,35 @@ import RangeSliderFactory from 'components/common/range-slider';
 import TimeSliderMarkerFactory from 'components/common/time-slider-marker';
 import PlaybackControlsFactory from 'components/common/animation-control/playback-controls';
 import TimeRangeSliderTimeTitleFactory from 'components/common/time-range-slider-time-title';
+import {HistogramBin, LineChart} from 'reducers';
 
 const animationControlWidth = 176;
 
 interface StyledSliderContainerProps {
   isEnlarged?: boolean;
 }
+
+type TimeRangeSliderProps = {
+  domain?: [number, number];
+  value: [number, number];
+  isEnlarged?: boolean;
+  hideTimeTitle?: boolean;
+  isAnimating: boolean;
+  timeFormat: string;
+  timezone?: string | null;
+  histogram?: HistogramBin[];
+  plotType?: string;
+  lineChart?: LineChart;
+  step: number;
+  isAnimatable?: boolean;
+  speed: number;
+  animationWindow: string;
+  resetAnimation?: () => void;
+  toggleAnimation: () => void;
+  updateAnimationSpeed?: (val: number) => void;
+  setFilterAnimationWindow?: (id: string) => void;
+  onChange: (v: number[]) => void;
+};
 
 const StyledSliderContainer = styled.div<StyledSliderContainerProps>`
   align-items: flex-end;
@@ -63,7 +85,7 @@ export default function TimeRangeSliderFactory(
   TimeSliderMarker: ReturnType<typeof TimeSliderMarkerFactory>,
   TimeRangeSliderTimeTitle: ReturnType<typeof TimeRangeSliderTimeTitleFactory>
 ) {
-  const TimeRangeSlider = props => {
+  const TimeRangeSlider = (props: TimeRangeSliderProps) => {
     const {
       domain,
       value,
@@ -143,24 +165,6 @@ export default function TimeRangeSliderFactory(
         </StyledSliderContainer>
       </div>
     );
-  };
-
-  TimeRangeSlider.propTypes = {
-    onChange: PropTypes.func.isRequired,
-    domain: PropTypes.arrayOf(PropTypes.number),
-    value: PropTypes.arrayOf(PropTypes.number).isRequired,
-    step: PropTypes.number.isRequired,
-    plotType: PropTypes.string,
-    histogram: PropTypes.arrayOf(PropTypes.any),
-    lineChart: PropTypes.object,
-    toggleAnimation: PropTypes.func.isRequired,
-    exportAnimation: PropTypes.func,
-    isAnimatable: PropTypes.bool,
-    isEnlarged: PropTypes.bool,
-    speed: PropTypes.number,
-    timeFormat: PropTypes.string,
-    timezone: PropTypes.string,
-    hideTimeTitle: PropTypes.bool
   };
 
   return React.memo(TimeRangeSlider);

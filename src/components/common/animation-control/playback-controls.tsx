@@ -159,7 +159,7 @@ interface PlaybackControls {
   setFilterAnimationWindow?: (id: string) => void,
   updateAnimationSpeed,
   pauseAnimation?: () => void;
-  resetAnimation: () => void;
+  resetAnimation?: () => void;
   startAnimation: () => void;
   playbackIcons?: typeof DEFAULT_ICONS;
   animationItems?: {[key: string]: AnimationItem};

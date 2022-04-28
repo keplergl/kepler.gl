@@ -19,18 +19,28 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import ItemSelector from '../common/item-selector/item-selector';
-import {PanelLabel} from '../common/styled-components';
+import styled from 'styled-components';
+import {format} from 'd3-format';
 import {FormattedMessage} from 'localization';
+import {DatasetInfoProps} from './types';
 
-export default function MultiSelectFilterFactory() {
-  const MultiSelectFilter = ({filter, setFilter}) => (
-    <div>
-      <PanelLabel htmlFor={`filter-${filter.id}`}>
-        <FormattedMessage id={'misc.valuesIn'} />
-      </PanelLabel>
-      <ItemSelector options={filter.domain} selectedItems={filter.value} onChange={setFilter} />
-    </div>
+const numFormat = format(',');
+
+const StyledDataRowCount = styled.div`
+  font-size: 11px;
+  color: ${props => props.theme.subtextColor};
+  padding-left: 19px;
+`;
+
+export default function DatasetInfoFactory() {
+  const DatasetInfo = ({dataset}: DatasetInfoProps) => (
+    <StyledDataRowCount className="source-data-rows">
+      <FormattedMessage
+        id={'datasetInfo.rowCount'}
+        values={{rowCount: numFormat(dataset.dataContainer.numRows())}}
+      />
+    </StyledDataRowCount>
   );
-  return MultiSelectFilter;
+
+  return DatasetInfo;
 }

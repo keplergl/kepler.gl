@@ -19,27 +19,26 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import styled from 'styled-components';
-import {format} from 'd3-format';
-import {FormattedMessage} from 'localization';
+import RangeSliderFactory from 'components/common/range-slider';
+import {RangeFilterProps} from './types';
 
-const numFormat = format(',');
+RangeFilterFactory.deps = [RangeSliderFactory];
 
-const StyledDataRowCount = styled.div`
-  font-size: 11px;
-  color: ${props => props.theme.subtextColor};
-  padding-left: 19px;
-`;
-
-export default function DatasetInfoFactory() {
-  const DatasetInfo = ({dataset}) => (
-    <StyledDataRowCount className="source-data-rows">
-      <FormattedMessage
-        id={'datasetInfo.rowCount'}
-        values={{rowCount: numFormat(dataset.dataContainer.numRows())}}
+export default function RangeFilterFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
+  const RangeFilter = ({filter, setFilter}: RangeFilterProps) => (
+    <div>
+      <RangeSlider
+        range={filter.domain}
+        value0={filter.value[0]}
+        value1={filter.value[1]}
+        step={filter.step}
+        histogram={filter.histogram}
+        isEnlarged={filter.enlarged}
+        onChange={setFilter}
+        inputTheme="secondary"
       />
-    </StyledDataRowCount>
+    </div>
   );
 
-  return DatasetInfo;
+  return RangeFilter;
 }

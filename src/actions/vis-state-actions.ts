@@ -240,7 +240,7 @@ export function setFilter(
   idx: number,
   prop: string,
   value: any,
-  valueIndex: number
+  valueIndex?: number
 ): Merge<SetFilterUpdaterAction, {type: typeof ActionTypes.SET_FILTER}> {
   return {
     type: ActionTypes.SET_FILTER,
@@ -309,7 +309,7 @@ export function setFilterAnimationWindow({
 }
 
 export type AddFilterUpdaterAction = {
-  dataId: string;
+  dataId?: string | null;
 };
 /**
  * Add a new filter
@@ -319,7 +319,7 @@ export type AddFilterUpdaterAction = {
  * @public
  */
 export function addFilter(
-  dataId: string
+  dataId: string | null
 ): Merge<AddFilterUpdaterAction, {type: typeof ActionTypes.ADD_FILTER}> {
   return {
     type: ActionTypes.ADD_FILTER,
@@ -471,7 +471,7 @@ export function showDatasetTable(
 
 export type UpdateDatasetColorUpdater = {
   dataId: string;
-  newColor: RGBColor;
+  newColor?: RGBColor;
 };
 /**
  * Update dataset color to custom by means of color picker
@@ -483,7 +483,7 @@ export type UpdateDatasetColorUpdater = {
  */
 export function updateTableColor(
   dataId: string,
-  newColor: RGBColor
+  newColor?: RGBColor
 ): Merge<UpdateDatasetColorUpdater, {type: typeof ActionTypes.UPDATE_TABLE_COLOR}> {
   return {
     type: ActionTypes.UPDATE_TABLE_COLOR,
