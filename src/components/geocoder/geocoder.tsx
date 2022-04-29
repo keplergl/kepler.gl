@@ -27,7 +27,7 @@ import {WebMercatorViewport} from 'viewport-mercator-project';
 import KeyEvent from 'constants/keyevent';
 import {Input} from 'components/common/styled-components';
 import {Search, Delete} from 'components/common/icons';
-import { Viewport } from 'reducers/map-state-updaters';
+import {Viewport} from 'reducers/map-state-updaters';
 
 // matches only valid coordinates
 const COORDINATE_REGEX_STRING =
@@ -108,30 +108,29 @@ const StyledContainer = styled.div`
 `;
 
 interface Result {
-  center: [number, number],
-  place_name: string
+  center: [number, number];
+  place_name: string;
 }
 
 export type Results = ReadonlyArray<Result>;
 
 type GeocoderProps = {
-  mapboxApiAccessToken: string,
-  className?: string,
-  limit?: number,
-  timeout?: number,
-  formatItem?: (item: Result) => string,
-  viewport: Viewport,
-  onSelected: (viewport: Viewport, item: Result) => void,
-  onDeleteMarker: () => void,
-  transitionDuration: number,
-  pointZoom: number,
-  width: number
+  mapboxApiAccessToken: string;
+  className?: string;
+  limit?: number;
+  timeout?: number;
+  formatItem?: (item: Result) => string;
+  viewport: Viewport;
+  onSelected: (viewport: Viewport, item: Result) => void;
+  onDeleteMarker: () => void;
+  transitionDuration: number;
+  pointZoom: number;
+  width: number;
 };
 
 type IntlProps = {
-  intl: IntlShape
+  intl: IntlShape;
 };
-
 
 /** @type {import('./geocoder').GeocoderComponent} */
 const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
