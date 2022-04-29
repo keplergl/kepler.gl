@@ -75,7 +75,6 @@ class FileDrop extends React.PureComponent<FileDropProps> {
     draggingOverTargetClassName: 'file-drop-dragging-over-target'
   };
 
-
   frameDragCounter = 0;
   state = {draggingOverFrame: false, draggingOverTarget: false};
 

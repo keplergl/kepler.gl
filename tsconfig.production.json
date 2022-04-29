@@ -4,14 +4,15 @@
     "allowJs": false,
     "checkJs": false,
     "jsx": "react",
-    "noEmit": true,
     "module": "esnext",
     "moduleResolution": "node",
+    "declaration":true,
+    "emitDeclarationOnly":true,
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noUnusedLocals": true,
-    "outDir": "build/dist",
+    "outDir": "dist",
     "sourceMap": true,
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": false,
@@ -31,6 +32,7 @@
   ],
   "exclude": [
     "src/deckgl-layers",
-    "src/layers"
+    "src/layers",
+    "*.js" //TODO remove one all translations finished
   ]
 }

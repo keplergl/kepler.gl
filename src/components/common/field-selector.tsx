@@ -79,7 +79,7 @@ interface FieldSelectorFactoryProps {
   fields?: FieldType[];
   onSelect: (items: readonly (string | number | boolean | object)[] | null) => void;
   placement?: string;
-  value?: FieldType;
+  value?: FieldType | null;
   filterFieldTypes?: FieldType | FieldType[];
   inputTheme?: string;
   placeholder?: string;
@@ -95,7 +95,7 @@ interface FieldSelectorFactoryProps {
 
 function FieldSelectorFactory(
   FieldListItemFactory: ReturnType<typeof FieldListItemFactoryFactory>
-) {
+): ComponentType<FieldSelectorFactoryProps> {
   class FieldSelector extends Component<FieldSelectorFactoryProps> {
     static defaultProps = {
       erasable: true,
