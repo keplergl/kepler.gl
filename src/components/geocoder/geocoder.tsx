@@ -22,11 +22,12 @@ import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import MapboxClient from 'mapbox';
-import {injectIntl} from 'react-intl';
+import {injectIntl, IntlShape} from 'react-intl';
 import {WebMercatorViewport} from 'viewport-mercator-project';
 import KeyEvent from 'constants/keyevent';
 import {Input} from 'components/common/styled-components';
 import {Search, Delete} from 'components/common/icons';
+import { Viewport } from 'reducers/map-state-updaters';
 
 // matches only valid coordinates
 const COORDINATE_REGEX_STRING =
@@ -35,9 +36,9 @@ const COORDINATE_REGEX = RegExp(COORDINATE_REGEX_STRING);
 
 const PLACEHOLDER = 'Enter an address or coordinates, ex 37.79,-122.40';
 
-let debounceTimeout = null;
+let debounceTimeout: NodeJS.Timeout | null = null;
 
-export const testForCoordinates = query => {
+export const testForCoordinates = (query: string): [true, number, number] | [false, string] => {
   const isValid = COORDINATE_REGEX.test(query.trim());
 
   if (!isValid) {
@@ -106,8 +107,34 @@ const StyledContainer = styled.div`
   }
 `;
 
+interface Result {
+  center: [number, number],
+  place_name: string
+}
+
+export type Results = ReadonlyArray<Result>;
+
+type GeocoderProps = {
+  mapboxApiAccessToken: string,
+  className?: string,
+  limit?: number,
+  timeout?: number,
+  formatItem?: (item: Result) => string,
+  viewport: Viewport,
+  onSelected: (viewport: Viewport, item: Result) => void,
+  onDeleteMarker: () => void,
+  transitionDuration: number,
+  pointZoom: number,
+  width: number
+};
+
+type IntlProps = {
+  intl: IntlShape
+};
+
+
 /** @type {import('./geocoder').GeocoderComponent} */
-const GeoCoder = ({
+const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
   mapboxApiAccessToken,
   className = '',
   limit = 5,
@@ -125,7 +152,7 @@ const GeoCoder = ({
   const [showResults, setShowResults] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   /** @type {import('./geocoder').Results} */
-  const initialResults = [];
+  const initialResults: Result[] = [];
   const [results, setResults] = useState(initialResults);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -135,11 +162,14 @@ const GeoCoder = ({
     event => {
       const queryString = event.target.value;
       setInputValue(queryString);
-      const [hasValidCoordinates, longitude, latitude] = testForCoordinates(queryString);
-      if (hasValidCoordinates) {
+      const resultCoordinates = testForCoordinates(queryString);
+      if (resultCoordinates[0]) {
+        const [_, latitude, longitude] = resultCoordinates;
         setResults([{center: [latitude, longitude], place_name: queryString}]);
       } else {
-        clearTimeout(debounceTimeout);
+        if (debounceTimeout) {
+          clearTimeout(debounceTimeout);
+        }
         debounceTimeout = setTimeout(async () => {
           if (limit > 0 && Boolean(queryString)) {
             try {
