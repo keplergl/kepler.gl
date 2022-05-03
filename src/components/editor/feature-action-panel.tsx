@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useState, ComponentType} from 'react';
+import React, {useCallback, useState} from 'react';
 import {useIntl} from 'react-intl';
 
 import ActionPanel, {ActionPanelItem} from 'components/common/action-panel';
@@ -42,7 +42,7 @@ PureFeatureActionPanelFactory.deps = [];
 export interface FeatureActionPanelProps {
   className?: string;
   datasets: Datasets;
-  selectedFeature: Feature;
+  selectedFeature: Feature | null;
   position: {
     x: number;
     y: number;
@@ -54,7 +54,7 @@ export interface FeatureActionPanelProps {
   onClose: () => void;
 }
 
-export function PureFeatureActionPanelFactory(): ComponentType<FeatureActionPanelProps> {
+export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProps> {
   const FeatureActionPanel = ({
     className,
     datasets,
@@ -132,7 +132,7 @@ FeatureActionPanelFactory.deps = PureFeatureActionPanelFactory.deps;
 export default function FeatureActionPanelFactory() {
   const PureFeatureActionPanel = PureFeatureActionPanelFactory();
 
-  const ClickOutsideFeatureActionPanel = (props: FeatureActionPanelProps) => {
+  const ClickOutsideFeatureActionPanel: React.FC<FeatureActionPanelProps> = props => {
     // @ts-ignore
     ClickOutsideFeatureActionPanel.handleClickOutside = (e: Event) => {
       e.preventDefault();

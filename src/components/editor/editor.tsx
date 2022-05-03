@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, ComponentType, CSSProperties, KeyboardEvent} from 'react';
+import React, {Component, CSSProperties, KeyboardEvent} from 'react';
 import styled from 'styled-components';
 import {Editor as Draw} from 'react-map-gl-draw';
 import window from 'global/window';
@@ -43,7 +43,6 @@ const StyledWrapper = styled.div`
   position: relative;
 `;
 
-// @ts-ignore
 const editorLayerFilter = (layer: Layer) => EDITOR_AVAILABLE_LAYERS.includes(layer.type);
 
 EditorFactory.deps = [FeatureActionPanelFactory];
@@ -55,8 +54,7 @@ interface EditorProps {
   editor: {selectedFeature: Feature; mode: string};
   layersToRender: Record<string, Layer>;
   index: number;
-  className: string; // ??
-  classnames: string;
+  className: string;
   clickRadius: number;
   style: CSSProperties;
   isEnabled: boolean;
@@ -67,8 +65,8 @@ interface EditorProps {
 }
 
 export default function EditorFactory(
-  FeatureActionPanel: ComponentType<FeatureActionPanelProps>
-): ComponentType<EditorProps> {
+  FeatureActionPanel: React.FC<FeatureActionPanelProps>
+): React.ComponentClass<EditorProps> {
   class Editor extends Component<EditorProps> {
     static defaultProps = {
       clickRadius: DEFAULT_RADIUS
