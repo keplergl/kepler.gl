@@ -24,18 +24,22 @@ import {requestAnimationFrame, cancelAnimationFrame} from 'global/window';
 import Console from 'global/console';
 import {BASE_SPEED, FPS, ANIMATION_WINDOW} from 'constants/default-settings';
 
-type AnimationControllerProps = {
+interface AnimationControllerProps<T extends number | number[]> {
   isAnimating?: boolean;
   speed?: number;
-  updateAnimation: Function;
+  updateAnimation: (x: T) => void;
   animationWindow?: string;
   steps?: number[] | null;
-  domain: number[];
-  value: number[];
+  domain: number[] | null;
+  value: T;
   baseSpeed?: number;
 }
 
-function AnimationControllerFactory() {
+class AnimationControllerType<T extends number | number[]> extends Component<
+  AnimationControllerProps<T>
+> {}
+
+function AnimationControllerFactory(): typeof AnimationControllerType {
   /**
    * 4 Animation Window Types
    * 1. free
@@ -58,15 +62,16 @@ function AnimationControllerFactory() {
    * Current time is a point. An array of sorted time steps are provided,
    * animate a moving point jumps to the next step
    */
-  class AnimationController extends Component<AnimationControllerProps> {
-
+  class AnimationController<T extends number | number[]> extends Component<
+    AnimationControllerProps<T>
+  > {
     static defaultProps = {
       baseSpeed: BASE_SPEED,
       speed: 1,
       steps: null,
       animationWindow: ANIMATION_WINDOW.free
     };
-    
+
     state = {
       isAnimating: false
     };
@@ -86,7 +91,7 @@ function AnimationControllerFactory() {
     }
 
     _timer = null;
-    _startTime: number | undefined;
+    _startTime: number = 0;
 
     _startOrPauseAnimation() {
       const {isAnimating, speed = 1} = this.props;
@@ -102,7 +107,6 @@ function AnimationControllerFactory() {
 
       const loop = () => {
         const current = new Date().getTime();
-        // @ts-ignore
         const delta = current - this._startTime;
 
         if (delta >= delay) {
@@ -118,22 +122,25 @@ function AnimationControllerFactory() {
 
     _resetAnimationByDomain = () => {
       const {domain, value, animationWindow} = this.props;
+      if (!domain) {
+        return;
+      }
       if (Array.isArray(value)) {
         if (animationWindow === ANIMATION_WINDOW.incremental) {
-          this.props.updateAnimation([value[0], value[0] + 1]);
+          this.props.updateAnimation([value[0], value[0] + 1] as T);
         } else {
-          this.props.updateAnimation([domain[0], domain[0] + value[1] - value[0]]);
+          this.props.updateAnimation([domain[0], domain[0] + value[1] - value[0]] as T);
         }
       } else {
-        this.props.updateAnimation(domain[0]);
+        this.props.updateAnimation(domain[0] as T);
       }
     };
 
     _resetAnimtionByTimeStep = () => {
-      const {steps = null} = this.props
+      const {steps = null} = this.props;
       if (!steps) return;
       // go to the first steps
-      this.props.updateAnimation([steps[0], 0]);
+      this.props.updateAnimation([steps[0], 0] as T);
     };
 
     _resetAnimation = () => {
@@ -186,18 +193,21 @@ function AnimationControllerFactory() {
           ? this._nextFrameByTimeStep()
           : this._nextFrameByDomain();
 
-      this.props.updateAnimation(nextValue);
+      this.props.updateAnimation(nextValue as T);
     };
 
     _nextFrameByDomain() {
       const {domain, value, speed = 1, baseSpeed = 600, animationWindow} = this.props;
+      if (!domain) {
+        return;
+      }
       const delta = ((domain[1] - domain[0]) / baseSpeed) * speed;
 
       // loop when reaches the end
       // current time is a range
       if (Array.isArray(value)) {
-        let value0;
-        let value1;
+        let value0: number;
+        let value1: number;
         const readEnd = value[1] + delta > domain[1];
         if (animationWindow === ANIMATION_WINDOW.incremental) {
           value0 = value[0];
@@ -210,13 +220,13 @@ function AnimationControllerFactory() {
       }
 
       // current time is a point
-      return value + delta > domain[1] ? domain[0] : value + delta;
+      return Number(value) + delta > domain[1] ? domain[0] : Number(value) + delta;
     }
 
     _nextFrameByTimeStep() {
       const {steps = null, value} = this.props;
       if (!steps) return;
-      const val = Array.isArray(value) ? value[0] : value;
+      const val = Array.isArray(value) ? value[0] : Number(value);
       const index = bisectLeft(steps, val);
       const nextIdx = index >= steps.length - 1 ? 0 : index + 1;
 

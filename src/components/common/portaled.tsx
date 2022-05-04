@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef, ElementType, ReactNode} from 'react';
+import React, {Component, createRef, ElementType} from 'react';
 import debounce from 'lodash.debounce';
 import isEqual from 'lodash.isequal';
 
@@ -144,7 +144,6 @@ interface PortaledProps {
   overlayZIndex?: number;
   modalProps?: Partial<ReactModal.Props>;
   modalStyle?: Partial<typeof defaultModalStyle>;
-  children?: ReactNode;
 }
 
 interface PortaledState {
@@ -271,10 +270,10 @@ class Portaled extends Component<PortaledProps, PortaledState> {
                   // failed to execute removeChild on parent node when it is already unmounted
                   return (
                     // @ts-ignore
-                    (context && context.current) || {
+                    ((context && context.current) || {
                       removeChild: () => {},
                       appendChild: () => {}
-                    }
+                    }) as HTMLElement
                   );
                 }}
                 onRequestClose={onClose}

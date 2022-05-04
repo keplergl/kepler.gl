@@ -77,7 +77,6 @@ export default class Base extends Component<BaseProps> {
     const fillStyle =
       Array.isArray(colors) && totalColor && getStyleClassFromColor(totalColor, colors);
 
-
     return (
       <svg
         viewBox={viewBox}

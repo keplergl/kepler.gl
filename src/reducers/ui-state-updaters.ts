@@ -87,12 +87,12 @@ export type MapControl = {
   activeMapIndex?: number;
 };
 export type MapControls = {
-  visibleLayers: MapControl;
-  mapLegend: MapControl;
-  toggle3d: MapControl;
-  splitMap: MapControl;
-  mapDraw: MapControl;
-  mapLocale: MapControl;
+  visibleLayers?: MapControl;
+  mapLegend?: MapControl;
+  toggle3d?: MapControl;
+  splitMap?: MapControl;
+  mapDraw?: MapControl;
+  mapLocale?: MapControl;
 };
 
 export type LoadFiles = {
