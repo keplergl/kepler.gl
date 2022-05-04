@@ -107,9 +107,11 @@ const StyledContainer = styled.div`
   }
 `;
 
-interface Result {
+export interface Result {
   center: [number, number];
   place_name: string;
+  bbox?: [number, number, number, number];
+  text?: string;
 }
 
 export type Results = ReadonlyArray<Result>;
@@ -120,12 +122,12 @@ type GeocoderProps = {
   limit?: number;
   timeout?: number;
   formatItem?: (item: Result) => string;
-  viewport: Viewport;
-  onSelected: (viewport: Viewport, item: Result) => void;
-  onDeleteMarker: () => void;
-  transitionDuration: number;
-  pointZoom: number;
-  width: number;
+  viewport?: Viewport;
+  onSelected: (viewport: Viewport | null, item: Result) => void;
+  onDeleteMarker?: () => void;
+  transitionDuration?: number;
+  pointZoom?: number;
+  width?: number;
 };
 
 type IntlProps = {
@@ -202,7 +204,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
       let newViewport = new WebMercatorViewport(viewport);
       const {bbox, center} = item;
 
-      newViewport = bbox
+      const resultViewport = bbox
         ? newViewport.fitBounds([
             [bbox[0], bbox[1]],
             [bbox[2], bbox[3]]
@@ -213,7 +215,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
             zoom: pointZoom
           };
 
-      const {longitude, latitude, zoom} = newViewport;
+      const {longitude, latitude, zoom} = resultViewport;
 
       onSelected({...viewport, ...{longitude, latitude, zoom, transitionDuration}}, item);
 
@@ -227,7 +229,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
   const onMarkDeleted = useCallback(() => {
     setShowDelete(false);
     setInputValue('');
-    onDeleteMarker();
+    onDeleteMarker?.();
   }, [onDeleteMarker]);
 
   const onKeyDown = useCallback(
