@@ -33,7 +33,7 @@ SourceDataSelectorFactory.deps = [DatasetTagFactory];
 
 export default function SourceDataSelectorFactory(
   DatasetTag: ReturnType<typeof DatasetTagFactory>
-) {
+): React.ComponentClass<SourceDataSelectorProps> {
   const DatasetItem = ({value}: DatasetItemProps) => <DatasetTag dataset={value} />;
 
   class SourceDataSelector extends Component<SourceDataSelectorProps> {

@@ -28,7 +28,12 @@ import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
 import {Portaled} from 'components';
 import {rgbToHex} from 'utils/color-utils';
-import {StyledDatasetTitleProps, DatasetTitleProps, RemoveDatasetProps, ShowDataTableProps} from './types';
+import {
+  StyledDatasetTitleProps,
+  DatasetTitleProps,
+  RemoveDatasetProps,
+  ShowDataTableProps
+} from './types';
 
 function nop(_) {}
 
@@ -104,7 +109,9 @@ const RemoveDataset = ({datasetKey, removeDataset = nop}: RemoveDatasetProps) =>
 
 DatasetTitleFactory.deps = [DatasetTagFactory];
 
-export default function DatasetTitleFactory(DatasetTag: ReturnType<typeof DatasetTagFactory>) {
+export default function DatasetTitleFactory(
+  DatasetTag: ReturnType<typeof DatasetTagFactory>
+): React.ComponentClass<DatasetTitleProps> {
   class DatasetTitle extends PureComponent<DatasetTitleProps> {
     state = {
       displayColorPicker: false
