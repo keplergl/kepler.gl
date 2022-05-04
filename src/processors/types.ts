@@ -14,3 +14,9 @@ export type RowData = {
 }[];
 
 export type ProcessorResult = {fields: Field[]; rows: any[][]} | null;
+
+export type ValidKeplerGlMap = {
+  datasets: unknown;
+  config: unknown;
+  info: Record<string, string>;
+};

@@ -27,7 +27,9 @@ import {isPlainObject, generateHashId} from 'utils/utils';
 import {DATASET_FORMATS} from 'constants/default-settings';
 import {LoaderObject} from '@loaders.gl/loader-utils';
 import {AddDataToMapPayload} from 'actions/actions';
-import {FileCacheItem} from './types';
+import {FileCacheItem, ValidKeplerGlMap} from './types';
+import {Feature} from 'reducers';
+import {FeatureCollection} from '@turf/helpers';
 
 const BATCH_TYPE = {
   METADATA: 'metadata',
@@ -50,30 +52,31 @@ const JSON_LOADER_OPTIONS = {
   ]
 };
 
-export function isGeoJson(json: any): boolean {
+export function isGeoJson(json: unknown): json is Feature | FeatureCollection {
   // json can be feature collection
   // or single feature
   return isPlainObject(json) && (isFeature(json) || isFeatureCollection(json));
 }
 
-export function isFeature(json: any): boolean {
-  return json.type === 'Feature' && json.geometry;
+export function isFeature(json: unknown): json is Feature {
+  return isPlainObject(json) && json.type === 'Feature' && !!json.geometry;
 }
 
-export function isFeatureCollection(json: any): boolean {
-  return json.type === 'FeatureCollection' && json.features;
+export function isFeatureCollection(json: unknown): json is FeatureCollection {
+  return isPlainObject(json) && json.type === 'FeatureCollection' && !!json.features;
 }
 
 export function isRowObject(json: any): boolean {
   return Array.isArray(json) && isPlainObject(json[0]);
 }
 
-export function isKeplerGlMap(json: any): Boolean {
+export function isKeplerGlMap(json: unknown): json is ValidKeplerGlMap {
   return Boolean(
     isPlainObject(json) &&
       json.datasets &&
       json.config &&
       json.info &&
+      isPlainObject(json.info) &&
       json.info.app === 'kepler.gl'
   );
 }

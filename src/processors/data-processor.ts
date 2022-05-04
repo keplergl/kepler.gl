@@ -29,7 +29,7 @@ import {notNullorUndefined, parseFieldValue} from 'utils/data-utils';
 import KeplerGlSchema, {SavedMap, ParsedDataset} from 'schemas';
 import {LoadedMap} from 'schemas/schema-manager';
 import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
-import {isPlainObject, toArray} from 'utils/utils';
+import {hasOwnProperty, isPlainObject, toArray} from 'utils/utils';
 import {Field} from 'utils/table-utils/kepler-table';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 import {ProcessorResult, RowData} from './types';
@@ -63,12 +63,14 @@ const IGNORE_DATA_TYPES = Object.keys(AnalyzerDATA_TYPES).filter(
 
 export const PARSE_FIELD_VALUE_FROM_STRING = {
   [ALL_FIELD_TYPES.boolean]: {
-    valid: (d: any) => typeof d === 'boolean',
-    parse: (d: any) => d === 'true' || d === 'True' || d === 'TRUE' || d === '1'
+    valid: (d: unknown): boolean => typeof d === 'boolean',
+    parse: (d: unknown): boolean => d === 'true' || d === 'True' || d === 'TRUE' || d === '1'
   },
   [ALL_FIELD_TYPES.integer]: {
-    valid: (d: any) => parseInt(d, 10) === d,
-    parse: (d: any) => parseInt(d, 10)
+    // @ts-ignore
+    valid: (d: unknown): boolean => parseInt(d, 10) === d,
+    // @ts-ignore
+    parse: (d: unknown): number => parseInt(d, 10)
   },
   [ALL_FIELD_TYPES.timestamp]: {
     valid: (d: any, field: Field) =>
@@ -171,7 +173,7 @@ export function getSampleForTypeAnalyze({
   sampleCount = 50
 }: {
   fields: string[];
-  rows: any[][];
+  rows: unknown[][];
   sampleCount?: number;
 }): RowData {
   const total = Math.min(sampleCount, rows.length);
@@ -210,7 +212,7 @@ export function getSampleForTypeAnalyze({
  *
  * @param rows
  */
-function cleanUpFalsyCsvValue(rows: any[][]): void {
+function cleanUpFalsyCsvValue(rows: unknown[][]): void {
   const re = new RegExp(CSV_NULLS, 'g');
   for (let i = 0; i < rows.length; i++) {
     for (let j = 0; j < rows[i].length; j++) {
@@ -218,7 +220,7 @@ function cleanUpFalsyCsvValue(rows: any[][]): void {
       // which will be parsed as '' by d3.csv
       // here we parse empty data as null
       // TODO: create warning when deltect `CSV_NULLS` in the data
-      if (typeof rows[i][j] === 'string' && rows[i][j].match(re)) {
+      if (typeof rows[i][j] === 'string' && (rows[i][j] as string).match(re)) {
         rows[i][j] = null;
       }
     }
@@ -234,7 +236,7 @@ function cleanUpFalsyCsvValue(rows: any[][]): void {
  * @param i
  */
 export function parseCsvRowsByFieldType(
-  rows: any[][],
+  rows: unknown[][],
   geoFieldIdx: number,
   field: Field,
   i: number
@@ -250,7 +252,13 @@ export function parseCsvRowsByFieldType(
       // parse string value based on field type
       if (row[i] !== null) {
         row[i] = parser.parse(row[i], field);
-        if (geoFieldIdx > -1 && row[geoFieldIdx] && row[geoFieldIdx].properties) {
+        if (
+          geoFieldIdx > -1 &&
+          isPlainObject(row[geoFieldIdx]) &&
+          // @ts-ignore
+          hasOwnProperty(row[geoFieldIdx], 'properties')
+        ) {
+          // @ts-ignore
           row[geoFieldIdx].properties[field.name] = row[i];
         }
       }
@@ -641,11 +649,7 @@ export function validateInputData(data: Record<string, unknown>): ProcessorResul
   return {fields: updatedFields, rows};
 }
 
-function findNonEmptyRowsAtField(
-  rows: Record<number, unknown>[],
-  fieldIdx: number,
-  total: number
-): any[] {
+function findNonEmptyRowsAtField(rows: unknown[][], fieldIdx: number, total: number): any[] {
   const sample: any[] = [];
   let i = 0;
   while (sample.length < total && i < rows.length) {
