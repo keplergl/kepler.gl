@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {injectIntl} from 'react-intl';
+import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from 'localization';
 
 import {
@@ -68,9 +68,66 @@ const CompareSwitchWrapper = styled.div`
   margin-bottom: 8px;
 `;
 
+type TooltipConfigProps = {
+  config: {
+    fieldsToShow: {
+      [key: string]: {name: string; format: string | null}[];
+    };
+    compareMode: boolean;
+    compareType: string[];
+  };
+  onChange: (config: {
+    fieldsToShow: {
+      [key: string]: {name: string; format: string | null}[];
+    };
+    compareMode: boolean;
+    compareType: string[];
+  }) => void;
+  datasets: {
+    [key: string]: {
+      id: string;
+      fields: {
+        format?: string;
+        id?: string;
+        name?: string;
+        fieldIdx?: number;
+        type?: number;
+      }[];
+    };
+  };
+  intl: IntlShape;
+};
+
+type DatasetTooltipConfigProps = {
+  config: {
+    fieldsToShow: {
+      [key: string]: {name: string; format: string | null}[];
+    };
+    compareMode: boolean;
+    compareType: string[];
+  };
+  onChange: (config: {
+    fieldsToShow: {
+      [key: string]: {name: string; format: string | null}[];
+    };
+    compareMode: boolean;
+    compareType: string[];
+  }) => void;
+  dataset: {
+    id: string;
+    fields: {
+      format?: string;
+      id?: string;
+      name?: string;
+      fieldIdx?: number;
+      type?: number;
+    }[];
+  };
+};
+
 TooltipConfigFactory.deps = [DatasetTagFactory, FieldSelectorFactory];
-function TooltipConfigFactory(DatasetTag, FieldSelector) {
-  const DatasetTooltipConfig = ({config, onChange, dataset}) => {
+function TooltipConfigFactory(DatasetTag, FieldSelector: ReturnType<typeof FieldSelectorFactory>) {
+  const DatasetTooltipConfig = ({config, onChange, dataset}: DatasetTooltipConfigProps) => {
     const dataId = dataset.id;
     return (
       <SidePanelSection key={dataId}>
@@ -102,15 +159,18 @@ function TooltipConfigFactory(DatasetTag, FieldSelector) {
           fields={dataset.fields}
           value={config.fieldsToShow[dataId]}
           onSelect={selected => {
-            const newConfig = {
+            const newConfig: DatasetTooltipConfigProps['config'] = {
               ...config,
               fieldsToShow: {
                 ...config.fieldsToShow,
+                //@ts-ignore
                 [dataId]: selected.map(
                   f =>
                     config.fieldsToShow[dataId].find(
+                      //@ts-ignore
                       tooltipField => tooltipField.name === f.name
                     ) || {
+                      //@ts-ignore
                       name: f.name,
                       // default initial tooltip is null
                       format: null
@@ -123,13 +183,14 @@ function TooltipConfigFactory(DatasetTag, FieldSelector) {
           closeOnSelect={false}
           multiSelect
           inputTheme="secondary"
+          //@ts-expect-error
           CustomChickletComponent={TooltipChickletFactory(dataId, config, onChange, dataset.fields)}
         />
       </SidePanelSection>
     );
   };
 
-  const TooltipConfig = ({config, datasets, onChange, intl}) => {
+  const TooltipConfig = ({config, datasets, onChange, intl}: TooltipConfigProps) => {
     return (
       <TooltipConfigWrapper>
         {Object.keys(config.fieldsToShow).map(dataId =>
@@ -175,8 +236,9 @@ function TooltipConfigFactory(DatasetTag, FieldSelector) {
             inputTheme={'secondary'}
             getOptionValue={d => d}
             onChange={option => {
-              const newConfig = {
+              const newConfig: TooltipConfigProps['config'] = {
                 ...config,
+                //@ts-ignore
                 compareType: option
               };
               onChange(newConfig);

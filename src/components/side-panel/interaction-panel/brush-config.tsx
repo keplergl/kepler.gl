@@ -27,8 +27,15 @@ import {FormattedMessage} from 'localization';
 
 BrushConfigFactory.deps = [RangeSliderFactory];
 
-function BrushConfigFactory(RangeSlider) {
-  const BrushConfig = ({config, onChange}) => (
+type BrushConfigProps = {
+  config: {
+    size: number;
+  };
+  onChange: (config: {size: number}) => void;
+};
+
+function BrushConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
+  const BrushConfig = ({config, onChange}: BrushConfigProps) => (
     <SidePanelSection>
       <PanelLabel>
         <FormattedMessage id={'misc.brushRadius'} />
