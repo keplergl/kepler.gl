@@ -2175,9 +2175,9 @@
     minimist "^1.2.0"
 
 "@danmarshall/deckgl-typings@^4.9.21":
-  version "4.9.21"
-  resolved "https://registry.yarnpkg.com/@danmarshall/deckgl-typings/-/deckgl-typings-4.9.21.tgz#45fefa22fe136368155d6c63f9caeff1511124cc"
-  integrity sha512-s6q9YlDKo1EWtwvI22hHHRv8xX/N8wrODMx9VUxQOr9SQ1yHch6aZHBn3957Mqsy7MAb0p5bG3lZYuDjescOlw==
+  version "4.9.22"
+  resolved "https://registry.yarnpkg.com/@danmarshall/deckgl-typings/-/deckgl-typings-4.9.22.tgz#b7044db5bd79ebb2a4f76a41f70ec59d6772d40f"
+  integrity sha512-kEVbNpPiqqS6NkTPAGd3Q9DgpuaMHQpsSEYVLJEYqQcfA2lwwhbjkJ1EGEQw/GbjEPpfdtQubTDxfnYNxBQ9JA==
   dependencies:
     "@types/hammerjs" "^2.0.36"
     "@types/react" "*"
