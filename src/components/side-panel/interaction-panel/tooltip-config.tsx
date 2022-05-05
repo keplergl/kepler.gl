@@ -163,14 +163,14 @@ function TooltipConfigFactory(DatasetTag, FieldSelector: ReturnType<typeof Field
               ...config,
               fieldsToShow: {
                 ...config.fieldsToShow,
-                //@ts-ignore
+                //@ts-expect-error
                 [dataId]: selected.map(
                   f =>
                     config.fieldsToShow[dataId].find(
-                      //@ts-ignore
+                      //@ts-expect-error
                       tooltipField => tooltipField.name === f.name
                     ) || {
-                      //@ts-ignore
+                      //@ts-expect-error
                       name: f.name,
                       // default initial tooltip is null
                       format: null
@@ -238,7 +238,7 @@ function TooltipConfigFactory(DatasetTag, FieldSelector: ReturnType<typeof Field
             onChange={option => {
               const newConfig: TooltipConfigProps['config'] = {
                 ...config,
-                //@ts-ignore
+                //@ts-expect-error
                 compareType: option
               };
               onChange(newConfig);
