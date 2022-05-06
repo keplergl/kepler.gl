@@ -250,7 +250,10 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
   const expectedActions = [
     {
       type: ActionTypes.LOAD_MAP_STYLES,
-      payload: DEFAULT_MAP_STYLES.reduce((accu, curr) => ({...accu, [curr.id]: curr}), {})
+      payload: {
+        newStyles: DEFAULT_MAP_STYLES.reduce((accu, curr) => ({...accu, [curr.id]: curr}), {}),
+        onSuccess: undefined
+      }
     }
   ];
   t.deepEqual(
@@ -285,7 +288,7 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
   const expectedStateMapStyles = {
     ...tmpState.mapStyle.mapStyles,
     dark: {
-      ...DEFAULT_MAP_STYLES[0],
+      ...DEFAULT_MAP_STYLES[1],
       style: {layers: [], name: 'dark'}
     }
   };
@@ -370,10 +373,13 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
     {
       type: ActionTypes.LOAD_MAP_STYLES,
       payload: {
-        ...initialCoreState1.mapStyle.mapStyles,
-        milkshake: customStyle2,
-        chai: customStyle3,
-        smoothie: customStyle1
+        newStyles: {
+          ...initialCoreState1.mapStyle.mapStyles,
+          milkshake: customStyle2,
+          chai: customStyle3,
+          smoothie: customStyle1
+        },
+        onSuccess: undefined
       }
     }
   ];

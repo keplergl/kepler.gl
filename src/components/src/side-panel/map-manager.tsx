@@ -20,15 +20,13 @@
 
 import React, {Component} from 'react';
 
-import {Button, SidePanelSection} from '../common/styled-components';
+import {Button} from '../common/styled-components';
 import MapStyleSelectorFactory from './map-style-panel/map-style-selector';
 import LayerGroupSelectorFactory from './map-style-panel/map-layer-selector';
 import PanelTitleFactory from '../side-panel/panel-title';
 
 import {Add} from '../common/icons';
 import {PanelMeta} from './common/types';
-import ColorSelector from './layer-panel/color-selector';
-import {createSelector} from 'reselect';
 import {injectIntl, WrappedComponentProps} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {MapStyle} from '@kepler.gl/reducers';
@@ -53,9 +51,6 @@ function MapManagerFactory(
       isSelecting: false
     };
 
-    buildingColorSelector = (props: MapManagerProps) => props.mapStyle.threeDBuildingColor;
-    setColorSelector = (props: MapManagerProps) => props.mapStyleActions.set3dBuildingColor;
-
     _toggleSelecting = () => {
       this.setState({isSelecting: !this.state.isSelecting});
     };
@@ -70,22 +65,7 @@ function MapManagerFactory(
     render() {
       const {mapStyle, intl, mapStyleActions, showAddMapStyleModal, panelMetadata} = this.props;
       const currentStyle = mapStyle.mapStyles[mapStyle.styleType] || {};
-      const editableLayers = (currentStyle.layerGroups || []).map(lg => lg.slug);
-      const hasBuildingLayer = mapStyle.visibleLayerGroups['3d building'];
-      const colorSetSelector = createSelector(
-        this.buildingColorSelector,
-        this.setColorSelector,
-        (selectedColor, setColor) => [
-          {
-            selectedColor,
-            setColor,
-            isRange: false,
-            label: intl.formatMessage({id: 'mapManager.3dBuildingColor'})
-          }
-        ]
-      );
-
-      const colorSets = colorSetSelector(this.props);
+      const editableLayers = currentStyle.layerGroups || [];
 
       return (
         <div className="map-style-panel">
@@ -111,11 +91,12 @@ function MapManagerFactory(
                 editableLayers={editableLayers}
                 topLayers={mapStyle.topLayerGroups}
                 onChange={mapStyleActions.mapConfigChange}
+                threeDBuildingColor={mapStyle.threeDBuildingColor}
+                on3dBuildingColorChange={mapStyleActions.set3dBuildingColor}
+                backgroundColor={mapStyle.backgroundColor}
+                onBackgroundColorChange={mapStyleActions.setBackgroundColor}
               />
             ) : null}
-            <SidePanelSection>
-              <ColorSelector colorSets={colorSets} disabled={!hasBuildingLayer} />
-            </SidePanelSection>
           </div>
         </div>
       );

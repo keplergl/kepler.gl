@@ -35,7 +35,7 @@ import {
   mapStyleChange
 } from '@kepler.gl/actions';
 import SchemaManager from '@kepler.gl/schemas';
-import {DEFAULT_MAP_STYLES, DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';
+import {DEFAULT_MAP_STYLES, DEFAULT_MAPBOX_API_URL, NO_MAP_ID} from '@kepler.gl/constants';
 
 // helpers
 import {StateWCustomMapStyle} from 'test/helpers/mock-state';
@@ -109,7 +109,9 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
     'initialize map style with mapboxApiAccessToken and mapStylesReplaceDefault; mapStyles empty'
   );
 
-  const finalState = loadMapStylesUpdater(newState, {payload: INITIAL_MAP_STYLE.mapStyles});
+  const finalState = loadMapStylesUpdater(newState, {
+    payload: {newStyles: INITIAL_MAP_STYLE.mapStyles}
+  });
 
   // should start loading default dark style
   t.deepEqual(
@@ -173,7 +175,7 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES ->  mapStylesReplaceDefault: tr
     [myMapStyle.id]: myMapStyle
   };
 
-  const finalState = loadMapStylesUpdater(newState, {payload: mapStyles});
+  const finalState = loadMapStylesUpdater(newState, {payload: {newStyles: mapStyles}});
 
   t.deepEqual(
     finalState,
@@ -236,6 +238,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
+    backgroundColor: [255, 255, 255],
     bottomMapStyle: undefined,
     topMapStyle: undefined,
     initialState: {}
@@ -298,6 +301,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
+    backgroundColor: [255, 255, 255],
     initialState: {},
     bottomMapStyle: {layers: [], name: 'smoothie_the_cat'},
     topMapStyle: null,
@@ -330,6 +334,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
         topLayerGroups: {},
         visibleLayerGroups: {},
         threeDBuildingColor: [1, 2, 3],
+        backgroundColor: [255, 255, 255],
         mapStyles: {
           smoothie_the_cat: {
             accessToken: 'secret_token',
@@ -499,6 +504,46 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
   // error load light map style
   const erroredState = reducer(nextState3, errorTaskInTest(tasks[0], new Error('hello')));
   t.deepEqual(erroredState.isLoading, {light: false}, 'should set isLoading correctly');
+
+  t.end();
+});
+
+test('#mapStyleReducer -> MAP_STYLE_CHANGE -> dark basemap to no basemap', t => {
+  const initialState = reducer(
+    InitialMapStyle,
+    keplerGlInit({
+      mapboxApiAccessToken: 'smoothies_secret_token'
+    })
+  );
+
+  // loadMapStyles
+  const nextState = reducer(initialState, loadMapStyles({dark: MOCK_MAP_STYLE}));
+
+  t.deepEqual(
+    initialState.backgroundColor,
+    nextState.backgroundColor,
+    'backgroundColor should remain the same when NOT switching to the no basemap option'
+  );
+
+  // set style type to no basemap
+  const nextState2 = reducer(nextState, mapStyleChange(NO_MAP_ID));
+
+  const expectedNextState2 = {
+    ...nextState2,
+    styleType: NO_MAP_ID
+  };
+
+  t.deepEqual(
+    nextState2,
+    expectedNextState2,
+    'state should be correct when switching to no basemap option'
+  );
+
+  t.notDeepEqual(
+    nextState.backgroundColor,
+    nextState2.backgroundColor,
+    'backgroundColor should be changed when switching to no basemap option (map-style-updates.js: getBackgroundColorFromStyleBaseLayer())'
+  );
 
   t.end();
 });

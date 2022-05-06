@@ -33,8 +33,15 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
 
   t.deepEqual(
     Object.keys(msToSave),
-    ['styleType', 'topLayerGroups', 'visibleLayerGroups', 'threeDBuildingColor', 'mapStyles'],
-    'mapStyle should have all 4 entries'
+    [
+      'styleType',
+      'topLayerGroups',
+      'visibleLayerGroups',
+      'threeDBuildingColor',
+      'backgroundColor',
+      'mapStyles'
+    ],
+    'mapStyle should have all 6 entries'
   );
 
   const expectedSaved = {
@@ -42,14 +49,16 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
     topLayerGroups: {},
     visibleLayerGroups: {},
     mapStyles: {},
-    threeDBuildingColor: [209, 206, 199]
+    threeDBuildingColor: [209, 206, 199],
+    backgroundColor: [255, 255, 255]
   };
 
   const expectedLoaded = {
     styleType: 'dark',
     topLayerGroups: {},
     visibleLayerGroups: {},
-    threeDBuildingColor: [209, 206, 199]
+    threeDBuildingColor: [209, 206, 199],
+    backgroundColor: [255, 255, 255]
   };
 
   t.deepEqual(msToSave, expectedSaved, 'saved mapStyle should be current');
@@ -73,6 +82,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom style', t => {
       road: true
     },
     threeDBuildingColor: [1, 2, 3],
+    backgroundColor: [255, 255, 255],
     mapStyles: {
       smoothie_the_cat: {
         id: 'smoothie_the_cat',

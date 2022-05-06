@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {rgb as d3Rgb} from 'd3-color';
 import {ColorRange} from '@kepler.gl/constants';
 import {HexColor, RGBColor} from '@kepler.gl/types';
 
@@ -106,6 +107,24 @@ export function createLinearGradient(direction: string, colors: RGBColor[]) {
   });
 
   return `linear-gradient(to ${direction}, ${bands.join(',')})`;
+}
+
+/**
+ * Convert color to RGB
+ */
+export function colorMaybeToRGB(color: unknown): RGBColor | null {
+  if (isRgbColor(color)) {
+    return color as RGBColor;
+  }
+
+  if (typeof color === 'string') {
+    const rgbObj = d3Rgb(color);
+    if (Number.isFinite(rgbObj?.r) && Number.isFinite(rgbObj?.g) && Number.isFinite(rgbObj?.b)) {
+      return [rgbObj.r, rgbObj.g, rgbObj.b];
+    }
+  }
+
+  return null;
 }
 
 /**

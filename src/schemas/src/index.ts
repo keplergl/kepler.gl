@@ -31,7 +31,8 @@ export type {
   ParsedConfig,
   SavedConfigV1,
   SavedMap,
-  LoadedMap
+  LoadedMap,
+  SavedMapState
 } from './schema-manager';
 export {CURRENT_VERSION, VERSIONS} from './versions';
 export {

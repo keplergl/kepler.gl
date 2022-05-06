@@ -61,7 +61,8 @@ export default {
     building: 'Edifici',
     water: 'Aigua',
     land: 'Terra',
-    '3dBuilding': 'Edifici 3D'
+    '3dBuilding': 'Edifici 3D',
+    background: 'Fons'
   },
   panel: {
     text: {
@@ -173,7 +174,8 @@ export default {
   mapManager: {
     mapStyle: 'Estil de mapa',
     addMapStyle: 'Afegeix estils de mapa',
-    '3dBuildingColor': 'Color edifici 3D'
+    '3dBuildingColor': 'Color edifici 3D',
+    backgroundColor: 'Color de fons'
   },
   layerConfiguration: {
     defaultDescription: 'Calcula {property} segons el camp seleccionat',
