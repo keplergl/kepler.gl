@@ -30,10 +30,14 @@ const Outer = styled.div`
 
 MapsLayoutFactory.deps = [];
 
-export default function MapsLayoutFactory(): React.ComponentType {
-  class MapsLayout extends React.Component {
+interface MapsLayoutFactoryProps {
+  className?: string;
+}
+
+export default function MapsLayoutFactory(): React.ComponentType<MapsLayoutFactoryProps> {
+  class MapsLayout extends React.Component<MapsLayoutFactoryProps> {
     render() {
-      return <Outer>{this.props.children}</Outer>;
+      return <Outer className={this.props.className}>{this.props.children}</Outer>;
     }
   }
   return MapsLayout;
