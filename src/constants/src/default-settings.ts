@@ -191,47 +191,110 @@ type DEFAULT_LAYER_GROUP = {
   slug: string;
   filter: (value) => boolean;
   defaultVisibility: boolean;
+  isVisibilityToggleAvailable?: boolean;
+  isMoveToTopAvailable?: boolean;
+  isColorPickerAvailable?: boolean;
+};
+
+export const DEFAULT_BLDG_COLOR = '#D1CEC7';
+
+export const DEFAULT_BACKGROUND_COLOR = '#FFFFFF';
+
+// assists in identifying basemap background layers when auto-determining the backgroundColor
+export const BASE_MAP_BACKGROUND_LAYER_IDS = ['background', 'bg', 'land', 'water'];
+
+export const BACKGROUND_LAYER_GROUP_SLUG = 'Background';
+
+export const THREE_D_BUILDING_LAYER_GROUP_SLUG = '3d building';
+
+export const BACKGROUND_LAYER_GROUP: DEFAULT_LAYER_GROUP = {
+  slug: BACKGROUND_LAYER_GROUP_SLUG,
+  filter: () => false,
+  defaultVisibility: false,
+  isVisibilityToggleAvailable: false,
+  isMoveToTopAvailable: false,
+  isColorPickerAvailable: true
 };
 
 export const DEFAULT_LAYER_GROUPS: DEFAULT_LAYER_GROUP[] = [
   {
     slug: 'label',
     filter: ({id}) => id.match(/(?=(label|place-|poi-))/),
-    defaultVisibility: true
+    defaultVisibility: true,
+    isVisibilityToggleAvailable: true,
+    isMoveToTopAvailable: true,
+    isColorPickerAvailable: false
   },
   {
     slug: 'road',
     filter: ({id}) => id.match(/(?=(road|railway|tunnel|street|bridge))(?!.*label)/),
-    defaultVisibility: true
+    defaultVisibility: true,
+    isVisibilityToggleAvailable: true,
+    isMoveToTopAvailable: true,
+    isColorPickerAvailable: false
   },
   {
     slug: 'border',
     filter: ({id}) => id.match(/border|boundaries|boundary/),
-    defaultVisibility: false
+    defaultVisibility: false,
+    isVisibilityToggleAvailable: true,
+    isMoveToTopAvailable: true,
+    isColorPickerAvailable: false
   },
   {
     slug: 'building',
     filter: ({id}) => id.match(/building/),
-    defaultVisibility: true
+    defaultVisibility: true,
+    isVisibilityToggleAvailable: true,
+    isMoveToTopAvailable: true,
+    isColorPickerAvailable: false
   },
   {
     slug: 'water',
     filter: ({id}) => id.match(/(?=(water|stream|ferry))/),
-    defaultVisibility: true
+    defaultVisibility: true,
+    isVisibilityToggleAvailable: true,
+    isMoveToTopAvailable: true,
+    isColorPickerAvailable: false
   },
   {
     slug: 'land',
     filter: ({id}) => id.match(/(?=(parks|landcover|industrial|sand|hillshade))/),
-    defaultVisibility: true
+    defaultVisibility: true,
+    isVisibilityToggleAvailable: true,
+    isMoveToTopAvailable: true,
+    isColorPickerAvailable: false
   },
   {
-    slug: '3d building',
+    slug: THREE_D_BUILDING_LAYER_GROUP_SLUG,
     filter: () => false,
-    defaultVisibility: false
+    defaultVisibility: false,
+    isVisibilityToggleAvailable: true,
+    isMoveToTopAvailable: true,
+    isColorPickerAvailable: true
   }
 ];
 
+export const NO_MAP_ID = 'no_map';
+
+// Fallback style to use when styles are being fetched, or when
+// a style fails to fetch
+export const EMPTY_MAPBOX_STYLE = {
+  version: 8,
+  sources: {},
+  layers: []
+};
+
 export const DEFAULT_MAP_STYLES = [
+  {
+    id: NO_MAP_ID,
+    label: 'No Basemap',
+    url: null,
+    icon: 'https://storage.googleapis.com/unfolded_public/statics/keplergl/geodude/NO_BASEMAP.png',
+    layerGroups: [BACKGROUND_LAYER_GROUP],
+    colorMode: BASE_MAP_COLOR_MODES.NONE, // ! not present in OS
+    style: EMPTY_MAPBOX_STYLE
+  },
   {
     id: 'dark',
     label: 'Dark',

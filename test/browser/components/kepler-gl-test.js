@@ -248,6 +248,7 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
 
   const actions = store.getActions();
   const expectedActions = [
+    // ! manassra
     {type: ActionTypes.LOAD_MAP_STYLES, payload: {}},
     {
       type: ActionTypes.REQUEST_MAP_STYLES,
@@ -310,7 +311,7 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
 
   const expectedStateMapStyles = {
     dark: {
-      ...DEFAULT_MAP_STYLES[0],
+      ...DEFAULT_MAP_STYLES[1],
       style: {layers: [], name: 'dark'}
     },
     light: {
@@ -387,6 +388,7 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
   const actions = store.getActions();
   const expectedActions = [
     {
+      // ! request map styles on demand
       type: ActionTypes.LOAD_MAP_STYLES,
       payload: {
         milkshake: customStyle2,

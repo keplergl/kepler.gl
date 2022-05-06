@@ -61,7 +61,8 @@ export default {
     building: '建物',
     water: '水',
     land: '地面',
-    '3dBuilding': '3D建物'
+    '3dBuilding': '3D建物',
+    background: '背景'
   },
   panel: {
     text: {
@@ -170,7 +171,8 @@ export default {
   mapManager: {
     mapStyle: 'マップスタイル',
     addMapStyle: 'マップスタイル追加',
-    '3dBuildingColor': '3D建物の色'
+    '3dBuildingColor': '3D建物の色',
+    backgroundColor: '背景色'
   },
   layerConfiguration: {
     defaultDescription: '選択されたフィールドに基づいて{property}を計算します',

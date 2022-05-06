@@ -76,6 +76,7 @@ export const propertiesV1 = {
   topLayerGroups: null,
   visibleLayerGroups: null,
   threeDBuildingColor: null,
+  backgroundColor: null,
   mapStyles: new MapStyleSchemaV1()
 };
 

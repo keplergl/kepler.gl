@@ -61,7 +61,8 @@ export default {
     building: 'Edificio',
     water: 'Agua',
     land: 'Tierra',
-    '3dBuilding': 'Edificio 3D'
+    '3dBuilding': 'Edificio 3D',
+    background: 'Fondo'
   },
   panel: {
     text: {
@@ -174,7 +175,8 @@ export default {
   mapManager: {
     mapStyle: 'Estilo de mapa',
     addMapStyle: 'Añadir estilo de mapa',
-    '3dBuildingColor': 'Color edificios 3D'
+    '3dBuildingColor': 'Color edificios 3D',
+    backgroundColor: 'Color de fondo'
   },
   layerConfiguration: {
     defaultDescription: 'Calcular {property} según el campo seleccionado',

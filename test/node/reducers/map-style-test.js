@@ -29,7 +29,7 @@ import {
 } from '@kepler.gl/reducers';
 import {keplerGlInit, receiveMapConfig} from '@kepler.gl/actions';
 import SchemaManager from '@kepler.gl/schemas';
-import {DEFAULT_MAP_STYLES, DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';
+import {DEFAULT_MAP_STYLES, DEFAULT_MAPBOX_API_URL, NO_MAP_ID} from '@kepler.gl/constants';
 
 // helpers
 import {StateWCustomMapStyle} from 'test/helpers/mock-state';
@@ -116,7 +116,7 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
     [myMapStyle.id]: myMapStyle
   };
 
-  const finalState = loadMapStylesUpdater(newState, {payload: mapStyles});
+  const finalState = loadMapStylesUpdater(newState, {payload: {newStyles: mapStyles}});
 
   t.deepEqual(
     finalState,
@@ -229,6 +229,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
+    backgroundColor: [255, 255, 255],
     initialState: {},
     bottomMapStyle: {layers: [], name: 'smoothie_the_cat'},
     topMapStyle: null,
@@ -258,6 +259,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
         topLayerGroups: {},
         visibleLayerGroups: {},
         threeDBuildingColor: [1, 2, 3],
+        backgroundColor: [255, 255, 255],
         mapStyles: {
           smoothie_the_cat: {
             accessToken: 'secret_token',

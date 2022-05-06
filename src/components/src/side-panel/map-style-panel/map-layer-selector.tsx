@@ -21,45 +21,25 @@
 import React, {ComponentType} from 'react';
 import styled from 'styled-components';
 import PanelHeaderActionFactory from '../panel-header-action';
+import LayerGroupItemFactory from './map-layer-group-item';
 import {EyeSeen, EyeUnseen} from '../../common/icons';
 
 import {
   CenterFlexbox,
   PanelLabel,
   PanelContent,
-  PanelLabelBold,
   PanelLabelWrapper
 } from '../../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {camelize} from '@kepler.gl/utils';
+import {THREE_D_BUILDING_LAYER_GROUP_SLUG, BACKGROUND_LAYER_GROUP_SLUG} from '@kepler.gl/constants';
 import {VisibleLayerGroups} from '@kepler.gl/types';
 import {BaseProps} from '../../common/icons';
 import {Upload} from '@kepler.gl/cloud-providers';
 
+function noop() {}
+
 const StyledInteractionPanel = styled.div`
   padding-bottom: 12px;
-`;
-
-const StyledLayerGroupItem = styled.div`
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  .layer-group__visibility-toggle {
-    margin-right: 12px;
-  }
-`;
-
-interface LayerLabelProps {
-  active: boolean;
-}
-
-const LayerLabel = styled(PanelLabelBold)<LayerLabelProps>`
-  color: ${props => (props.active ? props.theme.textColor : props.theme.labelColor)};
 `;
 
 export type LayerGroupSelectorProps = {
@@ -70,12 +50,19 @@ export type LayerGroupSelectorProps = {
     topLayerGroups?: VisibleLayerGroups;
   }) => void;
   topLayers: VisibleLayerGroups;
+  threeDBuildingColor: MapStyle['threeDBuildingColor'];
+  on3dBuildingColorChange: (pd: Set3dBuildingColorUpdaterAction['payload']) => void;
+  backgroundColor: MapStyle['backgroundColor'];
+  onBackgroundColorChange: (pd: SetBackgroundColorUpdaterAction['payload']) => void;
   actionIcons?: Record<string, ComponentType<Partial<BaseProps>>>;
 };
 
-LayerGroupSelectorFactory.deps = [PanelHeaderActionFactory];
+LayerGroupSelectorFactory.deps = [PanelHeaderActionFactory, LayerGroupItemFactory];
 
-function LayerGroupSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>) {
+function LayerGroupSelectorFactory(
+  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>,
+  LayerGroupItem
+) {
   const defaultActionIcons = {
     visible: EyeSeen,
     hidden: EyeUnseen
@@ -85,60 +72,54 @@ function LayerGroupSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHea
     editableLayers,
     onChange,
     topLayers,
+    threeDBuildingColor,
+    on3dBuildingColorChange,
+    backgroundColor,
+    onBackgroundColorChange,
     actionIcons = defaultActionIcons
-  }: LayerGroupSelectorProps) => (
-    <StyledInteractionPanel className="map-style__layer-group__selector">
-      <div className="layer-group__header">
-        <PanelLabel>
-          <FormattedMessage id={'mapLayers.title'} />
-        </PanelLabel>
-      </div>
-      <PanelContent className="map-style__layer-group">
-        {editableLayers.map(slug => (
-          <StyledLayerGroupItem className="layer-group__select" key={slug}>
-            <PanelLabelWrapper>
-              <PanelHeaderAction
-                className="layer-group__visibility-toggle"
-                id={`${slug}-toggle`}
-                tooltip={layers[slug] ? 'tooltip.hide' : 'tooltip.show'}
-                onClick={() =>
-                  onChange({
-                    visibleLayerGroups: {
-                      ...layers,
-                      [slug]: !layers[slug]
-                    }
-                  })
+  }: LayerGroupSelectorProps) => {
+    return (
+      <StyledInteractionPanel className="map-style__layer-group__selector">
+        <div className="layer-group__header">
+          <PanelLabel>
+            <FormattedMessage id={'mapLayers.title'} />
+          </PanelLabel>
+        </div>
+        <PanelContent className="map-style__layer-group">
+          {editableLayers.map(
+            ({slug, isVisibilityToggleAvailable, isMoveToTopAvailable, isColorPickerAvailable}) => (
+              <LayerGroupItem
+                key={slug}
+                PanelHeaderAction={PanelHeaderAction}
+                onChange={onChange}
+                slug={slug}
+                layers={layers}
+                topLayers={topLayers}
+                actionIcons={actionIcons}
+                isVisibilityToggleAvailable={isVisibilityToggleAvailable}
+                isMoveToTopAvailable={isMoveToTopAvailable}
+                isColorPickerAvailable={isColorPickerAvailable}
+                color={
+                  isColorPickerAvailable && slug === THREE_D_BUILDING_LAYER_GROUP_SLUG
+                    ? threeDBuildingColor
+                    : slug === BACKGROUND_LAYER_GROUP_SLUG
+                    ? backgroundColor
+                    : null
                 }
-                IconComponent={layers[slug] ? actionIcons.visible : actionIcons.hidden}
-                active={layers[slug]}
-                flush
-              />
-              <LayerLabel active={layers[slug]}>
-                <FormattedMessage id={`mapLayers.${camelize(slug)}`} />
-              </LayerLabel>
-            </PanelLabelWrapper>
-            <CenterFlexbox className="layer-group__bring-top">
-              <PanelHeaderAction
-                id={`${slug}-top`}
-                tooltip="tooltip.moveToTop"
-                disabled={!layers[slug]}
-                IconComponent={Upload}
-                active={topLayers[slug]}
-                onClick={() =>
-                  onChange({
-                    topLayerGroups: {
-                      ...topLayers,
-                      [slug]: !topLayers[slug]
-                    }
-                  })
+                onColorChange={
+                  isColorPickerAvailable && slug === THREE_D_BUILDING_LAYER_GROUP_SLUG
+                    ? on3dBuildingColorChange
+                    : slug === BACKGROUND_LAYER_GROUP_SLUG
+                    ? onBackgroundColorChange
+                    : noop
                 }
               />
-            </CenterFlexbox>
-          </StyledLayerGroupItem>
-        ))}
-      </PanelContent>
-    </StyledInteractionPanel>
-  );
+            )
+          )}
+        </PanelContent>
+      </StyledInteractionPanel>
+    );
+  };
 
   return LayerGroupSelector;
 }

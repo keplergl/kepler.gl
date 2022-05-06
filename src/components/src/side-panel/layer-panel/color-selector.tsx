@@ -48,6 +48,10 @@ type ColorSelectorProps = {
   setColorUI?: (newConfig: NestedPartial<ColorUI>) => void;
 };
 
+// export ColorBlock type for re-use in map-layer-group-color-picker
+// export type ReactElement = ({...props, color: RGBColor}) => JSX.Element;
+// export const ColorBlock: ReactElement;
+
 export const ColorBlock = styled.div<{backgroundcolor: RGBColor}>`
   width: 32px;
   height: 18px;

@@ -6,7 +6,7 @@ Current supported languages are:
 | locale code | Language   | Default? |
 |-------------|------------|----------|
 | en          | English    | default  |
-| fi          | Finish     |          |
+| fi          | Finnish    |          |
 | pt          | Portuguese |          |
 | ca          | Catalan    |          |
 | es          | Spanish    |          |
