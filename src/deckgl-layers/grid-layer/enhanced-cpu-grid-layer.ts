@@ -19,9 +19,9 @@
 // THE SOFTWARE.
 
 import {CPUGridLayer} from '@deck.gl/aggregation-layers';
-import CPUAggregator, {getAggregatedData} from '../layer-utils/cpu-aggregator';
+import CPUAggregator, {AggregationType, getAggregatedData} from '../layer-utils/cpu-aggregator';
 
-export const gridAggregation = {
+export const gridAggregation: AggregationType = {
   key: 'position',
   updateSteps: [
     {
@@ -43,7 +43,7 @@ export const gridAggregation = {
   ]
 };
 
-export default class ScaleEnhancedGridLayer extends CPUGridLayer {
+export default class ScaleEnhancedGridLayer extends CPUGridLayer<any> {
   initializeState() {
     const cpuAggregator = new CPUAggregator({
       aggregation: gridAggregation
