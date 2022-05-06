@@ -80,6 +80,7 @@
     "umd"
   ],
   "dependencies": {
+    "@danmarshall/deckgl-typings": "^4.9.21",
     "@deck.gl/aggregation-layers": "8.2.0",
     "@deck.gl/core": "8.2.0",
     "@deck.gl/extensions": "8.2.0",
@@ -203,7 +204,6 @@
     "@babel/register": "^7.12.1",
     "@babel/runtime": "^7.12.1",
     "@babel/traverse": "^7.12.1",
-    "@danmarshall/deckgl-typings": "^4.9.21",
     "@deck.gl/test-utils": "8.2.0",
     "@luma.gl/test-utils": "^8.2.0",
     "@probe.gl/test-utils": "^3.0.1",
