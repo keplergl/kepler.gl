@@ -21,6 +21,7 @@
 import pick from 'lodash.pick';
 import {VERSIONS} from './versions';
 import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {AddDataToMapOptions} from '@kepler.gl/types';
 import {isFilterValidToSave, notNullorUndefined} from '@kepler.gl/utils';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
@@ -87,17 +88,35 @@ export interface VisState {
   loaders: Loader[];
   loadOptions: object;
   initialState?: Partial<VisState>;
-  mergers: VisStateMergers;
+  mergers: VisStateMergers<any>;
   schema: typeof KeplerGLSchema;
   preserveLayerOrder?: number[];
+  isMergingDatasets: {
+    [datasetId: string]: boolean;
+  };
 }
 
-export type Merger = {
-  merge: <S extends VisState>(state: S, config: any, fromConfig?: boolean) => S;
-  prop: string;
-  toMergeProp?: string;
+export type PostMergerPayload = {
+  newDataIds: string[];
+  options?: AddDataToMapOptions;
 };
-export type VisStateMergers = Merger[];
+export type MergerActionPayload<S extends VisState> = {
+  mergers: Merger<S>[];
+  postMergerPayload: PostMergerPayload;
+};
+export type MergerMergeFunc<S extends VisState> = (
+  state: S,
+  config: any,
+  fromConfig: boolean,
+  mergerActionPayload?: MergerActionPayload<S>
+) => S;
+export type Merger<S extends VisState> = {
+  merge: MergerMergeFunc<S>;
+  prop: string | string[];
+  toMergeProp?: string | string[];
+  waitToFinish?: boolean;
+};
+export type VisStateMergers<S extends VisState> = Merger<S>[];
 
 // in v0 geojson there is only sizeField
 

@@ -22,7 +22,6 @@ import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
 import flattenDeep from 'lodash.flattendeep';
 import {
-  isObject,
   arrayInsert,
   getInitialMapLayersForSplitMap,
   applyFiltersToDatasets,
@@ -33,7 +32,6 @@ import {LayerColumns, LayerColumn, Layer} from '@kepler.gl/layers';
 import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
 import {
   CURRENT_VERSION,
-  Merger,
   VisState,
   VisStateMergers,
   visStateSchema,
@@ -98,15 +96,12 @@ export function createLayerFromConfig(state: VisState, layerConfig: any): Layer 
 }
 
 export function serializeLayer(newLayer): ParsedLayer {
-  const savedVisState = visStateSchema[CURRENT_VERSION].save(
-    // @ts-expect-error not all expected properties are provided
-    {
-      layers: [newLayer],
-      layerOrder: [0]
-    }
-  ).visState;
+  const savedVisState = visStateSchema[CURRENT_VERSION].save({
+    layers: [newLayer],
+    layerOrder: [0]
+  } as VisState).visState;
   const loadedLayer = visStateSchema[CURRENT_VERSION].load(savedVisState).visState?.layers?.[0];
-  // @ts-expect-error
+  // @ts-expect-error possibly undefined, but defined based on the config above
   return loadedLayer;
 }
 
@@ -121,17 +116,26 @@ export function mergeLayers<S extends VisState>(
   fromConfig?: boolean
 ): S {
   const preserveLayerOrder = fromConfig ? layersToMerge.map(l => l.id) : state.preserveLayerOrder;
-
   if (!Array.isArray(layersToMerge) || !layersToMerge.length) {
     return state;
   }
+  // don't merge layer if dataset is being merged
+  const unmerged: ParsedLayer[] = [];
+  const toMerge: ParsedLayer[] = [];
+  layersToMerge.forEach((l: ParsedLayer) => {
+    if (l?.config?.dataId && state.isMergingDatasets[l.config.dataId]) {
+      unmerged.push(l);
+    } else {
+      toMerge.push(l);
+    }
+  });
 
-  const {validated: mergedLayer, failed: unmerged} = validateLayersByDatasets(
+  const {validated: mergedLayer, failed} = validateLayersByDatasets(
     state.datasets,
     state.layerClasses,
-    layersToMerge
+    toMerge
   );
-
+  unmerged.push(...failed);
   // put new layers in front of current layers
   const {newLayerOrder, newLayers} = insertLayerAtRightOrder(
     state.layers,
@@ -330,7 +334,7 @@ export function mergeInteractionTooltipConfig(
   }
 
   for (const dataId in tooltipConfig.fieldsToShow) {
-    if (!state.datasets[dataId]) {
+    if (!state.datasets[dataId] || state.isMergingDatasets[dataId]) {
       // is not yet loaded
       unmergedTooltip[dataId] = tooltipConfig.fieldsToShow[dataId];
     } else {
@@ -633,11 +637,7 @@ export function mergeEditor<S extends VisState>(state: S, savedEditor: SavedEdit
   };
 }
 
-export function isValidMerger(merger: Merger): boolean {
-  return isObject(merger) && typeof merger.merge === 'function' && typeof merger.prop === 'string';
-}
-
-export const VIS_STATE_MERGERS: VisStateMergers = [
+export const VIS_STATE_MERGERS: VisStateMergers<any> = [
   {merge: mergeLayers, prop: 'layers', toMergeProp: 'layerToBeMerged'},
   {merge: mergeFilters, prop: 'filters', toMergeProp: 'filterToBeMerged'},
   {merge: mergeInteractions, prop: 'interactionConfig', toMergeProp: 'interactionToBeMerged'},

@@ -20,14 +20,17 @@
 
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
+import Task, {withTask, drainTasksForTesting, succeedTaskInTest} from 'react-palm/tasks';
 
-import {
+import keplerGlReducer, {
   mergeFilters,
   mergeLayers,
   mergeInteractions,
   mergeLayerBlending,
   mergeSplitMaps,
   insertLayerAtRightOrder,
+  VIS_STATE_MERGERS,
+  applyMergersUpdater,
   visStateReducer,
   keplerGlReducerCore as coreReducer,
   defaultInteractionConfig
@@ -35,7 +38,7 @@ import {
 
 import SchemaManager from '@kepler.gl/schemas';
 import {processKeplerglJSON} from '@kepler.gl/processors';
-import {updateVisData, receiveMapConfig, addDataToMap} from '@kepler.gl/actions';
+import {updateVisData, receiveMapConfig, addDataToMap, registerEntry} from '@kepler.gl/actions';
 
 import {createDataContainer} from '@kepler.gl/utils';
 
@@ -1922,5 +1925,185 @@ test('VisStateMerger -> load polygon filter map', t => {
   const newFilter = visState.filters[0];
 
   t.deepEqual(newFilter, oldFilter, 'Should have loaded the polygon filter correctly');
+  t.end();
+});
+
+const MOCK_MERGE_TASK = Task.fromPromise(
+  time => new Promise(resolve => window.setTimeout(resolve, time)),
+  'MOCK_MERGE_TASK'
+);
+const mergeSuccess = payload => ({
+  type: 'MERGE_SUCCESS',
+  payload
+});
+const mergeError = payload => ({
+  type: 'MERGE_ERROR',
+  payload
+});
+
+function mockMergeSuccessUpdater(state, action) {
+  const {mergerActionPayload, dataId} = action.payload;
+  const nextState = {
+    ...state,
+    visState: {
+      ...state.visState,
+      isMergingDatasets: {
+        ...state.isMergingDatasets,
+        [dataId]: false
+      }
+    }
+  };
+  return {
+    ...nextState,
+    visState: applyMergersUpdater(nextState.visState, mergerActionPayload)
+  };
+}
+
+function asyncMerger(
+  state,
+  {processToBeMerged, operationsToBeMerged},
+  fromConfig,
+  mergerActionPayload
+) {
+  if (!processToBeMerged) {
+    return state;
+  }
+  const {dataId} = processToBeMerged;
+
+  if (!state.datasets[dataId] && (processToBeMerged || operationsToBeMerged)) {
+    return {
+      ...state,
+      processToBeMerged,
+      operationsToBeMerged
+    };
+  }
+  const nextState = {
+    ...state,
+    isMergingDatasets: {
+      ...state.isMergingDatasets,
+      [dataId]: true
+    }
+  };
+
+  const mergeMergeTasks = MOCK_MERGE_TASK(100).bimap(
+    () => mergeSuccess({mergerActionPayload, dataId}),
+    err => mergeError({mergerActionPayload, dataId, err})
+  );
+
+  return withTask(nextState, mergeMergeTasks);
+}
+const mockMerger = {
+  merge: asyncMerger,
+  // test props being an array
+  prop: ['process', 'operations'],
+  toMergeProp: ['processToBeMerged', 'operationsToBeMerged'],
+  waitToFinish: true
+};
+
+// prepare reducers
+const mockReducer = keplerGlReducer
+  .initialState({
+    visState: {
+      process: undefined,
+      processToBeMerged: undefined,
+      mergers: [mockMerger, ...VIS_STATE_MERGERS]
+    }
+  })
+  .plugin({
+    MERGE_SUCCESS: mockMergeSuccessUpdater,
+    MERGE_ERROR: mockMergeSuccessUpdater
+  });
+
+// eslint-disable-next-line max-statements
+test('VisStateMerger -> asyne mergers', t => {
+  // adding mock process to state
+  const stateToSave = cloneDeep(StateWMultiFilters);
+  const appStateToSave = SchemaManager.save(stateToSave);
+  const stateParsed = SchemaManager.load(appStateToSave);
+
+  const configWithProcess = {
+    ...stateParsed.config,
+    visState: {
+      ...stateParsed.config.visState,
+      process: {dataId: testCsvDataId}
+    }
+  };
+  drainTasksForTesting();
+  const initialState = mockReducer(undefined, registerEntry({id: 'test'}));
+
+  // apply config with process to merge
+  const nextState = mockReducer(
+    initialState,
+    // add csv data first
+    updateVisData(
+      stateParsed.datasets.find(d => d.info.id === testCsvDataId),
+      {},
+      configWithProcess
+    )
+  );
+
+  t.deepEqual(
+    nextState.test.visState.isMergingDatasets,
+    {[testCsvDataId]: true},
+    'should set test dataId to true'
+  );
+  t.equal(nextState.test.visState.layers.length, 0, 'should not add any layers');
+  t.equal(nextState.test.visState.filters.length, 0, 'should not add any filters');
+  t.equal(
+    nextState.test.visState.layerToBeMerged.length,
+    2,
+    'should have 2 layers waiting to be merged'
+  );
+
+  t.ok(nextState.test.visState.datasets[testCsvDataId], 'should add csv data');
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 1, 'should create 1 task');
+  t.equal(tasks[0].type, 'MOCK_MERGE_TASK', 'should create merger task');
+
+  // add another dataset will async merger is in process
+  const nextState1 = mockReducer(
+    nextState,
+    // add geojson data
+    updateVisData(stateParsed.datasets.find(d => d.info.id === testGeoJsonDataId))
+  );
+
+  t.ok(nextState1.test.visState.datasets[testGeoJsonDataId], 'should add geojson data');
+
+  t.deepEqual(
+    nextState1.test.visState.isMergingDatasets,
+    {[testCsvDataId]: true},
+    'isMergingDatasets of dataId is still true'
+  );
+
+  t.equal(nextState1.test.visState.layers.length, 1, 'should merge 1 layer');
+  t.equal(
+    nextState1.test.visState.layers[0].config.dataId,
+    testGeoJsonDataId,
+    'should only merge layer of geojson data'
+  );
+
+  t.equal(nextState1.test.visState.filters.length, 2, 'should merge 2 filters');
+  t.deepEqual(
+    nextState1.test.visState.filters.map(f => f.dataId),
+    [[testGeoJsonDataId], [testGeoJsonDataId]],
+    'should merge 2 filters of geojson data'
+  );
+
+  // async merge succeed
+  const nextState2 = mockReducer(nextState1, succeedTaskInTest(tasks[0], undefined));
+  t.deepEqual(
+    nextState2.test.visState.isMergingDatasets,
+    {[testCsvDataId]: false},
+    'should set isMerging data to false'
+  );
+
+  t.equal(nextState2.test.visState.layers.length, 2, 'should merge 2 layers');
+  t.equal(
+    nextState2.test.visState.layers[1].config.dataId,
+    testCsvDataId,
+    'should merge layer of csv data'
+  );
+  t.equal(nextState2.test.visState.filters.length, 5, 'should merge 5 filters');
+
   t.end();
 });

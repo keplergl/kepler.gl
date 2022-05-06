@@ -68,14 +68,14 @@ import {
   getDefaultFilterPlotType
 } from '@kepler.gl/utils';
 
+// Mergers
 import {
-  isValidMerger,
   VIS_STATE_MERGERS,
   validateLayerWithData,
   createLayerFromConfig,
   serializeLayer
 } from './vis-state-merger';
-
+import {mergeStateFromMergers, isValidMerger} from './merger-handler';
 import {Layer, LayerClasses, LAYER_ID_LENGTH} from '@kepler.gl/layers';
 import {
   EDITOR_MODES,
@@ -88,7 +88,7 @@ import {
 } from '@kepler.gl/constants';
 import {pick_, merge_, swap_} from './composer-helpers';
 
-import KeplerGLSchema, {VisState} from '@kepler.gl/schemas';
+import KeplerGLSchema, {VisState, Merger, PostMergerPayload} from '@kepler.gl/schemas';
 
 import {Filter, InteractionConfig, AnimationConfig, Editor} from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
@@ -104,6 +104,7 @@ import {
   createNewDataEntry
 } from '@kepler.gl/table';
 import {findFieldsToShow} from './interaction-utils';
+import {hasPropsToMerge, getPropValueToMerger} from './merger-handler';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -228,7 +229,7 @@ export const INITIAL_VIS_STATE: VisState = {
   editingDataset: undefined,
 
   interactionConfig: defaultInteractionConfig,
-  interactionToBeMerged: undefined,
+  interactionToBeMerged: {},
 
   layerBlending: 'normal',
   overlayBlending: 'normal',
@@ -248,7 +249,7 @@ export const INITIAL_VIS_STATE: VisState = {
     // ]
   ],
   splitMapsToBeMerged: [],
-
+  isMergingDatasets: {},
   // defaults layer classes
   layerClasses: LayerClasses,
 
@@ -1416,8 +1417,14 @@ export const receiveMapConfigUpdater = (
   // reset config if keepExistingConfig is falsy
   let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
   for (const merger of state.mergers) {
-    if (isValidMerger(merger) && config.visState[merger.prop]) {
-      mergedState = merger.merge(mergedState, config.visState[merger.prop], true);
+    // @ts-expect-error 'ParsedVisState' is not assignable to parameter of type 'VisState'
+    if (isValidMerger(merger) && hasPropsToMerge(config.visState, merger.prop)) {
+      mergedState = merger.merge(
+        mergedState,
+        // @ts-expect-error 'ParsedVisState' is not assignable to parameter of type 'VisState'
+        getPropValueToMerger(config.visState, merger.prop, merger.toMergeProp),
+        true
+      );
     }
   }
 
@@ -1594,7 +1601,6 @@ export const toggleLayerForMapUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-/* eslint-disable max-statements */
 // eslint-disable-next-line complexity
 export const updateVisDataUpdater = (
   state: VisState,
@@ -1602,6 +1608,15 @@ export const updateVisDataUpdater = (
 ): VisState => {
   // datasets can be a single data entries or an array of multiple data entries
   const {config, options} = action;
+
+  // apply config if passed from action
+  // TODO: we don't handle asyn mergers here yet
+  const previousState = config
+    ? receiveMapConfigUpdater(state, {
+        payload: {config, options}
+      })
+    : state;
+
   const datasets = toArray(action.datasets);
 
   const newDataEntries = datasets.reduce(
@@ -1612,35 +1627,76 @@ export const updateVisDataUpdater = (
     {}
   );
 
-  const dataEmpty = Object.keys(newDataEntries).length < 1;
-
-  // apply config if passed from action
-  const previousState = config
-    ? receiveMapConfigUpdater(state, {
-        payload: {config, options}
-      })
-    : state;
-
-  let mergedState = {
+  // save new dataset entry to state
+  const mergedState = {
     ...previousState,
     datasets: {
       ...previousState.datasets,
       ...newDataEntries
     }
   };
+  const newDataIds = Object.keys(newDataEntries);
+
+  const postMergerPayload = {
+    newDataIds,
+    options
+  };
 
   // merge state with config to be merged
-  for (const merger of mergedState.mergers) {
-    if (isValidMerger(merger) && merger.toMergeProp && mergedState[merger.toMergeProp]) {
-      const toMerge = mergedState[merger.toMergeProp];
-      mergedState[merger.toMergeProp] = INITIAL_VIS_STATE[merger.toMergeProp];
-      mergedState = merger.merge(mergedState, toMerge);
-    }
+  return applyMergersUpdater(mergedState, {mergers: state.mergers, postMergerPayload});
+};
+
+export function applyMergersUpdater(
+  state: VisState,
+  action: {
+    mergers: Merger<any>[];
+    postMergerPayload: PostMergerPayload;
   }
+): VisState {
+  const {mergers, postMergerPayload} = action;
+
+  // merge state with config to be merged
+  const mergeStateResult = mergeStateFromMergers(
+    state,
+    {
+      ...INITIAL_VIS_STATE,
+      ...state.initialState
+    },
+    mergers,
+    // newDataIds,
+    postMergerPayload
+  );
+
+  // if all merged, kickup post merge process
+  // if not wait
+  return mergeStateResult.allMerged
+    ? postMergeUpdater(mergeStateResult.mergedState, postMergerPayload)
+    : mergeStateResult.mergedState;
+}
+
+function postMergeUpdater(
+  mergedState: VisState,
+  {newDataIds, options}: PostMergerPayload
+): VisState {
+  const newFilters = mergedState.filters.filter(f =>
+    f.dataId.find(fDataId => newDataIds.includes(fDataId))
+  );
+  const datasetFiltered: string[] = uniq(
+    newFilters.reduce((accu, f) => [...accu, ...f.dataId], [] as string[])
+  );
+  const dataEmpty = newDataIds.length < 1;
 
   let newLayers = !dataEmpty
-    ? mergedState.layers.filter(l => l.config.dataId && l.config.dataId in newDataEntries)
+    ? mergedState.layers.filter(l => l.config.dataId && newDataIds.includes(l.config.dataId))
     : [];
+
+  const newDataEntries = newDataIds.reduce(
+    (accu, id) => ({
+      ...accu,
+      [id]: mergedState.datasets[id]
+    }),
+    {}
+  );
 
   if (!newLayers.length && (options || {}).autoCreateLayers !== false) {
     // no layer merged, find defaults
@@ -1652,7 +1708,7 @@ export const updateVisDataUpdater = (
   if (mergedState.splitMaps.length) {
     // if map is split, add new layers to splitMaps
     newLayers = mergedState.layers.filter(
-      l => l.config.dataId && l.config.dataId in newDataEntries
+      l => l.config.dataId && newDataIds.includes(l.config.dataId)
     );
     mergedState = {
       ...mergedState,
@@ -1661,26 +1717,25 @@ export const updateVisDataUpdater = (
   }
 
   // if no tooltips merged add default tooltips
-  Object.keys(newDataEntries).forEach(dataId => {
+  newDataIds.forEach(dataId => {
     const tooltipFields = mergedState.interactionConfig.tooltip.config.fieldsToShow[dataId];
     if (!Array.isArray(tooltipFields) || !tooltipFields.length) {
       mergedState = addDefaultTooltips(mergedState, newDataEntries[dataId]);
     }
   });
 
-  let updatedState = updateAllLayerDomainData(
-    mergedState,
-    dataEmpty ? Object.keys(mergedState.datasets) : Object.keys(newDataEntries),
-    undefined
-  );
+  const updatedDatasets = dataEmpty
+    ? Object.keys(mergedState.datasets)
+    : uniq(Object.keys(newDataEntries).concat(datasetFiltered));
+
+  let updatedState = updateAllLayerDomainData(mergedState, updatedDatasets, undefined);
 
   // register layer animation domain,
   // need to be called after layer data is calculated
   updatedState = updateAnimationDomain(updatedState);
 
   return updatedState;
-};
-/* eslint-enable max-statements */
+}
 
 /**
  * Rename an existing dataset in `visState`
