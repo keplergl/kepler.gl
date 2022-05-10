@@ -1635,15 +1635,19 @@ export const updateVisDataUpdater = (
       ...newDataEntries
     }
   };
-  const newDataIds = Object.keys(newDataEntries);
-
-  const postMergerPayload = {
-    newDataIds,
-    options
-  };
 
   // merge state with config to be merged
-  return applyMergersUpdater(mergedState, {mergers: state.mergers, postMergerPayload});
+  const layerMergers = state.mergers.filter(m => m.waitForLayerData);
+  const datasetMergers = state.mergers.filter(m => !layerMergers.includes(m));
+
+  const newDataIds = Object.keys(newDataEntries);
+  const postMergerPayload = {
+    newDataIds,
+    options,
+    layerMergers
+  };
+
+  return applyMergersUpdater(mergedState, {mergers: datasetMergers, postMergerPayload});
 };
 
 /**
@@ -1680,10 +1684,8 @@ export function applyMergersUpdater(
 /**
  * Add new dataset to `visState`, with option to load a map config along with the datasets
  */
-function postMergeUpdater(
-  mergedState: VisState,
-  {newDataIds, options}: PostMergerPayload
-): VisState {
+function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPayload): VisState {
+  const {newDataIds, options, layerMergers} = postMergerPayload;
   const newFilters = mergedState.filters.filter(f =>
     f.dataId.find(fDataId => newDataIds.includes(fDataId))
   );
@@ -1740,7 +1742,13 @@ function postMergeUpdater(
   // need to be called after layer data is calculated
   updatedState = updateAnimationDomain(updatedState);
 
-  return updatedState;
+  // try to process layerMergers after dataset+datasetMergers
+  return layerMergers && layerMergers.length > 0
+    ? applyMergersUpdater(updatedState, {
+        mergers: layerMergers,
+        postMergerPayload: {...postMergerPayload, layerMergers: []}
+      })
+    : updatedState;
 }
 
 /**

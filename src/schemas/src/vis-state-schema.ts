@@ -99,6 +99,7 @@ export interface VisState {
 export type PostMergerPayload = {
   newDataIds: string[];
   options?: AddDataToMapOptions;
+  layerMergers?: Merger<any>[];
 };
 export type MergerActionPayload<S extends VisState> = {
   mergers: Merger<S>[];
@@ -115,6 +116,7 @@ export type Merger<S extends VisState> = {
   prop: string | string[];
   toMergeProp?: string | string[];
   waitToFinish?: boolean;
+  waitForLayerData?: boolean;
 };
 export type VisStateMergers<S extends VisState> = Merger<S>[];
 

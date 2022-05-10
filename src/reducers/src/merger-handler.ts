@@ -65,6 +65,8 @@ export function mergeStateFromMergers<State extends VisState>(
       merger.toMergeProp &&
       hasPropsToMerge(state, merger.toMergeProp)
     ) {
+      // put the rest of mergers and payload for postMergeUpdater in mergerActionPayload
+      // and pass it to current merger, which (if async) knows to continue merging
       const mergerActionPayload = {
         mergers: mergerQueue,
         postMergerPayload
@@ -79,15 +81,15 @@ export function mergeStateFromMergers<State extends VisState>(
       const [updatedState, newTasks] = callFunctionGetTask(mergeFunc);
 
       mergedState = updatedState;
-      // check if asyncTask was created
+      // check if asyncTask was created (time consuming tasks)
       if (newTasks.length && merger.waitToFinish) {
-        // skip rest
+        // skip rest, the async merger will call applyMergerupdater() to continue
         return {mergedState, allMerged: false};
       }
     }
   }
 
-  // if we merged all mergers in the queue we can call post merger
+  // we merged all mergers in the queue, and we can call post merger now
   return {mergedState, allMerged: true};
 }
 
