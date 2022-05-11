@@ -76,7 +76,7 @@ type LayerGroupSelectorProps = {
 
 LayerGroupSelectorFactory.deps = [PanelHeaderActionFactory];
 
-function LayerGroupSelectorFactory(PanelHeaderAction) {
+function LayerGroupSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>) {
   const defaultActionIcons = {
     visible: EyeSeen,
     hidden: EyeUnseen

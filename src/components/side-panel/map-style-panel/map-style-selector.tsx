@@ -74,7 +74,7 @@ type MapStyleSelectorProps = {
 
 MapStyleSelectorFactory.deps = [PanelHeaderActionFactory];
 
-function MapStyleSelectorFactory(PanelHeaderAction) {
+function MapStyleSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>) {
   const defaultActionIcons = {
     arrowDown: ArrowDown
   };
