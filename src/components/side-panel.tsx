@@ -58,29 +58,29 @@ type SidePanelItem = {
   id: string;
   label: string;
   iconComponent: ComponentType<any>;
-  component?: ComponentType<any>
+  component?: ComponentType<any>;
 };
 
 type SidePanelProps = {
   appName: string;
   appWebsite: string;
-  filters: Filter;
+  filters: Filter[];
   interactionConfig: InteractionConfig;
   layerBlending: string;
-  layers: Layer;
+  layers: Layer[];
   layerClasses: LayerClassesType;
   layerOrder: number[];
   mapStyle: MapStyle;
-  onSaveMap: Function;
+  onSaveMap?: Function;
   width: number;
-  mapInfo: {title: string, description: string}
+  mapInfo: {title: string; description: string};
   datasets: Datasets;
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
   mapStyleActions: typeof MapStyleActions;
   uiState: UiState;
-  availableProviders: {hasShare: boolean, hasStorage: boolean};
+  availableProviders: {hasShare: boolean; hasStorage: boolean};
   mapSaved?: string | null;
   panels: SidePanelItem[];
   version: string;
@@ -204,19 +204,19 @@ export default function SidePanelFactory(
     const onShowAddDataModal = useCallback(() => toggleModal(ADD_DATA_ID), [toggleModal]);
     const onShowAddMapStyleModal = useCallback(() => toggleModal(ADD_MAP_STYLE_ID), [toggleModal]);
     const onRemoveDataset = useCallback(dataId => openDeleteModal(dataId), [openDeleteModal]);
-    const onSaveToStorage = useMemo(() => ((hasStorage ? onClickSaveToStorage : null)), [
+    const onSaveToStorage = useMemo(() => (hasStorage ? onClickSaveToStorage : null), [
       hasStorage,
       onClickSaveToStorage
     ]);
     const onSaveAsToStorage = useMemo(
-      () => ((hasStorage && mapSaved ? onClickSaveAsToStorage : null)),
+      () => (hasStorage && mapSaved ? onClickSaveAsToStorage : null),
       [hasStorage, mapSaved, onClickSaveAsToStorage]
     );
     const currentPanel = useMemo(() => panels.find(({id}) => id === activeSidePanel), [
       activeSidePanel,
       panels
     ]);
-    const onShareMap = useMemo(() => ((hasShare ? onClickShareMap : null)), [
+    const onShareMap = useMemo(() => (hasShare ? onClickShareMap : null), [
       hasShare,
       onClickShareMap
     ]);
