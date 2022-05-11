@@ -134,7 +134,7 @@ export const AnimationWindowControl = ({
           data-for={`${item.id}-tooltip`}
           className="playback-control-button"
           onClick={() => {
-            onClick && onClick(item.id);
+            onClick?.(item.id);
             onHide();
           }}
           {...btnStyle}
