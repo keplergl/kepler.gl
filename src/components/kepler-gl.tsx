@@ -480,7 +480,7 @@ function KeplerGlFactory(
               >
                 <NotificationPanel {...notificationPanelFields} />
                 {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                <MapsLayout>{mapContainers}</MapsLayout>
+                <MapsLayout className="maps">{mapContainers}</MapsLayout>
                 {isExportingImage && <PlotContainer {...plotContainerFields} />}
                 {interactionConfig.geocoder.enabled && <GeoCoderPanel {...geoCoderPanelFields} />}
                 <BottomWidgetOuter absolute>

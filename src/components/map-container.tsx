@@ -72,20 +72,19 @@ import {
 import {Layer} from 'layers';
 import {SplitMapLayers} from 'reducers/vis-state-updaters';
 import {LayerBaseConfig, VisualChannelDomain} from 'layers/base-layer';
-import {Property} from 'csstype';
 
 /** @type {{[key: string]: React.CSSProperties}} */
-const MAP_STYLE = {
+const MAP_STYLE: {[key: string]: React.CSSProperties} = {
   container: {
     display: 'inline-block',
-    position: 'relative' as Property.Position,
+    position: 'relative',
     width: '100%',
     height: '100%'
   },
   top: {
-    position: 'absolute' as Property.Position,
+    position: 'absolute',
     top: '0px',
-    pointerEvents: 'none' as Property.PointerEvents,
+    pointerEvents: 'none',
     width: '100%',
     height: '100%'
   }
@@ -589,7 +588,7 @@ export default function MapContainerFactory(
             mapIndex={index}
             mapControls={mapControls}
             readOnly={this.props.readOnly}
-            scale={1}
+            scale={mapState.scale || 1}
             top={interactionConfig.geocoder && interactionConfig.geocoder.enabled ? 52 : 0}
             editor={editor}
             locale={locale}
