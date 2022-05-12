@@ -471,7 +471,7 @@ export function showDatasetTable(
 
 export type UpdateDatasetColorUpdater = {
   dataId: string;
-  newColor?: RGBColor;
+  newColor: RGBColor;
 };
 /**
  * Update dataset color to custom by means of color picker
@@ -483,7 +483,7 @@ export type UpdateDatasetColorUpdater = {
  */
 export function updateTableColor(
   dataId: string,
-  newColor?: RGBColor
+  newColor: RGBColor
 ): Merge<UpdateDatasetColorUpdater, {type: typeof ActionTypes.UPDATE_TABLE_COLOR}> {
   return {
     type: ActionTypes.UPDATE_TABLE_COLOR,

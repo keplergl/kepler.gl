@@ -9,11 +9,6 @@ export type DatasetInfoProps = {
 export type UpdateTableColorTypes = {
   id: string;
   children: React.ReactNode;
-  updateTableColor?: (d: string, c?: RGBColor) => void;
-};
-
-export type DatasetTagWrapperProps = {
-  updateTableColor?: (d: string, c?: RGBColor) => void;
 };
 
 export type DatasetTagProps = {
