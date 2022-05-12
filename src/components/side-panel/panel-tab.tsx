@@ -22,10 +22,27 @@ import React from 'react';
 import styled from 'styled-components';
 import {Tooltip} from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
+import {BaseProps} from 'components/common/icons/base';
+
+type StyledPanelTabProps = {
+  active?: boolean;
+};
+
+export type PanelItem = {
+  id: string;
+  label: string;
+  iconComponent: React.ComponentType<Partial<BaseProps>>;
+};
+
+type PanelTabProps = {
+  isActive: boolean;
+  panel: PanelItem;
+  onClick: () => void;
+};
 
 export const StyledPanelTab = styled.div.attrs({
   className: 'side-panel__tab'
-})`
+})<StyledPanelTabProps>`
   align-items: flex-end;
   border-bottom-style: solid;
   border-bottom-width: 2px;
@@ -45,7 +62,7 @@ export const StyledPanelTab = styled.div.attrs({
 `;
 
 export function PanelTabFactory() {
-  const PanelTab = ({isActive, onClick, panel}) => (
+  const PanelTab = ({isActive, onClick, panel}: PanelTabProps) => (
     <StyledPanelTab data-tip data-for={`${panel.id}-nav`} active={isActive} onClick={onClick}>
       <panel.iconComponent height="20px" />
       <Tooltip id={`${panel.id}-nav`} effect="solid" delayShow={500} place="bottom">

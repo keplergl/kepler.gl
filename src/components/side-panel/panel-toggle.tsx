@@ -19,14 +19,14 @@
 // THE SOFTWARE.
 
 import React, {useCallback} from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import PanelTabFactory from './panel-tab';
+import PanelTabFactory, {PanelItem} from './panel-tab';
+import {toggleSidePanel} from 'actions/ui-state-actions';
 
-const propTypes = {
-  panels: PropTypes.arrayOf(PropTypes.object),
-  activePanel: PropTypes.string,
-  togglePanel: PropTypes.func
+type PanelToggleProps = {
+  panels: PanelItem[];
+  activePanel: string;
+  togglePanel: typeof toggleSidePanel;
 };
 
 const PanelHeaderBottom = styled.div.attrs({
@@ -40,8 +40,9 @@ const PanelHeaderBottom = styled.div.attrs({
 `;
 
 PanelToggleFactory.deps = [PanelTabFactory];
-function PanelToggleFactory(PanelTab) {
-  const PanelToggle = ({activePanel, panels, togglePanel}) => {
+
+function PanelToggleFactory(PanelTab: ReturnType<typeof PanelTabFactory>) {
+  const PanelToggle = ({activePanel, panels, togglePanel}: PanelToggleProps) => {
     const onClick = useCallback(
       panel => {
         const callback = panel.onClick || togglePanel;
@@ -49,6 +50,7 @@ function PanelToggleFactory(PanelTab) {
       },
       [togglePanel]
     );
+
     return (
       <PanelHeaderBottom>
         {panels.map(panel => (
@@ -63,7 +65,6 @@ function PanelToggleFactory(PanelTab) {
     );
   };
 
-  PanelToggle.propTypes = propTypes;
   return PanelToggle;
 }
 

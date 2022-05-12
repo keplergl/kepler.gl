@@ -20,8 +20,7 @@
 
 import React, {Component, useCallback} from 'react';
 
-import PropTypes from 'prop-types';
-import {injectIntl} from 'react-intl';
+import {injectIntl, WrappedComponentProps} from 'react-intl';
 import {FormattedMessage} from 'localization';
 import styled from 'styled-components';
 
@@ -36,6 +35,33 @@ import ItemSelector from 'components/common/item-selector/item-selector';
 import {PanelLabel, SidePanelDivider, SidePanelSection} from 'components/common/styled-components';
 
 import {LAYER_BLENDINGS} from 'constants/default-settings';
+import {Datasets} from 'reducers';
+import {Layer, LayerClassesType} from 'layers';
+import * as UiStateActions from 'actions/ui-state-actions';
+import * as VisStateActions from 'actions/vis-state-actions';
+import {SidePanelItem} from 'components/types';
+import {LayerPanelListView} from 'reducers/ui-state-updaters';
+
+type LayerBlendingSelectorProps = {
+  layerBlending: string;
+  updateLayerBlending: typeof VisStateActions.updateLayerBlending;
+} & WrappedComponentProps;
+
+type LayerManagerProps = {
+  datasets: Datasets;
+  layers: Layer[];
+  layerOrder: number[];
+  layerClasses: LayerClassesType;
+  layerBlending: string;
+  uiStateActions: typeof UiStateActions;
+  visStateActions: typeof VisStateActions;
+  showAddDataModal: typeof UiStateActions.toggleModal;
+  removeDataset: typeof UiStateActions.openDeleteModal;
+  showDatasetTable: typeof VisStateActions.showDatasetTable;
+  updateTableColor: typeof VisStateActions.updateTableColor;
+  layerPanelListView: LayerPanelListView;
+  panelMetadata: SidePanelItem;
+} & WrappedComponentProps;
 
 const LayerHeader = styled.div.attrs({
   className: 'layer-manager-header'
@@ -46,7 +72,11 @@ const LayerHeader = styled.div.attrs({
   margin-top: 16px;
 `;
 
-const LayerBlendingSelector = ({layerBlending, updateLayerBlending, intl}) => {
+const LayerBlendingSelector = ({
+  layerBlending,
+  updateLayerBlending,
+  intl
+}: LayerBlendingSelectorProps) => {
   const labeledLayerBlendings = Object.keys(LAYER_BLENDINGS).reduce(
     (acc, current) => ({
       ...acc,
@@ -66,7 +96,7 @@ const LayerBlendingSelector = ({layerBlending, updateLayerBlending, intl}) => {
         <FormattedMessage id="layerBlending.title" />
       </PanelLabel>
       <ItemSelector
-        selectedItems={intl.formatMessage({id: LAYER_BLENDINGS[layerBlending].label})}
+        selectedItems={[intl.formatMessage({id: LAYER_BLENDINGS[layerBlending].label})]}
         options={Object.keys(labeledLayerBlendings)}
         multiSelect={false}
         searchable={false}
@@ -86,32 +116,20 @@ LayerManagerFactory.deps = [
 ];
 
 function LayerManagerFactory(
-  LayerList,
-  DatasetLayerGroup,
-  PanelViewListToggle,
-  PanelTitle,
-  DatasetSection,
-  AddLayerButton
+  LayerList: ReturnType<typeof LayerListFactory>,
+  DatasetLayerGroup: ReturnType<typeof DatasetLayerGroupFactory>,
+  PanelViewListToggle: ReturnType<typeof PanelViewListToggleFactory>,
+  PanelTitle: ReturnType<typeof PanelTitleFactory>,
+  DatasetSection: ReturnType<typeof DatasetSectionFactory>,
+  AddLayerButton: ReturnType<typeof AddLayerButtonFactory>
 ) {
-  class LayerManager extends Component {
-    static propTypes = {
-      datasets: PropTypes.object.isRequired,
-      layerBlending: PropTypes.string.isRequired,
-      layerClasses: PropTypes.object.isRequired,
-      layers: PropTypes.arrayOf(PropTypes.any).isRequired,
-      visStateActions: PropTypes.object.isRequired,
-      // functions
-      removeDataset: PropTypes.func.isRequired,
-      showDatasetTable: PropTypes.func.isRequired,
-      updateTableColor: PropTypes.func.isRequired
-    };
-
-    _addEmptyNewLayer = dataset => {
+  class LayerManager extends Component<LayerManagerProps> {
+    _addEmptyNewLayer = (dataset: string) => {
       const {visStateActions} = this.props;
       visStateActions.addLayer(undefined, dataset);
     };
 
-    _toggleLayerPanelListView = listView => {
+    _toggleLayerPanelListView = (listView: string) => {
       const {uiStateActions} = this.props;
       uiStateActions.toggleLayerPanelListView(listView);
     };
@@ -160,6 +178,8 @@ function LayerManagerFactory(
                 <FormattedMessage id={panelMetadata.label} />
               </PanelTitle>
               {defaultDataset ? (
+                // TODO replace ignore
+                // @ts-ignore
                 <AddLayerButton
                   datasets={datasets}
                   typeaheadPlaceholder="Search datasets"
@@ -184,6 +204,8 @@ function LayerManagerFactory(
                 showDeleteDataset
               />
             ) : (
+              // TODO replace ignore
+              // @ts-ignore
               <LayerList
                 layers={layers}
                 datasets={datasets}

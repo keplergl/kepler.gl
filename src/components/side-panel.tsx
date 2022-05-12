@@ -18,11 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useMemo, ComponentType} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import {FormattedMessage} from 'localization';
-import {Datasets, Filter, InteractionConfig, MapStyle} from '../reducers';
-import {Layer, LayerClassesType} from '../layers';
-import {UiState} from 'reducers/ui-state-updaters';
 
 import {
   EXPORT_DATA_ID,
@@ -48,43 +45,7 @@ import PanelTitleFactory from './side-panel/panel-title';
 
 import styled from 'styled-components';
 import get from 'lodash.get';
-
-import * as MapStyleActions from 'actions/map-style-actions';
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as MapStateActions from 'actions/map-state-actions';
-import * as UIStateActions from 'actions/ui-state-actions';
-
-type SidePanelItem = {
-  id: string;
-  label: string;
-  iconComponent: ComponentType<any>;
-  component?: ComponentType<any>;
-};
-
-type SidePanelProps = {
-  appName: string;
-  appWebsite: string;
-  filters: Filter[];
-  interactionConfig: InteractionConfig;
-  layerBlending: string;
-  layers: Layer[];
-  layerClasses: LayerClassesType;
-  layerOrder: number[];
-  mapStyle: MapStyle;
-  onSaveMap?: Function;
-  width: number;
-  mapInfo: {title: string; description: string};
-  datasets: Datasets;
-  uiStateActions: typeof UIStateActions;
-  visStateActions: typeof VisStateActions;
-  mapStateActions: typeof MapStateActions;
-  mapStyleActions: typeof MapStyleActions;
-  uiState: UiState;
-  availableProviders: {hasShare: boolean; hasStorage: boolean};
-  mapSaved?: string | null;
-  panels: SidePanelItem[];
-  version: string;
-};
+import {SidePanelProps} from './types';
 
 export const StyledSidePanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};

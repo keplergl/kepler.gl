@@ -44,7 +44,7 @@ export function isChrome() {
  * whether is an object
  * @returns {boolean} - yes or no
  */
-export function isPlainObject(obj) {
+export function isPlainObject(obj: unknown): obj is Record<string, unknown> {
   return obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj);
 }
 
