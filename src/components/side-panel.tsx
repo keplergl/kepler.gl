@@ -71,7 +71,7 @@ type SidePanelProps = {
   layerClasses: LayerClassesType;
   layerOrder: number[];
   mapStyle: MapStyle;
-  onSaveMap?: Function;
+  onSaveMap?: () => void;
   width: number;
   mapInfo: {title: string; description: string};
   datasets: Datasets;

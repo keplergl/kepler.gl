@@ -57,7 +57,7 @@ import {getSampleData} from 'utils/table-utils/data-container-utils';
 
 import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
-import {RGBColor, RGBAColor, MapState, Filter, Datasets, ValueOf} from 'reducers';
+import {RGBColor, RGBAColor, MapState, Filter, Datasets, ValueOf, NestedPartial} from 'reducers';
 import {LayerTextLabel, ColorUI} from './layer-factory';
 import {KeplerTable} from '../utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
@@ -73,7 +73,8 @@ export type VisualChannelField = Field | null;
 export type VisualChannelScale = keyof typeof SCALE_TYPES;
 
 export type LayerBaseConfig = {
-  dataId: string | null;
+  // TODO: Decide can dataId be null
+  dataId: string;
   label: string;
   color: RGBColor;
 
@@ -256,11 +257,11 @@ class Layer {
     return false;
   }
 
-  get requiredLayerColumns() {
+  get requiredLayerColumns(): string[] {
     return [];
   }
 
-  get optionalColumns() {
+  get optionalColumns(): string[] {
     return [];
   }
 
@@ -435,6 +436,7 @@ class Layer {
     props: Partial<LayerBaseConfig> = {}
   ): LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig> {
     return {
+      // @ts-expect-error
       dataId: props.dataId || null,
       label: props.label || DEFAULT_LAYER_LABEL,
       color: props.color || colorMaker.next().value,
@@ -709,7 +711,7 @@ class Layer {
     return this;
   }
 
-  updateLayerColorUI(prop: string, newConfig: Partial<ColorUI>): Layer {
+  updateLayerColorUI(prop: string, newConfig: NestedPartial<ColorUI>): Layer {
     const {colorUI: previous, visConfig} = this.config;
 
     if (!isPlainObject(newConfig) || typeof prop !== 'string') {
@@ -719,7 +721,6 @@ class Layer {
     const colorUIProp = Object.entries(newConfig).reduce((accu, [key, value]) => {
       return {
         ...accu,
-        // @ts-expect-error TODO: better type guard for isPlainObject
         [key]: isPlainObject(accu[key]) && isPlainObject(value) ? {...accu[key], ...value} : value
       };
     }, previous[prop] || DEFAULT_COLOR_UI);

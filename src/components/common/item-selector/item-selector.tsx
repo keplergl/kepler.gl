@@ -118,8 +118,16 @@ const DropdownWrapper = styled.div<DropdownWrapperProps>`
 type ItemSelectorProps = {
   selectedItems: ReadonlyArray<string | number | boolean | object>;
   options: ReadonlyArray<string | number | boolean | object>;
-  onChange: (items: ReadonlyArray<string | number | boolean | object> | null) => void;
-  fixedOptions?: any[];
+  onChange: (
+    items:
+      | ReadonlyArray<string | number | boolean | object>
+      | string
+      | number
+      | boolean
+      | object
+      | null
+  ) => void;
+  fixedOptions?: ReadonlyArray<string | number | boolean | object> | null;
   erasable?: boolean;
   showArrow?: boolean;
   searchable?: boolean;

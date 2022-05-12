@@ -24,7 +24,8 @@ import {AddDataToMapPayload} from '../actions/actions';
 import {FileCacheItem} from '../processors/file-handler';
 import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';
 import {Feature, InteractionConfig} from 'reducers/vis-state-updaters';
-import {ValueOf, Merge, RGBColor} from '../reducers/types';
+import {ValueOf, Merge, RGBColor, NestedPartial} from '../reducers/types';
+import {ColorUI} from 'layers/layer-factory';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
 
@@ -154,7 +155,7 @@ export function layerVisConfigChange(
 export type LayerColorUIChangeUpdaterAction = {
   oldLayer: Layer;
   prop: string;
-  newConfig: object;
+  newConfig: NestedPartial<ColorUI>;
 };
 
 /**
@@ -169,7 +170,7 @@ export type LayerColorUIChangeUpdaterAction = {
 export function layerColorUIChange(
   oldLayer: Layer,
   prop: string,
-  newConfig: object
+  newConfig: NestedPartial<ColorUI>
 ): Merge<LayerColorUIChangeUpdaterAction, {type: typeof ActionTypes.LAYER_COLOR_UI_CHANGE}> {
   return {
     type: ActionTypes.LAYER_COLOR_UI_CHANGE,
@@ -309,7 +310,7 @@ export function setFilterAnimationWindow({
 }
 
 export type AddFilterUpdaterAction = {
-  dataId: string;
+  dataId: string | null;
 };
 /**
  * Add a new filter
@@ -319,7 +320,7 @@ export type AddFilterUpdaterAction = {
  * @public
  */
 export function addFilter(
-  dataId: string
+  dataId: string | null
 ): Merge<AddFilterUpdaterAction, {type: typeof ActionTypes.ADD_FILTER}> {
   return {
     type: ActionTypes.ADD_FILTER,
@@ -328,7 +329,7 @@ export function addFilter(
 }
 
 export type AddLayerUpdaterAction = {
-  config: object;
+  config?: object;
   datasetId?: string;
 };
 /**
@@ -340,7 +341,7 @@ export type AddLayerUpdaterAction = {
  * @public
  */
 export function addLayer(
-  config: object,
+  config?: object,
   datasetId?: string
 ): Merge<AddLayerUpdaterAction, {type: typeof ActionTypes.ADD_LAYER}> {
   return {

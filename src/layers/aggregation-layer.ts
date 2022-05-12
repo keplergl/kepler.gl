@@ -24,6 +24,7 @@ import Layer, {
   LayerColorConfig,
   LayerColumn,
   LayerSizeConfig,
+  VisualChannelDescription,
   VisualChannels
 } from './base-layer';
 import {hexToRgb} from '../utils/color-utils';
@@ -36,10 +37,15 @@ import {
 } from '../constants/default-settings';
 import {Datasets, Merge} from '../reducers';
 import {ColorRange} from '../constants/color-ranges';
+import {KeplerTable} from '../utils';
 
 type AggregationLayerColumns = {
   lat: LayerColumn;
   lng: LayerColumn;
+};
+
+type AggregationLayerData = {
+  index: number;
 };
 
 export const pointPosAccessor = ({lat, lng}: AggregationLayerColumns) => dc => d => [
@@ -151,15 +157,20 @@ export default class AggregationLayer extends Layer {
    * @param key
    * @returns {{label: string, measure: (string|string)}}
    */
-  getVisualChannelDescription(key) {
+  getVisualChannelDescription(key): VisualChannelDescription {
+    //
     // e.g. label: Color, measure: Average of ETA
     const {range, field, defaultMeasure, aggregation} = this.visualChannels[key];
     const fieldConfig = this.config[field];
+    const label = this.visConfigSettings[range].label;
+
     return {
-      label: this.visConfigSettings[range].label,
-      measure: fieldConfig
-        ? `${this.config.visConfig[aggregation]} of ${fieldConfig.displayName || fieldConfig.name}`
-        : defaultMeasure
+      label: typeof label === 'function' ? label(this.config) : label,
+      measure:
+        fieldConfig && aggregation
+          ? `${this.config.visConfig[aggregation]} of ${fieldConfig.displayName ||
+              fieldConfig.name}`
+          : defaultMeasure
     };
   }
 
@@ -171,7 +182,7 @@ export default class AggregationLayer extends Layer {
   /**
    * Aggregation layer handles visual channel aggregation inside deck.gl layer
    */
-  updateLayerVisualChannel({data, dataContainer}, channel) {
+  updateLayerVisualChannel({dataContainer}, channel) {
     this.validateVisualChannel(channel);
   }
 
@@ -227,6 +238,7 @@ export default class AggregationLayer extends Layer {
   getScaleOptions(channel: string): string[] {
     const visualChannel = this.visualChannels[channel];
     const {field, aggregation, channelScaleType} = visualChannel;
+    // @ts-expect-error
     const aggregationType = this.config.visConfig[aggregation];
     return this.config[field]
       ? // scale options based on aggregation
@@ -238,7 +250,7 @@ export default class AggregationLayer extends Layer {
   /**
    * Aggregation layer handles visual channel aggregation inside deck.gl layer
    */
-  updateLayerDomain(datasets, newFilter) {
+  updateLayerDomain(datasets, newFilter): AggregationLayer {
     return this;
   }
 
@@ -249,8 +261,8 @@ export default class AggregationLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
-    const data = [];
+  calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getPosition) {
+    const data: AggregationLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
@@ -294,12 +306,14 @@ export default class AggregationLayer extends Layer {
       data,
       getPosition,
       _filterData: filterData,
+      // @ts-expect-error
       ...(getColorValue ? {getColorValue} : {}),
+      // @ts-expect-error
       ...(getElevationValue ? {getElevationValue} : {})
     };
   }
 
-  getDefaultDeckLayerProps(opts) {
+  getDefaultDeckLayerProps(opts): any {
     const baseProp = super.getDefaultDeckLayerProps(opts);
     return {
       ...baseProp,
