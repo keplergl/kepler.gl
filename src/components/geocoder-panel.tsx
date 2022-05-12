@@ -25,7 +25,7 @@ import {FlyToInterpolator} from '@deck.gl/core';
 import KeplerGlSchema from 'schemas';
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
 
-import Geocoder from './geocoder/geocoder';
+import Geocoder, { Result } from './geocoder/geocoder';
 import {
   GEOCODER_DATASET_NAME,
   GEOCODER_LAYER_ID,
@@ -33,7 +33,7 @@ import {
   GEOCODER_ICON_COLOR,
   GEOCODER_ICON_SIZE
 } from 'constants/default-settings';
-import {MapState} from 'reducers';
+import {MapState, Viewport} from 'reducers';
 
 const ICON_LAYER = {
   id: GEOCODER_LAYER_ID,
@@ -133,7 +133,7 @@ export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps
       this.props.removeDataset(GEOCODER_DATASET_NAME);
     }
 
-    onSelected = (viewport = null, geoItem) => {
+    onSelected = (viewport: Viewport | null = null, geoItem: Result) => {
       const {
         center: [lon, lat],
         text,
