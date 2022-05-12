@@ -97,7 +97,7 @@ interface FieldSelectorFactoryProps {
 
 function FieldSelectorFactory(
   FieldListItemFactory: ReturnType<typeof FieldListItemFactoryFactory>
-) {
+): ComponentType<FieldSelectorFactoryProps> {
   class FieldSelector extends Component<FieldSelectorFactoryProps> {
     static defaultProps = {
       erasable: true,

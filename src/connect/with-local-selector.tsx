@@ -18,9 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, ComponentType} from 'react';
+import React, {Component} from 'react';
 import {createSelector} from 'reselect';
 import KeplerGlContext from 'components/context';
+import {KeplerGlState} from 'reducers/combined-updaters';
 
 const identity = state => state;
 
@@ -32,8 +33,11 @@ const mergeSelectors = (parentSelector, childSelector) => state =>
 // when a selector is passed to a container component,
 // it will be stored in the context and passed down to child components,
 // as well as prop to the given component
-const withLocalSelector = (ParentComponent): ComponentType => {
-  class WithConnectSelector extends Component {
+
+const withLocalSelector = <P extends {}>(
+  ParentComponent: React.ComponentType<P>
+): React.ComponentType<P & {selector: (...args: any[]) => KeplerGlState}> => {
+  class WithConnectSelector extends Component<P & {selector: (...args: any[]) => KeplerGlState}> {
     static contextType = KeplerGlContext;
 
     selectorFromContext = (_, ctx) => (ctx.selector ? ctx.selector : identity);

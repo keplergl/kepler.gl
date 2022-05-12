@@ -35,5 +35,5 @@ export type MapControlProps = {
   mapHeight?: number;
 };
 
-export type MapControl = React.FC<MapControlProps>;
+export type MapControl = React.Component<MapControlProps>;
 export function MapControlFactory(): MapControl;

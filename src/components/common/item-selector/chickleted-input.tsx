@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, { ElementType, MouseEventHandler, ReactNode } from 'react';
+import React, {ElementType, MouseEventHandler, ReactNode} from 'react';
 
 import styled from 'styled-components';
 import Delete from '../icons/delete';
@@ -26,20 +26,20 @@ import {FormattedMessage} from 'localization';
 
 interface ChickletedInput {
   // required properties
-  onClick: MouseEventHandler<HTMLDivElement>,
-  removeItem: Function,
+  onClick: MouseEventHandler<HTMLDivElement>;
+  removeItem: Function;
 
   // optional properties
-  selectedItems?: any[],
-  disabled?: boolean,
-  displayOption?: Function,
-  focus?: boolean,
-  error?: boolean,
-  placeholder?: string,
-  inputTheme?: string
-  CustomChickletComponent?: ElementType
-  className?: string
-};
+  selectedItems?: any[];
+  disabled?: boolean;
+  displayOption?: Function;
+  focus?: boolean;
+  error?: boolean;
+  placeholder?: string;
+  inputTheme?: string;
+  CustomChickletComponent?: ElementType;
+  className?: string;
+}
 
 interface ChickletButtonProps {
   inputTheme?: string;
@@ -77,10 +77,10 @@ export const ChickletTag = styled.span`
 `;
 
 interface ChickletProps {
-  disabled?: boolean, 
-  name: ReactNode, 
-  remove?: MouseEventHandler<SVGSVGElement>, 
-  inputTheme?: string
+  disabled?: boolean;
+  name: ReactNode;
+  remove?: MouseEventHandler<SVGSVGElement>;
+  inputTheme?: string;
 }
 
 const Chicklet = ({disabled, name, remove, inputTheme}: ChickletProps) => (

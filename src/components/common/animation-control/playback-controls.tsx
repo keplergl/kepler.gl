@@ -27,7 +27,7 @@ import AnimationSpeedSliderFactory from './animation-speed-slider';
 import {Reset, Play, Pause, Rocket, AnchorWindow, FreeWindow} from 'components/common/icons';
 import {ANIMATION_WINDOW} from 'constants/default-settings';
 import {preciseRound} from 'utils/data-utils';
-import { ReactComponentLike } from 'prop-types';
+import {ReactComponentLike} from 'prop-types';
 
 const DELAY_SHOW = 500;
 const DEFAULT_BUTTON_HEIGHT = '20px';
@@ -102,18 +102,18 @@ const DEFAULT_ANIMATE_ITEMS = {
 };
 
 interface AnimationItem {
-  id: string,
-  icon: ReactComponentLike,
-  tooltip: string
+  id: string;
+  icon: ReactComponentLike;
+  tooltip: string;
 }
 
 interface AnimationWindowControlProps {
-  onClick?: (id: string) => void,
-  selected?: string,
-  onHide: ()=>void,
-  height?: string,
+  onClick?: (id: string) => void;
+  selected?: string;
+  onHide: () => void;
+  height?: string;
   animationItems: {[key: string]: AnimationItem};
-  btnStyle
+  btnStyle;
 }
 
 export const AnimationWindowControl = ({
@@ -134,7 +134,7 @@ export const AnimationWindowControl = ({
           data-for={`${item.id}-tooltip`}
           className="playback-control-button"
           onClick={() => {
-            onClick&&onClick(item.id);
+            onClick?.(item.id);
             onHide();
           }}
           {...btnStyle}
@@ -152,12 +152,12 @@ export const AnimationWindowControl = ({
 
 interface PlaybackControls {
   isAnimatable?: boolean;
-  isAnimating?: boolean,
-  width?: number | string,
-  speed: number,
-  animationWindow?: string
-  setFilterAnimationWindow?: (id: string) => void,
-  updateAnimationSpeed,
+  isAnimating?: boolean;
+  width?: number | string;
+  speed: number;
+  animationWindow?: string;
+  setFilterAnimationWindow?: (id: string) => void;
+  updateAnimationSpeed;
   pauseAnimation?: () => void;
   resetAnimation?: () => void;
   startAnimation: () => void;
@@ -168,7 +168,9 @@ interface PlaybackControls {
 }
 
 PlaybackControlsFactory.deps = [AnimationSpeedSliderFactory];
-function PlaybackControlsFactory(AnimationSpeedSlider: ReturnType<typeof AnimationSpeedSliderFactory>) {
+function PlaybackControlsFactory(
+  AnimationSpeedSlider: ReturnType<typeof AnimationSpeedSliderFactory>
+) {
   // eslint-disable-next-line complexity
   const PlaybackControls = ({
     isAnimatable = true,
