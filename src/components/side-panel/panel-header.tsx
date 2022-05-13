@@ -39,10 +39,10 @@ type ActionItem = {
   id: string;
   label?: string;
   blank?: boolean;
-  href: string;
+  href?: string;
   tooltip?: string;
-  iconComponent: React.ComponentType<BaseProps>;
-  iconComponentProps: BaseProps;
+  iconComponent: React.ComponentType<Partial<BaseProps>>;
+  iconComponentProps?: BaseProps;
   dropdownComponent?: React.ComponentType<DropdownComponentProps>;
   onClick?: (p: PanelHeaderProps) => void;
 };
@@ -60,7 +60,7 @@ type PanelHeaderDropdownProps = {
 };
 
 type DropdownCallbacks = {
-  logoComponent: React.ComponentType<{
+  logoComponent?: React.ComponentType<{
     appName: string;
     appWebsite: string;
     version: string;
@@ -77,7 +77,7 @@ type DropdownCallbacks = {
 
 type Item = {
   label: string;
-  icon: React.ComponentType;
+  icon: React.ComponentType<Partial<BaseProps>>;
   key: string;
   onClick: (p: DropdownComponentProps) => () => void;
 };
@@ -85,6 +85,7 @@ type Item = {
 type DropdownComponentProps = {
   show: boolean;
   onClose: () => void;
+  items?: Item[];
 } & DropdownCallbacks;
 
 type PanelHeaderProps = {
@@ -92,7 +93,7 @@ type PanelHeaderProps = {
   appWebsite: string;
   version: string;
   visibleDropdown: UiState['visibleDropdown'];
-  actionItems: ActionItem[];
+  actionItems?: ActionItem[];
   showExportDropdown: (i: string) => void;
   hideExportDropdown: () => void;
 } & DropdownCallbacks;
@@ -196,9 +197,9 @@ export const PanelHeaderDropdownFactory = () => {
 
 const getDropdownItemsSelector = () =>
   createSelector(
-    (props: DropdownComponentProps & {items: Item[]}) => props,
+    (props: DropdownComponentProps) => props,
     props =>
-      props.items
+      (props.items || [])
         .map(t => ({
           ...t,
           onClick: t.onClick && t.onClick(props) ? t.onClick(props) : null
@@ -211,7 +212,7 @@ export const SaveExportDropdownFactory = (
 ) => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
-  const SaveExportDropdown = (props: DropdownComponentProps & {items: Item[]}) => (
+  const SaveExportDropdown = (props: DropdownComponentProps) => (
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}
@@ -264,7 +265,7 @@ export const CloudStorageDropdownFactory = (
 ) => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
-  const CloudStorageDropdown = (props: DropdownComponentProps & {items: Item[]}) => (
+  const CloudStorageDropdown = (props: DropdownComponentProps) => (
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}
@@ -297,7 +298,7 @@ PanelHeaderFactory.deps = [SaveExportDropdownFactory, CloudStorageDropdownFactor
 function PanelHeaderFactory(
   SaveExportDropdown: ReturnType<typeof SaveExportDropdownFactory>,
   CloudStorageDropdown: ReturnType<typeof CloudStorageDropdownFactory>
-) {
+): React.ComponentType<PanelHeaderProps> {
   return class PanelHeader extends Component<PanelHeaderProps> {
     static defaultProps = {
       logoComponent: KeplerGlLogo,
@@ -334,13 +335,19 @@ function PanelHeaderFactory(
 
       // don't render cloud storage icon if onSaveToStorage is not provided
       if (typeof this.props.onSaveToStorage !== 'function') {
-        items = actionItems.filter(ai => ai.id !== 'storage');
+        items = items.filter(ai => ai.id !== 'storage');
       }
 
       return (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
-            <this.props.logoComponent appName={appName} version={version} appWebsite={appWebsite} />
+            {this.props.logoComponent && (
+              <this.props.logoComponent
+                appName={appName}
+                version={version}
+                appWebsite={appWebsite}
+              />
+            )}
             <StyledPanelTopActions>
               {items.map(item => (
                 <div

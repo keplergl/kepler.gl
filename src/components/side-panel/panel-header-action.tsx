@@ -65,11 +65,11 @@ const HeaderActionWrapper = styled.div<HeaderActionWrapperProps>`
 `;
 
 // Need to use react class to access props.component
-export default function PanelHeaderActionFactory() {
+export default function PanelHeaderActionFactory(): React.ComponentType<PanelHeaderActionProps> {
   class PanelHeaderAction extends Component<PanelHeaderActionProps> {
     static defaultProps = {
       onClick: () => {},
-      hoverColor: null,
+      hoverColor: '',
       active: false
     };
 
