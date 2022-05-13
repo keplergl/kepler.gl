@@ -62,7 +62,7 @@ type ColorPaletteGroupProps = {
 export const ALL_TYPES: string[] = uniq(
   COLOR_RANGES.map(c => c.type)
     .filter(ctype => ctype)
-    .concat(['all', 'custom'])
+    .concat(['all', 'custom']) as string[]
 );
 
 export const ALL_STEPS: number[] = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(numberSort);
