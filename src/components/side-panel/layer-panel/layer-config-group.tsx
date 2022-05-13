@@ -33,7 +33,8 @@ type LayerConfigGroupProps = {
   label: string;
   property?: string;
   description?: string;
-  collapsible: boolean;
+  collapsible?: boolean;
+  expanded?: boolean;
   disabled?: boolean;
   onChange?: (newVisConfig: Partial<LayerVisConfig>) => void;
 };
@@ -150,13 +151,13 @@ LayerConfigGroupFactory.deps = [LayerConfigGroupLabelFactory];
 
 function LayerConfigGroupFactory(
   LayerConfigGroupLabel: ReturnType<typeof LayerConfigGroupLabelFactory>
-) {
+): React.ComponentType<LayerConfigGroupProps> {
   class LayerConfigGroup extends Component<LayerConfigGroupProps> {
     static defaultProps = {
       collapsible: false,
       expanded: false,
       onChange: () => {},
-      description: null,
+      description: '',
       disabled: false
     };
 

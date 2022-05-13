@@ -59,7 +59,7 @@ function TextLabelPanelFactory(
   RangeSlider: ReturnType<typeof RangeSliderFactory>,
   LayerConfigGroup: ReturnType<typeof LayerConfigGroupFactory>,
   FieldSelector: ReturnType<typeof FieldSelectorFactory>
-) {
+): React.ComponentType<TextLabelPanelProps> {
   class TextLabelPanel extends Component<TextLabelPanelProps> {
     render() {
       const {updateLayerTextLabel, textLabel, fields} = this.props;

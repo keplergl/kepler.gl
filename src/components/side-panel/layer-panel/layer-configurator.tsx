@@ -179,7 +179,7 @@ export default function LayerConfiguratorFactory(
   LayerColumnConfig: ReturnType<typeof LayerColumnConfigFactory>,
   LayerTypeSelector: ReturnType<typeof LayerTypeSelectorFactory>,
   VisConfigSwitch: ReturnType<typeof VisConfigSwitchFactory>
-) {
+): React.ComponentType<LayerConfiguratorProps> {
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
       return this._renderScatterplotLayerConfig(props);

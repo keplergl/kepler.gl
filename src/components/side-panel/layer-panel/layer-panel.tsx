@@ -71,7 +71,7 @@ LayerPanelFactory.deps = [LayerConfiguratorFactory, LayerPanelHeaderFactory];
 function LayerPanelFactory(
   LayerConfigurator: ReturnType<typeof LayerConfiguratorFactory>,
   LayerPanelHeader: ReturnType<typeof LayerPanelHeaderFactory>
-) {
+): React.ComponentType<LayerPanelProps> {
   class LayerPanel extends Component<LayerPanelProps> {
     updateLayerConfig = (newProp: Partial<LayerBaseConfig>) => {
       this.props.layerConfigChange(this.props.layer, newProp);
