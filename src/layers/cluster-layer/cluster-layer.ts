@@ -146,7 +146,7 @@ export default class ClusterLayer extends AggregationLayer {
       // hover layer
       ...(hoveredObject
         ? [
-            new ScatterplotLayer({
+            new ScatterplotLayer<{radius: number}>({
               id: `${this.id}-hovered`,
               data: [hoveredObject],
               getFillColor: this.config.highlightColor,
