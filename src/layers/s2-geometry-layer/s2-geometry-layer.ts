@@ -42,7 +42,7 @@ import {
   VisConfigRange
 } from '../layer-factory';
 import S2LayerIcon from './s2-layer-icon';
-import {getS2Center} from './s2-utils';
+import {getS2Center, validS2Token} from './s2-utils';
 
 export type S2GeometryLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -270,8 +270,7 @@ export default class S2GeometryLayer extends Layer {
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
       const token = getS2Token({index});
-
-      if (token) {
+      if (validS2Token(token)) {
         data.push({
           index,
           token
@@ -286,9 +285,10 @@ export default class S2GeometryLayer extends Layer {
     const centroids = dataContainer.reduce(
       (acc, entry, index) => {
         const s2Token = getS2Token({index});
-        if (s2Token) {
+        if (validS2Token(s2Token)) {
           acc.push(getS2Center(s2Token));
         }
+
         return acc;
       },
       [],

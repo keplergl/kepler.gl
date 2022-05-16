@@ -21,13 +21,24 @@
 import Protobuf from 'pbf';
 import {VectorTile} from '@mapbox/vector-tile';
 import {worldToLngLat} from 'viewport-mercator-project';
+import {
+  Coordinates,
+  FlatFigure,
+  TileDataItem,
+  VectorTileFeature,
+  VectorTileFeatureProperties
+} from './types';
 
 /* global fetch */
 const TILE_SIZE = 512;
 const MAPBOX_HOST = 'https://a.tiles.mapbox.com';
 const MAP_SOURCE = '/v4/mapbox.mapbox-streets-v7';
 
-export function getTileData(host, token, {x, y, z}) {
+export function getTileData(
+  host: string,
+  token: string,
+  {x, y, z}: Coordinates
+): Promise<TileDataItem[]> {
   const mapSource = `${host ||
     MAPBOX_HOST}${MAP_SOURCE}/${z}/${x}/${y}.vector.pbf?access_token=${token}`;
 
@@ -36,10 +47,15 @@ export function getTileData(host, token, {x, y, z}) {
     .then(buffer => decodeTile(x, y, z, buffer));
 }
 
-export function decodeTile(x, y, z, arrayBuffer) {
+export function decodeTile(
+  x: number,
+  y: number,
+  z: number,
+  arrayBuffer: ArrayBuffer
+): TileDataItem[] {
   const tile = new VectorTile(new Protobuf(arrayBuffer));
 
-  const result = [];
+  const result: TileDataItem[] = [];
   const xProj = x * TILE_SIZE;
   const yProj = y * TILE_SIZE;
   const scale = Math.pow(2, z);
@@ -65,7 +81,7 @@ export function decodeTile(x, y, z, arrayBuffer) {
   return result;
 }
 
-function project(x, y, scale, line, extent) {
+function project(x: number, y: number, scale: number, line: FlatFigure, extent: number): void {
   const sizeToPixel = extent / TILE_SIZE;
 
   for (let ii = 0; ii < line.length; ii++) {
@@ -77,11 +93,14 @@ function project(x, y, scale, line, extent) {
 
 /* adapted from @mapbox/vector-tile/lib/vectortilefeature.js for better perf */
 /* eslint-disable */
-export function vectorTileFeatureToProp(vectorTileFeature, project) {
-  let coords = getCoordinates(vectorTileFeature);
+export function vectorTileFeatureToProp(
+  vectorTileFeature: VectorTileFeature,
+  project: (r: FlatFigure, n: number) => void
+): {coordinates: FlatFigure[]; properties: VectorTileFeatureProperties}[] {
+  let coords: FlatFigure[][] | FlatFigure[] = getCoordinates(vectorTileFeature);
   const extent = vectorTileFeature.extent;
-  let i;
-  let j;
+  let i: number;
+  let j: number;
 
   coords = classifyRings(coords);
   for (i = 0; i < coords.length; i++) {
@@ -96,7 +115,7 @@ export function vectorTileFeatureToProp(vectorTileFeature, project) {
   }));
 }
 
-function getCoordinates(vectorTileFeature) {
+function getCoordinates(vectorTileFeature: VectorTileFeature): FlatFigure[] {
   const pbf = vectorTileFeature._pbf;
   pbf.pos = vectorTileFeature._geometry;
 
@@ -106,8 +125,8 @@ function getCoordinates(vectorTileFeature) {
   let x = 0;
   let y = 0;
 
-  const lines = [];
-  let line;
+  const lines: FlatFigure[] = [];
+  let line: FlatFigure | undefined;
 
   while (pbf.pos < end) {
     if (length <= 0) {
@@ -132,7 +151,7 @@ function getCoordinates(vectorTileFeature) {
     } else if (cmd === 7) {
       // Workaround for https://github.com/mapbox/mapnik-vector-tile/issues/90
       if (line) {
-        line.push(line[0].slice()); // closePolygon
+        line.push(line[0].slice() as ([number, number] | [number, number, number])); // closePolygon
       }
     } else {
       throw new Error(`unknown command ${cmd}`);
@@ -146,14 +165,14 @@ function getCoordinates(vectorTileFeature) {
 
 // classifies an array of rings into polygons with outer rings and holes
 
-function classifyRings(rings) {
+function classifyRings(rings: FlatFigure[]): FlatFigure[][] {
   const len = rings.length;
 
   if (len <= 1) return [rings];
 
-  const polygons = [];
-  let polygon;
-  let ccw;
+  const polygons: FlatFigure[][] = [];
+  let polygon: FlatFigure[] | undefined;
+  let ccw: boolean | undefined;
 
   for (let i = 0; i < len; i++) {
     const area = signedArea(rings[i]);
@@ -181,9 +200,9 @@ function classifyRings(rings) {
   return polygons;
 }
 
-function signedArea(ring) {
+function signedArea(ring: FlatFigure): number {
   let sum = 0;
-  for (let i = 0, len = ring.length, j = len - 1, p1, p2; i < len; j = i++) {
+  for (let i = 0, len = ring.length, j = len - 1, p1: number[], p2: number[]; i < len; j = i++) {
     p1 = ring[i];
     p2 = ring[j];
     sum += (p2[0] - p1[0]) * (p1[1] + p2[1]);

@@ -19,11 +19,12 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import NotificationItemFactory from './notification-panel/notification-item';
 import {DEFAULT_NOTIFICATION_TOPICS} from 'constants/default-settings';
+import {Notifications} from 'reducers';
+import {removeNotification} from 'actions/ui-state-actions';
 
 const NotificationPanelContent = styled.div`
   background: transparent;
@@ -42,13 +43,15 @@ const NotificationPanelContent = styled.div`
 
 NotificationPanelFactory.deps = [NotificationItemFactory];
 
-export default function NotificationPanelFactory(NotificationItem) {
-  return class NotificationPanel extends Component {
-    static propTypes = {
-      removeNotification: PropTypes.func.isRequired,
-      notifications: PropTypes.arrayOf(PropTypes.object).isRequired
-    };
+interface NotificationPanelProps {
+  removeNotification?: typeof removeNotification;
+  notifications: Notifications[];
+}
 
+export default function NotificationPanelFactory(
+  NotificationItem: ReturnType<typeof NotificationItemFactory>
+) {
+  return class NotificationPanel extends Component<NotificationPanelProps> {
     render() {
       const globalNotifications = this.props.notifications.filter(
         n => n.topic === DEFAULT_NOTIFICATION_TOPICS.global

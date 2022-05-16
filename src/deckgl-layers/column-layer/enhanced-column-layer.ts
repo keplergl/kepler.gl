@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {ColumnLayer} from '@deck.gl/layers';
-import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
+import {editShader} from '../../deckgl-layers/layer-utils/shader-utils';
 
 function addInstanceCoverage(vs) {
   const addDecl = editShader(
@@ -39,7 +39,7 @@ function addInstanceCoverage(vs) {
 }
 
 // TODO: export all deck.gl layers from kepler.gl
-class EnhancedColumnLayer extends ColumnLayer {
+class EnhancedColumnLayer extends ColumnLayer<any> {
   getShaders() {
     const shaders = super.getShaders();
 
@@ -50,7 +50,7 @@ class EnhancedColumnLayer extends ColumnLayer {
   }
 
   initializeState() {
-    super.initializeState();
+    super.initializeState(undefined);
 
     this.getAttributeManager().addInstanced({
       instanceCoverage: {size: 1, accessor: 'getCoverage'}
