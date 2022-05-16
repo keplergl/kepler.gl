@@ -62,7 +62,7 @@ import {LayerTextLabel, ColorUI} from './layer-factory';
 import {KeplerTable} from '../utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 import {Field, GpuFilter} from 'utils/table-utils/kepler-table';
-import {Component} from 'react';
+import React from 'react';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 
@@ -74,8 +74,7 @@ export type VisualChannelField = Field | null;
 export type VisualChannelScale = keyof typeof SCALE_TYPES;
 
 export type LayerBaseConfig = {
-  // TODO: Decide can dataId be null
-  dataId: string;
+  dataId: string | null;
   label: string;
   color: RGBColor;
 
@@ -237,7 +236,7 @@ class Layer {
     });
   }
 
-  get layerIcon(): typeof Component {
+  get layerIcon(): React.ElementType {
     return DefaultLayerIcon;
   }
 
@@ -436,7 +435,6 @@ class Layer {
     props: Partial<LayerBaseConfig> = {}
   ): LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig> {
     return {
-      // @ts-expect-error
       dataId: props.dataId || null,
       label: props.label || DEFAULT_LAYER_LABEL,
       color: props.color || colorMaker.next().value,
