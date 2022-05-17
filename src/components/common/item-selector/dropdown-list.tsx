@@ -48,27 +48,25 @@ const DropdownListWrapper = styled.div<DropdownListWrapperProps>`
   ${props => (props.light ? props.theme.dropdownListLT : props.theme.dropdownList)};
 `;
 
-
 interface DropdownListProps {
   options?: any[];
   allowCustomValues?: number;
-  customClasses?: object,
-  customValues?: any[],
-  customListItemComponent?: ElementType,
-  customListHeaderComponent?: ElementType
-  selectionIndex?: number,
-  onOptionSelected?: Function,
-  displayOption?: Function,
-  defaultClassNames?: boolean,
-  areResultsTruncated?: boolean,
-  resultsTruncatedMessage?: string,
+  customClasses?: object;
+  customValues?: any[];
+  customListItemComponent?: ElementType;
+  customListHeaderComponent?: ElementType;
+  selectionIndex?: number;
+  onOptionSelected?: Function;
+  displayOption?: Function;
+  defaultClassNames?: boolean;
+  areResultsTruncated?: boolean;
+  resultsTruncatedMessage?: string;
   listItemComponent?: Function;
   light?: boolean;
-  fixedOptions?: any[]
-};
+  fixedOptions?: any[];
+}
 
 export default class DropdownList extends Component<DropdownListProps> {
-
   static defaultProps = {
     customClasses: {},
     customListItemComponent: ListItem,
@@ -87,7 +85,12 @@ export default class DropdownList extends Component<DropdownListProps> {
   }
 
   render() {
-    const {fixedOptions, light, allowCustomValues = 0, customListItemComponent: CustomListItemComponent = ListItem} = this.props;
+    const {
+      fixedOptions,
+      light,
+      allowCustomValues = 0,
+      customListItemComponent: CustomListItemComponent = ListItem
+    } = this.props;
     const {displayOption: display = defaultDisplay} = this.props;
 
     // Don't render if there are no options to display

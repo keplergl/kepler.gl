@@ -62,6 +62,7 @@ import {LayerTextLabel, ColorUI} from './layer-factory';
 import {KeplerTable} from '../utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 import {Field, GpuFilter} from 'utils/table-utils/kepler-table';
+import React from 'react';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 
@@ -73,7 +74,8 @@ export type VisualChannelField = Field | null;
 export type VisualChannelScale = keyof typeof SCALE_TYPES;
 
 export type LayerBaseConfig = {
-  dataId: string | null;
+  // TODO: allow to become null
+  dataId: string;
   label: string;
   color: RGBColor;
 
@@ -235,7 +237,7 @@ class Layer {
     });
   }
 
-  get layerIcon() {
+  get layerIcon(): React.ElementType {
     return DefaultLayerIcon;
   }
 
@@ -243,8 +245,7 @@ class Layer {
     return OVERLAY_TYPE.deckgl;
   }
 
-  get type(): string {
-    // @ts-expect-error
+  get type(): string | null {
     return null;
   }
 
@@ -256,11 +257,11 @@ class Layer {
     return false;
   }
 
-  get requiredLayerColumns() {
+  get requiredLayerColumns(): string[] {
     return [];
   }
 
-  get optionalColumns() {
+  get optionalColumns(): string[] {
     return [];
   }
 
@@ -340,7 +341,7 @@ class Layer {
    *   };
    * }
    */
-  get layerInfoModal() {
+  get layerInfoModal(): any {
     return null;
   }
   /*
@@ -435,6 +436,7 @@ class Layer {
     props: Partial<LayerBaseConfig> = {}
   ): LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig> {
     return {
+      // @ts-expect-error
       dataId: props.dataId || null,
       label: props.label || DEFAULT_LAYER_LABEL,
       color: props.color || colorMaker.next().value,
@@ -473,14 +475,17 @@ class Layer {
    * @returns
    */
   getVisualChannelDescription(key: string): VisualChannelDescription {
-    const label = this.visConfigSettings[this.visualChannels[key].range].label;
     // e.g. label: Color, measure: Vehicle Type
+    const channel = this.visualChannels[key];
+    if (!channel) return {label: '', measure: ''};
+    const rangeSettings = this.visConfigSettings[channel.range];
+    const fieldSettings = this.config[channel.field];
+    const label = rangeSettings?.label;
     return {
       label: typeof label === 'function' ? label(this.config) : label,
-      measure: this.config[this.visualChannels[key].field]
-        ? this.config[this.visualChannels[key].field].displayName ||
-          this.config[this.visualChannels[key].field].name
-        : this.visualChannels[key].defaultMeasure
+      measure: fieldSettings
+        ? fieldSettings.displayName || fieldSettings.name
+        : channel.defaultMeasure
     };
   }
 
@@ -1064,13 +1069,13 @@ class Layer {
     const dataUpdateTriggers = this.getDataUpdateTriggers(layerDataset);
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
-    if (triggerChanged.getMeta) {
+    if (triggerChanged && triggerChanged.getMeta) {
       this.updateLayerMeta(dataContainer, getPosition);
     }
 
     let data = [];
 
-    if (!triggerChanged.getData && oldLayerData && oldLayerData.data) {
+    if (!(triggerChanged && triggerChanged.getData) && oldLayerData && oldLayerData.data) {
       // same data
       data = oldLayerData.data;
     } else {

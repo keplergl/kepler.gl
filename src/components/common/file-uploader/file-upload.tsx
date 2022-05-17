@@ -27,7 +27,6 @@ import FileUploadProgress from 'components/common/file-uploader/file-upload-prog
 import FileDrop from './file-drop';
 import {FileLoading, FileLoadingProgress} from 'reducers/vis-state-updaters';
 
-
 import {isChrome} from 'utils/utils';
 import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
 import ReactMarkdown from 'react-markdown';
@@ -163,7 +162,7 @@ type FileUploadProps = {
   fileExtensions?: string[];
   /** Set to true if app wants to do its own file filtering */
   disableExtensionFilter?: boolean;
-} & WrappedComponentProps
+} & WrappedComponentProps;
 
 function FileUploadFactory() {
   /** @augments {Component<FileUploadProps>} */

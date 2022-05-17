@@ -60,7 +60,11 @@ export const pointPosAccessor = ({lat, lng}: HeatmapLayerColumnsConfig) => (
 export const pointColResolver = ({lat, lng}: HeatmapLayerColumnsConfig) =>
   `${lat.fieldIdx}-${lng.fieldIdx}`;
 
-export const heatmapVisConfigs = {
+export const heatmapVisConfigs: {
+  opacity: 'opacity';
+  colorRange: 'colorRange';
+  radius: 'heatmapRadius';
+} = {
   opacity: 'opacity',
   colorRange: 'colorRange',
   radius: 'heatmapRadius'
@@ -78,7 +82,7 @@ export const heatmapVisConfigs = {
  *  1, "rgb(178,24,43)"
  * ]
  */
-const heatmapDensity = (colorRange: ColorRange): string[] => {
+const heatmapDensity = (colorRange: ColorRange): (string | number)[] => {
   const scaleFunction = SCALE_FUNC.quantize;
 
   const colors: HexColor[] = ['#000000', ...colorRange.colors];
@@ -87,7 +91,7 @@ const heatmapDensity = (colorRange: ColorRange): string[] => {
     .domain([0, 1])
     .range(colors);
 
-  const colorDensity = scale.range().reduce((bands, level) => {
+  const colorDensity = scale.range().reduce((bands: (string | number)[], level) => {
     const invert = scale.invertExtent(level);
     return [
       ...bands,
@@ -160,6 +164,7 @@ class HeatmapLayer extends MapboxGLLayer {
       weightScale: 'linear'
     };
 
+    // @ts-expect-error
     return layerConfig;
   }
 

@@ -27,9 +27,8 @@
  * @returns {boolean|object} `false` if nothing changed, or `triggerChanged` as an object
  */
 export function diffUpdateTriggers(updateTriggers, oldUpdateTriggers = {}) {
-  const triggerChanged = {};
-  /** @type {boolean|object} */
-  let reason = false;
+  const triggerChanged: {[key: string]: true} = {};
+  let reason: boolean | {[key: string]: true} = false;
 
   for (const triggerName in updateTriggers) {
     const newTriggers = updateTriggers[triggerName] || {};

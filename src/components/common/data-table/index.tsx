@@ -287,7 +287,7 @@ export const TableSection = ({
               {...gridDimension}
               className={isPinned ? 'pinned-grid' : 'body-grid'}
               height={dataGridHeight - headerGridProps.height}
-              onScroll={onScroll} 
+              onScroll={onScroll}
               scrollTop={scrollTop}
               setGridRef={setGridRef}
             />
@@ -298,7 +298,7 @@ export const TableSection = ({
   </AutoSizer>
 );
 
-type CellSizeCache = {[id: string]: number}
+type CellSizeCache = {[id: string]: number};
 
 interface DataTableProps {
   cellSizeCache?: CellSizeCache;
@@ -310,9 +310,9 @@ interface DataTableProps {
 }
 
 interface DataTableState {
-  cellSizeCache?: CellSizeCache, 
-  moreOptionsColumn?, 
-  ghost?
+  cellSizeCache?: CellSizeCache;
+  moreOptionsColumn?;
+  ghost?;
 }
 
 DataTableFactory.deps = [FieldTokenFactory];
@@ -382,7 +382,7 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
         propsCache,
         pinnedColumns,
         unpinnedColumns
-      ) as {cellSizeCache: {}, ghost: number | null | undefined};
+      ) as {cellSizeCache: {}; ghost: number | null | undefined};
 
       return {
         cellSizeCache,
@@ -396,13 +396,7 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
 
     scaleCellsToWidth = debounce(this.doScaleCellsToWidth, 300);
 
-    renderHeaderCell = (
-      columns,
-      isPinned,
-      props,
-      toggleMoreOptions,
-      moreOptionsColumn
-    ) => {
+    renderHeaderCell = (columns, isPinned, props, toggleMoreOptions, moreOptionsColumn) => {
       // eslint-disable-next-line react/display-name
       return cellInfo => {
         const {columnIndex, key, style} = cellInfo;

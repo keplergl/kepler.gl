@@ -25,6 +25,6 @@ export function LoadDataModalFactory(
   ModalTabs: React.Component,
   FileUpload: React.Component,
   LoadStorageMap: React.Component
-): React.Component<LoadDataModalProps>;
+): React.ComponentType<LoadDataModalProps>;
 
 export default LoadDataModalFactory;

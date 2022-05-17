@@ -119,7 +119,12 @@ function getSizeSum(sizeCache, key) {
  * @param {number} containerWidth
  * @param {number} roomToFill
  */
-function expandCellSize(cellSizeCache: object, columnOrder: string[], containerWidth: number, roomToFill: number) {
+function expandCellSize(
+  cellSizeCache: object,
+  columnOrder: string[],
+  containerWidth: number,
+  roomToFill: number
+) {
   let remaining = roomToFill;
 
   const expandedCellSize = columnOrder.reduce((accu, col) => {

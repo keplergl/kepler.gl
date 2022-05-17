@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {LineLayer} from '@deck.gl/layers';
+import {LineLayer, LineLayerProps} from '@deck.gl/layers';
 import GL from '@luma.gl/constants';
-import {editShader} from 'deckgl-layers/layer-utils/shader-utils';
+import {editShader} from '../../deckgl-layers/layer-utils/shader-utils';
 
 const defaultProps = {
   ...LineLayer.defaultProps,
@@ -62,7 +62,7 @@ function addElevationScale(vs) {
      vec3 targetPosAdjusted = instanceTargetPositions;
      sourcePosAdjusted.z *= elevationScale;
      targetPosAdjusted.z *= elevationScale;
-     
+
      geometry.worldPosition = sourcePosAdjusted;
      geometry.worldPositionAlt = sourcePosAdjusted;`
   );
@@ -84,7 +84,10 @@ function addElevationScale(vs) {
   return elevationVs;
 }
 
-export default class EnhancedLineLayer extends LineLayer {
+export default class EnhancedLineLayer extends LineLayer<
+  any,
+  LineLayerProps<any> & {elevationScale: number}
+> {
   getShaders() {
     const shaders = super.getShaders();
 
@@ -103,11 +106,11 @@ export default class EnhancedLineLayer extends LineLayer {
   }
 
   initializeState() {
-    super.initializeState();
+    super.initializeState(undefined);
     const {attributeManager} = this.state;
     attributeManager.addInstanced({
       instanceTargetColors: {
-        size: this.props.colorFormat.length,
+        size: this.props.colorFormat?.length,
         type: GL.UNSIGNED_BYTE,
         normalized: true,
         transition: true,

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
+// Copyright (c) 2022 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,16 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/**
- * Very rough Typescript types for certain classes in @deck.gl/mesh-layers
- * TODO: This is initially focused on fixing things for our own usage;
- * we should eventually package proper types with the module.
- */
+import {createContext, RefObject} from 'react';
 
-declare module '@deck.gl/mesh-layers' {
-  import {Layer} from '@deck.gl/core';
+const identity = state => state;
+// New Context API only supported after 16.3
+const KeplerGlContext = createContext({
+  selector: identity,
+  id: 'map'
+});
 
-  export class SimpleMeshLayer extends Layer {
-    constructor(any): SimpleMeshLayer;
-  }
-}
+export const RootContext = createContext<RefObject<HTMLDivElement> | null>(null);
+
+export default KeplerGlContext;

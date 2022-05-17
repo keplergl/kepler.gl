@@ -144,7 +144,7 @@ function updateSourceData(map, sourceId, data) {
  * @returns FeatureCollection
  */
 export function geoJsonFromData(
-  filteredIndex = [],
+  filteredIndex: number[] = [],
   getGeometry: {({index: number}): any},
   getProperties: {({index: number}): any} = d => {}
 ) {
