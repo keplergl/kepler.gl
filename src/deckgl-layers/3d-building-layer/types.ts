@@ -11,7 +11,7 @@ export type ThreeDBuildingLayerProps = {
 };
 export type Coordinates = {x: number; y: number; z: number};
 // TODO rename
-export type FlatFigure = number[][];
+export type FlatFigure = ([number, number] | [number, number, number])[];
 export type TileDataItem = {coordinates: FlatFigure[]; properties: VectorTileFeatureProperties};
 export type VectorTileFeatureProperties = {layer: string; height?: number};
 export type VectorTileFeature = {

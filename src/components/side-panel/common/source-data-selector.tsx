@@ -71,6 +71,7 @@ export default function SourceDataSelectorFactory(
           <ItemSelector
             inputTheme={inputTheme}
             selectedItems={selectedItems}
+            // selectedItems={dataId ? [this.props.datasets[dataId]] : []}
             options={dsOptions}
             getOptionValue={'value'}
             filterOption={'label'}
