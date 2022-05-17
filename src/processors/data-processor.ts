@@ -73,12 +73,13 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
     parse: (d: unknown): number => parseInt(d, 10)
   },
   [ALL_FIELD_TYPES.timestamp]: {
-    valid: (d: any, field: Field) =>
+    valid: (d: unknown, field: Field): boolean =>
       ['x', 'X'].includes(field.format) ? typeof d === 'number' : typeof d === 'string',
     parse: (d: any, field: Field) => (['x', 'X'].includes(field.format) ? Number(d) : d)
   },
   [ALL_FIELD_TYPES.real]: {
-    valid: (d: any) => parseFloat(d) === d,
+    // @ts-ignore
+    valid: (d: unknown): boolean => parseFloat(d) === d,
     // Note this will result in NaN for some string
     parse: parseFloat
   }

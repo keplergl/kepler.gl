@@ -173,6 +173,7 @@ const GeoCoder = ({
       let newViewport = new WebMercatorViewport(viewport);
       const {bbox, center} = item;
 
+      // @ts-ignore
       newViewport = bbox
         ? newViewport.fitBounds([
             [bbox[0], bbox[1]],
