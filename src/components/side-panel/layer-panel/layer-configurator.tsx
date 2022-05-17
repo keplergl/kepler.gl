@@ -1045,7 +1045,8 @@ export default function LayerConfiguratorFactory(
               updateLayerConfig={updateLayerConfig}
             />
           </LayerConfigGroup>
-          {this[renderTemplate] &&
+          {renderTemplate &&
+            this[renderTemplate] &&
             this[renderTemplate]({
               layer,
               dataset,
