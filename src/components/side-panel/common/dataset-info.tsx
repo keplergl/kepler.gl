@@ -22,6 +22,7 @@ import React from 'react';
 import styled from 'styled-components';
 import {format} from 'd3-format';
 import {FormattedMessage} from 'localization';
+import {DatasetInfoProps} from './types';
 
 const numFormat = format(',');
 
@@ -32,7 +33,7 @@ const StyledDataRowCount = styled.div`
 `;
 
 export default function DatasetInfoFactory() {
-  const DatasetInfo = ({dataset}) => (
+  const DatasetInfo = ({dataset}: DatasetInfoProps) => (
     <StyledDataRowCount className="source-data-rows">
       <FormattedMessage
         id={'datasetInfo.rowCount'}
