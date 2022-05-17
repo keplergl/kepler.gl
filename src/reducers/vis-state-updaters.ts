@@ -691,6 +691,7 @@ export function layerDataIdChangeUpdater(
     );
     // if cant validate it with data create a new one
     if (!validated) {
+      // @ts-expect-error TODO: checking oldLayer.type !== null
       newLayer = new state.layerClasses[oldLayer.type]({dataId, id: oldLayer.id});
     } else {
       newLayer = validated;
