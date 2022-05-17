@@ -32,7 +32,6 @@ import {
   VisConfigSelection
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
-import {AGGREGATION_TYPES} from '../../constants/default-settings';
 import {Merge} from '../../reducers';
 import {VisualChannels} from '../base-layer';
 
@@ -54,7 +53,13 @@ export type ClusterLayerVisConfig = {
 
 export type ClusterLayerConfig = Merge<AggregationLayerConfig, {visConfig: ClusterLayerVisConfig}>;
 
-export const clusterVisConfigs = {
+export const clusterVisConfigs: {
+  opacity: 'opacity';
+  clusterRadius: 'clusterRadius';
+  colorRange: 'colorRange';
+  radiusRange: 'clusterRadiusRange';
+  colorAggregation: 'colorAggregation';
+} = {
   opacity: 'opacity',
   clusterRadius: 'clusterRadius',
   colorRange: 'colorRange',
@@ -141,7 +146,7 @@ export default class ClusterLayer extends AggregationLayer {
       // hover layer
       ...(hoveredObject
         ? [
-            new ScatterplotLayer({
+            new ScatterplotLayer<{radius: number}>({
               id: `${this.id}-hovered`,
               data: [hoveredObject],
               getFillColor: this.config.highlightColor,

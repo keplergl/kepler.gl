@@ -30,6 +30,7 @@ import {VisConfigColorRange, VisConfigNumber} from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
 import {Merge} from '../../reducers';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
+import {KeplerTable} from '../../utils';
 
 export type ScenegraphLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -61,6 +62,8 @@ export type ScenegraphLayerConfig = Merge<
   {columns: ScenegraphLayerColumnsConfig; visConfig: ScenegraphLayerVisConfig}
 >;
 
+export type ScenegraphLayerData = {position: number[]; index: number};
+
 export const scenegraphRequiredColumns: ['lat', 'lng'] = ['lat', 'lng'];
 export const scenegraphOptionalColumns: ['altitude'] = ['altitude'];
 
@@ -80,7 +83,15 @@ export const scenegraphPosAccessor = ({lat, lng, altitude}: ScenegraphLayerColum
   altitude && altitude.fieldIdx > -1 ? dc.valueAt(d.index, altitude.fieldIdx) : 0
 ];
 
-export const scenegraphVisConfigs = {
+export const scenegraphVisConfigs: {
+  opacity: 'opacity';
+  colorRange: 'colorRange';
+  //
+  sizeScale: 'sizeScale';
+  angleX: VisConfigNumber;
+  angleY: VisConfigNumber;
+  angleZ: VisConfigNumber;
+} = {
   opacity: 'opacity',
   colorRange: 'colorRange',
   //
@@ -119,7 +130,7 @@ export default class ScenegraphLayer extends Layer {
     super(props);
 
     this.registerVisConfig(scenegraphVisConfigs);
-    this.getPositionAccessor = dataContainer =>
+    this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
       scenegraphPosAccessor(this.config.columns)(dataContainer);
 
     // prepare layer info modal
@@ -156,12 +167,12 @@ export default class ScenegraphLayer extends Layer {
     };
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
-    const data = [];
+  calculateDataAttribute({dataContainer, filteredIndex}: KeplerTable, getPosition) {
+    const data: ScenegraphLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
-      const pos = getPosition({index});
+      const pos: number[] = getPosition({index});
 
       // if doesn't have point lat or lng, do not add the point
       // deck.gl can't handle position = null

@@ -24,7 +24,7 @@ import {bindActionCreators} from 'redux';
 import {console as Console} from 'global/window';
 import KeplerGlContext from 'components/context';
 
-export type FactoryElement = (...args) => React.Component;
+export type FactoryElement = (...args) => React.ComponentType;
 export type Factory = FactoryElement & {
   deps: FactoryElement[];
 };
