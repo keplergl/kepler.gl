@@ -138,9 +138,9 @@ interface SidePanelSectionProps {
   disabled?: boolean;
 }
 
-export const SidePanelSection = styled.div.attrs({
-  className: 'side-panel-section'
-})<SidePanelSectionProps>`
+export const SidePanelSection = styled.div.attrs(props => ({
+  className: classnames('side-panel-section', props.className)
+}))<SidePanelSectionProps>`
   margin-bottom: 12px;
 
   opacity: ${props => (props.disabled ? 0.4 : 1)};

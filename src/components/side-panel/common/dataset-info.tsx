@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
+// Copyright (c) 2022 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,16 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/**
- * Very rough Typescript types for certain classes in @deck.gl/mesh-layers
- * TODO: This is initially focused on fixing things for our own usage;
- * we should eventually package proper types with the module.
- */
+import React from 'react';
+import styled from 'styled-components';
+import {format} from 'd3-format';
+import {FormattedMessage} from 'localization';
+import {DatasetInfoProps} from './types';
 
-declare module '@deck.gl/mesh-layers' {
-  import {Layer} from '@deck.gl/core';
+const numFormat = format(',');
 
-  export class SimpleMeshLayer extends Layer {
-    constructor(any): SimpleMeshLayer;
-  }
+const StyledDataRowCount = styled.div`
+  font-size: 11px;
+  color: ${props => props.theme.subtextColor};
+  padding-left: 19px;
+`;
+
+export default function DatasetInfoFactory() {
+  const DatasetInfo = ({dataset}: DatasetInfoProps) => (
+    <StyledDataRowCount className="source-data-rows">
+      <FormattedMessage
+        id={'datasetInfo.rowCount'}
+        values={{rowCount: numFormat(dataset.dataContainer.numRows())}}
+      />
+    </StyledDataRowCount>
+  );
+
+  return DatasetInfo;
 }

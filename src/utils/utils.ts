@@ -49,6 +49,18 @@ export function isPlainObject(obj: unknown): obj is Record<string, unknown> {
 }
 
 /**
+ * whether object has property
+ * @param {string} prop
+ * @returns {boolean} - yes or no
+ */
+export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
+  obj: X,
+  prop: Y
+): obj is X & Record<Y, unknown> {
+  return obj.hasOwnProperty(prop);
+}
+
+/**
  * Capitalize first letter of a string
  * @param {string} str
  * @returns {string}

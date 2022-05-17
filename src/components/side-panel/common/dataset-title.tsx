@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {createRef, PureComponent} from 'react';
+import React, {createRef, MouseEvent, PureComponent} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
 
@@ -28,10 +28,16 @@ import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
 import {Portaled} from 'components';
 import {rgbToHex} from 'utils/color-utils';
+import {
+  StyledDatasetTitleProps,
+  DatasetTitleProps,
+  RemoveDatasetProps,
+  ShowDataTableProps
+} from './types';
 
 function nop(_) {}
 
-const StyledDatasetTitle = styled.div`
+const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
   color: ${props => props.theme.textColor};
   display: flex;
   align-items: flex-start;
@@ -63,7 +69,7 @@ const DataTagAction = styled.div`
   opacity: 0;
 `;
 
-const ShowDataTable = ({id, showDatasetTable = nop}) => (
+const ShowDataTable = ({id, showDatasetTable = nop}: ShowDataTableProps) => (
   <DataTagAction className="dataset-action show-data-table" data-tip data-for={`data-table-${id}`}>
     <Table
       height="16px"
@@ -80,7 +86,7 @@ const ShowDataTable = ({id, showDatasetTable = nop}) => (
   </DataTagAction>
 );
 
-const RemoveDataset = ({datasetKey, removeDataset = nop}) => (
+const RemoveDataset = ({datasetKey, removeDataset = nop}: RemoveDatasetProps) => (
   <DataTagAction
     className="dataset-action remove-dataset"
     data-tip
@@ -103,8 +109,10 @@ const RemoveDataset = ({datasetKey, removeDataset = nop}) => (
 
 DatasetTitleFactory.deps = [DatasetTagFactory];
 
-export default function DatasetTitleFactory(DatasetTag) {
-  class DatasetTitle extends PureComponent {
+export default function DatasetTitleFactory(
+  DatasetTag: ReturnType<typeof DatasetTagFactory>
+): React.ComponentClass<DatasetTitleProps> {
+  class DatasetTitle extends PureComponent<DatasetTitleProps> {
     state = {
       displayColorPicker: false
     };
@@ -117,9 +125,9 @@ export default function DatasetTitleFactory(DatasetTag) {
       this.setState({displayColorPicker: false});
     };
 
-    root = createRef();
+    root = createRef<HTMLDivElement>();
 
-    _onClickTitle = e => {
+    _onClickTitle = (e: MouseEvent) => {
       e.stopPropagation();
       if (typeof this.props.onTitleClick === 'function') {
         this.props.onTitleClick();
@@ -153,8 +161,8 @@ export default function DatasetTitleFactory(DatasetTag) {
             <Portaled isOpened={this.state.displayColorPicker !== false} left={110} top={-50}>
               <CustomPicker
                 color={rgbToHex(dataset.color)}
-                onChange={color =>
-                  updateTableColor(dataset.id, [color.rgb.r, color.rgb.g, color.rgb.b])
+                onChange={(color: {rgb: Record<string, number>}) =>
+                  updateTableColor?.(dataset.id, [color.rgb.r, color.rgb.g, color.rgb.b])
                 }
                 onSwatchClose={this._handleClosePicker}
               />

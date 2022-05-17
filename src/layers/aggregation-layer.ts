@@ -44,7 +44,7 @@ type AggregationLayerColumns = {
   lng: LayerColumn;
 };
 
-type AggregationLayerData = {
+export type AggregationLayerData = {
   index: number;
 };
 
@@ -155,12 +155,13 @@ export default class AggregationLayer extends Layer {
   /**
    * Get the description of a visualChannel config
    * @param key
-   * @returns {{label: string, measure: (string|string)}}
+   * @returns
    */
-  getVisualChannelDescription(key): VisualChannelDescription {
-    //
+  getVisualChannelDescription(key: string): VisualChannelDescription {
+    const channel = this.visualChannels[key];
+    if (!channel) return {label: '', measure: ''};
     // e.g. label: Color, measure: Average of ETA
-    const {range, field, defaultMeasure, aggregation} = this.visualChannels[key];
+    const {range, field, defaultMeasure, aggregation} = channel;
     const fieldConfig = this.config[field];
     const label = this.visConfigSettings[range].label;
 
@@ -238,8 +239,8 @@ export default class AggregationLayer extends Layer {
   getScaleOptions(channel: string): string[] {
     const visualChannel = this.visualChannels[channel];
     const {field, aggregation, channelScaleType} = visualChannel;
-    // @ts-expect-error
     const aggregationType = this.config.visConfig[aggregation];
+
     return this.config[field]
       ? // scale options based on aggregation
         FIELD_OPTS[this.config[field].type].scale[channelScaleType][aggregationType]
@@ -306,9 +307,7 @@ export default class AggregationLayer extends Layer {
       data,
       getPosition,
       _filterData: filterData,
-      // @ts-expect-error
       ...(getColorValue ? {getColorValue} : {}),
-      // @ts-expect-error
       ...(getElevationValue ? {getElevationValue} : {})
     };
   }
