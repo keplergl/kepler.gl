@@ -43,7 +43,7 @@ const StyledWrapper = styled.div`
   position: relative;
 `;
 
-const editorLayerFilter = (layer: Layer) => EDITOR_AVAILABLE_LAYERS.includes(layer.type);
+const editorLayerFilter = (layer: Layer) => EDITOR_AVAILABLE_LAYERS.includes(layer.type!);
 
 EditorFactory.deps = [FeatureActionPanelFactory];
 
@@ -76,7 +76,7 @@ export default function EditorFactory(
 
     state = {
       showActions: false,
-      lastPosition: {x: 0, y: 0}
+      lastPosition: null
     };
 
     componentDidMount() {

@@ -46,7 +46,7 @@ export interface FeatureActionPanelProps {
   position: {
     x: number;
     y: number;
-  };
+  } | null;
   layers: Layer[];
   currentFilter?: Filter;
   onToggleLayer: (l: Layer) => void;
@@ -73,6 +73,10 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
       if (selectedFeature?.geometry) copy(JSON.stringify(selectedFeature.geometry));
       setCopied(true);
     }, [selectedFeature?.geometry]);
+
+    if (!position) {
+      return null;
+    }
 
     return (
       <StyledActionsLayer
@@ -121,7 +125,7 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
 
   FeatureActionPanel.displayName = 'FeatureActionPanel';
   FeatureActionPanel.defaultProps = {
-    position: {x: 0, y: 0}
+    position: null
   };
 
   return FeatureActionPanel;
