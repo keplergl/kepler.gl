@@ -110,7 +110,7 @@ export default class EnhancedLineLayer extends LineLayer<
     const {attributeManager} = this.state;
     attributeManager.addInstanced({
       instanceTargetColors: {
-        size: this.props.colorFormat.length,
+        size: this.props.colorFormat?.length,
         type: GL.UNSIGNED_BYTE,
         normalized: true,
         transition: true,
