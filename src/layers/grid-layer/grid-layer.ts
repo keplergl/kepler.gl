@@ -32,7 +32,6 @@ import {
   VisConfigSelection
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
-import {AGGREGATION_TYPES} from '../../constants/default-settings';
 import {Merge} from '../../reducers';
 
 export type GridLayerVisConfigSettings = {
@@ -67,7 +66,20 @@ export type GridLayerVisConfig = {
 
 export type GridLayerConfig = Merge<AggregationLayerConfig, {visConfig: GridLayerVisConfig}>;
 
-export const gridVisConfigs = {
+export const gridVisConfigs: {
+  opacity: 'opacity';
+  worldUnitSize: 'worldUnitSize';
+  colorRange: 'colorRange';
+  coverage: 'coverage';
+  sizeRange: 'elevationRange';
+  percentile: 'percentile';
+  elevationPercentile: 'elevationPercentile';
+  elevationScale: 'elevationScale';
+  enableElevationZoomFactor: 'enableElevationZoomFactor';
+  colorAggregation: 'colorAggregation';
+  sizeAggregation: 'sizeAggregation';
+  enable3d: 'enable3d';
+} = {
   opacity: 'opacity',
   worldUnitSize: 'worldUnitSize',
   colorRange: 'colorRange',
@@ -110,8 +122,6 @@ export default class GridLayer extends AggregationLayer {
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
-      // @ts-expect-error for some reasons EnhancedGridLayer dont have constructor
-      // that expected 1 argument
       new EnhancedGridLayer({
         ...this.getDefaultAggregationLayerProp(opts),
         ...data,

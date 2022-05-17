@@ -18,15 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
 import {processRowObject} from 'processors';
 import {FlyToInterpolator} from '@deck.gl/core';
 import KeplerGlSchema from 'schemas';
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
 
-import Geocoder from './geocoder/geocoder';
+import Geocoder, { Result } from './geocoder/geocoder';
 import {
   GEOCODER_DATASET_NAME,
   GEOCODER_LAYER_ID,
@@ -34,6 +33,7 @@ import {
   GEOCODER_ICON_COLOR,
   GEOCODER_ICON_SIZE
 } from 'constants/default-settings';
+import {MapState, Viewport} from 'reducers';
 
 const ICON_LAYER = {
   id: GEOCODER_LAYER_ID,
@@ -65,7 +65,11 @@ const PARSED_CONFIG = KeplerGlSchema.parseSavedConfig({
   }
 });
 
-const StyledGeocoderPanel = styled.div`
+interface StyledGeocoderPanelProps {
+  width?: number;
+}
+
+const StyledGeocoderPanel = styled.div<StyledGeocoderPanelProps>`
   position: absolute;
   top: ${props => props.theme.geocoderTop}px;
   right: ${props => props.theme.geocoderRight}px;
@@ -107,25 +111,29 @@ export function getUpdateVisDataPayload(lat, lon, text) {
   ];
 }
 
-export default function GeocoderPanelFactory() {
-  class GeocoderPanel extends Component {
-    static propTypes = {
-      isGeocoderEnabled: PropTypes.bool.isRequired,
-      mapboxApiAccessToken: PropTypes.string.isRequired,
-      mapState: PropTypes.object.isRequired,
-      updateVisData: PropTypes.func.isRequired,
-      removeDataset: PropTypes.func.isRequired,
-      updateMap: PropTypes.func.isRequired,
+interface GeocoderPanelProps {
+  isGeocoderEnabled: boolean;
+  mapState: MapState;
+  mapboxApiAccessToken: string;
+  updateVisData: Function;
+  removeDataset: Function;
+  updateMap: Function;
 
-      transitionDuration: PropTypes.number,
-      width: PropTypes.number
+  transitionDuration?: number;
+  width?: number;
+}
+
+export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps> {
+  class GeocoderPanel extends Component<GeocoderPanelProps> {
+    defaultProps = {
+      transitionDuration: 3000
     };
 
     removeGeocoderDataset() {
       this.props.removeDataset(GEOCODER_DATASET_NAME);
     }
 
-    onSelected = (viewport = null, geoItem) => {
+    onSelected = (viewport: Viewport | null = null, geoItem: Result) => {
       const {
         center: [lon, lat],
         text,
@@ -186,10 +194,6 @@ export default function GeocoderPanelFactory() {
       );
     }
   }
-
-  GeocoderPanel.defaultProps = {
-    transitionDuration: 3000
-  };
 
   return GeocoderPanel;
 }

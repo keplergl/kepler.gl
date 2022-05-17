@@ -38,7 +38,7 @@ export function hexagonToPolygonGeo(object, properties, radius, mapState) {
 
   const pixRadius = radius * unitsPerMeter[0];
 
-  const coordinates = [];
+  const coordinates: any[] = [];
 
   for (let i = 0; i < 6; i++) {
     const vertex = hex_corner(screenCenter, pixRadius, i);

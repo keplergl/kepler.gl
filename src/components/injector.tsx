@@ -24,6 +24,16 @@ import {bindActionCreators} from 'redux';
 import {console as Console} from 'global/window';
 import KeplerGlContext from 'components/context';
 
+export type FactoryElement = (...args) => React.ComponentType;
+export type Factory = FactoryElement & {
+  deps: FactoryElement[];
+};
+
+export type InjectorType = {
+  provide: (factory: any, replacement: any) => InjectorType;
+  get: (fac: any, parent?: any) => any;
+};
+
 const MissingComp = () => <div />;
 
 export const ERROR_MSG = {
@@ -38,7 +48,7 @@ export const ERROR_MSG = {
   notFunc: 'factory and its replacement should be a function'
 };
 
-export function injector(map = new Map()) {
+export function injector(map = new Map()): InjectorType {
   const cache = new Map(); // map<factory, factory -> ?>
   const get = (fac, parent) => {
     const factory = map.get(fac);
@@ -71,14 +81,14 @@ export function injector(map = new Map()) {
 }
 
 // entryPoint
-export function flattenDeps(allDeps, factory) {
+export function flattenDeps(allDeps: Factory[], factory: any): Factory[] {
   const addToDeps = allDeps.concat([factory]);
   return Array.isArray(factory.deps) && factory.deps.length
     ? factory.deps.reduce((accu, dep) => flattenDeps(accu, dep), addToDeps)
     : addToDeps;
 }
 
-export function provideRecipesToInjector(recipes, appInjector) {
+export function provideRecipesToInjector(recipes: [Factory, Factory][], appInjector: InjectorType) {
   const provided = new Map();
 
   return recipes.reduce((inj, recipe) => {
@@ -128,7 +138,7 @@ export function typeCheckRecipe(recipe) {
 
 const identity = state => state;
 // Helper to add reducer state to custom component
-export function withState(lenses = [], mapStateToProps = identity, actions = {}) {
+export function withState(lenses: any[] = [], mapStateToProps = identity, actions = {}) {
   return Component => {
     const WrappedComponent = ({state, ...props}) => (
       <KeplerGlContext.Consumer>

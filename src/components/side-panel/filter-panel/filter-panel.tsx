@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 import get from 'lodash.get';
@@ -32,10 +31,18 @@ import MultiSelectFilterPanelFactory from 'components/filters/filter-panels/mult
 import RangeFilterPanelFactory from 'components/filters/filter-panels/range-filter-panel';
 import PolygonFilterPanelFactory from 'components/filters/filter-panels/polygon-filter-panel';
 
+import {Filter} from 'reducers/vis-state-updaters';
+import {Field} from 'utils/table-utils/kepler-table';
+import {FilterPanelProps} from 'components/filters/filter-panels/filter-panel-types';
+
 const StyledFilterPanel = styled.div`
   margin-bottom: 12px;
   border-radius: 1px;
 `;
+
+interface FilterPanelPropsImpl extends Omit<FilterPanelProps, 'allAvailableFields'> {
+  filters: Filter[];
+}
 
 FilterPanelFactory.deps = [
   NewFilterPanelFactory,
@@ -47,12 +54,12 @@ FilterPanelFactory.deps = [
 ];
 
 function FilterPanelFactory(
-  NewFilterPanel,
-  TimeRangeFilterPanel,
-  SingleSelectFilterPanel,
-  MultiSelectFilterPanel,
-  RangeFilterPanel,
-  PolygonFilterPanel
+  NewFilterPanel: ReturnType<typeof NewFilterPanelFactory>,
+  TimeRangeFilterPanel: ReturnType<typeof TimeRangeFilterPanelFactory>,
+  SingleSelectFilterPanel: ReturnType<typeof SingleSelectFilterPanelFactory>,
+  MultiSelectFilterPanel: ReturnType<typeof MultiSelectFilterPanelFactory>,
+  RangeFilterPanel: ReturnType<typeof RangeFilterPanelFactory>,
+  PolygonFilterPanel: ReturnType<typeof PolygonFilterPanelFactory>
 ) {
   const FilterPanelComponents = {
     default: NewFilterPanel,
@@ -63,23 +70,9 @@ function FilterPanelFactory(
     [FILTER_TYPES.polygon]: PolygonFilterPanel
   };
 
-  return class FilterPanel extends Component {
-    static propTypes = {
-      idx: PropTypes.number,
-      filters: PropTypes.arrayOf(PropTypes.any).isRequired,
-      filter: PropTypes.object.isRequired,
-      setFilter: PropTypes.func.isRequired,
-      removeFilter: PropTypes.func.isRequired,
-      enlargeFilter: PropTypes.func.isRequired,
-      toggleAnimation: PropTypes.func.isRequired,
-      toggleFilterFeature: PropTypes.func.isRequired,
-      datasets: PropTypes.object,
-      showDatasetTable: PropTypes.func,
-      isAnyFilterAnimating: PropTypes.bool
-    };
-
+  return class FilterPanel extends Component<FilterPanelPropsImpl> {
     /* selectors */
-    fieldsSelector = props => {
+    fieldsSelector = (props: FilterPanelPropsImpl) => {
       const datasetId = props.filter.dataId[0];
       if (!datasetId) {
         return [];
@@ -87,9 +80,9 @@ function FilterPanelFactory(
       return get(props, ['datasets', datasetId, 'fields'], []);
     };
 
-    filterSelector = props => props.filters;
-    nameSelector = props => props.filter.name;
-    dataIdSelector = props => props.filter.dataId[0];
+    filterSelector = (props: FilterPanelPropsImpl) => props.filters;
+    nameSelector = (props: FilterPanelPropsImpl) => props.filter.name;
+    dataIdSelector = (props: FilterPanelPropsImpl) => props.filter.dataId[0];
 
     // only show current field and field that's not already been used as a filter
     availableFieldsSelector = createSelector(
@@ -99,10 +92,11 @@ function FilterPanelFactory(
       this.dataIdSelector,
       (fields, filters, name, dataId) =>
         fields.filter(
-          f =>
+          (f: Field) =>
             f.type &&
             f.type !== ALL_FIELD_TYPES.geojson &&
-            (f.name === name || !filters.find(d => d.name === f.name && d.dataId === dataId))
+            (name.includes(f.name) ||
+              !filters.find(d => d.name.includes(f.name) && d.dataId.includes(dataId)))
         )
     );
 

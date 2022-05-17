@@ -4,14 +4,15 @@
     "allowJs": false,
     "checkJs": false,
     "jsx": "react",
-    "noEmit": true,
     "module": "esnext",
     "moduleResolution": "node",
+    "declaration":true,
+    "emitDeclarationOnly":true,
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noUnusedLocals": true,
-    "outDir": "build/dist",
+    "outDir": "dist",
     "sourceMap": true,
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": false,
@@ -26,15 +27,12 @@
       "*": ["*"]
     }
   },
-  "include": ["src"],
+  "include": [
+    "src"
+  ],
   "exclude": [
-    "src/deckgl-layers/3d-building-layer",
-    "src/deckgl-layers/cluster-layer",
-    "src/deckgl-layers/column-layer",
-    "src/deckgl-layers/grid-layer",
-    "src/deckgl-layers/hexagon-layer",
-    "src/deckgl-layers/line-layer",
-    "src/deckgl-layers/svg-icon-layer",
-    "src/layers"
+    "src/deckgl-layers",
+    "src/layers",
+    "*.js" //TODO remove one all translations finished
   ]
 }

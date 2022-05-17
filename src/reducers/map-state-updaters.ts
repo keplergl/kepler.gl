@@ -34,6 +34,7 @@ export type MapState = {
   height: number;
   isSplit: boolean;
   initialState?: any;
+  scale?: number;
 };
 
 export type Bounds = [number, number, number, number];

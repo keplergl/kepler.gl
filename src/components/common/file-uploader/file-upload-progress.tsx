@@ -73,7 +73,7 @@ interface UploadProgressProps {
   percent: number;
   error?: any;
   theme: any;
-} 
+}
 
 /**
  * @param {object} params
@@ -105,11 +105,10 @@ const UploadProgress = ({message, fileName, percent, error, theme}: UploadProgre
   );
 };
 
-
 interface FileUploadProgressProps {
   fileLoadingProgress: FileLoadingProgress;
   theme: any;
-};
+}
 
 /** @type {React.FunctionComponent<FileUploadProgressProps>} */
 const FileUploadProgress = ({fileLoadingProgress, theme}: FileUploadProgressProps) => (

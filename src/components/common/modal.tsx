@@ -149,9 +149,9 @@ export interface ModalDialogProps {
   onConfirm: (...args: any) => any;
   onCancel: (...args: any) => any;
   confirmButton: object;
-  confirmButtonLabel: string;
+  confirmButtonLabel?: string;
   cancelButton: object;
-  cancelButtonLabel: string;
+  cancelButtonLabel?: string;
   cssStyle?: FlattenSimpleInterpolation | string;
   style?: React.CSSProperties;
   theme: any;

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {createContext} from 'react';
+import {createContext, RefObject} from 'react';
 
 const identity = state => state;
 // New Context API only supported after 16.3
@@ -27,6 +27,6 @@ const KeplerGlContext = createContext({
   id: 'map'
 });
 
-export const RootContext = createContext(null);
+export const RootContext = createContext<RefObject<HTMLDivElement> | null>(null);
 
 export default KeplerGlContext;

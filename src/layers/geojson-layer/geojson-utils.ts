@@ -86,7 +86,7 @@ export function getGeojsonDataMaps(dataContainer: any, getFeature: GetFeature): 
     'GeometryCollection'
   ];
 
-  const dataToFeature: (Feature | null)[] = [];
+  const dataToFeature: GeojsonDataMaps = [];
 
   for (let index = 0; index < dataContainer.numRows(); index++) {
     const feature = parseGeoJsonRawFeature(getFeature({index}));
@@ -149,7 +149,7 @@ export function parseGeometryFromString(geoString: string): Feature | null {
   return normalized.features[0];
 }
 
-export function getGeojsonBounds(features: Feature[] = []): BBox | null {
+export function getGeojsonBounds(features: GeojsonDataMaps = []): BBox | null {
   // 70 ms for 10,000 polygons
   // here we only pick couple
   const maxCount = 10000;
@@ -183,14 +183,16 @@ export const featureToDeckGlGeoType = {
  * @param {Array<Object>} allFeatures
  * @returns {Object} mapping of feature type existence
  */
-export function getGeojsonFeatureTypes(allFeatures: Feature[]): FeatureTypeMap {
+export function getGeojsonFeatureTypes(allFeatures: GeojsonDataMaps): FeatureTypeMap {
   // @ts-expect-error
   const featureTypes: FeatureTypeMap = {};
   for (let f = 0; f < allFeatures.length; f++) {
     const feature = allFeatures[f];
-    const geoType = featureToDeckGlGeoType[feature && feature.geometry && feature.geometry.type];
-    if (geoType) {
-      featureTypes[geoType] = true;
+    if (feature) {
+      const geoType = featureToDeckGlGeoType[feature.geometry && feature.geometry.type];
+      if (geoType) {
+        featureTypes[geoType] = true;
+      }
     }
   }
 
