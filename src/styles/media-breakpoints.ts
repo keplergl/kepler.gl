@@ -36,21 +36,21 @@ const breakPoints = {
  */
 
 export const media = {
-  palm: (...args): string => css`
+  palm: (first, ...args) => css`
     @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
-      ${css(...args)};
+      ${css(first, ...args)};
     }
   `,
 
-  portable: (...args): string => css`
+  portable: (first, ...args) => css`
     @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
-      ${css(...args)};
+      ${css(first, ...args)};
     }
   `,
 
-  desk: (...args): string => css`
+  desk: (first, ...args) => css`
     @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
-      ${css(...args)};
+      ${css(first, ...args)};
     }
   `
 };
