@@ -34,7 +34,6 @@
     "src/deckgl-layers/grid-layer",
     "src/deckgl-layers/hexagon-layer",
     "src/deckgl-layers/line-layer",
-    "src/deckgl-layers/svg-icon-layer",
-    "src/layers"
+    "src/deckgl-layers/svg-icon-layer"
   ]
 }
