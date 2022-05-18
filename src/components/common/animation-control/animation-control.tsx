@@ -49,7 +49,7 @@ const AnimationWidgetInner = styled.div`
 `;
 
 const StyledDomain = styled.div.attrs(props => ({
-  className: props.className || 'animation-control__time-domain'
+  className: `animation-control__time-domain${props.className ? ` ${props.className}` : ''}`
 }))`
   color: ${props => props.theme.titleTextColor};
   font-weight: 400;

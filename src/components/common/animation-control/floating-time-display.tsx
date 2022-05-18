@@ -42,7 +42,7 @@ const StyledTimeDisplayWrapper = styled.div.attrs({
 `;
 
 const StyledTimeDisplay = styled.div.attrs(props => ({
-  className: props.className || 'floating-time-display__inner'
+  className: `floating-time-display__inner${props.className ? ` ${props.className}` : ''}`
 }))`
   background-color: ${props => props.theme.panelBackground};
   border-radius: ${props => props.theme.timeDisplayBorderRadius}px;
