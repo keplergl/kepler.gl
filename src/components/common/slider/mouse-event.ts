@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import document from 'global/document';
-import {RefObject} from 'react';
+import {RefObject, TouchEvent, TouchEventHandler, MouseEventHandler as ReactMouseEventHandler, MouseEvent} from 'react';
 import {StyleRangeSliderType} from './slider';
 
 function nope(...args) {}
@@ -53,7 +53,7 @@ export default class MouseEventHandler {
     this.setAnchor = setAnchor;
   }
 
-  handleMouseDown = (e: MouseEvent) => {
+  handleMouseDown: ReactMouseEventHandler = (e: MouseEvent) => {
     document.addEventListener('mouseup', this.mouseup);
     document.addEventListener('mousemove', this.mousemove);
     if (this.setAnchor) {
@@ -78,7 +78,7 @@ export default class MouseEventHandler {
   };
 
   private getDistanceToTrack(pos: number) {
-    const trackRect = this.track.current.getBoundingClientRect();
+    const trackRect = this.track.current!.getBoundingClientRect();
     return pos - (this.vertical ? trackRect.bottom : trackRect.left);
   }
 
@@ -88,7 +88,7 @@ export default class MouseEventHandler {
     this.valueListener(this.getDistanceToTrack(pos));
   };
 
-  handleTouchStart = (e: TouchEvent) => {
+  handleTouchStart: TouchEventHandler = (e: TouchEvent) => {
     // TODO: fix touch event
     document.addEventListener('touchend', this.touchend);
     document.addEventListener('touchmove', this.touchmove);

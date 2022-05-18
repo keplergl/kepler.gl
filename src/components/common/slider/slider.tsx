@@ -28,16 +28,25 @@ import {normalizeSliderValue, clamp} from 'utils/data-utils';
 
 function noop() {}
 
-const StyledRangeSlider = styled.div`
+interface StyledRangeSliderProps {
+  vertical?: boolean;
+}
+
+const StyledRangeSlider = styled.div<StyledRangeSliderProps>`
   position: relative;
   background-color: ${props => props.theme.sliderBarBgd};
   ${props => `${props.vertical ? 'width' : 'height'}: ${props.theme.sliderBarHeight}px`};
   ${props => `${props.vertical ? 'height' : 'width'}: 100%`};
 `;
 
-export type StyleRangeSliderType = typeof StyledRangeSlider;
+export type StyleRangeSliderType = typeof StyledRangeSlider & HTMLDivElement;
 
-const SliderWrapper = styled.div`
+interface SliderWrapperProps {
+  isRanged?: boolean;
+  vertical?: boolean;
+}
+
+const SliderWrapper = styled.div<SliderWrapperProps>`
   flex-grow: 1;
 `;
 
@@ -82,7 +91,7 @@ export default class Slider extends Component {
 
   private anchor: number = 0;
 
-  public ref: RefObject<typeof SliderWrapper> = createRef<typeof SliderWrapper>();
+  public ref: RefObject<typeof SliderWrapper & HTMLDivElement> = createRef<typeof SliderWrapper & HTMLDivElement>();
   public track: RefObject<StyleRangeSliderType> = createRef<StyleRangeSliderType>();
 
   constructor(public props: SliderProps) {
@@ -95,7 +104,7 @@ export default class Slider extends Component {
   };
 
   private getBaseDistance() {
-    return this.props.vertical ? this.ref.current.offsetHeight : this.ref.current.offsetWidth;
+    return this.props.vertical ? this.ref.current!.offsetHeight : this.ref.current!.offsetWidth;
   }
 
   private getDeltaVal(x: number) {
