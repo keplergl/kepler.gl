@@ -35,8 +35,6 @@ import {
   ShowDataTableProps
 } from './types';
 
-function nop(_) {}
-
 const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
   color: ${props => props.theme.textColor};
   display: flex;
@@ -69,13 +67,13 @@ const DataTagAction = styled.div`
   opacity: 0;
 `;
 
-const ShowDataTable = ({id, showDatasetTable = nop}: ShowDataTableProps) => (
+const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
   <DataTagAction className="dataset-action show-data-table" data-tip data-for={`data-table-${id}`}>
     <Table
       height="16px"
       onClick={e => {
         e.stopPropagation();
-        showDatasetTable(id);
+        showDatasetTable?.(id);
       }}
     />
     <Tooltip id={`data-table-${id}`} effect="solid">
@@ -86,7 +84,7 @@ const ShowDataTable = ({id, showDatasetTable = nop}: ShowDataTableProps) => (
   </DataTagAction>
 );
 
-const RemoveDataset = ({datasetKey, removeDataset = nop}: RemoveDatasetProps) => (
+const RemoveDataset = ({datasetKey, removeDataset}: RemoveDatasetProps) => (
   <DataTagAction
     className="dataset-action remove-dataset"
     data-tip
@@ -96,7 +94,7 @@ const RemoveDataset = ({datasetKey, removeDataset = nop}: RemoveDatasetProps) =>
       height="16px"
       onClick={e => {
         e.stopPropagation();
-        removeDataset(datasetKey);
+        removeDataset?.(datasetKey);
       }}
     />
     <Tooltip id={`delete-${datasetKey}`} effect="solid" type="error">

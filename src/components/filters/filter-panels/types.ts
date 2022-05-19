@@ -1,7 +1,7 @@
 import {FunctionComponent, ComponentType} from 'react';
-import {Datasets, Filter, PolygonFilter, TimeRangeFilter} from 'reducers';
+import {Filter, PolygonFilter, TimeRangeFilter} from 'reducers';
 import {Layer} from 'layers';
-import {Field} from 'utils/table-utils/kepler-table';
+import KeplerTable, {Field} from 'utils/table-utils/kepler-table';
 
 interface PanelAction {
   id: string;
@@ -13,7 +13,7 @@ interface PanelAction {
 
 export interface FilterPanelProps<F = Filter> {
   idx: number;
-  datasets: Datasets;
+  datasets: KeplerTable[];
   allAvailableFields: Field[];
   filter: F;
   removeFilter: () => void;

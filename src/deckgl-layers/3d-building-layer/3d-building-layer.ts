@@ -24,13 +24,13 @@ import {getTileData} from './3d-building-utils';
 import {ThreeDBuildingLayerProps, Coordinates, TileDataItem} from './types';
 import {SolidPolygonLayer} from '@deck.gl/layers';
 
-export default class ThreeDBuildingLayer extends CompositeLayer<ThreeDBuildingLayerProps> {
+export default class ThreeDBuildingLayer extends CompositeLayer<{}, ThreeDBuildingLayerProps> {
   // this layer add its subLayers to the redux store, and push sample data
 
   renderSubLayers(props: ThreeDBuildingLayerProps) {
-    return new SolidPolygonLayer({
+    return new SolidPolygonLayer<TileDataItem>({
       ...props,
-      parameter: {
+      parameters: {
         blendFunc: ['SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA', 'ONE', 'ONE_MINUS_SRC_ALPHA'],
         blendEquation: ['FUNC_ADD', 'FUNC_ADD']
       },

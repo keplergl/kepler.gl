@@ -24,10 +24,12 @@ import {useIntl} from 'react-intl';
 import ActionPanel, {ActionPanelItem} from 'components/common/action-panel';
 import styled from 'styled-components';
 import onClickOutside from 'react-onclickoutside';
-import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import {Trash, Layers, Copy, Checkmark} from 'components/common/icons';
 import copy from 'copy-to-clipboard';
+import {Layer} from 'layers';
+import {Datasets, Filter} from 'reducers';
+import {Feature} from '@nebula.gl/edit-modes';
 
 const LAYOVER_OFFSET = 4;
 
@@ -37,7 +39,22 @@ const StyledActionsLayer = styled.div`
 
 PureFeatureActionPanelFactory.deps = [];
 
-export function PureFeatureActionPanelFactory() {
+export interface FeatureActionPanelProps {
+  className?: string;
+  datasets: Datasets;
+  selectedFeature: Feature | null;
+  position: {
+    x: number;
+    y: number;
+  } | null;
+  layers: Layer[];
+  currentFilter?: Filter;
+  onToggleLayer: (l: Layer) => void;
+  onDeleteFeature: () => void;
+  onClose: () => void;
+}
+
+export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProps> {
   const FeatureActionPanel = ({
     className,
     datasets,
@@ -47,7 +64,7 @@ export function PureFeatureActionPanelFactory() {
     currentFilter,
     onToggleLayer,
     onDeleteFeature
-  }) => {
+  }: FeatureActionPanelProps) => {
     const [copied, setCopied] = useState(false);
     const {layerId = []} = currentFilter || {};
     const intl = useIntl();
@@ -56,6 +73,10 @@ export function PureFeatureActionPanelFactory() {
       if (selectedFeature?.geometry) copy(JSON.stringify(selectedFeature.geometry));
       setCopied(true);
     }, [selectedFeature?.geometry]);
+
+    if (!position) {
+      return null;
+    }
 
     return (
       <StyledActionsLayer
@@ -75,6 +96,7 @@ export function PureFeatureActionPanelFactory() {
               <ActionPanelItem
                 key={index}
                 label={layer.config.label}
+                // @ts-ignore
                 color={datasets[layer.config.dataId].color}
                 isSelection={true}
                 isActive={layerId.includes(layer.id)}
@@ -102,18 +124,8 @@ export function PureFeatureActionPanelFactory() {
   };
 
   FeatureActionPanel.displayName = 'FeatureActionPanel';
-  FeatureActionPanel.propTypes = {
-    className: PropTypes.string,
-    datasets: PropTypes.object.isRequired,
-    position: PropTypes.object.isRequired,
-    layers: PropTypes.arrayOf(PropTypes.object).isRequired,
-    currentFilter: PropTypes.object,
-    onClose: PropTypes.func.isRequired,
-    onDeleteFeature: PropTypes.func.isRequired
-  };
-
   FeatureActionPanel.defaultProps = {
-    position: {}
+    position: null
   };
 
   return FeatureActionPanel;
@@ -124,9 +136,9 @@ FeatureActionPanelFactory.deps = PureFeatureActionPanelFactory.deps;
 export default function FeatureActionPanelFactory() {
   const PureFeatureActionPanel = PureFeatureActionPanelFactory();
 
-  const ClickOutsideFeatureActionPanel = props => {
+  const ClickOutsideFeatureActionPanel: React.FC<FeatureActionPanelProps> = props => {
     // @ts-ignore
-    ClickOutsideFeatureActionPanel.handleClickOutside = e => {
+    ClickOutsideFeatureActionPanel.handleClickOutside = (e: Event) => {
       e.preventDefault();
       e.stopPropagation();
       props.onClose?.();

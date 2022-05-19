@@ -44,6 +44,7 @@ import {
 import {getHTMLMapModeTileUrl} from 'utils/utils';
 import {TOOLTIP_FORMAT_TYPES} from './tooltip';
 import {LAYER_TYPES} from 'layers/types';
+import {RGBAColor} from 'reducers';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
@@ -435,7 +436,7 @@ export const FILED_TYPE_DISPLAY = {
 export const FIELD_COLORS = {
   default: RED
 };
-export const HIGHLIGH_COLOR_3D = [255, 255, 255, 60];
+export const HIGHLIGH_COLOR_3D: RGBAColor = [255, 255, 255, 60];
 export const CHANNEL_SCALES = keyMirror({
   color: null,
   radius: null,
@@ -654,7 +655,7 @@ export const DEFAULT_LAYER_COLOR = {
 // let user pass in default tooltip fields
 export const DEFAULT_TOOLTIP_FIELDS: any[] = [];
 
-export const NO_VALUE_COLOR: [number, number, number, number] = [0, 0, 0, 0];
+export const NO_VALUE_COLOR: RGBAColor = [0, 0, 0, 0];
 
 export const LAYER_BLENDINGS = {
   additive: {
@@ -904,7 +905,7 @@ export const EDITOR_MODES = {
   EDIT: EditorModes.EDIT_VERTEX
 };
 
-export const EDITOR_AVAILABLE_LAYERS = [
+export const EDITOR_AVAILABLE_LAYERS: string[] = [
   LAYER_TYPES.point,
   LAYER_TYPES.hexagon,
   LAYER_TYPES.arc,

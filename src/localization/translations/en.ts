@@ -285,7 +285,7 @@ export default {
     },
     addStyle: {
       publishTitle:
-        '2. If entered mapbox stule url in step.1, publish your style at mapbox or provide access token. (Optional)',
+        '2. If entered mapbox style url in step.1, publish your style at mapbox or provide access token. (Optional)',
       publishSubtitle1: 'You can create your own map style at',
       publishSubtitle2: 'and',
       publishSubtitle3: 'publish',

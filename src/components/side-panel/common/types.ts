@@ -1,6 +1,7 @@
 import React, {MouseEvent} from 'react';
-import {Datasets, RGBColor} from 'reducers';
 import KeplerTable from 'utils/table-utils/kepler-table';
+import {openDeleteModal} from 'actions/ui-state-actions';
+import * as VisStateActions from 'actions/vis-state-actions';
 
 export type DatasetInfoProps = {
   dataset: KeplerTable;
@@ -14,19 +15,19 @@ export type UpdateTableColorTypes = {
 export type DatasetTagProps = {
   id?: string;
   dataset: KeplerTable;
-  updateTableColor?: (d: string, c?: RGBColor) => void;
+  updateTableColor?: typeof VisStateActions.updateTableColor;
   onClick?: (e: MouseEvent) => void;
   onClickSquare?: (e: MouseEvent) => void;
 };
 
 export type ShowDataTableProps = {
   id: string;
-  showDatasetTable: (i: string) => void;
+  showDatasetTable?: typeof VisStateActions.showDatasetTable;
 };
 
 export type RemoveDatasetProps = {
   datasetKey: string;
-  removeDataset?: (d: string) => void;
+  removeDataset?: typeof openDeleteModal;
 };
 
 export type StyledDatasetTitleProps = {
@@ -35,20 +36,20 @@ export type StyledDatasetTitleProps = {
 
 export type DatasetTitleProps = {
   dataset: KeplerTable;
-  showDatasetTable?: (i: string) => void;
   showDeleteDataset: boolean;
   onTitleClick?: () => void;
-  updateTableColor?: (d: string, c?: RGBColor) => void;
-  removeDataset?: (d: string) => void;
+  showDatasetTable?: typeof VisStateActions.showDatasetTable;
+  updateTableColor: typeof VisStateActions.updateTableColor;
+  removeDataset?: typeof openDeleteModal;
 };
 
 export type SourceDataCatalogProps = {
-  datasets: Datasets;
-  showDatasetTable?: (i: string) => void;
+  datasets: KeplerTable[];
   showDeleteDataset?: boolean;
   onTitleClick?: () => void;
-  updateTableColor?: (d: string, c?: RGBColor) => void;
-  removeDataset?: (d: string) => void;
+  showDatasetTable?: typeof VisStateActions.showDatasetTable;
+  updateTableColor: typeof VisStateActions.updateTableColor;
+  removeDataset?: typeof openDeleteModal;
 };
 
 export type DatasetItemProps = {
@@ -57,7 +58,7 @@ export type DatasetItemProps = {
 
 export type SourceDataSelectorProps = {
   dataId: string | string[];
-  datasets: Datasets;
+  datasets: KeplerTable[];
   disabled: boolean;
   defaultValue?: string;
   inputTheme: string;

@@ -18,14 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {ComponentType} from 'react';
 import styled from 'styled-components';
 import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import {Trash} from 'components/common/icons';
 import {createLinearGradient} from 'utils/color-utils';
 import {StyledPanelHeader} from 'components/common/styled-components';
-import {FilterPanelHeaderProps} from './types';
-import {RGBColor} from 'reducers';
+import {Filter, RGBColor} from 'reducers';
+import KeplerTable from 'utils/table-utils/kepler-table';
 
 export const StyledFilterHeader = styled(StyledPanelHeader)<{
   labelRCGColorValues: RGBColor[];
@@ -38,7 +38,7 @@ export const StyledFilterHeader = styled(StyledPanelHeader)<{
   }
 
   border-left: 3px solid;
-  ${props =>
+  ${(props: {labelRCGColorValues: KeplerTable['color'][]}) =>
     props.labelRCGColorValues && props.labelRCGColorValues.length > 0
       ? `border-image: ${createLinearGradient('bottom', props.labelRCGColorValues)} 3;`
       : 'border-color: transparent;'};
@@ -49,22 +49,32 @@ const StyledChildrenContainer = styled.div`
   flex: 2;
 `;
 
+type FilterPanelHeaderProps = {
+  children: React.ReactNode;
+  datasets: KeplerTable[];
+  filter: Filter;
+  removeFilter: () => void;
+  actionIcons?: Record<string, ComponentType>;
+};
+
 FilterPanelHeaderFactory.deps = [PanelHeaderActionFactory];
 
-function FilterPanelHeaderFactory(PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>) {
+function FilterPanelHeaderFactory(
+  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
+): React.ComponentType<FilterPanelHeaderProps> {
   const defaultActionIcons = {
     delete: Trash
   };
-  const FilterPanelHeader: React.FunctionComponent<FilterPanelHeaderProps> = ({
+  const FilterPanelHeader = ({
     children,
     datasets,
     filter,
     removeFilter,
     actionIcons = defaultActionIcons
-  }) => (
+  }: FilterPanelHeaderProps) => (
     <StyledFilterHeader
       className="filter-panel__header"
-      labelRCGColorValues={datasets.map(d => d.color)}
+      labelRCGColorValues={datasets.map((d: KeplerTable) => d.color)}
     >
       <StyledChildrenContainer>{children}</StyledChildrenContainer>
       <PanelHeaderAction
