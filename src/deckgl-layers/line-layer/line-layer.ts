@@ -20,6 +20,7 @@
 
 import {LineLayer, LineLayerProps} from '@deck.gl/layers';
 import GL from '@luma.gl/constants';
+import {RGBAColor} from 'deck.gl';
 import {editShader} from '../../deckgl-layers/layer-utils/shader-utils';
 
 const defaultProps = {
@@ -86,7 +87,7 @@ function addElevationScale(vs) {
 
 export default class EnhancedLineLayer extends LineLayer<
   any,
-  LineLayerProps<any> & {elevationScale: number}
+  LineLayerProps<any> & {elevationScale: number; getTargetColor: RGBAColor}
 > {
   getShaders() {
     const shaders = super.getShaders();
