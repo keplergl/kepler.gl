@@ -376,6 +376,7 @@ export default class IconLayer extends Layer {
 
           ...(hoveredObject
             ? [
+                // @ts-expect-error SvgIconLayerProps needs getIcon Field
                 new SvgIconLayer({
                   ...this.getDefaultHoverLayerProps(),
                   ...layerProps,
