@@ -35,60 +35,76 @@ const TippyArrow = styled.div`
   }
 `;
 
-const TippyTooltipContent = styled(({children, ...props}) => (
+const TippyTooltipContent = styled(({children, arrow, isLightTheme, ...props}) => (
   <div {...props}>
     {children}
-    <TippyArrow className="svg-arrow" data-popper-arrow="">
-      <svg width={15} height={15}>
-        <path d="M2,7.5 7.5,2 13,7.5Z" />
-      </svg>
-    </TippyArrow>
+    {arrow ? (
+      <TippyArrow className="svg-arrow" data-popper-arrow="">
+        <svg width={15} height={15}>
+          <path d="M2,7.5 7.5,2 13,7.5Z" />
+        </svg>
+      </TippyArrow>
+    ) : null}
   </div>
 ))`
   font-family: ${props => props.theme.fontFamily};
   font-size: ${props => props.theme.tooltipFontSize};
   font-weight: 400;
   padding: 7px 18px;
-  box-shadow: ${props => props.theme.tooltipBoxShadow};
-  background-color: ${props => props.theme.tooltipBg};
-  color: ${props => props.theme.tooltipColor};
+  box-shadow: ${props =>
+    props.isLightTheme ? props.theme.panelBoxShadow : props.theme.tooltipBoxShadow};
+  background-color: ${props =>
+    props.isLightTheme ? props.theme.tooltipBgLT : props.theme.tooltipBg};
+  color: ${props => (props.isLightTheme ? props.theme.tooltipColorLT : props.theme.tooltipColor)};
   border-radius: ${props => props.theme.primaryBtnRadius};
-  &[data-placement^='top'] > .svg-arrow {
-    bottom: 0;
-    &::after,
-    > svg {
-      top: 7px;
-      transform: rotate(180deg);
+  ${props =>
+    props.arrow
+      ? `
+    &[data-placement^='top'] > .svg-arrow {
+      bottom: 0;
+      &::after,
+      > svg {
+        top: 7px;
+        transform: rotate(180deg);
+      }
     }
-  }
 
-  &[data-placement^='bottom'] > .svg-arrow {
-    top: 0;
-    > svg {
-      bottom: 7px;
+    &[data-placement^='bottom'] > .svg-arrow {
+      top: 0;
+      > svg {
+        bottom: 7px;
+      }
     }
-  }
 
-  &[data-placement^='left'] > .svg-arrow {
-    right: 0;
-    &::after,
-    > svg {
-      transform: rotate(90deg);
-      left: 7px;
+    &[data-placement^='left'] > .svg-arrow {
+      right: 0;
+      &::after,
+      > svg {
+        transform: rotate(90deg);
+        left: 7px;
+      }
     }
-  }
 
-  &[data-placement^='right'] > .svg-arrow {
-    left: 0;
-    &::after,
-    > svg {
-      transform: rotate(-90deg);
-      right: 7px;
+    &[data-placement^='right'] > .svg-arrow {
+      left: 0;
+      &::after,
+      > svg {
+        transform: rotate(-90deg);
+        right: 7px;
+      }
     }
-  }
+  `
+      : ''}
 `;
 
-const TippyTooltip = ({children, render, duration = 200, ...rest}: TippyProps) => {
+const TippyTooltip = ({
+  children,
+  render,
+  duration = 200,
+  arrow = true,
+  isLightTheme = false,
+  ...rest
+}: TippyProps & {isLightTheme?: boolean}) => {
   const [opacity, setOpacity] = useState(0);
   const [timer, setTimer] = useState(null);
   function onMount() {
@@ -121,7 +137,12 @@ const TippyTooltip = ({children, render, duration = 200, ...rest}: TippyProps) =
           appendTo={context?.current || 'parent'}
           animation={true}
           render={attrs => (
-            <TippyTooltipContent {...attrs} style={{opacity, transition: `opacity ${duration}ms`}}>
+            <TippyTooltipContent
+              {...attrs}
+              style={{opacity, transition: `opacity ${duration}ms`}}
+              arrow={arrow}
+              isLightTheme={isLightTheme}
+            >
               {render?.(attrs)}
             </TippyTooltipContent>
           )}

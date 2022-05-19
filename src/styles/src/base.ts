@@ -283,7 +283,9 @@ export const panelBorderLT = `1px solid ${borderColorLT}`;
 export const mapPanelBackgroundColor = '#242730';
 export const mapPanelHeaderBackgroundColor = '#29323C';
 export const tooltipBg = '#3A414C';
+export const tooltipBgLT = '#1869B5';
 export const tooltipColor = textColorHl;
+export const tooltipColorLT = '#FFFFFF';
 export const tooltipBoxShadow = boxShadow;
 export const tooltipFontSize = '10px';
 
@@ -1397,7 +1399,9 @@ export const theme = {
   textTruncate,
   titleColorLT,
   tooltipBg,
+  tooltipBgLT,
   tooltipColor,
+  tooltipColorLT,
   tooltipBoxShadow,
   tooltipFontSize,
   logoColor,
@@ -1547,8 +1551,8 @@ export const themeLT = {
   titleTextColor: '#000000',
   sidePanelHeaderBg: '#F7F7F7',
   subtextColorActive: activeColorLT,
-  tooltipBg: '#1869B5',
-  tooltipColor: '#FFFFFF',
+  tooltipBg: tooltipBgLT,
+  tooltipColor: tooltipColorLT,
   dropdownListBgd: '#FFFFFF',
   toolbarItemBgdHover: '#F7F7F7',
   textColorHl: activeColorLT,
