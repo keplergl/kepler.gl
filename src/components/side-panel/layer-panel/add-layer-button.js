@@ -92,7 +92,7 @@ const TYPEAHEAD_INPUT_CLASS = 'typeahead__input';
 function AddLayerButtonFactory() {
   const ListItem = ({value}) => (
     <ListItemWrapper>
-      <DatasetSquare className="dataset-color" color={value.color} />
+      <DatasetSquare className="dataset-color" backgroundColor={value.color} />
       <div className="dataset-name" title={value.label}>
         {value.label}
       </div>

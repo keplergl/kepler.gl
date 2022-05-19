@@ -27,9 +27,9 @@ interface StyledDivProps {
   active?: boolean;
 }
 
-const StyledDiv = styled.div.attrs({
-  className: 'toolbar-item'
-})<StyledDivProps>`
+const StyledDiv = styled.div.attrs(props => ({
+  className: `toolbar-item${props.className ? ` ${props.className}` : ''}`
+}))<StyledDivProps>`
   color: ${props =>
     props.active ? props.theme.toolbarItemIconHover : props.theme.panelHeaderIcon};
   padding: 12px 20px;
@@ -71,7 +71,6 @@ export type ToolbarItemProps = {
   icon?: ComponentType<any>;
 };
 
-/** @type {typeof import('./toolbar-item').ToolbarItem} */
 const ToolbarItem = React.memo((props: ToolbarItemProps) => (
   <StyledDiv
     id={props.id}

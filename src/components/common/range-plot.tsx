@@ -38,12 +38,12 @@ interface RangePlotProps {
   value: number[];
   width: number;
   plotType?: string;
-  lineChart: LineChart;
+  lineChart?: LineChart;
   histogram?: {x0: number; x1: number}[];
   isEnlarged?: boolean;
   isRanged?: boolean;
   theme: any;
-  timeFormat: string;
+  timeFormat?: string;
   timezone?: string;
   playbackControlWidth?: number;
 }

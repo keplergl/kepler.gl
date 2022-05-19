@@ -147,7 +147,6 @@ export default function ModalContainerFactory(
   SaveMapModal: ReturnType<typeof SaveMapModalFactory>,
   ShareMapModal: ReturnType<typeof ShareMapModalFactory>
 ): React.ElementType<ModalContainerProps> {
-  /** @typedef {import('./modal-container').ModalContainerProps} ModalContainerProps */
   /** @augments React.Component<ModalContainerProps> */
   class ModalContainer extends Component<ModalContainerProps> {
     // TODO - remove when prop types are fully exported
@@ -311,6 +310,7 @@ export default function ModalContainerFactory(
             );
 
             // TODO: we need to make this width consistent with the css rule defined modal.js:32 max-width: 70vw
+            // @ts-ignore // TODO fix this after add types to Theme
             modalProps.cssStyle = css`
               ${DataTableModalStyle};
               ${media.palm`

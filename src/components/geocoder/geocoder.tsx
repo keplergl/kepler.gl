@@ -29,6 +29,10 @@ import {Input} from 'components/common/styled-components';
 import {Search, Delete} from 'components/common/icons';
 import {Viewport} from 'reducers/map-state-updaters';
 
+type StyledContainerProps = {
+  width?: number;
+};
+
 // matches only valid coordinates
 const COORDINATE_REGEX_STRING =
   '^[-+]?([1-8]?\\d(\\.\\d+)?|90(\\.0+)?),\\s*[-+]?(180(\\.0+)?|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+)?)';
@@ -50,7 +54,7 @@ export const testForCoordinates = (query: string): [true, number, number] | [fal
   return [isValid, Number(tokens[0]), Number(tokens[1])];
 };
 
-const StyledContainer = styled.div`
+const StyledContainer = styled.div<StyledContainerProps>`
   position: relative;
   color: ${props => props.theme.textColor};
 

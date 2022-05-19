@@ -21,6 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {CenterFlexbox, DatasetSquare} from 'components/common/styled-components';
+import KeplerTable from 'utils/table-utils/kepler-table';
 
 const DatasetName = styled.div.attrs({
   className: 'dataset-name'
@@ -31,15 +32,12 @@ const DatasetName = styled.div.attrs({
 `;
 
 interface DatasetLabelType {
-  dataset: {
-    color?: string;
-    label?: string;
-  };
+  dataset: KeplerTable;
 }
 
 const DatasetLabel = ({dataset}: DatasetLabelType) => (
   <CenterFlexbox>
-    <DatasetSquare className="dataset-clolor" color={dataset.color} />
+    <DatasetSquare className="dataset-color" backgroundColor={dataset.color} />
     <DatasetName>{dataset.label}</DatasetName>
   </CenterFlexbox>
 );

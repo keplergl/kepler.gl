@@ -51,11 +51,11 @@ const addEventListeners = () => {
 };
 
 interface GetChildPosProps {
-  offsets: {
+  offsets: Partial<{
     topOffset: number;
     leftOffset: number;
     rightOffset: number;
-  };
+  }>;
   rect: DOMRect;
   childRect: DOMRect;
   pageOffset: {
@@ -72,7 +72,7 @@ export const getChildPos = ({offsets, rect, childRect, pageOffset, padding}: Get
   const pos = {
     top: pageOffset.y + rect.top + (topOffset || 0),
     ...(anchorLeft
-      ? {left: pageOffset.x + rect.left + leftOffset}
+      ? {left: pageOffset.x + rect.left + leftOffset!}
       : {right: window.innerWidth - rect.right - pageOffset.x + (rightOffset || 0)})
   };
 
@@ -140,10 +140,11 @@ interface PortaledProps {
   isOpened?: boolean;
   top: number;
   left?: number;
-  right: number;
+  right?: number;
   overlayZIndex?: number;
   modalProps?: Partial<ReactModal.Props>;
   modalStyle?: Partial<typeof defaultModalStyle>;
+  children: React.ReactNode;
 }
 
 interface PortaledState {

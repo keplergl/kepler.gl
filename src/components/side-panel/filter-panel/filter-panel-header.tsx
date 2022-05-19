@@ -36,7 +36,7 @@ export const StyledFilterHeader = styled(StyledPanelHeader)`
   }
 
   border-left: 3px solid;
-  ${(props: {labelRCGColorValues: KeplerTable['color'][]}) =>
+  ${props =>
     props.labelRCGColorValues && props.labelRCGColorValues.length > 0
       ? `border-image: ${createLinearGradient('bottom', props.labelRCGColorValues)} 3;`
       : 'border-color: transparent;'};
