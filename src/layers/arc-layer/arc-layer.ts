@@ -42,6 +42,7 @@ import {
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
 import KeplerTable from '../../utils/table-utils/kepler-table';
+import {notNullorUndefined} from 'utils';
 
 export type ArcLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -218,6 +219,9 @@ export default class ArcLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
+    if (!notNullorUndefined(this.config.dataId)) {
+      return {};
+    }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);
     const accessors = this.getAttributeAccessors({dataContainer});

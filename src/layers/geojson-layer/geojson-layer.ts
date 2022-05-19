@@ -51,7 +51,7 @@ import {
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import {Merge, RGBColor} from '../../reducers';
 import {ColorRange} from '../../constants/color-ranges';
-import {KeplerTable} from '../../utils';
+import {KeplerTable, notNullorUndefined} from '../../utils';
 
 const SUPPORTED_ANALYZER_TYPES = {
   [DATA_TYPES.GEOMETRY]: true,
@@ -325,6 +325,9 @@ export default class GeoJsonLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
+    if (!notNullorUndefined(this.config.dataId)) {
+      return {};
+    }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);
 

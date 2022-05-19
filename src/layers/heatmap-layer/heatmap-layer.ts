@@ -29,6 +29,7 @@ import {DataContainerInterface} from 'utils/table-utils/data-container-interface
 import {VisConfigColorRange, VisConfigNumber} from '../layer-factory';
 import {ColorRange} from 'constants/color-ranges';
 import {HexColor, Merge} from 'reducers';
+import {notNullorUndefined} from 'utils';
 
 export type HeatmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -231,6 +232,9 @@ class HeatmapLayer extends MapboxGLLayer {
   );
 
   formatLayerData(datasets, oldLayerData) {
+    if (!notNullorUndefined(this.config.dataId)) {
+      return {};
+    }
     const {weightField} = this.config;
     const {dataContainer} = datasets[this.config.dataId];
     const getPosition = this.getPositionAccessor(dataContainer);

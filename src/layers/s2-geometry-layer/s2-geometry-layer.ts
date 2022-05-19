@@ -21,7 +21,7 @@
 import {S2Layer} from '@deck.gl/geo-layers';
 import {HIGHLIGH_COLOR_3D, CHANNEL_SCALES} from 'constants/default-settings';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
-import {KeplerTable} from '../../utils';
+import {KeplerTable, notNullorUndefined} from '../../utils';
 import {createDataContainer} from 'utils/table-utils';
 import {ColorRange} from '../../constants/color-ranges';
 import {Merge, RGBColor} from '../../reducers';
@@ -305,6 +305,9 @@ export default class S2GeometryLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData, opt = {}) {
+    if (!notNullorUndefined(this.config.dataId)) {
+      return {};
+    }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getS2Token = this.getPositionAccessor(dataContainer);
     const {data} = this.updateData(datasets, oldLayerData);

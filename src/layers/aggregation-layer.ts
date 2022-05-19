@@ -37,7 +37,7 @@ import {
 } from '../constants/default-settings';
 import {Datasets, Merge} from '../reducers';
 import {ColorRange} from '../constants/color-ranges';
-import {KeplerTable} from '../utils';
+import {KeplerTable, notNullorUndefined} from '../utils';
 
 type AggregationLayerColumns = {
   lat: LayerColumn;
@@ -281,6 +281,9 @@ export default class AggregationLayer extends Layer {
   }
 
   formatLayerData(datasets: Datasets, oldLayerData) {
+    if (!notNullorUndefined(this.config.dataId)) {
+      return {};
+    }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getPosition = this.getPositionAccessor(dataContainer);
 

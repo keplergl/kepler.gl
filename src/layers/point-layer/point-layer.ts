@@ -44,7 +44,7 @@ import {
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
 import {LAYER_VIS_CONFIGS} from '../layer-factory';
-import {KeplerTable} from '../../utils';
+import {KeplerTable, notNullorUndefined} from '../../utils';
 
 export type PointLayerVisConfigSettings = {
   radius: VisConfigNumber;
@@ -292,6 +292,9 @@ export default class PointLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
+    if (!notNullorUndefined(this.config.dataId)) {
+      return {};
+    }
     const {textLabel} = this.config;
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data, triggerChanged} = this.updateData(datasets, oldLayerData);

@@ -36,7 +36,7 @@ import {
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
 import {Merge} from '../../reducers';
-import {KeplerTable} from '../../utils';
+import {KeplerTable, notNullorUndefined} from '../../utils';
 
 export type IconLayerColumnsConfig = {
   lat: LayerColumn;
@@ -276,6 +276,9 @@ export default class IconLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
+    if (!notNullorUndefined(this.config.dataId)) {
+      return {};
+    }
     const {textLabel} = this.config;
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
 
