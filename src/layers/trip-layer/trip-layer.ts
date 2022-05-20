@@ -39,7 +39,7 @@ import {DataContainerInterface} from '../../utils/table-utils/data-container-int
 import {ColorRange} from '../../constants/color-ranges';
 import {VisConfigColorRange, VisConfigNumber, VisConfigRange} from '../layer-factory';
 import {Merge} from '../../reducers';
-import {KeplerTable, notNullorUndefined} from '../../utils';
+import {KeplerTable} from '../../utils';
 
 export type TripLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -244,7 +244,7 @@ export default class TripLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
-    if (!notNullorUndefined(this.config.dataId)) {
+    if (this.config.dataId === null) {
       return {};
     }
     // to-do: parse segment from dataContainer

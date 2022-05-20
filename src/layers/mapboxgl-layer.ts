@@ -24,7 +24,6 @@ import {createSelector} from 'reselect';
 import {geoJsonFromData, prefixGpuField, gpuFilterToMapboxFilter} from './mapbox-utils';
 import KeplerTable from '../utils/table-utils/kepler-table';
 import {Merge} from '../reducers';
-import {notNullorUndefined} from 'utils';
 
 type MapboxLayerGLColumns = {
   lat: LayerColumn;
@@ -70,7 +69,7 @@ class MapboxLayerGL extends Layer {
   }
   datasetSelector = (config: MapboxLayerGLConfig) => config.dataId;
   gpuFilterSelector = (config: MapboxLayerGLConfig, datasets) =>
-    ((notNullorUndefined(config.dataId) && datasets[config.dataId]) || {}).gpuFilter;
+    ((config.dataId && datasets[config.dataId]) || {}).gpuFilter;
   columnsSelector = (config: MapboxLayerGLConfig) => pointColResolver(config.columns);
 
   sourceSelector = createSelector(

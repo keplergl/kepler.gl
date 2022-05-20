@@ -36,7 +36,7 @@ import {
 } from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
 import {Merge} from '../../reducers';
-import {KeplerTable, notNullorUndefined} from '../../utils';
+import {KeplerTable} from '../../utils';
 
 export type IconLayerColumnsConfig = {
   lat: LayerColumn;
@@ -276,7 +276,7 @@ export default class IconLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
-    if (!notNullorUndefined(this.config.dataId)) {
+    if (this.config.dataId === null) {
       return {};
     }
     const {textLabel} = this.config;

@@ -43,7 +43,7 @@ import {
 import {Merge} from '../../reducers';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import {ColorRange} from '../../constants/color-ranges';
-import {KeplerTable, notNullorUndefined} from '../../utils';
+import {KeplerTable} from '../../utils';
 
 export type HexagonIdLayerColumnsConfig = {
   hex_id: LayerColumn;
@@ -238,7 +238,7 @@ export default class HexagonIdLayer extends Layer {
   // TODO: fix complexity
   /* eslint-disable complexity */
   formatLayerData(datasets, oldLayerData, opt = {}) {
-    if (!notNullorUndefined(this.config.dataId)) {
+    if (this.config.dataId === null) {
       return {};
     }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];

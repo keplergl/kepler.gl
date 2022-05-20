@@ -30,7 +30,7 @@ import {VisConfigColorRange, VisConfigNumber} from '../layer-factory';
 import {ColorRange} from '../../constants/color-ranges';
 import {Merge} from '../../reducers';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
-import {KeplerTable, notNullorUndefined} from '../../utils';
+import {KeplerTable} from '../../utils';
 
 export type ScenegraphLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -187,7 +187,7 @@ export default class ScenegraphLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
-    if (!notNullorUndefined(this.config.dataId)) {
+    if (this.config.dataId === null) {
       return {};
     }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
