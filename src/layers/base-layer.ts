@@ -176,6 +176,7 @@ export type UpdateTrigger = {
   [key: string]: {};
 };
 export type LayerBounds = [number, number, number, number];
+export type FindDefaultLayerPropsReturnValue = {props: any[]; foundLayers?: any[]};
 /**
  * Approx. number of points to sample in a large data set
  */
@@ -351,7 +352,7 @@ class Layer {
   static findDefaultLayerProps(
     dataset: KeplerTable,
     foundLayers?: any[]
-  ): {props: any[]; foundLayers?: any[]} {
+  ): FindDefaultLayerPropsReturnValue {
     return {props: [], foundLayers};
   }
 
