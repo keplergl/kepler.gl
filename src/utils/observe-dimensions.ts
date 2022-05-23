@@ -59,7 +59,7 @@ function getObserverRegistry() {
 
 export function observeDimensions(
   target: Element,
-  handleResize: (size: Dimensions) => void,
+  handleResize: (size: Dimensions | null) => void,
   throttleDelay = DEFAULT_THROTTLE_DELAY
 ) {
   const registry = getObserverRegistry();
@@ -72,7 +72,7 @@ export function unobserveDimensions(target: Element) {
   registry.unsubscribe(target);
 }
 
-function getSize(node, entry) {
+function getSize(node, entry): Dimensions | null {
   if (entry.contentRect) {
     const {width, height} = entry.contentRect;
     return {width, height};

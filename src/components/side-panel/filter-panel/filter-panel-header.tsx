@@ -18,12 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {ComponentType} from 'react';
 import styled from 'styled-components';
 import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import {Trash} from 'components/common/icons';
 import {createLinearGradient} from 'utils/color-utils';
 import {StyledPanelHeader} from 'components/common/styled-components';
+import {FilterPanelProps} from 'components/filters/filter-panels/filter-panel-types';
+import KeplerTable from 'utils/table-utils/kepler-table';
 
 export const StyledFilterHeader = styled(StyledPanelHeader)`
   cursor: pointer;
@@ -34,7 +36,7 @@ export const StyledFilterHeader = styled(StyledPanelHeader)`
   }
 
   border-left: 3px solid;
-  ${props =>
+  ${(props: {labelRCGColorValues: KeplerTable['color'][]}) =>
     props.labelRCGColorValues && props.labelRCGColorValues.length > 0
       ? `border-image: ${createLinearGradient('bottom', props.labelRCGColorValues)} 3;`
       : 'border-color: transparent;'};
@@ -45,25 +47,28 @@ const StyledChildrenContainer = styled.div`
   flex: 2;
 `;
 
+interface FilterPanelHeaderProps extends FilterPanelProps {
+  children: React.ReactNode;
+  enlarged?: boolean;
+  actionIcons?: Record<string, ComponentType>;
+}
+
 FilterPanelHeaderFactory.deps = [PanelHeaderActionFactory];
 
-function FilterPanelHeaderFactory(PanelHeaderAction) {
+function FilterPanelHeaderFactory(PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>) {
   const defaultActionIcons = {
     delete: Trash
   };
   const FilterPanelHeader = ({
     children,
     datasets,
-    allAvailableFields,
-    setFilter,
-    idx,
     filter,
     removeFilter,
     actionIcons = defaultActionIcons
-  }) => (
+  }: FilterPanelHeaderProps) => (
     <StyledFilterHeader
       className="filter-panel__header"
-      labelRCGColorValues={datasets.map(d => d.color)}
+      labelRCGColorValues={datasets.map((d: KeplerTable) => d.color)}
     >
       <StyledChildrenContainer>{children}</StyledChildrenContainer>
       <PanelHeaderAction

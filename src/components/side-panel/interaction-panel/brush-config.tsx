@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Uber Technologies, Inc.
+// Copyright (c) 2022 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,29 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {AddDataToMapPayload} from 'actions/actions';
+import React from 'react';
+import RangeSliderFactory from 'components/common/range-slider';
 
-export type FileCacheItem = {
-  data: any;
-  info: {
-    label: string;
-    format: string;
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
+import {BRUSH_CONFIG} from 'utils/interaction-utils';
+import {FormattedMessage} from 'localization';
+
+BrushConfigFactory.deps = [RangeSliderFactory];
+
+type BrushConfigProps = {
+  config: {
+    size: number;
   };
+  onChange: (config: {size: number}) => void;
 };
 
-export function readFileInBatches(payload: {
-  file: File;
-  fileCache: FileCacheItem[];
-  loaders: LoaderObject;
-  loadOptions: object;
-}): AsyncGenerator;
+function BrushConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
+  const BrushConfig = ({config, onChange}: BrushConfigProps) => (
+    <SidePanelSection>
+      <PanelLabel>
+        <FormattedMessage id={'misc.brushRadius'} />
+      </PanelLabel>
+      <RangeSlider
+        range={BRUSH_CONFIG.range}
+        value0={0}
+        value1={config.size || 10 / 2}
+        step={0.1}
+        isRanged={false}
+        onChange={value => onChange({...config, size: value[1]})}
+        inputTheme="secondary"
+      />
+    </SidePanelSection>
+  );
 
-export function processFileData(payload: {
-  content: any;
-  fileCache: FileCacheItem[];
-}): Promise<FileCacheItem[]>;
+  return BrushConfig;
+}
 
-export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayload[];
-
-export function readBatch(asyncIterator, fileName): AsyncIterable<any>;
-export function isKeplerGlMap(obj: any): Boolean;
+export default BrushConfigFactory;

@@ -25,18 +25,24 @@ import {PanelLabel, SidePanelSection} from 'components/common/styled-components'
 import ItemSelector from 'components/common/item-selector/item-selector';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
 import {FormattedMessage} from 'localization';
+import {DatasetItemProps, SourceDataSelectorProps} from './types';
 
 const defaultPlaceHolder = 'Select A Data Source';
 
 SourceDataSelectorFactory.deps = [DatasetTagFactory];
 
-export default function SourceDataSelectorFactory(DatasetTag) {
-  const DatasetItem = ({value}) => <DatasetTag dataset={value} />;
+export default function SourceDataSelectorFactory(
+  DatasetTag: ReturnType<typeof DatasetTagFactory>
+): React.ComponentClass<SourceDataSelectorProps> {
+  const DatasetItem = ({value}: DatasetItemProps) => <DatasetTag dataset={value} />;
 
-  class SourceDataSelector extends Component {
+  class SourceDataSelector extends Component<SourceDataSelectorProps> {
+    static defaultProps = {
+      defaultValue: defaultPlaceHolder
+    };
+
     /* selectors */
-    /* eslint-disable no-invalid-this */
-    datasetsSelector = props => props.datasets;
+    datasetsSelector = (props: SourceDataSelectorProps) => props.datasets;
     dsOptionsSelector = createSelector(this.datasetsSelector, datasets =>
       Object.values(datasets).map(ds => ({
         label: ds.label,
@@ -56,7 +62,7 @@ export default function SourceDataSelectorFactory(DatasetTag) {
           </PanelLabel>
           <ItemSelector
             inputTheme={inputTheme}
-            selectedItems={dataId ? this.props.datasets[dataId] : null}
+            selectedItems={dataId ? [this.props.datasets[dataId]] : []}
             options={dsOptions}
             getOptionValue={'value'}
             filterOption={'label'}
@@ -72,8 +78,5 @@ export default function SourceDataSelectorFactory(DatasetTag) {
     }
   }
 
-  SourceDataSelector.defaultProps = {
-    defaultValue: defaultPlaceHolder
-  };
   return SourceDataSelector;
 }

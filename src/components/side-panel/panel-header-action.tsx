@@ -18,14 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import React, {Component, ComponentType} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
 import {Tooltip} from 'components/common/styled-components';
 
-const HeaderActionWrapper = styled.div`
+interface HeaderActionWrapperProps {
+  flush?: boolean;
+  active?: boolean;
+  hoverColor?: boolean;
+}
+
+
+const HeaderActionWrapper = styled.div<HeaderActionWrapperProps>`
   margin-left: ${props => (props.flush ? 0 : 8)}px;
   display: flex;
   align-items: center;
@@ -44,22 +50,23 @@ const HeaderActionWrapper = styled.div`
   }
 `;
 
+interface PanelHeaderActionProps {
+  id?: string;
+  flush?: boolean;
+  tooltip?: string;
+  onClick?: Function;
+  active?: boolean;
+  disabled?: boolean;
+  hoverColor?: string | null;
+  className?: string;
+  tooltipType?: string;
+  IconComponent: any;
+}
+
 PanelHeaderActionFactory.deps = [];
 // Need to use react class to access props.component
-export default function PanelHeaderActionFactory() {
-  class PanelHeaderAction extends Component {
-    static propTypes = {
-      id: PropTypes.string,
-      flush: PropTypes.bool,
-      tooltip: PropTypes.string,
-      onClick: PropTypes.func,
-      active: PropTypes.bool,
-      disabled: PropTypes.bool,
-      hoverColor: PropTypes.string,
-      className: PropTypes.string,
-      tooltipType: PropTypes.string
-    };
-
+export default function PanelHeaderActionFactory(): ComponentType<PanelHeaderActionProps> {
+  class PanelHeaderAction extends Component<PanelHeaderActionProps> {
     static defaultProps = {
       onClick: () => {},
       hoverColor: null,
@@ -80,7 +87,7 @@ export default function PanelHeaderActionFactory() {
       } = this.props;
       return (
         <HeaderActionWrapper
-          className={classnames('panel--header__action', {disabled, [className]: className})}
+          className={classnames('panel--header__action', {disabled, [className!]: className})}
           active={active}
           hoverColor={hoverColor}
           flush={flush}

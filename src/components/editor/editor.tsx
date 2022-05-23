@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import React, {Component, CSSProperties, KeyboardEvent} from 'react';
 import styled from 'styled-components';
 import {Editor as Draw} from 'react-map-gl-draw';
 import window from 'global/window';
@@ -27,44 +26,53 @@ import classnames from 'classnames';
 import get from 'lodash.get';
 import {createSelector} from 'reselect';
 
-import FeatureActionPanelFactory from './feature-action-panel';
+import FeatureActionPanelFactory, {FeatureActionPanelProps} from './feature-action-panel';
 import {FILTER_TYPES, EDITOR_MODES, EDITOR_AVAILABLE_LAYERS} from 'constants/default-settings';
 
 import {DEFAULT_RADIUS, getStyle as getFeatureStyle} from './feature-styles';
 import {getStyle as getEditHandleStyle, getEditHandleShape} from './handle-style';
 import KeyEvent from 'constants/keyevent';
+import {Layer} from 'layers';
+import {Datasets, Filter} from 'reducers';
+import {Feature} from '@nebula.gl/edit-modes';
+import {MjolnirEvent} from 'mjolnir.js';
 
 const StyledWrapper = styled.div`
-  cursor: ${props => (props.editor.mode === EDITOR_MODES.EDIT ? 'pointer' : 'crosshair')};
+  cursor: ${(props: {editor: {mode: string}}) =>
+    props.editor.mode === EDITOR_MODES.EDIT ? 'pointer' : 'crosshair'};
   position: relative;
 `;
 
-const editorLayerFilter = layer => EDITOR_AVAILABLE_LAYERS.includes(layer.type);
+const editorLayerFilter = (layer: Layer) => EDITOR_AVAILABLE_LAYERS.includes(layer.type!);
 
 EditorFactory.deps = [FeatureActionPanelFactory];
 
-export default function EditorFactory(FeatureActionPanel) {
-  class Editor extends Component {
-    static propTypes = {
-      filters: PropTypes.arrayOf(PropTypes.object).isRequired,
-      layers: PropTypes.arrayOf(PropTypes.object).isRequired,
-      datasets: PropTypes.object.isRequired,
-      editor: PropTypes.object.isRequired,
-      layersToRender: PropTypes.object.isRequired,
-      onSelect: PropTypes.func.isRequired,
-      onUpdate: PropTypes.func.isRequired,
-      onDeleteFeature: PropTypes.func.isRequired,
-      onTogglePolygonFilter: PropTypes.func.isRequired,
+interface EditorProps {
+  filters: Filter[];
+  layers: Layer[];
+  datasets: Datasets;
+  editor: {selectedFeature: Feature; mode: string};
+  layersToRender: Record<string, Layer>;
+  index: number;
+  className: string;
+  clickRadius: number;
+  style: CSSProperties;
+  isEnabled: boolean;
+  onSelect: (f: Feature | null) => void;
+  onUpdate: (f: Feature[]) => void;
+  onDeleteFeature: (f: Feature) => void;
+  onTogglePolygonFilter: (l: Layer, f: Feature) => void;
+}
 
-      index: PropTypes.number,
-      classnames: PropTypes.string,
-      clickRadius: PropTypes.number,
-      isEnabled: PropTypes.bool
-    };
-
+export default function EditorFactory(
+  FeatureActionPanel: React.FC<FeatureActionPanelProps>
+): React.ComponentClass<EditorProps> {
+  class Editor extends Component<EditorProps> {
     static defaultProps = {
       clickRadius: DEFAULT_RADIUS
     };
+
+    static displayName = 'Editor';
 
     state = {
       showActions: false,
@@ -79,11 +87,12 @@ export default function EditorFactory(FeatureActionPanel) {
       window.removeEventListener('keydown', this._onKeyPressed);
     }
 
-    layerSelector = props => props.layers;
-    layersToRenderSelector = props => props.layersToRender;
-    filterSelector = props => props.filters;
-    selectedFeatureIdSelector = props => get(props, ['editor', 'selectedFeature', 'id']);
-    editorFeatureSelector = props => get(props, ['editor', 'features']);
+    layerSelector = (props: EditorProps) => props.layers;
+    layersToRenderSelector = (props: EditorProps) => props.layersToRender;
+    filterSelector = (props: EditorProps) => props.filters;
+    selectedFeatureIdSelector = (props: EditorProps) =>
+      get(props, ['editor', 'selectedFeature', 'id']);
+    editorFeatureSelector = (props: EditorProps) => get(props, ['editor', 'features']);
 
     currentFilterSelector = createSelector(
       this.filterSelector,
@@ -110,7 +119,7 @@ export default function EditorFactory(FeatureActionPanel) {
           .concat(editorFeatures)
     );
 
-    _onKeyPressed = event => {
+    _onKeyPressed = (event: KeyboardEvent) => {
       const {isEnabled} = this.props;
 
       if (!isEnabled) {
@@ -130,7 +139,13 @@ export default function EditorFactory(FeatureActionPanel) {
       }
     };
 
-    _onSelect = ({selectedFeatureId, sourceEvent}) => {
+    _onSelect = ({
+      selectedFeatureId,
+      sourceEvent
+    }: {
+      selectedFeatureId: string | number;
+      sourceEvent: MjolnirEvent;
+    }) => {
       const allFeatures = this.allFeaturesSelector(this.props);
       this.setState(
         {
@@ -164,7 +179,7 @@ export default function EditorFactory(FeatureActionPanel) {
       this.setState({showActions: false});
     };
 
-    _onToggleLayer = layer => {
+    _onToggleLayer = (layer: Layer) => {
       const {selectedFeature} = this.props.editor;
       if (!selectedFeature) {
         return;
@@ -211,8 +226,6 @@ export default function EditorFactory(FeatureActionPanel) {
       );
     }
   }
-
-  Editor.displayName = 'Editor';
 
   return Editor;
 }
