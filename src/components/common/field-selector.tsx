@@ -27,6 +27,7 @@ import {classList} from './item-selector/dropdown-list';
 import {toArray} from 'utils/utils';
 import {notNullorUndefined} from 'utils/data-utils';
 import FieldTokenFactory from '../common/field-token';
+import {Field} from 'utils/table-utils/kepler-table';
 
 const defaultDisplayOption = d => d.displayName || d.name;
 const defaultValueOption = d => d.name;
@@ -73,7 +74,8 @@ type FieldType =
       name?: string;
       fieldIdx?: number;
       type?: number;
-    };
+    }
+  | Field;
 
 interface FieldSelectorFactoryProps {
   fields?: FieldType[];

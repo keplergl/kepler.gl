@@ -21,11 +21,13 @@
 import React from 'react';
 import TimeRangeSliderFactory from 'components/common/time-range-slider';
 import {DEFAULT_TIME_FORMAT} from 'constants/default-settings';
+import {TimeRangeFilter} from 'reducers';
+import {TimeRangeFilterProps} from './types';
 
 /*
  * TimeRangeFilter -> TimeRangeSlider -> RangeSlider
  */
-export function timeRangeSliderFieldsSelector(filter) {
+export function timeRangeSliderFieldsSelector(filter: TimeRangeFilter) {
   const hasUserFormat = typeof filter.timeFormat === 'string';
   const timeFormat =
     (hasUserFormat ? filter.timeFormat : filter.defaultTimeFormat) || DEFAULT_TIME_FORMAT;
@@ -51,8 +53,14 @@ export function timeRangeSliderFieldsSelector(filter) {
 
 TimeRangeFilterFactory.deps = [TimeRangeSliderFactory];
 
-function TimeRangeFilterFactory(TimeRangeSlider) {
-  const TimeRangeFilter = ({filter, setFilter, isAnimatable, toggleAnimation, hideTimeTitle}) => (
+function TimeRangeFilterFactory(TimeRangeSlider: ReturnType<typeof TimeRangeSliderFactory>) {
+  const TimeRangeFilter: React.FC<TimeRangeFilterProps> = ({
+    filter,
+    setFilter,
+    isAnimatable,
+    toggleAnimation,
+    hideTimeTitle
+  }) => (
     <TimeRangeSlider
       {...timeRangeSliderFieldsSelector(filter)}
       onChange={setFilter}

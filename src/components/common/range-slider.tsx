@@ -73,7 +73,7 @@ interface RangeSliderProps {
   step?: number;
   sliderHandleWidth?: number;
   xAxis?: ElementType;
-  timezone?: string;
+  timezone?: string | null;
   timeFormat?: string;
   playbackControlWidth?: number;
   lineChart?: LineChart;

@@ -19,31 +19,26 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import ItemSelector from '../common/item-selector/item-selector';
-import {PanelLabel, SidePanelSection} from '../common/styled-components';
-import {FormattedMessage} from 'localization';
+import RangeSliderFactory from 'components/common/range-slider';
+import {RangeFilterProps} from './types';
 
-export default function SingleSelectFilterFactory() {
-  const SingleSelectFilter = ({filter, setFilter}) => (
-    <SidePanelSection>
-      <PanelLabel>
-        <FormattedMessage id={'misc.valueEquals'} />
-      </PanelLabel>
-      <ItemSelector
-        selectedItems={filter.value}
-        placeholder="placeholder.selectValue"
-        options={filter.domain}
-        multiSelect={false}
-        searchable={false}
-        displayOption={d => String(d)}
-        getOptionValue={d => d}
+RangeFilterFactory.deps = [RangeSliderFactory];
+
+export default function RangeFilterFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
+  const RangeFilter: React.FC<RangeFilterProps> = ({filter, setFilter}) => (
+    <div>
+      <RangeSlider
+        range={filter.domain}
+        value0={filter.value[0]}
+        value1={filter.value[1]}
+        step={filter.step}
+        histogram={filter.histogram}
+        isEnlarged={filter.enlarged}
         onChange={setFilter}
         inputTheme="secondary"
       />
-    </SidePanelSection>
+    </div>
   );
 
-  SingleSelectFilter.displayName = 'SingleSelectFilter';
-
-  return SingleSelectFilter;
+  return RangeFilter;
 }
