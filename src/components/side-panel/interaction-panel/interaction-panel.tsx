@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import React, {Component, ComponentType, ReactElement} from 'react';
 import styled from 'styled-components';
 import Switch from 'components/common/switch';
 
@@ -34,21 +33,32 @@ import {
 } from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
 
+interface InteractionPanelProps {
+  datasets: any;
+  config: {
+    id: string;
+    enabled: boolean;
+    label: string;
+    iconComponent: any;
+    config: any;
+  };
+  onConfigChange: any;
+}
+
 const StyledInteractionPanel = styled.div`
   padding-bottom: 6px;
 `;
 
 InteractionPanelFactory.deps = [TooltipConfigFactory, BrushConfigFactory];
 
-function InteractionPanelFactory(TooltipConfig, BrushConfig) {
-  return class InteractionPanel extends Component {
-    static propTypes = {
-      datasets: PropTypes.object.isRequired,
-      config: PropTypes.object.isRequired,
-      onConfigChange: PropTypes.func.isRequired
+function InteractionPanelFactory(
+  TooltipConfig: ReturnType<typeof TooltipConfigFactory>,
+  BrushConfig: ReturnType<typeof BrushConfigFactory>
+): ComponentType<InteractionPanelProps> {
+  return class InteractionPanel extends Component<InteractionPanelProps> {
+    state = {
+      isConfigActive: false
     };
-
-    state = {isConfigActive: false};
 
     _updateConfig = newProp => {
       this.props.onConfigChange({
@@ -64,7 +74,7 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
     render() {
       const {config, datasets} = this.props;
       const onChange = newConfig => this._updateConfig({config: newConfig});
-      let template = null;
+      let template: ReactElement | null = null;
 
       switch (config.id) {
         case 'tooltip':
@@ -72,7 +82,6 @@ function InteractionPanelFactory(TooltipConfig, BrushConfig) {
             <TooltipConfig datasets={datasets} config={config.config} onChange={onChange} />
           );
           break;
-
         case 'brush':
           template = <BrushConfig config={config.config} onChange={onChange} />;
           break;
