@@ -24,6 +24,7 @@ import styled from 'styled-components';
 import {SidePanelSection} from 'components/common/styled-components';
 import DatasetTitleFactory from 'components/side-panel/common/dataset-title';
 import DatasetInfoFactory from 'components/side-panel/common/dataset-info';
+import {SourceDataCatalogProps} from './types';
 
 const SourceDataCatalogWrapper = styled.div`
   transition: ${props => props.theme.transition};
@@ -31,7 +32,10 @@ const SourceDataCatalogWrapper = styled.div`
 
 SourceDataCatalogFactory.deps = [DatasetTitleFactory, DatasetInfoFactory];
 
-function SourceDataCatalogFactory(DatasetTitle, DatasetInfo) {
+function SourceDataCatalogFactory(
+  DatasetTitle: ReturnType<typeof DatasetTitleFactory>,
+  DatasetInfo: ReturnType<typeof DatasetInfoFactory>
+) {
   const SourceDataCatalog = ({
     datasets,
     showDatasetTable,
@@ -39,7 +43,7 @@ function SourceDataCatalogFactory(DatasetTitle, DatasetInfo) {
     onTitleClick,
     updateTableColor,
     showDeleteDataset = false
-  }) => (
+  }: SourceDataCatalogProps) => (
     <SourceDataCatalogWrapper className="source-data-catalog">
       {Object.values(datasets).map((dataset, index) => (
         <SidePanelSection key={dataset.id}>

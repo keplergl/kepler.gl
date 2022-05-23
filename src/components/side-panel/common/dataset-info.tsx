@@ -19,33 +19,28 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import RangeSliderFactory from 'components/common/range-slider';
-
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
-import {BRUSH_CONFIG} from 'utils/interaction-utils';
+import styled from 'styled-components';
+import {format} from 'd3-format';
 import {FormattedMessage} from 'localization';
+import {DatasetInfoProps} from './types';
 
-BrushConfigFactory.deps = [RangeSliderFactory];
+const numFormat = format(',');
 
-function BrushConfigFactory(RangeSlider) {
-  const BrushConfig = ({config, onChange}) => (
-    <SidePanelSection>
-      <PanelLabel>
-        <FormattedMessage id={'misc.brushRadius'} />
-      </PanelLabel>
-      <RangeSlider
-        range={BRUSH_CONFIG.range}
-        value0={0}
-        value1={config.size || 10 / 2}
-        step={0.1}
-        isRanged={false}
-        onChange={value => onChange({...config, size: value[1]})}
-        inputTheme="secondary"
+const StyledDataRowCount = styled.div`
+  font-size: 11px;
+  color: ${props => props.theme.subtextColor};
+  padding-left: 19px;
+`;
+
+export default function DatasetInfoFactory() {
+  const DatasetInfo = ({dataset}: DatasetInfoProps) => (
+    <StyledDataRowCount className="source-data-rows">
+      <FormattedMessage
+        id={'datasetInfo.rowCount'}
+        values={{rowCount: numFormat(dataset.dataContainer.numRows())}}
       />
-    </SidePanelSection>
+    </StyledDataRowCount>
   );
 
-  return BrushConfig;
+  return DatasetInfo;
 }
-
-export default BrushConfigFactory;

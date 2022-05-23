@@ -721,7 +721,6 @@ class Layer {
     const colorUIProp = Object.entries(newConfig).reduce((accu, [key, value]) => {
       return {
         ...accu,
-        // @ts-expect-error TODO: better type guard for isPlainObject
         [key]: isPlainObject(accu[key]) && isPlainObject(value) ? {...accu[key], ...value} : value
       };
     }, previous[prop] || DEFAULT_COLOR_UI);

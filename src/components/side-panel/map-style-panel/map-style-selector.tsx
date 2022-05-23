@@ -31,6 +31,7 @@ import {
   StyledPanelHeader
 } from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
+import {MapStyle} from 'reducers';
 
 const StyledMapDropdown = styled(StyledPanelHeader)`
   height: 48px;
@@ -60,9 +61,20 @@ const StyledMapDropdown = styled(StyledPanelHeader)`
     width: 40px;
   }
 `;
+
+type MapStyleSelectorProps = {
+  mapStyle: MapStyle;
+  onChange: (payload: string) => void;
+  toggleActive: () => void;
+  isSelecting: boolean;
+  actionIcons: {
+    arrowDown?: typeof ArrowDown;
+  };
+};
+
 MapStyleSelectorFactory.deps = [PanelHeaderActionFactory];
 
-function MapStyleSelectorFactory(PanelHeaderAction) {
+function MapStyleSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>) {
   const defaultActionIcons = {
     arrowDown: ArrowDown
   };
@@ -72,7 +84,7 @@ function MapStyleSelectorFactory(PanelHeaderAction) {
     toggleActive,
     isSelecting,
     actionIcons = defaultActionIcons
-  }) => (
+  }: MapStyleSelectorProps) => (
     <div>
       <PanelLabel>
         <FormattedMessage id={'mapManager.mapStyle'} />
