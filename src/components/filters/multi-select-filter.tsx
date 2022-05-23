@@ -25,7 +25,7 @@ import {FormattedMessage} from 'localization';
 import {MultiSelectFilterProps} from './types';
 
 export default function MultiSelectFilterFactory() {
-  const MultiSelectFilter = ({filter, setFilter}: MultiSelectFilterProps) => (
+  const MultiSelectFilter: React.FC<MultiSelectFilterProps> = ({filter, setFilter}) => (
     <div>
       <PanelLabel htmlFor={`filter-${filter.id}`}>
         <FormattedMessage id={'misc.valuesIn'} />

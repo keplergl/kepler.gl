@@ -106,14 +106,14 @@ const StyledTitle = styled(CenterFlexbox)`
 
 TimeWidgetTopFactory.deps = [FieldSelectorFactory];
 export function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFactory>) {
-  const TimeWidgetTop = ({
+  const TimeWidgetTop: React.FC<TimeWidgetTopProps> = ({
     filter,
     readOnly,
     datasets,
     setFilterPlot,
     index,
     onClose
-  }: TimeWidgetTopProps) => {
+  }) => {
     const yAxisFields = useMemo(
       () =>
         ((datasets[filter.dataId[0]] || {}).fields || []).filter(
@@ -168,7 +168,7 @@ function TimeWidgetFactory(
   FloatingTimeDisplay: ReturnType<typeof FloatingTimeDisplayFactory>,
   TimeWidgetTop: ReturnType<typeof TimeWidgetTopFactory>
 ) {
-  const TimeWidget = ({
+  const TimeWidget: React.FC<TimeWidgetProps> = ({
     datasets,
     filter,
     index,

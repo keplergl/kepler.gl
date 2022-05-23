@@ -25,7 +25,7 @@ import {RangeFilterProps} from './types';
 RangeFilterFactory.deps = [RangeSliderFactory];
 
 export default function RangeFilterFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
-  const RangeFilter = ({filter, setFilter}: RangeFilterProps) => (
+  const RangeFilter: React.FC<RangeFilterProps> = ({filter, setFilter}) => (
     <div>
       <RangeSlider
         range={filter.domain}

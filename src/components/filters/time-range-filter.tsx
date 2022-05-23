@@ -54,13 +54,13 @@ export function timeRangeSliderFieldsSelector(filter: TimeRangeFilter) {
 TimeRangeFilterFactory.deps = [TimeRangeSliderFactory];
 
 function TimeRangeFilterFactory(TimeRangeSlider: ReturnType<typeof TimeRangeSliderFactory>) {
-  const TimeRangeFilter = ({
+  const TimeRangeFilter: React.FC<TimeRangeFilterProps> = ({
     filter,
     setFilter,
     isAnimatable,
     toggleAnimation,
     hideTimeTitle
-  }: TimeRangeFilterProps) => (
+  }) => (
     <TimeRangeSlider
       {...timeRangeSliderFieldsSelector(filter)}
       onChange={setFilter}

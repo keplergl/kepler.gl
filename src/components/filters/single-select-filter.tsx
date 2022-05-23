@@ -25,7 +25,7 @@ import {FormattedMessage} from 'localization';
 import {SingleSelectFilterProps} from './types';
 
 export default function SingleSelectFilterFactory() {
-  const SingleSelectFilter = ({filter, setFilter}: SingleSelectFilterProps) => (
+  const SingleSelectFilter: React.FC<SingleSelectFilterProps> = ({filter, setFilter}) => (
     <SidePanelSection>
       <PanelLabel>
         <FormattedMessage id={'misc.valueEquals'} />

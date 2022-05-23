@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useMemo, useCallback, FunctionComponent} from 'react';
+import React, {useMemo, useCallback} from 'react';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {Layer} from 'layers';
 import {LAYER_TYPES} from 'layers/types';
@@ -30,7 +30,7 @@ const isAlreadySelected = (selectedLayers: Layer[], layerId: string) =>
   selectedLayers.findIndex(l => l.id === layerId) === -1;
 
 function PolygonFilterFactory() {
-  const PolygonFilter: FunctionComponent<PolygonFilterProps> = React.memo(
+  const PolygonFilter: React.FC<PolygonFilterProps> = React.memo(
     ({filter, layers, setLayers}) => {
       const setNewLayers = useCallback(
         newLayers => {
