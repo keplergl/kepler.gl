@@ -21,6 +21,22 @@
 import {css} from 'styled-components';
 import {DIMENSIONS} from 'constants/default-settings';
 
+type InputProps = {
+  active: boolean;
+  disabled: boolean;
+  error: string;
+  size: string;
+  type: string;
+};
+
+type SecondaryInputProps = {
+  error: string;
+};
+
+type SwitchableProps = {
+  checked: boolean;
+};
+
 export const transition = 'all .4s ease';
 export const transitionFast = 'all .2s ease';
 export const transitionSlow = 'all .8s ease';
@@ -443,7 +459,7 @@ export const breakPoints = {
 // it is used by styled-components to pass along to
 // all child components
 
-const input = css`
+const input = css<InputProps>`
   ::placeholder {
     color: ${props => props.theme.inputPlaceholderColor};
     font-weight: ${props => props.theme.inputPlaceholderFontWeight};
@@ -552,7 +568,7 @@ const inputLT = css`
   }
 `;
 
-const secondaryInput = css`
+const secondaryInput = css<SecondaryInputProps>`
   ${props => props.theme.input}
   color: ${props => props.theme.secondaryInputColor};
   background-color: ${props => props.theme.secondaryInputBgd};
@@ -626,7 +642,7 @@ const inlineInput = css`
   }
 `;
 
-const switchTrack = css`
+const switchTrack = css<SwitchableProps>`
   background: ${props =>
     props.checked ? props.theme.switchTrackBgdActive : props.theme.switchTrackBgd};
   position: absolute;
@@ -639,7 +655,7 @@ const switchTrack = css`
   border-radius: ${props => props.theme.switchTrackBorderRadius};
 `;
 
-const switchButton = css`
+const switchButton = css<SwitchableProps>`
   transition: ${props => props.theme.transition};
   position: absolute;
   top: ${props => (props.theme.switchHeight - props.theme.switchBtnHeight) / 2}px;
@@ -682,7 +698,7 @@ const inputSwitch = css`
 `;
 
 // This is a light version checkbox
-const checkboxBox = css`
+const checkboxBox = css<SwitchableProps>`
   display: block;
   position: absolute;
   top: 0;
@@ -698,7 +714,7 @@ const checkboxBox = css`
   content: '';
 `;
 
-const checkboxCheck = css`
+const checkboxCheck = css<SwitchableProps>`
   width: 10px;
   height: 5px;
   border-bottom: 2px solid white;
@@ -763,7 +779,7 @@ const inputRadio = css`
   }
 `;
 
-const secondarySwitch = css`
+const secondarySwitch = css<SwitchableProps>`
   ${props => props.theme.inputSwitch}
 
   :before {
