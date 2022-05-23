@@ -19,9 +19,9 @@
 // THE SOFTWARE.
 
 import {HexagonLayer} from '@deck.gl/aggregation-layers';
-import CPUAggregator, {getAggregatedData} from '../layer-utils/cpu-aggregator';
+import CPUAggregator, {AggregationType, getAggregatedData} from '../layer-utils/cpu-aggregator';
 
-export const hexagonAggregation = {
+export const hexagonAggregation: AggregationType = {
   key: 'position',
   updateSteps: [
     {
@@ -43,7 +43,7 @@ export const hexagonAggregation = {
   ]
 };
 
-export default class ScaleEnhancedHexagonLayer extends HexagonLayer {
+export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
   initializeState() {
     const cpuAggregator = new CPUAggregator({
       aggregation: hexagonAggregation
