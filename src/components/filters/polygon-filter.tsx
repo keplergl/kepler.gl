@@ -29,7 +29,7 @@ const layerFilter = (layer: Layer) => layer.type === LAYER_TYPES.point;
 const isAlreadySelected = (selectedLayers: Layer[], layerId: string) =>
   selectedLayers.findIndex(l => l.id === layerId) === -1;
 
-export default function PolygonFilterFactory() {
+function PolygonFilterFactory() {
   const PolygonFilter: FunctionComponent<PolygonFilterProps> = React.memo(
     ({filter, layers, setLayers}) => {
       const setNewLayers = useCallback(
@@ -72,3 +72,5 @@ export default function PolygonFilterFactory() {
 
   return PolygonFilter;
 }
+
+export default PolygonFilterFactory;

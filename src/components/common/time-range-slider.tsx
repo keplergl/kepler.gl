@@ -85,7 +85,7 @@ export default function TimeRangeSliderFactory(
   TimeSliderMarker: ReturnType<typeof TimeSliderMarkerFactory>,
   TimeRangeSliderTimeTitle: ReturnType<typeof TimeRangeSliderTimeTitleFactory>
 ) {
-  const TimeRangeSlider = (props: TimeRangeSliderProps) => {
+  const TimeRangeSlider: React.FC<TimeRangeSliderProps> = props => {
     const {
       domain,
       value,

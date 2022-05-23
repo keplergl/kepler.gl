@@ -8,6 +8,7 @@ import {
 } from 'reducers';
 import {Layer} from 'layers';
 import {
+  ActionHandler,
   enlargeFilter,
   setFilterAnimationTime,
   setFilterAnimationWindow,
@@ -53,7 +54,7 @@ export type TimeWidgetTopProps = {
   filter: Filter;
   readOnly: boolean;
   datasets: Datasets;
-  setFilterPlot: typeof setFilterPlot;
+  setFilterPlot: ActionHandler<typeof setFilterPlot>;
   index: number;
   onClose: () => void;
 };
@@ -66,10 +67,10 @@ export type TimeWidgetProps = {
   showTimeDisplay: boolean;
   isAnimatable: boolean;
   resetAnimation: () => void;
-  setFilterAnimationTime: typeof setFilterAnimationTime;
-  updateAnimationSpeed: typeof updateFilterAnimationSpeed;
-  toggleAnimation: typeof toggleFilterAnimation;
-  enlargeFilter: typeof enlargeFilter;
-  setFilterPlot: typeof setFilterPlot;
-  setFilterAnimationWindow: typeof setFilterAnimationWindow;
+  setFilterAnimationTime: ActionHandler<typeof setFilterAnimationTime>;
+  updateAnimationSpeed: ActionHandler<typeof updateFilterAnimationSpeed>;
+  toggleAnimation: ActionHandler<typeof toggleFilterAnimation>;
+  enlargeFilter: ActionHandler<typeof enlargeFilter>;
+  setFilterPlot: ActionHandler<typeof setFilterPlot>;
+  setFilterAnimationWindow: ActionHandler<typeof setFilterAnimationWindow>;
 };

@@ -157,7 +157,7 @@ interface PlaybackControls {
   speed: number;
   animationWindow?: string;
   setFilterAnimationWindow?: (id: string) => void;
-  updateAnimationSpeed;
+  updateAnimationSpeed?: (val: number) => void;
   pauseAnimation?: () => void;
   resetAnimation?: () => void;
   startAnimation: () => void;
