@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
 import {ChickletButton, ChickletTag} from 'components/common/item-selector/chickleted-input';
 import {Hash, Delete} from 'components/common/icons';
@@ -30,10 +30,40 @@ import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from 'constants/tool
 import {getFormatter} from 'utils/data-utils';
 import TippyTooltip from 'components/common/tippy-tooltip';
 
+interface TooltipChickletProps {
+  disabled: boolean;
+  item: {name: string};
+  displayOption: Function;
+  remove: any;
+}
+
+type TooltipConfig = {
+  fieldsToShow: {
+    [key: string]: {name: string; format: string | null}[];
+  };
+  compareMode: boolean;
+  compareType: string[];
+};
+
+type TooltipFields = {
+  format?: string;
+  id?: string;
+  name?: string;
+  fieldIdx?: number;
+  type?: number;
+};
+
+type TimeLabelFormat = {
+  id: string;
+  format: string | null;
+  type: string;
+  label: string;
+};
+
 const TIME_DISPLAY = '2020-05-11 14:00';
 const getValue = fmt => fmt[TOOLTIP_KEY];
 
-const addDTimeLabel = formats =>
+const addDTimeLabel = (formats: TimeLabelFormat[]) =>
   formats.map(f => ({
     ...f,
     label:
@@ -42,11 +72,12 @@ const addDTimeLabel = formats =>
         : f.label
   }));
 
-function getFormatLabels(fields, fieldName) {
-  const fieldType = fields.find(f => f.name === fieldName).type;
+function getFormatLabels(fields: any, fieldName: string) {
+  const fieldType = fields.find((f: TooltipFields) => f.name === fieldName).type;
   const tooltipTypes = (fieldType && FIELD_OPTS[fieldType].format.tooltip) || [];
-  const formatLabels = Object.values(TOOLTIP_FORMATS).filter(t => tooltipTypes.includes(t.type));
-
+  const formatLabels: TimeLabelFormat[] = Object.values(TOOLTIP_FORMATS).filter(t =>
+    tooltipTypes.includes(t.type)
+  );
   return addDTimeLabel(formatLabels);
 }
 
@@ -82,7 +113,7 @@ const IconDiv = styled.div.attrs({
       : props.theme.textColor};
 `;
 
-function getFormatTooltip(formatLabels, format) {
+function getFormatTooltip(formatLabels: TimeLabelFormat[], format: string | null) {
   if (!format) {
     return null;
   }
@@ -93,11 +124,17 @@ function getFormatTooltip(formatLabels, format) {
   return typeof format === 'object' ? JSON.stringify(format, null, 2) : String(format);
 }
 
-function TooltipChickletFactory(dataId, config, onChange, fields) {
-  class TooltipChicklet extends Component {
+function TooltipChickletFactory(
+  dataId: string,
+  config: TooltipConfig,
+  onChange: (config: TooltipConfig) => void,
+  fields: TooltipFields[]
+): ComponentType<TooltipChickletProps> {
+  class TooltipChicklet extends Component<TooltipChickletProps> {
     state = {
       show: false
     };
+    private node!: HTMLElement;
 
     componentDidMount() {
       document.addEventListener('mousedown', this.handleClickOutside, false);
@@ -107,11 +144,10 @@ function TooltipChickletFactory(dataId, config, onChange, fields) {
       document.removeEventListener('mousedown', this.handleClickOutside, false);
     }
 
-    handleClickOutside = e => {
+    handleClickOutside = (e: any) => {
       if (this.node.contains(e.target)) {
         return;
       }
-      this.setState({show: false});
     };
 
     render() {
@@ -129,7 +165,7 @@ function TooltipChickletFactory(dataId, config, onChange, fields) {
       const hashStyle = show ? hashStyles.SHOW : hasFormat ? hashStyles.ACTIVE : null;
 
       return (
-        <ChickletButton ref={node => (this.node = node)}>
+        <ChickletButton ref={(node: HTMLElement) => (this.node = node)}>
           <ChickletTag>{displayOption(item)}</ChickletTag>
           {formatLabels.length > 1 && (
             <ChickletAddonWrapper>

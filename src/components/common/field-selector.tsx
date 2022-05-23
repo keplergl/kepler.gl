@@ -65,8 +65,8 @@ type FieldType =
   | string
   | string[]
   | {
-      name?: string;
-      format?: string;
+      name: string;
+      format: string | null;
     }[]
   | {
       format?: string;

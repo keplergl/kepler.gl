@@ -1,8 +1,9 @@
 import React, {MouseEvent} from 'react';
-import {Datasets} from 'reducers';
 import KeplerTable from 'utils/table-utils/kepler-table';
 import {openDeleteModal} from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
+import {Datasets} from 'reducers';
+import {ActionHandler} from 'actions';
 
 export type DatasetInfoProps = {
   dataset: KeplerTable;
@@ -16,19 +17,19 @@ export type UpdateTableColorTypes = {
 export type DatasetTagProps = {
   id?: string;
   dataset: KeplerTable;
-  updateTableColor?: typeof VisStateActions.updateTableColor;
+  updateTableColor?: ActionHandler<typeof VisStateActions.updateTableColor>;
   onClick?: (e: MouseEvent) => void;
   onClickSquare?: (e: MouseEvent) => void;
 };
 
 export type ShowDataTableProps = {
   id: string;
-  showDatasetTable?: typeof VisStateActions.showDatasetTable;
+  showDatasetTable?: ActionHandler<typeof VisStateActions.showDatasetTable>;
 };
 
 export type RemoveDatasetProps = {
   datasetKey: string;
-  removeDataset?: typeof openDeleteModal;
+  removeDataset?: ActionHandler<typeof openDeleteModal>;
 };
 
 export type StyledDatasetTitleProps = {
@@ -39,18 +40,18 @@ export type DatasetTitleProps = {
   dataset: KeplerTable;
   showDeleteDataset: boolean;
   onTitleClick?: () => void;
-  showDatasetTable?: typeof VisStateActions.showDatasetTable;
-  updateTableColor: typeof VisStateActions.updateTableColor;
-  removeDataset?: typeof openDeleteModal;
+  showDatasetTable?: ActionHandler<typeof VisStateActions.showDatasetTable>;
+  updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
+  removeDataset?: ActionHandler<typeof openDeleteModal>;
 };
 
 export type SourceDataCatalogProps = {
   datasets: Datasets;
   showDeleteDataset?: boolean;
   onTitleClick?: () => void;
-  showDatasetTable?: typeof VisStateActions.showDatasetTable;
-  updateTableColor: typeof VisStateActions.updateTableColor;
-  removeDataset?: typeof openDeleteModal;
+  showDatasetTable?: ActionHandler<typeof VisStateActions.showDatasetTable>;
+  updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
+  removeDataset?: ActionHandler<typeof openDeleteModal>;
 };
 
 export type DatasetItemProps = {
@@ -58,11 +59,10 @@ export type DatasetItemProps = {
 };
 
 export type SourceDataSelectorProps = {
-  dataId: string | string[] | null;
-  // dataId: string;
+  dataId: string | string[];
   datasets: Datasets;
   disabled: boolean;
-  defaultValue: string;
+  defaultValue?: string;
   inputTheme: string;
   onSelect: (
     items:

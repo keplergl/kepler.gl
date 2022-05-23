@@ -62,6 +62,7 @@ test('FeatureActionPanel -> display layers', t => {
           datasets={datasets}
           onToggleLayer={onToggleLayer}
           onDeleteFeature={onDeleteFeature}
+          position={{x: 0, y: 0}}
         />
       </IntlWrapper>
     );

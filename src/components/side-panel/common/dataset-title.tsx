@@ -160,7 +160,7 @@ export default function DatasetTitleFactory(
               <CustomPicker
                 color={rgbToHex(dataset.color)}
                 onChange={(color: {rgb: Record<string, number>}) =>
-                  updateTableColor?.(dataset.id, [color.rgb.r, color.rgb.g, color.rgb.b])
+                  updateTableColor(dataset.id, [color.rgb.r, color.rgb.g, color.rgb.b])
                 }
                 onSwatchClose={this._handleClosePicker}
               />
