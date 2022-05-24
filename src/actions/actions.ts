@@ -71,6 +71,8 @@ export type AddDataToMapPayload = {
   info?: Partial<MapInfo>;
 };
 
+export type ActionHandler<A extends (...args: any) => any> = (...args: Parameters<A>) => void;
+
 /**
  * Add data to kepler.gl reducer, prepare map with preset configuration if config is passed.
  * Kepler.gl provides a handy set of utils to parse data from different formats to the `data` object required in dataset. You rarely need to manually format the data obejct.

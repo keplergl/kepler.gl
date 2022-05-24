@@ -18,26 +18,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import RangeSliderFactory from 'components/common/range-slider';
+import {CPUGridLayer} from '@deck.gl/aggregation-layers';
+import CPUAggregator, {AggregationType, getAggregatedData} from '../layer-utils/cpu-aggregator';
 
-RangeFilterFactory.deps = [RangeSliderFactory];
+export const gridAggregation: AggregationType = {
+  key: 'position',
+  updateSteps: [
+    {
+      key: 'aggregate',
+      triggers: {
+        cellSize: {
+          prop: 'cellSize'
+        },
+        position: {
+          prop: 'getPosition',
+          updateTrigger: 'getPosition'
+        },
+        aggregator: {
+          prop: 'gridAggregator'
+        }
+      },
+      updater: getAggregatedData
+    }
+  ]
+};
 
-export default function RangeFilterFactory(RangeSlider) {
-  const RangeFilter = ({filter, setFilter}) => (
-    <div>
-      <RangeSlider
-        range={filter.domain}
-        value0={filter.value[0]}
-        value1={filter.value[1]}
-        step={filter.step}
-        histogram={filter.histogram}
-        isEnlarged={filter.isEnlarged}
-        onChange={setFilter}
-        inputTheme="secondary"
-      />
-    </div>
-  );
+export default class ScaleEnhancedGridLayer extends CPUGridLayer<any> {
+  initializeState() {
+    const cpuAggregator = new CPUAggregator({
+      aggregation: gridAggregation
+    });
 
-  return RangeFilter;
+    this.state = {
+      cpuAggregator,
+      aggregatorState: cpuAggregator.state
+    };
+    const attributeManager = this.getAttributeManager();
+    attributeManager.add({
+      positions: {size: 3, accessor: 'getPosition'}
+    });
+  }
 }
+
+ScaleEnhancedGridLayer.layerName = 'ScaleEnhancedGridLayer';

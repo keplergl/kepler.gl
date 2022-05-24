@@ -18,46 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {CPUGridLayer} from '@deck.gl/aggregation-layers';
-import CPUAggregator, {getAggregatedData} from '../layer-utils/cpu-aggregator';
+import React from 'react';
+import RangeSliderFactory from 'components/common/range-slider';
 
-export const gridAggregation = {
-  key: 'position',
-  updateSteps: [
-    {
-      key: 'aggregate',
-      triggers: {
-        cellSize: {
-          prop: 'cellSize'
-        },
-        position: {
-          prop: 'getPosition',
-          updateTrigger: 'getPosition'
-        },
-        aggregator: {
-          prop: 'gridAggregator'
-        }
-      },
-      updater: getAggregatedData
-    }
-  ]
+import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
+import {BRUSH_CONFIG} from 'utils/interaction-utils';
+import {FormattedMessage} from 'localization';
+
+BrushConfigFactory.deps = [RangeSliderFactory];
+
+type BrushConfigProps = {
+  config: {
+    size: number;
+  };
+  onChange: (config: {size: number}) => void;
 };
 
-export default class ScaleEnhancedGridLayer extends CPUGridLayer {
-  initializeState() {
-    const cpuAggregator = new CPUAggregator({
-      aggregation: gridAggregation
-    });
+function BrushConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
+  const BrushConfig = ({config, onChange}: BrushConfigProps) => (
+    <SidePanelSection>
+      <PanelLabel>
+        <FormattedMessage id={'misc.brushRadius'} />
+      </PanelLabel>
+      <RangeSlider
+        range={BRUSH_CONFIG.range}
+        value0={0}
+        value1={config.size || 10 / 2}
+        step={0.1}
+        isRanged={false}
+        onChange={value => onChange({...config, size: value[1]})}
+        inputTheme="secondary"
+      />
+    </SidePanelSection>
+  );
 
-    this.state = {
-      cpuAggregator,
-      aggregatorState: cpuAggregator.state
-    };
-    const attributeManager = this.getAttributeManager();
-    attributeManager.add({
-      positions: {size: 3, accessor: 'getPosition'}
-    });
-  }
+  return BrushConfig;
 }
 
-ScaleEnhancedGridLayer.layerName = 'ScaleEnhancedGridLayer';
+export default BrushConfigFactory;

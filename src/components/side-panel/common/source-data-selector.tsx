@@ -33,7 +33,7 @@ SourceDataSelectorFactory.deps = [DatasetTagFactory];
 
 export default function SourceDataSelectorFactory(
   DatasetTag: ReturnType<typeof DatasetTagFactory>
-): React.ComponentClass<SourceDataSelectorProps> {
+): React.ComponentType<SourceDataSelectorProps> {
   const DatasetItem = ({value}: DatasetItemProps) => <DatasetTag dataset={value} />;
 
   class SourceDataSelector extends Component<SourceDataSelectorProps> {
@@ -42,6 +42,7 @@ export default function SourceDataSelectorFactory(
     };
 
     /* selectors */
+    dataIdSelector = (props: SourceDataSelectorProps) => props.dataId;
     datasetsSelector = (props: SourceDataSelectorProps) => props.datasets;
     dsOptionsSelector = createSelector(this.datasetsSelector, datasets =>
       Object.values(datasets).map(ds => ({
@@ -50,10 +51,17 @@ export default function SourceDataSelectorFactory(
         color: ds.color
       }))
     );
+    dsSelectedItemsSelector = createSelector(
+      this.dataIdSelector,
+      this.datasetsSelector,
+      (dataId, datasets) =>
+        dataId ? ((Array.isArray(dataId) && dataId) || [dataId]).map(id => datasets[id]) : []
+    );
 
     render() {
-      const {dataId, disabled, onSelect, defaultValue, inputTheme} = this.props;
+      const {disabled, onSelect, defaultValue, inputTheme} = this.props;
       const dsOptions = this.dsOptionsSelector(this.props);
+      const selectedItems = this.dsSelectedItemsSelector(this.props);
 
       return (
         <SidePanelSection className="data-source-selector">
@@ -62,7 +70,7 @@ export default function SourceDataSelectorFactory(
           </PanelLabel>
           <ItemSelector
             inputTheme={inputTheme}
-            selectedItems={dataId ? [this.props.datasets[dataId]] : []}
+            selectedItems={selectedItems}
             options={dsOptions}
             getOptionValue={'value'}
             filterOption={'label'}

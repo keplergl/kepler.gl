@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {ComponentType} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {ArrowDown} from 'components/common/icons';
@@ -31,6 +31,8 @@ import {
   StyledPanelHeader
 } from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
+import {MapStyle} from 'reducers';
+import {BaseProps} from 'components/common/icons/base';
 
 const StyledMapDropdown = styled(StyledPanelHeader)`
   height: 48px;
@@ -60,9 +62,18 @@ const StyledMapDropdown = styled(StyledPanelHeader)`
     width: 40px;
   }
 `;
+
+type MapStyleSelectorProps = {
+  mapStyle: MapStyle;
+  onChange: (payload: string) => void;
+  toggleActive: () => void;
+  isSelecting: boolean;
+  actionIcons?: Record<string, ComponentType<Partial<BaseProps>>>;
+};
+
 MapStyleSelectorFactory.deps = [PanelHeaderActionFactory];
 
-function MapStyleSelectorFactory(PanelHeaderAction) {
+function MapStyleSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>) {
   const defaultActionIcons = {
     arrowDown: ArrowDown
   };
@@ -72,7 +83,7 @@ function MapStyleSelectorFactory(PanelHeaderAction) {
     toggleActive,
     isSelecting,
     actionIcons = defaultActionIcons
-  }) => (
+  }: MapStyleSelectorProps) => (
     <div>
       <PanelLabel>
         <FormattedMessage id={'mapManager.mapStyle'} />

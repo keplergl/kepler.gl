@@ -18,24 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, ComponentType, MouseEventHandler} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
 import {Tooltip} from 'components/common/styled-components';
-import {ComponentType, MouseEventHandler} from 'react';
 import {BaseProps} from 'components/common/icons/base';
-
-type HeaderActionWrapperProps = {
-  flush: boolean;
-  active: boolean;
-  hoverColor: string;
-};
 
 type PanelHeaderActionProps = {
   id: string;
   tooltip?: string;
-  hoverColor: string;
+  hoverColor?: string;
   tooltipType?: string;
   className?: string;
   active?: boolean;
@@ -43,6 +36,12 @@ type PanelHeaderActionProps = {
   disabled?: boolean;
   onClick: MouseEventHandler;
   IconComponent: ComponentType<Partial<BaseProps>>;
+};
+
+type HeaderActionWrapperProps = {
+  flush?: boolean;
+  active?: boolean;
+  hoverColor?: boolean;
 };
 
 const HeaderActionWrapper = styled.div<HeaderActionWrapperProps>`
@@ -87,10 +86,7 @@ export default function PanelHeaderActionFactory(): React.ComponentType<PanelHea
       } = this.props;
       return (
         <HeaderActionWrapper
-          className={classnames('panel--header__action', {
-            disabled,
-            ...(className ? {[className]: className} : {})
-          })}
+          className={classnames('panel--header__action', {disabled, [className!]: className})}
           active={active}
           hoverColor={hoverColor}
           flush={flush}

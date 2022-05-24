@@ -18,46 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {HexagonLayer} from '@deck.gl/aggregation-layers';
-import CPUAggregator, {getAggregatedData} from '../layer-utils/cpu-aggregator';
+import React from 'react';
+import ItemSelector from '../common/item-selector/item-selector';
+import {PanelLabel, SidePanelSection} from '../common/styled-components';
+import {FormattedMessage} from 'localization';
+import {SingleSelectFilterProps} from './types';
 
-export const hexagonAggregation = {
-  key: 'position',
-  updateSteps: [
-    {
-      key: 'aggregate',
-      triggers: {
-        cellSize: {
-          prop: 'radius'
-        },
-        position: {
-          prop: 'getPosition',
-          updateTrigger: 'getPosition'
-        },
-        aggregator: {
-          prop: 'hexagonAggregator'
-        }
-      },
-      updater: getAggregatedData
-    }
-  ]
-};
+export default function SingleSelectFilterFactory() {
+  const SingleSelectFilter: React.FC<SingleSelectFilterProps> = ({filter, setFilter}) => (
+    <SidePanelSection>
+      <PanelLabel>
+        <FormattedMessage id={'misc.valueEquals'} />
+      </PanelLabel>
+      <ItemSelector
+        selectedItems={filter.value}
+        placeholder="placeholder.selectValue"
+        options={filter.domain}
+        multiSelect={false}
+        searchable={false}
+        displayOption={d => String(d)}
+        getOptionValue={d => d}
+        onChange={setFilter}
+        inputTheme="secondary"
+      />
+    </SidePanelSection>
+  );
 
-export default class ScaleEnhancedHexagonLayer extends HexagonLayer {
-  initializeState() {
-    const cpuAggregator = new CPUAggregator({
-      aggregation: hexagonAggregation
-    });
+  SingleSelectFilter.displayName = 'SingleSelectFilter';
 
-    this.state = {
-      cpuAggregator,
-      aggregatorState: cpuAggregator.state
-    };
-    const attributeManager = this.getAttributeManager();
-    attributeManager.add({
-      positions: {size: 3, accessor: 'getPosition'}
-    });
-  }
+  return SingleSelectFilter;
 }
-
-ScaleEnhancedHexagonLayer.layerName = 'ScaleEnhancedHexagonLayer';

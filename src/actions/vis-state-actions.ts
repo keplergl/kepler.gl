@@ -241,7 +241,7 @@ export function setFilter(
   idx: number,
   prop: string,
   value: any,
-  valueIndex: number
+  valueIndex?: number
 ): Merge<SetFilterUpdaterAction, {type: typeof ActionTypes.SET_FILTER}> {
   return {
     type: ActionTypes.SET_FILTER,
@@ -310,7 +310,7 @@ export function setFilterAnimationWindow({
 }
 
 export type AddFilterUpdaterAction = {
-  dataId: string | null;
+  dataId?: string | null;
 };
 /**
  * Add a new filter

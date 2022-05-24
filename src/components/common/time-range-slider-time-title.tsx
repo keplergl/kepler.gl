@@ -64,7 +64,7 @@ const TimeValue = ({value}) => (
 interface TimeTitleProps {
   value: number[];
   isEnlarged?: boolean;
-  timezone?: string;
+  timezone?: string | null;
   timeFormat: string;
 }
 

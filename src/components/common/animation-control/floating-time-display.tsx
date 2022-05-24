@@ -120,9 +120,9 @@ const TimeDisplayRow = ({timeValues = []}: TimeDisplayRowProps) => (
 
 interface FloatingTimeDisplayProps {
   currentTime: number | number[];
-  defaultTimeFormat?: string;
-  timeFormat?: string;
-  timezone?: string;
+  defaultTimeFormat?: string | null;
+  timeFormat?: string | null;
+  timezone?: string | null;
 }
 
 export default function FloatingTimeDisplayFactory() {

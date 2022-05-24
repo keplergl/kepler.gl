@@ -30,7 +30,9 @@ import {Close, Clock, LineChart} from 'components/common/icons';
 import TimeRangeSliderFactory from 'components/common/time-range-slider';
 import FieldSelectorFactory from 'components/common/field-selector';
 import FloatingTimeDisplayFactory from 'components/common/animation-control/floating-time-display';
+import {Field} from 'utils/table-utils/kepler-table';
 import {timeRangeSliderFieldsSelector} from './time-range-filter';
+import {TimeWidgetProps, TimeWidgetTopProps, TopSectionWrapperProps} from './types';
 
 const TOP_SECTION_HEIGHT = '36px';
 
@@ -39,7 +41,7 @@ const TimeBottomWidgetInner = styled(BottomWidgetInner)`
 `;
 const TopSectionWrapper = styled.div.attrs({
   className: 'time-widget--top'
-})`
+})<TopSectionWrapperProps>`
   display: flex;
   justify-content: space-between;
   width: 100%;
@@ -103,12 +105,19 @@ const StyledTitle = styled(CenterFlexbox)`
 `;
 
 TimeWidgetTopFactory.deps = [FieldSelectorFactory];
-export function TimeWidgetTopFactory(FieldSelector) {
-  const TimeWidgetTop = ({filter, readOnly, datasets, setFilterPlot, index, onClose}) => {
+export function TimeWidgetTopFactory(FieldSelector: ReturnType<typeof FieldSelectorFactory>) {
+  const TimeWidgetTop: React.FC<TimeWidgetTopProps> = ({
+    filter,
+    readOnly,
+    datasets,
+    setFilterPlot,
+    index,
+    onClose
+  }) => {
     const yAxisFields = useMemo(
       () =>
         ((datasets[filter.dataId[0]] || {}).fields || []).filter(
-          f => f.type === 'integer' || f.type === 'real'
+          (f: Field) => f.type === 'integer' || f.type === 'real'
         ),
       [datasets, filter.dataId]
     );
@@ -132,7 +141,6 @@ export function TimeWidgetTopFactory(FieldSelector) {
             <FieldSelector
               fields={yAxisFields}
               placement="top"
-              id="selected-time-widget-field"
               value={filter.yAxis ? filter.yAxis.name : null}
               onSelect={_setFilterPlotYAxis}
               placeholder="placeholder.yAxis"
@@ -155,8 +163,12 @@ export function TimeWidgetTopFactory(FieldSelector) {
 }
 
 TimeWidgetFactory.deps = [TimeRangeSliderFactory, FloatingTimeDisplayFactory, TimeWidgetTopFactory];
-function TimeWidgetFactory(TimeRangeSlider, FloatingTimeDisplay, TimeWidgetTop) {
-  const TimeWidget = ({
+function TimeWidgetFactory(
+  TimeRangeSlider: ReturnType<typeof TimeRangeSliderFactory>,
+  FloatingTimeDisplay: ReturnType<typeof FloatingTimeDisplayFactory>,
+  TimeWidgetTop: ReturnType<typeof TimeWidgetTopFactory>
+) {
+  const TimeWidget: React.FC<TimeWidgetProps> = ({
     datasets,
     filter,
     index,
@@ -170,7 +182,7 @@ function TimeWidgetFactory(TimeRangeSlider, FloatingTimeDisplay, TimeWidgetTop) 
     enlargeFilter,
     setFilterPlot,
     setFilterAnimationWindow
-  }) => {
+  }: TimeWidgetProps) => {
     const _updateAnimationSpeed = useCallback(speed => updateAnimationSpeed(index, speed), [
       updateAnimationSpeed,
       index

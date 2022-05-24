@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {ComponentType} from 'react';
 import styled from 'styled-components';
 import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import {EyeSeen, EyeUnseen, Upload} from 'components/common/icons';
@@ -32,6 +32,8 @@ import {
 } from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
 import {camelize} from 'utils/utils';
+import {VisibleLayerGroups} from 'reducers';
+import {BaseProps} from 'components/common/icons/base';
 
 const StyledInteractionPanel = styled.div`
   padding-bottom: 12px;
@@ -51,13 +53,28 @@ const StyledLayerGroupItem = styled.div`
   }
 `;
 
-const LayerLabel = styled(PanelLabelBold)`
+interface LayerLabelProps {
+  active: boolean;
+}
+
+const LayerLabel = styled<LayerLabelProps>(PanelLabelBold)`
   color: ${props => (props.active ? props.theme.textColor : props.theme.labelColor)};
 `;
 
+type LayerGroupSelectorProps = {
+  layers: VisibleLayerGroups;
+  editableLayers: string[];
+  onChange: (payload: {
+    visibleLayerGroups?: VisibleLayerGroups;
+    topLayerGroups?: VisibleLayerGroups;
+  }) => void;
+  topLayers: VisibleLayerGroups;
+  actionIcons?: Record<string, ComponentType<Partial<BaseProps>>>;
+};
+
 LayerGroupSelectorFactory.deps = [PanelHeaderActionFactory];
 
-function LayerGroupSelectorFactory(PanelHeaderAction) {
+function LayerGroupSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>) {
   const defaultActionIcons = {
     visible: EyeSeen,
     hidden: EyeUnseen
@@ -68,7 +85,7 @@ function LayerGroupSelectorFactory(PanelHeaderAction) {
     onChange,
     topLayers,
     actionIcons = defaultActionIcons
-  }) => (
+  }: LayerGroupSelectorProps) => (
     <StyledInteractionPanel className="map-style__layer-group__selector">
       <div className="layer-group__header">
         <PanelLabel>

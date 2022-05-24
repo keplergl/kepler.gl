@@ -30,10 +30,10 @@ import SingleSelectFilterPanelFactory from 'components/filters/filter-panels/sin
 import MultiSelectFilterPanelFactory from 'components/filters/filter-panels/multi-select-filter-panel';
 import RangeFilterPanelFactory from 'components/filters/filter-panels/range-filter-panel';
 import PolygonFilterPanelFactory from 'components/filters/filter-panels/polygon-filter-panel';
-
 import {Filter} from 'reducers/vis-state-updaters';
 import {Field} from 'utils/table-utils/kepler-table';
-import {FilterPanelProps} from 'components/filters/filter-panels/filter-panel-types';
+import {FilterPanelProps} from 'components/filters/filter-panels/types';
+import {Layer} from 'layers';
 
 const StyledFilterPanel = styled.div`
   margin-bottom: 12px;
@@ -42,6 +42,11 @@ const StyledFilterPanel = styled.div`
 
 interface FilterPanelPropsImpl extends Omit<FilterPanelProps, 'allAvailableFields'> {
   filters: Filter[];
+  layers: ReadonlyArray<Layer>;
+  isAnyFilterAnimating: boolean;
+  enlargeFilter: () => void;
+  toggleAnimation: () => void;
+  toggleFilterFeature: () => void;
 }
 
 FilterPanelFactory.deps = [
@@ -60,7 +65,7 @@ function FilterPanelFactory(
   MultiSelectFilterPanel: ReturnType<typeof MultiSelectFilterPanelFactory>,
   RangeFilterPanel: ReturnType<typeof RangeFilterPanelFactory>,
   PolygonFilterPanel: ReturnType<typeof PolygonFilterPanelFactory>
-) {
+): React.ComponentType<FilterPanelPropsImpl> {
   const FilterPanelComponents = {
     default: NewFilterPanel,
     [FILTER_TYPES.timeRange]: TimeRangeFilterPanel,
