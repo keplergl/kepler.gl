@@ -31,7 +31,7 @@ interface StyledSliderHandleProps {
 }
 
 const StyledSliderHandle = styled.span.attrs(props => ({
-  className: props.className || 'kg-range-slider__handle'
+  className: classnames('kg-range-slider__handle', {[props.className]: props.className})
 }))<StyledSliderHandleProps>`
   position: absolute;
   z-index: 10;
