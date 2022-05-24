@@ -79,7 +79,7 @@ type Item = {
   label: string;
   icon: React.ComponentType<Partial<BaseProps>>;
   key: string;
-  onClick: (p: DropdownComponentProps) => () => void;
+  onClick: (p: DropdownComponentProps) => (() => void) | null;
 };
 
 type DropdownComponentProps = {
@@ -154,7 +154,7 @@ const StyledToolbar = styled(Toolbar)`
   position: absolute;
 `;
 
-export const PanelAction = ({item, onClick}: PanelActionProps) => (
+export const PanelAction: React.FC<PanelActionProps> = ({item, onClick}) => (
   <StyledPanelAction data-tip data-for={`${item.id}-action`} onClick={onClick}>
     {item.label ? <p>{item.label}</p> : null}
     <a target={item.blank ? '_blank' : ''} href={item.href} rel="noreferrer">
@@ -169,7 +169,7 @@ export const PanelAction = ({item, onClick}: PanelActionProps) => (
 );
 
 export const PanelHeaderDropdownFactory = () => {
-  const PanelHeaderDropdown = ({items, show, onClose, id}: PanelHeaderDropdownProps) => {
+  const PanelHeaderDropdown: React.FC<PanelHeaderDropdownProps> = ({items, show, onClose, id}) => {
     return (
       <StyledToolbar show={show} className={`${id}-dropdown`}>
         <ClickOutsideCloseDropdown
@@ -212,7 +212,7 @@ export const SaveExportDropdownFactory = (
 ) => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
-  const SaveExportDropdown = (props: DropdownComponentProps) => (
+  const SaveExportDropdown: React.FC<DropdownComponentProps> = props => (
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}
@@ -245,7 +245,7 @@ export const SaveExportDropdownFactory = (
         label: 'toolbar.saveMap',
         icon: Save2,
         key: 'save',
-        onClick: props => props.onSaveMap
+        onClick: props => props.onSaveMap!
       },
       {
         label: 'toolbar.shareMapURL',
@@ -265,7 +265,7 @@ export const CloudStorageDropdownFactory = (
 ) => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
-  const CloudStorageDropdown = (props: DropdownComponentProps) => (
+  const CloudStorageDropdown: React.FC<DropdownComponentProps> = props => (
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}

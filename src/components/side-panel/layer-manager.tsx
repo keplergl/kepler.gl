@@ -41,10 +41,11 @@ import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {SidePanelItem} from 'components/types';
 import {LayerPanelListView} from 'reducers/ui-state-updaters';
+import {ActionHandler} from 'actions';
 
 type LayerBlendingSelectorProps = {
   layerBlending: string;
-  updateLayerBlending: typeof VisStateActions.updateLayerBlending;
+  updateLayerBlending: ActionHandler<typeof VisStateActions.updateLayerBlending>;
 } & WrappedComponentProps;
 
 type LayerManagerProps = {
@@ -55,10 +56,10 @@ type LayerManagerProps = {
   layerBlending: string;
   uiStateActions: typeof UiStateActions;
   visStateActions: typeof VisStateActions;
-  showAddDataModal: typeof UiStateActions.toggleModal;
-  removeDataset: typeof UiStateActions.openDeleteModal;
-  showDatasetTable: typeof VisStateActions.showDatasetTable;
-  updateTableColor: typeof VisStateActions.updateTableColor;
+  showAddDataModal: ActionHandler<typeof UiStateActions.toggleModal>;
+  removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
+  showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
+  updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   layerPanelListView: LayerPanelListView;
   panelMetadata: SidePanelItem;
 } & WrappedComponentProps;
@@ -96,7 +97,7 @@ const LayerBlendingSelector = ({
         <FormattedMessage id="layerBlending.title" />
       </PanelLabel>
       <ItemSelector
-        selectedItems={[intl.formatMessage({id: LAYER_BLENDINGS[layerBlending].label})]}
+        selectedItems={intl.formatMessage({id: LAYER_BLENDINGS[layerBlending].label})}
         options={Object.keys(labeledLayerBlendings)}
         multiSelect={false}
         searchable={false}

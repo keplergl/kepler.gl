@@ -22,11 +22,12 @@ import React, {useCallback} from 'react';
 import styled from 'styled-components';
 import PanelTabFactory, {PanelItem} from './panel-tab';
 import {toggleSidePanel} from 'actions/ui-state-actions';
+import {ActionHandler} from 'actions';
 
 type PanelToggleProps = {
   panels: PanelItem[];
   activePanel: string;
-  togglePanel: typeof toggleSidePanel;
+  togglePanel: ActionHandler<typeof toggleSidePanel>;
 };
 
 const PanelHeaderBottom = styled.div.attrs({
@@ -42,7 +43,7 @@ const PanelHeaderBottom = styled.div.attrs({
 PanelToggleFactory.deps = [PanelTabFactory];
 
 function PanelToggleFactory(PanelTab: ReturnType<typeof PanelTabFactory>) {
-  const PanelToggle = ({activePanel, panels, togglePanel}: PanelToggleProps) => {
+  const PanelToggle: React.FC<PanelToggleProps> = ({activePanel, panels, togglePanel}) => {
     const onClick = useCallback(
       panel => {
         const callback = panel.onClick || togglePanel;

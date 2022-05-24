@@ -62,7 +62,7 @@ export const StyledPanelTab = styled.div.attrs({
 `;
 
 export function PanelTabFactory() {
-  const PanelTab = ({isActive, onClick, panel}: PanelTabProps) => (
+  const PanelTab: React.FC<PanelTabProps> = ({isActive, onClick, panel}) => (
     <StyledPanelTab data-tip data-for={`${panel.id}-nav`} active={isActive} onClick={onClick}>
       <panel.iconComponent height="20px" />
       <Tooltip id={`${panel.id}-nav`} effect="solid" delayShow={500} place="bottom">

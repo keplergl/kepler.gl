@@ -27,13 +27,14 @@ import FilterPanelFactory from './filter-panel/filter-panel';
 import {Datasets, Filter} from 'reducers';
 import {Layer} from 'layers';
 import * as VisStateActions from 'actions/vis-state-actions';
+import {ActionHandler} from 'actions';
 
 type FilterManagerProps = {
   filters: Filter[];
   datasets: Datasets;
   layers: Layer[];
-  showDatasetTable: typeof VisStateActions.showDatasetTable;
-  updateTableColor: typeof VisStateActions.updateTableColor;
+  showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
+  updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   visStateActions: typeof VisStateActions;
 };
 
