@@ -245,7 +245,7 @@ export default function BottomWidgetFactory(
                 <TimeWidget
                   // TimeWidget uses React.memo, here we pass width
                   // even though it doesnt use it, to force rerender
-                  filter={filters[enlargedFilterIdx]}
+                  filter={filters[enlargedFilterIdx] as TimeRangeFilter}
                   index={enlargedFilterIdx}
                   datasets={datasets}
                   readOnly={readOnly}

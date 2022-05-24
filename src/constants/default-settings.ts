@@ -905,7 +905,7 @@ export const EDITOR_MODES = {
   EDIT: EditorModes.EDIT_VERTEX
 };
 
-export const EDITOR_AVAILABLE_LAYERS = [
+export const EDITOR_AVAILABLE_LAYERS: string[] = [
   LAYER_TYPES.point,
   LAYER_TYPES.hexagon,
   LAYER_TYPES.arc,

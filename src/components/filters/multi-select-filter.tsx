@@ -20,30 +20,18 @@
 
 import React from 'react';
 import ItemSelector from '../common/item-selector/item-selector';
-import {PanelLabel, SidePanelSection} from '../common/styled-components';
+import {PanelLabel} from '../common/styled-components';
 import {FormattedMessage} from 'localization';
+import {MultiSelectFilterProps} from './types';
 
-export default function SingleSelectFilterFactory() {
-  const SingleSelectFilter = ({filter, setFilter}) => (
-    <SidePanelSection>
-      <PanelLabel>
-        <FormattedMessage id={'misc.valueEquals'} />
+export default function MultiSelectFilterFactory() {
+  const MultiSelectFilter: React.FC<MultiSelectFilterProps> = ({filter, setFilter}) => (
+    <div>
+      <PanelLabel htmlFor={`filter-${filter.id}`}>
+        <FormattedMessage id={'misc.valuesIn'} />
       </PanelLabel>
-      <ItemSelector
-        selectedItems={filter.value}
-        placeholder="placeholder.selectValue"
-        options={filter.domain}
-        multiSelect={false}
-        searchable={false}
-        displayOption={d => String(d)}
-        getOptionValue={d => d}
-        onChange={setFilter}
-        inputTheme="secondary"
-      />
-    </SidePanelSection>
+      <ItemSelector options={filter.domain} selectedItems={filter.value} onChange={setFilter} />
+    </div>
   );
-
-  SingleSelectFilter.displayName = 'SingleSelectFilter';
-
-  return SingleSelectFilter;
+  return MultiSelectFilter;
 }

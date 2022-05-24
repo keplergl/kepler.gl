@@ -19,29 +19,23 @@
 // THE SOFTWARE.
 
 import React, {useCallback} from 'react';
-import SingleSelectFilterFactory from 'components/filters/single-select-filter';
+import RangeFilterFactory from 'components/filters/range-filter';
+import {RangeFilter} from 'reducers';
 import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/filter-panel-with-field-select';
+import {FilterPanelComponent} from './types';
 
-SingleSelectFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, SingleSelectFilterFactory];
+RangeFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, RangeFilterFactory];
 
-function SingleSelectFilterPanelFactory(FieldPanelWithFieldSelect, SingleSelectFilter) {
-  /** @type {import('./filter-panel-types').FilterPanelComponent} */
-  const SingleSelectFilterPanel = React.memo(
-    ({
-      idx,
-      datasets,
-      allAvailableFields,
-      filter,
-      isAnyFilterAnimating,
-      enlargeFilter,
-      setFilter,
-      removeFilter,
-      toggleAnimation
-    }) => {
+function RangeFilterPanelFactory(
+  FieldPanelWithFieldSelect: ReturnType<typeof FieldPanelWithFieldSelectFactory>,
+  RangeFilter: ReturnType<typeof RangeFilterFactory>
+) {
+  const RangeFilterPanel: FilterPanelComponent<RangeFilter> = React.memo(
+    ({idx, datasets, allAvailableFields, filter, removeFilter, setFilter}) => {
       const onSetFilter = useCallback(value => setFilter(idx, 'value', value), [idx, setFilter]);
 
       return (
-        <div className="single-select-filter-panel">
+        <div className="range-filter-panel">
           <FieldPanelWithFieldSelect
             allAvailableFields={allAvailableFields}
             datasets={datasets}
@@ -52,13 +46,7 @@ function SingleSelectFilterPanelFactory(FieldPanelWithFieldSelect, SingleSelectF
           >
             {filter.type && !filter.enlarged && (
               <div className="filter-panel__filter">
-                <SingleSelectFilter
-                  filter={filter}
-                  idx={idx}
-                  isAnyFilterAnimating={isAnyFilterAnimating}
-                  toggleAnimation={toggleAnimation}
-                  setFilter={onSetFilter}
-                />
+                <RangeFilter filter={filter} setFilter={onSetFilter} />
               </div>
             )}
           </FieldPanelWithFieldSelect>
@@ -67,9 +55,9 @@ function SingleSelectFilterPanelFactory(FieldPanelWithFieldSelect, SingleSelectF
     }
   );
 
-  SingleSelectFilterPanel.displayName = 'SingleSelectFilterPanel';
+  RangeFilterPanel.displayName = 'RangeFilterPanel';
 
-  return SingleSelectFilterPanel;
+  return RangeFilterPanel;
 }
 
-export default SingleSelectFilterPanelFactory;
+export default RangeFilterPanelFactory;
