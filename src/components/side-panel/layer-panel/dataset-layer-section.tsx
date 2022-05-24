@@ -27,6 +27,7 @@ import {Layer, LayerClassesType} from 'layers';
 import KeplerTable from 'utils/table-utils/kepler-table';
 import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
+import {ActionHandler} from 'actions';
 
 type DatasetLayerSectionProps = {
   dataset: KeplerTable;
@@ -34,9 +35,9 @@ type DatasetLayerSectionProps = {
   layerOrder: number[];
   layerClasses: LayerClassesType;
   showDeleteDataset: boolean;
-  showDatasetTable: typeof VisStateActions.showDatasetTable;
-  updateTableColor: typeof VisStateActions.updateTableColor;
-  removeDataset: typeof UiStateActions.openDeleteModal;
+  showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
+  updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
+  removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
   uiStateActions: typeof UiStateActions;
   visStateActions: typeof VisStateActions;
 };

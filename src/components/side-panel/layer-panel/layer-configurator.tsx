@@ -49,6 +49,7 @@ import AggregationLayer from 'layers/aggregation-layer';
 import {Field} from 'utils/table-utils/kepler-table';
 import {toggleModal} from 'actions/ui-state-actions';
 import {ColorRange} from 'constants/color-ranges';
+import {ActionHandler} from 'actions';
 
 type LayerConfiguratorProps = {
   layer: Layer;
@@ -59,7 +60,7 @@ type LayerConfiguratorProps = {
     icon: any; //
     requireData: any; //
   }[];
-  openModal: typeof toggleModal;
+  openModal: ActionHandler<typeof toggleModal>;
   updateLayerConfig: (newConfig: Partial<LayerBaseConfig>) => void;
   updateLayerType: (newType: string) => void;
   updateLayerVisConfig: (newVisConfig: Partial<LayerVisConfig>) => void;

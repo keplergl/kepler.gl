@@ -28,6 +28,7 @@ import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';
 import {toggleModal} from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {ColorUI} from 'layers/layer-factory';
+import {ActionHandler} from 'actions';
 
 type LayerPanelProps = {
   className?: string;
@@ -44,15 +45,17 @@ type LayerPanelProps = {
     requireData: any; //
   }[];
   isDraggable?: boolean;
-  openModal: typeof toggleModal;
-  layerColorUIChange: typeof VisStateActions.layerColorUIChange;
-  layerConfigChange: typeof VisStateActions.layerConfigChange;
-  layerVisualChannelConfigChange: typeof VisStateActions.layerVisualChannelConfigChange;
-  layerTypeChange: typeof VisStateActions.layerTypeChange;
-  layerVisConfigChange: typeof VisStateActions.layerVisConfigChange;
-  layerTextLabelChange: typeof VisStateActions.layerTextLabelChange;
-  removeLayer: typeof VisStateActions.removeLayer;
-  duplicateLayer: typeof VisStateActions.duplicateLayer;
+  openModal: ActionHandler<typeof toggleModal>;
+  layerColorUIChange: ActionHandler<typeof VisStateActions.layerColorUIChange>;
+  layerConfigChange: ActionHandler<typeof VisStateActions.layerConfigChange>;
+  layerVisualChannelConfigChange: ActionHandler<
+    typeof VisStateActions.layerVisualChannelConfigChange
+  >;
+  layerTypeChange: ActionHandler<typeof VisStateActions.layerTypeChange>;
+  layerVisConfigChange: ActionHandler<typeof VisStateActions.layerVisConfigChange>;
+  layerTextLabelChange: ActionHandler<typeof VisStateActions.layerTextLabelChange>;
+  removeLayer: ActionHandler<typeof VisStateActions.removeLayer>;
+  duplicateLayer: ActionHandler<typeof VisStateActions.duplicateLayer>;
 };
 
 const PanelWrapper = styled.div`

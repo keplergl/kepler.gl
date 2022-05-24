@@ -25,6 +25,7 @@ import {Datasets} from 'reducers';
 import {Layer, LayerClassesType} from 'layers';
 import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
+import {ActionHandler} from 'actions';
 
 type DatasetLayerGroupProps = {
   datasets: Datasets;
@@ -32,9 +33,9 @@ type DatasetLayerGroupProps = {
   layerOrder: number[];
   layerClasses: LayerClassesType;
   showDeleteDataset: boolean;
-  removeDataset: typeof UiStateActions.openDeleteModal;
-  showDatasetTable: typeof VisStateActions.showDatasetTable;
-  updateTableColor: typeof VisStateActions.updateTableColor;
+  removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
+  showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
+  updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   uiStateActions: typeof UiStateActions;
   visStateActions: typeof VisStateActions;
 };

@@ -51,7 +51,7 @@ const DimensionScaleSelector = ({
       </PanelLabel>
       <ItemSelector
         disabled={disabled}
-        selectedItems={scaleType ? [scaleType] : []}
+        selectedItems={scaleType}
         options={options}
         multiSelect={false}
         searchable={false}

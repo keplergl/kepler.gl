@@ -212,12 +212,12 @@ export default class ColorRangeSelector extends Component<ColorRangeSelectorProp
   }
 }
 
-export const PaletteConfig = ({
+export const PaletteConfig: React.FC<PaletteConfigProps> = ({
   label,
   value,
   config: {type, options},
   onChange
-}: PaletteConfigProps) => (
+}) => (
   <StyledPaletteConfig
     className="color-palette__config"
     onClick={(e: Event) => e.stopPropagation()}
@@ -230,7 +230,7 @@ export const PaletteConfig = ({
     {type === 'select' && (
       <div className="color-palette__config__select">
         <ItemSelector
-          selectedItems={[value]}
+          selectedItems={value}
           options={options}
           multiSelect={false}
           searchable={false}
@@ -259,12 +259,12 @@ const StyledColorRange = styled.div.attrs({
   }
 `;
 
-export const ColorPaletteGroup = ({
+export const ColorPaletteGroup: React.FC<ColorPaletteGroupProps> = ({
   reversed,
   onSelect,
   selected,
   colorRanges
-}: ColorPaletteGroupProps) => (
+}) => (
   <div className="color-palette__group">
     {colorRanges.map((colorRange, i) => (
       <StyledColorRange

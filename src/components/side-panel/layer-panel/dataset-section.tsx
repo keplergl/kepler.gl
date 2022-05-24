@@ -28,16 +28,17 @@ import SourceDataCatalogFactory from '../common/source-data-catalog';
 import {Datasets} from 'reducers';
 import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
+import {ActionHandler} from 'actions';
 
 type DatasetSectionProps = {
   datasets: Datasets;
   defaultDataset: string;
   showDatasetList: boolean;
   showDeleteDataset: boolean;
-  showDatasetTable: typeof VisStateActions.showDatasetTable;
-  updateTableColor: typeof VisStateActions.updateTableColor;
-  removeDataset: typeof UiStateActions.openDeleteModal;
-  showAddDataModal: typeof UiStateActions.toggleModal;
+  showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
+  updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
+  removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
+  showAddDataModal: ActionHandler<typeof UiStateActions.toggleModal>;
 };
 
 const StyledDatasetTitle = styled.div<{showDatasetList: boolean}>`
@@ -63,7 +64,7 @@ export function AddDataButtonFactory() {
     onClick,
     isInactive
   }: {
-    onClick: typeof UiStateActions.toggleModal;
+    onClick:  ActionHandler<typeof UiStateActions.toggleModal>;
     isInactive: boolean;
   }) => (
     <Button

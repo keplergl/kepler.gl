@@ -116,7 +116,13 @@ const DropdownWrapper = styled.div<DropdownWrapperProps>`
 `;
 
 type ItemSelectorProps = {
-  selectedItems: ReadonlyArray<string | number | boolean | object>;
+  selectedItems?:
+    | ReadonlyArray<string | number | boolean | object>
+    | string
+    | number
+    | boolean
+    | object
+    | null;
   options: ReadonlyArray<string | number | boolean | object>;
   onChange: (
     items:
@@ -186,16 +192,16 @@ class ItemSelector extends Component<ItemSelectorProps> {
     // only used when multiSelect = true
     e.preventDefault();
     e.stopPropagation();
-    const {selectedItems} = this.props;
-    const index = selectedItems.findIndex(t => t === item);
+    const multiSelectedItems = toArray(this.props.selectedItems);
+    const index = multiSelectedItems.findIndex(t => t === item);
 
     if (index < 0) {
       return;
     }
 
     const items = [
-      ...selectedItems.slice(0, index),
-      ...selectedItems.slice(index + 1, selectedItems.length)
+      ...multiSelectedItems.slice(0, index),
+      ...multiSelectedItems.slice(index + 1, multiSelectedItems.length)
     ];
 
     this.props.onChange(items);

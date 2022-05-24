@@ -122,7 +122,7 @@ function TextLabelPanelFactory(
                       </PanelLabel>
                       <ItemSelector
                         {...LAYER_TEXT_CONFIGS.textAnchor}
-                        selectedItems={[tl.anchor]}
+                        selectedItems={tl.anchor}
                         onChange={val => updateLayerTextLabel(idx, 'anchor', val)}
                       />
                     </SBFlexboxItem>

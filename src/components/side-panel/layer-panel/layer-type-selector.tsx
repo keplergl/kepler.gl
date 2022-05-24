@@ -82,10 +82,10 @@ function LayerTypeSelectorFactory(
       [hasData, layerTypeOptions]
     );
 
-    const selectedItems = useMemo(() => {
-      const selected = typeOptions.find(op => op.id === layer.type);
-      return selected ? [selected] : [];
-    }, [typeOptions, layer.type]);
+    const selectedItems = useMemo(() => typeOptions.find(op => op.id === layer.type), [
+      typeOptions,
+      layer.type
+    ]);
 
     return (
       <SidePanelSection>
