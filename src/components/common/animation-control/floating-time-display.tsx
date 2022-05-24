@@ -20,6 +20,7 @@
 
 import React, {useMemo} from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
 import {Minus} from 'components/common/icons';
 import {DEFAULT_TIME_FORMAT} from 'constants/default-settings';
 import {CenterFlexbox} from 'components/common/styled-components';
@@ -42,7 +43,7 @@ const StyledTimeDisplayWrapper = styled.div.attrs({
 `;
 
 const StyledTimeDisplay = styled.div.attrs(props => ({
-  className: `floating-time-display__inner${props.className ? ` ${props.className}` : ''}`
+  className: classnames('floating-time-display__inner', {[props.className]: props.className})
 }))`
   background-color: ${props => props.theme.panelBackground};
   border-radius: ${props => props.theme.timeDisplayBorderRadius}px;

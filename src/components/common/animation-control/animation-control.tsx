@@ -20,6 +20,7 @@
 
 import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
 
 import Slider from 'components/common/slider/slider';
 import {BottomWidgetInner} from 'components/common/styled-components';
@@ -49,7 +50,7 @@ const AnimationWidgetInner = styled.div`
 `;
 
 const StyledDomain = styled.div.attrs(props => ({
-  className: `animation-control__time-domain${props.className ? ` ${props.className}` : ''}`
+  className: classnames('animation-control__time-domain', {[props.className]: props.className})
 }))`
   color: ${props => props.theme.titleTextColor};
   font-weight: 400;
