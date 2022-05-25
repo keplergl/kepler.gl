@@ -21,7 +21,7 @@
 // vis-state-reducer
 import ActionTypes from 'constants/action-types';
 import {AddDataToMapPayload} from '../actions/actions';
-import {FileCacheItem} from '../processors/file-handler';
+import {FileCacheItem} from '../processors/types';
 import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';
 import {Feature, InteractionConfig} from 'reducers/vis-state-updaters';
 import {ValueOf, Merge, RGBColor} from '../reducers/types';
@@ -240,7 +240,7 @@ export function setFilter(
   idx: number,
   prop: string,
   value: any,
-  valueIndex: number
+  valueIndex?: number
 ): Merge<SetFilterUpdaterAction, {type: typeof ActionTypes.SET_FILTER}> {
   return {
     type: ActionTypes.SET_FILTER,
@@ -309,7 +309,7 @@ export function setFilterAnimationWindow({
 }
 
 export type AddFilterUpdaterAction = {
-  dataId: string;
+  dataId?: string | null;
 };
 /**
  * Add a new filter
@@ -319,7 +319,7 @@ export type AddFilterUpdaterAction = {
  * @public
  */
 export function addFilter(
-  dataId: string
+  dataId: string | null
 ): Merge<AddFilterUpdaterAction, {type: typeof ActionTypes.ADD_FILTER}> {
   return {
     type: ActionTypes.ADD_FILTER,

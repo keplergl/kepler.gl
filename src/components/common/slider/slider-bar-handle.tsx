@@ -24,7 +24,12 @@ import styled from 'styled-components';
 import MouseEventHandler from './mouse-event';
 import {StyleRangeSliderType} from './slider';
 
-const StyledSlider = styled.div`
+interface StyledSliderProps {
+  active?: boolean;
+  vertical?: boolean;
+}
+
+const StyledSlider = styled.div<StyledSliderProps>`
   position: relative;
   background-color: ${props =>
     props.active ? props.theme.sliderBarHoverColor : props.theme.sliderBarColor};
