@@ -74,8 +74,7 @@ export type VisualChannelField = Field | null;
 export type VisualChannelScale = keyof typeof SCALE_TYPES;
 
 export type LayerBaseConfig = {
-  // TODO: allow to become null
-  dataId: string;
+  dataId: string | null;
   label: string;
   color: RGBColor;
 
@@ -177,6 +176,7 @@ export type UpdateTrigger = {
   [key: string]: {};
 };
 export type LayerBounds = [number, number, number, number];
+export type FindDefaultLayerPropsReturnValue = {props: any[]; foundLayers?: any[]};
 /**
  * Approx. number of points to sample in a large data set
  */
@@ -352,7 +352,7 @@ class Layer {
   static findDefaultLayerProps(
     dataset: KeplerTable,
     foundLayers?: any[]
-  ): {props: any[]; foundLayers?: any[]} {
+  ): FindDefaultLayerPropsReturnValue {
     return {props: [], foundLayers};
   }
 
@@ -436,7 +436,6 @@ class Layer {
     props: Partial<LayerBaseConfig> = {}
   ): LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig> {
     return {
-      // @ts-expect-error
       dataId: props.dataId || null,
       label: props.label || DEFAULT_LAYER_LABEL,
       color: props.color || colorMaker.next().value,

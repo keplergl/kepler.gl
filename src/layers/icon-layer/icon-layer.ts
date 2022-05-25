@@ -276,6 +276,9 @@ export default class IconLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
+    if (this.config.dataId === null) {
+      return {};
+    }
     const {textLabel} = this.config;
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
 
@@ -373,6 +376,7 @@ export default class IconLayer extends Layer {
 
           ...(hoveredObject
             ? [
+                // @ts-expect-error SvgIconLayerProps needs getIcon Field
                 new SvgIconLayer({
                   ...this.getDefaultHoverLayerProps(),
                   ...layerProps,

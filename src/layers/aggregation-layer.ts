@@ -281,6 +281,9 @@ export default class AggregationLayer extends Layer {
   }
 
   formatLayerData(datasets: Datasets, oldLayerData) {
+    if (this.config.dataId === null) {
+      return {};
+    }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getPosition = this.getPositionAccessor(dataContainer);
 

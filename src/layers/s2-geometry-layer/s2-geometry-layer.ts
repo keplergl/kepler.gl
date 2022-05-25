@@ -305,6 +305,9 @@ export default class S2GeometryLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData, opt = {}) {
+    if (this.config.dataId === null) {
+      return {};
+    }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getS2Token = this.getPositionAccessor(dataContainer);
     const {data} = this.updateData(datasets, oldLayerData);
