@@ -21,83 +21,60 @@
 import React, {useCallback, useMemo} from 'react';
 import {StyledFilterContent} from 'components/common/styled-components';
 import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
-import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
 import FieldSelectorFactory from '../../common/field-selector';
-import {getSupportedFilterFields} from './new-filter-panel';
+import {FilterBase} from 'reducers';
+import {FilterPanelComponent} from './types';
+import KeplerTable, {Field} from 'utils/table-utils/kepler-table';
 
-FieldPanelWithFieldSelectFactory.deps = [
+NewFilterPanelFactory.deps = [
   FilterPanelHeaderFactory,
   SourceDataSelectorFactory,
-  FieldSelectorFactory,
-  PanelHeaderActionFactory
+  FieldSelectorFactory
 ];
 
-function FieldPanelWithFieldSelectFactory(
-  FilterPanelHeader,
-  SourceDataSelector,
-  FieldSelector,
-  PanelHeaderAction
+export function getSupportedFilterFields(
+  supportedFilterTypes: KeplerTable['supportedFilterTypes'],
+  fields: Field[]
 ) {
-  /** @type {import('./filter-panel-types').FilterPanelComponent} */
-  const FilterPanelWithFieldSelect = React.memo(
-    ({
-      allAvailableFields,
-      children,
-      datasets,
-      filter,
-      idx,
-      removeFilter,
-      setFilter,
-      panelActions = []
-    }) => {
+  return supportedFilterTypes
+    ? fields.filter(field => supportedFilterTypes.includes(field.type))
+    : fields;
+}
+
+function NewFilterPanelFactory(
+  FilterPanelHeader: ReturnType<typeof FilterPanelHeaderFactory>,
+  SourceDataSelector: ReturnType<typeof SourceDataSelectorFactory>,
+  FieldSelector: ReturnType<typeof FieldSelectorFactory>
+) {
+  const NewFilterPanel: FilterPanelComponent<FilterBase> = React.memo(
+    ({idx, filter, datasets, allAvailableFields, setFilter, removeFilter}) => {
       const onFieldSelector = useCallback(field => setFilter(idx, 'name', field.name), [
         idx,
         setFilter
       ]);
 
-      const onSourceDataSelector = useCallback(value => setFilter(idx, 'dataId', [value]), [
+      const onSourceDataSelector = useCallback(value => setFilter(idx, 'dataId', value), [
         idx,
         setFilter
       ]);
 
-      const fieldValue = useMemo(
-        () => ((Array.isArray(filter.name) ? filter.name[0] : filter.name)),
-        [filter.name]
-      );
-
-      const dataset = datasets[filter.dataId[0]];
+      const dataset: KeplerTable = datasets[filter.dataId[0]];
       const supportedFields = useMemo(
         () => getSupportedFilterFields(dataset.supportedFilterTypes, allAvailableFields),
         [dataset.supportedFilterTypes, allAvailableFields]
       );
+
       return (
         <>
-          <FilterPanelHeader
-            datasets={[dataset]}
-            allAvailableFields={supportedFields}
-            idx={idx}
-            filter={filter}
-            removeFilter={removeFilter}
-          >
+          <FilterPanelHeader datasets={[dataset]} filter={filter} removeFilter={removeFilter}>
             <FieldSelector
               inputTheme="secondary"
               fields={supportedFields}
-              value={fieldValue}
+              value={Array.isArray(filter.name) ? filter.name[0] : filter.name}
               erasable={false}
               onSelect={onFieldSelector}
             />
-            {panelActions &&
-              panelActions.map(panelAction => (
-                <PanelHeaderAction
-                  id={panelAction.id}
-                  key={panelAction.id}
-                  onClick={panelAction.onClick}
-                  tooltip={panelAction.tooltip}
-                  IconComponent={panelAction.iconComponent}
-                  active={panelAction.active}
-                />
-              ))}
           </FilterPanelHeader>
           <StyledFilterContent className="filter-panel__content">
             {Object.keys(datasets).length > 1 && (
@@ -109,16 +86,15 @@ function FieldPanelWithFieldSelectFactory(
                 onSelect={onSourceDataSelector}
               />
             )}
-            {children}
           </StyledFilterContent>
         </>
       );
     }
   );
 
-  FilterPanelWithFieldSelect.displayName = 'FilterPanelWithFieldSelect';
+  NewFilterPanel.displayName = 'NewFilterPanel';
 
-  return FilterPanelWithFieldSelect;
+  return NewFilterPanel;
 }
 
-export default FieldPanelWithFieldSelectFactory;
+export default NewFilterPanelFactory;

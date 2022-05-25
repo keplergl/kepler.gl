@@ -18,21 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback} from 'react';
-import MultiSelectFilterFactory from 'components/filters/multi-select-filter';
+import React, {useCallback, useMemo} from 'react';
+import TimeRangeFilterFactory from 'components/filters/time-range-filter';
+import {Clock} from 'components/common/icons';
 import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/filter-panel-with-field-select';
+import {TimeRangeFilterPanelComponent} from './types';
 
-MultiSelectFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, MultiSelectFilterFactory];
+TimeRangeFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, TimeRangeFilterFactory];
 
-function MultiSelectFilterPanelFactory(FieldPanelWithFieldSelect, MultiSelectFilter) {
-  /** @type {import('./filter-panel-types').FilterPanelComponent} */
-  const MultiSelectFilterPanel = React.memo(
+function TimeRangeFilterPanelFactory(
+  FieldPanelWithFieldSelect: ReturnType<typeof FieldPanelWithFieldSelectFactory>,
+  TimeRangeFilter: ReturnType<typeof TimeRangeFilterFactory>
+) {
+  const TimeRangeFilterPanel: TimeRangeFilterPanelComponent = React.memo(
     ({
       idx,
       datasets,
       allAvailableFields,
       filter,
-      isAnyFilterAnimating,
       enlargeFilter,
       setFilter,
       removeFilter,
@@ -40,8 +43,21 @@ function MultiSelectFilterPanelFactory(FieldPanelWithFieldSelect, MultiSelectFil
     }) => {
       const onSetFilter = useCallback(value => setFilter(idx, 'value', value), [idx, setFilter]);
 
+      const panelActions = useMemo(
+        () => [
+          {
+            id: filter.id,
+            onClick: enlargeFilter,
+            tooltip: 'tooltip.timePlayback',
+            iconComponent: Clock,
+            active: filter.enlarged
+          }
+        ],
+        [filter.id, filter.enlarged, enlargeFilter]
+      );
+
       return (
-        <div className="multi-select-filter-panel">
+        <>
           <FieldPanelWithFieldSelect
             allAvailableFields={allAvailableFields}
             datasets={datasets}
@@ -49,27 +65,28 @@ function MultiSelectFilterPanelFactory(FieldPanelWithFieldSelect, MultiSelectFil
             idx={idx}
             removeFilter={removeFilter}
             setFilter={setFilter}
+            panelActions={panelActions}
           >
             {filter.type && !filter.enlarged && (
               <div className="filter-panel__filter">
-                <MultiSelectFilter
+                <TimeRangeFilter
                   filter={filter}
-                  idx={idx}
-                  isAnyFilterAnimating={isAnyFilterAnimating}
                   toggleAnimation={toggleAnimation}
                   setFilter={onSetFilter}
+                  isAnimatable
+                  hideTimeTitle
                 />
               </div>
             )}
           </FieldPanelWithFieldSelect>
-        </div>
+        </>
       );
     }
   );
 
-  MultiSelectFilterPanel.displayName = 'MultiSelectFilterPanel';
+  TimeRangeFilterPanel.displayName = 'TimeRangeFilterPanel';
 
-  return MultiSelectFilterPanel;
+  return TimeRangeFilterPanel;
 }
 
-export default MultiSelectFilterPanelFactory;
+export default TimeRangeFilterPanelFactory;

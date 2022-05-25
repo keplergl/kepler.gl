@@ -19,18 +19,26 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import ItemSelector from '../common/item-selector/item-selector';
-import {PanelLabel} from '../common/styled-components';
-import {FormattedMessage} from 'localization';
+import RangeSliderFactory from 'components/common/range-slider';
+import {RangeFilterProps} from './types';
 
-export default function MultiSelectFilterFactory() {
-  const MultiSelectFilter = ({filter, setFilter}) => (
+RangeFilterFactory.deps = [RangeSliderFactory];
+
+export default function RangeFilterFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
+  const RangeFilter: React.FC<RangeFilterProps> = ({filter, setFilter}) => (
     <div>
-      <PanelLabel htmlFor={`filter-${filter.id}`}>
-        <FormattedMessage id={'misc.valuesIn'} />
-      </PanelLabel>
-      <ItemSelector options={filter.domain} selectedItems={filter.value} onChange={setFilter} />
+      <RangeSlider
+        range={filter.domain}
+        value0={filter.value[0]}
+        value1={filter.value[1]}
+        step={filter.step}
+        histogram={filter.histogram}
+        isEnlarged={filter.enlarged}
+        onChange={setFilter}
+        inputTheme="secondary"
+      />
     </div>
   );
-  return MultiSelectFilter;
+
+  return RangeFilter;
 }

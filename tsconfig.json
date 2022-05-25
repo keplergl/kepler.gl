@@ -27,14 +27,5 @@
     }
   },
   "include": ["src"],
-  "exclude": [
-    "src/deckgl-layers/3d-building-layer",
-    "src/deckgl-layers/cluster-layer",
-    "src/deckgl-layers/column-layer",
-    "src/deckgl-layers/grid-layer",
-    "src/deckgl-layers/hexagon-layer",
-    "src/deckgl-layers/line-layer",
-    "src/deckgl-layers/svg-icon-layer",
-    "src/layers"
-  ]
+  "exclude": ["src/deckgl-layers/cluster-layer", "src/layers"]
 }

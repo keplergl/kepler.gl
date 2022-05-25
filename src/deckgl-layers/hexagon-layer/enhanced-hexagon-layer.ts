@@ -18,34 +18,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import RangeSliderFactory from 'components/common/range-slider';
+import {HexagonLayer} from '@deck.gl/aggregation-layers';
+import CPUAggregator, {AggregationType, getAggregatedData} from '../layer-utils/cpu-aggregator';
 
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
-import {BRUSH_CONFIG} from 'utils/interaction-utils';
-import {FormattedMessage} from 'localization';
+export const hexagonAggregation: AggregationType = {
+  key: 'position',
+  updateSteps: [
+    {
+      key: 'aggregate',
+      triggers: {
+        cellSize: {
+          prop: 'radius'
+        },
+        position: {
+          prop: 'getPosition',
+          updateTrigger: 'getPosition'
+        },
+        aggregator: {
+          prop: 'hexagonAggregator'
+        }
+      },
+      updater: getAggregatedData
+    }
+  ]
+};
 
-BrushConfigFactory.deps = [RangeSliderFactory];
+export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
+  initializeState() {
+    const cpuAggregator = new CPUAggregator({
+      aggregation: hexagonAggregation
+    });
 
-function BrushConfigFactory(RangeSlider) {
-  const BrushConfig = ({config, onChange}) => (
-    <SidePanelSection>
-      <PanelLabel>
-        <FormattedMessage id={'misc.brushRadius'} />
-      </PanelLabel>
-      <RangeSlider
-        range={BRUSH_CONFIG.range}
-        value0={0}
-        value1={config.size || 10 / 2}
-        step={0.1}
-        isRanged={false}
-        onChange={value => onChange({...config, size: value[1]})}
-        inputTheme="secondary"
-      />
-    </SidePanelSection>
-  );
-
-  return BrushConfig;
+    this.state = {
+      cpuAggregator,
+      aggregatorState: cpuAggregator.state
+    };
+    const attributeManager = this.getAttributeManager();
+    attributeManager.add({
+      positions: {size: 3, accessor: 'getPosition'}
+    });
+  }
 }
 
-export default BrushConfigFactory;
+ScaleEnhancedHexagonLayer.layerName = 'ScaleEnhancedHexagonLayer';
