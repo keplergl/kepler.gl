@@ -27,7 +27,7 @@ import {getError} from 'utils/utils';
 import {FileLoadingProgress} from 'reducers/vis-state-updaters';
 
 const StyledFileProgress = styled.div.attrs(props => ({
-  className: classnames('file-upload__progress', {[props.className]: props.className})
+  className: classnames('file-upload__progress', props.className)
 }))`
   color: ${props => props.theme.textColorLT};
   font-size: 12px;

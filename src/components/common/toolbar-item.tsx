@@ -29,7 +29,7 @@ interface StyledDivProps {
 }
 
 const StyledDiv = styled.div.attrs(props => ({
-  className: classnames('toolbar-item', {[props.className]: props.className})
+  className: classnames('toolbar-item', props.className)
 }))<StyledDivProps>`
   color: ${props =>
     props.active ? props.theme.toolbarItemIconHover : props.theme.panelHeaderIcon};

@@ -60,6 +60,10 @@ type TimeLabelFormat = {
   label: string;
 };
 
+type IconDivProps = {
+  status: string | null;
+};
+
 const TIME_DISPLAY = '2020-05-11 14:00';
 const getValue = fmt => fmt[TOOLTIP_KEY];
 
@@ -104,7 +108,7 @@ const hashStyles = {
 
 const IconDiv = styled.div.attrs({
   className: 'tooltip-chicklet__icon'
-})`
+})<IconDivProps>`
   color: ${props =>
     props.status === hashStyles.SHOW
       ? props.theme.subtextColorActive
@@ -134,7 +138,7 @@ function TooltipChickletFactory(
     state = {
       show: false
     };
-    private node!: HTMLElement;
+    private node!: HTMLDivElement;
 
     componentDidMount() {
       document.addEventListener('mousedown', this.handleClickOutside, false);
@@ -165,7 +169,7 @@ function TooltipChickletFactory(
       const hashStyle = show ? hashStyles.SHOW : hasFormat ? hashStyles.ACTIVE : null;
 
       return (
-        <ChickletButton ref={(node: HTMLElement) => (this.node = node)}>
+        <ChickletButton ref={(node: HTMLDivElement) => (this.node = node)}>
           <ChickletTag>{displayOption(item)}</ChickletTag>
           {formatLabels.length > 1 && (
             <ChickletAddonWrapper>

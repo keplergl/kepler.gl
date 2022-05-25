@@ -44,7 +44,7 @@ interface RangePlotProps {
   isRanged?: boolean;
   theme: any;
   timeFormat?: string;
-  timezone?: string;
+  timezone?: string | null;
   playbackControlWidth?: number;
 }
 

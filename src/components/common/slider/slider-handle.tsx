@@ -31,7 +31,7 @@ interface StyledSliderHandleProps {
 }
 
 const StyledSliderHandle = styled.span.attrs(props => ({
-  className: classnames('kg-range-slider__handle', {[props.className]: props.className})
+  className: classnames('kg-range-slider__handle', props.className)
 }))<StyledSliderHandleProps>`
   position: absolute;
   z-index: 10;
@@ -174,7 +174,7 @@ export default class SliderHandle extends Component {
   }
 
   state = {mouseOver: false};
-  ref = createRef<typeof StyledSliderHandle & HTMLSpanElement>(); // Set correct type
+  ref = createRef<HTMLSpanElement>();
 
   toggleMouseOver = () => {
     this.setState({mouseOver: !this.state.mouseOver});

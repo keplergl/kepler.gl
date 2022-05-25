@@ -105,9 +105,9 @@ export const PanelLabelBold = styled(PanelLabel)`
   font-weight: 500;
 `;
 
-export const PanelHeaderTitle = styled.span.attrs({
-  className: 'side-panel-panel__header__title'
-})`
+export const PanelHeaderTitle = styled.span.attrs(props => ({
+  className: classnames('side-panel-panel__header__title', props.className)
+}))`
   color: ${props => props.theme.textColor};
   font-size: 13px;
   letter-spacing: 0.43px;
@@ -128,9 +128,9 @@ export const PanelHeaderContent = styled.div`
   }
 `;
 
-export const PanelContent = styled.div.attrs({
-  className: 'side-panel-panel__content'
-})`
+export const PanelContent = styled.div.attrs(props => ({
+  className: classnames('side-panel-panel__content', props.className)
+}))`
   background-color: ${props => props.theme.panelContentBackground};
   padding: 12px;
 `;

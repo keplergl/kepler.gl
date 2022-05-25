@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef, ElementType} from 'react';
+import React, {Component, createRef, ElementType, PropsWithChildren} from 'react';
 import debounce from 'lodash.debounce';
 import isEqual from 'lodash.isequal';
 
@@ -131,7 +131,7 @@ const WINDOW_PAD = 40;
 
 const noop = () => {};
 
-interface PortaledProps {
+type PortaledProps = PropsWithChildren<{
   component: ElementType;
   onClose?: (
     event: React.MouseEvent<Element, globalThis.MouseEvent> | React.KeyboardEvent<Element>
@@ -144,8 +144,7 @@ interface PortaledProps {
   overlayZIndex?: number;
   modalProps?: Partial<ReactModal.Props>;
   modalStyle?: Partial<typeof defaultModalStyle>;
-  children: React.ReactNode;
-}
+}>;
 
 interface PortaledState {
   pos:

@@ -21,6 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {CenterFlexbox, DatasetSquare} from 'components/common/styled-components';
+import {RGBColor} from 'reducers';
 
 const DatasetName = styled.div.attrs({
   className: 'dataset-name'
@@ -32,8 +33,8 @@ const DatasetName = styled.div.attrs({
 
 interface DatasetLabelType {
   dataset: {
-    color?: string;
-    label?: string;
+    color: RGBColor;
+    label: string;
   };
 }
 

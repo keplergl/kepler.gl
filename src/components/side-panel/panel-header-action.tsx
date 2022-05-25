@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component, ComponentType} from 'react';
+import {TooltipProps} from 'react-tooltip';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
@@ -27,9 +28,8 @@ import {Tooltip} from 'components/common/styled-components';
 interface HeaderActionWrapperProps {
   flush?: boolean;
   active?: boolean;
-  hoverColor?: boolean;
+  hoverColor?: string | null;
 }
-
 
 const HeaderActionWrapper = styled.div<HeaderActionWrapperProps>`
   margin-left: ${props => (props.flush ? 0 : 8)}px;
@@ -59,7 +59,7 @@ interface PanelHeaderActionProps {
   disabled?: boolean;
   hoverColor?: string | null;
   className?: string;
-  tooltipType?: string;
+  tooltipType?: TooltipProps['type'];
   IconComponent: any;
 }
 
