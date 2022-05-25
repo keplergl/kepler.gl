@@ -24,9 +24,15 @@ import styled from 'styled-components';
 import MouseEventHandler from './mouse-event';
 import {StyleRangeSliderType} from './slider';
 
-const StyledSliderHandle = styled.span.attrs({
-  className: 'kg-range-slider__handle'
-})`
+interface StyledSliderHandleProps {
+  vertical?: boolean;
+  sliderHandleWidth: number;
+  active?: boolean;
+}
+
+const StyledSliderHandle = styled.span.attrs(props => ({
+  className: classnames('kg-range-slider__handle', {[props.className]: props.className})
+}))<StyledSliderHandleProps>`
   position: absolute;
   z-index: 10;
   ${props => (props.vertical ? 'margin-left' : 'margin-top')}: -${props =>
@@ -64,7 +70,13 @@ const StyledSliderHandle = styled.span.attrs({
   }
 `;
 
-const StyledSliderTooltip = styled.div`
+interface StyledSliderTooltipProps {
+  vertical?: boolean;
+  sliderHandleWidth: number;
+  active?: boolean;
+}
+
+const StyledSliderTooltip = styled.div<StyledSliderTooltipProps>`
   position: absolute;
   border-radius: 3px;
   display: inline-block;
@@ -162,7 +174,7 @@ export default class SliderHandle extends Component {
   }
 
   state = {mouseOver: false};
-  ref = createRef();
+  ref = createRef<typeof StyledSliderHandle & HTMLSpanElement>(); // Set correct type
 
   toggleMouseOver = () => {
     this.setState({mouseOver: !this.state.mouseOver});
