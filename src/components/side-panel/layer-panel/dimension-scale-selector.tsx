@@ -34,13 +34,13 @@ type DimensionScaleSelectorProps = {
   disabled?: boolean;
 };
 
-const DimensionScaleSelector = ({
+const DimensionScaleSelector: React.FC<DimensionScaleSelectorProps> = ({
   label,
   onSelect,
   options,
   scaleType,
   disabled = false
-}: DimensionScaleSelectorProps) => {
+}) => {
   return (
     <SidePanelSection>
       <PanelLabel>

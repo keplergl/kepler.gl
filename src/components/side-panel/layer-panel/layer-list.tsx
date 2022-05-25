@@ -81,7 +81,7 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
     return <div>{children}</div>;
   });
 
-  const LayerList = (props: LayerListProps) => {
+  const LayerList: React.FC<LayerListProps> = props => {
     const {
       layers,
       datasets,

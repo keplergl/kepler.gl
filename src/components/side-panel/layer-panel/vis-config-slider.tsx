@@ -88,7 +88,7 @@ const RangeInput = styled.input`
   margin-top: 5px;
 `;
 
-const LazyInput = ({value, onChange, name}: LazyInputProps) => {
+const LazyInput: React.FC<LazyInputProps> = ({value, onChange, name}) => {
   const [stateValue, setValue] = useState(value);
   const inputRef = useRef(null);
   useEffect(() => {
@@ -129,7 +129,7 @@ const LazyInput = ({value, onChange, name}: LazyInputProps) => {
   );
 };
 
-const CustomInput = ({isRanged, value, onChangeCustomInput}: CustomInputProps) => {
+const CustomInput: React.FC<CustomInputProps> = ({isRanged, value, onChangeCustomInput}) => {
   const onChangeInput = useCallback(
     (name, v) => {
       if (isRanged) onChangeCustomInput(name === 'value0' ? [v, value[1]] : [value[0], v]);
@@ -163,7 +163,7 @@ const CustomInput = ({isRanged, value, onChangeCustomInput}: CustomInputProps) =
 VisConfigSliderFactory.deps = [RangeSliderFactory];
 
 export default function VisConfigSliderFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
-  const VisConfigSlider = ({
+  const VisConfigSlider: React.FC<VisConfigSliderProps> = ({
     layer: {config},
     property,
     label,
@@ -174,7 +174,7 @@ export default function VisConfigSliderFactory(RangeSlider: ReturnType<typeof Ra
     disabled,
     onChange,
     inputTheme
-  }: VisConfigSliderProps) => {
+  }) => {
     const value = config.visConfig[property];
     const [custom, setCustom] = useState(false || !isInRange(value, range));
 

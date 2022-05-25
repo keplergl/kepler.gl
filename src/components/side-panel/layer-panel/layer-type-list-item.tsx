@@ -68,7 +68,7 @@ const StyledListItem = styled.div`
 `;
 
 export function LayerTypeListItemFactory() {
-  const LayerTypeListItem = ({value, isTile}: LayerTypeListItemProps) => (
+  const LayerTypeListItem: React.FC<LayerTypeListItemProps> = ({value, isTile}) => (
     <StyledListItem
       className={classNames('layer-type-selector__item__inner', {
         list: !isTile

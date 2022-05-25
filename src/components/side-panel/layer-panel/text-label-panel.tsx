@@ -45,11 +45,6 @@ import {RGBColor} from 'reducers';
 type TextLabelPanelProps = {
   fields: Field[];
   textLabel: LayerTextLabel[];
-  // updateLayerTextLabel: (
-  //   i: number | string,
-  //   f?: string,
-  //   s?: any
-  // ) => void;
   updateLayerTextLabel: (idx: number | 'all', prop: string, value: any) => void;
 };
 
@@ -132,7 +127,7 @@ function TextLabelPanelFactory(
                       </PanelLabel>
                       <ItemSelector
                         {...LAYER_TEXT_CONFIGS.textAlignment}
-                        selectedItems={[tl.alignment]}
+                        selectedItems={tl.alignment}
                         onChange={val => updateLayerTextLabel(idx, 'alignment', val)}
                       />
                     </SBFlexboxItem>

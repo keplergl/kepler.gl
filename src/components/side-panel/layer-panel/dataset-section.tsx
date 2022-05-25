@@ -30,6 +30,11 @@ import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {ActionHandler} from 'actions';
 
+type AddDataButtonProps = {
+  onClick: ActionHandler<typeof UiStateActions.toggleModal>;
+  isInactive: boolean;
+};
+
 type DatasetSectionProps = {
   datasets: Datasets;
   defaultDataset: string;
@@ -60,13 +65,7 @@ const StyledDatasetSection = styled.div`
 `;
 
 export function AddDataButtonFactory() {
-  const AddDataButton = ({
-    onClick,
-    isInactive
-  }: {
-    onClick:  ActionHandler<typeof UiStateActions.toggleModal>;
-    isInactive: boolean;
-  }) => (
+  const AddDataButton: React.FC<AddDataButtonProps> = ({onClick, isInactive}) => (
     <Button
       className="add-data-button"
       onClick={onClick}
@@ -88,7 +87,7 @@ function DatasetSectionFactory(
   SourceDataCatalog: ReturnType<typeof SourceDataCatalogFactory>,
   AddDataButton: ReturnType<typeof AddDataButtonFactory>
 ) {
-  const DatasetSection = (props: DatasetSectionProps) => {
+  const DatasetSection: React.FC<DatasetSectionProps> = props => {
     const {
       datasets,
       showDatasetTable,

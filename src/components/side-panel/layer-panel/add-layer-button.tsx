@@ -107,7 +107,7 @@ function AddLayerButtonFactory() {
     </ListItemWrapper>
   );
 
-  const AddLayerButton = (props: AddLayerButtonProps) => {
+  const AddLayerButton: React.FC<AddLayerButtonProps> = props => {
     const {datasets, onOptionSelected, typeaheadPlaceholder, intl} = props;
     const [showAddLayerDropdown, setShowAddLayerDropdown] = useState(false);
 

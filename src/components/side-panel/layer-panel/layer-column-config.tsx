@@ -31,7 +31,7 @@ type LayerColumnConfigProps = {
   columnPairs?: ColumnPairs | null;
   fieldPairs?: FieldPair[];
   columns: LayerColumns;
-  columnLabels?: Record<string, string>; //
+  columnLabels?: Record<string, string>;
   fields: Field[];
   updateLayerConfig: (newConfig: Partial<LayerBaseConfig>) => void;
   assignColumn: Layer['assignColumn'];
@@ -46,7 +46,7 @@ const TopRow = styled.div`
 LayerColumnConfigFactory.deps = [ColumnSelectorFactory];
 
 function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelectorFactory>) {
-  const LayerColumnConfig = ({
+  const LayerColumnConfig: React.FC<LayerColumnConfigProps> = ({
     columnPairs,
     fieldPairs,
     columns,
@@ -55,7 +55,7 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
     updateLayerConfig,
     assignColumn,
     assignColumnPairs
-  }: LayerColumnConfigProps) => {
+  }) => {
     const enhancedFieldPairs = useMemo(
       () =>
         columnPairs && fieldPairs

@@ -95,7 +95,7 @@ const TOGGLE_OPTIONS = [
 PanelViewListToggleFactory.deps = [ToggleOptionFactory];
 
 function PanelViewListToggleFactory(ToggleOption: ReturnType<typeof ToggleOptionFactory>) {
-  const PanelViewListToggle = (props: PanelViewListToggleProps) => {
+  const PanelViewListToggle: React.FC<PanelViewListToggleProps> = props => {
     const {layerPanelListViewMode, toggleLayerPanelListView} = props;
 
     const toggleListView = (listView: string) => toggleLayerPanelListView(listView);

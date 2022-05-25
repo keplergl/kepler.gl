@@ -45,7 +45,7 @@ DatasetLayerGroupFactory.deps = [DatasetLayerSectionFactory];
 function DatasetLayerGroupFactory(
   DatasetLayerSection: ReturnType<typeof DatasetLayerSectionFactory>
 ) {
-  const DatasetLayerGroup = (props: DatasetLayerGroupProps) => {
+  const DatasetLayerGroup: React.FC<DatasetLayerGroupProps> = props => {
     const {
       datasets,
       showDatasetTable,

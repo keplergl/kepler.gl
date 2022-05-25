@@ -28,6 +28,11 @@ import InfoHelperFactory from 'components/common/info-helper';
 import {VertThreeDots} from 'components/common/icons';
 import {Layer, LayerVisConfig} from 'layers';
 
+type LayerConfigGroupLabelProps = {
+  label?: string;
+  description?: string;
+};
+
 type LayerConfigGroupProps = {
   layer?: Layer;
   label: string;
@@ -135,7 +140,7 @@ export function LayerConfigGroupLabelFactory(InfoHelper: ReturnType<typeof InfoH
     }
   `;
 
-  const LayerConfigGroupLabel = ({label, description}: {label?: string; description?: string}) => (
+  const LayerConfigGroupLabel: React.FC<LayerConfigGroupLabelProps> = ({label, description}) => (
     <StyledLayerConfigGroupLabel className="layer-config-group__label">
       <span>
         <FormattedMessage id={label || 'misc.empty'} defaultMessage={label} />

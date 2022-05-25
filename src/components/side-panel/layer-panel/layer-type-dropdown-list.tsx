@@ -75,13 +75,13 @@ const StyledDropdownListItem = styled.div`
 `;
 
 export function LayerTypeDropdownListFactory() {
-  const LayerTypeDropdownList = ({
+  const LayerTypeDropdownList: React.FC<LayerTypeDropdownListProps> = ({
     onOptionSelected,
     options,
     selectedItems,
     selectionIndex,
     customListItemComponent
-  }: LayerTypeDropdownListProps) => {
+  }) => {
     const onSelectOption = useCallback(
       (e, value) => {
         e.preventDefault();

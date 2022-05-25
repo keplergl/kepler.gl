@@ -66,12 +66,12 @@ function LayerTypeSelectorFactory(
   LayerTypeListItem: ReturnType<typeof LayerTypeListItemFactory>,
   LayerTypeDropdownList: ReturnType<typeof LayerTypeDropdownListFactory>
 ) {
-  const LayerTypeSelector = ({
+  const LayerTypeSelector: React.FC<LayerTypeSelectorProps> = ({
     layer,
     layerTypeOptions,
     onSelect,
     datasets
-  }: LayerTypeSelectorProps) => {
+  }) => {
     const hasData = useMemo(() => Boolean(Object.keys(datasets).length), [datasets]);
     const typeOptions = useMemo(
       () =>

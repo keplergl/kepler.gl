@@ -30,6 +30,19 @@ import {FormattedMessage} from 'localization';
 import {RGBColor} from 'reducers';
 import {BaseProps} from 'components/common/icons/base';
 
+type LayerLabelEditorProps = {
+  layerId: string;
+  label?: string;
+  onEdit: (e) => void;
+};
+
+type LayerTitleSectionProps = {
+  layerType?: string | null;
+  layerId: string;
+  label?: string;
+  onUpdateLayerLabel: (e) => void;
+};
+
 type LayerPanelHeaderProps = {
   layerId: string;
   isVisible: boolean;
@@ -41,7 +54,7 @@ type LayerPanelHeaderProps = {
   isConfigActive: boolean;
   showRemoveLayer?: boolean;
   label?: string;
-  layerType?: string;
+  layerType?: string | null;
   isDragNDropEnabled?: boolean;
   labelRCGColorValues?: RGBColor | null;
   actionIcons?: Record<string, ComponentType<Partial<BaseProps>>>;
@@ -103,15 +116,7 @@ export const DragHandle = SortableHandle(({className, children}) => (
   <StyledDragHandle className={className}>{children}</StyledDragHandle>
 ));
 
-export const LayerLabelEditor = ({
-  layerId,
-  label,
-  onEdit
-}: {
-  layerId: string;
-  label?: string;
-  onEdit: (e) => void; //
-}) => (
+export const LayerLabelEditor: React.FC<LayerLabelEditorProps> = ({layerId, label, onEdit}) => (
   <InlineInput
     type="text"
     className="layer__title__editor"
@@ -136,16 +141,11 @@ export function LayerTitleSectionFactory() {
       text-transform: capitalize;
     }
   `;
-  const LayerTitleSection = ({
+  const LayerTitleSection: React.FC<LayerTitleSectionProps> = ({
     layerType,
     layerId,
     label,
     onUpdateLayerLabel
-  }: {
-    layerType?: string;
-    layerId: string;
-    label?: string;
-    onUpdateLayerLabel: (e) => void; //
   }) => (
     <StyledLayerTitleSection className="layer__title">
       <div>
@@ -173,7 +173,7 @@ function LayerPanelHeaderFactory(
   LayerTitleSection: ReturnType<typeof LayerTitleSectionFactory>,
   PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
 ) {
-  const LayerPanelHeader = ({
+  const LayerPanelHeader: React.FC<LayerPanelHeaderProps> = ({
     isConfigActive,
     isDragNDropEnabled,
     isVisible,
@@ -188,7 +188,7 @@ function LayerPanelHeaderFactory(
     onRemoveLayer,
     showRemoveLayer,
     actionIcons = defaultActionIcons
-  }: LayerPanelHeaderProps) => {
+  }) => {
     const [isOpen, setOpen] = useState(false);
     const toggleLayerConfigurator = e => {
       setOpen(!isOpen);

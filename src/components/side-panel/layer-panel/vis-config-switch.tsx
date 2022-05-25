@@ -47,14 +47,14 @@ const StyledVisConfigSwitch = styled.div`
 
 VisConfigSwitchFactory.deps = [InfoHelperFactory];
 function VisConfigSwitchFactory(InfoHelper: ReturnType<typeof InfoHelperFactory>) {
-  const VisConfigSwitch = ({
+  const VisConfigSwitch: React.FC<VisConfigSwitchProps> = ({
     layer: {id, config},
     property,
     onChange,
     label,
     description,
     disabled
-  }: VisConfigSwitchProps) => (
+  }) => (
     <SidePanelSection disabled={Boolean(disabled)}>
       <StyledVisConfigSwitch className="vis-config-switch">
         <div className="vis-config-switch__title">

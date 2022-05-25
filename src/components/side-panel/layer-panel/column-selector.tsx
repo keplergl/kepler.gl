@@ -69,14 +69,14 @@ const ColumnSelect = styled.div`
 ColumnSelectorFactory.deps = [FieldSelectorFactory];
 
 function ColumnSelectorFactory(FieldSelector: ReturnType<typeof FieldSelectorFactory>) {
-  const ColumnSelector = ({
+  const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     column,
     columns,
     label,
     allFields,
     onSelect,
     fieldPairs
-  }: ColumnSelectorProps) => (
+  }) => (
     <ColumnRow className="layer-config__column__selector">
       <ColumnName className="layer-config__column__name">
         <PanelLabel>
