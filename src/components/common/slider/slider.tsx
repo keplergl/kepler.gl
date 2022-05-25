@@ -104,7 +104,10 @@ export default class Slider extends Component {
   };
 
   private getBaseDistance() {
-    return this.props.vertical ? this.ref.current!.offsetHeight : this.ref.current!.offsetWidth;
+    if (!this.ref.current) {
+      return 0;
+    }
+    return this.props.vertical ? this.ref.current.offsetHeight : this.ref.current.offsetWidth;
   }
 
   private getDeltaVal(x: number) {

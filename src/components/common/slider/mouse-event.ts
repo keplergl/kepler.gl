@@ -78,7 +78,10 @@ export default class MouseEventHandler {
   };
 
   private getDistanceToTrack(pos: number) {
-    const trackRect = this.track.current!.getBoundingClientRect();
+    if (!this.track.current) {
+      return 0;
+    }
+    const trackRect = this.track.current.getBoundingClientRect();
     return pos - (this.vertical ? trackRect.bottom : trackRect.left);
   }
 
