@@ -64,7 +64,7 @@ export type OnBrush = (val0: number, val1: number) => void;
 
 export interface RangeBrushProps {
   isRanged?: boolean;
-  theme: any;
+  theme?: any;
   range: number[];
   value: number[];
   onBrushStart: () => void;
