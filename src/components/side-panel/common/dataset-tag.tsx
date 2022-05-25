@@ -18,15 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {MouseEvent} from 'react';
+import React from 'react';
 import {FormattedMessage} from 'localization';
 import styled from 'styled-components';
 import {DatasetSquare, Tooltip} from 'components';
-import {DatasetTagWrapperProps, DatasetTagProps, UpdateTableColorTypes} from './types';
+import {DatasetTagProps, UpdateTableColorTypes} from './types';
 
-function nop(_) {}
-
-const DatasetTagWrapper = styled.div<DatasetTagWrapperProps>`
+const DatasetTagWrapper = styled.div`
   display: flex;
   color: ${props => props.theme.textColor};
   font-size: 11px;
@@ -49,15 +47,11 @@ const DatasetColorPicker = styled.div`
   display: flex;
 `;
 
-const UpdateTableColor = ({updateTableColor = nop, children, id}: UpdateTableColorTypes) => (
+const UpdateTableColor = ({children, id}: UpdateTableColorTypes) => (
   <DatasetColorPicker
     className="dataset-action update-color"
     data-tip
     data-for={`update-color-${id}`}
-    onClick={(e: MouseEvent) => {
-      e.stopPropagation();
-      updateTableColor(id);
-    }}
   >
     {children}
   </DatasetColorPicker>
@@ -65,8 +59,8 @@ const UpdateTableColor = ({updateTableColor = nop, children, id}: UpdateTableCol
 
 export default function DatasetTagFactory() {
   const DatasetTag = ({onClick, onClickSquare, dataset, updateTableColor, id}: DatasetTagProps) => (
-    <DatasetTagWrapper className="source-data-tag" updateTableColor={updateTableColor}>
-      <UpdateTableColor id={dataset.id} updateTableColor={updateTableColor}>
+    <DatasetTagWrapper className="source-data-tag">
+      <UpdateTableColor id={dataset.id}>
         <DatasetSquare
           className="dataset-color"
           backgroundColor={dataset.color}

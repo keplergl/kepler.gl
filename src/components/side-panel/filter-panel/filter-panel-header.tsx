@@ -24,10 +24,12 @@ import PanelHeaderActionFactory from 'components/side-panel/panel-header-action'
 import {Trash} from 'components/common/icons';
 import {createLinearGradient} from 'utils/color-utils';
 import {StyledPanelHeader} from 'components/common/styled-components';
-import {FilterPanelProps} from 'components/filters/filter-panels/filter-panel-types';
+import {Filter, RGBColor} from 'reducers';
 import KeplerTable from 'utils/table-utils/kepler-table';
 
-export const StyledFilterHeader = styled(StyledPanelHeader)`
+export const StyledFilterHeader = styled(StyledPanelHeader)<{
+  labelRCGColorValues: RGBColor[];
+}>`
   cursor: pointer;
   padding: 10px 12px;
 
@@ -47,15 +49,19 @@ const StyledChildrenContainer = styled.div`
   flex: 2;
 `;
 
-interface FilterPanelHeaderProps extends FilterPanelProps {
+type FilterPanelHeaderProps = {
   children: React.ReactNode;
-  enlarged?: boolean;
+  datasets: KeplerTable[];
+  filter: Filter;
+  removeFilter: () => void;
   actionIcons?: Record<string, ComponentType>;
-}
+};
 
 FilterPanelHeaderFactory.deps = [PanelHeaderActionFactory];
 
-function FilterPanelHeaderFactory(PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>) {
+function FilterPanelHeaderFactory(
+  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
+): React.ComponentType<FilterPanelHeaderProps> {
   const defaultActionIcons = {
     delete: Trash
   };

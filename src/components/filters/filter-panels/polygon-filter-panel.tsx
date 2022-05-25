@@ -28,6 +28,8 @@ import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-
 import {StyledFilterPanel} from '../components';
 
 import get from 'lodash.get';
+import {PolygonFilterPanelComponent} from './types';
+import KeplerTable from 'utils/table-utils/kepler-table';
 
 PolygonFilterPanelFactory.deps = [
   FilterPanelHeaderFactory,
@@ -35,20 +37,17 @@ PolygonFilterPanelFactory.deps = [
   PanelHeaderActionFactory
 ];
 
-function PolygonFilterPanelFactory(FilterPanelHeader, PolygonFilter, PanelHeaderAction) {
-  /** @type {import('./filter-panel-types').FilterPanelComponent} */
-  const PolygonFilterPanel = React.memo(
-    ({
-      idx,
-      datasets,
-      layers,
-      allAvailableFields,
-      filter,
-      removeFilter,
-      setFilter,
-      toggleFilterFeature
-    }) => {
-      const filterDatasets = useMemo(() => filter.dataId.map(d => datasets[d]), [filter, datasets]);
+function PolygonFilterPanelFactory(
+  FilterPanelHeader: ReturnType<typeof FilterPanelHeaderFactory>,
+  PolygonFilter: ReturnType<typeof PolygonFilterFactory>,
+  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
+) {
+  const PolygonFilterPanel: PolygonFilterPanelComponent = React.memo(
+    ({idx, datasets, layers, filter, removeFilter, setFilter, toggleFilterFeature}) => {
+      const filterDatasets: KeplerTable[] = useMemo(() => filter.dataId.map(d => datasets[d]), [
+        filter,
+        datasets
+      ]);
 
       const onSetLayers = useCallback(value => setFilter(idx, 'layerId', value), [setFilter, idx]);
 
@@ -57,13 +56,7 @@ function PolygonFilterPanelFactory(FilterPanelHeader, PolygonFilter, PanelHeader
 
       return (
         <div className="polygon-filter-panel">
-          <FilterPanelHeader
-            datasets={filterDatasets}
-            allAvailableFields={allAvailableFields}
-            idx={idx}
-            filter={filter}
-            removeFilter={removeFilter}
-          >
+          <FilterPanelHeader datasets={filterDatasets} filter={filter} removeFilter={removeFilter}>
             <StyledFilterPanel>Geo - {featureType}</StyledFilterPanel>
             <PanelHeaderAction
               id={filter.id}
@@ -75,12 +68,7 @@ function PolygonFilterPanelFactory(FilterPanelHeader, PolygonFilter, PanelHeader
           </FilterPanelHeader>
           <StyledFilterContent className="filter-panel__content">
             <div className="filter-panel__filter">
-              <PolygonFilter
-                filter={filter}
-                layers={layers}
-                setLayers={onSetLayers}
-                toggleFilterFeature={toggleFilterFeature}
-              />
+              <PolygonFilter filter={filter} layers={layers} setLayers={onSetLayers} />
             </div>
           </StyledFilterContent>
         </div>
