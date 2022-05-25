@@ -243,6 +243,18 @@ function findLayerFillColor(layer) {
   return layer && layer.paint && layer.paint['background-color'];
 }
 
+// need to be careful because some basemap layer.paint['background-color'] values may be an interpolate array expression instead of a color string
+// https://docs.mapbox.com/mapbox-gl-js/style-spec/layers/#paint-background-background-color
+// https://docs.mapbox.com/mapbox-gl-js/style-spec/expressions/#interpolate
+function getPaintColor(color) {
+  if (Array.isArray(color) && color[0] === 'interpolate') {
+    // get color of first zoom break
+    // ["interpolate", ["linear"], ["zoom"], 11, "hsl(35, 32%, 91%)", 13, "hsl(35, 12%, 89%)"]
+    return color[4];
+  }
+  return color;
+}
+
 function get3DBuildingColor(style): RGBColor {
   // set building color to be the same as the background color.
   if (!style.style) {
@@ -277,12 +289,8 @@ function getBackgroundColorFromStyleBaseLayer(
     BASE_MAP_BACKGROUND_LAYER_IDS.includes(id)
   );
 
-  const backgroundColorOfBaseLayer = findLayerFillColor(baseLayer);
+  const backgroundColorOfBaseLayer = getPaintColor(findLayerFillColor(baseLayer));
 
-  // need to be careful because some basemap layer.paint['background-color'] values may be an interpolate array expression instead of a color string
-  // and that results in colorMaybeToRGB(backgroundColorOfBaseLayer) returning null
-  // https://docs.mapbox.com/mapbox-gl-js/style-spec/layers/#paint-background-background-color
-  // https://docs.mapbox.com/mapbox-gl-js/style-spec/expressions/#interpolate
   const newBackgroundColor =
     typeof backgroundColorOfBaseLayer === 'string'
       ? backgroundColorOfBaseLayer
