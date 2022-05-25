@@ -78,7 +78,7 @@ export interface RangeBrushProps {
   onMouseoutHandle: () => void;
 }
 
-function RangeBrushFactory() {
+function RangeBrushFactory(): React.ComponentType<RangeBrushProps> {
   class RangeBrush extends Component<RangeBrushProps> {
     static defaultProps = {
       isRanged: true
