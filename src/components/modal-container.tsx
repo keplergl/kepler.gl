@@ -20,6 +20,7 @@
 
 import React, {Component} from 'react';
 import {css} from 'styled-components';
+import {findDOMNode} from 'react-dom';
 import {createSelector} from 'reselect';
 import get from 'lodash.get';
 import document from 'global/document';
@@ -274,6 +275,7 @@ export default function ModalContainerFactory(
         mapState,
         uiState,
         visState,
+        rootNode,
         visStateActions,
         uiStateActions,
         providerState
@@ -545,6 +547,7 @@ export default function ModalContainerFactory(
 
       return this.props.rootNode ? (
         <ModalDialog
+          parentSelector={() => findDOMNode(rootNode)}
           isOpen={Boolean(currentModal)}
           onCancel={this._closeModal}
           {...modalProps}
