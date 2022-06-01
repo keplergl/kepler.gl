@@ -239,7 +239,11 @@ export default class AggregationLayer extends Layer {
   getScaleOptions(channel: string): string[] {
     const visualChannel = this.visualChannels[channel];
     const {field, aggregation, channelScaleType} = visualChannel;
-    const aggregationType = this.config.visConfig[aggregation];
+    const aggregationType = aggregation ? this.config.visConfig[aggregation] : null;
+
+    if (!aggregationType) {
+      return [];
+    }
 
     return this.config[field]
       ? // scale options based on aggregation
