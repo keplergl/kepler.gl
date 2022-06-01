@@ -59,7 +59,7 @@ export type DatasetItemProps = {
 };
 
 export type SourceDataSelectorProps = {
-  dataId: string | string[];
+  dataId: string | string[] | null;
   datasets: Datasets;
   disabled: boolean;
   defaultValue?: string;
