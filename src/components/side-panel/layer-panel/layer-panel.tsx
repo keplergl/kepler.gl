@@ -18,12 +18,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, MouseEventHandler, TouchEventHandler} from 'react';
 import styled from 'styled-components';
-import PropTypes from 'prop-types';
 
 import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeaderFactory from './layer-panel-header';
+import {Datasets, NestedPartial} from 'reducers';
+import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';
+import {toggleModal} from 'actions/ui-state-actions';
+import * as VisStateActions from 'actions/vis-state-actions';
+import {ColorUI} from 'layers/layer-factory';
+import {ActionHandler} from 'actions';
+
+type LayerPanelProps = {
+  className?: string;
+  style?: string;
+  onMouseDown?: MouseEventHandler;
+  onTouchStart?: TouchEventHandler;
+  layer: Layer;
+  datasets: Datasets;
+  idx: number;
+  layerTypeOptions?: {
+    id: string;
+    label: string;
+    icon: any; //
+    requireData: any; //
+  }[];
+  isDraggable?: boolean;
+  openModal: ActionHandler<typeof toggleModal>;
+  layerColorUIChange: ActionHandler<typeof VisStateActions.layerColorUIChange>;
+  layerConfigChange: ActionHandler<typeof VisStateActions.layerConfigChange>;
+  layerVisualChannelConfigChange: ActionHandler<
+    typeof VisStateActions.layerVisualChannelConfigChange
+  >;
+  layerTypeChange: ActionHandler<typeof VisStateActions.layerTypeChange>;
+  layerVisConfigChange: ActionHandler<typeof VisStateActions.layerVisConfigChange>;
+  layerTextLabelChange: ActionHandler<typeof VisStateActions.layerTextLabelChange>;
+  removeLayer: ActionHandler<typeof VisStateActions.removeLayer>;
+  duplicateLayer: ActionHandler<typeof VisStateActions.duplicateLayer>;
+};
 
 const PanelWrapper = styled.div`
   font-size: 12px;
@@ -38,49 +71,33 @@ const PanelWrapper = styled.div`
 
 LayerPanelFactory.deps = [LayerConfiguratorFactory, LayerPanelHeaderFactory];
 
-function LayerPanelFactory(LayerConfigurator, LayerPanelHeader) {
-  class LayerPanel extends Component {
-    static propTypes = {
-      layer: PropTypes.object.isRequired,
-      datasets: PropTypes.object.isRequired,
-      idx: PropTypes.number.isRequired,
-      layerConfigChange: PropTypes.func.isRequired,
-      layerTypeChange: PropTypes.func.isRequired,
-      openModal: PropTypes.func.isRequired,
-      removeLayer: PropTypes.func.isRequired,
-      duplicateLayer: PropTypes.func.isRequired,
-      onCloseConfig: PropTypes.func,
-      layerTypeOptions: PropTypes.arrayOf(PropTypes.any),
-      layerVisConfigChange: PropTypes.func.isRequired,
-      layerVisualChannelConfigChange: PropTypes.func.isRequired,
-      layerColorUIChange: PropTypes.func.isRequired,
-      setLayerAnimationTime: PropTypes.func,
-      updateLayerAnimationSpeed: PropTypes.func,
-      isDraggable: PropTypes.bool
-    };
-
-    updateLayerConfig = newProp => {
+function LayerPanelFactory(
+  LayerConfigurator: ReturnType<typeof LayerConfiguratorFactory>,
+  LayerPanelHeader: ReturnType<typeof LayerPanelHeaderFactory>
+): React.ComponentType<LayerPanelProps> {
+  class LayerPanel extends Component<LayerPanelProps> {
+    updateLayerConfig = (newProp: Partial<LayerBaseConfig>) => {
       this.props.layerConfigChange(this.props.layer, newProp);
     };
 
-    updateLayerType = newType => {
+    updateLayerType = (newType: string) => {
       this.props.layerTypeChange(this.props.layer, newType);
     };
 
-    updateLayerVisConfig = newVisConfig => {
+    updateLayerVisConfig = (newVisConfig: Partial<LayerVisConfig>) => {
       this.props.layerVisConfigChange(this.props.layer, newVisConfig);
     };
 
-    updateLayerColorUI = (...args) => {
+    updateLayerColorUI = (...args: [string, NestedPartial<ColorUI>]) => {
       this.props.layerColorUIChange(this.props.layer, ...args);
     };
 
-    updateLayerTextLabel = (...args) => {
+    updateLayerTextLabel = (...args: [number | 'all', string, any]) => {
       this.props.layerTextLabelChange(this.props.layer, ...args);
     };
 
-    updateLayerVisualChannelConfig = (newConfig, channel, scaleKey) => {
-      this.props.layerVisualChannelConfigChange(this.props.layer, newConfig, channel, scaleKey);
+    updateLayerVisualChannelConfig = (newConfig: Partial<LayerBaseConfig>, channel: string) => {
+      this.props.layerVisualChannelConfigChange(this.props.layer, newConfig, channel);
     };
 
     _updateLayerLabel = ({target: {value}}) => {

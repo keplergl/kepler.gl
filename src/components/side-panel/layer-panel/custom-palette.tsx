@@ -20,7 +20,6 @@
 
 import React, {Component, createRef} from 'react';
 import classnames from 'classnames';
-import PropTypes from 'prop-types';
 import styled, {css} from 'styled-components';
 import {SortableContainer, SortableElement, SortableHandle} from 'react-sortable-hoc';
 import Portaled from 'components/common/portaled';
@@ -30,6 +29,17 @@ import {VertDots, Trash} from 'components/common/icons';
 import ColorPalette from './color-palette';
 import CustomPicker from './custom-picker';
 import {arrayMove} from 'utils/data-utils';
+import {ColorRange} from 'constants/color-ranges';
+import {NestedPartial} from 'reducers';
+
+type CustomPaletteProps = {
+  customPalette: ColorRange;
+  showSketcher?: boolean | number;
+  setCustomPalette: (c: NestedPartial<ColorRange>) => void;
+  onCancel: () => void;
+  onToggleSketcher: (i: boolean | number) => void;
+  onApply: (p: ColorRange, e: MouseEvent) => void;
+};
 
 const dragHandleActive = css`
   .layer__drag-handle {
@@ -140,38 +150,27 @@ const DragHandle = SortableHandle(({className, children}) => (
   <StyledDragHandle className={className}>{children}</StyledDragHandle>
 ));
 
-class CustomPalette extends Component {
-  static propTypes = {
-    customPalette: PropTypes.shape({
-      name: PropTypes.string,
-      type: PropTypes.string,
-      category: PropTypes.string,
-      colors: PropTypes.arrayOf(PropTypes.string)
-    }),
-    setCustomPalette: PropTypes.func,
-    showSketcher: PropTypes.oneOfType([PropTypes.bool, PropTypes.number])
-  };
-
+class CustomPalette extends Component<CustomPaletteProps> {
   state = {
     isSorting: false
   };
 
-  root = createRef();
+  root = createRef<HTMLDivElement>();
 
-  _setColorPaletteUI(colors) {
+  _setColorPaletteUI(colors: string[]) {
     this.props.setCustomPalette({
       colors
     });
   }
 
-  _onPickerUpdate = color => {
+  _onPickerUpdate = (color: {hex: string}) => {
     const {colors} = this.props.customPalette;
     const newColors = [...colors];
-    newColors[this.props.showSketcher] = color.hex;
+    newColors[this.props.showSketcher as number] = color.hex;
     this._setColorPaletteUI(newColors);
   };
 
-  _onColorDelete = index => {
+  _onColorDelete = (index: number) => {
     const {colors} = this.props.customPalette;
     const newColors = [...colors];
     if (newColors.length > 1) {
@@ -187,7 +186,7 @@ class CustomPalette extends Component {
     this._setColorPaletteUI(newColors);
   };
 
-  _onSwatchClick = index => {
+  _onSwatchClick = (index: number) => {
     this.props.onToggleSketcher(index);
   };
 
@@ -195,9 +194,10 @@ class CustomPalette extends Component {
     this.props.onToggleSketcher(false);
   };
 
-  _onApply = event => {
+  _onApply = (event: MouseEvent) => {
     event.stopPropagation();
     event.preventDefault();
+
     this.props.onCancel();
     this.props.onApply(this.props.customPalette, event);
   };
@@ -213,7 +213,7 @@ class CustomPalette extends Component {
     this.setState({isSorting: true});
   };
 
-  _inputColorHex = (index, {target: {value}}) => {
+  _inputColorHex = (index: number, {target: {value}}) => {
     const {colors} = this.props.customPalette;
     const newColors = [...colors];
     newColors[index] = value.toUpperCase();
@@ -277,7 +277,7 @@ class CustomPalette extends Component {
 
         <Portaled isOpened={this.props.showSketcher !== false} left={280} top={-300}>
           <CustomPicker
-            color={colors[this.props.showSketcher]}
+            color={colors[this.props.showSketcher as number]}
             onChange={this._onPickerUpdate}
             onSwatchClose={this._onSwatchClose}
           />

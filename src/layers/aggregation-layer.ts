@@ -164,6 +164,7 @@ export default class AggregationLayer extends Layer {
     const {range, field, defaultMeasure, aggregation} = channel;
     const fieldConfig = this.config[field];
     const label = this.visConfigSettings[range].label;
+
     return {
       label: typeof label === 'function' ? label(this.config) : label,
       measure:
@@ -316,7 +317,7 @@ export default class AggregationLayer extends Layer {
     };
   }
 
-  getDefaultDeckLayerProps(opts) {
+  getDefaultDeckLayerProps(opts): any {
     const baseProp = super.getDefaultDeckLayerProps(opts);
     return {
       ...baseProp,

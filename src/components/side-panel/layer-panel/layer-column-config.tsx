@@ -19,11 +19,24 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo} from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ColumnSelectorFactory from './column-selector';
+import {ColumnPairs} from 'layers/base-layer';
+import {Layer, LayerColumns, LayerBaseConfig} from 'layers';
+import {Field, FieldPair} from 'utils/table-utils/kepler-table';
+
+type LayerColumnConfigProps = {
+  columnPairs?: ColumnPairs | null;
+  fieldPairs?: FieldPair[];
+  columns: LayerColumns;
+  columnLabels?: Record<string, string>;
+  fields: Field[];
+  updateLayerConfig: (newConfig: Partial<LayerBaseConfig>) => void;
+  assignColumn: Layer['assignColumn'];
+  assignColumnPairs: Layer['assignColumnPairs'];
+};
 
 const TopRow = styled.div`
   display: flex;
@@ -32,8 +45,8 @@ const TopRow = styled.div`
 
 LayerColumnConfigFactory.deps = [ColumnSelectorFactory];
 
-function LayerColumnConfigFactory(ColumnSelector) {
-  const LayerColumnConfig = ({
+function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelectorFactory>) {
+  const LayerColumnConfig: React.FC<LayerColumnConfigProps> = ({
     columnPairs,
     fieldPairs,
     columns,
@@ -94,17 +107,6 @@ function LayerColumnConfigFactory(ColumnSelector) {
         </SidePanelSection>
       </div>
     );
-  };
-
-  LayerColumnConfig.propTypes = {
-    columns: PropTypes.object.isRequired,
-    fields: PropTypes.arrayOf(PropTypes.any).isRequired,
-    assignColumnPairs: PropTypes.func.isRequired,
-    assignColumn: PropTypes.func.isRequired,
-    updateLayerConfig: PropTypes.func.isRequired,
-    columnPairs: PropTypes.object,
-    fieldPairs: PropTypes.arrayOf(PropTypes.any),
-    columnLabels: PropTypes.object
   };
 
   return LayerColumnConfig;

@@ -24,6 +24,21 @@ import styled from 'styled-components';
 import classnames from 'classnames';
 import {SortableContainer, SortableElement} from 'react-sortable-hoc';
 import LayerPanelFactory from './layer-panel';
+import {Datasets} from 'reducers';
+import {Layer, LayerClassesType} from 'layers';
+import * as UiStateActions from 'actions/ui-state-actions';
+import * as VisStateActions from 'actions/vis-state-actions';
+
+type LayerListProps = {
+  datasets: Datasets;
+  layers: Layer[];
+  layerOrder: number[];
+  layerClasses: LayerClassesType;
+  isSortable?: boolean;
+  uiStateActions: typeof UiStateActions;
+  visStateActions: typeof VisStateActions;
+};
+
 // make sure the element is always visible while is being dragged
 // item being dragged is appended in body, here to reset its global style
 const SortableStyledItem = styled.div`
@@ -48,8 +63,10 @@ const SortableStyledItem = styled.div`
     }
   }
 `;
+
 LayerListFactory.deps = [LayerPanelFactory];
-function LayerListFactory(LayerPanel) {
+
+function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
   // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
   // Developers can provide any layer panel implementation and it will still be sortable
   const SortableItem = SortableElement(({children, isSorting}) => {
@@ -59,10 +76,12 @@ function LayerListFactory(LayerPanel) {
       </SortableStyledItem>
     );
   });
+
   const WrappedSortableContainer = SortableContainer(({children}) => {
     return <div>{children}</div>;
   });
-  const LayerList = props => {
+
+  const LayerList: React.FC<LayerListProps> = props => {
     const {
       layers,
       datasets,
@@ -140,7 +159,6 @@ function LayerListFactory(LayerPanel) {
                 <LayerPanel
                   {...panelProps}
                   {...layerActions}
-                  sortData={layerIdx}
                   key={layers[layerIdx].id}
                   idx={layerIdx}
                   layer={layers[layerIdx]}
@@ -158,7 +176,6 @@ function LayerListFactory(LayerPanel) {
               <LayerPanel
                 {...panelProps}
                 {...layerActions}
-                sortData={layerIdx}
                 key={layers[layerIdx].id}
                 idx={layerIdx}
                 layer={layers[layerIdx]}

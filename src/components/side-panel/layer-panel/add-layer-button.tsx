@@ -21,6 +21,7 @@
 import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
+import {WrappedComponentProps} from 'react-intl';
 
 import Tippy from '@tippyjs/react';
 import {Add} from 'components/common/icons';
@@ -28,6 +29,13 @@ import {Button} from 'components/common/styled-components';
 import {DatasetSquare} from 'components';
 import Typeahead from 'components/common/item-selector/typeahead';
 import Accessor from 'components/common/item-selector/accessor';
+import {Datasets, RGBColor} from 'reducers';
+
+type AddLayerButtonProps = {
+  datasets: Datasets;
+  onOptionSelected: (opt: string) => void;
+  typeaheadPlaceholder?: string;
+} & WrappedComponentProps;
 
 const DropdownContainer = styled.div.attrs({
   className: 'add-layer-menu-dropdown'
@@ -99,7 +107,7 @@ function AddLayerButtonFactory() {
     </ListItemWrapper>
   );
 
-  const AddLayerButton = props => {
+  const AddLayerButton: React.FC<AddLayerButtonProps> = props => {
     const {datasets, onOptionSelected, typeaheadPlaceholder, intl} = props;
     const [showAddLayerDropdown, setShowAddLayerDropdown] = useState(false);
 
@@ -112,7 +120,7 @@ function AddLayerButtonFactory() {
     }, []);
 
     const toggleSelectedOption = useCallback(
-      option => {
+      (option: {label: string; value: string; color: RGBColor}) => {
         onOptionSelected(option.value);
         _onBlur();
       },

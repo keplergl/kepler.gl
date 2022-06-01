@@ -12,3 +12,7 @@ export type Merge<A, B> = {[K in keyof A]: K extends keyof B ? B[K] : A[K]} & B 
 export type Entries<T> = {
   [K in keyof T]: [K, T[K]];
 }[keyof T][];
+
+export type NestedPartial<T> = {
+  [P in keyof T]?: NestedPartial<T[P]>;
+};

@@ -47,7 +47,9 @@ export type SingleSelectFilterProps = {
 
 export type MultiSelectFilterProps = {
   filter: MultiSelectFilter;
-  setFilter: (v: ReadonlyArray<string | number | boolean | object> | null) => void;
+  setFilter: (
+    v: ReadonlyArray<string | number | boolean | object> | string | number | boolean | object | null
+  ) => void;
 };
 
 export type TimeWidgetTopProps = {

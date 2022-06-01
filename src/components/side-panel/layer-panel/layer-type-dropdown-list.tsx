@@ -18,10 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback} from 'react';
+import React, {ComponentType, useCallback} from 'react';
 import styled from 'styled-components';
 import classNames from 'classnames';
 import {classList} from '../../common/item-selector/dropdown-list';
+
+type ListItem = {
+  id: string;
+  disabled: boolean;
+};
+
+type LayerTypeDropdownListProps = {
+  options: ListItem[];
+  selectedItems: ListItem[];
+  selectionIndex: number | null;
+  onOptionSelected: (opt: string, e: Event) => void;
+  customListItemComponent: ComponentType<{value: ListItem; isTile: boolean}>;
+};
 
 const DropdownListWrapper = styled.div`
   ${props => props.theme.dropdownList};
@@ -62,7 +75,7 @@ const StyledDropdownListItem = styled.div`
 `;
 
 export function LayerTypeDropdownListFactory() {
-  const LayerTypeDropdownList = ({
+  const LayerTypeDropdownList: React.FC<LayerTypeDropdownListProps> = ({
     onOptionSelected,
     options,
     selectedItems,
@@ -89,8 +102,8 @@ export function LayerTypeDropdownListFactory() {
               disabled: value.disabled
             })}
             key={`${value.id}_${i}`}
-            onMouseDown={e => onSelectOption(e, value)}
-            onClick={e => onSelectOption(e, value)}
+            onMouseDown={(e: MouseEvent) => onSelectOption(e, value)}
+            onClick={(e: MouseEvent) => onSelectOption(e, value)}
           >
             <Component value={value} isTile />
           </StyledDropdownListItem>

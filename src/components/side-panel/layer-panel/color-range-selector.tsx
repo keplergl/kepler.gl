@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 import uniq from 'lodash.uniq';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
@@ -29,18 +28,44 @@ import {PanelLabel} from 'components/common/styled-components';
 import Switch from 'components/common/switch';
 import ColorPalette from './color-palette';
 import CustomPalette from './custom-palette';
-import {COLOR_RANGES} from 'constants/color-ranges';
+import {COLOR_RANGES, ColorRange} from 'constants/color-ranges';
 import {numberSort} from 'utils/data-utils';
 import {reverseColorRange} from 'utils/color-utils';
 import {FormattedMessage} from 'localization';
+import {ColorUI} from 'layers/layer-factory';
+import {NestedPartial} from 'reducers';
 
-export const ALL_TYPES = uniq(
+type ColorRangeSelectorProps = {
+  colorPaletteUI: ColorUI;
+  selectedColorRange: ColorRange;
+  onSelectColorRange: (p: ColorRange, e: MouseEvent) => void;
+  setColorPaletteUI: (newConfig: NestedPartial<ColorUI>) => void;
+};
+
+type PaletteConfigProps = {
+  label: string;
+  value: string | number | boolean;
+  config: {
+    type: string;
+    options: (string | number | boolean)[];
+  };
+  onChange: (v: string | number | boolean | object | null) => void;
+};
+
+type ColorPaletteGroupProps = {
+  reversed?: boolean;
+  selected: ColorRange;
+  colorRanges: ColorRange[];
+  onSelect: (p: ColorRange, e: MouseEvent) => void;
+};
+
+export const ALL_TYPES: string[] = uniq(
   COLOR_RANGES.map(c => c.type)
     .filter(ctype => ctype)
-    .concat(['all', 'custom'])
+    .concat(['all', 'custom']) as string[]
 );
 
-export const ALL_STEPS = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(numberSort);
+export const ALL_STEPS: number[] = uniq(COLOR_RANGES.map(d => d.colors.length)).sort(numberSort);
 
 const StyledColorConfig = styled.div`
   padding: 12px 12px 0 12px;
@@ -88,31 +113,21 @@ const CONFIG_SETTINGS = {
   }
 };
 
-export default class ColorRangeSelect extends Component {
-  static propTypes = {
-    colorPaletteUI: PropTypes.object.isRequired,
-    selectedColorRange: PropTypes.object.isRequired,
-    onSelectColorRange: PropTypes.func.isRequired,
-    setColorPaletteUI: PropTypes.func.isRequired,
-    // optional
-    colorRanges: PropTypes.arrayOf(PropTypes.any)
-  };
-
+export default class ColorRangeSelector extends Component<ColorRangeSelectorProps> {
   static defaultProps = {
-    colorRanges: COLOR_RANGES,
     onSelectColorRange: () => {},
     setColorPaletteUI: () => {}
   };
 
-  colorRangesSelector = props => props.colorRanges;
-  configTypeSelector = props => props.colorPaletteUI.colorRangeConfig.type;
-  configStepSelector = props => props.colorPaletteUI.colorRangeConfig.steps;
+  configTypeSelector = (props: ColorRangeSelectorProps) =>
+    props.colorPaletteUI.colorRangeConfig.type;
+  configStepSelector = (props: ColorRangeSelectorProps) =>
+    props.colorPaletteUI.colorRangeConfig.steps;
   filteredColorRange = createSelector(
-    this.colorRangesSelector,
     this.configTypeSelector,
     this.configStepSelector,
-    (colorRanges, type, steps) => {
-      return colorRanges.filter(colorRange => {
+    (type, steps) => {
+      return COLOR_RANGES.filter(colorRange => {
         const isType = type === 'all' || type === colorRange.type;
         const isStep = Number(steps) === colorRange.colors.length;
 
@@ -121,30 +136,36 @@ export default class ColorRangeSelect extends Component {
     }
   );
 
-  _updateConfig = ({key, value}) => {
+  _updateConfig = ({
+    key,
+    value
+  }: {
+    key: string;
+    value: string | number | boolean | object | null;
+  }) => {
     this._setColorRangeConfig({[key]: value});
   };
 
-  _onSetCustomPalette = config => {
+  _onSetCustomPalette = (config: NestedPartial<ColorRange>) => {
     this.props.setColorPaletteUI({
       customPalette: config
     });
   };
 
-  _setColorRangeConfig = newConfig => {
+  _setColorRangeConfig = (newConfig: Record<string, string | number | boolean | object | null>) => {
     this.props.setColorPaletteUI({
       colorRangeConfig: newConfig
     });
   };
 
-  _onCustomPaletteCancel = newConfig => {
+  _onCustomPaletteCancel = () => {
     this.props.setColorPaletteUI({
       showSketcher: false,
       colorRangeConfig: {custom: false}
     });
   };
 
-  _onToggleSketcher = val => {
+  _onToggleSketcher = (val: boolean | number) => {
     this.props.setColorPaletteUI({
       showSketcher: val
     });
@@ -173,7 +194,6 @@ export default class ColorRangeSelect extends Component {
           <CustomPalette
             customPalette={customPalette}
             showSketcher={showSketcher}
-            selected={this.props.selectedColorRange}
             onApply={this.props.onSelectColorRange}
             onToggleSketcher={this._onToggleSketcher}
             setCustomPalette={this._onSetCustomPalette}
@@ -192,8 +212,16 @@ export default class ColorRangeSelect extends Component {
   }
 }
 
-export const PaletteConfig = ({label, value, config: {type, options}, onChange}) => (
-  <StyledPaletteConfig className="color-palette__config" onClick={e => e.stopPropagation()}>
+export const PaletteConfig: React.FC<PaletteConfigProps> = ({
+  label,
+  value,
+  config: {type, options},
+  onChange
+}) => (
+  <StyledPaletteConfig
+    className="color-palette__config"
+    onClick={(e: Event) => e.stopPropagation()}
+  >
     <div className="color-palette__config__label">
       <PanelLabel>
         <FormattedMessage id={`color.${label}`} />
@@ -211,7 +239,12 @@ export const PaletteConfig = ({label, value, config: {type, options}, onChange})
       </div>
     )}
     {type === 'switch' && (
-      <Switch checked={value} id={`${label}-toggle`} onChange={() => onChange(!value)} secondary />
+      <Switch
+        checked={value as boolean}
+        id={`${label}-toggle`}
+        onChange={() => onChange(!value)}
+        secondary
+      />
     )}
   </StyledPaletteConfig>
 );
@@ -226,12 +259,19 @@ const StyledColorRange = styled.div.attrs({
   }
 `;
 
-export const ColorPaletteGroup = ({reversed, onSelect, selected, colorRanges}) => (
+export const ColorPaletteGroup: React.FC<ColorPaletteGroupProps> = ({
+  reversed,
+  onSelect,
+  selected,
+  colorRanges
+}) => (
   <div className="color-palette__group">
     {colorRanges.map((colorRange, i) => (
       <StyledColorRange
         key={`${colorRange.name}-${i}`}
-        onClick={e => onSelect(reversed ? reverseColorRange(true, colorRange) : colorRange, e)}
+        onClick={e =>
+          onSelect(reversed ? (reverseColorRange(true, colorRange) as ColorRange) : colorRange, e)
+        }
       >
         <ColorPalette
           colors={colorRange.colors}

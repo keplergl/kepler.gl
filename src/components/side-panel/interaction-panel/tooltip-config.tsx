@@ -167,10 +167,8 @@ function TooltipConfigFactory(DatasetTag, FieldSelector: ReturnType<typeof Field
                 [dataId]: selected.map(
                   f =>
                     config.fieldsToShow[dataId].find(
-                      //@ts-expect-error
                       tooltipField => tooltipField.name === f.name
                     ) || {
-                      //@ts-expect-error
                       name: f.name,
                       // default initial tooltip is null
                       format: null
