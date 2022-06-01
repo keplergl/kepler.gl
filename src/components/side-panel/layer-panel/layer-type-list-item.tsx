@@ -18,11 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {ComponentType} from 'react';
 import styled from 'styled-components';
 import {CLOUDFRONT} from 'constants/default-settings';
 import classNames from 'classnames';
 import {FormattedMessage} from 'localization';
+import {BaseProps} from 'components/common/icons/base';
+
+type LayerTypeListItemProps = {
+  value: {
+    icon: ComponentType<Partial<BaseProps>>;
+    label: string;
+  };
+  isTile: boolean;
+};
 
 const ITEM_SIZE = {
   large: 50,
@@ -59,7 +68,7 @@ const StyledListItem = styled.div`
 `;
 
 export function LayerTypeListItemFactory() {
-  const LayerTypeListItem = ({value, isTile}) => (
+  const LayerTypeListItem: React.FC<LayerTypeListItemProps> = ({value, isTile}) => (
     <StyledListItem
       className={classNames('layer-type-selector__item__inner', {
         list: !isTile

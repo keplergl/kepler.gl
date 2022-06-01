@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {useState, useCallback, useEffect, useRef} from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
@@ -29,6 +28,32 @@ import KeyEvent from 'constants/keyevent';
 import {Checkbox} from 'components';
 import {clamp} from 'utils/data-utils';
 import {isInRange} from 'utils/filter-utils';
+import {Layer, LayerBaseConfig} from 'layers';
+
+type LazyInputProps = {
+  value: string | [string, string];
+  name: string;
+  onChange: (n: string | [string, string], v?: string | [string, string]) => void;
+};
+
+type CustomInputProps = {
+  value: string | [string, string];
+  isRanged: boolean;
+  onChangeCustomInput: (v: [string, string]) => void;
+};
+
+type VisConfigSliderProps = {
+  layer: Layer;
+  property: string;
+  onChange: (v: Record<string, number | string | number[] | string[]>) => void;
+  label?: string | ((c: LayerBaseConfig) => string);
+  range: [number, number];
+  step?: number;
+  isRanged: boolean;
+  disabled?: boolean;
+  inputTheme?: string;
+  allowCustomValue?: boolean;
+};
 
 const InputWrapper = styled.div`
   display: flex;
@@ -63,7 +88,7 @@ const RangeInput = styled.input`
   margin-top: 5px;
 `;
 
-const LazyInput = ({value, onChange, name}) => {
+const LazyInput: React.FC<LazyInputProps> = ({value, onChange, name}) => {
   const [stateValue, setValue] = useState(value);
   const inputRef = useRef(null);
   useEffect(() => {
@@ -104,7 +129,7 @@ const LazyInput = ({value, onChange, name}) => {
   );
 };
 
-const CustomInput = ({isRanged, value, onChangeCustomInput}) => {
+const CustomInput: React.FC<CustomInputProps> = ({isRanged, value, onChangeCustomInput}) => {
   const onChangeInput = useCallback(
     (name, v) => {
       if (isRanged) onChangeCustomInput(name === 'value0' ? [v, value[1]] : [value[0], v]);
@@ -135,22 +160,10 @@ const CustomInput = ({isRanged, value, onChangeCustomInput}) => {
   );
 };
 
-const propTypes = {
-  layer: PropTypes.object.isRequired,
-  property: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  label: PropTypes.oneOfType([PropTypes.string, PropTypes.bool, PropTypes.func]),
-  range: PropTypes.arrayOf(PropTypes.number).isRequired,
-  step: PropTypes.number,
-  isRanged: PropTypes.bool,
-  disabled: PropTypes.bool,
-  inputTheme: PropTypes.bool
-};
-
 VisConfigSliderFactory.deps = [RangeSliderFactory];
 
-export default function VisConfigSliderFactory(RangeSlider) {
-  const VisConfigSlider = ({
+export default function VisConfigSliderFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
+  const VisConfigSlider: React.FC<VisConfigSliderProps> = ({
     layer: {config},
     property,
     label,
@@ -219,8 +232,6 @@ export default function VisConfigSliderFactory(RangeSlider) {
       </SidePanelSection>
     );
   };
-
-  VisConfigSlider.propTypes = propTypes;
 
   return VisConfigSlider;
 }

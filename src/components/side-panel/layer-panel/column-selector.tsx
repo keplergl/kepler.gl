@@ -24,6 +24,31 @@ import {FormattedMessage} from 'localization';
 import {PanelLabel} from 'components/common/styled-components';
 import FieldSelectorFactory from 'components/common/field-selector';
 import {validateColumn} from 'reducers/vis-state-merger';
+import {LayerColumn, LayerColumns} from 'layers';
+import {Field, FieldPair} from 'utils/table-utils/kepler-table';
+
+type Pair = {
+  name: string;
+  type: string;
+  pair: FieldPair['pair'];
+};
+
+type ColumnSelectorProps = {
+  column: LayerColumn;
+  columns: LayerColumns;
+  label: string;
+  allFields: Field[];
+  onSelect: (
+    items:
+      | ReadonlyArray<string | number | boolean | object>
+      | string
+      | number
+      | boolean
+      | object
+      | null
+  ) => void;
+  fieldPairs?: Pair[] | null;
+};
 
 const ColumnRow = styled.div`
   display: flex;
@@ -43,8 +68,15 @@ const ColumnSelect = styled.div`
 
 ColumnSelectorFactory.deps = [FieldSelectorFactory];
 
-function ColumnSelectorFactory(FieldSelector) {
-  const ColumnSelector = ({column, columns, label, allFields, onSelect, fieldPairs}) => (
+function ColumnSelectorFactory(FieldSelector: ReturnType<typeof FieldSelectorFactory>) {
+  const ColumnSelector: React.FC<ColumnSelectorProps> = ({
+    column,
+    columns,
+    label,
+    allFields,
+    onSelect,
+    fieldPairs
+  }) => (
     <ColumnRow className="layer-config__column__selector">
       <ColumnName className="layer-config__column__name">
         <PanelLabel>

@@ -20,6 +20,8 @@
 
 import {CompositeLayer} from '@deck.gl/core';
 import {CompositeLayerProps} from '@deck.gl/core/lib/composite-layer';
+import {Position, RGBAColor} from 'deck.gl';
+import {RGBColor} from 'reducers';
 import ScatterplotIconLayer from './scatterplot-icon-layer';
 
 // default icon geometry is a square
@@ -33,6 +35,9 @@ const defaultProps = {
 export interface SvgIconLayerProps extends CompositeLayerProps<any> {
   getIconGeometry: (i: string) => number[];
   getIcon: (d: {icon: string}) => string;
+  getPosition: (d: any) => Position;
+  getRadius: ((d: any) => number) | number;
+  getFillColor: RGBColor | RGBAColor;
 }
 
 export default class SvgIconLayer extends CompositeLayer<any, SvgIconLayerProps> {

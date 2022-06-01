@@ -24,7 +24,23 @@ import ItemSelector from 'components/common/item-selector/item-selector';
 import {FormattedMessage} from 'localization';
 import {camelize} from 'utils/utils';
 
-const DimensionScaleSelector = ({label, onSelect, options, scaleType, disabled = false}) => {
+type DimensionScaleSelectorProps = {
+  label: string;
+  onSelect: (
+    val: readonly (string | number | boolean | object)[] | string | number | boolean | object | null
+  ) => void;
+  options: string[];
+  scaleType?: string;
+  disabled?: boolean;
+};
+
+const DimensionScaleSelector: React.FC<DimensionScaleSelectorProps> = ({
+  label,
+  onSelect,
+  options,
+  scaleType,
+  disabled = false
+}) => {
   return (
     <SidePanelSection>
       <PanelLabel>

@@ -19,17 +19,18 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import {range} from 'd3-array';
 import styled from 'styled-components';
 import {hexToRgb} from 'utils/color-utils';
 
 import {ColorsByTheme, Themes} from 'constants/color-palette';
+import {RGBColor} from 'reducers';
+import {ColorRange} from 'constants/color-ranges';
 
-const propTypes = {
-  onSelectColor: PropTypes.func.isRequired,
+type SingleColorPaletteProps = {
+  onSelectColor: (color: RGBColor | ColorRange, e: MouseEvent) => void;
   // hex value
-  selectedColor: PropTypes.string.isRequired
+  selectedColor: string;
 };
 
 const PALETTE_HEIGHT = '8px';
@@ -60,7 +61,7 @@ const StyledColorBlock = styled.div`
   border-style: solid;
 `;
 
-const SingleColorPalette = ({selectedColor, onSelectColor}) => (
+const SingleColorPalette: React.FC<SingleColorPaletteProps> = ({selectedColor, onSelectColor}) => (
   <StyledColorPalette className="single-color-palette">
     {Themes.map((theme, col) => (
       <StyledColorColumn key={theme} className="single-color-palette__column">
@@ -83,7 +84,5 @@ const SingleColorPalette = ({selectedColor, onSelectColor}) => (
     ))}
   </StyledColorPalette>
 );
-
-SingleColorPalette.propTypes = propTypes;
 
 export default SingleColorPalette;

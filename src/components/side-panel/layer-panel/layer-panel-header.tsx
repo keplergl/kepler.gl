@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useState} from 'react';
-import PropTypes from 'prop-types';
+import React, {useState, ComponentType, MouseEventHandler} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import {SortableHandle} from 'react-sortable-hoc';
@@ -28,24 +27,37 @@ import {Copy, ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from 'components/c
 
 import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
+import {RGBColor} from 'reducers';
+import {BaseProps} from 'components/common/icons/base';
 
-const propTypes = {
-  // required
-  layerId: PropTypes.string.isRequired,
-  isVisible: PropTypes.bool.isRequired,
-  onToggleVisibility: PropTypes.func.isRequired,
-  onUpdateLayerLabel: PropTypes.func.isRequired,
-  onToggleEnableConfig: PropTypes.func.isRequired,
-  onRemoveLayer: PropTypes.func.isRequired,
-  onDuplicateLayer: PropTypes.func.isRequired,
-  isConfigActive: PropTypes.bool.isRequired,
+type LayerLabelEditorProps = {
+  layerId: string;
+  label?: string;
+  onEdit: (e) => void;
+};
 
-  // optional
-  showRemoveLayer: PropTypes.bool,
-  label: PropTypes.string,
-  layerType: PropTypes.string,
-  isDragNDropEnabled: PropTypes.bool,
-  labelRCGColorValues: PropTypes.arrayOf(PropTypes.number)
+type LayerTitleSectionProps = {
+  layerType?: string | null;
+  layerId: string;
+  label?: string;
+  onUpdateLayerLabel: (e) => void;
+};
+
+type LayerPanelHeaderProps = {
+  layerId: string;
+  isVisible: boolean;
+  onToggleVisibility: MouseEventHandler;
+  onUpdateLayerLabel: (e) => void; //
+  onToggleEnableConfig: MouseEventHandler;
+  onRemoveLayer: MouseEventHandler;
+  onDuplicateLayer: MouseEventHandler;
+  isConfigActive: boolean;
+  showRemoveLayer?: boolean;
+  label?: string;
+  layerType?: string | null;
+  isDragNDropEnabled?: boolean;
+  labelRCGColorValues?: RGBColor | null;
+  actionIcons?: Record<string, ComponentType<Partial<BaseProps>>>;
 };
 
 export const defaultProps = {
@@ -104,12 +116,12 @@ export const DragHandle = SortableHandle(({className, children}) => (
   <StyledDragHandle className={className}>{children}</StyledDragHandle>
 ));
 
-export const LayerLabelEditor = ({layerId, label, onEdit}) => (
+export const LayerLabelEditor: React.FC<LayerLabelEditorProps> = ({layerId, label, onEdit}) => (
   <InlineInput
     type="text"
     className="layer__title__editor"
     value={label}
-    onClick={e => {
+    onClick={(e: MouseEvent) => {
       e.stopPropagation();
     }}
     onChange={onEdit}
@@ -129,7 +141,12 @@ export function LayerTitleSectionFactory() {
       text-transform: capitalize;
     }
   `;
-  const LayerTitleSection = ({layerType, layerId, label, onUpdateLayerLabel}) => (
+  const LayerTitleSection: React.FC<LayerTitleSectionProps> = ({
+    layerType,
+    layerId,
+    label,
+    onUpdateLayerLabel
+  }) => (
     <StyledLayerTitleSection className="layer__title">
       <div>
         <LayerLabelEditor layerId={layerId} label={label} onEdit={onUpdateLayerLabel} />
@@ -143,6 +160,7 @@ export function LayerTitleSectionFactory() {
 }
 
 LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory, PanelHeaderActionFactory];
+
 const defaultActionIcons = {
   remove: Trash,
   visible: EyeSeen,
@@ -150,8 +168,12 @@ const defaultActionIcons = {
   enableConfig: ArrowDown,
   duplicate: Copy
 };
-function LayerPanelHeaderFactory(LayerTitleSection, PanelHeaderAction) {
-  const LayerPanelHeader = ({
+
+function LayerPanelHeaderFactory(
+  LayerTitleSection: ReturnType<typeof LayerTitleSectionFactory>,
+  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
+) {
+  const LayerPanelHeader: React.FC<LayerPanelHeaderProps> = ({
     isConfigActive,
     isDragNDropEnabled,
     isVisible,
@@ -172,6 +194,7 @@ function LayerPanelHeaderFactory(LayerTitleSection, PanelHeaderAction) {
       setOpen(!isOpen);
       onToggleEnableConfig(e);
     };
+
     return (
       <StyledLayerPanelHeader
         className={classnames('layer-panel__header', {
@@ -235,7 +258,6 @@ function LayerPanelHeaderFactory(LayerTitleSection, PanelHeaderAction) {
     );
   };
 
-  LayerPanelHeader.propTypes = propTypes;
   LayerPanelHeader.defaultProps = defaultProps;
 
   return LayerPanelHeader;

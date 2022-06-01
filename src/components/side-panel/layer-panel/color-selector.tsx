@@ -19,16 +19,31 @@
 // THE SOFTWARE.
 
 import React, {Component, createRef} from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {rgbToHex} from 'utils/color-utils';
-import SingleColorPalette from 'components/side-panel/layer-panel/single-color-palette';
-import ColorRangeSelector from 'components/side-panel/layer-panel/color-range-selector';
-import ColorPalette from 'components/side-panel/layer-panel/color-palette';
+import SingleColorPalette from './single-color-palette';
+import ColorRangeSelector from './color-range-selector';
+import ColorPalette from './color-palette';
 import {StyledPanelDropdown} from 'components/common/styled-components';
 import onClickOutside from 'react-onclickoutside';
+import {ColorUI} from 'layers/layer-factory';
+import {ColorRange} from 'constants/color-ranges';
+import {NestedPartial, RGBColor} from 'reducers';
 
-export const ColorBlock = styled.div`
+type ColorSelectorProps = {
+  colorSets: {
+    selectedColor: RGBColor | ColorRange;
+    setColor: ((v: RGBColor) => void) | ((v: ColorRange) => void);
+    isRange?: boolean;
+    label?: string;
+  }[];
+  colorUI?: ColorUI;
+  inputTheme?: string;
+  disabled?: boolean;
+  setColorUI?: (newConfig: NestedPartial<ColorUI>) => void;
+};
+
+export const ColorBlock = styled.div<{color: string}>`
   width: 32px;
   height: 18px;
   border-radius: 1px;
@@ -59,27 +74,7 @@ export const InputBoxContainer = styled.div`
   }
 `;
 
-class ColorSelector extends Component {
-  static propTypes = {
-    colorSets: PropTypes.arrayOf(
-      PropTypes.shape({
-        selectedColor: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.any), PropTypes.object]),
-        setColor: PropTypes.func.isRequired,
-        isRange: PropTypes.bool,
-        label: PropTypes.string
-      })
-    ),
-    colorUI: PropTypes.shape({
-      customPalette: PropTypes.object,
-      showSketcher: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
-      showDropdown: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
-      colorRangeConfig: PropTypes.object
-    }),
-    inputTheme: PropTypes.string,
-    disabled: PropTypes.bool,
-    setColorUI: PropTypes.func
-  };
-
+class ColorSelector extends Component<ColorSelectorProps> {
   static defaultProps = {
     colorSets: []
   };
@@ -88,13 +83,14 @@ class ColorSelector extends Component {
     showDropdown: false
   };
 
-  node = createRef();
+  node = createRef<HTMLDivElement>();
 
   handleClickOutside = e => {
     if (this.props.colorUI && Number.isInteger(this.props.colorUI.showSketcher)) {
       // if sketcher is open, let sketch to close itself first
       return;
     }
+
     this._closePanelDropdown();
   };
 
@@ -106,6 +102,7 @@ class ColorSelector extends Component {
     if (this._getEditing() === false) {
       return;
     }
+
     if (this.props.setColorUI) {
       this.props.setColorUI({showDropdown: false, showSketcher: false});
     } else {
@@ -113,10 +110,13 @@ class ColorSelector extends Component {
     }
   };
 
-  _onSelectColor = (color, e) => {
+  _onSelectColor = (color: RGBColor | ColorRange, e: MouseEvent) => {
     e.stopPropagation();
+
     const editing = this._getEditing();
-    if (this.props.colorSets[editing]) {
+
+    if (typeof editing === 'number' && this.props.colorSets[editing]) {
+      // @ts-ignore
       this.props.colorSets[editing].setColor(color);
     }
   };
@@ -124,6 +124,7 @@ class ColorSelector extends Component {
   _showDropdown = (e, i) => {
     e.stopPropagation();
     e.preventDefault();
+
     if (this.props.setColorUI) {
       this.props.setColorUI({showDropdown: i});
     } else {
@@ -135,7 +136,8 @@ class ColorSelector extends Component {
     const {colorSets, disabled, inputTheme, colorUI} = this.props;
 
     const editing = this._getEditing();
-    const currentEditing = colorSets[editing] && typeof colorSets[editing] === 'object';
+    const currentEditing =
+      typeof editing === 'number' && colorSets[editing] && typeof colorSets[editing] === 'object';
 
     return (
       <div className="color-selector" ref={this.node}>
@@ -150,7 +152,7 @@ class ColorSelector extends Component {
                 onMouseDown={e => this._showDropdown(e, i)}
               >
                 {cSet.isRange ? (
-                  <ColorPalette colors={cSet.selectedColor.colors} />
+                  <ColorPalette colors={(cSet.selectedColor as ColorRange).colors} />
                 ) : (
                   <ColorBlock
                     className="color-selector__selector__block"
@@ -166,16 +168,16 @@ class ColorSelector extends Component {
         </InputBoxContainer>
         {currentEditing ? (
           <StyledPanelDropdown className="color-selector__dropdown">
-            {colorSets[editing].isRange ? (
+            {colorSets[editing as number].isRange ? (
               <ColorRangeSelector
-                selectedColorRange={colorSets[editing].selectedColor}
+                selectedColorRange={colorSets[editing as number].selectedColor as ColorRange}
                 onSelectColorRange={this._onSelectColor}
                 setColorPaletteUI={this.props.setColorUI}
-                colorPaletteUI={colorUI}
+                colorPaletteUI={colorUI as ColorUI}
               />
             ) : (
               <SingleColorPalette
-                selectedColor={rgbToHex(colorSets[editing].selectedColor)}
+                selectedColor={rgbToHex(colorSets[editing as number].selectedColor as RGBColor)}
                 onSelectColor={this._onSelectColor}
               />
             )}

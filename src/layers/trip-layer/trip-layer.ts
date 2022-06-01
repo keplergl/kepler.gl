@@ -244,6 +244,9 @@ export default class TripLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
+    if (this.config.dataId === null) {
+      return {};
+    }
     // to-do: parse segment from dataContainer
     const {dataContainer, gpuFilter} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);

@@ -187,6 +187,9 @@ export default class ScenegraphLayer extends Layer {
   }
 
   formatLayerData(datasets, oldLayerData) {
+    if (this.config.dataId === null) {
+      return {};
+    }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data} = this.updateData(datasets, oldLayerData);
     const getPosition = this.getPositionAccessor(dataContainer);

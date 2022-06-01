@@ -238,6 +238,9 @@ export default class HexagonIdLayer extends Layer {
   // TODO: fix complexity
   /* eslint-disable complexity */
   formatLayerData(datasets, oldLayerData, opt = {}) {
+    if (this.config.dataId === null) {
+      return {};
+    }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getHexId = this.getPositionAccessor(dataContainer);
     const {data} = this.updateData(datasets, oldLayerData);

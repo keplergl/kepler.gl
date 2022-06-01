@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {OVERLAY_TYPE} from 'layers/base-layer';
+import {FindDefaultLayerPropsReturnValue, OVERLAY_TYPE} from 'layers/base-layer';
 import {GEOCODER_LAYER_ID} from 'constants/default-settings';
 import {Layer, LayerClassesType} from 'layers';
 import {VisState, TooltipField, CompareType, SplitMapLayers} from 'reducers/vis-state-updaters';
@@ -46,11 +46,9 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
   }
   const layerProps = (Object.keys(layerClasses) as Array<keyof LayerClassesType>).reduce(
     (previous, lc) => {
-      const result =
-        // @ts-expect-error
+      const result: FindDefaultLayerPropsReturnValue =
         typeof layerClasses[lc].findDefaultLayerProps === 'function'
-          ? // @ts-expect-error
-            layerClasses[lc].findDefaultLayerProps(dataset, previous)
+          ? layerClasses[lc].findDefaultLayerProps(dataset, previous)
           : {props: []};
 
       const props = Array.isArray(result) ? result : result.props || [];

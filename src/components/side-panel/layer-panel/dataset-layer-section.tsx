@@ -23,6 +23,24 @@ import styled from 'styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
 import LayerListFactory from './layer-list';
+import {Layer, LayerClassesType} from 'layers';
+import KeplerTable from 'utils/table-utils/kepler-table';
+import * as UiStateActions from 'actions/ui-state-actions';
+import * as VisStateActions from 'actions/vis-state-actions';
+import {ActionHandler} from 'actions';
+
+type DatasetLayerSectionProps = {
+  dataset: KeplerTable;
+  layers: Layer[];
+  layerOrder: number[];
+  layerClasses: LayerClassesType;
+  showDeleteDataset: boolean;
+  showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
+  updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
+  removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
+  uiStateActions: typeof UiStateActions;
+  visStateActions: typeof VisStateActions;
+};
 
 const DatasetLayerSectionWrapper = styled.div.attrs({
   className: 'dataset-layer-section'
@@ -32,8 +50,11 @@ const DatasetLayerSectionWrapper = styled.div.attrs({
 
 DatasetLayerSectionFactory.deps = [SourceDataCatalogFactory, LayerListFactory];
 
-function DatasetLayerSectionFactory(SourceDataCatalog, LayerList) {
-  const DatasetLayerSection = props => {
+function DatasetLayerSectionFactory(
+  SourceDataCatalog: ReturnType<typeof SourceDataCatalogFactory>,
+  LayerList: ReturnType<typeof LayerListFactory>
+) {
+  const DatasetLayerSection: React.FC<DatasetLayerSectionProps> = props => {
     const {
       dataset,
       showDatasetTable,

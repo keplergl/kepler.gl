@@ -19,15 +19,16 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import PropTypes from 'prop-types';
+import {HexColor, RGBColor} from 'reducers';
 import styled from 'styled-components';
+import classnames from 'classnames';
 
-const propTypes = {
-  colors: PropTypes.arrayOf(PropTypes.string).isRequired,
-  height: PropTypes.number,
-  className: PropTypes.string,
-  isSelected: PropTypes.bool,
-  isReversed: PropTypes.bool
+type ColorPaletteProps = {
+  colors: RGBColor | HexColor[];
+  height?: number;
+  className?: string;
+  isSelected?: boolean;
+  isReversed?: boolean;
 };
 
 const defaultProps = {
@@ -49,9 +50,9 @@ const PaletteWrapper = styled.div.attrs({
   overflow: hidden;
 `;
 
-const PaletteContainer = styled.div.attrs({
-  className: 'color-range-palette'
-})`
+const PaletteContainer = styled.div.attrs(props => ({
+  className: classnames('color-range-palette', props.className)
+}))<{isSelected: boolean}>`
   display: flex;
   flex-grow: 1;
   border-width: 1px;
@@ -67,17 +68,22 @@ const StyledColorBlock = styled.div.attrs({
   flex-grow: 1;
 `;
 
-const ColorPalette = ({colors, height, className, isSelected, isReversed}) => (
+const ColorPalette: React.FC<ColorPaletteProps> = ({
+  colors,
+  height,
+  className,
+  isSelected,
+  isReversed
+}) => (
   <PaletteContainer className={className} isSelected={isSelected}>
     <PaletteWrapper style={{height, transform: `scale(${isReversed ? -1 : 1}, 1)`}}>
-      {colors.map((color, index) => (
+      {colors.map((color: number | string, index: number) => (
         <StyledColorBlock key={`${color}-${index}`} style={{backgroundColor: color}} />
       ))}
     </PaletteWrapper>
   </PaletteContainer>
 );
 
-ColorPalette.propTypes = propTypes;
 ColorPalette.defaultProps = defaultProps;
 
 export default ColorPalette;

@@ -27,5 +27,5 @@
     }
   },
   "include": ["src"],
-  "exclude": ["src/deckgl-layers/cluster-layer", "src/layers"]
+  "exclude": ["src/deckgl-layers/cluster-layer"]
 }

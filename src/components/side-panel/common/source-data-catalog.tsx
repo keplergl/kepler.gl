@@ -45,7 +45,7 @@ function SourceDataCatalogFactory(
     showDeleteDataset = false
   }: SourceDataCatalogProps) => (
     <SourceDataCatalogWrapper className="source-data-catalog">
-      {Object.values(datasets).map((dataset, index) => (
+      {Object.values(datasets).map(dataset => (
         <SidePanelSection key={dataset.id}>
           <DatasetTitle
             showDatasetTable={showDatasetTable}

@@ -19,8 +19,7 @@
 // THE SOFTWARE.
 
 /* eslint-disable complexity */
-import React, {Component, Fragment} from 'react';
-import PropTypes from 'prop-types';
+import React, {Component, Fragment, MouseEventHandler} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
 
@@ -42,6 +41,82 @@ import {capitalizeFirstLetter} from 'utils/utils';
 
 import {CHANNEL_SCALE_SUPPORTED_FIELDS} from 'constants/default-settings';
 import {LAYER_TYPES} from 'layers/types';
+import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';
+import {Datasets, NestedPartial, RGBColor} from 'reducers';
+import {ColorUI} from 'layers/layer-factory';
+import {VisualChannel} from 'layers/base-layer';
+import AggregationLayer from 'layers/aggregation-layer';
+import {Field} from 'utils/table-utils/kepler-table';
+import {toggleModal} from 'actions/ui-state-actions';
+import {ColorRange} from 'constants/color-ranges';
+import {ActionHandler} from 'actions';
+
+type LayerConfiguratorProps = {
+  layer: Layer;
+  datasets: Datasets;
+  layerTypeOptions?: {
+    id: string;
+    label: string;
+    icon: any; //
+    requireData: any; //
+  }[];
+  openModal: ActionHandler<typeof toggleModal>;
+  updateLayerConfig: (newConfig: Partial<LayerBaseConfig>) => void;
+  updateLayerType: (newType: string) => void;
+  updateLayerVisConfig: (newVisConfig: Partial<LayerVisConfig>) => void;
+  updateLayerVisualChannelConfig: (newConfig: Partial<LayerBaseConfig>, channel: string) => void;
+  updateLayerColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
+  updateLayerTextLabel: (idx: number | 'all', prop: string, value: any) => void;
+};
+
+type LayerColorSelectorProps = {
+  layer: Layer;
+  onChange: (v: Record<string, RGBColor>) => void;
+  selectedColor?: RGBColor;
+  property?: string;
+  setColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
+};
+
+type ArcLayerColorSelectorProps = {
+  layer: Layer;
+  onChangeConfig: (v: {color: RGBColor}) => void;
+  onChangeVisConfig: (v: {targetColor: RGBColor}) => void;
+  property?: string;
+  setColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
+};
+
+type LayerColorRangeSelectorProps = {
+  layer: Layer;
+  onChange: (v: Record<string, ColorRange>) => void;
+  property?: string;
+  setColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
+};
+
+type ChannelByValueSelectorProps = {
+  layer: Layer;
+  channel: VisualChannel;
+  onChange: (
+    val: Record<
+      string,
+      string | number | boolean | object | readonly (string | number | boolean | object)[] | null
+    >,
+    key: string
+  ) => void;
+  fields: Field[];
+  description: string;
+};
+
+type AggregationSelectorProps = {
+  channel: VisualChannel;
+  layer: AggregationLayer;
+  onChange: (
+    val: Record<
+      string,
+      string | number | boolean | object | readonly (string | number | boolean | object)[] | null
+    >,
+    key: string
+  ) => void;
+};
 
 const StyledLayerConfigurator = styled.div.attrs({
   className: 'layer-panel__config'
@@ -59,27 +134,27 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
   margin-top: 12px;
 `;
 
-export const getLayerFields = (datasets, layer) =>
-  layer.config && datasets[layer.config.dataId] ? datasets[layer.config.dataId].fields : [];
+export const getLayerFields = (datasets: Datasets, layer: Layer) =>
+  layer.config?.dataId && datasets[layer.config.dataId] ? datasets[layer.config.dataId].fields : [];
 
-export const getLayerDataset = (datasets, layer) =>
-  layer.config && datasets[layer.config.dataId] ? datasets[layer.config.dataId] : null;
+export const getLayerDataset = (datasets: Datasets, layer: Layer) =>
+  layer.config?.dataId && datasets[layer.config.dataId] ? datasets[layer.config.dataId] : null;
 
-export const getLayerConfiguratorProps = props => ({
+export const getLayerConfiguratorProps = (props: LayerConfiguratorProps) => ({
   layer: props.layer,
   fields: getLayerFields(props.datasets, props.layer),
   onChange: props.updateLayerConfig,
   setColorUI: props.updateLayerColorUI
 });
 
-export const getVisConfiguratorProps = props => ({
+export const getVisConfiguratorProps = (props: LayerConfiguratorProps) => ({
   layer: props.layer,
   fields: getLayerFields(props.datasets, props.layer),
   onChange: props.updateLayerVisConfig,
   setColorUI: props.updateLayerColorUI
 });
 
-export const getLayerChannelConfigProps = props => ({
+export const getLayerChannelConfigProps = (props: LayerConfiguratorProps) => ({
   layer: props.layer,
   fields: getLayerFields(props.datasets, props.layer),
   onChange: props.updateLayerVisualChannelConfig
@@ -97,28 +172,16 @@ LayerConfiguratorFactory.deps = [
 ];
 
 export default function LayerConfiguratorFactory(
-  SourceDataSelector,
-  VisConfigSlider,
-  TextLabelPanel,
-  LayerConfigGroup,
-  ChannelByValueSelector,
-  LayerColumnConfig,
-  LayerTypeSelector,
-  VisConfigSwitch
-) {
-  class LayerConfigurator extends Component {
-    static propTypes = {
-      layer: PropTypes.object.isRequired,
-      datasets: PropTypes.object.isRequired,
-      layerTypeOptions: PropTypes.arrayOf(PropTypes.any).isRequired,
-      openModal: PropTypes.func.isRequired,
-      updateLayerConfig: PropTypes.func.isRequired,
-      updateLayerType: PropTypes.func.isRequired,
-      updateLayerVisConfig: PropTypes.func.isRequired,
-      updateLayerVisualChannelConfig: PropTypes.func.isRequired,
-      updateLayerColorUI: PropTypes.func.isRequired
-    };
-
+  SourceDataSelector: ReturnType<typeof SourceDataSelectorFactory>,
+  VisConfigSlider: ReturnType<typeof VisConfigSliderFactory>,
+  TextLabelPanel: ReturnType<typeof TextLabelPanelFactory>,
+  LayerConfigGroup: ReturnType<typeof LayerConfigGroupFactory>,
+  ChannelByValueSelector: ReturnType<typeof ChannelByValueSelectorFactory>,
+  LayerColumnConfig: ReturnType<typeof LayerColumnConfigFactory>,
+  LayerTypeSelector: ReturnType<typeof LayerTypeSelectorFactory>,
+  VisConfigSwitch: ReturnType<typeof VisConfigSwitchFactory>
+): React.ComponentType<LayerConfiguratorProps> {
+  class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
       return this._renderScatterplotLayerConfig(props);
     }
@@ -221,8 +284,6 @@ export default function LayerConfiguratorFactory(
             fields={visConfiguratorProps.fields}
             updateLayerTextLabel={this.props.updateLayerTextLabel}
             textLabel={layer.config.textLabel}
-            colorPalette={visConfiguratorProps.colorPalette}
-            setColorPaletteUI={visConfiguratorProps.setColorPaletteUI}
           />
         </StyledLayerVisualConfigurator>
       );
@@ -240,7 +301,10 @@ export default function LayerConfiguratorFactory(
           <LayerConfigGroup label={'layer.color'} collapsible>
             <LayerColorRangeSelector {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
-              <AggrScaleSelector {...layerConfiguratorProps} channel={layer.visualChannels.color} />
+              <AggregationScaleSelector
+                {...layerConfiguratorProps}
+                channel={layer.visualChannels.color}
+              />
               <ChannelByValueSelector
                 channel={layer.visualChannels.color}
                 {...layerChannelConfigProps}
@@ -328,7 +392,10 @@ export default function LayerConfiguratorFactory(
           <LayerConfigGroup label={'layer.color'} collapsible>
             <LayerColorRangeSelector {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
-              <AggrScaleSelector {...layerConfiguratorProps} channel={layer.visualChannels.color} />
+              <AggregationScaleSelector
+                {...layerConfiguratorProps}
+                channel={layer.visualChannels.color}
+              />
               <ChannelByValueSelector
                 channel={layer.visualChannels.color}
                 {...layerChannelConfigProps}
@@ -379,7 +446,7 @@ export default function LayerConfiguratorFactory(
                   description={elevationByDescription}
                   disabled={!enable3d}
                 />
-                <AggrScaleSelector
+                <AggregationScaleSelector
                   {...layerConfiguratorProps}
                   channel={layer.visualChannels.size}
                 />
@@ -963,7 +1030,8 @@ export default function LayerConfiguratorFactory(
                 datasets={datasets}
                 id={layer.id}
                 dataId={config.dataId}
-                onSelect={value => updateLayerConfig({dataId: value})}
+                // @ts-ignore
+                onSelect={(value: string) => updateLayerConfig({dataId: value})}
               />
             )}
             <LayerColumnConfig
@@ -971,14 +1039,15 @@ export default function LayerConfiguratorFactory(
               columns={layer.config.columns}
               assignColumnPairs={layer.assignColumnPairs.bind(layer)}
               assignColumn={layer.assignColumn.bind(layer)}
+              // @ts-ignore
               columnLabels={layer.columnLabels}
               fields={fields}
               fieldPairs={fieldPairs}
               updateLayerConfig={updateLayerConfig}
-              updateLayerType={this.props.updateLayerType}
             />
           </LayerConfigGroup>
-          {this[renderTemplate] &&
+          {renderTemplate &&
+            this[renderTemplate] &&
             this[renderTemplate]({
               layer,
               dataset,
@@ -1003,7 +1072,7 @@ const StyledHowToButton = styled.div`
   top: -4px;
 `;
 
-export const HowToButton = ({onClick}) => (
+export const HowToButton = ({onClick}: {onClick: MouseEventHandler}) => (
   <StyledHowToButton>
     <Button link small onClick={onClick}>
       <FormattedMessage id={'layerConfiguration.howTo'} />
@@ -1014,17 +1083,16 @@ export const HowToButton = ({onClick}) => (
 export const LayerColorSelector = ({
   layer,
   onChange,
-  label,
   selectedColor,
   property = 'color',
   setColorUI
-}) => (
+}: LayerColorSelectorProps) => (
   <SidePanelSection>
     <ColorSelector
       colorSets={[
         {
           selectedColor: selectedColor || layer.config.color,
-          setColor: rgbValue => onChange({[property]: rgbValue})
+          setColor: (rgbValue: RGBColor) => onChange({[property]: rgbValue})
         }
       ]}
       colorUI={layer.config.colorUI[property]}
@@ -1039,18 +1107,18 @@ export const ArcLayerColorSelector = ({
   onChangeVisConfig,
   property = 'color',
   setColorUI
-}) => (
+}: ArcLayerColorSelectorProps) => (
   <SidePanelSection>
     <ColorSelector
       colorSets={[
         {
           selectedColor: layer.config.color,
-          setColor: rgbValue => onChangeConfig({color: rgbValue}),
+          setColor: (rgbValue: RGBColor) => onChangeConfig({color: rgbValue}),
           label: 'Source'
         },
         {
           selectedColor: layer.config.visConfig.targetColor || layer.config.color,
-          setColor: rgbValue => onChangeVisConfig({targetColor: rgbValue}),
+          setColor: (rgbValue: RGBColor) => onChangeVisConfig({targetColor: rgbValue}),
           label: 'Target'
         }
       ]}
@@ -1060,14 +1128,19 @@ export const ArcLayerColorSelector = ({
   </SidePanelSection>
 );
 
-export const LayerColorRangeSelector = ({layer, onChange, property = 'colorRange', setColorUI}) => (
+export const LayerColorRangeSelector = ({
+  layer,
+  onChange,
+  property = 'colorRange',
+  setColorUI
+}: LayerColorRangeSelectorProps) => (
   <SidePanelSection>
     <ColorSelector
       colorSets={[
         {
           selectedColor: layer.config.visConfig[property],
           isRange: true,
-          setColor: colorRange => onChange({[property]: colorRange})
+          setColor: (colorRange: ColorRange) => onChange({[property]: colorRange})
         }
       ]}
       colorUI={layer.config.colorUI[property]}
@@ -1077,15 +1150,22 @@ export const LayerColorRangeSelector = ({layer, onChange, property = 'colorRange
 );
 
 ChannelByValueSelectorFactory.deps = [VisConfigByFieldSelectorFactory];
-export function ChannelByValueSelectorFactory(VisConfigByFieldSelector) {
-  const ChannelByValueSelector = ({layer, channel, onChange, fields, description}) => {
+
+export function ChannelByValueSelectorFactory(
+  VisConfigByFieldSelector: ReturnType<typeof VisConfigByFieldSelectorFactory>
+) {
+  const ChannelByValueSelector = ({
+    layer,
+    channel,
+    onChange,
+    fields,
+    description
+  }: ChannelByValueSelectorProps) => {
     const {
       channelScaleType,
-      domain,
       field,
       key,
       property,
-      range,
       scale,
       defaultMeasure,
       supportedFieldTypes
@@ -1101,13 +1181,11 @@ export function ChannelByValueSelectorFactory(VisConfigByFieldSelector) {
       <VisConfigByFieldSelector
         channel={channel.key}
         description={description || defaultDescription}
-        domain={layer.config[domain]}
         fields={supportedFields}
         id={layer.id}
         key={`${key}-channel-selector`}
         property={property}
         placeholder={defaultMeasure || 'placeholder.selectField'}
-        range={layer.config.visConfig[range]}
         scaleOptions={scaleOptions}
         scaleType={scale ? layer.config[scale] : null}
         selectedField={layer.config[field]}
@@ -1121,7 +1199,7 @@ export function ChannelByValueSelectorFactory(VisConfigByFieldSelector) {
   return ChannelByValueSelector;
 }
 
-export const AggrScaleSelector = ({channel, layer, onChange}) => {
+export const AggregationScaleSelector = ({channel, layer, onChange}: AggregationSelectorProps) => {
   const {scale, key} = channel;
   const scaleOptions = layer.getScaleOptions(key);
 
@@ -1135,7 +1213,7 @@ export const AggrScaleSelector = ({channel, layer, onChange}) => {
   ) : null;
 };
 
-export const AggregationTypeSelector = ({layer, channel, onChange}) => {
+export const AggregationTypeSelector = ({channel, layer, onChange}: AggregationSelectorProps) => {
   const {field, aggregation, key} = channel;
   const selectedField = layer.config[field];
   const {visConfig} = layer.config;
@@ -1149,7 +1227,7 @@ export const AggregationTypeSelector = ({layer, channel, onChange}) => {
         <FormattedMessage id={'layer.aggregateBy'} values={{field: selectedField.name}} />
       </PanelLabel>
       <ItemSelector
-        selectedItems={visConfig[aggregation]}
+        selectedItems={visConfig[aggregation as string]}
         options={aggregationOptions}
         multiSelect={false}
         searchable={false}
@@ -1158,7 +1236,7 @@ export const AggregationTypeSelector = ({layer, channel, onChange}) => {
             {
               visConfig: {
                 ...layer.config.visConfig,
-                [aggregation]: value
+                [aggregation as string]: value
               }
             },
             channel.key

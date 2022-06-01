@@ -25,8 +25,28 @@ import {Add} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
+import {Datasets} from 'reducers';
+import * as UiStateActions from 'actions/ui-state-actions';
+import * as VisStateActions from 'actions/vis-state-actions';
+import {ActionHandler} from 'actions';
 
-const StyledDatasetTitle = styled.div`
+type AddDataButtonProps = {
+  onClick: ActionHandler<typeof UiStateActions.toggleModal>;
+  isInactive: boolean;
+};
+
+type DatasetSectionProps = {
+  datasets: Datasets;
+  defaultDataset: string;
+  showDatasetList: boolean;
+  showDeleteDataset: boolean;
+  showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
+  updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
+  removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
+  showAddDataModal: ActionHandler<typeof UiStateActions.toggleModal>;
+};
+
+const StyledDatasetTitle = styled.div<{showDatasetList: boolean}>`
   line-height: ${props => props.theme.sidePanelTitleLineHeight};
   font-weight: 400;
   letter-spacing: 1.25px;
@@ -45,7 +65,7 @@ const StyledDatasetSection = styled.div`
 `;
 
 export function AddDataButtonFactory() {
-  const AddDataButton = ({onClick, isInactive}) => (
+  const AddDataButton: React.FC<AddDataButtonProps> = ({onClick, isInactive}) => (
     <Button
       className="add-data-button"
       onClick={onClick}
@@ -63,8 +83,11 @@ export function AddDataButtonFactory() {
 
 DatasetSectionFactory.deps = [SourceDataCatalogFactory, AddDataButtonFactory];
 
-function DatasetSectionFactory(SourceDataCatalog, AddDataButton) {
-  const DatasetSection = props => {
+function DatasetSectionFactory(
+  SourceDataCatalog: ReturnType<typeof SourceDataCatalogFactory>,
+  AddDataButton: ReturnType<typeof AddDataButtonFactory>
+) {
+  const DatasetSection: React.FC<DatasetSectionProps> = props => {
     const {
       datasets,
       showDatasetTable,
@@ -76,6 +99,7 @@ function DatasetSectionFactory(SourceDataCatalog, AddDataButton) {
       defaultDataset
     } = props;
     const datasetCount = Object.keys(datasets).length;
+
     return (
       <StyledDatasetSection>
         <StyledDatasetTitle showDatasetList={showDatasetList}>

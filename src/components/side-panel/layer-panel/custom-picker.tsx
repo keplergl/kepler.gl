@@ -19,13 +19,21 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 import styled, {withTheme} from 'styled-components';
 import {SketchPicker} from 'react-color';
 import onClickOutside from 'react-onclickoutside';
 import {createSelector} from 'reselect';
 // This was put in because 3rd party library react-color doesn't yet cater for customized color of child component <SketchField> which contains HEX/RGB input text box
 // Issue raised: https://github.com/casesandberg/react-color/issues/631
+
+type CustomPickerProps = {
+  color: string;
+  theme: {
+    panelBackground: string;
+  };
+  onChange: (v: {r: number; g: number; b: number; a: number; source: string; hex: string}) => void;
+  onSwatchClose: () => void;
+};
 
 const StyledPicker = styled.div`
   .sketch-picker {
@@ -46,14 +54,8 @@ const StyledPicker = styled.div`
 
 const PRESET_COLORS = [];
 
-class CustomPicker extends Component {
-  static propTypes = {
-    color: PropTypes.string,
-    onChange: PropTypes.func,
-    onSwatchClose: PropTypes.func
-  };
-
-  themeSelector = props => props.theme;
+class CustomPicker extends Component<CustomPickerProps> {
+  themeSelector = (props: CustomPickerProps) => props.theme;
   pickerStyleSelector = createSelector(this.themeSelector, theme => ({
     picker: {
       width: '200px',
@@ -63,14 +65,14 @@ class CustomPicker extends Component {
     }
   }));
 
-  handleClickOutside = e => {
+  handleClickOutside = (e: Event) => {
     this.props.onSwatchClose();
   };
 
   render() {
     const {color, onChange} = this.props;
-    /** @type {any} - TS complains this doesn't match SketchPickerStylesProps */
     const pickerStyle = this.pickerStyleSelector(this.props);
+
     return (
       <StyledPicker>
         <SketchPicker

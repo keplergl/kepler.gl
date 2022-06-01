@@ -35,6 +35,7 @@ import {LAYER_TYPES} from './types';
 
 // base layer
 export {default as Layer, OVERLAY_TYPE, LAYER_ID_LENGTH, colorMaker} from './base-layer';
+export type {LayerBaseConfig, LayerColumns, LayerColumn} from './base-layer';
 
 // individual layers
 export const KeplerGlLayers = {
@@ -53,6 +54,7 @@ export const KeplerGlLayers = {
   S2GeometryLayer
 };
 
+export type LayerClassesType = typeof LayerClasses;
 export const LayerClasses = {
   [LAYER_TYPES.point]: PointLayer,
   [LAYER_TYPES.arc]: ArcLayer,
@@ -69,4 +71,7 @@ export const LayerClasses = {
   [LAYER_TYPES.s2]: S2GeometryLayer
 };
 
+export type OVERLAY_TYPE = {[key: string]: string};
+
 export {LAYER_VIS_CONFIGS} from './layer-factory';
+export type {LayerVisConfig} from './layer-factory';

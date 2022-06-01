@@ -282,6 +282,9 @@ export default class AggregationLayer extends Layer {
   }
 
   formatLayerData(datasets: Datasets, oldLayerData) {
+    if (this.config.dataId === null) {
+      return {};
+    }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getPosition = this.getPositionAccessor(dataContainer);
 
@@ -307,7 +310,9 @@ export default class AggregationLayer extends Layer {
       data,
       getPosition,
       _filterData: filterData,
+      // @ts-expect-error
       ...(getColorValue ? {getColorValue} : {}),
+      // @ts-expect-error
       ...(getElevationValue ? {getElevationValue} : {})
     };
   }

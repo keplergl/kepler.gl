@@ -78,17 +78,16 @@ export const VisualChannelMetric = ({name}) => {
 };
 
 /** @type {typeof import('./map-legend').LayerSizeLegend} */
-export const LayerSizeLegend = ({label, name}) => (
-  <div className="legend--layer_size-schema">
-    <p>
-      <span className="legend--layer_by">
-        <FormattedMessage id={label} />
-      </span>
-      <span className="legend--layer_by"> by </span>
-    </p>
-    <VisualChannelMetric name={name} />
-  </div>
-);
+export const LayerSizeLegend = ({label, name}) =>
+  label ? (
+    (<div className="legend--layer_size-schema">
+      <p>
+        <span className="legend--layer_by">{label ? <FormattedMessage id={label} /> : null}</span>
+        <span className="legend--layer_by"> by </span>
+      </p>
+      <VisualChannelMetric name={name} />
+    </div>)
+  ) : null;
 
 const SINGLE_COLOR_DOMAIN = [''];
 
