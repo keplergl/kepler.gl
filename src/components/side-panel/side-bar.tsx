@@ -19,9 +19,20 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {ArrowRight} from 'components/common/icons';
+
+type CollapseButtonProps = {
+  isOpen: boolean;
+  onClick: () => void;
+};
+
+type SideBarProps = {
+  width: number;
+  isOpen: boolean;
+  minifiedWidth: number;
+  onOpenOrClose: (v: {isOpen: boolean}) => void;
+};
 
 const StyledSidePanelContainer = styled.div`
   z-index: 99;
@@ -81,7 +92,7 @@ const StyledCollapseButton = styled.div`
 `;
 
 export const CollapseButtonFactory = () => {
-  const CollapseButton = ({onClick, isOpen}) => (
+  const CollapseButton = ({onClick, isOpen}: CollapseButtonProps) => (
     <StyledCollapseButton className="side-bar__close" onClick={onClick}>
       <ArrowRight height="12px" style={{transform: `rotate(${isOpen ? 180 : 0}deg)`}} />
     </StyledCollapseButton>
@@ -91,15 +102,8 @@ export const CollapseButtonFactory = () => {
 
 SidebarFactory.deps = [CollapseButtonFactory];
 
-function SidebarFactory(CollapseButton) {
-  return class SideBar extends Component {
-    static propTypes = {
-      width: PropTypes.number,
-      isOpen: PropTypes.bool,
-      minifiedWidth: PropTypes.number,
-      onOpenOrClose: PropTypes.func
-    };
-
+function SidebarFactory(CollapseButton: ReturnType<typeof CollapseButtonFactory>) {
+  return class SideBar extends Component<SideBarProps> {
     static defaultProps = {
       width: 300,
       minifiedWidth: 0,

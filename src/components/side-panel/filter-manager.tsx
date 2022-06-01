@@ -19,16 +19,31 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo} from 'react';
-import PropTypes from 'prop-types';
 import {FormattedMessage} from 'localization';
 import {Button, SidePanelDivider, SidePanelSection} from 'components/common/styled-components';
 import {Add} from 'components/common/icons';
 import SourceDataCatalogFactory from './common/source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
+import {Datasets, Filter} from 'reducers';
+import {Layer} from 'layers';
+import * as VisStateActions from 'actions/vis-state-actions';
+import {ActionHandler} from 'actions';
+
+type FilterManagerProps = {
+  filters: Filter[];
+  datasets: Datasets;
+  layers: Layer[];
+  showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
+  updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
+  visStateActions: typeof VisStateActions;
+};
 
 FilterManagerFactory.deps = [SourceDataCatalogFactory, FilterPanelFactory];
 
-function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
+function FilterManagerFactory(
+  SourceDataCatalog: ReturnType<typeof SourceDataCatalogFactory>,
+  FilterPanel: ReturnType<typeof FilterPanelFactory>
+) {
   const FilterManager = ({
     filters = [],
     datasets,
@@ -36,13 +51,13 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
     showDatasetTable,
     updateTableColor,
     visStateActions
-  }) => {
+  }: FilterManagerProps) => {
     const {
       addFilter,
       enlargeFilter,
       removeFilter,
       setFilter,
-      toggleAnimation,
+      toggleFilterAnimation,
       toggleFilterFeature
     } = visStateActions;
     const isAnyFilterAnimating = filters.some(f => f.isAnimating);
@@ -80,7 +95,7 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
               isAnyFilterAnimating={isAnyFilterAnimating}
               removeFilter={() => removeFilter(idx)}
               enlargeFilter={() => enlargeFilter(idx)}
-              toggleAnimation={() => toggleAnimation(idx)}
+              toggleAnimation={() => toggleFilterAnimation(idx)}
               toggleFilterFeature={() => toggleFilterFeature(idx)}
               setFilter={setFilter}
             />
@@ -97,18 +112,6 @@ function FilterManagerFactory(SourceDataCatalog, FilterPanel) {
         </Button>
       </div>
     );
-  };
-
-  FilterManager.propTypes = {
-    datasets: PropTypes.object,
-    layers: PropTypes.arrayOf(PropTypes.any).isRequired,
-    filters: PropTypes.arrayOf(PropTypes.any).isRequired,
-    showDatasetTable: PropTypes.func.isRequired,
-    updateTableColor: PropTypes.func.isRequired,
-    visStateActions: PropTypes.object.isRequired,
-
-    // fields can be undefined when dataset is not selected
-    fields: PropTypes.arrayOf(PropTypes.any)
   };
 
   return FilterManager;

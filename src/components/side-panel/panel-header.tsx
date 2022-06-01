@@ -20,15 +20,83 @@
 
 import React, {Component} from 'react';
 import styled from 'styled-components';
-import PropTypes from 'prop-types';
 import {createSelector} from 'reselect';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
 import {Save, DataTable, Save2, Picture, Db, Map as MapIcon, Share} from 'components/common/icons';
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 import Toolbar from 'components/common/toolbar';
-import ToolbarItem from 'components/common/toolbar-item';
+import ToolbarItem, {ToolbarItemProps} from 'components/common/toolbar-item';
 import {FormattedMessage} from 'localization';
+import {UiState} from 'reducers';
+import {BaseProps} from 'components/common/icons/base';
+
+type StyledPanelActionProps = {
+  active?: boolean;
+};
+
+type ActionItem = {
+  id: string;
+  label?: string;
+  blank?: boolean;
+  href?: string;
+  tooltip?: string;
+  iconComponent: React.ComponentType<Partial<BaseProps>>;
+  iconComponentProps?: BaseProps;
+  dropdownComponent?: React.ComponentType<DropdownComponentProps>;
+  onClick?: (p: PanelHeaderProps) => void;
+};
+
+type PanelActionProps = {
+  item: ActionItem;
+  onClick: () => void;
+};
+
+type PanelHeaderDropdownProps = {
+  id: string;
+  items: ToolbarItemProps[];
+  show?: boolean;
+  onClose: () => void;
+};
+
+type DropdownCallbacks = {
+  logoComponent?: React.ComponentType<{
+    appName: string;
+    appWebsite: string;
+    version: string;
+  }>;
+  onExportImage: () => void;
+  onExportData: () => void;
+  onExportConfig?: () => void;
+  onExportMap: () => void;
+  onSaveToStorage: (() => void) | null;
+  onSaveAsToStorage: (() => void) | null;
+  onSaveMap?: () => void;
+  onShareMap: (() => void) | null;
+};
+
+type Item = {
+  label: string;
+  icon: React.ComponentType<Partial<BaseProps>>;
+  key: string;
+  onClick: (p: DropdownComponentProps) => (() => void) | null;
+};
+
+type DropdownComponentProps = {
+  show: boolean;
+  onClose: () => void;
+  items?: Item[];
+} & DropdownCallbacks;
+
+type PanelHeaderProps = {
+  appName: string;
+  appWebsite: string;
+  version: string;
+  visibleDropdown: UiState['visibleDropdown'];
+  actionItems?: ActionItem[];
+  showExportDropdown: (i: string) => void;
+  hideExportDropdown: () => void;
+} & DropdownCallbacks;
 
 const StyledPanelHeader = styled.div.attrs({
   className: 'side-side-panel__header'
@@ -54,7 +122,7 @@ const StyledPanelTopActions = styled.div.attrs({
 
 const StyledPanelAction = styled.div.attrs({
   className: 'side-panel__panel-header__action'
-})`
+})<StyledPanelActionProps>`
   align-items: center;
   border-radius: 2px;
   color: ${props => (props.active ? props.theme.textColorHl : props.theme.subtextColor)};
@@ -86,7 +154,7 @@ const StyledToolbar = styled(Toolbar)`
   position: absolute;
 `;
 
-export const PanelAction = ({item, onClick}) => (
+export const PanelAction: React.FC<PanelActionProps> = ({item, onClick}) => (
   <StyledPanelAction data-tip data-for={`${item.id}-action`} onClick={onClick}>
     {item.label ? <p>{item.label}</p> : null}
     <a target={item.blank ? '_blank' : ''} href={item.href} rel="noreferrer">
@@ -101,7 +169,7 @@ export const PanelAction = ({item, onClick}) => (
 );
 
 export const PanelHeaderDropdownFactory = () => {
-  const PanelHeaderDropdown = ({items, show, onClose, id}) => {
+  const PanelHeaderDropdown: React.FC<PanelHeaderDropdownProps> = ({items, show, onClose, id}) => {
     return (
       <StyledToolbar show={show} className={`${id}-dropdown`}>
         <ClickOutsideCloseDropdown
@@ -129,9 +197,9 @@ export const PanelHeaderDropdownFactory = () => {
 
 const getDropdownItemsSelector = () =>
   createSelector(
-    props => props,
+    (props: DropdownComponentProps) => props,
     props =>
-      props.items
+      (props.items || [])
         .map(t => ({
           ...t,
           onClick: t.onClick && t.onClick(props) ? t.onClick(props) : null
@@ -139,10 +207,12 @@ const getDropdownItemsSelector = () =>
         .filter(l => l.onClick)
   );
 
-export const SaveExportDropdownFactory = PanelHeaderDropdown => {
+export const SaveExportDropdownFactory = (
+  PanelHeaderDropdown: ReturnType<typeof PanelHeaderDropdownFactory>
+) => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
-  const SaveExportDropdown = props => (
+  const SaveExportDropdown: React.FC<DropdownComponentProps> = props => (
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}
@@ -175,7 +245,7 @@ export const SaveExportDropdownFactory = PanelHeaderDropdown => {
         label: 'toolbar.saveMap',
         icon: Save2,
         key: 'save',
-        onClick: props => props.onSaveMap
+        onClick: props => props.onSaveMap!
       },
       {
         label: 'toolbar.shareMapURL',
@@ -190,10 +260,12 @@ export const SaveExportDropdownFactory = PanelHeaderDropdown => {
 };
 SaveExportDropdownFactory.deps = [PanelHeaderDropdownFactory];
 
-export const CloudStorageDropdownFactory = PanelHeaderDropdown => {
+export const CloudStorageDropdownFactory = (
+  PanelHeaderDropdown: ReturnType<typeof PanelHeaderDropdownFactory>
+) => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
-  const CloudStorageDropdown = props => (
+  const CloudStorageDropdown: React.FC<DropdownComponentProps> = props => (
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}
@@ -223,25 +295,11 @@ CloudStorageDropdownFactory.deps = [PanelHeaderDropdownFactory];
 
 PanelHeaderFactory.deps = [SaveExportDropdownFactory, CloudStorageDropdownFactory];
 
-function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
-  return class PanelHeader extends Component {
-    static propTypes = {
-      appName: PropTypes.string,
-      appWebsite: PropTypes.string,
-      version: PropTypes.string,
-      visibleDropdown: PropTypes.string,
-      logoComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-      actionItems: PropTypes.arrayOf(PropTypes.any),
-      onExportImage: PropTypes.func,
-      onExportData: PropTypes.func,
-      onExportConfig: PropTypes.func,
-      onExportMap: PropTypes.func,
-      onSaveToStorage: PropTypes.func,
-      onSaveAsToStorage: PropTypes.func,
-      onSaveMap: PropTypes.func,
-      onShareMap: PropTypes.func
-    };
-
+function PanelHeaderFactory(
+  SaveExportDropdown: ReturnType<typeof SaveExportDropdownFactory>,
+  CloudStorageDropdown: ReturnType<typeof CloudStorageDropdownFactory>
+): React.ComponentType<PanelHeaderProps> {
+  return class PanelHeader extends Component<PanelHeaderProps> {
     static defaultProps = {
       logoComponent: KeplerGlLogo,
       actionItems: [
@@ -277,13 +335,19 @@ function PanelHeaderFactory(SaveExportDropdown, CloudStorageDropdown) {
 
       // don't render cloud storage icon if onSaveToStorage is not provided
       if (typeof this.props.onSaveToStorage !== 'function') {
-        items = actionItems.filter(ai => ai.id !== 'storage');
+        items = items.filter(ai => ai.id !== 'storage');
       }
 
       return (
         <StyledPanelHeader className="side-panel__panel-header">
           <StyledPanelHeaderTop className="side-panel__panel-header__top">
-            <this.props.logoComponent appName={appName} version={version} appWebsite={appWebsite} />
+            {this.props.logoComponent && (
+              <this.props.logoComponent
+                appName={appName}
+                version={version}
+                appWebsite={appWebsite}
+              />
+            )}
             <StyledPanelTopActions>
               {items.map(item => (
                 <div

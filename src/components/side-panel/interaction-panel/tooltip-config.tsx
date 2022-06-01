@@ -36,6 +36,8 @@ import ItemSelector from 'components/common/item-selector/item-selector';
 import {COMPARE_TYPES} from 'constants/tooltip';
 import FieldSelectorFactory from '../../common/field-selector';
 import {GEOCODER_DATASET_NAME} from 'constants/default-settings';
+import KeplerTable from 'utils/table-utils/kepler-table';
+import {Datasets} from 'reducers';
 
 const TooltipConfigWrapper = styled.div`
   .item-selector > div > div {
@@ -83,18 +85,7 @@ type TooltipConfigProps = {
     compareMode: boolean;
     compareType: string[];
   }) => void;
-  datasets: {
-    [key: string]: {
-      id: string;
-      fields: {
-        format?: string;
-        id?: string;
-        name?: string;
-        fieldIdx?: number;
-        type?: number;
-      }[];
-    };
-  };
+  datasets: Datasets;
   intl: IntlShape;
 };
 
@@ -113,20 +104,14 @@ type DatasetTooltipConfigProps = {
     compareMode: boolean;
     compareType: string[];
   }) => void;
-  dataset: {
-    id: string;
-    fields: {
-      format?: string;
-      id?: string;
-      name?: string;
-      fieldIdx?: number;
-      type?: number;
-    }[];
-  };
+  dataset: KeplerTable;
 };
 
 TooltipConfigFactory.deps = [DatasetTagFactory, FieldSelectorFactory];
-function TooltipConfigFactory(DatasetTag, FieldSelector: ReturnType<typeof FieldSelectorFactory>) {
+function TooltipConfigFactory(
+  DatasetTag: ReturnType<typeof DatasetTagFactory>,
+  FieldSelector: ReturnType<typeof FieldSelectorFactory>
+) {
   const DatasetTooltipConfig = ({config, onChange, dataset}: DatasetTooltipConfigProps) => {
     const dataId = dataset.id;
     return (

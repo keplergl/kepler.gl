@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {ComponentType} from 'react';
 import styled from 'styled-components';
 import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import {EyeSeen, EyeUnseen, Upload} from 'components/common/icons';
@@ -33,6 +33,7 @@ import {
 import {FormattedMessage} from 'localization';
 import {camelize} from 'utils/utils';
 import {VisibleLayerGroups} from 'reducers';
+import {BaseProps} from 'components/common/icons/base';
 
 const StyledInteractionPanel = styled.div`
   padding-bottom: 12px;
@@ -68,10 +69,7 @@ type LayerGroupSelectorProps = {
     topLayerGroups?: VisibleLayerGroups;
   }) => void;
   topLayers: VisibleLayerGroups;
-  actionIcons: {
-    visible?: typeof EyeSeen;
-    hidden?: typeof EyeUnseen;
-  };
+  actionIcons?: Record<string, ComponentType<Partial<BaseProps>>>;
 };
 
 LayerGroupSelectorFactory.deps = [PanelHeaderActionFactory];

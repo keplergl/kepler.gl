@@ -19,13 +19,26 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import {Datasets, InteractionConfig} from 'reducers';
 import InteractionPanelFactory from './interaction-panel/interaction-panel';
+import * as VisStateActions from 'actions/vis-state-actions';
+
+type InteractionManagerProps = {
+  interactionConfig: InteractionConfig;
+  datasets: Datasets;
+  visStateActions: typeof VisStateActions;
+};
 
 InteractionManagerFactory.deps = [InteractionPanelFactory];
 
-function InteractionManagerFactory(InteractionPanel) {
-  const InteractionManager = ({interactionConfig, datasets, visStateActions}) => {
+function InteractionManagerFactory(InteractionPanel: ReturnType<typeof InteractionPanelFactory>) {
+  const InteractionManager = ({
+    interactionConfig,
+    datasets,
+    visStateActions
+  }: InteractionManagerProps) => {
     const {interactionConfigChange: onConfigChange} = visStateActions;
+
     return (
       <div className="interaction-manager">
         {Object.keys(interactionConfig).map(key => (

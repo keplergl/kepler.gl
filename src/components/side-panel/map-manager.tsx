@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 
 import {Button, SidePanelSection} from 'components/common/styled-components';
 import MapStyleSelectorFactory from 'components/side-panel/map-style-panel/map-style-selector';
@@ -28,31 +27,36 @@ import LayerGroupSelectorFactory from 'components/side-panel/map-style-panel/map
 import {Add} from 'components/common/icons';
 import ColorSelector from './layer-panel/color-selector';
 import {createSelector} from 'reselect';
-import {injectIntl} from 'react-intl';
+import {injectIntl, WrappedComponentProps} from 'react-intl';
 import {FormattedMessage} from 'localization';
+import {MapStyle} from 'reducers';
+import * as MapStyleActions from 'actions/map-style-actions';
+
+type MapManagerProps = {
+  mapStyle: MapStyle;
+  mapStyleActions: typeof MapStyleActions;
+  showAddMapStyleModal: () => void;
+} & WrappedComponentProps;
 
 MapManagerFactory.deps = [MapStyleSelectorFactory, LayerGroupSelectorFactory];
 
-function MapManagerFactory(MapStyleSelector, LayerGroupSelector) {
-  class MapManager extends Component {
-    static propTypes = {
-      mapStyle: PropTypes.object.isRequired,
-      mapStyleActions: PropTypes.object.isRequired,
-      showAddMapStyleModal: PropTypes.func.isRequired
-    };
-
+function MapManagerFactory(
+  MapStyleSelector: ReturnType<typeof MapStyleSelectorFactory>,
+  LayerGroupSelector: ReturnType<typeof LayerGroupSelectorFactory>
+) {
+  class MapManager extends Component<MapManagerProps> {
     state = {
       isSelecting: false
     };
 
-    buildingColorSelector = props => props.mapStyle.threeDBuildingColor;
-    setColorSelector = props => props.mapStyleActions.set3dBuildingColor;
+    buildingColorSelector = (props: MapManagerProps) => props.mapStyle.threeDBuildingColor;
+    setColorSelector = (props: MapManagerProps) => props.mapStyleActions.set3dBuildingColor;
 
     _toggleSelecting = () => {
       this.setState({isSelecting: !this.state.isSelecting});
     };
 
-    _selectStyle = val => {
+    _selectStyle = (val: string) => {
       const {mapStyleActions} = this.props;
       const {mapStyleChange} = mapStyleActions;
       mapStyleChange(val);
