@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {useMemo} from 'react';
-import PropTypes from 'prop-types';
 import styled, {withTheme} from 'styled-components';
 
 import LayerTypeDropdownListFactory from './layer-type-dropdown-list';
@@ -27,10 +26,29 @@ import LayerTypeListItemFactory from './layer-type-list-item';
 import ItemSelector from 'components/common/item-selector/item-selector';
 
 import {SidePanelSection} from 'components/common/styled-components';
+import {Layer} from 'layers';
+import {Datasets} from 'reducers';
 
-const propTypes = {
-  layer: PropTypes.object.isRequired,
-  onSelect: PropTypes.func.isRequired
+type Option = {
+  id: string;
+  label: string;
+  icon: any; //
+  requireData: any; //
+};
+
+type LayerTypeSelectorProps = {
+  layer: Layer;
+  datasets: Datasets;
+  layerTypeOptions: Option[];
+  onSelect: (
+    items:
+      | readonly (string | number | boolean | object)[]
+      | string
+      | number
+      | boolean
+      | object
+      | null
+  ) => void;
 };
 
 const StyledLayerTypeSelector = styled.div`
@@ -41,11 +59,19 @@ const StyledLayerTypeSelector = styled.div`
 
 LayerTypeSelectorFactory.deps = [LayerTypeListItemFactory, LayerTypeDropdownListFactory];
 
-const getDisplayOption = op => op.label;
-const getOptionValue = op => op.id;
+const getDisplayOption = (op: Option) => op.label;
+const getOptionValue = (op: Option) => op.id;
 
-function LayerTypeSelectorFactory(LayerTypeListItem, LayerTypeDropdownList) {
-  const LayerTypeSelector = ({layer, layerTypeOptions, onSelect, datasets}) => {
+function LayerTypeSelectorFactory(
+  LayerTypeListItem: ReturnType<typeof LayerTypeListItemFactory>,
+  LayerTypeDropdownList: ReturnType<typeof LayerTypeDropdownListFactory>
+) {
+  const LayerTypeSelector: React.FC<LayerTypeSelectorProps> = ({
+    layer,
+    layerTypeOptions,
+    onSelect,
+    datasets
+  }) => {
     const hasData = useMemo(() => Boolean(Object.keys(datasets).length), [datasets]);
     const typeOptions = useMemo(
       () =>
@@ -80,8 +106,6 @@ function LayerTypeSelectorFactory(LayerTypeListItem, LayerTypeDropdownList) {
       </SidePanelSection>
     );
   };
-
-  LayerTypeSelector.propTypes = propTypes;
 
   return withTheme(LayerTypeSelector);
 }

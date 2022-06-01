@@ -57,7 +57,7 @@ import {getSampleData} from 'utils/table-utils/data-container-utils';
 
 import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
-import {RGBColor, RGBAColor, MapState, Filter, Datasets, ValueOf} from 'reducers';
+import {RGBColor, RGBAColor, MapState, Filter, Datasets, ValueOf, NestedPartial} from 'reducers';
 import {LayerTextLabel, ColorUI} from './layer-factory';
 import {KeplerTable} from '../utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
@@ -710,7 +710,7 @@ class Layer {
     return this;
   }
 
-  updateLayerColorUI(prop: string, newConfig: Partial<ColorUI>): Layer {
+  updateLayerColorUI(prop: string, newConfig: NestedPartial<ColorUI>): Layer {
     const {colorUI: previous, visConfig} = this.config;
 
     if (!isPlainObject(newConfig) || typeof prop !== 'string') {

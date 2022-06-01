@@ -48,9 +48,9 @@ const StyledInfoHelper = styled.div<StyledInfoHelperProps>`
 interface InfoHelperProps {
   description: string;
   containerClass?: string;
-  width: number;
+  width?: number;
   property?: string;
-  id: string;
+  id?: string;
 }
 
 function InfoHelperFactory() {

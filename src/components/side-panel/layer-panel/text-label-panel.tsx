@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 import {FormattedMessage} from 'localization';
 
 import {
@@ -38,27 +37,35 @@ import LayerConfigGroupFactory, {
 } from './layer-config-group';
 import RangeSliderFactory from 'components/common/range-slider';
 
-import {LAYER_TEXT_CONFIGS} from 'layers/layer-factory';
+import {LayerTextLabel, LAYER_TEXT_CONFIGS} from 'layers/layer-factory';
 import FieldSelectorFactory from '../../common/field-selector';
+import {Field} from 'utils/table-utils/kepler-table';
+import {RGBColor} from 'reducers';
+
+type TextLabelPanelProps = {
+  fields: Field[];
+  textLabel: LayerTextLabel[];
+  updateLayerTextLabel: (idx: number | 'all', prop: string, value: any) => void;
+};
 
 TextLabelPanelFactory.deps = [RangeSliderFactory, LayerConfigGroupFactory, FieldSelectorFactory];
-function TextLabelPanelFactory(RangeSlider, LayerConfigGroup, FieldSelector) {
-  class TextLabelPanel extends Component {
-    static propTypes = {
-      fields: PropTypes.arrayOf(PropTypes.object),
-      textLabel: PropTypes.arrayOf(PropTypes.object),
-      updateLayerTextLabel: PropTypes.func.isRequired
-    };
 
+function TextLabelPanelFactory(
+  RangeSlider: ReturnType<typeof RangeSliderFactory>,
+  LayerConfigGroup: ReturnType<typeof LayerConfigGroupFactory>,
+  FieldSelector: ReturnType<typeof FieldSelectorFactory>
+): React.ComponentType<TextLabelPanelProps> {
+  class TextLabelPanel extends Component<TextLabelPanelProps> {
     render() {
       const {updateLayerTextLabel, textLabel, fields} = this.props;
-      const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => d);
+      const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => !!d);
+
       return (
         <LayerConfigGroup label={'panel.text.label'} collapsible>
           <ConfigGroupCollapsibleHeader>
             <FieldSelector
               fields={fields}
-              value={currentFields}
+              value={currentFields as string[]}
               onSelect={selected => updateLayerTextLabel('all', 'fields', selected)}
               multiSelect
             />
@@ -85,7 +92,7 @@ function TextLabelPanelFactory(RangeSlider, LayerConfigGroup, FieldSelector) {
                   <RangeSlider
                     {...LAYER_TEXT_CONFIGS.fontSize}
                     value1={tl.size}
-                    isRange={false}
+                    isRanged={false}
                     onChange={v => updateLayerTextLabel(idx, 'size', v[1])}
                   />
                 </SidePanelSection>
@@ -97,7 +104,7 @@ function TextLabelPanelFactory(RangeSlider, LayerConfigGroup, FieldSelector) {
                     colorSets={[
                       {
                         selectedColor: tl.color,
-                        setColor: v => updateLayerTextLabel(idx, 'color', v)
+                        setColor: (v: RGBColor) => updateLayerTextLabel(idx, 'color', v)
                       }
                     ]}
                   />
@@ -129,7 +136,7 @@ function TextLabelPanelFactory(RangeSlider, LayerConfigGroup, FieldSelector) {
               </div>
             ))}
             <SidePanelSection>
-              <Button link onClick={val => updateLayerTextLabel(textLabel.length)}>
+              <Button link onClick={() => updateLayerTextLabel(textLabel.length, '', null)}>
                 <Add height="12px" />
                 <FormattedMessage id="panel.text.addMoreLabel" />
               </Button>

@@ -79,7 +79,15 @@ type FieldType =
 
 interface FieldSelectorFactoryProps {
   fields?: FieldType[];
-  onSelect: (items: readonly (string | number | boolean | object)[] | null) => void;
+  onSelect: (
+    items:
+      | ReadonlyArray<string | number | boolean | object>
+      | string
+      | number
+      | boolean
+      | object
+      | null
+  ) => void;
   placement?: string;
   value?: FieldType | null;
   filterFieldTypes?: FieldType | FieldType[];
@@ -90,7 +98,7 @@ interface FieldSelectorFactoryProps {
   multiSelect?: boolean;
   closeOnSelect?: boolean;
   showToken?: boolean;
-  suggested?: any[]; //TODO
+  suggested?: ReadonlyArray<string | number | boolean | object> | null;
   CustomChickletComponent?: ComponentType;
   size?: string;
 }

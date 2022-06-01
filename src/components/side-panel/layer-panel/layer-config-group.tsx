@@ -26,6 +26,23 @@ import {FormattedMessage} from 'react-intl';
 import Switch from 'components/common/switch';
 import InfoHelperFactory from 'components/common/info-helper';
 import {VertThreeDots} from 'components/common/icons';
+import {Layer, LayerVisConfig} from 'layers';
+
+type LayerConfigGroupLabelProps = {
+  label?: string;
+  description?: string;
+};
+
+type LayerConfigGroupProps = {
+  layer?: Layer;
+  label: string;
+  property?: string;
+  description?: string;
+  collapsible?: boolean;
+  expanded?: boolean;
+  disabled?: boolean;
+  onChange?: (newVisConfig: Partial<LayerVisConfig>) => void;
+};
 
 export const StyledLayerConfigGroupAction = styled.div`
   display: flex;
@@ -102,7 +119,7 @@ const ConfigGroupContent = styled.div`
 
 LayerConfigGroupLabelFactory.deps = [InfoHelperFactory];
 
-export function LayerConfigGroupLabelFactory(InfoHelper) {
+export function LayerConfigGroupLabelFactory(InfoHelper: ReturnType<typeof InfoHelperFactory>) {
   const StyledLayerConfigGroupLabel = styled.div`
     border-left: ${props => props.theme.layerConfigGroupLabelBorderLeft} solid
       ${props => props.theme.labelColor};
@@ -123,7 +140,7 @@ export function LayerConfigGroupLabelFactory(InfoHelper) {
     }
   `;
 
-  const LayerConfigGroupLabel = ({label, description}) => (
+  const LayerConfigGroupLabel: React.FC<LayerConfigGroupLabelProps> = ({label, description}) => (
     <StyledLayerConfigGroupLabel className="layer-config-group__label">
       <span>
         <FormattedMessage id={label || 'misc.empty'} defaultMessage={label} />
@@ -137,13 +154,15 @@ export function LayerConfigGroupLabelFactory(InfoHelper) {
 
 LayerConfigGroupFactory.deps = [LayerConfigGroupLabelFactory];
 
-function LayerConfigGroupFactory(LayerConfigGroupLabel) {
-  class LayerConfigGroup extends Component {
+function LayerConfigGroupFactory(
+  LayerConfigGroupLabel: ReturnType<typeof LayerConfigGroupLabelFactory>
+): React.ComponentType<LayerConfigGroupProps> {
+  class LayerConfigGroup extends Component<LayerConfigGroupProps> {
     static defaultProps = {
       collapsible: false,
       expanded: false,
       onChange: () => {},
-      description: null,
+      description: '',
       disabled: false
     };
 
@@ -184,9 +203,9 @@ function LayerConfigGroupFactory(LayerConfigGroupLabel) {
             <StyledLayerConfigGroupAction className="layer-config-group__action">
               {property ? (
                 <Switch
-                  checked={layer.config.visConfig[property]}
-                  id={`${layer.id}-${property}`}
-                  onChange={() => onChange({[property]: !layer.config.visConfig[property]})}
+                  checked={layer?.config.visConfig[property]}
+                  id={`${layer?.id}-${property}`}
+                  onChange={() => onChange?.({[property]: !layer?.config.visConfig[property]})}
                 />
               ) : null}
               {collapsible ? <VertThreeDots height="18px" /> : null}
@@ -194,7 +213,7 @@ function LayerConfigGroupFactory(LayerConfigGroupLabel) {
           </StyledConfigGroupHeader>
           <ConfigGroupContent
             className={classnames('layer-config-group__content', {
-              disabled: property && !layer.config.visConfig[property]
+              disabled: property && !layer?.config.visConfig[property]
             })}
           >
             {children}

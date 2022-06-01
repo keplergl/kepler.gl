@@ -19,21 +19,21 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import InfoHelperFacotry from 'components/common/info-helper';
+import InfoHelperFactory from 'components/common/info-helper';
 import Switch from 'components/common/switch';
 import {SidePanelSection, PanelLabel} from 'components/common/styled-components';
 import {capitalizeFirstLetter} from 'utils/utils';
 import {FormattedMessage} from 'localization';
+import {Layer} from 'layers';
 
-const propTypes = {
-  layer: PropTypes.object.isRequired,
-  property: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  label: PropTypes.oneOfType([PropTypes.string, PropTypes.bool, PropTypes.func]),
-  description: PropTypes.string,
-  disabled: PropTypes.bool
+type VisConfigSwitchProps = {
+  layer: Layer;
+  property: string;
+  onChange: (v: Record<string, boolean>) => void;
+  label?: string;
+  description?: string;
+  disabled?: boolean;
 };
 
 const StyledVisConfigSwitch = styled.div`
@@ -45,9 +45,9 @@ const StyledVisConfigSwitch = styled.div`
   }
 `;
 
-VisConfigSwitchFactory.deps = [InfoHelperFacotry];
-function VisConfigSwitchFactory(InfoHelper) {
-  const VisConfigSwitch = ({
+VisConfigSwitchFactory.deps = [InfoHelperFactory];
+function VisConfigSwitchFactory(InfoHelper: ReturnType<typeof InfoHelperFactory>) {
+  const VisConfigSwitch: React.FC<VisConfigSwitchProps> = ({
     layer: {id, config},
     property,
     onChange,
@@ -80,7 +80,6 @@ function VisConfigSwitchFactory(InfoHelper) {
     </SidePanelSection>
   );
 
-  VisConfigSwitch.propTypes = propTypes;
   return VisConfigSwitch;
 }
 export default VisConfigSwitchFactory;

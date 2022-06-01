@@ -21,11 +21,31 @@
 import React, {useMemo} from 'react';
 
 import DatasetLayerSectionFactory from './dataset-layer-section';
+import {Datasets} from 'reducers';
+import {Layer, LayerClassesType} from 'layers';
+import * as UiStateActions from 'actions/ui-state-actions';
+import * as VisStateActions from 'actions/vis-state-actions';
+import {ActionHandler} from 'actions';
+
+type DatasetLayerGroupProps = {
+  datasets: Datasets;
+  layers: Layer[];
+  layerOrder: number[];
+  layerClasses: LayerClassesType;
+  showDeleteDataset: boolean;
+  removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
+  showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
+  updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
+  uiStateActions: typeof UiStateActions;
+  visStateActions: typeof VisStateActions;
+};
 
 DatasetLayerGroupFactory.deps = [DatasetLayerSectionFactory];
 
-function DatasetLayerGroupFactory(DatasetLayerSection) {
-  const DatasetLayerGroup = props => {
+function DatasetLayerGroupFactory(
+  DatasetLayerSection: ReturnType<typeof DatasetLayerSectionFactory>
+) {
+  const DatasetLayerGroup: React.FC<DatasetLayerGroupProps> = props => {
     const {
       datasets,
       showDatasetTable,
@@ -44,29 +64,33 @@ function DatasetLayerGroupFactory(DatasetLayerSection) {
         // Global layer order will contain the correct order of layers
         // We just empty the positions in layers array (for each dataset)
         // where the layer doesn't belong to a dataset and set it to null
-        const datasetLayers = layers.map(layer =>
-          layer.config.dataId === dataset.id ? layer : null
-        );
+        const datasetLayers = layers
+          .map(layer => (layer.config.dataId === dataset.id ? layer : null))
+          .filter(layer => !!layer);
 
         return {dataset, datasetLayers};
       });
     }, [datasets, layers]);
 
-    return datasetLayerSectionData.map(dlsData => (
-      <DatasetLayerSection
-        key={dlsData.dataset.id}
-        dataset={dlsData.dataset}
-        layers={dlsData.datasetLayers}
-        showDatasetTable={showDatasetTable}
-        updateTableColor={updateTableColor}
-        showDeleteDataset={showDeleteDataset}
-        removeDataset={removeDataset}
-        layerOrder={layerOrder}
-        layerClasses={layerClasses}
-        uiStateActions={uiStateActions}
-        visStateActions={visStateActions}
-      />
-    ));
+    return (
+      <>
+        {datasetLayerSectionData.map(dlsData => (
+          <DatasetLayerSection
+            key={dlsData.dataset.id}
+            dataset={dlsData.dataset}
+            layers={dlsData.datasetLayers as Layer[]}
+            showDatasetTable={showDatasetTable}
+            updateTableColor={updateTableColor}
+            showDeleteDataset={showDeleteDataset}
+            removeDataset={removeDataset}
+            layerOrder={layerOrder}
+            layerClasses={layerClasses}
+            uiStateActions={uiStateActions}
+            visStateActions={visStateActions}
+          />
+        ))}
+      </>
+    );
   };
 
   return DatasetLayerGroup;

@@ -24,6 +24,12 @@ import OrderByList from 'components/common/icons/order-by-list';
 import OrderByDataset from 'components/common/icons/order-by-dataset';
 import {Tooltip} from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
+import {LayerPanelListView} from 'reducers/ui-state-updaters';
+
+type PanelViewListToggleProps = {
+  layerPanelListViewMode: LayerPanelListView;
+  toggleLayerPanelListView: (view: string) => void;
+};
 
 const PanelViewListToggleContainer = styled.div.attrs({
   className: 'panel-view-list-toggle'
@@ -88,11 +94,11 @@ const TOGGLE_OPTIONS = [
 
 PanelViewListToggleFactory.deps = [ToggleOptionFactory];
 
-function PanelViewListToggleFactory(ToggleOption) {
-  const PanelViewListToggle = props => {
+function PanelViewListToggleFactory(ToggleOption: ReturnType<typeof ToggleOptionFactory>) {
+  const PanelViewListToggle: React.FC<PanelViewListToggleProps> = props => {
     const {layerPanelListViewMode, toggleLayerPanelListView} = props;
 
-    const toggleListView = listView => toggleLayerPanelListView(listView);
+    const toggleListView = (listView: string) => toggleLayerPanelListView(listView);
     const options = useMemo(
       () => TOGGLE_OPTIONS.map(opt => ({...opt, isActive: layerPanelListViewMode === opt.value})),
       [layerPanelListViewMode]

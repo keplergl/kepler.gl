@@ -19,36 +19,51 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
-import {FormattedMessage, injectIntl} from 'react-intl';
+import {FormattedMessage, injectIntl, WrappedComponentProps} from 'react-intl';
 
 import {PanelLabel, PanelLabelWrapper, SidePanelSection} from 'components/common/styled-components';
-import InfoHelperFacotry from 'components/common/info-helper';
+import InfoHelperFactory from 'components/common/info-helper';
 import DimensionScaleSelector from './dimension-scale-selector';
 import {camelize} from 'utils/utils';
 import FieldSelectorFactory from '../../common/field-selector';
+import {Field} from 'utils/table-utils/kepler-table';
 
-VisConfigByFieldSelectorFactory.deps = [InfoHelperFacotry, FieldSelectorFactory];
-function VisConfigByFieldSelectorFactory(InfoHelper, FieldSelector) {
-  class VisConfigByFieldSelector extends Component {
-    static propTypes = {
-      channel: PropTypes.string.isRequired,
-      fields: PropTypes.arrayOf(PropTypes.any).isRequired,
-      id: PropTypes.string.isRequired,
-      property: PropTypes.string.isRequired,
-      showScale: PropTypes.bool.isRequired,
-      updateField: PropTypes.func.isRequired,
-      updateScale: PropTypes.func.isRequired,
+type VisConfigByFieldSelectorProps = {
+  channel: string;
+  fields: Field[];
+  id: string;
+  property: string;
+  showScale: boolean;
+  updateField: (
+    val: readonly (string | number | boolean | object)[] | string | number | boolean | object | null
+  ) => void;
+  updateScale: (
+    val: readonly (string | number | boolean | object)[] | string | number | boolean | object | null
+  ) => void;
+  scaleType?: string;
+  selectedField?: Field;
+  description?: string;
+  label?: string;
+  placeholder?: string;
+  scaleOptions: string[];
+} & WrappedComponentProps;
 
-      // optional
-      scaleType: PropTypes.string,
-      selectedField: PropTypes.object,
-      description: PropTypes.string,
-      label: PropTypes.string,
-      placeholder: PropTypes.string
-    };
+VisConfigByFieldSelectorFactory.deps = [InfoHelperFactory, FieldSelectorFactory];
 
-    _updateVisByField = val => {
+function VisConfigByFieldSelectorFactory(
+  InfoHelper: ReturnType<typeof InfoHelperFactory>,
+  FieldSelector: ReturnType<typeof FieldSelectorFactory>
+) {
+  class VisConfigByFieldSelector extends Component<VisConfigByFieldSelectorProps> {
+    _updateVisByField = (
+      val:
+        | readonly (string | number | boolean | object)[]
+        | string
+        | number
+        | boolean
+        | object
+        | null
+    ) => {
       this.props.updateField(val);
     };
 

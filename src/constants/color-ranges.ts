@@ -27,9 +27,9 @@ export type ColorMap = [string | number | null, HexColor][];
 export type ColorLegends = {[key: string]: string};
 
 export type ColorRange = {
-  name: string;
-  type: string;
-  category: string;
+  name?: string;
+  type?: string;
+  category?: string;
   colors: HexColor[];
   reversed?: boolean;
   colorMap?: ColorMap;
