@@ -55,6 +55,7 @@ interface IconButtonProps {
   collapsed?: boolean;
 }
 
+// @ts-ignore
 export const IconButton = styled(Button)<IconButtonProps>`
   width: ${props => (props.collapsed ? 0 : 32)}px;
   height: 32px;

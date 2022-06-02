@@ -27,6 +27,7 @@ import {StyledPanelHeader} from 'components/common/styled-components';
 import {Filter, RGBColor} from 'reducers';
 import KeplerTable from 'utils/table-utils/kepler-table';
 
+// @ts-ignore
 export const StyledFilterHeader = styled(StyledPanelHeader)<{
   $labelRCGColorValues: RGBColor[];
 }>`
