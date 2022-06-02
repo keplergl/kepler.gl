@@ -119,10 +119,11 @@ export type SelectFilter = FilterBase<LineChart> &
 
 export type MultiSelectFilter = FilterBase<LineChart> &
   MultiSelectFieldDomain & {
-    type: 'range';
+    type: 'multiSelect';
     fieldType: 'string' | 'date';
     value: string[];
   };
+
 export type TimeRangeFilter = FilterBase<LineChart> &
   TimeRangeFieldDomain & {
     type: 'timeRange';
