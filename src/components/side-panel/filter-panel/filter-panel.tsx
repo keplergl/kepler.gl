@@ -33,6 +33,7 @@ import PolygonFilterPanelFactory from 'components/filters/filter-panels/polygon-
 import {Filter} from 'reducers/vis-state-updaters';
 import {Field} from 'utils/table-utils/kepler-table';
 import {FilterPanelProps} from 'components/filters/filter-panels/types';
+import {Layer} from 'layers';
 
 const StyledFilterPanel = styled.div`
   margin-bottom: 12px;
@@ -41,6 +42,11 @@ const StyledFilterPanel = styled.div`
 
 interface FilterPanelPropsImpl extends Omit<FilterPanelProps, 'allAvailableFields'> {
   filters: Filter[];
+  layers: ReadonlyArray<Layer>;
+  isAnyFilterAnimating: boolean;
+  enlargeFilter: () => void;
+  toggleAnimation: () => void;
+  toggleFilterFeature: () => void;
 }
 
 FilterPanelFactory.deps = [

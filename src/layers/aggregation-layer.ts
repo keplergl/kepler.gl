@@ -164,6 +164,7 @@ export default class AggregationLayer extends Layer {
     const {range, field, defaultMeasure, aggregation} = channel;
     const fieldConfig = this.config[field];
     const label = this.visConfigSettings[range].label;
+
     return {
       label: typeof label === 'function' ? label(this.config) : label,
       measure:
@@ -238,8 +239,12 @@ export default class AggregationLayer extends Layer {
   getScaleOptions(channel: string): string[] {
     const visualChannel = this.visualChannels[channel];
     const {field, aggregation, channelScaleType} = visualChannel;
-    // @ts-expect-error
-    const aggregationType = this.config.visConfig[aggregation];
+    const aggregationType = aggregation ? this.config.visConfig[aggregation] : null;
+
+    if (!aggregationType) {
+      return [];
+    }
+
     return this.config[field]
       ? // scale options based on aggregation
         FIELD_OPTS[this.config[field].type].scale[channelScaleType][aggregationType]
@@ -281,6 +286,9 @@ export default class AggregationLayer extends Layer {
   }
 
   formatLayerData(datasets: Datasets, oldLayerData) {
+    if (this.config.dataId === null) {
+      return {};
+    }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getPosition = this.getPositionAccessor(dataContainer);
 
@@ -313,7 +321,7 @@ export default class AggregationLayer extends Layer {
     };
   }
 
-  getDefaultDeckLayerProps(opts) {
+  getDefaultDeckLayerProps(opts): any {
     const baseProp = super.getDefaultDeckLayerProps(opts);
     return {
       ...baseProp,

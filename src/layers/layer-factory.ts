@@ -48,9 +48,9 @@ export type ColorUI = {
   // customPalette in edit
   customPalette: ColorRange;
   // show color sketcher modal
-  showSketcher: boolean;
+  showSketcher: boolean | number;
   // show color range selection panel
-  showDropdown: boolean;
+  showDropdown: boolean | number;
   // color range selector config
   colorRangeConfig: {
     type: string;

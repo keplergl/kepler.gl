@@ -128,7 +128,7 @@ interface TypeaheadProps {
   maxVisible?: number;
   resultsTruncatedMessage?: string;
   options?: ReadonlyArray<string | number | boolean | object>;
-  fixedOptions?: ReadonlyArray<string | number | boolean | object>;
+  fixedOptions?: ReadonlyArray<string | number | boolean | object> | null;
   allowCustomValues?: number;
   initialValue?: string;
   value?: string;

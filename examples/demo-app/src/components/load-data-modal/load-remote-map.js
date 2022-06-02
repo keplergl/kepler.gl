@@ -25,6 +25,7 @@ import styled from 'styled-components';
 import {CORS_LINK} from '../../constants/default-settings';
 import {FormattedHTMLMessage, FormattedMessage} from 'react-intl';
 import {Button} from 'kepler.gl/components';
+import {validateUrl} from '../../utils/url';
 
 const propTypes = {
   onLoadRemoteMap: PropTypes.func.isRequired
@@ -92,19 +93,24 @@ const Error = ({error, url}) => (
 
 class LoadRemoteMap extends Component {
   state = {
-    dataUrl: ''
+    dataUrl: '',
+    error: null,
+    submitted: false
   };
 
   onMapUrlChange = e => {
-    // TODO: validate url
     this.setState({
-      dataUrl: e.target.value
+      dataUrl: e.target.value,
+      error: !validateUrl(e.target.value) ? {message: 'Incorrect URL'} : null
     });
   };
 
   onLoadRemoteMap = () => {
-    const {dataUrl} = this.state;
-    if (!dataUrl) {
+    const {dataUrl, error} = this.state;
+
+    this.setState({submitted: true});
+
+    if (!dataUrl || error) {
       return;
     }
 
@@ -112,6 +118,8 @@ class LoadRemoteMap extends Component {
   };
 
   render() {
+    const displayedError = this.props.error || this.state.submitted ? this.state.error : null;
+
     return (
       <div>
         <InputForm>
@@ -138,13 +146,13 @@ class LoadRemoteMap extends Component {
               type="text"
               placeholder="Url"
               value={this.state.dataUrl}
-              error={this.props.error}
+              error={displayedError}
             />
             <Button type="submit" cta size="small" onClick={this.onLoadRemoteMap}>
               <FormattedMessage id={'loadRemoteMap.fetch'} />
             </Button>
           </StyledFromGroup>
-          {this.props.error && <Error error={this.props.error} url={this.props.option.dataUrl} />}
+          {displayedError && <Error error={displayedError} url={this.props.option?.dataUrl} />}
         </InputForm>
       </div>
     );

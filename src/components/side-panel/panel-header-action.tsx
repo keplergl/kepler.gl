@@ -18,18 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, ComponentType} from 'react';
+import React, {Component, ComponentType, MouseEventHandler} from 'react';
 import {TooltipProps} from 'react-tooltip';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
 import {Tooltip} from 'components/common/styled-components';
+import {BaseProps} from 'components/common/icons/base';
 
-interface HeaderActionWrapperProps {
+interface PanelHeaderActionProps {
+  id?: string;
+  tooltip?: string;
+  hoverColor?: string;
+  className?: string;
+  active?: boolean;
+  flush?: boolean;
+  disabled?: boolean;
+  onClick?: MouseEventHandler;
+  tooltipType?: TooltipProps['type'];
+  IconComponent: ComponentType<Partial<BaseProps>>;
+}
+
+type HeaderActionWrapperProps = {
   flush?: boolean;
   active?: boolean;
   hoverColor?: string | null;
-}
+};
 
 const HeaderActionWrapper = styled.div<HeaderActionWrapperProps>`
   margin-left: ${props => (props.flush ? 0 : 8)}px;
@@ -50,26 +64,13 @@ const HeaderActionWrapper = styled.div<HeaderActionWrapperProps>`
   }
 `;
 
-interface PanelHeaderActionProps {
-  id?: string;
-  flush?: boolean;
-  tooltip?: string;
-  onClick?: Function;
-  active?: boolean;
-  disabled?: boolean;
-  hoverColor?: string | null;
-  className?: string;
-  tooltipType?: TooltipProps['type'];
-  IconComponent: any;
-}
-
 PanelHeaderActionFactory.deps = [];
 // Need to use react class to access props.component
-export default function PanelHeaderActionFactory(): ComponentType<PanelHeaderActionProps> {
+export default function PanelHeaderActionFactory(): React.ComponentType<PanelHeaderActionProps> {
   class PanelHeaderAction extends Component<PanelHeaderActionProps> {
     static defaultProps = {
       onClick: () => {},
-      hoverColor: null,
+      hoverColor: '',
       active: false
     };
 

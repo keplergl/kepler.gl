@@ -57,7 +57,7 @@ import {getSampleData} from 'utils/table-utils/data-container-utils';
 
 import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
-import {RGBColor, RGBAColor, MapState, Filter, Datasets, ValueOf} from 'reducers';
+import {RGBColor, RGBAColor, MapState, Filter, Datasets, ValueOf, NestedPartial} from 'reducers';
 import {LayerTextLabel, ColorUI} from './layer-factory';
 import {KeplerTable} from '../utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
@@ -74,8 +74,7 @@ export type VisualChannelField = Field | null;
 export type VisualChannelScale = keyof typeof SCALE_TYPES;
 
 export type LayerBaseConfig = {
-  // TODO: allow to become null
-  dataId: string;
+  dataId: string | null;
   label: string;
   color: RGBColor;
 
@@ -177,6 +176,7 @@ export type UpdateTrigger = {
   [key: string]: {};
 };
 export type LayerBounds = [number, number, number, number];
+export type FindDefaultLayerPropsReturnValue = {props: any[]; foundLayers?: any[]};
 /**
  * Approx. number of points to sample in a large data set
  */
@@ -352,7 +352,7 @@ class Layer {
   static findDefaultLayerProps(
     dataset: KeplerTable,
     foundLayers?: any[]
-  ): {props: any[]; foundLayers?: any[]} {
+  ): FindDefaultLayerPropsReturnValue {
     return {props: [], foundLayers};
   }
 
@@ -436,7 +436,6 @@ class Layer {
     props: Partial<LayerBaseConfig> = {}
   ): LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig> {
     return {
-      // @ts-expect-error
       dataId: props.dataId || null,
       label: props.label || DEFAULT_LAYER_LABEL,
       color: props.color || colorMaker.next().value,
@@ -711,7 +710,7 @@ class Layer {
     return this;
   }
 
-  updateLayerColorUI(prop: string, newConfig: Partial<ColorUI>): Layer {
+  updateLayerColorUI(prop: string, newConfig: NestedPartial<ColorUI>): Layer {
     const {colorUI: previous, visConfig} = this.config;
 
     if (!isPlainObject(newConfig) || typeof prop !== 'string') {

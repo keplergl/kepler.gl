@@ -231,6 +231,9 @@ class HeatmapLayer extends MapboxGLLayer {
   );
 
   formatLayerData(datasets, oldLayerData) {
+    if (this.config.dataId === null) {
+      return {};
+    }
     const {weightField} = this.config;
     const {dataContainer} = datasets[this.config.dataId];
     const getPosition = this.getPositionAccessor(dataContainer);

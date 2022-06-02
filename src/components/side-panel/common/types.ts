@@ -59,10 +59,18 @@ export type DatasetItemProps = {
 };
 
 export type SourceDataSelectorProps = {
-  dataId: string | string[];
+  dataId: string | string[] | null;
   datasets: Datasets;
   disabled: boolean;
   defaultValue?: string;
   inputTheme: string;
-  onSelect: (items: ReadonlyArray<string | number | boolean | object> | null) => void;
+  onSelect: (
+    items:
+      | ReadonlyArray<string | number | boolean | object>
+      | string
+      | number
+      | boolean
+      | object
+      | null
+  ) => void;
 };

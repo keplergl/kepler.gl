@@ -69,7 +69,7 @@ class MapboxLayerGL extends Layer {
   }
   datasetSelector = (config: MapboxLayerGLConfig) => config.dataId;
   gpuFilterSelector = (config: MapboxLayerGLConfig, datasets) =>
-    (datasets[config.dataId] || {}).gpuFilter;
+    ((config.dataId && datasets[config.dataId]) || {}).gpuFilter;
   columnsSelector = (config: MapboxLayerGLConfig) => pointColResolver(config.columns);
 
   sourceSelector = createSelector(

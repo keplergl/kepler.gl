@@ -64,11 +64,12 @@ const StyledDiv = styled.div.attrs(props => ({
 
 export type ToolbarItemProps = {
   id?: string;
+  key?: string;
   label: string;
   className?: string;
   active?: boolean;
   onClose?: () => void;
-  onClick: (event: MouseEvent<HTMLDivElement>) => void;
+  onClick: ((event: MouseEvent<HTMLDivElement>) => void) | null;
   icon?: ComponentType<any>;
 };
 
@@ -83,7 +84,7 @@ const ToolbarItem = React.memo((props: ToolbarItemProps) => (
       if (typeof props.onClose === 'function') {
         props.onClose();
       }
-      props.onClick(e);
+      props.onClick?.(e);
     }}
   >
     {props.icon && <props.icon />}
