@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, MouseEventHandler, TouchEventHandler} from 'react';
+import React, {Component, MouseEventHandler, TouchEventHandler, CSSProperties, ChangeEventHandler} from 'react';
 import styled from 'styled-components';
 
 import LayerConfiguratorFactory from './layer-configurator';
@@ -32,13 +32,13 @@ import {ActionHandler} from 'actions';
 
 type LayerPanelProps = {
   className?: string;
-  style?: string;
+  style?: CSSProperties;
   onMouseDown?: MouseEventHandler;
   onTouchStart?: TouchEventHandler;
   layer: Layer;
   datasets: Datasets;
   idx: number;
-  layerTypeOptions?: {
+  layerTypeOptions: {
     id: string;
     label: string;
     icon: any; //
@@ -58,7 +58,7 @@ type LayerPanelProps = {
   duplicateLayer: ActionHandler<typeof VisStateActions.duplicateLayer>;
 };
 
-const PanelWrapper = styled.div`
+const PanelWrapper = styled.div<{active: boolean}>`
   font-size: 12px;
   border-radius: 1px;
   margin-bottom: 8px;
@@ -100,17 +100,17 @@ function LayerPanelFactory(
       this.props.layerVisualChannelConfigChange(this.props.layer, newConfig, channel);
     };
 
-    _updateLayerLabel = ({target: {value}}) => {
+    _updateLayerLabel: ChangeEventHandler<HTMLInputElement> = ({target: {value}}) => {
       this.updateLayerConfig({label: value});
     };
 
-    _toggleVisibility = e => {
+    _toggleVisibility: MouseEventHandler = e => {
       e.stopPropagation();
       const isVisible = !this.props.layer.config.isVisible;
       this.updateLayerConfig({isVisible});
     };
 
-    _toggleEnableConfig = e => {
+    _toggleEnableConfig: MouseEventHandler = e => {
       e.stopPropagation();
       const {
         layer: {
@@ -120,12 +120,12 @@ function LayerPanelFactory(
       this.updateLayerConfig({isConfigActive: !isConfigActive});
     };
 
-    _removeLayer = e => {
+    _removeLayer: MouseEventHandler = e => {
       e.stopPropagation();
       this.props.removeLayer(this.props.idx);
     };
 
-    _duplicateLayer = e => {
+    _duplicateLayer: MouseEventHandler = e => {
       e.stopPropagation();
       this.props.duplicateLayer(this.props.idx);
     };

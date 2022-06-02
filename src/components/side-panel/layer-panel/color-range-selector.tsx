@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, MouseEvent} from 'react';
 import uniq from 'lodash.uniq';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
@@ -220,7 +220,7 @@ export const PaletteConfig: React.FC<PaletteConfigProps> = ({
 }) => (
   <StyledPaletteConfig
     className="color-palette__config"
-    onClick={(e: Event) => e.stopPropagation()}
+    onClick={(e) => e.stopPropagation()}
   >
     <div className="color-palette__config__label">
       <PanelLabel>

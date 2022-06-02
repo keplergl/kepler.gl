@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef} from 'react';
+import React, {Component, createRef, MouseEvent} from 'react';
 import styled from 'styled-components';
 import {rgbToHex} from 'utils/color-utils';
 import SingleColorPalette from './single-color-palette';
@@ -29,6 +29,12 @@ import onClickOutside from 'react-onclickoutside';
 import {ColorUI} from 'layers/layer-factory';
 import {ColorRange} from 'constants/color-ranges';
 import {NestedPartial, RGBColor} from 'reducers';
+
+type ColorSelectorInputProps = {
+  active: boolean;
+  disabled?: boolean;
+  inputTheme?: string;
+};
 
 type ColorSelectorProps = {
   colorSets: {
@@ -43,14 +49,14 @@ type ColorSelectorProps = {
   setColorUI?: (newConfig: NestedPartial<ColorUI>) => void;
 };
 
-export const ColorBlock = styled.div<{color: string}>`
+export const ColorBlock = styled.div<{backgroundcolor: RGBColor}>`
   width: 32px;
   height: 18px;
   border-radius: 1px;
-  background-color: ${props => `rgb(${props.color.slice(0, 3).join(',')})`};
+  background-color: ${props => `rgb(${props.backgroundcolor.slice(0, 3).join(',')})`};
 `;
 
-export const ColorSelectorInput = styled.div`
+export const ColorSelectorInput = styled.div<ColorSelectorInputProps>`
   ${props => (props.inputTheme === 'secondary' ? props.theme.secondaryInput : props.theme.input)};
   height: ${props => props.theme.inputBoxHeight};
 
@@ -156,7 +162,7 @@ class ColorSelector extends Component<ColorSelectorProps> {
                 ) : (
                   <ColorBlock
                     className="color-selector__selector__block"
-                    color={cSet.selectedColor}
+                    backgroundcolor={cSet.selectedColor as RGBColor}
                   />
                 )}
                 {cSet.label ? (

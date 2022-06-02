@@ -23,13 +23,15 @@ import styled from 'styled-components';
 import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import {Trash} from 'components/common/icons';
 import {createLinearGradient} from 'utils/color-utils';
-import {StyledPanelHeader} from 'components/common/styled-components';
+import {StyledPanelHeader, StyledPanelHeaderProps} from 'components/common/styled-components';
 import {Filter, RGBColor} from 'reducers';
 import KeplerTable from 'utils/table-utils/kepler-table';
 
-export const StyledFilterHeader = styled(StyledPanelHeader)<{
-  labelRCGColorValues: RGBColor[];
-}>`
+interface StyledFilterHeaderProps extends StyledPanelHeaderProps {
+  $labelRCGColorValues: RGBColor[];
+}
+
+export const StyledFilterHeader = styled(StyledPanelHeader)<StyledFilterHeaderProps>`
   cursor: pointer;
   padding: 10px 12px;
 
@@ -38,9 +40,9 @@ export const StyledFilterHeader = styled(StyledPanelHeader)<{
   }
 
   border-left: 3px solid;
-  ${(props: {labelRCGColorValues: KeplerTable['color'][]}) =>
-    props.labelRCGColorValues && props.labelRCGColorValues.length > 0
-      ? `border-image: ${createLinearGradient('bottom', props.labelRCGColorValues)} 3;`
+  ${props =>
+    props.$labelRCGColorValues && props.$labelRCGColorValues.length > 0
+      ? `border-image: ${createLinearGradient('bottom', props.$labelRCGColorValues)} 3;`
       : 'border-color: transparent;'};
 `;
 
@@ -74,7 +76,7 @@ function FilterPanelHeaderFactory(
   }: FilterPanelHeaderProps) => (
     <StyledFilterHeader
       className="filter-panel__header"
-      labelRCGColorValues={datasets.map((d: KeplerTable) => d.color)}
+      $labelRCGColorValues={datasets.map((d: KeplerTable) => d.color)}
     >
       <StyledChildrenContainer>{children}</StyledChildrenContainer>
       <PanelHeaderAction

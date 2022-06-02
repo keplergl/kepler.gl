@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {MouseEvent} from 'react';
 import {range} from 'd3-array';
 import styled from 'styled-components';
 import {hexToRgb} from 'utils/color-utils';
@@ -54,7 +54,7 @@ const StyledColorColumn = styled.div`
   justify-content: space-between;
 `;
 
-const StyledColorBlock = styled.div`
+const StyledColorBlock = styled.div<{selected: boolean}>`
   flex-grow: 1;
   height: ${PALETTE_HEIGHT};
   border-width: 1px;

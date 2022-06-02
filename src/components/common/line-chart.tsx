@@ -97,12 +97,12 @@ interface LineChartProps {
   height: number;
   hoveredDP?: HoverDP | null;
   isEnlarged?: boolean;
-  lineChart: LineChart;
+  lineChart?: LineChart;
   margin: {top?: number; bottom?: number; left?: number; right?: number};
   onMouseMove: (datapoint: LineSeriesPoint | null, data?: RVNearestXData<LineSeriesPoint>) => void;
   width: number;
   timezone?: string | null;
-  timeFormat: string;
+  timeFormat?: string;
 }
 
 const MARGIN = {top: 0, bottom: 0, left: 0, right: 0};
@@ -122,10 +122,12 @@ function LineChartFactory() {
     timezone,
     timeFormat
   }: LineChartProps) => {
-    const {series, yDomain} = lineChart;
+    const {series, yDomain} = lineChart || {};
 
     const brushData = useMemo(() => {
-      return [{x: series[0].x, y: yDomain[1], customComponent: () => brushComponent}];
+      return series && series[0] && series[0].x && yDomain && yDomain[1]
+        ? [{x: series[0].x, y: yDomain[1], customComponent: () => brushComponent}]
+        : [];
     }, [series, yDomain, brushComponent]);
     const hintFormatter = useMemo(() => datetimeFormatter(timezone)(timeFormat), [
       timezone,

@@ -19,29 +19,30 @@
 // THE SOFTWARE.
 
 import React, {Component, ComponentType, MouseEventHandler} from 'react';
+import {TooltipProps} from 'react-tooltip';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
 import {Tooltip} from 'components/common/styled-components';
 import {BaseProps} from 'components/common/icons/base';
 
-type PanelHeaderActionProps = {
-  id: string;
+interface PanelHeaderActionProps {
+  id?: string;
   tooltip?: string;
   hoverColor?: string;
-  tooltipType?: string;
   className?: string;
   active?: boolean;
   flush?: boolean;
   disabled?: boolean;
-  onClick: MouseEventHandler;
+  onClick?: MouseEventHandler;
+  tooltipType?: TooltipProps['type'];
   IconComponent: ComponentType<Partial<BaseProps>>;
-};
+}
 
 type HeaderActionWrapperProps = {
   flush?: boolean;
   active?: boolean;
-  hoverColor?: boolean;
+  hoverColor?: string | null;
 };
 
 const HeaderActionWrapper = styled.div<HeaderActionWrapperProps>`
@@ -63,6 +64,7 @@ const HeaderActionWrapper = styled.div<HeaderActionWrapperProps>`
   }
 `;
 
+PanelHeaderActionFactory.deps = [];
 // Need to use react class to access props.component
 export default function PanelHeaderActionFactory(): React.ComponentType<PanelHeaderActionProps> {
   class PanelHeaderAction extends Component<PanelHeaderActionProps> {

@@ -22,6 +22,7 @@ import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import {media} from 'styles/media-breakpoints';
 import classnames from 'classnames';
+import {RGBColor} from 'reducers';
 
 export const SelectText = styled.span`
   color: ${props => props.theme.labelColor};
@@ -104,9 +105,9 @@ export const PanelLabelBold = styled(PanelLabel)`
   font-weight: 500;
 `;
 
-export const PanelHeaderTitle = styled.span.attrs({
-  className: 'side-panel-panel__header__title'
-})`
+export const PanelHeaderTitle = styled.span.attrs(props => ({
+  className: classnames('side-panel-panel__header__title', props.className)
+}))`
   color: ${props => props.theme.textColor};
   font-size: 13px;
   letter-spacing: 0.43px;
@@ -127,9 +128,9 @@ export const PanelHeaderContent = styled.div`
   }
 `;
 
-export const PanelContent = styled.div.attrs({
-  className: 'side-panel-panel__content'
-})`
+export const PanelContent = styled.div.attrs(props => ({
+  className: classnames('side-panel-panel__content', props.className)
+}))`
   background-color: ${props => props.theme.panelContentBackground};
   padding: 12px;
 `;
@@ -193,7 +194,7 @@ export const Tooltip = styled(ReactTooltip)`
   }
 `;
 
-interface ButtonProps {
+export interface ButtonProps {
   negative?: boolean;
   secondary?: boolean;
   link?: boolean;
@@ -203,6 +204,7 @@ interface ButtonProps {
   small?: boolean;
   disabled?: boolean;
   width?: string;
+  inactive?: boolean;
 }
 
 export const Button = styled.div.attrs(props => ({
@@ -324,9 +326,9 @@ export const InlineInput = styled(Input)`
   ${props => props.theme.inlineInput};
 `;
 
-interface StyledPanelHeaderProps {
+export interface StyledPanelHeaderProps {
   active?: boolean;
-  labelRCGColorValues?: string[];
+  labelRCGColorValues?: RGBColor | null;
 }
 
 export const StyledPanelHeader = styled.div<StyledPanelHeaderProps>`
@@ -378,15 +380,15 @@ export const ButtonGroup = styled.div`
   }
 `;
 
-interface StyledPanelHeaderProps {
-  color: string[];
+interface DatasetSquareProps {
+  backgroundColor: RGBColor;
 }
 
-export const DatasetSquare = styled.div<StyledPanelHeaderProps>`
+export const DatasetSquare = styled.div<DatasetSquareProps>`
   display: inline-block;
   width: 10px;
   height: 10px;
-  background-color: rgb(${props => props.color.join(',')});
+  background-color: rgb(${props => props.backgroundColor.join(',')});
   margin-right: 12px;
 `;
 

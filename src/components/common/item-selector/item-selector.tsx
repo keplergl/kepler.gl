@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, ComponentType} from 'react';
+import React, {Component, ComponentType, MouseEventHandler} from 'react';
 import classnames from 'classnames';
 import uniqBy from 'lodash.uniqby';
 import listensToClickOutside from 'react-onclickoutside';
@@ -232,12 +232,12 @@ class ItemSelector extends Component<ItemSelectorProps> {
     }
   };
 
-  _onErase = e => {
+  _onErase: MouseEventHandler = e => {
     e.stopPropagation();
     this.props.onChange(null);
   };
 
-  _showTypeahead = e => {
+  _showTypeahead: MouseEventHandler = e => {
     e.stopPropagation();
     if (!this.props.disabled) {
       this.setState({

@@ -54,7 +54,7 @@ import {ActionHandler} from 'actions';
 type LayerConfiguratorProps = {
   layer: Layer;
   datasets: Datasets;
-  layerTypeOptions?: {
+  layerTypeOptions: {
     id: string;
     label: string;
     icon: any; //
@@ -1023,6 +1023,7 @@ export default function LayerConfiguratorFactory(
               datasets={datasets}
               layer={layer}
               layerTypeOptions={layerTypeOptions}
+              // @ts-ignore
               onSelect={updateLayerType}
             />
             {Object.keys(datasets).length > 1 && (

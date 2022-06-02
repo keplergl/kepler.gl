@@ -63,7 +63,7 @@ export default function DatasetTagFactory() {
       <UpdateTableColor id={dataset.id}>
         <DatasetSquare
           className="dataset-color"
-          color={dataset.color}
+          backgroundColor={dataset.color}
           onClick={onClickSquare}
           data-tip
           data-for={`update-color-${id}`}

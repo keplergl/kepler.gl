@@ -57,7 +57,7 @@ interface LayerLabelProps {
   active: boolean;
 }
 
-const LayerLabel = styled<LayerLabelProps>(PanelLabelBold)`
+const LayerLabel = styled(PanelLabelBold)<LayerLabelProps>`
   color: ${props => (props.active ? props.theme.textColor : props.theme.labelColor)};
 `;
 

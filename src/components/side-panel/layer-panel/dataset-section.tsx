@@ -31,7 +31,7 @@ import * as VisStateActions from 'actions/vis-state-actions';
 import {ActionHandler} from 'actions';
 
 type AddDataButtonProps = {
-  onClick: ActionHandler<typeof UiStateActions.toggleModal>;
+  onClick: () => void;
   isInactive: boolean;
 };
 
@@ -43,7 +43,7 @@ type DatasetSectionProps = {
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
-  showAddDataModal: ActionHandler<typeof UiStateActions.toggleModal>;
+  showAddDataModal: () => void;
 };
 
 const StyledDatasetTitle = styled.div<{showDatasetList: boolean}>`
@@ -69,7 +69,7 @@ export function AddDataButtonFactory() {
     <Button
       className="add-data-button"
       onClick={onClick}
-      isInactive={!isInactive}
+      inactive={!isInactive}
       width="105px"
       secondary
     >

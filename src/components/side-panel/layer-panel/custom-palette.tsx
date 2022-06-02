@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef} from 'react';
+import React, {Component, createRef, MouseEventHandler, MouseEvent} from 'react';
 import classnames from 'classnames';
 import styled, {css} from 'styled-components';
 import {SortableContainer, SortableElement, SortableHandle} from 'react-sortable-hoc';
@@ -194,7 +194,7 @@ class CustomPalette extends Component<CustomPaletteProps> {
     this.props.onToggleSketcher(false);
   };
 
-  _onApply = (event: MouseEvent) => {
+  _onApply: MouseEventHandler = event => {
     event.stopPropagation();
     event.preventDefault();
 

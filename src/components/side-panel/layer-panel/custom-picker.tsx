@@ -26,12 +26,21 @@ import {createSelector} from 'reselect';
 // This was put in because 3rd party library react-color doesn't yet cater for customized color of child component <SketchField> which contains HEX/RGB input text box
 // Issue raised: https://github.com/casesandberg/react-color/issues/631
 
+type SketchPickerValue = {
+  hsl: {h: number; s: number; l: number; a: number};
+  hex: string;
+  rgb: {r: number; g: number; b: number; a: number};
+  hsv: {h: number; s: number; v: number; a: number};
+  oldHue: number;
+  source: string;
+};
+
 type CustomPickerProps = {
   color: string;
   theme: {
     panelBackground: string;
   };
-  onChange: (v: {r: number; g: number; b: number; a: number; source: string; hex: string}) => void;
+  onChange: (v: SketchPickerValue) => void;
   onSwatchClose: () => void;
 };
 

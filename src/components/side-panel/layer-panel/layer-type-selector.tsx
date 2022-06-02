@@ -49,6 +49,8 @@ type LayerTypeSelectorProps = {
       | object
       | null
   ) => void;
+  // TODO add correct type after Theme typing
+  theme: Record<string, string>;
 };
 
 const StyledLayerTypeSelector = styled.div`

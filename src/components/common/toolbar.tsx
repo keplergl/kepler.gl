@@ -20,7 +20,7 @@
 
 import styled from 'styled-components';
 
-interface ToolbarProps {
+export interface ToolbarProps {
   show?: boolean;
 }
 

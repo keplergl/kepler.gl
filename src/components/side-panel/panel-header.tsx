@@ -20,6 +20,7 @@
 
 import React, {Component} from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
 import {createSelector} from 'reselect';
 import {Tooltip} from 'components/common/styled-components';
 import KeplerGlLogo from 'components/common/logo';
@@ -98,16 +99,16 @@ type PanelHeaderProps = {
   hideExportDropdown: () => void;
 } & DropdownCallbacks;
 
-const StyledPanelHeader = styled.div.attrs({
-  className: 'side-side-panel__header'
-})`
+const StyledPanelHeader = styled.div.attrs(props => ({
+  className: classnames('side-side-panel__header', props.className)
+}))`
   background-color: ${props => props.theme.sidePanelHeaderBg};
   padding: 12px 16px 0 16px;
 `;
 
-const StyledPanelHeaderTop = styled.div.attrs({
-  className: 'side-panel__header__top'
-})`
+const StyledPanelHeaderTop = styled.div.attrs(props => ({
+  className: classnames('side-panel__header__top', props.className)
+}))`
   display: flex;
   justify-content: space-between;
   margin-bottom: 16px;

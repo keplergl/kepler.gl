@@ -20,16 +20,15 @@
 
 import React from 'react';
 import styled, {withTheme} from 'styled-components';
+import classnames from 'classnames';
 import ProgressBar from '../progress-bar';
 import {TruncatedTitleText} from 'components/common/styled-components';
 import {getError} from 'utils/utils';
 import {FileLoadingProgress} from 'reducers/vis-state-updaters';
 
-/** @typedef {import('./file-upload-progress').FileUploadProgressProps} FileUploadProgressProps*/
-
-const StyledFileProgress = styled.div.attrs({
-  className: 'file-upload__progress'
-})`
+const StyledFileProgress = styled.div.attrs(props => ({
+  className: classnames('file-upload__progress', props.className)
+}))`
   color: ${props => props.theme.textColorLT};
   font-size: 12px;
   margin-top: 12px;

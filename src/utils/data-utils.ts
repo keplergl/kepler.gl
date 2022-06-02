@@ -414,7 +414,7 @@ export function applyCustomFormat(format, field): FieldFormatter {
  */
 export function datetimeFormatter(
   timezone?: string | null
-): (format: string) => (ts: number) => string {
+): (format?: string) => (ts: number) => string {
   return timezone
     ? format => ts =>
         moment

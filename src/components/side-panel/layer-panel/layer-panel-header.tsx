@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useState, ComponentType, MouseEventHandler} from 'react';
+import React, {useState, ComponentType, MouseEventHandler, MouseEvent, ChangeEventHandler} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import {SortableHandle} from 'react-sortable-hoc';
@@ -33,21 +33,21 @@ import {BaseProps} from 'components/common/icons/base';
 type LayerLabelEditorProps = {
   layerId: string;
   label?: string;
-  onEdit: (e) => void;
+  onEdit: ChangeEventHandler;
 };
 
 type LayerTitleSectionProps = {
   layerType?: string | null;
   layerId: string;
   label?: string;
-  onUpdateLayerLabel: (e) => void;
+  onUpdateLayerLabel: ChangeEventHandler;
 };
 
 type LayerPanelHeaderProps = {
   layerId: string;
   isVisible: boolean;
   onToggleVisibility: MouseEventHandler;
-  onUpdateLayerLabel: (e) => void; //
+  onUpdateLayerLabel: ChangeEventHandler;
   onToggleEnableConfig: MouseEventHandler;
   onRemoveLayer: MouseEventHandler;
   onDuplicateLayer: MouseEventHandler;
