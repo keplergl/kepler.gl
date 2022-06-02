@@ -194,7 +194,7 @@ export const Tooltip = styled(ReactTooltip)`
   }
 `;
 
-interface ButtonProps {
+export interface ButtonProps {
   negative?: boolean;
   secondary?: boolean;
   link?: boolean;
@@ -326,7 +326,7 @@ export const InlineInput = styled(Input)`
   ${props => props.theme.inlineInput};
 `;
 
-interface StyledPanelHeaderProps {
+export interface StyledPanelHeaderProps {
   active?: boolean;
   labelRCGColorValues?: RGBColor | null;
 }

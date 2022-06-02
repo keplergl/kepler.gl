@@ -19,10 +19,9 @@
 // THE SOFTWARE.
 
 import styled from 'styled-components';
-import Toolbar from './toolbar';
+import Toolbar, {ToolbarProps} from './toolbar';
 
-// @ts-ignore
-const VerticalToolbar = styled(Toolbar)`
+const VerticalToolbar = styled(Toolbar)<ToolbarProps>`
   flex-direction: column;
 
   .toolbar-item {

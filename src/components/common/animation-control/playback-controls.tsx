@@ -22,7 +22,7 @@ import React, {useState, useCallback} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {FormattedMessage} from 'localization';
-import {Button, Tooltip} from 'components/common/styled-components';
+import {Button, Tooltip, ButtonProps} from 'components/common/styled-components';
 import AnimationSpeedSliderFactory from './animation-speed-slider';
 import {Reset, Play, Pause, Rocket, AnchorWindow, FreeWindow} from 'components/common/icons';
 import {ANIMATION_WINDOW} from 'constants/default-settings';
@@ -51,11 +51,10 @@ const StyledSpeedControl = styled.div`
   }
 `;
 
-interface IconButtonProps {
+interface IconButtonProps extends ButtonProps {
   collapsed?: boolean;
 }
 
-// @ts-ignore
 export const IconButton = styled(Button)<IconButtonProps>`
   width: ${props => (props.collapsed ? 0 : 32)}px;
   height: 32px;

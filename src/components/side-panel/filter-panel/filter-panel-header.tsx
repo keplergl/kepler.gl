@@ -23,14 +23,15 @@ import styled from 'styled-components';
 import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import {Trash} from 'components/common/icons';
 import {createLinearGradient} from 'utils/color-utils';
-import {StyledPanelHeader} from 'components/common/styled-components';
+import {StyledPanelHeader, StyledPanelHeaderProps} from 'components/common/styled-components';
 import {Filter, RGBColor} from 'reducers';
 import KeplerTable from 'utils/table-utils/kepler-table';
 
-// @ts-ignore
-export const StyledFilterHeader = styled(StyledPanelHeader)<{
+interface StyledFilterHeaderProps extends StyledPanelHeaderProps {
   $labelRCGColorValues: RGBColor[];
-}>`
+}
+
+export const StyledFilterHeader = styled(StyledPanelHeader)<StyledFilterHeaderProps>`
   cursor: pointer;
   padding: 10px 12px;
 
