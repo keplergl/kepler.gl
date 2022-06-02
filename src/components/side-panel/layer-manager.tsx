@@ -56,7 +56,7 @@ type LayerManagerProps = {
   layerBlending: string;
   uiStateActions: typeof UiStateActions;
   visStateActions: typeof VisStateActions;
-  showAddDataModal: ActionHandler<typeof UiStateActions.toggleModal>;
+  showAddDataModal: () => void;
   removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;

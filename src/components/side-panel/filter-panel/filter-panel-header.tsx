@@ -27,9 +27,8 @@ import {StyledPanelHeader} from 'components/common/styled-components';
 import {Filter, RGBColor} from 'reducers';
 import KeplerTable from 'utils/table-utils/kepler-table';
 
-// @ts-ignore
 export const StyledFilterHeader = styled(StyledPanelHeader)<{
-  labelRCGColorValues: RGBColor[];
+  $labelRCGColorValues: RGBColor[];
 }>`
   cursor: pointer;
   padding: 10px 12px;
@@ -40,8 +39,8 @@ export const StyledFilterHeader = styled(StyledPanelHeader)<{
 
   border-left: 3px solid;
   ${props =>
-    props.labelRCGColorValues && props.labelRCGColorValues.length > 0
-      ? `border-image: ${createLinearGradient('bottom', props.labelRCGColorValues)} 3;`
+    props.$labelRCGColorValues && props.$labelRCGColorValues.length > 0
+      ? `border-image: ${createLinearGradient('bottom', props.$labelRCGColorValues)} 3;`
       : 'border-color: transparent;'};
 `;
 
@@ -75,7 +74,7 @@ function FilterPanelHeaderFactory(
   }: FilterPanelHeaderProps) => (
     <StyledFilterHeader
       className="filter-panel__header"
-      labelRCGColorValues={datasets.map((d: KeplerTable) => d.color)}
+      $labelRCGColorValues={datasets.map((d: KeplerTable) => d.color)}
     >
       <StyledChildrenContainer>{children}</StyledChildrenContainer>
       <PanelHeaderAction

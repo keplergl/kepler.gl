@@ -52,7 +52,7 @@ const PaletteWrapper = styled.div.attrs({
 
 const PaletteContainer = styled.div.attrs(props => ({
   className: classnames('color-range-palette', props.className)
-}))<{isSelected: boolean}>`
+}))<{isSelected?: boolean}>`
   display: flex;
   flex-grow: 1;
   border-width: 1px;
@@ -78,7 +78,7 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
   <PaletteContainer className={className} isSelected={isSelected}>
     <PaletteWrapper style={{height, transform: `scale(${isReversed ? -1 : 1}, 1)`}}>
       {colors.map((color: number | string, index: number) => (
-        <StyledColorBlock key={`${color}-${index}`} style={{backgroundColor: color}} />
+        <StyledColorBlock key={`${color}-${index}`} style={{backgroundColor: String(color)}} />
       ))}
     </PaletteWrapper>
   </PaletteContainer>

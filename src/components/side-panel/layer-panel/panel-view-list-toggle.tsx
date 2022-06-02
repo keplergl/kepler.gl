@@ -26,6 +26,12 @@ import {Tooltip} from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
 import {LayerPanelListView} from 'reducers/ui-state-updaters';
 
+type ToggleOptionProps = {
+  isActive: boolean;
+  onClick: () => void;
+  option: typeof TOGGLE_OPTIONS[0];
+};
+
 type PanelViewListToggleProps = {
   layerPanelListViewMode: LayerPanelListView;
   toggleLayerPanelListView: (view: string) => void;
@@ -46,7 +52,7 @@ const PanelViewListToggleWrapper = styled.div.attrs({
 
 export const StyledToggleOption = styled.div.attrs({
   className: 'layer-panel-toggle-option'
-})`
+})<{active: boolean}>`
   color: ${props =>
     props.active
       ? props.theme.layerPanelToggleOptionColorActive
@@ -58,7 +64,7 @@ export const StyledToggleOption = styled.div.attrs({
 `;
 
 function ToggleOptionFactory() {
-  const ToggleOption = ({isActive, onClick, option}) => (
+  const ToggleOption: React.FC<ToggleOptionProps> = ({isActive, onClick, option}) => (
     <StyledToggleOption
       data-tip
       data-for={`${option.id}-toggle-option`}

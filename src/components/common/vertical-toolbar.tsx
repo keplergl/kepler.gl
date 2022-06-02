@@ -21,7 +21,6 @@
 import styled from 'styled-components';
 import Toolbar from './toolbar';
 
-// @ts-ignore
 const VerticalToolbar = styled(Toolbar)`
   flex-direction: column;
 

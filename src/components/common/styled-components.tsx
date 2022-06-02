@@ -204,6 +204,7 @@ interface ButtonProps {
   small?: boolean;
   disabled?: boolean;
   width?: string;
+  inactive?: boolean;
 }
 
 export const Button = styled.div.attrs(props => ({
@@ -327,7 +328,7 @@ export const InlineInput = styled(Input)`
 
 interface StyledPanelHeaderProps {
   active?: boolean;
-  labelRCGColorValues?: RGBColor[];
+  labelRCGColorValues?: RGBColor | null;
 }
 
 export const StyledPanelHeader = styled.div<StyledPanelHeaderProps>`

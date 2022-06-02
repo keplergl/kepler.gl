@@ -34,7 +34,7 @@ type SideBarProps = {
   onOpenOrClose: (v: {isOpen: boolean}) => void;
 };
 
-const StyledSidePanelContainer = styled.div`
+const StyledSidePanelContainer = styled.div<{width: number}>`
   z-index: 99;
   height: 100%;
   width: ${props => props.width + 2 * props.theme.sidePanel.margin.left}px;
@@ -52,7 +52,7 @@ const StyledSidePanelContainer = styled.div`
   }
 `;
 
-const SideBarContainer = styled.div`
+const SideBarContainer = styled.div<{left: number}>`
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: left 250ms, right 250ms;
   left: ${props => props.left}px;
