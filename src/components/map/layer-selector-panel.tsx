@@ -27,7 +27,7 @@ import MapLayerSelector from '../common/map-layer-selector';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlPanelFactory from './map-control-panel';
 import {Layer} from 'layers';
-import {MapControls} from 'reducers';
+import {MapControl, MapControls} from 'reducers';
 
 LayerSelectorPanelFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory];
 
@@ -55,7 +55,7 @@ function LayerSelectorPanelFactory(
     mapControls,
     readOnly
   }) => {
-    const visibleLayers = mapControls?.visibleLayers || {};
+    const visibleLayers = mapControls?.visibleLayers || {} as MapControl;
     const {active: isActive, show, disableClose} = visibleLayers || {};
 
     const legendLayers = useMemo(

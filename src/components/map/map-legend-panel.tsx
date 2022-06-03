@@ -30,7 +30,7 @@ import Tippy from '@tippyjs/react/headless';
 import TippyTooltip from 'components/common/tippy-tooltip';
 import {createPortal} from 'react-dom';
 import {DIMENSIONS} from 'constants/default-settings';
-import {MapControls} from 'reducers';
+import {MapControl, MapControls} from 'reducers';
 import {Layer} from 'layers';
 
 MapLegendPanelFactory.deps = [MapControlPanelFactory, MapLegendFactory];
@@ -72,7 +72,7 @@ function MapLegendPanelFactory(MapControlPanel, MapLegend) {
     actionIcons = defaultActionIcons,
     mapHeight
   }) => {
-    const mapLegend = mapControls?.mapLegend || {};
+    const mapLegend = mapControls?.mapLegend || {} as MapControl;
     const {active: isPinned} = mapLegend || {};
 
     const onClick = () => {

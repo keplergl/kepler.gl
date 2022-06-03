@@ -24,7 +24,7 @@ import {MapControlButton} from 'components/common/styled-components';
 import {Delete, Split} from 'components/common/icons';
 import {FormattedMessage} from '../../localization';
 import TippyTooltip from '../common/tippy-tooltip';
-import {MapControls} from 'reducers';
+import {MapControl, MapControls} from 'reducers';
 
 SplitMapButtonFactory.deps = [];
 
@@ -57,7 +57,7 @@ function SplitMapButtonFactory() {
     mapControls,
     readOnly
   }) => {
-    const splitMap = mapControls?.splitMap || {};
+    const splitMap = mapControls?.splitMap || {} as MapControl;
     const onClick = useCallback(
       event => {
         event.preventDefault();

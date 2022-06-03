@@ -28,7 +28,7 @@ import {StyledLayerName} from './layer-hover-info';
 const DECIMAL = 6;
 const DECIMAL_Z = 1;
 
-interface CoordinateInfoProps {
+export interface CoordinateInfoProps {
   coordinate: number[];
   zoom: number;
 }

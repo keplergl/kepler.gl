@@ -99,7 +99,7 @@ const DefaultStyle = css`
 
 export type ModalContainerProps = {
   appName: string;
-  rootNode: React.ReactNode;
+  rootNode: React.ReactInstance | null | undefined;
   containerW: number;
   containerH: number;
   mapboxApiAccessToken: string;
