@@ -114,6 +114,7 @@
     "@types/lodash.flattendeep": "^4.4.7",
     "@types/lodash.get": "^4.4.6",
     "@types/lodash.isequal": "^4.5.5",
+    "@types/lodash.memoize": "^4.1.7",
     "@types/lodash.pick": "^4.4.6",
     "@types/lodash.throttle": "^4.1.7",
     "@types/lodash.uniq": "^4.5.7",

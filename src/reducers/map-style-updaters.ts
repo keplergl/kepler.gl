@@ -184,6 +184,13 @@ const mapStyleUpdaters = null;
  */
 export const INITIAL_MAP_STYLE: MapStyle = getDefaultState();
 
+interface GetMapStylesParam {
+  styleType: string;
+  visibleLayerGroups: {[id: string]: LayerGroup | boolean};
+  topLayerGroups: {[id: string]: LayerGroup | boolean};
+  mapStyles: {[id: string]: any}
+}
+
 /**
  * Create two map styles from preset map style, one for top map one for bottom
  *
@@ -193,7 +200,7 @@ export const INITIAL_MAP_STYLE: MapStyle = getDefaultState();
  * @param {Object} mapStyles - a dictionary of all map styles
  * @returns {Object} bottomMapStyle | topMapStyle | isRaster
  */
-export function getMapStyles({styleType, visibleLayerGroups, topLayerGroups, mapStyles}) {
+export function getMapStyles({styleType, visibleLayerGroups, topLayerGroups, mapStyles}: GetMapStylesParam) {
   const mapStyle = mapStyles[styleType];
 
   // style might not be loaded yet
@@ -211,7 +218,7 @@ export function getMapStyles({styleType, visibleLayerGroups, topLayerGroups, map
         visibleLayerGroups
       });
 
-  const hasTopLayer = editable && Object.values(topLayerGroups).some(v => v);
+  const hasTopLayer = editable > 0 && Object.values(topLayerGroups).some(v => v);
 
   // mute top layer if not visible in bottom layer
   const topLayers =
@@ -221,12 +228,11 @@ export function getMapStyles({styleType, visibleLayerGroups, topLayerGroups, map
         ...accu,
         [key]: topLayerGroups[key] && visibleLayerGroups[key]
       }),
-      {}
+      {} as {[id: string]: LayerGroup | boolean}
     );
 
   const topMapStyle = hasTopLayer
     ? editTopMapStyle({
-        id: styleType,
         mapStyle,
         visibleLayerGroups: topLayers
       })
