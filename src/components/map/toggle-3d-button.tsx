@@ -18,68 +18,73 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useMemo} from 'react';
+import React, {ComponentType, useCallback, useMemo} from 'react';
 import classnames from 'classnames';
+
+import {Cube3d} from 'components/common/icons';
 import {MapControlButton} from 'components/common/styled-components';
-import {Delete, Split} from 'components/common/icons';
-import MapControlTooltipFactory from './map-control-tooltip';
-import MapControlPanelFactory from './map-control-panel';
 import {FormattedMessage} from '../../localization';
-import TippyTooltip from '../common/tippy-tooltip';
+import TippyTooltip from 'components/common/tippy-tooltip';
+import {MapControls} from 'reducers';
 
-SplitMapButtonFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory];
+Toggle3dButtonFactory.deps = [];
 
-function SplitMapButtonFactory(MapControlTooltip) {
+interface Toggle3dButtonIcons {
+  cube: ComponentType<any>;
+}
+
+export type Toggle3dButtonProps = {
+  dragRotate: boolean;
+  onTogglePerspective: () => void;
+  actionIcons: Toggle3dButtonIcons;
+  mapControls: MapControls;
+};
+
+function Toggle3dButtonFactory() {
   const defaultActionIcons = {
-    delete: Delete,
-    split: Split
+    cube: Cube3d
   };
-
-  /** @type {import('./split-map-button').SplitMapButtonComponent} */
-  const SplitMapButton = ({
-    isSplit,
-    mapIndex,
-    onToggleSplitMap,
+  /** @type {import('./toggle-3d-button').Toggle3dButtonComponent} */
+  const Toggle3dButton: React.FC<Toggle3dButtonProps> = ({
+    dragRotate,
+    onTogglePerspective,
     actionIcons = defaultActionIcons,
-    mapControls,
-    readOnly
+    mapControls
   }) => {
-    const splitMap = mapControls?.splitMap || {};
     const onClick = useCallback(
       event => {
         event.preventDefault();
-        onToggleSplitMap(isSplit ? mapIndex : undefined);
+        onTogglePerspective();
       },
-      [isSplit, mapIndex, onToggleSplitMap]
+      [onTogglePerspective]
     );
 
-    const isVisible = useMemo(() => splitMap.show && readOnly !== true, [splitMap.show, readOnly]);
+    const isVisible = useMemo(() => {
+      return (mapControls?.toggle3d || {}).show;
+    }, [mapControls]);
 
-    if (!splitMap.show) {
-      return null;
-    }
     return isVisible ? (
-      (<TippyTooltip
+      <TippyTooltip
         placement="left"
         render={() => (
-          <div id="action-toggle">
-            <FormattedMessage id={isSplit ? 'tooltip.closePanel' : 'tooltip.switchToDualView'} />
+          <div id="action-3d">
+            <FormattedMessage id={dragRotate ? 'tooltip.disable3DMap' : 'tooltip.3DMap'} />
           </div>
         )}
       >
         <MapControlButton
-          active={isSplit}
           onClick={onClick}
-          className={classnames('map-control-button', 'split-map', {'close-map': isSplit})}
+          active={dragRotate}
+          className={classnames('map-control-button', 'toggle-3d', {map3d: dragRotate})}
         >
-          {isSplit ? <actionIcons.delete height="18px" /> : <actionIcons.split height="18px" />}
+          <actionIcons.cube height="22px" />
         </MapControlButton>
-      </TippyTooltip>)
+      </TippyTooltip>
     ) : null;
   };
 
-  SplitMapButton.displayName = 'SplitMapButton';
-  return React.memo(SplitMapButton);
+  Toggle3dButton.displayName = 'Toggle3dButton';
+  return React.memo(Toggle3dButton);
 }
 
-export default SplitMapButtonFactory;
+export default Toggle3dButtonFactory;

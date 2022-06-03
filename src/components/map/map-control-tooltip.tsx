@@ -22,9 +22,14 @@ import React from 'react';
 import {Tooltip} from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
 
+export type MapControlTooltipProps = {
+  id: string;
+  message: string;
+};
+
 function MapControlTooltipFactory() {
   /** @type {import('./map-control-tooltip').MapControlTooltipComponent} */
-  const MapControlTooltip = React.memo(({id, message}) => (
+  const MapControlTooltip: React.FC<MapControlTooltipProps> = React.memo(({id, message}) => (
     <Tooltip id={id} place="left" effect="solid">
       <span>
         <FormattedMessage id={message} />
