@@ -74,9 +74,20 @@ const StyledIcon = styled(IconRoundSmall)`
   }
 `;
 
+export type MapControlPanelProps = {
+  header?: string;
+  scale?: number;
+  onClick: React.MouseEventHandler<HTMLDivElement>;
+  onPinClick?: React.MouseEventHandler<HTMLDivElement>;
+  pinnable?: boolean;
+  disableClose?: boolean;
+  isExport?: boolean;
+  logoComponent?: Element;
+};
+
 function MapControlPanelFactory() {
   /** @type {import('./map-control-panel').MapControlPanelComponent} */
-  const MapControlPanel = React.memo(
+  const MapControlPanel: React.FC<MapControlPanelProps> = React.memo(
     ({
       children,
       header,

@@ -37,12 +37,24 @@ import MapControlPanelFactory from './map-control-panel';
 import MapControlToolbarFactory from './map-control-toolbar';
 import {FormattedMessage} from '../../localization';
 import TippyTooltip from 'components/common/tippy-tooltip';
+import {Editor, MapControls} from 'reducers';
+import {BaseProps} from 'components/common/icons/base';
 
 MapDrawPanelFactory.deps = [
   MapControlTooltipFactory,
   MapControlPanelFactory,
   MapControlToolbarFactory
 ];
+
+export type MapDrawPanelProps = {
+  editor: Editor;
+  mapControls: MapControls;
+  onToggleMapControl: (control: string) => void;
+  onSetEditorMode: (mode: string) => void;
+  onToggleEditorVisibility: () => void;
+  actionIcons: {[id: string]: React.ComponentType<Partial<BaseProps>>};
+};
+
 function MapDrawPanelFactory(MapControlTooltip, MapControlPanel, MapControlToolbar) {
   const defaultActionIcons = {
     visible: EyeSeen,
@@ -53,7 +65,7 @@ function MapDrawPanelFactory(MapControlTooltip, MapControlPanel, MapControlToolb
     rectangle: Rectangle
   };
   /** @type {import('./map-draw-panel').MapDrawPanelComponent} */
-  const MapDrawPanel = React.memo(
+  const MapDrawPanel: React.FC<MapDrawPanelProps> = React.memo(
     ({
       editor,
       mapControls,

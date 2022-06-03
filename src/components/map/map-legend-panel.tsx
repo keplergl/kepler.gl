@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useState} from 'react';
+import React, {ComponentType, useState} from 'react';
 import styled from 'styled-components';
 
 import {Legend} from 'components/common/icons';
@@ -30,6 +30,8 @@ import Tippy from '@tippyjs/react/headless';
 import TippyTooltip from 'components/common/tippy-tooltip';
 import {createPortal} from 'react-dom';
 import {DIMENSIONS} from 'constants/default-settings';
+import {MapControl, MapControls} from 'reducers';
+import {Layer} from 'layers';
 
 MapLegendPanelFactory.deps = [MapControlPanelFactory, MapLegendFactory];
 
@@ -39,13 +41,28 @@ const PinToBottom = styled.div`
   right: ${DIMENSIONS.mapControl.mapLegend.pinned.right}px;
 `;
 
+interface MapLegendPanelIcons {
+  legend: ComponentType<any>;
+}
+
+export type MapLegendPanelProps = {
+  layers: ReadonlyArray<Layer>;
+  scale: number;
+  onToggleMapControl: (control: string) => void;
+  isExport: boolean;
+  logoComponent: Element;
+  actionIcons: MapLegendPanelIcons;
+  mapControls: MapControls;
+  mapHeight?: number;
+};
+
 function MapLegendPanelFactory(MapControlPanel, MapLegend) {
   const defaultActionIcons = {
     legend: Legend
   };
 
   /** @type {import('./map-legend-panel').MapLegendPanelComponent} */
-  const MapLegendPanel = ({
+  const MapLegendPanel: React.FC<MapLegendPanelProps> = ({
     layers,
     mapControls,
     scale,
@@ -55,7 +72,7 @@ function MapLegendPanelFactory(MapControlPanel, MapLegend) {
     actionIcons = defaultActionIcons,
     mapHeight
   }) => {
-    const mapLegend = mapControls?.mapLegend || {};
+    const mapLegend = mapControls?.mapLegend || {} as MapControl;
     const {active: isPinned} = mapLegend || {};
 
     const onClick = () => {

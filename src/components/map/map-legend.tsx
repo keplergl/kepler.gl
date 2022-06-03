@@ -24,8 +24,14 @@ import {rgb} from 'd3-color';
 import ColorLegend from 'components/common/color-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from 'constants/default-settings';
 import {FormattedMessage} from 'localization';
+import Layer, {LayerBaseConfig, VisualChannel, VisualChannelDescription} from 'layers/base-layer';
 
-export const StyledMapControlLegend = styled.div`
+interface StyledMapControlLegendProps {
+  width?: number;
+  last?: boolean;
+}
+
+export const StyledMapControlLegend = styled.div<StyledMapControlLegendProps>`
   padding: 10px ${props => props.theme.mapControl.padding}px 10px
     ${props => props.theme.mapControl.padding}px;
   font-size: 11px;
@@ -77,8 +83,13 @@ export const VisualChannelMetric = ({name}) => {
   );
 };
 
+export type LayerSizeLegendProps = {
+  label: string;
+  name: string;
+};
+
 /** @type {typeof import('./map-legend').LayerSizeLegend} */
-export const LayerSizeLegend = ({label, name}) =>
+export const LayerSizeLegend: React.FC<LayerSizeLegendProps> = ({label, name}) => 
   label ? (
     (<div className="legend--layer_size-schema">
       <p>
@@ -91,8 +102,13 @@ export const LayerSizeLegend = ({label, name}) =>
 
 const SINGLE_COLOR_DOMAIN = [''];
 
+export type SingleColorLegendProps = {
+  width: number;
+  color: string;
+};
+
 /** @type {typeof import('./map-legend').SingleColorLegend} */
-export const SingleColorLegend = React.memo(({width, color}) => (
+export const SingleColorLegend: React.FC<SingleColorLegendProps> = React.memo(({width, color}) => (
   <ColorLegend
     scaleType="ordinal"
     displayLabel={false}
@@ -105,49 +121,65 @@ export const SingleColorLegend = React.memo(({width, color}) => (
 
 SingleColorLegend.displayName = 'SingleColorLegend';
 
-/** @type {typeof import('./map-legend').LayerColorLegend} */
-export const LayerColorLegend = React.memo(({description, config, width, colorChannel}) => {
-  const enableColorBy = description.measure;
-  const {scale, field, domain, range, property} = colorChannel;
-  const [colorScale, colorField, colorDomain] = [scale, field, domain].map(k => config[k]);
-  const colorRange = config.visConfig[range];
+export type LayerColorLegendProps = {
+  description: VisualChannelDescription;
+  config: LayerBaseConfig;
+  width: number;
+  colorChannel: VisualChannel;
+};
 
-  return (
-    <div>
-      <div className="legend--layer_color-schema">
-        <div>
-          {enableColorBy ? <VisualChannelMetric name={enableColorBy} /> : null}
-          <div className="legend--layer_color-legend">
-            {enableColorBy ? (
-              <ColorLegend
-                scaleType={colorScale}
-                displayLabel
-                domain={colorDomain}
-                fieldType={(colorField && colorField.type) || 'real'}
-                range={colorRange}
-                width={width}
-              />
-            ) : (
-              <SingleColorLegend
-                color={config.visConfig[property] || config[property] || config.color}
-                width={width}
-              />
-            )}
+/** @type {typeof import('./map-legend').LayerColorLegend} */
+export const LayerColorLegend: React.FC<LayerColorLegendProps> = React.memo(
+  ({description, config, width, colorChannel}) => {
+    const enableColorBy = description.measure;
+    const {scale, field, domain, range, property} = colorChannel;
+    const [colorScale, colorField, colorDomain] = [scale, field, domain].map(k => config[k]);
+    const colorRange = config.visConfig[range];
+
+    return (
+      <div>
+        <div className="legend--layer_color-schema">
+          <div>
+            {enableColorBy ? <VisualChannelMetric name={enableColorBy} /> : null}
+            <div className="legend--layer_color-legend">
+              {enableColorBy ? (
+                <ColorLegend
+                  scaleType={colorScale}
+                  displayLabel
+                  domain={colorDomain}
+                  fieldType={(colorField && colorField.type) || 'real'}
+                  range={colorRange}
+                  width={width}
+                />
+              ) : (
+                <SingleColorLegend
+                  color={config.visConfig[property] || config[property] || config.color}
+                  width={width}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 LayerColorLegend.displayName = 'LayerColorLegend';
 
 const isColorChannel = visualChannel =>
   [CHANNEL_SCALES.color, CHANNEL_SCALES.colorAggr].includes(visualChannel.channelScaleType);
 
+export type LayerLegendHeaderProps = {
+  layer: Layer;
+  options?: {
+    showLayerName?: boolean;
+  };
+};
+
 export function LayerLegendHeaderFactory() {
   /** @type {typeof import('./map-legend').LayerLegendHeader }> */
-  const LayerLegendHeader = ({options, layer}) => {
+  const LayerLegendHeader: React.FC<LayerLegendHeaderProps> = ({options, layer}) => {
     return options?.showLayerName !== false ? (
       <div className="legend--layer_name">{layer.config.label}</div>
     ) : null;
@@ -155,9 +187,14 @@ export function LayerLegendHeaderFactory() {
   return LayerLegendHeader;
 }
 
+export type LayerLegendContentProps = {
+  layer: Layer;
+  containerW: number;
+};
+
 export function LayerLegendContentFactory() {
   /** @type {typeof import('./map-legend').LayerLegendContent }> */
-  const LayerLegendContent = ({layer, containerW}) => {
+  const LayerLegendContent: React.FC<LayerLegendContentProps> = ({layer, containerW}) => {
     const colorChannels = Object.values(layer.visualChannels).filter(isColorChannel);
     const nonColorChannels = Object.values(layer.visualChannels).filter(vc => !isColorChannel(vc));
 
@@ -195,10 +232,19 @@ export function LayerLegendContentFactory() {
   return LayerLegendContent;
 }
 
+export type MapLegendProps = {
+  layers?: ReadonlyArray<Layer>;
+  width?: number;
+  mapHeight?: number;
+  options?: {
+    showLayerName?: boolean;
+  };
+};
+
 MapLegendFactory.deps = [LayerLegendHeaderFactory, LayerLegendContentFactory];
 function MapLegendFactory(LayerLegendHeader, LayerLegendContent) {
   /** @type {typeof import('./map-legend').MapLegend }> */
-  const MapLegend = ({layers = [], width, mapHeight, options}) => (
+  const MapLegend: React.FC<MapLegendProps> = ({layers = [], width, mapHeight, options}) => (
     <div
       className="map-legend"
       {...(mapHeight && {

@@ -51,8 +51,15 @@ const StyledTable = styled.table`
   }
 `;
 
+interface RowProps {
+  name: string;
+  value: string;
+  deltaValue?: string | null;
+  url?: string;
+}
+
 /** @type {import('./layer-hover-info').RowComponent} */
-const Row = ({name, value, deltaValue, url}) => {
+const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
   // Set 'url' to 'value' if it looks like a url
   if (!url && value && typeof value === 'string' && value.match(/^http/)) {
     url = value;

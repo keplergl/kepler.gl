@@ -29,8 +29,14 @@ import LayerSelectorPanelFactory from './layer-selector-panel';
 import MapLegendPanelFactory from './map-legend-panel';
 import MapDrawPanelFactory from './map-draw-panel';
 import LocalePanelFactory from './locale-panel';
+import {Datasets, Editor, MapControls} from 'reducers';
+import {Layer} from 'layers';
 
-const StyledMapControl = styled.div`
+interface StyledMapControlProps {
+  top?: number;
+}
+
+const StyledMapControl = styled.div<StyledMapControlProps>`
   right: 0;
   padding: ${props => props.theme.mapControl.padding}px;
   z-index: 10;
@@ -48,6 +54,35 @@ const StyledMapControl = styled.div`
 
 const LegendLogo = <KeplerGlLogo version={false} appName="kepler.gl" />;
 
+export type MapControlProps = {
+  availableLocales: ReadonlyArray<string>;
+  datasets: Datasets;
+  dragRotate: boolean;
+  isSplit: boolean;
+  primary: boolean;
+  layers: Layer[];
+  layersToRender: {[key: string]: boolean};
+  mapIndex: number;
+  mapControls: MapControls;
+  onTogglePerspective: () => void;
+  onToggleSplitMap: () => void;
+  onToggleMapControl: (control: string) => void;
+  onSetEditorMode: (mode: string) => void;
+  onToggleEditorVisibility: () => void;
+  top: number;
+  onSetLocale: () => void;
+  locale: string;
+  logoComponent: React.FC | React.ReactNode;
+
+  // optional
+  readOnly?: boolean;
+  scale?: number;
+  mapLayers?: {[key: string]: boolean};
+  editor: Editor;
+  actionComponents: React.FC[] | React.Component[];
+  mapHeight?: number;
+};
+
 MapControlFactory.deps = [
   MapDrawPanelFactory,
   Toggle3dButtonFactory,
@@ -58,12 +93,12 @@ MapControlFactory.deps = [
 ];
 
 function MapControlFactory(
-  MapDrawPanel,
-  Toggle3dButton,
-  SplitMapButton,
-  MapLegendPanel,
-  LayerSelectorPanel,
-  LocalePanel
+  MapDrawPanel: ReturnType<typeof MapDrawPanelFactory>,
+  Toggle3dButton: ReturnType<typeof Toggle3dButtonFactory>,
+  SplitMapButton: ReturnType<typeof SplitMapButtonFactory>,
+  MapLegendPanel: ReturnType<typeof MapLegendPanelFactory>,
+  LayerSelectorPanel: ReturnType<typeof LayerSelectorPanelFactory>,
+  LocalePanel: ReturnType<typeof LocalePanelFactory>
 ) {
   const DEFAULT_ACTIONS = [
     SplitMapButton,
@@ -75,7 +110,10 @@ function MapControlFactory(
   ];
 
   /** @type {import('./map-control').MapControl} */
-  const MapControl = ({actionComponents = DEFAULT_ACTIONS, ...props}) => {
+  const MapControl: React.FC<MapControlProps> = ({
+    actionComponents = DEFAULT_ACTIONS,
+    ...props
+  }) => {
     return (
       <StyledMapControl className="map-control" top={props.top}>
         {actionComponents.map((ActionComponent, index) => (

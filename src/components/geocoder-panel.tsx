@@ -25,7 +25,7 @@ import {FlyToInterpolator} from '@deck.gl/core';
 import KeplerGlSchema from 'schemas';
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
 
-import Geocoder, { Result } from './geocoder/geocoder';
+import Geocoder, {Result} from './geocoder/geocoder';
 import {
   GEOCODER_DATASET_NAME,
   GEOCODER_LAYER_ID,

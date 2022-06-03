@@ -23,9 +23,10 @@ import styled from 'styled-components';
 import LayerHoverInfoFactory from './layer-hover-info';
 import CoordinateInfoFactory from './coordinate-info';
 import {ArrowLeft, ArrowRight, Pin} from 'components/common/icons';
-import {injectIntl} from 'react-intl';
+import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from 'localization';
 import Tippy from '@tippyjs/react/headless';
+import {LayerHoverProp} from 'utils/layer-utils';
 
 const MAX_WIDTH = 500;
 const MAX_HEIGHT = 600;
@@ -167,9 +168,28 @@ function getPopperOptions(container) {
   };
 }
 
-export default function MapPopoverFactory(LayerHoverInfo, CoordinateInfo) {
+export type MapPopoverProps = {
+  x: number;
+  y: number;
+  frozen?: boolean;
+  coordinate: [number, number] | boolean;
+  layerHoverProp: LayerHoverProp | null;
+  isBase?: boolean;
+  zoom: number;
+  container?: HTMLElement | null;
+  onClose: () => void;
+};
+
+type IntlProps = {
+  intl: IntlShape;
+};
+
+export default function MapPopoverFactory(
+  LayerHoverInfo: ReturnType<typeof LayerHoverInfoFactory>,
+  CoordinateInfo: ReturnType<typeof CoordinateInfoFactory>
+) {
   /** @type {typeof import('./map-popover').MapPopover} */
-  const MapPopover = ({
+  const MapPopover: React.FC<MapPopoverProps & IntlProps> = ({
     x,
     y,
     frozen,

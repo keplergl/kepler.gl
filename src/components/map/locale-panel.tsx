@@ -27,14 +27,26 @@ import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlToolbarFactory from './map-control-toolbar';
 import {FormattedMessage} from '../../localization';
 import TippyTooltip from 'components/common/tippy-tooltip';
+import {MapControls} from 'reducers';
 
 LocalePanelFactory.deps = [MapControlTooltipFactory, MapControlToolbarFactory];
 
-function LocalePanelFactory(MapControlTooltip, MapControlToolbar) {
+export type LocalePanelProps = {
+  availableLocales: ReadonlyArray<string>;
+  onSetLocale: (locale: string) => void;
+  locale: string;
+  onToggleMapControl: (control: string) => void;
+  mapControls: MapControls;
+};
+
+function LocalePanelFactory(
+  MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>,
+  MapControlToolbar: ReturnType<typeof MapControlToolbarFactory>
+) {
   /** @type {import('./locale-panel').LocalePanelComponent} */
-  const LocalePanel = React.memo(
+  const LocalePanel: React.FC<LocalePanelProps> = React.memo(
     ({availableLocales, onToggleMapControl, onSetLocale, locale: currentLocal, mapControls}) => {
-      const {active: isActive, disableClose, show} = mapControls.mapLocale || {};
+      const {active: isActive, show} = mapControls.mapLocale || {};
 
       const onClickItem = useCallback(
         locale => {
@@ -81,7 +93,6 @@ function LocalePanelFactory(MapControlTooltip, MapControlToolbar) {
               className={classnames('map-control-button', 'map-locale', {isActive})}
               onClick={onClickButton}
               active={isActive}
-              disableClose={disableClose}
             >
               <span className="map-control-button__locale">{currentLocal.toUpperCase()}</span>
             </MapControlButton>

@@ -28,8 +28,13 @@ import {StyledLayerName} from './layer-hover-info';
 const DECIMAL = 6;
 const DECIMAL_Z = 1;
 
+export interface CoordinateInfoProps {
+  coordinate: number[];
+  zoom: number;
+}
+
 const CoordinateInfoFactory = () => {
-  const CoordinateInfo = ({coordinate, zoom}) => (
+  const CoordinateInfo: React.FC<CoordinateInfoProps> = ({coordinate, zoom}) => (
     <div className="coordingate-hover-info">
       <StyledLayerName className="map-popover__layer-name">
         <CursorClick height="12px" />
