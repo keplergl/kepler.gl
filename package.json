@@ -111,6 +111,7 @@
     "@types/keymirror": "^0.1.1",
     "@types/lodash.clonedeep": "^4.5.7",
     "@types/lodash.curry": "^4.1.7",
+    "@types/lodash.debounce": "^4.0.7",
     "@types/lodash.flattendeep": "^4.4.7",
     "@types/lodash.get": "^4.4.6",
     "@types/lodash.isequal": "^4.5.5",

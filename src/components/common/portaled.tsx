@@ -46,8 +46,8 @@ const getPageOffset = () => ({
 
 const addEventListeners = () => {
   if (document && document.body)
-    document.body.addEventListener('mousewheel', debounce(startListening, 100, true));
-  window.addEventListener('resize', debounce(startListening, 50, true));
+    document.body.addEventListener('mousewheel', debounce(startListening, 100));
+  window.addEventListener('resize', debounce(startListening, 50));
 };
 
 interface GetChildPosProps {
