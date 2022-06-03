@@ -3317,6 +3317,13 @@
   dependencies:
     "@types/lodash" "*"
 
+"@types/lodash.memoize@^4.1.7":
+  version "4.1.7"
+  resolved "https://registry.yarnpkg.com/@types/lodash.memoize/-/lodash.memoize-4.1.7.tgz#aff94ab32813c557cbc1104e127030e3d60a3b27"
+  integrity sha512-lGN7WeO4vO6sICVpf041Q7BX/9k1Y24Zo3FY0aUezr1QlKznpjzsDk3T3wvH8ofYzoK0QupN9TWcFAFZlyPwQQ==
+  dependencies:
+    "@types/lodash" "*"
+
 "@types/lodash.pick@^4.4.6":
   version "4.4.6"
   resolved "https://registry.yarnpkg.com/@types/lodash.pick/-/lodash.pick-4.4.6.tgz#ae4e8f109e982786313bb6aac4b1a73aefa6e9be"
