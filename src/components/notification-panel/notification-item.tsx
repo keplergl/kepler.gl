@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import {Delete, Info, Warning, Checkmark} from 'components/common/icons';
 import ReactMarkdown from 'react-markdown';
-import {removeNotification} from 'actions';
+import {ActionHandler, removeNotification as removeNotificationActions} from 'actions';
 
 interface NotificationItemContentProps {
   type: string;
@@ -98,7 +98,7 @@ interface NotificationItemProps {
     message: string;
   };
   isExpanded?: boolean;
-  removeNotification?: typeof removeNotification;
+  removeNotification?: ActionHandler<typeof removeNotificationActions>;
   theme?: any;
 }
 
