@@ -18,7 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, MouseEventHandler, TouchEventHandler, CSSProperties, ChangeEventHandler} from 'react';
+import React, {
+  Component,
+  MouseEventHandler,
+  TouchEventHandler,
+  CSSProperties,
+  ChangeEventHandler
+} from 'react';
 import styled from 'styled-components';
 
 import LayerConfiguratorFactory from './layer-configurator';

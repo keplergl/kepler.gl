@@ -19,12 +19,17 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {Delete, Info, Warning, Checkmark} from 'components/common/icons';
 import ReactMarkdown from 'react-markdown';
+import {ActionHandler, removeNotification as removeNotificationActions} from 'actions';
 
-const NotificationItemContent = styled.div`
+interface NotificationItemContentProps {
+  type: string;
+  isExpanded?: boolean;
+}
+
+const NotificationItemContent = styled.div<NotificationItemContentProps>`
   background-color: ${props => props.theme.notificationColors[props.type] || '#000'};
   color: #fff;
   display: flex;
@@ -43,9 +48,13 @@ const DeleteIcon = styled(Delete)`
   cursor: pointer;
 `;
 
+interface NotificationMessageProps {
+  isExpanded?: boolean;
+}
+
 const NotificationMessage = styled.div.attrs({
   className: 'notification-item--message'
-})`
+})<NotificationMessageProps>`
   flex-grow: 2;
   width: ${props => props.theme.notificationPanelItemWidth}px;
   margin: 0 1em;
@@ -82,17 +91,19 @@ const LinkRenderer = props => {
   );
 };
 
-export default function NotificationItemFactory() {
-  return class NotificationItem extends Component {
-    static propTypes = {
-      notification: PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        type: PropTypes.string.isRequired,
-        message: PropTypes.string.isRequired
-      }).isRequired,
-      isExpanded: PropTypes.bool
-    };
+interface NotificationItemProps {
+  notification: {
+    id: string;
+    type: string;
+    message: string;
+  };
+  isExpanded?: boolean;
+  removeNotification?: ActionHandler<typeof removeNotificationActions>;
+  theme?: any;
+}
 
+export default function NotificationItemFactory() {
+  return class NotificationItem extends Component<NotificationItemProps> {
     state = {
       isExpanded: false
     };

@@ -55,7 +55,7 @@ function LayerSelectorPanelFactory(
     mapControls,
     readOnly
   }) => {
-    const visibleLayers = mapControls?.visibleLayers || {} as MapControl;
+    const visibleLayers = mapControls?.visibleLayers || ({} as MapControl);
     const {active: isActive, show, disableClose} = visibleLayers || {};
 
     const legendLayers = useMemo(

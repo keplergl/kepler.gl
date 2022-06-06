@@ -18,7 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useState, ComponentType, MouseEventHandler, MouseEvent, ChangeEventHandler} from 'react';
+import React, {
+  useState,
+  ComponentType,
+  MouseEventHandler,
+  MouseEvent,
+  ChangeEventHandler
+} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import {SortableHandle} from 'react-sortable-hoc';

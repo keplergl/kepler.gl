@@ -57,7 +57,7 @@ function SplitMapButtonFactory() {
     mapControls,
     readOnly
   }) => {
-    const splitMap = mapControls?.splitMap || {} as MapControl;
+    const splitMap = mapControls?.splitMap || ({} as MapControl);
     const onClick = useCallback(
       event => {
         event.preventDefault();

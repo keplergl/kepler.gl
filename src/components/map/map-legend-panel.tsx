@@ -72,7 +72,7 @@ function MapLegendPanelFactory(MapControlPanel, MapLegend) {
     actionIcons = defaultActionIcons,
     mapHeight
   }) => {
-    const mapLegend = mapControls?.mapLegend || {} as MapControl;
+    const mapLegend = mapControls?.mapLegend || ({} as MapControl);
     const {active: isPinned} = mapLegend || {};
 
     const onClick = () => {

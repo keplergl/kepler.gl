@@ -89,15 +89,15 @@ export type LayerSizeLegendProps = {
 };
 
 /** @type {typeof import('./map-legend').LayerSizeLegend} */
-export const LayerSizeLegend: React.FC<LayerSizeLegendProps> = ({label, name}) => 
+export const LayerSizeLegend: React.FC<LayerSizeLegendProps> = ({label, name}) =>
   label ? (
-    (<div className="legend--layer_size-schema">
+    <div className="legend--layer_size-schema">
       <p>
         <span className="legend--layer_by">{label ? <FormattedMessage id={label} /> : null}</span>
         <span className="legend--layer_by"> by </span>
       </p>
       <VisualChannelMetric name={name} />
-    </div>)
+    </div>
   ) : null;
 
 const SINGLE_COLOR_DOMAIN = [''];

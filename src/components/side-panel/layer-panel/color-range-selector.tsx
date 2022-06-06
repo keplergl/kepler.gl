@@ -218,10 +218,7 @@ export const PaletteConfig: React.FC<PaletteConfigProps> = ({
   config: {type, options},
   onChange
 }) => (
-  <StyledPaletteConfig
-    className="color-palette__config"
-    onClick={(e) => e.stopPropagation()}
-  >
+  <StyledPaletteConfig className="color-palette__config" onClick={e => e.stopPropagation()}>
     <div className="color-palette__config__label">
       <PanelLabel>
         <FormattedMessage id={`color.${label}`} />

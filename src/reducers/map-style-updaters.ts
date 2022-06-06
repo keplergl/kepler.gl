@@ -188,7 +188,7 @@ interface GetMapStylesParam {
   styleType: string;
   visibleLayerGroups: {[id: string]: LayerGroup | boolean};
   topLayerGroups: {[id: string]: LayerGroup | boolean};
-  mapStyles: {[id: string]: any}
+  mapStyles: {[id: string]: any};
 }
 
 /**
@@ -200,7 +200,12 @@ interface GetMapStylesParam {
  * @param {Object} mapStyles - a dictionary of all map styles
  * @returns {Object} bottomMapStyle | topMapStyle | isRaster
  */
-export function getMapStyles({styleType, visibleLayerGroups, topLayerGroups, mapStyles}: GetMapStylesParam) {
+export function getMapStyles({
+  styleType,
+  visibleLayerGroups,
+  topLayerGroups,
+  mapStyles
+}: GetMapStylesParam) {
   const mapStyle = mapStyles[styleType];
 
   // style might not be loaded yet
