@@ -19,7 +19,13 @@
 // THE SOFTWARE.
 
 import document from 'global/document';
-import {RefObject, TouchEvent, TouchEventHandler, MouseEventHandler as ReactMouseEventHandler, MouseEvent} from 'react';
+import {
+  RefObject,
+  TouchEvent,
+  TouchEventHandler,
+  MouseEventHandler as ReactMouseEventHandler,
+  MouseEvent
+} from 'react';
 import {StyleRangeSliderType} from './slider';
 
 function nope(...args) {}

@@ -151,7 +151,7 @@ function getCoordinates(vectorTileFeature: VectorTileFeature): FlatFigure[] {
     } else if (cmd === 7) {
       // Workaround for https://github.com/mapbox/mapnik-vector-tile/issues/90
       if (line) {
-        line.push(line[0].slice() as ([number, number] | [number, number, number])); // closePolygon
+        line.push(line[0].slice() as [number, number] | [number, number, number]); // closePolygon
       }
     } else {
       throw new Error(`unknown command ${cmd}`);

@@ -30,43 +30,41 @@ const isAlreadySelected = (selectedLayers: Layer[], layerId: string) =>
   selectedLayers.findIndex(l => l.id === layerId) === -1;
 
 function PolygonFilterFactory() {
-  const PolygonFilter: React.FC<PolygonFilterProps> = React.memo(
-    ({filter, layers, setLayers}) => {
-      const setNewLayers = useCallback(
-        newLayers => {
-          return setLayers(newLayers.map((l: Layer) => l.id));
-        },
-        [setLayers]
+  const PolygonFilter: React.FC<PolygonFilterProps> = React.memo(({filter, layers, setLayers}) => {
+    const setNewLayers = useCallback(
+      newLayers => {
+        return setLayers(newLayers.map((l: Layer) => l.id));
+      },
+      [setLayers]
+    );
+
+    const selectedLayers = useMemo(() => layers.filter(l => filter.layerId?.includes(l.id)), [
+      filter,
+      layers
+    ]);
+
+    const availableLayers = useMemo(() => {
+      // remove already added layers and filter out non point layers
+      return layers.filter(
+        layer => layerFilter(layer) && isAlreadySelected(selectedLayers, layer.id)
       );
+    }, [layers, selectedLayers]);
 
-      const selectedLayers = useMemo(() => layers.filter(l => filter.layerId?.includes(l.id)), [
-        filter,
-        layers
-      ]);
-
-      const availableLayers = useMemo(() => {
-        // remove already added layers and filter out non point layers
-        return layers.filter(
-          layer => layerFilter(layer) && isAlreadySelected(selectedLayers, layer.id)
-        );
-      }, [layers, selectedLayers]);
-
-      return (
-        <div>
-          <StyledFilterPanel htmlFor={`filter-${filter.id}`}>Layers:</StyledFilterPanel>
-          <ItemSelector
-            options={availableLayers}
-            selectedItems={selectedLayers}
-            onChange={setNewLayers}
-            searchable={false}
-            multiSelect={true}
-            getOptionValue={(l: Layer) => l.id}
-            displayOption={(l: Layer) => l.config.label}
-          />
-        </div>
-      );
-    }
-  );
+    return (
+      <div>
+        <StyledFilterPanel htmlFor={`filter-${filter.id}`}>Layers:</StyledFilterPanel>
+        <ItemSelector
+          options={availableLayers}
+          selectedItems={selectedLayers}
+          onChange={setNewLayers}
+          searchable={false}
+          multiSelect={true}
+          getOptionValue={(l: Layer) => l.id}
+          displayOption={(l: Layer) => l.config.label}
+        />
+      </div>
+    );
+  });
 
   PolygonFilter.displayName = 'PolygonFilter';
 

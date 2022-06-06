@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import {Delete, Info, Warning, Checkmark} from 'components/common/icons';
 import ReactMarkdown from 'react-markdown';
-import { removeNotification } from 'actions';
+import {removeNotification} from 'actions';
 
 interface NotificationItemContentProps {
   type: string;

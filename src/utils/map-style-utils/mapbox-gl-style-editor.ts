@@ -36,7 +36,15 @@ export function getDefaultLayerGroupVisibility({layerGroups = []}: {layerGroups:
   );
 }
 
-const resolver = ({id, mapStyle, visibleLayerGroups = {}}: {id?: string; mapStyle: BaseMapStyle; visibleLayerGroups: {[id: string]: LayerGroup | boolean} | false}) =>
+const resolver = ({
+  id,
+  mapStyle,
+  visibleLayerGroups = {}
+}: {
+  id?: string;
+  mapStyle: BaseMapStyle;
+  visibleLayerGroups: {[id: string]: LayerGroup | boolean} | false;
+}) =>
   `${id}:${Object.keys(visibleLayerGroups)
     .filter(d => visibleLayerGroups[d])
     .sort()
@@ -50,7 +58,13 @@ const resolver = ({id, mapStyle, visibleLayerGroups = {}}: {id?: string; mapStyl
  * @returns top map style
  */
 export const editTopMapStyle = memoize(
-  ({mapStyle, visibleLayerGroups}: {mapStyle: BaseMapStyle; visibleLayerGroups: {[id: string]: LayerGroup | boolean} | false}) => {
+  ({
+    mapStyle,
+    visibleLayerGroups
+  }: {
+    mapStyle: BaseMapStyle;
+    visibleLayerGroups: {[id: string]: LayerGroup | boolean} | false;
+  }) => {
     const visibleFilters = (mapStyle.layerGroups || [])
       .filter(lg => visibleLayerGroups[lg.slug])
       .map(lg => lg.filter);
