@@ -25,20 +25,13 @@ import uniq from 'lodash.uniq';
 import get from 'lodash.get';
 import xor from 'lodash.xor';
 import copy from 'copy-to-clipboard';
-import {parseFieldValue} from 'utils/data-utils';
-// Tasks
-import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from 'tasks/tasks';
-// Actions
-import {
-  loadFilesErr,
-  loadFilesSuccess,
-  loadFileStepSuccess,
-  loadNextFile,
-  nextFileBatch
-} from 'actions/vis-state-actions';
+import {LoaderObject} from '@loaders.gl/loader-utils';
+
 // Utils
-import {findFieldsToShow, getDefaultInteraction} from 'utils/interaction-utils';
 import {
+  parseFieldValue,
+  findFieldsToShow,
+  getDefaultInteraction,
   applyFilterFieldName,
   applyFiltersToDatasets,
   featureToFilterValue,
@@ -52,19 +45,49 @@ import {
   getTimeWidgetTitleFormatter,
   isInRange,
   LIMITED_FILTER_EFFECT_PROPS,
-  updateFilterDataId
-} from 'utils/filter-utils';
-import {assignGpuChannel, setFilterGpuMode} from 'utils/gpu-filter-utils';
-import {createNewDataEntry} from 'utils/dataset-utils';
-import {
+  updateFilterDataId,
+  assignGpuChannel,
+  setFilterGpuMode,
+  createNewDataEntry,
   pinTableColumns,
   sortDatasetByColumn,
   copyTableAndUpdate,
-  Field
-} from 'utils/table-utils/kepler-table';
-import {set, toArray, arrayInsert, generateHashId} from 'utils/utils';
-
-import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils';
+  Field,
+  set,
+  toArray,
+  arrayInsert,
+  generateHashId,
+  calculateLayerData,
+  findDefaultLayer,
+  addNewLayersToSplitMap,
+  computeSplitMapLayers,
+  removeLayerFromSplitMaps,
+  isRgbColor,
+  KeplerTable
+} from '../utils';
+// Tasks
+import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from 'tasks';
+// Actions
+import {
+  loadFilesErr,
+  loadFilesSuccess,
+  loadFileStepSuccess,
+  loadNextFile,
+  nextFileBatch,
+  processFileContent,
+  ReceiveMapConfigPayload,
+  VisStateActions,
+  MapStateActions
+} from 'actions';
+import {Layer, LayerClasses, LayerClassesType, LAYER_ID_LENGTH, DEFAULT_TEXT_LABEL} from 'layers';
+import {
+  EDITOR_MODES,
+  SORT_ORDER,
+  FILTER_TYPES,
+  MAX_DEFAULT_TOOLTIPS,
+  ActionTypes
+} from '../constants';
+import KeplerGLSchema from 'schemas';
 
 import {
   isValidMerger,
@@ -74,34 +97,8 @@ import {
   serializeLayer,
   VisStateMergers
 } from './vis-state-merger';
-
-import {
-  addNewLayersToSplitMap,
-  computeSplitMapLayers,
-  removeLayerFromSplitMaps
-} from 'utils/split-map-utils';
-
-import {Layer, LayerClasses, LayerClassesType, LAYER_ID_LENGTH} from 'layers';
-import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
-import {
-  EDITOR_MODES,
-  SORT_ORDER,
-  FILTER_TYPES,
-  MAX_DEFAULT_TOOLTIPS
-} from 'constants/default-settings';
 import {pick_, merge_, swap_} from './composer-helpers';
-import {processFileContent} from 'actions/vis-state-actions';
-
-import KeplerGLSchema from 'schemas';
-import {isRgbColor} from 'utils/color-utils';
-
 import {Millisecond} from './types';
-import {ReceiveMapConfigPayload} from '../actions/actions';
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as MapStateActions from 'actions/map-state-actions';
-import ActionTypes from 'constants/action-types';
-import {LoaderObject} from '@loaders.gl/loader-utils';
-import {KeplerTable} from '../utils';
 
 export type HistogramBin = {
   x0: number | undefined;

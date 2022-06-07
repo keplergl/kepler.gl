@@ -20,6 +20,7 @@
 
 import Task, {withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
+import {rgb} from 'd3-color';
 
 // Utils
 import {
@@ -29,23 +30,26 @@ import {
   mergeLayerGroupVisibility,
   editTopMapStyle,
   editBottomMapStyle,
-  getStyleImageIcon
-} from 'utils/map-style-utils/mapbox-gl-style-editor';
+  getStyleImageIcon,
+  generateHashId,
+  hexToRgb
+} from '../utils';
 import {
   DEFAULT_MAP_STYLES,
   DEFAULT_LAYER_GROUPS,
-  DEFAULT_MAPBOX_API_URL
-} from 'constants/default-settings';
-import {generateHashId} from 'utils/utils';
-import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
-import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
-import {rgb} from 'd3-color';
-import {hexToRgb} from 'utils/color-utils';
+  DEFAULT_MAPBOX_API_URL,
+  ActionTypes
+} from '../constants';
+import {LOAD_MAP_STYLE_TASK} from 'tasks';
+import {
+  loadMapStyles,
+  loadMapStyleErr,
+  MapStyleActions,
+  ReceiveMapConfigPayload,
+  KeplerGlInitPayload
+} from 'actions';
 
 import {RGBColor} from './types';
-import ActionTypes from 'constants/action-types';
-import {ReceiveMapConfigPayload, KeplerGlInitPayload} from '../actions/actions';
-import * as MapStyleActions from '../actions/map-style-actions';
 
 export type LayerGroup = {
   slug: string;

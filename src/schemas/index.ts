@@ -33,7 +33,9 @@ export type {
   ParsedFilter,
   SavedConfigV1,
   SavedDatasetV1,
-  SavedMap
+  SavedMap,
+  SavedInteractionConfig,
+  LoadedMap
 } from './schema-manager';
 export {CURRENT_VERSION, VERSIONS} from './versions';
 export {

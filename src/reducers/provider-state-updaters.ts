@@ -20,14 +20,15 @@
 
 import {withTask} from 'react-palm/tasks';
 import {default as Console} from 'global/console';
-import {generateHashId, getError, isPlainObject, toArray} from '../utils/utils';
+
+import {generateHashId, getError, isPlainObject, toArray} from '../utils';
 import {
   EXPORT_FILE_TO_CLOUD_TASK,
   ACTION_TASK,
   DELAY_TASK,
   LOAD_CLOUD_MAP_TASK,
   GET_SAVED_MAPS_TASK
-} from '../tasks/tasks';
+} from 'tasks';
 import {
   exportFileSuccess,
   exportFileError,
@@ -36,22 +37,22 @@ import {
   getSavedMapsSuccess,
   getSavedMapsError,
   loadCloudMapError,
-  resetProviderStatus
-} from '../actions/provider-actions';
-import {removeNotification, toggleModal, addNotification} from '../actions/ui-state-actions';
-import {addDataToMap} from '../actions/actions';
+  resetProviderStatus,
+  removeNotification,
+  toggleModal,
+  addNotification,
+  addDataToMap,
+  ProviderActions
+} from '../actions';
 import {
   DEFAULT_NOTIFICATION_TYPES,
   DEFAULT_NOTIFICATION_TOPICS,
   DATASET_FORMATS,
   OVERWRITE_MAP_ID
-} from '../constants/default-settings';
+} from '../constants';
+import {DATASET_HANDLERS} from 'processors';
 
-import {FILE_CONFLICT_MSG} from '../cloud-providers';
-import {DATASET_HANDLERS} from '../processors/data-processor';
-
-import * as ProviderActions from '../actions/provider-actions';
-import {MapListItem} from '../cloud-providers';
+import {FILE_CONFLICT_MSG, MapListItem} from '../cloud-providers';
 
 type ActionPayload<P> = {
   type?: string;

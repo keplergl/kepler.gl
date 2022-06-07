@@ -20,3 +20,4 @@
 
 export * from './data-processor';
 export * from './file-handler';
+export type {FileCacheItem} from './types'

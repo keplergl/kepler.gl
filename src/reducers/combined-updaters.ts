@@ -18,6 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {findMapBounds, isPlainObject} from '../utils';
+import {filesToDataPayload} from 'processors';
+import {AddDataToMapPayload, loadFilesSuccessUpdaterAction} from 'actions';
+import {ParsedConfig} from 'schemas';
+import {Layer} from 'layers';
 import {
   toggleModalUpdater,
   loadFilesSuccessUpdater as uiStateLoadFilesSuccessUpdater
@@ -28,19 +33,12 @@ import {
 } from './vis-state-updaters';
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
-import {findMapBounds} from 'utils/data-utils';
-import {isPlainObject} from 'utils/utils';
-import {filesToDataPayload} from 'processors/file-handler';
 import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-helpers';
 import {VisState} from './vis-state-updaters';
 import {MapState} from './map-state-updaters';
 import {UiState} from './ui-state-updaters';
 import {MapStyle} from './map-style-updaters';
 import {ProviderState} from './provider-state-updaters';
-import {AddDataToMapPayload} from 'actions/actions';
-import {loadFilesSuccessUpdaterAction} from 'actions/vis-state-actions';
-import {ParsedConfig} from 'schemas';
-import {Layer} from 'layers';
 
 export type KeplerGlState = {
   visState: VisState;

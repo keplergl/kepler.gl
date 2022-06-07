@@ -19,28 +19,8 @@
 // THE SOFTWARE.
 
 // UTILS
-export {
-  maybeToDate,
-  roundValToStep,
-  timeToUnixMilli,
-  defaultFormatter,
-  FIELD_DISPLAY_FORMAT
-} from './data-utils';
-export {createNewDataEntry, datasetColorMaker, findDefaultColorField} from './dataset-utils';
-export {hexToRgb} from './color-utils';
-export {errorNotification} from './notifications-utils';
-export {dataURItoBlob, downloadFile} from './export-utils';
-export {calculateLayerData, prepareLayersToRender, prepareLayersForDeck} from './layer-utils';
-export {
-  applyFilterFieldName,
-  applyFiltersToDatasets,
-  validateFilterWithData,
-  validateFiltersUpdateDatasets,
-  getIntervalBins,
-  getNumericStepSize,
-  formatNumberByStep
-} from 'utils/filter-utils';
-export {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
+export {errorNotification, createNotification} from './notifications-utils';
+export {dataURItoBlob, downloadFile, calculateExportImageSize} from './export-utils';
 
 // REDUCER UTILS
 export {updateAllLayerDomainData} from '../reducers/vis-state-updaters';
@@ -50,15 +30,25 @@ export {containValidTime} from '../layers/trip-layer/trip-utils';
 export {
   default as KeplerTable,
   findPointFieldPairs,
-  copyTableAndUpdate
+  copyTableAndUpdate,
+  pinTableColumns,
+  sortDatasetByColumn,
 } from './table-utils/kepler-table';
+export type {Field} from './table-utils/kepler-table';
 export {createDataContainer, createIndexedDataContainer} from './table-utils/data-container-utils';
+export type {DataContainerInterface} from './table-utils/data-container-interface';
 
 export * from './color-utils';
 export * from './data-scale-utils';
 export * from './data-utils';
 export * from './dataset-utils';
+export * from './filter-utils';
 export * from './gpu-filter-utils';
 export * from './interaction-utils';
 export * from './layer-utils';
 export * from './observe-dimensions';
+export * from './projection-utils';
+export * from './map-style-utils/mapbox-gl-style-editor';
+export * from './map-style-utils/mapbox-utils';
+export * from './utils';
+export * from './split-map-utils';

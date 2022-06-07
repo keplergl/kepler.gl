@@ -34,7 +34,8 @@ import {default as S2GeometryLayer} from './s2-geometry-layer/s2-geometry-layer'
 import {LAYER_TYPES} from './types';
 
 // base layer
-export {default as Layer, OVERLAY_TYPE, LAYER_ID_LENGTH, colorMaker} from './base-layer';
+export {default as Layer} from './base-layer';
+export * from './base-layer';
 export type {LayerBaseConfig, LayerColumns, LayerColumn} from './base-layer';
 
 // individual layers
@@ -71,7 +72,7 @@ export const LayerClasses = {
   [LAYER_TYPES.s2]: S2GeometryLayer
 };
 
-export type OVERLAY_TYPE = {[key: string]: string};
-
-export {LAYER_VIS_CONFIGS} from './layer-factory';
-export type {LayerVisConfig} from './layer-factory';
+export {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL} from './layer-factory';
+export type {LayerVisConfig, LayerTextLabel, ColorUI} from './layer-factory';
+export * from './types';
+export * from './h3-hexagon-layer';

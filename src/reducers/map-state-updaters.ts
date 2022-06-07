@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
-import * as MapStateActions from 'actions/map-state-actions';
-import {ReceiveMapConfigPayload} from '../actions/actions';
-import ActionTypes from '../constants/action-types';
+import {getCenterAndZoomFromBounds} from '../utils';
+import {ReceiveMapConfigPayload, MapStateActions} from 'actions';
+import {ActionTypes} from '../constants';
 
 export type MapState = {
   pitch: number;

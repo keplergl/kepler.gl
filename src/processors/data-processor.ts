@@ -20,20 +20,25 @@
 
 import {csvParseRows, csvFormatRows} from 'd3-dsv';
 import {range} from 'd3-array';
+import {Feature} from '@nebula.gl/edit-modes';
 import {console as globalConsole} from 'global/window';
 import assert from 'assert';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
-import {ALL_FIELD_TYPES, DATASET_FORMATS} from 'constants/default-settings';
-import {notNullorUndefined, parseFieldValue} from 'utils/data-utils';
-import KeplerGlSchema, {SavedMap, ParsedDataset} from 'schemas';
-import {LoadedMap} from 'schemas/schema-manager';
-import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
-import {hasOwnProperty, isPlainObject, toArray} from 'utils/utils';
-import {Field} from 'utils/table-utils/kepler-table';
-import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
+
+import {ALL_FIELD_TYPES, DATASET_FORMATS, GUIDES_FILE_FORMAT_DOC} from '../constants';
+import {
+  notNullorUndefined,
+  parseFieldValue,
+  hasOwnProperty,
+  isPlainObject,
+  toArray,
+  Field,
+  DataContainerInterface
+} from '../utils';
+import KeplerGlSchema, {SavedMap, ParsedDataset, LoadedMap} from 'schemas';
+
 import {ProcessorResult, RowData} from './types';
-import {Feature} from '@nebula.gl/edit-modes';
 
 export const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.DATE,

@@ -28,16 +28,14 @@ import {
   EXPORT_IMG_RATIOS,
   EXPORT_MAP_FORMATS,
   RESOLUTIONS,
-  MAP_CONTROLS
-} from 'constants/default-settings';
-import {LOCALE_CODES} from 'localization/locales';
-import {createNotification, errorNotification} from 'utils/notifications-utils';
-import {calculateExportImageSize} from '../utils/export-utils';
-import {payload_, apply_, compose_} from './composer-helpers';
+  MAP_CONTROLS,
+  ActionTypes
+} from '../constants';
+import {LOCALE_CODES} from 'localization';
+import {createNotification, errorNotification, calculateExportImageSize} from '../utils';
+import {UiStateActions, KeplerGlInitPayload, LoadFilesErrUpdaterAction} from '../actions';
 
-import ActionTypes from '../constants/action-types';
-import * as UiStateActions from 'actions/ui-state-actions';
-import {KeplerGlInitPayload, LoadFilesErrUpdaterAction} from '../actions';
+import {payload_, apply_, compose_} from './composer-helpers';
 
 export type ExportImage = {
   ratio: keyof typeof EXPORT_IMG_RATIOS;
