@@ -23,7 +23,11 @@ import ErrorBoundary from 'components/common/error-boundary';
 import NotificationItemFactory from 'components/notification-panel/notification-item';
 const NotificationItem = NotificationItemFactory();
 
-const ErrorDisplay = ({error}) => (
+interface ErrorDisplayProps {
+  error?: string;
+}
+
+const ErrorDisplay: React.FC<ErrorDisplayProps> = ({error}) => (
   <ErrorBoundary>
     <NotificationItem
       notification={{

@@ -123,6 +123,7 @@
     "@types/lodash.xor": "^4.5.7",
     "@types/mapbox__geo-viewport": "^0.4.1",
     "@types/react-dom": "^18.0.0",
+    "@types/react-copy-to-clipboard": "^5.0.2",
     "@types/react-lifecycles-compat": "^3.0.1",
     "@types/react-map-gl": "^6.1.2",
     "@types/react-modal": "^3.13.1",

@@ -33,7 +33,7 @@ const maxWidth = 1080;
 
 interface BottomWidgetContainerProps {
   hasPadding?: boolean;
-  width: number;
+  width?: number;
 }
 
 const BottomWidgetContainer = styled.div<BottomWidgetContainerProps>`

@@ -18,15 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, { ReactNode } from 'react';
 import styled from 'styled-components';
 import {Logout, Login} from 'components/common/icons';
 import {CenterVerticalFlexbox, Button, CheckMark} from 'components/common/styled-components';
 import LoadingSpinner from 'components/common/loading-spinner';
+import { Provider } from 'cloud-providers';
+
+interface StyledTileWrapperProps {
+  selected?: boolean;
+}
 
 const StyledTileWrapper = styled.div.attrs({
   className: 'provider-tile__wrapper'
-})`
+})<StyledTileWrapperProps>`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -72,28 +77,58 @@ const StyledUserName = styled.div`
   text-overflow: ellipsis;
 `;
 
-const LoginButton = ({onClick}) => (
+interface OnClickProps {
+  onClick?: React.MouseEventHandler<HTMLDivElement> 
+} 
+
+const LoginButton = ({onClick}: OnClickProps) => (
   <Button className="login-button" link small onClick={onClick}>
     <Login />
     Login
   </Button>
 );
 
-const LogoutButton = ({onClick}) => (
+const LogoutButton = ({onClick}: OnClickProps) => (
   <Button className="logout-button" link small onClick={onClick}>
     <Logout />
     Logout
   </Button>
 );
 
-const ActionButton = ({isConnected, actionName = null, isReady}) =>
+interface ActionButtonProps {
+  isConnected?: boolean, 
+  actionName?: ReactNode | null, 
+  isReady?: boolean;
+}
+
+const ActionButton = ({isConnected, actionName = null, isReady}: ActionButtonProps) =>
   isConnected && actionName ? (
     <Button className="cloud-tile__action" small secondary disabled={!isReady}>
       {isReady ? actionName : <LoadingSpinner size={12} />}
     </Button>
   ) : null;
 
-const CloudTile = ({
+interface CloudTileProps {
+
+  onSelect?: React.MouseEventHandler<HTMLDivElement>,
+  // default to login
+  onConnect?: React.MouseEventHandler<HTMLDivElement> | null,
+  // default to logout
+  onLogout?: React.MouseEventHandler<HTMLDivElement> | null,
+  // action name
+  actionName?: ReactNode | null,
+  // cloud provider class
+  cloudProvider: Provider,
+  // function to take after login or logout
+  onSetCloudProvider,
+  // whether provider is selected as currentProvider
+  isSelected?: boolean,
+  // whether user has logged in
+  isConnected?:boolean,
+  isReady?: boolean;
+}
+
+const CloudTile: React.FC<CloudTileProps> = ({
   // action when click on the tile
   onSelect,
   // default to login

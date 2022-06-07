@@ -22,12 +22,19 @@ import React from 'react';
 import styled from 'styled-components';
 import DatasetLabel from 'components/common/dataset-label';
 import {FormattedMessage} from 'localization';
+import { Layer } from 'layers';
+import KeplerTable from 'utils/table-utils/kepler-table';
 
 const StyledMsg = styled.div`
   margin-top: 24px;
 `;
 
-export const DeleteDatasetModal = ({dataset, layers = []}) => {
+interface DeleteDatasetModalProps {
+  dataset: KeplerTable;
+  layers: Layer[];
+}
+
+export const DeleteDatasetModal: React.FC<DeleteDatasetModalProps> = ({dataset, layers = []}) => {
   // retrieve only layers related to the current dataset
   const currDatasetLayers = layers.filter(layer => layer.config.dataId === (dataset && dataset.id));
 

@@ -46,7 +46,7 @@ export type ProviderProps = {
   thumbnail?: Thumbnail;
 };
 
-interface IconProps {
+export interface IconProps {
   height?: string;
   width?: string;
 }
@@ -169,7 +169,7 @@ export default class Provider {
    * @param {function} onCloudLogoutSuccess - callbacks to be called after logout success
    * @public
    */
-  async logout(onCloudLogoutSuccess) {
+  async logout(onCloudLogoutSuccess: () => void) {
     onCloudLogoutSuccess();
     return;
   }

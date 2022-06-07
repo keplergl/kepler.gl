@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import moment from 'moment';
 import {LeftArrow} from 'components/common/icons';
@@ -27,10 +26,6 @@ import {FormattedMessage} from 'localization';
 
 const imageH = 108;
 
-const propTypes = {
-  onLoadAsset: PropTypes.func.isRequired,
-  back: PropTypes.func.isRequired
-};
 
 const StyledAssetGallery = styled.div.attrs({
   className: 'storage-asset-gallery'
@@ -129,9 +124,23 @@ const StyledError = styled.div`
   margin-bottom: 16px;
 `;
 
-const getDuration = last => moment.duration(new Date().valueOf() - last).humanize();
+const getDuration = (last: number = 0) => moment.duration(new Date().valueOf() - last).humanize();
 
-const AssetItem = ({asset, onClick}) => (
+interface Asset {
+  imageUrl?: string;
+  label?: string;
+  title?: string;
+  description?: string;
+  lastUpdated?: number;
+  id?: string;
+}
+
+interface AssetItemProps {
+  asset: Asset;
+  onClick: React.MouseEventHandler<HTMLDivElement>;
+}
+
+const AssetItem: React.FC<AssetItemProps> = ({asset, onClick}) => (
   <StyledAssetItem>
     <div className="asset__image" onClick={onClick}>
       {asset.imageUrl && <img src={asset.imageUrl} />}
@@ -149,8 +158,14 @@ const AssetItem = ({asset, onClick}) => (
   </StyledAssetItem>
 );
 
-class StorageAssetsViewer extends React.Component {
-  static propTypes = propTypes;
+interface StorageAssetsViewerProps {
+  assets: Asset[];
+  onLoadAsset: (asset: Asset) => void;
+  back?: React.MouseEventHandler<HTMLDivElement>;
+  error?: {message?: string};
+}
+
+class StorageAssetsViewer extends React.Component<StorageAssetsViewerProps> {
 
   render() {
     const {assets, onLoadAsset, back, error} = this.props;

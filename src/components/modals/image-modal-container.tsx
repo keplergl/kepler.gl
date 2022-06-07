@@ -22,15 +22,25 @@ import React, {useEffect} from 'react';
 import get from 'lodash.get';
 
 import {MAP_THUMBNAIL_DIMENSION, EXPORT_IMG_RATIOS} from 'constants/default-settings';
+import { SetExportImageSettingUpdaterAction } from 'actions';
+import { Provider } from 'cloud-providers';
 
 /** @typedef {import('./image-modal-container').ImageModalContainerProps} ImageModalContainerProps */
+
+export type ImageModalContainerProps = {
+  cloudProviders?: Provider[];
+  currentProvider?: string | null;
+  onUpdateImageSetting: (newSetting: SetExportImageSettingUpdaterAction['payload']) => void;
+  cleanupExportImage: () => void;
+};
+
 
 /**
  * A wrapper component in modals contain a image preview of the map with cloud providers
  * It sets export image size based on provider thumbnail size
  * @type {React.FunctionComponent<ImageModalContainerProps>}
  */
-const ImageModalContainer = ({
+const ImageModalContainer: React.FC<ImageModalContainerProps> = ({
   onUpdateImageSetting,
   cleanupExportImage,
   cloudProviders,

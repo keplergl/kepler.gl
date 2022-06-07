@@ -20,7 +20,6 @@
 
 import React, {Component} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
-import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import MapboxGLMap from 'react-map-gl';
@@ -35,8 +34,10 @@ import {media} from 'styles/media-breakpoints';
 
 // Utils
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
-import {injectIntl} from 'react-intl';
+import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from 'localization';
+import { InputStyle, MapState } from 'reducers';
+import mapboxgl from 'mapbox-gl';
 
 const MapH = 190;
 const MapW = 264;
@@ -104,16 +105,19 @@ const InlineLink = styled.a`
   }
 `;
 
+
+interface AddMapStyleModalProps {
+  inputMapStyle: Function,
+  inputStyle: InputStyle,
+  loadCustomMapStyle: Function,
+  mapboxApiAccessToken: string,
+  mapboxApiUrl: string,
+  mapState: MapState,
+  intl: IntlShape
+};
+
 function AddMapStyleModalFactory() {
-  class AddMapStyleModal extends Component {
-    static propTypes = {
-      inputMapStyle: PropTypes.func.isRequired,
-      inputStyle: PropTypes.object.isRequired,
-      loadCustomMapStyle: PropTypes.func.isRequired,
-      mapboxApiAccessToken: PropTypes.string.isRequired,
-      mapboxApiUrl: PropTypes.string.isRequired,
-      mapState: PropTypes.object.isRequired
-    };
+  class AddMapStyleModal extends Component<AddMapStyleModalProps> {
 
     state = {
       reRenderKey: 0,
@@ -138,6 +142,9 @@ function AddMapStyleModalFactory() {
 
       return null;
     }
+    
+    mapRef: MapboxGLMap | null | undefined;
+    _map: mapboxgl.Map | undefined;
 
     componentDidUpdate() {
       const map = this.mapRef && this.mapRef.getMap();
@@ -283,7 +290,7 @@ function AddMapStyleModalFactory() {
                       key={this.state.reRenderKey}
                       width={MapW}
                       height={MapH}
-                      mapStyle={inputStyle.url}
+                      mapStyle={inputStyle.url ? inputStyle.url : undefined}
                     />
                   </StyledMapContainer>
                 )}

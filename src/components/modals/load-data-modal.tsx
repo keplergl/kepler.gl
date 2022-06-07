@@ -21,7 +21,7 @@
 import React, {useState} from 'react';
 import styled from 'styled-components';
 import get from 'lodash.get';
-import {useIntl} from 'react-intl';
+import {IntlShape, useIntl} from 'react-intl';
 
 import FileUploadFactory from 'components/common/file-uploader/file-upload';
 import LoadStorageMapFactory from './load-storage-map';
@@ -29,6 +29,7 @@ import ModalTabsFactory from './modal-tabs';
 import LoadingDialog from './loading-dialog';
 
 import {LOADING_METHODS} from 'constants/default-settings';
+import { FileLoading } from 'reducers/vis-state-updaters';
 
 /** @typedef {import('./load-data-modal').LoadDataModalProps} LoadDataModalProps */
 
@@ -43,12 +44,36 @@ const StyledLoadDataModal = styled.div.attrs({
 
 const noop = () => {};
 const getDefaultMethod = methods => (Array.isArray(methods) ? get(methods, [0]) : null);
+export interface LoadingMethod {
+  id: string;
+  label: string;
+  elementType: React.ComponentType<any>;
+  tabElementType?: React.ComponentType<{onClick: React.MouseEventHandler, intl: IntlShape}>;
+}
+
+type LoadDataModalProps = {
+  // call backs
+  onFileUpload: (files: File[]) => void;
+  onLoadCloudMap: (provider: any, vis: any) => void;
+  fileLoading: FileLoading | false,
+  loadingMethods: LoadingMethod[];
+  /** A list of names of supported formats suitable to present to user */
+  fileFormatNames: string[];
+  /** A list of typically 3 letter extensions (without '.') for file matching */
+  fileExtensions: string[];
+  isCloudMapLoading: boolean;
+  /** Set to true if app wants to do its own file filtering */
+  disableExtensionFilter?: boolean;
+};
 
 LoadDataModalFactory.deps = [ModalTabsFactory, FileUploadFactory, LoadStorageMapFactory];
 
-export function LoadDataModalFactory(ModalTabs, FileUpload, LoadStorageMap) {
+export function LoadDataModalFactory(
+    ModalTabs: ReturnType<typeof ModalTabsFactory>, 
+    FileUpload: ReturnType<typeof FileUploadFactory>, 
+    LoadStorageMap: ReturnType<typeof LoadStorageMapFactory>) {
   /** @type {React.FunctionComponent<LoadDataModalProps>} */
-  const LoadDataModal = props => {
+  const LoadDataModal: React.FC<LoadDataModalProps> = props => {
     const intl = useIntl();
     const {loadingMethods, isCloudMapLoading} = props;
     const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));

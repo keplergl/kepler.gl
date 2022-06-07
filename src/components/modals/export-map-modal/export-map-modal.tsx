@@ -68,7 +68,6 @@ function ExportMapModalFactory(ExportHtmlMap, ExportJsonMap) {
               <StyledType
                 key={op.id}
                 selected={options.format === op.id}
-                available={op.available}
                 onClick={() => op.available && onChangeExportMapFormat(op.id)}
               >
                 <FileType ext={op.label} height="80px" fontSize="11px" />

@@ -24,6 +24,7 @@ import styled from 'styled-components';
 import PropTypes from 'prop-types';
 import {media} from 'styles';
 import {FormattedMessage, useIntl} from 'react-intl';
+import { LoadingMethod } from './load-data-modal';
 
 const ModalTab = styled.div`
   align-items: flex-end;
@@ -74,7 +75,13 @@ const StyledLoadDataModalTabItem = styled.div`
 
 const noop = () => {};
 
-export const ModalTabItem = ({currentMethod, method, toggleMethod}) => {
+interface ModalTabItemProps {
+  currentMethod?: string;
+  method: LoadingMethod;
+  toggleMethod: (method: LoadingMethod) => void;
+}
+
+export const ModalTabItem: React.FC<ModalTabItemProps> = ({currentMethod, method, toggleMethod}) => {
   const onClick = useCallback(() => toggleMethod(method), [method, toggleMethod]);
   const intl = useIntl();
 
