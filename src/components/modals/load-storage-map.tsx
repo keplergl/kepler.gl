@@ -276,7 +276,7 @@ interface LoadStorageMapProps {
   isProviderLoading?: boolean;
 }
 
-function LoadStorageMapFactory() {
+function LoadStorageMapFactory(): React.ComponentType<LoadStorageMapProps> {
   class LoadStorageMap extends Component<LoadStorageMapProps> {
     state = {
       showProviderSelect: true

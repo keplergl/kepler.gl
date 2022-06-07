@@ -110,7 +110,7 @@ interface AddMapStyleModalProps {
   inputStyle: InputStyle;
   loadCustomMapStyle: Function;
   mapboxApiAccessToken: string;
-  mapboxApiUrl: string;
+  mapboxApiUrl?: string;
   mapState: MapState;
   intl: IntlShape;
 }

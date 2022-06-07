@@ -115,7 +115,7 @@ export type ModalContainerProps = {
   mapStyleActions: typeof MapStyleActions;
   providerActions: typeof ProviderActions;
   onSaveToStorage?: () => void;
-  cloudProviders: object[];
+  cloudProviders: Provider[];
   onLoadCloudMapSuccess?: OnSuccessCallBack;
   onLoadCloudMapError?: OnErrorCallBack;
   onExportToCloudSuccess?: OnSuccessCallBack;
@@ -396,7 +396,6 @@ export default function ModalContainerFactory(
                 supportedDataTypes={EXPORT_DATA_TYPE_OPTIONS}
                 datasets={datasets}
                 applyCPUFilter={this.props.visStateActions.applyCPUFilter}
-                onClose={this._closeModal}
                 onChangeExportDataType={uiStateActions.setExportDataType}
                 onChangeExportSelectedDataset={uiStateActions.setExportSelectedDataset}
                 onChangeExportFiltered={uiStateActions.setExportFiltered}
@@ -502,7 +501,6 @@ export default function ModalContainerFactory(
                 {...providerState}
                 cloudProviders={this.props.cloudProviders}
                 title={get(visState, ['mapInfo', 'title'])}
-                onSetCloudProvider={this.props.providerActions.setCloudProvider}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
                 cleanupExportImage={uiStateActions.cleanupExportImage}
               />

@@ -67,13 +67,9 @@ const BigStyledTile = styled(StyledType)`
   }
 `;
 
-type IgnoreReturn<T extends (...args: any) => any> = T extends (...args: infer R) => any
-  ? (...args: R) => void
-  : any;
-
 type ExportHtmlMapProps = {
-  onChangeExportMapHTMLMode: IgnoreReturn<typeof setExportHTMLMapMode>;
-  onEditUserMapboxAccessToken: IgnoreReturn<typeof setUserMapboxAccessToken>;
+  onChangeExportMapHTMLMode: typeof setExportHTMLMapMode;
+  onEditUserMapboxAccessToken: typeof setUserMapboxAccessToken;
   options: {
     userMapboxToken?: string;
     mode?: string;

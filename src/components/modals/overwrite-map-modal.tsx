@@ -55,7 +55,7 @@ type OverwriteMapModalProps = {
   title: string;
   cloudProviders: Provider[];
   isProviderLoading: boolean;
-  currentProvider: string;
+  currentProvider: string | null;
 
   // callbacks
   onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];

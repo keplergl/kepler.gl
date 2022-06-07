@@ -96,7 +96,7 @@ interface ShareMapUrlModalFactoryProps {
   isReady?: boolean;
   onExport?: (provider: Provider) => void;
   cloudProviders?: Provider[];
-  currentProvider: string;
+  currentProvider: string | null;
   providerError?: string;
   successInfo?: {shareUrl?: string; folderLink?: string};
   onSetCloudProvider?: (provider: SetCloudProviderPayload) => void;
