@@ -110,7 +110,7 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
   onChangeInput
 }) => (
   <div className="selection map-info-panel">
-    <StyledModalSection>
+    <StyledModalSection className="save-map-modal-name">
       <div className="modal-section-title">Name*</div>
       <div>
         <InputLight
