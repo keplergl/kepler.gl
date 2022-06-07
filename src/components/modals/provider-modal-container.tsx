@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import { Provider } from 'cloud-providers';
-import { SetCloudProviderPayload } from 'actions';
+import {Provider} from 'cloud-providers';
+import {SetCloudProviderPayload} from 'actions';
 
 export type ProviderModalContainerProps = {
   cloudProviders?: Provider[];
@@ -34,7 +34,6 @@ export type ProviderModalContainerProps = {
  * @component
  */
 export default class ProviderModalContainer extends Component<ProviderModalContainerProps> {
-
   static defaultProps = {
     cloudProviders: [],
     currentProvider: null

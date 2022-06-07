@@ -36,7 +36,7 @@ import {media} from 'styles/media-breakpoints';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from 'localization';
-import { InputStyle, MapState } from 'reducers';
+import {InputStyle, MapState} from 'reducers';
 import mapboxgl from 'mapbox-gl';
 
 const MapH = 190;
@@ -105,20 +105,18 @@ const InlineLink = styled.a`
   }
 `;
 
-
 interface AddMapStyleModalProps {
-  inputMapStyle: Function,
-  inputStyle: InputStyle,
-  loadCustomMapStyle: Function,
-  mapboxApiAccessToken: string,
-  mapboxApiUrl: string,
-  mapState: MapState,
-  intl: IntlShape
-};
+  inputMapStyle: Function;
+  inputStyle: InputStyle;
+  loadCustomMapStyle: Function;
+  mapboxApiAccessToken: string;
+  mapboxApiUrl: string;
+  mapState: MapState;
+  intl: IntlShape;
+}
 
 function AddMapStyleModalFactory() {
   class AddMapStyleModal extends Component<AddMapStyleModalProps> {
-
     state = {
       reRenderKey: 0,
       previousToken: null
@@ -142,7 +140,7 @@ function AddMapStyleModalFactory() {
 
       return null;
     }
-    
+
     mapRef: MapboxGLMap | null | undefined;
     _map: mapboxgl.Map | undefined;
 
@@ -290,7 +288,7 @@ function AddMapStyleModalFactory() {
                       key={this.state.reRenderKey}
                       width={MapW}
                       height={MapH}
-                      mapStyle={inputStyle.url ? inputStyle.url : undefined}
+                      mapStyle={inputStyle.url === null ? undefined : inputStyle.url}
                     />
                   </StyledMapContainer>
                 )}

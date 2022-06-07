@@ -21,8 +21,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import CloudTile from './cloud-tile';
-import ImageModalContainer, { ImageModalContainerProps } from './image-modal-container';
-import ProviderModalContainer, { ProviderModalContainerProps } from './provider-modal-container';
+import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
+import ProviderModalContainer, {ProviderModalContainerProps} from './provider-modal-container';
 import StatusPanel, {UploadAnimation} from './status-panel';
 
 import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER} from 'constants/default-settings';
@@ -37,9 +37,9 @@ import {
 } from 'components/common/styled-components';
 import ImagePreview from 'components/common/image-preview';
 import {FormattedMessage} from 'localization';
-import { ExportImage, MapInfo } from 'reducers';
-import { Provider } from 'cloud-providers';
-import { setMapInfo, cleanupExportImage } from 'actions';
+import {ExportImage, MapInfo} from 'reducers';
+import {Provider} from 'cloud-providers';
+import {setMapInfo, cleanupExportImage} from 'actions';
 
 /** @typedef {import('./save-map-modal').SaveMapModalProps} SaveMapModalProps */
 
@@ -97,7 +97,12 @@ type SaveMapModalProps = {
   onSetMapInfo: typeof setMapInfo;
 };
 
-type MapInfoPanelProps = Pick<SaveMapModalProps, 'mapInfo' | 'characterLimits'> & {onChangeInput: (type: string, event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => void}
+type MapInfoPanelProps = Pick<SaveMapModalProps, 'mapInfo' | 'characterLimits'> & {
+  onChangeInput: (
+    type: string,
+    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+  ) => void;
+};
 
 export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
   mapInfo = {description: '', title: ''},
@@ -137,8 +142,8 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
           characterLimits?.description && mapInfo.description.length > characterLimits.description
         }
       >
-        {mapInfo.description.length}/{characterLimits?.description || MAP_INFO_CHARACTER.description}{' '}
-        characters
+        {mapInfo.description.length}/
+        {characterLimits?.description || MAP_INFO_CHARACTER.description} characters
       </StyledModalInputFootnote>
     </StyledModalSection>
   </div>
@@ -161,7 +166,10 @@ function SaveMapModalFactory() {
     cleanupExportImage,
     onSetMapInfo
   }) => {
-    const onChangeInput = (key: string, {target: {value}}: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    const onChangeInput = (
+      key: string,
+      {target: {value}}: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+    ) => {
       onSetMapInfo({[key]: value});
     };
     const provider = currentProvider ? cloudProviders.find(p => p.name === currentProvider) : null;

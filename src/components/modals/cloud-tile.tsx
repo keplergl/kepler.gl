@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, { ReactNode } from 'react';
+import React, {ReactNode} from 'react';
 import styled from 'styled-components';
 import {Logout, Login} from 'components/common/icons';
 import {CenterVerticalFlexbox, Button, CheckMark} from 'components/common/styled-components';
 import LoadingSpinner from 'components/common/loading-spinner';
-import { Provider } from 'cloud-providers';
+import {Provider} from 'cloud-providers';
 
 interface StyledTileWrapperProps {
   selected?: boolean;
@@ -78,8 +78,8 @@ const StyledUserName = styled.div`
 `;
 
 interface OnClickProps {
-  onClick?: React.MouseEventHandler<HTMLDivElement> 
-} 
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
+}
 
 const LoginButton = ({onClick}: OnClickProps) => (
   <Button className="login-button" link small onClick={onClick}>
@@ -96,8 +96,8 @@ const LogoutButton = ({onClick}: OnClickProps) => (
 );
 
 interface ActionButtonProps {
-  isConnected?: boolean, 
-  actionName?: ReactNode | null, 
+  isConnected?: boolean;
+  actionName?: ReactNode | null;
   isReady?: boolean;
 }
 
@@ -109,22 +109,21 @@ const ActionButton = ({isConnected, actionName = null, isReady}: ActionButtonPro
   ) : null;
 
 interface CloudTileProps {
-
-  onSelect?: React.MouseEventHandler<HTMLDivElement>,
+  onSelect?: React.MouseEventHandler<HTMLDivElement>;
   // default to login
-  onConnect?: React.MouseEventHandler<HTMLDivElement> | null,
+  onConnect?: React.MouseEventHandler<HTMLDivElement> | null;
   // default to logout
-  onLogout?: React.MouseEventHandler<HTMLDivElement> | null,
+  onLogout?: React.MouseEventHandler<HTMLDivElement> | null;
   // action name
-  actionName?: ReactNode | null,
+  actionName?: ReactNode | null;
   // cloud provider class
-  cloudProvider: Provider,
+  cloudProvider: Provider;
   // function to take after login or logout
-  onSetCloudProvider,
+  onSetCloudProvider;
   // whether provider is selected as currentProvider
-  isSelected?: boolean,
+  isSelected?: boolean;
   // whether user has logged in
-  isConnected?:boolean,
+  isConnected?: boolean;
   isReady?: boolean;
 }
 

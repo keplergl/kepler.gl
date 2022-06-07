@@ -18,13 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, { ComponentType } from 'react';
+import React, {ComponentType} from 'react';
 import styled from 'styled-components';
 import {MapIcon} from 'components/common/icons';
 import {StyledExportSection} from 'components/common/styled-components';
 import ErrorDisplay from './error-display';
 import {FormattedMessage} from 'localization';
-import { IconProps } from 'cloud-providers/provider';
+import {IconProps} from 'cloud-providers/provider';
 
 const StyledUploader = styled.div`
   display: flex;
@@ -80,8 +80,8 @@ export const UploadAnimation: React.FC<UploadAnimationProps> = props => (
 );
 
 interface StatusPanelProps {
-  error?: string | null, 
-  isLoading?: boolean, 
+  error?: string | null;
+  isLoading?: boolean;
   providerIcon?: ComponentType<IconProps> | null;
 }
 

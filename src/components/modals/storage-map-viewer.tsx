@@ -26,7 +26,6 @@ import {FormattedMessage} from 'localization';
 
 const imageH = 108;
 
-
 const StyledAssetGallery = styled.div.attrs({
   className: 'storage-asset-gallery'
 })`
@@ -166,7 +165,6 @@ interface StorageAssetsViewerProps {
 }
 
 class StorageAssetsViewer extends React.Component<StorageAssetsViewerProps> {
-
   render() {
     const {assets, onLoadAsset, back, error} = this.props;
 

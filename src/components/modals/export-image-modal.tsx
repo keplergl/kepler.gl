@@ -29,7 +29,7 @@ import {StyledModalContent, SelectionButton, CheckMark} from 'components/common/
 import Switch from 'components/common/switch';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from 'localization';
-import { ExportImage } from 'reducers';
+import {ExportImage} from 'reducers';
 
 const ImageOptionList = styled.div`
   display: flex;
@@ -59,7 +59,7 @@ interface ExportImageModalProps {
   exportImage: ExportImage;
   mapW: number;
   mapH: number;
-  onUpdateImageSetting: (payload: SetExportImageSettingUpdaterAction["payload"]) => void;
+  onUpdateImageSetting: (payload: SetExportImageSettingUpdaterAction['payload']) => void;
   cleanupExportImage: () => void;
   intl: IntlShape;
 }

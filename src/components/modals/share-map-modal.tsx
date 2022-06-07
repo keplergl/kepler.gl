@@ -22,7 +22,7 @@ import React, {useState} from 'react';
 import styled, {ThemeProvider} from 'styled-components';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
 import {themeLT} from 'styles/base';
-import ImageModalContainer, { ImageModalContainerProps } from './image-modal-container';
+import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
 import ProviderModalContainer from './provider-modal-container';
 
 import {
@@ -34,8 +34,8 @@ import {
 import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
 import {FormattedMessage} from 'localization';
-import { Provider } from 'cloud-providers';
-import { cleanupExportImage, SetCloudProviderPayload } from 'actions';
+import {Provider} from 'cloud-providers';
+import {cleanupExportImage, SetCloudProviderPayload} from 'actions';
 
 export const StyledInputLabel = styled.label`
   font-size: 12px;
@@ -98,7 +98,7 @@ interface ShareMapUrlModalFactoryProps {
   cloudProviders?: Provider[];
   currentProvider: string;
   providerError?: string;
-  successInfo?: {shareUrl?: string, folderLink?: string},
+  successInfo?: {shareUrl?: string; folderLink?: string};
   onSetCloudProvider?: (provider: SetCloudProviderPayload) => void;
   onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
   cleanupExportImage: typeof cleanupExportImage;

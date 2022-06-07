@@ -58,7 +58,10 @@ interface LoadingDialogProps {
   message?: string;
 }
 
-const LoadingDialog: React.FC<LoadingDialogProps> = ({size = 64, message = 'modal.loadingDialog.loading'}) => (
+const LoadingDialog: React.FC<LoadingDialogProps> = ({
+  size = 64,
+  message = 'modal.loadingDialog.loading'
+}) => (
   <StyledLoadingDialog>
     <div className="loading-content">
       <StyledSpinner>

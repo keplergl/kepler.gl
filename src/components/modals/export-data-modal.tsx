@@ -31,9 +31,14 @@ import {
 } from 'components/common/styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from 'localization';
-import { Datasets } from 'reducers';
+import {Datasets} from 'reducers';
 
-const getDataRowCount = (datasets: Datasets, selectedDataset: string | undefined, filtered: boolean, intl: IntlShape) => {
+const getDataRowCount = (
+  datasets: Datasets,
+  selectedDataset: string | undefined,
+  filtered: boolean,
+  intl: IntlShape
+) => {
   if (selectedDataset === undefined) {
     return;
   }
@@ -59,22 +64,22 @@ const getDataRowCount = (datasets: Datasets, selectedDataset: string | undefined
 };
 
 interface ExportDataModalProps {
-  datasets: Datasets,
-  selectedDataset?: string,
-  dataType: string,
-  filtered: boolean,
+  datasets: Datasets;
+  selectedDataset?: string;
+  dataType: string;
+  filtered: boolean;
   // callbacks
-  applyCPUFilter: (filter: string | string[]) => void,
-  onChangeExportSelectedDataset: (dataset: string) => void,
-  onChangeExportDataType: (type: string) => void,
-  onChangeExportFiltered: (isFiltered: boolean) => void,
+  applyCPUFilter: (filter: string | string[]) => void;
+  onChangeExportSelectedDataset: (dataset: string) => void;
+  onChangeExportDataType: (type: string) => void;
+  onChangeExportFiltered: (isFiltered: boolean) => void;
   intl: IntlShape;
   supportedDataTypes: {
-    id: string,
-    label: string,
+    id: string;
+    label: string;
     available: boolean;
-  }[]
-};
+  }[];
+}
 
 const ExportDataModalFactory = () => {
   class ExportDataModal extends Component<ExportDataModalProps> {

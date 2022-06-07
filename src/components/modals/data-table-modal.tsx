@@ -25,7 +25,7 @@ import DataTableFactory from 'components/common/data-table';
 import {createSelector} from 'reselect';
 import {renderedSize} from 'components/common/data-table/cell-size';
 import CanvasHack from 'components/common/data-table/canvas';
-import { Datasets } from 'reducers';
+import {Datasets} from 'reducers';
 import KeplerTable from 'utils/table-utils/kepler-table';
 
 const dgSettings = {
@@ -65,12 +65,16 @@ export const DatasetModalTab = styled.div<DatasetModalTabProps>`
 `;
 
 interface DatasetTabsUnmemoizedProps {
-  activeDataset: KeplerTable, 
-  datasets: Datasets, 
+  activeDataset: KeplerTable;
+  datasets: Datasets;
   showDatasetTable: (id: string) => void;
 }
 
-const DatasetTabsUnmemoized: React.FC<DatasetTabsUnmemoizedProps> = ({activeDataset, datasets, showDatasetTable}) => (
+const DatasetTabsUnmemoized: React.FC<DatasetTabsUnmemoizedProps> = ({
+  activeDataset,
+  datasets,
+  showDatasetTable
+}) => (
   <DatasetCatalog className="dataset-modal-catalog">
     {Object.values(datasets).map(dataset => (
       <DatasetModalTab
@@ -102,8 +106,8 @@ const TableContainer = styled.div`
 interface DataTableModalProps {
   theme: any;
   dataId: string;
-  sortTableColumn: (id: string, column: string, mode?: string) => void, 
-  pinTableColumn: (id: string, column: string) => void, 
+  sortTableColumn: (id: string, column: string, mode?: string) => void;
+  pinTableColumn: (id: string, column: string) => void;
   copyTableColumn: (id: string, column: string) => void;
   datasets: Datasets;
   showDatasetTable: (id: string) => void;

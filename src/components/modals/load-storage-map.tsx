@@ -28,7 +28,7 @@ import CloudTile from './cloud-tile';
 import {Base, ArrowLeft} from 'components/common/icons';
 import ProviderModalContainer from './provider-modal-container';
 import {FormattedMessage} from 'localization';
-import { MapListItem, Provider } from 'cloud-providers';
+import {MapListItem, Provider} from 'cloud-providers';
 
 const StyledProviderSection = styled.div.attrs({
   className: 'provider-selection'
@@ -180,7 +180,7 @@ const StyledVisualizationItem = styled.div`
   }
 `;
 
-type MapIconPorps = React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>
+type MapIconPorps = React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
 
 const MapIcon: React.FC<MapIconPorps> = props => {
   return (
@@ -205,7 +205,7 @@ const PrivacyBadge: React.FC<PrivacyBadgeProps> = ({privateMap}) => (
 );
 
 interface Visualization extends MapListItem {
-  thumbnail?: Blob
+  thumbnail?: Blob;
 }
 
 interface VisualizationItemProps {
@@ -237,9 +237,9 @@ const VisualizationItem: React.FC<VisualizationItemProps> = ({vis, onClick}) => 
 };
 
 interface ProviderSelectProps {
-  cloudProviders: Provider[],
-  onSelect: (name: string) => void,
-  onSetCloudProvider: () => void,
+  cloudProviders: Provider[];
+  onSelect: (name: string) => void;
+  onSetCloudProvider: () => void;
   currentProvider?: string;
 }
 
@@ -266,10 +266,9 @@ export const ProviderSelect: React.FC<ProviderSelectProps> = ({
     <p>No storage provider available</p>
   );
 
-
 interface LoadStorageMapProps {
-  cloudProviders: Provider[],
-  onSetCloudProvider,
+  cloudProviders: Provider[];
+  onSetCloudProvider;
   currentProvider?: string;
   getSavedMaps: (provider?: Provider) => void;
   onLoadCloudMap: ({loadParams: any, provider: Provider}) => void;

@@ -29,7 +29,7 @@ import ModalTabsFactory from './modal-tabs';
 import LoadingDialog from './loading-dialog';
 
 import {LOADING_METHODS} from 'constants/default-settings';
-import { FileLoading } from 'reducers/vis-state-updaters';
+import {FileLoading} from 'reducers/vis-state-updaters';
 
 /** @typedef {import('./load-data-modal').LoadDataModalProps} LoadDataModalProps */
 
@@ -48,14 +48,14 @@ export interface LoadingMethod {
   id: string;
   label: string;
   elementType: React.ComponentType<any>;
-  tabElementType?: React.ComponentType<{onClick: React.MouseEventHandler, intl: IntlShape}>;
+  tabElementType?: React.ComponentType<{onClick: React.MouseEventHandler; intl: IntlShape}>;
 }
 
 type LoadDataModalProps = {
   // call backs
   onFileUpload: (files: File[]) => void;
   onLoadCloudMap: (provider: any, vis: any) => void;
-  fileLoading: FileLoading | false,
+  fileLoading: FileLoading | false;
   loadingMethods: LoadingMethod[];
   /** A list of names of supported formats suitable to present to user */
   fileFormatNames: string[];
@@ -69,9 +69,10 @@ type LoadDataModalProps = {
 LoadDataModalFactory.deps = [ModalTabsFactory, FileUploadFactory, LoadStorageMapFactory];
 
 export function LoadDataModalFactory(
-    ModalTabs: ReturnType<typeof ModalTabsFactory>, 
-    FileUpload: ReturnType<typeof FileUploadFactory>, 
-    LoadStorageMap: ReturnType<typeof LoadStorageMapFactory>) {
+  ModalTabs: ReturnType<typeof ModalTabsFactory>,
+  FileUpload: ReturnType<typeof FileUploadFactory>,
+  LoadStorageMap: ReturnType<typeof LoadStorageMapFactory>
+) {
   /** @type {React.FunctionComponent<LoadDataModalProps>} */
   const LoadDataModal: React.FC<LoadDataModalProps> = props => {
     const intl = useIntl();

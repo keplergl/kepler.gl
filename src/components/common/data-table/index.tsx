@@ -37,7 +37,7 @@ import {adjustCellsToContainer} from './cell-size';
 
 import {ALL_FIELD_TYPES, SORT_ORDER} from 'constants/default-settings';
 import FieldTokenFactory from 'components/common/field-token';
-import { DataContainerInterface } from 'utils/table-utils/data-container-interface';
+import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 
 const defaultHeaderRowHeight = 55;
 const defaultRowHeight = 32;
@@ -231,18 +231,25 @@ const columnWidthFunction = (columns, cellSizeCache, ghost?) => ({index}) => {
 };
 
 interface GetRowCellProps {
-  dataContainer: DataContainerInterface, 
-  columns: (string & {ghost?: boolean})[], 
-  column: string, 
-  colMeta, 
-  rowIndex: number, 
-  sortOrder: number[]
+  dataContainer: DataContainerInterface;
+  columns: (string & {ghost?: boolean})[];
+  column: string;
+  colMeta;
+  rowIndex: number;
+  sortOrder: number[];
 }
 
 /*
  * This is an accessor method used to generalize getting a cell from a data row
  */
-const getRowCell = ({dataContainer, columns, column, colMeta, rowIndex, sortOrder}: GetRowCellProps) => {
+const getRowCell = ({
+  dataContainer,
+  columns,
+  column,
+  colMeta,
+  rowIndex,
+  sortOrder
+}: GetRowCellProps) => {
   const rowIdx = sortOrder && sortOrder.length ? get(sortOrder, rowIndex) : rowIndex;
   const {type} = colMeta[column];
 
@@ -253,25 +260,25 @@ const getRowCell = ({dataContainer, columns, column, colMeta, rowIndex, sortOrde
 
 interface TableSectionProps {
   classList?: {
-    header: string,
-    rows: string
-  },
-  isPinned?: boolean,
+    header: string;
+    rows: string;
+  };
+  isPinned?: boolean;
   columns: (string & {ghost?: boolean})[];
-  headerGridProps?,
-  fixedWidth?: number,
-  fixedHeight?: number,
+  headerGridProps?;
+  fixedWidth?: number;
+  fixedHeight?: number;
   onScroll?: (params: OnScrollParams) => void;
-  scrollTop?: number,
+  scrollTop?: number;
   dataGridProps: {
-    rowHeight: number | ((params: Index) => number)
+    rowHeight: number | ((params: Index) => number);
     rowCount: number;
-  } & Partial<GridProps>,
-  columnWidth?,
-  setGridRef?: Function,
-  headerCellRender?,
-  dataCellRender?,
-  scrollLeft?: number,
+  } & Partial<GridProps>;
+  columnWidth?;
+  setGridRef?: Function;
+  headerCellRender?;
+  dataCellRender?;
+  scrollLeft?: number;
 }
 
 export const TableSection = ({
@@ -341,13 +348,15 @@ interface DataTableProps {
   theme?: any;
   dataContainer: DataContainerInterface;
   fixedHeight?: number;
-  colMeta: {[id: string]: {
-    name: string,
-    type: string
-  }}, 
-  sortColumn?: {[id: string]: string}, 
-  sortTableColumn: (id: string, mode?: string) => void, 
-  pinTableColumn: (id: string) => void, 
+  colMeta: {
+    [id: string]: {
+      name: string;
+      type: string;
+    };
+  };
+  sortColumn?: {[id: string]: string};
+  sortTableColumn: (id: string, mode?: string) => void;
+  pinTableColumn: (id: string) => void;
   copyTableColumn: (id: string) => void;
   sortOrder: number[];
 }
@@ -558,11 +567,19 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
     };
 
     render() {
-      const {dataContainer, pinnedColumns = [], theme = {}, fixedWidth, fixedHeight = 0} = this.props;
+      const {
+        dataContainer,
+        pinnedColumns = [],
+        theme = {},
+        fixedWidth,
+        fixedHeight = 0
+      } = this.props;
       const unpinnedColumns = this.unpinnedColumns(this.props);
 
       const {cellSizeCache = {}, moreOptionsColumn, ghost} = this.state;
-      const unpinnedColumnsGhost = ghost ? [...unpinnedColumns, {ghost: true} as (string & {ghost: boolean})] : unpinnedColumns;
+      const unpinnedColumnsGhost = ghost
+        ? [...unpinnedColumns, {ghost: true} as string & {ghost: boolean}]
+        : unpinnedColumns;
       const pinnedColumnsWidth = pinnedColumns.reduce(
         (acc, val) => acc + get(cellSizeCache, val, 0),
         0

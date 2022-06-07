@@ -28,14 +28,16 @@ import {StyledExportMapSection} from './components';
 import ExportHtmlMapFactory from './export-html-map';
 import ExportJsonMapFactory from './export-json-map';
 import {FormattedMessage} from 'localization';
+import {setExportHTMLMapMode, setUserMapboxAccessToken} from 'actions';
 
-const propTypes = {
-  options: PropTypes.object,
-  onEditUserMapboxAccessToken: PropTypes.func.isRequired,
-  onChangeExportData: PropTypes.func,
-  onChangeExportMapType: PropTypes.func,
-  mapFormat: PropTypes.string
-};
+interface ExportMapModalFactoryProps {
+  options?: {format: string};
+  config: any;
+  onEditUserMapboxAccessToken: typeof setUserMapboxAccessToken;
+  onChangeExportMapHTMLMode?: typeof setExportHTMLMapMode;
+  onChangeExportMapFormat?: (format: string) => any;
+  mapFormat?: string;
+}
 
 const style = {width: '100%'};
 
@@ -43,7 +45,10 @@ const NO_OP = () => {};
 
 ExportMapModalFactory.deps = [ExportHtmlMapFactory, ExportJsonMapFactory];
 
-function ExportMapModalFactory(ExportHtmlMap, ExportJsonMap) {
+function ExportMapModalFactory(
+  ExportHtmlMap: ReturnType<typeof ExportHtmlMapFactory>,
+  ExportJsonMap: ReturnType<typeof ExportJsonMapFactory>
+) {
   const ExportMapModalUnmemoized = ({
     config = {},
     onChangeExportData = NO_OP,
@@ -86,13 +91,7 @@ function ExportMapModalFactory(ExportHtmlMap, ExportJsonMap) {
                 options={options[options.format]}
               />
             ),
-            [EXPORT_MAP_FORMATS.JSON]: (
-              <ExportJsonMap
-                config={config}
-                onChangeExportData={onChangeExportData}
-                options={options[options.format]}
-              />
-            )
+            [EXPORT_MAP_FORMATS.JSON]: <ExportJsonMap config={config} />
           }[
             // @ts-ignore
             options.format
