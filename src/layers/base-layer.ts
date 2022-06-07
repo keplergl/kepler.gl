@@ -50,9 +50,9 @@ import {
   LayerVisConfigSettings
 } from './layer-factory';
 
-import {generateHashId, isPlainObject} from 'utils/utils';
+import {generateHashId} from 'utils/utils';
 
-import {getLatLngBounds, notNullorUndefined} from 'utils/data-utils';
+import {getLatLngBounds, notNullorUndefined, isPlainObject} from 'utils/data-utils';
 import {getSampleData} from 'utils/table-utils/data-container-utils';
 
 import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';

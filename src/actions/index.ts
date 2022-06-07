@@ -30,13 +30,10 @@ export * from './identity-actions';
 export * from './provider-actions';
 
 // Dispatch
-export {
-  _actionFor,
-  forwardTo,
-  getActionForwardAddress,
-  isForwardAction,
-  unwrap,
-  wrapTo
-} from './action-wrapper';
+export * from './action-wrapper';
 
-export {default as ActionTypes} from '../constants/action-types';
+export * as MapStateActions from './map-state-actions';
+export * as MapStyleActions from './map-style-actions';
+export * as ProviderActions from './provider-actions';
+export * as VisStateActions from './vis-state-actions';
+export * as UiStateActions from './ui-state-actions';

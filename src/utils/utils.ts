@@ -41,26 +41,6 @@ export function isChrome() {
 }
 
 /**
- * whether is an object
- * @returns {boolean} - yes or no
- */
-export function isPlainObject(obj: unknown): obj is Record<string, unknown> {
-  return obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj);
-}
-
-/**
- * whether object has property
- * @param {string} prop
- * @returns {boolean} - yes or no
- */
-export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
-  obj: X,
-  prop: Y
-): obj is X & Record<Y, unknown> {
-  return obj.hasOwnProperty(prop);
-}
-
-/**
  * Capitalize first letter of a string
  * @param {string} str
  * @returns {string}
