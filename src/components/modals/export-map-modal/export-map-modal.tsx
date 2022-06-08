@@ -27,13 +27,13 @@ import {StyledExportMapSection} from './components';
 import ExportHtmlMapFactory from './export-html-map';
 import ExportJsonMapFactory from './export-json-map';
 import {FormattedMessage} from 'localization';
-import {setExportHTMLMapMode, setUserMapboxAccessToken} from 'actions';
+import {ActionHandler, setExportHTMLMapMode, setUserMapboxAccessToken} from 'actions';
 
 interface ExportMapModalFactoryProps {
   options?: {format: string};
   config: any;
-  onEditUserMapboxAccessToken: typeof setUserMapboxAccessToken;
-  onChangeExportMapHTMLMode?: typeof setExportHTMLMapMode;
+  onEditUserMapboxAccessToken: ActionHandler<typeof setUserMapboxAccessToken>;
+  onChangeExportMapHTMLMode?: ActionHandler<typeof setExportHTMLMapMode>;
   onChangeExportMapFormat?: (format: string) => any;
   mapFormat?: string;
 }

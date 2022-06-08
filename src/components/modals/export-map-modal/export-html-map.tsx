@@ -28,7 +28,7 @@ import {injectIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';
 import {IntlShape} from 'react-intl';
 
-import {setUserMapboxAccessToken, setExportHTMLMapMode} from 'actions';
+import {setUserMapboxAccessToken, setExportHTMLMapMode, ActionHandler} from 'actions';
 
 const ExportMapStyledExportSection = styled(StyledExportSection)`
   .disclaimer {
@@ -68,8 +68,8 @@ const BigStyledTile = styled(StyledType)`
 `;
 
 type ExportHtmlMapProps = {
-  onChangeExportMapHTMLMode: typeof setExportHTMLMapMode;
-  onEditUserMapboxAccessToken: typeof setUserMapboxAccessToken;
+  onChangeExportMapHTMLMode: ActionHandler<typeof setExportHTMLMapMode>;
+  onEditUserMapboxAccessToken: ActionHandler<typeof setUserMapboxAccessToken>;
   options: {
     userMapboxToken?: string;
     mode?: string;
