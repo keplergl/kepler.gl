@@ -24,7 +24,7 @@ import NotificationItemFactory from 'components/notification-panel/notification-
 const NotificationItem = NotificationItemFactory();
 
 interface ErrorDisplayProps {
-  error?: string;
+  error: string;
 }
 
 const ErrorDisplay: React.FC<ErrorDisplayProps> = ({error}) => (

@@ -55,7 +55,7 @@ const ImageOptionList = styled.div`
   }
 `;
 
-interface ExportImageModalProps {
+export interface ExportImageModalProps {
   exportImage: ExportImage;
   mapW: number;
   mapH: number;

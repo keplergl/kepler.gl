@@ -20,7 +20,6 @@
 
 import React, {Component} from 'react';
 import {css} from 'styled-components';
-import {findDOMNode} from 'react-dom';
 import {createSelector} from 'reselect';
 import get from 'lodash.get';
 import document from 'global/document';
@@ -275,7 +274,6 @@ export default function ModalContainerFactory(
         mapState,
         uiState,
         visState,
-        rootNode,
         visStateActions,
         uiStateActions,
         providerState
@@ -301,8 +299,6 @@ export default function ModalContainerFactory(
             const width = containerW * 0.9;
             template = (
               <DataTableModal
-                width={containerW * 0.9}
-                height={containerH * 0.85}
                 datasets={datasets}
                 dataId={editingDataset}
                 showDatasetTable={visStateActions.showDatasetTable}
@@ -546,7 +542,6 @@ export default function ModalContainerFactory(
 
       return this.props.rootNode ? (
         <ModalDialog
-          parentSelector={() => findDOMNode(rootNode)}
           isOpen={Boolean(currentModal)}
           onCancel={this._closeModal}
           {...modalProps}

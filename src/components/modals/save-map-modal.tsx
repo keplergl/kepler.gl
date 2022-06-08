@@ -139,7 +139,7 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
       </div>
       <StyledModalInputFootnote
         error={
-          characterLimits?.description && mapInfo.description.length > characterLimits.description
+          Boolean(characterLimits?.description) && mapInfo.description.length > Number(characterLimits?.description)
         }
       >
         {mapInfo.description.length}/

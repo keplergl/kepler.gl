@@ -559,7 +559,7 @@ export const StyledAttrbution = styled.div.attrs({
   }
 `;
 
-interface StyledExportSectionProps {
+export interface StyledExportSectionProps {
   disabled?: boolean;
 }
 

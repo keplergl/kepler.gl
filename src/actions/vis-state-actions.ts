@@ -496,7 +496,7 @@ export function updateTableColor(
 export type SortTableColumnUpdaterAction = {
   dataId: string;
   column: string;
-  mode: string;
+  mode?: string;
 };
 /**
  * Sort dataset column, for table display
@@ -510,7 +510,7 @@ export type SortTableColumnUpdaterAction = {
 export function sortTableColumn(
   dataId: string,
   column: string,
-  mode: string
+  mode?: string
 ): Merge<SortTableColumnUpdaterAction, {type: typeof ActionTypes.SORT_TABLE_COLUMN}> {
   return {
     type: ActionTypes.SORT_TABLE_COLUMN,

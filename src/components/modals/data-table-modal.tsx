@@ -105,7 +105,7 @@ const TableContainer = styled.div`
 
 interface DataTableModalProps {
   theme: any;
-  dataId: string;
+  dataId?: string;
   sortTableColumn: (id: string, column: string, mode?: string) => void;
   pinTableColumn: (id: string, column: string) => void;
   copyTableColumn: (id: string, column: string) => void;
@@ -114,12 +114,12 @@ interface DataTableModalProps {
   showTab?: boolean;
 }
 
-function DataTableModalFactory(DataTable: ReturnType<typeof DataTableFactory>) {
+function DataTableModalFactory(DataTable: ReturnType<typeof DataTableFactory>): React.ComponentType<Omit<DataTableModalProps, "theme">> {
   class DataTableModal extends React.Component<DataTableModalProps> {
     datasetCellSizeCache = {};
-    dataId = (props: DataTableModalProps) => props.dataId;
+    dataId = ({dataId = ''}: DataTableModalProps) => dataId;
     datasets = (props: DataTableModalProps) => props.datasets;
-    fields = (props: DataTableModalProps) => (props.datasets[props.dataId] || {}).fields;
+    fields = ({datasets, dataId = ''}: DataTableModalProps) => (datasets[dataId] || {}).fields;
     columns = createSelector(this.fields, fields => fields.map(f => f.name));
     colMeta = createSelector(this.fields, fields =>
       fields.reduce(
@@ -180,17 +180,17 @@ function DataTableModalFactory(DataTable: ReturnType<typeof DataTableFactory>) {
     });
 
     copyTableColumn = (column: string) => {
-      const {dataId, copyTableColumn} = this.props;
+      const {dataId = '', copyTableColumn} = this.props;
       copyTableColumn(dataId, column);
     };
 
     pinTableColumn = (column: string) => {
-      const {dataId, pinTableColumn} = this.props;
+      const {dataId = '', pinTableColumn} = this.props;
       pinTableColumn(dataId, column);
     };
 
     sortTableColumn = (column: string, mode?: string) => {
-      const {dataId, sortTableColumn} = this.props;
+      const {dataId = '', sortTableColumn} = this.props;
       sortTableColumn(dataId, column, mode);
     };
 

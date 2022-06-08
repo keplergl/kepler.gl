@@ -236,7 +236,7 @@ interface GetRowCellProps {
   column: string;
   colMeta;
   rowIndex: number;
-  sortOrder: number[];
+  sortOrder?: number[] | null;
 }
 
 /*
@@ -358,7 +358,7 @@ interface DataTableProps {
   sortTableColumn: (id: string, mode?: string) => void;
   pinTableColumn: (id: string) => void;
   copyTableColumn: (id: string) => void;
-  sortOrder: number[];
+  sortOrder?: number[] | null;
 }
 
 interface DataTableState {

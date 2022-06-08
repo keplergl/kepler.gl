@@ -29,7 +29,7 @@ const StyledMsg = styled.div`
   margin-top: 24px;
 `;
 
-interface DeleteDatasetModalProps {
+export interface DeleteDatasetModalProps {
   dataset: KeplerTable;
   layers: Layer[];
 }

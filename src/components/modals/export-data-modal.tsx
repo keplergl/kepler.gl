@@ -63,7 +63,7 @@ const getDataRowCount = (
   );
 };
 
-interface ExportDataModalProps {
+export interface ExportDataModalProps {
   datasets: Datasets;
   selectedDataset?: string;
   dataType: string;
@@ -143,7 +143,6 @@ const ExportDataModalFactory = () => {
                   <StyledType
                     key={op.id}
                     selected={dataType === op.id}
-                    available={op.available}
                     onClick={() => op.available && onChangeExportDataType(op.id)}
                   >
                     <FileType ext={op.label} height="80px" fontSize="11px" />
