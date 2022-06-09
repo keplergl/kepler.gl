@@ -625,7 +625,7 @@ export const CHANNEL_SCALE_SUPPORTED_FIELDS = Object.keys(CHANNEL_SCALES).reduce
     ...accu,
     [key]: Object.keys(FIELD_OPTS).filter(ft => Object.keys(FIELD_OPTS[ft].scale[key]).length)
   }),
-  {}
+  {} as {[id: string]: string[]}
 );
 
 export const DEFAULT_LAYER_COLOR = {

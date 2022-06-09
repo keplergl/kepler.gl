@@ -23,14 +23,11 @@
 export {ACTION_PREFIX} from './action-types';
 export {default as ActionTypes} from './action-types';
 
+export * from './color-palette';
+export * from './color-ranges';
+export * from './custom-color-ranges';
 export * from './default-settings';
-export * from './user-guides';
+export {default as KeyEvent} from './keyevent';
 export * from './tooltip';
 export * from './user-feedbacks';
-
-export {BUG_REPORT_LINK, USER_GUIDE_DOC} from './user-guides';
-
-export {VizColorPalette, DataVizColors} from './custom-color-ranges';
-export {COLOR_RANGES, DEFAULT_COLOR_RANGE} from './color-ranges';
-export type {ColorMap, ColorLegends, ColorRange} from './color-ranges';
-export {default as KeyEvent} from './keyevent';
+export * from './user-guides';
