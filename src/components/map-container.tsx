@@ -169,27 +169,13 @@ export default function MapContainerFactory(
   Editor
 ): React.ComponentType<MapContainerProps> {
   class MapContainer extends Component<MapContainerProps> {
-    static propTypes = {
-      // required
-    };
-
+    displayName = 'MapContainer';
     static defaultProps = {
       MapComponent: MapboxGLMap,
       deckGlProps: {},
       index: 0,
       primary: true
     };
-
-    previousLayers = {
-      // [layers.id]: mapboxLayerConfig
-    };
-
-    displayName = 'MapContainer';
-
-    _deck: any = null;
-    _map: mapboxgl.Map | null = null;
-    _ref = createRef<HTMLDivElement>();
-    _deckGLErrorsElapsed: {[id: string]: number} = {};
 
     constructor(props) {
       super(props);
@@ -213,6 +199,15 @@ export default function MapContainerFactory(
       }
       unobserveDimensions(this._ref.current);
     }
+
+    _deck: any = null;
+    _map: mapboxgl.Map | null = null;
+    _ref = createRef<HTMLDivElement>();
+    _deckGLErrorsElapsed: {[id: string]: number} = {};
+
+    previousLayers = {
+      // [layers.id]: mapboxLayerConfig
+    };
 
     _handleResize = dimensions => {
       const {primary} = this.props;

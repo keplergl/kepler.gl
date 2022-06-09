@@ -19,7 +19,7 @@
     "context": true,
     "jestPuppeteer": true
   },
-  "parser": "@babel/eslint-parser",
+  "parser": "@typescript-eslint/parser",
   "plugins": ["babel", "prettier", "react", "@typescript-eslint"],
   "rules": {
     "valid-jsdoc": 0,
@@ -27,6 +27,7 @@
     "max-len": 0,
     "react/no-did-mount-set-state": 0,
     "react/no-multi-comp": 0,
+    "no-use-before-define": "off",
     "prefer-spread": 1,
     "prefer-template": 1,
     "prettier/prettier": "error",
