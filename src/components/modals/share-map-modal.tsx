@@ -22,7 +22,7 @@ import React, {useState} from 'react';
 import styled, {ThemeProvider} from 'styled-components';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
 import {themeLT} from 'styles/base';
-import ImageModalContainer from './image-modal-container';
+import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
 import ProviderModalContainer from './provider-modal-container';
 
 import {
@@ -34,6 +34,8 @@ import {
 import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
 import {FormattedMessage} from 'localization';
+import {Provider} from 'cloud-providers';
+import {cleanupExportImage, SetCloudProviderPayload} from 'actions';
 
 export const StyledInputLabel = styled.label`
   font-size: 12px;
@@ -59,13 +61,18 @@ export const StyleSharingUrl = styled.div.attrs({
   }
 `;
 
-export const SharingUrl = ({url, message = ''}) => {
+interface SharingUrlProps {
+  url: string;
+  message?: string;
+}
+
+export const SharingUrl: React.FC<SharingUrlProps> = ({url, message = ''}) => {
   const [copied, setCopy] = useState(false);
   return (
     <StyleSharingUrl>
       <StyledInputLabel>{message}</StyledInputLabel>
       <div style={{display: 'flex'}}>
-        <InputLight type="text" value={url} readOnly selected />
+        <InputLight type="text" value={url} readOnly />
         <CopyToClipboard text={url} onCopy={() => setCopy(true)}>
           <Button width="80px">{copied ? 'Copied!' : 'Copy'}</Button>
         </CopyToClipboard>
@@ -84,17 +91,30 @@ const StyledInnerDiv = styled.div`
   min-height: 500px;
 `;
 
+interface ShareMapUrlModalFactoryProps {
+  isProviderLoading?: boolean;
+  isReady?: boolean;
+  onExport?: (provider: Provider) => void;
+  cloudProviders?: Provider[];
+  currentProvider: string | null;
+  providerError?: string;
+  successInfo?: {shareUrl?: string; folderLink?: string};
+  onSetCloudProvider?: (provider: SetCloudProviderPayload) => void;
+  onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
+  cleanupExportImage: typeof cleanupExportImage;
+}
+
 export default function ShareMapUrlModalFactory() {
-  const ShareMapUrlModal = ({
-    isProviderLoading,
+  const ShareMapUrlModal: React.FC<ShareMapUrlModalFactoryProps> = ({
+    isProviderLoading = false,
     isReady,
-    onExport,
-    cloudProviders,
-    currentProvider,
-    providerError,
-    successInfo,
-    onSetCloudProvider,
-    onUpdateImageSetting,
+    onExport = nop,
+    cloudProviders = [],
+    currentProvider = null,
+    providerError = null,
+    successInfo = {},
+    onSetCloudProvider = nop,
+    onUpdateImageSetting = nop,
     cleanupExportImage
   }) => {
     const {shareUrl, folderLink} = successInfo;
@@ -191,17 +211,6 @@ export default function ShareMapUrlModalFactory() {
         </ProviderModalContainer>
       </ThemeProvider>
     );
-  };
-
-  ShareMapUrlModal.defaultProps = {
-    isProviderLoading: false,
-    onExport: nop,
-    cloudProviders: [],
-    currentProvider: null,
-    providerError: null,
-    successInfo: {},
-    onSetCloudProvider: nop,
-    onUpdateImageSetting: nop
   };
 
   return ShareMapUrlModal;

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, ReactNode} from 'react';
 import {FormattedMessage} from 'localization';
 
 import styled, {FlattenSimpleInterpolation} from 'styled-components';
@@ -155,9 +155,10 @@ export interface ModalDialogProps {
   cssStyle?: FlattenSimpleInterpolation | string;
   style?: React.CSSProperties;
   theme: any;
+  children?: ReactNode;
 }
 
-class ModalDialog extends Component<ModalDialogProps> {
+export class ModalDialog extends Component<ModalDialogProps> {
   static defaultProps = {
     footer: false,
     close: true,

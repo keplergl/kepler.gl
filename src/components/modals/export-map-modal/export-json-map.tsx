@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {useState} from 'react';
-import PropTypes from 'prop-types';
 import JSONPretty from 'react-json-pretty';
 import {ADD_DATA_TO_MAP_DOC} from 'constants/user-guides';
 import styled from 'styled-components';
@@ -62,11 +61,11 @@ const StyledJsonExportSection = styled(StyledExportSection)`
   }
 `;
 
-const exportJsonPropTypes = {
-  options: PropTypes.object
+type ExportJsonPropTypes = {
+  config: any;
 };
 
-const ExportJsonMapUnmemoized = ({config = {}}) => {
+const ExportJsonMapUnmemoized = ({config = {}}: ExportJsonPropTypes) => {
   const [copied, setCopy] = useState(false);
   return (
     <div>
@@ -89,11 +88,7 @@ const ExportJsonMapUnmemoized = ({config = {}}) => {
         <div className="selection">
           <div className="viewer">
             <JSONPretty id="json-pretty" json={config} />
-            <CopyToClipboard
-              className="copy-button"
-              text={JSON.stringify(config)}
-              onCopy={() => setCopy(true)}
-            >
+            <CopyToClipboard text={JSON.stringify(config)} onCopy={() => setCopy(true)}>
               <Button width="80px">{copied ? 'Copied!' : 'Copy'}</Button>
             </CopyToClipboard>
           </div>
@@ -107,8 +102,6 @@ const ExportJsonMapUnmemoized = ({config = {}}) => {
     </div>
   );
 };
-
-ExportJsonMapUnmemoized.propTypes = exportJsonPropTypes;
 
 ExportJsonMapUnmemoized.displayName = 'ExportJsonMap';
 

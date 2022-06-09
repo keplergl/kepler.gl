@@ -26,6 +26,9 @@ import {EXPORT_HTML_MAP_DOC, EXPORT_HTML_MAP_MODES_DOC} from 'constants/user-gui
 import styled from 'styled-components';
 import {injectIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';
+import {IntlShape} from 'react-intl';
+
+import {setUserMapboxAccessToken, setExportHTMLMapMode, ActionHandler} from 'actions';
 
 const ExportMapStyledExportSection = styled(StyledExportSection)`
   .disclaimer {
@@ -35,7 +38,11 @@ const ExportMapStyledExportSection = styled(StyledExportSection)`
   }
 `;
 
-const StyledInput = styled.input`
+interface StyledInputProps {
+  error?: boolean;
+}
+
+const StyledInput = styled.input<StyledInputProps>`
   width: 100%;
   padding: ${props => props.theme.inputPadding};
   color: ${props => (props.error ? 'red' : props.theme.titleColorLT)};
@@ -60,9 +67,22 @@ const BigStyledTile = styled(StyledType)`
   }
 `;
 
-function ExportHtmlMapFactory() {
+type ExportHtmlMapProps = {
+  onChangeExportMapHTMLMode: ActionHandler<typeof setExportHTMLMapMode>;
+  onEditUserMapboxAccessToken: ActionHandler<typeof setUserMapboxAccessToken>;
+  options: {
+    userMapboxToken?: string;
+    mode?: string;
+  };
+};
+
+type IntlProps = {
+  intl: IntlShape;
+};
+
+function ExportHtmlMapFactory(): React.ComponentType<ExportHtmlMapProps> {
   /** @type {typeof import('./export-html-map').ExportHtmlMap} */
-  const ExportHtmlMap = ({
+  const ExportHtmlMap: React.FC<ExportHtmlMapProps & IntlProps> = ({
     onChangeExportMapHTMLMode = mode => {},
     onEditUserMapboxAccessToken = token => {},
     options = {},
@@ -119,7 +139,6 @@ function ExportHtmlMapFactory() {
             <BigStyledTile
               key={mode.id}
               selected={options.mode === mode.id}
-              available={mode.available}
               onClick={() => mode.available && onChangeExportMapHTMLMode(mode.id)}
             >
               <img src={mode.url} alt="" />

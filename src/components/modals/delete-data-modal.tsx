@@ -19,21 +19,37 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import ErrorBoundary from 'components/common/error-boundary';
-import NotificationItemFactory from 'components/notification-panel/notification-item';
-const NotificationItem = NotificationItemFactory();
+import styled from 'styled-components';
+import DatasetLabel from 'components/common/dataset-label';
+import {FormattedMessage} from 'localization';
+import {Layer} from 'layers';
+import KeplerTable from 'utils/table-utils/kepler-table';
 
-const ErrorDisplay = ({error}) => (
-  <ErrorBoundary>
-    <NotificationItem
-      notification={{
-        type: 'error',
-        message: error,
-        id: 'cloud-export-error'
-      }}
-      isExpanded
-    />
-  </ErrorBoundary>
-);
+const StyledMsg = styled.div`
+  margin-top: 24px;
+`;
 
-export default ErrorDisplay;
+export interface DeleteDatasetModalProps {
+  dataset: KeplerTable;
+  layers: Layer[];
+}
+
+export const DeleteDatasetModal: React.FC<DeleteDatasetModalProps> = ({dataset, layers = []}) => {
+  // retrieve only layers related to the current dataset
+  const currDatasetLayers = layers.filter(layer => layer.config.dataId === (dataset && dataset.id));
+
+  return (
+    <div className="delete-dataset-modal">
+      <DatasetLabel dataset={dataset} />
+      <StyledMsg className="delete-dataset-msg">
+        <FormattedMessage
+          id={'modal.deleteData.warning'}
+          values={{length: currDatasetLayers.length}}
+        />
+      </StyledMsg>
+    </div>
+  );
+};
+
+const DeleteDatasetModalFactory = () => DeleteDatasetModal;
+export default DeleteDatasetModalFactory;

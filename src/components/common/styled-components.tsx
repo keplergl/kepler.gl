@@ -477,9 +477,9 @@ export const StyledModalVerticalPanel = styled.div.attrs({
   }
 `;
 
-export const StyledModalSection = styled.div.attrs({
-  className: 'modal-section'
-})`
+export const StyledModalSection = styled.div.attrs(({className}) => ({
+  className: classnames('modal-section', className)
+}))`
   margin-bottom: 32px;
 
   .modal-section-title {
@@ -559,7 +559,7 @@ export const StyledAttrbution = styled.div.attrs({
   }
 `;
 
-interface StyledExportSectionProps {
+export interface StyledExportSectionProps {
   disabled?: boolean;
 }
 

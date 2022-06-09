@@ -20,7 +20,6 @@
 
 import React, {Component} from 'react';
 import {css} from 'styled-components';
-import {findDOMNode} from 'react-dom';
 import {createSelector} from 'reselect';
 import get from 'lodash.get';
 import document from 'global/document';
@@ -70,6 +69,7 @@ import * as UIStateActions from 'actions/ui-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as ProviderActions from 'actions/provider-actions';
 import {ModalDialogProps} from './common/modal';
+import {Provider} from 'cloud-providers';
 
 const DataTableModalStyle = css`
   top: 80px;
@@ -114,7 +114,7 @@ export type ModalContainerProps = {
   mapStyleActions: typeof MapStyleActions;
   providerActions: typeof ProviderActions;
   onSaveToStorage?: () => void;
-  cloudProviders: object[];
+  cloudProviders: Provider[];
   onLoadCloudMapSuccess?: OnSuccessCallBack;
   onLoadCloudMapError?: OnErrorCallBack;
   onExportToCloudSuccess?: OnSuccessCallBack;
@@ -274,7 +274,6 @@ export default function ModalContainerFactory(
         mapState,
         uiState,
         visState,
-        rootNode,
         visStateActions,
         uiStateActions,
         providerState
@@ -300,8 +299,6 @@ export default function ModalContainerFactory(
             const width = containerW * 0.9;
             template = (
               <DataTableModal
-                width={containerW * 0.9}
-                height={containerH * 0.85}
                 datasets={datasets}
                 dataId={editingDataset}
                 showDatasetTable={visStateActions.showDatasetTable}
@@ -395,7 +392,6 @@ export default function ModalContainerFactory(
                 supportedDataTypes={EXPORT_DATA_TYPE_OPTIONS}
                 datasets={datasets}
                 applyCPUFilter={this.props.visStateActions.applyCPUFilter}
-                onClose={this._closeModal}
                 onChangeExportDataType={uiStateActions.setExportDataType}
                 onChangeExportSelectedDataset={uiStateActions.setExportSelectedDataset}
                 onChangeExportFiltered={uiStateActions.setExportFiltered}
@@ -501,7 +497,6 @@ export default function ModalContainerFactory(
                 {...providerState}
                 cloudProviders={this.props.cloudProviders}
                 title={get(visState, ['mapInfo', 'title'])}
-                onSetCloudProvider={this.props.providerActions.setCloudProvider}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
                 cleanupExportImage={uiStateActions.cleanupExportImage}
               />
@@ -547,7 +542,6 @@ export default function ModalContainerFactory(
 
       return this.props.rootNode ? (
         <ModalDialog
-          parentSelector={() => findDOMNode(rootNode)}
           isOpen={Boolean(currentModal)}
           onCancel={this._closeModal}
           {...modalProps}

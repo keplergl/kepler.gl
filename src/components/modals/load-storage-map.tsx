@@ -28,6 +28,7 @@ import CloudTile from './cloud-tile';
 import {Base, ArrowLeft} from 'components/common/icons';
 import ProviderModalContainer from './provider-modal-container';
 import {FormattedMessage} from 'localization';
+import {MapListItem, Provider} from 'cloud-providers';
 
 const StyledProviderSection = styled.div.attrs({
   className: 'provider-selection'
@@ -179,7 +180,9 @@ const StyledVisualizationItem = styled.div`
   }
 `;
 
-const MapIcon = props => {
+type MapIconPorps = React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
+
+const MapIcon: React.FC<MapIconPorps> = props => {
   return (
     <div {...props}>
       {props.children}
@@ -193,11 +196,24 @@ const MapIcon = props => {
   );
 };
 
-const PrivacyBadge = ({privateMap}) => (
+interface PrivacyBadgeProps {
+  privateMap?: boolean;
+}
+
+const PrivacyBadge: React.FC<PrivacyBadgeProps> = ({privateMap}) => (
   <span className="vis_item-privacy">{privateMap ? 'Private' : 'Public'}</span>
 );
 
-const VisualizationItem = ({vis, onClick}) => {
+interface Visualization extends MapListItem {
+  thumbnail?: Blob;
+}
+
+interface VisualizationItemProps {
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
+  vis: Visualization;
+}
+
+const VisualizationItem: React.FC<VisualizationItemProps> = ({vis, onClick}) => {
   return (
     <StyledVisualizationItem onClick={onClick}>
       {vis.thumbnail ? (
@@ -220,7 +236,14 @@ const VisualizationItem = ({vis, onClick}) => {
   );
 };
 
-export const ProviderSelect = ({
+interface ProviderSelectProps {
+  cloudProviders: Provider[];
+  onSelect: (name: string) => void;
+  onSetCloudProvider: () => void;
+  currentProvider?: string;
+}
+
+export const ProviderSelect: React.FC<ProviderSelectProps> = ({
   cloudProviders = [],
   onSelect,
   onSetCloudProvider,
@@ -243,8 +266,18 @@ export const ProviderSelect = ({
     <p>No storage provider available</p>
   );
 
-function LoadStorageMapFactory() {
-  class LoadStorageMap extends Component {
+interface LoadStorageMapProps {
+  cloudProviders: Provider[];
+  onSetCloudProvider;
+  currentProvider?: string;
+  getSavedMaps: (provider?: Provider) => void;
+  onLoadCloudMap: ({loadParams: any, provider: Provider}) => void;
+  visualizations: Visualization[];
+  isProviderLoading?: boolean;
+}
+
+function LoadStorageMapFactory(): React.ComponentType<LoadStorageMapProps> {
+  class LoadStorageMap extends Component<LoadStorageMapProps> {
     state = {
       showProviderSelect: true
     };
@@ -272,7 +305,7 @@ function LoadStorageMapFactory() {
       }
     }
 
-    _onLoadCloudMap(provider, vis) {
+    _onLoadCloudMap(provider: Provider | undefined, vis: Visualization) {
       this.props.onLoadCloudMap({
         loadParams: vis.loadParams,
         provider
@@ -330,10 +363,10 @@ function LoadStorageMapFactory() {
                         <FormattedMessage id={'modal.loadStorageMap.back'} />
                       </Button>
                     </StyledBackBtn>
-                    {provider.getManagementUrl && (
+                    {provider?.getManagementUrl && (
                       <a
                         key={1}
-                        href={provider.getManagementUrl()}
+                        href={provider?.getManagementUrl()}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{textDecoration: 'underline'}}

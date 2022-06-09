@@ -19,51 +19,25 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import styled from 'styled-components';
-import LoadingSpinner from 'components/common/loading-spinner';
-import {FormattedMessage} from 'localization';
+import ErrorBoundary from 'components/common/error-boundary';
+import NotificationItemFactory from 'components/notification-panel/notification-item';
+const NotificationItem = NotificationItemFactory();
 
-const StyledSpinner = styled.div`
-  text-align: center;
+interface ErrorDisplayProps {
+  error: string;
+}
 
-  span {
-    margin: 0 auto;
-  }
-`;
-
-const StyledLoadingDialog = styled.div.attrs({
-  className: 'data-loading-dialog'
-})`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-grow: 1;
-
-  .loading-content {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .loading-message {
-    margin-left: 32px;
-    color: ${props => props.theme.titleColorLT};
-    font-weight: 500;
-    font-size: 14px;
-  }
-`;
-
-const LoadingDialog = ({size = 64, message = 'modal.loadingDialog.loading'}) => (
-  <StyledLoadingDialog>
-    <div className="loading-content">
-      <StyledSpinner>
-        <LoadingSpinner size={size} />
-      </StyledSpinner>
-      <div className="loading-message">
-        <FormattedMessage id={message} />
-      </div>
-    </div>
-  </StyledLoadingDialog>
+const ErrorDisplay: React.FC<ErrorDisplayProps> = ({error}) => (
+  <ErrorBoundary>
+    <NotificationItem
+      notification={{
+        type: 'error',
+        message: error,
+        id: 'cloud-export-error'
+      }}
+      isExpanded
+    />
+  </ErrorBoundary>
 );
 
-export default LoadingDialog;
+export default ErrorDisplay;

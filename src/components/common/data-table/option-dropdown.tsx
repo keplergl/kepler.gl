@@ -59,7 +59,7 @@ interface OptionDropdownProps {
   pinTableColumn: () => void;
   copyTableColumn: () => void;
   sortMode?: string;
-  isSorted?: boolean;
+  isSorted?: string;
   isPinned?: boolean;
 }
 

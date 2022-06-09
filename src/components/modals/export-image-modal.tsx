@@ -21,13 +21,15 @@
 import React, {useEffect} from 'react';
 import styled from 'styled-components';
 import ImagePreview from 'components/common/image-preview';
+import {SetExportImageSettingUpdaterAction} from '../../actions';
 
 import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS} from 'constants/default-settings';
 
 import {StyledModalContent, SelectionButton, CheckMark} from 'components/common/styled-components';
 import Switch from 'components/common/switch';
-import {injectIntl} from 'react-intl';
+import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from 'localization';
+import {ExportImage} from 'reducers';
 
 const ImageOptionList = styled.div`
   display: flex;
@@ -53,9 +55,18 @@ const ImageOptionList = styled.div`
   }
 `;
 
+export interface ExportImageModalProps {
+  exportImage: ExportImage;
+  mapW: number;
+  mapH: number;
+  onUpdateImageSetting: (payload: SetExportImageSettingUpdaterAction['payload']) => void;
+  cleanupExportImage: () => void;
+  intl: IntlShape;
+}
+
 const ExportImageModalFactory = () => {
   /** @type {typeof import('./export-image-modal').ExportImageModal} */
-  const ExportImageModal = ({
+  const ExportImageModal: React.FC<ExportImageModalProps> = ({
     mapW,
     mapH,
     exportImage,

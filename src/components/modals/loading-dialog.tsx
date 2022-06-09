@@ -20,29 +20,58 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import DatasetLabel from 'components/common/dataset-label';
+import LoadingSpinner from 'components/common/loading-spinner';
 import {FormattedMessage} from 'localization';
 
-const StyledMsg = styled.div`
-  margin-top: 24px;
+const StyledSpinner = styled.div`
+  text-align: center;
+
+  span {
+    margin: 0 auto;
+  }
 `;
 
-export const DeleteDatasetModal = ({dataset, layers = []}) => {
-  // retrieve only layers related to the current dataset
-  const currDatasetLayers = layers.filter(layer => layer.config.dataId === (dataset && dataset.id));
+const StyledLoadingDialog = styled.div.attrs({
+  className: 'data-loading-dialog'
+})`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
 
-  return (
-    <div className="delete-dataset-modal">
-      <DatasetLabel dataset={dataset} />
-      <StyledMsg className="delete-dataset-msg">
-        <FormattedMessage
-          id={'modal.deleteData.warning'}
-          values={{length: currDatasetLayers.length}}
-        />
-      </StyledMsg>
+  .loading-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .loading-message {
+    margin-left: 32px;
+    color: ${props => props.theme.titleColorLT};
+    font-weight: 500;
+    font-size: 14px;
+  }
+`;
+
+interface LoadingDialogProps {
+  size?: number;
+  message?: string;
+}
+
+const LoadingDialog: React.FC<LoadingDialogProps> = ({
+  size = 64,
+  message = 'modal.loadingDialog.loading'
+}) => (
+  <StyledLoadingDialog>
+    <div className="loading-content">
+      <StyledSpinner>
+        <LoadingSpinner size={size} />
+      </StyledSpinner>
+      <div className="loading-message">
+        <FormattedMessage id={message} />
+      </div>
     </div>
-  );
-};
+  </StyledLoadingDialog>
+);
 
-const DeleteDatasetModalFactory = () => DeleteDatasetModal;
-export default DeleteDatasetModalFactory;
+export default LoadingDialog;

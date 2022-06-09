@@ -19,20 +19,21 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import {Provider} from 'cloud-providers';
+import {SetCloudProviderPayload} from 'actions';
+
+export type ProviderModalContainerProps = {
+  cloudProviders?: Provider[];
+  currentProvider?: string | null;
+  onSetCloudProvider: (provider: SetCloudProviderPayload) => void;
+};
 
 /**
  * A wrapper component in modals contain cloud providers.
  * It set default provider by checking which provider has logged in
  * @component
  */
-export default class ProviderModalContainer extends Component {
-  static propTypes = {
-    onSetCloudProvider: PropTypes.func.isRequired,
-    cloudProviders: PropTypes.arrayOf(PropTypes.object),
-    currentProvider: PropTypes.string
-  };
-
+export default class ProviderModalContainer extends Component<ProviderModalContainerProps> {
   static defaultProps = {
     cloudProviders: [],
     currentProvider: null
@@ -43,8 +44,8 @@ export default class ProviderModalContainer extends Component {
   }
 
   _setDefaultProvider() {
-    if (!this.props.currentProvider && this.props.cloudProviders.length) {
-      const connected = this.props.cloudProviders.find(
+    if (!this.props.currentProvider && this.props.cloudProviders?.length) {
+      const connected = this.props.cloudProviders?.find(
         p => typeof p.getAccessToken === 'function' && p.getAccessToken()
       );
 

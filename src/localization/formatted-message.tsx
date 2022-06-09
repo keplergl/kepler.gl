@@ -26,7 +26,7 @@ type EnhancedFormattedMessageProps = {
   defaultMessage?: string;
   defaultValue?: string;
   values?: {
-    [key: string]: string | number;
+    [key: string]: string | number | null;
   };
   children?: () => React.ReactElement;
 };

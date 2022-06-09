@@ -77,7 +77,7 @@ export type InputStyle = {
   error: boolean;
   isValid: boolean;
   label: string | null;
-  style: Object | null;
+  style: any | null;
   url: string | null;
   icon: string | null;
   custom: boolean;

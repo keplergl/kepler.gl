@@ -24,6 +24,10 @@ import {CenterVerticalFlexbox} from 'components/common/styled-components';
 import {UploadAnimation} from './status-panel';
 import ImageModalContainer from './image-modal-container';
 import {FormattedMessage} from 'localization';
+import {Provider} from 'cloud-providers';
+
+import {ImageModalContainerProps} from './image-modal-container';
+import {cleanupExportImage} from 'actions';
 
 /** @typedef {import('./overwrite-map-modal').OverwriteMapModalProps} OverwriteMapModalProps */
 
@@ -46,11 +50,23 @@ const StyledOverwriteMapModal = styled(CenterVerticalFlexbox)`
   min-height: 220px;
 `;
 
+type OverwriteMapModalProps = {
+  mapSaved: string | null;
+  title: string;
+  cloudProviders: Provider[];
+  isProviderLoading: boolean;
+  currentProvider: string | null;
+
+  // callbacks
+  onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
+  cleanupExportImage: typeof cleanupExportImage;
+};
+
 const OverwriteMapModalFactory = () => {
   /**
    * @type {React.FunctionComponent<OverwriteMapModalProps>}
    */
-  const OverwriteMapModal = ({
+  const OverwriteMapModal: React.FC<OverwriteMapModalProps> = ({
     mapSaved,
     title,
     currentProvider,

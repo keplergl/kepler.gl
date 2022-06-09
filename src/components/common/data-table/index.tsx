@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component, createRef} from 'react';
-import {ScrollSync, AutoSizer} from 'react-virtualized';
+import {ScrollSync, AutoSizer, OnScrollParams, GridProps, Index} from 'react-virtualized';
 import styled, {withTheme} from 'styled-components';
 import classnames from 'classnames';
 import {createSelector} from 'reselect';
@@ -37,6 +37,7 @@ import {adjustCellsToContainer} from './cell-size';
 
 import {ALL_FIELD_TYPES, SORT_ORDER} from 'constants/default-settings';
 import FieldTokenFactory from 'components/common/field-token';
+import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 
 const defaultHeaderRowHeight = 55;
 const defaultRowHeight = 32;
@@ -229,10 +230,26 @@ const columnWidthFunction = (columns, cellSizeCache, ghost?) => ({index}) => {
   return (columns[index] || {}).ghost ? ghost : cellSizeCache[columns[index]] || defaultColumnWidth;
 };
 
+interface GetRowCellProps {
+  dataContainer: DataContainerInterface;
+  columns: (string & {ghost?: boolean})[];
+  column: string;
+  colMeta;
+  rowIndex: number;
+  sortOrder?: number[] | null;
+}
+
 /*
  * This is an accessor method used to generalize getting a cell from a data row
  */
-const getRowCell = ({dataContainer, columns, column, colMeta, rowIndex, sortOrder}) => {
+const getRowCell = ({
+  dataContainer,
+  columns,
+  column,
+  colMeta,
+  rowIndex,
+  sortOrder
+}: GetRowCellProps) => {
   const rowIdx = sortOrder && sortOrder.length ? get(sortOrder, rowIndex) : rowIndex;
   const {type} = colMeta[column];
 
@@ -240,6 +257,29 @@ const getRowCell = ({dataContainer, columns, column, colMeta, rowIndex, sortOrde
   if (value === undefined) value = 'Err';
   return parseFieldValue(value, type);
 };
+
+interface TableSectionProps {
+  classList?: {
+    header: string;
+    rows: string;
+  };
+  isPinned?: boolean;
+  columns: (string & {ghost?: boolean})[];
+  headerGridProps?;
+  fixedWidth?: number;
+  fixedHeight?: number;
+  onScroll?: (params: OnScrollParams) => void;
+  scrollTop?: number;
+  dataGridProps: {
+    rowHeight: number | ((params: Index) => number);
+    rowCount: number;
+  } & Partial<GridProps>;
+  columnWidth?;
+  setGridRef?: Function;
+  headerCellRender?;
+  dataCellRender?;
+  scrollLeft?: number;
+}
 
 export const TableSection = ({
   classList,
@@ -256,7 +296,7 @@ export const TableSection = ({
   headerCellRender,
   dataCellRender,
   scrollLeft = 0
-}) => (
+}: TableSectionProps) => (
   <AutoSizer>
     {({width, height}) => {
       const gridDimension = {
@@ -303,10 +343,22 @@ type CellSizeCache = {[id: string]: number};
 interface DataTableProps {
   cellSizeCache?: CellSizeCache;
   pinnedColumns?: string[];
+  columns: (string & {ghost?: boolean})[];
   fixedWidth?: number;
   theme?: any;
-  dataContainer;
-  fixedHeight;
+  dataContainer: DataContainerInterface;
+  fixedHeight?: number;
+  colMeta: {
+    [id: string]: {
+      name: string;
+      type: string;
+    };
+  };
+  sortColumn?: {[id: string]: string};
+  sortTableColumn: (id: string, mode?: string) => void;
+  pinTableColumn: (id: string) => void;
+  copyTableColumn: (id: string) => void;
+  sortOrder?: number[] | null;
 }
 
 interface DataTableState {
@@ -357,8 +409,8 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
     }
 
     root = createRef<HTMLDivElement>();
-    columns = props => props.columns;
-    pinnedColumns = props => props.pinnedColumns;
+    columns = (props: DataTableProps) => props.columns;
+    pinnedColumns = (props: DataTableProps) => props.pinnedColumns;
     unpinnedColumns = createSelector(this.columns, this.pinnedColumns, (columns, pinnedColumns) =>
       !Array.isArray(pinnedColumns) ? columns : columns.filter(c => !pinnedColumns.includes(c))
     );
@@ -396,11 +448,17 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
 
     scaleCellsToWidth = debounce(this.doScaleCellsToWidth, 300);
 
-    renderHeaderCell = (columns, isPinned, props, toggleMoreOptions, moreOptionsColumn) => {
+    renderHeaderCell = (
+      columns: (string & {ghost?: boolean})[],
+      isPinned: boolean,
+      props: DataTableProps,
+      toggleMoreOptions,
+      moreOptionsColumn
+    ) => {
       // eslint-disable-next-line react/display-name
       return cellInfo => {
         const {columnIndex, key, style} = cellInfo;
-        const {colMeta, sortColumn, sortTableColumn, pinTableColumn, copyTableColumn} = props;
+        const {colMeta, sortColumn = {}, sortTableColumn, pinTableColumn, copyTableColumn} = props;
 
         const column = columns[columnIndex];
         const isGhost = column.ghost;
@@ -468,7 +526,7 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
       };
     };
 
-    renderDataCell = (columns, isPinned, props) => {
+    renderDataCell = (columns, isPinned, props: DataTableProps) => {
       return cellInfo => {
         const {columnIndex, key, style, rowIndex} = cellInfo;
         const {dataContainer, colMeta} = props;
@@ -483,7 +541,7 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
         const endCell = columnIndex === columns.length - 1;
         const firstCell = columnIndex === 0;
         const bottomCell = rowIndex === lastRowIndex;
-        const alignRight = fieldToAlignRight[type];
+        const alignRight = fieldToAlignRight[Number(type)];
 
         const cell = (
           <div
@@ -509,11 +567,19 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
     };
 
     render() {
-      const {dataContainer, pinnedColumns = [], theme = {}, fixedWidth, fixedHeight} = this.props;
+      const {
+        dataContainer,
+        pinnedColumns = [],
+        theme = {},
+        fixedWidth,
+        fixedHeight = 0
+      } = this.props;
       const unpinnedColumns = this.unpinnedColumns(this.props);
 
       const {cellSizeCache = {}, moreOptionsColumn, ghost} = this.state;
-      const unpinnedColumnsGhost = ghost ? [...unpinnedColumns, {ghost: true}] : unpinnedColumns;
+      const unpinnedColumnsGhost = ghost
+        ? [...unpinnedColumns, {ghost: true} as string & {ghost: boolean}]
+        : unpinnedColumns;
       const pinnedColumnsWidth = pinnedColumns.reduce(
         (acc, val) => acc + get(cellSizeCache, val, 0),
         0

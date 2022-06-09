@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import PropTypes from 'prop-types';
 
 import {FileType} from 'components/common/icons';
 import {StyledModalContent, StyledType, CheckMark} from 'components/common/styled-components';
@@ -28,30 +27,34 @@ import {StyledExportMapSection} from './components';
 import ExportHtmlMapFactory from './export-html-map';
 import ExportJsonMapFactory from './export-json-map';
 import {FormattedMessage} from 'localization';
+import {ActionHandler, setExportHTMLMapMode, setUserMapboxAccessToken} from 'actions';
 
-const propTypes = {
-  options: PropTypes.object,
-  onEditUserMapboxAccessToken: PropTypes.func.isRequired,
-  onChangeExportData: PropTypes.func,
-  onChangeExportMapType: PropTypes.func,
-  mapFormat: PropTypes.string
-};
+interface ExportMapModalFactoryProps {
+  options?: {format: string};
+  config: any;
+  onEditUserMapboxAccessToken: ActionHandler<typeof setUserMapboxAccessToken>;
+  onChangeExportMapHTMLMode?: ActionHandler<typeof setExportHTMLMapMode>;
+  onChangeExportMapFormat?: (format: string) => any;
+  mapFormat?: string;
+}
 
 const style = {width: '100%'};
 
-const NO_OP = () => {};
+const NO_OP = (...args: any[]) => ({} as any);
 
 ExportMapModalFactory.deps = [ExportHtmlMapFactory, ExportJsonMapFactory];
 
-function ExportMapModalFactory(ExportHtmlMap, ExportJsonMap) {
+function ExportMapModalFactory(
+  ExportHtmlMap: ReturnType<typeof ExportHtmlMapFactory>,
+  ExportJsonMap: ReturnType<typeof ExportJsonMapFactory>
+) {
   const ExportMapModalUnmemoized = ({
     config = {},
-    onChangeExportData = NO_OP,
-    onChangeExportMapFormat = format => {},
+    onChangeExportMapFormat = NO_OP,
     onChangeExportMapHTMLMode = NO_OP,
     onEditUserMapboxAccessToken = NO_OP,
     options = {format: ''}
-  }) => (
+  }: ExportMapModalFactoryProps) => (
     <StyledModalContent className="export-map-modal">
       <div style={style}>
         <StyledExportMapSection>
@@ -68,7 +71,6 @@ function ExportMapModalFactory(ExportHtmlMap, ExportJsonMap) {
               <StyledType
                 key={op.id}
                 selected={options.format === op.id}
-                available={op.available}
                 onClick={() => op.available && onChangeExportMapFormat(op.id)}
               >
                 <FileType ext={op.label} height="80px" fontSize="11px" />
@@ -87,13 +89,7 @@ function ExportMapModalFactory(ExportHtmlMap, ExportJsonMap) {
                 options={options[options.format]}
               />
             ),
-            [EXPORT_MAP_FORMATS.JSON]: (
-              <ExportJsonMap
-                config={config}
-                onChangeExportData={onChangeExportData}
-                options={options[options.format]}
-              />
-            )
+            [EXPORT_MAP_FORMATS.JSON]: <ExportJsonMap config={config} />
           }[
             // @ts-ignore
             options.format
@@ -103,7 +99,6 @@ function ExportMapModalFactory(ExportHtmlMap, ExportJsonMap) {
     </StyledModalContent>
   );
 
-  ExportMapModalUnmemoized.propTypes = propTypes;
   ExportMapModalUnmemoized.displayName = 'ExportMapModal';
 
   const ExportMapModal = React.memo(ExportMapModalUnmemoized);

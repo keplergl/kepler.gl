@@ -21,8 +21,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import CloudTile from './cloud-tile';
-import ImageModalContainer from './image-modal-container';
-import ProviderModalContainer from './provider-modal-container';
+import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
+import ProviderModalContainer, {ProviderModalContainerProps} from './provider-modal-container';
 import StatusPanel, {UploadAnimation} from './status-panel';
 
 import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER} from 'constants/default-settings';
@@ -37,6 +37,9 @@ import {
 } from 'components/common/styled-components';
 import ImagePreview from 'components/common/image-preview';
 import {FormattedMessage} from 'localization';
+import {ExportImage, MapInfo} from 'reducers';
+import {Provider} from 'cloud-providers';
+import {setMapInfo, cleanupExportImage} from 'actions';
 
 /** @typedef {import('./save-map-modal').SaveMapModalProps} SaveMapModalProps */
 
@@ -73,7 +76,35 @@ const StyledSaveMapModal = styled.div.attrs({
 
 const nop = _ => {};
 
-export const MapInfoPanel = ({
+type CharacterLimits = {
+  title?: number;
+  description?: number;
+};
+
+type SaveMapModalProps = {
+  mapInfo: MapInfo;
+  exportImage: ExportImage;
+  cloudProviders: Provider[];
+  isProviderLoading: boolean;
+  currentProvider?: string;
+  providerError?: any;
+  characterLimits?: CharacterLimits;
+
+  // callbacks
+  onSetCloudProvider: ProviderModalContainerProps['onSetCloudProvider'];
+  onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
+  cleanupExportImage: typeof cleanupExportImage;
+  onSetMapInfo: typeof setMapInfo;
+};
+
+type MapInfoPanelProps = Pick<SaveMapModalProps, 'mapInfo' | 'characterLimits'> & {
+  onChangeInput: (
+    type: string,
+    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+  ) => void;
+};
+
+export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
   mapInfo = {description: '', title: ''},
   characterLimits,
   onChangeInput
@@ -98,7 +129,7 @@ export const MapInfoPanel = ({
       </div>
       <div>
         <TextAreaLight
-          rows="3"
+          rows={3}
           id="map-description"
           style={{resize: 'none'}}
           value={mapInfo.description}
@@ -107,13 +138,12 @@ export const MapInfoPanel = ({
         />
       </div>
       <StyledModalInputFootnote
-        className="save-map-modal-description__footnote"
         error={
-          characterLimits.description && mapInfo.description.length > characterLimits.description
+          Boolean(characterLimits?.description) && mapInfo.description.length > Number(characterLimits?.description)
         }
       >
-        {mapInfo.description.length}/{characterLimits.description || MAP_INFO_CHARACTER.description}{' '}
-        characters
+        {mapInfo.description.length}/
+        {characterLimits?.description || MAP_INFO_CHARACTER.description} characters
       </StyledModalInputFootnote>
     </StyledModalSection>
   </div>
@@ -123,7 +153,7 @@ function SaveMapModalFactory() {
   /**
    * @type {React.FunctionComponent<SaveMapModalProps>}
    */
-  const SaveMapModal = ({
+  const SaveMapModal: React.FC<SaveMapModalProps> = ({
     mapInfo,
     exportImage,
     characterLimits = {},
@@ -136,7 +166,10 @@ function SaveMapModalFactory() {
     cleanupExportImage,
     onSetMapInfo
   }) => {
-    const onChangeInput = (key, {target: {value}}) => {
+    const onChangeInput = (
+      key: string,
+      {target: {value}}: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+    ) => {
       onSetMapInfo({[key]: value});
     };
     const provider = currentProvider ? cloudProviders.find(p => p.name === currentProvider) : null;
