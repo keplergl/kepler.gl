@@ -6,88 +6,86 @@
     "license": "MIT",
     "types": "types.d.ts",
     "keywords": [
-      "babel",
-      "es6",
-      "react",
-      "webgl",
-      "visualization",
-      "deck.gl"
+        "babel",
+        "es6",
+        "react",
+        "webgl",
+        "visualization",
+        "deck.gl"
     ],
     "repository": {
-      "type": "git",
-      "url": "https://github.com/keplergl/kepler.gl.git"
+        "type": "git",
+        "url": "https://github.com/keplergl/kepler.gl.git"
     },
     "scripts": {
-      "install:example": "cd examples/demo-app && yarn",
-      "install:web": "yarn install:example && cd website && yarn",
-      "install-and-start": "node ./scripts/install-and-start",
-      "babel-tape-runner": "node ./scripts/babel-tape-runner",
-      "fast-test": "npm run test-node && npm run test-browser ",
-      "test-browser": "NODE_ENV=test npm run babel-tape-runner -r ./test/setup-browser-env.js ./test/browser/index.js | tap-spec",
-      "test-node": "NODE_ENV=test npm run babel-tape-runner ./test/node.js | tap-spec",
-      "test-browser-drive": "NODE_ENV=test node ./test/browser-drive.js",
-      "test-e2e": "NODE_ENV=test HEADLESS=true SLOWMO=true jest",
-      "test": "npm run lint && npm run test-node && npm run test-browser",
-      "cover": "nyc --reporter=lcov --reporter html npm test",
-      "start": "npm run install-and-start -- examples/demo-app start-local",
-      "start:deck": "npm run install-and-start -- examples/demo-app start-local-deck",
-      "start:deck-src": "npm run install-and-start -- examples/demo-app start-local-deck-src",
-      "start:loaders-src": "npm run install-and-start -- examples/demo-app start-local-loaders-src",
-      "start:open-modal": "npm run install-and-start -- examples/open-modal start-local",
-      "start:custom-reducer": "npm run install-and-start -- examples/custom-reducer start-local",
-      "start:replace-component": "npm run install-and-start -- examples/replace-component start-local",
-      "start:custom-theme": "npm run install-and-start -- examples/custom-theme start-local",
-      "start:custom-map-style": "npm run install-and-start -- examples/custom-map-style start-local",
-      "start:node-app": "npm run install-and-start -- examples/node-app start-local",
-      "start:web": "npm run install-and-start -- website start",
-      "start:https": "npm run install-and-start -- examples/demo-app start-local-https",
-      "start:e2e": "npm run install-and-start -- examples/demo-app start-local-e2e",
-      "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
-      "build:umd": "webpack --config ./webpack/umd.js --progress --env.prod",
-      "build:types": "tsc --project ./tsconfig.production.json",
-      "analyze": "npm run analyze:bundle",
-      "analyze:bundle": "webpack --config ./webpack/bundle.js --progress --env.prod",
-      "check-licence": "uber-licence --dry",
-      "add-licence": "uber-licence",
-      "prepublish": "uber-licence && yarn build && yarn build:types",
-      "docs": "babel-node ./scripts/documentation.js",
-      "typedoc": "typedoc --theme markdown --out typedoc --inputFiles ./src/reducers --inputFiles ./src/actions --excludeExternals --excludeNotExported --excludePrivate",
-      "example-version": "babel-node ./scripts/edit-version.js",
-      "prettier-all": "prettier --write '{src,examples,test}/**/*.{js,tsx,ts}'",
-      "lint": "yarn typescript && eslint src test webpack examples/*.js examples/**/src/*.{js,tsx,ts} website/*.js website/src --fix",
-      "lint:css": "stylelint './src/**/*.js'",
-      "typescript": "tsc --noEmit",
-      "web": "(yarn && yarn install:web && yarn start:web)",
-      "deploy": "yarn install:web && (cd website && yarn build)",
-      "clean": "rm -rf node_modules examples/**/node_modules website/node_modules",
-      "release:patch": "git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags"
+        "install:example": "cd examples/demo-app && yarn",
+        "install:web": "yarn install:example && cd website && yarn",
+        "install-and-start": "node ./scripts/install-and-start",
+        "babel-tape-runner": "node ./scripts/babel-tape-runner",
+        "fast-test": "npm run test-node && npm run test-browser ",
+        "test-browser": "NODE_ENV=test npm run babel-tape-runner -r ./test/setup-browser-env.js ./test/browser/index.js | tap-spec",
+        "test-node": "NODE_ENV=test npm run babel-tape-runner ./test/node.js | tap-spec",
+        "test-browser-drive": "NODE_ENV=test node ./test/browser-drive.js",
+        "test-e2e": "NODE_ENV=test HEADLESS=true SLOWMO=true jest",
+        "test": "npm run lint && npm run test-node && npm run test-browser",
+        "cover": "nyc --reporter=lcov --reporter html npm test",
+        "start": "npm run install-and-start -- examples/demo-app start-local",
+        "start:deck": "npm run install-and-start -- examples/demo-app start-local-deck",
+        "start:deck-src": "npm run install-and-start -- examples/demo-app start-local-deck-src",
+        "start:loaders-src": "npm run install-and-start -- examples/demo-app start-local-loaders-src",
+        "start:open-modal": "npm run install-and-start -- examples/open-modal start-local",
+        "start:custom-reducer": "npm run install-and-start -- examples/custom-reducer start-local",
+        "start:replace-component": "npm run install-and-start -- examples/replace-component start-local",
+        "start:custom-theme": "npm run install-and-start -- examples/custom-theme start-local",
+        "start:custom-map-style": "npm run install-and-start -- examples/custom-map-style start-local",
+        "start:node-app": "npm run install-and-start -- examples/node-app start-local",
+        "start:web": "npm run install-and-start -- website start",
+        "start:https": "npm run install-and-start -- examples/demo-app start-local-https",
+        "start:e2e": "npm run install-and-start -- examples/demo-app start-local-e2e",
+        "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+        "build:umd": "webpack --config ./webpack/umd.js --progress --env.prod",
+        "build:types": "tsc --project ./tsconfig.production.json",
+        "analyze": "npm run analyze:bundle",
+        "analyze:bundle": "webpack --config ./webpack/bundle.js --progress --env.prod",
+        "check-licence": "uber-licence --dry",
+        "add-licence": "uber-licence",
+        "prepublish": "uber-licence",
+        "docs": "babel-node ./scripts/documentation.js",
+        "typedoc": "typedoc --theme markdown --out typedoc --inputFiles ./src/reducers --inputFiles ./src/actions --excludeExternals --excludeNotExported --excludePrivate",
+        "example-version": "babel-node ./scripts/edit-version.js",
+        "prettier-all": "prettier --write '{src,examples,test}/**/*.{js,tsx,ts}'",
+        "lint": "yarn typescript && eslint src test webpack examples/*.js examples/**/src/*.{js,tsx,ts} website/*.js website/src --fix",
+        "lint:css": "stylelint './src/**/*.js'",
+        "typescript": "tsc --noEmit",
+        "web": "(yarn && yarn install:web && yarn start:web)",
+        "deploy": "yarn install:web && (cd website && yarn build)",
+        "clean": "rm -rf node_modules examples/**/node_modules website/node_modules",
+        "release:patch": "git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags"
     },
-    "resolutions": {},
     "peerDependencies": {
-      "react": ">=16.3",
-      "react-dom": ">=16.3",
-      "styled-components": "^4.x || ^5.x"
+        "react": ">=16.3",
+        "react-dom": ">=16.3",
+        "styled-components": "^4.x || ^5.x"
     },
     "nyc": {
-      "sourceMap": false,
-      "instrument": false,
-      "exclude": [
-        "test/**/*.js",
-        "src/tasks",
-        "src/templates",
-        "src/styles"
-      ]
+        "sourceMap": false,
+        "instrument": false,
+        "exclude": [
+            "test/**/*.js",
+            "src/tasks",
+            "src/templates",
+            "src/styles"
+        ]
     },
     "engines": {
-      "node": ">=12.0.0"
+        "node": ">=12.0.0"
     },
     "maintainers": [
-      "Shan He <heshan0131@gmail.com>",
-      "Giuseppe Macri <gmacri@uber.com>"
+        "Shan He <heshan0131@gmail.com>",
+        "Giuseppe Macri <gmacri@uber.com>"
     ],
     "volta": {
-      "node": "12.19.0",
-      "yarn": "1.22.17"
+        "node": "12.19.0",
+        "yarn": "1.22.17"
     }
-  }
-  
+}

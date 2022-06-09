@@ -24,11 +24,7 @@ import styled from 'styled-components';
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import RangeSliderFactory from 'components/common/range-slider';
 import {FormattedMessage} from 'localization';
-<<<<<<< HEAD
-import KeyEvent from '@kepler.gl/constants/keyevent';
-=======
 import {KeyEvent} from '@kepler.gl/constants';
->>>>>>> 48683cf8 (Rebase corrections)
 import {Checkbox} from 'components';
 import {clamp} from 'utils/data-utils';
 import {isInRange} from 'utils/filter-utils';

@@ -1,0 +1,109 @@
+{
+  "name": "@kepler.gl/constants",
+  "author": "Shan He <shan@uber.com>",
+  "version": "2.5.5",
+  "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "index.d.ts",
+  "keywords": [
+    "babel",
+    "es6",
+    "react",
+    "webgl",
+    "visualization",
+    "deck.gl"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keplergl/kepler.gl.git"
+  },
+  "scripts": {
+    "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+    "build:umd": "webpack --config ./webpack/umd.js --progress --env.prod",
+    "build:types": "tsc --project ./tsconfig.production.json",
+    "prepublish": "uber-licence && yarn build && yarn build:umd && yarn build:types"
+  },
+  "files": [
+    "dist",
+    "src",
+    "actions.js",
+    "components.js",
+    "constants.js",
+    "layers.js",
+    "middleware.js",
+    "processors.js",
+    "reducers.js",
+    "schemas.js",
+    "styles.js",
+    "cloud-providers.js",
+    "localization.js",
+    "umd"
+  ],
+  "dependencies": {
+    "colorbrewer": "^1.5.0",
+    "d3-scale": "^3.2.3",
+    "global": "^4.3.0",
+    "keymirror": "^0.1.1",
+    "react-map-gl-draw": "0.14.8"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.12.1",
+    "@babel/core": "^7.12.1",
+    "@babel/eslint-parser": "^7.17.0",
+    "@babel/node": "^7.12.1",
+    "@babel/parser": "^7.12.1",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
+    "@babel/plugin-proposal-export-namespace-from": "^7.12.1",
+    "@babel/plugin-proposal-optional-chaining": "^7.12.1",
+    "@babel/plugin-transform-modules-commonjs": "^7.12.1",
+    "@babel/plugin-transform-runtime": "^7.12.1",
+    "@babel/plugin-transform-typescript": "^7.16.8",
+    "@babel/polyfill": "^7.12.1",
+    "typescript": "4.2.3",
+    "uber-licence": "^3.1.1",
+    "webpack": "^4.29.0",
+    "webpack-bundle-analyzer": "^3.3.2",
+    "webpack-cli": "^3.2.1",
+    "webpack-dev-middleware": "^3.5.1",
+    "webpack-dev-server": "^3.1.14",
+    "webpack-hot-middleware": "^2.24.3",
+    "webpack-stats-plugin": "^0.2.1"
+  },
+  "peerDependencies": {
+    "react": ">=16.3",
+    "react-dom": ">=16.3",
+    "styled-components": "^4.x || ^5.x"
+  },
+
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*"
+  },
+  "typesVersions": {
+    "*": {
+      "*": ["dist/*"]
+    }
+  },
+  "nyc": {
+    "sourceMap": false,
+    "instrument": false,
+    "exclude": [
+      "test/**/*.js",
+      "src/tasks",
+      "src/templates",
+      "src/styles"
+    ]
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "maintainers": [
+    "Shan He <heshan0131@gmail.com>",
+    "Giuseppe Macri <gmacri@uber.com>"
+  ],
+  "volta": {
+    "node": "12.19.0",
+    "yarn": "1.22.17"
+  }
+}
