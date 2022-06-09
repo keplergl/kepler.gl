@@ -19,6 +19,10 @@
 // THE SOFTWARE.
 
 // Constants
+
+export {ACTION_PREFIX} from './action-types';
+export {default as ActionTypesfrom} from './action-types';
+
 export {
   ADD_DATA_ID,
   ADD_MAP_STYLE_ID,
@@ -27,6 +31,7 @@ export {
   CHANNEL_SCALES,
   DATA_TABLE_ID,
   DATASET_FORMATS,
+  DEFAULT_AGGREGATION,
   DEFAULT_LAYER_GROUPS,
   DEFAULT_MAP_STYLES,
   DEFAULT_NOTIFICATION_TOPICS,
@@ -46,7 +51,9 @@ export {
   FIELD_OPTS,
   FILTER_TYPES,
   GEOJSON_FIELDS,
+  HIGHLIGH_COLOR_3D,
   ICON_FIELDS,
+  OVERWRITE_MAP_ID,
   KEPLER_GL_NAME,
   KEPLER_GL_VERSION,
   KEPLER_GL_WEBSITE,
@@ -55,6 +62,7 @@ export {
   PANELS,
   SIDEBAR_PANELS,
   SCALE_TYPES,
+  SCALE_FUNC,
   THEME,
   TRIP_ARC_FIELDS,
   TRIP_POINT_FIELDS,
@@ -72,6 +80,7 @@ export {BUG_REPORT_LINK, USER_GUIDE_DOC} from './user-guides';
 
 export {VizColorPalette, DataVizColors} from './custom-color-ranges';
 export {COLOR_RANGES, DEFAULT_COLOR_RANGE} from './color-ranges';
+export type {ColorMap, ColorLegends, ColorRange} from './color-ranges';
 export {default as KeyEvent} from './keyevent';
 export {LAYER_TYPES} from 'layers/types';
 export {PLOT_TYPES} from 'utils/filter-utils';

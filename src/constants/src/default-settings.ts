@@ -40,11 +40,11 @@ import {
   ArrowUp,
   Clipboard,
   Cancel
-} from 'components/common/icons';
-import {getHTMLMapModeTileUrl} from 'utils/utils';
+} from '../../components/common/icons';
+import {getHTMLMapModeTileUrl} from '../../utils/utils';
 import {TOOLTIP_FORMAT_TYPES} from './tooltip';
-import {LAYER_TYPES} from 'layers/types';
-import {RGBAColor} from 'reducers';
+import {LAYER_TYPES} from '../../layers/types';
+import {RGBAColor} from '../../reducers';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
