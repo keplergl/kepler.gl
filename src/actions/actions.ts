@@ -18,11 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import ActionTypes from 'constants/action-types';
+import {ActionTypes} from '@kepler.gl/constants';
 import {createAction} from '@reduxjs/toolkit';
 
 import {ParsedConfig} from '../schemas';
-import {RGBColor} from 'reducers/types';
+import {RGBColor} from '@kepler.gl/types';
 import {Bounds} from 'reducers/map-state-updaters';
 import {MapInfo} from 'reducers/vis-state-updaters';
 import {UiState} from 'reducers/ui-state-updaters';

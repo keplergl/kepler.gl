@@ -24,10 +24,9 @@ import {
   DEFAULT_NOTIFICATION_MESSAGE,
   DEFAULT_NOTIFICATION_TOPICS,
   DEFAULT_NOTIFICATION_TYPES,
-  DEFAULT_UUID_COUNT
-} from 'constants/default-settings';
-
-import {BUG_REPORT_LINK} from 'constants/user-guides';
+  DEFAULT_UUID_COUNT,
+  BUG_REPORT_LINK
+} from '@kepler.gl/constants';
 
 /**
  * Creates a notification

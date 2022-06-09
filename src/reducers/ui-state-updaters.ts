@@ -28,14 +28,14 @@ import {
   EXPORT_IMG_RATIOS,
   EXPORT_MAP_FORMATS,
   RESOLUTIONS,
-  MAP_CONTROLS
-} from 'constants/default-settings';
+  MAP_CONTROLS,
+  ActionTypes
+} from '@kepler.gl/constants';
 import {LOCALE_CODES} from 'localization/locales';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 import {calculateExportImageSize} from '../utils/export-utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
-import ActionTypes from '../constants/action-types';
 import * as UiStateActions from 'actions/ui-state-actions';
 import {KeplerGlInitPayload, LoadFilesErrUpdaterAction} from '../actions';
 

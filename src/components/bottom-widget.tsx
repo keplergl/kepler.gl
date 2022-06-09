@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-control';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
-import {ANIMATION_WINDOW, DIMENSIONS, FILTER_TYPES} from 'constants/default-settings';
+import {ANIMATION_WINDOW, DIMENSIONS, FILTER_TYPES} from '@kepler.gl/constants';
 import {getIntervalBins} from 'utils/filter-utils';
 import {media} from 'styles/media-breakpoints';
 import {AnimationConfig, TimeRangeFilter} from 'reducers';

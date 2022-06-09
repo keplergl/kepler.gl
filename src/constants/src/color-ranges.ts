@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import colorbrewer from 'colorbrewer';
-import {HexColor} from 'reducers';
+import {HexColor} from '@kepler.gl/types';
 import {VizColorPalette} from './custom-color-ranges';
 
 export type ColorMap = [string | number | null, HexColor][];

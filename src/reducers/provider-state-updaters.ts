@@ -45,7 +45,7 @@ import {
   DEFAULT_NOTIFICATION_TOPICS,
   DATASET_FORMATS,
   OVERWRITE_MAP_ID
-} from '../constants/default-settings';
+} from '@kepler.gl/constants';
 
 import {FILE_CONFLICT_MSG} from '../cloud-providers';
 import {DATASET_HANDLERS} from '../processors/data-processor';

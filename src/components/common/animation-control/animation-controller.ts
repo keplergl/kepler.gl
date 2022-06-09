@@ -22,7 +22,7 @@ import {Component} from 'react';
 import {bisectLeft} from 'd3-array';
 import {requestAnimationFrame, cancelAnimationFrame} from 'global/window';
 import Console from 'global/console';
-import {BASE_SPEED, FPS, ANIMATION_WINDOW} from 'constants/default-settings';
+import {BASE_SPEED, FPS, ANIMATION_WINDOW} from '@kepler.gl/constants';
 
 interface AnimationControllerProps<T extends number | number[]> {
   isAnimating?: boolean;

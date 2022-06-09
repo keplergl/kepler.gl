@@ -39,4 +39,4 @@ export {
   wrapTo
 } from './action-wrapper';
 
-export {default as ActionTypes} from '../constants/action-types';
+export {ActionTypes} from '@kepler.gl/constants';

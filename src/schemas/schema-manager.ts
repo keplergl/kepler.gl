@@ -34,11 +34,14 @@ import {
   TooltipInfo,
   SplitMap,
   AnimationConfig,
-  VisState,
+  VisState
+} from '../reducers';
+
+import {
   RGBColor,
   Merge,
   RGBAColor
-} from '../reducers';
+} from '@kepler.gl/types'
 
 import {LayerTextLabel} from '../layers/layer-factory';
 

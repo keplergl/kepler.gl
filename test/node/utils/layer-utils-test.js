@@ -24,7 +24,7 @@ import {findDefaultLayer, getLayerHoverProp} from 'utils/layer-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import KeplerTable, {findPointFieldPairs} from 'utils/table-utils/kepler-table';
 import {processCsvData, processGeojson} from 'processors/data-processor';
-import {GEOJSON_FIELDS} from 'constants/default-settings';
+import {GEOJSON_FIELDS} from '@kepler.gl/constants';
 import {LayerClasses, KeplerGlLayers} from 'layers';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 

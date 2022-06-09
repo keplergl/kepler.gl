@@ -21,7 +21,7 @@
 import React, {useMemo, useCallback} from 'react';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {Layer} from 'layers';
-import {LAYER_TYPES} from 'layers/types';
+import {LAYER_TYPES} from '@kepler.gl/constants';
 import {PolygonFilterProps} from './types';
 import {StyledFilterPanel} from './components';
 

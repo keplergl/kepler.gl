@@ -22,7 +22,7 @@ import React from 'react';
 
 import {FileType} from 'components/common/icons';
 import {StyledModalContent, StyledType, CheckMark} from 'components/common/styled-components';
-import {EXPORT_MAP_FORMATS, EXPORT_MAP_FORMAT_OPTIONS} from 'constants/default-settings';
+import {EXPORT_MAP_FORMATS, EXPORT_MAP_FORMAT_OPTIONS} from '@kepler.gl/constants';
 import {StyledExportMapSection} from './components';
 import ExportHtmlMapFactory from './export-html-map';
 import ExportJsonMapFactory from './export-json-map';

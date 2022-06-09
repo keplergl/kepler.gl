@@ -21,8 +21,11 @@
 import {
   DEFAULT_TOOLTIP_FIELDS,
   ALL_FIELD_TYPES,
-  TRIP_POINT_FIELDS
-} from 'constants/default-settings';
+  TRIP_POINT_FIELDS,
+  TOOLTIP_FORMATS, 
+  TOOLTIP_KEY, 
+  COMPARE_TYPES
+} from '@kepler.gl/constants';
 import {
   parseFieldValue,
   getFormatter,
@@ -31,7 +34,6 @@ import {
   notNullorUndefined
 } from 'utils/data-utils';
 import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons/index';
-import {TOOLTIP_FORMATS, TOOLTIP_KEY, COMPARE_TYPES} from 'constants/tooltip';
 
 import {InteractionConfig, TooltipField, CompareType} from '../reducers/vis-state-updaters';
 import {DataRow} from './table-utils/data-row';

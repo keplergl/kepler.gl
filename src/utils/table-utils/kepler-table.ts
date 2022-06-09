@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {console as Console} from 'global/console';
-import {TRIP_POINT_FIELDS, SORT_ORDER} from 'constants/default-settings';
+import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
 import {ascending, descending} from 'd3-array';
 
 // import {validateInputData} from 'processors/data-processor';
@@ -43,11 +43,9 @@ import {
   getLinearDomain
 } from 'utils/data-scale-utils';
 
-import {ALL_FIELD_TYPES, SCALE_TYPES} from 'constants/default-settings';
-
 import {createDataContainer} from './data-container-utils';
 
-import {RGBColor} from 'reducers/types';
+import {RGBColor} from '@kepler.gl/types';
 import {Layer} from 'layers';
 import {FieldDomain, Filter} from 'reducers/vis-state-updaters';
 import {DataContainerInterface} from './data-container-interface';

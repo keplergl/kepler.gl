@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {KEPLER_GL_NAME, KEPLER_GL_VERSION, KEPLER_GL_WEBSITE} from 'constants/default-settings';
+import {KEPLER_GL_NAME, KEPLER_GL_VERSION, KEPLER_GL_WEBSITE} from '@kepler.gl/constants';
 
 const LogoTitle = styled.div`
   display: inline-block;

@@ -49,9 +49,9 @@ import {
   KEPLER_GL_VERSION,
   THEME,
   DEFAULT_MAPBOX_API_URL,
-  GEOCODER_DATASET_NAME
-} from 'constants/default-settings';
-import {MISSING_MAPBOX_TOKEN} from 'constants/user-feedbacks';
+  GEOCODER_DATASET_NAME,
+  MISSING_MAPBOX_TOKEN
+} from '@kepler.gl/constants';
 
 import SidePanelFactory from './side-panel';
 import MapContainerFactory from './map-container';

@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {handleActions} from 'redux-actions';
-import ActionTypes from 'constants/action-types';
+import {ActionTypes} from '@kepler.gl/constants';
 import * as mapStateUpdaters from './map-state-updaters';
 
 /**

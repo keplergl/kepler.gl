@@ -37,7 +37,7 @@ import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 import keplerGlReducer from 'reducers/core';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {assertDatasetIsTable} from '../../../helpers/comparison-utils';
 
 // components

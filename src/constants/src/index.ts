@@ -21,60 +21,12 @@
 // Constants
 
 export {ACTION_PREFIX} from './action-types';
-export {default as ActionTypesfrom} from './action-types';
+export {default as ActionTypes} from './action-types';
 
-export {
-  ADD_DATA_ID,
-  ADD_MAP_STYLE_ID,
-  AGGREGATION_TYPES,
-  ALL_FIELD_TYPES,
-  CHANNEL_SCALES,
-  DATA_TABLE_ID,
-  DATASET_FORMATS,
-  DEFAULT_AGGREGATION,
-  DEFAULT_LAYER_GROUPS,
-  DEFAULT_MAP_STYLES,
-  DEFAULT_NOTIFICATION_TOPICS,
-  DEFAULT_NOTIFICATION_TYPES,
-  DELETE_DATA_ID,
-  DIMENSIONS,
-  EDITOR_MODES,
-  EXPORT_DATA_ID,
-  EXPORT_DATA_TYPE_OPTIONS,
-  EXPORT_IMAGE_ID,
-  EXPORT_IMG_RATIO_OPTIONS,
-  EXPORT_IMG_RATIOS,
-  EXPORT_IMG_RESOLUTION_OPTIONS,
-  EXPORT_MAP_FORMAT_OPTIONS,
-  EXPORT_MAP_FORMATS,
-  EXPORT_MAP_ID,
-  FIELD_OPTS,
-  FILTER_TYPES,
-  GEOJSON_FIELDS,
-  HIGHLIGH_COLOR_3D,
-  ICON_FIELDS,
-  OVERWRITE_MAP_ID,
-  KEPLER_GL_NAME,
-  KEPLER_GL_VERSION,
-  KEPLER_GL_WEBSITE,
-  LAYER_BLENDINGS,
-  MAX_DEFAULT_TOOLTIPS,
-  PANELS,
-  SIDEBAR_PANELS,
-  SCALE_TYPES,
-  SCALE_FUNC,
-  THEME,
-  TRIP_ARC_FIELDS,
-  TRIP_POINT_FIELDS,
-  BASE_SPEED,
-  FPS,
-  ANIMATION_WINDOW,
-  DEFAULT_TIME_FORMAT,
-  SPEED_CONTROL_RANGE,
-  RESOLUTIONS,
-  SORT_ORDER,
-  MAP_CONTROLS
-} from './default-settings';
+export * from './default-settings';
+export * from './user-guides';
+export * from './tooltip';
+export * from './user-feedbacks';
 
 export {BUG_REPORT_LINK, USER_GUIDE_DOC} from './user-guides';
 
@@ -82,5 +34,3 @@ export {VizColorPalette, DataVizColors} from './custom-color-ranges';
 export {COLOR_RANGES, DEFAULT_COLOR_RANGE} from './color-ranges';
 export type {ColorMap, ColorLegends, ColorRange} from './color-ranges';
 export {default as KeyEvent} from './keyevent';
-export {LAYER_TYPES} from 'layers/types';
-export {PLOT_TYPES} from 'utils/filter-utils';

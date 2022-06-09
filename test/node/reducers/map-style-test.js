@@ -29,7 +29,7 @@ import {
 } from 'reducers/map-style-updaters';
 import {keplerGlInit, receiveMapConfig} from 'actions/actions';
 import SchemaManager from 'schemas';
-import {DEFAULT_MAP_STYLES, DEFAULT_MAPBOX_API_URL} from 'constants/default-settings';
+import {DEFAULT_MAP_STYLES, DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';
 
 // helpers
 import {StateWCustomMapStyle} from 'test/helpers/mock-state';

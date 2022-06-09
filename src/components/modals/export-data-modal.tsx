@@ -20,7 +20,7 @@
 
 import React, {Component} from 'react';
 
-import {EXPORT_DATA_TYPE_OPTIONS} from 'constants/default-settings';
+import {EXPORT_DATA_TYPE_OPTIONS} from '@kepler.gl/constants';
 import {FileType} from 'components/common/icons';
 import {
   StyledExportSection,

@@ -22,7 +22,14 @@ import React, {useCallback} from 'react';
 import styled from 'styled-components';
 import Portaled from 'components/common/portaled';
 import DropdownList from 'components/common/item-selector/dropdown-list';
-import {SORT_ORDER, TABLE_OPTION, TABLE_OPTION_LIST} from 'constants/default-settings';
+import {SORT_ORDER, TABLE_OPTION, TABLE_OPTION_LIST} from '@kepler.gl/constants';
+import {
+  Pin,
+  ArrowDown,
+  ArrowUp,
+  Clipboard,
+  Cancel
+} from 'components/common/icons';
 
 const ListItem = ({value}) => (
   <div>
@@ -102,7 +109,15 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     [column, sortTableColumn, pinTableColumn, copyTableColumn, toggleMoreOptions]
   );
 
-  const options = TABLE_OPTION_LIST.filter(op => !op.condition || op.condition(props));
+  const TABLE_OPTION_LIST_ICONS = {
+    "Pin": Pin,
+    "ArrowDown": ArrowDown,
+    "ArrowUp": ArrowUp,
+    "Clipboard": Clipboard,
+    "Cancel": Cancel
+  }
+
+  const options = TABLE_OPTION_LIST.filter(op => !op.condition || op.condition(props)).map(op => ({...op, icon: TABLE_OPTION_LIST_ICONS[op.icon]}));
 
   return (
     <Portaled right={120} top={20} isOpened={isOpened} onClose={() => toggleMoreOptions(column)}>

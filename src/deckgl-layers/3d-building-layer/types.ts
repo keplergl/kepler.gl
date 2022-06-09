@@ -1,4 +1,4 @@
-import {RGBColor} from '../../reducers';
+import {RGBColor} from '@kepler.gl/types';
 
 export type ThreeDBuildingLayerProps = {
   id: string;

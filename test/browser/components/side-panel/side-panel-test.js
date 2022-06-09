@@ -55,7 +55,7 @@ const SaveExportDropdown = appInjector.get(SaveExportDropdownFactory);
 import {InitialState} from 'test/helpers/mock-state';
 
 // Constants
-import {EXPORT_DATA_ID, EXPORT_MAP_ID, EXPORT_IMAGE_ID} from 'constants/default-settings';
+import {EXPORT_DATA_ID, EXPORT_MAP_ID, EXPORT_IMAGE_ID} from '@kepler.gl/constants';
 
 // default props from initial state
 const defaultProps = {

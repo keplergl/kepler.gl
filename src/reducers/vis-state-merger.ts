@@ -26,7 +26,7 @@ import {applyFiltersToDatasets, validateFiltersUpdateDatasets} from 'utils/filte
 
 import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
 import {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
-import {LAYER_BLENDINGS} from 'constants/default-settings';
+import {LAYER_BLENDINGS} from '@kepler.gl/constants';
 import {CURRENT_VERSION, visStateSchema} from 'schemas';
 
 import {VisState, Datasets} from './vis-state-updaters';

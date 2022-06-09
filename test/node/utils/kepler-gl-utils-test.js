@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {GEOCODER_DATASET_NAME} from 'constants/default-settings';
+import {GEOCODER_DATASET_NAME} from '@kepler.gl/constants';
 import {getVisibleDatasets} from 'components/kepler-gl';
 
 test('kepler-gl utils -> getVisibleDatasets', t => {

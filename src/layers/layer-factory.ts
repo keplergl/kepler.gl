@@ -20,10 +20,9 @@
 
 import keyMirror from 'keymirror';
 
-import {AGGREGATION_TYPES} from '../constants/default-settings';
-import {ColorRange, DEFAULT_COLOR_RANGE} from '../constants/color-ranges';
+import {AGGREGATION_TYPES, ColorRange, DEFAULT_COLOR_RANGE} from '@kepler.gl/constants';
 
-import {RGBColor, RGBAColor} from '../reducers';
+import {RGBColor, RGBAColor} from '@kepler.gl/types';
 import {Field} from '../utils/table-utils/kepler-table';
 import {
   LayerBaseConfig,

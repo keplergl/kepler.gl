@@ -19,12 +19,12 @@
 // THE SOFTWARE.
 
 // vis-state-reducer
-import ActionTypes from 'constants/action-types';
+import {ActionTypes} from '@kepler.gl/constants';
 import {AddDataToMapPayload} from '../actions/actions';
 import {FileCacheItem} from '../processors/types';
 import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';
 import {Feature, InteractionConfig} from 'reducers/vis-state-updaters';
-import {ValueOf, Merge, RGBColor, NestedPartial} from '../reducers/types';
+import {ValueOf, Merge, RGBColor, NestedPartial} from '@kepler.gl/types';
 import {ColorUI} from 'layers/layer-factory';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported

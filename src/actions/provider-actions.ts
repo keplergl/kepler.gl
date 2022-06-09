@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {createAction} from '@reduxjs/toolkit';
-import {ACTION_PREFIX} from 'constants/action-types';
+import {ACTION_PREFIX} from '@kepler.gl/constants';
 import {SavedMap} from 'schemas';
 import {MapListItem, Provider} from 'cloud-providers';
 

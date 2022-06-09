@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {css} from 'styled-components';
-import {DIMENSIONS} from 'constants/default-settings';
+import {DIMENSIONS} from '@kepler.gl/constants';
 
 type InputProps = {
   active: boolean;

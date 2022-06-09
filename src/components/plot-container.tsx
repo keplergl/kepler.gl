@@ -32,7 +32,7 @@ import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-e
 
 import {findMapBounds} from 'utils/data-utils';
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
-import {GEOCODER_LAYER_ID} from 'constants/default-settings';
+import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {ExportImage, SplitMap} from 'reducers';
 import {setExportImageDataUri, setExportImageError, setExportImageSetting} from 'actions';
 import {mapFieldsSelector} from './kepler-gl';

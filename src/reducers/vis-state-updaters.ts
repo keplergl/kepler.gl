@@ -87,19 +87,19 @@ import {
   EDITOR_MODES,
   SORT_ORDER,
   FILTER_TYPES,
-  MAX_DEFAULT_TOOLTIPS
-} from 'constants/default-settings';
+  MAX_DEFAULT_TOOLTIPS,
+  ActionTypes
+} from '@kepler.gl/constants';
 import {pick_, merge_, swap_} from './composer-helpers';
 import {processFileContent} from 'actions/vis-state-actions';
 
 import KeplerGLSchema from 'schemas';
 import {isRgbColor} from 'utils/color-utils';
 
-import {Millisecond} from './types';
+import {Millisecond} from '@kepler.gl/types';
 import {ReceiveMapConfigPayload} from '../actions/actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
-import ActionTypes from 'constants/action-types';
 import {LoaderObject} from '@loaders.gl/loader-utils';
 import {KeplerTable} from '../utils';
 

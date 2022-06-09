@@ -29,7 +29,7 @@ import MapLegendFactory from './map-legend';
 import Tippy from '@tippyjs/react/headless';
 import TippyTooltip from 'components/common/tippy-tooltip';
 import {createPortal} from 'react-dom';
-import {DIMENSIONS} from 'constants/default-settings';
+import {DIMENSIONS} from '@kepler.gl/constants';
 import {MapControl, MapControls} from 'reducers';
 import {Layer} from 'layers';
 

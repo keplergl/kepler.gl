@@ -20,13 +20,13 @@
 
 import {hexToRgb} from './color-utils';
 import uniq from 'lodash.uniq';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {validateInputData} from 'processors/data-processor';
 import KeplerTable, {Field} from './table-utils/kepler-table';
 
 import {Datasets} from '../reducers/vis-state-updaters';
 import {ProtoDataset} from '../actions';
-import {RGBColor} from 'reducers/types';
+import {RGBColor} from '@kepler.gl/types';
 
 // apply a color for each dataset
 // to use as label colors

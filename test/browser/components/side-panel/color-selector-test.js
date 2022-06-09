@@ -46,7 +46,7 @@ import CustomPalette from 'components/side-panel/layer-panel/custom-palette';
 import CustomPicker from 'components/side-panel/layer-panel/custom-picker';
 import {Button} from 'components/common/styled-components';
 
-import {COLOR_RANGES} from 'constants/color-ranges';
+import {COLOR_RANGES} from '@kepler.gl/constants';
 
 import {StateWFilesFiltersLayerColor, StateWTrips} from 'test/helpers/mock-state';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';

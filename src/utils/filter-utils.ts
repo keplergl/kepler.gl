@@ -27,10 +27,9 @@ import isEqual from 'lodash.isequal';
 import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
-import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW} from 'constants/default-settings';
+import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW, LAYER_TYPES, PLOT_TYPES} from '@kepler.gl/constants';
 import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
-import {LAYER_TYPES} from 'layers/types';
 import {generateHashId, set, toArray} from './utils';
 import {getCentroid, h3IsValid} from 'layers/h3-hexagon-layer/h3-utils';
 
@@ -54,7 +53,7 @@ import {Layer} from 'layers';
 import {ParsedFilter} from 'schemas';
 import {DataContainerInterface} from './table-utils/data-container-interface';
 import {Millisecond} from 'cloud-providers';
-import {Entries} from 'reducers';
+import {Entries} from '@kepler.gl/types';
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];
@@ -88,11 +87,6 @@ const durationHour = durationMinute * 60;
 const durationDay = durationHour * 24;
 const durationWeek = durationDay * 7;
 const durationYear = durationDay * 365;
-
-export const PLOT_TYPES = keyMirror({
-  histogram: null,
-  lineChart: null
-});
 
 export const FILTER_UPDATER_PROPS = keyMirror({
   dataId: null,

@@ -55,7 +55,7 @@ import {
   FILTER_TYPES,
   GEOCODER_LAYER_ID,
   THROTTLE_NOTIFICATION_TIME
-} from 'constants/default-settings';
+} from '@kepler.gl/constants';
 
 import ErrorBoundary from 'components/common/error-boundary';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';

@@ -34,16 +34,16 @@ import {
 import {
   DEFAULT_MAP_STYLES,
   DEFAULT_LAYER_GROUPS,
-  DEFAULT_MAPBOX_API_URL
-} from 'constants/default-settings';
+  DEFAULT_MAPBOX_API_URL,
+  ActionTypes
+} from '@kepler.gl/constants';
 import {generateHashId} from 'utils/utils';
 import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
 import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
 import {rgb} from 'd3-color';
 import {hexToRgb} from 'utils/color-utils';
 
-import {RGBColor} from './types';
-import ActionTypes from 'constants/action-types';
+import {RGBColor} from '@kepler.gl/types';
 import {ReceiveMapConfigPayload, KeplerGlInitPayload} from '../actions/actions';
 import * as MapStyleActions from '../actions/map-style-actions';
 

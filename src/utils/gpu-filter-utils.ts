@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {set, toArray} from './utils';
-import {MAX_GPU_FILTERS, FILTER_TYPES} from 'constants/default-settings';
+import {MAX_GPU_FILTERS, FILTER_TYPES} from '@kepler.gl/constants';
 import {notNullorUndefined} from './data-utils';
 import moment from 'moment';
 import {Filter} from 'reducers/vis-state-updaters';

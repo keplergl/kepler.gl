@@ -24,7 +24,7 @@ import classnames from 'classnames';
 import MapboxClient from 'mapbox';
 import {injectIntl, IntlShape} from 'react-intl';
 import {WebMercatorViewport} from 'viewport-mercator-project';
-import KeyEvent from 'constants/keyevent';
+import {KeyEvent} from '@kepler.gl/constants';
 import {Input} from 'components/common/styled-components';
 import {Search, Delete} from 'components/common/icons';
 import {Viewport} from 'reducers/map-state-updaters';

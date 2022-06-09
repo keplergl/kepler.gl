@@ -36,7 +36,7 @@ import {
 
 import {getDatasetFieldIndexForFilter} from 'utils/gpu-filter-utils';
 
-import {FILTER_TYPES} from 'constants/default-settings';
+import {FILTER_TYPES} from '@kepler.gl/constants';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
 
 import {createDataContainer} from 'utils/table-utils';

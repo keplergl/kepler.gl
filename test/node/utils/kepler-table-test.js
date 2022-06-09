@@ -28,7 +28,7 @@ import {createNewDataEntry} from 'utils/dataset-utils';
 
 import {processCsvData} from 'processors/data-processor';
 import {cmpFields} from '../../helpers/comparison-utils';
-import {FILTER_TYPES} from 'constants/default-settings';
+import {FILTER_TYPES} from '@kepler.gl/constants';
 
 function testGetTimeFieldDomain(table, t) {
   const test_cases = [
