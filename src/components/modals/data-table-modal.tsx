@@ -114,7 +114,9 @@ interface DataTableModalProps {
   showTab?: boolean;
 }
 
-function DataTableModalFactory(DataTable: ReturnType<typeof DataTableFactory>): React.ComponentType<Omit<DataTableModalProps, "theme">> {
+function DataTableModalFactory(
+  DataTable: ReturnType<typeof DataTableFactory>
+): React.ComponentType<Omit<DataTableModalProps, 'theme'>> {
   class DataTableModal extends React.Component<DataTableModalProps> {
     datasetCellSizeCache = {};
     dataId = ({dataId = ''}: DataTableModalProps) => dataId;

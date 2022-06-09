@@ -34,7 +34,7 @@ import {
   VisConfigNumber,
   VisConfigRange
 } from '../layer-factory';
-import {ColorRange} from '@kepler.gl/constants/color-ranges';
+import {ColorRange} from '@kepler.gl/constants';
 import {Merge} from '@kepler.gl/types';
 import {KeplerTable} from '../../utils';
 

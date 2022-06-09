@@ -29,7 +29,7 @@ import {VertDots, Trash} from 'components/common/icons';
 import ColorPalette from './color-palette';
 import CustomPicker from './custom-picker';
 import {arrayMove} from 'utils/data-utils';
-import {ColorRange} from '@kepler.gl/constants/color-ranges';
+import {ColorRange} from '@kepler.gl/constants';
 import {NestedPartial} from '@kepler.gl/types';
 
 type CustomPaletteProps = {

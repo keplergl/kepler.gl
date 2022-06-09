@@ -27,11 +27,10 @@ import get from 'lodash.get';
 import {createSelector} from 'reselect';
 
 import FeatureActionPanelFactory, {FeatureActionPanelProps} from './feature-action-panel';
-import {FILTER_TYPES, EDITOR_MODES, EDITOR_AVAILABLE_LAYERS} from '@kepler.gl/constants';
+import {FILTER_TYPES, EDITOR_MODES, EDITOR_AVAILABLE_LAYERS, KeyEvent} from '@kepler.gl/constants';
 
 import {DEFAULT_RADIUS, getStyle as getFeatureStyle} from './feature-styles';
 import {getStyle as getEditHandleStyle, getEditHandleShape} from './handle-style';
-import {KeyEvent} from '@kepler.gl/constants';
 import {Layer} from 'layers';
 import {Datasets, Filter} from 'reducers';
 import {Feature} from '@nebula.gl/edit-modes';
