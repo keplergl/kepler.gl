@@ -37,7 +37,7 @@ import {
   ColorRange
 } from '@kepler.gl/constants';
 import {Datasets} from '../reducers';
-import {Merge} from '@kepler.gl/types'
+import {Merge} from '@kepler.gl/types';
 import {KeplerTable} from '../utils';
 
 type AggregationLayerColumns = {

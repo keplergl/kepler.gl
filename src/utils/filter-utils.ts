@@ -27,7 +27,13 @@ import isEqual from 'lodash.isequal';
 import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
-import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW, LAYER_TYPES, PLOT_TYPES} from '@kepler.gl/constants';
+import {
+  ALL_FIELD_TYPES,
+  FILTER_TYPES,
+  ANIMATION_WINDOW,
+  LAYER_TYPES,
+  PLOT_TYPES
+} from '@kepler.gl/constants';
 import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {generateHashId, set, toArray} from './utils';

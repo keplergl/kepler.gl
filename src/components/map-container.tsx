@@ -51,11 +51,7 @@ import {
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
-import {
-  FILTER_TYPES,
-  GEOCODER_LAYER_ID,
-  THROTTLE_NOTIFICATION_TIME
-} from '@kepler.gl/constants';
+import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepler.gl/constants';
 
 import ErrorBoundary from 'components/common/error-boundary';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';

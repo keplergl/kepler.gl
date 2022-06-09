@@ -36,7 +36,7 @@ import {
   SCALE_FUNC,
   CHANNEL_SCALE_SUPPORTED_FIELDS,
   MAX_GPU_FILTERS,
-  ColorRange, 
+  ColorRange,
   COLOR_RANGES,
   DataVizColors
 } from '@kepler.gl/constants';
@@ -59,7 +59,7 @@ import {getSampleData} from 'utils/table-utils/data-container-utils';
 import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
 import {MapState, Filter, Datasets} from 'reducers';
-import {RGBColor, RGBAColor, ValueOf, NestedPartial} from '@kepler.gl/types'
+import {RGBColor, RGBAColor, ValueOf, NestedPartial} from '@kepler.gl/types';
 import {LayerTextLabel, ColorUI} from './layer-factory';
 import {KeplerTable} from '../utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';

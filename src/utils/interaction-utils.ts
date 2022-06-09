@@ -22,8 +22,8 @@ import {
   DEFAULT_TOOLTIP_FIELDS,
   ALL_FIELD_TYPES,
   TRIP_POINT_FIELDS,
-  TOOLTIP_FORMATS, 
-  TOOLTIP_KEY, 
+  TOOLTIP_FORMATS,
+  TOOLTIP_KEY,
   COMPARE_TYPES
 } from '@kepler.gl/constants';
 import {

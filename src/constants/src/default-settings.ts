@@ -346,29 +346,34 @@ export const TABLE_OPTION_LIST = [
   {
     value: TABLE_OPTION.SORT_ASC,
     display: 'Sort Ascending',
-    icon: "ArrowUp",
+    icon: 'ArrowUp',
     condition: props => props.sortMode !== SORT_ORDER.ASCENDING
   },
   {
     value: TABLE_OPTION.SORT_DES,
     display: 'Sort Descending',
-    icon: "ArrowDown",
+    icon: 'ArrowDown',
     condition: props => props.sortMode !== SORT_ORDER.DESCENDING
   },
   {
     value: TABLE_OPTION.UNSORT,
     display: 'Unsort Column',
-    icon: "Cancel",
+    icon: 'Cancel',
     condition: props => props.isSorted
   },
-  {value: TABLE_OPTION.PIN, display: 'Pin Column', icon: "Pin", condition: props => !props.isPinned},
+  {
+    value: TABLE_OPTION.PIN,
+    display: 'Pin Column',
+    icon: 'Pin',
+    condition: props => !props.isPinned
+  },
   {
     value: TABLE_OPTION.UNPIN,
     display: 'Unpin Column',
-    icon: "Cancel",
+    icon: 'Cancel',
     condition: props => props.isPinned
   },
-  {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: "Clipboard"}
+  {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: 'Clipboard'}
 ];
 
 const ORANGE = '248, 194, 28';
@@ -807,7 +812,6 @@ export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS).map(
   })
 );
 
-
 export function getHTMLMapModeTileUrl(mode) {
   return `https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/map-${mode.toLowerCase()}-mode.png`;
 }
@@ -913,7 +917,6 @@ export const LAYER_TYPES = keyMirror({
   trip: null,
   s2: null
 });
-
 
 export const EDITOR_AVAILABLE_LAYERS: string[] = [
   LAYER_TYPES.point,

@@ -37,11 +37,7 @@ import {
   VisState
 } from '../reducers';
 
-import {
-  RGBColor,
-  Merge,
-  RGBAColor
-} from '@kepler.gl/types'
+import {RGBColor, Merge, RGBAColor} from '@kepler.gl/types';
 
 import {LayerTextLabel} from '../layers/layer-factory';
 

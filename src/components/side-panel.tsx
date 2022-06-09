@@ -33,13 +33,7 @@ import {
   ADD_MAP_STYLE_ID
 } from '@kepler.gl/constants';
 
-
-import {
-  Layers,
-  FilterFunnel,
-  Settings,
-  CursorClick
-} from 'components/common/icons';
+import {Layers, FilterFunnel, Settings, CursorClick} from 'components/common/icons';
 
 import SidebarFactory from './side-panel/side-bar';
 import PanelHeaderFactory from './side-panel/panel-header';
@@ -107,8 +101,8 @@ export default function SidePanelFactory(
     layer: Layers,
     filter: FilterFunnel,
     interaction: Settings,
-    map: CursorClick,
-  }
+    map: CursorClick
+  };
 
   // We should defined sidebar panels here but keeping them for backward compatible
   const fullPanels = SIDEBAR_PANELS.map(component => ({
