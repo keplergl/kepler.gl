@@ -34,8 +34,8 @@ import {
   VisConfigNumber,
   VisConfigRange
 } from '../layer-factory';
-import {ColorRange} from '../../constants/color-ranges';
-import {Merge} from '../../reducers';
+import {ColorRange} from '@kepler.gl/constants/color-ranges';
+import {Merge} from '@kepler.gl/types';
 import {KeplerTable} from '../../utils';
 
 export type IconLayerColumnsConfig = {

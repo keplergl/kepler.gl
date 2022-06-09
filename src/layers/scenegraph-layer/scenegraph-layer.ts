@@ -27,8 +27,8 @@ import ScenegraphLayerIcon from './scenegraph-layer-icon';
 import ScenegraphInfoModalFactory from './scenegraph-info-modal';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import {VisConfigColorRange, VisConfigNumber} from '../layer-factory';
-import {ColorRange} from '../../constants/color-ranges';
-import {Merge} from '../../reducers';
+import {ColorRange} from '@kepler.gl/constants/color-ranges';
+import {Merge} from '@kepler.gl/types';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import {KeplerTable} from '../../utils';
 

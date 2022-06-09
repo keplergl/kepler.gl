@@ -29,8 +29,8 @@ import {VertDots, Trash} from 'components/common/icons';
 import ColorPalette from './color-palette';
 import CustomPicker from './custom-picker';
 import {arrayMove} from 'utils/data-utils';
-import {ColorRange} from 'constants/color-ranges';
-import {NestedPartial} from 'reducers';
+import {ColorRange} from '@kepler.gl/constants/color-ranges';
+import {NestedPartial} from '@kepler.gl/types';
 
 type CustomPaletteProps = {
   customPalette: ColorRange;

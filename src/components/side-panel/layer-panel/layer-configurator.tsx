@@ -39,8 +39,7 @@ import TextLabelPanelFactory from './text-label-panel';
 
 import {capitalizeFirstLetter} from 'utils/utils';
 
-import {CHANNEL_SCALE_SUPPORTED_FIELDS, ColorRange} from '@kepler.gl/constants';
-import {LAYER_TYPES} from 'layers/types';
+import {CHANNEL_SCALE_SUPPORTED_FIELDS, ColorRange, LAYER_TYPES} from '@kepler.gl/constants';
 import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';
 import {Datasets} from 'reducers';
 import {NestedPartial, RGBColor} from '@kepler.gl/types';

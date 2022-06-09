@@ -23,7 +23,7 @@ import {createSelector} from 'reselect';
 
 import {geoJsonFromData, prefixGpuField, gpuFilterToMapboxFilter} from './mapbox-utils';
 import KeplerTable from '../utils/table-utils/kepler-table';
-import {Merge} from '../reducers';
+import {Merge} from '@kepler.gl/types';
 
 type MapboxLayerGLColumns = {
   lat: LayerColumn;

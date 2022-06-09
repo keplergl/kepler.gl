@@ -21,7 +21,7 @@
 import {CompositeLayer} from '@deck.gl/core';
 import {CompositeLayerProps} from '@deck.gl/core/lib/composite-layer';
 import {Position, RGBAColor} from 'deck.gl';
-import {RGBColor} from 'reducers';
+import {RGBColor} from '@kepler.gl/types';
 import ScatterplotIconLayer from './scatterplot-icon-layer';
 
 // default icon geometry is a square

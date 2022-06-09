@@ -33,7 +33,7 @@ import {Copy, ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from 'components/c
 
 import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
-import {RGBColor} from 'reducers';
+import {RGBColor} from '@kepler.gl/types';
 import {BaseProps} from 'components/common/icons/base';
 
 type LayerLabelEditorProps = {
