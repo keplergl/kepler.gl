@@ -120,6 +120,8 @@ const actionHandler = {
 
   [ActionTypes.RENAME_DATASET]: visStateUpdaters.renameDatasetUpdater,
 
+  [ActionTypes.UPDATE_DATASET_PROPS]: visStateUpdaters.updateDatasetPropsUpdater,
+
   [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
 
   [ActionTypes.DELETE_FEATURE]: visStateUpdaters.deleteFeatureUpdater,
