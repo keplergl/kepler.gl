@@ -31,9 +31,9 @@ import {
   ALL_FIELD_TYPES,
   FILTER_TYPES,
   ANIMATION_WINDOW,
-  LAYER_TYPES,
   PLOT_TYPES
 } from '@kepler.gl/constants';
+import {LAYER_TYPES} from 'layers/types';
 import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {generateHashId, set, toArray} from './utils';
