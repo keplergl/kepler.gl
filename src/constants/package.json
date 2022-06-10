@@ -2,7 +2,7 @@
   "name": "@kepler.gl/constants",
   "author": "Shan He <shan@uber.com>",
   "version": "2.5.5",
-  "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
+  "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "index.d.ts",
@@ -26,18 +26,6 @@
   },
   "files": [
     "dist",
-    "src",
-    "actions.js",
-    "components.js",
-    "constants.js",
-    "layers.js",
-    "middleware.js",
-    "processors.js",
-    "reducers.js",
-    "schemas.js",
-    "styles.js",
-    "cloud-providers.js",
-    "localization.js",
     "umd"
   ],
   "dependencies": {
@@ -47,35 +35,6 @@
     "keymirror": "^0.1.1",
     "react-map-gl-draw": "0.14.8"
   },
-  "devDependencies": {
-    "@babel/cli": "^7.12.1",
-    "@babel/core": "^7.12.1",
-    "@babel/eslint-parser": "^7.17.0",
-    "@babel/node": "^7.12.1",
-    "@babel/parser": "^7.12.1",
-    "@babel/plugin-proposal-class-properties": "^7.12.1",
-    "@babel/plugin-proposal-export-namespace-from": "^7.12.1",
-    "@babel/plugin-proposal-optional-chaining": "^7.12.1",
-    "@babel/plugin-transform-modules-commonjs": "^7.12.1",
-    "@babel/plugin-transform-runtime": "^7.12.1",
-    "@babel/plugin-transform-typescript": "^7.16.8",
-    "@babel/polyfill": "^7.12.1",
-    "typescript": "4.2.3",
-    "uber-licence": "^3.1.1",
-    "webpack": "^4.29.0",
-    "webpack-bundle-analyzer": "^3.3.2",
-    "webpack-cli": "^3.2.1",
-    "webpack-dev-middleware": "^3.5.1",
-    "webpack-dev-server": "^3.1.14",
-    "webpack-hot-middleware": "^2.24.3",
-    "webpack-stats-plugin": "^0.2.1"
-  },
-  "peerDependencies": {
-    "react": ">=16.3",
-    "react-dom": ">=16.3",
-    "styled-components": "^4.x || ^5.x"
-  },
-
   "exports": {
     ".": "./dist/index.js",
     "./*": "./dist/*"
@@ -87,13 +46,7 @@
   },
   "nyc": {
     "sourceMap": false,
-    "instrument": false,
-    "exclude": [
-      "test/**/*.js",
-      "src/tasks",
-      "src/templates",
-      "src/styles"
-    ]
+    "instrument": false
   },
   "engines": {
     "node": ">=12.0.0"
@@ -103,7 +56,7 @@
     "Giuseppe Macri <gmacri@uber.com>"
   ],
   "volta": {
-    "node": "12.19.0",
+    "node": "12.22.0",
     "yarn": "1.22.17"
   }
 }
