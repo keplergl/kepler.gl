@@ -23,7 +23,7 @@ import {handleActions} from 'redux-actions';
 import {_actionFor, _updateProperty} from '../actions/action-wrapper';
 import {keplerGlInit} from '../actions/actions';
 import {coreReducerFactory} from './core';
-import {ActionTypes} from '@kepler.gl/constants';
+import {ActionTypes} from 'actions';
 
 // INITIAL_STATE
 const initialCoreState = {};

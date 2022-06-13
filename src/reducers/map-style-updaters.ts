@@ -34,9 +34,9 @@ import {
 import {
   DEFAULT_MAP_STYLES,
   DEFAULT_LAYER_GROUPS,
-  DEFAULT_MAPBOX_API_URL,
-  ActionTypes
+  DEFAULT_MAPBOX_API_URL
 } from '@kepler.gl/constants';
+import {ActionTypes} from 'actions';
 import {generateHashId} from 'utils/utils';
 import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
 import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';

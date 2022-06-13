@@ -20,9 +20,6 @@
 
 // Constants
 
-export {ACTION_PREFIX} from './action-types';
-export {default as ActionTypes} from './action-types';
-
 export * from './color-palette';
 export * from './color-ranges';
 export * from './custom-color-ranges';

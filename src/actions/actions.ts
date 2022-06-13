@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ActionTypes} from '@kepler.gl/constants';
+import {default as ActionTypes} from './action-types';
 import {createAction} from '@reduxjs/toolkit';
 
 import {ParsedConfig} from '../schemas';

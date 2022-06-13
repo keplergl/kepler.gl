@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 // vis-state-reducer
-import {ActionTypes} from '@kepler.gl/constants';
+import {default as ActionTypes} from './action-types';
 import {AddDataToMapPayload} from '../actions/actions';
 import {FileCacheItem} from '../processors/types';
 import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';

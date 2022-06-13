@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {createAction} from '@reduxjs/toolkit';
-import {ActionTypes} from '@kepler.gl/constants';
+import {default as ActionTypes} from './action-types';
 import {Merge, RGBColor} from '@kepler.gl/types';
 import {InputStyle, MapStyles, VisibleLayerGroups} from '../reducers/map-style-updaters';
 import {MapState} from '../reducers/map-state-updaters';

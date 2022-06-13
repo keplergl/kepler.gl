@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {createAction} from '@reduxjs/toolkit';
-import {ActionTypes} from '@kepler.gl/constants';
+import {default as ActionTypes} from './action-types';
 import {Merge} from '@kepler.gl/types';
 import {Bounds, Viewport} from '../reducers/map-state-updaters';
 
