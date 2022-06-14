@@ -25,7 +25,7 @@ import ImageModalContainer, {ImageModalContainerProps} from './image-modal-conta
 import ProviderModalContainer, {ProviderModalContainerProps} from './provider-modal-container';
 import StatusPanel, {UploadAnimation} from './status-panel';
 
-import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER} from 'constants/default-settings';
+import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER} from '@kepler.gl/constants';
 
 import {
   StyledModalContent,
@@ -139,7 +139,8 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
       </div>
       <StyledModalInputFootnote
         error={
-          Boolean(characterLimits?.description) && mapInfo.description.length > Number(characterLimits?.description)
+          Boolean(characterLimits?.description) &&
+          mapInfo.description.length > Number(characterLimits?.description)
         }
       >
         {mapInfo.description.length}/

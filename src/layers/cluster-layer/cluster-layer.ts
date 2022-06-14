@@ -22,7 +22,7 @@ import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
 import DeckGLClusterLayer from 'deckgl-layers/cluster-layer/cluster-layer';
-import {CHANNEL_SCALES} from 'constants/default-settings';
+import {CHANNEL_SCALES} from '@kepler.gl/constants';
 import ClusterLayerIcon from './cluster-layer-icon';
 import {
   AggregationTypes,
@@ -31,8 +31,8 @@ import {
   VisConfigRange,
   VisConfigSelection
 } from '../layer-factory';
-import {ColorRange} from '../../constants/color-ranges';
-import {Merge} from '../../reducers';
+import {ColorRange} from '@kepler.gl/constants';
+import {Merge} from '@kepler.gl/types';
 import {VisualChannels} from '../base-layer';
 
 export type ClusterLayerVisConfigSettings = {

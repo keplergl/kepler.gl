@@ -27,7 +27,7 @@ import window from 'global/window';
 import document from 'global/document';
 import console from 'global/console';
 import svgToMiniDataURI from 'mini-svg-data-uri';
-import {IMAGE_EXPORT_ERRORS} from 'constants/user-feedbacks';
+import {IMAGE_EXPORT_ERRORS} from '@kepler.gl/constants';
 import {
   canvasToBlob,
   escape,

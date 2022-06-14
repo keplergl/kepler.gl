@@ -32,7 +32,7 @@ import coreReducer from 'reducers/core';
 import {keplerGlInit} from 'actions/actions';
 
 import Container, {ERROR_MSG} from 'components/container';
-import {DEFAULT_MAPBOX_API_URL} from 'constants/default-settings';
+import {DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';
 const initialCoreState = coreReducer(undefined, keplerGlInit());
 const initialState = {
   keplerGl: {}

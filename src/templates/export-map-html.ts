@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 // @ts-nocheck
-import {KEPLER_GL_VERSION, EXPORT_HTML_MAP_MODES} from 'constants/default-settings';
+import {KEPLER_GL_VERSION, EXPORT_HTML_MAP_MODES} from '@kepler.gl/constants';
 
 /**
  * This method is used to create an html file which will inlcude kepler and map data

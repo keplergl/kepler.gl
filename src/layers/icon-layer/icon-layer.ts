@@ -23,7 +23,7 @@ import {BrushingExtension} from '@deck.gl/extensions';
 
 import SvgIconLayer from 'deckgl-layers/svg-icon-layer/svg-icon-layer';
 import IconLayerIcon from './icon-layer-icon';
-import {ICON_FIELDS, CLOUDFRONT} from 'constants/default-settings';
+import {ICON_FIELDS, CLOUDFRONT} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
@@ -34,8 +34,8 @@ import {
   VisConfigNumber,
   VisConfigRange
 } from '../layer-factory';
-import {ColorRange} from '../../constants/color-ranges';
-import {Merge} from '../../reducers';
+import {ColorRange} from '@kepler.gl/constants';
+import {Merge} from '@kepler.gl/types';
 import {KeplerTable} from '../../utils';
 
 export type IconLayerColumnsConfig = {

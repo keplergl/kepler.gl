@@ -23,7 +23,7 @@ import uniq from 'lodash.uniq';
 import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
 import {TripsLayer as DeckGLTripsLayer} from '@deck.gl/geo-layers';
 
-import {GEOJSON_FIELDS} from 'constants/default-settings';
+import {GEOJSON_FIELDS, ColorRange} from '@kepler.gl/constants';
 import TripLayerIcon from './trip-layer-icon';
 
 import {
@@ -36,9 +36,8 @@ import {
 import {isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
 import TripInfoModalFactory from './trip-info-modal';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
-import {ColorRange} from '../../constants/color-ranges';
 import {VisConfigColorRange, VisConfigNumber, VisConfigRange} from '../layer-factory';
-import {Merge} from '../../reducers';
+import {Merge} from '@kepler.gl/types';
 import {KeplerTable} from '../../utils';
 
 export type TripLayerVisConfigSettings = {

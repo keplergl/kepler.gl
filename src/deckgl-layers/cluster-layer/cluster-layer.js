@@ -30,8 +30,7 @@ import {getDistanceScales} from 'viewport-mercator-project';
 import {max} from 'd3-array';
 
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
-import {SCALE_TYPES} from 'constants/default-settings';
-import {DEFAULT_COLOR_RANGE} from 'constants/color-ranges';
+import {SCALE_TYPES, DEFAULT_COLOR_RANGE} from '@kepler.gl/constants';
 import ClusterBuilder, {getGeoJSON} from '../layer-utils/cluster-utils';
 
 const defaultRadius = LAYER_VIS_CONFIGS.clusterRadius.defaultValue;

@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 import {createAction} from '@reduxjs/toolkit';
-import ActionTypes from 'constants/action-types';
-import {Merge} from '../reducers/types';
+import {default as ActionTypes} from './action-types';
+import {Merge} from '@kepler.gl/types';
 import {ExportImage} from '../reducers/ui-state-updaters';
 
 /** TOGGLE_SIDE_PANEL */

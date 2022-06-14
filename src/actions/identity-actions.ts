@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {createAction} from '@reduxjs/toolkit';
-import ActionTypes from 'constants/action-types';
+import {default as ActionTypes} from './action-types';
 import {UiState} from 'reducers/ui-state-updaters';
 
 export type RegisterEntryUpdaterAction = {

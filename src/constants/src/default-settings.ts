@@ -30,21 +30,8 @@ import {
   scaleLog,
   scalePoint
 } from 'd3-scale';
-import {
-  Layers,
-  FilterFunnel,
-  Settings,
-  CursorClick,
-  Pin,
-  ArrowDown,
-  ArrowUp,
-  Clipboard,
-  Cancel
-} from 'components/common/icons';
-import {getHTMLMapModeTileUrl} from 'utils/utils';
 import {TOOLTIP_FORMAT_TYPES} from './tooltip';
-import {LAYER_TYPES} from 'layers/types';
-import {RGBAColor} from 'reducers';
+import {RGBAColor} from '@kepler.gl/types';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
@@ -171,25 +158,21 @@ export const SIDEBAR_PANELS = [
   {
     id: 'layer',
     label: 'sidebar.panels.layer',
-    iconComponent: Layers,
     onClick: null
   },
   {
     id: 'filter',
     label: 'sidebar.panels.filter',
-    iconComponent: FilterFunnel,
     onClick: null
   },
   {
     id: 'interaction',
     label: 'sidebar.panels.interaction',
-    iconComponent: CursorClick,
     onClick: null
   },
   {
     id: 'map',
     label: 'sidebar.panels.basemap',
-    iconComponent: Settings,
     onClick: null
   }
 ];
@@ -363,29 +346,34 @@ export const TABLE_OPTION_LIST = [
   {
     value: TABLE_OPTION.SORT_ASC,
     display: 'Sort Ascending',
-    icon: ArrowUp,
+    icon: 'ArrowUp',
     condition: props => props.sortMode !== SORT_ORDER.ASCENDING
   },
   {
     value: TABLE_OPTION.SORT_DES,
     display: 'Sort Descending',
-    icon: ArrowDown,
+    icon: 'ArrowDown',
     condition: props => props.sortMode !== SORT_ORDER.DESCENDING
   },
   {
     value: TABLE_OPTION.UNSORT,
     display: 'Unsort Column',
-    icon: Cancel,
+    icon: 'Cancel',
     condition: props => props.isSorted
   },
-  {value: TABLE_OPTION.PIN, display: 'Pin Column', icon: Pin, condition: props => !props.isPinned},
+  {
+    value: TABLE_OPTION.PIN,
+    display: 'Pin Column',
+    icon: 'Pin',
+    condition: props => !props.isPinned
+  },
   {
     value: TABLE_OPTION.UNPIN,
     display: 'Unpin Column',
-    icon: Cancel,
+    icon: 'Cancel',
     condition: props => props.isPinned
   },
-  {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: Clipboard}
+  {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: 'Clipboard'}
 ];
 
 const ORANGE = '248, 194, 28';
@@ -642,7 +630,7 @@ export const CHANNEL_SCALE_SUPPORTED_FIELDS = Object.keys(CHANNEL_SCALES).reduce
     ...accu,
     [key]: Object.keys(FIELD_OPTS).filter(ft => Object.keys(FIELD_OPTS[ft].scale[key]).length)
   }),
-  {}
+  {} as {[id: string]: string[]}
 );
 
 export const DEFAULT_LAYER_COLOR = {
@@ -824,6 +812,10 @@ export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS).map(
   })
 );
 
+export function getHTMLMapModeTileUrl(mode) {
+  return `https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/map-${mode.toLowerCase()}-mode.png`;
+}
+
 export const EXPORT_HTML_MAP_MODE_OPTIONS = Object.entries(EXPORT_HTML_MAP_MODES).map(
   (entry: [string, any]) => ({
     id: entry[0],
@@ -905,13 +897,11 @@ export const EDITOR_MODES = {
   EDIT: EditorModes.EDIT_VERTEX
 };
 
-export const EDITOR_AVAILABLE_LAYERS: string[] = [
-  LAYER_TYPES.point,
-  LAYER_TYPES.hexagon,
-  LAYER_TYPES.arc,
-  LAYER_TYPES.line,
-  LAYER_TYPES.hexagonId
-];
+export const PLOT_TYPES = keyMirror({
+  histogram: null,
+  lineChart: null
+});
+
 // GPU Filtering
 /**
  * Max number of filter value buffers that deck.gl provides

@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 
 import NotificationItemFactory from './notification-panel/notification-item';
-import {DEFAULT_NOTIFICATION_TOPICS} from 'constants/default-settings';
+import {DEFAULT_NOTIFICATION_TOPICS} from '@kepler.gl/constants';
 import {Notifications} from 'reducers';
 import {removeNotification} from 'actions/ui-state-actions';
 

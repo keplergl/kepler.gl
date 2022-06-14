@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import {createSelector} from 'reselect';
 import {format} from 'd3-format';
 import moment from 'moment';
-import {SCALE_TYPES, SCALE_FUNC, ALL_FIELD_TYPES} from 'constants/default-settings';
+import {SCALE_TYPES, SCALE_FUNC, ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
 
 const ROW_H = 10;

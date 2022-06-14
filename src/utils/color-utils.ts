@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ColorRange} from 'constants/color-ranges';
-import {HexColor, RGBColor} from 'reducers';
+import {ColorRange} from '@kepler.gl/constants';
+import {HexColor, RGBColor} from '@kepler.gl/types';
 
 /**
  * get r g b from hex code

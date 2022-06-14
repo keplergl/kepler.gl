@@ -24,7 +24,7 @@ import EnhancedHexagonLayer from 'deckgl-layers/hexagon-layer/enhanced-hexagon-l
 import {hexagonToPolygonGeo} from './hexagon-utils';
 import HexagonLayerIcon from './hexagon-layer-icon';
 import {clamp} from 'utils/data-utils';
-import {Merge} from '../../reducers';
+import {Merge} from '@kepler.gl/types';
 import {
   AggregationTypes,
   VisConfigBoolean,
@@ -33,7 +33,7 @@ import {
   VisConfigRange,
   VisConfigSelection
 } from '../layer-factory';
-import {ColorRange} from '../../constants/color-ranges';
+import {ColorRange} from '@kepler.gl/constants';
 
 export type HexagonLayerVisConfigSettings = {
   opacity: VisConfigNumber;

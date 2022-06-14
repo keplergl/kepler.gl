@@ -43,7 +43,7 @@ import {
   RESOLUTIONS,
   DEFAULT_NOTIFICATION_TOPICS,
   DEFAULT_NOTIFICATION_TYPES
-} from 'constants/default-settings';
+} from '@kepler.gl/constants';
 
 test('#uiStateReducer', t => {
   t.deepEqual(

@@ -28,7 +28,7 @@ import FileDrop from './file-drop';
 import {FileLoading, FileLoadingProgress} from 'reducers/vis-state-updaters';
 
 import {isChrome} from 'utils/utils';
-import {GUIDES_FILE_FORMAT_DOC} from 'constants/user-guides';
+import {GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
 import ReactMarkdown from 'react-markdown';
 // Breakpoints
 import {media} from 'styles/media-breakpoints';

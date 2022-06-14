@@ -21,7 +21,7 @@
 import React, {useCallback} from 'react';
 import classnames from 'classnames';
 
-import {EDITOR_MODES} from 'constants/default-settings';
+import {EDITOR_MODES} from '@kepler.gl/constants';
 import {
   CursorClick,
   DrawPolygon,

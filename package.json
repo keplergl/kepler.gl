@@ -14,6 +14,11 @@
     "visualization",
     "deck.gl"
   ],
+  "private": true,
+  "workspaces": [
+    "./src/constants",
+    "./src/types"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/keplergl/kepler.gl.git"
@@ -50,12 +55,12 @@
     "analyze:bundle": "webpack --config ./webpack/bundle.js --progress --env.prod",
     "check-licence": "uber-licence --dry",
     "add-licence": "uber-licence",
-    "prepublish": "uber-licence && yarn build && yarn build:umd && yarn build:types",
+    "prepublish": "yarn workspaces run prepublish && uber-licence && yarn build && yarn build:umd && yarn build:types",
     "docs": "babel-node ./scripts/documentation.js",
     "typedoc": "typedoc --theme markdown --out typedoc --inputFiles ./src/reducers --inputFiles ./src/actions --excludeExternals --excludeNotExported --excludePrivate",
     "example-version": "babel-node ./scripts/edit-version.js",
     "prettier-all": "prettier --write '{src,examples,test}/**/*.{js,tsx,ts}'",
-    "lint": "yarn typescript && eslint src test webpack examples/*.js examples/**/src/*.{js,tsx,ts} website/*.js website/src --fix",
+    "lint": "yarn typescript && eslint src/*/src/*.{js,tsx,ts}  test webpack examples/*.js examples/**/src/*.{js,tsx,ts} website/*.js website/src --fix",
     "lint:css": "stylelint './src/**/*.js'",
     "typescript": "tsc --noEmit",
     "web": "(yarn && yarn install:web && yarn start:web)",
@@ -132,6 +137,7 @@
     "@types/react-virtualized": "^9.21.20",
     "@types/react-vis": "^1.8.0",
     "@types/styled-components": "^5.1.25",
+    "@typescript-eslint/parser": "^5.27.0",
     "classnames": "^2.2.1",
     "colorbrewer": "^1.5.0",
     "copy-to-clipboard": "^3.3.1",

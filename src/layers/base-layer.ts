@@ -35,10 +35,11 @@ import {
   FIELD_OPTS,
   SCALE_FUNC,
   CHANNEL_SCALE_SUPPORTED_FIELDS,
-  MAX_GPU_FILTERS
-} from 'constants/default-settings';
-import {ColorRange, COLOR_RANGES} from 'constants/color-ranges';
-import {DataVizColors} from 'constants/custom-color-ranges';
+  MAX_GPU_FILTERS,
+  ColorRange,
+  COLOR_RANGES,
+  DataVizColors
+} from '@kepler.gl/constants';
 import {
   LAYER_VIS_CONFIGS,
   DEFAULT_TEXT_LABEL,
@@ -57,7 +58,8 @@ import {getSampleData} from 'utils/table-utils/data-container-utils';
 
 import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
-import {RGBColor, RGBAColor, MapState, Filter, Datasets, ValueOf, NestedPartial} from 'reducers';
+import {MapState, Filter, Datasets} from 'reducers';
+import {RGBColor, RGBAColor, ValueOf, NestedPartial} from '@kepler.gl/types';
 import {LayerTextLabel, ColorUI} from './layer-factory';
 import {KeplerTable} from '../utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';

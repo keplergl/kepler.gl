@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {handleActions} from 'redux-actions';
-import ActionTypes from 'constants/action-types';
+import {ActionTypes} from 'actions';
 import * as mapStyleUpdaters from './map-style-updaters';
 
 /**

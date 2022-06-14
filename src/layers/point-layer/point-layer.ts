@@ -31,10 +31,10 @@ import Layer, {
 import {hexToRgb} from 'utils/color-utils';
 import {findDefaultColorField} from 'utils/dataset-utils';
 import PointLayerIcon from './point-layer-icon';
-import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES} from 'constants/default-settings';
+import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES, ColorRange} from '@kepler.gl/constants';
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
-import {Merge, RGBColor} from '../../reducers';
+import {Merge, RGBColor} from '@kepler.gl/types';
 import {
   VisConfigBoolean,
   VisConfigColorRange,
@@ -42,7 +42,6 @@ import {
   VisConfigNumber,
   VisConfigRange
 } from '../layer-factory';
-import {ColorRange} from '../../constants/color-ranges';
 import {LAYER_VIS_CONFIGS} from '../layer-factory';
 import {KeplerTable} from '../../utils';
 

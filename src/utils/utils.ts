@@ -98,9 +98,7 @@ export const camelize = str => {
  * @param mode export option
  * @return {string} url
  */
-export function getHTMLMapModeTileUrl(mode) {
-  return `https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/map-${mode.toLowerCase()}-mode.png`;
-}
+export {getHTMLMapModeTileUrl} from '@kepler.gl/constants';
 
 /**
  * Converts non-arrays to arrays.  Leaves arrays alone.  Converts

@@ -21,7 +21,7 @@
 import console from 'global/console';
 import window from 'global/window';
 import document from 'global/document';
-import {IMAGE_EXPORT_ERRORS} from 'constants/user-feedbacks';
+import {IMAGE_EXPORT_ERRORS} from '@kepler.gl/constants';
 
 export function processClone(original, clone) {
   if (!(clone instanceof window.Element)) {

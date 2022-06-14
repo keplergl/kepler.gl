@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {CenterFlexbox, DatasetSquare} from 'components/common/styled-components';
-import {RGBColor} from 'reducers';
+import {RGBColor} from '@kepler.gl/types';
 
 const DatasetName = styled.div.attrs({
   className: 'dataset-name'

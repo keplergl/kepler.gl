@@ -39,16 +39,16 @@ import TextLabelPanelFactory from './text-label-panel';
 
 import {capitalizeFirstLetter} from 'utils/utils';
 
-import {CHANNEL_SCALE_SUPPORTED_FIELDS} from 'constants/default-settings';
-import {LAYER_TYPES} from 'layers/types';
+import {CHANNEL_SCALE_SUPPORTED_FIELDS, ColorRange} from '@kepler.gl/constants';
 import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';
-import {Datasets, NestedPartial, RGBColor} from 'reducers';
+import {LAYER_TYPES} from 'layers/types';
+import {Datasets} from 'reducers';
+import {NestedPartial, RGBColor} from '@kepler.gl/types';
 import {ColorUI} from 'layers/layer-factory';
 import {VisualChannel} from 'layers/base-layer';
 import AggregationLayer from 'layers/aggregation-layer';
 import {Field} from 'utils/table-utils/kepler-table';
 import {toggleModal} from 'actions/ui-state-actions';
-import {ColorRange} from 'constants/color-ranges';
 import {ActionHandler} from 'actions';
 
 type LayerConfiguratorProps = {

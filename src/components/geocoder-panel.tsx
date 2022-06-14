@@ -32,7 +32,7 @@ import {
   GEOCODER_GEO_OFFSET,
   GEOCODER_ICON_COLOR,
   GEOCODER_ICON_SIZE
-} from 'constants/default-settings';
+} from '@kepler.gl/constants';
 import {MapState, Viewport} from 'reducers';
 
 const ICON_LAYER = {

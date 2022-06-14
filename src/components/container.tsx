@@ -95,17 +95,6 @@ export function ContainerFactory(
       mint: true
     };
 
-    getSelector = memoize((id, getState) => state => {
-      if (!getState(state)) {
-        // log error
-        Console.error(ERROR_MSG.noState);
-
-        return null;
-      }
-      return getState(state)[id];
-    });
-    getDispatch = memoize((id, dispatch) => forwardTo(id, dispatch));
-
     componentDidMount() {
       const {
         id,
@@ -146,6 +135,17 @@ export function ContainerFactory(
         this.props.dispatch(deleteEntry(this.props.id));
       }
     }
+
+    getSelector = memoize((id, getState) => state => {
+      if (!getState(state)) {
+        // log error
+        Console.error(ERROR_MSG.noState);
+
+        return null;
+      }
+      return getState(state)[id];
+    });
+    getDispatch = memoize((id, dispatch) => forwardTo(id, dispatch));
 
     render() {
       const {id, getState, dispatch, state} = this.props;

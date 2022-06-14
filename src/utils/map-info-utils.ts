@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {MAP_INFO_CHARACTER} from 'constants/default-settings';
+import {MAP_INFO_CHARACTER} from '@kepler.gl/constants';
 
 export function isValidMapInfo(mapInfo) {
   return (

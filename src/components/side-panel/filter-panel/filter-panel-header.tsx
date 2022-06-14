@@ -24,7 +24,8 @@ import PanelHeaderActionFactory from 'components/side-panel/panel-header-action'
 import {Trash} from 'components/common/icons';
 import {createLinearGradient} from 'utils/color-utils';
 import {StyledPanelHeader, StyledPanelHeaderProps} from 'components/common/styled-components';
-import {Filter, RGBColor} from 'reducers';
+import {Filter} from 'reducers';
+import {RGBColor} from '@kepler.gl/types';
 import KeplerTable from 'utils/table-utils/kepler-table';
 
 interface StyledFilterHeaderProps extends StyledPanelHeaderProps {

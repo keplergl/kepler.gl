@@ -22,7 +22,7 @@ import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
 import {drainTasksForTesting} from 'react-palm/tasks';
 
-import {VizColorPalette} from 'constants/custom-color-ranges';
+import {VizColorPalette, COMPARE_TYPES} from '@kepler.gl/constants';
 import {getInitialInputStyle} from 'reducers/map-style-updaters';
 
 import keplerGlReducer from 'reducers/core';
@@ -54,7 +54,6 @@ import {
 } from 'test/fixtures/test-trip-data';
 import tripGeojson, {tripDataInfo} from 'test/fixtures/trip-geojson';
 import {processCsvData, processGeojson} from 'processors/data-processor';
-import {COMPARE_TYPES} from 'constants/tooltip';
 import {MOCK_MAP_STYLE} from './mock-map-styles';
 import {getUpdateVisDataPayload} from 'components/geocoder-panel';
 

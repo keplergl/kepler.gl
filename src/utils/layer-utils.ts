@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {FindDefaultLayerPropsReturnValue, OVERLAY_TYPE} from 'layers/base-layer';
-import {GEOCODER_LAYER_ID} from 'constants/default-settings';
+import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {Layer, LayerClassesType} from 'layers';
 import {VisState, TooltipField, CompareType, SplitMapLayers} from 'reducers/vis-state-updaters';
 import KeplerTable, {Field} from './table-utils/kepler-table';

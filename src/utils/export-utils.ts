@@ -28,7 +28,7 @@ import {
   EXPORT_DATA_TYPE,
   FourByThreeRatioOption,
   OneXResolutionOption
-} from 'constants/default-settings';
+} from '@kepler.gl/constants';
 import {exportMapToHTML} from 'templates/export-map-html';
 import {formatCsv} from 'processors/data-processor';
 import get from 'lodash.get';

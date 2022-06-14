@@ -35,7 +35,7 @@ import {ArrowUp, ArrowDown, VertThreeDots} from 'components/common/icons';
 import {parseFieldValue} from 'utils/data-utils';
 import {adjustCellsToContainer} from './cell-size';
 
-import {ALL_FIELD_TYPES, SORT_ORDER} from 'constants/default-settings';
+import {ALL_FIELD_TYPES, SORT_ORDER} from '@kepler.gl/constants';
 import FieldTokenFactory from 'components/common/field-token';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 

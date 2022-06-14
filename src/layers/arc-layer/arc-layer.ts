@@ -30,9 +30,9 @@ import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
 
 import {hexToRgb} from '../../utils/color-utils';
 import ArcLayerIcon from './arc-layer-icon';
-import {DEFAULT_LAYER_COLOR} from '../../constants/default-settings';
+import {DEFAULT_LAYER_COLOR, ColorRange} from '@kepler.gl/constants';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
-import {RGBColor, Merge} from '../../reducers';
+import {RGBColor, Merge} from '@kepler.gl/types';
 
 import {
   VisConfigColorRange,
@@ -40,7 +40,6 @@ import {
   VisConfigNumber,
   VisConfigRange
 } from '../layer-factory';
-import {ColorRange} from '../../constants/color-ranges';
 import KeplerTable from '../../utils/table-utils/kepler-table';
 
 export type ArcLayerVisConfigSettings = {

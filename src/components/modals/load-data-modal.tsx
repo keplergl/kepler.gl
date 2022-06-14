@@ -28,7 +28,7 @@ import LoadStorageMapFactory from './load-storage-map';
 import ModalTabsFactory from './modal-tabs';
 import LoadingDialog from './loading-dialog';
 
-import {LOADING_METHODS} from 'constants/default-settings';
+import {LOADING_METHODS} from '@kepler.gl/constants';
 import {FileLoading} from 'reducers/vis-state-updaters';
 
 /** @typedef {import('./load-data-modal').LoadDataModalProps} LoadDataModalProps */

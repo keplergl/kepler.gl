@@ -20,7 +20,7 @@
 
 import React, {useState} from 'react';
 import JSONPretty from 'react-json-pretty';
-import {ADD_DATA_TO_MAP_DOC} from 'constants/user-guides';
+import {ADD_DATA_TO_MAP_DOC} from '@kepler.gl/constants';
 import styled from 'styled-components';
 import {StyledExportSection, Button} from 'components/common/styled-components';
 import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';

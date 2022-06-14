@@ -41,7 +41,7 @@ import {
 import NotificationPanelFactory from 'components/notification-panel';
 import {ActionTypes} from 'actions';
 import {DEFAULT_MAP_STYLES, EXPORT_IMAGE_ID} from 'constants';
-import {GEOCODER_DATASET_NAME} from 'constants/default-settings';
+import {GEOCODER_DATASET_NAME} from '@kepler.gl/constants';
 // mock state
 import {StateWithGeocoderDataset} from 'test/helpers/mock-state';
 

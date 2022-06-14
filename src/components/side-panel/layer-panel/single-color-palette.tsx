@@ -23,9 +23,8 @@ import {range} from 'd3-array';
 import styled from 'styled-components';
 import {hexToRgb} from 'utils/color-utils';
 
-import {ColorsByTheme, Themes} from 'constants/color-palette';
-import {RGBColor} from 'reducers';
-import {ColorRange} from 'constants/color-ranges';
+import {ColorsByTheme, Themes, ColorRange} from '@kepler.gl/constants';
+import {RGBColor} from '@kepler.gl/types';
 
 type SingleColorPaletteProps = {
   onSelectColor: (color: RGBColor | ColorRange, e: MouseEvent) => void;

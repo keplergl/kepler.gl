@@ -39,4 +39,5 @@ export {
   wrapTo
 } from './action-wrapper';
 
-export {default as ActionTypes} from '../constants/action-types';
+export {ACTION_PREFIX} from './action-types';
+export {default as ActionTypes} from './action-types';

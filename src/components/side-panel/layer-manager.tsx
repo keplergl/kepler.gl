@@ -34,7 +34,7 @@ import AddLayerButtonFactory from './layer-panel/add-layer-button';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {PanelLabel, SidePanelDivider, SidePanelSection} from 'components/common/styled-components';
 
-import {LAYER_BLENDINGS} from 'constants/default-settings';
+import {LAYER_BLENDINGS} from '@kepler.gl/constants';
 import {Datasets} from 'reducers';
 import {Layer, LayerClassesType} from 'layers';
 import * as UiStateActions from 'actions/ui-state-actions';

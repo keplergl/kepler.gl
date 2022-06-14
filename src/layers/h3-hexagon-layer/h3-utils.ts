@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {h3GetResolution, H3Index, h3IsValid, h3ToGeo, h3ToGeoBoundary} from 'h3-js';
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {notNullorUndefined} from 'utils/data-utils';
 
 export {h3GetResolution, h3IsValid};

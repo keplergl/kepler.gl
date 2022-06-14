@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {HexColor, RGBColor} from 'reducers';
+import {HexColor, RGBColor} from '@kepler.gl/types';
 import styled from 'styled-components';
 import classnames from 'classnames';
 

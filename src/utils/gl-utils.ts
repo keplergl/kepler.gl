@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {setParameters} from '@luma.gl/core';
-import {LAYER_BLENDINGS} from 'constants/default-settings';
+import {LAYER_BLENDINGS} from '@kepler.gl/constants';
 import GL from '@luma.gl/constants';
 
 const getGlConst = d => GL[d];

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {FILTER_TYPES} from 'constants/default-settings';
+import {FILTER_TYPES} from '@kepler.gl/constants';
 import {toArray} from '../../src/utils/utils';
 import KeplerTable from '../../src/utils/table-utils/kepler-table';
 

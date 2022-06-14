@@ -28,7 +28,7 @@ export * from './schemas';
 export * from './actions';
 
 // Constants
-export * from './constants';
+export * from '@kepler.gl/constants';
 
 // Processors
 export * from './processors';

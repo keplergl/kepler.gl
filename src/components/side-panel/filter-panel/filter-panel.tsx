@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 import get from 'lodash.get';
-import {ALL_FIELD_TYPES, FILTER_TYPES} from 'constants/default-settings';
+import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 
 import NewFilterPanelFactory from 'components/filters/filter-panels/new-filter-panel';
 import TimeRangeFilterPanelFactory from 'components/filters/filter-panels/time-range-filter-panel';

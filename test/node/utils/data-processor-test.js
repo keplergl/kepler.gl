@@ -57,7 +57,7 @@ import {
 
 import {createDataContainer} from 'utils/table-utils';
 
-import {ALL_FIELD_TYPES} from 'constants/default-settings';
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {cmpFields} from '../../helpers/comparison-utils';
 
 test('Processor -> getFieldsFromData', t => {

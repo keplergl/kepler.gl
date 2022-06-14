@@ -21,8 +21,11 @@
 import React from 'react';
 import {StyledExportSection, StyledType, CheckMark} from 'components/common/styled-components';
 import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';
-import {EXPORT_HTML_MAP_MODE_OPTIONS} from 'constants/default-settings';
-import {EXPORT_HTML_MAP_DOC, EXPORT_HTML_MAP_MODES_DOC} from 'constants/user-guides';
+import {
+  EXPORT_HTML_MAP_MODE_OPTIONS,
+  EXPORT_HTML_MAP_DOC,
+  EXPORT_HTML_MAP_MODES_DOC
+} from '@kepler.gl/constants';
 import styled from 'styled-components';
 import {injectIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';

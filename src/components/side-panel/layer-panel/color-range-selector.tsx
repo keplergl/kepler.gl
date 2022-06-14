@@ -28,12 +28,12 @@ import {PanelLabel} from 'components/common/styled-components';
 import Switch from 'components/common/switch';
 import ColorPalette from './color-palette';
 import CustomPalette from './custom-palette';
-import {COLOR_RANGES, ColorRange} from 'constants/color-ranges';
+import {COLOR_RANGES, ColorRange} from '@kepler.gl/constants';
 import {numberSort} from 'utils/data-utils';
 import {reverseColorRange} from 'utils/color-utils';
 import {FormattedMessage} from 'localization';
 import {ColorUI} from 'layers/layer-factory';
-import {NestedPartial} from 'reducers';
+import {NestedPartial} from '@kepler.gl/types';
 
 type ColorRangeSelectorProps = {
   colorPaletteUI: ColorUI;

@@ -24,7 +24,7 @@ import {createSelector} from 'reselect';
 import get from 'lodash.get';
 import document from 'global/document';
 
-import {EXPORT_DATA_TYPE_OPTIONS, EXPORT_MAP_FORMATS} from 'constants/default-settings';
+import {EXPORT_DATA_TYPE_OPTIONS, EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import ModalDialogFactory from './modals/modal-dialog';
 import {exportJson, exportHtml, exportData, exportImage, exportMap} from 'utils/export-utils';
 import {isValidMapInfo} from 'utils/map-info-utils';
@@ -56,9 +56,9 @@ import {
   SAVE_MAP_ID,
   SHARE_MAP_ID,
   OVERWRITE_MAP_ID
-} from 'constants/default-settings';
+} from '@kepler.gl/constants';
 
-import KeyEvent from 'constants/keyevent';
+import {KeyEvent} from '@kepler.gl/constants';
 import {getFileFormatNames, getFileExtensions} from '../reducers/vis-state-selectors';
 import {MapState, MapStyle, UiState, VisState} from 'reducers';
 import {OnSuccessCallBack, OnErrorCallBack} from 'actions';

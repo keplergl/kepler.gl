@@ -31,8 +31,7 @@ import {default as H3Layer} from './h3-hexagon-layer/h3-hexagon-layer';
 import {default as ScenegraphLayer} from './scenegraph-layer/scenegraph-layer';
 import {default as TripLayer} from './trip-layer/trip-layer';
 import {default as S2GeometryLayer} from './s2-geometry-layer/s2-geometry-layer';
-import {LAYER_TYPES} from './types';
-
+import {LAYER_TYPES} from 'layers/types';
 // base layer
 export {default as Layer, OVERLAY_TYPE, LAYER_ID_LENGTH, colorMaker} from './base-layer';
 export type {LayerBaseConfig, LayerColumns, LayerColumn} from './base-layer';
