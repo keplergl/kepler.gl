@@ -29,8 +29,7 @@ import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import {VisConfigColorRange, VisConfigNumber} from '../layer-factory';
 import {ColorRange} from '@kepler.gl/constants';
 import {Merge} from '@kepler.gl/types';
-import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
-import {KeplerTable} from '../../utils';
+import {DataContainerInterface, KeplerTable} from '@kepler.gl/utils';
 
 export type ScenegraphLayerVisConfigSettings = {
   opacity: VisConfigNumber;

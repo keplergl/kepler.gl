@@ -33,8 +33,7 @@ import {
 } from '../layer-factory';
 import {ColorRange} from '@kepler.gl/constants';
 import {Merge, RGBColor} from '@kepler.gl/types';
-import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
-import {KeplerTable} from '../../utils';
+import {DataContainerInterface, KeplerTable} from '@kepler.gl/utils';
 
 export type LineLayerVisConfigSettings = {
   opacity: VisConfigNumber;

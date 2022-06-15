@@ -21,10 +21,8 @@
 import {S2Layer} from '@deck.gl/geo-layers';
 import {HIGHLIGH_COLOR_3D, CHANNEL_SCALES, ColorRange} from '@kepler.gl/constants';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
-import {KeplerTable} from '../../utils';
-import {createDataContainer} from 'utils/table-utils';
+import {KeplerTable, createDataContainer, DataContainerInterface} from '@kepler.gl/utils';
 import {Merge, RGBColor} from '@kepler.gl/types';
-import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import Layer, {
   LayerBaseConfig,
   LayerColorConfig,

@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import en from './translations/en';
-import {flattenMessages} from '../utils/locale-utils';
+import {flattenMessages} from '@kepler.gl/utils';
 import {LOCALE_CODES} from './locales';
 
 const enFlat = flattenMessages(en);

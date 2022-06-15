@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {findDefaultColorField, createNewDataEntry} from 'utils/dataset-utils';
+import {findDefaultColorField, createNewDataEntry} from '@kepler.gl/utils';
 
 import {processCsvData} from 'processors/data-processor';
 

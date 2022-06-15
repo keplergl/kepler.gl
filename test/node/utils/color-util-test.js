@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {createLinearGradient} from 'utils/color-utils';
+import {createLinearGradient} from '@kepler.gl/utils';
 
 test('createLinearGradient', t => {
   let colors = [[100, 100, 100]];

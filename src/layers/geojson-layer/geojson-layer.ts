@@ -48,9 +48,8 @@ import {
   VisConfigRange,
   VisConfigBoolean
 } from '../layer-factory';
-import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
+import {DataContainerInterface, KeplerTable} from '@kepler.gl/utils';
 import {Merge, RGBColor} from '@kepler.gl/types';
-import {KeplerTable} from '../../utils';
 
 const SUPPORTED_ANALYZER_TYPES = {
   [DATA_TYPES.GEOMETRY]: true,

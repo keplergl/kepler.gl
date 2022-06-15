@@ -26,7 +26,7 @@ import {Button, Tooltip, ButtonProps} from 'components/common/styled-components'
 import AnimationSpeedSliderFactory from './animation-speed-slider';
 import {Reset, Play, Pause, Rocket, AnchorWindow, FreeWindow} from 'components/common/icons';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
-import {preciseRound} from 'utils/data-utils';
+import {preciseRound} from '@kepler.gl/utils';
 import {ReactComponentLike} from 'prop-types';
 
 const DELAY_SHOW = 500;

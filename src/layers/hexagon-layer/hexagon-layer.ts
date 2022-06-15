@@ -23,7 +23,7 @@ import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import EnhancedHexagonLayer from 'deckgl-layers/hexagon-layer/enhanced-hexagon-layer';
 import {hexagonToPolygonGeo} from './hexagon-utils';
 import HexagonLayerIcon from './hexagon-layer-icon';
-import {clamp} from 'utils/data-utils';
+import {clamp} from '@kepler.gl/utils';
 import {Merge} from '@kepler.gl/types';
 import {
   AggregationTypes,

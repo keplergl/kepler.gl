@@ -28,10 +28,9 @@ import Layer, {
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
 
-import {hexToRgb} from '../../utils/color-utils';
+import {hexToRgb, DataContainerInterface, KeplerTable} from '@kepler.gl/utils';
 import ArcLayerIcon from './arc-layer-icon';
 import {DEFAULT_LAYER_COLOR, ColorRange} from '@kepler.gl/constants';
-import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import {RGBColor, Merge} from '@kepler.gl/types';
 
 import {
@@ -40,7 +39,6 @@ import {
   VisConfigNumber,
   VisConfigRange
 } from '../layer-factory';
-import KeplerTable from '../../utils/table-utils/kepler-table';
 
 export type ArcLayerVisConfigSettings = {
   opacity: VisConfigNumber;

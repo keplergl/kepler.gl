@@ -22,7 +22,7 @@ import React from 'react';
 import test from 'tape';
 import {shallow} from 'enzyme';
 import NotificationItemFactory from 'components/notification-panel/notification-item';
-import {createNotification} from 'utils/notifications-utils';
+import {createNotification} from '@kepler.gl/utils';
 import {theme} from 'styles/base';
 
 const NotificationItem = NotificationItemFactory();

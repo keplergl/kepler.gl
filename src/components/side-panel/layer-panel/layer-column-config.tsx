@@ -25,7 +25,7 @@ import {PanelLabel, SidePanelSection} from 'components/common/styled-components'
 import ColumnSelectorFactory from './column-selector';
 import {ColumnPairs} from 'layers/base-layer';
 import {Layer, LayerColumns, LayerBaseConfig} from 'layers';
-import {Field, FieldPair} from 'utils/table-utils/kepler-table';
+import {Field, FieldPair} from '@kepler.gl/utils';
 
 type LayerColumnConfigProps = {
   columnPairs?: ColumnPairs | null;

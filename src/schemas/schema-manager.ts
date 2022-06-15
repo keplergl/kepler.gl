@@ -26,7 +26,7 @@ import mapStyleSchema from './map-style-schema';
 import mapStateSchema from './map-state-schema';
 
 import {CURRENT_VERSION, VERSIONS} from './versions';
-import {isPlainObject} from 'utils/utils';
+import {isPlainObject} from '@kepler.gl/utils';
 
 import {
   InteractionConfig,

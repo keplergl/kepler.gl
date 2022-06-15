@@ -31,7 +31,7 @@ import {
   CenterFlexbox
 } from 'components/common/styled-components';
 import {FormattedMessage} from 'localization';
-import {camelize} from 'utils/utils';
+import {camelize} from '@kepler.gl/utils';
 import {VisibleLayerGroups} from 'reducers';
 import {BaseProps} from 'components/common/icons/base';
 

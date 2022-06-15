@@ -35,7 +35,7 @@ import {
 } from 'test/helpers/layer-utils';
 import {parseTripGeoJsonTimestamp} from 'layers/trip-layer/trip-utils';
 import {TripLayerMeta, dataToFeature, dataToTimeStamp} from 'test/fixtures/trip-geojson';
-import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
+import {copyTableAndUpdate} from '@kepler.gl/utils';
 
 test('#TripLayer -> constructor', t => {
   const TEST_CASES = {

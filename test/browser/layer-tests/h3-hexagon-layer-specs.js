@@ -34,7 +34,7 @@ import {
 import {KeplerGlLayers} from 'layers';
 import {getCentroid} from 'layers/h3-hexagon-layer/h3-utils';
 import {defaultElevation} from 'layers/h3-hexagon-layer/h3-hexagon-layer';
-import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
+import {copyTableAndUpdate} from '@kepler.gl/utils';
 
 const {H3Layer} = KeplerGlLayers;
 const columns = {

@@ -24,10 +24,8 @@ import {createSelector} from 'reselect';
 
 import ItemSelector from './item-selector/item-selector';
 import {classList} from './item-selector/dropdown-list';
-import {toArray} from 'utils/utils';
-import {notNullorUndefined} from 'utils/data-utils';
+import {toArray, notNullorUndefined, Field} from '@kepler.gl/utils';
 import FieldTokenFactory from '../common/field-token';
-import {Field} from 'utils/table-utils/kepler-table';
 
 const defaultDisplayOption = d => d.displayName || d.name;
 const defaultValueOption = d => d.name;

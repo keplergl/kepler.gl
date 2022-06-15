@@ -210,10 +210,7 @@ export {
   LayerColorSelector
 } from './side-panel/layer-panel/layer-configurator';
 
-export * from './common/styled-components';
-import * as Icons from './common/icons';
-
-export {Icons};
+export * from './common';
 
 // Individual Component from Dependency Tree
 export const TimeRangeSlider = appInjector.get(TimeRangeSliderFactory);

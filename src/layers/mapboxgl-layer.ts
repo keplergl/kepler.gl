@@ -22,7 +22,7 @@ import Layer, {LayerBaseConfig, LayerColumn, OVERLAY_TYPE, VisualChannels} from 
 import {createSelector} from 'reselect';
 
 import {geoJsonFromData, prefixGpuField, gpuFilterToMapboxFilter} from './mapbox-utils';
-import KeplerTable from '../utils/table-utils/kepler-table';
+import {KeplerTable} from '@kepler.gl/utils';
 import {Merge} from '@kepler.gl/types';
 
 type MapboxLayerGLColumns = {

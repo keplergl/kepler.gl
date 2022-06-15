@@ -35,10 +35,9 @@ import {
 
 import {isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
 import TripInfoModalFactory from './trip-info-modal';
-import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
+import {DataContainerInterface, KeplerTable} from '@kepler.gl/utils';
 import {VisConfigColorRange, VisConfigNumber, VisConfigRange} from '../layer-factory';
 import {Merge} from '@kepler.gl/types';
-import {KeplerTable} from '../../utils';
 
 export type TripLayerVisConfigSettings = {
   opacity: VisConfigNumber;

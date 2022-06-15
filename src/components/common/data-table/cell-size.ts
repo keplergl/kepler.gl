@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import document from 'global/document';
-import {parseFieldValue} from 'utils/data-utils';
+import {parseFieldValue} from '@kepler.gl/utils';
 
 const MIN_GHOST_CELL_SIZE = 200;
 
