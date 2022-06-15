@@ -44,18 +44,20 @@ import {
 
 import {
   ACCEPTED_ANALYZER_TYPES,
-  analyzerTypeToFieldType,
-  formatCsv,
-  getFieldsFromData,
-  getSampleForTypeAnalyze,
   parseCsvRowsByFieldType,
   processCsvData,
   processGeojson,
-  processRowObject,
-  validateInputData
+  processRowObject
 } from 'processors/data-processor';
 
-import {createDataContainer} from 'utils/table-utils';
+import {
+  analyzerTypeToFieldType,
+  getSampleForTypeAnalyze,
+  createDataContainer,
+  formatCsv,
+  validateInputData,
+  getFieldsFromData
+} from '@kepler.gl/utils';
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {cmpFields} from '../../helpers/comparison-utils';
