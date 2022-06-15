@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import React from 'react';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import {DataFilterExtension} from '@deck.gl/extensions';
@@ -51,20 +52,24 @@ import {
   LayerVisConfigSettings
 } from './layer-factory';
 
-import {generateHashId, isPlainObject} from 'utils/utils';
+import {
+  generateHashId,
+  isPlainObject,
+  getLatLngBounds,
+  notNullorUndefined,
+  getSampleData,
+  hexToRgb,
+  getColorGroupByName,
+  reverseColorRange,
+  KeplerTable,
+  DataContainerInterface,
+  Field,
+  GpuFilter
+} from '@kepler.gl/utils';
 
-import {getLatLngBounds, notNullorUndefined} from 'utils/data-utils';
-import {getSampleData} from 'utils/table-utils/data-container-utils';
-
-import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
-
-import {MapState, Filter, Datasets} from 'reducers';
-import {RGBColor, RGBAColor, ValueOf, NestedPartial} from '@kepler.gl/types';
+import {MapState, Filter} from 'reducers';
+import {Datasets, RGBColor, RGBAColor, ValueOf, NestedPartial} from '@kepler.gl/types';
 import {LayerTextLabel, ColorUI} from './layer-factory';
-import {KeplerTable} from '../utils';
-import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
-import {Field, GpuFilter} from 'utils/table-utils/kepler-table';
-import React from 'react';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 

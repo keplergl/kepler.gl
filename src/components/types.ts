@@ -1,5 +1,6 @@
 import {ComponentType} from 'react';
-import {Datasets, Filter, InteractionConfig, MapStyle} from '../reducers';
+import {Filter, InteractionConfig, MapStyle} from '../reducers';
+import {Datasets} from '@kepler.gl/types';
 import {Layer, LayerClassesType} from '../layers';
 import {UiState} from 'reducers/ui-state-updaters';
 

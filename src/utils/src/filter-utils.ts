@@ -23,27 +23,18 @@ import keyMirror from 'keymirror';
 import {console as Console} from 'global/console';
 import get from 'lodash.get';
 import isEqual from 'lodash.isequal';
-
 import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
-import {
-  ALL_FIELD_TYPES,
-  FILTER_TYPES,
-  ANIMATION_WINDOW,
-  PLOT_TYPES
-} from '@kepler.gl/constants';
-import {LAYER_TYPES} from 'layers/types';
-import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
-import * as ScaleUtils from './data-scale-utils';
-import {generateHashId, set, toArray} from './utils';
-import {getCentroid, h3IsValid} from 'layers/h3-hexagon-layer/h3-utils';
+import {h3IsValid} from 'h3-js';
 
+import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW} from '@kepler.gl/constants';
+import {Layer, LAYER_TYPES, getCentroid} from '../../layers';
+import {Millisecond, ParsedFilter, Datasets, Entries} from '@kepler.gl/types';
 import {
   Filter,
   FilterBase,
   PolygonFilter,
-  Datasets,
   FieldDomain,
   TimeRangeFieldDomain,
   HistogramBin,
@@ -53,13 +44,13 @@ import {
   LineChart,
   TimeRangeFilter,
   RangeFieldDomain
-} from '../reducers/vis-state-updaters';
+} from '../../reducers';
+
+import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
+import * as ScaleUtils from './data-scale-utils';
+import {generateHashId, set, toArray} from './utils';
 import KeplerTable, {Field, FilterRecord, FilterDatasetOpt} from './table-utils/kepler-table';
-import {Layer} from 'layers';
-import {ParsedFilter} from 'schemas';
 import {DataContainerInterface} from './table-utils/data-container-interface';
-import {Millisecond} from 'cloud-providers';
-import {Entries} from '@kepler.gl/types';
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];
@@ -93,6 +84,11 @@ const durationHour = durationMinute * 60;
 const durationDay = durationHour * 24;
 const durationWeek = durationDay * 7;
 const durationYear = durationDay * 365;
+
+export const PLOT_TYPES = keyMirror({
+  histogram: null,
+  lineChart: null
+});
 
 export const FILTER_UPDATER_PROPS = keyMirror({
   dataId: null,
@@ -251,7 +247,6 @@ export function validateFilter(
     return failed;
   }
 
-  // @ts-expect-error
   const initializeFilter: Filter = {
     // @ts-expect-error
     ...getDefaultFilter(filter.dataId),

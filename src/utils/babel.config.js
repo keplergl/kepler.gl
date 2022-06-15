@@ -18,25 +18,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {setParameters} from '@luma.gl/core';
-import {LAYER_BLENDINGS} from '@kepler.gl/constants';
-import GL from '@luma.gl/constants';
+const KeplerPackage = require('./package');
 
-const getGlConst = d => GL[d];
-
-export function setLayerBlending(gl, layerBlending) {
-  const blending = LAYER_BLENDINGS[layerBlending];
-  const {blendFunc, blendEquation} = blending;
-
-  setParameters(gl, {
-    [GL.BLEND]: true,
-    ...(blendFunc
-      ? {
-          blendFunc: blendFunc.map(getGlConst),
-          blendEquation: Array.isArray(blendEquation)
-            ? blendEquation.map(getGlConst)
-            : getGlConst(blendEquation)
+const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
+const PLUGINS = [
+  ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
+  '@babel/plugin-transform-modules-commonjs',
+  '@babel/plugin-proposal-export-namespace-from',
+  '@babel/plugin-proposal-optional-chaining',
+  [
+    '@babel/transform-runtime',
+    {
+      regenerator: true
+    }
+  ],
+  [
+    'search-and-replace',
+    {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
         }
-      : {})
-  });
-}
+      ]
+    }
+  ]
+];
+const ENV = {
+  test: {
+    plugins: ['istanbul']
+  },
+  debug: {
+    sourceMaps: 'inline',
+    retainLines: true
+  }
+};
+
+module.exports = function babel(api) {
+  api.cache(true);
+
+  return {
+    presets: PRESETS,
+    plugins: PLUGINS,
+    env: ENV
+  };
+};

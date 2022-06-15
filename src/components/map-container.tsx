@@ -24,7 +24,6 @@ import MapboxGLMap from 'react-map-gl';
 import DeckGL from '@deck.gl/react';
 import {createSelector} from 'reselect';
 import WebMercatorViewport from 'viewport-mercator-project';
-import {errorNotification} from 'utils/notifications-utils';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
@@ -39,32 +38,27 @@ import EditorFactory from './editor/editor';
 
 // utils
 import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
-import {setLayerBlending} from 'utils/gl-utils';
-import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 import {
+  errorNotification,
+  setLayerBlending,
+  transformRequest,
   getLayerHoverProp,
   renderDeckGlLayer,
   prepareLayersToRender,
   prepareLayersForDeck,
-  LayerHoverProp
-} from 'utils/layer-utils';
+  LayerHoverProp,
+  observeDimensions,
+  unobserveDimensions
+} from '@kepler.gl/utils';
 
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
 import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepler.gl/constants';
+import {Datasets} from '@kepler.gl/types';
 
 import ErrorBoundary from 'components/common/error-boundary';
-import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
 import {LOCALE_CODES} from 'localization/locales';
-import {
-  Datasets,
-  Filter,
-  InteractionConfig,
-  MapControls,
-  MapState,
-  MapStyle,
-  Viewport
-} from 'reducers';
+import {Filter, InteractionConfig, MapControls, MapState, MapStyle, Viewport} from 'reducers';
 import {Layer} from 'layers';
 import {SplitMapLayers} from 'reducers/vis-state-updaters';
 import {LayerBaseConfig, VisualChannelDomain} from 'layers/base-layer';

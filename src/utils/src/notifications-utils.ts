@@ -18,15 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {generateHashId} from './utils';
-
 import {
+  BUG_REPORT_LINK,
   DEFAULT_NOTIFICATION_MESSAGE,
   DEFAULT_NOTIFICATION_TOPICS,
   DEFAULT_NOTIFICATION_TYPES,
-  DEFAULT_UUID_COUNT,
-  BUG_REPORT_LINK
+  DEFAULT_UUID_COUNT
 } from '@kepler.gl/constants';
+
+import {generateHashId} from './utils';
 
 /**
  * Creates a notification

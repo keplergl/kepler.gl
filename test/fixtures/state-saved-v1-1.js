@@ -20,7 +20,7 @@
 
 import GeojsonLayer from 'layers/geojson-layer/geojson-layer';
 import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
-import {getDefaultInteraction} from 'utils/interaction-utils';
+import {defaultInteractionConfig} from 'reducers/vis-state-updaters';
 
 export const savedStateV1 = {
   datasets: [
@@ -2777,11 +2777,10 @@ mergedLayer1.dataToFeature = mergedLayer0.dataToFeature;
 
 export const mergedLayers = [mergedLayer0, mergedLayer1];
 
-const defaultInteraction = getDefaultInteraction();
 export const mergedInteraction = {
-  ...defaultInteraction,
+  ...defaultInteractionConfig,
   tooltip: {
-    ...defaultInteraction.tooltip,
+    ...defaultInteractionConfig.tooltip,
     enabled: false,
     config: {
       compareMode: false,
@@ -2805,7 +2804,7 @@ export const mergedInteraction = {
     }
   },
   brush: {
-    ...defaultInteraction.brush,
+    ...defaultInteractionConfig.brush,
     enabled: false,
     config: {
       size: 1

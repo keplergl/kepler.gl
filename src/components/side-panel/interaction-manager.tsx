@@ -19,7 +19,8 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {Datasets, InteractionConfig} from 'reducers';
+import {InteractionConfig} from 'reducers';
+import {Datasets} from '@kepler.gl/types';
 import InteractionPanelFactory from './interaction-panel/interaction-panel';
 import * as VisStateActions from 'actions/vis-state-actions';
 

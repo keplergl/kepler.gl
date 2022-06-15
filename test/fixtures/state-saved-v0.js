@@ -20,7 +20,7 @@
 
 import {KeplerGlLayers} from 'layers';
 const {PointLayer, ArcLayer, HexagonLayer, GeojsonLayer} = KeplerGlLayers;
-import {getDefaultInteraction} from 'utils/interaction-utils';
+import {defaultInteractionConfig} from 'reducers/vis-state-updaters';
 import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 
 export const savedStateV0 = {
@@ -1477,11 +1477,10 @@ mergedLayer4.meta = {
 
 export const mergedLayers = [mergedLayer0, mergedLayer1, mergedLayer2, mergedLayer3, mergedLayer4];
 
-const defaultInteraction = getDefaultInteraction();
 export const mergedInteractions = {
-  ...defaultInteraction,
+  ...defaultInteractionConfig,
   tooltip: {
-    ...defaultInteraction.tooltip,
+    ...defaultInteractionConfig.tooltip,
     enabled: true,
     config: {
       compareMode: false,

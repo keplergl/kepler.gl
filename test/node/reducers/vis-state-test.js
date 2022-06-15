@@ -32,17 +32,13 @@ import reducer from 'reducers/vis-state';
 
 import {INITIAL_VIS_STATE, DEFAULT_ANIMATION_CONFIG} from 'reducers/vis-state-updaters';
 import {serializeLayer} from 'reducers/vis-state-merger';
-import {getDefaultInteraction} from 'utils/interaction-utils';
-import {getDefaultFilter} from 'utils/filter-utils';
-import {createNewDataEntry} from 'utils/dataset-utils';
-import {maybeToDate} from 'utils/data-utils';
+import {defaultInteractionConfig} from 'reducers/vis-state-updaters';
+import {getDefaultFilter, createNewDataEntry, maybeToDate, createDataContainer} from '@kepler.gl/utils';
 import {processCsvData, processGeojson} from 'processors/data-processor';
 import {Layer, KeplerGlLayers} from 'layers';
 import {ALL_FIELD_TYPES, EDITOR_MODES} from '@kepler.gl/constants';
 
 const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
-
-import {createDataContainer} from 'utils/table-utils';
 
 // fixtures
 import testData, {mergedTimeFilter, testFields, testAllData} from 'test/fixtures/test-csv-data';
@@ -3277,8 +3273,6 @@ test('#visStateReducer -> TOGGLE_LAYER_ANIMATION', t => {
 });
 
 test('#visStateReducer -> INTERACTION_CONFIG_CHANGE', t => {
-  const defaultInteractionConfig = getDefaultInteraction();
-
   const brushConfig = {
     ...defaultInteractionConfig.brush,
     enabled: true
@@ -3336,7 +3330,6 @@ test('#visStateReducer -> MAP_CLICK', t => {
 });
 
 test('#visStateReducer -> MOUSE_MOVE', t => {
-  const defaultInteractionConfig = getDefaultInteraction();
   const initialState = StateWFiles.visState;
   const evt = {
     point: [10, 20],

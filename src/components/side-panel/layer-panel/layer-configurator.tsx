@@ -37,17 +37,15 @@ import VisConfigSliderFactory from './vis-config-slider';
 import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import TextLabelPanelFactory from './text-label-panel';
 
-import {capitalizeFirstLetter} from 'utils/utils';
+import {capitalizeFirstLetter, Field} from '@kepler.gl/utils';
 
 import {CHANNEL_SCALE_SUPPORTED_FIELDS, ColorRange} from '@kepler.gl/constants';
 import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';
 import {LAYER_TYPES} from 'layers/types';
-import {Datasets} from 'reducers';
-import {NestedPartial, RGBColor} from '@kepler.gl/types';
+import {NestedPartial, RGBColor, Datasets} from '@kepler.gl/types';
 import {ColorUI} from 'layers/layer-factory';
 import {VisualChannel} from 'layers/base-layer';
 import AggregationLayer from 'layers/aggregation-layer';
-import {Field} from 'utils/table-utils/kepler-table';
 import {toggleModal} from 'actions/ui-state-actions';
 import {ActionHandler} from 'actions';
 

@@ -35,10 +35,10 @@ import visStateReducer from 'reducers/vis-state';
 import coreReducer from 'reducers/core';
 import {updateVisData} from 'actions/vis-state-actions';
 import {receiveMapConfig, addDataToMap} from 'actions/actions';
-import {getDefaultInteraction} from 'utils/interaction-utils';
+import {defaultInteractionConfig} from 'reducers/vis-state-updaters';
 import {processKeplerglJSON} from 'processors/data-processor';
 
-import {createDataContainer} from 'utils/table-utils';
+import {createDataContainer} from '@kepler.gl/utils';
 
 // fixtures
 import {
@@ -728,12 +728,11 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
 
   // load data into reducer
   const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
-  const defaultInteraction = getDefaultInteraction();
 
   const expectedInteractions = {
-    ...defaultInteraction,
+    ...defaultInteractionConfig,
     tooltip: {
-      ...defaultInteraction.tooltip,
+      ...defaultInteractionConfig.tooltip,
       enabled: true,
       config: {
         compareMode: false,
@@ -829,7 +828,6 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
 
   // merge interactions
   const mergedState = mergeInteractions(oldState.visState, parsedInteraction);
-  const defaultInteraction = getDefaultInteraction();
 
   Object.keys(oldVisState).forEach(key => {
     if (key === 'interactionToBeMerged') {
@@ -862,9 +860,9 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
       t.deepEqual(
         mergedState.interactionConfig,
         {
-          ...defaultInteraction,
+          ...defaultInteractionConfig,
           tooltip: {
-            ...defaultInteraction.tooltip,
+            ...defaultInteractionConfig.tooltip,
             enabled: false,
             config: {
               fieldsToShow: {},
@@ -873,7 +871,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
             }
           },
           brush: {
-            ...defaultInteraction.brush,
+            ...defaultInteractionConfig.brush,
             enabled: false,
             config: {
               size: 1
@@ -937,7 +935,6 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
 
   // merge interactions
   const mergedState = mergeInteractions(oldState.visState, parsedInteraction);
-  const defaultInteraction = getDefaultInteraction();
 
   const expectedInteractionToBeMerged = {
     tooltip: {
@@ -972,9 +969,9 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
       t.deepEqual(
         mergedState.interactionConfig,
         {
-          ...defaultInteraction,
+          ...defaultInteractionConfig,
           tooltip: {
-            ...defaultInteraction.tooltip,
+            ...defaultInteractionConfig.tooltip,
             enabled: false,
             config: {
               compareMode: false,
@@ -1029,7 +1026,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
           },
 
           brush: {
-            ...defaultInteraction.brush,
+            ...defaultInteractionConfig.brush,
             enabled: false,
             config: {
               size: 1
@@ -1037,7 +1034,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
           },
 
           coordinate: {
-            ...defaultInteraction.coordinate,
+            ...defaultInteractionConfig.coordinate,
             enabled: false
           }
         },
@@ -1054,9 +1051,9 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
   const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
 
   const expectedInteractions = {
-    ...defaultInteraction,
+    ...defaultInteractionConfig,
     tooltip: {
-      ...defaultInteraction.tooltip,
+      ...defaultInteractionConfig.tooltip,
       enabled: false,
       config: {
         compareMode: false,
@@ -1124,7 +1121,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
       }
     },
     brush: {
-      ...defaultInteraction.brush,
+      ...defaultInteractionConfig.brush,
       enabled: false,
       config: {size: 1}
     }
@@ -1148,7 +1145,6 @@ test('VisStateMerger.v1 -> mergeInteractions -> coordinate', t => {
 
   // merge interactions
   const mergedState = mergeInteractions(oldState.visState, parsedInteraction);
-  const defaultInteraction = getDefaultInteraction();
 
   const expectedInteractionToBeMerged = {};
 
@@ -1163,22 +1159,22 @@ test('VisStateMerger.v1 -> mergeInteractions -> coordinate', t => {
       t.deepEqual(
         mergedState.interactionConfig,
         {
-          ...defaultInteraction,
+          ...defaultInteractionConfig,
 
           tooltip: {
-            ...defaultInteraction.tooltip,
+            ...defaultInteractionConfig.tooltip,
             enabled: false
           },
 
           brush: {
-            ...defaultInteraction.brush,
+            ...defaultInteractionConfig.brush,
             config: {
               size: 1
             }
           },
 
           coordinate: {
-            ...defaultInteraction.coordinate,
+            ...defaultInteractionConfig.coordinate,
             enabled: true
           }
         },
@@ -1195,9 +1191,9 @@ test('VisStateMerger.v1 -> mergeInteractions -> coordinate', t => {
   const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
 
   const expectedInteractions = {
-    ...defaultInteraction,
+    ...defaultInteractionConfig,
     tooltip: {
-      ...defaultInteraction.tooltip,
+      ...defaultInteractionConfig.tooltip,
       enabled: false,
       config: {
         compareMode: false,
@@ -1229,12 +1225,12 @@ test('VisStateMerger.v1 -> mergeInteractions -> coordinate', t => {
       }
     },
     brush: {
-      ...defaultInteraction.brush,
+      ...defaultInteractionConfig.brush,
       enabled: false,
       config: {size: 1}
     },
     coordinate: {
-      ...defaultInteraction.coordinate,
+      ...defaultInteractionConfig.coordinate,
       enabled: true
     }
   };

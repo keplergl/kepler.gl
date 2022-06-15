@@ -35,8 +35,8 @@ import Switch from 'components/common/switch';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {COMPARE_TYPES, GEOCODER_DATASET_NAME} from '@kepler.gl/constants';
 import FieldSelectorFactory from '../../common/field-selector';
-import KeplerTable from 'utils/table-utils/kepler-table';
-import {Datasets} from 'reducers';
+import {KeplerTable} from '@kepler.gl/utils';
+import {Datasets} from '@kepler.gl/types';
 
 const TooltipConfigWrapper = styled.div`
   .item-selector > div > div {
