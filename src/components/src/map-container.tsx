@@ -31,7 +31,11 @@ import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actio
 // components
 import MapPopoverFactory from './map/map-popover';
 import MapControlFactory from './map/map-control';
-import {StyledMapContainer, StyledAttrbution} from './common/styled-components';
+import {
+  StyledMapContainer,
+  StyledAttrbution,
+  EndHorizontalFlexbox
+} from './common/styled-components';
 
 import EditorFactory from './editor/editor';
 
@@ -84,6 +88,8 @@ import {
 } from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
 
+import type {DatasetAttribution} from './types';
+
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {
   container: {
@@ -132,50 +138,93 @@ const MapboxLogo = () => (
   </div>
 );
 
-export const Attribution = ({showMapboxLogo = true}) => {
+interface StyledDatasetAttributionsContainerProps {
+  isPalm: boolean;
+}
+
+const StyledDatasetAttributionsContainer = styled.div<StyledDatasetAttributionsContainerProps>`
+  width: ${props => (props.isPalm ? '130px' : '180px')};
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  color: ${props => props.theme.labelColor};
+  margin-right: 2px;
+  line-height: ${props => (props.isPalm ? '1em' : '1.4em')};
+  :hover {
+    white-space: inherit;
+  }
+`;
+
+const DatasetAttributions = ({datasetAttributions, isPalm}) => (
+  <>
+    {datasetAttributions?.length ? (
+      <StyledDatasetAttributionsContainer isPalm={isPalm}>
+        {datasetAttributions.map((ds, idx) => (
+          <a href={ds.url} target="_blank" rel="noopener noreferrer" key={`${ds.title}_${idx}`}>
+            {ds.title}
+            {idx !== datasetAttributions.length - 1 ? ', ' : null}
+          </a>
+        ))}
+      </StyledDatasetAttributionsContainer>
+    ) : null}
+  </>
+);
+
+export const Attribution = ({
+  showMapboxLogo = true,
+  showOsmBasemapAttribution = false,
+  datasetAttributions
+}) => {
   const isPalm = hasMobileWidth(breakPointValues);
 
   const memoizedComponents = useMemo(() => {
     if (!showMapboxLogo) {
       return (
         <StyledAttrbution>
-          <a
-            href="http://www.openstreetmap.org/copyright"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            © OpenStreetMap
-          </a>
+          <EndHorizontalFlexbox>
+            <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
+            {showOsmBasemapAttribution ? (
+              <div className="attrition-link">
+                <a
+                  href="http://www.openstreetmap.org/copyright"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  © OpenStreetMap
+                </a>
+              </div>
+            ) : null}
+          </EndHorizontalFlexbox>
         </StyledAttrbution>
       );
     }
 
     return (
       <StyledAttrbution>
-        {isPalm ? <MapboxLogo /> : null}
-        <div className="attrition-link">
-          <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
-            © kepler.gl |{' '}
-          </a>
-          <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
-            © Mapbox |{' '}
-          </a>
-          <a
-            href="http://www.openstreetmap.org/copyright"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            © OpenStreetMap |{' '}
-          </a>
-          <a href="https://www.mapbox.com/map-feedback/" target="_blank" rel="noopener noreferrer">
-            <strong>Improve this map </strong>
-            {!isPalm ? <strong> | </strong> : null}
-          </a>
-          {!isPalm ? <MapboxLogo /> : null}
-        </div>
+        <EndHorizontalFlexbox>
+          <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
+          <div className="attrition-link">
+            {isPalm ? <MapboxLogo /> : null}
+            <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
+              © kepler.gl |{' '}
+            </a>
+            <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
+              © Mapbox |{' '}
+            </a>
+            <a
+              href="https://www.mapbox.com/map-feedback/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <strong>Improve this map </strong>
+              {!isPalm ? <strong> | </strong> : null}
+            </a>
+            {!isPalm ? <MapboxLogo /> : null}
+          </div>
+        </EndHorizontalFlexbox>
       </StyledAttrbution>
     );
-  }, [showMapboxLogo, isPalm]);
+  }, [showMapboxLogo, showOsmBasemapAttribution, datasetAttributions, isPalm]);
 
   return memoizedComponents;
 };
@@ -217,6 +266,8 @@ interface MapContainerProps {
   topMapContainerProps: any;
   bottomMapContainerProps: any;
   transformRequest?: any;
+
+  datasetAttributions?: DatasetAttribution[]
 }
 
 export default function MapContainerFactory(
@@ -761,7 +812,8 @@ export default function MapContainerFactory(
         primary,
         bottomMapContainerProps,
         topMapContainerProps,
-        theme
+        theme,
+        datasetAttributions = []
       } = this.props;
 
       const {layers, datasets, editor, interactionConfig} = visState;
@@ -858,8 +910,12 @@ export default function MapContainerFactory(
             </div>
           ) : null}
           {this._renderMapPopover()}
-          {!isSplit || index === 1 ? (
-            <Attribution showMapboxLogo={this.state.showMapboxAttribution} />
+          {this.props.primary ? (
+            <Attribution
+              showMapboxLogo={this.state.showMapboxAttribution}
+              showOsmBasemapAttribution={true}
+              datasetAttributions={datasetAttributions}
+            />
           ) : null}
         </>
       );

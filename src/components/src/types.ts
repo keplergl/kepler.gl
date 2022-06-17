@@ -43,3 +43,8 @@ export type SidePanelProps = {
   panels: SidePanelItem[];
   version: string;
 };
+
+export type DatasetAttribution = {
+  title: string;
+  url: string;
+};
