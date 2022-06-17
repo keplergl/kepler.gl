@@ -24,6 +24,7 @@ import {_AggregationLayer as AggregationLayer} from '@deck.gl/aggregation-layers
 import geoViewport from '@mapbox/geo-viewport';
 import CPUAggregator, {
   defaultColorDimension,
+  DimensionType,
   getDimensionScale
 } from '../layer-utils/cpu-aggregator';
 import {getDistanceScales} from 'viewport-mercator-project';
@@ -32,6 +33,8 @@ import {max} from 'd3-array';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import {SCALE_TYPES, DEFAULT_COLOR_RANGE} from '@kepler.gl/constants';
 import ClusterBuilder, {getGeoJSON} from '../layer-utils/cluster-utils';
+import {RGBAColor} from '@kepler.gl/types';
+import {AggregationLayerProps} from '@deck.gl/aggregation-layers/aggregation-layer';
 
 const defaultRadius = LAYER_VIS_CONFIGS.clusterRadius.defaultValue;
 const defaultRadiusRange = LAYER_VIS_CONFIGS.clusterRadiusRange.defaultValue;
@@ -117,7 +120,7 @@ function getRadiusValueDomain(step, props, dimensionUpdater) {
   this._setDimensionState(key, {valueDomain});
 }
 
-const clusterLayerDimensions = [
+const clusterLayerDimensions: [DimensionType<RGBAColor>, DimensionType<number>] = [
   defaultColorDimension,
   {
     key: 'radius',
@@ -164,7 +167,10 @@ const defaultProps = {
   getRadiusValue: {type: 'accessor', value: defaultGetRadiusValue}
 };
 
-export default class ClusterLayer extends AggregationLayer {
+export default class ClusterLayer extends AggregationLayer<
+  any,
+  AggregationLayerProps<any> & {radiusScale: number}
+> {
   initializeState() {
     const cpuAggregator = new CPUAggregator({
       aggregation: clusterAggregation,
