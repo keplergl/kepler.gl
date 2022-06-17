@@ -114,8 +114,6 @@ export const scenegraphVisConfigs: {
   }
 };
 
-const DEFAULT_MODEL =
-  'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb';
 const DEFAULT_TRANSITION: [0, 0, 0] = [0, 0, 0];
 const DEFAULT_SCALE: [1, 1, 1] = [1, 1, 1];
 const DEFAULT_COLOR: [255, 255, 255, 255] = [255, 255, 255, 255];
@@ -212,26 +210,28 @@ export default class ScenegraphLayer extends Layer {
       visConfig: {sizeScale = 1, angleX = 0, angleY = 0, angleZ = 90}
     } = this.config;
 
-    return [
-      new DeckScenegraphLayer({
-        ...this.getDefaultDeckLayerProps(opts),
-        ...data,
-        fetch,
-        scenegraph: this.config.visConfig.scenegraph || DEFAULT_MODEL,
-        sizeScale,
-        getTranslation: DEFAULT_TRANSITION,
-        getScale: DEFAULT_SCALE,
-        getOrientation: [angleX, angleY, angleZ],
-        getColor: DEFAULT_COLOR,
-        // parameters
-        parameters: {depthTest: true, blend: false},
-        // update triggers
-        updateTriggers: {
-          getOrientation: {angleX, angleY, angleZ},
-          getPosition: this.config.columns,
-          getFilterValue: gpuFilter.filterValueUpdateTriggers
-        }
-      })
-    ];
+    return this.config.visConfig.scenegraph
+      ? [
+          new DeckScenegraphLayer({
+            ...this.getDefaultDeckLayerProps(opts),
+            ...data,
+            fetch,
+            scenegraph: this.config.visConfig.scenegraph,
+            sizeScale,
+            getTranslation: DEFAULT_TRANSITION,
+            getScale: DEFAULT_SCALE,
+            getOrientation: [angleX, angleY, angleZ],
+            getColor: DEFAULT_COLOR,
+            // parameters
+            parameters: {depthTest: true, blend: false},
+            // update triggers
+            updateTriggers: {
+              getOrientation: {angleX, angleY, angleZ},
+              getPosition: this.config.columns,
+              getFilterValue: gpuFilter.filterValueUpdateTriggers
+            }
+          })
+        ]
+      : [];
   }
 }
