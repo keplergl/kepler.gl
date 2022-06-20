@@ -21,7 +21,7 @@
 import Supercluster from 'supercluster';
 import memoize from 'lodash.memoize';
 import {MemoizedFunction} from 'lodash';
-import {BBox} from 'geojson';
+import {BBox, Position} from 'geojson';
 
 export function getGeoJSON(data, getPosition, filterData) {
   const raw = typeof filterData === 'function' ? data.filter(filterData) : data;
@@ -72,7 +72,11 @@ export default class ClusterBuilder {
     clusterRadius: number;
     geoJSON;
     zoom: number;
-  }) {
+  }): {
+    points: any;
+    position: Position;
+    index: number;
+  }[] {
     const clusterer = this.clusterer({clusterRadius, geoJSON});
 
     // map clusters to formatted bins to be passed to deck.gl bin-sorter
