@@ -29,8 +29,7 @@ import LayerSelectorPanelFactory from './layer-selector-panel';
 import MapLegendPanelFactory from './map-legend-panel';
 import MapDrawPanelFactory from './map-draw-panel';
 import LocalePanelFactory from './locale-panel';
-import {Editor, MapControls} from 'reducers';
-import {Datasets} from '@kepler.gl/types';
+import {Datasets, Editor, MapControls} from 'reducers'
 import {Layer} from 'layers';
 
 interface StyledMapControlProps {

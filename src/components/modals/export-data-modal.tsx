@@ -31,7 +31,7 @@ import {
 } from 'components/common/styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from 'localization';
-import {Datasets} from '@kepler.gl/types';
+import {Datasets} from 'reducers';
 
 const getDataRowCount = (
   datasets: Datasets,

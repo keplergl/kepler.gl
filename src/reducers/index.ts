@@ -66,6 +66,7 @@ export type {
 } from './map-style-updaters';
 
 export type {
+  Bounds,
   MapState,
   Viewport
 } from './map-state-updaters';

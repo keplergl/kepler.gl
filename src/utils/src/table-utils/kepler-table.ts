@@ -23,7 +23,7 @@ import {ascending, descending} from 'd3-array';
 
 // import {validateInputData} from 'processors/data-processor';
 import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
-import {RGBColor, ProtoDataset} from '@kepler.gl/types';
+import {RGBColor} from '@kepler.gl/types';
 import {FieldDomain, Filter} from 'reducers';
 import {Layer} from 'layers';
 
@@ -49,6 +49,7 @@ import {
 
 import {createDataContainer} from './data-container-utils';
 import {DataContainerInterface} from './data-container-interface';
+import {ProtoDataset} from 'actions';
 
 export type Field = {
   analyzerType: string;

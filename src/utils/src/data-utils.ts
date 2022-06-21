@@ -23,8 +23,9 @@ import {format as d3Format} from 'd3-format';
 import {bisectLeft} from 'd3-array';
 import moment from 'moment-timezone';
 
-import {Bounds, Millisecond} from '@kepler.gl/types';
-import {Layer} from '../../layers';
+import {Millisecond} from '@kepler.gl/types';
+import {Layer} from 'layers';
+import {Bounds} from 'reducers/map-state-updaters';
 import {ALL_FIELD_TYPES, TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from '@kepler.gl/constants';
 import {DataContainerInterface} from './table-utils/data-container-interface';
 import {Field} from './table-utils/kepler-table';

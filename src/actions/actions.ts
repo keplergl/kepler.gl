@@ -22,9 +22,36 @@ import {default as ActionTypes} from './action-types';
 import {createAction} from '@reduxjs/toolkit';
 
 import {ParsedConfig} from '../schemas';
-import {Bounds, ProtoDataset} from '@kepler.gl/types';
+import {RGBColor} from '@kepler.gl/types';
+import {Bounds} from 'reducers/map-state-updaters';
 import {MapInfo} from 'reducers/vis-state-updaters';
 import {UiState} from 'reducers/ui-state-updaters';
+
+/**
+ * Input dataset parsed to addDataToMap
+ */
+export type ProtoDataset = {
+  info: {
+    id?: string;
+    label?: string;
+    format?: string;
+    color?: RGBColor;
+  };
+  data: {
+    fields: {
+      name: string;
+      type?: string;
+      format?: string;
+      displayName?: string;
+      id?: string;
+    }[];
+    rows: any[][];
+  };
+
+  // table-injected metadata
+  metadata?: any;
+  supportedFilterTypes?: string[];
+};
 
 export type AddDataToMapOptions = {
   centerMap?: boolean;

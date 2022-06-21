@@ -25,7 +25,7 @@ import DataTableFactory from 'components/common/data-table';
 import {createSelector} from 'reselect';
 import {renderedSize} from 'components/common/data-table/cell-size';
 import CanvasHack from 'components/common/data-table/canvas';
-import {Datasets} from '@kepler.gl/types';
+import {Datasets} from 'reducers';
 import {KeplerTable} from '@kepler.gl/utils';
 
 const dgSettings = {

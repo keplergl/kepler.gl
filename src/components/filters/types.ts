@@ -1,5 +1,11 @@
-import {Filter, MultiSelectFilter, RangeFilter, SelectFilter, TimeRangeFilter} from 'reducers';
-import {Datasets} from '@kepler.gl/types';
+import {
+  Datasets,
+  Filter,
+  MultiSelectFilter,
+  RangeFilter,
+  SelectFilter,
+  TimeRangeFilter
+} from 'reducers';
 import {Layer} from 'layers';
 import {
   ActionHandler,

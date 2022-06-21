@@ -30,11 +30,12 @@ import {h3IsValid} from 'h3-js';
 
 import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW} from '@kepler.gl/constants';
 import {Layer, LAYER_TYPES, getCentroid} from '../../layers';
-import {Millisecond, ParsedFilter, Datasets, Entries} from '@kepler.gl/types';
+import {Millisecond, Entries} from '@kepler.gl/types';
 import {
   Filter,
   FilterBase,
   PolygonFilter,
+  Datasets,
   FieldDomain,
   TimeRangeFieldDomain,
   HistogramBin,
@@ -49,6 +50,7 @@ import {
 import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {generateHashId, set, toArray} from './utils';
+import {ParsedFilter} from 'schemas';
 import KeplerTable, {Field, FilterRecord, FilterDatasetOpt} from './table-utils/kepler-table';
 import {DataContainerInterface} from './table-utils/data-container-interface';
 

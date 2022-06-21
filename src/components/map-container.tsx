@@ -54,11 +54,18 @@ import {
 // default-settings
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
 import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepler.gl/constants';
-import {Datasets} from '@kepler.gl/types';
 
 import ErrorBoundary from 'components/common/error-boundary';
 import {LOCALE_CODES} from 'localization/locales';
-import {Filter, InteractionConfig, MapControls, MapState, MapStyle, Viewport} from 'reducers';
+import {
+  Datasets,
+  Filter,
+  InteractionConfig,
+  MapControls,
+  MapState,
+  MapStyle,
+  Viewport
+} from 'reducers';
 import {Layer} from 'layers';
 import {SplitMapLayers} from 'reducers/vis-state-updaters';
 import {LayerBaseConfig, VisualChannelDomain} from 'layers/base-layer';

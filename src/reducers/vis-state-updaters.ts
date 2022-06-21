@@ -97,7 +97,7 @@ import {processFileContent} from 'actions/vis-state-actions';
 
 import KeplerGLSchema from 'schemas';
 
-import {Millisecond, Datasets} from '@kepler.gl/types';
+import {Millisecond} from '@kepler.gl/types';
 import {ReceiveMapConfigPayload} from '../actions/actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
@@ -233,6 +233,10 @@ export type Filter =
   | SelectFilter
   | MultiSelectFilter
   | PolygonFilter;
+
+export type Datasets = {
+  [key: string]: KeplerTable;
+};
 
 export type Feature = {
   id: string;

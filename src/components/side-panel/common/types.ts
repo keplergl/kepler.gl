@@ -2,7 +2,7 @@ import React, {MouseEvent} from 'react';
 import {KeplerTable} from '@kepler.gl/utils';
 import {openDeleteModal} from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
-import {Datasets} from '@kepler.gl/types';
+import {Datasets} from 'reducers';
 import {ActionHandler} from 'actions';
 
 export type DatasetInfoProps = {

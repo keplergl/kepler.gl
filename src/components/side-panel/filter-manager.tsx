@@ -24,8 +24,7 @@ import {Button, SidePanelDivider, SidePanelSection} from 'components/common/styl
 import {Add} from 'components/common/icons';
 import SourceDataCatalogFactory from './common/source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
-import {Filter} from 'reducers';
-import {Datasets} from '@kepler.gl/types';
+import {Datasets, Filter} from 'reducers';
 import {Layer} from 'layers';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {ActionHandler} from 'actions';

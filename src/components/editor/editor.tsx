@@ -33,8 +33,7 @@ import {EDITOR_AVAILABLE_LAYERS} from 'layers/types';
 import {DEFAULT_RADIUS, getStyle as getFeatureStyle} from './feature-styles';
 import {getStyle as getEditHandleStyle, getEditHandleShape} from './handle-style';
 import {Layer} from 'layers';
-import {Filter} from 'reducers';
-import {Datasets} from '@kepler.gl/types';
+import {Datasets, Filter} from 'reducers';
 import {Feature} from '@nebula.gl/edit-modes';
 import {MjolnirEvent} from 'mjolnir.js';
 

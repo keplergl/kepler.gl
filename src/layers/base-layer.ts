@@ -67,8 +67,8 @@ import {
   GpuFilter
 } from '@kepler.gl/utils';
 
-import {MapState, Filter} from 'reducers';
-import {Datasets, RGBColor, RGBAColor, ValueOf, NestedPartial} from '@kepler.gl/types';
+import {MapState, Filter, Datasets} from 'reducers';
+import {RGBColor, RGBAColor, ValueOf, NestedPartial} from '@kepler.gl/types';
 import {LayerTextLabel, ColorUI} from './layer-factory';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};

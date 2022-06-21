@@ -24,7 +24,9 @@ import {range} from 'd3-array';
 import {console as globalConsole} from 'global/window';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 
-import {Datasets, RGBColor, ProtoDataset} from '@kepler.gl/types';
+import {Datasets} from 'reducers';
+import {ProtoDataset} from 'actions';
+import {RGBColor} from '@kepler.gl/types';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 
 import {hexToRgb} from './color-utils';

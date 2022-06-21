@@ -37,6 +37,7 @@ export type MapState = {
   scale?: number;
 };
 
+export type Bounds = [number, number, number, number];
 /** Width of viewport */
 export type Viewport = {
   /**  Width of viewport */

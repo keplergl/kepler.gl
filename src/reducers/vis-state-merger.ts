@@ -35,8 +35,7 @@ import {
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
 import {CURRENT_VERSION, visStateSchema} from 'schemas';
 
-import {VisState} from './vis-state-updaters';
-import {Datasets} from '@kepler.gl/types';
+import {VisState, Datasets} from './vis-state-updaters';
 import {ParsedConfig, ParsedLayer} from 'schemas';
 import {Layer, LayerColumns, LayerColumn} from 'layers';
 import {TooltipInfo} from './vis-state-updaters';
