@@ -70,6 +70,7 @@ import * as MapStyleActions from 'actions/map-style-actions';
 import * as ProviderActions from 'actions/provider-actions';
 import {ModalDialogProps} from './common/modal';
 import {Provider} from 'cloud-providers';
+import {findDOMNode} from 'react-dom';
 
 const DataTableModalStyle = css`
   top: 80px;
@@ -274,6 +275,7 @@ export default function ModalContainerFactory(
         mapState,
         uiState,
         visState,
+        rootNode,
         visStateActions,
         uiStateActions,
         providerState
@@ -540,8 +542,9 @@ export default function ModalContainerFactory(
         }
       }
 
-      return this.props.rootNode ? (
+      return rootNode ? (
         <ModalDialog
+          parentSelector={() => findDOMNode(rootNode) as HTMLElement}
           isOpen={Boolean(currentModal)}
           onCancel={this._closeModal}
           {...modalProps}
