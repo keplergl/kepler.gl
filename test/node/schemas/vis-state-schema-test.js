@@ -21,7 +21,7 @@
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
 import {cmpFilters, cmpSavedLayers} from 'test/helpers/comparison-utils';
-import SchemaManager from 'schemas';
+import SchemaManager from '@kepler.gl/schemas';
 
 import {
   StateWFilesFiltersLayerColor,

@@ -30,14 +30,16 @@ import {
   RESOLUTIONS,
   MAP_CONTROLS
 } from '@kepler.gl/constants';
-import {ActionTypes} from 'actions';
+import {
+  ActionTypes,
+  UiStateActions,
+  KeplerGlInitPayload,
+  LoadFilesErrUpdaterAction
+} from '@kepler.gl/actions';
 import {LOCALE_CODES} from 'localization/locales';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 import {calculateExportImageSize} from '../utils/export-utils';
 import {payload_, apply_, compose_} from './composer-helpers';
-
-import * as UiStateActions from 'actions/ui-state-actions';
-import {KeplerGlInitPayload, LoadFilesErrUpdaterAction} from '../actions';
 
 export type ExportImage = {
   ratio: keyof typeof EXPORT_IMG_RATIOS;

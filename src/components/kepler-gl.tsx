@@ -27,13 +27,15 @@ import {connect as keplerGlConnect} from 'connect/keplergl-connect';
 import {IntlProvider} from 'react-intl';
 import {messages} from '../localization';
 import {RootContext} from 'components/context';
-import {OnErrorCallBack, OnSuccessCallBack} from 'actions/provider-actions';
-
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as MapStateActions from 'actions/map-state-actions';
-import * as MapStyleActions from 'actions/map-style-actions';
-import * as UIStateActions from 'actions/ui-state-actions';
-import * as ProviderActions from 'actions/provider-actions';
+import {
+  OnErrorCallBack,
+  OnSuccessCallBack,
+  MapStateActions,
+  MapStyleActions,
+  VisStateActions,
+  UIStateActions,
+  ProviderActions
+} from '@kepler.gl/actions';
 
 type KeplerGlActions = {
   visStateActions: typeof VisStateActions;

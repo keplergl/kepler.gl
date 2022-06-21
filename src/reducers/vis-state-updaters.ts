@@ -34,8 +34,13 @@ import {
   loadFilesSuccess,
   loadFileStepSuccess,
   loadNextFile,
-  nextFileBatch
-} from 'actions/vis-state-actions';
+  nextFileBatch,
+  ActionTypes,
+  processFileContent,
+  ReceiveMapConfigPayload,
+  VisStateActions,
+  MapStateActions
+} from '@kepler.gl/actions';
 // Utils
 import {findFieldsToShow, getDefaultInteraction} from 'utils/interaction-utils';
 import {
@@ -83,23 +88,13 @@ import {
 
 import {Layer, LayerClasses, LayerClassesType, LAYER_ID_LENGTH} from 'layers';
 import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
-import {
-  EDITOR_MODES,
-  SORT_ORDER,
-  FILTER_TYPES,
-  MAX_DEFAULT_TOOLTIPS
-} from '@kepler.gl/constants';
-import {ActionTypes} from 'actions';
+import {EDITOR_MODES, SORT_ORDER, FILTER_TYPES, MAX_DEFAULT_TOOLTIPS} from '@kepler.gl/constants';
 import {pick_, merge_, swap_} from './composer-helpers';
-import {processFileContent} from 'actions/vis-state-actions';
 
-import KeplerGLSchema from 'schemas';
+import KeplerGLSchema from '@kepler.gl/schemas';
 import {isRgbColor} from 'utils/color-utils';
 
 import {Millisecond} from '@kepler.gl/types';
-import {ReceiveMapConfigPayload} from '../actions/actions';
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as MapStateActions from 'actions/map-state-actions';
 import {LoaderObject} from '@loaders.gl/loader-utils';
 import {KeplerTable} from '../utils';
 

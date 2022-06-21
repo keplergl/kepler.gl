@@ -27,8 +27,8 @@ import {
   loadMapStylesUpdater,
   getInitialInputStyle
 } from 'reducers/map-style-updaters';
-import {keplerGlInit, receiveMapConfig} from 'actions/actions';
-import SchemaManager from 'schemas';
+import {keplerGlInit, receiveMapConfig} from '@kepler.gl/actions';
+import SchemaManager from '@kepler.gl/schemas';
 import {DEFAULT_MAP_STYLES, DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';
 
 // helpers

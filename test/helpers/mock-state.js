@@ -26,7 +26,14 @@ import {VizColorPalette, COMPARE_TYPES} from '@kepler.gl/constants';
 import {getInitialInputStyle} from 'reducers/map-style-updaters';
 
 import keplerGlReducer from 'reducers/core';
-import {addDataToMap} from 'actions/actions';
+import {
+  addDataToMap,
+  VisStateActions,
+  MapStateActions,
+  MapStyleActions,
+  UIStateActions,
+  ProviderActions
+} from '@kepler.gl/actions';
 import {
   DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_RANGE,
@@ -35,11 +42,6 @@ import {
   DEFAULT_LAYER_LABEL
 } from 'layers/layer-factory';
 import {DEFAULT_KEPLER_GL_PROPS} from 'components';
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as MapStateActions from 'actions/map-state-actions';
-import * as MapStyleActions from 'actions/map-style-actions';
-import * as UIStateActions from 'actions/ui-state-actions';
-import * as ProviderActions from 'actions/provider-actions';
 
 // fixtures
 import {dataId as csvDataId, testFields, testAllData} from 'test/fixtures/test-csv-data';

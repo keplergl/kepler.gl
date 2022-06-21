@@ -21,7 +21,7 @@
 import React from 'react';
 import {Datasets, InteractionConfig} from 'reducers';
 import InteractionPanelFactory from './interaction-panel/interaction-panel';
-import * as VisStateActions from 'actions/vis-state-actions';
+import {VisStateActions} from '@kepler.gl/actions';
 
 type InteractionManagerProps = {
   interactionConfig: InteractionConfig;

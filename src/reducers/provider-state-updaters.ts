@@ -36,10 +36,13 @@ import {
   getSavedMapsSuccess,
   getSavedMapsError,
   loadCloudMapError,
-  resetProviderStatus
-} from '../actions/provider-actions';
-import {removeNotification, toggleModal, addNotification} from '../actions/ui-state-actions';
-import {addDataToMap} from '../actions/actions';
+  resetProviderStatus,
+  removeNotification,
+  toggleModal,
+  addNotification,
+  addDataToMap,
+  ProviderActions
+} from '@kepler.gl/actions';
 import {
   DEFAULT_NOTIFICATION_TYPES,
   DEFAULT_NOTIFICATION_TOPICS,
@@ -50,7 +53,6 @@ import {
 import {FILE_CONFLICT_MSG} from '../cloud-providers';
 import {DATASET_HANDLERS} from '../processors/data-processor';
 
-import * as ProviderActions from '../actions/provider-actions';
 import {MapListItem} from '../cloud-providers';
 
 type ActionPayload<P> = {

@@ -35,11 +35,11 @@ import {
   SplitMap,
   AnimationConfig,
   VisState
-} from '../reducers';
+} from 'reducers';
 
 import {RGBColor, Merge, RGBAColor} from '@kepler.gl/types';
 
-import {LayerTextLabel} from '../layers/layer-factory';
+import {LayerTextLabel} from 'layers/layer-factory';
 
 export type SavedFilter = {
   dataId: Filter['dataId'];

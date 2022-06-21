@@ -15,7 +15,7 @@ import {
   setFilterPlot,
   toggleFilterAnimation,
   updateFilterAnimationSpeed
-} from 'actions';
+} from '@kepler.gl/actions';
 
 export type PolygonFilterProps = {
   filter: Filter;

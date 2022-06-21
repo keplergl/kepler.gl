@@ -33,9 +33,7 @@ import CustomPanelsFactory from 'components/side-panel/custom-panel';
 
 import ToolbarItem from 'components/common/toolbar-item';
 
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as MapStyleActions from 'actions/map-style-actions';
-import * as UIStateActions from 'actions/ui-state-actions';
+import {VisStateActions, MapStyleActions, UIStateActions} from '@kepler.gl/actions';
 
 import {appInjector} from 'components/container';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';

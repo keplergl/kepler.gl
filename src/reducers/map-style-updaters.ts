@@ -36,16 +36,20 @@ import {
   DEFAULT_LAYER_GROUPS,
   DEFAULT_MAPBOX_API_URL
 } from '@kepler.gl/constants';
-import {ActionTypes} from 'actions';
+import {
+  ActionTypes,
+  loadMapStyles,
+  loadMapStyleErr,
+  ReceiveMapConfigPayload,
+  KeplerGlInitPayload,
+  MapStyleActions
+} from '@kepler.gl/actions';
 import {generateHashId} from 'utils/utils';
 import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
-import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
 import {rgb} from 'd3-color';
 import {hexToRgb} from 'utils/color-utils';
 
 import {RGBColor} from '@kepler.gl/types';
-import {ReceiveMapConfigPayload, KeplerGlInitPayload} from '../actions/actions';
-import * as MapStyleActions from '../actions/map-style-actions';
 
 export type LayerGroup = {
   slug: string;

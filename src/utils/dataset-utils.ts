@@ -25,7 +25,7 @@ import {validateInputData} from 'processors/data-processor';
 import KeplerTable, {Field} from './table-utils/kepler-table';
 
 import {Datasets} from '../reducers/vis-state-updaters';
-import {ProtoDataset} from '../actions';
+import {ProtoDataset} from '@kepler.gl/actions';
 import {RGBColor} from '@kepler.gl/types';
 
 // apply a color for each dataset

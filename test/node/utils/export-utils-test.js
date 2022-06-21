@@ -20,7 +20,7 @@
 
 import test from 'tape';
 
-import {registerEntry} from 'actions/identity-actions';
+import {registerEntry} from '@kepler.gl/actions';
 import keplerGlReducer from 'reducers';
 import {
   getMapJSON,

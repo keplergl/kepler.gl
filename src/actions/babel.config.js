@@ -18,35 +18,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Schemas
-export {
-  default,
-  default as KeplerGlSchema,
-  reducerSchema,
-  KeplerGLSchema as KeplerGLSchemaClass
-} from './schema-manager';
+const KeplerPackage = require('./package');
 
-export type {
-  ParsedConfig,
-  ParsedDataset,
-  ParsedLayer,
-  ParsedFilter,
-  SavedConfigV1,
-  SavedDatasetV1,
-  SavedMap
-} from './schema-manager';
-export {CURRENT_VERSION, VERSIONS} from './versions';
-export {
-  visStateSchemaV1,
-  FilterSchemaV0,
-  LayerSchemaV0,
-  InteractionSchemaV1,
-  DimensionFieldSchema,
-  SplitMapsSchema,
-  filterPropsV1,
-  default as visStateSchema
-} from './vis-state-schema';
-export {default as datasetSchema} from './dataset-schema';
-export {default as mapStyleSchema} from './map-style-schema';
-export {default as mapStateSchema} from './map-state-schema';
-export {default as Schema} from './schema';
+const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
+const PLUGINS = [
+  ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
+  '@babel/plugin-transform-modules-commonjs',
+  '@babel/plugin-proposal-export-namespace-from',
+  '@babel/plugin-proposal-optional-chaining',
+  [
+    '@babel/transform-runtime',
+    {
+      regenerator: true
+    }
+  ],
+  [
+    'search-and-replace',
+    {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }
+  ]
+];
+const ENV = {
+  test: {
+    plugins: ['istanbul']
+  },
+  debug: {
+    sourceMaps: 'inline',
+    retainLines: true
+  }
+};
+
+module.exports = function babel(api) {
+  api.cache(true);
+
+  return {
+    presets: PRESETS,
+    plugins: PLUGINS,
+    env: ENV
+  };
+};

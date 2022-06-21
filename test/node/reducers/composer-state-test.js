@@ -23,7 +23,7 @@
 import test from 'tape';
 import keplerGlReducer from 'reducers';
 import {addDataToMapUpdater} from 'reducers/combined-updaters';
-import {registerEntry} from 'actions/identity-actions';
+import {registerEntry} from '@kepler.gl/actions';
 import {processCsvData} from 'processors/data-processor';
 
 import testCsvData, {sampleConfig} from 'test/fixtures/test-csv-data';

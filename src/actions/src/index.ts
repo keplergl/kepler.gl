@@ -18,35 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Reducers
-export * from 'reducers';
-
-// Schemas
-export * from '@kepler.gl/schemas';
-
 // Actions
 export * from './actions';
 
-// Constants
-export * from '@kepler.gl/constants';
+// kepler.gl actions accessible outside component
+export * from './vis-state-actions';
+export * from './ui-state-actions';
+export * from './map-state-actions';
+export * from './map-style-actions';
+export * from './identity-actions';
+export * from './provider-actions';
 
-// Processors
-export * from './processors';
+// Dispatch
+export {ACTION_PREFIX} from './action-types';
+export {default as ActionTypes} from './action-types';
+export * from './action-wrapper';
 
-// Components
-export * from './components';
-
-// Layers
-export * from './layers';
-
-// Styles
-export * from './styles';
-
-// Middleware
-export * from './middleware';
-
-// Utils
-export * from './utils';
-
-// Default export
-export {default} from './components';
+export * as MapStateActions from './map-state-actions';
+export * as MapStyleActions from './map-style-actions';
+export * as ProviderActions from './provider-actions';
+export * as VisStateActions from './vis-state-actions';
+export * as UiStateActions from './ui-state-actions';

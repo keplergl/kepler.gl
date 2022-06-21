@@ -26,9 +26,7 @@ import {createSelector} from 'reselect';
 import WebMercatorViewport from 'viewport-mercator-project';
 import {errorNotification} from 'utils/notifications-utils';
 
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as MapStateActions from 'actions/map-state-actions';
-import * as UIStateActions from 'actions/ui-state-actions';
+import {MapStateActions, VisStateActions, UIStateActions} from '@kepler.gl/actions';
 
 // components
 import MapPopoverFactory from 'components/map/map-popover';

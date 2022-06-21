@@ -18,35 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Reducers
-export * from 'reducers';
-
 // Schemas
-export * from '@kepler.gl/schemas';
+export {
+  default,
+  default as KeplerGlSchema,
+  reducerSchema,
+  KeplerGLSchema as KeplerGLSchemaClass
+} from './schema-manager';
 
-// Actions
-export * from './actions';
-
-// Constants
-export * from '@kepler.gl/constants';
-
-// Processors
-export * from './processors';
-
-// Components
-export * from './components';
-
-// Layers
-export * from './layers';
-
-// Styles
-export * from './styles';
-
-// Middleware
-export * from './middleware';
-
-// Utils
-export * from './utils';
-
-// Default export
-export {default} from './components';
+export type {
+  ParsedConfig,
+  ParsedDataset,
+  ParsedLayer,
+  ParsedFilter,
+  SavedConfigV1,
+  SavedDatasetV1,
+  SavedMap,
+  SavedInteractionConfig,
+  LoadedMap
+} from './schema-manager';
+export {CURRENT_VERSION, VERSIONS} from './versions';
+export {
+  visStateSchemaV1,
+  FilterSchemaV0,
+  LayerSchemaV0,
+  InteractionSchemaV1,
+  DimensionFieldSchema,
+  SplitMapsSchema,
+  filterPropsV1,
+  default as visStateSchema
+} from './vis-state-schema';
+export {default as datasetSchema} from './dataset-schema';
+export {default as mapStyleSchema} from './map-style-schema';
+export {default as mapStateSchema} from './map-state-schema';
+export {default as Schema} from './schema';

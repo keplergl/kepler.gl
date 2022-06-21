@@ -56,7 +56,7 @@ import {
 } from '../reducers/vis-state-updaters';
 import KeplerTable, {Field, FilterRecord, FilterDatasetOpt} from './table-utils/kepler-table';
 import {Layer} from 'layers';
-import {ParsedFilter} from 'schemas';
+import {ParsedFilter} from '@kepler.gl/schemas';
 import {DataContainerInterface} from './table-utils/data-container-interface';
 import {Millisecond} from 'cloud-providers';
 import {Entries} from '@kepler.gl/types';

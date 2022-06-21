@@ -32,10 +32,11 @@ import {
   setExportFiltered,
   startExportingImage,
   addNotification,
-  removeNotification
-} from 'actions/ui-state-actions';
-import {loadFiles, loadFilesErr} from 'actions/vis-state-actions';
-import {keplerGlInit} from 'actions/actions';
+  removeNotification,
+  loadFiles,
+  loadFilesErr,
+  keplerGlInit
+} from '@kepler.gl/actions';
 import reducer, {uiStateReducerFactory} from 'reducers/ui-state';
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
 import {

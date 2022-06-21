@@ -35,7 +35,7 @@ import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
 import {FormattedMessage} from 'localization';
 import {Provider} from 'cloud-providers';
-import {cleanupExportImage, SetCloudProviderPayload} from 'actions';
+import {cleanupExportImage, SetCloudProviderPayload} from '@kepler.gl/actions';
 
 export const StyledInputLabel = styled.label`
   font-size: 12px;

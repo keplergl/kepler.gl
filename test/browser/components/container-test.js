@@ -29,7 +29,7 @@ import sinon from 'sinon';
 import {console as Console} from 'global/window';
 import rootReducer from 'reducers/root';
 import coreReducer from 'reducers/core';
-import {keplerGlInit} from 'actions/actions';
+import {keplerGlInit} from '@kepler.gl/actions';
 
 import Container, {ERROR_MSG} from 'components/container';
 import {DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';

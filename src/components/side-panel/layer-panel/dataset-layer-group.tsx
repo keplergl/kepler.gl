@@ -23,9 +23,7 @@ import React, {useMemo} from 'react';
 import DatasetLayerSectionFactory from './dataset-layer-section';
 import {Datasets} from 'reducers';
 import {Layer, LayerClassesType} from 'layers';
-import * as UiStateActions from 'actions/ui-state-actions';
-import * as VisStateActions from 'actions/vis-state-actions';
-import {ActionHandler} from 'actions';
+import {UiStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
 
 type DatasetLayerGroupProps = {
   datasets: Datasets;

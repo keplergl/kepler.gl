@@ -25,7 +25,7 @@ import './utils';
 import './reducers';
 
 // test schemas
-import './schemas';
+import '@kepler.gl/schemas';
 
 // test processers
 import './processors';

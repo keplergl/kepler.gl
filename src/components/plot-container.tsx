@@ -34,7 +34,7 @@ import {findMapBounds} from 'utils/data-utils';
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {ExportImage, SplitMap} from 'reducers';
-import {setExportImageDataUri, setExportImageError, setExportImageSetting} from 'actions';
+import {setExportImageDataUri, setExportImageError, setExportImageSetting} from '@kepler.gl/actions';
 import {mapFieldsSelector} from './kepler-gl';
 
 const CLASS_FILTER = ['mapboxgl-control-container', 'attrition-link', 'attrition-logo'];

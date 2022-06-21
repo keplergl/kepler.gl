@@ -19,9 +19,7 @@
 // THE SOFTWARE.
 
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
-import * as MapStateActions from 'actions/map-state-actions';
-import {ReceiveMapConfigPayload} from '../actions/actions';
-import {ActionTypes} from 'actions';
+import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
 
 export type MapState = {
   pitch: number;
