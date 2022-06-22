@@ -190,6 +190,7 @@ export const Attribution = ({
             <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
             {showOsmBasemapAttribution ? (
               <div className="attrition-link">
+                {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
                 <a
                   href="http://www.openstreetmap.org/copyright"
                   target="_blank"
@@ -209,6 +210,7 @@ export const Attribution = ({
         <EndHorizontalFlexbox>
           <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
           <div className="attrition-link">
+            {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
             {isPalm ? <MapboxLogo /> : null}
             <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
               © kepler.gl |{' '}

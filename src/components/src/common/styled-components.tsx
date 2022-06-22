@@ -551,10 +551,15 @@ export const StyledAttrbution = styled.div.attrs({
   .attrition-link {
     display: flex;
     align-items: center;
-    margin-left: 10px;
 
-    a {
+    a,
+    .pipe-separator {
       margin-right: 2px;
+    }
+
+    .pipe-separator {
+      text-decoration: none;
+      color: ${props => props.theme.labelColor};
     }
   }
 
@@ -570,7 +575,8 @@ export const StyledAttrbution = styled.div.attrs({
       margin-left: 4px;
     }
   }
-  a {
+  a,
+  .pipe-separator {
     font-size: 10px;
   }
 
