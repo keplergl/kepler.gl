@@ -28,7 +28,7 @@ import Layer, {
 import {findDefaultColorField} from 'utils/dataset-utils';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
-import EnhancedColumnLayer from 'deckgl-layers/column-layer/enhanced-column-layer';
+import {EnhancedColumnLayer} from '@kepler.gl/deckgl-layers';
 import {getCentroid, idToPolygonGeo, h3IsValid, getHexFields, Centroid} from './h3-utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {CHANNEL_SCALES, HIGHLIGH_COLOR_3D, ColorRange} from '@kepler.gl/constants';

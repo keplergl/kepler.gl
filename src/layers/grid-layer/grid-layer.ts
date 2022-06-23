@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {GeoJsonLayer} from '@deck.gl/layers';
-import EnhancedGridLayer from '../../deckgl-layers/grid-layer/enhanced-cpu-grid-layer';
+import {EnhancedGridLayer} from '@kepler.gl/deckgl-layers';
 import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import {pointToPolygonGeo} from './grid-utils';
 import GridLayerIcon from './grid-layer-icon';

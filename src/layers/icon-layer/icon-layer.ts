@@ -21,7 +21,7 @@
 import window from 'global/window';
 import {BrushingExtension} from '@deck.gl/extensions';
 
-import SvgIconLayer from 'deckgl-layers/svg-icon-layer/svg-icon-layer';
+import {SvgIconLayer} from '@kepler.gl/deckgl-layers';
 import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS, CLOUDFRONT} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
