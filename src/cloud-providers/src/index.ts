@@ -19,4 +19,4 @@
 // THE SOFTWARE.
 
 export {default as Provider, FILE_CONFLICT_MSG} from './provider';
-export type {MapListItem, Millisecond, Thumbnail, ProviderProps} from './provider';
+export type {MapListItem, Millisecond, Thumbnail, ProviderProps, IconProps} from './provider';

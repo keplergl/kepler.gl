@@ -21,7 +21,7 @@
 import {createAction} from '@reduxjs/toolkit';
 import {ACTION_PREFIX} from './action-types';
 import {SavedMap} from 'schemas';
-import {MapListItem, Provider} from 'cloud-providers';
+import {MapListItem, Provider} from '@kepler.gl/cloud-providers';
 
 const assignType = <T>(obj: T): { [K in keyof T]: `${typeof ACTION_PREFIX}${string & K}`; } => obj as any
 export const ActionTypes = assignType({

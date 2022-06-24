@@ -38,7 +38,7 @@ import {
 } from '@kepler.gl/constants';
 import {ActionTypes} from 'actions';
 import {generateHashId} from 'utils/utils';
-import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
+import {LOAD_MAP_STYLE_TASK} from '@kepler.gl/tasks';
 import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
 import {rgb} from 'd3-color';
 import {hexToRgb} from 'utils/color-utils';

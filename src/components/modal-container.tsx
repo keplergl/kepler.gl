@@ -69,7 +69,7 @@ import * as UIStateActions from 'actions/ui-state-actions';
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as ProviderActions from 'actions/provider-actions';
 import {ModalDialogProps} from './common/modal';
-import {Provider} from 'cloud-providers';
+import {Provider} from '@kepler.gl/cloud-providers';
 
 const DataTableModalStyle = css`
   top: 80px;

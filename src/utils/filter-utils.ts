@@ -58,7 +58,7 @@ import KeplerTable, {Field, FilterRecord, FilterDatasetOpt} from './table-utils/
 import {Layer} from 'layers';
 import {ParsedFilter} from 'schemas';
 import {DataContainerInterface} from './table-utils/data-container-interface';
-import {Millisecond} from 'cloud-providers';
+import {Millisecond} from '@kepler.gl/cloud-providers';
 import {Entries} from '@kepler.gl/types';
 
 export type FilterResult = {

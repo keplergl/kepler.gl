@@ -27,7 +27,7 @@ import {
   DELAY_TASK,
   LOAD_CLOUD_MAP_TASK,
   GET_SAVED_MAPS_TASK
-} from '../tasks/tasks';
+} from '@kepler.gl/tasks';
 import {
   exportFileSuccess,
   exportFileError,
@@ -47,11 +47,10 @@ import {
   OVERWRITE_MAP_ID
 } from '@kepler.gl/constants';
 
-import {FILE_CONFLICT_MSG} from '../cloud-providers';
+import {FILE_CONFLICT_MSG, MapListItem} from '@kepler.gl/cloud-providers';
 import {DATASET_HANDLERS} from '../processors/data-processor';
 
 import * as ProviderActions from '../actions/provider-actions';
-import {MapListItem} from '../cloud-providers';
 
 type ActionPayload<P> = {
   type?: string;

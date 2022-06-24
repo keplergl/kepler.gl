@@ -16,7 +16,10 @@
   ],
   "private": true,
   "workspaces": [
+    "./src/cloud-providers",
     "./src/constants",
+    "./src/middleware",
+    "./src/tasks",
     "./src/types"
   ],
   "repository": {
