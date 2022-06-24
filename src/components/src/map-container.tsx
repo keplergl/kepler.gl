@@ -22,6 +22,7 @@
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
 import {StaticMap, MapRef} from 'react-map-gl';
+import {PickInfo} from '@deck.gl/core/lib/deck';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
 import mapboxgl from 'mapbox-gl';
@@ -412,12 +413,7 @@ export default function MapContainerFactory(
       this.props.visStateActions.onLayerClick(null);
     };
 
-    _onLayerHover = (
-      idx: number,
-      info: {
-        picked?: boolean;
-      } | null
-    ) => {
+    _onLayerHover = (idx: number, info: PickInfo<any> | null) => {
       this.props.visStateActions.onLayerHover(info);
     };
 

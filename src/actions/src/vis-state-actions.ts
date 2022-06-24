@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 // vis-state-reducer
+import {PickInfo} from '@deck.gl/core/lib/deck';
 import {default as ActionTypes} from './action-types';
 import {FileCacheItem} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
@@ -874,7 +875,7 @@ export function toggleFilterFeature(
 }
 
 export type OnLayerHoverUpdaterAction = {
-  info: {picked?: boolean} | null;
+  info: PickInfo<any> | null;
 };
 /**
  * Trigger layer hover event with hovered object
@@ -884,7 +885,7 @@ export type OnLayerHoverUpdaterAction = {
  * @public
  */
 export function onLayerHover(
-  info: {picked?: boolean} | null
+  info: PickInfo<any> | null
 ): Merge<OnLayerHoverUpdaterAction, {type: typeof ActionTypes.LAYER_HOVER}> {
   return {
     type: ActionTypes.LAYER_HOVER,
@@ -893,7 +894,7 @@ export function onLayerHover(
 }
 
 export type OnLayerClickUpdaterAction = {
-  info: {picked?: boolean} | null;
+  info: PickInfo<any> | null;
 };
 /**
  * Trigger layer click event with clicked object
@@ -903,7 +904,7 @@ export type OnLayerClickUpdaterAction = {
  * @public
  */
 export function onLayerClick(
-  info: {picked?: boolean} | null
+  info: PickInfo<any> | null
 ): Merge<OnLayerClickUpdaterAction, {type: typeof ActionTypes.LAYER_CLICK}> {
   return {
     type: ActionTypes.LAYER_CLICK,
