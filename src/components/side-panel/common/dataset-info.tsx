@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {format} from 'd3-format';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {DatasetInfoProps} from './types';
 
 const numFormat = format(',');

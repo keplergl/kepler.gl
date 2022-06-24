@@ -22,7 +22,7 @@ import React from 'react';
 import styled from 'styled-components';
 import moment from 'moment';
 import {LeftArrow} from 'components/common/icons';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 const imageH = 108;
 

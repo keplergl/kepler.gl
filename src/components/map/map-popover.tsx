@@ -24,7 +24,7 @@ import LayerHoverInfoFactory from './layer-hover-info';
 import CoordinateInfoFactory from './coordinate-info';
 import {ArrowLeft, ArrowRight, Pin} from 'components/common/icons';
 import {injectIntl, IntlShape} from 'react-intl';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import Tippy from '@tippyjs/react/headless';
 import {LayerHoverProp} from 'utils/layer-utils';
 

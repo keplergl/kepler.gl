@@ -55,7 +55,7 @@ import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepl
 
 import ErrorBoundary from 'components/common/error-boundary';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
-import {LOCALE_CODES} from 'localization/locales';
+import {LOCALE_CODES} from '@kepler.gl/localization';
 import {
   Datasets,
   Filter,

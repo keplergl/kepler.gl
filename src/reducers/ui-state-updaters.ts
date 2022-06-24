@@ -31,7 +31,7 @@ import {
   MAP_CONTROLS
 } from '@kepler.gl/constants';
 import {ActionTypes} from 'actions';
-import {LOCALE_CODES} from 'localization/locales';
+import {LOCALE_CODES} from '@kepler.gl/localization';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 import {calculateExportImageSize} from '../utils/export-utils';
 import {payload_, apply_, compose_} from './composer-helpers';

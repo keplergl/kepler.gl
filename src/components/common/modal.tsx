@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component, ReactNode} from 'react';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 import styled, {FlattenSimpleInterpolation} from 'styled-components';
 import Modal from 'react-modal';

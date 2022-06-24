@@ -35,7 +35,7 @@ import {media} from 'styles/media-breakpoints';
 // Utils
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 import {injectIntl, IntlShape} from 'react-intl';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {InputStyle, MapState} from 'reducers';
 import mapboxgl from 'mapbox-gl';
 

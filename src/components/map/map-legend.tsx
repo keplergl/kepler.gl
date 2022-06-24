@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import {rgb} from 'd3-color';
 import ColorLegend from 'components/common/color-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import Layer, {LayerBaseConfig, VisualChannel, VisualChannelDescription} from 'layers/base-layer';
 
 interface StyledMapControlLegendProps {

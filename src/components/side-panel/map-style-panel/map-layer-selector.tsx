@@ -30,7 +30,7 @@ import {
   PanelLabelWrapper,
   CenterFlexbox
 } from 'components/common/styled-components';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {camelize} from 'utils/utils';
 import {VisibleLayerGroups} from 'reducers';
 import {BaseProps} from 'components/common/icons/base';

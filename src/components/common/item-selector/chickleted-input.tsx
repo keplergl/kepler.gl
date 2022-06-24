@@ -22,7 +22,7 @@ import React, {ElementType, MouseEventHandler, ReactNode} from 'react';
 
 import styled from 'styled-components';
 import Delete from '../icons/delete';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 interface ChickletedInput {
   // required properties

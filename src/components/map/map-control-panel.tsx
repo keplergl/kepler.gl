@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {IconRoundSmall} from 'components/common/styled-components';
 import {Close, Pin} from 'components/common/icons';
 

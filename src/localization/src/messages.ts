@@ -18,41 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import RangeSliderFactory from 'components/common/range-slider';
+import en from './translations/en';
+import {flattenMessages} from 'utils/locale-utils';
+import {LOCALE_CODES} from './locales';
 
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
-import {BRUSH_CONFIG} from 'utils/interaction-utils';
-import {FormattedMessage} from '@kepler.gl/localization';
+const enFlat = flattenMessages(en);
 
-BrushConfigFactory.deps = [RangeSliderFactory];
+export const messages: {
+  [key: string]: string;
+} = Object.keys(LOCALE_CODES).reduce(
+  (acc, key) => ({
+    ...acc,
+    [key]:
+      key === 'en'
+        ? enFlat
+        : {...enFlat, ...flattenMessages(require(`./translations/${key}.ts`).default)}
+  }),
+  {}
+);
 
-type BrushConfigProps = {
-  config: {
-    size: number;
-  };
-  onChange: (config: {size: number}) => void;
-};
-
-function BrushConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
-  const BrushConfig = ({config, onChange}: BrushConfigProps) => (
-    <SidePanelSection>
-      <PanelLabel>
-        <FormattedMessage id={'misc.brushRadius'} />
-      </PanelLabel>
-      <RangeSlider
-        range={BRUSH_CONFIG.range}
-        value0={0}
-        value1={config.size || 10 / 2}
-        step={0.1}
-        isRanged={false}
-        onChange={value => onChange({...config, size: value[1]})}
-        inputTheme="secondary"
-      />
-    </SidePanelSection>
-  );
-
-  return BrushConfig;
-}
-
-export default BrushConfigFactory;
+export default messages;

@@ -25,7 +25,7 @@ import styled, {ThemeProvider, withTheme} from 'styled-components';
 import {createSelector} from 'reselect';
 import {connect as keplerGlConnect} from 'connect/keplergl-connect';
 import {IntlProvider} from 'react-intl';
-import {messages} from '../localization';
+import {messages} from '@kepler.gl/localization';
 import {RootContext} from 'components/context';
 import {OnErrorCallBack, OnSuccessCallBack} from 'actions/provider-actions';
 

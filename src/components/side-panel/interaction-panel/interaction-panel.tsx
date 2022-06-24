@@ -31,7 +31,7 @@ import {
   PanelHeaderContent,
   PanelContent
 } from 'components/common/styled-components';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 interface InteractionPanelProps {
   datasets: any;

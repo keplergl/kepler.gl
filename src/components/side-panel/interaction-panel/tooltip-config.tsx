@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 import {
   SidePanelSection,
