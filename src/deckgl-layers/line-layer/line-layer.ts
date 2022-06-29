@@ -21,7 +21,7 @@
 import {LineLayer, LineLayerProps} from '@deck.gl/layers';
 import GL from '@luma.gl/constants';
 import {RGBAColor} from 'deck.gl';
-import {editShader} from '../../deckgl-layers/layer-utils/shader-utils';
+import {editShader} from '../layer-utils/shader-utils';
 
 const defaultProps = {
   ...LineLayer.defaultProps,

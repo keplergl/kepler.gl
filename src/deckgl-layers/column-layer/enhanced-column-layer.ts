@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {ColumnLayer} from '@deck.gl/layers';
-import {editShader} from '../../deckgl-layers/layer-utils/shader-utils';
+import {editShader} from '../layer-utils/shader-utils';
 
 function addInstanceCoverage(vs) {
   const addDecl = editShader(

@@ -37,7 +37,13 @@ import {getDefaultFilter} from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {maybeToDate} from 'utils/data-utils';
 import {processCsvData, processGeojson} from 'processors/data-processor';
-import {Layer, KeplerGlLayers} from 'layers';
+import {
+  Layer,
+  KeplerGlLayers,
+  LAYER_VIS_CONFIGS,
+  DEFAULT_TEXT_LABEL,
+  DEFAULT_COLOR_UI
+} from 'layers';
 import {ALL_FIELD_TYPES, EDITOR_MODES} from '@kepler.gl/constants';
 
 const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
@@ -79,7 +85,6 @@ import {
   testGeoJsonDataId,
   InitialState
 } from 'test/helpers/mock-state';
-import {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import {assertDatasetIsTable} from '../../helpers/comparison-utils';
 
