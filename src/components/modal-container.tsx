@@ -42,7 +42,7 @@ import SaveMapModalFactory from './modals/save-map-modal';
 import ShareMapModalFactory from './modals/share-map-modal';
 
 // Breakpoints
-import {media} from 'styles/media-breakpoints';
+import {media} from 'styles';
 
 // Template
 import {

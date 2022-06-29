@@ -20,7 +20,7 @@
 
 import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
-import {media} from 'styles/media-breakpoints';
+import {media} from 'styles';
 import classnames from 'classnames';
 import {RGBColor} from '@kepler.gl/types';
 

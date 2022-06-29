@@ -24,7 +24,7 @@ import sinon from 'sinon';
 import {shallow} from 'enzyme';
 import {NotificationItemFactory, NotificationPanelFactory} from 'components';
 import {createNotification} from 'utils/notifications-utils';
-import {theme} from 'styles/base';
+import {theme} from 'styles';
 
 const NotificationItem = NotificationItemFactory();
 const NotificationPanel = NotificationPanelFactory(NotificationItem);

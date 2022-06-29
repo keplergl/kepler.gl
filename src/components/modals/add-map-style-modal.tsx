@@ -30,7 +30,7 @@ import {
   StyledModalVerticalPanel,
   StyledModalSection
 } from '../common/styled-components';
-import {media} from 'styles/media-breakpoints';
+import {media} from 'styles';
 
 // Utils
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
