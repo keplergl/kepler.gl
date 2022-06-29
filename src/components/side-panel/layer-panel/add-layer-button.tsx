@@ -24,11 +24,10 @@ import {FormattedMessage} from 'localization';
 import {WrappedComponentProps} from 'react-intl';
 
 import Tippy from '@tippyjs/react';
-import {Add} from 'components/common/icons';
-import {Button} from 'components/common/styled-components';
-import {DatasetSquare} from 'components';
-import Typeahead from 'components/common/item-selector/typeahead';
-import Accessor from 'components/common/item-selector/accessor';
+import {Add} from '../../common/icons';
+import {Button, DatasetSquare} from '../../common/styled-components';
+import Typeahead from '../../common/item-selector/typeahead';
+import Accessor from '../../common/item-selector/accessor';
 import {Datasets} from 'reducers';
 import {RGBColor} from '@kepler.gl/types';
 

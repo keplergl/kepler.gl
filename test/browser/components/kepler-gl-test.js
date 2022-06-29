@@ -36,9 +36,9 @@ import {
   BottomWidgetFactory,
   ModalContainerFactory,
   PlotContainerFactory,
-  GeocoderPanelFactory
+  GeocoderPanelFactory,
+  NotificationPanelFactory
 } from 'components';
-import NotificationPanelFactory from 'components/notification-panel';
 import {ActionTypes} from 'actions';
 import {DEFAULT_MAP_STYLES, EXPORT_IMAGE_ID} from 'constants';
 import {GEOCODER_DATASET_NAME} from '@kepler.gl/constants';

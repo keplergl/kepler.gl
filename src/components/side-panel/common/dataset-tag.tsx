@@ -21,7 +21,7 @@
 import React from 'react';
 import {FormattedMessage} from 'localization';
 import styled from 'styled-components';
-import {DatasetSquare, Tooltip} from 'components';
+import {DatasetSquare, Tooltip} from '../../common/styled-components';
 import {DatasetTagProps, UpdateTableColorTypes} from './types';
 
 const DatasetTagWrapper = styled.div`

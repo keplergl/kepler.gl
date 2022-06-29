@@ -19,9 +19,9 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo} from 'react';
-import {StyledFilterContent} from 'components/common/styled-components';
-import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
-import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
+import {StyledFilterContent} from '../../common/styled-components';
+import FilterPanelHeaderFactory from '../../side-panel/filter-panel/filter-panel-header';
+import SourceDataSelectorFactory from '../../side-panel/common/source-data-selector';
 import FieldSelectorFactory from '../../common/field-selector';
 import {FilterBase} from 'reducers';
 import {FilterPanelComponent} from './types';

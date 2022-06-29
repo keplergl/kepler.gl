@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {StyledExportSection, StyledType, CheckMark} from 'components/common/styled-components';
+import {StyledExportSection, StyledType, CheckMark} from '../../common/styled-components';
 import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';
 import {
   EXPORT_HTML_MAP_MODE_OPTIONS,

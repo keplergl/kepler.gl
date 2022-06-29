@@ -21,9 +21,9 @@
 import React, {Component} from 'react';
 import {createSelector} from 'reselect';
 
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
-import ItemSelector from 'components/common/item-selector/item-selector';
-import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
+import {PanelLabel, SidePanelSection} from '../../common/styled-components';
+import ItemSelector from '../../common/item-selector/item-selector';
+import DatasetTagFactory from './dataset-tag';
 import {FormattedMessage} from 'localization';
 import {DatasetItemProps, SourceDataSelectorProps} from './types';
 

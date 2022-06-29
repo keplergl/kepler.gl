@@ -27,14 +27,20 @@ import {ChannelByValueSelectorFactory} from './side-panel/layer-panel/layer-conf
 import FieldSelectorFactory, {FieldListItemFactoryFactory} from './common/field-selector';
 import FieldTokenFactory from './common/field-token';
 import PanelHeaderActionFactory from './side-panel/panel-header-action';
-import InfoHelperFactory from 'components/common/info-helper';
+import InfoHelperFactory from './common/info-helper';
 import {appInjector} from './container';
 
 // Components
 export {default as KeplerGl, default, injectComponents, ContainerFactory} from './container';
 
 // factories
-export {default as KeplerGlFactory, DEFAULT_KEPLER_GL_PROPS} from './kepler-gl';
+export {
+  default as KeplerGlFactory,
+  DEFAULT_KEPLER_GL_PROPS,
+  mapFieldsSelector,
+  plotContainerSelector,
+  getVisibleDatasets
+} from './kepler-gl';
 export {default as SidePanelFactory} from './side-panel';
 export {default as PanelTitleFactory} from './side-panel/panel-title';
 export {default as MapContainerFactory, Attribution} from './map-container';
@@ -46,7 +52,7 @@ export {
 } from './bottom-widget';
 export {default as ModalContainerFactory} from './modal-container';
 export {default as PlotContainerFactory} from './plot-container';
-export {default as GeocoderPanelFactory} from './geocoder-panel';
+export {default as GeocoderPanelFactory, getUpdateVisDataPayload} from './geocoder-panel';
 
 // // side panel factories
 export {
@@ -61,7 +67,10 @@ export {default as PanelTabFactory} from './side-panel/panel-tab';
 
 export {default as LayerManagerFactory} from './side-panel/layer-manager';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
-export {default as LayerPanelHeaderFactory} from './side-panel/layer-panel/layer-panel-header';
+export {
+  default as LayerPanelHeaderFactory,
+  DragHandle
+} from './side-panel/layer-panel/layer-panel-header';
 export {default as LayerConfiguratorFactory} from './side-panel/layer-panel/layer-configurator';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
 export {LayerConfigGroupLabelFactory} from './side-panel/layer-panel/layer-config-group';
@@ -104,7 +113,12 @@ export {default as MapControlTooltipFactory} from './map/map-control-tooltip';
 export {
   default as MapLegendFactory,
   LayerLegendHeaderFactory,
-  LayerLegendContentFactory
+  LayerLegendContentFactory,
+  StyledMapControlLegend,
+  LayerColorLegend,
+  VisualChannelMetric,
+  LayerSizeLegend,
+  SingleColorLegend
 } from './map/map-legend';
 export {default as MapDrawPanelFactory} from './map/map-draw-panel';
 export {default as SplitMapButtonFactory} from './map/split-map-button';
@@ -115,18 +129,25 @@ export {default as MapControlToolbarFactory} from './map/map-control-toolbar';
 // // modal factories
 export {default as ModalDialogFactory} from './modals/modal-dialog';
 export {default as DeleteDatasetModalFactory} from './modals/delete-data-modal';
-export {default as DataTableModalFactory} from './modals/data-table-modal';
+export {
+  default as DataTableModalFactory,
+  DatasetTabs,
+  DatasetModalTab
+} from './modals/data-table-modal';
 export {default as LoadDataModalFactory} from './modals/load-data-modal';
 export {default as ExportImageModalFactory} from './modals/export-image-modal';
 export {default as ExportDataModalFactory} from './modals/export-data-modal';
 export {default as AddMapStyleModalFactory} from './modals/add-map-style-modal';
 export {default as ExportMapModalFactory} from './modals/export-map-modal/export-map-modal';
-export {default as ModalTabsFactory} from './modals/modal-tabs';
+export {default as ModalTabsFactory, ModalTabItem} from './modals/modal-tabs';
 export {default as LoadStorageMapFactory} from './modals/load-storage-map';
 export {default as ExportJsonMapFactory} from './modals/export-map-modal/export-json-map';
 export {default as ExportHtmlMapFactory} from './modals/export-map-modal/export-html-map';
+export {default as SaveMapModalFactory} from './modals/save-map-modal';
+export {default as ShareMapUrlModalFactory, SharingUrl} from './modals/share-map-modal';
 
 // // notification panel
+export {default as NotificationPanelFactory} from './notification-panel';
 export {default as NotificationItemFactory} from './notification-panel/notification-item';
 
 // // common factory
@@ -162,13 +183,18 @@ export {injector, provideRecipesToInjector, withState} from './injector';
 
 // Common Components
 export {default as CloudTile} from './modals/cloud-tile';
-export {default as FileUploadFactory, FileUpload} from './common/file-uploader/file-upload';
+export {
+  default as FileUploadFactory,
+  FileUpload,
+  WarningMsg
+} from './common/file-uploader/file-upload';
 export {default as FileDrop} from './common/file-uploader/file-drop';
 export {default as UploadButton} from './common/file-uploader/upload-button';
 export {default as DatasetLabel} from './common/dataset-label';
 export {default as ItemSelector} from './common/item-selector/item-selector';
 export {default as Typeahead} from './common/item-selector/typeahead';
-export {default as DropdownList} from './common/item-selector/dropdown-list';
+export {default as DropdownList, ListItem} from './common/item-selector/dropdown-list';
+export {default as ChickletedInput} from './common/item-selector/chickleted-input';
 export {default as FieldSelectorFactory} from './common/field-selector';
 export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';
@@ -181,15 +207,19 @@ export {default as Portaled} from './common/portaled';
 export {default as ProgressBar} from './common/progress-bar';
 export {default as FileUploadProgress} from './common/file-uploader/file-upload-progress';
 export {default as Slider} from './common/slider/slider';
-export {DatasetSquare} from './common/styled-components';
 export {default as ActionPanel, ActionPanelItem} from './common/action-panel';
 export {default as DataTableFactory} from './common/data-table';
 export {default as CanvasHack} from './common/data-table/canvas';
 export {default as MapLayerSelector} from './common/map-layer-selector';
 export {default as VerticalToolbar} from './common/vertical-toolbar';
 export {default as ToolbarItem} from './common/toolbar-item';
-export {SharingUrl} from './modals/share-map-modal';
 export {default as TippyTooltip} from './common/tippy-tooltip';
+export {default as ErrorBoundary} from './common/error-boundary';
+export {default as SliderHandle} from './common/slider/slider-handle';
+export {default as SliderBarHandle} from './common/slider/slider-bar-handle';
+export {default as OptionDropdown} from './common/data-table/option-dropdown';
+export {default as ImagePreview} from './common/image-preview';
+export {default as StatusPanel} from './modals/status-panel';
 
 // side pane components
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
@@ -203,17 +233,41 @@ export {
   LayerLabelEditor,
   LayerTitleSectionFactory
 } from './side-panel/layer-panel/layer-panel-header';
-
 export {
   HowToButton,
   LayerColorRangeSelector,
-  LayerColorSelector
+  LayerColorSelector,
+  ArcLayerColorSelector,
+  getLayerConfiguratorProps,
+  getVisConfiguratorProps
 } from './side-panel/layer-panel/layer-configurator';
+export {
+  default as ColorSelector,
+  ColorSelectorInput,
+  ColorBlock
+} from './side-panel/layer-panel/color-selector';
+export {default as SingleColorPalette} from './side-panel/layer-panel/single-color-palette';
+export {
+  default as ColorRangeSelector,
+  PaletteConfig,
+  ColorPaletteGroup,
+  ALL_TYPES
+} from './side-panel/layer-panel/color-range-selector';
+export {default as ColorPalette} from './side-panel/layer-panel/color-palette';
+export {default as CustomPalette} from './side-panel/layer-panel/custom-palette';
+export {default as CustomPicker} from './side-panel/layer-panel/custom-picker';
 
 export * from './common/styled-components';
+export * from './common/icons';
 import * as Icons from './common/icons';
 
 export {Icons};
+
+export * from './geocoder/geocoder';
+export * from './common/item-selector/chickleted-input';
+export * from './common/animation-control/playback-controls';
+export {default as ColorLegend, LegendRow} from './common/color-legend';
+export {getStyle} from './editor/feature-styles';
 
 // Individual Component from Dependency Tree
 export const TimeRangeSlider = appInjector.get(TimeRangeSliderFactory);
@@ -241,4 +295,4 @@ export {
 };
 
 // Context
-export {default as KeplerGlContext, RootContext} from 'components/context';
+export {default as KeplerGlContext, RootContext} from './context';

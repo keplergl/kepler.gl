@@ -20,8 +20,8 @@
 
 import React, {useCallback, useMemo} from 'react';
 import {FormattedMessage} from 'localization';
-import {Button, SidePanelDivider, SidePanelSection} from 'components/common/styled-components';
-import {Add} from 'components/common/icons';
+import {Button, SidePanelDivider, SidePanelSection} from '../common/styled-components';
+import {Add} from '../common/icons';
 import SourceDataCatalogFactory from './common/source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
 import {Datasets, Filter} from 'reducers';

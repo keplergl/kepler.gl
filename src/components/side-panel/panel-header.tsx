@@ -22,15 +22,15 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {createSelector} from 'reselect';
-import {Tooltip} from 'components/common/styled-components';
-import KeplerGlLogo from 'components/common/logo';
-import {Save, DataTable, Save2, Picture, Db, Map as MapIcon, Share} from 'components/common/icons';
-import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
-import Toolbar from 'components/common/toolbar';
-import ToolbarItem, {ToolbarItemProps} from 'components/common/toolbar-item';
+import {Tooltip} from '../common/styled-components';
+import KeplerGlLogo from '../common/logo';
+import {Save, DataTable, Save2, Picture, Db, Map as MapIcon, Share} from '../common/icons';
+import ClickOutsideCloseDropdown from './panel-dropdown';
+import Toolbar from '../common/toolbar';
+import ToolbarItem, {ToolbarItemProps} from '../common/toolbar-item';
 import {FormattedMessage} from 'localization';
 import {UiState} from 'reducers';
-import {BaseProps} from 'components/common/icons/base';
+import {BaseProps} from '../common/icons/base';
 
 type StyledPanelActionProps = {
   active?: boolean;

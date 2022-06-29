@@ -23,9 +23,9 @@ import uniq from 'lodash.uniq';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
-import ItemSelector from 'components/common/item-selector/item-selector';
-import {PanelLabel} from 'components/common/styled-components';
-import Switch from 'components/common/switch';
+import ItemSelector from '../../common/item-selector/item-selector';
+import {PanelLabel} from '../../common/styled-components';
+import Switch from '../../common/switch';
 import ColorPalette from './color-palette';
 import CustomPalette from './custom-palette';
 import {COLOR_RANGES, ColorRange} from '@kepler.gl/constants';

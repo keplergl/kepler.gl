@@ -21,13 +21,13 @@
 import React, {ComponentType, useState} from 'react';
 import styled from 'styled-components';
 
-import {Legend} from 'components/common/icons';
+import {Legend} from '../common/icons';
 import {FormattedMessage} from 'localization';
-import {MapControlButton} from 'components/common/styled-components';
+import {MapControlButton} from '../common/styled-components';
 import MapControlPanelFactory from './map-control-panel';
 import MapLegendFactory from './map-legend';
 import Tippy from '@tippyjs/react/headless';
-import TippyTooltip from 'components/common/tippy-tooltip';
+import TippyTooltip from '../common/tippy-tooltip';
 import {createPortal} from 'react-dom';
 import {DIMENSIONS} from '@kepler.gl/constants';
 import {MapControl, MapControls} from 'reducers';

@@ -31,9 +31,9 @@ import * as MapStateActions from 'actions/map-state-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 
 // components
-import MapPopoverFactory from 'components/map/map-popover';
-import MapControlFactory from 'components/map/map-control';
-import {StyledMapContainer, StyledAttrbution} from 'components/common/styled-components';
+import MapPopoverFactory from './map/map-popover';
+import MapControlFactory from './map/map-control';
+import {StyledMapContainer, StyledAttrbution} from './common/styled-components';
 
 import EditorFactory from './editor/editor';
 
@@ -53,7 +53,7 @@ import {
 import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
 import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepler.gl/constants';
 
-import ErrorBoundary from 'components/common/error-boundary';
+import ErrorBoundary from './common/error-boundary';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
 import {LOCALE_CODES} from 'localization/locales';
 import {

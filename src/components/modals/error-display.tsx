@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import ErrorBoundary from 'components/common/error-boundary';
-import NotificationItemFactory from 'components/notification-panel/notification-item';
+import ErrorBoundary from '../common/error-boundary';
+import NotificationItemFactory from '../notification-panel/notification-item';
 const NotificationItem = NotificationItemFactory();
 
 interface ErrorDisplayProps {

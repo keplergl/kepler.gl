@@ -20,7 +20,7 @@
 
 import React, {Component, ComponentType, ReactElement} from 'react';
 import styled from 'styled-components';
-import Switch from 'components/common/switch';
+import Switch from '../../common/switch';
 
 import BrushConfigFactory from './brush-config';
 import TooltipConfigFactory from './tooltip-config';
@@ -30,7 +30,7 @@ import {
   PanelHeaderTitle,
   PanelHeaderContent,
   PanelContent
-} from 'components/common/styled-components';
+} from '../../common/styled-components';
 import {FormattedMessage} from 'localization';
 
 interface InteractionPanelProps {

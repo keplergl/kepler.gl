@@ -28,18 +28,20 @@ import CloneDeep from 'lodash.clonedeep';
 import * as VisStateActions from 'actions/vis-state-actions';
 import visStateReducer from 'reducers/vis-state';
 
-import FieldTokenFactory from 'components/common/field-token';
-import {VertThreeDots, ArrowUp} from 'components/common/icons';
-import DataTableModalFactory, {
+import {
+  FieldTokenFactory,
+  VertThreeDots,
+  ArrowUp,
+  DataTableModalFactory,
   DatasetTabs,
-  DatasetModalTab
-} from 'components/modals/data-table-modal';
-import DataTableFactory from 'components/common/data-table';
-import OptionDropdown from 'components/common/data-table/option-dropdown';
+  DatasetModalTab,
+  DataTableFactory,
+  OptionDropdown,
+  appInjector
+} from 'components';
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
-import {appInjector} from '../../../../src/components/container';
 
 import {createDataContainer} from 'utils/table-utils';
 

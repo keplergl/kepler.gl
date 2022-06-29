@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import RangeSliderFactory from 'components/common/range-slider';
+import RangeSliderFactory from '../common/range-slider';
 import {RangeFilterProps} from './types';
 
 RangeFilterFactory.deps = [RangeSliderFactory];

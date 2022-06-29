@@ -34,8 +34,8 @@ import {
   StyledExportSection,
   StyledModalSection,
   StyledModalInputFootnote
-} from 'components/common/styled-components';
-import ImagePreview from 'components/common/image-preview';
+} from '../common/styled-components';
+import ImagePreview from '../common/image-preview';
 import {FormattedMessage} from 'localization';
 import {ExportImage, MapInfo} from 'reducers';
 import {Provider} from 'cloud-providers';

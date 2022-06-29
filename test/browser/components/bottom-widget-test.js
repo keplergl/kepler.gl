@@ -21,8 +21,12 @@
 import React from 'react';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {BottomWidgetFactory, TimeWidgetFactory, AnimationControlFactory} from 'components';
-import {appInjector} from 'components/container';
+import {
+  BottomWidgetFactory,
+  TimeWidgetFactory,
+  AnimationControlFactory,
+  appInjector
+} from 'components';
 import * as VisStateActions from 'actions/vis-state-actions';
 
 const BottomWidget = appInjector.get(BottomWidgetFactory);

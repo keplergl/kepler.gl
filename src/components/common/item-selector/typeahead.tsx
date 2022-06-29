@@ -27,7 +27,7 @@ import {console as Console} from 'global/window';
 
 import Accessor from './accessor';
 import DropdownList, {ListItem} from './dropdown-list';
-import {Search} from 'components/common/icons';
+import {Search} from '../icons';
 import {KeyEvent} from '@kepler.gl/constants';
 
 const DEFAULT_CLASS = 'typeahead';

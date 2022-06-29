@@ -23,8 +23,8 @@ import {FormattedMessage} from 'localization';
 
 import styled, {FlattenSimpleInterpolation} from 'styled-components';
 import Modal from 'react-modal';
-import {Delete} from 'components/common/icons';
-import {Button} from 'components/common/styled-components';
+import {Delete} from './icons';
+import {Button} from './styled-components';
 import {media} from 'styles/media-breakpoints';
 
 interface ModalContentWrapperProps {

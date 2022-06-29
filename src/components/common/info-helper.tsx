@@ -22,7 +22,7 @@ import React from 'react';
 import {useIntl} from 'react-intl';
 import {FormattedMessage} from 'localization';
 import {Tooltip} from './styled-components';
-import {Docs} from 'components/common/icons';
+import {Docs} from './icons';
 import styled from 'styled-components';
 import {camelize} from 'utils/utils';
 

@@ -23,8 +23,8 @@ import {TooltipProps} from 'react-tooltip';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
-import {Tooltip} from 'components/common/styled-components';
-import {BaseProps} from 'components/common/icons/base';
+import {Tooltip} from '../common/styled-components';
+import {BaseProps} from '../common/icons/base';
 
 interface PanelHeaderActionProps {
   id?: string;

@@ -21,7 +21,7 @@
 import React from 'react';
 import test from 'tape';
 import {shallow} from 'enzyme';
-import NotificationItemFactory from 'components/notification-panel/notification-item';
+import {NotificationItemFactory} from 'components';
 import {createNotification} from 'utils/notifications-utils';
 import {theme} from 'styles/base';
 

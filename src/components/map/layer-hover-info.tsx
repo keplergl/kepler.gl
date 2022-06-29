@@ -20,8 +20,8 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {CenterFlexbox} from 'components/common/styled-components';
-import {Layers} from 'components/common/icons';
+import {CenterFlexbox} from '../common/styled-components';
+import {Layers} from '../common/icons';
 import PropTypes from 'prop-types';
 import {notNullorUndefined} from 'utils/data-utils';
 import {getTooltipDisplayValue, getTooltipDisplayDeltaValue} from 'utils/interaction-utils';

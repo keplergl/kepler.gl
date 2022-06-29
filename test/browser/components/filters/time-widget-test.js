@@ -38,16 +38,13 @@ import {
   AnimationSpeedSliderFactory,
   Icons,
   TimeSliderMarkerFactory,
-  TimeRangeSliderTimeTitleFactory
-} from 'components';
-import {
+  TimeRangeSliderTimeTitleFactory,
   AnimationWindowControl,
-  IconButton
-} from 'components/common/animation-control/playback-controls';
-import SliderHandle from 'components/common/slider/slider-handle';
-import Typeahead from 'components/common/item-selector/typeahead';
-
-import {appInjector} from 'components/container';
+  IconButton,
+  SliderHandle,
+  Typeahead,
+  appInjector
+} from 'components';
 
 const TimeWidget = appInjector.get(TimeWidgetFactory);
 const TimeRangeSlider = appInjector.get(TimeRangeSliderFactory);

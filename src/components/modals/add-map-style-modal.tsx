@@ -29,7 +29,7 @@ import {
   StyledMapContainer,
   StyledModalVerticalPanel,
   StyledModalSection
-} from 'components/common/styled-components';
+} from '../common/styled-components';
 import {media} from 'styles/media-breakpoints';
 
 // Utils

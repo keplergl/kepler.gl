@@ -22,8 +22,7 @@ import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import {shallow} from 'enzyme';
-import NotificationItemFactory from 'components/notification-panel/notification-item';
-import NotificationPanelFactory from 'components/notification-panel';
+import {NotificationItemFactory, NotificationPanelFactory} from 'components';
 import {createNotification} from 'utils/notifications-utils';
 import {theme} from 'styles/base';
 

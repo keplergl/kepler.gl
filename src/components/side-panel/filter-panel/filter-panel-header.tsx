@@ -20,10 +20,10 @@
 
 import React, {ComponentType} from 'react';
 import styled from 'styled-components';
-import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
-import {Trash} from 'components/common/icons';
+import PanelHeaderActionFactory from '../panel-header-action';
+import {Trash} from '../../common/icons';
 import {createLinearGradient} from 'utils/color-utils';
-import {StyledPanelHeader, StyledPanelHeaderProps} from 'components/common/styled-components';
+import {StyledPanelHeader, StyledPanelHeaderProps} from '../../common/styled-components';
 import {Filter} from 'reducers';
 import {RGBColor} from '@kepler.gl/types';
 import KeplerTable from 'utils/table-utils/kepler-table';

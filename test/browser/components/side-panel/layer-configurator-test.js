@@ -24,9 +24,8 @@ import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 
-import {LayerConfiguratorFactory} from 'components';
+import {LayerConfiguratorFactory, appInjector} from 'components';
 import {StateWFiles, testCsvDataId} from 'test/helpers/mock-state';
-import {appInjector} from 'components/container';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 // components

@@ -33,7 +33,7 @@ import {
   defaultFormatter,
   notNullorUndefined
 } from 'utils/data-utils';
-import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons/index';
+import {Messages, Crosshairs, CursorClick, Pin} from 'components';
 
 import {InteractionConfig, TooltipField, CompareType} from '../reducers/vis-state-updaters';
 import {DataRow} from './table-utils/data-row';

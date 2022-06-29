@@ -25,26 +25,30 @@ import sinon from 'sinon';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
-import {MapControlButton} from 'components/common/styled-components';
-import ToolbarItem from 'components/common/toolbar-item';
-
-import {mapFieldsSelector} from 'components/kepler-gl';
 import {
+  MapControlButton,
+  ToolbarItem,
+  mapFieldsSelector,
   appInjector,
   MapLayerSelector,
   MapContainerFactory,
   MapLegendFactory,
   MapControlFactory,
-  MapControlToolbarFactory
+  MapControlToolbarFactory,
+  Cube3d,
+  Split,
+  Legend,
+  DrawPolygon,
+  Layers,
+  Delete
 } from 'components';
+
 import {
   mockKeplerProps,
   mockKeplerPropsWithState,
   StateWSplitMaps,
   StateWFiles
 } from '../../../helpers/mock-state';
-
-import {Cube3d, Split, Legend, DrawPolygon, Layers, Delete} from 'components/common/icons';
 
 import {LOCALE_CODES, LOCALES} from 'localization';
 import {toggleMapControl} from 'actions';

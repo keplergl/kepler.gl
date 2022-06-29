@@ -22,10 +22,8 @@ import React from 'react';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import sinon from 'sinon';
-import ShareMapUrlModalFactory, {SharingUrl} from 'components/modals/share-map-modal';
+import {ShareMapUrlModalFactory, SharingUrl, CloudTile, StatusPanel} from 'components';
 
-import CloudTile from 'components/modals/cloud-tile';
-import StatusPanel from 'components/modals/status-panel';
 const ShareMapUrlModal = ShareMapUrlModalFactory();
 
 test('Components -> ShareMapUrlModal.mount', t => {

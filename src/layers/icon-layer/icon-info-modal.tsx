@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {line} from 'd3-shape';
-import {Table, CenterFlexbox} from 'components/common/styled-components';
+import {StyledTable as Table, CenterFlexbox} from 'components';
 import {FormattedMessage} from 'localization';
 
 const lineFunction = line()

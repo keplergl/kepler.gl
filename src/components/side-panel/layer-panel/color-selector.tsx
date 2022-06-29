@@ -24,7 +24,7 @@ import {rgbToHex} from 'utils/color-utils';
 import SingleColorPalette from './single-color-palette';
 import ColorRangeSelector from './color-range-selector';
 import ColorPalette from './color-palette';
-import {StyledPanelDropdown} from 'components/common/styled-components';
+import {StyledPanelDropdown} from '../../common/styled-components';
 import onClickOutside from 'react-onclickoutside';
 import {ColorUI} from 'layers/layer-factory';
 import {ColorRange} from '@kepler.gl/constants';

@@ -22,8 +22,8 @@ import React, {Component, createRef} from 'react';
 import styled from 'styled-components';
 import {injectIntl, WrappedComponentProps} from 'react-intl';
 import UploadButton from './upload-button';
-import {DragNDrop, FileType} from 'components/common/icons';
-import FileUploadProgress from 'components/common/file-uploader/file-upload-progress';
+import {DragNDrop, FileType} from '../icons';
+import FileUploadProgress from './file-upload-progress';
 import FileDrop from './file-drop';
 import {FileLoading, FileLoadingProgress} from 'reducers/vis-state-updaters';
 

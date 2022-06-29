@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {useMemo, useCallback} from 'react';
-import ItemSelector from 'components/common/item-selector/item-selector';
+import ItemSelector from '../common/item-selector/item-selector';
 import {Layer} from 'layers';
 import {LAYER_TYPES} from 'layers/types';
 import {PolygonFilterProps} from './types';

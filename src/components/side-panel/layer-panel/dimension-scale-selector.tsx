@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
-import ItemSelector from 'components/common/item-selector/item-selector';
+import {PanelLabel, SidePanelSection} from '../../common/styled-components';
+import ItemSelector from '../../common/item-selector/item-selector';
 import {FormattedMessage} from 'localization';
 import {camelize} from 'utils/utils';
 

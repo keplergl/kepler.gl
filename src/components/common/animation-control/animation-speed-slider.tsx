@@ -20,7 +20,7 @@
 
 import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
-import RangeSliderFactory from 'components/common/range-slider';
+import RangeSliderFactory from '../range-slider';
 import onClickOutside from 'react-onclickoutside';
 import {SPEED_CONTROL_RANGE, SPEED_CONTROL_STEP} from '@kepler.gl/constants';
 

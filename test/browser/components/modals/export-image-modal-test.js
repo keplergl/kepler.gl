@@ -23,10 +23,7 @@ import test from 'tape-catch';
 import sinon from 'sinon';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
-import ExportImageModalFactory from 'components/modals/export-image-modal';
-import ImagePreview from 'components/common/image-preview';
-import {appInjector} from 'components/container';
-import {SelectionButton} from 'components/common/styled-components';
+import {ExportImageModalFactory, ImagePreview, appInjector, SelectionButton} from 'components';
 
 import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
 

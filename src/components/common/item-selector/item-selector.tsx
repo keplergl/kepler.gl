@@ -27,7 +27,7 @@ import styled from 'styled-components';
 import Accessor from './accessor';
 import ChickletedInput from './chickleted-input';
 import Typeahead from './typeahead';
-import {Delete, ArrowDown} from 'components/common/icons';
+import {Delete, ArrowDown} from '../icons';
 import DropdownList, {ListItem} from './dropdown-list';
 
 import {toArray} from 'utils/utils';

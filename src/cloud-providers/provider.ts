@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Upload} from 'components/common/icons';
+import {Upload} from 'components';
 import {MapData, ExportFileOptions} from 'actions/provider-actions';
 import {ComponentType} from 'react';
 

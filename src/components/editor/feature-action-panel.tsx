@@ -21,11 +21,11 @@
 import React, {useCallback, useState} from 'react';
 import {useIntl} from 'react-intl';
 
-import ActionPanel, {ActionPanelItem} from 'components/common/action-panel';
+import ActionPanel, {ActionPanelItem} from '../common/action-panel';
 import styled from 'styled-components';
 import onClickOutside from 'react-onclickoutside';
 import classnames from 'classnames';
-import {Trash, Layers, Copy, Checkmark} from 'components/common/icons';
+import {Trash, Layers, Copy, Checkmark} from '../common/icons';
 import copy from 'copy-to-clipboard';
 import {Layer} from 'layers';
 import {Datasets, Filter} from 'reducers';

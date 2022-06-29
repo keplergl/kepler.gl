@@ -21,9 +21,9 @@
 import React, {useMemo} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import {Minus} from 'components/common/icons';
+import {Minus} from '../icons';
 import {DEFAULT_TIME_FORMAT} from '@kepler.gl/constants';
-import {CenterFlexbox} from 'components/common/styled-components';
+import {CenterFlexbox} from '../styled-components';
 import {datetimeFormatter} from 'utils/data-utils';
 
 const StyledTimeDisplayWrapper = styled.div.attrs({

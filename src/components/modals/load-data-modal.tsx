@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import get from 'lodash.get';
 import {IntlShape, useIntl} from 'react-intl';
 
-import FileUploadFactory from 'components/common/file-uploader/file-upload';
+import FileUploadFactory from '../common/file-uploader/file-upload';
 import LoadStorageMapFactory from './load-storage-map';
 import ModalTabsFactory from './modal-tabs';
 import LoadingDialog from './loading-dialog';

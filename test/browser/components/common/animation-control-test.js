@@ -28,14 +28,12 @@ import {mountWithTheme} from 'test/helpers/component-utils';
 import {
   AnimationControlFactory,
   PlaybackControlsFactory,
-  FloatingTimeDisplayFactory
-} from 'components';
-import {appInjector} from 'components/container';
-import {StateWTripGeojson} from 'test/helpers/mock-state';
-import {
+  FloatingTimeDisplayFactory,
+  appInjector,
   AnimationWindowControl,
   IconButton
-} from 'components/common/animation-control/playback-controls';
+} from 'components';
+import {StateWTripGeojson} from 'test/helpers/mock-state';
 import reducer from 'reducers/vis-state';
 
 const AnimationControl = appInjector.get(AnimationControlFactory);

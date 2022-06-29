@@ -20,11 +20,11 @@
 
 import React, {Component} from 'react';
 
-import {Button, SidePanelSection} from 'components/common/styled-components';
-import MapStyleSelectorFactory from 'components/side-panel/map-style-panel/map-style-selector';
-import LayerGroupSelectorFactory from 'components/side-panel/map-style-panel/map-layer-selector';
+import {Button, SidePanelSection} from '../common/styled-components';
+import MapStyleSelectorFactory from './map-style-panel/map-style-selector';
+import LayerGroupSelectorFactory from './map-style-panel/map-layer-selector';
 
-import {Add} from 'components/common/icons';
+import {Add} from '../common/icons';
 import ColorSelector from './layer-panel/color-selector';
 import {createSelector} from 'reselect';
 import {injectIntl, WrappedComponentProps} from 'react-intl';

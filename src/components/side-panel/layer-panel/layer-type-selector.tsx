@@ -23,9 +23,9 @@ import styled, {withTheme} from 'styled-components';
 
 import LayerTypeDropdownListFactory from './layer-type-dropdown-list';
 import LayerTypeListItemFactory from './layer-type-list-item';
-import ItemSelector from 'components/common/item-selector/item-selector';
+import ItemSelector from '../../common/item-selector/item-selector';
 
-import {SidePanelSection} from 'components/common/styled-components';
+import {SidePanelSection} from '../../common/styled-components';
 import {Layer} from 'layers';
 import {Datasets} from 'reducers';
 

@@ -21,8 +21,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
-import {IconRoundSmall} from 'components/common/styled-components';
-import {Close, Pin} from 'components/common/icons';
+import {IconRoundSmall} from '../common/styled-components';
+import {Close, Pin} from '../common/icons';
 
 const StyledMapControlPanel = styled.div`
   background-color: ${props => props.theme.mapPanelBackgroundColor};

@@ -20,9 +20,9 @@
 
 import React, {ReactNode} from 'react';
 import styled from 'styled-components';
-import {Logout, Login} from 'components/common/icons';
-import {CenterVerticalFlexbox, Button, CheckMark} from 'components/common/styled-components';
-import LoadingSpinner from 'components/common/loading-spinner';
+import {Logout, Login} from '../common/icons';
+import {CenterVerticalFlexbox, Button, CheckMark} from '../common/styled-components';
+import LoadingSpinner from '../common/loading-spinner';
 import {Provider} from 'cloud-providers';
 
 interface StyledTileWrapperProps {

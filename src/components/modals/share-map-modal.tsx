@@ -30,7 +30,7 @@ import {
   StyledExportSection,
   InputLight,
   Button
-} from 'components/common/styled-components';
+} from '../common/styled-components';
 import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
 import {FormattedMessage} from 'localization';

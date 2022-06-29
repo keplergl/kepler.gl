@@ -21,8 +21,8 @@
 import React, {Component} from 'react';
 import {FormattedMessage, injectIntl, WrappedComponentProps} from 'react-intl';
 
-import {PanelLabel, PanelLabelWrapper, SidePanelSection} from 'components/common/styled-components';
-import InfoHelperFactory from 'components/common/info-helper';
+import {PanelLabel, PanelLabelWrapper, SidePanelSection} from '../../common/styled-components';
+import InfoHelperFactory from '../../common/info-helper';
 import DimensionScaleSelector from './dimension-scale-selector';
 import {camelize} from 'utils/utils';
 import FieldSelectorFactory from '../../common/field-selector';

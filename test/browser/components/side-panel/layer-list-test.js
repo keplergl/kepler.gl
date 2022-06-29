@@ -26,10 +26,8 @@ import {StateWMultiH3Layers} from 'test/helpers/mock-state';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 
-import {appInjector} from 'components/container';
+import {appInjector, LayerListFactory} from 'components';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-
-import LayerListFactory from 'components/side-panel/layer-panel/layer-list';
 
 const LayerList = appInjector.get(LayerListFactory);
 

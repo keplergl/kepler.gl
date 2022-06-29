@@ -19,7 +19,8 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {PanelHeaderDropdownFactory, Icons} from 'components';
+import {PanelHeaderDropdownFactory} from './panel-header';
+import * as Icons from '../common/icons';
 
 const CloudStorageItems = [
   {

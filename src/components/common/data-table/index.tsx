@@ -30,13 +30,13 @@ import OptionDropdown from './option-dropdown';
 
 import Grid from './grid';
 import Button from './button';
-import {ArrowUp, ArrowDown, VertThreeDots} from 'components/common/icons';
+import {ArrowUp, ArrowDown, VertThreeDots} from '../icons';
 
 import {parseFieldValue} from 'utils/data-utils';
 import {adjustCellsToContainer} from './cell-size';
 
 import {ALL_FIELD_TYPES, SORT_ORDER} from '@kepler.gl/constants';
-import FieldTokenFactory from 'components/common/field-token';
+import FieldTokenFactory from '../field-token';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 
 const defaultHeaderRowHeight = 55;

@@ -20,7 +20,7 @@
 
 import React from 'react';
 import {preciseRound} from 'utils/data-utils';
-import {CursorClick} from 'components/common/icons';
+import {CursorClick} from '../common/icons';
 import {StyledLayerName} from './layer-hover-info';
 
 // 6th decimal is worth up to 0.11 m

@@ -19,9 +19,9 @@
 // THE SOFTWARE.
 
 import React, {useCallback} from 'react';
-import RangeFilterFactory from 'components/filters/range-filter';
+import RangeFilterFactory from '../range-filter';
 import {RangeFilter} from 'reducers';
-import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/filter-panel-with-field-select';
+import FieldPanelWithFieldSelectFactory from './filter-panel-with-field-select';
 import {FilterPanelComponent} from './types';
 
 RangeFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, RangeFilterFactory];

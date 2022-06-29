@@ -28,13 +28,13 @@ import React, {
 import classnames from 'classnames';
 import styled from 'styled-components';
 import {SortableHandle} from 'react-sortable-hoc';
-import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
-import {Copy, ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from 'components/common/icons';
+import PanelHeaderActionFactory from '../panel-header-action';
+import {Copy, ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from '../../common/icons';
 
-import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
+import {InlineInput, StyledPanelHeader} from '../../common/styled-components';
 import {FormattedMessage} from 'localization';
 import {RGBColor} from '@kepler.gl/types';
-import {BaseProps} from 'components/common/icons/base';
+import {BaseProps} from '../../common/icons/base';
 
 type LayerLabelEditorProps = {
   layerId: string;

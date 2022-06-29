@@ -22,7 +22,7 @@ import React from 'react';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {console as Console} from 'global/window';
-import KeplerGlContext from 'components/context';
+import KeplerGlContext from './context';
 
 export type FactoryElement = (...args) => React.ComponentType;
 export type Factory = FactoryElement & {

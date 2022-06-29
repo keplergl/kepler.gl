@@ -27,12 +27,11 @@ import {
   FilterPanelFactory,
   FieldSelectorFactory,
   Button,
-  FilterPanelHeaderFactory
+  FilterPanelHeaderFactory,
+  FilterPanelFactory as NewFilterPanelFactory,
+  appInjector
 } from 'components';
 
-import NewFilterPanelFactory from 'components/side-panel/filter-panel/filter-panel';
-
-import {appInjector} from 'components/container';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 import keplerGlReducer from 'reducers/core';
 import * as VisStateActions from 'actions/vis-state-actions';

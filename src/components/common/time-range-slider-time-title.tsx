@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {Minus} from 'components/common/icons';
+import {Minus} from './icons';
 import {datetimeFormatter} from 'utils/data-utils';
 
 interface TimeValueWrapperProps {

@@ -23,8 +23,7 @@ import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 import sinon from 'sinon';
 import test from 'tape';
-import {appInjector, MapContainerFactory} from 'components';
-import {mapFieldsSelector} from 'components/kepler-gl';
+import {appInjector, MapContainerFactory, mapFieldsSelector} from 'components';
 import {mockKeplerProps} from '../../helpers/mock-state';
 
 const MapContainer = appInjector.get(MapContainerFactory);

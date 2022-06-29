@@ -21,11 +21,11 @@
 import React, {useState, useCallback, useEffect, useRef} from 'react';
 import styled from 'styled-components';
 
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
-import RangeSliderFactory from 'components/common/range-slider';
+import {PanelLabel, SidePanelSection} from '../../common/styled-components';
+import RangeSliderFactory from '../../common/range-slider';
 import {FormattedMessage} from 'localization';
 import {KeyEvent} from '@kepler.gl/constants';
-import {Checkbox} from 'components';
+import Checkbox from '../../common/checkbox';
 import {clamp} from 'utils/data-utils';
 import {isInRange} from 'utils/filter-utils';
 import {Layer, LayerBaseConfig} from 'layers';

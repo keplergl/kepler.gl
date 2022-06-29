@@ -23,8 +23,8 @@ import {polyfill} from 'react-lifecycles-compat';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
 import RangePlotFactory from './range-plot';
-import Slider from 'components/common/slider/slider';
-import {Input} from 'components/common/styled-components';
+import Slider from './slider/slider';
+import {Input} from './styled-components';
 
 import {roundValToStep, clamp} from 'utils/data-utils';
 import {observeDimensions, unobserveDimensions} from '../../utils/observe-dimensions';

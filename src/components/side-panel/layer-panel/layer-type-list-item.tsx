@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import {CLOUDFRONT} from '@kepler.gl/constants';
 import classNames from 'classnames';
 import {FormattedMessage} from 'localization';
-import {BaseProps} from 'components/common/icons/base';
+import {BaseProps} from '../../common/icons/base';
 
 type LayerTypeListItemProps = {
   value: {

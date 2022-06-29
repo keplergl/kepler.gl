@@ -20,13 +20,13 @@
 
 import React, {useEffect} from 'react';
 import styled from 'styled-components';
-import ImagePreview from 'components/common/image-preview';
+import ImagePreview from '../common/image-preview';
 import {SetExportImageSettingUpdaterAction} from '../../actions';
 
 import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS} from '@kepler.gl/constants';
 
-import {StyledModalContent, SelectionButton, CheckMark} from 'components/common/styled-components';
-import Switch from 'components/common/switch';
+import {StyledModalContent, SelectionButton, CheckMark} from '../common/styled-components';
+import Switch from '../common/switch';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from 'localization';
 import {ExportImage} from 'reducers';

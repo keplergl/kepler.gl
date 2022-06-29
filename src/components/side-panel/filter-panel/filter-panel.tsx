@@ -24,15 +24,15 @@ import styled from 'styled-components';
 import get from 'lodash.get';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 
-import NewFilterPanelFactory from 'components/filters/filter-panels/new-filter-panel';
-import TimeRangeFilterPanelFactory from 'components/filters/filter-panels/time-range-filter-panel';
-import SingleSelectFilterPanelFactory from 'components/filters/filter-panels/single-select-filter-panel';
-import MultiSelectFilterPanelFactory from 'components/filters/filter-panels/multi-select-filter-panel';
-import RangeFilterPanelFactory from 'components/filters/filter-panels/range-filter-panel';
-import PolygonFilterPanelFactory from 'components/filters/filter-panels/polygon-filter-panel';
+import NewFilterPanelFactory from '../../filters/filter-panels/new-filter-panel';
+import TimeRangeFilterPanelFactory from '../../filters/filter-panels/time-range-filter-panel';
+import SingleSelectFilterPanelFactory from '../../filters/filter-panels/single-select-filter-panel';
+import MultiSelectFilterPanelFactory from '../../filters/filter-panels/multi-select-filter-panel';
+import RangeFilterPanelFactory from '../../filters/filter-panels/range-filter-panel';
+import PolygonFilterPanelFactory from '../../filters/filter-panels/polygon-filter-panel';
 import {Filter} from 'reducers/vis-state-updaters';
 import {Field} from 'utils/table-utils/kepler-table';
-import {FilterPanelProps} from 'components/filters/filter-panels/types';
+import {FilterPanelProps} from '../../filters/filter-panels/types';
 import {Layer} from 'layers';
 
 const StyledFilterPanel = styled.div`

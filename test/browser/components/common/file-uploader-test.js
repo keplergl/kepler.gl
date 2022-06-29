@@ -23,9 +23,7 @@ import test from 'tape';
 import sinon from 'sinon';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
-import {FileUpload, WarningMsg} from 'components/common/file-uploader/file-upload';
-import FileDrop from 'components/common/file-uploader/file-drop';
-import UploadButton from 'components/common/file-uploader/upload-button';
+import {FileUpload, WarningMsg, FileDrop, UploadButton} from 'components';
 
 test('Components -> FileUploader.render', t => {
   let wrapper;

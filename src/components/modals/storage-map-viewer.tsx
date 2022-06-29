@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import moment from 'moment';
-import {LeftArrow} from 'components/common/icons';
+import {LeftArrow} from '../common/icons';
 import {FormattedMessage} from 'localization';
 
 const imageH = 108;

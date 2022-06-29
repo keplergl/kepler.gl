@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {StyledExportSection} from 'components/common/styled-components';
+import {StyledExportSection} from '../../common/styled-components';
 
 export const StyledExportMapSection = styled(StyledExportSection)`
   margin-top: ${props => props.theme.exportIntraSectionMargin}px;

@@ -19,12 +19,12 @@
 // THE SOFTWARE.
 
 import React, {useMemo, useCallback} from 'react';
-import {StyledFilterContent} from 'components/common/styled-components';
-import PolygonFilterFactory from 'components/filters/polygon-filter';
-import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
-import {EyeSeen, EyeUnseen} from 'components/common/icons';
+import {StyledFilterContent} from '../../common/styled-components';
+import PolygonFilterFactory from '../polygon-filter';
+import PanelHeaderActionFactory from '../../side-panel/panel-header-action';
+import {EyeSeen, EyeUnseen} from '../../common/icons';
 
-import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
+import FilterPanelHeaderFactory from '../../side-panel/filter-panel/filter-panel-header';
 import {StyledFilterPanel} from '../components';
 
 import get from 'lodash.get';

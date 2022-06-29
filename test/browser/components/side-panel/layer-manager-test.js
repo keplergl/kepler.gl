@@ -28,18 +28,17 @@ import {
   DatasetSectionFactory,
   PanelViewListToggleFactory,
   PanelTitleFactory,
-  AddLayerButtonFactory
+  AddLayerButtonFactory,
+  appInjector,
+  Layers
 } from 'components';
 
-import {appInjector} from 'components/container';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
 
 import {StateWMultiH3Layers} from 'test/helpers/mock-state';
-
-import {Layers} from 'components/common/icons';
 
 const LayerManager = appInjector.get(LayerManagerFactory);
 const LayerList = appInjector.get(LayerListFactory);

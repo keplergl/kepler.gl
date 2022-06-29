@@ -21,8 +21,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
-import {Add} from 'components/common/icons';
-import {Button} from 'components/common/styled-components';
+import {Add} from '../../common/icons';
+import {Button} from '../../common/styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
 import {Datasets} from 'reducers';

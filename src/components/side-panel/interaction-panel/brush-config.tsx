@@ -19,9 +19,9 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import RangeSliderFactory from 'components/common/range-slider';
+import RangeSliderFactory from '../../common/range-slider';
 
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
+import {PanelLabel, SidePanelSection} from '../../common/styled-components';
 import {BRUSH_CONFIG} from 'utils/interaction-utils';
 import {FormattedMessage} from 'localization';
 

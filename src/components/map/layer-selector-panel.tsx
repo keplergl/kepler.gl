@@ -21,7 +21,7 @@
 import React, {useCallback, useMemo} from 'react';
 import classnames from 'classnames';
 
-import {MapControlButton} from 'components/common/styled-components';
+import {MapControlButton} from '../common/styled-components';
 import {Layers} from '../common/icons';
 import MapLayerSelector from '../common/map-layer-selector';
 import MapControlTooltipFactory from './map-control-tooltip';

@@ -22,23 +22,16 @@ import React, {useCallback} from 'react';
 import classnames from 'classnames';
 
 import {EDITOR_MODES} from '@kepler.gl/constants';
-import {
-  CursorClick,
-  DrawPolygon,
-  EyeSeen,
-  EyeUnseen,
-  Polygon,
-  Rectangle
-} from 'components/common/icons';
-import {MapControlButton} from 'components/common/styled-components';
-import ToolbarItem from 'components/common/toolbar-item';
+import {CursorClick, DrawPolygon, EyeSeen, EyeUnseen, Polygon, Rectangle} from '../common/icons';
+import {MapControlButton} from '../common/styled-components';
+import ToolbarItem from '../common/toolbar-item';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlPanelFactory from './map-control-panel';
 import MapControlToolbarFactory from './map-control-toolbar';
 import {FormattedMessage} from '../../localization';
-import TippyTooltip from 'components/common/tippy-tooltip';
+import TippyTooltip from '../common/tippy-tooltip';
 import {Editor, MapControls} from 'reducers';
-import {BaseProps} from 'components/common/icons/base';
+import {BaseProps} from '../common/icons/base';
 
 MapDrawPanelFactory.deps = [
   MapControlTooltipFactory,

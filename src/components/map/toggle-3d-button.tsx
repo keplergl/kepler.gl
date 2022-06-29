@@ -21,10 +21,10 @@
 import React, {ComponentType, useCallback, useMemo} from 'react';
 import classnames from 'classnames';
 
-import {Cube3d} from 'components/common/icons';
-import {MapControlButton} from 'components/common/styled-components';
+import {Cube3d} from '../common/icons';
+import {MapControlButton} from '../common/styled-components';
 import {FormattedMessage} from '../../localization';
-import TippyTooltip from 'components/common/tippy-tooltip';
+import TippyTooltip from '../common/tippy-tooltip';
 import {MapControls} from 'reducers';
 
 Toggle3dButtonFactory.deps = [];

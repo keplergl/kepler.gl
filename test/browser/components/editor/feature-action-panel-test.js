@@ -21,10 +21,10 @@
 import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
-import {PureFeatureActionPanelFactory} from 'components/editor/feature-action-panel';
+import {FeatureActionPanelFactory} from 'components';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
-const FeatureActionPanel = PureFeatureActionPanelFactory();
+const FeatureActionPanel = FeatureActionPanelFactory();
 
 test('FeatureActionPanel -> display layers', t => {
   const layers = [

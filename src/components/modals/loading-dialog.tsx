@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import LoadingSpinner from 'components/common/loading-spinner';
+import LoadingSpinner from '../common/loading-spinner';
 import {FormattedMessage} from 'localization';
 
 const StyledSpinner = styled.div`

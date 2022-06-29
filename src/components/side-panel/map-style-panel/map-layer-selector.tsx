@@ -20,8 +20,8 @@
 
 import React, {ComponentType} from 'react';
 import styled from 'styled-components';
-import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
-import {EyeSeen, EyeUnseen, Upload} from 'components/common/icons';
+import PanelHeaderActionFactory from '../panel-header-action';
+import {EyeSeen, EyeUnseen, Upload} from '../../common/icons';
 
 import {
   PanelLabel,
@@ -29,11 +29,11 @@ import {
   PanelLabelBold,
   PanelLabelWrapper,
   CenterFlexbox
-} from 'components/common/styled-components';
+} from '../../common/styled-components';
 import {FormattedMessage} from 'localization';
 import {camelize} from 'utils/utils';
 import {VisibleLayerGroups} from 'reducers';
-import {BaseProps} from 'components/common/icons/base';
+import {BaseProps} from '../../common/icons/base';
 
 const StyledInteractionPanel = styled.div`
   padding-bottom: 12px;

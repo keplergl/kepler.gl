@@ -21,8 +21,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
-import {PanelLabel} from 'components/common/styled-components';
-import FieldSelectorFactory from 'components/common/field-selector';
+import {PanelLabel} from '../../common/styled-components';
+import FieldSelectorFactory from '../../common/field-selector';
 import {validateColumn} from 'reducers/vis-state-merger';
 import {LayerColumn, LayerColumns} from 'layers';
 import {Field, FieldPair} from 'utils/table-utils/kepler-table';

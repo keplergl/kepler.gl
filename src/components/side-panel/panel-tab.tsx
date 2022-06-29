@@ -20,9 +20,9 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {Tooltip} from 'components/common/styled-components';
+import {Tooltip} from '../common/styled-components';
 import {FormattedMessage} from 'localization';
-import {BaseProps} from 'components/common/icons/base';
+import {BaseProps} from '../common/icons/base';
 
 type StyledPanelTabProps = {
   active?: boolean;

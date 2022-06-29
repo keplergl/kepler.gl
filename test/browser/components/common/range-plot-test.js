@@ -22,8 +22,7 @@
 import React from 'react';
 import test from 'tape';
 import {mountWithTheme} from 'test/helpers/component-utils';
-import {appInjector} from 'components/container';
-import {RangePlotFactory} from 'components';
+import {appInjector, RangePlotFactory} from 'components';
 
 const RangePlot = appInjector.get(RangePlotFactory);
 

@@ -27,15 +27,15 @@ import {
   SBFlexboxItem,
   SidePanelSection,
   SpaceBetweenFlexbox
-} from 'components/common/styled-components';
-import {Add} from 'components/common/icons';
+} from '../../common/styled-components';
+import {Add} from '../../common/icons';
 import ColorSelector from './color-selector';
-import ItemSelector from 'components/common/item-selector/item-selector';
+import ItemSelector from '../../common/item-selector/item-selector';
 import LayerConfigGroupFactory, {
   ConfigGroupCollapsibleContent,
   ConfigGroupCollapsibleHeader
 } from './layer-config-group';
-import RangeSliderFactory from 'components/common/range-slider';
+import RangeSliderFactory from '../../common/range-slider';
 
 import {LayerTextLabel, LAYER_TEXT_CONFIGS} from 'layers/layer-factory';
 import FieldSelectorFactory from '../../common/field-selector';

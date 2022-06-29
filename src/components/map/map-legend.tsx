@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {rgb} from 'd3-color';
-import ColorLegend from 'components/common/color-legend';
+import ColorLegend from '../common/color-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from 'localization';
 import Layer, {LayerBaseConfig, VisualChannel, VisualChannelDescription} from 'layers/base-layer';

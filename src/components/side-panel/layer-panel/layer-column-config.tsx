@@ -21,7 +21,7 @@
 import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
+import {PanelLabel, SidePanelSection} from '../../common/styled-components';
 import ColumnSelectorFactory from './column-selector';
 import {ColumnPairs} from 'layers/base-layer';
 import {Layer, LayerColumns, LayerBaseConfig} from 'layers';

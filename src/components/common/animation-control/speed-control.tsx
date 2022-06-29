@@ -21,8 +21,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import AnimationSpeedSliderFactory from './animation-speed-slider';
-import {Button, CenterFlexbox} from 'components/common/styled-components';
-import {Rocket} from 'components/common/icons';
+import {Button, CenterFlexbox} from '../styled-components';
+import {Rocket} from '../icons';
 import {preciseRound} from 'utils/data-utils';
 
 const StyledSpeedToggle = styled.div`
