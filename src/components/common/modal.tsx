@@ -140,7 +140,7 @@ export const ModalFooter = ({cancel, confirm, cancelButton, confirmButton}) => {
   );
 };
 
-export interface ModalDialogProps {
+interface ModalDialogOwnProps {
   footer: boolean;
   close: boolean;
   isOpen: boolean;
@@ -157,6 +157,8 @@ export interface ModalDialogProps {
   theme: any;
   children?: ReactNode;
 }
+
+export type ModalDialogProps = ModalDialogOwnProps & Omit<ReactModal.Props, "style" | "ariaHideApp" | "className">
 
 export class ModalDialog extends Component<ModalDialogProps> {
   static defaultProps = {
