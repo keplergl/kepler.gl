@@ -24,16 +24,15 @@ import {EnhancedHexagonLayer} from '@kepler.gl/deckgl-layers';
 import {hexagonToPolygonGeo} from './hexagon-utils';
 import HexagonLayerIcon from './hexagon-layer-icon';
 import {clamp} from 'utils/data-utils';
-import {Merge} from '@kepler.gl/types';
 import {
-  AggregationTypes,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
   VisConfigSelection,
-  ColorRange
-} from '@kepler.gl/constants';
+  Merge
+} from '@kepler.gl/types';
+import {AggregationTypes, ColorRange} from '@kepler.gl/constants';
 
 export type HexagonLayerVisConfigSettings = {
   opacity: VisConfigNumber;

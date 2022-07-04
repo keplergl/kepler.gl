@@ -39,17 +39,23 @@ import {
   GeojsonDataMaps
 } from './geojson-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
-import {GEOJSON_FIELDS, HIGHLIGH_COLOR_3D, CHANNEL_SCALES, ColorRange} from '@kepler.gl/constants';
 import {
-  LAYER_VIS_CONFIGS,
+  GEOJSON_FIELDS, 
+  HIGHLIGH_COLOR_3D, 
+  CHANNEL_SCALES, 
+  ColorRange,
+  LAYER_VIS_CONFIGS
+} from '@kepler.gl/constants';
+import {
   VisConfigNumber,
   VisConfigColorSelect,
   VisConfigColorRange,
   VisConfigRange,
-  VisConfigBoolean
-} from '@kepler.gl/constants';
+  VisConfigBoolean,
+  Merge, 
+  RGBColor
+} from '@kepler.gl/types';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
-import {Merge, RGBColor} from '@kepler.gl/types';
 import {KeplerTable} from '../../utils';
 
 const SUPPORTED_ANALYZER_TYPES = {

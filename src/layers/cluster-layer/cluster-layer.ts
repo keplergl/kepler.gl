@@ -22,14 +22,16 @@ import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
 import {DeckGLClusterLayer} from '@kepler.gl/deckgl-layers';
-import {CHANNEL_SCALES} from '@kepler.gl/constants';
 import ClusterLayerIcon from './cluster-layer-icon';
 import {
-  AggregationTypes,
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
   VisConfigSelection,
+} from '@kepler.gl/types';
+import {
+  CHANNEL_SCALES,
+  AggregationTypes,
   ColorRange
 } from '@kepler.gl/constants';
 import {Merge} from '@kepler.gl/types';

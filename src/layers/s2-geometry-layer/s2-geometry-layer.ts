@@ -22,7 +22,6 @@ import {S2Layer} from '@deck.gl/geo-layers';
 import {HIGHLIGH_COLOR_3D, CHANNEL_SCALES, ColorRange, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import {KeplerTable} from '../../utils';
 import {createDataContainer} from 'utils/table-utils';
-import {Merge, RGBColor} from '@kepler.gl/types';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import Layer, {
   LayerBaseConfig,
@@ -33,12 +32,14 @@ import Layer, {
   LayerHeightConfig
 } from '../base-layer';
 import {
+  Merge, 
+  RGBColor,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
   VisConfigRange
-} from '@kepler.gl/constants';
+} from '@kepler.gl/types';
 import S2LayerIcon from './s2-layer-icon';
 import {getS2Center, validS2Token} from './s2-utils';
 

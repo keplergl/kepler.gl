@@ -25,8 +25,8 @@ import {GLTFLoader} from '@loaders.gl/gltf';
 import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
 import ScenegraphLayerIcon from './scenegraph-layer-icon';
 import ScenegraphInfoModalFactory from './scenegraph-info-modal';
-import {LAYER_VIS_CONFIGS, VisConfigColorRange, VisConfigNumber, ColorRange} from '@kepler.gl/constants';
-import {Merge} from '@kepler.gl/types';
+import {LAYER_VIS_CONFIGS, ColorRange} from '@kepler.gl/constants';
+import {Merge, VisConfigColorRange, VisConfigNumber} from '@kepler.gl/types';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import {KeplerTable} from '../../utils';
 
