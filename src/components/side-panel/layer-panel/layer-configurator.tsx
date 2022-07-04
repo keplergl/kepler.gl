@@ -43,15 +43,13 @@ import {CHANNEL_SCALE_SUPPORTED_FIELDS, ColorRange} from '@kepler.gl/constants';
 import {
   Layer,
   LayerBaseConfig,
-  LayerVisConfig,
   LAYER_TYPES,
-  ColorUI,
   VisualChannel,
   AggregationLayer
 } from 'layers';
 
 import {Datasets} from 'reducers';
-import {NestedPartial, RGBColor} from '@kepler.gl/types';
+import {NestedPartial, RGBColor, LayerVisConfig, ColorUI} from '@kepler.gl/types';
 import {Field} from 'utils/table-utils/kepler-table';
 import {toggleModal} from 'actions/ui-state-actions';
 import {ActionHandler} from 'actions';

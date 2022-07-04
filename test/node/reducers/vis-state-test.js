@@ -37,14 +37,14 @@ import {getDefaultFilter} from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {maybeToDate} from 'utils/data-utils';
 import {processCsvData, processGeojson} from 'processors/data-processor';
+import {Layer, KeplerGlLayers} from 'layers';
 import {
-  Layer,
-  KeplerGlLayers,
+  ALL_FIELD_TYPES,
+  EDITOR_MODES,
   LAYER_VIS_CONFIGS,
   DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_UI
-} from 'layers';
-import {ALL_FIELD_TYPES, EDITOR_MODES} from '@kepler.gl/constants';
+} from '@kepler.gl/constants';
 
 const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
 

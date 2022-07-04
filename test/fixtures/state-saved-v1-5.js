@@ -23,13 +23,13 @@ import tripGeojson, {
   tripBounds,
   dataToTimeStamp
 } from 'test/fixtures/trip-geojson';
+import {KeplerGlLayers} from 'layers';
 import {
-  KeplerGlLayers,
+  DEFAULT_LAYER_OPACITY,
   DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_RANGE,
-  DEFAULT_LAYER_OPACITY,
   DEFAULT_COLOR_UI
-} from 'layers';
+} from '@kepler.gl/constants';
 
 const {TripLayer} = KeplerGlLayers;
 

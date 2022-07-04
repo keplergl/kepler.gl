@@ -37,10 +37,10 @@ import LayerConfigGroupFactory, {
 } from './layer-config-group';
 import RangeSliderFactory from 'components/common/range-slider';
 
-import {LayerTextLabel, LAYER_TEXT_CONFIGS} from 'layers';
 import FieldSelectorFactory from '../../common/field-selector';
 import {Field} from 'utils/table-utils/kepler-table';
-import {RGBColor} from '@kepler.gl/types';
+import {RGBColor, LayerTextLabel} from '@kepler.gl/types';
+import {LAYER_TEXT_CONFIGS} from '@kepler.gl/constants';
 
 type TextLabelPanelProps = {
   fields: Field[];

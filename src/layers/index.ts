@@ -102,7 +102,4 @@ export const LayerClasses = {
 
 export type OVERLAY_TYPE = {[key: string]: string};
 
-export * from '@kepler.gl/constants';
-export type {LayerVisConfig, ColorUI, LayerTextLabel} from '@kepler.gl/types';
-
 export * from './mapbox-utils';
