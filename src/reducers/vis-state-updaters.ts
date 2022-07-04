@@ -81,8 +81,7 @@ import {
   removeLayerFromSplitMaps
 } from 'utils/split-map-utils';
 
-import {Layer, LayerClasses, LayerClassesType, LAYER_ID_LENGTH} from 'layers';
-import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
+import {Layer, LayerClasses, LayerClassesType, LAYER_ID_LENGTH, DEFAULT_TEXT_LABEL} from 'layers';
 import {EDITOR_MODES, SORT_ORDER, FILTER_TYPES, MAX_DEFAULT_TOOLTIPS} from '@kepler.gl/constants';
 import {ActionTypes} from 'actions';
 import {pick_, merge_, swap_} from './composer-helpers';

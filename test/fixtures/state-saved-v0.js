@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {KeplerGlLayers} from 'layers';
+import {KeplerGlLayers, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers';
 const {PointLayer, ArcLayer, HexagonLayer, GeojsonLayer} = KeplerGlLayers;
 import {getDefaultInteraction} from 'utils/interaction-utils';
-import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
 
 export const savedStateV0 = {
   config: {

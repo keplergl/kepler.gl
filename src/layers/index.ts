@@ -22,19 +22,49 @@ import {default as PointLayer} from './point-layer/point-layer';
 import {default as ArcLayer} from './arc-layer/arc-layer';
 import {default as LineLayer} from './line-layer/line-layer';
 import {default as GridLayer} from './grid-layer/grid-layer';
+export {pointToPolygonGeo} from './grid-layer/grid-utils';
 import {default as HexagonLayer} from './hexagon-layer/hexagon-layer';
 import {default as GeojsonLayer} from './geojson-layer/geojson-layer';
+export {
+  defaultElevation,
+  defaultLineWidth,
+  defaultRadius
+} from './geojson-layer/geojson-layer';
 import {default as ClusterLayer} from './cluster-layer/cluster-layer';
 import {default as IconLayer} from './icon-layer/icon-layer';
 import {default as HeatmapLayer} from './heatmap-layer/heatmap-layer';
+export {MAX_ZOOM_LEVEL} from './heatmap-layer/heatmap-layer';
 import {default as H3Layer} from './h3-hexagon-layer/h3-hexagon-layer';
+export {defaultElevation as h3DefaultElevation} from './h3-hexagon-layer/h3-hexagon-layer';
+export {getCentroid, h3IsValid, getHexFields} from './h3-hexagon-layer/h3-utils';
 import {default as ScenegraphLayer} from './scenegraph-layer/scenegraph-layer';
 import {default as TripLayer} from './trip-layer/trip-layer';
+export {defaultLineWidth as tripDefaultLineWidth} from './trip-layer/trip-layer';
+export {containValidTime, parseTripGeoJsonTimestamp} from './trip-layer/trip-utils';
 import {default as S2GeometryLayer} from './s2-geometry-layer/s2-geometry-layer';
-import {LAYER_TYPES} from 'layers/types';
+export {defaultElevation as s2DefaultElevation} from './s2-geometry-layer/s2-geometry-layer';
+export {getS2Center} from './s2-geometry-layer/s2-utils';
+export {default as AggregationLayer} from './aggregation-layer';
+import {LAYER_TYPES} from './types';
+export {LAYER_TYPES, EDITOR_AVAILABLE_LAYERS} from './types';
 // base layer
-export {default as Layer, OVERLAY_TYPE, LAYER_ID_LENGTH, colorMaker} from './base-layer';
-export type {LayerBaseConfig, LayerColumns, LayerColumn} from './base-layer';
+export {
+  default as Layer,
+  OVERLAY_TYPE,
+  LAYER_ID_LENGTH,
+  colorMaker,
+  layerColors
+} from './base-layer';
+export type {
+  LayerBaseConfig,
+  LayerColumns,
+  LayerColumn,
+  VisualChannelDomain,
+  VisualChannel,
+  VisualChannelDescription,
+  ColumnPairs,
+  FindDefaultLayerPropsReturnValue
+} from './base-layer';
 
 // individual layers
 export const KeplerGlLayers = {
@@ -72,5 +102,7 @@ export const LayerClasses = {
 
 export type OVERLAY_TYPE = {[key: string]: string};
 
-export {LAYER_VIS_CONFIGS} from './layer-factory';
-export type {LayerVisConfig} from './layer-factory';
+export * from './layer-factory';
+export type {LayerVisConfig, ColorUI, LayerTextLabel} from './layer-factory';
+
+export * from './mapbox-utils';

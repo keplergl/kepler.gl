@@ -24,7 +24,7 @@ import {mount} from 'enzyme';
 import sinon from 'sinon';
 import sinonStubPromise from 'sinon-stub-promise';
 import {getDistanceScales} from 'viewport-mercator-project';
-import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
+import {DEFAULT_TEXT_LABEL, KeplerGlLayers} from 'layers';
 
 sinonStubPromise(sinon);
 
@@ -38,7 +38,6 @@ import {
   pointLayerMeta,
   iconGeometry
 } from 'test/helpers/layer-utils';
-import {KeplerGlLayers} from 'layers';
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 import {IntlWrapper} from '../../helpers/component-utils';
 import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';

@@ -28,11 +28,10 @@ import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
 import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW, PLOT_TYPES} from '@kepler.gl/constants';
-import {LAYER_TYPES} from 'layers/types';
+import {LAYER_TYPES, getCentroid, h3IsValid, Layer} from 'layers';
 import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {generateHashId, set, toArray} from './utils';
-import {getCentroid, h3IsValid} from 'layers/h3-hexagon-layer/h3-utils';
 
 import {
   Filter,
@@ -50,7 +49,6 @@ import {
   RangeFieldDomain
 } from '../reducers/vis-state-updaters';
 import KeplerTable, {Field, FilterRecord, FilterDatasetOpt} from './table-utils/kepler-table';
-import {Layer} from 'layers';
 import {ParsedFilter} from 'schemas';
 import {DataContainerInterface} from './table-utils/data-container-interface';
 import {Millisecond} from 'cloud-providers';

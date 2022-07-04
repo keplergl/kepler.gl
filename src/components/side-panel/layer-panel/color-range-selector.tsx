@@ -32,7 +32,7 @@ import {COLOR_RANGES, ColorRange} from '@kepler.gl/constants';
 import {numberSort} from 'utils/data-utils';
 import {reverseColorRange} from 'utils/color-utils';
 import {FormattedMessage} from 'localization';
-import {ColorUI} from 'layers/layer-factory';
+import {ColorUI} from 'layers';
 import {NestedPartial} from '@kepler.gl/types';
 
 type ColorRangeSelectorProps = {

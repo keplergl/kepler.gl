@@ -31,7 +31,7 @@ import CPUAggregator, {
 import {getDistanceScales} from 'viewport-mercator-project';
 import {max} from 'd3-array';
 
-import {LAYER_VIS_CONFIGS} from '../../../layers/layer-factory';
+import {LAYER_VIS_CONFIGS} from 'layers';
 import {SCALE_TYPES, DEFAULT_COLOR_RANGE} from '@kepler.gl/constants';
 import ClusterBuilder, {getGeoJSON} from '../layer-utils/cluster-utils';
 import {RGBAColor} from '@kepler.gl/types';

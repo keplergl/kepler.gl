@@ -22,7 +22,13 @@
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
 
-import TripLayer, {defaultLineWidth} from 'layers/trip-layer/trip-layer';
+import {
+  KeplerGlLayers,
+  tripDefaultLineWidth as defaultLineWidth,
+  parseTripGeoJsonTimestamp
+} from 'layers';
+
+const {TripLayer} = KeplerGlLayers;
 
 import {
   dataId,
@@ -33,7 +39,6 @@ import {
   valueFilterDomain0,
   animationConfig
 } from 'test/helpers/layer-utils';
-import {parseTripGeoJsonTimestamp} from 'layers/trip-layer/trip-utils';
 import {TripLayerMeta, dataToFeature, dataToTimeStamp} from 'test/fixtures/trip-geojson';
 import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 

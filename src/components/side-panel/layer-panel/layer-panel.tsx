@@ -31,10 +31,9 @@ import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeaderFactory from './layer-panel-header';
 import {Datasets} from 'reducers';
 import {NestedPartial} from '@kepler.gl/types';
-import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';
+import {Layer, LayerBaseConfig, LayerVisConfig, ColorUI} from 'layers';
 import {toggleModal} from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
-import {ColorUI} from 'layers/layer-factory';
 import {ActionHandler} from 'actions';
 
 type LayerPanelProps = {

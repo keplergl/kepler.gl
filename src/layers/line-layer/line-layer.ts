@@ -20,17 +20,17 @@
 
 import {BrushingExtension} from '@deck.gl/extensions';
 
-import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
-import LineLayerIcon from './line-layer-icon';
-import ArcLayer, {ArcLayerConfig} from '../arc-layer/arc-layer';
 import {EnhancedLineLayer} from '@kepler.gl/deckgl-layers';
-import {LayerColumn} from '../base-layer';
 import {
+  LAYER_VIS_CONFIGS,
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
   VisConfigRange
 } from '../layer-factory';
+import LineLayerIcon from './line-layer-icon';
+import ArcLayer, {ArcLayerConfig} from '../arc-layer/arc-layer';
+import {LayerColumn} from '../base-layer';
 import {ColorRange} from '@kepler.gl/constants';
 import {Merge, RGBColor} from '@kepler.gl/types';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';

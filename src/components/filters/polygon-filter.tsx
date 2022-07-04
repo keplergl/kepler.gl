@@ -20,8 +20,7 @@
 
 import React, {useMemo, useCallback} from 'react';
 import ItemSelector from 'components/common/item-selector/item-selector';
-import {Layer} from 'layers';
-import {LAYER_TYPES} from 'layers/types';
+import {Layer, LAYER_TYPES} from 'layers';
 import {PolygonFilterProps} from './types';
 import {StyledFilterPanel} from './components';
 
