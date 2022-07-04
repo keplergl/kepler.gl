@@ -39,7 +39,7 @@ import {
   VisConfigColorSelect,
   VisConfigNumber,
   VisConfigRange
-} from '../layer-factory';
+} from '@kepler.gl/constants';
 import KeplerTable from '../../utils/table-utils/kepler-table';
 
 export type ArcLayerVisConfigSettings = {

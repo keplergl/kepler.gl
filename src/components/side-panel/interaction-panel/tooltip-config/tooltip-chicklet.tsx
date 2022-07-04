@@ -25,8 +25,7 @@ import {Hash, Delete} from 'components/common/icons';
 import DropdownList from 'components/common/item-selector/dropdown-list';
 import {FormattedMessage} from 'localization';
 import onClickOutside from 'react-onclickoutside';
-import {FIELD_OPTS} from '@kepler.gl/constants';
-import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from '@kepler.gl/constants';
+import {FIELD_OPTS, TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from '@kepler.gl/constants';
 import {getFormatter} from 'utils/data-utils';
 import TippyTooltip from 'components/common/tippy-tooltip';
 

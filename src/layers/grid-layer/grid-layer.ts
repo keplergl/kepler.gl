@@ -29,9 +29,9 @@ import {
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
-  VisConfigSelection
-} from '../layer-factory';
-import {ColorRange} from '@kepler.gl/constants';
+  VisConfigSelection,
+  ColorRange
+} from '@kepler.gl/constants';
 import {Merge} from '@kepler.gl/types';
 
 export type GridLayerVisConfigSettings = {

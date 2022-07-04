@@ -20,17 +20,30 @@
 
 import keyMirror from 'keymirror';
 
-import {AGGREGATION_TYPES, ColorRange, DEFAULT_COLOR_RANGE} from '@kepler.gl/constants';
+import {ColorRange, DEFAULT_COLOR_RANGE} from './color-ranges';
+import {AGGREGATION_TYPES} from './default-settings';
 
 import {RGBColor, RGBAColor} from '@kepler.gl/types';
-import {Field} from '../utils/table-utils/kepler-table';
+
+export type Field = {
+  analyzerType: string;
+  id?: string;
+  name: string;
+  displayName: string;
+  format: string;
+  type: string;
+  fieldIdx: number;
+  valueAccessor(v: {index: number}): any;
+  filterProps?: any;
+  metadata?: any;
+};
 import {
   LayerBaseConfig,
   LayerColorConfig,
   LayerHeightConfig,
   LayerSizeConfig,
   LayerWeightConfig
-} from './base-layer';
+} from '@kepler.gl/types';
 
 export type LayerTextLabel = {
   field: Field | null;

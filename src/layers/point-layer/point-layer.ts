@@ -40,9 +40,9 @@ import {
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
-  VisConfigRange
-} from '../layer-factory';
-import {LAYER_VIS_CONFIGS} from '../layer-factory';
+  VisConfigRange,
+  LAYER_VIS_CONFIGS
+} from '@kepler.gl/constants';
 import {KeplerTable} from '../../utils';
 
 export type PointLayerVisConfigSettings = {
