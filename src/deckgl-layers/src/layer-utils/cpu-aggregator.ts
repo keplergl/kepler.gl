@@ -380,7 +380,7 @@ export const defaultElevationDimension: DimensionType<number> = {
 
 export const defaultDimensions = [defaultColorDimension, defaultElevationDimension];
 
-export type CPUAggregatorState = {layerData: {data?}; dimensions: {}; geoJSON?, clusterBuilder?};
+export type CPUAggregatorState = {layerData: {data?}; dimensions: {}; geoJSON?; clusterBuilder?};
 
 export default class CPUAggregator {
   static getDimensionScale: any;
