@@ -44,7 +44,7 @@ import {
   Layer,
   LayerBaseConfig,
   VisualChannelDomain
-} from 'layers';
+} from '@kepler.gl/layers';
 import {setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 import {

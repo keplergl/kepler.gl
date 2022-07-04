@@ -28,7 +28,7 @@ import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
 import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW, PLOT_TYPES} from '@kepler.gl/constants';
-import {LAYER_TYPES, getCentroid, h3IsValid, Layer} from 'layers';
+import {LAYER_TYPES, getCentroid, h3IsValid, Layer} from '@kepler.gl/layers';
 import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
 import {generateHashId, set, toArray} from './utils';

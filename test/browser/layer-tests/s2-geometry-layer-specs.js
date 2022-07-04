@@ -30,7 +30,7 @@ import {
   testRows,
   preparedFilterDomain0
 } from 'test/helpers/layer-utils';
-import {KeplerGlLayers, s2DefaultElevation as defaultElevation} from 'layers';
+import {KeplerGlLayers, s2DefaultElevation as defaultElevation} from '@kepler.gl/layers';
 
 const {S2GeometryLayer} = KeplerGlLayers;
 

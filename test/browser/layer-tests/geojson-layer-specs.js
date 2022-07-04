@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {KeplerGlLayers, defaultElevation, defaultLineWidth, defaultRadius} from 'layers';
+import {KeplerGlLayers, defaultElevation, defaultLineWidth, defaultRadius} from '@kepler.gl/layers';
 
 const {GeojsonLayer} = KeplerGlLayers;
 
