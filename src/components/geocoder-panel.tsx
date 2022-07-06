@@ -22,7 +22,7 @@ import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
 import {processRowObject} from 'processors';
 import {FlyToInterpolator} from '@deck.gl/core';
-import KeplerGlSchema from 'schemas';
+import {KeplerGlSchema} from 'schemas';
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
 
 import Geocoder, {Result} from './geocoder/geocoder';

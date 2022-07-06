@@ -19,7 +19,7 @@ Under the hood, `SchemaManager.save()` calls `SchemaManager.getDatasetToSave()` 
 In the example blow, `foo` is the id of the KeplerGl instance to be save.
 
 ```js
-import KeplerGlSchema from 'kepler.gl/schemas';
+import {KeplerGlSchema} from 'kepler.gl/schemas';
 
 const mapToSave = KeplerGlSchema.save(state.keplerGl.foo);
 // mapToSave = {datasets: [], config: {}, info: {}};
@@ -41,7 +41,7 @@ Under the hood, `SchemaManager.load()` calls `SchemaManager.parseSavedData()` an
 - `SchemaManager.parseSavedConfig()` will output a JSON blob of the parsed config.
 
 ```js
-import KeplerGlSchema from 'kepler.gl/schemas';
+import {KeplerGlSchema} from 'kepler.gl/schemas';
 import {addDataToMap} from 'kepler.gl/actions';
 
 const mapToLoad = KeplerGlSchema.load(savedDatasets, savedConfig);
@@ -55,7 +55,7 @@ this.props.dispatch(addDataToMap(mapToLoad));
 Often times, people want to keep a map config as template, then load it with different datasets. To match a config with a different dataset, you need to make sure `data.id` in the new dataset matches the old one.
 
 ```js
-import KeplerGlSchema from 'kepler.gl/schemas';
+import {KeplerGlSchema} from 'kepler.gl/schemas';
 import {addDataToMap} from 'kepler.gl/actions';
 
 // save current map data and config

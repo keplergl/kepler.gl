@@ -479,7 +479,7 @@ It will reset current configuration first then apply config to it.
 
 ```javascript
 import {receiveMapConfig} from 'kepler.gl/actions';
-import KeplerGlSchema from 'kepler.gl/schemas';
+import {KeplerGlSchema} from 'kepler.gl/schemas';
 
 const parsedConfig = KeplerGlSchema.parseSavedConfig(config);
 this.props.dispatch(receiveMapConfig(parsedConfig));

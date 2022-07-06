@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {createAction, handleActions} from 'redux-actions';
-import KeplerGlSchema from 'kepler.gl/schemas';
+import {KeplerGlSchema} from 'kepler.gl/schemas';
 
 // CONSTANTS
 export const INIT = 'INIT';

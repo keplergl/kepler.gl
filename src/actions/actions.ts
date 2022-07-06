@@ -201,7 +201,7 @@ export type ReceiveMapConfigPayload = {
  * @public
  * @example
  * import {receiveMapConfig} from 'kepler.gl/actions';
- * import KeplerGlSchema from 'kepler.gl/schemas';
+ * import {KeplerGlSchema} from 'kepler.gl/schemas';
  *
  * const parsedConfig = KeplerGlSchema.parseSavedConfig(config);
  * this.props.dispatch(receiveMapConfig(parsedConfig));

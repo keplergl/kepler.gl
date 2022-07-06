@@ -23,7 +23,7 @@ import {handleActions} from 'redux-actions';
 
 import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from 'kepler.gl/reducers';
 import {processGeojson, processCsvData} from 'kepler.gl/processors';
-import KeplerGlSchema from 'kepler.gl/schemas';
+import {KeplerGlSchema} from 'kepler.gl/schemas';
 import {EXPORT_MAP_FORMATS} from 'kepler.gl/constants';
 
 import {
