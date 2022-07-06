@@ -2,7 +2,7 @@
   "name": "@kepler.gl/layers",
   "author": "Shan He <shan@uber.com>",
   "version": "2.5.5",
-  "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
+  "description": "kepler.gl layers used by kepler.gl actions, components, reducers and utils",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/layers/src/index.d.ts",
