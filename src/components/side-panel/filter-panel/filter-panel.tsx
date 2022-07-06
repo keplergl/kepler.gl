@@ -33,7 +33,7 @@ import PolygonFilterPanelFactory from '../../filters/filter-panels/polygon-filte
 import {Filter} from 'reducers/vis-state-updaters';
 import {Field} from 'utils/table-utils/kepler-table';
 import {FilterPanelProps} from '../../filters/filter-panels/types';
-import {Layer} from 'layers';
+import {Layer} from '@kepler.gl/layers';
 
 const StyledFilterPanel = styled.div`
   margin-bottom: 12px;

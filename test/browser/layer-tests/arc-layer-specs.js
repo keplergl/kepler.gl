@@ -32,7 +32,7 @@ import {
   arcLayerMeta
 } from 'test/helpers/layer-utils';
 
-import {KeplerGlLayers} from 'layers';
+import {KeplerGlLayers} from '@kepler.gl/layers';
 import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 
 const {ArcLayer} = KeplerGlLayers;

@@ -26,9 +26,8 @@ import ColorRangeSelector from './color-range-selector';
 import ColorPalette from './color-palette';
 import {StyledPanelDropdown} from '../../common/styled-components';
 import onClickOutside from 'react-onclickoutside';
-import {ColorUI} from 'layers/layer-factory';
 import {ColorRange} from '@kepler.gl/constants';
-import {NestedPartial, RGBColor} from '@kepler.gl/types';
+import {NestedPartial, RGBColor, ColorUI} from '@kepler.gl/types';
 
 type ColorSelectorInputProps = {
   active: boolean;

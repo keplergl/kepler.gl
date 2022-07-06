@@ -30,7 +30,7 @@ import MapLegendPanelFactory from './map-legend-panel';
 import MapDrawPanelFactory from './map-draw-panel';
 import LocalePanelFactory from './locale-panel';
 import {Datasets, Editor, MapControls} from 'reducers';
-import {Layer} from 'layers';
+import {Layer} from '@kepler.gl/layers';
 
 interface StyledMapControlProps {
   top?: number;

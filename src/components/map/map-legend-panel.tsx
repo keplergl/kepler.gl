@@ -31,7 +31,7 @@ import TippyTooltip from '../common/tippy-tooltip';
 import {createPortal} from 'react-dom';
 import {DIMENSIONS} from '@kepler.gl/constants';
 import {MapControl, MapControls} from 'reducers';
-import {Layer} from 'layers';
+import {Layer} from '@kepler.gl/layers';
 
 MapLegendPanelFactory.deps = [MapControlPanelFactory, MapLegendFactory];
 

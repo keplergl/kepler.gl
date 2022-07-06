@@ -46,6 +46,7 @@ import {media} from 'styles';
 
 // Template
 import {
+  KeyEvent,
   ADD_DATA_ID,
   DATA_TABLE_ID,
   DELETE_DATA_ID,
@@ -57,8 +58,6 @@ import {
   SHARE_MAP_ID,
   OVERWRITE_MAP_ID
 } from '@kepler.gl/constants';
-
-import {KeyEvent} from '@kepler.gl/constants';
 import {getFileFormatNames, getFileExtensions} from '../reducers/vis-state-selectors';
 import {MapState, MapStyle, UiState, VisState} from 'reducers';
 import {OnSuccessCallBack, OnErrorCallBack} from 'actions';
