@@ -1,0 +1,53 @@
+{
+  "name": "@kepler.gl/layers",
+  "author": "Shan He <shan@uber.com>",
+  "version": "2.5.5",
+  "description": "kepler.gl layers used by kepler.gl actions, components, reducers and utils",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/layers/src/index.d.ts",
+  "keywords": [
+    "babel",
+    "es6",
+    "react",
+    "webgl",
+    "visualization",
+    "deck.gl"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keplergl/kepler.gl.git"
+  },
+  "scripts": {
+    "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+    "build:umd": "webpack --config ./webpack/umd.js --progress --env.prod",
+    "build:types": "tsc --project ./tsconfig.production.json",
+    "prepublish": "uber-licence && yarn build && yarn build:types"
+  },
+  "files": [
+    "dist",
+    "umd"
+  ],
+  "dependencies": {
+    "colorbrewer": "^1.5.0",
+    "d3-scale": "^3.2.3",
+    "global": "^4.3.0",
+    "keymirror": "^0.1.1",
+    "react-map-gl-draw": "0.14.8"
+  },
+  "nyc": {
+    "sourceMap": false,
+    "instrument": false
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "maintainers": [
+    "Shan He <heshan0131@gmail.com>",
+    "Giuseppe Macri <gmacri@uber.com>"
+  ],
+  "volta": {
+    "node": "12.22.0",
+    "yarn": "1.22.17"
+  }
+}

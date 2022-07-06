@@ -22,10 +22,9 @@
 import {default as ActionTypes} from './action-types';
 import {AddDataToMapPayload} from '../actions/actions';
 import {FileCacheItem} from '../processors/types';
-import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';
+import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {Feature, InteractionConfig} from 'reducers/vis-state-updaters';
-import {ValueOf, Merge, RGBColor, NestedPartial} from '@kepler.gl/types';
-import {ColorUI} from 'layers/layer-factory';
+import {ValueOf, Merge, RGBColor, NestedPartial, LayerVisConfig, ColorUI} from '@kepler.gl/types';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
 

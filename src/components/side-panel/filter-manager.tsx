@@ -25,7 +25,7 @@ import {Add} from 'components/common/icons';
 import SourceDataCatalogFactory from './common/source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
 import {Datasets, Filter} from 'reducers';
-import {Layer} from 'layers';
+import {Layer} from '@kepler.gl/layers';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {ActionHandler} from 'actions';
 

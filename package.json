@@ -17,7 +17,9 @@
   "private": true,
   "workspaces": [
     "./src/constants",
-    "./src/types"
+    "./src/types",
+    "./src/deckgl-layers",
+    "./src/layers"
   ],
   "repository": {
     "type": "git",
@@ -48,7 +50,7 @@
     "start:web": "npm run install-and-start -- website start",
     "start:https": "npm run install-and-start -- examples/demo-app start-local-https",
     "start:e2e": "npm run install-and-start -- examples/demo-app start-local-e2e",
-    "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+    "build": "rm -fr dist && babel src/{actions,components,layers,middleware,reducers,styles,templates,utils,cloud-providers,connect,localization,processors,schemas,tasks} --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
     "build:umd": "webpack --config ./webpack/umd.js --progress --env.prod",
     "build:types": "tsc --project tsconfig.production.json",
     "analyze": "npm run analyze:bundle",

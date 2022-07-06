@@ -33,10 +33,10 @@ import {
   fieldDomain
 } from 'test/helpers/layer-utils';
 
-import {KeplerGlLayers} from 'layers';
+import {KeplerGlLayers} from '@kepler.gl/layers';
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
-import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
+import {DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
 
 const {PointLayer} = KeplerGlLayers;
 

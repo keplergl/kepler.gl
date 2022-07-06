@@ -35,7 +35,7 @@ import {
   pointLayerMeta,
   preparedFilterDomain0
 } from 'test/helpers/layer-utils';
-import {KeplerGlLayers} from 'layers';
+import {KeplerGlLayers} from '@kepler.gl/layers';
 const {ScenegraphLayer} = KeplerGlLayers;
 const columns = {lat: 'lat', lng: 'lng'};
 
