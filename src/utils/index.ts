@@ -44,8 +44,7 @@ export {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
 
 // REDUCER UTILS
 export {updateAllLayerDomainData} from '../reducers/vis-state-updaters';
-export {getHexFields} from '../layers/h3-hexagon-layer/h3-utils';
-export {containValidTime} from '../layers/trip-layer/trip-utils';
+export {getHexFields, containValidTime} from '@kepler.gl/layers';
 
 export {
   default as KeplerTable,

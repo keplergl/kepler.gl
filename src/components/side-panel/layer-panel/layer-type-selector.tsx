@@ -26,7 +26,7 @@ import LayerTypeListItemFactory from './layer-type-list-item';
 import ItemSelector from 'components/common/item-selector/item-selector';
 
 import {SidePanelSection} from 'components/common/styled-components';
-import {Layer} from 'layers';
+import {Layer} from '@kepler.gl/layers';
 import {Datasets} from 'reducers';
 
 type Option = {

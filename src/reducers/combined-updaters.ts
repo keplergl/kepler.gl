@@ -40,7 +40,7 @@ import {ProviderState} from './provider-state-updaters';
 import {AddDataToMapPayload} from 'actions/actions';
 import {loadFilesSuccessUpdaterAction} from 'actions/vis-state-actions';
 import {ParsedConfig} from 'schemas';
-import {Layer} from 'layers';
+import {Layer} from '@kepler.gl/layers';
 
 export type KeplerGlState = {
   visState: VisState;

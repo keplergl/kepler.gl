@@ -37,9 +37,7 @@ import {
   VisState
 } from '../reducers';
 
-import {RGBColor, Merge, RGBAColor} from '@kepler.gl/types';
-
-import {LayerTextLabel} from '../layers/layer-factory';
+import {RGBColor, Merge, RGBAColor, LayerTextLabel} from '@kepler.gl/types';
 
 export type SavedFilter = {
   dataId: Filter['dataId'];
