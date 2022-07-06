@@ -39,7 +39,7 @@ import {MapStyle} from './map-style-updaters';
 import {ProviderState} from './provider-state-updaters';
 import {AddDataToMapPayload, loadFilesSuccessUpdaterAction} from 'actions';
 import {ParsedConfig} from 'schemas';
-import {Layer} from 'layers';
+import {Layer} from '@kepler.gl/layers';
 
 export type KeplerGlState = {
   visState: VisState;

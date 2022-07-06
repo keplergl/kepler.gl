@@ -23,7 +23,7 @@ import styled from 'styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
 import LayerListFactory from './layer-list';
-import {Layer, LayerClassesType} from 'layers';
+import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import KeplerTable from 'utils/table-utils/kepler-table';
 import {UiStateActions, VisStateActions, ActionHandler} from 'actions';
 

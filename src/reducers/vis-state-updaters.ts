@@ -86,12 +86,17 @@ import {
   removeLayerFromSplitMaps
 } from 'utils/split-map-utils';
 
-import {Layer, LayerClasses, LayerClassesType, LAYER_ID_LENGTH} from 'layers';
-import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
-import {EDITOR_MODES, SORT_ORDER, FILTER_TYPES, MAX_DEFAULT_TOOLTIPS} from '@kepler.gl/constants';
+import {Layer, LayerClasses, LayerClassesType, LAYER_ID_LENGTH} from '@kepler.gl/layers';
+import {
+  EDITOR_MODES,
+  SORT_ORDER,
+  FILTER_TYPES,
+  MAX_DEFAULT_TOOLTIPS,
+  DEFAULT_TEXT_LABEL
+} from '@kepler.gl/constants';
 import {pick_, merge_, swap_} from './composer-helpers';
 
-import KeplerGLSchema from 'schemas';
+import {KeplerGlSchema} from 'schemas';
 import {isRgbColor} from 'utils/color-utils';
 
 import {Millisecond} from '@kepler.gl/types';
@@ -358,7 +363,7 @@ export type VisState = {
   loadOptions: object;
   initialState?: Partial<VisState>;
   mergers: VisStateMergers;
-  schema: typeof KeplerGLSchema;
+  schema: typeof KeplerGlSchema;
   preserveLayerOrder?: number[];
 };
 
@@ -490,7 +495,7 @@ export const INITIAL_VIS_STATE: VisState = {
   mergers: VIS_STATE_MERGERS,
 
   // kepler schemas
-  schema: KeplerGLSchema
+  schema: KeplerGlSchema
 };
 
 /**

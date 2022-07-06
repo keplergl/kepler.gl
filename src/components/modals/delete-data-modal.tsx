@@ -22,7 +22,7 @@ import React from 'react';
 import styled from 'styled-components';
 import DatasetLabel from 'components/common/dataset-label';
 import {FormattedMessage} from 'localization';
-import {Layer} from 'layers';
+import {Layer} from '@kepler.gl/layers';
 import KeplerTable from 'utils/table-utils/kepler-table';
 
 const StyledMsg = styled.div`

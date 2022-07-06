@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {getS2Center} from 'layers/s2-geometry-layer/s2-utils';
+import {getS2Center} from '@kepler.gl/layers';
 
 test('Utils -> getS2Center', t => {
   const s2Toekn = '8085873c';

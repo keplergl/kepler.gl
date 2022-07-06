@@ -18,9 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import GeojsonLayer from 'layers/geojson-layer/geojson-layer';
-import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers/layer-factory';
+import {KeplerGlLayers} from '@kepler.gl/layers';
 import {getDefaultInteraction} from 'utils/interaction-utils';
+import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from '@kepler.gl/constants';
+
+const {GeojsonLayer} = KeplerGlLayers;
 
 export const savedStateV1 = {
   datasets: [

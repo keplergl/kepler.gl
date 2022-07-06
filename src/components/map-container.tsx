@@ -36,7 +36,13 @@ import {StyledMapContainer, StyledAttrbution} from 'components/common/styled-com
 import EditorFactory from './editor/editor';
 
 // utils
-import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
+import {
+  generateMapboxLayers,
+  updateMapboxLayers,
+  Layer,
+  LayerBaseConfig,
+  VisualChannelDomain
+} from '@kepler.gl/layers';
 import {setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 import {
@@ -48,7 +54,7 @@ import {
 } from 'utils/layer-utils';
 
 // default-settings
-import ThreeDBuildingLayer from 'deckgl-layers/3d-building-layer/3d-building-layer';
+import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
 import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepler.gl/constants';
 
 import ErrorBoundary from 'components/common/error-boundary';
@@ -63,9 +69,7 @@ import {
   MapStyle,
   Viewport
 } from 'reducers';
-import {Layer} from 'layers';
 import {SplitMapLayers} from 'reducers/vis-state-updaters';
-import {LayerBaseConfig, VisualChannelDomain} from 'layers/base-layer';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {

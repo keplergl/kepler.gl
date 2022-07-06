@@ -46,7 +46,7 @@ import {
 import {createDataContainer} from './data-container-utils';
 
 import {RGBColor} from '@kepler.gl/types';
-import {Layer} from 'layers';
+import {Layer} from '@kepler.gl/layers';
 import {FieldDomain, Filter} from 'reducers/vis-state-updaters';
 import {DataContainerInterface} from './data-container-interface';
 import {ProtoDataset} from 'actions';

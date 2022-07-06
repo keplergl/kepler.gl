@@ -30,10 +30,9 @@ import styled from 'styled-components';
 import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeaderFactory from './layer-panel-header';
 import {Datasets} from 'reducers';
-import {NestedPartial} from '@kepler.gl/types';
-import {Layer, LayerBaseConfig, LayerVisConfig} from 'layers';
+import {NestedPartial, LayerVisConfig, ColorUI} from '@kepler.gl/types';
+import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {toggleModal, VisStateActions, ActionHandler} from 'actions';
-import {ColorUI} from 'layers/layer-factory';
 
 type LayerPanelProps = {
   className?: string;

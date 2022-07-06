@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {KeplerGlLayers} from 'layers';
+import {KeplerGlLayers} from '@kepler.gl/layers';
+import {DEFAULT_COLOR_UI} from '@kepler.gl/constants';
 const {PointLayer} = KeplerGlLayers;
-import {DEFAULT_COLOR_UI} from 'layers/layer-factory';
 
 export const stateSavedV1 = {
   datasets: [

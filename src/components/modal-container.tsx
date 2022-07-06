@@ -46,6 +46,7 @@ import {media} from 'styles/media-breakpoints';
 
 // Template
 import {
+  KeyEvent,
   ADD_DATA_ID,
   DATA_TABLE_ID,
   DELETE_DATA_ID,
@@ -55,10 +56,8 @@ import {
   ADD_MAP_STYLE_ID,
   SAVE_MAP_ID,
   SHARE_MAP_ID,
-  OVERWRITE_MAP_ID,
-  KeyEvent
+  OVERWRITE_MAP_ID
 } from '@kepler.gl/constants';
-
 import {getFileFormatNames, getFileExtensions} from '../reducers/vis-state-selectors';
 import {MapState, MapStyle, UiState, VisState} from 'reducers';
 import {
