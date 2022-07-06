@@ -28,7 +28,7 @@ import cloneDeep from 'lodash.clonedeep';
 
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 import {INITIAL_VIS_STATE} from 'reducers/vis-state-updaters';
-import {VisStateActions, addDataToMap} from '@kepler.gl/actions';
+import {VisStateActions, addDataToMap} from 'actions';
 
 import {colorMaker, layerColors} from 'layers/base-layer';
 import {getGpuFilterProps} from 'utils/gpu-filter-utils';

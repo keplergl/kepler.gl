@@ -26,7 +26,7 @@ import {createSelector} from 'reselect';
 import WebMercatorViewport from 'viewport-mercator-project';
 import {errorNotification} from 'utils/notifications-utils';
 
-import {MapStateActions, VisStateActions, UIStateActions} from '@kepler.gl/actions';
+import {MapStateActions, VisStateActions, UiStateActions} from 'actions';
 
 // components
 import MapPopoverFactory from 'components/map/map-popover';
@@ -138,7 +138,7 @@ interface MapContainerProps {
   mapboxApiUrl: string;
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
-  uiStateActions: typeof UIStateActions;
+  uiStateActions: typeof UiStateActions;
 
   // optional
   primary?: boolean; // primary one will be reporting its size to appState

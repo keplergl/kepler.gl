@@ -22,7 +22,7 @@ import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import moment from 'moment';
-import {setFilterAnimationTimeConfig} from '@kepler.gl/actions';
+import {setLayerAnimationTimeConfig} from 'actions';
 
 import {mountWithTheme} from 'test/helpers/component-utils';
 import {

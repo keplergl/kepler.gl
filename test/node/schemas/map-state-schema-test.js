@@ -20,7 +20,7 @@
 
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
-import SchemaManager from '@kepler.gl/schemas';
+import SchemaManager from 'schemas';
 import {InitialState} from 'test/helpers/mock-state';
 
 test('#mapStateSchema -> v1 -> save load mapState', t => {

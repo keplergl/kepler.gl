@@ -16,9 +16,7 @@
   ],
   "private": true,
   "workspaces": [
-    "./src/actions",
     "./src/constants",
-    "./src/schemas",
     "./src/types"
   ],
   "repository": {

@@ -20,13 +20,7 @@
 
 import test from 'tape';
 
-import {
-  updateMap,
-  togglePerspective,
-  fitBounds,
-  toggleSplitMap,
-  receiveMapConfig
-} from '@kepler.gl/actions';
+import {updateMap, togglePerspective, fitBounds, toggleSplitMap, receiveMapConfig} from 'actions';
 
 import reducer, {mapStateReducerFactory} from 'reducers/map-state';
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';

@@ -48,7 +48,7 @@ import {ColorUI} from 'layers/layer-factory';
 import {VisualChannel} from 'layers/base-layer';
 import AggregationLayer from 'layers/aggregation-layer';
 import {Field} from 'utils/table-utils/kepler-table';
-import {toggleModal, ActionHandler} from '@kepler.gl/actions';
+import {toggleModal, ActionHandler} from 'actions';
 
 type LayerConfiguratorProps = {
   layer: Layer;

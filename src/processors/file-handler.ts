@@ -26,7 +26,7 @@ import {processGeojson, processKeplerglJSON, processRowObject} from './data-proc
 import {isPlainObject, generateHashId} from 'utils/utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
 import {LoaderObject} from '@loaders.gl/loader-utils';
-import {AddDataToMapPayload} from '@kepler.gl/actions';
+import {AddDataToMapPayload} from 'actions';
 import {FileCacheItem, ValidKeplerGlMap} from './types';
 import {Feature} from 'reducers';
 import {FeatureCollection} from '@turf/helpers';

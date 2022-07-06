@@ -43,7 +43,7 @@ import {
   ReceiveMapConfigPayload,
   KeplerGlInitPayload,
   MapStyleActions
-} from '@kepler.gl/actions';
+} from 'actions';
 import {generateHashId} from 'utils/utils';
 import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
 import {rgb} from 'd3-color';

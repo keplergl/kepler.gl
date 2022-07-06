@@ -22,7 +22,7 @@
 export * from 'reducers';
 
 // Schemas
-export * from '@kepler.gl/schemas';
+export * from './schemas';
 
 // Actions
 export * from './actions';

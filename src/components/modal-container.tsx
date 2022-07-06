@@ -55,10 +55,10 @@ import {
   ADD_MAP_STYLE_ID,
   SAVE_MAP_ID,
   SHARE_MAP_ID,
-  OVERWRITE_MAP_ID
+  OVERWRITE_MAP_ID,
+  KeyEvent
 } from '@kepler.gl/constants';
 
-import {KeyEvent} from '@kepler.gl/constants';
 import {getFileFormatNames, getFileExtensions} from '../reducers/vis-state-selectors';
 import {MapState, MapStyle, UiState, VisState} from 'reducers';
 import {
@@ -66,9 +66,9 @@ import {
   OnErrorCallBack,
   MapStyleActions,
   VisStateActions,
-  UIStateActions,
+  UiStateActions,
   ProviderActions
-} from '@kepler.gl/actions';
+} from 'actions';
 import {ProviderState} from 'reducers/provider-state-updaters';
 
 import {ModalDialogProps} from './common/modal';
@@ -113,7 +113,7 @@ export type ModalContainerProps = {
   visState: VisState;
   providerState: ProviderState;
   visStateActions: typeof VisStateActions;
-  uiStateActions: typeof UIStateActions;
+  uiStateActions: typeof UiStateActions;
   mapStyleActions: typeof MapStyleActions;
   providerActions: typeof ProviderActions;
   onSaveToStorage?: () => void;

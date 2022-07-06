@@ -33,7 +33,7 @@ import {
   ParsedConfig,
   ParsedLayer,
   SavedInteractionConfig
-} from '@kepler.gl/schemas';
+} from 'schemas';
 
 import {VisState, Datasets} from './vis-state-updaters';
 import {KeplerTable} from '../utils';

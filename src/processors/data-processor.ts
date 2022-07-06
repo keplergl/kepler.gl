@@ -26,7 +26,7 @@ import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES, DATASET_FORMATS, GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
 import {notNullorUndefined, parseFieldValue} from 'utils/data-utils';
-import KeplerGlSchema, {SavedMap, ParsedDataset, LoadedMap} from '@kepler.gl/schemas';
+import KeplerGlSchema, {SavedMap, ParsedDataset, LoadedMap} from 'schemas';
 import {hasOwnProperty, isPlainObject, toArray} from 'utils/utils';
 import {Field} from 'utils/table-utils/kepler-table';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';

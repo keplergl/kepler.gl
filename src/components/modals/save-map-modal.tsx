@@ -39,7 +39,7 @@ import ImagePreview from 'components/common/image-preview';
 import {FormattedMessage} from 'localization';
 import {ExportImage, MapInfo} from 'reducers';
 import {Provider} from 'cloud-providers';
-import {setMapInfo, cleanupExportImage} from '@kepler.gl/actions';
+import {setMapInfo, cleanupExportImage} from 'actions';
 
 /** @typedef {import('./save-map-modal').SaveMapModalProps} SaveMapModalProps */
 

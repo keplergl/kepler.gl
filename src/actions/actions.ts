@@ -21,7 +21,7 @@
 import {default as ActionTypes} from './action-types';
 import {createAction} from '@reduxjs/toolkit';
 
-import {ParsedConfig} from '@kepler.gl/schemas';
+import {ParsedConfig} from 'schemas';
 import {RGBColor} from '@kepler.gl/types';
 import {Bounds} from 'reducers/map-state-updaters';
 import {MapInfo} from 'reducers/vis-state-updaters';

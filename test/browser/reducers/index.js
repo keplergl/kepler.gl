@@ -22,7 +22,7 @@ import reducer from 'reducers/vis-state';
 import CloneDeep from 'lodash.clonedeep';
 import test from 'tape-catch';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
-import {VisStateActions} from '@kepler.gl/actions';
+import {VisStateActions} from 'actions';
 
 test('#visStateReducer -> COPY_TABLE_COLUMN', t => {
   const initialState = CloneDeep(StateWFiles.visState);

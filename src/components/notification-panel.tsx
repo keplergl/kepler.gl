@@ -24,7 +24,7 @@ import styled from 'styled-components';
 import NotificationItemFactory from './notification-panel/notification-item';
 import {DEFAULT_NOTIFICATION_TOPICS} from '@kepler.gl/constants';
 import {Notifications} from 'reducers';
-import {removeNotification} from '@kepler.gl/actions';
+import {removeNotification} from 'actions';
 
 const NotificationPanelContent = styled.div`
   background: transparent;

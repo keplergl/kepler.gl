@@ -20,7 +20,7 @@
 
 import React, {Component} from 'react';
 import {Provider} from 'cloud-providers';
-import {SetCloudProviderPayload} from '@kepler.gl/actions';
+import {SetCloudProviderPayload} from 'actions';
 
 export type ProviderModalContainerProps = {
   cloudProviders?: Provider[];

@@ -26,7 +26,7 @@ import {console as Console} from 'global/window';
 import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
 import CloneDeep from 'lodash.clonedeep';
 
-import {VisStateActions, MapStateActions} from '@kepler.gl/actions';
+import {VisStateActions, MapStateActions} from 'actions';
 import reducer from 'reducers/vis-state';
 
 import {INITIAL_VIS_STATE, DEFAULT_ANIMATION_CONFIG} from 'reducers/vis-state-updaters';

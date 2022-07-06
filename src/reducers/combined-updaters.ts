@@ -37,8 +37,8 @@ import {MapState} from './map-state-updaters';
 import {UiState} from './ui-state-updaters';
 import {MapStyle} from './map-style-updaters';
 import {ProviderState} from './provider-state-updaters';
-import {AddDataToMapPayload, loadFilesSuccessUpdaterAction} from '@kepler.gl/actions';
-import {ParsedConfig} from '@kepler.gl/schemas';
+import {AddDataToMapPayload, loadFilesSuccessUpdaterAction} from 'actions';
+import {ParsedConfig} from 'schemas';
 import {Layer} from 'layers';
 
 export type KeplerGlState = {

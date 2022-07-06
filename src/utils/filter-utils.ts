@@ -27,12 +27,7 @@ import isEqual from 'lodash.isequal';
 import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
-import {
-  ALL_FIELD_TYPES,
-  FILTER_TYPES,
-  ANIMATION_WINDOW,
-  PLOT_TYPES
-} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW, PLOT_TYPES} from '@kepler.gl/constants';
 import {LAYER_TYPES} from 'layers/types';
 import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
@@ -56,7 +51,7 @@ import {
 } from '../reducers/vis-state-updaters';
 import KeplerTable, {Field, FilterRecord, FilterDatasetOpt} from './table-utils/kepler-table';
 import {Layer} from 'layers';
-import {ParsedFilter} from '@kepler.gl/schemas';
+import {ParsedFilter} from 'schemas';
 import {DataContainerInterface} from './table-utils/data-container-interface';
 import {Millisecond} from 'cloud-providers';
 import {Entries} from '@kepler.gl/types';

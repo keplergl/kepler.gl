@@ -30,10 +30,10 @@ import {
   insertLayerAtRightOrder
 } from 'reducers/vis-state-merger';
 
-import SchemaManager from '@kepler.gl/schemas';
+import SchemaManager from 'schemas';
 import visStateReducer from 'reducers/vis-state';
 import coreReducer from 'reducers/core';
-import {updateVisData, receiveMapConfig, addDataToMap} from '@kepler.gl/actions';
+import {updateVisData, receiveMapConfig, addDataToMap} from 'actions';
 import {getDefaultInteraction} from 'utils/interaction-utils';
 import {processKeplerglJSON} from 'processors/data-processor';
 

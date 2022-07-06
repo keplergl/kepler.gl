@@ -37,7 +37,7 @@ import {PanelLabel, SidePanelDivider, SidePanelSection} from 'components/common/
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
 import {Datasets} from 'reducers';
 import {Layer, LayerClassesType} from 'layers';
-import {UiStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {UiStateActions, VisStateActions, ActionHandler} from 'actions';
 import {SidePanelItem} from 'components/types';
 import {LayerPanelListView} from 'reducers/ui-state-updaters';
 

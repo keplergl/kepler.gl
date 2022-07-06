@@ -23,7 +23,7 @@ import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {BottomWidgetFactory, TimeWidgetFactory, AnimationControlFactory} from 'components';
 import {appInjector} from 'components/container';
-import {VisStateActions} from '@kepler.gl/actions';
+import {VisStateActions} from 'actions';
 
 const BottomWidget = appInjector.get(BottomWidgetFactory);
 const TimeWidget = appInjector.get(TimeWidgetFactory);

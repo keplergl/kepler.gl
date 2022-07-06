@@ -26,7 +26,7 @@ import SourceDataCatalogFactory from './common/source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
 import {Datasets, Filter} from 'reducers';
 import {Layer} from 'layers';
-import {VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {VisStateActions, ActionHandler} from 'actions';
 
 type FilterManagerProps = {
   filters: Filter[];

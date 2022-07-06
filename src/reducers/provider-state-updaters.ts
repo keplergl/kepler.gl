@@ -42,7 +42,7 @@ import {
   addNotification,
   addDataToMap,
   ProviderActions
-} from '@kepler.gl/actions';
+} from 'actions';
 import {
   DEFAULT_NOTIFICATION_TYPES,
   DEFAULT_NOTIFICATION_TOPICS,

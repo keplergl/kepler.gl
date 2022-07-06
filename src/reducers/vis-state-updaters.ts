@@ -40,7 +40,7 @@ import {
   ReceiveMapConfigPayload,
   VisStateActions,
   MapStateActions
-} from '@kepler.gl/actions';
+} from 'actions';
 // Utils
 import {findFieldsToShow, getDefaultInteraction} from 'utils/interaction-utils';
 import {
@@ -91,7 +91,7 @@ import {DEFAULT_TEXT_LABEL} from 'layers/layer-factory';
 import {EDITOR_MODES, SORT_ORDER, FILTER_TYPES, MAX_DEFAULT_TOOLTIPS} from '@kepler.gl/constants';
 import {pick_, merge_, swap_} from './composer-helpers';
 
-import KeplerGLSchema from '@kepler.gl/schemas';
+import KeplerGLSchema from 'schemas';
 import {isRgbColor} from 'utils/color-utils';
 
 import {Millisecond} from '@kepler.gl/types';

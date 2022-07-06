@@ -49,7 +49,7 @@ import {RGBColor} from '@kepler.gl/types';
 import {Layer} from 'layers';
 import {FieldDomain, Filter} from 'reducers/vis-state-updaters';
 import {DataContainerInterface} from './data-container-interface';
-import {ProtoDataset} from '@kepler.gl/actions';
+import {ProtoDataset} from 'actions';
 
 export type Field = {
   analyzerType: string;

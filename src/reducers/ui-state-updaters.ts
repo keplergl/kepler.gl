@@ -30,12 +30,7 @@ import {
   RESOLUTIONS,
   MAP_CONTROLS
 } from '@kepler.gl/constants';
-import {
-  ActionTypes,
-  UiStateActions,
-  KeplerGlInitPayload,
-  LoadFilesErrUpdaterAction
-} from '@kepler.gl/actions';
+import {ActionTypes, UiStateActions, KeplerGlInitPayload, LoadFilesErrUpdaterAction} from 'actions';
 import {LOCALE_CODES} from 'localization/locales';
 import {createNotification, errorNotification} from 'utils/notifications-utils';
 import {calculateExportImageSize} from '../utils/export-utils';

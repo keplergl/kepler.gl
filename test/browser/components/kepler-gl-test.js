@@ -27,7 +27,7 @@ import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 
 import coreReducer from 'reducers/core';
-import {keplerGlInit, ActionTypes} from '@kepler.gl/actions';
+import {keplerGlInit, ActionTypes} from 'actions';
 import {
   appInjector,
   KeplerGlFactory,

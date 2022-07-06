@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ActionTypes} from '@kepler.gl/actions';
+import {ActionTypes} from 'actions';
 import {handleActions} from 'redux-actions';
 import * as visStateUpdaters from './vis-state-updaters';
 

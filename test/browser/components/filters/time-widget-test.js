@@ -25,7 +25,7 @@ import sinon from 'sinon';
 import moment from 'moment';
 
 import {IntlWrapper, mountWithTheme, mockHTMLElementClientSize} from 'test/helpers/component-utils';
-import {setFilterAnimationTimeConfig} from '@kepler.gl/actions';
+import {setFilterAnimationTimeConfig} from 'actions';
 import reducer from 'reducers/vis-state';
 
 import {

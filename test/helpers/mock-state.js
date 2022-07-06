@@ -33,7 +33,7 @@ import {
   MapStyleActions,
   UIStateActions,
   ProviderActions
-} from '@kepler.gl/actions';
+} from 'actions';
 import {
   DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_RANGE,

@@ -27,7 +27,7 @@ import {FormattedMessage} from 'localization';
 import {Provider} from 'cloud-providers';
 
 import {ImageModalContainerProps} from './image-modal-container';
-import {cleanupExportImage} from '@kepler.gl/actions';
+import {cleanupExportImage} from 'actions';
 
 /** @typedef {import('./overwrite-map-modal').OverwriteMapModalProps} OverwriteMapModalProps */
 

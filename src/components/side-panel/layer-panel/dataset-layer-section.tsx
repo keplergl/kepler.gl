@@ -25,7 +25,7 @@ import SourceDataCatalogFactory from '../common/source-data-catalog';
 import LayerListFactory from './layer-list';
 import {Layer, LayerClassesType} from 'layers';
 import KeplerTable from 'utils/table-utils/kepler-table';
-import {UiStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {UiStateActions, VisStateActions, ActionHandler} from 'actions';
 
 type DatasetLayerSectionProps = {
   dataset: KeplerTable;

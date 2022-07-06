@@ -3,12 +3,7 @@ import {Datasets, Filter, InteractionConfig, MapStyle} from '../reducers';
 import {Layer, LayerClassesType} from '../layers';
 import {UiState} from 'reducers/ui-state-updaters';
 
-import {
-  MapStyleActions,
-  VisStateActions,
-  MapStateActions,
-  UIStateActions
-} from '@kepler.gl/actions';
+import {MapStyleActions, VisStateActions, MapStateActions, UiStateActions} from 'actions';
 
 export type SidePanelItem = {
   id: string;
@@ -31,7 +26,7 @@ export type SidePanelProps = {
   width: number;
   mapInfo: {title: string; description: string};
   datasets: Datasets;
-  uiStateActions: typeof UIStateActions;
+  uiStateActions: typeof UiStateActions;
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
   mapStyleActions: typeof MapStyleActions;

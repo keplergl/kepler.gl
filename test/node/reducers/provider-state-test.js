@@ -22,12 +22,7 @@ import test from 'tape';
 import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
 import sinon from 'sinon';
 import {default as Console} from 'global/console';
-import {
-  ActionTypes,
-  exportFileToCloud,
-  resetProviderStatus,
-  setCloudProvider
-} from '@kepler.gl/actions';
+import {ActionTypes, exportFileToCloud, resetProviderStatus, setCloudProvider} from 'actions';
 import reducer, {providerStateReducerFactory} from 'reducers/provider-state';
 import {INITIAL_PROVIDER_STATE} from 'reducers/provider-state-updaters';
 import MockProvider from 'test/helpers/mock-provider';

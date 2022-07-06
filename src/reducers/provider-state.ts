@@ -20,25 +20,31 @@
 
 import {handleActions} from 'redux-actions';
 import * as providerStateUpdaters from './provider-state-updaters';
-import {ActionTypes} from '@kepler.gl/actions';
+import {ProviderActions} from 'actions';
 
 /**
  * Important: Do not rename `actionHandler` or the assignment pattern of property value.
  * It is used to generate documentation
  */
 const actionHandler = {
-  [ActionTypes.EXPORT_FILE_TO_CLOUD]: providerStateUpdaters.exportFileToCloudUpdater,
-  [ActionTypes.EXPORT_FILE_SUCCESS]: providerStateUpdaters.exportFileSuccessUpdater,
-  [ActionTypes.EXPORT_FILE_ERROR]: providerStateUpdaters.exportFileErrorUpdater,
-  [ActionTypes.RESET_PROVIDER_STATUS]: providerStateUpdaters.resetProviderStatusUpdater,
-  [ActionTypes.SET_CLOUD_PROVIDER]: providerStateUpdaters.setCloudProviderUpdater,
-  [ActionTypes.POST_SAVE_LOAD_SUCCESS]: providerStateUpdaters.postSaveLoadSuccessUpdater,
-  [ActionTypes.LOAD_CLOUD_MAP]: providerStateUpdaters.loadCloudMapUpdater,
-  [ActionTypes.LOAD_CLOUD_MAP_SUCCESS]: providerStateUpdaters.loadCloudMapSuccessUpdater,
-  [ActionTypes.LOAD_CLOUD_MAP_ERROR]: providerStateUpdaters.loadCloudMapErrorUpdater,
-  [ActionTypes.GET_SAVED_MAPS]: providerStateUpdaters.getSavedMapsUpdater,
-  [ActionTypes.GET_SAVED_MAPS_SUCCESS]: providerStateUpdaters.getSavedMapsSuccessUpdater,
-  [ActionTypes.GET_SAVED_MAPS_ERROR]: providerStateUpdaters.getSavedMapsErrorUpdater
+  [ProviderActions.ActionTypes.EXPORT_FILE_TO_CLOUD]:
+    providerStateUpdaters.exportFileToCloudUpdater,
+  [ProviderActions.ActionTypes.EXPORT_FILE_SUCCESS]: providerStateUpdaters.exportFileSuccessUpdater,
+  [ProviderActions.ActionTypes.EXPORT_FILE_ERROR]: providerStateUpdaters.exportFileErrorUpdater,
+  [ProviderActions.ActionTypes.RESET_PROVIDER_STATUS]:
+    providerStateUpdaters.resetProviderStatusUpdater,
+  [ProviderActions.ActionTypes.SET_CLOUD_PROVIDER]: providerStateUpdaters.setCloudProviderUpdater,
+  [ProviderActions.ActionTypes.POST_SAVE_LOAD_SUCCESS]:
+    providerStateUpdaters.postSaveLoadSuccessUpdater,
+  [ProviderActions.ActionTypes.LOAD_CLOUD_MAP]: providerStateUpdaters.loadCloudMapUpdater,
+  [ProviderActions.ActionTypes.LOAD_CLOUD_MAP_SUCCESS]:
+    providerStateUpdaters.loadCloudMapSuccessUpdater,
+  [ProviderActions.ActionTypes.LOAD_CLOUD_MAP_ERROR]:
+    providerStateUpdaters.loadCloudMapErrorUpdater,
+  [ProviderActions.ActionTypes.GET_SAVED_MAPS]: providerStateUpdaters.getSavedMapsUpdater,
+  [ProviderActions.ActionTypes.GET_SAVED_MAPS_SUCCESS]:
+    providerStateUpdaters.getSavedMapsSuccessUpdater,
+  [ProviderActions.ActionTypes.GET_SAVED_MAPS_ERROR]: providerStateUpdaters.getSavedMapsErrorUpdater
 };
 
 // construct provider-state reducer

@@ -23,7 +23,7 @@ import test from 'tape';
 
 import {StateWMultiH3Layers} from 'test/helpers/mock-state';
 
-import {VisStateActions, UIStateActions} from '@kepler.gl/actions';
+import {VisStateActions, UIStateActions} from 'actions';
 
 import {appInjector} from 'components/container';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';

@@ -20,7 +20,7 @@
 
 import {handleActions} from 'redux-actions';
 
-import {_actionFor, _updateProperty, keplerGlInit, ActionTypes} from '@kepler.gl/actions';
+import {_actionFor, _updateProperty, keplerGlInit, ActionTypes} from 'actions';
 import {coreReducerFactory} from './core';
 
 // INITIAL_STATE
