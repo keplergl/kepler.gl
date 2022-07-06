@@ -28,7 +28,7 @@ import {EXPORT_IMG_RATIO_OPTIONS, EXPORT_IMG_RESOLUTION_OPTIONS} from '@kepler.g
 import {StyledModalContent, SelectionButton, CheckMark} from 'components/common/styled-components';
 import Switch from 'components/common/switch';
 import {injectIntl, IntlShape} from 'react-intl';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import {ExportImage} from 'reducers';
 
 const ImageOptionList = styled.div`

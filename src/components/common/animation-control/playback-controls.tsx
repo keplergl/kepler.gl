@@ -21,7 +21,7 @@
 import React, {useState, useCallback} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import {Button, Tooltip, ButtonProps} from 'components/common/styled-components';
 import AnimationSpeedSliderFactory from './animation-speed-slider';
 import {Reset, Play, Pause, Rocket, AnchorWindow, FreeWindow} from 'components/common/icons';

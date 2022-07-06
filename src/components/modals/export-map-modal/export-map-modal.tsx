@@ -26,7 +26,7 @@ import {EXPORT_MAP_FORMATS, EXPORT_MAP_FORMAT_OPTIONS} from '@kepler.gl/constant
 import {StyledExportMapSection} from './components';
 import ExportHtmlMapFactory from './export-html-map';
 import ExportJsonMapFactory from './export-json-map';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import {ActionHandler, setExportHTMLMapMode, setUserMapboxAccessToken} from 'actions';
 
 interface ExportMapModalFactoryProps {

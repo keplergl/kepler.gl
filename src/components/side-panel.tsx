@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo} from 'react';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 
 import {
   EXPORT_DATA_ID,

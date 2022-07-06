@@ -32,7 +32,7 @@ import PanelHeaderActionFactory from 'components/side-panel/panel-header-action'
 import {Copy, ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots} from 'components/common/icons';
 
 import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import {RGBColor} from '@kepler.gl/types';
 import {BaseProps} from 'components/common/icons/base';
 

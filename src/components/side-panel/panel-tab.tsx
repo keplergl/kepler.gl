@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {Tooltip} from 'components/common/styled-components';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import {BaseProps} from 'components/common/icons/base';
 
 type StyledPanelTabProps = {

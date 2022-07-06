@@ -46,7 +46,7 @@ import {
 
 import {Cube3d, Split, Legend, DrawPolygon, Layers, Delete} from 'components/common/icons';
 
-import {LOCALE_CODES, LOCALES} from '@kepler.gl/localization';
+import {LOCALE_CODES, LOCALES} from 'localization';
 import {toggleMapControl} from 'actions';
 import {keplerGlReducerCore} from 'reducers';
 

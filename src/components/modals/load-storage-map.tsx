@@ -27,7 +27,7 @@ import {Button} from 'components/common/styled-components';
 import CloudTile from './cloud-tile';
 import {Base, ArrowLeft} from 'components/common/icons';
 import ProviderModalContainer from './provider-modal-container';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import {MapListItem, Provider} from 'cloud-providers';
 
 const StyledProviderSection = styled.div.attrs({

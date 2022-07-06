@@ -23,7 +23,7 @@ import styled from 'styled-components';
 
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import RangeSliderFactory from 'components/common/range-slider';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import {KeyEvent} from '@kepler.gl/constants';
 import {Checkbox} from 'components';
 import {clamp} from 'utils/data-utils';

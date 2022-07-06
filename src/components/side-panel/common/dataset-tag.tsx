@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import styled from 'styled-components';
 import {DatasetSquare, Tooltip} from 'components';
 import {DatasetTagProps, UpdateTableColorTypes} from './types';

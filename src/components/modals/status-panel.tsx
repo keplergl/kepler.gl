@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import {MapIcon} from 'components/common/icons';
 import {StyledExportSection} from 'components/common/styled-components';
 import ErrorDisplay from './error-display';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import {IconProps} from 'cloud-providers/provider';
 
 const StyledUploader = styled.div`

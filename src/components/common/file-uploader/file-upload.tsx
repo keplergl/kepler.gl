@@ -32,7 +32,7 @@ import {GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
 import ReactMarkdown from 'react-markdown';
 // Breakpoints
 import {media} from 'styles/media-breakpoints';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 
 /** @typedef {import('./file-upload').FileUploadProps} FileUploadProps */
 

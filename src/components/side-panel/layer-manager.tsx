@@ -21,7 +21,7 @@
 import React, {Component, useCallback} from 'react';
 
 import {injectIntl, WrappedComponentProps} from 'react-intl';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import styled from 'styled-components';
 
 import LayerListFactory from './layer-panel/layer-list';

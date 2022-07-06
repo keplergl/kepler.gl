@@ -33,7 +33,7 @@ import {
 } from 'components/common/styled-components';
 import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import {Provider} from 'cloud-providers';
 import {cleanupExportImage, SetCloudProviderPayload} from 'actions';
 

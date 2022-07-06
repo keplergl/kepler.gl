@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo} from 'react';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import {Button, SidePanelDivider, SidePanelSection} from 'components/common/styled-components';
 import {Add} from 'components/common/icons';
 import SourceDataCatalogFactory from './common/source-data-catalog';

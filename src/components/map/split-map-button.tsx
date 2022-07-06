@@ -22,7 +22,7 @@ import React, {ComponentType, useCallback, useMemo} from 'react';
 import classnames from 'classnames';
 import {MapControlButton} from 'components/common/styled-components';
 import {Delete, Split} from 'components/common/icons';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import TippyTooltip from '../common/tippy-tooltip';
 import {MapControl, MapControls} from 'reducers';
 

@@ -24,7 +24,7 @@ import {createSelector} from 'reselect';
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
-import {FormattedMessage} from '@kepler.gl/localization';
+import {FormattedMessage} from 'localization';
 import {DatasetItemProps, SourceDataSelectorProps} from './types';
 
 const defaultPlaceHolder = 'Select A Data Source';
