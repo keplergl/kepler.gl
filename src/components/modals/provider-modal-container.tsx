@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import {Provider} from '@kepler.gl/cloud-providers';
+import {Provider} from 'cloud-providers';
 import {SetCloudProviderPayload} from 'actions';
 
 export type ProviderModalContainerProps = {

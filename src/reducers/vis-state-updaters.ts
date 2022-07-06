@@ -27,7 +27,7 @@ import xor from 'lodash.xor';
 import copy from 'copy-to-clipboard';
 import {parseFieldValue} from 'utils/data-utils';
 // Tasks
-import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from '@kepler.gl/tasks';
+import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from 'tasks';
 // Actions
 import {
   loadFilesErr,

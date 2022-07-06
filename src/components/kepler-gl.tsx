@@ -69,7 +69,7 @@ import {mergeMessages} from 'utils/locale-utils';
 import {theme as basicTheme, themeLT, themeBS} from 'styles/base';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
 import {KeplerGlState} from 'reducers/core';
-import {Provider} from '@kepler.gl/cloud-providers';
+import {Provider} from 'cloud-providers';
 
 // Maybe we should think about exporting this or creating a variable
 // as part of the base.js theme

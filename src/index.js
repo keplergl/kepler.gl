@@ -43,7 +43,7 @@ export * from './layers';
 export * from './styles';
 
 // Middleware
-export * from '@kepler.gl/middleware';
+export * from './middleware';
 
 // Utils
 export * from './utils';

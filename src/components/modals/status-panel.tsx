@@ -24,7 +24,7 @@ import {MapIcon} from 'components/common/icons';
 import {StyledExportSection} from 'components/common/styled-components';
 import ErrorDisplay from './error-display';
 import {FormattedMessage} from 'localization';
-import {IconProps} from '@kepler.gl/cloud-providers';
+import {IconProps} from 'cloud-providers';
 
 const StyledUploader = styled.div`
   display: flex;
