@@ -26,7 +26,7 @@ import {SortableContainer, SortableElement} from 'react-sortable-hoc';
 import LayerPanelFactory from './layer-panel';
 import {Datasets} from 'reducers';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {UiStateActions, VisStateActions} from 'actions';
+import {UIStateActions, VisStateActions} from 'actions';
 
 type LayerListProps = {
   datasets: Datasets;
@@ -34,7 +34,7 @@ type LayerListProps = {
   layerOrder: number[];
   layerClasses: LayerClassesType;
   isSortable?: boolean;
-  uiStateActions: typeof UiStateActions;
+  uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
 };
 

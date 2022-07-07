@@ -23,7 +23,7 @@ import React, {useMemo} from 'react';
 import DatasetLayerSectionFactory from './dataset-layer-section';
 import {Datasets} from 'reducers';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {UiStateActions, VisStateActions, ActionHandler} from 'actions';
+import {UIStateActions, VisStateActions, ActionHandler} from 'actions';
 
 type DatasetLayerGroupProps = {
   datasets: Datasets;
@@ -31,10 +31,10 @@ type DatasetLayerGroupProps = {
   layerOrder: number[];
   layerClasses: LayerClassesType;
   showDeleteDataset: boolean;
-  removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
+  removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
-  uiStateActions: typeof UiStateActions;
+  uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
 };
 

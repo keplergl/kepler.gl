@@ -38,4 +38,4 @@ export * as MapStateActions from './map-state-actions';
 export * as MapStyleActions from './map-style-actions';
 export * as ProviderActions from './provider-actions';
 export * as VisStateActions from './vis-state-actions';
-export * as UiStateActions from './ui-state-actions';
+export * as UIStateActions from './ui-state-actions';

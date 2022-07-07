@@ -33,7 +33,7 @@ import {
   MapStateActions,
   MapStyleActions,
   VisStateActions,
-  UiStateActions,
+  UIStateActions,
   ProviderActions
 } from 'actions';
 
@@ -41,7 +41,7 @@ type KeplerGlActions = {
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
   mapStyleActions: typeof MapStyleActions;
-  uiStateActions: typeof UiStateActions;
+  uiStateActions: typeof UIStateActions;
   providerActions: typeof ProviderActions;
 };
 
@@ -531,7 +531,7 @@ function makeGetActionCreators() {
       VisStateActions,
       MapStateActions,
       MapStyleActions,
-      UiStateActions,
+      UIStateActions,
       ProviderActions
     ].map(actions => bindActionCreators(mergeActions(actions, userActions), dispatch));
 

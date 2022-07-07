@@ -65,7 +65,7 @@ import {
   OnErrorCallBack,
   MapStyleActions,
   VisStateActions,
-  UiStateActions,
+  UIStateActions,
   ProviderActions
 } from 'actions';
 import {ProviderState} from 'reducers/provider-state-updaters';
@@ -112,7 +112,7 @@ export type ModalContainerProps = {
   visState: VisState;
   providerState: ProviderState;
   visStateActions: typeof VisStateActions;
-  uiStateActions: typeof UiStateActions;
+  uiStateActions: typeof UIStateActions;
   mapStyleActions: typeof MapStyleActions;
   providerActions: typeof ProviderActions;
   onSaveToStorage?: () => void;

@@ -26,7 +26,7 @@ import {createSelector} from 'reselect';
 import WebMercatorViewport from 'viewport-mercator-project';
 import {errorNotification} from 'utils/notifications-utils';
 
-import {MapStateActions, VisStateActions, UiStateActions} from 'actions';
+import {MapStateActions, VisStateActions, UIStateActions} from 'actions';
 
 // components
 import MapPopoverFactory from 'components/map/map-popover';
@@ -142,7 +142,7 @@ interface MapContainerProps {
   mapboxApiUrl: string;
   visStateActions: typeof VisStateActions;
   mapStateActions: typeof MapStateActions;
-  uiStateActions: typeof UiStateActions;
+  uiStateActions: typeof UIStateActions;
 
   // optional
   primary?: boolean; // primary one will be reporting its size to appState

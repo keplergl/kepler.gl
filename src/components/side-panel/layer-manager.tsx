@@ -37,7 +37,7 @@ import {PanelLabel, SidePanelDivider, SidePanelSection} from 'components/common/
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
 import {Datasets} from 'reducers';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {UiStateActions, VisStateActions, ActionHandler} from 'actions';
+import {UIStateActions, VisStateActions, ActionHandler} from 'actions';
 import {SidePanelItem} from 'components/types';
 import {LayerPanelListView} from 'reducers/ui-state-updaters';
 
@@ -52,10 +52,10 @@ type LayerManagerProps = {
   layerOrder: number[];
   layerClasses: LayerClassesType;
   layerBlending: string;
-  uiStateActions: typeof UiStateActions;
+  uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
   showAddDataModal: () => void;
-  removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
+  removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   layerPanelListView: LayerPanelListView;

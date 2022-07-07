@@ -26,7 +26,7 @@ import {Button} from 'components/common/styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
 import {Datasets} from 'reducers';
-import {UiStateActions, VisStateActions, ActionHandler} from 'actions';
+import {UIStateActions, VisStateActions, ActionHandler} from 'actions';
 
 type AddDataButtonProps = {
   onClick: () => void;
@@ -40,7 +40,7 @@ type DatasetSectionProps = {
   showDeleteDataset: boolean;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
-  removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
+  removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
   showAddDataModal: () => void;
 };
 
