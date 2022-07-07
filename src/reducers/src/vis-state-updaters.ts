@@ -194,7 +194,9 @@ export const DEFAULT_ANIMATION_CONFIG: AnimationConfig = {
   isAnimating: false,
   timeFormat: null,
   timezone: null,
-  defaultTimeFormat: null
+  defaultTimeFormat: null,
+  hideControl: false,
+  duration: null
 };
 
 export const DEFAULT_EDITOR: Editor = {

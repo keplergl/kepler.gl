@@ -191,6 +191,7 @@ export type AnimationConfig = {
   domain: number[] | null;
   currentTime: number | null;
   speed: number;
+  duration?: number | null;
   isAnimating?: boolean;
   timeSteps?: null | number[];
   // auto generated based on time domain

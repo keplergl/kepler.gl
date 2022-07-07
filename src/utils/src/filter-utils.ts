@@ -265,7 +265,6 @@ export function validateFilter<K extends KeplerTableModel<K, L>, L>(
   }
 
   const initializeFilter: Filter = {
-    // @ts-expect-error
     ...getDefaultFilter(filter.dataId),
     ...filter,
     dataId: filterDataId,

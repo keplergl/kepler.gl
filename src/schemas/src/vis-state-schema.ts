@@ -37,8 +37,10 @@ import {
   ParsedLayer,
   ParsedVisState,
   SavedFilter,
+  MinSavedFilter,
   SavedInteractionConfig,
   SavedLayer,
+  MinSavedLayer,
   SavedVisState,
   SplitMap
 } from '@kepler.gl/types';
@@ -570,7 +572,7 @@ export class LayerSchemaV0 extends Schema {
   }
 
   load(
-    layers: SavedLayer[] | undefined
+    layers: SavedLayer[] | MinSavedLayer[] | undefined
   ): {
     layers: ParsedLayer[] | undefined;
   } {
@@ -591,7 +593,9 @@ export class FilterSchemaV0 extends Schema {
         .map(filter => this.savePropertiesOrApplySchema(filter).filters)
     };
   }
-  load(filters: undefined | SavedFilter[]): {filters: undefined | ParsedFilter[]} {
+  load(
+    filters: SavedFilter[] | MinSavedFilter[] | undefined
+  ): {filters: ParsedFilter[] | undefined} {
     return {
       filters: filters
         ?.map(filter => this.loadPropertiesOrApplySchema(filter).filters)
