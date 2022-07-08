@@ -115,7 +115,7 @@ export const scenegraphVisConfigs: {
 };
 
 const DEFAULT_MODEL =
-  'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb';
+  'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BoxTextured/glTF-Binary/BoxTextured.glb';
 const DEFAULT_TRANSITION: [0, 0, 0] = [0, 0, 0];
 const DEFAULT_SCALE: [1, 1, 1] = [1, 1, 1];
 const DEFAULT_COLOR: [255, 255, 255, 255] = [255, 255, 255, 255];
