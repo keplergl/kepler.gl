@@ -24,7 +24,6 @@ const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-type
 const PLUGINS = [
   ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
   '@babel/plugin-transform-modules-commonjs',
-  '@babel/plugin-proposal-export-namespace-from',
   '@babel/plugin-proposal-optional-chaining',
   [
     '@babel/transform-runtime',
