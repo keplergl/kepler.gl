@@ -28,6 +28,9 @@ import {IntlProvider} from 'react-intl';
 import {messages} from '@kepler.gl/localization';
 import {RootContext, FeatureFlagsContextProvider, FeatureFlags} from './context';
 import {OnErrorCallBack, OnSuccessCallBack, Viewport} from '@kepler.gl/types';
+import {Layer} from '@kepler.gl/layers';
+
+import {DndContext, DragOverlay} from '@dnd-kit/core';
 
 import {
   MapStateActions,
@@ -54,6 +57,15 @@ import {
   GEOCODER_DATASET_NAME,
   MISSING_MAPBOX_TOKEN
 } from '@kepler.gl/constants';
+
+import {
+  DragItem,
+  DND_MODIFIERS,
+  DND_EMPTY_MODIFIERS,
+  DRAGOVERLAY_MODIFIERS,
+  findDndContainerId,
+  getLayerOrderOnSort
+} from './dnd-layer-items';
 
 import SidePanelFactory from './side-panel';
 import MapContainerFactory from './map-container';
@@ -331,6 +343,12 @@ type KeplerGLBasicProps = {
 };
 
 type KeplerGLProps = KeplerGlState & KeplerGlActions & KeplerGLBasicProps;
+type KeplerGLCompState = {
+  dimensions: any;
+  activeLayer: undefined | Layer;
+  isDragging: boolean | null;
+  dndItems: any;
+};
 
 KeplerGlFactory.deps = [
   BottomWidgetFactory,
@@ -355,21 +373,37 @@ function KeplerGlFactory(
 ): React.ComponentType<KeplerGLBasicProps & {selector: (...args: any[]) => KeplerGlState}> {
   /** @typedef {import('./kepler-gl').UnconnectedKeplerGlProps} KeplerGlProps */
   /** @augments React.Component<KeplerGlProps> */
-  class KeplerGL extends Component<KeplerGLProps & {selector: (...args: any[]) => KeplerGlState}> {
+  class KeplerGL extends Component<
+    KeplerGLProps & {selector: (...args: any[]) => KeplerGlState},
+    KeplerGLCompState
+  > {
     static defaultProps = DEFAULT_KEPLER_GL_PROPS;
 
-    state = {
-      dimensions: null
+    state: KeplerGLCompState = {
+      dimensions: null,
+      activeLayer: undefined,
+      isDragging: null,
+      dndItems: {sortablelist: [], 0: [], 1: []}
     };
 
     componentDidMount() {
       this._validateMapboxToken();
       this._loadMapStyle();
+      this._updateDndItems();
       if (typeof this.props.onKeplerGlInitialized === 'function') {
         this.props.onKeplerGlInitialized();
       }
       if (this.root.current instanceof HTMLElement) {
         observeDimensions(this.root.current, this._handleResize);
+      }
+    }
+
+    componentDidUpdate(prevProps) {
+      if (
+        this.props.visState.layerOrder !== prevProps.visState.layerOrder ||
+        this.props.visState.layers !== prevProps.visState.layers
+      ) {
+        this._updateDndItems();
       }
     }
 
@@ -446,6 +480,75 @@ function KeplerGlFactory(
       this.props.mapStyleActions.loadMapStyles(allStyles);
     };
 
+    _updateDndItems = () => {
+      // update dndItems when layerOrder or layers change
+      this.setState((state, props) => {
+        const {
+          visState: {layers, layerOrder}
+        } = props;
+
+        return {
+          dndItems: {
+            ...state.dndItems,
+            sortablelist: layerOrder.map(layerIdx => layers[layerIdx].id)
+          }
+        };
+      });
+    };
+
+    _deleteMapLabels = (containerId, layerId) => {
+      // delete dnditems in map panel
+      this.props.visStateActions.toggleLayerForMap(containerId, layerId);
+    };
+
+    _handleDragStart = ({active}) => {
+      const {
+        visState: {layers},
+        visStateActions
+      } = this.props;
+      const activeLayer = layers.find(layer => layer.id === active.id);
+      this.setState({activeLayer});
+
+      if (activeLayer?.config.isConfigActive) {
+        visStateActions.layerConfigChange(activeLayer, {isConfigActive: false});
+      }
+    };
+
+    _handleDragEnd = ({active, over}) => {
+      const {
+        visState: {layerOrder},
+        visStateActions
+      } = this.props;
+      const {dndItems} = this.state;
+
+      if (!dndItems) {
+        return;
+      }
+
+      const {id: activeLayerId} = active;
+      const overId = over?.id; // isSplit ? overContainerId : overLayerId
+      const activeContainer = findDndContainerId(activeLayerId, dndItems);
+      const overContainer = findDndContainerId(overId, dndItems);
+
+      if (!activeContainer || !overContainer) {
+        return;
+      }
+
+      if (activeContainer === overContainer) {
+        // drag and drop in the same container: Sortablelist
+        // this sort action may happen in any modes, regardless of isSplit
+        visStateActions.reorderLayer(
+          getLayerOrderOnSort(layerOrder, dndItems[activeContainer], activeLayerId, overId)
+        );
+      } else {
+        // drag and drop in different containers: Sortablelist -> MapContainer
+        visStateActions.toggleLayerForMap(overContainer, activeLayerId);
+      }
+
+      this.setState({activeLayer: undefined});
+    };
+
+    // eslint-disable-next-line complexity
     render() {
       const {
         id = 'map',
@@ -461,6 +564,7 @@ function KeplerGlFactory(
       } = this.props;
 
       const dimensions = this.state.dimensions || {width, height};
+      const activeLayer = this.state.activeLayer;
       const {
         splitMaps, // this will store support for split map view is necessary
         interactionConfig
@@ -479,15 +583,25 @@ function KeplerGlFactory(
       const modalContainerFields = modalContainerSelector(this.props, this.root.current);
       const geoCoderPanelFields = geoCoderPanelSelector(this.props, dimensions);
       const notificationPanelFields = notificationPanelSelector(this.props);
-
       const mapContainers = !isSplit
-        ? [<MapContainer primary={true} key={0} index={0} {...mapFieldsSelector(this.props)} />]
+        ? [
+            <MapContainer
+              primary={true}
+              key={0}
+              index={0}
+              {...mapFieldsSelector(this.props)}
+              containerId={0}
+              deleteMapLabels={this._deleteMapLabels}
+            />
+          ]
         : splitMaps.map((settings, index) => (
             <MapContainer
               key={index}
               index={index}
               primary={index === 1}
               {...mapFieldsSelector(this.props, index)}
+              containerId={index}
+              deleteMapLabels={this._deleteMapLabels}
             />
           ));
 
@@ -509,8 +623,21 @@ function KeplerGlFactory(
                   ref={this.root}
                 >
                   <NotificationPanel {...notificationPanelFields} />
-                  {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                  <MapsLayout className="maps">{mapContainers}</MapsLayout>
+                  <DndContext
+                    onDragStart={this._handleDragStart}
+                    onDragEnd={this._handleDragEnd}
+                    modifiers={!isSplit ? DND_MODIFIERS : DND_EMPTY_MODIFIERS}
+                  >
+                    {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
+                    <MapsLayout className="maps">{mapContainers}</MapsLayout>
+                    {isSplit && (
+                      <DragOverlay modifiers={DRAGOVERLAY_MODIFIERS} dropAnimation={null}>
+                        {activeLayer !== undefined ? (
+                          <DragItem>{activeLayer.config?.label}</DragItem>
+                        ) : null}
+                      </DragOverlay>
+                    )}
+                  </DndContext>
                   {isExportingImage && <PlotContainer {...plotContainerFields} />}
                   {/* 1 geocoder: single mode OR split mode and synced viewports */}
                   {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (

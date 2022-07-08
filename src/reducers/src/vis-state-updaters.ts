@@ -1551,7 +1551,7 @@ export const toggleSplitMapUpdater = (
         ...state,
         // maybe we should use an array to store state for a single map as well
         // if current maps length is equal to 0 it means that we are about to split the view
-        splitMaps: computeSplitMapLayers(state.layers)
+        splitMaps: computeSplitMapLayers(state.layers, {duplicate: false})
       }
     : closeSpecificMapAtIndex(state, action);
 

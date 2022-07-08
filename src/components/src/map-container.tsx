@@ -26,6 +26,7 @@ import {PickInfo} from '@deck.gl/core/lib/deck';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
 import mapboxgl from 'mapbox-gl';
+import {useDroppable} from '@dnd-kit/core';
 
 import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actions';
 
@@ -137,6 +138,28 @@ const MapboxLogo = () => (
     />
   </div>
 );
+
+interface StyledDroppableProps {
+  isOver: boolean;
+}
+
+const StyledDroppable = styled.div<StyledDroppableProps>`
+  background-color: ${({isOver}) => (isOver ? 'rgba(128,128,128,0.2)' : 'none')};
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+`;
+
+export const isSplitSelector = props =>
+  props.visState.splitMaps && props.visState.splitMaps.length > 1;
+
+export const Droppable = ({containerId}) => {
+  const {isOver, setNodeRef} = useDroppable({id: containerId});
+
+  return <StyledDroppable ref={setNodeRef} isOver={isOver} />;
+};
 
 interface StyledDatasetAttributionsContainerProps {
   isPalm: boolean;
@@ -262,6 +285,8 @@ interface MapContainerProps {
   onMapRender?: Function;
   getMapboxRef?: (mapbox?: MapRef | null, index?: number) => void;
   index?: number;
+  deleteMapLabels?: any;
+  containerId?: number;
 
   locale?: any;
   theme?: any;
@@ -832,7 +857,8 @@ export default function MapContainerFactory(
         bottomMapContainerProps,
         topMapContainerProps,
         theme,
-        datasetAttributions = []
+        datasetAttributions = [],
+        containerId = 0
       } = this.props;
 
       const {layers, datasets, editor, interactionConfig} = visState;
@@ -888,6 +914,7 @@ export default function MapContainerFactory(
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
             mapHeight={mapState.height}
           />
+          {isSplitSelector(this.props) && <Droppable containerId={containerId} />}
           {/* 
           // @ts-ignore */}
           <MapComponent

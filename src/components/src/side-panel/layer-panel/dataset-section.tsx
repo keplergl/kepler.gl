@@ -56,8 +56,6 @@ const StyledDatasetTitle = styled.div<{showDatasetList?: boolean}>`
 `;
 
 const StyledDatasetSection = styled.div`
-  margin: 0 -32px 0 -16px;
-  padding: 0 32px 0 16px;
   border-bottom: 1px solid ${props => props.theme.sidePanelBorderColor};
 `;
 
