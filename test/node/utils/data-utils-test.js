@@ -30,7 +30,8 @@ import {
   arrayMove,
   getFormatter,
   defaultFormatter,
-  formatNumber
+  formatNumber,
+  roundToFour
 } from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 
@@ -49,6 +50,19 @@ test('dataUtils -> preciseRound', t => {
   t.equal(preciseRound(13, 2), '13.00', 'should round 13 correctly');
   t.equal(preciseRound(1.437, 2), '1.44', 'should round 1.437 correctly');
   t.equal(preciseRound(0.09999999999999987, 8), '0.10000000', 'should round 0.10000000 correctly');
+  t.end();
+});
+
+test('dataUtils -> roundToFour', t => {
+  t.equal(roundToFour(1.2344), 1.2344, 'should round 1.2344 to 4 decimals correctly');
+  t.equal(roundToFour(13.23445), 13.2345, 'should round 13.23445 to 4 decimals correctly');
+  t.equal(roundToFour(13), 13, 'should round 13 to 4 decimals correctly');
+  t.equal(roundToFour(1.437), 1.437, 'should round 1.437 to 4 decimals correctly');
+  t.equal(
+    roundToFour(0.09999999999999987),
+    0.1,
+    'should round 0.09999999999999987 to 4 decimals correctly'
+  );
   t.end();
 });
 
