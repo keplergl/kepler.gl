@@ -59,6 +59,13 @@ const StyledTable = styled.table`
   }
 `;
 
+const StyledDivider = styled.div`
+  // offset divider to reach popover edge
+  margin-left: -14px;
+  margin-right: -14px;
+  border-bottom: 1px solid ${props => props.theme.panelBorderColor};
+`;
+
 interface RowProps {
   name: string;
   value: string;
@@ -66,7 +73,6 @@ interface RowProps {
   url?: string;
 }
 
-/** @type {import('./layer-hover-info').RowComponent} */
 const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
   // Set 'url' to 'value' if it looks like a url
   if (!url && value && typeof value === 'string' && value.match(/^http/)) {
@@ -192,10 +198,13 @@ const LayerHoverInfoFactory = () => {
   const LayerHoverInfo = props => {
     const {data, layer} = props;
     const intl = useIntl();
-
     if (!data || !layer) {
       return null;
     }
+
+    const hasFieldsToShow =
+      (data.fieldValues && Object.keys(data.fieldValues).length > 0) ||
+      (props.fieldsToShow && props.fieldsToShow.length > 0);
 
     return (
       <div className="map-popover__layer-info">
@@ -203,6 +212,7 @@ const LayerHoverInfoFactory = () => {
           <Layers height="12px" />
           {props.layer.config.label}
         </StyledLayerName>
+        {hasFieldsToShow && <StyledDivider />}
         <StyledTable>
           {data.fieldValues ? (
             <tbody>
@@ -216,6 +226,7 @@ const LayerHoverInfoFactory = () => {
             <EntryInfo {...props} />
           )}
         </StyledTable>
+        {hasFieldsToShow && <StyledDivider />}
       </div>
     );
   };

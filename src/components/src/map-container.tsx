@@ -587,6 +587,8 @@ export default function MapContainerFactory(
               coordinate={interactionConfig.coordinate.enabled && (pinned || {}).coordinate}
               frozen={true}
               isBase={compareMode}
+              onSetFeatures={this.props.visStateActions.setFeatures}
+              setSelectedFeature={this.props.visStateActions.setSelectedFeature}
             />
           )}
           {layerHoverProp && (!layerPinnedProp || compareMode) && (
@@ -597,6 +599,8 @@ export default function MapContainerFactory(
               layerHoverProp={layerHoverProp}
               frozen={false}
               coordinate={interactionConfig.coordinate.enabled && coordinate}
+              onSetFeatures={this.props.visStateActions.setFeatures}
+              setSelectedFeature={this.props.visStateActions.setSelectedFeature}
             />
           )}
         </ErrorBoundary>

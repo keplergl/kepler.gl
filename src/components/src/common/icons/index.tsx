@@ -95,4 +95,5 @@ export {default as OrderByDataset} from './order-by-dataset';
 export {default as Messages} from './messages';
 export {default as Crosshairs} from './crosshairs';
 export {default as CursorClick} from './cursor-click';
+export {default as CursorPoint} from './cursor-point';
 export {default as Pin} from './pin';
