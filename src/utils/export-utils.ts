@@ -36,7 +36,7 @@ import {set, generateHashId} from 'utils/utils';
 
 import {createIndexedDataContainer} from './table-utils/data-container-utils';
 import {ExportImage} from 'reducers/ui-state-updaters';
-import { VisState } from 'reducers';
+import {VisState} from 'reducers';
 
 /**
  * Default file names
@@ -210,8 +210,8 @@ export function exportHtml(state, options) {
 }
 
 interface StateType {
-  visState: VisState, 
-  appName?: string
+  visState: VisState;
+  appName?: string;
 }
 
 export function exportData(state: StateType, options) {
