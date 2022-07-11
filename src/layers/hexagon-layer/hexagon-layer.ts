@@ -20,7 +20,7 @@
 
 import {GeoJsonLayer} from '@deck.gl/layers';
 import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
-import EnhancedHexagonLayer from 'deckgl-layers/hexagon-layer/enhanced-hexagon-layer';
+import {EnhancedHexagonLayer} from '@kepler.gl/deckgl-layers';
 import {hexagonToPolygonGeo} from './hexagon-utils';
 import HexagonLayerIcon from './hexagon-layer-icon';
 import {clamp} from 'utils/data-utils';

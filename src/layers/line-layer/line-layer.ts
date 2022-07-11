@@ -23,7 +23,7 @@ import {BrushingExtension} from '@deck.gl/extensions';
 import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
 import LineLayerIcon from './line-layer-icon';
 import ArcLayer, {ArcLayerConfig} from '../arc-layer/arc-layer';
-import EnhancedLineLayer from 'deckgl-layers/line-layer/line-layer';
+import {EnhancedLineLayer} from '@kepler.gl/deckgl-layers';
 import {LayerColumn} from '../base-layer';
 import {
   VisConfigColorRange,

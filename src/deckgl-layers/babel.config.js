@@ -18,46 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ColumnLayer} from '@deck.gl/layers';
-import {editShader} from '../../deckgl-layers/layer-utils/shader-utils';
+const KeplerPackage = require('./package');
 
-function addInstanceCoverage(vs) {
-  const addDecl = editShader(
-    vs,
-    'hexagon cell vs add instance',
-    'attribute vec3 instancePickingColors;',
-    `attribute vec3 instancePickingColors;
-     attribute float instanceCoverage;`
-  );
-
-  return editShader(
-    addDecl,
-    'hexagon cell vs add instance',
-    'float dotRadius = radius * coverage * shouldRender;',
-    'float dotRadius = radius * coverage * instanceCoverage * shouldRender;'
-  );
-}
-
-// TODO: export all deck.gl layers from kepler.gl
-class EnhancedColumnLayer extends ColumnLayer<any> {
-  getShaders() {
-    const shaders = super.getShaders();
-
-    return {
-      ...shaders,
-      vs: addInstanceCoverage(shaders.vs)
-    };
+const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
+const PLUGINS = [
+  ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
+  '@babel/plugin-transform-modules-commonjs',
+  '@babel/plugin-proposal-optional-chaining',
+  [
+    '@babel/transform-runtime',
+    {
+      regenerator: true
+    }
+  ],
+  [
+    'search-and-replace',
+    {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }
+  ]
+];
+const ENV = {
+  test: {
+    plugins: ['istanbul']
+  },
+  debug: {
+    sourceMaps: 'inline',
+    retainLines: true
   }
+};
 
-  initializeState() {
-    super.initializeState(undefined);
+module.exports = function babel(api) {
+  api.cache(true);
 
-    this.getAttributeManager().addInstanced({
-      instanceCoverage: {size: 1, accessor: 'getCoverage'}
-    });
-  }
-}
-
-EnhancedColumnLayer.layerName = 'EnhancedColumnLayer';
-
-export default EnhancedColumnLayer;
+  return {
+    presets: PRESETS,
+    plugins: PLUGINS,
+    env: ENV
+  };
+};
