@@ -229,6 +229,10 @@ export type MapPopoverProps = {
   onClose: () => void;
   onSetFeatures: (features: Feature[]) => any;
   setSelectedFeature: (feature: Feature, clickContext: object) => any;
+  featureCollection?: {
+    type: string;
+    features: Feature[];
+  };
 };
 
 type IntlProps = {
@@ -249,7 +253,8 @@ export default function MapPopoverFactory(
     container,
     onClose,
     onSetFeatures,
-    setSelectedFeature
+    setSelectedFeature,
+    featureCollection
   }) => {
     const [horizontalPlacement, setHorizontalPlacement] = useState('start');
     const moveLeft = () => setHorizontalPlacement('end');
@@ -264,10 +269,13 @@ export default function MapPopoverFactory(
       const selectedFeature = getSelectedFeature(layerHoverProp);
       if (selectedFeature) {
         setSelectedFeature(selectedFeature, clickContext);
-        onSetFeatures([selectedFeature]);
+        const updatedFeatures = featureCollection
+          ? [...featureCollection.features, selectedFeature]
+          : [selectedFeature];
+        onSetFeatures(updatedFeatures);
       }
       onClose();
-    }, [onClose, onSetFeatures, x, y, setSelectedFeature, layerHoverProp]);
+    }, [onClose, onSetFeatures, x, y, setSelectedFeature, layerHoverProp, featureCollection]);
 
     return (
       <RootContext.Consumer>

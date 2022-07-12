@@ -301,7 +301,8 @@ function testMapPopoverProp(t, mapPopoverProp) {
     y: 200,
     zoom: 13,
     onSetFeatures: sinon.spy(),
-    setSelectedFeature: sinon.spy()
+    setSelectedFeature: sinon.spy(),
+    featureCollection: {type: 'FeatureCollection', features: []}
   };
   t.deepEqual(
     Object.keys(mapPopoverProp).sort(),
