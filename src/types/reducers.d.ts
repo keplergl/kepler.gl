@@ -397,6 +397,8 @@ export type UiState = {
   layerPanelListView: PanelListView;
   // view filters by list or dataset
   filterPanelListView: PanelListView;
+  // side panel close button visibility
+  isSidePanelCloseButtonVisible: boolean | null;
 };
 
 /** Width of viewport */

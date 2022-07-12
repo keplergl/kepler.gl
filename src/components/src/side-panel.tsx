@@ -194,7 +194,13 @@ export default function SidePanelFactory(
     const PanelComponent = currentPanel?.component;
 
     return (
-      <Sidebar width={width} isOpen={isOpen} minifiedWidth={0} onOpenOrClose={_onOpenOrClose}>
+      <Sidebar
+        width={width}
+        isOpen={isOpen}
+        shouldShowCollapseButton={uiState.isSidePanelCloseButtonVisible}
+        minifiedWidth={0}
+        onOpenOrClose={_onOpenOrClose}
+      >
         <PanelHeader
           appName={appName}
           version={version}

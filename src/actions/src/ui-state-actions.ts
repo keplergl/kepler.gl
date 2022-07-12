@@ -94,6 +94,26 @@ export const hideExportDropdown: () => {
   type: typeof ActionTypes.HIDE_EXPORT_DROPDOWN;
 } = createAction(ActionTypes.HIDE_EXPORT_DROPDOWN);
 
+/** TOGGLE_SIDE_PANEL_CLOSE_BUTTON*/
+export type ToggleSidePanelCloseButtonUpdaterAction = {
+  payload: {
+    show: boolean;
+  };
+};
+
+/**
+ * Toggle side panel close button
+ * @memberof uiStateActions
+ * @param show - if side panel button visible
+ * @public
+ */
+export const toggleSidePanelCloseButton: (
+  show: boolean
+) => Merge<
+  ToggleSidePanelCloseButtonUpdaterAction,
+  {type: typeof ActionTypes.TOGGLE_SIDE_PANEL_CLOSE_BUTTON}
+> = createAction(ActionTypes.TOGGLE_SIDE_PANEL_CLOSE_BUTTON, show => ({payload: {show}}));
+
 /** TOGGLE_MAP_CONTROL */
 export type ToggleMapControlUpdaterAction = {
   payload: {
