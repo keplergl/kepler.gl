@@ -107,6 +107,7 @@ export type MapControlPanelProps = {
   logoComponent?: Element;
   mapState?: MapState;
   onToggleSplitMapViewport?: ActionHandler<typeof toggleSplitMapViewport>;
+  isViewportUnsyncAllowed?: boolean;
 };
 
 function MapControlPanelFactory() {
@@ -122,7 +123,8 @@ function MapControlPanelFactory() {
       isExport,
       logoComponent,
       mapState,
-      onToggleSplitMapViewport
+      onToggleSplitMapViewport,
+      isViewportUnsyncAllowed
     }) => {
       const {isViewportSynced, isZoomLocked} = mapState || {};
       const onUnlockViewportChange = useCallback(() => {
@@ -141,7 +143,7 @@ function MapControlPanelFactory() {
             marginBottom: '8px !important'
           }}
         >
-          {mapState?.isSplit ? (
+          {mapState?.isSplit && isViewportUnsyncAllowed ? (
             <StyledMapControlPanelHeaderSplitViewportsTools>
               <StyledSBCenterFlexbox style={{paddingBottom: '6px'}}>
                 <FormattedMessage id="Unlock Viewport" />

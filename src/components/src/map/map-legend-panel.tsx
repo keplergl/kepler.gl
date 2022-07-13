@@ -71,6 +71,7 @@ export type MapLegendPanelProps = {
   mapHeight?: number;
   offsetRight?: number;
   onToggleSplitMapViewport?: ActionHandler<typeof toggleSplitMapViewport>;
+  isViewportUnsyncAllowed?: boolean;
 };
 
 function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
@@ -89,7 +90,8 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     mapState,
     mapHeight,
     offsetRight,
-    onToggleSplitMapViewport
+    onToggleSplitMapViewport,
+    isViewportUnsyncAllowed = true
   }) => {
     const mapLegend = mapControls?.mapLegend || ({} as MapControl);
     const {active: isPinned} = mapLegend || {};
@@ -136,6 +138,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
         logoComponent={logoComponent}
         mapState={mapState}
         onToggleSplitMapViewport={onToggleSplitMapViewport}
+        isViewportUnsyncAllowed={isViewportUnsyncAllowed}
       >
         <MapLegend layers={layers} mapHeight={mapHeight} />
       </MapControlPanel>
