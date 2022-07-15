@@ -244,6 +244,7 @@
     "babel-plugin-search-and-replace": "^1.0.0",
     "babel-plugin-transform-builtin-extend": "^1.1.0",
     "babelify": "^10.0.0",
+    "caniuse-lite": "^1.0.30001361",
     "documentation": "^9.1.1",
     "dts-bundle-webpack": "^1.0.2",
     "enzyme": "^3.9.0",
