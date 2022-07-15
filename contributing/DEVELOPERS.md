@@ -83,13 +83,13 @@ npm run start:deck-src
 
 ## Running Tests
 
-We write unit and browser tests with [Tape][tape] and [Enzyme][enzyme], and lint with [ESLint][eslint]. Make sure to run test before submitting your PR. To run all of the tests once with node:
+- We write node and browser tests with [Tape][tape], [Enzyme][enzyme], [jsDom](https://www.npmjs.com/package/jsdom) and [@probe.gl/test-util](https://uber-web.github.io/probe.gl/docs/api-reference/test-utils/browser-driver), and lint with [ESLint][eslint]. Make sure to run test before submitting your PR. To run all of the tests once
 
 ```bash
 yarn test
 ```
 
-To run separately
+- Yarn test runs lint and 3 tests in different env. To run them separately
 ```bash
 # lint
 yarn lint
@@ -97,11 +97,30 @@ yarn lint
 # node tests
 yarn test-node
 
-# browser tests
+# jsdom tests
 yarn test-browser
 
-# fast test (no linting)
-yarn fast-test
+# headless browser tests, uses probe.gl to run browser tests with puppeteer
+yarn test-headless
+```
+
+- Here are some handy scripts / tricks for debugging tests
+
+1. add `.only` to errored tests to only run 1 test at a time
+```js
+test.only('MapContainerFactory', t => {
+  // tests 
+}
+```
+
+2. run all tests in chromium browser. This runs node, browser and headless browser tests in chromium browser and logs the output, you can step through the code with chrome developer tools
+```bash
+yarn test-browser-drive
+```
+
+3. Fast tests, runs node and browser tests without tap-spec output
+```bash
+yarn test-fast
 ```
 
 To generate a coverage report

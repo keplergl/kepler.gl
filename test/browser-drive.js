@@ -23,18 +23,8 @@ const resolve = require('path').resolve;
 const BrowserTestDriver = require('@probe.gl/test-utils').BrowserTestDriver;
 
 const configPath = resolve(__dirname, './webpack.config.js');
-
-const options = {
-  server: {
-    command: 'webpack-dev-server',
-    arguments: ['--config', configPath, '--env.mode=test']
-  },
-  browser: {
-    defaultViewport: {width: 1200, height: 800}
-  },
-  headless: false,
-  executablePath: getExecutablePath()
-};
+const myArgs = process.argv.slice(2);
+const debug = myArgs.length && myArgs[0] === 'debug';
 
 function getExecutablePath(dir) {
   try {
@@ -49,5 +39,27 @@ function getExecutablePath(dir) {
   return null;
 }
 
+function getOptions(opt) {
+  const entryPath = opt.debug
+    ? resolve(__dirname, './browser-debug.js')
+    : resolve(__dirname, './browser-headless.js');
+  const headless = !opt.debug;
+
+  const options = {
+    server: {
+      command: 'webpack-dev-server',
+      arguments: ['--entry', entryPath, '--config', configPath, '--env.mode=test']
+    },
+    browser: {
+      defaultViewport: {width: 1200, height: 800}
+    },
+    headless,
+    executablePath: getExecutablePath()
+  };
+
+  return options;
+}
+
+const options = getOptions({debug});
 const browserTest = new BrowserTestDriver();
 browserTest.run(options);

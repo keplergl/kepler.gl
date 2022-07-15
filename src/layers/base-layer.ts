@@ -1041,13 +1041,12 @@ class Layer {
     this.meta = {...this.meta, ...meta};
   }
 
-  // @ts-expect-error
-  getDataUpdateTriggers({filteredIndex, id, allData}: KeplerTable): any {
+  getDataUpdateTriggers({filteredIndex, id, dataContainer}: KeplerTable): any {
     const {columns} = this.config;
 
     return {
-      getData: {datasetId: id, allData, columns, filteredIndex},
-      getMeta: {datasetId: id, allData, columns},
+      getData: {datasetId: id, dataContainer, columns, filteredIndex},
+      getMeta: {datasetId: id, dataContainer, columns},
       ...(this.config.textLabel || []).reduce(
         (accu, tl, i) => ({
           ...accu,

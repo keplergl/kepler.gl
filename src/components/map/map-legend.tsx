@@ -165,6 +165,7 @@ export const LayerColorLegend: React.FC<LayerColorLegendProps> = React.memo(
   }
 );
 
+// eslint-disable-next-line react/display-name
 LayerColorLegend.displayName = 'LayerColorLegend';
 
 const isColorChannel = visualChannel =>

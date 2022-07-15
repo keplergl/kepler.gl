@@ -57,18 +57,13 @@ export const pointPosAccessor = ({lat, lng}: AggregationLayerColumns) => dc => d
 export const pointPosResolver = ({lat, lng}: AggregationLayerColumns) =>
   `${lat.fieldIdx}-${lng.fieldIdx}`;
 
-export const getValueAggrFunc = (field, aggregation) => {
-  return points => {
-    return field
-      ? aggregate(
-          points.map(p => {
-            return field.valueAccessor(p);
-          }),
-          aggregation
-        )
-      : points.length;
-  };
-};
+export const getValueAggrFunc = getPointData => (field, aggregation) => points =>
+  field
+    ? aggregate(
+        points.map(p => field.valueAccessor(getPointData(p))),
+        aggregation
+      )
+    : points.length;
 
 export const getFilterDataFunc = (filterRange, getFilterValue) => pt =>
   getFilterValue(pt).every((val, i) => val >= filterRange[i][0] && val <= filterRange[i][1]);
@@ -83,6 +78,9 @@ export type AggregationLayerConfig = Merge<LayerBaseConfig, {columns: Aggregatio
 export default class AggregationLayer extends Layer {
   getColorRange: any;
   declare config: AggregationLayerConfig;
+  declare getPointData: (any) => any;
+  declare gpuFilterGetIndex: (any) => number;
+  declare gpuFilterGetData: (dataContainer, data, fieldIndex) => any;
 
   constructor(
     props?: {
@@ -94,6 +92,14 @@ export default class AggregationLayer extends Layer {
     this.getPositionAccessor = dataContainer =>
       pointPosAccessor(this.config.columns)(dataContainer);
     this.getColorRange = memoize(getLayerColorRange);
+
+    // Access data of a point from aggregated bins, depends on how BinSorter works
+    // Deck.gl's BinSorter puts data in point.source
+    this.getPointData = pt => pt.source;
+
+    this.gpuFilterGetIndex = pt => this.getPointData(pt).index;
+    this.gpuFilterGetData = (dataContainer, data, fieldIndex) =>
+      dataContainer.valueAt(data.index, fieldIndex);
   }
 
   get isAggregated(): true {
@@ -293,18 +299,22 @@ export default class AggregationLayer extends Layer {
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getPosition = this.getPositionAccessor(dataContainer);
 
-    const getColorValue = getValueAggrFunc(
+    const aggregatePoints = getValueAggrFunc(this.getPointData);
+    const getColorValue = aggregatePoints(
       this.config.colorField,
       this.config.visConfig.colorAggregation
     );
 
-    const getElevationValue = getValueAggrFunc(
+    const getElevationValue = aggregatePoints(
       this.config.sizeField,
       this.config.visConfig.sizeAggregation
     );
     const hasFilter = Object.values(gpuFilter.filterRange).some(arr => arr.some(v => v !== 0));
 
-    const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)();
+    const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
+      this.gpuFilterGetIndex,
+      this.gpuFilterGetData
+    );
     const filterData = hasFilter
       ? getFilterDataFunc(gpuFilter.filterRange, getFilterValue)
       : undefined;
