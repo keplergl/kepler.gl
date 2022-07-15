@@ -32,7 +32,6 @@ const COMMON_CONFIG = {
     },
     clientLogLevel: 'debug'
   },
-  entry: resolve(__dirname, './browser.js'),
   output: {
     filename: 'bundle.js'
   },

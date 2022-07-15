@@ -18,19 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './injector-test';
-import './container-test';
-import './kepler-gl-test';
+// test in puppeteer browser
+// require('@probe.gl/test-utils/polyfill');
+import Console from 'global/console';
 
-import './modals';
-import './notifications';
-import './map';
-import './side-panel';
+const test = require('tape-catch');
+const enableDOMLogging = require('@probe.gl/test-utils')._enableDOMLogging;
+enableDOMLogging();
 
-import './common';
-import './editor';
-import './filters';
-import './geocoder-panel-test';
-import './tooltip-config-test';
-import './bottom-widget-test';
-import './plot-container-test';
+test.onFinish(window.browserTestDriver_finish);
+test.onFailure(args => {
+  Console.log(args);
+  window.browserTestDriver_fail();
+});
+
+test('Browser tests', t => {
+  // running all tests in browser for debugging
+  require('./node/index.js');
+  require('./browser/index.js');
+  require('./browser-headless/index.js');
+
+  t.end();
+});

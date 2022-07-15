@@ -250,6 +250,9 @@ export const defaultColorDimension: DimensionType<RGBAColor> = {
   key: 'fillColor',
   accessor: 'getFillColor',
   getPickingInfo: (dimensionState, cell) => {
+    if (!cell) {
+      return {};
+    }
     const {sortedBins} = dimensionState;
     const colorValue = sortedBins.binMap[cell.index] && sortedBins.binMap[cell.index].value;
     return {colorValue};
@@ -316,6 +319,9 @@ export const defaultElevationDimension: DimensionType<number> = {
   key: 'elevation',
   accessor: 'getElevation',
   getPickingInfo: (dimensionState, cell) => {
+    if (!cell) {
+      return {};
+    }
     const {sortedBins} = dimensionState;
     const elevationValue = sortedBins.binMap[cell.index] && sortedBins.binMap[cell.index].value;
     return {elevationValue};
@@ -616,10 +622,8 @@ export default class CPUAggregator {
   getPickingInfo({info}, layerProps) {
     const isPicked = info.picked && info.index > -1;
     let object = null;
-
-    if (isPicked) {
-      const cell = this.state.layerData.data[info.index];
-
+    const cell = isPicked ? this.state.layerData.data[info.index] : null;
+    if (cell) {
       let binInfo = {};
       for (const key in this.dimensionUpdaters) {
         const {getPickingInfo} = this.dimensionUpdaters[key];

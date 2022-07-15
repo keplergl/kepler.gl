@@ -1535,7 +1535,10 @@ export const layerHoverUpdater = (
   action: VisStateActions.OnLayerHoverUpdaterAction
 ): VisState => ({
   ...state,
-  hoverInfo: action.info
+  hoverInfo: {
+    // deck.gl info is mutable
+    ...action.info
+  }
 });
 
 /* eslint-enable max-statements */

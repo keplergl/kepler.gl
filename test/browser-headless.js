@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// import './browser/index.js';
+// test in puppeteer browser
 require('@probe.gl/test-utils/polyfill');
 
 const test = require('tape-catch');
@@ -29,7 +29,6 @@ test.onFinish(window.browserTestDriver_finish);
 test.onFailure(window.browserTestDriver_fail);
 
 test('Browser tests', t => {
-  require('./node/index.js');
-  require('./browser/index.js');
+  require('./browser-headless/index.js');
   t.end();
 });

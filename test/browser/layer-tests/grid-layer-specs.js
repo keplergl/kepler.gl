@@ -39,6 +39,91 @@ const columns = {
   lat: 'lat',
   lng: 'lng'
 };
+const filteredIndex = [0, 1, 2, 4, 5, 7];
+
+const expectedGridCellData = [
+  {
+    index: 0,
+    position: [-122.59661271087748, 37.743177277521255],
+    count: 2,
+    points: [
+      {
+        source: {
+          index: 0
+        },
+        index: 0
+      },
+      {
+        source: {
+          index: 1
+        },
+        index: 1
+      }
+    ],
+    lonIdx: 253,
+    latIdx: 711,
+    filteredPoints: []
+  },
+  {
+    index: 1,
+    position: [-122.14283099317691, 37.38384344551697],
+    count: 2,
+    points: [
+      {
+        source: {
+          index: 4
+        },
+        index: 2
+      },
+      {
+        source: {
+          index: 5
+        },
+        index: 3
+      }
+    ],
+    lonIdx: 255,
+    latIdx: 709,
+    filteredPoints: [
+      {
+        source: {
+          index: 4
+        },
+        index: 2
+      },
+      {
+        source: {
+          index: 5
+        },
+        index: 3
+      }
+    ]
+  },
+  {
+    index: 2,
+    position: [-122.3697218520272, 37.743177277521255],
+    count: 1,
+    points: [
+      {
+        source: {
+          index: 7
+        },
+
+        index: 4
+      }
+    ],
+    lonIdx: 254,
+    latIdx: 711,
+    filteredPoints: [
+      {
+        source: {
+          index: 7
+        },
+        index: 4
+      }
+    ]
+  }
+];
 
 test('#GridLayer -> constructor', t => {
   const TEST_CASES = {
@@ -65,8 +150,6 @@ test('#GridLayer -> constructor', t => {
 });
 
 test('#GridLayer -> formatLayerData', t => {
-  const filteredIndex = [0, 1, 2, 4, 5, 7];
-
   const TEST_CASES = [
     {
       name: 'Grid gps point.1',
@@ -116,23 +199,6 @@ test('#GridLayer -> formatLayerData', t => {
         // 4: 2016-09-17 00:14:00 1474071240000 - 1
         // 5: 2016-09-17 00:15:01 1474071301000 - 1
         // 7: 2016-09-17 00:17:05 1474071425000 - 1
-        t.equal(
-          // assume all points fall into one bin
-          layerData.getColorValue(expectedLayerData.data),
-          5,
-          'should return unfiltered point count'
-        );
-        t.equal(
-          // assume all points fall into one bin
-          layerData.getElevationValue(expectedLayerData.data),
-          5,
-          'should return unfiltered point count'
-        );
-        t.deepEqual(
-          layerData.data.map(layerData._filterData),
-          [false, false, true, true, true],
-          '_filterData should filter data correctly'
-        );
         // test layer.meta
         t.deepEqual(layer.meta, pointLayerMeta, 'should format correct grid layer meta');
       }
@@ -182,35 +248,6 @@ test('#GridLayer -> formatLayerData', t => {
           Object.keys(expectedLayerData).sort(),
           'layerData should have 4 keys'
         );
-        // test getColorValue aggregate by mode
-        // 0: driver_analytics_0 - 0
-        // 1: null  - 0
-        // 4: driver_analytics - 1
-        // 5: driver_analytics - 1
-        // 7: driver_analytics - 1
-        t.equal(
-          // assume all points fall into one bin
-          layerData.getColorValue(expectedLayerData.data),
-          'driver_analytics',
-          'should return filtered mode of (types)'
-        );
-        t.deepEqual(
-          layerData.data.map(layerData._filterData),
-          [false, false, true, true, true],
-          '_filterData should filter data correctly'
-        );
-        // test getColorValue aggregate by avg
-        // 0: 1.59 - 0
-        // 1: 2.38  - 0
-        // 4: 2.37 - 1
-        // 5: 7.13 - 1
-        // 7: 11 - 1
-        t.equal(
-          // assume all points fall into one bin
-          layerData.getElevationValue(expectedLayerData.data),
-          (1.59 + 2.38 + 2.37 + 7.13 + 11) / 5,
-          'should return filtered avg trip_distance'
-        );
       }
     }
   ];
@@ -220,7 +257,6 @@ test('#GridLayer -> formatLayerData', t => {
 });
 
 test('#GridLayer -> renderLayer', t => {
-  const filteredIndex = [0, 1, 2, 4, 5, 7];
   const spyLayerCallbacks = sinon.spy();
 
   const TEST_CASES = [
@@ -237,7 +273,7 @@ test('#GridLayer -> renderLayer', t => {
           visConfig: {
             worldUnitSize: 20,
             colorRange: {
-              colors: ['#080808', '#090909', '#070707']
+              colors: ['#010101', '#020202', '#030303']
             }
           }
         }
@@ -253,7 +289,7 @@ test('#GridLayer -> renderLayer', t => {
           onSetLayerDomain: spyLayerCallbacks
         }
       },
-      assert: (deckLayers, layer) => {
+      assert: (deckLayers, layer, result) => {
         t.deepEqual(
           deckLayers.map(l => l.id),
           ['test_layer_1', 'test_layer_1-grid-cell'],
@@ -262,14 +298,16 @@ test('#GridLayer -> renderLayer', t => {
         const [cpuGridLayer, gridCellLayer] = deckLayers;
         const {props} = cpuGridLayer;
         const gridCellLayerProp = gridCellLayer.props;
+        const {attributes} = gridCellLayer.state.attributeManager;
+        const {instanceFillColors, instancePositions, instanceElevations} = attributes;
 
         const expectedProps = {
           coverage: layer.config.visConfig.coverage,
           cellSize: layer.config.visConfig.worldUnitSize * 1000,
           colorRange: [
-            [8, 8, 8],
-            [9, 9, 9],
-            [7, 7, 7]
+            [1, 1, 1],
+            [2, 2, 2],
+            [3, 3, 3]
           ],
           colorScaleType: layer.config.colorScale,
           elevationScaleType: layer.config.sizeScale,
@@ -282,65 +320,10 @@ test('#GridLayer -> renderLayer', t => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
 
-        const expectedGridCellData = [
-          {
-            index: 0,
-            position: [-122.59661271087748, 37.743177277521255],
-            count: 2,
-            points: [
-              {
-                index: 0
-              },
-              {
-                index: 1
-              }
-            ],
-            lonIdx: 253,
-            latIdx: 711,
-            filteredPoints: []
-          },
-          {
-            index: 1,
-            position: [-122.14283099317691, 37.38384344551697],
-            count: 2,
-            points: [
-              {
-                index: 4
-              },
-              {
-                index: 5
-              }
-            ],
-            lonIdx: 255,
-            latIdx: 709,
-            filteredPoints: [
-              {
-                index: 4
-              },
-              {
-                index: 5
-              }
-            ]
-          },
-          {
-            index: 2,
-            position: [-122.3697218520272, 37.743177277521255],
-            count: 1,
-            points: [
-              {
-                index: 7
-              }
-            ],
-            lonIdx: 254,
-            latIdx: 711,
-            filteredPoints: [
-              {
-                index: 7
-              }
-            ]
-          }
-        ];
+        // filterRange [39000, 552000]
+        // filter.domain [1474071056000, 1474071489000]
         const expectedColorBins = [
+          // i = 0 is filtered out because empty
           {i: 2, value: 1, counts: 1},
           {i: 1, value: 2, counts: 2}
         ];
@@ -351,8 +334,8 @@ test('#GridLayer -> renderLayer', t => {
         ];
 
         t.deepEqual(
-          gridCellLayerProp.data,
-          expectedGridCellData,
+          gridCellLayerProp.data.length,
+          expectedGridCellData.length,
           'should pass correct data to grid cell layer'
         );
         gridCellLayerProp.data.forEach((ac, i) => {
@@ -378,6 +361,139 @@ test('#GridLayer -> renderLayer', t => {
           cpuGridLayer.state.aggregatorState.dimensions.elevation.sortedBins.sortedBins,
           expectedElevationBins,
           'should create correct elevation bins'
+        );
+
+        // instancePositions
+        t.deepEqual(
+          instancePositions.value.slice(0, 12),
+          // position of each bin
+          [
+            -122.59661271087748,
+            37.743177277521255,
+            0,
+            -122.14283099317691,
+            37.38384344551697,
+            0,
+            -122.3697218520272,
+            37.743177277521255,
+            0,
+            0,
+            0,
+            0
+          ],
+          'should create correct attribute.instanceFillColors'
+        );
+        // instanceFillColors
+        t.deepEqual(
+          instanceFillColors.value.slice(0, 16),
+          // color by filtered points count: [0, 2, 1]
+          [0, 0, 0, 0, 3, 3, 3, 255, 1, 1, 1, 255, 0, 0, 0, 0],
+          'should create correct attribute.instanceFillColors'
+        );
+        // instanceElevations
+        t.deepEqual(
+          instanceElevations.value.slice(0, 4),
+          // elevation by filtered points count: [0, 2, 1], range: [0, 500]
+          [-1, 500, 0, 0],
+          'should create correct attribute.instanceFillColors'
+        );
+      }
+    },
+    {
+      name: 'Grid gps point.color by',
+      layer: {
+        type: 'grid',
+        id: 'test_layer_2',
+        config: {
+          dataId,
+          label: 'some geometry file',
+          columns,
+          color: [1, 2, 3],
+          colorField: {
+            name: 'trip_distance',
+            type: 'real'
+          },
+          colorScale: 'quantize',
+          visConfig: {
+            worldUnitSize: 20,
+            colorRange: {
+              colors: ['#010101', '#020202', '#030303']
+            },
+            colorAggregation: 'maximum'
+          }
+        }
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      renderArgs: {
+        layerCallbacks: {
+          onSetLayerDomain: spyLayerCallbacks
+        }
+      },
+      assert: (deckLayers, layer, result) => {
+        t.deepEqual(
+          deckLayers.map(l => l.id),
+          ['test_layer_2', 'test_layer_2-grid-cell'],
+          'Should create 2 deck.gl layers'
+        );
+        const [cpuGridLayer, gridCellLayer] = deckLayers;
+        const {props} = cpuGridLayer;
+        const gridCellLayerProp = gridCellLayer.props;
+        const {attributes} = gridCellLayer.state.attributeManager;
+        const {instanceFillColors} = attributes;
+
+        t.equal(props.colorScaleType, 'quantize', 'should pass colorScaleType');
+
+        t.deepEqual(
+          gridCellLayerProp.data.length,
+          expectedGridCellData.length,
+          'should pass correct data to grid cell layer'
+        );
+        gridCellLayerProp.data.forEach((ac, i) => {
+          t.deepEqual(
+            gridCellLayerProp.data[i],
+            expectedGridCellData[i],
+            `should pass correct data:${i} to grid cell layer`
+          );
+        });
+        const expectedColorBins = [
+          // i = 0 is filtered out because empty
+          // bins are sorted
+          {i: 1, value: 7.13, counts: 2},
+          {i: 2, value: 11, counts: 1}
+        ];
+        const expectedElevationBins = [
+          {i: 2, value: 1, counts: 1},
+          {i: 1, value: 2, counts: 2}
+        ];
+
+        t.deepEqual(
+          spyLayerCallbacks.args[1][0],
+          [7.13, 11],
+          'should call onSetLayerDomain with correct domain'
+        );
+        t.deepEqual(
+          cpuGridLayer.state.aggregatorState.dimensions.fillColor.sortedBins.sortedBins,
+          expectedColorBins,
+          'should create correct color bins'
+        );
+
+        t.deepEqual(
+          cpuGridLayer.state.aggregatorState.dimensions.elevation.sortedBins.sortedBins,
+          expectedElevationBins,
+          'should create correct elevation bins'
+        );
+
+        // instanceFillColors
+        t.deepEqual(
+          instanceFillColors.value.slice(0, 16),
+          // color by filtered points color value: [0, 7.13, 11]
+          [0, 0, 0, 0, 1, 1, 1, 255, 3, 3, 3, 255, 0, 0, 0, 0],
+          'should create correct attribute.instanceFillColors'
         );
       }
     }
