@@ -20,7 +20,7 @@
 
 // libraries
 import React, {Component, createRef} from 'react';
-import MapboxGLMap from 'react-map-gl';
+import MapboxGLMap, {MapRef} from 'react-map-gl';
 import DeckGL from '@deck.gl/react';
 import {createSelector} from 'reselect';
 import WebMercatorViewport from 'viewport-mercator-project';
@@ -152,7 +152,7 @@ interface MapContainerProps {
   onMapToggleLayer?: Function;
   onMapStyleLoaded?: Function;
   onMapRender?: Function;
-  getMapboxRef?: (mapbox?: MapboxGLMap | null, index?: number) => void;
+  getMapboxRef?: (mapbox?: MapRef | null, index?: number) => void;
   index?: number;
 
   locale?: any;
@@ -273,7 +273,7 @@ export default function MapContainerFactory(
       }
     };
 
-    _setMapboxMap: React.LegacyRef<MapboxGLMap> = mapbox => {
+    _setMapboxMap: React.Ref<MapRef> = mapbox => {
       if (!this._map && mapbox) {
         this._map = mapbox.getMap();
         // i noticed in certain context we don't access the actual map element
