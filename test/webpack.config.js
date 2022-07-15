@@ -38,7 +38,8 @@ const COMMON_CONFIG = {
   devtool: 'inline-source-maps',
 
   resolve: {
-    extensions: ['.tsx', '.ts', '.js']
+    extensions: ['.tsx', '.ts', '.js'],
+    modules: [SRC_DIR, 'node_modules']
   },
 
   module: {

@@ -244,7 +244,6 @@
     "babel-plugin-search-and-replace": "^1.0.0",
     "babel-plugin-transform-builtin-extend": "^1.1.0",
     "babelify": "^10.0.0",
-    "caniuse-lite": "^1.0.30001361",
     "documentation": "^9.1.1",
     "dts-bundle-webpack": "^1.0.2",
     "enzyme": "^3.9.0",
@@ -317,7 +316,8 @@
     "lodash": "4.17.19",
     "minimist": "1.2.3",
     "node-fetch": "2.6.1",
-    "tough-cookie": "4.0.0"
+    "tough-cookie": "4.0.0",
+    "caniuse-lite": "^1.0.30001361"
   },
   "peerDependencies": {
     "react": ">=16.3",
