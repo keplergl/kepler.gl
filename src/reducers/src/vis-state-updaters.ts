@@ -469,9 +469,11 @@ export function layerTextLabelChangeUpdater(
 
 function validateExistingLayerWithData(dataset, layerClasses, layer) {
   const loadedLayer = serializeLayer(layer);
-  return validateLayerWithData(dataset, loadedLayer, layerClasses, {
-    allowEmptyColumn: true
-  });
+  return loadedLayer
+    ? validateLayerWithData(dataset, loadedLayer, layerClasses, {
+        allowEmptyColumn: true
+      })
+    : false;
 }
 
 /**

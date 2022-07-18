@@ -94,7 +94,7 @@ export const InitialState = keplerGlReducer(undefined, {});
  * Mock app state with uploaded geojson and csv file
  * @returns {Immutable} appState
  */
-function mockStateWithFileUpload() {
+export function mockStateWithFileUpload() {
   const initialState = cloneDeep(InitialState);
 
   // load csv and geojson
@@ -348,7 +348,7 @@ function mockStateWithTripData() {
   );
 }
 
-function mockStateWithLayerDimensions(state) {
+export function mockStateWithLayerDimensions(state) {
   const initialState = state || mockStateWithFileUpload();
 
   const layer0 = initialState.visState.layers.find(
