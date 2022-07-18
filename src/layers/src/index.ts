@@ -55,7 +55,7 @@ export {
   colorMaker,
   layerColors
 } from './base-layer';
-/* eslint-disable prettier/prettier */
+// eslint-disable-next-line prettier/prettier
 export type {
   LayerBaseConfig,
   LayerColumns,

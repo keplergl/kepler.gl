@@ -60,6 +60,7 @@ export type FilterResult = {
 };
 
 export type FilterChanged = {
+  // eslint-disable-next-line no-unused-vars
   [key in keyof FilterRecord]: {
     [key: string]: 'added' | 'deleted' | 'name_changed' | 'value_changed' | 'dataId_changed';
   } | null;
@@ -448,6 +449,7 @@ type filterFunction = (data: {index: number}) => boolean;
  * @param dataContainer Data container
  * @return filterFunction
  */
+// eslint-disable-next-line complexity
 export function getFilterFunction(
   field: Field | null,
   dataId: string,

@@ -32,14 +32,14 @@ export function payload_<P>(payload: P) {
 }
 /** Wraps a value in an object and stores it the `payload` field */
 export function apply_<State, P>(
-  updater: (state: State, payload: P) => State,
+  updater: (state: State, nextPayload: P) => State,
   payload: P
 ): (state: State) => State {
   return state => updater(state, payload);
 }
 
 export function with_<State>(
-  fn: (state: State) => (state: State) => State
+  fn: (state: State) => (nextState: State) => State
 ): (state: State) => State {
   return state => fn(state)(state);
 }
