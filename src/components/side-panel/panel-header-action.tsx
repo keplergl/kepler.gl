@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, ComponentType, MouseEventHandler} from 'react';
+import React, {ComponentType, MouseEventHandler} from 'react';
 import {TooltipProps} from 'react-tooltip';
 import classnames from 'classnames';
 import styled from 'styled-components';

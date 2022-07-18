@@ -119,7 +119,11 @@ const HeaderLabelSection = styled.div`
   padding-right: 50px;
 `;
 
-const HeaderActionSection = styled.div`
+type HeaderActionSectionProps = {
+  isEditingLabel: boolean;
+};
+
+const HeaderActionSection = styled.div<HeaderActionSectionProps>`
   display: flex;
   position: absolute;
   height: 100%;
