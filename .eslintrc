@@ -44,6 +44,14 @@
     "consistent-return": 0,
     "comma-dangle": 1
   },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        "no-undef": "off",
+      },
+    },
+  ],
   "settings": {
     "react": {
       "version": "detect"

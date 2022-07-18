@@ -347,7 +347,7 @@
     "Giuseppe Macri <gmacri@uber.com>"
   ],
   "volta": {
-    "node": "12.19.0",
-    "yarn": "1.22.17"
+    "node": "12.22.12",
+    "yarn": "1.22.19"
   }
 }

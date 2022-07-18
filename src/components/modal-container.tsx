@@ -342,7 +342,7 @@ export default function ModalContainerFactory(
             template = (
               <LoadDataModal
                 {...providerState}
-                //@ts-expect-error //TODO Remove it once LoadDataModal is translated
+                // @ts-expect-error //TODO Remove it once LoadDataModal is translated
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
                 onLoadCloudMap={this._onLoadCloudMap}
@@ -464,7 +464,7 @@ export default function ModalContainerFactory(
             break;
           case SAVE_MAP_ID:
             template = (
-              //@ts-expect-error //TODO Remove it once SaveMapModal is translated
+              // @ts-expect-error //TODO Remove it once SaveMapModal is translated
               <SaveMapModal
                 {...providerState}
                 exportImage={uiState.exportImage}

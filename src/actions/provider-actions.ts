@@ -23,6 +23,7 @@ import {ACTION_PREFIX} from './action-types';
 import {SavedMap} from 'schemas';
 import {MapListItem, Provider} from 'cloud-providers';
 
+// eslint-disable-next-line prettier/prettier
 const assignType = <T>(obj: T): { [K in keyof T]: `${typeof ACTION_PREFIX}${string & K}`; } => obj as any
 export const ActionTypes = assignType({
   EXPORT_FILE_TO_CLOUD: `${ACTION_PREFIX}EXPORT_FILE_TO_CLOUD`,
@@ -147,7 +148,7 @@ export const loadCloudMap: (
 ) => {
   type: typeof ActionTypes.LOAD_CLOUD_MAP;
   payload: LoadCloudMapPayload;
-} = createAction(ActionTypes.LOAD_CLOUD_MAP, payload => ({payload : payload}));
+} = createAction(ActionTypes.LOAD_CLOUD_MAP, payload => ({payload}));
 
 /** LOAD_CLOUD_MAP_SUCCESS */
 type LoadCloudMapSuccessCallback = (p: {response: any; loadParams: any; provider: Provider}) => any;
@@ -165,7 +166,7 @@ export const loadCloudMapSuccess: (
   payload: LoadCloudMapSuccessPayload;
 } = createAction(
   ActionTypes.LOAD_CLOUD_MAP_SUCCESS,
-  (payload: LoadCloudMapSuccessPayload) => ({payload : payload})
+  (payload: LoadCloudMapSuccessPayload) => ({payload})
 );
 
 /** LOAD_CLOUD_MAP_ERROR */
@@ -179,7 +180,7 @@ export const loadCloudMapError: (
 ) => {
   type: typeof ActionTypes.LOAD_CLOUD_MAP_ERROR;
   payload: LoadCloudMapErrorPayload;
-} = createAction(ActionTypes.LOAD_CLOUD_MAP_ERROR, (payload: LoadCloudMapErrorPayload) => ({payload : payload}));
+} = createAction(ActionTypes.LOAD_CLOUD_MAP_ERROR, (payload: LoadCloudMapErrorPayload) => ({payload}));
 
 /** GET_SAVED_MAPS */
 export type GetSavedMapsPayload = string;
@@ -202,7 +203,7 @@ export const getSavedMapsSuccess: (
   payload: GetSavedMapsSuccessPayload;
 } = createAction(
   ActionTypes.GET_SAVED_MAPS_SUCCESS,
-  (payload: GetSavedMapsSuccessPayload) => ({payload : payload})
+  (payload: GetSavedMapsSuccessPayload) => ({payload})
 );
 
 /** GET_SAVED_MAPS_ERROR */
@@ -215,4 +216,4 @@ export const getSavedMapsError: (
 ) => {
   type: typeof ActionTypes.GET_SAVED_MAPS_ERROR;
   payload: GetSavedMapsErrorPayload;
-} = createAction(ActionTypes.GET_SAVED_MAPS_ERROR, payload => ({payload : payload}));
+} = createAction(ActionTypes.GET_SAVED_MAPS_ERROR, payload => ({payload}));

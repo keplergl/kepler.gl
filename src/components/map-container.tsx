@@ -24,6 +24,8 @@ import MapboxGLMap, {MapRef} from 'react-map-gl';
 import DeckGL from '@deck.gl/react';
 import {createSelector} from 'reselect';
 import WebMercatorViewport from 'viewport-mercator-project';
+import mapboxgl from 'mapbox-gl';
+
 import {errorNotification} from 'utils/notifications-utils';
 
 import * as VisStateActions from 'actions/vis-state-actions';
