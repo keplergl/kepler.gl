@@ -40,6 +40,8 @@ type LayerLabelEditorProps = {
   layerId: string;
   label?: string;
   onEdit: ChangeEventHandler;
+  onFocus: ChangeEventHandler;
+  onBlur: ChangeEventHandler;
 };
 
 type LayerTitleSectionProps = {
@@ -47,6 +49,8 @@ type LayerTitleSectionProps = {
   layerId: string;
   label?: string;
   onUpdateLayerLabel: ChangeEventHandler;
+  onFocus: ChangeEventHandler;
+  onBlur: ChangeEventHandler;
 };
 
 type LayerPanelHeaderProps = {
@@ -63,7 +67,14 @@ type LayerPanelHeaderProps = {
   layerType?: string | null;
   isDragNDropEnabled?: boolean;
   labelRCGColorValues?: RGBColor | null;
-  actionIcons?: Record<string, ComponentType<Partial<BaseProps>>>;
+  actionIcons?: {
+    remove: ComponentType<Partial<BaseProps>>;
+    visible: ComponentType<Partial<BaseProps>>;
+    hidden: ComponentType<Partial<BaseProps>>;
+    enableConfig: ComponentType<Partial<BaseProps>>;
+    resetIsValid: ComponentType<Partial<BaseProps>>;
+    duplicate: ComponentType<Partial<BaseProps>>;
+  };
 };
 
 export const defaultProps = {
@@ -73,6 +84,9 @@ export const defaultProps = {
 
 const StyledLayerPanelHeader = styled(StyledPanelHeader)`
   height: ${props => props.theme.layerPanelHeaderHeight}px;
+  position: relative;
+  align-items: stretch;
+
   .layer__remove-layer {
     opacity: 0;
   }
@@ -99,10 +113,39 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
 const HeaderLabelSection = styled.div`
   display: flex;
   color: ${props => props.theme.textColor};
+  flex-grow: 1;
+  align-items: stretch;
+  // leave space for eye and collapse icon
+  padding-right: 50px;
 `;
 
 const HeaderActionSection = styled.div`
   display: flex;
+  position: absolute;
+  height: 100%;
+  align-items: stretch;
+  right: 10px;
+  pointer-events: ${props => (props.isEditingLabel ? 'none' : 'all')};
+  :hover {
+    .layer-panel__header__actions__hidden {
+      opacity: 1;
+      background-color: ${props => props.theme.panelBackgroundHover};
+    }
+  }
+`;
+
+// Hiden actions only show up on hover
+const StyledPanelHeaderHiddenActions = styled.div.attrs({
+  className: 'layer-panel__header__actions__hidden'
+})`
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  background-color: ${props => props.theme.panelBackground};
+  transition: ${props => props.theme.transition};
+  :hover {
+    opacity: 1;
+  }
 `;
 
 const StyledDragHandle = styled.div`
@@ -122,7 +165,13 @@ export const DragHandle = SortableHandle(({className, children}) => (
   <StyledDragHandle className={className}>{children}</StyledDragHandle>
 ));
 
-export const LayerLabelEditor: React.FC<LayerLabelEditorProps> = ({layerId, label, onEdit}) => (
+export const LayerLabelEditor: React.FC<LayerLabelEditorProps> = ({
+  layerId,
+  label,
+  onEdit,
+  onFocus,
+  onBlur
+}) => (
   <InlineInput
     type="text"
     className="layer__title__editor"
@@ -131,6 +180,8 @@ export const LayerLabelEditor: React.FC<LayerLabelEditorProps> = ({layerId, labe
       e.stopPropagation();
     }}
     onChange={onEdit}
+    onFocus={onFocus}
+    onBlur={onBlur}
     id={`${layerId}:input-layer-label`}
   />
 );
@@ -138,6 +189,12 @@ export const LayerLabelEditor: React.FC<LayerLabelEditorProps> = ({layerId, labe
 export function LayerTitleSectionFactory() {
   const StyledLayerTitleSection = styled.div`
     margin-left: 4px;
+    flex-grow: 1;
+    align-items: center;
+    display: flex;
+    .layer__title__inner {
+      flex-grow: 1;
+    }
 
     .layer__title__type {
       color: ${props => props.theme.subtextColor};
@@ -151,11 +208,19 @@ export function LayerTitleSectionFactory() {
     layerType,
     layerId,
     label,
-    onUpdateLayerLabel
+    onUpdateLayerLabel,
+    onFocus,
+    onBlur
   }) => (
     <StyledLayerTitleSection className="layer__title">
       <div>
-        <LayerLabelEditor layerId={layerId} label={label} onEdit={onUpdateLayerLabel} />
+        <LayerLabelEditor
+          layerId={layerId}
+          label={label}
+          onEdit={onUpdateLayerLabel}
+          onFocus={onFocus}
+          onBlur={onBlur}
+        />
         <div className="layer__title__type">
           {layerType && <FormattedMessage id={`layer.type.${layerType.toLowerCase()}`} />}
         </div>
@@ -196,6 +261,8 @@ function LayerPanelHeaderFactory(
     actionIcons = defaultActionIcons
   }) => {
     const [isOpen, setOpen] = useState(false);
+    const [isEditingLabel, setIsEditingLabel] = useState(false);
+
     const toggleLayerConfigurator = e => {
       setOpen(!isOpen);
       onToggleEnableConfig(e);
@@ -223,32 +290,43 @@ function LayerPanelHeaderFactory(
             label={label}
             onUpdateLayerLabel={onUpdateLayerLabel}
             layerType={layerType}
+            onFocus={() => {
+              setIsEditingLabel(true);
+            }}
+            onBlur={() => {
+              setIsEditingLabel(false);
+            }}
           />
         </HeaderLabelSection>
-        <HeaderActionSection className="layer-panel__header__actions">
-          {showRemoveLayer ? (
+        <HeaderActionSection
+          className="layer-panel__header__actions"
+          isEditingLabel={isEditingLabel}
+        >
+          <StyledPanelHeaderHiddenActions>
+            {showRemoveLayer ? (
+              <PanelHeaderAction
+                className="layer__remove-layer"
+                id={layerId}
+                tooltip={'tooltip.removeLayer'}
+                onClick={onRemoveLayer}
+                tooltipType="error"
+                IconComponent={actionIcons.remove}
+              />
+            ) : null}
             <PanelHeaderAction
-              className="layer__remove-layer"
+              className="layer__duplicate"
               id={layerId}
-              tooltip={'tooltip.removeLayer'}
-              onClick={onRemoveLayer}
-              tooltipType="error"
-              IconComponent={actionIcons.remove}
+              tooltip={'tooltip.duplicateLayer'}
+              onClick={onDuplicateLayer}
+              IconComponent={actionIcons.duplicate}
             />
-          ) : null}
+          </StyledPanelHeaderHiddenActions>
           <PanelHeaderAction
             className="layer__visibility-toggle"
             id={layerId}
             tooltip={isVisible ? 'tooltip.hideLayer' : 'tooltip.showLayer'}
             onClick={onToggleVisibility}
             IconComponent={isVisible ? actionIcons.visible : actionIcons.hidden}
-          />
-          <PanelHeaderAction
-            className="layer__duplicate"
-            id={layerId}
-            tooltip={'tooltip.duplicateLayer'}
-            onClick={onDuplicateLayer}
-            IconComponent={actionIcons.duplicate}
           />
           <PanelHeaderAction
             className={classnames('layer__enable-config ', {
