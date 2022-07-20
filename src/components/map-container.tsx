@@ -20,7 +20,7 @@
 
 // libraries
 import React, {Component, createRef} from 'react';
-import MapboxGLMap from 'react-map-gl';
+import MapboxGLMap, {MapRef} from 'react-map-gl';
 import DeckGL from '@deck.gl/react';
 import {createSelector} from 'reselect';
 import WebMercatorViewport from 'viewport-mercator-project';
@@ -152,7 +152,7 @@ interface MapContainerProps {
   onMapToggleLayer?: Function;
   onMapStyleLoaded?: Function;
   onMapRender?: Function;
-  getMapboxRef?: (mapbox?: MapboxGLMap | null, index?: number) => void;
+  getMapboxRef?: (mapbox?: MapRef | null, index?: number) => void;
   index?: number;
 
   locale?: any;
@@ -273,7 +273,7 @@ export default function MapContainerFactory(
       }
     };
 
-    _setMapboxMap: React.LegacyRef<MapboxGLMap> = mapbox => {
+    _setMapboxMap: React.Ref<MapRef> = mapbox => {
       if (!this._map && mapbox) {
         this._map = mapbox.getMap();
         // i noticed in certain context we don't access the actual map element
@@ -332,7 +332,7 @@ export default function MapContainerFactory(
     /* component render functions */
 
     /* eslint-disable complexity */
-    _renderMapPopover(layersToRender) {
+    _renderMapPopover() {
       // TODO: move this into reducer so it can be tested
       const {
         mapState,
@@ -343,6 +343,7 @@ export default function MapContainerFactory(
         layers,
         mousePos: {mousePosition, coordinate, pinned}
       } = this.props;
+      const layersToRender = this.layersToRenderSelector(this.props);
 
       if (!mousePosition || !interactionConfig.tooltip) {
         return null;
@@ -365,7 +366,7 @@ export default function MapContainerFactory(
       if (pinned || clicked) {
         // project lnglat to screen so that tooltip follows the object on zoom
         const viewport = new WebMercatorViewport(mapState);
-        const lngLat = clicked ? clicked.lngLat : pinned.coordinate;
+        const lngLat = clicked ? clicked.coordinate : pinned.coordinate;
         pinnedPosition = this._getHoverXY(viewport, lngLat);
         layerPinnedProp = getLayerHoverProp({
           interactionConfig,
@@ -502,6 +503,33 @@ export default function MapContainerFactory(
       }
     }
 
+    _renderDrawEditor() {
+      const {layers, datasets, mapControls, visStateActions, editor, index} = this.props;
+      const isEdit = mapControls.mapDraw ? mapControls.mapDraw.active : false;
+      const layersToRender = this.layersToRenderSelector(this.props);
+
+      return (
+        <Editor
+          index={index}
+          datasets={datasets}
+          editor={editor}
+          filters={this.polygonFilters(this.props)}
+          isEnabled={isEdit}
+          layers={layers}
+          layersToRender={layersToRender}
+          onDeleteFeature={visStateActions.deleteFeature}
+          onSelect={visStateActions.setSelectedFeature}
+          onUpdate={visStateActions.setFeatures}
+          onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
+          style={{
+            pointerEvents: isEdit ? 'all' : 'none',
+            position: 'absolute',
+            display: editor.visible ? 'block' : 'none'
+          }}
+        />
+      );
+    }
+
     _onViewportChange = viewState => {
       const {width, height, ...restViewState} = viewState;
       const {primary} = this.props;
@@ -560,8 +588,6 @@ export default function MapContainerFactory(
         transformRequest
       };
 
-      const isEdit = (mapControls.mapDraw || {}).active;
-
       const hasGeocoderLayer = layers.find(l => l.id === GEOCODER_LAYER_ID);
       const isSplit = Boolean(mapState.isSplit);
 
@@ -602,24 +628,7 @@ export default function MapContainerFactory(
           >
             {this._renderDeckOverlay(layersForDeck)}
             {this._renderMapboxOverlays()}
-            <Editor
-              index={index}
-              datasets={datasets}
-              editor={editor}
-              filters={this.polygonFilters(this.props)}
-              isEnabled={isEdit}
-              layers={layers}
-              layersToRender={layersToRender}
-              onDeleteFeature={visStateActions.deleteFeature}
-              onSelect={visStateActions.setSelectedFeature}
-              onUpdate={visStateActions.setFeatures}
-              onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
-              style={{
-                pointerEvents: isEdit ? 'all' : 'none',
-                position: 'absolute',
-                display: editor.visible ? 'block' : 'none'
-              }}
-            />
+            {this._renderDrawEditor()}
           </MapComponent>
           {mapStyle.topMapStyle || hasGeocoderLayer ? (
             <div style={MAP_STYLE.top}>
@@ -628,7 +637,7 @@ export default function MapContainerFactory(
               </MapComponent>
             </div>
           ) : null}
-          {this._renderMapPopover(layersToRender)}
+          {this._renderMapPopover()}
           {!isSplit || index === 1 ? <Attribution /> : null}
         </>
       );

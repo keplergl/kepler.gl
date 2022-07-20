@@ -22,7 +22,7 @@ import React, {Component} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
 import classnames from 'classnames';
 import styled from 'styled-components';
-import MapboxGLMap from 'react-map-gl';
+import MapboxGLMap, {MapRef} from 'react-map-gl';
 import {
   StyledModalContent,
   InputLight,
@@ -141,7 +141,7 @@ function AddMapStyleModalFactory() {
       return null;
     }
 
-    mapRef: MapboxGLMap | null | undefined;
+    mapRef: MapRef | null | undefined;
     _map: mapboxgl.Map | undefined;
 
     componentDidUpdate() {

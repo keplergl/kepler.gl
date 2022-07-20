@@ -32,14 +32,14 @@ const COMMON_CONFIG = {
     },
     clientLogLevel: 'debug'
   },
-  entry: resolve(__dirname, './browser.js'),
   output: {
     filename: 'bundle.js'
   },
   devtool: 'inline-source-maps',
 
   resolve: {
-    extensions: ['.tsx', '.ts', '.js']
+    extensions: ['.tsx', '.ts', '.js'],
+    modules: [SRC_DIR, 'node_modules']
   },
 
   module: {
