@@ -22,24 +22,25 @@
     "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
     "build:umd": "webpack --config ./webpack/umd.js --progress --env.prod",
     "build:types": "tsc --project ./tsconfig.production.json",
-    "prepublish": "uber-licence && yarn build && yarn build:types"
+    "prepublish": "uber-licence && yarn build && yarn build:types",
+    "stab": "mkdir -p dist && touch dist/index.js"
   },
   "files": [
     "dist",
     "umd"
   ],
   "dependencies": {
-    "@deck.gl/geo-layers": "8.2.0",
-    "@deck.gl/core": "8.2.0",
-    "@deck.gl/extensions": "8.2.0",
-    "@deck.gl/layers": "8.2.0",
-    "@deck.gl/mesh-layers": "8.2.0",
+    "@deck.gl/core": "^8.4.11",
+    "@deck.gl/extensions": "^8.4.11",
+    "@deck.gl/geo-layers": "^8.4.11",
+    "@deck.gl/layers": "^8.4.11",
+    "@deck.gl/mesh-layers": "^8.4.11",
     "@kepler.gl/deckgl-layers": "^2.5.5",
     "@kepler.gl/layers": "^2.5.5",
     "@kepler.gl/constants": "^2.5.5",
     "@kepler.gl/types": "^2.5.5",
-    "@loaders.gl/core": "^2.3.3",
-    "@loaders.gl/gltf": "^2.3.3",
+    "@loaders.gl/core": "^2.3.12",
+    "@loaders.gl/gltf": "^2.3.12",
     "@mapbox/geojson-normalize": "0.0.1",
     "@turf/bbox": "^6.0.1",
     "@types/geojson": "^7946.0.7",
