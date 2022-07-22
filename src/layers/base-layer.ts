@@ -44,9 +44,7 @@ import {
   DEFAULT_COLOR_UI,
   UNKNOWN_COLOR_KEY,
   DEFAULT_HIGHLIGHT_COLOR,
-  DEFAULT_LAYER_LABEL,
-  LayerVisConfig,
-  LayerVisConfigSettings
+  DEFAULT_LAYER_LABEL
 } from '@kepler.gl/constants';
 
 import {generateHashId, isPlainObject} from 'utils/utils';
@@ -57,8 +55,15 @@ import {getSampleData} from 'utils/table-utils/data-container-utils';
 import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
 
 import {MapState, Filter, Datasets} from 'reducers';
-import {RGBColor, RGBAColor, ValueOf, NestedPartial} from '@kepler.gl/types';
-import {LayerTextLabel, ColorUI} from '@kepler.gl/constants';
+import {
+  RGBColor, 
+  RGBAColor, 
+  ValueOf, 
+  NestedPartial,
+  LayerTextLabel, 
+  ColorUI,
+  LayerVisConfig,
+  LayerVisConfigSettings} from '@kepler.gl/types';
 import {KeplerTable} from '../utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 import {Field, GpuFilter} from 'utils/table-utils/kepler-table';

@@ -28,14 +28,14 @@ import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
+import {ColorRange} from '@kepler.gl/constants';
 import {
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
-  ColorRange
-} from '@kepler.gl/constants';
-import {Merge} from '@kepler.gl/types';
+  Merge
+} from '@kepler.gl/types';
 import {KeplerTable} from '../../utils';
 
 export type IconLayerColumnsConfig = {

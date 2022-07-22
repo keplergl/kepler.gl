@@ -32,14 +32,15 @@ import {hexToRgb} from '../../utils/color-utils';
 import ArcLayerIcon from './arc-layer-icon';
 import {DEFAULT_LAYER_COLOR, ColorRange} from '@kepler.gl/constants';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
-import {RGBColor, Merge} from '@kepler.gl/types';
 
 import {
+  RGBColor, 
+  Merge,
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
   VisConfigRange
-} from '@kepler.gl/constants';
+} from '@kepler.gl/types';
 import KeplerTable from '../../utils/table-utils/kepler-table';
 
 export type ArcLayerVisConfigSettings = {

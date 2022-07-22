@@ -24,15 +24,17 @@ import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import {pointToPolygonGeo} from './grid-utils';
 import GridLayerIcon from './grid-layer-icon';
 import {
-  AggregationTypes,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
   VisConfigSelection,
+  Merge
+} from '@kepler.gl/types';
+import {
+  AggregationTypes,
   ColorRange
 } from '@kepler.gl/constants';
-import {Merge} from '@kepler.gl/types';
 
 export type GridLayerVisConfigSettings = {
   opacity: VisConfigNumber;

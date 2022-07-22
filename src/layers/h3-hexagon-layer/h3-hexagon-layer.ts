@@ -38,9 +38,9 @@ import {
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigNumber,
-  VisConfigRange
-} from '@kepler.gl/constants';
-import {Merge} from '@kepler.gl/types';
+  VisConfigRange,
+  Merge
+} from '@kepler.gl/types';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import {KeplerTable} from '../../utils';
 
