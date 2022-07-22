@@ -31,7 +31,7 @@ import {
   getGeojsonBounds,
   getGeojsonFeatureTypes,
   GeojsonDataMaps
-} from 'layers/geojson-layer/geojson-utils';
+} from '../geojson-layer/geojson-utils';
 
 import {isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
 import TripInfoModalFactory from './trip-info-modal';

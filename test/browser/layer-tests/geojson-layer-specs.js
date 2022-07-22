@@ -19,11 +19,9 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import GeojsonLayer, {
-  defaultElevation,
-  defaultLineWidth,
-  defaultRadius
-} from 'layers/geojson-layer/geojson-layer';
+import {KeplerGlLayers, defaultElevation, defaultLineWidth, defaultRadius} from 'layers';
+
+const {GeojsonLayer} = KeplerGlLayers;
 
 import {updatedLayerV2} from 'test/fixtures/test-csv-data';
 import {

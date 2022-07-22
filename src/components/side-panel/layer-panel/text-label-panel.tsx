@@ -37,7 +37,7 @@ import LayerConfigGroupFactory, {
 } from './layer-config-group';
 import RangeSliderFactory from 'components/common/range-slider';
 
-import {LayerTextLabel, LAYER_TEXT_CONFIGS} from 'layers/layer-factory';
+import {LayerTextLabel, LAYER_TEXT_CONFIGS} from 'layers';
 import FieldSelectorFactory from '../../common/field-selector';
 import {Field} from 'utils/table-utils/kepler-table';
 import {RGBColor} from '@kepler.gl/types';

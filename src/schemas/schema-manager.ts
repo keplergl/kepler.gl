@@ -39,7 +39,7 @@ import {
 
 import {RGBColor, Merge, RGBAColor} from '@kepler.gl/types';
 
-import {LayerTextLabel} from '../layers/layer-factory';
+import {LayerTextLabel} from 'layers';
 
 export type SavedFilter = {
   dataId: Filter['dataId'];

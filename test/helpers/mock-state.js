@@ -33,7 +33,7 @@ import {
   DEFAULT_LAYER_OPACITY,
   DEFAULT_HIGHLIGHT_COLOR,
   DEFAULT_LAYER_LABEL
-} from 'layers/layer-factory';
+} from 'layers';
 import {DEFAULT_KEPLER_GL_PROPS} from 'components';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';

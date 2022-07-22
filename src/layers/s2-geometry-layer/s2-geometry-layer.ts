@@ -20,7 +20,7 @@
 
 import {S2Layer} from '@deck.gl/geo-layers';
 import {HIGHLIGH_COLOR_3D, CHANNEL_SCALES, ColorRange} from '@kepler.gl/constants';
-import {LAYER_VIS_CONFIGS} from 'layers/layer-factory';
+import {LAYER_VIS_CONFIGS} from '../layer-factory';
 import {KeplerTable} from '../../utils';
 import {createDataContainer} from 'utils/table-utils';
 import {Merge, RGBColor} from '@kepler.gl/types';

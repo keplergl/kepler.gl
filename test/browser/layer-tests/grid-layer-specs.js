@@ -31,8 +31,8 @@ import {
   pointLayerMeta
 } from 'test/helpers/layer-utils';
 
-import GridLayer from 'layers/grid-layer/grid-layer';
-import {pointToPolygonGeo} from 'layers/grid-layer/grid-utils';
+import {KeplerGlLayers, pointToPolygonGeo} from 'layers';
+const {GridLayer} = KeplerGlLayers;
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 
 const columns = {

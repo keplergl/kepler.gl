@@ -24,12 +24,13 @@ import tripGeojson, {
   dataToTimeStamp
 } from 'test/fixtures/trip-geojson';
 import {
+  KeplerGlLayers,
   DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_RANGE,
   DEFAULT_LAYER_OPACITY,
   DEFAULT_COLOR_UI
-} from 'layers/layer-factory';
-import {KeplerGlLayers} from 'layers';
+} from 'layers';
+
 const {TripLayer} = KeplerGlLayers;
 
 export const savedStateV1TripGeoJson = {
