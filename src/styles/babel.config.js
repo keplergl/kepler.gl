@@ -18,37 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import test from 'tape';
-import sinon from 'sinon';
-import {shallow} from 'enzyme';
-import NotificationItemFactory from 'components/notification-panel/notification-item';
-import NotificationPanelFactory from 'components/notification-panel';
-import {createNotification} from 'utils/notifications-utils';
-import {theme} from '@kepler.gl/styles';
+const KeplerPackage = require('./package');
 
-const NotificationItem = NotificationItemFactory();
-const NotificationPanel = NotificationPanelFactory(NotificationItem);
-
-const notifications = [
-  createNotification({message: '1', type: 'success'}),
-  createNotification({message: '2', type: 'error'}),
-  createNotification({message: '3', topic: 'file'}),
-  createNotification({message: '4', type: 'info'})
+const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
+const PLUGINS = [
+  ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
+  '@babel/plugin-transform-modules-commonjs',
+  '@babel/plugin-proposal-optional-chaining',
+  [
+    '@babel/transform-runtime',
+    {
+      regenerator: true
+    }
+  ],
+  [
+    'search-and-replace',
+    {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }
+  ]
 ];
+const ENV = {
+  test: {
+    plugins: ['istanbul']
+  },
+  debug: {
+    sourceMaps: 'inline',
+    retainLines: true
+  }
+};
 
-test('Notification Panel - Show notifications', t => {
-  const removeNotification = sinon.spy();
-  const $ = shallow(
-    <NotificationPanel
-      notifications={notifications}
-      removeNotification={removeNotification}
-      theme={theme}
-    />
-  );
+module.exports = function babel(api) {
+  api.cache(true);
 
-  // Check notifications
-  t.equal($.find('NotificationItem').length, 3, 'Should display only 3 Notifications');
-
-  t.end();
-});
+  return {
+    presets: PRESETS,
+    plugins: PLUGINS,
+    env: ENV
+  };
+};

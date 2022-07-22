@@ -30,7 +30,7 @@ import {
   StyledModalVerticalPanel,
   StyledModalSection
 } from 'components/common/styled-components';
-import {media} from 'styles/media-breakpoints';
+import {media} from '@kepler.gl/styles';
 
 // Utils
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';

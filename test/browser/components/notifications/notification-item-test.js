@@ -23,7 +23,7 @@ import test from 'tape';
 import {shallow} from 'enzyme';
 import NotificationItemFactory from 'components/notification-panel/notification-item';
 import {createNotification} from 'utils/notifications-utils';
-import {theme} from 'styles/base';
+import {theme} from '@kepler.gl/styles';
 
 const NotificationItem = NotificationItemFactory();
 

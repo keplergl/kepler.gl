@@ -25,7 +25,7 @@ import styled, {FlattenSimpleInterpolation} from 'styled-components';
 import Modal from 'react-modal';
 import {Delete} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
-import {media} from 'styles/media-breakpoints';
+import {media} from '@kepler.gl/styles';
 
 interface ModalContentWrapperProps {
   cssStyle?: FlattenSimpleInterpolation | string;
