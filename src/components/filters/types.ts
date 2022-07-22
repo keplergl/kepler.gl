@@ -6,7 +6,7 @@ import {
   SelectFilter,
   TimeRangeFilter
 } from 'reducers';
-import {Layer} from 'layers';
+import {Layer} from '@kepler.gl/layers';
 import {
   ActionHandler,
   enlargeFilter,

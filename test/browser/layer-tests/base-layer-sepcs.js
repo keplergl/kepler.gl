@@ -19,8 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape-catch';
-import {Layer} from 'layers';
-import AggregationLayer from 'layers/aggregation-layer';
+import {Layer, AggregationLayer} from '@kepler.gl/layers';
 
 /* Fixed in #618
 test('#BaseLayer -> updateLayerDomain', t => {

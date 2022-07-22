@@ -32,7 +32,7 @@ import {CURRENT_VERSION, visStateSchema} from 'schemas';
 import {VisState, Datasets} from './vis-state-updaters';
 import {KeplerTable} from '../utils';
 import {ParsedConfig, ParsedLayer} from 'schemas';
-import {Layer, LayerColumns, LayerColumn} from 'layers';
+import {Layer, LayerColumns, LayerColumn} from '@kepler.gl/layers';
 import {TooltipInfo} from './vis-state-updaters';
 import {SavedInteractionConfig} from 'schemas/schema-manager';
 

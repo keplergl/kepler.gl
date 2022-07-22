@@ -22,18 +22,19 @@ import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
 import {drainTasksForTesting} from 'react-palm/tasks';
 
-import {VizColorPalette, COMPARE_TYPES} from '@kepler.gl/constants';
 import {getInitialInputStyle} from 'reducers/map-style-updaters';
 
 import keplerGlReducer from 'reducers/core';
 import {addDataToMap} from 'actions/actions';
 import {
+  VizColorPalette,
+  COMPARE_TYPES,
+  DEFAULT_LAYER_OPACITY,
   DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_RANGE,
-  DEFAULT_LAYER_OPACITY,
   DEFAULT_HIGHLIGHT_COLOR,
   DEFAULT_LAYER_LABEL
-} from 'layers/layer-factory';
+} from '@kepler.gl/constants';
 import {DEFAULT_KEPLER_GL_PROPS} from 'components';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';

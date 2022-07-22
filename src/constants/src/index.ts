@@ -24,6 +24,7 @@ export * from './color-palette';
 export * from './color-ranges';
 export * from './custom-color-ranges';
 export * from './default-settings';
+export * from './layers';
 export {default as KeyEvent} from './keyevent';
 export * from './tooltip';
 export * from './user-feedbacks';

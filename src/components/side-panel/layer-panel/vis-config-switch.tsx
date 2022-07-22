@@ -25,7 +25,7 @@ import Switch from 'components/common/switch';
 import {SidePanelSection, PanelLabel} from 'components/common/styled-components';
 import {capitalizeFirstLetter} from 'utils/utils';
 import {FormattedMessage} from 'localization';
-import {Layer} from 'layers';
+import {Layer} from '@kepler.gl/layers';
 
 type VisConfigSwitchProps = {
   layer: Layer;

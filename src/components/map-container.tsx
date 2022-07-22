@@ -38,7 +38,13 @@ import {StyledMapContainer, StyledAttrbution} from 'components/common/styled-com
 import EditorFactory from './editor/editor';
 
 // utils
-import {generateMapboxLayers, updateMapboxLayers} from 'layers/mapbox-utils';
+import {
+  generateMapboxLayers,
+  updateMapboxLayers,
+  Layer,
+  LayerBaseConfig,
+  VisualChannelDomain
+} from '@kepler.gl/layers';
 import {setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 import {
@@ -65,9 +71,7 @@ import {
   MapStyle,
   Viewport
 } from 'reducers';
-import {Layer} from 'layers';
 import {SplitMapLayers} from 'reducers/vis-state-updaters';
-import {LayerBaseConfig, VisualChannelDomain} from 'layers/base-layer';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {

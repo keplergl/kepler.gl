@@ -31,9 +31,11 @@ import {
   preparedFilterDomain0,
   hexagonIdLayerMeta
 } from 'test/helpers/layer-utils';
-import {KeplerGlLayers} from 'layers';
-import {getCentroid} from 'layers/h3-hexagon-layer/h3-utils';
-import {defaultElevation} from 'layers/h3-hexagon-layer/h3-hexagon-layer';
+import {
+  KeplerGlLayers,
+  getCentroid,
+  h3DefaultElevation as defaultElevation
+} from '@kepler.gl/layers';
 import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 
 const {H3Layer} = KeplerGlLayers;

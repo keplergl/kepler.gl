@@ -18,9 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {FindDefaultLayerPropsReturnValue, OVERLAY_TYPE} from 'layers/base-layer';
+import {
+  FindDefaultLayerPropsReturnValue,
+  Layer,
+  LayerClassesType,
+  OVERLAY_TYPE_CONST
+} from '@kepler.gl/layers';
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
-import {Layer, LayerClassesType} from 'layers';
 import {VisState, TooltipField, CompareType, SplitMapLayers} from 'reducers/vis-state-updaters';
 import KeplerTable, {Field} from './table-utils/kepler-table';
 
@@ -202,7 +206,7 @@ export function prepareLayersForDeck(
     (accu, layer, idx) => ({
       ...accu,
       [layer.id]:
-        isLayerRenderable(layer, layerData[idx]) && layer.overlayType === OVERLAY_TYPE.deckgl
+        isLayerRenderable(layer, layerData[idx]) && layer.overlayType === OVERLAY_TYPE_CONST.deckgl
     }),
     {}
   );
