@@ -21,7 +21,7 @@
 import React, {useState} from 'react';
 import styled, {ThemeProvider} from 'styled-components';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
-import {themeLT} from 'styles/base';
+import {themeLT} from '@kepler.gl/styles';
 import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
 import ProviderModalContainer from './provider-modal-container';
 

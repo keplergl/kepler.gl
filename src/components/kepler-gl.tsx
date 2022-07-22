@@ -66,7 +66,7 @@ import {filterObjectByPredicate, generateHashId} from 'utils/utils';
 import {validateToken} from 'utils/mapbox-utils';
 import {mergeMessages} from 'utils/locale-utils';
 
-import {theme as basicTheme, themeLT, themeBS} from 'styles/base';
+import {theme as basicTheme, themeLT, themeBS} from '@kepler.gl/styles';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
 import {KeplerGlState} from 'reducers/core';
 import {Provider} from 'cloud-providers';

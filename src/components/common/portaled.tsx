@@ -27,7 +27,7 @@ import {withTheme} from 'styled-components';
 import {RootContext} from 'components/context';
 import Modal from 'react-modal';
 import window from 'global/window';
-import {theme} from 'styles/base';
+import {theme} from '@kepler.gl/styles';
 
 const listeners = {};
 
