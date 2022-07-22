@@ -121,6 +121,11 @@ export const updateMapUpdater = (
   const {viewport, mapIndex = 0} = action.payload;
 
   if (state.isViewportSynced) {
+    // @ts-expect-error Type 'Viewport' is missing the following properties from type 'MapState': isSplit, isViewportSynced, isZoomLocked, splitMapViewports
+    // the `updateViewport` function is typed as (Viewport, Viewport) -> Viewport but here the
+    // expected typing is (MapState, Viewport) -> MapState.
+    // this could be a potential bug as we treat Viewport and MapState as equal seemingly
+    // https://github.com/UnfoldedInc/kepler.gl/pull/541#issuecomment-1188374720
     return updateViewport(state, viewport);
   }
 
@@ -474,18 +479,29 @@ function getViewportFromMapState(state) {
   ]);
 }
 
+// From https://stackoverflow.com/a/56650790
+/** Select items from object whose value is not undefined */
+const definedProps = obj =>
+  Object.fromEntries(Object.entries(obj).filter(([k, v]) => v !== undefined));
+
+/**
+ * @memberof mapStateUpdaters
+ * @param {import('./map-state-updaters').Viewport} originalViewport
+ * @param {import('./map-state-updaters').Viewport} viewportUpdates
+ * @returns {import('./map-state-updaters').Viewport}
+ */
 function updateViewport(originalViewport, viewportUpdates) {
   let newViewport = {
     ...originalViewport,
-    ...(viewportUpdates || {})
+    ...(definedProps(viewportUpdates) || {})
   };
 
   // Make sure zoom level doesn't go bellow minZoom if defined
-  if (newViewport.minZoom && newViewport.zoom < newViewport.minZoom) {
+  if (newViewport.minZoom && newViewport.zoom && newViewport.zoom < newViewport.minZoom) {
     newViewport.zoom = newViewport.minZoom;
   }
   // Make sure zoom level doesn't go above maxZoom if defined
-  if (newViewport.maxZoom && newViewport.zoom > newViewport.maxZoom) {
+  if (newViewport.maxZoom && newViewport.zoom && newViewport.zoom > newViewport.maxZoom) {
     newViewport.zoom = newViewport.maxZoom;
   }
   // Limit viewport update based on maxBounds
