@@ -18,7 +18,8 @@
         "url": "https://github.com/keplergl/kepler.gl.git"
     },
     "scripts": {
-        "prepublish": " "
+        "prepublish": " ",
+        "stab": " "
     },
     "nyc": {
         "sourceMap": false,

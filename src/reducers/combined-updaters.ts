@@ -210,7 +210,7 @@ export const loadFilesSuccessUpdater = (
   const stateWithData = compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(
     nextState
   );
-  return stateWithData;
+  return stateWithData as KeplerGlState;
 };
 
 export const addDataToMapComposed = addDataToMapUpdater;
