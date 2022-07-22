@@ -47,7 +47,7 @@ import {
   VisConfigColorRange,
   VisConfigRange,
   VisConfigBoolean
-} from '../layer-factory';
+} from '@kepler.gl/constants';
 import {DataContainerInterface} from '../../utils/table-utils/data-container-interface';
 import {Merge, RGBColor} from '@kepler.gl/types';
 import {KeplerTable} from '../../utils';

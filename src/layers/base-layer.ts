@@ -38,9 +38,7 @@ import {
   MAX_GPU_FILTERS,
   ColorRange,
   COLOR_RANGES,
-  DataVizColors
-} from '@kepler.gl/constants';
-import {
+  DataVizColors,
   LAYER_VIS_CONFIGS,
   DEFAULT_TEXT_LABEL,
   DEFAULT_COLOR_UI,
@@ -49,7 +47,7 @@ import {
   DEFAULT_LAYER_LABEL,
   LayerVisConfig,
   LayerVisConfigSettings
-} from './layer-factory';
+} from '@kepler.gl/constants';
 
 import {generateHashId, isPlainObject} from 'utils/utils';
 
@@ -60,7 +58,7 @@ import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-util
 
 import {MapState, Filter, Datasets} from 'reducers';
 import {RGBColor, RGBAColor, ValueOf, NestedPartial} from '@kepler.gl/types';
-import {LayerTextLabel, ColorUI} from './layer-factory';
+import {LayerTextLabel, ColorUI} from '@kepler.gl/constants';
 import {KeplerTable} from '../utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 import {Field, GpuFilter} from 'utils/table-utils/kepler-table';

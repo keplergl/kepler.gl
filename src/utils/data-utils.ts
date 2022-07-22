@@ -19,8 +19,7 @@
 // THE SOFTWARE.
 
 import assert from 'assert';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from '@kepler.gl/constants';
 import {format as d3Format} from 'd3-format';
 import {bisectLeft} from 'd3-array';
 import moment from 'moment-timezone';

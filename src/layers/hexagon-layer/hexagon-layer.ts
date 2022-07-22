@@ -31,9 +31,9 @@ import {
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
-  VisConfigSelection
-} from '../layer-factory';
-import {ColorRange} from '@kepler.gl/constants';
+  VisConfigSelection,
+  ColorRange
+} from '@kepler.gl/constants';
 
 export type HexagonLayerVisConfigSettings = {
   opacity: VisConfigNumber;

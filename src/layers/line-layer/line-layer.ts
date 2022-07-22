@@ -27,7 +27,7 @@ import {
   VisConfigColorSelect,
   VisConfigNumber,
   VisConfigRange
-} from '../layer-factory';
+} from '@kepler.gl/constants';
 import LineLayerIcon from './line-layer-icon';
 import ArcLayer, {ArcLayerConfig} from '../arc-layer/arc-layer';
 import {LayerColumn} from '../base-layer';
