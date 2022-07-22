@@ -27,8 +27,8 @@ import Layer, {
   VisualChannelDescription,
   VisualChannels
 } from './base-layer';
-import {hexToRgb} from 'utils/color-utils';
-import {aggregate} from 'utils/aggregate-utils';
+import {hexToRgb} from '../../utils/color-utils';
+import {aggregate} from '../../utils/aggregate-utils';
 import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
