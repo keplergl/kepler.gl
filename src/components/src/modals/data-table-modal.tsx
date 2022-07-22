@@ -26,11 +26,14 @@ import {createSelector} from 'reselect';
 import {renderedSize} from '../common/data-table/cell-size';
 import CanvasHack from '../common/data-table/canvas';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
+import {UIStateActions} from '@kepler.gl/actions';
+import {UiState} from '@kepler.gl/types';
 
 const MIN_STATS_CELL_SIZE = 122;
 
+// sidePadding changes from 38 to 68, 30px for configuration button
 const dgSettings = {
-  sidePadding: '38px',
+  sidePadding: '68px',
   verticalPadding: '16px',
   height: '36px'
 };
@@ -113,25 +116,33 @@ interface DataTableModalProps {
   datasets: Datasets;
   showDatasetTable: (id: string) => void;
   showTab?: boolean;
+  setColumnDisplayFormat: (dataId: string, column: string, displayFormat: string) => void;
+  uiStateActions: typeof UIStateActions;
+  uiState: UiState;
 }
 
 function DataTableModalFactory(
   DataTable: ReturnType<typeof DataTableFactory>
 ): React.ComponentType<Omit<DataTableModalProps, 'theme'>> {
   class DataTableModal extends React.Component<DataTableModalProps> {
+    state = {
+      showConfig: false
+    };
+
     datasetCellSizeCache = {};
     dataId = ({dataId = ''}: DataTableModalProps) => dataId;
     datasets = (props: DataTableModalProps) => props.datasets;
     fields = ({datasets, dataId = ''}: DataTableModalProps) => (datasets[dataId] || {}).fields;
     columns = createSelector(this.fields, fields => fields.map(f => f.name));
-    colMeta = createSelector(this.fields, fields =>
+    colMeta = createSelector([this.fields, this.datasets], fields =>
       fields.reduce(
-        (acc, {name, displayName, type, filterProps, format}) => ({
+        (acc, {name, displayName, type, filterProps, format, displayFormat}) => ({
           ...acc,
           [name]: {
             name: displayName || name,
             type,
             ...(format ? {format} : {}),
+            ...(displayFormat ? {displayFormat} : {}),
             ...(filterProps?.columnStats ? {columnStats: filterProps.columnStats} : {})
           }
         }),
@@ -200,6 +211,19 @@ function DataTableModalFactory(
       sortTableColumn(dataId, column, mode);
     };
 
+    setDisplayFormat = (column, displayFormat) => {
+      const {dataId, setColumnDisplayFormat} = this.props;
+      if (dataId) setColumnDisplayFormat(dataId, column, displayFormat);
+    };
+
+    onOpenConfig = () => {
+      this.setState({showConfig: true});
+    };
+
+    onCloseConfig = () => {
+      this.setState({showConfig: false});
+    };
+
     render() {
       const {datasets, dataId, showDatasetTable, showTab = true} = this.props;
       if (!datasets || !dataId) {
@@ -235,6 +259,7 @@ function DataTableModalFactory(
                 copyTableColumn={this.copyTableColumn}
                 pinTableColumn={this.pinTableColumn}
                 sortTableColumn={this.sortTableColumn}
+                setDisplayFormat={this.setDisplayFormat}
                 hasStats
               />
             ) : null}

@@ -68,6 +68,7 @@ export type Field = {
   valueAccessor(v: {index: number}): any;
   filterProps?: any;
   metadata?: any;
+  displayFormat?: string;
 };
 
 export type FieldPair = {

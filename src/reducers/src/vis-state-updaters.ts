@@ -92,7 +92,7 @@ import {pick_, merge_, swap_} from './composer-helpers';
 
 import KeplerGLSchema, {VisState, Merger, PostMergerPayload} from '@kepler.gl/schemas';
 
-import {Filter, InteractionConfig, AnimationConfig, Editor} from '@kepler.gl/types';
+import {Filter, InteractionConfig, AnimationConfig, Editor, Field} from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
 import {calculateLayerData, findDefaultLayer} from './layer-utils';
@@ -2496,6 +2496,32 @@ export function copyTableColumnUpdater(
   copy(text);
 
   return state;
+}
+
+/**
+ * Set column display format from user selection
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function setColumnDisplayFormatUpdater(
+  state: VisState,
+  {dataId, column, displayFormat}: VisStateActions.SetColumnDisplayFormatUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+  const fieldIdx = dataset.fields.findIndex(f => f.name === column);
+  if (fieldIdx < 0) {
+    return state;
+  }
+  const field = dataset.fields[fieldIdx];
+
+  const newFields = swap_(merge_({displayFormat})(field) as {id: string})(
+    dataset.fields as {id: string}[]
+  );
+  const newDataset = copyTableAndUpdate(dataset, {fields: newFields as Field[]});
+  return pick_('datasets')(merge_({[dataId]: newDataset}))(state);
 }
 
 /**

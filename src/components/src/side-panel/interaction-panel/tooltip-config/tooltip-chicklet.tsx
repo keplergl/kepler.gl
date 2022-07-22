@@ -24,9 +24,9 @@ import {ChickletButton, ChickletTag} from '../../../common/item-selector/chickle
 import {Hash, Delete} from '../../../common/icons';
 import DropdownList from '../../../common/item-selector/dropdown-list';
 import {FormattedMessage} from '@kepler.gl/localization';
+import {TimeLabelFormat, TooltipFields} from '@kepler.gl/types';
+import {getFormatValue, getFormatLabels} from '@kepler.gl/utils';
 import onClickOutside from 'react-onclickoutside';
-import {FIELD_OPTS, TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from '@kepler.gl/constants';
-import {getFormatter} from '@kepler.gl/utils';
 import TippyTooltip from '../../../common/tippy-tooltip';
 
 interface TooltipChickletProps {
@@ -44,45 +44,9 @@ type TooltipConfig = {
   compareType: string[];
 };
 
-type TooltipFields = {
-  format?: string;
-  id?: string;
-  name?: string;
-  fieldIdx?: number;
-  type?: number;
-};
-
-type TimeLabelFormat = {
-  id: string;
-  format: string | null;
-  type: string;
-  label: string;
-};
-
 type IconDivProps = {
   status: string | null;
 };
-
-const TIME_DISPLAY = '2020-05-11 14:00';
-const getValue = fmt => fmt[TOOLTIP_KEY];
-
-const addDTimeLabel = (formats: TimeLabelFormat[]) =>
-  formats.map(f => ({
-    ...f,
-    label:
-      f.type === TOOLTIP_FORMAT_TYPES.DATE_TIME || f.type === TOOLTIP_FORMAT_TYPES.DATE
-        ? getFormatter(getValue(f))(TIME_DISPLAY)
-        : f.label
-  }));
-
-function getFormatLabels(fields: any, fieldName: string) {
-  const fieldType = fields.find((f: TooltipFields) => f.name === fieldName).type;
-  const tooltipTypes = (fieldType && FIELD_OPTS[fieldType].format.tooltip) || [];
-  const formatLabels: TimeLabelFormat[] = Object.values(TOOLTIP_FORMATS).filter(t =>
-    tooltipTypes.includes(t.type)
-  );
-  return addDTimeLabel(formatLabels);
-}
 
 const ChickletAddonWrapper = styled.div`
   position: relative;
@@ -120,7 +84,7 @@ function getFormatTooltip(formatLabels: TimeLabelFormat[], format: string | null
   if (!format) {
     return null;
   }
-  const formatLabel = formatLabels.find(fl => getValue(fl) === format);
+  const formatLabel = formatLabels.find(fl => getFormatValue(fl) === format);
   if (formatLabel) {
     return formatLabel.label;
   }
@@ -164,7 +128,9 @@ function TooltipChickletFactory(
       }
       const formatLabels = getFormatLabels(fields, tooltipField.name);
       const hasFormat = Boolean(tooltipField.format);
-      const selectionIndex = formatLabels.findIndex(fl => getValue(fl) === tooltipField.format);
+      const selectionIndex = formatLabels.findIndex(
+        fl => getFormatValue(fl) === tooltipField.format
+      );
       const hashStyle = show ? hashStyles.SHOW : hasFormat ? hashStyles.ACTIVE : null;
 
       return (
@@ -213,7 +179,7 @@ function TooltipChickletFactory(
                         return fieldToShow.name === tooltipField.name
                           ? {
                               name: tooltipField.name,
-                              format: getValue(result)
+                              format: getFormatValue(result)
                             }
                           : fieldToShow;
                       });

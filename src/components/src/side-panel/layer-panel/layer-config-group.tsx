@@ -89,7 +89,7 @@ export const StyledLayerConfigGroup = styled.div`
   }
 `;
 
-const StyledConfigGroupHeader = styled.div.attrs({
+export const StyledConfigGroupHeader = styled.div.attrs({
   className: 'layer-config-group__header'
 })`
   display: flex;

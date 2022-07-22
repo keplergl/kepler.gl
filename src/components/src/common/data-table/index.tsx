@@ -32,7 +32,8 @@ import {CellSizeCache} from './cell-size';
 import Grid from './grid';
 import HeaderCellFactory from './header-cell';
 
-import {parseFieldValue, DataContainerInterface} from '@kepler.gl/utils';
+import {ColMeta} from '@kepler.gl/types';
+import {parseFieldValue, getColumnFormatter, DataContainerInterface} from '@kepler.gl/utils';
 import {adjustCellsToContainer} from './cell-size';
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
@@ -189,17 +190,6 @@ export const Container = styled.div`
 
 const defaultColumnWidth = 200;
 
-export type ColMeta = {
-  [key: string]: {
-    colIdx: number;
-    name: string;
-    displayName: string;
-    type: string;
-    format?: string;
-    columnStats?: any;
-  };
-};
-
 export type SortColumn = {
   column?: string;
   mode?: string;
@@ -221,20 +211,16 @@ interface GetRowCellProps {
 /*
  * This is an accessor method used to generalize getting a cell from a data row
  */
-const getRowCell = ({
-  dataContainer,
-  columns,
-  column,
-  colMeta,
-  rowIndex,
-  sortOrder
-}: GetRowCellProps) => {
+const getRowCell = (
+  {dataContainer, columns, column, colMeta, rowIndex, sortOrder}: GetRowCellProps,
+  formatter
+) => {
   const rowIdx = sortOrder && sortOrder.length ? get(sortOrder, rowIndex) : rowIndex;
   const {type} = colMeta[column];
 
   let value = dataContainer.valueAt(rowIdx, columns.indexOf(column));
   if (value === undefined) value = 'Err';
-  return parseFieldValue(value, type);
+  return formatter ? formatter(value) : parseFieldValue(value, type);
 };
 
 type StatsControlProps = {
@@ -404,6 +390,7 @@ export interface DataTableProps {
   sortColumn?: SortColumn;
   sortTableColumn: (column: string, mode?: string) => void;
   pinTableColumn: (column: string) => void;
+  setDisplayFormat: (column: string, displayFormat: string) => void;
   copyTableColumn: (column: string) => void;
   sortOrder?: number[] | null;
   showStats?: boolean;
@@ -509,7 +496,8 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
         const column = columns[columnIndex];
         const isGhost = column.ghost;
 
-        const rowCell = isGhost ? '' : getRowCell({...props, column, rowIndex});
+        const formatter = isGhost ? null : getColumnFormatter(colMeta[column]);
+        const rowCell = isGhost ? '' : getRowCell({...props, column, rowIndex}, formatter);
         const type = isGhost ? null : colMeta[column].type;
 
         const lastRowIndex = dataContainer ? dataContainer.numRows() - 1 : 0;
