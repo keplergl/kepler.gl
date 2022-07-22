@@ -158,7 +158,8 @@ interface ModalDialogOwnProps {
   children?: ReactNode;
 }
 
-export type ModalDialogProps = ModalDialogOwnProps & Omit<ReactModal.Props, "style" | "ariaHideApp" | "className">
+export type ModalDialogProps = ModalDialogOwnProps &
+  Omit<ReactModal.Props, 'style' | 'ariaHideApp' | 'className'>;
 
 export class ModalDialog extends Component<ModalDialogProps> {
   static defaultProps = {
