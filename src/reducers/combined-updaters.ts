@@ -30,7 +30,7 @@ import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-upda
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
 import {findMapBounds} from 'utils/data-utils';
 import {isPlainObject} from 'utils/utils';
-import {filesToDataPayload} from 'processors/file-handler';
+import {filesToDataPayload} from '@kepler.gl/processors';
 import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-helpers';
 import {VisState} from './vis-state-updaters';
 import {MapState} from './map-state-updaters';
@@ -210,7 +210,7 @@ export const loadFilesSuccessUpdater = (
   const stateWithData = compose_(payloads.map(p => apply_(addDataToMapUpdater, payload_(p))))(
     nextState
   );
-  return stateWithData;
+  return stateWithData as KeplerGlState;
 };
 
 export const addDataToMapComposed = addDataToMapUpdater;

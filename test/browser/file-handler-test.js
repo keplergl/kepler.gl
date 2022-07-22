@@ -20,8 +20,7 @@
 
 /* eslint-disable max-statements */
 import test from 'tape';
-import {processFileData, readFileInBatches} from 'processors/file-handler';
-import {csvWithNull} from '../node/processors/file-handler-fixtures';
+import {processFileData, readFileInBatches, csvWithNull} from '@kepler.gl/processors';
 import {dataWithNulls, testFields, parsedDataWithNulls} from 'test/fixtures/test-csv-data';
 import geojsonString, {
   featureString,

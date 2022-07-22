@@ -22,7 +22,8 @@
     "build": "rm -fr dist && babel src --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
     "build:umd": "webpack --config ./webpack/umd.js --progress --env.prod",
     "build:types": "tsc --project ./tsconfig.production.json",
-    "prepublish": "uber-licence && yarn build && yarn build:umd && yarn build:types"
+    "prepublish": "uber-licence && yarn build && yarn build:umd && yarn build:types",
+    "stab": "mkdir -p dist && touch dist/index.js"
   },
   "files": [
     "dist",

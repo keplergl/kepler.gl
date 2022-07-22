@@ -36,7 +36,7 @@ import {getDefaultInteraction} from 'utils/interaction-utils';
 import {getDefaultFilter} from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {maybeToDate} from 'utils/data-utils';
-import {processCsvData, processGeojson} from 'processors/data-processor';
+import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {Layer, KeplerGlLayers} from '@kepler.gl/layers';
 import {
   ALL_FIELD_TYPES,

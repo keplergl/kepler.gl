@@ -19,7 +19,8 @@
     "./src/constants",
     "./src/types",
     "./src/deckgl-layers",
-    "./src/layers"
+    "./src/layers",
+    "./src/processors"
   ],
   "repository": {
     "type": "git",
@@ -60,12 +61,12 @@
     "analyze:bundle": "webpack --config ./webpack/bundle.js --progress --env.prod",
     "check-licence": "uber-licence --dry",
     "add-licence": "uber-licence",
-    "prepublish": "yarn workspaces run prepublish && uber-licence && yarn build && yarn build:umd && yarn build:types",
+    "prepublish": "yarn workspaces run stab && yarn workspaces run prepublish && uber-licence && yarn build && yarn build:umd && yarn build:types",
     "docs": "babel-node ./scripts/documentation.js",
     "typedoc": "typedoc --theme markdown --out typedoc --inputFiles ./src/reducers --inputFiles ./src/actions --excludeExternals --excludeNotExported --excludePrivate",
     "example-version": "babel-node ./scripts/edit-version.js",
     "prettier-all": "prettier --write '{src,examples,test}/**/*.{js,tsx,ts}'",
-    "lint": "yarn typescript && eslint src/*/src/*.{js,tsx,ts}  test webpack examples/*.js examples/**/src/*.{js,tsx,ts} website/*.js website/src --fix",
+    "lint": "yarn typescript && eslint src/*/src/*.{js,tsx,ts} test webpack examples/*.js examples/**/src/*.{js,tsx,ts} website/*.js website/src --fix",
     "lint:css": "stylelint './src/**/*.js'",
     "typescript": "tsc --noEmit",
     "web": "(yarn && yarn install:web && yarn start:web)",

@@ -54,7 +54,7 @@ import {
   dataId as tripDataId
 } from 'test/fixtures/test-trip-data';
 import tripGeojson, {tripDataInfo} from 'test/fixtures/trip-geojson';
-import {processCsvData, processGeojson} from 'processors/data-processor';
+import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {MOCK_MAP_STYLE} from './mock-map-styles';
 import {getUpdateVisDataPayload} from 'components/geocoder-panel';
 

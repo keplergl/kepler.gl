@@ -48,7 +48,7 @@ import {
 } from '@kepler.gl/constants';
 
 import {FILE_CONFLICT_MSG} from '../cloud-providers';
-import {DATASET_HANDLERS} from '../processors/data-processor';
+import {DATASET_HANDLERS} from '@kepler.gl/processors';
 
 import * as ProviderActions from '../actions/provider-actions';
 import {MapListItem} from '../cloud-providers';

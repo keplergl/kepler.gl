@@ -53,7 +53,7 @@ import {
   processGeojson,
   processRowObject,
   validateInputData
-} from 'processors/data-processor';
+} from '@kepler.gl/processors';
 
 import {createDataContainer} from 'utils/table-utils';
 
