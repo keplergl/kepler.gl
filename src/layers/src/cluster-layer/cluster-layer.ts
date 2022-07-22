@@ -27,10 +27,10 @@ import {
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
-  VisConfigSelection
+  VisConfigSelection,
+  Merge
 } from '@kepler.gl/types';
 import {CHANNEL_SCALES, AggregationTypes, ColorRange} from '@kepler.gl/constants';
-import {Merge} from '@kepler.gl/types';
 import {VisualChannels} from '../base-layer';
 
 export type ClusterLayerVisConfigSettings = {
