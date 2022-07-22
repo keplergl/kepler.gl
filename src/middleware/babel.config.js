@@ -18,35 +18,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Reducers
-export * from 'reducers';
+const KeplerPackage = require('./package');
 
-// Schemas
-export * from './schemas';
+const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
+const PLUGINS = [
+  ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
+  '@babel/plugin-transform-modules-commonjs',
+  '@babel/plugin-proposal-export-namespace-from',
+  '@babel/plugin-proposal-optional-chaining',
+  [
+    '@babel/transform-runtime',
+    {
+      regenerator: true
+    }
+  ],
+  [
+    'search-and-replace',
+    {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }
+  ]
+];
+const ENV = {
+  test: {
+    plugins: ['istanbul']
+  },
+  debug: {
+    sourceMaps: 'inline',
+    retainLines: true
+  }
+};
 
-// Actions
-export * from './actions';
+module.exports = function babel(api) {
+  api.cache(true);
 
-// Constants
-export * from '@kepler.gl/constants';
-
-// Processors
-export * from '@kepler.gl/processors';
-
-// Components
-export * from './components';
-
-// Layers
-export * from './layers';
-
-// Styles
-export * from './styles';
-
-// Middleware
-export * from '@kepler.gl/middleware';
-
-// Utils
-export * from './utils';
-
-// Default export
-export {default} from './components';
+  return {
+    presets: PRESETS,
+    plugins: PLUGINS,
+    env: ENV
+  };
+};
