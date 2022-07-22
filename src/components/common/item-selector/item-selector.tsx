@@ -32,7 +32,7 @@ import DropdownList, {ListItem} from './dropdown-list';
 
 import {toArray} from 'utils/utils';
 import {injectIntl, IntlShape} from 'react-intl';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 interface StyledDropdownSelect {
   inputTheme?: string;

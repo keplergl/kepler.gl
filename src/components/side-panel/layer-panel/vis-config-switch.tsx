@@ -24,7 +24,7 @@ import InfoHelperFactory from 'components/common/info-helper';
 import Switch from 'components/common/switch';
 import {SidePanelSection, PanelLabel} from 'components/common/styled-components';
 import {capitalizeFirstLetter} from 'utils/utils';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer} from '@kepler.gl/layers';
 
 type VisConfigSwitchProps = {

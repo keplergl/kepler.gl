@@ -18,23 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import en from './translations/en';
-import {flattenMessages} from '../utils/locale-utils';
-import {LOCALE_CODES} from './locales';
+const KeplerPackage = require('./package');
 
-const enFlat = flattenMessages(en);
+const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
+const PLUGINS = [
+  ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
+  '@babel/plugin-transform-modules-commonjs',
+  '@babel/plugin-proposal-optional-chaining',
+  [
+    '@babel/transform-runtime',
+    {
+      regenerator: true
+    }
+  ],
+  [
+    'search-and-replace',
+    {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }
+  ]
+];
+const ENV = {
+  test: {
+    plugins: ['istanbul']
+  },
+  debug: {
+    sourceMaps: 'inline',
+    retainLines: true
+  }
+};
 
-export const messages: {
-  [key: string]: string;
-} = Object.keys(LOCALE_CODES).reduce(
-  (acc, key) => ({
-    ...acc,
-    [key]:
-      key === 'en'
-        ? enFlat
-        : {...enFlat, ...flattenMessages(require(`./translations/${key}.ts`).default)}
-  }),
-  {}
-);
+module.exports = function babel(api) {
+  api.cache(true);
 
-export default messages;
+  return {
+    presets: PRESETS,
+    plugins: PLUGINS,
+    env: ENV
+  };
+};

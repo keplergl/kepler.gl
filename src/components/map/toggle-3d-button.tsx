@@ -23,7 +23,7 @@ import classnames from 'classnames';
 
 import {Cube3d} from 'components/common/icons';
 import {MapControlButton} from 'components/common/styled-components';
-import {FormattedMessage} from '../../localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import TippyTooltip from 'components/common/tippy-tooltip';
 import {MapControls} from 'reducers';
 

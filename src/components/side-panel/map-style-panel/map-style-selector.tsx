@@ -30,7 +30,7 @@ import {
   PanelLabel,
   StyledPanelHeader
 } from 'components/common/styled-components';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {MapStyle} from 'reducers';
 import {BaseProps} from 'components/common/icons/base';
 

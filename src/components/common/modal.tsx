@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component, ReactNode} from 'react';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 import styled, {FlattenSimpleInterpolation} from 'styled-components';
 import Modal from 'react-modal';
@@ -158,7 +158,8 @@ interface ModalDialogOwnProps {
   children?: ReactNode;
 }
 
-export type ModalDialogProps = ModalDialogOwnProps & Omit<ReactModal.Props, "style" | "ariaHideApp" | "className">
+export type ModalDialogProps = ModalDialogOwnProps &
+  Omit<ReactModal.Props, 'style' | 'ariaHideApp' | 'className'>;
 
 export class ModalDialog extends Component<ModalDialogProps> {
   static defaultProps = {

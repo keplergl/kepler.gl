@@ -28,7 +28,7 @@ import {
 } from '@kepler.gl/constants';
 import styled from 'styled-components';
 import {injectIntl} from 'react-intl';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {IntlShape} from 'react-intl';
 
 import {setUserMapboxAccessToken, setExportHTMLMapMode, ActionHandler} from 'actions';

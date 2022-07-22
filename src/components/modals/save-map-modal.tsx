@@ -36,7 +36,7 @@ import {
   StyledModalInputFootnote
 } from 'components/common/styled-components';
 import ImagePreview from 'components/common/image-preview';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {ExportImage, MapInfo} from 'reducers';
 import {Provider} from 'cloud-providers';
 import {setMapInfo, cleanupExportImage} from 'actions';

@@ -24,7 +24,7 @@ import {ADD_DATA_TO_MAP_DOC} from '@kepler.gl/constants';
 import styled from 'styled-components';
 import {StyledExportSection, Button} from 'components/common/styled-components';
 import {StyledExportMapSection, StyledWarning, ExportMapLink} from './components';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
 
 const StyledJsonExportSection = styled(StyledExportSection)`

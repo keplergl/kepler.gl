@@ -28,7 +28,7 @@ import {Save, DataTable, Save2, Picture, Db, Map as MapIcon, Share} from 'compon
 import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 import Toolbar from 'components/common/toolbar';
 import ToolbarItem, {ToolbarItemProps} from 'components/common/toolbar-item';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {UiState} from 'reducers';
 import {BaseProps} from 'components/common/icons/base';
 
