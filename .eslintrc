@@ -39,6 +39,7 @@
     "no-inline-comments": 0,
     "no-invalid-this": 0,
     "no-unused-expressions": 0,
+    "no-undef": 0,
     "camelcase": 0,
     "consistent-return": 0,
     "comma-dangle": 1

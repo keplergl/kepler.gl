@@ -23,12 +23,12 @@ import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {processGeojson, processKeplerglJSON, processRowObject} from './data-processor';
-import {isPlainObject, generateHashId} from 'utils/utils';
+import {isPlainObject, generateHashId} from '../../utils/utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
 import {LoaderObject} from '@loaders.gl/loader-utils';
-import {AddDataToMapPayload} from 'actions/actions';
+import {AddDataToMapPayload} from '../../actions/actions';
 import {FileCacheItem, ValidKeplerGlMap} from './types';
-import {Feature} from 'reducers';
+import {Feature} from '../../reducers';
 import {FeatureCollection} from '@turf/helpers';
 
 const BATCH_TYPE = {
@@ -59,11 +59,11 @@ export function isGeoJson(json: unknown): json is Feature | FeatureCollection {
 }
 
 export function isFeature(json: unknown): json is Feature {
-  return isPlainObject(json) && json.type === 'Feature' && !!json.geometry;
+  return isPlainObject(json) && json.type === 'Feature' && Boolean(json.geometry);
 }
 
 export function isFeatureCollection(json: unknown): json is FeatureCollection {
-  return isPlainObject(json) && json.type === 'FeatureCollection' && !!json.features;
+  return isPlainObject(json) && json.type === 'FeatureCollection' && Boolean(json.features);
 }
 
 export function isRowObject(json: any): boolean {

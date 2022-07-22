@@ -18,35 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Reducers
-export * from 'reducers';
-
-// Schemas
-export * from './schemas';
-
-// Actions
-export * from './actions';
-
-// Constants
-export * from '@kepler.gl/constants';
-
-// Processors
-export * from '@kepler.gl/processors';
-
-// Components
-export * from './components';
-
-// Layers
-export * from './layers';
-
-// Styles
-export * from './styles';
-
-// Middleware
-export * from './middleware';
-
-// Utils
-export * from './utils';
-
-// Default export
-export {default} from './components';
+export * from './data-processor';
+export * from './file-handler';
+export * from './types';
