@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {KeplerGlLayers, DEFAULT_COLOR_UI} from 'layers';
+import {KeplerGlLayers} from 'layers';
+import {DEFAULT_COLOR_UI} from '@kepler.gl/constants';
 const {H3Layer} = KeplerGlLayers;
 
 import {createDataContainer} from 'utils/table-utils';

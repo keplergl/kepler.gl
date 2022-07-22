@@ -31,7 +31,7 @@ import Layer, {
 import {hexToRgb} from 'utils/color-utils';
 import {findDefaultColorField} from 'utils/dataset-utils';
 import PointLayerIcon from './point-layer-icon';
-import {DEFAULT_LAYER_COLOR, CHANNEL_SCALES, ColorRange} from '@kepler.gl/constants';
+import {LAYER_VIS_CONFIGS, DEFAULT_LAYER_COLOR, CHANNEL_SCALES, ColorRange} from '@kepler.gl/constants';
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {
@@ -43,7 +43,6 @@ import {
   VisConfigNumber,
   VisConfigRange
 } from '@kepler.gl/types';
-import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import {KeplerTable} from '../../utils';
 
 export type PointLayerVisConfigSettings = {

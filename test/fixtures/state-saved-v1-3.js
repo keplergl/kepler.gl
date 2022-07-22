@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {KeplerGlLayers, DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from 'layers';
+import {KeplerGlLayers} from 'layers';
+import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from '@kepler.gl/constants';
 const {PointLayer, HexagonLayer} = KeplerGlLayers;
 
 // saved state v1 with split maps

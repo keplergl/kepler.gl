@@ -24,7 +24,8 @@ import {mount} from 'enzyme';
 import sinon from 'sinon';
 import sinonStubPromise from 'sinon-stub-promise';
 import {getDistanceScales} from 'viewport-mercator-project';
-import {DEFAULT_TEXT_LABEL, KeplerGlLayers} from 'layers';
+import {KeplerGlLayers} from 'layers';
+import {DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
 
 sinonStubPromise(sinon);
 
