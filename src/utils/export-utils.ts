@@ -30,7 +30,7 @@ import {
   OneXResolutionOption
 } from '@kepler.gl/constants';
 import {exportMapToHTML} from 'templates/export-map-html';
-import {formatCsv} from 'processors/data-processor';
+import {formatCsv} from '@kepler.gl/processors';
 import get from 'lodash.get';
 import {set, generateHashId} from 'utils/utils';
 

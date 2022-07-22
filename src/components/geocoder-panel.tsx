@@ -20,7 +20,7 @@
 
 import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
-import {processRowObject} from 'processors';
+import {processRowObject} from '@kepler.gl/processors';
 import {FlyToInterpolator} from '@deck.gl/core';
 import KeplerGlSchema from 'schemas';
 import {getCenterAndZoomFromBounds} from 'utils/projection-utils';

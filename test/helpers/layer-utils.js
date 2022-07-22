@@ -35,7 +35,7 @@ import {colorMaker, layerColors, LayerClasses} from '@kepler.gl/layers';
 import {getGpuFilterProps} from 'utils/gpu-filter-utils';
 import {renderDeckGlLayer} from 'utils/layer-utils';
 import {validateLayerWithData} from 'reducers/vis-state-merger';
-import {processCsvData, processGeojson} from 'processors/data-processor';
+import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {applyActions, InitialState} from 'test/helpers/mock-state';
 import {visStateReducer, keplerGlReducerCore} from 'reducers';
 // Fixtures

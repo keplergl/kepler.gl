@@ -26,7 +26,7 @@ import {getFilterFunction} from 'utils/filter-utils';
 import {preciseRound} from 'utils/data-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 
-import {processCsvData} from 'processors/data-processor';
+import {processCsvData} from '@kepler.gl/processors';
 import {cmpFields} from '../../helpers/comparison-utils';
 import {FILTER_TYPES} from '@kepler.gl/constants';
 

@@ -21,7 +21,7 @@
 import {hexToRgb} from './color-utils';
 import uniq from 'lodash.uniq';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {validateInputData} from 'processors/data-processor';
+import {validateInputData} from '@kepler.gl/processors';
 import KeplerTable, {Field} from './table-utils/kepler-table';
 
 import {Datasets} from '../reducers/vis-state-updaters';

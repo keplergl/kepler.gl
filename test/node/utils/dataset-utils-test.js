@@ -21,7 +21,7 @@
 import test from 'tape';
 import {findDefaultColorField, createNewDataEntry} from 'utils/dataset-utils';
 
-import {processCsvData} from 'processors/data-processor';
+import {processCsvData} from '@kepler.gl/processors';
 
 import csvData from 'test/fixtures/test-layer-data';
 

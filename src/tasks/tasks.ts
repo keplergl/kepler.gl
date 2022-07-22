@@ -20,7 +20,7 @@
 
 import Task, {taskCreator} from 'react-palm/tasks';
 import {json as requestJson} from 'd3-request';
-import {readFileInBatches, processFileData} from '../processors/file-handler';
+import {readFileInBatches, processFileData} from '@kepler.gl/processors';
 
 export const LOAD_FILE_TASK = Task.fromPromise(
   ({file, fileCache, loaders, loadOptions}) =>

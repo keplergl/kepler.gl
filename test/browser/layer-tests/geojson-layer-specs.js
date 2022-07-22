@@ -41,7 +41,7 @@ import {
   geoStyleMeta
 } from 'test/fixtures/geojson';
 import {createNewDataEntry} from 'utils/dataset-utils';
-import {processGeojson} from 'processors/data-processor';
+import {processGeojson} from '@kepler.gl/processors';
 import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 
 test('#GeojsonLayer -> constructor', t => {

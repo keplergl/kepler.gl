@@ -24,7 +24,7 @@ import test from 'tape';
 import keplerGlReducer from 'reducers';
 import {addDataToMapUpdater} from 'reducers/combined-updaters';
 import {registerEntry} from 'actions/identity-actions';
-import {processCsvData} from 'processors/data-processor';
+import {processCsvData} from '@kepler.gl/processors';
 
 import testCsvData, {sampleConfig} from 'test/fixtures/test-csv-data';
 import testHexIdData, {
