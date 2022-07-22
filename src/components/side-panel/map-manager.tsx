@@ -28,7 +28,7 @@ import {Add} from 'components/common/icons';
 import ColorSelector from './layer-panel/color-selector';
 import {createSelector} from 'reselect';
 import {injectIntl, WrappedComponentProps} from 'react-intl';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {MapStyle} from 'reducers';
 import * as MapStyleActions from 'actions/map-style-actions';
 

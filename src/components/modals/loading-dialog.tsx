@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import LoadingSpinner from 'components/common/loading-spinner';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 const StyledSpinner = styled.div`
   text-align: center;

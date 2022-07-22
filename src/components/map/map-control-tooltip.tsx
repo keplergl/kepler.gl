@@ -20,7 +20,7 @@
 
 import React from 'react';
 import {Tooltip} from 'components/common/styled-components';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 export type MapControlTooltipProps = {
   id: string;

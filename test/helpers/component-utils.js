@@ -24,7 +24,7 @@ import {mount} from 'enzyme';
 import {theme} from 'styles/base';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
-import {messages} from 'localization';
+import {messages} from '@kepler.gl/localization';
 
 export function mountWithTheme(node, options) {
   return mount(node, {

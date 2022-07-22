@@ -18,6 +18,7 @@
   "workspaces": [
     "./src/constants",
     "./src/types",
+    "./src/localization",
     "./src/middleware",
     "./src/deckgl-layers",
     "./src/layers",

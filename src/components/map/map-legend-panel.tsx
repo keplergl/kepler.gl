@@ -22,7 +22,7 @@ import React, {ComponentType, useState} from 'react';
 import styled from 'styled-components';
 
 import {Legend} from 'components/common/icons';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {MapControlButton} from 'components/common/styled-components';
 import MapControlPanelFactory from './map-control-panel';
 import MapLegendFactory from './map-legend';

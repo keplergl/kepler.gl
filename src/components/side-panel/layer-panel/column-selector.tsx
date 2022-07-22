@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {PanelLabel} from 'components/common/styled-components';
 import FieldSelectorFactory from 'components/common/field-selector';
 import {validateColumn} from 'reducers/vis-state-merger';
