@@ -26,7 +26,7 @@ import {
   KeplerGlLayers,
   tripDefaultLineWidth as defaultLineWidth,
   parseTripGeoJsonTimestamp
-} from 'layers';
+} from '@kepler.gl/layers';
 
 const {TripLayer} = KeplerGlLayers;
 

@@ -26,8 +26,8 @@ import {FormattedMessage} from 'react-intl';
 import Switch from 'components/common/switch';
 import InfoHelperFactory from 'components/common/info-helper';
 import {VertThreeDots} from 'components/common/icons';
-import {Layer} from 'layers';
-import { LayerVisConfig } from '@kepler.gl/types';
+import {Layer} from '@kepler.gl/layers';
+import {LayerVisConfig} from '@kepler.gl/types';
 
 type LayerConfigGroupLabelProps = {
   label?: string;

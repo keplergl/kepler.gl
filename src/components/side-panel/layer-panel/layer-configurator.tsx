@@ -46,7 +46,7 @@ import {
   LAYER_TYPES,
   VisualChannel,
   AggregationLayer
-} from 'layers';
+} from '@kepler.gl/layers';
 
 import {Datasets} from 'reducers';
 import {NestedPartial, RGBColor, LayerVisConfig, ColorUI} from '@kepler.gl/types';

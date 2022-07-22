@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import {FormattedMessage} from 'localization';
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ColumnSelectorFactory from './column-selector';
-import {ColumnPairs, Layer, LayerColumns, LayerBaseConfig} from 'layers';
+import {ColumnPairs, Layer, LayerColumns, LayerBaseConfig} from '@kepler.gl/layers';
 import {Field, FieldPair} from 'utils/table-utils/kepler-table';
 
 type LayerColumnConfigProps = {

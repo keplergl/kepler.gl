@@ -31,7 +31,7 @@ import {
   pointLayerMeta
 } from 'test/helpers/layer-utils';
 
-import {KeplerGlLayers} from 'layers';
+import {KeplerGlLayers} from '@kepler.gl/layers';
 const {HexagonLayer} = KeplerGlLayers;
 
 const columns = {

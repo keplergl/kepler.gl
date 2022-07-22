@@ -28,7 +28,7 @@ import {createSelector} from 'reselect';
 
 import FeatureActionPanelFactory, {FeatureActionPanelProps} from './feature-action-panel';
 import {FILTER_TYPES, EDITOR_MODES, KeyEvent} from '@kepler.gl/constants';
-import {EDITOR_AVAILABLE_LAYERS, Layer} from 'layers';
+import {EDITOR_AVAILABLE_LAYERS, Layer} from '@kepler.gl/layers';
 
 import {DEFAULT_RADIUS, getStyle as getFeatureStyle} from './feature-styles';
 import {getStyle as getEditHandleStyle, getEditHandleShape} from './handle-style';

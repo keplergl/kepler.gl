@@ -28,7 +28,7 @@ import {KeyEvent} from '@kepler.gl/constants';
 import {Checkbox} from 'components';
 import {clamp} from 'utils/data-utils';
 import {isInRange} from 'utils/filter-utils';
-import {Layer, LayerBaseConfig} from 'layers';
+import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 
 type LazyInputProps = {
   value: string | [string, string];

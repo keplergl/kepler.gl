@@ -23,7 +23,7 @@ import tripGeojson, {
   tripBounds,
   dataToTimeStamp
 } from 'test/fixtures/trip-geojson';
-import {KeplerGlLayers} from 'layers';
+import {KeplerGlLayers} from '@kepler.gl/layers';
 import {
   DEFAULT_LAYER_OPACITY,
   DEFAULT_TEXT_LABEL,
