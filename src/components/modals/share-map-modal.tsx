@@ -35,7 +35,7 @@ import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Provider} from 'cloud-providers';
-import {cleanupExportImage, SetCloudProviderPayload} from 'actions';
+import {cleanupExportImage as cleanupExportImageAction, SetCloudProviderPayload} from 'actions';
 
 export const StyledInputLabel = styled.label`
   font-size: 12px;
@@ -101,7 +101,7 @@ interface ShareMapUrlModalFactoryProps {
   successInfo?: {shareUrl?: string; folderLink?: string};
   onSetCloudProvider?: (provider: SetCloudProviderPayload) => void;
   onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
-  cleanupExportImage: typeof cleanupExportImage;
+  cleanupExportImage: typeof cleanupExportImageAction;
 }
 
 export default function ShareMapUrlModalFactory() {

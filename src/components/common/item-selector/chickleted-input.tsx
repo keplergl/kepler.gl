@@ -24,7 +24,7 @@ import styled from 'styled-components';
 import Delete from '../icons/delete';
 import {FormattedMessage} from '@kepler.gl/localization';
 
-interface ChickletedInput {
+interface ChickletedInputProps {
   // required properties
   onClick: MouseEventHandler<HTMLDivElement>;
   removeItem: Function;
@@ -108,7 +108,7 @@ const ChickletedInputContainer = styled.div<ChickletedInputContainerProps>`
   overflow: hidden;
 `;
 
-const ChickletedInput = ({
+const ChickletedInput: React.FC<ChickletedInputProps> = ({
   disabled,
   onClick,
   className,
@@ -118,7 +118,7 @@ const ChickletedInput = ({
   displayOption = d => d,
   inputTheme,
   CustomChickletComponent
-}: ChickletedInput) => (
+}) => (
   <ChickletedInputContainer
     className={`${className} chickleted-input`}
     onClick={onClick}

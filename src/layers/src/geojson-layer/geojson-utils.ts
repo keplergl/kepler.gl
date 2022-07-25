@@ -28,6 +28,8 @@ import {Feature, BBox} from 'geojson';
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = Array<Feature | null>;
 
+/* eslint-disable */
+// TODO: Re-enable eslint when we upgrade to handle enums and type maps
 export enum FeatureTypes {
   Point = 'Point',
   MultiPoint = 'MultiPoint',
@@ -40,6 +42,7 @@ export enum FeatureTypes {
 type FeatureTypeMap = {
   [key in FeatureTypes]: boolean;
 };
+/* eslint-enable */
 
 export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
   if (typeof rawFeature === 'object') {

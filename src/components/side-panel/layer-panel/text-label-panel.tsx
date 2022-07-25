@@ -58,7 +58,7 @@ function TextLabelPanelFactory(
   class TextLabelPanel extends Component<TextLabelPanelProps> {
     render() {
       const {updateLayerTextLabel, textLabel, fields} = this.props;
-      const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => !!d);
+      const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => Boolean(d));
 
       return (
         <LayerConfigGroup label={'panel.text.label'} collapsible>

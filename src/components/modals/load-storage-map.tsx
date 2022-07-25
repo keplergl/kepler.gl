@@ -271,7 +271,7 @@ interface LoadStorageMapProps {
   onSetCloudProvider;
   currentProvider?: string;
   getSavedMaps: (provider?: Provider) => void;
-  onLoadCloudMap: ({loadParams: any, provider: Provider}) => void;
+  onLoadCloudMap: (opts: {loadParams: any; provider?: Provider}) => void;
   visualizations: Visualization[];
   isProviderLoading?: boolean;
 }

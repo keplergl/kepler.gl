@@ -527,15 +527,15 @@ export default class CPUAggregator {
     props,
     dimension: UpdaterObjectType
   ) {
-    type UpdaterType = UpdaterObjectType extends DimensionType
+    type LocalUpdaterType = UpdaterObjectType extends DimensionType
       ? BindedUpdaterType
       : BindedAggregatedUpdaterType;
-    const updaters: UpdaterType[] = [];
+    const updaters: LocalUpdaterType[] = [];
     for (let i = step; i < dimension.updateSteps.length; i++) {
       const updater = dimension.updateSteps[i].updater;
       if (typeof updater === 'function') {
         updaters.push(
-          updater.bind(this, dimension.updateSteps[i], props, dimension) as UpdaterType
+          updater.bind(this, dimension.updateSteps[i], props, dimension) as LocalUpdaterType
         );
       }
     }
@@ -549,10 +549,10 @@ export default class CPUAggregator {
     props,
     changeFlags
   ) {
-    type UpdaterType = UpdaterObjectType extends DimensionType
+    type LocalUpdaterType = UpdaterObjectType extends DimensionType
       ? BindedUpdaterType
       : BindedAggregatedUpdaterType;
-    let updaters: UpdaterType[] = [];
+    let updaters: LocalUpdaterType[] = [];
     const needUpdateStep = dimension.updateSteps.findIndex(step =>
       this._needUpdateStep(step, oldProps, props, changeFlags)
     );

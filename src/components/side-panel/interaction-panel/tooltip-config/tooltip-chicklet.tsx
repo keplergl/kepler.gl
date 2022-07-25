@@ -130,7 +130,7 @@ function getFormatTooltip(formatLabels: TimeLabelFormat[], format: string | null
 function TooltipChickletFactory(
   dataId: string,
   config: TooltipConfig,
-  onChange: (config: TooltipConfig) => void,
+  onChange: (cfg: TooltipConfig) => void,
   fields: TooltipFields[]
 ): ComponentType<TooltipChickletProps> {
   class TooltipChicklet extends Component<TooltipChickletProps> {

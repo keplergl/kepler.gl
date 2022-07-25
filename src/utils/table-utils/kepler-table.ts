@@ -71,7 +71,7 @@ export type GpuFilter = {
     dc: DataContainerInterface
   ) => (
     getIndex?: (any) => number,
-    getData?: (dc: DataContainerInterface, d: any, fieldIndex: number) => any
+    getData?: (dc_: DataContainerInterface, d: any, fieldIndex: number) => any
   ) => (d: any) => number;
 };
 

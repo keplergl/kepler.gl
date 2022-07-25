@@ -155,6 +155,7 @@ class HeatmapLayer extends MapboxGLLayer {
   getDefaultLayerConfig(props = {}): HeatmapLayerConfig {
     // mapbox heatmap layer color is always based on density
     // no need to set colorField, colorDomain and colorScale
+    // eslint-disable-next-line no-unused-vars
     const {colorField, colorDomain, colorScale, ...layerConfig} = {
       ...super.getDefaultLayerConfig(props),
 
