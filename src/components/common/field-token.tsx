@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {FILED_TYPE_DISPLAY, FIELD_COLORS} from '@kepler.gl/constants';
+import {FIELD_TYPE_DISPLAY, FIELD_COLORS} from '@kepler.gl/constants';
 
 function FieldTokenFactory(
   fieldTypeDisplay: ReturnType<typeof getFieldTypes>,
@@ -51,7 +51,7 @@ function FieldTokenFactory(
 }
 
 function getFieldTypes() {
-  return FILED_TYPE_DISPLAY;
+  return FIELD_TYPE_DISPLAY;
 }
 
 function getFieldColors() {
