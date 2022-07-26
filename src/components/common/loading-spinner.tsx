@@ -43,11 +43,11 @@ const Loader = styled.span`
     animation-name: ${animationName};
 }`;
 
-interface LoadingWrapper {
+interface LoadingWrapperProps {
   borderColor?: string;
 }
 
-const LoadingWrapper = styled.div<LoadingWrapper>`
+const LoadingWrapper = styled.div<LoadingWrapperProps>`
   border-radius: 50%;
   border: 3px solid ${props => props.borderColor || props.theme.borderColorLT};
   padding: 2px;
@@ -60,7 +60,12 @@ interface LoadingSpinnerProps {
   gap?: number;
 }
 
-const LoadingSpinner = ({size = 32, color = '', strokeWidth = 3, gap = 2}: LoadingSpinnerProps) => (
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+  size = 32,
+  color = '',
+  strokeWidth = 3,
+  gap = 2
+}) => (
   <LoadingWrapper style={{width: `${size}px`, height: `${size}px`, padding: `${gap}px`}}>
     <Loader
       color={color}

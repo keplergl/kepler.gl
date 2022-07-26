@@ -69,13 +69,6 @@ export type Field = {
   filterProps?: any;
   metadata?: any;
 };
-import {
-  LayerBaseConfig,
-  LayerColorConfig,
-  LayerHeightConfig,
-  LayerSizeConfig,
-  LayerWeightConfig
-} from '@kepler.gl/types';
 
 export type LayerTextLabel = {
   field: Field | null;

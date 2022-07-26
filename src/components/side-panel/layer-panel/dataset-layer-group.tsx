@@ -66,7 +66,7 @@ function DatasetLayerGroupFactory(
         // where the layer doesn't belong to a dataset and set it to null
         const datasetLayers = layers
           .map(layer => (layer.config.dataId === dataset.id ? layer : null))
-          .filter(layer => !!layer);
+          .filter(layer => Boolean(layer));
 
         return {dataset, datasetLayers};
       });

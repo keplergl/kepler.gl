@@ -53,7 +53,7 @@ RangePlotFactory.deps = [RangeBrushFactory, HistogramPlotFactory, LineChartFacto
 export default function RangePlotFactory(
   RangeBrush: ReturnType<typeof RangeBrushFactory>,
   HistogramPlot: ReturnType<typeof HistogramPlotFactory>,
-  LineChart: ReturnType<typeof LineChartFactory>
+  LineChartPlot: ReturnType<typeof LineChartFactory>
 ) {
   const RangePlot = ({
     onBrush,
@@ -133,7 +133,7 @@ export default function RangePlotFactory(
         className="kg-range-slider__plot"
       >
         {plotType === 'lineChart' && lineChart ? (
-          <LineChart lineChart={lineChart} {...commonProps} />
+          <LineChartPlot lineChart={lineChart} {...commonProps} />
         ) : (
           <HistogramPlot histogram={histogram} {...commonProps} />
         )}

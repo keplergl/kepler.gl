@@ -63,7 +63,7 @@ interface RangeSliderProps {
   range?: number[];
   value0: number;
   value1: number;
-  onChange?: (val: number[]) => void; //TODO
+  onChange?: (val: number[]) => void; // TODO
   histogram?: any[];
   isRanged?: boolean;
   isEnlarged?: boolean;

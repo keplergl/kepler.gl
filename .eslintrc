@@ -27,6 +27,7 @@
     "max-len": 0,
     "react/no-did-mount-set-state": 0,
     "react/no-multi-comp": 0,
+    "react/sort-comp": 0,
     "no-use-before-define": "off",
     "prefer-spread": 1,
     "prefer-template": 1,
@@ -44,6 +45,15 @@
     "consistent-return": 0,
     "comma-dangle": 1
   },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        "no-undef": 0,
+        "no-unused-vars": 0,
+      },
+    },
+  ],
   "settings": {
     "react": {
       "version": "detect"

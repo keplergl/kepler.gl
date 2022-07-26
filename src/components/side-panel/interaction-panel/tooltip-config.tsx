@@ -147,7 +147,7 @@ function TooltipConfigFactory(
               ...config,
               fieldsToShow: {
                 ...config.fieldsToShow,
-                //@ts-expect-error
+                // @ts-expect-error
                 [dataId]: selected.map(
                   f =>
                     config.fieldsToShow[dataId].find(
@@ -165,7 +165,7 @@ function TooltipConfigFactory(
           closeOnSelect={false}
           multiSelect
           inputTheme="secondary"
-          //@ts-expect-error
+          // @ts-expect-error
           CustomChickletComponent={TooltipChickletFactory(dataId, config, onChange, dataset.fields)}
         />
       </SidePanelSection>
@@ -220,7 +220,7 @@ function TooltipConfigFactory(
             onChange={option => {
               const newConfig: TooltipConfigProps['config'] = {
                 ...config,
-                //@ts-expect-error
+                // @ts-expect-error
                 compareType: option
               };
               onChange(newConfig);

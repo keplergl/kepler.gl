@@ -104,11 +104,11 @@ const OptionDropdown = (props: OptionDropdownProps) => {
   );
 
   const TABLE_OPTION_LIST_ICONS = {
-    Pin: Pin,
-    ArrowDown: ArrowDown,
-    ArrowUp: ArrowUp,
-    Clipboard: Clipboard,
-    Cancel: Cancel
+    Pin,
+    ArrowDown,
+    ArrowUp,
+    Clipboard,
+    Cancel
   };
 
   const options = TABLE_OPTION_LIST.filter(op => !op.condition || op.condition(props)).map(op => ({

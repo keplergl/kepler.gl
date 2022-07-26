@@ -34,14 +34,14 @@ import {toArray} from 'utils/utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 
-interface StyledDropdownSelect {
+interface StyledDropdownSelectProps {
   inputTheme?: string;
   size?: string;
 }
 
 export const StyledDropdownSelect = styled.div.attrs({
   className: 'item-selector__dropdown'
-})<StyledDropdownSelect>`
+})<StyledDropdownSelectProps>`
   ${props =>
     props.inputTheme === 'secondary'
       ? props.theme.secondaryInput
@@ -293,7 +293,7 @@ class ItemSelector extends Component<ItemSelectorProps> {
       disabled: this.props.disabled,
       onClick: this._showTypeahead,
       error: this.props.isError,
-      inputTheme: inputTheme,
+      inputTheme,
       size: this.props.size
     };
     const intl = this.props.intl;

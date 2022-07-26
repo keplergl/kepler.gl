@@ -28,7 +28,7 @@ RangeFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, RangeFilterFac
 
 function RangeFilterPanelFactory(
   FieldPanelWithFieldSelect: ReturnType<typeof FieldPanelWithFieldSelectFactory>,
-  RangeFilter: ReturnType<typeof RangeFilterFactory>
+  RangeFilterComponent: ReturnType<typeof RangeFilterFactory>
 ) {
   const RangeFilterPanel: FilterPanelComponent<RangeFilter> = React.memo(
     ({idx, datasets, allAvailableFields, filter, removeFilter, setFilter}) => {
@@ -46,7 +46,7 @@ function RangeFilterPanelFactory(
           >
             {filter.type && !filter.enlarged && (
               <div className="filter-panel__filter">
-                <RangeFilter filter={filter} setFilter={onSetFilter} />
+                <RangeFilterComponent filter={filter} setFilter={onSetFilter} />
               </div>
             )}
           </FieldPanelWithFieldSelect>

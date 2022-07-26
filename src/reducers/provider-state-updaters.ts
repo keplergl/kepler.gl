@@ -79,8 +79,6 @@ export const INITIAL_PROVIDER_STATE: ProviderState = {
   visualizations: []
 };
 
-declare function withTask<T>(s: T, any: any): T;
-
 function createActionTask(action, payload) {
   if (typeof action === 'function') {
     return ACTION_TASK().map(_ => action(payload));

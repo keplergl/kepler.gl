@@ -28,7 +28,7 @@ MultiSelectFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, MultiSel
 
 function MultiSelectFilterPanelFactory(
   FieldPanelWithFieldSelect: ReturnType<typeof FieldPanelWithFieldSelectFactory>,
-  MultiSelectFilter: ReturnType<typeof MultiSelectFilterFactory>
+  MultiSelectFilterComponent: ReturnType<typeof MultiSelectFilterFactory>
 ) {
   const MultiSelectFilterPanel: FilterPanelComponent<MultiSelectFilter> = React.memo(
     ({idx, datasets, allAvailableFields, filter, setFilter, removeFilter}) => {
@@ -46,7 +46,7 @@ function MultiSelectFilterPanelFactory(
           >
             {filter.type && !filter.enlarged && (
               <div className="filter-panel__filter">
-                <MultiSelectFilter filter={filter} setFilter={onSetFilter} />
+                <MultiSelectFilterComponent filter={filter} setFilter={onSetFilter} />
               </div>
             )}
           </FieldPanelWithFieldSelect>

@@ -26,6 +26,7 @@ export {
   KeplerGLSchema as KeplerGLSchemaClass
 } from './schema-manager';
 
+// eslint-disable-next-line prettier/prettier
 export type {
   ParsedConfig,
   ParsedDataset,

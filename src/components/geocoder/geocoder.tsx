@@ -205,7 +205,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
 
   const onItemSelected = useCallback(
     item => {
-      let newViewport = new WebMercatorViewport(viewport);
+      const newViewport = new WebMercatorViewport(viewport);
       const {bbox, center} = item;
 
       const resultViewport = bbox

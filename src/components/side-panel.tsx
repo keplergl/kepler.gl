@@ -113,6 +113,7 @@ export default function SidePanelFactory(
 
   const getCustomPanelProps = get(CustomPanels, ['defaultProps', 'getProps']) || (() => ({}));
 
+  // eslint-disable-next-line max-statements
   const SidePanel = (props: SidePanelProps) => {
     const {
       appName,

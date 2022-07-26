@@ -27,7 +27,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {Provider} from 'cloud-providers';
 
 import {ImageModalContainerProps} from './image-modal-container';
-import {cleanupExportImage} from 'actions';
+import {cleanupExportImage as cleanupExportImageAction} from 'actions';
 
 /** @typedef {import('./overwrite-map-modal').OverwriteMapModalProps} OverwriteMapModalProps */
 
@@ -59,7 +59,7 @@ type OverwriteMapModalProps = {
 
   // callbacks
   onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
-  cleanupExportImage: typeof cleanupExportImage;
+  cleanupExportImage: typeof cleanupExportImageAction;
 };
 
 const OverwriteMapModalFactory = () => {

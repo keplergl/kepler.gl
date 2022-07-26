@@ -18,6 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// TODO: Unnecessary when eslint-plugin-prettier is upgraded
+/* eslint-disable prettier/prettier */
+
 // Root Reducer, used to register, and remove core reducers of each instance
 export {default} from './root';
 export {default as keplerGlReducer} from './root';
@@ -37,6 +40,7 @@ export {default as mapStateReducer} from './map-state';
 export {default as mapStyleReducer} from './map-style';
 
 // reducer updaters
+
 export * as visStateUpdaters from './vis-state-updaters';
 export * as mapStateUpdaters from './map-state-updaters';
 export * as mapStyleUpdaters from './map-style-updaters';

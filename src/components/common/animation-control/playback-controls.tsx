@@ -116,14 +116,14 @@ interface AnimationWindowControlProps {
   btnStyle;
 }
 
-export const AnimationWindowControl = ({
+export const AnimationWindowControl: React.FC<AnimationWindowControlProps> = ({
   onClick,
   selected,
   onHide,
   height,
   animationItems,
   btnStyle = {}
-}: AnimationWindowControlProps) => (
+}) => (
   <div>
     {Object.values(animationItems)
       .filter(item => item.id !== selected)
@@ -150,7 +150,7 @@ export const AnimationWindowControl = ({
   </div>
 );
 
-interface PlaybackControls {
+interface PlaybackControlsProps {
   isAnimatable?: boolean;
   isAnimating?: boolean;
   width?: number | string;
@@ -172,7 +172,7 @@ function PlaybackControlsFactory(
   AnimationSpeedSlider: ReturnType<typeof AnimationSpeedSliderFactory>
 ) {
   // eslint-disable-next-line complexity
-  const PlaybackControls = ({
+  const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     isAnimatable = true,
     isAnimating,
     width,
@@ -187,7 +187,7 @@ function PlaybackControlsFactory(
     animationItems = DEFAULT_ANIMATE_ITEMS,
     buttonStyle = 'secondary',
     buttonHeight = DEFAULT_BUTTON_HEIGHT
-  }: PlaybackControls) => {
+  }) => {
     const [isSpeedControlVisible, toggleSpeedControl] = useState(false);
     const [showAnimationWindowControl, setShowAnimationWindowControl] = useState(false);
 
