@@ -242,6 +242,9 @@ export default class ClusterLayer extends AggregationLayer<
       autoHighlight,
       highlightColor,
       updateTriggers,
+      parameters: {
+        depthMask: false
+      },
       ...accessors
     });
   }

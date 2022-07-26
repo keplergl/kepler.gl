@@ -426,7 +426,7 @@ export default function MapContainerFactory(
       return screenCoord && {x: screenCoord[0], y: screenCoord[1]};
     }
 
-    _renderDeckOverlay(layersForDeck) {
+    _renderDeckOverlay(layersForDeck, options = {primaryMap: false}) {
       const {
         mapState,
         mapStyle,
@@ -458,7 +458,7 @@ export default function MapContainerFactory(
         deckGlLayers = deckGlLayers.concat(dataLayers);
       }
 
-      if (mapStyle.visibleLayerGroups['3d building']) {
+      if (mapStyle.visibleLayerGroups['3d building'] && options.primaryMap) {
         deckGlLayers.push(
           new ThreeDBuildingLayer({
             id: '_keplergl_3d-building',
@@ -632,14 +632,14 @@ export default function MapContainerFactory(
             getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
             onMouseMove={this.props.visStateActions.onMouseMove}
           >
-            {this._renderDeckOverlay(layersForDeck)}
+            {this._renderDeckOverlay(layersForDeck, {primaryMap: true})}
             {this._renderMapboxOverlays()}
             {this._renderDrawEditor()}
           </MapComponent>
           {mapStyle.topMapStyle || hasGeocoderLayer ? (
             <div style={MAP_STYLE.top}>
               <MapComponent {...mapProps} key="top" mapStyle={mapStyle.topMapStyle}>
-                {this._renderDeckOverlay({[GEOCODER_LAYER_ID]: true})}
+                {this._renderDeckOverlay({[GEOCODER_LAYER_ID]: hasGeocoderLayer})}
               </MapComponent>
             </div>
           ) : null}
