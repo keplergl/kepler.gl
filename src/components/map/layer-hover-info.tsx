@@ -18,13 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {useMemo} from 'react';
 import styled from 'styled-components';
+import {TooltipField} from 'reducers/vis-state-updaters';
 import {CenterFlexbox} from 'components/common/styled-components';
 import {Layers} from 'components/common/icons';
 import PropTypes from 'prop-types';
 import {notNullorUndefined} from 'utils/data-utils';
 import {getTooltipDisplayValue, getTooltipDisplayDeltaValue} from 'utils/interaction-utils';
+import {AggregationLayerHoverData} from 'utils/layer-utils';
+import {Layer} from 'layers';
 
 export const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};
@@ -114,7 +117,8 @@ const EntryInfoRow = ({item, fields, data, primaryData, compareType}) => {
     return null;
   }
   const field = fields[fieldIdx];
-  const displayValue = getTooltipDisplayValue({item, field, data, fieldIdx});
+  const value = data.valueAt(fieldIdx);
+  const displayValue = getTooltipDisplayValue({item, field, value});
 
   const displayDeltaValue = getTooltipDisplayDeltaValue({
     item,
@@ -135,24 +139,48 @@ const EntryInfoRow = ({item, fields, data, primaryData, compareType}) => {
 };
 
 // TODO: supporting comparative value for aggregated cells as well
-const CellInfo = ({data, layer}) => {
-  const {colorField, sizeField} = layer.config;
+const CellInfo = ({
+  fieldsToShow,
+  data,
+  layer
+}: {
+  data: AggregationLayerHoverData;
+  fieldsToShow: TooltipField[];
+  layer: Layer;
+}) => {
+  const {colorField, sizeField} = layer.config as any;
+
+  const colorValue = useMemo(() => {
+    if (colorField && layer.visualChannels.color) {
+      const item = fieldsToShow.find(field => field.name === colorField.name);
+      return getTooltipDisplayValue({item, field: colorField, value: data.colorValue});
+    }
+    return null;
+  }, [fieldsToShow, colorField, layer, data.colorValue]);
+
+  const elevationValue = useMemo(() => {
+    if (sizeField && layer.visualChannels.size) {
+      const item = fieldsToShow.find(field => field.name === sizeField.name);
+      return getTooltipDisplayValue({item, field: sizeField, value: data.elevationValue});
+    }
+    return null;
+  }, [fieldsToShow, sizeField, layer, data.elevationValue]);
 
   return (
     <tbody>
-      <Row name={'total points'} key="count" value={data.points && data.points.length} />
+      <Row name={'total points'} key="count" value={String(data.points && data.points.length)} />
       {colorField && layer.visualChannels.color ? (
         <Row
           name={layer.getVisualChannelDescription('color').measure}
           key="color"
-          value={data.colorValue || 'N/A'}
+          value={colorValue || 'N/A'}
         />
       ) : null}
       {sizeField && layer.visualChannels.size ? (
         <Row
           name={layer.getVisualChannelDescription('size').measure}
           key="size"
-          value={data.elevationValue || 'N/A'}
+          value={elevationValue || 'N/A'}
         />
       ) : null}
     </tbody>

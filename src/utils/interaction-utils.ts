@@ -195,20 +195,17 @@ export function getTooltipDisplayDeltaValue({
 export function getTooltipDisplayValue({
   item,
   field,
-  data,
-  fieldIdx
+  value
 }: {
-  item: TooltipField;
+  item: TooltipField | undefined;
   field: Field;
-  data: DataRow;
-  fieldIdx: number;
+  value: any;
 }): string {
-  const dataValue = data.valueAt(fieldIdx);
-  if (!notNullorUndefined(dataValue)) {
+  if (!notNullorUndefined(value)) {
     return '';
   }
 
-  return item.format
-    ? getFormatter(item.format, field)(dataValue)
-    : parseFieldValue(dataValue, field.type);
+  return item?.format
+    ? getFormatter(item.format, field)(value)
+    : parseFieldValue(value, field.type);
 }
