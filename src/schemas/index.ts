@@ -48,6 +48,9 @@ export {
   default as visStateSchema
 } from './vis-state-schema';
 export type {
+  SavedField,
+  ParsedField,
+  SavedDatasetV1,
   ParsedDataset
 } from './dataset-schema';
 export {

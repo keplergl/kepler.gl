@@ -99,14 +99,15 @@ export function createLayerFromConfig(state: VisState, layerConfig: any): Layer 
 
 export function serializeLayer(newLayer): ParsedLayer {
   const savedVisState = visStateSchema[CURRENT_VERSION].save(
-    //@ts-expect-error not all expected properties are provided
+    // @ts-expect-error not all expected properties are provided
     {
       layers: [newLayer],
       layerOrder: [0]
     }
   ).visState;
-  const loadedLayer = visStateSchema[CURRENT_VERSION].load(savedVisState).visState.layers?.[0];
-  return loadedLayer as ParsedLayer;
+  const loadedLayer = visStateSchema[CURRENT_VERSION].load(savedVisState).visState?.layers?.[0];
+  // @ts-expect-error
+  return loadedLayer;
 }
 
 /**

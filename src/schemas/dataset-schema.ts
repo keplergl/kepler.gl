@@ -165,7 +165,7 @@ export class DatasetSchema extends Schema {
   }
 }
 
-const datasetSchema = {
+export const datasetSchema = {
   [VERSIONS.v0]: new DatasetSchema({
     key: 'dataset',
     version: VERSIONS.v0,

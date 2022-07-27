@@ -772,19 +772,7 @@ export class SplitMapsSchema extends Schema {
   }
 }
 
-export const filterPropsV1: {
-  dataId: null;
-  id: null;
-  name: null;
-  type: null;
-  value: null;
-  enlarged: null;
-  plotType: null;
-  animationWindow: null;
-  yAxis: Schema;
-  layerId: null;
-  speed: null;
-} = {
+export const filterPropsV1 = {
   ...filterPropsV0,
   plotType: null,
   animationWindow: null,
@@ -847,16 +835,18 @@ export const propertiesV1 = {
 };
 
 export class VisStateSchemaV1 extends Schema {
-  save(node: VisState, parents: any[] = [], accumulator?: any): {visState?: SavedVisState} {
+  save(node: VisState, parents: any[] = [], accumulator?: any): {visState: SavedVisState} {
+    // @ts-expect-error
     return this.savePropertiesOrApplySchema(node, parents, accumulator);
   }
 
   load(
     node?: SavedVisState
   ): {
-    visState: ParsedVisState;
+    visState: ParsedVisState | undefined;
   } {
-    return this.loadPropertiesOrApplySchema(node) as {visState: ParsedVisState};
+    // @ts-expect-error
+    return this.loadPropertiesOrApplySchema(node);
   }
 }
 
@@ -879,7 +869,6 @@ export const visStateSchema: {
   // @ts-expect-error
   [VERSIONS.v0]: {
     save: toSave => visStateSchemaV0.save(toSave),
-    // @ts-ignore visState doesn't exit on {} error
     load: toLoad => visStateSchemaV1.load(visStateSchemaV0.load(toLoad)?.visState)
   },
   [VERSIONS.v1]: visStateSchemaV1
