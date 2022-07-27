@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, ComponentType, MouseEventHandler} from 'react';
+import React, {ComponentType, MouseEventHandler} from 'react';
 import {TooltipProps} from 'react-tooltip';
 import classnames from 'classnames';
 import styled from 'styled-components';
@@ -66,49 +66,41 @@ const HeaderActionWrapper = styled.div<HeaderActionWrapperProps>`
 
 PanelHeaderActionFactory.deps = [];
 // Need to use react class to access props.component
-export default function PanelHeaderActionFactory(): React.ComponentType<PanelHeaderActionProps> {
-  class PanelHeaderAction extends Component<PanelHeaderActionProps> {
-    static defaultProps = {
-      onClick: () => {},
-      hoverColor: '',
-      active: false
-    };
-
-    render() {
-      const {
-        onClick,
-        tooltip,
-        id,
-        active,
-        flush,
-        hoverColor,
-        tooltipType,
-        disabled,
-        className
-      } = this.props;
-      return (
-        <HeaderActionWrapper
-          className={classnames('panel--header__action', {disabled, [className!]: className})}
-          active={active}
-          hoverColor={hoverColor}
-          flush={flush}
-        >
-          <this.props.IconComponent
-            data-tip
-            data-for={`${tooltip}_${id}`}
-            height="16px"
-            onClick={onClick}
-          />
-          {tooltip ? (
-            <Tooltip id={`${tooltip}_${id}`} effect="solid" delayShow={500} type={tooltipType}>
-              <span>
-                <FormattedMessage id={tooltip} />
-              </span>
-            </Tooltip>
-          ) : null}
-        </HeaderActionWrapper>
-      );
-    }
-  }
+export default function PanelHeaderActionFactory(): React.FC<PanelHeaderActionProps> {
+  const PanelHeaderAction: React.FC<PanelHeaderActionProps> = ({
+    onClick,
+    tooltip,
+    id,
+    active = false,
+    flush,
+    hoverColor,
+    tooltipType,
+    disabled,
+    className,
+    IconComponent
+  }) => {
+    return (
+      <HeaderActionWrapper
+        className={classnames('panel--header__action', {
+          disabled,
+          ...(className ? {[className]: true} : {})
+        })}
+        active={active}
+        hoverColor={hoverColor}
+        flush={flush}
+      >
+        {IconComponent ? (
+          <IconComponent data-tip data-for={`${tooltip}_${id}`} height="16px" onClick={onClick} />
+        ) : null}
+        {tooltip ? (
+          <Tooltip id={`${tooltip}_${id}`} effect="solid" delayShow={500} type={tooltipType}>
+            <span>
+              <FormattedMessage id={tooltip} />
+            </span>
+          </Tooltip>
+        ) : null}
+      </HeaderActionWrapper>
+    );
+  };
   return PanelHeaderAction;
 }
