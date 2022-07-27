@@ -140,8 +140,7 @@ function LayerPanelFactory(
       const {layer, datasets, isDraggable, layerTypeOptions} = this.props;
       const {config} = layer;
       const {isConfigActive} = config;
-      const allowDuplicate =
-        typeof layer.isValidToSave === 'function' && layer.isValidToSave() && isValid;
+      const allowDuplicate = typeof layer.isValidToSave === 'function' && layer.isValidToSave();
 
       return (
         <PanelWrapper

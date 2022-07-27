@@ -139,10 +139,14 @@ const HeaderActionSection = styled.div<HeaderActionSectionProps>`
   }
 `;
 
+type StyledPanelHeaderHiddenActionsProps = {
+  isConfigActive: LayerPanelHeaderProps['isConfigActive'];
+};
+
 // Hiden actions only show up on hover
 const StyledPanelHeaderHiddenActions = styled.div.attrs({
   className: 'layer-panel__header__actions__hidden'
-})`
+})<StyledPanelHeaderHiddenActionsProps>`
   opacity: 0;
   display: flex;
   align-items: center;
@@ -304,7 +308,7 @@ function LayerPanelHeaderFactory(
           className="layer-panel__header__actions"
           isEditingLabel={isEditingLabel}
         >
-          <StyledPanelHeaderHiddenActions>
+          <StyledPanelHeaderHiddenActions isConfigActive={isConfigActive}>
             {showRemoveLayer ? (
               <PanelHeaderAction
                 className="layer__remove-layer"
