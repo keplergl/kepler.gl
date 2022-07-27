@@ -577,9 +577,6 @@ export const layerPropsV1 = {
 export class LayerSchemaV0 extends Schema {
   key = 'layers';
 
-  // @ts-expect-error
-  readonly properties: typeof layerPropsV0;
-
   save(layers: Layer[], parents: [VisState]): {layers: SavedLayer[]} {
     const [visState] = parents.slice(-1);
 
@@ -850,16 +847,17 @@ export const propertiesV1 = {
 };
 
 export class VisStateSchemaV1 extends Schema {
-  // @ts-expect-error
-  readonly properties: typeof propertiesV1;
-  // @ts-expect-error
-  save(node: VisState, parent: any[] = [], accumulator?: any): {visState?: SavedVisState};
-  // @ts-expect-error
+  save(node: VisState, parents: any[] = [], accumulator?: any): {visState?: SavedVisState} {
+    return this.savePropertiesOrApplySchema(node, parents, accumulator);
+  }
+
   load(
     node?: SavedVisState
   ): {
     visState: ParsedVisState;
-  };
+  } {
+    return this.loadPropertiesOrApplySchema(node) as {visState: ParsedVisState};
+  }
 }
 
 export const visStateSchemaV0 = new Schema({

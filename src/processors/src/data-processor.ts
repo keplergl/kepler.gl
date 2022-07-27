@@ -664,7 +664,7 @@ function findNonEmptyRowsAtField(rows: unknown[][], fieldIdx: number, total: num
 /**
  * Process saved kepler.gl json to be pass to [`addDataToMap`](../actions/actions.md#adddatatomap).
  * The json object should contain `datasets` and `config`.
- * @param
+ * @param rawData
  * @param schema
  * @returns datasets and config `{datasets: {}, config: {}}`
  * @public
