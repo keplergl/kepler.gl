@@ -29,14 +29,14 @@ export {
 // eslint-disable-next-line prettier/prettier
 export type {
   ParsedConfig,
-  ParsedDataset,
-  ParsedLayer,
-  ParsedFilter,
   SavedConfigV1,
-  SavedDatasetV1,
   SavedMap
 } from './schema-manager';
 export {CURRENT_VERSION, VERSIONS} from './versions';
+export type {
+  ParsedLayer,
+  ParsedFilter,
+} from './vis-state-schema';
 export {
   visStateSchemaV1,
   FilterSchemaV0,
@@ -47,7 +47,16 @@ export {
   filterPropsV1,
   default as visStateSchema
 } from './vis-state-schema';
-export {default as datasetSchema} from './dataset-schema';
+export type {
+  ParsedDataset
+} from './dataset-schema';
+export {
+  default as datasetSchema,
+  DatasetSchema,
+  fieldPropertiesV1,
+  propertiesV1 as datasetPropertiesV1
+} from './dataset-schema';
+export * from './vis-state-schema';
 export {default as mapStyleSchema} from './map-style-schema';
 export {default as mapStateSchema} from './map-state-schema';
 export {default as Schema} from './schema';
