@@ -34,7 +34,7 @@ import {KeplerTable} from '../utils';
 import {ParsedConfig, ParsedLayer} from 'schemas';
 import {Layer, LayerColumns, LayerColumn} from '@kepler.gl/layers';
 import {TooltipInfo} from './vis-state-updaters';
-import {SavedInteractionConfig} from 'schemas/schema-manager';
+import {SavedInteractionConfig} from 'schemas';
 
 export type Merger = {
   merge: (state: VisState, config: any, fromConfig?: boolean) => VisState;
@@ -98,11 +98,15 @@ export function createLayerFromConfig(state: VisState, layerConfig: any): Layer 
 }
 
 export function serializeLayer(newLayer): ParsedLayer {
-  const savedVisState = visStateSchema[CURRENT_VERSION].save({
-    layers: [newLayer],
-    layerOrder: [0]
-  }).visState;
-  const loadedLayer = visStateSchema[CURRENT_VERSION].load(savedVisState).visState.layers[0];
+  const savedVisState = visStateSchema[CURRENT_VERSION].save(
+    // @ts-expect-error not all expected properties are provided
+    {
+      layers: [newLayer],
+      layerOrder: [0]
+    }
+  ).visState;
+  const loadedLayer = visStateSchema[CURRENT_VERSION].load(savedVisState).visState?.layers?.[0];
+  // @ts-expect-error
   return loadedLayer;
 }
 
@@ -239,7 +243,6 @@ export function mergeInteractions(
         }
       }
 
-      // @ts-expect-error
       merged[key] = {
         ...state.interactionConfig[key],
         enabled: Boolean(enabled),

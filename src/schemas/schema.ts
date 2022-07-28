@@ -53,7 +53,7 @@ export default class Schema {
 
   loadPropertiesOrApplySchema(
     node: any,
-    parents: string[] = [],
+    parents: object[] = [],
     accumulator?: any
   ): {[key: string]: any} {
     return this._getPropertyValueFromSchema('load', node, parents, accumulator);
@@ -61,13 +61,13 @@ export default class Schema {
 
   savePropertiesOrApplySchema(
     node: any,
-    parents: string[] = [],
+    parents: object[] = [],
     accumulator?: any
   ): {[key: string]: any} {
     return this._getPropertyValueFromSchema('save', node, parents, accumulator);
   }
 
-  _getPropertyValueFromSchema(operation, node: any, parents: string[] = [], accumulator) {
+  _getPropertyValueFromSchema(operation, node: any, parents: object[] = [], accumulator) {
     const internal = `_${operation}`;
     return {
       [this.key]: this.properties
@@ -109,7 +109,7 @@ export default class Schema {
     return this.save(...args);
   }
 
-  save(node: any, parents: string[] = [], accumulator: any = {}): {[key: string]: any} {
+  save(node: any, parents: object[] = [], accumulator: any = {}): {[key: string]: any} {
     return this.savePropertiesOrApplySchema(node, parents, accumulator);
   }
 
@@ -118,7 +118,7 @@ export default class Schema {
     return this.load(...args);
   }
 
-  load(node: any, parents: string[] = [], accumulator: any = {}): {[key: string]: any} {
+  load(node: any, parents: object[] = [], accumulator: any = {}): {[key: string]: any} {
     return this.loadPropertiesOrApplySchema(node, parents, accumulator);
   }
 }

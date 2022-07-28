@@ -665,6 +665,7 @@ function findNonEmptyRowsAtField(rows: unknown[][], fieldIdx: number, total: num
  * Process saved kepler.gl json to be pass to [`addDataToMap`](../actions/actions.md#adddatatomap).
  * The json object should contain `datasets` and `config`.
  * @param rawData
+ * @param schema
  * @returns datasets and config `{datasets: {}, config: {}}`
  * @public
  * @example
@@ -673,20 +674,24 @@ function findNonEmptyRowsAtField(rows: unknown[][], fieldIdx: number, total: num
  *
  * dispatch(addDataToMap(processKeplerglJSON(keplerGlJson)));
  */
-export function processKeplerglJSON(rawData: SavedMap): LoadedMap | null {
-  return rawData ? KeplerGlSchema.load(rawData.datasets, rawData.config) : null;
+export function processKeplerglJSON(rawData: SavedMap, schema = KeplerGlSchema): LoadedMap | null {
+  return rawData ? schema.load(rawData.datasets, rawData.config) : null;
 }
 
 /**
  * Parse a single or an array of datasets saved using kepler.gl schema
  * @param rawData
+ * @param schema
  */
-export function processKeplerglDataset(rawData: unknown): ParsedDataset | ParsedDataset[] | null {
+export function processKeplerglDataset(
+  rawData: object | object[],
+  schema = KeplerGlSchema
+): ParsedDataset | ParsedDataset[] | null {
   if (!rawData) {
     return null;
   }
 
-  const results = KeplerGlSchema.parseSavedData(toArray(rawData));
+  const results = schema.parseSavedData(toArray(rawData));
   if (!results) {
     return null;
   }

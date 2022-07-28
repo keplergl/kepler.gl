@@ -21,24 +21,64 @@
 import pick from 'lodash.pick';
 import {console as globalConsole} from 'global/window';
 
+import {ProtoDataset} from 'actions';
+import {RGBColor} from 'types';
 import {VERSIONS} from './versions';
 import Schema from './schema';
 import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/processors';
 
+export type SavedField = {
+  name: string;
+  type: string;
+  format?: string;
+  analyzerType?: string;
+};
+
+export type ParsedField = {
+  name: string;
+  type: string;
+  format: string;
+  analyzerType: string;
+};
+
+export type SavedDatasetV1 = {
+  version: 'v1';
+  data: {
+    id: string;
+    label: string;
+    color: RGBColor;
+    allData: any[][];
+    fields: SavedField[];
+  };
+};
+
+export type ParsedDataset = {
+  data: {
+    fields: ParsedField[];
+    rows: any[][];
+  };
+  info: {
+    id?: string;
+    label?: string;
+    color?: RGBColor;
+  };
+};
+
 // version v0
-const fieldPropertiesV0 = {
+export const fieldPropertiesV0 = {
   name: null,
   type: null
 };
 
-const fieldPropertiesV1 = {
+export const fieldPropertiesV1 = {
   name: null,
   type: null,
   format: null,
-  analyzerType: null
+  analyzerType: null,
+  metadata: null
 };
 
-class FieldSchema extends Schema {
+export class FieldSchema extends Schema {
   save(fields) {
     return {
       [this.key]: fields.map(f => this.savePropertiesOrApplySchema(f)[this.key])
@@ -49,7 +89,7 @@ class FieldSchema extends Schema {
   }
 }
 
-const propertiesV0 = {
+export const propertiesV0 = {
   id: null,
   label: null,
   color: null,
@@ -61,7 +101,7 @@ const propertiesV0 = {
   })
 };
 
-const propertiesV1 = {
+export const propertiesV1 = {
   ...propertiesV0,
   fields: new FieldSchema({
     key: 'fields',
@@ -70,10 +110,10 @@ const propertiesV1 = {
   })
 };
 
-class DatasetSchema extends Schema {
+export class DatasetSchema extends Schema {
   key = 'dataset';
 
-  save(dataset) {
+  save(dataset): SavedDatasetV1['data'] {
     const datasetFlattened = dataset.dataContainer
       ? {
           ...dataset,
@@ -83,7 +123,7 @@ class DatasetSchema extends Schema {
 
     return this.savePropertiesOrApplySchema(datasetFlattened)[this.key];
   }
-  load(dataset) {
+  load(dataset: SavedDatasetV1['data']): ProtoDataset {
     const {fields, allData} = dataset;
     let updatedFields = fields;
 
@@ -125,7 +165,7 @@ class DatasetSchema extends Schema {
   }
 }
 
-const datasetSchema = {
+export const datasetSchema = {
   [VERSIONS.v0]: new DatasetSchema({
     key: 'dataset',
     version: VERSIONS.v0,

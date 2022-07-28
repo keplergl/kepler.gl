@@ -20,101 +20,16 @@
 
 import {console as Console} from 'global/window';
 
-import visStateSchema from './vis-state-schema';
 import datasetSchema from './dataset-schema';
 import mapStyleSchema from './map-style-schema';
 import mapStateSchema from './map-state-schema';
+import {SavedDatasetV1, ParsedDataset} from './dataset-schema';
+import {visStateSchema, SavedVisState, ParsedVisState} from './vis-state-schema';
 
 import {CURRENT_VERSION, VERSIONS} from './versions';
 import {isPlainObject} from 'utils/utils';
-
-import {
-  InteractionConfig,
-  Filter,
-  TooltipInfo,
-  SplitMap,
-  AnimationConfig,
-  VisState
-} from '../reducers';
-
-import {RGBColor, Merge, RGBAColor, LayerTextLabel} from '@kepler.gl/types';
-
-export type SavedFilter = {
-  dataId: Filter['dataId'];
-  id: Filter['id'];
-  name: Filter['name'];
-  type: Filter['type'];
-  value: Filter['value'];
-  enlarged: Filter['enlarged'];
-  plotType: Filter['plotType'];
-  yAxis: {
-    name: string;
-    type: string;
-  } | null;
-  speed: Filter['speed'];
-  layerId: Filter['layerId'];
-};
-
-export type ParsedFilter = Partial<SavedFilter>;
-
-export type SavedInteractionConfig = {
-  tooltip: TooltipInfo['config'] & {
-    enabled: boolean;
-  };
-  geocoder: InteractionConfig['geocoder'] & {
-    enabled: boolean;
-  };
-  brush: InteractionConfig['brush'] & {
-    enabled: boolean;
-  };
-  coordinate: InteractionConfig['coordinate'] & {
-    enabled: boolean;
-  };
-};
-
-export type SavedScale = string;
-export type SavedVisualChannels = {
-  [key: string]: SavedField | SavedScale;
-};
-
-export type SavedLayer = {
-  id: string;
-  type: string;
-  config: {
-    dataId: string;
-    label: string;
-    color: RGBColor;
-    highlightColor: RGBAColor;
-    columns: {
-      [key: string]: string;
-    };
-    isVisible: boolean;
-    visConfig: object;
-    hidden: boolean;
-    textLabel: Merge<LayerTextLabel, {field: {name: string; type: string} | null}>;
-  };
-  visualChannels: SavedVisualChannels;
-};
-
-export type ParsedLayer = {
-  id?: string;
-  type?: string;
-  config?: Partial<SavedLayer['config']>;
-};
-
-export type SavedAnimationConfig = {
-  currentTime: AnimationConfig['currentTime'];
-  speed: AnimationConfig['speed'];
-};
-
-export type SavedVisState = {
-  filters: SavedFilter[];
-  layers: SavedLayer[];
-  interactionConfig: SavedInteractionConfig;
-  layerBlending: string;
-  splitMaps: SplitMap[];
-  animationConfig: SavedAnimationConfig;
-};
+import {RGBColor} from 'types';
+import {VisState} from '../reducers';
 
 export type SavedMapState = {
   bearing: number;
@@ -162,53 +77,9 @@ export type SavedConfigV1 = {
 /** Schema for a parsed configuration ("normalized" across versions) */
 export type ParsedConfig = {
   version: string;
-  visState?: {
-    layers?: ParsedLayer[];
-    filters?: ParsedFilter[];
-    interactionConfig?: Partial<SavedInteractionConfig>;
-    layerBlending?: string;
-    splitMaps?: SplitMap[];
-    animationConfig?: Partial<SavedAnimationConfig>;
-  };
+  visState?: ParsedVisState;
   mapState?: Partial<SavedMapState>;
   mapStyle?: Partial<SavedMapStyle>;
-};
-
-export type SavedField = {
-  name: string;
-  type: string;
-  format?: string;
-  analyzerType?: string;
-};
-
-export type ParsedField = {
-  name: string;
-  type: string;
-  format: string;
-  analyzerType: string;
-};
-
-export type SavedDatasetV1 = {
-  version: 'v1';
-  data: {
-    id: string;
-    label: string;
-    color: RGBColor;
-    allData: any[][];
-    fields: SavedField[];
-  };
-};
-
-export type ParsedDataset = {
-  data: {
-    fields: ParsedField[];
-    rows: any[][];
-  };
-  info: {
-    id?: string;
-    label?: string;
-    color?: RGBColor;
-  };
 };
 
 export type SavedMap = {
@@ -434,7 +305,8 @@ export class KeplerGLSchema {
    * @returns - whether data has changed or not
    */
   hasDataChanged(state: any): boolean {
-    return this._datasetLastSaved !== state.visState.datasets;
+    return true;
+    // return this._datasetLastSaved !== state.visState.datasets;
   }
 }
 

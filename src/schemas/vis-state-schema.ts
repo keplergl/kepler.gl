@@ -25,6 +25,110 @@ import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
 import {notNullorUndefined} from 'utils/data-utils';
+import {LayerTextLabel} from '@kepler.gl/types';
+import {
+  InteractionConfig,
+  Filter,
+  TooltipInfo,
+  SplitMap,
+  AnimationConfig,
+  VisState
+} from 'reducers';
+import {RGBColor, Merge} from 'types';
+import {Layer} from 'layers';
+
+export type SavedFilter = {
+  dataId: Filter['dataId'];
+  id: Filter['id'];
+  name: Filter['name'];
+  type: Filter['type'];
+  value: Filter['value'];
+  enlarged: Filter['enlarged'];
+  plotType: Filter['plotType'];
+  yAxis: {
+    name: string;
+    type: string;
+  } | null;
+  speed: Filter['speed'];
+  layerId: Filter['layerId'];
+};
+
+export type ParsedFilter = Partial<SavedFilter>;
+
+export type SavedInteractionConfig = {
+  tooltip: TooltipInfo['config'] & {
+    enabled: boolean;
+  };
+  // @ts-expect-error
+  geocoder: TooltipInfo['geocoder'] & {
+    enabled: boolean;
+  };
+  // @ts-expect-error
+  brush: TooltipInfo['brush'] & {
+    enabled: boolean;
+  };
+  // @ts-expect-error
+  coordinate: TooltipInfo['coordinate'] & {
+    enabled: boolean;
+  };
+};
+
+export type SavedField = {
+  name: string;
+  type: string;
+} | null;
+export type SavedScale = string;
+export type SavedVisualChannels = {
+  [key: string]: SavedField | SavedScale;
+};
+
+export type SavedLayer = {
+  id: string;
+  type: string;
+  config: {
+    dataId: string;
+    label: string;
+    color: RGBColor;
+    columns: {
+      [key: string]: string;
+    };
+    isVisible: boolean;
+    visConfig: object;
+    hidden: boolean;
+    textLabel: Merge<LayerTextLabel, {field: {name: string; type: string} | null}>;
+    highlightColor?: RGBColor;
+  };
+  visualChannels: SavedVisualChannels;
+};
+
+export type ParsedLayer = {
+  id?: string;
+  type?: string;
+  config?: Partial<SavedLayer['config']>;
+};
+
+export type SavedAnimationConfig = {
+  currentTime: AnimationConfig['currentTime'];
+  speed: AnimationConfig['speed'];
+};
+
+export type SavedVisState = {
+  filters: SavedFilter[];
+  layers: SavedLayer[];
+  interactionConfig: SavedInteractionConfig;
+  layerBlending: string;
+  splitMaps: SplitMap[];
+  animationConfig: SavedAnimationConfig;
+};
+
+export type ParsedVisState = {
+  layers?: ParsedLayer[];
+  filters?: ParsedFilter[];
+  interactionConfig?: Partial<SavedInteractionConfig>;
+  layerBlending?: string;
+  splitMaps?: SplitMap[];
+  animationConfig?: Partial<SavedAnimationConfig>;
+};
 
 /**
  * V0 Schema
@@ -473,38 +577,45 @@ export const layerPropsV1 = {
 export class LayerSchemaV0 extends Schema {
   key = 'layers';
 
-  save(layers, parents) {
+  save(layers: Layer[], parents: [VisState]): {layers: SavedLayer[]} {
     const [visState] = parents.slice(-1);
 
     return {
-      [this.key]: visState.layerOrder.reduce((saved, index) => {
+      [this.key as 'layers']: visState.layerOrder.reduce((saved, index) => {
         // save layers according to their rendering order
         const layer = layers[index];
         if (layer.isValidToSave()) {
           saved.push(this.savePropertiesOrApplySchema(layer).layers);
         }
         return saved;
-      }, [])
+      }, [] as SavedLayer[])
     };
   }
 
-  load(layers) {
+  load(
+    layers: SavedLayer[] | undefined
+  ): {
+    layers: ParsedLayer[] | undefined;
+  } {
     return {
-      [this.key]: layers.map(layer => this.loadPropertiesOrApplySchema(layer, layers).layers)
+      [this.key as 'layers']: layers
+        ? layers.map(layer => this.loadPropertiesOrApplySchema(layer, layers).layers)
+        : []
     };
   }
 }
 
 export class FilterSchemaV0 extends Schema {
   key = 'filters';
-  save(filters) {
+  save(filters: Filter[]): {filters: SavedFilter[]} {
     return {
       filters: filters
+        // @ts-expect-error should pass type of the layer instead?
         .filter(isValidFilterValue)
         .map(filter => this.savePropertiesOrApplySchema(filter).filters)
     };
   }
-  load(filters) {
+  load(filters: undefined | SavedFilter[]): {filters: undefined | ParsedFilter[]} {
     return {filters};
   }
 }
@@ -554,7 +665,13 @@ const interactionPropsV1 = [...interactionPropsV0, 'geocoder', 'coordinate'];
 export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
 
-  save(interactionConfig) {
+  save(
+    interactionConfig: InteractionConfig
+  ):
+    | {
+        interactionConfig: SavedInteractionConfig;
+      }
+    | {} {
     // save config even if disabled,
     return Array.isArray(this.properties)
       ? {
@@ -571,7 +688,11 @@ export class InteractionSchemaV1 extends Schema {
         }
       : {};
   }
-  load(interactionConfig) {
+  load(
+    interactionConfig: SavedInteractionConfig
+  ): {
+    interactionConfig: Partial<SavedInteractionConfig>;
+  } {
     const modifiedConfig = interactionConfig;
     Object.keys(interactionConfig).forEach(configType => {
       if (configType === 'tooltip') {
@@ -580,6 +701,7 @@ export class InteractionSchemaV1 extends Schema {
           return {[this.key]: modifiedConfig};
         }
         Object.keys(fieldsToShow).forEach(key => {
+          // @ts-expect-error name: fieldData should be string
           fieldsToShow[key] = fieldsToShow[key].map(fieldData => {
             if (!fieldData.name) {
               return {
@@ -593,7 +715,7 @@ export class InteractionSchemaV1 extends Schema {
       }
       return;
     });
-    return {[this.key]: modifiedConfig};
+    return {[this.key as 'interactionConfig']: modifiedConfig};
   }
 }
 
@@ -712,22 +834,42 @@ export const propertiesV1 = {
   })
 };
 
+export class VisStateSchemaV1 extends Schema {
+  save(node: VisState, parents: any[] = [], accumulator?: any): {visState: SavedVisState} {
+    // @ts-expect-error
+    return this.savePropertiesOrApplySchema(node, parents, accumulator);
+  }
+
+  load(
+    node?: SavedVisState
+  ): {
+    visState: ParsedVisState | undefined;
+  } {
+    // @ts-expect-error
+    return this.loadPropertiesOrApplySchema(node);
+  }
+}
+
 export const visStateSchemaV0 = new Schema({
   version: VERSIONS.v0,
   properties: propertiesV0,
   key: 'visState'
 });
 
-export const visStateSchemaV1 = new Schema({
+export const visStateSchemaV1 = new VisStateSchemaV1({
   version: VERSIONS.v1,
   properties: propertiesV1,
   key: 'visState'
 });
 
-export const visStateSchema = {
+export const visStateSchema: {
+  v0: typeof visStateSchemaV0;
+  v1: typeof visStateSchemaV1;
+} = {
+  // @ts-expect-error
   [VERSIONS.v0]: {
     save: toSave => visStateSchemaV0.save(toSave),
-    load: toLoad => visStateSchemaV1.load(visStateSchemaV0.load(toLoad).visState)
+    load: toLoad => visStateSchemaV1.load(visStateSchemaV0.load(toLoad)?.visState)
   },
   [VERSIONS.v1]: visStateSchemaV1
 };
