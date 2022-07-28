@@ -25,7 +25,7 @@ import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
 import {notNullorUndefined} from 'utils/data-utils';
-import {LayerTextLabel} from 'layers/layer-factory';
+import {LayerTextLabel} from '@kepler.gl/types';
 import {
   InteractionConfig,
   Filter,
