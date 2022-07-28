@@ -350,6 +350,10 @@ class Layer {
   get layerInfoModal(): any {
     return null;
   }
+
+  get supportedDatasetTypes(): string[] | null {
+    return null;
+  }
   /*
    * Given a dataset, automatically find props to create layer based on it
    * and return the props and previous found layers.
