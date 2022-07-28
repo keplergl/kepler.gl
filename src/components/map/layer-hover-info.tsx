@@ -43,9 +43,10 @@ export const StyledLayerName = styled(CenterFlexbox)`
 const StyledTable = styled.table`
   & .row__delta-value {
     text-align: right;
+    margin-left: 6px;
 
     &.positive {
-      color: ${props => props.theme.primaryBtnBgd};
+      color: ${props => props.theme.notificationColors.success};
     }
 
     &.negative {
@@ -80,18 +81,20 @@ const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
             {value}
           </a>
         ) : (
-          value
+          <>
+            <span>{value}</span>
+            {notNullorUndefined(deltaValue) ? (
+              <span
+                className={`row__delta-value ${
+                  deltaValue.toString().charAt(0) === '+' ? 'positive' : 'negative'
+                }`}
+              >
+                {deltaValue}
+              </span>
+            ) : null}
+          </>
         )}
       </td>
-      {notNullorUndefined(deltaValue) && (
-        <td
-          className={`row__delta-value ${
-            deltaValue.toString().charAt(0) === '+' ? 'positive' : 'negative'
-          }`}
-        >
-          {deltaValue}
-        </td>
-      )}
     </tr>
   );
 };
