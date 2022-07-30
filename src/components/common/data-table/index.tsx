@@ -357,10 +357,10 @@ interface DataTableProps {
   cellSizeCache?: CellSizeCache;
   pinnedColumns?: string[];
   columns: (string & {ghost?: boolean})[];
-  fixedWidth?: number | null;
+  fixedWidth?: number;
   theme?: any;
   dataContainer: DataContainerInterface;
-  fixedHeight?: number | null;
+  fixedHeight?: number;
   colMeta: ColMeta;
   sortColumn?: SortColumn;
   sortTableColumn: (column: string, mode?: string) => void;
@@ -589,7 +589,7 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
         ? [...unpinnedColumns, {ghost: true} as string & {ghost: boolean}]
         : unpinnedColumns;
       const pinnedColumnsWidth = pinnedColumns.reduce(
-        (acc, val) => acc + get(cellSizeCache, val, 0),
+        (acc, val) => acc + (get(cellSizeCache, val, 0) as number),
         0
       );
 

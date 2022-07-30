@@ -199,12 +199,12 @@ export function adjustCellsToContainer(
   unpinnedColumns: string[]
 ): {
   cellSizeCache: CellSizeCache;
-  ghost: number | null;
+  ghost?: number | null;
 } {
   const minRowSum = getSizeSum(cellSizeCache, 'row');
   if (minRowSum >= containerWidth) {
     // we apply the min Width to all cells
-    return {cellSizeCache: getMinCellSize(cellSizeCache), ghost: null};
+    return {cellSizeCache: getMinCellSize(cellSizeCache)};
   }
 
   // if we have some room to expand
