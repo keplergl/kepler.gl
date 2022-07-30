@@ -115,7 +115,7 @@ const DropdownWrapper = styled.div<DropdownWrapperProps>`
     props.placement === 'top' ? `${props.theme.dropdownWapperMargin}px` : 'auto'};
 `;
 
-type ItemSelectorProps = {
+export type ItemSelectorProps = {
   selectedItems?:
     | ReadonlyArray<string | number | boolean | object>
     | string

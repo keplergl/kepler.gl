@@ -57,7 +57,7 @@ const UpdateTableColor = ({children, id}: UpdateTableColorTypes) => (
   </DatasetColorPicker>
 );
 
-export default function DatasetTagFactory() {
+export default function DatasetTagFactory(): React.FC<DatasetTagProps> {
   const DatasetTag = ({onClick, onClickSquare, dataset, updateTableColor, id}: DatasetTagProps) => (
     <DatasetTagWrapper className="source-data-tag">
       <UpdateTableColor id={dataset.id}>
