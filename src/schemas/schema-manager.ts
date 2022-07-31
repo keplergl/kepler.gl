@@ -20,6 +20,7 @@
 
 import {console as Console} from 'global/window';
 
+import {Datasets} from 'reducers';
 import datasetSchema from './dataset-schema';
 import mapStyleSchema from './map-style-schema';
 import mapStateSchema from './map-state-schema';
@@ -210,7 +211,7 @@ export class KeplerGLSchema {
 
     const {visState} = state;
 
-    const datasets = Object.values(visState.datasets).map(ds => ({
+    const datasets = Object.values(visState.datasets as Datasets).map(ds => ({
       version: this._version,
       data: this._datasetSchema[this._version].save(ds)
     }));
