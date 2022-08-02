@@ -35,7 +35,7 @@ export type {
 export {CURRENT_VERSION, VERSIONS} from './versions';
 export type {
   ParsedLayer,
-  ParsedFilter,
+  ParsedFilter
 } from './vis-state-schema';
 export {
   visStateSchemaV1,

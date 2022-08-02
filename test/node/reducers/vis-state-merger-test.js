@@ -1532,8 +1532,11 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
     [testCsvDataId]: {
       metadata: {
         id: testCsvDataId,
-        label: 'hello.csv'
+        label: 'hello.csv',
+        format: ''
       },
+      supportedFilterTypes: null,
+      disableDataOperation: false,
       fields: tFields0,
       dataContainer: dc0,
       allIndexes: [
@@ -1606,8 +1609,11 @@ test('VisStateMerger.v1 -> mergeFilters -> multiFilters', t => {
     [testGeoJsonDataId]: {
       metadata: {
         id: testGeoJsonDataId,
-        label: 'zip.geojson'
+        label: 'zip.geojson',
+        format: ''
       },
+      supportedFilterTypes: null,
+      disableDataOperation: false,
       fields: tFields1,
       filterRecord: {
         dynamicDomain: [mergedRateFilter, mergedTripFilter],

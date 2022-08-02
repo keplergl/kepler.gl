@@ -133,7 +133,9 @@ class KeplerTable {
   sortOrder?: number[] | null;
 
   pinnedColumns?: string[];
-  supportedFilterTypes: string[] | undefined;
+  supportedFilterTypes?: string[] | null;
+  disableDataOperation?: boolean;
+
   // table-injected metadata
   metadata: object;
 
@@ -142,13 +144,15 @@ class KeplerTable {
     data,
     color,
     metadata,
-    supportedFilterTypes
+    supportedFilterTypes = null,
+    disableDataOperation = false
   }: {
     info?: ProtoDataset['info'];
     data: ProtoDataset['data'];
     color: RGBColor;
     metadata?: ProtoDataset['metadata'];
     supportedFilterTypes?: ProtoDataset['supportedFilterTypes'];
+    disableDataOperation?: ProtoDataset['disableDataOperation'];
   }) {
     // TODO - what to do if validation fails? Can kepler handle exceptions?
     // const validatedData = validateInputData(data);
@@ -162,7 +166,7 @@ class KeplerTable {
     const datasetInfo = {
       id: generateHashId(4),
       label: 'new dataset',
-      ...(info || {})
+      ...info
     };
     const dataId = datasetInfo.id;
     // @ts-expect-error
@@ -183,14 +187,19 @@ class KeplerTable {
     }));
 
     const allIndexes = dataContainer.getPlainIndex();
+    const defaultMetadata = {
+      id: datasetInfo.id,
+      // @ts-ignore
+      format: datasetInfo.format || '',
+      label: datasetInfo.label || ''
+    };
 
     this.id = datasetInfo.id;
     this.label = datasetInfo.label;
     this.color = color;
     this.metadata = {
-      ...metadata,
-      id: datasetInfo.id,
-      label: datasetInfo.label
+      ...defaultMetadata,
+      ...metadata
     };
 
     this.dataContainer = dataContainer;
@@ -200,9 +209,8 @@ class KeplerTable {
     this.fieldPairs = findPointFieldPairs(fields);
     this.fields = fields;
     this.gpuFilter = getGpuFilterProps([], dataId, fields);
-    if (supportedFilterTypes) {
-      this.supportedFilterTypes = supportedFilterTypes;
-    }
+    this.supportedFilterTypes = supportedFilterTypes;
+    this.disableDataOperation = disableDataOperation;
   }
 
   /**

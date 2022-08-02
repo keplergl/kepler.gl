@@ -1258,7 +1258,9 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
           suffix: ['lat', 'lng']
         }
       ],
-      metadata: {id: 'smoothie', label: 'exciting dataset', album: 'taro_and_blue'}
+      metadata: {id: 'smoothie', label: 'exciting dataset', album: 'taro_and_blue', format: ''},
+      supportedFilterTypes: null,
+      disableDataOperation: false
     }
   };
 
@@ -1404,8 +1406,11 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
     smoothie: {
       metadata: {
         id: 'smoothie',
-        label: 'smoothie and milkshake'
+        label: 'smoothie and milkshake',
+        format: ''
       },
+      supportedFilterTypes: null,
+      disableDataOperation: false,
       fields: expectedFields,
       dataContainer: createDataContainer(mockRawData.rows, {fields: mockRawData.fields}),
       color: 'donnot test me',
@@ -1526,8 +1531,11 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
   const expectedDatasets = {
     metadata: {
       id: 'milkshake',
-      label: 'king milkshake'
+      label: 'king milkshake',
+      format: ''
     },
+    supportedFilterTypes: null,
+    disableDataOperation: false,
     id: 'milkshake',
     label: 'king milkshake',
     color: 'donnot test me',
@@ -1734,8 +1742,11 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     smoothie: {
       metadata: {
         id: 'smoothie',
-        label: 'smoothie and milkshake'
+        label: 'smoothie and milkshake',
+        format: ''
       },
+      supportedFilterTypes: null,
+      disableDataOperation: false,
       fields: expectedFields.map(f =>
         f.name === mockFilter.name
           ? {
@@ -2039,8 +2050,11 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
   const expectedDataset = {
     metadata: {
       id: 'smoothie',
-      label: 'queen smoothie'
+      label: 'queen smoothie',
+      format: ''
     },
+    supportedFilterTypes: null,
+    disableDataOperation: false,
     id: 'smoothie',
     label: 'queen smoothie',
     color: 'donnot test me',
@@ -2125,7 +2139,9 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
       fixedDomain: null,
       cpu: {[updatedFilterWValue.id]: 'added'},
       gpu: null
-    }
+    },
+    supportedFilterTypes: null,
+    disableDataOperation: false
   };
 
   cmpDataset(t, expectedFilteredDataset, stateWithFilterValue.datasets.smoothie);
@@ -2349,7 +2365,9 @@ function testSetFilterDynamicDomainGPU(t, setFilter) {
       fixedDomain: null,
       cpu: null,
       gpu: {[filterId]: 'value_changed'}
-    }
+    },
+    supportedFilterTypes: null,
+    disableDataOperation: false
   };
 
   const actualTripField = stateWithFilterValue.datasets.milkshake.fields[4];
@@ -2547,7 +2565,9 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
       fixedDomain: {[filterId]: 'value_changed'},
       cpu: null,
       gpu: {[filterId]: 'value_changed'}
-    }
+    },
+    supportedFilterTypes: null,
+    disableDataOperation: false
   };
 
   // check filter by ts
@@ -2617,7 +2637,9 @@ test('#visStateReducer -> setFilter.fixedDomain & DynamicDomain & gpu & cpu', t 
       fixedDomain: null,
       cpu: {[filterId1]: 'added'},
       gpu: null
-    }
+    },
+    supportedFilterTypes: null,
+    disableDataOperation: false
   };
 
   cmpDataset(t, expectedFilteredDataset, stateWidthTsAndNameFilter.datasets.smoothie);
