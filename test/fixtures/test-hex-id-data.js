@@ -438,8 +438,11 @@ export const expectedMergedDataset = {
   color: 'dont test me',
   metadata: {
     id: 'h3-hex-id',
-    label: 'new dataset'
+    label: 'new dataset',
+    format: ''
   },
+  supportedFilterTypes: null,
+  disableDataOperation: false,
   dataContainer,
   allIndexes: indices,
   filteredIndex: indices,

@@ -50,7 +50,8 @@ export type ProtoDataset = {
 
   // table-injected metadata
   metadata?: any;
-  supportedFilterTypes?: string[];
+  supportedFilterTypes?: string[] | null;
+  disableDataOperation?: boolean;
 };
 
 export type AddDataToMapOptions = {
