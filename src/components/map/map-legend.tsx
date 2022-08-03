@@ -85,7 +85,7 @@ export const VisualChannelMetric = ({name}) => {
 
 export type LayerSizeLegendProps = {
   label: string;
-  name: string;
+  name: string | undefined;
 };
 
 /** @type {typeof import('./map-legend').LayerSizeLegend} */
@@ -96,7 +96,7 @@ export const LayerSizeLegend: React.FC<LayerSizeLegendProps> = ({label, name}) =
         <span className="legend--layer_by">{label ? <FormattedMessage id={label} /> : null}</span>
         <span className="legend--layer_by"> by </span>
       </p>
-      <VisualChannelMetric name={name} />
+      {name && <VisualChannelMetric name={name} />}
     </div>
   ) : null;
 
