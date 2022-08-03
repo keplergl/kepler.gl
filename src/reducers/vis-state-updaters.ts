@@ -711,14 +711,13 @@ export function layerDataIdChangeUpdater(
 }
 
 function setInitialLayerConfig(layer, datasets, layerClasses) {
-
   let newLayer = layer;
   if (!Object.keys(datasets).length) {
     // no data is loaded
     return layer;
   }
   if (!layer.config.dataId) {
-    //set layer dataId
+    // set layer dataId
     newLayer = layer.updateLayerConfig({dataId: Object.keys(datasets)[0]});
   }
   const dataset = datasets[newLayer.config.dataId];
@@ -727,8 +726,10 @@ function setInitialLayerConfig(layer, datasets, layerClasses) {
   }
 
   // find defaut layer props
-  const result = typeof layerClasses[newLayer.type].findDefaultLayerProps === 'function'
-    ? layerClasses[newLayer.type].findDefaultLayerProps(dataset, []) : {props: []};
+  const result =
+    typeof layerClasses[newLayer.type].findDefaultLayerProps === 'function'
+      ? layerClasses[newLayer.type].findDefaultLayerProps(dataset, [])
+      : {props: []};
 
   // an array of possible props, use 1st one
   const props = Array.isArray(result) ? result : result.props || [];
@@ -740,10 +741,10 @@ function setInitialLayerConfig(layer, datasets, layerClasses) {
       dataId: newLayer.config.dataId,
       isVisible: true
     });
-    
+
     return typeof newLayer.setInitialLayerConfig === 'function'
-    ? newLayer.setInitialLayerConfig(dataset)
-    : newLayer;
+      ? newLayer.setInitialLayerConfig(dataset)
+      : newLayer;
   }
 
   return newLayer;
@@ -774,7 +775,7 @@ export function layerTypeChangeUpdater(
 
   if (!oldLayer.type) {
     // if setting layer type on an empty layer
-    newLayer = setInitialLayerConfig(newLayer, state.datasets, state.layerClasses)    
+    newLayer = setInitialLayerConfig(newLayer, state.datasets, state.layerClasses);
   } else {
     // get a mint layer, with new id and type
     // because deck.gl uses id to match between new and old layer.
