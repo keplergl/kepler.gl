@@ -246,6 +246,3 @@ export {
 
 // Context
 export {default as KeplerGlContext, RootContext} from 'components/context';
-
-// hooks
-export {default as useFeatureFlags} from './hooks/use-feature-flags';

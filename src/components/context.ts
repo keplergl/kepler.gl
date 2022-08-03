@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {createContext, RefObject, ReactNode} from 'react';
+import {createContext, RefObject} from 'react';
 
 const identity = state => state;
 // New Context API only supported after 16.3
@@ -26,21 +26,6 @@ const KeplerGlContext = createContext({
   selector: identity,
   id: 'map'
 });
-
-export type FeatureFlags = {};
-
-export const FeatureFlagsContext = createContext<FeatureFlags>({});
-
-export type FeatureFlagsContextProviderProps = {
-  children: ReactNode;
-  featureFlags?: FeatureFlags;
-};
-
-export const FeatureFlagsContextProvider = (props: FeatureFlagsContextProviderProps) => (
-  <FeatureFlagsContext.Provider value={props.featureFlags || {}}>
-    {props.children}
-  </FeatureFlagsContext.Provider>
-);
 
 export const RootContext = createContext<RefObject<HTMLDivElement> | null>(null);
 

@@ -600,36 +600,31 @@ export default function MapContainerFactory(
 
       return (
         <>
-          <FeatureFlagsContext.Consumer>
-            {featureFlags => (
-              <MapControl
-                availableLocales={Object.keys(LOCALE_CODES)}
-                primary={primary}
-                featureFlags={featureFlags}
-                datasets={datasets}
-                dragRotate={mapState.dragRotate}
-                isSplit={isSplit}
-                isExport={isExport}
-                layers={layers}
-                layersToRender={layersToRender}
-                mapIndex={index}
-                mapControls={mapControls}
-                readOnly={this.props.readOnly}
-                scale={mapState.scale || 1}
-                top={interactionConfig.geocoder && interactionConfig.geocoder.enabled ? 52 : 0}
-                editor={editor}
-                locale={locale}
-                onTogglePerspective={mapStateActions.togglePerspective}
-                onToggleSplitMap={mapStateActions.toggleSplitMap}
-                onMapToggleLayer={this._handleMapToggleLayer}
-                onToggleMapControl={this._toggleMapControl}
-                onSetEditorMode={visStateActions.setEditorMode}
-                onSetLocale={uiStateActions.setLocale}
-                onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
-                mapHeight={mapState.height}
-              />
-            )}
-          </FeatureFlagsContext.Consumer>
+          <MapControl
+            availableLocales={Object.keys(LOCALE_CODES)}
+            primary={primary}
+            datasets={datasets}
+            dragRotate={mapState.dragRotate}
+            isSplit={isSplit}
+            isExport={isExport}
+            layers={layers}
+            layersToRender={layersToRender}
+            mapIndex={index}
+            mapControls={mapControls}
+            readOnly={this.props.readOnly}
+            scale={mapState.scale || 1}
+            top={interactionConfig.geocoder && interactionConfig.geocoder.enabled ? 52 : 0}
+            editor={editor}
+            locale={locale}
+            onTogglePerspective={mapStateActions.togglePerspective}
+            onToggleSplitMap={mapStateActions.toggleSplitMap}
+            onMapToggleLayer={this._handleMapToggleLayer}
+            onToggleMapControl={this._toggleMapControl}
+            onSetEditorMode={visStateActions.setEditorMode}
+            onSetLocale={uiStateActions.setLocale}
+            onToggleEditorVisibility={visStateActions.toggleEditorVisibility}
+            mapHeight={mapState.height}
+          />
           <MapComponent
             {...mapProps}
             key="bottom"

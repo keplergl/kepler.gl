@@ -30,7 +30,6 @@ import MapLegendPanelFactory from './map-legend-panel';
 import MapDrawPanelFactory from './map-draw-panel';
 import LocalePanelFactory from './locale-panel';
 import {Datasets, Editor, MapControls} from 'reducers';
-import {FeatureFlags} from '../context';
 import {Layer} from '@kepler.gl/layers';
 
 interface StyledMapControlProps {
@@ -57,7 +56,6 @@ const LegendLogo = <KeplerGlLogo version={false} appName="kepler.gl" />;
 
 export type MapControlProps = {
   availableLocales: ReadonlyArray<string>;
-  featureFlags: FeatureFlags;
   datasets: Datasets;
   dragRotate: boolean;
   isSplit: boolean;
