@@ -60,8 +60,6 @@ import {
 // default-settings
 import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
 import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepler.gl/constants';
-// Contexts
-import {FeatureFlagsContext} from '../components/context';
 import ErrorBoundary from 'components/common/error-boundary';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
 import {LOCALE_CODES} from '@kepler.gl/localization';
@@ -601,11 +599,11 @@ export default function MapContainerFactory(
       return (
         <>
           <MapControl
-            availableLocales={Object.keys(LOCALE_CODES)}
-            primary={primary}
             datasets={datasets}
+            availableLocales={Object.keys(LOCALE_CODES)}
             dragRotate={mapState.dragRotate}
             isSplit={isSplit}
+            primary={primary}
             isExport={isExport}
             layers={layers}
             layersToRender={layersToRender}
