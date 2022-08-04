@@ -372,6 +372,9 @@ export default class GeoJsonLayer extends Layer {
   }
 
   setInitialLayerConfig({dataContainer}) {
+    if (!dataContainer.numRows()) {
+      return this;
+    }
     this.updateLayerMeta(dataContainer);
 
     const {featureTypes} = this.meta;
