@@ -29,8 +29,8 @@ import {notNullorUndefined} from 'utils/data-utils';
 import FieldTokenFactory from '../common/field-token';
 import {Field} from 'utils/table-utils/kepler-table';
 
-const defaultDisplayOption = d => d.displayName || d.name;
-const defaultValueOption = d => d.name;
+const defaultDisplayOption = (d: Field) => d.displayName || d.name;
+const defaultValueOption = (d: Field) => d.name;
 
 const StyledToken = styled.div`
   display: inline-block;
@@ -40,11 +40,19 @@ const StyledFieldListItem = styled.div`
   line-height: 0;
 `;
 
+export type FieldListItemFactoryProps = {
+  value: Field;
+  displayOption: (field: Field) => string;
+};
+
 FieldListItemFactoryFactory.deps = [FieldTokenFactory];
 // custom list Item
 export function FieldListItemFactoryFactory(FieldToken) {
   const FieldListItemFactory = (showToken = true) => {
-    const FieldListItem = ({value, displayOption = defaultDisplayOption}) => (
+    const FieldListItem = ({
+      value,
+      displayOption = defaultDisplayOption
+    }: FieldListItemFactoryProps) => (
       <StyledFieldListItem className="field-selector_list-item">
         {showToken ? (
           <StyledToken>
