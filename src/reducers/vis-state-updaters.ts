@@ -103,8 +103,6 @@ import * as MapStateActions from 'actions/map-state-actions';
 import {LoaderObject} from '@loaders.gl/loader-utils';
 import {KeplerTable} from '../utils';
 
-export type {Field, FieldPair, FilterRecord, GpuFilter} from 'utils/table-utils/kepler-table';;
-
 export {KeplerTable};
 
 export type HistogramBin = {
