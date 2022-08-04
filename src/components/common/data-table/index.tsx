@@ -27,6 +27,7 @@ import get from 'lodash.get';
 import debounce from 'lodash.debounce';
 
 import OptionDropdown from './option-dropdown';
+import {CellSizeCache} from './cell-size';
 
 import Grid from './grid';
 import Button from './button';
@@ -226,6 +227,20 @@ export const Container = styled.div`
 
 const defaultColumnWidth = 200;
 
+export type ColMeta = {
+  [key: string]: {
+    colIdx: number;
+    name: string;
+    displayName: string;
+    type: string;
+  };
+};
+
+export type SortColumn = {
+  column?: string;
+  mode?: string;
+};
+
 const columnWidthFunction = (columns, cellSizeCache, ghost?) => ({index}) => {
   return (columns[index] || {}).ghost ? ghost : cellSizeCache[columns[index]] || defaultColumnWidth;
 };
@@ -338,8 +353,6 @@ export const TableSection = ({
   </AutoSizer>
 );
 
-type CellSizeCache = {[id: string]: number};
-
 interface DataTableProps {
   cellSizeCache?: CellSizeCache;
   pinnedColumns?: string[];
@@ -348,16 +361,11 @@ interface DataTableProps {
   theme?: any;
   dataContainer: DataContainerInterface;
   fixedHeight?: number;
-  colMeta: {
-    [id: string]: {
-      name: string;
-      type: string;
-    };
-  };
-  sortColumn?: {[id: string]: string};
-  sortTableColumn: (id: string, mode?: string) => void;
-  pinTableColumn: (id: string) => void;
-  copyTableColumn: (id: string) => void;
+  colMeta: ColMeta;
+  sortColumn?: SortColumn;
+  sortTableColumn: (column: string, mode?: string) => void;
+  pinTableColumn: (column: string) => void;
+  copyTableColumn: (column: string) => void;
   sortOrder?: number[] | null;
 }
 
@@ -581,7 +589,7 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
         ? [...unpinnedColumns, {ghost: true} as string & {ghost: boolean}]
         : unpinnedColumns;
       const pinnedColumnsWidth = pinnedColumns.reduce(
-        (acc, val) => acc + get(cellSizeCache, val, 0),
+        (acc, val) => acc + (get(cellSizeCache, val, 0) as number),
         0
       );
 

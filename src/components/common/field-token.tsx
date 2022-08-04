@@ -22,10 +22,14 @@ import React from 'react';
 import styled from 'styled-components';
 import {FIELD_TYPE_DISPLAY, FIELD_COLORS} from '@kepler.gl/constants';
 
+export type FieldTokenProps = {
+  type: string;
+};
+
 function FieldTokenFactory(
   fieldTypeDisplay: ReturnType<typeof getFieldTypes>,
   fieldColors: ReturnType<typeof getFieldColors>
-) {
+): React.FC<FieldTokenProps> {
   const FieldTag = styled.div`
     background-color: rgba(${props => props.color}, 0.2);
     border-radius: 2px;
@@ -40,7 +44,7 @@ function FieldTokenFactory(
     line-height: 20px;
   `;
 
-  const FieldToken = ({type}) => (
+  const FieldToken = ({type}: FieldTokenProps) => (
     <FieldTag
       color={(fieldTypeDisplay[type] && fieldTypeDisplay[type].color) || fieldColors.default}
     >

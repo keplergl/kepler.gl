@@ -20,12 +20,34 @@
 
 import document from 'global/document';
 import {parseFieldValue} from 'utils/data-utils';
+import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 
-const MIN_GHOST_CELL_SIZE = 200;
+const MIN_GHOST_CELL_SIZE: number = 200;
+
+type RenderSizeParam = {
+  text: {dataContainer: DataContainerInterface; column: string};
+  type?: string;
+  colIdx: number;
+  numRowsToCalculate?: number;
+  fontSize?: number;
+  font?: string;
+  cellPadding?: number;
+  maxCellSize?: number;
+  maxHeaderSize?: number;
+  minCellSize?: number;
+  optionsButton?: number;
+};
+
+export type CellSizeCache = {
+  [key: string]: {
+    row: number;
+    header: number;
+  };
+};
 
 /**
  * Measure rows and column content to determine min width for each column
- * @param {*} param0
+ * @param {RenderSizeParam} param0
  */
 export function renderedSize({
   text: {dataContainer, column},
@@ -39,7 +61,7 @@ export function renderedSize({
   maxHeaderSize = 150,
   minCellSize = 45,
   optionsButton = 30
-}) {
+}: RenderSizeParam): {row: number; header: number} {
   if (!document) {
     return {
       row: 0,
@@ -94,7 +116,7 @@ function getColumnOrder(pinnedColumns: string[] = [], unpinnedColumns: string[] 
   return [...pinnedColumns, ...unpinnedColumns];
 }
 
-function getMinCellSize(cellSizeCache) {
+function getMinCellSize(cellSizeCache: CellSizeCache) {
   return Object.keys(cellSizeCache).reduce(
     (accu, col) => ({
       ...accu,
@@ -114,17 +136,20 @@ function getSizeSum(sizeCache, key) {
 /**
  * Expand cell to fit both row and header, if there is still room left,
  * expand last cell to fit the entire width of the container
- * @param {object} cellSizeCache
+ * @param {CellSizeCache} cellSizeCache
  * @param {string[]} columnOrder
  * @param {number} containerWidth
  * @param {number} roomToFill
  */
 function expandCellSize(
-  cellSizeCache: object,
+  cellSizeCache: CellSizeCache,
   columnOrder: string[],
   containerWidth: number,
   roomToFill: number
-) {
+): {
+  cellSizeCache: CellSizeCache;
+  ghost: number | null;
+} {
   let remaining = roomToFill;
 
   const expandedCellSize = columnOrder.reduce((accu, col) => {
@@ -163,16 +188,19 @@ function expandCellSize(
 /**
  * Adjust cell size based on container width
  * @param {number} containerWidth
- * @param {Object} cellSizeCache
+ * @param {CellSizeCache} cellSizeCache
  * @param {string[]} pinnedColumns
  * @param {string[]} unpinnedColumns
  */
 export function adjustCellsToContainer(
   containerWidth: number,
-  cellSizeCache: object,
+  cellSizeCache: CellSizeCache,
   pinnedColumns: string[],
   unpinnedColumns: string[]
-) {
+): {
+  cellSizeCache: CellSizeCache;
+  ghost?: number | null;
+} {
   const minRowSum = getSizeSum(cellSizeCache, 'row');
   if (minRowSum >= containerWidth) {
     // we apply the min Width to all cells
