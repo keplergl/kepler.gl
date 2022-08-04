@@ -172,7 +172,7 @@ export type FilterBase = {
 
   // plot
   yAxis: Field | null;
-  plotType: string | Record<string, any>;
+  plotType: string;
   lineChart?: LineChart;
   // gpu filter
   gpu: boolean;
