@@ -56,9 +56,9 @@ For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 Install node (`> 10.15.0`), yarn, and project dependencies
 
 ```sh
-npm install --save kepler.gl
+npm install --save kepler.gl deck.gl@^8.4.16
 // or
-yarn add kepler.gl
+yarn add kepler.gl deck.gl@^8.4.16
 ```
 
 kepler.gl is built upon [mapbox][mapbox]. You will need a [Mapbox Access Token][mapbox-token] to use it.

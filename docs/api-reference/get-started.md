@@ -5,7 +5,7 @@
 Use <b>Node v6</b> and above, older node versions have not been tested
 
 ```sh
-npm install --save kepler.gl
+npm install --save kepler.gl deck.gl@^8.4.16
 ```
 
 ### Get Mapbox Token

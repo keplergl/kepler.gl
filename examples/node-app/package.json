@@ -4,6 +4,7 @@
     "start-local": "WEBPACK_ENV=es6 node server.js"
   },
   "dependencies": {
+    "deck.gl": "^8.4.16",
     "express": "^4.17.1",
     "global": "^4.3.0",
     "kepler.gl": "^2.5.5",
