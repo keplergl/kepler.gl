@@ -115,6 +115,7 @@ export default class GridLayer extends AggregationLayer {
   renderLayer(opts) {
     const {data, objectHovered, mapState} = opts;
 
+    const defaultAggregationLayerProps = this.getDefaultAggregationLayerProp(opts);
     const zoomFactor = this.getZoomFactor(mapState);
     const {visConfig} = this.config;
     const cellSize = visConfig.worldUnitSize * 1000;
@@ -122,7 +123,7 @@ export default class GridLayer extends AggregationLayer {
 
     return [
       new EnhancedGridLayer({
-        ...this.getDefaultAggregationLayerProp(opts),
+        ...defaultAggregationLayerProps,
         ...data,
         wrapLongitude: false,
         cellSize
@@ -133,6 +134,7 @@ export default class GridLayer extends AggregationLayer {
         ? [
             new GeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
+              visible: defaultAggregationLayerProps.visible,
               wrapLongitude: false,
               data: [
                 pointToPolygonGeo({

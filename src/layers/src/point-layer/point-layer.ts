@@ -382,6 +382,7 @@ export default class PointLayer extends Layer {
             new ScatterplotLayer({
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
+              visible: defaultLayerProps.visible,
               data: [hoveredObject],
               getLineColor: this.config.highlightColor,
               getFillColor: this.config.highlightColor,
