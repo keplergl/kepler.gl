@@ -37,7 +37,6 @@ import {
   EyeUnseen,
   Trash,
   VertDots,
-  Reset,
   WarningSign
 } from 'components/common/icons';
 
@@ -115,7 +114,7 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
     padding: 10px;
   }
 
-  ${props => (props.warning ? getBorderCss('warning') : props.isValid ? '' : getBorderCss('error'))}
+  ${props => (props.warning ? getBorderCss('warning') : '')}
 
   :hover {
     cursor: pointer;

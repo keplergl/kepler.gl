@@ -329,6 +329,7 @@ export const InlineInput = styled(Input)`
 export interface StyledPanelHeaderProps {
   active?: boolean;
   labelRCGColorValues?: RGBColor | null;
+  warning?: boolean;
 }
 
 export const StyledPanelHeader = styled.div<StyledPanelHeaderProps>`
