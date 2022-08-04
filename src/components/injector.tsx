@@ -21,6 +21,11 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
+import {
+  MapStateToPropsParam,
+  MapDispatchToPropsParam,
+  InferableComponentEnhancerWithProps
+} from 'react-redux';
 import {console as Console} from 'global/window';
 import KeplerGlContext from 'components/context';
 
@@ -134,6 +139,14 @@ export function typeCheckRecipe(recipe) {
   }
 
   return true;
+}
+
+export interface WithState<RootState> {
+  <TStateProps = {}, TDispatchProps = {}, TOwnProps = {}, State = RootState>(
+    lenses: any[],
+    mapStateToProps: MapStateToPropsParam<TStateProps, TOwnProps, State>,
+    mapDispatchToProps?: MapDispatchToPropsParam<TDispatchProps, TOwnProps>
+  ): InferableComponentEnhancerWithProps<TStateProps & TDispatchProps, TOwnProps>;
 }
 
 const identity = state => state;
