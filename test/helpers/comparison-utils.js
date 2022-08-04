@@ -21,7 +21,6 @@
 import {FILTER_TYPES} from '@kepler.gl/constants';
 import {toArray} from '../../src/utils/utils';
 import {getFieldValueAccessor} from '../../src/utils';
-import {getSampleData} from '../../src/utils/data-utils';
 import KeplerTable from '../../src/utils/table-utils/kepler-table';
 
 export function cmpObjectKeys(t, expectedObj, actualObj, name) {
