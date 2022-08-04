@@ -61,6 +61,7 @@ export type {
   AnimationConfig,
   Brush,
   Coordinate,
+  KeplerTable,
   Datasets,
   Editor,
   Feature,

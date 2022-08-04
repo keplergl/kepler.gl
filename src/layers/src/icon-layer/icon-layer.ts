@@ -20,6 +20,7 @@
 
 import window from 'global/window';
 import {BrushingExtension} from '@deck.gl/extensions';
+import GL from '@luma.gl/constants';
 
 import {SvgIconLayer} from '@kepler.gl/deckgl-layers';
 import IconLayerIcon from './icon-layer-icon';
@@ -354,7 +355,8 @@ export default class IconLayer extends Layer {
 
     const parameters = {
       // icons will be flat on the map when the altitude column is not used
-      depthTest: this.config.columns.altitude?.fieldIdx > -1
+      depthTest: this.config.columns.altitude?.fieldIdx > -1,
+      cullFace: GL.FRONT
     };
 
     return !this.iconGeometry

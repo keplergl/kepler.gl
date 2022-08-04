@@ -22,6 +22,7 @@ import pick from 'lodash.pick';
 import {console as globalConsole} from 'global/window';
 
 import {ProtoDataset} from 'actions';
+import {KeplerTable} from 'reducers';
 import {RGBColor} from 'types';
 import {VERSIONS} from './versions';
 import Schema from './schema';
@@ -113,7 +114,7 @@ export const propertiesV1 = {
 export class DatasetSchema extends Schema {
   key = 'dataset';
 
-  save(dataset): SavedDatasetV1['data'] {
+  save(dataset: KeplerTable): SavedDatasetV1['data'] {
     const datasetFlattened = dataset.dataContainer
       ? {
           ...dataset,
