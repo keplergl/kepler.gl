@@ -339,7 +339,7 @@ export default class TripLayer extends Layer {
       new DeckGLTripsLayer({
         ...defaultLayerProps,
         ...data,
-        getTimestamps: d => data.getTimestamps(d).map(ts => ts - domain0),
+        getTimestamps: d => (data.getTimestamps(d) || []).map(ts => ts - domain0),
         widthScale: this.config.visConfig.thickness * zoomFactor * zoomFactorValue,
         rounded: true,
         wrapLongitude: false,
