@@ -172,7 +172,7 @@ export default class HexagonIdLayer extends Layer {
   }
 
   setInitialLayerConfig(dataset) {
-    if (!dataset.allData?.length) {
+    if (!dataset.dataContainer.numRows()) {
       return this;
     }
     const defaultColorField = findDefaultColorField(dataset);
