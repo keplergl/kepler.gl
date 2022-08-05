@@ -1371,7 +1371,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
     }
   });
 
-  const testFields3 = [{id: 'a'}, {id: 'b'}];
   const oldState = {
     ...INITIAL_VIS_STATE,
     layers: [mockLayer],
@@ -1400,7 +1399,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
     splitMaps: []
   };
 
-  const testFields2 = [{id: 'a'}, {id: 'b'}];
   const expectedDatasets = {
     snowflake,
     smoothie: {
