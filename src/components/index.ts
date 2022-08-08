@@ -132,8 +132,12 @@ export {default as NotificationItemFactory} from './notification-panel/notificat
 // // common factory
 export {default as AnimationControlFactory} from './common/animation-control/animation-control';
 export {default as AnimationControllerFactory} from './common/animation-control/animation-controller';
-export {default as SpeedControlFactory} from './common/animation-control/speed-control';
 export {default as PlaybackControlsFactory} from './common/animation-control/playback-controls';
+export {default as WindowActionControlFactory} from './common/animation-control/window-action-control';
+export {default as PlayControlFactory} from './common/animation-control/play-control';
+export {default as ResetControlFactory} from './common/animation-control/reset-control';
+export {default as SpeedControlFactory} from './common/animation-control/speed-control';
+export {default as AnimationWindowControlFactory} from './common/animation-control/animation-window-control';
 export {default as FloatingTimeDisplayFactory} from './common/animation-control/floating-time-display';
 export {default as AnimationSpeedSliderFactory} from './common/animation-control/animation-speed-slider';
 export {default as RangePlotFactory} from './common/range-plot';
@@ -142,7 +146,7 @@ export {default as LineChartFactory} from './common/line-chart';
 export {default as RangeBrushFactory} from './common/range-brush';
 export {default as TimeSliderMarkerFactory} from './common/time-slider-marker';
 export {default as TimeRangeSliderTimeTitleFactory} from './common/time-range-slider-time-title';
-
+export {default as IconButton} from './common/icon-button';
 // // Filters factory
 export {default as TimeWidgetFactory, TimeWidgetTopFactory} from './filters/time-widget';
 export {default as SingleSelectFilterFactory} from './filters/single-select-filter';

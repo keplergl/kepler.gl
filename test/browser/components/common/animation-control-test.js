@@ -32,10 +32,8 @@ import {
 } from 'components';
 import {appInjector} from 'components/container';
 import {StateWTripGeojson} from 'test/helpers/mock-state';
-import {
-  AnimationWindowControl,
-  IconButton
-} from 'components/common/animation-control/playback-controls';
+import IconButton from 'components/common/icon-button';
+
 import reducer from 'reducers/vis-state';
 
 const AnimationControl = appInjector.get(AnimationControlFactory);
@@ -67,7 +65,7 @@ test('Components -> AnimationControl -> render with props', t => {
   }, 'Show not fail with trip layer props');
 
   t.equal(
-    wrapper.find(AnimationWindowControl).length,
+    wrapper.find('.animation-window-control').length,
     0,
     'should not render AnimationWindowControl'
   );

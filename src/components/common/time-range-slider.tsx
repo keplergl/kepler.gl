@@ -108,6 +108,7 @@ export default function TimeRangeSliderFactory(
       onChange
     } = props;
     const throttledOnchange = useMemo(() => throttle(onChange, 20), [onChange]);
+
     return (
       <div className="time-range-slider">
         {!hideTimeTitle ? (

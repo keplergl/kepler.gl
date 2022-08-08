@@ -23,6 +23,7 @@ package-lock.json
 /index.html
 
 npm-debug.log
+.history/
 
 .pnp.*
 .yarn/*
