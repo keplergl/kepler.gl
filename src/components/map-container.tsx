@@ -583,12 +583,14 @@ export default function MapContainerFactory(
       const layersToRender = this.layersToRenderSelector(this.props);
       const layersForDeck = this.layersForDeckSelector(this.props);
 
+      // Current style can be a custom style, from which we pull the mapbox API acccess token
+      const currentStyle = mapStyle.mapStyles?.[mapStyle.styleType];
       const mapProps = {
         ...mapState,
         width: '100%',
         height: '100%',
         preserveDrawingBuffer: true,
-        mapboxApiAccessToken,
+        mapboxApiAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         mapboxApiUrl,
         onViewportChange: this._onViewportChange,
         transformRequest
