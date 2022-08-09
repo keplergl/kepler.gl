@@ -1878,12 +1878,12 @@ export function closeSpecificMapAtIndex<S extends VisState>(
 ): S {
   // retrieve layers meta data from the remaining map that we need to keep
   const indexToRetrieve = 1 - action.payload;
-  const mapLayers = state.splitMaps[indexToRetrieve].layers;
+  const mapLayers = state.splitMaps[indexToRetrieve]?.layers;
   const {layers} = state;
 
   // update layer visibility
   const newLayers = layers.map(layer =>
-    !mapLayers[layer.id] && layer.config.isVisible
+    mapLayers && !mapLayers[layer.id] && layer.config.isVisible
       ? layer.updateLayerConfig({
           // if layer.id is not in mapLayers, it should be inVisible
           isVisible: false
