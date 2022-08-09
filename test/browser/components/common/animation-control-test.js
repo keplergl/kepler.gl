@@ -74,7 +74,7 @@ test('Components -> AnimationControl -> render with props', t => {
 
   wrapper
     .find(IconButton)
-    .at(2)
+    .at(0)
     .simulate('click');
   t.ok(toggleAnimation.calledOnce, 'should call toggleAnimation');
   t.end();
