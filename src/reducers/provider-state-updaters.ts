@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {withTask} from 'react-palm/tasks';
-import {default as Console} from 'global/console';
+import Console from 'global/console';
 import {generateHashId, getError, isPlainObject, toArray} from '../utils/utils';
 import {
   EXPORT_FILE_TO_CLOUD_TASK,

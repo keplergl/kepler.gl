@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {isObject} from './utils';
-import {console as Console} from 'global/console';
+import Console from 'global/console';
 
 // Flat messages since react-intl does not seem to support nested structures
 // Adapted from https://medium.com/siren-apparel-press/internationalization-and-localization-of-sirenapparel-eu-sirenapparel-us-and-sirenapparel-asia-ddee266066a2

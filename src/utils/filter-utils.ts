@@ -20,7 +20,7 @@
 
 import {ascending, extent, histogram as d3Histogram, ticks} from 'd3-array';
 import keyMirror from 'keymirror';
-import {console as Console} from 'global/console';
+import Console from 'global/console';
 import get from 'lodash.get';
 import isEqual from 'lodash.isequal';
 
@@ -240,7 +240,7 @@ export function validateFilter(
   const filterDataId = toArray(filter.dataId);
 
   const filterDatasetIndex = filterDataId.indexOf(dataset.id);
-  if (filterDatasetIndex < 0) {
+  if (filterDatasetIndex < 0 || !toArray(filter.name)[filterDatasetIndex]) {
     // the current filter is not mapped against the current dataset
     return failed;
   }
@@ -829,6 +829,20 @@ export function getTimeWidgetHintFormatter(domain: [number, number]): string | u
 
 /**
  * Sanity check on filters to prepare for save
+ * @type {typeof import('./filter-utils').isFilterValidToSave}
+ */
+export function isFilterValidToSave(filter: any): boolean {
+  return (
+    filter?.type &&
+    Array.isArray(filter?.name) &&
+    filter?.name.length &&
+    isValidFilterValue(filter?.type, filter?.value)
+  );
+}
+
+/**
+ * Sanity check on filters to prepare for save
+ * @type {typeof import('./filter-utils').isValidFilterValue}
  */
 /* eslint-disable complexity */
 export function isValidFilterValue(type: string | null, value: any): boolean {
