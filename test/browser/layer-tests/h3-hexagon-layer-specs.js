@@ -32,7 +32,7 @@ import {
   hexagonIdLayerMeta
 } from 'test/helpers/layer-utils';
 import {KeplerGlLayers, h3DefaultElevation as defaultElevation} from '@kepler.gl/layers';
-import {getCentroid} from '@kepler.gl/utils';
+import {getCentroid, idToPolygonGeo} from '@kepler.gl/utils';
 
 import {copyTableAndUpdate} from '@kepler.gl/table';
 
@@ -266,5 +266,56 @@ test('#H3Layer -> renderLayer', t => {
   ];
 
   testRenderLayerCases(t, H3Layer, TEST_CASES);
+  t.end();
+});
+
+test('#H3Layer -> idToPolygonGeo', t => {
+  const h3Object = {
+    index: 411,
+    id: '882a100d01fffff'
+  };
+
+  const hexagonOutline = idToPolygonGeo(h3Object);
+  const expectedCoordinates = [
+    [-73.9556604529423, 40.747207768842344],
+    [-73.96203986286912, 40.746155567377926],
+    [-73.96400718290255, 40.74169679631741],
+    [-73.95959600220597, 40.73829055843986],
+    [-73.95321761814058, 40.73934254051138],
+    [-73.9512493890226, 40.74380097982341],
+    [-73.9556604529423, 40.747207768842344]
+  ];
+
+  const expectedHexagonOutline = {
+    type: 'Feature',
+    geometry: {
+      coordinates: expectedCoordinates,
+      type: 'LineString'
+    },
+    properties: undefined
+  };
+  t.deepEqual(
+    hexagonOutline,
+    expectedHexagonOutline,
+    'should generate geojson object of hexagon outline (LineString)'
+  );
+
+  const properties = {isClosed: true};
+  const hexagonPolygon = idToPolygonGeo(h3Object, properties);
+
+  const expectedHexagonPolygon = {
+    type: 'Feature',
+    geometry: {
+      coordinates: [expectedCoordinates],
+      type: 'Polygon'
+    },
+    properties: {isClosed: true}
+  };
+  t.deepEqual(
+    hexagonPolygon,
+    expectedHexagonPolygon,
+    'should generate geojson object of hexagon outline (LineString)'
+  );
+
   t.end();
 });
