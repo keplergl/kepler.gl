@@ -164,14 +164,19 @@ export const addDataToMapUpdater = (
 
   return compose_<KeplerGlState>([
     pick_('visState')(
-      apply_(visStateUpdateVisDataUpdater, {
+      apply_<VisState, any>(visStateUpdateVisDataUpdater, {
         datasets,
         options,
         config: parsedConfig
       })
     ),
 
-    if_(Boolean(info), pick_('visState')(apply_(setMapInfoUpdater, {info}))),
+    if_(
+      Boolean(info),
+      pick_('visState')(
+        apply_<VisState, any>(setMapInfoUpdater, {info})
+      )
+    ),
 
     with_(({visState}) =>
       pick_('mapState')(

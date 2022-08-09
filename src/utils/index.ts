@@ -56,6 +56,8 @@ export {getHexFields, containValidTime} from '@kepler.gl/layers';
 export {
   default as KeplerTable,
   findPointFieldPairs,
+  getFieldValueAccessor,
+  copyTable,
   copyTableAndUpdate
 } from './table-utils/kepler-table';
 export {createDataContainer, createIndexedDataContainer} from './table-utils/data-container-utils';

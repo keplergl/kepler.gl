@@ -37,7 +37,7 @@ import {TooltipInfo} from './vis-state-updaters';
 import {SavedInteractionConfig} from 'schemas';
 
 export type Merger = {
-  merge: (state: VisState, config: any, fromConfig?: boolean) => VisState;
+  merge: <S extends VisState>(state: S, config: any, fromConfig?: boolean) => S;
   prop: string;
   toMergeProp?: string;
 };
@@ -48,11 +48,11 @@ export type VisStateMergers = Merger[];
  * save it for later
  *
  */
-export function mergeFilters(
-  state: VisState,
+export function mergeFilters<S extends VisState>(
+  state: S,
   filtersToMerge: NonNullable<ParsedConfig['visState']>['filters'],
   fromConfig?: boolean
-): VisState {
+): S {
   if (!Array.isArray(filtersToMerge) || !filtersToMerge.length) {
     return state;
   }
@@ -115,11 +115,11 @@ export function serializeLayer(newLayer): ParsedLayer {
  * save it for later
  *
  */
-export function mergeLayers(
-  state: VisState,
+export function mergeLayers<S extends VisState>(
+  state: S,
   layersToMerge: NonNullable<ParsedConfig['visState']>['layers'] = [],
   fromConfig?: boolean
-): VisState {
+): S {
   const preserveLayerOrder = fromConfig ? layersToMerge.map(l => l.id) : state.preserveLayerOrder;
 
   if (!Array.isArray(layersToMerge) || !layersToMerge.length) {
@@ -145,7 +145,6 @@ export function mergeLayers(
     ...state,
     layers: newLayers,
     layerOrder: newLayerOrder,
-    // @ts-expect-error
     preserveLayerOrder,
     layerToBeMerged: [...state.layerToBeMerged, ...unmerged]
   };
@@ -202,11 +201,11 @@ export function insertLayerAtRightOrder(
  * Merge interactions with saved config
  *
  */
-export function mergeInteractions(
-  state: VisState,
+export function mergeInteractions<S extends VisState>(
+  state: S,
   interactionToBeMerged: Partial<SavedInteractionConfig> | undefined,
   fromConfig?: boolean
-): VisState {
+): S {
   const merged: Partial<SavedInteractionConfig> = {};
   const unmerged: Partial<SavedInteractionConfig> = {};
 
@@ -263,7 +262,6 @@ export function mergeInteractions(
 
   return {
     ...state,
-    // @ts-expect-error
     interactionConfig: {
       ...state.interactionConfig,
       ...merged
@@ -279,11 +277,11 @@ export function mergeInteractions(
  * 2. if current map is NOT split, but splitMaps contain maps
  *    : add to splitMaps, and add current layers to splitMaps
  */
-export function mergeSplitMaps(
-  state: VisState,
+export function mergeSplitMaps<S extends VisState>(
+  state: S,
   splitMaps: NonNullable<ParsedConfig['visState']>['splitMaps'] = [],
   fromConfig?: boolean
-): VisState {
+): S {
   const merged = [...state.splitMaps];
   const unmerged = [];
   splitMaps.forEach((sm, i) => {
@@ -353,11 +351,11 @@ export function mergeInteractionTooltipConfig(
  * Merge layerBlending with saved
  *
  */
-export function mergeLayerBlending(
-  state: VisState,
+export function mergeLayerBlending<S extends VisState>(
+  state: S,
   layerBlending: NonNullable<ParsedConfig['visState']>['layerBlending'],
   fromConfig?: boolean
-): VisState {
+): S {
   if (layerBlending && LAYER_BLENDINGS[layerBlending]) {
     return {
       ...state,
@@ -371,11 +369,11 @@ export function mergeLayerBlending(
 /**
  * Merge animation config
  */
-export function mergeAnimationConfig(
-  state: VisState,
+export function mergeAnimationConfig<S extends VisState>(
+  state: S,
   animation: NonNullable<ParsedConfig['visState']>['animationConfig'],
   fromConfig?: boolean
-): VisState {
+): S {
   if (animation && animation.currentTime) {
     return {
       ...state,
