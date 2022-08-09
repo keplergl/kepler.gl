@@ -227,11 +227,13 @@ export function cmpDatasets(t, expectedDatasets, actualDatasets) {
     cmpDataset(t, expectedDatasets[dataId], actualDatasets[dataId]);
   });
 }
+
 export function assertDatasetIsTable(t, dataset) {
   t.ok(dataset instanceof KeplerTable, `${dataset.label || 'dataset'} should be a KeplerTable`);
 }
 
 export function cmpDataset(t, expectedDataset, actualDataset, opt = {}) {
+  assertDatasetIsTable(t, actualDataset);
   cmpObjectKeys(t, expectedDataset, actualDataset, `dataset:${expectedDataset.id}`);
 
   // test everything except auto generated color

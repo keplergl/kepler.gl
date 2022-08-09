@@ -36,6 +36,7 @@ import {getDefaultInteraction} from 'utils/interaction-utils';
 import {getDefaultFilter} from 'utils/filter-utils';
 import {createNewDataEntry} from 'utils/dataset-utils';
 import {maybeToDate} from 'utils/data-utils';
+import KeplerTable from 'utils/table-utils/kepler-table';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {Layer, KeplerGlLayers} from '@kepler.gl/layers';
 import {
@@ -71,7 +72,8 @@ import {
   cmpDatasets,
   cmpDataset,
   cmpObjectKeys,
-  cmpField
+  cmpField,
+  assertDatasetIsTable
 } from 'test/helpers/comparison-utils';
 import {
   applyActions,
@@ -86,7 +88,6 @@ import {
   InitialState
 } from 'test/helpers/mock-state';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
-import {assertDatasetIsTable} from '../../helpers/comparison-utils';
 
 const mockData = {
   fields: [
@@ -1361,8 +1362,16 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
       }
     }
   });
+  const snowflake = new KeplerTable({
+    data: {
+      fields: [{name: 'a'}, {name: 'b'}],
+      rows: [['something'], ['something_else']]
+    },
+    info: {
+      id: 'snowflake'
+    }
+  });
 
-  const testFields3 = [{id: 'a'}, {id: 'b'}];
   const oldState = {
     ...INITIAL_VIS_STATE,
     layers: [mockLayer],
@@ -1373,12 +1382,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
       [7, 8]
     ],
     datasets: {
-      snowflake: {
-        fields: testFields3,
-        dataContainer: createDataContainer([['something'], ['something_else']], {
-          fields: testFields3
-        })
-      }
+      snowflake
     },
     filters: [{name: 'hello'}, {name: 'world'}],
     interactionConfig: {
@@ -1396,14 +1400,8 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
     splitMaps: []
   };
 
-  const testFields2 = [{id: 'a'}, {id: 'b'}];
   const expectedDatasets = {
-    snowflake: {
-      fields: testFields2,
-      dataContainer: createDataContainer([['something'], ['something_else']], {
-        fields: testFields2
-      })
-    },
+    snowflake,
     smoothie: {
       metadata: {
         id: 'smoothie',
@@ -2187,6 +2185,7 @@ test('#visStateReducer -> RENAME_DATASET', t => {
   const newLabel = 'New label!!!11';
   const updated = reducer(initialState, VisStateActions.renameDataset(tripDataInfo.id, newLabel));
 
+  assertDatasetIsTable(t, updated.datasets[tripDataInfo.id]);
   t.equal(updated.datasets[tripDataInfo.id].label, newLabel, 'Updated label as expected');
 
   t.end();
