@@ -140,7 +140,7 @@ class KeplerTable {
   metadata: object;
 
   constructor({
-    info = {},
+    info,
     data,
     color,
     metadata,

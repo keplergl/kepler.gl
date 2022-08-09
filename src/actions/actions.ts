@@ -36,6 +36,7 @@ export type ProtoDataset = {
     label?: string;
     format?: string;
     color?: RGBColor;
+    type?: string;
   };
   data: {
     fields: {
