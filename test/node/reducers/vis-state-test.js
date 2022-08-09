@@ -321,6 +321,14 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
     layers: [{id: 'existing_layer'}, layer],
     layerData: [[{data: [1, 2, 3]}, {data: [4, 5, 6]}]],
     layerOrder: [1, 0],
+    hoverInfo: {
+      layer: {props: {id: 'more_layer'}},
+      picked: true
+    },
+    clicked: {
+      layer: {props: {id: 'more_layer'}},
+      picked: true
+    },
     splitMaps: [
       {
         layers: {
@@ -363,6 +371,9 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
     expectedSplitMaps,
     'should add newId to SplitMaps, and replace old id'
   );
+
+  t.ok(!nextState.clicked, 'should reset clicked');
+  t.ok(!nextState.hoverInfo, 'should reset hoverInfo');
 
   t.end();
 });

@@ -785,8 +785,16 @@ export function layerTypeChangeUpdater<S extends VisState>(
     newLayer.updateLayerDomain(state.datasets);
   }
 
-  const {layerData, layer} = calculateLayerData(newLayer, state);
-  let newState = updateStateWithLayerAndData(state, {layerData, layer, idx});
+  const {clicked, hoverInfo} = state;
+
+  let newState = {
+    ...state,
+    clicked: oldLayer.isLayerHovered(clicked) ? undefined : clicked,
+    hoverInfo: oldLayer.isLayerHovered(hoverInfo) ? undefined : hoverInfo
+  };
+
+  const {layerData, layer} = calculateLayerData(newLayer, newState);
+  newState = updateStateWithLayerAndData(newState, {layerData, layer, idx});
 
   if (layer.config.animation.enabled || oldLayer.config.animation.enabled) {
     newState = updateAnimationDomain(newState);
