@@ -166,6 +166,7 @@ class KeplerTable {
     const datasetInfo = {
       id: generateHashId(4),
       label: 'new dataset',
+      type: '',
       ...info
     };
     const dataId = datasetInfo.id;
@@ -187,6 +188,7 @@ class KeplerTable {
     };
 
     this.id = datasetInfo.id;
+    this.type = datasetInfo.type;
     this.label = datasetInfo.label;
     this.color = color;
     this.metadata = {
