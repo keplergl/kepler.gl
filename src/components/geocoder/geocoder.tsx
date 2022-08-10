@@ -208,7 +208,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
       const newViewport = new WebMercatorViewport(viewport);
       const {bbox, center} = item;
 
-      const resultViewport = bbox
+      const gotoViewport = bbox
         ? newViewport.fitBounds([
             [bbox[0], bbox[1]],
             [bbox[2], bbox[3]]
@@ -219,7 +219,7 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
             zoom: pointZoom
           };
 
-      const {longitude, latitude, zoom} = resultViewport;
+      const {longitude, latitude, zoom} = gotoViewport;
 
       onSelected({...viewport, ...{longitude, latitude, zoom, transitionDuration}}, item);
 
