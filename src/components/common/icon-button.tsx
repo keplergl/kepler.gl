@@ -1,7 +1,11 @@
+import {MouseEvent} from 'react';
 import styled from 'styled-components';
 import {Button, ButtonProps} from './styled-components';
 interface IconButtonProps extends ButtonProps {
   collapsed?: boolean;
+  theme?: object;
+  className?: string;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
 export const IconButton = styled(Button)<IconButtonProps>`
