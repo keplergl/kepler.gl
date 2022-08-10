@@ -18,14 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import '@loaders.gl/polyfills';
 import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {processGeojson, processKeplerglJSON, processRowObject} from './data-processor';
 import {isPlainObject, generateHashId} from '../../utils/utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
-import {LoaderObject} from '@loaders.gl/loader-utils';
+import {Loader} from '@loaders.gl/loader-utils';
 import {AddDataToMapPayload} from '../../actions/actions';
 import {FileCacheItem, ValidKeplerGlMap} from './types';
 import {Feature} from '../../reducers';
@@ -38,12 +37,12 @@ const BATCH_TYPE = {
 };
 
 const CSV_LOADER_OPTIONS = {
-  batchSize: 4000, // Auto de tect number of rows per batch (network batch size)
-  rowFormat: 'object',
+  shape: 'object-row-table',
   dynamicTyping: false // not working for now
 };
 
 const JSON_LOADER_OPTIONS = {
+  shape: 'object-row-table',
   // instruct loaders.gl on what json paths to stream
   jsonpaths: [
     '$', // JSON Row array
@@ -152,7 +151,7 @@ export async function readFileInBatches({
 }: {
   file: File;
   fileCache: FileCacheItem[];
-  loaders: LoaderObject[];
+  loaders: Loader[];
   loadOptions: any;
 }): Promise<AsyncGenerator> {
   loaders = [JSONLoader, CSVLoader, ...loaders];

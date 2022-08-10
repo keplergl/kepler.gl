@@ -545,7 +545,7 @@ test('#HexagonLayer -> renderHover', t => {
             'test_layer_1',
             'test_layer_1-hexagon-cell',
             'test_layer_1-hovered',
-            'test_layer_1-hovered-line-strings'
+            'test_layer_1-hovered-linestrings'
           ],
           'Should create 4 deck.gl layers'
         );

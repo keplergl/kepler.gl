@@ -175,7 +175,6 @@ export const DEFAULT_MODAL = ADD_DATA_ID;
  * export default composedReducer;
  */
 /* eslint-disable no-unused-vars */
-// @ts-expect-error
 const uiStateUpdaters = null;
 /* eslint-enable no-unused-vars */
 

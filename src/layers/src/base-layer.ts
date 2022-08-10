@@ -44,7 +44,8 @@ import {
   DEFAULT_COLOR_UI,
   UNKNOWN_COLOR_KEY,
   DEFAULT_HIGHLIGHT_COLOR,
-  DEFAULT_LAYER_LABEL
+  DEFAULT_LAYER_LABEL,
+  PROJECTED_PIXEL_SIZE_MULTIPLIER
 } from '@kepler.gl/constants';
 
 import {generateHashId, isPlainObject} from 'utils/utils';
@@ -1320,7 +1321,7 @@ class Layer {
             getPosition,
             characterSet: d.characterSet,
             getPixelOffset: getPixelOffset(textLabel[i]),
-            getSize: 1,
+            getSize: PROJECTED_PIXEL_SIZE_MULTIPLIER,
             sizeScale: textLabel[i].size,
             getTextAnchor: textLabel[i].anchor,
             getAlignmentBaseline: textLabel[i].alignment,

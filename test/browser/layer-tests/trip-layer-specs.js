@@ -301,7 +301,8 @@ test('#TripLayer -> renderLayer', t => {
         const deckTripLayer = deckLayers[0];
         const expectedProps = {
           trailLength: 2000,
-          rounded: true,
+          capRounded: true,
+          jointRounded: true,
           widthScale: 128,
           currentTime: 0,
           parameters: {depthTest: false, depthMask: false},

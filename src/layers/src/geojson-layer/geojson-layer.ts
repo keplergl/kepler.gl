@@ -269,7 +269,7 @@ export default class GeoJsonLayer extends Layer {
         range: 'radiusRange',
         key: 'radius',
         channelScaleType: CHANNEL_SCALES.radius,
-        accessor: 'getRadius',
+        accessor: 'getPointRadius',
         nullValue: 0,
         getAttributeValue: () => d => d.properties.radius || defaultRadius
       }
@@ -438,7 +438,8 @@ export default class GeoJsonLayer extends Layer {
         wireframe: visConfig.wireframe,
         wrapLongitude: false,
         lineMiterLimit: 2,
-        rounded: true,
+        capRounded: true,
+        jointRounded: true,
         updateTriggers,
         _subLayerProps: {
           ...(featureTypes?.polygon ? {'polygons-stroke': opaOverwrite} : {}),
@@ -460,7 +461,7 @@ export default class GeoJsonLayer extends Layer {
               wrapLongitude: false,
               data: [hoveredObject],
               getLineWidth: data.getLineWidth,
-              getRadius: data.getRadius,
+              getPointRadius: data.getPointRadius,
               getElevation: data.getElevation,
               getLineColor: this.config.highlightColor,
               getFillColor: this.config.highlightColor,

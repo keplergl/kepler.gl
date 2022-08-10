@@ -30,7 +30,11 @@ import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
 
 import {hexToRgb} from 'utils/color-utils';
 import ArcLayerIcon from './arc-layer-icon';
-import {DEFAULT_LAYER_COLOR, ColorRange} from '@kepler.gl/constants';
+import {
+  DEFAULT_LAYER_COLOR,
+  ColorRange,
+  PROJECTED_PIXEL_SIZE_MULTIPLIER
+} from '@kepler.gl/constants';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 
 import {
@@ -265,6 +269,7 @@ export default class ArcLayer extends Layer {
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       ...this.getVisualChannelUpdateTriggers()
     };
+    const widthScale = this.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER;
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
     return [
@@ -272,7 +277,7 @@ export default class ArcLayer extends Layer {
         ...defaultLayerProps,
         ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
-        widthScale: this.config.visConfig.thickness,
+        widthScale,
         updateTriggers,
         extensions: [...defaultLayerProps.extensions, new BrushingExtension()]
       }),
@@ -282,7 +287,7 @@ export default class ArcLayer extends Layer {
             new DeckArcLayer({
               ...this.getDefaultHoverLayerProps(),
               data: [hoveredObject],
-              widthScale: this.config.visConfig.thickness,
+              widthScale,
               getSourceColor: this.config.highlightColor,
               getTargetColor: this.config.highlightColor,
               getWidth: data.getWidth

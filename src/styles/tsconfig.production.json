@@ -6,12 +6,12 @@
     "jsx": "react",
     "module": "esnext",
     "moduleResolution": "node",
-    "declaration":true,
-    "emitDeclarationOnly":true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "outDir": "dist",
     "sourceMap": true,
     "strictNullChecks": true,
@@ -27,7 +27,5 @@
       "*": ["*"] //TODO change once all dependencies are isolated
     }
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

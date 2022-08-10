@@ -31,6 +31,7 @@ import {
   arcLayerMeta
 } from 'test/helpers/layer-utils';
 
+import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {copyTable, copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 
@@ -321,7 +322,7 @@ test('#LineLayer -> renderLayer', t => {
         t.equal(props.opacity, layer.config.visConfig.opacity, 'should calculate correct opacity');
         t.equal(
           props.widthScale,
-          layer.config.visConfig.thickness,
+          layer.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER,
           'should apply correct widthScale'
         );
         t.equal(
