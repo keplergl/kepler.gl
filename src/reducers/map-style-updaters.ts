@@ -67,6 +67,7 @@ export type BaseMapStyle = {
   style?: Object;
   layerGroups: LayerGroup[];
   accessToken?: string;
+  custom?: boolean;
 };
 
 export type MapStyles = {

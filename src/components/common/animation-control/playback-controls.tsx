@@ -103,12 +103,11 @@ function PlaybackControlsFactory(
   PlayControl
 ) {
   const PLAYBACK_CONTROLS_DEFAULT_ACTION_COMPONENTS = [
-    WindowActionControl,
-    AnimationWindowControl,
-    // backwards compatible
+    PlayControl,
     SpeedControlFactory(AnimationSpeedSlider),
     ResetControl,
-    PlayControl
+    WindowActionControl,
+    AnimationWindowControl
   ];
 
   // eslint-disable-next-line complexity
