@@ -85,6 +85,7 @@ type TooltipConfigProps = {
   }) => void;
   datasets: Datasets;
   intl: IntlShape;
+  onDisplayFormatChange: (dataId, column, displayFormat) => void;
 };
 
 type DatasetTooltipConfigProps = {
@@ -103,6 +104,7 @@ type DatasetTooltipConfigProps = {
     compareType: string | null;
   }) => void;
   dataset: KeplerTable;
+  onDisplayFormatChange: (dataId, column, displayFormat) => void;
 };
 
 TooltipConfigFactory.deps = [DatasetTagFactory, FieldSelectorFactory];
@@ -110,7 +112,12 @@ function TooltipConfigFactory(
   DatasetTag: ReturnType<typeof DatasetTagFactory>,
   FieldSelector: ReturnType<typeof FieldSelectorFactory>
 ) {
-  const DatasetTooltipConfig = ({config, onChange, dataset}: DatasetTooltipConfigProps) => {
+  const DatasetTooltipConfig = ({
+    config,
+    onChange,
+    dataset,
+    onDisplayFormatChange
+  }: DatasetTooltipConfigProps) => {
     const dataId = dataset.id;
     return (
       <SidePanelSection key={dataId}>
@@ -164,14 +171,25 @@ function TooltipConfigFactory(
           closeOnSelect={false}
           multiSelect
           inputTheme="secondary"
-          // @ts-expect-error
-          CustomChickletComponent={TooltipChickletFactory(dataId, config, onChange, dataset.fields)}
+          CustomChickletComponent={TooltipChickletFactory(
+            dataId,
+            config,
+            onChange,
+            dataset.fields,
+            onDisplayFormatChange
+          )}
         />
       </SidePanelSection>
     );
   };
 
-  const TooltipConfig = ({config, datasets, onChange, intl}: TooltipConfigProps) => {
+  const TooltipConfig = ({
+    config,
+    datasets,
+    onChange,
+    onDisplayFormatChange,
+    intl
+  }: TooltipConfigProps) => {
     return (
       <TooltipConfigWrapper>
         {Object.keys(config.fieldsToShow).map(dataId =>
@@ -181,6 +199,7 @@ function TooltipConfigFactory(
               config={config}
               onChange={onChange}
               dataset={datasets[dataId]}
+              onDisplayFormatChange={onDisplayFormatChange}
             />
           )
         )}

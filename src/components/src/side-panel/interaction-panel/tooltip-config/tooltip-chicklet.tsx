@@ -41,7 +41,7 @@ type TooltipConfig = {
     [key: string]: {name: string; format: string | null}[];
   };
   compareMode: boolean;
-  compareType: string[];
+  compareType: string | null; // ! check
 };
 
 type IconDivProps = {
@@ -95,7 +95,8 @@ function TooltipChickletFactory(
   dataId: string,
   config: TooltipConfig,
   onChange: (cfg: TooltipConfig) => void,
-  fields: TooltipFields[]
+  fields: TooltipFields[],
+  onDisplayFormatChange
 ): ComponentType<TooltipChickletProps> {
   class TooltipChicklet extends Component<TooltipChickletProps> {
     state = {
@@ -126,10 +127,14 @@ function TooltipChickletFactory(
       if (!tooltipField) {
         return null;
       }
+      const field = fields.find(f => f.name === tooltipField.name);
+      if (!field) {
+        return null;
+      }
       const formatLabels = getFormatLabels(fields, tooltipField.name);
-      const hasFormat = Boolean(tooltipField.format);
+      const hasFormat = Boolean(field.displayFormat);
       const selectionIndex = formatLabels.findIndex(
-        fl => getFormatValue(fl) === tooltipField.format
+        fl => getFormatValue(fl) === field.displayFormat
       );
       const hashStyle = show ? hashStyles.SHOW : hasFormat ? hashStyles.ACTIVE : null;
 
@@ -143,7 +148,7 @@ function TooltipChickletFactory(
                 render={() => (
                   <span>
                     {hasFormat ? (
-                      getFormatTooltip(formatLabels, tooltipField.format)
+                      getFormatTooltip(formatLabels, field.displayName)
                     ) : (
                       <FormattedMessage id={'fieldSelector.formatting'} />
                     )}
@@ -174,12 +179,13 @@ function TooltipChickletFactory(
                         show: false
                       });
 
+                      const displayFormat = getFormatValue(result);
                       const oldFieldsToShow = config.fieldsToShow[dataId];
                       const fieldsToShow = oldFieldsToShow.map(fieldToShow => {
                         return fieldToShow.name === tooltipField.name
                           ? {
                               name: tooltipField.name,
-                              format: getFormatValue(result)
+                              format: displayFormat
                             }
                           : fieldToShow;
                       });
@@ -191,6 +197,7 @@ function TooltipChickletFactory(
                         }
                       };
                       onChange(newConfig);
+                      onDisplayFormatChange(dataId, field.name, displayFormat);
                     }}
                   />
                 </StyledPopover>

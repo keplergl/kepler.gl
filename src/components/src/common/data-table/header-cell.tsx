@@ -106,7 +106,7 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
       sortTableColumn,
       pinTableColumn,
       copyTableColumn,
-      setDisplayFormat
+      setColumnDisplayFormat
     } = props;
     const [showFormatter, setShowFormatter] = useState(false);
     const column = columns[columnIndex];
@@ -125,9 +125,9 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
     const onCopy = useCallback(() => copyTableColumn(column), [copyTableColumn, column]);
     const onSetDisplayFormat = useCallback(
       displayFormat => {
-        setDisplayFormat(column, displayFormat.format);
+        setColumnDisplayFormat({[column]: displayFormat.format});
       },
-      [column, setDisplayFormat]
+      [column, setColumnDisplayFormat]
     );
 
     const onToggleDisplayFormat = useCallback(() => {
@@ -172,7 +172,7 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
                       left={0}
                       top={0}
                       isOpened={isFormatted && showFormatter}
-                      column={colMeta[column]}
+                      displayFormat={colMeta[column].displayFormat}
                       setDisplayFormat={onSetDisplayFormat}
                       onClose={() => setShowFormatter(false)}
                       formatLabels={formatLabels}

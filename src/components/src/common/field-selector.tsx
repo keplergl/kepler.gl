@@ -107,7 +107,7 @@ interface FieldSelectorFactoryProps {
   closeOnSelect?: boolean;
   showToken?: boolean;
   suggested?: ReadonlyArray<string | number | boolean | object> | null;
-  CustomChickletComponent?: ComponentType;
+  CustomChickletComponent?: ComponentType<any>;
   size?: string;
 }
 

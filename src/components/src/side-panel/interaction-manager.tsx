@@ -49,7 +49,7 @@ function InteractionManagerFactory(
     visStateActions,
     panelMetadata
   }) => {
-    const {interactionConfigChange: onConfigChange} = visStateActions;
+    const {interactionConfigChange: onConfigChange, setColumnDisplayFormat} = visStateActions;
     const intl = useIntl();
     return (
       <div className="interaction-manager">
@@ -63,6 +63,7 @@ function InteractionManagerFactory(
             config={interactionConfig[key]}
             key={key}
             onConfigChange={onConfigChange}
+            setColumnDisplayFormat={setColumnDisplayFormat}
           />
         ))}
       </div>

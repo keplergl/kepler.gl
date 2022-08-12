@@ -44,6 +44,7 @@ interface InteractionPanelProps {
   interactionConfigIcons?: {
     [key: string]: React.ElementType;
   };
+  setColumnDisplayFormat: any; // !
 }
 
 const StyledInteractionPanel = styled.div`
@@ -68,6 +69,7 @@ function InteractionPanelFactory(
     config,
     onConfigChange,
     datasets,
+    setColumnDisplayFormat,
     interactionConfigIcons = INTERACTION_CONFIG_ICONS
   }) => {
     const [isConfigActive, setIsConfigAction] = useState(false);
@@ -82,6 +84,13 @@ function InteractionPanelFactory(
       [onConfigChange, config]
     );
 
+    const _updateDisplayFormat = useCallback(
+      (dataId, column, displayFormat) => {
+        setColumnDisplayFormat(dataId, {[column]: displayFormat});
+      },
+      [setColumnDisplayFormat]
+    );
+
     const togglePanelActive = useCallback(() => {
       setIsConfigAction(!isConfigActive);
     }, [setIsConfigAction, isConfigActive]);
@@ -92,13 +101,27 @@ function InteractionPanelFactory(
     }, [_updateConfig, enabled]);
 
     const onChange = useCallback(newConfig => _updateConfig({config: newConfig}), [_updateConfig]);
+
+    // ! redundant
+    const onDisplayFormatChange = useCallback(
+      (dataId, column, displayFormat) => _updateDisplayFormat(dataId, column, displayFormat),
+      [_updateDisplayFormat]
+    );
+
     const IconComponent = interactionConfigIcons[config.id];
 
     let template: ReactElement | null = null;
 
     switch (config.id) {
       case 'tooltip':
-        template = <TooltipConfig datasets={datasets} config={config.config} onChange={onChange} />;
+        template = (
+          <TooltipConfig
+            datasets={datasets}
+            config={config.config}
+            onChange={onChange}
+            onDisplayFormatChange={onDisplayFormatChange}
+          />
+        );
         break;
       case 'brush':
         template = <BrushConfig config={config.config} onChange={onChange} />;

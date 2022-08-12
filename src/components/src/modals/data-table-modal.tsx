@@ -28,6 +28,9 @@ import CanvasHack from '../common/data-table/canvas';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
 import {UIStateActions} from '@kepler.gl/actions';
 import {UiState} from '@kepler.gl/types';
+import {Gear} from '../common/icons';
+import Portaled from '../common/portaled';
+import DataTableConfigFactory from '../common/data-table/display-format';
 
 const MIN_STATS_CELL_SIZE = 122;
 
@@ -68,6 +71,17 @@ export const DatasetModalTab = styled.div<DatasetModalTabProps>`
   }
 `;
 
+const StyledConfigureButton = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  position: absolute;
+  top: 24px;
+  right: 48px;
+  svg {
+    stroke: black;
+  }
+`;
+
 interface DatasetTabsUnmemoizedProps {
   activeDataset: KeplerTable;
   datasets: Datasets;
@@ -97,7 +111,7 @@ export const DatasetTabs = React.memo(DatasetTabsUnmemoized);
 
 DatasetTabs.displayName = 'DatasetTabs';
 
-DataTableModalFactory.deps = [DataTableFactory];
+DataTableModalFactory.deps = [DataTableFactory, DataTableConfigFactory];
 
 const TableContainer = styled.div`
   display: flex;
@@ -116,13 +130,20 @@ interface DataTableModalProps {
   datasets: Datasets;
   showDatasetTable: (id: string) => void;
   showTab?: boolean;
-  setColumnDisplayFormat: (dataId: string, column: string, displayFormat: string) => void;
+  setColumnDisplayFormat: (
+    dataId: string,
+    formats: {
+      column: string;
+      displayFormat: string;
+    }
+  ) => void;
   uiStateActions: typeof UIStateActions;
   uiState: UiState;
 }
 
 function DataTableModalFactory(
-  DataTable: ReturnType<typeof DataTableFactory>
+  DataTable: ReturnType<typeof DataTableFactory>,
+  DataTableConfig: ReturnType<typeof DataTableConfigFactory>
 ): React.ComponentType<Omit<DataTableModalProps, 'theme'>> {
   class DataTableModal extends React.Component<DataTableModalProps> {
     state = {
@@ -211,9 +232,9 @@ function DataTableModalFactory(
       sortTableColumn(dataId, column, mode);
     };
 
-    setDisplayFormat = (column, displayFormat) => {
+    setColumnDisplayFormat = formats => {
       const {dataId, setColumnDisplayFormat} = this.props;
-      if (dataId) setColumnDisplayFormat(dataId, column, displayFormat);
+      if (dataId) setColumnDisplayFormat(dataId, formats);
     };
 
     onOpenConfig = () => {
@@ -245,6 +266,22 @@ function DataTableModalFactory(
                 showDatasetTable={showDatasetTable}
               />
             ) : null}
+            <StyledConfigureButton className="display-config-button">
+              <Gear onClick={this.onOpenConfig} />
+              <Portaled
+                right={240}
+                top={20}
+                isOpened={this.state.showConfig}
+                onClose={this.onCloseConfig}
+              >
+                <DataTableConfig
+                  columns={columns}
+                  colMeta={colMeta}
+                  setColumnDisplayFormat={this.setColumnDisplayFormat}
+                  onClose={this.onCloseConfig}
+                />
+              </Portaled>
+            </StyledConfigureButton>
             {datasets[dataId] ? (
               <DataTable
                 key={dataId}
@@ -259,7 +296,7 @@ function DataTableModalFactory(
                 copyTableColumn={this.copyTableColumn}
                 pinTableColumn={this.pinTableColumn}
                 sortTableColumn={this.sortTableColumn}
-                setDisplayFormat={this.setDisplayFormat}
+                setColumnDisplayFormat={this.setColumnDisplayFormat}
                 hasStats={false}
               />
             ) : null}
