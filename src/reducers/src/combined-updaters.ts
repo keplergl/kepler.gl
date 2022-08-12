@@ -28,7 +28,8 @@ import {
   updateVisDataUpdater as visStateUpdateVisDataUpdater,
   setMapInfoUpdater,
   layerTypeChangeUpdater,
-  toggleSplitMapUpdater as visStateToggleSplitMapUpdater
+  toggleSplitMapUpdater as visStateToggleSplitMapUpdater,
+  prepareStateForDatasetReplace
 } from './vis-state-updaters';
 import {
   receiveMapConfigUpdater as stateMapConfigUpdater,
@@ -47,7 +48,8 @@ import {
   loadFilesSuccessUpdaterAction,
   MapStyleChangeUpdaterAction,
   LayerTypeChangeUpdaterAction,
-  ToggleSplitMapUpdaterAction
+  ToggleSplitMapUpdaterAction,
+  ReplaceDataInMapPayload
 } from '@kepler.gl/actions';
 import {VisState} from '@kepler.gl/schemas';
 import {Layer} from '@kepler.gl/layers';
@@ -376,4 +378,47 @@ export const toggleSplitMapUpdater = (
   }
 
   return newState;
+};
+
+const defaultReplaceDataToMapOptions = {
+  keepExistingConfig: true,
+  centerMap: true,
+  autoCreateLayers: false
+};
+
+/**
+ * Updater replace a dataset in state
+ */
+export const replaceDataInMapUpdater = (
+  state: KeplerGlState,
+  {payload}: {payload: ReplaceDataInMapPayload}
+): KeplerGlState => {
+  const {datasetToReplaceId, datasetToUse, options = {}} = payload;
+  const addDataToMapOptions = {...defaultReplaceDataToMapOptions, ...options};
+
+  // check if dataset is there
+  if (!state.visState.datasets[datasetToReplaceId]) {
+    return state;
+  }
+  // datasetToUse is ProtoDataset
+  const dataIdToUse = datasetToUse.info.id;
+  if (!dataIdToUse) {
+    return state;
+  }
+  // remove dataset and put dependencies in toBeMerged
+  const preparedState = {
+    ...state,
+    visState: prepareStateForDatasetReplace(state.visState, datasetToReplaceId, dataIdToUse)
+  };
+
+  const nextState = addDataToMapUpdater(
+    preparedState,
+    payload_({
+      datasets: datasetToUse,
+      // should zoom to new dataset
+      options: addDataToMapOptions
+    })
+  );
+
+  return nextState;
 };

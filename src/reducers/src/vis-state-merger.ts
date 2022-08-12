@@ -30,14 +30,16 @@ import {
 
 import {LayerColumns, LayerColumn, Layer} from '@kepler.gl/layers';
 import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
-import {CURRENT_VERSION, VisState, VisStateMergers, visStateSchema} from '@kepler.gl/schemas';
+import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@kepler.gl/schemas';
 
 import {
   ParsedLayer,
+  ParsedVisState,
   SavedInteractionConfig,
   TooltipInfo,
   SavedEditor,
-  ParsedConfig
+  ParsedConfig,
+  Filter
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
@@ -51,14 +53,22 @@ export function mergeFilters<S extends VisState>(
   filtersToMerge: NonNullable<ParsedConfig['visState']>['filters'],
   fromConfig?: boolean
 ): S {
+  const preserveFilterOrder = fromConfig
+    ? filtersToMerge?.map(l => l.id)
+    : state.preserveFilterOrder;
+
   if (!Array.isArray(filtersToMerge) || !filtersToMerge.length) {
     return state;
   }
 
   const {validated, failed, updatedDatasets} = validateFiltersUpdateDatasets(state, filtersToMerge);
+  let updatedFilters = insertItemBasedOnPreservedOrder(
+    state.filters,
+    validated,
+    preserveFilterOrder
+  );
 
   // merge filter with existing
-  let updatedFilters = [...(state.filters || []), ...validated];
   updatedFilters = resetFilterGpuMode(updatedFilters);
   updatedFilters = assignGpuChannels(updatedFilters);
   // filter data
@@ -75,30 +85,88 @@ export function mergeFilters<S extends VisState>(
     ...state,
     filters: updatedFilters,
     datasets: filtered,
+    preserveFilterOrder,
     filterToBeMerged: [...state.filterToBeMerged, ...failed]
   };
 }
 
-export function isSavedLayerConfigV1(layerConfig: any): boolean {
-  // exported layer configuration contains visualChannels property
-  return layerConfig.visualChannels;
+// replace dataId in saved Filter
+export function replaceFilterDatasetIds(
+  savedFilter: Filter[],
+  dataId: string,
+  dataIdToUse: string
+) {
+  const replaced: Filter[] = [];
+  savedFilter.forEach(filter => {
+    if (filter.dataId.includes(dataId)) {
+      const newDataId = filter.dataId.map(d => (d === dataId ? dataIdToUse : d));
+      // ! check colorsByDataId
+      replaced.push({
+        ...filter,
+        dataId: newDataId
+      });
+    }
+  });
+  return replaced.length ? replaced : null;
 }
 
-export function parseLayerConfig(layerConfig: any): Layer | undefined {
-  // @ts-expect-error ParsedLayer vs Layer
-  return visStateSchema[CURRENT_VERSION].load({
-    layers: [layerConfig],
-    // @ts-expect-error layerOrder not in SavedVisState
-    layerOrder: [0]
-  }).visState?.layers?.[0];
+export function isSavedLayerConfigV1(layerConfig: any): boolean {
+  // exported layer configuration contains visualChannels property
+  return layerConfig?.visualChannels;
+}
+
+export function parseLayerConfig(schema: any, layerConfig: any): Layer | undefined {
+  // assume the layer config is current version
+  const savedConfig = {
+    version: CURRENT_VERSION,
+    config: {
+      visState: {layers: [layerConfig], layerOrder: [0]}
+    }
+  };
+
+  return schema.parseSavedConfig(savedConfig)?.visState?.layers?.[0];
+}
+
+function insertItemBasedOnPreservedOrder(
+  currentItems,
+  items: Filter[],
+  preservedOrder: any[] = [],
+  defaultStart?: boolean
+) {
+  let newItems = [...currentItems];
+
+  for (const item of items) {
+    const expectedIdx = preservedOrder.indexOf(item.id);
+    // insertAt the end by default
+    let insertAt = defaultStart ? 0 : newItems.length;
+    if (expectedIdx > 0) {
+      // look for layer to insert after
+      let i = expectedIdx + 1;
+      let preceedIdx = -1;
+      while (i-- > 0 && preceedIdx < 0) {
+        // keep looking for preceed layer that is already loaded
+        const preceedItemId = preservedOrder[i - 1];
+        preceedIdx = newItems.findIndex(d => d.id === preceedItemId);
+      }
+      if (preceedIdx > -1) {
+        // if found
+        insertAt = preceedIdx + 1;
+      }
+    }
+    newItems = arrayInsert(newItems, insertAt, item);
+  }
+  return newItems;
 }
 
 export function createLayerFromConfig(state: VisState, layerConfig: any): Layer | null {
   // check if the layer config is parsed
   const parsedLayerConfig = isSavedLayerConfigV1(layerConfig)
-    ? parseLayerConfig(layerConfig)
+    ? parseLayerConfig(state.schema, layerConfig)
     : layerConfig;
 
+  if (!parsedLayerConfig) {
+    return null;
+  }
   // first validate config against dataset
   const {validated, failed} = validateLayersByDatasets(state.datasets, state.layerClasses, [
     parsedLayerConfig
@@ -114,18 +182,29 @@ export function createLayerFromConfig(state: VisState, layerConfig: any): Layer 
   return newLayer;
 }
 
-export function serializeLayer(newLayer): ParsedLayer | undefined {
-  const savedVisState = visStateSchema[CURRENT_VERSION].save(
-    // @ts-expect-error consider MinSavedVisState instead of SavedVisState
-    {
-      layers: [newLayer],
-      layerOrder: [0]
-    }
-  ).visState;
-
-  return visStateSchema[CURRENT_VERSION].load(savedVisState).visState?.layers?.[0];
+/**
+ * Get loaded layer from state
+ */
+export function serializeLayer(
+  newLayer: Layer,
+  schema: KeplerGLSchemaClass
+): ParsedLayer | undefined {
+  const serializedVisState = serializeVisState({layers: [newLayer], layerOrder: [0]}, schema);
+  return serializedVisState?.layers?.[0];
 }
 
+/**
+ * Get vis state config
+ */
+export function serializeVisState(
+  visState: Partial<VisState>,
+  schema: KeplerGLSchemaClass
+): ParsedVisState | undefined {
+  const savedState = schema.getConfigToSave({
+    visState
+  });
+  return savedState ? schema.parseSavedConfig(savedState)?.visState : undefined;
+}
 /**
  * Merge layers from de-serialized state, if no fields or data are loaded
  * save it for later
@@ -162,7 +241,6 @@ export function mergeLayers<S extends VisState>(
     state.layers,
     mergedLayer,
     state.layerOrder,
-    // @ts-expect-error
     preserveLayerOrder
   );
 
@@ -181,39 +259,23 @@ export function insertLayerAtRightOrder(
   currentOrder,
   preservedOrder: string[] = []
 ) {
+  if (!layersToInsert?.length) {
+    return {newLayers: currentLayers, newLayerOrder: currentOrder};
+  }
   // perservedOrder ['a', 'b', 'c'];
   // layerOrder [1, 0, 3]
   // layerOrderMap ['a', 'c']
-  let layerOrderQueue = currentOrder.map(i => currentLayers[i].id);
-  let newLayers = currentLayers;
-
-  for (const newLayer of layersToInsert) {
-    // find where to insert it
-    const expectedIdx = preservedOrder.indexOf(newLayer.id);
-    // if cant find place to insert, insert at the front
-    let insertAt = 0;
-
-    if (expectedIdx > 0) {
-      // look for layer to insert after
-      let i = expectedIdx + 1;
-      let preceedIdx = -1;
-      while (i-- > 0 && preceedIdx < 0) {
-        // keep looking for preceed layer that is already loaded
-        const preceedLayer = preservedOrder[i - 1];
-        preceedIdx = layerOrderQueue.indexOf(preceedLayer);
-      }
-      if (preceedIdx > -1) {
-        // if found
-        insertAt = preceedIdx + 1;
-      }
-    }
-
-    layerOrderQueue = arrayInsert(layerOrderQueue, insertAt, newLayer.id);
-    newLayers = newLayers.concat(newLayer);
-  }
+  const currentLayerQueue = currentOrder.map(i => currentLayers[i]);
+  const newLayers = currentLayers.concat(layersToInsert);
+  const newLayerOrderQueue = insertItemBasedOnPreservedOrder(
+    currentLayerQueue,
+    layersToInsert,
+    preservedOrder,
+    true
+  );
 
   // reconstruct layerOrder after insert
-  const newLayerOrder = layerOrderQueue.map(id => newLayers.findIndex(l => l.id === id));
+  const newLayerOrder = newLayerOrderQueue.map(lyr => newLayers.findIndex(l => l.id === lyr.id));
 
   return {
     newLayerOrder,
@@ -284,16 +346,49 @@ export function mergeInteractions<S extends VisState>(
     });
   }
 
-  return {
+  const nextState = {
     ...state,
     interactionConfig: {
       ...state.interactionConfig,
       ...merged
     },
-    interactionToBeMerged: unmerged
+    interactionToBeMerged: savedUnmergedInteraction(state, unmerged)
+  };
+  return nextState;
+}
+
+function savedUnmergedInteraction(state, unmerged) {
+  if (!unmerged?.tooltip?.fieldsToShow) {
+    return state.interactionToBeMerged;
+  }
+  return {
+    tooltip: {
+      ...state.interactionToBeMerged.tooltip,
+      ...(typeof unmerged?.tooltip?.enabled === 'boolean'
+        ? {enabled: unmerged.tooltip.enabled}
+        : {}),
+      fieldsToShow: {
+        ...state.interactionToBeMerged?.tooltip?.fieldsToShow,
+        ...unmerged?.tooltip?.fieldsToShow
+      }
+    }
   };
 }
 
+function replaceInteractionDatasetIds(interactionConfig, dataId, dataIdToReplace) {
+  if (interactionConfig?.tooltip?.fieldsToShow[dataId]) {
+    return {
+      ...interactionConfig,
+      tooltip: {
+        ...interactionConfig.tooltip,
+        fieldsToShow: {
+          [dataIdToReplace]: interactionConfig?.tooltip?.fieldsToShow[dataId]
+        }
+      }
+    };
+  }
+  return null;
+}
 /**
  * Merge splitMaps config with current visStete.
  * 1. if current map is split, but splitMap DOESNOT contain maps
@@ -664,10 +759,54 @@ export function mergeEditor<S extends VisState>(state: S, savedEditor: SavedEdit
   };
 }
 
+/**
+ * Validate saved layer config with new data,
+ * update fieldIdx based on new fields
+ */
+export function mergeDatasetsByOrder(state: VisState, newDataEntries: Datasets): Datasets {
+  const merged = {
+    ...state.datasets,
+    ...newDataEntries
+  };
+
+  if (Array.isArray(state.preserveDatasetOrder)) {
+    // preserveDatasetOrder  might not include the  new datasets
+    const newDatasetIds = Object.keys(merged).filter(
+      id => !state.preserveDatasetOrder?.includes(id)
+    );
+    return [...state.preserveDatasetOrder, ...newDatasetIds].reduce(
+      (accu, dataId) => ({
+        ...accu,
+        ...(merged[dataId] ? {[dataId]: merged[dataId]} : {})
+      }),
+      {}
+    );
+  }
+
+  return merged;
+}
+
 export const VIS_STATE_MERGERS: VisStateMergers<any> = [
-  {merge: mergeLayers, prop: 'layers', toMergeProp: 'layerToBeMerged'},
-  {merge: mergeFilters, prop: 'filters', toMergeProp: 'filterToBeMerged'},
-  {merge: mergeInteractions, prop: 'interactionConfig', toMergeProp: 'interactionToBeMerged'},
+  {
+    merge: mergeLayers,
+    prop: 'layers',
+    toMergeProp: 'layerToBeMerged',
+    preserveOrder: 'preserveLayerOrder'
+  },
+  {
+    merge: mergeFilters,
+    prop: 'filters',
+    toMergeProp: 'filterToBeMerged',
+    preserveOrder: 'preserveFilterOrder',
+    replaceParentDatasetIds: replaceFilterDatasetIds
+  },
+  {
+    merge: mergeInteractions,
+    prop: 'interactionConfig',
+    toMergeProp: 'interactionToBeMerged',
+    replaceParentDatasetIds: replaceInteractionDatasetIds,
+    saveUnmerged: savedUnmergedInteraction
+  },
   {merge: mergeLayerBlending, prop: 'layerBlending'},
   {merge: mergeOverlayBlending, prop: 'overlayBlending'},
   {merge: mergeSplitMaps, prop: 'splitMaps', toMergeProp: 'splitMapsToBeMerged'},

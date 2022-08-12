@@ -52,7 +52,7 @@ export * as uiStateUpdaters from './ui-state-updaters';
 export * as combineUpdaters from './combined-updaters';
 export * as combinedUpdaters from './combined-updaters';
 export type {KeplerGlState} from './combined-updaters';
-export {addDataToMapUpdater} from './combined-updaters';
+export {addDataToMapUpdater, replaceDataInMapUpdater} from './combined-updaters';
 
 // reducer merges
 export * as visStateMergers from './vis-state-merger';
@@ -63,7 +63,7 @@ export * from './provider-state';
 export * from './ui-state';
 export * from './map-state';
 export {getInitialInputStyle, loadMapStylesUpdater, INITIAL_MAP_STYLE} from './map-style-updaters';
-export {INITIAL_MAP_STATE} from './map-state-updaters';
+export {fitBoundsUpdater, INITIAL_MAP_STATE} from './map-state-updaters';
 
 // Helpers
 export * from './composer-helpers';

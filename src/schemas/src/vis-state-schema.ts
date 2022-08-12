@@ -92,7 +92,9 @@ export interface VisState {
   initialState?: Partial<VisState>;
   mergers: VisStateMergers<any>;
   schema: typeof KeplerGLSchema;
-  preserveLayerOrder?: number[];
+  preserveLayerOrder?: string[];
+  preserveFilterOrder?: string[];
+  preserveDatasetOrder?: string[];
   isMergingDatasets: {
     [datasetId: string]: boolean;
   };
@@ -113,12 +115,21 @@ export type MergerMergeFunc<S extends VisState> = (
   fromConfig: boolean,
   mergerActionPayload?: MergerActionPayload<S>
 ) => S;
+export type ReplaceParentDatasetIdsFunc<T> = (
+  item: T,
+  dataId: string,
+  dataIdToReplace: string
+) => T | null;
 export type Merger<S extends VisState> = {
   merge: MergerMergeFunc<S>;
   prop: string | string[];
   toMergeProp?: string | string[];
+  preserveOrder?: string;
   waitToFinish?: boolean;
   waitForLayerData?: boolean;
+  replaceParentDatasetIds?: ReplaceParentDatasetIdsFunc<S['filters']>;
+  saveUnmerged?: (state: S, unmerged: any) => S;
+  getChildDatasetIds?: any;
 };
 export type VisStateMergers<S extends VisState> = Merger<S>[];
 

@@ -32,7 +32,8 @@ import {
   INITIAL_VIS_STATE,
   DEFAULT_ANIMATION_CONFIG,
   serializeLayer,
-  defaultInteractionConfig
+  defaultInteractionConfig,
+  prepareStateForDatasetReplace
 } from '@kepler.gl/reducers';
 
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
@@ -1087,7 +1088,7 @@ test('#visStateReducer -> REMOVE_LAYER', t => {
     animationConfig: DEFAULT_ANIMATION_CONFIG
   };
 
-  const newReducer = reducer(oldState, VisStateActions.removeLayer(1));
+  const newReducer = reducer(oldState, VisStateActions.removeLayer('b'));
 
   t.deepEqual(
     newReducer,
@@ -1113,13 +1114,13 @@ test('#visStateReducer -> REMOVE_LAYER', t => {
 test('#visStateReducer -> DUPLICATE_LAYER', t => {
   const oldState = CloneDeep(StateWFilesFiltersLayerColor.visState);
   // layers: ['point-0', 'geojson-1', 'hexagon-2'],
-  const layerToCopy = serializeLayer(oldState.layers[0]);
+  const layerToCopy = serializeLayer(oldState.layers[0], oldState.schema);
   t.equal(oldState.layers.length, 3, 'should have 3 layers to begin');
   t.deepEqual(oldState.layerOrder, [2, 0, 1], 'should have 3 layers to begin');
 
   const nextState = reducer(oldState, VisStateActions.duplicateLayer(0));
   t.equal(nextState.layers.length, 4, 'should add 1 layer');
-  const layerCopied = serializeLayer(nextState.layers[3]);
+  const layerCopied = serializeLayer(nextState.layers[3], nextState.schema);
 
   const expectedLayer = {
     ...layerToCopy,
@@ -1145,7 +1146,7 @@ test('#visStateReducer -> DUPLICATE_LAYER', t => {
   // copy again
   const nextState1 = reducer(nextState, VisStateActions.duplicateLayer(0));
   t.equal(nextState1.layers.length, 5, 'should add 1 layer');
-  const layerCopied1 = serializeLayer(nextState1.layers[4]);
+  const layerCopied1 = serializeLayer(nextState1.layers[4], nextState1.schema);
 
   const expectedLayer1 = {
     ...layerToCopy,
@@ -1170,7 +1171,7 @@ test('#visStateReducer -> DUPLICATE_LAYER', t => {
   // copy again
   const nextState2 = reducer(nextState1, VisStateActions.duplicateLayer(0));
   t.equal(nextState2.layers.length, 6, 'should add 1 layer');
-  const layerCopied2 = serializeLayer(nextState2.layers[5]);
+  const layerCopied2 = serializeLayer(nextState2.layers[5], nextState2.schema);
 
   const expectedLayer2 = {
     ...layerToCopy,
@@ -3152,7 +3153,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
     animationConfig: DEFAULT_ANIMATION_CONFIG
   };
 
-  const newReducer = reducer(oldState, VisStateActions.removeLayer(1));
+  const newReducer = reducer(oldState, VisStateActions.removeLayer('b'));
 
   t.deepEqual(
     newReducer,
@@ -3207,7 +3208,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
     }
   };
 
-  const newReducer = reducer(oldState, VisStateActions.removeLayer(2));
+  const newReducer = reducer(oldState, VisStateActions.removeLayer('t1'));
   const expectedAnimationConfig = {
     domain: [1568502810000, 1568503060000],
     currentTime: 1568502970000,
@@ -3220,7 +3221,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
     'should remove animation layer and adjust animation domain'
   );
 
-  const newReducer2 = reducer(oldState, VisStateActions.removeLayer(3));
+  const newReducer2 = reducer(oldState, VisStateActions.removeLayer('t2'));
   const expectedAnimationConfig2 = {
     domain: [1568502710000, 1568502960000],
     currentTime: 1568502710000,
@@ -3232,7 +3233,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
     'should remove animation layer and adjust animation domain'
   );
 
-  const newReducer3 = reducer(newReducer2, VisStateActions.removeLayer(2));
+  const newReducer3 = reducer(newReducer2, VisStateActions.removeLayer('t1'));
   t.deepEqual(
     newReducer3.animationConfig,
     {
@@ -5339,5 +5340,77 @@ test('#visStateReducer -> setFilterAnimationTimeConfig', t => {
     VisStateActions.setFilterAnimationTimeConfig(0, {timezone: 'America/New_York'})
   );
   t.equal(nextState1.filters[0].timezone, 'America/New_York', 'should set filter timeFormat');
+  t.end();
+});
+
+test('VisStateUpdater -> prepareStateForDatasetReplace', t => {
+  const oldTooltipConfigFields =
+    StateWFilters.visState.interactionConfig.tooltip.config.fieldsToShow;
+  const dataIdToUse = 'taro_and_blue';
+  const nextState = prepareStateForDatasetReplace(
+    StateWFilters.visState,
+    testCsvDataId,
+    dataIdToUse
+  );
+
+  // layers
+  t.equal(nextState.layers.length, 1, 'should keep 1 layer');
+  t.equal(nextState.layers[0], StateWFilters.visState.layers[1], 'should keep 1 layer');
+  t.equal(nextState.layerToBeMerged.length, 1, 'should move 1 layer to layerToBeMerged');
+  t.equal(
+    nextState.layerToBeMerged[0].id,
+    StateWFilters.visState.layers[0].id,
+    'should move 1 layer to layerToBeMerged'
+  );
+  t.equal(nextState.layerToBeMerged[0].config.dataId, dataIdToUse, 'should replace layer dataId');
+
+  // filers
+  t.equal(nextState.filters.length, 1, 'should keep 1 filter');
+  t.equal(nextState.filters[0], StateWFilters.visState.filters[1], 'should keep 1 filter');
+  t.equal(nextState.filterToBeMerged.length, 1, 'should move 1 filter to filterToBeMerged');
+  t.equal(
+    nextState.filterToBeMerged[0].id,
+    StateWFilters.visState.filters[0].id,
+    'should move 1 filter to filterToBeMerged'
+  );
+
+  t.deepEqual(nextState.filterToBeMerged[0].dataId, [dataIdToUse], 'should replace filter dataId');
+
+  // preserveLayerOrder
+  t.deepEqual(nextState.layerOrder, [0], 'should remove layer from layer order');
+  t.deepEqual(
+    nextState.preserveLayerOrder,
+    ['geojson-1', 'point-0'],
+    'should save preserved layer order'
+  );
+
+  // interactionConfig
+  t.deepEqual(
+    nextState.interactionConfig.tooltip.config.fieldsToShow,
+    {[testGeoJsonDataId]: oldTooltipConfigFields[testGeoJsonDataId]},
+    'Should only keep geojson dataset tooltip'
+  );
+  t.deepEqual(
+    nextState.interactionToBeMerged,
+    {
+      tooltip: {enabled: true, fieldsToShow: {[dataIdToUse]: oldTooltipConfigFields[testCsvDataId]}}
+    },
+    'should move tooltip config to interactionToBeMerged'
+  );
+
+  // preserveDatasetOrder
+  t.deepEqual(
+    nextState.preserveDatasetOrder,
+    [dataIdToUse, testGeoJsonDataId],
+    'should save dataset id to preserveDatasetOrder'
+  );
+
+  // preserveFilterOrder
+  t.deepEqual(
+    nextState.preserveFilterOrder,
+    ['time-0', 'RATE-1'],
+    'should save filter id to preserveFilterOrder'
+  );
+
   t.end();
 });
