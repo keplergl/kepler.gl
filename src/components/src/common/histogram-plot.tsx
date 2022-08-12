@@ -105,18 +105,22 @@ function HistogramPlotFactory() {
             const inRange =
               undefinedToZero(bar.x1) <= value[1] && undefinedToZero(bar.x0) >= value[0];
             const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
-            return (
-              <Bar
-                inRange={inRange}
-                key={bar.x0}
-                height={y(getValue(bar))}
-                width={barWidth * wRatio}
-                x={x(undefinedToZero(bar.x0)) + (barWidth * (1 - wRatio)) / 2}
-                rx={1}
-                ry={1}
-                y={height - y(getValue(bar))}
-              />
-            );
+            const startX = x(undefinedToZero(bar.x0)) + (barWidth * (1 - wRatio)) / 2;
+            if (startX > 0 && startX + barWidth * histogramStyle.unHighlightedW <= width) {
+              return (
+                <Bar
+                  inRange={inRange}
+                  key={bar.x0}
+                  height={y(getValue(bar))}
+                  width={barWidth * wRatio}
+                  x={startX}
+                  rx={1}
+                  ry={1}
+                  y={height - y(getValue(bar))}
+                />
+              );
+            }
+            return null;
           })}
         </g>
         <g transform={`translate(${isRanged ? 0 : barWidth / 2}, 0)`}>{brushComponent}</g>
