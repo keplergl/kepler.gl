@@ -4,8 +4,8 @@ import {SplitMapLayers, SplitMap} from 'reducers/vis-state-updaters';
 export const onViewPortChange = (
   viewState: any,
   onUpdateMap: (next: any) => any,
-  primary: boolean = false,
-  onViewStateChange?: (next: any) => void | null
+  onViewStateChange?: (next: any) => void | null,
+  primary: boolean = false
 ): void => {
   const {width, height, ...restViewState} = viewState;
   // react-map-gl sends 0,0 dimensions during initialization

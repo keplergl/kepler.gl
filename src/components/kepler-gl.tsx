@@ -143,8 +143,8 @@ export const mapFieldsSelector = (props: KeplerGLProps) => ({
   locale: props.uiState.locale,
 
   // mapStyle
-  topMapContainerProps: props.topMapContainerProps || {},
-  bottomMapContainerProps: props.bottomMapContainerProps || {}
+  topMapContainerProps: props.topMapContainerProps,
+  bottomMapContainerProps: props.bottomMapContainerProps
 });
 
 export function getVisibleDatasets(datasets) {

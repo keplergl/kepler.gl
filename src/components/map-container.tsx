@@ -69,6 +69,7 @@ import {
   Datasets,
   Filter,
   InteractionConfig,
+  AnimationConfig,
   MapControls,
   MapState,
   MapStyle,
@@ -134,6 +135,7 @@ interface MapContainerProps {
   visState: {
     datasets: Datasets;
     interactionConfig: InteractionConfig;
+    animationConfig: AnimationConfig;
     layerBlending: string;
     layerOrder: number[];
     layerData: any[];
@@ -542,8 +544,8 @@ export default function MapContainerFactory(
       onViewPortChange(
         viewState,
         this.props.mapStateActions.updateMap,
-        this.props.primary,
-        this.props.onViewStateChange
+        this.props.onViewStateChange,
+        this.props.primary
       );
     };
 
