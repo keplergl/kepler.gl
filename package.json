@@ -70,6 +70,7 @@
     "example-version": "babel-node ./scripts/edit-version.js",
     "prettier": "prettier --write '{src,examples,test}/**/*.{js,tsx,ts}'",
     "run-prettier": "prettier-check '{src,examples,test}/**/*.js'",
+    "lint": "yarn typescript && eslint src test webpack examples website --fix --ignore-path .gitignore --ext .js,.ts,.tsx",
     "lint:css": "stylelint './src/**/*.js'",
     "typescript": "tsc --noEmit",
     "web": "(yarn && yarn install:web && yarn start:web)",
