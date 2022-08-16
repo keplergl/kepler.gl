@@ -33,18 +33,11 @@ import {
 import {MapControlButton} from 'components/common/styled-components';
 import ToolbarItem from 'components/common/toolbar-item';
 import MapControlTooltipFactory from './map-control-tooltip';
-import MapControlPanelFactory from './map-control-panel';
 import MapControlToolbarFactory from './map-control-toolbar';
-import {FormattedMessage} from '@kepler.gl/localization';
-import TippyTooltip from 'components/common/tippy-tooltip';
 import {Editor, MapControls} from 'reducers';
 import {BaseProps} from 'components/common/icons/base';
 
-MapDrawPanelFactory.deps = [
-  MapControlTooltipFactory,
-  MapControlPanelFactory,
-  MapControlToolbarFactory
-];
+MapDrawPanelFactory.deps = [MapControlTooltipFactory, MapControlToolbarFactory];
 
 export type MapDrawPanelProps = {
   editor: Editor;
@@ -55,7 +48,7 @@ export type MapDrawPanelProps = {
   actionIcons: {[id: string]: React.ComponentType<Partial<BaseProps>>};
 };
 
-function MapDrawPanelFactory(MapControlTooltip, MapControlPanel, MapControlToolbar) {
+function MapDrawPanelFactory(MapControlTooltip, MapControlToolbar) {
   const defaultActionIcons = {
     visible: EyeSeen,
     hidden: EyeUnseen,
@@ -114,14 +107,7 @@ function MapDrawPanelFactory(MapControlTooltip, MapControlPanel, MapControlToolb
               />
             </MapControlToolbar>
           ) : null}
-          <TippyTooltip
-            placement="left"
-            render={() => (
-              <div id="map-draw">
-                <FormattedMessage id="tooltip.DrawOnMap" />
-              </div>
-            )}
-          >
+          <MapControlTooltip id="map-draw" message="tooltip.DrawOnMap">
             <MapControlButton
               className={classnames('map-control-button', 'map-draw', {isActive})}
               onClick={e => {
@@ -132,7 +118,7 @@ function MapDrawPanelFactory(MapControlTooltip, MapControlPanel, MapControlToolb
             >
               <actionIcons.polygon height="22px" />
             </MapControlButton>
-          </TippyTooltip>
+          </MapControlTooltip>
         </div>
       );
     }

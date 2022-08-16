@@ -208,8 +208,9 @@ export {
   LayerTitleSectionFactory
 } from './side-panel/layer-panel/layer-panel-header';
 
+export {default as HowToButton} from './side-panel/layer-panel/how-to-button';
+
 export {
-  HowToButton,
   LayerColorRangeSelector,
   LayerColorSelector
 } from './side-panel/layer-panel/layer-configurator';

@@ -20,14 +20,12 @@
 
 import React, {ComponentType, useCallback, useMemo} from 'react';
 import classnames from 'classnames';
-
 import {Cube3d} from 'components/common/icons';
 import {MapControlButton} from 'components/common/styled-components';
-import {FormattedMessage} from '@kepler.gl/localization';
-import TippyTooltip from 'components/common/tippy-tooltip';
+import MapControlTooltipFactory from './map-control-tooltip';
 import {MapControls} from 'reducers';
 
-Toggle3dButtonFactory.deps = [];
+Toggle3dButtonFactory.deps = [MapControlTooltipFactory];
 
 interface Toggle3dButtonIcons {
   cube: ComponentType<any>;
@@ -40,7 +38,7 @@ export type Toggle3dButtonProps = {
   mapControls: MapControls;
 };
 
-function Toggle3dButtonFactory() {
+function Toggle3dButtonFactory(MapControlTooltip) {
   const defaultActionIcons = {
     cube: Cube3d
   };
@@ -64,13 +62,9 @@ function Toggle3dButtonFactory() {
     }, [mapControls]);
 
     return isVisible ? (
-      <TippyTooltip
-        placement="left"
-        render={() => (
-          <div id="action-3d">
-            <FormattedMessage id={dragRotate ? 'tooltip.disable3DMap' : 'tooltip.3DMap'} />
-          </div>
-        )}
+      <MapControlTooltip
+        id="action-3d"
+        message={dragRotate ? 'tooltip.disable3DMap' : 'tooltip.3DMap'}
       >
         <MapControlButton
           onClick={onClick}
@@ -79,7 +73,7 @@ function Toggle3dButtonFactory() {
         >
           <actionIcons.cube height="22px" />
         </MapControlButton>
-      </TippyTooltip>
+      </MapControlTooltip>
     ) : null;
   };
 

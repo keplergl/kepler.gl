@@ -117,3 +117,5 @@ export type {
   Notifications,
   UiState
 } from './ui-state-updaters';
+
+export * as providerStateUpdaters from './provider-state-updaters';

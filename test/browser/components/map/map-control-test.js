@@ -166,7 +166,7 @@ test('MapControlFactory - click options', t => {
     .simulate('click');
 
   // TODO the test doesn't work with LazyTippy
-  // t.equal(wrapper.find(MapLegend).length, 1, 'should render MapLegend');
+  t.equal(wrapper.find(MapLegend).length, 1, 'should render MapLegend');
 
   // click map draw
   wrapper
@@ -175,7 +175,7 @@ test('MapControlFactory - click options', t => {
     .simulate('click');
 
   // TODO the test doesn't work with LazyTippy
-  // t.equal(wrapper.find(MapLegend).length, 1, 'should render MapLegend');
+  t.equal(wrapper.find(MapLegend).length, 1, 'should render MapLegend');
 
   t.ok(onToggleMapControl.calledOnce, 'should call onToggleMapControl');
   t.deepEqual(

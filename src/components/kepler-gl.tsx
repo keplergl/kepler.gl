@@ -134,24 +134,17 @@ export const mapFieldsSelector = (props: KeplerGLProps) => ({
   mapStateActions: props.mapStateActions,
 
   // visState
-  editor: props.visState.editor,
-  datasets: props.visState.datasets,
-  layers: props.visState.layers,
-  layerOrder: props.visState.layerOrder,
-  layerData: props.visState.layerData,
-  layerBlending: props.visState.layerBlending,
-  filters: props.visState.filters,
-  interactionConfig: props.visState.interactionConfig,
-  hoverInfo: props.visState.hoverInfo,
-  clicked: props.visState.clicked,
-  mousePos: props.visState.mousePos,
-  animationConfig: props.visState.animationConfig,
+  visState: props.visState,
 
   // uiState
   activeSidePanel: props.uiState.activeSidePanel,
   mapControls: props.uiState.mapControls,
   readOnly: props.uiState.readOnly,
-  locale: props.uiState.locale
+  locale: props.uiState.locale,
+
+  // mapStyle
+  topMapContainerProps: props.topMapContainerProps,
+  bottomMapContainerProps: props.bottomMapContainerProps
 });
 
 export function getVisibleDatasets(datasets) {
@@ -294,6 +287,9 @@ type KeplerGLBasicProps = {
 
   localeMessages?: {[key: string]: {[key: string]: string}};
   dispatch: Dispatch<any>;
+
+  topMapContainerProps?: object;
+  bottomMapContainerProps?: object;
 };
 
 type KeplerGLProps = KeplerGlState & KeplerGlActions & KeplerGLBasicProps;
@@ -451,15 +447,9 @@ function KeplerGlFactory(
       const notificationPanelFields = notificationPanelSelector(this.props);
 
       const mapContainers = !isSplit
-        ? [<MapContainer primary={true} key={0} index={0} {...mapFields} mapLayers={null} />]
+        ? [<MapContainer primary={true} key={0} index={0} {...mapFields} />]
         : splitMaps.map((settings, index) => (
-            <MapContainer
-              key={index}
-              index={index}
-              primary={index === 1}
-              {...mapFields}
-              mapLayers={splitMaps[index].layers}
-            />
+            <MapContainer key={index} index={index} primary={index === 1} {...mapFields} />
           ));
 
       return (

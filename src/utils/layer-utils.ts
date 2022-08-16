@@ -25,6 +25,9 @@ import {
   OVERLAY_TYPE_CONST
 } from '@kepler.gl/layers';
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
+import {ThreeDBuildingLayer} from '../deckgl-layers';
+import {getMapLayersFromSplitMaps} from './map-utils';
+import {isFunction} from 'utils/utils';
 import {VisState, TooltipField, CompareType, SplitMapLayers} from 'reducers/vis-state-updaters';
 import KeplerTable, {Field} from './table-utils/kepler-table';
 
@@ -220,7 +223,7 @@ export function prepareLayersForDeck(
 export function prepareLayersToRender(
   layers: Layer[],
   layerData: VisState['layerData'],
-  mapLayers?: SplitMapLayers
+  mapLayers?: SplitMapLayers | null
 ): {
   [key: string]: boolean;
 } {
@@ -231,4 +234,111 @@ export function prepareLayersToRender(
     }),
     {}
   );
+}
+
+export function getCustomDeckLayers(deckGlProps) {
+  const bottomDeckLayers = Array.isArray(deckGlProps?.layers)
+    ? deckGlProps?.layers
+    : isFunction(deckGlProps?.layers)
+    ? deckGlProps?.layers()
+    : [];
+  const topDeckLayers = Array.isArray(deckGlProps?.topLayers)
+    ? deckGlProps?.topLayers
+    : isFunction(deckGlProps?.topLayers)
+    ? deckGlProps?.topLayers()
+    : [];
+
+  return [bottomDeckLayers, topDeckLayers];
+}
+
+export type ComputeDeckLayersProps = {
+  mapIndex?: number;
+  mapboxApiAccessToken?: string;
+  mapboxApiUrl?: string;
+  primaryMap?: boolean;
+  layersForDeck?: {[key: string]: boolean};
+};
+
+export function computeDeckLayers(
+  {visState, mapState, mapStyle}: any,
+  options?: ComputeDeckLayersProps,
+  onSetLayerDomain?: (idx: number, value: any) => void,
+  deckGlProps?: any
+): Layer[] {
+  const {
+    datasets,
+    layers,
+    layerOrder,
+    layerData,
+    hoverInfo,
+    clicked,
+    interactionConfig,
+    animationConfig,
+    splitMaps
+  } = visState;
+
+  const {mapIndex, mapboxApiAccessToken, mapboxApiUrl, primaryMap, layersForDeck} = options || {};
+
+  if (!layerData || !layerData.length) {
+    return [];
+  }
+
+  const mapLayers = getMapLayersFromSplitMaps(splitMaps, mapIndex || 0);
+
+  const currentLayersForDeck = layersForDeck || prepareLayersForDeck(layers, layerData);
+
+  const dataLayers = layerOrder
+    .slice()
+    .reverse()
+    .filter(idx => currentLayersForDeck[layers[idx].id])
+    .reduce((overlays, idx) => {
+      const layerCallbacks = onSetLayerDomain
+        ? {
+            onSetLayerDomain: val => onSetLayerDomain(idx, val)
+          }
+        : {};
+      const layerOverlay = renderDeckGlLayer(
+        {
+          datasets,
+          layers,
+          layerData,
+          hoverInfo,
+          clicked,
+          mapState,
+          interactionConfig,
+          animationConfig,
+          mapLayers
+        },
+        layerCallbacks,
+        idx
+      );
+      return overlays.concat(layerOverlay || []);
+    }, []);
+
+  if (!primaryMap) {
+    return dataLayers;
+  }
+
+  if (
+    mapStyle?.visibleLayerGroups['3d building'] &&
+    primaryMap &&
+    mapboxApiAccessToken &&
+    mapboxApiUrl
+  ) {
+    dataLayers.push(
+      new ThreeDBuildingLayer({
+        id: '_keplergl_3d-building',
+        mapboxApiAccessToken,
+        mapboxApiUrl,
+        threeDBuildingColor: mapStyle.threeDBuildingColor,
+        updateTriggers: {
+          getFillColor: mapStyle.threeDBuildingColor
+        }
+      })
+    );
+  }
+
+  const [customBottomDeckLayers, customTopDeckLayers] = getCustomDeckLayers(deckGlProps);
+
+  return [...customBottomDeckLayers, ...dataLayers, ...customTopDeckLayers];
 }

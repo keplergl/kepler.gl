@@ -18,24 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import {Tooltip} from 'components/common/styled-components';
+import React, {ReactElement, JSXElementConstructor} from 'react';
 import {FormattedMessage} from '@kepler.gl/localization';
+import TippyTooltip from '../common/tippy-tooltip';
 
 export type MapControlTooltipProps = {
   id: string;
   message: string;
+  children?: ReactElement<any, string | JSXElementConstructor<any>>;
 };
 
 function MapControlTooltipFactory() {
-  /** @type {import('./map-control-tooltip').MapControlTooltipComponent} */
-  const MapControlTooltip: React.FC<MapControlTooltipProps> = React.memo(({id, message}) => (
-    <Tooltip id={id} place="left" effect="solid">
-      <span>
-        <FormattedMessage id={message} />
-      </span>
-    </Tooltip>
-  ));
+  const MapControlTooltip: React.FC<MapControlTooltipProps> = React.memo(
+    ({id, message, children}) => (
+      <TippyTooltip
+        placement="left"
+        render={() => (
+          <div id={id}>
+            <FormattedMessage id={message} />
+          </div>
+        )}
+      >
+        {children}
+      </TippyTooltip>
+    )
+  );
 
   MapControlTooltip.displayName = 'MapControlTooltip';
 

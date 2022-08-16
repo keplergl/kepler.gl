@@ -1,6 +1,9 @@
 // @ts-nocheck
 import React, {useState, forwardRef} from 'react';
 import Tippy from '@tippyjs/react/headless';
+import {isTest} from 'utils/utils';
+
+const isTestEnv = isTest();
 
 /**
  * Lazy mounting tippy content
@@ -8,7 +11,7 @@ import Tippy from '@tippyjs/react/headless';
  */
 // eslint-disable-next-line react/display-name
 const LazyTippy = forwardRef((props, ref) => {
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(isTestEnv);
 
   const lazyPlugin = {
     fn: () => ({
