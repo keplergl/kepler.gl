@@ -142,7 +142,9 @@ export {
   arrayInsert,
   isTest,
   filterObjectByPredicate,
-  isFunction
+  isFunction,
+  hasMobileWidth,
+  hasPortableWidth
 } from './utils';
 export {
   addNewLayersToSplitMap,

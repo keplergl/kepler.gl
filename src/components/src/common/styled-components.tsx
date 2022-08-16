@@ -539,8 +539,16 @@ export const StyledAttrbution = styled.div.attrs({
   right: 0;
   position: absolute;
   display: block;
-  margin: 0 10px 2px;
+  margin: 0 10px 6px;
   z-index: 0;
+  .attrition-link {
+    display: flex;
+    align-items: center;
+
+    a {
+      margin-right: 2px;
+    }
+  }
 
   .attrition-logo {
     display: flex;
@@ -548,16 +556,25 @@ export const StyledAttrbution = styled.div.attrs({
     justify-content: flex-end;
     align-items: center;
     color: ${props => props.theme.labelColor};
-    margin-bottom: -4px;
 
     a.mapboxgl-ctrl-logo {
       width: 72px;
-      margin-left: 6px;
+      margin-left: 4px;
     }
   }
   a {
     font-size: 10px;
   }
+
+  ${media.palm`
+    .attrition-logo a {
+      width: 60px;
+    }
+
+    .attrition-link {
+      line-height: 1em;
+    }
+  `};
 `;
 
 export interface StyledExportSectionProps {
@@ -666,6 +683,13 @@ export const BottomWidgetInner = styled.div`
   padding: ${props => `${props.theme.bottomInnerPdVert}px ${props.theme.bottomInnerPdSide}px`};
   position: relative;
   margin-top: ${props => props.theme.bottomPanelGap}px;
+
+  ${media.portable`
+    border-top: 1px solid ${props => props.theme.panelBorderColor};
+    border-left: 1px solid ${props => props.theme.panelBorderColor};
+    padding: 12px 12px;
+    margin-top: 0;
+  `}
 `;
 
 interface MapControlButtonProps {

@@ -70,7 +70,8 @@ import {
   validateToken,
   mergeMessages,
   observeDimensions,
-  unobserveDimensions
+  unobserveDimensions,
+  hasPortableWidth
 } from '@kepler.gl/utils';
 
 import {theme as basicTheme, themeLT, themeBS} from '@kepler.gl/styles';
@@ -356,7 +357,7 @@ function KeplerGlFactory(
     static contextType = RootContext;
 
     root = createRef<HTMLDivElement>();
-    bottomWidgetRef = createRef();
+    bottomWidgetRef = createRef<HTMLDivElement>();
 
     /* selectors */
     themeSelector = props => props.theme;
@@ -485,9 +486,9 @@ function KeplerGlFactory(
                   <MapsLayout className="maps">{mapContainers}</MapsLayout>
                   {isExportingImage && <PlotContainer {...plotContainerFields} />}
                   {interactionConfig.geocoder.enabled && <GeoCoderPanel {...geoCoderPanelFields} />}
-                  <BottomWidgetOuter absolute>
+                  <BottomWidgetOuter absolute={!hasPortableWidth()}>
                     <BottomWidget
-                      ref={this.bottomWidgetRef}
+                      rootRef={this.bottomWidgetRef}
                       {...bottomWidgetFields}
                       containerW={dimensions.width}
                     />

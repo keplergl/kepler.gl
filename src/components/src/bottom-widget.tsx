@@ -50,7 +50,11 @@ const BottomWidgetContainer = styled.div<BottomWidgetContainerProps>`
   }
   width: ${props => props.width}px;
   z-index: 1;
-  ${media.portable`padding: 0;`}
+  ${media.portable`
+    padding-left: 0;
+    padding-right: 0;   
+    padding-bottom: 0;
+  `}
 `;
 
 interface FilterAnimationControllerProps {
@@ -142,6 +146,7 @@ export function LayerAnimationControllerFactory(
 }
 
 type BottomWidgetProps = {
+  rootRef: React.ForwardedRef<HTMLDivElement>;
   containerW: number;
 } & ReturnType<typeof bottomWidgetSelector>;
 
@@ -168,7 +173,8 @@ export default function BottomWidgetFactory(
       containerW,
       uiState,
       sidePanelWidth,
-      layers
+      layers,
+      rootRef
     } = props;
 
     const {activeSidePanel, readOnly} = uiState;
@@ -215,6 +221,7 @@ export default function BottomWidgetFactory(
         style={{marginRight: spaceForLegendWidth}}
         className="bottom-widget--container"
         hasPadding={showAnimationControl || showTimeWidget}
+        ref={rootRef}
       >
         <LayerAnimationController
           animationConfig={animationConfig}

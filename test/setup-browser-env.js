@@ -49,6 +49,24 @@ Object.defineProperty(window, 'prompt', {
   writable: true
 });
 
+// TODO: This should be the right wat to mock matchMedia but matchMedia was still undefined so I moved to another way to mock it
+
+// Object.defineProperty(window, 'matchMedia', {
+//   value: () => ({
+//       matches: false,
+//       addListener: function() {},
+//       removeListener: function() {}
+//   }),
+//   writable: true
+// });
+window.matchMedia = () => {
+  return {
+    matches: false,
+    addListener: () => {},
+    removeListener: () => {}
+  };
+};
+
 function mockClipboardData() {
   let data = null;
   const obj = {};

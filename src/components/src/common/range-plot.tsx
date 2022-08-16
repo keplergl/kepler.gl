@@ -23,7 +23,7 @@ import styled, {withTheme} from 'styled-components';
 import RangeBrushFactory, {OnBrush, RangeBrushProps} from './range-brush';
 import HistogramPlotFactory from './histogram-plot';
 import LineChartFactory, {HoverDP} from './line-chart';
-import {isTest} from '@kepler.gl/utils';
+import {isTest, hasMobileWidth} from '@kepler.gl/utils';
 import {LineChart} from '@kepler.gl/types';
 
 const StyledRangePlot = styled.div`
@@ -71,7 +71,11 @@ export default function RangePlotFactory(
     const [brushing, setBrushing] = useState(false);
     const [hoveredDP, onMouseMove] = useState<HoverDP | null>(null);
     const [enableChartHover, setEnableChartHover] = useState(false);
-    const height = isEnlarged ? theme.rangePlotHLarge : theme.rangePlotH;
+    const height = isEnlarged
+      ? hasMobileWidth()
+        ? theme.rangePlotHLargePalm
+        : theme.rangePlotHLarge
+      : theme.rangePlotH;
 
     const onBrushStart = useCallback(() => {
       setBrushing(true);
@@ -128,7 +132,13 @@ export default function RangePlotFactory(
     return (
       <StyledRangePlot
         style={{
-          height: `${isEnlarged ? theme.rangePlotContainerHLarge : theme.rangePlotContainerH}px`
+          height: `${
+            isEnlarged
+              ? hasMobileWidth()
+                ? theme.rangePlotContainerHLargePalm
+                : theme.rangePlotContainerHLarge
+              : theme.rangePlotContainerH
+          }px`
         }}
         className="kg-range-slider__plot"
       >
