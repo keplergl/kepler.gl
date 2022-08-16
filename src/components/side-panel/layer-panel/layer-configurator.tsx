@@ -23,7 +23,7 @@ import React, {Component, Fragment, MouseEventHandler} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
-import {Button, Input, PanelLabel, SidePanelSection} from 'components/common/styled-components';
+import {Input, PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
 
 import VisConfigByFieldSelectorFactory from './vis-config-by-field-selector';
@@ -36,6 +36,7 @@ import VisConfigSwitchFactory from './vis-config-switch';
 import VisConfigSliderFactory from './vis-config-slider';
 import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import TextLabelPanelFactory from './text-label-panel';
+import HowToButton from './how-to-button';
 
 import {capitalizeFirstLetter} from 'utils/utils';
 
@@ -60,14 +61,18 @@ type LayerConfiguratorProps = {
   layerTypeOptions: {
     id: string;
     label: string;
-    icon: any; //
-    requireData: any; //
+    icon: React.ElementType;
+    requireData: boolean;
   }[];
   openModal: ActionHandler<typeof toggleModal>;
   updateLayerConfig: (newConfig: Partial<LayerBaseConfig>) => void;
   updateLayerType: (newType: string) => void;
   updateLayerVisConfig: (newVisConfig: Partial<LayerVisConfig>) => void;
-  updateLayerVisualChannelConfig: (newConfig: Partial<LayerBaseConfig>, channel: string) => void;
+  updateLayerVisualChannelConfig: (
+    newConfig: Partial<LayerBaseConfig>,
+    channel: string,
+    newVisConfig?: Partial<LayerVisConfig>
+  ) => void;
   updateLayerColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
   updateLayerTextLabel: (idx: number | 'all', prop: string, value: any) => void;
 };
@@ -1064,23 +1069,6 @@ export default function LayerConfiguratorFactory(
 
   return LayerConfigurator;
 }
-/*
- * Componentize config component into pure functional components
- */
-
-const StyledHowToButton = styled.div`
-  position: absolute;
-  right: 12px;
-  top: -4px;
-`;
-
-export const HowToButton = ({onClick}: {onClick: MouseEventHandler}) => (
-  <StyledHowToButton>
-    <Button link small onClick={onClick}>
-      <FormattedMessage id={'layerConfiguration.howTo'} />
-    </Button>
-  </StyledHowToButton>
-);
 
 export const LayerColorSelector = ({
   layer,
