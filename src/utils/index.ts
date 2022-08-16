@@ -29,7 +29,7 @@ export {
 export {createNewDataEntry, datasetColorMaker, findDefaultColorField} from './dataset-utils';
 export {hexToRgb} from './color-utils';
 export {errorNotification} from './notifications-utils';
-export {dataURItoBlob, downloadFile} from './export-utils';
+export {dataURItoBlob, downloadFile, exportJson} from './export-utils';
 export {calculateLayerData, prepareLayersToRender, prepareLayersForDeck} from './layer-utils';
 export {
   applyFilterFieldName,
