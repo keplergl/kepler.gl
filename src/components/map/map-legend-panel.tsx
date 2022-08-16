@@ -26,7 +26,7 @@ import {MapControlButton} from 'components/common/styled-components';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlPanelFactory from './map-control-panel';
 import MapLegendFactory from './map-legend';
-import Tippy from '@tippyjs/react/headless';
+import LazyTippy from './lazy-tippy';
 import {createPortal} from 'react-dom';
 import {DIMENSIONS} from '@kepler.gl/constants';
 import {MapControl, MapControls} from 'reducers';
@@ -131,11 +131,12 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     return (
       // The outer div is to prevent an accessibility warning from Tippy
       <div>
-        <Tippy
+        {/* 
+  // @ts-ignore */}
+        <LazyTippy
           interactive={true}
           trigger="click"
           placement="left-start"
-          // @ts-ignore
           onCreate={setTippyInstance}
           render={attrs => <div {...attrs}>{mapControlPanel}</div>}
           appendTo={document.body}
@@ -147,7 +148,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
               </MapControlButton>
             </MapControlTooltip>
           </div>
-        </Tippy>
+        </LazyTippy>
       </div>
     );
   };
