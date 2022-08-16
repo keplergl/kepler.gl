@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 /* eslint-disable complexity */
-import React, {Component, Fragment, MouseEventHandler} from 'react';
+import React, {Component, Fragment} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
