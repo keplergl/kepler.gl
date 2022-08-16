@@ -19,4 +19,5 @@
 // THE SOFTWARE.
 
 // Run the tests
+require('@loaders.gl/polyfills');
 require('./node/index.js');
