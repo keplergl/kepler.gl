@@ -73,3 +73,12 @@ export * from './gpu-filter-utils';
 export * from './interaction-utils';
 export * from './layer-utils';
 export * from './observe-dimensions';
+
+// Layers
+export {computeDeckLayers} from './layer-utils';
+
+// Mapbox
+export {transformRequest} from './map-style-utils/mapbox-utils';
+
+// Map
+export {onViewPortChange} from './map-utils';

@@ -97,7 +97,8 @@ export type MapStyle = {
   inputStyle: InputStyle;
   threeDBuildingColor: RGBColor;
   custom3DBuildingColor: boolean;
-
+  bottomMapStyle: any;
+  topMapStyle: any;
   initialState?: MapStyle;
 };
 
@@ -125,7 +126,9 @@ const getDefaultState = (): MapStyle => {
     mapStylesReplaceDefault: false,
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: hexToRgb(DEFAULT_BLDG_COLOR),
-    custom3DBuildingColor: false
+    custom3DBuildingColor: false,
+    bottomMapStyle: undefined,
+    topMapStyle: undefined
   };
 };
 

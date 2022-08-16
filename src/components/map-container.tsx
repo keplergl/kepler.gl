@@ -51,23 +51,25 @@ import {setLayerBlending} from 'utils/gl-utils';
 import {transformRequest} from 'utils/map-style-utils/mapbox-utils';
 import {
   getLayerHoverProp,
-  renderDeckGlLayer,
   prepareLayersToRender,
   prepareLayersForDeck,
   LayerHoverProp
 } from 'utils/layer-utils';
 
 // default-settings
-import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
 import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepler.gl/constants';
 
 import ErrorBoundary from 'components/common/error-boundary';
 import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
 import {LOCALE_CODES} from '@kepler.gl/localization';
+import {computeDeckLayers} from '../utils/layer-utils';
+import {getMapLayersFromSplitMaps, onViewPortChange} from 'utils/map-utils';
+import {MapView} from '@deck.gl/core';
 import {
   Datasets,
   Filter,
   InteractionConfig,
+  AnimationConfig,
   MapControls,
   MapState,
   MapStyle,
@@ -94,7 +96,6 @@ const MAP_STYLE: {[key: string]: React.CSSProperties} = {
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
-const TRANSITION_DURATION = 0;
 const nop = () => {};
 
 export const Attribution = () => (
@@ -131,17 +132,24 @@ MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory]
 type MapboxStyle = string | object | undefined;
 
 interface MapContainerProps {
-  datasets: Datasets;
-  interactionConfig: InteractionConfig;
-  layerBlending: string;
-  layerOrder: number[];
-  layerData: any[];
-  layers: Layer[];
-  filters: Filter[];
+  visState: {
+    datasets: Datasets;
+    interactionConfig: InteractionConfig;
+    animationConfig: AnimationConfig;
+    layerBlending: string;
+    layerOrder: number[];
+    layerData: any[];
+    layers: Layer[];
+    filters: Filter[];
+    mousePos: any;
+    clicked?: any;
+    hoverInfo?: any;
+    mapLayers?: SplitMapLayers | null;
+    editor: any;
+  };
   mapState: MapState;
   mapControls: MapControls;
   mapStyle: {bottomMapStyle?: MapboxStyle; topMapStyle?: MapboxStyle} & MapStyle;
-  mousePos: any;
   mapboxApiAccessToken: string;
   mapboxApiUrl: string;
   visStateActions: typeof VisStateActions;
@@ -152,9 +160,6 @@ interface MapContainerProps {
   primary?: boolean; // primary one will be reporting its size to appState
   readOnly?: boolean;
   isExport?: boolean;
-  clicked?: any;
-  hoverInfo?: any;
-  mapLayers?: SplitMapLayers | null;
   onMapToggleLayer?: Function;
   onMapStyleLoaded?: Function;
   onMapRender?: Function;
@@ -167,6 +172,9 @@ interface MapContainerProps {
   deckGlProps?: any;
   onDeckInitialized?: (a: any, b: any) => void;
   onViewStateChange?: (viewport: Viewport) => void;
+
+  topMapContainerProps: any;
+  bottomMapContainerProps: any;
 }
 
 export default function MapContainerFactory(
@@ -225,10 +233,16 @@ export default function MapContainerFactory(
       }
     };
 
-    layersSelector = props => props.layers;
-    layerDataSelector = props => props.layerData;
-    mapLayersSelector = props => props.mapLayers;
-    layerOrderSelector = props => props.layerOrder;
+    layersSelector = props => props.visState.layers;
+    layerDataSelector = props => props.visState.layerData;
+    splitMapSelector = props => props.visState.splitMaps;
+    splitMapIndexSelector = props => props.index;
+    mapLayersSelector = createSelector(
+      this.splitMapSelector,
+      this.splitMapIndexSelector,
+      (splitMaps, splitMapIndex) => getMapLayersFromSplitMaps(splitMaps, splitMapIndex)
+    );
+    layerOrderSelector = props => props.visState.layerOrder;
     layersToRenderSelector = createSelector(
       this.layersSelector,
       this.layerDataSelector,
@@ -240,7 +254,7 @@ export default function MapContainerFactory(
       this.layerDataSelector,
       prepareLayersForDeck
     );
-    filtersSelector = props => props.filters;
+    filtersSelector = props => props.visState.filters;
     polygonFilters = createSelector(this.filtersSelector, filters =>
       filters.filter(f => f.type === FILTER_TYPES.polygon)
     );
@@ -259,7 +273,7 @@ export default function MapContainerFactory(
     };
 
     _onLayerSetDomain = (idx: number, colorDomain: VisualChannelDomain) => {
-      this.props.visStateActions.layerConfigChange(this.props.layers[idx], {
+      this.props.visStateActions.layerConfigChange(this.props.visState.layers[idx], {
         colorDomain
       } as Partial<LayerBaseConfig>);
     };
@@ -311,7 +325,7 @@ export default function MapContainerFactory(
     }
 
     _onBeforeRender = ({gl}) => {
-      setLayerBlending(gl, this.props.layerBlending);
+      setLayerBlending(gl, this.props.visState.layerBlending);
     };
 
     _onDeckError = (error, layer) => {
@@ -342,12 +356,14 @@ export default function MapContainerFactory(
       // TODO: move this into reducer so it can be tested
       const {
         mapState,
-        hoverInfo,
-        clicked,
-        datasets,
-        interactionConfig,
-        layers,
-        mousePos: {mousePosition, coordinate, pinned}
+        visState: {
+          hoverInfo,
+          clicked,
+          datasets,
+          interactionConfig,
+          layers,
+          mousePos: {mousePosition, coordinate, pinned}
+        }
       } = this.props;
       const layersToRender = this.layersToRenderSelector(this.props);
 
@@ -430,54 +446,41 @@ export default function MapContainerFactory(
       const {
         mapState,
         mapStyle,
-        layerData,
-        layerOrder,
-        layers,
+        visState,
         visStateActions,
         mapboxApiAccessToken,
-        mapboxApiUrl
+        mapboxApiUrl,
+        deckGlProps,
+        index
       } = this.props;
 
-      // initialise layers from props if exists
-      let deckGlLayers = this.props.deckGlProps?.layers || [];
+      const deckGlLayers = computeDeckLayers(
+        {
+          visState,
+          mapState,
+          mapStyle
+        },
+        {
+          mapIndex: index,
+          primaryMap: options.primaryMap,
+          mapboxApiAccessToken,
+          mapboxApiUrl,
+          layersForDeck
+        },
+        this._onLayerSetDomain,
+        deckGlProps
+      );
 
-      // wait until data is ready before render data layers
-      if (layerData && layerData.length) {
-        // last layer render first
-        const dataLayers = layerOrder
-          .slice()
-          .reverse()
-          .filter(idx => layersForDeck[layers[idx].id])
-          .reduce((overlays, idx) => {
-            const layerCallbacks = {
-              onSetLayerDomain: val => this._onLayerSetDomain(idx, val)
-            };
-            const layerOverlay = renderDeckGlLayer(this.props, layerCallbacks, idx);
-            return overlays.concat(layerOverlay || []);
-          }, []);
-        deckGlLayers = deckGlLayers.concat(dataLayers);
-      }
-
-      if (mapStyle.visibleLayerGroups['3d building'] && options.primaryMap) {
-        deckGlLayers.push(
-          new ThreeDBuildingLayer({
-            id: '_keplergl_3d-building',
-            mapboxApiAccessToken,
-            mapboxApiUrl,
-            threeDBuildingColor: mapStyle.threeDBuildingColor,
-            updateTriggers: {
-              getFillColor: mapStyle.threeDBuildingColor
-            }
-          })
-        );
-      }
+      const views = deckGlProps?.views ? deckGlProps?.views() : new MapView({});
 
       return (
         <DeckGL
-          {...this.props.deckGlProps}
-          viewState={mapState}
           id="default-deckgl-overlay"
+          {...deckGlProps}
+          views={views}
           layers={deckGlLayers}
+          controller={true}
+          viewState={mapState}
           onBeforeRender={this._onBeforeRender}
           onHover={visStateActions.onLayerHover}
           onClick={visStateActions.onLayerClick}
@@ -510,7 +513,8 @@ export default function MapContainerFactory(
     }
 
     _renderDrawEditor() {
-      const {layers, datasets, mapControls, visStateActions, editor, index} = this.props;
+      const {visState, mapControls, visStateActions, index} = this.props;
+      const {layers, datasets, editor} = visState;
       const isEdit = mapControls.mapDraw ? mapControls.mapDraw.active : false;
       const layersToRender = this.layersToRenderSelector(this.props);
 
@@ -537,19 +541,12 @@ export default function MapContainerFactory(
     }
 
     _onViewportChange = viewState => {
-      const {width, height, ...restViewState} = viewState;
-      const {primary} = this.props;
-      // react-map-gl sends 0,0 dimensions during initialization
-      // after we have received proper dimensions from observeDimensions
-      const next = {
-        ...(width > 0 && height > 0 ? viewState : restViewState),
-        // enabling transition in two maps may lead to endless update loops
-        transitionDuration: primary ? TRANSITION_DURATION : 0
-      };
-      if (typeof this.props.onViewStateChange === 'function') {
-        this.props.onViewStateChange(next);
-      }
-      this.props.mapStateActions.updateMap(next);
+      onViewPortChange(
+        viewState,
+        this.props.mapStateActions.updateMap,
+        this.props.onViewStateChange,
+        this.props.primary
+      );
     };
 
     _toggleMapControl = panelId => {
@@ -561,12 +558,11 @@ export default function MapContainerFactory(
     /* eslint-disable complexity */
     _renderMap() {
       const {
+        visState,
         mapState,
         mapStyle,
         mapStateActions,
-        layers,
         MapComponent = MapboxGLMap,
-        datasets,
         mapboxApiAccessToken,
         mapboxApiUrl,
         mapControls,
@@ -574,11 +570,13 @@ export default function MapContainerFactory(
         locale,
         uiStateActions,
         visStateActions,
-        interactionConfig,
-        editor,
         index,
-        primary
+        primary,
+        bottomMapContainerProps,
+        topMapContainerProps
       } = this.props;
+
+      const {layers, datasets, editor, interactionConfig, hoverInfo} = visState;
 
       const layersToRender = this.layersToRenderSelector(this.props);
       const layersForDeck = this.layersForDeckSelector(this.props);
@@ -596,7 +594,7 @@ export default function MapContainerFactory(
         transformRequest
       };
 
-      const hasGeocoderLayer = layers.find(l => l.id === GEOCODER_LAYER_ID);
+      const hasGeocoderLayer = Boolean(layers.find(l => l.id === GEOCODER_LAYER_ID));
       const isSplit = Boolean(mapState.isSplit);
 
       return (
@@ -627,11 +625,12 @@ export default function MapContainerFactory(
             mapHeight={mapState.height}
           />
           <MapComponent
-            {...mapProps}
             key="bottom"
-            ref={this._setMapboxMap}
+            {...mapProps}
             mapStyle={mapStyle.bottomMapStyle}
-            getCursor={this.props.hoverInfo ? () => 'pointer' : undefined}
+            {...bottomMapContainerProps}
+            ref={this._setMapboxMap}
+            getCursor={hoverInfo ? () => 'pointer' : undefined}
             onMouseMove={this.props.visStateActions.onMouseMove}
           >
             {this._renderDeckOverlay(layersForDeck, {primaryMap: true})}
@@ -640,7 +639,12 @@ export default function MapContainerFactory(
           </MapComponent>
           {mapStyle.topMapStyle || hasGeocoderLayer ? (
             <div style={MAP_STYLE.top}>
-              <MapComponent {...mapProps} key="top" mapStyle={mapStyle.topMapStyle}>
+              <MapComponent
+                key="top"
+                {...mapProps}
+                mapStyle={mapStyle.topMapStyle}
+                {...topMapContainerProps}
+              >
                 {this._renderDeckOverlay({[GEOCODER_LAYER_ID]: hasGeocoderLayer})}
               </MapComponent>
             </div>

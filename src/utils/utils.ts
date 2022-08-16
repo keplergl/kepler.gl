@@ -224,3 +224,7 @@ export function filterObjectByPredicate(obj, predicate) {
     {}
   );
 }
+
+export function isFunction(func) {
+  return typeof func === 'function';
+}

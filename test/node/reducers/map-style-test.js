@@ -173,6 +173,8 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
+    bottomMapStyle: undefined,
+    topMapStyle: undefined,
     initialState: {}
   };
 
