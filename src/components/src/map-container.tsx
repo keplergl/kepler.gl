@@ -103,7 +103,7 @@ const MapboxLogo = () => (
     />
   </div>
 );
-const Attribution = () => {
+export const Attribution = () => {
   const isPalm = hasMobileWidth();
   return (
     <StyledAttrbution>
