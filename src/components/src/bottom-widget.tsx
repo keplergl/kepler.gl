@@ -50,11 +50,7 @@ const BottomWidgetContainer = styled.div<BottomWidgetContainerProps>`
   }
   width: ${props => props.width}px;
   z-index: 1;
-  ${media.portable`
-    padding-left: 0;
-    padding-right: 0;   
-    padding-bottom: 0;
-  `}
+  ${media.portable`padding: 0;`}
 `;
 
 interface FilterAnimationControllerProps {
