@@ -22,11 +22,10 @@ import React, {ComponentType, useCallback, useMemo} from 'react';
 import classnames from 'classnames';
 import {MapControlButton} from 'components/common/styled-components';
 import {Delete, Split} from 'components/common/icons';
-import {FormattedMessage} from '@kepler.gl/localization';
-import TippyTooltip from '../common/tippy-tooltip';
+import MapControlTooltipFactory from './map-control-tooltip';
 import {MapControl, MapControls} from 'reducers';
 
-SplitMapButtonFactory.deps = [];
+SplitMapButtonFactory.deps = [MapControlTooltipFactory];
 
 interface SplitMapButtonIcons {
   delete: ComponentType<any>;
@@ -42,7 +41,7 @@ export type SplitMapButtonProps = {
   mapControls: MapControls;
 };
 
-function SplitMapButtonFactory() {
+function SplitMapButtonFactory(MapControlTooltip) {
   const defaultActionIcons = {
     delete: Delete,
     split: Split
@@ -72,13 +71,9 @@ function SplitMapButtonFactory() {
       return null;
     }
     return isVisible ? (
-      <TippyTooltip
-        placement="left"
-        render={() => (
-          <div id="action-toggle">
-            <FormattedMessage id={isSplit ? 'tooltip.closePanel' : 'tooltip.switchToDualView'} />
-          </div>
-        )}
+      <MapControlTooltip
+        id="action-toggle"
+        message={isSplit ? 'tooltip.closePanel' : 'tooltip.switchToDualView'}
       >
         <MapControlButton
           active={isSplit}
@@ -87,7 +82,7 @@ function SplitMapButtonFactory() {
         >
           {isSplit ? <actionIcons.delete height="18px" /> : <actionIcons.split height="18px" />}
         </MapControlButton>
-      </TippyTooltip>
+      </MapControlTooltip>
     ) : null;
   };
 

@@ -110,10 +110,7 @@ function MapControlFactory(
   ];
 
   /** @type {import('./map-control').MapControl} */
-  const MapControl: React.FC<MapControlProps> = ({
-    actionComponents = DEFAULT_ACTIONS,
-    ...props
-  }) => {
+  const MapControl: React.FC<MapControlProps> = React.memo(({actionComponents, ...props}) => {
     return (
       <StyledMapControl className="map-control" top={props.top}>
         {actionComponents.map((ActionComponent, index) => (
@@ -121,18 +118,20 @@ function MapControlFactory(
         ))}
       </StyledMapControl>
     );
-  };
+  });
 
   MapControl.defaultProps = {
     isSplit: false,
     top: 0,
     mapIndex: 0,
-    logoComponent: LegendLogo
+    logoComponent: LegendLogo,
+    // @ts-expect-error
+    actionComponents: DEFAULT_ACTIONS
   };
 
   MapControl.displayName = 'MapControl';
 
-  return React.memo(MapControl);
+  return MapControl;
 }
 
 export default MapControlFactory;
