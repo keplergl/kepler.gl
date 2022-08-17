@@ -26,7 +26,7 @@ import {createSelector} from 'reselect';
 import {connect as keplerGlConnect} from 'connect/keplergl-connect';
 import {IntlProvider} from 'react-intl';
 import {messages} from '@kepler.gl/localization';
-import {RootContext, FeatureFlagsContextProvider} from 'components/context';
+import {RootContext, FeatureFlagsContextProvider, FeatureFlags} from 'components/context';
 import {OnErrorCallBack, OnSuccessCallBack} from 'actions/provider-actions';
 
 import * as VisStateActions from 'actions/vis-state-actions';
@@ -285,7 +285,7 @@ type KeplerGLBasicProps = {
   onExportToCloudSuccess?: OnSuccessCallBack;
   onExportToCloudError?: OnErrorCallBack;
   readOnly?: boolean;
-  featureFlags?: object;
+  featureFlags?: FeatureFlags;
 
   localeMessages?: {[key: string]: {[key: string]: string}};
   dispatch: Dispatch<any>;

@@ -29,7 +29,7 @@ const KeplerGlContext = createContext({
 
 export const FeatureFlagsContext = createContext<object | null>({});
 
-export type FeatureFlags = {};
+export type FeatureFlags = {[key: string]: string | boolean};
 
 export type FeatureFlagsContextProviderProps = {
   children: ReactNode;
