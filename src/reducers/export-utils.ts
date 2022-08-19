@@ -21,9 +21,7 @@
 import {Blob} from 'global/window';
 import {csvFormatRows} from 'd3-dsv';
 
-import {
-  EXPORT_DATA_TYPE
-} from '@kepler.gl/constants';
+import {EXPORT_DATA_TYPE} from '@kepler.gl/constants';
 import {Field} from '@kepler.gl/types';
 
 import {createIndexedDataContainer} from 'reducers/table-utils/data-container-utils';

@@ -56,38 +56,6 @@ export * as visStateMergers from './vis-state-merger';
 // Helpers
 export * from './composer-helpers';
 
-// export types
-export type {
-  AnimationConfig,
-  Brush,
-  Coordinate,
-  KeplerTable,
-  Datasets,
-  Editor,
-  Feature,
-  FeatureValue,
-  FieldDomain,
-  Filter,
-  FilterBase,
-  Geocoder,
-  HistogramBin,
-  InteractionConfig,
-  LineChart,
-  MapInfo,
-  MultiSelectFieldDomain,
-  MultiSelectFilter,
-  PolygonFilter,
-  RangeFieldDomain,
-  RangeFilter,
-  SelectFieldDomain,
-  SelectFilter,
-  SplitMap,
-  TimeRangeFieldDomain,
-  TimeRangeFilter,
-  TooltipInfo,
-  VisState
-} from './vis-state-updaters';
-
 export type {
   InputStyle,
   MapboxStyleUrl,

@@ -20,105 +20,17 @@
 
 import {console as Console} from 'global/window';
 
-import {Datasets} from 'reducers';
-import datasetSchema, { SavedField } from './dataset-schema';
+import {Datasets} from 'reducers/table-utils';
+import datasetSchema from './dataset-schema';
 import mapStyleSchema from './map-style-schema';
 import mapStateSchema from './map-state-schema';
 import {SavedDatasetV1, ParsedDataset} from './dataset-schema';
-import {visStateSchema, ParsedVisState} from './vis-state-schema';
+import {visStateSchema, ParsedVisState, SavedVisState} from './vis-state-schema';
 
 import {CURRENT_VERSION, VERSIONS} from './versions';
 import {isPlainObject} from '@kepler.gl/utils';
 
-import {
-  InteractionConfig,
-  Filter,
-  TooltipInfo,
-  SplitMap,
-  AnimationConfig,
-  MapInfo,
-  RGBColor,
-  Merge,
-  RGBAColor,
-  LayerTextLabel
-} from '@kepler.gl/types';
-
-export type SavedFilter = {
-  dataId: Filter['dataId'];
-  id: Filter['id'];
-  name: Filter['name'];
-  type: Filter['type'];
-  value: Filter['value'];
-  enlarged: Filter['enlarged'];
-  plotType: Filter['plotType'];
-  yAxis: {
-    name: string;
-    type: string;
-  } | null;
-  speed: Filter['speed'];
-  layerId: Filter['layerId'];
-};
-
-export type ParsedFilter = Partial<SavedFilter>;
-
-export type SavedInteractionConfig = {
-  tooltip: TooltipInfo['config'] & {
-    enabled: boolean;
-  };
-  geocoder: InteractionConfig['geocoder'] & {
-    enabled: boolean;
-  };
-  brush: InteractionConfig['brush'] & {
-    enabled: boolean;
-  };
-  coordinate: InteractionConfig['coordinate'] & {
-    enabled: boolean;
-  };
-};
-
-export type SavedScale = string;
-export type SavedVisualChannels = {
-  [key: string]: SavedField | SavedScale;
-};
-
-export type SavedLayer = {
-  id: string;
-  type: string;
-  config: {
-    dataId: string;
-    label: string;
-    color: RGBColor;
-    highlightColor: RGBAColor;
-    columns: {
-      [key: string]: string;
-    };
-    isVisible: boolean;
-    visConfig: object;
-    hidden: boolean;
-    textLabel: Merge<LayerTextLabel, {field: {name: string; type: string} | null}>;
-  };
-  visualChannels: SavedVisualChannels;
-};
-
-export type ParsedLayer = {
-  id?: string;
-  type?: string;
-  config?: Partial<SavedLayer['config']>;
-};
-
-export type SavedAnimationConfig = {
-  currentTime: AnimationConfig['currentTime'];
-  speed: AnimationConfig['speed'];
-};
-
-export type SavedVisState = {
-  filters: SavedFilter[];
-  layers: SavedLayer[];
-  interactionConfig: SavedInteractionConfig;
-  layerBlending: string;
-  splitMaps: SplitMap[];
-  animationConfig: SavedAnimationConfig;
-};
+import {MapInfo, RGBColor} from '@kepler.gl/types';
 
 export type SavedMapState = {
   bearing: number;

@@ -32,7 +32,7 @@ import reducer from 'reducers/vis-state';
 
 import {INITIAL_VIS_STATE, DEFAULT_ANIMATION_CONFIG} from 'reducers/vis-state-updaters';
 import {serializeLayer} from 'reducers/vis-state-merger';
-import KeplerTable from 'utils/table-utils/kepler-table';
+import KeplerTable from 'reducers/table-utils';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {defaultInteractionConfig} from 'reducers/vis-state-updaters';
 import {Layer, KeplerGlLayers} from '@kepler.gl/layers';

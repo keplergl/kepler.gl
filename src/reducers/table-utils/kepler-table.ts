@@ -47,7 +47,7 @@ import {
   getOrdinalDomain,
   getQuantileDomain
 } from '../data-scale-utils';
-import { DataContainerInterface } from './data-container-interface';
+import {DataContainerInterface} from './data-container-interface';
 
 export type GpuFilter = {
   filterRange: number[][];

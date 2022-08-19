@@ -49,8 +49,7 @@ import {
   RangeFieldDomain
 } from '@kepler.gl/types';
 
-import {ParsedFilter} from 'schemas';
-import { VisState } from 'reducers';
+import {ParsedFilter, VisState} from 'schemas';
 import KeplerTable, {
   FilterRecord,
   Datasets,
@@ -58,7 +57,6 @@ import KeplerTable, {
 } from 'reducers/table-utils/kepler-table';
 import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
 import {LAYER_TYPES, getCentroid} from '@kepler.gl/layers';
-import { isValidFilterValue } from '@kepler.gl/utils';
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];
@@ -251,6 +249,7 @@ export function validateFilter(
     return failed;
   }
 
+  // @ts-expect-error
   const initializeFilter: Filter = {
     // @ts-expect-error
     ...getDefaultFilter(filter.dataId),
@@ -362,6 +361,7 @@ export function getFilterProps(
       };
 
     case ALL_FIELD_TYPES.boolean:
+      // @ts-expect-error
       return {
         ...filterProps,
         type: FILTER_TYPES.select,
@@ -371,6 +371,7 @@ export function getFilterProps(
 
     case ALL_FIELD_TYPES.string:
     case ALL_FIELD_TYPES.date:
+      // @ts-expect-error
       return {
         ...filterProps,
         type: FILTER_TYPES.multiSelect,
@@ -379,6 +380,7 @@ export function getFilterProps(
       };
 
     case ALL_FIELD_TYPES.timestamp:
+      // @ts-expect-error
       return {
         ...filterProps,
         type: FILTER_TYPES.timeRange,

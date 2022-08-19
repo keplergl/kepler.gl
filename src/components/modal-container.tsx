@@ -61,7 +61,7 @@ import {
 
 import {MapState} from '@kepler.gl/types';
 import {getFileFormatNames, getFileExtensions} from 'reducers/vis-state-selectors';
-import {MapStyle, UiState, VisState} from 'reducers';
+import {MapStyle, UiState} from 'reducers';
 import {OnSuccessCallBack, OnErrorCallBack} from 'actions';
 import {ProviderState} from 'reducers/provider-state-updaters';
 
@@ -72,6 +72,7 @@ import * as ProviderActions from 'actions/provider-actions';
 import {ModalDialogProps} from './common/modal';
 import {Provider} from 'cloud-providers';
 import {findDOMNode} from 'react-dom';
+import {VisState} from 'schemas';
 
 const DataTableModalStyle = css`
   top: 80px;

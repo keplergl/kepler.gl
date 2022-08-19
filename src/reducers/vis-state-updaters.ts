@@ -53,11 +53,10 @@ import {
   VIS_STATE_MERGERS,
   validateLayerWithData,
   createLayerFromConfig,
-  serializeLayer,
-  VisStateMergers
+  serializeLayer
 } from './vis-state-merger';
 
-import {Layer, LayerClasses, LayerClassesType, LAYER_ID_LENGTH} from '@kepler.gl/layers';
+import {Layer, LayerClasses, LAYER_ID_LENGTH} from '@kepler.gl/layers';
 import {
   EDITOR_MODES,
   SORT_ORDER,
@@ -70,18 +69,9 @@ import {ActionTypes} from 'actions';
 import {pick_, merge_, swap_} from './composer-helpers';
 import {processFileContent} from 'actions/vis-state-actions';
 
-import KeplerGLSchema from 'schemas';
+import KeplerGLSchema, {VisState} from 'schemas';
 
-import {
-  MapInfo,
-  Filter,
-  InteractionConfig,
-  AnimationConfig,
-  Editor,
-  SplitMap,
-  FileLoading,
-  FileLoadingProgress
-} from '@kepler.gl/types';
+import {Filter, InteractionConfig, AnimationConfig, Editor} from '@kepler.gl/types';
 import {ReceiveMapConfigPayload} from '../actions/actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';

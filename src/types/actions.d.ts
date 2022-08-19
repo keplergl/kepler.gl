@@ -4,6 +4,7 @@ export type ProtoDataset = {
     label?: string;
     format?: string;
     color?: RGBColor;
+    type?: string;
   };
   data: {
     fields: {
@@ -18,5 +19,6 @@ export type ProtoDataset = {
 
   // table-injected metadata
   metadata?: any;
-  supportedFilterTypes?: string[];
+  supportedFilterTypes?: string[] | null;
+  disableDataOperation?: boolean;
 };

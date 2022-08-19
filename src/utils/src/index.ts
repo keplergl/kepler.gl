@@ -20,13 +20,12 @@
 
 // UTILS
 export {
-  maybeToDate,
   roundValToStep,
   timeToUnixMilli,
   defaultFormatter,
   FIELD_DISPLAY_FORMAT
 } from './data-utils';
-export {createNewDataEntry, datasetColorMaker, findDefaultColorField} from './dataset-utils';
+export {datasetColorMaker, findDefaultColorField} from './dataset-utils';
 export {hexToRgb} from './color-utils';
 export {errorNotification} from './notifications-utils';
 export {dataURItoBlob, downloadFile, exportJson} from './export-utils';
@@ -53,18 +52,6 @@ export {
 
 export {getHexFields, containValidTime} from '@kepler.gl/layers';
 
-export {
-  default as KeplerTable,
-  findPointFieldPairs,
-  getFieldValueAccessor,
-  copyTableAndUpdate,
-  pinTableColumns,
-  sortDatasetByColumn,
-  copyTable
-} from './table-utils/kepler-table';
-export type {GpuFilter, Datasets} from './table-utils/kepler-table';
-export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData} from './table-utils/data-container-utils';
-export type {DataContainerInterface} from './table-utils/data-container-interface';
 export {createNotification, exportImageError, successNotification} from './notifications-utils';
 
 export {default as domtoimage} from './dom-to-image';

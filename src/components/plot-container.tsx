@@ -28,7 +28,7 @@ import {
   exportImageError,
   scaleMapStyleByResolution,
   getCenterAndZoomFromBounds,
-  convertToPng, 
+  convertToPng,
   getScaleFromImageSize
 } from '@kepler.gl/utils';
 import {findMapBounds} from 'reducers/data-utils';

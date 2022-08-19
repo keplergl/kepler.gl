@@ -20,22 +20,28 @@
 
 import pick from 'lodash.pick';
 import {VERSIONS} from './versions';
-import {isFilterValidToSave} from 'utils/filter-utils';
 import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import {notNullorUndefined} from '@kepler.gl/utils';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
-import {LayerTextLabel} from '@kepler.gl/types';
 import {
-  InteractionConfig,
-  Filter,
-  TooltipInfo,
-  SplitMap,
   AnimationConfig,
-  VisState
-} from 'reducers';
+  Editor,
+  FileLoading,
+  FileLoadingProgress,
+  Filter,
+  InteractionConfig,
+  LayerTextLabel,
+  MapInfo,
+  SplitMap,
+  TooltipInfo
+} from '@kepler.gl/types';
+import {isFilterValidToSave} from 'reducers/filter-utils';
+import {Datasets} from 'reducers/table-utils';
 import {RGBColor, Merge} from 'types';
-import {Layer} from 'layers';
+import {Layer, LayerClassesType} from '@kepler.gl/layers';
+import {LoaderObject} from '@loaders.gl/loader-utils';
+import KeplerGLSchema from './schema-manager';
 
 export type SavedFilter = {
   dataId: Filter['dataId'];
@@ -142,6 +148,45 @@ export type modifiedType = {
   filled?: boolean;
   stroked?: boolean;
 };
+
+export type VisState = {
+  mapInfo: MapInfo;
+  layers: Layer[];
+  layerData: any[];
+  layerToBeMerged: any[];
+  layerOrder: number[];
+  filters: Filter[];
+  filterToBeMerged: any[];
+  datasets: Datasets;
+  editingDataset: string | undefined;
+  interactionConfig: InteractionConfig;
+  interactionToBeMerged: any;
+  layerBlending: string;
+  hoverInfo: any;
+  clicked: any;
+  mousePos: any;
+  maxDefaultTooltips: number;
+  layerClasses: LayerClassesType;
+  animationConfig: AnimationConfig;
+  editor: Editor;
+  splitMaps: SplitMap[];
+  splitMapsToBeMerged: SplitMap[];
+  fileLoading: FileLoading | false;
+  fileLoadingProgress: FileLoadingProgress;
+  loaders: LoaderObject[];
+  loadOptions: object;
+  initialState?: Partial<VisState>;
+  mergers: VisStateMergers;
+  schema: typeof KeplerGLSchema;
+  preserveLayerOrder?: number[];
+};
+
+export type Merger = {
+  merge: <S extends VisState>(state: S, config: any, fromConfig?: boolean) => S;
+  prop: string;
+  toMergeProp?: string;
+};
+export type VisStateMergers = Merger[];
 
 // in v0 geojson there is only sizeField
 

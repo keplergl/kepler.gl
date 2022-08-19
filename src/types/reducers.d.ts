@@ -1,3 +1,5 @@
+import {Field, Millisecond} from './types';
+
 export type MapState = {
   pitch: number;
   bearing: number;
@@ -59,7 +61,7 @@ export type LineChart = {
   xDomain: [number, number];
 };
 
-export type FilterBase = {
+export type FilterBase<L extends LineChart> = {
   dataId: string[];
   id: string;
 
@@ -83,7 +85,7 @@ export type FilterBase = {
   // plot
   yAxis: Field | null;
   plotType: string;
-  lineChart?: LineChart;
+  lineChart?: L;
   // gpu filter
   gpu: boolean;
   gpuChannel?: number[];
@@ -93,7 +95,7 @@ export type FilterBase = {
   layerId?: string[];
 };
 
-export type RangeFilter = FilterBase &
+export type RangeFilter = FilterBase<LineChart> &
   RangeFieldDomain & {
     type: 'range';
     fieldType: 'real' | 'integer';
@@ -102,20 +104,20 @@ export type RangeFilter = FilterBase &
     typeOptions: ['range'];
   };
 
-export type SelectFilter = FilterBase &
+export type SelectFilter = FilterBase<LineChart> &
   SelectFieldDomain & {
     type: 'select';
     fieldType: 'boolean';
     value: boolean;
   };
 
-export type MultiSelectFilter = FilterBase &
+export type MultiSelectFilter = FilterBase<LineChart> &
   MultiSelectFieldDomain & {
     type: 'range';
     fieldType: 'string' | 'date';
     value: string[];
   };
-export type TimeRangeFilter = FilterBase &
+export type TimeRangeFilter = FilterBase<LineChart> &
   TimeRangeFieldDomain & {
     type: 'timeRange';
     fieldType: 'timestamp';
@@ -128,7 +130,7 @@ export type TimeRangeFilter = FilterBase &
     animationWindow: string;
   };
 
-export type PolygonFilter = FilterBase & {
+export type PolygonFilter = FilterBase<LineChart> & {
   layerId: string[];
   type: 'polygon';
   fixedDomain: true;
@@ -136,7 +138,7 @@ export type PolygonFilter = FilterBase & {
 };
 
 export type Filter =
-  | FilterBase
+  | FilterBase<LineChart>
   | RangeFilter
   | TimeRangeFilter
   | SelectFilter
@@ -255,4 +257,6 @@ export type BaseMapStyle = {
   icon: string;
   style?: Object;
   layerGroups: LayerGroup[];
+  accessToken?: string;
+  custom?: boolean;
 };

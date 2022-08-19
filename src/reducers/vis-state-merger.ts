@@ -25,22 +25,14 @@ import {isObject, arrayInsert, getInitialMapLayersForSplitMap} from '@kepler.gl/
 
 import {LayerColumns, LayerColumn, Layer} from '@kepler.gl/layers';
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
-import {CURRENT_VERSION, visStateSchema} from 'schemas';
+import {CURRENT_VERSION, Merger, VisState, VisStateMergers, visStateSchema} from 'schemas';
 
-import {VisState} from './vis-state-updaters';
 import {ParsedConfig, ParsedLayer} from 'schemas';
 import {SavedInteractionConfig} from 'schemas';
 import {TooltipInfo} from '@kepler.gl/types';
 import KeplerTable, {Datasets} from './table-utils/kepler-table';
 import {applyFiltersToDatasets, validateFiltersUpdateDatasets} from './filter-utils';
 import {assignGpuChannels, resetFilterGpuMode} from './table-utils/gpu-filter-utils';
-
-export type Merger = {
-  merge: <S extends VisState>(state: S, config: any, fromConfig?: boolean) => S;
-  prop: string;
-  toMergeProp?: string;
-};
-export type VisStateMergers = Merger[];
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded

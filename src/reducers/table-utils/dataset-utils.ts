@@ -38,8 +38,6 @@ const datasetColors = [
   '#A2D4AB'
 ].map(hexToRgb);
 
-
-
 /** @type {typeof import('./dataset-utils').getNewDatasetColor} */
 export function getNewDatasetColor(datasets: Datasets): RGBColor {
   const presetColors = datasetColors.map(String);
@@ -80,4 +78,3 @@ export function createNewDataEntry(
     [keplerTable.id]: keplerTable
   };
 }
-
