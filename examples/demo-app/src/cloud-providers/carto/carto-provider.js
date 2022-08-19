@@ -21,9 +21,8 @@
 import {OAuthApp} from '@carto/toolkit';
 import Console from 'global/console';
 import CartoIcon from './carto-icon';
-import {formatCsv} from 'kepler.gl/processors';
 import {Provider} from 'kepler.gl/cloud-providers';
-import {createDataContainer} from 'kepler.gl/utils';
+import {createDataContainer, formatCsv} from '../../utils';
 
 const NAME = 'carto';
 const DISPLAY_NAME = 'CARTO';

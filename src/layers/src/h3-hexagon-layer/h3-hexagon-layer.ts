@@ -25,7 +25,12 @@ import Layer, {
   LayerCoverageConfig,
   LayerSizeConfig
 } from '../base-layer';
-import {findDefaultColorField} from 'utils/dataset-utils';
+import {
+  findDefaultColorField,
+  createDataContainer,
+  DataContainerInterface,
+  KeplerTable
+} from '../../utils';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
 import {EnhancedColumnLayer} from '@kepler.gl/deckgl-layers';
@@ -33,7 +38,6 @@ import {getCentroid, idToPolygonGeo, h3IsValid, getHexFields, Centroid} from './
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {CHANNEL_SCALES, HIGHLIGH_COLOR_3D, ColorRange} from '@kepler.gl/constants';
 
-import {createDataContainer} from 'utils/table-utils';
 import {
   VisConfigBoolean,
   VisConfigColorRange,
@@ -41,8 +45,6 @@ import {
   VisConfigRange,
   Merge
 } from '@kepler.gl/types';
-import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
-import {KeplerTable} from '../../../utils';
 
 export type HexagonIdLayerColumnsConfig = {
   hex_id: LayerColumn;

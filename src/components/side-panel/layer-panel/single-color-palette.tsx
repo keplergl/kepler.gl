@@ -21,7 +21,7 @@
 import React, {MouseEvent} from 'react';
 import {range} from 'd3-array';
 import styled from 'styled-components';
-import {hexToRgb} from 'utils/color-utils';
+import {hexToRgb} from '../../../utils';
 
 import {ColorsByTheme, Themes, ColorRange} from '@kepler.gl/constants';
 import {RGBColor} from '@kepler.gl/types';

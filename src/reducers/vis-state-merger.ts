@@ -21,16 +21,21 @@
 import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
 import flattenDeep from 'lodash.flattendeep';
-import {isObject, arrayInsert} from 'utils/utils';
-import {applyFiltersToDatasets, validateFiltersUpdateDatasets} from 'utils/filter-utils';
+import {
+  isObject,
+  arrayInsert,
+  applyFiltersToDatasets,
+  validateFiltersUpdateDatasets,
+  getInitialMapLayersForSplitMap,
+  resetFilterGpuMode,
+  assignGpuChannels,
+  KeplerTable
+} from '../utils';
 
-import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
-import {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
 import {CURRENT_VERSION, visStateSchema} from 'schemas';
 
 import {VisState, Datasets} from './vis-state-updaters';
-import {KeplerTable} from '../utils';
 import {ParsedConfig, ParsedLayer} from 'schemas';
 import {Layer, LayerColumns, LayerColumn} from '@kepler.gl/layers';
 import {TooltipInfo} from './vis-state-updaters';

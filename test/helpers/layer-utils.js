@@ -32,8 +32,7 @@ import * as VisStateActions from 'actions/vis-state-actions';
 import {addDataToMap} from 'actions/actions';
 
 import {colorMaker, layerColors, LayerClasses} from '@kepler.gl/layers';
-import {getGpuFilterProps} from 'utils/gpu-filter-utils';
-import {renderDeckGlLayer} from 'utils/layer-utils';
+import {getGpuFilterProps, renderDeckGlLayer} from '../utils';
 import {validateLayerWithData} from 'reducers/vis-state-merger';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {applyActions, InitialState} from 'test/helpers/mock-state';

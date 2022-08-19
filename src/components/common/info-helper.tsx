@@ -24,7 +24,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {Tooltip} from './styled-components';
 import {Docs} from 'components/common/icons';
 import styled from 'styled-components';
-import {camelize} from 'utils/utils';
+import {camelize} from '../../utils';
 
 interface StyledInfoHelperProps {
   width?: number;

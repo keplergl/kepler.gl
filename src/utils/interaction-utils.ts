@@ -26,64 +26,23 @@ import {
   TOOLTIP_KEY,
   COMPARE_TYPES
 } from '@kepler.gl/constants';
+import {TooltipField, CompareType} from 'reducers';
+
+import {DataRow} from './table-utils/data-row';
+import {Field} from './table-utils/kepler-table';
 import {
   parseFieldValue,
   getFormatter,
   isNumber,
   defaultFormatter,
   notNullorUndefined
-} from 'utils/data-utils';
-import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons/index';
-
-import {InteractionConfig, TooltipField, CompareType} from '../reducers/vis-state-updaters';
-import {DataRow} from './table-utils/data-row';
-import {Field} from './table-utils/kepler-table';
+} from './data-utils';
 
 /**
  * Minus sign used in tooltip formatting.
  * \u2212 is the minus sign that d3-format uses for decimal number formatting
  */
 export const TOOLTIP_MINUS_SIGN = '\u2212';
-
-export function getDefaultInteraction(): InteractionConfig {
-  return {
-    tooltip: {
-      id: 'tooltip',
-      label: 'interactions.tooltip',
-      enabled: true,
-      iconComponent: Messages,
-      config: {
-        fieldsToShow: {},
-        compareMode: false,
-        compareType: COMPARE_TYPES.ABSOLUTE
-      }
-    },
-    geocoder: {
-      id: 'geocoder',
-      label: 'interactions.geocoder',
-      enabled: false,
-      iconComponent: Pin,
-      position: null
-    },
-    brush: {
-      id: 'brush',
-      label: 'interactions.brush',
-      enabled: false,
-      iconComponent: Crosshairs,
-      config: {
-        // size is in km
-        size: 0.5
-      }
-    },
-    coordinate: {
-      id: 'coordinate',
-      label: 'interactions.coordinate',
-      enabled: false,
-      iconComponent: CursorClick,
-      position: null
-    }
-  };
-}
 
 export const BRUSH_CONFIG: {
   range: [number, number];

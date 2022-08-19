@@ -24,7 +24,7 @@ import {createSelector} from 'reselect';
 import {format} from 'd3-format';
 import moment from 'moment';
 import {SCALE_TYPES, SCALE_FUNC, ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {getTimeWidgetHintFormatter} from 'utils/filter-utils';
+import {getTimeWidgetHintFormatter} from '../../utils';
 
 const ROW_H = 10;
 const GAP = 4;

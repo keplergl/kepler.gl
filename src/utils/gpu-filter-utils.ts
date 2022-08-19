@@ -18,11 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {set, toArray} from './utils';
-import {MAX_GPU_FILTERS, FILTER_TYPES} from '@kepler.gl/constants';
-import {notNullorUndefined} from './data-utils';
 import moment from 'moment';
-import {Filter} from 'reducers/vis-state-updaters';
+import {MAX_GPU_FILTERS, FILTER_TYPES} from '@kepler.gl/constants';
+import {Filter} from 'reducers';
+
+import {set, toArray} from './utils';
+import {notNullorUndefined} from './data-utils';
 import {DataContainerInterface} from './table-utils/data-container-interface';
 import {Field, GpuFilter} from './table-utils/kepler-table';
 

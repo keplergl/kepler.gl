@@ -27,7 +27,7 @@ import FileUploadProgress from 'components/common/file-uploader/file-upload-prog
 import FileDrop from './file-drop';
 import {FileLoading, FileLoadingProgress} from 'reducers/vis-state-updaters';
 
-import {isChrome} from 'utils/utils';
+import {isChrome} from '../../../utils';
 import {GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
 import ReactMarkdown from 'react-markdown';
 // Breakpoints

@@ -25,7 +25,7 @@ import SourceDataSelectorFactory from 'components/side-panel/common/source-data-
 import FieldSelectorFactory from '../../common/field-selector';
 import {FilterBase, LineChart} from 'reducers';
 import {FilterPanelComponent} from './types';
-import KeplerTable, {Field} from 'utils/table-utils/kepler-table';
+import {KeplerTable, Field} from '../../../utils';
 
 NewFilterPanelFactory.deps = [
   FilterPanelHeaderFactory,

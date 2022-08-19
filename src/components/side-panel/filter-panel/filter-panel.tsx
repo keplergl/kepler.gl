@@ -31,7 +31,7 @@ import MultiSelectFilterPanelFactory from 'components/filters/filter-panels/mult
 import RangeFilterPanelFactory from 'components/filters/filter-panels/range-filter-panel';
 import PolygonFilterPanelFactory from 'components/filters/filter-panels/polygon-filter-panel';
 import {Filter} from 'reducers/vis-state-updaters';
-import {Field} from 'utils/table-utils/kepler-table';
+import {Field} from '../../../utils';
 import {FilterPanelProps} from 'components/filters/filter-panels/types';
 import {Layer} from '@kepler.gl/layers';
 

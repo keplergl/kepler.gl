@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {errorNotification, successNotification} from 'utils/notifications-utils';
+import {errorNotification, successNotification} from '../utils';
 
 test('#notificationsUtils -> errorNotification', t => {
   const notification = errorNotification({message: 'test', id: 'test-1'});

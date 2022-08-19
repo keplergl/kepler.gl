@@ -28,7 +28,7 @@ import {MapInfo} from 'reducers/vis-state-updaters';
 import {UiState} from 'reducers/ui-state-updaters';
 
 /**
- * Input dataest parsed to addDataToMap
+ * Input dataset parsed to addDataToMap
  */
 export type ProtoDataset = {
   info: {

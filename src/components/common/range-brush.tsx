@@ -22,7 +22,7 @@ import React, {Component, createRef} from 'react';
 import styled, {withTheme} from 'styled-components';
 import {select, Selection} from 'd3-selection';
 import {BrushBehavior, brushX} from 'd3-brush';
-import {normalizeSliderValue} from 'utils/data-utils';
+import {normalizeSliderValue} from '../../utils';
 
 interface StyledGProps {
   isRanged?: boolean;

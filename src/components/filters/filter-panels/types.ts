@@ -1,7 +1,7 @@
 import {FunctionComponent, ComponentType} from 'react';
 import {Datasets, Filter, PolygonFilter, TimeRangeFilter} from 'reducers';
 import {Layer} from '@kepler.gl/layers';
-import {Field} from 'utils/table-utils/kepler-table';
+import {Field} from '../../../utils';
 
 interface PanelAction {
   id: string;

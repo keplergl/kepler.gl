@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import Checkbox from 'components/common/checkbox';
-import {generateHashId} from '../../utils/utils';
+import {generateHashId} from '../../utils';
 
 const MapLayerSelect = styled.div`
   padding: 12px;

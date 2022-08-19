@@ -18,13 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Console from 'global/console';
-import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
+import {console as Console} from 'global/console';
 import {ascending, descending} from 'd3-array';
 
 // import {validateInputData} from 'processors/data-processor';
-import {generateHashId} from 'utils/utils';
-import {getGpuFilterProps, getDatasetFieldIndexForFilter} from 'utils/gpu-filter-utils';
+import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
+import {RGBColor} from '@kepler.gl/types';
+import {FieldDomain, Filter} from 'reducers';
+
+import {generateHashId} from '../../utils';
+import {getGpuFilterProps, getDatasetFieldIndexForFilter} from '../gpu-filter-utils';
 import {
   getFilterProps,
   getFilterRecord,
@@ -34,20 +37,18 @@ import {
   getNumericFieldDomain,
   getTimestampFieldDomain,
   FilterResult
-} from 'utils/filter-utils';
-import {maybeToDate, getSortingFunction} from 'utils/data-utils';
+} from '../filter-utils';
+import {maybeToDate, getSortingFunction} from '../data-utils';
 import {
   getQuantileDomain,
   getOrdinalDomain,
   getLogDomain,
   getLinearDomain
-} from 'utils/data-scale-utils';
+} from '../data-scale-utils';
 
 import {createDataContainer} from './data-container-utils';
 
-import {RGBColor} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
-import {FieldDomain, Filter} from 'reducers/vis-state-updaters';
 import {DataContainerInterface} from './data-container-interface';
 import {ProtoDataset} from 'actions';
 

@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+export {getFieldsFromData, formatCsv} from '../utils';
 export * from './data-processor';
 export * from './file-handler';
 export * from './types';

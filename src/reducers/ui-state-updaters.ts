@@ -32,8 +32,7 @@ import {
 } from '@kepler.gl/constants';
 import {ActionTypes} from 'actions';
 import {LOCALE_CODES} from '@kepler.gl/localization';
-import {createNotification, errorNotification} from 'utils/notifications-utils';
-import {calculateExportImageSize} from '../utils/export-utils';
+import {createNotification, errorNotification, calculateExportImageSize} from '../utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
 import * as UiStateActions from 'actions/ui-state-actions';

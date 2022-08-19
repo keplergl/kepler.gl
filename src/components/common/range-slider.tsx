@@ -26,8 +26,7 @@ import RangePlotFactory from './range-plot';
 import Slider from 'components/common/slider/slider';
 import {Input} from 'components/common/styled-components';
 
-import {roundValToStep, clamp} from 'utils/data-utils';
-import {observeDimensions, unobserveDimensions} from '../../utils/observe-dimensions';
+import {roundValToStep, clamp, observeDimensions, unobserveDimensions} from '../../utils';
 import {LineChart} from 'reducers';
 
 interface SliderInputProps {

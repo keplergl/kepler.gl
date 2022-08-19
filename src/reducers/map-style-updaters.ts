@@ -29,19 +29,19 @@ import {
   mergeLayerGroupVisibility,
   editTopMapStyle,
   editBottomMapStyle,
-  getStyleImageIcon
-} from 'utils/map-style-utils/mapbox-gl-style-editor';
+  getStyleImageIcon,
+  generateHashId,
+  hexToRgb
+} from '../utils';
 import {
   DEFAULT_MAP_STYLES,
   DEFAULT_LAYER_GROUPS,
   DEFAULT_MAPBOX_API_URL
 } from '@kepler.gl/constants';
 import {ActionTypes} from 'actions';
-import {generateHashId} from 'utils/utils';
 import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
 import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
 import {rgb} from 'd3-color';
-import {hexToRgb} from 'utils/color-utils';
 
 import {RGBColor} from '@kepler.gl/types';
 import {ReceiveMapConfigPayload, KeplerGlInitPayload} from '../actions/actions';

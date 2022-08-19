@@ -23,9 +23,9 @@ import {
   getOrdinalDomain,
   getQuantileDomain,
   getLinearDomain,
-  getLogDomain
-} from 'utils/data-scale-utils';
-import {createDataContainer} from 'utils/table-utils';
+  getLogDomain,
+  createDataContainer
+} from '../utils';
 
 function numberSort(a, b) {
   return a - b;

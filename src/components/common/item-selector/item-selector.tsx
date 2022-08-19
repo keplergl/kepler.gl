@@ -30,7 +30,7 @@ import Typeahead from './typeahead';
 import {Delete, ArrowDown} from 'components/common/icons';
 import DropdownList, {ListItem} from './dropdown-list';
 
-import {toArray} from 'utils/utils';
+import {toArray} from '../../../utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 

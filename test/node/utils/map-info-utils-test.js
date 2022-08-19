@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {isValidMapInfo} from 'utils/map-info-utils';
+import {isValidMapInfo} from '../utils';
 
 test('mapInfoUtils -> isValidMapInfo', t => {
   t.equal(

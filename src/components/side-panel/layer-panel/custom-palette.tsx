@@ -28,7 +28,7 @@ import {Button, InlineInput} from 'components/common/styled-components';
 import {VertDots, Trash} from 'components/common/icons';
 import ColorPalette from './color-palette';
 import CustomPicker from './custom-picker';
-import {arrayMove} from 'utils/data-utils';
+import {arrayMove} from '../../../utils';
 import {ColorRange} from '@kepler.gl/constants';
 import {NestedPartial} from '@kepler.gl/types';
 

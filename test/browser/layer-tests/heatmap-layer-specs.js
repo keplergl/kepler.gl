@@ -33,7 +33,7 @@ import {KeplerGlLayers, MAX_ZOOM_LEVEL} from '@kepler.gl/layers';
 
 const {HeatmapLayer} = KeplerGlLayers;
 
-import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
+import {copyTableAndUpdate} from '../utils';
 
 const columns = {
   lat: 'lat',

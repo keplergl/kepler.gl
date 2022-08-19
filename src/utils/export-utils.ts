@@ -18,8 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import domtoimage from 'utils/dom-to-image';
 import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
+import get from 'lodash.get';
+import {csvFormatRows} from 'd3-dsv';
+
 import {
   EXPORT_IMG_RESOLUTION_OPTIONS,
   EXPORT_IMG_RATIO_OPTIONS,
@@ -31,12 +33,13 @@ import {
 } from '@kepler.gl/constants';
 import {exportMapToHTML} from 'templates/export-map-html';
 import {formatCsv} from '@kepler.gl/processors';
-import get from 'lodash.get';
-import {set, generateHashId} from 'utils/utils';
 
+import {set, generateHashId} from './utils';
+import domtoimage from './dom-to-image';
 import {createIndexedDataContainer} from './table-utils/data-container-utils';
-import {ExportImage} from 'reducers/ui-state-updaters';
 import {VisState} from 'reducers';
+import {parseFieldValue} from './data-utils';
+import {DataContainerInterface} from './table-utils/data-container-interface';
 
 /**
  * Default file names
@@ -259,6 +262,24 @@ export function exportMap(state, options = DEFAULT_EXPORT_JSON_SETTINGS) {
     map: mapToSave,
     thumbnail
   };
+}
+
+/**
+ * On export data to csv
+ * @param dataContainer
+ * @param fields `dataset.fields`
+ * @returns csv string
+ */
+export function formatCsv(data: DataContainerInterface, fields: Field[]): string {
+  const columns = fields.map(f => f.displayName || f.name);
+  const formattedData = [columns];
+
+  // parse geojson object as string
+  for (const row of data.rows(true)) {
+    formattedData.push(row.map((d, i) => parseFieldValue(d, fields[i].type)));
+  }
+
+  return csvFormatRows(formattedData);
 }
 
 const exporters = {

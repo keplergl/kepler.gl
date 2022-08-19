@@ -20,12 +20,15 @@
 
 import {Analyzer, DATA_TYPES} from 'type-analyzer';
 
-import {timeToUnixMilli, notNullorUndefined} from 'utils/data-utils';
-import {getSampleData} from 'utils/table-utils/data-container-utils';
+import {
+  timeToUnixMilli,
+  notNullorUndefined,
+  getSampleContainerData,
+  Field,
+  DataContainerInterface
+} from '../../utils';
 
 import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from '../geojson-layer/geojson-utils';
-import {Field} from 'utils/table-utils/kepler-table';
-import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 
 /**
  * Parse geojson from string
@@ -79,7 +82,7 @@ export function isTripGeoJsonField(dataContainer: DataContainerInterface, field)
 
   const maxCount = 10000;
   const sampleRawFeatures =
-    dataContainer.numRows() > maxCount ? getSampleData(dataContainer, maxCount) : dataContainer;
+    dataContainer.numRows() > maxCount ? getSampleContainerData(dataContainer, maxCount) : dataContainer;
 
   const features = sampleRawFeatures
     .mapIndex(field.valueAccessor)

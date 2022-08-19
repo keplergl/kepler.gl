@@ -23,7 +23,7 @@ import styled, {withTheme} from 'styled-components';
 import RangeBrushFactory, {OnBrush, RangeBrushProps} from './range-brush';
 import HistogramPlotFactory from './histogram-plot';
 import LineChartFactory, {HoverDP} from './line-chart';
-import {isTest} from 'utils/utils';
+import {isTest} from '../../utils';
 import {LineChart} from 'reducers';
 
 const StyledRangePlot = styled.div`

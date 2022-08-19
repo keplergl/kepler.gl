@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import {processRowObject} from '@kepler.gl/processors';
 import {FlyToInterpolator} from '@deck.gl/core';
 import KeplerGlSchema from 'schemas';
-import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
+import {getCenterAndZoomFromBounds} from '../utils';
 
 import Geocoder, {Result} from './geocoder/geocoder';
 import {

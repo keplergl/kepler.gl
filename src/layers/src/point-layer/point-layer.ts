@@ -28,8 +28,7 @@ import Layer, {
   LayerSizeConfig,
   LayerStrokeColorConfig
 } from '../base-layer';
-import {hexToRgb} from 'utils/color-utils';
-import {findDefaultColorField} from 'utils/dataset-utils';
+import {hexToRgb, findDefaultColorField, KeplerTable} from '../../utils';
 import PointLayerIcon from './point-layer-icon';
 import {
   LAYER_VIS_CONFIGS,
@@ -48,7 +47,6 @@ import {
   VisConfigNumber,
   VisConfigRange
 } from '@kepler.gl/types';
-import {KeplerTable} from '../../../utils';
 
 export type PointLayerVisConfigSettings = {
   radius: VisConfigNumber;

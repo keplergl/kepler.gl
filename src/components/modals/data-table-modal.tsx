@@ -26,7 +26,7 @@ import {createSelector} from 'reselect';
 import {renderedSize} from 'components/common/data-table/cell-size';
 import CanvasHack from 'components/common/data-table/canvas';
 import {Datasets} from 'reducers';
-import KeplerTable from 'utils/table-utils/kepler-table';
+import {KeplerTable} from '../../utils';
 
 const dgSettings = {
   sidePadding: '38px',

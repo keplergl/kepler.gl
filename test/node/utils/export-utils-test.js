@@ -28,8 +28,7 @@ import {
   getScaleFromImageSize,
   isMSEdge,
   calculateExportImageSize
-  // dataURItoBlob
-} from 'utils/export-utils';
+} from '../utils';
 import {EXPORT_IMG_RATIOS, RESOLUTIONS} from '../../../src/constants';
 
 test('exportUtils -> ExportJson', t => {

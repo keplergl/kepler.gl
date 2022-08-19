@@ -24,4 +24,4 @@
  * @param {string} token the Mapbox token to validate
  * @return {boolean} true if token is valid, false otherwise
  */
-export const validateToken = token => (token || '') !== '';
+export const validateToken = (token: string): boolean => (token || '') !== '';

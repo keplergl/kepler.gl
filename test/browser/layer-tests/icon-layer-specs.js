@@ -41,7 +41,7 @@ import {
 } from 'test/helpers/layer-utils';
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 import {IntlWrapper} from '../../helpers/component-utils';
-import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
+import {copyTableAndUpdate} from '../utils';
 
 const {IconLayer} = KeplerGlLayers;
 const columns = {

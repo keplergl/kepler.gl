@@ -25,7 +25,7 @@ import {PanelLabel} from 'components/common/styled-components';
 import FieldSelectorFactory from 'components/common/field-selector';
 import {validateColumn} from 'reducers/vis-state-merger';
 import {LayerColumn, LayerColumns} from '@kepler.gl/layers';
-import {Field, FieldPair} from 'utils/table-utils/kepler-table';
+import {Field, FieldPair} from '../../../utils';
 
 type Pair = {
   name: string;

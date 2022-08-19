@@ -31,15 +31,13 @@ import {
   isInPolygon,
   diffFilters,
   getHistogram,
-  getTimestampFieldDomain
-} from 'utils/filter-utils';
-
-import {getDatasetFieldIndexForFilter} from 'utils/gpu-filter-utils';
+  getTimestampFieldDomain,
+  getDatasetFieldIndexForFilter,
+  createDataContainer
+} from '../utils';
 
 import {FILTER_TYPES} from '@kepler.gl/constants';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
-
-import {createDataContainer} from 'utils/table-utils';
 
 /* eslint-disable max-statements */
 test('filterUtils -> adjustValueToFilterDomain', t => {

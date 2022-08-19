@@ -20,7 +20,7 @@
 
 import React, {Component, createRef, MouseEvent} from 'react';
 import styled from 'styled-components';
-import {rgbToHex} from 'utils/color-utils';
+import {rgbToHex} from '../../../utils';
 import SingleColorPalette from './single-color-palette';
 import ColorRangeSelector from './color-range-selector';
 import ColorPalette from './color-palette';

@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {preciseRound} from 'utils/data-utils';
+import {preciseRound} from '../../utils';
 import {CursorClick} from 'components/common/icons';
 import {StyledLayerName} from './layer-hover-info';
 

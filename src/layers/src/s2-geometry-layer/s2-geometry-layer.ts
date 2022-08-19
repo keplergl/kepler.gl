@@ -25,9 +25,8 @@ import {
   ColorRange,
   LAYER_VIS_CONFIGS
 } from '@kepler.gl/constants';
-import {KeplerTable} from '../../../utils';
-import {createDataContainer} from 'utils/table-utils';
-import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
+import {KeplerTable, createDataContainer, DataContainerInterface} from '../../utils';
+import {Merge, RGBColor} from '@kepler.gl/types';
 import Layer, {
   LayerBaseConfig,
   LayerColorConfig,

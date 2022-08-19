@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {mergeLayerGroupVisibility} from 'utils/map-style-utils/mapbox-gl-style-editor';
+import {mergeLayerGroupVisibility} from '../utils';
 
 test('mapbox.gl Style Editor -> mergeLayerGroupVisibility', t => {
   const defaultLG = {

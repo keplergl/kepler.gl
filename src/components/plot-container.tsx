@@ -24,14 +24,17 @@ import {createSelector} from 'reselect';
 import styled from 'styled-components';
 import {StaticMap} from 'react-map-gl';
 import debounce from 'lodash.debounce';
-import {exportImageError} from 'utils/notifications-utils';
+import {
+  exportImageError,
+  convertToPng,
+  getScaleFromImageSize,
+  scaleMapStyleByResolution,
+  findMapBounds,
+  getCenterAndZoomFromBounds
+} from '../utils';
 import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
-import {convertToPng, getScaleFromImageSize} from 'utils/export-utils';
-import {scaleMapStyleByResolution} from 'utils/map-style-utils/mapbox-gl-style-editor';
 
-import {findMapBounds} from 'utils/data-utils';
-import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {ExportImage, SplitMap} from 'reducers';
 import {setExportImageDataUri, setExportImageError, setExportImageSetting} from 'actions';

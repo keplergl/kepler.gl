@@ -32,6 +32,7 @@ import moment from 'moment-timezone';
 import {Millisecond} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {Bounds} from 'reducers/map-state-updaters';
+import {ALL_FIELD_TYPES, TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from '@kepler.gl/constants';
 import {DataContainerInterface} from './table-utils/data-container-interface';
 import {Field} from './table-utils/kepler-table';
 
@@ -168,11 +169,25 @@ export function notNullorUndefined<T extends NonNullable<any>>(d: T | null | und
 export function isNumber(d: any): boolean {
   return Number.isFinite(d);
 }
+
 /**
- * whether null or undefined
+ * whether is an object
+ * @returns {boolean} - yes or no
  */
-export function isPlainObject(obj: any): boolean {
+export function isPlainObject(obj: unknown): obj is Record<string, unknown> {
   return obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj);
+}
+
+/**
+ * whether object has property
+ * @param {string} prop
+ * @returns {boolean} - yes or no
+ */
+export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
+  obj: X,
+  prop: Y
+): obj is X & Record<Y, unknown> {
+  return obj.hasOwnProperty(prop);
 }
 
 export function numberSort(a: number, b: number): number {

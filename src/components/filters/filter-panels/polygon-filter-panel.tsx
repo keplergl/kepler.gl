@@ -29,7 +29,7 @@ import {StyledFilterPanel} from '../components';
 
 import get from 'lodash.get';
 import {PolygonFilterPanelComponent} from './types';
-import KeplerTable from 'utils/table-utils/kepler-table';
+import {KeplerTable} from '../../../utils';
 
 PolygonFilterPanelFactory.deps = [
   FilterPanelHeaderFactory,

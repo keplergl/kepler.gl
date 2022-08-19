@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 import document from 'global/document';
-import {parseFieldValue} from 'utils/data-utils';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
+import {parseFieldValue} from '../../../utils';
 
 const MIN_GHOST_CELL_SIZE: number = 200;
 

@@ -62,12 +62,16 @@ import PlotContainerFactory from './plot-container';
 import NotificationPanelFactory from './notification-panel';
 import GeoCoderPanelFactory from './geocoder-panel';
 
-import {filterObjectByPredicate, generateHashId} from 'utils/utils';
-import {validateToken} from 'utils/mapbox-utils';
-import {mergeMessages} from 'utils/locale-utils';
+import {
+  filterObjectByPredicate,
+  generateHashId,
+  validateToken,
+  mergeMessages,
+  observeDimensions,
+  unobserveDimensions
+} from '../utils';
 
 import {theme as basicTheme, themeLT, themeBS} from '@kepler.gl/styles';
-import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
 import {KeplerGlState} from 'reducers/core';
 import {Provider} from 'cloud-providers';
 

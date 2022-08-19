@@ -32,7 +32,7 @@ import {
 } from 'react-vis';
 import {LineChart} from 'reducers';
 import styled from 'styled-components';
-import {datetimeFormatter} from 'utils/data-utils';
+import {datetimeFormatter} from '../../utils';
 
 const LineChartWrapper = styled.div`
   .rv-xy-plot {

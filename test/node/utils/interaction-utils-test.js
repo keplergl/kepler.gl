@@ -24,7 +24,7 @@ import {
   getTooltipDisplayValue,
   getTooltipDisplayDeltaValue,
   TOOLTIP_MINUS_SIGN
-} from 'utils/interaction-utils';
+} from '../utils';
 import {DEFAULT_TOOLTIP_FIELDS, COMPARE_TYPES} from '@kepler.gl/constants';
 import {StateWTooltipFormat, testGeoJsonDataId} from 'test/helpers/mock-state';
 

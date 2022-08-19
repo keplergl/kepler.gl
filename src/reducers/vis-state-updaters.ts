@@ -25,7 +25,6 @@ import uniq from 'lodash.uniq';
 import get from 'lodash.get';
 import xor from 'lodash.xor';
 import copy from 'copy-to-clipboard';
-import {parseFieldValue} from 'utils/data-utils';
 // Tasks
 import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from 'tasks/tasks';
 // Actions
@@ -37,8 +36,9 @@ import {
   nextFileBatch
 } from 'actions/vis-state-actions';
 // Utils
-import {findFieldsToShow, getDefaultInteraction} from 'utils/interaction-utils';
 import {
+  parseFieldValue,
+  findFieldsToShow,
   applyFilterFieldName,
   applyFiltersToDatasets,
   featureToFilterValue,
@@ -52,19 +52,26 @@ import {
   getTimeWidgetTitleFormatter,
   isInRange,
   LIMITED_FILTER_EFFECT_PROPS,
-  updateFilterDataId
-} from 'utils/filter-utils';
-import {assignGpuChannel, setFilterGpuMode} from 'utils/gpu-filter-utils';
-import {createNewDataEntry} from 'utils/dataset-utils';
-import {
+  updateFilterDataId,
+  assignGpuChannel,
+  setFilterGpuMode,
+  createNewDataEntry,
   pinTableColumns,
   sortDatasetByColumn,
   copyTableAndUpdate,
-  Field
-} from 'utils/table-utils/kepler-table';
-import {set, toArray, arrayInsert, generateHashId} from 'utils/utils';
-
-import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils';
+  Field,
+  set,
+  toArray,
+  arrayInsert,
+  generateHashId,
+  calculateLayerData,
+  findDefaultLayer,
+  addNewLayersToSplitMap,
+  computeSplitMapLayers,
+  removeLayerFromSplitMaps,
+  isRgbColor,
+  KeplerTable
+} from '../utils';
 
 import {
   isValidMerger,
@@ -87,14 +94,14 @@ import {
   SORT_ORDER,
   FILTER_TYPES,
   MAX_DEFAULT_TOOLTIPS,
-  DEFAULT_TEXT_LABEL
+  DEFAULT_TEXT_LABEL,
+  COMPARE_TYPES
 } from '@kepler.gl/constants';
 import {ActionTypes} from 'actions';
 import {pick_, merge_, swap_} from './composer-helpers';
 import {processFileContent} from 'actions/vis-state-actions';
 
 import KeplerGLSchema from 'schemas';
-import {isRgbColor} from 'utils/color-utils';
 
 import {Millisecond} from '@kepler.gl/types';
 import {ReceiveMapConfigPayload} from '../actions/actions';
@@ -102,6 +109,8 @@ import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import {Loader} from '@loaders.gl/loader-utils';
 import {KeplerTable} from '../utils';
+
+import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons/index';
 
 export {KeplerTable};
 
@@ -414,6 +423,44 @@ disableStackCapturing();
 const visStateUpdaters = null;
 /* eslint-enable no-unused-vars */
 
+export const defaultInteractionConfig: InteractionConfig = {
+  tooltip: {
+    id: 'tooltip',
+    label: 'interactions.tooltip',
+    enabled: true,
+    iconComponent: Messages,
+    config: {
+      fieldsToShow: {},
+      compareMode: false,
+      compareType: COMPARE_TYPES.ABSOLUTE
+    }
+  },
+  geocoder: {
+    id: 'geocoder',
+    label: 'interactions.geocoder',
+    enabled: false,
+    iconComponent: Pin,
+    position: null
+  },
+  brush: {
+    id: 'brush',
+    label: 'interactions.brush',
+    enabled: false,
+    iconComponent: Crosshairs,
+    config: {
+      // size is in km
+      size: 0.5
+    }
+  },
+  coordinate: {
+    id: 'coordinate',
+    label: 'interactions.coordinate',
+    enabled: false,
+    iconComponent: CursorClick,
+    position: null
+  }
+};
+
 export const DEFAULT_ANIMATION_CONFIG: AnimationConfig = {
   domain: null,
   currentTime: null,
@@ -457,7 +504,7 @@ export const INITIAL_VIS_STATE: VisState = {
   datasets: {},
   editingDataset: undefined,
 
-  interactionConfig: getDefaultInteraction(),
+  interactionConfig: defaultInteractionConfig,
   interactionToBeMerged: undefined,
 
   layerBlending: 'normal',

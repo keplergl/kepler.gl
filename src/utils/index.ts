@@ -58,9 +58,13 @@ export {
   findPointFieldPairs,
   getFieldValueAccessor,
   copyTable,
-  copyTableAndUpdate
+  copyTableAndUpdate,
+  pinTableColumns,
+  sortDatasetByColumn
 } from './table-utils/kepler-table';
-export {createDataContainer, createIndexedDataContainer} from './table-utils/data-container-utils';
+export type {Field, GpuFilter, FieldPair} from './table-utils/kepler-table';
+export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData} from './table-utils/data-container-utils';
+export type {DataContainerInterface} from './table-utils/data-container-interface';
 
 // Render
 export {renderedSize} from 'components/common/data-table/cell-size';
@@ -69,10 +73,22 @@ export * from './color-utils';
 export * from './data-scale-utils';
 export * from './data-utils';
 export * from './dataset-utils';
+export * from './export-utils';
+export * from './filter-utils';
 export * from './gpu-filter-utils';
+export * from './gl-utils';
 export * from './interaction-utils';
 export * from './layer-utils';
+export * from './locale-utils';
 export * from './observe-dimensions';
+export * from './projection-utils';
+export * from './mapbox-utils';
+export * from './map-style-utils/mapbox-gl-style-editor';
+export * from './map-style-utils/mapbox-utils';
+export * from './map-info-utils';
+export * from './utils';
+export * from './split-map-utils';
+export * from './types';
 
 // Layers
 export {computeDeckLayers} from './layer-utils';

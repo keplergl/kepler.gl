@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo, useState} from 'react';
-import {arrayMove} from 'utils/data-utils';
+import {arrayMove} from '../../../utils';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {SortableContainer, SortableElement} from 'react-sortable-hoc';

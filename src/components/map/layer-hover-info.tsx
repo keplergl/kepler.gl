@@ -24,10 +24,13 @@ import {TooltipField} from 'reducers/vis-state-updaters';
 import {CenterFlexbox} from 'components/common/styled-components';
 import {Layers} from 'components/common/icons';
 import PropTypes from 'prop-types';
-import {notNullorUndefined} from 'utils/data-utils';
-import {getTooltipDisplayValue, getTooltipDisplayDeltaValue} from 'utils/interaction-utils';
-import {AggregationLayerHoverData} from 'utils/layer-utils';
-import {Layer} from 'layers';
+import {
+  notNullorUndefined,
+  getTooltipDisplayValue,
+  getTooltipDisplayDeltaValue,
+  AggregationLayerHoverData
+} from '../../utils';
+import {Layer} from '@kepler.gl/layers';
 
 export const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};

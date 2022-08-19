@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import DatasetLabel from 'components/common/dataset-label';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer} from '@kepler.gl/layers';
-import KeplerTable from 'utils/table-utils/kepler-table';
+import {KeplerTable} from '../../utils';
 
 const StyledMsg = styled.div`
   margin-top: 24px;

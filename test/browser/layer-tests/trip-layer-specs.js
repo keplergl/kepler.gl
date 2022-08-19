@@ -40,7 +40,7 @@ import {
   animationConfig
 } from 'test/helpers/layer-utils';
 import {TripLayerMeta, dataToFeature, dataToTimeStamp} from 'test/fixtures/trip-geojson';
-import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
+import {copyTableAndUpdate} from '../utils';
 
 test('#TripLayer -> constructor', t => {
   const TEST_CASES = {
