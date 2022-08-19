@@ -58,6 +58,7 @@ import KeplerTable, {
 } from 'reducers/table-utils/kepler-table';
 import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
 import {LAYER_TYPES, getCentroid} from '@kepler.gl/layers';
+import { isValidFilterValue } from '@kepler.gl/utils';
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];

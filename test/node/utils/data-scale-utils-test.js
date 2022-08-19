@@ -24,7 +24,7 @@ import {
   getQuantileDomain,
   getLinearDomain,
   getLogDomain
-} from '@kepler.gl/layers';
+} from 'reducers/layer-utils';
 
 import {createDataContainer} from 'reducers/table-utils';
 

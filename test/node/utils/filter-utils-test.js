@@ -21,19 +21,20 @@
 import test from 'tape';
 import moment from 'moment';
 
+import {isValidFilterValue} from '@kepler.gl/utils';
+
 import {
   adjustValueToFilterDomain,
   getFilterFunction,
   getDefaultFilter,
   validatePolygonFilter,
   generatePolygonFilter,
-  isValidFilterValue,
   isInPolygon,
   diffFilters,
   getHistogram,
   getTimestampFieldDomain,
   getDatasetFieldIndexForFilter
-} from '@kepler.gl/layers';
+} from '../../../src/reducers/layer-utils';
 
 import {createDataContainer} from 'reducers/table-utils';
 

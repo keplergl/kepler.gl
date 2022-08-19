@@ -28,7 +28,7 @@ import {
   getScaleFromImageSize,
   isMSEdge,
   calculateExportImageSize
-} from '@kepler.gl/layers';
+} from '@kepler.gl/utils';
 import {EXPORT_IMG_RATIOS, RESOLUTIONS} from '@kepler.gl/constants';
 
 test('exportUtils -> ExportJson', t => {

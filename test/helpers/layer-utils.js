@@ -31,13 +31,8 @@ import {INITIAL_VIS_STATE} from 'reducers/vis-state-updaters';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {addDataToMap} from 'actions/actions';
 
-import {
-  colorMaker,
-  layerColors,
-  LayerClasses,
-  getGpuFilterProps,
-  renderDeckGlLayer
-} from '@kepler.gl/layers';
+import {colorMaker, layerColors, LayerClasses} from '@kepler.gl/layers';
+import {getGpuFilterProps, renderDeckGlLayer} from 'reducers/layer-utils';
 import {validateLayerWithData} from 'reducers/vis-state-merger';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {applyActions, InitialState} from 'test/helpers/mock-state';

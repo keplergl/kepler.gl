@@ -53,12 +53,12 @@ import {
   ACCEPTED_ANALYZER_TYPES,
   analyzerTypeToFieldType,
   getSampleForTypeAnalyze,
-  formatCsv,
   validateInputData,
   getFieldsFromData
-} from '@kepler.gl/layers';
+} from '@kepler.gl/utils';
 
 import {createDataContainer} from 'reducers/table-utils';
+import {formatCsv} from 'reducers/layer-utils';
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {cmpFields} from '../../helpers/comparison-utils';

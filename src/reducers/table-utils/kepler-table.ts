@@ -47,6 +47,7 @@ import {
   getOrdinalDomain,
   getQuantileDomain
 } from '../layer-utils/data-scale-utils';
+import {maybeToDate} from '../layer-utils/data-utils'
 import { DataContainerInterface } from './data-container-interface';
 
 export type GpuFilter = {

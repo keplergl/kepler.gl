@@ -21,14 +21,13 @@
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
+import {LayerClasses, KeplerGlLayers} from '@kepler.gl/layers';
+import {GEOJSON_FIELDS} from '@kepler.gl/constants';
 import {
-  LayerClasses,
   findDefaultLayer,
   getLayerHoverProp,
-  createNewDataEntry,
-  KeplerGlLayers
-} from '@kepler.gl/layers';
-import {GEOJSON_FIELDS} from '@kepler.gl/constants';
+  createNewDataEntry
+} from '../../../src/reducers/layer-utils';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 
 const {PointLayer, ArcLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
@@ -42,7 +41,7 @@ import {
   KeplerTable,
   findPointFieldPairs,
   createDataContainer
-} from '../../../src/reducers/table-utils'
+} from '../../../src/reducers/table-utils';
 
 test('layerUtils -> findDefaultLayer.1', t => {
   const inputFields = [
