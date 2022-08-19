@@ -28,9 +28,8 @@ import {
   getScaleFromImageSize,
   isMSEdge,
   calculateExportImageSize
-  // dataURItoBlob
-} from 'utils/export-utils';
-import {EXPORT_IMG_RATIOS, RESOLUTIONS} from '../../../src/constants';
+} from '@kepler.gl/utils';
+import {EXPORT_IMG_RATIOS, RESOLUTIONS} from '@kepler.gl/constants';
 
 test('exportUtils -> ExportJson', t => {
   const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;

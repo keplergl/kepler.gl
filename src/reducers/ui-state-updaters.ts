@@ -28,37 +28,16 @@ import {
   EXPORT_IMG_RATIOS,
   EXPORT_MAP_FORMATS,
   RESOLUTIONS,
-  MAP_CONTROLS
+  MAP_CONTROLS,
+  ExportImage
 } from '@kepler.gl/constants';
 import {ActionTypes} from 'actions';
 import {LOCALE_CODES} from '@kepler.gl/localization';
-import {createNotification, errorNotification} from 'utils/notifications-utils';
-import {calculateExportImageSize} from '../utils/export-utils';
+import {createNotification, errorNotification, calculateExportImageSize} from '@kepler.gl/utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
 import * as UiStateActions from 'actions/ui-state-actions';
 import {KeplerGlInitPayload, LoadFilesErrUpdaterAction} from '../actions';
-
-export type ExportImage = {
-  ratio: keyof typeof EXPORT_IMG_RATIOS;
-  resolution: keyof typeof RESOLUTIONS;
-  legend: boolean;
-  mapH: number;
-  mapW: number;
-  imageSize: {
-    zoomOffset: number;
-    scale: number;
-    imageW: number;
-    imageH: number;
-  };
-  // exporting state
-  imageDataUri: string;
-  exporting: boolean;
-  processing: boolean;
-  error: Error | false;
-  // This field was not in the .d.ts file
-  center: boolean;
-};
 
 export type ExportData = {
   selectedDataset: string;

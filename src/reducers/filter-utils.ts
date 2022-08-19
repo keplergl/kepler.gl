@@ -28,31 +28,35 @@ import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
 import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW, PLOT_TYPES} from '@kepler.gl/constants';
-import {LAYER_TYPES, getCentroid, h3IsValid, Layer} from '@kepler.gl/layers';
-import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
+import {Layer} from '@kepler.gl/layers';
+import {notNullorUndefined, unique, timeToUnixMilli} from '@kepler.gl/utils';
 import * as ScaleUtils from './data-scale-utils';
-import {generateHashId, set, toArray} from './utils';
+import {generateHashId, set, toArray} from '@kepler.gl/utils';
+import {h3IsValid} from 'h3-js';
 
+import {Millisecond, Entries, Field} from '@kepler.gl/types';
 import {
   Filter,
   FilterBase,
   PolygonFilter,
-  Datasets,
   FieldDomain,
   TimeRangeFieldDomain,
   HistogramBin,
   Feature,
   FeatureValue,
-  VisState,
   LineChart,
   TimeRangeFilter,
   RangeFieldDomain
-} from '../reducers/vis-state-updaters';
-import KeplerTable, {Field, FilterRecord, FilterDatasetOpt} from './table-utils/kepler-table';
-import {ParsedFilter} from 'schemas';
-import {DataContainerInterface} from './table-utils/data-container-interface';
-import {Millisecond} from 'cloud-providers';
-import {Entries} from '@kepler.gl/types';
+} from '@kepler.gl/types';
+
+import {ParsedFilter, VisState} from 'schemas';
+import KeplerTable, {
+  FilterRecord,
+  Datasets,
+  FilterDatasetOpt
+} from 'reducers/table-utils/kepler-table';
+import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
+import {LAYER_TYPES, getCentroid} from '@kepler.gl/layers';
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];
@@ -1089,7 +1093,13 @@ export function generatePolygonFilter(layers: Layer[], feature: Feature): Polygo
 /**
  * Run filter entirely on CPU
  */
-export function filterDatasetCPU(state: VisState, dataId: string): VisState {
+interface StateType {
+  layers: Layer[];
+  filters: Filter[];
+  datasets: Datasets;
+}
+
+export function filterDatasetCPU<T extends StateType>(state: T, dataId: string): T {
   const datasetFilters = state.filters.filter(f => f.dataId.includes(dataId));
   const dataset = state.datasets[dataId];
 

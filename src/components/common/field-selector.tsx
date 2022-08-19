@@ -22,12 +22,12 @@ import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
+import {Field} from '@kepler.gl/types';
+import {notNullorUndefined, toArray} from '@kepler.gl/utils';
+
 import ItemSelector from './item-selector/item-selector';
 import {classList} from './item-selector/dropdown-list';
-import {toArray} from 'utils/utils';
-import {notNullorUndefined} from 'utils/data-utils';
 import FieldTokenFactory from '../common/field-token';
-import {Field} from 'utils/table-utils/kepler-table';
 
 const defaultDisplayOption = (d: Field) => d.displayName || d.name;
 const defaultValueOption = (d: Field) => d.name;

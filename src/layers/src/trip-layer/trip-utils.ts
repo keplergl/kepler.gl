@@ -20,12 +20,12 @@
 
 import {Analyzer, DATA_TYPES} from 'type-analyzer';
 
-import {timeToUnixMilli, notNullorUndefined} from 'utils/data-utils';
-import {getSampleData} from 'utils/table-utils/data-container-utils';
+import {Field} from '@kepler.gl/types';
 
 import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from '../geojson-layer/geojson-utils';
-import {Field} from 'utils/table-utils/kepler-table';
-import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
+import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
+import {notNullorUndefined, timeToUnixMilli} from '@kepler.gl/utils';
+import {getSampleData} from 'reducers/table-utils/data-container-utils';
 
 /**
  * Parse geojson from string

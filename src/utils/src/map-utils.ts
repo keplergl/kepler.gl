@@ -1,5 +1,5 @@
 import {TRANSITION_DURATION} from '@kepler.gl/constants';
-import {SplitMapLayers, SplitMap} from 'reducers/vis-state-updaters';
+import {SplitMapLayers, SplitMap} from '@kepler.gl/types';
 
 export const onViewPortChange = (
   viewState: any,

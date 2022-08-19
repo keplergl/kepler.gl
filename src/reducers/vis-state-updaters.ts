@@ -25,7 +25,6 @@ import uniq from 'lodash.uniq';
 import get from 'lodash.get';
 import xor from 'lodash.xor';
 import copy from 'copy-to-clipboard';
-import {parseFieldValue} from 'utils/data-utils';
 // Tasks
 import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from 'tasks/tasks';
 // Actions
@@ -37,337 +36,74 @@ import {
   nextFileBatch
 } from 'actions/vis-state-actions';
 // Utils
-import {findFieldsToShow, getDefaultInteraction} from 'utils/interaction-utils';
 import {
-  applyFilterFieldName,
-  applyFiltersToDatasets,
-  featureToFilterValue,
-  FILTER_UPDATER_PROPS,
-  filterDatasetCPU,
-  generatePolygonFilter,
-  getDefaultFilter,
-  getDefaultFilterPlotType,
-  getFilterIdInFeature,
-  getFilterPlot,
-  getTimeWidgetTitleFormatter,
-  isInRange,
-  LIMITED_FILTER_EFFECT_PROPS,
-  updateFilterDataId
-} from 'utils/filter-utils';
-import {assignGpuChannel, setFilterGpuMode} from 'utils/gpu-filter-utils';
-import {createNewDataEntry} from 'utils/dataset-utils';
-import {
-  pinTableColumns,
-  sortDatasetByColumn,
-  copyTableAndUpdate,
-  Field
-} from 'utils/table-utils/kepler-table';
-import {set, toArray, arrayInsert, generateHashId} from 'utils/utils';
-
-import {calculateLayerData, findDefaultLayer} from 'utils/layer-utils';
+  set,
+  toArray,
+  arrayInsert,
+  generateHashId,
+  addNewLayersToSplitMap,
+  computeSplitMapLayers,
+  removeLayerFromSplitMaps,
+  isRgbColor,
+  parseFieldValue
+} from '@kepler.gl/utils';
 
 import {
   isValidMerger,
   VIS_STATE_MERGERS,
   validateLayerWithData,
   createLayerFromConfig,
-  serializeLayer,
-  VisStateMergers
+  serializeLayer
 } from './vis-state-merger';
 
-import {
-  addNewLayersToSplitMap,
-  computeSplitMapLayers,
-  removeLayerFromSplitMaps
-} from 'utils/split-map-utils';
-
-import {Layer, LayerClasses, LayerClassesType, LAYER_ID_LENGTH} from '@kepler.gl/layers';
+import {Layer, LayerClasses, LAYER_ID_LENGTH} from '@kepler.gl/layers';
 import {
   EDITOR_MODES,
   SORT_ORDER,
   FILTER_TYPES,
   MAX_DEFAULT_TOOLTIPS,
-  DEFAULT_TEXT_LABEL
+  DEFAULT_TEXT_LABEL,
+  COMPARE_TYPES
 } from '@kepler.gl/constants';
 import {ActionTypes} from 'actions';
 import {pick_, merge_, swap_} from './composer-helpers';
 import {processFileContent} from 'actions/vis-state-actions';
 
-import KeplerGLSchema from 'schemas';
-import {isRgbColor} from 'utils/color-utils';
+import KeplerGLSchema, {VisState} from 'schemas';
 
-import {Millisecond} from '@kepler.gl/types';
+import {Filter, InteractionConfig, AnimationConfig, Editor} from '@kepler.gl/types';
 import {ReceiveMapConfigPayload} from '../actions/actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import {Loader} from '@loaders.gl/loader-utils';
-import {KeplerTable} from '../utils';
 
-export {KeplerTable};
-
-export type HistogramBin = {
-  x0: number | undefined;
-  x1: number | undefined;
-  count: number;
-};
-
-export type RangeFieldDomain = {
-  domain: [number, number];
-  step: number;
-  histogram: HistogramBin[];
-  enlargedHistogram: HistogramBin[];
-};
-
-export type SelectFieldDomain = {
-  domain: [true, false];
-};
-export type MultiSelectFieldDomain = {
-  domain: string[];
-};
-
-export type TimeRangeFieldDomain = {
-  domain: [number, number];
-  step: number;
-  histogram: HistogramBin[];
-  enlargedHistogram: HistogramBin[];
-  mappedValue: (Millisecond | null)[];
-  // auto generated based on time domain
-  defaultTimeFormat?: string | null;
-  // custom ui input
-  timeFormat?: string | null;
-  // custom ui input
-  timezone?: string | null;
-};
-export type FieldDomain =
-  | RangeFieldDomain
-  | TimeRangeFieldDomain
-  | SelectFieldDomain
-  | MultiSelectFieldDomain;
-
-export type LineChart = {
-  series: {x: number; y: number}[];
-  yDomain: [number, number];
-  xDomain: [number, number];
-};
-
-export type FilterBase<L extends LineChart> = {
-  dataId: string[];
-  id: string;
-
-  freeze: boolean;
-
-  // time range filter specific
-  fixedDomain: boolean;
-  enlarged: boolean;
-  isAnimating: boolean;
-  speed: number;
-  showTimeDisplay?: boolean;
-
-  // field specific
-  name: string[]; // string
-  type: string | null;
-  fieldIdx: number[]; // [integer]
-  domain: any[] | null;
-  value: any;
-  mappedValue?: number[];
-
-  // plot
-  yAxis: Field | null;
-  plotType: string;
-  lineChart?: L;
-  // gpu filter
-  gpu: boolean;
-  gpuChannel?: number[];
-  fieldType?: string;
-
-  // polygon
-  layerId?: string[];
-};
-
-export type RangeFilter = FilterBase<LineChart> &
-  RangeFieldDomain & {
-    type: 'range';
-    fieldType: 'real' | 'integer';
-    value: [number, number];
-    fixedDomain: true;
-    typeOptions: ['range'];
-  };
-
-export type SelectFilter = FilterBase<LineChart> &
-  SelectFieldDomain & {
-    type: 'select';
-    fieldType: 'boolean';
-    value: boolean;
-  };
-
-export type MultiSelectFilter = FilterBase<LineChart> &
-  MultiSelectFieldDomain & {
-    type: 'range';
-    fieldType: 'string' | 'date';
-    value: string[];
-  };
-export type TimeRangeFilter = FilterBase<LineChart> &
-  TimeRangeFieldDomain & {
-    type: 'timeRange';
-    fieldType: 'timestamp';
-    fixedDomain: true;
-    value: [number, number];
-    bins?: Object;
-    plotType: {
-      [key: string]: any;
-    };
-    animationWindow: string;
-  };
-
-export type PolygonFilter = FilterBase<LineChart> & {
-  layerId: string[];
-  type: 'polygon';
-  fixedDomain: true;
-  value: Feature;
-};
-
-export type Filter =
-  | FilterBase<LineChart>
-  | RangeFilter
-  | TimeRangeFilter
-  | SelectFilter
-  | MultiSelectFilter
-  | PolygonFilter;
-
-export type Datasets = {
-  [key: string]: KeplerTable;
-};
-
-export type Feature = {
-  id: string;
-  properties: any;
-  geometry: {
-    type: string;
-    coordinates: any;
-  };
-};
-export type FeatureValue = {
-  id: string;
-  properties: {
-    filterId: string;
-  };
-  geometry: {
-    type: string;
-    coordinates: any;
-  };
-};
-export type Editor = {
-  mode: string;
-  features: Feature[];
-  selectedFeature: any;
-  visible: boolean;
-};
-
-export type SplitMapLayers = {[key: string]: boolean};
-export type SplitMap = {
-  layers: SplitMapLayers;
-};
-export type AnimationConfig = {
-  domain: number[] | null;
-  currentTime: number | null;
-  speed: number;
-  isAnimating?: boolean;
-  // auto generated based on time domain
-  defaultTimeFormat?: string | null;
-  // custom ui input
-  timeFormat?: string | null;
-  // custom ui input
-  timezone?: string | null;
-  // hide or show control
-  hideControl?: boolean;
-};
-
-export type BaseInteraction = {
-  id: string;
-  label: string;
-  enabled: boolean;
-  iconComponent: any;
-};
-export type TooltipField = {
-  name: string;
-  format: string | null;
-};
-export type CompareType = string | null;
-export type TooltipInfo = BaseInteraction & {
-  config: {
-    fieldsToShow: {
-      [key: string]: TooltipField[];
-    };
-    compareMode: boolean;
-    compareType: CompareType;
-  };
-};
-export type Geocoder = BaseInteraction & {
-  position: number[] | null;
-};
-export type Brush = BaseInteraction & {
-  config: {
-    size: number;
-  };
-};
-export type Coordinate = BaseInteraction & {
-  position: number[] | null;
-};
-export type InteractionConfig = {
-  tooltip: TooltipInfo;
-  geocoder: Geocoder;
-  brush: Brush;
-  coordinate: Coordinate;
-};
-export type MapInfo = {
-  title: string;
-  description: string;
-};
-export type FileLoading = {
-  filesToLoad: FileList;
-  onFinish: (payload: any) => any;
-  fileCache: any[];
-};
-export type FileLoadingProgress = {
-  [key: string]: {
-    percent: number;
-    message: string;
-    fileName: string;
-    error: any;
-  };
-};
-
-export type VisState = {
-  mapInfo: MapInfo;
-  layers: Layer[];
-  layerData: any[];
-  layerToBeMerged: any[];
-  layerOrder: number[];
-  filters: Filter[];
-  filterToBeMerged: any[];
-  datasets: Datasets;
-  editingDataset: string | undefined;
-  interactionConfig: InteractionConfig;
-  interactionToBeMerged: any;
-  layerBlending: string;
-  hoverInfo: any;
-  clicked: any;
-  mousePos: any;
-  maxDefaultTooltips: number;
-  layerClasses: LayerClassesType;
-  animationConfig: AnimationConfig;
-  editor: Editor;
-  splitMaps: SplitMap[];
-  splitMapsToBeMerged: SplitMap[];
-  fileLoading: FileLoading | false;
-  fileLoadingProgress: FileLoadingProgress;
-  loaders: Loader[];
-  loadOptions: object;
-  initialState?: Partial<VisState>;
-  mergers: VisStateMergers;
-  schema: typeof KeplerGLSchema;
-  preserveLayerOrder?: number[];
-};
+import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons/index';
+import {
+  copyTableAndUpdate,
+  Datasets,
+  pinTableColumns,
+  sortDatasetByColumn
+} from './table-utils/kepler-table';
+import {calculateLayerData, findDefaultLayer} from './layer-utils';
+import {
+  applyFilterFieldName,
+  applyFiltersToDatasets,
+  featureToFilterValue,
+  filterDatasetCPU,
+  FILTER_UPDATER_PROPS,
+  generatePolygonFilter,
+  getDefaultFilter,
+  getFilterIdInFeature,
+  getTimeWidgetTitleFormatter,
+  isInRange,
+  LIMITED_FILTER_EFFECT_PROPS,
+  updateFilterDataId
+} from './filter-utils';
+import {assignGpuChannel, setFilterGpuMode} from './table-utils/gpu-filter-utils';
+import {createNewDataEntry} from './table-utils/dataset-utils';
+import {findFieldsToShow} from './interaction-utils';
+import {getFilterPlot} from './filter-utils';
+import {getDefaultFilterPlotType} from './filter-utils';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -414,6 +150,44 @@ disableStackCapturing();
 const visStateUpdaters = null;
 /* eslint-enable no-unused-vars */
 
+export const defaultInteractionConfig: InteractionConfig = {
+  tooltip: {
+    id: 'tooltip',
+    label: 'interactions.tooltip',
+    enabled: true,
+    iconComponent: Messages,
+    config: {
+      fieldsToShow: {},
+      compareMode: false,
+      compareType: COMPARE_TYPES.ABSOLUTE
+    }
+  },
+  geocoder: {
+    id: 'geocoder',
+    label: 'interactions.geocoder',
+    enabled: false,
+    iconComponent: Pin,
+    position: null
+  },
+  brush: {
+    id: 'brush',
+    label: 'interactions.brush',
+    enabled: false,
+    iconComponent: Crosshairs,
+    config: {
+      // size is in km
+      size: 0.5
+    }
+  },
+  coordinate: {
+    id: 'coordinate',
+    label: 'interactions.coordinate',
+    enabled: false,
+    iconComponent: CursorClick,
+    position: null
+  }
+};
+
 export const DEFAULT_ANIMATION_CONFIG: AnimationConfig = {
   domain: null,
   currentTime: null,
@@ -457,7 +231,7 @@ export const INITIAL_VIS_STATE: VisState = {
   datasets: {},
   editingDataset: undefined,
 
-  interactionConfig: getDefaultInteraction(),
+  interactionConfig: defaultInteractionConfig,
   interactionToBeMerged: undefined,
 
   layerBlending: 'normal',

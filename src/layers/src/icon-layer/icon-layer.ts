@@ -28,7 +28,8 @@ import {ICON_FIELDS, CLOUDFRONT, ColorRange} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
-import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
+import {default as KeplerTable} from 'reducers/table-utils/kepler-table';
+import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
 import {
   VisConfigBoolean,
   VisConfigColorRange,
@@ -36,7 +37,6 @@ import {
   VisConfigRange,
   Merge
 } from '@kepler.gl/types';
-import {KeplerTable} from '../../../utils';
 
 export type IconLayerColumnsConfig = {
   lat: LayerColumn;

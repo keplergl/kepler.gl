@@ -25,7 +25,7 @@ import ImageModalContainer, {ImageModalContainerProps} from './image-modal-conta
 import ProviderModalContainer, {ProviderModalContainerProps} from './provider-modal-container';
 import StatusPanel, {UploadAnimation} from './status-panel';
 
-import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER} from '@kepler.gl/constants';
+import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER, ExportImage} from '@kepler.gl/constants';
 
 import {
   StyledModalContent,
@@ -37,7 +37,7 @@ import {
 } from 'components/common/styled-components';
 import ImagePreview from 'components/common/image-preview';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {ExportImage, MapInfo} from 'reducers';
+import {MapInfo} from '@kepler.gl/types';
 import {Provider} from 'cloud-providers';
 import {setMapInfo, cleanupExportImage as cleanupExportImageAction} from 'actions';
 

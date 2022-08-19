@@ -21,27 +21,18 @@
 import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
 import flattenDeep from 'lodash.flattendeep';
-import {isObject, arrayInsert} from 'utils/utils';
-import {applyFiltersToDatasets, validateFiltersUpdateDatasets} from 'utils/filter-utils';
+import {isObject, arrayInsert, getInitialMapLayersForSplitMap} from '@kepler.gl/utils';
 
-import {getInitialMapLayersForSplitMap} from 'utils/split-map-utils';
-import {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
+import {LayerColumns, LayerColumn, Layer} from '@kepler.gl/layers';
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
-import {CURRENT_VERSION, visStateSchema} from 'schemas';
+import {CURRENT_VERSION, Merger, VisState, VisStateMergers, visStateSchema} from 'schemas';
 
-import {VisState, Datasets} from './vis-state-updaters';
-import {KeplerTable} from '../utils';
 import {ParsedConfig, ParsedLayer} from 'schemas';
-import {Layer, LayerColumns, LayerColumn} from '@kepler.gl/layers';
-import {TooltipInfo} from './vis-state-updaters';
 import {SavedInteractionConfig} from 'schemas';
-
-export type Merger = {
-  merge: <S extends VisState>(state: S, config: any, fromConfig?: boolean) => S;
-  prop: string;
-  toMergeProp?: string;
-};
-export type VisStateMergers = Merger[];
+import {TooltipInfo} from '@kepler.gl/types';
+import KeplerTable, {Datasets} from './table-utils/kepler-table';
+import {applyFiltersToDatasets, validateFiltersUpdateDatasets} from './filter-utils';
+import {assignGpuChannels, resetFilterGpuMode} from './table-utils/gpu-filter-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded

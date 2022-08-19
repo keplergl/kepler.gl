@@ -29,7 +29,7 @@ import ModalTabsFactory from './modal-tabs';
 import LoadingDialog from './loading-dialog';
 
 import {LOADING_METHODS} from '@kepler.gl/constants';
-import {FileLoading} from 'reducers/vis-state-updaters';
+import {FileLoading} from '@kepler.gl/types';
 
 /** @typedef {import('./load-data-modal').LoadDataModalProps} LoadDataModalProps */
 

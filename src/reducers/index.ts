@@ -56,42 +56,8 @@ export * as visStateMergers from './vis-state-merger';
 // Helpers
 export * from './composer-helpers';
 
-// export types
 export type {
-  AnimationConfig,
-  Brush,
-  Coordinate,
-  KeplerTable,
-  Datasets,
-  Editor,
-  Feature,
-  FeatureValue,
-  FieldDomain,
-  Filter,
-  FilterBase,
-  Geocoder,
-  HistogramBin,
-  InteractionConfig,
-  LineChart,
-  MapInfo,
-  MultiSelectFieldDomain,
-  MultiSelectFilter,
-  PolygonFilter,
-  RangeFieldDomain,
-  RangeFilter,
-  SelectFieldDomain,
-  SelectFilter,
-  SplitMap,
-  TimeRangeFieldDomain,
-  TimeRangeFilter,
-  TooltipInfo,
-  VisState
-} from './vis-state-updaters';
-
-export type {
-  BaseMapStyle,
   InputStyle,
-  LayerGroup,
   MapboxStyleUrl,
   MapStyle,
   MapStyles,
@@ -99,15 +65,12 @@ export type {
 } from './map-style-updaters';
 
 export type {
-  Bounds,
-  MapState,
   Viewport
 } from './map-state-updaters';
 
 export type {
   ExportData,
   ExportHtml,
-  ExportImage,
   ExportJson,
   ExportMap,
   LoadFiles,
@@ -118,4 +81,12 @@ export type {
   UiState
 } from './ui-state-updaters';
 
+export * from './data-scale-utils';
+export * from './data-utils';
+export * from './table-utils/dataset-utils';
+export * from './export-utils';
+export * from './filter-utils';
+export * from './table-utils/gpu-filter-utils';
+export * from './interaction-utils';
+export * from './layer-utils';
 export * as providerStateUpdaters from './provider-state-updaters';

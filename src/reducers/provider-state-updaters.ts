@@ -20,7 +20,7 @@
 
 import {withTask} from 'react-palm/tasks';
 import Console from 'global/console';
-import {generateHashId, getError, isPlainObject, toArray} from '../utils/utils';
+import {generateHashId, getError, isPlainObject, toArray} from '@kepler.gl/utils';
 import {
   EXPORT_FILE_TO_CLOUD_TASK,
   ACTION_TASK,

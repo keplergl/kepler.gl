@@ -33,7 +33,7 @@ import {
 
 import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {copyTable, copyTableAndUpdate} from 'utils/table-utils/kepler-table';
+import {copyTable, copyTableAndUpdate} from 'reducers/table-utils';
 
 const {LineLayer} = KeplerGlLayers;
 const columns = {

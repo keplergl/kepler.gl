@@ -34,7 +34,8 @@ import {MapControlButton} from 'components/common/styled-components';
 import ToolbarItem from 'components/common/toolbar-item';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlToolbarFactory from './map-control-toolbar';
-import {Editor, MapControls} from 'reducers';
+import {MapControls} from 'reducers';
+import {Editor} from '@kepler.gl/types';
 import {BaseProps} from 'components/common/icons/base';
 
 MapDrawPanelFactory.deps = [MapControlTooltipFactory, MapControlToolbarFactory];
