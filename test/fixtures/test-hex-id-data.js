@@ -22,7 +22,7 @@ import {KeplerGlLayers} from '@kepler.gl/layers';
 import {DEFAULT_COLOR_UI} from '@kepler.gl/constants';
 const {H3Layer} = KeplerGlLayers;
 
-import {createDataContainer} from '../utils';
+import {createDataContainer} from '../../src/utils';
 
 export default `hex_id,value
 89283082c2fffff,64

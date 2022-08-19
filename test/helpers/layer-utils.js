@@ -32,7 +32,7 @@ import * as VisStateActions from 'actions/vis-state-actions';
 import {addDataToMap} from 'actions/actions';
 
 import {colorMaker, layerColors, LayerClasses} from '@kepler.gl/layers';
-import {getGpuFilterProps, renderDeckGlLayer} from '../utils';
+import {getGpuFilterProps, renderDeckGlLayer} from '../../src/utils';
 import {validateLayerWithData} from 'reducers/vis-state-merger';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {applyActions, InitialState} from 'test/helpers/mock-state';
@@ -45,7 +45,7 @@ import tripGeoJson from 'test/fixtures/trip-geojson';
 
 import {logStep} from '../../scripts/log';
 import {IntlWrapper} from './component-utils';
-import mapState from '../../src/reducers/map-state';
+import mapState from 'reducers/map-state';
 
 export const dataId = '0dj3h';
 export const timeFilter = [{name: 'utc_timestamp', value: [1474071095000, 1474071608000]}];

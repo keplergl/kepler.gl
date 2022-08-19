@@ -24,7 +24,7 @@ import {
   assignGpuChannel,
   assignGpuChannels,
   getDatasetFieldIndexForFilter
-} from '../utils';
+} from '../../../src/utils';
 
 test('gpuFilterUtils -> resetFilterGpuMode', t => {
   const testFilters = [

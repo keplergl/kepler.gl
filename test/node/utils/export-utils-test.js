@@ -28,7 +28,7 @@ import {
   getScaleFromImageSize,
   isMSEdge,
   calculateExportImageSize
-} from '../utils';
+} from '../../../src/utils';
 import {EXPORT_IMG_RATIOS, RESOLUTIONS} from '../../../src/constants';
 
 test('exportUtils -> ExportJson', t => {

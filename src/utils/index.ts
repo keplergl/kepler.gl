@@ -57,7 +57,6 @@ export {
   default as KeplerTable,
   findPointFieldPairs,
   getFieldValueAccessor,
-  copyTable,
   copyTableAndUpdate,
   pinTableColumns,
   sortDatasetByColumn

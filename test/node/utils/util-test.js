@@ -27,7 +27,7 @@ import {
   camelize,
   capitalizeFirstLetter,
   arrayInsert
-} from '../utils';
+} from '../../../src/utils';
 
 test('Utils -> set', t => {
   const obj1 = {map: {map1: 'world'}};

@@ -30,7 +30,7 @@ import {
   arrayMove,
   getFormatter,
   defaultFormatter
-} from '../utils';
+} from '../../../src/utils';
 import {ALL_FIELD_TYPES} from 'constants';
 
 test('dataUtils -> clamp', t => {

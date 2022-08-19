@@ -50,7 +50,7 @@ import {COLOR_RANGES} from '@kepler.gl/constants';
 
 import {StateWFilesFiltersLayerColor, StateWTrips} from 'test/helpers/mock-state';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {hexToRgb} from '../utils';
+import {hexToRgb} from '../../../../src/utils';
 
 test('Components -> ColorSelector.render', t => {
   t.doesNotThrow(() => {

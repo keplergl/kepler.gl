@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {getFrequency, getMode, aggregate} from '../utils';
+import {getFrequency, getMode, aggregate} from '../../../src/utils';
 import {AGGREGATION_TYPES} from '@kepler.gl/constants';
 
 test('AggregateUtils - GetFrequency', t => {

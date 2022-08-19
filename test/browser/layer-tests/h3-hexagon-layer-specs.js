@@ -36,7 +36,7 @@ import {
   getCentroid,
   h3DefaultElevation as defaultElevation
 } from '@kepler.gl/layers';
-import {copyTableAndUpdate} from '../utils';
+import {copyTableAndUpdate} from '../../../src/utils';
 
 const {H3Layer} = KeplerGlLayers;
 const columns = {

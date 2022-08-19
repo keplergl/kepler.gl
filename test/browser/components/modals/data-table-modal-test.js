@@ -41,7 +41,7 @@ import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
 import {appInjector} from '../../../../src/components/container';
 
-import {createDataContainer} from '../utils';
+import {createDataContainer} from '../../../../src/utils';
 
 const DataTableModal = appInjector.get(DataTableModalFactory);
 const DataTable = appInjector.get(DataTableFactory);

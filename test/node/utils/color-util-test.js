@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {createLinearGradient} from '../utils';
+import {createLinearGradient} from '../../../src/utils';
 
 test('createLinearGradient', t => {
   let colors = [[100, 100, 100]];

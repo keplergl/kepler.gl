@@ -25,7 +25,7 @@ import {
   getLinearDomain,
   getLogDomain,
   createDataContainer
-} from '../utils';
+} from '../../../src/utils';
 
 function numberSort(a, b) {
   return a - b;

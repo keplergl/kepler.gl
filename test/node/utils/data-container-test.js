@@ -20,7 +20,7 @@
 
 import test from 'tape';
 
-import {createDataContainer, createIndexedDataContainer} from '../utils';
+import {createDataContainer, createIndexedDataContainer} from '../../../src/utils';
 
 const data = [
   [10, 20], // 0

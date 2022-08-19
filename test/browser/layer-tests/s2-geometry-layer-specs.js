@@ -34,7 +34,7 @@ import {KeplerGlLayers, s2DefaultElevation as defaultElevation} from '@kepler.gl
 
 const {S2GeometryLayer} = KeplerGlLayers;
 
-import {copyTableAndUpdate} from '../utils';
+import {copyTableAndUpdate} from '../../../src/utils';
 
 test('#S2Geometry -> constructor', t => {
   const TEST_CASES = [
