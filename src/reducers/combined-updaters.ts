@@ -40,7 +40,7 @@ import {loadFilesSuccessUpdaterAction} from 'actions/vis-state-actions';
 import {ParsedConfig} from 'schemas';
 import {Layer} from '@kepler.gl/layers';
 import {isPlainObject} from '@kepler.gl/utils';
-import {findMapBounds} from './layer-utils/data-utils';
+import {findMapBounds} from './data-utils';
 
 export type KeplerGlState = {
   visState: VisState;

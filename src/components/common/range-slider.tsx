@@ -26,8 +26,7 @@ import RangePlotFactory from './range-plot';
 import Slider from 'components/common/slider/slider';
 import {Input} from 'components/common/styled-components';
 
-import {observeDimensions, unobserveDimensions} from '@kepler.gl/utils';
-import {roundValToStep, clamp} from '@kepler.gl/utils';
+import {observeDimensions, unobserveDimensions, roundValToStep, clamp} from '@kepler.gl/utils';
 import {LineChart} from '@kepler.gl/types';
 
 interface SliderInputProps {

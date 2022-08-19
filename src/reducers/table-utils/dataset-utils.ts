@@ -20,7 +20,6 @@
 
 import uniq from 'lodash.uniq';
 import KeplerTable, {Datasets} from 'reducers/table-utils/kepler-table';
-import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 
 import {ProtoDataset} from 'actions';
 import {RGBColor} from '@kepler.gl/types';
@@ -38,23 +37,6 @@ const datasetColors = [
   '#3EACA8',
   '#A2D4AB'
 ].map(hexToRgb);
-
-export const ACCEPTED_ANALYZER_TYPES = [
-  AnalyzerDATA_TYPES.DATE,
-  AnalyzerDATA_TYPES.TIME,
-  AnalyzerDATA_TYPES.DATETIME,
-  AnalyzerDATA_TYPES.NUMBER,
-  AnalyzerDATA_TYPES.INT,
-  AnalyzerDATA_TYPES.FLOAT,
-  AnalyzerDATA_TYPES.BOOLEAN,
-  AnalyzerDATA_TYPES.STRING,
-  AnalyzerDATA_TYPES.GEOMETRY,
-  AnalyzerDATA_TYPES.GEOMETRY_FROM_STRING,
-  AnalyzerDATA_TYPES.PAIR_GEOMETRY_FROM_STRING,
-  AnalyzerDATA_TYPES.ZIPCODE,
-  AnalyzerDATA_TYPES.ARRAY,
-  AnalyzerDATA_TYPES.OBJECT
-];
 
 
 

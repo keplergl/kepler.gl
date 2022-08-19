@@ -34,7 +34,7 @@ import {
 import {KeplerGlSchema, ParsedDataset, SavedMap} from 'schemas';
 import {Feature} from '@nebula.gl/edit-modes';
 import {LoadedMap} from 'schemas/schema-manager';
-import {formatCsv} from 'reducers/layer-utils/export-utils';
+import {formatCsv} from 'reducers/export-utils';
 
 // if any of these value occurs in csv, parse it to null;
 // const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];

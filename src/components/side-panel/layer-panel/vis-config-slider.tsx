@@ -27,7 +27,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {KeyEvent} from '@kepler.gl/constants';
 import {Checkbox} from 'components';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {isInRange} from 'reducers/layer-utils/filter-utils';
+import {isInRange} from 'reducers/filter-utils';
 import {clamp} from '@kepler.gl/utils';
 
 type LazyInputProps = {

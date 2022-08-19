@@ -19,8 +19,6 @@
 // THE SOFTWARE.
 import {Bounds} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
-import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
-import {timeToUnixMilli} from '@kepler.gl/utils';
 
 const MAX_LATITUDE = 90;
 const MIN_LATITUDE = -90;
@@ -61,18 +59,4 @@ export function findMapBounds(layers: Layer[]): Bounds | null {
   );
   // @ts-expect-error
   return newBounds;
-}
-
-export function maybeToDate(
-  isTime: boolean,
-  fieldIdx: number,
-  format: string,
-  dc: DataContainerInterface,
-  d: {index: number}
-) {
-  if (isTime) {
-    return timeToUnixMilli(dc.valueAt(d.index, fieldIdx), format);
-  }
-
-  return dc.valueAt(d.index, fieldIdx);
 }

@@ -58,7 +58,7 @@ import {
 } from '@kepler.gl/utils';
 
 import {createDataContainer} from 'reducers/table-utils';
-import {formatCsv} from 'reducers/layer-utils';
+import {formatCsv} from 'reducers';
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {cmpFields} from '../../helpers/comparison-utils';

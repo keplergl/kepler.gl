@@ -32,8 +32,8 @@ import {ParsedConfig, ParsedLayer} from 'schemas';
 import {SavedInteractionConfig} from 'schemas';
 import {TooltipInfo} from '@kepler.gl/types';
 import KeplerTable, {Datasets} from './table-utils/kepler-table';
-import {applyFiltersToDatasets, validateFiltersUpdateDatasets} from './layer-utils/filter-utils';
-import {assignGpuChannels, resetFilterGpuMode} from './layer-utils/gpu-filter-utils';
+import {applyFiltersToDatasets, validateFiltersUpdateDatasets} from './filter-utils';
+import {assignGpuChannels, resetFilterGpuMode} from './table-utils/gpu-filter-utils';
 
 export type Merger = {
   merge: <S extends VisState>(state: S, config: any, fromConfig?: boolean) => S;

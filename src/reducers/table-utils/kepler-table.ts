@@ -25,8 +25,8 @@ import {ascending, descending} from 'd3-array';
 import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
 import {RGBColor, Field, FieldPair, FieldDomain, Filter, ProtoDataset} from '@kepler.gl/types';
 
-import {generateHashId, getSortingFunction} from '@kepler.gl/utils';
-import {getGpuFilterProps, getDatasetFieldIndexForFilter} from '../layer-utils/gpu-filter-utils';
+import {generateHashId, getSortingFunction, timeToUnixMilli} from '@kepler.gl/utils';
+import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 
 import {createDataContainer} from './data-container-utils';
 
@@ -40,14 +40,13 @@ import {
   getFilterRecord,
   getNumericFieldDomain,
   getTimestampFieldDomain
-} from '../layer-utils/filter-utils';
+} from '../filter-utils';
 import {
   getLinearDomain,
   getLogDomain,
   getOrdinalDomain,
   getQuantileDomain
-} from '../layer-utils/data-scale-utils';
-import {maybeToDate} from '../layer-utils/data-utils'
+} from '../data-scale-utils';
 import { DataContainerInterface } from './data-container-interface';
 
 export type GpuFilter = {
@@ -77,6 +76,20 @@ export type FilterDatasetOpt = {
 
 // Unique identifier of each field
 const FID_KEY = 'name';
+
+export function maybeToDate(
+  isTime: boolean,
+  fieldIdx: number,
+  format: string,
+  dc: DataContainerInterface,
+  d: {index: number}
+) {
+  if (isTime) {
+    return timeToUnixMilli(dc.valueAt(d.index, fieldIdx), format);
+  }
+
+  return dc.valueAt(d.index, fieldIdx);
+}
 
 class KeplerTable {
   readonly id: string;

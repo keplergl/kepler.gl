@@ -95,7 +95,7 @@ import {
   pinTableColumns,
   sortDatasetByColumn
 } from './table-utils/kepler-table';
-import {calculateLayerData, findDefaultLayer} from './layer-utils/layer-utils';
+import {calculateLayerData, findDefaultLayer} from './layer-utils';
 import {
   applyFilterFieldName,
   applyFiltersToDatasets,
@@ -109,12 +109,12 @@ import {
   isInRange,
   LIMITED_FILTER_EFFECT_PROPS,
   updateFilterDataId
-} from './layer-utils/filter-utils';
-import {assignGpuChannel, setFilterGpuMode} from './layer-utils/gpu-filter-utils';
-import {createNewDataEntry} from './layer-utils/dataset-utils';
-import {findFieldsToShow} from './layer-utils/interaction-utils';
-import {getFilterPlot} from './layer-utils/filter-utils';
-import {getDefaultFilterPlotType} from './layer-utils/filter-utils';
+} from './filter-utils';
+import {assignGpuChannel, setFilterGpuMode} from './table-utils/gpu-filter-utils';
+import {createNewDataEntry} from './table-utils/dataset-utils';
+import {findFieldsToShow} from './interaction-utils';
+import {getFilterPlot} from './filter-utils';
+import {getDefaultFilterPlotType} from './filter-utils';
 
 export type HistogramBin = {
   x0: number | undefined;

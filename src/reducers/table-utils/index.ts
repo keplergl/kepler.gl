@@ -24,7 +24,8 @@ export {
     copyTableAndUpdate,
     pinTableColumns,
     sortDatasetByColumn,
-    copyTable
+    copyTable,
+    maybeToDate
   } from './kepler-table';
   /* eslint-disable prettier/prettier */
   export type {GpuFilter, Datasets} from './kepler-table';

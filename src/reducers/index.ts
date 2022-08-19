@@ -113,4 +113,12 @@ export type {
   UiState
 } from './ui-state-updaters';
 
+export * from './data-scale-utils';
+export * from './data-utils';
+export * from './table-utils/dataset-utils';
+export * from './export-utils';
+export * from './filter-utils';
+export * from './table-utils/gpu-filter-utils';
+export * from './interaction-utils';
+export * from './layer-utils';
 export * as providerStateUpdaters from './provider-state-updaters';

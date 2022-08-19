@@ -78,7 +78,7 @@ import {
   prepareLayersForDeck,
   prepareLayersToRender,
   renderDeckGlLayer
-} from 'reducers/layer-utils/layer-utils';
+} from 'reducers/layer-utils';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {

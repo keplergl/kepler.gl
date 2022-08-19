@@ -34,7 +34,7 @@ import {
   getHistogram,
   getTimestampFieldDomain,
   getDatasetFieldIndexForFilter
-} from '../../../src/reducers/layer-utils';
+} from '../../../src/reducers';
 
 import {createDataContainer} from 'reducers/table-utils';
 

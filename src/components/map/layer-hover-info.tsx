@@ -35,7 +35,7 @@ import {
 import {
   getTooltipDisplayDeltaValue,
   getTooltipDisplayValue
-} from 'reducers/layer-utils/interaction-utils';
+} from 'reducers/interaction-utils';
 
 export const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};

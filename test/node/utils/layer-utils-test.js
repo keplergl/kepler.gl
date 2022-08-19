@@ -23,11 +23,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {LayerClasses, KeplerGlLayers} from '@kepler.gl/layers';
 import {GEOJSON_FIELDS} from '@kepler.gl/constants';
-import {
-  findDefaultLayer,
-  getLayerHoverProp,
-  createNewDataEntry
-} from '../../../src/reducers/layer-utils';
+import {findDefaultLayer, getLayerHoverProp, createNewDataEntry} from '../../../src/reducers';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 
 const {PointLayer, ArcLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
