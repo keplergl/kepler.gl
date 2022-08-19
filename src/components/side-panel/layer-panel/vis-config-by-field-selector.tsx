@@ -21,10 +21,12 @@
 import React, {Component} from 'react';
 import {FormattedMessage, injectIntl, WrappedComponentProps} from 'react-intl';
 
+import {Field} from '@kepler.gl/types';
+
 import {PanelLabel, PanelLabelWrapper, SidePanelSection} from 'components/common/styled-components';
 import InfoHelperFactory from 'components/common/info-helper';
 import DimensionScaleSelector from './dimension-scale-selector';
-import {camelize, Field} from '../../../utils';
+import {camelize} from '../../../utils';
 import FieldSelectorFactory from '../../common/field-selector';
 
 type VisConfigByFieldSelectorProps = {

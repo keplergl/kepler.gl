@@ -21,12 +21,12 @@
 import {csvParseRows} from 'd3-dsv';
 import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES, DATASET_FORMATS, GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
+import {ProcessorResult, Field} from '@kepler.gl/types';
 import {
   notNullorUndefined,
   hasOwnProperty,
   isPlainObject,
   toArray,
-  Field,
   analyzerTypeToFieldType,
   getSampleForTypeAnalyze,
   getFieldsFromData,

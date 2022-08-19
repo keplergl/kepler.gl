@@ -70,6 +70,25 @@ export type Field = {
   metadata?: any;
 };
 
+export type FieldPair = {
+  defaultName: string;
+  pair: {
+    [key: string]: {
+      fieldIdx: number;
+      value: string;
+    };
+  };
+  suffix: string[];
+};
+
+import {
+  LayerBaseConfig,
+  LayerColorConfig,
+  LayerHeightConfig,
+  LayerSizeConfig,
+  LayerWeightConfig
+} from '@kepler.gl/types';
+
 export type LayerTextLabel = {
   field: Field | null;
   color: RGBColor;

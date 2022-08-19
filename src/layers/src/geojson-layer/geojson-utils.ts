@@ -22,7 +22,7 @@ import wktParser from 'wellknown';
 import normalize from '@mapbox/geojson-normalize';
 import bbox from '@turf/bbox';
 
-import {getSampleData} from '../../utils';
+import {getSampleData} from '../../../utils';
 import {Feature, BBox} from 'geojson';
 
 export type GetFeature = (d: any) => Feature;

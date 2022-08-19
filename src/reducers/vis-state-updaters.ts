@@ -59,7 +59,6 @@ import {
   pinTableColumns,
   sortDatasetByColumn,
   copyTableAndUpdate,
-  Field,
   set,
   toArray,
   arrayInsert,
@@ -82,12 +81,6 @@ import {
   VisStateMergers
 } from './vis-state-merger';
 
-import {
-  addNewLayersToSplitMap,
-  computeSplitMapLayers,
-  removeLayerFromSplitMaps
-} from 'utils/split-map-utils';
-
 import {Layer, LayerClasses, LayerClassesType, LAYER_ID_LENGTH} from '@kepler.gl/layers';
 import {
   EDITOR_MODES,
@@ -103,7 +96,7 @@ import {processFileContent} from 'actions/vis-state-actions';
 
 import KeplerGLSchema from 'schemas';
 
-import {Millisecond} from '@kepler.gl/types';
+import {Millisecond, Field} from '@kepler.gl/types';
 import {ReceiveMapConfigPayload} from '../actions/actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';

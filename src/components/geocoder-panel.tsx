@@ -33,7 +33,8 @@ import {
   GEOCODER_ICON_COLOR,
   GEOCODER_ICON_SIZE
 } from '@kepler.gl/constants';
-import {MapState, Viewport} from 'reducers';
+import {MapState} from '@kepler.gl/types'
+import {Viewport} from 'reducers';
 
 const ICON_LAYER = {
   id: GEOCODER_LAYER_ID,

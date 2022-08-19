@@ -28,7 +28,7 @@ import Layer, {
   LayerSizeConfig,
   LayerStrokeColorConfig
 } from '../base-layer';
-import {hexToRgb, findDefaultColorField, KeplerTable} from '../../utils';
+import {hexToRgb, findDefaultColorField, KeplerTable} from '../../../utils';
 import PointLayerIcon from './point-layer-icon';
 import {
   LAYER_VIS_CONFIGS,

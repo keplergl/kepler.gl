@@ -34,7 +34,7 @@ import * as ScaleUtils from './data-scale-utils';
 import {generateHashId, set, toArray} from './utils';
 import {h3IsValid} from 'h3-js';
 
-import {Millisecond, Entries} from '@kepler.gl/types';
+import {Millisecond, Entries, Field} from '@kepler.gl/types';
 import {
   Filter,
   FilterBase,
@@ -51,11 +51,8 @@ import {
   RangeFieldDomain
 } from 'reducers';
 
-import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
-import * as ScaleUtils from './data-scale-utils';
-import {generateHashId, set, toArray} from './utils';
 import {ParsedFilter} from 'schemas';
-import KeplerTable, {Field, FilterRecord, FilterDatasetOpt} from './table-utils/kepler-table';
+import KeplerTable, {FilterRecord, FilterDatasetOpt} from './table-utils/kepler-table';
 import {DataContainerInterface} from './table-utils/data-container-interface';
 
 export type FilterResult = {
@@ -91,11 +88,6 @@ const durationHour = durationMinute * 60;
 const durationDay = durationHour * 24;
 const durationWeek = durationDay * 7;
 const durationYear = durationDay * 365;
-
-export const PLOT_TYPES = keyMirror({
-  histogram: null,
-  lineChart: null
-});
 
 export const FILTER_UPDATER_PROPS = keyMirror({
   dataId: null,

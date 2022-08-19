@@ -62,7 +62,7 @@ export {
   pinTableColumns,
   sortDatasetByColumn
 } from './table-utils/kepler-table';
-export type {Field, GpuFilter, FieldPair} from './table-utils/kepler-table';
+export type {GpuFilter} from './table-utils/kepler-table';
 export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData} from './table-utils/data-container-utils';
 export type {DataContainerInterface} from './table-utils/data-container-interface';
 
@@ -88,7 +88,6 @@ export * from './map-style-utils/mapbox-utils';
 export * from './map-info-utils';
 export * from './utils';
 export * from './split-map-utils';
-export * from './types';
 
 // Layers
 export {computeDeckLayers} from './layer-utils';

@@ -33,7 +33,7 @@ import {
   VisConfigNumber,
   VisConfigRange
 } from '@kepler.gl/types';
-import {DataContainerInterface, KeplerTable} from '../../utils';
+import {DataContainerInterface, KeplerTable} from '../../../utils';
 
 export type LineLayerVisConfigSettings = {
   opacity: VisConfigNumber;

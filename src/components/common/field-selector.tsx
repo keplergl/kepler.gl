@@ -22,9 +22,11 @@ import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
+import {Field} from '@kepler.gl/types';
+
 import ItemSelector from './item-selector/item-selector';
 import {classList} from './item-selector/dropdown-list';
-import {toArray, notNullorUndefined, Field} from '../../utils';
+import {toArray, notNullorUndefined} from '../../utils';
 import FieldTokenFactory from '../common/field-token';
 
 const defaultDisplayOption = (d: Field) => d.displayName || d.name;

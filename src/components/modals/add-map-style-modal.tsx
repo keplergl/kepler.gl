@@ -38,6 +38,7 @@ import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {InputStyle, MapState} from 'reducers';
 import mapboxgl from 'mapbox-gl';
+import {MapState} from '@kepler.gl/types';
 
 const MapH = 190;
 const MapW = 264;

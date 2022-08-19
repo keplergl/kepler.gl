@@ -16,8 +16,8 @@
   ],
   "private": true,
   "workspaces": [
-    "./src/constants",
     "./src/types",
+    "./src/constants",
     "./src/styles",
     "./src/localization",
     "./src/middleware",

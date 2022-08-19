@@ -25,11 +25,7 @@ import {default as GridLayer} from './grid-layer/grid-layer';
 export {pointToPolygonGeo} from './grid-layer/grid-utils';
 import {default as HexagonLayer} from './hexagon-layer/hexagon-layer';
 import {default as GeojsonLayer} from './geojson-layer/geojson-layer';
-export {
-  defaultElevation,
-  defaultLineWidth,
-  defaultRadius
-} from './geojson-layer/geojson-layer';
+export {defaultElevation, defaultLineWidth, defaultRadius} from './geojson-layer/geojson-layer';
 import {default as ClusterLayer} from './cluster-layer/cluster-layer';
 import {default as IconLayer} from './icon-layer/icon-layer';
 import {default as HeatmapLayer} from './heatmap-layer/heatmap-layer';
@@ -66,9 +62,7 @@ export type {
   ColumnPairs,
   FindDefaultLayerPropsReturnValue
 } from './base-layer';
-export {default as Layer} from './base-layer';
 export * from './base-layer';
-export type {LayerBaseConfig, LayerColumns, LayerColumn} from './base-layer';
 
 // individual layers
 export const KeplerGlLayers = {
@@ -107,7 +101,5 @@ export const LayerClasses = {
 export type OVERLAY_TYPE = {[key: string]: string};
 
 export * from './mapbox-utils';
-export {LAYER_VIS_CONFIGS, DEFAULT_TEXT_LABEL} from './layer-factory';
-export type {LayerVisConfig, LayerTextLabel, ColorUI} from './layer-factory';
 export * from './types';
 export * from './h3-hexagon-layer';

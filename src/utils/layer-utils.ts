@@ -25,12 +25,13 @@ import {
   OVERLAY_TYPE_CONST
 } from '@kepler.gl/layers';
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
+import {Field} from '@kepler.gl/types';
 import {ThreeDBuildingLayer} from '../deckgl-layers';
 import {getMapLayersFromSplitMaps} from './map-utils';
 import {isFunction} from 'utils/utils';
 import {VisState, TooltipField, CompareType, SplitMapLayers} from 'reducers';
 
-import KeplerTable, {Field} from './table-utils/kepler-table';
+import KeplerTable from './table-utils/kepler-table';
 
 export type LayersToRender = {
   [layerId: string]: boolean;

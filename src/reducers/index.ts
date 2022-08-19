@@ -100,7 +100,6 @@ export type {
 
 export type {
   Bounds,
-  MapState,
   Viewport
 } from './map-state-updaters';
 

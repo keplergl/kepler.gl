@@ -29,7 +29,7 @@ import {
 import {TooltipField, CompareType} from 'reducers';
 
 import {DataRow} from './table-utils/data-row';
-import {Field} from './table-utils/kepler-table';
+import {Field} from '@kepler.gl/types';
 import {
   parseFieldValue,
   getFormatter,

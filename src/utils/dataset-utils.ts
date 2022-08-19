@@ -29,7 +29,6 @@ import {RGBColor} from '@kepler.gl/types';
 
 import {hexToRgb} from './color-utils';
 import {notNullorUndefined, isPlainObject} from './data-utils';
-import {ProcessorResult, RowData} from './types';
 
 // apply a color for each dataset
 // to use as label colors

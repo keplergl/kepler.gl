@@ -30,7 +30,7 @@ import {
   createDataContainer,
   DataContainerInterface,
   KeplerTable
-} from '../../utils';
+} from '../../../utils';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
 import {EnhancedColumnLayer} from '@kepler.gl/deckgl-layers';

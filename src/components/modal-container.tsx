@@ -64,8 +64,10 @@ import {
   SHARE_MAP_ID,
   OVERWRITE_MAP_ID
 } from '@kepler.gl/constants';
+
+import {MapState} from '@kepler.gl/types';
 import {getFileFormatNames, getFileExtensions} from '../reducers/vis-state-selectors';
-import {MapState, MapStyle, UiState, VisState} from 'reducers';
+import {MapStyle, UiState, VisState} from 'reducers';
 import {OnSuccessCallBack, OnErrorCallBack} from 'actions';
 import {ProviderState} from 'reducers/provider-state-updaters';
 

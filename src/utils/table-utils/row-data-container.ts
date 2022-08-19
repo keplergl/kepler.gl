@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {DataRow, SharedRowOptions} from './data-row';
-import {Field} from './kepler-table';
+import {Field} from '@kepler.gl/types';
 import {DataContainerInterface, RangeOptions} from './data-container-interface';
 
 type RowDataContainerInput = {

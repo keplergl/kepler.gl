@@ -20,12 +20,13 @@
 
 import moment from 'moment';
 import {MAX_GPU_FILTERS, FILTER_TYPES} from '@kepler.gl/constants';
+import {Field} from '@kepler.gl/types';
 import {Filter} from 'reducers';
 
 import {set, toArray} from './utils';
 import {notNullorUndefined} from './data-utils';
 import {DataContainerInterface} from './table-utils/data-container-interface';
-import {Field, GpuFilter} from './table-utils/kepler-table';
+import {GpuFilter} from './table-utils/kepler-table';
 
 /**
  * Set gpu mode based on current number of gpu filters exists

@@ -22,20 +22,7 @@ import {getCenterAndZoomFromBounds} from '../utils';
 import * as MapStateActions from 'actions/map-state-actions';
 import {ReceiveMapConfigPayload} from '../actions/actions';
 import {ActionTypes} from 'actions';
-
-export type MapState = {
-  pitch: number;
-  bearing: number;
-  latitude: number;
-  longitude: number;
-  zoom: number;
-  dragRotate: boolean;
-  width: number;
-  height: number;
-  isSplit: boolean;
-  initialState?: any;
-  scale?: number;
-};
+import {MapState} from '@kepler.gl/types';
 
 export type Bounds = [number, number, number, number];
 /** Width of viewport */

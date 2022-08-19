@@ -21,7 +21,8 @@
 import memoize from 'lodash.memoize';
 import clondDeep from 'lodash.clonedeep';
 import {DEFAULT_LAYER_GROUPS, DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';
-import {BaseMapStyle, LayerGroup, MapState} from 'reducers';
+import {BaseMapStyle, LayerGroup} from 'reducers';
+import {MapState} from '@kepler.gl/types';
 
 const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
 const httpRg = /^(?=(http:|https:))/;

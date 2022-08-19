@@ -24,7 +24,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ColumnSelectorFactory from './column-selector';
 import {ColumnPairs, Layer, LayerColumns, LayerBaseConfig} from '@kepler.gl/layers';
-import {Field, FieldPair} from '../../../utils';
+import {Field, FieldPair} from '@kepler.gl/types';
 
 type LayerColumnConfigProps = {
   columnPairs?: ColumnPairs | null;

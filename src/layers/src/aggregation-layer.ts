@@ -27,7 +27,7 @@ import Layer, {
   VisualChannelDescription,
   VisualChannels
 } from './base-layer';
-import {hexToRgb, aggregate, KeplerTable} from '../utils';
+import {hexToRgb, aggregate, KeplerTable} from '../../utils';
 import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,

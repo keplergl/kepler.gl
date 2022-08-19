@@ -1,4 +1,5 @@
 export * from './layers';
+export * from './reducers';
 
 export type RGBColor = [number, number, number];
 export type RGBAColor = [number, number, number, number];
@@ -18,3 +19,9 @@ export type Entries<T> = {
 export type NestedPartial<T> = {
   [P in keyof T]?: NestedPartial<T[P]>;
 };
+
+export type RowData = {
+  [key: string]: string | null;
+}[];
+
+export type ProcessorResult = {fields: Field[]; rows: any[][]} | null;

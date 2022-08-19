@@ -23,7 +23,7 @@ import {ascending, descending} from 'd3-array';
 
 // import {validateInputData} from 'processors/data-processor';
 import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
-import {RGBColor} from '@kepler.gl/types';
+import {RGBColor, Field, FieldPair} from '@kepler.gl/types';
 import {FieldDomain, Filter} from 'reducers';
 
 import {generateHashId} from '../../utils';
@@ -52,19 +52,6 @@ import {Layer} from '@kepler.gl/layers';
 import {DataContainerInterface} from './data-container-interface';
 import {ProtoDataset} from 'actions';
 
-export type Field = {
-  analyzerType: string;
-  id?: string;
-  name: string;
-  displayName: string;
-  format: string;
-  type: string;
-  fieldIdx: number;
-  valueAccessor(v: {index: number}): any;
-  filterProps?: any;
-  metadata?: any;
-};
-
 export type GpuFilter = {
   filterRange: number[][];
   filterValueUpdateTriggers: any;
@@ -74,17 +61,6 @@ export type GpuFilter = {
     getIndex?: (any) => number,
     getData?: (dc_: DataContainerInterface, d: any, fieldIndex: number) => any
   ) => (d: any) => number;
-};
-
-export type FieldPair = {
-  defaultName: string;
-  pair: {
-    [key: string]: {
-      fieldIdx: number;
-      value: string;
-    };
-  };
-  suffix: string[];
 };
 
 export type FilterRecord = {

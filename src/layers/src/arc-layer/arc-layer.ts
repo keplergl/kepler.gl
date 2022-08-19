@@ -28,14 +28,13 @@ import Layer, {
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
 
-import {hexToRgb, DataContainerInterface, KeplerTable} from '../../utils';
+import {hexToRgb, DataContainerInterface, KeplerTable} from '../../../utils';
 import ArcLayerIcon from './arc-layer-icon';
 import {
   DEFAULT_LAYER_COLOR,
   ColorRange,
   PROJECTED_PIXEL_SIZE_MULTIPLIER
 } from '@kepler.gl/constants';
-import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
 
 import {
   RGBColor,
