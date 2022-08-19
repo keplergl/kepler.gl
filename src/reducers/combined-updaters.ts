@@ -39,7 +39,7 @@ import {ProviderState} from './provider-state-updaters';
 import {AddDataToMapPayload} from 'actions/actions';
 import {loadFilesSuccessUpdaterAction} from 'actions/vis-state-actions';
 import {ParsedConfig} from 'schemas';
-import {Layer} from '@kepler.gl/layers';
+import {Layer, findMapBounds, isPlainObject} from '@kepler.gl/layers';
 
 export type KeplerGlState = {
   visState: VisState;

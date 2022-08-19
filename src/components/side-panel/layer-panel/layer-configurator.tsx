@@ -38,7 +38,7 @@ import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-co
 import TextLabelPanelFactory from './text-label-panel';
 import HowToButton from './how-to-button';
 
-import {capitalizeFirstLetter, Datasets} from '../../../utils';
+import {capitalizeFirstLetter} from '../../../utils';
 
 import {CHANNEL_SCALE_SUPPORTED_FIELDS, ColorRange} from '@kepler.gl/constants';
 import {
@@ -46,7 +46,8 @@ import {
   LayerBaseConfig,
   LAYER_TYPES,
   VisualChannel,
-  AggregationLayer
+  AggregationLayer,
+  Datasets
 } from '@kepler.gl/layers';
 
 import {NestedPartial, RGBColor, LayerVisConfig, ColorUI, Field} from '@kepler.gl/types';

@@ -23,7 +23,7 @@ import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
 import {EnhancedHexagonLayer} from '@kepler.gl/deckgl-layers';
 import {hexagonToPolygonGeo} from './hexagon-utils';
 import HexagonLayerIcon from './hexagon-layer-icon';
-import {clamp} from '../../../utils';
+import {clamp} from '../layer-utils/data-utils';
 import {
   VisConfigBoolean,
   VisConfigColorRange,

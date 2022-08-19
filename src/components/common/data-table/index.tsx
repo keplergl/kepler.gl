@@ -33,7 +33,7 @@ import Grid from './grid';
 import Button from './button';
 import {ArrowUp, ArrowDown, VertThreeDots} from 'components/common/icons';
 
-import {parseFieldValue, DataContainerInterface} from '../../../utils';
+import {parseFieldValue, DataContainerInterface} from '@kepler.gl/layers';
 import {adjustCellsToContainer} from './cell-size';
 
 import {ALL_FIELD_TYPES, SORT_ORDER} from '@kepler.gl/constants';

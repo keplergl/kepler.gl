@@ -26,14 +26,14 @@ import document from 'global/document';
 
 import {EXPORT_DATA_TYPE_OPTIONS, EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import ModalDialogFactory from './modals/modal-dialog';
+import {isValidMapInfo} from '../utils';
 import {
   exportJson,
   exportHtml,
   exportData,
   exportImage,
   exportMap,
-  isValidMapInfo
-} from '../utils';
+} from '@kepler.gl/layers';
 
 // modals
 import DeleteDatasetModalFactory from './modals/delete-data-modal';

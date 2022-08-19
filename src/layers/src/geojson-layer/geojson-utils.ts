@@ -22,8 +22,8 @@ import wktParser from 'wellknown';
 import normalize from '@mapbox/geojson-normalize';
 import bbox from '@turf/bbox';
 
-import {getSampleData} from '../../../utils';
 import {Feature, BBox} from 'geojson';
+import { getSampleData } from '../layer-utils/data-utils';
 
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = Array<Feature | null>;

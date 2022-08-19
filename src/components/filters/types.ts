@@ -5,8 +5,7 @@ import {
   SelectFilter,
   TimeRangeFilter
 } from '@kepler.gl/types';
-import {Datasets} from '../../utils';
-import {Layer} from '@kepler.gl/layers';
+import {Layer, Datasets} from '@kepler.gl/layers';
 import {
   ActionHandler,
   enlargeFilter,

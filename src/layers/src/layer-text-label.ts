@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {getDistanceScales} from 'viewport-mercator-project';
-import {notNullorUndefined} from '../../utils';
+import {notNullorUndefined} from './layer-utils/data-utils';
 import uniq from 'lodash.uniq';
 
 export const defaultPadding = 20;

@@ -743,7 +743,6 @@ export const EXPORT_IMG_RATIO_OPTIONS: ReadonlyArray<ImageRatioOption> = [
   SixteenByNineRatioOption
 ];
 
-
 export type ImageResolutionOption = {
   id: keyof typeof RESOLUTIONS;
   label: string;

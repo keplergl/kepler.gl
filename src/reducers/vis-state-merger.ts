@@ -24,22 +24,25 @@ import flattenDeep from 'lodash.flattendeep';
 import {
   isObject,
   arrayInsert,
+  getInitialMapLayersForSplitMap
+} from '../utils';
+
+import {
+  LayerColumns, 
+  LayerColumn, 
   applyFiltersToDatasets,
   validateFiltersUpdateDatasets,
-  getInitialMapLayersForSplitMap,
   resetFilterGpuMode,
   assignGpuChannels,
   KeplerTable,
-  Datasets
-} from '../utils';
-
-import {LayerColumns, LayerColumn} from '@kepler.gl/layers';
+  Datasets,
+  Layer
+} from '@kepler.gl/layers';
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
 import {CURRENT_VERSION, visStateSchema} from 'schemas';
 
 import {VisState} from './vis-state-updaters';
 import {ParsedConfig, ParsedLayer} from 'schemas';
-import {Layer} from '@kepler.gl/layers';
 import {SavedInteractionConfig} from 'schemas';
 import {TooltipInfo} from '@kepler.gl/types';
 

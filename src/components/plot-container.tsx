@@ -26,12 +26,14 @@ import {StaticMap} from 'react-map-gl';
 import debounce from 'lodash.debounce';
 import {
   exportImageError,
-  convertToPng,
-  getScaleFromImageSize,
   scaleMapStyleByResolution,
-  findMapBounds,
   getCenterAndZoomFromBounds
 } from '../utils';
+import {
+  findMapBounds,
+  convertToPng,
+  getScaleFromImageSize,
+} from '@kepler.gl/layers';
 import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
 

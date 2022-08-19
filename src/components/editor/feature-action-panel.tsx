@@ -27,9 +27,8 @@ import onClickOutside from 'react-onclickoutside';
 import classnames from 'classnames';
 import {Trash, Layers, Copy, Checkmark} from 'components/common/icons';
 import copy from 'copy-to-clipboard';
-import {Layer} from '@kepler.gl/layers';
+import {Layer, Datasets} from '@kepler.gl/layers';
 import {Filter} from '@kepler.gl/types';
-import {Datasets} from '../../utils';
 import {Feature} from '@nebula.gl/edit-modes';
 
 const LAYOVER_OFFSET = 4;

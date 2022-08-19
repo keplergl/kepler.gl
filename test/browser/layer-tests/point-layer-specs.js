@@ -33,7 +33,7 @@ import {
   fieldDomain
 } from 'test/helpers/layer-utils';
 
-import {KeplerGlLayers} from '@kepler.gl/layers';
+import {KeplerGlLayers, copyTableAndUpdate} from '@kepler.gl/layers';
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {copyTableAndUpdate} from '../../../src/utils';

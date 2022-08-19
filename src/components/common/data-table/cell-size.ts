@@ -20,7 +20,7 @@
 
 import document from 'global/document';
 import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
-import {parseFieldValue} from '../../../utils';
+import {parseFieldValue} from '@kepler.gl/layers';
 
 const MIN_GHOST_CELL_SIZE: number = 200;
 

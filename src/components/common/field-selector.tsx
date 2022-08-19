@@ -23,10 +23,11 @@ import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
 import {Field} from '@kepler.gl/types';
+import {notNullorUndefined} from '@kepler.gl/layers';
 
 import ItemSelector from './item-selector/item-selector';
 import {classList} from './item-selector/dropdown-list';
-import {toArray, notNullorUndefined} from '../../utils';
+import {toArray} from '../../utils';
 import FieldTokenFactory from '../common/field-token';
 
 const defaultDisplayOption = (d: Field) => d.displayName || d.name;

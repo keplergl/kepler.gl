@@ -24,6 +24,10 @@ import {Tooltip} from 'components/common/styled-components';
 import IconButton from '../icon-button';
 import {media} from '@kepler.gl/styles';
 import {preciseRound} from '../../../utils';
+import AnimationSpeedSliderFactory from './animation-speed-slider';
+import {Button, CenterFlexbox} from 'components/common/styled-components';
+import {Rocket} from 'components/common/icons';
+import {preciseRound} from '@kepler.gl/layers';
 
 const StyledSpeedControl = styled.div`
   display: flex;

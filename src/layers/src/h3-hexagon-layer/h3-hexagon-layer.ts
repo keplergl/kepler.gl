@@ -25,12 +25,6 @@ import Layer, {
   LayerCoverageConfig,
   LayerSizeConfig
 } from '../base-layer';
-import {
-  findDefaultColorField,
-  createDataContainer,
-  DataContainerInterface,
-  KeplerTable
-} from '../../../utils';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
 import {EnhancedColumnLayer} from '@kepler.gl/deckgl-layers';
@@ -45,6 +39,10 @@ import {
   VisConfigRange,
   Merge
 } from '@kepler.gl/types';
+import { DataContainerInterface } from '../layer-utils/table-utils/data-container-interface';
+import { findDefaultColorField } from '../layer-utils/dataset-utils';
+import KeplerTable from '../layer-utils/table-utils/kepler-table';
+import { createDataContainer } from '../layer-utils/table-utils';
 
 export type HexagonIdLayerColumnsConfig = {
   hex_id: LayerColumn;

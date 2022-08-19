@@ -19,12 +19,11 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo, useState} from 'react';
-import {arrayMove, Datasets} from '../../../utils';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {SortableContainer, SortableElement} from 'react-sortable-hoc';
 import LayerPanelFactory from './layer-panel';
-import {Layer, LayerClassesType} from '@kepler.gl/layers';
+import {Layer, LayerClassesType, arrayMove, Datasets} from '@kepler.gl/layers';
 import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 

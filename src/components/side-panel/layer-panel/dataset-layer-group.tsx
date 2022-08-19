@@ -21,8 +21,7 @@
 import React, {useMemo} from 'react';
 
 import DatasetLayerSectionFactory from './dataset-layer-section';
-import {Datasets} from '../../../utils';
-import {Layer, LayerClassesType} from '@kepler.gl/layers';
+import {Layer, LayerClassesType, Datasets} from '@kepler.gl/layers';
 import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {ActionHandler} from 'actions';

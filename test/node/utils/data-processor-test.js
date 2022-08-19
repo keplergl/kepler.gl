@@ -58,7 +58,7 @@ import {
   formatCsv,
   validateInputData,
   getFieldsFromData
-} from '../../../src/utils';
+} from '@kepler.gl/layers';
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {cmpFields} from '../../helpers/comparison-utils';

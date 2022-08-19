@@ -28,9 +28,9 @@ import {
   notNullorUndefined,
   getTooltipDisplayValue,
   getTooltipDisplayDeltaValue,
-  AggregationLayerHoverData
-} from '../../utils';
-import {Layer} from '@kepler.gl/layers';
+  AggregationLayerHoverData,
+  Layer
+} from '@kepler.gl/layers';
 
 export const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};

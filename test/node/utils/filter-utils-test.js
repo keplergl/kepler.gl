@@ -34,7 +34,7 @@ import {
   getTimestampFieldDomain,
   getDatasetFieldIndexForFilter,
   createDataContainer
-} from '../../../src/utils';
+} from '@kepler.gl/layers';
 
 import {FILTER_TYPES} from '@kepler.gl/constants';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';

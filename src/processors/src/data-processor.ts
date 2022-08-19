@@ -26,7 +26,6 @@ import {
   notNullorUndefined,
   hasOwnProperty,
   isPlainObject,
-  toArray,
   analyzerTypeToFieldType,
   getSampleForTypeAnalyze,
   getFieldsFromData,

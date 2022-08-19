@@ -25,7 +25,8 @@ import cloneDeep from 'lodash.clonedeep';
 import {
   KeplerGlLayers,
   tripDefaultLineWidth as defaultLineWidth,
-  parseTripGeoJsonTimestamp
+  parseTripGeoJsonTimestamp,
+  copyTableAndUpdate
 } from '@kepler.gl/layers';
 
 const {TripLayer} = KeplerGlLayers;
@@ -40,7 +41,6 @@ import {
   animationConfig
 } from 'test/helpers/layer-utils';
 import {TripLayerMeta, dataToFeature, dataToTimeStamp} from 'test/fixtures/trip-geojson';
-import {copyTableAndUpdate} from '../../../src/utils';
 
 test('#TripLayer -> constructor', t => {
   const TEST_CASES = {

@@ -1,5 +1,5 @@
 import React, {MouseEvent} from 'react';
-import {KeplerTable, Datasets} from '../../../utils';
+import {KeplerTable, Datasets} from '@kepler.gl/layers';
 import {openDeleteModal} from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {ActionHandler} from 'actions';

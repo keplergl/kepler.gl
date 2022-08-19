@@ -28,10 +28,10 @@ import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
 import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW, PLOT_TYPES} from '@kepler.gl/constants';
-import {LAYER_TYPES, getCentroid, Layer} from '@kepler.gl/layers';
+import Layer from '../base-layer';
 import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
-import {generateHashId, set, toArray} from './utils';
+import {generateHashId, set, toArray} from '../../../utils';
 import {h3IsValid} from 'h3-js';
 
 import {Millisecond, Entries, Field} from '@kepler.gl/types';
@@ -53,6 +53,8 @@ import {ParsedFilter} from 'schemas';
 import KeplerTable, {FilterRecord, Datasets, FilterDatasetOpt} from './table-utils/kepler-table';
 import {DataContainerInterface} from './table-utils/data-container-interface';
 import { VisState } from 'reducers';
+import { LAYER_TYPES } from '../types';
+import { getCentroid } from '../h3-hexagon-layer';
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];

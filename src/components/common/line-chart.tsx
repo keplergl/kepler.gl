@@ -32,7 +32,7 @@ import {
 } from 'react-vis';
 import {LineChart} from '@kepler.gl/types';
 import styled from 'styled-components';
-import {datetimeFormatter} from '../../utils';
+import {datetimeFormatter} from '@kepler.gl/layers';
 
 const LineChartWrapper = styled.div`
   .rv-xy-plot {

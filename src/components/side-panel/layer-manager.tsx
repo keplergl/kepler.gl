@@ -35,8 +35,7 @@ import ItemSelector from 'components/common/item-selector/item-selector';
 import {PanelLabel, SidePanelDivider, SidePanelSection} from 'components/common/styled-components';
 
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
-import {Datasets} from '../../utils';
-import {Layer, LayerClassesType} from '@kepler.gl/layers';
+import {Layer, LayerClassesType, Datasets} from '@kepler.gl/layers';
 import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {SidePanelItem} from 'components/types';

@@ -21,12 +21,13 @@
 import {createSelector} from 'reselect';
 import memoize from 'lodash.memoize';
 import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES, ColorRange} from '@kepler.gl/constants';
-import {hexToRgb, DataContainerInterface} from '../../../utils';
+import {hexToRgb} from '../../../utils';
 import MapboxGLLayer, {MapboxLayerGLConfig} from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 import {LayerColumn, LayerWeightConfig, VisualChannels} from '../base-layer';
 import {VisConfigColorRange, VisConfigNumber} from '@kepler.gl/types';
 import {HexColor, Merge} from '@kepler.gl/types';
+import { DataContainerInterface } from '../layer-utils/table-utils/data-container-interface';
 
 export type HeatmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;

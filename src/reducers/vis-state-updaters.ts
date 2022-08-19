@@ -37,6 +37,30 @@ import {
 } from 'actions/vis-state-actions';
 // Utils
 import {
+  set,
+  toArray,
+  arrayInsert,
+  generateHashId,
+  addNewLayersToSplitMap,
+  computeSplitMapLayers,
+  removeLayerFromSplitMaps,
+  isRgbColor
+} from '../utils';
+
+import {
+  isValidMerger,
+  VIS_STATE_MERGERS,
+  validateLayerWithData,
+  createLayerFromConfig,
+  serializeLayer,
+  VisStateMergers
+} from './vis-state-merger';
+
+import {
+  Layer, 
+  LayerClasses, 
+  LayerClassesType, 
+  LAYER_ID_LENGTH, 
   parseFieldValue,
   findFieldsToShow,
   applyFilterFieldName,
@@ -59,29 +83,10 @@ import {
   pinTableColumns,
   sortDatasetByColumn,
   copyTableAndUpdate,
-  set,
-  toArray,
-  arrayInsert,
-  generateHashId,
   calculateLayerData,
   findDefaultLayer,
-  addNewLayersToSplitMap,
-  computeSplitMapLayers,
-  removeLayerFromSplitMaps,
-  isRgbColor,
   Datasets
-} from '../utils';
-
-import {
-  isValidMerger,
-  VIS_STATE_MERGERS,
-  validateLayerWithData,
-  createLayerFromConfig,
-  serializeLayer,
-  VisStateMergers
-} from './vis-state-merger';
-
-import {Layer, LayerClasses, LayerClassesType, LAYER_ID_LENGTH} from '@kepler.gl/layers';
+} from '@kepler.gl/layers';
 import {
   EDITOR_MODES,
   SORT_ORDER,

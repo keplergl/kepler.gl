@@ -24,7 +24,7 @@ import styled from 'styled-components';
 
 import SliderHandle from './slider-handle';
 import SliderBarHandle from './slider-bar-handle';
-import {normalizeSliderValue, clamp} from '../../../utils';
+import {normalizeSliderValue, clamp} from '@kepler.gl/layers';
 
 function noop() {}
 

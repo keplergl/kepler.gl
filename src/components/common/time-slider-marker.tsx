@@ -25,7 +25,7 @@ import {NumberValue, scaleUtc} from 'd3-scale';
 import {select} from 'd3-selection';
 import {axisBottom} from 'd3-axis';
 import styled from 'styled-components';
-import {datetimeFormatter} from '../../utils';
+import {datetimeFormatter} from '@kepler.gl/layers';
 
 const MIN_TICK_WIDTH_LARGE = 80;
 const MIN_TICK_WIDTH_SMALL = 50;
