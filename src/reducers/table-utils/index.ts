@@ -18,4 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export {createDataContainer, createIndexedDataContainer} from './data-container-utils';
+export {
+    default as KeplerTable,
+    findPointFieldPairs,
+    copyTableAndUpdate,
+    pinTableColumns,
+    sortDatasetByColumn,
+    copyTable
+  } from './kepler-table';
+  /* eslint-disable prettier/prettier */
+  export type {GpuFilter, Datasets} from './kepler-table';
+  export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData} from './data-container-utils';
+  export type {DataContainerInterface} from './data-container-interface';

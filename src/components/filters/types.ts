@@ -5,7 +5,7 @@ import {
   SelectFilter,
   TimeRangeFilter
 } from '@kepler.gl/types';
-import {Layer, Datasets} from '@kepler.gl/layers';
+import {Layer} from '@kepler.gl/layers';
 import {
   ActionHandler,
   enlargeFilter,
@@ -15,6 +15,7 @@ import {
   toggleFilterAnimation,
   updateFilterAnimationSpeed
 } from 'actions';
+import {Datasets} from 'reducers/table-utils/kepler-table';
 
 export type PolygonFilterProps = {
   filter: Filter;

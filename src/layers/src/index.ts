@@ -104,18 +104,7 @@ export * from './mapbox-utils';
 export * from './types';
 export * from './h3-hexagon-layer';
 
-export {
-  default as KeplerTable,
-  findPointFieldPairs,
-  copyTableAndUpdate,
-  pinTableColumns,
-  sortDatasetByColumn,
-  copyTable
-} from './layer-utils/table-utils/kepler-table';
 /* eslint-disable prettier/prettier */
-export type {GpuFilter, Datasets} from './layer-utils/table-utils/kepler-table';
-export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData} from './layer-utils/table-utils/data-container-utils';
-export type {DataContainerInterface} from './layer-utils/table-utils/data-container-interface';
 export * from './layer-utils/data-scale-utils';
 
 export * from './layer-utils/data-scale-utils';

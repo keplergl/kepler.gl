@@ -37,9 +37,9 @@ import {
   SplitMap,
   AnimationConfig,
   MapInfo,
-  RGBColor, 
-  Merge, 
-  RGBAColor, 
+  RGBColor,
+  Merge,
+  RGBAColor,
   LayerTextLabel
 } from '@kepler.gl/types';
 

@@ -39,10 +39,10 @@ import {
   VisConfigRange,
   Merge
 } from '@kepler.gl/types';
-import { DataContainerInterface } from '../layer-utils/table-utils/data-container-interface';
-import { findDefaultColorField } from '../layer-utils/dataset-utils';
-import KeplerTable from '../layer-utils/table-utils/kepler-table';
-import { createDataContainer } from '../layer-utils/table-utils';
+import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
+import {findDefaultColorField} from '../layer-utils/dataset-utils';
+import KeplerTable from 'reducers/table-utils/kepler-table';
+import {createDataContainer} from 'reducers/table-utils';
 
 export type HexagonIdLayerColumnsConfig = {
   hex_id: LayerColumn;

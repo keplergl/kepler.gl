@@ -31,7 +31,7 @@ import moment from 'moment-timezone';
 
 import {Millisecond, Field, Bounds} from '@kepler.gl/types';
 import Layer from '../base-layer';
-import {DataContainerInterface} from './table-utils/data-container-interface';
+import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
 
 export type FieldFormatter = (value: any) => string;
 

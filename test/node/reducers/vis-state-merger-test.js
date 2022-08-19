@@ -38,7 +38,7 @@ import {receiveMapConfig, addDataToMap} from 'actions/actions';
 import {processKeplerglJSON} from '@kepler.gl/processors';
 import {defaultInteractionConfig} from 'reducers/vis-state-updaters';
 
-import {createDataContainer} from '@kepler.gl/layers';
+import {createDataContainer} from 'reducers/table-utils';
 
 // fixtures
 import {

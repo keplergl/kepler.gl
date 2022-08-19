@@ -23,9 +23,10 @@ import {
   getOrdinalDomain,
   getQuantileDomain,
   getLinearDomain,
-  getLogDomain,
-  createDataContainer
+  getLogDomain
 } from '@kepler.gl/layers';
+
+import {createDataContainer} from 'reducers/table-utils';
 
 function numberSort(a, b) {
   return a - b;

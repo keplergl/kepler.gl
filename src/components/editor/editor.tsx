@@ -28,13 +28,14 @@ import {createSelector} from 'reselect';
 
 import FeatureActionPanelFactory, {FeatureActionPanelProps} from './feature-action-panel';
 import {FILTER_TYPES, EDITOR_MODES, KeyEvent} from '@kepler.gl/constants';
-import {EDITOR_AVAILABLE_LAYERS, Layer, Datasets} from '@kepler.gl/layers';
+import {EDITOR_AVAILABLE_LAYERS, Layer} from '@kepler.gl/layers';
 
 import {DEFAULT_RADIUS, getStyle as getFeatureStyle} from './feature-styles';
 import {getStyle as getEditHandleStyle, getEditHandleShape} from './handle-style';
 import {Filter} from '@kepler.gl/types';
 import {Feature} from '@nebula.gl/edit-modes';
 import {MjolnirEvent} from 'mjolnir.js';
+import {Datasets} from 'reducers/table-utils/kepler-table';
 
 const StyledWrapper = styled.div`
   cursor: ${(props: {editor: {mode: string}}) =>

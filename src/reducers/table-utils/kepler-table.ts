@@ -26,7 +26,10 @@ import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepl
 import {RGBColor, Field, FieldPair, FieldDomain, Filter, ProtoDataset} from '@kepler.gl/types';
 
 import {generateHashId} from '@kepler.gl/utils';
-import {getGpuFilterProps, getDatasetFieldIndexForFilter} from '../gpu-filter-utils';
+import {
+  getGpuFilterProps,
+  getDatasetFieldIndexForFilter
+} from '../../layers/src/layer-utils/gpu-filter-utils';
 import {
   getFilterProps,
   getFilterRecord,
@@ -36,18 +39,18 @@ import {
   getNumericFieldDomain,
   getTimestampFieldDomain,
   FilterResult
-} from '../filter-utils';
-import {maybeToDate, getSortingFunction} from '../data-utils';
+} from '@kepler.gl/layers';
+import {maybeToDate, getSortingFunction} from '@kepler.gl/layers';
 import {
   getQuantileDomain,
   getOrdinalDomain,
   getLogDomain,
   getLinearDomain
-} from '../data-scale-utils';
+} from '@kepler.gl/layers';
 
 import {createDataContainer} from './data-container-utils';
 
-import Layer from '../../base-layer';
+import Layer from '../../layers/src/base-layer';
 import {DataContainerInterface} from './data-container-interface';
 
 export type GpuFilter = {
@@ -454,7 +457,6 @@ class KeplerTable {
 export type Datasets = {
   [key: string]: KeplerTable;
 };
-
 
 // HELPER FUNCTIONS (MAINLY EXPORTED FOR TEST...)
 

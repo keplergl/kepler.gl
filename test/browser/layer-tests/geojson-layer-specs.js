@@ -20,14 +20,14 @@
 
 import test from 'tape';
 import {
-  KeplerGlLayers,
   defaultElevation,
   defaultLineWidth,
   defaultRadius,
-  createNewDataEntry,
-  copyTableAndUpdate
+  createNewDataEntry
 } from '@kepler.gl/layers';
+import {copyTableAndUpdate} from 'reducers/table-utils';
 
+import {KeplerGlLayers} from '@kepler.gl/layers';
 const {GeojsonLayer} = KeplerGlLayers;
 
 import {updatedLayerV2} from 'test/fixtures/test-csv-data';

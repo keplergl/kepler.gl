@@ -20,7 +20,7 @@
 
 import {notNullorUndefined, unique} from './data-utils';
 import {extent} from 'd3-array';
-import {DataContainerInterface} from './table-utils/data-container-interface';
+import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
 
 type dataValueAccessor = <T>(param: T) => T;
 type dataContainerValueAccessor = (d: {index: number}, dc: DataContainerInterface) => any;

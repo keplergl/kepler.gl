@@ -20,14 +20,16 @@
 
 import Layer, {FindDefaultLayerPropsReturnValue, OVERLAY_TYPE_CONST} from '../base-layer';
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
-import {Field} from '@kepler.gl/types';
-import {ThreeDBuildingLayer} from '../deckgl-layers';
-import {getMapLayersFromSplitMaps} from './map-utils';
-import {isFunction} from 'utils/utils';
-import {VisState, TooltipField, CompareType, SplitMapLayers} from 'reducers';
+import {
+  Field,
+  TooltipField,
+  CompareType,
+  SplitMapLayers,
+  InteractionConfig
+} from '@kepler.gl/types';
 
-import KeplerTable, { Datasets } from './table-utils/kepler-table';
-import { LayerClassesType } from '..';
+import KeplerTable, {Datasets} from 'reducers/table-utils/kepler-table';
+import {LayerClassesType} from '..';
 
 export type LayersToRender = {
   [layerId: string]: boolean;

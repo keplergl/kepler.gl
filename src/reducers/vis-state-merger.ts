@@ -21,21 +21,15 @@
 import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
 import flattenDeep from 'lodash.flattendeep';
-import {
-  isObject,
-  arrayInsert,
-  getInitialMapLayersForSplitMap
-} from '@kepler.gl/utils';
+import {isObject, arrayInsert, getInitialMapLayersForSplitMap} from '@kepler.gl/utils';
 
 import {
-  LayerColumns, 
-  LayerColumn, 
+  LayerColumns,
+  LayerColumn,
   applyFiltersToDatasets,
   validateFiltersUpdateDatasets,
   resetFilterGpuMode,
   assignGpuChannels,
-  KeplerTable,
-  Datasets,
   Layer
 } from '@kepler.gl/layers';
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
@@ -45,6 +39,7 @@ import {VisState} from './vis-state-updaters';
 import {ParsedConfig, ParsedLayer} from 'schemas';
 import {SavedInteractionConfig} from 'schemas';
 import {TooltipInfo} from '@kepler.gl/types';
+import KeplerTable, {Datasets} from './table-utils/kepler-table';
 
 export type Merger = {
   merge: <S extends VisState>(state: S, config: any, fromConfig?: boolean) => S;

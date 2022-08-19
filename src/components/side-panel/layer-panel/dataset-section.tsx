@@ -25,10 +25,10 @@ import {Add} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
-import {Datasets} from '@kepler.gl/layers';
 import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {ActionHandler} from 'actions';
+import {Datasets} from 'reducers/table-utils/kepler-table';
 
 type AddDataButtonProps = {
   onClick: () => void;

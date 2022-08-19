@@ -23,7 +23,16 @@ import {default as ActionTypes} from './action-types';
 import {AddDataToMapPayload} from '../actions/actions';
 import {FileCacheItem} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {ValueOf, Merge, RGBColor, NestedPartial, LayerVisConfig, ColorUI, Feature, InteractionConfig} from '@kepler.gl/types';
+import {
+  ValueOf,
+  Merge,
+  RGBColor,
+  NestedPartial,
+  LayerVisConfig,
+  ColorUI,
+  Feature,
+  InteractionConfig
+} from '@kepler.gl/types';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
 

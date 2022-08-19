@@ -57,10 +57,10 @@ import {
 } from './vis-state-merger';
 
 import {
-  Layer, 
-  LayerClasses, 
-  LayerClassesType, 
-  LAYER_ID_LENGTH, 
+  Layer,
+  LayerClasses,
+  LayerClassesType,
+  LAYER_ID_LENGTH,
   parseFieldValue,
   findFieldsToShow,
   applyFilterFieldName,
@@ -80,12 +80,8 @@ import {
   assignGpuChannel,
   setFilterGpuMode,
   createNewDataEntry,
-  pinTableColumns,
-  sortDatasetByColumn,
-  copyTableAndUpdate,
   calculateLayerData,
-  findDefaultLayer,
-  Datasets
+  findDefaultLayer
 } from '@kepler.gl/layers';
 import {
   EDITOR_MODES,
@@ -101,7 +97,16 @@ import {processFileContent} from 'actions/vis-state-actions';
 
 import KeplerGLSchema from 'schemas';
 
-import {MapInfo, Filter, InteractionConfig, AnimationConfig, Editor, SplitMap, FileLoading, FileLoadingProgress} from '@kepler.gl/types';
+import {
+  MapInfo,
+  Filter,
+  InteractionConfig,
+  AnimationConfig,
+  Editor,
+  SplitMap,
+  FileLoading,
+  FileLoadingProgress
+} from '@kepler.gl/types';
 import {ReceiveMapConfigPayload} from '../actions/actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
@@ -109,6 +114,12 @@ import {Loader} from '@loaders.gl/loader-utils';
 import {KeplerTable} from '../utils';
 
 import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons/index';
+import {
+  copyTableAndUpdate,
+  Datasets,
+  pinTableColumns,
+  sortDatasetByColumn
+} from './table-utils/kepler-table';
 
 export type HistogramBin = {
   x0: number | undefined;

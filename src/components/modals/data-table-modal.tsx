@@ -25,7 +25,7 @@ import DataTableFactory from 'components/common/data-table';
 import {createSelector} from 'reselect';
 import {renderedSize} from 'components/common/data-table/cell-size';
 import CanvasHack from 'components/common/data-table/canvas';
-import {KeplerTable, Datasets} from '@kepler.gl/layers';
+import KeplerTable, {Datasets} from 'reducers/table-utils/kepler-table';
 
 const dgSettings = {
   sidePadding: '38px',

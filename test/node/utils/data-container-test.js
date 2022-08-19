@@ -20,7 +20,7 @@
 
 import test from 'tape';
 
-import {createDataContainer, createIndexedDataContainer} from '@kepler.gl/layers';
+import {createDataContainer, createIndexedDataContainer} from 'reducers/table-utils';
 
 const data = [
   [10, 20], // 0

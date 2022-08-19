@@ -32,11 +32,12 @@ import {
   hexagonIdLayerMeta
 } from 'test/helpers/layer-utils';
 import {
-  KeplerGlLayers,
   getCentroid,
-  h3DefaultElevation as defaultElevation,
-  copyTableAndUpdate
+  KeplerGlLayers,
+  h3DefaultElevation as defaultElevation
 } from '@kepler.gl/layers';
+
+import {copyTableAndUpdate} from 'reducers/table-utils';
 
 const {H3Layer} = KeplerGlLayers;
 const columns = {

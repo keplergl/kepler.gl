@@ -21,7 +21,7 @@
 import uniq from 'lodash.uniq';
 import {console as globalConsole} from 'global/window';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import KeplerTable, {Datasets} from './table-utils/kepler-table';
+import KeplerTable, {Datasets} from 'reducers/table-utils/kepler-table';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import assert from 'assert';
 

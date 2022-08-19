@@ -22,11 +22,10 @@ import {Analyzer, DATA_TYPES} from 'type-analyzer';
 
 import {Field} from '@kepler.gl/types';
 
-
 import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from '../geojson-layer/geojson-utils';
-import { DataContainerInterface } from '../layer-utils/table-utils/data-container-interface';
-import { notNullorUndefined, timeToUnixMilli } from '../layer-utils/data-utils';
-import { getSampleData } from '../layer-utils/table-utils/data-container-utils';
+import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
+import {notNullorUndefined, timeToUnixMilli} from '../layer-utils/data-utils';
+import {getSampleData} from 'reducers/table-utils/data-container-utils';
 
 /**
  * Parse geojson from string

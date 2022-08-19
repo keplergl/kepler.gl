@@ -47,7 +47,6 @@ import {RGBColor, BaseMapStyle, LayerGroup} from '@kepler.gl/types';
 import {ReceiveMapConfigPayload, KeplerGlInitPayload} from '../actions/actions';
 import * as MapStyleActions from '../actions/map-style-actions';
 
-
 export type VisibleLayerGroups = {
   [key: string]: boolean;
 };

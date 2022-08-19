@@ -46,13 +46,13 @@ import {
   LayerBaseConfig,
   LAYER_TYPES,
   VisualChannel,
-  AggregationLayer,
-  Datasets
+  AggregationLayer
 } from '@kepler.gl/layers';
 
 import {NestedPartial, RGBColor, LayerVisConfig, ColorUI, Field} from '@kepler.gl/types';
 import {toggleModal} from 'actions/ui-state-actions';
 import {ActionHandler} from 'actions';
+import {Datasets} from 'reducers/table-utils/kepler-table';
 
 type LayerConfiguratorProps = {
   layer: Layer;

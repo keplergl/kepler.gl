@@ -58,7 +58,7 @@
     "start:web": "yarn install-and-start -- website start",
     "start:https": "yarn install-and-start -- examples/demo-app start-local-https",
     "start:e2e": "yarn install-and-start -- examples/demo-app start-local-e2e",
-    "build": "rm -fr dist && babel src/{actions,components,layers,middleware,reducers,styles,templates,utils,cloud-providers,connect,localization,processors,schemas,tasks} --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+    "build": "rm -fr dist && babel src/{actions,components,middleware,reducers,templates,cloud-providers,connect,localization,schemas,tasks} --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
     "build:umd": "webpack --config ./webpack/umd.js --progress --env.prod",
     "build:types": "tsc --project tsconfig.production.json",
     "analyze": "yarn analyze:bundle",

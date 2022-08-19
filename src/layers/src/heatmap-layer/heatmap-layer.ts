@@ -27,7 +27,7 @@ import HeatmapLayerIcon from './heatmap-layer-icon';
 import {LayerColumn, LayerWeightConfig, VisualChannels} from '../base-layer';
 import {VisConfigColorRange, VisConfigNumber} from '@kepler.gl/types';
 import {HexColor, Merge} from '@kepler.gl/types';
-import { DataContainerInterface } from '../layer-utils/table-utils/data-container-interface';
+import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
 
 export type HeatmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;

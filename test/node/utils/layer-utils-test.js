@@ -23,13 +23,10 @@ import cloneDeep from 'lodash.clonedeep';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {
   LayerClasses,
-  KeplerGlLayers,
   findDefaultLayer,
   getLayerHoverProp,
   createNewDataEntry,
-  KeplerTable,
-  findPointFieldPairs,
-  createDataContainer
+  KeplerGlLayers
 } from '@kepler.gl/layers';
 import {GEOJSON_FIELDS} from '@kepler.gl/constants';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
@@ -41,6 +38,11 @@ import {cmpLayers} from 'test/helpers/comparison-utils';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import tripGeojson, {timeStampDomain, tripBounds} from 'test/fixtures/trip-geojson';
 import {geoJsonWithStyle} from 'test/fixtures/geojson';
+import {
+  KeplerTable,
+  findPointFieldPairs,
+  createDataContainer
+} from '../../../src/reducers/table-utils'
 
 test('layerUtils -> findDefaultLayer.1', t => {
   const inputFields = [

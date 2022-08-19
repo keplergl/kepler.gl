@@ -20,7 +20,7 @@
 
 import {FILTER_TYPES} from '@kepler.gl/constants';
 import {toArray} from '../../src/utils';
-import {KeplerTable} from '@kepler.gl/layers';
+import {KeplerTable} from '../../src/reducers/table-utils';
 
 export function cmpObjectKeys(t, expectedObj, actualObj, name) {
   t.deepEqual(

@@ -40,8 +40,6 @@ import {payload_, apply_, compose_} from './composer-helpers';
 import * as UiStateActions from 'actions/ui-state-actions';
 import {KeplerGlInitPayload, LoadFilesErrUpdaterAction} from '../actions';
 
-
-
 export type ExportData = {
   selectedDataset: string;
   dataType: string;

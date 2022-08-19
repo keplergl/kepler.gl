@@ -1,20 +1,18 @@
 export type MapState = {
-    pitch: number;
-    bearing: number;
-    latitude: number;
-    longitude: number;
-    zoom: number;
-    dragRotate: boolean;
-    width: number;
-    height: number;
-    isSplit: boolean;
-    initialState?: any;
-    scale?: number;
-  };
+  pitch: number;
+  bearing: number;
+  latitude: number;
+  longitude: number;
+  zoom: number;
+  dragRotate: boolean;
+  width: number;
+  height: number;
+  isSplit: boolean;
+  initialState?: any;
+  scale?: number;
+};
 
 export type Bounds = [number, number, number, number];
-
-
 
 export type HistogramBin = {
   x0: number | undefined;

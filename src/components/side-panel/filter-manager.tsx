@@ -25,9 +25,10 @@ import {Add} from 'components/common/icons';
 import SourceDataCatalogFactory from './common/source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
 import {Filter} from '@kepler.gl/types';
-import {Layer, Datasets} from '@kepler.gl/layers';
+import {Layer} from '@kepler.gl/layers';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {ActionHandler} from 'actions';
+import {Datasets} from 'reducers/table-utils/kepler-table';
 
 type FilterManagerProps = {
   filters: Filter[];

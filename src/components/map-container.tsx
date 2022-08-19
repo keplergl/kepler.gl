@@ -48,8 +48,7 @@ import {
   prepareLayersToRender,
   prepareLayersForDeck,
   LayerHoverProp,
-  VisualChannelDomain,
-  Datasets
+  VisualChannelDomain
 } from '@kepler.gl/layers';
 import {Filter, InteractionConfig, MapState, SplitMapLayers} from '@kepler.gl/types';
 import {
@@ -81,6 +80,7 @@ import {
   MapStyle,
   Viewport
 } from 'reducers';
+import { Datasets } from 'reducers/table-utils';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {

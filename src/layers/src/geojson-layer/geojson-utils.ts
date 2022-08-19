@@ -23,7 +23,7 @@ import normalize from '@mapbox/geojson-normalize';
 import bbox from '@turf/bbox';
 
 import {Feature, BBox} from 'geojson';
-import { getSampleData } from '../layer-utils/data-utils';
+import {getSampleData} from '../layer-utils/data-utils';
 
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = Array<Feature | null>;

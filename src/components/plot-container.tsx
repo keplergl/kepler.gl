@@ -29,11 +29,7 @@ import {
   scaleMapStyleByResolution,
   getCenterAndZoomFromBounds
 } from '@kepler.gl/utils';
-import {
-  findMapBounds,
-  convertToPng,
-  getScaleFromImageSize,
-} from '@kepler.gl/layers';
+import {findMapBounds, convertToPng, getScaleFromImageSize} from '@kepler.gl/layers';
 import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
 

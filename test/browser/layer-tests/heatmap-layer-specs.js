@@ -29,7 +29,8 @@ import {
 import {StateWFiles, testCsvDataId} from 'test/helpers/mock-state';
 import {gpsPointBounds} from 'test/fixtures/test-csv-data';
 
-import {KeplerGlLayers, MAX_ZOOM_LEVEL, copyTableAndUpdate} from '@kepler.gl/layers';
+import {MAX_ZOOM_LEVEL, KeplerGlLayers} from '@kepler.gl/layers';
+import {copyTableAndUpdate} from 'reducers/table-utils';
 
 const {HeatmapLayer} = KeplerGlLayers;
 

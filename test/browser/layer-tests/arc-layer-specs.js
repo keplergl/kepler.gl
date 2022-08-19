@@ -33,7 +33,8 @@ import {
 } from 'test/helpers/layer-utils';
 
 import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
-import {KeplerGlLayers, copyTableAndUpdate} from '@kepler.gl/layers';
+import {KeplerGlLayers} from '@kepler.gl/layers';
+import {copyTableAndUpdate} from 'reducers/table-utils';
 
 const {ArcLayer} = KeplerGlLayers;
 const columns = {

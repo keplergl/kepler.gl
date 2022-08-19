@@ -35,7 +35,14 @@ import {serializeLayer} from 'reducers/vis-state-merger';
 import KeplerTable from 'utils/table-utils/kepler-table';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {defaultInteractionConfig} from 'reducers/vis-state-updaters';
-import {Layer, KeplerGlLayers, getDefaultFilter, createNewDataEntry, maybeToDate, createDataContainer} from '@kepler.gl/layers';
+import {
+  Layer,
+  KeplerGlLayers,
+  getDefaultFilter,
+  createNewDataEntry,
+  maybeToDate
+} from '@kepler.gl/layers';
+import {createDataContainer} from '../../../src/reducers/table-utils';
 import {
   ALL_FIELD_TYPES,
   EDITOR_MODES,

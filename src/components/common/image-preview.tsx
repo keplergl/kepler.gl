@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import LoadingSpinner from 'components/common/loading-spinner';
 import {ExportImage} from '@kepler.gl/constants';
 
-/** @typedef {import('../../reducers/ui-state-updaters').ExportImage} ExportImage */
+/** @typedef {import('reducers/ui-state-updaters').ExportImage} ExportImage */
 
 const StyledImagePreview = styled.div.attrs({
   className: 'image-preview'

@@ -39,9 +39,9 @@ import OptionDropdown from 'components/common/data-table/option-dropdown';
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
-import {appInjector} from '../../../../src/components/container';
+import {appInjector} from 'components/container';
 
-import {createDataContainer} from '@kepler.gl/layers';
+import {createDataContainer} from 'reducers/table-utils';
 
 const DataTableModal = appInjector.get(DataTableModalFactory);
 const DataTable = appInjector.get(DataTableFactory);

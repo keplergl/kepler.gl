@@ -23,12 +23,12 @@ import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
 
 import {
-  KeplerGlLayers,
   tripDefaultLineWidth as defaultLineWidth,
   parseTripGeoJsonTimestamp,
-  copyTableAndUpdate
+  KeplerGlLayers
 } from '@kepler.gl/layers';
 
+import {copyTableAndUpdate} from 'reducers/table-utils';
 const {TripLayer} = KeplerGlLayers;
 
 import {

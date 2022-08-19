@@ -22,7 +22,8 @@ import React from 'react';
 import styled from 'styled-components';
 import DatasetLabel from 'components/common/dataset-label';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {Layer, KeplerTable} from '@kepler.gl/layers';
+import {Layer} from '@kepler.gl/layers';
+import {KeplerTable} from 'reducers/table-utils';
 
 const StyledMsg = styled.div`
   margin-top: 24px;

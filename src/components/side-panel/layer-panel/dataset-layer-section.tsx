@@ -23,10 +23,11 @@ import styled from 'styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
 import LayerListFactory from './layer-list';
-import {Layer, LayerClassesType, KeplerTable} from '@kepler.gl/layers';
+import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {ActionHandler} from 'actions';
+import KeplerTable from 'reducers/table-utils/kepler-table';
 
 type DatasetLayerSectionProps = {
   dataset: KeplerTable;

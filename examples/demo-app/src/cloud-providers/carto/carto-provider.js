@@ -22,7 +22,7 @@ import {OAuthApp} from '@carto/toolkit';
 import Console from 'global/console';
 import CartoIcon from './carto-icon';
 import {Provider} from 'kepler.gl/cloud-providers';
-import {createDataContainer, formatCsv} from '../../utils';
+import {createDataContainer, formatCsv} from 'kepler.gl/reducers/table-utils';
 
 const NAME = 'carto';
 const DISPLAY_NAME = 'CARTO';
