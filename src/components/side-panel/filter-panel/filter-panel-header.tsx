@@ -22,7 +22,7 @@ import React, {ComponentType} from 'react';
 import styled from 'styled-components';
 import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
 import {Trash} from 'components/common/icons';
-import {createLinearGradient} from '../../../utils';
+import {createLinearGradient} from '@kepler.gl/utils';
 import {KeplerTable} from '@kepler.gl/layers';
 import {StyledPanelHeader, StyledPanelHeaderProps} from 'components/common/styled-components';
 import {RGBColor, Filter} from '@kepler.gl/types';

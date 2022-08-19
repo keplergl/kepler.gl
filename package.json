@@ -18,6 +18,7 @@
   "workspaces": [
     "./src/types",
     "./src/constants",
+    "./src/utils",
     "./src/styles",
     "./src/localization",
     "./src/middleware",

@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import en from './translations/en';
-import {flattenMessages} from '../../utils/locale-utils';
 import {LOCALE_CODES} from './locales';
 
 // Flat messages since react-intl does not seem to support nested structures

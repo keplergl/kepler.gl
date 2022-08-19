@@ -18,47 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import styled from 'styled-components';
-import Checkbox from 'components/common/checkbox';
-import {generateHashId} from '@kepler.gl/utils';
+const KeplerPackage = require('./package');
 
-const MapLayerSelect = styled.div`
-  padding: 12px;
-
-  .map-layer-selector__item {
-    margin: 12px 0;
+const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
+const PLUGINS = [
+  ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
+  '@babel/plugin-transform-modules-commonjs',
+  '@babel/plugin-proposal-class-properties',
+  '@babel/plugin-proposal-export-namespace-from',
+  '@babel/plugin-proposal-optional-chaining',
+  [
+    '@babel/transform-runtime',
+    {
+      regenerator: true
+    }
+  ],
+  [
+    'search-and-replace',
+    {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }
+  ]
+];
+const ENV = {
+  test: {
+    plugins: ['istanbul']
+  },
+  debug: {
+    sourceMaps: 'inline',
+    retainLines: true
   }
-`;
-interface Layer {
-  id: string;
-  name: string;
-  isVisible: boolean;
-}
+};
 
-interface MapLayerSelectorProps {
-  layers: Layer[];
-  onMapToggleLayer: (layerId: string) => void;
-}
+module.exports = function babel(api) {
+  api.cache(true);
 
-/** @type {typeof import('./map-layer-selector').default} */
-const MapLayerSelector = ({layers, onMapToggleLayer}: MapLayerSelectorProps) => (
-  <MapLayerSelect className="map-layer-selector">
-    {layers.map((layer, index) => (
-      <div key={layer.id} className="map-layer-selector__item">
-        <Checkbox
-          type="radio"
-          checked={layer.isVisible}
-          id={`${layer.id}-toggle-${generateHashId(4)}`}
-          label={layer.name}
-          onChange={e => {
-            e.preventDefault();
-            onMapToggleLayer(layer.id);
-          }}
-        />
-      </div>
-    ))}
-  </MapLayerSelect>
-);
-
-export default MapLayerSelector;
+  return {
+    presets: PRESETS,
+    plugins: PLUGINS,
+    env: ENV
+  };
+};

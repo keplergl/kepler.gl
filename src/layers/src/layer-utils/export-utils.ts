@@ -29,13 +29,13 @@ import {
   EXPORT_IMG_RATIOS,
   EXPORT_DATA_TYPE,
   FourByThreeRatioOption,
-  OneXResolutionOption, 
+  OneXResolutionOption,
   ExportImage
 } from '@kepler.gl/constants';
+import {Field} from '@kepler.gl/types';
 import {exportMapToHTML} from 'templates/export-map-html';
-import {formatCsv} from '@kepler.gl/processors';
 
-import {set, generateHashId, domtoimage} from '../../../utils';
+import {set, generateHashId, domtoimage} from '@kepler.gl/utils';
 import {createIndexedDataContainer} from './table-utils/data-container-utils';
 import {parseFieldValue} from './data-utils';
 import {DataContainerInterface} from './table-utils/data-container-interface';

@@ -32,7 +32,7 @@ import {
   getStyleImageIcon,
   generateHashId,
   hexToRgb
-} from '../utils';
+} from '@kepler.gl/utils';
 import {
   DEFAULT_MAP_STYLES,
   DEFAULT_LAYER_GROUPS,

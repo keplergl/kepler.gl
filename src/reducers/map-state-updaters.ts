@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {getCenterAndZoomFromBounds} from '../utils';
+import {getCenterAndZoomFromBounds} from '@kepler.gl/utils';
 import * as MapStateActions from 'actions/map-state-actions';
 import {ReceiveMapConfigPayload} from '../actions/actions';
 import {ActionTypes} from 'actions';

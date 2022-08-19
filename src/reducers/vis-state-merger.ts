@@ -25,7 +25,7 @@ import {
   isObject,
   arrayInsert,
   getInitialMapLayersForSplitMap
-} from '../utils';
+} from '@kepler.gl/utils';
 
 import {
   LayerColumns, 

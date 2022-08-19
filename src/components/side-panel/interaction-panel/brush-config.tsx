@@ -22,7 +22,7 @@ import React from 'react';
 import RangeSliderFactory from 'components/common/range-slider';
 
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
-import {BRUSH_CONFIG} from 'utils/interaction-utils';
+import {BRUSH_CONFIG} from '@kepler.gl/layers';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 BrushConfigFactory.deps = [RangeSliderFactory];

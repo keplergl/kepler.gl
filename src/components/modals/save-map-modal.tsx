@@ -37,7 +37,7 @@ import {
 } from 'components/common/styled-components';
 import ImagePreview from 'components/common/image-preview';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {ExportImage, MapInfo} from 'reducers';
+import {MapInfo} from '@kepler.gl/types';
 import {Provider} from 'cloud-providers';
 import {setMapInfo, cleanupExportImage as cleanupExportImageAction} from 'actions';
 

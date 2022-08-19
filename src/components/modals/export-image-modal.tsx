@@ -29,7 +29,6 @@ import {StyledModalContent, SelectionButton, CheckMark} from 'components/common/
 import Switch from 'components/common/switch';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {ExportImage} from 'reducers';
 
 const ImageOptionList = styled.div`
   display: flex;

@@ -27,7 +27,7 @@ import {ArrowRight, Table, Trash} from 'components/common/icons';
 import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
 import {Portaled} from 'components';
-import {rgbToHex} from '../../../utils';
+import {rgbToHex} from '@kepler.gl/utils';
 import {
   StyledDatasetTitleProps,
   DatasetTitleProps,

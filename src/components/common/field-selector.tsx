@@ -27,7 +27,7 @@ import {notNullorUndefined} from '@kepler.gl/layers';
 
 import ItemSelector from './item-selector/item-selector';
 import {classList} from './item-selector/dropdown-list';
-import {toArray} from '../../utils';
+import {toArray} from '@kepler.gl/utils';
 import FieldTokenFactory from '../common/field-token';
 
 const defaultDisplayOption = (d: Field) => d.displayName || d.name;

@@ -46,8 +46,7 @@ import {
   parseCsvRowsByFieldType,
   processCsvData,
   processGeojson,
-  processRowObject,
-  validateInputData
+  processRowObject
 } from '@kepler.gl/processors';
 
 import {

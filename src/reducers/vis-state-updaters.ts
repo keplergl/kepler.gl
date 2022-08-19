@@ -45,7 +45,7 @@ import {
   computeSplitMapLayers,
   removeLayerFromSplitMaps,
   isRgbColor
-} from '../utils';
+} from '@kepler.gl/utils';
 
 import {
   isValidMerger,

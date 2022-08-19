@@ -19,16 +19,18 @@
 // THE SOFTWARE.
 
 import uniq from 'lodash.uniq';
+import {console as globalConsole} from 'global/window';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {validateInputData} from '@kepler.gl/processors';
-import KeplerTable, {Field} from './table-utils/kepler-table';
+import KeplerTable, {Datasets} from './table-utils/kepler-table';
+import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
+import assert from 'assert';
 
-import {Datasets} from 'reducers';
 import {ProtoDataset} from 'actions';
-import {RGBColor} from '@kepler.gl/types';
+import {ProcessorResult, RGBColor, RowData, Field} from '@kepler.gl/types';
 
-import {hexToRgb} from './color-utils';
+import {hexToRgb} from '@kepler.gl/utils';
 import {notNullorUndefined, isPlainObject} from './data-utils';
+import {range} from 'd3-array';
 
 // apply a color for each dataset
 // to use as label colors

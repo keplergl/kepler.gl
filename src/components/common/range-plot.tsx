@@ -23,7 +23,7 @@ import styled, {withTheme} from 'styled-components';
 import RangeBrushFactory, {OnBrush, RangeBrushProps} from './range-brush';
 import HistogramPlotFactory from './histogram-plot';
 import LineChartFactory, {HoverDP} from './line-chart';
-import {isTest} from '../../utils';
+import {isTest} from '@kepler.gl/utils';
 import {LineChart} from '@kepler.gl/types';
 
 const StyledRangePlot = styled.div`

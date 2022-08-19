@@ -31,7 +31,7 @@ import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW, PLOT_TYPES} from '@kepl
 import Layer from '../base-layer';
 import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
-import {generateHashId, set, toArray} from '../../../utils';
+import {generateHashId, set, toArray} from '@kepler.gl/utils';
 import {h3IsValid} from 'h3-js';
 
 import {Millisecond, Entries, Field} from '@kepler.gl/types';

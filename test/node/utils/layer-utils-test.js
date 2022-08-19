@@ -30,7 +30,7 @@ import {
   KeplerTable,
   findPointFieldPairs,
   createDataContainer
-} from '../utils';
+} from '@kepler.gl/layers';
 import {GEOJSON_FIELDS} from '@kepler.gl/constants';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 

@@ -26,7 +26,7 @@ import document from 'global/document';
 
 import {EXPORT_DATA_TYPE_OPTIONS, EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import ModalDialogFactory from './modals/modal-dialog';
-import {isValidMapInfo} from '../utils';
+import {isValidMapInfo} from '@kepler.gl/utils';
 import {
   exportJson,
   exportHtml,

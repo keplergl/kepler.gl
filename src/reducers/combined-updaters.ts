@@ -29,7 +29,6 @@ import {
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
 import {filesToDataPayload} from '@kepler.gl/processors';
-import {findMapBounds, isPlainObject} from '../utils';
 import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-helpers';
 import {VisState} from './vis-state-updaters';
 import {MapState} from '@kepler.gl/types';

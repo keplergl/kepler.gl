@@ -38,7 +38,7 @@ import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-co
 import TextLabelPanelFactory from './text-label-panel';
 import HowToButton from './how-to-button';
 
-import {capitalizeFirstLetter} from '../../../utils';
+import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
 import {CHANNEL_SCALE_SUPPORTED_FIELDS, ColorRange} from '@kepler.gl/constants';
 import {

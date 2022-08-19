@@ -21,7 +21,7 @@
 import React from 'react';
 import styled, {css} from 'styled-components';
 import {media} from '../../styles';
-import {cdnUrl} from '../../../utils';
+import {cdnUrl} from '../../utils';
 
 const buttonStyles = css`
   align-items: center;

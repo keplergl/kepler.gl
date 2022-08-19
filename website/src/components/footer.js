@@ -22,7 +22,7 @@ import React, {PureComponent} from 'react';
 import styled from 'styled-components';
 import {FacebookIcon, FacebookShareButton, TwitterIcon, TwitterShareButton} from 'react-share';
 
-import {cdnUrl} from '../utils';
+import {cdnUrl} from '@kepler.gl/utils';
 import {LinkButton} from './common/styled-components';
 import {media} from '../styles';
 import MapboxLogo from './mapbox-logo';

@@ -22,7 +22,7 @@ import React from 'react';
 
 import styled from 'styled-components';
 import {media} from '../../styles';
-import {cdnUrl} from '../../../utils';
+import {cdnUrl} from '../../utils';
 
 export const StyledCaption = styled.div`
   max-width: unset;

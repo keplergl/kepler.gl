@@ -62,7 +62,7 @@ import {
   LayerHoverProp,
   observeDimensions,
   unobserveDimensions
-} from '../utils';
+} from '@kepler.gl/utils';
 
 // default-settings
 import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepler.gl/constants';

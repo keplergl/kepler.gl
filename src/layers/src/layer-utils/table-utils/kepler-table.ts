@@ -25,7 +25,7 @@ import {ascending, descending} from 'd3-array';
 import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
 import {RGBColor, Field, FieldPair, FieldDomain, Filter, ProtoDataset} from '@kepler.gl/types';
 
-import {generateHashId} from '../../../../utils';
+import {generateHashId} from '@kepler.gl/utils';
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from '../gpu-filter-utils';
 import {
   getFilterProps,

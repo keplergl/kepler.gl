@@ -29,12 +29,12 @@ import {
   analyzerTypeToFieldType,
   getSampleForTypeAnalyze,
   getFieldsFromData,
-  formatCsv,
-  ProcessorResult
-} from '../../utils';
+  formatCsv
+} from '@kepler.gl/layers';
 import KeplerGlSchema, {SavedMap, ParsedDataset} from 'schemas';
 import {LoadedMap} from 'schemas/schema-manager';
 import {Feature} from '@nebula.gl/edit-modes';
+import {toArray} from '@kepler.gl/utils';
 
 // if any of these value occurs in csv, parse it to null;
 // const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];

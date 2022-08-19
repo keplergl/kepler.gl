@@ -6,8 +6,8 @@
     "jsx": "react",
     "module": "esnext",
     "moduleResolution": "node",
-    "declaration": true,
-    "emitDeclarationOnly": true,
+    "declaration":true,
+    "emitDeclarationOnly":true,
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
@@ -22,14 +22,12 @@
     "strict": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": "./src",
+    "baseUrl": "./src", //TODO change once all dependencies are isolated
     "paths": {
-      "*": ["*"]
+      "*": ["*"] //TODO change once all dependencies are isolated
     }
   },
   "include": [
     "src"
-  ],
-  "exclude": [
   ]
 }
