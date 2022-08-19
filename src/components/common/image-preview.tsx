@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import LoadingSpinner from 'components/common/loading-spinner';
-import {ExportImage} from 'reducers';
+import {ExportImage} from '@kepler.gl/constants';
 
 /** @typedef {import('../../reducers/ui-state-updaters').ExportImage} ExportImage */
 

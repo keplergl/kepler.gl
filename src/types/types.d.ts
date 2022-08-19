@@ -1,5 +1,6 @@
 export * from './layers';
 export * from './reducers';
+export * from './actions';
 
 export type RGBColor = [number, number, number];
 export type RGBAColor = [number, number, number, number];

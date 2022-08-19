@@ -36,8 +36,8 @@ import {
   TooltipInfo,
   SplitMap,
   AnimationConfig,
-  VisState
-} from '../reducers';
+  MapInfo
+} from '@kepler.gl/types';
 
 import {RGBColor, Merge, RGBAColor, LayerTextLabel} from '@kepler.gl/types';
 
@@ -256,7 +256,7 @@ export class KeplerGLSchema {
     };
   }
 
-  getMapInfo(state: any): VisState['mapInfo'] {
+  getMapInfo(state: any): MapInfo {
     return state.visState.mapInfo;
   }
   /**

@@ -30,8 +30,7 @@ import SingleSelectFilterPanelFactory from 'components/filters/filter-panels/sin
 import MultiSelectFilterPanelFactory from 'components/filters/filter-panels/multi-select-filter-panel';
 import RangeFilterPanelFactory from 'components/filters/filter-panels/range-filter-panel';
 import PolygonFilterPanelFactory from 'components/filters/filter-panels/polygon-filter-panel';
-import {Filter} from 'reducers/vis-state-updaters';
-import {Field} from '@kepler.gl/types';
+import {Field, Filter} from '@kepler.gl/types';
 import {FilterPanelProps} from 'components/filters/filter-panels/types';
 import {Layer} from '@kepler.gl/layers';
 

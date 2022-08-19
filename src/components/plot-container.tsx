@@ -35,8 +35,8 @@ import {
 import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
 
-import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
-import {ExportImage, SplitMap} from 'reducers';
+import {GEOCODER_LAYER_ID, ExportImage} from '@kepler.gl/constants';
+import {SplitMap} from '@kepler.gl/types';
 import {setExportImageDataUri, setExportImageError, setExportImageSetting} from 'actions';
 import {mapFieldsSelector} from './kepler-gl';
 

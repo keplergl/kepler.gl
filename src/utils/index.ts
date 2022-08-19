@@ -59,9 +59,10 @@ export {
   getFieldValueAccessor,
   copyTableAndUpdate,
   pinTableColumns,
-  sortDatasetByColumn
+  sortDatasetByColumn,
+  copyTable
 } from './table-utils/kepler-table';
-export type {GpuFilter} from './table-utils/kepler-table';
+export type {GpuFilter, Datasets} from './table-utils/kepler-table';
 export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData} from './table-utils/data-container-utils';
 export type {DataContainerInterface} from './table-utils/data-container-interface';
 

@@ -25,7 +25,7 @@ import UploadButton from './upload-button';
 import {DragNDrop, FileType} from 'components/common/icons';
 import FileUploadProgress from 'components/common/file-uploader/file-upload-progress';
 import FileDrop from './file-drop';
-import {FileLoading, FileLoadingProgress} from 'reducers/vis-state-updaters';
+import {FileLoading, FileLoadingProgress} from '@kepler.gl/types';
 
 import {isChrome} from '../../../utils';
 import {GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';

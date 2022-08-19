@@ -29,9 +29,8 @@ import {format as d3Format} from 'd3-format';
 import {bisectLeft} from 'd3-array';
 import moment from 'moment-timezone';
 
-import {Millisecond, Field} from '@kepler.gl/types';
+import {Millisecond, Field, Bounds} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
-import {Bounds} from 'reducers/map-state-updaters';
 import {DataContainerInterface} from './table-utils/data-container-interface';
 
 export type FieldFormatter = (value: any) => string;

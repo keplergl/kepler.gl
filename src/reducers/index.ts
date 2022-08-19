@@ -89,9 +89,7 @@ export type {
 } from './vis-state-updaters';
 
 export type {
-  BaseMapStyle,
   InputStyle,
-  LayerGroup,
   MapboxStyleUrl,
   MapStyle,
   MapStyles,
@@ -99,14 +97,12 @@ export type {
 } from './map-style-updaters';
 
 export type {
-  Bounds,
   Viewport
 } from './map-state-updaters';
 
 export type {
   ExportData,
   ExportHtml,
-  ExportImage,
   ExportJson,
   ExportMap,
   LoadFiles,

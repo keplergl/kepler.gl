@@ -27,7 +27,7 @@ import Layer, {
   VisualChannelDescription,
   VisualChannels
 } from './base-layer';
-import {hexToRgb, aggregate, KeplerTable} from '../../utils';
+import {hexToRgb, aggregate, KeplerTable, Datasets} from '../../utils';
 import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
@@ -35,7 +35,6 @@ import {
   DEFAULT_AGGREGATION,
   ColorRange
 } from '@kepler.gl/constants';
-import {Datasets} from 'reducers';
 import {Merge} from '@kepler.gl/types';
 
 type AggregationLayerColumns = {

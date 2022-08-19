@@ -24,7 +24,6 @@ import {ReceiveMapConfigPayload} from '../actions/actions';
 import {ActionTypes} from 'actions';
 import {MapState} from '@kepler.gl/types';
 
-export type Bounds = [number, number, number, number];
 /** Width of viewport */
 export type Viewport = {
   /**  Width of viewport */

@@ -24,7 +24,7 @@ import RangeBrushFactory, {OnBrush, RangeBrushProps} from './range-brush';
 import HistogramPlotFactory from './histogram-plot';
 import LineChartFactory, {HoverDP} from './line-chart';
 import {isTest} from '../../utils';
-import {LineChart} from 'reducers';
+import {LineChart} from '@kepler.gl/types';
 
 const StyledRangePlot = styled.div`
   margin-bottom: ${props => props.theme.sliderBarHeight}px;

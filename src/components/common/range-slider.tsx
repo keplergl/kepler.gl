@@ -27,7 +27,7 @@ import Slider from 'components/common/slider/slider';
 import {Input} from 'components/common/styled-components';
 
 import {roundValToStep, clamp, observeDimensions, unobserveDimensions} from '../../utils';
-import {LineChart} from 'reducers';
+import {LineChart} from '@kepler.gl/types';
 
 interface SliderInputProps {
   flush?: boolean;

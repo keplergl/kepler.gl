@@ -24,7 +24,7 @@ import classnames from 'classnames';
 import ProgressBar from '../progress-bar';
 import {TruncatedTitleText} from 'components/common/styled-components';
 import {getError} from '../../../utils';
-import {FileLoadingProgress} from 'reducers/vis-state-updaters';
+import {FileLoadingProgress} from '@kepler.gl/types';
 
 const StyledFileProgress = styled.div.attrs(props => ({
   className: classnames('file-upload__progress', props.className)

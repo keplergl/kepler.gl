@@ -29,7 +29,8 @@ import {
   EXPORT_IMG_RATIOS,
   EXPORT_DATA_TYPE,
   FourByThreeRatioOption,
-  OneXResolutionOption
+  OneXResolutionOption, 
+  ExportImage
 } from '@kepler.gl/constants';
 import {exportMapToHTML} from 'templates/export-map-html';
 import {formatCsv} from '@kepler.gl/processors';
@@ -37,9 +38,9 @@ import {formatCsv} from '@kepler.gl/processors';
 import {set, generateHashId} from './utils';
 import domtoimage from './dom-to-image';
 import {createIndexedDataContainer} from './table-utils/data-container-utils';
-import {VisState} from 'reducers';
 import {parseFieldValue} from './data-utils';
 import {DataContainerInterface} from './table-utils/data-container-interface';
+import {Datasets} from './table-utils/kepler-table';
 
 /**
  * Default file names
@@ -213,7 +214,7 @@ export function exportHtml(state, options) {
 }
 
 interface StateType {
-  visState: VisState;
+  visState: {datasets:Datasets};
   appName?: string;
 }
 

@@ -43,32 +43,16 @@ import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
 import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
 import {rgb} from 'd3-color';
 
-import {RGBColor} from '@kepler.gl/types';
+import {RGBColor, BaseMapStyle, LayerGroup} from '@kepler.gl/types';
 import {ReceiveMapConfigPayload, KeplerGlInitPayload} from '../actions/actions';
 import * as MapStyleActions from '../actions/map-style-actions';
 
-export type LayerGroup = {
-  slug: string;
-  filter(layer: {id: string}): boolean;
-  defaultVisibility: boolean;
-};
 
 export type VisibleLayerGroups = {
   [key: string]: boolean;
 };
 
 export type MapboxStyleUrl = string;
-
-export type BaseMapStyle = {
-  id: string;
-  label: string;
-  url: string;
-  icon: string;
-  style?: Object;
-  layerGroups: LayerGroup[];
-  accessToken?: string;
-  custom?: boolean;
-};
 
 export type MapStyles = {
   [key: string]: BaseMapStyle;

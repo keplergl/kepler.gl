@@ -25,7 +25,7 @@ import ImageModalContainer, {ImageModalContainerProps} from './image-modal-conta
 import ProviderModalContainer, {ProviderModalContainerProps} from './provider-modal-container';
 import StatusPanel, {UploadAnimation} from './status-panel';
 
-import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER} from '@kepler.gl/constants';
+import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER, ExportImage} from '@kepler.gl/constants';
 
 import {
   StyledModalContent,

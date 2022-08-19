@@ -23,8 +23,7 @@ import {ascending, descending} from 'd3-array';
 
 // import {validateInputData} from 'processors/data-processor';
 import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
-import {RGBColor, Field, FieldPair} from '@kepler.gl/types';
-import {FieldDomain, Filter} from 'reducers';
+import {RGBColor, Field, FieldPair, FieldDomain, Filter, ProtoDataset} from '@kepler.gl/types';
 
 import {generateHashId} from '../../utils';
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from '../gpu-filter-utils';
@@ -50,7 +49,6 @@ import {createDataContainer} from './data-container-utils';
 
 import {Layer} from '@kepler.gl/layers';
 import {DataContainerInterface} from './data-container-interface';
-import {ProtoDataset} from 'actions';
 
 export type GpuFilter = {
   filterRange: number[][];
@@ -452,6 +450,11 @@ class KeplerTable {
     }
   }
 }
+
+export type Datasets = {
+  [key: string]: KeplerTable;
+};
+
 
 // HELPER FUNCTIONS (MAINLY EXPORTED FOR TEST...)
 

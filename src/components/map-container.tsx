@@ -45,7 +45,7 @@ import {
   LayerBaseConfig,
   VisualChannelDomain
 } from '@kepler.gl/layers';
-import {MapState} from '@kepler.gl/types';
+import {Filter, InteractionConfig, MapState, SplitMapLayers} from '@kepler.gl/types';
 import {
   errorNotification,
   setLayerBlending,
@@ -55,7 +55,8 @@ import {
   prepareLayersForDeck,
   LayerHoverProp,
   observeDimensions,
-  unobserveDimensions
+  unobserveDimensions,
+  Datasets
 } from '../utils';
 
 // default-settings
@@ -75,7 +76,6 @@ import {
   MapStyle,
   Viewport
 } from 'reducers';
-import {SplitMapLayers} from 'reducers/vis-state-updaters';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {

@@ -30,7 +30,7 @@ import {
   LineSeriesPoint,
   RVNearestXData
 } from 'react-vis';
-import {LineChart} from 'reducers';
+import {LineChart} from '@kepler.gl/types';
 import styled from 'styled-components';
 import {datetimeFormatter} from '../../utils';
 

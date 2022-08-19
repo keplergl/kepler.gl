@@ -29,7 +29,7 @@ import styled from 'styled-components';
 
 import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeaderFactory from './layer-panel-header';
-import {Datasets} from 'reducers';
+import {Datasets} from '../../../utils';
 import {NestedPartial, LayerVisConfig, ColorUI} from '@kepler.gl/types';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {toggleModal} from 'actions/ui-state-actions';

@@ -25,7 +25,7 @@ import {Add} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
-import {Datasets} from 'reducers';
+import {Datasets} from '../../../utils';
 import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {ActionHandler} from 'actions';
