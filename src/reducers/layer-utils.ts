@@ -34,6 +34,9 @@ import {
 } from '@kepler.gl/layers';
 
 import KeplerTable, {Datasets} from 'reducers/table-utils/kepler-table';
+import {VisState} from 'schemas';
+import {isFunction, getMapLayersFromSplitMaps} from '@kepler.gl/utils';
+import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
 
 export type LayersToRender = {
   [layerId: string]: boolean;

@@ -34,8 +34,6 @@ import {MapControlButton} from 'components/common/styled-components';
 import ToolbarItem from 'components/common/toolbar-item';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlToolbarFactory from './map-control-toolbar';
-import {FormattedMessage} from '@kepler.gl/localization';
-import TippyTooltip from 'components/common/tippy-tooltip';
 import {MapControls} from 'reducers';
 import {Editor} from '@kepler.gl/types';
 import {BaseProps} from 'components/common/icons/base';

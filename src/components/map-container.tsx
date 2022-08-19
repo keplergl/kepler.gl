@@ -45,15 +45,17 @@ import {
   LayerBaseConfig,
   VisualChannelDomain
 } from '@kepler.gl/layers';
-import {Filter, InteractionConfig, MapState, SplitMapLayers} from '@kepler.gl/types';
+import {
+  AnimationConfig,
+  Filter,
+  InteractionConfig,
+  MapState,
+  SplitMapLayers
+} from '@kepler.gl/types';
 import {
   errorNotification,
   setLayerBlending,
   transformRequest,
-  getLayerHoverProp,
-  prepareLayersToRender,
-  prepareLayersForDeck,
-  LayerHoverProp,
   observeDimensions,
   unobserveDimensions
 } from '@kepler.gl/utils';
@@ -63,22 +65,17 @@ import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepl
 
 import ErrorBoundary from 'components/common/error-boundary';
 import {LOCALE_CODES} from '@kepler.gl/localization';
-import {computeDeckLayers} from '../utils/layer-utils';
-import {getMapLayersFromSplitMaps, onViewPortChange} from 'utils/map-utils';
+import {getMapLayersFromSplitMaps, onViewPortChange} from '@kepler.gl/utils';
 import {MapView} from '@deck.gl/core';
 import {MapControls, MapStyle, Viewport} from 'reducers';
 import {Datasets} from 'reducers/table-utils';
 import {
-  Datasets,
-  Filter,
-  InteractionConfig,
-  AnimationConfig,
+  computeDeckLayers,
   getLayerHoverProp,
   LayerHoverProp,
   prepareLayersForDeck,
-  prepareLayersToRender,
-  renderDeckGlLayer
-} from 'reducers/layer-utils';
+  prepareLayersToRender
+} from 'reducers';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {

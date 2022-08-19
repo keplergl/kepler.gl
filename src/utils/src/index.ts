@@ -29,26 +29,6 @@ export {datasetColorMaker, findDefaultColorField} from './dataset-utils';
 export {hexToRgb} from './color-utils';
 export {errorNotification} from './notifications-utils';
 export {dataURItoBlob, downloadFile, exportJson} from './export-utils';
-export {calculateLayerData, prepareLayersToRender, prepareLayersForDeck} from './layer-utils';
-export {
-  applyFilterFieldName,
-  applyFiltersToDatasets,
-  validateFilterWithData,
-  validateFiltersUpdateDatasets,
-  getIntervalBins,
-  getNumericStepSize,
-  formatNumberByStep
-} from 'utils/filter-utils';
-export {resetFilterGpuMode, assignGpuChannels} from 'utils/gpu-filter-utils';
-
-// REDUCER UTILS
-export {updateAllLayerDomainData} from '../reducers/vis-state-updaters';
-export {
-  validateLayerWithData,
-  validateLayersByDatasets,
-  validateSavedVisualChannels,
-  mergeLayers
-} from '../reducers/vis-state-merger';
 
 export {getHexFields, containValidTime} from '@kepler.gl/layers';
 
@@ -74,11 +54,8 @@ export * from './map-info-utils';
 export * from './utils';
 export * from './split-map-utils';
 
-// Layers
-export {computeDeckLayers} from './layer-utils';
-
 // Mapbox
 export {transformRequest} from './map-style-utils/mapbox-utils';
 
 // Map
-export {onViewPortChange} from './map-utils';
+export {onViewPortChange, getMapLayersFromSplitMaps} from './map-utils';
