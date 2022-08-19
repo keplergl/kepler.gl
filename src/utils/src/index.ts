@@ -19,40 +19,129 @@
 // THE SOFTWARE.
 
 // UTILS
+
 export {
-  roundValToStep,
-  timeToUnixMilli,
-  defaultFormatter,
-  FIELD_DISPLAY_FORMAT
-} from './data-utils';
-export {datasetColorMaker, findDefaultColorField} from './dataset-utils';
-export {hexToRgb} from './color-utils';
+  hexToRgb,
+  isHexColor,
+  rgbToHex,
+  getColorGroupByName,
+  reverseColorRange,
+  createLinearGradient,
+  isRgbColor
+} from './color-utils';
 export {errorNotification} from './notifications-utils';
-export {dataURItoBlob, downloadFile, exportJson} from './export-utils';
 
 export {getHexFields, containValidTime} from '@kepler.gl/layers';
 
 export {createNotification, exportImageError, successNotification} from './notifications-utils';
 
 export {default as domtoimage} from './dom-to-image';
-
-export * from './aggregate-utils';
-export * from './data-utils';
-export * from './dataset-utils';
-export * from './export-map-html';
-export * from './export-utils';
-export * from './filter-utils';
-export * from './color-utils';
-export * from './gl-utils';
-export * from './locale-utils';
-export * from './observe-dimensions';
-export * from './projection-utils';
-export * from './mapbox-utils';
-export * from './map-style-utils/mapbox-gl-style-editor';
-export * from './map-style-utils/mapbox-utils';
-export * from './map-info-utils';
-export * from './utils';
-export * from './split-map-utils';
+export {getFrequency, getMode, aggregate} from './aggregate-utils';
+// eslint-disable-next-line prettier/prettier
+export type {FieldFormatter} from './data-utils';
+export {
+  unique,
+  getLatLngBounds,
+  clamp,
+  getSampleData,
+  timeToUnixMilli,
+  notNullorUndefined,
+  isNumber,
+  isPlainObject,
+  hasOwnProperty,
+  numberSort,
+  getSortingFunction,
+  preciseRound,
+  getRoundingDecimalFromStep,
+  snapToMarks,
+  normalizeSliderValue,
+  roundValToStep,
+  defaultFormatter,
+  FIELD_DISPLAY_FORMAT,
+  parseFieldValue,
+  arrayMove,
+  getFormatter,
+  applyDefaultFormat,
+  getBooleanFormatter,
+  applyCustomFormat,
+  datetimeFormatter
+} from './data-utils';
+export {
+  datasetColorMaker,
+  findDefaultColorField,
+  ACCEPTED_ANALYZER_TYPES,
+  validateInputData,
+  getSampleForTypeAnalyze,
+  getFieldsFromData,
+  renameDuplicateFields,
+  analyzerTypeToFieldType
+} from './dataset-utils';
+export {exportMapToHTML} from './export-map-html';
+export {
+  DEFAULT_IMAGE_NAME,
+  DEFAULT_HTML_NAME,
+  DEFAULT_JSON_NAME,
+  DEFAULT_DATA_NAME,
+  DEFAULT_EXPORT_JSON_SETTINGS,
+  isMSEdge,
+  getScaleFromImageSize,
+  calculateExportImageSize,
+  convertToPng,
+  dataURItoBlob,
+  downloadFile,
+  exportImage,
+  exportToJsonString,
+  getMapJSON,
+  exportJson,
+  exportHtml,
+  exportMap,
+  default as exporters
+} from './export-utils';
+export {isValidFilterValue} from './filter-utils';
+export {setLayerBlending} from './gl-utils';
+export {flattenMessages, mergeMessages} from './locale-utils';
+export type {Dimensions} from './observe-dimensions';
+export {
+  observeDimensions,
+  unobserveDimensions,
+  default as useDimensions
+} from './observe-dimensions';
+export {validateBounds, getCenterAndZoomFromBounds} from './projection-utils';
+export {validateToken} from './mapbox-utils';
+export {
+  getDefaultLayerGroupVisibility,
+  editTopMapStyle,
+  editBottomMapStyle,
+  isValidStyleUrl,
+  getStyleDownloadUrl,
+  getStyleImageIcon,
+  scaleMapStyleByResolution,
+  mergeLayerGroupVisibility
+} from './map-style-utils/mapbox-gl-style-editor';
+export {isValidMapInfo} from './map-info-utils';
+export {
+  generateHashId,
+  isChrome,
+  capitalizeFirstLetter,
+  camelToTitle,
+  camelize,
+  getHTMLMapModeTileUrl,
+  toArray,
+  insertValue,
+  isObject,
+  set,
+  getError,
+  arrayInsert,
+  isTest,
+  filterObjectByPredicate,
+  isFunction
+} from './utils';
+export {
+  addNewLayersToSplitMap,
+  removeLayerFromSplitMaps,
+  getInitialMapLayersForSplitMap,
+  computeSplitMapLayers
+} from './split-map-utils';
 
 // Mapbox
 export {transformRequest} from './map-style-utils/mapbox-utils';
