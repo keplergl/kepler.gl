@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import InfoHelperFactory from 'components/common/info-helper';
 import Switch from 'components/common/switch';
 import {SidePanelSection, PanelLabel} from 'components/common/styled-components';
-import {FormattedMessage} from '@kepler.gl/localization'
+import {FormattedMessage} from '@kepler.gl/localization';
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
 import {Layer} from '@kepler.gl/layers';
 

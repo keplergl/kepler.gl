@@ -103,15 +103,3 @@ export type OVERLAY_TYPE = {[key: string]: string};
 export * from './mapbox-utils';
 export * from './types';
 export * from './h3-hexagon-layer';
-
-/* eslint-disable prettier/prettier */
-export * from './layer-utils/data-scale-utils';
-
-export * from './layer-utils/data-scale-utils';
-export * from './layer-utils/data-utils';
-export * from './layer-utils/dataset-utils';
-export * from './layer-utils/export-utils';
-export * from './layer-utils/filter-utils';
-export * from './layer-utils/gpu-filter-utils';
-export * from './layer-utils/interaction-utils';
-export * from './layer-utils/layer-utils';

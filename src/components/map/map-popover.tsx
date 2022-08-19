@@ -26,7 +26,7 @@ import {ArrowLeft, ArrowRight, Pin} from 'components/common/icons';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import Tippy from '@tippyjs/react/headless';
-import {LayerHoverProp} from '@kepler.gl/layers';
+import {LayerHoverProp} from 'reducers/layer-utils/layer-utils';
 
 const MAX_WIDTH = 500;
 const MAX_HEIGHT = 600;

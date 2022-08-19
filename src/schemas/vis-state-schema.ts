@@ -22,7 +22,7 @@ import pick from 'lodash.pick';
 import {VERSIONS} from './versions';
 import {isFilterValidToSave} from 'utils/filter-utils';
 import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
-import {notNullorUndefined} from '@kepler.gl/layers';
+import {notNullorUndefined} from '@kepler.gl/utils';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
 import {LayerTextLabel} from '@kepler.gl/types';

@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {preciseRound} from '@kepler.gl/layers';
+import {preciseRound} from '@kepler.gl/utils';
 import {CursorClick} from 'components/common/icons';
 import {StyledLayerName} from './layer-hover-info';
 

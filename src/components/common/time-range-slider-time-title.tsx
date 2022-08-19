@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {Minus} from 'components/common/icons';
-import {datetimeFormatter} from '@kepler.gl/layers';
+import {datetimeFormatter} from '@kepler.gl/utils';
 
 interface TimeValueWrapperProps {
   isEnlarged?: boolean;

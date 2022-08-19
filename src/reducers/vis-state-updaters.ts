@@ -44,7 +44,8 @@ import {
   addNewLayersToSplitMap,
   computeSplitMapLayers,
   removeLayerFromSplitMaps,
-  isRgbColor
+  isRgbColor,
+  parseFieldValue
 } from '@kepler.gl/utils';
 
 import {
@@ -56,33 +57,7 @@ import {
   VisStateMergers
 } from './vis-state-merger';
 
-import {
-  Layer,
-  LayerClasses,
-  LayerClassesType,
-  LAYER_ID_LENGTH,
-  parseFieldValue,
-  findFieldsToShow,
-  applyFilterFieldName,
-  applyFiltersToDatasets,
-  featureToFilterValue,
-  FILTER_UPDATER_PROPS,
-  filterDatasetCPU,
-  generatePolygonFilter,
-  getDefaultFilter,
-  getDefaultFilterPlotType,
-  getFilterIdInFeature,
-  getFilterPlot,
-  getTimeWidgetTitleFormatter,
-  isInRange,
-  LIMITED_FILTER_EFFECT_PROPS,
-  updateFilterDataId,
-  assignGpuChannel,
-  setFilterGpuMode,
-  createNewDataEntry,
-  calculateLayerData,
-  findDefaultLayer
-} from '@kepler.gl/layers';
+import {Layer, LayerClasses, LayerClassesType, LAYER_ID_LENGTH} from '@kepler.gl/layers';
 import {
   EDITOR_MODES,
   SORT_ORDER,
@@ -120,6 +95,26 @@ import {
   pinTableColumns,
   sortDatasetByColumn
 } from './table-utils/kepler-table';
+import {calculateLayerData, findDefaultLayer} from './layer-utils/layer-utils';
+import {
+  applyFilterFieldName,
+  applyFiltersToDatasets,
+  featureToFilterValue,
+  filterDatasetCPU,
+  FILTER_UPDATER_PROPS,
+  generatePolygonFilter,
+  getDefaultFilter,
+  getFilterIdInFeature,
+  getTimeWidgetTitleFormatter,
+  isInRange,
+  LIMITED_FILTER_EFFECT_PROPS,
+  updateFilterDataId
+} from './layer-utils/filter-utils';
+import {assignGpuChannel, setFilterGpuMode} from './layer-utils/gpu-filter-utils';
+import {createNewDataEntry} from './layer-utils/dataset-utils';
+import {findFieldsToShow} from './layer-utils/interaction-utils';
+import {getFilterPlot} from './layer-utils/filter-utils';
+import {getDefaultFilterPlotType} from './layer-utils/filter-utils';
 
 export type HistogramBin = {
   x0: number | undefined;

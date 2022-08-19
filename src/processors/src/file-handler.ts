@@ -22,7 +22,7 @@ import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {processGeojson, processKeplerglJSON, processRowObject} from './data-processor';
-import {generateHashId} from '@kepler.gl/utils';
+import {generateHashId, isPlainObject} from '@kepler.gl/utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
 import {Loader} from '@loaders.gl/loader-utils';
 import {isPlainObject} from '@kepler.gl/layers';

@@ -29,12 +29,12 @@ import {
   analyzerTypeToFieldType,
   getSampleForTypeAnalyze,
   getFieldsFromData,
-  formatCsv
-} from '@kepler.gl/layers';
+  toArray
+} from '@kepler.gl/utils';
 import {KeplerGlSchema, ParsedDataset, SavedMap} from 'schemas';
 import {Feature} from '@nebula.gl/edit-modes';
-import {toArray} from '@kepler.gl/utils';
-import { LoadedMap } from 'schemas/schema-manager';
+import {LoadedMap} from 'schemas/schema-manager';
+import {formatCsv} from 'reducers/layer-utils/export-utils';
 
 // if any of these value occurs in csv, parse it to null;
 // const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];

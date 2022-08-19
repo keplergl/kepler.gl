@@ -26,8 +26,8 @@ import document from 'global/document';
 
 import {EXPORT_DATA_TYPE_OPTIONS, EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import ModalDialogFactory from './modals/modal-dialog';
-import {isValidMapInfo} from '@kepler.gl/utils';
-import {exportJson, exportHtml, exportData, exportImage, exportMap} from '@kepler.gl/layers';
+import {exportHtml, isValidMapInfo} from '@kepler.gl/utils';
+import {exportData, exportJson, exportMap} from 'reducers/layer-utils/export-utils';
 
 // modals
 import DeleteDatasetModalFactory from './modals/delete-data-modal';

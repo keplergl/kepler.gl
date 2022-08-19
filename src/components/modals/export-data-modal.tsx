@@ -30,7 +30,7 @@ import {
   CheckMark
 } from 'components/common/styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
-import {FormattedMessage} from '@kepler.gl/localization'
+import {FormattedMessage} from '@kepler.gl/localization';
 import {Datasets} from 'reducers/table-utils';
 
 const getDataRowCount = (

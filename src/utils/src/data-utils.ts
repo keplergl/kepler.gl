@@ -29,16 +29,9 @@ import {format as d3Format} from 'd3-format';
 import {bisectLeft} from 'd3-array';
 import moment from 'moment-timezone';
 
-import {Millisecond, Field, Bounds} from '@kepler.gl/types';
-import Layer from '../base-layer';
-import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
+import {Millisecond, Field} from '@kepler.gl/types';
 
 export type FieldFormatter = (value: any) => string;
-
-const MAX_LATITUDE = 90;
-const MIN_LATITUDE = -90;
-const MAX_LONGITUDE = 180;
-const MIN_LONGITUDE = -180;
 
 /**
  * simple getting unique values of an array
@@ -55,42 +48,6 @@ export function unique<T>(values: T[]) {
     }
   });
   return results;
-}
-
-/**
- * return center of map from given points
- * @param layers
- * @returns coordinates of map center, empty if not found
- */
-export function findMapBounds(layers: Layer[]): Bounds | null {
-  // find bounds in formatted layerData
-  // take ALL layers into account when finding map bounds
-  const availableLayerBounds: Bounds | [] = layers.reduce((res, l) => {
-    // @ts-expect-error
-    if (l.meta && l.meta.bounds) {
-      // @ts-expect-error
-      res.push(l.meta.bounds);
-    }
-    return res;
-  }, []);
-  // return null if no layer is available
-  if (availableLayerBounds.length === 0) {
-    return null;
-  }
-  // merge bounds in each layer
-  const newBounds = (availableLayerBounds as Bounds).reduce(
-    (res, b) => {
-      return [
-        Math.min(res[0], b[0]),
-        Math.min(res[1], b[1]),
-        Math.max(res[2], b[2]),
-        Math.max(res[3], b[3])
-      ];
-    },
-    [MAX_LONGITUDE, MAX_LATITUDE, MIN_LONGITUDE, MIN_LATITUDE]
-  );
-  // @ts-expect-error
-  return newBounds;
 }
 
 export function getLatLngBounds(
@@ -137,20 +94,6 @@ export function timeToUnixMilli(value: string | number, format: string): Millise
       : value;
   }
   return null;
-}
-
-export function maybeToDate(
-  isTime: boolean,
-  fieldIdx: number,
-  format: string,
-  dc: DataContainerInterface,
-  d: {index: number}
-) {
-  if (isTime) {
-    return timeToUnixMilli(dc.valueAt(d.index, fieldIdx), format);
-  }
-
-  return dc.valueAt(d.index, fieldIdx);
 }
 
 /**

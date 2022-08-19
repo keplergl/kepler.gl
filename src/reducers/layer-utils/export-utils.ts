@@ -33,11 +33,10 @@ import {
   ExportImage
 } from '@kepler.gl/constants';
 import {Field} from '@kepler.gl/types';
-import {exportMapToHTML} from 'templates/export-map-html';
 
 import {set, generateHashId, domtoimage} from '@kepler.gl/utils';
 import {createIndexedDataContainer} from 'reducers/table-utils/data-container-utils';
-import {parseFieldValue} from './data-utils';
+import {parseFieldValue} from '@kepler.gl/utils';
 import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
 import {Datasets} from 'reducers/table-utils/kepler-table';
 
@@ -198,20 +197,6 @@ export function exportJson(state, options: any = {}) {
   downloadFile(fileBlob, fileName);
 }
 
-export function exportHtml(state, options) {
-  const {userMapboxToken, exportMapboxAccessToken, mode} = options;
-
-  const data = {
-    ...getMapJSON(state),
-    mapboxApiAccessToken:
-      (userMapboxToken || '') !== '' ? userMapboxToken : exportMapboxAccessToken,
-    mode
-  };
-
-  const fileBlob = new Blob([exportMapToHTML(data)], {type: 'text/html'});
-  downloadFile(fileBlob, state.appName ? `${state.appName}.html` : DEFAULT_HTML_NAME);
-}
-
 interface StateType {
   visState: {datasets: Datasets};
   appName?: string;
@@ -285,7 +270,6 @@ export function formatCsv(data: DataContainerInterface, fields: Field[]): string
 const exporters = {
   exportImage,
   exportJson,
-  exportHtml,
   exportData
 };
 

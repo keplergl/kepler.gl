@@ -25,33 +25,29 @@ import {ascending, descending} from 'd3-array';
 import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
 import {RGBColor, Field, FieldPair, FieldDomain, Filter, ProtoDataset} from '@kepler.gl/types';
 
-import {generateHashId} from '@kepler.gl/utils';
-import {
-  getGpuFilterProps,
-  getDatasetFieldIndexForFilter
-} from '../../layers/src/layer-utils/gpu-filter-utils';
-import {
-  getFilterProps,
-  getFilterRecord,
-  diffFilters,
-  getFilterFunction,
-  filterDataByFilterTypes,
-  getNumericFieldDomain,
-  getTimestampFieldDomain,
-  FilterResult
-} from '@kepler.gl/layers';
-import {maybeToDate, getSortingFunction} from '@kepler.gl/layers';
-import {
-  getQuantileDomain,
-  getOrdinalDomain,
-  getLogDomain,
-  getLinearDomain
-} from '@kepler.gl/layers';
+import {generateHashId, getSortingFunction} from '@kepler.gl/utils';
+import {getGpuFilterProps, getDatasetFieldIndexForFilter} from '../layer-utils/gpu-filter-utils';
 
 import {createDataContainer} from './data-container-utils';
 
-import Layer from '../../layers/src/base-layer';
-import {DataContainerInterface} from './data-container-interface';
+import {Layer} from '@kepler.gl/layers';
+import {
+  diffFilters,
+  filterDataByFilterTypes,
+  FilterResult,
+  getFilterFunction,
+  getFilterProps,
+  getFilterRecord,
+  getNumericFieldDomain,
+  getTimestampFieldDomain
+} from '../layer-utils/filter-utils';
+import {
+  getLinearDomain,
+  getLogDomain,
+  getOrdinalDomain,
+  getQuantileDomain
+} from '../layer-utils/data-scale-utils';
+import { DataContainerInterface } from './data-container-interface';
 
 export type GpuFilter = {
   filterRange: number[][];

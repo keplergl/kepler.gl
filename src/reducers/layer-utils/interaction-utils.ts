@@ -35,7 +35,7 @@ import {
   isNumber,
   defaultFormatter,
   notNullorUndefined
-} from './data-utils';
+} from '@kepler.gl/utils';
 
 /**
  * Minus sign used in tooltip formatting.

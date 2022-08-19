@@ -24,7 +24,7 @@ import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-control';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
 import {ANIMATION_WINDOW, DIMENSIONS, FILTER_TYPES} from '@kepler.gl/constants';
-import {getIntervalBins} from '@kepler.gl/layers';
+import {getIntervalBins} from 'reducers/layer-utils/filter-utils';
 import {media} from '@kepler.gl/styles';
 import {AnimationConfig, TimeRangeFilter} from '@kepler.gl/types';
 import {bottomWidgetSelector} from './kepler-gl';

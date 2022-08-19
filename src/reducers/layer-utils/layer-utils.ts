@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Layer, {FindDefaultLayerPropsReturnValue, OVERLAY_TYPE_CONST} from '../base-layer';
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {
   Field,
@@ -27,9 +26,14 @@ import {
   SplitMapLayers,
   InteractionConfig
 } from '@kepler.gl/types';
+import {
+  FindDefaultLayerPropsReturnValue,
+  Layer,
+  LayerClassesType,
+  OVERLAY_TYPE_CONST
+} from '@kepler.gl/layers';
 
 import KeplerTable, {Datasets} from 'reducers/table-utils/kepler-table';
-import {LayerClassesType} from '..';
 
 export type LayersToRender = {
   [layerId: string]: boolean;

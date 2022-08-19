@@ -23,10 +23,11 @@ import styled from 'styled-components';
 import classnames from 'classnames';
 import {SortableContainer, SortableElement} from 'react-sortable-hoc';
 import LayerPanelFactory from './layer-panel';
-import {Layer, LayerClassesType, arrayMove} from '@kepler.gl/layers';
+import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {Datasets} from 'reducers/table-utils/kepler-table';
+import {arrayMove} from '@kepler.gl/utils';
 
 type LayerListProps = {
   datasets: Datasets;

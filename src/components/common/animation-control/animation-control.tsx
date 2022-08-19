@@ -25,8 +25,7 @@ import classnames from 'classnames';
 import Slider from 'components/common/slider/slider';
 import {BottomWidgetInner} from 'components/common/styled-components';
 import PlaybackControlsFactory from './playback-controls';
-import FloatingTimeDisplayFactory from './floating-time-display';
-import {snapToMarks, datetimeFormatter} from '@kepler.gl/layers';
+import FloatingTimeDisplayFactory from './floating-time-display';import {datetimeFormatter, snapToMarks} from '@kepler.gl/utils';
 import {DEFAULT_TIME_FORMAT} from '@kepler.gl/constants';
 
 const SliderWrapper = styled.div`

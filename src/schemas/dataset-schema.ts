@@ -26,7 +26,7 @@ import {KeplerTable} from 'reducers';
 import {RGBColor} from 'types';
 import {VERSIONS} from './versions';
 import Schema from './schema';
-import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/layers';
+import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/utils';
 
 export type SavedField = {
   name: string;

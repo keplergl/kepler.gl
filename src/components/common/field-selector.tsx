@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
 import {Field} from '@kepler.gl/types';
-import {notNullorUndefined} from '@kepler.gl/layers';
+import {notNullorUndefined} from '@kepler.gl/utils';
 
 import ItemSelector from './item-selector/item-selector';
 import {classList} from './item-selector/dropdown-list';

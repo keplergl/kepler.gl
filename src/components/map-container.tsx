@@ -43,11 +43,6 @@ import {
   updateMapboxLayers,
   Layer,
   LayerBaseConfig,
-  getLayerHoverProp,
-  renderDeckGlLayer,
-  prepareLayersToRender,
-  prepareLayersForDeck,
-  LayerHoverProp,
   VisualChannelDomain
 } from '@kepler.gl/layers';
 import {Filter, InteractionConfig, MapState, SplitMapLayers} from '@kepler.gl/types';
@@ -71,16 +66,19 @@ import {LOCALE_CODES} from '@kepler.gl/localization';
 import {computeDeckLayers} from '../utils/layer-utils';
 import {getMapLayersFromSplitMaps, onViewPortChange} from 'utils/map-utils';
 import {MapView} from '@deck.gl/core';
+import {MapControls, MapStyle, Viewport} from 'reducers';
+import {Datasets} from 'reducers/table-utils';
 import {
   Datasets,
   Filter,
   InteractionConfig,
   AnimationConfig,
-  MapControls,
-  MapStyle,
-  Viewport
-} from 'reducers';
-import { Datasets } from 'reducers/table-utils';
+  getLayerHoverProp,
+  LayerHoverProp,
+  prepareLayersForDeck,
+  prepareLayersToRender,
+  renderDeckGlLayer
+} from 'reducers/layer-utils/layer-utils';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {

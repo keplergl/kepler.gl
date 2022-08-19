@@ -24,7 +24,7 @@ import classnames from 'classnames';
 import {Minus} from 'components/common/icons';
 import {DEFAULT_TIME_FORMAT} from '@kepler.gl/constants';
 import {CenterFlexbox} from 'components/common/styled-components';
-import {datetimeFormatter} from '@kepler.gl/layers';
+import {datetimeFormatter} from '@kepler.gl/utils';
 
 const StyledTimeDisplayWrapper = styled.div.attrs({
   className: 'floating-time-display'

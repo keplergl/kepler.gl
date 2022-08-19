@@ -66,12 +66,7 @@ import {
 } from '@kepler.gl/types';
 import KeplerTable, {Datasets, GpuFilter} from 'reducers/table-utils/kepler-table';
 import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
-import {
-  getLatLngBounds,
-  getSampleData,
-  isPlainObject,
-  notNullorUndefined
-} from './layer-utils/data-utils';
+import {getLatLngBounds, getSampleData, isPlainObject, notNullorUndefined} from '@kepler.gl/utils';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 

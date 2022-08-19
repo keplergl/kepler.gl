@@ -28,7 +28,7 @@ import {SavedDatasetV1, ParsedDataset} from './dataset-schema';
 import {visStateSchema, ParsedVisState} from './vis-state-schema';
 
 import {CURRENT_VERSION, VERSIONS} from './versions';
-import {isPlainObject} from '@kepler.gl/layers';
+import {isPlainObject} from '@kepler.gl/utils';
 
 import {
   InteractionConfig,

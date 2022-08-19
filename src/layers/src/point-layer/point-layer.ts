@@ -30,7 +30,7 @@ import Layer, {
 } from '../base-layer';
 import {hexToRgb} from '@kepler.gl/utils';
 import {default as KeplerTable} from 'reducers/table-utils/kepler-table';
-import {findDefaultColorField} from '../layer-utils/dataset-utils';
+import {findDefaultColorField} from '@kepler.gl/utils';
 import PointLayerIcon from './point-layer-icon';
 import {
   LAYER_VIS_CONFIGS,
