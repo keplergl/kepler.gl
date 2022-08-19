@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 export {
+    default,
     default as KeplerTable,
     findPointFieldPairs,
     copyTableAndUpdate,

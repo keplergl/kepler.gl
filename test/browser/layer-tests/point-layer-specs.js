@@ -37,7 +37,6 @@ import {copyTableAndUpdate} from 'reducers/table-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
-import {copyTableAndUpdate} from '../../../src/utils';
 
 const {PointLayer} = KeplerGlLayers;
 

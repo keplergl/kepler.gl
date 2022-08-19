@@ -226,7 +226,6 @@ export function findDefaultColorField({
   return null;
 }
 
-
 export const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.DATE,
   AnalyzerDATA_TYPES.TIME,

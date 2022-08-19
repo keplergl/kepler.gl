@@ -40,7 +40,7 @@ import {isFilterValidToSave} from 'reducers/filter-utils';
 import {Datasets} from 'reducers/table-utils';
 import {RGBColor, Merge} from 'types';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {LoaderObject} from '@loaders.gl/loader-utils';
+import {Loader} from '@loaders.gl/loader-utils';
 import KeplerGLSchema from './schema-manager';
 
 export type SavedFilter = {
@@ -173,7 +173,7 @@ export type VisState = {
   splitMapsToBeMerged: SplitMap[];
   fileLoading: FileLoading | false;
   fileLoadingProgress: FileLoadingProgress;
-  loaders: LoaderObject[];
+  loaders: Loader[];
   loadOptions: object;
   initialState?: Partial<VisState>;
   mergers: VisStateMergers;
