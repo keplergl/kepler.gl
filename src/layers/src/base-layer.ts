@@ -66,7 +66,8 @@ import {
 } from '@kepler.gl/types';
 import KeplerTable, {Datasets, GpuFilter} from 'reducers/table-utils/kepler-table';
 import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
-import {getLatLngBounds, getSampleData, isPlainObject, notNullorUndefined} from '@kepler.gl/utils';
+import {getSampleData} from 'reducers/table-utils/data-container-utils';
+import {getLatLngBounds, isPlainObject, notNullorUndefined} from '@kepler.gl/utils';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 
@@ -994,7 +995,7 @@ class Layer {
         : dataContainer;
 
     const points = sampleData.mapIndex(getPosition);
-
+    console.log(points);
     const latBounds = getLatLngBounds(points, 1, [-90, 90]);
     const lngBounds = getLatLngBounds(points, 0, [-180, 180]);
 
