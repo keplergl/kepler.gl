@@ -21,7 +21,7 @@
 import pick from 'lodash.pick';
 import {console as globalConsole} from 'global/window';
 
-import {ProtoDataset} from 'actions';
+import {ProtoDataset} from '@kepler.gl/types';
 import {KeplerTable} from 'reducers/table-utils';
 import {RGBColor} from 'types';
 import {VERSIONS} from './versions';

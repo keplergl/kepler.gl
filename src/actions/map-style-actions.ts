@@ -20,7 +20,14 @@
 
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
-import {InputStyle, MapStyles, Merge, RGBColor, MapState, VisibleLayerGroups} from '@kepler.gl/types';
+import {
+  InputStyle,
+  MapStyles,
+  Merge,
+  RGBColor,
+  MapState,
+  VisibleLayerGroups
+} from '@kepler.gl/types';
 
 /**
  * Add map style from user input to reducer and set it to current style

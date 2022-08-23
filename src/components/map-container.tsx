@@ -50,8 +50,10 @@ import {
   Filter,
   InteractionConfig,
   MapState,
-  SplitMapLayers
-, MapControls, Viewport} from '@kepler.gl/types';
+  SplitMapLayers,
+  MapControls,
+  Viewport
+} from '@kepler.gl/types';
 import {
   errorNotification,
   setLayerBlending,

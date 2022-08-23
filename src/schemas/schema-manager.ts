@@ -25,12 +25,12 @@ import datasetSchema from './dataset-schema';
 import mapStyleSchema from './map-style-schema';
 import mapStateSchema from './map-state-schema';
 import {SavedDatasetV1, ParsedDataset} from './dataset-schema';
-import {visStateSchema, ParsedVisState, SavedVisState} from './vis-state-schema';
+import {visStateSchema} from './vis-state-schema';
 
 import {CURRENT_VERSION, VERSIONS} from './versions';
 import {isPlainObject} from '@kepler.gl/utils';
 
-import {MapInfo, RGBColor} from '@kepler.gl/types';
+import {MapInfo, ParsedVisState, RGBColor, SavedVisState} from '@kepler.gl/types';
 
 export type SavedMapState = {
   bearing: number;

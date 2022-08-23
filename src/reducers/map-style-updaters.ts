@@ -47,10 +47,7 @@ import {RGBColor, LayerGroup, MapStyles, InputStyle, VisibleLayerGroups} from '@
 import {ReceiveMapConfigPayload, KeplerGlInitPayload} from '../actions/actions';
 import * as MapStyleActions from '../actions/map-style-actions';
 
-
 export type MapboxStyleUrl = string;
-
-
 
 export type MapStyle = {
   styleType: string;

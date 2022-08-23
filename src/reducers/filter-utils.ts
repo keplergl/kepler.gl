@@ -34,7 +34,7 @@ import * as ScaleUtils from './data-scale-utils';
 import {generateHashId, set, toArray} from '@kepler.gl/utils';
 import {h3IsValid} from 'h3-js';
 
-import {Millisecond, Entries, Field} from '@kepler.gl/types';
+import {Millisecond, Entries, Field, ParsedFilter} from '@kepler.gl/types';
 import {
   Filter,
   FilterBase,
@@ -49,7 +49,7 @@ import {
   RangeFieldDomain
 } from '@kepler.gl/types';
 
-import {ParsedFilter, VisState} from 'schemas';
+import {VisState} from 'schemas';
 import KeplerTable, {
   FilterRecord,
   Datasets,
@@ -249,7 +249,6 @@ export function validateFilter(
     return failed;
   }
 
-  // @ts-expect-error
   const initializeFilter: Filter = {
     // @ts-expect-error
     ...getDefaultFilter(filter.dataId),

@@ -38,7 +38,15 @@ import {payload_, apply_, compose_} from './composer-helpers';
 
 import * as UiStateActions from 'actions/ui-state-actions';
 import {KeplerGlInitPayload, LoadFilesErrUpdaterAction} from '../actions';
-import { ExportData, ExportHtml, ExportJson, ExportMap, MapControl, MapControls, UiState } from '@kepler.gl/types';
+import {
+  ExportData,
+  ExportHtml,
+  ExportJson,
+  ExportMap,
+  MapControl,
+  MapControls,
+  UiState
+} from '@kepler.gl/types';
 
 export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
 export const DEFAULT_MODAL = ADD_DATA_ID;

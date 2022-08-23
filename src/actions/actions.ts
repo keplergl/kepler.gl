@@ -21,7 +21,13 @@
 import {default as ActionTypes} from './action-types';
 import {createAction} from '@reduxjs/toolkit';
 
-import {AddDataToMapOptions, AddDataToMapPayload, Bounds, UiState, ParsedConfig} from '@kepler.gl/types';
+import {
+  AddDataToMapOptions,
+  AddDataToMapPayload,
+  Bounds,
+  UiState,
+  ParsedConfig
+} from '@kepler.gl/types';
 
 export type ActionHandler<A extends (...args: any) => any> = (...args: Parameters<A>) => void;
 

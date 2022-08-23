@@ -11,7 +11,7 @@
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false, //TODO change once all dependencies are isolated
     "outDir": "dist",
     "sourceMap": true,
     "strictNullChecks": true,

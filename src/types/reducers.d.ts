@@ -262,16 +262,16 @@ export type BaseMapStyle = {
 };
 
 export declare type ExportImage = {
-  ratio: "SCREEN" | "FOUR_BY_THREE" | "SIXTEEN_BY_NINE" | "CUSTOM";
-  resolution: "ONE_X" | "TWO_X";
+  ratio: 'SCREEN' | 'FOUR_BY_THREE' | 'SIXTEEN_BY_NINE' | 'CUSTOM';
+  resolution: 'ONE_X' | 'TWO_X';
   legend: boolean;
   mapH: number;
   mapW: number;
   imageSize: {
-      zoomOffset: number;
-      scale: number;
-      imageW: number;
-      imageH: number;
+    zoomOffset: number;
+    scale: number;
+    imageW: number;
+    imageH: number;
   };
   imageDataUri: string;
   exporting: boolean;

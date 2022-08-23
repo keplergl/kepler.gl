@@ -28,7 +28,7 @@ export type ExportFileToCloudPayload = {
 /**
  * Input dataset parsed to addDataToMap
  */
- export type ProtoDataset = {
+export type ProtoDataset = {
   info: {
     id?: string;
     label?: string;
