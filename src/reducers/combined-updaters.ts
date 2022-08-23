@@ -30,10 +30,9 @@ import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-upda
 import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
 import {filesToDataPayload} from '@kepler.gl/processors';
 import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-helpers';
-import {MapState, UiState, ParsedConfig} from '@kepler.gl/types';
+import {MapState, UiState, AddDataToMapPayload, ParsedConfig} from '@kepler.gl/types';
 import {MapStyle} from './map-style-updaters';
 import {ProviderState} from './provider-state-updaters';
-import {AddDataToMapPayload} from 'actions/actions';
 import {loadFilesSuccessUpdaterAction} from 'actions/vis-state-actions';
 import {VisState} from '@kepler.gl/schemas';
 import {Layer} from '@kepler.gl/layers';
