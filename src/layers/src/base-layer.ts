@@ -995,7 +995,7 @@ class Layer {
         : dataContainer;
 
     const points = sampleData.mapIndex(getPosition);
-    console.log(points);
+
     const latBounds = getLatLngBounds(points, 1, [-90, 90]);
     const lngBounds = getLatLngBounds(points, 0, [-180, 180]);
 
