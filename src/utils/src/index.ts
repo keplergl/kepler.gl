@@ -141,7 +141,8 @@ export {
   filterObjectByPredicate,
   isFunction,
   hasMobileWidth,
-  hasPortableWidth
+  hasPortableWidth,
+  findById
 } from './utils';
 export {
   addNewLayersToSplitMap,

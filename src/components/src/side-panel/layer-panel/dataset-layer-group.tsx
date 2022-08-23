@@ -28,7 +28,7 @@ import {KeplerTable, Datasets} from '@kepler.gl/table';
 type DatasetLayerGroupProps = {
   datasets: Datasets;
   layers: Layer[];
-  layerOrder: number[];
+  layerOrder: string[];
   layerClasses: LayerClassesType;
   showDeleteDataset: boolean;
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;

@@ -90,14 +90,22 @@ import {
   DEFAULT_TEXT_LABEL,
   COMPARE_TYPES
 } from '@kepler.gl/constants';
-import {pick_, merge_, swap_, apply_, compose_} from './composer-helpers';
+import {
+  pick_,
+  merge_,
+  swap_,
+  apply_,
+  compose_,
+  removeElementAtIndex,
+  filterOutById
+} from './composer-helpers';
 
 import KeplerGLSchema, {VisState, Merger, PostMergerPayload} from '@kepler.gl/schemas';
 
 import {Filter, InteractionConfig, AnimationConfig, Editor, Field} from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
-import {calculateLayerData, findDefaultLayer} from './layer-utils';
+import {calculateLayerData, findDefaultLayer, getLayerOrderFromLayers} from './layer-utils';
 import {
   copyTableAndUpdate,
   Datasets,
@@ -642,6 +650,14 @@ export function layerTypeChangeUpdater(
     };
   }
 
+  // update layerOrder with new id
+  newState = {
+    ...newState,
+    layerOrder: newState.layerOrder.map(layerId =>
+      layerId === oldLayer.id ? newLayer.id : layerId
+    )
+  };
+
   return newState;
 }
 
@@ -1161,7 +1177,7 @@ export const addLayerUpdater = (
     layers: [...state.layers, newLayer],
     layerData: [...state.layerData, newLayerData],
     // add new layer at the top
-    layerOrder: [state.layerOrder.length, ...state.layerOrder],
+    layerOrder: [newLayer.id, ...state.layerOrder],
     splitMaps: addNewLayersToSplitMap(state.splitMaps, newLayer)
   };
 };
@@ -1184,23 +1200,35 @@ export function removeLayerUpdater<T extends VisState>(
     Console.warn(`can not remove layer with invalid id|idx ${id}`);
     return state;
   }
-  const {layers, layerData, clicked, hoverInfo} = state;
-  const layerToRemove = state.layers[idx];
-  const newMaps = removeLayerFromSplitMaps(state.splitMaps, layerToRemove);
 
+  const {layers, layerData, layerOrder, clicked, hoverInfo} = state;
+  const layerToRemove = layers[idx];
   const newState = {
     ...state,
-    layers: [...layers.slice(0, idx), ...layers.slice(idx + 1, layers.length)],
-    layerData: [...layerData.slice(0, idx), ...layerData.slice(idx + 1, layerData.length)],
-    layerOrder: state.layerOrder.filter(i => i !== idx).map(pid => (pid > idx ? pid - 1 : pid)),
+    layers: filterOutById(layerToRemove.id)(layers),
+    layerData: removeElementAtIndex(idx)(layerData),
+    layerOrder: layerOrder.filter(layerId => layerId !== layerToRemove.id),
     clicked: layerToRemove.isLayerHovered(clicked) ? undefined : clicked,
     hoverInfo: layerToRemove.isLayerHovered(hoverInfo) ? undefined : hoverInfo,
-    splitMaps: newMaps
+    splitMaps: removeLayerFromSplitMaps(state.splitMaps, layerToRemove)
     // TODO: update filters, create helper to remove layer form filter (remove layerid and dataid) if mapped
   };
 
   return updateAnimationDomain(newState);
 }
+
+/**
+ * Reorder layer
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const reorderLayerUpdater = (
+  state: VisState,
+  {order}: VisStateActions.ReorderLayerUpdaterAction
+): VisState => ({
+  ...state,
+  layerOrder: order
+});
 
 /**
  * duplicate layer
@@ -1209,16 +1237,21 @@ export function removeLayerUpdater<T extends VisState>(
  */
 export const duplicateLayerUpdater = (
   state: VisState,
-  {idx}: VisStateActions.DuplicateLayerUpdaterAction
+  {id}: VisStateActions.DuplicateLayerUpdaterAction
 ): VisState => {
-  const {layers} = state;
-  const original = state.layers[idx];
-  const originalLayerOrderIdx = state.layerOrder.findIndex(i => i === idx);
-
-  if (!original) {
-    Console.warn(`layer.${idx} is undefined`);
+  const idx = Number.isFinite(id)
+    ? // support older API, remove layer by idx
+      Number(id)
+    : state.layers.findIndex(l => l.id === id);
+  if (idx < 0 || !state.layers[idx]) {
+    Console.warn(`layer ${idx} not found in layerOrder`);
     return state;
   }
+
+  const {layers} = state;
+  const original = layers[idx];
+
+  const originalLayerOrderIdx = state.layerOrder.findIndex(id => id === original.id);
   let newLabel = `Copy of ${original.config.label}`;
   let postfix = 0;
   // eslint-disable-next-line no-loop-func
@@ -1238,37 +1271,19 @@ export const duplicateLayerUpdater = (
 
   // add layer to state
   let nextState = addLayerUpdater(state, {config: loadedLayer});
-  // layers: ['a', 'b', 'c', 'd']
-  // order: [3, 0, 1, 2]
-  // [0, 3, 1, 2]
-  // new added layer are at the top, move it to be on top of original layer
-  const newLayerOrderIdx = nextState.layers.length - 1;
+  // retrieve newly created layer
+  const newLayer = nextState.layers[nextState.layers.length - 1];
+  // update layer order with newLyaer.id
   const newLayerOrder = arrayInsert(
     nextState.layerOrder.slice(1, nextState.layerOrder.length),
     originalLayerOrderIdx,
-    newLayerOrderIdx
+    newLayer.id
   );
 
-  nextState = {
-    ...nextState,
-    layerOrder: newLayerOrder
-  };
+  nextState = reorderLayerUpdater(nextState, {order: newLayerOrder});
 
   return updateAnimationDomain(nextState);
 };
-
-/**
- * Reorder layer
- * @memberof visStateUpdaters
- * @public
- */
-export const reorderLayerUpdater = (
-  state: VisState,
-  {order}: VisStateActions.ReorderLayerUpdaterAction
-): VisState => ({
-  ...state,
-  layerOrder: order
-});
 
 /**
  * Remove a dataset and all layers, filters, tooltip configs that based on it
@@ -2110,8 +2125,8 @@ export function addDefaultLayers(
       ...state,
       layers: [...state.layers, ...defaultLayers],
       layerOrder: [
-        // put new layers on top of old ones
-        ...defaultLayers.map((_, i) => state.layers.length + i),
+        // put new layers on top of old ones in reverse
+        ...getLayerOrderFromLayers(defaultLayers),
         ...state.layerOrder
       ]
     },

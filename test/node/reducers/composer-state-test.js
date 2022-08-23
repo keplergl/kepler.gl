@@ -206,6 +206,8 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
     }
   });
 
+  t.deepEqual(nextState1.visState.layerOrder, ['avlgol'], 'Should contain nextState1 layer order');
+
   cmpDataset(t, expectedMergedDataset, nextState1.visState.datasets[hexDataId]);
 
   t.deepEqual(nextState1.visState.splitMaps, [], 'should clear out splitMaps');
@@ -231,8 +233,9 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
 
   const actualVisState = nextState2.visState;
 
+  const newLayers = [...oldLayers, mergedH3Layer];
   const expectedVisState = {
-    layers: [...oldLayers, mergedH3Layer],
+    layers: newLayers,
     filters: [...oldFilters, ...mergedFilters],
     datasets: 'test seperate',
     interactionConfig: {
@@ -272,7 +275,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
         }
       }
     ],
-    layerOrder: [2, 0, 1]
+    layerOrder: [newLayers[2].id, newLayers[0].id, newLayers[1].id]
   };
 
   cmpLayers(t, expectedVisState.layers, actualVisState.layers);

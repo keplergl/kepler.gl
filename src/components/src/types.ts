@@ -27,7 +27,7 @@ export type SidePanelProps = {
   overlayBlending: string;
   layers: Layer[];
   layerClasses: LayerClassesType;
-  layerOrder: number[];
+  layerOrder: string[];
   mapStyle: MapStyle;
   onSaveMap?: () => void;
   width: number;

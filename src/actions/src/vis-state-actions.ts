@@ -408,7 +408,7 @@ export function addLayer(
 }
 
 export type ReorderLayerUpdaterAction = {
-  order: number[];
+  order: string[];
 };
 /**
  * Reorder layer, order is an array of layer indexes, index 0 will be the one at the bottom
@@ -418,12 +418,12 @@ export type ReorderLayerUpdaterAction = {
  * @public
  * @example
  *
- * // bring `layers[1]` below `layers[0]`, the sequence layers will be rendered is `1`, `0`, `2`, `3`.
- * // `1` will be at the bottom, `3` will be at the top.
- * this.props.dispatch(reorderLayer([1, 0, 2, 3]));
+ * bring `layers[1]` below `layers[0]`, the sequence layers will be rendered is `layers[1].id`, `layers[0].id`, `layers[2].id`, `layers[3].id`.
+ * `layers[1]` will be at the bottom, `layers[13]` will be at the top.
+ * this.props.dispatch(reorderLayer([`layers[1].id`, `layers[0].id`, `layers[2].id`, `layers[3].id`]));
  */
 export function reorderLayer(
-  order: number[]
+  order: string[]
 ): Merge<ReorderLayerUpdaterAction, {type: typeof ActionTypes.REORDER_LAYER}> {
   return {
     type: ActionTypes.REORDER_LAYER,
@@ -451,7 +451,7 @@ export function removeFilter(
 }
 
 export type RemoveLayerUpdaterAction = {
-  id: string | number;
+  id: string;
 };
 /**
  * Remove a layer
@@ -461,7 +461,7 @@ export type RemoveLayerUpdaterAction = {
  * @public
  */
 export function removeLayer(
-  id: string | number
+  id: string
 ): Merge<RemoveLayerUpdaterAction, {type: typeof ActionTypes.REMOVE_LAYER}> {
   return {
     type: ActionTypes.REMOVE_LAYER,
@@ -470,21 +470,21 @@ export function removeLayer(
 }
 
 export type DuplicateLayerUpdaterAction = {
-  idx: number;
+  id: string;
 };
 /**
  * Duplicate a layer
  * @memberof visStateActions
- * @param idx idx of layer to be duplicated
+ * @param id id of layer to be duplicated
  * @returns action
  * @public
  */
 export function duplicateLayer(
-  idx: number
+  id: string
 ): Merge<DuplicateLayerUpdaterAction, {type: typeof ActionTypes.DUPLICATE_LAYER}> {
   return {
     type: ActionTypes.DUPLICATE_LAYER,
-    idx
+    id
   };
 }
 

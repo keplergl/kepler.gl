@@ -18,24 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './data-utils-test';
-import './data-processor-test';
-import './kepler-table-test';
-import './data-container-test';
-import './filter-utils-test';
-import './gpu-filter-utils-test';
-import './layer-utils-test';
-import './data-scale-utils-test';
-import './interaction-utils-test';
-import './mapbox-gl-style-editor-test';
-import './mapbox-utils-test';
-import './notifications-utils-test';
-import './aggregate-utils-test';
-import './color-util-test';
-import './util-test';
-import './export-utils-test';
-import './s2-utils-test';
-import './editor-utils-test';
-import './kepler-gl-utils-test';
-import './timeline-test';
-import './composer-helpers-test';
+import test from 'tape';
+import {filterOutById, removeElementAtIndex} from '@kepler.gl/reducers';
+
+test('#composeHelpers -> RemoveElementAtIndex', t => {
+  const list = [1, 2, 3, 4, 5];
+  t.deepEqual(removeElementAtIndex(1)(list), [1, 3, 4, 5], 'Should remove element at index');
+  t.end();
+});
+
+test('#composeHelpers -> filterOutById', t => {
+  const list = [{id: 1}, {id: 2}, {id: 3}];
+  t.deepEqual(filterOutById(1)(list), [{id: 2}, {id: 3}], 'Should remove element with specific id');
+  t.end();
+});

@@ -34,14 +34,15 @@ import keplerGlReducer, {
   applyMergersUpdater,
   visStateReducer,
   keplerGlReducerCore as coreReducer,
-  defaultInteractionConfig
+  defaultInteractionConfig,
+  getLayerOrderFromLayers
 } from '@kepler.gl/reducers';
 
 import SchemaManager, {CURRENT_VERSION, visStateSchema} from '@kepler.gl/schemas';
 import {processKeplerglJSON} from '@kepler.gl/processors';
 import {updateVisData, receiveMapConfig, addDataToMap, registerEntry} from '@kepler.gl/actions';
 
-import {createDataContainer} from '@kepler.gl/utils';
+import {createDataContainer, findById} from '@kepler.gl/utils';
 
 // fixtures
 import {
@@ -343,15 +344,15 @@ test('VisStateMerger.current -> mergeLayers -> toEmptyState', t => {
   const stateWData = visStateReducer(mergedState, updateVisData(parsedData));
 
   // test parsed layers
-  const genericLayersByOrder = stateToSave.visState.layerOrder.map(
-    idx => stateToSave.visState.layers[idx]
+  const genericLayersByOrder = stateToSave.visState.layerOrder.map(id =>
+    findById(id)(stateToSave.visState.layers)
   );
 
   cmpLayers(t, genericLayersByOrder, stateWData.layers, {id: true});
   t.end();
 });
 
-test('visStateMerger -> mergeLayer -> imcremental load', t => {
+test('visStateMerger -> mergeLayer -> incremental load', t => {
   const stateToSave = cloneDeep(StateWFilesFiltersLayerColor);
   const appStateToSave = SchemaManager.save(stateToSave);
   const {datasets, config} = appStateToSave;
@@ -387,7 +388,11 @@ test('visStateMerger -> mergeLayer -> imcremental load', t => {
     'shoud load geojeon layer'
   );
 
-  t.deepEqual(stateWithData2.visState.layerOrder, [0], 'layerOrder should be correct');
+  t.deepEqual(
+    stateWithData2.visState.layerOrder,
+    [stateWithData2.visState.layers[0].id],
+    'layerOrder should be correct'
+  );
   t.deepEqual(
     stateWithData2.visState.layerToBeMerged.map(l => l.id),
     ['hexagon-2', 'point-0'],
@@ -407,7 +412,15 @@ test('visStateMerger -> mergeLayer -> imcremental load', t => {
     ['geojson-1', 'hexagon-2', 'point-0'],
     'shoud load 2 layers'
   );
-  t.deepEqual(stateWithData1.visState.layerOrder, [1, 2, 0], 'layerOrder should be correct');
+  t.deepEqual(
+    stateWithData1.visState.layerOrder,
+    [
+      stateWithData1.visState.layers[1].id,
+      stateWithData1.visState.layers[2].id,
+      stateWithData1.visState.layers[0].id
+    ],
+    'layerOrder should be correct'
+  );
   t.deepEqual(
     stateWithData1.visState.layerToBeMerged.map(l => l.id),
     [],
@@ -540,7 +553,14 @@ test('VisStateMerger.v0 -> mergeLayers -> toWorkingState', t => {
   const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config);
 
   const oldState = cloneDeep(StateWFilesFiltersLayerColor);
+
   const oldVisState = oldState.visState;
+  t.deepEqual(
+    oldVisState.layerOrder,
+    ['hexagon-2', 'point-0', 'geojson-1'],
+    'layer order should be correct'
+  );
+
   const oldLayers = [...oldVisState.layers];
 
   const parsedLayers = parsedConfig.visState.layers;
@@ -560,6 +580,12 @@ test('VisStateMerger.v0 -> mergeLayers -> toWorkingState', t => {
     }
   });
 
+  t.deepEqual(
+    mergedState.layerOrder,
+    ['hexagon-2', 'point-0', 'geojson-1'],
+    'layer order should not change'
+  );
+
   const parsedData = SchemaManager.parseSavedData(savedConfig.datasets);
 
   // load data into reducer
@@ -570,7 +596,7 @@ test('VisStateMerger.v0 -> mergeLayers -> toWorkingState', t => {
 
   t.deepEqual(
     stateWData.layerOrder,
-    [3, 4, 5, 6, 7, 2, 0, 1],
+    [...getLayerOrderFromLayers(mergedLayersV0), 'hexagon-2', 'point-0', 'geojson-1'],
     'should put new layers on top of old ones'
   );
   t.deepEqual(stateWData.layerToBeMerged, [], 'should clean up layer to be merged');
@@ -585,6 +611,11 @@ test('VisStateMerger.v1 -> mergeLayers -> toWorkingState', t => {
 
   const oldState = cloneDeep(StateWFilesFiltersLayerColor);
   const oldVisState = oldState.visState;
+  t.deepEqual(
+    oldVisState.layerOrder,
+    ['hexagon-2', 'point-0', 'geojson-1'],
+    'layer order should be correct'
+  );
   const oldLayers = [...oldVisState.layers];
 
   const parsedLayers = parsedConfig.visState.layers;
@@ -604,6 +635,12 @@ test('VisStateMerger.v1 -> mergeLayers -> toWorkingState', t => {
     }
   });
 
+  t.deepEqual(
+    mergedState.layerOrder,
+    ['hexagon-2', 'point-0', 'geojson-1'],
+    'layer order should not change'
+  );
+
   const parsedData = SchemaManager.parseSavedData(savedConfig.datasets);
 
   // load data into reducer
@@ -612,7 +649,17 @@ test('VisStateMerger.v1 -> mergeLayers -> toWorkingState', t => {
   // test parsed filters
   cmpLayers(t, [...oldLayers, ...mergedLayersV1], stateWData.layers);
 
-  t.deepEqual(stateWData.layerOrder, [3, 4, 2, 0, 1], 'should put new layers on top of old ones');
+  t.deepEqual(
+    stateWData.layerOrder,
+    [
+      stateWData.layers[3].id,
+      stateWData.layers[4].id,
+      stateWData.layers[2].id,
+      stateWData.layers[0].id,
+      stateWData.layers[1].id
+    ],
+    'should put new layers on top of old ones'
+  );
   t.deepEqual(stateWData.layerToBeMerged, [], 'should clean up layer to be merged');
   t.equal(stateWData.layerData.length, 5, 'should calculate layer data');
 
@@ -1748,21 +1795,21 @@ test('VisStateMerger -> insertLayerAtRightOrder -> to empty config', t => {
         {
           load: [{id: 'b'}],
           expectedLayers: [{id: 'b'}],
-          expectedOrder: [0]
+          expectedOrder: ['b']
         },
         {
           load: [{id: 'a'}, {id: 'c'}],
           expectedLayers: [{id: 'b'}, {id: 'a'}, {id: 'c'}],
-          expectedOrder: [1, 0, 2]
+          expectedOrder: ['a', 'b', 'c']
         },
         {
           load: [{id: 'd'}],
           expectedLayers: [{id: 'b'}, {id: 'a'}, {id: 'c'}, {id: 'd'}],
-          expectedOrder: [1, 0, 2, 3]
+          expectedOrder: ['a', 'b', 'c', 'd']
         }
       ],
       expectedLayers: [{id: 'b'}, {id: 'a'}, {id: 'c'}, {id: 'd'}],
-      expectedOrder: [1, 0, 2, 3]
+      expectedOrder: ['a', 'b', 'c', 'd']
     },
     {
       preservedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h'],
@@ -1770,17 +1817,17 @@ test('VisStateMerger -> insertLayerAtRightOrder -> to empty config', t => {
         {
           load: [{id: '6'}],
           expectedLayers: [{id: '6'}],
-          expectedOrder: [0]
+          expectedOrder: ['6']
         },
         {
           load: [{id: 'e'}],
           expectedLayers: [{id: '6'}, {id: 'e'}],
-          expectedOrder: [1, 0]
+          expectedOrder: ['e', '6']
         },
         {
           load: [{id: 'x'}, {id: 'p'}, {id: 'w'}, {id: 'h'}],
           expectedLayers: [{id: '6'}, {id: 'e'}, {id: 'x'}, {id: 'p'}, {id: 'w'}, {id: 'h'}],
-          expectedOrder: [2, 1, 3, 4, 0, 5]
+          expectedOrder: ['x', 'e', 'p', 'w', '6', 'h']
         },
         {
           load: [{id: 'm'}],
@@ -1793,11 +1840,11 @@ test('VisStateMerger -> insertLayerAtRightOrder -> to empty config', t => {
             {id: 'h'},
             {id: 'm'}
           ],
-          expectedOrder: [2, 6, 1, 3, 4, 0, 5]
+          expectedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h']
         }
       ],
       expectedLayers: [{id: '6'}, {id: 'e'}, {id: 'x'}, {id: 'p'}, {id: 'w'}, {id: 'h'}, {id: 'm'}],
-      expectedOrder: [2, 6, 1, 3, 4, 0, 5]
+      expectedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h']
     },
     {
       preservedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h'],
@@ -1805,17 +1852,17 @@ test('VisStateMerger -> insertLayerAtRightOrder -> to empty config', t => {
         {
           load: [{id: 'x'}, {id: 'm'}],
           expectedLayers: [{id: 'x'}, {id: 'm'}],
-          expectedOrder: [0, 1]
+          expectedOrder: ['x', 'm']
         },
         {
           load: [{id: 'w'}],
           expectedLayers: [{id: 'x'}, {id: 'm'}, {id: 'w'}],
-          expectedOrder: [0, 1, 2]
+          expectedOrder: ['x', 'm', 'w']
         },
         {
           load: [{id: 'p'}],
           expectedLayers: [{id: 'x'}, {id: 'm'}, {id: 'w'}, {id: 'p'}],
-          expectedOrder: [0, 1, 3, 2]
+          expectedOrder: ['x', 'm', 'p', 'w']
         },
         {
           load: [{id: 'e'}, {id: 'h'}, {id: '6'}],
@@ -1828,10 +1875,10 @@ test('VisStateMerger -> insertLayerAtRightOrder -> to empty config', t => {
             {id: 'h'},
             {id: '6'}
           ],
-          expectedOrder: [0, 1, 4, 3, 2, 6, 5]
+          expectedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h']
         }
       ],
-      expectedOrder: [0, 1, 4, 3, 2, 6, 5],
+      expectedOrder: ['x', 'm', 'e', 'p', 'w', '6', 'h'],
       expectedLayers: [{id: 'x'}, {id: 'm'}, {id: 'w'}, {id: 'p'}, {id: 'e'}, {id: 'h'}, {id: '6'}]
     }
   ];
@@ -1866,21 +1913,21 @@ test('VisStateMerger -> insertLayerAtRightOrder -> to empty config', t => {
   const preservedOrder = ['a', 'b', 'c', 'd'];
 
   const batches = [
-    {load: [{id: 'b'}], expectedLayers: [{id: 'm'}, {id: 'b'}], expectedOrder: [1, 0]},
+    {load: [{id: 'b'}], expectedLayers: [{id: 'm'}, {id: 'b'}], expectedOrder: ['b', 'm']},
     {
       load: [{id: 'a'}, {id: 'c'}],
       expectedLayers: [{id: 'm'}, {id: 'b'}, {id: 'a'}, {id: 'c'}],
-      expectedOrder: [2, 1, 3, 0]
+      expectedOrder: ['a', 'b', 'c', 'm']
     },
     {
       load: [{id: 'd'}],
       expectedLayers: [{id: 'm'}, {id: 'b'}, {id: 'a'}, {id: 'c'}, {id: 'd'}],
-      expectedOrder: [2, 1, 3, 4, 0]
+      expectedOrder: ['a', 'b', 'c', 'd', 'm']
     }
   ];
 
   let currentLayers = [{id: 'm'}];
-  let currentOrder = [0];
+  let currentOrder = ['m'];
 
   // add layers in batch
   for (const batch of batches) {
@@ -1929,7 +1976,7 @@ test('VisStateMerger -> createLayerFromConfig with Parsed Layer', t => {
   // mock an exported layer config with visual channels
   const savedLayer = visStateSchema[CURRENT_VERSION].save({
     layers: [oldState.visState.layers[0]],
-    layerOrder: [0]
+    layerOrder: [oldState.visState.layers[0].id]
   }).visState.layers[0];
 
   t.ok(savedLayer.visualChannels, 'Should have visualChannels');

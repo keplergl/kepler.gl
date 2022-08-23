@@ -240,12 +240,15 @@ function testAttributeUpdate(t, attributeValues, layer, shouldUpdate) {
 export function renderLayerByState(t, state, layerManager) {
   const layerCallbacks = () => {};
   const layer = state.visState.layers[0];
+  const data = state.visState.layerData[0];
 
   let layerOverlay;
   t.doesNotThrow(() => {
     layerOverlay = renderDeckGlLayer(
       {
         ...state.visState,
+        layer,
+        data,
         mapState: state.mapState
       },
       layerCallbacks,

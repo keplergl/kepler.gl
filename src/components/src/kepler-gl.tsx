@@ -491,13 +491,13 @@ function KeplerGlFactory(
       // update dndItems when layerOrder or layers change
       this.setState((state, props) => {
         const {
-          visState: {layers, layerOrder}
+          visState: {layerOrder}
         } = props;
 
         return {
           dndItems: {
             ...state.dndItems,
-            sortablelist: layerOrder.map(layerIdx => layers[layerIdx].id)
+            sortablelist: layerOrder
           }
         };
       });
