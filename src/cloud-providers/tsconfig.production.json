@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "allowJs": false,
+    "checkJs": false,
+    "jsx": "react",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "declaration":true,
+    "emitDeclarationOnly":true,
+    "noImplicitAny": false,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "outDir": "dist",
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "baseUrl": "../../src", //TODO change once all dependencies are isolated
+    "paths": {
+      "@kepler.gl/cloud-providers": ["cloud-providers/src"] //TODO change once all dependencies are isolated
+    }
+  },
+  "include": [
+    "src"
+  ]
+}
