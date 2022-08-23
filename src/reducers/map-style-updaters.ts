@@ -39,34 +39,15 @@ import {
   DEFAULT_MAPBOX_API_URL
 } from '@kepler.gl/constants';
 import {ActionTypes} from 'actions';
-import {LOAD_MAP_STYLE_TASK} from 'tasks/tasks';
+import {LOAD_MAP_STYLE_TASK} from '@kepler.gl/tasks';
 import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
 import {rgb} from 'd3-color';
 
-import {RGBColor, BaseMapStyle, LayerGroup} from '@kepler.gl/types';
+import {RGBColor, LayerGroup, MapStyles, InputStyle, VisibleLayerGroups} from '@kepler.gl/types';
 import {ReceiveMapConfigPayload, KeplerGlInitPayload} from '../actions/actions';
 import * as MapStyleActions from '../actions/map-style-actions';
 
-export type VisibleLayerGroups = {
-  [key: string]: boolean;
-};
-
 export type MapboxStyleUrl = string;
-
-export type MapStyles = {
-  [key: string]: BaseMapStyle;
-};
-
-export type InputStyle = {
-  accessToken: string | null;
-  error: boolean;
-  isValid: boolean;
-  label: string | null;
-  style: any | null;
-  url: string | null;
-  icon: string | null;
-  custom: boolean;
-};
 
 export type MapStyle = {
   styleType: string;

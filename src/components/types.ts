@@ -1,8 +1,7 @@
 import {ComponentType} from 'react';
 import {MapStyle} from 'reducers';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {Filter, InteractionConfig} from '@kepler.gl/types';
-import {UiState} from 'reducers/ui-state-updaters';
+import {Filter, InteractionConfig, UiState} from '@kepler.gl/types';
 
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as VisStateActions from 'actions/vis-state-actions';

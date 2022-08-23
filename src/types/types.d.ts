@@ -1,7 +1,3 @@
-export * from './layers';
-export * from './reducers';
-export * from './actions';
-
 export type RGBColor = [number, number, number];
 export type RGBAColor = [number, number, number, number];
 export type HexColor = string; // this is the best typescript can do at the moment

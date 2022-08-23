@@ -59,10 +59,9 @@ import {
   OVERWRITE_MAP_ID
 } from '@kepler.gl/constants';
 
-import {MapState} from '@kepler.gl/types';
 import {getFileFormatNames, getFileExtensions} from 'reducers/vis-state-selectors';
-import {MapStyle, UiState} from 'reducers';
-import {OnSuccessCallBack, OnErrorCallBack} from 'actions';
+import {MapStyle} from 'reducers';
+import {MapState, UiState, OnSuccessCallBack, OnErrorCallBack} from '@kepler.gl/types';
 import {ProviderState} from 'reducers/provider-state-updaters';
 
 import * as VisStateActions from 'actions/vis-state-actions';

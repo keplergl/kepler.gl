@@ -29,7 +29,7 @@ import ClickOutsideCloseDropdown from 'components/side-panel/panel-dropdown';
 import Toolbar from 'components/common/toolbar';
 import ToolbarItem, {ToolbarItemProps} from 'components/common/toolbar-item';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {UiState} from 'reducers';
+import {UiState} from '@kepler.gl/types';
 import {BaseProps} from 'components/common/icons/base';
 
 type StyledPanelActionProps = {

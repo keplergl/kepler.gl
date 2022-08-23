@@ -20,8 +20,8 @@
 
 // vis-state-reducer
 import {default as ActionTypes} from './action-types';
-import {AddDataToMapPayload} from '../actions/actions';
 import {FileCacheItem} from '@kepler.gl/processors';
+import {AddDataToMapPayload} from '@kepler.gl/types';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {
   ValueOf,

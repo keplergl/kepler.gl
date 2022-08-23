@@ -20,8 +20,7 @@
 
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
-import {Bounds, Merge} from '@kepler.gl/types';
-import {Viewport} from 'reducers/map-state-updaters';
+import {Bounds, Merge, Viewport} from '@kepler.gl/types';
 
 export type TogglePerspectiveUpdaterAction = {};
 /**

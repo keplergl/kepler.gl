@@ -57,29 +57,9 @@ export * as visStateMergers from './vis-state-merger';
 export * from './composer-helpers';
 
 export type {
-  InputStyle,
   MapboxStyleUrl,
-  MapStyle,
-  MapStyles,
-  VisibleLayerGroups
+  MapStyle
 } from './map-style-updaters';
-
-export type {
-  Viewport
-} from './map-state-updaters';
-
-export type {
-  ExportData,
-  ExportHtml,
-  ExportJson,
-  ExportMap,
-  LoadFiles,
-  Locale,
-  MapControl,
-  MapControls,
-  Notifications,
-  UiState
-} from './ui-state-updaters';
 
 export * from './data-scale-utils';
 export * from './data-utils';

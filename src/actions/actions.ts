@@ -21,55 +21,13 @@
 import {default as ActionTypes} from './action-types';
 import {createAction} from '@reduxjs/toolkit';
 
-import {ParsedConfig} from '../schemas';
-import {RGBColor, Bounds, MapInfo} from '@kepler.gl/types';
-import {UiState} from 'reducers/ui-state-updaters';
-
-/**
- * Input dataset parsed to addDataToMap
- */
-export type ProtoDataset = {
-  info: {
-    id?: string;
-    label?: string;
-    format?: string;
-    color?: RGBColor;
-    type?: string;
-  };
-  data: {
-    fields: {
-      name: string;
-      type?: string;
-      format?: string;
-      displayName?: string;
-      id?: string;
-    }[];
-    rows: any[][];
-  };
-
-  // table-injected metadata
-  metadata?: any;
-  supportedFilterTypes?: string[] | null;
-  disableDataOperation?: boolean;
-};
-
-export type AddDataToMapOptions = {
-  centerMap?: boolean;
-  readOnly?: boolean;
-  keepExistingConfig?: boolean;
-  autoCreateLayers?: boolean;
-};
-
-export type AddDataToMapPayload = {
-  // TODO/ib - internally the code calls `toArray` a couple of layers deep
-  // so this function can actually accept both an array and an object
-  // recommend dropping such "sloppy typing" and enforcing array type
-  // as the field is called `datasets`
-  datasets: ProtoDataset[] | ProtoDataset;
-  options?: AddDataToMapOptions;
-  config?: ParsedConfig;
-  info?: Partial<MapInfo>;
-};
+import {
+  AddDataToMapOptions,
+  AddDataToMapPayload,
+  Bounds,
+  UiState,
+  ParsedConfig
+} from '@kepler.gl/types';
 
 export type ActionHandler<A extends (...args: any) => any> = (...args: Parameters<A>) => void;
 

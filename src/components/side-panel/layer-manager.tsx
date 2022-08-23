@@ -39,7 +39,7 @@ import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {SidePanelItem} from 'components/types';
-import {LayerPanelListView} from 'reducers/ui-state-updaters';
+import {LayerPanelListView} from '@kepler.gl/types';
 import {ActionHandler} from 'actions';
 import {Datasets} from 'reducers/table-utils/kepler-table';
 

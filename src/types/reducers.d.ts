@@ -260,3 +260,136 @@ export type BaseMapStyle = {
   accessToken?: string;
   custom?: boolean;
 };
+
+export declare type ExportImage = {
+  ratio: 'SCREEN' | 'FOUR_BY_THREE' | 'SIXTEEN_BY_NINE' | 'CUSTOM';
+  resolution: 'ONE_X' | 'TWO_X';
+  legend: boolean;
+  mapH: number;
+  mapW: number;
+  imageSize: {
+    zoomOffset: number;
+    scale: number;
+    imageW: number;
+    imageH: number;
+  };
+  imageDataUri: string;
+  exporting: boolean;
+  processing: boolean;
+  error: Error | false;
+  center: boolean;
+};
+
+export type ExportData = {
+  selectedDataset: string;
+  dataType: string;
+  filtered: boolean;
+};
+
+export type ExportHtml = {
+  exportMapboxAccessToken: null | string;
+  userMapboxToken: string;
+  mode: string;
+};
+export type ExportJson = {
+  hasData: boolean;
+};
+export type ExportMap = {
+  HTML: ExportHtml;
+  JSON: ExportJson;
+  format: 'HTML' | 'JSON';
+};
+
+export type MapControl = {
+  show: boolean;
+  active: boolean;
+  disableClose?: boolean;
+  activeMapIndex?: number;
+};
+export type MapControls = {
+  visibleLayers?: MapControl;
+  mapLegend?: MapControl;
+  toggle3d?: MapControl;
+  splitMap?: MapControl;
+  mapDraw?: MapControl;
+  mapLocale?: MapControl;
+};
+
+export type LoadFiles = {
+  fileLoading: boolean;
+};
+
+export type Notifications = {
+  message: string;
+  type: string;
+  topic: string;
+  id: string;
+  count: number;
+  isExpanded?: boolean;
+};
+
+export type Locale = string;
+
+export type LayerPanelListView = 'list' | 'sortByDataset';
+
+export type UiState = {
+  readOnly: boolean;
+  activeSidePanel: string;
+  currentModal: string | null;
+  datasetKeyToRemove: string | null;
+  visibleDropdown: string | null;
+  // export image modal ui
+  exportImage: ExportImage;
+  // export data modal ui
+  exportData: ExportData;
+  // html export
+  exportMap: ExportMap;
+  // map control panels
+  mapControls: MapControls;
+  // ui notifications
+  notifications: Notifications[];
+  // load files
+  loadFiles: LoadFiles;
+  // Locale of the UI
+  locale: Locale;
+  layerPanelListView: LayerPanelListView;
+};
+
+/** Width of viewport */
+export type Viewport = {
+  /**  Width of viewport */
+  width?: number;
+  /**  Height of viewport */
+  height?: number;
+  /**  Zoom of viewport */
+  zoom?: number;
+  /**  Camera angle in degrees (0 is straight down) */
+  pitch?: number;
+  /**  Map rotation in degrees (0 means north is up) */
+  bearing?: number;
+  /**  Latitude center of viewport on map in mercator projection */
+  latitude?: number;
+  /**  Longitude Center of viewport on map in mercator projection */
+  longitude?: number;
+  /**  Whether to enable drag and rotate map into perspective viewport */
+  dragRotate?: boolean;
+};
+
+export type MapStyles = {
+  [key: string]: BaseMapStyle;
+};
+
+export type VisibleLayerGroups = {
+  [key: string]: boolean;
+};
+
+export type InputStyle = {
+  accessToken: string | null;
+  error: boolean;
+  isValid: boolean;
+  label: string | null;
+  style: any | null;
+  url: string | null;
+  icon: string | null;
+  custom: boolean;
+};
