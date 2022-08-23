@@ -24,7 +24,6 @@ import OrderByList from 'components/common/icons/order-by-list';
 import OrderByDataset from 'components/common/icons/order-by-dataset';
 import {Tooltip} from 'components/common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {LayerPanelListView} from 'reducers/ui-state-updaters';
 
 type ToggleOptionProps = {
   isActive: boolean;

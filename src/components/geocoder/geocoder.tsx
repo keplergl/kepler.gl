@@ -27,7 +27,7 @@ import {WebMercatorViewport} from 'viewport-mercator-project';
 import {KeyEvent} from '@kepler.gl/constants';
 import {Input} from 'components/common/styled-components';
 import {Search, Delete} from 'components/common/icons';
-import {Viewport} from 'reducers/map-state-updaters';
+import {Viewport} from '@kepler.gl/types';
 
 type StyledContainerProps = {
   width?: number;

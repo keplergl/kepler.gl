@@ -57,11 +57,8 @@ export * as visStateMergers from './vis-state-merger';
 export * from './composer-helpers';
 
 export type {
-  InputStyle,
   MapboxStyleUrl,
-  MapStyle,
-  MapStyles,
-  VisibleLayerGroups
+  MapStyle
 } from './map-style-updaters';
 
 export type {

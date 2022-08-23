@@ -37,26 +37,6 @@ export type MapState = {
   scale?: number;
 };
 
-/** Width of viewport */
-export type Viewport = {
-  /**  Width of viewport */
-  width?: number;
-  /**  Height of viewport */
-  height?: number;
-  /**  Zoom of viewport */
-  zoom?: number;
-  /**  Camera angle in degrees (0 is straight down) */
-  pitch?: number;
-  /**  Map rotation in degrees (0 means north is up) */
-  bearing?: number;
-  /**  Latitude center of viewport on map in mercator projection */
-  latitude?: number;
-  /**  Longitude Center of viewport on map in mercator projection */
-  longitude?: number;
-  /**  Whether to enable drag and rotate map into perspective viewport */
-  dragRotate?: boolean;
-};
-
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
  * Read more about [Using updaters](../advanced-usage/using-updaters.md)

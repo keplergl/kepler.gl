@@ -36,9 +36,8 @@ import {media} from '@kepler.gl/styles';
 import {transformRequest} from '@kepler.gl/utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {InputStyle} from 'reducers';
 import mapboxgl from 'mapbox-gl';
-import {MapState} from '@kepler.gl/types';
+import {InputStyle, MapState} from '@kepler.gl/types';
 
 const MapH = 190;
 const MapW = 264;

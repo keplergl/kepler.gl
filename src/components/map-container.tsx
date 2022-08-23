@@ -51,7 +51,7 @@ import {
   InteractionConfig,
   MapState,
   SplitMapLayers
-} from '@kepler.gl/types';
+, MapControls, Viewport} from '@kepler.gl/types';
 import {
   errorNotification,
   setLayerBlending,
@@ -67,7 +67,7 @@ import ErrorBoundary from 'components/common/error-boundary';
 import {LOCALE_CODES} from '@kepler.gl/localization';
 import {getMapLayersFromSplitMaps, onViewPortChange} from '@kepler.gl/utils';
 import {MapView} from '@deck.gl/core';
-import {MapControls, MapStyle, Viewport} from 'reducers';
+import {MapStyle} from 'reducers';
 import {Datasets} from 'reducers/table-utils';
 import {
   computeDeckLayers,

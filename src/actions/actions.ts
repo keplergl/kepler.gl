@@ -21,8 +21,7 @@
 import {default as ActionTypes} from './action-types';
 import {createAction} from '@reduxjs/toolkit';
 
-import {ParsedConfig} from '../schemas';
-import {RGBColor, Bounds, MapInfo} from '@kepler.gl/types';
+import {RGBColor, Bounds, MapInfo, ParsedConfig} from '@kepler.gl/types';
 import {UiState} from 'reducers/ui-state-updaters';
 
 /**

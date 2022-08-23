@@ -32,7 +32,7 @@ import {
 } from 'components/common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {camelize} from '@kepler.gl/utils';
-import {VisibleLayerGroups} from 'reducers';
+import {VisibleLayerGroups} from '@kepler.gl/types';
 import {BaseProps} from 'components/common/icons/base';
 
 const StyledInteractionPanel = styled.div`
