@@ -27,7 +27,7 @@ import {
   DELAY_TASK,
   LOAD_CLOUD_MAP_TASK,
   GET_SAVED_MAPS_TASK
-} from '../tasks/tasks';
+} from '@kepler.gl/tasks';
 import {
   exportFileSuccess,
   exportFileError,

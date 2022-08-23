@@ -25,7 +25,8 @@
     "./src/deckgl-layers",
     "./src/layers",
     "./src/cloud-providers",
-    "./src/processors"
+    "./src/processors",
+    "./src/tasks"
   ],
   "repository": {
     "type": "git",
