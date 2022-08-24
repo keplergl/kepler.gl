@@ -26,7 +26,7 @@ import LayerPanelFactory from './layer-panel';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Datasets} from 'reducers/table-utils/kepler-table';
 import {arrayMove} from '@kepler.gl/utils';
-import { UIStateActions, VisStateActions } from '@kepler.gl/actions';
+import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
 
 type LayerListProps = {
   datasets: Datasets;

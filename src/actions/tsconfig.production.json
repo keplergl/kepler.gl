@@ -11,7 +11,7 @@
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false, //TODO needs to be removed once all isolations are ready
     "outDir": "dist",
     "sourceMap": true,
     "strictNullChecks": true,

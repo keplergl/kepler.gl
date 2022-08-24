@@ -38,7 +38,7 @@ import {
   testGeoJsonDataId
 } from 'test/helpers/mock-state';
 import keplerGlReducer from 'reducers/core';
-import * as VisStateActions from 'actions/vis-state-actions';
+import {VisStateActions} from '@kepler.gl/actions';
 
 test('#visStateSchema -> v1 -> save layers', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);

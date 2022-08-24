@@ -3,7 +3,12 @@ import {MapStyle} from 'reducers';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Filter, InteractionConfig, UiState} from '@kepler.gl/types';
 
-import {MapStyleActions, VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actions';
+import {
+  MapStyleActions,
+  VisStateActions,
+  MapStateActions,
+  UIStateActions
+} from '@kepler.gl/actions';
 import {Datasets} from 'reducers/table-utils/kepler-table';
 
 export type SidePanelItem = {

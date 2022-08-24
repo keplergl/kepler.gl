@@ -38,9 +38,7 @@ import {
   DEFAULT_LAYER_GROUPS,
   DEFAULT_MAPBOX_API_URL
 } from '@kepler.gl/constants';
-import {ActionTypes} from 'actions';
 import {LOAD_MAP_STYLE_TASK} from '@kepler.gl/tasks';
-import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
 import {rgb} from 'd3-color';
 
 import {RGBColor, LayerGroup, MapStyles, InputStyle, VisibleLayerGroups} from '@kepler.gl/types';
