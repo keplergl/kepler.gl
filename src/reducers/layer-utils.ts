@@ -286,41 +286,41 @@ export function computeDeckLayers(
 
   const {mapIndex, mapboxApiAccessToken, mapboxApiUrl, primaryMap, layersForDeck} = options || {};
 
-  if (!layerData || !layerData.length) {
-    return [];
+  let dataLayers: any[] = [];
+
+  if (layerData && layerData.length) {
+    const mapLayers = getMapLayersFromSplitMaps(splitMaps, mapIndex || 0);
+
+    const currentLayersForDeck = layersForDeck || prepareLayersForDeck(layers, layerData);
+
+    dataLayers = layerOrder
+      .slice()
+      .reverse()
+      .filter(idx => currentLayersForDeck[layers[idx].id])
+      .reduce((overlays, idx) => {
+        const layerCallbacks = onSetLayerDomain
+          ? {
+              onSetLayerDomain: val => onSetLayerDomain(idx, val)
+            }
+          : {};
+        const layerOverlay = renderDeckGlLayer(
+          {
+            datasets,
+            layers,
+            layerData,
+            hoverInfo,
+            clicked,
+            mapState,
+            interactionConfig,
+            animationConfig,
+            mapLayers
+          },
+          layerCallbacks,
+          idx
+        );
+        return overlays.concat(layerOverlay || []);
+      }, []);
   }
-
-  const mapLayers = getMapLayersFromSplitMaps(splitMaps, mapIndex || 0);
-
-  const currentLayersForDeck = layersForDeck || prepareLayersForDeck(layers, layerData);
-
-  const dataLayers = layerOrder
-    .slice()
-    .reverse()
-    .filter(idx => currentLayersForDeck[layers[idx].id])
-    .reduce((overlays, idx) => {
-      const layerCallbacks = onSetLayerDomain
-        ? {
-            onSetLayerDomain: val => onSetLayerDomain(idx, val)
-          }
-        : {};
-      const layerOverlay = renderDeckGlLayer(
-        {
-          datasets,
-          layers,
-          layerData,
-          hoverInfo,
-          clicked,
-          mapState,
-          interactionConfig,
-          animationConfig,
-          mapLayers
-        },
-        layerCallbacks,
-        idx
-      );
-      return overlays.concat(layerOverlay || []);
-    }, []);
 
   if (!primaryMap) {
     return dataLayers;
