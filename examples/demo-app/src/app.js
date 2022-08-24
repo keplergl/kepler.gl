@@ -30,7 +30,7 @@ import Announcement, {FormLink} from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
-import {AUTH_TOKENS} from './constants/default-settings';
+import {AUTH_TOKENS, DEFAULT_FEATURE_FLAGS} from './constants/default-settings';
 import {messages} from './constants/localization';
 
 import {
@@ -401,6 +401,7 @@ class App extends Component {
                   localeMessages={messages}
                   onExportToCloudSuccess={onExportFileSuccess}
                   onLoadCloudMapSuccess={onLoadCloudMapSuccess}
+                  featureFlags={DEFAULT_FEATURE_FLAGS}
                 />
               )}
             </AutoSizer>
