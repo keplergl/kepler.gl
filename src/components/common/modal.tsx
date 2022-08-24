@@ -146,8 +146,8 @@ interface ModalDialogOwnProps {
   isOpen: boolean;
   title?: string;
   className?: string;
-  onConfirm: (...args: any) => any;
-  onCancel: (...args: any) => any;
+  onConfirm?: (...args: any) => void;
+  onCancel: (...args: any) => void;
   confirmButton: object;
   confirmButtonLabel?: string;
   cancelButton: object;
@@ -165,8 +165,8 @@ export class ModalDialog extends Component<ModalDialogProps> {
   static defaultProps = {
     footer: false,
     close: true,
-    onConfirm: () => {},
-    onCancel: () => {},
+    onConfirm: (): void => {},
+    onCancel: (): void => {},
     cancelButton: defaultCancelButton,
     confirmButton: defaultConfirmButton,
     cssStyle: []
