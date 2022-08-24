@@ -64,6 +64,14 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
   const useLocalDeck = env.deck || env.hubble_src;
   const useRepoDeck = env.deck_src;
 
+  // add kepler.gl submodule aliases
+  const workspaces = KeplerPackage.workspaces;
+  workspaces.forEach(workspace => {
+    // workspace =  "./src/types",  "./src/constants", etc
+    const moduleName = workspace.split('/').pop();
+    resolveAlias[`@kepler.gl/${moduleName}`] = join(SRC_DIR, `${moduleName}/src`);
+  });
+
   // resolve deck.gl from local dir
   if (useLocalDeck || useRepoDeck) {
     // Load deck.gl from root node_modules

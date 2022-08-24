@@ -138,7 +138,7 @@ test('MapControlFactory - click options', t => {
         <MapContainer {...mapContainerProps} />
       </IntlWrapper>
     );
-  }, 'MapCnotainer should not fail without props');
+  }, 'MapContainer should not fail without props');
 
   // layer selector is not active
   t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 5 MapControlButton');
@@ -221,7 +221,7 @@ test('MapControlFactory - show panels', t => {
         <MapContainer {...mapContainerProps} />
       </IntlWrapper>
     );
-  }, 'MapCnotainer should not fail without props');
+  }, 'MapContainer should not fail without props');
 
   // show legend
   t.equal(wrapper.find(MapLegend).length, 1, 'should render 1 MapLegend');

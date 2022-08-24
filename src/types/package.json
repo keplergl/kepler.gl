@@ -4,7 +4,7 @@
     "version": "2.5.5",
     "description": "kepler.gl types used by kepler.gl components, actions and reducers",
     "license": "MIT",
-    "types": "types.d.ts",
+    "types": "index.d.ts",
     "keywords": [
         "babel",
         "es6",

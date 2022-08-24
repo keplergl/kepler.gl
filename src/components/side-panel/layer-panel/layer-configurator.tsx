@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 /* eslint-disable complexity */
-import React, {Component, Fragment, MouseEventHandler} from 'react';
+import React, {Component, Fragment} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
@@ -38,7 +38,7 @@ import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-co
 import TextLabelPanelFactory from './text-label-panel';
 import HowToButton from './how-to-button';
 
-import {capitalizeFirstLetter} from 'utils/utils';
+import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
 import {CHANNEL_SCALE_SUPPORTED_FIELDS, ColorRange} from '@kepler.gl/constants';
 import {
@@ -49,11 +49,10 @@ import {
   AggregationLayer
 } from '@kepler.gl/layers';
 
-import {Datasets} from 'reducers';
-import {NestedPartial, RGBColor, LayerVisConfig, ColorUI} from '@kepler.gl/types';
-import {Field} from 'utils/table-utils/kepler-table';
+import {NestedPartial, RGBColor, LayerVisConfig, ColorUI, Field} from '@kepler.gl/types';
 import {toggleModal} from 'actions/ui-state-actions';
 import {ActionHandler} from 'actions';
+import {Datasets} from 'reducers/table-utils/kepler-table';
 
 type LayerConfiguratorProps = {
   layer: Layer;

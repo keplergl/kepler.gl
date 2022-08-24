@@ -28,112 +28,25 @@ import {
   EXPORT_IMG_RATIOS,
   EXPORT_MAP_FORMATS,
   RESOLUTIONS,
-  MAP_CONTROLS
+  MAP_CONTROLS,
+  ExportImage
 } from '@kepler.gl/constants';
 import {ActionTypes} from 'actions';
 import {LOCALE_CODES} from '@kepler.gl/localization';
-import {createNotification, errorNotification} from 'utils/notifications-utils';
-import {calculateExportImageSize} from '../utils/export-utils';
+import {createNotification, errorNotification, calculateExportImageSize} from '@kepler.gl/utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
 import * as UiStateActions from 'actions/ui-state-actions';
 import {KeplerGlInitPayload, LoadFilesErrUpdaterAction} from '../actions';
-
-export type ExportImage = {
-  ratio: keyof typeof EXPORT_IMG_RATIOS;
-  resolution: keyof typeof RESOLUTIONS;
-  legend: boolean;
-  mapH: number;
-  mapW: number;
-  imageSize: {
-    zoomOffset: number;
-    scale: number;
-    imageW: number;
-    imageH: number;
-  };
-  // exporting state
-  imageDataUri: string;
-  exporting: boolean;
-  processing: boolean;
-  error: Error | false;
-  // This field was not in the .d.ts file
-  center: boolean;
-};
-
-export type ExportData = {
-  selectedDataset: string;
-  dataType: string;
-  filtered: boolean;
-};
-
-export type ExportHtml = {
-  exportMapboxAccessToken: null | string;
-  userMapboxToken: string;
-  mode: string;
-};
-export type ExportJson = {
-  hasData: boolean;
-};
-export type ExportMap = {
-  HTML: ExportHtml;
-  JSON: ExportJson;
-  format: 'HTML' | 'JSON';
-};
-
-export type MapControl = {
-  show: boolean;
-  active: boolean;
-  disableClose?: boolean;
-  activeMapIndex?: number;
-};
-export type MapControls = {
-  visibleLayers?: MapControl;
-  mapLegend?: MapControl;
-  toggle3d?: MapControl;
-  splitMap?: MapControl;
-  mapDraw?: MapControl;
-  mapLocale?: MapControl;
-};
-
-export type LoadFiles = {
-  fileLoading: boolean;
-};
-
-export type Notifications = {
-  message: string;
-  type: string;
-  topic: string;
-  id: string;
-  count: number;
-  isExpanded?: boolean;
-};
-
-export type Locale = string;
-
-export type LayerPanelListView = 'list' | 'sortByDataset';
-
-export type UiState = {
-  readOnly: boolean;
-  activeSidePanel: string;
-  currentModal: string | null;
-  datasetKeyToRemove: string | null;
-  visibleDropdown: string | null;
-  // export image modal ui
-  exportImage: ExportImage;
-  // export data modal ui
-  exportData: ExportData;
-  // html export
-  exportMap: ExportMap;
-  // map control panels
-  mapControls: MapControls;
-  // ui notifications
-  notifications: Notifications[];
-  // load files
-  loadFiles: LoadFiles;
-  // Locale of the UI
-  locale: Locale;
-  layerPanelListView: LayerPanelListView;
-};
+import {
+  ExportData,
+  ExportHtml,
+  ExportJson,
+  ExportMap,
+  MapControl,
+  MapControls,
+  UiState
+} from '@kepler.gl/types';
 
 export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
 export const DEFAULT_MODAL = ADD_DATA_ID;
@@ -175,6 +88,7 @@ export const DEFAULT_MODAL = ADD_DATA_ID;
  * export default composedReducer;
  */
 /* eslint-disable no-unused-vars */
+// @ts-ignore
 const uiStateUpdaters = null;
 /* eslint-enable no-unused-vars */
 

@@ -21,12 +21,13 @@
 import React, {Component} from 'react';
 import {FormattedMessage, injectIntl, WrappedComponentProps} from 'react-intl';
 
+import {Field} from '@kepler.gl/types';
+
 import {PanelLabel, PanelLabelWrapper, SidePanelSection} from 'components/common/styled-components';
 import InfoHelperFactory from 'components/common/info-helper';
 import DimensionScaleSelector from './dimension-scale-selector';
-import {camelize} from 'utils/utils';
+import {camelize} from '@kepler.gl/utils';
 import FieldSelectorFactory from '../../common/field-selector';
-import {Field} from 'utils/table-utils/kepler-table';
 
 type VisConfigByFieldSelectorProps = {
   channel: string;
