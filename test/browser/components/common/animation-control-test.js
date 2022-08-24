@@ -22,7 +22,7 @@ import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import moment from 'moment';
-import {setLayerAnimationTimeConfig} from 'actions/vis-state-actions';
+import {setLayerAnimationTimeConfig} from '@kepler.gl/actions';
 
 import {mountWithTheme} from 'test/helpers/component-utils';
 import {

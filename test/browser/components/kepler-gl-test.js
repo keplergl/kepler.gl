@@ -27,7 +27,7 @@ import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 
 import coreReducer from 'reducers/core';
-import {keplerGlInit} from 'actions/actions';
+import {keplerGlInit, ActionTypes} from '@kepler.gl/actions';
 import {
   appInjector,
   KeplerGlFactory,
@@ -39,7 +39,6 @@ import {
   GeocoderPanelFactory
 } from 'components';
 import NotificationPanelFactory from 'components/notification-panel';
-import {ActionTypes} from 'actions';
 import {DEFAULT_MAP_STYLES, EXPORT_IMAGE_ID} from 'constants';
 import {GEOCODER_DATASET_NAME} from '@kepler.gl/constants';
 // mock state

@@ -18,12 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {ActionTypes, keplerGlInit, _actionFor, _updateProperty} from '@kepler.gl/actions';
 import {handleActions} from 'redux-actions';
 
-import {_actionFor, _updateProperty} from '../actions/action-wrapper';
-import {keplerGlInit} from '../actions/actions';
 import {coreReducerFactory} from './core';
-import {ActionTypes} from 'actions';
 
 // INITIAL_STATE
 const initialCoreState = {};

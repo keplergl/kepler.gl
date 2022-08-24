@@ -20,7 +20,7 @@
 
 import {handleActions} from 'redux-actions';
 import * as providerStateUpdaters from './provider-state-updaters';
-import {ActionTypes} from 'actions/provider-actions';
+import {ProviderActionTypes as ActionTypes} from '@kepler.gl/actions';
 
 /**
  * Important: Do not rename `actionHandler` or the assignment pattern of property value.

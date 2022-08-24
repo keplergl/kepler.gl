@@ -29,7 +29,7 @@ import {console as Console} from 'global/window';
 import {withState, injectComponents, PanelHeaderFactory} from 'components';
 
 import coreReducer from 'reducers/core';
-import {keplerGlInit} from 'actions/actions';
+import {keplerGlInit} from '@kepler.gl/actions';
 import {visStateLens, uiStateLens, mapStateLens, mapStyleLens} from 'reducers';
 
 const mockStore = configureStore();

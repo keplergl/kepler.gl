@@ -24,7 +24,6 @@ import memoize from 'lodash.memoize';
 import {console as Console} from 'global/window';
 import {injector, provideRecipesToInjector, flattenDeps} from './injector';
 import KeplerGlFactory from './kepler-gl';
-import {forwardTo} from 'actions/action-wrapper';
 
 import {registerEntry, deleteEntry, renameEntry} from 'actions/identity-actions';
 import {notNullorUndefined} from '@kepler.gl/utils';

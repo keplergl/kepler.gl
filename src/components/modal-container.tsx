@@ -64,10 +64,7 @@ import {MapStyle} from 'reducers';
 import {MapState, UiState} from '@kepler.gl/types';
 import {ProviderState} from 'reducers/provider-state-updaters';
 
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as UIStateActions from 'actions/ui-state-actions';
-import * as MapStyleActions from 'actions/map-style-actions';
-import * as ProviderActions from 'actions/provider-actions';
+import {VisStateActions, UIStateActions, MapStyleActions, ProviderActions} from '@kepler.gl/actions';
 import {ModalDialogProps} from './common/modal';
 import {Provider} from 'cloud-providers';
 import {findDOMNode} from 'react-dom';

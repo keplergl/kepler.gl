@@ -25,7 +25,6 @@ import {drainTasksForTesting} from 'react-palm/tasks';
 import {getInitialInputStyle} from 'reducers/map-style-updaters';
 
 import keplerGlReducer from 'reducers/core';
-import {addDataToMap} from 'actions/actions';
 import {
   VizColorPalette,
   COMPARE_TYPES,
@@ -36,11 +35,14 @@ import {
   DEFAULT_LAYER_LABEL
 } from '@kepler.gl/constants';
 import {DEFAULT_KEPLER_GL_PROPS} from 'components';
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as MapStateActions from 'actions/map-state-actions';
-import * as MapStyleActions from 'actions/map-style-actions';
-import * as UIStateActions from 'actions/ui-state-actions';
-import * as ProviderActions from 'actions/provider-actions';
+import {
+  addDataToMap,
+  VisStateActions,
+  MapStateActions,
+  MapStyleActions,
+  UIStateActions,
+  ProviderActions
+} from '@kepler.gl/actions';
 
 // fixtures
 import {dataId as csvDataId, testFields, testAllData} from 'test/fixtures/test-csv-data';

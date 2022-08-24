@@ -24,7 +24,6 @@ import classnames from 'classnames';
 import {SortableContainer, SortableElement} from 'react-sortable-hoc';
 import LayerPanelFactory from './layer-panel';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import * as UiStateActions from 'actions/ui-state-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import {Datasets} from 'reducers/table-utils/kepler-table';
 import {arrayMove} from '@kepler.gl/utils';
@@ -35,7 +34,7 @@ type LayerListProps = {
   layerOrder: number[];
   layerClasses: LayerClassesType;
   isSortable?: boolean;
-  uiStateActions: typeof UiStateActions;
+  uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
 };
 

@@ -44,8 +44,14 @@ import {loadMapStyles, loadMapStyleErr} from 'actions/map-style-actions';
 import {rgb} from 'd3-color';
 
 import {RGBColor, LayerGroup, MapStyles, InputStyle, VisibleLayerGroups} from '@kepler.gl/types';
-import {ReceiveMapConfigPayload, KeplerGlInitPayload} from '../actions/actions';
-import * as MapStyleActions from '../actions/map-style-actions';
+import {
+  ActionTypes,
+  ReceiveMapConfigPayload,
+  KeplerGlInitPayload,
+  MapStyleActions,
+  loadMapStyles,
+  loadMapStyleErr
+} from '@kepler.gl/actions';
 
 export type MapboxStyleUrl = string;
 

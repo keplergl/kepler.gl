@@ -26,7 +26,7 @@ import {
   receiveMapConfig,
   toggleSplitMap,
   toggleMapControl
-} from 'actions';
+} from '@kepler.gl/actions';
 import {createAction, handleActions} from 'redux-actions';
 
 test('keplerGlReducer.initialState', t => {

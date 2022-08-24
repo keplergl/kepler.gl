@@ -36,21 +36,24 @@ import {
   getSavedMapsSuccess,
   getSavedMapsError,
   loadCloudMapError,
-  resetProviderStatus
-} from '../actions/provider-actions';
-import {removeNotification, toggleModal, addNotification} from '../actions/ui-state-actions';
-import {addDataToMap} from '../actions/actions';
+  resetProviderStatus,
+  removeNotification,
+  toggleModal,
+  addNotification,
+  addDataToMap
+} from '@kepler.gl/actions';
 import {
   DEFAULT_NOTIFICATION_TYPES,
   DEFAULT_NOTIFICATION_TOPICS,
   DATASET_FORMATS,
   OVERWRITE_MAP_ID
 } from '@kepler.gl/constants';
+import {ProviderActions} from '@kepler.gl/actions';
+import {ExportFileToCloudPayload} from '@kepler.gl/types';
 
 import {FILE_CONFLICT_MSG} from '../cloud-providers';
 import {DATASET_HANDLERS} from '@kepler.gl/processors';
 
-import * as ProviderActions from '../actions/provider-actions';
 import {MapListItem} from '../cloud-providers';
 
 type ActionPayload<P> = {
@@ -128,7 +131,7 @@ function createGlobalNotificationTasks({
  */
 export const exportFileToCloudUpdater = (
   state: ProviderState,
-  action: ActionPayload<ProviderActions.ExportFileToCloudPayload>
+  action: ActionPayload<ExportFileToCloudPayload>
 ): ProviderState => {
   const {mapData, provider, options = {}, onSuccess, onError, closeModal} = action.payload;
 

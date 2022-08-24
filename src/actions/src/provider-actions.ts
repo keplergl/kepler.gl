@@ -20,7 +20,7 @@
 
 import {createAction} from '@reduxjs/toolkit';
 import {ACTION_PREFIX} from './action-types';
-import {SavedMap} from 'schemas';
+import {ExportFileOptions, ExportFileToCloudPayload, OnErrorCallBack, OnSuccessCallBack} from '@kepler.gl/types';
 import {MapListItem, Provider} from 'cloud-providers';
 
 // eslint-disable-next-line prettier/prettier

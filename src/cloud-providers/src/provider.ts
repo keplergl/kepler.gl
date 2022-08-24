@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {Upload} from 'components/common/icons';
-import {MapData, ExportFileOptions} from 'actions/provider-actions';
+import {MapData, ExportFileOptions} from '@kepler.gl/types';
 import {ComponentType} from 'react';
 
 export type Millisecond = number;
