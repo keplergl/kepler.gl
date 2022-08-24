@@ -18,13 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {set, toArray} from './utils';
-import {MAX_GPU_FILTERS, FILTER_TYPES} from '@kepler.gl/constants';
-import {notNullorUndefined} from './data-utils';
 import moment from 'moment';
-import {Filter} from 'reducers/vis-state-updaters';
-import {DataContainerInterface} from './table-utils/data-container-interface';
-import {Field, GpuFilter} from './table-utils/kepler-table';
+import {MAX_GPU_FILTERS, FILTER_TYPES} from '@kepler.gl/constants';
+import {Field, Filter} from '@kepler.gl/types';
+
+import {set, toArray, notNullorUndefined} from '@kepler.gl/utils';
+import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
+import {GpuFilter} from 'reducers/table-utils/kepler-table';
 
 /**
  * Set gpu mode based on current number of gpu filters exists

@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {notNullorUndefined, unique} from './data-utils';
+import {notNullorUndefined, unique} from '@kepler.gl/utils';
 import {extent} from 'd3-array';
-import {DataContainerInterface} from './table-utils/data-container-interface';
+import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
 
 type dataValueAccessor = <T>(param: T) => T;
 type dataContainerValueAccessor = (d: {index: number}, dc: DataContainerInterface) => any;

@@ -30,11 +30,10 @@ import {
   testRows,
   preparedFilterDomain0
 } from 'test/helpers/layer-utils';
-import {KeplerGlLayers, s2DefaultElevation as defaultElevation} from '@kepler.gl/layers';
+import {s2DefaultElevation as defaultElevation, KeplerGlLayers} from '@kepler.gl/layers';
+import {copyTableAndUpdate} from 'reducers/table-utils';
 
 const {S2GeometryLayer} = KeplerGlLayers;
-
-import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 
 test('#S2Geometry -> constructor', t => {
   const TEST_CASES = [

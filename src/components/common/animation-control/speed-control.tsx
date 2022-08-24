@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import {Tooltip} from 'components/common/styled-components';
 import IconButton from '../icon-button';
 import {media} from '@kepler.gl/styles';
-import {preciseRound} from 'utils/data-utils';
+import {preciseRound} from '@kepler.gl/utils';
 
 const StyledSpeedControl = styled.div`
   display: flex;

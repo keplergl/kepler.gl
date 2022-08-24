@@ -30,7 +30,7 @@ import {
   arrayMove,
   getFormatter,
   defaultFormatter
-} from 'utils/data-utils';
+} from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from 'constants';
 
 test('dataUtils -> clamp', t => {

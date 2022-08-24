@@ -1,12 +1,13 @@
 import {ComponentType} from 'react';
-import {Datasets, Filter, InteractionConfig, MapStyle} from '../reducers';
+import {MapStyle} from 'reducers';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {UiState} from 'reducers/ui-state-updaters';
+import {Filter, InteractionConfig, UiState} from '@kepler.gl/types';
 
 import * as MapStyleActions from 'actions/map-style-actions';
 import * as VisStateActions from 'actions/vis-state-actions';
 import * as MapStateActions from 'actions/map-state-actions';
 import * as UIStateActions from 'actions/ui-state-actions';
+import {Datasets} from 'reducers/table-utils/kepler-table';
 
 export type SidePanelItem = {
   id: string;

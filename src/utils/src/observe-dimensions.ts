@@ -19,9 +19,8 @@
 // THE SOFTWARE.
 
 import throttle from 'lodash.throttle';
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useRef, useState, RefObject} from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
-import {RefObject} from 'react';
 
 export interface Dimensions {
   readonly height: number;

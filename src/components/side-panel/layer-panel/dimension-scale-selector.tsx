@@ -22,7 +22,7 @@ import React from 'react';
 import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
 import ItemSelector from 'components/common/item-selector/item-selector';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {camelize} from 'utils/utils';
+import {camelize} from '@kepler.gl/utils';
 
 type DimensionScaleSelectorProps = {
   label: string;

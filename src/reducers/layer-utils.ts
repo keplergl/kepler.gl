@@ -18,18 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
+import {
+  Field,
+  TooltipField,
+  CompareType,
+  SplitMapLayers,
+  InteractionConfig
+} from '@kepler.gl/types';
 import {
   FindDefaultLayerPropsReturnValue,
   Layer,
   LayerClassesType,
   OVERLAY_TYPE_CONST
 } from '@kepler.gl/layers';
-import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
-import {ThreeDBuildingLayer} from '../deckgl-layers';
-import {getMapLayersFromSplitMaps} from './map-utils';
-import {isFunction} from 'utils/utils';
-import {VisState, TooltipField, CompareType, SplitMapLayers} from 'reducers/vis-state-updaters';
-import KeplerTable, {Field} from './table-utils/kepler-table';
+
+import KeplerTable, {Datasets} from 'reducers/table-utils/kepler-table';
+import {VisState} from 'schemas';
+import {isFunction, getMapLayersFromSplitMaps} from '@kepler.gl/utils';
+import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
 
 export type LayersToRender = {
   [layerId: string]: boolean;
@@ -90,7 +97,7 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
  */
 export function calculateLayerData(
   layer: Layer,
-  state: VisState,
+  state: {datasets: Datasets},
   oldLayerData?: any
 ): {
   layerData: any;
@@ -117,11 +124,11 @@ export function getLayerHoverProp({
   layersToRender,
   datasets
 }: {
-  interactionConfig: VisState['interactionConfig'];
-  hoverInfo: VisState['hoverInfo'];
-  layers: VisState['layers'];
+  interactionConfig: InteractionConfig;
+  hoverInfo: any;
+  layers: Layer[];
   layersToRender: LayersToRender;
-  datasets: VisState['datasets'];
+  datasets: Datasets;
 }): LayerHoverProp | null {
   if (interactionConfig.tooltip.enabled && hoverInfo && hoverInfo.picked) {
     // if anything hovered
@@ -203,7 +210,7 @@ export function isLayerVisible(layer, mapLayers) {
 // return {[id]: true \ false}
 export function prepareLayersForDeck(
   layers: Layer[],
-  layerData: VisState['layerData']
+  layerData: any[]
 ): {
   [key: string]: boolean;
 } {
@@ -279,41 +286,41 @@ export function computeDeckLayers(
 
   const {mapIndex, mapboxApiAccessToken, mapboxApiUrl, primaryMap, layersForDeck} = options || {};
 
-  if (!layerData || !layerData.length) {
-    return [];
+  let dataLayers: any[] = [];
+
+  if (layerData && layerData.length) {
+    const mapLayers = getMapLayersFromSplitMaps(splitMaps, mapIndex || 0);
+
+    const currentLayersForDeck = layersForDeck || prepareLayersForDeck(layers, layerData);
+
+    dataLayers = layerOrder
+      .slice()
+      .reverse()
+      .filter(idx => currentLayersForDeck[layers[idx].id])
+      .reduce((overlays, idx) => {
+        const layerCallbacks = onSetLayerDomain
+          ? {
+              onSetLayerDomain: val => onSetLayerDomain(idx, val)
+            }
+          : {};
+        const layerOverlay = renderDeckGlLayer(
+          {
+            datasets,
+            layers,
+            layerData,
+            hoverInfo,
+            clicked,
+            mapState,
+            interactionConfig,
+            animationConfig,
+            mapLayers
+          },
+          layerCallbacks,
+          idx
+        );
+        return overlays.concat(layerOverlay || []);
+      }, []);
   }
-
-  const mapLayers = getMapLayersFromSplitMaps(splitMaps, mapIndex || 0);
-
-  const currentLayersForDeck = layersForDeck || prepareLayersForDeck(layers, layerData);
-
-  const dataLayers = layerOrder
-    .slice()
-    .reverse()
-    .filter(idx => currentLayersForDeck[layers[idx].id])
-    .reduce((overlays, idx) => {
-      const layerCallbacks = onSetLayerDomain
-        ? {
-            onSetLayerDomain: val => onSetLayerDomain(idx, val)
-          }
-        : {};
-      const layerOverlay = renderDeckGlLayer(
-        {
-          datasets,
-          layers,
-          layerData,
-          hoverInfo,
-          clicked,
-          mapState,
-          interactionConfig,
-          animationConfig,
-          mapLayers
-        },
-        layerCallbacks,
-        idx
-      );
-      return overlays.concat(layerOverlay || []);
-    }, []);
 
   if (!primaryMap) {
     return dataLayers;

@@ -43,19 +43,22 @@ import {
 } from 'test/fixtures/geojson';
 
 import {
-  ACCEPTED_ANALYZER_TYPES,
-  analyzerTypeToFieldType,
-  formatCsv,
-  getFieldsFromData,
-  getSampleForTypeAnalyze,
   parseCsvRowsByFieldType,
   processCsvData,
   processGeojson,
-  processRowObject,
-  validateInputData
+  processRowObject
 } from '@kepler.gl/processors';
 
-import {createDataContainer} from 'utils/table-utils';
+import {
+  ACCEPTED_ANALYZER_TYPES,
+  analyzerTypeToFieldType,
+  getSampleForTypeAnalyze,
+  validateInputData,
+  getFieldsFromData
+} from '@kepler.gl/utils';
+
+import {createDataContainer} from 'reducers/table-utils';
+import {formatCsv} from 'reducers';
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {cmpFields} from '../../helpers/comparison-utils';

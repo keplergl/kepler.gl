@@ -24,7 +24,7 @@ import sinon from 'sinon';
 import {shallow} from 'enzyme';
 import NotificationItemFactory from 'components/notification-panel/notification-item';
 import NotificationPanelFactory from 'components/notification-panel';
-import {createNotification} from 'utils/notifications-utils';
+import {createNotification} from '@kepler.gl/utils';
 import {theme} from '@kepler.gl/styles';
 
 const NotificationItem = NotificationItemFactory();

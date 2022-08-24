@@ -20,7 +20,7 @@
 
 import React, {useCallback} from 'react';
 import RangeFilterFactory from 'components/filters/range-filter';
-import {RangeFilter} from 'reducers';
+import {RangeFilter} from '@kepler.gl/types';
 import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/filter-panel-with-field-select';
 import {FilterPanelComponent} from './types';
 

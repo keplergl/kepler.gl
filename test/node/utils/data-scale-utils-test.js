@@ -19,13 +19,9 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {
-  getOrdinalDomain,
-  getQuantileDomain,
-  getLinearDomain,
-  getLogDomain
-} from 'utils/data-scale-utils';
-import {createDataContainer} from 'utils/table-utils';
+import {getOrdinalDomain, getQuantileDomain, getLinearDomain, getLogDomain} from 'reducers';
+
+import {createDataContainer} from 'reducers/table-utils';
 
 function numberSort(a, b) {
   return a - b;

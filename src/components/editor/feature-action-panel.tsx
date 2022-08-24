@@ -28,8 +28,9 @@ import classnames from 'classnames';
 import {Trash, Layers, Copy, Checkmark} from 'components/common/icons';
 import copy from 'copy-to-clipboard';
 import {Layer} from '@kepler.gl/layers';
-import {Datasets, Filter} from 'reducers';
+import {Filter} from '@kepler.gl/types';
 import {Feature} from '@nebula.gl/edit-modes';
+import {Datasets} from 'reducers/table-utils/kepler-table';
 
 const LAYOVER_OFFSET = 4;
 

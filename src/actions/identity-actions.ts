@@ -20,7 +20,7 @@
 
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
-import {UiState} from 'reducers/ui-state-updaters';
+import {UiState} from '@kepler.gl/types';
 
 export type RegisterEntryUpdaterAction = {
   payload: {

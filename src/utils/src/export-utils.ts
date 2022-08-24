@@ -18,25 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import domtoimage from 'utils/dom-to-image';
 import {Blob, URL, atob, Uint8Array, ArrayBuffer, document} from 'global/window';
+import get from 'lodash.get';
+
 import {
   EXPORT_IMG_RESOLUTION_OPTIONS,
   EXPORT_IMG_RATIO_OPTIONS,
   RESOLUTIONS,
   EXPORT_IMG_RATIOS,
-  EXPORT_DATA_TYPE,
   FourByThreeRatioOption,
-  OneXResolutionOption
+  OneXResolutionOption,
+  ExportImage
 } from '@kepler.gl/constants';
-import {exportMapToHTML} from 'templates/export-map-html';
-import {formatCsv} from '@kepler.gl/processors';
-import get from 'lodash.get';
-import {set, generateHashId} from 'utils/utils';
-
-import {createIndexedDataContainer} from './table-utils/data-container-utils';
-import {ExportImage} from 'reducers/ui-state-updaters';
-import {VisState} from 'reducers';
+import domtoimage from './dom-to-image';
+import {generateHashId, set} from './utils';
+import {exportMapToHTML} from './export-map-html';
 
 /**
  * Default file names
@@ -209,47 +205,6 @@ export function exportHtml(state, options) {
   downloadFile(fileBlob, state.appName ? `${state.appName}.html` : DEFAULT_HTML_NAME);
 }
 
-interface StateType {
-  visState: VisState;
-  appName?: string;
-}
-
-export function exportData(state: StateType, options) {
-  const {visState, appName} = state;
-  const {datasets} = visState;
-  const {selectedDataset, dataType, filtered} = options;
-  // get the selected data
-  const filename = appName ? appName : DEFAULT_DATA_NAME;
-  const selectedDatasets = datasets[selectedDataset]
-    ? [datasets[selectedDataset]]
-    : Object.values(datasets);
-  if (!selectedDatasets.length) {
-    // error: selected dataset not found.
-    return;
-  }
-
-  selectedDatasets.forEach(selectedData => {
-    const {dataContainer, fields, label, filteredIdxCPU = []} = selectedData;
-    const toExport = filtered
-      ? createIndexedDataContainer(dataContainer, filteredIdxCPU)
-      : dataContainer;
-
-    // start to export data according to selected data type
-    switch (dataType) {
-      case EXPORT_DATA_TYPE.CSV: {
-        const csv = formatCsv(toExport, fields);
-
-        const fileBlob = new Blob([csv], {type: 'text/csv'});
-        downloadFile(fileBlob, `${filename}_${label}.csv`);
-        break;
-      }
-      // TODO: support more file types.
-      default:
-        break;
-    }
-  });
-}
-
 export function exportMap(state, options = DEFAULT_EXPORT_JSON_SETTINGS) {
   const {imageDataUri} = state.uiState.exportImage;
   const thumbnail: Blob | null = imageDataUri ? dataURItoBlob(imageDataUri) : null;
@@ -264,8 +219,7 @@ export function exportMap(state, options = DEFAULT_EXPORT_JSON_SETTINGS) {
 const exporters = {
   exportImage,
   exportJson,
-  exportHtml,
-  exportData
+  exportHtml
 };
 
 export default exporters;

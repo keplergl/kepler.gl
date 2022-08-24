@@ -18,51 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import Console from 'global/console';
-import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
+import {console as Console} from 'global/console';
 import {ascending, descending} from 'd3-array';
 
 // import {validateInputData} from 'processors/data-processor';
-import {generateHashId} from 'utils/utils';
-import {getGpuFilterProps, getDatasetFieldIndexForFilter} from 'utils/gpu-filter-utils';
-import {
-  getFilterProps,
-  getFilterRecord,
-  diffFilters,
-  getFilterFunction,
-  filterDataByFilterTypes,
-  getNumericFieldDomain,
-  getTimestampFieldDomain,
-  FilterResult
-} from 'utils/filter-utils';
-import {maybeToDate, getSortingFunction} from 'utils/data-utils';
-import {
-  getQuantileDomain,
-  getOrdinalDomain,
-  getLogDomain,
-  getLinearDomain
-} from 'utils/data-scale-utils';
+import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
+import {RGBColor, Field, FieldPair, FieldDomain, Filter, ProtoDataset} from '@kepler.gl/types';
+
+import {generateHashId, getSortingFunction, timeToUnixMilli} from '@kepler.gl/utils';
+import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 
 import {createDataContainer} from './data-container-utils';
 
-import {RGBColor} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
-import {FieldDomain, Filter} from 'reducers/vis-state-updaters';
+import {
+  diffFilters,
+  filterDataByFilterTypes,
+  FilterResult,
+  getFilterFunction,
+  getFilterProps,
+  getFilterRecord,
+  getNumericFieldDomain,
+  getTimestampFieldDomain
+} from '../filter-utils';
+import {
+  getLinearDomain,
+  getLogDomain,
+  getOrdinalDomain,
+  getQuantileDomain
+} from '../data-scale-utils';
 import {DataContainerInterface} from './data-container-interface';
-import {ProtoDataset} from 'actions';
-
-export type Field = {
-  analyzerType: string;
-  id?: string;
-  name: string;
-  displayName: string;
-  format: string;
-  type: string;
-  fieldIdx: number;
-  valueAccessor(v: {index: number}): any;
-  filterProps?: any;
-  metadata?: any;
-};
 
 export type GpuFilter = {
   filterRange: number[][];
@@ -73,17 +58,6 @@ export type GpuFilter = {
     getIndex?: (any) => number,
     getData?: (dc_: DataContainerInterface, d: any, fieldIndex: number) => any
   ) => (d: any) => number;
-};
-
-export type FieldPair = {
-  defaultName: string;
-  pair: {
-    [key: string]: {
-      fieldIdx: number;
-      value: string;
-    };
-  };
-  suffix: string[];
 };
 
 export type FilterRecord = {
@@ -102,6 +76,20 @@ export type FilterDatasetOpt = {
 
 // Unique identifier of each field
 const FID_KEY = 'name';
+
+export function maybeToDate(
+  isTime: boolean,
+  fieldIdx: number,
+  format: string,
+  dc: DataContainerInterface,
+  d: {index: number}
+) {
+  if (isTime) {
+    return timeToUnixMilli(dc.valueAt(d.index, fieldIdx), format);
+  }
+
+  return dc.valueAt(d.index, fieldIdx);
+}
 
 class KeplerTable {
   readonly id: string;
@@ -475,6 +463,10 @@ class KeplerTable {
     }
   }
 }
+
+export type Datasets = {
+  [key: string]: KeplerTable;
+};
 
 // HELPER FUNCTIONS (MAINLY EXPORTED FOR TEST...)
 
