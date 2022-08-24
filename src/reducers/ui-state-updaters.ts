@@ -46,6 +46,7 @@ import {
   MapControls,
   UiState
 } from '@kepler.gl/types';
+import { UIStateActions } from '@kepler.gl/actions';
 
 export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
 export const DEFAULT_MODAL = ADD_DATA_ID;
