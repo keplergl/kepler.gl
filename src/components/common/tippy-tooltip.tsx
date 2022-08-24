@@ -20,6 +20,7 @@
 
 import styled from 'styled-components';
 import React, {useState} from 'react';
+import {RootContext} from 'components';
 import Tippy, {TippyProps} from '@tippyjs/react';
 
 const TippyArrow = styled.div`
@@ -111,19 +112,26 @@ const TippyTooltip = ({children, render, duration = 200, ...rest}: TippyProps) =
   }
 
   return (
-    <Tippy
-      {...rest}
-      animation={true}
-      render={attrs => (
-        <TippyTooltipContent {...attrs} style={{opacity, transition: `opacity ${duration}ms`}}>
-          {render?.(attrs)}
-        </TippyTooltipContent>
+    <RootContext.Consumer>
+      {context => (
+        <Tippy
+          {...rest}
+          // Using document.body would result in the CSS styles not being applied
+          // to the tooltip content when embedding the map widget as a Shadow DOM element.
+          appendTo={context?.current || 'parent'}
+          animation={true}
+          render={attrs => (
+            <TippyTooltipContent {...attrs} style={{opacity, transition: `opacity ${duration}ms`}}>
+              {render?.(attrs)}
+            </TippyTooltipContent>
+          )}
+          onMount={onMount}
+          onHide={onHide}
+        >
+          {children}
+        </Tippy>
       )}
-      onMount={onMount}
-      onHide={onHide}
-    >
-      {children}
-    </Tippy>
+    </RootContext.Consumer>
   );
 };
 

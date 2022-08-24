@@ -26,6 +26,7 @@ import {ArrowLeft, ArrowRight, Pin} from 'components/common/icons';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import Tippy from '@tippyjs/react/headless';
+import {RootContext} from 'components';
 import {LayerHoverProp} from 'reducers/layer-utils';
 
 const MAX_WIDTH = 500;
@@ -204,48 +205,55 @@ export default function MapPopoverFactory(
     const moveLeft = () => setHorizontalPlacement('end');
     const moveRight = () => setHorizontalPlacement('start');
     return (
-      <Tippy
-        popperOptions={getPopperOptions(container)}
-        zIndex={999} /* should be below Modal which has zIndex=1000 */
-        visible={true}
-        interactive={true}
-        getReferenceClientRect={() => createVirtualReference(container, x, y)}
-        // @ts-ignore
-        placement={`bottom-${horizontalPlacement}`}
-        // @ts-ignore
-        offset={getOffsetForPlacement}
-        appendTo={document.body}
-        render={attrs => (
-          <StyledMapPopover {...attrs} className="map-popover">
-            {frozen ? (
-              <PinnedButtons>
-                {horizontalPlacement === 'start' && (
-                  <StyledIcon className="popover-arrow-left" onClick={moveLeft}>
-                    <ArrowLeft />
-                  </StyledIcon>
-                )}
-                <StyledIcon className="popover-pin" onClick={onClose}>
-                  <Pin height="16px" />
-                </StyledIcon>
-                {horizontalPlacement === 'end' && (
-                  <StyledIcon className="popover-arrow-right" onClick={moveRight}>
-                    <ArrowRight />
-                  </StyledIcon>
-                )}
-                {isBase && (
-                  <div className="primary-label">
-                    <FormattedMessage id="mapPopover.primary" />
-                  </div>
-                )}
-              </PinnedButtons>
-            ) : null}
-            <PopoverContent>
-              {Array.isArray(coordinate) && <CoordinateInfo coordinate={coordinate} zoom={zoom} />}
-              {layerHoverProp && <LayerHoverInfo {...layerHoverProp} />}
-            </PopoverContent>
-          </StyledMapPopover>
+      <RootContext.Consumer>
+        {context => (
+          <Tippy
+            popperOptions={getPopperOptions(container)}
+            zIndex={999} /* should be below Modal which has zIndex=1000 */
+            visible={true}
+            interactive={true}
+            // @ts-ignore
+            getReferenceClientRect={() => createVirtualReference(container, x, y)}
+            // @ts-ignore
+            placement={`bottom-${horizontalPlacement}`}
+            // @ts-ignore
+            offset={getOffsetForPlacement}
+            appendTo={context?.current || document.body}
+            render={attrs => (
+              <StyledMapPopover {...attrs} className="map-popover">
+                {frozen ? (
+                  <PinnedButtons>
+                    {horizontalPlacement === 'start' && (
+                      <StyledIcon className="popover-arrow-left" onClick={moveLeft}>
+                        <ArrowLeft />
+                      </StyledIcon>
+                    )}
+                    <StyledIcon className="popover-pin" onClick={onClose}>
+                      <Pin height="16px" />
+                    </StyledIcon>
+                    {horizontalPlacement === 'end' && (
+                      <StyledIcon className="popover-arrow-right" onClick={moveRight}>
+                        <ArrowRight />
+                      </StyledIcon>
+                    )}
+                    {isBase && (
+                      <div className="primary-label">
+                        <FormattedMessage id="mapPopover.primary" />
+                      </div>
+                    )}
+                  </PinnedButtons>
+                ) : null}
+                <PopoverContent>
+                  {Array.isArray(coordinate) && (
+                    <CoordinateInfo coordinate={coordinate} zoom={zoom} />
+                  )}
+                  {layerHoverProp && <LayerHoverInfo {...layerHoverProp} />}
+                </PopoverContent>
+              </StyledMapPopover>
+            )}
+          />
         )}
-      />
+      </RootContext.Consumer>
     );
   };
   return injectIntl(MapPopover);

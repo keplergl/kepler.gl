@@ -139,7 +139,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
           placement="left-start"
           onCreate={setTippyInstance}
           render={attrs => <div {...attrs}>{mapControlPanel}</div>}
-          appendTo={document.body}
+          appendTo="parent"
         >
           <div>
             <MapControlTooltip id="show-legend" message="tooltip.showLegend">
