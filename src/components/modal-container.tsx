@@ -26,8 +26,8 @@ import document from 'global/document';
 
 import {EXPORT_DATA_TYPE_OPTIONS, EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import ModalDialogFactory from './modals/modal-dialog';
-import {exportJson, exportHtml, exportData, exportImage, exportMap} from 'utils/export-utils';
-import {isValidMapInfo} from 'utils/map-info-utils';
+import {exportHtml, isValidMapInfo, exportMap, exportJson} from '@kepler.gl/utils';
+import {exportData} from 'reducers/export-utils';
 
 // modals
 import DeleteDatasetModalFactory from './modals/delete-data-modal';
@@ -58,9 +58,10 @@ import {
   SHARE_MAP_ID,
   OVERWRITE_MAP_ID
 } from '@kepler.gl/constants';
-import {getFileFormatNames, getFileExtensions} from '../reducers/vis-state-selectors';
-import {MapState, MapStyle, UiState, VisState} from 'reducers';
-import {OnSuccessCallBack, OnErrorCallBack} from 'actions';
+
+import {getFileFormatNames, getFileExtensions} from 'reducers/vis-state-selectors';
+import {MapStyle} from 'reducers';
+import {MapState, UiState, OnSuccessCallBack, OnErrorCallBack} from '@kepler.gl/types';
 import {ProviderState} from 'reducers/provider-state-updaters';
 
 import * as VisStateActions from 'actions/vis-state-actions';
@@ -70,6 +71,7 @@ import * as ProviderActions from 'actions/provider-actions';
 import {ModalDialogProps} from './common/modal';
 import {Provider} from 'cloud-providers';
 import {findDOMNode} from 'react-dom';
+import {VisState} from 'schemas';
 
 const DataTableModalStyle = css`
   top: 80px;

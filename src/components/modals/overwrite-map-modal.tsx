@@ -22,11 +22,9 @@ import React from 'react';
 import styled from 'styled-components';
 import {CenterVerticalFlexbox} from 'components/common/styled-components';
 import {UploadAnimation} from './status-panel';
-import ImageModalContainer from './image-modal-container';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {Provider} from 'cloud-providers';
-
-import {ImageModalContainerProps} from './image-modal-container';
+import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
+import {Provider} from '@kepler.gl/cloud-providers';
 import {cleanupExportImage as cleanupExportImageAction} from 'actions';
 
 /** @typedef {import('./overwrite-map-modal').OverwriteMapModalProps} OverwriteMapModalProps */

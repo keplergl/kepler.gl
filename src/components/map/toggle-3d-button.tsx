@@ -23,7 +23,7 @@ import classnames from 'classnames';
 import {Cube3d} from 'components/common/icons';
 import {MapControlButton} from 'components/common/styled-components';
 import MapControlTooltipFactory from './map-control-tooltip';
-import {MapControls} from 'reducers';
+import {MapControls} from '@kepler.gl/types';
 
 Toggle3dButtonFactory.deps = [MapControlTooltipFactory];
 

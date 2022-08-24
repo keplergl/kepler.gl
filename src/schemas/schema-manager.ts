@@ -20,17 +20,17 @@
 
 import {console as Console} from 'global/window';
 
-import {Datasets} from 'reducers';
+import {Datasets} from 'reducers/table-utils';
 import datasetSchema from './dataset-schema';
 import mapStyleSchema from './map-style-schema';
 import mapStateSchema from './map-state-schema';
 import {SavedDatasetV1, ParsedDataset} from './dataset-schema';
-import {visStateSchema, SavedVisState, ParsedVisState} from './vis-state-schema';
+import {visStateSchema} from './vis-state-schema';
 
 import {CURRENT_VERSION, VERSIONS} from './versions';
-import {isPlainObject} from 'utils/utils';
-import {RGBColor} from 'types';
-import {VisState} from '../reducers';
+import {isPlainObject} from '@kepler.gl/utils';
+
+import {MapInfo, ParsedVisState, RGBColor, SavedVisState} from '@kepler.gl/types';
 
 export type SavedMapState = {
   bearing: number;
@@ -170,7 +170,7 @@ export class KeplerGLSchema {
     };
   }
 
-  getMapInfo(state: any): VisState['mapInfo'] {
+  getMapInfo(state: any): MapInfo {
     return state.visState.mapInfo;
   }
   /**

@@ -24,6 +24,7 @@ import {mount} from 'enzyme';
 import sinon from 'sinon';
 import sinonStubPromise from 'sinon-stub-promise';
 import {getDistanceScales} from 'viewport-mercator-project';
+import {copyTableAndUpdate} from 'reducers/table-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 
@@ -41,7 +42,6 @@ import {
 } from 'test/helpers/layer-utils';
 import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
 import {IntlWrapper} from '../../helpers/component-utils';
-import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
 
 const {IconLayer} = KeplerGlLayers;
 const columns = {

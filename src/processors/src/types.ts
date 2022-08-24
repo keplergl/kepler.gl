@@ -1,5 +1,3 @@
-import {Field} from 'utils/table-utils/kepler-table';
-
 export type FileCacheItem = {
   data: any;
   info: {
@@ -8,12 +6,6 @@ export type FileCacheItem = {
     format: string;
   };
 };
-
-export type RowData = {
-  [key: string]: string | null;
-}[];
-
-export type ProcessorResult = {fields: Field[]; rows: any[][]} | null;
 
 export type ValidKeplerGlMap = {
   datasets: unknown;

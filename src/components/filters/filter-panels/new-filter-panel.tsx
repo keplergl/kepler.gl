@@ -23,9 +23,9 @@ import {StyledFilterContent} from 'components/common/styled-components';
 import FilterPanelHeaderFactory from 'components/side-panel/filter-panel/filter-panel-header';
 import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
 import FieldSelectorFactory from '../../common/field-selector';
-import {FilterBase, LineChart} from 'reducers';
 import {FilterPanelComponent} from './types';
-import KeplerTable, {Field} from 'utils/table-utils/kepler-table';
+import KeplerTable from 'reducers/table-utils/kepler-table';
+import {Field, FilterBase, LineChart} from '@kepler.gl/types';
 
 NewFilterPanelFactory.deps = [
   FilterPanelHeaderFactory,

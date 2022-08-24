@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import React from 'react';
 import {console as Console} from 'global/window';
 import keymirror from 'keymirror';
 import {DataFilterExtension} from '@deck.gl/extensions';
@@ -48,14 +49,8 @@ import {
   PROJECTED_PIXEL_SIZE_MULTIPLIER
 } from '@kepler.gl/constants';
 
-import {generateHashId, isPlainObject} from 'utils/utils';
+import {generateHashId, getColorGroupByName, reverseColorRange, hexToRgb} from '@kepler.gl/utils';
 
-import {getLatLngBounds, notNullorUndefined} from 'utils/data-utils';
-import {getSampleData} from 'utils/table-utils/data-container-utils';
-
-import {hexToRgb, getColorGroupByName, reverseColorRange} from 'utils/color-utils';
-
-import {MapState, Filter, Datasets} from 'reducers';
 import {
   RGBColor,
   RGBAColor,
@@ -64,12 +59,15 @@ import {
   LayerTextLabel,
   ColorUI,
   LayerVisConfig,
-  LayerVisConfigSettings
+  LayerVisConfigSettings,
+  Field,
+  MapState,
+  Filter
 } from '@kepler.gl/types';
-import {KeplerTable} from '../../utils';
-import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
-import {Field, GpuFilter} from 'utils/table-utils/kepler-table';
-import React from 'react';
+import KeplerTable, {Datasets, GpuFilter} from 'reducers/table-utils/kepler-table';
+import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
+import {getSampleData} from 'reducers/table-utils/data-container-utils';
+import {getLatLngBounds, isPlainObject, notNullorUndefined} from '@kepler.gl/utils';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 

@@ -20,7 +20,7 @@
 
 import React, {useCallback} from 'react';
 import SingleSelectFilterFactory from 'components/filters/single-select-filter';
-import {SelectFilter} from 'reducers';
+import {SelectFilter} from '@kepler.gl/types';
 import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/filter-panel-with-field-select';
 import {FilterPanelComponent} from './types';
 

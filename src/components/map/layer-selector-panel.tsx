@@ -27,7 +27,7 @@ import MapLayerSelector from '../common/map-layer-selector';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlPanelFactory from './map-control-panel';
 import {Layer} from '@kepler.gl/layers';
-import {MapControl, MapControls} from 'reducers';
+import {MapControl, MapControls} from '@kepler.gl/types';
 
 LayerSelectorPanelFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory];
 

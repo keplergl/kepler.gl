@@ -27,7 +27,7 @@ import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import Tippy from '@tippyjs/react/headless';
 import {RootContext} from 'components';
-import {LayerHoverProp} from 'utils/layer-utils';
+import {LayerHoverProp} from 'reducers/layer-utils';
 
 const MAX_WIDTH = 500;
 const MAX_HEIGHT = 600;

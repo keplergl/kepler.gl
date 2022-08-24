@@ -1,5 +1,3 @@
-export * from './layers';
-
 export type RGBColor = [number, number, number];
 export type RGBAColor = [number, number, number, number];
 export type HexColor = string; // this is the best typescript can do at the moment
@@ -18,3 +16,9 @@ export type Entries<T> = {
 export type NestedPartial<T> = {
   [P in keyof T]?: NestedPartial<T[P]>;
 };
+
+export type RowData = {
+  [key: string]: string | null;
+}[];
+
+export type ProcessorResult = {fields: Field[]; rows: any[][]} | null;

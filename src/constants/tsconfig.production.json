@@ -27,6 +27,9 @@
       "*": ["*"]
     }
   },
-  "include": ["src"],
-  "exclude": ["*/actions/**/*", "*/utils/**/*", "../components/**/*"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+  ]
 }

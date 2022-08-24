@@ -23,7 +23,7 @@ import classnames from 'classnames';
 import {MapControlButton} from 'components/common/styled-components';
 import {Delete, Split} from 'components/common/icons';
 import MapControlTooltipFactory from './map-control-tooltip';
-import {MapControl, MapControls} from 'reducers';
+import {MapControl, MapControls} from '@kepler.gl/types';
 
 SplitMapButtonFactory.deps = [MapControlTooltipFactory];
 

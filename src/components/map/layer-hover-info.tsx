@@ -20,14 +20,17 @@
 
 import React, {useMemo} from 'react';
 import styled from 'styled-components';
-import {TooltipField} from 'reducers/vis-state-updaters';
+import {TooltipField} from '@kepler.gl/types';
 import {CenterFlexbox} from 'components/common/styled-components';
 import {Layers} from 'components/common/icons';
 import PropTypes from 'prop-types';
-import {notNullorUndefined} from 'utils/data-utils';
-import {getTooltipDisplayValue, getTooltipDisplayDeltaValue} from 'utils/interaction-utils';
-import {AggregationLayerHoverData} from 'utils/layer-utils';
-import {Layer} from 'layers';
+import {notNullorUndefined} from '@kepler.gl/utils';
+import {Layer} from '@kepler.gl/layers';
+import {
+  AggregationLayerHoverData,
+  getTooltipDisplayDeltaValue,
+  getTooltipDisplayValue
+} from 'reducers';
 
 export const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};

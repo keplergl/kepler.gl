@@ -28,11 +28,10 @@ import {providerStateReducerFactory} from './provider-state';
 
 import composers from './composers';
 
-import {VisState} from './vis-state-updaters';
-import {MapState} from './map-state-updaters';
+import {VisState} from 'schemas';
+import {MapState, UiState} from '@kepler.gl/types';
 import {MapStyle} from './map-style-updaters';
 import {ProviderState} from './provider-state-updaters';
-import {UiState} from './ui-state-updaters';
 
 export type KeplerGlState = {
   visState: VisState;

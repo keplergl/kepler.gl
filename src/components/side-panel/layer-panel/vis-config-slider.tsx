@@ -26,9 +26,9 @@ import RangeSliderFactory from 'components/common/range-slider';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {KeyEvent} from '@kepler.gl/constants';
 import {Checkbox} from 'components';
-import {clamp} from 'utils/data-utils';
-import {isInRange} from 'utils/filter-utils';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
+import {isInRange} from 'reducers/filter-utils';
+import {clamp} from '@kepler.gl/utils';
 
 type LazyInputProps = {
   value: string | [string, string];
