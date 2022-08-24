@@ -29,7 +29,7 @@ import MapLegendFactory from './map-legend';
 import LazyTippy from './lazy-tippy';
 import {createPortal} from 'react-dom';
 import {DIMENSIONS} from '@kepler.gl/constants';
-import {MapControl, MapControls} from 'reducers';
+import {MapControl, MapControls} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 
 MapLegendPanelFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory, MapLegendFactory];
@@ -139,7 +139,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
           placement="left-start"
           onCreate={setTippyInstance}
           render={attrs => <div {...attrs}>{mapControlPanel}</div>}
-          appendTo={document.body}
+          appendTo="parent"
         >
           <div>
             <MapControlTooltip id="show-legend" message="tooltip.showLegend">

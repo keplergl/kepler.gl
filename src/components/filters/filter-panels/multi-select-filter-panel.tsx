@@ -20,7 +20,7 @@
 
 import React, {useCallback} from 'react';
 import MultiSelectFilterFactory from 'components/filters/multi-select-filter';
-import {MultiSelectFilter} from 'reducers';
+import {MultiSelectFilter} from '@kepler.gl/types';
 import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/filter-panel-with-field-select';
 import {FilterPanelComponent} from './types';
 

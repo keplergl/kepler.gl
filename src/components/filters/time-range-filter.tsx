@@ -21,7 +21,7 @@
 import React from 'react';
 import TimeRangeSliderFactory from 'components/common/time-range-slider';
 import {DEFAULT_TIME_FORMAT} from '@kepler.gl/constants';
-import {TimeRangeFilter} from 'reducers';
+import {TimeRangeFilter} from '@kepler.gl/types';
 import {TimeRangeFilterProps} from './types';
 /*
  * TimeRangeFilter -> TimeRangeSlider -> RangeSlider

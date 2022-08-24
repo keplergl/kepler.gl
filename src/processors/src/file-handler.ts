@@ -22,12 +22,11 @@ import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {processGeojson, processKeplerglJSON, processRowObject} from './data-processor';
-import {isPlainObject, generateHashId} from '../../utils/utils';
+import {generateHashId, isPlainObject} from '@kepler.gl/utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
 import {Loader} from '@loaders.gl/loader-utils';
-import {AddDataToMapPayload} from '../../actions/actions';
 import {FileCacheItem, ValidKeplerGlMap} from './types';
-import {Feature} from '../../reducers';
+import {Feature, AddDataToMapPayload} from '@kepler.gl/types';
 import {FeatureCollection} from '@turf/helpers';
 
 const BATCH_TYPE = {

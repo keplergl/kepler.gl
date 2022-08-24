@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {FILTER_TYPES} from '../../src/constants/src/default-settings';
-import {toArray} from '../../src/utils/utils';
-import {getFieldValueAccessor} from '../../src/utils';
-import KeplerTable from '../../src/utils/table-utils/kepler-table';
+import {FILTER_TYPES} from '@kepler.gl/constants';
+import {toArray} from '../../src/utils';
+import {KeplerTable} from '../../src/reducers/table-utils';
 
 export function cmpObjectKeys(t, expectedObj, actualObj, name) {
   t.deepEqual(

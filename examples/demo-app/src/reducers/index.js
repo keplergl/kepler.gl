@@ -34,7 +34,7 @@ import {
   SET_SAMPLE_LOADING_STATUS
 } from '../actions';
 
-import {AUTH_TOKENS, DEFAULT_FEATURE_FLAGS} from '../constants/default-settings';
+import {AUTH_TOKENS} from '../constants/default-settings';
 import {generateHashId} from '../utils/strings';
 
 // INITIAL_APP_STATE
@@ -43,13 +43,11 @@ const initialAppState = {
   loaded: false,
   sampleMaps: [], // this is used to store sample maps fetch from a remote json file
   isMapLoading: false, // determine whether we are loading a sample map,
-  error: null, // contains error when loading/retrieving data/configuration
+  error: null // contains error when loading/retrieving data/configuration
   // {
   //   status: null,
   //   message: null
   // }
-  // eventually we may have an async process to fetch these from a remote location
-  featureFlags: DEFAULT_FEATURE_FLAGS
 };
 
 // App reducer
