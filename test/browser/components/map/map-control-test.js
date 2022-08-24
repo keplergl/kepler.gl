@@ -184,7 +184,7 @@ test('MapControlFactory - click options', t => {
 
   // click locale
   wrapper
-    .find('.map-control-button.map-locale')
+    .find('.map-control-button.locale-panel')
     .at(0)
     .simulate('click');
   t.ok(onToggleMapControl.calledTwice, 'should call onToggleMapControl');
