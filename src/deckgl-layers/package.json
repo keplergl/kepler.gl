@@ -5,7 +5,7 @@
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/index.js",
-  "types": "dist/deckgl-layers/src/index.d.ts",
+  "types": "index.d.ts",
   "keywords": [
     "babel",
     "es6",
@@ -48,6 +48,15 @@
     "keymirror": "^0.1.1",
     "@kepler.gl/constants": "2.5.5",
     "lodash.memoize": "^4.1.2"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*"
+  },
+  "typesVersions": {
+    "*": {
+      "*": ["dist/*"]
+    }
   },
   "nyc": {
     "sourceMap": false,

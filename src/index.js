@@ -46,7 +46,7 @@ export * from './styles';
 export * from '@kepler.gl/middleware';
 
 // Utils
-export * from './utils';
+export * from '@kepler.gl/utils';
 
 // Default export
 export {default} from './components';

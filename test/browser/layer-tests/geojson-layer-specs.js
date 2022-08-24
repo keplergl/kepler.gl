@@ -19,7 +19,8 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {KeplerGlLayers, defaultElevation, defaultLineWidth, defaultRadius} from '@kepler.gl/layers';
+import {defaultElevation, defaultLineWidth, defaultRadius, KeplerGlLayers} from '@kepler.gl/layers';
+import {copyTableAndUpdate} from 'reducers/table-utils';
 
 const {GeojsonLayer} = KeplerGlLayers;
 
@@ -40,9 +41,8 @@ import {
   geoStyleDataToFeature,
   geoStyleMeta
 } from 'test/fixtures/geojson';
-import {createNewDataEntry} from 'utils/dataset-utils';
 import {processGeojson} from '@kepler.gl/processors';
-import {copyTableAndUpdate} from 'utils/table-utils/kepler-table';
+import {createNewDataEntry} from 'reducers';
 
 test('#GeojsonLayer -> constructor', t => {
   const TEST_CASES = {

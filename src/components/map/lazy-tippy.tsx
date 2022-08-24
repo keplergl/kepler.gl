@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, {useState, forwardRef} from 'react';
 import Tippy from '@tippyjs/react/headless';
-import {isTest} from 'utils/utils';
+import {isTest} from '@kepler.gl/utils';
 
 const isTestEnv = isTest();
 

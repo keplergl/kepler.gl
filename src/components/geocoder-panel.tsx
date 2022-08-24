@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import {processRowObject} from '@kepler.gl/processors';
 import {FlyToInterpolator} from '@deck.gl/core';
 import KeplerGlSchema from 'schemas';
-import {getCenterAndZoomFromBounds} from 'utils/projection-utils';
+import {getCenterAndZoomFromBounds} from '@kepler.gl/utils';
 
 import Geocoder, {Result} from './geocoder/geocoder';
 import {
@@ -33,7 +33,7 @@ import {
   GEOCODER_ICON_COLOR,
   GEOCODER_ICON_SIZE
 } from '@kepler.gl/constants';
-import {MapState, Viewport} from 'reducers';
+import {MapState, Viewport} from '@kepler.gl/types';
 
 const ICON_LAYER = {
   id: GEOCODER_LAYER_ID,

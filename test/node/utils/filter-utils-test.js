@@ -21,25 +21,25 @@
 import test from 'tape';
 import moment from 'moment';
 
+import {isValidFilterValue} from '@kepler.gl/utils';
+
 import {
   adjustValueToFilterDomain,
   getFilterFunction,
   getDefaultFilter,
   validatePolygonFilter,
   generatePolygonFilter,
-  isValidFilterValue,
   isInPolygon,
   diffFilters,
   getHistogram,
-  getTimestampFieldDomain
-} from 'utils/filter-utils';
+  getTimestampFieldDomain,
+  getDatasetFieldIndexForFilter
+} from '../../../src/reducers';
 
-import {getDatasetFieldIndexForFilter} from 'utils/gpu-filter-utils';
+import {createDataContainer} from 'reducers/table-utils';
 
 import {FILTER_TYPES} from '@kepler.gl/constants';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';
-
-import {createDataContainer} from 'utils/table-utils';
 
 /* eslint-disable max-statements */
 test('filterUtils -> adjustValueToFilterDomain', t => {

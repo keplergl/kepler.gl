@@ -26,7 +26,7 @@ import {createSelector} from 'reselect';
 import {connect as keplerGlConnect} from 'connect/keplergl-connect';
 import {IntlProvider} from 'react-intl';
 import {messages} from '@kepler.gl/localization';
-import {RootContext} from 'components/context';
+import {RootContext, FeatureFlagsContextProvider, FeatureFlags} from 'components/context';
 import {OnErrorCallBack, OnSuccessCallBack} from 'actions/provider-actions';
 
 import * as VisStateActions from 'actions/vis-state-actions';
@@ -62,12 +62,16 @@ import PlotContainerFactory from './plot-container';
 import NotificationPanelFactory from './notification-panel';
 import GeoCoderPanelFactory from './geocoder-panel';
 
-import {filterObjectByPredicate, generateHashId} from 'utils/utils';
-import {validateToken} from 'utils/mapbox-utils';
-import {mergeMessages} from 'utils/locale-utils';
+import {
+  filterObjectByPredicate,
+  generateHashId,
+  validateToken,
+  mergeMessages,
+  observeDimensions,
+  unobserveDimensions
+} from '@kepler.gl/utils';
 
 import {theme as basicTheme, themeLT, themeBS} from '@kepler.gl/styles';
-import {observeDimensions, unobserveDimensions} from '../utils/observe-dimensions';
 import {KeplerGlState} from 'reducers/core';
 import {Provider} from 'cloud-providers';
 
@@ -255,7 +259,8 @@ export const DEFAULT_KEPLER_GL_PROPS = {
   sidePanelWidth: DIMENSIONS.sidePanel.width,
   theme: {},
   cloudProviders: [],
-  readOnly: false
+  readOnly: false,
+  featureFlags: {}
 };
 
 type KeplerGLBasicProps = {
@@ -284,6 +289,7 @@ type KeplerGLBasicProps = {
   onExportToCloudSuccess?: OnSuccessCallBack;
   onExportToCloudError?: OnErrorCallBack;
   readOnly?: boolean;
+  featureFlags?: FeatureFlags;
 
   localeMessages?: {[key: string]: {[key: string]: string}};
   dispatch: Dispatch<any>;
@@ -422,7 +428,10 @@ function KeplerGlFactory(
         uiState,
         visState,
         // readOnly override
-        readOnly
+        readOnly,
+
+        // features
+        featureFlags
       } = this.props;
 
       const dimensions = this.state.dimensions || {width, height};
@@ -454,40 +463,42 @@ function KeplerGlFactory(
 
       return (
         <RootContext.Provider value={this.root}>
-          <IntlProvider locale={uiState.locale} messages={localeMessages[uiState.locale]}>
-            <ThemeProvider theme={theme}>
-              <GlobalStyle
-                className="kepler-gl"
-                id={`kepler-gl__${id}`}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  position: 'relative',
-                  width: `${width}px`,
-                  height: `${height}px`
-                }}
-                ref={this.root}
-              >
-                <NotificationPanel {...notificationPanelFields} />
-                {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                <MapsLayout className="maps">{mapContainers}</MapsLayout>
-                {isExportingImage && <PlotContainer {...plotContainerFields} />}
-                {interactionConfig.geocoder.enabled && <GeoCoderPanel {...geoCoderPanelFields} />}
-                <BottomWidgetOuter absolute>
-                  <BottomWidget
-                    ref={this.bottomWidgetRef}
-                    {...bottomWidgetFields}
+          <FeatureFlagsContextProvider featureFlags={featureFlags}>
+            <IntlProvider locale={uiState.locale} messages={localeMessages[uiState.locale]}>
+              <ThemeProvider theme={theme}>
+                <GlobalStyle
+                  className="kepler-gl"
+                  id={`kepler-gl__${id}`}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    position: 'relative',
+                    width: `${width}px`,
+                    height: `${height}px`
+                  }}
+                  ref={this.root}
+                >
+                  <NotificationPanel {...notificationPanelFields} />
+                  {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
+                  <MapsLayout className="maps">{mapContainers}</MapsLayout>
+                  {isExportingImage && <PlotContainer {...plotContainerFields} />}
+                  {interactionConfig.geocoder.enabled && <GeoCoderPanel {...geoCoderPanelFields} />}
+                  <BottomWidgetOuter absolute>
+                    <BottomWidget
+                      ref={this.bottomWidgetRef}
+                      {...bottomWidgetFields}
+                      containerW={dimensions.width}
+                    />
+                  </BottomWidgetOuter>
+                  <ModalContainer
+                    {...modalContainerFields}
                     containerW={dimensions.width}
+                    containerH={dimensions.height}
                   />
-                </BottomWidgetOuter>
-                <ModalContainer
-                  {...modalContainerFields}
-                  containerW={dimensions.width}
-                  containerH={dimensions.height}
-                />
-              </GlobalStyle>
-            </ThemeProvider>
-          </IntlProvider>
+                </GlobalStyle>
+              </ThemeProvider>
+            </IntlProvider>
+          </FeatureFlagsContextProvider>
         </RootContext.Provider>
       );
     }

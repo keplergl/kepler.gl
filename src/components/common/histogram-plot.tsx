@@ -23,7 +23,7 @@ import {scaleLinear} from 'd3-scale';
 import {max} from 'd3-array';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import {HistogramBin} from 'reducers';
+import {HistogramBin} from '@kepler.gl/types';
 
 const histogramStyle = {
   highlightW: 0.7,

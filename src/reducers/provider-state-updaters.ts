@@ -20,14 +20,14 @@
 
 import {withTask} from 'react-palm/tasks';
 import Console from 'global/console';
-import {generateHashId, getError, isPlainObject, toArray} from '../utils/utils';
+import {generateHashId, getError, isPlainObject, toArray} from '@kepler.gl/utils';
 import {
   EXPORT_FILE_TO_CLOUD_TASK,
   ACTION_TASK,
   DELAY_TASK,
   LOAD_CLOUD_MAP_TASK,
   GET_SAVED_MAPS_TASK
-} from '../tasks/tasks';
+} from '@kepler.gl/tasks';
 import {
   exportFileSuccess,
   exportFileError,

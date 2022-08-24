@@ -27,8 +27,8 @@ import ScenegraphLayerIcon from './scenegraph-layer-icon';
 import ScenegraphInfoModalFactory from './scenegraph-info-modal';
 import {LAYER_VIS_CONFIGS, ColorRange} from '@kepler.gl/constants';
 import {Merge, VisConfigColorRange, VisConfigNumber} from '@kepler.gl/types';
-import {DataContainerInterface} from 'utils/table-utils/data-container-interface';
-import {KeplerTable} from '../../../utils';
+import {default as KeplerTable} from 'reducers/table-utils/kepler-table';
+import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
 
 export type ScenegraphLayerVisConfigSettings = {
   opacity: VisConfigNumber;

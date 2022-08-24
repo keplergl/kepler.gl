@@ -421,7 +421,7 @@ export const SelectionButton = styled.div<SelectionButtonProps>`
   }
 `;
 
-export const Table = styled.table`
+export const StyledTable = styled.table`
   width: 100%;
   border-spacing: 0;
 

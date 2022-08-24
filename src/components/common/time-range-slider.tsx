@@ -26,7 +26,7 @@ import RangeSliderFactory from 'components/common/range-slider';
 import TimeSliderMarkerFactory from 'components/common/time-slider-marker';
 import PlaybackControlsFactory from 'components/common/animation-control/playback-controls';
 import TimeRangeSliderTimeTitleFactory from 'components/common/time-range-slider-time-title';
-import {HistogramBin, LineChart} from 'reducers';
+import {HistogramBin, LineChart} from '@kepler.gl/types';
 
 const animationControlWidth = 176;
 

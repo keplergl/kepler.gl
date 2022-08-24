@@ -24,7 +24,7 @@ import window from 'global/window';
 import Console from 'global/console';
 import DropboxIcon from './dropbox-icon';
 import {MAP_URI} from '../../constants/default-settings';
-import {Provider} from 'kepler.gl/cloud-providers';
+import {Provider} from '@kepler.gl/cloud-providers';
 
 const NAME = 'dropbox';
 const DISPLAY_NAME = 'Dropbox';

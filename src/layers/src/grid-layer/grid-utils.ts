@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {WebMercatorViewport} from '@deck.gl/core';
-import {MapState} from '../../../reducers';
+import {MapState} from '@kepler.gl/types';
 
 /**
  * top left of the grid to a square polygon for the hover layer
