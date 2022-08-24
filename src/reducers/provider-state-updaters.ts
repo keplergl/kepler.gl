@@ -40,7 +40,8 @@ import {
   removeNotification,
   toggleModal,
   addNotification,
-  addDataToMap
+  addDataToMap,
+  ProviderActions
 } from '@kepler.gl/actions';
 import {
   DEFAULT_NOTIFICATION_TYPES,
@@ -48,7 +49,6 @@ import {
   DATASET_FORMATS,
   OVERWRITE_MAP_ID
 } from '@kepler.gl/constants';
-import {ProviderActions} from '@kepler.gl/actions';
 import {ExportFileToCloudPayload} from '@kepler.gl/types';
 
 import {FILE_CONFLICT_MSG} from '../cloud-providers';
