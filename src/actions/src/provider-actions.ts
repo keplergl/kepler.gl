@@ -40,30 +40,6 @@ export const ActionTypes = assignType({
   GET_SAVED_MAPS_ERROR: `${ACTION_PREFIX}GET_SAVED_MAPS_ERROR`
 });
 
-/** EXPORT_FILE_TO_CLOUD */
-export type MapData = {
-  map: SavedMap;
-  thumbnail: Blob | null;
-};
-export type ExportFileOptions = {
-  isPublic?: boolean;
-  overwrite?: boolean;
-};
-export type OnErrorCallBack = (error: Error) => any;
-export type OnSuccessCallBack = (p: {
-  response: any;
-  provider: Provider;
-  options: ExportFileOptions;
-}) => any;
-
-export type ExportFileToCloudPayload = {
-  mapData: MapData;
-  provider: Provider;
-  options: ExportFileOptions;
-  onSuccess?: OnSuccessCallBack;
-  onError?: OnErrorCallBack;
-  closeModal?: boolean;
-};
 /**
  * Call provider to upload file to cloud
  * @param mapData

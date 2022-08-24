@@ -18,26 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Actions
-export * from './actions';
+const KeplerPackage = require('./package');
 
-// kepler.gl actions accessible outside component
-export * from './vis-state-actions';
-export * from './ui-state-actions';
-export * from './map-state-actions';
-export * from './map-style-actions';
-export * from './identity-actions';
-export * from './provider-actions';
+const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
+const PLUGINS = [
+  ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
+  '@babel/plugin-transform-modules-commonjs',
+  '@babel/plugin-proposal-optional-chaining',
+  [
+    '@babel/transform-runtime',
+    {
+      regenerator: true
+    }
+  ],
+  [
+    'search-and-replace',
+    {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }
+  ]
+];
+const ENV = {
+  test: {
+    plugins: ['istanbul']
+  },
+  debug: {
+    sourceMaps: 'inline',
+    retainLines: true
+  }
+};
 
-// Dispatch
-export {
-  _actionFor,
-  forwardTo,
-  getActionForwardAddress,
-  isForwardAction,
-  unwrap,
-  wrapTo
-} from './action-wrapper';
+module.exports = function babel(api) {
+  api.cache(true);
 
-export {ACTION_PREFIX} from './action-types';
-export {default as ActionTypes} from './action-types';
+  return {
+    presets: PRESETS,
+    plugins: PLUGINS,
+    env: ENV
+  };
+};
