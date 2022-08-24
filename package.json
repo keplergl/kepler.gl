@@ -247,6 +247,7 @@
     "@testing-library/react-hooks": "^3.4.2",
     "@types/d3-array": "^2.0.0",
     "@types/d3-scale": "^3.2.2",
+    "@types/lodash.debounce": "^4.0.6",
     "@types/geojson": "^7946.0.7",
     "@types/redux-actions": "^2.6.2",
     "@types/supercluster": "^7.1.0",
