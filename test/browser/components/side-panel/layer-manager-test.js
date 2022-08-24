@@ -34,8 +34,7 @@ import {
 import {appInjector} from 'components/container';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as UIStateActions from 'actions/ui-state-actions';
+import {VisStateActions, UIStateActions} from '@kepler.gl/actions';
 
 import {StateWMultiH3Layers} from 'test/helpers/mock-state';
 

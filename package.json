@@ -26,7 +26,8 @@
     "./src/layers",
     "./src/cloud-providers",
     "./src/processors",
-    "./src/tasks"
+    "./src/tasks",
+    "./src/actions"
   ],
   "repository": {
     "type": "git",

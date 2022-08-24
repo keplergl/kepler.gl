@@ -24,9 +24,7 @@ import styled from 'styled-components';
 import SourceDataCatalogFactory from '../common/source-data-catalog';
 import LayerListFactory from './layer-list';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import * as UiStateActions from 'actions/ui-state-actions';
-import * as VisStateActions from 'actions/vis-state-actions';
-import {ActionHandler} from 'actions';
+import {UIStateActions, ActionHandler, VisStateActions} from '@kepler.gl/actions';
 import KeplerTable from 'reducers/table-utils/kepler-table';
 
 type DatasetLayerSectionProps = {
@@ -37,8 +35,8 @@ type DatasetLayerSectionProps = {
   showDeleteDataset: boolean;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
-  removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
-  uiStateActions: typeof UiStateActions;
+  removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
+  uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
 };
 

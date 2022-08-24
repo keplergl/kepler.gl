@@ -18,16 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ActionTypes} from '@kepler.gl/actions';
-import * as combinedUpdaters from './combined-updaters';
+// Actions
+export * from './actions';
 
-/**
- * Important: Do not rename `actionHandler` or the assignment pattern of property value.
- * It is used to generate documentation
- */
-const actionHandler = {
-  [ActionTypes.ADD_DATA_TO_MAP]: combinedUpdaters.addDataToMapUpdater,
-  [ActionTypes.LOAD_FILES_SUCCESS]: combinedUpdaters.loadFilesSuccessUpdater
-};
+// kepler.gl actions accessible outside component
+export * from './action-wrapper';
+export * from './vis-state-actions';
+export * from './ui-state-actions';
+export * from './map-state-actions';
+export * from './map-style-actions';
+export * from './identity-actions';
+export * from './provider-actions';
 
-export default actionHandler;
+/* eslint-disable prettier/prettier */
+export * as VisStateActions from './vis-state-actions';
+export * as MapStateActions from './map-state-actions';
+export * as MapStyleActions from './map-style-actions';
+export * as UIStateActions from './ui-state-actions';
+export * as ProviderActions from './provider-actions';
+
+// Dispatch
+export {
+  _actionFor,
+  forwardTo,
+  getActionForwardAddress,
+  isForwardAction,
+  unwrap,
+  wrapTo
+} from './action-wrapper';
+
+export {ACTION_PREFIX} from './action-types';
+export {default as ActionTypes} from './action-types';
+export {ActionTypes as ProviderActionTypes} from './provider-actions';

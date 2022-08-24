@@ -30,7 +30,7 @@ import {createSelector} from 'reselect';
 import {injectIntl, WrappedComponentProps} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {MapStyle} from 'reducers';
-import * as MapStyleActions from 'actions/map-style-actions';
+import {MapStyleActions} from '@kepler.gl/actions';
 
 type MapManagerProps = {
   mapStyle: MapStyle;

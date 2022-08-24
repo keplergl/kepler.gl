@@ -37,7 +37,11 @@ import MapsLayoutFactory from './maps-layout';
 
 import {GEOCODER_LAYER_ID, ExportImage} from '@kepler.gl/constants';
 import {SplitMap} from '@kepler.gl/types';
-import {setExportImageDataUri, setExportImageError, setExportImageSetting} from 'actions';
+import {
+  setExportImageDataUri,
+  setExportImageError,
+  setExportImageSetting
+} from '@kepler.gl/actions';
 import {mapFieldsSelector} from './kepler-gl';
 
 const CLASS_FILTER = ['mapboxgl-control-container', 'attrition-link', 'attrition-logo'];

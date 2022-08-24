@@ -33,7 +33,7 @@ import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-
 import {MapState, UiState, AddDataToMapPayload, ParsedConfig} from '@kepler.gl/types';
 import {MapStyle} from './map-style-updaters';
 import {ProviderState} from './provider-state-updaters';
-import {loadFilesSuccessUpdaterAction} from 'actions/vis-state-actions';
+import {loadFilesSuccessUpdaterAction} from '@kepler.gl/actions';
 import {VisState} from 'schemas';
 import {Layer} from '@kepler.gl/layers';
 import {isPlainObject} from '@kepler.gl/utils';

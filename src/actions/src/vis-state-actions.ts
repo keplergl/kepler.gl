@@ -1175,6 +1175,7 @@ type FileContent = {
 };
 export type NextFileBatchUpdaterAction = {
   payload: {
+    /* eslint-disable no-undef */
     gen: AsyncGenerator<FileContent>;
     fileName: string;
     progress?: any;

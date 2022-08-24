@@ -33,9 +33,8 @@ import {
 import SchemaManager from 'schemas';
 import visStateReducer from 'reducers/vis-state';
 import coreReducer from 'reducers/core';
-import {updateVisData} from 'actions/vis-state-actions';
-import {receiveMapConfig, addDataToMap} from 'actions/actions';
 import {processKeplerglJSON} from '@kepler.gl/processors';
+import {updateVisData, receiveMapConfig, addDataToMap} from '@kepler.gl/actions';
 import {defaultInteractionConfig} from 'reducers/vis-state-updaters';
 
 import {createDataContainer} from 'reducers/table-utils';

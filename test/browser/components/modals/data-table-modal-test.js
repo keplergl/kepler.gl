@@ -25,7 +25,7 @@ import sinon from 'sinon';
 import flatten from 'lodash.flattendeep';
 import {mountWithTheme} from 'test/helpers/component-utils';
 import CloneDeep from 'lodash.clonedeep';
-import * as VisStateActions from 'actions/vis-state-actions';
+import {VisStateActions} from '@kepler.gl/actions';
 import visStateReducer from 'reducers/vis-state';
 
 import FieldTokenFactory from 'components/common/field-token';

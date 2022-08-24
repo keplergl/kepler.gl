@@ -22,7 +22,7 @@ import React, {useEffect} from 'react';
 import get from 'lodash.get';
 
 import {MAP_THUMBNAIL_DIMENSION, EXPORT_IMG_RATIOS} from '@kepler.gl/constants';
-import {SetExportImageSettingUpdaterAction} from 'actions';
+import {SetExportImageSettingUpdaterAction} from '@kepler.gl/actions';
 import {Provider} from '@kepler.gl/cloud-providers';
 
 /** @typedef {import('./image-modal-container').ImageModalContainerProps} ImageModalContainerProps */

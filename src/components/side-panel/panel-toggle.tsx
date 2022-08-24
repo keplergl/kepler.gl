@@ -21,8 +21,7 @@
 import React, {useCallback} from 'react';
 import styled from 'styled-components';
 import PanelTabFactory, {PanelItem} from './panel-tab';
-import {toggleSidePanel} from 'actions/ui-state-actions';
-import {ActionHandler} from 'actions';
+import {toggleSidePanel, ActionHandler} from '@kepler.gl/actions';
 
 type PanelToggleProps = {
   panels: PanelItem[];

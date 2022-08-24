@@ -19,23 +19,8 @@
 // THE SOFTWARE.
 
 import {getCenterAndZoomFromBounds} from '@kepler.gl/utils';
-import * as MapStateActions from 'actions/map-state-actions';
-import {ReceiveMapConfigPayload} from '../actions/actions';
-import {ActionTypes} from 'actions';
-
-export type MapState = {
-  pitch: number;
-  bearing: number;
-  latitude: number;
-  longitude: number;
-  zoom: number;
-  dragRotate: boolean;
-  width: number;
-  height: number;
-  isSplit: boolean;
-  initialState?: any;
-  scale?: number;
-};
+import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
+import {MapState} from '@kepler.gl/types';
 
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.

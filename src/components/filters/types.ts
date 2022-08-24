@@ -14,7 +14,7 @@ import {
   setFilterPlot,
   toggleFilterAnimation,
   updateFilterAnimationSpeed
-} from 'actions';
+} from '@kepler.gl/actions';
 import {Datasets} from 'reducers/table-utils/kepler-table';
 
 export type PolygonFilterProps = {

@@ -33,8 +33,14 @@ import {
   loadFilesSuccess,
   loadFileStepSuccess,
   loadNextFile,
-  nextFileBatch
-} from 'actions/vis-state-actions';
+  nextFileBatch,
+  ReceiveMapConfigPayload,
+  VisStateActions,
+  MapStateActions,
+  processFileContent,
+  ActionTypes
+} from '@kepler.gl/actions';
+
 // Utils
 import {
   set,
@@ -65,16 +71,11 @@ import {
   DEFAULT_TEXT_LABEL,
   COMPARE_TYPES
 } from '@kepler.gl/constants';
-import {ActionTypes} from 'actions';
 import {pick_, merge_, swap_} from './composer-helpers';
-import {processFileContent} from 'actions/vis-state-actions';
 
 import KeplerGLSchema, {VisState} from 'schemas';
 
 import {Filter, InteractionConfig, AnimationConfig, Editor} from '@kepler.gl/types';
-import {ReceiveMapConfigPayload} from '../actions/actions';
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as MapStateActions from 'actions/map-state-actions';
 import {Loader} from '@loaders.gl/loader-utils';
 
 import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons/index';

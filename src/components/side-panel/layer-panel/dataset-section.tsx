@@ -25,9 +25,7 @@ import {Add} from 'components/common/icons';
 import {Button} from 'components/common/styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
-import * as UiStateActions from 'actions/ui-state-actions';
-import * as VisStateActions from 'actions/vis-state-actions';
-import {ActionHandler} from 'actions';
+import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
 import {Datasets} from 'reducers/table-utils/kepler-table';
 
 type AddDataButtonProps = {
@@ -42,7 +40,7 @@ type DatasetSectionProps = {
   showDeleteDataset: boolean;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
-  removeDataset: ActionHandler<typeof UiStateActions.openDeleteModal>;
+  removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
   showAddDataModal: () => void;
 };
 
