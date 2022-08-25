@@ -352,11 +352,18 @@ export function layerConfigChangeUpdater<S extends VisState>(
     newState = updateStateOnLayerVisibilityChange(state, newLayer);
   }
 
-  return updateStateWithLayerAndData(newState, {
+  newState = updateStateWithLayerAndData(newState, {
     layer: newLayer,
     layerData,
     idx
   });
+
+  if (newLayer.config.animation.enabled) {
+    newState = updateAnimationDomain(newState);
+  }
+
+  return newState
+
 }
 
 function addOrRemoveTextLabels(newFields, textLabel) {
