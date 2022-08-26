@@ -153,6 +153,7 @@ export type ItemSelectorProps = {
   CustomChickletComponent?: ComponentType<any>;
   intl: IntlShape;
   className?: string;
+  showDropdownOnMount?: boolean;
 };
 
 class ItemSelector extends Component<ItemSelectorProps> {
@@ -173,7 +174,6 @@ class ItemSelector extends Component<ItemSelectorProps> {
   };
 
   componentDidMount() {
-    // @ts-ignore merge prev upsteream
     if (this.props.showDropdownOnMount) {
       this.setState({showTypeahead: true});
     }

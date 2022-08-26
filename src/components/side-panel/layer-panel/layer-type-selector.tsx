@@ -21,13 +21,11 @@
 import React, {useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
 
-import LayerTypeDropdownListFactory from './layer-type-dropdown-list';
+import LayerTypeDropdownListFactory, {LayerTypeOption} from './layer-type-dropdown-list';
 import LayerTypeListItemFactory from './layer-type-list-item';
 import ItemSelector from 'components/common/item-selector/item-selector';
 
 import {SidePanelSection} from 'components/common/styled-components';
-import {Layer} from '@kepler.gl/layers';
-import {Datasets} from 'reducers/table-utils/kepler-table';
 
 type Option = {
   id: string;
@@ -36,10 +34,8 @@ type Option = {
   requireData: any; //
 };
 
-type LayerTypeSelectorProps = {
-  layer: Layer;
-  datasets: Datasets;
-  layerTypeOptions: Option[];
+export type LayerTypeSelectorProps = {
+  selected: string | null;
   onSelect: (
     items:
       | readonly (string | number | boolean | object)[]
@@ -49,13 +45,14 @@ type LayerTypeSelectorProps = {
       | object
       | null
   ) => void;
+  options: LayerTypeOption[];
   // TODO add correct type after Theme typing
   theme: Record<string, string>;
 };
 
 const StyledLayerTypeSelector = styled.div`
   .item-selector .item-selector__dropdown {
-    padding: 4px 10px 4px 2px;
+    padding: 4px 10px 4px 10px;
   }
 `;
 
@@ -68,25 +65,10 @@ function LayerTypeSelectorFactory(
   LayerTypeListItem: ReturnType<typeof LayerTypeListItemFactory>,
   LayerTypeDropdownList: ReturnType<typeof LayerTypeDropdownListFactory>
 ) {
-  const LayerTypeSelector: React.FC<LayerTypeSelectorProps> = ({
-    layer,
-    layerTypeOptions,
-    onSelect,
-    datasets
-  }) => {
-    const hasData = useMemo(() => Boolean(Object.keys(datasets).length), [datasets]);
-    const typeOptions = useMemo(
-      () =>
-        layerTypeOptions.map(op => ({
-          ...op,
-          disabled: !hasData && op.requireData !== false
-        })),
-      [hasData, layerTypeOptions]
-    );
-
-    const selectedItems = useMemo(() => typeOptions.find(op => op.id === layer.type), [
-      typeOptions,
-      layer.type
+  const LayerTypeSelector: React.FC<LayerTypeSelectorProps> = ({selected, options, onSelect}) => {
+    const selectedItems = useMemo(() => options.find(op => op.id === selected), [
+      options,
+      selected
     ]);
 
     return (
@@ -94,7 +76,7 @@ function LayerTypeSelectorFactory(
         <StyledLayerTypeSelector className="layer-config__type">
           <ItemSelector
             selectedItems={selectedItems}
-            options={typeOptions}
+            options={options}
             multiSelect={false}
             placeholder="placeholder.selectType"
             onChange={onSelect}
