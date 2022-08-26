@@ -38,9 +38,8 @@ export function apply_<State, P>(
   return state => updater(state, payload);
 }
 
-export function with_<State>(
-  fn: (state: State) => (nextState: State) => State
-): (state: State) => State {
+type Arg<State> = (state: State) => (nextState: State) => State;
+export function with_<State>(fn: Arg<State>): (state: State) => State {
   return state => fn(state)(state);
 }
 
