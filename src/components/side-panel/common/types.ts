@@ -2,6 +2,7 @@ import React, {MouseEvent} from 'react';
 import {openDeleteModal} from '@kepler.gl/actions';
 import {VisStateActions} from '@kepler.gl/actions';
 import {ActionHandler} from '@kepler.gl/actions';
+import {RGBColor} from '@kepler.gl/types';
 import KeplerTable, {Datasets} from 'reducers/table-utils/kepler-table';
 
 export type DatasetInfoProps = {
@@ -57,9 +58,15 @@ export type DatasetItemProps = {
   value: KeplerTable;
 };
 
+export type SelectableDataset = {
+  label?: string;
+  id: string;
+  color: RGBColor;
+};
+
 export type SourceDataSelectorProps = {
   dataId: string | string[] | null;
-  datasets: Datasets;
+  datasets: {[id: string]: SelectableDataset};
   disabled?: boolean;
   defaultValue?: string;
   inputTheme?: string;

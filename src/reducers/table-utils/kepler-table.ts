@@ -195,6 +195,10 @@ class KeplerTable {
     this.disableDataOperation = disableDataOperation;
   }
 
+  get length() {
+    return this.dataContainer.numRows();
+  }
+
   /**
    * Get field
    * @param columnName

@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {ComponentType} from 'react';
-import styled from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 import {CLOUDFRONT} from '@kepler.gl/constants';
 import classNames from 'classnames';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -31,11 +31,7 @@ type LayerTypeListItemProps = {
     label: string;
   };
   isTile: boolean;
-};
-
-const ITEM_SIZE = {
-  large: 50,
-  small: 28
+  theme: any;
 };
 
 const StyledListItem = styled.div`
@@ -68,14 +64,14 @@ const StyledListItem = styled.div`
 `;
 
 export function LayerTypeListItemFactory() {
-  const LayerTypeListItem: React.FC<LayerTypeListItemProps> = ({value, isTile}) => (
+  const LayerTypeListItem: React.FC<LayerTypeListItemProps> = ({value, isTile, theme}) => (
     <StyledListItem
       className={classNames('layer-type-selector__item__inner', {
         list: !isTile
       })}
     >
       <div className="layer-type-selector__item__icon">
-        <value.icon height={`${isTile ? ITEM_SIZE.large : ITEM_SIZE.small}px`} />
+        <value.icon height={`${isTile ? theme.layerTypeIconSizeL : theme.layerTypeIconSizeSM}px`} />
       </div>
       <div className="layer-type-selector__item__label">
         <FormattedMessage
@@ -86,7 +82,7 @@ export function LayerTypeListItemFactory() {
     </StyledListItem>
   );
 
-  return LayerTypeListItem;
+  return withTheme(LayerTypeListItem);
 }
 
 export default LayerTypeListItemFactory;
