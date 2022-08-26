@@ -30,11 +30,11 @@
     "umd"
   ],
   "dependencies": {
-    "@deck.gl/geo-layers": "^8.5.4",
-    "@deck.gl/core": "^8.5.4",
-    "@deck.gl/extensions": "^8.5.4",
-    "@deck.gl/layers": "^8.5.4",
-    "@deck.gl/mesh-layers": "^8.5.4",
+    "@deck.gl/geo-layers": "^8.5.7",
+    "@deck.gl/core": "^8.5.7",
+    "@deck.gl/extensions": "^8.5.7",
+    "@deck.gl/layers": "^8.5.7",
+    "@deck.gl/mesh-layers": "^8.5.7",
     "@kepler.gl/deckgl-layers": "^2.5.5",
     "@kepler.gl/layers": "^2.5.5",
     "@kepler.gl/constants": "^2.5.5",
@@ -63,7 +63,9 @@
   },
   "typesVersions": {
     "*": {
-      "*": ["dist/*"]
+      "*": [
+        "dist/*"
+      ]
     }
   },
   "nyc": {
