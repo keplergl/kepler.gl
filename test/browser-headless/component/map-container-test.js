@@ -232,7 +232,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
             x: 200
           };
 
-          const {toJSON, ...rect} = tippyProps.getReferenceClientRect();
+          const rect = tippyProps.getReferenceClientRect();
 
           t.deepEqual(
             rect,
