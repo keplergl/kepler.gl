@@ -121,12 +121,8 @@ export default function RangeSliderFactory(
 
     componentDidMount() {
       if (this.sliderContainer instanceof Element) {
-        observeDimensions(this.sliderContainer, this._resize);
+        observeDimensions(this.sliderContainer, this._resize, 100);
       }
-    }
-
-    componentDidUpdate() {
-      this._resize();
     }
 
     componentWillUnmount() {
