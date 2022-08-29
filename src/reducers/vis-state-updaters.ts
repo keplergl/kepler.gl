@@ -100,8 +100,7 @@ import {
   LIMITED_FILTER_EFFECT_PROPS,
   updateFilterDataId
 } from './filter-utils';
-import {assignGpuChannel, setFilterGpuMode} from './table-utils/gpu-filter-utils';
-import {createNewDataEntry} from './table-utils/dataset-utils';
+import {assignGpuChannel, setFilterGpuMode, createNewDataEntry} from 'table-utils';
 import {findFieldsToShow} from './interaction-utils';
 import {getFilterPlot} from './filter-utils';
 import {getDefaultFilterPlotType} from './filter-utils';

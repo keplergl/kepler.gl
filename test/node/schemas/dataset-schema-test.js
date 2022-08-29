@@ -30,8 +30,16 @@ import {
   expectedFields1,
   expectedInfo1
 } from 'test/fixtures/state-saved-v0';
-import {savedStateV1, v0ExpectedInfo, v0ExpectedFields} from 'test/fixtures/state-saved-v1-1';
-import {stateSavedV1_2, v1expectedInfo_2, v1expectedFields_2} from 'test/fixtures/state-saved-v1-2';
+import {
+  savedStateV1,
+  v0ExpectedInfo,
+  v0ExpectedFields
+} from 'test/fixtures/state-saved-v1-1';
+import {
+  stateSavedV1_2,
+  v1expectedInfo_2,
+  v1expectedFields_2
+} from 'test/fixtures/state-saved-v1-2';
 
 /* eslint-disable max-statements */
 test('#DatasetSchema -> SchemaManager.parseSavedData', t => {

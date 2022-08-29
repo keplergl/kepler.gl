@@ -23,7 +23,8 @@ import moment from 'moment';
 import testData, {numericRangesCsv, testFields} from 'test/fixtures/test-csv-data';
 
 import {preciseRound} from '@kepler.gl/utils';
-import {getFilterFunction, createNewDataEntry} from 'reducers';
+import {getFilterFunction} from 'reducers';
+import {createNewDataEntry} from 'table-utils';
 
 import {processCsvData} from '@kepler.gl/processors';
 import {cmpFields} from '../../helpers/comparison-utils';

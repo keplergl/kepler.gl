@@ -34,3 +34,5 @@ export {
   export type {DataContainerInterface} from './data-container-interface';
   export * from './data-container-utils';
   export * from './data-row';
+  export * from './gpu-filter-utils';
+  export * from './dataset-utils';

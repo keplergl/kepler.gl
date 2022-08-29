@@ -33,9 +33,7 @@ import {
   DEFAULT_ANIMATION_CONFIG,
   serializeLayer,
   defaultInteractionConfig,
-  getDefaultFilter,
-  createNewDataEntry,
-  maybeToDate
+  getDefaultFilter
 } from 'reducers';
 
 import {INITIAL_VIS_STATE, DEFAULT_ANIMATION_CONFIG} from 'reducers/vis-state-updaters';
@@ -43,8 +41,7 @@ import {serializeLayer} from 'reducers/vis-state-merger';
 import KeplerTable from 'reducers/table-utils';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {Layer, KeplerGlLayers} from '@kepler.gl/layers';
-import {getDefaultFilter, createNewDataEntry} from 'reducers';
-import {createDataContainer} from 'table-utils';
+import {createDataContainer, createNewDataEntry, maybeToDate} from 'table-utils';
 import {
   ALL_FIELD_TYPES,
   EDITOR_MODES,

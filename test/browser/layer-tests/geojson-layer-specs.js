@@ -42,7 +42,7 @@ import {
   geoStyleMeta
 } from 'test/fixtures/geojson';
 import {processGeojson} from '@kepler.gl/processors';
-import {createNewDataEntry} from 'reducers';
+import {createNewDataEntry} from 'table-utils';
 
 test('#GeojsonLayer -> constructor', t => {
   const TEST_CASES = {
