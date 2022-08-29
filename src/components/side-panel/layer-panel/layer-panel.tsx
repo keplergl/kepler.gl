@@ -32,7 +32,7 @@ import LayerPanelHeaderFactory from './layer-panel-header';
 import {NestedPartial, LayerVisConfig, ColorUI} from '@kepler.gl/types';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {toggleModal, VisStateActions, ActionHandler} from '@kepler.gl/actions';
-import {Datasets} from 'reducers/table-utils/kepler-table';
+import {Datasets} from 'table-utils';
 
 type LayerPanelProps = {
   className?: string;

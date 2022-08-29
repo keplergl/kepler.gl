@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {createDataContainer} from 'reducers/table-utils';
+import {createDataContainer} from 'table-utils';
 import {DEFAULT_COLOR_UI} from '@kepler.gl/constants';
 const {H3Layer} = KeplerGlLayers;
 

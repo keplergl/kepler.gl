@@ -27,7 +27,7 @@ import {
   COMPARE_TYPES
 } from '@kepler.gl/constants';
 
-import {DataRow} from '../table-utils/data-row';
+import {DataRow} from 'table-utils';
 import {Field, TooltipField, CompareType} from '@kepler.gl/types';
 import {
   parseFieldValue,

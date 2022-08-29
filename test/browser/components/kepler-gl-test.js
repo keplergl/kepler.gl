@@ -26,7 +26,7 @@ import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 
-import coreReducer from 'reducers/core';
+import {keplerGlReducerCore as coreReducer} from 'reducers';
 import {keplerGlInit, ActionTypes} from '@kepler.gl/actions';
 import {
   appInjector,

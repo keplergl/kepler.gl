@@ -9,7 +9,7 @@ import {
   MapStateActions,
   UIStateActions
 } from '@kepler.gl/actions';
-import {Datasets} from 'reducers/table-utils/kepler-table';
+import {Datasets} from 'table-utils';
 
 export type SidePanelItem = {
   id: string;

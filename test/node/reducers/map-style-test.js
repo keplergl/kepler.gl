@@ -21,12 +21,12 @@
 import test from 'tape';
 import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 
-import reducer from 'reducers/map-style';
 import {
+  mapStyleReducer as reducer,
   INITIAL_MAP_STYLE,
   loadMapStylesUpdater,
   getInitialInputStyle
-} from 'reducers/map-style-updaters';
+} from 'reducers';
 import {keplerGlInit, receiveMapConfig} from '@kepler.gl/actions';
 import SchemaManager from 'schemas';
 import {DEFAULT_MAP_STYLES, DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';

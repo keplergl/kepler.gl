@@ -22,9 +22,8 @@ import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
 import {drainTasksForTesting} from 'react-palm/tasks';
 
-import {getInitialInputStyle} from 'reducers/map-style-updaters';
+import {getInitialInputStyle, keplerGlReducerCore as keplerGlReducer} from 'reducers';
 
-import keplerGlReducer from 'reducers/core';
 import {
   VizColorPalette,
   COMPARE_TYPES,

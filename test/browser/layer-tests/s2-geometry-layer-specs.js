@@ -31,7 +31,7 @@ import {
   preparedFilterDomain0
 } from 'test/helpers/layer-utils';
 import {s2DefaultElevation as defaultElevation, KeplerGlLayers} from '@kepler.gl/layers';
-import {copyTableAndUpdate} from 'reducers/table-utils';
+import {copyTableAndUpdate} from 'table-utils';
 
 const {S2GeometryLayer} = KeplerGlLayers;
 

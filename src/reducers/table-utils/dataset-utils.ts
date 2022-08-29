@@ -20,7 +20,6 @@
 
 import uniq from 'lodash.uniq';
 import KeplerTable, {Datasets} from './kepler-table';
-
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
 
 import {hexToRgb, validateInputData, datasetColorMaker} from '@kepler.gl/utils';

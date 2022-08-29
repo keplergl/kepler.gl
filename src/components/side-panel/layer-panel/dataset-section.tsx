@@ -26,7 +26,7 @@ import {Button} from 'components/common/styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
 import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
-import {Datasets} from 'reducers/table-utils/kepler-table';
+import {Datasets} from 'table-utils';
 
 type AddDataButtonProps = {
   onClick: () => void;

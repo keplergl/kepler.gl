@@ -34,7 +34,7 @@ import {appInjector} from 'components/container';
 import {StateWTripGeojson} from 'test/helpers/mock-state';
 import IconButton from 'components/common/icon-button';
 
-import reducer from 'reducers/vis-state';
+import {visStateReducer as reducer} from 'reducers';
 
 const AnimationControl = appInjector.get(AnimationControlFactory);
 const PlaybackControls = appInjector.get(PlaybackControlsFactory);

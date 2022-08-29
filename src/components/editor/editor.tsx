@@ -35,7 +35,7 @@ import {getStyle as getEditHandleStyle, getEditHandleShape} from './handle-style
 import {Filter} from '@kepler.gl/types';
 import {Feature} from '@nebula.gl/edit-modes';
 import {MjolnirEvent} from 'mjolnir.js';
-import {Datasets} from 'reducers/table-utils/kepler-table';
+import {Datasets} from 'table-utils';
 
 const StyledWrapper = styled.div`
   cursor: ${(props: {editor: {mode: string}}) =>

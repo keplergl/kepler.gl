@@ -31,7 +31,7 @@ import {ParsedConfig} from 'schemas';
 import {ParsedLayer, SavedInteractionConfig, TooltipInfo} from '@kepler.gl/types';
 import KeplerTable, {Datasets} from './table-utils/kepler-table';
 import {applyFiltersToDatasets, validateFiltersUpdateDatasets} from './filter-utils';
-import {assignGpuChannels, resetFilterGpuMode} from './table-utils/gpu-filter-utils';
+import {assignGpuChannels, resetFilterGpuMode} from 'table-utils/gpu-filter-utils';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded

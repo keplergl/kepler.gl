@@ -27,7 +27,7 @@ import document from 'global/document';
 import {EXPORT_DATA_TYPE_OPTIONS, EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import ModalDialogFactory from './modals/modal-dialog';
 import {exportHtml, isValidMapInfo, exportMap, exportJson} from '@kepler.gl/utils';
-import {exportData} from 'reducers/export-utils';
+import {exportData} from 'reducers';
 
 // modals
 import DeleteDatasetModalFactory from './modals/delete-data-modal';
@@ -59,10 +59,10 @@ import {
   OVERWRITE_MAP_ID
 } from '@kepler.gl/constants';
 
-import {getFileFormatNames, getFileExtensions} from 'reducers/vis-state-selectors';
-import {MapStyle} from 'reducers';
-import {MapState, UiState, OnErrorCallBack, OnSuccessCallBack} from '@kepler.gl/types';
-import {ProviderState} from 'reducers/provider-state-updaters';
+import {getFileFormatNames, getFileExtensions} from 'reducers';
+import {MapStyle, VisState} from 'reducers';
+import {MapState, UiState, OnSuccessCallBack, OnErrorCallBack} from '@kepler.gl/types';
+import {ProviderState} from 'reducers';
 
 import {
   VisStateActions,

@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {PanelLabel} from 'components/common/styled-components';
 import FieldSelectorFactory from 'components/common/field-selector';
-import {validateColumn} from 'reducers/vis-state-merger';
+import {validateColumn} from 'reducers';
 import {LayerColumn, LayerColumns} from '@kepler.gl/layers';
 import {Field, FieldPair} from '@kepler.gl/types';
 

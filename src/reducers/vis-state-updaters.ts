@@ -84,7 +84,7 @@ import {
   Datasets,
   pinTableColumns,
   sortDatasetByColumn
-} from './table-utils/kepler-table';
+} from 'table-utils';
 import {calculateLayerData, findDefaultLayer} from './layer-utils';
 import {
   applyFilterFieldName,

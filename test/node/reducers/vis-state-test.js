@@ -27,16 +27,24 @@ import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-pa
 import CloneDeep from 'lodash.clonedeep';
 
 import {VisStateActions, MapStateActions} from '@kepler.gl/actions';
-import reducer from 'reducers/vis-state';
+import {
+  visStateReducer as reducer,
+  INITIAL_VIS_STATE,
+  DEFAULT_ANIMATION_CONFIG,
+  serializeLayer,
+  defaultInteractionConfig,
+  getDefaultFilter,
+  createNewDataEntry,
+  maybeToDate
+} from 'reducers';
 
 import {INITIAL_VIS_STATE, DEFAULT_ANIMATION_CONFIG} from 'reducers/vis-state-updaters';
 import {serializeLayer} from 'reducers/vis-state-merger';
 import KeplerTable from 'reducers/table-utils';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
-import {defaultInteractionConfig} from 'reducers/vis-state-updaters';
 import {Layer, KeplerGlLayers} from '@kepler.gl/layers';
 import {getDefaultFilter, createNewDataEntry} from 'reducers';
-import {createDataContainer, maybeToDate} from 'reducers/table-utils';
+import {createDataContainer} from 'table-utils';
 import {
   ALL_FIELD_TYPES,
   EDITOR_MODES,

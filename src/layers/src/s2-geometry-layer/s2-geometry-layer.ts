@@ -25,9 +25,7 @@ import {
   ColorRange,
   LAYER_VIS_CONFIGS
 } from '@kepler.gl/constants';
-import {default as KeplerTable} from 'reducers/table-utils/kepler-table';
-import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
-import {createDataContainer} from 'reducers/table-utils/data-container-utils';
+import {default as KeplerTable, DataContainerInterface, createDataContainer} from 'table-utils';
 import Layer, {
   LayerBaseConfig,
   LayerColorConfig,

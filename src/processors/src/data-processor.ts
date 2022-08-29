@@ -392,7 +392,6 @@ export const Processors: {
   analyzerTypeToFieldType: typeof analyzerTypeToFieldType;
   getFieldsFromData: typeof getFieldsFromData;
   parseCsvRowsByFieldType: typeof parseCsvRowsByFieldType;
-  formatCsv: typeof formatCsv;
 } = {
   processGeojson,
   processCsvData,
@@ -401,6 +400,5 @@ export const Processors: {
   processKeplerglDataset,
   analyzerTypeToFieldType,
   getFieldsFromData,
-  parseCsvRowsByFieldType,
-  formatCsv
+  parseCsvRowsByFieldType
 };

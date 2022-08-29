@@ -27,7 +27,7 @@ import Layer, {
 import {createSelector} from 'reselect';
 
 import {geoJsonFromData, prefixGpuField, gpuFilterToMapboxFilter} from './mapbox-utils';
-import {default as KeplerTable} from 'reducers/table-utils/kepler-table';
+import {default as KeplerTable} from 'table-utils';
 import {Merge} from '@kepler.gl/types';
 
 type MapboxLayerGLColumns = {

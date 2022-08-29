@@ -68,7 +68,7 @@ import {LOCALE_CODES} from '@kepler.gl/localization';
 import {getMapLayersFromSplitMaps, onViewPortChange} from '@kepler.gl/utils';
 import {MapView} from '@deck.gl/core';
 import {MapStyle} from 'reducers';
-import {Datasets} from 'reducers/table-utils';
+import {Datasets} from 'table-utils';
 import {
   computeDeckLayers,
   getLayerHoverProp,

@@ -53,9 +53,9 @@ import {VisState} from 'schemas';
 import KeplerTable, {
   FilterRecord,
   Datasets,
-  FilterDatasetOpt
-} from '../table-utils/kepler-table';
-import {DataContainerInterface} from '../table-utils/data-container-interface';
+  FilterDatasetOpt,
+  DataContainerInterface
+} from 'table-utils';
 import {LAYER_TYPES, getCentroid} from '@kepler.gl/layers';
 
 export type FilterResult = {

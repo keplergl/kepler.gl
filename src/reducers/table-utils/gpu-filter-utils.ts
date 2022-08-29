@@ -23,8 +23,7 @@ import {MAX_GPU_FILTERS, FILTER_TYPES} from '@kepler.gl/constants';
 import {Field, Filter} from '@kepler.gl/types';
 
 import {set, toArray, notNullorUndefined} from '@kepler.gl/utils';
-import {DataContainerInterface} from '../table-utils/data-container-interface';
-import {GpuFilter} from '../table-utils/kepler-table';
+import {DataContainerInterface, GpuFilter} from 'table-utils';
 
 /**
  * Set gpu mode based on current number of gpu filters exists

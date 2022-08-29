@@ -31,7 +31,7 @@ import MapDrawPanelFactory from './map-draw-panel';
 import LocalePanelFactory from './locale-panel';
 import {Layer} from '@kepler.gl/layers';
 import {Editor, MapControls} from '@kepler.gl/types';
-import {Datasets} from 'reducers/table-utils/kepler-table';
+import {Datasets} from 'table-utils';
 
 interface StyledMapControlProps {
   top?: number;

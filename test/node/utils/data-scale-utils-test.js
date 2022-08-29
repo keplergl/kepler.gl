@@ -21,7 +21,7 @@
 import test from 'tape';
 import {getOrdinalDomain, getQuantileDomain, getLinearDomain, getLogDomain} from 'reducers';
 
-import {createDataContainer} from 'reducers/table-utils';
+import {createDataContainer} from 'table-utils';
 
 function numberSort(a, b) {
   return a - b;

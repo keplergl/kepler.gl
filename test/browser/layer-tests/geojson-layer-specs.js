@@ -20,7 +20,7 @@
 
 import test from 'tape';
 import {defaultElevation, defaultLineWidth, defaultRadius, KeplerGlLayers} from '@kepler.gl/layers';
-import {copyTableAndUpdate} from 'reducers/table-utils';
+import {copyTableAndUpdate} from 'table-utils';
 
 const {GeojsonLayer} = KeplerGlLayers;
 

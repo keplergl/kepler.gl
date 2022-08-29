@@ -39,7 +39,7 @@ import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
 import {SidePanelItem} from 'components/types';
 import {LayerPanelListView} from '@kepler.gl/types';
-import {Datasets} from 'reducers/table-utils/kepler-table';
+import {Datasets} from 'table-utils';
 
 type LayerBlendingSelectorProps = {
   layerBlending: string;

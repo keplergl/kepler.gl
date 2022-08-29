@@ -23,9 +23,8 @@ import {Analyzer, DATA_TYPES} from 'type-analyzer';
 import {Field} from '@kepler.gl/types';
 
 import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from '../geojson-layer/geojson-utils';
-import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
+import {DataContainerInterface, getSampleData} from 'table-utils';
 import {notNullorUndefined, timeToUnixMilli} from '@kepler.gl/utils';
-import {getSampleData} from 'reducers/table-utils/data-container-utils';
 
 /**
  * Parse geojson from string
