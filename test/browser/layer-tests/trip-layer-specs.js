@@ -28,7 +28,7 @@ import {
   KeplerGlLayers
 } from '@kepler.gl/layers';
 
-import {copyTableAndUpdate} from 'table-utils';
+import {copyTableAndUpdate} from '@kepler.gl/table-utils';
 const {TripLayer} = KeplerGlLayers;
 
 import {

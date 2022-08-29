@@ -24,7 +24,7 @@ import {csvFormatRows} from 'd3-dsv';
 import {EXPORT_DATA_TYPE} from '@kepler.gl/constants';
 import {Field} from '@kepler.gl/types';
 
-import {createIndexedDataContainer, DataContainerInterface, Datasets} from 'table-utils';
+import {createIndexedDataContainer, DataContainerInterface, Datasets} from '@kepler.gl/table-utils';
 import {parseFieldValue} from '@kepler.gl/utils'
 import {downloadFile, DEFAULT_DATA_NAME} from '@kepler.gl/utils';
 

@@ -84,7 +84,7 @@ import {
   Datasets,
   pinTableColumns,
   sortDatasetByColumn
-} from 'table-utils';
+} from '@kepler.gl/table-utils';
 import {calculateLayerData, findDefaultLayer} from './layer-utils';
 import {
   applyFilterFieldName,
@@ -99,11 +99,9 @@ import {
   isInRange,
   LIMITED_FILTER_EFFECT_PROPS,
   updateFilterDataId
-} from './filter-utils';
-import {assignGpuChannel, setFilterGpuMode, createNewDataEntry} from 'table-utils';
+} from '@kepler.gl/table-utils/src/filter-utils';
+import {assignGpuChannel, setFilterGpuMode, createNewDataEntry, getFilterPlot, getDefaultFilterPlotType} from '@kepler.gl/table-utils';
 import {findFieldsToShow} from './interaction-utils';
-import {getFilterPlot} from './filter-utils';
-import {getDefaultFilterPlotType} from './filter-utils';
 
 // react-palm
 // disable capture exception for react-palm call to withTask

@@ -22,7 +22,7 @@ import React from 'react';
 import {InteractionConfig} from '@kepler.gl/types';
 import InteractionPanelFactory from './interaction-panel/interaction-panel';
 import {VisStateActions} from '@kepler.gl/actions';
-import {Datasets} from 'table-utils';
+import {Datasets} from '@kepler.gl/table-utils';
 
 type InteractionManagerProps = {
   interactionConfig: InteractionConfig;

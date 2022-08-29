@@ -24,7 +24,7 @@ import {mount} from 'enzyme';
 import sinon from 'sinon';
 import sinonStubPromise from 'sinon-stub-promise';
 import {getDistanceScales} from 'viewport-mercator-project';
-import {copyTableAndUpdate} from 'table-utils';
+import {copyTableAndUpdate} from '@kepler.gl/table-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 

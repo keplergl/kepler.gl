@@ -36,3 +36,5 @@ export {
   export * from './data-row';
   export * from './gpu-filter-utils';
   export * from './dataset-utils';
+  export * from './filter-utils';
+  export * from './data-scale-utils';

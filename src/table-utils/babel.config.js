@@ -18,38 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import styled from 'styled-components';
-import DatasetLabel from 'components/common/dataset-label';
-import {FormattedMessage} from '@kepler.gl/localization';
-import {Layer} from '@kepler.gl/layers';
-import {KeplerTable} from '@kepler.gl/table-utils';
+const KeplerPackage = require('./package');
 
-const StyledMsg = styled.div`
-  margin-top: 24px;
-`;
-
-export interface DeleteDatasetModalProps {
-  dataset: KeplerTable;
-  layers: Layer[];
-}
-
-export const DeleteDatasetModal: React.FC<DeleteDatasetModalProps> = ({dataset, layers = []}) => {
-  // retrieve only layers related to the current dataset
-  const currDatasetLayers = layers.filter(layer => layer.config.dataId === (dataset && dataset.id));
-
-  return (
-    <div className="delete-dataset-modal">
-      <DatasetLabel dataset={dataset} />
-      <StyledMsg className="delete-dataset-msg">
-        <FormattedMessage
-          id={'modal.deleteData.warning'}
-          values={{length: currDatasetLayers.length}}
-        />
-      </StyledMsg>
-    </div>
-  );
+const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
+const PLUGINS = [
+  ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
+  '@babel/plugin-transform-modules-commonjs',
+  '@babel/plugin-proposal-class-properties',
+  '@babel/plugin-proposal-export-namespace-from',
+  '@babel/plugin-proposal-optional-chaining',
+  [
+    '@babel/transform-runtime',
+    {
+      regenerator: true
+    }
+  ],
+  [
+    'search-and-replace',
+    {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }
+  ]
+];
+const ENV = {
+  test: {
+    plugins: ['istanbul']
+  },
+  debug: {
+    sourceMaps: 'inline',
+    retainLines: true
+  }
 };
 
-const DeleteDatasetModalFactory = () => DeleteDatasetModal;
-export default DeleteDatasetModalFactory;
+module.exports = function babel(api) {
+  api.cache(true);
+
+  return {
+    presets: PRESETS,
+    plugins: PLUGINS,
+    env: ENV
+  };
+};

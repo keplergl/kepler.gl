@@ -33,7 +33,7 @@ import {
   OVERLAY_TYPE_CONST
 } from '@kepler.gl/layers';
 
-import KeplerTable, {Datasets} from 'reducers/table-utils/kepler-table';
+import KeplerTable, {Datasets} from '@kepler.gl/table-utils';
 import {VisState} from 'schemas';
 import {isFunction, getMapLayersFromSplitMaps} from '@kepler.gl/utils';
 import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';

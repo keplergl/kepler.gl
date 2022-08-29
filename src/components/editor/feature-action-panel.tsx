@@ -30,7 +30,7 @@ import copy from 'copy-to-clipboard';
 import {Layer} from '@kepler.gl/layers';
 import {Filter} from '@kepler.gl/types';
 import {Feature} from '@nebula.gl/edit-modes';
-import {Datasets} from 'table-utils';
+import {Datasets} from '@kepler.gl/table-utils';
 
 const LAYOVER_OFFSET = 4;
 

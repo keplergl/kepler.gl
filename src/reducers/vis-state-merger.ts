@@ -29,7 +29,7 @@ import {CURRENT_VERSION, Merger, VisState, VisStateMergers, visStateSchema} from
 
 import {ParsedConfig} from 'schemas';
 import {ParsedLayer, SavedInteractionConfig, TooltipInfo} from '@kepler.gl/types';
-import KeplerTable, {Datasets} from './table-utils/kepler-table';
+import {KeplerTable, Datasets} from '@kepler.gl/table-utils';
 import {applyFiltersToDatasets, validateFiltersUpdateDatasets} from './filter-utils';
 import {assignGpuChannels, resetFilterGpuMode} from 'table-utils/gpu-filter-utils';
 

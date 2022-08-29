@@ -29,11 +29,11 @@ import cloneDeep from 'lodash.clonedeep';
 import {
   INITIAL_MAP_STATE,
   INITIAL_VIS_STATE,
-  getGpuFilterProps,
   renderDeckGlLayer,
   validateLayerWithData,
   mapStateReducer as mapState
 } from 'reducers';
+import {getGpuFilterProps} from '@kepler.gl/table-utils';
 import {VisStateActions, addDataToMap} from '@kepler.gl/actions';
 
 import {colorMaker, layerColors, LayerClasses} from '@kepler.gl/layers';

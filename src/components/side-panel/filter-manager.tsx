@@ -27,7 +27,7 @@ import FilterPanelFactory from './filter-panel/filter-panel';
 import {Filter} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {VisStateActions, ActionHandler} from '@kepler.gl/actions';
-import {Datasets} from 'table-utils';
+import {Datasets} from '@kepler.gl/table-utils';
 
 type FilterManagerProps = {
   filters: Filter[];

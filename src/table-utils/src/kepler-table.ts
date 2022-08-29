@@ -26,7 +26,7 @@ import {TRIP_POINT_FIELDS, SORT_ORDER, ALL_FIELD_TYPES, SCALE_TYPES} from '@kepl
 import {RGBColor, Field, FieldPair, FieldDomain, Filter, ProtoDataset} from '@kepler.gl/types';
 
 import {generateHashId, getSortingFunction, timeToUnixMilli} from '@kepler.gl/utils';
-import {getGpuFilterProps, getDatasetFieldIndexForFilter} from 'table-utils';
+import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 
 import {createDataContainer} from './data-container-utils';
 
@@ -40,14 +40,14 @@ import {
   getFilterRecord,
   getNumericFieldDomain,
   getTimestampFieldDomain
-} from 'reducers';
+} from './filter-utils';
 import {
   getLinearDomain,
   getLogDomain,
   getOrdinalDomain,
   getQuantileDomain
-} from 'reducers';
-import { DataContainerInterface } from './data-container-interface';
+} from './data-scale-utils';
+import {DataContainerInterface} from './data-container-interface';
 
 export type GpuFilter = {
   filterRange: number[][];

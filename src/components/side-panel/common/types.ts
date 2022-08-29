@@ -3,7 +3,7 @@ import {openDeleteModal} from '@kepler.gl/actions';
 import {VisStateActions} from '@kepler.gl/actions';
 import {ActionHandler} from '@kepler.gl/actions';
 import {RGBColor} from '@kepler.gl/types';
-import KeplerTable, {Datasets} from 'table-utils';
+import KeplerTable, {Datasets} from '@kepler.gl/table-utils';
 
 export type DatasetInfoProps = {
   dataset: KeplerTable;

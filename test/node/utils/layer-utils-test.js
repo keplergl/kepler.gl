@@ -38,7 +38,7 @@ import {
   findPointFieldPairs,
   createDataContainer,
   createNewDataEntry
-} from 'table-utils';
+} from '@kepler.gl/table-utils';
 
 test('layerUtils -> findDefaultLayer.1', t => {
   const inputFields = [

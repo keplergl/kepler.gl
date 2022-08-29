@@ -29,7 +29,7 @@ import Layer, {
   LayerStrokeColorConfig
 } from '../base-layer';
 import {hexToRgb} from '@kepler.gl/utils';
-import {default as KeplerTable} from 'table-utils';
+import {default as KeplerTable} from '@kepler.gl/table-utils';
 import {findDefaultColorField} from '@kepler.gl/utils';
 import PointLayerIcon from './point-layer-icon';
 import {

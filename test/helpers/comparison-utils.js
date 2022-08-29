@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 import {FILTER_TYPES} from '@kepler.gl/constants';
-import {toArray} from '../../src/utils';
-import {KeplerTable} from '../../src/table-utils';
+import {toArray} from '@kepler.gl/utils';
+import {KeplerTable} from '@kepler.gl/table-utils';
 
 export function cmpObjectKeys(t, expectedObj, actualObj, name) {
   t.deepEqual(

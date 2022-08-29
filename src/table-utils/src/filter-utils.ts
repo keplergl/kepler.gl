@@ -57,6 +57,9 @@ import KeplerTable, {
   DataContainerInterface
 } from 'table-utils';
 import {LAYER_TYPES, getCentroid} from '@kepler.gl/layers';
+import {isValidFilterValue} from '@kepler.gl/utils';
+import KeplerTable, {Datasets, FilterDatasetOpt, FilterRecord} from './kepler-table';
+import {DataContainerInterface} from './data-container-interface';
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];
@@ -452,7 +455,7 @@ type filterFunction = (data: {index: number}) => boolean;
  * @param dataContainer Data container
  * @return filterFunction
  */
-// eslint-disable-next-line complexity
+/* eslint-disable complexity */
 export function getFilterFunction(
   field: Field | null,
   dataId: string,

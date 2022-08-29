@@ -28,7 +28,7 @@ import {ICON_FIELDS, CLOUDFRONT, ColorRange} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
-import {default as KeplerTable, DataContainerInterface} from 'table-utils';
+import {default as KeplerTable, DataContainerInterface} from '@kepler.gl/table-utils';
 import {
   VisConfigBoolean,
   VisConfigColorRange,

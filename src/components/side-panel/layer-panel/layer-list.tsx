@@ -24,7 +24,7 @@ import classnames from 'classnames';
 import {SortableContainer, SortableElement} from 'react-sortable-hoc';
 import LayerPanelFactory from './layer-panel';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {Datasets} from 'table-utils';
+import {Datasets} from '@kepler.gl/table-utils';
 import {arrayMove} from '@kepler.gl/utils';
 import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
 
