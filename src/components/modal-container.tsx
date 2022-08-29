@@ -60,7 +60,7 @@ import {
 } from '@kepler.gl/constants';
 
 import {getFileFormatNames, getFileExtensions} from 'reducers';
-import {MapStyle, VisState} from 'reducers';
+import {MapStyle} from 'reducers';
 import {MapState, UiState, OnSuccessCallBack, OnErrorCallBack} from '@kepler.gl/types';
 import {ProviderState} from 'reducers';
 

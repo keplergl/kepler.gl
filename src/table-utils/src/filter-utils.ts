@@ -49,15 +49,7 @@ import {
   RangeFieldDomain
 } from '@kepler.gl/types';
 
-import {VisState} from 'schemas';
-import KeplerTable, {
-  FilterRecord,
-  Datasets,
-  FilterDatasetOpt,
-  DataContainerInterface
-} from 'table-utils';
 import {LAYER_TYPES, getCentroid} from '@kepler.gl/layers';
-import {isValidFilterValue} from '@kepler.gl/utils';
 import KeplerTable, {Datasets, FilterDatasetOpt, FilterRecord} from './kepler-table';
 import {DataContainerInterface} from './data-container-interface';
 
@@ -1117,7 +1109,7 @@ export function filterDatasetCPU<T extends StateType>(state: T, dataId: string):
 /**
  * Validate parsed filters with datasets and add filterProps to field
  */
-export function validateFiltersUpdateDatasets<S extends VisState>(
+export function validateFiltersUpdateDatasets<S extends {datasets: Datasets; layers: Layer[]}>(
   state: S,
   filtersToValidate: ParsedFilter[] = []
 ): {

@@ -35,12 +35,10 @@ import {
   defaultInteractionConfig
 } from 'reducers';
 
-import {INITIAL_VIS_STATE, DEFAULT_ANIMATION_CONFIG} from 'reducers/vis-state-updaters';
-import {serializeLayer} from 'reducers/vis-state-merger';
-import KeplerTable from 'reducers/table-utils';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {Layer, KeplerGlLayers} from '@kepler.gl/layers';
 import {
+  KeplerTable,
   createDataContainer,
   createNewDataEntry,
   maybeToDate,

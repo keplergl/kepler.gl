@@ -41,8 +41,7 @@ import {
   SavedVisState,
   SplitMap
 } from '@kepler.gl/types';
-import {isFilterValidToSave} from 'reducers/filter-utils';
-import {Datasets} from 'reducers/table-utils';
+import {isFilterValidToSave, Datasets} from '@kepler.gl/table-utils';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Loader} from '@loaders.gl/loader-utils';
 import KeplerGLSchema from './schema-manager';

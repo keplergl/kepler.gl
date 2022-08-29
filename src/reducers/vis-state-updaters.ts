@@ -100,7 +100,13 @@ import {
   LIMITED_FILTER_EFFECT_PROPS,
   updateFilterDataId
 } from '@kepler.gl/table-utils/src/filter-utils';
-import {assignGpuChannel, setFilterGpuMode, createNewDataEntry, getFilterPlot, getDefaultFilterPlotType} from '@kepler.gl/table-utils';
+import {
+  assignGpuChannel,
+  setFilterGpuMode,
+  createNewDataEntry,
+  getFilterPlot,
+  getDefaultFilterPlotType
+} from '@kepler.gl/table-utils';
 import {findFieldsToShow} from './interaction-utils';
 
 // react-palm
