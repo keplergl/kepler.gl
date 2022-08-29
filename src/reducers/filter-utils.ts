@@ -54,8 +54,8 @@ import KeplerTable, {
   FilterRecord,
   Datasets,
   FilterDatasetOpt
-} from 'reducers/table-utils/kepler-table';
-import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
+} from '../table-utils/kepler-table';
+import {DataContainerInterface} from '../table-utils/data-container-interface';
 import {LAYER_TYPES, getCentroid} from '@kepler.gl/layers';
 
 export type FilterResult = {

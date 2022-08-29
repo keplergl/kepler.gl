@@ -18,6 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+export {
+  default as Layer,
+  OVERLAY_TYPE_CONST,
+  LAYER_ID_LENGTH,
+  colorMaker,
+  layerColors
+} from './base-layer';
+export * from './base-layer';
 import {default as PointLayer} from './point-layer/point-layer';
 import {default as ArcLayer} from './arc-layer/arc-layer';
 import {default as LineLayer} from './line-layer/line-layer';
