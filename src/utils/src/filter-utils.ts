@@ -1,5 +1,13 @@
 import {FILTER_TYPES} from '@kepler.gl/constants';
 import get from 'lodash.get';
+import {TimeRangeFilter} from '@kepler.gl/types';
+
+export const durationSecond = 1000;
+export const durationMinute = durationSecond * 60;
+export const durationHour = durationMinute * 60;
+export const durationDay = durationHour * 24;
+export const durationWeek = durationDay * 7;
+export const durationYear = durationDay * 365;
 
 /**
  * Sanity check on filters to prepare for save
@@ -31,4 +39,36 @@ export function isValidFilterValue(type: string | null, value: any): boolean {
     default:
       return true;
   }
+}
+
+/**
+ * Retrieve interval bins for time filter
+ */
+export function getIntervalBins(filter: TimeRangeFilter) {
+  const {bins} = filter;
+  const interval = filter.plotType?.interval;
+  if (!interval || !bins || Object.keys(bins).length === 0) {
+    return null;
+  }
+  const values = Object.values(bins);
+  return values[0] ? values[0][interval] : null;
+}
+
+export function isValidTimeDomain(domain) {
+  return Array.isArray(domain) && domain.every(Number.isFinite);
+}
+
+export function getTimeWidgetHintFormatter(domain: [number, number]): string | undefined {
+  if (!isValidTimeDomain(domain)) {
+    return undefined;
+  }
+
+  const diff = domain[1] - domain[0];
+  return diff > durationWeek
+    ? 'L'
+    : diff > durationDay
+    ? 'L LT'
+    : diff > durationHour
+    ? 'LT'
+    : 'LTS';
 }

@@ -24,7 +24,7 @@
     "./src/middleware",
     "./src/deckgl-layers",
     "./src/layers",
-    "./src/table-utils",
+    "./src/table",
     "./src/cloud-providers",
     "./src/processors",
     "./src/tasks",
