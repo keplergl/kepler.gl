@@ -310,6 +310,11 @@ export interface MapContainerProps {
   generateDeckGLLayers?: typeof computeDeckLayers;
 
   onMouseMove?: (event: React.MouseEvent & {lngLat?: [number, number]}) => void;
+
+  deckRenderCallbacks?: {
+    onDeckLoad?: () => void;
+    onDeckRender?: (deckProps: Record<string, unknown>) => Record<string, unknown>;
+  };
 }
 
 export default function MapContainerFactory(
@@ -671,6 +676,7 @@ export default function MapContainerFactory(
         deckGlProps,
         index,
         mapControls,
+        deckRenderCallbacks,
         theme,
         generateDeckGLLayers,
         onMouseMove
@@ -754,6 +760,13 @@ export default function MapContainerFactory(
         ? deckGlProps?.views()
         : new MapView({legacyMeterSizes: true});
 
+      const allDeckGlProps = {
+        ...deckGlProps,
+        pickingRadius: DEFAULT_PICKING_RADIUS,
+        views,
+        layers: deckGlLayers
+      };
+
       return (
         <div
           onMouseMove={
@@ -768,12 +781,16 @@ export default function MapContainerFactory(
         >
           <DeckGL
             id="default-deckgl-overlay"
-            {...deckGlProps}
-            views={views}
-            layers={deckGlLayers}
+            onLoad={() => {
+              if (typeof deckRenderCallbacks?.onDeckLoad === 'function') {
+                deckRenderCallbacks.onDeckLoad();
+              }
+            }}
+            {...(typeof deckRenderCallbacks?.onDeckRender === 'function'
+              ? deckRenderCallbacks.onDeckRender(allDeckGlProps)
+              : allDeckGlProps)}
             controller={{doubleClickZoom: !isEditorDrawingMode}}
             viewState={mapState}
-            pickingRadius={DEFAULT_PICKING_RADIUS}
             onBeforeRender={this._onBeforeRender}
             onViewStateChange={this._onViewportChange}
             {...extraDeckParams}
