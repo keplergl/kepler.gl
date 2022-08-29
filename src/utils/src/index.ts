@@ -97,7 +97,18 @@ export {
   exportMap,
   default as exporters
 } from './export-utils';
-export {isValidFilterValue, isValidTimeDomain, getIntervalBins, getTimeWidgetHintFormatter, durationSecond, durationMinute, durationHour, durationDay, durationWeek, durationYear} from './filter-utils';
+export {
+  isValidFilterValue, 
+  isValidTimeDomain, 
+  getIntervalBins, 
+  getTimeWidgetHintFormatter, 
+  durationSecond, 
+  durationMinute, 
+  durationHour, 
+  durationDay, 
+  durationWeek, 
+  durationYear
+} from './filter-utils';
 export {setLayerBlending} from './gl-utils';
 export {flattenMessages, mergeMessages} from './locale-utils';
 export type {Dimensions} from './observe-dimensions';

@@ -20,7 +20,7 @@
 
 import {console as Console} from 'global/window';
 
-import {Datasets} from '@kepler.gl/table-utils';
+import {Datasets} from '@kepler.gl/table';
 import datasetSchema from './dataset-schema';
 import mapStyleSchema from './map-style-schema';
 import mapStateSchema from './map-state-schema';

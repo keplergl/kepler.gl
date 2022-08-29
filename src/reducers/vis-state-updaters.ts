@@ -79,12 +79,7 @@ import {Filter, InteractionConfig, AnimationConfig, Editor} from '@kepler.gl/typ
 import {Loader} from '@loaders.gl/loader-utils';
 
 import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons/index';
-import {
-  copyTableAndUpdate,
-  Datasets,
-  pinTableColumns,
-  sortDatasetByColumn
-} from '@kepler.gl/table-utils';
+import {copyTableAndUpdate, Datasets, pinTableColumns, sortDatasetByColumn} from '@kepler.gl/table';
 import {calculateLayerData, findDefaultLayer} from './layer-utils';
 import {
   applyFilterFieldName,
@@ -99,14 +94,14 @@ import {
   isInRange,
   LIMITED_FILTER_EFFECT_PROPS,
   updateFilterDataId
-} from '@kepler.gl/table-utils/src/filter-utils';
+} from '@kepler.gl/table/src/filter-utils';
 import {
   assignGpuChannel,
   setFilterGpuMode,
   createNewDataEntry,
   getFilterPlot,
   getDefaultFilterPlotType
-} from '@kepler.gl/table-utils';
+} from '@kepler.gl/table';
 import {findFieldsToShow} from './interaction-utils';
 
 // react-palm

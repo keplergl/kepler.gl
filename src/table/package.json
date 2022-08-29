@@ -1,5 +1,5 @@
 {
-  "name": "@kepler.gl/table-utils",
+  "name": "@kepler.gl/table",
   "author": "Shan He <shan@uber.com>",
   "version": "2.5.5",
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",

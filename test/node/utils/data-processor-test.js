@@ -57,7 +57,7 @@ import {
   getFieldsFromData
 } from '@kepler.gl/utils';
 
-import {createDataContainer} from '@kepler.gl/table-utils';
+import {createDataContainer} from '@kepler.gl/table';
 import {formatCsv} from 'reducers';
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';

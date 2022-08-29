@@ -29,7 +29,7 @@ import {
   default as KeplerTable,
   DataContainerInterface,
   createDataContainer
-} from '@kepler.gl/table-utils';
+} from '@kepler.gl/table';
 import Layer, {
   LayerBaseConfig,
   LayerColorConfig,

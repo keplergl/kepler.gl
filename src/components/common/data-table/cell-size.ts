@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import document from 'global/document';
-import {DataContainerInterface} from '@kepler.gl/table-utils';
+import {DataContainerInterface} from '@kepler.gl/table';
 import {parseFieldValue} from '@kepler.gl/utils';
 
 const MIN_GHOST_CELL_SIZE: number = 200;

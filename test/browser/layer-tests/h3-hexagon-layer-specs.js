@@ -37,7 +37,7 @@ import {
   h3DefaultElevation as defaultElevation
 } from '@kepler.gl/layers';
 
-import {copyTableAndUpdate} from '@kepler.gl/table-utils';
+import {copyTableAndUpdate} from '@kepler.gl/table';
 
 const {H3Layer} = KeplerGlLayers;
 const columns = {

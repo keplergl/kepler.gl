@@ -64,7 +64,7 @@ import {
   MapState,
   Filter
 } from '@kepler.gl/types';
-import {KeplerTable, Datasets, GpuFilter, DataContainerInterface} from '@kepler.gl/table-utils';
+import {KeplerTable, Datasets, GpuFilter, DataContainerInterface} from '@kepler.gl/table';
 import {getLatLngBounds, getSampleData, isPlainObject, notNullorUndefined} from '@kepler.gl/utils';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};

@@ -36,7 +36,7 @@ import {
   ColorRange
 } from '@kepler.gl/constants';
 import {Merge} from '@kepler.gl/types';
-import {KeplerTable, Datasets} from '@kepler.gl/table-utils';
+import {KeplerTable, Datasets} from '@kepler.gl/table';
 
 type AggregationLayerColumns = {
   lat: LayerColumn;

@@ -44,7 +44,7 @@ import {
   VisConfigNumber,
   VisConfigRange
 } from '@kepler.gl/types';
-import {KeplerTable, DataContainerInterface} from '@kepler.gl/table-utils';
+import {KeplerTable, DataContainerInterface} from '@kepler.gl/table';
 
 export type ArcLayerVisConfigSettings = {
   opacity: VisConfigNumber;

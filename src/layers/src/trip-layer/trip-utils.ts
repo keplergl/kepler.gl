@@ -23,7 +23,7 @@ import {Analyzer, DATA_TYPES} from 'type-analyzer';
 import {Field} from '@kepler.gl/types';
 
 import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from '../geojson-layer/geojson-utils';
-import {DataContainerInterface, getSampleData} from '@kepler.gl/table-utils';
+import {DataContainerInterface, getSampleData} from '@kepler.gl/table';
 import {notNullorUndefined, timeToUnixMilli} from '@kepler.gl/utils';
 import {Feature} from '@turf/helpers';
 import {GeoJsonProperties, Geometry} from 'geojson';

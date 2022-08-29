@@ -33,7 +33,7 @@ import {
   validateLayerWithData,
   mapStateReducer as mapState
 } from 'reducers';
-import {getGpuFilterProps} from '@kepler.gl/table-utils';
+import {getGpuFilterProps} from '@kepler.gl/table';
 import {VisStateActions, addDataToMap} from '@kepler.gl/actions';
 
 import {colorMaker, layerColors, LayerClasses} from '@kepler.gl/layers';

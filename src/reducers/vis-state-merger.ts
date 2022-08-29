@@ -29,13 +29,13 @@ import {CURRENT_VERSION, Merger, VisState, VisStateMergers, visStateSchema} from
 
 import {ParsedConfig} from 'schemas';
 import {ParsedLayer, SavedInteractionConfig, TooltipInfo} from '@kepler.gl/types';
-import {KeplerTable, Datasets} from '@kepler.gl/table-utils';
+import {KeplerTable, Datasets} from '@kepler.gl/table';
 import {
   applyFiltersToDatasets,
   validateFiltersUpdateDatasets,
   assignGpuChannels,
   resetFilterGpuMode
-} from '@kepler.gl/table-utils';
+} from '@kepler.gl/table';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded

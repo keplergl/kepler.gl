@@ -25,7 +25,7 @@ import {Trash} from 'components/common/icons';
 import {createLinearGradient} from '@kepler.gl/utils';
 import {StyledPanelHeader, StyledPanelHeaderProps} from 'components/common/styled-components';
 import {RGBColor, Filter} from '@kepler.gl/types';
-import {KeplerTable} from '@kepler.gl/table-utils';
+import {KeplerTable} from '@kepler.gl/table';
 
 interface StyledFilterHeaderProps extends StyledPanelHeaderProps {
   $labelRCGColorValues: RGBColor[];

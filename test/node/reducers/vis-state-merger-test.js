@@ -37,7 +37,7 @@ import SchemaManager from 'schemas';
 import {processKeplerglJSON} from '@kepler.gl/processors';
 import {updateVisData, receiveMapConfig, addDataToMap} from '@kepler.gl/actions';
 
-import {createDataContainer} from '@kepler.gl/table-utils';
+import {createDataContainer} from '@kepler.gl/table';
 
 // fixtures
 import {

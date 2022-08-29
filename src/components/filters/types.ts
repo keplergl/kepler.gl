@@ -15,7 +15,7 @@ import {
   toggleFilterAnimation,
   updateFilterAnimationSpeed
 } from '@kepler.gl/actions';
-import {Datasets} from '@kepler.gl/table-utils';
+import {Datasets} from '@kepler.gl/table';
 
 export type PolygonFilterProps = {
   filter: Filter;

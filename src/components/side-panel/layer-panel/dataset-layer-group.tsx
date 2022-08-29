@@ -23,7 +23,7 @@ import React, {useMemo} from 'react';
 import DatasetLayerSectionFactory from './dataset-layer-section';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
-import {Datasets} from '@kepler.gl/table-utils';
+import {Datasets} from '@kepler.gl/table';
 
 type DatasetLayerGroupProps = {
   datasets: Datasets;

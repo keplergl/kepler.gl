@@ -43,7 +43,7 @@ import {
   createNewDataEntry,
   maybeToDate,
   getDefaultFilter
-} from '@kepler.gl/table-utils';
+} from '@kepler.gl/table';
 import {
   ALL_FIELD_TYPES,
   EDITOR_MODES,

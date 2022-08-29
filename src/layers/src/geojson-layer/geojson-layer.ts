@@ -55,7 +55,7 @@ import {
   Merge,
   RGBColor
 } from '@kepler.gl/types';
-import {KeplerTable, DataContainerInterface} from '@kepler.gl/table-utils';
+import {KeplerTable, DataContainerInterface} from '@kepler.gl/table';
 
 const SUPPORTED_ANALYZER_TYPES = {
   [DATA_TYPES.GEOMETRY]: true,
