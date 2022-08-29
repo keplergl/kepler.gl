@@ -23,7 +23,7 @@ import Console from 'global/console';
 import CartoIcon from './carto-icon';
 import {Provider} from '@kepler.gl/cloud-providers';
 import {createDataContainer} from '@kepler.gl/table-utils';
-import {formatCsv} from '@kepler.gl/reducers';
+import {formatCsv} from 'reducers';
 
 const NAME = 'carto';
 const DISPLAY_NAME = 'CARTO';
