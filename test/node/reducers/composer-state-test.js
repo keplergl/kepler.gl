@@ -22,7 +22,7 @@
 
 import test from 'tape';
 import keplerGlReducer from 'reducers';
-import {addDataToMapUpdater} from 'reducers/combined-updaters';
+import {addDataToMapUpdater, INITIAL_UI_STATE} from 'reducers';
 import {processCsvData} from '@kepler.gl/processors';
 import {registerEntry} from '@kepler.gl/actions';
 
@@ -34,8 +34,6 @@ import testHexIdData, {
   expectedMergedDataset
 } from 'test/fixtures/test-hex-id-data';
 import {cmpLayers, cmpFilters, cmpDataset, cmpInteraction} from 'test/helpers/comparison-utils';
-import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
-
 const mockRawData = {
   fields: [
     {

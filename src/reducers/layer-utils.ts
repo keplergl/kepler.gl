@@ -33,7 +33,7 @@ import {
   OVERLAY_TYPE_CONST
 } from '@kepler.gl/layers';
 
-import KeplerTable, {Datasets} from 'reducers/table-utils/kepler-table';
+import KeplerTable, {DataRow, Datasets} from '@kepler.gl/table';
 import {VisState} from 'schemas';
 import {isFunction, getMapLayersFromSplitMaps} from '@kepler.gl/utils';
 import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
@@ -146,7 +146,7 @@ export function getLayerHoverProp({
         return null;
       }
       const {dataContainer, fields} = datasets[dataId];
-      const data = layer.getHoverData(object, dataContainer, fields);
+      const data: DataRow | null = layer.getHoverData(object, dataContainer, fields);
       const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
 
       return {

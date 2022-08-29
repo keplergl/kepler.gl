@@ -38,7 +38,7 @@ import {adjustCellsToContainer} from './cell-size';
 
 import {ALL_FIELD_TYPES, SORT_ORDER} from '@kepler.gl/constants';
 import FieldTokenFactory from 'components/common/field-token';
-import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
+import {DataContainerInterface} from '@kepler.gl/table';
 
 const defaultHeaderRowHeight = 55;
 const defaultRowHeight = 32;

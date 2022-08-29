@@ -40,13 +40,13 @@ import {
   getFilterRecord,
   getNumericFieldDomain,
   getTimestampFieldDomain
-} from '../filter-utils';
+} from './filter-utils';
 import {
   getLinearDomain,
   getLogDomain,
   getOrdinalDomain,
   getQuantileDomain
-} from '../data-scale-utils';
+} from './data-scale-utils';
 import {DataContainerInterface} from './data-container-interface';
 
 export type GpuFilter = {

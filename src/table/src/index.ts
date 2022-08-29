@@ -29,6 +29,12 @@ export {
     maybeToDate
   } from './kepler-table';
   /* eslint-disable prettier/prettier */
-  export type {GpuFilter, Datasets} from './kepler-table';
+  export type {GpuFilter, Datasets, FilterRecord, FilterDatasetOpt} from './kepler-table';
   export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData} from './data-container-utils';
   export type {DataContainerInterface} from './data-container-interface';
+  export * from './data-container-utils';
+  export * from './data-row';
+  export * from './gpu-filter-utils';
+  export * from './dataset-utils';
+  export * from './filter-utils';
+  export * from './data-scale-utils';

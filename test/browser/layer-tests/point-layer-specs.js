@@ -33,9 +33,9 @@ import {
   fieldDomain
 } from 'test/helpers/layer-utils';
 
-import {copyTableAndUpdate} from 'reducers/table-utils';
+import {copyTableAndUpdate} from '@kepler.gl/table';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
+import {INITIAL_MAP_STATE} from 'reducers';
 import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 
 const {PointLayer} = KeplerGlLayers;

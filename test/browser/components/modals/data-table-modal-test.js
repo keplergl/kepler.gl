@@ -26,7 +26,7 @@ import flatten from 'lodash.flattendeep';
 import {mountWithTheme} from 'test/helpers/component-utils';
 import CloneDeep from 'lodash.clonedeep';
 import {VisStateActions} from '@kepler.gl/actions';
-import visStateReducer from 'reducers/vis-state';
+import {visStateReducer} from 'reducers';
 
 import FieldTokenFactory from 'components/common/field-token';
 import {VertThreeDots, ArrowUp} from 'components/common/icons';
@@ -41,7 +41,7 @@ import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
 import {appInjector} from 'components/container';
 
-import {createDataContainer} from 'reducers/table-utils';
+import {createDataContainer} from '@kepler.gl/table';
 
 const DataTableModal = appInjector.get(DataTableModalFactory);
 const DataTable = appInjector.get(DataTableFactory);

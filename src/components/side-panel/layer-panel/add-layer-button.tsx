@@ -29,7 +29,7 @@ import {Button} from 'components/common/styled-components';
 import {DatasetSquare} from 'components';
 import Typeahead from 'components/common/item-selector/typeahead';
 import Accessor from 'components/common/item-selector/accessor';
-import {Datasets} from 'reducers/table-utils/kepler-table';
+import {Datasets} from '@kepler.gl/table';
 import {RGBColor} from '@kepler.gl/types';
 
 type AddLayerButtonProps = {

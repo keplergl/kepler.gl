@@ -49,14 +49,10 @@ import {
   RangeFieldDomain
 } from '@kepler.gl/types';
 
-import {VisState} from 'schemas';
-import KeplerTable, {
-  FilterRecord,
-  Datasets,
-  FilterDatasetOpt
-} from 'reducers/table-utils/kepler-table';
-import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
 import {LAYER_TYPES, getCentroid} from '@kepler.gl/layers';
+import KeplerTable, {Datasets, FilterDatasetOpt, FilterRecord} from './kepler-table';
+import {DataContainerInterface} from './data-container-interface';
+import {isValidTimeDomain, durationYear, durationDay} from '@kepler.gl/utils';
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];
@@ -84,13 +80,6 @@ export const TimestampStepMap = [
 
 export const histogramBins = 30;
 export const enlargedHistogramBins = 100;
-
-const durationSecond = 1000;
-const durationMinute = durationSecond * 60;
-const durationHour = durationMinute * 60;
-const durationDay = durationHour * 24;
-const durationWeek = durationDay * 7;
-const durationYear = durationDay * 365;
 
 export const FILTER_UPDATER_PROPS = keyMirror({
   dataId: null,
@@ -452,7 +441,7 @@ type filterFunction = (data: {index: number}) => boolean;
  * @param dataContainer Data container
  * @return filterFunction
  */
-// eslint-disable-next-line complexity
+/* eslint-disable complexity */
 export function getFilterFunction(
   field: Field | null,
   dataId: string,
@@ -801,9 +790,6 @@ export function isInRange(val: any, domain: number[]): boolean {
 export function isInPolygon(point: number[], polygon: any): boolean {
   return booleanWithin(turfPoint(point), polygon);
 }
-export function isValidTimeDomain(domain) {
-  return Array.isArray(domain) && domain.every(Number.isFinite);
-}
 export function getTimeWidgetTitleFormatter(domain: [number, number]): string | null {
   if (!isValidTimeDomain(domain)) {
     return null;
@@ -814,21 +800,6 @@ export function getTimeWidgetTitleFormatter(domain: [number, number]): string | 
   // Local aware formats
   // https://momentjs.com/docs/#/parsing/string-format
   return diff > durationYear ? 'L' : diff > durationDay ? 'L LT' : 'L LTS';
-}
-
-export function getTimeWidgetHintFormatter(domain: [number, number]): string | undefined {
-  if (!isValidTimeDomain(domain)) {
-    return undefined;
-  }
-
-  const diff = domain[1] - domain[0];
-  return diff > durationWeek
-    ? 'L'
-    : diff > durationDay
-    ? 'L LT'
-    : diff > durationHour
-    ? 'LT'
-    : 'LTS';
 }
 
 /**
@@ -1114,7 +1085,7 @@ export function filterDatasetCPU<T extends StateType>(state: T, dataId: string):
 /**
  * Validate parsed filters with datasets and add filterProps to field
  */
-export function validateFiltersUpdateDatasets<S extends VisState>(
+export function validateFiltersUpdateDatasets<S extends {datasets: Datasets; layers: Layer[]}>(
   state: S,
   filtersToValidate: ParsedFilter[] = []
 ): {
@@ -1188,17 +1159,4 @@ export function validateFiltersUpdateDatasets<S extends VisState>(
   });
 
   return {validated, failed, updatedDatasets};
-}
-
-/**
- * Retrieve interval bins for time filter
- */
-export function getIntervalBins(filter: TimeRangeFilter) {
-  const {bins} = filter;
-  const interval = filter.plotType?.interval;
-  if (!interval || !bins || Object.keys(bins).length === 0) {
-    return null;
-  }
-  const values = Object.values(bins);
-  return values[0] ? values[0][interval] : null;
 }

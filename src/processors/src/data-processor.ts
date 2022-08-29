@@ -34,7 +34,6 @@ import {
 import {KeplerGlSchema, ParsedDataset, SavedMap} from 'schemas';
 import {Feature} from '@nebula.gl/edit-modes';
 import {LoadedMap} from 'schemas/schema-manager';
-import {formatCsv} from 'reducers/export-utils';
 
 // if any of these value occurs in csv, parse it to null;
 // const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];
@@ -392,7 +391,6 @@ export const Processors: {
   analyzerTypeToFieldType: typeof analyzerTypeToFieldType;
   getFieldsFromData: typeof getFieldsFromData;
   parseCsvRowsByFieldType: typeof parseCsvRowsByFieldType;
-  formatCsv: typeof formatCsv;
 } = {
   processGeojson,
   processCsvData,
@@ -401,6 +399,5 @@ export const Processors: {
   processKeplerglDataset,
   analyzerTypeToFieldType,
   getFieldsFromData,
-  parseCsvRowsByFieldType,
-  formatCsv
+  parseCsvRowsByFieldType
 };

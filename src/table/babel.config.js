@@ -18,41 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
-import RangeSliderFactory from 'components/common/range-slider';
+const KeplerPackage = require('./package');
 
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
-import {BRUSH_CONFIG} from 'reducers';
-import {FormattedMessage} from '@kepler.gl/localization';
-
-BrushConfigFactory.deps = [RangeSliderFactory];
-
-type BrushConfigProps = {
-  config: {
-    size: number;
-  };
-  onChange: (config: {size: number}) => void;
+const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
+const PLUGINS = [
+  ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
+  '@babel/plugin-transform-modules-commonjs',
+  '@babel/plugin-proposal-class-properties',
+  '@babel/plugin-proposal-export-namespace-from',
+  '@babel/plugin-proposal-optional-chaining',
+  [
+    '@babel/transform-runtime',
+    {
+      regenerator: true
+    }
+  ],
+  [
+    'search-and-replace',
+    {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }
+  ]
+];
+const ENV = {
+  test: {
+    plugins: ['istanbul']
+  },
+  debug: {
+    sourceMaps: 'inline',
+    retainLines: true
+  }
 };
 
-function BrushConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
-  const BrushConfig = ({config, onChange}: BrushConfigProps) => (
-    <SidePanelSection>
-      <PanelLabel>
-        <FormattedMessage id={'misc.brushRadius'} />
-      </PanelLabel>
-      <RangeSlider
-        range={BRUSH_CONFIG.range}
-        value0={0}
-        value1={config.size || 10 / 2}
-        step={0.1}
-        isRanged={false}
-        onChange={value => onChange({...config, size: value[1]})}
-        inputTheme="secondary"
-      />
-    </SidePanelSection>
-  );
+module.exports = function babel(api) {
+  api.cache(true);
 
-  return BrushConfig;
-}
-
-export default BrushConfigFactory;
+  return {
+    presets: PRESETS,
+    plugins: PLUGINS,
+    env: ENV
+  };
+};

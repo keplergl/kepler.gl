@@ -31,7 +31,7 @@ import {
   convertToPng,
   getScaleFromImageSize
 } from '@kepler.gl/utils';
-import {findMapBounds} from 'reducers/data-utils';
+import {findMapBounds} from 'reducers';
 import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
 

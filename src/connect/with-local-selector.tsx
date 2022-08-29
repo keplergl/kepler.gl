@@ -21,7 +21,7 @@
 import React, {Component} from 'react';
 import {createSelector} from 'reselect';
 import KeplerGlContext from 'components/context';
-import {KeplerGlState} from 'reducers/combined-updaters';
+import {KeplerGlState} from 'reducers';
 
 const identity = state => state;
 

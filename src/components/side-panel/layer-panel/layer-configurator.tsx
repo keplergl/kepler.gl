@@ -51,7 +51,7 @@ import {
 
 import {NestedPartial, RGBColor, LayerVisConfig, ColorUI, Field} from '@kepler.gl/types';
 import {toggleModal, ActionHandler} from '@kepler.gl/actions';
-import {Datasets} from 'reducers/table-utils/kepler-table';
+import {Datasets} from '@kepler.gl/table';
 
 type LayerConfiguratorProps = {
   layer: Layer;

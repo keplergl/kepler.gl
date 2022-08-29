@@ -27,8 +27,7 @@ import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
-import rootReducer from 'reducers/root';
-import coreReducer from 'reducers/core';
+import {keplerGlReducer as rootReducer, keplerGlReducerCore as coreReducer} from 'reducers';
 import {keplerGlInit} from '@kepler.gl/actions';
 
 import Container, {ERROR_MSG} from 'components/container';
