@@ -93,9 +93,7 @@ import {
   getTimeWidgetTitleFormatter,
   isInRange,
   LIMITED_FILTER_EFFECT_PROPS,
-  updateFilterDataId
-} from '@kepler.gl/table/src/filter-utils';
-import {
+  updateFilterDataId,
   assignGpuChannel,
   setFilterGpuMode,
   createNewDataEntry,
