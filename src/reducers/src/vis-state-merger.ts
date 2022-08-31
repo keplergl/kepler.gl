@@ -170,9 +170,12 @@ export function createLayerFromConfig(state: VisState, layerConfig: any): Layer 
     return null;
   }
   // first validate config against dataset
-  const {validated, failed} = validateLayersByDatasets(state.datasets, state.layerClasses, [
-    parsedLayerConfig
-  ]);
+  const {validated, failed} = validateLayersByDatasets(
+    state.datasets,
+    state.layerClasses,
+    [parsedLayerConfig],
+    {allowEmptyColumn: true}
+  );
 
   if (failed?.length || !validated.length) {
     // failed
@@ -657,10 +660,15 @@ export function validateSavedVisualChannels(
   return newLayer;
 }
 
+type ValidateLayerOption = {
+  allowEmptyColumn?: boolean;
+};
+
 export function validateLayersByDatasets(
   datasets: Datasets,
   layerClasses: VisState['layerClasses'],
-  layers: NonNullable<ParsedConfig['visState']>['layers'] = []
+  layers: NonNullable<ParsedConfig['visState']>['layers'] = [],
+  options?: ValidateLayerOption
 ) {
   const validated: Layer[] = [];
   const failed: NonNullable<ParsedConfig['visState']>['layers'] = [];
@@ -671,7 +679,12 @@ export function validateLayersByDatasets(
     if (layer?.config?.dataId) {
       if (datasets[layer.config.dataId]) {
         // datasets are already loaded
-        validateLayer = validateLayerWithData(datasets[layer.config.dataId], layer, layerClasses);
+        validateLayer = validateLayerWithData(
+          datasets[layer.config.dataId],
+          layer,
+          layerClasses,
+          options
+        );
       }
     }
 
@@ -693,9 +706,7 @@ export function validateLayerWithData(
   {fields, id: dataId}: KeplerTable,
   savedLayer: ParsedLayer,
   layerClasses: VisState['layerClasses'],
-  options: {
-    allowEmptyColumn?: boolean;
-  } = {}
+  options: ValidateLayerOption = {}
 ): Layer | null {
   const {type} = savedLayer;
   // layer doesnt have a valid type
