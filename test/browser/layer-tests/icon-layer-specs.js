@@ -510,7 +510,7 @@ test('#IconLayer -> fetch icon geometry -> renderIconModal', t => {
   });
 
   // initialize iconLayer
-  const iconLayer = new IconLayer();
+  const iconLayer = new IconLayer({dataId: ''});
   t.deepEqual(iconLayer.iconGeometry, iconLayer.iconGeometry, 'should create correct iconGeometry');
 
   let wrapper;

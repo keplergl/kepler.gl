@@ -23,6 +23,7 @@ import {ScatterplotLayer} from '@deck.gl/layers';
 
 import Layer, {
   LayerBaseConfig,
+  LayerBaseConfigPartial,
   LayerColorConfig,
   LayerColumn,
   LayerSizeConfig,
@@ -261,7 +262,7 @@ export default class PointLayer extends Layer {
     return {props};
   }
 
-  getDefaultLayerConfig(props = {}) {
+  getDefaultLayerConfig(props: LayerBaseConfigPartial) {
     return {
       ...super.getDefaultLayerConfig(props),
 

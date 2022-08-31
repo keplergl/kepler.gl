@@ -23,7 +23,12 @@ import memoize from 'lodash.memoize';
 import {CHANNEL_SCALES, SCALE_FUNC, ALL_FIELD_TYPES, ColorRange} from '@kepler.gl/constants';
 import MapboxGLLayer, {MapboxLayerGLConfig} from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
-import {LayerColumn, LayerWeightConfig, VisualChannels} from '../base-layer';
+import {
+  LayerBaseConfigPartial,
+  LayerColumn,
+  LayerWeightConfig,
+  VisualChannels
+} from '../base-layer';
 import {VisConfigColorRange, VisConfigNumber, HexColor, Merge} from '@kepler.gl/types';
 import {hexToRgb, DataContainerInterface} from '@kepler.gl/utils';
 
@@ -150,7 +155,7 @@ class HeatmapLayer extends MapboxGLLayer {
         };
   }
 
-  getDefaultLayerConfig(props = {}): HeatmapLayerConfig {
+  getDefaultLayerConfig(props: LayerBaseConfigPartial): HeatmapLayerConfig {
     // mapbox heatmap layer color is always based on density
     // no need to set colorField, colorDomain and colorScale
     // eslint-disable-next-line no-unused-vars

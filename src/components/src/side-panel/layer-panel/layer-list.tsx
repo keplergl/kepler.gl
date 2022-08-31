@@ -141,7 +141,7 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
     const layerTypeOptions = useMemo(
       () =>
         Object.keys(layerClasses).map(key => {
-          const layer = new layerClasses[key]();
+          const layer = new layerClasses[key]({dataId: ''});
           return {
             id: key,
             label: layer.name,

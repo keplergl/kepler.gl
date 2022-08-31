@@ -21,6 +21,7 @@
 import memoize from 'lodash.memoize';
 import Layer, {
   LayerBaseConfig,
+  LayerBaseConfigPartial,
   LayerColorConfig,
   LayerColumn,
   LayerSizeConfig,
@@ -84,9 +85,9 @@ export default class AggregationLayer extends Layer {
   declare gpuFilterGetData: (dataContainer, data, fieldIndex) => any;
 
   constructor(
-    props?: {
+    props: {
       id?: string;
-    } & Partial<LayerBaseConfig>
+    } & LayerBaseConfigPartial
   ) {
     super(props);
 

@@ -24,6 +24,7 @@ import {DATA_TYPES} from 'type-analyzer';
 import Layer, {
   colorMaker,
   LayerBaseConfig,
+  LayerBaseConfigPartial,
   LayerColorConfig,
   LayerColumn,
   LayerHeightConfig,
@@ -299,7 +300,7 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
-  getDefaultLayerConfig(props = {}) {
+  getDefaultLayerConfig(props: LayerBaseConfigPartial) {
     return {
       ...super.getDefaultLayerConfig(props),
 
