@@ -31,9 +31,8 @@ import {
   getFieldsFromData,
   toArray
 } from '@kepler.gl/utils';
-import {KeplerGlSchema, ParsedDataset, SavedMap} from 'schemas';
+import {KeplerGlSchema, ParsedDataset, SavedMap, LoadedMap} from '@kepler.gl/schemas';
 import {Feature} from '@nebula.gl/edit-modes';
-import {LoadedMap} from 'schemas/schema-manager';
 
 // if any of these value occurs in csv, parse it to null;
 // const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];

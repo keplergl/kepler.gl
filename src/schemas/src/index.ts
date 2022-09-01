@@ -30,7 +30,8 @@ export {
 export type {
   ParsedConfig,
   SavedConfigV1,
-  SavedMap
+  SavedMap,
+  LoadedMap
 } from './schema-manager';
 export {CURRENT_VERSION, VERSIONS} from './versions';
 export {

@@ -25,7 +25,13 @@ import {isObject, arrayInsert, getInitialMapLayersForSplitMap} from '@kepler.gl/
 
 import {LayerColumns, LayerColumn, Layer} from '@kepler.gl/layers';
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
-import {CURRENT_VERSION, Merger, VisState, VisStateMergers, visStateSchema} from '@kepler.gl/schemas';
+import {
+  CURRENT_VERSION,
+  Merger,
+  VisState,
+  VisStateMergers,
+  visStateSchema
+} from '@kepler.gl/schemas';
 
 import {ParsedConfig} from 'schemas';
 import {ParsedLayer, SavedInteractionConfig, TooltipInfo} from '@kepler.gl/types';
