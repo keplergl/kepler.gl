@@ -33,7 +33,7 @@ import {
   defaultInteractionConfig
 } from '@kepler.gl/reducers';
 
-import SchemaManager from 'schemas';
+import SchemaManager from '@kepler.gl/schemas';
 import {processKeplerglJSON} from '@kepler.gl/processors';
 import {updateVisData, receiveMapConfig, addDataToMap} from '@kepler.gl/actions';
 

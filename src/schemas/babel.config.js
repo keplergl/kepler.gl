@@ -18,37 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
-import cloneDeep from 'lodash.clonedeep';
-import SchemaManager from '@kepler.gl/schemas';
-import {InitialState} from 'test/helpers/mock-state';
+const KeplerPackage = require('./package');
 
-test('#mapStateSchema -> v1 -> save load mapState', t => {
-  const initialState = cloneDeep(InitialState);
-  const savedState = SchemaManager.getConfigToSave(initialState);
+const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
+const PLUGINS = [
+  ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],
+  '@babel/plugin-transform-modules-commonjs',
+  '@babel/plugin-proposal-class-properties',
+  '@babel/plugin-proposal-export-namespace-from',
+  '@babel/plugin-proposal-optional-chaining',
+  [
+    '@babel/transform-runtime',
+    {
+      regenerator: true
+    }
+  ],
+  [
+    'search-and-replace',
+    {
+      rules: [
+        {
+          search: '__PACKAGE_VERSION__',
+          replace: KeplerPackage.version
+        }
+      ]
+    }
+  ]
+];
+const ENV = {
+  test: {
+    plugins: ['istanbul']
+  },
+  debug: {
+    sourceMaps: 'inline',
+    retainLines: true
+  }
+};
 
-  // save state
-  const msToSave = savedState.config.mapState;
-  const msLoaded = SchemaManager.parseSavedConfig(savedState).mapState;
+module.exports = function babel(api) {
+  api.cache(true);
 
-  t.deepEqual(
-    Object.keys(msToSave),
-    ['bearing', 'dragRotate', 'latitude', 'longitude', 'pitch', 'zoom', 'isSplit'],
-    'mapState should have all 6 entries'
-  );
-
-  const expected = {
-    pitch: 0,
-    bearing: 0,
-    latitude: 37.75043,
-    longitude: -122.34679,
-    zoom: 9,
-    dragRotate: false,
-    isSplit: false
+  return {
+    presets: PRESETS,
+    plugins: PLUGINS,
+    env: ENV
   };
-
-  t.deepEqual(msToSave, expected, 'save mapState should be current');
-  t.deepEqual(msLoaded, expected, 'load mapState should be current');
-
-  t.end();
-});
+};

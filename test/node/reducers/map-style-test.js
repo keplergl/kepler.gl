@@ -28,7 +28,7 @@ import {
   getInitialInputStyle
 } from '@kepler.gl/reducers';
 import {keplerGlInit, receiveMapConfig} from '@kepler.gl/actions';
-import SchemaManager from 'schemas';
+import SchemaManager from '@kepler.gl/schemas';
 import {DEFAULT_MAP_STYLES, DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';
 
 // helpers

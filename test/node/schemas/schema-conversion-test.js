@@ -20,7 +20,7 @@
 
 import test from 'tape';
 
-import SchemaManager from 'schemas';
+import SchemaManager from '@kepler.gl/schemas';
 import {cmpParsedAppConfigs} from 'test/helpers/comparison-utils';
 import {logStep} from '../../../scripts/log';
 

@@ -20,7 +20,7 @@
 
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
-import SchemaManager from 'schemas';
+import SchemaManager from '@kepler.gl/schemas';
 
 // fixtures
 import {
