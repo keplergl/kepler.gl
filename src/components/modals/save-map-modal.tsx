@@ -86,7 +86,7 @@ type SaveMapModalProps = {
   exportImage: ExportImage;
   cloudProviders: Provider[];
   isProviderLoading: boolean;
-  currentProvider?: string;
+  currentProvider?: string | null;
   providerError?: any;
   characterLimits?: CharacterLimits;
 

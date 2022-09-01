@@ -74,7 +74,7 @@ import {
 } from '@kepler.gl/utils';
 
 import {theme as basicTheme, themeLT, themeBS} from '@kepler.gl/styles';
-import {KeplerGlState} from 'reducers';
+import {KeplerGlState} from '@kepler.gl/reducers';
 import {Provider} from 'cloud-providers';
 
 // Maybe we should think about exporting this or creating a variable

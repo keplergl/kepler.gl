@@ -33,7 +33,7 @@ import {
   providerReducer as reducer,
   providerStateReducerFactory,
   INITIAL_PROVIDER_STATE
-} from 'reducers';
+} from '@kepler.gl/reducers';
 import MockProvider from 'test/helpers/mock-provider';
 
 test('#providerStateReducer', t => {

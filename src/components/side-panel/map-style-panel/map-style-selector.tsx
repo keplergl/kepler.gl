@@ -31,7 +31,7 @@ import {
   StyledPanelHeader
 } from 'components/common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {MapStyle} from 'reducers';
+import {MapStyle} from '@kepler.gl/reducers';
 import {BaseProps} from 'components/common/icons/base';
 
 const StyledMapDropdown = styled(StyledPanelHeader)`

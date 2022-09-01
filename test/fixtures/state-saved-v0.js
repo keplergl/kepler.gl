@@ -21,7 +21,7 @@
 import {KeplerGlLayers} from '@kepler.gl/layers';
 const {PointLayer, ArcLayer, HexagonLayer, GeojsonLayer} = KeplerGlLayers;
 import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from '@kepler.gl/constants';
-import {defaultInteractionConfig} from 'reducers';
+import {defaultInteractionConfig} from '@kepler.gl/reducers';
 
 export const savedStateV0 = {
   config: {

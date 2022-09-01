@@ -27,7 +27,7 @@ import KeplerGlFactory from './kepler-gl';
 
 import {registerEntry, deleteEntry, renameEntry, forwardTo} from '@kepler.gl/actions';
 import {notNullorUndefined} from '@kepler.gl/utils';
-import {KeplerGlState} from 'reducers';
+import {KeplerGlState} from '@kepler.gl/reducers';
 
 export const ERROR_MSG = {
   noState:

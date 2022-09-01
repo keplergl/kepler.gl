@@ -31,7 +31,7 @@ import {
   visStateReducer,
   keplerGlReducerCore as coreReducer,
   defaultInteractionConfig
-} from 'reducers';
+} from '@kepler.gl/reducers';
 
 import SchemaManager from 'schemas';
 import {processKeplerglJSON} from '@kepler.gl/processors';

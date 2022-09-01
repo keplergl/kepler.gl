@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import keplerGlReducer from 'reducers';
+import keplerGlReducer from '@kepler.gl/reducers';
 import {
   registerEntry,
   resetMapConfig,

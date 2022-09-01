@@ -36,7 +36,7 @@ import {LOCALE_CODES} from '@kepler.gl/localization';
 import {createNotification, errorNotification, calculateExportImageSize} from '@kepler.gl/utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
-import {KeplerGlInitPayload, LoadFilesErrUpdaterAction} from '../actions';
+import {KeplerGlInitPayload, LoadFilesErrUpdaterAction} from '@kepler.gl/actions';
 import {
   ExportData,
   ExportHtml,

@@ -29,7 +29,9 @@ import ModalTabsFactory from './modal-tabs';
 import LoadingDialog from './loading-dialog';
 
 import {LOADING_METHODS} from '@kepler.gl/constants';
-import {FileLoading} from '@kepler.gl/types';
+import {FileLoading, FileLoadingProgress, LoadFiles} from '@kepler.gl/types';
+import {Provider} from 'cloud-providers';
+import {SetCloudProviderPayload, ProviderActions, ActionHandler} from '@kepler.gl/actions';
 
 /** @typedef {import('./load-data-modal').LoadDataModalProps} LoadDataModalProps */
 
@@ -43,7 +45,8 @@ const StyledLoadDataModal = styled.div.attrs({
 `;
 
 const noop = () => {};
-const getDefaultMethod = methods => (Array.isArray(methods) ? get(methods, [0]) : null);
+const getDefaultMethod = <T,>(methods: T[] = []) =>
+  Array.isArray(methods) ? get(methods, [0]) : null;
 export interface LoadingMethod {
   id: string;
   label: string;
@@ -56,7 +59,7 @@ type LoadDataModalProps = {
   onFileUpload: (files: File[]) => void;
   onLoadCloudMap: (provider: any, vis: any) => void;
   fileLoading: FileLoading | false;
-  loadingMethods: LoadingMethod[];
+  loadingMethods?: LoadingMethod[];
   /** A list of names of supported formats suitable to present to user */
   fileFormatNames: string[];
   /** A list of typically 3 letter extensions (without '.') for file matching */
@@ -64,6 +67,13 @@ type LoadDataModalProps = {
   isCloudMapLoading: boolean;
   /** Set to true if app wants to do its own file filtering */
   disableExtensionFilter?: boolean;
+  onClose?: (...args: any) => any;
+  cloudProviders?: Provider[];
+
+  onSetCloudProvider: (provider: SetCloudProviderPayload) => void;
+  getSavedMaps: ActionHandler<typeof ProviderActions['getSavedMaps']>;
+  loadFiles: LoadFiles;
+  fileLoadingProgress: FileLoadingProgress;
 };
 
 LoadDataModalFactory.deps = [ModalTabsFactory, FileUploadFactory, LoadStorageMapFactory];
@@ -79,19 +89,19 @@ export function LoadDataModalFactory(
     const {loadingMethods, isCloudMapLoading} = props;
     const [currentMethod, toggleMethod] = useState(getDefaultMethod(loadingMethods));
 
-    const ElementType = currentMethod.elementType;
+    const ElementType = currentMethod?.elementType;
 
     return (
       <StyledLoadDataModal>
         <ModalTabs
-          currentMethod={currentMethod.id}
+          currentMethod={currentMethod?.id}
           loadingMethods={loadingMethods}
           toggleMethod={toggleMethod}
         />
         {isCloudMapLoading ? (
           <LoadingDialog size={64} />
         ) : (
-          currentMethod && <ElementType key={currentMethod.id} intl={intl} {...props} />
+          ElementType && <ElementType key={currentMethod?.id} intl={intl} {...props} />
         )}
       </StyledLoadDataModal>
     );

@@ -67,7 +67,7 @@ import ErrorBoundary from 'components/common/error-boundary';
 import {LOCALE_CODES} from '@kepler.gl/localization';
 import {getMapLayersFromSplitMaps, onViewPortChange} from '@kepler.gl/utils';
 import {MapView} from '@deck.gl/core';
-import {MapStyle} from 'reducers';
+import {MapStyle} from '@kepler.gl/reducers';
 import {Datasets} from '@kepler.gl/table';
 import {
   computeDeckLayers,
@@ -75,7 +75,7 @@ import {
   LayerHoverProp,
   prepareLayersForDeck,
   prepareLayersToRender
-} from 'reducers';
+} from '@kepler.gl/reducers';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {
