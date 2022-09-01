@@ -94,7 +94,13 @@ export default function PanelHeaderActionFactory(): React.FC<PanelHeaderActionPr
         flush={flush}
       >
         {IconComponent ? (
-          <IconComponent data-tip data-for={`${tooltip}_${id}`} height="16px" onClick={onClick} />
+          <IconComponent
+            className="panel--header__action__component"
+            data-tip
+            data-for={`${tooltip}_${id}`}
+            height="16px"
+            onClick={onClick}
+          />
         ) : null}
         {tooltip ? (
           <Tooltip id={`${tooltip}_${id}`} effect="solid" delayShow={500} type={tooltipType}>

@@ -48,6 +48,7 @@ type LayerPanelProps = {
     requireData: any; //
   }[];
   isDraggable?: boolean;
+  idx: number;
   openModal: ActionHandler<typeof toggleModal>;
   layerColorUIChange: ActionHandler<typeof VisStateActions.layerColorUIChange>;
   layerConfigChange: ActionHandler<typeof VisStateActions.layerConfigChange>;

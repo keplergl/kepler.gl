@@ -75,12 +75,14 @@ const SortableStyledItem = styled.div<SortableStyledItemProps>`
   }
 `;
 
+const INITIAL_LAYERS_TO_SHOW: Layer[] = [];
+
 LayerListFactory.deps = [LayerPanelFactory];
 
 function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
   // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
   // Developers can provide any layer panel implementation and it will still be sortable
-  const SortableItem = ({layer, layerIndex, panelProps, layerActions}) => {
+  const SortableItem = ({layer, idx, panelProps, layerActions}) => {
     const {attributes, listeners, setNodeRef, isDragging, transform, transition} = useSortable({
       id: layer.id
     });
@@ -97,7 +99,7 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
           {...panelProps}
           {...layerActions}
           key={layer.id}
-          idx={layerIndex}
+          idx={idx}
           layer={layer}
           listeners={listeners}
         />
@@ -132,12 +134,12 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
 
     const layersToShow = useMemo(() => {
       return layerOrder.reduce((acc, layerId) => {
-        const layer = findById(layerId)(layers);
+        const layer = findById(layerId)(layers.filter(Boolean));
         if (!layer) {
           return acc;
         }
         return !layer.config.hidden ? [...acc, layer] : acc;
-      }, [] as Layer[]);
+      }, INITIAL_LAYERS_TO_SHOW);
     }, [layers, layerOrder]);
 
     const sidePanelDndItems = useMemo(() => {
@@ -158,34 +160,39 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
       [layerClasses]
     );
 
-    const layerActions = {
-      layerColorUIChange: visStateActions.layerColorUIChange,
-      layerConfigChange: visStateActions.layerConfigChange,
-      layerVisualChannelConfigChange: visStateActions.layerVisualChannelConfigChange,
-      layerTypeChange: visStateActions.layerTypeChange,
-      layerVisConfigChange: visStateActions.layerVisConfigChange,
-      layerTextLabelChange: visStateActions.layerTextLabelChange,
-      removeLayer: visStateActions.removeLayer,
-      duplicateLayer: visStateActions.duplicateLayer,
-      layerSetIsValid: visStateActions.layerSetIsValid
-    };
+    const layerActions = useMemo(
+      () => ({
+        layerColorUIChange: visStateActions.layerColorUIChange,
+        layerConfigChange: visStateActions.layerConfigChange,
+        layerVisualChannelConfigChange: visStateActions.layerVisualChannelConfigChange,
+        layerTypeChange: visStateActions.layerTypeChange,
+        layerVisConfigChange: visStateActions.layerVisConfigChange,
+        layerTextLabelChange: visStateActions.layerTextLabelChange,
+        removeLayer: visStateActions.removeLayer,
+        duplicateLayer: visStateActions.duplicateLayer,
+        layerSetIsValid: visStateActions.layerSetIsValid
+      }),
+      [visStateActions]
+    );
 
-    const panelProps = {
-      datasets,
-      openModal,
-      layerTypeOptions
-    };
+    const panelProps = useMemo(
+      () => ({
+        datasets,
+        openModal,
+        layerTypeOptions
+      }),
+      [datasets, openModal, layerTypeOptions]
+    );
 
     return isSortable ? (
       <>
         <SortableList containerId="sortablelist" sidePanelDndItems={sidePanelDndItems}>
           {/* warning: containerId should be similar to the first key in dndItems defined in kepler-gl.js*/}
-
           {layersToShow.map(layer => (
             <SortableItem
               key={layer.id}
               layer={layer}
-              layerIndex={layers.findIndex(({id}) => id === layer.id)}
+              idx={layers.findIndex(l => l?.id === layer.id)}
               panelProps={panelProps}
               layerActions={layerActions}
             />
@@ -199,6 +206,7 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
             {...panelProps}
             {...layerActions}
             key={layer.id}
+            idx={layers.findIndex(l => l?.id === layer.id)}
             layer={layer}
             isDraggable={false}
           />
