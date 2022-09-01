@@ -37,7 +37,7 @@ import {
   testCsvDataId,
   testGeoJsonDataId
 } from 'test/helpers/mock-state';
-import keplerGlReducer from 'reducers/core';
+import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 
 test('#visStateSchema -> v1 -> save layers', t => {

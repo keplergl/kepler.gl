@@ -30,7 +30,7 @@ import {
   AggregationLayerHoverData,
   getTooltipDisplayDeltaValue,
   getTooltipDisplayValue
-} from 'reducers';
+} from '@kepler.gl/reducers';
 
 export const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};

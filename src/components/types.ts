@@ -1,5 +1,5 @@
 import {ComponentType} from 'react';
-import {MapStyle} from 'reducers';
+import {MapStyle} from '@kepler.gl/reducers';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Filter, InteractionConfig, UiState} from '@kepler.gl/types';
 

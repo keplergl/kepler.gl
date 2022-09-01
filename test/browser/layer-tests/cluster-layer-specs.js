@@ -32,7 +32,7 @@ import {
 } from 'test/helpers/layer-utils';
 
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {INITIAL_MAP_STATE} from 'reducers';
+import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 
 const {ClusterLayer} = KeplerGlLayers;
 

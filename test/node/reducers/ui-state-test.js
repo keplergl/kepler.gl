@@ -37,7 +37,11 @@ import {
   loadFilesErr,
   keplerGlInit
 } from '@kepler.gl/actions';
-import {uiStateReducer as reducer, uiStateReducerFactory, INITIAL_UI_STATE} from 'reducers';
+import {
+  uiStateReducer as reducer,
+  uiStateReducerFactory,
+  INITIAL_UI_STATE
+} from '@kepler.gl/reducers';
 import {
   EXPORT_DATA_TYPE,
   RESOLUTIONS,

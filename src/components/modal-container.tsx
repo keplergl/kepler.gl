@@ -27,7 +27,13 @@ import document from 'global/document';
 import {EXPORT_DATA_TYPE_OPTIONS, EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import ModalDialogFactory from './modals/modal-dialog';
 import {exportHtml, isValidMapInfo, exportMap, exportJson} from '@kepler.gl/utils';
-import {exportData, getFileFormatNames, getFileExtensions, MapStyle, ProviderState} from 'reducers';
+import {
+  exportData,
+  getFileFormatNames,
+  getFileExtensions,
+  MapStyle,
+  ProviderState
+} from '@kepler.gl/reducers';
 
 // modals
 import DeleteDatasetModalFactory from './modals/delete-data-modal';
@@ -159,7 +165,7 @@ export default function ModalContainerFactory(
       document.removeEventListener('keyup', this._onKeyUp);
     }
 
-    cloudProviders = props => props.cloudProviders;
+    cloudProviders = (props: ModalContainerProps) => props.cloudProviders;
     providerWithStorage = createSelector(this.cloudProviders, cloudProviders =>
       cloudProviders.filter(p => p.hasPrivateStorage())
     );
@@ -343,7 +349,6 @@ export default function ModalContainerFactory(
             template = (
               <LoadDataModal
                 {...providerState}
-                // @ts-expect-error //TODO Remove it once LoadDataModal is translated
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
                 onLoadCloudMap={this._onLoadCloudMap}
@@ -465,7 +470,6 @@ export default function ModalContainerFactory(
             break;
           case SAVE_MAP_ID:
             template = (
-              // @ts-expect-error //TODO Remove it once SaveMapModal is translated
               <SaveMapModal
                 {...providerState}
                 exportImage={uiState.exportImage}

@@ -26,7 +26,7 @@ import flatten from 'lodash.flattendeep';
 import {mountWithTheme} from 'test/helpers/component-utils';
 import CloneDeep from 'lodash.clonedeep';
 import {VisStateActions} from '@kepler.gl/actions';
-import {visStateReducer} from 'reducers';
+import {visStateReducer} from '@kepler.gl/reducers';
 
 import FieldTokenFactory from 'components/common/field-token';
 import {VertThreeDots, ArrowUp} from 'components/common/icons';

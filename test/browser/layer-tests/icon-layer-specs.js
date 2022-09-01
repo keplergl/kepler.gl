@@ -40,7 +40,7 @@ import {
   pointLayerMeta,
   iconGeometry
 } from 'test/helpers/layer-utils';
-import {INITIAL_MAP_STATE} from 'reducers';
+import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {IntlWrapper} from '../../helpers/component-utils';
 
 const {IconLayer} = KeplerGlLayers;

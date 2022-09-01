@@ -51,10 +51,8 @@ import {
 } from '@kepler.gl/constants';
 import {ExportFileToCloudPayload} from '@kepler.gl/types';
 
-import {FILE_CONFLICT_MSG} from '../cloud-providers';
+import {FILE_CONFLICT_MSG, MapListItem} from 'cloud-providers';
 import {DATASET_HANDLERS} from '@kepler.gl/processors';
-
-import {MapListItem} from '../cloud-providers';
 
 type ActionPayload<P> = {
   type?: string;

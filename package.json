@@ -28,7 +28,8 @@
     "./src/cloud-providers",
     "./src/processors",
     "./src/tasks",
-    "./src/actions"
+    "./src/actions",
+    "./src/reducers"
   ],
   "repository": {
     "type": "git",

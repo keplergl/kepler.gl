@@ -34,7 +34,7 @@ import NewFilterPanelFactory from 'components/side-panel/filter-panel/filter-pan
 
 import {appInjector} from 'components/container';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
-import {keplerGlReducerCore as keplerGlReducer} from 'reducers';
+import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';

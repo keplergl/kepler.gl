@@ -26,7 +26,7 @@ import moment from 'moment';
 
 import {IntlWrapper, mountWithTheme, mockHTMLElementClientSize} from 'test/helpers/component-utils';
 import {setFilterAnimationTimeConfig} from '@kepler.gl/actions';
-import {visStateReducer as reducer} from 'reducers';
+import {visStateReducer as reducer} from '@kepler.gl/reducers';
 
 import {
   TimeWidgetFactory,

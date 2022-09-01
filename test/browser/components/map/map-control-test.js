@@ -48,7 +48,7 @@ import {Cube3d, Split, Legend, DrawPolygon, Layers, Delete} from 'components/com
 
 import {LOCALE_CODES, LOCALES} from '@kepler.gl/localization';
 import {toggleMapControl} from '@kepler.gl/actions';
-import {keplerGlReducerCore} from 'reducers';
+import {keplerGlReducerCore} from '@kepler.gl/reducers';
 
 const MapControl = appInjector.get(MapControlFactory);
 const MapContainer = appInjector.get(MapContainerFactory);

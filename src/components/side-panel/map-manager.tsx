@@ -29,7 +29,7 @@ import ColorSelector from './layer-panel/color-selector';
 import {createSelector} from 'reselect';
 import {injectIntl, WrappedComponentProps} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {MapStyle} from 'reducers';
+import {MapStyle} from '@kepler.gl/reducers';
 import {MapStyleActions} from '@kepler.gl/actions';
 
 type MapManagerProps = {

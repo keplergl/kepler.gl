@@ -33,7 +33,7 @@ import {
   DEFAULT_ANIMATION_CONFIG,
   serializeLayer,
   defaultInteractionConfig
-} from 'reducers';
+} from '@kepler.gl/reducers';
 
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {Layer, KeplerGlLayers} from '@kepler.gl/layers';
