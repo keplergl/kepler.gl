@@ -21,8 +21,7 @@
 /* eslint-disable max-statements */
 
 import test from 'tape';
-import keplerGlReducer from '@kepler.gl/reducers';
-import {addDataToMapUpdater, INITIAL_UI_STATE} from '@kepler.gl/reducers';
+import keplerGlReducer, {addDataToMapUpdater, INITIAL_UI_STATE} from '@kepler.gl/reducers';
 import {processCsvData} from '@kepler.gl/processors';
 import {registerEntry} from '@kepler.gl/actions';
 

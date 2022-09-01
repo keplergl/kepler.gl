@@ -67,9 +67,9 @@ import ErrorBoundary from 'components/common/error-boundary';
 import {LOCALE_CODES} from '@kepler.gl/localization';
 import {getMapLayersFromSplitMaps, onViewPortChange} from '@kepler.gl/utils';
 import {MapView} from '@deck.gl/core';
-import {MapStyle} from '@kepler.gl/reducers';
 import {Datasets} from '@kepler.gl/table';
 import {
+  MapStyle,
   computeDeckLayers,
   getLayerHoverProp,
   LayerHoverProp,

@@ -31,7 +31,9 @@ import {
   INITIAL_VIS_STATE,
   renderDeckGlLayer,
   validateLayerWithData,
-  mapStateReducer as mapState
+  mapStateReducer as mapState,
+  visStateReducer, 
+  keplerGlReducerCore
 } from '@kepler.gl/reducers';
 import {getGpuFilterProps} from '@kepler.gl/table';
 import {VisStateActions, addDataToMap} from '@kepler.gl/actions';
@@ -39,7 +41,6 @@ import {VisStateActions, addDataToMap} from '@kepler.gl/actions';
 import {colorMaker, layerColors, LayerClasses} from '@kepler.gl/layers';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {applyActions, InitialState} from 'test/helpers/mock-state';
-import {visStateReducer, keplerGlReducerCore} from '@kepler.gl/reducers';
 // Fixtures
 import csvData, {wktCsv} from 'test/fixtures/test-csv-data';
 import testLayerData, {bounds, fieldDomain, iconGeometry} from 'test/fixtures/test-layer-data';
