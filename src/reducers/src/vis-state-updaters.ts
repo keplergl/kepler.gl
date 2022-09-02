@@ -73,7 +73,7 @@ import {
 } from '@kepler.gl/constants';
 import {pick_, merge_, swap_} from './composer-helpers';
 
-import KeplerGLSchema, {VisState} from 'schemas';
+import KeplerGLSchema, {VisState} from '@kepler.gl/schemas';
 
 import {Filter, InteractionConfig, AnimationConfig, Editor} from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
