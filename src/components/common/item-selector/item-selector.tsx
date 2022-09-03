@@ -21,7 +21,6 @@
 import React, {Component, createRef, ComponentType, MouseEventHandler, RefObject} from 'react';
 import classnames from 'classnames';
 import uniqBy from 'lodash.uniqby';
-import listensToClickOutside from 'react-onclickoutside';
 import styled from 'styled-components';
 
 import Accessor from './accessor';
@@ -199,10 +198,10 @@ class ItemSelector extends Component<ItemSelectorProps> {
     this.setState({dimensions});
   };
 
-  _hideTypeahead() {
+  _hideTypeahead = () => {
     this.setState({showTypeahead: false});
     this._onBlur();
-  }
+  };
 
   _onBlur = () => {
     // note: chickleted input is not a real form element so we call onBlur()
@@ -275,7 +274,7 @@ class ItemSelector extends Component<ItemSelectorProps> {
     const {dimensions} = this.state;
 
     return (
-      <Portaled left={0} top={0} isOpened={this.state.showTypeahead}>
+      <Portaled left={0} top={0} isOpened={this.state.showTypeahead} onClose={this._hideTypeahead}>
         <DropdownWrapper placement={placement} width={dimensions?.width}>
           <Typeahead
             customClasses={{
@@ -375,5 +374,4 @@ class ItemSelector extends Component<ItemSelectorProps> {
   }
 }
 
-export const ItemSelectorListen = listensToClickOutside(ItemSelector);
-export default injectIntl(listensToClickOutside(ItemSelector));
+export default injectIntl(ItemSelector);
