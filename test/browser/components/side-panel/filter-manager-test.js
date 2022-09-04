@@ -220,7 +220,7 @@ test('Components -> FilterManager.mount -> with supportedFilterTypes', t => {
 
   t.deepEqual(
     fieldOptions.map(f => f.name),
-    ['gps_data.lat', 'gps_data.lng', 'id'],
+    ['gps_data.lat', 'gps_data.lng', 'uid'],
     'should only pass real / integer fields'
   );
 

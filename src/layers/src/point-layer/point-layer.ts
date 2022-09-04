@@ -40,7 +40,7 @@ import {
 } from '@kepler.gl/constants';
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
-import {assignPointPairToLayerColumn} from '@kepler.gl/reducers';
+import {assignPointPairToLayerColumn} from '../layer-utils';
 import {
   Merge,
   RGBColor,

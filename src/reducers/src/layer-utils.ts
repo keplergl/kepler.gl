@@ -346,18 +346,3 @@ export function computeDeckLayers(
 
   return [...customBottomDeckLayers, ...dataLayers, ...customTopDeckLayers];
 }
-
-export function assignPointPairToLayerColumn(pair, hasAlt) {
-  const {lat, lng, alt} = pair.pair;
-  if (!hasAlt) {
-    return {lat, lng};
-  }
-
-  const defaultAltColumn = {value: null, fieldIdx: -1, optional: true};
-
-  return {
-    lat,
-    lng,
-    altitude: alt ? {...defaultAltColumn, ...alt} : defaultAltColumn
-  };
-}
