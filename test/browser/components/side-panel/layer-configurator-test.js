@@ -34,8 +34,6 @@ import {
 
 import ColumnSelectorFactory from 'components/side-panel/layer-panel/column-selector';
 
-import Checkbox from 'components/common/checkbox';
-
 import {StateWFiles, StateWTripGeojson, testCsvDataId} from 'test/helpers/mock-state';
 import {
   IntlWrapper,
