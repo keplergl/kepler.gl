@@ -38,13 +38,12 @@ import {
   AnimationSpeedSliderFactory,
   Icons,
   TimeSliderMarkerFactory,
-  TimeRangeSliderTimeTitleFactory
-} from 'components';
-import {IconButton} from 'components';
-import {SliderHandle} from 'components';
-import {Typeahead} from 'components';
-
-import {appInjector} from 'components';
+  TimeRangeSliderTimeTitleFactory,
+  IconButton,
+  SliderHandle,
+  Typeahead,
+  appInjector
+} from '@kepler.gl/components';
 
 const TimeWidget = appInjector.get(TimeWidgetFactory);
 const TimeRangeSlider = appInjector.get(TimeRangeSliderFactory);

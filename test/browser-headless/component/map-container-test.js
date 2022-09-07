@@ -28,13 +28,13 @@ import {
   MapContainerFactory,
   EditorFactory,
   MapControlFactory,
-  MapPopoverFactory
-} from 'components';
+  MapPopoverFactory,
+  mapFieldsSelector
+} from '@kepler.gl/components';
 import MapboxGLMap from 'react-map-gl';
 import Tippy from '@tippyjs/react/headless';
 import {gl, InteractionTestRunner} from '@deck.gl/test-utils';
 
-import {mapFieldsSelector} from 'components';
 import {mockKeplerProps} from '../../helpers/mock-state';
 
 const MapContainer = appInjector.get(MapContainerFactory);

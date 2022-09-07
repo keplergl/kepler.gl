@@ -28,17 +28,16 @@ import {
   DatasetSectionFactory,
   PanelViewListToggleFactory,
   PanelTitleFactory,
-  AddLayerButtonFactory
-} from 'components';
+  AddLayerButtonFactory,
+  appInjector,
+  Layers
+} from '@kepler.gl/components';
 
-import {appInjector} from 'components';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 
 import {VisStateActions, UIStateActions} from '@kepler.gl/actions';
 
 import {StateWMultiH3Layers} from 'test/helpers/mock-state';
-
-import {Layers} from 'components';
 
 const LayerManager = appInjector.get(LayerManagerFactory);
 const LayerList = appInjector.get(LayerListFactory);

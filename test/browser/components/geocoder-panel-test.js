@@ -23,9 +23,7 @@ import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {GeocoderPanelFactory} from 'components';
-import {appInjector} from 'components';
-import {testForCoordinates} from 'components';
+import {GeocoderPanelFactory, appInjector, testForCoordinates} from '@kepler.gl/components';
 import {cmpDatasetData, cmpObjectKeys} from '../../helpers/comparison-utils';
 
 const GeocoderPanel = appInjector.get(GeocoderPanelFactory);

@@ -21,11 +21,12 @@
 import React from 'react';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {LoadDataModalFactory} from 'components';
-import {ModalTabItem} from 'components';
-import {LoadStorageMapFactory} from 'components';
-
-import {appInjector} from 'components';
+import {
+  LoadDataModalFactory,
+  ModalTabItem,
+  LoadStorageMapFactory,
+  appInjector
+} from '@kepler.gl/components';
 
 const LoadDataModal = appInjector.get(LoadDataModalFactory);
 const LoadStorageMap = appInjector.get(LoadStorageMapFactory);

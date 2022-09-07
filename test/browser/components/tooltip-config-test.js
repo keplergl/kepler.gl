@@ -24,17 +24,19 @@ import test from 'tape';
 import uniq from 'lodash.uniq';
 
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {TooltipConfigFactory} from 'components';
-import {DatasetTagFactory} from 'components';
-import {FieldSelectorFactory} from 'components';
-import {ChickletedInput, ChickletButton} from 'components';
+import {
+  TooltipConfigFactory,
+  DatasetTagFactory,
+  FieldSelectorFactory,
+  ChickletedInput,
+  ChickletButton,
+  DropdownList,
+  Typeahead,
+  Icons,
+  appInjector
+} from '@kepler.gl/components';
 
-import {DropdownList} from 'components';
-import {Typeahead} from 'components';
-
-import {Icons} from 'components';
 import {StateWFiles, StateWithGeocoderDataset} from 'test/helpers/mock-state';
-import {appInjector} from 'components';
 
 const TooltipConfig = appInjector.get(TooltipConfigFactory);
 const DatasetTag = appInjector.get(DatasetTagFactory);

@@ -21,8 +21,12 @@
 import React from 'react';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {BottomWidgetFactory, TimeWidgetFactory, AnimationControlFactory} from 'components';
-import {appInjector} from 'components';
+import {
+  BottomWidgetFactory,
+  TimeWidgetFactory,
+  AnimationControlFactory,
+  appInjector
+} from '@kepler.gl/components';
 import {VisStateActions} from '@kepler.gl/actions';
 
 const BottomWidget = appInjector.get(BottomWidgetFactory);

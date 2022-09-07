@@ -27,12 +27,10 @@ import {
   FilterPanelFactory,
   FieldSelectorFactory,
   Button,
-  FilterPanelHeaderFactory
-} from 'components';
-
-import {NewFilterPanelFactory} from 'components';
-
-import {appInjector} from 'components';
+  FilterPanelHeaderFactory,
+  NewFilterPanelFactory,
+  appInjector
+} from '@kepler.gl/components';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';

@@ -22,10 +22,7 @@ import React from 'react';
 import test from 'tape';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 import sinon from 'sinon';
-import {SaveMapModalFactory} from 'components';
-
-import {CloudTile} from 'components';
-import {ImagePreview} from 'components';
+import {SaveMapModalFactory, CloudTile, ImagePreview} from '@kepler.gl/components';
 import MockProvider from 'test/helpers/mock-provider';
 
 const mockProvider = new MockProvider();

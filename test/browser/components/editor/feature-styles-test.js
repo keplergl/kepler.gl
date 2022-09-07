@@ -20,7 +20,7 @@
 
 import test from 'tape';
 import {RenderStates, RenderTypes} from 'react-map-gl-draw';
-import {getStyle} from 'components';
+import {getStyle} from '@kepler.gl/components';
 
 test('FeatureStyles - getStyles point', t => {
   const feature = {

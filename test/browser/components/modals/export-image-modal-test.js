@@ -23,10 +23,12 @@ import test from 'tape-catch';
 import sinon from 'sinon';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
-import {ExportImageModalFactory} from 'components';
-import {ImagePreview} from 'components';
-import {appInjector} from 'components';
-import {SelectionButton} from 'components';
+import {
+  ExportImageModalFactory,
+  ImagePreview,
+  appInjector,
+  SelectionButton
+} from '@kepler.gl/components';
 
 import {INITIAL_UI_STATE} from '@kepler.gl/reducers';
 

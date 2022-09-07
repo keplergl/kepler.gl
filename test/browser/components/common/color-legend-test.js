@@ -22,7 +22,7 @@ import React from 'react';
 import test from 'tape';
 import {mountWithTheme} from 'test/helpers/component-utils';
 
-import {ColorLegend, LegendRow} from 'components';
+import {ColorLegend, LegendRow} from '@kepler.gl/components';
 
 test('Components -> ColorLegend.render', t => {
   t.doesNotThrow(() => {

@@ -20,7 +20,7 @@
 
 import React, {Component} from 'react';
 import {createSelector} from 'reselect';
-import {KeplerGlContext} from 'components';
+import {KeplerGlContext} from '@kepler.gl/components';
 import {KeplerGlState} from '@kepler.gl/reducers';
 
 const identity = state => state;

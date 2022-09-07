@@ -32,7 +32,7 @@ import {
   renderDeckGlLayer,
   validateLayerWithData,
   mapStateReducer as mapState,
-  visStateReducer, 
+  visStateReducer,
   keplerGlReducerCore
 } from '@kepler.gl/reducers';
 import {getGpuFilterProps} from '@kepler.gl/table';

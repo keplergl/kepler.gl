@@ -22,9 +22,7 @@ import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {ItemSelector} from 'components';
-import {Typeahead} from 'components';
-import {DropdownList, ListItem} from 'components';
+import {ItemSelector, Typeahead, DropdownList, ListItem} from '@kepler.gl/components';
 
 test('Components -> ItemSelector.render', t => {
   let wrapper;

@@ -28,15 +28,19 @@ import CloneDeep from 'lodash.clonedeep';
 import {VisStateActions} from '@kepler.gl/actions';
 import {visStateReducer} from '@kepler.gl/reducers';
 
-import {FieldTokenFactory} from 'components';
-import {Icons} from 'components';
-import {DataTableModalFactory, DatasetTabs, DatasetModalTab} from 'components';
-import {DataTableFactory} from 'components';
-import {OptionDropdown} from 'components';
+import {
+  FieldTokenFactory,
+  Icons,
+  DataTableModalFactory,
+  DatasetTabs,
+  DatasetModalTab,
+  DataTableFactory,
+  OptionDropdown,
+  appInjector
+} from '@kepler.gl/components';
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
-import {appInjector} from 'components/container';
 
 import {createDataContainer} from '@kepler.gl/table';
 

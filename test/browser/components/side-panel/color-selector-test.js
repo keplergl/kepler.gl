@@ -24,20 +24,25 @@ import {mount} from 'enzyme';
 import sinon from 'sinon';
 import cloneDeep from 'lodash.clonedeep';
 
-import {ColorSelector, ColorSelectorInput, ColorBlock} from 'components';
 import {
+  ColorSelector,
+  ColorSelectorInput,
+  ColorBlock,
   LayerColorSelector,
   LayerColorRangeSelector,
   ArcLayerColorSelector,
   getLayerConfiguratorProps,
-  getVisConfiguratorProps
-} from 'components';
-import {SingleColorPalette} from 'components';
-import {ColorRangeSelector, PaletteConfig, ColorPaletteGroup, ALL_TYPES} from 'components';
-import {ColorPalette} from 'components';
-import {CustomPalette} from 'components';
-import {CustomPicker} from 'components';
-import {Button} from 'components';
+  getVisConfiguratorProps,
+  SingleColorPalette,
+  ColorRangeSelector,
+  PaletteConfig,
+  ColorPaletteGroup,
+  ALL_TYPES,
+  ColorPalette,
+  CustomPalette,
+  CustomPicker,
+  Button
+} from '@kepler.gl/components';
 
 import {COLOR_RANGES} from '@kepler.gl/constants';
 

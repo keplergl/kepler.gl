@@ -25,10 +25,8 @@ import {StateWMultiH3Layers} from 'test/helpers/mock-state';
 
 import {VisStateActions, UIStateActions} from '@kepler.gl/actions';
 
-import {appInjector} from 'components';
+import {appInjector, LayerListFactory} from '@kepler.gl/components';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-
-import {LayerListFactory} from 'components';
 
 const LayerList = appInjector.get(LayerListFactory);
 

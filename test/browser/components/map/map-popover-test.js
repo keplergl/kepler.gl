@@ -24,8 +24,7 @@ import test from 'tape';
 
 import {Pin} from '@kepler.gl/constants';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {MapPopoverFactory} from 'components';
-import {appInjector} from 'components';
+import {MapPopoverFactory, appInjector} from '@kepler.gl/components';
 
 const MapPopover = appInjector.get(MapPopoverFactory);
 

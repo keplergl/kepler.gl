@@ -21,9 +21,7 @@
 import React from 'react';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {RangeSlider, Slider} from 'components';
-import {SliderHandle} from 'components';
-import {SliderBarHandle} from 'components';
+import {RangeSlider, Slider, SliderHandle, SliderBarHandle} from '@kepler.gl/components';
 
 test('Components -> RangeSlider.render', t => {
   let wrapper;

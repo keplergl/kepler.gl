@@ -22,10 +22,9 @@ import React from 'react';
 import test from 'tape';
 import {mountWithTheme} from 'test/helpers/component-utils';
 import sinon from 'sinon';
-import {LoadStorageMapFactory} from 'components';
+import {LoadStorageMapFactory, appInjector} from '@kepler.gl/components';
 
 import MockProvider from 'test/helpers/mock-provider';
-import {appInjector} from 'components';
 
 const mockProvider = new MockProvider();
 
