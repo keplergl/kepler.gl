@@ -25,7 +25,7 @@ import Switch from '../../common/switch';
 import BrushConfigFactory from './brush-config';
 import TooltipConfigFactory from './tooltip-config';
 import {Datasets} from '@kepler.gl/table';
-import {InteractionConfig} from '@kepler.gl/reducers';
+import {InteractionConfig} from '@kepler.gl/types';
 
 import {
   StyledPanelHeader,
@@ -33,10 +33,10 @@ import {
   PanelHeaderContent,
   PanelContent
 } from '../../common/styled-components';
-import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons';
+import {Messages, Crosshairs, CursorClick, Pin} from '@kepler.gl/constants';
 
 import {FormattedMessage} from '@kepler.gl/localization';
-import {ValueOf} from 'types';
+import {ValueOf} from '@kepler.gl/types';
 
 interface InteractionPanelProps {
   datasets: Datasets;

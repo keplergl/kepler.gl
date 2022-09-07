@@ -78,7 +78,6 @@ import KeplerGLSchema, {VisState} from '@kepler.gl/schemas';
 import {Filter, InteractionConfig, AnimationConfig, Editor} from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
-import {Messages, Crosshairs, CursorClick, Pin} from '@kepler.gl/constants';
 import {copyTableAndUpdate, Datasets, pinTableColumns, sortDatasetByColumn} from '@kepler.gl/table';
 import {calculateLayerData, findDefaultLayer} from './layer-utils';
 import {
