@@ -24,8 +24,8 @@ import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-control';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
 import {ANIMATION_WINDOW, DIMENSIONS, FILTER_TYPES} from '@kepler.gl/constants';
-import {getIntervalBins} from '@kepler.gl/utils';
-import {media} from '@kepler.gl/styles';
+import {getIntervalBins, hasPortableWidth} from '@kepler.gl/utils';
+import {media, breakPointValues} from '@kepler.gl/styles';
 import {AnimationConfig, TimeRangeFilter} from '@kepler.gl/types';
 import {bottomWidgetSelector} from './kepler-gl';
 
@@ -180,17 +180,21 @@ export default function BottomWidgetFactory(
       () => filters.findIndex(f => f.enlarged && f.type === FILTER_TYPES.timeRange),
       [filters]
     );
+
+    const isMobile = useMemo(() => hasPortableWidth(breakPointValues), []);
+
     const animatedFilterIdx = useMemo(() => filters.findIndex(f => f.isAnimating), [filters]);
     const animatedFilter = animatedFilterIdx > -1 ? filters[animatedFilterIdx] : null;
 
     const isLegendPinned =
       uiState.mapControls?.mapLegend?.show && uiState.mapControls?.mapLegend?.active;
-    const spaceForLegendWidth = isLegendPinned
-      ? DIMENSIONS.mapControl.width + DIMENSIONS.mapControl.mapLegend.pinned.right
-      : 0;
+    const spaceForLegendWidth =
+      isLegendPinned && !isMobile
+        ? DIMENSIONS.mapControl.width + DIMENSIONS.mapControl.mapLegend.pinned.right
+        : 0;
 
     const enlargedFilterWidth =
-      (isOpen ? containerW - sidePanelWidth : containerW) - spaceForLegendWidth;
+      (isOpen && !isMobile ? containerW - sidePanelWidth : containerW) - spaceForLegendWidth;
 
     // show playback control if layers contain trip layer & at least one trip layer is visible
     const animatableLayer = useMemo(
