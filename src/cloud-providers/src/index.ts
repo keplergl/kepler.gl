@@ -21,3 +21,4 @@
 export {default as Provider, FILE_CONFLICT_MSG} from './provider';
 // eslint-disable-next-line prettier/prettier
 export type {MapListItem, Millisecond, Thumbnail, ProviderProps, IconProps} from './provider';
+export {default as Upload} from './upload';

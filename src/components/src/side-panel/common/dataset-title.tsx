@@ -22,8 +22,8 @@ import React, {createRef, MouseEvent, PureComponent} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
-import {CenterFlexbox, Table} from '@kepler.gl/constants';
-import {Tooltip} from '../../common/styled-components';
+import {Table} from '@kepler.gl/layers';
+import {CenterFlexbox, Tooltip} from '../../common/styled-components';
 import {ArrowRight, Trash} from '../../common/icons';
 import DatasetTagFactory from './dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';

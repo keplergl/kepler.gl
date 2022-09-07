@@ -103,3 +103,4 @@ export type OVERLAY_TYPE = {[key: string]: string};
 export * from './mapbox-utils';
 export * from './types';
 export * from './h3-hexagon-layer';
+export {default as Table} from './table';

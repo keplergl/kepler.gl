@@ -23,8 +23,8 @@ import styled from 'styled-components';
 import PanelHeaderActionFactory from '../panel-header-action';
 import {EyeSeen, EyeUnseen} from '../../common/icons';
 
-import {CenterFlexbox} from '@kepler.gl/constants';
 import {
+  CenterFlexbox,
   PanelLabel,
   PanelContent,
   PanelLabelBold,
@@ -33,7 +33,8 @@ import {
 import {FormattedMessage} from '@kepler.gl/localization';
 import {camelize} from '@kepler.gl/utils';
 import {VisibleLayerGroups} from '@kepler.gl/types';
-import {BaseProps, Upload} from '@kepler.gl/constants';
+import {BaseProps} from '@kepler.gl/constants';
+import {Upload} from '@kepler.gl/cloud-providers';
 
 const StyledInteractionPanel = styled.div`
   padding-bottom: 12px;

@@ -30,4 +30,3 @@ export * from './tooltip';
 export * from './user-feedbacks';
 export * from './user-guides';
 export * from './icons';
-export {CenterFlexbox, StyledTable} from './base-styled-components';

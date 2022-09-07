@@ -22,7 +22,12 @@ import React from 'react';
 import styled from 'styled-components';
 import {line} from 'd3-shape';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {CenterFlexbox, Table} from '@kepler.gl/constants';
+import Table from '../table';
+
+const CenterFlexbox = styled.div`
+  display: flex;
+  align-items: center;
+`;
 
 const lineFunction = line()
   .x(d => d[0] * 10)
