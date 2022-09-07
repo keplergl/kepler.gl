@@ -78,7 +78,6 @@ import KeplerGLSchema, {VisState} from '@kepler.gl/schemas';
 import {Filter, InteractionConfig, AnimationConfig, Editor} from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
-import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons/index';
 import {copyTableAndUpdate, Datasets, pinTableColumns, sortDatasetByColumn} from '@kepler.gl/table';
 import {calculateLayerData, findDefaultLayer} from './layer-utils';
 import {
@@ -152,7 +151,6 @@ export const defaultInteractionConfig: InteractionConfig = {
     id: 'tooltip',
     label: 'interactions.tooltip',
     enabled: true,
-    iconComponent: Messages,
     config: {
       fieldsToShow: {},
       compareMode: false,
@@ -163,14 +161,12 @@ export const defaultInteractionConfig: InteractionConfig = {
     id: 'geocoder',
     label: 'interactions.geocoder',
     enabled: false,
-    iconComponent: Pin,
     position: null
   },
   brush: {
     id: 'brush',
     label: 'interactions.brush',
     enabled: false,
-    iconComponent: Crosshairs,
     config: {
       // size is in km
       size: 0.5
@@ -180,7 +176,6 @@ export const defaultInteractionConfig: InteractionConfig = {
     id: 'coordinate',
     label: 'interactions.coordinate',
     enabled: false,
-    iconComponent: CursorClick,
     position: null
   }
 };

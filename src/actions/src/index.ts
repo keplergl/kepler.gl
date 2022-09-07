@@ -18,6 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import * as VisStateActions from './vis-state-actions';
+import * as MapStateActions from './map-state-actions';
+import * as UIStateActions from './ui-state-actions';
+import * as MapStyleActions from './map-style-actions';
+import * as ProviderActions from './provider-actions';
+
 // Actions
 export * from './actions';
 
@@ -30,12 +36,7 @@ export * from './map-style-actions';
 export * from './identity-actions';
 export * from './provider-actions';
 
-/* eslint-disable prettier/prettier */
-export * as VisStateActions from './vis-state-actions';
-export * as MapStateActions from './map-state-actions';
-export * as MapStyleActions from './map-style-actions';
-export * as UIStateActions from './ui-state-actions';
-export * as ProviderActions from './provider-actions';
+export {VisStateActions, MapStateActions, UIStateActions, MapStyleActions, ProviderActions};
 
 // Dispatch
 export {

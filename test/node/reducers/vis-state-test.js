@@ -2838,7 +2838,6 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
         id: 'tooltip',
         label: 'interactions.tooltip',
         enabled: true,
-        iconComponent: oldState.interactionConfig.tooltip.iconComponent,
         config: {
           compareMode: false,
           compareType: 'absolute',
@@ -3087,7 +3086,6 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
         id: 'tooltip',
         label: 'interactions.tooltip',
         enabled: true,
-        iconComponent: oldState.interactionConfig.tooltip.iconComponent,
         config: {
           compareMode: false,
           compareType: 'absolute',

@@ -193,7 +193,6 @@ export type BaseInteraction = {
   id: string;
   label: string;
   enabled: boolean;
-  iconComponent: any;
 };
 export type TooltipField = {
   name: string;

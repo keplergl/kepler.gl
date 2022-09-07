@@ -22,7 +22,7 @@
 import React, {Component, createRef} from 'react';
 import MapboxGLMap, {MapRef} from 'react-map-gl';
 import DeckGL from '@deck.gl/react';
-import {createSelector} from 'reselect';
+import {createSelector, Selector} from 'reselect';
 import WebMercatorViewport from 'viewport-mercator-project';
 import mapboxgl from 'mapbox-gl';
 
@@ -39,19 +39,10 @@ import EditorFactory from './editor/editor';
 import {
   generateMapboxLayers,
   updateMapboxLayers,
-  Layer,
   LayerBaseConfig,
   VisualChannelDomain
 } from '@kepler.gl/layers';
-import {
-  AnimationConfig,
-  Filter,
-  InteractionConfig,
-  MapState,
-  SplitMapLayers,
-  MapControls,
-  Viewport
-} from '@kepler.gl/types';
+import {MapState, MapControls, Viewport, SplitMap, SplitMapLayers} from '@kepler.gl/types';
 import {
   errorNotification,
   setLayerBlending,
@@ -67,15 +58,16 @@ import ErrorBoundary from 'components/common/error-boundary';
 import {LOCALE_CODES} from '@kepler.gl/localization';
 import {getMapLayersFromSplitMaps, onViewPortChange} from '@kepler.gl/utils';
 import {MapView} from '@deck.gl/core';
-import {Datasets} from '@kepler.gl/table';
 import {
   MapStyle,
   computeDeckLayers,
   getLayerHoverProp,
   LayerHoverProp,
   prepareLayersForDeck,
-  prepareLayersToRender
+  prepareLayersToRender,
+  LayersToRender
 } from '@kepler.gl/reducers';
+import {VisState} from '@kepler.gl/schemas';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {
@@ -130,23 +122,10 @@ export const Attribution = () => (
 MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory];
 
 type MapboxStyle = string | object | undefined;
+type PropSelector<R> = Selector<MapContainerProps, R>;
 
 interface MapContainerProps {
-  visState: {
-    datasets: Datasets;
-    interactionConfig: InteractionConfig;
-    animationConfig: AnimationConfig;
-    layerBlending: string;
-    layerOrder: number[];
-    layerData: any[];
-    layers: Layer[];
-    filters: Filter[];
-    mousePos: any;
-    clicked?: any;
-    hoverInfo?: any;
-    mapLayers?: SplitMapLayers | null;
-    editor: any;
-  };
+  visState: VisState;
   mapState: MapState;
   mapControls: MapControls;
   mapStyle: {bottomMapStyle?: MapboxStyle; topMapStyle?: MapboxStyle} & MapStyle;
@@ -233,17 +212,17 @@ export default function MapContainerFactory(
       }
     };
 
-    layersSelector = props => props.visState.layers;
-    layerDataSelector = props => props.visState.layerData;
-    splitMapSelector = props => props.visState.splitMaps;
-    splitMapIndexSelector = props => props.index;
-    mapLayersSelector = createSelector(
+    layersSelector: PropSelector<VisState['layers']> = props => props.visState.layers;
+    layerDataSelector: PropSelector<VisState['layers']> = props => props.visState.layerData;
+    splitMapSelector: PropSelector<SplitMap[]> = props => props.visState.splitMaps;
+    splitMapIndexSelector: PropSelector<number | undefined> = props => props.index;
+    mapLayersSelector: PropSelector<SplitMapLayers | null | undefined> = createSelector(
       this.splitMapSelector,
       this.splitMapIndexSelector,
-      (splitMaps, splitMapIndex) => getMapLayersFromSplitMaps(splitMaps, splitMapIndex)
+      getMapLayersFromSplitMaps
     );
-    layerOrderSelector = props => props.visState.layerOrder;
-    layersToRenderSelector = createSelector(
+    layerOrderSelector: PropSelector<VisState['layerOrder']> = props => props.visState.layerOrder;
+    layersToRenderSelector: PropSelector<LayersToRender> = createSelector(
       this.layersSelector,
       this.layerDataSelector,
       this.mapLayersSelector,
