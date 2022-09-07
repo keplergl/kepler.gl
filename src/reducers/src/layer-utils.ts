@@ -230,10 +230,8 @@ export function prepareLayersForDeck(
 export function prepareLayersToRender(
   layers: Layer[],
   layerData: VisState['layerData'],
-  mapLayers?: SplitMapLayers | null
-): {
-  [key: string]: boolean;
-} {
+  mapLayers?: SplitMapLayers | undefined | null
+): LayersToRender {
   return layers.reduce(
     (accu, layer, idx) => ({
       ...accu,
