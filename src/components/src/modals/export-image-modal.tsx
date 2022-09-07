@@ -21,7 +21,7 @@
 import React, {useEffect} from 'react';
 import styled from 'styled-components';
 import ImagePreview from '../common/image-preview';
-import {SetExportImageSettingUpdaterAction} from '../../actions';
+import {SetExportImageSettingUpdaterAction} from '@kepler.gl/actions';
 
 import {
   EXPORT_IMG_RATIO_OPTIONS,

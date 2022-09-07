@@ -30,7 +30,8 @@
     "./src/processors",
     "./src/tasks",
     "./src/actions",
-    "./src/reducers"
+    "./src/reducers",
+    "./src/components"
   ],
   "repository": {
     "type": "git",

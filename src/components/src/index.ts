@@ -37,7 +37,7 @@ import {appInjector} from './container';
 export {default as KeplerGl, default, injectComponents, ContainerFactory, ERROR_MSG} from './container';
 
 // factories
-export {default as KeplerGlFactory, DEFAULT_KEPLER_GL_PROPS, getVisibleDatasets} from './kepler-gl';
+export {default as KeplerGlFactory, DEFAULT_KEPLER_GL_PROPS, getVisibleDatasets, mapFieldsSelector, plotContainerSelector} from './kepler-gl';
 export {default as SidePanelFactory} from './side-panel';
 export {default as PanelTitleFactory} from './side-panel/panel-title';
 export {default as MapContainerFactory, Attribution} from './map-container';
@@ -49,7 +49,7 @@ export {
 } from './bottom-widget';
 export {default as ModalContainerFactory} from './modal-container';
 export {default as PlotContainerFactory} from './plot-container';
-export {default as GeocoderPanelFactory, getUpdateVisDataPayload, getUpdateVisDataPayload} from './geocoder-panel';
+export {default as GeocoderPanelFactory, getUpdateVisDataPayload} from './geocoder-panel';
 export {testForCoordinates} from './geocoder/geocoder';
 
 // // side panel factories
