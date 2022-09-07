@@ -19,9 +19,9 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo} from 'react';
-import TimeRangeFilterFactory from 'components/filters/time-range-filter';
-import {Clock} from 'components/common/icons';
-import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/filter-panel-with-field-select';
+import TimeRangeFilterFactory from '../time-range-filter';
+import {Clock} from '../../common/icons';
+import FieldPanelWithFieldSelectFactory from './filter-panel-with-field-select';
 import {TimeRangeFilterPanelComponent} from './types';
 
 TimeRangeFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, TimeRangeFilterFactory];

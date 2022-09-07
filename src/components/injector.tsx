@@ -27,7 +27,7 @@ import {
   InferableComponentEnhancerWithProps
 } from 'react-redux';
 import {console as Console} from 'global/window';
-import KeplerGlContext from 'components/context';
+import KeplerGlContext from './context';
 
 export type FactoryElement = (...args) => React.ComponentType;
 export type Factory = FactoryElement & {

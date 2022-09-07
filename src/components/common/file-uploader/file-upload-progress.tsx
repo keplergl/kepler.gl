@@ -22,7 +22,7 @@ import React from 'react';
 import styled, {withTheme} from 'styled-components';
 import classnames from 'classnames';
 import ProgressBar from '../progress-bar';
-import {TruncatedTitleText} from 'components/common/styled-components';
+import {TruncatedTitleText} from '../styled-components';
 import {getError} from '@kepler.gl/utils';
 import {FileLoadingProgress} from '@kepler.gl/types';
 

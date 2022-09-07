@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import Checkbox from 'components/common/checkbox';
+import Checkbox from './checkbox';
 import {generateHashId} from '@kepler.gl/utils';
 
 const MapLayerSelect = styled.div`

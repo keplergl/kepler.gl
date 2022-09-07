@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {CenterVerticalFlexbox} from 'components/common/styled-components';
+import {CenterVerticalFlexbox} from '../common/styled-components';
 import {UploadAnimation} from './status-panel';
 import {FormattedMessage} from '@kepler.gl/localization';
 import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';

@@ -21,8 +21,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {Add} from 'components/common/icons';
-import {Button} from 'components/common/styled-components';
+import {Add} from '../../common/icons';
+import {Button} from '../../common/styled-components';
 
 import SourceDataCatalogFactory from '../common/source-data-catalog';
 import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';

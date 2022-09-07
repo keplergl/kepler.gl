@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {useMemo, useCallback} from 'react';
-import ItemSelector from 'components/common/item-selector/item-selector';
+import ItemSelector from '../common/item-selector/item-selector';
 import {Layer, LAYER_TYPES} from '@kepler.gl/layers';
 import {PolygonFilterProps} from './types';
 import {StyledFilterPanel} from './components';

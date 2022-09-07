@@ -23,9 +23,9 @@ import styled from 'styled-components';
 import moment from 'moment';
 
 import LoadingDialog from './loading-dialog';
-import {Button} from 'components/common/styled-components';
+import {Button} from '../common/styled-components';
 import CloudTile from './cloud-tile';
-import {Base, ArrowLeft} from 'components/common/icons';
+import {Base, ArrowLeft} from '../common/icons';
 import ProviderModalContainer from './provider-modal-container';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {MapListItem, Provider} from 'cloud-providers';

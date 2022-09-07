@@ -21,8 +21,8 @@
 import React, {useCallback} from 'react';
 import classnames from 'classnames';
 
-import ToolbarItem from 'components/common/toolbar-item';
-import {MapControlButton} from 'components/common/styled-components';
+import ToolbarItem from '../common/toolbar-item';
+import {MapControlButton} from '../common/styled-components';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlToolbarFactory from './map-control-toolbar';
 import {MapControls} from '@kepler.gl/types';

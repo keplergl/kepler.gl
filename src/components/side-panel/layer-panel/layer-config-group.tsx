@@ -23,9 +23,9 @@ import {polyfill} from 'react-lifecycles-compat';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {FormattedMessage} from 'react-intl';
-import Switch from 'components/common/switch';
-import InfoHelperFactory from 'components/common/info-helper';
-import {VertThreeDots} from 'components/common/icons';
+import Switch from '../../common/switch';
+import InfoHelperFactory from '../../common/info-helper';
+import {VertThreeDots} from '../../common/icons';
 import {Layer} from '@kepler.gl/layers';
 import {LayerVisConfig} from '@kepler.gl/types';
 

@@ -28,11 +28,11 @@ import {
   SBFlexboxNoMargin,
   Button,
   PanelLabel
-} from 'components/common/styled-components';
-import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
+} from '../../common/styled-components';
+import DatasetTagFactory from '../common/dataset-tag';
 import TooltipChickletFactory from './tooltip-config/tooltip-chicklet';
-import Switch from 'components/common/switch';
-import ItemSelector from 'components/common/item-selector/item-selector';
+import Switch from '../../common/switch';
+import ItemSelector from '../../common/item-selector/item-selector';
 import {COMPARE_TYPES, GEOCODER_DATASET_NAME} from '@kepler.gl/constants';
 import FieldSelectorFactory from '../../common/field-selector';
 import KeplerTable, {Datasets} from '@kepler.gl/table';

@@ -25,11 +25,11 @@ import {
   IconRoundSmall,
   CenterFlexbox,
   BottomWidgetInner
-} from 'components/common/styled-components';
-import {Close, Clock, LineChart} from 'components/common/icons';
-import TimeRangeSliderFactory from 'components/common/time-range-slider';
-import FieldSelectorFactory from 'components/common/field-selector';
-import FloatingTimeDisplayFactory from 'components/common/animation-control/floating-time-display';
+} from '../common/styled-components';
+import {Close, Clock, LineChart} from '../common/icons';
+import TimeRangeSliderFactory from '../common/time-range-slider';
+import FieldSelectorFactory from '../common/field-selector';
+import FloatingTimeDisplayFactory from '../common/animation-control/floating-time-display';
 import {Field} from '@kepler.gl/types';
 import {timeRangeSliderFieldsSelector} from './time-range-filter';
 import {TimeWidgetProps, TimeWidgetTopProps, TopSectionWrapperProps} from './types';

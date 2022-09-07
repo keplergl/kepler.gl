@@ -20,8 +20,8 @@
 
 import React from 'react';
 
-import {FileType} from 'components/common/icons';
-import {StyledModalContent, StyledType, CheckMark} from 'components/common/styled-components';
+import {FileType} from '../../common/icons';
+import {StyledModalContent, StyledType, CheckMark} from '../../common/styled-components';
 import {EXPORT_MAP_FORMATS, EXPORT_MAP_FORMAT_OPTIONS} from '@kepler.gl/constants';
 import {StyledExportMapSection} from './components';
 import ExportHtmlMapFactory from './export-html-map';

@@ -21,8 +21,8 @@
 import React, {ComponentType, useState} from 'react';
 import styled from 'styled-components';
 
-import {Legend} from 'components/common/icons';
-import {MapControlButton} from 'components/common/styled-components';
+import {Legend} from '../common/icons';
+import {MapControlButton} from '../common/styled-components';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlPanelFactory from './map-control-panel';
 import MapLegendFactory from './map-legend';

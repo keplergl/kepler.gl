@@ -22,11 +22,11 @@ import React, {useState} from 'react';
 import styled from 'styled-components';
 import LayerHoverInfoFactory from './layer-hover-info';
 import CoordinateInfoFactory from './coordinate-info';
-import {ArrowLeft, ArrowRight, Pin} from 'components/common/icons';
+import {ArrowLeft, ArrowRight, Pin} from '../common/icons';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import Tippy from '@tippyjs/react/headless';
-import {RootContext} from 'components';
+import {RootContext} from '..';
 import {LayerHoverProp} from '@kepler.gl/reducers';
 
 const MAX_WIDTH = 500;

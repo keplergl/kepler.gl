@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import {StyledPanelDropdown} from 'components/common/styled-components';
+import {StyledPanelDropdown} from '../common/styled-components';
 import listensToClickOutside from 'react-onclickoutside';
 
 type ClickOutsideCloseDropdownProps = {

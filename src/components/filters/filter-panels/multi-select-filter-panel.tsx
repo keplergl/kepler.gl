@@ -19,9 +19,9 @@
 // THE SOFTWARE.
 
 import React, {useCallback} from 'react';
-import MultiSelectFilterFactory from 'components/filters/multi-select-filter';
+import MultiSelectFilterFactory from '../multi-select-filter';
 import {MultiSelectFilter} from '@kepler.gl/types';
-import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/filter-panel-with-field-select';
+import FieldPanelWithFieldSelectFactory from './filter-panel-with-field-select';
 import {FilterPanelComponent} from './types';
 
 MultiSelectFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, MultiSelectFilterFactory];

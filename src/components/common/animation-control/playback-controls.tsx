@@ -21,7 +21,7 @@
 import React, {useState, useCallback} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import {Reset, Play, Pause, Save, Rocket, AnchorWindow, FreeWindow} from 'components/common/icons';
+import {Reset, Play, Pause, Save, Rocket, AnchorWindow, FreeWindow} from '../icons';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
 import AnimationSpeedSliderFactory from './animation-speed-slider';
 import WindowActionControlFactory from './window-action-control';

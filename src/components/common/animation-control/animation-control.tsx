@@ -22,8 +22,8 @@ import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 
-import Slider from 'components/common/slider/slider';
-import {BottomWidgetInner} from 'components/common/styled-components';
+import Slider from '../slider/slider';
+import {BottomWidgetInner} from '../styled-components';
 import PlaybackControlsFactory from './playback-controls';
 import FloatingTimeDisplayFactory from './floating-time-display';
 import {datetimeFormatter, snapToMarks} from '@kepler.gl/utils';

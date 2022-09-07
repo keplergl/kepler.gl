@@ -20,7 +20,7 @@
 
 import React, {Component} from 'react';
 import styled from 'styled-components';
-import {Delete, Info, Warning, Checkmark} from 'components/common/icons';
+import {Delete, Info, Warning, Checkmark} from '../common/icons';
 import ReactMarkdown from 'react-markdown';
 import {ActionHandler, removeNotification as removeNotificationActions} from '@kepler.gl/actions';
 

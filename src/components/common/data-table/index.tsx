@@ -31,13 +31,13 @@ import {CellSizeCache} from './cell-size';
 
 import Grid from './grid';
 import Button from './button';
-import {ArrowUp, ArrowDown, VertThreeDots} from 'components/common/icons';
+import {ArrowUp, ArrowDown, VertThreeDots} from '../icons';
 
 import {parseFieldValue} from '@kepler.gl/utils';
 import {adjustCellsToContainer} from './cell-size';
 
 import {ALL_FIELD_TYPES, SORT_ORDER} from '@kepler.gl/constants';
-import FieldTokenFactory from 'components/common/field-token';
+import FieldTokenFactory from '../field-token';
 import {DataContainerInterface} from '@kepler.gl/table';
 
 const defaultHeaderRowHeight = 55;

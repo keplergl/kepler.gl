@@ -19,9 +19,9 @@
 // THE SOFTWARE.
 
 import React, {useMemo} from 'react';
-import {PanelLabel, SidePanelSection} from 'components/common/styled-components';
-import ItemSelector from 'components/common/item-selector/item-selector';
-import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
+import {PanelLabel, SidePanelSection} from '../../common/styled-components';
+import ItemSelector from '../../common/item-selector/item-selector';
+import DatasetTagFactory from './dataset-tag';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {DatasetItemProps, SourceDataSelectorProps} from './types';
 

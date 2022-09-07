@@ -20,10 +20,10 @@
 
 import React, {useCallback} from 'react';
 import styled from 'styled-components';
-import Portaled from 'components/common/portaled';
-import DropdownList from 'components/common/item-selector/dropdown-list';
+import Portaled from '../portaled';
+import DropdownList from '../item-selector/dropdown-list';
 import {SORT_ORDER, TABLE_OPTION, TABLE_OPTION_LIST} from '@kepler.gl/constants';
-import {Pin, ArrowDown, ArrowUp, Clipboard, Cancel} from 'components/common/icons';
+import {Pin, ArrowDown, ArrowUp, Clipboard, Cancel} from '../icons';
 
 const ListItem = ({value}) => (
   <div>

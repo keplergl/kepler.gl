@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {Tooltip} from 'components/common/styled-components';
+import {Tooltip} from '../styled-components';
 import IconButton from '../icon-button';
 import {media} from '@kepler.gl/styles';
 import {preciseRound} from '@kepler.gl/utils';

@@ -1,6 +1,6 @@
 import React from 'react';
 import {FormattedMessage} from 'localization';
-import {Tooltip} from 'components/common/styled-components';
+import {Tooltip} from '../styled-components';
 import IconButton from '../icon-button';
 
 const DELAY_SHOW = 500;

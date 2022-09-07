@@ -21,9 +21,9 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import {SidePanelSection} from 'components/common/styled-components';
-import DatasetTitleFactory from 'components/side-panel/common/dataset-title';
-import DatasetInfoFactory from 'components/side-panel/common/dataset-info';
+import {SidePanelSection} from '../../common/styled-components';
+import DatasetTitleFactory from './dataset-title';
+import DatasetInfoFactory from './dataset-info';
 import {SourceDataCatalogProps} from './types';
 
 const SourceDataCatalogWrapper = styled.div`

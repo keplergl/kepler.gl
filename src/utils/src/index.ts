@@ -31,8 +31,6 @@ export {
 } from './color-utils';
 export {errorNotification} from './notifications-utils';
 
-export {getHexFields, containValidTime} from '@kepler.gl/layers';
-
 export {createNotification, exportImageError, successNotification} from './notifications-utils';
 
 export {default as domtoimage} from './dom-to-image';

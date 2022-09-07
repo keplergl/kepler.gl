@@ -21,7 +21,7 @@
 import React from 'react';
 import {FormattedMessage} from '@kepler.gl/localization';
 import styled from 'styled-components';
-import {DatasetSquare, Tooltip} from 'components';
+import {DatasetSquare, Tooltip} from '../..';
 import {DatasetTagProps, UpdateTableColorTypes} from './types';
 
 const DatasetTagWrapper = styled.div`

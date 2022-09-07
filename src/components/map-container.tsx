@@ -29,9 +29,9 @@ import mapboxgl from 'mapbox-gl';
 import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actions';
 
 // components
-import MapPopoverFactory from 'components/map/map-popover';
-import MapControlFactory from 'components/map/map-control';
-import {StyledMapContainer, StyledAttrbution} from 'components/common/styled-components';
+import MapPopoverFactory from './map/map-popover';
+import MapControlFactory from './map/map-control';
+import {StyledMapContainer, StyledAttrbution} from './common/styled-components';
 
 import EditorFactory from './editor/editor';
 
@@ -54,7 +54,7 @@ import {
 // default-settings
 import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepler.gl/constants';
 
-import ErrorBoundary from 'components/common/error-boundary';
+import ErrorBoundary from './common/error-boundary';
 import {LOCALE_CODES} from '@kepler.gl/localization';
 import {getMapLayersFromSplitMaps, onViewPortChange} from '@kepler.gl/utils';
 import {MapView} from '@deck.gl/core';

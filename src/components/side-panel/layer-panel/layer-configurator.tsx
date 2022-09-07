@@ -23,15 +23,15 @@ import React, {Component, Fragment} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
-import {Input, PanelLabel, SidePanelSection} from 'components/common/styled-components';
-import ItemSelector from 'components/common/item-selector/item-selector';
+import {Input, PanelLabel, SidePanelSection} from '../../common/styled-components';
+import ItemSelector from '../../common/item-selector/item-selector';
 
 import VisConfigByFieldSelectorFactory from './vis-config-by-field-selector';
 import LayerColumnConfigFactory from './layer-column-config';
 import LayerTypeSelectorFactory from './layer-type-selector';
 import DimensionScaleSelector from './dimension-scale-selector';
 import ColorSelector from './color-selector';
-import SourceDataSelectorFactory from 'components/side-panel/common/source-data-selector';
+import SourceDataSelectorFactory from '../common/source-data-selector';
 import VisConfigSwitchFactory from './vis-config-switch';
 import VisConfigSliderFactory from './vis-config-slider';
 import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-config-group';

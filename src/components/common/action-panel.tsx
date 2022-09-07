@@ -21,8 +21,8 @@
 import React, {useCallback, PropsWithChildren, ElementType, CSSProperties, ReactNode} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import {ArrowRight} from 'components/common/icons';
-import Checkbox from 'components/common/switch';
+import {ArrowRight} from './icons';
+import Checkbox from './switch';
 
 export type ActionPanelProps = PropsWithChildren<{
   color?: string;

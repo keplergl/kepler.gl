@@ -21,8 +21,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {PanelLabel} from 'components/common/styled-components';
-import FieldSelectorFactory from 'components/common/field-selector';
+import {PanelLabel} from '../../common/styled-components';
+import FieldSelectorFactory from '../../common/field-selector';
 import {validateColumn} from '@kepler.gl/reducers';
 import {LayerColumn, LayerColumns} from '@kepler.gl/layers';
 import {Field, FieldPair} from '@kepler.gl/types';

@@ -20,7 +20,7 @@
 
 import React, {Component} from 'react';
 import styled from 'styled-components';
-import {ArrowRight} from 'components/common/icons';
+import {ArrowRight} from '../common/icons';
 
 type CollapseButtonProps = {
   isOpen: boolean;

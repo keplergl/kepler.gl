@@ -22,11 +22,11 @@ import React, {createRef, MouseEvent, PureComponent} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
-import {CenterFlexbox, Tooltip} from 'components/common/styled-components';
-import {ArrowRight, Table, Trash} from 'components/common/icons';
-import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
+import {CenterFlexbox, Tooltip} from '../../common/styled-components';
+import {ArrowRight, Table, Trash} from '../../common/icons';
+import DatasetTagFactory from './dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
-import {Portaled} from 'components';
+import {Portaled} from '../..';
 import {rgbToHex} from '@kepler.gl/utils';
 import {
   StyledDatasetTitleProps,

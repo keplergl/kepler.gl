@@ -31,13 +31,13 @@ import PanelTitleFactory from './panel-title';
 import DatasetSectionFactory from './layer-panel/dataset-section';
 import AddLayerButtonFactory from './layer-panel/add-layer-button';
 
-import ItemSelector from 'components/common/item-selector/item-selector';
-import {PanelLabel, SidePanelDivider, SidePanelSection} from 'components/common/styled-components';
+import ItemSelector from '../common/item-selector/item-selector';
+import {PanelLabel, SidePanelDivider, SidePanelSection} from '../common/styled-components';
 
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
-import {SidePanelItem} from 'components/types';
+import {SidePanelItem} from '../types';
 import {LayerPanelListView} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 

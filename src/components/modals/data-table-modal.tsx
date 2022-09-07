@@ -20,11 +20,11 @@
 
 import React from 'react';
 import styled, {withTheme} from 'styled-components';
-import DatasetLabel from 'components/common/dataset-label';
-import DataTableFactory from 'components/common/data-table';
+import DatasetLabel from '../common/dataset-label';
+import DataTableFactory from '../common/data-table';
 import {createSelector} from 'reselect';
-import {renderedSize} from 'components/common/data-table/cell-size';
-import CanvasHack from 'components/common/data-table/canvas';
+import {renderedSize} from '../common/data-table/cell-size';
+import CanvasHack from '../common/data-table/canvas';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
 
 const dgSettings = {

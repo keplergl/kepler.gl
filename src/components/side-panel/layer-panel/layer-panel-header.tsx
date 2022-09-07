@@ -28,8 +28,8 @@ import React, {
 import classnames from 'classnames';
 import styled, {css} from 'styled-components';
 import {SortableHandle} from 'react-sortable-hoc';
-import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
-import {Tooltip} from 'components/common/styled-components';
+import PanelHeaderActionFactory from '../panel-header-action';
+import {Tooltip} from '../../common/styled-components';
 import {
   Copy,
   ArrowDown,
@@ -38,12 +38,12 @@ import {
   Trash,
   VertDots,
   WarningSign
-} from 'components/common/icons';
+} from '../../common/icons';
 
-import {InlineInput, StyledPanelHeader} from 'components/common/styled-components';
+import {InlineInput, StyledPanelHeader} from '../../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {RGBColor} from '@kepler.gl/types';
-import {BaseProps} from 'components/common/icons/base';
+import {BaseProps} from '../../common/icons/base';
 
 type LayerLabelEditorProps = {
   layerId: string;

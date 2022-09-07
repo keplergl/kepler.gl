@@ -21,18 +21,18 @@
 import React, {ComponentType} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import {ArrowDown} from 'components/common/icons';
-import PanelHeaderActionFactory from 'components/side-panel/panel-header-action';
+import {ArrowDown} from '../../common/icons';
+import PanelHeaderActionFactory from '../panel-header-action';
 
 import {
   PanelHeaderContent,
   PanelHeaderTitle,
   PanelLabel,
   StyledPanelHeader
-} from 'components/common/styled-components';
+} from '../../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {MapStyle} from '@kepler.gl/reducers';
-import {BaseProps} from 'components/common/icons/base';
+import {BaseProps} from '../../common/icons/base';
 
 const StyledMapDropdown = styled(StyledPanelHeader)`
   height: 48px;

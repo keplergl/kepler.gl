@@ -20,8 +20,8 @@
 
 import React, {ComponentType, useCallback, useMemo} from 'react';
 import classnames from 'classnames';
-import {MapControlButton} from 'components/common/styled-components';
-import {Delete, Split} from 'components/common/icons';
+import {MapControlButton} from '../common/styled-components';
+import {Delete, Split} from '../common/icons';
 import MapControlTooltipFactory from './map-control-tooltip';
 import {MapControl, MapControls} from '@kepler.gl/types';
 

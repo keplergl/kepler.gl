@@ -27,7 +27,7 @@ import {ChannelByValueSelectorFactory} from './side-panel/layer-panel/layer-conf
 import FieldSelectorFactory, {FieldListItemFactoryFactory} from './common/field-selector';
 import FieldTokenFactory from './common/field-token';
 import PanelHeaderActionFactory from './side-panel/panel-header-action';
-import InfoHelperFactory from 'components/common/info-helper';
+import InfoHelperFactory from './common/info-helper';
 import {appInjector} from './container';
 
 // Components
@@ -243,4 +243,4 @@ export {
 };
 
 // Context
-export {default as KeplerGlContext, RootContext} from 'components/context';
+export {default as KeplerGlContext, RootContext} from './context';

@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import TimeRangeSliderFactory from 'components/common/time-range-slider';
+import TimeRangeSliderFactory from '../common/time-range-slider';
 import {DEFAULT_TIME_FORMAT} from '@kepler.gl/constants';
 import {TimeRangeFilter} from '@kepler.gl/types';
 import {TimeRangeFilterProps} from './types';

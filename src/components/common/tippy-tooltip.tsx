@@ -20,7 +20,7 @@
 
 import styled from 'styled-components';
 import React, {useState} from 'react';
-import {RootContext} from 'components';
+import {RootContext} from '..';
 import Tippy, {TippyProps} from '@tippyjs/react';
 
 const TippyArrow = styled.div`

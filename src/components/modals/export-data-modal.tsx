@@ -21,14 +21,14 @@
 import React, {Component} from 'react';
 
 import {EXPORT_DATA_TYPE_OPTIONS} from '@kepler.gl/constants';
-import {FileType} from 'components/common/icons';
+import {FileType} from '../common/icons';
 import {
   StyledExportSection,
   StyledFilteredOption,
   StyledModalContent,
   StyledType,
   CheckMark
-} from 'components/common/styled-components';
+} from '../common/styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Datasets} from '@kepler.gl/table';

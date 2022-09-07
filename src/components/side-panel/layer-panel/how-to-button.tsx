@@ -22,7 +22,7 @@ import React, {MouseEventHandler} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
-import {Button} from 'components/common/styled-components';
+import {Button} from '../../common/styled-components';
 
 const StyledHowToButton = styled.div`
   position: absolute;

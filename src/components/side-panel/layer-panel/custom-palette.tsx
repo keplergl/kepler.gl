@@ -22,10 +22,10 @@ import React, {Component, createRef, MouseEventHandler, MouseEvent} from 'react'
 import classnames from 'classnames';
 import styled, {css} from 'styled-components';
 import {SortableContainer, SortableElement, SortableHandle} from 'react-sortable-hoc';
-import Portaled from 'components/common/portaled';
+import Portaled from '../../common/portaled';
 
-import {Button, InlineInput} from 'components/common/styled-components';
-import {VertDots, Trash} from 'components/common/icons';
+import {Button, InlineInput} from '../../common/styled-components';
+import {VertDots, Trash} from '../../common/icons';
 import ColorPalette from './color-palette';
 import CustomPicker from './custom-picker';
 import {arrayMove} from '@kepler.gl/utils';

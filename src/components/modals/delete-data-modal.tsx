@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import DatasetLabel from 'components/common/dataset-label';
+import DatasetLabel from '../common/dataset-label';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer} from '@kepler.gl/layers';
 import {KeplerTable} from '@kepler.gl/table';

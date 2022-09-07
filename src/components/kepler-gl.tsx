@@ -26,7 +26,7 @@ import {createSelector} from 'reselect';
 import {connect as keplerGlConnect} from 'connect/keplergl-connect';
 import {IntlProvider} from 'react-intl';
 import {messages} from '@kepler.gl/localization';
-import {RootContext, FeatureFlagsContextProvider, FeatureFlags} from 'components/context';
+import {RootContext, FeatureFlagsContextProvider, FeatureFlags} from './context';
 import {OnErrorCallBack, OnSuccessCallBack} from '@kepler.gl/types';
 
 import {

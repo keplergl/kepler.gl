@@ -19,9 +19,9 @@
 // THE SOFTWARE.
 
 import React, {useCallback} from 'react';
-import SingleSelectFilterFactory from 'components/filters/single-select-filter';
+import SingleSelectFilterFactory from '../single-select-filter';
 import {SelectFilter} from '@kepler.gl/types';
-import FieldPanelWithFieldSelectFactory from 'components/filters/filter-panels/filter-panel-with-field-select';
+import FieldPanelWithFieldSelectFactory from './filter-panel-with-field-select';
 import {FilterPanelComponent} from './types';
 
 SingleSelectFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, SingleSelectFilterFactory];

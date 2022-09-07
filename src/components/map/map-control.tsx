@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import KeplerGlLogo from 'components/common/logo';
+import KeplerGlLogo from '../common/logo';
 
 // factories
 import SplitMapButtonFactory from './split-map-button';

@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import LoadingSpinner from 'components/common/loading-spinner';
+import LoadingSpinner from './loading-spinner';
 import {ExportImage} from '@kepler.gl/constants';
 
 const StyledImagePreview = styled.div.attrs({
