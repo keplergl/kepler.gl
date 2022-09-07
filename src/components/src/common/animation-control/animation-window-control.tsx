@@ -1,5 +1,5 @@
 import React, {useCallback} from 'react';
-import {FormattedMessage} from 'localization';
+import {FormattedMessage} from '@kepler.gl/localization';
 import {ReactComponentLike} from 'prop-types';
 import IconButton from '../icon-button';
 import {Tooltip} from '../styled-components';

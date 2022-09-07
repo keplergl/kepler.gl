@@ -22,7 +22,7 @@ import React, {useCallback} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
-import {media} from 'styles';
+import {media} from '@kepler.gl/styles';
 import {FormattedMessage, useIntl} from 'react-intl';
 import {LoadingMethod} from './load-data-modal';
 

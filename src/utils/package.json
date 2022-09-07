@@ -5,7 +5,7 @@
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/index.js",
-  "types": "index.d.ts",
+  "types": "dist/index.d.ts",
   "keywords": [
     "babel",
     "es6",
@@ -56,17 +56,6 @@
     "type-analyzer": "0.3.0",
     "viewport-mercator-project": "^6.0.0",
     "wellknown": "^0.5.0"
-  },
-  "exports": {
-    ".": "./dist/index.js",
-    "./*": "./dist/*"
-  },
-  "typesVersions": {
-    "*": {
-      "*": [
-        "dist/*"
-      ]
-    }
   },
   "nyc": {
     "sourceMap": false,

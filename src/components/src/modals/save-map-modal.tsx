@@ -38,8 +38,8 @@ import {
 import ImagePreview from '../common/image-preview';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {MapInfo} from '@kepler.gl/types';
-import {Provider} from 'cloud-providers';
-import {setMapInfo, cleanupExportImage as cleanupExportImageAction} from 'actions';
+import {Provider} from '@kepler.gl/cloud-providers';
+import {setMapInfo, cleanupExportImage as cleanupExportImageAction} from '@kepler.gl/actions';
 
 /** @typedef {import('./save-map-modal').SaveMapModalProps} SaveMapModalProps */
 

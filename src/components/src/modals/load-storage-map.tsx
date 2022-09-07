@@ -29,7 +29,7 @@ import {Base} from '@kepler.gl/constants';
 import {ArrowLeft} from '../common/icons';
 import ProviderModalContainer from './provider-modal-container';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {MapListItem, Provider} from 'cloud-providers';
+import {MapListItem, Provider} from '@kepler.gl/cloud-providers';
 
 const StyledProviderSection = styled.div.attrs({
   className: 'provider-selection'

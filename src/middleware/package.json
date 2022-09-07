@@ -5,7 +5,7 @@
   "description": "kepler.gl middleware used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/index.js",
-  "types": "index.d.ts",
+  "types": "dist/index.d.ts",
   "keywords": [
     "babel",
     "es6",

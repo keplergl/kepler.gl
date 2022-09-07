@@ -25,7 +25,7 @@ import {UploadAnimation} from './status-panel';
 import {FormattedMessage} from '@kepler.gl/localization';
 import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
 import {Provider} from '@kepler.gl/cloud-providers';
-import {cleanupExportImage as cleanupExportImageAction} from 'actions';
+import {cleanupExportImage as cleanupExportImageAction} from '@kepler.gl/actions';
 
 /** @typedef {import('./overwrite-map-modal').OverwriteMapModalProps} OverwriteMapModalProps */
 

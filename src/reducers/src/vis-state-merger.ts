@@ -33,7 +33,7 @@ import {
   visStateSchema
 } from '@kepler.gl/schemas';
 
-import {ParsedConfig} from 'schemas';
+import {ParsedConfig} from '@kepler.gl/schemas';
 import {ParsedLayer, SavedInteractionConfig, TooltipInfo} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 import {

@@ -30,7 +30,7 @@ import LoadingDialog from './loading-dialog';
 
 import {LOADING_METHODS} from '@kepler.gl/constants';
 import {FileLoading, FileLoadingProgress, LoadFiles} from '@kepler.gl/types';
-import {Provider} from 'cloud-providers';
+import {Provider} from '@kepler.gl/cloud-providers';
 import {SetCloudProviderPayload, ProviderActions, ActionHandler} from '@kepler.gl/actions';
 
 /** @typedef {import('./load-data-modal').LoadDataModalProps} LoadDataModalProps */

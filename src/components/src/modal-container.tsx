@@ -74,9 +74,9 @@ import {
   ProviderActions
 } from '@kepler.gl/actions';
 import {ModalDialogProps} from './common/modal';
-import {Provider} from 'cloud-providers';
+import {Provider} from '@kepler.gl/cloud-providers';
 import {findDOMNode} from 'react-dom';
-import {VisState} from 'schemas';
+import {VisState} from '@kepler.gl/schemas';
 
 const DataTableModalStyle = css`
   top: 80px;

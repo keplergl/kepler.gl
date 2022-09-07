@@ -49,17 +49,6 @@
     "@kepler.gl/constants": "2.5.5",
     "lodash.memoize": "^4.1.2"
   },
-  "exports": {
-    ".": "./dist/index.js",
-    "./*": "./dist/*"
-  },
-  "typesVersions": {
-    "*": {
-      "*": [
-        "dist/*"
-      ]
-    }
-  },
   "nyc": {
     "sourceMap": false,
     "instrument": false

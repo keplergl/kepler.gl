@@ -23,7 +23,7 @@ import Console from 'global/console';
 import {bindActionCreators} from 'redux';
 import styled, {ThemeProvider, withTheme} from 'styled-components';
 import {createSelector} from 'reselect';
-import {connect as keplerGlConnect} from 'connect/keplergl-connect';
+import {connect as keplerGlConnect} from './connect/keplergl-connect';
 import {IntlProvider} from 'react-intl';
 import {messages} from '@kepler.gl/localization';
 import {RootContext, FeatureFlagsContextProvider, FeatureFlags} from './context';
@@ -75,7 +75,7 @@ import {
 
 import {theme as basicTheme, themeLT, themeBS} from '@kepler.gl/styles';
 import {KeplerGlState} from '@kepler.gl/reducers';
-import {Provider} from 'cloud-providers';
+import {Provider} from '@kepler.gl/cloud-providers';
 
 // Maybe we should think about exporting this or creating a variable
 // as part of the base.js theme
