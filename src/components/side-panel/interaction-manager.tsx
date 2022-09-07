@@ -33,11 +33,11 @@ type InteractionManagerProps = {
 InteractionManagerFactory.deps = [InteractionPanelFactory];
 
 function InteractionManagerFactory(InteractionPanel: ReturnType<typeof InteractionPanelFactory>) {
-  const InteractionManager = ({
+  const InteractionManager: React.FC<InteractionManagerProps> = ({
     interactionConfig,
     datasets,
     visStateActions
-  }: InteractionManagerProps) => {
+  }) => {
     const {interactionConfigChange: onConfigChange} = visStateActions;
 
     return (

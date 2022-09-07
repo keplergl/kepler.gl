@@ -18,12 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, ComponentType, ReactElement} from 'react';
+import React, {useState, ComponentType, ReactElement, useCallback} from 'react';
 import styled from 'styled-components';
 import Switch from 'components/common/switch';
 
 import BrushConfigFactory from './brush-config';
 import TooltipConfigFactory from './tooltip-config';
+import {Datasets} from '@kepler.gl/table';
+import {InteractionConfig} from '@kepler.gl/reducers';
 
 import {
   StyledPanelHeader,
@@ -31,18 +33,18 @@ import {
   PanelHeaderContent,
   PanelContent
 } from 'components/common/styled-components';
+import {Messages, Crosshairs, CursorClick, Pin} from 'components/common/icons';
+
 import {FormattedMessage} from '@kepler.gl/localization';
+import {ValueOf} from 'types';
 
 interface InteractionPanelProps {
-  datasets: any;
-  config: {
-    id: string;
-    enabled: boolean;
-    label: string;
-    iconComponent: any;
-    config: any;
-  };
+  datasets: Datasets;
+  config: ValueOf<InteractionConfig>;
   onConfigChange: any;
+  interactionConfigIcons?: {
+    [key: string]: ReactElement;
+  };
 }
 
 const StyledInteractionPanel = styled.div`
@@ -51,74 +53,90 @@ const StyledInteractionPanel = styled.div`
 
 InteractionPanelFactory.deps = [TooltipConfigFactory, BrushConfigFactory];
 
+const INTERACTION_CONFIG_ICONS = {
+  tooltip: Messages,
+  geocoder: Pin,
+  brush: Crosshairs,
+  coordinate: CursorClick
+};
+
 function InteractionPanelFactory(
   TooltipConfig: ReturnType<typeof TooltipConfigFactory>,
   BrushConfig: ReturnType<typeof BrushConfigFactory>
 ): ComponentType<InteractionPanelProps> {
-  return class InteractionPanel extends Component<InteractionPanelProps> {
-    state = {
-      isConfigActive: false
-    };
+  const InteractionPanel: React.FC<InteractionPanelProps> = ({
+    config,
+    onConfigChange,
+    datasets,
+    interactionConfigIcons = INTERACTION_CONFIG_ICONS
+  }) => {
+    const [isConfigActive, setIsConfigAction] = useState(false);
 
-    _updateConfig = newProp => {
-      this.props.onConfigChange({
-        ...this.props.config,
-        ...newProp
-      });
-    };
+    const _updateConfig = useCallback(
+      newProp => {
+        onConfigChange({
+          ...config,
+          ...newProp
+        });
+      },
+      [onConfigChange, config]
+    );
 
-    _enableConfig = () => {
-      this.setState({isConfigActive: !this.state.isConfigActive});
-    };
+    const togglePanelActive = useCallback(() => {
+      setIsConfigAction(!isConfigActive);
+    }, [setIsConfigAction, isConfigActive]);
 
-    render() {
-      const {config, datasets} = this.props;
-      const onChange = newConfig => this._updateConfig({config: newConfig});
-      let template: ReactElement | null = null;
+    const {enabled} = config;
+    const toggleEnableConfig = useCallback(() => {
+      _updateConfig({enabled: !enabled});
+    }, [_updateConfig, enabled]);
 
-      switch (config.id) {
-        case 'tooltip':
-          template = (
-            <TooltipConfig datasets={datasets} config={config.config} onChange={onChange} />
-          );
-          break;
-        case 'brush':
-          template = <BrushConfig config={config.config} onChange={onChange} />;
-          break;
+    const onChange = useCallback(newConfig => _updateConfig({config: newConfig}), [_updateConfig]);
+    const IconComponent = interactionConfigIcons[config.id];
 
-        default:
-          break;
-      }
+    let template: ReactElement | null = null;
 
-      return (
-        <StyledInteractionPanel className="interaction-panel">
-          <StyledPanelHeader className="interaction-panel__header" onClick={this._enableConfig}>
-            <PanelHeaderContent className="interaction-panel__header__content">
-              <div className="interaction-panel__header__icon icon">
-                <config.iconComponent height="16px" />
-              </div>
-              <div className="interaction-panel__header__title">
-                <PanelHeaderTitle>
-                  <FormattedMessage id={config.label} />
-                </PanelHeaderTitle>
-              </div>
-            </PanelHeaderContent>
-            <div className="interaction-panel__header__actions">
-              <Switch
-                checked={config.enabled}
-                id={`${config.id}-toggle`}
-                onChange={() => this._updateConfig({enabled: !config.enabled})}
-                secondary
-              />
-            </div>
-          </StyledPanelHeader>
-          {config.enabled && template && (
-            <PanelContent className="interaction-panel__content">{template}</PanelContent>
-          )}
-        </StyledInteractionPanel>
-      );
+    switch (config.id) {
+      case 'tooltip':
+        template = <TooltipConfig datasets={datasets} config={config.config} onChange={onChange} />;
+        break;
+      case 'brush':
+        template = <BrushConfig config={config.config} onChange={onChange} />;
+        break;
+
+      default:
+        break;
     }
+    return (
+      <StyledInteractionPanel className="interaction-panel">
+        <StyledPanelHeader className="interaction-panel__header" onClick={togglePanelActive}>
+          <PanelHeaderContent className="interaction-panel__header__content">
+            <div className="interaction-panel__header__icon icon">
+              {IconComponent ? <IconComponent height="16px" /> : null}
+            </div>
+            <div className="interaction-panel__header__title">
+              <PanelHeaderTitle>
+                <FormattedMessage id={config.label} />
+              </PanelHeaderTitle>
+            </div>
+          </PanelHeaderContent>
+          <div className="interaction-panel__header__actions">
+            <Switch
+              checked={config.enabled}
+              id={`${config.id}-toggle`}
+              onChange={toggleEnableConfig}
+              secondary
+            />
+          </div>
+        </StyledPanelHeader>
+        {config.enabled && template && (
+          <PanelContent className="interaction-panel__content">{template}</PanelContent>
+        )}
+      </StyledInteractionPanel>
+    );
   };
+
+  return InteractionPanel;
 }
 
 export default InteractionPanelFactory;
