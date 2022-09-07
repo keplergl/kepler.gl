@@ -24,7 +24,7 @@ import classnames from 'classnames';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Tooltip} from '../common/styled-components';
-import {BaseProps} from '../common/icons/base';
+import {BaseProps} from '@kepler.gl/constants';
 
 interface PanelHeaderActionProps {
   id?: string;

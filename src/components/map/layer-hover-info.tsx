@@ -21,7 +21,7 @@
 import React, {useMemo} from 'react';
 import styled from 'styled-components';
 import {TooltipField} from '@kepler.gl/types';
-import {CenterFlexbox} from '../common/styled-components';
+import {CenterFlexbox} from '@kepler.gl/constants';
 import {Layers} from '../common/icons';
 import PropTypes from 'prop-types';
 import {notNullorUndefined} from '@kepler.gl/utils';

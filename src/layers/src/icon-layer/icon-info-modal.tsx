@@ -21,9 +21,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import {line} from 'd3-shape';
-import {CenterFlexbox} from 'components/common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {Table} from 'components/common/icons';
+import {CenterFlexbox, Table} from '@kepler.gl/constants';
 
 const lineFunction = line()
   .x(d => d[0] * 10)

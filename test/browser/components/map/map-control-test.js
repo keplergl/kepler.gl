@@ -23,12 +23,12 @@
 import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';
-import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {IntlWrapper, mountWithTheme} from '../../../helpers/component-utils';
 
 import {MapControlButton} from 'components/common/styled-components';
 import ToolbarItem from 'components/common/toolbar-item';
 
-import {mapFieldsSelector} from 'components/kepler-gl';
+import {mapFieldsSelector} from '../../../../src/components/kepler-gl';
 import {
   appInjector,
   MapLayerSelector,
@@ -36,7 +36,7 @@ import {
   MapLegendFactory,
   MapControlFactory,
   MapControlToolbarFactory
-} from 'components';
+} from '../../../../src/components';
 import {
   mockKeplerProps,
   mockKeplerPropsWithState,

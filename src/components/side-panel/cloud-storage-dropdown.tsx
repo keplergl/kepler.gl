@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {PanelHeaderDropdownFactory, Icons} from '..';
+import {PanelHeaderDropdownFactory, Icons} from '../';
 
 const CloudStorageItems = [
   {

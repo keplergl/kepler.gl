@@ -20,7 +20,7 @@
 
 import React from 'react';
 import {preciseRound} from '@kepler.gl/utils';
-import {CursorClick} from '../common/icons';
+import {CursorClick} from '@kepler.gl/constants';
 import {StyledLayerName} from './layer-hover-info';
 
 // 6th decimal is worth up to 0.11 m

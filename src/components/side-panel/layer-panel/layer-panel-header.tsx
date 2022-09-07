@@ -43,7 +43,7 @@ import {
 import {InlineInput, StyledPanelHeader} from '../../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {RGBColor} from '@kepler.gl/types';
-import {BaseProps} from '../../common/icons/base';
+import {BaseProps} from '@kepler.gl/constants';
 
 type LayerLabelEditorProps = {
   layerId: string;

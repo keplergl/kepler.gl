@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import Base, {BaseProps} from './base';
+import {Base, BaseProps} from '@kepler.gl/constants';
 
 export default class Pause extends Component<Partial<BaseProps>> {
   static defaultProps = {

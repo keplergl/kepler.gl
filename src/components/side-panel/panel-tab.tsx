@@ -22,7 +22,7 @@ import React from 'react';
 import styled from 'styled-components';
 import {Tooltip} from '../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {BaseProps} from '../common/icons/base';
+import {BaseProps} from '@kepler.gl/constants';
 
 type StyledPanelTabProps = {
   active?: boolean;

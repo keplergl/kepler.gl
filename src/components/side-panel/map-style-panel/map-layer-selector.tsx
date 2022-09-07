@@ -21,19 +21,19 @@
 import React, {ComponentType} from 'react';
 import styled from 'styled-components';
 import PanelHeaderActionFactory from '../panel-header-action';
-import {EyeSeen, EyeUnseen, Upload} from '../../common/icons';
+import {EyeSeen, EyeUnseen} from '../../common/icons';
 
+import {CenterFlexbox} from '@kepler.gl/constants';
 import {
   PanelLabel,
   PanelContent,
   PanelLabelBold,
-  PanelLabelWrapper,
-  CenterFlexbox
+  PanelLabelWrapper
 } from '../../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {camelize} from '@kepler.gl/utils';
 import {VisibleLayerGroups} from '@kepler.gl/types';
-import {BaseProps} from '../../common/icons/base';
+import {BaseProps, Upload} from '@kepler.gl/constants';
 
 const StyledInteractionPanel = styled.div`
   padding-bottom: 12px;

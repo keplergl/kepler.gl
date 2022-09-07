@@ -20,12 +20,8 @@
 
 import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
-import {
-  SelectTextBold,
-  IconRoundSmall,
-  CenterFlexbox,
-  BottomWidgetInner
-} from '../common/styled-components';
+import {CenterFlexbox} from '@kepler.gl/constants';
+import {SelectTextBold, IconRoundSmall, BottomWidgetInner} from '../common/styled-components';
 import {Close, Clock, LineChart} from '../common/icons';
 import TimeRangeSliderFactory from '../common/time-range-slider';
 import FieldSelectorFactory from '../common/field-selector';

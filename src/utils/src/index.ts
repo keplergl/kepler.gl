@@ -134,7 +134,6 @@ export {
   capitalizeFirstLetter,
   camelToTitle,
   camelize,
-  getHTMLMapModeTileUrl,
   toArray,
   insertValue,
   isObject,

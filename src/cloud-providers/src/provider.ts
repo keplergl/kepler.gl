@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Upload} from 'components/common/icons';
+import {Upload} from '@kepler.gl/constants';
 import {MapData, ExportFileOptions} from '@kepler.gl/types';
 import {ComponentType} from 'react';
 

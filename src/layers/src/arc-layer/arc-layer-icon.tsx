@@ -20,7 +20,7 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import Base from 'components/common/icons/base';
+import {Base} from '@kepler.gl/constants';
 
 class ArcLayerIcon extends Component {
   static propTypes = {

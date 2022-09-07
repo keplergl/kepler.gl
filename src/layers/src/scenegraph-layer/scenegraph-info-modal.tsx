@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {StyledTable as Table} from 'components/common/styled-components';
+import {StyledTable as Table} from '@kepler.gl/constants';
 
 const StyledTitle = styled.div`
   font-size: 20px;

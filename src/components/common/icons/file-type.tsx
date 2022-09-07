@@ -21,7 +21,7 @@
 import React, {ReactNode} from 'react';
 import styled from 'styled-components';
 
-import {File} from '.';
+import {File} from './';
 
 interface FileNameTagProps {
   fontSize: string;

@@ -28,7 +28,7 @@ import ChickletedInput from './chickleted-input';
 import Typeahead from './typeahead';
 import {Delete, ArrowDown} from '../icons';
 import DropdownList, {ListItem} from './dropdown-list';
-import Portaled from 'components/common/portaled';
+import Portaled from '../../common/portaled';
 import {toArray} from '@kepler.gl/utils';
 import {observeDimensions, unobserveDimensions} from '@kepler.gl/utils';
 import {injectIntl, IntlShape} from 'react-intl';

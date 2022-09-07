@@ -20,7 +20,8 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {CenterFlexbox, DatasetSquare} from './styled-components';
+import {CenterFlexbox} from '@kepler.gl/constants';
+import {DatasetSquare} from './styled-components';
 import {RGBColor} from '@kepler.gl/types';
 
 const DatasetName = styled.div.attrs({

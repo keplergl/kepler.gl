@@ -22,7 +22,8 @@ import React from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {IconRoundSmall} from '../common/styled-components';
-import {Close, Pin} from '../common/icons';
+import {Close} from '../common/icons';
+import {Pin} from '@kepler.gl/constants';
 
 const StyledMapControlPanel = styled.div`
   background-color: ${props => props.theme.mapPanelBackgroundColor};

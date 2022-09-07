@@ -22,8 +22,8 @@ import React, {useCallback} from 'react';
 import styled from 'styled-components';
 import Portaled from '../portaled';
 import DropdownList from '../item-selector/dropdown-list';
-import {SORT_ORDER, TABLE_OPTION, TABLE_OPTION_LIST} from '@kepler.gl/constants';
-import {Pin, ArrowDown, ArrowUp, Clipboard, Cancel} from '../icons';
+import {Pin, SORT_ORDER, TABLE_OPTION, TABLE_OPTION_LIST} from '@kepler.gl/constants';
+import {ArrowDown, ArrowUp, Clipboard, Cancel} from '../icons';
 
 const ListItem = ({value}) => (
   <div>

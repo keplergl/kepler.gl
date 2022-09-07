@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import Base, {BaseProps} from './base';
+import {Base, BaseProps} from '@kepler.gl/constants';
 
 export default class Files extends React.Component<Partial<BaseProps>> {
   static defaultProps = {
