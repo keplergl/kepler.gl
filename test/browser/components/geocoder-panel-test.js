@@ -23,9 +23,9 @@ import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import GeocoderPanelFactory from 'components/geocoder-panel';
-import {appInjector} from 'components/container';
-import {testForCoordinates} from 'components/geocoder/geocoder';
+import {GeocoderPanelFactory} from 'components';
+import {appInjector} from 'components';
+import {testForCoordinates} from 'components';
 import {cmpDatasetData, cmpObjectKeys} from '../../helpers/comparison-utils';
 
 const GeocoderPanel = appInjector.get(GeocoderPanelFactory);

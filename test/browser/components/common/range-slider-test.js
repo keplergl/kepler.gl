@@ -22,8 +22,8 @@ import React from 'react';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {RangeSlider, Slider} from 'components';
-import SliderHandle from 'components/common/slider/slider-handle';
-import SliderBarHandle from 'components/common/slider/slider-bar-handle';
+import {SliderHandle} from 'components';
+import {SliderBarHandle} from 'components';
 
 test('Components -> RangeSlider.render', t => {
   let wrapper;

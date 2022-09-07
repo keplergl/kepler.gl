@@ -23,13 +23,14 @@ import test from 'tape';
 import {mount} from 'enzyme';
 import cloneDeep from 'lodash.clonedeep';
 
-import MapLegendFactory, {
+import {
+  MapLegendFactory,
   StyledMapControlLegend,
   LayerColorLegend,
   VisualChannelMetric,
   LayerSizeLegend,
   SingleColorLegend
-} from 'components/map/map-legend';
+} from 'components';
 import {
   StateWFilesFiltersLayerColor,
   expectedSavedLayer1 as pointLayer,

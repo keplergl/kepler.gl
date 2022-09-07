@@ -24,8 +24,8 @@ import React from 'react';
 import test from 'tape';
 
 import {LayerPanelHeaderFactory} from 'components';
-import {DragHandle} from 'components/side-panel/layer-panel/layer-panel-header';
-import {appInjector} from 'components/container';
+import {DragHandle} from 'components';
+import {appInjector} from 'components';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 
 // components

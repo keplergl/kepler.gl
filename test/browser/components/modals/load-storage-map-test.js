@@ -22,10 +22,10 @@ import React from 'react';
 import test from 'tape';
 import {mountWithTheme} from 'test/helpers/component-utils';
 import sinon from 'sinon';
-import LoadStorageMapFactory from 'components/modals/load-storage-map';
+import {LoadStorageMapFactory} from 'components';
 
 import MockProvider from 'test/helpers/mock-provider';
-import {appInjector} from 'components/container';
+import {appInjector} from 'components';
 
 const mockProvider = new MockProvider();
 

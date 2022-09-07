@@ -20,7 +20,7 @@
 
 import test from 'tape';
 import {RenderStates, RenderTypes} from 'react-map-gl-draw';
-import {getStyle} from 'components/editor/feature-styles';
+import {getStyle} from 'components';
 
 test('FeatureStyles - getStyles point', t => {
   const feature = {

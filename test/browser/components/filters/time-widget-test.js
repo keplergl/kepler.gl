@@ -40,11 +40,11 @@ import {
   TimeSliderMarkerFactory,
   TimeRangeSliderTimeTitleFactory
 } from 'components';
-import IconButton from 'components/common/icon-button';
-import SliderHandle from 'components/common/slider/slider-handle';
-import Typeahead from 'components/common/item-selector/typeahead';
+import {IconButton} from 'components';
+import {SliderHandle} from 'components';
+import {Typeahead} from 'components';
 
-import {appInjector} from 'components/container';
+import {appInjector} from 'components';
 
 const TimeWidget = appInjector.get(TimeWidgetFactory);
 const TimeRangeSlider = appInjector.get(TimeRangeSliderFactory);

@@ -26,7 +26,7 @@ import sinon from 'sinon';
 
 import {LayerConfiguratorFactory} from 'components';
 import {StateWFiles, testCsvDataId} from 'test/helpers/mock-state';
-import {appInjector} from 'components/container';
+import {appInjector} from 'components';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 // components

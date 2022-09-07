@@ -24,20 +24,21 @@ import test from 'tape';
 import uniq from 'lodash.uniq';
 
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import TooltipConfigFactory from 'components/side-panel/interaction-panel/tooltip-config';
-import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
-import FieldSelectorFactory from 'components/common/field-selector';
-import ChickletedInput, {ChickletButton} from 'components/common/item-selector/chickleted-input';
+import {TooltipConfigFactory} from 'components';
+import {DatasetTagFactory} from 'components';
+import {FieldSelectorFactory} from 'components';
+import {ChickletedInput, ChickletButton} from 'components';
 
-import DropdownList from 'components/common/item-selector/dropdown-list';
-import Typeahead from 'components/common/item-selector/typeahead';
+import {DropdownList} from 'components';
+import {Typeahead} from 'components';
 
-import {Hash, Delete} from 'components/common/icons';
+import {Icons} from 'components';
 import {StateWFiles, StateWithGeocoderDataset} from 'test/helpers/mock-state';
-import {appInjector} from 'components/container';
+import {appInjector} from 'components';
 
 const TooltipConfig = appInjector.get(TooltipConfigFactory);
 const DatasetTag = appInjector.get(DatasetTagFactory);
+const {Hash, Delete} = Icons;
 
 // const tooltipConfig = {
 //   fieldsToShow: {

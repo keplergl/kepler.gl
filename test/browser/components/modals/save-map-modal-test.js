@@ -22,10 +22,10 @@ import React from 'react';
 import test from 'tape';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 import sinon from 'sinon';
-import SaveMapModalFactory from '../../../../src/components/modals/save-map-modal';
+import {SaveMapModalFactory} from 'components';
 
-import CloudTile from '../../../../src/components/modals/cloud-tile';
-import ImagePreview from '../../../../src/components/common/image-preview';
+import {CloudTile} from 'components';
+import {ImagePreview} from 'components';
 import MockProvider from 'test/helpers/mock-provider';
 
 const mockProvider = new MockProvider();

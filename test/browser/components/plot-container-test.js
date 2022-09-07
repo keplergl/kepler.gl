@@ -23,7 +23,7 @@ import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 import test from 'tape';
 import {appInjector, PlotContainerFactory, MapContainerFactory} from 'components';
-import {plotContainerSelector} from 'components/kepler-gl';
+import {plotContainerSelector} from 'components';
 import {mockKeplerProps} from '../../helpers/mock-state';
 
 const PlotContainer = appInjector.get(PlotContainerFactory);

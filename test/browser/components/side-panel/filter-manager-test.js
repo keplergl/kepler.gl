@@ -30,9 +30,9 @@ import {
   FilterPanelHeaderFactory
 } from 'components';
 
-import NewFilterPanelFactory from 'components/side-panel/filter-panel/filter-panel';
+import {NewFilterPanelFactory} from 'components';
 
-import {appInjector} from 'components/container';
+import {appInjector} from 'components';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';

@@ -30,9 +30,9 @@ import {
   PlaybackControlsFactory,
   FloatingTimeDisplayFactory
 } from 'components';
-import {appInjector} from 'components/container';
+import {appInjector} from 'components';
 import {StateWTripGeojson} from 'test/helpers/mock-state';
-import IconButton from 'components/common/icon-button';
+import {IconButton} from 'components';
 
 import {visStateReducer as reducer} from '@kepler.gl/reducers';
 

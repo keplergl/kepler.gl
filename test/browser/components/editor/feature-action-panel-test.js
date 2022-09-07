@@ -21,7 +21,7 @@
 import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
-import {PureFeatureActionPanelFactory} from 'components/editor/feature-action-panel';
+import {PureFeatureActionPanelFactory} from 'components';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 const FeatureActionPanel = PureFeatureActionPanelFactory();
