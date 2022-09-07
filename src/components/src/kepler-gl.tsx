@@ -74,7 +74,7 @@ import {
   hasPortableWidth
 } from '@kepler.gl/utils';
 
-import {theme as basicTheme, themeLT, themeBS} from '@kepler.gl/styles';
+import {theme as basicTheme, themeLT, themeBS, breakPointValues} from '@kepler.gl/styles';
 import {KeplerGlState} from '@kepler.gl/reducers';
 import {Provider} from '@kepler.gl/cloud-providers';
 
@@ -486,7 +486,7 @@ function KeplerGlFactory(
                   <MapsLayout className="maps">{mapContainers}</MapsLayout>
                   {isExportingImage && <PlotContainer {...plotContainerFields} />}
                   {interactionConfig.geocoder.enabled && <GeoCoderPanel {...geoCoderPanelFields} />}
-                  <BottomWidgetOuter absolute={!hasPortableWidth()}>
+                  <BottomWidgetOuter absolute={!hasPortableWidth(breakPointValues)}>
                     <BottomWidget
                       rootRef={this.bottomWidgetRef}
                       {...bottomWidgetFields}

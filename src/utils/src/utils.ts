@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import window from 'global/window';
-import {breakPointValues} from '@kepler.gl/styles';
 
 /**
  * Generate a hash string based on number of character
@@ -181,12 +180,12 @@ export function arrayInsert(arr, index, val) {
   return [...arr.slice(0, index), val, ...arr.slice(index)];
 }
 
-export function hasMobileWidth() {
+export function hasMobileWidth(breakPointValues) {
   const mobileWidth = window.matchMedia(`(max-width: ${breakPointValues.palm}px)`);
   return mobileWidth.matches;
 }
 
-export function hasPortableWidth() {
+export function hasPortableWidth(breakPointValues) {
   const mobileWidth = window.matchMedia(`(max-width: ${breakPointValues.desk}px)`);
   return mobileWidth.matches;
 }

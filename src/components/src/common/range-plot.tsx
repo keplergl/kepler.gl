@@ -24,6 +24,7 @@ import RangeBrushFactory, {OnBrush, RangeBrushProps} from './range-brush';
 import HistogramPlotFactory from './histogram-plot';
 import LineChartFactory, {HoverDP} from './line-chart';
 import {isTest, hasMobileWidth} from '@kepler.gl/utils';
+import {breakPointValues} from '@kepler.gl/styles';
 import {LineChart} from '@kepler.gl/types';
 
 const StyledRangePlot = styled.div`
@@ -72,7 +73,7 @@ export default function RangePlotFactory(
     const [hoveredDP, onMouseMove] = useState<HoverDP | null>(null);
     const [enableChartHover, setEnableChartHover] = useState(false);
     const height = isEnlarged
-      ? hasMobileWidth()
+      ? hasMobileWidth(breakPointValues)
         ? theme.rangePlotHLargePalm
         : theme.rangePlotHLarge
       : theme.rangePlotH;
@@ -134,7 +135,7 @@ export default function RangePlotFactory(
         style={{
           height: `${
             isEnlarged
-              ? hasMobileWidth()
+              ? hasMobileWidth(breakPointValues)
                 ? theme.rangePlotContainerHLargePalm
                 : theme.rangePlotContainerHLarge
               : theme.rangePlotContainerH

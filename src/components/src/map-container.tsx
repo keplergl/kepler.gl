@@ -51,6 +51,7 @@ import {
   unobserveDimensions,
   hasMobileWidth
 } from '@kepler.gl/utils';
+import {breakPointValues} from '@kepler.gl/styles';
 
 // default-settings
 import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepler.gl/constants';
@@ -104,7 +105,7 @@ const MapboxLogo = () => (
   </div>
 );
 export const Attribution = () => {
-  const isPalm = hasMobileWidth();
+  const isPalm = hasMobileWidth(breakPointValues);
   return (
     <StyledAttrbution>
       {isPalm ? <MapboxLogo /> : null}
