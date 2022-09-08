@@ -31,6 +31,7 @@ import {createPortal} from 'react-dom';
 import {DIMENSIONS} from '@kepler.gl/constants';
 import {MapControl, MapControls} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
+import {media} from '@kepler.gl/styles';
 
 MapLegendPanelFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory, MapLegendFactory];
 
@@ -38,6 +39,15 @@ const PinToBottom = styled.div`
   position: absolute;
   bottom: ${DIMENSIONS.mapControl.mapLegend.pinned.bottom}px;
   right: ${DIMENSIONS.mapControl.mapLegend.pinned.right}px;
+  ${media.portable`
+    bottom: 0px;
+    right: 0px;
+    min-width: ${DIMENSIONS.mapControl.width + DIMENSIONS.mapControl.mapLegend.pinned.right}px;
+    .map-control-panel {
+      min-height: 215px;
+      margin-bottom: 0px;
+    };
+  `};
 `;
 
 interface MapLegendPanelIcons {

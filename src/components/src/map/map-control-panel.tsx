@@ -100,9 +100,10 @@ function MapControlPanelFactory() {
       logoComponent
     }) => (
       <StyledMapControlPanel
+        className="map-control-panel"
         style={{
           transform: `scale(${scale})`,
-          marginBottom: '8px'
+          marginBottom: '8px !important'
         }}
       >
         <StyledMapControlPanelHeader>

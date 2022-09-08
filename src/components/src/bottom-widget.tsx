@@ -181,17 +181,16 @@ export default function BottomWidgetFactory(
       [filters]
     );
 
-    const isMobile = useMemo(() => hasPortableWidth(breakPointValues), []);
+    const isMobile = hasPortableWidth(breakPointValues);
 
     const animatedFilterIdx = useMemo(() => filters.findIndex(f => f.isAnimating), [filters]);
     const animatedFilter = animatedFilterIdx > -1 ? filters[animatedFilterIdx] : null;
 
     const isLegendPinned =
       uiState.mapControls?.mapLegend?.show && uiState.mapControls?.mapLegend?.active;
-    const spaceForLegendWidth =
-      isLegendPinned && !isMobile
-        ? DIMENSIONS.mapControl.width + DIMENSIONS.mapControl.mapLegend.pinned.right
-        : 0;
+    const spaceForLegendWidth = isLegendPinned
+      ? DIMENSIONS.mapControl.width + DIMENSIONS.mapControl.mapLegend.pinned.right
+      : 0;
 
     const enlargedFilterWidth =
       (isOpen && !isMobile ? containerW - sidePanelWidth : containerW) - spaceForLegendWidth;
