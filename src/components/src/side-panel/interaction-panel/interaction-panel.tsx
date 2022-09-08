@@ -43,7 +43,7 @@ interface InteractionPanelProps {
   config: ValueOf<InteractionConfig>;
   onConfigChange: any;
   interactionConfigIcons?: {
-    [key: string]: ReactElement;
+    [key: string]: React.ElementType;
   };
 }
 
@@ -53,7 +53,7 @@ const StyledInteractionPanel = styled.div`
 
 InteractionPanelFactory.deps = [TooltipConfigFactory, BrushConfigFactory];
 
-const INTERACTION_CONFIG_ICONS = {
+const INTERACTION_CONFIG_ICONS: {[key: string]: React.ElementType} = {
   tooltip: Messages,
   geocoder: Pin,
   brush: Crosshairs,

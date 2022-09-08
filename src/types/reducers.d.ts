@@ -190,7 +190,6 @@ export type AnimationConfig = {
 };
 
 export type BaseInteraction = {
-  id: string;
   label: string;
   enabled: boolean;
 };
@@ -200,6 +199,7 @@ export type TooltipField = {
 };
 export type CompareType = string | null;
 export type TooltipInfo = BaseInteraction & {
+  id: 'tooltip';
   config: {
     fieldsToShow: {
       [key: string]: TooltipField[];
@@ -209,14 +209,17 @@ export type TooltipInfo = BaseInteraction & {
   };
 };
 export type Geocoder = BaseInteraction & {
+  id: 'geocoder';
   position: number[] | null;
 };
 export type Brush = BaseInteraction & {
+  id: 'brush';
   config: {
     size: number;
   };
 };
 export type Coordinate = BaseInteraction & {
+  id: 'coordinate';
   position: number[] | null;
 };
 export type InteractionConfig = {

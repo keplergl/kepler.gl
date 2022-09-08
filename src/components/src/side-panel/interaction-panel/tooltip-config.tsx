@@ -74,14 +74,14 @@ type TooltipConfigProps = {
       [key: string]: {name: string; format: string | null}[];
     };
     compareMode: boolean;
-    compareType: string[];
+    compareType: string | null;
   };
   onChange: (config: {
     fieldsToShow: {
       [key: string]: {name: string; format: string | null}[];
     };
     compareMode: boolean;
-    compareType: string[];
+    compareType: string | null;
   }) => void;
   datasets: Datasets;
   intl: IntlShape;
@@ -93,14 +93,14 @@ type DatasetTooltipConfigProps = {
       [key: string]: {name: string; format: string | null}[];
     };
     compareMode: boolean;
-    compareType: string[];
+    compareType: string | null;
   };
   onChange: (config: {
     fieldsToShow: {
       [key: string]: {name: string; format: string | null}[];
     };
     compareMode: boolean;
-    compareType: string[];
+    compareType: string | null;
   }) => void;
   dataset: KeplerTable;
 };

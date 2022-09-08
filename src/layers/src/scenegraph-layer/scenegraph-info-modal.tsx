@@ -42,7 +42,6 @@ export const Table = styled.table`
   }
 `;
 
-
 const StyledTitle = styled.div`
   font-size: 20px;
   letter-spacing: 1.25px;
