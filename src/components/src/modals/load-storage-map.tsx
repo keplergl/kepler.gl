@@ -25,7 +25,7 @@ import moment from 'moment';
 import LoadingDialog from './loading-dialog';
 import {Button} from '../common/styled-components';
 import CloudTile from './cloud-tile';
-import {Base} from '@kepler.gl/constants';
+import {Base} from '../common/icons';
 import {ArrowLeft} from '../common/icons';
 import ProviderModalContainer from './provider-modal-container';
 import {FormattedMessage} from '@kepler.gl/localization';

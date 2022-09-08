@@ -20,7 +20,7 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {Base} from '@kepler.gl/constants';
+import {Base} from '../base';
 
 export default class ScenegraphLayerIcon extends Component {
   static propTypes = {

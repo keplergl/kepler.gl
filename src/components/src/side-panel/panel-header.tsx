@@ -30,7 +30,7 @@ import Toolbar from '../common/toolbar';
 import ToolbarItem, {ToolbarItemProps} from '../common/toolbar-item';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {UiState} from '@kepler.gl/types';
-import {BaseProps} from '@kepler.gl/constants';
+import {BaseProps} from '../common/icons';
 
 type StyledPanelActionProps = {
   active?: boolean;

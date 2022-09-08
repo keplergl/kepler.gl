@@ -33,7 +33,7 @@ import {
 import {FormattedMessage} from '@kepler.gl/localization';
 import {camelize} from '@kepler.gl/utils';
 import {VisibleLayerGroups} from '@kepler.gl/types';
-import {BaseProps} from '@kepler.gl/constants';
+import {BaseProps} from '../../common/icons';
 import {Upload} from '@kepler.gl/cloud-providers';
 
 const StyledInteractionPanel = styled.div`

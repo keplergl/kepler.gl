@@ -17,6 +17,10 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+export {default as Base} from './base'
+
+// eslint-disable-next-line prettier/prettier
+export type {BaseProps} from './base'
 
 export {default as Add} from './add';
 export {default as AnchorWindow} from './anchor_window';
@@ -87,3 +91,7 @@ export {default as Polygon} from './polygon';
 export {default as Rectangle} from './rectangle';
 export {default as OrderByList} from './order-by-list';
 export {default as OrderByDataset} from './order-by-dataset';
+export {default as Messages} from './messages';
+export {default as Crosshairs} from './crosshairs';
+export {default as CursorClick} from './cursor-click';
+export {default as Pin} from './pin';

@@ -57,7 +57,6 @@ import {
 import tripGeojson, {tripDataInfo} from 'test/fixtures/trip-geojson';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {MOCK_MAP_STYLE} from './mock-map-styles';
-import {} from '@kepler.gl/components';
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);

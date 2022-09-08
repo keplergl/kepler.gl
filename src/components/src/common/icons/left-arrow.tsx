@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import {Base, BaseProps} from '@kepler.gl/constants';
+import Base, {BaseProps} from './base';
 
 export default class LeftArrow extends Component<Partial<BaseProps>> {
   static defaultProps = {

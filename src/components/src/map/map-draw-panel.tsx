@@ -21,14 +21,14 @@
 import React, {useCallback} from 'react';
 import classnames from 'classnames';
 
-import {CursorClick, EDITOR_MODES} from '@kepler.gl/constants';
-import {DrawPolygon, EyeSeen, EyeUnseen, Polygon, Rectangle} from '../common/icons';
+import {EDITOR_MODES} from '@kepler.gl/constants';
+import {CursorClick, DrawPolygon, EyeSeen, EyeUnseen, Polygon, Rectangle} from '../common/icons';
 import {MapControlButton} from '../common/styled-components';
 import ToolbarItem from '../common/toolbar-item';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlToolbarFactory from './map-control-toolbar';
 import {Editor, MapControls} from '@kepler.gl/types';
-import {BaseProps} from '@kepler.gl/constants';
+import {BaseProps} from '../common/icons';
 
 MapDrawPanelFactory.deps = [MapControlTooltipFactory, MapControlToolbarFactory];
 

@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {Base, BaseProps} from '@kepler.gl/constants';
+import Base, {BaseProps} from './base';
 
 const OrderByList = (props: Partial<BaseProps>) => (
   <Base {...props}>

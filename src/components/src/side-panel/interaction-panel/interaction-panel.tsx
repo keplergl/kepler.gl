@@ -33,7 +33,7 @@ import {
   PanelHeaderContent,
   PanelContent
 } from '../../common/styled-components';
-import {Messages, Crosshairs, CursorClick, Pin} from '@kepler.gl/constants';
+import {Messages, Crosshairs, CursorClick, Pin} from '../../common/icons';
 
 import {FormattedMessage} from '@kepler.gl/localization';
 import {ValueOf} from '@kepler.gl/types';

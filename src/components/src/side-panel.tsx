@@ -30,11 +30,10 @@ import {
   SAVE_MAP_ID,
   EXPORT_IMAGE_ID,
   ADD_DATA_ID,
-  ADD_MAP_STYLE_ID,
-  CursorClick
+  ADD_MAP_STYLE_ID
 } from '@kepler.gl/constants';
 
-import {Layers, FilterFunnel, Settings} from './common/icons';
+import {CursorClick, Layers, FilterFunnel, Settings} from './common/icons';
 
 import SidebarFactory from './side-panel/side-bar';
 import PanelHeaderFactory from './side-panel/panel-header';
