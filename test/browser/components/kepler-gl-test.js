@@ -379,7 +379,6 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
           mapboxApiAccessToken="smoothie-the-cat"
           selector={state => state.keplerGl.map}
           dispatch={store.dispatch}
-          height={1000}
           mapStyles={[customStyle1, customStyle2, customStyle3]}
         />
       </Provider>
@@ -401,8 +400,7 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
         (accu, curr) => ({...accu, [curr.id]: curr, smoothie: customStyle1}),
         {}
       )
-    },
-    {type: ActionTypes.UPDATE_MAP, payload: {height: 1000}}
+    }
   ];
   t.deepEqual(
     actions,
