@@ -382,7 +382,8 @@ class ColumnSchemaV1 extends Schema {
       [this.key]: Object.keys(columns).reduce(
         (accu, ckey) => ({
           ...accu,
-          [ckey]: columns[ckey].value
+          // if value is null, don't save it
+          ...(columns[ckey]?.value ? {[ckey]: columns[ckey].value} : {})
         }),
         {}
       )
