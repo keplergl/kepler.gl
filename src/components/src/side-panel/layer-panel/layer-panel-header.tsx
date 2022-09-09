@@ -194,7 +194,11 @@ const StyledDragHandle = styled.div`
   }
 `;
 
-export const DragHandle = ({className, listeners, children}) => (
+export const DragHandle: React.FC<{className?: string; listeners?: any}> = ({
+  className,
+  listeners,
+  children
+}) => (
   <StyledDragHandle className={className} {...(listeners ? listeners : {})}>
     {children}
   </StyledDragHandle>

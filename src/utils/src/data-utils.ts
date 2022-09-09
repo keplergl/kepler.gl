@@ -309,7 +309,7 @@ const arrayMoveMutate = <T>(array: T[], from: number, to: number) => {
  * @param from
  * @param to
  */
-export const arrayMove = <T>(array: T[], from: number, to: number) => {
+export const arrayMove = <T>(array: T[], from: number, to: number): T[] => {
   array = array.slice();
   arrayMoveMutate(array, from, to);
   return array;

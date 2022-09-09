@@ -30,7 +30,7 @@ import {RootContext, FeatureFlagsContextProvider, FeatureFlags} from './context'
 import {OnErrorCallBack, OnSuccessCallBack, Viewport} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 
-import {DndContext, DragOverlay} from '@dnd-kit/core';
+import {DndContext, DragOverlay, DragEndEvent, DragStartEvent} from '@dnd-kit/core';
 
 import {
   MapStateActions,
@@ -60,7 +60,6 @@ import {
 
 import {
   DragItem,
-  DND_MODIFIERS,
   DND_EMPTY_MODIFIERS,
   DRAGOVERLAY_MODIFIERS,
   findDndContainerId,
@@ -345,6 +344,9 @@ type KeplerGLBasicProps = {
 
   topMapContainerProps?: object;
   bottomMapContainerProps?: object;
+
+  onDragStart?: (event: DragStartEvent) => void;
+  onDragEnd?: (event: DragEndEvent) => void;
 };
 
 type KeplerGLProps = KeplerGlState & KeplerGlActions & KeplerGLBasicProps;
@@ -508,7 +510,13 @@ function KeplerGlFactory(
       this.props.visStateActions.toggleLayerForMap(containerId, layerId);
     };
 
-    _handleDragStart = ({active}) => {
+    _handleDragStart = event => {
+      if (this.props.onDragStart) {
+        this.props.onDragStart(event);
+        return;
+      }
+
+      const {active} = event;
       const {
         visState: {layers},
         visStateActions
@@ -521,7 +529,14 @@ function KeplerGlFactory(
       }
     };
 
-    _handleDragEnd = ({active, over}) => {
+    _handleDragEnd = event => {
+      if (this.props.onDragEnd) {
+        this.props.onDragEnd(event);
+        return;
+      }
+
+      const {active, over} = event;
+
       const {
         visState: {layerOrder, splitMaps},
         visStateActions
@@ -634,7 +649,7 @@ function KeplerGlFactory(
                   <DndContext
                     onDragStart={this._handleDragStart}
                     onDragEnd={this._handleDragEnd}
-                    modifiers={!isSplit ? DND_MODIFIERS : DND_EMPTY_MODIFIERS}
+                    modifiers={DND_EMPTY_MODIFIERS}
                   >
                     {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
                     <MapsLayout className="maps">{mapContainers}</MapsLayout>

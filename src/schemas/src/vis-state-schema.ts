@@ -42,7 +42,8 @@ import {
   SavedLayer,
   MinSavedLayer,
   SavedVisState,
-  SplitMap
+  SplitMap,
+  ValueOf
 } from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
@@ -105,11 +106,11 @@ export type PostMergerPayload = {
   options?: AddDataToMapOptions;
   layerMergers?: Merger<any>[];
 };
-export type MergerActionPayload<S extends VisState> = {
+export type MergerActionPayload<S extends {}> = {
   mergers: Merger<S>[];
   postMergerPayload: PostMergerPayload;
 };
-export type MergerMergeFunc<S extends VisState> = (
+export type MergerMergeFunc<S extends {}> = (
   state: S,
   config: any,
   fromConfig: boolean,
@@ -120,18 +121,18 @@ export type ReplaceParentDatasetIdsFunc<T> = (
   dataId: string,
   dataIdToReplace: string
 ) => T | null;
-export type Merger<S extends VisState> = {
+export type Merger<S extends {}> = {
   merge: MergerMergeFunc<S>;
   prop: string | string[];
   toMergeProp?: string | string[];
   preserveOrder?: string;
   waitToFinish?: boolean;
   waitForLayerData?: boolean;
-  replaceParentDatasetIds?: ReplaceParentDatasetIdsFunc<S['filters']>;
+  replaceParentDatasetIds?: ReplaceParentDatasetIdsFunc<ValueOf<S>>;
   saveUnmerged?: (state: S, unmerged: any) => S;
   getChildDatasetIds?: any;
 };
-export type VisStateMergers<S extends VisState> = Merger<S>[];
+export type VisStateMergers<S extends {}> = Merger<S>[];
 
 // in v0 geojson there is only sizeField
 

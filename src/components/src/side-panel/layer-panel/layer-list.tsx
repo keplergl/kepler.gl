@@ -31,7 +31,7 @@ import {useSortable, SortableContext, verticalListSortingStrategy} from '@dnd-ki
 import {CSS} from '@dnd-kit/utilities';
 import {findById} from '@kepler.gl/utils';
 
-type LayerListProps = {
+export type LayerListProps = {
   datasets: Datasets;
   layers: Layer[];
   layerOrder: string[];
@@ -40,6 +40,8 @@ type LayerListProps = {
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
 };
+export type LayerList = React.FC<LayerListProps>;
+export type LayerListFactoryDeps = [typeof LayerPanelFactory];
 
 // make sure the element is always visible while is being dragged
 // item being dragged is appended in body, here to reset its global style

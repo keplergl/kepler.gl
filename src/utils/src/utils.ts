@@ -25,7 +25,7 @@ import window from 'global/window';
  * @param {number} count
  * @returns {string} hash string
  */
-export function generateHashId(count = 6) {
+export function generateHashId(count: number = 6): string {
   return Math.random()
     .toString(36)
     .substr(count);
@@ -35,7 +35,7 @@ export function generateHashId(count = 6) {
  * Detect chrome
  * @returns {boolean} - yes or no
  */
-export function isChrome() {
+export function isChrome(): boolean {
   // Chrome 1+
   return window.chrome && window.chrome.webstore;
 }
@@ -55,7 +55,7 @@ export function capitalizeFirstLetter(str) {
  * @param {string} str
  * @returns {string}
  */
-export function camelToTitle(str) {
+export function camelToTitle(str: string): string {
   const breakWord = str.replace(/([A-Z])/g, ' $1');
   return capitalizeFirstLetter(breakWord);
 }
@@ -66,7 +66,7 @@ export function camelToTitle(str) {
  * @param {string} str
  * @returns {string}
  */
-export const camelize = str => {
+export const camelize = (str: string): string => {
   return str.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, (match, index) => {
     if (Number(match) === 0) return ''; // or if (/\s+/.test(match)) for white spaces
     return index === 0 ? match.toLowerCase() : match.toUpperCase();
@@ -81,7 +81,7 @@ export const camelize = str => {
  * @param {*} item
  * @returns {array} boom! much array. very indexed. so useful.
  */
-export function toArray(item) {
+export function toArray<T>(item: T | T[]): T[] {
   if (Array.isArray(item)) {
     return item;
   }
@@ -100,9 +100,13 @@ export function toArray(item) {
  * @param {*} value
  * @returns {Array|Object}
  */
-export const insertValue = (obj, key, value) => {
+export const insertValue = <T extends any[] | object>(
+  obj: T,
+  key: number | string,
+  value: any
+): T => {
   if (Array.isArray(obj) && typeof key === 'number') {
-    return [...obj.slice(0, key), value, ...obj.slice(key + 1, obj.length)];
+    return [...obj.slice(0, key), value, ...obj.slice(key + 1, obj.length)] as T;
   }
 
   return {...obj, [key]: value};
@@ -112,18 +116,22 @@ export const insertValue = (obj, key, value) => {
  * check if value is a loose object including a plain object, array, function
  * @param {*} value
  */
-export function isObject(value) {
+export function isObject(value): boolean {
   return value !== null && (typeof value === 'object' || typeof value === 'function');
 }
 
-const setPath = ([key, ...next], value, obj) => {
+const setPath = <T extends any[] | object>(
+  [key, ...next]: (string | number)[],
+  value: any,
+  obj: object | any[]
+): T => {
   // is Object allows js object, array and function
   if (!isObject(obj)) {
-    return obj;
+    return obj as T;
   }
 
   if (next.length === 0) {
-    return insertValue(obj, key, value);
+    return insertValue(obj, key, value) as T;
   }
 
   // @ts-ignore
@@ -138,7 +146,14 @@ const setPath = ([key, ...next], value, obj) => {
  * @returns {Object}
  */
 // @ts-ignore
-export const set = (path, value, obj) => (obj === null ? obj : setPath(path, value, obj));
+export const set = <T extends any[] | object>(path: (string | number)[], value: any, obj: T): T =>
+  obj === null ? obj : setPath(path, value, obj);
+
+type ErrorObject = {
+  error?: any;
+  err?: any;
+  message?: any;
+};
 
 /**
  * Get error information of unknown type
@@ -149,7 +164,7 @@ export const set = (path, value, obj) => (obj === null ? obj : setPath(path, val
  * @param {*}  err - Unknown error
  * @return {string} - human readable error msg
  */
-export function getError(err) {
+export function getError(err?: Error | ErrorObject | string): string {
   if (!err) {
     return 'Something went wrong';
   }
@@ -172,7 +187,7 @@ export function getError(err) {
   return null;
 }
 
-export function arrayInsert(arr, index, val) {
+export function arrayInsert<T>(arr: T[], index: number, val: T): T[] {
   if (!Array.isArray(arr)) {
     return arr;
   }
@@ -180,17 +195,17 @@ export function arrayInsert(arr, index, val) {
   return [...arr.slice(0, index), val, ...arr.slice(index)];
 }
 
-export function hasMobileWidth(breakPointValues) {
+export function hasMobileWidth(breakPointValues: {palm: number; desk: number}): boolean {
   const mobileWidth = window.matchMedia(`(max-width: ${breakPointValues.palm}px)`);
   return mobileWidth.matches;
 }
 
-export function hasPortableWidth(breakPointValues) {
+export function hasPortableWidth(breakPointValues: {palm: number; desk: number}): boolean {
   const mobileWidth = window.matchMedia(`(max-width: ${breakPointValues.desk}px)`);
   return mobileWidth.matches;
 }
 
-export function isTest() {
+export function isTest(): boolean {
   return process?.env?.NODE_ENV === 'test';
 }
 
@@ -208,7 +223,7 @@ export function filterObjectByPredicate(obj, predicate) {
   );
 }
 
-export function isFunction(func) {
+export function isFunction(func): boolean {
   return typeof func === 'function';
 }
 

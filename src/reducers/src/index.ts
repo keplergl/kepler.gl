@@ -71,8 +71,6 @@ export * from './composer-helpers';
 // export types
 export * from './vis-state-updaters';
 
-export * from './layer-utils';
-
 export {INITIAL_UI_STATE} from './ui-state-updaters';
 
 export type {

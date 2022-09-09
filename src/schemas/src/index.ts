@@ -42,7 +42,9 @@ export {
   DimensionFieldSchema,
   SplitMapsSchema,
   filterPropsV1,
-  default as visStateSchema
+  default as visStateSchema,
+  layerPropsV1,
+  layerPropsV0
 } from './vis-state-schema';
 export type {
   SavedField,

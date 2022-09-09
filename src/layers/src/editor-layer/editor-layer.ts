@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import {EditableGeoJsonLayer} from '@nebula.gl/layers';
+import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
 import {
   DrawPolygonMode,
   TranslateMode,
@@ -70,7 +71,7 @@ export function getEditorLayer({
   featureCollection,
   selectedFeatureIndexes,
   viewport
-}: GetEditorLayerProps): EditableGeoJsonLayer {
+}: GetEditorLayerProps): DeckLayer<DeckLayerProps<any>> {
   const {mode: editorMode} = editor;
 
   let mode = DEFAULT_COMPOSITE_MODE;

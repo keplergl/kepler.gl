@@ -206,6 +206,7 @@ export const dropdownListBorderTopLT = '#D3D8E0';
 export const dropdownListLineHeight = 20;
 export const dropdownWrapperZ = 100;
 export const dropdownWapperMargin = 4;
+export const dndOverBackgroundColor = 'rgba(128, 128, 128, 0.2)';
 
 // Switch
 export const switchWidth = 24;
@@ -1125,6 +1126,7 @@ export const theme = {
   dropdownListShadow,
   dropdownWrapperZ,
   dropdownWapperMargin,
+  dndOverBackgroundColor,
   modalScrollBar,
   scrollBar,
   sidePanelScrollBar,
