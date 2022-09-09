@@ -23,9 +23,7 @@
 import React from 'react';
 import test from 'tape';
 
-import {LayerPanelHeaderFactory} from 'components';
-import {DragHandle} from 'components/side-panel/layer-panel/layer-panel-header';
-import {appInjector} from 'components/container';
+import {LayerPanelHeaderFactory, DragHandle, appInjector} from '@kepler.gl/components';
 import {mountWithTheme, IntlWrapper} from 'test/helpers/component-utils';
 
 // components

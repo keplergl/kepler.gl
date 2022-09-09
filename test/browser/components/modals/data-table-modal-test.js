@@ -28,21 +28,23 @@ import CloneDeep from 'lodash.clonedeep';
 import {VisStateActions} from '@kepler.gl/actions';
 import {visStateReducer} from '@kepler.gl/reducers';
 
-import FieldTokenFactory from 'components/common/field-token';
-import {VertThreeDots, ArrowUp} from 'components/common/icons';
-import DataTableModalFactory, {
+import {
+  FieldTokenFactory,
+  Icons,
+  DataTableModalFactory,
   DatasetTabs,
-  DatasetModalTab
-} from 'components/modals/data-table-modal';
-import DataTableFactory from 'components/common/data-table';
-import OptionDropdown from 'components/common/data-table/option-dropdown';
+  DatasetModalTab,
+  DataTableFactory,
+  OptionDropdown,
+  appInjector
+} from '@kepler.gl/components';
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
-import {appInjector} from 'components/container';
 
 import {createDataContainer} from '@kepler.gl/table';
 
+const {VertThreeDots, ArrowUp} = Icons;
 const DataTableModal = appInjector.get(DataTableModalFactory);
 const DataTable = appInjector.get(DataTableFactory);
 const FieldToken = appInjector.get(FieldTokenFactory);

@@ -34,7 +34,7 @@ import {MapState, UiState, AddDataToMapPayload, ParsedConfig} from '@kepler.gl/t
 import {MapStyle} from './map-style-updaters';
 import {ProviderState} from './provider-state-updaters';
 import {loadFilesSuccessUpdaterAction} from '@kepler.gl/actions';
-import {VisState} from 'schemas';
+import {VisState} from '@kepler.gl/schemas';
 import {Layer} from '@kepler.gl/layers';
 import {isPlainObject} from '@kepler.gl/utils';
 import {findMapBounds} from './data-utils';

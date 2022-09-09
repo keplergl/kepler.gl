@@ -34,7 +34,7 @@ import {
 } from '@kepler.gl/layers';
 
 import KeplerTable, {DataRow, Datasets} from '@kepler.gl/table';
-import {VisState} from 'schemas';
+import {VisState} from '@kepler.gl/schemas';
 import {isFunction, getMapLayersFromSplitMaps} from '@kepler.gl/utils';
 import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
 

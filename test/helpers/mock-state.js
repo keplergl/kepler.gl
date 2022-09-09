@@ -33,7 +33,7 @@ import {
   DEFAULT_HIGHLIGHT_COLOR,
   DEFAULT_LAYER_LABEL
 } from '@kepler.gl/constants';
-import {DEFAULT_KEPLER_GL_PROPS} from 'components';
+import {DEFAULT_KEPLER_GL_PROPS, getUpdateVisDataPayload} from '@kepler.gl/components';
 import {
   addDataToMap,
   VisStateActions,
@@ -57,7 +57,6 @@ import {
 import tripGeojson, {tripDataInfo} from 'test/fixtures/trip-geojson';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {MOCK_MAP_STYLE} from './mock-map-styles';
-import {getUpdateVisDataPayload} from 'components/geocoder-panel';
 
 const geojsonFields = cloneDeep(fields);
 const geojsonRows = cloneDeep(rows);

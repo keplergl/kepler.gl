@@ -22,11 +22,10 @@ import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';
 
-import {Pin} from 'components/common/icons';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import MapPopoverFactory from 'components/map/map-popover';
-import {appInjector} from 'components';
+import {Icons, MapPopoverFactory, appInjector} from '@kepler.gl/components';
 
+const {Pin} = Icons;
 const MapPopover = appInjector.get(MapPopoverFactory);
 
 test('Map Popover - render', t => {

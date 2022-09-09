@@ -22,9 +22,9 @@
     "strict": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": "../../src", //TODO change once all dependencies are isolated
+    "baseUrl": "./src",
     "paths": {
-      "*": ["*"] //TODO change once all dependencies are isolated
+      "*": ["*"]
     }
   },
   "include": [

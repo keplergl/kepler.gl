@@ -5,7 +5,7 @@
   "description": "kepler.gl schemas used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/index.js",
-  "types": "index.d.ts",
+  "types": "dist/index.d.ts",
   "keywords": [
     "babel",
     "es6",
@@ -37,15 +37,6 @@
     "keymirror": "^0.1.1",
     "react-map-gl-draw": "0.14.8",
     "@kepler.gl/types": "2.5.5"
-  },
-  "exports": {
-    ".": "./dist/index.js",
-    "./*": "./dist/*"
-  },
-  "typesVersions": {
-    "*": {
-      "*": ["dist/*"]
-    }
   },
   "nyc": {
     "sourceMap": false,

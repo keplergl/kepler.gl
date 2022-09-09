@@ -23,13 +23,15 @@ import test from 'tape';
 import {mount} from 'enzyme';
 import cloneDeep from 'lodash.clonedeep';
 
-import MapLegendFactory, {
+import {
+  MapLegendFactory,
   StyledMapControlLegend,
   LayerColorLegend,
   VisualChannelMetric,
   LayerSizeLegend,
-  SingleColorLegend
-} from 'components/map/map-legend';
+  SingleColorLegend,
+  appInjector
+} from '@kepler.gl/components';
 import {
   StateWFilesFiltersLayerColor,
   expectedSavedLayer1 as pointLayer,
@@ -37,7 +39,6 @@ import {
   expectedSavedLayer2 as geojsonLayer
 } from 'test/helpers/mock-state';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {appInjector} from 'components';
 
 const MapLegend = appInjector.get(MapLegendFactory);
 

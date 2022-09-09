@@ -24,9 +24,9 @@ import {mount} from 'enzyme';
 import sinon from 'sinon';
 import {
   SaveExportDropdownFactory,
-  PanelHeaderDropdownFactory
-} from 'components/side-panel/panel-header';
-import ToolbarItem from 'components/common/toolbar-item';
+  PanelHeaderDropdownFactory,
+  ToolbarItem
+} from '@kepler.gl/components';
 import {IntlWrapper} from 'test/helpers/component-utils';
 
 test('SaveExportDropdown', t => {

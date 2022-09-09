@@ -24,20 +24,23 @@ import test from 'tape';
 import uniq from 'lodash.uniq';
 
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import TooltipConfigFactory from 'components/side-panel/interaction-panel/tooltip-config';
-import DatasetTagFactory from 'components/side-panel/common/dataset-tag';
-import FieldSelectorFactory from 'components/common/field-selector';
-import ChickletedInput, {ChickletButton} from 'components/common/item-selector/chickleted-input';
+import {
+  TooltipConfigFactory,
+  DatasetTagFactory,
+  FieldSelectorFactory,
+  ChickletedInput,
+  ChickletButton,
+  DropdownList,
+  Typeahead,
+  Icons,
+  appInjector
+} from '@kepler.gl/components';
 
-import DropdownList from 'components/common/item-selector/dropdown-list';
-import Typeahead from 'components/common/item-selector/typeahead';
-
-import {Hash, Delete} from 'components/common/icons';
 import {StateWFiles, StateWithGeocoderDataset} from 'test/helpers/mock-state';
-import {appInjector} from 'components/container';
 
 const TooltipConfig = appInjector.get(TooltipConfigFactory);
 const DatasetTag = appInjector.get(DatasetTagFactory);
+const {Hash, Delete} = Icons;
 
 // const tooltipConfig = {
 //   fieldsToShow: {

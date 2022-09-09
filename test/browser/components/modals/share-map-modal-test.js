@@ -22,10 +22,7 @@ import React from 'react';
 import test from 'tape';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import sinon from 'sinon';
-import ShareMapUrlModalFactory, {SharingUrl} from 'components/modals/share-map-modal';
-
-import CloudTile from 'components/modals/cloud-tile';
-import StatusPanel from 'components/modals/status-panel';
+import {ShareMapUrlModalFactory, SharingUrl, CloudTile, StatusPanel} from '@kepler.gl/components';
 const ShareMapUrlModal = ShareMapUrlModalFactory();
 
 test('Components -> ShareMapUrlModal.mount', t => {
