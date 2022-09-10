@@ -40,7 +40,7 @@ export {default as KeplerGl, default, injectComponents, ContainerFactory, ERROR_
 export {default as KeplerGlFactory, DEFAULT_KEPLER_GL_PROPS, getVisibleDatasets, mapFieldsSelector, plotContainerSelector} from './kepler-gl';
 export {default as SidePanelFactory} from './side-panel';
 export {default as PanelTitleFactory} from './side-panel/panel-title';
-export {default as MapContainerFactory, Attribution} from './map-container';
+export {default as MapContainerFactory} from './map-container';
 export {default as MapsLayoutFactory} from './maps-layout';
 export {
   default as BottomWidgetFactory,

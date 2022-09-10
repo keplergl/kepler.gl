@@ -24,8 +24,8 @@ import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-control';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
 import {ANIMATION_WINDOW, DIMENSIONS, FILTER_TYPES} from '@kepler.gl/constants';
-import {getIntervalBins} from '@kepler.gl/utils';
-import {media} from '@kepler.gl/styles';
+import {getIntervalBins, hasPortableWidth} from '@kepler.gl/utils';
+import {media, breakPointValues} from '@kepler.gl/styles';
 import {AnimationConfig, TimeRangeFilter} from '@kepler.gl/types';
 import {bottomWidgetSelector} from './kepler-gl';
 
@@ -142,6 +142,7 @@ export function LayerAnimationControllerFactory(
 }
 
 type BottomWidgetProps = {
+  rootRef: React.ForwardedRef<HTMLDivElement>;
   containerW: number;
 } & ReturnType<typeof bottomWidgetSelector>;
 
@@ -168,7 +169,8 @@ export default function BottomWidgetFactory(
       containerW,
       uiState,
       sidePanelWidth,
-      layers
+      layers,
+      rootRef
     } = props;
 
     const {activeSidePanel, readOnly} = uiState;
@@ -178,6 +180,9 @@ export default function BottomWidgetFactory(
       () => filters.findIndex(f => f.enlarged && f.type === FILTER_TYPES.timeRange),
       [filters]
     );
+
+    const isMobile = hasPortableWidth(breakPointValues);
+
     const animatedFilterIdx = useMemo(() => filters.findIndex(f => f.isAnimating), [filters]);
     const animatedFilter = animatedFilterIdx > -1 ? filters[animatedFilterIdx] : null;
 
@@ -188,7 +193,7 @@ export default function BottomWidgetFactory(
       : 0;
 
     const enlargedFilterWidth =
-      (isOpen ? containerW - sidePanelWidth : containerW) - spaceForLegendWidth;
+      (isOpen && !isMobile ? containerW - sidePanelWidth : containerW) - spaceForLegendWidth;
 
     // show playback control if layers contain trip layer & at least one trip layer is visible
     const animatableLayer = useMemo(
@@ -215,6 +220,7 @@ export default function BottomWidgetFactory(
         style={{marginRight: spaceForLegendWidth}}
         className="bottom-widget--container"
         hasPadding={showAnimationControl || showTimeWidget}
+        ref={rootRef}
       >
         <LayerAnimationController
           animationConfig={animationConfig}

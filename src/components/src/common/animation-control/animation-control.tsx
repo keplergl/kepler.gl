@@ -28,25 +28,58 @@ import PlaybackControlsFactory from './playback-controls';
 import FloatingTimeDisplayFactory from './floating-time-display';
 import {datetimeFormatter, snapToMarks} from '@kepler.gl/utils';
 import {DEFAULT_TIME_FORMAT} from '@kepler.gl/constants';
+import {media} from '@kepler.gl/styles';
+
+const SLIDER_MARGIN_PALM = 6;
 
 const SliderWrapper = styled.div`
   display: flex;
   position: relative;
   flex-grow: 1;
-  margin-right: 24px;
-  margin-left: 24px;
+  margin: 0 24px;
+
+  ${media.palm`
+    margin: 0 ${SLIDER_MARGIN_PALM}px;
+  `}
 `;
 
 const AnimationWidgetInner = styled.div`
   position: relative;
   display: flex;
   align-items: center;
-  height: 32px;
 
+  .animation-control__time-slider {
+    display: flex;
+    align-items: center;
+    height: 32px;
+    width: 100%;
+  }
   .playback-controls {
     margin-left: -8px;
     margin-right: 16px;
   }
+
+  ${media.palm`
+    flex-direction: column;
+    .playback-controls {
+      margin: 0;
+    }
+    .animation-control__time-slider {
+      width: 100%;
+      position: relative;
+    }
+    .animation-control__time-domain {
+      position: absolute;
+      top: -24px;
+
+      &.domain-start {
+        left: ${SLIDER_MARGIN_PALM}px;
+      }
+      &.domain-end {
+        right: ${SLIDER_MARGIN_PALM}px;
+      }
+    }
+  `};
 `;
 
 const StyledDomain = styled.div.attrs(props => ({
@@ -116,23 +149,25 @@ function AnimationControlFactory(
             isAnimatable={isAnimatable}
             updateAnimationSpeed={updateAnimationSpeed}
           />
-          <StyledDomain className="domain-start">
-            <span>{timeStart}</span>
-          </StyledDomain>
-          <SliderWrapper className="animation-control__slider">
-            <Slider
-              isRanged={false}
-              step={step}
-              minValue={domain ? domain[0] : 0}
-              maxValue={domain ? domain[1] : 1}
-              value1={currentTime}
-              onSlider1Change={onSlider1Change}
-              enableBarDrag={true}
-            />
-          </SliderWrapper>
-          <StyledDomain className="domain-end">
-            <span>{timeEnd}</span>
-          </StyledDomain>
+          <div className="animation-control__time-slider">
+            <StyledDomain className="domain-start">
+              <span>{timeStart}</span>
+            </StyledDomain>
+            <SliderWrapper className="animation-control__slider">
+              <Slider
+                isRanged={false}
+                step={step}
+                minValue={domain ? domain[0] : 0}
+                maxValue={domain ? domain[1] : 1}
+                value1={currentTime}
+                onSlider1Change={onSlider1Change}
+                enableBarDrag={true}
+              />
+            </SliderWrapper>
+            <StyledDomain className="domain-end">
+              <span>{timeEnd}</span>
+            </StyledDomain>
+          </div>
         </AnimationWidgetInner>
         <FloatingTimeDisplay
           currentTime={currentTime}

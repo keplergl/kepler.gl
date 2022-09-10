@@ -48,8 +48,10 @@ import {
   setLayerBlending,
   transformRequest,
   observeDimensions,
-  unobserveDimensions
+  unobserveDimensions,
+  hasMobileWidth
 } from '@kepler.gl/utils';
+import {breakPointValues} from '@kepler.gl/styles';
 
 // default-settings
 import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepler.gl/constants';
@@ -90,34 +92,42 @@ const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
 const nop = () => {};
 
-export const Attribution = () => (
-  <StyledAttrbution>
-    <div className="attrition-logo">
-      Basemap by:
-      <a
-        className="mapboxgl-ctrl-logo"
-        target="_blank"
-        rel="noopener noreferrer"
-        href="https://www.mapbox.com/"
-        aria-label="Mapbox logo"
-      />
-    </div>
-    <div className="attrition-link">
-      <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
-        © kepler.gl |{' '}
-      </a>
-      <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
-        © Mapbox |{' '}
-      </a>
-      <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
-        © OpenStreetMap |{' '}
-      </a>
-      <a href="https://www.mapbox.com/map-feedback/" target="_blank" rel="noopener noreferrer">
-        <strong>Improve this map</strong>
-      </a>
-    </div>
-  </StyledAttrbution>
+const MapboxLogo = () => (
+  <div className="attrition-logo">
+    Basemap by:
+    <a
+      className="mapboxgl-ctrl-logo"
+      target="_blank"
+      rel="noopener noreferrer"
+      href="https://www.mapbox.com/"
+      aria-label="Mapbox logo"
+    />
+  </div>
 );
+export const Attribution = () => {
+  const isPalm = hasMobileWidth(breakPointValues);
+  return (
+    <StyledAttrbution>
+      {isPalm ? <MapboxLogo /> : null}
+      <div className="attrition-link">
+        <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
+          © kepler.gl |{' '}
+        </a>
+        <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
+          © Mapbox |{' '}
+        </a>
+        <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
+          © OpenStreetMap |{' '}
+        </a>
+        <a href="https://www.mapbox.com/map-feedback/" target="_blank" rel="noopener noreferrer">
+          <strong>Improve this map </strong>
+          {!isPalm ? <strong> | </strong> : null}
+        </a>
+        {!isPalm ? <MapboxLogo /> : null}
+      </div>
+    </StyledAttrbution>
+  );
+};
 
 MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory];
 

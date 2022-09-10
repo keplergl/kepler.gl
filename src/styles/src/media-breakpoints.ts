@@ -21,7 +21,7 @@
 import {css} from 'styled-components';
 
 // These are useful for test or when theme doesn't define them
-const breakPoints = {
+export const breakPointValues = {
   palm: 588,
   desk: 768
 };
@@ -37,19 +37,19 @@ const breakPoints = {
 
 export const media = {
   palm: (first, ...args) => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).palm}px) {
+    @media (max-width: ${props => (props.theme.breakPoints || breakPointValues).palm}px) {
       ${css(first, ...args)};
     }
   `,
 
   portable: (first, ...args) => css`
-    @media (max-width: ${props => (props.theme.breakPoints || breakPoints).desk}px) {
+    @media (max-width: ${props => (props.theme.breakPoints || breakPointValues).desk}px) {
       ${css(first, ...args)};
     }
   `,
 
   desk: (first, ...args) => css`
-    @media (min-width: ${props => (props.theme.breakPoints || breakPoints).desk + 1}px) {
+    @media (min-width: ${props => (props.theme.breakPoints || breakPointValues).desk + 1}px) {
       ${css(first, ...args)};
     }
   `
