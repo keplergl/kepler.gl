@@ -24,33 +24,31 @@ import {mount} from 'enzyme';
 import sinon from 'sinon';
 import cloneDeep from 'lodash.clonedeep';
 
-import ColorSelector, {
-  ColorSelectorInput,
-  ColorBlock
-} from 'components/side-panel/layer-panel/color-selector';
 import {
+  ColorSelector,
+  ColorSelectorInput,
+  ColorBlock,
   LayerColorSelector,
   LayerColorRangeSelector,
   ArcLayerColorSelector,
   getLayerConfiguratorProps,
-  getVisConfiguratorProps
-} from 'components/side-panel/layer-panel/layer-configurator';
-import SingleColorPalette from 'components/side-panel/layer-panel/single-color-palette';
-import ColorRangeSelector, {
+  getVisConfiguratorProps,
+  SingleColorPalette,
+  ColorRangeSelector,
   PaletteConfig,
   ColorPaletteGroup,
-  ALL_TYPES
-} from 'components/side-panel/layer-panel/color-range-selector';
-import ColorPalette from 'components/side-panel/layer-panel/color-palette';
-import CustomPalette from 'components/side-panel/layer-panel/custom-palette';
-import CustomPicker from 'components/side-panel/layer-panel/custom-picker';
-import {Button} from 'components/common/styled-components';
+  ALL_TYPES,
+  ColorPalette,
+  CustomPalette,
+  CustomPicker,
+  Button
+} from '@kepler.gl/components';
 
 import {COLOR_RANGES} from '@kepler.gl/constants';
 
 import {StateWFilesFiltersLayerColor, StateWTrips} from 'test/helpers/mock-state';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
-import {hexToRgb} from '../../../../src/utils';
+import {hexToRgb} from '@kepler.gl/utils';
 
 test('Components -> ColorSelector.render', t => {
   t.doesNotThrow(() => {

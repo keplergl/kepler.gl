@@ -64,10 +64,9 @@ import {
   MapState,
   Filter
 } from '@kepler.gl/types';
-import KeplerTable, {Datasets, GpuFilter} from 'reducers/table-utils/kepler-table';
-import {DataContainerInterface} from 'reducers/table-utils/data-container-interface';
-import {getSampleData} from 'reducers/table-utils/data-container-utils';
+import {KeplerTable, Datasets, GpuFilter, DataContainerInterface} from '@kepler.gl/table';
 import {getLatLngBounds, isPlainObject, notNullorUndefined} from '@kepler.gl/utils';
+import {getSampleContainerData} from '@kepler.gl/table';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 
@@ -991,7 +990,7 @@ class Layer {
     // get a sample of data to calculate bounds
     const sampleData =
       dataContainer.numRows() > MAX_SAMPLE_SIZE
-        ? getSampleData(dataContainer, MAX_SAMPLE_SIZE)
+        ? getSampleContainerData(dataContainer, MAX_SAMPLE_SIZE)
         : dataContainer;
 
     const points = sampleData.mapIndex(getPosition);

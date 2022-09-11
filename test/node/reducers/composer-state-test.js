@@ -21,8 +21,7 @@
 /* eslint-disable max-statements */
 
 import test from 'tape';
-import keplerGlReducer from 'reducers';
-import {addDataToMapUpdater} from 'reducers/combined-updaters';
+import keplerGlReducer, {addDataToMapUpdater, INITIAL_UI_STATE} from '@kepler.gl/reducers';
 import {processCsvData} from '@kepler.gl/processors';
 import {registerEntry} from '@kepler.gl/actions';
 
@@ -34,8 +33,6 @@ import testHexIdData, {
   expectedMergedDataset
 } from 'test/fixtures/test-hex-id-data';
 import {cmpLayers, cmpFilters, cmpDataset, cmpInteraction} from 'test/helpers/comparison-utils';
-import {INITIAL_UI_STATE} from 'reducers/ui-state-updaters';
-
 const mockRawData = {
   fields: [
     {

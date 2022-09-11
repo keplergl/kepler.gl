@@ -19,13 +19,13 @@
 // THE SOFTWARE.
 
 // Reducers
-export * from 'reducers';
+export * from '@kepler.gl/reducers';
 
 // Schemas
-export * from './schemas';
+export * from '@kepler.gl/schemas';
 
 // Actions
-export * from './actions';
+export * from '@kepler.gl/actions';
 
 // Constants
 export * from '@kepler.gl/constants';
@@ -34,13 +34,13 @@ export * from '@kepler.gl/constants';
 export * from '@kepler.gl/processors';
 
 // Components
-export * from './components';
+export * from '@kepler.gl/components';
 
 // Layers
-export * from './layers';
+export * from '@kepler.gl/layers';
 
 // Styles
-export * from './styles';
+export * from '@kepler.gl/styles';
 
 // Middleware
 export * from '@kepler.gl/middleware';

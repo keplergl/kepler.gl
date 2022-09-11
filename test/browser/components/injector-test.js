@@ -26,11 +26,16 @@ import {Provider} from 'react-redux';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
 
-import {withState, injectComponents, PanelHeaderFactory} from 'components';
+import {withState, injectComponents, PanelHeaderFactory} from '@kepler.gl/components';
 
-import coreReducer from 'reducers/core';
 import {keplerGlInit} from '@kepler.gl/actions';
-import {visStateLens, uiStateLens, mapStateLens, mapStyleLens} from 'reducers';
+import {
+  keplerGlReducerCore as coreReducer,
+  visStateLens,
+  uiStateLens,
+  mapStateLens,
+  mapStyleLens
+} from '@kepler.gl/reducers';
 
 const mockStore = configureStore();
 const initialCoreState = coreReducer(undefined, keplerGlInit({}));

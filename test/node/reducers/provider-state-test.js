@@ -29,8 +29,11 @@ import {
   resetProviderStatus,
   setCloudProvider
 } from '@kepler.gl/actions';
-import reducer, {providerStateReducerFactory} from 'reducers/provider-state';
-import {INITIAL_PROVIDER_STATE} from 'reducers/provider-state-updaters';
+import {
+  providerReducer as reducer,
+  providerStateReducerFactory,
+  INITIAL_PROVIDER_STATE
+} from '@kepler.gl/reducers';
 import MockProvider from 'test/helpers/mock-provider';
 
 test('#providerStateReducer', t => {

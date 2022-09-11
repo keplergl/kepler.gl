@@ -1321,19 +1321,20 @@
     "@types/react" "*"
     indefinitely-typed "^1.1.0"
 
-"@deck.gl/aggregation-layers@8.5.7":
-  version "8.5.7"
-  resolved "https://registry.yarnpkg.com/@deck.gl/aggregation-layers/-/aggregation-layers-8.5.7.tgz#ebf96d4fd7596cfe17d3eded052019e3ea37de1c"
-  integrity sha512-vpE0qJIfFs3gts/UlIWo+KF5QLlv2rWXnHdXN0xqxOE7xWKRyKTJgtkrZx6/10/fK3uPs+NolQBiz/ttU3vbvg==
+"@deck.gl/aggregation-layers@8.6.0", "@deck.gl/aggregation-layers@^8.6.0":
+  version "8.8.9"
+  resolved "https://registry.yarnpkg.com/@deck.gl/aggregation-layers/-/aggregation-layers-8.8.9.tgz#e8456c3822d3634a68d113998b6d6cf3d89b3262"
+  integrity sha512-quXUDBeyFau77mlYGmLeGpCzd5NjChdt5+SMG7X7VmxrZuUh6zNP381J1+t6WlNShZdUwjhPKvRQDSYyXo2nIA==
   dependencies:
-    "@luma.gl/shadertools" "^8.5.5"
-    "@math.gl/web-mercator" "^3.5.4"
+    "@luma.gl/constants" "^8.5.16"
+    "@luma.gl/shadertools" "^8.5.16"
+    "@math.gl/web-mercator" "^3.6.2"
     d3-hexbin "^0.2.1"
 
-"@deck.gl/core@^8.5.7":
-  version "8.8.8"
-  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-8.8.8.tgz#f566575c4c3b52ae77cdbbd225d79a331c1654eb"
-  integrity sha512-Vps5IPAa2B6Q8rgnqsKIgfr6BXvAp2fW1ZeyQikcxNkvmlCcqgZs08tv0yg1F8waglEXt58kPh70xNm6OY6jzQ==
+"@deck.gl/core@^8.6.0":
+  version "8.8.9"
+  resolved "https://registry.yarnpkg.com/@deck.gl/core/-/core-8.8.9.tgz#a4c0b8100bc15e81d940fea3376b39c8476daa4e"
+  integrity sha512-fRbN/EpoFT2935qlSXrGltUsUFr7Qia8yegLfjRkK244bJX6ptuaRee1GZAeqpCVaWQRbXOM11C2NEe3d64oNg==
   dependencies:
     "@loaders.gl/core" "^3.2.5"
     "@loaders.gl/images" "^3.2.5"
@@ -1349,17 +1350,17 @@
     math.gl "^3.6.2"
     mjolnir.js "^2.7.0"
 
-"@deck.gl/extensions@^8.5.7":
-  version "8.8.8"
-  resolved "https://registry.yarnpkg.com/@deck.gl/extensions/-/extensions-8.8.8.tgz#a9a705df42f9db3d0b2433a945b39bb275e8e80f"
-  integrity sha512-ldLhbhoEet2n8fobPf47Ytt5NAW6d9zolIEslEGe9zgKAQf1dOXnPLNyQVzRj7C9WptcLoQ/82K1ZIJ0IFfIfQ==
+"@deck.gl/extensions@^8.6.0":
+  version "8.8.9"
+  resolved "https://registry.yarnpkg.com/@deck.gl/extensions/-/extensions-8.8.9.tgz#983199d1dfc2daf3b5609252e0077bfac81fc4fc"
+  integrity sha512-A91E5YQTh9eTzqmb+KB3ehARIqMosQkZz77TvnaMEWaRgrbRp4/lNZEBTtu0RenDnxy04lojCaYxRoh+kPidSg==
   dependencies:
     "@luma.gl/shadertools" "^8.5.16"
 
-"@deck.gl/geo-layers@^8.5.7":
-  version "8.8.8"
-  resolved "https://registry.yarnpkg.com/@deck.gl/geo-layers/-/geo-layers-8.8.8.tgz#80603c41c04fbaf2d7fa5e7eaa83a4b134147dcb"
-  integrity sha512-7zMAEgA8ul6lemIAEoizQZ+gPE571cfehrCmbVCG1mdHJ2VbAXVVEWoGQTzRFFpBcOsoeNA5nh/30orPDEAYCw==
+"@deck.gl/geo-layers@^8.6.0":
+  version "8.8.9"
+  resolved "https://registry.yarnpkg.com/@deck.gl/geo-layers/-/geo-layers-8.8.9.tgz#6fe9fdbb85c0e5a44a3de8b06f22e565f4215870"
+  integrity sha512-/0V8/LlaixrC0Xxx9y9V1CIqRY1MH+sZ1tDXp1WkzG3Nk26GWg/70uN9uaBX+ex+ND5W0cU0hveJGeY6+FnNMQ==
   dependencies:
     "@loaders.gl/3d-tiles" "^3.2.5"
     "@loaders.gl/gis" "^3.2.5"
@@ -1377,10 +1378,10 @@
     h3-js "^3.7.0"
     long "^3.2.0"
 
-"@deck.gl/layers@^8.5.7":
-  version "8.8.8"
-  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-8.8.8.tgz#b88a1729ba4558517b8e5b70b1fe41d0f9a1d26e"
-  integrity sha512-UeEUpN4gJx5yryDM0ro/V6yL+RVI92LtFwUNghLO4hI1CxOvZvDhJHjtfnkPqAIho6EcVq+3JWZ+q6glm+IusA==
+"@deck.gl/layers@^8.6.0":
+  version "8.8.9"
+  resolved "https://registry.yarnpkg.com/@deck.gl/layers/-/layers-8.8.9.tgz#c970be4780bdb4b719617af24508d2e1e37543a7"
+  integrity sha512-IwpTfYU2yJdybP4hD2p4A/JZ3jqCzkwpjKxrig43Q4OeR9oNmotS1DOyqD70sF4Al8xOPV9/WxPCht4O7/Pbrw==
   dependencies:
     "@loaders.gl/images" "^3.2.5"
     "@loaders.gl/schema" "^3.2.5"
@@ -1391,32 +1392,32 @@
     "@math.gl/web-mercator" "^3.6.2"
     earcut "^2.0.6"
 
-"@deck.gl/mapbox@^8.5.7":
-  version "8.8.8"
-  resolved "https://registry.yarnpkg.com/@deck.gl/mapbox/-/mapbox-8.8.8.tgz#e4c0b4b760bf30b237106c06581c3b5582952772"
-  integrity sha512-tpIOV+EAR9HSxhpMF9Pw1jSlNFTqO6R3vQPjWTwXaoOUHuKtvhbRJ+2o9+SC3b2ioxT61mmoMSlqvDq6hYvFoA==
+"@deck.gl/mapbox@^8.6.0":
+  version "8.8.9"
+  resolved "https://registry.yarnpkg.com/@deck.gl/mapbox/-/mapbox-8.8.9.tgz#e7814e666df260be7d5fcb90f4ae092e1a7c4d48"
+  integrity sha512-3CmQjon797QLU1FbVktJyUIFjH9Dipc1KnJG9yBVQBXw7fCALqhYbtZ0oTJqTSfYVE6pnc7BQFcZYPTpHlHuJg==
   dependencies:
     "@types/mapbox-gl" "^2.6.3"
 
-"@deck.gl/mesh-layers@^8.5.7":
-  version "8.8.8"
-  resolved "https://registry.yarnpkg.com/@deck.gl/mesh-layers/-/mesh-layers-8.8.8.tgz#0cc752750573a493342ee44149b80634583e5841"
-  integrity sha512-OzYkLunDfPQzHCvzQ7HvnWMz6G0nMkeh0nLsEEEAAeotBKyeQbXEl08AkkIbBc17yDfJwZwfVIHdLlHAGTF+yg==
+"@deck.gl/mesh-layers@^8.6.0":
+  version "8.8.9"
+  resolved "https://registry.yarnpkg.com/@deck.gl/mesh-layers/-/mesh-layers-8.8.9.tgz#51686c83b11b4dd9245e892d3c8ad2731dc87b11"
+  integrity sha512-8tI1UvLdxcZxdEam+SV4Pdajd6Fl/BclOnscJwgzGu9ahK0efMhnfUmvxcBqg6F4r2FGXga7wMetzHYGo3Zwmw==
   dependencies:
     "@loaders.gl/gltf" "^3.2.5"
     "@luma.gl/constants" "^8.5.16"
     "@luma.gl/experimental" "^8.5.16"
     "@luma.gl/shadertools" "^8.5.16"
 
-"@deck.gl/react@^8.5.7":
-  version "8.8.8"
-  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-8.8.8.tgz#c19c5d5b9acdda767ead8ebd37a388b842e576b8"
-  integrity sha512-xFLmC+d2f8u6hExASP21/h5+K7hz3gjOqCSbBWEkH5XyWe03uBlrSbhmqJAFYK/tHp52IUV7sPGtA7U8UpbHYQ==
+"@deck.gl/react@^8.6.0":
+  version "8.8.9"
+  resolved "https://registry.yarnpkg.com/@deck.gl/react/-/react-8.8.9.tgz#6eb0e40bc11d68d383cdaa07cdddc208f27e98e9"
+  integrity sha512-muCUYVnpKuvxvPnOajpMUADeYQCSemnWjsZgUZGyItn00CbntWWQK889TnZFUNLsBY04XZV3oLTqV9SXL+PaoQ==
 
-"@deck.gl/test-utils@^8.5.7":
-  version "8.8.8"
-  resolved "https://registry.yarnpkg.com/@deck.gl/test-utils/-/test-utils-8.8.8.tgz#85b34056166979cfdbf32f11fb0105372b8f5e1f"
-  integrity sha512-4REcmRpk+gS50ezddvnPDJCZFcivcQNhlFlW3I9IeBFxETjPknT5KTa1R0T7fc2rn375In5YN2Ap+8MHVLGiWw==
+"@deck.gl/test-utils@^8.6.0":
+  version "8.8.9"
+  resolved "https://registry.yarnpkg.com/@deck.gl/test-utils/-/test-utils-8.8.9.tgz#b044c2edfd7cf090282b17c137bbeedf96a4074c"
+  integrity sha512-iasv76T1NGHiwh+4b7kW7CMPZzyXASxT3xK8IViiUUegLeZbnkB7qmp66+gcsLrAEVS+a0kP9RX2a3H5ljjl3Q==
 
 "@emotion/is-prop-valid@^0.8.1":
   version "0.8.8"
@@ -1945,12 +1946,12 @@
   dependencies:
     "@babel/runtime" "^7.3.1"
 
-"@luma.gl/constants@8.5.16", "@luma.gl/constants@^8.5.16", "@luma.gl/constants@^8.5.5":
+"@luma.gl/constants@8.5.16", "@luma.gl/constants@^8.5.10", "@luma.gl/constants@^8.5.16":
   version "8.5.16"
   resolved "https://registry.yarnpkg.com/@luma.gl/constants/-/constants-8.5.16.tgz#196f270d0e7735cafe264e994ee34ebfaa11906a"
   integrity sha512-b9JrfhlU4tgQWa7vAzQzzw3yS0NdJBrTEZ6LA9XRKSwVV5VunHXApnrnN4v1oA0AGgnknnUf40PRBZolsVK+7Q==
 
-"@luma.gl/core@^8.5.16", "@luma.gl/core@^8.5.5":
+"@luma.gl/core@^8.5.10", "@luma.gl/core@^8.5.16":
   version "8.5.16"
   resolved "https://registry.yarnpkg.com/@luma.gl/core/-/core-8.5.16.tgz#a8ad0afbb68885913d4a18add5b3926c8c9be39d"
   integrity sha512-w3goHMFEhQFlpoXXygFD6zaZvu4rYvMLfDXThpBMUYm8Y4k46UREFYhsV1aOe1aJlaolsRT/9J2fgSDXr0yA3w==
@@ -1997,7 +1998,7 @@
     "@probe.gl/log" "^3.5.0"
     "@types/offscreencanvas" "^2019.7.0"
 
-"@luma.gl/shadertools@8.5.16", "@luma.gl/shadertools@^8.5.16", "@luma.gl/shadertools@^8.5.5":
+"@luma.gl/shadertools@8.5.16", "@luma.gl/shadertools@^8.5.10", "@luma.gl/shadertools@^8.5.16":
   version "8.5.16"
   resolved "https://registry.yarnpkg.com/@luma.gl/shadertools/-/shadertools-8.5.16.tgz#90eeed64fc4dfce9e87cd096238988cff06dda30"
   integrity sha512-L3M3v6bQhIT8McCeqLvHnLJBmBXYDog1QblF4PVszuIB/WH+cHxZ0I26X2a1eEsVCvdeCrxRBxr42743oyfUNA==
@@ -2005,7 +2006,7 @@
     "@babel/runtime" "^7.0.0"
     "@math.gl/core" "^3.5.0"
 
-"@luma.gl/test-utils@^8.5.5":
+"@luma.gl/test-utils@^8.5.10":
   version "8.5.16"
   resolved "https://registry.yarnpkg.com/@luma.gl/test-utils/-/test-utils-8.5.16.tgz#c05451075e4c3d58bafe1646670b1a2b720c088c"
   integrity sha512-MNZc+h9QdfcDNBKgF0GWypRU+fTUlKsDHnkgzIloR8Kx6Oz+vkgWyIPDunVpcnxEnIpwmOCGGwTR5E9rahT7BA==

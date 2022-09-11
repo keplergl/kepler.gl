@@ -36,7 +36,7 @@ import {
   ColorRange
 } from '@kepler.gl/constants';
 import {Merge} from '@kepler.gl/types';
-import KeplerTable, {Datasets} from 'reducers/table-utils/kepler-table';
+import {KeplerTable, Datasets} from '@kepler.gl/table';
 
 type AggregationLayerColumns = {
   lat: LayerColumn;
@@ -307,7 +307,9 @@ export default class AggregationLayer extends Layer {
       this.config.sizeField,
       this.config.visConfig.sizeAggregation
     );
-    const hasFilter = Object.values(gpuFilter.filterRange).some(arr => arr.some(v => v !== 0));
+    const hasFilter = Object.values(gpuFilter.filterRange).some((arr: any) =>
+      arr.some(v => v !== 0)
+    );
 
     const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(
       this.gpuFilterGetIndex,

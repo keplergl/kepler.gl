@@ -23,9 +23,17 @@
     "isolatedModules": true,
     "baseUrl": "./src",
     "paths": {
-      "*": ["*"]
+      "*": ["*"],
+      // Map all modules to their source
+      "@kepler.gl/*": ["src/*/src"]
     }
   },
   "include": ["src"],
-  "exclude": ["src/deckgl-layers/cluster-layer"]
+
+  "exclude": [
+    "src/deckgl-layers/cluster-layer",
+
+    // build files
+    "src/**/dist/**"
+  ]
 }

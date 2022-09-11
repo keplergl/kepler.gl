@@ -33,7 +33,7 @@ import {
 
 import {pointToPolygonGeo, KeplerGlLayers} from '@kepler.gl/layers';
 const {GridLayer} = KeplerGlLayers;
-import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
+import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 
 const columns = {
   lat: 'lat',

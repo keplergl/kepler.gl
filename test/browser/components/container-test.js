@@ -27,11 +27,13 @@ import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 import sinon from 'sinon';
 import {console as Console} from 'global/window';
-import rootReducer from 'reducers/root';
-import coreReducer from 'reducers/core';
+import {
+  keplerGlReducer as rootReducer,
+  keplerGlReducerCore as coreReducer
+} from '@kepler.gl/reducers';
 import {keplerGlInit} from '@kepler.gl/actions';
 
-import Container, {ERROR_MSG} from 'components/container';
+import Container, {ERROR_MSG} from '@kepler.gl/components';
 import {DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';
 const initialCoreState = coreReducer(undefined, keplerGlInit());
 const initialState = {

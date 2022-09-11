@@ -33,10 +33,9 @@ import {
   diffFilters,
   getHistogram,
   getTimestampFieldDomain,
+  createDataContainer,
   getDatasetFieldIndexForFilter
-} from '../../../src/reducers';
-
-import {createDataContainer} from 'reducers/table-utils';
+} from '@kepler.gl/table';
 
 import {FILTER_TYPES} from '@kepler.gl/constants';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';

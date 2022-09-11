@@ -74,15 +74,6 @@ export const camelize = str => {
 };
 
 /**
- * Returns the img url for a given map export option
- * @param mode export option
- * @return {string} url
- */
-export function getHTMLMapModeTileUrl(mode) {
-  return `https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/map-${mode.toLowerCase()}-mode.png`;
-}
-
-/**
  * Converts non-arrays to arrays.  Leaves arrays alone.  Converts
  * undefined values to empty arrays ([] instead of [undefined]).
  * Otherwise, just returns [item] for non-array items.
@@ -187,6 +178,16 @@ export function arrayInsert(arr, index, val) {
   }
 
   return [...arr.slice(0, index), val, ...arr.slice(index)];
+}
+
+export function hasMobileWidth(breakPointValues) {
+  const mobileWidth = window.matchMedia(`(max-width: ${breakPointValues.palm}px)`);
+  return mobileWidth.matches;
+}
+
+export function hasPortableWidth(breakPointValues) {
+  const mobileWidth = window.matchMedia(`(max-width: ${breakPointValues.desk}px)`);
+  return mobileWidth.matches;
 }
 
 export function isTest() {

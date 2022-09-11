@@ -301,6 +301,7 @@ export const sidepanelDividerHeight = 12;
 export const bottomInnerPdSide = 32;
 export const bottomInnerPdVert = 6;
 export const bottomPanelGap = 20;
+export const bottomPanelGapPalm = 20;
 export const bottomWidgetPaddingTop = 20;
 export const bottomWidgetPaddingRight = 20;
 export const bottomWidgetPaddingBottom = 30;
@@ -370,7 +371,9 @@ export const rangePlotMarginLarge = {top: 18, bottom: 0, left: 0, right: 0};
 export const rangePlotH = 62;
 export const rangePlotContainerH = 78;
 export const rangePlotHLarge = 102;
+export const rangePlotHLargePalm = 102;
 export const rangePlotContainerHLarge = 120;
+export const rangePlotContainerHLargePalm = 120;
 
 // Notification
 export const notificationColors = {
@@ -1365,6 +1368,7 @@ export const theme = {
   bottomInnerPdSide,
   bottomInnerPdVert,
   bottomPanelGap,
+  bottomPanelGapPalm,
   bottomWidgetPaddingTop,
   bottomWidgetPaddingRight,
   bottomWidgetPaddingBottom,
@@ -1409,8 +1413,10 @@ export const theme = {
   rangePlotMarginLarge,
   rangePlotH,
   rangePlotHLarge,
+  rangePlotHLargePalm,
   rangePlotContainerH,
   rangePlotContainerHLarge,
+  rangePlotContainerHLargePalm,
 
   // Notifications
   notificationColors,

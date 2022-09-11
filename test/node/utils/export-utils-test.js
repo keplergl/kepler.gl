@@ -21,7 +21,7 @@
 import test from 'tape';
 
 import {registerEntry} from '@kepler.gl/actions';
-import keplerGlReducer from 'reducers';
+import keplerGlReducer from '@kepler.gl/reducers';
 import {
   getMapJSON,
   exportToJsonString,

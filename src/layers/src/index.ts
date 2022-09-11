@@ -18,6 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+export {
+  default as Layer,
+  OVERLAY_TYPE_CONST,
+  LAYER_ID_LENGTH,
+  colorMaker,
+  layerColors
+} from './base-layer';
 import {default as PointLayer} from './point-layer/point-layer';
 import {default as ArcLayer} from './arc-layer/arc-layer';
 import {default as LineLayer} from './line-layer/line-layer';
@@ -44,13 +51,6 @@ export {default as AggregationLayer} from './aggregation-layer';
 import {LAYER_TYPES} from './types';
 export {LAYER_TYPES, EDITOR_AVAILABLE_LAYERS} from './types';
 // base layer
-export {
-  default as Layer,
-  OVERLAY_TYPE_CONST,
-  LAYER_ID_LENGTH,
-  colorMaker,
-  layerColors
-} from './base-layer';
 // eslint-disable-next-line prettier/prettier
 export type {
   LayerBaseConfig,
@@ -103,3 +103,4 @@ export type OVERLAY_TYPE = {[key: string]: string};
 export * from './mapbox-utils';
 export * from './types';
 export * from './h3-hexagon-layer';
+export {default as Table} from './table';

@@ -24,7 +24,7 @@ export const onViewPortChange = (
 
 export const getMapLayersFromSplitMaps = (
   splitMaps: SplitMap[],
-  mapIndex: number
-): SplitMapLayers | null => {
-  return splitMaps[mapIndex]?.layers;
+  mapIndex?: number | undefined
+): SplitMapLayers | undefined | null => {
+  return splitMaps[mapIndex || '']?.layers;
 };

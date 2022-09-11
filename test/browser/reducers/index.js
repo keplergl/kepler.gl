@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import reducer from 'reducers/vis-state';
+import {visStateReducer as reducer} from '@kepler.gl/reducers';
 import CloneDeep from 'lodash.clonedeep';
 import test from 'tape-catch';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';

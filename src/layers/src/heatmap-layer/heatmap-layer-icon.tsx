@@ -20,7 +20,7 @@
 
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import Base from 'components/common/icons/base';
+import {Base} from '../base';
 
 export default class HeatmapLayerIcon extends Component {
   static propTypes = {

@@ -21,7 +21,7 @@
 import {createAction} from '@reduxjs/toolkit';
 import {ACTION_PREFIX} from './action-types';
 import {ExportFileOptions, ExportFileToCloudPayload, OnErrorCallBack, OnSuccessCallBack} from '@kepler.gl/types';
-import {MapListItem, Provider} from 'cloud-providers';
+import {MapListItem, Provider} from '@kepler.gl/cloud-providers';
 
 // eslint-disable-next-line prettier/prettier
 const assignType = <T>(obj: T): { [K in keyof T]: `${typeof ACTION_PREFIX}${string & K}`; } => obj as any

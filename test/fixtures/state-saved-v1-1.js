@@ -22,7 +22,7 @@ import {KeplerGlLayers} from '@kepler.gl/layers';
 import {DEFAULT_TEXT_LABEL, DEFAULT_COLOR_UI} from '@kepler.gl/constants';
 
 const {GeojsonLayer} = KeplerGlLayers;
-import {defaultInteractionConfig} from 'reducers/vis-state-updaters';
+import {defaultInteractionConfig} from '@kepler.gl/reducers';
 
 export const savedStateV1 = {
   datasets: [

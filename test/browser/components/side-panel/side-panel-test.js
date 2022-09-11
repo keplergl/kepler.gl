@@ -21,21 +21,23 @@
 import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
-import SidePanelFactory from 'components/side-panel';
-import SidebarFactory from 'components/side-panel/side-bar';
-import PanelHeaderFactory, {SaveExportDropdownFactory} from 'components/side-panel/panel-header';
-import LayerManagerFactory from 'components/side-panel/layer-manager';
-import FilterManagerFactory from 'components/side-panel/filter-manager';
-import InteractionManagerFactory from 'components/side-panel/interaction-manager';
-import MapManagerFactory from 'components/side-panel/map-manager';
-import PanelToggleFactory from 'components/side-panel/panel-toggle';
-import CustomPanelsFactory from 'components/side-panel/custom-panel';
-
-import ToolbarItem from 'components/common/toolbar-item';
+import {
+  SidePanelFactory,
+  SidebarFactory,
+  PanelHeaderFactory,
+  SaveExportDropdownFactory,
+  LayerManagerFactory,
+  FilterManagerFactory,
+  InteractionManagerFactory,
+  MapManagerFactory,
+  PanelToggleFactory,
+  CustomPanelsFactory,
+  ToolbarItem,
+  appInjector
+} from '@kepler.gl/components';
 
 import {VisStateActions, MapStyleActions, UIStateActions} from '@kepler.gl/actions';
 
-import {appInjector} from 'components/container';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 // components

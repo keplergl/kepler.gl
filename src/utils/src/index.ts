@@ -31,8 +31,6 @@ export {
 } from './color-utils';
 export {errorNotification} from './notifications-utils';
 
-export {getHexFields, containValidTime} from '@kepler.gl/layers';
-
 export {createNotification, exportImageError, successNotification} from './notifications-utils';
 
 export {default as domtoimage} from './dom-to-image';
@@ -97,7 +95,18 @@ export {
   exportMap,
   default as exporters
 } from './export-utils';
-export {isValidFilterValue} from './filter-utils';
+export {
+  isValidFilterValue, 
+  isValidTimeDomain, 
+  getIntervalBins, 
+  getTimeWidgetHintFormatter, 
+  durationSecond, 
+  durationMinute, 
+  durationHour, 
+  durationDay, 
+  durationWeek, 
+  durationYear
+} from './filter-utils';
 export {setLayerBlending} from './gl-utils';
 export {flattenMessages, mergeMessages} from './locale-utils';
 export type {Dimensions} from './observe-dimensions';
@@ -125,7 +134,6 @@ export {
   capitalizeFirstLetter,
   camelToTitle,
   camelize,
-  getHTMLMapModeTileUrl,
   toArray,
   insertValue,
   isObject,
@@ -134,7 +142,9 @@ export {
   arrayInsert,
   isTest,
   filterObjectByPredicate,
-  isFunction
+  isFunction,
+  hasMobileWidth,
+  hasPortableWidth
 } from './utils';
 export {
   addNewLayersToSplitMap,

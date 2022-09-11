@@ -21,7 +21,7 @@
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
 import {cmpFilters, cmpSavedLayers} from 'test/helpers/comparison-utils';
-import SchemaManager from 'schemas';
+import SchemaManager from '@kepler.gl/schemas';
 
 import {
   StateWFilesFiltersLayerColor,
@@ -37,7 +37,7 @@ import {
   testCsvDataId,
   testGeoJsonDataId
 } from 'test/helpers/mock-state';
-import keplerGlReducer from 'reducers/core';
+import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 
 test('#visStateSchema -> v1 -> save layers', t => {

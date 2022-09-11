@@ -19,9 +19,14 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {getOrdinalDomain, getQuantileDomain, getLinearDomain, getLogDomain} from 'reducers';
 
-import {createDataContainer} from 'reducers/table-utils';
+import {
+  getOrdinalDomain,
+  getQuantileDomain,
+  getLinearDomain,
+  getLogDomain,
+  createDataContainer
+} from '@kepler.gl/table';
 
 function numberSort(a, b) {
   return a - b;

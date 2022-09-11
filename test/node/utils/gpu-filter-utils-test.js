@@ -24,7 +24,7 @@ import {
   assignGpuChannel,
   assignGpuChannels,
   getDatasetFieldIndexForFilter
-} from 'reducers';
+} from '@kepler.gl/table';
 
 test('gpuFilterUtils -> resetFilterGpuMode', t => {
   const testFilters = [

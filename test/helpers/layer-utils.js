@@ -26,16 +26,21 @@ import {mount} from 'enzyme';
 import {console as Console} from 'global/window';
 import cloneDeep from 'lodash.clonedeep';
 
-import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
-import {INITIAL_VIS_STATE} from 'reducers/vis-state-updaters';
+import {
+  INITIAL_MAP_STATE,
+  INITIAL_VIS_STATE,
+  renderDeckGlLayer,
+  validateLayerWithData,
+  mapStateReducer as mapState,
+  visStateReducer,
+  keplerGlReducerCore
+} from '@kepler.gl/reducers';
+import {getGpuFilterProps} from '@kepler.gl/table';
 import {VisStateActions, addDataToMap} from '@kepler.gl/actions';
 
 import {colorMaker, layerColors, LayerClasses} from '@kepler.gl/layers';
-import {getGpuFilterProps, renderDeckGlLayer} from 'reducers';
-import {validateLayerWithData} from 'reducers/vis-state-merger';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {applyActions, InitialState} from 'test/helpers/mock-state';
-import {visStateReducer, keplerGlReducerCore} from 'reducers';
 // Fixtures
 import csvData, {wktCsv} from 'test/fixtures/test-csv-data';
 import testLayerData, {bounds, fieldDomain, iconGeometry} from 'test/fixtures/test-layer-data';
@@ -44,7 +49,6 @@ import tripGeoJson from 'test/fixtures/trip-geojson';
 
 import {logStep} from '../../scripts/log';
 import {IntlWrapper} from './component-utils';
-import mapState from 'reducers/map-state';
 
 export const dataId = '0dj3h';
 export const timeFilter = [{name: 'utc_timestamp', value: [1474071095000, 1474071608000]}];

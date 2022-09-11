@@ -20,7 +20,7 @@
 
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
-import SchemaManager from 'schemas';
+import SchemaManager from '@kepler.gl/schemas';
 import {InitialState, StateWCustomMapStyle} from 'test/helpers/mock-state';
 
 test('#mapStyleSchema -> v1 -> save load mapStyle', t => {

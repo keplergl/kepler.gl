@@ -28,8 +28,11 @@ import {
   receiveMapConfig
 } from '@kepler.gl/actions';
 
-import reducer, {mapStateReducerFactory} from 'reducers/map-state';
-import {INITIAL_MAP_STATE} from 'reducers/map-state-updaters';
+import {
+  mapStateReducer as reducer,
+  mapStateReducerFactory,
+  INITIAL_MAP_STATE
+} from '@kepler.gl/reducers';
 
 const InitialMapState = reducer(undefined, {});
 test('#mapStateReducer', t => {

@@ -27,17 +27,17 @@ import {
   mergeInteractions,
   mergeLayerBlending,
   mergeSplitMaps,
-  insertLayerAtRightOrder
-} from 'reducers/vis-state-merger';
+  insertLayerAtRightOrder,
+  visStateReducer,
+  keplerGlReducerCore as coreReducer,
+  defaultInteractionConfig
+} from '@kepler.gl/reducers';
 
-import SchemaManager from 'schemas';
-import visStateReducer from 'reducers/vis-state';
-import coreReducer from 'reducers/core';
+import SchemaManager from '@kepler.gl/schemas';
 import {processKeplerglJSON} from '@kepler.gl/processors';
 import {updateVisData, receiveMapConfig, addDataToMap} from '@kepler.gl/actions';
-import {defaultInteractionConfig} from 'reducers/vis-state-updaters';
 
-import {createDataContainer} from 'reducers/table-utils';
+import {createDataContainer} from '@kepler.gl/table';
 
 // fixtures
 import {

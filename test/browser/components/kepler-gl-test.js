@@ -26,7 +26,7 @@ import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
 import configureStore from 'redux-mock-store';
 import {Provider} from 'react-redux';
 
-import coreReducer from 'reducers/core';
+import {keplerGlReducerCore as coreReducer} from '@kepler.gl/reducers';
 import {keplerGlInit, ActionTypes} from '@kepler.gl/actions';
 import {
   appInjector,
@@ -36,10 +36,10 @@ import {
   BottomWidgetFactory,
   ModalContainerFactory,
   PlotContainerFactory,
-  GeocoderPanelFactory
-} from 'components';
-import NotificationPanelFactory from 'components/notification-panel';
-import {DEFAULT_MAP_STYLES, EXPORT_IMAGE_ID} from 'constants';
+  GeocoderPanelFactory,
+  NotificationPanelFactory
+} from '@kepler.gl/components';
+import {DEFAULT_MAP_STYLES, EXPORT_IMAGE_ID} from '@kepler.gl/constants';
 import {GEOCODER_DATASET_NAME} from '@kepler.gl/constants';
 // mock state
 import {StateWithGeocoderDataset} from 'test/helpers/mock-state';

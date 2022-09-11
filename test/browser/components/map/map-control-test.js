@@ -23,20 +23,20 @@
 import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';
-import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {IntlWrapper, mountWithTheme} from '../../../helpers/component-utils';
 
-import {MapControlButton} from 'components/common/styled-components';
-import ToolbarItem from 'components/common/toolbar-item';
-
-import {mapFieldsSelector} from 'components/kepler-gl';
 import {
+  MapControlButton,
+  ToolbarItem,
+  mapFieldsSelector,
   appInjector,
   MapLayerSelector,
   MapContainerFactory,
   MapLegendFactory,
   MapControlFactory,
-  MapControlToolbarFactory
-} from 'components';
+  MapControlToolbarFactory,
+  Icons
+} from '@kepler.gl/components';
 import {
   mockKeplerProps,
   mockKeplerPropsWithState,
@@ -44,12 +44,11 @@ import {
   StateWFiles
 } from '../../../helpers/mock-state';
 
-import {Cube3d, Split, Legend, DrawPolygon, Layers, Delete} from 'components/common/icons';
-
 import {LOCALE_CODES, LOCALES} from '@kepler.gl/localization';
 import {toggleMapControl} from '@kepler.gl/actions';
-import {keplerGlReducerCore} from 'reducers';
+import {keplerGlReducerCore} from '@kepler.gl/reducers';
 
+const {Cube3d, Split, Legend, DrawPolygon, Layers, Delete} = Icons;
 const MapControl = appInjector.get(MapControlFactory);
 const MapContainer = appInjector.get(MapContainerFactory);
 const MapLegend = appInjector.get(MapLegendFactory);

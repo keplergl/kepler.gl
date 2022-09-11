@@ -28,13 +28,13 @@ import {mountWithTheme} from 'test/helpers/component-utils';
 import {
   AnimationControlFactory,
   PlaybackControlsFactory,
-  FloatingTimeDisplayFactory
-} from 'components';
-import {appInjector} from 'components/container';
+  FloatingTimeDisplayFactory,
+  appInjector,
+  IconButton
+} from '@kepler.gl/components';
 import {StateWTripGeojson} from 'test/helpers/mock-state';
-import IconButton from 'components/common/icon-button';
 
-import reducer from 'reducers/vis-state';
+import {visStateReducer as reducer} from '@kepler.gl/reducers';
 
 const AnimationControl = appInjector.get(AnimationControlFactory);
 const PlaybackControls = appInjector.get(PlaybackControlsFactory);
