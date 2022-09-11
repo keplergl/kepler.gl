@@ -104,7 +104,7 @@ export const resetProviderStatus: () => {
 } = createAction(ActionTypes.RESET_PROVIDER_STATUS);
 
 /** SET_CLOUD_PROVIDER */
-export type SetCloudProviderPayload = string;
+export type SetCloudProviderPayload = string | null;
 export const setCloudProvider: (
   p: SetCloudProviderPayload
 ) => {

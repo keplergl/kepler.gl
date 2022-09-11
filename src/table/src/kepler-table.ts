@@ -586,7 +586,8 @@ export function pinTableColumns(dataset: KeplerTable, column: string): KeplerTab
   // @ts-ignore
   return copyTableAndUpdate(dataset, {pinnedColumns});
 }
-export function copyTable<T extends KeplerTable>(original: T): T {
+
+export function copyTable(original: KeplerTable): KeplerTable {
   return Object.assign(Object.create(Object.getPrototypeOf(original)), original);
 }
 
@@ -594,10 +595,10 @@ export function copyTable<T extends KeplerTable>(original: T): T {
  * @type
  * @returns
  */
-export function copyTableAndUpdate<T extends KeplerTable>(
-  original: T,
-  options: Partial<T> = {}
-): T {
+export function copyTableAndUpdate(
+  original: KeplerTable,
+  options: Partial<KeplerTable> = {}
+): KeplerTable {
   return Object.entries(options).reduce((acc, entry) => {
     acc[entry[0]] = entry[1];
     return acc;
