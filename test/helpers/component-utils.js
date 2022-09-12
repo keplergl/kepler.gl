@@ -25,7 +25,7 @@ import {theme} from '@kepler.gl/styles';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
 import {messages} from '@kepler.gl/localization';
-import Typeahead from 'components/common/item-selector/typeahead';
+import {Typeahead} from '@kepler.gl/components';
 
 export function mountWithTheme(node, options) {
   return mount(node, {

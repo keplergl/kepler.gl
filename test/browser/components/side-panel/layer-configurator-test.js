@@ -29,10 +29,9 @@ import {
   LayerColumnConfigFactory,
   LayerConfigGroupFactory,
   FieldSelectorFactory,
+  ColumnSelectorFactory,
   appInjector
 } from '@kepler.gl/components';
-
-import ColumnSelectorFactory from 'components/side-panel/layer-panel/column-selector';
 
 import {StateWFiles, StateWTripGeojson, testCsvDataId} from 'test/helpers/mock-state';
 import {
@@ -72,7 +71,7 @@ const defaultProps = {
   updateLayerVisConfig
 };
 
-test('Components -> LayerConfigurator.mount -> defaut prop', t => {
+test('Components -> LayerConfigurator.mount -> defaut prop 1', t => {
   // mount
   let wrapper;
   t.doesNotThrow(() => {
@@ -148,7 +147,7 @@ test('Components -> LayerConfigurator.mount -> defaut prop', t => {
   t.end();
 });
 
-test('Components -> LayerConfigurator.mount -> defaut prop', t => {
+test('Components -> LayerConfigurator.mount -> defaut prop 2', t => {
   // mount
   const updateLayerConfigSpy = sinon.spy();
 
@@ -198,13 +197,13 @@ test('Components -> LayerConfigurator.mount -> defaut prop', t => {
   t.equal(
     getItemSelectorListText(fieldSelector2, 0),
     'gps_data',
-    'should render correct field paid name'
+    'should render correct field pair name'
   );
 
   // click list item suggested field pair
   clickItemSelectList(fieldSelector2, 0);
 
-  t.ok(updateLayerConfigSpy.calledOnce, 'shoudl call updateLayerConfigSpy');
+  t.ok(updateLayerConfigSpy.calledOnce, 'should call updateLayerConfigSpy');
   t.deepEqual(
     updateLayerConfigSpy.args[0],
     [
@@ -233,7 +232,7 @@ test('Components -> LayerConfigurator.mount -> defaut prop', t => {
   // click single column
   clickItemSelectList(fieldSelector2, 2);
 
-  t.ok(updateLayerConfigSpy.calledTwice, 'shoudl call updateLayerConfigSpy');
+  t.ok(updateLayerConfigSpy.calledTwice, 'should call updateLayerConfigSpy');
   t.deepEqual(
     updateLayerConfigSpy.args[1],
     [
