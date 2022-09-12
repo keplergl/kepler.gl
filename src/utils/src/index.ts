@@ -154,7 +154,7 @@ export {
 } from './split-map-utils';
 
 // Mapbox
-export {transformRequest} from './map-style-utils/mapbox-utils';
+export {transformRequest, isStyleUsingMapboxTiles} from './map-style-utils/mapbox-utils';
 
 // Map
 export {onViewPortChange, getMapLayersFromSplitMaps} from './map-utils';

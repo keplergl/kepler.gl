@@ -46,6 +46,7 @@ import {MapState, MapControls, Viewport, SplitMap, SplitMapLayers} from '@kepler
 import {
   errorNotification,
   setLayerBlending,
+  isStyleUsingMapboxTiles,
   transformRequest,
   observeDimensions,
   unobserveDimensions,
@@ -104,8 +105,19 @@ const MapboxLogo = () => (
     />
   </div>
 );
-export const Attribution = () => {
+
+export const Attribution = ({showMapboxLogo = true}) => {
   const isPalm = hasMobileWidth(breakPointValues);
+  if (!showMapboxLogo) {
+    return (
+      <StyledAttrbution>
+        <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
+          © OpenStreetMap
+        </a>
+      </StyledAttrbution>
+    );
+  }
+
   return (
     <StyledAttrbution>
       {isPalm ? <MapboxLogo /> : null}
@@ -178,6 +190,11 @@ export default function MapContainerFactory(
       deckGlProps: {},
       index: 0,
       primary: true
+    };
+
+    state = {
+      // Determines whether attribution should be visible based the result of loading the map style
+      showMapboxAttribution: true
     };
 
     constructor(props) {
@@ -272,10 +289,15 @@ export default function MapContainerFactory(
       visStateActions.toggleLayerForMap(mapIndex, layerId);
     };
 
-    _onMapboxStyleUpdate = () => {
+    _onMapboxStyleUpdate = update => {
       // force refresh mapboxgl layers
       this.previousLayers = {};
       this._updateMapboxLayers();
+
+      if (update && update.style) {
+        // No attributions are needed if the style doesn't reference Mapbox sources
+        this.setState({showMapboxAttribution: isStyleUsingMapboxTiles(update.style)});
+      }
 
       if (typeof this.props.onMapStyleLoaded === 'function') {
         this.props.onMapStyleLoaded(this._map);
@@ -641,7 +663,9 @@ export default function MapContainerFactory(
             </div>
           ) : null}
           {this._renderMapPopover()}
-          {!isSplit || index === 1 ? <Attribution /> : null}
+          {!isSplit || index === 1 ? (
+            <Attribution showMapboxLogo={this.state.showMapboxAttribution} />
+          ) : null}
         </>
       );
     }

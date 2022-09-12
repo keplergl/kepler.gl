@@ -18,21 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './data-utils-test';
-import './data-processor-test';
-import './kepler-table-test';
-import './data-container-test';
-import './filter-utils-test';
-import './gpu-filter-utils-test';
-import './layer-utils-test';
-import './data-scale-utils-test';
-import './interaction-utils-test';
-import './mapbox-gl-style-editor-test';
-import './mapbox-utils-test';
-import './notifications-utils-test';
-import './aggregate-utils-test';
-import './color-util-test';
-import './util-test';
-import './export-utils-test';
-import './s2-utils-test';
-import './kepler-gl-utils-test';
+import test from 'tape';
+import {isStyleUsingMapboxTiles} from '../../../src/utils';
+
+test('mapbox-utils -> isStyleUsingMapboxTiles', t => {
+  t.notOk(isStyleUsingMapboxTiles({}), 'Empty style does not reference Mapbox');
+  t.notOk(
+    isStyleUsingMapboxTiles({stylesheet: {sources: {a: {}}}}),
+    'Source does not reference Mapbox'
+  );
+  t.ok(
+    isStyleUsingMapboxTiles({
+      stylesheet: {
+        sources: {
+          a: {url: 'some/url'},
+          b: {url: 'mapbox://mapbox-style.json'}
+        }
+      }
+    }),
+    'Source references Mapbox tiles using "url"'
+  );
+  t.ok(
+    isStyleUsingMapboxTiles({
+      stylesheet: {
+        sources: {
+          a: {url: 'some/url'},
+          b: {tiles: ['mapbox://mapbox-style.json']}
+        }
+      }
+    }),
+    'Source references Mapbox tiles using "tiles"'
+  );
+  t.end();
+});
