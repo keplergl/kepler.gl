@@ -101,7 +101,7 @@ test('#file-handler -> readFileInBatches.csv -> processFileData', async t => {
         'gps_data.types',
         'epoch',
         'has_result',
-        'id',
+        'uid',
         'time',
         'begintrip_ts_utc',
         'begintrip_ts_local',

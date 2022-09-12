@@ -27,6 +27,7 @@ import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS, CLOUDFRONT, ColorRange} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
+import {assignPointPairToLayerColumn} from '../layer-utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {default as KeplerTable, DataContainerInterface} from '@kepler.gl/table';
 import {
@@ -234,12 +235,12 @@ export default class IconLayer extends Layer {
 
     // create icon layers for first point pair
     const ptPair = fieldPairs[0];
+    const columns = assignPointPairToLayerColumn(ptPair, true);
 
     const props = iconFields.map(iconField => ({
       label: iconField.name.replace(/[_,.]+/g, ' ').trim(),
       columns: {
-        lat: ptPair.pair.lat,
-        lng: ptPair.pair.lng,
+        ...columns,
         icon: {
           value: iconField.name,
           fieldIdx: iconField.fieldIdx

@@ -45,11 +45,11 @@ export type LayersToRender = {
 export type AggregationLayerHoverData = {points: any[]; colorValue?: any; elevationValue?: any};
 
 export type LayerHoverProp = {
-  data: any[] | AggregationLayerHoverData;
+  data: DataRow | AggregationLayerHoverData | null;
   fields: Field[];
   fieldsToShow: TooltipField[];
   layer: Layer;
-  primaryData?: any[] | AggregationLayerHoverData;
+  primaryData?: DataRow | AggregationLayerHoverData | null;
   compareType?: CompareType;
 };
 
@@ -150,7 +150,6 @@ export function getLayerHoverProp({
       const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
 
       return {
-        // @ts-expect-error
         data,
         fields,
         fieldsToShow,

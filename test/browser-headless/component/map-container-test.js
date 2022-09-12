@@ -245,7 +245,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
             ['gps_data.types', 'driver_analytics'],
             ['epoch', '1472754400000'],
             ['has_result', ''],
-            ['id', '1']
+            ['uid', '1']
           ];
 
           for (let i = 0; i < 5; i++) {

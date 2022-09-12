@@ -507,7 +507,8 @@ function setInitialLayerConfig(layer, datasets, layerClasses) {
       ...props[0],
       label: newLayer.config.label,
       dataId: newLayer.config.dataId,
-      isVisible: true
+      isVisible: true,
+      isConfigActive: newLayer.config.isConfigActive
     });
 
     return typeof newLayer.setInitialLayerConfig === 'function'
@@ -538,7 +539,9 @@ export function layerTypeChangeUpdater(
     return state;
   }
   let newLayer = new state.layerClasses[newType]({
-    label: oldLayer.config.label
+    // keep old layer lable and isConfigActive
+    label: oldLayer.config.label,
+    isConfigActive: oldLayer.config.isConfigActive
   });
 
   if (!oldLayer.type) {
@@ -1922,7 +1925,7 @@ export function addDefaultLayers(
   datasets: Datasets
 ): {state: VisState; newLayers: Layer[]} {
   const empty: Layer[] = [];
-  const defaultLayers = Object.values(datasets).reduce((accu, dataset) => {
+  const defaultLayers = Object.values(datasets).reduce((accu: Layer[], dataset) => {
     const foundLayers = findDefaultLayer(dataset, state.layerClasses);
     return foundLayers && foundLayers.length ? accu.concat(foundLayers) : accu;
   }, empty);

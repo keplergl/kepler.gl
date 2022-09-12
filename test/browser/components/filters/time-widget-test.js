@@ -108,7 +108,7 @@ test('Components -> TimeWidget.mount -> with time filter', t => {
     .props().fields;
   t.deepEqual(
     yAxisFields.map(f => f.name),
-    ['gps_data.lat', 'gps_data.lng', 'id'],
+    ['gps_data.lat', 'gps_data.lng', 'uid'],
     'should only pass real / integer fields to yAxis'
   );
 

@@ -664,7 +664,7 @@ export const expectedSavedLayer1 = {
   type: 'point',
   config: {
     dataId: testCsvDataId,
-    label: 'gps data',
+    label: 'gps_data',
     highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {
@@ -720,7 +720,7 @@ export const expectedLoadedLayer1 = {
   type: 'point',
   config: {
     dataId: testCsvDataId,
-    label: 'gps data',
+    label: 'gps_data',
     highlightColor: DEFAULT_HIGHLIGHT_COLOR,
     color: [0, 0, 0],
     columns: {

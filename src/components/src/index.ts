@@ -26,6 +26,7 @@ import RangeSliderFactory from './common/range-slider';
 import VisConfigSliderFactory from './side-panel/layer-panel/vis-config-slider';
 import VisConfigSwitchFactory from './side-panel/layer-panel/vis-config-switch';
 import LayerConfigGroupFactory from './side-panel/layer-panel/layer-config-group';
+import LayerColumnConfigFactory from './side-panel/layer-panel/layer-column-config';
 import {ChannelByValueSelectorFactory} from './side-panel/layer-panel/layer-configurator';
 import FieldSelectorFactory, {FieldListItemFactoryFactory} from './common/field-selector';
 import FieldTokenFactory from './common/field-token';
@@ -301,6 +302,7 @@ export const RangeSlider = appInjector.get(RangeSliderFactory);
 export const VisConfigSlider = appInjector.get(VisConfigSliderFactory);
 export const VisConfigSwitch = appInjector.get(VisConfigSwitchFactory);
 export const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
+export const LayerColumnConfig = appInjector.get(LayerColumnConfigFactory);
 export const ChannelByValueSelector = appInjector.get(ChannelByValueSelectorFactory);
 export const FieldSelector = appInjector.get(FieldSelectorFactory);
 export const FieldToken = appInjector.get(FieldTokenFactory);
@@ -315,6 +317,7 @@ export {
   VisConfigSliderFactory,
   VisConfigSwitchFactory,
   LayerConfigGroupFactory,
+  LayerColumnConfigFactory,
   ChannelByValueSelectorFactory,
   FieldListItemFactoryFactory,
   InfoHelperFactory

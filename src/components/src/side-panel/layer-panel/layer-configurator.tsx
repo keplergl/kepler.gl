@@ -1031,24 +1031,26 @@ export default function LayerConfiguratorFactory(
               // @ts-ignore
               onSelect={updateLayerType}
             />
-            <SourceDataSelector
-              datasets={datasets}
-              id={layer.id}
-              dataId={config.dataId}
-              // @ts-ignore
-              onSelect={(value: string) => updateLayerConfig({dataId: value})}
-            />
-            <LayerColumnConfig
-              columnPairs={layer.columnPairs}
-              columns={layer.config.columns}
-              assignColumnPairs={layer.assignColumnPairs.bind(layer)}
-              assignColumn={layer.assignColumn.bind(layer)}
-              // @ts-ignore
-              columnLabels={layer.columnLabels}
-              fields={fields}
-              fieldPairs={fieldPairs}
-              updateLayerConfig={updateLayerConfig}
-            />
+            <ConfigGroupCollapsibleContent>
+              <SourceDataSelector
+                datasets={datasets}
+                id={layer.id}
+                dataId={config.dataId}
+                // @ts-ignore
+                onSelect={(value: string) => updateLayerConfig({dataId: value})}
+              />
+              <LayerColumnConfig
+                columnPairs={layer.columnPairs}
+                columns={layer.config.columns}
+                assignColumnPairs={layer.assignColumnPairs.bind(layer)}
+                assignColumn={layer.assignColumn.bind(layer)}
+                // @ts-ignore
+                columnLabels={layer.columnLabels}
+                fields={fields}
+                fieldPairs={fieldPairs}
+                updateLayerConfig={updateLayerConfig}
+              />
+            </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
           {renderTemplate &&
             this[renderTemplate] &&

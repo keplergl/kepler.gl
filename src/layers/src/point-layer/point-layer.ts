@@ -40,6 +40,7 @@ import {
 } from '@kepler.gl/constants';
 
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
+import {assignPointPairToLayerColumn} from '../layer-utils';
 import {
   Merge,
   RGBColor,
@@ -66,7 +67,7 @@ export type PointLayerVisConfigSettings = {
 export type PointLayerColumnsConfig = {
   lat: LayerColumn;
   lng: LayerColumn;
-  altitude: LayerColumn;
+  altitude?: LayerColumn;
 };
 
 export type PointLayerVisConfig = {
@@ -234,8 +235,6 @@ export default class PointLayer extends Layer {
     // Make layer for each pair
     fieldPairs.forEach(pair => {
       const latField = pair.pair.lat;
-      const lngField = pair.pair.lng;
-      const layerName = pair.defaultName;
 
       const prop: {
         label: string;
@@ -243,7 +242,7 @@ export default class PointLayer extends Layer {
         isVisible?: boolean;
         columns?: PointLayerColumnsConfig;
       } = {
-        label: layerName.length ? layerName : 'Point'
+        label: pair.defaultName || 'Point'
       };
 
       // default layer color for begintrip and dropoff point
@@ -255,12 +254,7 @@ export default class PointLayer extends Layer {
       if (props.length === 0) {
         prop.isVisible = true;
       }
-
-      prop.columns = {
-        lat: latField,
-        lng: lngField,
-        altitude: {value: null, fieldIdx: -1, optional: true}
-      };
+      prop.columns = assignPointPairToLayerColumn(pair, true);
 
       props.push(prop);
     });
@@ -377,7 +371,7 @@ export default class PointLayer extends Layer {
         ...data,
         parameters: {
           // circles will be flat on the map when the altitude column is not used
-          depthTest: this.config.columns.altitude?.fieldIdx > -1
+          depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1
         },
         lineWidthUnits: 'pixels',
         updateTriggers,

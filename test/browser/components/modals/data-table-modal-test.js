@@ -56,7 +56,7 @@ const expectedCellSizeCache = {
   'gps_data.types': {row: 125, header: 123},
   epoch: {row: 121, header: 90},
   has_result: {row: 75, header: 99},
-  id: {row: 75, header: 90},
+  uid: {row: 75, header: 90},
   time: {row: 180, header: 90},
   begintrip_ts_utc: {row: 182, header: 129},
   begintrip_ts_local: {row: 182, header: 137},
@@ -71,7 +71,7 @@ const expectedExpandedCellSize = {
     'gps_data.types': 125,
     epoch: 121,
     has_result: 75,
-    id: 75,
+    uid: 75,
     time: 180,
     begintrip_ts_utc: 182,
     begintrip_ts_local: 182,
@@ -155,7 +155,7 @@ test('Components -> DataTableModal.render: csv 1', t => {
     'gps_data.types',
     'epoch',
     'has_result',
-    'id',
+    'uid',
     'time',
     'begintrip_ts_utc',
     'begintrip_ts_local',
@@ -169,7 +169,7 @@ test('Components -> DataTableModal.render: csv 1', t => {
     'gps_data.types': {name: 'gps_data.types', type: 'string'},
     epoch: {name: 'epoch', type: 'timestamp'},
     has_result: {name: 'has_result', type: 'boolean'},
-    id: {name: 'id', type: 'integer'},
+    uid: {name: 'uid', type: 'integer'},
     time: {name: 'time', type: 'timestamp'},
     begintrip_ts_utc: {name: 'begintrip_ts_utc', type: 'timestamp'},
     begintrip_ts_local: {name: 'begintrip_ts_local', type: 'timestamp'},
@@ -256,7 +256,6 @@ test('Components -> DataTableModal -> render DataTable: csv 1', t => {
   const wrapper = mountWithTheme(
     <DataTableModal datasets={StateWFiles.visState.datasets} dataId={testCsvDataId} />
   );
-
   t.equal(wrapper.find(DataTable).length, 1, 'should render 1 DataTable');
 
   const props = wrapper
@@ -412,7 +411,7 @@ test('Components -> DataTableModal -> render DataTable: sort and pin', t => {
     'gps_data.lng',
     'gps_data.types',
     'epoch',
-    'id',
+    'uid',
     'time',
     'begintrip_ts_utc',
     'begintrip_ts_local',

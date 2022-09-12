@@ -55,7 +55,12 @@ import {
 const {ArcLayer, PointLayer, GeojsonLayer, LineLayer, TripLayer} = KeplerGlLayers;
 
 // fixtures
-import testData, {mergedTimeFilter, testFields, testAllData} from 'test/fixtures/test-csv-data';
+import testData, {
+  mergedTimeFilter,
+  testFields,
+  testAllData,
+  testCsvFieldPairs
+} from 'test/fixtures/test-csv-data';
 import {
   geojsonData,
   geoJsonTripFilterProps,
@@ -161,7 +166,36 @@ const expectedFields = [
     valueAccessor: values => values[3]
   }
 ];
-
+const expectedFieldParis = [
+  {
+    defaultName: 'start_point',
+    pair: {
+      lat: {
+        value: 'start_point_lat',
+        fieldIdx: 0
+      },
+      lng: {
+        value: 'start_point_lng',
+        fieldIdx: 1
+      }
+    },
+    suffix: ['lat', 'lng']
+  },
+  {
+    defaultName: 'end_point',
+    pair: {
+      lat: {
+        value: 'end_point_lat',
+        fieldIdx: 2
+      },
+      lng: {
+        value: 'end_point_lng',
+        fieldIdx: 3
+      }
+    },
+    suffix: ['lat', 'lng']
+  }
+];
 const mockFilter = {
   fieldIdx: 0,
   name: mockData.fields[0].name,
@@ -1097,7 +1131,7 @@ test('#visStateReducer -> DUPLICATE_LAYER', t => {
     id: layerCopied.id,
     config: {
       ...layerToCopy.config,
-      label: 'Copy of gps data'
+      label: 'Copy of gps_data'
     }
   };
 
@@ -1123,7 +1157,7 @@ test('#visStateReducer -> DUPLICATE_LAYER', t => {
     id: layerCopied1.id,
     config: {
       ...layerToCopy.config,
-      label: 'Copy of gps data 1'
+      label: 'Copy of gps_data 1'
     }
   };
   t.deepEqual(layerCopied1, expectedLayer1, 'should copy layer config correctly');
@@ -1148,7 +1182,7 @@ test('#visStateReducer -> DUPLICATE_LAYER', t => {
     id: layerCopied2.id,
     config: {
       ...layerToCopy.config,
-      label: 'Copy of gps data 2'
+      label: 'Copy of gps_data 2'
     }
   };
   t.deepEqual(layerCopied2, expectedLayer2, 'should copy layer config correctly');
@@ -1243,36 +1277,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
       color: 'donnot test me',
       id: 'smoothie',
       label: 'exciting dataset',
-      fieldPairs: [
-        {
-          defaultName: 'start point',
-          pair: {
-            lat: {
-              value: 'start_point_lat',
-              fieldIdx: 0
-            },
-            lng: {
-              value: 'start_point_lng',
-              fieldIdx: 1
-            }
-          },
-          suffix: ['lat', 'lng']
-        },
-        {
-          defaultName: 'end point',
-          pair: {
-            lat: {
-              value: 'end_point_lat',
-              fieldIdx: 2
-            },
-            lng: {
-              value: 'end_point_lng',
-              fieldIdx: 3
-            }
-          },
-          suffix: ['lat', 'lng']
-        }
-      ],
+      fieldPairs: expectedFieldParis,
       metadata: {id: 'smoothie', label: 'exciting dataset', album: 'taro_and_blue', format: ''},
       type: '',
       supportedFilterTypes: null,
@@ -1286,7 +1291,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
 
   const expectedArcLayer = new ArcLayer({
     dataId: 'smoothie',
-    label: 'start point -> end point arc',
+    label: 'start_point -> end_point arc',
     columns: {
       lat0: {fieldIdx: 0, value: 'start_point_lat'},
       lng0: {fieldIdx: 1, value: 'start_point_lng'},
@@ -1297,7 +1302,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
 
   const expectedLineLayer = new LineLayer({
     dataId: 'smoothie',
-    label: 'start point -> end point line',
+    label: 'start_point -> end_point line',
     columns: {
       lat0: {fieldIdx: 0, value: 'start_point_lat'},
       lng0: {fieldIdx: 1, value: 'start_point_lng'},
@@ -1318,7 +1323,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
 
   const expectedPointLayer1 = new PointLayer({
     dataId: 'smoothie',
-    label: 'start point',
+    label: 'start_point',
     columns: {
       lat: {fieldIdx: 0, value: 'start_point_lat'},
       lng: {fieldIdx: 1, value: 'start_point_lng'},
@@ -1333,7 +1338,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
 
   const expectedPointLayer2 = new PointLayer({
     dataId: 'smoothie',
-    label: 'end point',
+    label: 'end_point',
     columns: {
       lat: {fieldIdx: 2, value: 'end_point_lat'},
       lng: {fieldIdx: 3, value: 'end_point_lng'},
@@ -1451,36 +1456,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
       },
       id: 'smoothie',
       label: 'smoothie and milkshake',
-      fieldPairs: [
-        {
-          defaultName: 'start point',
-          pair: {
-            lat: {
-              value: 'start_point_lat',
-              fieldIdx: 0
-            },
-            lng: {
-              value: 'start_point_lng',
-              fieldIdx: 1
-            }
-          },
-          suffix: ['lat', 'lng']
-        },
-        {
-          defaultName: 'end point',
-          pair: {
-            lat: {
-              value: 'end_point_lat',
-              fieldIdx: 2
-            },
-            lng: {
-              value: 'end_point_lng',
-              fieldIdx: 3
-            }
-          },
-          suffix: ['lat', 'lng']
-        }
-      ]
+      fieldPairs: expectedFieldParis
     }
   };
 
@@ -1806,36 +1782,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
       color: 'donot test me',
       id: 'smoothie',
       label: 'smoothie and milkshake',
-      fieldPairs: [
-        {
-          defaultName: 'start point',
-          pair: {
-            lat: {
-              value: 'start_point_lat',
-              fieldIdx: 0
-            },
-            lng: {
-              value: 'start_point_lng',
-              fieldIdx: 1
-            }
-          },
-          suffix: ['lat', 'lng']
-        },
-        {
-          defaultName: 'end point',
-          pair: {
-            lat: {
-              value: 'end_point_lat',
-              fieldIdx: 2
-            },
-            lng: {
-              value: 'end_point_lng',
-              fieldIdx: 3
-            }
-          },
-          suffix: ['lat', 'lng']
-        }
-      ],
+      fieldPairs: expectedFieldParis,
       changedFilters: {
         dynamicDomain: {'38chejr': 'added'},
         fixedDomain: null,
@@ -1974,7 +1921,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
   const expectedLayer1 = new PointLayer({
     isVisible: true,
     dataId: 'smoothie',
-    label: 'gps data',
+    label: 'gps_data',
     columns: {
       lat: {value: 'gps_data.lat', fieldIdx: 1},
       lng: {value: 'gps_data.lng', fieldIdx: 2},
@@ -2104,22 +2051,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
         result: [0, 0, 0, 0]
       }
     },
-    fieldPairs: [
-      {
-        defaultName: 'gps data',
-        pair: {
-          lat: {
-            value: 'gps_data.lat',
-            fieldIdx: 1
-          },
-          lng: {
-            value: 'gps_data.lng',
-            fieldIdx: 2
-          }
-        },
-        suffix: ['lat', 'lng']
-      }
-    ],
+    fieldPairs: testCsvFieldPairs,
     changedFilters: {dynamicDomain: null, fixedDomain: null, cpu: null, gpu: null}
   };
 
@@ -2696,7 +2628,7 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
   );
 
   // find id which is an integer field
-  const yAxisField = stateWithFilterName.datasets.smoothie.fields.find(f => f.name === 'id');
+  const yAxisField = stateWithFilterName.datasets.smoothie.fields.find(f => f.name === 'uid');
 
   // set filterPlot yAxis
   const stateWithFilterPlot = reducer(
@@ -2716,16 +2648,7 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
     value: [1474070995000, 1474072208000],
     step: 1000,
     plotType: 'lineChart',
-    yAxis: {
-      type: 'integer',
-      name: 'id',
-      displayName: 'id',
-      id: 'id',
-      format: '',
-      fieldIdx: 6,
-      analyzerType: 'INT',
-      valueAccessor: values => values[6]
-    },
+    yAxis: yAxisField,
     interval: null,
     lineChart: {
       series: [
@@ -3108,7 +3031,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
                 format: null
               },
               {
-                name: 'id',
+                name: 'uid',
                 format: null
               }
             ]
