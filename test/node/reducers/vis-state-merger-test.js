@@ -109,6 +109,7 @@ import {
   mergedTripFilter,
   mergedRateFilter
 } from 'test/fixtures/geojson';
+import {mockStateWithPolygonFilter} from '../../fixtures/points-with-polygon-filter-map';
 
 test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
   const savedConfig = cloneDeep(savedStateV0);
@@ -1900,5 +1901,26 @@ test('VisStateMerger -> insertLayerAtRightOrder -> to empty config', t => {
     t.deepEqual(currentOrder, batch.expectedOrder, 'Should reconstruct layer order');
   }
 
+  t.end();
+});
+
+test('VisStateMerger -> load polygon filter map', t => {
+  const oldState = mockStateWithPolygonFilter();
+
+  const oldFilter = oldState.visState.filters[0];
+
+  const appStateToSave = SchemaManager.save(oldState);
+  const stateParsed = SchemaManager.load(appStateToSave);
+  const initialState = cloneDeep(InitialState);
+  const initialVisState = initialState.visState;
+
+  const visState = visStateReducer(
+    initialVisState,
+    updateVisData(stateParsed.datasets, {}, stateParsed.config)
+  );
+
+  const newFilter = visState.filters[0];
+
+  t.deepEqual(newFilter, oldFilter, 'Should have loaded the polygon filter correctly');
   t.end();
 });
