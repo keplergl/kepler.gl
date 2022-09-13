@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {PanelHeaderFactory} from 'kepler.gl/components';
+import {PanelHeaderFactory} from '@kepler.gl/components';
 
 // Custom Panel Header renders default panel header, changing its default props
 // to avoid rendering any action items on the top right

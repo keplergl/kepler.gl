@@ -20,7 +20,7 @@
 
 import window from 'global/window';
 import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
-import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
+import {enhanceReduxMiddleware} from '@kepler.gl/middleware';
 
 import demoReducer from './reducers/index';
 

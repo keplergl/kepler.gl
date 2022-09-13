@@ -21,8 +21,8 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import {PanelToggleFactory, Button, Icons, withState} from 'kepler.gl/components';
-import {visStateLens} from 'kepler.gl/reducers';
+import {PanelToggleFactory, Button, Icons, withState} from '@kepler.gl/components';
+import {visStateLens} from '@kepler.gl/reducers';
 
 import {setMapConfig} from '../app-reducer';
 

@@ -20,7 +20,7 @@
 
 import React, {Component} from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
-import {addDataToMap, wrapTo} from 'kepler.gl/actions';
+import {addDataToMap, wrapTo} from '@kepler.gl/actions';
 import KeplerGl from 'kepler.gl';
 
 import sampleData from '../data/sample-data';
