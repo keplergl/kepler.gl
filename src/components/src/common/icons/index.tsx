@@ -57,6 +57,7 @@ export {default as FreeWindow} from './free-window';
 export {default as Gear} from './gear';
 export {default as Hash} from './hash';
 export {default as Histogram} from './histogram';
+export {default as IconWrapper} from './base';
 export {default as Info} from './info';
 export {default as Layers} from './layers';
 export {default as LeftArrow} from './left-arrow';

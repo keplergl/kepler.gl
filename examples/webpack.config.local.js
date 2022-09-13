@@ -69,7 +69,7 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
   workspaces.forEach(workspace => {
     // workspace =  "./src/types",  "./src/constants", etc
     const moduleName = workspace.split('/').pop();
-    resolveAlias[`@kepler.gl/${moduleName}`] = join(SRC_DIR, `${moduleName}/src`);
+    resolveAlias[`@kepler.gl/${moduleName}`] = join(SRC_DIR, `${moduleName}/dist`);
   });
 
   // resolve deck.gl from local dir

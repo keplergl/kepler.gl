@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {Icons} from 'kepler.gl/components';
+import {Icons} from '@kepler.gl/components';
 
 const StyledBanner = styled.div`
   align-items: center;
