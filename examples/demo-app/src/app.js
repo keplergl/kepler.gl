@@ -24,7 +24,7 @@ import styled, {ThemeProvider} from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
 
-import {theme} from 'kepler.gl/styles';
+import {theme} from '@kepler.gl/styles';
 import Banner from './components/banner';
 import Announcement, {FormLink} from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
@@ -40,10 +40,10 @@ import {
   onLoadCloudMapSuccess
 } from './actions';
 
-import {loadCloudMap, addDataToMap, addNotification} from 'kepler.gl/actions';
+import {loadCloudMap, addDataToMap, addNotification} from '@kepler.gl/actions';
 import {CLOUD_PROVIDERS} from './cloud-providers';
 
-const KeplerGl = require('kepler.gl/components').injectComponents([
+const KeplerGl = require('@kepler.gl/components').injectComponents([
   replaceLoadDataModal(),
   replaceMapControl(),
   replacePanelHeader()
@@ -60,7 +60,7 @@ import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sa
 import sampleAnimateTrip from './data/sample-animate-trip-data';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 
-import {processCsvData, processGeojson} from 'kepler.gl/processors';
+import {processCsvData, processGeojson} from '@kepler.gl/processors';
 /* eslint-enable no-unused-vars */
 
 const BannerHeight = 48;

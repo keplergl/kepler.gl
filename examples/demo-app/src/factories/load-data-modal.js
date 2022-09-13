@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {LoadDataModalFactory, withState} from 'kepler.gl/components';
+import {LoadDataModalFactory, withState} from '@kepler.gl/components';
 import {LOADING_METHODS} from '../constants/default-settings';
 
 import SampleMapGallery from '../components/load-data-modal/sample-data-viewer';
