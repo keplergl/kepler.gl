@@ -24,7 +24,7 @@ import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import KeplerGl from 'kepler.gl';
 import {createAction} from 'redux-actions';
 
-import {addDataToMap, wrapTo} from 'kepler.gl/actions';
+import {addDataToMap, wrapTo} from '@kepler.gl/actions';
 import sampleData from './data/sample-data';
 import config from './configurations/config';
 

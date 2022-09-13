@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {Icons} from 'kepler.gl/components';
+import {Icons} from '@kepler.gl/components';
 
 function CustomSidePanelsFactory() {
   const CustomPanels = props => {

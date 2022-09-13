@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component} from 'react';
-import {Icons} from 'kepler.gl/components';
+import {Icons} from '@kepler.gl/components';
 import PropTypes from 'prop-types';
 
 class DropboxIcon extends Component {
