@@ -21,7 +21,7 @@
 import React, {useCallback} from 'react';
 import classnames from 'classnames';
 
-import {EDITOR_MODES, BaseProps} from '@kepler.gl/constants';
+import {EDITOR_MODES} from '@kepler.gl/constants';
 import {CursorClick, DrawPolygon, EyeSeen, EyeUnseen, Polygon, Rectangle} from '../common/icons';
 import {MapControlButton} from '../common/styled-components';
 import ToolbarItem from '../common/toolbar-item';

@@ -83,11 +83,7 @@ import {
   FILTER_TYPES,
   MAX_DEFAULT_TOOLTIPS,
   DEFAULT_TEXT_LABEL,
-  COMPARE_TYPES,
-  Messages,
-  Crosshairs,
-  CursorClick,
-  Pin
+  COMPARE_TYPES
 } from '@kepler.gl/constants';
 import {pick_, merge_, swap_} from './composer-helpers';
 
