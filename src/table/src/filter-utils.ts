@@ -28,14 +28,25 @@ import booleanWithin from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
 import {ALL_FIELD_TYPES, FILTER_TYPES, ANIMATION_WINDOW, PLOT_TYPES} from '@kepler.gl/constants';
-import {Layer} from '@kepler.gl/layers';
-import {notNullorUndefined, unique, timeToUnixMilli} from '@kepler.gl/utils';
+import {
+  notNullorUndefined,
+  unique,
+  timeToUnixMilli,
+  generateHashId,
+  set,
+  toArray,
+  isValidTimeDomain,
+  durationYear,
+  durationDay
+} from '@kepler.gl/utils';
 import * as ScaleUtils from './data-scale-utils';
-import {generateHashId, set, toArray} from '@kepler.gl/utils';
 import {h3IsValid} from 'h3-js';
 
-import {Millisecond, Entries, Field, ParsedFilter} from '@kepler.gl/types';
 import {
+  Millisecond,
+  Entries,
+  Field,
+  ParsedFilter,
   Filter,
   FilterBase,
   PolygonFilter,
@@ -49,10 +60,9 @@ import {
   RangeFieldDomain
 } from '@kepler.gl/types';
 
-import {LAYER_TYPES, getCentroid} from '@kepler.gl/layers';
+import {Layer, LAYER_TYPES, getCentroid} from '@kepler.gl/layers';
 import KeplerTable, {Datasets, FilterDatasetOpt, FilterRecord} from './kepler-table';
 import {DataContainerInterface} from './data-container-interface';
-import {isValidTimeDomain, durationYear, durationDay} from '@kepler.gl/utils';
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];

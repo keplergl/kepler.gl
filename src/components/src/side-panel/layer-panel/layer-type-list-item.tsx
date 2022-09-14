@@ -20,7 +20,7 @@
 
 import React, {ComponentType} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {CLOUDFRONT} from '@kepler.gl/constants';
+import {CLOUDFRONT, BaseProps} from '@kepler.gl/constants';
 import classNames from 'classnames';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {BaseProps} from '../../common/icons';

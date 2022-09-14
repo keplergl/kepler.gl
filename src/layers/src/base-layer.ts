@@ -49,7 +49,15 @@ import {
   PROJECTED_PIXEL_SIZE_MULTIPLIER
 } from '@kepler.gl/constants';
 
-import {generateHashId, getColorGroupByName, reverseColorRange, hexToRgb} from '@kepler.gl/utils';
+import {
+  generateHashId,
+  getColorGroupByName,
+  reverseColorRange,
+  hexToRgb,
+  getLatLngBounds,
+  isPlainObject,
+  notNullorUndefined
+} from '@kepler.gl/utils';
 
 import {
   RGBColor,
@@ -64,9 +72,13 @@ import {
   MapState,
   Filter
 } from '@kepler.gl/types';
-import {KeplerTable, Datasets, GpuFilter, DataContainerInterface} from '@kepler.gl/table';
-import {getLatLngBounds, isPlainObject, notNullorUndefined} from '@kepler.gl/utils';
-import {getSampleContainerData} from '@kepler.gl/table';
+import {
+  KeplerTable,
+  Datasets,
+  GpuFilter,
+  DataContainerInterface,
+  getSampleContainerData
+} from '@kepler.gl/table';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 

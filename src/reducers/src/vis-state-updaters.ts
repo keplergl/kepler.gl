@@ -69,7 +69,11 @@ import {
   FILTER_TYPES,
   MAX_DEFAULT_TOOLTIPS,
   DEFAULT_TEXT_LABEL,
-  COMPARE_TYPES
+  COMPARE_TYPES,
+  Messages,
+  Crosshairs,
+  CursorClick,
+  Pin
 } from '@kepler.gl/constants';
 import {pick_, merge_, swap_} from './composer-helpers';
 
@@ -78,9 +82,12 @@ import KeplerGLSchema, {VisState} from '@kepler.gl/schemas';
 import {Filter, InteractionConfig, AnimationConfig, Editor} from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
-import {copyTableAndUpdate, Datasets, pinTableColumns, sortDatasetByColumn} from '@kepler.gl/table';
 import {calculateLayerData, findDefaultLayer} from './layer-utils';
 import {
+  copyTableAndUpdate,
+  Datasets,
+  pinTableColumns,
+  sortDatasetByColumn,
   applyFilterFieldName,
   applyFiltersToDatasets,
   featureToFilterValue,

@@ -30,8 +30,7 @@ import {
   Datasets,
   KeplerTable
 } from '@kepler.gl/table';
-import {parseFieldValue} from '@kepler.gl/utils';
-import {downloadFile, DEFAULT_DATA_NAME} from '@kepler.gl/utils';
+import {parseFieldValue, downloadFile, DEFAULT_DATA_NAME} from '@kepler.gl/utils';
 
 interface StateType {
   visState: {datasets: Datasets};

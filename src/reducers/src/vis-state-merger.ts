@@ -30,13 +30,14 @@ import {
   Merger,
   VisState,
   VisStateMergers,
-  visStateSchema
+  visStateSchema,
+  ParsedConfig
 } from '@kepler.gl/schemas';
 
-import {ParsedConfig} from '@kepler.gl/schemas';
 import {ParsedLayer, SavedInteractionConfig, TooltipInfo} from '@kepler.gl/types';
-import {KeplerTable, Datasets} from '@kepler.gl/table';
 import {
+  KeplerTable,
+  Datasets,
   applyFiltersToDatasets,
   validateFiltersUpdateDatasets,
   assignGpuChannels,

@@ -39,8 +39,7 @@ import {
   GeocoderPanelFactory,
   NotificationPanelFactory
 } from '@kepler.gl/components';
-import {DEFAULT_MAP_STYLES, EXPORT_IMAGE_ID} from '@kepler.gl/constants';
-import {GEOCODER_DATASET_NAME} from '@kepler.gl/constants';
+import {DEFAULT_MAP_STYLES, EXPORT_IMAGE_ID, GEOCODER_DATASET_NAME} from '@kepler.gl/constants';
 // mock state
 import {StateWithGeocoderDataset} from 'test/helpers/mock-state';
 

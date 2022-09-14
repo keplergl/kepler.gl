@@ -29,8 +29,7 @@ import Typeahead from './typeahead';
 import {Delete, ArrowDown} from '../icons';
 import DropdownList, {ListItem} from './dropdown-list';
 import Portaled from '../../common/portaled';
-import {toArray} from '@kepler.gl/utils';
-import {observeDimensions, unobserveDimensions} from '@kepler.gl/utils';
+import {toArray, observeDimensions, unobserveDimensions} from '@kepler.gl/utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 

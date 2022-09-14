@@ -24,7 +24,6 @@ import {createSelector} from 'reselect';
 import get from 'lodash.get';
 import document from 'global/document';
 
-import {EXPORT_DATA_TYPE_OPTIONS, EXPORT_MAP_FORMATS} from '@kepler.gl/constants';
 import ModalDialogFactory from './modals/modal-dialog';
 import {exportHtml, isValidMapInfo, exportMap, exportJson} from '@kepler.gl/utils';
 import {
@@ -52,6 +51,8 @@ import {media} from '@kepler.gl/styles';
 
 // Template
 import {
+  EXPORT_DATA_TYPE_OPTIONS,
+  EXPORT_MAP_FORMATS,
   KeyEvent,
   ADD_DATA_ID,
   DATA_TABLE_ID,

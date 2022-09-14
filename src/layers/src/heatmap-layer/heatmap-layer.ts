@@ -25,8 +25,7 @@ import {hexToRgb} from '@kepler.gl/utils';
 import MapboxGLLayer, {MapboxLayerGLConfig} from '../mapboxgl-layer';
 import HeatmapLayerIcon from './heatmap-layer-icon';
 import {LayerColumn, LayerWeightConfig, VisualChannels} from '../base-layer';
-import {VisConfigColorRange, VisConfigNumber} from '@kepler.gl/types';
-import {HexColor, Merge} from '@kepler.gl/types';
+import {VisConfigColorRange, VisConfigNumber, HexColor, Merge} from '@kepler.gl/types';
 import {DataContainerInterface} from '@kepler.gl/table';
 
 export type HeatmapLayerVisConfigSettings = {
