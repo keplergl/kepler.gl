@@ -56,7 +56,9 @@ import {
   hexToRgb,
   getLatLngBounds,
   isPlainObject,
-  notNullorUndefined
+  notNullorUndefined,
+  DataContainerInterface,
+  getSampleContainerData
 } from '@kepler.gl/utils';
 
 import {
@@ -72,13 +74,7 @@ import {
   MapState,
   Filter
 } from '@kepler.gl/types';
-import {
-  KeplerTable,
-  Datasets,
-  GpuFilter,
-  DataContainerInterface,
-  getSampleContainerData
-} from '@kepler.gl/table';
+import {KeplerTable, Datasets, GpuFilter} from '@kepler.gl/table';
 
 export type LayerColumn = {value: string | null; fieldIdx: number; optional?: boolean};
 

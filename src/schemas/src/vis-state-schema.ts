@@ -21,7 +21,7 @@
 import pick from 'lodash.pick';
 import {VERSIONS} from './versions';
 import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
-import {notNullorUndefined} from '@kepler.gl/utils';
+import {isFilterValidToSave, notNullorUndefined} from '@kepler.gl/utils';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
 import {
@@ -41,7 +41,7 @@ import {
   SavedVisState,
   SplitMap
 } from '@kepler.gl/types';
-import {isFilterValidToSave, Datasets} from '@kepler.gl/table';
+import {Datasets} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Loader} from '@loaders.gl/loader-utils';
 import KeplerGLSchema from './schema-manager';

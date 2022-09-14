@@ -21,7 +21,6 @@
     "./src/utils",
     "./src/styles",
     "./src/localization",
-    "./src/middleware",
     "./src/deckgl-layers",
     "./src/layers",
     "./src/schemas",

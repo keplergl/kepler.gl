@@ -51,7 +51,21 @@ import {
   computeSplitMapLayers,
   removeLayerFromSplitMaps,
   isRgbColor,
-  parseFieldValue
+  parseFieldValue,
+  applyFilterFieldName,
+  applyFiltersToDatasets,
+  featureToFilterValue,
+  filterDatasetCPU,
+  FILTER_UPDATER_PROPS,
+  generatePolygonFilter,
+  getDefaultFilter,
+  getFilterIdInFeature,
+  getTimeWidgetTitleFormatter,
+  isInRange,
+  LIMITED_FILTER_EFFECT_PROPS,
+  updateFilterDataId,
+  getFilterPlot,
+  getDefaultFilterPlotType
 } from '@kepler.gl/utils';
 
 import {
@@ -88,23 +102,9 @@ import {
   Datasets,
   pinTableColumns,
   sortDatasetByColumn,
-  applyFilterFieldName,
-  applyFiltersToDatasets,
-  featureToFilterValue,
-  filterDatasetCPU,
-  FILTER_UPDATER_PROPS,
-  generatePolygonFilter,
-  getDefaultFilter,
-  getFilterIdInFeature,
-  getTimeWidgetTitleFormatter,
-  isInRange,
-  LIMITED_FILTER_EFFECT_PROPS,
-  updateFilterDataId,
   assignGpuChannel,
   setFilterGpuMode,
-  createNewDataEntry,
-  getFilterPlot,
-  getDefaultFilterPlotType
+  createNewDataEntry
 } from '@kepler.gl/table';
 import {findFieldsToShow} from './interaction-utils';
 

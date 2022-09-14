@@ -33,12 +33,11 @@ import Grid from './grid';
 import Button from './button';
 import {ArrowUp, ArrowDown, VertThreeDots} from '../icons';
 
-import {parseFieldValue} from '@kepler.gl/utils';
+import {parseFieldValue, DataContainerInterface} from '@kepler.gl/utils';
 import {adjustCellsToContainer} from './cell-size';
 
 import {ALL_FIELD_TYPES, SORT_ORDER} from '@kepler.gl/constants';
 import FieldTokenFactory from '../field-token';
-import {DataContainerInterface} from '@kepler.gl/table';
 
 const defaultHeaderRowHeight = 55;
 const defaultRowHeight = 32;

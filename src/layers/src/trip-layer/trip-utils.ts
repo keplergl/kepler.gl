@@ -23,8 +23,12 @@ import {Analyzer, DATA_TYPES} from 'type-analyzer';
 import {Field} from '@kepler.gl/types';
 
 import {parseGeoJsonRawFeature, getGeojsonFeatureTypes} from '../geojson-layer/geojson-utils';
-import {DataContainerInterface, getSampleData} from '@kepler.gl/table';
-import {notNullorUndefined, timeToUnixMilli} from '@kepler.gl/utils';
+import {
+  DataContainerInterface,
+  getSampleContainerData,
+  notNullorUndefined,
+  timeToUnixMilli
+} from '@kepler.gl/utils';
 import {Feature} from '@turf/helpers';
 import {GeoJsonProperties, Geometry} from 'geojson';
 
@@ -80,7 +84,9 @@ export function isTripGeoJsonField(dataContainer: DataContainerInterface, field)
 
   const maxCount = 10000;
   const sampleRawFeatures =
-    dataContainer.numRows() > maxCount ? getSampleData(dataContainer, maxCount) : dataContainer;
+    dataContainer.numRows() > maxCount
+      ? getSampleContainerData(dataContainer, maxCount)
+      : dataContainer;
 
   const features: Feature<Geometry, GeoJsonProperties>[] = sampleRawFeatures
     .mapIndex(field.valueAccessor)

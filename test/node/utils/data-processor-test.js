@@ -54,10 +54,10 @@ import {
   analyzerTypeToFieldType,
   getSampleForTypeAnalyze,
   validateInputData,
-  getFieldsFromData
+  getFieldsFromData,
+  createDataContainer
 } from '@kepler.gl/utils';
 
-import {createDataContainer} from '@kepler.gl/table';
 import {formatCsv} from '@kepler.gl/reducers';
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';

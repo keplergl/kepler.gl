@@ -19,10 +19,8 @@
 // THE SOFTWARE.
 
 import Upload from './upload';
-import {MapData, ExportFileOptions} from '@kepler.gl/types';
+import {MapData, ExportFileOptions, Millisecond} from '@kepler.gl/types';
 import {ComponentType} from 'react';
-
-export type Millisecond = number;
 
 export type MapListItem = {
   id: string;
