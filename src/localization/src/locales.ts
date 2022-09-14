@@ -37,7 +37,7 @@ export const LOCALES = {
  * @example
  * ```js
  * import {combineReducers} from 'redux';
- * import {LOCALE_CODES} from 'kepler.gl/localization/locales';
+ * import {LOCALE_CODES} from 'kepler.gl/localization';
  *
  * const customizedKeplerGlReducer = keplerGlReducer
  *   .initialState({

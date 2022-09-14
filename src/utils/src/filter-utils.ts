@@ -34,12 +34,14 @@ import {
   PLOT_TYPES,
   LAYER_TYPES
 } from '@kepler.gl/constants';
-import {getCentroid, h3IsValid} from './h3-utils';
-import {notNullorUndefined, unique, timeToUnixMilli} from './data-utils';
 import * as ScaleUtils from './data-scale-utils';
-import {generateHashId, set, toArray} from './utils';
+import {h3IsValid} from 'h3-js';
 
 import {
+  Millisecond,
+  Entries,
+  Field,
+  ParsedFilter,
   Filter,
   FilterBase,
   PolygonFilter,
@@ -51,13 +53,21 @@ import {
   LineChart,
   TimeRangeFilter,
   RangeFieldDomain,
-  Field,
-  LayerBaseConfig,
-  FilterRecord,
-  FilterDatasetOpt
+  FilterDatasetOpt,
+  FilterRecord
 } from '@kepler.gl/types';
-import {ParsedFilter, Millisecond, Entries} from '@kepler.gl/types';
+
 import {DataContainerInterface} from './data-container-interface';
+import {generateHashId, set, toArray} from './utils';
+import {notNullorUndefined, timeToUnixMilli, unique} from './data-utils';
+import {getCentroid} from './h3-utils';
+
+export const durationSecond = 1000;
+export const durationMinute = durationSecond * 60;
+export const durationHour = durationMinute * 60;
+export const durationDay = durationHour * 24;
+export const durationWeek = durationDay * 7;
+export const durationYear = durationDay * 365;
 
 export type FilterResult = {
   filteredIndexForDomain?: number[];
@@ -85,13 +95,6 @@ export const TimestampStepMap = [
 
 export const histogramBins = 30;
 export const enlargedHistogramBins = 100;
-
-const durationSecond = 1000;
-const durationMinute = durationSecond * 60;
-const durationHour = durationMinute * 60;
-const durationDay = durationHour * 24;
-const durationWeek = durationDay * 7;
-const durationYear = durationDay * 365;
 
 export const FILTER_UPDATER_PROPS = keyMirror({
   dataId: null,
@@ -182,6 +185,15 @@ export function shouldApplyFilter(filter: Filter, datasetId: string): boolean {
   return dataIds.includes(datasetId) && filter.value !== null;
 }
 
+interface KeplerTableModel<K, L> {
+  id: string;
+  getColumnFieldIdx(columnName: string): number;
+  filterTable(filters: Filter[], layers: L[], opt?: FilterDatasetOpt): K;
+  getColumnFilterProps(columnName: string): Field['filterProps'] | null | undefined;
+  dataContainer: DataContainerInterface;
+  filterTableCPU(filters: Filter[], layers: L[]): K;
+}
+
 /**
  * Validates and modifies polygon filter structure
  * @param dataset
@@ -189,7 +201,7 @@ export function shouldApplyFilter(filter: Filter, datasetId: string): boolean {
  * @param layers
  * @return - {filter, dataset}
  */
-export function validatePolygonFilter<K extends BasicTable<K, L>, L extends {id: string}>(
+export function validatePolygonFilter<K extends KeplerTableModel<K, L>, L extends {id: string}>(
   dataset: K,
   filter: PolygonFilter,
   layers: L[]
@@ -236,7 +248,7 @@ const filterValidators = {
  * @param filter
  * @return - {filter, dataset}
  */
-export function validateFilter<K extends BasicTable<K, L>, L>(
+export function validateFilter<K extends KeplerTableModel<K, L>, L>(
   dataset: K,
   filter: ParsedFilter
 ): {filter: Filter | null; dataset: K} {
@@ -295,7 +307,7 @@ export function validateFilter<K extends BasicTable<K, L>, L>(
  * @param layers - layers
  * @return validated filter
  */
-export function validateFilterWithData<K extends BasicTable<K, L>, L>(
+export function validateFilterWithData<K extends KeplerTableModel<K, L>, L>(
   dataset: K,
   filter: ParsedFilter,
   layers: L[]
@@ -453,8 +465,8 @@ type filterFunction = (data: {index: number}) => boolean;
  * @param dataContainer Data container
  * @return filterFunction
  */
-// eslint-disable-next-line complexity
-export function getFilterFunction<L extends {id: string; config: LayerBaseConfig}>(
+/* eslint-disable complexity */
+export function getFilterFunction<L extends {config: {dataId: string | null}; id: string}>(
   field: Field | null,
   dataId: string,
   filter: Filter,
@@ -615,9 +627,14 @@ export function diffFilters(
  *
  * @returns value - adjusted value to match filter or null to remove filter
  */
-/* eslint-disable complexity */
+// eslint-disable-next-line complexity
 export function adjustValueToFilterDomain(value: Filter['value'], {domain, type}) {
-  if (!domain || !type) {
+  if (!type) {
+    return false;
+  }
+  // if the current filter is a polygon it will not have any domain
+  // all other filter types require domain
+  if (type !== FILTER_TYPES.polygon && !domain) {
     return false;
   }
 
@@ -639,6 +656,8 @@ export function adjustValueToFilterDomain(value: Filter['value'], {domain, type}
 
     case FILTER_TYPES.select:
       return domain.includes(value) ? value : true;
+    case FILTER_TYPES.polygon:
+      return value;
 
     default:
       return null;
@@ -802,9 +821,6 @@ export function isInRange(val: any, domain: number[]): boolean {
 export function isInPolygon(point: number[], polygon: any): boolean {
   return booleanWithin(turfPoint(point), polygon);
 }
-export function isValidTimeDomain(domain) {
-  return Array.isArray(domain) && domain.every(Number.isFinite);
-}
 export function getTimeWidgetTitleFormatter(domain: [number, number]): string | null {
   if (!isValidTimeDomain(domain)) {
     return null;
@@ -817,21 +833,6 @@ export function getTimeWidgetTitleFormatter(domain: [number, number]): string | 
   return diff > durationYear ? 'L' : diff > durationDay ? 'L LT' : 'L LTS';
 }
 
-export function getTimeWidgetHintFormatter(domain: [number, number]): string | undefined {
-  if (!isValidTimeDomain(domain)) {
-    return undefined;
-  }
-
-  const diff = domain[1] - domain[0];
-  return diff > durationWeek
-    ? 'L'
-    : diff > durationDay
-    ? 'L LT'
-    : diff > durationHour
-    ? 'LT'
-    : 'LTS';
-}
-
 /**
  * Sanity check on filters to prepare for save
  * @type {typeof import('./filter-utils').isFilterValidToSave}
@@ -840,7 +841,7 @@ export function isFilterValidToSave(filter: any): boolean {
   return (
     filter?.type &&
     Array.isArray(filter?.name) &&
-    filter?.name.length &&
+    (filter?.name.length || filter?.layerId.length) &&
     isValidFilterValue(filter?.type, filter?.value)
   );
 }
@@ -877,7 +878,7 @@ export function isValidFilterValue(type: string | null, value: any): boolean {
   }
 }
 
-export function getFilterPlot<K extends BasicTable<K, L>, L>(
+export function getColumnFilterProps<K extends KeplerTableModel<K, L>, L>(
   filter: Filter,
   dataset: K
 ): {lineChart: LineChart; yAxs: Field} | {} {
@@ -926,14 +927,6 @@ export function getDefaultFilterPlotType(filter: Filter): string | null {
   return filterPlotTypes[filter.yAxis.type] || null;
 }
 
-interface BasicTable<K, L> {
-  getColumnFieldIdx: (columnName: string) => number;
-  getColumnFilterProps: (columnName: string) => Field['filterProps'] | null | undefined;
-  filterTable(filters: Filter[], layers: L[], opt?: FilterDatasetOpt): K;
-  id: string;
-  dataContainer: DataContainerInterface;
-}
-
 /**
  *
  * @param datasetIds list of dataset ids to be filtered
@@ -942,9 +935,14 @@ interface BasicTable<K, L> {
  * @return datasets - new updated datasets
  */
 export function applyFiltersToDatasets<
-  K extends BasicTable<K, L>,
-  L extends {config: LayerBaseConfig}
->(datasetIds: string[], datasets: {[id: string]: K}, filters: Filter[], layers?: L[]): K[] {
+  K extends KeplerTableModel<K, L>,
+  L extends {config: {dataId: string | null}}
+>(
+  datasetIds: string[],
+  datasets: {[id: string]: K},
+  filters: Filter[],
+  layers?: L[]
+): {[id: string]: K} {
   const dataIds = toArray(datasetIds);
   return dataIds.reduce((acc, dataId) => {
     const layersToFilter = (layers || []).filter(l => l.config.dataId === dataId);
@@ -967,7 +965,7 @@ export function applyFiltersToDatasets<
  * @param option
  * @return - {filter, datasets}
  */
-export function applyFilterFieldName<K extends BasicTable<K, L>, L>(
+export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
   filter: Filter,
   dataset: K,
   fieldName: string,
@@ -1081,10 +1079,9 @@ export const getFilterIdInFeature = (f: FeatureValue): string => get(f, ['proper
 /**
  * Generates polygon filter
  */
-export function generatePolygonFilter<L extends {id: string; config: LayerBaseConfig}>(
-  layers: L[],
-  feature: Feature
-): PolygonFilter {
+export function generatePolygonFilter<
+  L extends {config: {dataId: string | null; label: string}; id: string}
+>(layers: L[], feature: Feature): PolygonFilter {
   const dataId = layers.map(l => l.config.dataId).filter(notNullorUndefined);
   const layerId = layers.map(l => l.id);
   const name = layers.map(l => l.config.label);
@@ -1102,10 +1099,16 @@ export function generatePolygonFilter<L extends {id: string; config: LayerBaseCo
 /**
  * Run filter entirely on CPU
  */
-export function filterDatasetCPU<
-  T,
-  K extends {filters: Filter[]; datasets: unknown[]; layers: T[]}
->(state: K, dataId: string): K {
+interface StateType<K extends KeplerTableModel<K, L>, L> {
+  layers: L[];
+  filters: Filter[];
+  datasets: {[id: string]: K};
+}
+
+export function filterDatasetCPU<T extends StateType<K, L>, K extends KeplerTableModel<K, L>, L>(
+  state: T,
+  dataId: string
+): T {
   const datasetFilters = state.filters.filter(f => f.dataId.includes(dataId));
   const dataset = state.datasets[dataId];
 
@@ -1122,9 +1125,9 @@ export function filterDatasetCPU<
  * Validate parsed filters with datasets and add filterProps to field
  */
 export function validateFiltersUpdateDatasets<
-  S extends {datasets: {[id: string]: D}; layers: L[]},
-  D extends {id: string},
-  L extends {config: LayerBaseConfig}
+  S extends {datasets: {[id: string]: K}; layers: L[]},
+  K extends KeplerTableModel<K, L>,
+  L extends {config: {dataId: string | null; label: string}; id: string}
 >(
   state: S,
   filtersToValidate: ParsedFilter[] = []
@@ -1201,6 +1204,41 @@ export function validateFiltersUpdateDatasets<
   return {validated, failed, updatedDatasets};
 }
 
+export function getFilterPlot<K extends KeplerTableModel<K, L>, L>(
+  filter: Filter,
+  dataset: K
+): {lineChart: LineChart; yAxs: Field} | {} {
+  if (filter.plotType === PLOT_TYPES.histogram || !filter.yAxis) {
+    // histogram should be calculated when create filter
+    return {};
+  }
+
+  const {mappedValue = []} = filter;
+  const {yAxis} = filter;
+  const fieldIdx = dataset.getColumnFieldIdx(yAxis.name);
+  if (fieldIdx < 0) {
+    Console.warn(`yAxis ${yAxis.name} does not exist in dataset`);
+    return {lineChart: {}, yAxis};
+  }
+
+  // return lineChart
+  const series = dataset.dataContainer
+    .map(
+      (row, rowIndex) => ({
+        x: mappedValue[rowIndex],
+        y: row.valueAt(fieldIdx)
+      }),
+      true
+    )
+    .filter(({x, y}) => Number.isFinite(x) && Number.isFinite(y))
+    .sort((a, b) => ascending(a.x, b.x));
+
+  const yDomain = extent(series, d => d.y);
+  const xDomain = [series[0].x, series[series.length - 1].x];
+
+  return {lineChart: {series, yDomain, xDomain}, yAxis};
+}
+
 /**
  * Retrieve interval bins for time filter
  */
@@ -1212,4 +1250,23 @@ export function getIntervalBins(filter: TimeRangeFilter) {
   }
   const values = Object.values(bins);
   return values[0] ? values[0][interval] : null;
+}
+
+export function isValidTimeDomain(domain) {
+  return Array.isArray(domain) && domain.every(Number.isFinite);
+}
+
+export function getTimeWidgetHintFormatter(domain: [number, number]): string | undefined {
+  if (!isValidTimeDomain(domain)) {
+    return undefined;
+  }
+
+  const diff = domain[1] - domain[0];
+  return diff > durationWeek
+    ? 'L'
+    : diff > durationDay
+    ? 'L LT'
+    : diff > durationHour
+    ? 'LT'
+    : 'LTS';
 }
