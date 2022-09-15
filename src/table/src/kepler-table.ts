@@ -21,7 +21,6 @@
 import {console as Console} from 'global/console';
 import {ascending, descending} from 'd3-array';
 
-// import {validateInputData} from 'processors/data-processor';
 import {
   TRIP_POINT_FIELDS,
   SORT_ORDER,

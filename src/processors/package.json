@@ -30,11 +30,19 @@
     "umd"
   ],
   "dependencies": {
-    "colorbrewer": "^1.5.0",
-    "d3-scale": "^3.2.3",
-    "global": "^4.3.0",
-    "keymirror": "^0.1.1",
-    "react-map-gl-draw": "0.14.8"
+    "@danmarshall/deckgl-typings": "4.9.22",
+    "@kepler.gl/constants": "2.5.5",
+    "@kepler.gl/schemas": "2.5.5",
+    "@kepler.gl/types": "2.5.5",
+    "@kepler.gl/utils": "2.5.5",
+    "@loaders.gl/core": "^3.0.9",
+    "@loaders.gl/csv": "^3.0.9",
+    "@loaders.gl/json": "^3.0.9",
+    "@loaders.gl/loader-utils": "^3.0.9",
+    "@mapbox/geojson-normalize": "0.0.1",
+    "@nebula.gl/edit-modes": "0.14.0",
+    "@turf/helpers": "^6.1.4",
+    "d3-dsv": "^2.0.0"
   },
   "nyc": {
     "sourceMap": false,

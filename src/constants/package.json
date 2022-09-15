@@ -30,13 +30,14 @@
     "umd"
   ],
   "dependencies": {
-    "@babel/runtime": "^7.12.1",
+    "@kepler.gl/types": "2.5.5",
+    "@types/d3-scale": "^3.2.2",
+    "@types/keymirror": "^0.1.1",
     "colorbrewer": "^1.5.0",
     "d3-scale": "^3.2.3",
     "global": "^4.3.0",
     "keymirror": "^0.1.1",
-    "react-map-gl-draw": "0.14.8",
-    "@kepler.gl/types": "2.5.5"
+    "react-map-gl-draw": "0.14.8"
   },
   "nyc": {
     "sourceMap": false,

@@ -36,11 +36,12 @@ import {FormattedMessage} from '@kepler.gl/localization';
 interface StyledDropdownSelectProps {
   inputTheme?: string;
   size?: string;
+  className?: string;
 }
 
-export const StyledDropdownSelect = styled.div.attrs({
-  className: 'item-selector__dropdown'
-})<StyledDropdownSelectProps>`
+export const StyledDropdownSelect = styled.div.attrs(props => ({
+  className: classnames('item-selector__dropdown', props.className)
+}))<StyledDropdownSelectProps>`
   ${props =>
     props.inputTheme === 'secondary'
       ? props.theme.secondaryInput

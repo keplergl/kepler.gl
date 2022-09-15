@@ -696,9 +696,9 @@ interface MapControlButtonProps {
   active?: boolean;
 }
 
-export const MapControlButton = styled(Button).attrs({
-  className: 'map-control-button'
-})<MapControlButtonProps>`
+export const MapControlButton = styled(Button).attrs(props => ({
+  className: classnames('map-control-button', props.className)
+}))<MapControlButtonProps>`
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.16);
   height: 32px;
   width: 32px;
