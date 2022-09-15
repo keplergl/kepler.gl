@@ -32,7 +32,11 @@ import {
   ExportImage
 } from '@kepler.gl/constants';
 import {LOCALE_CODES} from '@kepler.gl/localization';
-import {createNotification, errorNotification, calculateExportImageSize} from '@kepler.gl/utils';
+import {
+  createNotification,
+  errorNotification,
+  calculateExportImageSize
+} from '@kepler.gl/utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
 import {

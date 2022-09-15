@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {isStyleUsingMapboxTiles} from '../../../src/utils';
+import {isStyleUsingMapboxTiles} from '@kepler.gl/utils';
 
 test('mapbox-utils -> isStyleUsingMapboxTiles', t => {
   t.notOk(isStyleUsingMapboxTiles({}), 'Empty style does not reference Mapbox');

@@ -27,7 +27,12 @@ import get from 'lodash.get';
 import {createSelector} from 'reselect';
 
 import FeatureActionPanelFactory, {FeatureActionPanelProps} from './feature-action-panel';
-import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES, EDITOR_MODES, KeyEvent} from '@kepler.gl/constants';
+import {
+  EDITOR_AVAILABLE_LAYERS,
+  FILTER_TYPES,
+  EDITOR_MODES,
+  KeyEvent
+} from '@kepler.gl/constants';
 import {Layer} from '@kepler.gl/layers';
 
 import {DEFAULT_RADIUS, getStyle as getFeatureStyle} from './feature-styles';

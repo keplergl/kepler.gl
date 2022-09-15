@@ -41,7 +41,13 @@ import {
 import {LOAD_MAP_STYLE_TASK} from '@kepler.gl/tasks';
 import {rgb} from 'd3-color';
 
-import {RGBColor, LayerGroup, MapStyles, InputStyle, VisibleLayerGroups} from '@kepler.gl/types';
+import {
+  RGBColor,
+  LayerGroup,
+  MapStyles,
+  InputStyle,
+  VisibleLayerGroups
+} from '@kepler.gl/types';
 import {
   ActionTypes,
   ReceiveMapConfigPayload,

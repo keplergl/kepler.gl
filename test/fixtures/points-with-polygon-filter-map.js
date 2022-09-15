@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {processKeplerglJSON} from 'processors';
+import {processKeplerglJSON} from '@kepler.gl/processors';
 import CloneDeep from 'lodash.clonedeep';
 import {keplerGlReducerCore as coreReducer} from '@kepler.gl/reducers';
 import {addDataToMap} from '@kepler.gl/actions';
