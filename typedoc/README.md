@@ -1,6 +1,4 @@
-[kepler.gl](README.md) › [Globals](globals.md)
-
-# kepler.gl
+kepler.gl / [Modules](modules.md)
 
 <p align="right">
   <a href="https://npmjs.org/package/kepler.gl">
@@ -169,11 +167,15 @@ stored in `state.keplerGl.foo`.
 In case you create multiple kepler.gl instances using the same id, the kepler.gl state defined by the entry will be
 overridden by the latest instance and reset to a blank state.
 
-##### `mapboxApiAccessToken` (String, required)
+##### `mapboxApiAccessToken` (String, required*)
 
 - Default: `undefined`
 
-You can create a free account at [mapbox][mapbox] and create a token at [www.mapbox.com/account/access-tokens][mapbox-token]
+By default, kepler.gl uses mapbox-gl.js to render its base maps. You can create a free account at [mapbox][mapbox] and create a token at [www.mapbox.com/account/access-tokens][mapbox-token].
+
+If you replaced kepler.gl default map styles with your own, and they are not Mapbox styles. `mapboxApiAccessToken` will not be reuiqred. 
+
+Read more about [Custom Map Styles][custom-map-styles].
 
 ##### `getState` (Function, optional)
 
@@ -272,7 +274,7 @@ Each `mapStyles` should has the following properties:
 
 - `id` (String, required) unique string that should **not** be one of these reserved `dark` `light` `muted`. `muted_night`
 - `label` (String, required) name to be displayed in map style selection panel
-- `url` (String, required) mapbox style url or a url pointing to the map style json object
+- `url` (String, required) mapbox style url or a url pointing to the map style json object written in [Mapbox GL Style Spec](https://docs.mapbox.com/mapbox-gl-js/style-spec/). 
 - `icon` (String, optional) image icon of the style, it can be a url, or an [image data url](https://flaviocopes.com/data-urls/#how-does-a-data-url-look)
 - `layerGroups` (Array, optional)
 
@@ -299,6 +301,20 @@ const mapStyles = [
   }
 ];
 ```
+
+Read more about [Custom Map Styles][custom-map-styles].
+
+#### `initialUiState` (object, optional)
+
+- Default: `undefined`
+
+Intial UI State applied to uiState reducer, value will be shallow merged with default [`INITIAL_UI_STATE`](https://docs.kepler.gl/docs/api-reference/reducers/ui-state#initial_ui_state)
+
+#### `localeMessages` (object, optional)
+
+- Default: `undefined` Modify default translation or add new translation
+
+Read more about [Localization][localization].
 
 ### 3. Dispatch custom actions to `keplerGl` reducer.
 
@@ -645,9 +661,11 @@ Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatato
 [processors]: docs/api-reference/processors/README.md
 [schemas]: docs/api-reference/schemas/README.md
 [using-updaters]: ./docs/api-reference/advanced-usages/using-updaters.md
+[custom-map-styles]: ./docs/api-reference/advanced-usages/custom-map-styles.md
 [forward-actions]: ./docs/api-reference/advanced-usages/forward-actions.md
 [replace-ui-component]: ./docs/api-reference/advanced-usages/replace-ui-component.md
 [saving-loading-w-schema]: ./docs/api-reference/advanced-usages/saving-loading-w-schema.md
+[localization]: ./docs/api-reference/localization/README.md
 [40]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 [41]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
 [42]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
