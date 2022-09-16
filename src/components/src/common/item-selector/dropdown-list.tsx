@@ -126,7 +126,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
   }
 
   getSnapshotBeforeUpdate(prevProps: DropdownListProps, prevState: DropdownListState) {
-    if (prevProps.options?.length !== this.props.options?.length) {
+    if (prevProps.options !== this.props.options) {
       // check if user searching, reset state.options at the first time
       const options = this._getOptions(0);
       this.setState({options});
