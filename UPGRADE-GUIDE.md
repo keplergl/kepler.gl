@@ -92,3 +92,55 @@
 
 ### Bug Fixes
 - __Cluster Layer__: Fix incorrect cluster point count. Fix cluster layer missing in exported image.
+
+### Moved from `kepler.gl/utils` to `@kepler.gl/table`
+- `maybeToDate`
+- `getNewDatasetColor`
+- `createNewDataEntry`
+- `setFilterGpuMode`
+- `assignGpuChannels`
+- `assignGpuChannel`
+- `resetFilterGpuMode`
+- `getGpuFilterProps`
+- `getDatasetFieldIndexForFilter`
+
+### Moved from `kepler.gl/utils` to `@kepler.gl/reducers`
+- `findMapBounds`
+- `exportData`
+- `TOOLTIP_MINUS_SIGN`
+- `getDefaultInteraction`
+- `BRUSH_CONFIG`
+- `findFieldsToShow`
+- `getTooltipDisplayDeltaValue`
+- `getTooltipDisplayValue`
+- `LayersToRender`
+- `AggregationLayerHoverData`
+- `LayerHoverProp`
+- `findDefaultLayer`
+- `calculateLayerData`
+- `getLayerHoverProp`
+- `renderDeckGlLayer`
+- `isLayerRenderable`
+- `isLayerVisible`
+- `prepareLayersForDeck`
+- `prepareLayersToRender`
+- `getCustomDeckLayers`
+- `ComputeDeckLayersProps`
+- `computeDeckLayers`
+
+### Moved from `kepler.gl/processors` to `@kepler.gl/utils`
+- `ACCEPTED_ANALYZER_TYPES`
+- `validateInputData`
+- `getSampleForTypeAnalyze`
+- `getFieldsFromData`
+- `renameDuplicateFields`
+- `analyzerTypeToFieldType`
+
+### Moved from `kepler.gl/templates` to `@kepler.gl/utils`
+- `exportMapToHTML`
+
+### Moved from `kepler.gl/layers` to `@kepler.gl/utils`
+- `getCentroid`
+- `idToPolygonGeo`
+- `h3IsValid`
+- `getHexFields`
