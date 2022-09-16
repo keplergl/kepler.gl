@@ -286,6 +286,7 @@ export const geoCoderPanelSelector = (
   mapboxApiAccessToken: props.mapboxApiAccessToken,
   mapState: props.mapState,
   uiState: props.uiState,
+  layerOrder: props.visState.layerOrder,
   updateVisData: props.visStateActions.updateVisData,
   removeDataset: props.visStateActions.removeDataset,
   updateMap: props.mapStateActions.updateMap,

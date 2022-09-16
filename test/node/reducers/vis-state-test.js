@@ -5244,7 +5244,11 @@ test('VisStateUpdater -> prepareStateForDatasetReplace', t => {
   t.deepEqual(nextState.filterToBeMerged[0].dataId, [dataIdToUse], 'should replace filter dataId');
 
   // preserveLayerOrder
-  t.deepEqual(nextState.layerOrder, ['geojson-1'], 'should remove layer from layer order');
+  t.deepEqual(
+    nextState.layerOrder,
+    ['geojson-1', 'point-0'],
+    'should not remove layer from layer order'
+  );
   t.deepEqual(
     nextState.preserveLayerOrder,
     ['geojson-1', 'point-0'],

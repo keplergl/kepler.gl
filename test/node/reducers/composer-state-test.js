@@ -492,3 +492,50 @@ test('#composerStateReducer - replaceDataInMapUpdater', t => {
   t.deepEqual(nextState.visState.splitMapsToBeMerged, [], 'should reset splitMapsToBeMerged');
   t.end();
 });
+
+test('#composerStateReducer - replaceDataInMapUpdater: same dataId', t => {
+  const datasets = {
+    data: processCsvData(testCsvData),
+    info: {
+      id: sampleConfig.dataId
+    }
+  };
+  const datasetToUse = {
+    data: processCsvData(dataWithNulls),
+    info: {
+      id: sampleConfig.dataId
+    }
+  };
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  // old state contain splitMaps
+  const oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      config: sampleConfig.config
+    }
+  });
+
+  const oldSavedConfig = state.visState.schema.getConfigToSave(oldState).config;
+
+  const nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse
+    }
+  });
+
+  // dataset should be replaced
+  t.ok(nextState.visState.datasets[sampleConfig.dataId], ' dataset should be replaced');
+  const nextSavedConfig = nextState.visState.schema.getConfigToSave(nextState).config;
+
+  const expectedLayers = oldSavedConfig.visState.layers.map(l => ({
+    ...l,
+    config: {
+      ...l.config,
+      dataId: sampleConfig.dataId
+    }
+  }));
+  t.deepEqual(nextSavedConfig.visState.layers, expectedLayers, 'should replace layer dataId');
+  t.end();
+});

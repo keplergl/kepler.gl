@@ -43,7 +43,7 @@ test('GeocoderPanel - render', t => {
     width: 800,
     height: 800
   };
-
+  const layerOrder = ['layer_1', 'layer_2'];
   const mockUiState = InitialState.uiState;
 
   const mockGeoItem = {
@@ -139,7 +139,8 @@ test('GeocoderPanel - render', t => {
               }
             }
           }
-        ]
+        ],
+        layerOrder: ['geocoder_layer', 'layer_1', 'layer_2']
       }
     }
   ];
@@ -157,6 +158,7 @@ test('GeocoderPanel - render', t => {
           updateVisData={updateVisData}
           removeDataset={removeDataset}
           updateMap={updateMap}
+          layerOrder={layerOrder}
         />
       </IntlWrapper>
     );

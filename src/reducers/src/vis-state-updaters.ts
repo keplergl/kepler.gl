@@ -2723,6 +2723,8 @@ export function prepareStateForDatasetReplace<T extends VisState>(
 ): T {
   const serializedState = serializeVisState(state, state.schema);
   const nextState = replaceDatasetAndDeps(state, dataId, dataIdToUse);
+  // make a copy of layerOrder, because layer id will be removed from it by calling removeLayerUpdater
+  const preserveLayerOrder = [...state.layerOrder];
 
   // preserve dataset order
   nextState.preserveDatasetOrder = Object.keys(state.datasets).map(d =>
@@ -2733,6 +2735,7 @@ export function prepareStateForDatasetReplace<T extends VisState>(
   if (nextState.layerToBeMerged?.length) {
     // copy split maps to be merged, because it will be reset in remove layer
     nextState.splitMapsToBeMerged = serializedState?.splitMaps ?? [];
+    nextState.layerOrder = [...preserveLayerOrder];
   }
 
   return nextState;
