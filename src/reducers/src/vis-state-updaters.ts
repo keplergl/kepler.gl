@@ -287,14 +287,19 @@ export const INITIAL_VIS_STATE: VisState = {
   schema: KeplerGLSchema
 };
 
+type UpdateStateWithLayerAndDataType = {
+  layers: Layer[];
+  layerData: any[];
+};
+
 /**
  * Update state with updated layer and layerData
  *
  */
-export function updateStateWithLayerAndData(
-  state: VisState,
+export function updateStateWithLayerAndData<S extends UpdateStateWithLayerAndDataType>(
+  state: S,
   {layerData, layer, idx}: {layerData?: any; layer: Layer; idx: number}
-): VisState {
+): S {
   return {
     ...state,
     layers: state.layers.map((lyr, i) => (i === idx ? layer : lyr)),
@@ -538,7 +543,7 @@ export function layerDataIdChangeUpdater(
   return updateStateWithLayerAndData(state, {layerData, layer, idx});
 }
 
-function setInitialLayerConfig(layer, datasets, layerClasses) {
+export function setInitialLayerConfig(layer, datasets, layerClasses): Layer {
   let newLayer = layer;
   if (!Object.keys(datasets).length) {
     // no data is loaded

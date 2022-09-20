@@ -126,6 +126,8 @@ function decorate(target, savedInitialState = {}) {
    * @mixin keplerGlReducer.plugin
    * @memberof keplerGlReducer
    * @param {Object|Function} customReducer - A reducer map or a reducer
+   * @param {Object} options - options to be applied to custom reducer logic
+   * @param {Object} options.override - objects that describe which action to override, e.g. {[ActionTypes.LAYER_TYPE_CHANGE]: true}
    * @public
    * @example
    * const myKeplerGlReducer = keplerGlReducer
@@ -150,15 +152,18 @@ function decorate(target, savedInitialState = {}) {
    *   })
    * }, {}));
    */
-  target.plugin = function plugin(customReducer) {
+  target.plugin = function plugin(customReducer, options) {
     if (typeof customReducer === 'object') {
       // if only provided a reducerMap, wrap it in a reducer
       customReducer = handleActions(customReducer, {});
     }
 
     // use 'function' keyword to enable 'this'
-    return decorate((state = {}, action = {}) => {
-      let nextState = this(state, action);
+    return decorate((state = {}, action: {type?: string} = {}) => {
+      let nextState = state;
+      if (action.type && !options?.override?.[action.type]) {
+        nextState = this(state, action);
+      }
 
       // for each entry in the staten
       Object.keys(nextState).forEach(id => {
@@ -169,7 +174,6 @@ function decorate(target, savedInitialState = {}) {
           customReducer(nextState[id], _actionFor(id, action))
         );
       });
-
       return nextState;
     });
   };
