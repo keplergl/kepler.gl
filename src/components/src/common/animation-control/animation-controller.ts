@@ -219,12 +219,14 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
       if (Array.isArray(value)) {
         let value0: number;
         let value1: number;
-        const readEnd = value[1] + delta > domain[1];
         if (animationWindow === ANIMATION_WINDOW.incremental) {
+          const lastFrame = value[1] + delta > domain[1];
           value0 = value[0];
-          value1 = readEnd ? value[0] + 1 : value[1] + delta;
+          value1 = lastFrame ? value[0] + 1 : value[1] + delta;
         } else {
-          value0 = readEnd ? domain[0] : value[0] + delta;
+          // use value[0] to display the last item  duration as the first item
+          const lastFrame = value[0] + delta > domain[1];
+          value0 = lastFrame ? domain[0] : value[0] + delta;
           value1 = value0 + value[1] - value[0];
         }
         return [value0, value1];
