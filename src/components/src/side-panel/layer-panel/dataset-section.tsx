@@ -38,6 +38,7 @@ type DatasetSectionProps = {
   defaultDataset: string;
   showDatasetList: boolean;
   showDeleteDataset: boolean;
+  showDataCatalog: boolean;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
@@ -63,7 +64,7 @@ const StyledDatasetSection = styled.div`
 `;
 
 export function AddDataButtonFactory() {
-  const AddDataButton: React.FC<AddDataButtonProps> = ({onClick, isInactive}) => (
+  const AddDataButton: React.FC<AddDataButtonProps> = React.memo(({onClick, isInactive}) => (
     <Button
       className="add-data-button"
       onClick={onClick}
@@ -74,8 +75,8 @@ export function AddDataButtonFactory() {
       <Add height="12px" />
       <FormattedMessage id={'layerManager.addData'} />
     </Button>
-  );
-
+  ));
+  AddDataButton.displayName = 'AddDataButton';
   return AddDataButton;
 }
 
@@ -94,7 +95,8 @@ function DatasetSectionFactory(
       removeDataset,
       showDatasetList,
       showAddDataModal,
-      defaultDataset
+      defaultDataset,
+      showDataCatalog
     } = props;
     const datasetCount = Object.keys(datasets).length;
 
@@ -104,7 +106,7 @@ function DatasetSectionFactory(
           <span>Datasets ({datasetCount})</span>
           <AddDataButton onClick={showAddDataModal} isInactive={!defaultDataset} />
         </StyledDatasetTitle>
-        {showDatasetList && (
+        {showDatasetList && showDataCatalog && (
           <SourceDataCatalog
             datasets={datasets}
             showDatasetTable={showDatasetTable}

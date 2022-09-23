@@ -21,8 +21,8 @@
 import React, {ReactElement, useMemo} from 'react';
 import {scaleLinear} from 'd3-scale';
 import {max} from 'd3-array';
+import {hcl} from 'd3-color';
 import styled from 'styled-components';
-import classnames from 'classnames';
 import {HistogramBin} from '@kepler.gl/types';
 
 const histogramStyle = {
@@ -32,15 +32,22 @@ const histogramStyle = {
 
 const HistogramWrapper = styled.svg`
   overflow: visible;
-  .histogram-bars {
-    rect {
-      fill: ${props => props.theme.histogramFillOutRange};
-    }
-    rect.in-range {
-      fill: ${props => props.theme.histogramFillInRange};
-    }
-  }
 `;
+
+type BarType = {
+  inRange: boolean;
+};
+const BarUnmemoized = styled.rect<BarType>(
+  ({theme, inRange, color}) => `
+  ${
+    inRange
+      ? `fill: ${color ?? theme.histogramFillInRange};`
+      : `fill: ${color ? hcl(color).darker() : theme.histogramFillOutRange};`
+  }
+`
+);
+const Bar = React.memo(BarUnmemoized);
+Bar.displayName = 'Bar';
 
 interface HistogramPlotParams {
   width: number;
@@ -99,8 +106,8 @@ function HistogramPlotFactory() {
               undefinedToZero(bar.x1) <= value[1] && undefinedToZero(bar.x0) >= value[0];
             const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
             return (
-              <rect
-                className={classnames({'in-range': inRange})}
+              <Bar
+                inRange={inRange}
                 key={bar.x0}
                 height={y(getValue(bar))}
                 width={barWidth * wRatio}

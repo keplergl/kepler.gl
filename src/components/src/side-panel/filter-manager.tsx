@@ -75,6 +75,15 @@ function FilterManagerFactory(
         .reverse();
     }, [filters.length]);
 
+    const filterPanelCallbacks = useMemo(() => {
+      return new Array(filters.length).fill(0).map((d, idx) => ({
+        removeFilter: () => removeFilter(idx),
+        enlargeFilter: () => enlargeFilter(idx),
+        toggleAnimation: () => toggleFilterAnimation(idx),
+        toggleFilterFeature: () => toggleFilterFeature(idx)
+      }));
+    }, [filters.length, removeFilter, enlargeFilter, toggleFilterAnimation, toggleFilterFeature]);
+
     return (
       <div className="filter-manager">
         <SourceDataCatalog
@@ -93,10 +102,10 @@ function FilterManagerFactory(
               datasets={datasets}
               layers={layers}
               isAnyFilterAnimating={isAnyFilterAnimating}
-              removeFilter={() => removeFilter(idx)}
-              enlargeFilter={() => enlargeFilter(idx)}
-              toggleAnimation={() => toggleFilterAnimation(idx)}
-              toggleFilterFeature={() => toggleFilterFeature(idx)}
+              removeFilter={filterPanelCallbacks[idx].removeFilter}
+              enlargeFilter={filterPanelCallbacks[idx].enlargeFilter}
+              toggleAnimation={filterPanelCallbacks[idx].toggleAnimation}
+              toggleFilterFeature={filterPanelCallbacks[idx].toggleFilterFeature}
               setFilter={setFilter}
             />
           ))}

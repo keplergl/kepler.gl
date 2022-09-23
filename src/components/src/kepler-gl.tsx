@@ -482,7 +482,9 @@ function KeplerGlFactory(
                   ref={this.root}
                 >
                   <NotificationPanel {...notificationPanelFields} />
-                  {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
+                  {!uiState.readOnly && !readOnly && (
+                    <SidePanel {...sideFields} showDataCatalog={true} />
+                  )}
                   <MapsLayout className="maps">{mapContainers}</MapsLayout>
                   {isExportingImage && <PlotContainer {...plotContainerFields} />}
                   {interactionConfig.geocoder.enabled && <GeoCoderPanel {...geoCoderPanelFields} />}

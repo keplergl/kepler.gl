@@ -137,7 +137,8 @@ export default function SidePanelFactory(
       uiStateActions,
       visStateActions,
       version,
-      width
+      width,
+      showDataCatalog
     } = props;
     const {openDeleteModal, toggleModal, toggleSidePanel} = uiStateActions;
     const {activeSidePanel} = uiState;
@@ -248,6 +249,7 @@ export default function SidePanelFactory(
                 visStateActions={visStateActions}
                 panelMetadata={currentPanel}
                 layerPanelListView={currentPanel?.id === 'layer' && uiState.layerPanelListView}
+                showDataCatalog={showDataCatalog}
               />
             ) : null}
             <CustomPanels {...customPanelProps} activeSidePanel={activeSidePanel} />

@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 // libraries
-import React, {Component, createRef} from 'react';
+import React, {Component, createRef, useMemo} from 'react';
 import MapboxGLMap, {MapRef} from 'react-map-gl';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
@@ -89,6 +89,8 @@ const MAP_STYLE: {[key: string]: React.CSSProperties} = {
   }
 };
 
+const LOCALE_CODES_ARRAY = Object.keys(LOCALE_CODES);
+
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
 const nop = () => {};
@@ -108,37 +110,50 @@ const MapboxLogo = () => (
 
 export const Attribution = ({showMapboxLogo = true}) => {
   const isPalm = hasMobileWidth(breakPointValues);
-  if (!showMapboxLogo) {
+
+  const memoizedComponents = useMemo(() => {
+    if (!showMapboxLogo) {
+      return (
+        <StyledAttrbution>
+          <a
+            href="http://www.openstreetmap.org/copyright"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            © OpenStreetMap
+          </a>
+        </StyledAttrbution>
+      );
+    }
+
     return (
       <StyledAttrbution>
-        <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
-          © OpenStreetMap
-        </a>
+        {isPalm ? <MapboxLogo /> : null}
+        <div className="attrition-link">
+          <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
+            © kepler.gl |{' '}
+          </a>
+          <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
+            © Mapbox |{' '}
+          </a>
+          <a
+            href="http://www.openstreetmap.org/copyright"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            © OpenStreetMap |{' '}
+          </a>
+          <a href="https://www.mapbox.com/map-feedback/" target="_blank" rel="noopener noreferrer">
+            <strong>Improve this map </strong>
+            {!isPalm ? <strong> | </strong> : null}
+          </a>
+          {!isPalm ? <MapboxLogo /> : null}
+        </div>
       </StyledAttrbution>
     );
-  }
+  }, [showMapboxLogo, isPalm]);
 
-  return (
-    <StyledAttrbution>
-      {isPalm ? <MapboxLogo /> : null}
-      <div className="attrition-link">
-        <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
-          © kepler.gl |{' '}
-        </a>
-        <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
-          © Mapbox |{' '}
-        </a>
-        <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
-          © OpenStreetMap |{' '}
-        </a>
-        <a href="https://www.mapbox.com/map-feedback/" target="_blank" rel="noopener noreferrer">
-          <strong>Improve this map </strong>
-          {!isPalm ? <strong> | </strong> : null}
-        </a>
-        {!isPalm ? <MapboxLogo /> : null}
-      </div>
-    </StyledAttrbution>
-  );
+  return memoizedComponents;
 };
 
 MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory];
@@ -614,7 +629,7 @@ export default function MapContainerFactory(
         <>
           <MapControl
             datasets={datasets}
-            availableLocales={Object.keys(LOCALE_CODES)}
+            availableLocales={LOCALE_CODES_ARRAY}
             dragRotate={mapState.dragRotate}
             isSplit={isSplit}
             primary={primary}
