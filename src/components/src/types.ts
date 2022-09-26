@@ -41,5 +41,4 @@ export type SidePanelProps = {
   mapSaved?: string | null;
   panels: SidePanelItem[];
   version: string;
-  showDataCatalog: boolean;
 };

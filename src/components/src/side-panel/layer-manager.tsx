@@ -52,7 +52,6 @@ type LayerManagerProps = {
   layerOrder: number[];
   layerClasses: LayerClassesType;
   layerBlending: string;
-  showDataCatalog: boolean;
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
   showAddDataModal: () => void;
@@ -146,8 +145,7 @@ function LayerManagerFactory(
         uiStateActions,
         visStateActions,
         layerPanelListView,
-        panelMetadata,
-        showDataCatalog
+        panelMetadata
       } = this.props;
 
       const defaultDataset = Object.keys(datasets)[0];
@@ -170,7 +168,6 @@ function LayerManagerFactory(
             showDatasetList={!isSortByDatasetMode}
             showAddDataModal={showAddDataModal}
             defaultDataset={defaultDataset}
-            showDataCatalog={showDataCatalog}
           />
           <SidePanelDivider />
           <SidePanelSection>

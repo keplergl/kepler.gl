@@ -38,7 +38,6 @@ type DatasetSectionProps = {
   defaultDataset: string;
   showDatasetList: boolean;
   showDeleteDataset: boolean;
-  showDataCatalog: boolean;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
@@ -95,8 +94,7 @@ function DatasetSectionFactory(
       removeDataset,
       showDatasetList,
       showAddDataModal,
-      defaultDataset,
-      showDataCatalog
+      defaultDataset
     } = props;
     const datasetCount = Object.keys(datasets).length;
 
@@ -106,7 +104,7 @@ function DatasetSectionFactory(
           <span>Datasets ({datasetCount})</span>
           <AddDataButton onClick={showAddDataModal} isInactive={!defaultDataset} />
         </StyledDatasetTitle>
-        {showDatasetList && showDataCatalog && (
+        {showDatasetList && (
           <SourceDataCatalog
             datasets={datasets}
             showDatasetTable={showDatasetTable}

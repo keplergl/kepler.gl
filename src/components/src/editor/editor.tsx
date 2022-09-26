@@ -228,5 +228,6 @@ export default function EditorFactory(
   }
 
   const Editor = (React.memo(EditorUnmemoized) as unknown) as typeof EditorUnmemoized;
+  Editor.displayName = 'Editor';
   return Editor;
 }
