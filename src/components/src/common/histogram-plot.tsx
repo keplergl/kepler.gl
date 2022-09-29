@@ -49,7 +49,7 @@ const BarUnmemoized = styled.rect<BarType>(
 const Bar = React.memo(BarUnmemoized);
 Bar.displayName = 'Bar';
 
-interface HistogramPlotParams {
+interface HistogramPlotProps {
   width: number;
   height: number;
   margin: {top: number; bottom: number; left: number; right: number};
@@ -68,7 +68,7 @@ function HistogramPlotFactory() {
     histogram,
     value,
     brushComponent
-  }: HistogramPlotParams) => {
+  }: HistogramPlotProps) => {
     const undefinedToZero = (x: number | undefined) => (x ? x : 0);
     const domain = useMemo(
       () =>

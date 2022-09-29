@@ -55,8 +55,8 @@ const StyledOptionsDropdown = styled.div`
 interface OptionDropdownProps {
   isOpened?: boolean;
   column: string;
-  toggleMoreOptions: (order: string) => void;
-  sortTableColumn: (order: string) => void;
+  toggleMoreOptions: (column: string) => void;
+  sortTableColumn: (sort: string) => void;
   pinTableColumn: () => void;
   copyTableColumn: () => void;
   sortMode?: string;
