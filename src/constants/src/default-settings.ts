@@ -202,7 +202,7 @@ export const DEFAULT_LAYER_GROUPS: DEFAULT_LAYER_GROUP[] = [
   },
   {
     slug: 'border',
-    filter: ({id}) => id.match(/border|boundaries/),
+    filter: ({id}) => id.match(/border|boundaries|boundary/),
     defaultVisibility: false
   },
   {
