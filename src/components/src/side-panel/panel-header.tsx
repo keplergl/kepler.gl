@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import React, {Component, useCallback} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import {createSelector} from 'reselect';
@@ -45,12 +45,12 @@ type ActionItem = {
   iconComponent: React.ComponentType<Partial<BaseProps>>;
   iconComponentProps?: BaseProps;
   dropdownComponent?: React.ComponentType<DropdownComponentProps>;
-  onClick?: (p: PanelHeaderProps) => void;
+  onClick?: () => void;
 };
 
 type PanelActionProps = {
   item: ActionItem;
-  onClick: () => void;
+  showExportDropdown: (string) => void;
 };
 
 type PanelHeaderDropdownProps = {
@@ -155,19 +155,31 @@ const StyledToolbar = styled(Toolbar)`
   position: absolute;
 `;
 
-export const PanelAction: React.FC<PanelActionProps> = ({item, onClick}) => (
-  <StyledPanelAction data-tip data-for={`${item.id}-action`} onClick={onClick}>
-    {item.label ? <p>{item.label}</p> : null}
-    <a target={item.blank ? '_blank' : ''} href={item.href} rel="noreferrer">
-      <item.iconComponent height="20px" {...item.iconComponentProps} />
-    </a>
-    {item.tooltip ? (
-      <Tooltip id={`${item.id}-action`} place="bottom" delayShow={500} effect="solid">
-        <FormattedMessage id={item.tooltip} />
-      </Tooltip>
-    ) : null}
-  </StyledPanelAction>
-);
+const PanelAction: React.FC<PanelActionProps> = React.memo(({item, showExportDropdown}) => {
+  const onClick = useCallback(() => {
+    if (item.dropdownComponent) {
+      showExportDropdown(item.id);
+    } else {
+      item.onClick && item.onClick();
+    }
+  }, [item, showExportDropdown]);
+
+  return (
+    <StyledPanelAction data-tip data-for={`${item.id}-action`} onClick={onClick}>
+      {item.label ? <p>{item.label}</p> : null}
+      <a target={item.blank ? '_blank' : ''} href={item.href} rel="noreferrer">
+        <item.iconComponent height="20px" {...item.iconComponentProps} />
+      </a>
+      {item.tooltip ? (
+        <Tooltip id={`${item.id}-action`} place="bottom" delayShow={500} effect="solid">
+          <FormattedMessage id={item.tooltip} />
+        </Tooltip>
+      ) : null}
+    </StyledPanelAction>
+  );
+});
+PanelAction.displayName = 'PanelAction';
+export {PanelAction};
 
 export const PanelHeaderDropdownFactory = () => {
   const PanelHeaderDropdown: React.FC<PanelHeaderDropdownProps> = ({items, show, onClose, id}) => {
@@ -356,16 +368,7 @@ function PanelHeaderFactory(
                   key={item.id}
                   style={{position: 'relative'}}
                 >
-                  <PanelAction
-                    item={item}
-                    onClick={() => {
-                      if (item.dropdownComponent) {
-                        showExportDropdown(item.id);
-                      } else {
-                        item.onClick && item.onClick(this.props);
-                      }
-                    }}
-                  />
+                  <PanelAction item={item} showExportDropdown={showExportDropdown} />
                   {item.dropdownComponent ? (
                     <item.dropdownComponent
                       onClose={hideExportDropdown}

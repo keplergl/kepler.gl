@@ -67,7 +67,7 @@ const HeaderActionWrapper = styled.div<HeaderActionWrapperProps>`
 PanelHeaderActionFactory.deps = [];
 // Need to use react class to access props.component
 export default function PanelHeaderActionFactory(): React.FC<PanelHeaderActionProps> {
-  const PanelHeaderAction: React.FC<PanelHeaderActionProps> = ({
+  const PanelHeaderActionUnmemoized: React.FC<PanelHeaderActionProps> = ({
     onClick,
     tooltip,
     id,
@@ -102,5 +102,8 @@ export default function PanelHeaderActionFactory(): React.FC<PanelHeaderActionPr
       </HeaderActionWrapper>
     );
   };
+
+  const PanelHeaderAction = React.memo(PanelHeaderActionUnmemoized);
+  PanelHeaderAction.displayName = 'PanelHeaderAction';
   return PanelHeaderAction;
 }

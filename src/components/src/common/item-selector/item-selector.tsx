@@ -155,7 +155,7 @@ export type ItemSelectorProps = {
   showDropdownOnMount?: boolean;
 };
 
-class ItemSelector extends Component<ItemSelectorProps> {
+class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
   static defaultProps = {
     multiSelect: true,
     placeholder: 'placeholder.enterValue',
@@ -374,4 +374,7 @@ class ItemSelector extends Component<ItemSelectorProps> {
   }
 }
 
-export default injectIntl(ItemSelector);
+const ItemSelector = React.memo(ItemSelectorUnmemoized);
+ItemSelector.displayName = 'ItemSelector';
+
+export default injectIntl(ItemSelectorUnmemoized);
