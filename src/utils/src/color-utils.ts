@@ -112,14 +112,11 @@ export function createLinearGradient(direction: string, colors: RGBColor[]) {
  * Whether color is rgb
  * @returns
  */
-export function isRgbColor(color: unknown): color is RGBColor {
-  if (
+export function isRgbColor(color: unknown): boolean {
+  return Boolean(
     color &&
-    Array.isArray(color) &&
-    color.length === 3 &&
-    color.every(n => Number.isFinite(n) && n <= 255 && n >= 0)
-  ) {
-    return true;
-  }
-  return false;
+      Array.isArray(color) &&
+      color.length === 3 &&
+      color.every(n => Number.isFinite(n) && n <= 255 && n >= 0)
+  );
 }
