@@ -41,7 +41,8 @@ import {
   ColorPalette,
   CustomPalette,
   CustomPicker,
-  Button
+  Button,
+  Portaled
 } from '@kepler.gl/components';
 
 import {COLOR_RANGES} from '@kepler.gl/constants';
@@ -780,6 +781,12 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
 
   const picker = cp.find(CustomPicker);
   t.equal(picker.length, 1, 'should render 1 CustomPicker');
+
+  // SecurityError (e.g. cross-origin error) should be handled in Portaled component
+  t.doesNotThrow(() => {
+    picker.simulateError({name: 'SecurityError', message: '', stack: []});
+    t.equal(wrapper.find(Portaled).length, 1);
+  }, 'Should not fail with SecurityError when close CustomPicker');
 
   t.end();
 });
