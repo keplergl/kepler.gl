@@ -71,39 +71,38 @@ const LayerHeader = styled.div.attrs({
   margin-top: 16px;
 `;
 
-const LayerBlendingSelector = ({
-  layerBlending,
-  updateLayerBlending,
-  intl
-}: LayerBlendingSelectorProps) => {
-  const labeledLayerBlendings = Object.keys(LAYER_BLENDINGS).reduce(
-    (acc, current) => ({
-      ...acc,
-      [intl.formatMessage({id: LAYER_BLENDINGS[current].label})]: current
-    }),
-    {}
-  );
+const LayerBlendingSelector = React.memo(
+  ({layerBlending, updateLayerBlending, intl}: LayerBlendingSelectorProps) => {
+    const labeledLayerBlendings = Object.keys(LAYER_BLENDINGS).reduce(
+      (acc, current) => ({
+        ...acc,
+        [intl.formatMessage({id: LAYER_BLENDINGS[current].label})]: current
+      }),
+      {}
+    );
 
-  const onChange = useCallback(blending => updateLayerBlending(labeledLayerBlendings[blending]), [
-    updateLayerBlending,
-    labeledLayerBlendings
-  ]);
+    const onChange = useCallback(blending => updateLayerBlending(labeledLayerBlendings[blending]), [
+      updateLayerBlending,
+      labeledLayerBlendings
+    ]);
 
-  return (
-    <SidePanelSection>
-      <PanelLabel>
-        <FormattedMessage id="layerBlending.title" />
-      </PanelLabel>
-      <ItemSelector
-        selectedItems={intl.formatMessage({id: LAYER_BLENDINGS[layerBlending].label})}
-        options={Object.keys(labeledLayerBlendings)}
-        multiSelect={false}
-        searchable={false}
-        onChange={onChange}
-      />
-    </SidePanelSection>
-  );
-};
+    return (
+      <SidePanelSection>
+        <PanelLabel>
+          <FormattedMessage id="layerBlending.title" />
+        </PanelLabel>
+        <ItemSelector
+          selectedItems={intl.formatMessage({id: LAYER_BLENDINGS[layerBlending].label})}
+          options={Object.keys(labeledLayerBlendings)}
+          multiSelect={false}
+          searchable={false}
+          onChange={onChange}
+        />
+      </SidePanelSection>
+    );
+  }
+);
+LayerBlendingSelector.displayName = 'LayerBlendingSelector';
 
 LayerManagerFactory.deps = [
   LayerListFactory,

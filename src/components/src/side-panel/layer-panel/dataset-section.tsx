@@ -63,7 +63,7 @@ const StyledDatasetSection = styled.div`
 `;
 
 export function AddDataButtonFactory() {
-  const AddDataButton: React.FC<AddDataButtonProps> = ({onClick, isInactive}) => (
+  const AddDataButton: React.FC<AddDataButtonProps> = React.memo(({onClick, isInactive}) => (
     <Button
       className="add-data-button"
       onClick={onClick}
@@ -74,8 +74,8 @@ export function AddDataButtonFactory() {
       <Add height="12px" />
       <FormattedMessage id={'layerManager.addData'} />
     </Button>
-  );
-
+  ));
+  AddDataButton.displayName = 'AddDataButton';
   return AddDataButton;
 }
 

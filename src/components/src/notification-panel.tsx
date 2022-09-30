@@ -50,8 +50,10 @@ interface NotificationPanelProps {
 
 export default function NotificationPanelFactory(
   NotificationItem: ReturnType<typeof NotificationItemFactory>
-) {
-  return class NotificationPanel extends Component<NotificationPanelProps> {
+): React.ComponentClass<NotificationPanelProps> {
+  class NotificationPanelUnmemoized extends Component<NotificationPanelProps> {
+    static displayName = 'NotificationPanel';
+
     render() {
       const globalNotifications = this.props.notifications.filter(
         n => n.topic === DEFAULT_NOTIFICATION_TOPICS.global
@@ -71,5 +73,10 @@ export default function NotificationPanelFactory(
         </NotificationPanelContent>
       );
     }
-  };
+  }
+
+  const NotificationPanel = (React.memo(
+    NotificationPanelUnmemoized
+  ) as unknown) as typeof NotificationPanelUnmemoized;
+  return NotificationPanel;
 }

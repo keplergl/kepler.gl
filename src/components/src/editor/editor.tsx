@@ -67,7 +67,7 @@ interface EditorProps {
 export default function EditorFactory(
   FeatureActionPanel: React.FC<FeatureActionPanelProps>
 ): React.ComponentClass<EditorProps> {
-  class Editor extends Component<EditorProps> {
+  class EditorUnmemoized extends Component<EditorProps> {
     static defaultProps = {
       clickRadius: DEFAULT_RADIUS
     };
@@ -227,5 +227,7 @@ export default function EditorFactory(
     }
   }
 
+  const Editor = (React.memo(EditorUnmemoized) as unknown) as typeof EditorUnmemoized;
+  Editor.displayName = 'Editor';
   return Editor;
 }

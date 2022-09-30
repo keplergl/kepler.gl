@@ -129,12 +129,16 @@ function FieldSelectorFactory(
     };
 
     fieldsSelector = props => props.fields;
-    filteredFieldsSelector = props =>
-      props.fields.filter(
-        field =>
-          !toArray(props.value).find(d => (d.name ? d.name === field.name : d === field.name))
-      );
     valueSelector = props => props.value;
+    filteredFieldsSelector = createSelector(
+      this.fieldsSelector,
+      this.valueSelector,
+      (fields, value) => {
+        return fields.filter(
+          field => !toArray(value).find(d => (d.name ? d.name === field.name : d === field.name))
+        );
+      }
+    );
     filterFieldTypesSelector = props => props.filterFieldTypes;
     showTokenSelector = props => props.showToken;
 
