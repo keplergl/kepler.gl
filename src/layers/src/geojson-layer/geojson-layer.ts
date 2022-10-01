@@ -443,7 +443,7 @@ export default class GeoJsonLayer extends Layer {
         updateTriggers,
         _subLayerProps: {
           ...(featureTypes?.polygon ? {'polygons-stroke': opaOverwrite} : {}),
-          ...(featureTypes?.line ? {'line-strings': opaOverwrite} : {}),
+          ...(featureTypes?.line ? {linestrings: opaOverwrite} : {}),
           ...(featureTypes?.point
             ? {
                 points: {
