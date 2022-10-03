@@ -30,7 +30,7 @@ import {parseGeoJsonRawFeature} from '@kepler.gl/layers';
 import {idToPolygonGeo, generateHashId} from '@kepler.gl/utils';
 import {LAYER_TYPES} from '@kepler.gl/constants';
 import {LayerHoverProp} from '@kepler.gl/reducers';
-import {Feature} from '@kepler.gl/types';
+import {Feature, FeatureSelectionContext} from '@kepler.gl/types';
 
 const SELECTABLE_LAYERS: string[] = [LAYER_TYPES.hexagonId, LAYER_TYPES.geojson];
 const MAX_WIDTH = 500;
@@ -228,7 +228,7 @@ export type MapPopoverProps = {
   container?: HTMLElement | null;
   onClose: () => void;
   onSetFeatures: (features: Feature[]) => any;
-  setSelectedFeature: (feature: Feature, clickContext: object) => any;
+  setSelectedFeature: (feature: Feature | null, clickContext?: FeatureSelectionContext) => any;
   featureCollection?: {
     type: string;
     features: Feature[];

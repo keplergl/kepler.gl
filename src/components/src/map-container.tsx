@@ -202,11 +202,11 @@ const DatasetAttributions = ({
   </>
 );
 
-export const Attribution = ({
-  showMapboxLogo = true,
-  showOsmBasemapAttribution = false,
-  datasetAttributions
-}) => {
+export const Attribution: React.FC<{
+  showMapboxLogo: boolean;
+  showOsmBasemapAttribution: boolean;
+  datasetAttributions: DatasetAttribution[];
+}> = ({showMapboxLogo = true, showOsmBasemapAttribution = false, datasetAttributions}) => {
   const isPalm = hasMobileWidth(breakPointValues);
 
   const memoizedComponents = useMemo(() => {
@@ -268,7 +268,7 @@ MapContainerFactory.deps = [MapPopoverFactory, MapControlFactory, EditorFactory]
 type MapboxStyle = string | object | undefined;
 type PropSelector<R> = Selector<MapContainerProps, R>;
 
-interface MapContainerProps {
+export interface MapContainerProps {
   visState: VisState;
   mapState: MapState;
   mapControls: MapControls;
@@ -310,9 +310,9 @@ interface MapContainerProps {
 }
 
 export default function MapContainerFactory(
-  MapPopover,
-  MapControl,
-  Editor
+  MapPopover: ReturnType<typeof MapPopoverFactory>,
+  MapControl: ReturnType<typeof MapControlFactory>,
+  Editor: ReturnType<typeof EditorFactory>
 ): React.ComponentType<MapContainerProps> {
   class MapContainer extends Component<MapContainerProps> {
     displayName = 'MapContainer';
@@ -592,7 +592,7 @@ export default function MapContainerFactory(
         ? interactionConfig.tooltip.config.compareMode
         : false;
 
-      let pinnedPosition = {};
+      let pinnedPosition = {x: 0, y: 0};
       let layerPinnedProp: LayerHoverProp | null = null;
       if (pinned || clicked) {
         // project lnglat to screen so that tooltip follows the object on zoom
@@ -903,11 +903,11 @@ export default function MapContainerFactory(
             availableLocales={LOCALE_CODES_ARRAY}
             dragRotate={mapState.dragRotate}
             isSplit={isSplit}
-            primary={primary}
+            primary={Boolean(primary)}
             isExport={isExport}
             layers={layers}
             layersToRender={layersToRender}
-            mapIndex={index}
+            mapIndex={index || 0}
             mapControls={mapControls}
             readOnly={this.props.readOnly}
             scale={mapState.scale || 1}
@@ -941,7 +941,7 @@ export default function MapContainerFactory(
             {this._renderDeckOverlay(layersForDeck, {primaryMap: true})}
             {this._renderMapboxOverlays()}
             <Editor
-              index={index}
+              index={index || 0}
               datasets={datasets}
               editor={editor}
               filters={this.polygonFiltersSelector(this.props)}

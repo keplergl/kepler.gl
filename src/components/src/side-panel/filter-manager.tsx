@@ -27,7 +27,7 @@ import {FILTER_VIEW_TYPES, PANEL_VIEW_TOGGLES} from '@kepler.gl/constants';
 import {Filter} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {isSideFilter} from '@kepler.gl/utils';
-import {VisStateActions, ActionHandler, UIStateActions} from '@kepler.gl/actions';
+import {VisStateActions, ActionHandler, UIStateActions, ActionHandlers} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 
 import PanelViewListToggleFactory from './panel-view-list-toggle';
@@ -35,6 +35,9 @@ import PanelTitleFactory from './panel-title';
 import AddFilterButtonFactory from './filter-panel/add-filter-button';
 import DatasetSectionFactory from './layer-panel/dataset-section';
 import {PanelMeta} from './common/types';
+
+type VisStateActionHandlers = ActionHandlers<typeof VisStateActions>;
+type UiStateActionHandlers = ActionHandlers<typeof UIStateActions>;
 
 type FilterManagerProps = {
   filters: Filter[];
@@ -47,8 +50,8 @@ type FilterManagerProps = {
 
   panelMetadata: PanelMeta;
   panelListView: string;
-  visStateActions: typeof VisStateActions;
-  uiStateActions: typeof UIStateActions;
+  visStateActions: VisStateActionHandlers;
+  uiStateActions: UiStateActionHandlers;
 };
 
 type FilterListProps = {
@@ -60,7 +63,7 @@ type FilterListProps = {
     idx: number;
   }[];
   isAnyFilterAnimating: boolean;
-  visStateActions: typeof VisStateActions;
+  visStateActions: VisStateActionHandlers;
 };
 
 FilterManagerFactory.deps = [

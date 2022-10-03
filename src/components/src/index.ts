@@ -42,7 +42,7 @@ export {default as KeplerGl, default, injectComponents, ContainerFactory, ERROR_
 export {default as KeplerGlFactory, DEFAULT_KEPLER_GL_PROPS, getVisibleDatasets, mapFieldsSelector, plotContainerSelector} from './kepler-gl';
 export {default as SidePanelFactory} from './side-panel';
 export {default as PanelTitleFactory} from './side-panel/panel-title';
-export {default as MapContainerFactory} from './map-container';
+export {default as MapContainerFactory, Attribution} from './map-container';
 export {default as MapsLayoutFactory} from './maps-layout';
 export {default as BottomWidgetFactory} from './bottom-widget';
 export {default as LayerAnimationControllerFactory} from './layer-animation-controller';
@@ -268,6 +268,10 @@ export type {LayerGroupColorPickerProps} from './side-panel/map-style-panel/map-
 export type {MapLegendPanelProps, MapLegendPanelFactoryDeps} from './map/map-legend-panel';
 export type {FormatterDropdownProps} from './common/data-table/option-dropdown';
 export type {LayerListProps, LayerListFactoryDeps} from './side-panel/layer-panel/layer-list';
+export type {MapContainerProps} from './map-container';
+export type {MapControlProps} from './map/map-control';
+export type {MapDrawPanelProps} from './map/map-draw-panel';
+export type {PanelHeaderProps} from './side-panel/panel-header';
 
 export {
   Icons,

@@ -25,7 +25,7 @@ import {toggleSidePanel, ActionHandler} from '@kepler.gl/actions';
 
 type PanelToggleProps = {
   panels: PanelItem[];
-  activePanel: string;
+  activePanel: string | null;
   togglePanel: ActionHandler<typeof toggleSidePanel>;
 };
 

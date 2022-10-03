@@ -41,7 +41,10 @@ export type MapDrawPanelProps = {
   actionIcons: {[id: string]: React.ComponentType<Partial<BaseProps>>};
 };
 
-function MapDrawPanelFactory(MapControlTooltip, MapControlToolbar) {
+function MapDrawPanelFactory(
+  MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>,
+  MapControlToolbar: ReturnType<typeof MapControlToolbarFactory>
+) {
   const defaultActionIcons = {
     visible: EyeSeen,
     hidden: EyeUnseen,
@@ -50,7 +53,7 @@ function MapDrawPanelFactory(MapControlTooltip, MapControlToolbar) {
     innerPolygon: Polygon,
     rectangle: Rectangle
   };
-  /** @type {import('./map-draw-panel').MapDrawPanelComponent} */
+
   const MapDrawPanel: React.FC<MapDrawPanelProps> = React.memo(
     ({
       editor,
