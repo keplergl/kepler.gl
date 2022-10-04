@@ -1,7 +1,7 @@
 import React, {CSSProperties} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import {Button} from '../../common/styled-components';
+import Button from './button';
 import {ArrowUp, ArrowDown, VertThreeDots} from '../../common/icons';
 import OptionDropdown from './option-dropdown';
 import {SORT_ORDER} from '@kepler.gl/constants';
