@@ -26,18 +26,15 @@ import {createSelector} from 'reselect';
 import get from 'lodash.get';
 import debounce from 'lodash.debounce';
 
-import OptionDropdown from './option-dropdown';
 import {CellSizeCache} from './cell-size';
 
 import Grid from './grid';
-import Button from './button';
-import {ArrowUp, ArrowDown, VertThreeDots} from '../icons';
+import HeaderCellFactory from './header-cell';
 
 import {parseFieldValue, DataContainerInterface} from '@kepler.gl/utils';
 import {adjustCellsToContainer} from './cell-size';
 
-import {ALL_FIELD_TYPES, SORT_ORDER} from '@kepler.gl/constants';
-import FieldTokenFactory from '../field-token';
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 
 const defaultHeaderRowHeight = 55;
 const defaultRowHeight = 32;
@@ -161,62 +158,6 @@ export const Container = styled.div`
     .cell.align-right {
       align-items: flex-end;
     }
-    .header-cell {
-      border-bottom: 1px solid ${props => props.theme.headerCellBorderColor};
-      border-top: 1px solid ${props => props.theme.headerCellBorderColor};
-      padding-top: ${props => props.theme.headerPaddingTop}px;
-      padding-right: 0;
-      padding-bottom: ${props => props.theme.headerPaddingBottom}px;
-      padding-left: ${props => props.theme.cellPaddingSide}px;
-      align-items: center;
-      justify-content: space-between;
-      display: flex;
-      flex-direction: row;
-      background-color: ${props => props.theme.headerCellBackground};
-
-      &:hover {
-        .more {
-          color: ${props => props.theme.headerCellIconColor};
-        }
-      }
-      .n-sort-idx {
-        font-size: 9px;
-      }
-      .details {
-        font-weight: 500;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        height: 100%;
-        overflow: hidden;
-        flex-grow: 1;
-
-        .col-name {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          cursor: pointer;
-
-          .col-name__left {
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            svg {
-              margin-left: 6px;
-            }
-          }
-          .col-name__name {
-            overflow: hidden;
-            white-space: nowrap;
-          }
-        }
-      }
-
-      .more {
-        color: transparent;
-        margin-left: 5px;
-      }
-    }
   }
 
   :focus {
@@ -232,6 +173,8 @@ export type ColMeta = {
     name: string;
     displayName: string;
     type: string;
+    format?: string;
+    columnStats?: any;
   };
 };
 
@@ -327,6 +270,7 @@ export const TableSection = ({
               {...headerGridProps}
               {...gridDimension}
               scrollLeft={scrollLeft}
+              onScroll={onScroll}
             />
           </div>
           <div
@@ -352,7 +296,9 @@ export const TableSection = ({
   </AutoSizer>
 );
 
-interface DataTableProps {
+export interface DataTableProps {
+  dataId?: string;
+  showStats?: boolean;
   cellSizeCache?: CellSizeCache;
   pinnedColumns?: string[];
   columns: (string & {ghost?: boolean})[];
@@ -374,8 +320,8 @@ interface DataTableState {
   ghost?;
 }
 
-DataTableFactory.deps = [FieldTokenFactory];
-function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
+DataTableFactory.deps = [HeaderCellFactory];
+function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
   class DataTable extends Component<DataTableProps, DataTableState> {
     static defaultProps = {
       dataContainer: null,
@@ -385,7 +331,8 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
       sortColumn: {},
       fixedWidth: null,
       fixedHeight: null,
-      theme: {}
+      theme: {},
+      showStats: false
     };
 
     state: DataTableState = {
@@ -455,84 +402,6 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
 
     scaleCellsToWidth = debounce(this.doScaleCellsToWidth, 300);
 
-    renderHeaderCell = (
-      columns: (string & {ghost?: boolean})[],
-      isPinned: boolean,
-      props: DataTableProps,
-      toggleMoreOptions,
-      moreOptionsColumn
-    ) => {
-      // eslint-disable-next-line react/display-name
-      return cellInfo => {
-        const {columnIndex, key, style} = cellInfo;
-        const {colMeta, sortColumn = {}, sortTableColumn, pinTableColumn, copyTableColumn} = props;
-
-        const column = columns[columnIndex];
-        const isGhost = column.ghost;
-        const isSorted = sortColumn[column];
-        const firstCell = columnIndex === 0;
-
-        return (
-          <div
-            className={classnames('header-cell', {
-              [`column-${columnIndex}`]: true,
-              'pinned-header-cell': isPinned,
-              'first-cell': firstCell
-            })}
-            key={key}
-            style={style}
-            onClick={e => {
-              e.shiftKey ? sortTableColumn(column) : null;
-            }}
-            onDoubleClick={() => sortTableColumn(column)}
-            title={column}
-          >
-            {isGhost ? (
-              <div />
-            ) : (
-              <>
-                <section className="details">
-                  <div className="col-name">
-                    <div className="col-name__left">
-                      <div className="col-name__name">{colMeta[column].name}</div>
-                      <Button className="col-name__sort" onClick={() => sortTableColumn(column)}>
-                        {isSorted ? (
-                          isSorted === SORT_ORDER.ASCENDING ? (
-                            <ArrowUp height="14px" />
-                          ) : (
-                            <ArrowDown height="14px" />
-                          )
-                        ) : null}
-                      </Button>
-                    </div>
-                    <Button className="more" onClick={() => toggleMoreOptions(column)}>
-                      <VertThreeDots height="14px" />
-                    </Button>
-                  </div>
-
-                  <FieldToken type={colMeta[column].type} />
-                </section>
-
-                <section className="options">
-                  <OptionDropdown
-                    isOpened={moreOptionsColumn === column}
-                    column={column}
-                    toggleMoreOptions={toggleMoreOptions}
-                    sortTableColumn={mode => sortTableColumn(column, mode)}
-                    sortMode={sortColumn && sortColumn[column]}
-                    pinTableColumn={() => pinTableColumn(column)}
-                    copyTableColumn={() => copyTableColumn(column)}
-                    isSorted={isSorted}
-                    isPinned={isPinned}
-                  />
-                </section>
-              </>
-            )}
-          </div>
-        );
-      };
-    };
-
     renderDataCell = (columns, isPinned, props: DataTableProps) => {
       return cellInfo => {
         const {columnIndex, key, style, rowIndex} = cellInfo;
@@ -573,13 +442,27 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
       };
     };
 
+    renderHeaderCell(columns, isPinned, props, toggleMoreOptions, moreOptionsColumn) {
+      return cellInfo => (
+        <HeaderCell
+          cellInfo={cellInfo}
+          key={cellInfo.columnIndex}
+          columns={columns}
+          isPinned={isPinned}
+          props={props}
+          toggleMoreOptions={toggleMoreOptions}
+          moreOptionsColumn={moreOptionsColumn}
+        />
+      );
+    }
     render() {
       const {
         dataContainer,
         pinnedColumns = [],
         theme = {},
         fixedWidth,
-        fixedHeight = 0
+        fixedHeight = 0,
+        showStats
       } = this.props;
       const unpinnedColumns = this.unpinnedColumns(this.props);
 
@@ -593,14 +476,18 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
       );
 
       const hasPinnedColumns = Boolean(pinnedColumns.length);
-      const {headerRowHeight = defaultHeaderRowHeight, rowHeight = defaultRowHeight} = theme;
+      const {
+        headerRowHeight = defaultHeaderRowHeight,
+        headerRowWStatsHeight = defaultHeaderRowHeight,
+        rowHeight = defaultRowHeight
+      } = theme;
 
       const headerGridProps = {
         cellSizeCache,
         className: 'header-grid',
-        height: headerRowHeight,
+        height: showStats ? headerRowWStatsHeight : headerRowHeight,
         rowCount: 1,
-        rowHeight: headerRowHeight
+        rowHeight: showStats ? headerRowWStatsHeight : headerRowHeight
       };
 
       const dataGridProps = {
@@ -613,7 +500,7 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
 
       return (
         <Container className="data-table-container" ref={this.root}>
-          {Object.keys(cellSizeCache).length && (
+          {Object.keys(cellSizeCache).length ? (
             <ScrollSync>
               {({onScroll, scrollLeft, scrollTop}) => {
                 return (
@@ -688,7 +575,7 @@ function DataTableFactory(FieldToken: ReturnType<typeof FieldTokenFactory>) {
                 );
               }}
             </ScrollSync>
-          )}
+          ) : null}
         </Container>
       );
     }

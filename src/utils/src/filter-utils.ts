@@ -1008,7 +1008,10 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
  * Merge one filter with other filter prop domain
  */
 /* eslint-disable complexity */
-export function mergeFilterDomainStep(filter: Filter, filterProps?: any): Filter | null {
+export function mergeFilterDomainStep(
+  filter: Filter,
+  filterProps?: Partial<Filter>
+): (Filter & {step?: number}) | null {
   if (!filter) {
     return null;
   }
@@ -1041,9 +1044,9 @@ export function mergeFilterDomainStep(filter: Filter, filterProps?: any): Filter
 
     case ALL_FIELD_TYPES.timestamp:
       const step =
-        (filter as TimeRangeFilter).step < filterProps.step
+        (filter as TimeRangeFilter).step < (filterProps as TimeRangeFieldDomain).step
           ? (filter as TimeRangeFilter).step
-          : filterProps.step;
+          : (filterProps as TimeRangeFieldDomain).step;
 
       return {
         ...newFilter,

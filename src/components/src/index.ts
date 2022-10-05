@@ -220,6 +220,7 @@ export {default as Slider} from './common/slider/slider';
 export {default as SliderHandle} from './common/slider/slider-handle';
 export {default as SliderBarHandle} from './common/slider/slider-bar-handle';
 export {default as ActionPanel, ActionPanelItem} from './common/action-panel';
+export {default as HeaderCellFactory} from './common/data-table/header-cell';
 export {default as DataTableFactory} from './common/data-table';
 export {default as CanvasHack} from './common/data-table/canvas';
 export {default as OptionDropdown} from './common/data-table/option-dropdown';
