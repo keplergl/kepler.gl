@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {Component, CSSProperties, KeyboardEvent} from 'react';
+import {createPortal} from 'react-dom';
 import styled from 'styled-components';
 import window from 'global/window';
 import classnames from 'classnames';
@@ -36,6 +37,7 @@ import {Layer, EditorLayerUtils} from '@kepler.gl/layers';
 import {Filter, FeatureSelectionContext, Feature} from '@kepler.gl/types';
 import {FeatureOf, Polygon} from '@nebula.gl/edit-modes';
 import {Datasets} from '@kepler.gl/table';
+import {RootContext} from '../';
 
 const DECKGL_RENDER_LAYER = 'default-deckgl-overlay-wrapper';
 
@@ -160,20 +162,27 @@ export default function EditorFactory(
       const {rightClick, position, mapIndex} = selectionContext || {};
 
       return (
-        <StyledWrapper className={classnames('editor', className)} style={style}>
-          {Boolean(rightClick) && selectedFeature && index === mapIndex ? (
-            <FeatureActionPanel
-              selectedFeature={selectedFeature as FeatureOf<Polygon>}
-              datasets={datasets}
-              layers={availableLayers}
-              currentFilter={currentFilter}
-              onClose={this._closeFeatureAction}
-              onDeleteFeature={this._onDeleteSelectedFeature}
-              onToggleLayer={this._togglePolygonFilter}
-              position={position || null}
-            />
-          ) : null}
-        </StyledWrapper>
+        <RootContext.Consumer>
+          {context =>
+            createPortal(
+              <StyledWrapper className={classnames('editor', className)} style={style}>
+                {Boolean(rightClick) && selectedFeature && index === mapIndex ? (
+                  <FeatureActionPanel
+                    selectedFeature={selectedFeature as FeatureOf<Polygon>}
+                    datasets={datasets}
+                    layers={availableLayers}
+                    currentFilter={currentFilter}
+                    onClose={this._closeFeatureAction}
+                    onDeleteFeature={this._onDeleteSelectedFeature}
+                    onToggleLayer={this._togglePolygonFilter}
+                    position={position || null}
+                  />
+                ) : null}
+              </StyledWrapper>,
+              context?.current ?? document.body
+            )
+          }
+        </RootContext.Consumer>
       );
     }
   }
