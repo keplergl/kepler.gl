@@ -23,6 +23,7 @@ import {DataContainerInterface} from '@kepler.gl/table';
 import {parseFieldValue} from '@kepler.gl/utils';
 
 const MIN_GHOST_CELL_SIZE: number = 200;
+const MIN_CELL_SIZE = 45;
 
 type RenderSizeParam = {
   text: {dataContainer: DataContainerInterface; column: string};
@@ -57,9 +58,9 @@ export function renderedSize({
   fontSize = 12,
   font = 'Lato',
   cellPadding = 40,
-  maxCellSize = 400,
-  maxHeaderSize = 150,
-  minCellSize = 45,
+  maxCellSize = 500,
+  maxHeaderSize = 500,
+  minCellSize = MIN_CELL_SIZE,
   optionsButton = 30
 }: RenderSizeParam): {row: number; header: number} {
   if (!document) {

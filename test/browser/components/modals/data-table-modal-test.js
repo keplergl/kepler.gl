@@ -44,7 +44,7 @@ import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-s
 
 import {createDataContainer} from '@kepler.gl/table';
 
-const {VertThreeDots, ArrowUp} = Icons;
+const {VertThreeDots} = Icons;
 const DataTableModal = appInjector.get(DataTableModalFactory);
 const DataTable = appInjector.get(DataTableFactory);
 const FieldToken = appInjector.get(FieldTokenFactory);
@@ -163,17 +163,25 @@ test('Components -> DataTableModal.render: csv 1', t => {
   ];
 
   const expectedColMeta = {
-    'gps_data.utc_timestamp': {name: 'gps_data.utc_timestamp', type: 'timestamp'},
+    'gps_data.utc_timestamp': {
+      name: 'gps_data.utc_timestamp',
+      type: 'timestamp',
+      format: 'YYYY-M-D H:m:s'
+    },
     'gps_data.lat': {name: 'gps_data.lat', type: 'real'},
     'gps_data.lng': {name: 'gps_data.lng', type: 'real'},
     'gps_data.types': {name: 'gps_data.types', type: 'string'},
-    epoch: {name: 'epoch', type: 'timestamp'},
+    epoch: {name: 'epoch', type: 'timestamp', format: 'X'},
     has_result: {name: 'has_result', type: 'boolean'},
     uid: {name: 'uid', type: 'integer'},
-    time: {name: 'time', type: 'timestamp'},
-    begintrip_ts_utc: {name: 'begintrip_ts_utc', type: 'timestamp'},
-    begintrip_ts_local: {name: 'begintrip_ts_local', type: 'timestamp'},
-    date: {name: 'date', type: 'date'}
+    time: {name: 'time', type: 'timestamp', format: 'YYYY-M-DTHH:mm:ss.SSSS'},
+    begintrip_ts_utc: {name: 'begintrip_ts_utc', type: 'timestamp', format: 'YYYY-M-D HH:mm:ssZZ'},
+    begintrip_ts_local: {
+      name: 'begintrip_ts_local',
+      type: 'timestamp',
+      format: 'YYYY-M-D HH:mm:ssZZ'
+    },
+    date: {name: 'date', type: 'date', format: 'YYYY-M-D'}
   };
 
   t.deepEqual(props.columns, expectedColumns, 'DataTable should have the correct props.columns');
@@ -284,7 +292,7 @@ test('Components -> DataTableModal -> render DataTable: csv 1', t => {
 
   t.equal(
     wrapper2.find('.header-cell').length,
-    testFields.length,
+    testFields.length * 3,
     `should render ${testFields.length} headers`
   );
 
@@ -420,7 +428,7 @@ test('Components -> DataTableModal -> render DataTable: sort and pin', t => {
 
   t.equal(
     wrapper2.find('.header-cell').length,
-    testFields.length,
+    testFields.length * 3,
     `should render ${testFields.length} headers`
   );
 
@@ -444,22 +452,13 @@ test('Components -> DataTableModal -> render DataTable: sort and pin', t => {
     t.equal(
       wrapper2
         .find('.header-cell')
-        .at(i)
+        .at(i * 3)
         .find('.col-name__name')
         .text(),
       expectedHeaders[i],
       'should render corrected pinned columns'
     );
   });
-
-  t.equal(
-    wrapper2
-      .find('.header-cell')
-      .at(2)
-      .find(ArrowUp).length,
-    1,
-    'should render sort icon'
-  );
 
   t.end();
 });
@@ -542,9 +541,9 @@ test('Components -> cellSize -> renderedSize', t => {
     .props();
 
   const expected = {
-    _geojson: {row: 400, header: 96},
-    'income level of people over 65': {row: 85, header: 150},
-    engagement: {row: 127, header: 115}
+    _geojson: {row: 500, header: 192},
+    'income level of people over 65': {row: 182, header: 209},
+    engagement: {row: 182, header: 192}
   };
 
   t.deepEqual(
@@ -614,7 +613,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
   componentInstance.setState(result);
   wrapper2.update();
 
-  t.equal(wrapper2.find('.header-cell').length, 7, `should render 7 header cells`);
+  t.equal(wrapper2.find('.header-cell').length, 21, `should render 7 header cells`);
 
   // test header cell
   const expectedHeaders = [
@@ -629,7 +628,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
 
   expectedHeaders.forEach((name, index) => {
     const header = wrapper2.find(`.header-cell.column-${index}`);
-    t.equal(header.length, 1, 'should render 1 header');
+    t.equal(header.length, 3, 'should render 1 header');
 
     if (index < 6) {
       const cellText = header.find('.col-name__name').text();
@@ -640,7 +639,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
       t.equal(header.find(OptionDropdown).length, 1, 'should render OptionDropdown');
     } else {
       // if ghost cell
-      t.equal(header.text(), '', 'cell should be empty');
+      t.equal(header.at(2).text(), '', 'cell should be empty');
     }
   });
 

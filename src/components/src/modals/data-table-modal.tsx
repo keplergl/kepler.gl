@@ -27,6 +27,8 @@ import {renderedSize} from '../common/data-table/cell-size';
 import CanvasHack from '../common/data-table/canvas';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
 
+const MIN_STATS_CELL_SIZE = 142;
+
 const dgSettings = {
   sidePadding: '38px',
   verticalPadding: '16px',
@@ -34,7 +36,7 @@ const dgSettings = {
 };
 
 const StyledModal = styled.div`
-  min-height: 70vh;
+  min-height: 85vh;
   overflow: hidden;
   display: flex;
 `;
@@ -124,11 +126,13 @@ function DataTableModalFactory(
     columns = createSelector(this.fields, fields => fields.map(f => f.name));
     colMeta = createSelector(this.fields, fields =>
       fields.reduce(
-        (acc, {name, displayName, type}) => ({
+        (acc, {name, displayName, type, filterProps, format}) => ({
           ...acc,
           [name]: {
             name: displayName || name,
-            type
+            type,
+            ...(format ? {format} : {}),
+            ...(filterProps?.columnStats ? {columnStats: filterProps.columnStats} : {})
           }
         }),
         {}
@@ -166,7 +170,8 @@ function DataTableModalFactory(
             colIdx,
             type: field.type,
             fontSize: this.props.theme.cellFontSize,
-            font: this.props.theme.fontFamily
+            font: this.props.theme.fontFamily,
+            minCellSize: MIN_STATS_CELL_SIZE
           })
         }),
         {}
@@ -219,6 +224,7 @@ function DataTableModalFactory(
             {datasets[dataId] ? (
               <DataTable
                 key={dataId}
+                dataId={dataId}
                 columns={columns}
                 colMeta={colMeta}
                 cellSizeCache={cellSizeCache}
@@ -229,6 +235,7 @@ function DataTableModalFactory(
                 copyTableColumn={this.copyTableColumn}
                 pinTableColumn={this.pinTableColumn}
                 sortTableColumn={this.sortTableColumn}
+                showStats
               />
             ) : null}
           </TableContainer>
