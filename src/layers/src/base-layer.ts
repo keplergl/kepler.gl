@@ -577,10 +577,10 @@ class Layer {
    * Calculate a elevation zoom multiplier to render points, so they are visible in all zoom level
    * @param {object} mapState
    * @param {number} mapState.zoom - actual zoom
-   * @param {number | void} mapState.zoomOffset - zoomOffset when render in the plot container for export image
+   * @param {number=} mapState.zoomOffset - zoomOffset when render in the plot container for export image
    * @returns {number}
    */
-  getElevationZoomFactor({zoom, zoomOffset = 0}: {zoom: number; zoomOffset?: number}) {
+  getElevationZoomFactor({zoom, zoomOffset = 0}: {zoom: number; zoomOffset?: number}): number {
     return this.config.visConfig.enableElevationZoomFactor
       ? Math.pow(2, Math.max(8 - zoom + zoomOffset, 0))
       : 1;
