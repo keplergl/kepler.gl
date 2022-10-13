@@ -33,8 +33,8 @@ import {TOOLTIP_FORMAT_TYPES} from './tooltip';
 import {RGBAColor} from '@kepler.gl/types';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
-export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl';
-export const ICON_PREFIX = `${CLOUDFRONT}/geodude`;
+export const KEPLER_UNFOLDED_BUCKET = 'https://cdn.unfolded.ai/statics/keplergl';
+export const BASEMAP_ICON_PREFIX = `${KEPLER_UNFOLDED_BUCKET}/geodude`;
 export const DEFAULT_MAPBOX_API_URL = 'https://api.mapbox.com';
 export const TRANSITION_DURATION = 0;
 
@@ -296,7 +296,7 @@ export const DEFAULT_MAP_STYLES = [
     id: NO_MAP_ID,
     label: 'No Basemap',
     url: null,
-    icon: 'https://storage.googleapis.com/unfolded_public/statics/keplergl/geodude/NO_BASEMAP.png',
+    icon: `${BASEMAP_ICON_PREFIX}/NO_BASEMAP.png`,
     layerGroups: [BACKGROUND_LAYER_GROUP],
     colorMode: BASE_MAP_COLOR_MODES.NONE,
     style: EMPTY_MAPBOX_STYLE
@@ -305,7 +305,7 @@ export const DEFAULT_MAP_STYLES = [
     id: 'dark',
     label: 'Dark',
     url: 'mapbox://styles/uberdata/cjoqbbf6l9k302sl96tyvka09',
-    icon: `${ICON_PREFIX}/UBER_DARK_V2.png`,
+    icon: `${BASEMAP_ICON_PREFIX}/UBER_DARK_V2.png`,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.DARK
   },
@@ -313,7 +313,7 @@ export const DEFAULT_MAP_STYLES = [
     id: 'light',
     label: 'Light',
     url: 'mapbox://styles/uberdata/cjoqb9j339k1f2sl9t5ic5bn4',
-    icon: `${ICON_PREFIX}/UBER_LIGHT_V2.png`,
+    icon: `${BASEMAP_ICON_PREFIX}/UBER_LIGHT_V2.png`,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.LIGHT
   },
@@ -321,7 +321,7 @@ export const DEFAULT_MAP_STYLES = [
     id: 'muted',
     label: 'Muted Light',
     url: 'mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4',
-    icon: `${ICON_PREFIX}/UBER_MUTED_LIGHT.png`,
+    icon: `${BASEMAP_ICON_PREFIX}/UBER_MUTED_LIGHT.png`,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.LIGHT
   },
@@ -329,7 +329,7 @@ export const DEFAULT_MAP_STYLES = [
     id: 'muted_night',
     label: 'Muted Night',
     url: 'mapbox://styles/uberdata/cjfxhlikmaj1b2soyzevnywgs',
-    icon: `${ICON_PREFIX}/UBER_MUTED_NIGHT.png`,
+    icon: `${BASEMAP_ICON_PREFIX}/UBER_MUTED_NIGHT.png`,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.DARK
   },
@@ -337,7 +337,7 @@ export const DEFAULT_MAP_STYLES = [
     id: 'satellite',
     label: 'Satellite',
     url: `mapbox://styles/mapbox/satellite-v9`,
-    icon: `${ICON_PREFIX}/UBER_SATELLITE.png`,
+    icon: `${BASEMAP_ICON_PREFIX}/UBER_SATELLITE.png`,
     layerGroups: [],
     colorMode: BASE_MAP_COLOR_MODES.NONE
   }

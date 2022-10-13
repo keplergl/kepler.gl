@@ -20,17 +20,18 @@
 
 import React, {ComponentType} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {CLOUDFRONT} from '@kepler.gl/constants';
+import {KEPLER_UNFOLDED_BUCKET} from '@kepler.gl/constants';
 import classNames from 'classnames';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {BaseProps} from '../../common/icons';
 
-type LayerTypeListItemProps = {
+export type LayerTypeListItemProps = {
   value: {
     icon: ComponentType<Partial<BaseProps>>;
     label: string;
   };
-  isTile: boolean;
+  isTile?: boolean;
+  className?: string;
 };
 
 type WithThemeProps = LayerTypeListItemProps & {theme: Record<string, string>};
@@ -55,7 +56,7 @@ const StyledListItem = styled.div`
   .layer-type-selector__item__icon {
     color: ${props => props.theme.labelColor};
     display: flex;
-    background-image: url(${`${CLOUDFRONT}/kepler.gl-layer-icon-bg.png`});
+    background-image: url(${`${KEPLER_UNFOLDED_BUCKET}/images/kepler.gl-layer-icon-bg.png`});
     background-size: ${props => props.theme.layerTypeIconSizeL}px
       ${props => props.theme.layerTypeIconSizeL}px;
     height: ${props => props.theme.layerTypeIconSizeL}px;

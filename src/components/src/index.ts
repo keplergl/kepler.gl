@@ -263,7 +263,7 @@ export type {SourceDataCatalogProps} from './side-panel/common/source-data-catal
 export type {DatasetInfoProps} from './side-panel/common/dataset-info';
 export type {DatasetTagProps} from './side-panel/common/dataset-tag';
 export type {CustomPanelsProps} from './side-panel/custom-panel';
-export type {LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
+export type {LayerTypeListItemProps, LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
 export type {LayerGroupColorPickerProps} from './side-panel/map-style-panel/map-layer-group-color-picker';
 export type {MapLegendPanelProps, MapLegendPanelFactoryDeps} from './map/map-legend-panel';
 export type {FormatterDropdownProps} from './common/data-table/option-dropdown';
