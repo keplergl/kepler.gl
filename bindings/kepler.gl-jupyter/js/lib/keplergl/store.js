@@ -20,10 +20,10 @@
 
 import {applyMiddleware, compose, createStore} from 'redux';
 import {combineReducers} from 'redux';
-import {keplerGlReducer} from 'kepler.gl/reducers';
+import {keplerGlReducer} from '@kepler.gl/reducers';
 
 // TODO: remove this after added middleware to files
-import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
+import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 
 const customizedKeplerGlReducer = keplerGlReducer.initialState({
   uiState: {

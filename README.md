@@ -93,8 +93,7 @@ You need to add `taskMiddleware` of `react-palm` to your store too. We are activ
 
 ```js
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
-import keplerGlReducer from 'kepler.gl/reducers';
-import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
+import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 
 const initialState = {};
 const reducers = combineReducers({
