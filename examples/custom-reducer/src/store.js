@@ -19,7 +19,8 @@
 // THE SOFTWARE.
 
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
-import keplerGlReducer, {uiStateUpdaters, enhanceReduxMiddleware} from '@kepler.gl/reducers';
+import keplerGlReducer, {uiStateUpdaters} from '@kepler.gl/reducers';
+import {enhanceReduxMiddleware} from '@kepler.gl/middleware';
 import appReducer from './app-reducer';
 import window from 'global/window';
 
