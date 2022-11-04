@@ -50,16 +50,21 @@ import {
   transformRequest,
   observeDimensions,
   unobserveDimensions,
-  hasMobileWidth
+  hasMobileWidth,
+  getMapLayersFromSplitMaps,
+  onViewPortChange
 } from '@kepler.gl/utils';
 import {breakPointValues} from '@kepler.gl/styles';
 
 // default-settings
-import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepler.gl/constants';
+import {
+  FILTER_TYPES,
+  GEOCODER_LAYER_ID,
+  THROTTLE_NOTIFICATION_TIME
+} from '@kepler.gl/constants';
 
 import ErrorBoundary from './common/error-boundary';
 import {LOCALE_CODES} from '@kepler.gl/localization';
-import {getMapLayersFromSplitMaps, onViewPortChange} from '@kepler.gl/utils';
 import {MapView} from '@deck.gl/core';
 import {
   MapStyle,

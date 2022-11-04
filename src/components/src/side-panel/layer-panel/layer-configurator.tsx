@@ -40,14 +40,8 @@ import HowToButton from './how-to-button';
 
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
-import {CHANNEL_SCALE_SUPPORTED_FIELDS, ColorRange} from '@kepler.gl/constants';
-import {
-  Layer,
-  LayerBaseConfig,
-  LAYER_TYPES,
-  VisualChannel,
-  AggregationLayer
-} from '@kepler.gl/layers';
+import {CHANNEL_SCALE_SUPPORTED_FIELDS, LAYER_TYPES, ColorRange} from '@kepler.gl/constants';
+import {Layer, LayerBaseConfig, VisualChannel, AggregationLayer} from '@kepler.gl/layers';
 
 import {NestedPartial, RGBColor, LayerVisConfig, ColorUI, Field} from '@kepler.gl/types';
 import {toggleModal, ActionHandler} from '@kepler.gl/actions';

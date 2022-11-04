@@ -42,7 +42,7 @@ import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
 
-import {createDataContainer} from '@kepler.gl/table';
+import {createDataContainer} from '@kepler.gl/utils';
 
 const {VertThreeDots} = Icons;
 const DataTableModal = appInjector.get(DataTableModalFactory);

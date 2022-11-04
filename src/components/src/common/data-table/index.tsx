@@ -31,11 +31,10 @@ import {CellSizeCache} from './cell-size';
 import Grid from './grid';
 import HeaderCellFactory from './header-cell';
 
-import {parseFieldValue} from '@kepler.gl/utils';
+import {parseFieldValue, DataContainerInterface} from '@kepler.gl/utils';
 import {adjustCellsToContainer} from './cell-size';
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {DataContainerInterface} from '@kepler.gl/table';
 
 const defaultHeaderRowHeight = 55;
 const defaultRowHeight = 32;

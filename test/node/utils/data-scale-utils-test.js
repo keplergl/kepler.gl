@@ -26,7 +26,7 @@ import {
   getLinearDomain,
   getLogDomain,
   createDataContainer
-} from '@kepler.gl/table';
+} from '@kepler.gl/utils';
 
 function numberSort(a, b) {
   return a - b;

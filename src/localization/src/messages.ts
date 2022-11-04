@@ -55,13 +55,13 @@ export const messages: {
   };
 } = {};
 
-messages['en'] = enFlat;
-messages['fi'] = {...enFlat, ...flattenMessages(fi)};
-messages['pt'] = {...enFlat, ...flattenMessages(pt)};
-messages['es'] = {...enFlat, ...flattenMessages(es)};
-messages['ca'] = {...enFlat, ...flattenMessages(ca)};
-messages['cn'] = {...enFlat, ...flattenMessages(cn)};
-messages['ja'] = {...enFlat, ...flattenMessages(ja)};
-messages['ru'] = {...enFlat, ...flattenMessages(ru)};
+messages.en = enFlat;
+messages.fi = {...enFlat, ...flattenMessages(fi)};
+messages.pt = {...enFlat, ...flattenMessages(pt)};
+messages.es = {...enFlat, ...flattenMessages(es)};
+messages.ca = {...enFlat, ...flattenMessages(ca)};
+messages.cn = {...enFlat, ...flattenMessages(cn)};
+messages.ja = {...enFlat, ...flattenMessages(ja)};
+messages.ru = {...enFlat, ...flattenMessages(ru)};
 
 export default messages;

@@ -29,6 +29,11 @@
     "dist",
     "umd"
   ],
+  "dependencies": {
+    "@kepler.gl/processors": "2.5.5",
+    "d3-request": "^1.0.6",
+    "react-palm": "^3.3.7"
+  },
   "nyc": {
     "sourceMap": false,
     "instrument": false

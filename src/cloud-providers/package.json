@@ -29,6 +29,10 @@
     "dist",
     "umd"
   ],
+  "dependencies": {
+    "@kepler.gl/types": "2.5.5",
+    "react": "^16.8.4"
+  },
   "nyc": {
     "sourceMap": false,
     "instrument": false

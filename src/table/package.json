@@ -29,6 +29,18 @@
     "dist",
     "umd"
   ],
+  "dependencies": {
+    "@kepler.gl/constants": "2.5.5",
+    "@kepler.gl/layers": "2.5.5",
+    "@kepler.gl/types": "2.5.5",
+    "@kepler.gl/utils": "2.5.5",
+    "@types/d3-array": "^2.0.0",
+    "@types/lodash.uniq": "^4.5.7",
+    "d3-array": "^2.8.0",
+    "global": "^4.3.0",
+    "lodash.uniq": "^4.0.1",
+    "moment": "^2.10.6"
+  },
   "nyc": {
     "sourceMap": false,
     "instrument": false

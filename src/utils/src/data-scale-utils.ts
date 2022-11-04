@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {notNullorUndefined, unique} from '@kepler.gl/utils';
+import {notNullorUndefined, unique} from './data-utils';
 import {extent} from 'd3-array';
 import {DataContainerInterface} from './data-container-interface';
 

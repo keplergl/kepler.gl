@@ -27,7 +27,7 @@ import {
   camelize,
   capitalizeFirstLetter,
   arrayInsert
-} from '../../../src/utils';
+} from '@kepler.gl/utils';
 
 test('Utils -> set', t => {
   const obj1 = {map: {map1: 'world'}};

@@ -24,7 +24,12 @@ import {rgb} from 'd3-color';
 import ColorLegend from '../common/color-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {Layer, LayerBaseConfig, VisualChannel, VisualChannelDescription} from '@kepler.gl/layers';
+import {
+  Layer,
+  LayerBaseConfig,
+  VisualChannel,
+  VisualChannelDescription
+} from '@kepler.gl/layers';
 
 interface StyledMapControlLegendProps {
   width?: number;

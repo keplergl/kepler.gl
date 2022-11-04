@@ -24,7 +24,11 @@ import {EnhancedLineLayer} from '@kepler.gl/deckgl-layers';
 import LineLayerIcon from './line-layer-icon';
 import ArcLayer, {ArcLayerConfig} from '../arc-layer/arc-layer';
 import {LayerColumn} from '../base-layer';
-import {LAYER_VIS_CONFIGS, ColorRange, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
+import {
+  LAYER_VIS_CONFIGS,
+  ColorRange,
+  PROJECTED_PIXEL_SIZE_MULTIPLIER
+} from '@kepler.gl/constants';
 import {
   Merge,
   RGBColor,
@@ -33,7 +37,8 @@ import {
   VisConfigNumber,
   VisConfigRange
 } from '@kepler.gl/types';
-import {default as KeplerTable, DataContainerInterface} from '@kepler.gl/table';
+import {default as KeplerTable} from '@kepler.gl/table';
+import {DataContainerInterface} from '@kepler.gl/utils';
 
 export type LineLayerVisConfigSettings = {
   opacity: VisConfigNumber;

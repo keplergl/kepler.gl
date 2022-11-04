@@ -20,7 +20,8 @@
 
 import React, {useMemo, useCallback} from 'react';
 import ItemSelector from '../common/item-selector/item-selector';
-import {Layer, LAYER_TYPES} from '@kepler.gl/layers';
+import {Layer} from '@kepler.gl/layers';
+import {LAYER_TYPES} from '@kepler.gl/constants';
 import {PolygonFilterProps} from './types';
 import {StyledFilterPanel} from './components';
 
