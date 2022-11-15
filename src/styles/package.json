@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/styles",
   "author": "Shan He <shan@uber.com>",
-  "version": "2.5.5",
+  "version": "3.0.0-alpha.0",
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/index.js",
@@ -30,7 +30,7 @@
     "umd"
   ],
   "dependencies": {
-    "@kepler.gl/constants": "2.5.5",
+    "@kepler.gl/constants": "3.0.0-alpha.0",
     "@types/styled-components": "^5.1.25",
     "styled-components": "^4.1.3"
   },
