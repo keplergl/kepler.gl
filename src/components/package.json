@@ -92,7 +92,7 @@
     "lodash.uniqby": "^4.7.0",
     "mapbox": "^1.0.0-beta10",
     "mapbox-gl": "^1.0.0",
-    "mjolnir.js": "^2.5.0",
+    "mjolnir.js": "^2.7.0",
     "moment": "^2.10.6",
     "moment-timezone": "^0.5.32",
     "prop-types": "^15.6.0",

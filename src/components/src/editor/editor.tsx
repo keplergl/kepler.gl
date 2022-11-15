@@ -39,7 +39,7 @@ import {DEFAULT_RADIUS, getStyle as getFeatureStyle} from './feature-styles';
 import {getStyle as getEditHandleStyle, getEditHandleShape} from './handle-style';
 import {Filter} from '@kepler.gl/types';
 import {Feature} from '@nebula.gl/edit-modes';
-import {MjolnirEvent} from 'mjolnir.js';
+import {MjolnirGestureEvent} from 'mjolnir.js';
 import {Datasets} from '@kepler.gl/table';
 
 const StyledWrapper = styled.div`
@@ -149,7 +149,7 @@ export default function EditorFactory(
       sourceEvent
     }: {
       selectedFeatureId: string | number;
-      sourceEvent: MjolnirEvent;
+      sourceEvent: MjolnirGestureEvent;
     }) => {
       const allFeatures = this.allFeaturesSelector(this.props);
       this.setState(
