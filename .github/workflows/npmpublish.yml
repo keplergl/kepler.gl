@@ -15,7 +15,7 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - run: npm install -g yarn
       - run: yarn
-      - run: npm install npm@8.19.2
-      - run: npm publish --workspaces --access public
+      - run: npm i -g npm@8.19.2
+      - run: npm --version && npm publish --workspaces --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
