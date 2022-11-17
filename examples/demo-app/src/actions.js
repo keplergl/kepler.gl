@@ -20,7 +20,7 @@
 
 import {push} from 'react-router-redux';
 import {request, text as requestText, json as requestJson} from 'd3-request';
-import {loadFiles, toggleModal} from 'kepler.gl/actions';
+import {loadFiles, toggleModal} from '@kepler.gl/actions';
 
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,

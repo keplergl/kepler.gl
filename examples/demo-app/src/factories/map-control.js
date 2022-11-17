@@ -20,7 +20,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import {MapControlFactory, withState} from 'kepler.gl/components';
+import {MapControlFactory, withState} from '@kepler.gl/components';
 import {SampleMapPanel} from '../components/map-control/map-control';
 
 CustomMapControlFactory.deps = MapControlFactory.deps;

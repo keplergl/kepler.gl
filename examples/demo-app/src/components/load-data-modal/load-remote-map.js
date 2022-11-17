@@ -24,7 +24,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {CORS_LINK} from '../../constants/default-settings';
 import {FormattedHTMLMessage, FormattedMessage} from 'react-intl';
-import {Button} from 'kepler.gl/components';
+import {Button} from '@kepler.gl/components';
 import {validateUrl} from '../../utils/url';
 
 const propTypes = {

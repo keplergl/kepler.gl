@@ -21,7 +21,7 @@
 import {combineReducers, createStore, applyMiddleware, compose} from 'redux';
 import {routerReducer, routerMiddleware} from 'react-router-redux';
 import {browserHistory} from 'react-router';
-import {enhanceReduxMiddleware} from '@kepler.gl/middleware';
+import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import thunk from 'redux-thunk';
 // eslint-disable-next-line no-unused-vars
 import window from 'global/window';

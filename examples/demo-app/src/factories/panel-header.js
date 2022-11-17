@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {PanelHeaderFactory, Icons} from 'kepler.gl/components';
-import {BUG_REPORT_LINK, USER_GUIDE_DOC} from 'kepler.gl/constants';
+import {PanelHeaderFactory, Icons} from '@kepler.gl/components';
+import {BUG_REPORT_LINK, USER_GUIDE_DOC} from '@kepler.gl/constants';
 
 export function CustomPanelHeaderFactory(...deps) {
   const PanelHeader = PanelHeaderFactory(...deps);
