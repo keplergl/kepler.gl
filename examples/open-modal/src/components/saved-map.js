@@ -20,7 +20,7 @@
 
 import React, {Component} from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 export default class SavedMap extends Component {
   render() {

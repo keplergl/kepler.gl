@@ -19,8 +19,7 @@
 // THE SOFTWARE.
 
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
-import keplerGlReducer from 'kepler.gl/reducers';
-import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
+import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import appReducer from './app-reducer';
 
 const reducers = combineReducers({
