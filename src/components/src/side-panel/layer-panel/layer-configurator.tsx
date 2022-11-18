@@ -555,6 +555,13 @@ export default function LayerConfiguratorFactory(
               />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
+
+          {/* text label */}
+          <TextLabelPanel
+            fields={visConfiguratorProps.fields}
+            updateLayerTextLabel={this.props.updateLayerTextLabel}
+            textLabel={layer.config.textLabel}
+          />
         </StyledLayerVisualConfigurator>
       );
     }
