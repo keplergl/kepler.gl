@@ -987,7 +987,7 @@ export const updateLayerAnimationSpeedUpdater = (
  */
 export const setFilterViewUpdater = (
   state: VisState,
-  action: VisStateActions.EnlargeFilterUpdaterAction
+  action: VisStateActions.SetFilterViewUpdaterAction
 ) => {
   const {view, idx} = action;
   return {

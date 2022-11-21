@@ -757,7 +757,7 @@ export function toggleLayerAnimationControl(): Merge<
   };
 }
 
-export type EnlargeFilterUpdaterAction = {
+export type SetFilterViewUpdaterAction = {
   idx: number;
   view: Filter['view'];
 };
@@ -772,7 +772,7 @@ export type EnlargeFilterUpdaterAction = {
 export function setFilterView(
   idx: number,
   view: Filter['view']
-): Merge<EnlargeFilterUpdaterAction, {type: typeof ActionTypes.SET_FILTER_VIEW}> {
+): Merge<SetFilterViewUpdaterAction, {type: typeof ActionTypes.SET_FILTER_VIEW}> {
   return {
     type: ActionTypes.SET_FILTER_VIEW,
     idx,
