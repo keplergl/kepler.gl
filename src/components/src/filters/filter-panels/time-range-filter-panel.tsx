@@ -59,7 +59,6 @@ function TimeRangeFilterPanelFactory(
         [filter.id, isEnlarged, enlargeFilter]
       );
 
-      // check the following enlarged, orig conflict
       return (
         <>
           <FieldPanelWithFieldSelect
