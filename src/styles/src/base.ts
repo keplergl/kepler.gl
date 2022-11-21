@@ -389,6 +389,8 @@ export const notificationPanelItemHeight = 60;
 
 // Data Table
 const headerRowHeight = 70;
+const headerStatsControlHeight = 32;
+const headerRowWStatsHeight = 364;
 const rowHeight = 32;
 const headerPaddingTop = 6;
 const headerPaddingBottom = 8;
@@ -398,6 +400,8 @@ const cellFontSize = 10;
 const gridPaddingSide = 24;
 const headerCellBackground = '#FFFFFF';
 const headerCellBorderColor = '#E0E0E0';
+const headerCellStatsBackground = '#F8FAFF';
+const headerCellStatsControlBackground = '#EAF0FF';
 const headerCellIconColor = '#666666';
 const cellBorderColor = '#E0E0E0';
 const evenRowBackground = '#FFFFFF';
@@ -545,12 +549,12 @@ const inputLT = css`
 
   background-color: ${props => props.theme.selectBackgroundLT};
   border: 1px solid
-  ${props =>
-    props.active
-      ? props.theme.selectActiveBorderColor
-      : props.error
-      ? props.theme.errorColor
-      : props.theme.selectBorderColorLT};
+    ${props =>
+      props.active
+        ? props.theme.selectActiveBorderColor
+        : props.error
+        ? props.theme.errorColor
+        : props.theme.selectBorderColorLT};
   color: ${props => props.theme.selectColorLT};
   caret-color: ${props => props.theme.inputBorderActiveColorLT};
 
@@ -1451,6 +1455,8 @@ export const theme = {
 
   // Data Table
   headerRowHeight,
+  headerRowWStatsHeight,
+  headerStatsControlHeight,
   rowHeight,
   headerPaddingTop,
   headerPaddingBottom,
@@ -1461,6 +1467,8 @@ export const theme = {
   optionButtonColor,
   headerCellBackground,
   headerCellBorderColor,
+  headerCellStatsBackground,
+  headerCellStatsControlBackground,
   headerCellIconColor,
   cellBorderColor,
   evenRowBackground,
