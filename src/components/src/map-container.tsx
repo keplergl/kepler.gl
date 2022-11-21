@@ -51,6 +51,7 @@ import {
   observeDimensions,
   unobserveDimensions,
   hasMobileWidth,
+  EMPTY_MAPBOX_STYLE,
   getMapLayersFromSplitMaps,
   onViewPortChange
 } from '@kepler.gl/utils';
@@ -660,7 +661,7 @@ export default function MapContainerFactory(
           <MapComponent
             key="bottom"
             {...mapProps}
-            mapStyle={mapStyle.bottomMapStyle}
+            mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
             {...bottomMapContainerProps}
             ref={this._setMapboxMap}
             getCursor={hoverInfo ? () => 'pointer' : undefined}
@@ -691,10 +692,9 @@ export default function MapContainerFactory(
     }
 
     render() {
-      const {mapStyle} = this.props;
       return (
         <StyledMapContainer ref={this._ref} style={MAP_STYLE.container}>
-          {mapStyle.bottomMapStyle && this._renderMap()}
+          {this._renderMap()}
         </StyledMapContainer>
       );
     }

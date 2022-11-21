@@ -113,7 +113,8 @@ export {
   getStyleDownloadUrl,
   getStyleImageIcon,
   scaleMapStyleByResolution,
-  mergeLayerGroupVisibility
+  mergeLayerGroupVisibility,
+  EMPTY_MAPBOX_STYLE
 } from './map-style-utils/mapbox-gl-style-editor';
 export {isValidMapInfo} from './map-info-utils';
 export {
