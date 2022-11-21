@@ -51,7 +51,21 @@ import {
   computeSplitMapLayers,
   removeLayerFromSplitMaps,
   isRgbColor,
-  parseFieldValue
+  parseFieldValue,
+  applyFilterFieldName,
+  applyFiltersToDatasets,
+  featureToFilterValue,
+  filterDatasetCPU,
+  FILTER_UPDATER_PROPS,
+  generatePolygonFilter,
+  getDefaultFilter,
+  getFilterIdInFeature,
+  getTimeWidgetTitleFormatter,
+  isInRange,
+  LIMITED_FILTER_EFFECT_PROPS,
+  updateFilterDataId,
+  getFilterPlot,
+  getDefaultFilterPlotType
 } from '@kepler.gl/utils';
 
 import {
@@ -78,26 +92,15 @@ import KeplerGLSchema, {VisState} from '@kepler.gl/schemas';
 import {Filter, InteractionConfig, AnimationConfig, Editor} from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
-import {copyTableAndUpdate, Datasets, pinTableColumns, sortDatasetByColumn} from '@kepler.gl/table';
 import {calculateLayerData, findDefaultLayer} from './layer-utils';
 import {
-  applyFilterFieldName,
-  applyFiltersToDatasets,
-  featureToFilterValue,
-  filterDatasetCPU,
-  FILTER_UPDATER_PROPS,
-  generatePolygonFilter,
-  getDefaultFilter,
-  getFilterIdInFeature,
-  getTimeWidgetTitleFormatter,
-  isInRange,
-  LIMITED_FILTER_EFFECT_PROPS,
-  updateFilterDataId,
+  copyTableAndUpdate,
+  Datasets,
+  pinTableColumns,
+  sortDatasetByColumn,
   assignGpuChannel,
   setFilterGpuMode,
-  createNewDataEntry,
-  getFilterPlot,
-  getDefaultFilterPlotType
+  createNewDataEntry
 } from '@kepler.gl/table';
 import {findFieldsToShow} from './interaction-utils';
 

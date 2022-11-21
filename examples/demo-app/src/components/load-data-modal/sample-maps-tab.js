@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {Icons} from '@kepler.gl/components';
-import {media} from 'kepler.gl/styles';
+import {media} from '@kepler.gl/styles';
 import {FormattedMessage} from 'react-intl';
 
 import {ASSETS_URL} from '../../constants/default-settings';

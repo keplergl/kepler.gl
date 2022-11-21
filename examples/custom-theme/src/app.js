@@ -22,7 +22,7 @@ import React, {useEffect, useState} from 'react';
 import styled from 'styled-components';
 import window from 'global/window';
 import {connect} from 'react-redux';
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 const MAPBOX_TOKEN = process.env.MapboxAccessToken; // eslint-disable-line
 

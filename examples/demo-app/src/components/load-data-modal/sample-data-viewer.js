@@ -22,7 +22,7 @@ import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {format} from 'd3-format';
-import {LoadingDialog} from 'kepler.gl/components';
+import {LoadingDialog} from '@kepler.gl/components';
 import {FormattedMessage} from 'react-intl';
 
 const numFormat = format(',');

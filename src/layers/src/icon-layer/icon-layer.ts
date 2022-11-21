@@ -29,7 +29,8 @@ import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
 import {assignPointPairToLayerColumn} from '../layer-utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
-import {default as KeplerTable, DataContainerInterface} from '@kepler.gl/table';
+import {default as KeplerTable} from '@kepler.gl/table';
+import {DataContainerInterface} from '@kepler.gl/utils';
 import {
   VisConfigBoolean,
   VisConfigColorRange,

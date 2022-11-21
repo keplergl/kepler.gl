@@ -39,7 +39,6 @@ import {default as HeatmapLayer} from './heatmap-layer/heatmap-layer';
 export {MAX_ZOOM_LEVEL} from './heatmap-layer/heatmap-layer';
 import {default as H3Layer} from './h3-hexagon-layer/h3-hexagon-layer';
 export {defaultElevation as h3DefaultElevation} from './h3-hexagon-layer/h3-hexagon-layer';
-export {getCentroid, h3IsValid, getHexFields} from './h3-hexagon-layer/h3-utils';
 import {default as ScenegraphLayer} from './scenegraph-layer/scenegraph-layer';
 import {default as TripLayer} from './trip-layer/trip-layer';
 export {defaultLineWidth as tripDefaultLineWidth} from './trip-layer/trip-layer';
@@ -48,8 +47,7 @@ import {default as S2GeometryLayer} from './s2-geometry-layer/s2-geometry-layer'
 export {defaultElevation as s2DefaultElevation} from './s2-geometry-layer/s2-geometry-layer';
 export {getS2Center} from './s2-geometry-layer/s2-utils';
 export {default as AggregationLayer} from './aggregation-layer';
-import {LAYER_TYPES} from './types';
-export {LAYER_TYPES, EDITOR_AVAILABLE_LAYERS} from './types';
+import {LAYER_TYPES} from '@kepler.gl/constants';
 // base layer
 // eslint-disable-next-line prettier/prettier
 export type {
@@ -101,6 +99,5 @@ export const LayerClasses = {
 export type OVERLAY_TYPE = {[key: string]: string};
 
 export * from './mapbox-utils';
-export * from './types';
 export * from './h3-hexagon-layer';
 export {default as Table} from './table';

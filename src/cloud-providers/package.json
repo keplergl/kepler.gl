@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/cloud-providers",
   "author": "Shan He <shan@uber.com>",
-  "version": "2.5.5",
+  "version": "3.0.0-alpha.0",
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/index.js",
@@ -29,6 +29,10 @@
     "dist",
     "umd"
   ],
+  "dependencies": {
+    "@kepler.gl/types": "3.0.0-alpha.0",
+    "react": "^16.8.4"
+  },
   "nyc": {
     "sourceMap": false,
     "instrument": false

@@ -19,8 +19,7 @@
 // THE SOFTWARE.
 
 import document from 'global/document';
-import {DataContainerInterface} from '@kepler.gl/table';
-import {parseFieldValue} from '@kepler.gl/utils';
+import {DataContainerInterface, parseFieldValue} from '@kepler.gl/utils';
 
 const MIN_GHOST_CELL_SIZE: number = 200;
 const MIN_CELL_SIZE = 45;
@@ -61,7 +60,7 @@ export function renderedSize({
   maxCellSize = 500,
   maxHeaderSize = 500,
   minCellSize = MIN_CELL_SIZE,
-  optionsButton = 30
+  optionsButton = 44
 }: RenderSizeParam): {row: number; header: number} {
   if (!document) {
     return {

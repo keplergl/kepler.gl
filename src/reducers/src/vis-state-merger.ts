@@ -21,7 +21,13 @@
 import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
 import flattenDeep from 'lodash.flattendeep';
-import {isObject, arrayInsert, getInitialMapLayersForSplitMap} from '@kepler.gl/utils';
+import {
+  isObject,
+  arrayInsert,
+  getInitialMapLayersForSplitMap,
+  applyFiltersToDatasets,
+  validateFiltersUpdateDatasets
+} from '@kepler.gl/utils';
 
 import {LayerColumns, LayerColumn, Layer} from '@kepler.gl/layers';
 import {LAYER_BLENDINGS} from '@kepler.gl/constants';
@@ -30,18 +36,12 @@ import {
   Merger,
   VisState,
   VisStateMergers,
-  visStateSchema
+  visStateSchema,
+  ParsedConfig
 } from '@kepler.gl/schemas';
 
-import {ParsedConfig} from '@kepler.gl/schemas';
 import {ParsedLayer, SavedInteractionConfig, TooltipInfo} from '@kepler.gl/types';
-import {KeplerTable, Datasets} from '@kepler.gl/table';
-import {
-  applyFiltersToDatasets,
-  validateFiltersUpdateDatasets,
-  assignGpuChannels,
-  resetFilterGpuMode
-} from '@kepler.gl/table';
+import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
 /**
  * Merge loaded filters with current state, if no fields or data are loaded

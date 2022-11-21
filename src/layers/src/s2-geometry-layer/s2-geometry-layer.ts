@@ -25,11 +25,7 @@ import {
   ColorRange,
   LAYER_VIS_CONFIGS
 } from '@kepler.gl/constants';
-import {
-  default as KeplerTable,
-  DataContainerInterface,
-  createDataContainer
-} from '@kepler.gl/table';
+import {default as KeplerTable} from '@kepler.gl/table';
 import Layer, {
   LayerBaseConfig,
   LayerColorConfig,
@@ -49,6 +45,7 @@ import {
 } from '@kepler.gl/types';
 import S2LayerIcon from './s2-layer-icon';
 import {getS2Center, validS2Token} from './s2-utils';
+import {DataContainerInterface, createDataContainer} from '@kepler.gl/utils';
 
 export type S2GeometryLayerVisConfigSettings = {
   opacity: VisConfigNumber;

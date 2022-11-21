@@ -33,12 +33,8 @@ import {cmpLayers} from 'test/helpers/comparison-utils';
 import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import tripGeojson, {timeStampDomain, tripBounds} from 'test/fixtures/trip-geojson';
 import {geoJsonWithStyle} from 'test/fixtures/geojson';
-import {
-  KeplerTable,
-  findPointFieldPairs,
-  createDataContainer,
-  createNewDataEntry
-} from '@kepler.gl/table';
+import {KeplerTable, findPointFieldPairs, createNewDataEntry} from '@kepler.gl/table';
+import {createDataContainer} from '@kepler.gl/utils';
 
 test('layerUtils -> findDefaultLayer.1', t => {
   const inputFields = [

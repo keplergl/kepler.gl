@@ -22,8 +22,7 @@ import moment from 'moment';
 import {MAX_GPU_FILTERS, FILTER_TYPES} from '@kepler.gl/constants';
 import {Field, Filter} from '@kepler.gl/types';
 
-import {set, toArray, notNullorUndefined} from '@kepler.gl/utils';
-import {DataContainerInterface} from './data-container-interface';
+import {set, toArray, notNullorUndefined, DataContainerInterface} from '@kepler.gl/utils';
 import {GpuFilter} from './kepler-table';
 
 /**
