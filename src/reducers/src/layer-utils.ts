@@ -97,7 +97,7 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
   });
 }
 
-type MinVisState = {
+type MinVisStateForLayerData = {
   datasets: VisState['datasets'];
   animationConfig: VisState['animationConfig'];
 };
@@ -108,7 +108,7 @@ type MinVisState = {
  * Also, returns updated layer in case the input layer was in invalid state.
  * Adds an error message to the layer in case of an exception.
  */
-export function calculateLayerData<S extends MinVisState>(
+export function calculateLayerData<S extends MinVisStateForLayerData>(
   layer: Layer,
   state: S,
   oldLayerData?: any

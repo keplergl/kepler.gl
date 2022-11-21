@@ -18,35 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import * as VisStateActions from './vis-state-actions';
-import * as MapStateActions from './map-state-actions';
-import * as UIStateActions from './ui-state-actions';
-import * as MapStyleActions from './map-style-actions';
-import * as ProviderActions from './provider-actions';
+import {bisectLeft} from 'd3-array';
 
-// Actions
-export * from './actions';
-
-// kepler.gl actions accessible outside component
-export * from './action-wrapper';
-export * from './vis-state-actions';
-export * from './ui-state-actions';
-export * from './map-state-actions';
-export * from './map-style-actions';
-export * from './identity-actions';
-export * from './provider-actions';
-
-export {VisStateActions, MapStateActions, UIStateActions, MapStyleActions, ProviderActions};
-
-// Dispatch
-export {
-  _actionFor,
-  forwardTo,
-  getActionForwardAddress,
-  isForwardAction,
-  unwrap,
-  wrapTo
-} from './action-wrapper';
-
-export {default as ActionTypes, ACTION_PREFIX} from './action-types';
-export {ActionTypes as ProviderActionTypes} from './provider-actions';
+/**
+ * Use in slider, given a number and an array of numbers, return the nears number from the array
+ * @param value
+ * @param marks
+ */
+export function snapToMarks(value: number, marks: number[]): number {
+  // always use bin x0
+  const i = bisectLeft(marks, value);
+  if (i === 0) {
+    return marks[i];
+  } else if (i === marks.length) {
+    return marks[i - 1];
+  }
+  const idx = marks[i] - value < value - marks[i - 1] ? i : i - 1;
+  return marks[idx];
+}

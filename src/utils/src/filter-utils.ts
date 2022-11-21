@@ -1138,9 +1138,9 @@ export function filterDatasetCPU<T extends StateType<K, L>, K extends KeplerTabl
 /**
  * Validate parsed filters with datasets and add filterProps to field
  */
-type MinVisState = Pick<VisState, 'layers' | 'datasets' | 'isMergingDatasets'>;
+type MinVisStateForFilter = Pick<VisState, 'layers' | 'datasets' | 'isMergingDatasets'>;
 export function validateFiltersUpdateDatasets<
-  S extends MinVisState,
+  S extends MinVisStateForFilter,
   K extends KeplerTableModel<K, L>,
   L extends {config: {dataId: string | null; label: string}; id: string}
 >(

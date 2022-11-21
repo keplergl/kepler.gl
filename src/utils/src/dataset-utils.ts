@@ -39,7 +39,8 @@ import {
 } from '@kepler.gl/types';
 import {TooltipFormat} from '@kepler.gl/constants';
 
-import {notNullorUndefined, isPlainObject, getFormatter} from './data-utils';
+import {isPlainObject} from './utils';
+import {notNullorUndefined, getFormatter} from './data-utils';
 import {getFormatValue} from './format';
 import {range} from 'd3-array';
 import {hexToRgb} from './color-utils';
