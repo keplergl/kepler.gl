@@ -742,6 +742,10 @@ export function getTimestampFieldDomain(
   let step = 0.01;
 
   const diff = domain[1] - domain[0];
+  // in case equal timestamp add 1 second padding to prevent break
+  if (!diff) {
+    domain[1] = domain[0] + 1000;
+  }
   const entry = TimestampStepMap.find(f => f.max >= diff);
   if (entry) {
     step = entry.step;
