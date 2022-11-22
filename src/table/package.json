@@ -39,7 +39,7 @@
     "d3-array": "^2.8.0",
     "global": "^4.3.0",
     "lodash.uniq": "^4.0.1",
-    "moment": "^2.10.6"
+    "moment": "^2.29.4"
   },
   "nyc": {
     "sourceMap": false,

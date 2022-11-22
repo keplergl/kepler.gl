@@ -93,7 +93,7 @@
     "mapbox": "^1.0.0-beta10",
     "mapbox-gl": "^1.0.0",
     "mjolnir.js": "^2.7.0",
-    "moment": "^2.10.6",
+    "moment": "^2.29.4",
     "moment-timezone": "^0.5.35",
     "prop-types": "^15.6.0",
     "react": "^16.8.4",
