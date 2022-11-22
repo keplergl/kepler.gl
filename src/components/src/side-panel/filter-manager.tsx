@@ -39,7 +39,7 @@ import {PanelMeta} from './common/types';
 type VisStateActionHandlers = ActionHandlers<typeof VisStateActions>;
 type UiStateActionHandlers = ActionHandlers<typeof UIStateActions>;
 
-type FilterManagerProps = {
+export type FilterManagerProps = {
   filters: Filter[];
   datasets: Datasets;
   layers: Layer[];
