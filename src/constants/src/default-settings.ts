@@ -296,6 +296,14 @@ export const FILTER_TYPES = keyMirror({
   polygon: null
 });
 
+export const FILTER_VIEW_TYPES = keyMirror({
+  side: null,
+  enlarged: null,
+  minified: null
+});
+
+export const DEFAULT_FILTER_VIEW_TYPE = FILTER_VIEW_TYPES.side;
+
 export const SCALE_TYPES = keyMirror({
   ordinal: null,
   quantile: null,
@@ -606,6 +614,7 @@ export const FIELD_OPTS = {
     }
   },
   date: {
+    type: 'time',
     scale: {
       ...ordinalFieldScaleFunctions,
       ...ordinalFieldAggrScaleFunctions

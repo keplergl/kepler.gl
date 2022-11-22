@@ -290,7 +290,7 @@ In order to publish a new version of kepler.gl a developer must perform the foll
 3. Create a new PR for review.
 4. Once the PR is reviewed and merged, pull the latest changes locally.
 5. Run ```gh-release```: this command will create a new Github Release with the new updated CHANGELOG.md section.
-6. Once the new Github Release is created, Github will automatically trgger a new Github Action flow that will automatically build and publish the new package version to NPM registry.
+6. Once the new Github Release is created, Github will automatically trigger a new Github Action flow that will automatically build and publish the new package version to NPM registry.
 
 __After Release is completed and pushed__
 * Update each of the example folder package.json kepler.gl dependency with the newer. To update all examples, run

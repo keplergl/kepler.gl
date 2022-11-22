@@ -26,7 +26,8 @@ import {
   Merge,
   RGBColor,
   MapState,
-  VisibleLayerGroups
+  VisibleLayerGroups,
+  LayerGroup
 } from '@kepler.gl/types';
 
 /**
@@ -108,7 +109,7 @@ export type RequestMapStylesUpdaterAction = {
       label?: string;
       url: string;
       icon?: string;
-      layerGroups?: string;
+      layerGroups?: LayerGroup[];
     };
   };
 };

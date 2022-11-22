@@ -1,7 +1,7 @@
 {
     "name": "@kepler.gl/types",
     "author": "Shan He <shan@uber.com>",
-    "version": "2.5.5",
+    "version": "3.0.0-alpha.0",
     "description": "kepler.gl types used by kepler.gl components, actions and reducers",
     "license": "MIT",
     "types": "index.d.ts",

@@ -20,6 +20,7 @@
 
 import React from 'react';
 import RangeSliderFactory from '../common/range-slider';
+import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {RangeFilterProps} from './types';
 
 RangeFilterFactory.deps = [RangeSliderFactory];
@@ -33,7 +34,7 @@ export default function RangeFilterFactory(RangeSlider: ReturnType<typeof RangeS
         value1={filter.value[1]}
         step={filter.step}
         histogram={filter.histogram}
-        isEnlarged={filter.enlarged}
+        isEnlarged={filter.view === FILTER_VIEW_TYPES.enlarged}
         onChange={setFilter}
         inputTheme="secondary"
       />

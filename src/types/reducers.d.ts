@@ -61,6 +61,8 @@ export type LineChart = {
   xDomain: [number, number];
 };
 
+type FilterViewType = 'side' | 'enlarged' | 'minified';
+
 export type FilterBase<L extends LineChart> = {
   dataId: string[];
   id: string;
@@ -69,7 +71,7 @@ export type FilterBase<L extends LineChart> = {
 
   // time range filter specific
   fixedDomain: boolean;
-  enlarged: boolean;
+  view: FilterViewType;
   isAnimating: boolean;
   speed: number;
   showTimeDisplay?: boolean;
@@ -394,4 +396,18 @@ export type InputStyle = {
   url: string | null;
   icon: string | null;
   custom: boolean;
+};
+
+export type FilterRecord = {
+  dynamicDomain: Filter[];
+  fixedDomain: Filter[];
+  cpu: Filter[];
+  gpu: Filter[];
+};
+
+export type FilterDatasetOpt = {
+  // only allow cpu filtering
+  cpuOnly?: boolean;
+  // ignore filter for domain calculation
+  ignoreDomain?: boolean;
 };

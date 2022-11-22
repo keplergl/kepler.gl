@@ -95,18 +95,6 @@ export {
   exportMap,
   default as exporters
 } from './export-utils';
-export {
-  isValidFilterValue, 
-  isValidTimeDomain, 
-  getIntervalBins, 
-  getTimeWidgetHintFormatter, 
-  durationSecond, 
-  durationMinute, 
-  durationHour, 
-  durationDay, 
-  durationWeek, 
-  durationYear
-} from './filter-utils';
 export {setLayerBlending} from './gl-utils';
 export {flattenMessages, mergeMessages} from './locale-utils';
 export type {Dimensions} from './observe-dimensions';
@@ -125,7 +113,8 @@ export {
   getStyleDownloadUrl,
   getStyleImageIcon,
   scaleMapStyleByResolution,
-  mergeLayerGroupVisibility
+  mergeLayerGroupVisibility,
+  EMPTY_MAPBOX_STYLE
 } from './map-style-utils/mapbox-gl-style-editor';
 export {isValidMapInfo} from './map-info-utils';
 export {
@@ -158,3 +147,68 @@ export {transformRequest, isStyleUsingMapboxTiles} from './map-style-utils/mapbo
 
 // Map
 export {onViewPortChange, getMapLayersFromSplitMaps} from './map-utils';
+
+export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData} from './data-container-utils';
+export type {DataContainerInterface} from './data-container-interface';
+export type {FilterResult, FilterChanged, dataValueAccessor} from './filter-utils'
+export {
+  TimestampStepMap,
+  histogramBins,
+  enlargedHistogramBins,
+  FILTER_UPDATER_PROPS,
+  LIMITED_FILTER_EFFECT_PROPS,
+  FILTER_COMPONENTS,
+  DEFAULT_FILTER_STRUCTURE,
+  FILTER_ID_LENGTH,
+  LAYER_FILTERS,
+  getDefaultFilter,
+  shouldApplyFilter,
+  validatePolygonFilter,
+  validateFilter,
+  validateFilterWithData,
+  getFilterProps,
+  getPolygonFilterFunctor,
+  getFilterFunction,
+  updateFilterDataId,
+  filterDataByFilterTypes,
+  getFilterRecord,
+  diffFilters,
+  adjustValueToFilterDomain,
+  getNumericFieldDomain,
+  getNumericStepSize,
+  getTimestampFieldDomain,
+  histogramConstruct,
+  getHistogram,
+  formatNumberByStep,
+  isInRange,
+  isInPolygon,
+  isValidTimeDomain,
+  getTimeWidgetTitleFormatter,
+  getTimeWidgetHintFormatter,
+  isFilterValidToSave,
+  isValidFilterValue,
+  isSideFilter,
+  getFilterPlot,
+  getDefaultFilterPlotType,
+  applyFiltersToDatasets,
+  applyFilterFieldName,
+  mergeFilterDomainStep,
+  featureToFilterValue,
+  getFilterIdInFeature,
+  generatePolygonFilter,
+  filterDatasetCPU,
+  validateFiltersUpdateDatasets,
+  getIntervalBins
+} from "./filter-utils";
+
+export {
+  getQuantileDomain,
+  getOrdinalDomain,
+  getLinearDomain,
+  getLogDomain
+} from "./data-scale-utils";
+
+export {DataRow} from './data-row';
+
+export type {Centroid} from './h3-utils';
+export {getCentroid, idToPolygonGeo, h3IsValid, getHexFields} from './h3-utils';

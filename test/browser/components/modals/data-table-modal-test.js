@@ -42,7 +42,7 @@ import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
 
-import {createDataContainer} from '@kepler.gl/table';
+import {createDataContainer} from '@kepler.gl/utils';
 
 const {VertThreeDots} = Icons;
 const DataTableModal = appInjector.get(DataTableModalFactory);
@@ -541,9 +541,9 @@ test('Components -> cellSize -> renderedSize', t => {
     .props();
 
   const expected = {
-    _geojson: {row: 500, header: 192},
-    'income level of people over 65': {row: 182, header: 209},
-    engagement: {row: 182, header: 192}
+    _geojson: {row: 500, header: 206},
+    'income level of people over 65': {row: 182, header: 223},
+    engagement: {row: 182, header: 206}
   };
 
   t.deepEqual(

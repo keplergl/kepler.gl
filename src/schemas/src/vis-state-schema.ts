@@ -20,8 +20,8 @@
 
 import pick from 'lodash.pick';
 import {VERSIONS} from './versions';
-import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
-import {notNullorUndefined} from '@kepler.gl/utils';
+import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {isFilterValidToSave, notNullorUndefined} from '@kepler.gl/utils';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
 import {
@@ -41,7 +41,7 @@ import {
   SavedVisState,
   SplitMap
 } from '@kepler.gl/types';
-import {isFilterValidToSave, Datasets} from '@kepler.gl/table';
+import {Datasets} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Loader} from '@loaders.gl/loader-utils';
 import KeplerGLSchema from './schema-manager';
@@ -570,7 +570,22 @@ export class FilterSchemaV0 extends Schema {
     };
   }
   load(filters: undefined | SavedFilter[]): {filters: undefined | ParsedFilter[]} {
-    return {filters};
+    return {
+      filters: filters
+        ?.map(filter => this.loadPropertiesOrApplySchema(filter).filters)
+        // backward compatible convert enlarged to view
+        .map(filter => {
+          const {enlarged, view, ...filterProps} = filter;
+
+          const newFilter = {
+            ...filterProps,
+            // if view exist use it otherwise check for enlarged
+            view: view ? view : enlarged ? FILTER_VIEW_TYPES.enlarged : FILTER_VIEW_TYPES.side
+          };
+
+          return newFilter;
+        })
+    };
   }
 }
 
@@ -592,6 +607,7 @@ class InteractionSchemaV0 extends Schema {
         }
       : {};
   }
+
   load(interactionConfig) {
     // convert v0 -> v1
     // return enabled: false if disabled,
@@ -679,6 +695,7 @@ export const filterPropsV0 = {
   name: null,
   type: null,
   value: null,
+  // deprecated
   enlarged: null
 };
 
@@ -738,6 +755,8 @@ export const filterPropsV1 = {
       type: null
     }
   }),
+  // this replaced enlarged
+  view: null,
 
   // polygon filter properties
   layerId: null,

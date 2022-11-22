@@ -51,7 +51,21 @@ import {
   computeSplitMapLayers,
   removeLayerFromSplitMaps,
   isRgbColor,
-  parseFieldValue
+  parseFieldValue,
+  applyFilterFieldName,
+  applyFiltersToDatasets,
+  featureToFilterValue,
+  filterDatasetCPU,
+  FILTER_UPDATER_PROPS,
+  generatePolygonFilter,
+  getDefaultFilter,
+  getFilterIdInFeature,
+  getTimeWidgetTitleFormatter,
+  isInRange,
+  LIMITED_FILTER_EFFECT_PROPS,
+  updateFilterDataId,
+  getFilterPlot,
+  getDefaultFilterPlotType
 } from '@kepler.gl/utils';
 
 import {
@@ -67,6 +81,7 @@ import {
   EDITOR_MODES,
   SORT_ORDER,
   FILTER_TYPES,
+  FILTER_VIEW_TYPES,
   MAX_DEFAULT_TOOLTIPS,
   DEFAULT_TEXT_LABEL,
   COMPARE_TYPES
@@ -78,26 +93,15 @@ import KeplerGLSchema, {VisState} from '@kepler.gl/schemas';
 import {Filter, InteractionConfig, AnimationConfig, Editor} from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
 
-import {copyTableAndUpdate, Datasets, pinTableColumns, sortDatasetByColumn} from '@kepler.gl/table';
 import {calculateLayerData, findDefaultLayer} from './layer-utils';
 import {
-  applyFilterFieldName,
-  applyFiltersToDatasets,
-  featureToFilterValue,
-  filterDatasetCPU,
-  FILTER_UPDATER_PROPS,
-  generatePolygonFilter,
-  getDefaultFilter,
-  getFilterIdInFeature,
-  getTimeWidgetTitleFormatter,
-  isInRange,
-  LIMITED_FILTER_EFFECT_PROPS,
-  updateFilterDataId,
+  copyTableAndUpdate,
+  Datasets,
+  pinTableColumns,
+  sortDatasetByColumn,
   assignGpuChannel,
   setFilterGpuMode,
-  createNewDataEntry,
-  getFilterPlot,
-  getDefaultFilterPlotType
+  createNewDataEntry
 } from '@kepler.gl/table';
 import {findFieldsToShow} from './interaction-utils';
 
@@ -783,11 +787,11 @@ export function setFilterUpdater(
       break;
   }
 
-  const enlargedFilter = state.filters.find(f => f.enlarged);
+  const enlargedFilter = state.filters.find(f => f.view === FILTER_VIEW_TYPES.enlarged);
 
   if (enlargedFilter && enlargedFilter.id !== newFilter.id) {
     // there should be only one enlarged filter
-    newFilter.enlarged = false;
+    newFilter.view = FILTER_VIEW_TYPES.side;
   }
 
   // save new filters to newState
@@ -984,17 +988,18 @@ export const updateLayerAnimationSpeedUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const enlargeFilterUpdater = (
+export const setFilterViewUpdater = (
   state: VisState,
-  action: VisStateActions.EnlargeFilterUpdaterAction
-): VisState => {
+  action: VisStateActions.SetFilterViewUpdaterAction
+) => {
+  const {view, idx} = action;
   return {
     ...state,
     filters: state.filters.map((f, i) =>
-      i === action.idx
+      i === idx
         ? {
             ...f,
-            enlarged: !f.enlarged
+            view
           }
         : f
     )

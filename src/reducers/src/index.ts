@@ -85,3 +85,5 @@ export * from './export-utils';
 export * from './interaction-utils';
 export * from './layer-utils';
 export * as providerStateUpdaters from './provider-state-updaters';
+
+export {enhanceReduxMiddleware} from './middleware';

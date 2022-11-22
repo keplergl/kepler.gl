@@ -23,8 +23,8 @@ import styled from 'styled-components';
 import TimeWidgetFactory from './filters/time-widget';
 import AnimationControlFactory from './common/animation-control/animation-control';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
-import {ANIMATION_WINDOW, DIMENSIONS, FILTER_TYPES} from '@kepler.gl/constants';
-import {getIntervalBins, hasPortableWidth} from '@kepler.gl/utils';
+import {ANIMATION_WINDOW, DIMENSIONS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {getIntervalBins, hasPortableWidth, isSideFilter} from '@kepler.gl/utils';
 import {media, breakPointValues} from '@kepler.gl/styles';
 import {AnimationConfig, TimeRangeFilter} from '@kepler.gl/types';
 import {bottomWidgetSelector} from './kepler-gl';
@@ -176,10 +176,7 @@ export default function BottomWidgetFactory(
     const {activeSidePanel, readOnly} = uiState;
     const isOpen = Boolean(activeSidePanel);
 
-    const enlargedFilterIdx = useMemo(
-      () => filters.findIndex(f => f.enlarged && f.type === FILTER_TYPES.timeRange),
-      [filters]
-    );
+    const enlargedFilterIdx = useMemo(() => filters.findIndex(f => !isSideFilter(f)), [filters]);
 
     const isMobile = hasPortableWidth(breakPointValues);
 
@@ -213,6 +210,11 @@ export default function BottomWidgetFactory(
     // if filter is not animating, pass in enlarged filter here because
     // animation controller needs to call reset on it
     const filter = (animatedFilter as TimeRangeFilter) || filters[enlargedFilterIdx];
+
+    const onClose = useCallback(
+      () => visStateActions.setFilterView(enlargedFilterIdx, FILTER_VIEW_TYPES.side),
+      [visStateActions, enlargedFilterIdx]
+    );
 
     return (
       <BottomWidgetContainer
@@ -261,9 +263,9 @@ export default function BottomWidgetFactory(
                   setFilterAnimationWindow={visStateActions.setFilterAnimationWindow}
                   toggleAnimation={visStateActions.toggleFilterAnimation}
                   updateAnimationSpeed={visStateActions.updateFilterAnimationSpeed}
-                  enlargeFilter={visStateActions.enlargeFilter}
                   resetAnimation={resetAnimation}
                   isAnimatable={!animationConfig || !animationConfig.isAnimating}
+                  onClose={onClose}
                 />
               ) : null
             }

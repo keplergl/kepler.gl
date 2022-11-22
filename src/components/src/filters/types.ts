@@ -8,7 +8,6 @@ import {
 import {Layer} from '@kepler.gl/layers';
 import {
   ActionHandler,
-  enlargeFilter,
   setFilterAnimationTime,
   setFilterAnimationWindow,
   setFilterPlot,
@@ -69,10 +68,10 @@ export type TimeWidgetProps = {
   showTimeDisplay: boolean;
   isAnimatable: boolean;
   resetAnimation: () => void;
+  onClose: () => void;
   setFilterAnimationTime: ActionHandler<typeof setFilterAnimationTime>;
   updateAnimationSpeed: ActionHandler<typeof updateFilterAnimationSpeed>;
   toggleAnimation: ActionHandler<typeof toggleFilterAnimation>;
-  enlargeFilter: ActionHandler<typeof enlargeFilter>;
   setFilterPlot: ActionHandler<typeof setFilterPlot>;
   setFilterAnimationWindow: ActionHandler<typeof setFilterAnimationWindow>;
 };

@@ -38,7 +38,7 @@ pip install keplergl
     - Python >= 2
     - ipywidgets >= 7.0.0
 
-If you on Mac used `pip install` and running Notebook 5.3 and above, you don't need to run the following
+If you're on Mac, used `pip install`, and you're running Notebook 5.3 and above, you don't need to run the following:
 
 ```shell
 jupyter nbextension install --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above

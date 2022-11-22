@@ -28,9 +28,8 @@ import Layer, {
   LayerSizeConfig,
   LayerStrokeColorConfig
 } from '../base-layer';
-import {hexToRgb} from '@kepler.gl/utils';
+import {hexToRgb, findDefaultColorField} from '@kepler.gl/utils';
 import {default as KeplerTable} from '@kepler.gl/table';
-import {findDefaultColorField} from '@kepler.gl/utils';
 import PointLayerIcon from './point-layer-icon';
 import {
   LAYER_VIS_CONFIGS,

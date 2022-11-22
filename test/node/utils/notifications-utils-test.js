@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {errorNotification, successNotification} from '../../../src/utils';
+import {errorNotification, successNotification} from '@kepler.gl/utils';
 
 test('#notificationsUtils -> errorNotification', t => {
   const notification = errorNotification({message: 'test', id: 'test-1'});

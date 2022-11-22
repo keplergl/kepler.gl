@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {SidebarFactory, Icons} from 'kepler.gl/components';
+import {SidebarFactory, Icons} from '@kepler.gl/components';
 import styled from 'styled-components';
 
 const StyledSideBarContainer = styled.div`

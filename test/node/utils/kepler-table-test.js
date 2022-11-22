@@ -22,8 +22,8 @@ import test from 'tape';
 import moment from 'moment';
 import testData, {numericRangesCsv, testFields} from 'test/fixtures/test-csv-data';
 
-import {preciseRound} from '@kepler.gl/utils';
-import {createNewDataEntry, getFilterFunction, findPointFieldPairs} from '@kepler.gl/table';
+import {preciseRound, getFilterFunction} from '@kepler.gl/utils';
+import {createNewDataEntry, findPointFieldPairs} from '@kepler.gl/table';
 
 import {processCsvData} from '@kepler.gl/processors';
 import {cmpFields} from '../../helpers/comparison-utils';

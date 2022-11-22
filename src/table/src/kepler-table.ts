@@ -21,7 +21,6 @@
 import {console as Console} from 'global/console';
 import {ascending, descending} from 'd3-array';
 
-// import {validateInputData} from 'processors/data-processor';
 import {
   TRIP_POINT_FIELDS,
   SORT_ORDER,
@@ -29,15 +28,25 @@ import {
   ALTITUDE_FIELDS,
   SCALE_TYPES
 } from '@kepler.gl/constants';
-import {RGBColor, Field, FieldPair, FieldDomain, Filter, ProtoDataset} from '@kepler.gl/types';
+import {
+  RGBColor,
+  Field,
+  FieldPair,
+  FieldDomain,
+  Filter,
+  ProtoDataset,
+  FilterRecord,
+  FilterDatasetOpt
+} from '@kepler.gl/types';
 
-import {generateHashId, getSortingFunction, timeToUnixMilli} from '@kepler.gl/utils';
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
-
-import {createDataContainer} from './data-container-utils';
 
 import {Layer} from '@kepler.gl/layers';
 import {
+  generateHashId,
+  getSortingFunction,
+  timeToUnixMilli,
+  createDataContainer,
   diffFilters,
   filterDataByFilterTypes,
   FilterResult,
@@ -45,15 +54,13 @@ import {
   getFilterProps,
   getFilterRecord,
   getNumericFieldDomain,
-  getTimestampFieldDomain
-} from './filter-utils';
-import {
+  getTimestampFieldDomain,
   getLinearDomain,
   getLogDomain,
   getOrdinalDomain,
-  getQuantileDomain
-} from './data-scale-utils';
-import {DataContainerInterface} from './data-container-interface';
+  getQuantileDomain,
+  DataContainerInterface
+} from '@kepler.gl/utils';
 
 export type GpuFilter = {
   filterRange: number[][];
@@ -64,20 +71,6 @@ export type GpuFilter = {
     getIndex?: (any) => number,
     getData?: (dc_: DataContainerInterface, d: any, fieldIndex: number) => any
   ) => (d: any) => number;
-};
-
-export type FilterRecord = {
-  dynamicDomain: Filter[];
-  fixedDomain: Filter[];
-  cpu: Filter[];
-  gpu: Filter[];
-};
-
-export type FilterDatasetOpt = {
-  // only allow cpu filtering
-  cpuOnly?: boolean;
-  // ignore filter for domain calculation
-  ignoreDomain?: boolean;
 };
 
 // Unique identifier of each field

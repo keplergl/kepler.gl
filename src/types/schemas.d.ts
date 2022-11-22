@@ -10,7 +10,9 @@ export type SavedFilter = {
   name: Filter['name'];
   type: Filter['type'];
   value: Filter['value'];
-  enlarged: Filter['enlarged'];
+  // deprecated
+  enlarged?: Filter['enlarged'];
+  view?: Filter['view'];
   plotType: Filter['plotType'];
   yAxis: {
     name: string;
