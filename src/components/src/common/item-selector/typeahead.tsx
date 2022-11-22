@@ -94,40 +94,21 @@ function generateSearchFunction(props: TypeaheadProps) {
       ? Accessor.generateAccessor(filterOption)
       : Accessor.IDENTITY_FN;
 
-  return (value, options) =>
-    fuzzy.filter(value, options, {extract: mapper}).map(res => options[res.index]);
+  return (value, options) => {
+    return fuzzy.filter(value, options, {extract: mapper}).map(res => options[res.index]);
+  };
 }
 
-function getOptionsForValue(value, props, state) {
-  const {options, showOptionsWhenEmpty} = props;
-
-  if (!props.searchable) {
-    // directly pass through options if can not be searched
-    return options;
-  }
-  if (shouldSkipSearch(value, state, showOptionsWhenEmpty)) {
-    return options;
-  }
-
+function searchOptionsOnInput(inputValue, props) {
   const searchOptions = generateSearchFunction(props);
-  return searchOptions(value, options);
-}
-
-function shouldSkipSearch(input, state, showOptionsWhenEmpty) {
-  const emptyValue = !input || input.trim().length === 0;
-
-  // this.state must be checked because it may not be defined yet if this function
-  // is called from within getInitialState
-  const isFocused = state && state.isFocused;
-  return !(showOptionsWhenEmpty && isFocused) && emptyValue;
+  return searchOptions(inputValue, props.options);
 }
 
 interface TypeaheadProps {
   name?: string;
   customClasses?: any;
-  maxVisible?: number;
   resultsTruncatedMessage?: string;
-  options?: ReadonlyArray<string | number | boolean | object>;
+  options?: ReadonlyArray<string | number | boolean | object | undefined>;
   fixedOptions?: ReadonlyArray<string | number | boolean | object> | null;
   allowCustomValues?: number;
   initialValue?: string;
@@ -158,11 +139,12 @@ interface TypeaheadProps {
   inputIcon: ElementType;
   className?: string;
   selectedItems?: any[] | null;
+  // deprecated
+  maxVisible?: number;
 }
 
 interface TypeaheadState {
-  /** @type {ReadonlyArray<string>} */
-  searchResults: (string | undefined)[];
+  searchResults: ReadonlyArray<string | number | boolean | object | undefined>;
 
   // This should be called something else, 'entryValue'
   entryValue?: string;
@@ -209,19 +191,12 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     resultsTruncatedMessage: null
   };
 
-  static getDerivedStateFromProps(props, state) {
-    //  invoked after a component is instantiated as well as before it is re-rendered
-    const searchResults = getOptionsForValue(state.entryValue, props, state);
-
-    return {searchResults};
-  }
-
   constructor(props) {
     super(props);
 
     this.state = {
-      /** @type {ReadonlyArray<string>} */
-      searchResults: [],
+      // initiate searchResults with options
+      searchResults: this.props.options || [],
 
       // This should be called something else, 'entryValue'
       entryValue: this.props.value || this.props.initialValue,
@@ -273,14 +248,8 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     return (
       <CustomListComponent
         fixedOptions={this.props.fixedOptions}
-        options={
-          this.props.maxVisible
-            ? this.state.searchResults.slice(0, this.props.maxVisible)
-            : this.state.searchResults
-        }
-        areResultsTruncated={
-          this.props.maxVisible && this.state.searchResults.length > this.props.maxVisible
-        }
+        options={this.state.searchResults}
+        areResultsTruncated={false}
         resultsTruncatedMessage={this.props.resultsTruncatedMessage}
         onOptionSelected={this._onOptionSelected}
         allowCustomValues={this.props.allowCustomValues}
@@ -322,7 +291,8 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     if (this.props.searchable) {
       // reset entry input
       this.setState({
-        searchResults: getOptionsForValue('', this.props, this.state),
+        // reset search options when selection has been made
+        searchResults: this.props.options || [],
         selection: '',
         entryValue: ''
       });
@@ -337,7 +307,7 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
       const value = this.entry.current?.value;
 
       this.setState({
-        searchResults: getOptionsForValue(value, this.props, this.state),
+        searchResults: searchOptionsOnInput(value, this.props),
         selection: '',
         entryValue: value
       });
