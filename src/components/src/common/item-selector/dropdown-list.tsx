@@ -34,7 +34,7 @@ const defaultDisplay = d => d;
 export const ListItem = ({value, displayOption = defaultDisplay, light}) => {
   const displayValue = displayOption(value);
   return (
-    <span title={displayValue} className={classList.listItemAnchor}>
+    <span title={displayValue} className={classNames(classList.listItemAnchor)}>
       {displayValue}
     </span>
   );
