@@ -55,7 +55,7 @@ import {
   TimeRangeFilter,
   RangeFieldDomain,
   FilterDatasetOpt,
-  FilterRecord,
+  FilterRecord
 } from '@kepler.gl/types';
 
 import {DataContainerInterface} from './data-container-interface';
