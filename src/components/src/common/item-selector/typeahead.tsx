@@ -291,7 +291,7 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     if (this.props.searchable) {
       // reset entry input
       this.setState({
-        // reset search otions when selection has been made
+        // reset search options when selection has been made
         searchResults: this.props.options || [],
         selection: '',
         entryValue: ''
