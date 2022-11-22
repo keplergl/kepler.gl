@@ -175,11 +175,11 @@ function TimeWidgetFactory(
     readOnly,
     showTimeDisplay,
     setFilterAnimationTime,
+    onClose,
     resetAnimation,
     isAnimatable,
     updateAnimationSpeed,
     toggleAnimation,
-    enlargeFilter,
     setFilterPlot,
     setFilterAnimationWindow
   }: TimeWidgetProps) => {
@@ -189,8 +189,6 @@ function TimeWidgetFactory(
     ]);
 
     const _toggleAnimation = useCallback(() => toggleAnimation(index), [toggleAnimation, index]);
-
-    const _onClose = useCallback(() => enlargeFilter(index), [enlargeFilter, index]);
 
     const _setFilterAnimationWindow = useCallback(
       animationWindow => setFilterAnimationWindow({id: filter.id, animationWindow}),
@@ -210,7 +208,7 @@ function TimeWidgetFactory(
           datasets={datasets}
           setFilterPlot={setFilterPlot}
           index={index}
-          onClose={_onClose}
+          onClose={onClose}
         />
         <TimeRangeSlider
           {...timeRangeSliderFieldsSelector(filter)}

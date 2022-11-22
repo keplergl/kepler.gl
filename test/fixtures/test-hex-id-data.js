@@ -161,7 +161,7 @@ export const mergedFilters = [
     name: ['value'],
     type: 'range',
     value: [11.2, 28],
-    enlarged: false,
+    view: 'side',
     freeze: true,
     plotType: 'histogram',
     yAxis: null,

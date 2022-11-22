@@ -61,6 +61,8 @@ export type LineChart = {
   xDomain: [number, number];
 };
 
+type FilterViewType = 'side' | 'enlarged' | 'minified';
+
 export type FilterBase<L extends LineChart> = {
   dataId: string[];
   id: string;
@@ -69,7 +71,7 @@ export type FilterBase<L extends LineChart> = {
 
   // time range filter specific
   fixedDomain: boolean;
-  enlarged: boolean;
+  view: FilterViewType;
   isAnimating: boolean;
   speed: number;
   showTimeDisplay?: boolean;

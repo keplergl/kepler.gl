@@ -82,7 +82,7 @@ function FieldPanelWithFieldSelectFactory(
               erasable={false}
               onSelect={onFieldSelector}
             />
-            {panelActions?.map(panelAction => (
+            {panelActions.map(panelAction => (
               <PanelHeaderAction
                 id={panelAction.id}
                 key={panelAction.id}

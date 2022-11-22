@@ -33,7 +33,7 @@ const actionHandler = {
 
   [ActionTypes.DUPLICATE_LAYER]: visStateUpdaters.duplicateLayerUpdater,
 
-  [ActionTypes.ENLARGE_FILTER]: visStateUpdaters.enlargeFilterUpdater,
+  [ActionTypes.SET_FILTER_VIEW]: visStateUpdaters.setFilterViewUpdater,
 
   [ActionTypes.INTERACTION_CONFIG_CHANGE]: visStateUpdaters.interactionConfigChangeUpdater,
 

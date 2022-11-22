@@ -32,7 +32,8 @@ import {
   FILTER_TYPES,
   ANIMATION_WINDOW,
   PLOT_TYPES,
-  LAYER_TYPES
+  LAYER_TYPES,
+  FILTER_VIEW_TYPES
 } from '@kepler.gl/constants';
 import * as ScaleUtils from './data-scale-utils';
 import {h3IsValid} from 'h3-js';
@@ -137,7 +138,7 @@ export const DEFAULT_FILTER_STRUCTURE = {
 
   // time range filter specific
   fixedDomain: false,
-  enlarged: false,
+  view: FILTER_VIEW_TYPES.side,
   isAnimating: false,
   animationWindow: ANIMATION_WINDOW.free,
   speed: 1,
@@ -284,8 +285,7 @@ export function validateFilter<K extends KeplerTableModel<K, L>, L>(
   }
 
   updatedFilter.value = adjustValueToFilterDomain(filter.value, updatedFilter);
-  updatedFilter.enlarged =
-    typeof filter.enlarged === 'boolean' ? filter.enlarged : updatedFilter.enlarged;
+  updatedFilter.view = filter.view ?? updatedFilter.view;
 
   if (updatedFilter.value === null) {
     // cannot adjust saved value to filter
@@ -396,7 +396,7 @@ export function getFilterProps(
       return {
         ...filterProps,
         type: FILTER_TYPES.timeRange,
-        enlarged: true,
+        view: FILTER_VIEW_TYPES.enlarged,
         fixedDomain: true,
         value: filterProps.domain,
         gpu: true
@@ -1272,4 +1272,8 @@ export function getTimeWidgetHintFormatter(domain: [number, number]): string | u
     : diff > durationHour
     ? 'LT'
     : 'LTS';
+}
+
+export function isSideFilter(filter: Filter): boolean {
+  return filter.view === FILTER_VIEW_TYPES.side;
 }

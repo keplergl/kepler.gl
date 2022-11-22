@@ -31,7 +31,8 @@ import {
   LayerVisConfig,
   ColorUI,
   Feature,
-  InteractionConfig
+  InteractionConfig,
+  Filter
 } from '@kepler.gl/types';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
@@ -756,22 +757,26 @@ export function toggleLayerAnimationControl(): Merge<
   };
 }
 
-export type EnlargeFilterUpdaterAction = {
+export type SetFilterViewUpdaterAction = {
   idx: number;
+  view: Filter['view'];
 };
 /**
  * Show larger time filter at bottom for time playback (apply to time filter only)
  * @memberof visStateActions
  * @param idx - index of filter to enlarge
+ * @param view - type of filter view
  * @returns action
  * @public
  */
-export function enlargeFilter(
-  idx: number
-): Merge<EnlargeFilterUpdaterAction, {type: typeof ActionTypes.ENLARGE_FILTER}> {
+export function setFilterView(
+  idx: number,
+  view: Filter['view']
+): Merge<SetFilterViewUpdaterAction, {type: typeof ActionTypes.SET_FILTER_VIEW}> {
   return {
-    type: ActionTypes.ENLARGE_FILTER,
-    idx
+    type: ActionTypes.SET_FILTER_VIEW,
+    idx,
+    view
   };
 }
 

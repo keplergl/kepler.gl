@@ -23,6 +23,7 @@ import TimeRangeFilterFactory from '../time-range-filter';
 import {Clock} from '../../common/icons';
 import FieldPanelWithFieldSelectFactory from './filter-panel-with-field-select';
 import {TimeRangeFilterPanelComponent} from './types';
+import {isSideFilter} from '@kepler.gl/utils';
 
 TimeRangeFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, TimeRangeFilterFactory];
 
@@ -43,6 +44,8 @@ function TimeRangeFilterPanelFactory(
     }) => {
       const onSetFilter = useCallback(value => setFilter(idx, 'value', value), [idx, setFilter]);
 
+      const isEnlarged = useMemo(() => !isSideFilter(filter), [filter]);
+
       const panelActions = useMemo(
         () => [
           {
@@ -50,10 +53,10 @@ function TimeRangeFilterPanelFactory(
             onClick: enlargeFilter,
             tooltip: 'tooltip.timePlayback',
             iconComponent: Clock,
-            active: filter.enlarged
+            active: isEnlarged
           }
         ],
-        [filter.id, filter.enlarged, enlargeFilter]
+        [filter.id, isEnlarged, enlargeFilter]
       );
 
       return (
@@ -67,7 +70,7 @@ function TimeRangeFilterPanelFactory(
             setFilter={setFilter}
             panelActions={panelActions}
           >
-            {filter.type && !filter.enlarged && (
+            {filter.type && !isEnlarged && (
               <div className="filter-panel__filter">
                 <TimeRangeFilter
                   filter={filter}

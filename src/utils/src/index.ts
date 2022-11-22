@@ -187,6 +187,7 @@ export {
   getTimeWidgetHintFormatter,
   isFilterValidToSave,
   isValidFilterValue,
+  isSideFilter,
   getFilterPlot,
   getDefaultFilterPlotType,
   applyFiltersToDatasets,
