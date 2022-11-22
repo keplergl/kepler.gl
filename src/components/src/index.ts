@@ -256,6 +256,7 @@ export {
   SelectText,
   SelectTextBold,
   IconRoundSmall,
+  CenterFlexbox,
   CenterVerticalFlexbox,
   SpaceBetweenFlexbox,
   SBFlexboxItem,
