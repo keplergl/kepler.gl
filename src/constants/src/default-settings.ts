@@ -614,6 +614,7 @@ export const FIELD_OPTS = {
     }
   },
   date: {
+    type: 'time',
     scale: {
       ...ordinalFieldScaleFunctions,
       ...ordinalFieldAggrScaleFunctions
