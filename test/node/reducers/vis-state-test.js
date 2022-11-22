@@ -37,13 +37,8 @@ import {
 
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {Layer, KeplerGlLayers} from '@kepler.gl/layers';
-import {
-  KeplerTable,
-  createDataContainer,
-  createNewDataEntry,
-  maybeToDate,
-  getDefaultFilter
-} from '@kepler.gl/table';
+import {KeplerTable, createNewDataEntry, maybeToDate} from '@kepler.gl/table';
+import {createDataContainer, getDefaultFilter} from '@kepler.gl/utils';
 import {
   ALL_FIELD_TYPES,
   EDITOR_MODES,

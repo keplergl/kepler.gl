@@ -33,9 +33,9 @@ import {
   OVERLAY_TYPE_CONST
 } from '@kepler.gl/layers';
 
-import KeplerTable, {DataRow, Datasets} from '@kepler.gl/table';
+import KeplerTable, {Datasets} from '@kepler.gl/table';
 import {VisState} from '@kepler.gl/schemas';
-import {isFunction, getMapLayersFromSplitMaps} from '@kepler.gl/utils';
+import {isFunction, getMapLayersFromSplitMaps, DataRow} from '@kepler.gl/utils';
 import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
 
 export type LayersToRender = {

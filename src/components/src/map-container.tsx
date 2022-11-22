@@ -50,16 +50,22 @@ import {
   transformRequest,
   observeDimensions,
   unobserveDimensions,
-  hasMobileWidth
+  hasMobileWidth,
+  EMPTY_MAPBOX_STYLE,
+  getMapLayersFromSplitMaps,
+  onViewPortChange
 } from '@kepler.gl/utils';
 import {breakPointValues} from '@kepler.gl/styles';
 
 // default-settings
-import {FILTER_TYPES, GEOCODER_LAYER_ID, THROTTLE_NOTIFICATION_TIME} from '@kepler.gl/constants';
+import {
+  FILTER_TYPES,
+  GEOCODER_LAYER_ID,
+  THROTTLE_NOTIFICATION_TIME
+} from '@kepler.gl/constants';
 
 import ErrorBoundary from './common/error-boundary';
 import {LOCALE_CODES} from '@kepler.gl/localization';
-import {getMapLayersFromSplitMaps, onViewPortChange} from '@kepler.gl/utils';
 import {MapView} from '@deck.gl/core';
 import {
   MapStyle,
@@ -655,7 +661,7 @@ export default function MapContainerFactory(
           <MapComponent
             key="bottom"
             {...mapProps}
-            mapStyle={mapStyle.bottomMapStyle}
+            mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
             {...bottomMapContainerProps}
             ref={this._setMapboxMap}
             getCursor={hoverInfo ? () => 'pointer' : undefined}
@@ -686,10 +692,9 @@ export default function MapContainerFactory(
     }
 
     render() {
-      const {mapStyle} = this.props;
       return (
         <StyledMapContainer ref={this._ref} style={MAP_STYLE.container}>
-          {mapStyle.bottomMapStyle && this._renderMap()}
+          {this._renderMap()}
         </StyledMapContainer>
       );
     }

@@ -20,8 +20,8 @@
 
 import React, {Component} from 'react';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
-import {addDataToMap, wrapTo} from 'kepler.gl/actions';
-import KeplerGl from 'kepler.gl';
+import {addDataToMap, wrapTo} from '@kepler.gl/actions';
+import KeplerGl from '@kepler.gl/components';
 
 import sampleData from '../data/sample-data';
 import config from '../configurations/config';

@@ -21,9 +21,10 @@
 import test from 'tape';
 import moment from 'moment';
 
-import {isValidFilterValue} from '@kepler.gl/utils';
+import {getDatasetFieldIndexForFilter} from '@kepler.gl/table';
 
 import {
+  isValidFilterValue,
   adjustValueToFilterDomain,
   getFilterFunction,
   getDefaultFilter,
@@ -33,9 +34,8 @@ import {
   diffFilters,
   getHistogram,
   getTimestampFieldDomain,
-  createDataContainer,
-  getDatasetFieldIndexForFilter
-} from '@kepler.gl/table';
+  createDataContainer
+} from '@kepler.gl/utils';
 
 import {FILTER_TYPES} from '@kepler.gl/constants';
 import {mockPolygonFeature, mockPolygonData} from '../../fixtures/polygon';

@@ -22,7 +22,10 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import {Delete, Info, Warning, Checkmark} from '../common/icons';
 import ReactMarkdown from 'react-markdown';
-import {ActionHandler, removeNotification as removeNotificationActions} from '@kepler.gl/actions';
+import {
+  ActionHandler,
+  removeNotification as removeNotificationActions
+} from '@kepler.gl/actions';
 
 interface NotificationItemContentProps {
   type: string;

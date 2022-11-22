@@ -31,7 +31,11 @@ import {injectIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {IntlShape} from 'react-intl';
 
-import {setUserMapboxAccessToken, setExportHTMLMapMode, ActionHandler} from '@kepler.gl/actions';
+import {
+  setUserMapboxAccessToken,
+  setExportHTMLMapMode,
+  ActionHandler
+} from '@kepler.gl/actions';
 
 const ExportMapStyledExportSection = styled(StyledExportSection)`
   .disclaimer {

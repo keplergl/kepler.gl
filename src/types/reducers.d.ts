@@ -397,3 +397,17 @@ export type InputStyle = {
   icon: string | null;
   custom: boolean;
 };
+
+export type FilterRecord = {
+  dynamicDomain: Filter[];
+  fixedDomain: Filter[];
+  cpu: Filter[];
+  gpu: Filter[];
+};
+
+export type FilterDatasetOpt = {
+  // only allow cpu filtering
+  cpuOnly?: boolean;
+  // ignore filter for domain calculation
+  ignoreDomain?: boolean;
+};

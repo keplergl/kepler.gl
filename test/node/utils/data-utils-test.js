@@ -31,7 +31,7 @@ import {
   getFormatter,
   defaultFormatter
 } from '@kepler.gl/utils';
-import {ALL_FIELD_TYPES} from 'constants';
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 
 test('dataUtils -> clamp', t => {
   t.equal(clamp([0, 1], 2), 1, 'should clamp 2 to 1 for [0,1]');

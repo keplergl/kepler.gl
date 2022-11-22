@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {isValidMapInfo} from '../../../src/utils';
+import {isValidMapInfo} from '@kepler.gl/utils';
 
 test('mapInfoUtils -> isValidMapInfo', t => {
   t.equal(

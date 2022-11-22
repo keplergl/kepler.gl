@@ -21,11 +21,18 @@
 import memoize from 'lodash.memoize';
 import clondDeep from 'lodash.clonedeep';
 import {DEFAULT_LAYER_GROUPS, DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';
-import {BaseMapStyle, LayerGroup} from '@kepler.gl/types';
-import {MapState} from '@kepler.gl/types';
+import {BaseMapStyle, LayerGroup, MapState} from '@kepler.gl/types';
 
 const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
 const httpRg = /^(?=(http:|https:))/;
+
+// Fallback style to use when styles are being fetched, or when
+// a style fails to fetch
+export const EMPTY_MAPBOX_STYLE = {
+  version: 8,
+  sources: {},
+  layers: []
+};
 
 export function getDefaultLayerGroupVisibility({layerGroups = []}: {layerGroups: LayerGroup[]}) {
   return layerGroups.reduce(

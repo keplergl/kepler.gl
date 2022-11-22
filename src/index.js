@@ -42,11 +42,8 @@ export * from '@kepler.gl/layers';
 // Styles
 export * from '@kepler.gl/styles';
 
-// Middleware
-export * from '@kepler.gl/middleware';
-
 // Utils
 export * from '@kepler.gl/utils';
 
 // Default export
-export {default} from './components';
+export {default} from '@kepler.gl/components';

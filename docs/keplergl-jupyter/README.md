@@ -37,7 +37,7 @@ To install use pip:
 $ pip install keplergl
 ```
 
-If you on Mac used `pip install` and running Notebook 5.3 and above, you don't need to run the following
+If you're on Mac, used `pip install`, and you're running Notebook 5.3 and above, you don't need to run the following:
 
 ```bash
 $ jupyter nbextension install --py --sys-prefix keplergl # can be skipped for notebook 5.3 and above
