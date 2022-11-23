@@ -214,7 +214,7 @@ const getRowCell = ({
 
 type StatsControlProps = {
   top: number;
-  showStats: boolean;
+  showStats?: boolean;
 };
 
 const StyledStatsControl = styled.div<StatsControlProps>`
@@ -246,7 +246,7 @@ const StyledStatsControl = styled.div<StatsControlProps>`
   }
 `;
 
-const StatsControl = ({top, showStats, toggleShowStats}) => (
+const StatsControl = ({top, showStats, toggleShowStats}: {top: number, showStats?: boolean, toggleShowStats: () => void}) => (
   <StyledStatsControl top={top} showStats={showStats}>
     <div onClick={toggleShowStats}>
       {showStats ? 'Hide Column Stats' : 'Show Column Stats'}
@@ -339,7 +339,7 @@ export const TableSection = ({
 
 export interface DataTableProps {
   dataId?: string;
-  showStats?: boolean;
+  hasStats?: boolean;
   cellSizeCache?: CellSizeCache;
   pinnedColumns?: string[];
   columns: (string & {ghost?: boolean})[];
@@ -353,6 +353,7 @@ export interface DataTableProps {
   pinTableColumn: (column: string) => void;
   copyTableColumn: (column: string) => void;
   sortOrder?: number[] | null;
+  showStats?: boolean;
 }
 
 interface DataTableState {
