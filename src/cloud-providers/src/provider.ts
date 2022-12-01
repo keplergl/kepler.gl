@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import Upload from './upload';
-import {MapData, ExportFileOptions, Millisecond} from '@kepler.gl/types';
+import {MapData, ExportFileOptions, Millisecond, SavedMap} from '@kepler.gl/types';
 import {ComponentType} from 'react';
 
 export type MapListItem = {
@@ -243,7 +243,7 @@ export default class Provider {
    *  return downloadMap;
    * }
    */
-  async downloadMap(loadParams): Promise<{map: MapData; format: string}> {
+  async downloadMap(loadParams): Promise<{map: SavedMap; format: string}> {
     // @ts-expect-error
     return;
   }
