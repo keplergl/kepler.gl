@@ -280,6 +280,7 @@ export type ComputeDeckLayersProps = {
   };
 };
 
+// eslint-disable-next-line complexity
 export function computeDeckLayers(
   {visState, mapState, mapStyle}: any,
   options?: ComputeDeckLayersProps,

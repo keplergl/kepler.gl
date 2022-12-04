@@ -47,13 +47,14 @@ export function isDrawingActive(editorMenuActive: boolean, mode: string): boolea
  * @param params.mapIndex
  * @returns Returns true is the click is handled.
  */
+// eslint-disable-next-line complexity
 export function onClick(
   info: PickInfo<any>,
   event: any,
   {editorMenuActive, editor, setSelectedFeature, onLayerClick, mapIndex = 0}: {
     editorMenuActive: boolean;
     editor: Editor;
-    onLayerClick: (data, event) => any;
+    onLayerClick: (data, clickEvent) => any;
     setSelectedFeature: (
       feature: Feature | null,
       selectionContext?: FeatureSelectionContext
@@ -136,6 +137,7 @@ export function onHover(info: PickInfo<any>, {hoverInfo, editor, editorMenuActiv
  * @param params.theme
  * @raturns Returns a tooltip object compatible with Deck.getTooltip()
  */
+// eslint-disable-next-line complexity
 export function getTooltip(info: PickInfo<any>, {editor, theme, editorMenuActive}: {editorMenuActive: boolean; editor: Editor; theme: any}): object | null {
   const {object, layer} = info;
 
