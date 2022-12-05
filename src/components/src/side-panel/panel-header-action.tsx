@@ -85,7 +85,7 @@ export default function PanelHeaderActionFactory(): React.FC<PanelHeaderActionPr
       <HeaderActionWrapper
         className={classnames('panel--header__action', {
           disabled,
-          className
+          ...(className ? {[className]: true} : {})
         })}
         active={active}
         hoverColor={hoverColor}
