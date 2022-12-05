@@ -65,7 +65,7 @@ const expectedCellSizeCache = {
 
 const expectedExpandedCellSize = {
   cellSizeCache: {
-    'gps_data.utc_timestamp': 145,
+    'gps_data.utc_timestamp': 155,
     'gps_data.lat': 96,
     'gps_data.lng': 96,
     'gps_data.types': 125,
@@ -527,7 +527,11 @@ test('Components -> cellSize -> renderedSize', t => {
         smoothie: {
           id: 'smoothie',
           dataContainer,
-          fields,
+          fields: [
+            {name: testColumns[0], type: 'geojson', displayName: testColumns[0]},
+            {name: testColumns[1], type: 'real', displayName: testColumns[1]},
+            {name: testColumns[2], type: 'string', displayName: testColumns[2]}
+          ],
           color: [113, 113, 113]
         }
       }}
@@ -595,14 +599,14 @@ test('Components -> DataTableModal.render: csv 2', t => {
 
   const expectedExpandedCellSizeGeo = {
     cellSizeCache: {
-      _geojson: 400,
+      _geojson: 410,
       fillColor: 90,
       lineColor: 94,
       lineWidth: 98,
       elevation: 94,
       radius: 90
     },
-    ghost: 334
+    ghost: 324
   };
   const wrapper2 = mountWithTheme(<DataTable {...enriched} />);
   const componentInstance = wrapper2.find('DataTable').instance();

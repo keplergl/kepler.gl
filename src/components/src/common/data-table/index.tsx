@@ -214,7 +214,7 @@ const getRowCell = ({
 
 type StatsControlProps = {
   top: number;
-  showStats: boolean;
+  showStats?: boolean;
 };
 
 const StyledStatsControl = styled.div<StatsControlProps>`
@@ -246,7 +246,7 @@ const StyledStatsControl = styled.div<StatsControlProps>`
   }
 `;
 
-const StatsControl = ({top, showStats, toggleShowStats}) => (
+const StatsControl = ({top, showStats, toggleShowStats}: {top: number, showStats?: boolean, toggleShowStats: () => void}) => (
   <StyledStatsControl top={top} showStats={showStats}>
     <div onClick={toggleShowStats}>
       {showStats ? 'Hide Column Stats' : 'Show Column Stats'}
@@ -339,7 +339,7 @@ export const TableSection = ({
 
 export interface DataTableProps {
   dataId?: string;
-  showStats?: boolean;
+  hasStats?: boolean;
   cellSizeCache?: CellSizeCache;
   pinnedColumns?: string[];
   columns: (string & {ghost?: boolean})[];
@@ -353,6 +353,7 @@ export interface DataTableProps {
   pinTableColumn: (column: string) => void;
   copyTableColumn: (column: string) => void;
   sortOrder?: number[] | null;
+  showStats?: boolean;
 }
 
 interface DataTableState {
@@ -373,7 +374,8 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
       sortColumn: {},
       fixedWidth: null,
       fixedHeight: null,
-      theme: {}
+      theme: {},
+      hasStats: false
     };
 
     pinnedGrid = false;
@@ -507,7 +509,8 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
         pinnedColumns = [],
         theme = {},
         fixedWidth,
-        fixedHeight = 0
+        fixedHeight = 0,
+        hasStats
       } = this.props;
       const unpinnedColumns = this.unpinnedColumns(this.props);
 
@@ -531,9 +534,17 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
       const headerGridProps = {
         cellSizeCache,
         className: 'header-grid',
-        height: showStats ? headerRowWStatsHeight : headerRowHeight + headerStatsControlHeight,
+        height: !hasStats
+          ? headerRowHeight
+          : showStats
+          ? headerRowWStatsHeight
+          : headerRowHeight + headerStatsControlHeight,
         rowCount: 1,
-        rowHeight: showStats ? headerRowWStatsHeight : headerRowHeight + headerStatsControlHeight
+        rowHeight: !hasStats
+          ? headerRowHeight
+          : showStats
+          ? headerRowWStatsHeight
+          : headerRowHeight + headerStatsControlHeight
       };
 
       const dataGridProps = {
@@ -624,11 +635,13 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
                   );
                 }}
               </ScrollSync>
-              <StatsControl
-                top={headerRowHeight}
-                showStats={showStats}
-                toggleShowStats={this.toggleShowStats}
-              />
+              {hasStats ? (
+                <StatsControl
+                  top={headerRowHeight}
+                  showStats={showStats}
+                  toggleShowStats={this.toggleShowStats}
+                />
+              ) : null}
             </>
           ) : null}
         </Container>

@@ -23,6 +23,8 @@ import {DataContainerInterface, parseFieldValue} from '@kepler.gl/utils';
 
 const MIN_GHOST_CELL_SIZE: number = 200;
 const MIN_CELL_SIZE = 45;
+// first column have padding on the left
+const EDGE_COLUMN_PADDING = 10;
 
 type RenderSizeParam = {
   text: {dataContainer: DataContainerInterface; column: string};
@@ -185,6 +187,21 @@ function expandCellSize(
   };
 }
 
+function addPaddingToFirstColumn(cellSizeCache: CellSizeCache, columnOrder: string[] = []): CellSizeCache {
+  const firstCol = columnOrder[0];
+
+  if (firstCol && cellSizeCache[firstCol]) {
+    return {
+      ...cellSizeCache,
+      [firstCol]: {
+        header: cellSizeCache[firstCol].header + EDGE_COLUMN_PADDING,
+        row: cellSizeCache[firstCol].row + EDGE_COLUMN_PADDING
+      }
+    };
+  }
+  return cellSizeCache;
+}
+
 /**
  * Adjust cell size based on container width
  * @param {number} containerWidth
@@ -201,13 +218,14 @@ export function adjustCellsToContainer(
   cellSizeCache: CellSizeCache;
   ghost?: number | null;
 } {
-  const minRowSum = getSizeSum(cellSizeCache, 'row');
+  const columnOrder = getColumnOrder(pinnedColumns, unpinnedColumns);
+  const paddedCellSize = addPaddingToFirstColumn(cellSizeCache, columnOrder);
+  const minRowSum = getSizeSum(paddedCellSize, 'row');
+
   if (minRowSum >= containerWidth) {
     // we apply the min Width to all cells
-    return {cellSizeCache: getMinCellSize(cellSizeCache)};
+    return {cellSizeCache: getMinCellSize(paddedCellSize)};
   }
-
   // if we have some room to expand
-  const columnOrder = getColumnOrder(pinnedColumns, unpinnedColumns);
-  return expandCellSize(cellSizeCache, columnOrder, containerWidth, containerWidth - minRowSum);
+  return expandCellSize(paddedCellSize, columnOrder, containerWidth, containerWidth - minRowSum);
 }
