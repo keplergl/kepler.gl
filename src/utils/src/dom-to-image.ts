@@ -43,7 +43,9 @@ import {
   resolveUrl,
   getWidth,
   getHeight,
-  getAndEncode
+  getAndEncode,
+  setStyleSheetBaseHref,
+  toStyleSheet
 } from './dom-utils';
 
 const inliner = newInliner();
@@ -355,8 +357,10 @@ function newFontFaces() {
             return window
               .fetch(sheet.href, {credentials: 'omit', cache})
               .then(response => response.text())
-              .then(setBaseHref(sheet.href))
-              .then(toStyleSheet)
+              .then(text => {
+                const result = setStyleSheetBaseHref(text, sheet.href);
+                return toStyleSheet(result);
+              })
               .catch(err => {
                 // Handle any error that occurred in any of the previous
                 // promises in the chain. stylesheet failed to load should not stop
@@ -369,55 +373,6 @@ function newFontFaces() {
           return Promise.resolve(sheet);
         })
       );
-
-      function setBaseHref(base) {
-        base = base.split('/');
-        base.pop();
-        base = base.join('/');
-
-        function addBaseHrefToUrl(match, p1) {
-          const url = /^http/i.test(p1) ? p1 : concatAndResolveUrl(base, p1);
-          return `url('${url}')`;
-        }
-
-        // Source: http://stackoverflow.com/a/2676231/3786856
-        function concatAndResolveUrl(url, concat) {
-          const url1: string[] = url.split('/');
-          const url2: string[] = concat.split('/');
-          const url3: string[] = [];
-          for (let i = 0, l = url1.length; i < l; i++) {
-            if (url1[i] === '..') {
-              url3.pop();
-            } else if (url1[i] !== '.') {
-              url3.push(url1[i]);
-            }
-          }
-          for (let i = 0, l = url2.length; i < l; i++) {
-            if (url2[i] === '..') {
-              url3.pop();
-            } else if (url2[i] !== '.') {
-              url3.push(url2[i]);
-            }
-          }
-          return url3.join('/');
-        }
-
-        return text => {
-          return isSrcAsDataUrl(text)
-            ? text
-            : text.replace(/url\(['"]?([^'"]+?)['"]?\)/g, addBaseHrefToUrl);
-        };
-      }
-
-      function toStyleSheet(text) {
-        const doc = document.implementation.createHTMLDocument('');
-        const styleElement = document.createElement('style');
-
-        styleElement.textContent = text;
-        doc.body.appendChild(styleElement);
-
-        return styleElement.sheet;
-      }
     }
 
     function getCssRules(styleSheets) {
