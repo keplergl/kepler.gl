@@ -57,9 +57,14 @@ function getOptions(opt) {
     executablePath: getExecutablePath()
   };
 
+  // eslint-disable-next-line no-console
+  console.log(options);
   return options;
 }
 
-const options = getOptions({debug});
-const browserTest = new BrowserTestDriver();
-browserTest.run(options);
+function runBrowserTest() {
+  const options = getOptions({debug});
+  return new BrowserTestDriver().run(options);
+}
+
+runBrowserTest();
