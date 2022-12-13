@@ -158,8 +158,10 @@ export function getGeojsonBounds(features: GeojsonDataMaps = []): BBox | null {
   const maxCount = 10000;
   const samples = features.length > maxCount ? getSampleData(features, maxCount) : features;
 
+  const validSingleGeometry = geom => geom.coordinates && geom.coordinates.length;
+  const validGeometryCollection = geom => geom.geometries && geom.geometries.length && geom.geometries.every(validSingleGeometry);
   const nonEmpty = samples.filter(
-    d => d && d.geometry && d.geometry.coordinates && d.geometry.coordinates.length
+    d => d && d.geometry && (validSingleGeometry(d.geometry) || validGeometryCollection(d.geometry))
   );
 
   try {
