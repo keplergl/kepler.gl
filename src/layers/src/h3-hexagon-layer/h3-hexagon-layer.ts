@@ -81,6 +81,7 @@ export type HexagonIdLayerVisConfigSettings = {
 
 export type HexagonIdLayerVisConfig = {
   opacity: number;
+  strokeOpacity: number;
   colorRange: ColorRange;
   coverage: number;
   enable3d: boolean;
@@ -115,7 +116,8 @@ export const defaultElevation = 500;
 export const defaultCoverage = 1;
 
 export const HexagonIdVisConfigs: {
-  opacity: 'opacity';
+  opacity: VisConfigNumber;
+  strokeOpacity: VisConfigNumber;
   colorRange: 'colorRange';
   filled: VisConfigBoolean;
   outline: 'outline';
@@ -129,15 +131,26 @@ export const HexagonIdVisConfigs: {
   elevationScale: 'elevationScale';
   enableElevationZoomFactor: 'enableElevationZoomFactor';
 } = {
-  opacity: 'opacity',
   colorRange: 'colorRange',
   filled: {
     ...LAYER_VIS_CONFIGS.filled,
     defaultValue: true
   },
+  opacity: {
+    ...LAYER_VIS_CONFIGS.opacity,
+    label: 'Fill Opacity',
+    range: [0, 1],
+    property: 'opacity'
+  },
   outline: 'outline',
   strokeColor: 'strokeColor',
   strokeColorRange: 'strokeColorRange',
+  strokeOpacity: {
+    ...LAYER_VIS_CONFIGS.opacity,
+    label: 'Stroke Opacity',
+    range: [0, 1],
+    property: 'strokeOpacity'
+  },
   thickness: 'thickness',
   coverage: 'coverage',
   enable3d: 'enable3d',
@@ -432,7 +445,8 @@ export default class HexagonIdLayer extends Layer {
           'hexagon-cell': {
             type: EnhancedColumnLayer,
             getCoverage: data.getCoverage,
-            updateTriggers: columnLayerTriggers
+            updateTriggers: columnLayerTriggers,
+            strokeOpacity: visConfig.strokeOpacity
           }
         }
       }),
