@@ -66,6 +66,7 @@ type FilterViewType = 'side' | 'enlarged' | 'minified';
 export type FilterBase<L extends LineChart> = {
   dataId: string[];
   id: string;
+  enabled: boolean;
 
   freeze: boolean;
 
@@ -155,6 +156,11 @@ export type Feature = {
     coordinates: any;
   };
 };
+export type FeatureSelectionContext = {
+  rightClick: boolean;
+  position: {x: number; y: number};
+  mapIndex?: number;
+};
 export type FeatureValue = {
   id: string;
   properties: {
@@ -169,6 +175,7 @@ export type Editor = {
   mode: string;
   features: Feature[];
   selectedFeature: any;
+  selectionContext?: FeatureSelectionContext;
   visible: boolean;
 };
 

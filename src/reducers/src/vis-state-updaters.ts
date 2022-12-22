@@ -1016,17 +1016,22 @@ export const toggleFilterFeatureUpdater = (
 ): VisState => {
   const filter = state.filters[action.idx];
   const isVisible = get(filter, ['value', 'properties', 'isVisible']);
-  const newFilter = {
-    ...filter,
+
+  let newState = setFilterUpdater(state, {
+    idx: action.idx,
+    prop: 'enabled',
+    value: !isVisible
+  });
+
+  newState = setFilterUpdater(newState, {
+    idx: action.idx,
+    prop: 'value',
     value: featureToFilterValue(filter.value, filter.id, {
       isVisible: !isVisible
     })
-  };
+  });
 
-  return {
-    ...state,
-    filters: Object.assign([...state.filters], {[action.idx]: newFilter})
-  };
+  return newState;
 };
 
 /**
@@ -2140,14 +2145,17 @@ export function setFeaturesUpdater(
  */
 export const setSelectedFeatureUpdater = (
   state: VisState,
-  {feature}: VisStateActions.SetSelectedFeatureUpdaterAction
-): VisState => ({
-  ...state,
-  editor: {
-    ...state.editor,
-    selectedFeature: feature
-  }
-});
+  {feature, selectionContext}: VisStateActions.SetSelectedFeatureUpdaterAction
+): VisState => {
+  return {
+    ...state,
+    editor: {
+      ...state.editor,
+      selectedFeature: feature,
+      selectionContext
+    }
+  };
+};
 
 /**
  * Delete existing feature from filters

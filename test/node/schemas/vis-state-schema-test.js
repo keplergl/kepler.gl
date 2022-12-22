@@ -97,6 +97,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
     {
       dataId: [testCsvDataId],
       id: 'hjpn8frza',
+      enabled: true,
       name: ['time'],
       type: 'timeRange',
       value: [1474606800000, 1474617600000],
@@ -109,6 +110,7 @@ test('#visStateSchema -> v1 -> save load filters', t => {
     {
       dataId: [testGeoJsonDataId],
       id: 'vpk2466o',
+      enabled: true,
       name: ['RATE'],
       type: 'multiSelect',
       value: ['a'],

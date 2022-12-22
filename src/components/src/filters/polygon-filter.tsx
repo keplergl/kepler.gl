@@ -50,6 +50,11 @@ function PolygonFilterFactory() {
       );
     }, [layers, selectedLayers]);
 
+    const searchOptions = useCallback((value, options) => {
+      const searchStr = value?.toLowerCase();
+      return options.filter(l => l.config?.label?.toLowerCase().indexOf(searchStr) >= 0);
+    }, []);
+
     return (
       <div>
         <StyledFilterPanel htmlFor={`filter-${filter.id}`}>Layers:</StyledFilterPanel>
@@ -57,10 +62,12 @@ function PolygonFilterFactory() {
           options={availableLayers}
           selectedItems={selectedLayers}
           onChange={setNewLayers}
-          searchable={false}
+          searchable={true}
+          searchOptions={searchOptions}
           multiSelect={true}
           getOptionValue={(l: Layer) => l.id}
           displayOption={(l: Layer) => l.config.label}
+          placeholder={'placeholder.selectLayer'}
         />
       </div>
     );

@@ -36,6 +36,9 @@ const LAYOVER_OFFSET = 4;
 
 const StyledActionsLayer = styled.div`
   position: absolute;
+  .layer-panel-item-disabled {
+    color: ${props => props.theme.textColor};
+  }
 `;
 
 PureFeatureActionPanelFactory.deps = [];
@@ -93,18 +96,31 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
             label={intl.formatMessage({id: 'editor.filterLayer', defaultMessage: 'Filter layers'})}
             Icon={Layers}
           >
-            {layers.map((layer, index) => (
+            {layers.length ? (
+              layers.map((layer, index) => (
+                <ActionPanelItem
+                  key={index}
+                  label={layer.config.label}
+                  // @ts-ignore
+                  color={datasets[layer.config.dataId].color}
+                  isSelection={true}
+                  isActive={layerId.includes(layer.id)}
+                  onClick={() => onToggleLayer(layer)}
+                  className="layer-panel-item"
+                />
+              ))
+            ) : (
               <ActionPanelItem
-                key={index}
-                label={layer.config.label}
-                // @ts-ignore
-                color={datasets[layer.config.dataId].color}
-                isSelection={true}
-                isActive={layerId.includes(layer.id)}
-                onClick={() => onToggleLayer(layer)}
-                className="layer-panel-item"
+                key={'no-layers'}
+                label={intl.formatMessage({
+                  id: 'editor.noLayersToFilter',
+                  defaultMessage: 'No layers to filter'
+                })}
+                isSelection={false}
+                isActive={false}
+                className="layer-panel-item-disabled"
               />
-            ))}
+            )}
           </ActionPanelItem>
           <ActionPanelItem
             label={intl.formatMessage({id: 'editor.copyGeometry', defaultMessage: 'Copy Geometry'})}
@@ -112,7 +128,6 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
             Icon={copied ? Checkmark : Copy}
             onClick={copyGeometry}
           />
-
           <ActionPanelItem
             label={intl.formatMessage({id: 'tooltip.delete', defaultMessage: 'Delete'})}
             className="delete-panel-item"

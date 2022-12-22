@@ -101,3 +101,10 @@ export type OVERLAY_TYPE = {[key: string]: string};
 export * from './mapbox-utils';
 export * from './h3-hexagon-layer';
 export {default as Table} from './table';
+
+export {getEditorLayer} from './editor-layer/editor-layer';
+
+import {isDrawingActive, onClick, onHover, getTooltip, getCursor} from './editor-layer/editor-layer-utils';
+export const EditorLayerUtils = {
+  isDrawingActive, onClick, onHover, getTooltip, getCursor
+};

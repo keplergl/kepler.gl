@@ -24,13 +24,18 @@ import {
   TooltipField,
   CompareType,
   SplitMapLayers,
-  InteractionConfig
+  InteractionConfig,
+  Editor,
+  Feature,
+  FeatureSelectionContext,
+  Viewport
 } from '@kepler.gl/types';
 import {
   FindDefaultLayerPropsReturnValue,
   Layer,
   LayerClassesType,
-  OVERLAY_TYPE_CONST
+  OVERLAY_TYPE_CONST,
+  getEditorLayer
 } from '@kepler.gl/layers';
 
 import KeplerTable, {Datasets} from '@kepler.gl/table';
@@ -261,8 +266,21 @@ export type ComputeDeckLayersProps = {
   mapboxApiUrl?: string;
   primaryMap?: boolean;
   layersForDeck?: {[key: string]: boolean};
+  editorInfo?: {
+    editor: Editor;
+    editorMenuActive: boolean;
+    onSetFeatures: (features: Feature[]) => any;
+    setSelectedFeature: (feature: Feature | null, selectionContext?: FeatureSelectionContext) => any;
+    featureCollection: {
+      type: string;
+      features: Feature[];
+    };
+    selectedFeatureIndexes: number[];
+    viewport: Viewport;
+  };
 };
 
+// eslint-disable-next-line complexity
 export function computeDeckLayers(
   {visState, mapState, mapStyle}: any,
   options?: ComputeDeckLayersProps,
@@ -281,7 +299,8 @@ export function computeDeckLayers(
     splitMaps
   } = visState;
 
-  const {mapIndex, mapboxApiAccessToken, mapboxApiUrl, primaryMap, layersForDeck} = options || {};
+  const {mapIndex, mapboxApiAccessToken, mapboxApiUrl, primaryMap, layersForDeck, editorInfo} =
+    options || {};
 
   let dataLayers: any[] = [];
 
@@ -344,5 +363,14 @@ export function computeDeckLayers(
 
   const [customBottomDeckLayers, customTopDeckLayers] = getCustomDeckLayers(deckGlProps);
 
-  return [...customBottomDeckLayers, ...dataLayers, ...customTopDeckLayers];
+  const editorLayer: any[] = [];
+  if (editorInfo) {
+    editorLayer.push(
+      getEditorLayer({
+        ...editorInfo
+      })
+    );
+  }
+
+  return [...customBottomDeckLayers, ...dataLayers, ...customTopDeckLayers, ...editorLayer];
 }

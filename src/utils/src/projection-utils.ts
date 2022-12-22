@@ -19,6 +19,8 @@
 // THE SOFTWARE.
 
 import geoViewport from '@mapbox/geo-viewport';
+
+import WebMercatorViewport from 'viewport-mercator-project';
 import Console from 'global/console';
 
 const MAPBOX_TILE_SIZE = 512;
@@ -69,4 +71,29 @@ export function getCenterAndZoomFromBounds(bounds, {width, height}) {
   const center = [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2];
 
   return {zoom, center};
+}
+
+/**
+ * Add extra info about screen space position and world position to the event.
+ * @param {*} event Event to normalize.
+ * @param {*} viewport Current viewport.
+ * @returns Normalized event with extra information.
+ */
+export function normalizeEvent(event: any, viewport: WebMercatorViewport) {
+  var bounds = event.target?.getBoundingClientRect();
+  if (!bounds) {
+    return event;
+  }
+
+  var x = event.clientX - bounds.left;
+  var y = event.clientY - bounds.top;
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    return event;
+  }
+
+  event.point = [x, y];
+  const location = viewport.unproject(event.point, {targetZ: 0});
+  event.lngLat = [location[0], location[1]];
+
+  return event;
 }

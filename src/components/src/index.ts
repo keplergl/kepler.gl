@@ -188,7 +188,6 @@ export {default as RangeFilterFactory} from './filters/range-filter';
 
 // // Editor Factory
 export {default as EditorFactory} from './editor/editor';
-export {getStyle} from './editor/feature-styles';
 export {default as FeatureActionPanelFactory, PureFeatureActionPanelFactory} from './editor/feature-action-panel';
 
 // Injector

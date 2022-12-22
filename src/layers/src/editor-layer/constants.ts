@@ -18,22 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Copied from react-map-gl-draw until it gets exported
-export const RENDER_STATE = {
-  INACTIVE: 'INACTIVE',
-  UNCOMMITTED: 'UNCOMMITTED',
-  SELECTED: 'SELECTED',
-  HOVERED: 'HOVERED'
-};
-export const RENDER_TYPE = {
-  POINT: 'Point',
-  LINE_STRING: 'LineString',
-  POLYGON: 'Polygon',
-  RECTANGLE: 'Rectangle'
-};
+import {RGBColor} from '@kepler.gl/types';
+
 
 export const COLORS = {
-  PRIMARY: '#26B5F2',
-  SECONDARY: '#ffff00',
-  TERTIARY: '#6c6c6c'
+  // blue
+  PRIMARY: [0x26, 0xb5, 0xf2] as RGBColor,
+  // gray
+  SECONDARY: [0xaa, 0xaa, 0xaa] as RGBColor,
+  // yellow
+  HIGHLIGHT: [0xff, 0xff, 0x00] as RGBColor
+};
+
+export const EDIT_TYPES = {
+  ADD_POSITION: 'addPosition',
+  MOVE_POSITION: 'movePosition',
+  TRANSLATING: 'translating',
+  ADD_FEATURE: 'addFeature'
 };
