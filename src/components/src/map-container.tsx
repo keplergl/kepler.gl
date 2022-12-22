@@ -560,7 +560,10 @@ export default function MapContainerFactory(
         deckGlProps
       );
 
-      const extraDeckParams: {getTooltip?: (info: any) => object | null, getCursor?: ({isDragging: boolean}) => string} = {};
+      const extraDeckParams: {
+        getTooltip?: (info: any) => object | null;
+        getCursor?: ({isDragging: boolean}) => string;
+      } = {};
       if (primaryMap) {
         extraDeckParams.getTooltip = info =>
           EditorLayerUtils.getTooltip(info, {
@@ -591,7 +594,8 @@ export default function MapContainerFactory(
         <div
           onMouseMove={
             primaryMap
-              ? event => this.props.visStateActions.onMouseMove(normalizeEvent(event, viewport))
+              ? // @ts-expect-error should be deck viewport
+                event => this.props.visStateActions.onMouseMove(normalizeEvent(event, viewport))
               : undefined
           }
         >
@@ -807,7 +811,11 @@ export default function MapContainerFactory(
 
     render() {
       return (
-        <StyledMapContainer ref={this._ref} style={MAP_STYLE.container} onContextMenu={event => event.preventDefault()}>
+        <StyledMapContainer
+          ref={this._ref}
+          style={MAP_STYLE.container}
+          onContextMenu={event => event.preventDefault()}
+        >
           {this._renderMap()}
         </StyledMapContainer>
       );
