@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import keyMirror from 'keymirror';
-import {EditorModes} from 'react-map-gl-draw';
 
 import {
   scaleLinear,
@@ -657,6 +656,8 @@ export const DEFAULT_TOOLTIP_FIELDS: any[] = [];
 
 export const NO_VALUE_COLOR: RGBAColor = [0, 0, 0, 0];
 
+export const DEFAULT_PICKING_RADIUS = 3;
+
 export const LAYER_BLENDINGS = {
   additive: {
     label: 'layerBlending.additive',
@@ -920,14 +921,13 @@ export const GEOCODER_GEO_OFFSET = 0.05;
 export const GEOCODER_ICON_COLOR: [number, number, number] = [255, 0, 0];
 export const GEOCODER_ICON_SIZE = 80;
 
-// We could use directly react-map-gl-draw EditorMode but this would
-// create a direct dependency with react-map-gl-draw
-// Created this map to be independent from react-map-gl-draw
+// Editor
+export const EDITOR_LAYER_ID = 'kepler_editor_layer';
+export const EDITOR_LAYER_PICKING_RADIUS = 6;
 export const EDITOR_MODES = {
-  READ_ONLY: EditorModes.READ_ONLY,
-  DRAW_POLYGON: EditorModes.DRAW_POLYGON,
-  DRAW_RECTANGLE: EditorModes.DRAW_RECTANGLE,
-  EDIT: EditorModes.EDIT_VERTEX
+  DRAW_POLYGON: 'DRAW_POLYGON',
+  DRAW_RECTANGLE: 'DRAW_RECTANGLE',
+  EDIT: 'EDIT_VERTEX'
 };
 
 export const PLOT_TYPES = keyMirror({

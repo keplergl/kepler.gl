@@ -839,6 +839,7 @@ export const mergedFilters = [
     dataId: ['a5ybmwl2d'],
     freeze: true,
     id: '9ca0l7p2a',
+    enabled: true,
     view: 'side',
     isAnimating: false,
     animationWindow: 'free',

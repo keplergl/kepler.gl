@@ -31,6 +31,7 @@ import {
   LayerVisConfig,
   ColorUI,
   Feature,
+  FeatureSelectionContext,
   InteractionConfig,
   Filter
 } from '@kepler.gl/types';
@@ -1081,20 +1082,23 @@ export function setPolygonFilterLayer(
 }
 
 export type SetSelectedFeatureUpdaterAction = {
-  feature: Feature;
+  feature: Feature | null;
+  selectionContext?: FeatureSelectionContext;
 };
+
 /**
- * Set the current feature to be edited/deleted
+ * Set the current feature to be edited/deleted,
+ * and the context of how the feature was selected.
  * @memberof visStateActions
  * @param feature
+ * @param selectionContext
  * @returns action
  */
-export function setSelectedFeature(
-  feature: Feature
-): Merge<SetSelectedFeatureUpdaterAction, {type: typeof ActionTypes.SET_SELECTED_FEATURE}> {
+export function setSelectedFeature(feature: Feature | null, selectionContext?: FeatureSelectionContext): Merge<SetSelectedFeatureUpdaterAction, {type: typeof ActionTypes.SET_SELECTED_FEATURE}> {
   return {
     type: ActionTypes.SET_SELECTED_FEATURE,
-    feature
+    feature,
+    selectionContext
   };
 }
 

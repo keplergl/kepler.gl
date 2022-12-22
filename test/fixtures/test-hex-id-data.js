@@ -158,6 +158,7 @@ export const mergedFilters = [
   {
     dataId: [dataId],
     id: 'value',
+    enabled: true,
     name: ['value'],
     type: 'range',
     value: [11.2, 28],
