@@ -1,7 +1,7 @@
 import WebMercatorViewport from 'viewport-mercator-project';
 
 import {TRANSITION_DURATION} from '@kepler.gl/constants';
-import {SplitMapLayers, SplitMap, Viewport} from '@kepler.gl/types';
+import {SplitMapLayers, SplitMap, Viewport, MapState} from '@kepler.gl/types';
 
 export const onViewPortChange = (
   viewState: any,
@@ -36,6 +36,6 @@ export const getMapLayersFromSplitMaps = (
  * @param {*} mapState
  * @returns A viewport.
  */
-export const getViewportFromMapState = (mapState): Viewport => {
+export const getViewportFromMapState = (mapState: MapState): Viewport => {
   return new WebMercatorViewport(mapState);
 };
