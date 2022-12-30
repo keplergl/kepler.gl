@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useState, Component, ComponentType} from 'react';
 import {useIntl} from 'react-intl';
 
 import ActionPanel, {ActionPanelItem} from '../common/action-panel';
@@ -149,14 +149,14 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
 
 FeatureActionPanelFactory.deps = PureFeatureActionPanelFactory.deps;
 
-export default function FeatureActionPanelFactory() {
+export default function FeatureActionPanelFactory(): ComponentType<FeatureActionPanelProps> {
   const PureFeatureActionPanel = PureFeatureActionPanelFactory();
 
   /**
    * FeatureActionPanel wrapped with a click-outside handler. Note that this needs to be a
    * class component, as react-onclickoutside does not handle functional components.
    */
-  class ClickOutsideFeatureActionPanel extends React.Component<FeatureActionPanelProps> {
+  class ClickOutsideFeatureActionPanel extends Component<FeatureActionPanelProps> {
     handleClickOutside(e) {
       e.preventDefault();
       e.stopPropagation();
