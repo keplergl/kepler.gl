@@ -155,8 +155,6 @@ export default function FeatureActionPanelFactory() {
   /**
    * FeatureActionPanel wrapped with a click-outside handler. Note that this needs to be a
    * class component, as react-onclickoutside does not handle functional components.
-   * @typedef {Parameters<typeof PureFeatureActionPanel>[0] & {onClose: any}} Props
-   * @extends {React.Component<Props>}
    */
   class ClickOutsideFeatureActionPanel extends React.Component<FeatureActionPanelProps> {
     handleClickOutside(e) {
