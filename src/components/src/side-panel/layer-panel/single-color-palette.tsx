@@ -26,7 +26,7 @@ import {hexToRgb} from '@kepler.gl/utils';
 import {ColorsByTheme, Themes, ColorRange} from '@kepler.gl/constants';
 import {RGBColor} from '@kepler.gl/types';
 
-type SingleColorPaletteProps = {
+export type SingleColorPaletteProps = {
   onSelectColor: (color: RGBColor | ColorRange, e: MouseEvent) => void;
   // hex value
   selectedColor: string;

@@ -285,6 +285,7 @@ export type {FilterManagerProps} from './side-panel/filter-manager';
 export type {PanelMeta} from './side-panel/common/types';
 export type {SideBarProps} from './side-panel/side-bar';
 export type {FeatureActionPanelProps} from './editor/feature-action-panel';
+export type {SingleColorPaletteProps} from './side-panel/layer-panel/single-color-palette';
 
 export {
   Icons,
