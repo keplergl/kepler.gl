@@ -105,13 +105,6 @@ const getBorderCss = status =>
 
 const StyledLayerPanelHeader = styled(StyledPanelHeader)`
   height: ${props => props.theme.layerPanelHeaderHeight}px;
-  ${props =>
-    props.isValid
-      ? ''
-      : `border-top: 2px solid ${props.theme.notificationColors.error};` +
-        `border-bottom: 2px solid ${props.theme.notificationColors.error};` +
-        `border-right: 2px solid ${props.theme.notificationColors.error};`}
-
   position: relative;
   align-items: stretch;
 
@@ -124,7 +117,7 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
     padding: 10px;
   }
 
-  ${props => (props.warning ? getBorderCss('warning') : '')}
+  ${props => (props.warning ? getBorderCss('warning') : props.isValid ? '' : getBorderCss('error'))}
 
   :hover {
     cursor: pointer;
