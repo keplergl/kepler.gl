@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +26,7 @@ import get from 'lodash.get';
 import {createSelector} from 'reselect';
 
 import FeatureActionPanelFactory, {FeatureActionPanelProps} from './feature-action-panel';
-import {
-  EDITOR_AVAILABLE_LAYERS,
-  FILTER_TYPES,
-  EDITOR_MODES,
-  KeyEvent
-} from '@kepler.gl/constants';
+import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES, EDITOR_MODES, KeyEvent} from '@kepler.gl/constants';
 import {Layer, EditorLayerUtils} from '@kepler.gl/layers';
 import {Filter, FeatureSelectionContext} from '@kepler.gl/types';
 import {Feature} from '@nebula.gl/edit-modes';
@@ -49,7 +44,7 @@ interface EditorProps {
   filters: Filter[];
   layers: Layer[];
   datasets: Datasets;
-  editor: {selectedFeature: Feature; mode: string, selectionContext?: FeatureSelectionContext};
+  editor: {selectedFeature: Feature; mode: string; selectionContext?: FeatureSelectionContext};
   layersToRender: Record<string, Layer>;
   index: number;
   className: string;

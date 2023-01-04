@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ function MapControlToolbar() {
     position: absolute;
     right: 32px;
     transform: translateX(calc(-50% + 45px));
-    
+
     .toolbar-item {
       width: 120px;
       padding: 13px 16px;
@@ -38,7 +38,7 @@ function MapControlToolbar() {
         height: 16px;
         margin-right: 10px;
       }
-      
+
       .toolbar-item__title {
         margin-left: auto;
         margin-right: auto;

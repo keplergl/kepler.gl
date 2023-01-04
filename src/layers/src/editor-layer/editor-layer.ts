@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,11 +27,7 @@ import {
 } from '@nebula.gl/edit-modes';
 import {PathStyleExtension} from '@deck.gl/extensions';
 
-import {
-  EDITOR_LAYER_ID,
-  EDITOR_MODES,
-  EDITOR_LAYER_PICKING_RADIUS
-} from '@kepler.gl/constants';
+import {EDITOR_LAYER_ID, EDITOR_MODES, EDITOR_LAYER_PICKING_RADIUS} from '@kepler.gl/constants';
 import {Viewport, Editor, Feature, FeatureSelectionContext} from '@kepler.gl/types';
 import {generateHashId} from '@kepler.gl/utils';
 
