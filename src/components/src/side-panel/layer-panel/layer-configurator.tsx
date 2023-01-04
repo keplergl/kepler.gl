@@ -37,6 +37,7 @@ import VisConfigSliderFactory from './vis-config-slider';
 import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import TextLabelPanelFactory from './text-label-panel';
 import HowToButton from './how-to-button';
+import LayerErrorMessage from './layer-error-message';
 
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
@@ -117,8 +118,6 @@ type AggregationSelectorProps = {
     key: string
   ) => void;
 };
-
-import LayerErrorMessage from './layer-error-message';
 
 const StyledLayerConfigurator = styled.div.attrs({
   className: 'layer-panel__config'
