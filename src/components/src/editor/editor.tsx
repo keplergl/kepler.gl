@@ -26,7 +26,13 @@ import get from 'lodash.get';
 import {createSelector} from 'reselect';
 
 import FeatureActionPanelFactory, {FeatureActionPanelProps} from './feature-action-panel';
-import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES, EDITOR_MODES, KeyEvent} from '@kepler.gl/constants';
+import {
+  EDITOR_AVAILABLE_LAYERS,
+  FILTER_TYPES,
+  EDITOR_MODES,
+  GEOCODER_LAYER_ID,
+  KeyEvent
+} from '@kepler.gl/constants';
 import {Layer, EditorLayerUtils} from '@kepler.gl/layers';
 import {Filter, FeatureSelectionContext} from '@kepler.gl/types';
 import {Feature} from '@nebula.gl/edit-modes';
@@ -45,7 +51,6 @@ interface EditorProps {
   layers: Layer[];
   datasets: Datasets;
   editor: {selectedFeature: Feature; mode: string; selectionContext?: FeatureSelectionContext};
-  layersToRender: Record<string, Layer>;
   index: number;
   className: string;
   style: CSSProperties;
@@ -74,7 +79,6 @@ export default function EditorFactory(
     }
 
     layerSelector = (props: EditorProps) => props.layers;
-    layersToRenderSelector = (props: EditorProps) => props.layersToRender;
     filterSelector = (props: EditorProps) => props.filters;
     selectedFeatureIdSelector = (props: EditorProps) =>
       get(props, ['editor', 'selectedFeature', 'id']);
@@ -86,13 +90,8 @@ export default function EditorFactory(
       (filters, selectedFeatureId) => filters.find(f => f.value && f.value.id === selectedFeatureId)
     );
 
-    availableLayersSeletor = createSelector(
-      this.layerSelector,
-      this.layersToRenderSelector,
-      (layers, layersToRender) =>
-        layers.filter(editorLayerFilter).filter(layer => {
-          return layersToRender[layer.id];
-        })
+    availableLayersSelector = createSelector(this.layerSelector, layers =>
+      layers.filter(editorLayerFilter).filter(layer => layer.id !== GEOCODER_LAYER_ID)
     );
 
     allFeaturesSelector = createSelector(
@@ -148,7 +147,7 @@ export default function EditorFactory(
       const {className, datasets, editor, style, index} = this.props;
       const {selectedFeature, selectionContext} = editor;
       const currentFilter = this.currentFilterSelector(this.props);
-      const availableLayers = this.availableLayersSeletor(this.props);
+      const availableLayers = this.availableLayersSelector(this.props);
 
       const {rightClick, position, mapIndex} = selectionContext || {};
 
