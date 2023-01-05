@@ -1,6 +1,13 @@
 import {RGBColor, Merge, RGBAColor} from './types';
 
-import {Filter, TooltipInfo, InteractionConfig, AnimationConfig, SplitMap} from './reducers';
+import {
+  Filter,
+  TooltipInfo,
+  InteractionConfig,
+  AnimationConfig,
+  SplitMap,
+  Feature
+} from './reducers';
 
 import {LayerTextLabel} from './layers';
 
@@ -74,6 +81,11 @@ export type SavedAnimationConfig = {
   speed: AnimationConfig['speed'];
 };
 
+export type SavedEditor = {
+  features: Feature[];
+  visible: boolean;
+};
+
 export type SavedVisState = {
   filters: SavedFilter[];
   layers: SavedLayer[];
@@ -81,6 +93,7 @@ export type SavedVisState = {
   layerBlending: string;
   splitMaps: SplitMap[];
   animationConfig: SavedAnimationConfig;
+  editor?: SavedEditor;
 };
 
 export type ParsedVisState = {
