@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ const TENTATIVE_FEATURE_COLOR_TRANSPARENT: RGBAColor = [...COLORS.SECONDARY, ALP
 export const EDIT_HANDLE_STYLE = {
   getRadius: POINT_RADIUS,
   getFillColor: SECONDARY_COLOR_TRANSPARENT,
-  getOutlineColor: (handle) =>
+  getOutlineColor: handle =>
     handle?.properties?.featureIndex < 0 ? TENTATIVE_FEATURE_COLOR : PRIMARY_COLOR,
   highlightMultiplier: [...COLORS.HIGHLIGHT, ALPHA_05],
   highlightMultiplierNone: SECONDARY_COLOR_TRANSPARENT
@@ -59,11 +59,14 @@ export const FEATURE_STYLE = {
 };
 
 export const LINE_STYLE = {
-  getColor: (feature: Feature, isSelected, mode: string): RGBAColor => (isSelected ? PRIMARY_COLOR : PRIMARY_COLOR),
+  getColor: (feature: Feature, isSelected, mode: string): RGBAColor =>
+    isSelected ? PRIMARY_COLOR : PRIMARY_COLOR,
   getWidth: (feature: Feature, isSelected, mode: string): number =>
     isSelected ? STROKE_WIDTH_SELECTED : STROKE_WIDTH_NOT_SELECTED,
-  getTentativeLineColor: (feature: Feature, isSelected: boolean): RGBAColor => TENTATIVE_FEATURE_COLOR,
-  getTentativeLineWidth: (feature: Feature, isSelected: boolean): number => STROKE_WIDTH_NOT_SELECTED,
+  getTentativeLineColor: (feature: Feature, isSelected: boolean): RGBAColor =>
+    TENTATIVE_FEATURE_COLOR,
+  getTentativeLineWidth: (feature: Feature, isSelected: boolean): number =>
+    STROKE_WIDTH_NOT_SELECTED,
   getTentativeFillColor: TENTATIVE_FEATURE_COLOR_TRANSPARENT,
   dashArray: STROKE_DASH_ARRAY,
   solidArray: STROKE_SOLID_ARRAY,

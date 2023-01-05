@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -270,7 +270,10 @@ export type ComputeDeckLayersProps = {
     editor: Editor;
     editorMenuActive: boolean;
     onSetFeatures: (features: Feature[]) => any;
-    setSelectedFeature: (feature: Feature | null, selectionContext?: FeatureSelectionContext) => any;
+    setSelectedFeature: (
+      feature: Feature | null,
+      selectionContext?: FeatureSelectionContext
+    ) => any;
     featureCollection: {
       type: string;
       features: Feature[];

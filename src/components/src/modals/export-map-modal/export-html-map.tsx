@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -31,11 +31,7 @@ import {injectIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {IntlShape} from 'react-intl';
 
-import {
-  setUserMapboxAccessToken,
-  setExportHTMLMapMode,
-  ActionHandler
-} from '@kepler.gl/actions';
+import {setUserMapboxAccessToken, setExportHTMLMapMode, ActionHandler} from '@kepler.gl/actions';
 
 const ExportMapStyledExportSection = styled(StyledExportSection)`
   .disclaimer {

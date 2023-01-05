@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,7 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import {Delete, Info, Warning, Checkmark} from '../common/icons';
 import ReactMarkdown from 'react-markdown';
-import {
-  ActionHandler,
-  removeNotification as removeNotificationActions
-} from '@kepler.gl/actions';
+import {ActionHandler, removeNotification as removeNotificationActions} from '@kepler.gl/actions';
 
 interface NotificationItemContentProps {
   type: string;
