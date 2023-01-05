@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,11 +32,7 @@ import {
   ExportImage
 } from '@kepler.gl/constants';
 import {LOCALE_CODES} from '@kepler.gl/localization';
-import {
-  createNotification,
-  errorNotification,
-  calculateExportImageSize
-} from '@kepler.gl/utils';
+import {createNotification, errorNotification, calculateExportImageSize} from '@kepler.gl/utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
 import {

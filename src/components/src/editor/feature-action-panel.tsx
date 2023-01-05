@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useState, Component, ComponentType} from 'react';
 import {useIntl} from 'react-intl';
 
 import ActionPanel, {ActionPanelItem} from '../common/action-panel';
@@ -149,22 +149,27 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
 
 FeatureActionPanelFactory.deps = PureFeatureActionPanelFactory.deps;
 
-export default function FeatureActionPanelFactory() {
+export default function FeatureActionPanelFactory(): ComponentType<FeatureActionPanelProps> {
   const PureFeatureActionPanel = PureFeatureActionPanelFactory();
 
-  const ClickOutsideFeatureActionPanel: React.FC<FeatureActionPanelProps> = props => {
-    // @ts-ignore
-    ClickOutsideFeatureActionPanel.handleClickOutside = (e: Event) => {
+  /**
+   * FeatureActionPanel wrapped with a click-outside handler. Note that this needs to be a
+   * class component, as react-onclickoutside does not handle functional components.
+   */
+  class ClickOutsideFeatureActionPanel extends Component<FeatureActionPanelProps> {
+    handleClickOutside(e) {
       e.preventDefault();
       e.stopPropagation();
-      props.onClose?.();
-    };
-    return <PureFeatureActionPanel {...props} />;
-  };
+      this.props.onClose?.();
+    }
+
+    render() {
+      return <PureFeatureActionPanel {...this.props} />;
+    }
+  }
 
   const clickOutsideConfig = {
-    // @ts-ignore
-    handleClickOutside: () => ClickOutsideFeatureActionPanel.handleClickOutside
+    handleClickOutside: () => ClickOutsideFeatureActionPanel.prototype.handleClickOutside
   };
 
   return onClickOutside(ClickOutsideFeatureActionPanel, clickOutsideConfig);
