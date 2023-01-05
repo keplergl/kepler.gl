@@ -622,6 +622,7 @@ export default function MapContainerFactory(
             }}
             onClick={(data, event) => {
               // @ts-ignore
+              normalizeEvent(event.srcEvent, viewport);
               const res = EditorLayerUtils.onClick(data, event, {
                 editorMenuActive,
                 editor,

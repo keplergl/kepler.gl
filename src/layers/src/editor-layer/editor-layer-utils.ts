@@ -78,13 +78,14 @@ export function onClick(
       }
     } else if (objectType === 'Polygon' || objectType === 'Point') {
       let clickContext;
-      if (event.rightButton) {
+      if (event.rightButton && Array.isArray(event.srcEvent?.point)) {
+        const {point} = event.srcEvent;
         clickContext = {
           mapIndex,
           rightClick: true,
           position: {
-            x: event.changedPointers[0].offsetX,
-            y: event.changedPointers[0].offsetY
+            x: point[0],
+            y: point[1]
           }
         };
       }
