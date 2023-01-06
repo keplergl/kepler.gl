@@ -418,6 +418,7 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
   const metadata = Analyzer.computeColMeta(
     data,
     [
+      {regex: /.*array/g, dataType: 'ARRAY'},
       {regex: /.*geojson|all_points/g, dataType: 'GEOMETRY'},
       {regex: /.*census/g, dataType: 'STRING'}
     ],
@@ -524,10 +525,11 @@ export function analyzerTypeToFieldType(aType: string): string {
     case GEOMETRY:
     case GEOMETRY_FROM_STRING:
     case PAIR_GEOMETRY_FROM_STRING:
-    case ARRAY:
     case OBJECT:
-      // TODO: create a new data type for objects and arrays
+      // TODO: create a new data type for objects
       return ALL_FIELD_TYPES.geojson;
+    case ARRAY:
+      return ALL_FIELD_TYPES.array;
     case NUMBER:
     case STRING:
     case ZIPCODE:

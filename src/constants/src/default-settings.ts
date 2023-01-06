@@ -329,6 +329,7 @@ export const ALL_FIELD_TYPES = keyMirror({
   boolean: null,
   date: null,
   geojson: null,
+  array: null,
   integer: null,
   real: null,
   string: null,
@@ -406,6 +407,10 @@ export const FIELD_TYPE_DISPLAY = {
   },
   [ALL_FIELD_TYPES.geojson]: {
     label: 'geo',
+    color: BLUE2
+  },
+  [ALL_FIELD_TYPES.array]: {
+    label: 'array',
     color: BLUE2
   },
   [ALL_FIELD_TYPES.integer]: {
@@ -625,6 +630,17 @@ export const FIELD_OPTS = {
   },
   geojson: {
     type: 'geometry',
+    scale: {
+      ...notSupportedScaleOpts,
+      ...notSupportAggrOpts
+    },
+    format: {
+      legend: d => '...',
+      tooltip: []
+    }
+  },
+  array: {
+    type: 'array',
     scale: {
       ...notSupportedScaleOpts,
       ...notSupportAggrOpts

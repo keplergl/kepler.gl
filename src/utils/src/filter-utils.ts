@@ -385,6 +385,7 @@ export function getFilterProps(
 
     case ALL_FIELD_TYPES.string:
     case ALL_FIELD_TYPES.date:
+    case ALL_FIELD_TYPES.array:
       // @ts-expect-error
       return {
         ...filterProps,
@@ -487,6 +488,9 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
     case FILTER_TYPES.range:
       return data => isInRange(valueAccessor(data), filter.value);
     case FILTER_TYPES.multiSelect:
+      if (field?.type === ALL_FIELD_TYPES.array) {
+        return data => valueAccessor(data).some(v => filter.value.includes(v));
+      }
       return data => filter.value.includes(valueAccessor(data));
     case FILTER_TYPES.select:
       return data => valueAccessor(data) === filter.value;
@@ -1047,6 +1051,7 @@ export function mergeFilterDomainStep(
   switch (filterProps.fieldType) {
     case ALL_FIELD_TYPES.string:
     case ALL_FIELD_TYPES.date:
+    case ALL_FIELD_TYPES.array:
       return {
         ...newFilter,
         domain: unique(combinedDomain).sort()

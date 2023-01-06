@@ -33,7 +33,7 @@ function numberSort(a, b) {
 }
 
 test('DataScaleUtils -> getOrdinalDomain', t => {
-  const data = [['a'], ['a'], ['b'], [undefined], [null], [0], null];
+  const data = [['a'], ['a'], ['b'], [undefined], [null], [0], null, [['c', 'd', null]]];
 
   function valueAccessor(d, dc) {
     return dc.valueAt(d.index, 0);
@@ -41,7 +41,7 @@ test('DataScaleUtils -> getOrdinalDomain', t => {
 
   t.deepEqual(
     getOrdinalDomain(createDataContainer(data), valueAccessor),
-    [0, 'a', 'b'],
+    [0, 'a', 'b', 'c', 'd'],
     'should get correct ordinal domain'
   );
 

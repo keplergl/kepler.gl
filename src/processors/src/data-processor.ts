@@ -60,6 +60,16 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
     valid: (d: unknown): boolean => parseFloat(d) === d,
     // Note this will result in NaN for some string
     parse: parseFloat
+  },
+  [ALL_FIELD_TYPES.array]: {
+    valid: (d: unknown): boolean => Array.isArray(d),
+    parse: (d: unknown): any => {
+      try {
+        return JSON.parse(d as string);
+      } catch (e) {
+        return [];
+      }
+    }
   }
 };
 
