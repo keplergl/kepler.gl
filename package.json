@@ -230,8 +230,7 @@
     "minimist": "1.2.3",
     "node-fetch": "2.6.1",
     "tough-cookie": "4.0.0",
-    "caniuse-lite": "^1.0.30001361",
-    "react-vis": "1.11.7"
+    "caniuse-lite": "^1.0.30001361"
   },
   "peerDependencies": {
     "react": ">=16.3",
