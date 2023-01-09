@@ -60,7 +60,7 @@
     "react": "^16.8.4",
     "resize-observer-polyfill": "^1.5.1",
     "type-analyzer": "0.3.0"
-},
+  },
   "nyc": {
     "sourceMap": false,
     "instrument": false
@@ -73,7 +73,7 @@
     "Giuseppe Macri <gmacri@uber.com>"
   ],
   "volta": {
-    "node": "12.22.0",
+    "node": "14.21.1",
     "yarn": "1.22.17"
   }
 }

@@ -1,39 +1,39 @@
 {
-    "name": "@kepler.gl/types",
-    "author": "Shan He <shan@uber.com>",
-    "version": "3.0.0-alpha.0",
-    "description": "kepler.gl types used by kepler.gl components, actions and reducers",
-    "license": "MIT",
-    "types": "index.d.ts",
-    "keywords": [
-        "babel",
-        "es6",
-        "react",
-        "webgl",
-        "visualization",
-        "deck.gl"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/keplergl/kepler.gl.git"
-    },
-    "scripts": {
-        "prepublish": " ",
-        "stab": " "
-    },
-    "nyc": {
-        "sourceMap": false,
-        "instrument": false
-    },
-    "engines": {
-        "node": ">=12.0.0"
-    },
-    "maintainers": [
-        "Shan He <heshan0131@gmail.com>",
-        "Giuseppe Macri <gmacri@uber.com>"
-    ],
-    "volta": {
-        "node": "12.22.0",
-        "yarn": "1.22.17"
-    }
+  "name": "@kepler.gl/types",
+  "author": "Shan He <shan@uber.com>",
+  "version": "3.0.0-alpha.0",
+  "description": "kepler.gl types used by kepler.gl components, actions and reducers",
+  "license": "MIT",
+  "types": "index.d.ts",
+  "keywords": [
+    "babel",
+    "es6",
+    "react",
+    "webgl",
+    "visualization",
+    "deck.gl"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keplergl/kepler.gl.git"
+  },
+  "scripts": {
+    "prepublish": " ",
+    "stab": " "
+  },
+  "nyc": {
+    "sourceMap": false,
+    "instrument": false
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "maintainers": [
+    "Shan He <heshan0131@gmail.com>",
+    "Giuseppe Macri <gmacri@uber.com>"
+  ],
+  "volta": {
+    "node": "14.21.1",
+    "yarn": "1.22.17"
+  }
 }

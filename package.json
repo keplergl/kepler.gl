@@ -101,18 +101,18 @@
     "umd"
   ],
   "dependencies": {
-    "@deck.gl/mapbox":"^8.6.0",
-    "@hubble.gl/core":"1.2.0-alpha.6",
-    "@hubble.gl/react":"1.2.0-alpha.6",
-    "@kepler.gl/components":"3.0.0-alpha.0",
-    "@loaders.gl/polyfills":"^3.0.9",
-    "@loaders.gl/shapefile":"^3.0.9",
-    "@types/mapbox__geo-viewport":"^0.4.1",
-    "@typescript-eslint/parser":"^5.27.0",
-    "d3-hexbin":"^0.2.2",
-    "eslint-config-developit":"^1.2.0",
-    "html-webpack-plugin":"^4.3.0",
-    "typedoc":"^0.19.2"
+    "@deck.gl/mapbox": "^8.6.0",
+    "@hubble.gl/core": "1.2.0-alpha.6",
+    "@hubble.gl/react": "1.2.0-alpha.6",
+    "@kepler.gl/components": "3.0.0-alpha.0",
+    "@loaders.gl/polyfills": "^3.0.9",
+    "@loaders.gl/shapefile": "^3.0.9",
+    "@types/mapbox__geo-viewport": "^0.4.1",
+    "@typescript-eslint/parser": "^5.27.0",
+    "d3-hexbin": "^0.2.2",
+    "eslint-config-developit": "^1.2.0",
+    "html-webpack-plugin": "^4.3.0",
+    "typedoc": "^0.19.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.12.1",
@@ -255,7 +255,7 @@
     "Giuseppe Macri <gmacri@uber.com>"
   ],
   "volta": {
-    "node": "12.22.12",
+    "node": "14.21.1",
     "yarn": "1.22.19"
   }
 }
