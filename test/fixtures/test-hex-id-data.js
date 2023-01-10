@@ -329,7 +329,8 @@ const mergedFields = [
       value: [1, 76],
       type: 'range',
       typeOptions: ['range'],
-      gpu: true
+      gpu: true,
+      view: 'side'
     }
   }
 ];
