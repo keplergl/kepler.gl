@@ -1,5 +1,17 @@
 import {RGBColor} from '@kepler.gl/types';
 
+export type TileIndex = {x: number; y: number; z: number};
+
+export type TileLoadProps = {
+  id: string;
+  index: TileIndex;
+  bbox: any;
+  url?: string | null;
+  signal?: AbortSignal;
+  userData?: Record<string, any>;
+  zoom?: number;
+};
+
 export type ThreeDBuildingLayerProps = {
   id: string;
   mapboxApiAccessToken: string;
