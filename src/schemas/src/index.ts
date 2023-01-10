@@ -59,6 +59,7 @@ export {
   propertiesV1 as datasetPropertiesV1
 } from './dataset-schema';
 export * from './vis-state-schema';
-export {default as mapStyleSchema} from './map-style-schema';
+/** NOTE: `MapStyleSchemaV1` is actually for `mapStyle.mapStyles` (original naming can be unclear) */
+export {default as mapStyleSchema, MapStyleSchemaV1, CustomMapStyleSchema} from './map-style-schema';
 export {default as mapStateSchema} from './map-state-schema';
 export {default as Schema} from './schema';

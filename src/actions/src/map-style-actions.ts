@@ -225,7 +225,7 @@ export type LoadCustomMapStyleUpdaterAction = {
   payload: {
     icon?: string;
     style?: object;
-    error?: Error;
+    error?: object;
   };
 };
 /**
