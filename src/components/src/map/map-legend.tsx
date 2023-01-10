@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +24,7 @@ import {rgb} from 'd3-color';
 import ColorLegend from '../common/color-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {
-  Layer,
-  LayerBaseConfig,
-  VisualChannel,
-  VisualChannelDescription
-} from '@kepler.gl/layers';
+import {Layer, LayerBaseConfig, VisualChannel, VisualChannelDescription} from '@kepler.gl/layers';
 
 interface StyledMapControlLegendProps {
   width?: number;

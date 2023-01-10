@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -112,6 +112,7 @@ const StyledCheckedbox = styled(Checkbox)`
 `;
 
 const renderChildren = (child: ReactNode, index: number) =>
+  child &&
   React.isValidElement<any>(child) &&
   React.cloneElement(child, {
     onClick: () => {

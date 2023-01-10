@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,12 +25,7 @@ import {Hash, Delete} from '../../../common/icons';
 import DropdownList from '../../../common/item-selector/dropdown-list';
 import {FormattedMessage} from '@kepler.gl/localization';
 import onClickOutside from 'react-onclickoutside';
-import {
-  FIELD_OPTS,
-  TOOLTIP_FORMATS,
-  TOOLTIP_FORMAT_TYPES,
-  TOOLTIP_KEY
-} from '@kepler.gl/constants';
+import {FIELD_OPTS, TOOLTIP_FORMATS, TOOLTIP_FORMAT_TYPES, TOOLTIP_KEY} from '@kepler.gl/constants';
 import {getFormatter} from '@kepler.gl/utils';
 import TippyTooltip from '../../../common/tippy-tooltip';
 

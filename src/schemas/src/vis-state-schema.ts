@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -806,6 +806,14 @@ export const propertiesV1 = {
       speed: null
     },
     key: 'animationConfig'
+  }),
+  editor: new Schema({
+    version: VERSIONS.v1,
+    properties: {
+      features: null,
+      visible: null
+    },
+    key: 'editor'
   })
 };
 
