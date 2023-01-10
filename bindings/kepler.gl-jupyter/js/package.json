@@ -76,6 +76,9 @@
     "redux-actions": "^2.2.1",
     "styled-components": "^4.1.3"
   },
+  "resolutions": {
+    "react-vis": "1.11.7"
+  },
   "jupyterlab": {
     "extension": "babel/labplugin",
     "outputDir": "../keplergl-jupyter/labextension",
