@@ -69,7 +69,8 @@ const defaultProps = {
   layerPanelListView: 'list',
   uiStateActions: UIStateActions,
   visStateActions: VisStateActions,
-  layerBlending: 'normal'
+  layerBlending: 'normal',
+  overlayBlending: 'normal'
 };
 
 test('Components -> LayerManager -> render -> list view', t => {
