@@ -1,8 +1,8 @@
 import React, {useCallback, useMemo} from 'react';
-import AnimationControllerFactory from './common/animation-control/animation-controller';
-import {getIntervalBins} from '@kepler.gl/utils';
+import {getIntervalBins, getTimelineFromFilter} from '@kepler.gl/utils';
 import {TimeRangeFilter} from '@kepler.gl/types';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
+import AnimationControllerFactory from './common/animation-control/animation-controller';
 
 interface FilterAnimationControllerProps {
   filter: TimeRangeFilter & {animationWindow?: string};
@@ -44,6 +44,9 @@ function FilterAnimationControllerFactory(
       [filterIdx, intervalBins, filter.animationWindow, setFilterAnimationTime]
     );
 
+    // if filter is synced merge the filter and animation config
+    const timeline = getTimelineFromFilter(filter);
+
     return (
       <AnimationController
         key="filter-control"
@@ -54,6 +57,9 @@ function FilterAnimationControllerFactory(
         animationWindow={filter.animationWindow}
         steps={steps}
         updateAnimation={updateAnimation}
+        // @ts-expect-error different type
+        setTimelineValue={setFilterAnimationTime}
+        timeline={timeline}
         children={children}
       />
     );

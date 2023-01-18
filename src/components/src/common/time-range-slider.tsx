@@ -26,7 +26,7 @@ import RangeSliderFactory from './range-slider';
 import TimeSliderMarkerFactory from './time-slider-marker';
 import PlaybackControlsFactory from './animation-control/playback-controls';
 import TimeRangeSliderTimeTitleFactory from './time-range-slider-time-title';
-import {HistogramBin, LineChart} from '@kepler.gl/types';
+import {HistogramBin, LineChart, Timeline} from '@kepler.gl/types';
 import AnimationControlFactory from './animation-control/animation-control';
 
 const animationControlWidth = 176;
@@ -56,6 +56,7 @@ type TimeRangeSliderProps = {
   updateAnimationSpeed?: (val: number) => void;
   setFilterAnimationWindow?: (id: string) => void;
   onChange: (v: number[]) => void;
+  timeline: Timeline;
 };
 
 const StyledSliderContainer = styled.div<StyledSliderContainerProps>`
@@ -112,7 +113,8 @@ export default function TimeRangeSliderFactory(
       updateAnimationSpeed,
       setFilterAnimationWindow,
       toggleAnimation,
-      onChange
+      onChange,
+      timeline
     } = props;
 
     const throttledOnchange = useMemo(() => throttle(onChange, 20), [onChange]);
@@ -156,7 +158,6 @@ export default function TimeRangeSliderFactory(
               />
             </div>
           ) : (
-            // @ts-expect-error
             <AnimationControl
               style={ANIMATION_CONTROL_STYLE}
               isAnimatable={isAnimatable}
@@ -164,10 +165,12 @@ export default function TimeRangeSliderFactory(
               resetAnimation={resetAnimation}
               toggleAnimation={toggleAnimation}
               updateAnimationSpeed={updateAnimationSpeed}
+              setTimelineValue={throttledOnchange}
+              setAnimationWindow={setFilterAnimationWindow}
               showTimeDisplay={false}
+              timeline={timeline}
             />
           )}
-
           {isEnlarged && !isMinified ? (
             <PlaybackControls
               isAnimatable={isAnimatable}

@@ -51,7 +51,8 @@ function TimeWidgetFactory(
     updateAnimationSpeed,
     toggleAnimation,
     setFilterPlot,
-    setFilterAnimationWindow
+    setFilterAnimationWindow,
+    timeline
   }: TimeWidgetProps) => {
     const [isMinified, setMinified] = useState(false);
 
@@ -98,6 +99,7 @@ function TimeWidgetFactory(
           resetAnimation={resetAnimation}
           isAnimatable={isAnimatable}
           isMinified={isMinified}
+          timeline={timeline}
         />
         {showTimeDisplay ? (
           <FloatingTimeDisplay

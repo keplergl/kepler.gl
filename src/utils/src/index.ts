@@ -64,6 +64,8 @@ export {
   applyCustomFormat,
   datetimeFormatter
 } from './data-utils';
+export {getTimelineFromAnimationConfig, getTimelineFromFilter} from './time';
+
 export {
   datasetColorMaker,
   findDefaultColorField,

@@ -147,16 +147,16 @@ export default function BottomWidgetFactory(
           animationConfig={animationConfig}
           setLayerAnimationTime={visStateActions.setLayerAnimationTime}
         >
-          {(isAnimating, start, pause, resetAnimation) =>
+          {(isAnimating, start, pause, resetAnimation, timeline, setTimelineValue) =>
             showAnimationControl ? (
               <LayerAnimationControl
-                animationConfig={animationConfig}
-                setLayerAnimationTime={visStateActions.setLayerAnimationTime}
                 updateAnimationSpeed={visStateActions.updateLayerAnimationSpeed}
                 toggleAnimation={visStateActions.toggleLayerAnimation}
                 isAnimatable={!animatedFilter}
                 isAnimating={isAnimating}
                 resetAnimation={resetAnimation}
+                setTimelineValue={setTimelineValue}
+                timeline={timeline}
               />
             ) : null
           }
@@ -167,7 +167,7 @@ export default function BottomWidgetFactory(
             filterIdx={animatedFilterIdx > -1 ? animatedFilterIdx : enlargedFilterIdx}
             setFilterAnimationTime={visStateActions.setFilterAnimationTime}
           >
-            {(isAnimating, start, pause, resetAnimation) =>
+            {(isAnimating, start, pause, resetAnimation, timeline, setTimelineValue) =>
               showTimeWidget ? (
                 <TimeWidget
                   // TimeWidget uses React.memo, here we pass width
@@ -179,12 +179,13 @@ export default function BottomWidgetFactory(
                   showTimeDisplay={showFloatingTimeDisplay}
                   setFilterPlot={visStateActions.setFilterPlot}
                   setFilterAnimationTime={visStateActions.setFilterAnimationTime}
-                  setFilterAnimationWindow={visStateActions.setFilterAnimationWindow}
+                  setFilterAnimationWindow={setTimelineValue}
                   toggleAnimation={visStateActions.toggleFilterAnimation}
                   updateAnimationSpeed={visStateActions.updateFilterAnimationSpeed}
                   resetAnimation={resetAnimation}
                   isAnimatable={!animationConfig || !animationConfig.isAnimating}
                   onClose={onClose}
+                  timeline={timeline}
                 />
               ) : null
             }

@@ -58,8 +58,8 @@ type SliderProps = {
   minValue: number;
   maxValue: number;
   sliderHandleWidth: number;
-  onSlider0Change: (val: number) => void;
-  onSlider1Change: (val: number) => void;
+  onSlider0Change: (val: number) => any;
+  onSlider1Change: (val: number) => any;
   onSliderBarChange: (val0: number, val1: number) => void;
   step: number;
   enableBarDrag: boolean;
@@ -72,7 +72,7 @@ type SliderProps = {
   style?: object;
 };
 
-export default class Slider extends Component {
+export default class Slider extends Component<SliderProps> {
   static defaultProps = {
     title: '',
     isRanged: true,

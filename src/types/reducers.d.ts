@@ -198,6 +198,20 @@ export type AnimationConfig = {
   hideControl?: boolean;
 };
 
+export type Timeline = {
+  domain: [number, number] | null;
+  value: number | [number, number];
+  speed: number;
+  isAnimating: boolean;
+  step?: null | number;
+  timeSteps?: null | number[];
+  defaultTimeFormat?: null | string;
+  timeFormat?: null | string;
+  timezone?: null | string;
+  animationWindow?: null | Filter['animationWindow'];
+  marks?: null | number[];
+} & Record<string, any>;
+
 export type BaseInteraction = {
   label: string;
   enabled: boolean;
