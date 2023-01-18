@@ -2014,6 +2014,14 @@
     "@babel/runtime" "^7.0.0"
     "@math.gl/core" "^3.5.0"
 
+"@luma.gl/shadertools@^8.5.10":
+  version "8.5.18"
+  resolved "https://registry.yarnpkg.com/@luma.gl/shadertools/-/shadertools-8.5.18.tgz#2007c7173b95c552910fdf722876e25d8f2385a3"
+  integrity sha512-orkdnlVLB8AO4yf9jXXZqEG/UuwVg/v3Gmo4/F2vdrwkUMN+wUZFUdhssDGEGWvuauZWK9Mbz8XrxC0gmLbWzw==
+  dependencies:
+    "@babel/runtime" "^7.0.0"
+    "@math.gl/core" "^3.5.0"
+
 "@luma.gl/test-utils@^8.5.10":
   version "8.5.16"
   resolved "https://registry.yarnpkg.com/@luma.gl/test-utils/-/test-utils-8.5.16.tgz#c05451075e4c3d58bafe1646670b1a2b720c088c"
@@ -2200,6 +2208,14 @@
     "@babel/runtime" "^7.12.0"
     gl-matrix "^3.0.0"
 
+"@math.gl/web-mercator@^3.5.4", "@math.gl/web-mercator@^3.6.2":
+  version "3.6.3"
+  resolved "https://registry.yarnpkg.com/@math.gl/web-mercator/-/web-mercator-3.6.3.tgz#ef91168e030eecffc788618d686e8a6c1d7a0bf8"
+  integrity sha512-UVrkSOs02YLehKaehrxhAejYMurehIHPfFQvPFZmdJHglHOU4V2cCUApTVEwOksvCp161ypEqVp+9H6mGhTTcw==
+  dependencies:
+    "@babel/runtime" "^7.12.0"
+    gl-matrix "^3.4.0"
+
 "@math.gl/web-mercator@^3.5.5":
   version "3.5.6"
   resolved "https://registry.yarnpkg.com/@math.gl/web-mercator/-/web-mercator-3.5.6.tgz#3bdc62f578bc0f360bb3c2866d015065b869cc20"
@@ -2207,14 +2223,6 @@
   dependencies:
     "@babel/runtime" "^7.12.0"
     gl-matrix "~3.3.0"
-
-"@math.gl/web-mercator@^3.6.2":
-  version "3.6.3"
-  resolved "https://registry.yarnpkg.com/@math.gl/web-mercator/-/web-mercator-3.6.3.tgz#ef91168e030eecffc788618d686e8a6c1d7a0bf8"
-  integrity sha512-UVrkSOs02YLehKaehrxhAejYMurehIHPfFQvPFZmdJHglHOU4V2cCUApTVEwOksvCp161ypEqVp+9H6mGhTTcw==
-  dependencies:
-    "@babel/runtime" "^7.12.0"
-    gl-matrix "^3.4.0"
 
 "@mdn/browser-compat-data@^3.3.14":
   version "3.3.14"
@@ -3325,10 +3333,10 @@
     "@types/prop-types" "*"
     "@types/react" "*"
 
-"@types/react-vis@^1.8.0":
-  version "1.11.10"
-  resolved "https://registry.yarnpkg.com/@types/react-vis/-/react-vis-1.11.10.tgz#eb281db2366215665a14f7f5161f377e90da34b7"
-  integrity sha512-QQiBRQ4pfLue9dPhd20v3kpgB4U5TyW4dMcP231/y0b5qaxpaIXDDMZpEqYtNgqeGV566G0vVy9521p1s1tyww==
+"@types/react-vis@1.11.7":
+  version "1.11.7"
+  resolved "https://registry.yarnpkg.com/@types/react-vis/-/react-vis-1.11.7.tgz#da23b8fb833a962e8a0db39668438a43e9a7e05d"
+  integrity sha512-X0+xpR+koVXxmh68TlGSkIuXNL7DwqL+IvjtQvdJi7Vg9OokqBMU/EyuaFOUpN5awMXB7DDT/2WxC2epG+nW7Q==
   dependencies:
     "@types/react" "*"
 
@@ -13370,7 +13378,7 @@ react-virtualized@^9.21.1:
     prop-types "^15.7.2"
     react-lifecycles-compat "^3.0.4"
 
-react-vis@^1.8.0:
+react-vis@1.11.7:
   version "1.11.7"
   resolved "https://registry.yarnpkg.com/react-vis/-/react-vis-1.11.7.tgz#909902af00158895d14da1adfe1d0dc0045228ff"
   integrity sha512-vJqS12l/6RHeSq8DVl4PzX0j8iPgbT8H8PtgTRsimKsBNcPjPseO4RICw1FUPrwj8MPrrna34LBtzyC4ATd5Ow==

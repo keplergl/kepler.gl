@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -246,7 +246,15 @@ const StyledStatsControl = styled.div<StatsControlProps>`
   }
 `;
 
-const StatsControl = ({top, showStats, toggleShowStats}: {top: number, showStats?: boolean, toggleShowStats: () => void}) => (
+const StatsControl = ({
+  top,
+  showStats,
+  toggleShowStats
+}: {
+  top: number;
+  showStats?: boolean;
+  toggleShowStats: () => void;
+}) => (
   <StyledStatsControl top={top} showStats={showStats}>
     <div onClick={toggleShowStats}>
       {showStats ? 'Hide Column Stats' : 'Show Column Stats'}

@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -40,7 +40,7 @@ import {
   ParsedConfig
 } from '@kepler.gl/schemas';
 
-import {ParsedLayer, SavedInteractionConfig, TooltipInfo} from '@kepler.gl/types';
+import {ParsedLayer, SavedInteractionConfig, TooltipInfo, SavedEditor} from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
 /**
@@ -600,6 +600,21 @@ export function validateLayerWithData(
   return newLayer;
 }
 
+export function mergeEditor<S extends VisState>(state: S, savedEditor: SavedEditor) {
+  if (!savedEditor) {
+    return state;
+  }
+  return {
+    ...state,
+    editor: {
+      ...state.editor,
+      features: [...state.editor.features, ...(savedEditor.features || [])],
+      // if savedEditor.visible is undefined keep state.editor.visible
+      visible: savedEditor.visible ?? state.editor.visible
+    }
+  };
+}
+
 export function isValidMerger(merger: Merger): boolean {
   return isObject(merger) && typeof merger.merge === 'function' && typeof merger.prop === 'string';
 }
@@ -610,5 +625,6 @@ export const VIS_STATE_MERGERS: VisStateMergers = [
   {merge: mergeInteractions, prop: 'interactionConfig', toMergeProp: 'interactionToBeMerged'},
   {merge: mergeLayerBlending, prop: 'layerBlending'},
   {merge: mergeSplitMaps, prop: 'splitMaps', toMergeProp: 'splitMapsToBeMerged'},
-  {merge: mergeAnimationConfig, prop: 'animationConfig'}
+  {merge: mergeAnimationConfig, prop: 'animationConfig'},
+  {merge: mergeEditor, prop: 'editor'}
 ];

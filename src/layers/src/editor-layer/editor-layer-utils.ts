@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,8 +30,7 @@ import {EDITOR_LAYER_ID, EDITOR_MODES} from '@kepler.gl/constants';
  */
 export function isDrawingActive(editorMenuActive: boolean, mode: string): boolean {
   return (
-    (editorMenuActive &&
-    (mode === EDITOR_MODES.DRAW_POLYGON || mode === EDITOR_MODES.DRAW_RECTANGLE))
+    editorMenuActive && (mode === EDITOR_MODES.DRAW_POLYGON || mode === EDITOR_MODES.DRAW_RECTANGLE)
   );
 }
 
@@ -51,7 +50,13 @@ export function isDrawingActive(editorMenuActive: boolean, mode: string): boolea
 export function onClick(
   info: PickInfo<any>,
   event: any,
-  {editorMenuActive, editor, setSelectedFeature, onLayerClick, mapIndex = 0}: {
+  {
+    editorMenuActive,
+    editor,
+    setSelectedFeature,
+    onLayerClick,
+    mapIndex = 0
+  }: {
     editorMenuActive: boolean;
     editor: Editor;
     onLayerClick: (data, clickEvent) => any;
@@ -73,13 +78,14 @@ export function onClick(
       }
     } else if (objectType === 'Polygon' || objectType === 'Point') {
       let clickContext;
-      if (event.rightButton) {
+      if (event.rightButton && Array.isArray(event.srcEvent?.point)) {
+        const {point} = event.srcEvent;
         clickContext = {
           mapIndex,
           rightClick: true,
           position: {
-            x: event.changedPointers[0].offsetX,
-            y: event.changedPointers[0].offsetY
+            x: point[0],
+            y: point[1]
           }
         };
       }
@@ -120,7 +126,10 @@ export function onClick(
  * @param params.hoverInfo
  * @returns Returns true is hover is handled.
  */
-export function onHover(info: PickInfo<any>, {hoverInfo, editor, editorMenuActive}: {editorMenuActive: boolean; editor: Editor; hoverInfo}): boolean {
+export function onHover(
+  info: PickInfo<any>,
+  {hoverInfo, editor, editorMenuActive}: {editorMenuActive: boolean; editor: Editor; hoverInfo}
+): boolean {
   if (isDrawingActive(editorMenuActive, editor.mode)) {
     return true;
   }
@@ -138,7 +147,10 @@ export function onHover(info: PickInfo<any>, {hoverInfo, editor, editorMenuActiv
  * @raturns Returns a tooltip object compatible with Deck.getTooltip()
  */
 // eslint-disable-next-line complexity
-export function getTooltip(info: PickInfo<any>, {editor, theme, editorMenuActive}: {editorMenuActive: boolean; editor: Editor; theme: any}): object | null {
+export function getTooltip(
+  info: PickInfo<any>,
+  {editor, theme, editorMenuActive}: {editorMenuActive: boolean; editor: Editor; theme: any}
+): object | null {
   const {object, layer} = info;
 
   // don't show the tooltip when the menu is visible
@@ -186,7 +198,11 @@ export function getTooltip(info: PickInfo<any>, {editor, theme, editorMenuActive
  * @param params.hoverInfo
  * @returns Returns cursor type.
  */
-export function getCursor({editorMenuActive, editor, hoverInfo}: {
+export function getCursor({
+  editorMenuActive,
+  editor,
+  hoverInfo
+}: {
   editorMenuActive: boolean;
   editor: Editor;
   hoverInfo: any;
@@ -207,7 +223,7 @@ export function getCursor({editorMenuActive, editor, hoverInfo}: {
  * @param text Text to show.
  * @param theme Current theme.
  */
-function getTooltipObject(text: string, theme: any): {text: string, style: object} {
+function getTooltipObject(text: string, theme: any): {text: string; style: object} {
   return {
     text,
     style: {

@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -41,13 +41,7 @@ import {
 import {LOAD_MAP_STYLE_TASK} from '@kepler.gl/tasks';
 import {rgb} from 'd3-color';
 
-import {
-  RGBColor,
-  LayerGroup,
-  MapStyles,
-  InputStyle,
-  VisibleLayerGroups
-} from '@kepler.gl/types';
+import {RGBColor, LayerGroup, MapStyles, InputStyle, VisibleLayerGroups} from '@kepler.gl/types';
 import {
   ActionTypes,
   ReceiveMapConfigPayload,
