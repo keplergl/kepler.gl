@@ -71,7 +71,8 @@ const defaultProps = {
   resetAnimation: nop,
   updateAnimationSpeed: nop,
   toggleAnimation: nop,
-  enlargeFilter: nop,
+  onClose: nop,
+  onToggleMinify: nop,
   setFilterPlot: nop,
   setFilterAnimationWindow: nop
 };
