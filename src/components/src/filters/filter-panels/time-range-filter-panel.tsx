@@ -59,7 +59,6 @@ function TimeRangeFilterPanelFactory(
         [filter.id, isEnlarged, enlargeFilter]
       );
 
-      // ! not sure, recheck
       const timeline = getTimelineFromFilter(filter);
 
       return (

@@ -57,7 +57,7 @@ function FilterAnimationControllerFactory(
         animationWindow={filter.animationWindow}
         steps={steps}
         updateAnimation={updateAnimation}
-        // @ts-expect-error different type
+        // @ts-expect-error different function type, goes to TimeWidget setFilterAnimationTime()
         setTimelineValue={setFilterAnimationTime}
         timeline={timeline}
         children={children}

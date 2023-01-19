@@ -28,7 +28,7 @@ import {Timeline} from '@kepler.gl/types';
 interface AnimationControllerProps<T extends number | number[]> {
   isAnimating?: boolean;
   speed?: number;
-  updateAnimation?: (x: T) => void; // ! deprecated
+  updateAnimation?: (x: T) => void;
   setTimelineValue: (x: T) => void;
   timeline?: Timeline;
   animationWindow?: string;

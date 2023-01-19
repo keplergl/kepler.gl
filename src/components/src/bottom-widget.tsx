@@ -178,8 +178,8 @@ export default function BottomWidgetFactory(
                   readOnly={readOnly}
                   showTimeDisplay={showFloatingTimeDisplay}
                   setFilterPlot={visStateActions.setFilterPlot}
-                  setFilterAnimationTime={visStateActions.setFilterAnimationTime}
-                  setFilterAnimationWindow={setTimelineValue}
+                  setFilterAnimationTime={setTimelineValue}
+                  setFilterAnimationWindow={visStateActions.setFilterAnimationWindow}
                   toggleAnimation={visStateActions.toggleFilterAnimation}
                   updateAnimationSpeed={visStateActions.updateFilterAnimationSpeed}
                   resetAnimation={resetAnimation}

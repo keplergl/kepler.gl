@@ -22,6 +22,24 @@ import {AnimationConfig, Timeline, TimeRangeFilter} from '@kepler.gl/types';
 
 import {toArray} from './utils';
 
+export const TIMELINE_MODES = {
+  inner: 'inner',
+  outer: 'outer'
+};
+
+export const SAMPLE_TIMELINE = {
+  // value: [15], // represent 15% of the all width
+  value: [5, 15], // represent start at 5% and ends at 15%
+  domain: [1, 100], // represent the total domain
+  speed: 1,
+  enableInteraction: false, // can use interact with this timeline
+  isAnimating: false,
+  step: null,
+  // @todo: giuseppe coverType: 'inner' | 'outer'
+  mode: TIMELINE_MODES.inner
+  //  ....
+};
+
 export const getTimelineFromAnimationConfig = (animationConfig: AnimationConfig): Timeline => {
   const {
     currentTime,

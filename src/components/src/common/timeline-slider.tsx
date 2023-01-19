@@ -46,7 +46,7 @@ const PROGRESS_BAR_HEIGHT = 8;
 
 interface TimelineSliderProps {
   timeline: Timeline;
-  setTimelineValue: (value: number[]) => void;
+  setTimelineValue: (value: [number] | [number, number]) => void;
   enableBarDrag?: boolean;
   showDomainTimes?: boolean;
   height?: number;
@@ -89,20 +89,18 @@ function TimelineSliderFactory() {
     );
 
     const [onSlider0Change, onSlider1Change] = useMemo(() => {
-      const domain1: [number, number] = domain ? domain : [0, 1];
+      if (!domain) return [noop, noop];
       return [
+        isRanged ? (newValue: number) => onThrottleUpdate([clamp(domain, newValue), value1]) : noop,
         isRanged
-          ? (newValue: number) => onThrottleUpdate([clamp(domain1, newValue), value1])
-          : noop,
-        isRanged
-          ? (newValue: number) => onThrottleUpdate([value0, clamp(domain1, newValue)])
+          ? (newValue: number) => onThrottleUpdate([value0, clamp(domain, newValue)])
           : (newValue: number) =>
               onThrottleUpdate(
                 animationWindow === ANIMATION_WINDOW.interval
                   ? // filter requires an array with 2 values
-                    [clamp(domain1, newValue), clamp(domain1, newValue)]
+                    [clamp(domain, newValue), clamp(domain, newValue)]
                   : // animationConfig only requires one value
-                    [clamp(domain1, newValue)]
+                    [clamp(domain, newValue)]
               )
       ];
     }, [animationWindow, domain, isRanged, value0, value1, onThrottleUpdate]);
@@ -136,7 +134,7 @@ function TimelineSliderFactory() {
         <SliderWrapper className="animation-control__slider">
           <StyledSlider
             isRanged={requiresRangeSlider}
-            step={step || 1}
+            step={step || undefined}
             minValue={domain ? domain[0] : 0}
             maxValue={domain ? domain[1] : 1}
             enableBarDrag={enableBarDrag}
@@ -155,29 +153,6 @@ function TimelineSliderFactory() {
       </AnimationControlSlider>
     );
   };
-
-  /*
-  <div className="animation-control__time-slider">
-    <StyledDomain className="domain-start">
-      <span>{timeStart}</span>
-    </StyledDomain>
-    <SliderWrapper className="animation-control__slider">
-      <Slider
-        isRanged={false}
-        step={step}
-        minValue={domain ? domain[0] : 0}
-        maxValue={domain ? domain[1] : 1}
-        // @ts-expect-error
-        value1={currentTime}
-        onSlider1Change={onSlider1Change}
-        enableBarDrag={true}
-      />
-    </SliderWrapper>
-    <StyledDomain className="domain-end">
-      <span>{timeEnd}</span>
-    </StyledDomain>
-  </div>
-  */
 
   return TimelineSlider;
 }
