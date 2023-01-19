@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -637,6 +637,7 @@ export default function MapContainerFactory(
             }}
             onClick={(data, event) => {
               // @ts-ignore
+              normalizeEvent(event.srcEvent, viewport);
               const res = EditorLayerUtils.onClick(data, event, {
                 editorMenuActive,
                 editor,
@@ -683,8 +684,6 @@ export default function MapContainerFactory(
       const {visState, visStateActions, index} = this.props;
       const {layers, datasets, editor} = visState;
 
-      const layersToRender = this.layersToRenderSelector(this.props);
-
       return (
         <Editor
           index={index}
@@ -692,7 +691,6 @@ export default function MapContainerFactory(
           editor={editor}
           filters={this.polygonFiltersSelector(this.props)}
           layers={layers}
-          layersToRender={layersToRender}
           onDeleteFeature={visStateActions.deleteFeature}
           onSelect={visStateActions.setSelectedFeature}
           onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}

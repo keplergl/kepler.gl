@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -418,7 +418,8 @@ export const geoJsonTripFilterProps = {
   type: 'range',
   typeOptions: ['range'],
   value: [4, 20],
-  gpu: true
+  gpu: true,
+  view: 'side'
 };
 
 export const mergedTripFilter = {
@@ -446,7 +447,8 @@ export const geoJsonRateFilterProps = {
   fieldType: 'string',
   type: 'multiSelect',
   value: [],
-  gpu: false
+  gpu: false,
+  view: 'side'
 };
 
 export const mergedRateFilter = {

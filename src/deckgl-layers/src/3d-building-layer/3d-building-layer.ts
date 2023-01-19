@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,21 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {CompositeLayer} from '@deck.gl/core';
-import {TileLayer as DeckGLTileLayer} from '@deck.gl/geo-layers';
-import {getTileData} from './3d-building-utils';
-import {ThreeDBuildingLayerProps, Coordinates, TileDataItem} from './types';
-import {SolidPolygonLayer} from '@deck.gl/layers';
+import GL from '@luma.gl/constants';
+import {CompositeLayer} from '@deck.gl/core/typed';
+import {TileLayer as DeckGLTileLayer} from '@deck.gl/geo-layers/typed';
+import {SolidPolygonLayer, SolidPolygonLayerProps} from '@deck.gl/layers/typed';
 
-export default class ThreeDBuildingLayer extends CompositeLayer<{}, ThreeDBuildingLayerProps> {
+import {getTileData} from './3d-building-utils';
+import {ThreeDBuildingLayerProps, TileDataItem, TileLoadProps} from './types';
+
+export default class ThreeDBuildingLayer extends CompositeLayer<ThreeDBuildingLayerProps> {
   // this layer add its subLayers to the redux store, and push sample data
 
-  renderSubLayers(props: ThreeDBuildingLayerProps) {
+  renderSubLayers(props: SolidPolygonLayerProps<any>) {
     return new SolidPolygonLayer<TileDataItem>({
       ...props,
       parameters: {
-        blendFunc: ['SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA', 'ONE', 'ONE_MINUS_SRC_ALPHA'],
-        blendEquation: ['FUNC_ADD', 'FUNC_ADD']
+        blendFunc: [GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA, GL.ONE, GL.ONE_MINUS_SRC_ALPHA],
+        blendEquation: [GL.FUNC_ADD, GL.FUNC_ADD]
       },
       extruded: true,
       opacity: 1,
@@ -46,9 +48,9 @@ export default class ThreeDBuildingLayer extends CompositeLayer<{}, ThreeDBuildi
   renderLayers() {
     return [
       new DeckGLTileLayer({
-        id: `${this.id}-deck-3d-building`,
-        getTileData: (args: Coordinates) =>
-          getTileData(this.props.mapboxApiUrl, this.props.mapboxApiAccessToken, args),
+        id: `${this.id}-deck-3d-building` as string,
+        getTileData: (tile: TileLoadProps) =>
+          getTileData(this.props.mapboxApiUrl, this.props.mapboxApiAccessToken, tile.index),
         minZoom: 13,
         renderSubLayers: this.renderSubLayers.bind(this),
         updateTriggers: this.props.updateTriggers

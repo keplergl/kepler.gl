@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -153,7 +153,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
   };
 
   _getOptions(page) {
-    if(!this.props.options){
+    if (!this.props.options) {
       return [];
     }
 
@@ -168,7 +168,10 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
       this.page = page + 1;
       // in case of user searching, props.options will be updated
       // so "page" value will be set to 0 and previous state.options will be discarded
-      return [...(page > 0 ? (this.state.options || []) : []), ...this.props.options.slice(start, end)];
+      return [
+        ...(page > 0 ? this.state.options || [] : []),
+        ...this.props.options.slice(start, end)
+      ];
     }
 
     return null;
@@ -190,7 +193,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
 
     // Don't render if there are no options to display
     if (!this.props.options?.length && allowCustomValues <= 0) {
-      return <div />;;
+      return <div />;
     }
 
     const valueOffset = Array.isArray(fixedOptions) ? fixedOptions.length : 0;
