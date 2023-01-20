@@ -20,7 +20,7 @@
 
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
-import {withTheme} from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 import {StaticMap, MapRef} from 'react-map-gl';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
@@ -100,6 +100,18 @@ const MAP_STYLE: {[key: string]: React.CSSProperties} = {
 };
 
 const LOCALE_CODES_ARRAY = Object.keys(LOCALE_CODES);
+
+interface StyledMapContainerProps {
+  mixBlendMode?: string;
+}
+
+const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
+  ({mixBlendMode = 'normal'}) => `
+  .overlays {
+    mix-blend-mode: ${mixBlendMode};
+  };
+`
+);
 
 const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
@@ -826,14 +838,16 @@ export default function MapContainerFactory(
     }
 
     render() {
+      const {visState} = this.props;
       return (
-        <StyledMapContainer
+        <StyledMap
           ref={this._ref}
           style={MAP_STYLE.container}
           onContextMenu={event => event.preventDefault()}
+          mixBlendMode={visState.overlayBlending}
         >
           {this._renderMap()}
-        </StyledMapContainer>
+        </StyledMap>
       );
     }
   }

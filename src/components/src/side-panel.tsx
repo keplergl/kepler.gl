@@ -123,6 +123,7 @@ export default function SidePanelFactory(
       filters,
       layers,
       layerBlending,
+      overlayBlending,
       layerClasses,
       layerOrder,
       interactionConfig,
@@ -235,6 +236,7 @@ export default function SidePanelFactory(
                 layerClasses={layerClasses}
                 layerOrder={layerOrder}
                 layerBlending={layerBlending}
+                overlayBlending={overlayBlending}
                 mapStyle={mapStyle}
                 mapStyleActions={mapStyleActions}
                 mapStateActions={mapStateActions}

@@ -62,6 +62,7 @@ const defaultProps = {
   datasets: InitialState.visState.datasets,
   filters: InitialState.visState.filters,
   layerBlending: InitialState.visState.layerBlending,
+  overlayBlending: InitialState.visState.overlayBlending,
   layerClasses: InitialState.visState.layerClasses,
   layerOrder: InitialState.visState.layerOrder,
   interactionConfig: InitialState.visState.interactionConfig,

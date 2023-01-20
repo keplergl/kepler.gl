@@ -72,6 +72,7 @@ export interface VisState {
   interactionConfig: InteractionConfig;
   interactionToBeMerged: any;
   layerBlending: string;
+  overlayBlending: string;
   hoverInfo: any;
   clicked: any;
   mousePos: any;
@@ -778,7 +779,8 @@ export const propertiesV0 = {
     version: VERSIONS.v0,
     properties: interactionPropsV0
   }),
-  layerBlending: null
+  layerBlending: null,
+  overlayBlending: null
 };
 
 export const propertiesV1 = {
@@ -795,6 +797,7 @@ export const propertiesV1 = {
     properties: interactionPropsV1
   }),
   layerBlending: null,
+  overlayBlending: null,
   splitMaps: new SplitMapsSchema({
     key: 'splitMaps',
     version: VERSIONS.v1

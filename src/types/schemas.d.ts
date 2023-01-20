@@ -91,6 +91,7 @@ export type SavedVisState = {
   layers: SavedLayer[];
   interactionConfig: SavedInteractionConfig;
   layerBlending: string;
+  overlayBlending: string;
   splitMaps: SplitMap[];
   animationConfig: SavedAnimationConfig;
   editor?: SavedEditor;
@@ -101,6 +102,7 @@ export type ParsedVisState = {
   filters?: ParsedFilter[];
   interactionConfig?: Partial<SavedInteractionConfig>;
   layerBlending?: string;
+  overlayBlending?: string;
   splitMaps?: SplitMap[];
   animationConfig?: Partial<SavedAnimationConfig>;
 };

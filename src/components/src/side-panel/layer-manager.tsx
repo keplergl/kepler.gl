@@ -34,7 +34,7 @@ import AddLayerButtonFactory from './layer-panel/add-layer-button';
 import ItemSelector from '../common/item-selector/item-selector';
 import {PanelLabel, SidePanelDivider, SidePanelSection} from '../common/styled-components';
 
-import {LAYER_BLENDINGS} from '@kepler.gl/constants';
+import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
 import {SidePanelItem} from '../types';
@@ -46,12 +46,18 @@ type LayerBlendingSelectorProps = {
   updateLayerBlending: ActionHandler<typeof VisStateActions.updateLayerBlending>;
 } & WrappedComponentProps;
 
+type OverlayBlendingSelectorProps = {
+  overlayBlending: string;
+  updateOverlayBlending: ActionHandler<typeof VisStateActions.updateOverlayBlending>;
+} & WrappedComponentProps;
+
 type LayerManagerProps = {
   datasets: Datasets;
   layers: Layer[];
   layerOrder: number[];
   layerClasses: LayerClassesType;
   layerBlending: string;
+  overlayBlending: string;
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
   showAddDataModal: () => void;
@@ -103,6 +109,39 @@ const LayerBlendingSelector = React.memo(
   }
 );
 LayerBlendingSelector.displayName = 'LayerBlendingSelector';
+
+const OverlayBlendingSelector = React.memo(
+  ({overlayBlending, updateOverlayBlending, intl}: OverlayBlendingSelectorProps) => {
+    const labeledOverlayBlendings = Object.keys(OVERLAY_BLENDINGS).reduce(
+      (acc, current) => ({
+        ...acc,
+        [intl.formatMessage({id: OVERLAY_BLENDINGS[current].label})]: current
+      }),
+      {}
+    );
+
+    const onChange = useCallback(
+      blending => updateOverlayBlending(labeledOverlayBlendings[blending]),
+      [updateOverlayBlending, labeledOverlayBlendings]
+    );
+
+    return (
+      <SidePanelSection>
+        <PanelLabel>
+          <FormattedMessage id="overlayBlending.title" />
+        </PanelLabel>
+        <ItemSelector
+          selectedItems={intl.formatMessage({id: OVERLAY_BLENDINGS[overlayBlending].label})}
+          options={Object.keys(labeledOverlayBlendings)}
+          multiSelect={false}
+          searchable={false}
+          onChange={onChange}
+        />
+      </SidePanelSection>
+    );
+  }
+);
+OverlayBlendingSelector.displayName = 'OverlayBlendingSelector';
 
 LayerManagerFactory.deps = [
   LayerListFactory,
@@ -217,6 +256,11 @@ function LayerManagerFactory(
           <LayerBlendingSelector
             layerBlending={this.props.layerBlending}
             updateLayerBlending={visStateActions.updateLayerBlending}
+            intl={intl}
+          />
+          <OverlayBlendingSelector
+            overlayBlending={this.props.overlayBlending}
+            updateOverlayBlending={visStateActions.updateOverlayBlending}
             intl={intl}
           />
         </div>
