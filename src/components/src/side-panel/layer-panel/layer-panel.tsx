@@ -55,6 +55,7 @@ type LayerPanelProps = {
   layerVisualChannelConfigChange: ActionHandler<
     typeof VisStateActions.layerVisualChannelConfigChange
   >;
+  layerSetIsValid: ActionHandler<typeof VisStateActions.layerSetIsValid>;
   layerTypeChange: ActionHandler<typeof VisStateActions.layerTypeChange>;
   layerVisConfigChange: ActionHandler<typeof VisStateActions.layerVisConfigChange>;
   layerTextLabelChange: ActionHandler<typeof VisStateActions.layerTextLabelChange>;
@@ -67,7 +68,6 @@ const PanelWrapper = styled.div<{active: boolean}>`
   border-radius: 1px;
   margin-bottom: 8px;
   z-index: 1000;
-
   &.dragging {
     cursor: move;
   }
@@ -114,6 +114,12 @@ function LayerPanelFactory(
       this.updateLayerConfig({isVisible});
     };
 
+    _resetIsValid: MouseEventHandler = e => {
+      e.stopPropagation();
+      // Make the layer valid and visible again after an error
+      this.props.layerSetIsValid(this.props.layer, true);
+    };
+
     _toggleEnableConfig: MouseEventHandler = e => {
       e.stopPropagation();
       const {
@@ -136,7 +142,7 @@ function LayerPanelFactory(
 
     render() {
       const {layer, datasets, isDraggable, layerTypeOptions} = this.props;
-      const {config} = layer;
+      const {config, isValid} = layer;
       const {isConfigActive} = config;
       const allowDuplicate = typeof layer.isValidToSave === 'function' && layer.isValidToSave();
 
@@ -152,12 +158,14 @@ function LayerPanelFactory(
             isConfigActive={isConfigActive}
             layerId={layer.id}
             isVisible={config.isVisible}
+            isValid={isValid}
             label={config.label}
             labelRCGColorValues={config.dataId ? datasets[config.dataId].color : null}
             layerType={layer.type}
             allowDuplicate={allowDuplicate}
             onToggleEnableConfig={this._toggleEnableConfig}
             onToggleVisibility={this._toggleVisibility}
+            onResetIsValid={this._resetIsValid}
             onUpdateLayerLabel={this._updateLayerLabel}
             onRemoveLayer={this._removeLayer}
             onDuplicateLayer={this._duplicateLayer}

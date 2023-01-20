@@ -230,6 +230,9 @@ class Layer {
   // TODO: define _oldDataUpdateTriggers
   _oldDataUpdateTriggers: any;
 
+  isValid: boolean;
+  errorMessage: string | null;
+
   constructor(
     props: {
       id?: string;
@@ -247,6 +250,10 @@ class Layer {
       columns: this.getLayerColumns(),
       ...props
     });
+
+    // false indicates that the layer caused an error, and was disabled
+    this.isValid = true;
+    this.errorMessage = null;
   }
 
   get layerIcon(): React.ElementType {

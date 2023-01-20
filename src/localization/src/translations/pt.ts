@@ -118,7 +118,9 @@ export default {
       trip: 'viagem',
       s2: 'S2',
       '3d': '3D'
-    }
+    },
+    layerUpdateError:
+      'Ocorreu um erro ao atualizar a camada: {errorMessage}. Certifique-se de que o formato dos dados de entrada seja válido.'
   },
   layerVisConfigs: {
     strokeWidth: 'Largura do Traço',
@@ -194,6 +196,7 @@ export default {
     hide: 'esconder',
     show: 'mostrar',
     removeLayer: 'Remover Camada',
+    resetAfterError: 'Tente habilitar a camada após um erro',
     layerSettings: 'Configurações de Camada',
     closePanel: 'Fechar painel atual',
     switchToDualView: 'Trocar para visualização dupla de mapa',

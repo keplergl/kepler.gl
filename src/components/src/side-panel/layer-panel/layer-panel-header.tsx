@@ -37,7 +37,8 @@ import {
   EyeUnseen,
   Trash,
   VertDots,
-  WarningSign
+  WarningSign,
+  Reset
 } from '../../common/icons';
 
 import {InlineInput, StyledPanelHeader} from '../../common/styled-components';
@@ -65,11 +66,13 @@ type LayerTitleSectionProps = {
 type LayerPanelHeaderProps = {
   layerId: string;
   isVisible: boolean;
+  isValid: boolean;
   onToggleVisibility: MouseEventHandler;
   onUpdateLayerLabel: ChangeEventHandler;
   onToggleEnableConfig: MouseEventHandler;
   onRemoveLayer: MouseEventHandler;
   onDuplicateLayer: MouseEventHandler;
+  onResetIsValid: MouseEventHandler;
   isConfigActive: boolean;
   showRemoveLayer?: boolean;
   label?: string;
@@ -114,7 +117,7 @@ const StyledLayerPanelHeader = styled(StyledPanelHeader)`
     padding: 10px;
   }
 
-  ${props => (props.warning ? getBorderCss('warning') : '')}
+  ${props => (props.warning ? getBorderCss('warning') : props.isValid ? '' : getBorderCss('error'))}
 
   :hover {
     cursor: pointer;
@@ -282,7 +285,8 @@ const defaultActionIcons = {
   visible: EyeSeen,
   hidden: EyeUnseen,
   enableConfig: ArrowDown,
-  duplicate: Copy
+  duplicate: Copy,
+  resetIsValid: Reset
 };
 
 function LayerPanelHeaderFactory(
@@ -294,6 +298,7 @@ function LayerPanelHeaderFactory(
     allowDuplicate,
     isDragNDropEnabled,
     isVisible,
+    isValid,
     warning,
     label,
     layerId,
@@ -304,6 +309,7 @@ function LayerPanelHeaderFactory(
     onToggleEnableConfig,
     onDuplicateLayer,
     onRemoveLayer,
+    onResetIsValid,
     showRemoveLayer,
     actionIcons = defaultActionIcons
   }) => {
@@ -314,6 +320,7 @@ function LayerPanelHeaderFactory(
         className={classnames('layer-panel__header', {
           'sort--handle': !isConfigActive
         })}
+        isValid={isValid}
         warning={warning}
         active={isConfigActive}
         labelRCGColorValues={labelRCGColorValues}
@@ -365,13 +372,23 @@ function LayerPanelHeaderFactory(
               disabled={!allowDuplicate}
             />
           </StyledPanelHeaderHiddenActions>
-          <PanelHeaderAction
-            className="layer__visibility-toggle"
-            id={layerId}
-            tooltip={isVisible ? 'tooltip.hideLayer' : 'tooltip.showLayer'}
-            onClick={onToggleVisibility}
-            IconComponent={isVisible ? actionIcons.visible : actionIcons.hidden}
-          />
+          {isValid ? (
+            <PanelHeaderAction
+              className="layer__visibility-toggle"
+              id={layerId}
+              tooltip={isVisible ? 'tooltip.hideLayer' : 'tooltip.showLayer'}
+              onClick={onToggleVisibility}
+              IconComponent={isVisible ? actionIcons.visible : actionIcons.hidden}
+            />
+          ) : (
+            <PanelHeaderAction
+              className="layer__is-valid-refresh"
+              id={layerId}
+              tooltip={'tooltip.resetAfterError'}
+              onClick={onResetIsValid}
+              IconComponent={actionIcons.resetIsValid}
+            />
+          )}
           <PanelHeaderAction
             className={classnames('layer__enable-config ', {
               'is-open': isConfigActive

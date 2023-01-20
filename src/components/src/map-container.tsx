@@ -389,21 +389,36 @@ export default function MapContainerFactory(
     };
 
     _onDeckError = (error, layer) => {
-      const errorMessage = `An error in deck.gl: ${error.message} in ${layer.id}`;
-      const notificationId = `${layer.id}-${error.message}`;
+      const errorMessage = error?.message || 'unknown-error';
+      const layerMessage = layer?.id ? ` in ${layer.id} layer` : '';
+      const errorMessageFull = `An error in deck.gl: ${errorMessage}${layerMessage}.`;
 
       // Throttle error notifications, as React doesn't like too many state changes from here.
-      const lastShown = this._deckGLErrorsElapsed[notificationId];
+      const lastShown = this._deckGLErrorsElapsed[errorMessageFull];
       if (!lastShown || lastShown < Date.now() - THROTTLE_NOTIFICATION_TIME) {
-        this._deckGLErrorsElapsed[notificationId] = Date.now();
+        this._deckGLErrorsElapsed[errorMessageFull] = Date.now();
+
+        // Mark layer as invalid
+        let extraLayerMessage = '';
+        const {visStateActions} = this.props;
+        if (layer) {
+          let topMostLayer = layer;
+          while (topMostLayer.parent) {
+            topMostLayer = topMostLayer.parent;
+          }
+          if (topMostLayer.props?.id) {
+            visStateActions.layerSetIsValid(topMostLayer, false);
+            extraLayerMessage = 'The layer has been disabled and highlighted.';
+          }
+        }
 
         // Create new error notification or update existing one with same id.
         // Update is required to preserve the order of notifications as they probably are going to "jump" based on order of errors.
         const {uiStateActions} = this.props;
         uiStateActions.addNotification(
           errorNotification({
-            message: errorMessage,
-            id: notificationId
+            message: `${errorMessageFull} ${extraLayerMessage}`,
+            id: errorMessageFull // treat the error message as id
           })
         );
       }

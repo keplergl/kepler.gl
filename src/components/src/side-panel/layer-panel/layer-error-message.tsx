@@ -18,41 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import test from 'tape';
-import {errorNotification, successNotification} from '@kepler.gl/utils';
+import React from 'react';
+import styled from 'styled-components';
 
-test('#notificationsUtils -> errorNotification', t => {
-  const notification = errorNotification({message: 'test', id: 'test-1'});
+import {FormattedMessage} from '@kepler.gl/localization';
 
-  t.deepEqual(
-    notification,
-    {
-      id: 'test-1',
-      message: 'test',
-      type: 'error',
-      topic: 'global',
-      count: 1
-    },
-    'ErrorNotification creates an error notification'
+const LayerErrorMessageContent = styled.div.attrs({
+  className: 'layer-error-message-content'
+})`
+  background-color: ${props => props.theme.notificationColors.error || '#000'};
+  color: #fff;
+  display: block;
+  width: 100%;
+  font-size: 11px;
+  padding: 1em;
+  border-radius: 4px;
+`;
+
+type LayerErrorMessageProps = {
+  errorMessage: string;
+};
+
+const LayerErrorMessage: React.FC<LayerErrorMessageProps> = ({errorMessage}) => {
+  return (
+    <LayerErrorMessageContent>
+      <FormattedMessage id={'layer.layerUpdateError'} values={{errorMessage}} />
+    </LayerErrorMessageContent>
   );
+};
 
-  t.end();
-});
-
-test('#notificationsUtils -> successNotification', t => {
-  const notification = successNotification({message: 'test', id: 'test-1'});
-
-  t.deepEqual(
-    notification,
-    {
-      id: 'test-1',
-      message: 'test',
-      type: 'success',
-      topic: 'global',
-      count: 1
-    },
-    'SuccessNotification creates an error notification'
-  );
-
-  t.end();
-});
+export default LayerErrorMessage;

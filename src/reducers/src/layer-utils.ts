@@ -97,8 +97,10 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
 }
 
 /**
- * calculate layer data based on layer type, col Config,
- * return updated layer if colorDomain, dataMap has changed
+ * Calculate layer data based on layer type, col Config,
+ * return updated layer if colorDomain, dataMap has changed.
+ * Also, returns updated layer in case the input layer was in invalid state.
+ * Adds an error message to the layer in case of an exception.
  */
 export function calculateLayerData(
   layer: Layer,
@@ -108,14 +110,43 @@ export function calculateLayerData(
   layerData: any;
   layer: Layer;
 } {
-  const {type} = layer;
+  let layerData;
+  try {
+    // Make sure the layer updates data after an error
+    if (!layer.isValid) {
+      layer._oldDataUpdateTriggers = undefined;
+    }
 
-  if (!type || !layer.hasAllColumns() || !layer.config.dataId) {
-    return {layer, layerData: {}};
+    if (!layer.type || !layer.hasAllColumns() || !layer.config.dataId) {
+      return {layer, layerData: {}};
+    }
+
+    layerData = layer.formatLayerData(state.datasets, oldLayerData);
+
+    // At this point the data for the layer is updated without errors
+    if (!layer.isValid) {
+      // Switch to visible after an error
+      layer = layer.updateLayerConfig({
+        isVisible: true
+      });
+    }
+    layer.isValid = true;
+    layer.errorMessage = null;
+  } catch (err) {
+    layer = layer.updateLayerConfig({
+      isVisible: false
+    });
+    layer.isValid = false;
+
+    layer.errorMessage = err?.message ? err.message.substring(0, 100) : 'Unknown error';
+
+    layerData = {};
   }
 
-  const layerData = layer.formatLayerData(state.datasets, oldLayerData);
-  return {layerData, layer};
+  return {
+    layer,
+    layerData
+  };
 }
 
 /**

@@ -268,7 +268,6 @@ export const INITIAL_UI_STATE: UiState = {
 /* Updaters */
 /**
  * @memberof uiStateUpdaters
-
  */
 export const initUiStateUpdater = (
   state: UiState,
@@ -682,17 +681,18 @@ export const addNotificationUpdater = (
   state: UiState,
   {payload}: UIStateActions.AddNotificationUpdaterAction
 ): UiState => {
-  let notifications;
-
+  const oldNotifications = state.notifications || [];
   // @ts-expect-error
   const payloadId = payload?.id;
-  const notificationToUpdate = payloadId ? state.notifications.find(n => n.id === payloadId) : null;
+  const notificationToUpdate = payloadId ? oldNotifications.find(n => n.id === payloadId) : null;
+
+  let notifications;
   if (notificationToUpdate) {
-    notifications = state.notifications.map(n =>
-      n.id === payloadId ? createNotification(payload) : n
+    notifications = oldNotifications.map(n =>
+      n.id === payloadId ? createNotification({...payload, count: n.count + 1}) : n
     );
   } else {
-    notifications = [...(state.notifications || []), createNotification(payload)];
+    notifications = [...oldNotifications, createNotification(payload)];
   }
 
   return {...state, notifications};

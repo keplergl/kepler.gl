@@ -37,6 +37,7 @@ import VisConfigSliderFactory from './vis-config-slider';
 import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import TextLabelPanelFactory from './text-label-panel';
 import HowToButton from './how-to-button';
+import LayerErrorMessage from './layer-error-message';
 
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
@@ -1045,6 +1046,7 @@ export default function LayerConfiguratorFactory(
                 updateLayerConfig={updateLayerConfig}
               />
             </ConfigGroupCollapsibleContent>
+            {layer.errorMessage ? <LayerErrorMessage errorMessage={layer.errorMessage} /> : null}
           </LayerConfigGroup>
           {renderTemplate &&
             this[renderTemplate] &&

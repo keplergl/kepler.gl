@@ -333,13 +333,12 @@ export function layerConfigChangeUpdater(
 
   let layerData;
 
-  // let newLayer;
   if (newLayer.shouldCalculateLayerData(props)) {
     const oldLayerData = state.layerData[idx];
-    const updateLayerDataResult = calculateLayerData(newLayer, state, oldLayerData);
 
-    layerData = updateLayerDataResult.layerData;
+    const updateLayerDataResult = calculateLayerData(newLayer, state, oldLayerData);
     newLayer = updateLayerDataResult.layer;
+    layerData = updateLayerDataResult.layerData;
   }
 
   let newState = state;
@@ -352,6 +351,43 @@ export function layerConfigChangeUpdater(
     layerData,
     idx
   });
+}
+
+/**
+ * Updates isValid flag of a layer.
+ * Updates isVisible based on the value of isValid.
+ * Triggers update of data for the layer in order to get errors again during next update iteration.
+ * @memberof visStateUpdaters
+ * @returns nextState
+ */
+export function layerSetIsValidUpdater(
+  state: VisState,
+  action: VisStateActions.LayerSetIsValidUpdaterAction
+): VisState {
+  const {oldLayer, isValid} = action;
+
+  const idx = state.layers.findIndex(l => l.id === oldLayer.id);
+  const layerToUpdate = state.layers[idx];
+  if (layerToUpdate) {
+    let newLayer;
+    let newData = null;
+
+    if (isValid) {
+      // Trigger data update in order to show errors again if present.
+      const {layer, layerData} = calculateLayerData(layerToUpdate, state, undefined);
+      newLayer = layer;
+      newData = layerData;
+    } else {
+      newLayer = layerToUpdate.updateLayerConfig({
+        isVisible: false
+      });
+      newLayer.isValid = false;
+    }
+
+    return updateStateWithLayerAndData(state, {idx, layer: newLayer, layerData: newData});
+  }
+
+  return state;
 }
 
 function addOrRemoveTextLabels(newFields, textLabel) {

@@ -120,7 +120,9 @@ export default {
       trip: 'trip',
       s2: 'S2',
       '3d': '3D'
-    }
+    },
+    layerUpdateError:
+      'An error occurred during layer update: {errorMessage}. Make sure the format of the input data is valid.'
   },
   layerVisConfigs: {
     angle: 'Angle',
@@ -196,6 +198,7 @@ export default {
     show: 'show',
     removeLayer: 'Remove layer',
     duplicateLayer: 'Duplicate layer',
+    resetAfterError: 'Try to enable the layer after an error',
     layerSettings: 'Layer settings',
     closePanel: 'Close current panel',
     switchToDualView: 'Switch to dual map view',

@@ -89,6 +89,31 @@ export function layerTextLabelChange(
     value
   };
 }
+
+export type LayerSetIsValidUpdaterAction = {
+  oldLayer: Layer;
+  isValid: boolean;
+};
+
+/**
+ * Changes value of isValid flag for a layer.
+ * The action also updates visibility of the layer based on isValid.
+ * @param oldLayer - layer to be updated
+ * @param isValid - new value for isValid flag
+ * @returns action
+ * @public
+ */
+export function layerSetIsValid(
+  oldLayer: Layer,
+  isValid: boolean
+): Merge<LayerSetIsValidUpdaterAction, {type: typeof ActionTypes.LAYER_SET_IS_VALID}> {
+  return {
+    type: ActionTypes.LAYER_SET_IS_VALID,
+    oldLayer,
+    isValid
+  };
+}
+
 export type LayerTypeChangeUpdaterAction = {
   oldLayer: Layer;
   newType: string;
