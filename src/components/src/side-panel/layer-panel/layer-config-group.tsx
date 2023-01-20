@@ -43,6 +43,7 @@ export type LayerConfigGroupProps = {
   expanded?: boolean;
   disabled?: boolean;
   onChange?: (newVisConfig: Partial<LayerVisConfig>) => void;
+  IconComponent?: React.ElementType;
 };
 
 export const StyledLayerConfigGroupAction = styled.div`
@@ -169,7 +170,8 @@ function LayerConfigGroupFactory(
     collapsible,
     description,
     disabled,
-    expanded
+    expanded,
+    IconComponent = VertThreeDots
   }) => {
     const [collapsed, toggleCollapsed] = useState(!expanded);
     const onToggleCollapsed = useCallback(() => {
@@ -188,7 +190,7 @@ function LayerConfigGroupFactory(
                 onChange={() => onChange?.({[property]: !layer?.config.visConfig[property]})}
               />
             ) : null}
-            {collapsible ? <VertThreeDots height="18px" /> : null}
+            {collapsible ? <IconComponent height="18px" /> : null}
           </StyledLayerConfigGroupAction>
         </StyledConfigGroupHeader>
         <ConfigGroupContent

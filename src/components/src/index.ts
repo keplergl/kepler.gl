@@ -242,10 +242,11 @@ export {ConfigGroupCollapsibleContent, StyledConfigGroupHeader, LayerConfigGroup
 export {default as ColumnSelectorFactory} from './side-panel/layer-panel/column-selector';
 export {default as StyledDropdownSelect} from './common/item-selector/item-selector';
 export {
-  default as LayerPanelHeaderFactory,
   DragHandle,
   LayerLabelEditor,
-  LayerTitleSectionFactory
+  LayerTitleSectionFactory,
+  LayerPanelHeaderActionSectionFactory,
+  default as LayerPanelHeaderFactory
 } from './side-panel/layer-panel/layer-panel-header';
 export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
 
@@ -277,7 +278,7 @@ export type {MapContainerProps} from './map-container';
 export type {MapControlProps} from './map/map-control';
 export type {MapDrawPanelProps} from './map/map-draw-panel';
 export type {PanelHeaderProps} from './side-panel/panel-header';
-export type {LayerLabelEditorProps, LayerTitleSectionProps, LayerPanelHeaderProps} from './side-panel/layer-panel/layer-panel-header';
+export type {LayerLabelEditorProps, LayerTitleSectionProps, LayerPanelHeaderProps, LayerPanelHeaderActionSectionProps} from './side-panel/layer-panel/layer-panel-header';
 export type {FilterPanelHeaderProps} from './side-panel/filter-panel/filter-panel-header';
 export type {LayerTypeOption} from './side-panel/layer-panel/layer-type-dropdown-list';
 export type {LayerConfigGroupLabelProps, LayerConfigGroupProps} from './side-panel/layer-panel/layer-config-group';

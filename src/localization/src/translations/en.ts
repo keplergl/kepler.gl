@@ -198,8 +198,8 @@ export default {
     rowCount: '{rowCount} rows'
   },
   tooltip: {
-    hideLayer: 'hide layer',
-    showLayer: 'show layer',
+    hideLayer: 'Hide layer',
+    showLayer: 'Show layer',
     hideFeature: 'Hide Feature',
     showFeature: 'Show feature',
     hide: 'hide',

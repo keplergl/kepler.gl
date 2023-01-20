@@ -116,13 +116,13 @@ function LayerPanelFactory(
     };
 
     _resetIsValid: MouseEventHandler = e => {
-      e.stopPropagation();
+      e?.stopPropagation();
       // Make the layer valid and visible again after an error
       this.props.layerSetIsValid(this.props.layer, true);
     };
 
     _toggleEnableConfig: MouseEventHandler = e => {
-      e.stopPropagation();
+      e?.stopPropagation();
       const {
         layer: {
           config: {isConfigActive}
@@ -132,12 +132,12 @@ function LayerPanelFactory(
     };
 
     _removeLayer: MouseEventHandler = e => {
-      e.stopPropagation();
+      e?.stopPropagation();
       this.props.removeLayer(this.props.layer.id);
     };
 
     _duplicateLayer: MouseEventHandler = e => {
-      e.stopPropagation();
+      e?.stopPropagation();
       this.props.duplicateLayer(this.props.layer.id);
     };
 

@@ -91,6 +91,12 @@ export type LayerPanelHeaderProps = {
   listeners?: React.ElementType;
 };
 
+type HeaderActionSectionProps = {
+  isEditingLabel: boolean;
+};
+
+export type LayerPanelHeaderActionSectionProps = LayerPanelHeaderProps & HeaderActionSectionProps;
+
 export const defaultProps = {
   isDragNDropEnabled: true,
   showRemoveLayer: true
@@ -141,10 +147,6 @@ const HeaderLabelSection = styled.div`
   // leave space for eye and collapse icon
   padding-right: 50px;
 `;
-
-type HeaderActionSectionProps = {
-  isEditingLabel: boolean;
-};
 
 const HeaderActionSection = styled.div<HeaderActionSectionProps>`
   display: flex;
@@ -270,6 +272,86 @@ export function LayerTitleSectionFactory() {
   return LayerTitleSection;
 }
 
+LayerPanelHeaderActionSectionFactory.deps = [PanelHeaderActionFactory];
+
+export function LayerPanelHeaderActionSectionFactory(
+  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
+) {
+  const LayerPanelHeaderActionSection: React.FC<LayerPanelHeaderActionSectionProps> = (
+    props: LayerPanelHeaderActionSectionProps
+  ) => {
+    const {
+      isConfigActive,
+      allowDuplicate,
+      isVisible,
+      isValid,
+      layerId,
+      onToggleVisibility,
+      onResetIsValid,
+      onToggleEnableConfig,
+      onDuplicateLayer,
+      onRemoveLayer,
+      showRemoveLayer,
+      isEditingLabel,
+      // TODO: may not contain all necessary icons for all actions, e.g. actionIcons.duplicate. Need to to merge rather than replace
+      actionIcons = defaultActionIcons
+    } = props;
+    return (
+      <HeaderActionSection className="layer-panel__header__actions" isEditingLabel={isEditingLabel}>
+        <StyledPanelHeaderHiddenActions isConfigActive={isConfigActive}>
+          {showRemoveLayer ? (
+            <PanelHeaderAction
+              className="layer__remove-layer"
+              id={layerId}
+              tooltip={'tooltip.removeLayer'}
+              onClick={onRemoveLayer}
+              tooltipType="error"
+              IconComponent={actionIcons.remove}
+            />
+          ) : null}
+          <PanelHeaderAction
+            className="layer__duplicate"
+            id={layerId}
+            tooltip={'tooltip.duplicateLayer'}
+            onClick={onDuplicateLayer}
+            IconComponent={actionIcons.duplicate}
+            disabled={!allowDuplicate}
+          />
+        </StyledPanelHeaderHiddenActions>
+        {isValid ? (
+          <PanelHeaderAction
+            className="layer__visibility-toggle"
+            id={layerId}
+            tooltip={isVisible ? 'tooltip.hideLayer' : 'tooltip.showLayer'}
+            onClick={onToggleVisibility}
+            IconComponent={isVisible ? actionIcons.visible : actionIcons.hidden}
+          />
+        ) : (
+          <PanelHeaderAction
+            className="layer__is-valid-refresh"
+            id={layerId}
+            tooltip={'tooltip.resetAfterError'}
+            onClick={onResetIsValid}
+            IconComponent={actionIcons.resetIsValid}
+          />
+        )}
+
+        <PanelHeaderAction
+          className={classnames('layer__enable-config ', {
+            'is-open': isConfigActive
+          })}
+          id={layerId}
+          tooltip={'tooltip.layerSettings'}
+          onClick={onToggleEnableConfig}
+          IconComponent={actionIcons.enableConfig}
+        />
+      </HeaderActionSection>
+    );
+  };
+
+  return LayerPanelHeaderActionSection;
+}
+
 const StyledHeaderWaring = styled.div`
   position: absolute;
   right: -9px;
@@ -285,7 +367,6 @@ export const HeaderWarning = ({warning, id}) => (
     </Tooltip>
   </StyledHeaderWaring>
 );
-LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory, PanelHeaderActionFactory];
 
 const defaultActionIcons = {
   remove: Trash,
@@ -296,31 +377,26 @@ const defaultActionIcons = {
   resetIsValid: Reset
 };
 
+LayerPanelHeaderFactory.deps = [LayerTitleSectionFactory, LayerPanelHeaderActionSectionFactory];
+
 function LayerPanelHeaderFactory(
   LayerTitleSection: ReturnType<typeof LayerTitleSectionFactory>,
-  PanelHeaderAction: ReturnType<typeof PanelHeaderActionFactory>
+  LayerPanelHeaderActionSection: ReturnType<typeof LayerPanelHeaderActionSectionFactory>
 ) {
-  const LayerPanelHeader: React.FC<LayerPanelHeaderProps> = ({
-    isConfigActive,
-    allowDuplicate,
-    isDragNDropEnabled,
-    isVisible,
-    isValid,
-    warning,
-    label,
-    layerId,
-    layerType,
-    labelRCGColorValues,
-    onToggleVisibility,
-    onUpdateLayerLabel,
-    onToggleEnableConfig,
-    onDuplicateLayer,
-    onRemoveLayer,
-    onResetIsValid,
-    showRemoveLayer,
-    listeners,
-    actionIcons = defaultActionIcons
-  }) => {
+  const LayerPanelHeader: React.FC<LayerPanelHeaderProps> = props => {
+    const {
+      isConfigActive,
+      isDragNDropEnabled,
+      isValid,
+      warning,
+      label,
+      layerId,
+      layerType,
+      labelRCGColorValues,
+      onUpdateLayerLabel,
+      onToggleEnableConfig,
+      listeners
+    } = props;
     const [isEditingLabel, setIsEditingLabel] = useState(false);
     return (
       <StyledLayerPanelHeader
@@ -355,57 +431,7 @@ function LayerPanelHeaderFactory(
             }}
           />
         </HeaderLabelSection>
-        <HeaderActionSection
-          className="layer-panel__header__actions"
-          isEditingLabel={isEditingLabel}
-        >
-          <StyledPanelHeaderHiddenActions isConfigActive={isConfigActive}>
-            {showRemoveLayer ? (
-              <PanelHeaderAction
-                className="layer__remove-layer"
-                id={layerId}
-                tooltip={'tooltip.removeLayer'}
-                onClick={onRemoveLayer}
-                tooltipType="error"
-                IconComponent={actionIcons.remove}
-              />
-            ) : null}
-            <PanelHeaderAction
-              className="layer__duplicate"
-              id={layerId}
-              tooltip={'tooltip.duplicateLayer'}
-              onClick={onDuplicateLayer}
-              IconComponent={actionIcons.duplicate}
-              disabled={!allowDuplicate}
-            />
-          </StyledPanelHeaderHiddenActions>
-          {isValid ? (
-            <PanelHeaderAction
-              className="layer__visibility-toggle"
-              id={layerId}
-              tooltip={isVisible ? 'tooltip.hideLayer' : 'tooltip.showLayer'}
-              onClick={onToggleVisibility}
-              IconComponent={isVisible ? actionIcons.visible : actionIcons.hidden}
-            />
-          ) : (
-            <PanelHeaderAction
-              className="layer__is-valid-refresh"
-              id={layerId}
-              tooltip={'tooltip.resetAfterError'}
-              onClick={onResetIsValid}
-              IconComponent={actionIcons.resetIsValid}
-            />
-          )}
-          <PanelHeaderAction
-            className={classnames('layer__enable-config ', {
-              'is-open': isConfigActive
-            })}
-            id={layerId}
-            tooltip={'tooltip.layerSettings'}
-            onClick={onToggleEnableConfig}
-            IconComponent={actionIcons.enableConfig}
-          />
-        </HeaderActionSection>
+        <LayerPanelHeaderActionSection {...props} isEditingLabel={isEditingLabel} />
       </StyledLayerPanelHeader>
     );
   };
