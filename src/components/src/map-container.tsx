@@ -391,7 +391,10 @@ export default function MapContainerFactory(
     _onDeckError = (error, layer) => {
       const errorMessage = error?.message || 'unknown-error';
       const layerMessage = layer?.id ? ` in ${layer.id} layer` : '';
-      const errorMessageFull = `An error in deck.gl: ${errorMessage}${layerMessage}.`;
+      let errorMessageFull =
+        errorMessage === 'WebGL context is lost'
+          ? 'Your GPU was disconnected. This can happen if your computer goes to sleep. It can also occur for other reasons, such as if you are running too many GPU applications.'
+          : `An error in deck.gl: ${errorMessage}${layerMessage}.`;
 
       // Throttle error notifications, as React doesn't like too many state changes from here.
       const lastShown = this._deckGLErrorsElapsed[errorMessageFull];
