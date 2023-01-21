@@ -165,7 +165,7 @@ export default class ColorLegend extends Component<ColorLegendProps> {
     const height = legends.data.length * (ROW_H + GAP);
 
     return (
-      <StyledLegend>
+      <StyledLegend className="styled-color-legend">
         <svg width={width} height={height}>
           {legends.data.map((color, idx) => (
             <LegendRow
