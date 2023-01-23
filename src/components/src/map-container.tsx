@@ -720,6 +720,11 @@ export default function MapContainerFactory(
     }
 
     _onViewportChange = ({viewState}) => {
+      if (this.props.isExport) {
+        // Image export map shouldn't be interactive (otherwise this callback can
+        // lead to inadvertent changes to the state of the main map)
+        return;
+      }
       onViewPortChange(
         viewState,
         this.props.mapStateActions.updateMap,
