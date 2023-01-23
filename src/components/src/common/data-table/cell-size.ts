@@ -70,6 +70,7 @@ export function renderedSize({
       header: 0
     };
   }
+
   const textCanvas = document.createElement('canvas');
   document.body.appendChild(textCanvas);
   const context = textCanvas.getContext('2d');
@@ -84,12 +85,16 @@ export function renderedSize({
     rowsToSample = Array.from(Array(dataContainer.numRows()).keys());
   }
   const rowWidth = Math.max(
-    ...rowsToSample.map(
-      rowIdx =>
-        Math.ceil(
-          context.measureText(parseFieldValue(dataContainer.valueAt(rowIdx, colIdx), type)).width
-        ) + cellPadding
-    )
+    ...rowsToSample.map(rowIdx => {
+      const value = parseFieldValue(dataContainer.valueAt(rowIdx, colIdx), type);
+      // measuring large text cause slow performance
+      if (value.length > maxCellSize) {
+        return maxCellSize;
+      } else {
+        const textWidth = context.measureText(value).width;
+        return Math.ceil(textWidth) + cellPadding;
+      }
+    })
   );
   // header cell only has left padding
   const headerWidth =
