@@ -757,7 +757,8 @@ export default function MapContainerFactory(
         index,
         primary,
         bottomMapContainerProps,
-        topMapContainerProps
+        topMapContainerProps,
+        theme
       } = this.props;
 
       const {layers, datasets, editor, interactionConfig} = visState;
@@ -795,7 +796,11 @@ export default function MapContainerFactory(
             mapControls={mapControls}
             readOnly={this.props.readOnly}
             scale={mapState.scale || 1}
-            top={interactionConfig.geocoder && interactionConfig.geocoder.enabled ? 52 : 0}
+            top={
+              interactionConfig.geocoder && interactionConfig.geocoder.enabled
+                ? theme.mapControlTop
+                : 0
+            }
             editor={editor}
             locale={locale}
             onTogglePerspective={mapStateActions.togglePerspective}

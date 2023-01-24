@@ -238,13 +238,18 @@ export const modalContainerSelector = (props: KeplerGLProps, rootNode) => ({
   onExportToCloudError: props.onExportToCloudError
 });
 
-export const geoCoderPanelSelector = (props: KeplerGLProps) => ({
+export const geoCoderPanelSelector = (
+  props: KeplerGLProps,
+  dimensions: {width: number; height: number}
+) => ({
   isGeocoderEnabled: props.visState.interactionConfig.geocoder.enabled,
   mapboxApiAccessToken: props.mapboxApiAccessToken,
   mapState: props.mapState,
+  uiState: props.uiState,
   updateVisData: props.visStateActions.updateVisData,
   removeDataset: props.visStateActions.removeDataset,
-  updateMap: props.mapStateActions.updateMap
+  updateMap: props.mapStateActions.updateMap,
+  appWidth: dimensions.width
 });
 
 export const notificationPanelSelector = (props: KeplerGLProps) => ({
@@ -456,7 +461,7 @@ function KeplerGlFactory(
       const plotContainerFields = plotContainerSelector(this.props);
       const bottomWidgetFields = bottomWidgetSelector(this.props, theme);
       const modalContainerFields = modalContainerSelector(this.props, this.root.current);
-      const geoCoderPanelFields = geoCoderPanelSelector(this.props);
+      const geoCoderPanelFields = geoCoderPanelSelector(this.props, dimensions);
       const notificationPanelFields = notificationPanelSelector(this.props);
 
       const mapContainers = !isSplit

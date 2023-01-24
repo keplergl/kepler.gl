@@ -359,6 +359,9 @@ export const geocoderTop = 20;
 export const geocoderRight = 12;
 export const geocoderInputHeight = 36;
 
+// Map Control
+export const mapControlTop = 52;
+
 // Plot
 export const rangeBrushBgd = '#3A414C';
 export const histogramFillInRange = activeColor;
@@ -1430,6 +1433,9 @@ export const theme = {
   geocoderTop,
   geocoderRight,
   geocoderInputHeight,
+
+  // Map Control
+  mapControlTop,
 
   // Plot
   rangeBrushBgd,

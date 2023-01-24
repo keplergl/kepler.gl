@@ -26,6 +26,8 @@ import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {GeocoderPanelFactory, appInjector, testForCoordinates} from '@kepler.gl/components';
 import {cmpDatasetData, cmpObjectKeys} from '../../helpers/comparison-utils';
 
+import {InitialState} from 'test/helpers/mock-state';
+
 const GeocoderPanel = appInjector.get(GeocoderPanelFactory);
 const MAPBOX_TOKEN = process.env.MapboxAccessToken;
 
@@ -41,6 +43,8 @@ test('GeocoderPanel - render', t => {
     width: 800,
     height: 800
   };
+
+  const mockUiState = InitialState.uiState;
 
   const mockGeoItem = {
     center: [1, 55],
@@ -149,6 +153,7 @@ test('GeocoderPanel - render', t => {
           isGeocoderEnabled={enabled}
           mapboxApiAccessToken={MAPBOX_TOKEN}
           mapState={mockMapState}
+          uiState={mockUiState}
           updateVisData={updateVisData}
           removeDataset={removeDataset}
           updateMap={updateMap}

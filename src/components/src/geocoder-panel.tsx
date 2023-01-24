@@ -20,6 +20,7 @@
 
 import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
 import {processRowObject} from '@kepler.gl/processors';
 import {FlyToInterpolator} from '@deck.gl/core';
 import KeplerGlSchema from '@kepler.gl/schemas';
@@ -33,7 +34,7 @@ import {
   GEOCODER_ICON_COLOR,
   GEOCODER_ICON_SIZE
 } from '@kepler.gl/constants';
-import {MapState, Viewport} from '@kepler.gl/types';
+import {MapState, UiState, Viewport} from '@kepler.gl/types';
 
 const ICON_LAYER = {
   id: GEOCODER_LAYER_ID,
@@ -114,6 +115,7 @@ export function getUpdateVisDataPayload(lat, lon, text) {
 interface GeocoderPanelProps {
   isGeocoderEnabled: boolean;
   mapState: MapState;
+  uiState: UiState;
   mapboxApiAccessToken: string;
   updateVisData: Function;
   removeDataset: Function;
@@ -121,6 +123,8 @@ interface GeocoderPanelProps {
 
   transitionDuration?: number;
   width?: number;
+  appWidth: number;
+  className?: string;
 }
 
 export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps> {
@@ -175,10 +179,10 @@ export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps
     };
 
     render() {
-      const {isGeocoderEnabled, mapboxApiAccessToken, width} = this.props;
+      const {isGeocoderEnabled, mapboxApiAccessToken, width, className} = this.props;
       return (
         <StyledGeocoderPanel
-          className="geocoder-panel"
+          className={classnames('geocoder-panel', className)}
           width={width}
           style={{display: isGeocoderEnabled ? 'block' : 'none'}}
         >
