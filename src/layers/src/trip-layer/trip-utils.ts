@@ -121,9 +121,7 @@ export function parseTripGeoJsonTimestamp(dataToFeature: any[]) {
   // Analyze type based on coordinates of the 1st lineString
   // select a sample trip to analyze time format
   const empty = {dataToTimeStamp: [], animationDomain: null};
-  const sampleTrip = dataToFeature.find(
-    f => f && f.geometry && f.geometry.coordinates && f.geometry.coordinates.length >= 3
-  );
+  const sampleTrip = dataToFeature.find(f => f?.geometry?.coordinates?.[0]?.length > 3);
 
   // if no valid geometry
   if (!sampleTrip) {
