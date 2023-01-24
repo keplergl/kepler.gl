@@ -1329,6 +1329,7 @@ class Layer {
             ...sharedProps,
             id: `${this.id}-label-${textLabel[i].field?.name}`,
             data: data.data,
+            visible: this.config.isVisible,
             getText: d.getText,
             getPosition,
             characterSet: d.characterSet,
