@@ -291,12 +291,14 @@ export const EMPTY_MAPBOX_STYLE = {
   layers: []
 };
 
+export const NO_BASEMAP_ICON = `${BASEMAP_ICON_PREFIX}/NO_BASEMAP.png`;
+
 export const DEFAULT_MAP_STYLES = [
   {
     id: NO_MAP_ID,
     label: 'No Basemap',
     url: null,
-    icon: `${BASEMAP_ICON_PREFIX}/NO_BASEMAP.png`,
+    icon: NO_BASEMAP_ICON,
     layerGroups: [BACKGROUND_LAYER_GROUP],
     colorMode: BASE_MAP_COLOR_MODES.NONE,
     style: EMPTY_MAPBOX_STYLE

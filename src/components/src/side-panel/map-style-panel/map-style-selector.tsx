@@ -21,9 +21,13 @@
 import React, {ComponentType} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
+
+import {FormattedMessage} from '@kepler.gl/localization';
+import {MapStyle} from '@kepler.gl/reducers';
+import {NO_BASEMAP_ICON} from '@kepler.gl/constants';
+
 import {ArrowDown} from '../../common/icons';
 import PanelHeaderActionFactory from '../panel-header-action';
-
 import {
   PanelHeaderContent,
   PanelHeaderTitle,
@@ -31,8 +35,6 @@ import {
   StyledPanelHeader,
   StyledPanelHeaderProps
 } from '../../common/styled-components';
-import {FormattedMessage} from '@kepler.gl/localization';
-import {MapStyle} from '@kepler.gl/reducers';
 import {BaseProps} from '../../common/icons';
 
 type StyledMapDropdownProps = StyledPanelHeaderProps & {hasCallout: boolean};
@@ -89,45 +91,51 @@ function MapStyleSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeade
   const defaultActionIcons = {
     arrowDown: ArrowDown
   };
+
   const MapStyleSelector = ({
     mapStyle,
     onChange,
     toggleActive,
     isSelecting,
     actionIcons = defaultActionIcons
-  }: MapStyleSelectorProps) => (
-    <div>
-      <PanelLabel>
-        <FormattedMessage id={'mapManager.mapStyle'} />
-      </PanelLabel>
-      {Object.keys(mapStyle.mapStyles).map(op => (
-        <StyledMapDropdown
-          className={classnames('map-dropdown-option', {
-            collapsed: !isSelecting && mapStyle.styleType !== op
-          })}
-          key={op}
-          onClick={isSelecting ? () => onChange(op) : toggleActive}
-          hasCallout={Boolean(mapStyle.mapStyles[op].custom)}
-        >
-          <PanelHeaderContent className="map-title-block">
-            <img className="map-preview" src={mapStyle.mapStyles[op].icon} />
-            <PanelHeaderTitle className="map-preview-name">
-              {mapStyle.mapStyles[op].label}
-            </PanelHeaderTitle>
-          </PanelHeaderContent>
-          {!isSelecting ? (
-            <PanelHeaderAction
-              className="map-dropdown-option__enable-config"
-              id="map-enable-config"
-              IconComponent={actionIcons.arrowDown}
-              tooltip={'tooltip.selectBaseMapStyle'}
-              onClick={toggleActive}
-            />
-          ) : null}
-        </StyledMapDropdown>
-      ))}
-    </div>
-  );
+  }: MapStyleSelectorProps) => {
+    const {mapStyles, styleType} = mapStyle;
+
+    return (
+      <div>
+        <PanelLabel>
+          <FormattedMessage id={'mapManager.mapStyle'} />
+        </PanelLabel>
+
+        {Object.values(mapStyles).map(
+          ({id, custom, icon = NO_BASEMAP_ICON, label = 'Untitled'}) => (
+            <StyledMapDropdown
+              className={classnames('map-dropdown-option', {
+                collapsed: !isSelecting && styleType !== id
+              })}
+              key={id}
+              onClick={isSelecting ? () => onChange(id) : toggleActive}
+              hasCallout={Boolean(custom)}
+            >
+              <PanelHeaderContent className="map-title-block">
+                <img className="map-preview" src={icon} />
+                <PanelHeaderTitle className="map-preview-name">{label}</PanelHeaderTitle>
+              </PanelHeaderContent>
+              {!isSelecting ? (
+                <PanelHeaderAction
+                  className="map-dropdown-option__enable-config"
+                  id="map-enable-config"
+                  IconComponent={actionIcons.arrowDown}
+                  tooltip={'tooltip.selectBaseMapStyle'}
+                  onClick={toggleActive}
+                />
+              ) : null}
+            </StyledMapDropdown>
+          )
+        )}
+      </div>
+    );
+  };
 
   return MapStyleSelector;
 }
