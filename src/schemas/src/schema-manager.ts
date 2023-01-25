@@ -51,7 +51,7 @@ export type SavedLayerGroups = {
 
 export type SavedCustomMapStyle = {
   [key: string]: {
-    accessToken: string;
+    accessToken?: string;
     custom: BaseMapStyle['custom'];
     icon: string;
     id: string;
