@@ -29,7 +29,8 @@ import {
   snapToMarks,
   arrayMove,
   getFormatter,
-  defaultFormatter
+  defaultFormatter,
+  formatNumber
 } from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 
@@ -188,5 +189,28 @@ test('dataUtils -> getFormatter', t => {
       t.equal(formatter(tc.assert[0]), tc.assert[1], 'should return correct formatter');
     }
   });
+  t.end();
+});
+
+test('dataUtils -> formatNumber', t => {
+  const TEST_CASES = [
+    {input: ['3.14'], output: '3.14', message: 'field type is not given'},
+    {input: ['3.14123'], output: '3.141', message: 'field type is not given'},
+    {input: ['3'], output: '3', message: 'field type is not given'},
+    {input: ['331', 'integer'], output: '331', message: 'format integer'},
+    {input: ['-33.1', 'integer'], output: '-33', message: 'format integer'},
+    {input: ['1234', 'integer'], output: '1,234', message: 'format integer'},
+    {input: ['123456', 'integer'], output: '123.5k', message: 'format integer'},
+    {input: ['123456.2', 'real'], output: '123.5k', message: 'format real'},
+    {input: ['123.23', 'real'], output: '123.2', message: 'format real'},
+    {input: ['12.3', 'real'], output: '12.3', message: 'format real'},
+    {input: ['12.345', 'real'], output: '12.35', message: 'format real'}
+  ];
+
+  TEST_CASES.forEach(tc => {
+    const output = formatNumber(...tc.input);
+    t.equal(output, tc.output, `formatNumber should be correct when ${tc.message}`);
+  });
+
   t.end();
 });
