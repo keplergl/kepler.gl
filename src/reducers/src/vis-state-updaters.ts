@@ -1212,7 +1212,7 @@ export const duplicateLayerUpdater = (
 
   // add layer to state
   let nextState = addLayerUpdater(state, {config: loadedLayer});
-  // lahyers: ['a', 'b', 'c', 'd']
+  // layers: ['a', 'b', 'c', 'd']
   // order: [3, 0, 1, 2]
   // [0, 3, 1, 2]
   // new added layer are at the top, move it to be on top of original layer
