@@ -695,30 +695,6 @@ export default function MapContainerFactory(
       }
     }
 
-    _renderEditorContextMenu() {
-      const {visState, visStateActions, index} = this.props;
-      const {layers, datasets, editor} = visState;
-
-      return (
-        <Editor
-          index={index}
-          datasets={datasets}
-          editor={editor}
-          filters={this.polygonFiltersSelector(this.props)}
-          layers={layers}
-          onDeleteFeature={visStateActions.deleteFeature}
-          onSelect={visStateActions.setSelectedFeature}
-          onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
-          onSetEditorMode={visStateActions.setEditorMode}
-          style={{
-            pointerEvents: 'all',
-            position: 'absolute',
-            display: editor.visible ? 'block' : 'none'
-          }}
-        />
-      );
-    }
-
     _onViewportChange = ({viewState}) => {
       if (this.props.isExport) {
         // Image export map shouldn't be interactive (otherwise this callback can
@@ -823,7 +799,22 @@ export default function MapContainerFactory(
           >
             {this._renderDeckOverlay(layersForDeck, {primaryMap: true})}
             {this._renderMapboxOverlays()}
-            {this._renderEditorContextMenu()}
+            <Editor
+              index={index}
+              datasets={datasets}
+              editor={editor}
+              filters={this.polygonFiltersSelector(this.props)}
+              layers={layers}
+              onDeleteFeature={visStateActions.deleteFeature}
+              onSelect={visStateActions.setSelectedFeature}
+              onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
+              onSetEditorMode={visStateActions.setEditorMode}
+              style={{
+                pointerEvents: 'all',
+                position: 'absolute',
+                display: editor.visible ? 'block' : 'none'
+              }}
+            />
           </MapComponent>
           {mapStyle.topMapStyle || hasGeocoderLayer ? (
             <div style={MAP_STYLE.top}>

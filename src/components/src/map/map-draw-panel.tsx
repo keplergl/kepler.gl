@@ -57,7 +57,6 @@ function MapDrawPanelFactory(MapControlTooltip, MapControlToolbar) {
       mapControls,
       onToggleMapControl,
       onSetEditorMode,
-      onToggleEditorVisibility,
       actionIcons = defaultActionIcons
     }) => {
       const isActive = mapControls?.mapDraw?.active;
