@@ -2229,10 +2229,10 @@
   resolved "https://registry.yarnpkg.com/@mdn/browser-compat-data/-/browser-compat-data-3.3.14.tgz#b72a37c654e598f9ae6f8335faaee182bebc6b28"
   integrity sha512-n2RC9d6XatVbWFdHLimzzUJxJ1KY8LdjqrW6YvGPiRmsHkhOUx74/Ct10x5Yo7bC/Jvqx7cDEW8IMPv/+vwEzA==
 
-"@nebula.gl/edit-modes@1.0.2-alpha.0":
-  version "1.0.2-alpha.0"
-  resolved "https://registry.yarnpkg.com/@nebula.gl/edit-modes/-/edit-modes-1.0.2-alpha.0.tgz#e91ec7d692fb24815e2882d2f7edceab062b0489"
-  integrity sha512-SQfksd7c4H0r5Zf+3ElDUQBttk1gSfT8skSeTWAq1Bv3t65zMZZuvWeQjI8mc+NQL33W8tDJuoGYw0uhYgVZ6g==
+"@nebula.gl/edit-modes@1.0.2-alpha.1":
+  version "1.0.2-alpha.1"
+  resolved "https://registry.yarnpkg.com/@nebula.gl/edit-modes/-/edit-modes-1.0.2-alpha.1.tgz#ccfb6ed523d2ed368aac485f3c69290683e88e2c"
+  integrity sha512-8E6eXT/2tANvdGma3Z21a54UVDB5wdTVwNlhkZQKU+kP8sZCq3grYFRB4Uqt3WbZVvcfP9Yviyck84VxHszEXw==
   dependencies:
     "@turf/along" ">=6.3.0"
     "@turf/area" ">=4.0.0"
@@ -2263,13 +2263,13 @@
     lodash.throttle "^4.1.1"
     viewport-mercator-project ">=6.0.0"
 
-"@nebula.gl/layers@1.0.2-alpha.0":
-  version "1.0.2-alpha.0"
-  resolved "https://registry.yarnpkg.com/@nebula.gl/layers/-/layers-1.0.2-alpha.0.tgz#08b62b08134e57668e33ae47d097b73ba0be8e97"
-  integrity sha512-bSRqEvdauWUTIYf+RXamnYekSCBaA4tEkqGiD3xVZEsrgG0//BYsjHbSG62tpYY5FwSJEzPx6NeBRIxcJ+xPIg==
+"@nebula.gl/layers@1.0.2-alpha.1":
+  version "1.0.2-alpha.1"
+  resolved "https://registry.yarnpkg.com/@nebula.gl/layers/-/layers-1.0.2-alpha.1.tgz#77cbcd68c4644a18ee7cfd3a5fd31b53821d77a0"
+  integrity sha512-qcKZ0E3KV+tZrPVPP7VcKEiePwhBtri7xb8Pmh4T7XIzltdF7dpzyrwCSYl0lDBVjrKSAo2Ccs90zzKcqQ8iPQ==
   dependencies:
     "@danmarshall/deckgl-typings" "4.9.12"
-    "@nebula.gl/edit-modes" "1.0.2-alpha.0"
+    "@nebula.gl/edit-modes" "1.0.2-alpha.1"
     "@turf/bbox" ">=4.0.0"
     "@turf/bbox-polygon" ">=4.0.0"
     "@turf/bearing" ">=4.0.0"

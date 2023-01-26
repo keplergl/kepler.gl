@@ -44,7 +44,7 @@
     "@kepler.gl/table": "3.0.0-alpha.0",
     "@kepler.gl/types": "3.0.0-alpha.0",
     "@kepler.gl/utils": "3.0.0-alpha.0",
-    "@nebula.gl/edit-modes": "1.0.2-alpha.0",
+    "@nebula.gl/edit-modes": "1.0.2-alpha.1",
     "@tippyjs/react": "^4.2.0",
     "@types/classnames": "^2.3.1",
     "@types/d3-array": "^2.0.0",

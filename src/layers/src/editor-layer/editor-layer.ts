@@ -92,8 +92,12 @@ export function getEditorLayer({
     pickable: true,
     pickingRadius: EDITOR_LAYER_PICKING_RADIUS,
     modeConfig: {
-      viewport
+      viewport,
+      screenSpace: true,
+      lockRectangles: true
     },
+
+    pickingLineWidthExtraPixels: 5,
 
     // Only show fill when polygons are selected,
     // there is no way atm to enable fill for only one feature
