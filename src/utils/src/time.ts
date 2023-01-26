@@ -46,7 +46,6 @@ export const getTimelineFromAnimationConfig = (animationConfig: AnimationConfig)
     domain,
     speed,
     isAnimating,
-    // @ts-expect-error not in anim
     timeSteps,
     defaultTimeFormat,
     timeFormat,

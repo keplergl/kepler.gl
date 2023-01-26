@@ -5,7 +5,7 @@ import {snapToMarks, getTimelineFromAnimationConfig, toArray} from '@kepler.gl/u
 import AnimationControllerFactory from './common/animation-control/animation-controller';
 
 interface LayerAnimationControllerProps {
-  animationConfig: AnimationConfig & {timeSteps?: number[] | null};
+  animationConfig: AnimationConfig;
   setLayerAnimationTime: (x: number) => void;
 }
 
