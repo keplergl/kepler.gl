@@ -320,7 +320,7 @@ test('#visStateReducer -> ADD_LAYER.1', t => {
     [oldState.layerData[0], {}],
     'newState should have empty layer datat'
   );
-  t.deepEqual(newReducer.layerOrder, [0, 1], 'should add to layerOrder');
+  t.deepEqual(newReducer.layerOrder, [1, 0], 'should add to layerOrder');
   t.deepEqual(newReducer.splitMaps, expectedSplitMaps, 'should add to SplitMaps');
 
   t.end();
