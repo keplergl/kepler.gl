@@ -3,7 +3,8 @@ import {
   MultiSelectFilter,
   RangeFilter,
   SelectFilter,
-  TimeRangeFilter
+  TimeRangeFilter,
+  Timeline
 } from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {
@@ -37,6 +38,7 @@ export type TimeRangeFilterProps = {
   hideTimeTitle: boolean;
   setFilter: (v: number[]) => void;
   toggleAnimation: () => void;
+  timeline: Timeline;
 };
 
 export type SingleSelectFilterProps = {
@@ -58,6 +60,8 @@ export type TimeWidgetTopProps = {
   setFilterPlot: ActionHandler<typeof setFilterPlot>;
   index: number;
   onClose: () => void;
+  onToggleMinify: () => void;
+  isMinified: boolean;
 };
 
 export type TimeWidgetProps = {
@@ -74,4 +78,5 @@ export type TimeWidgetProps = {
   toggleAnimation: ActionHandler<typeof toggleFilterAnimation>;
   setFilterPlot: ActionHandler<typeof setFilterPlot>;
   setFilterAnimationWindow: ActionHandler<typeof setFilterAnimationWindow>;
+  timeline: Timeline;
 };

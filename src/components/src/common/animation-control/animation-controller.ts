@@ -23,11 +23,14 @@ import {bisectLeft} from 'd3-array';
 import {requestAnimationFrame, cancelAnimationFrame} from 'global/window';
 import Console from 'global/console';
 import {BASE_SPEED, FPS, ANIMATION_WINDOW} from '@kepler.gl/constants';
+import {Timeline} from '@kepler.gl/types';
 
 interface AnimationControllerProps<T extends number | number[]> {
   isAnimating?: boolean;
   speed?: number;
-  updateAnimation: (x: T) => void;
+  updateAnimation?: (x: T) => void;
+  setTimelineValue: (x: T) => void;
+  timeline?: Timeline;
   animationWindow?: string;
   steps?: number[] | null;
   domain: number[] | null;
@@ -121,31 +124,37 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
     };
 
     _resetAnimationByDomain = () => {
-      const {domain, value, animationWindow} = this.props;
+      const {domain, value, animationWindow, updateAnimation} = this.props;
       if (!domain) {
         return;
       }
+      // interim solution while we fully migrate filter and layer controllers
+      const setTimelineValue = updateAnimation || this.props.setTimelineValue;
+
       if (Array.isArray(value)) {
         if (animationWindow === ANIMATION_WINDOW.incremental) {
-          this.props.updateAnimation([value[0], value[0] + 1] as T);
+          setTimelineValue([value[0], value[0] + 1] as T);
         } else {
-          this.props.updateAnimation([domain[0], domain[0] + value[1] - value[0]] as T);
+          setTimelineValue([domain[0], domain[0] + value[1] - value[0]] as T);
         }
       } else {
-        this.props.updateAnimation(domain[0] as T);
+        setTimelineValue(domain[0] as T);
       }
     };
 
-    _resetAnimtionByTimeStep = () => {
-      const {steps = null} = this.props;
+    _resetAnimationByTimeStep = () => {
+      const {steps = null, updateAnimation} = this.props;
       if (!steps) return;
+      // interim solution while we fully migrate filter and layer controllers
+      const setTimelineValue = updateAnimation || this.props.setTimelineValue;
+
       // go to the first steps
-      this.props.updateAnimation([steps[0], 0] as T);
+      setTimelineValue([steps[0], 0] as T);
     };
 
     _resetAnimation = () => {
       if (this.props.animationWindow === ANIMATION_WINDOW.interval) {
-        this._resetAnimtionByTimeStep();
+        this._resetAnimationByTimeStep();
       } else {
         this._resetAnimationByDomain();
       }
@@ -193,7 +202,9 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
           ? this._nextFrameByTimeStep()
           : this._nextFrameByDomain();
 
-      this.props.updateAnimation(nextValue as T);
+      // interim solution while we fully migrate filter and layer controllers
+      const setTimelineValue = this.props.updateAnimation || this.props.setTimelineValue;
+      setTimelineValue(nextValue as T);
     };
 
     _nextFrameByDomain() {
@@ -240,7 +251,14 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
       const {children} = this.props;
 
       return typeof children === 'function'
-        ? children(isAnimating, this._startAnimation, this._pauseAnimation, this._resetAnimation)
+        ? children(
+            isAnimating,
+            this._startAnimation,
+            this._pauseAnimation,
+            this._resetAnimation,
+            this.props.timeline,
+            this.props.setTimelineValue
+          )
         : null;
     }
   }

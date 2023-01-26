@@ -26,7 +26,8 @@ import RangeSliderFactory from './range-slider';
 import TimeSliderMarkerFactory from './time-slider-marker';
 import PlaybackControlsFactory from './animation-control/playback-controls';
 import TimeRangeSliderTimeTitleFactory from './time-range-slider-time-title';
-import {HistogramBin, LineChart} from '@kepler.gl/types';
+import {HistogramBin, LineChart, Timeline} from '@kepler.gl/types';
+import AnimationControlFactory from './animation-control/animation-control';
 
 const animationControlWidth = 176;
 
@@ -38,6 +39,7 @@ type TimeRangeSliderProps = {
   domain?: [number, number];
   value: [number, number];
   isEnlarged?: boolean;
+  isMinified?: boolean;
   hideTimeTitle?: boolean;
   isAnimating: boolean;
   timeFormat: string;
@@ -54,6 +56,7 @@ type TimeRangeSliderProps = {
   updateAnimationSpeed?: (val: number) => void;
   setFilterAnimationWindow?: (id: string) => void;
   onChange: (v: number[]) => void;
+  timeline: Timeline;
 };
 
 const StyledSliderContainer = styled.div<StyledSliderContainerProps>`
@@ -72,24 +75,29 @@ const StyledSliderContainer = styled.div<StyledSliderContainerProps>`
   }
 `;
 
+const ANIMATION_CONTROL_STYLE = {flex: 1};
+
 TimeRangeSliderFactory.deps = [
   PlaybackControlsFactory,
   RangeSliderFactory,
   TimeSliderMarkerFactory,
-  TimeRangeSliderTimeTitleFactory
+  TimeRangeSliderTimeTitleFactory,
+  AnimationControlFactory
 ];
 
 export default function TimeRangeSliderFactory(
   PlaybackControls: ReturnType<typeof PlaybackControlsFactory>,
   RangeSlider: ReturnType<typeof RangeSliderFactory>,
   TimeSliderMarker: ReturnType<typeof TimeSliderMarkerFactory>,
-  TimeRangeSliderTimeTitle: ReturnType<typeof TimeRangeSliderTimeTitleFactory>
+  TimeRangeSliderTimeTitle: ReturnType<typeof TimeRangeSliderTimeTitleFactory>,
+  AnimationControl: ReturnType<typeof AnimationControlFactory>
 ) {
   const TimeRangeSlider: React.FC<TimeRangeSliderProps> = props => {
     const {
       domain,
       value,
       isEnlarged,
+      isMinified,
       hideTimeTitle,
       isAnimating,
       resetAnimation,
@@ -105,8 +113,10 @@ export default function TimeRangeSliderFactory(
       updateAnimationSpeed,
       setFilterAnimationWindow,
       toggleAnimation,
-      onChange
+      onChange,
+      timeline
     } = props;
+
     const throttledOnchange = useMemo(() => throttle(onChange, 20), [onChange]);
 
     const style = useMemo(
@@ -129,24 +139,39 @@ export default function TimeRangeSliderFactory(
           </div>
         ) : null}
         <StyledSliderContainer className="time-range-slider__container" isEnlarged={isEnlarged}>
-          <div className="timeline-container" style={style}>
-            <RangeSlider
-              range={domain}
-              value0={value[0]}
-              value1={value[1]}
-              histogram={histogram}
-              lineChart={lineChart}
-              plotType={plotType}
-              isEnlarged={isEnlarged}
-              showInput={false}
-              step={step}
-              onChange={throttledOnchange}
-              xAxis={TimeSliderMarker}
-              timezone={timezone}
-              timeFormat={timeFormat}
+          {!isMinified ? (
+            <div className="timeline-container" style={style}>
+              <RangeSlider
+                range={domain}
+                value0={value[0]}
+                value1={value[1]}
+                histogram={histogram}
+                lineChart={lineChart}
+                plotType={plotType}
+                isEnlarged={isEnlarged}
+                showInput={false}
+                step={step}
+                onChange={throttledOnchange}
+                xAxis={TimeSliderMarker}
+                timezone={timezone}
+                timeFormat={timeFormat}
+              />
+            </div>
+          ) : (
+            <AnimationControl
+              style={ANIMATION_CONTROL_STYLE}
+              isAnimatable={isAnimatable}
+              isAnimating={isAnimating}
+              resetAnimation={resetAnimation}
+              toggleAnimation={toggleAnimation}
+              updateAnimationSpeed={updateAnimationSpeed}
+              setTimelineValue={throttledOnchange}
+              setAnimationWindow={setFilterAnimationWindow}
+              showTimeDisplay={false}
+              timeline={timeline}
             />
-          </div>
-          {isEnlarged ? (
+          )}
+          {isEnlarged && !isMinified ? (
             <PlaybackControls
               isAnimatable={isAnimatable}
               width={animationControlWidth}

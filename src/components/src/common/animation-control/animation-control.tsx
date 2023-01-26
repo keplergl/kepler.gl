@@ -18,28 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useMemo} from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 
-import Slider from '../slider/slider';
-import {BottomWidgetInner} from '../styled-components';
+import {media} from '@kepler.gl/styles';
+import {Timeline} from '@kepler.gl/types';
+
+import TimelineSliderFactory from '../timeline-slider';
 import PlaybackControlsFactory from './playback-controls';
 import FloatingTimeDisplayFactory from './floating-time-display';
-import {datetimeFormatter, snapToMarks, toArray} from '@kepler.gl/utils';
-import {DEFAULT_TIME_FORMAT} from '@kepler.gl/constants';
-import {media} from '@kepler.gl/styles';
 
 const SLIDER_MARGIN_PALM = 6;
 
-const SliderWrapper = styled.div`
-  display: flex;
+const AnimationControlContainer = styled.div`
+  padding: ${props => `${props.theme.bottomInnerPdVert}px ${props.theme.bottomInnerPdSide}px`};
   position: relative;
-  flex-grow: 1;
-  margin: 0 24px;
+  margin-top: ${props => props.theme.bottomPanelGap}px;
 
-  ${media.palm`
-    margin: 0 ${SLIDER_MARGIN_PALM}px;
+  ${media.portable`
+    border-top: 1px solid ${props => props.theme.panelBorderColor};
+    border-left: 1px solid ${props => props.theme.panelBorderColor};
+    padding: 12px 12px;
+    margin-top: 0;
   `}
 `;
 
@@ -81,110 +82,99 @@ const AnimationWidgetInner = styled.div`
   `};
 `;
 
-const StyledDomain = styled.div.attrs(props => ({
-  className: classnames('animation-control__time-domain', props.className)
-}))`
-  color: ${props => props.theme.titleTextColor};
-  font-weight: 400;
-  font-size: 10px;
-`;
+const TIMELINE_PLAYBACK_STYLE = {flex: 1};
 
-AnimationControlFactory.deps = [PlaybackControlsFactory, FloatingTimeDisplayFactory];
+type AnimationControlProps = {
+  timeline: Timeline;
+  isAnimatable?: boolean;
+  isAnimating?: boolean;
+  updateAnimationSpeed?: (val: number) => void;
+  setAnimationWindow?: (id: string) => void;
+  toggleAnimation: () => void;
+  resetAnimation?: () => void;
+  setTimelineValue: (value: number[]) => void;
+  showTimeDisplay?: boolean;
+  showTimeline?: boolean;
+  showControls?: boolean;
+  className?: string;
+  style?: object;
+};
+
+AnimationControlFactory.deps = [
+  PlaybackControlsFactory,
+  FloatingTimeDisplayFactory,
+  TimelineSliderFactory
+];
 
 function AnimationControlFactory(
   PlaybackControls: ReturnType<typeof PlaybackControlsFactory>,
-  FloatingTimeDisplay: ReturnType<typeof FloatingTimeDisplayFactory>
+  FloatingTimeDisplay: ReturnType<typeof FloatingTimeDisplayFactory>,
+  TimelineSlider: ReturnType<typeof TimelineSliderFactory>
 ) {
-  const AnimationControl = ({
+  const AnimationControl: React.FC<AnimationControlProps> = ({
+    className,
+    style,
     isAnimatable,
     isAnimating,
     resetAnimation,
     toggleAnimation,
-    setLayerAnimationTime,
     updateAnimationSpeed,
-    animationConfig
+    setTimelineValue,
+    setAnimationWindow,
+    timeline,
+    showTimeline = true,
+    showControls = true,
+    showTimeDisplay = true
   }) => {
-    const {
-      currentTime,
-      domain,
-      speed,
-      step,
-      timeSteps,
-      timeFormat,
-      timezone,
-      defaultTimeFormat
-    } = animationConfig;
-    const onSlider1Change = useCallback(
-      val => {
-        // TODO: can we move this logic into setLayerAnimationTimeUpdater
-        if (Array.isArray(timeSteps)) {
-          setLayerAnimationTime(snapToMarks(toArray(val)[0], timeSteps));
+    if (!timeline) {
+      return null;
+    }
 
-          // TODO: merge slider in to avoid this step
-        } else if (val >= domain[0] && val <= domain[1]) {
-          setLayerAnimationTime(val);
-        }
-      },
-      [domain, timeSteps, setLayerAnimationTime]
-    );
-
-    const dateFunc = useMemo(() => {
-      const hasUserFormat = typeof timeFormat === 'string';
-      const currentFormat = (hasUserFormat ? timeFormat : defaultTimeFormat) || DEFAULT_TIME_FORMAT;
-      return datetimeFormatter(timezone)(currentFormat);
-    }, [timeFormat, defaultTimeFormat, timezone]);
-
-    const timeStart = useMemo(() => (domain ? dateFunc(domain[0]) : ''), [domain, dateFunc]);
-    const timeEnd = useMemo(() => (domain ? dateFunc(domain[1]) : ''), [domain, dateFunc]);
+    const {animationWindow, value, speed, defaultTimeFormat, timeFormat, timezone} = timeline;
 
     return (
-      <BottomWidgetInner className="bottom-widget--inner">
+      <AnimationControlContainer
+        style={style}
+        className={classnames('animation-control-container', className)}
+      >
         <AnimationWidgetInner className="animation-widget--inner">
-          <div className="animation-control__time-slider">
-            <StyledDomain className="domain-start">
-              <span>{timeStart}</span>
-            </StyledDomain>
-            <SliderWrapper className="animation-control__slider">
-              <Slider
-                isRanged={false}
-                step={step}
-                minValue={domain ? domain[0] : 0}
-                maxValue={domain ? domain[1] : 1}
-                value1={currentTime}
-                onSlider1Change={onSlider1Change}
-                enableBarDrag={true}
-              />
-            </SliderWrapper>
-            <StyledDomain className="domain-end">
-              <span>{timeEnd}</span>
-            </StyledDomain>
-          </div>
-          <PlaybackControls
-            className="animation-control-playpause"
-            startAnimation={toggleAnimation}
-            isAnimating={isAnimating}
-            pauseAnimation={toggleAnimation}
-            resetAnimation={resetAnimation}
-            speed={speed}
-            isAnimatable={isAnimatable}
-            updateAnimationSpeed={updateAnimationSpeed}
-          />
+          {showTimeline ? (
+            <TimelineSlider
+              style={TIMELINE_PLAYBACK_STYLE}
+              timeline={timeline}
+              setTimelineValue={setTimelineValue}
+            />
+          ) : null}
+          {showControls ? (
+            <PlaybackControls
+              className="animation-control-playpause"
+              isAnimatable={isAnimatable}
+              startAnimation={toggleAnimation}
+              isAnimating={isAnimating}
+              pauseAnimation={toggleAnimation}
+              resetAnimation={resetAnimation}
+              speed={speed}
+              updateAnimationSpeed={updateAnimationSpeed}
+              setFilterAnimationWindow={setAnimationWindow}
+              animationWindow={animationWindow}
+            />
+          ) : null}
         </AnimationWidgetInner>
-        <FloatingTimeDisplay
-          currentTime={currentTime}
-          defaultTimeFormat={defaultTimeFormat}
-          timeFormat={timeFormat}
-          timezone={timezone}
-        />
-      </BottomWidgetInner>
+        {showTimeDisplay ? (
+          <FloatingTimeDisplay
+            currentTime={value}
+            defaultTimeFormat={defaultTimeFormat}
+            timeFormat={timeFormat}
+            timezone={timezone}
+          />
+        ) : null}
+      </AnimationControlContainer>
     );
   };
 
   AnimationControl.defaultProps = {
     toggleAnimation: () => {},
-    updateAnimationSpeed: () => {},
-    animationControlProps: {},
-    animationConfig: {}
+    updateAnimationSpeed: () => {}
   };
 
   return AnimationControl;

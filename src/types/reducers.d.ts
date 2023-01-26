@@ -188,6 +188,7 @@ export type AnimationConfig = {
   currentTime: number | null;
   speed: number;
   isAnimating?: boolean;
+  timeSteps?: null | number[];
   // auto generated based on time domain
   defaultTimeFormat?: string | null;
   // custom ui input
@@ -197,6 +198,20 @@ export type AnimationConfig = {
   // hide or show control
   hideControl?: boolean;
 };
+
+export type Timeline = {
+  domain: [number, number] | null;
+  value: number | [number, number];
+  speed: number;
+  isAnimating: boolean;
+  step?: null | number;
+  timeSteps?: null | number[];
+  defaultTimeFormat?: null | string;
+  timeFormat?: null | string;
+  timezone?: null | string;
+  animationWindow?: null | Filter['animationWindow'];
+  marks?: null | number[];
+} & Record<string, any>;
 
 export type BaseInteraction = {
   label: string;

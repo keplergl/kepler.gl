@@ -60,7 +60,8 @@ function TimeRangeFilterFactory(TimeRangeSlider: ReturnType<typeof TimeRangeSlid
     setFilter,
     isAnimatable,
     toggleAnimation,
-    hideTimeTitle
+    hideTimeTitle,
+    timeline
   }) => (
     <TimeRangeSlider
       {...timeRangeSliderFieldsSelector(filter)}
@@ -68,6 +69,7 @@ function TimeRangeFilterFactory(TimeRangeSlider: ReturnType<typeof TimeRangeSlid
       toggleAnimation={toggleAnimation}
       isAnimatable={isAnimatable}
       hideTimeTitle={hideTimeTitle}
+      timeline={timeline}
     />
   );
 

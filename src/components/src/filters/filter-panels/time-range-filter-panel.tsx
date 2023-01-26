@@ -23,7 +23,7 @@ import TimeRangeFilterFactory from '../time-range-filter';
 import {Clock} from '../../common/icons';
 import FieldPanelWithFieldSelectFactory from './filter-panel-with-field-select';
 import {TimeRangeFilterPanelComponent} from './types';
-import {isSideFilter} from '@kepler.gl/utils';
+import {isSideFilter, getTimelineFromFilter} from '@kepler.gl/utils';
 
 TimeRangeFilterPanelFactory.deps = [FieldPanelWithFieldSelectFactory, TimeRangeFilterFactory];
 
@@ -59,6 +59,8 @@ function TimeRangeFilterPanelFactory(
         [filter.id, isEnlarged, enlargeFilter]
       );
 
+      const timeline = getTimelineFromFilter(filter);
+
       return (
         <>
           <FieldPanelWithFieldSelect
@@ -78,6 +80,7 @@ function TimeRangeFilterPanelFactory(
                   setFilter={onSetFilter}
                   isAnimatable
                   hideTimeTitle
+                  timeline={timeline}
                 />
               </div>
             )}

@@ -58,8 +58,8 @@ type SliderProps = {
   minValue: number;
   maxValue: number;
   sliderHandleWidth: number;
-  onSlider0Change: (val: number) => void;
-  onSlider1Change: (val: number) => void;
+  onSlider0Change: (val: number) => any;
+  onSlider1Change: (val: number) => any;
   onSliderBarChange: (val0: number, val1: number) => void;
   step: number;
   enableBarDrag: boolean;
@@ -68,9 +68,11 @@ type SliderProps = {
   marks?: number[];
   classSet?: {[key: string]: boolean};
   disabled: boolean;
+  className?: string;
+  style?: object;
 };
 
-export default class Slider extends Component {
+export default class Slider extends Component<SliderProps> {
   static defaultProps = {
     title: '',
     isRanged: true,
@@ -175,6 +177,7 @@ export default class Slider extends Component {
 
   render() {
     const {
+      className,
       classSet,
       disabled,
       isRanged,
@@ -183,7 +186,8 @@ export default class Slider extends Component {
       value1,
       vertical,
       sliderHandleWidth,
-      showTooltip
+      showTooltip,
+      style
     } = this.props;
     const value0 = !isRanged && minValue > 0 ? minValue : this.props.value0;
     const currValDelta = value1 - value0;
@@ -194,10 +198,11 @@ export default class Slider extends Component {
 
     return (
       <SliderWrapper
-        className={classnames('kg-slider', {...classSet, disabled})}
+        className={classnames('kg-slider', {...classSet, disabled}, className)}
         ref={this.ref}
         isRanged={isRanged}
         vertical={vertical}
+        style={style}
       >
         <StyledRangeSlider className="kg-range-slider" vertical={vertical} ref={this.track}>
           <SliderHandle
