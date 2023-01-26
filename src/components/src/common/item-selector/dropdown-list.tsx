@@ -32,10 +32,10 @@ export const classList = {
 };
 
 const defaultDisplay = d => d;
-export const ListItem = ({value, displayOption = defaultDisplay, light}) => {
+export const ListItem = ({value, displayOption = defaultDisplay, disabled, light}) => {
   const displayValue = displayOption(value);
   return (
-    <span title={displayValue} className={classNames(classList.listItemAnchor)}>
+    <span title={displayValue} className={classNames(classList.listItemAnchor, {disabled})}>
       {displayValue}
     </span>
   );

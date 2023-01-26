@@ -32,10 +32,14 @@ import SpeedControlFactory from './speed-control';
 
 const DEFAULT_BUTTON_HEIGHT = '20px';
 
-const StyledAnimationControls = styled.div`
+interface StyledAnimationControlsProps {
+  width?: number;
+}
+
+const StyledAnimationControls = styled.div<StyledAnimationControlsProps>`
   display: flex;
   position: relative;
-
+  width: ${props => props.width}px;
   &.disabled {
     opacity: 0.4;
     pointer-events: none;
@@ -71,7 +75,7 @@ const DEFAULT_ANIMATE_ITEMS = {
 interface PlaybackControlsProps {
   isAnimatable?: boolean;
   isAnimating?: boolean;
-  width?: number | string;
+  width?: number;
   speed: number;
   animationWindow?: string;
   setFilterAnimationWindow?: (id: string) => void;
@@ -152,7 +156,7 @@ function PlaybackControlsFactory(
         className={classnames('playback-controls', {
           disabled: !isAnimatable
         })}
-        style={{width: `${width}px`}}
+        width={width}
       >
         {/** Window */}
         {playbackActionItems.map((ActionComponent, index) => (

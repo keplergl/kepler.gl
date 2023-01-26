@@ -60,6 +60,7 @@ export const StyledDropdownSelect = styled.div.attrs(props => ({
 interface DropdownSelectValueProps {
   hasPlaceholder?: boolean;
   inputTheme?: string;
+  disabled?: boolean;
 }
 
 const DropdownSelectValue = styled.span<DropdownSelectValueProps>`
@@ -312,14 +313,18 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
     const selected = toArray(this.props.selectedItems);
     const hasValue = selected.length;
     const displayOption = Accessor.generateOptionToStringFor(this.props.displayOption);
-    const {inputTheme = 'primary', DropDownLineItemRenderComponent = ListItem} = this.props;
+    const {
+      disabled,
+      inputTheme = 'primary',
+      DropDownLineItemRenderComponent = ListItem
+    } = this.props;
 
     const dropdownSelectProps = {
       className: classnames({
         active: this.state.showTypeahead
       }),
       displayOption,
-      disabled: this.props.disabled,
+      disabled: disabled,
       onClick: this._showTypeahead,
       error: this.props.isError,
       inputTheme,
@@ -344,6 +349,7 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
             <StyledDropdownSelect {...dropdownSelectProps}>
               <DropdownSelectValue
                 hasPlaceholder={!hasValue}
+                disabled={disabled}
                 inputTheme={inputTheme}
                 className="item-selector__dropdown__value"
               >
@@ -351,6 +357,7 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
                   <DropDownLineItemRenderComponent
                     displayOption={displayOption}
                     value={selected[0]}
+                    disabled={disabled}
                     light={inputTheme === 'light'}
                   />
                 ) : (
