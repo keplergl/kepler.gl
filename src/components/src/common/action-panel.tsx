@@ -51,7 +51,7 @@ const StyledItem = styled.div`
   align-items: center;
   font-size: 12px;
   line-height: 14px;
-  padding: 8px;
+  padding: 8px 16px 8px 8px;
   min-height: ${props => props.theme.actionPanelHeight}px;
   text-transform: capitalize;
   background-color: ${props => props.theme.dropdownListBgd};
@@ -73,9 +73,15 @@ const StyledItem = styled.div`
   }
 
   .label-icon {
-    margin-left: auto;
+    margin-left: 4px;
+    margin-bottom: -2px;
   }
-
+  .icon {
+    width: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   .nested-group {
     max-width: 200px;
     overflow: hidden;

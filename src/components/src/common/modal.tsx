@@ -123,7 +123,27 @@ const defaultConfirmButton = {
   children: 'modal.button.defaultConfirm'
 };
 
-export const ModalFooter = ({cancel, confirm, cancelButton, confirmButton}) => {
+type ModalButtonProps = {
+  style?: React.CSSProperties;
+  large?: boolean;
+  disabled?: boolean;
+  negative?: boolean;
+  children?: string;
+};
+
+type ModalFooterProps = {
+  cancel: () => void;
+  confirm: (data?: any) => void;
+  cancelButton?: ModalButtonProps;
+  confirmButton?: ModalButtonProps;
+};
+
+export const ModalFooter: React.FC<ModalFooterProps> = ({
+  cancel,
+  confirm,
+  cancelButton,
+  confirmButton
+}) => {
   const cancelButtonProps = {...defaultCancelButton, ...cancelButton};
   const confirmButtonProps = {...defaultConfirmButton, ...confirmButton};
   return (
@@ -146,11 +166,11 @@ interface ModalDialogOwnProps {
   isOpen: boolean;
   title?: string;
   className?: string;
-  onConfirm?: (...args: any) => void;
+  onConfirm: (...args: any) => void;
   onCancel: (...args: any) => void;
-  confirmButton: object;
+  confirmButton?: ModalButtonProps;
   confirmButtonLabel?: string;
-  cancelButton: object;
+  cancelButton?: ModalButtonProps;
   cancelButtonLabel?: string;
   cssStyle?: FlattenSimpleInterpolation | string;
   style?: React.CSSProperties;

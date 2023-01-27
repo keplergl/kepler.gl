@@ -596,6 +596,7 @@ export const StyledExportSection = styled.div<StyledExportSectionProps>`
     width: 185px;
     .title {
       font-weight: 500;
+      font-family: ${props => props.theme.fontFamilyMedium ?? props.theme.fontFamily};
     }
     .subtitle {
       color: ${props => props.theme.subtextColorLT};
