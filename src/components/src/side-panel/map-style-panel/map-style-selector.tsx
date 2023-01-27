@@ -25,6 +25,7 @@ import classnames from 'classnames';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {MapStyle} from '@kepler.gl/reducers';
 import {NO_BASEMAP_ICON} from '@kepler.gl/constants';
+import {MapStyles} from '@kepler.gl/types';
 
 import {ArrowDown} from '../../common/icons';
 import PanelHeaderActionFactory from '../panel-header-action';
@@ -36,6 +37,7 @@ import {
   StyledPanelHeaderProps
 } from '../../common/styled-components';
 import {BaseProps} from '../../common/icons';
+import {PanelHeaderActionIcon} from '../panel-header-action';
 
 type StyledMapDropdownProps = StyledPanelHeaderProps & {hasCallout: boolean};
 
@@ -67,6 +69,10 @@ const StyledMapDropdown = styled(StyledPanelHeader)<StyledMapDropdownProps>`
     width: 40px;
   }
 
+  &.selected {
+    outline: 1px solid #caf2f4;
+  }
+
   /* show callout dot if props.hasCallout and theme provides calloutDot base styles */
   :after {
     ${({theme}) => theme.calloutDot}
@@ -75,6 +81,12 @@ const StyledMapDropdown = styled(StyledPanelHeader)<StyledMapDropdownProps>`
     left: 15px;
     display: ${({theme, hasCallout}) => (theme.calloutDot && hasCallout ? 'block' : 'none')};
   }
+
+  .custom-style-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 `;
 
 export type MapStyleSelectorProps = {
@@ -82,6 +94,15 @@ export type MapStyleSelectorProps = {
   onChange: (payload: string) => void;
   toggleActive: () => void;
   isSelecting: boolean;
+  customMapStylesActions?: Record<
+    string,
+    {
+      id: string;
+      IconComponent: PanelHeaderActionIcon;
+      tooltip: string;
+      onClick: () => void;
+    }[]
+  >;
   actionIcons?: Record<string, ComponentType<Partial<BaseProps>>>;
 };
 
@@ -97,9 +118,10 @@ function MapStyleSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeade
     onChange,
     toggleActive,
     isSelecting,
+    customMapStylesActions,
     actionIcons = defaultActionIcons
   }: MapStyleSelectorProps) => {
-    const {mapStyles, styleType} = mapStyle;
+    const {mapStyles, styleType}: {mapStyles: MapStyles; styleType: string} = mapStyle;
 
     return (
       <div>
@@ -111,7 +133,8 @@ function MapStyleSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeade
           ({id, custom, icon = NO_BASEMAP_ICON, label = 'Untitled'}) => (
             <StyledMapDropdown
               className={classnames('map-dropdown-option', {
-                collapsed: !isSelecting && styleType !== id
+                collapsed: !isSelecting && id !== styleType,
+                selected: isSelecting && id === styleType
               })}
               key={id}
               onClick={isSelecting ? () => onChange(id) : toggleActive}
@@ -129,6 +152,23 @@ function MapStyleSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeade
                   tooltip={'tooltip.selectBaseMapStyle'}
                   onClick={toggleActive}
                 />
+              ) : null}
+              {isSelecting && custom ? (
+                <div className="custom-style-actions">
+                  {(customMapStylesActions?.[id] || []).map(action => (
+                    <PanelHeaderAction
+                      key={action.id}
+                      className="map-dropdown-option__enable-config"
+                      id={action.id}
+                      IconComponent={action.IconComponent}
+                      tooltip={action.tooltip}
+                      onClick={e => {
+                        e.stopPropagation();
+                        action.onClick();
+                      }}
+                    />
+                  ))}
+                </div>
               ) : null}
             </StyledMapDropdown>
           )

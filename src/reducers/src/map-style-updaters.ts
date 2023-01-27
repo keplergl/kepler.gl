@@ -764,6 +764,33 @@ export const addCustomMapStyleUpdater = (state: MapStyle): MapStyle => {
 };
 
 /**
+ * Remove a custom map style from `state.mapStyle.mapStyles`.
+ * @memberof mapStyleUpdaters
+ */
+export const removeCustomMapStyleUpdater = (
+  state: MapStyle,
+  action: MapStyleActions.RemoveCustomMapStyleUpdaterAction
+): MapStyle => {
+  const {id} = action.payload;
+
+  // eslint-disable-next-line no-unused-vars
+  const {[id]: _, ...restOfMapStyles} = state.mapStyles;
+
+  const newState = {
+    ...state,
+    mapStyles: restOfMapStyles
+  };
+
+  if (state.styleType === id) {
+    // if removing a custom style that is also the current active base map,
+    // then reset to the default active base map (`mapStyle.styleType`)
+    return mapStyleChangeUpdater(newState, {payload: {styleType: getDefaultState().styleType}});
+  }
+
+  return newState;
+};
+
+/**
  * Updates 3d building color
  * @memberof mapStyleUpdaters
  */

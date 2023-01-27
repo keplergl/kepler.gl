@@ -32,7 +32,8 @@ import {
   receiveMapConfig,
   loadMapStyles,
   mapConfigChange,
-  mapStyleChange
+  mapStyleChange,
+  removeCustomMapStyle
 } from '@kepler.gl/actions';
 import SchemaManager from '@kepler.gl/schemas';
 import {DEFAULT_MAP_STYLES, DEFAULT_MAPBOX_API_URL, NO_MAP_ID} from '@kepler.gl/constants';
@@ -825,6 +826,87 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE -> dark basemap to no basemap', t => 
     nextState.backgroundColor,
     nextState2.backgroundColor,
     'backgroundColor should be changed when switching to no basemap option (map-style-updates.js: getBackgroundColorFromStyleBaseLayer())'
+  );
+
+  t.end();
+});
+
+test('#mapStyleReducer -> REMOVE_CUSTOM_MAP_STYLE -> removal of currently selected custom style', t => {
+  drainTasksForTesting();
+  const stateWithToken = reducer(
+    InitialMapStyle,
+    keplerGlInit({
+      mapboxApiAccessToken: 'smoothies_secret_token'
+    })
+  );
+
+  // state with custom style which is also the active styleType
+  let nextState = reducer(stateWithToken, receiveMapConfig(StateWCustomMapStyleLocal));
+
+  t.equal(
+    nextState.styleType,
+    'smoothie_the_cat',
+    'active styleType is currently the custom style'
+  );
+
+  // remove custom map style
+  nextState = reducer(
+    nextState,
+    removeCustomMapStyle({
+      id: 'smoothie_the_cat'
+    })
+  );
+
+  t.equal(
+    nextState.mapStyles.smoothie_the_cat,
+    undefined,
+    'should remove custom style with id "smoothie_the_cat"'
+  );
+
+  t.equal(
+    nextState.styleType,
+    'dark',
+    'should change active styleType to default "dark" when removing a custom style that was the active styleType'
+  );
+
+  t.end();
+});
+
+test('#mapStyleReducer -> REMOVE_CUSTOM_MAP_STYLE -> removal of not currently selected custom style', t => {
+  drainTasksForTesting();
+  const stateWithToken = reducer(
+    InitialMapStyle,
+    keplerGlInit({
+      mapboxApiAccessToken: 'smoothies_secret_token'
+    })
+  );
+
+  // state with custom style
+  let nextState = reducer(stateWithToken, receiveMapConfig(StateWCustomMapStyleLocal));
+
+  // set style type to no basemap
+  nextState = reducer(nextState, mapStyleChange(NO_MAP_ID));
+
+  t.equal(nextState.styleType, NO_MAP_ID, 'active styleType is currently the no basemap style');
+
+  // remove custom map style
+  nextState = reducer(
+    nextState,
+    removeCustomMapStyle({
+      id: 'smoothie_the_cat'
+    })
+  );
+
+  t.equal(
+    nextState.mapStyles.smoothie_the_cat,
+    undefined,
+    'should remove custom style with id "smoothie_the_cat"'
+  );
+
+  t.equal(
+    nextState.styleType,
+    NO_MAP_ID,
+    'should not change the active styleType when removing a custom style that was not the active styleType'
   );
 
   t.end();

@@ -42,6 +42,31 @@ export const addCustomMapStyle: () => {
   type: typeof ActionTypes.ADD_CUSTOM_MAP_STYLE;
 } = createAction(ActionTypes.ADD_CUSTOM_MAP_STYLE);
 
+export type RemoveCustomMapStyleUpdaterAction = {
+  payload: {
+    id: string;
+  };
+};
+
+/**
+ * Remove a custom map style from `state.mapStyle.mapStyles`.
+ * @param id
+ * @memberof mapStyleActions
+ * @public
+ */
+export const removeCustomMapStyle: ({
+  id
+}: RemoveCustomMapStyleUpdaterAction['payload']) => Merge<
+  RemoveCustomMapStyleUpdaterAction,
+  {type: typeof ActionTypes.REMOVE_CUSTOM_MAP_STYLE}
+> = createAction(ActionTypes.REMOVE_CUSTOM_MAP_STYLE, ({id}) => {
+  return {
+    payload: {
+      id
+    }
+  };
+});
+
 /** INPUT_MAP_STYLE */
 export type InputMapStyleUpdaterAction = {
   payload: {
