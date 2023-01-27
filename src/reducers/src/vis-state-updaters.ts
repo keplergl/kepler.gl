@@ -1031,6 +1031,7 @@ export const setFilterViewUpdater = (
   action: VisStateActions.SetFilterViewUpdaterAction
 ) => {
   const {view, idx} = action;
+  const shouldResetOtherFiltersView = view === FILTER_VIEW_TYPES.enlarged;
   return {
     ...state,
     filters: state.filters.map((f, i) =>
@@ -1038,6 +1039,11 @@ export const setFilterViewUpdater = (
         ? {
             ...f,
             view
+          }
+        : shouldResetOtherFiltersView
+        ? {
+            ...f,
+            view: FILTER_VIEW_TYPES.side
           }
         : f
     )
