@@ -24,7 +24,6 @@ import OrderByList from '../../common/icons/order-by-list';
 import OrderByDataset from '../../common/icons/order-by-dataset';
 import {Tooltip} from '../../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {LayerPanelListView} from '@kepler.gl/types';
 import {
   ActionHandler,
   toggleLayerPanelListView as _toggleLayerPanelListView
@@ -37,7 +36,7 @@ type ToggleOptionProps = {
 };
 
 type PanelViewListToggleProps = {
-  layerPanelListViewMode: LayerPanelListView;
+  layerPanelListViewMode: string;
   toggleLayerPanelListView: ActionHandler<typeof _toggleLayerPanelListView>;
 };
 
@@ -91,13 +90,13 @@ const TOGGLE_OPTIONS = [
   {
     id: 'list',
     iconComponent: OrderByList,
-    value: 'list' as LayerPanelListView,
+    value: 'list',
     label: 'List'
   },
   {
     id: 'sort-by-dataset',
     iconComponent: OrderByDataset,
-    value: 'sortByDataset' as LayerPanelListView,
+    value: 'sortByDataset',
     label: 'Sort by dataset'
   }
 ];
@@ -108,7 +107,7 @@ function PanelViewListToggleFactory(ToggleOption: ReturnType<typeof ToggleOption
   const PanelViewListToggle: React.FC<PanelViewListToggleProps> = props => {
     const {layerPanelListViewMode, toggleLayerPanelListView} = props;
 
-    const toggleListView = (listView: LayerPanelListView) => toggleLayerPanelListView(listView);
+    const toggleListView = (listView: string) => toggleLayerPanelListView(listView);
     const options = useMemo(
       () => TOGGLE_OPTIONS.map(opt => ({...opt, isActive: layerPanelListViewMode === opt.value})),
       [layerPanelListViewMode]

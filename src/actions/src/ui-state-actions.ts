@@ -20,7 +20,7 @@
 
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
-import {Merge, LayerPanelListView} from '@kepler.gl/types';
+import {Merge} from '@kepler.gl/types';
 import {ExportImage} from '@kepler.gl/constants';
 
 /** TOGGLE_SIDE_PANEL */
@@ -455,7 +455,7 @@ export const setLocale: (
 
 /** TOGGLE_LAYER_PANEL_LIST_VIEW */
 export type ToggleLayerPanelListViewAction = {
-  payload: LayerPanelListView;
+  payload: string;
 };
 /**
  * Toggle layer panel list view

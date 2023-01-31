@@ -38,7 +38,6 @@ import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
 import {SidePanelItem} from '../types';
-import {LayerPanelListView} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 
 type LayerBlendingSelectorProps = {
@@ -64,7 +63,7 @@ type LayerManagerProps = {
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
-  layerPanelListView: LayerPanelListView;
+  layerPanelListView: string;
   panelMetadata: SidePanelItem;
 } & WrappedComponentProps;
 
@@ -166,7 +165,7 @@ function LayerManagerFactory(
       visStateActions.addLayer(undefined, dataset);
     };
 
-    _toggleLayerPanelListView = (listView: LayerPanelListView) => {
+    _toggleLayerPanelListView = (listView: string) => {
       const {uiStateActions} = this.props;
       uiStateActions.toggleLayerPanelListView(listView);
     };
