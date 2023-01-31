@@ -232,7 +232,6 @@ export {default as TippyTooltip} from './common/tippy-tooltip';
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
 export {default as LayerTypeDropdownListFactory} from './side-panel/layer-panel/layer-type-dropdown-list';
 export {default as LayerTypeListItemFactory} from './side-panel/layer-panel/layer-type-list-item';
-export type {LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
 export {ConfigGroupCollapsibleContent} from './side-panel/layer-panel/layer-config-group';
 export {default as ColumnSelectorFactory} from './side-panel/layer-panel/column-selector';
 export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
@@ -241,6 +240,9 @@ export {
   LayerLabelEditor,
   LayerTitleSectionFactory
 } from './side-panel/layer-panel/layer-panel-header';
+
+import {LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
+export type {LayerTypeListItemType};
 
 export {default as HowToButton} from './side-panel/layer-panel/how-to-button';
 // eslint-disable-next-line prettier/prettier
