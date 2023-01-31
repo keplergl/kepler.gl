@@ -27,7 +27,7 @@ export default class GridHack extends PureComponent<GridProps> {
 
   _preventScrollBack = e => {
     const {scrollLeft} = this.props;
-    if (scrollLeft <= 0 && e.deltaX < 0) {
+    if (scrollLeft !== undefined && scrollLeft <= 0 && e.deltaX < 0) {
       // Prevent Scroll On Scrollable Elements, avoid browser backward navigation
       // https://alvarotrigo.com/blog/prevent-scroll-on-scrollable-element-js/
       e.preventDefault();
@@ -43,12 +43,14 @@ export default class GridHack extends PureComponent<GridProps> {
        * This hack exists because we need to add wheel event listener to the div rendered by Grid
        *
        */
+      //@ts-expect-error _scrollingContainer not typed in Grid
       this.grid?._scrollingContainer?.addEventListener('wheel', this._preventScrollBack, {
         passive: false
       });
     }
   };
   componentWillUnmount() {
+    //@ts-expect-error _scrollingContainer not typed in Grid
     this.grid?._scrollingContainer?.removeEventListener('wheel', this._preventScrollBack, {
       passive: false
     });
