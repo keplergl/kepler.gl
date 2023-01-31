@@ -35,7 +35,7 @@ type LayerTypeListItemProps = {
 
 type WithThemeProps = LayerTypeListItemProps & {theme: Record<string, string>};
 
-export type LayerTypeListItem = React.FC<LayerTypeListItemProps>;
+export type LayerTypeListItemType = React.FC<LayerTypeListItemProps>;
 
 const StyledListItem = styled.div`
   &.list {
