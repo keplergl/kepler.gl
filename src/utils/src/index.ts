@@ -55,6 +55,7 @@ export {
   normalizeSliderValue,
   roundValToStep,
   defaultFormatter,
+  arrayFormatter,
   FIELD_DISPLAY_FORMAT,
   parseFieldValue,
   arrayMove,

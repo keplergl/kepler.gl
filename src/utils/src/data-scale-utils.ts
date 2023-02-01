@@ -47,7 +47,7 @@ export function getOrdinalDomain(
 ): string[] {
   const values = dataContainer.mapIndex(valueAccessor);
 
-  return unique(values)
+  return unique(values.flat())
     .filter(notNullorUndefined)
     .sort();
 }

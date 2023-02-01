@@ -257,6 +257,8 @@ export function roundValToStep(minValue: number, step: number, val: number): num
  * Used in render tooltip value
  */
 export const defaultFormatter: FieldFormatter = v => (notNullorUndefined(v) ? String(v) : '');
+export const arrayFormatter: FieldFormatter = v =>
+  Array.isArray(v) ? `[${String(v)}]` : defaultFormatter(v);
 
 export const FIELD_DISPLAY_FORMAT: {
   [key: string]: FieldFormatter;
@@ -268,13 +270,8 @@ export const FIELD_DISPLAY_FORMAT: {
   [ALL_FIELD_TYPES.boolean]: defaultFormatter,
   [ALL_FIELD_TYPES.date]: defaultFormatter,
   [ALL_FIELD_TYPES.geojson]: d =>
-    typeof d === 'string'
-      ? d
-      : isPlainObject(d)
-      ? JSON.stringify(d)
-      : Array.isArray(d)
-      ? `[${String(d)}]`
-      : ''
+    typeof d === 'string' ? d : isPlainObject(d) ? JSON.stringify(d) : arrayFormatter(d),
+  [ALL_FIELD_TYPES.array]: arrayFormatter
 };
 
 /**

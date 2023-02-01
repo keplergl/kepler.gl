@@ -30,7 +30,8 @@ import {
   arrayMove,
   getFormatter,
   defaultFormatter,
-  formatNumber
+  formatNumber,
+  arrayFormatter
 } from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 
@@ -117,6 +118,16 @@ test('dataUtils -> defaultFormatter', t => {
   t.equal(defaultFormatter(undefined), '', 'defaultFormatter should be correct');
   t.equal(defaultFormatter(NaN), 'NaN', 'defaultFormatter should be correct');
   t.equal(defaultFormatter(null), '', 'defaultFormatter should be correct');
+
+  t.end();
+});
+
+test('dataUtils -> arrayFormatter', t => {
+  t.equal(arrayFormatter([]), '[]', 'arrayFormatter should be correct');
+  t.equal(arrayFormatter(['tag1']), '[tag1]', 'arrayFormatter should be correct');
+  t.equal(arrayFormatter(undefined), '', 'arrayFormatter should be correct');
+  t.equal(arrayFormatter(NaN), 'NaN', 'arrayFormatter should be correct');
+  t.equal(arrayFormatter(null), '', 'arrayFormatter should be correct');
 
   t.end();
 });
