@@ -27,7 +27,7 @@ import {renderedSize} from '../common/data-table/cell-size';
 import CanvasHack from '../common/data-table/canvas';
 import KeplerTable, {Datasets} from '@kepler.gl/table';
 
-const MIN_STATS_CELL_SIZE = 142;
+const MIN_STATS_CELL_SIZE = 122;
 
 const dgSettings = {
   sidePadding: '38px',
