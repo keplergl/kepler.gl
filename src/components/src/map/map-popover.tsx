@@ -22,6 +22,7 @@ import React, {useState} from 'react';
 import styled from 'styled-components';
 import LayerHoverInfoFactory from './layer-hover-info';
 import CoordinateInfoFactory from './coordinate-info';
+import MapPopoverContentFactory from './map-popover-content';
 import {Pin, ArrowLeft, ArrowRight} from '../common/icons';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -126,7 +127,7 @@ const StyledIcon = styled.div`
   }
 `;
 
-MapPopoverFactory.deps = [LayerHoverInfoFactory, CoordinateInfoFactory];
+MapPopoverFactory.deps = [LayerHoverInfoFactory, CoordinateInfoFactory, MapPopoverContentFactory];
 
 function createVirtualReference(container, x, y, size = 0) {
   const bounds =
@@ -193,7 +194,8 @@ type IntlProps = {
 
 export default function MapPopoverFactory(
   LayerHoverInfo: ReturnType<typeof LayerHoverInfoFactory>,
-  CoordinateInfo: ReturnType<typeof CoordinateInfoFactory>
+  CoordinateInfo: ReturnType<typeof CoordinateInfoFactory>,
+  MapPopoverContent: ReturnType<typeof MapPopoverContentFactory>
 ) {
   /** @type {typeof import('./map-popover').MapPopover} */
   const MapPopover: React.FC<MapPopoverProps & IntlProps> = ({
@@ -250,10 +252,11 @@ export default function MapPopoverFactory(
                   </PinnedButtons>
                 ) : null}
                 <PopoverContent>
-                  {Array.isArray(coordinate) && (
-                    <CoordinateInfo coordinate={coordinate} zoom={zoom} />
-                  )}
-                  {layerHoverProp && <LayerHoverInfo {...layerHoverProp} />}
+                  <MapPopoverContent
+                    coordinate={coordinate}
+                    zoom={zoom}
+                    layerHoverProp={layerHoverProp}
+                  />
                 </PopoverContent>
               </StyledMapPopover>
             )}
