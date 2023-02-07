@@ -10,6 +10,9 @@ export type MapState = {
   width: number;
   height: number;
   isSplit: boolean;
+  minZoom?: number;
+  maxZoom?: number;
+  maxBounds?: Bounds;
   initialState?: any;
   scale?: number;
 };
@@ -399,6 +402,12 @@ export type Viewport = {
   longitude?: number;
   /**  Whether to enable drag and rotate map into perspective viewport */
   dragRotate?: boolean;
+  /**  Minimum allowed viewport zoom */
+  minZoom?: number;
+  /**  Maximum allowed viewport zoom */
+  maxZoom?: number;
+  /**  Maximum geographical bounds, pan/zoom operations are constrained within those bounds */
+  maxBounds?: Bounds;
 };
 
 export type MapStyles = {

@@ -18,9 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {getCenterAndZoomFromBounds} from '@kepler.gl/utils';
+import geoViewport from '@mapbox/geo-viewport';
+import booleanWithin from '@turf/boolean-within';
+import bboxPolygon from '@turf/bbox-polygon';
+import {fitBounds} from '@math.gl/web-mercator';
+
+import {getCenterAndZoomFromBounds, validateBounds, MAPBOX_TILE_SIZE} from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
-import {MapState} from '@kepler.gl/types';
+import {MapState, Bounds} from '@kepler.gl/types';
 
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
@@ -86,7 +91,10 @@ export const INITIAL_MAP_STATE: MapState = {
   dragRotate: false,
   width: 800,
   height: 800,
-  isSplit: false
+  isSplit: false,
+  minZoom: undefined,
+  maxZoom: undefined,
+  maxBounds: undefined
 };
 
 /* Updaters */
@@ -98,10 +106,26 @@ export const INITIAL_MAP_STATE: MapState = {
 export const updateMapUpdater = (
   state: MapState,
   action: MapStateActions.UpdateMapUpdaterAction
-): MapState => ({
-  ...state,
-  ...(action.payload || {})
-});
+): MapState => {
+  let newMapState = {
+    ...state,
+    ...(action.payload || {})
+  };
+
+  // Make sure zoom level doesn't go bellow minZoom if defined
+  if (newMapState.minZoom && newMapState.zoom < newMapState.minZoom) {
+    newMapState.zoom = newMapState.minZoom;
+  }
+  // Make sure zoom level doesn't go above maxZoom if defined
+  if (newMapState.maxZoom && newMapState.zoom > newMapState.maxZoom) {
+    newMapState.zoom = newMapState.maxZoom;
+  }
+  // Limit viewport update based on maxBounds
+  if (newMapState.maxBounds && validateBounds(newMapState.maxBounds)) {
+    newMapState = updateViewportBasedOnBounds(state, newMapState);
+  }
+  return newMapState;
+};
 
 /**
  * Fit map viewport to bounds
@@ -232,4 +256,59 @@ export function getMapDimForSplitMap(isSplit, state) {
   return {
     width
   };
+}
+
+function updateViewportBasedOnBounds(state: MapState, newMapState: MapState) {
+  // Get the new viewport bounds
+  const viewportBounds = geoViewport.bounds(
+    [newMapState.longitude, newMapState.latitude],
+    newMapState.zoom,
+    [newMapState.width, newMapState.height],
+    MAPBOX_TILE_SIZE
+  );
+  // Generate turf Polygon from bounds for comparison
+  const viewportBoundsPolygon = bboxPolygon(viewportBounds);
+  // @ts-ignore
+  const newStateMaxBounds: Bounds = newMapState.maxBounds;
+  // @ts-ignore
+  const maxBoundsPolygon = bboxPolygon(newStateMaxBounds);
+
+  // If maxBounds has changed reset the viewport to snap to bounds
+  const hasMaxBoundsChanged =
+    !state.maxBounds || !state.maxBounds.every((val, idx) => val === newStateMaxBounds[idx]);
+  if (hasMaxBoundsChanged) {
+    // Check if the newMapState viewport is within maxBounds
+    if (!booleanWithin(viewportBoundsPolygon, maxBoundsPolygon)) {
+      const {latitude, longitude, zoom} = fitBounds({
+        width: newMapState.width,
+        height: newMapState.width,
+        bounds: [
+          [newStateMaxBounds[0], newStateMaxBounds[1]],
+          [newStateMaxBounds[2], newStateMaxBounds[3]]
+        ]
+      });
+
+      newMapState = {
+        ...newMapState,
+        latitude,
+        longitude,
+        // For marginal or invalid bounds, zoom may be NaN. Make sure to provide a valid value in order
+        // to avoid corrupt state and potential crashes as zoom is expected to be a number
+        ...(Number.isFinite(zoom) ? {zoom} : {})
+      };
+    }
+    return newMapState;
+  }
+
+  // Check if the newMapState viewport is within maxBounds
+  if (!booleanWithin(viewportBoundsPolygon, maxBoundsPolygon)) {
+    newMapState = {
+      ...newMapState,
+      longitude: state.longitude,
+      latitude: state.latitude,
+      zoom: state.zoom
+    };
+  }
+
+  return newMapState;
 }
