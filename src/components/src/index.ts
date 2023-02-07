@@ -241,9 +241,6 @@ export {
   LayerTitleSectionFactory
 } from './side-panel/layer-panel/layer-panel-header';
 
-import {LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
-export type {LayerTypeListItemType};
-
 export {default as HowToButton} from './side-panel/layer-panel/how-to-button';
 // eslint-disable-next-line prettier/prettier
 export type {
@@ -251,6 +248,8 @@ export type {
   StyledPanelHeaderProps,
   StyledExportSectionProps
 } from './common';
+
+export type {LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
 
 export {
   Icons,
