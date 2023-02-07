@@ -36,6 +36,7 @@ type AddLayerButtonProps = {
   datasets: Datasets;
   onOptionSelected: (opt: string) => void;
   typeaheadPlaceholder?: string;
+  disabled?: boolean;
 } & WrappedComponentProps;
 
 const DropdownContainer = styled.div.attrs({
@@ -109,7 +110,7 @@ function AddLayerButtonFactory() {
   );
 
   const AddLayerButton: React.FC<AddLayerButtonProps> = props => {
-    const {datasets, onOptionSelected, typeaheadPlaceholder, intl} = props;
+    const {datasets, onOptionSelected, typeaheadPlaceholder, intl, disabled} = props;
     const [showAddLayerDropdown, setShowAddLayerDropdown] = useState(false);
 
     const toggleAddLayerDropdown = useCallback(() => {
@@ -195,6 +196,7 @@ function AddLayerButtonFactory() {
           className="add-layer-button"
           width="105px"
           onClick={toggleAddLayerDropdown}
+          disabled={disabled}
         >
           <Add height="12px" />
           <FormattedMessage id={'layerManager.addLayer'} />

@@ -104,6 +104,30 @@ function searchOptionsOnInput(inputValue, props) {
   return searchOptions(inputValue, props.options);
 }
 
+function getOptionsForValue(value, props, state) {
+  const {options, showOptionsWhenEmpty} = props;
+
+  if (!props.searchable) {
+    // directly pass through options if can not be searched
+    return options;
+  }
+  if (shouldSkipSearch(value, state, showOptionsWhenEmpty)) {
+    return options;
+  }
+
+  const searchOptions = generateSearchFunction(props);
+  return searchOptions(value, options);
+}
+
+function shouldSkipSearch(input, state, showOptionsWhenEmpty) {
+  const emptyValue = !input || input.trim().length === 0;
+
+  // this.state must be checked because it may not be defined yet if this function
+  // is called from within getInitialState
+  const isFocused = state && state.isFocused;
+  return !(showOptionsWhenEmpty && isFocused) && emptyValue;
+}
+
 interface TypeaheadProps {
   name?: string;
   customClasses?: any;
@@ -190,6 +214,20 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
     searchable: true,
     resultsTruncatedMessage: null
   };
+
+  static getDerivedStateFromProps(props, state) {
+    if (props.options === state.prevOptions) {
+      return {};
+    }
+
+    //  invoked after a component is instantiated as well as before it is re-rendered
+    const searchResults = getOptionsForValue(state.entryValue, props, state);
+
+    return {
+      searchResults,
+      prevOptions: props.options
+    };
+  }
 
   constructor(props) {
     super(props);

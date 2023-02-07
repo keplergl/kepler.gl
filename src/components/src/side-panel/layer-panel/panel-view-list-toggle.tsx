@@ -24,7 +24,10 @@ import OrderByList from '../../common/icons/order-by-list';
 import OrderByDataset from '../../common/icons/order-by-dataset';
 import {Tooltip} from '../../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {LayerPanelListView} from '@kepler.gl/types';
+import {
+  ActionHandler,
+  toggleLayerPanelListView as _toggleLayerPanelListView
+} from '@kepler.gl/actions';
 
 type ToggleOptionProps = {
   isActive: boolean;
@@ -33,8 +36,8 @@ type ToggleOptionProps = {
 };
 
 type PanelViewListToggleProps = {
-  layerPanelListViewMode: LayerPanelListView;
-  toggleLayerPanelListView: (view: string) => void;
+  layerPanelListViewMode: string;
+  toggleLayerPanelListView: ActionHandler<typeof _toggleLayerPanelListView>;
 };
 
 const PanelViewListToggleContainer = styled.div.attrs({

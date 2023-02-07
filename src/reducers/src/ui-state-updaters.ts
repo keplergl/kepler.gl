@@ -832,7 +832,6 @@ export const toggleLayerPanelListViewUpdater = (
   state: UiState,
   {payload: listView}: UIStateActions.ToggleLayerPanelListViewAction
 ): UiState => {
-  // @ts-expect-error
   return listView === state.layerPanelListView
     ? state
     : {

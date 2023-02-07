@@ -38,7 +38,6 @@ import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
 import {SidePanelItem} from '../types';
-import {LayerPanelListView} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 
 type LayerBlendingSelectorProps = {
@@ -64,7 +63,7 @@ type LayerManagerProps = {
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
-  layerPanelListView: LayerPanelListView;
+  layerPanelListView: string;
   panelMetadata: SidePanelItem;
 } & WrappedComponentProps;
 
@@ -214,16 +213,13 @@ function LayerManagerFactory(
               <PanelTitle className="layer-manager-title">
                 <FormattedMessage id={panelMetadata.label} />
               </PanelTitle>
-              {defaultDataset ? (
-                // TODO replace ignore
-                // @ts-ignore
-                <AddLayerButton
-                  datasets={datasets}
-                  typeaheadPlaceholder="Search datasets"
-                  intl={intl}
-                  onOptionSelected={this._addEmptyNewLayer}
-                />
-              ) : null}
+              <AddLayerButton
+                datasets={datasets}
+                typeaheadPlaceholder="Search datasets"
+                intl={intl}
+                onOptionSelected={this._addEmptyNewLayer}
+                disabled={!defaultDataset}
+              />
             </LayerHeader>
           </SidePanelSection>
           <SidePanelSection>

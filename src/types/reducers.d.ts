@@ -359,8 +359,6 @@ export type Notifications = {
 
 export type Locale = string;
 
-export type LayerPanelListView = 'list' | 'sortByDataset';
-
 export type UiState = {
   readOnly: boolean;
   activeSidePanel: string;
@@ -381,7 +379,7 @@ export type UiState = {
   loadFiles: LoadFiles;
   // Locale of the UI
   locale: Locale;
-  layerPanelListView: LayerPanelListView;
+  layerPanelListView: string;
 };
 
 /** Width of viewport */
