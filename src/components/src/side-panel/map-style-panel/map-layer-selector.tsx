@@ -62,7 +62,7 @@ const LayerLabel = styled(PanelLabelBold)<LayerLabelProps>`
   color: ${props => (props.active ? props.theme.textColor : props.theme.labelColor)};
 `;
 
-type LayerGroupSelectorProps = {
+export type LayerGroupSelectorProps = {
   layers: VisibleLayerGroups;
   editableLayers: string[];
   onChange: (payload: {

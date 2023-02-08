@@ -34,7 +34,7 @@ export type PanelItem = {
   iconComponent: React.ComponentType<Partial<BaseProps>>;
 };
 
-type PanelTabProps = {
+export type PanelTabProps = {
   isActive: boolean;
   panel: PanelItem;
   onClick: (e: React.MouseEvent<HTMLDivElement>) => void;

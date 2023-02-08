@@ -63,7 +63,7 @@ const StyledMapDropdown = styled(StyledPanelHeader)`
   }
 `;
 
-type MapStyleSelectorProps = {
+export type MapStyleSelectorProps = {
   mapStyle: MapStyle;
   onChange: (payload: string) => void;
   toggleActive: () => void;

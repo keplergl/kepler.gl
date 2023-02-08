@@ -250,6 +250,20 @@ export type {
   StyledExportSectionProps
 } from './common';
 
+export type {CollapseButtonProps} from './side-panel/side-bar';
+export type {PanelTabProps} from './side-panel/panel-tab';
+export type {MapStyleSelectorProps} from './side-panel/map-style-panel/map-style-selector';
+export type {LayerGroupSelectorProps} from './side-panel/map-style-panel/map-layer-selector';
+export type {MapManagerProps} from './side-panel/map-manager';
+export type {
+  SourceDataCatalogProps,
+  SourceDataSelectorProps,
+  DatasetTitleProps,
+  DatasetInfoProps,
+  DatasetTagProps
+} from './side-panel/common/types';
+export type {CustomPanelsProps} from './side-panel/custom-panel';
+
 export {
   Icons,
   SelectText,

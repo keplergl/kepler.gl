@@ -34,7 +34,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {MapStyle} from '@kepler.gl/reducers';
 import {MapStyleActions} from '@kepler.gl/actions';
 
-type MapManagerProps = {
+export type MapManagerProps = {
   mapStyle: MapStyle;
   mapStyleActions: typeof MapStyleActions;
   showAddMapStyleModal: () => void;
