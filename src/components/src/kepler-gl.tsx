@@ -497,6 +497,7 @@ function KeplerGlFactory(
                       rootRef={this.bottomWidgetRef}
                       {...bottomWidgetFields}
                       containerW={dimensions.width}
+                      theme={theme}
                     />
                   </BottomWidgetOuter>
                   <ModalContainer
