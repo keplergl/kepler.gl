@@ -15856,10 +15856,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
 
-type-analyzer@0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/type-analyzer/-/type-analyzer-0.3.0.tgz#b62a226deb4e9ca46b8cc86e14a93344154377d0"
-  integrity sha512-C2A/rZcoP03dAmv1/hCo2AjD7q2BHfZEp62Fn52BXgHoAEDVTobRbtR6UcEOhNy7g9/sh17MHq3ThxAp3578zw==
+type-analyzer@0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/type-analyzer/-/type-analyzer-0.4.0.tgz#56621f23b832468d358080466a2d41e142c8078a"
+  integrity sha512-vLj0uKCCZYqtkFoQwf7mIvRQopDc2R4mdADLuX1uhtOm5MjtksHMiatI1TW+n0r7vDZLAMgW5VKGKlVTwbcAhg==
 
 type-check@~0.3.2:
   version "0.3.2"
@@ -15958,9 +15958,9 @@ typical@^5.2.0:
   integrity sha512-dvdQgNDNJo+8B2uBQoqdb11eUCE1JQXhvjC/CZtgvZseVd5TYMXnq0+vuUemXbd/Se29cTaUuPX3YIc2xgbvIg==
 
 ua-parser-js@^0.7.18:
-  version "0.7.25"
-  resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-0.7.25.tgz#67689fa263a87a52dabbc251ede89891f59156ce"
-  integrity sha512-8NFExdfI24Ny8R3Vc6+uUytP/I7dpqk3JERlvxPWlrtx5YboqCgxAXYKPAifbPLV2zKbgmmPL53ufW7mUC/VOQ==
+  version "0.7.33"
+  resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-0.7.33.tgz#1d04acb4ccef9293df6f70f2c3d22f3030d8b532"
+  integrity sha512-s8ax/CeZdK9R/56Sui0WM6y9OFREJarMRHqLB2EwkovemBxNQ+Bqu8GAsUnVcXKgphb++ghr/B2BZx4mahujPw==
 
 uber-licence@^3.1.1:
   version "3.1.1"

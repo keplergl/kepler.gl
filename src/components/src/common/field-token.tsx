@@ -40,8 +40,8 @@ function FieldTokenFactory(
     font-weight: 400;
     padding: 0 5px;
     text-align: center;
-    width: 40px;
-    line-height: 20px;
+    width: ${props => props.theme.fieldTokenWidth}px;
+    line-height: ${props => props.theme.fieldTokenHeight}px;
   `;
 
   const FieldToken = ({type}: FieldTokenProps) => (

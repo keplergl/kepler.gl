@@ -56,7 +56,7 @@ export const ConfigGroupCollapsibleContent = styled.div.attrs({
   transition: max-height 0.3s ease-out;
   height: max-content;
   max-height: 1200px;
-  overflow: scroll;
+  overflow: auto;
 `;
 
 export const ConfigGroupCollapsibleHeader = styled.div.attrs({

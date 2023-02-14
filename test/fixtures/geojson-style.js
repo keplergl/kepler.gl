@@ -122,7 +122,7 @@ export const processedFields = [
     displayName: 'fillColor',
     format: '',
     fieldIdx: 1,
-    type: 'geojson',
+    type: 'array',
     analyzerType: 'ARRAY',
     valueAccessor: values => values[1]
   },

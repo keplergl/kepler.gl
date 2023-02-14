@@ -31,8 +31,11 @@ type LayerTypeListItemProps = {
     label: string;
   };
   isTile: boolean;
-  theme: any;
 };
+
+type WithThemeProps = LayerTypeListItemProps & {theme: Record<string, string>};
+
+export type LayerTypeListItemType = React.FC<LayerTypeListItemProps>;
 
 const StyledListItem = styled.div`
   &.list {
@@ -64,7 +67,7 @@ const StyledListItem = styled.div`
 `;
 
 export function LayerTypeListItemFactory() {
-  const LayerTypeListItem: React.FC<LayerTypeListItemProps> = ({value, isTile, theme}) => (
+  const LayerTypeListItem: React.FC<WithThemeProps> = ({value, isTile, theme}) => (
     <StyledListItem
       className={classNames('layer-type-selector__item__inner', {
         list: !isTile

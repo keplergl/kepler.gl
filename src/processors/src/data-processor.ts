@@ -39,6 +39,14 @@ import {Feature} from '@nebula.gl/edit-modes';
 // matches empty string
 export const CSV_NULLS = /^(null|NULL|Null|NaN|\/N||)$/;
 
+function tryParseJsonString(str) {
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    return null;
+  }
+}
+
 export const PARSE_FIELD_VALUE_FROM_STRING = {
   [ALL_FIELD_TYPES.boolean]: {
     valid: (d: unknown): boolean => typeof d === 'boolean',
@@ -60,6 +68,15 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
     valid: (d: unknown): boolean => parseFloat(d) === d,
     // Note this will result in NaN for some string
     parse: parseFloat
+  },
+  [ALL_FIELD_TYPES.object]: {
+    valid: isPlainObject,
+    parse: tryParseJsonString
+  },
+
+  [ALL_FIELD_TYPES.array]: {
+    valid: Array.isArray,
+    parse: tryParseJsonString
   }
 };
 

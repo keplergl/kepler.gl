@@ -27,6 +27,7 @@ import VisConfigSliderFactory from './side-panel/layer-panel/vis-config-slider';
 import VisConfigSwitchFactory from './side-panel/layer-panel/vis-config-switch';
 import LayerConfigGroupFactory from './side-panel/layer-panel/layer-config-group';
 import LayerColumnConfigFactory from './side-panel/layer-panel/layer-column-config';
+import LayerTypeListItemFactory from './side-panel/layer-panel/layer-type-list-item';
 import {ChannelByValueSelectorFactory} from './side-panel/layer-panel/layer-configurator';
 import FieldSelectorFactory, {FieldListItemFactoryFactory} from './common/field-selector';
 import FieldTokenFactory from './common/field-token';
@@ -232,7 +233,6 @@ export {default as TippyTooltip} from './common/tippy-tooltip';
 // side pane components
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
 export {default as LayerTypeDropdownListFactory} from './side-panel/layer-panel/layer-type-dropdown-list';
-export {default as LayerTypeListItemFactory} from './side-panel/layer-panel/layer-type-list-item';
 export {ConfigGroupCollapsibleContent} from './side-panel/layer-panel/layer-config-group';
 export {default as ColumnSelectorFactory} from './side-panel/layer-panel/column-selector';
 export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
@@ -263,6 +263,7 @@ export type {
   DatasetTagProps
 } from './side-panel/common/types';
 export type {CustomPanelsProps} from './side-panel/custom-panel';
+export type {LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
 
 export {
   Icons,
@@ -323,8 +324,8 @@ export const FieldSelector = appInjector.get(FieldSelectorFactory);
 export const FieldToken = appInjector.get(FieldTokenFactory);
 export const PanelHeaderAction = appInjector.get(PanelHeaderActionFactory);
 export const FieldListItemFactory = appInjector.get(FieldListItemFactoryFactory);
+export const LayerTypeListItem = appInjector.get(LayerTypeListItemFactory);
 export const InfoHelper = appInjector.get(InfoHelperFactory);
-
 export {
   appInjector,
   TimeRangeSliderFactory,
@@ -333,6 +334,7 @@ export {
   VisConfigSwitchFactory,
   LayerConfigGroupFactory,
   LayerColumnConfigFactory,
+  LayerTypeListItemFactory,
   ChannelByValueSelectorFactory,
   FieldListItemFactoryFactory,
   InfoHelperFactory

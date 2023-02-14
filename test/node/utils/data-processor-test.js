@@ -41,7 +41,7 @@ import {
   fields as geojsonFields,
   rows as geojsonRows
 } from 'test/fixtures/geojson';
-
+import testCsvObjectData, {objCsvFields, objCsvRows} from 'test/fixtures/test-csv-object';
 import {
   parseCsvRowsByFieldType,
   processCsvData,
@@ -140,7 +140,7 @@ test('Processor -> processCsvData', t => {
   t.end();
 });
 
-test('Processor -> processCsvData: duplicated field name', t => {
+test('Processor -> processCsvData -> duplicated field name', t => {
   const testData1 = `column1,column1,column1,column2\na,b,c,d\nc,d,e,f`;
 
   // load sample dataset csv as text
@@ -216,7 +216,7 @@ test('Processor -> processCsvData -> with nulls', t => {
   t.end();
 });
 
-test('Processor -> processCsv.wkt', t => {
+test('Processor -> processCsvData -> wkt', t => {
   const {fields, rows} = processCsvData(wktCsv);
 
   cmpFields(t, fields, wktCsvFields, 'should find geometry fields as type:geojson');
@@ -226,6 +226,17 @@ test('Processor -> processCsv.wkt', t => {
   });
   t.deepEqual(rows, wktCsvRows, 'should process wkt rows correctly');
 
+  t.end();
+});
+
+test('Processor -> processCsvData -> w/ array and object', t => {
+  const {fields, rows} = processCsvData(testCsvObjectData);
+  cmpFields(t, fields, objCsvFields, 'should find csv object fields as type:object');
+
+  t.equal(rows.length, objCsvRows.length, 'should have same row length');
+  rows.forEach((r, i) => {
+    t.deepEqual(r, objCsvRows[i], 'should format correct csv object rows');
+  });
   t.end();
 });
 

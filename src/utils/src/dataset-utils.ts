@@ -524,10 +524,11 @@ export function analyzerTypeToFieldType(aType: string): string {
     case GEOMETRY:
     case GEOMETRY_FROM_STRING:
     case PAIR_GEOMETRY_FROM_STRING:
-    case ARRAY:
-    case OBJECT:
-      // TODO: create a new data type for objects and arrays
       return ALL_FIELD_TYPES.geojson;
+    case ARRAY:
+      return ALL_FIELD_TYPES.array;
+    case OBJECT:
+      return ALL_FIELD_TYPES.object;
     case NUMBER:
     case STRING:
     case ZIPCODE:

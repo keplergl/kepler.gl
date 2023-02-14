@@ -75,6 +75,150 @@ test('#mapStateReducer -> UPDATE_MAP', t => {
   t.end();
 });
 
+// eslint-disable-next-line max-statements
+test('#mapStateReducer -> UPDATE_MAP - minZoom/maxZoom', t => {
+  let mapUpdate = {
+    zoom: 9,
+    maxZoom: 12
+  };
+  let expectedState = {...InitialMapState, ...mapUpdate};
+  let newState = reducer(undefined, updateMap(mapUpdate));
+  t.deepEqual(newState, expectedState, 'If zoom < maxZoom - zoom should stay the same');
+
+  mapUpdate = {
+    zoom: 14,
+    maxZoom: 12
+  };
+  expectedState = {...InitialMapState, ...mapUpdate, ...{zoom: mapUpdate.maxZoom}};
+  newState = reducer(undefined, updateMap(mapUpdate));
+  t.deepEqual(newState, expectedState, 'If zoom > maxZoom - zoom should be equal to maxZoom');
+
+  mapUpdate = {
+    zoom: 15,
+    minZoom: 12
+  };
+  expectedState = {...InitialMapState, ...mapUpdate};
+  newState = reducer(undefined, updateMap(mapUpdate));
+  t.deepEqual(newState, expectedState, 'If zoom > minZoom - zoom should stay the same');
+
+  mapUpdate = {
+    zoom: 9,
+    minZoom: 12
+  };
+  expectedState = {...InitialMapState, ...mapUpdate, ...{zoom: mapUpdate.minZoom}};
+  newState = reducer(undefined, updateMap(mapUpdate));
+  t.deepEqual(newState, expectedState, 'If zoom < minZoom - zoom should be equal to minZoom');
+
+  mapUpdate = {
+    zoom: 9,
+    minZoom: 3,
+    maxZoom: 15
+  };
+  expectedState = {...InitialMapState, ...mapUpdate};
+  newState = reducer(undefined, updateMap(mapUpdate));
+  t.deepEqual(newState, expectedState, 'If minZoom < zoom < maxZoom - zoom should stay the same');
+
+  mapUpdate = {
+    zoom: 9,
+    minZoom: 9,
+    maxZoom: 9
+  };
+  expectedState = {...InitialMapState, ...mapUpdate};
+  newState = reducer(undefined, updateMap(mapUpdate));
+  t.deepEqual(
+    newState,
+    expectedState,
+    'If minZoom === zoom === maxZoom - zoom should stay the same'
+  );
+
+  mapUpdate = {
+    zoom: 15,
+    minZoom: 3,
+    maxZoom: 12
+  };
+  expectedState = {...InitialMapState, ...mapUpdate, ...{zoom: mapUpdate.maxZoom}};
+  newState = reducer(undefined, updateMap(mapUpdate));
+  t.deepEqual(
+    newState,
+    expectedState,
+    'If minZoom < maxZoom < zoom - zoom should be equal to maxZoom'
+  );
+
+  mapUpdate = {
+    zoom: 3,
+    minZoom: 6,
+    maxZoom: 12
+  };
+  expectedState = {...InitialMapState, ...mapUpdate, ...{zoom: mapUpdate.minZoom}};
+  newState = reducer(undefined, updateMap(mapUpdate));
+  t.deepEqual(
+    newState,
+    expectedState,
+    'If zoom < minZoom < maxZoom - zoom should be equal to minZoom'
+  );
+
+  t.end();
+});
+
+test('#mapStateReducer -> UPDATE_MAP - maxBounds', t => {
+  let state = {
+    ...InitialMapState,
+    latitude: 37.685430657228906,
+    longitude: -122.20643775128097,
+    zoom: 5,
+    width: 640,
+    height: 480
+  };
+  let mapUpdate = {
+    maxBounds: [-122.47705311445556, 37.52481163037179, -121.93582238810639, 37.846049684086026]
+  };
+  let expectedState = {
+    ...state,
+    ...mapUpdate,
+    ...{
+      latitude: 37.68560457001023,
+      longitude: -122.20643775128097,
+      zoom: 9.699465540852673
+    }
+  };
+  let newState = reducer(state, updateMap(mapUpdate));
+  t.deepEqual(newState, expectedState, 'maxBounds is snapped to the viewport');
+
+  state = {
+    ...InitialMapState,
+    latitude: 37.685430657228906,
+    longitude: -122.20643775128097,
+    zoom: 9,
+    width: 640,
+    height: 480,
+    maxBounds: [-122.47705311445556, 37.52481163037179, -121.93582238810639, 37.846049684086026]
+  };
+  mapUpdate = {
+    zoom: 12
+  };
+  expectedState = {...state, ...mapUpdate};
+  newState = reducer(state, updateMap(mapUpdate));
+  t.deepEqual(newState, expectedState, 'Viewport is within maxBounds - zoomed in');
+
+  state = {
+    ...InitialMapState,
+    latitude: 37.685430657228906,
+    longitude: -122.20643775128097,
+    zoom: 9,
+    width: 640,
+    height: 480,
+    maxBounds: [-122.47705311445556, 37.52481163037179, -121.93582238810639, 37.846049684086026]
+  };
+  mapUpdate = {
+    zoom: 8
+  };
+  expectedState = {...state};
+  newState = reducer(state, updateMap(mapUpdate));
+  t.deepEqual(newState, expectedState, 'Viewport is outside the maxBounds - zoomed out');
+
+  t.end();
+});
+
 test('#mapStateReducer -> TOGGLE_PERSPECTIVE', t => {
   const newState = reducer(undefined, {});
   t.equal(newState.dragRotate, false, 'dragRotate should default to false');

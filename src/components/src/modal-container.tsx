@@ -81,7 +81,7 @@ import {VisState} from '@kepler.gl/schemas';
 
 const DataTableModalStyle = css`
   top: 70px;
-  padding: 32px 0 0 0;
+  padding: 0;
   width: 90vw;
   max-width: 90vw;
 
