@@ -647,22 +647,16 @@ export const FIELD_OPTS = {
     }
   },
   [ALL_FIELD_TYPES.object]: {
-    type: 'categorical',
-    scale: {
-      ...ordinalFieldScaleFunctions,
-      ...ordinalFieldAggrScaleFunctions
-    },
+    type: 'numerical',
+    scale: {},
     format: {
       legend: d => '...',
       tooltip: []
     }
   },
   [ALL_FIELD_TYPES.array]: {
-    type: 'categorical',
-    scale: {
-      ...ordinalFieldScaleFunctions,
-      ...ordinalFieldAggrScaleFunctions
-    },
+    type: 'numerical',
+    scale: {},
     format: {
       legend: d => '...',
       tooltip: []
@@ -673,7 +667,9 @@ export const FIELD_OPTS = {
 export const CHANNEL_SCALE_SUPPORTED_FIELDS = Object.keys(CHANNEL_SCALES).reduce(
   (accu, key) => ({
     ...accu,
-    [key]: Object.keys(FIELD_OPTS).filter(ft => Object.keys(FIELD_OPTS[ft].scale[key]).length)
+    [key]: Object.keys(FIELD_OPTS).filter(
+      ft => FIELD_OPTS[ft].scale[key] && Object.keys(FIELD_OPTS[ft].scale[key]).length
+    )
   }),
   {} as {[id: string]: string[]}
 );
