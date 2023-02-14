@@ -249,6 +249,8 @@ export type {
   StyledExportSectionProps
 } from './common';
 
+export type {LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
+
 export {
   Icons,
   SelectText,
