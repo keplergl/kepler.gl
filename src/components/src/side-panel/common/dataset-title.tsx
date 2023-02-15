@@ -29,12 +29,9 @@ import DatasetTagFactory from './dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
 import {Portaled} from '../..';
 import {rgbToHex} from '@kepler.gl/utils';
-import {
-  StyledDatasetTitleProps,
-  DatasetTitleProps,
-  RemoveDatasetProps,
-  ShowDataTableProps
-} from './types';
+import {openDeleteModal, VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {RGBColor} from '@kepler.gl/types';
+import {StyledDatasetTitleProps, RemoveDatasetProps, ShowDataTableProps} from './types';
 
 const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
   color: ${props => props.theme.textColor};
@@ -67,6 +64,21 @@ const DataTagAction = styled.div`
   height: 16px;
   opacity: 0;
 `;
+
+type MiniDataset = {
+  id: string;
+  color: RGBColor;
+  label?: string;
+};
+
+export type DatasetTitleProps = {
+  dataset: MiniDataset;
+  showDeleteDataset: boolean;
+  onTitleClick?: () => void;
+  showDatasetTable?: ActionHandler<typeof VisStateActions.showDatasetTable>;
+  updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
+  removeDataset?: ActionHandler<typeof openDeleteModal>;
+};
 
 const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
   <DataTagAction className="dataset-action show-data-table" data-tip data-for={`data-table-${id}`}>

@@ -255,13 +255,11 @@ export type {PanelTabProps} from './side-panel/panel-tab';
 export type {MapStyleSelectorProps} from './side-panel/map-style-panel/map-style-selector';
 export type {LayerGroupSelectorProps} from './side-panel/map-style-panel/map-layer-selector';
 export type {MapManagerProps} from './side-panel/map-manager';
-export type {
-  SourceDataCatalogProps,
-  SourceDataSelectorProps,
-  DatasetTitleProps,
-  DatasetInfoProps,
-  DatasetTagProps
-} from './side-panel/common/types';
+export type {SourceDataSelectorProps} from './side-panel/common/types';
+export type {DatasetTitleProps} from './side-panel/common/dataset-title';
+export type {SourceDataCatalogProps} from './side-panel/common/source-data-catalog';
+export type {DatasetInfoProps} from './side-panel/common/dataset-info';
+export type {DatasetTagProps} from './side-panel/common/dataset-tag';
 export type {CustomPanelsProps} from './side-panel/custom-panel';
 export type {LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
 

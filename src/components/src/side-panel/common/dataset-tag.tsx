@@ -22,7 +22,9 @@ import React from 'react';
 import {FormattedMessage} from '@kepler.gl/localization';
 import styled from 'styled-components';
 import {DatasetSquare, Tooltip} from '../..';
-import {DatasetTagProps, UpdateTableColorTypes} from './types';
+import {UpdateTableColorTypes} from './types';
+import {RGBColor} from '@kepler.gl/types';
+import {VisStateActions, ActionHandler} from '@kepler.gl/actions';
 
 function nop(_) {}
 
@@ -58,6 +60,20 @@ const UpdateTableColor = ({children, id}: UpdateTableColorTypes) => (
     {children}
   </DatasetColorPicker>
 );
+
+type MiniDataset = {
+  id: string;
+  color: RGBColor;
+  label?: string;
+};
+
+export type DatasetTagProps = {
+  id?: string;
+  dataset: MiniDataset;
+  updateTableColor?: ActionHandler<typeof VisStateActions.updateTableColor>;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
+  onClickSquare?: React.MouseEventHandler<HTMLDivElement>;
+};
 
 export default function DatasetTagFactory(): React.FC<DatasetTagProps> {
   const DatasetTag = ({
