@@ -34,7 +34,7 @@ export function isValidMerger(merger: Merger<any>): boolean {
 /**
  * Call state updater, return the tasks created by the state update with withTask()
  */
-function callFunctionGetTask(fn) {
+function callFunctionGetTask(fn: () => any): [any, any] {
   const before = getGlobalTaskQueue();
   const ret = fn();
   const after = getGlobalTaskQueue();
@@ -110,7 +110,11 @@ export function getPropValueToMerger<State extends VisState>(
     : state[mergerProps];
 }
 
-export function resetStateToMergeProps(state, initialState, mergerProps) {
+export function resetStateToMergeProps<State extends VisState>(
+  state: State,
+  initialState: State,
+  mergerProps: string | string[]
+) {
   return toArray(mergerProps).reduce(
     (accu, prop) => ({
       ...accu,

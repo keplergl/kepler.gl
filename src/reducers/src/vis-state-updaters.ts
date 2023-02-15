@@ -1646,6 +1646,9 @@ export const updateVisDataUpdater = (
   return applyMergersUpdater(mergedState, {mergers: state.mergers, postMergerPayload});
 };
 
+/**
+ * Add new dataset to `visState`, with option to load a map config along with the datasets
+ */
 export function applyMergersUpdater(
   state: VisState,
   action: {
@@ -1674,6 +1677,9 @@ export function applyMergersUpdater(
     : mergeStateResult.mergedState;
 }
 
+/**
+ * Add new dataset to `visState`, with option to load a map config along with the datasets
+ */
 function postMergeUpdater(
   mergedState: VisState,
   {newDataIds, options}: PostMergerPayload
