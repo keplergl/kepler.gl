@@ -262,7 +262,8 @@ export const INITIAL_UI_STATE: UiState = {
   loadFiles: DEFAULT_LOAD_FILES,
   // Locale of the UI
   locale: LOCALE_CODES.en,
-  layerPanelListView: 'list'
+  layerPanelListView: 'list',
+  filterPanelListView: 'list'
 };
 
 /* Updaters */
@@ -828,14 +829,21 @@ export const setLocaleUpdater = (
  * @returns nextState
  * @public
  */
-export const toggleLayerPanelListViewUpdater = (
+export const togglePanelListViewUpdater = (
   state: UiState,
-  {payload: listView}: UIStateActions.ToggleLayerPanelListViewAction
+  {payload: {panelId, listView}}: UIStateActions.TogglePanelListViewAction
 ): UiState => {
-  return listView === state.layerPanelListView
-    ? state
-    : {
-        ...state,
-        layerPanelListView: listView
-      };
+  const stateProp =
+    panelId === 'layer'
+      ? 'layerPanelListView'
+      : panelId === 'filter'
+      ? 'filterPanelListView'
+      : null;
+  if (!stateProp || state[stateProp] === listView) {
+    return state;
+  }
+  return {
+    ...state,
+    [stateProp]: listView
+  };
 };

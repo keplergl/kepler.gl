@@ -22,11 +22,10 @@ import React, {Component, useCallback} from 'react';
 
 import {injectIntl, WrappedComponentProps} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
-import styled from 'styled-components';
 
 import LayerListFactory from './layer-panel/layer-list';
 import DatasetLayerGroupFactory from './layer-panel/dataset-layer-group';
-import PanelViewListToggleFactory from './layer-panel/panel-view-list-toggle';
+import PanelViewListToggleFactory from './panel-view-list-toggle';
 import PanelTitleFactory from './panel-title';
 import DatasetSectionFactory from './layer-panel/dataset-section';
 import AddLayerButtonFactory from './layer-panel/add-layer-button';
@@ -34,10 +33,11 @@ import AddLayerButtonFactory from './layer-panel/add-layer-button';
 import ItemSelector from '../common/item-selector/item-selector';
 import {PanelLabel, SidePanelDivider, SidePanelSection} from '../common/styled-components';
 
-import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
+import {LAYER_BLENDINGS, OVERLAY_BLENDINGS, PANEL_VIEW_TOGGLES} from '@kepler.gl/constants';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, ActionHandler} from '@kepler.gl/actions';
 import {SidePanelItem} from '../types';
+import {PanelListView} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 
 type LayerBlendingSelectorProps = {
@@ -63,18 +63,9 @@ type LayerManagerProps = {
   removeDataset: ActionHandler<typeof UIStateActions.openDeleteModal>;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
-  layerPanelListView: string;
+  panelListView: PanelListView;
   panelMetadata: SidePanelItem;
 } & WrappedComponentProps;
-
-const LayerHeader = styled.div.attrs({
-  className: 'layer-manager-header'
-})`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-top: 16px;
-`;
 
 const LayerBlendingSelector = React.memo(
   ({layerBlending, updateLayerBlending, intl}: LayerBlendingSelectorProps) => {
@@ -160,14 +151,14 @@ function LayerManagerFactory(
   AddLayerButton: ReturnType<typeof AddLayerButtonFactory>
 ) {
   class LayerManager extends Component<LayerManagerProps> {
-    _addEmptyNewLayer = (dataset: string) => {
+    _addLayer = (dataset: string) => {
       const {visStateActions} = this.props;
       visStateActions.addLayer(undefined, dataset);
     };
 
-    _toggleLayerPanelListView = (listView: string) => {
+    _togglePanelListView = (listView: string) => {
       const {uiStateActions} = this.props;
-      uiStateActions.toggleLayerPanelListView(listView);
+      uiStateActions.togglePanelListView({panelId: 'layer', listView});
     };
 
     render() {
@@ -182,19 +173,18 @@ function LayerManagerFactory(
         removeDataset,
         uiStateActions,
         visStateActions,
-        layerPanelListView,
+        panelListView,
         panelMetadata
       } = this.props;
 
-      const defaultDataset = Object.keys(datasets)[0];
-      const isSortByDatasetMode = layerPanelListView === 'sortByDataset';
+      const isSortByDatasetMode = panelListView === PANEL_VIEW_TOGGLES.byDataset;
 
       return (
         <div className="layer-manager">
           <SidePanelSection>
             <PanelViewListToggle
-              toggleLayerPanelListView={this._toggleLayerPanelListView}
-              layerPanelListViewMode={layerPanelListView}
+              togglePanelListView={this._togglePanelListView}
+              mode={panelListView}
             />
           </SidePanelSection>
           <DatasetSection
@@ -205,22 +195,15 @@ function LayerManagerFactory(
             showDeleteDataset
             showDatasetList={!isSortByDatasetMode}
             showAddDataModal={showAddDataModal}
-            defaultDataset={defaultDataset}
           />
           <SidePanelDivider />
           <SidePanelSection>
-            <LayerHeader>
-              <PanelTitle className="layer-manager-title">
-                <FormattedMessage id={panelMetadata.label} />
-              </PanelTitle>
-              <AddLayerButton
-                datasets={datasets}
-                typeaheadPlaceholder="Search datasets"
-                intl={intl}
-                onOptionSelected={this._addEmptyNewLayer}
-                disabled={!defaultDataset}
-              />
-            </LayerHeader>
+            <PanelTitle
+              className="layer-manager-title"
+              title={intl.formatMessage({id: panelMetadata.label})}
+            >
+              <AddLayerButton datasets={datasets} onAdd={this._addLayer} />
+            </PanelTitle>
           </SidePanelSection>
           <SidePanelSection>
             {isSortByDatasetMode ? (

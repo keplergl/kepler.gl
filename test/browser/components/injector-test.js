@@ -55,7 +55,7 @@ test('Components -> injector -> injectComponents', t => {
 
   const wrapper = mount(
     <Provider store={store}>
-      <KeplerGl id="foo" />
+      <KeplerGl id="foo" mapboxApiAccessToken="smoothie_and_milkshake" />
     </Provider>
   );
 

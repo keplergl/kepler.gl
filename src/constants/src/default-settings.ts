@@ -177,6 +177,11 @@ export const SIDEBAR_PANELS = [
   }
 ];
 
+export const PANEL_VIEW_TOGGLES = keyMirror({
+  list: null,
+  byDataset: null
+});
+
 // backward compatibility
 export const PANELS = SIDEBAR_PANELS;
 

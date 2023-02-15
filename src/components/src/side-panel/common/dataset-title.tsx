@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {createRef, MouseEvent, PureComponent} from 'react';
+import React, {useCallback, useRef, useState} from 'react';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
@@ -29,12 +29,9 @@ import DatasetTagFactory from './dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
 import {Portaled} from '../..';
 import {rgbToHex} from '@kepler.gl/utils';
-import {
-  StyledDatasetTitleProps,
-  DatasetTitleProps,
-  RemoveDatasetProps,
-  ShowDataTableProps
-} from './types';
+import {openDeleteModal, VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {RGBColor} from '@kepler.gl/types';
+import {StyledDatasetTitleProps, RemoveDatasetProps, ShowDataTableProps} from './types';
 
 const StyledDatasetTitle = styled.div<StyledDatasetTitleProps>`
   color: ${props => props.theme.textColor};
@@ -67,6 +64,21 @@ const DataTagAction = styled.div`
   height: 16px;
   opacity: 0;
 `;
+
+type MiniDataset = {
+  id: string;
+  color: RGBColor;
+  label?: string;
+};
+
+export type DatasetTitleProps = {
+  dataset: MiniDataset;
+  showDeleteDataset: boolean;
+  onTitleClick?: () => void;
+  showDatasetTable?: ActionHandler<typeof VisStateActions.showDatasetTable>;
+  updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
+  removeDataset?: ActionHandler<typeof openDeleteModal>;
+};
 
 const ShowDataTable = ({id, showDatasetTable}: ShowDataTableProps) => (
   <DataTagAction className="dataset-action show-data-table" data-tip data-for={`data-table-${id}`}>
@@ -110,83 +122,83 @@ DatasetTitleFactory.deps = [DatasetTagFactory];
 
 export default function DatasetTitleFactory(
   DatasetTag: ReturnType<typeof DatasetTagFactory>
-): React.ComponentType<DatasetTitleProps> {
-  class DatasetTitle extends PureComponent<DatasetTitleProps> {
-    state = {
-      displayColorPicker: false
-    };
+): React.FC<DatasetTitleProps> {
+  const DatasetTitle: React.FC<DatasetTitleProps> = ({
+    showDatasetTable,
+    showDeleteDataset,
+    onTitleClick,
+    removeDataset,
+    dataset,
+    updateTableColor
+  }) => {
+    const [displayColorPicker, setDisplayColorPicker] = useState(false);
+    const root = useRef(null);
+    const datasetId = dataset.id;
+    const _handleClick = useCallback(() => {
+      setDisplayColorPicker(!displayColorPicker);
+    }, [setDisplayColorPicker, displayColorPicker]);
 
-    _handleClick = () => {
-      this.setState({displayColorPicker: !this.state.displayColorPicker});
-    };
+    const _handleClosePicker = useCallback(() => {
+      setDisplayColorPicker(false);
+    }, [setDisplayColorPicker]);
+    const _handleCustomPicker = useCallback(
+      (color: {rgb: Record<string, number>}) => {
+        updateTableColor(datasetId, [color.rgb.r, color.rgb.g, color.rgb.b]);
+      },
+      [updateTableColor, datasetId]
+    );
 
-    _handleClosePicker = () => {
-      this.setState({displayColorPicker: false});
-    };
+    const _onClickTitle = useCallback(
+      (e: React.MouseEvent<HTMLDivElement>) => {
+        e.stopPropagation();
+        if (typeof onTitleClick === 'function') {
+          onTitleClick();
+        } else if (typeof showDatasetTable === 'function') {
+          showDatasetTable(datasetId);
+        }
+      },
+      [onTitleClick, showDatasetTable, datasetId]
+    );
 
-    root = createRef<HTMLDivElement>();
-
-    _onClickTitle = (e: MouseEvent) => {
-      e.stopPropagation();
-      if (typeof this.props.onTitleClick === 'function') {
-        this.props.onTitleClick();
-      } else if (typeof this.props.showDatasetTable === 'function') {
-        this.props.showDatasetTable(this.props.dataset.id);
-      }
-    };
-
-    render() {
-      const {
-        showDatasetTable,
-        showDeleteDataset,
-        onTitleClick,
-        removeDataset,
-        dataset,
-        updateTableColor
-      } = this.props;
-
-      return (
-        <div className="custom-palette-panel" ref={this.root}>
-          <StyledDatasetTitle
-            className="source-data-title"
-            clickable={Boolean(showDatasetTable || onTitleClick)}
+    return (
+      <div className="custom-palette-panel" ref={root}>
+        <StyledDatasetTitle
+          className="source-data-title"
+          clickable={Boolean(showDatasetTable || onTitleClick)}
+        >
+          <DatasetTag
+            dataset={dataset}
+            onClick={_onClickTitle}
+            updateTableColor={updateTableColor}
+            onClickSquare={_handleClick}
+          />
+          <Portaled
+            isOpened={displayColorPicker !== false}
+            left={110}
+            top={-50}
+            onClose={_handleClosePicker}
           >
-            <DatasetTag
-              dataset={dataset}
-              onClick={this._onClickTitle}
-              updateTableColor={updateTableColor}
-              onClickSquare={this._handleClick}
+            <CustomPicker
+              color={rgbToHex(dataset.color)}
+              onChange={_handleCustomPicker}
+              onSwatchClose={_handleClosePicker}
             />
-            <Portaled
-              isOpened={this.state.displayColorPicker !== false}
-              left={110}
-              top={-50}
-              onClose={this._handleClosePicker}
-            >
-              <CustomPicker
-                color={rgbToHex(dataset.color)}
-                onChange={(color: {rgb: Record<string, number>}) =>
-                  updateTableColor(dataset.id, [color.rgb.r, color.rgb.g, color.rgb.b])
-                }
-                onSwatchClose={this._handleClosePicker}
-              />
-            </Portaled>
-            {showDatasetTable ? (
-              <CenterFlexbox className="source-data-arrow">
-                <ArrowRight height="12px" />
-              </CenterFlexbox>
-            ) : null}
-            {showDatasetTable ? (
-              <ShowDataTable id={dataset.id} showDatasetTable={showDatasetTable} />
-            ) : null}
-            {showDeleteDataset ? (
-              <RemoveDataset datasetKey={dataset.id} removeDataset={removeDataset} />
-            ) : null}
-          </StyledDatasetTitle>
-        </div>
-      );
-    }
-  }
+          </Portaled>
+          {showDatasetTable ? (
+            <CenterFlexbox className="source-data-arrow">
+              <ArrowRight height="12px" />
+            </CenterFlexbox>
+          ) : null}
+          {showDatasetTable ? (
+            <ShowDataTable id={datasetId} showDatasetTable={showDatasetTable} />
+          ) : null}
+          {showDeleteDataset ? (
+            <RemoveDataset datasetKey={datasetId} removeDataset={removeDataset} />
+          ) : null}
+        </StyledDatasetTitle>
+      </div>
+    );
+  };
 
   return DatasetTitle;
 }

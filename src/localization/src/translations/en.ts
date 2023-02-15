@@ -81,6 +81,10 @@ export default {
       filter: 'Filters',
       interaction: 'Interactions',
       basemap: 'Base map'
+    },
+    panelViewToggle: {
+      list: 'View List',
+      byDataset: 'View by Dataset'
     }
   },
   layer: {
