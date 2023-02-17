@@ -63,6 +63,12 @@ export const TOOLTIP_FORMATS = {
     format: '.3~s',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
+  DECIMAL_PERCENT_FULL_0: {
+    id: 'DECIMAL_PERCENT_FULL_0',
+    label: '.01 → 1%',
+    format: '.0%',
+    type: TOOLTIP_FORMAT_TYPES.DECIMAL
+  },
   DECIMAL_PERCENT_FULL_1: {
     id: 'DECIMAL_PERCENT_FULL_1',
     label: '.01 → 1.0%',
