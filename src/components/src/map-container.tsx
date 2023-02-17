@@ -313,7 +313,7 @@ export interface MapContainerProps {
 
   deckRenderCallbacks?: {
     onDeckLoad?: () => void;
-    onDeckRender?: (deckProps: Record<string, unknown>) => Record<string, unknown>;
+    onDeckRender?: (deckProps: Record<string, unknown>) => Record<string, unknown> | null;
   };
 }
 
@@ -760,12 +760,20 @@ export default function MapContainerFactory(
         ? deckGlProps?.views()
         : new MapView({legacyMeterSizes: true});
 
-      const allDeckGlProps = {
+      let allDeckGlProps = {
         ...deckGlProps,
         pickingRadius: DEFAULT_PICKING_RADIUS,
         views,
         layers: deckGlLayers
       };
+
+      if (typeof deckRenderCallbacks?.onDeckRender === 'function') {
+        allDeckGlProps = deckRenderCallbacks.onDeckRender(allDeckGlProps);
+        if (!allDeckGlProps) {
+          // if onDeckRender returns null, do not render deck.gl
+          return null;
+        }
+      }
 
       return (
         <div
@@ -786,9 +794,7 @@ export default function MapContainerFactory(
                 deckRenderCallbacks.onDeckLoad();
               }
             }}
-            {...(typeof deckRenderCallbacks?.onDeckRender === 'function'
-              ? deckRenderCallbacks.onDeckRender(allDeckGlProps)
-              : allDeckGlProps)}
+            {...allDeckGlProps}
             controller={{doubleClickZoom: !isEditorDrawingMode}}
             viewState={mapState}
             onBeforeRender={this._onBeforeRender}
@@ -919,6 +925,12 @@ export default function MapContainerFactory(
       const hasGeocoderLayer = Boolean(layers.find(l => l.id === GEOCODER_LAYER_ID));
       const isSplit = Boolean(mapState.isSplit);
 
+      const deckOverlay = this._renderDeckOverlay(layersForDeck, {primaryMap: true});
+      if (!deckOverlay) {
+        // deckOverlay can be null if onDeckRender returns null
+        // in this case we don't want to render the map
+        return null;
+      }
       return (
         <>
           <MapControl
@@ -962,7 +974,7 @@ export default function MapContainerFactory(
             {...bottomMapContainerProps}
             ref={this._setMapboxMap}
           >
-            {this._renderDeckOverlay(layersForDeck, {primaryMap: true})}
+            {deckOverlay}
             {this._renderMapboxOverlays()}
             <Editor
               index={index || 0}
@@ -1010,6 +1022,12 @@ export default function MapContainerFactory(
 
     render() {
       const {visState} = this.props;
+      const mapContent = this._renderMap();
+      if (!mapContent) {
+        // mapContent can be null if onDeckRender returns null
+        // in this case we don't want to render the map
+        return null;
+      }
       return (
         <StyledMap
           ref={this._ref}
@@ -1017,7 +1035,7 @@ export default function MapContainerFactory(
           onContextMenu={event => event.preventDefault()}
           mixBlendMode={visState.overlayBlending}
         >
-          {this._renderMap()}
+          {mapContent}
         </StyledMap>
       );
     }
