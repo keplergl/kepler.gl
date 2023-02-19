@@ -37,7 +37,11 @@ import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-
 import {MapState, UiState, AddDataToMapPayload, ParsedConfig} from '@kepler.gl/types';
 import {MapStyle} from './map-style-updaters';
 import {ProviderState} from './provider-state-updaters';
-import {loadFilesSuccessUpdaterAction} from '@kepler.gl/actions';
+import {
+  loadFilesSuccessUpdaterAction,
+  MapStyleChangeUpdaterAction,
+  LayerTypeChangeUpdaterAction
+} from '@kepler.gl/actions';
 import {VisState} from '@kepler.gl/schemas';
 import {Layer} from '@kepler.gl/layers';
 import {isPlainObject} from '@kepler.gl/utils';
@@ -240,7 +244,10 @@ const updateOverlayBlending = overlayBlending => visState => {
  * Helper which updates `darkBaseMapEnabled` in all the layers in visState which
  * have this config setting (or in one specific layer if the `layerId` param is provided).
  */
-const updateDarkBaseMapLayers = (darkBaseMapEnabled, layerId = null) => visState => ({
+const updateDarkBaseMapLayers = (
+  darkBaseMapEnabled: boolean,
+  layerId: string | null = null
+) => visState => ({
   ...visState,
   layers: visState.layers.map(layer => {
     if (!layerId || layer.id === layerId) {
@@ -265,9 +272,11 @@ const updateDarkBaseMapLayers = (darkBaseMapEnabled, layerId = null) => visState
  *   2. Update all the layers which have the `darkBaseMapEnabled` config setting
  *      adjusting it in accordance with the colorMode of the base map.
  *
- * @type {typeof import('./combined-updaters').combinedMapStyleChangeUpdater}
  */
-export const combinedMapStyleChangeUpdater = (state, action) => {
+export const combinedMapStyleChangeUpdater = (
+  state: KeplerGlState,
+  action: MapStyleChangeUpdaterAction
+): KeplerGlState => {
   const {payload} = action;
   const {mapStyle} = state;
   const getColorMode = key => mapStyle.mapStyles[key]?.colorMode;
@@ -302,11 +311,12 @@ export const combinedMapStyleChangeUpdater = (state, action) => {
 /**
  * Updater that changes the layer type by calling `layerTypeChangeUpdater` on visState.
  * In addition to that, if the new layer type has the `darkBaseMapEnabled` config
- * setting, we adjust it in accordance with the colorMode of the base map.
- *
- * @type {typeof import('./combined-updaters').combinedLayerTypeChangeUpdater}
+ * setting, we adjust it in accordance with the colorMode of the base map.s
  */
-export const combinedLayerTypeChangeUpdater = (state, action) => {
+export const combinedLayerTypeChangeUpdater = (
+  state: KeplerGlState,
+  action: LayerTypeChangeUpdaterAction
+): KeplerGlState => {
   let {visState} = state;
   const oldLayerIndex = visState.layers.findIndex(layer => layer === action.oldLayer);
   visState = layerTypeChangeUpdater(visState, action);

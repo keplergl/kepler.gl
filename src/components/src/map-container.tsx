@@ -339,7 +339,12 @@ export default function MapContainerFactory(
       this.props.visStateActions.onLayerClick(null);
     };
 
-    _onLayerHover = (idx: number, info) => {
+    _onLayerHover = (
+      idx: number,
+      info: {
+        picked?: boolean;
+      } | null
+    ) => {
       this.props.visStateActions.onLayerHover(info);
     };
 
