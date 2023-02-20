@@ -1,6 +1,5 @@
 import React, {useCallback} from 'react';
 import styled from 'styled-components';
-import {PanelLabelBold, CenterFlexbox} from '../../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {camelize} from '@kepler.gl/utils';
 import {RGBColor} from '@kepler.gl/types';
@@ -8,6 +7,7 @@ import {MapConfigChangeUpdaterAction} from '@kepler.gl/actions';
 import {MapStyle} from '@kepler.gl/reducers';
 import LayerGroupColorPickerFactory from './map-layer-group-color-picker';
 import {PanelHeaderActionProps, PanelHeaderActionIcon} from '../panel-header-action';
+import {PanelLabelBold, CenterFlexbox, PanelLabelWrapper} from '../../common/styled-components';
 
 const StyledLayerGroupItem = styled.div`
   margin-bottom: 10px;
@@ -84,7 +84,7 @@ function LayerGroupItemFactory(LayerGroupColorPicker) {
     return (
       <StyledLayerGroupItem className="layer-group__select">
         {isVisibilityToggleAvailable ? (
-          <CenterFlexbox>
+          <PanelLabelWrapper>
             <PanelHeaderAction
               className="layer-group__visibility-toggle"
               id={`${slug}-toggle`}
@@ -97,7 +97,7 @@ function LayerGroupItemFactory(LayerGroupColorPicker) {
             <LayerLabel active={layers[slug]}>
               <FormattedMessage id={`mapLayers.${camelize(slug)}`} />
             </LayerLabel>
-          </CenterFlexbox>
+          </PanelLabelWrapper>
         ) : (
           <CenterFlexbox>
             <LayerLabel style={{marginLeft: '28px'}} active={true}>
