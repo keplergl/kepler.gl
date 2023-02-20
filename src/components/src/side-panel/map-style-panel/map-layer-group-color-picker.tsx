@@ -1,12 +1,14 @@
 import React, {useCallback, useState} from 'react';
 import styled, {css} from 'styled-components';
-import {Tooltip} from '../../common/styled-components';
-import {Portaled} from '../..';
-import CustomPicker from '../layer-panel/custom-picker';
-import {ColorBlock} from '../layer-panel/color-selector';
+
 import {rgbToHex} from '@kepler.gl/utils';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {RGBColor} from '@kepler.gl/types';
+
+import {Portaled} from '../..';
+import {Tooltip} from '../../common/styled-components';
+import CustomPicker from '../layer-panel/custom-picker';
+import {ColorBlock} from '../layer-panel/color-selector';
 
 const LayerGroupColorPickerWrapper = styled.div<{extraMarginRight?: boolean; disabled?: boolean}>`
   margin-right: ${props => (props.extraMarginRight ? 0 : 24)}px;

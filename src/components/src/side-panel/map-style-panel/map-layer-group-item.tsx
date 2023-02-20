@@ -1,10 +1,12 @@
 import React, {useCallback} from 'react';
 import styled from 'styled-components';
+
 import {FormattedMessage} from '@kepler.gl/localization';
 import {camelize} from '@kepler.gl/utils';
 import {RGBColor} from '@kepler.gl/types';
 import {MapConfigChangeUpdaterAction} from '@kepler.gl/actions';
 import {MapStyle} from '@kepler.gl/reducers';
+
 import LayerGroupColorPickerFactory from './map-layer-group-color-picker';
 import {PanelHeaderActionProps, PanelHeaderActionIcon} from '../panel-header-action';
 import {PanelLabelBold, CenterFlexbox, PanelLabelWrapper} from '../../common/styled-components';
