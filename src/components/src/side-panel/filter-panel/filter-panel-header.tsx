@@ -36,6 +36,7 @@ export const StyledFilterHeader = styled(StyledPanelHeader)<StyledFilterHeaderPr
   padding: 10px 12px;
 
   .field-selector {
+    width: 100%;
     flex: 2;
   }
 
@@ -49,6 +50,7 @@ export const StyledFilterHeader = styled(StyledPanelHeader)<StyledFilterHeaderPr
 const StyledChildrenContainer = styled.div`
   display: flex;
   flex: 2;
+  width: 90%;
 `;
 
 export type FilterPanelHeaderProps = {

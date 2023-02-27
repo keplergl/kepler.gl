@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo} from 'react';
+import styled from 'styled-components';
 import TimeRangeFilterFactory from '../time-range-filter';
 import {Clock} from '../../common/icons';
 import FieldPanelWithFieldSelectFactory from './filter-panel-with-field-select';
@@ -31,6 +32,12 @@ function TimeRangeFilterPanelFactory(
   FieldPanelWithFieldSelect: ReturnType<typeof FieldPanelWithFieldSelectFactory>,
   TimeRangeFilter: ReturnType<typeof TimeRangeFilterFactory>
 ) {
+  const StyledFieldPanelWithFieldSelect = styled(FieldPanelWithFieldSelect)`
+    .field-selector {
+      width: 90%;
+    }
+  `;
+
   const TimeRangeFilterPanel: TimeRangeFilterPanelComponent = React.memo(
     ({
       idx,
@@ -63,7 +70,7 @@ function TimeRangeFilterPanelFactory(
 
       return (
         <>
-          <FieldPanelWithFieldSelect
+          <StyledFieldPanelWithFieldSelect
             allAvailableFields={allAvailableFields}
             datasets={datasets}
             filter={filter}
@@ -84,7 +91,7 @@ function TimeRangeFilterPanelFactory(
                 />
               </div>
             )}
-          </FieldPanelWithFieldSelect>
+          </StyledFieldPanelWithFieldSelect>
         </>
       );
     }
