@@ -304,7 +304,7 @@ export const combinedMapStyleChangeUpdater = (
   return {
     ...state,
     visState,
-    mapStyle: mapStyleChangeUpdater(mapStyle, {payload: {styleType: payload.styleType}})
+    mapStyle: mapStyleChangeUpdater(mapStyle, {payload: {...payload}})
   };
 };
 
