@@ -449,6 +449,13 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     group: PROPERTY_GROUPS.cell,
     property: 'radius',
     allowCustomValue: true
+  },
+  darkBaseMapEnabled: {
+    type: 'boolean',
+    defaultValue: true,
+    label: 'layerVisConfigs.darkModeEnabled',
+    property: 'darkBaseMapEnabled',
+    group: PROPERTY_GROUPS.display
   }
 };
 

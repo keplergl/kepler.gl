@@ -31,6 +31,7 @@ import {
   getTooltipDisplayDeltaValue,
   getTooltipDisplayValue
 } from '@kepler.gl/reducers';
+import {useIntl} from 'react-intl';
 
 export const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};
@@ -190,6 +191,7 @@ const CellInfo = ({
 const LayerHoverInfoFactory = () => {
   const LayerHoverInfo = props => {
     const {data, layer} = props;
+    const intl = useIntl();
 
     if (!data || !layer) {
       return null;
@@ -202,7 +204,17 @@ const LayerHoverInfoFactory = () => {
           {props.layer.config.label}
         </StyledLayerName>
         <StyledTable>
-          {props.layer.isAggregated ? <CellInfo {...props} /> : <EntryInfo {...props} />}
+          {data.fieldValues ? (
+            <tbody>
+              {data.fieldValues.map(({labelMessage, value}, i) => (
+                <Row key={i} name={intl.formatMessage({id: labelMessage})} value={value} />
+              ))}
+            </tbody>
+          ) : props.layer.isAggregated ? (
+            <CellInfo {...props} />
+          ) : (
+            <EntryInfo {...props} />
+          )}
         </StyledTable>
       </div>
     );

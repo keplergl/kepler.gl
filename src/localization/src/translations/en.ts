@@ -167,7 +167,8 @@ export default {
     weightIntensity: 'Weight Intensity',
     zoomScale: 'Zoom Scale',
     heightRange: 'Height Range',
-    heightMultiplier: 'Height Multiplier'
+    heightMultiplier: 'Height Multiplier',
+    darkModeEnabled: 'Dark base map'
   },
   layerManager: {
     addData: 'Add Data',
@@ -420,9 +421,10 @@ export default {
   },
   overlayBlending: {
     title: 'Map overlay blending',
-    screen: 'screen',
+    description: 'Blend layers with the base map so that both are visible.',
+    screen: 'dark base map',
     normal: 'normal',
-    darken: 'darken'
+    darken: 'light base map'
   },
   columns: {
     title: 'Columns',

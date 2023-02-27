@@ -339,6 +339,15 @@ export default function MapContainerFactory(
       this.props.visStateActions.onLayerClick(null);
     };
 
+    _onLayerHover = (
+      idx: number,
+      info: {
+        picked?: boolean;
+      } | null
+    ) => {
+      this.props.visStateActions.onLayerHover(info);
+    };
+
     _onLayerSetDomain = (idx: number, colorDomain: VisualChannelDomain) => {
       this.props.visStateActions.layerConfigChange(this.props.visState.layers[idx], {
         colorDomain
@@ -586,7 +595,10 @@ export default function MapContainerFactory(
               }
             : undefined
         },
-        this._onLayerSetDomain,
+        {
+          onLayerHover: this._onLayerHover,
+          onSetLayerDomain: this._onLayerSetDomain
+        },
         deckGlProps
       );
 

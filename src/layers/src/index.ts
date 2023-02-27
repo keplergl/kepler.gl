@@ -109,3 +109,5 @@ import {isDrawingActive, onClick, onHover, getTooltip, getCursor} from './editor
 export const EditorLayerUtils = {
   isDrawingActive, onClick, onHover, getTooltip, getCursor
 };
+
+export {getFilterDataFunc} from './aggregation-layer';

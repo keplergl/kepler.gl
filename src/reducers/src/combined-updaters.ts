@@ -24,20 +24,29 @@ import {
 } from './ui-state-updaters';
 import {
   updateVisDataUpdater as visStateUpdateVisDataUpdater,
-  setMapInfoUpdater
+  setMapInfoUpdater,
+  layerTypeChangeUpdater
 } from './vis-state-updaters';
 import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
-import {receiveMapConfigUpdater as styleMapConfigUpdater} from './map-style-updaters';
+import {
+  mapStyleChangeUpdater,
+  receiveMapConfigUpdater as styleMapConfigUpdater
+} from './map-style-updaters';
 import {filesToDataPayload} from '@kepler.gl/processors';
 import {payload_, apply_, with_, if_, compose_, merge_, pick_} from './composer-helpers';
 import {MapState, UiState, AddDataToMapPayload, ParsedConfig} from '@kepler.gl/types';
 import {MapStyle} from './map-style-updaters';
 import {ProviderState} from './provider-state-updaters';
-import {loadFilesSuccessUpdaterAction} from '@kepler.gl/actions';
+import {
+  loadFilesSuccessUpdaterAction,
+  MapStyleChangeUpdaterAction,
+  LayerTypeChangeUpdaterAction
+} from '@kepler.gl/actions';
 import {VisState} from '@kepler.gl/schemas';
 import {Layer} from '@kepler.gl/layers';
 import {isPlainObject} from '@kepler.gl/utils';
 import {findMapBounds} from './data-utils';
+import {BASE_MAP_COLOR_MODES, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
 
 export type KeplerGlState = {
   visState: VisState;
@@ -216,3 +225,123 @@ export const loadFilesSuccessUpdater = (
 };
 
 export const addDataToMapComposed = addDataToMapUpdater;
+
+/**
+ * Helper which updates map overlay blending mode in visState,
+ * but only if it's not currently in the `normal` mode.
+ */
+const updateOverlayBlending = overlayBlending => visState => {
+  if (visState.overlayBlending !== OVERLAY_BLENDINGS.normal.value) {
+    return {
+      ...visState,
+      overlayBlending
+    };
+  }
+  return visState;
+};
+
+/**
+ * Helper which updates `darkBaseMapEnabled` in all the layers in visState which
+ * have this config setting (or in one specific layer if the `layerId` param is provided).
+ */
+const updateDarkBaseMapLayers = (
+  darkBaseMapEnabled: boolean,
+  layerId: string | null = null
+) => visState => ({
+  ...visState,
+  layers: visState.layers.map(layer => {
+    if (!layerId || layer.id === layerId) {
+      if (layer.visConfigSettings.hasOwnProperty('darkBaseMapEnabled')) {
+        const {visConfig} = layer.config;
+        return layer.updateLayerConfig({
+          visConfig: {...visConfig, darkBaseMapEnabled}
+        });
+      }
+    }
+    return layer;
+  })
+});
+
+/**
+ * Updater that changes the map style by calling mapStyleChangeUpdater on visState.
+ * In addition to that, it does the following:
+ *
+ *   1. Update map overlay blending mode in accordance with the colorMode of the
+ *      base map, but only if it's not in the `normal` mode.
+ *
+ *   2. Update all the layers which have the `darkBaseMapEnabled` config setting
+ *      adjusting it in accordance with the colorMode of the base map.
+ *
+ */
+export const combinedMapStyleChangeUpdater = (
+  state: KeplerGlState,
+  action: MapStyleChangeUpdaterAction
+): KeplerGlState => {
+  const {payload} = action;
+  const {mapStyle} = state;
+  const getColorMode = key => mapStyle.mapStyles[key]?.colorMode;
+  const prevColorMode = getColorMode(mapStyle.styleType);
+  const nextColorMode = getColorMode(payload);
+  let {visState} = state;
+  if (nextColorMode !== prevColorMode) {
+    switch (nextColorMode) {
+      case BASE_MAP_COLOR_MODES.DARK:
+        visState = compose_([
+          updateOverlayBlending(OVERLAY_BLENDINGS.screen.value),
+          updateDarkBaseMapLayers(true)
+        ])(visState);
+        break;
+      case BASE_MAP_COLOR_MODES.LIGHT:
+        visState = compose_([
+          updateOverlayBlending(OVERLAY_BLENDINGS.darken.value),
+          updateDarkBaseMapLayers(false)
+        ])(visState);
+        break;
+      default:
+      // do nothing
+    }
+  }
+  return {
+    ...state,
+    visState,
+    mapStyle: mapStyleChangeUpdater(mapStyle, {payload})
+  };
+};
+
+/**
+ * Updater that changes the layer type by calling `layerTypeChangeUpdater` on visState.
+ * In addition to that, if the new layer type has the `darkBaseMapEnabled` config
+ * setting, we adjust it in accordance with the colorMode of the base map.s
+ */
+export const combinedLayerTypeChangeUpdater = (
+  state: KeplerGlState,
+  action: LayerTypeChangeUpdaterAction
+): KeplerGlState => {
+  let {visState} = state;
+  const oldLayerIndex = visState.layers.findIndex(layer => layer === action.oldLayer);
+  visState = layerTypeChangeUpdater(visState, action);
+  const newLayer = visState.layers[oldLayerIndex];
+  if (newLayer?.visConfigSettings.hasOwnProperty('darkBaseMapEnabled')) {
+    const {mapStyle} = state;
+    const {colorMode} = mapStyle.mapStyles[mapStyle.styleType];
+    const {darkBaseMapEnabled} = newLayer.config.visConfig;
+    switch (colorMode) {
+      case BASE_MAP_COLOR_MODES.DARK:
+        if (!darkBaseMapEnabled) {
+          visState = updateDarkBaseMapLayers(true, newLayer.id)(visState);
+        }
+        break;
+      case BASE_MAP_COLOR_MODES.LIGHT:
+        if (darkBaseMapEnabled) {
+          visState = updateDarkBaseMapLayers(false, newLayer.id)(visState);
+        }
+        break;
+      default:
+      // do nothing
+    }
+  }
+  return {
+    ...state,
+    visState
+  };
+};

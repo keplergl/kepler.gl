@@ -277,9 +277,12 @@ export default class HexagonIdLayer extends Layer {
 
     const centroidsDataContainer = createDataContainer(centroids);
 
-    const bounds = this.getPointsBounds(centroidsDataContainer, (d, dc) => {
-      return [dc.valueAt(d.index, 0), dc.valueAt(d.index, 1)];
-    });
+    const bounds = this.getPointsBounds(
+      centroidsDataContainer,
+      (d: any, dc: DataContainerInterface) => {
+        return [dc.valueAt(d.index, 0), dc.valueAt(d.index, 1)];
+      }
+    );
     this.dataToFeature = {centroids};
     this.updateMeta({bounds});
   }

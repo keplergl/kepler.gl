@@ -317,11 +317,24 @@ export type ComputeDeckLayersProps = {
   };
 };
 
+export function bindLayerCallbacks(layerCallbacks = {}, idx) {
+  return Object.keys(layerCallbacks).reduce(
+    (accu, key) => ({
+      ...accu,
+      [key]: val => layerCallbacks[key](idx, val)
+    }),
+    {}
+  );
+}
+
 // eslint-disable-next-line complexity
 export function computeDeckLayers(
   {visState, mapState, mapStyle}: any,
   options?: ComputeDeckLayersProps,
-  onSetLayerDomain?: (idx: number, value: any) => void,
+  layerCallbacks?: {
+    onLayerHover?: (idx: number, value: any) => void;
+    onSetLayerDomain?: (idx: number, value: any) => void;
+  },
   deckGlProps?: any
 ): Layer[] {
   const {
@@ -351,11 +364,7 @@ export function computeDeckLayers(
       .reverse()
       .filter(idx => currentLayersForDeck[layers[idx].id])
       .reduce((overlays, idx) => {
-        const layerCallbacks = onSetLayerDomain
-          ? {
-              onSetLayerDomain: val => onSetLayerDomain(idx, val)
-            }
-          : {};
+        const bindedLayerCallbacks = layerCallbacks ? bindLayerCallbacks(layerCallbacks, idx) : {};
         const layerOverlay = renderDeckGlLayer(
           {
             datasets,
@@ -368,7 +377,7 @@ export function computeDeckLayers(
             animationConfig,
             mapLayers
           },
-          layerCallbacks,
+          bindedLayerCallbacks,
           idx
         );
         return overlays.concat(layerOverlay || []);
