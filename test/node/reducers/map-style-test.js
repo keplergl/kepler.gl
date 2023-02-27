@@ -547,3 +547,4 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE -> dark basemap to no basemap', t => 
 
   t.end();
 });
+
