@@ -48,7 +48,14 @@ import {
 import {ACTION_TASK, LOAD_MAP_STYLE_TASK} from '@kepler.gl/tasks';
 import {rgb} from 'd3-color';
 
-import {RGBColor, LayerGroup, MapStyles, InputStyle, VisibleLayerGroups} from '@kepler.gl/types';
+import {
+  RGBColor,
+  LayerGroup,
+  BaseMapStyle,
+  MapStyles,
+  InputStyle,
+  VisibleLayerGroups
+} from '@kepler.gl/types';
 import {
   ActionTypes,
   ReceiveMapConfigPayload,
@@ -257,11 +264,15 @@ function get3DBuildingColor(style): RGBColor {
   return [rgbObj.r, rgbObj.g, rgbObj.b];
 }
 
-function getBackgroundColorFromStyleBaseLayer(style, backupBackgroundColor) {
+function getBackgroundColorFromStyleBaseLayer(
+  style: BaseMapStyle,
+  backupBackgroundColor: RGBColor
+): RGBColor {
   if (!style.style) {
-    return colorMaybeToRGB(backupBackgroundColor);
+    return colorMaybeToRGB(backupBackgroundColor) || backupBackgroundColor;
   }
 
+  // @ts-expect-error style.style not typed
   const baseLayer = (style.style.layers || []).find(({id}) =>
     BASE_MAP_BACKGROUND_LAYER_IDS.includes(id)
   );
@@ -281,13 +292,13 @@ function getBackgroundColorFromStyleBaseLayer(style, backupBackgroundColor) {
     // if newBackgroundColor was in string HSL format it can introduce RGB numbers with decimals,
     // which may render the background-color CSS of the <StyledMap> container incorrectly when using our own color utils `rgbToHex()`
     // so we attempt to round to nearest integer here
-    ?.map(channelNumber => Math.round(channelNumber));
+    ?.map(channelNumber => Math.round(channelNumber)) as RGBColor | null;
 
-  return newBackgroundColorAsRGBArray;
+  return newBackgroundColorAsRGBArray || backupBackgroundColor;
 }
 
 // determine new backgroundColor from either previous state basemap style, previous state backgroundColor, or the DEFAULT_BACKGROUND_COLOR
-function getBackgroundColor(previousState, styleType) {
+function getBackgroundColor(previousState: MapStyle, styleType: string) {
   const previousStateMapStyle = previousState.mapStyles[previousState.styleType];
   const backupBackgroundColor = previousState.backgroundColor || DEFAULT_BACKGROUND_COLOR;
   const backgroundColor =
