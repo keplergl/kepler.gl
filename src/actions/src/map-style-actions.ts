@@ -150,22 +150,30 @@ export const loadMapStyles: (
 
 /** LOAD_MAP_STYLE_ERR */
 export type LoadMapStyleErrUpdaterAction = {
-  payload: Error;
+  payload: {
+    ids: string[];
+    error: Error;
+  };
 };
 /**
  * Callback when load map style error
  * @memberof mapStyleActions
+ * @param ids
  * @param error
  * @public
  */
 export const loadMapStyleErr: (
-  error: LoadMapStyleErrUpdaterAction['payload']
+  ids: LoadMapStyleErrUpdaterAction['payload']['ids'],
+  error: LoadMapStyleErrUpdaterAction['payload']['error']
 ) => Merge<
   LoadMapStyleErrUpdaterAction,
   {type: typeof ActionTypes.LOAD_MAP_STYLE_ERR}
 > = createAction(
   ActionTypes.LOAD_MAP_STYLE_ERR,
-  (error: LoadMapStyleErrUpdaterAction['payload']) => ({payload: error})
+  (
+    ids: LoadMapStyleErrUpdaterAction['payload']['ids'],
+    error: LoadMapStyleErrUpdaterAction['payload']['error']
+  ) => ({payload: {ids, error}})
 );
 
 /** MAP_STYLE_CHANGE */

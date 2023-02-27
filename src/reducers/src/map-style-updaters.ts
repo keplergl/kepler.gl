@@ -20,6 +20,7 @@
 
 import Task, {withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
+import Console from 'global/console';
 
 // Utils
 import {
@@ -31,6 +32,7 @@ import {
   editBottomMapStyle,
   getStyleImageIcon,
   generateHashId,
+  isPlainObject,
   hexToRgb
 } from '@kepler.gl/utils';
 import {
@@ -68,6 +70,9 @@ export type MapStyle = {
   bottomMapStyle: any;
   topMapStyle: any;
   initialState?: MapStyle;
+  isLoading: {
+    [key: string]: boolean;
+  };
 };
 
 const DEFAULT_BLDG_COLOR = '#D1CEC7';
@@ -95,6 +100,7 @@ const getDefaultState = (): MapStyle => {
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: hexToRgb(DEFAULT_BLDG_COLOR),
     custom3DBuildingColor: false,
+    isLoading: {},
     bottomMapStyle: undefined,
     topMapStyle: undefined
   };
@@ -211,6 +217,7 @@ export function getMapStyles({
 
   const topMapStyle = hasTopLayer
     ? editTopMapStyle({
+        id: styleType,
         mapStyle,
         visibleLayerGroups: topLayers
       })
@@ -245,12 +252,48 @@ function get3DBuildingColor(style): RGBColor {
 }
 
 function getLayerGroupsFromStyle(style) {
-  return Array.isArray(style.layers)
+  return Array.isArray(style?.layers)
     ? DEFAULT_LAYER_GROUPS.filter(lg => style.layers.filter(lg.filter).length)
     : [];
 }
 
 // Updaters
+
+/**
+ * @memberof mapStyleUpdaters
+ * @public
+ */
+export const requestMapStylesUpdater = (
+  state: MapStyle,
+  {payload: mapStyles}: MapStyleActions.RequestMapStylesUpdaterAction
+): MapStyle => {
+  const toLoad = Object.keys(mapStyles).reduce(
+    (accu, id) => ({
+      ...accu,
+      ...(!state.isLoading[id] ? {[id]: mapStyles[id]} : {})
+    }),
+    {}
+  );
+  const loadMapStyleTasks = getLoadMapStyleTasks(
+    toLoad,
+    state.mapboxApiAccessToken,
+    state.mapboxApiUrl
+  );
+
+  const isLoading = Object.keys(toLoad).reduce(
+    (accu, key) => ({
+      ...accu,
+      [key]: true
+    }),
+    {}
+  );
+  const nextState = {
+    ...state,
+    isLoading
+  };
+  return withTask(nextState, loadMapStyleTasks);
+};
+
 /**
  * Propagate `mapStyle` reducer with `mapboxApiAccessToken` and `mapStylesReplaceDefault`.
  * if mapStylesReplaceDefault is true mapStyles is emptied; loadMapStylesUpdater() will
@@ -285,14 +328,18 @@ export const initMapStyleUpdater = (
 export const mapConfigChangeUpdater = (
   state: MapStyle,
   action: MapStyleActions.MapConfigChangeUpdaterAction
-): MapStyle => ({
-  ...state,
-  ...action.payload,
-  ...getMapStyles({
+): MapStyle => {
+  return {
     ...state,
-    ...action.payload
-  })
-});
+    ...action.payload,
+    ...getMapStyles({
+      ...state,
+      ...action.payload
+    })
+  };
+};
+
+const hasStyleObject = style => isPlainObject(style?.style);
 
 /**
  * Change to another map style. The selected style should already been loaded into `mapStyle.mapStyles`
@@ -307,6 +354,22 @@ export const mapStyleChangeUpdater = (
     // we might not have received the style yet
     return state;
   }
+
+  if (!hasStyleObject(state.mapStyles[styleType])) {
+    // style hasn't loaded yet
+    return requestMapStylesUpdater(
+      {
+        ...state,
+        styleType
+      },
+      {
+        payload: {
+          [styleType]: state.mapStyles[styleType]
+        }
+      }
+    );
+  }
+
   const defaultLGVisibility = getDefaultLayerGroupVisibility(state.mapStyles[styleType]);
 
   const visibleLayerGroups = mergeLayerGroupVisibility(
@@ -341,6 +404,7 @@ export const loadMapStylesUpdater = (
   action: MapStyleActions.LoadMapStylesUpdaterAction
 ): MapStyle => {
   const newStyles = action.payload || {};
+
   const addLayerGroups = Object.keys(newStyles).reduce(
     (accu, id) => ({
       ...accu,
@@ -351,10 +415,20 @@ export const loadMapStylesUpdater = (
     }),
     {}
   );
-
+  // reset isLoading
+  const isLoading = Object.keys(state.isLoading).reduce(
+    (accu, key) => ({
+      ...accu,
+      ...(state.isLoading[key] && hasStyleObject(newStyles[key])
+        ? {[key]: false}
+        : {[key]: state.isLoading[key]})
+    }),
+    {}
+  );
   // add new styles to state
   const newState = {
     ...state,
+    isLoading,
     mapStyles: {
       ...state.mapStyles,
       ...addLayerGroups
@@ -374,23 +448,24 @@ export const loadMapStylesUpdater = (
 // do nothing for now, if didn't load, skip it
 export const loadMapStyleErrUpdater = (
   state: MapStyle,
-  action: MapStyleActions.LoadMapStyleErrUpdaterAction
-): MapStyle => state;
-
-/**
- * @memberof mapStyleUpdaters
- * @public
- */
-export const requestMapStylesUpdater = (
-  state: MapStyle,
-  {payload: mapStyles}: MapStyleActions.RequestMapStylesUpdaterAction
+  {payload: {ids, error}}: MapStyleActions.LoadMapStyleErrUpdaterAction
 ): MapStyle => {
-  const loadMapStyleTasks = getLoadMapStyleTasks(
-    mapStyles,
-    state.mapboxApiAccessToken,
-    state.mapboxApiUrl
+  Console.error(error);
+  // reset isLoading
+  const isLoading = Object.keys(state.isLoading).reduce(
+    (accu, key) => ({
+      ...accu,
+      ...(state.isLoading[key] && (ids || []).includes(key)
+        ? {[key]: false}
+        : {[key]: state.isLoading[key]})
+    }),
+    {}
   );
-  return withTask(state, loadMapStyleTasks);
+
+  return {
+    ...state,
+    isLoading
+  };
 };
 
 /**
@@ -416,11 +491,6 @@ export const receiveMapConfigUpdater = (
     return state;
   }
 
-  // if saved custom mapStyles load the style object
-  const loadMapStyleTasks = mapStyle.mapStyles
-    ? getLoadMapStyleTasks(mapStyle.mapStyles, state.mapboxApiAccessToken, state.mapboxApiUrl)
-    : null;
-
   // merge default mapStyles
   const merged = mapStyle.mapStyles
     ? {
@@ -439,7 +509,7 @@ export const receiveMapConfigUpdater = (
     Boolean(mapStyle.threeDBuildingColor) || merged.custom3DBuildingColor;
   const newState = mapConfigChangeUpdater(state, {payload: merged});
 
-  return loadMapStyleTasks ? withTask(newState, loadMapStyleTasks) : newState;
+  return mapStyleChangeUpdater(newState, {payload: newState.styleType});
 };
 
 function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken, mapboxApiUrl) {
@@ -470,7 +540,7 @@ function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken, mapboxApiUrl) {
           )
         ),
       // error
-      loadMapStyleErr
+      err => loadMapStyleErr(Object.keys(mapStyles), err)
     )
   ];
 }
