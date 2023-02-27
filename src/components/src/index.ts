@@ -110,6 +110,7 @@ export {default as TooltipConfigFactory} from './side-panel/interaction-panel/to
 export {default as MapManagerFactory} from './side-panel/map-manager';
 export {default as LayerGroupSelectorFactory} from './side-panel/map-style-panel/map-layer-selector';
 export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/map-style-selector';
+export {default as LayerGroupColorPickerFactory} from './side-panel/map-style-panel/map-layer-group-color-picker';
 export {default as CustomPanelsFactory} from './side-panel/custom-panel';
 // // map factories
 export {default as MapPopoverFactory} from './map/map-popover';
@@ -262,6 +263,7 @@ export type {DatasetInfoProps} from './side-panel/common/dataset-info';
 export type {DatasetTagProps} from './side-panel/common/dataset-tag';
 export type {CustomPanelsProps} from './side-panel/custom-panel';
 export type {LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
+export type {LayerGroupColorPickerProps} from './side-panel/map-style-panel/map-layer-group-color-picker';
 
 export {
   Icons,
