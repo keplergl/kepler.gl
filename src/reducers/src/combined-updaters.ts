@@ -281,7 +281,7 @@ export const combinedMapStyleChangeUpdater = (
   const {mapStyle} = state;
   const getColorMode = key => mapStyle.mapStyles[key]?.colorMode;
   const prevColorMode = getColorMode(mapStyle.styleType);
-  const nextColorMode = getColorMode(payload);
+  const nextColorMode = getColorMode(payload.styleType);
   let {visState} = state;
   if (nextColorMode !== prevColorMode) {
     switch (nextColorMode) {
@@ -304,7 +304,7 @@ export const combinedMapStyleChangeUpdater = (
   return {
     ...state,
     visState,
-    mapStyle: mapStyleChangeUpdater(mapStyle, {payload})
+    mapStyle: mapStyleChangeUpdater(mapStyle, {payload: {styleType: payload.styleType}})
   };
 };
 

@@ -27,6 +27,7 @@ export {
   getColorGroupByName,
   reverseColorRange,
   createLinearGradient,
+  colorMaybeToRGB,
   isRgbColor
 } from './color-utils';
 export {errorNotification} from './notifications-utils';
@@ -116,8 +117,7 @@ export {
   getStyleDownloadUrl,
   getStyleImageIcon,
   scaleMapStyleByResolution,
-  mergeLayerGroupVisibility,
-  EMPTY_MAPBOX_STYLE
+  mergeLayerGroupVisibility
 } from './map-style-utils/mapbox-gl-style-editor';
 export {isValidMapInfo} from './map-info-utils';
 export {

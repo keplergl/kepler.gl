@@ -26,7 +26,9 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {Tooltip} from '../common/styled-components';
 import {BaseProps} from '../common/icons';
 
-interface PanelHeaderActionProps {
+export type PanelHeaderActionIcon = ComponentType<Partial<BaseProps>>;
+
+export interface PanelHeaderActionProps {
   id?: string;
   tooltip?: string;
   hoverColor?: string;
@@ -36,7 +38,7 @@ interface PanelHeaderActionProps {
   disabled?: boolean;
   onClick?: MouseEventHandler;
   tooltipType?: TooltipProps['type'];
-  IconComponent: ComponentType<Partial<BaseProps>>;
+  IconComponent: PanelHeaderActionIcon;
 }
 
 type HeaderActionWrapperProps = {
