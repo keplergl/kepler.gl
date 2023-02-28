@@ -35,10 +35,14 @@ import {media} from '@kepler.gl/styles';
 
 MapLegendPanelFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory, MapLegendFactory];
 
-const PinToBottom = styled.div`
+interface PinToBottomProps {
+  offsetRight?: number;
+}
+
+const PinToBottom = styled.div<PinToBottomProps>`
   position: absolute;
   bottom: ${DIMENSIONS.mapControl.mapLegend.pinned.bottom}px;
-  right: ${DIMENSIONS.mapControl.mapLegend.pinned.right}px;
+  right: ${props => (props.offsetRight || 0) + DIMENSIONS.mapControl.mapLegend.pinned.right}px;
   ${media.portable`
     bottom: 0px;
     right: 0px;
@@ -63,6 +67,7 @@ export type MapLegendPanelProps = {
   actionIcons: MapLegendPanelIcons;
   mapControls: MapControls;
   mapHeight?: number;
+  offsetRight?: number;
 };
 
 function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
@@ -79,7 +84,8 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     isExport,
     logoComponent,
     actionIcons = defaultActionIcons,
-    mapHeight
+    mapHeight,
+    offsetRight
   }) => {
     const mapLegend = mapControls?.mapLegend || ({} as MapControl);
     const {active: isPinned} = mapLegend || {};
@@ -134,7 +140,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
       if (isExport) {
         return mapControlPanel;
       }
-      const pinnedPanel = <PinToBottom>{mapControlPanel}</PinToBottom>;
+      const pinnedPanel = <PinToBottom offsetRight={offsetRight}>{mapControlPanel}</PinToBottom>;
       return createPortal(pinnedPanel, document.body);
     }
 

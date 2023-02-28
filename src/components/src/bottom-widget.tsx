@@ -19,9 +19,9 @@
 // THE SOFTWARE.
 
 import React, {forwardRef, useMemo, useCallback} from 'react';
-import styled from 'styled-components';
+import styled, {withTheme} from 'styled-components';
 
-import {DIMENSIONS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {hasPortableWidth, isSideFilter} from '@kepler.gl/utils';
 import {media, breakPointValues} from '@kepler.gl/styles';
 import {TimeRangeFilter} from '@kepler.gl/types';
@@ -56,10 +56,14 @@ const BottomWidgetContainer = styled.div<BottomWidgetContainerProps>`
   ${media.portable`padding: 0;`}
 `;
 
-type BottomWidgetProps = {
+export type BottomWidgetProps = {
   rootRef: React.ForwardedRef<HTMLDivElement>;
   containerW: number;
 } & ReturnType<typeof bottomWidgetSelector>;
+type ThemeProp = {
+  theme: Record<string, any>;
+};
+type BottomWidgetThemedProps = BottomWidgetProps & ThemeProp;
 
 BottomWidgetFactory.deps = [
   TimeWidgetFactory,
@@ -74,12 +78,12 @@ export default function BottomWidgetFactory(
   AnimationControl: ReturnType<typeof AnimationControlFactory>,
   FilterAnimationController: ReturnType<typeof FilterAnimationControllerFactory>,
   LayerAnimationController: ReturnType<typeof LayerAnimationControllerFactory>
-): React.FC<BottomWidgetProps> {
+): React.FC<BottomWidgetThemedProps> {
   const LayerAnimationControl = styled(AnimationControl)`
     background-color: ${props => props.theme.sidePanelBg};
   `;
 
-  const BottomWidget: React.FC<BottomWidgetProps> = (props: BottomWidgetProps) => {
+  const BottomWidget: React.FC<BottomWidgetThemedProps> = (props: BottomWidgetThemedProps) => {
     const {
       datasets,
       filters,
@@ -89,7 +93,8 @@ export default function BottomWidgetFactory(
       uiState,
       sidePanelWidth,
       layers,
-      rootRef
+      rootRef,
+      theme
     } = props;
 
     const {activeSidePanel, readOnly} = uiState;
@@ -105,7 +110,9 @@ export default function BottomWidgetFactory(
     const isLegendPinned =
       uiState.mapControls?.mapLegend?.show && uiState.mapControls?.mapLegend?.active;
     const spaceForLegendWidth = isLegendPinned
-      ? DIMENSIONS.mapControl.width + DIMENSIONS.mapControl.mapLegend.pinned.right
+      ? theme.mapControl?.width +
+        theme.mapControl?.mapLegend?.pinned?.right * 2 -
+        theme.bottomWidgetPaddingRight
       : 0;
 
     const enlargedFilterWidth =
@@ -196,8 +203,10 @@ export default function BottomWidgetFactory(
   };
 
   /* eslint-disable react/display-name */
-  // @ts-ignore
-  return forwardRef((props: BottomWidgetProps, ref) => <BottomWidget {...props} rootRef={ref} />);
+  return withTheme(
+    // @ts-ignore
+    forwardRef((props: BottomWidgetThemedProps, ref) => <BottomWidget {...props} rootRef={ref} />)
+  );
   /* eslint-enable react/display-name */
 }
 /* eslint-enable complexity */
