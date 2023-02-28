@@ -25,6 +25,7 @@ import uniq from 'lodash.uniq';
 import get from 'lodash.get';
 import xor from 'lodash.xor';
 import copy from 'copy-to-clipboard';
+import deepmerge from 'deepmerge';
 // Tasks
 import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from '@kepler.gl/tasks';
 // Actions
@@ -47,6 +48,7 @@ import {
   toArray,
   arrayInsert,
   generateHashId,
+  isPlainObject,
   addNewLayersToSplitMap,
   computeSplitMapLayers,
   removeLayerFromSplitMaps,
@@ -1364,22 +1366,7 @@ export const updateTableColorUpdater = (
   state: VisState,
   action: VisStateActions.UpdateDatasetColorUpdater
 ): VisState => {
-  const {dataId, newColor} = action;
-  const {datasets} = state;
-
-  if (isRgbColor(newColor)) {
-    const existing = datasets[dataId];
-    existing.updateTableColor(newColor);
-
-    return {
-      ...state,
-      datasets: {
-        ...state.datasets,
-        [dataId]: copyTableAndUpdate(existing, {})
-      }
-    };
-  }
-  return state;
+  return updateDatasetPropsUpdater(state, {dataId: action.dataId, props: {color: action.newColor}});
 };
 
 /**
@@ -1691,22 +1678,65 @@ export function renameDatasetUpdater(
   state: VisState,
   action: VisStateActions.RenameDatasetUpdaterAction
 ): VisState {
-  const {dataId, label} = action;
+  return updateDatasetPropsUpdater(state, {dataId: action.dataId, props: {label: action.label}});
+}
+
+const ALLOWED_UPDATE_DATASET_PROPS = ['label', 'color', 'metadata'];
+
+/**
+ * Validates properties before updating the dataset.
+ * Makes sure each property is in the allowed list
+ * Makes sure color value is RGB
+ * Performs deep merge when updating metadata
+ */
+const validateDatasetUpdateProps = (props, dataset) => {
+  const validatedProps = Object.entries(props).reduce((acc, entry) => {
+    const [key, value] = entry;
+    // is it allowed ?
+    if (!ALLOWED_UPDATE_DATASET_PROPS.includes(key)) {
+      return acc;
+    }
+
+    // if we are adding a color but it is not RGB we don't accept the value
+    // in the future as we add more props we should change this if into a switch
+    if (key === 'color' && !isRgbColor(value)) {
+      return acc;
+    }
+
+    // do we need deep merge ?
+    return {...acc, [key]: isPlainObject(value) ? deepmerge(dataset[key] || {}, value) : value};
+  }, {});
+
+  return validatedProps;
+};
+
+/**
+ * Update Dataset props (label, color, meta). Do not use to update data or any related properties
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function updateDatasetPropsUpdater(
+  state: VisState,
+  action: VisStateActions.UpdateDatasetPropsUpdaterAction
+): VisState {
+  const {dataId, props} = action;
   const {datasets} = state;
   const existing = datasets[dataId];
 
   if (existing) {
-    const newDataset = copyTableAndUpdate(existing, {label});
+    const validatedProps = validateDatasetUpdateProps(props, existing);
+    //  validate props: just color for now
+    //  we only allow label, color and meta to be updated
+    // const newTable = copyTableAndUpdate(existing, validatedProps);
     return {
       ...state,
       datasets: {
         ...datasets,
-        [dataId]: newDataset
+        [dataId]: copyTableAndUpdate(existing, validatedProps)
       }
     };
   }
 
-  // No-op if the dataset doesn't exist
   return state;
 }
 
