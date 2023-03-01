@@ -1417,11 +1417,13 @@ export const receiveMapConfigUpdater = (
   // reset config if keepExistingConfig is falsy
   let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
   for (const merger of state.mergers) {
-    // @ts-expect-error 'ParsedVisState' is not assignable to parameter of type 'VisState'
-    if (isValidMerger(merger) && hasPropsToMerge(config.visState, merger.prop)) {
+    if (
+      isValidMerger(merger) &&
+      hasPropsToMerge(config.visState, merger.prop) &&
+      merger.toMergeProp
+    ) {
       mergedState = merger.merge(
         mergedState,
-        // @ts-expect-error 'ParsedVisState' is not assignable to parameter of type 'VisState'
         getPropValueToMerger(config.visState, merger.prop, merger.toMergeProp),
         true
       );

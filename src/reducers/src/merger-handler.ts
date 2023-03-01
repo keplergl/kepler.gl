@@ -91,7 +91,7 @@ export function mergeStateFromMergers<State extends VisState>(
   return {mergedState, allMerged: true};
 }
 
-export function hasPropsToMerge<State extends VisState>(
+export function hasPropsToMerge<State extends {}>(
   state: State,
   mergerProps: string | string[]
 ): boolean {
@@ -100,7 +100,7 @@ export function hasPropsToMerge<State extends VisState>(
     : typeof mergerProps === 'string' && state.hasOwnProperty(mergerProps);
 }
 
-export function getPropValueToMerger<State extends VisState>(
+export function getPropValueToMerger<State extends {}>(
   state: State,
   mergerProps: string | string[],
   toMergeProps: string | string[]
