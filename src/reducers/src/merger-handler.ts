@@ -103,10 +103,13 @@ export function hasPropsToMerge<State extends {}>(
 export function getPropValueToMerger<State extends {}>(
   state: State,
   mergerProps: string | string[],
-  toMergeProps: string | string[]
+  toMergeProps?: string | string[]
 ): Partial<State> | ValueOf<State> {
   return Array.isArray(mergerProps)
-    ? mergerProps.reduce((accu, p, i) => ({...accu, [toMergeProps[i]]: state[p]}), {})
+    ? mergerProps.reduce((accu, p, i) => {
+        if (!toMergeProps) return accu;
+        return {...accu, [toMergeProps[i]]: state[p]};
+      }, {})
     : state[mergerProps];
 }
 

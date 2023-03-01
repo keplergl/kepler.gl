@@ -1417,11 +1417,7 @@ export const receiveMapConfigUpdater = (
   // reset config if keepExistingConfig is falsy
   let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
   for (const merger of state.mergers) {
-    if (
-      isValidMerger(merger) &&
-      hasPropsToMerge(config.visState, merger.prop) &&
-      merger.toMergeProp
-    ) {
+    if (isValidMerger(merger) && hasPropsToMerge(config.visState, merger.prop)) {
       mergedState = merger.merge(
         mergedState,
         getPropValueToMerger(config.visState, merger.prop, merger.toMergeProp),
