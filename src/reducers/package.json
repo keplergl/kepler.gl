@@ -61,7 +61,7 @@
     "lodash.pick": "^4.4.0",
     "lodash.uniq": "^4.0.1",
     "lodash.xor": "^4.5.0",
-    "react-palm": "^3.3.7",
+    "react-palm": "^3.3.8",
     "redux": "^4.0.5",
     "redux-actions": "^2.2.1",
     "reselect": "^4.0.0"

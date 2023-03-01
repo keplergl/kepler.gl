@@ -1138,7 +1138,13 @@ export function filterDatasetCPU<T extends StateType<K, L>, K extends KeplerTabl
  * Validate parsed filters with datasets and add filterProps to field
  */
 export function validateFiltersUpdateDatasets<
-  S extends {datasets: {[id: string]: K}; layers: L[]},
+  S extends {
+    datasets: {[id: string]: K};
+    layers: L[];
+    isMergingDatasets: {
+      [datasetId: string]: boolean;
+    };
+  },
   K extends KeplerTableModel<K, L>,
   L extends {config: {dataId: string | null; label: string}; id: string}
 >(
@@ -1161,7 +1167,7 @@ export function validateFiltersUpdateDatasets<
     const datasetIds = toArray(filter.dataId);
 
     // we can merge a filter only if all datasets in filter.dataId are loaded
-    if (datasetIds.every(d => datasets[d])) {
+    if (datasetIds.every(d => datasets[d] && !state.isMergingDatasets[d])) {
       // all datasetIds in filter must be present the state datasets
       const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce(
         (acc, datasetId) => {
