@@ -179,14 +179,14 @@ class App extends Component {
   }
 
   _loadSampleData() {
-    // this._loadPointData();
-    // this._loadGeojsonData();
-    this._loadTripGeoJson();
+    this._loadPointData();
+    this._loadGeojsonData();
+    // this._loadTripGeoJson();
     // this._loadIconData();
     // this._loadH3HexagonData();
     // this._loadS2Data();
     // this._loadScenegraphLayer();
-    this._loadGpsData();
+    // this._loadGpsData();
   }
 
   _loadPointData() {
@@ -200,8 +200,8 @@ class App extends Component {
           data: sampleTripData
         },
         options: {
-          centerMap: true,
-          readOnly: false
+          // centerMap: true,
+          keepExistingConfig: true
         },
         config: sampleTripDataConfig
       })

@@ -87,7 +87,7 @@ export {
 } from './side-panel/layer-panel/dataset-section';
 export {default as DatasetLayerSectionFactory} from './side-panel/layer-panel/dataset-layer-section';
 export {default as DatasetLayerGroupFactory} from './side-panel/layer-panel/dataset-layer-group';
-export {default as PanelViewListToggleFactory} from './side-panel/layer-panel/panel-view-list-toggle';
+export {default as PanelViewListToggleFactory} from './side-panel/panel-view-list-toggle';
 export {default as AddLayerButtonFactory} from './side-panel/layer-panel/add-layer-button';
 export {default as LayerListFactory} from './side-panel/layer-panel/layer-list';
 export {default as CustomPicker} from './side-panel/layer-panel/custom-picker';
@@ -101,6 +101,7 @@ export {default as DatasetTagFactory} from './side-panel/common/dataset-tag';
 
 export {default as FilterManagerFactory} from './side-panel/filter-manager';
 export {default as FilterPanelFactory} from './side-panel/filter-panel/filter-panel';
+export {default as AddFilterButtonFactory} from './side-panel/filter-panel/add-filter-button';
 
 export {default as InteractionManagerFactory} from './side-panel/interaction-manager';
 export {default as BrushConfigFactory} from './side-panel/interaction-panel/brush-config';
@@ -109,6 +110,7 @@ export {default as TooltipConfigFactory} from './side-panel/interaction-panel/to
 export {default as MapManagerFactory} from './side-panel/map-manager';
 export {default as LayerGroupSelectorFactory} from './side-panel/map-style-panel/map-layer-selector';
 export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/map-style-selector';
+export {default as LayerGroupColorPickerFactory} from './side-panel/map-style-panel/map-layer-group-color-picker';
 export {default as CustomPanelsFactory} from './side-panel/custom-panel';
 // // map factories
 export {default as MapPopoverFactory} from './map/map-popover';
@@ -248,6 +250,20 @@ export type {
   StyledPanelHeaderProps,
   StyledExportSectionProps
 } from './common';
+
+export type {CollapseButtonProps} from './side-panel/side-bar';
+export type {PanelTabProps} from './side-panel/panel-tab';
+export type {MapStyleSelectorProps} from './side-panel/map-style-panel/map-style-selector';
+export type {LayerGroupSelectorProps} from './side-panel/map-style-panel/map-layer-selector';
+export type {MapManagerProps} from './side-panel/map-manager';
+export type {SourceDataSelectorProps} from './side-panel/common/types';
+export type {DatasetTitleProps} from './side-panel/common/dataset-title';
+export type {SourceDataCatalogProps} from './side-panel/common/source-data-catalog';
+export type {DatasetInfoProps} from './side-panel/common/dataset-info';
+export type {DatasetTagProps} from './side-panel/common/dataset-tag';
+export type {CustomPanelsProps} from './side-panel/custom-panel';
+export type {LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
+export type {LayerGroupColorPickerProps} from './side-panel/map-style-panel/map-layer-group-color-picker';
 
 export {
   Icons,

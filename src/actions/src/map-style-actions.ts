@@ -101,16 +101,21 @@ export const mapConfigChange: (
   (mapStyle: MapConfigChangeUpdaterAction['payload']) => ({payload: mapStyle})
 );
 
+type OnLoadMapStyleSuccessCallback = (payload: {styleType: string}) => any;
+
 /** REQUEST_MAP_STYLES */
 export type RequestMapStylesUpdaterAction = {
   payload: {
-    [key: string]: {
-      id: string;
-      label?: string;
-      url: string;
-      icon?: string;
-      layerGroups?: LayerGroup[];
+    mapStyles: {
+      [key: string]: {
+        id: string;
+        label?: string;
+        url: string;
+        icon?: string;
+        layerGroups?: LayerGroup[];
+      };
     };
+    onSuccess?: OnLoadMapStyleSuccessCallback;
   };
 };
 /**
@@ -119,18 +124,25 @@ export type RequestMapStylesUpdaterAction = {
  * @public
  */
 export const requestMapStyles: (
-  mapStyles: RequestMapStylesUpdaterAction['payload']
+  mapStyles: RequestMapStylesUpdaterAction['payload']['mapStyles'],
+  onSuccess?: RequestMapStylesUpdaterAction['payload']['onSuccess']
 ) => Merge<
   RequestMapStylesUpdaterAction,
   {type: typeof ActionTypes.REQUEST_MAP_STYLES}
 > = createAction(
   ActionTypes.REQUEST_MAP_STYLES,
-  (mapStyles: RequestMapStylesUpdaterAction['payload']) => ({payload: mapStyles})
+  (
+    mapStyles: RequestMapStylesUpdaterAction['payload']['mapStyles'],
+    onSuccess?: RequestMapStylesUpdaterAction['payload']['onSuccess']
+  ) => ({payload: {mapStyles, onSuccess}})
 );
 
 /** LOAD_MAP_STYLES */
 export type LoadMapStylesUpdaterAction = {
-  payload: MapStyles;
+  payload: {
+    newStyles: MapStyles;
+    onSuccess?: OnLoadMapStyleSuccessCallback;
+  };
 };
 /**
  * Callback when load map style success
@@ -139,53 +151,73 @@ export type LoadMapStylesUpdaterAction = {
  * @public
  */
 export const loadMapStyles: (
-  newStyles: LoadMapStylesUpdaterAction['payload']
+  newStyles: LoadMapStylesUpdaterAction['payload']['newStyles'],
+  onSuccess?: LoadMapStylesUpdaterAction['payload']['onSuccess']
 ) => Merge<
   LoadMapStylesUpdaterAction,
   {type: typeof ActionTypes.LOAD_MAP_STYLES}
 > = createAction(
   ActionTypes.LOAD_MAP_STYLES,
-  (newStyles: LoadMapStylesUpdaterAction['payload']) => ({payload: newStyles})
+  (
+    newStyles: LoadMapStylesUpdaterAction['payload']['newStyles'],
+    onSuccess?: LoadMapStylesUpdaterAction['payload']['onSuccess']
+  ) => ({payload: {newStyles, onSuccess}})
 );
 
 /** LOAD_MAP_STYLE_ERR */
 export type LoadMapStyleErrUpdaterAction = {
-  payload: Error;
+  payload: {
+    ids: string[];
+    error: Error;
+  };
 };
 /**
  * Callback when load map style error
  * @memberof mapStyleActions
+ * @param ids
  * @param error
  * @public
  */
 export const loadMapStyleErr: (
-  error: LoadMapStyleErrUpdaterAction['payload']
+  ids: LoadMapStyleErrUpdaterAction['payload']['ids'],
+  error: LoadMapStyleErrUpdaterAction['payload']['error']
 ) => Merge<
   LoadMapStyleErrUpdaterAction,
   {type: typeof ActionTypes.LOAD_MAP_STYLE_ERR}
 > = createAction(
   ActionTypes.LOAD_MAP_STYLE_ERR,
-  (error: LoadMapStyleErrUpdaterAction['payload']) => ({payload: error})
+  (
+    ids: LoadMapStyleErrUpdaterAction['payload']['ids'],
+    error: LoadMapStyleErrUpdaterAction['payload']['error']
+  ) => ({payload: {ids, error}})
 );
 
 /** MAP_STYLE_CHANGE */
 export type MapStyleChangeUpdaterAction = {
-  payload: string;
+  payload: {
+    styleType: string;
+    onSuccess?: OnLoadMapStyleSuccessCallback;
+  };
 };
 /**
  * Change to another map style. The selected style should already been loaded into `mapStyle.mapStyles`
  * @memberof mapStyleActions
  * @param styleType the style to change to
+ * @param onSuccess optional success callback function when an asynchronous basemap syle has loaded
  * @public
  */
 export const mapStyleChange: (
-  styleType: MapStyleChangeUpdaterAction['payload']
+  styleType: MapStyleChangeUpdaterAction['payload']['styleType'],
+  onSuccess?: MapStyleChangeUpdaterAction['payload']['onSuccess']
 ) => Merge<
   MapStyleChangeUpdaterAction,
   {type: typeof ActionTypes.MAP_STYLE_CHANGE}
 > = createAction(
   ActionTypes.MAP_STYLE_CHANGE,
-  (styleType: MapStyleChangeUpdaterAction['payload']) => ({payload: styleType})
+  (
+    styleType: MapStyleChangeUpdaterAction['payload']['styleType'],
+    onSuccess?: MapStyleChangeUpdaterAction['payload']['onSuccess']
+  ) => ({payload: {styleType, onSuccess}})
 );
 
 /** LOAD_CUSTOM_MAP_STYLE */
@@ -235,6 +267,24 @@ export const set3dBuildingColor: (
   ActionTypes.SET_3D_BUILDING_COLOR,
   (color: Set3dBuildingColorUpdaterAction['payload']) => ({payload: color})
 );
+
+/** SET_BACKGROUND_COLOR */
+export type SetBackgroundColorUpdaterAction = {
+  payload: RGBColor;
+};
+
+/**
+ * Set background color
+ * @memberof mapStyleActions
+ * @param color - [r, g, b]
+ * @public
+ */
+export const setBackgroundColor: (
+  color: SetBackgroundColorUpdaterAction['payload']
+) => Merge<
+  SetBackgroundColorUpdaterAction,
+  {type: typeof ActionTypes.SET_BACKGROUND_COLOR}
+> = createAction(ActionTypes.SET_BACKGROUND_COLOR, (color: RGBColor) => ({payload: color}));
 
 /**
  * Actions handled mostly by  `mapStyle` reducer.

@@ -40,7 +40,7 @@ const StyledMapControlPanelContent = styled.div.attrs({
   max-height: 500px;
   min-height: 100px;
   min-width: ${props => props.theme.mapControl.width}px;
-  overflow: auto;
+  overflow: overlay;
 `;
 
 const StyledMapControlPanelHeader = styled.div.attrs({

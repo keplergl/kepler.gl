@@ -62,7 +62,8 @@ export default {
     building: 'Building',
     water: 'Water',
     land: 'Land',
-    '3dBuilding': '3d Building'
+    '3dBuilding': '3d Building',
+    background: 'Background'
   },
   panel: {
     text: {
@@ -81,6 +82,10 @@ export default {
       filter: 'Filters',
       interaction: 'Interactions',
       basemap: 'Base map'
+    },
+    panelViewToggle: {
+      list: 'View List',
+      byDataset: 'View by Dataset'
     }
   },
   layer: {
@@ -163,7 +168,8 @@ export default {
     weightIntensity: 'Weight Intensity',
     zoomScale: 'Zoom Scale',
     heightRange: 'Height Range',
-    heightMultiplier: 'Height Multiplier'
+    heightMultiplier: 'Height Multiplier',
+    darkModeEnabled: 'Dark base map'
   },
   layerManager: {
     addData: 'Add Data',
@@ -174,7 +180,8 @@ export default {
   mapManager: {
     mapStyle: 'Map style',
     addMapStyle: 'Add Map Style',
-    '3dBuildingColor': '3D Building Color'
+    '3dBuildingColor': '3D Building Color',
+    backgroundColor: 'Background Color'
   },
   layerConfiguration: {
     defaultDescription: 'Calculate {property} based on selected field',
@@ -416,9 +423,10 @@ export default {
   },
   overlayBlending: {
     title: 'Map overlay blending',
-    screen: 'screen',
+    description: 'Blend layers with the base map so that both are visible.',
+    screen: 'dark base map',
     normal: 'normal',
-    darken: 'darken'
+    darken: 'light base map'
   },
   columns: {
     title: 'Columns',

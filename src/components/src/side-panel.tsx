@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo} from 'react';
-import {FormattedMessage} from '@kepler.gl/localization';
 
 import {
   EXPORT_DATA_ID,
@@ -43,7 +42,6 @@ import FilterManagerFactory from './side-panel/filter-manager';
 import InteractionManagerFactory from './side-panel/interaction-manager';
 import MapManagerFactory from './side-panel/map-manager';
 import CustomPanelsFactory from './side-panel/custom-panel';
-import PanelTitleFactory from './side-panel/panel-title';
 
 import styled from 'styled-components';
 import get from 'lodash.get';
@@ -67,7 +65,6 @@ SidePanelFactory.deps = [
   SidebarFactory,
   PanelHeaderFactory,
   PanelToggleFactory,
-  PanelTitleFactory,
   LayerManagerFactory,
   FilterManagerFactory,
   InteractionManagerFactory,
@@ -82,7 +79,6 @@ export default function SidePanelFactory(
   Sidebar: ReturnType<typeof SidebarFactory>,
   PanelHeader: ReturnType<typeof PanelHeaderFactory>,
   PanelToggle: ReturnType<typeof PanelToggleFactory>,
-  PanelTitle: ReturnType<typeof PanelTitleFactory>,
   LayerManager: ReturnType<typeof LayerManagerFactory>,
   FilterManager: ReturnType<typeof FilterManagerFactory>,
   InteractionManager: ReturnType<typeof InteractionManagerFactory>,
@@ -223,11 +219,6 @@ export default function SidePanelFactory(
         />
         <StyledSidePanelContent className="side-panel__content">
           <div className="side-panel__content__inner">
-            {currentPanel?.id !== 'layer' ? (
-              <PanelTitle className="side-panel__content__title">
-                <FormattedMessage id={currentPanel?.label} />
-              </PanelTitle>
-            ) : null}
             {PanelComponent ? (
               <PanelComponent
                 datasets={datasets}
@@ -249,10 +240,20 @@ export default function SidePanelFactory(
                 uiStateActions={uiStateActions}
                 visStateActions={visStateActions}
                 panelMetadata={currentPanel}
-                layerPanelListView={currentPanel?.id === 'layer' && uiState.layerPanelListView}
+                panelListView={
+                  currentPanel?.id === 'layer'
+                    ? uiState.layerPanelListView
+                    : currentPanel?.id === 'filter'
+                    ? uiState.filterPanelListView
+                    : null
+                }
               />
             ) : null}
-            <CustomPanels {...customPanelProps} activeSidePanel={activeSidePanel} />
+            <CustomPanels
+              {...customPanelProps}
+              activeSidePanel={activeSidePanel}
+              updateTableColor={onUpdateTableColor}
+            />
           </div>
         </StyledSidePanelContent>
       </Sidebar>

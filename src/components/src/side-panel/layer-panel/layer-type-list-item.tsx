@@ -31,8 +31,11 @@ type LayerTypeListItemProps = {
     label: string;
   };
   isTile: boolean;
-  theme: any;
 };
+
+type WithThemeProps = LayerTypeListItemProps & {theme: Record<string, string>};
+
+export type LayerTypeListItemType = React.FC<LayerTypeListItemProps>;
 
 const StyledListItem = styled.div`
   &.list {
@@ -43,6 +46,8 @@ const StyledListItem = styled.div`
       color: ${props => props.theme.activeColor};
       background-size: ${props => props.theme.layerTypeIconSizeSM}px
         ${props => props.theme.layerTypeIconSizeSM}px;
+      height: ${props => props.theme.layerTypeIconSizeSM}px;
+      width: ${props => props.theme.layerTypeIconSizeSM}px;
       margin-right: 12px;
     }
   }
@@ -53,6 +58,8 @@ const StyledListItem = styled.div`
     background-image: url(${`${CLOUDFRONT}/kepler.gl-layer-icon-bg.png`});
     background-size: ${props => props.theme.layerTypeIconSizeL}px
       ${props => props.theme.layerTypeIconSizeL}px;
+    height: ${props => props.theme.layerTypeIconSizeL}px;
+    width: ${props => props.theme.layerTypeIconSizeL}px;
   }
 
   .layer-type-selector__item__label {
@@ -64,7 +71,7 @@ const StyledListItem = styled.div`
 `;
 
 export function LayerTypeListItemFactory() {
-  const LayerTypeListItem: React.FC<LayerTypeListItemProps> = ({value, isTile, theme}) => (
+  const LayerTypeListItem: React.FC<WithThemeProps> = ({value, isTile, theme}) => (
     <StyledListItem
       className={classNames('layer-type-selector__item__inner', {
         list: !isTile

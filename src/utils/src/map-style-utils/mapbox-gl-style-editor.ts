@@ -20,19 +20,16 @@
 
 import memoize from 'lodash.memoize';
 import clondDeep from 'lodash.clonedeep';
-import {DEFAULT_LAYER_GROUPS, DEFAULT_MAPBOX_API_URL} from '@kepler.gl/constants';
+import {
+  DEFAULT_LAYER_GROUPS,
+  DEFAULT_MAPBOX_API_URL,
+  NO_MAP_ID,
+  EMPTY_MAPBOX_STYLE
+} from '@kepler.gl/constants';
 import {BaseMapStyle, LayerGroup, MapState} from '@kepler.gl/types';
 
 const mapUrlRg = /^mapbox:\/\/styles\/[-a-z0-9]{2,256}\/[-a-z0-9]{2,256}/;
 const httpRg = /^(?=(http:|https:))/;
-
-// Fallback style to use when styles are being fetched, or when
-// a style fails to fetch
-export const EMPTY_MAPBOX_STYLE = {
-  version: 8,
-  sources: {},
-  layers: []
-};
 
 export function getDefaultLayerGroupVisibility({layerGroups = []}: {layerGroups: LayerGroup[]}) {
   return layerGroups.reduce(
@@ -67,9 +64,11 @@ const resolver = ({
  */
 export const editTopMapStyle = memoize(
   ({
+    id,
     mapStyle,
     visibleLayerGroups
   }: {
+    id?: string;
     mapStyle: BaseMapStyle;
     visibleLayerGroups: {[id: string]: LayerGroup | boolean} | false;
   }) => {
@@ -100,6 +99,10 @@ export const editTopMapStyle = memoize(
  * @returns {Object} bottom map style
  */
 export const editBottomMapStyle = memoize(({id, mapStyle, visibleLayerGroups}) => {
+  if (id === NO_MAP_ID) {
+    return EMPTY_MAPBOX_STYLE;
+  }
+
   const invisibleFilters = (mapStyle.layerGroups || [])
     .filter(lg => !visibleLayerGroups[lg.slug])
     .map(lg => lg.filter);

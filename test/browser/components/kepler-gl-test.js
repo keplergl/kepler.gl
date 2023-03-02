@@ -248,21 +248,24 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
 
   const actions = store.getActions();
   const expectedActions = [
-    {type: ActionTypes.LOAD_MAP_STYLES, payload: {}},
     {
-      type: ActionTypes.REQUEST_MAP_STYLES,
-      payload: DEFAULT_MAP_STYLES.reduce((accu, curr) => ({...accu, [curr.id]: curr}), {})
+      type: ActionTypes.LOAD_MAP_STYLES,
+      payload: {
+        newStyles: DEFAULT_MAP_STYLES.reduce((accu, curr) => ({...accu, [curr.id]: curr}), {}),
+        onSuccess: undefined
+      }
     }
   ];
   t.deepEqual(
     actions,
     expectedActions,
-    'Should mount kepler.gl and dispatch 2 actions to load map styles'
+    'Should mount kepler.gl and dispatch 1 action to load map styles'
   );
 
-  const resultState1 = coreReducer(initialCoreState, actions[1]);
-  const [task1, ...rest] = drainTasksForTesting();
-  t.equal(rest.length, 0, 'should dispatch 1 tasks');
+  // const tmpState0 = coreReducer(initialCoreState, actions[0]);
+  const tmpState = coreReducer(initialCoreState, actions[0]);
+  const [actionTask1, ...more] = drainTasksForTesting();
+  t.equal(more.length, 0, 'should dispatch 1 tasks');
 
   const expectedTask = {
     payload: [
@@ -270,72 +273,38 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
         id: 'dark',
         url:
           'https://api.mapbox.com/styles/v1/uberdata/cjoqbbf6l9k302sl96tyvka09?pluginName=Keplergl&access_token=smoothie-the-cat'
-      },
-      {
-        id: 'light',
-        url:
-          'https://api.mapbox.com/styles/v1/uberdata/cjoqb9j339k1f2sl9t5ic5bn4?pluginName=Keplergl&access_token=smoothie-the-cat'
-      },
-      {
-        id: 'muted',
-        url:
-          'https://api.mapbox.com/styles/v1/uberdata/cjfyl03kp1tul2smf5v2tbdd4?pluginName=Keplergl&access_token=smoothie-the-cat'
-      },
-      {
-        id: 'muted_night',
-        url:
-          'https://api.mapbox.com/styles/v1/uberdata/cjfxhlikmaj1b2soyzevnywgs?pluginName=Keplergl&access_token=smoothie-the-cat'
-      },
-      {
-        id: 'satellite',
-        url:
-          'https://api.mapbox.com/styles/v1/mapbox/satellite-v9?pluginName=Keplergl&access_token=smoothie-the-cat'
       }
     ]
   };
 
-  t.deepEqual(task1.payload, expectedTask.payload, 'should create task to load map styles');
-  t.deepEqual(resultState1, initialCoreState, 'state should be the same');
+  t.deepEqual(actionTask1.payload, expectedTask.payload, 'should create task to load map styles');
+  t.deepEqual(tmpState.mapStyle.isLoading, {dark: true}, 'should set mapStyle isLoading');
 
-  const resultState2 = coreReducer(
-    resultState1,
-    succeedTaskWithValues(task1, [
-      {id: 'dark', style: {layers: [], name: 'dark'}},
-      {id: 'light', style: {layers: [], name: 'light'}},
-      {id: 'muted', style: {hello: 'world'}},
-      {id: 'muted_night', style: {world: 'hello'}},
-      {id: 'satellite', style: {satellite: 'yes'}}
-    ])
+  const resultState1 = coreReducer(
+    tmpState,
+    succeedTaskWithValues(actionTask1, [{id: 'dark', style: {layers: [], name: 'dark'}}])
   );
 
   const expectedStateMapStyles = {
+    ...tmpState.mapStyle.mapStyles,
     dark: {
-      ...DEFAULT_MAP_STYLES[0],
-      style: {layers: [], name: 'dark'}
-    },
-    light: {
       ...DEFAULT_MAP_STYLES[1],
-      style: {layers: [], name: 'light'}
-    },
-    muted: {
-      ...DEFAULT_MAP_STYLES[2],
-      style: {hello: 'world'}
-    },
-    muted_night: {
-      ...DEFAULT_MAP_STYLES[3],
-      style: {world: 'hello'}
-    },
-    satellite: {
-      ...DEFAULT_MAP_STYLES[4],
-      style: {satellite: 'yes'},
-      layerGroups: []
+      style: {layers: [], name: 'dark'}
     }
   };
 
   t.deepEqual(
-    resultState2.mapStyle.mapStyles,
+    resultState1.mapStyle.mapStyles,
     expectedStateMapStyles,
     'should update state with loaded map styles'
+  );
+
+  t.deepEqual(
+    resultState1.mapStyle.isLoading,
+    {
+      dark: false
+    },
+    'should update state isLoading'
   );
 
   t.end();
@@ -344,9 +313,23 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
 test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
   drainTasksForTesting();
   // mount with empty store
-  const store = mockStore(initialState);
-  // mount without id or a kepler.gl state
+  // set initialState to custom styleType
+  const initialCoreState1 = {
+    ...initialCoreState,
+    mapStyle: {
+      ...initialCoreState.mapStyle,
+      styleType: 'chai'
+    }
+  };
+  const initialState1 = {
+    keplerGl: {
+      map: initialCoreState1
+    }
+  };
 
+  const store = mockStore(initialState1);
+
+  //
   const customStyle1 = {
     id: 'smoothie',
     url: 'mapbox://styles/smoothie/thecat'
@@ -366,7 +349,8 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
     },
     layerGroups: [
       {
-        slug: 'label'
+        slug: 'label',
+        defaultVisibility: true
       }
     ]
   };
@@ -389,40 +373,50 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
     {
       type: ActionTypes.LOAD_MAP_STYLES,
       payload: {
-        milkshake: customStyle2,
-        chai: customStyle3
+        newStyles: {
+          ...initialCoreState1.mapStyle.mapStyles,
+          milkshake: customStyle2,
+          chai: customStyle3,
+          smoothie: customStyle1
+        },
+        onSuccess: undefined
       }
-    },
-    {
-      type: ActionTypes.REQUEST_MAP_STYLES,
-      payload: DEFAULT_MAP_STYLES.reduce(
-        (accu, curr) => ({...accu, [curr.id]: curr, smoothie: customStyle1}),
-        {}
-      )
     }
   ];
   t.deepEqual(
     actions,
     expectedActions,
-    'Should mount kepler.gl and dispatch 2 actions to load map styles'
+    'Should mount kepler.gl and dispatch 1 actions to load map styles'
   );
 
-  const resultState1 = coreReducer(initialCoreState, actions[0]);
+  const resultState1 = coreReducer(initialCoreState1, actions[0]);
 
   const expectedMapStyleState1 = {
-    ...initialCoreState.mapStyle,
+    ...initialCoreState1.mapStyle,
     mapStyles: {
-      ...initialCoreState.mapStyle.mapStyles,
+      ...initialCoreState1.mapStyle.mapStyles,
       milkshake: {
         id: 'milkshake',
         style: {
           id: 'mm',
           layers: []
         },
-        layerGroups: {}
+        layerGroups: []
       },
-      chai: customStyle3
-    }
+      chai: customStyle3,
+      smoothie: {
+        id: 'smoothie',
+        url: 'mapbox://styles/smoothie/thecat',
+        layerGroups: []
+      }
+    },
+    visibleLayerGroups: {
+      label: true
+    },
+    threeDBuildingColor: [194.6103322548211, 191.81688250953655, 185.2988331038727],
+    bottomMapStyle: {id: 'chai', layers: []},
+    topMapStyle: null,
+    editable: 1
   };
 
   t.deepEqual(
@@ -431,48 +425,19 @@ test('Components -> KeplerGl -> Mount -> Load custom map style task', t => {
     'Should load map style into reducer and create layer groups'
   );
 
+  Object.keys(resultState1.mapStyle).forEach(key => {
+    t.deepEqual(
+      resultState1.mapStyle[key],
+      expectedMapStyleState1[key],
+      `mapStyle[${key}] should be correct`
+    );
+  });
+
   // Do not remove this. Necessary for testing flow
   // eslint-disable-next-line no-unused-vars
-  const resultState2 = coreReducer(resultState1, actions[1]);
-  const [task1, ...rest] = drainTasksForTesting();
-  t.equal(rest.length, 0, 'should dispatch 1 tasks');
+  const actionTask1 = drainTasksForTesting();
 
-  const expectedTask = {
-    payload: [
-      {
-        id: 'smoothie',
-        url:
-          'https://api.mapbox.com/styles/v1/smoothie/thecat?pluginName=Keplergl&access_token=smoothie-the-cat'
-      },
-      {
-        id: 'dark',
-        url:
-          'https://api.mapbox.com/styles/v1/uberdata/cjoqbbf6l9k302sl96tyvka09?pluginName=Keplergl&access_token=smoothie-the-cat'
-      },
-      {
-        id: 'light',
-        url:
-          'https://api.mapbox.com/styles/v1/uberdata/cjoqb9j339k1f2sl9t5ic5bn4?pluginName=Keplergl&access_token=smoothie-the-cat'
-      },
-      {
-        id: 'muted',
-        url:
-          'https://api.mapbox.com/styles/v1/uberdata/cjfyl03kp1tul2smf5v2tbdd4?pluginName=Keplergl&access_token=smoothie-the-cat'
-      },
-      {
-        id: 'muted_night',
-        url:
-          'https://api.mapbox.com/styles/v1/uberdata/cjfxhlikmaj1b2soyzevnywgs?pluginName=Keplergl&access_token=smoothie-the-cat'
-      },
-      {
-        id: 'satellite',
-        url:
-          'https://api.mapbox.com/styles/v1/mapbox/satellite-v9?pluginName=Keplergl&access_token=smoothie-the-cat'
-      }
-    ]
-  };
-
-  t.deepEqual(task1.payload, expectedTask.payload, 'should create task to load map styles');
+  t.equal(actionTask1.length, 0, 'should not dispatch action to load styles');
 
   t.end();
 });

@@ -81,6 +81,7 @@ export function mergeStateFromMergers<State extends VisState>(
       const [updatedState, newTasks] = callFunctionGetTask(mergeFunc);
 
       mergedState = updatedState;
+
       // check if asyncTask was created (time consuming tasks)
       if (newTasks.length && merger.waitToFinish) {
         // skip rest, the async merger will call applyMergerupdater() to continue
@@ -93,7 +94,7 @@ export function mergeStateFromMergers<State extends VisState>(
   return {mergedState, allMerged: true};
 }
 
-export function hasPropsToMerge<State extends VisState>(
+export function hasPropsToMerge<State extends {}>(
   state: State,
   mergerProps: string | string[]
 ): boolean {
@@ -102,13 +103,16 @@ export function hasPropsToMerge<State extends VisState>(
     : typeof mergerProps === 'string' && state.hasOwnProperty(mergerProps);
 }
 
-export function getPropValueToMerger<State extends VisState>(
+export function getPropValueToMerger<State extends {}>(
   state: State,
   mergerProps: string | string[],
-  toMergeProps: string | string[]
+  toMergeProps?: string | string[]
 ): Partial<State> | ValueOf<State> {
   return Array.isArray(mergerProps)
-    ? mergerProps.reduce((accu, p, i) => ({...accu, [toMergeProps[i]]: state[p]}), {})
+    ? mergerProps.reduce((accu, p, i) => {
+        if (!toMergeProps) return accu;
+        return {...accu, [toMergeProps[i]]: state[p]};
+      }, {})
     : state[mergerProps];
 }
 

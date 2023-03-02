@@ -70,7 +70,7 @@ export type GpuFilter = {
   ) => (
     getIndex?: (any) => number,
     getData?: (dc_: DataContainerInterface, d: any, fieldIndex: number) => any
-  ) => (d: any) => number;
+  ) => (d: any) => number[];
 };
 
 // Unique identifier of each field

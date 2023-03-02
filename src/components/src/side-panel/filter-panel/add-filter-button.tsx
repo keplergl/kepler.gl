@@ -18,46 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Schemas
-export {
-  default,
-  default as KeplerGlSchema,
-  reducerSchema,
-  KeplerGLSchema as KeplerGLSchemaClass
-} from './schema-manager';
+import React from 'react';
+import {Datasets} from '@kepler.gl/table';
+import AddByDatasetButton from '../add-by-dataset-button';
 
-// eslint-disable-next-line prettier/prettier
-export type {
-  ParsedConfig,
-  SavedConfigV1,
-  SavedMap,
-  LoadedMap,
-  SavedMapState
-} from './schema-manager';
-export {CURRENT_VERSION, VERSIONS} from './versions';
-export {
-  visStateSchemaV1,
-  FilterSchemaV0,
-  LayerSchemaV0,
-  InteractionSchemaV1,
-  DimensionFieldSchema,
-  SplitMapsSchema,
-  filterPropsV1,
-  default as visStateSchema
-} from './vis-state-schema';
-export type {
-  SavedField,
-  ParsedField,
-  SavedDatasetV1,
-  ParsedDataset
-} from './dataset-schema';
-export {
-  default as datasetSchema,
-  DatasetSchema,
-  fieldPropertiesV1,
-  propertiesV1 as datasetPropertiesV1
-} from './dataset-schema';
-export * from './vis-state-schema';
-export {default as mapStyleSchema} from './map-style-schema';
-export {default as mapStateSchema} from './map-state-schema';
-export {default as Schema} from './schema';
+export type AddFilterButtonProps = {
+  datasets: Datasets;
+  onAdd: (dataId: string) => void;
+};
+
+function AddFilterButtonFactory() {
+  const AddFilterButton: React.FC<AddFilterButtonProps> = ({datasets, onAdd}) => {
+    return (
+      <AddByDatasetButton
+        datasets={datasets}
+        className="add-filter-button"
+        width="105px"
+        onAdd={onAdd}
+        buttonIntlId="filterManager.addFilter"
+      />
+    );
+  };
+
+  return AddFilterButton;
+}
+
+export default AddFilterButtonFactory;

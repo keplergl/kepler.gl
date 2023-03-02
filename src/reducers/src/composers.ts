@@ -27,6 +27,8 @@ import * as combinedUpdaters from './combined-updaters';
  */
 const actionHandler = {
   [ActionTypes.ADD_DATA_TO_MAP]: combinedUpdaters.addDataToMapUpdater,
+  [ActionTypes.MAP_STYLE_CHANGE]: combinedUpdaters.combinedMapStyleChangeUpdater,
+  [ActionTypes.LAYER_TYPE_CHANGE]: combinedUpdaters.combinedLayerTypeChangeUpdater,
   [ActionTypes.LOAD_FILES_SUCCESS]: combinedUpdaters.loadFilesSuccessUpdater
 };
 

@@ -204,6 +204,7 @@ export type LayerVisConfigSettings = {
   wireframe: VisConfigBoolean;
   weight: VisConfigNumber;
   heatmapRadius: VisConfigNumber;
+  darkBaseMapEnabled: VisConfigBoolean;
 };
 
 // TODO: Move this to individual layers

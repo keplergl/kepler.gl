@@ -20,37 +20,36 @@
 
 import React, {Component} from 'react';
 
-import {Button, SidePanelSection} from '../common/styled-components';
+import {Button} from '../common/styled-components';
 import MapStyleSelectorFactory from './map-style-panel/map-style-selector';
 import LayerGroupSelectorFactory from './map-style-panel/map-layer-selector';
+import PanelTitleFactory from '../side-panel/panel-title';
 
 import {Add} from '../common/icons';
-import ColorSelector from './layer-panel/color-selector';
-import {createSelector} from 'reselect';
+import {PanelMeta} from './common/types';
 import {injectIntl, WrappedComponentProps} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {MapStyle} from '@kepler.gl/reducers';
 import {MapStyleActions} from '@kepler.gl/actions';
 
-type MapManagerProps = {
+export type MapManagerProps = {
   mapStyle: MapStyle;
   mapStyleActions: typeof MapStyleActions;
   showAddMapStyleModal: () => void;
+  panelMetadata: PanelMeta;
 } & WrappedComponentProps;
 
-MapManagerFactory.deps = [MapStyleSelectorFactory, LayerGroupSelectorFactory];
+MapManagerFactory.deps = [MapStyleSelectorFactory, LayerGroupSelectorFactory, PanelTitleFactory];
 
 function MapManagerFactory(
   MapStyleSelector: ReturnType<typeof MapStyleSelectorFactory>,
-  LayerGroupSelector: ReturnType<typeof LayerGroupSelectorFactory>
+  LayerGroupSelector: ReturnType<typeof LayerGroupSelectorFactory>,
+  PanelTitle: ReturnType<typeof PanelTitleFactory>
 ) {
   class MapManager extends Component<MapManagerProps> {
     state = {
       isSelecting: false
     };
-
-    buildingColorSelector = (props: MapManagerProps) => props.mapStyle.threeDBuildingColor;
-    setColorSelector = (props: MapManagerProps) => props.mapStyleActions.set3dBuildingColor;
 
     _toggleSelecting = () => {
       this.setState({isSelecting: !this.state.isSelecting});
@@ -64,27 +63,21 @@ function MapManagerFactory(
     };
 
     render() {
-      const {mapStyle, intl, mapStyleActions, showAddMapStyleModal} = this.props;
+      const {mapStyle, intl, mapStyleActions, showAddMapStyleModal, panelMetadata} = this.props;
       const currentStyle = mapStyle.mapStyles[mapStyle.styleType] || {};
-      const editableLayers = (currentStyle.layerGroups || []).map(lg => lg.slug);
-      const hasBuildingLayer = mapStyle.visibleLayerGroups['3d building'];
-      const colorSetSelector = createSelector(
-        this.buildingColorSelector,
-        this.setColorSelector,
-        (selectedColor, setColor) => [
-          {
-            selectedColor,
-            setColor,
-            isRange: false,
-            label: intl.formatMessage({id: 'mapManager.3dBuildingColor'})
-          }
-        ]
-      );
-
-      const colorSets = colorSetSelector(this.props);
+      const editableLayers = currentStyle.layerGroups || [];
 
       return (
         <div className="map-style-panel">
+          <PanelTitle
+            className="filter-manager-title"
+            title={intl.formatMessage({id: panelMetadata.label})}
+          >
+            <Button className="add-map-style-button" onClick={showAddMapStyleModal}>
+              <Add height="12px" />
+              <FormattedMessage id={'mapManager.addMapStyle'} />
+            </Button>
+          </PanelTitle>
           <div>
             <MapStyleSelector
               mapStyle={mapStyle}
@@ -98,15 +91,12 @@ function MapManagerFactory(
                 editableLayers={editableLayers}
                 topLayers={mapStyle.topLayerGroups}
                 onChange={mapStyleActions.mapConfigChange}
+                threeDBuildingColor={mapStyle.threeDBuildingColor}
+                on3dBuildingColorChange={mapStyleActions.set3dBuildingColor}
+                backgroundColor={mapStyle.backgroundColor}
+                onBackgroundColorChange={mapStyleActions.setBackgroundColor}
               />
             ) : null}
-            <SidePanelSection>
-              <ColorSelector colorSets={colorSets} disabled={!hasBuildingLayer} />
-            </SidePanelSection>
-            <Button className="add-map-style-button" onClick={showAddMapStyleModal} secondary>
-              <Add height="12px" />
-              <FormattedMessage id={'mapManager.addMapStyle'} />
-            </Button>
           </div>
         </div>
       );

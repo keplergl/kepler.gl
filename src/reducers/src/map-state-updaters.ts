@@ -22,6 +22,7 @@ import geoViewport from '@mapbox/geo-viewport';
 import booleanWithin from '@turf/boolean-within';
 import bboxPolygon from '@turf/bbox-polygon';
 import {fitBounds} from '@math.gl/web-mercator';
+import deepmerge from 'deepmerge';
 
 import {getCenterAndZoomFromBounds, validateBounds, MAPBOX_TILE_SIZE} from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
@@ -199,10 +200,19 @@ export const receiveMapConfigUpdater = (
     payload: ReceiveMapConfigPayload;
   }
 ): MapState => {
-  const {mapState} = config || {};
+  /**
+   * @type {Partial<MapState>}
+   */
+  const mapState = (config || {}).mapState || {};
+  // merged received mapState with previous state
+  // state also may include properties that are new to an existing, saved project's mapState
 
-  // merged received mapstate with previous state
-  let mergedState = {...state, ...mapState};
+  let mergedState = deepmerge<MapState>(state, mapState, {
+    // note: deepmerge by default will merge arrays by concatenating them
+    // but we need to overwrite destination arrays with source arrays, if present
+    // https://github.com/TehShrike/deepmerge#arraymerge-example-overwrite-target-array
+    arrayMerge: (_destinationArray, sourceArray) => sourceArray
+  });
 
   // if center map
   // center map will override mapState config

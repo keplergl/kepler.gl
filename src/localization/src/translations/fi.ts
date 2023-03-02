@@ -60,7 +60,8 @@ export default {
     building: 'Rakennukset',
     water: 'Vesi',
     land: 'Maa',
-    '3dBuilding': '3d-rakennukset'
+    '3dBuilding': '3d-rakennukset',
+    background: 'Tausta'
   },
   panel: {
     text: {
@@ -171,7 +172,8 @@ export default {
   mapManager: {
     mapStyle: 'Kartan tyyli',
     addMapStyle: 'Lisää tyyli kartalle',
-    '3dBuildingColor': '3D-rakennusten väri'
+    '3dBuildingColor': '3D-rakennusten väri',
+    backgroundColor: 'Taustaväri'
   },
   layerConfiguration: {
     defaultDescription: 'Laske suureen {property} arvo valitun kentän perusteella',

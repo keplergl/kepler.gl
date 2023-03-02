@@ -20,6 +20,7 @@
 
 import Task, {withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
+import Console from 'global/console';
 
 // Utils
 import {
@@ -31,17 +32,30 @@ import {
   editBottomMapStyle,
   getStyleImageIcon,
   generateHashId,
-  hexToRgb
+  isPlainObject,
+  hexToRgb,
+  colorMaybeToRGB
 } from '@kepler.gl/utils';
 import {
   DEFAULT_MAP_STYLES,
   DEFAULT_LAYER_GROUPS,
-  DEFAULT_MAPBOX_API_URL
+  DEFAULT_MAPBOX_API_URL,
+  NO_MAP_ID,
+  DEFAULT_BLDG_COLOR,
+  DEFAULT_BACKGROUND_COLOR,
+  BASE_MAP_BACKGROUND_LAYER_IDS
 } from '@kepler.gl/constants';
-import {LOAD_MAP_STYLE_TASK} from '@kepler.gl/tasks';
+import {ACTION_TASK, LOAD_MAP_STYLE_TASK} from '@kepler.gl/tasks';
 import {rgb} from 'd3-color';
 
-import {RGBColor, LayerGroup, MapStyles, InputStyle, VisibleLayerGroups} from '@kepler.gl/types';
+import {
+  RGBColor,
+  LayerGroup,
+  BaseMapStyle,
+  MapStyles,
+  InputStyle,
+  VisibleLayerGroups
+} from '@kepler.gl/types';
 import {
   ActionTypes,
   ReceiveMapConfigPayload,
@@ -64,13 +78,15 @@ export type MapStyle = {
   mapStylesReplaceDefault: boolean;
   inputStyle: InputStyle;
   threeDBuildingColor: RGBColor;
+  backgroundColor: RGBColor;
   custom3DBuildingColor: boolean;
   bottomMapStyle: any;
   topMapStyle: any;
   initialState?: MapStyle;
+  isLoading: {
+    [key: string]: boolean;
+  };
 };
-
-const DEFAULT_BLDG_COLOR = '#D1CEC7';
 
 const getDefaultState = (): MapStyle => {
   const visibleLayerGroups = {};
@@ -95,6 +111,8 @@ const getDefaultState = (): MapStyle => {
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: hexToRgb(DEFAULT_BLDG_COLOR),
     custom3DBuildingColor: false,
+    backgroundColor: hexToRgb(DEFAULT_BACKGROUND_COLOR),
+    isLoading: {},
     bottomMapStyle: undefined,
     topMapStyle: undefined
   };
@@ -153,6 +171,7 @@ const mapStyleUpdaters = null;
  * @Property mapStylesReplaceDefault - Default: `false`
  * @property inputStyle - Default: `{}`
  * @property threeDBuildingColor - Default: `[r, g, b]`
+ * @property backgroundColor - Default: `[r, g, b]`
  * @public
  */
 export const INITIAL_MAP_STYLE: MapStyle = getDefaultState();
@@ -211,6 +230,7 @@ export function getMapStyles({
 
   const topMapStyle = hasTopLayer
     ? editTopMapStyle({
+        id: styleType,
         mapStyle,
         visibleLayerGroups: topLayers
       })
@@ -244,13 +264,100 @@ function get3DBuildingColor(style): RGBColor {
   return [rgbObj.r, rgbObj.g, rgbObj.b];
 }
 
+function getBackgroundColorFromStyleBaseLayer(
+  style: BaseMapStyle,
+  backupBackgroundColor: RGBColor
+): RGBColor {
+  if (!style.style) {
+    return colorMaybeToRGB(backupBackgroundColor) || backupBackgroundColor;
+  }
+
+  // @ts-expect-error style.style not typed
+  const baseLayer = (style.style.layers || []).find(({id}) =>
+    BASE_MAP_BACKGROUND_LAYER_IDS.includes(id)
+  );
+
+  const backgroundColorOfBaseLayer = findLayerFillColor(baseLayer);
+
+  // need to be careful because some basemap layer.paint['background-color'] values may be an interpolate array expression instead of a color string
+  // and that results in colorMaybeToRGB(backgroundColorOfBaseLayer) returning null
+  // https://docs.mapbox.com/mapbox-gl-js/style-spec/layers/#paint-background-background-color
+  // https://docs.mapbox.com/mapbox-gl-js/style-spec/expressions/#interpolate
+  const newBackgroundColor =
+    typeof backgroundColorOfBaseLayer === 'string'
+      ? backgroundColorOfBaseLayer
+      : backupBackgroundColor;
+
+  const newBackgroundColorAsRGBArray = colorMaybeToRGB(newBackgroundColor)
+    // if newBackgroundColor was in string HSL format it can introduce RGB numbers with decimals,
+    // which may render the background-color CSS of the <StyledMap> container incorrectly when using our own color utils `rgbToHex()`
+    // so we attempt to round to nearest integer here
+    ?.map(channelNumber => Math.round(channelNumber)) as RGBColor | null;
+
+  return newBackgroundColorAsRGBArray || backupBackgroundColor;
+}
+
+// determine new backgroundColor from either previous state basemap style, previous state backgroundColor, or the DEFAULT_BACKGROUND_COLOR
+function getBackgroundColor(previousState: MapStyle, styleType: string) {
+  const previousStateMapStyle = previousState.mapStyles[previousState.styleType];
+  const backupBackgroundColor = previousState.backgroundColor || DEFAULT_BACKGROUND_COLOR;
+  const backgroundColor =
+    styleType === NO_MAP_ID
+      ? // if the style has switched to the "no basemap" style,
+        // attempt to detect backgroundColor of the previous basemap if it was a mapbox basemap
+        // and set it as the "no basemap" backgroundColor
+        getBackgroundColorFromStyleBaseLayer(previousStateMapStyle, backupBackgroundColor)
+      : // otherwise leave it alone and rely on the previous state's preexisting backgroundColor
+        // or DEFAULT_BACKGROUND_COLOR as a last resort
+        backupBackgroundColor;
+
+  return backgroundColor;
+}
+
 function getLayerGroupsFromStyle(style) {
-  return Array.isArray(style.layers)
+  return Array.isArray(style?.layers)
     ? DEFAULT_LAYER_GROUPS.filter(lg => style.layers.filter(lg.filter).length)
     : [];
 }
 
 // Updaters
+
+/**
+ * @memberof mapStyleUpdaters
+ * @public
+ */
+export const requestMapStylesUpdater = (
+  state: MapStyle,
+  {payload: {mapStyles, onSuccess}}: MapStyleActions.RequestMapStylesUpdaterAction
+): MapStyle => {
+  const toLoad = Object.keys(mapStyles).reduce(
+    (accu, id) => ({
+      ...accu,
+      ...(!state.isLoading[id] ? {[id]: mapStyles[id]} : {})
+    }),
+    {}
+  );
+  const loadMapStyleTasks = getLoadMapStyleTasks(
+    toLoad,
+    state.mapboxApiAccessToken,
+    state.mapboxApiUrl,
+    onSuccess
+  );
+
+  const isLoading = Object.keys(toLoad).reduce(
+    (accu, key) => ({
+      ...accu,
+      [key]: true
+    }),
+    {}
+  );
+  const nextState = {
+    ...state,
+    isLoading
+  };
+  return withTask(nextState, loadMapStyleTasks);
+};
+
 /**
  * Propagate `mapStyle` reducer with `mapboxApiAccessToken` and `mapStylesReplaceDefault`.
  * if mapStylesReplaceDefault is true mapStyles is emptied; loadMapStylesUpdater() will
@@ -285,14 +392,18 @@ export const initMapStyleUpdater = (
 export const mapConfigChangeUpdater = (
   state: MapStyle,
   action: MapStyleActions.MapConfigChangeUpdaterAction
-): MapStyle => ({
-  ...state,
-  ...action.payload,
-  ...getMapStyles({
+): MapStyle => {
+  return {
     ...state,
-    ...action.payload
-  })
-});
+    ...action.payload,
+    ...getMapStyles({
+      ...state,
+      ...action.payload
+    })
+  };
+};
+
+const hasStyleObject = style => isPlainObject(style?.style);
 
 /**
  * Change to another map style. The selected style should already been loaded into `mapStyle.mapStyles`
@@ -301,12 +412,31 @@ export const mapConfigChangeUpdater = (
  */
 export const mapStyleChangeUpdater = (
   state: MapStyle,
-  {payload: styleType}: MapStyleActions.MapStyleChangeUpdaterAction
+  {payload: {styleType, onSuccess}}: MapStyleActions.MapStyleChangeUpdaterAction
 ): MapStyle => {
   if (!state.mapStyles[styleType]) {
     // we might not have received the style yet
     return state;
   }
+
+  if (!hasStyleObject(state.mapStyles[styleType])) {
+    // style hasn't loaded yet
+    return requestMapStylesUpdater(
+      {
+        ...state,
+        styleType
+      },
+      {
+        payload: {
+          mapStyles: {
+            [styleType]: state.mapStyles[styleType]
+          },
+          onSuccess
+        }
+      }
+    );
+  }
+
   const defaultLGVisibility = getDefaultLayerGroupVisibility(state.mapStyles[styleType]);
 
   const visibleLayerGroups = mergeLayerGroupVisibility(
@@ -318,11 +448,15 @@ export const mapStyleChangeUpdater = (
     ? state.threeDBuildingColor
     : get3DBuildingColor(state.mapStyles[styleType]);
 
+  // determine new backgroundColor from either previous state basemap style, previous state backgroundColor, or the DEFAULT_BACKGROUND_COLOR
+  const backgroundColor = getBackgroundColor(state, styleType);
+
   return {
     ...state,
     styleType,
     visibleLayerGroups,
     threeDBuildingColor,
+    backgroundColor,
     ...getMapStyles({
       ...state,
       visibleLayerGroups,
@@ -340,7 +474,8 @@ export const loadMapStylesUpdater = (
   state: MapStyle,
   action: MapStyleActions.LoadMapStylesUpdaterAction
 ): MapStyle => {
-  const newStyles = action.payload || {};
+  const {newStyles, onSuccess} = action.payload || {};
+
   const addLayerGroups = Object.keys(newStyles).reduce(
     (accu, id) => ({
       ...accu,
@@ -351,20 +486,42 @@ export const loadMapStylesUpdater = (
     }),
     {}
   );
-
+  // reset isLoading
+  const isLoading = Object.keys(state.isLoading).reduce(
+    (accu, key) => ({
+      ...accu,
+      ...(state.isLoading[key] && hasStyleObject(newStyles[key])
+        ? {[key]: false}
+        : {[key]: state.isLoading[key]})
+    }),
+    {}
+  );
   // add new styles to state
   const newState = {
     ...state,
+    isLoading,
     mapStyles: {
       ...state.mapStyles,
       ...addLayerGroups
     }
   };
 
-  return newStyles[state.styleType]
-    ? mapStyleChangeUpdater(newState, {payload: state.styleType})
+  const tasks = createActionTask(onSuccess, {styleType: state.styleType});
+
+  const nextState = newStyles[state.styleType]
+    ? mapStyleChangeUpdater(newState, {payload: {styleType: state.styleType}})
     : newState;
+
+  return tasks ? withTask(nextState, tasks) : nextState;
 };
+
+function createActionTask(action, payload) {
+  if (typeof action === 'function') {
+    return ACTION_TASK().map(_ => action(payload));
+  }
+
+  return null;
+}
 
 /**
  * Callback when load map style error
@@ -374,23 +531,24 @@ export const loadMapStylesUpdater = (
 // do nothing for now, if didn't load, skip it
 export const loadMapStyleErrUpdater = (
   state: MapStyle,
-  action: MapStyleActions.LoadMapStyleErrUpdaterAction
-): MapStyle => state;
-
-/**
- * @memberof mapStyleUpdaters
- * @public
- */
-export const requestMapStylesUpdater = (
-  state: MapStyle,
-  {payload: mapStyles}: MapStyleActions.RequestMapStylesUpdaterAction
+  {payload: {ids, error}}: MapStyleActions.LoadMapStyleErrUpdaterAction
 ): MapStyle => {
-  const loadMapStyleTasks = getLoadMapStyleTasks(
-    mapStyles,
-    state.mapboxApiAccessToken,
-    state.mapboxApiUrl
+  Console.error(error);
+  // reset isLoading
+  const isLoading = Object.keys(state.isLoading).reduce(
+    (accu, key) => ({
+      ...accu,
+      ...(state.isLoading[key] && (ids || []).includes(key)
+        ? {[key]: false}
+        : {[key]: state.isLoading[key]})
+    }),
+    {}
   );
-  return withTask(state, loadMapStyleTasks);
+
+  return {
+    ...state,
+    isLoading
+  };
 };
 
 /**
@@ -416,11 +574,6 @@ export const receiveMapConfigUpdater = (
     return state;
   }
 
-  // if saved custom mapStyles load the style object
-  const loadMapStyleTasks = mapStyle.mapStyles
-    ? getLoadMapStyleTasks(mapStyle.mapStyles, state.mapboxApiAccessToken, state.mapboxApiUrl)
-    : null;
-
   // merge default mapStyles
   const merged = mapStyle.mapStyles
     ? {
@@ -439,10 +592,10 @@ export const receiveMapConfigUpdater = (
     Boolean(mapStyle.threeDBuildingColor) || merged.custom3DBuildingColor;
   const newState = mapConfigChangeUpdater(state, {payload: merged});
 
-  return loadMapStyleTasks ? withTask(newState, loadMapStyleTasks) : newState;
+  return mapStyleChangeUpdater(newState, {payload: {styleType: newState.styleType}});
 };
 
-function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken, mapboxApiUrl) {
+function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken, mapboxApiUrl, onSuccess) {
   return [
     Task.all(
       Object.values(mapStyles)
@@ -467,10 +620,11 @@ function getLoadMapStyleTasks(mapStyles, mapboxApiAccessToken, mapboxApiUrl) {
               }
             }),
             {}
-          )
+          ),
+          onSuccess
         ),
       // error
-      loadMapStyleErr
+      err => loadMapStyleErr(Object.keys(mapStyles), err)
     )
   ];
 }
@@ -492,7 +646,7 @@ export const resetMapConfigMapStyleUpdater = (state: MapStyle): MapStyle => {
     initialState: state.initialState
   };
 
-  return mapStyleChangeUpdater(emptyConfig, {payload: emptyConfig.styleType});
+  return mapStyleChangeUpdater(emptyConfig, {payload: {styleType: emptyConfig.styleType}});
 };
 
 /**
@@ -579,7 +733,7 @@ export const addCustomMapStyleUpdater = (state: MapStyle): MapStyle => {
     inputStyle: getInitialInputStyle()
   };
   // set new style
-  return mapStyleChangeUpdater(newState, {payload: styleId});
+  return mapStyleChangeUpdater(newState, {payload: {styleType: styleId}});
 };
 
 /**
@@ -593,6 +747,18 @@ export const set3dBuildingColorUpdater = (
   ...state,
   threeDBuildingColor: color,
   custom3DBuildingColor: true
+});
+
+/**
+ * Updates background color
+ * @memberof mapStyleUpdaters
+ */
+export const setBackgroundColorUpdater = (
+  state: MapStyle,
+  {payload: color}: MapStyleActions.SetBackgroundColorUpdaterAction
+): MapStyle => ({
+  ...state,
+  backgroundColor: color
 });
 
 /**

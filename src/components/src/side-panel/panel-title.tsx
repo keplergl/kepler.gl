@@ -18,10 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import React from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 
-const PanelTitleFactory = () => styled.div.attrs(props => ({
+const StyledPanelTitle = styled.div.attrs(props => ({
   className: classnames('panel-title', props.className)
 }))`
   color: ${props => props.theme.titleTextColor};
@@ -29,7 +30,32 @@ const PanelTitleFactory = () => styled.div.attrs(props => ({
   line-height: ${props => props.theme.sidePanelTitleLineHeight};
   font-weight: 400;
   letter-spacing: 1.25px;
-  margin-bottom: 14px;
 `;
+
+const PanelHeaderRow = styled.div.attrs({
+  className: 'layer-manager-header'
+})`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  margin-bottom: 32px;
+`;
+
+export type PanelTitleProps = {
+  title: string;
+  className?: string;
+};
+
+const PanelTitleFactory = () => {
+  const PanelTitle: React.FC<PanelTitleProps> = ({title, className, children}) => (
+    <PanelHeaderRow>
+      <StyledPanelTitle className={className || 'panel-title'}>{title}</StyledPanelTitle>
+      {children}
+    </PanelHeaderRow>
+  );
+
+  return PanelTitle;
+};
 
 export default PanelTitleFactory;

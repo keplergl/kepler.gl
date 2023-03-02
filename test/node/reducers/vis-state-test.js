@@ -2138,6 +2138,79 @@ test('#visStateReducer -> RENAME_DATASET', t => {
   t.end();
 });
 
+test('#visStateReducer -> UPDATE_COLOR_TABLE', t => {
+  const initialState = StateWTripGeojson.visState;
+
+  t.deepEqual(
+    initialState.datasets[tripDataInfo.id].color,
+    [192, 108, 132],
+    'Initial color as expected'
+  );
+
+  const newColor = [255, 255, 255];
+  const updated = reducer(
+    initialState,
+    VisStateActions.updateTableColor(tripDataInfo.id, newColor)
+  );
+
+  assertDatasetIsTable(t, updated.datasets[tripDataInfo.id]);
+  t.equal(updated.datasets[tripDataInfo.id].color, newColor, 'Updated color as expected');
+
+  t.end();
+});
+
+test('#visStateReducer -> UPDATE_TABLE_PROPS', t => {
+  const initialState = StateWTripGeojson.visState;
+
+  // update label
+  t.equal(
+    initialState.datasets[tripDataInfo.id].label,
+    tripDataInfo.label,
+    'Initial label as expected'
+  );
+
+  const newLabel = 'New label!!!11';
+  let updated = reducer(
+    initialState,
+    VisStateActions.updateDatasetProps(tripDataInfo.id, {label: newLabel})
+  );
+
+  assertDatasetIsTable(t, updated.datasets[tripDataInfo.id]);
+  t.equal(updated.datasets[tripDataInfo.id].label, newLabel, 'Updated label as expected');
+
+  // update color
+  t.deepEqual(
+    updated.datasets[tripDataInfo.id].color,
+    [192, 108, 132],
+    'Initial color as expected'
+  );
+
+  const newColor = [255, 255, 255];
+  updated = reducer(
+    updated,
+    VisStateActions.updateDatasetProps(tripDataInfo.id, {color: newColor})
+  );
+  assertDatasetIsTable(t, updated.datasets[tripDataInfo.id]);
+  t.equal(updated.datasets[tripDataInfo.id].label, newLabel, 'Updated color as expected');
+
+  // update meta
+  updated = reducer(
+    updated,
+    VisStateActions.updateDatasetProps(tripDataInfo.id, {metadata: {test: true}})
+  );
+  assertDatasetIsTable(t, updated.datasets[tripDataInfo.id]);
+  t.deepEqual(
+    updated.datasets[tripDataInfo.id].metadata,
+    {
+      ...updated.datasets[tripDataInfo.id].metadata,
+      test: true
+    },
+    'Updated color as expected'
+  );
+
+  t.end();
+});
+
 test('#visStateReducer -> SET_FILTER.name', t => {
   const oldState = CloneDeep(StateWFilters.visState);
   const oldFilter0 = oldState.filters[0];
@@ -4706,22 +4779,6 @@ test('#visStateReducer -> SORT_TABLE_COLUMN', t => {
     'should correctly sort'
   );
   assertDatasetIsTable(t, nextState5.datasets[testCsvDataId]);
-
-  t.end();
-});
-
-test('#visStateReducer -> updateTableColor', t => {
-  const initialState = CloneDeep(StateWFiles.visState);
-  const newColor = [150, 150, 150];
-
-  const nextState = reducer(
-    initialState,
-    VisStateActions.updateTableColor(testCsvDataId, newColor)
-  );
-
-  // test dataset is table
-  assertDatasetIsTable(t, nextState.datasets[testCsvDataId]);
-  t.deepEqual(nextState.datasets[testCsvDataId].color, newColor, 'should update dataset color');
 
   t.end();
 });

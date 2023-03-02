@@ -53,6 +53,7 @@
     "copy-to-clipboard": "^3.3.1",
     "d3-color": "^2.0.0",
     "d3-dsv": "^2.0.0",
+    "deepmerge": "^4.2.2",
     "global": "^4.3.0",
     "lodash.clonedeep": "^4.0.1",
     "lodash.flattendeep": "^4.2.0",

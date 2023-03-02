@@ -19,17 +19,22 @@
 // THE SOFTWARE.
 
 import React, {useCallback, useMemo} from 'react';
-import {FormattedMessage} from '@kepler.gl/localization';
-import {Button, SidePanelDivider, SidePanelSection} from '../common/styled-components';
-import {Add} from '../common/icons';
+import {useIntl} from 'react-intl';
+import {SidePanelDivider, SidePanelSection} from '../common/styled-components';
 import SourceDataCatalogFactory from './common/source-data-catalog';
 import FilterPanelFactory from './filter-panel/filter-panel';
-import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {FILTER_VIEW_TYPES, PANEL_VIEW_TOGGLES} from '@kepler.gl/constants';
 import {Filter} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {isSideFilter} from '@kepler.gl/utils';
-import {VisStateActions, ActionHandler} from '@kepler.gl/actions';
+import {VisStateActions, ActionHandler, UIStateActions} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
+
+import PanelViewListToggleFactory from './panel-view-list-toggle';
+import PanelTitleFactory from './panel-title';
+import AddFilterButtonFactory from './filter-panel/add-filter-button';
+import DatasetSectionFactory from './layer-panel/dataset-section';
+import {PanelMeta} from './common/types';
 
 type FilterManagerProps = {
   filters: Filter[];
@@ -37,94 +42,237 @@ type FilterManagerProps = {
   layers: Layer[];
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;
   updateTableColor: ActionHandler<typeof VisStateActions.updateTableColor>;
+  removeDataset: ActionHandler<typeof VisStateActions.removeDataset>;
+  showAddDataModal: () => void;
+
+  panelMetadata: PanelMeta;
+  panelListView: string;
+  visStateActions: typeof VisStateActions;
+  uiStateActions: typeof UIStateActions;
+};
+
+type FilterListProps = {
+  filters: Filter[];
+  datasets: Datasets;
+  layers: Layer[];
+  filtersByIndex: {
+    filter: Filter;
+    idx: number;
+  }[];
+  isAnyFilterAnimating: boolean;
   visStateActions: typeof VisStateActions;
 };
 
-FilterManagerFactory.deps = [SourceDataCatalogFactory, FilterPanelFactory];
+FilterManagerFactory.deps = [
+  DatasetSectionFactory,
+  FilterPanelFactory,
+  PanelTitleFactory,
+  AddFilterButtonFactory,
+  PanelViewListToggleFactory,
+  SourceDataCatalogFactory
+];
 
 function FilterManagerFactory(
-  SourceDataCatalog: ReturnType<typeof SourceDataCatalogFactory>,
-  FilterPanel: ReturnType<typeof FilterPanelFactory>
+  DatasetSection: ReturnType<typeof DatasetSectionFactory>,
+  FilterPanel: ReturnType<typeof FilterPanelFactory>,
+  PanelTitle: ReturnType<typeof PanelTitleFactory>,
+  AddFilterButton: ReturnType<typeof AddFilterButtonFactory>,
+  PanelViewListToggle: ReturnType<typeof PanelViewListToggleFactory>,
+  SourceDataCatalog: ReturnType<typeof SourceDataCatalogFactory>
 ) {
-  const FilterManager = ({
-    filters = [],
+  const FilterList = ({
+    filtersByIndex,
+    filters,
     datasets,
     layers,
-    showDatasetTable,
-    updateTableColor,
+    isAnyFilterAnimating,
     visStateActions
-  }: FilterManagerProps) => {
+  }: FilterListProps) => {
     const {
-      addFilter,
       removeFilter,
       setFilter,
       toggleFilterAnimation,
       toggleFilterFeature,
       setFilterView
     } = visStateActions;
-    const isAnyFilterAnimating = filters.some(f => f.isAnimating);
-    const hadEmptyFilter = filters.some(f => !f.name);
-    const hadDataset = Object.keys(datasets).length;
-    const onClickAddFilter = useCallback(() => {
-      const defaultDataset = (Object.keys(datasets).length && Object.keys(datasets)[0]) || null;
-      addFilter(defaultDataset);
-    }, [datasets, addFilter]);
-    // render last added filter first
-    const reversedIndex = useMemo(() => {
-      return new Array(filters.length)
-        .fill(0)
-        .map((d, i) => i)
-        .reverse();
-    }, [filters.length]);
 
     const filterPanelCallbacks = useMemo(() => {
-      return new Array(filters.length).fill(0).map((d, idx) => ({
-        removeFilter: () => removeFilter(idx),
-        toggleFilterView: () =>
-          setFilterView(
-            idx,
-            isSideFilter(filters[idx]) ? FILTER_VIEW_TYPES.enlarged : FILTER_VIEW_TYPES.side
-          ),
-        toggleAnimation: () => toggleFilterAnimation(idx),
-        toggleFilterFeature: () => toggleFilterFeature(idx)
-      }));
-    }, [filters, removeFilter, setFilterView, toggleFilterAnimation, toggleFilterFeature]);
+      return filtersByIndex.reduce(
+        (accu, {filter, idx}) => ({
+          ...accu,
+          [filter.id]: {
+            removeFilter: () => removeFilter(idx),
+            toggleFilterView: () =>
+              setFilterView(
+                idx,
+                isSideFilter(filter) ? FILTER_VIEW_TYPES.enlarged : FILTER_VIEW_TYPES.side
+              ),
+            toggleAnimation: () => toggleFilterAnimation(idx),
+            toggleFilterFeature: () => toggleFilterFeature(idx)
+          }
+        }),
+        {}
+      );
+    }, [filtersByIndex, removeFilter, setFilterView, toggleFilterAnimation, toggleFilterFeature]);
+
+    return (
+      <SidePanelSection>
+        {[...filtersByIndex].reverse().map(({filter, idx}) => (
+          <FilterPanel
+            key={`${filter.id}-${idx}`}
+            idx={idx}
+            filters={filters}
+            filter={filter}
+            datasets={datasets}
+            layers={layers}
+            isAnyFilterAnimating={isAnyFilterAnimating}
+            removeFilter={filterPanelCallbacks[filter.id].removeFilter}
+            enlargeFilter={filterPanelCallbacks[filter.id].toggleFilterView}
+            toggleAnimation={filterPanelCallbacks[filter.id].toggleAnimation}
+            toggleFilterFeature={filterPanelCallbacks[filter.id].toggleFilterFeature}
+            setFilter={setFilter}
+          />
+        ))}
+      </SidePanelSection>
+    );
+  };
+
+  const DatasetFilterSection = ({
+    filtersByIndex,
+    filters,
+    dataset,
+    datasets,
+    layers,
+    isAnyFilterAnimating,
+    visStateActions,
+    showDatasetTable,
+    updateTableColor,
+    removeDataset,
+    showDeleteDataset
+  }) => {
+    const datasetCatalog = useMemo(() => {
+      return {[dataset.id]: dataset};
+    }, [dataset]);
+
+    return (
+      <>
+        <SourceDataCatalog
+          datasets={datasetCatalog}
+          showDatasetTable={showDatasetTable}
+          updateTableColor={updateTableColor}
+          removeDataset={removeDataset}
+          showDeleteDataset={showDeleteDataset}
+        />
+        <FilterList
+          filtersByIndex={filtersByIndex}
+          filters={filters}
+          datasets={datasets}
+          layers={layers}
+          isAnyFilterAnimating={isAnyFilterAnimating}
+          visStateActions={visStateActions}
+        />
+      </>
+    );
+  };
+
+  const FilterManager: React.FC<FilterManagerProps> = ({
+    filters = [],
+    datasets,
+    layers,
+    showDatasetTable,
+    updateTableColor,
+    removeDataset,
+    showAddDataModal,
+    panelMetadata,
+    panelListView,
+    visStateActions,
+    uiStateActions
+  }) => {
+    const {addFilter} = visStateActions;
+    const {togglePanelListView} = uiStateActions;
+    const isAnyFilterAnimating = filters.some(f => f.isAnimating);
+    const onClickAddFilter = useCallback(dataset => addFilter(dataset), [addFilter]);
+    const isSortByDatasetMode = panelListView === PANEL_VIEW_TOGGLES.byDataset;
+    const filtersByIndex = useMemo(
+      () =>
+        filters.map((f, idx) => ({
+          filter: f,
+          idx
+        })),
+      [filters]
+    );
+    const filtersByDatasets = useMemo(
+      () =>
+        Object.keys(datasets).reduce(
+          (accu, dataId) => ({
+            ...accu,
+            // if synced filter, show it unfder its the first dataset
+            [dataId]: filtersByIndex.filter(
+              fidx => fidx.filter.dataId && fidx.filter.dataId[0] === dataId
+            )
+          }),
+          {}
+        ),
+      [datasets, filtersByIndex]
+    );
+    const _TogglePanelListView = useCallback(
+      listView => {
+        togglePanelListView({panelId: 'filter', listView});
+      },
+      [togglePanelListView]
+    );
+
+    const intl = useIntl();
+    const filterListProps = {
+      datasets,
+      filters,
+      layers,
+      isAnyFilterAnimating,
+      visStateActions
+    };
+
+    const sourceDataCatalogProps = {
+      showDatasetTable,
+      updateTableColor,
+      removeDataset,
+      showDeleteDataset: true
+    };
 
     return (
       <div className="filter-manager">
-        <SourceDataCatalog
+        <SidePanelSection>
+          <PanelViewListToggle togglePanelListView={_TogglePanelListView} mode={panelListView} />
+        </SidePanelSection>
+        <DatasetSection
           datasets={datasets}
-          showDatasetTable={showDatasetTable}
-          updateTableColor={updateTableColor}
+          {...sourceDataCatalogProps}
+          showDatasetList={!isSortByDatasetMode}
+          showAddDataModal={showAddDataModal}
         />
         <SidePanelDivider />
         <SidePanelSection>
-          {reversedIndex.map(idx => (
-            <FilterPanel
-              key={`${filters[idx].id}-${idx}`}
-              idx={idx}
-              filters={filters}
-              filter={filters[idx]}
-              datasets={datasets}
-              layers={layers}
-              isAnyFilterAnimating={isAnyFilterAnimating}
-              removeFilter={filterPanelCallbacks[idx].removeFilter}
-              enlargeFilter={filterPanelCallbacks[idx].toggleFilterView}
-              toggleAnimation={filterPanelCallbacks[idx].toggleAnimation}
-              toggleFilterFeature={filterPanelCallbacks[idx].toggleFilterFeature}
-              setFilter={setFilter}
-            />
-          ))}
+          <PanelTitle
+            className="filter-manager-title"
+            title={intl.formatMessage({id: panelMetadata.label})}
+          >
+            <AddFilterButton datasets={datasets} onAdd={onClickAddFilter} />
+          </PanelTitle>
         </SidePanelSection>
-        <Button
-          className="add-filter-button"
-          inactive={hadEmptyFilter || !hadDataset}
-          width="105px"
-          onClick={onClickAddFilter}
-        >
-          <Add height="12px" />
-          <FormattedMessage id={'filterManager.addFilter'} />
-        </Button>
+        <SidePanelSection>
+          {isSortByDatasetMode ? (
+            Object.keys(filtersByDatasets).map(dataId => (
+              <DatasetFilterSection
+                key={dataId}
+                filtersByIndex={filtersByDatasets[dataId]}
+                dataset={datasets[dataId]}
+                {...filterListProps}
+                {...sourceDataCatalogProps}
+              />
+            ))
+          ) : (
+            <FilterList filtersByIndex={filtersByIndex} {...filterListProps} />
+          )}
+        </SidePanelSection>
       </div>
     );
   };

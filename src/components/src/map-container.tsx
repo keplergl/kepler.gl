@@ -52,11 +52,11 @@ import {
   observeDimensions,
   unobserveDimensions,
   hasMobileWidth,
-  EMPTY_MAPBOX_STYLE,
   getMapLayersFromSplitMaps,
   onViewPortChange,
   getViewportFromMapState,
-  normalizeEvent
+  normalizeEvent,
+  rgbToHex
 } from '@kepler.gl/utils';
 import {breakPointValues} from '@kepler.gl/styles';
 
@@ -65,7 +65,9 @@ import {
   FILTER_TYPES,
   GEOCODER_LAYER_ID,
   THROTTLE_NOTIFICATION_TIME,
-  DEFAULT_PICKING_RADIUS
+  DEFAULT_PICKING_RADIUS,
+  NO_MAP_ID,
+  EMPTY_MAPBOX_STYLE
 } from '@kepler.gl/constants';
 
 import ErrorBoundary from './common/error-boundary';
@@ -334,9 +336,31 @@ export default function MapContainerFactory(
       generateMapboxLayers
     );
 
+    // merge in a background-color style if the basemap choice is NO_MAP_ID
+    // used by <StyledMap> inline style prop
+    mapStyleTypeSelector = props => props.mapStyle.styleType;
+    mapStyleBackgroundColorSelector = props => props.mapStyle.backgroundColor;
+    styleSelector = createSelector(
+      this.mapStyleTypeSelector,
+      this.mapStyleBackgroundColorSelector,
+      (styleType, backgroundColor) => ({
+        ...MAP_STYLE.container,
+        ...(styleType === NO_MAP_ID ? {backgroundColor: rgbToHex(backgroundColor)} : {})
+      })
+    );
+
     /* component private functions */
     _onCloseMapPopover = () => {
       this.props.visStateActions.onLayerClick(null);
+    };
+
+    _onLayerHover = (
+      idx: number,
+      info: {
+        picked?: boolean;
+      } | null
+    ) => {
+      this.props.visStateActions.onLayerHover(info);
     };
 
     _onLayerSetDomain = (idx: number, colorDomain: VisualChannelDomain) => {
@@ -586,7 +610,10 @@ export default function MapContainerFactory(
               }
             : undefined
         },
-        this._onLayerSetDomain,
+        {
+          onLayerHover: this._onLayerHover,
+          onSetLayerDomain: this._onLayerSetDomain
+        },
         deckGlProps
       );
 
@@ -843,7 +870,7 @@ export default function MapContainerFactory(
       return (
         <StyledMap
           ref={this._ref}
-          style={MAP_STYLE.container}
+          style={this.styleSelector(this.props)}
           onContextMenu={event => event.preventDefault()}
           mixBlendMode={visState.overlayBlending}
         >

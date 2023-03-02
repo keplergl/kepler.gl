@@ -686,6 +686,35 @@ export function renameDataset(
   };
 }
 
+export type UpdateDatasetPropsUpdaterAction = {
+  dataId: string;
+  props: {
+    label?: string;
+    color?: RGBColor;
+    metadata?: Record<string, unknown>;
+  };
+};
+/**
+ * Update an existing dataset props in `visState`
+ * @param dataId - ***required** Id of the dataset to update
+ * @param props - ***required** New props to update
+ * @returns action
+ */
+export function updateDatasetProps(
+  dataId: string,
+  props: {
+    label?: string;
+    color?: RGBColor;
+    metadata?: Record<string, unknown>;
+  }
+): Merge<UpdateDatasetPropsUpdaterAction, {type: typeof ActionTypes.UPDATE_DATASET_PROPS}> {
+  return {
+    type: ActionTypes.UPDATE_DATASET_PROPS,
+    dataId,
+    props
+  };
+}
+
 export type ToggleFilterAnimationUpdaterAction = {
   idx: number;
 };

@@ -415,18 +415,12 @@ function KeplerGlFactory(
         id: ms.id || generateHashId()
       }));
 
-      const allStyles = [...customStyles, ...defaultStyles].reduce(
-        (accu, style) => {
-          const hasStyleObject = style.style && typeof style.style === 'object';
-          accu[hasStyleObject ? 'toLoad' : 'toRequest'][style.id] = style;
+      const allStyles = [...customStyles, ...defaultStyles].reduce((accu, style) => {
+        accu[style.id] = style;
+        return accu;
+      }, {});
 
-          return accu;
-        },
-        {toLoad: {}, toRequest: {}}
-      );
-
-      this.props.mapStyleActions.loadMapStyles(allStyles.toLoad);
-      this.props.mapStyleActions.requestMapStyles(allStyles.toRequest);
+      this.props.mapStyleActions.loadMapStyles(allStyles);
     };
 
     render() {
@@ -497,6 +491,7 @@ function KeplerGlFactory(
                       rootRef={this.bottomWidgetRef}
                       {...bottomWidgetFields}
                       containerW={dimensions.width}
+                      theme={theme}
                     />
                   </BottomWidgetOuter>
                   <ModalContainer

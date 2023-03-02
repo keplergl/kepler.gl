@@ -25,9 +25,10 @@ import SourceDataCatalogFactory from '../common/source-data-catalog';
 import LayerListFactory from './layer-list';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, ActionHandler, VisStateActions} from '@kepler.gl/actions';
-import {KeplerTable} from '@kepler.gl/table';
+import {KeplerTable, Datasets} from '@kepler.gl/table';
 
 type DatasetLayerSectionProps = {
+  datasets: Datasets;
   dataset: KeplerTable;
   layers: Layer[];
   layerOrder: number[];
@@ -55,6 +56,7 @@ function DatasetLayerSectionFactory(
   const DatasetLayerSection: React.FC<DatasetLayerSectionProps> = props => {
     const {
       dataset,
+      datasets,
       showDatasetTable,
       layers,
       updateTableColor,
@@ -66,14 +68,14 @@ function DatasetLayerSectionFactory(
       visStateActions
     } = props;
 
-    const datasets = useMemo(() => {
+    const datasetCatalog = useMemo(() => {
       return {[dataset.id]: dataset};
     }, [dataset]);
 
     return (
       <DatasetLayerSectionWrapper>
         <SourceDataCatalog
-          datasets={datasets}
+          datasets={datasetCatalog}
           showDatasetTable={showDatasetTable}
           updateTableColor={updateTableColor}
           removeDataset={removeDataset}
