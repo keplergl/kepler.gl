@@ -75,7 +75,7 @@ import {
 } from '@kepler.gl/constants';
 
 import ErrorBoundary from './common/error-boundary';
-import type {DatasetAttribution} from './types';
+import {DatasetAttribution} from './types';
 import {LOCALE_CODES} from '@kepler.gl/localization';
 import {MapView} from '@deck.gl/core';
 import {
@@ -154,7 +154,13 @@ const StyledDatasetAttributionsContainer = styled.div<StyledDatasetAttributionsC
   }
 `;
 
-const DatasetAttributions = ({datasetAttributions, isPalm}: {datasetAttributions: DatasetAttribution[]; isPalm: boolean}) => (
+const DatasetAttributions = ({
+  datasetAttributions,
+  isPalm
+}: {
+  datasetAttributions: DatasetAttribution[];
+  isPalm: boolean;
+}) => (
   <>
     {datasetAttributions?.length ? (
       <StyledDatasetAttributionsContainer isPalm={isPalm}>
@@ -266,7 +272,7 @@ interface MapContainerProps {
   bottomMapContainerProps: any;
   transformRequest?: any;
 
-  datasetAttributions?: DatasetAttribution[]
+  datasetAttributions?: DatasetAttribution[];
 }
 
 export default function MapContainerFactory(
