@@ -75,6 +75,7 @@ import {
 } from '@kepler.gl/constants';
 
 import ErrorBoundary from './common/error-boundary';
+import type {DatasetAttribution} from './types';
 import {LOCALE_CODES} from '@kepler.gl/localization';
 import {MapView} from '@deck.gl/core';
 import {
@@ -87,8 +88,6 @@ import {
   LayersToRender
 } from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
-
-import type {DatasetAttribution} from './types';
 
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {
@@ -155,7 +154,7 @@ const StyledDatasetAttributionsContainer = styled.div<StyledDatasetAttributionsC
   }
 `;
 
-const DatasetAttributions = ({datasetAttributions, isPalm}) => (
+const DatasetAttributions = ({datasetAttributions, isPalm}: {datasetAttributions: DatasetAttribution[]; isPalm: boolean}) => (
   <>
     {datasetAttributions?.length ? (
       <StyledDatasetAttributionsContainer isPalm={isPalm}>
