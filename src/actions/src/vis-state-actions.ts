@@ -364,7 +364,7 @@ export function setFilterAnimationWindow({
 }
 
 export type AddFilterUpdaterAction = {
-  dataId?: string | null;
+  dataId?: string | string[] | null;
 };
 /**
  * Add a new filter
