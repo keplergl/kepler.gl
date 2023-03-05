@@ -67,6 +67,12 @@ export const CenterVerticalFlexbox = styled.div`
   align-items: center;
 `;
 
+export const EndHorizontalFlexbox = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: end;
+`;
+
 export const SpaceBetweenFlexbox = styled.div`
   display: flex;
   justify-content: space-between;
@@ -541,7 +547,7 @@ export const StyledAttrbution = styled.div.attrs({
   position: absolute;
   display: block;
   margin: 0 10px 6px;
-  z-index: 0;
+  z-index: 1;
   .attrition-link {
     display: flex;
     align-items: center;
