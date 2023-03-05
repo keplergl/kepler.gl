@@ -119,10 +119,11 @@ export type SelectFilter = FilterBase<LineChart> &
 
 export type MultiSelectFilter = FilterBase<LineChart> &
   MultiSelectFieldDomain & {
-    type: 'range';
+    type: 'multiSelect';
     fieldType: 'string' | 'date';
     value: string[];
   };
+
 export type TimeRangeFilter = FilterBase<LineChart> &
   TimeRangeFieldDomain & {
     type: 'timeRange';
@@ -446,3 +447,55 @@ export type FilterDatasetOpt = {
   // ignore filter for domain calculation
   ignoreDomain?: boolean;
 };
+
+/* DUPLICATES OF FILTER TYPES ABOVE, REMOVE ONCE TYPES ABOVE ARE FIXED */
+
+export type TypedRangeFilter = FilterBase<LineChart> &
+  RangeFieldDomain & {
+    type: 'range';
+    fieldType: 'real' | 'integer';
+    value: [number, number];
+    fixedDomain: true;
+    typeOptions: ['range'];
+  };
+
+export type TypedSelectFilter = FilterBase<LineChart> &
+  SelectFieldDomain & {
+    type: 'select';
+    fieldType: 'boolean';
+    value: boolean;
+  };
+
+export type TypedMultiSelectFilter = FilterBase<LineChart> &
+  MultiSelectFieldDomain & {
+    type: 'multiSelect';
+    fieldType: 'string' | 'date';
+    value: string[];
+  };
+
+export type TypedTimeRangeFilter = FilterBase<LineChart> &
+  TimeRangeFieldDomain & {
+    type: 'timeRange';
+    fieldType: 'timestamp';
+    fixedDomain: true;
+    value: [number, number];
+    bins?: Object;
+    plotType: {
+      [key: string]: any;
+    };
+    animationWindow: string;
+  };
+
+export type TypedPolygonFilter = FilterBase<LineChart> & {
+  layerId: string[];
+  type: 'polygon';
+  fixedDomain: true;
+  value: Feature;
+};
+
+export type TypedFilter =
+  | TypedRangeFilter
+  | TypedTimeRangeFilter
+  | TypedSelectFilter
+  | TypedMultiSelectFilter
+  | TypedPolygonFilter;
