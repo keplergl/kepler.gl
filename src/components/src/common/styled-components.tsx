@@ -551,6 +551,7 @@ export const StyledAttrbution = styled.div.attrs({
   .attrition-link {
     display: flex;
     align-items: center;
+    margin-left: 10px;
 
     a,
     .pipe-separator {
