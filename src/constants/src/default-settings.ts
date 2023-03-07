@@ -851,6 +851,7 @@ export type ExportImage = {
   exporting: boolean;
   processing: boolean;
   error: Error | false;
+  escapeXhtmlForWebpack?: boolean;
   // This field was not in the .d.ts file
   center: boolean;
 };

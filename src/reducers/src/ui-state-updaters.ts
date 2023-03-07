@@ -138,6 +138,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = (Object.keys(MAP_CONTROLS) as A
  * @property imageDataUri Default: `''`,
  * @property exporting Default: `false`
  * @property error Default: `false`
+ * @property escapeXhtmlForWebpack Default: `true`
  * @public
  */
 export const DEFAULT_EXPORT_IMAGE: ExportImage = {
@@ -161,7 +162,9 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   exporting: false,
   // processing: used as loading indicator when export image is being produced
   processing: false,
-  error: false
+  error: false,
+  // whether to apply fix for uglify error in dom-to-image (should be true for webpack builds)
+  escapeXhtmlForWebpack: true
 };
 
 export const DEFAULT_LOAD_FILES = {

@@ -75,20 +75,20 @@ const domtoimage = {
 };
 
 /**
-   * @param {Node} node - The DOM Node object to render
-   * @param {Object} options - Rendering options
-   * @param {Function} [options.filter] - Should return true if passed node should be included in the output
-   *          (excluding node means excluding it's children as well). Not called on the root node.
-   * @param {String} [options.bgcolor] - color for the background, any valid CSS color value.
-   * @param {Number} [options.width] - width to be applied to node before rendering.
-   * @param {Number} [options.height] - height to be applied to node before rendering.
-   * @param {Object} [options.style] - an object whose properties to be copied to node's style before rendering.
-   * @param {Number} [options.quality] - a Number between 0 and 1 indicating image quality (applicable to JPEG only),
-              defaults to 1.0.
-    * @param {String} [options.imagePlaceholder] - dataURL to use as a placeholder for failed images, default behaviour is to fail fast on images we can't fetch
-    * @param {Boolean} [options.cacheBust] - set to true to cache bust by appending the time to the request url
-    * @return {Promise} - A promise that is fulfilled with a SVG image data URL
-    * */
+ * @param {Node} node - The DOM Node object to render
+ * @param {Object} options - Rendering options
+ * @param {Function} [options.filter] - Should return true if passed node should be included in the output
+ *          (excluding node means excluding it's children as well). Not called on the root node.
+ * @param {String} [options.bgcolor] - color for the background, any valid CSS color value.
+ * @param {Number} [options.width] - width to be applied to node before rendering.
+ * @param {Number} [options.height] - height to be applied to node before rendering.
+ * @param {Object} [options.style] - an object whose properties to be copied to node's style before rendering.
+ * @param {Number} [options.quality] - a Number between 0 and 1 indicating image quality (applicable to JPEG only), defaults to 1.0.
+ * @param {boolean} [options.escapeXhtmlForWebpack] - whether to apply fix for uglify error in dom-to-image (should be true for webpack builds), defaults to true.
+ * @param {String} [options.imagePlaceholder] - dataURL to use as a placeholder for failed images, default behaviour is to fail fast on images we can't fetch
+ * @param {Boolean} [options.cacheBust] - set to true to cache bust by appending the time to the request url
+ * @return {Promise} - A promise that is fulfilled with a SVG image data URL
+ * */
 function toSvg(node, options) {
   options = options || {};
   copyOptions(options);
@@ -98,7 +98,12 @@ function toSvg(node, options) {
     .then(inlineImages)
     .then(applyOptions)
     .then(clone =>
-      makeSvgDataUri(clone, options.width || getWidth(node), options.height || getHeight(node))
+      makeSvgDataUri(
+        clone,
+        options.width || getWidth(node),
+        options.height || getHeight(node),
+        options.escapeXhtmlForWebpack
+      )
     );
 
   function applyOptions(clone) {
@@ -249,12 +254,12 @@ function inlineImages(node) {
   return images.inlineAll(node).then(() => node);
 }
 
-function makeSvgDataUri(node, width, height) {
+function makeSvgDataUri(node, width, height, escapeXhtmlForWebpack = true) {
   return Promise.resolve(node).then(nd => {
     nd.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
     const serializedString = new window.XMLSerializer().serializeToString(nd);
 
-    const xhtml = escapeXhtml(serializedString);
+    const xhtml = escapeXhtmlForWebpack ? escapeXhtml(serializedString) : serializedString;
     const foreignObject = `<foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject>`;
     const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${foreignObject}</svg>`;
 
