@@ -50,7 +50,7 @@ export const ACTION_PREFIX = '@@kepler.gl/';
  *
  * export default createStore(reducers, {}, applyMiddleware(taskMiddleware))
  */
-const ActionTypes = {
+export const ActionTypes = {
   // identity action
   REGISTER_ENTRY: `${ACTION_PREFIX}REGISTER_ENTRY`,
   DELETE_ENTRY: `${ACTION_PREFIX}DELETE_ENTRY`,
