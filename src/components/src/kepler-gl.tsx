@@ -27,7 +27,7 @@ import {connect as keplerGlConnect} from './connect/keplergl-connect';
 import {IntlProvider} from 'react-intl';
 import {messages} from '@kepler.gl/localization';
 import {RootContext, FeatureFlagsContextProvider, FeatureFlags} from './context';
-import {OnErrorCallBack, OnSuccessCallBack} from '@kepler.gl/types';
+import {OnErrorCallBack, OnSuccessCallBack, Viewport} from '@kepler.gl/types';
 
 import {
   MapStateActions,
@@ -281,7 +281,7 @@ type KeplerGLBasicProps = {
 
   appWebsite?: any;
   onSaveMap?: () => void;
-  onViewStateChange?: () => void;
+  onViewStateChange?: (viewState: Viewport) => void;
   onDeckInitialized?: () => void;
   onKeplerGlInitialized?: () => void;
   getMapboxRef?: () => React.RefObject<any>;

@@ -4,12 +4,12 @@ import {TRANSITION_DURATION} from '@kepler.gl/constants';
 import {SplitMapLayers, SplitMap, Viewport, MapState} from '@kepler.gl/types';
 
 export const onViewPortChange = (
-  viewState: any,
+  viewState: Viewport,
   onUpdateMap: (next: any) => any,
   onViewStateChange?: (next: any) => void | null,
   primary: boolean = false
 ): void => {
-  const {width, height, ...restViewState} = viewState;
+  const {width = 0, height = 0, ...restViewState} = viewState;
   // react-map-gl sends 0,0 dimensions during initialization
   // after we have received proper dimensions from observeDimensions
   const next = {
