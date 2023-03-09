@@ -158,7 +158,8 @@ export const isSplitSelector = props =>
 export const Droppable = ({containerId}) => {
   const {isOver, setNodeRef} = useDroppable({
     id: containerId,
-    data: {type: 'map', index: containerId}
+    data: {type: 'map', index: containerId},
+    disabled: !containerId
   });
 
   return <StyledDroppable ref={setNodeRef} isOver={isOver} />;

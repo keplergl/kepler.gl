@@ -742,7 +742,7 @@ const getDispatch = (dispatch, props) => dispatch;
 const getUserActions = (dispatch, props) => props.actions || defaultUserActions;
 
 /** @type {() => import('reselect').OutputParametricSelector<any, any, any, any>} */
-function makeGetActionCreators() {
+export function makeGetActionCreators() {
   return createSelector([getDispatch, getUserActions], (dispatch, userActions) => {
     const [visStateActions, mapStateActions, mapStyleActions, uiStateActions, providerActions] = [
       VisStateActions,
