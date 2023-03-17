@@ -336,7 +336,7 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
       });
     }
 
-    return this.props.onOptionSelected?.(option, event);
+    this.props.onOptionSelected?.(option, event);
   };
 
   // use () => {} to avoid binding 'this'
@@ -355,9 +355,9 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
   _onEnter = event => {
     const selection = this.getSelection();
     if (!selection) {
-      return this.props.onKeyDown?.(event);
+      this.props.onKeyDown?.(event);
     }
-    return this._onOptionSelected(selection, event);
+    this._onOptionSelected(selection, event);
   };
 
   _onEscape = () => {
