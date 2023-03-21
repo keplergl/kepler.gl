@@ -150,6 +150,7 @@ export const addDataToMapUpdater = (
     ...payload.options
   };
 
+  // @ts-expect-error
   let parsedConfig: ParsedConfig = config;
 
   if (isValidConfig(config)) {

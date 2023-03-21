@@ -33,9 +33,10 @@ import {isPlainObject} from '@kepler.gl/utils';
 import {
   MapInfo,
   ParsedVisState,
-  RGBColor,
   SavedVisState,
-  MinSavedVisStateV1
+  ParsedMapState,
+  ParsedMapStyle,
+  SavedMapStyle
 } from '@kepler.gl/types';
 
 export type SavedMapState = {
@@ -47,10 +48,6 @@ export type SavedMapState = {
   zoom: number;
   isSplit: boolean;
 };
-
-export type SavedMapStateV1 = SavedMapState;
-export type MinSavedMapStateV1 = Partial<SavedMapState>;
-export type ParsedMapState = Partial<SavedMapState>;
 
 export type SavedLayerGroups = {
   [key: string]: boolean;
@@ -67,18 +64,6 @@ export type SavedCustomMapStyle = {
   };
 };
 
-export type SavedMapStyle = {
-  styleType: string;
-  topLayerGroups: SavedLayerGroups;
-  visibleLayerGroups: SavedLayerGroups;
-  threeDBuildingColor: RGBColor;
-  mapStyles: SavedCustomMapStyle;
-};
-export type SavedMapStyleV1 = SavedMapStyle;
-export type MinSavedMapStyleV1 = Partial<SavedMapStyleV1>;
-
-export type ParsedMapStyle = Partial<SavedMapStyleV1>;
-
 /** Schema for v1 saved configuration */
 export type SavedConfigV1 = {
   version: 'v1';
@@ -86,16 +71,6 @@ export type SavedConfigV1 = {
     visState: SavedVisState;
     mapState: SavedMapState;
     mapStyle: SavedMapStyle;
-  };
-};
-
-// supported by addDataToMap
-export type MinSavedConfigV1 = {
-  version: 'v1';
-  config: {
-    visState?: MinSavedVisStateV1;
-    mapState?: MinSavedMapStateV1;
-    mapStyle?: MinSavedMapStyleV1;
   };
 };
 

@@ -1391,7 +1391,7 @@ export const resetMapConfigUpdater = (state: VisState): VisState => ({
 export const receiveMapConfigUpdater = (
   state: VisState,
   {
-    payload: {config = {version: ''}, options = {}}
+    payload: {config = {}, options = {}}
   }: {
     type?: typeof ActionTypes.RECEIVE_MAP_CONFIG;
     payload: ReceiveMapConfigPayload;
