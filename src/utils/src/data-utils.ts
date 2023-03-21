@@ -166,8 +166,6 @@ export function preciseRound(num: number, decimals: number): string {
 /**
  * round a giving number at most 4 decimal places
  * e.g. 10 -> 10, 1.12345 -> 1.2345, 2.0 -> 2
- * @param {number} num
- * @returns number
  */
 export function roundToFour(num: number): number {
   // @ts-expect-error
