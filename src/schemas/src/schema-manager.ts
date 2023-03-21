@@ -30,14 +30,7 @@ import {visStateSchema} from './vis-state-schema';
 import {CURRENT_VERSION, VERSIONS} from './versions';
 import {isPlainObject} from '@kepler.gl/utils';
 
-import {
-  MapInfo,
-  ParsedVisState,
-  SavedVisState,
-  ParsedMapState,
-  ParsedMapStyle,
-  SavedMapStyle
-} from '@kepler.gl/types';
+import {MapInfo, SavedVisState, SavedMapStyle, ParsedConfig} from '@kepler.gl/types';
 
 export type SavedMapState = {
   bearing: number;
@@ -72,13 +65,6 @@ export type SavedConfigV1 = {
     mapState: SavedMapState;
     mapStyle: SavedMapStyle;
   };
-};
-
-/** Schema for a parsed configuration ("normalized" across versions) */
-export type ParsedConfig = {
-  visState?: ParsedVisState;
-  mapState?: ParsedMapState;
-  mapStyle?: ParsedMapStyle;
 };
 
 export type SavedMap = {
