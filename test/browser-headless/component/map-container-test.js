@@ -40,7 +40,6 @@ import {mockKeplerProps, expectedLayerHoverProp} from '../../helpers/mock-state'
 const MapContainer = appInjector.get(MapContainerFactory);
 const MapPopover = appInjector.get(MapPopoverFactory);
 const MapControl = appInjector.get(MapControlFactory);
-const Editor = appInjector.get(EditorFactory);
 const initialProps = mapFieldsSelector(mockKeplerProps);
 
 test('MapContainerFactory - display all options', t => {
