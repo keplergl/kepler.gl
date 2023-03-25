@@ -30,15 +30,15 @@ import {
 
 import {LayerColumns, LayerColumn, Layer} from '@kepler.gl/layers';
 import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
-import {
-  CURRENT_VERSION,
-  VisState,
-  VisStateMergers,
-  visStateSchema,
-  ParsedConfig
-} from '@kepler.gl/schemas';
+import {CURRENT_VERSION, VisState, VisStateMergers, visStateSchema} from '@kepler.gl/schemas';
 
-import {ParsedLayer, SavedInteractionConfig, TooltipInfo, SavedEditor} from '@kepler.gl/types';
+import {
+  ParsedLayer,
+  SavedInteractionConfig,
+  TooltipInfo,
+  SavedEditor,
+  ParsedConfig
+} from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
 /**

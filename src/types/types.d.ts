@@ -9,6 +9,8 @@ export type Merge<A, B> = {[K in keyof A]: K extends keyof B ? B[K] : A[K]} & B 
   ? {[K in keyof O]: O[K]}
   : never;
 
+export type RequireFrom<T, K extends keyof T> = Merge<Required<Pick<T, K>>, Partial<Omit<T, K>>>;
+
 export type Entries<T> = {
   [K in keyof T]: [K, T[K]];
 }[keyof T][];

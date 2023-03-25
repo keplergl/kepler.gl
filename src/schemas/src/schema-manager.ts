@@ -30,7 +30,7 @@ import {visStateSchema} from './vis-state-schema';
 import {CURRENT_VERSION, VERSIONS} from './versions';
 import {isPlainObject} from '@kepler.gl/utils';
 
-import {MapInfo, ParsedVisState, RGBColor, SavedVisState} from '@kepler.gl/types';
+import {MapInfo, SavedVisState, SavedMapStyle, ParsedConfig} from '@kepler.gl/types';
 
 export type SavedMapState = {
   bearing: number;
@@ -57,14 +57,6 @@ export type SavedCustomMapStyle = {
   };
 };
 
-export type SavedMapStyle = {
-  styleType: string;
-  topLayerGroups: SavedLayerGroups;
-  visibleLayerGroups: SavedLayerGroups;
-  threeDBuildingColor: RGBColor;
-  mapStyles: SavedCustomMapStyle;
-};
-
 /** Schema for v1 saved configuration */
 export type SavedConfigV1 = {
   version: 'v1';
@@ -73,14 +65,6 @@ export type SavedConfigV1 = {
     mapState: SavedMapState;
     mapStyle: SavedMapStyle;
   };
-};
-
-/** Schema for a parsed configuration ("normalized" across versions) */
-export type ParsedConfig = {
-  version: string;
-  visState?: ParsedVisState;
-  mapState?: Partial<SavedMapState>;
-  mapStyle?: Partial<SavedMapStyle>;
 };
 
 export type SavedMap = {
@@ -269,7 +253,6 @@ export class KeplerGLSchema {
       return null;
     }
 
-    // @ts-expect-error
     return Object.keys(config).reduce(
       (accu, key) => ({
         ...accu,

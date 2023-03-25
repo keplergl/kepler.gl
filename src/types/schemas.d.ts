@@ -1,4 +1,4 @@
-import {RGBColor, Merge, RGBAColor} from './types';
+import {RGBColor, Merge, RGBAColor, RequireFrom} from './types';
 
 import {
   Filter,
@@ -28,8 +28,8 @@ export type SavedFilter = {
   speed: Filter['speed'];
   layerId: Filter['layerId'];
 };
-
-export type ParsedFilter = Partial<SavedFilter>;
+export type MinSavedFilter = RequireFrom<SavedFilter, 'dataId' | 'id' | 'name' | 'type' | 'value'>;
+export type ParsedFilter = SavedFilter | MinSavedFilter;
 
 export type SavedInteractionConfig = {
   tooltip: TooltipInfo['config'] & {
@@ -63,18 +63,20 @@ export type SavedLayer = {
       [key: string]: string;
     };
     isVisible: boolean;
-    visConfig: object;
+    visConfig: Record<string, any>;
     hidden: boolean;
     textLabel: Merge<LayerTextLabel, {field: {name: string; type: string} | null}>;
   };
   visualChannels: SavedVisualChannels;
 };
-
-export type ParsedLayer = {
-  id?: string;
-  type?: string;
-  config?: Partial<SavedLayer['config']>;
+export type MinSavedLayerConfig = RequireFrom<SavedLayer['config'], 'dataId' | 'columns'>;
+export type MinSavedLayer = {
+  id: string;
+  type: string;
+  config: MinSavedLayerConfig;
+  visualChannels?: SavedVisualChannels;
 };
+export type ParsedLayer = SavedLayer | MinSavedLayer;
 
 export type SavedAnimationConfig = {
   currentTime: AnimationConfig['currentTime'];
@@ -97,6 +99,18 @@ export type SavedVisState = {
   editor?: SavedEditor;
 };
 
+// Min saved config can be passed to addDataToMap
+export type MinSavedVisStateV1 = {
+  filters?: MinSavedFilter[];
+  layers?: MinSavedLayer[];
+  interactionConfig?: Partial<SavedInteractionConfig>;
+  layerBlending?: string;
+  overlayBlending?: string;
+  splitMaps?: SplitMap[];
+  animationConfig?: SavedAnimationConfig;
+  editor?: SavedEditor;
+};
+
 export type ParsedVisState = {
   layers?: ParsedLayer[];
   filters?: ParsedFilter[];
@@ -116,6 +130,10 @@ export type SavedMapState = {
   zoom: number;
   isSplit: boolean;
 };
+
+export type SavedMapStateV1 = SavedMapState;
+export type MinSavedMapStateV1 = Partial<SavedMapState>;
+export type ParsedMapState = Partial<SavedMapState>;
 
 export type SavedLayerGroups = {
   [key: string]: boolean;
@@ -140,6 +158,11 @@ export type SavedMapStyle = {
   mapStyles: SavedCustomMapStyle;
 };
 
+export type SavedMapStyleV1 = SavedMapStyle;
+export type MinSavedMapStyleV1 = Partial<SavedMapStyleV1>;
+
+export type ParsedMapStyle = Partial<SavedMapStyleV1>;
+
 /** Schema for v1 saved configuration */
 export type SavedConfigV1 = {
   version: 'v1';
@@ -150,12 +173,21 @@ export type SavedConfigV1 = {
   };
 };
 
+// supported by addDataToMap
+export type MinSavedConfigV1 = {
+  version: 'v1';
+  config: {
+    visState?: MinSavedVisStateV1;
+    mapState?: MinSavedMapStateV1;
+    mapStyle?: MinSavedMapStyleV1;
+  };
+};
+
 /** Schema for a parsed configuration ("normalized" across versions) */
 export type ParsedConfig = {
-  version: string;
   visState?: ParsedVisState;
-  mapState?: Partial<SavedMapState>;
-  mapStyle?: Partial<SavedMapStyle>;
+  mapState?: ParsedMapState;
+  mapStyle?: ParsedMapStyle;
 };
 
 export type SavedField = {

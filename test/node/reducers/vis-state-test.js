@@ -603,13 +603,10 @@ test('#visStateReducer -> LAYER_CONFIG_CHANGE -> isVisible -> animationConfig', 
   t.deepEqual(
     nextState.animationConfig,
     {
+      ...DEFAULT_ANIMATION_CONFIG,
       domain: null,
       currentTime: 1565577261000,
-      speed: 1,
-      isAnimating: false,
-      defaultTimeFormat: null,
-      timeFormat: null,
-      timezone: null
+      isAnimating: false
     },
     'should set animationConfig to default'
   );

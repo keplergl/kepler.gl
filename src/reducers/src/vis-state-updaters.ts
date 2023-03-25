@@ -194,7 +194,9 @@ export const DEFAULT_ANIMATION_CONFIG: AnimationConfig = {
   isAnimating: false,
   timeFormat: null,
   timezone: null,
-  defaultTimeFormat: null
+  defaultTimeFormat: null,
+  hideControl: false,
+  duration: null
 };
 
 export const DEFAULT_EDITOR: Editor = {
@@ -1389,7 +1391,7 @@ export const resetMapConfigUpdater = (state: VisState): VisState => ({
 export const receiveMapConfigUpdater = (
   state: VisState,
   {
-    payload: {config = {version: ''}, options = {}}
+    payload: {config = {}, options = {}}
   }: {
     type?: typeof ActionTypes.RECEIVE_MAP_CONFIG;
     payload: ReceiveMapConfigPayload;

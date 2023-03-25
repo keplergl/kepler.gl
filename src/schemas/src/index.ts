@@ -28,7 +28,6 @@ export {
 
 // eslint-disable-next-line prettier/prettier
 export type {
-  ParsedConfig,
   SavedConfigV1,
   SavedMap,
   LoadedMap,

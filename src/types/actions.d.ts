@@ -1,4 +1,4 @@
-import {SavedMap, ParsedConfig} from './schemas';
+import {SavedMap, ParsedConfig, SavedConfigV1, MinSavedConfigV1} from './schemas';
 
 /** EXPORT_FILE_TO_CLOUD */
 export type MapData = {
@@ -67,6 +67,6 @@ export type AddDataToMapPayload = {
   // as the field is called `datasets`
   datasets: ProtoDataset[] | ProtoDataset;
   options?: AddDataToMapOptions;
-  config?: ParsedConfig;
+  config?: ParsedConfig | SavedConfigV1 | MinSavedConfigV1;
   info?: Partial<MapInfo>;
 };

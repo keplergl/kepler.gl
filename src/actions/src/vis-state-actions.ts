@@ -34,7 +34,8 @@ import {
   Feature,
   FeatureSelectionContext,
   InteractionConfig,
-  Filter
+  Filter,
+  ParsedConfig
 } from '@kepler.gl/types';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
@@ -628,8 +629,8 @@ export type AddDataToMapUpdaterOptions = {
 export type UpdateVisDataUpdaterAction = {
   datasets: AddDataToMapPayload['datasets'];
   options: AddDataToMapPayload['options'];
-  config?: AddDataToMapPayload['config'];
-} & AddDataToMapPayload;
+  config?: ParsedConfig;
+};
 // * @param dataset.info -info of a dataset
 // * @param dataset.info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
 // * @param dataset.info.label - A display name of this dataset
@@ -654,7 +655,7 @@ export type UpdateVisDataUpdaterAction = {
 export function updateVisData(
   datasets: AddDataToMapPayload['datasets'],
   options: AddDataToMapPayload['options'],
-  config?: AddDataToMapPayload['config']
+  config?: ParsedConfig
 ): Merge<UpdateVisDataUpdaterAction, {type: typeof ActionTypes.UPDATE_VIS_DATA}> {
   return {
     type: ActionTypes.UPDATE_VIS_DATA,
