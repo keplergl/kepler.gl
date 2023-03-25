@@ -76,7 +76,7 @@ export function onClick(
       if (editor.selectedFeature) {
         setSelectedFeature(null);
       }
-    } else if (objectType === 'Polygon' || objectType === 'Point') {
+    } else if (objectType?.endsWith('Polygon') || objectType?.endsWith('Point')) {
       let clickContext;
       if (event.rightButton && Array.isArray(event.srcEvent?.point)) {
         const {point} = event.srcEvent;
@@ -90,7 +90,7 @@ export function onClick(
         };
       }
 
-      if (objectType === 'Polygon') {
+      if (objectType?.endsWith('Polygon')) {
         setSelectedFeature(info.object, clickContext);
       } else {
         // don't select points

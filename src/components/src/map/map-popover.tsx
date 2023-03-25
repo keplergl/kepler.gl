@@ -18,18 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useState} from 'react';
+import React, {useState, useCallback} from 'react';
 import styled from 'styled-components';
-import LayerHoverInfoFactory from './layer-hover-info';
-import CoordinateInfoFactory from './coordinate-info';
 import MapPopoverContentFactory from './map-popover-content';
-import {Pin, ArrowLeft, ArrowRight} from '../common/icons';
+import {Pin, ArrowLeft, ArrowRight, CursorPoint} from '../common/icons';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import Tippy from '@tippyjs/react/headless';
 import {RootContext} from '../';
+import {parseGeoJsonRawFeature} from '@kepler.gl/layers';
+import {idToPolygonGeo, generateHashId} from '@kepler.gl/utils';
+import {LAYER_TYPES} from '@kepler.gl/constants';
 import {LayerHoverProp} from '@kepler.gl/reducers';
+import {Feature} from '@kepler.gl/types';
 
+const SELECTABLE_LAYERS: string[] = [LAYER_TYPES.hexagonId, LAYER_TYPES.geojson];
 const MAX_WIDTH = 500;
 const MAX_HEIGHT = 600;
 
@@ -127,7 +130,21 @@ const StyledIcon = styled.div`
   }
 `;
 
-MapPopoverFactory.deps = [LayerHoverInfoFactory, CoordinateInfoFactory, MapPopoverContentFactory];
+const StyledSelectGeometry = styled.div`
+  display: flex;
+  align-items: center;
+  color: ${props => props.theme.textColorHl};
+  svg {
+    margin-right: 6px;
+  }
+
+  :hover {
+    cursor: pointer;
+    color: ${props => props.theme.linkBtnColor};
+  }
+`;
+
+MapPopoverFactory.deps = [MapPopoverContentFactory];
 
 function createVirtualReference(container, x, y, size = 0) {
   const bounds =
@@ -176,6 +193,30 @@ function getPopperOptions(container) {
   };
 }
 
+export function getSelectedFeature(layerHoverProp: LayerHoverProp | null): Feature | null {
+  const layer = layerHoverProp?.layer;
+  let fieldIdx;
+  let selectedFeature;
+  switch (layer?.type) {
+    case LAYER_TYPES.hexagonId:
+      fieldIdx = layer.config?.columns?.hex_id?.fieldIdx;
+      selectedFeature = idToPolygonGeo({id: layerHoverProp?.data?.[fieldIdx]}, {isClosed: true});
+      break;
+    case LAYER_TYPES.geojson:
+      fieldIdx = layer.config?.columns?.geojson?.fieldIdx;
+      selectedFeature = parseGeoJsonRawFeature(layerHoverProp?.data?.[fieldIdx]);
+      break;
+    default:
+      break;
+  }
+
+  return {
+    ...selectedFeature,
+    // unique id should be assigned to features in the editor
+    id: generateHashId(8)
+  };
+}
+
 export type MapPopoverProps = {
   x: number;
   y: number;
@@ -186,6 +227,8 @@ export type MapPopoverProps = {
   zoom: number;
   container?: HTMLElement | null;
   onClose: () => void;
+  onSetFeatures: (features: Feature[]) => any;
+  setSelectedFeature: (feature: Feature, clickContext: object) => any;
 };
 
 type IntlProps = {
@@ -193,11 +236,8 @@ type IntlProps = {
 };
 
 export default function MapPopoverFactory(
-  LayerHoverInfo: ReturnType<typeof LayerHoverInfoFactory>,
-  CoordinateInfo: ReturnType<typeof CoordinateInfoFactory>,
   MapPopoverContent: ReturnType<typeof MapPopoverContentFactory>
 ) {
-  /** @type {typeof import('./map-popover').MapPopover} */
   const MapPopover: React.FC<MapPopoverProps & IntlProps> = ({
     x,
     y,
@@ -207,11 +247,28 @@ export default function MapPopoverFactory(
     isBase,
     zoom,
     container,
-    onClose
+    onClose,
+    onSetFeatures,
+    setSelectedFeature
   }) => {
     const [horizontalPlacement, setHorizontalPlacement] = useState('start');
     const moveLeft = () => setHorizontalPlacement('end');
     const moveRight = () => setHorizontalPlacement('start');
+
+    const onSetSelectedFeature = useCallback(() => {
+      const clickContext = {
+        mapIndex: 0,
+        rightClick: true,
+        position: {x, y}
+      };
+      const selectedFeature = getSelectedFeature(layerHoverProp);
+      if (selectedFeature) {
+        setSelectedFeature(selectedFeature, clickContext);
+        onSetFeatures([selectedFeature]);
+      }
+      onClose();
+    }, [onClose, onSetFeatures, x, y, setSelectedFeature, layerHoverProp]);
+
     return (
       <RootContext.Consumer>
         {context => (
@@ -258,6 +315,12 @@ export default function MapPopoverFactory(
                     layerHoverProp={layerHoverProp}
                   />
                 </PopoverContent>
+                {SELECTABLE_LAYERS.includes(layerHoverProp?.layer?.type as string) && frozen ? (
+                  <StyledSelectGeometry className="select-geometry" onClick={onSetSelectedFeature}>
+                    <CursorPoint />
+                    Select Geometry
+                  </StyledSelectGeometry>
+                ) : null}
               </StyledMapPopover>
             )}
           />

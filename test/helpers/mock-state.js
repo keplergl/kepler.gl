@@ -22,10 +22,7 @@ import test from 'tape-catch';
 import cloneDeep from 'lodash.clonedeep';
 import {drainTasksForTesting} from 'react-palm/tasks';
 
-import {
-  getInitialInputStyle,
-  keplerGlReducerCore as keplerGlReducer
-} from '@kepler.gl/reducers';
+import {getInitialInputStyle, keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
 
 import {
   VizColorPalette,
@@ -945,3 +942,22 @@ export function mockKeplerPropsWithState({
 }
 
 export const mockKeplerProps = mockKeplerPropsWithState({state: StateWLayerStyle});
+
+// mount map with mockKeplerProps
+// hover over data index 15
+// tested in map-container-test
+export const expectedLayerHoverProp = {
+  data: mockKeplerProps.visState.datasets[testCsvDataId].dataContainer.row(15),
+  fields: mockKeplerProps.visState.datasets[testCsvDataId].fields,
+  fieldsToShow:
+    mockKeplerProps.visState.interactionConfig.tooltip.config.fieldsToShow[testCsvDataId],
+  layer: mockKeplerProps.visState.layers[0]
+};
+
+export const expectedGeojsonLayerHoverProp = {
+  data: mockKeplerProps.visState.datasets[testGeoJsonDataId].dataContainer.row(0),
+  fields: mockKeplerProps.visState.datasets[testGeoJsonDataId].fields,
+  fieldsToShow:
+    mockKeplerProps.visState.interactionConfig.tooltip.config.fieldsToShow[testGeoJsonDataId],
+  layer: mockKeplerProps.visState.layers[1]
+};
