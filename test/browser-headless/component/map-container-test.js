@@ -26,7 +26,6 @@ import test from 'tape';
 import {
   appInjector,
   MapContainerFactory,
-  EditorFactory,
   MapControlFactory,
   MapPopoverFactory,
   mapFieldsSelector
