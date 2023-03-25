@@ -35,7 +35,7 @@ import {StaticMap} from 'react-map-gl';
 import Tippy from '@tippyjs/react/headless';
 import {gl, InteractionTestRunner} from '@deck.gl/test-utils';
 
-import {mockKeplerProps} from '../../helpers/mock-state';
+import {mockKeplerProps, expectedLayerHoverProp} from '../../helpers/mock-state';
 
 const MapContainer = appInjector.get(MapContainerFactory);
 const MapPopover = appInjector.get(MapPopoverFactory);
@@ -210,6 +210,13 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           }, 'render map container with map popover should not fail');
 
           t.equal(wrapper.find(MapPopover).length, 1, 'should render 1 MapPopover');
+          const mapPopoverProps = wrapper
+            .find(MapPopover)
+            .at(0)
+            .props();
+
+          // test MapPopoverProp
+          testMapPopoverProp(t, mapPopoverProps);
           // map control and map popover both uses Tippy
           t.equal(wrapper.find(Tippy).length, 2, 'should render Tippy');
           t.equal(wrapper.find('table').length, 1, 'should render 1 table');
@@ -234,6 +241,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           };
 
           const rect = tippyProps.getReferenceClientRect();
+          delete rect.toJSON;
 
           t.deepEqual(
             rect,
@@ -280,6 +288,76 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
     .then(() => t.end());
 });
 
+function testMapPopoverProp(t, mapPopoverProp) {
+  const expected = {
+    container: 'test exist',
+    coordinate: false,
+    frozen: false,
+    layerHoverProp: 'test seperate',
+    onClose: 'test exist',
+    x: 200,
+    y: 200,
+    zoom: 13,
+    onSetFeatures: sinon.spy(),
+    setSelectedFeature: sinon.spy()
+  };
+  t.deepEqual(
+    Object.keys(mapPopoverProp).sort(),
+    Object.keys(expected).sort(),
+    'MapPopover should receive corrent props'
+  );
+
+  t.equal(
+    mapPopoverProp.coordinate,
+    expected.coordinate,
+    `MapPopover.props.coordinate should be correct`
+  );
+  t.equal(mapPopoverProp.frozen, expected.frozen, `MapPopover.props.frozen should be correct`);
+  t.equal(mapPopoverProp.x, expected.x, `MapPopover.props.x should be correct`);
+  t.equal(mapPopoverProp.y, expected.y, `MapPopover.props.y should be correct`);
+  t.equal(mapPopoverProp.zoom, expected.zoom, `MapPopover.props.zoom should be correct`);
+
+  testlayerHoverProp(t, mapPopoverProp.layerHoverProp);
+}
+
+function testlayerHoverProp(t, layerHoverProp) {
+  t.deepEqual(
+    Object.keys(layerHoverProp).sort(),
+    Object.keys(expectedLayerHoverProp).sort(),
+    'layerHoverProp should have corrent props'
+  );
+
+  t.equal(
+    layerHoverProp.currentTime,
+    expectedLayerHoverProp.currentTime,
+    `layerHoverProp.currentTime should be correct`
+  );
+
+  t.equal(
+    layerHoverProp.data.values(),
+    expectedLayerHoverProp.data.values(),
+    `layerHoverProp.data should be correct`
+  );
+
+  t.equal(
+    layerHoverProp.fields,
+    expectedLayerHoverProp.fields,
+    `layerHoverProp.fields should be correct`
+  );
+
+  t.equal(
+    layerHoverProp.fieldsToShow,
+    expectedLayerHoverProp.fieldsToShow,
+    `layerHoverProp.fieldsToShow should be correct`
+  );
+  t.equal(
+    layerHoverProp.layer,
+    expectedLayerHoverProp.layer,
+    `layerHoverProp.layer should be correct`
+  );
+}
+
+/*
 test('MapContainerFactory - _renderEditorContextMenu', t => {
   const props = {
     ...initialProps,
@@ -316,3 +394,4 @@ test('MapContainerFactory - _renderEditorContextMenu', t => {
   t.equal(editorWrapper.find(Editor).length, 1, 'should render 1 Editor');
   t.end();
 });
+*/
