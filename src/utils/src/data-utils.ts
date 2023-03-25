@@ -164,6 +164,14 @@ export function preciseRound(num: number, decimals: number): string {
 }
 
 /**
+ * round a giving number at most 4 decimal places
+ * e.g. 10 -> 10, 1.12345 -> 1.2345, 2.0 -> 2
+ */
+export function roundToFour(num: number): number {
+  // @ts-expect-error
+  return Number(`${Math.round(`${num}e+4`)}e-4`);
+}
+/**
  * get number of decimals to round to for slider from step
  * @param step
  * @returns- number of decimal
@@ -257,6 +265,8 @@ export function roundValToStep(minValue: number, step: number, val: number): num
  * Used in render tooltip value
  */
 export const defaultFormatter: FieldFormatter = v => (notNullorUndefined(v) ? String(v) : '');
+
+export const floatFormatter = v => (isNumber(v) ? String(roundToFour(v)) : '');
 
 export const FIELD_DISPLAY_FORMAT: {
   [key: string]: FieldFormatter;

@@ -61,6 +61,7 @@ export {
   arrayMove,
   getFormatter,
   applyDefaultFormat,
+  roundToFour,
   getBooleanFormatter,
   applyCustomFormat,
   datetimeFormatter,
