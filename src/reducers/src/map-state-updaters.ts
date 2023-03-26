@@ -23,6 +23,7 @@ import booleanWithin from '@turf/boolean-within';
 import bboxPolygon from '@turf/bbox-polygon';
 import {fitBounds} from '@math.gl/web-mercator';
 import deepmerge from 'deepmerge';
+import pick from 'lodash.pick';
 
 import {getCenterAndZoomFromBounds, validateBounds, MAPBOX_TILE_SIZE} from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
@@ -80,7 +81,13 @@ const mapStateUpdaters = null;
  * @property dragRotate Default: `false`
  * @property width Default: `800`
  * @property height Default: `800`
- * @property isSplit Default: `false`
+ * @property minZoom: `undefined`,
+ * @property maxZoom: `undefined`,
+ * @property maxBounds: `undefined`,
+ * @property isSplit: `false`,
+ * @property isViewportSynced: `true`,
+ * @property isZoomLocked: `false`,
+ * @property splitMapViewports: `[]`
  * @public
  */
 export const INITIAL_MAP_STATE: MapState = {
@@ -92,10 +99,13 @@ export const INITIAL_MAP_STATE: MapState = {
   dragRotate: false,
   width: 800,
   height: 800,
-  isSplit: false,
   minZoom: undefined,
   maxZoom: undefined,
-  maxBounds: undefined
+  maxBounds: undefined,
+  isSplit: false,
+  isViewportSynced: true,
+  isZoomLocked: false,
+  splitMapViewports: []
 };
 
 /* Updaters */
@@ -108,24 +118,46 @@ export const updateMapUpdater = (
   state: MapState,
   action: MapStateActions.UpdateMapUpdaterAction
 ): MapState => {
-  let newMapState = {
-    ...state,
-    ...(action.payload || {})
-  };
+  const {viewport, mapIndex = 0} = action.payload;
 
-  // Make sure zoom level doesn't go bellow minZoom if defined
-  if (newMapState.minZoom && newMapState.zoom < newMapState.minZoom) {
-    newMapState.zoom = newMapState.minZoom;
+  if (state.isViewportSynced) {
+    return updateViewport(state, viewport);
   }
-  // Make sure zoom level doesn't go above maxZoom if defined
-  if (newMapState.maxZoom && newMapState.zoom > newMapState.maxZoom) {
-    newMapState.zoom = newMapState.maxZoom;
+
+  let otherViewportMapIndex = -1;
+  const splitMapViewports = state.splitMapViewports.map((currentViewport, i) => {
+    if (i === mapIndex) {
+      // update the matching viewport with the newViewport info in the action payload
+      return updateViewport(currentViewport, viewport);
+    }
+
+    otherViewportMapIndex = i;
+    // make no changes to the other viewport (yet)
+    return currentViewport;
+  });
+
+  // make conditional updates to the other viewport not matching this payload's `mapIndex`
+  if (Number.isFinite(otherViewportMapIndex) && otherViewportMapIndex > -1) {
+    // width and height are a special case and are always updated
+    splitMapViewports[otherViewportMapIndex].width = splitMapViewports[mapIndex].width;
+    splitMapViewports[otherViewportMapIndex].height = splitMapViewports[mapIndex].height;
+
+    if (state.isZoomLocked) {
+      // update the other viewport with the new zoom from the split viewport that was updated with this payload's `mapIndex`
+      splitMapViewports[otherViewportMapIndex].zoom = splitMapViewports[mapIndex].zoom;
+    }
   }
-  // Limit viewport update based on maxBounds
-  if (newMapState.maxBounds && validateBounds(newMapState.maxBounds)) {
-    newMapState = updateViewportBasedOnBounds(state, newMapState);
-  }
-  return newMapState;
+
+  return {
+    // update the top-level mapState viewport with the most recently interacted-with split viewport
+    // WHY? this avoids zoom and bounds "jumping" due to a "stale" top-level mapState viewport when:
+    //  1. toggling off the unsynced viewports mode to switch to the synced viewports mode
+    //  2. toggling on the zoom lock during an unsynced viewports mode
+    ...state,
+    ...splitMapViewports[mapIndex],
+    // update the mapState with the new array of split viewports
+    splitMapViewports
+  };
 };
 
 /**
@@ -146,7 +178,7 @@ export const fitBoundsUpdater = (
     return state;
   }
 
-  return {
+  const newState = {
     ...state,
     latitude: centerAndZoom.center[1],
     longitude: centerAndZoom.center[0],
@@ -154,6 +186,19 @@ export const fitBoundsUpdater = (
     // to avoid corrupt state and potential crashes as zoom is expected to be a number
     ...(Number.isFinite(centerAndZoom.zoom) ? {zoom: centerAndZoom.zoom} : {})
   };
+
+  // if fitting to bounds while split and unsynced
+  // copy the new latitude, longitude, and zoom values to each split viewport
+  if (newState.splitMapViewports.length) {
+    newState.splitMapViewports = newState.splitMapViewports.map(currentViewport => ({
+      ...currentViewport,
+      latitude: newState.latitude,
+      longitude: newState.longitude,
+      zoom: newState.zoom
+    }));
+  }
+
+  return newState;
 };
 
 /**
@@ -164,14 +209,29 @@ export const fitBoundsUpdater = (
 export const togglePerspectiveUpdater = (
   state: MapState,
   action: MapStateActions.TogglePerspectiveUpdaterAction
-): MapState => ({
-  ...state,
-  ...{
-    pitch: state.dragRotate ? 0 : 50,
-    bearing: state.dragRotate ? 0 : 24
-  },
-  dragRotate: !state.dragRotate
-});
+): MapState => {
+  const newState = {
+    ...state,
+    ...{
+      pitch: state.dragRotate ? 0 : 50,
+      bearing: state.dragRotate ? 0 : 24
+    },
+    dragRotate: !state.dragRotate
+  };
+
+  // if toggling 3d and 2d while split and unsynced
+  // copy the new pitch, bearing, and dragRotate values to each split viewport
+  if (newState.splitMapViewports.length) {
+    newState.splitMapViewports = newState.splitMapViewports.map(currentViewport => ({
+      ...currentViewport,
+      pitch: newState.pitch,
+      bearing: newState.bearing,
+      dragRotate: newState.dragRotate
+    }));
+  }
+
+  return newState;
+};
 
 /**
  * reset mapState to initial State
@@ -239,9 +299,84 @@ export const toggleSplitMapUpdater = (
   action: MapStateActions.ToggleSplitMapUpdaterAction
 ): MapState => ({
   ...state,
+  ...getMapDimForSplitMap(!state.isSplit, state),
   isSplit: !state.isSplit,
-  ...getMapDimForSplitMap(!state.isSplit, state)
+  ...(!state.isSplit === false
+    ? {
+        // if toggling to no longer split (single mode) then reset a few properties
+        isViewportSynced: true,
+        isZoomLocked: false,
+        splitMapViewports: []
+      }
+    : {})
 });
+
+/**
+ * Toggle between locked and unlocked split viewports
+ * @memberof mapStateUpdaters
+ * @public
+ */
+export const toggleSplitMapViewportUpdater = (
+  state: MapState,
+  action: MapStateActions.ToggleSplitMapViewportUpdaterAction
+) => {
+  // new map state immediately gets the new payload values for isViewportSynced and isZoomLocked
+  const newMapState = {
+    ...state,
+    ...(action.payload || {})
+  };
+
+  if (newMapState.isViewportSynced) {
+    // switching from unsynced to synced viewports
+    newMapState.splitMapViewports = [];
+  } else {
+    // switching from synced to unsynced viewports
+    // or already in unsynced mode and toggling locked zoom
+
+    if (state.isZoomLocked && !newMapState.isZoomLocked) {
+      // switching off locked zoom while unsynced
+      // don't copy the mapStates to left and right viewports because there will be zoom "jumping"
+      return newMapState;
+    }
+
+    if (!state.isZoomLocked && newMapState.isZoomLocked) {
+      // switching on locked zoom while unsynced
+      // only copy zoom viewport property from the most recently interacted-with viewport to the other
+      // TODO: do we want to check for a match a different way, such as a combo of `latitude` and `longitude`?
+      const lastUpdatedViewportIndex = newMapState.splitMapViewports.findIndex(
+        v => newMapState.zoom === v.zoom
+      );
+
+      const splitMapViewports = newMapState.splitMapViewports.map((currentViewport, i) => {
+        if (i === lastUpdatedViewportIndex) {
+          // no zoom to modify here
+          return currentViewport;
+        }
+        // the other viewport gets the most recently interacted-with viewport's zoom
+        // WHY? the viewport the user was last interacting with will set zoom across the board for smooth UX
+        return {
+          ...currentViewport,
+          zoom: newMapState.splitMapViewports[lastUpdatedViewportIndex].zoom
+        };
+      });
+
+      newMapState.splitMapViewports = splitMapViewports;
+
+      return newMapState;
+    }
+
+    // if current viewport is synced, and we are unsyncing it
+    // or already in unsynced mode and NOT toggling locked zoom
+    // make a fresh copy of the current viewport object, assign it to splitMapViewports[]
+    // getViewportFromMapState is called twice to avoid memory allocation conflicts
+    const leftViewport = getViewportFromMapState(newMapState);
+    const rightViewport = getViewportFromMapState(newMapState);
+    newMapState.splitMapViewports = [leftViewport, rightViewport];
+  }
+
+  // return new state
+  return newMapState;
+};
 
 // Helpers
 export function getMapDimForSplitMap(isSplit, state) {
@@ -321,4 +456,42 @@ function updateViewportBasedOnBounds(state: MapState, newMapState: MapState) {
   }
 
   return newMapState;
+}
+
+function getViewportFromMapState(state) {
+  return pick(state, [
+    'width',
+    'height',
+    'zoom',
+    'pitch',
+    'bearing',
+    'latitude',
+    'longitude',
+    'dragRotate',
+    'minZoom',
+    'maxZoom',
+    'maxBounds'
+  ]);
+}
+
+function updateViewport(originalViewport, viewportUpdates) {
+  let newViewport = {
+    ...originalViewport,
+    ...(viewportUpdates || {})
+  };
+
+  // Make sure zoom level doesn't go bellow minZoom if defined
+  if (newViewport.minZoom && newViewport.zoom < newViewport.minZoom) {
+    newViewport.zoom = newViewport.minZoom;
+  }
+  // Make sure zoom level doesn't go above maxZoom if defined
+  if (newViewport.maxZoom && newViewport.zoom > newViewport.maxZoom) {
+    newViewport.zoom = newViewport.maxZoom;
+  }
+  // Limit viewport update based on maxBounds
+  if (newViewport.maxBounds && validateBounds(newViewport.maxBounds)) {
+    newViewport = updateViewportBasedOnBounds(originalViewport, newViewport);
+  }
+
+  return newViewport;
 }

@@ -330,11 +330,11 @@ export default function MapContainerFactory(
     };
 
     _handleResize = dimensions => {
-      const {primary} = this.props;
+      const {primary, index} = this.props;
       if (primary) {
         const {mapStateActions} = this.props;
         if (dimensions && dimensions.width > 0 && dimensions.height > 0) {
-          mapStateActions.updateMap(dimensions);
+          mapStateActions.updateMap(dimensions, index);
         }
       }
     };
@@ -521,6 +521,12 @@ export default function MapContainerFactory(
 
     /* eslint-disable complexity */
     _renderMapPopover() {
+      // this check is for limiting the display of the `<MapPopover>` to the `<MapContainer>` the user is interacting with
+      // the DeckGL onHover event handler adds a `mapIndex` property which is available in the `hoverInfo` object of `visState`
+      if (this.props.index !== this.props.visState.hoverInfo?.mapIndex) {
+        return null;
+      }
+
       // TODO: move this into reducer so it can be tested
       const {
         mapState,
@@ -733,6 +739,11 @@ export default function MapContainerFactory(
               });
               if (res) return;
 
+              // add `mapIndex` property which will end up in the the `hoverInfo` object of `visState`
+              // this is for limiting the display of the `<MapPopover>` to the `<MapContainer>` the user is interacting with
+              // @ts-ignore (does not fail with local yarn-test)
+              data.mapIndex = index;
+
               visStateActions.onLayerHover(data);
             }}
             onClick={(data, event) => {
@@ -790,7 +801,8 @@ export default function MapContainerFactory(
         viewState,
         this.props.mapStateActions.updateMap,
         this.props.onViewStateChange,
-        this.props.primary
+        this.props.primary,
+        this.props.index
       );
     };
 
@@ -869,6 +881,7 @@ export default function MapContainerFactory(
             onToggleSplitMap={mapStateActions.toggleSplitMap}
             onMapToggleLayer={this._handleMapToggleLayer}
             onToggleMapControl={this._toggleMapControl}
+            onToggleSplitMapViewport={mapStateActions.toggleSplitMapViewport}
             onSetEditorMode={visStateActions.setEditorMode}
             onSetLocale={uiStateActions.setLocale}
             onToggleEditorVisibility={visStateActions.toggleEditorVisibility}

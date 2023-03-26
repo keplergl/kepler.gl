@@ -68,12 +68,21 @@ const PARSED_CONFIG = KeplerGlSchema.parseSavedConfig({
 
 interface StyledGeocoderPanelProps {
   width?: number;
+  unsyncedViewports: any;
+  index: any;
 }
 
 const StyledGeocoderPanel = styled.div<StyledGeocoderPanelProps>`
   position: absolute;
   top: ${props => props.theme.geocoderTop}px;
-  right: ${props => props.theme.geocoderRight}px;
+  right: ${props =>
+    props.unsyncedViewports
+      ? // 2 geocoders: split mode and unsynced viewports
+        Number.isFinite(props.index) && props.index === 0
+        ? `calc(50% + ${props.theme.geocoderRight}px)` // unsynced left geocoder (index 0)
+        : `${props.theme.geocoderRight}px` // unsynced right geocoder (index 1)
+      : // 1 geocoder: single mode OR split mode and synced viewports
+        `${props.theme.geocoderRight}px`};
   width: ${props => (Number.isFinite(props.width) ? props.width : props.theme.geocoderWidth)}px;
   box-shadow: ${props => props.theme.boxShadow};
   z-index: 100;
@@ -125,6 +134,8 @@ interface GeocoderPanelProps {
   width?: number;
   appWidth: number;
   className?: string;
+  index: number;
+  unsyncedViewports: boolean;
 }
 
 export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps> {
@@ -161,17 +172,20 @@ export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps
         return;
       }
 
-      this.props.updateMap({
-        latitude: centerAndZoom.center[1],
-        longitude: centerAndZoom.center[0],
-        // For marginal or invalid bounds, zoom may be NaN. Make sure to provide a valid value in order
-        // to avoid corrupt state and potential crashes as zoom is expected to be a number
-        ...(Number.isFinite(centerAndZoom.zoom) ? {zoom: centerAndZoom.zoom} : {}),
-        pitch: 0,
-        bearing: 0,
-        transitionDuration: this.props.transitionDuration,
-        transitionInterpolator: new FlyToInterpolator()
-      });
+      this.props.updateMap(
+        {
+          latitude: centerAndZoom.center[1],
+          longitude: centerAndZoom.center[0],
+          // For marginal or invalid bounds, zoom may be NaN. Make sure to provide a valid value in order
+          // to avoid corrupt state and potential crashes as zoom is expected to be a number
+          ...(Number.isFinite(centerAndZoom.zoom) ? {zoom: centerAndZoom.zoom} : {}),
+          pitch: 0,
+          bearing: 0,
+          transitionDuration: this.props.transitionDuration,
+          transitionInterpolator: new FlyToInterpolator()
+        },
+        this.props.index
+      );
     };
 
     removeMarker = () => {
@@ -179,11 +193,20 @@ export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps
     };
 
     render() {
-      const {isGeocoderEnabled, mapboxApiAccessToken, width, className} = this.props;
+      const {
+        className,
+        isGeocoderEnabled,
+        mapboxApiAccessToken,
+        width,
+        index,
+        unsyncedViewports
+      } = this.props;
       return (
         <StyledGeocoderPanel
           className={classnames('geocoder-panel', className)}
           width={width}
+          index={index}
+          unsyncedViewports={unsyncedViewports}
           style={{display: isGeocoderEnabled ? 'block' : 'none'}}
         >
           {isValid(mapboxApiAccessToken) && (

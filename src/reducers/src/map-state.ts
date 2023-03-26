@@ -32,7 +32,8 @@ const actionHandler = {
   [ActionTypes.TOGGLE_PERSPECTIVE]: mapStateUpdaters.togglePerspectiveUpdater,
   [ActionTypes.RECEIVE_MAP_CONFIG]: mapStateUpdaters.receiveMapConfigUpdater,
   [ActionTypes.RESET_MAP_CONFIG]: mapStateUpdaters.resetMapConfigUpdater,
-  [ActionTypes.TOGGLE_SPLIT_MAP]: mapStateUpdaters.toggleSplitMapUpdater
+  [ActionTypes.TOGGLE_SPLIT_MAP]: mapStateUpdaters.toggleSplitMapUpdater,
+  [ActionTypes.TOGGLE_SPLIT_MAP_VIEWPORT]: mapStateUpdaters.toggleSplitMapViewportUpdater
 };
 
 /* Reducer */

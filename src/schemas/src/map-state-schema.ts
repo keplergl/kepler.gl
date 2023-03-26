@@ -33,7 +33,10 @@ export const propertiesV0 = {
 
 export const propertiesV1 = {
   ...propertiesV0,
-  isSplit: null
+  isSplit: null,
+  isViewportSynced: null,
+  isZoomLocked: null,
+  splitMapViewports: null
 };
 
 const mapStateSchema = {

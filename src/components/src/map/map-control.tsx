@@ -67,6 +67,13 @@ export type MapControlProps = {
   mapControls: MapControls;
   onTogglePerspective: () => void;
   onToggleSplitMap: () => void;
+  onToggleSplitMapViewport: ({
+    isViewportSynced,
+    isZoomLocked
+  }: {
+    isViewportSynced: boolean;
+    isZoomLocked: boolean;
+  }) => void;
   onToggleMapControl: (control: string) => void;
   onSetEditorMode: (mode: string) => void;
   onToggleEditorVisibility: () => void;
