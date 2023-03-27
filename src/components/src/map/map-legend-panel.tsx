@@ -29,9 +29,10 @@ import MapLegendFactory from './map-legend';
 import LazyTippy from './lazy-tippy';
 import {createPortal} from 'react-dom';
 import {DIMENSIONS} from '@kepler.gl/constants';
-import {MapControl, MapControls} from '@kepler.gl/types';
+import {MapControl, MapControls, MapState} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {media} from '@kepler.gl/styles';
+import {ActionHandler, toggleSplitMapViewport} from '@kepler.gl/actions';
 
 MapLegendPanelFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory, MapLegendFactory];
 
@@ -66,8 +67,10 @@ export type MapLegendPanelProps = {
   logoComponent: Element;
   actionIcons: MapLegendPanelIcons;
   mapControls: MapControls;
+  mapState?: MapState;
   mapHeight?: number;
   offsetRight?: number;
+  onToggleSplitMapViewport?: ActionHandler<typeof toggleSplitMapViewport>;
 };
 
 function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
@@ -75,7 +78,6 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     legend: Legend
   };
 
-  /** @type {import('./map-legend-panel').MapLegendPanelComponent} */
   const MapLegendPanel: React.FC<MapLegendPanelProps> = ({
     layers,
     mapControls,
@@ -84,8 +86,10 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     isExport,
     logoComponent,
     actionIcons = defaultActionIcons,
+    mapState,
     mapHeight,
-    offsetRight
+    offsetRight,
+    onToggleSplitMapViewport
   }) => {
     const mapLegend = mapControls?.mapLegend || ({} as MapControl);
     const {active: isPinned} = mapLegend || {};
@@ -130,6 +134,8 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
             })}
         isExport={isExport}
         logoComponent={logoComponent}
+        mapState={mapState}
+        onToggleSplitMapViewport={onToggleSplitMapViewport}
       >
         <MapLegend layers={layers} mapHeight={mapHeight} />
       </MapControlPanel>

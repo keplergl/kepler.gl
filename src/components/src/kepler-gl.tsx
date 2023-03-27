@@ -127,11 +127,34 @@ const BottomWidgetOuter = styled.div<BottomWidgetOuterProps>(
   }`
 );
 
-export const mapFieldsSelector = (props: KeplerGLProps) => ({
+export const isViewportDisjointed = props => {
+  return (
+    props.mapState.isSplit &&
+    !props.mapState.isViewportSynced &&
+    props.mapState.splitMapViewports.length > 1
+  );
+};
+
+export const mapStateSelector = (props, index) => {
+  if (!Number.isFinite(index)) {
+    // either no index arg or an invalid index was provided
+    // it is expected to be either 0 or 1 when in split mode
+    // only use the mapState
+    return props.mapState;
+  }
+
+  return isViewportDisjointed(props)
+    ? // mix together the viewport properties intended for this disjointed <MapContainer> with the other necessary mapState properties
+      {...props.mapState, ...props.mapState.splitMapViewports[index]}
+    : // otherwise only use the mapState
+      props.mapState;
+};
+
+export const mapFieldsSelector = (props: KeplerGLProps, index: number = 0) => ({
   getMapboxRef: props.getMapboxRef,
   mapboxApiAccessToken: props.mapboxApiAccessToken,
   mapboxApiUrl: props.mapboxApiUrl ? props.mapboxApiUrl : DEFAULT_KEPLER_GL_PROPS.mapboxApiUrl,
-  mapState: props.mapState,
+  mapState: mapStateSelector(props, index),
   mapStyle: props.mapStyle,
   onDeckInitialized: props.onDeckInitialized,
   onViewStateChange: props.onViewStateChange,
@@ -449,7 +472,6 @@ function KeplerGlFactory(
       const isExportingImage = uiState.exportImage.exporting;
       const availableProviders = this.availableProviders(this.props);
 
-      const mapFields = mapFieldsSelector(this.props);
       const filteredDatasets = this.filteredDatasetsSelector(this.props);
       const sideFields = sidePanelSelector(this.props, availableProviders, filteredDatasets);
       const plotContainerFields = plotContainerSelector(this.props);
@@ -459,9 +481,14 @@ function KeplerGlFactory(
       const notificationPanelFields = notificationPanelSelector(this.props);
 
       const mapContainers = !isSplit
-        ? [<MapContainer primary={true} key={0} index={0} {...mapFields} />]
+        ? [<MapContainer primary={true} key={0} index={0} {...mapFieldsSelector(this.props)} />]
         : splitMaps.map((settings, index) => (
-            <MapContainer key={index} index={index} primary={index === 1} {...mapFields} />
+            <MapContainer
+              key={index}
+              index={index}
+              primary={index === 1}
+              {...mapFieldsSelector(this.props, index)}
+            />
           ));
 
       return (
@@ -485,7 +512,21 @@ function KeplerGlFactory(
                   {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
                   <MapsLayout className="maps">{mapContainers}</MapsLayout>
                   {isExportingImage && <PlotContainer {...plotContainerFields} />}
-                  {interactionConfig.geocoder.enabled && <GeoCoderPanel {...geoCoderPanelFields} />}
+                  {/* 1 geocoder: single mode OR split mode and synced viewports */}
+                  {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (
+                    <GeoCoderPanel {...geoCoderPanelFields} index={0} unsyncedViewports={false} />
+                  )}
+                  {/* 2 geocoders: split mode and unsynced viewports */}
+                  {isViewportDisjointed(this.props) &&
+                    interactionConfig.geocoder.enabled &&
+                    mapContainers.map((_mapContainer, index) => (
+                      <GeoCoderPanel
+                        key={index}
+                        {...geoCoderPanelFields}
+                        index={index}
+                        unsyncedViewports={true}
+                      />
+                    ))}
                   <BottomWidgetOuter absolute={!hasPortableWidth(breakPointValues)}>
                     <BottomWidget
                       rootRef={this.bottomWidgetRef}

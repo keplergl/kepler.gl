@@ -144,6 +144,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
       height: 800,
       onClick: (info, event) => clickEvents.push({info, event}),
       onHover: (info, event) => {
+        info.mapIndex = 0;
         hoverEvents.push({info, event});
       }
     },
@@ -157,14 +158,17 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           assert.is(hoverEvents.length, 1, 'onHover is called');
           assert.is(hoverEvents[0].info.index, 15, 'object is picked');
           assert.is(hoverEvents[0].info.picked, true, 'object is picked');
+          assert.is(hoverEvents[0].info.mapIndex, 0, 'onHover includes mapIndex value');
           assert.deepEqual(
             layers[0].state.model.getUniforms().picking_uSelectedColor,
             [16, 0, 0],
             'autoHighlight parameter is set'
           );
 
-          // test picking info
-          ['color', 'coordinate', 'pixel', 'x', 'y'].forEach(key => {
+          [
+            // test picking info
+            ('color', 'coordinate', 'pixel', 'x', 'y')
+          ].forEach(key => {
             assert.deepEqual(
               hoverEvents[0].info[key],
               expectedInfo[key],

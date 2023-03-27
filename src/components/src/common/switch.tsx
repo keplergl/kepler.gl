@@ -32,6 +32,7 @@ interface SwitchProps {
   onFocus?: FocusEventHandler<HTMLInputElement>;
   value?: string;
   secondary?: boolean;
+  disabled?: boolean;
 }
 
 const Switch = (props: SwitchProps) => {

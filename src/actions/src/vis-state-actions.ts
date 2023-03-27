@@ -876,17 +876,17 @@ export function toggleFilterFeature(
 }
 
 export type OnLayerHoverUpdaterAction = {
-  info: PickInfo<any> | null;
+  info: (PickInfo<any> & {mapIndex?: number}) | null;
 };
 /**
  * Trigger layer hover event with hovered object
  * @memberof visStateActions
- * @param info - Object hovered, returned by deck.gl
+ * @param info - Object hovered, returned by deck.gl. Includes an optional `mapIndex` property for limiting the display of the `<MapPopover>` to the `<MapContainer>` the user is interacting with.
  * @returns action
  * @public
  */
 export function onLayerHover(
-  info: PickInfo<any> | null
+  info: (PickInfo<any> & {mapIndex?: number}) | null
 ): Merge<OnLayerHoverUpdaterAction, {type: typeof ActionTypes.LAYER_HOVER}> {
   return {
     type: ActionTypes.LAYER_HOVER,

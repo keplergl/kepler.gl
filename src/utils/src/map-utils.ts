@@ -5,9 +5,10 @@ import {SplitMapLayers, SplitMap, Viewport, MapState} from '@kepler.gl/types';
 
 export const onViewPortChange = (
   viewState: Viewport,
-  onUpdateMap: (next: any) => any,
+  onUpdateMap: (next: any, mapIndex: number) => any,
   onViewStateChange?: (next: any) => void | null,
-  primary: boolean = false
+  primary: boolean = false,
+  mapIndex: number = 0
 ): void => {
   const {width = 0, height = 0, ...restViewState} = viewState;
   // react-map-gl sends 0,0 dimensions during initialization
@@ -21,7 +22,7 @@ export const onViewPortChange = (
     onViewStateChange(next);
   }
 
-  onUpdateMap(next);
+  onUpdateMap(next, mapIndex);
 };
 
 export const getMapLayersFromSplitMaps = (

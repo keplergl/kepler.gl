@@ -54,7 +54,7 @@ export const fitBounds: (
   {type: typeof ActionTypes.FIT_BOUNDS}
 > = createAction(ActionTypes.FIT_BOUNDS, (bounds: Bounds) => ({payload: bounds}));
 
-export type UpdateMapUpdaterAction = {payload: Viewport};
+export type UpdateMapUpdaterAction = {payload: {viewport: Viewport; mapIndex?: number}};
 /**
  * Update map viewport
  * @memberof mapStateActions
@@ -67,18 +67,25 @@ export type UpdateMapUpdaterAction = {payload: Viewport};
  * @param {Number} [viewport.latitude] Latitude center of viewport on map in mercator projection
  * @param {Number} [viewport.longitude] Longitude Center of viewport on map in mercator projection
  * @param {boolean} [viewport.dragRotate] Whether to enable drag and rotate map into perspective viewport
+ * @param {number} mapIndex Index of which map to update the viewport of
  * @public
  * @example
  * import {updateMap} from 'kepler.gl/actions';
- * this.props.dispatch(updateMap({latitude: 37.75043, longitude: -122.34679, width: 800, height: 1200}));
+ * this.props.dispatch(updateMap({latitude: 37.75043, longitude: -122.34679, width: 800, height: 1200}, 0));
  */
 
 export const updateMap: (
-  payload: Viewport
-) => Merge<
-  UpdateMapUpdaterAction,
-  {type: typeof ActionTypes.UPDATE_MAP}
-> = createAction(ActionTypes.UPDATE_MAP, (viewport: Viewport) => ({payload: viewport}));
+  viewport: Viewport,
+  mapIndex?: number
+) => Merge<UpdateMapUpdaterAction, {type: typeof ActionTypes.UPDATE_MAP}> = createAction(
+  ActionTypes.UPDATE_MAP,
+  (viewport: Viewport, mapIndex?: number) => ({
+    payload: {
+      viewport,
+      mapIndex
+    }
+  })
+);
 
 export type ToggleSplitMapUpdaterAction = {
   payload: number;
@@ -98,6 +105,31 @@ export const toggleSplitMap: (
   ToggleSplitMapUpdaterAction,
   {type: typeof ActionTypes.TOGGLE_SPLIT_MAP}
 > = createAction(ActionTypes.TOGGLE_SPLIT_MAP, (index: number) => ({payload: index}));
+
+export type ToggleSplitMapViewportUpdaterAction = {
+  payload: {
+    isViewportSynced?: boolean;
+    isZoomLocked?: boolean;
+  };
+};
+
+/**
+ * For split maps, toggle between having (un)synced viewports and (un)locked zooms
+ * @memberof mapStateActions
+ * @param {Object} syncInfo
+ * @param {boolean} [syncInfo.isViewportSynced] Are the 2 split maps having synced viewports?
+ * @param {boolean} [syncInfo.isZoomLocked] If split, are the zooms locked to each other or independent?
+ */
+export const toggleSplitMapViewport: (payload: {
+  isViewportSynced?: boolean;
+  isZoomLocked?: boolean;
+}) => Merge<
+  ToggleSplitMapViewportUpdaterAction,
+  {type: typeof ActionTypes.TOGGLE_SPLIT_MAP_VIEWPORT}
+> = createAction(
+  ActionTypes.TOGGLE_SPLIT_MAP_VIEWPORT,
+  (syncInfo: ToggleSplitMapViewportUpdaterAction['payload']) => ({payload: syncInfo})
+);
 
 /**
  * This declaration is needed to group actions in docs

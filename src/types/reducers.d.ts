@@ -9,12 +9,21 @@ export type MapState = {
   dragRotate: boolean;
   width: number;
   height: number;
-  isSplit: boolean;
   minZoom?: number;
   maxZoom?: number;
   maxBounds?: Bounds;
   initialState?: any;
   scale?: number;
+
+  // the following 4 properties assist with split viewports that can optionally have (un)synced viewports and zooms
+  /**  Is the application split into 2 maps? */
+  isSplit: boolean;
+  /**  Are the 2 split maps having synced viewports? */
+  isViewportSynced: boolean;
+  /**  If split, are the zooms locked to each other or independent? */
+  isZoomLocked: boolean;
+  /**  An array of either 0 or 2 Viewport objects (index 0 for left map; index 1 for right map) */
+  splitMapViewports: Viewport[];
 };
 
 export type Bounds = [number, number, number, number];

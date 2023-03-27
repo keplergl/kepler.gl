@@ -30,7 +30,7 @@ import MapLegendPanelFactory from './map-legend-panel';
 import MapDrawPanelFactory from './map-draw-panel';
 import LocalePanelFactory from './locale-panel';
 import {Layer} from '@kepler.gl/layers';
-import {Editor, MapControls} from '@kepler.gl/types';
+import {Editor, MapControls, MapState} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 
 interface StyledMapControlProps {
@@ -67,6 +67,13 @@ export type MapControlProps = {
   mapControls: MapControls;
   onTogglePerspective: () => void;
   onToggleSplitMap: () => void;
+  onToggleSplitMapViewport: ({
+    isViewportSynced,
+    isZoomLocked
+  }: {
+    isViewportSynced: boolean;
+    isZoomLocked: boolean;
+  }) => void;
   onToggleMapControl: (control: string) => void;
   onSetEditorMode: (mode: string) => void;
   onToggleEditorVisibility: () => void;
@@ -76,6 +83,7 @@ export type MapControlProps = {
   logoComponent: React.FC | React.ReactNode;
 
   // optional
+  mapState?: MapState;
   readOnly?: boolean;
   scale?: number;
   mapLayers?: {[key: string]: boolean};

@@ -291,19 +291,25 @@ export function mergeSplitMaps<S extends VisState>(
   const merged = [...state.splitMaps];
   const unmerged = [];
   splitMaps.forEach((sm, i) => {
-    Object.entries(sm.layers).forEach(([id, value]) => {
-      // check if layer exists
-      const pushTo = state.layers.find(l => l.id === id) ? merged : unmerged;
+    const entries = Object.entries(sm.layers);
+    if (entries.length > 0) {
+      entries.forEach(([id, value]) => {
+        // check if layer exists
+        const pushTo = state.layers.find(l => l.id === id) ? merged : unmerged;
 
-      // create map panel if current map is not split
-      pushTo[i] = pushTo[i] || {
-        layers: pushTo === merged ? getInitialMapLayersForSplitMap(state.layers) : []
-      };
-      pushTo[i].layers = {
-        ...pushTo[i].layers,
-        [id]: value
-      };
-    });
+        // create map panel if current map is not split
+        pushTo[i] = pushTo[i] || {
+          layers: pushTo === merged ? getInitialMapLayersForSplitMap(state.layers) : []
+        };
+        pushTo[i].layers = {
+          ...pushTo[i].layers,
+          [id]: value
+        };
+      });
+    } else {
+      // We are merging if there are no layers in both split map
+      merged.push(sm);
+    }
   });
 
   return {

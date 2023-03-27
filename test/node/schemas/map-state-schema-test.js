@@ -33,7 +33,18 @@ test('#mapStateSchema -> v1 -> save load mapState', t => {
 
   t.deepEqual(
     Object.keys(msToSave),
-    ['bearing', 'dragRotate', 'latitude', 'longitude', 'pitch', 'zoom', 'isSplit'],
+    [
+      'bearing',
+      'dragRotate',
+      'latitude',
+      'longitude',
+      'pitch',
+      'zoom',
+      'isSplit',
+      'isViewportSynced',
+      'isZoomLocked',
+      'splitMapViewports'
+    ],
     'mapState should have all 6 entries'
   );
 
@@ -44,7 +55,10 @@ test('#mapStateSchema -> v1 -> save load mapState', t => {
     longitude: -122.34679,
     zoom: 9,
     dragRotate: false,
-    isSplit: false
+    isSplit: false,
+    isViewportSynced: true,
+    isZoomLocked: false,
+    splitMapViewports: []
   };
 
   t.deepEqual(msToSave, expected, 'save mapState should be current');
