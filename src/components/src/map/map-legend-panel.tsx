@@ -78,7 +78,6 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     legend: Legend
   };
 
-  /** @type {import('./map-legend-panel').MapLegendPanelComponent} */
   const MapLegendPanel: React.FC<MapLegendPanelProps> = ({
     layers,
     mapControls,
