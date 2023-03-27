@@ -315,7 +315,9 @@ export default function MapPopoverFactory(
                     layerHoverProp={layerHoverProp}
                   />
                 </PopoverContent>
-                {SELECTABLE_LAYERS.includes(layerHoverProp?.layer?.type as string) && frozen ? (
+                {layerHoverProp?.layer?.type &&
+                SELECTABLE_LAYERS.includes(layerHoverProp?.layer?.type) &&
+                frozen ? (
                   <StyledSelectGeometry className="select-geometry" onClick={onSetSelectedFeature}>
                     <CursorPoint />
                     Select Geometry
