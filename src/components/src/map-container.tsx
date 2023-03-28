@@ -310,6 +310,8 @@ export interface MapContainerProps {
   generateDeckGLLayers?: typeof computeDeckLayers;
 
   onMouseMove?: (event: React.MouseEvent & {lngLat?: [number, number]}) => void;
+
+  children?: React.ReactNode;
 }
 
 export default function MapContainerFactory(

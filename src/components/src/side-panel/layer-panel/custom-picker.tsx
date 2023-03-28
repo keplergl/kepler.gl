@@ -87,4 +87,4 @@ class CustomPicker extends Component<CustomPickerProps> {
   }
 }
 
-export default withTheme(onClickOutside(CustomPicker));
+export default withTheme(onClickOutside(CustomPicker) as React.ComponentType<CustomPickerProps>);

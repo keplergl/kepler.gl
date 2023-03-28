@@ -33,6 +33,7 @@ import Portaled from '../common/portaled';
 import DataTableConfigFactory from '../common/data-table/display-format';
 
 const MIN_STATS_CELL_SIZE = 122;
+const DEFAULT_SORT_COLUMN = {};
 
 // sidePadding changes from 38 to 68, 30px for configuration button
 const dgSettings = {
@@ -292,7 +293,7 @@ function DataTableModalFactory(
                 dataContainer={activeDataset.dataContainer}
                 pinnedColumns={activeDataset.pinnedColumns}
                 sortOrder={activeDataset.sortOrder}
-                sortColumn={activeDataset.sortColumn}
+                sortColumn={activeDataset.sortColumn || DEFAULT_SORT_COLUMN}
                 copyTableColumn={this.copyTableColumn}
                 pinTableColumn={this.pinTableColumn}
                 sortTableColumn={this.sortTableColumn}

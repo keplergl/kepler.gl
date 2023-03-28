@@ -32,6 +32,7 @@ MapsLayoutFactory.deps = [];
 
 interface MapsLayoutFactoryProps {
   className?: string;
+  children?: React.ReactNode;
 }
 
 export default function MapsLayoutFactory(): React.ComponentType<MapsLayoutFactoryProps> {

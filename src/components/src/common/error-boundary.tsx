@@ -21,7 +21,10 @@
 import React, {ErrorInfo} from 'react';
 import console from 'global/console';
 
-export default class ErrorBoundary extends React.Component {
+interface ErrorBoundaryProps {
+  children?: React.ReactNode;
+}
+export default class ErrorBoundary extends React.Component<ErrorBoundaryProps> {
   static getDerivedStateFromError(error) {
     // Update state so the next render will show the fallback UI.
     return {hasError: true, error};

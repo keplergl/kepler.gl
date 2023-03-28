@@ -35,6 +35,7 @@ import Tippy from '@tippyjs/react/headless';
 import {gl, InteractionTestRunner} from '@deck.gl/test-utils';
 
 import {mockKeplerProps, expectedLayerHoverProp} from '../../helpers/mock-state';
+import {act} from 'react-dom/test-utils';
 
 const MapContainer = appInjector.get(MapContainerFactory);
 const MapPopover = appInjector.get(MapPopoverFactory);
@@ -101,7 +102,7 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
 
   const instance = wrapper.find('MapContainer').instance();
   const _renderDeckOverlay = sinon.spy(instance, '_renderDeckOverlay');
-  instance.forceUpdate();
+  act(() => instance.forceUpdate());
   wrapper.update();
 
   t.ok(_renderDeckOverlay.calledOnce, '_renderDeckOverlay be called once');

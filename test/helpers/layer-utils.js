@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+/* eslint-disable enzyme-deprecation/no-mount */
 import {LayerManager, MapView} from '@deck.gl/core';
 import React from 'react';
 import {gl} from '@deck.gl/test-utils';

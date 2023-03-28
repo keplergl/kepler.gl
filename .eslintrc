@@ -20,7 +20,7 @@
     "jestPuppeteer": true
   },
   "parser": "@typescript-eslint/parser",
-  "plugins": ["babel", "prettier", "react", "@typescript-eslint"],
+  "plugins": ["babel", "prettier", "react", "@typescript-eslint", "enzyme-deprecation"],
   "rules": {
     "valid-jsdoc": 0,
     "no-var": 0,
@@ -43,7 +43,9 @@
     "no-undef": 0,
     "camelcase": 0,
     "consistent-return": 0,
-    "comma-dangle": 1
+    "comma-dangle": 1,
+    "enzyme-deprecation/no-shallow": 2,
+    "enzyme-deprecation/no-mount": 2
   },
   "overrides": [
     {

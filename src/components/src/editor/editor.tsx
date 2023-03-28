@@ -37,7 +37,6 @@ import {Layer, EditorLayerUtils} from '@kepler.gl/layers';
 import {Filter, FeatureSelectionContext, Feature} from '@kepler.gl/types';
 import {FeatureOf, Polygon} from '@nebula.gl/edit-modes';
 import {Datasets} from '@kepler.gl/table';
-import {RootContext} from '../';
 
 const DECKGL_RENDER_LAYER = 'default-deckgl-overlay-wrapper';
 
@@ -63,9 +62,45 @@ interface EditorProps {
   onTogglePolygonFilter: (l: Layer, f: Feature) => any;
 }
 
+export type PortalEditorProps = FeatureActionPanelProps & {
+  visiblePanel: boolean;
+  style?: React.CSSProperties;
+};
+
 export default function EditorFactory(
   FeatureActionPanel: React.FC<FeatureActionPanelProps>
 ): React.ComponentClass<EditorProps> {
+  const PortalEditor: React.FC<PortalEditorProps> = ({
+    visiblePanel,
+    className,
+    style,
+    selectedFeature,
+    datasets,
+    layers,
+    currentFilter,
+    onClose,
+    onDeleteFeature,
+    onToggleLayer,
+    position
+  }) => {
+    return createPortal(
+      <StyledWrapper className={classnames('editor', className)} style={style}>
+        {visiblePanel ? (
+          <FeatureActionPanel
+            selectedFeature={selectedFeature}
+            datasets={datasets}
+            layers={layers}
+            currentFilter={currentFilter}
+            onClose={onClose}
+            onDeleteFeature={onDeleteFeature}
+            onToggleLayer={onToggleLayer}
+            position={position}
+          />
+        ) : null}
+      </StyledWrapper>,
+      document.body
+    );
+  };
   class EditorUnmemoized extends Component<EditorProps> {
     static defaultProps = {};
 
@@ -162,27 +197,19 @@ export default function EditorFactory(
       const {rightClick, position, mapIndex} = selectionContext || {};
 
       return (
-        <RootContext.Consumer>
-          {context =>
-            createPortal(
-              <StyledWrapper className={classnames('editor', className)} style={style}>
-                {Boolean(rightClick) && selectedFeature && index === mapIndex ? (
-                  <FeatureActionPanel
-                    selectedFeature={selectedFeature as FeatureOf<Polygon>}
-                    datasets={datasets}
-                    layers={availableLayers}
-                    currentFilter={currentFilter}
-                    onClose={this._closeFeatureAction}
-                    onDeleteFeature={this._onDeleteSelectedFeature}
-                    onToggleLayer={this._togglePolygonFilter}
-                    position={position || null}
-                  />
-                ) : null}
-              </StyledWrapper>,
-              context?.current ?? document.body
-            )
-          }
-        </RootContext.Consumer>
+        <PortalEditor
+          selectedFeature={selectedFeature as FeatureOf<Polygon>}
+          visiblePanel={Boolean(rightClick) && selectedFeature && index === mapIndex}
+          datasets={datasets}
+          layers={availableLayers}
+          currentFilter={currentFilter}
+          onClose={this._closeFeatureAction}
+          onDeleteFeature={this._onDeleteSelectedFeature}
+          onToggleLayer={this._togglePolygonFilter}
+          position={position || null}
+          className={className}
+          style={style}
+        />
       );
     }
   }

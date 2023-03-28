@@ -46,9 +46,13 @@ const StyledMapControlPanelContent = styled.div.attrs({
   overflow: overlay;
 `;
 
+type MapControlPanelHeaderProps = {
+  children?: React.ReactNode[];
+};
+
 const StyledMapControlPanelHeader = styled.div.attrs({
   className: 'map-control__panel-header'
-})`
+})<MapControlPanelHeaderProps>`
   display: flex;
   justify-content: space-between;
   background-color: ${props => props.theme.mapPanelHeaderBackgroundColor};
@@ -126,6 +130,7 @@ export type MapControlPanelProps = {
   mapState?: MapState;
   onToggleSplitMapViewport?: ActionHandler<typeof toggleSplitMapViewport>;
   isViewportUnsyncAllowed?: boolean;
+  children?: React.ReactNode;
 };
 
 function MapControlPanelFactory() {
@@ -186,13 +191,15 @@ function MapControlPanelFactory() {
           ) : null}
 
           <StyledMapControlPanelHeader>
-            {isExport && logoComponent ? (
-              logoComponent
-            ) : header ? (
-              <span style={{verticalAlign: 'middle'}}>
-                <FormattedMessage id={header} />
-              </span>
-            ) : null}
+            {
+              (isExport && logoComponent ? (
+                logoComponent
+              ) : header ? (
+                <span style={{verticalAlign: 'middle'}}>
+                  <FormattedMessage id={header} />
+                </span>
+              ) : null) as React.ReactNode
+            }
             {isExport ? null : (
               <>
                 {pinnable && (

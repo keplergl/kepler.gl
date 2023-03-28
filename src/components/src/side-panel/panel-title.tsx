@@ -45,6 +45,7 @@ const PanelHeaderRow = styled.div.attrs({
 export type PanelTitleProps = {
   title: string;
   className?: string;
+  children?: React.ReactNode;
 };
 
 const PanelTitleFactory = () => {

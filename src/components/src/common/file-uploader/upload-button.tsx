@@ -36,6 +36,7 @@ const inputStyle = {display: 'none'};
 
 interface UploadButtonProps {
   onUpload: (files: FileList, event: any) => void;
+  children?: React.ReactNode;
 }
 
 /*

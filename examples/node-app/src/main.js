@@ -19,9 +19,9 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import ReactDOM from 'react-dom/client';
 import document from 'global/document';
 import {Provider} from 'react-redux';
-import {render} from 'react-dom';
 import store from './store';
 import App from './app';
 
@@ -31,4 +31,6 @@ const Root = () => (
   </Provider>
 );
 
-render(<Root />, document.body.appendChild(document.createElement('div')));
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+root.render(<Root />);

@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 const configure = require('enzyme').configure;
-const Adapter = require('enzyme-adapter-react-16');
+const Adapter = require('@cfaester/enzyme-adapter-react-18').default;
 configure({adapter: new Adapter()});
 
 // component tests

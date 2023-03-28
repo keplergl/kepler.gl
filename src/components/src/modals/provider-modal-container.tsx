@@ -26,6 +26,7 @@ export type ProviderModalContainerProps = {
   cloudProviders?: Provider[];
   currentProvider?: string | null;
   onSetCloudProvider: (provider: SetCloudProviderPayload) => void;
+  children?: React.ReactNode;
 };
 
 /**

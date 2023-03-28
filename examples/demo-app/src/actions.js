@@ -197,7 +197,7 @@ export function loadSample(options, pushRoute = true) {
   return (dispatch, getState) => {
     const {routing} = getState();
     if (options.id && pushRoute) {
-      dispatch(push(`/demo/${options.id}${routing.locationBeforeTransitions.search}`));
+      dispatch(push(`/demo/${options.id}${routing.locationBeforeTransitions?.search ?? ''}`));
     }
     // if the sample has a kepler.gl config file url we load it
     if (options.keplergl) {

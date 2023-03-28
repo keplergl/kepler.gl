@@ -108,7 +108,9 @@
 
       /** Render **/
       (function render(react, reactDOM, app) {
-        reactDOM.render(app, document.getElementById('app'));
+        const container = document.getElementById('app');
+        const root = reactDOM.client.createRoot(container);
+        root.render(app);
       }(React, ReactDOM, app));
 
     </script>

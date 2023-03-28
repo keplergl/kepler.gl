@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/* eslint-disable max-statements */
+/* eslint-disable max-statements, enzyme-deprecation/no-mount */
 import React from 'react';
 import test from 'tape';
 import {mount} from 'enzyme';
