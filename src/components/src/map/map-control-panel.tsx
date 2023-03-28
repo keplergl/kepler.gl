@@ -80,7 +80,11 @@ const StyledSBCenterFlexbox = styled(CenterFlexbox)`
   flex-direction: row;
 `;
 
-const StyledDisableableText = styled.span`
+interface StyledDisableableTextProps {
+  disabled?: boolean;
+}
+
+const StyledDisableableText = styled.span<StyledDisableableTextProps>`
   opacity: ${props => (props.disabled ? 0.4 : 1)};
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
 `;
