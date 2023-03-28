@@ -23,6 +23,8 @@ import classNames from 'classnames';
 import styled from 'styled-components';
 import {INIT_FILTER_ITEMS_IN_DROPDOWN} from '@kepler.gl/constants';
 
+const LEFT_BUTTON = 0;
+
 export const classList = {
   list: 'list-selector',
   listHeader: 'list__header',
@@ -180,7 +182,10 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
 
   _onClick(result, event) {
     event.preventDefault();
-    this.props.onOptionSelected?.(result, event);
+    // only work when left is clicked
+    if ((event.type === 'mousedown' && event.button === LEFT_BUTTON) || event.type === 'click') {
+      this.props.onOptionSelected?.(result, event);
+    }
   }
 
   render() {
@@ -218,13 +223,10 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
                   [classList.listItemFixed]: true
                 })}
                 key={`${display(value)}_${i}`}
+                onMouseDown={e => this._onClick(value, e)}
                 onClick={e => this._onClick(value, e)}
               >
-                <CustomListItemComponent
-                  value={value}
-                  displayOption={display}
-                  onOptionSelected={this.props.onOptionSelected}
-                />
+                <CustomListItemComponent value={value} displayOption={display} />
               </div>
             ))}
           </div>
@@ -236,13 +238,10 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
               hover: this.props.selectionIndex === i + valueOffset
             })}
             key={`${display(value)}_${i}`}
+            onMouseDown={e => this._onClick(value, e)}
             onClick={e => this._onClick(value, e)}
           >
-            <CustomListItemComponent
-              value={value}
-              displayOption={display}
-              onOptionSelected={this.props.onOptionSelected}
-            />
+            <CustomListItemComponent value={value} displayOption={display} />
           </div>
         ))}
 
