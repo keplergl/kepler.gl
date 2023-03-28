@@ -344,10 +344,10 @@ type KeplerGLBasicProps = {
 
 type KeplerGLProps = KeplerGlState & KeplerGlActions & KeplerGLBasicProps;
 type KeplerGLCompState = {
-  dimensions: any;
-  activeLayer: undefined | Layer;
+  dimensions: {width: number; height: number} | null;
+  activeLayer?: Layer;
   isDragging: boolean | null;
-  dndItems: any;
+  dndItems: {sortablelist: string[]; 0: []; 1: []};
 };
 
 KeplerGlFactory.deps = [

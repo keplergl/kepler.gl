@@ -95,7 +95,6 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
         <LayerPanel
           {...panelProps}
           {...layerActions}
-          sortData={layerIndex}
           key={layerId}
           idx={layerIndex}
           layer={layers[layerIndex]}

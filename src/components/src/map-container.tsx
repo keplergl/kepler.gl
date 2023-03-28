@@ -285,7 +285,7 @@ interface MapContainerProps {
   onMapRender?: Function;
   getMapboxRef?: (mapbox?: MapRef | null, index?: number) => void;
   index?: number;
-  deleteMapLabels?: any;
+  deleteMapLabels?: (containerId: string, layerId: string) => void;
   containerId?: number;
 
   locale?: any;
