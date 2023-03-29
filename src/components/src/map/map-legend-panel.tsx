@@ -36,6 +36,11 @@ import {ActionHandler, toggleSplitMapViewport} from '@kepler.gl/actions';
 
 MapLegendPanelFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory, MapLegendFactory];
 
+export type MapLegendPanelFactoryDeps = [
+  typeof MapControlTooltipFactory,
+  typeof MapControlPanelFactory,
+  typeof MapLegendFactory
+];
 interface PinToBottomProps {
   offsetRight?: number;
 }
