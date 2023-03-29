@@ -80,6 +80,15 @@ const StyledSBCenterFlexbox = styled(CenterFlexbox)`
   flex-direction: row;
 `;
 
+interface StyledDisableableTextProps {
+  disabled?: boolean;
+}
+
+const StyledDisableableText = styled.span<StyledDisableableTextProps>`
+  opacity: ${props => (props.disabled ? 0.4 : 1)};
+  pointer-events: ${props => (props.disabled ? 'none' : 'all')};
+`;
+
 const StyledDisableableSwitch = styled(Switch)`
   opacity: ${props => (props.disabled ? 0.4 : 1)};
   pointer-events: ${props => (props.disabled ? 'none' : 'all')};
@@ -152,7 +161,9 @@ function MapControlPanelFactory() {
                 />
               </StyledSBCenterFlexbox>
               <StyledSBCenterFlexbox>
-                <FormattedMessage id="Sync Zoom" />
+                <StyledDisableableText disabled={mapState?.isViewportSynced}>
+                  <FormattedMessage id="Sync Zoom" />
+                </StyledDisableableText>
                 <StyledDisableableSwitch
                   checked={mapState?.isZoomLocked}
                   id="sync-zoom-toggle"
