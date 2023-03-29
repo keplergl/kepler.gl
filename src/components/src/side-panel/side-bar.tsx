@@ -32,6 +32,7 @@ type SideBarProps = {
   isOpen: boolean;
   minifiedWidth: number;
   onOpenOrClose: (arg: {isOpen: boolean}) => void;
+  shouldShowCollapseButton?: boolean | null;
 };
 
 const StyledSidePanelContainer = styled.div<{width: number}>`
@@ -108,7 +109,8 @@ function SidebarFactory(CollapseButton: ReturnType<typeof CollapseButtonFactory>
       width: 300,
       minifiedWidth: 0,
       isOpen: true,
-      onOpenOrClose: function noop() {}
+      onOpenOrClose: function noop() {},
+      shouldShowCollapseButton: true
     };
 
     _onOpenOrClose = () => {
@@ -116,7 +118,7 @@ function SidebarFactory(CollapseButton: ReturnType<typeof CollapseButtonFactory>
     };
 
     render() {
-      const {isOpen, minifiedWidth, width} = this.props;
+      const {isOpen, minifiedWidth, width, shouldShowCollapseButton} = this.props;
       const horizontalOffset = isOpen ? 0 : minifiedWidth - width;
 
       return (
@@ -129,7 +131,9 @@ function SidebarFactory(CollapseButton: ReturnType<typeof CollapseButtonFactory>
             {isOpen ? (
               <SideBarInner className="side-bar__inner">{this.props.children}</SideBarInner>
             ) : null}
-            <CollapseButton isOpen={isOpen} onClick={this._onOpenOrClose} />
+            {shouldShowCollapseButton ? (
+              <CollapseButton isOpen={isOpen} onClick={this._onOpenOrClose} />
+            ) : null}
           </SideBarContainer>
         </StyledSidePanelContainer>
       );

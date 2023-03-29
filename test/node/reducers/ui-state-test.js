@@ -23,6 +23,7 @@ import test from 'tape';
 import {
   toggleSidePanel,
   toggleModal,
+  toggleSidePanelCloseButton,
   openDeleteModal,
   setExportImageSetting,
   toggleMapControl,
@@ -113,6 +114,28 @@ test('#uiStateReducer -> TOGGLE_SIDE_PANEL', t => {
   };
 
   t.deepEqual(nextState3, expectedNextState3, 'should close panel');
+
+  t.end();
+});
+
+test('#uiStateReducer -> TOGGLE_SIDE_PANEL_CLOSE_BUTTON', t => {
+  const newReducer = reducer(INITIAL_UI_STATE, toggleSidePanelCloseButton(false));
+
+  const expectedState = {
+    ...INITIAL_UI_STATE,
+    isSidePanelCloseButtonVisible: false
+  };
+
+  t.deepEqual(newReducer, expectedState, 'should hide side panel close button');
+
+  const nextState2 = reducer(expectedState, toggleSidePanelCloseButton(true));
+
+  const expectedNextState2 = {
+    ...expectedState,
+    isSidePanelCloseButtonVisible: true
+  };
+
+  t.deepEqual(nextState2, expectedNextState2, 'should show side panel close button');
 
   t.end();
 });

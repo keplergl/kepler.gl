@@ -24,6 +24,7 @@ import sinon from 'sinon';
 import {
   SidePanelFactory,
   SidebarFactory,
+  CollapseButtonFactory,
   PanelHeaderFactory,
   SaveExportDropdownFactory,
   LayerManagerFactory,
@@ -43,6 +44,7 @@ import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 // components
 const SidePanel = appInjector.get(SidePanelFactory);
 const Sidebar = appInjector.get(SidebarFactory);
+const SidebarCloseButton = appInjector.get(CollapseButtonFactory);
 const PanelHeader = appInjector.get(PanelHeaderFactory);
 const LayerManager = appInjector.get(LayerManagerFactory);
 const FilterManager = appInjector.get(FilterManagerFactory);
@@ -90,6 +92,36 @@ test('Components -> SidePanel.mount -> no prop', t => {
   t.ok(wrapper.find(PanelHeader).length === 1, 'should render PanelHeader');
   t.ok(wrapper.find(PanelToggle).length === 1, 'should render PanelToggle');
   t.ok(wrapper.find(Sidebar).length === 1, 'should render Sidebar');
+
+  // side bar close button
+  t.ok(wrapper.find(SidebarCloseButton).length === 1, 'should render SideBarCollapseButton');
+
+  t.end();
+});
+
+test('Components -> SidePanel.mount -> hide CollapseButton', t => {
+  // mount
+  let wrapper;
+
+  const uiState = {
+    ...defaultProps.uiState,
+    isSidePanelCloseButtonVisible: false
+  };
+
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <SidePanel {...defaultProps} uiState={uiState} />
+      </IntlWrapper>
+    );
+  }, 'SidePanel should not fail without props');
+
+  t.ok(wrapper.find(PanelHeader).length === 1, 'should render PanelHeader');
+  t.ok(wrapper.find(PanelToggle).length === 1, 'should render PanelToggle');
+  t.ok(wrapper.find(Sidebar).length === 1, 'should render Sidebar');
+
+  // side bar close button
+  t.ok(wrapper.find(SidebarCloseButton).length === 0, 'should not render SideBarCollapseButton');
 
   t.end();
 });

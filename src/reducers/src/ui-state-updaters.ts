@@ -240,6 +240,7 @@ export const DEFAULT_EXPORT_MAP: ExportMap = {
  * @property notifications Default: `[]`
  * @property notifications Default: `[]`
  * @property loadFiles
+ * @property isSidePanelCloseButtonVisible Default: `true`
  * @public
  */
 export const INITIAL_UI_STATE: UiState = {
@@ -263,7 +264,8 @@ export const INITIAL_UI_STATE: UiState = {
   // Locale of the UI
   locale: LOCALE_CODES.en,
   layerPanelListView: 'list',
-  filterPanelListView: 'list'
+  filterPanelListView: 'list',
+  isSidePanelCloseButtonVisible: true
 };
 
 /* Updaters */
@@ -346,6 +348,19 @@ export const showExportDropdownUpdater = (
 export const hideExportDropdownUpdater = (state: UiState): UiState => ({
   ...state,
   visibleDropdown: null
+});
+
+/**
+ * Toggle side panel close button on top left of the side panel
+ * @memberof uiStateUpdaters
+ * @public
+ */
+export const toggleSidePanelCloseButtonUpdater = (
+  state: UiState,
+  {payload: {show}}: UIStateActions.ToggleSidePanelCloseButtonUpdaterAction
+): UiState => ({
+  ...state,
+  isSidePanelCloseButtonVisible: show
 });
 
 /**
