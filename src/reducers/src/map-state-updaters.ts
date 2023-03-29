@@ -27,7 +27,7 @@ import pick from 'lodash.pick';
 
 import {getCenterAndZoomFromBounds, validateBounds, MAPBOX_TILE_SIZE} from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
-import {MapState, Bounds} from '@kepler.gl/types';
+import {MapState, Bounds, Viewport} from '@kepler.gl/types';
 
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
@@ -121,11 +121,10 @@ export const updateMapUpdater = (
   const {viewport, mapIndex = 0} = action.payload;
 
   if (state.isViewportSynced) {
-    // @ts-expect-error Type 'Viewport' is missing the following properties from type 'MapState': isSplit, isViewportSynced, isZoomLocked, splitMapViewports
-    // the `updateViewport` function is typed as (Viewport, Viewport) -> Viewport but here the
+    // The `updateViewport` function is typed as (Viewport, Viewport) -> Viewport but here the
     // expected typing is (MapState, Viewport) -> MapState.
     // this could be a potential bug as we treat Viewport and MapState as equal seemingly
-    // https://github.com/UnfoldedInc/kepler.gl/pull/541#issuecomment-1188374720
+    // @ts-expect-error Type 'Viewport' is missing the following properties from type 'MapState': isSplit, isViewportSynced, isZoomLocked, splitMapViewports
     return updateViewport(state, viewport);
   }
 
@@ -484,13 +483,7 @@ function getViewportFromMapState(state) {
 const definedProps = obj =>
   Object.fromEntries(Object.entries(obj).filter(([k, v]) => v !== undefined));
 
-/**
- * @memberof mapStateUpdaters
- * @param {import('./map-state-updaters').Viewport} originalViewport
- * @param {import('./map-state-updaters').Viewport} viewportUpdates
- * @returns {import('./map-state-updaters').Viewport}
- */
-function updateViewport(originalViewport, viewportUpdates) {
+function updateViewport(originalViewport: Viewport, viewportUpdates: Viewport): Viewport {
   let newViewport = {
     ...originalViewport,
     ...(definedProps(viewportUpdates) || {})
@@ -506,6 +499,7 @@ function updateViewport(originalViewport, viewportUpdates) {
   }
   // Limit viewport update based on maxBounds
   if (newViewport.maxBounds && validateBounds(newViewport.maxBounds)) {
+    // @ts-expect-error Type 'Viewport' is missing the following properties from type 'MapState': isSplit, isViewportSynced, isZoomLocked, splitMapViewports
     newViewport = updateViewportBasedOnBounds(originalViewport, newViewport);
   }
 
