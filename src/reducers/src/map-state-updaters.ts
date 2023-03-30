@@ -27,7 +27,7 @@ import pick from 'lodash.pick';
 
 import {getCenterAndZoomFromBounds, validateBounds, MAPBOX_TILE_SIZE} from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
-import {MapState, Bounds} from '@kepler.gl/types';
+import {MapState, Bounds, Viewport} from '@kepler.gl/types';
 
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
@@ -121,6 +121,10 @@ export const updateMapUpdater = (
   const {viewport, mapIndex = 0} = action.payload;
 
   if (state.isViewportSynced) {
+    // The `updateViewport` function is typed as (Viewport, Viewport) -> Viewport but here the
+    // expected typing is (MapState, Viewport) -> MapState.
+    // this could be a potential bug as we treat Viewport and MapState as equal seemingly
+    // @ts-expect-error Type 'Viewport' is missing the following properties from type 'MapState': isSplit, isViewportSynced, isZoomLocked, splitMapViewports
     return updateViewport(state, viewport);
   }
 
@@ -474,22 +478,28 @@ function getViewportFromMapState(state) {
   ]);
 }
 
-function updateViewport(originalViewport, viewportUpdates) {
+// From https://stackoverflow.com/a/56650790
+/** Select items from object whose value is not undefined */
+const definedProps = obj =>
+  Object.fromEntries(Object.entries(obj).filter(([k, v]) => v !== undefined));
+
+function updateViewport(originalViewport: Viewport, viewportUpdates: Viewport): Viewport {
   let newViewport = {
     ...originalViewport,
-    ...(viewportUpdates || {})
+    ...(definedProps(viewportUpdates) || {})
   };
 
   // Make sure zoom level doesn't go bellow minZoom if defined
-  if (newViewport.minZoom && newViewport.zoom < newViewport.minZoom) {
+  if (newViewport.minZoom && newViewport.zoom && newViewport.zoom < newViewport.minZoom) {
     newViewport.zoom = newViewport.minZoom;
   }
   // Make sure zoom level doesn't go above maxZoom if defined
-  if (newViewport.maxZoom && newViewport.zoom > newViewport.maxZoom) {
+  if (newViewport.maxZoom && newViewport.zoom && newViewport.zoom > newViewport.maxZoom) {
     newViewport.zoom = newViewport.maxZoom;
   }
   // Limit viewport update based on maxBounds
   if (newViewport.maxBounds && validateBounds(newViewport.maxBounds)) {
+    // @ts-expect-error Type 'Viewport' is missing the following properties from type 'MapState': isSplit, isViewportSynced, isZoomLocked, splitMapViewports
     newViewport = updateViewportBasedOnBounds(originalViewport, newViewport);
   }
 
