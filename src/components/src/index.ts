@@ -264,6 +264,7 @@ export type {DatasetTagProps} from './side-panel/common/dataset-tag';
 export type {CustomPanelsProps} from './side-panel/custom-panel';
 export type {LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
 export type {LayerGroupColorPickerProps} from './side-panel/map-style-panel/map-layer-group-color-picker';
+export type {MapLegendPanelProps, MapLegendPanelFactoryDeps} from './map/map-legend-panel';
 
 export {
   Icons,

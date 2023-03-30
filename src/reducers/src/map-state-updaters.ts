@@ -324,7 +324,7 @@ export const toggleSplitMapViewportUpdater = (
   state: MapState,
   action: MapStateActions.ToggleSplitMapViewportUpdaterAction
 ) => {
-  // new map state immediately gets the new payload values for isViewportSynced and isZoomLocked
+  // new map state immediately gets the new, optional payload values for isViewportSynced and/or isZoomLocked
   const newMapState = {
     ...state,
     ...(action.payload || {})
