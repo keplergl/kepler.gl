@@ -473,7 +473,7 @@ function validateExistingLayerWithData(dataset, layerClasses, layer) {
     ? validateLayerWithData(dataset, loadedLayer, layerClasses, {
         allowEmptyColumn: true
       })
-    : false;
+    : null;
 }
 
 /**
