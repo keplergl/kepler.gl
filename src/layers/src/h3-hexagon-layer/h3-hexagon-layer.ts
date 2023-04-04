@@ -339,10 +339,12 @@ export default class HexagonIdLayer extends Layer {
           }
         }
       }),
+      // hover layer
       ...(hoveredObject && !config.sizeField
         ? [
             new GeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
+              visible: defaultLayerProps.visible,
               data: [idToPolygonGeo(hoveredObject)],
               getLineColor: config.highlightColor,
               lineWidthScale: DEFAULT_LINE_SCALE_VALUE * zoomFactor,

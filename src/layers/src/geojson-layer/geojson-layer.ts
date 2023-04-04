@@ -457,11 +457,13 @@ export default class GeoJsonLayer extends Layer {
             : {})
         }
       }),
+      // hover layer
       ...(hoveredObject && !visConfig.enable3d
         ? [
             new DeckGLGeoJsonLayer({
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
+              visible: defaultLayerProps.visible,
               wrapLongitude: false,
               data: [hoveredObject],
               getLineWidth: data.getLineWidth,

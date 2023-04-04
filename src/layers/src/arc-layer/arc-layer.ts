@@ -285,6 +285,7 @@ export default class ArcLayer extends Layer {
         ? [
             new DeckArcLayer({
               ...this.getDefaultHoverLayerProps(),
+              visible: defaultLayerProps.visible,
               data: [hoveredObject],
               widthScale,
               getSourceColor: this.config.highlightColor,

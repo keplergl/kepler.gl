@@ -115,12 +115,15 @@ export default class ClusterLayer extends AggregationLayer {
         ...gpuFilter.filterValueUpdateTriggers
       }
     };
+
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+
     const {_filterData: filterData, ...clusterData} = data;
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     return [
       new DeckGLClusterLayer({
-        ...this.getDefaultDeckLayerProps(opts),
+        ...defaultLayerProps,
         ...clusterData,
         filterData,
 
@@ -149,6 +152,7 @@ export default class ClusterLayer extends AggregationLayer {
         ? [
             new ScatterplotLayer<{radius: number}>({
               id: `${this.id}-hovered`,
+              visible: defaultLayerProps.visible,
               data: [hoveredObject],
               getFillColor: this.config.highlightColor,
               getRadius: d => d.radius,
