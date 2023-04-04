@@ -79,10 +79,29 @@ export function mergeFilters<S extends VisState>(
   };
 }
 
+export function isSavedLayerConfigV1(layerConfig: any): boolean {
+  // exported layer configuration contains visualChannels property
+  return layerConfig.visualChannels;
+}
+
+export function parseLayerConfig(layerConfig: any): Layer | undefined {
+  // @ts-expect-error ParsedLayer vs Layer
+  return visStateSchema[CURRENT_VERSION].load({
+    layers: [layerConfig],
+    // @ts-expect-error layerOrder not in SavedVisState
+    layerOrder: [0]
+  }).visState?.layers?.[0];
+}
+
 export function createLayerFromConfig(state: VisState, layerConfig: any): Layer | null {
+  // check if the layer config is parsed
+  const parsedLayerConfig = isSavedLayerConfigV1(layerConfig)
+    ? parseLayerConfig(layerConfig)
+    : layerConfig;
+
   // first validate config against dataset
   const {validated, failed} = validateLayersByDatasets(state.datasets, state.layerClasses, [
-    layerConfig
+    parsedLayerConfig
   ]);
 
   if (failed?.length || !validated.length) {
@@ -95,17 +114,16 @@ export function createLayerFromConfig(state: VisState, layerConfig: any): Layer 
   return newLayer;
 }
 
-export function serializeLayer(newLayer): ParsedLayer {
+export function serializeLayer(newLayer): ParsedLayer | undefined {
   const savedVisState = visStateSchema[CURRENT_VERSION].save(
-    // @ts-expect-error not all expected properties are provided
+    // @ts-expect-error consider MinSavedVisState instead of SavedVisState
     {
       layers: [newLayer],
       layerOrder: [0]
     }
   ).visState;
-  const loadedLayer = visStateSchema[CURRENT_VERSION].load(savedVisState).visState?.layers?.[0];
-  // @ts-expect-error
-  return loadedLayer;
+
+  return visStateSchema[CURRENT_VERSION].load(savedVisState).visState?.layers?.[0];
 }
 
 /**

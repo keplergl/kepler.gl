@@ -1186,6 +1186,175 @@ test('#visStateReducer -> DUPLICATE_LAYER', t => {
   t.end();
 });
 
+// TODO: not sure if this test is correct, it basically checks if the loaded visState is empty
+// if we load configuration through the schema manager all layers will be changing from having visualChannels to visualConfig
+// test('#visStateReducer -> SERIALIZE', t => {
+//   const configuration = {
+//     version: 'v1',
+//     config: {
+//       visState: {
+//         filters: [
+//           {
+//             dataId: ['earthquakes'],
+//             id: 'vo18yorx',
+//             name: ['DateTime'],
+//             type: 'timeRange',
+//             value: [663046722470, 1301519405470],
+//             enlarged: true,
+//             plotType: 'histogram',
+//             animationWindow: 'free',
+//             yAxis: null,
+//             speed: 1
+//           }
+//         ],
+//         layers: [
+//           {
+//             id: 'hty62yd',
+//             type: 'point',
+//             config: {
+//               dataId: 'earthquakes',
+//               label: 'Point',
+//               color: [23, 184, 190],
+//               highlightColor: [252, 242, 26, 255],
+//               columns: {
+//                 lat: 'Latitude',
+//                 lng: 'Longitude',
+//                 altitude: null
+//               },
+//               isVisible: true,
+//               visConfig: {
+//                 radius: 10,
+//                 fixedRadius: false,
+//                 opacity: 0.39,
+//                 outline: false,
+//                 thickness: 2,
+//                 strokeColor: [23, 184, 190],
+//                 colorRange: {
+//                   name: 'ColorBrewer PRGn-6',
+//                   type: 'diverging',
+//                   category: 'ColorBrewer',
+//                   colors: ['#762a83', '#af8dc3', '#e7d4e8', '#d9f0d3', '#7fbf7b', '#1b7837'],
+//                   reversed: false
+//                 },
+//                 strokeColorRange: {
+//                   name: 'ColorBrewer PRGn-6',
+//                   type: 'diverging',
+//                   category: 'ColorBrewer',
+//                   colors: ['#762a83', '#af8dc3', '#e7d4e8', '#d9f0d3', '#7fbf7b', '#1b7837'],
+//                   reversed: false
+//                 },
+//                 radiusRange: [4.2, 96.2],
+//                 filled: true
+//               },
+//               hidden: false,
+//               textLabel: [
+//                 {
+//                   field: null,
+//                   color: [255, 255, 255],
+//                   size: 18,
+//                   offset: [0, 0],
+//                   anchor: 'start',
+//                   alignment: 'center'
+//                 }
+//               ]
+//             },
+//             visualChannels: {
+//               colorField: {
+//                 name: 'Magnitude',
+//                 type: 'real'
+//               },
+//               colorScale: 'quantize',
+//               strokeColorField: null,
+//               strokeColorScale: 'quantile',
+//               sizeField: {
+//                 name: 'Magnitude',
+//                 type: 'real'
+//               },
+//               sizeScale: 'sqrt'
+//             }
+//           }
+//         ],
+//         interactionConfig: {
+//           tooltip: {
+//             fieldsToShow: {
+//               earthquakes: [
+//                 {
+//                   name: 'DateTime',
+//                   format: null
+//                 },
+//                 {
+//                   name: 'Latitude',
+//                   format: null
+//                 },
+//                 {
+//                   name: 'Longitude',
+//                   format: null
+//                 },
+//                 {
+//                   name: 'Depth',
+//                   format: null
+//                 },
+//                 {
+//                   name: 'Magnitude',
+//                   format: null
+//                 }
+//               ]
+//             },
+//             compareMode: false,
+//             compareType: 'absolute',
+//             enabled: true
+//           },
+//           brush: {
+//             size: 0.5,
+//             enabled: false
+//           },
+//           geocoder: {
+//             enabled: false
+//           },
+//           coordinate: {
+//             enabled: false
+//           }
+//         },
+//         layerBlending: 'normal',
+//         splitMaps: [],
+//         animationConfig: {
+//           currentTime: null,
+//           speed: 1
+//         }
+//       },
+//       mapState: {
+//         bearing: 0,
+//         dragRotate: false,
+//         latitude: 37.05881309947238,
+//         longitude: -122.80009283836715,
+//         pitch: 0,
+//         zoom: 5.740491857794806,
+//         isSplit: false
+//       },
+//       mapStyle: {
+//         styleType: 'light',
+//         topLayerGroups: {},
+//         visibleLayerGroups: {
+//           border: false,
+//           building: true,
+//           label: true,
+//           land: true,
+//           road: true,
+//           water: true
+//         },
+//         threeDBuildingColor: [9.665468314072013, 17.18305478057247, 31.1442867897876],
+//         mapStyles: {}
+//       }
+//     }
+//   };
+//
+//   const loadedVisState = visStateSchema[CURRENT_VERSION].load(configuration.config.visState);
+//
+//   t.deepEqual(loadedVisState, {}, 'Should have the same configuration');
+//
+//   t.end();
+// });
+
 test('#visStateReducer -> UPDATE_VIS_DATA.1 -> No data', t => {
   const oldState = CloneDeep(InitialState).visState;
   const nextState1 = reducer(oldState, VisStateActions.updateVisData([{info: null, data: null}]));

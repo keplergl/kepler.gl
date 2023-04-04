@@ -36,6 +36,7 @@ export default class GridHack extends PureComponent<GridProps> {
     }
     return;
   };
+
   _updateRef = x => {
     if (!this.grid && x) {
       this.grid = x;

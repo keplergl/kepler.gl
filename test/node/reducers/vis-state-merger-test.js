@@ -30,13 +30,14 @@ import keplerGlReducer, {
   mergeSplitMaps,
   insertLayerAtRightOrder,
   VIS_STATE_MERGERS,
+  createLayerFromConfig,
   applyMergersUpdater,
   visStateReducer,
   keplerGlReducerCore as coreReducer,
   defaultInteractionConfig
 } from '@kepler.gl/reducers';
 
-import SchemaManager from '@kepler.gl/schemas';
+import SchemaManager, {CURRENT_VERSION, visStateSchema} from '@kepler.gl/schemas';
 import {processKeplerglJSON} from '@kepler.gl/processors';
 import {updateVisData, receiveMapConfig, addDataToMap, registerEntry} from '@kepler.gl/actions';
 
@@ -90,7 +91,8 @@ import {
   StateWFilesFiltersLayerColor,
   StateWSplitMaps,
   testCsvDataId,
-  testGeoJsonDataId
+  testGeoJsonDataId,
+  StateWFiles
 } from 'test/helpers/mock-state';
 
 import {
@@ -113,6 +115,7 @@ import {
   mergedRateFilter
 } from 'test/fixtures/geojson';
 import {mockStateWithPolygonFilter} from '../../fixtures/points-with-polygon-filter-map';
+import CloneDeep from 'lodash.clonedeep';
 
 test('VisStateMerger.v0 -> mergeFilters -> toEmptyState', t => {
   const savedConfig = cloneDeep(savedStateV0);
@@ -1925,6 +1928,26 @@ test('VisStateMerger -> load polygon filter map', t => {
   const newFilter = visState.filters[0];
 
   t.deepEqual(newFilter, oldFilter, 'Should have loaded the polygon filter correctly');
+  t.end();
+});
+
+test('VisStateMerger -> createLayerFromConfig with Parsed Layer', t => {
+  const oldState = CloneDeep(StateWFiles);
+
+  t.equal(oldState.visState.layers.length, 2, 'Should have layers');
+
+  // mock an exported layer config with visual channels
+  const savedLayer = visStateSchema[CURRENT_VERSION].save({
+    layers: [oldState.visState.layers[0]],
+    layerOrder: [0]
+  }).visState.layers[0];
+
+  t.ok(savedLayer.visualChannels, 'Should have visualChannels');
+
+  const addedLayer = createLayerFromConfig(oldState.visState, savedLayer);
+
+  t.ok(addedLayer.visConfigSettings, 'Should have visConfig settings loaded correctly');
+
   t.end();
 });
 
