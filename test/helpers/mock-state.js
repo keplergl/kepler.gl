@@ -466,13 +466,18 @@ function mockStateWithSplitMaps(state) {
   const initialState = state || mockStateWithFileUpload();
 
   const firstLayer = initialState.visState.layers[0];
-
+  const secondLayer = initialState.visState.layers[1];
   const prepareState = applyActions(keplerGlReducer, initialState, [
     // toggle splitMaps
     {action: MapStateActions.toggleSplitMap, payload: []},
 
     // toggleLayerForMap
-    {action: VisStateActions.toggleLayerForMap, payload: [0, firstLayer.id]}
+    {action: VisStateActions.toggleLayerForMap, payload: [0, firstLayer.id]},
+
+    // open geojson layer
+    {action: VisStateActions.toggleLayerForMap, payload: [1, secondLayer.id]},
+
+    {action: VisStateActions.toggleLayerForMap, payload: [1, firstLayer.id]}
   ]);
 
   return prepareState;

@@ -27,7 +27,6 @@ import React, {
 } from 'react';
 import classnames from 'classnames';
 import styled, {css} from 'styled-components';
-import {SortableHandle} from 'react-sortable-hoc';
 import PanelHeaderActionFactory from '../panel-header-action';
 import {Tooltip} from '../../common/styled-components';
 import {
@@ -89,6 +88,7 @@ type LayerPanelHeaderProps = {
     resetIsValid: ComponentType<Partial<BaseProps>>;
     duplicate: ComponentType<Partial<BaseProps>>;
   };
+  listeners?: React.ElementType;
 };
 
 export const defaultProps = {
@@ -194,9 +194,11 @@ const StyledDragHandle = styled.div`
   }
 `;
 
-export const DragHandle = SortableHandle(({className, children}) => (
-  <StyledDragHandle className={className}>{children}</StyledDragHandle>
-));
+export const DragHandle = ({className, listeners, children}) => (
+  <StyledDragHandle className={className} {...(listeners ? listeners : {})}>
+    {children}
+  </StyledDragHandle>
+);
 
 export const LayerLabelEditor: React.FC<LayerLabelEditorProps> = ({
   layerId,
@@ -211,6 +213,7 @@ export const LayerLabelEditor: React.FC<LayerLabelEditorProps> = ({
     value={label}
     onClick={(e: MouseEvent) => {
       e.stopPropagation();
+      e.preventDefault();
     }}
     onChange={onEdit}
     onFocus={onFocus}
@@ -311,10 +314,10 @@ function LayerPanelHeaderFactory(
     onRemoveLayer,
     onResetIsValid,
     showRemoveLayer,
+    listeners,
     actionIcons = defaultActionIcons
   }) => {
     const [isEditingLabel, setIsEditingLabel] = useState(false);
-
     return (
       <StyledLayerPanelHeader
         className={classnames('layer-panel__header', {
@@ -329,7 +332,7 @@ function LayerPanelHeaderFactory(
         {warning ? <HeaderWarning warning={warning} id={layerId} /> : null}
         <HeaderLabelSection className="layer-panel__header__content">
           {isDragNDropEnabled ? (
-            <DragHandle className="layer__drag-handle">
+            <DragHandle className="layer__drag-handle" listeners={listeners}>
               <VertDots height="20px" />
             </DragHandle>
           ) : (

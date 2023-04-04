@@ -61,6 +61,7 @@ type LayerPanelProps = {
   layerTextLabelChange: ActionHandler<typeof VisStateActions.layerTextLabelChange>;
   removeLayer: ActionHandler<typeof VisStateActions.removeLayer>;
   duplicateLayer: ActionHandler<typeof VisStateActions.duplicateLayer>;
+  listeners?: React.ElementType;
 };
 
 const PanelWrapper = styled.div<{active: boolean}>`
@@ -141,7 +142,7 @@ function LayerPanelFactory(
     };
 
     render() {
-      const {layer, datasets, isDraggable, layerTypeOptions} = this.props;
+      const {layer, datasets, isDraggable, layerTypeOptions, listeners} = this.props;
       const {config, isValid} = layer;
       const {isConfigActive} = config;
       const allowDuplicate = typeof layer.isValidToSave === 'function' && layer.isValidToSave();
@@ -170,6 +171,7 @@ function LayerPanelFactory(
             onRemoveLayer={this._removeLayer}
             onDuplicateLayer={this._duplicateLayer}
             isDragNDropEnabled={isDraggable}
+            listeners={listeners}
           />
           {isConfigActive && (
             <LayerConfigurator

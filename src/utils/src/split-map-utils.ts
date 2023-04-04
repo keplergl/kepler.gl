@@ -95,10 +95,12 @@ export function getInitialMapLayersForSplitMap(layers) {
 /**
  * This method will get default splitMap settings based on existing layers
  * @param {Array<Object>} layers
+ * @param {Object} options
  * @returns {Array<Object>} split map settings
  */
-export function computeSplitMapLayers(layers) {
+export function computeSplitMapLayers(layers, options?: {duplicate: boolean}) {
   const mapLayers = getInitialMapLayersForSplitMap(layers);
-
-  return [{layers: mapLayers}, {layers: cloneDeep(mapLayers)}];
+  const {duplicate} = options || {};
+  // show all visible layers in left map, leave right map empty
+  return [{layers: mapLayers}, {layers: duplicate ? cloneDeep(mapLayers) : {}}];
 }

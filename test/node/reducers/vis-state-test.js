@@ -2943,11 +2943,7 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE', t => {
           a: true
         }
       },
-      {
-        layers: {
-          a: true
-        }
-      }
+      {layers: {}}
     ],
     'should split map'
   );

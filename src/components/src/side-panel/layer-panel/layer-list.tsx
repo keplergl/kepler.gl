@@ -18,15 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useMemo} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import {SortableContainer, SortableElement} from 'react-sortable-hoc';
 import LayerPanelFactory from './layer-panel';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
-import {arrayMove} from '@kepler.gl/utils';
 import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
+
+import {useDroppable} from '@dnd-kit/core';
+import {useSortable, SortableContext, verticalListSortingStrategy} from '@dnd-kit/sortable';
+import {CSS} from '@dnd-kit/utilities';
 
 type LayerListProps = {
   datasets: Datasets;
@@ -40,9 +42,18 @@ type LayerListProps = {
 
 // make sure the element is always visible while is being dragged
 // item being dragged is appended in body, here to reset its global style
-const SortableStyledItem = styled.div`
+
+interface SortableStyledItemProps {
+  transition?: string;
+  transform?: string;
+}
+
+const SortableStyledItem = styled.div<SortableStyledItemProps>`
   z-index: ${props => props.theme.dropdownWrapperZ + 1};
+  transition: ${props => props.transition};
+  transform: ${props => props.transform};
   &.sorting {
+    opacity: 0.3;
     pointer-events: none;
   }
   &.sorting-layers .layer-panel__header {
@@ -68,17 +79,43 @@ LayerListFactory.deps = [LayerPanelFactory];
 function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
   // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
   // Developers can provide any layer panel implementation and it will still be sortable
-  const SortableItem = SortableElement(({children, isSorting}) => {
+  const SortableItem = ({layerId, layers, layerIndex, panelProps, layerActions}) => {
+    const {attributes, listeners, setNodeRef, isDragging, transform, transition} = useSortable({
+      id: layerId
+    });
+
     return (
-      <SortableStyledItem className={classnames('sortable-layer-items', {sorting: isSorting})}>
-        {children}
+      <SortableStyledItem
+        ref={setNodeRef}
+        className={classnames('sortable-layer-items', {sorting: isDragging})}
+        transform={CSS.Transform.toString(transform)}
+        transition={transition}
+        {...attributes}
+      >
+        <LayerPanel
+          {...panelProps}
+          {...layerActions}
+          key={layerId}
+          idx={layerIndex}
+          layer={layers[layerIndex]}
+          listeners={listeners}
+        />
       </SortableStyledItem>
     );
-  });
+  };
 
-  const WrappedSortableContainer = SortableContainer(({children}) => {
-    return <div>{children}</div>;
-  });
+  const SortableList = ({containerId, sidePanelDndItems, children}) => {
+    const {setNodeRef} = useDroppable({id: containerId});
+    return (
+      <SortableContext
+        id={containerId}
+        items={sidePanelDndItems}
+        strategy={verticalListSortingStrategy}
+      >
+        <div ref={setNodeRef}>{children}</div>
+      </SortableContext>
+    );
+  };
 
   const LayerList: React.FC<LayerListProps> = props => {
     const {
@@ -91,7 +128,11 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
       isSortable = true
     } = props;
     const {toggleModal: openModal} = uiStateActions;
-    const [isSorting, setIsSorting] = useState(false);
+    const sidePanelDndItems = useMemo(() => layerOrder.map(layerIdx => layers[layerIdx].id), [
+      layers,
+      layerOrder
+    ]);
+
     const layerTypeOptions = useMemo(
       () =>
         Object.keys(layerClasses).map(key => {
@@ -124,49 +165,28 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
       layerTypeOptions
     };
 
-    const _handleSort = useCallback(
-      ({oldIndex, newIndex}) => {
-        visStateActions.reorderLayer(arrayMove(props.layerOrder, oldIndex, newIndex));
-        setIsSorting(false);
-      },
-      [props.layerOrder, visStateActions]
-    );
-    const _onSortStart = useCallback(() => {
-      setIsSorting(true);
-    }, []);
-    const _updateBeforeSortStart = useCallback(() => {
-      ({index}) => {
-        const layerIdx = layerOrder[index];
-        if (layers[layerIdx].config.isConfigActive) {
-          visStateActions.layerConfigChange(layers[layerIdx], {isConfigActive: false});
-        }
-      };
-    }, [layers, layerOrder, visStateActions]);
     return isSortable ? (
-      <WrappedSortableContainer
-        onSortEnd={_handleSort}
-        onSortStart={_onSortStart}
-        updateBeforeSortStart={_updateBeforeSortStart}
-        lockAxis="y"
-        helperClass="sorting-layers"
-        useDragHandle
-      >
-        {layerOrder.map(
-          (layerIdx, index) =>
-            layers[layerIdx] &&
-            !layers[layerIdx].config.hidden && (
-              <SortableItem key={`layer-${layerIdx}`} index={index} isSorting={isSorting}>
-                <LayerPanel
-                  {...panelProps}
-                  {...layerActions}
-                  key={layers[layerIdx].id}
-                  idx={layerIdx}
-                  layer={layers[layerIdx]}
+      <>
+        <SortableList containerId="sortablelist" sidePanelDndItems={sidePanelDndItems}>
+          {/* warning: containerId should be similar to the first key in dndItems defined in kepler-gl.js*/}
+
+          {sidePanelDndItems.map(
+            (id, index) =>
+              layers[layerOrder[index]] &&
+              !layers[layerOrder[index]].config.hidden &&
+              id && (
+                <SortableItem
+                  key={id}
+                  layerId={id}
+                  panelProps={panelProps}
+                  layerActions={layerActions}
+                  layers={layers}
+                  layerIndex={layerOrder[index]}
                 />
-              </SortableItem>
-            )
-        )}
-      </WrappedSortableContainer>
+              )
+          )}
+        </SortableList>
+      </>
     ) : (
       <>
         {layerOrder.map(
