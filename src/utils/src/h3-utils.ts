@@ -42,13 +42,13 @@ export function idToPolygonGeo(object?: {id: H3Index}, properties?: any) {
   if (!object?.id) {
     return null;
   }
-
   const vertices = getVertices(object);
 
   return {
+    type: 'Feature',
     geometry: {
-      coordinates: vertices,
-      type: 'LineString'
+      coordinates: properties?.isClosed ? [vertices] : vertices,
+      type: properties?.isClosed ? 'Polygon' : 'LineString'
     },
     properties
   };
