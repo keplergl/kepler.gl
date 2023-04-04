@@ -21,11 +21,6 @@ const StyledHeaderCell = styled.div`
   flex-direction: row;
   background-color: ${props => props.theme.headerCellBackground};
 
-  &:hover {
-    .more {
-      color: ${props => props.theme.headerCellIconColor};
-    }
-  }
   .n-sort-idx {
     font-size: 9px;
   }
@@ -42,7 +37,6 @@ const StyledHeaderCell = styled.div`
       display: flex;
       align-items: center;
       justify-content: space-between;
-      cursor: pointer;
 
       .col-name__left {
         display: flex;
@@ -62,7 +56,6 @@ const StyledHeaderCell = styled.div`
   }
 
   .more {
-    color: transparent;
     margin-left: 5px;
   }
 `;
