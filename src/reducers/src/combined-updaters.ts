@@ -363,7 +363,7 @@ export const toggleSplitMapUpdater = (
   const newState = {
     ...state,
     visState: visStateToggleSplitMapUpdater(state.visState, action),
-    uiState: uiStateToggleSplitMapUpdater(state.uiState, action),
+    uiState: uiStateToggleSplitMapUpdater(state.uiState),
     mapState: mapStateToggleSplitMapUpdater(state.mapState, action)
   };
 
