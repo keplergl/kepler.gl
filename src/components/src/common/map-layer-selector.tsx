@@ -51,8 +51,7 @@ const MapLayerSelector = ({layers, onMapToggleLayer}: MapLayerSelectorProps) => 
           checked={layer.isVisible}
           id={`${layer.id}-toggle-${generateHashId(4)}`}
           label={layer.name}
-          onChange={e => {
-            e.preventDefault();
+          onChange={() => {
             onMapToggleLayer(layer.id);
           }}
         />
