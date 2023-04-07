@@ -32,7 +32,7 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-intl": "^6.3.0",
-    "redux": "^4.0.5"
+    "redux": "^4.2.1"
   },
   "nyc": {
     "sourceMap": false,
