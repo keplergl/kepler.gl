@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {PropsWithChildren} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 
@@ -42,11 +42,10 @@ const PanelHeaderRow = styled.div.attrs({
   margin-bottom: 32px;
 `;
 
-export type PanelTitleProps = {
+export type PanelTitleProps = PropsWithChildren<{
   title: string;
   className?: string;
-  children?: React.ReactNode;
-};
+}>;
 
 const PanelTitleFactory = () => {
   const PanelTitle: React.FC<PanelTitleProps> = ({title, className, children}) => (
