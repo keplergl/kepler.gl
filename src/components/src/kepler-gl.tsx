@@ -516,7 +516,7 @@ function KeplerGlFactory(
 
     _handleDragEnd = ({active, over}) => {
       const {
-        visState: {layerOrder},
+        visState: {layerOrder, splitMaps},
         visStateActions
       } = this.props;
       const {dndItems} = this.state;
@@ -540,7 +540,7 @@ function KeplerGlFactory(
         visStateActions.reorderLayer(
           getLayerOrderOnSort(layerOrder, dndItems[activeContainer], activeLayerId, overId)
         );
-      } else {
+      } else if (!splitMaps[overContainer].layers[activeLayerId]) {
         // drag and drop in different containers: Sortablelist -> MapContainer
         visStateActions.toggleLayerForMap(overContainer, activeLayerId);
       }
