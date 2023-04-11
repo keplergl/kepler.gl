@@ -75,6 +75,7 @@ import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
 import NotificationPanelFactory from './notification-panel';
 import GeoCoderPanelFactory from './geocoder-panel';
+import LayerPanelHeaderFactory from './side-panel/layer-panel/layer-panel-header';
 
 import {
   filterObjectByPredicate,
@@ -138,6 +139,10 @@ const BottomWidgetOuter = styled.div<BottomWidgetOuterProps>(
     pointer-events: all;
   }`
 );
+
+const nop = () => {
+  return;
+};
 
 export const isViewportDisjointed = props => {
   return (
@@ -358,7 +363,8 @@ KeplerGlFactory.deps = [
   ModalContainerFactory,
   SidePanelFactory,
   PlotContainerFactory,
-  NotificationPanelFactory
+  NotificationPanelFactory,
+  LayerPanelHeaderFactory
 ];
 
 function KeplerGlFactory(
@@ -369,7 +375,8 @@ function KeplerGlFactory(
   ModalContainer: ReturnType<typeof ModalContainerFactory>,
   SidePanel: ReturnType<typeof SidePanelFactory>,
   PlotContainer: ReturnType<typeof PlotContainerFactory>,
-  NotificationPanel: ReturnType<typeof NotificationPanelFactory>
+  NotificationPanel: ReturnType<typeof NotificationPanelFactory>,
+  LayerPanelHeader: ReturnType<typeof LayerPanelHeaderFactory>
 ): React.ComponentType<KeplerGLBasicProps & {selector: (...args: any[]) => KeplerGlState}> {
   /** @typedef {import('./kepler-gl').UnconnectedKeplerGlProps} KeplerGlProps */
   /** @augments React.Component<KeplerGlProps> */
@@ -516,7 +523,7 @@ function KeplerGlFactory(
 
     _handleDragEnd = ({active, over}) => {
       const {
-        visState: {layerOrder},
+        visState: {layerOrder, splitMaps},
         visStateActions
       } = this.props;
       const {dndItems} = this.state;
@@ -540,7 +547,7 @@ function KeplerGlFactory(
         visStateActions.reorderLayer(
           getLayerOrderOnSort(layerOrder, dndItems[activeContainer], activeLayerId, overId)
         );
-      } else {
+      } else if (!splitMaps[overContainer].layers[activeLayerId]) {
         // drag and drop in different containers: Sortablelist -> MapContainer
         visStateActions.toggleLayerForMap(overContainer, activeLayerId);
       }
@@ -567,7 +574,8 @@ function KeplerGlFactory(
       const activeLayer = this.state.activeLayer;
       const {
         splitMaps, // this will store support for split map view is necessary
-        interactionConfig
+        interactionConfig,
+        datasets
       } = visState;
 
       const isSplit = isSplitSelector(this.props);
@@ -633,7 +641,29 @@ function KeplerGlFactory(
                     {isSplit && (
                       <DragOverlay modifiers={DRAGOVERLAY_MODIFIERS} dropAnimation={null}>
                         {activeLayer !== undefined ? (
-                          <DragItem>{activeLayer.config?.label}</DragItem>
+                          <DragItem>
+                            <LayerPanelHeader
+                              isConfigActive={false}
+                              layerId={activeLayer.id}
+                              isVisible={true}
+                              isValid={true}
+                              label={activeLayer.config.label}
+                              labelRCGColorValues={
+                                activeLayer.config.dataId
+                                  ? datasets[activeLayer.config.dataId].color
+                                  : null
+                              }
+                              onToggleVisibility={nop}
+                              onResetIsValid={nop}
+                              onUpdateLayerLabel={nop}
+                              onToggleEnableConfig={nop}
+                              onDuplicateLayer={nop}
+                              onRemoveLayer={nop}
+                              layerType={activeLayer.type}
+                              allowDuplicate={false}
+                              isDragNDropEnabled={false}
+                            />
+                          </DragItem>
                         ) : null}
                       </DragOverlay>
                     )}

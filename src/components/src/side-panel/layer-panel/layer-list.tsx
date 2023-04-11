@@ -128,10 +128,15 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
       isSortable = true
     } = props;
     const {toggleModal: openModal} = uiStateActions;
-    const sidePanelDndItems = useMemo(() => layerOrder.map(layerIdx => layers[layerIdx].id), [
-      layers,
-      layerOrder
-    ]);
+    const layerOrdersToShow = useMemo(
+      () =>
+        layerOrder.filter(layerIdx => Boolean(layers[layerIdx]) && !layers[layerIdx].config.hidden),
+      [layers, layerOrder]
+    );
+
+    const sidePanelDndItems = useMemo(() => {
+      return layerOrdersToShow.map(layerIdx => layers[layerIdx].id);
+    }, [layerOrdersToShow, layers]);
 
     const layerTypeOptions = useMemo(
       () =>
@@ -170,27 +175,22 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
         <SortableList containerId="sortablelist" sidePanelDndItems={sidePanelDndItems}>
           {/* warning: containerId should be similar to the first key in dndItems defined in kepler-gl.js*/}
 
-          {sidePanelDndItems.map(
-            (id, index) =>
-              layers[layerOrder[index]] &&
-              !layers[layerOrder[index]].config.hidden &&
-              id && (
-                <SortableItem
-                  key={id}
-                  layerId={id}
-                  panelProps={panelProps}
-                  layerActions={layerActions}
-                  layers={layers}
-                  layerIndex={layerOrder[index]}
-                />
-              )
-          )}
+          {layerOrdersToShow.map(layerIdx => (
+            <SortableItem
+              key={layers[layerIdx].id}
+              layerId={layers[layerIdx].id}
+              panelProps={panelProps}
+              layerActions={layerActions}
+              layers={layers}
+              layerIndex={layerIdx}
+            />
+          ))}
         </SortableList>
       </>
     ) : (
       <>
         {layerOrder.map(
-          (layerIdx, index) =>
+          layerIdx =>
             layers[layerIdx] &&
             !layers[layerIdx].config.hidden && (
               <LayerPanel

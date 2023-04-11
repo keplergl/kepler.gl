@@ -251,6 +251,8 @@ test('keplerGlReducer - splitMap and mapControl interaction', t => {
 
   t.equal(state.test.mapState.isSplit, true, 'Should have split map');
 
+  t.equal(state.test.uiState.mapControls.mapLegend.active, true, 'Should open map legend');
+
   state = keplerGlReducer(state, toggleMapControl('mapDraw', 1));
 
   t.equal(
