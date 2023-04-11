@@ -24,7 +24,7 @@ import Portaled from '../portaled';
 import DropdownList from '../item-selector/dropdown-list';
 import {SORT_ORDER, TABLE_OPTION, TABLE_OPTION_LIST, TooltipFormat} from '@kepler.gl/constants';
 import {getFieldFormatLabels} from '@kepler.gl/utils';
-import {ColMeta} from '@kepler.gl/types';
+import {ColMeta, ColMetaProps} from '@kepler.gl/types';
 import {ArrowDown, ArrowUp, Clipboard, Pin, Cancel} from '../icons';
 
 const ListItem = ({value}) => (
@@ -80,13 +80,15 @@ export type FormatterDropdownProps = {
   left: number;
   top: number;
   isOpened: boolean;
-  column: ColMeta;
+  column: ColMetaProps;
   setDisplayFormat: (displayFormat: string) => void;
   onClose: () => void;
   formatLabels: TooltipFormat[];
 };
 
-export const FormatterDropdown = props => {
+export const FormatterDropdown: React.FC<FormatterDropdownProps> = (
+  props: FormatterDropdownProps
+) => {
   const {left, top, isOpened, column, setDisplayFormat, onClose, formatLabels} = props;
   const selectionIndex = formatLabels.findIndex(label => label.format === column.displayFormat);
 
@@ -209,7 +211,7 @@ const OptionDropdown = (props: OptionDropdownProps) => {
         <FormatterDropdown
           left={120}
           top={-10}
-          isOpened={isOpened && showFormatter}
+          isOpened={Boolean(isOpened && showFormatter)}
           formatLabels={formatLabels}
           column={colMeta[column]}
           setDisplayFormat={setDisplayFormat}

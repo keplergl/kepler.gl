@@ -10,7 +10,7 @@ type TooltipFields = {
   id?: string;
   name?: string;
   fieldIdx?: number;
-  type?: number;
+  type?: string;
 };
 
 export type ColMetaProps = {

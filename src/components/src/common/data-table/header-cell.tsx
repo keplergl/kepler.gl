@@ -102,7 +102,7 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
     const {columnIndex, key, style} = cellInfo;
     const {
       colMeta,
-      sortColumn = {},
+      sortColumn,
       sortTableColumn,
       pinTableColumn,
       copyTableColumn,

@@ -358,7 +358,6 @@ export function getColumnFormatter(colMeta: ColMetaProps): FieldFormatter {
   return defaultFormatter;
 }
 
-// ! extra upstream
 export function applyValueMap(format) {
   return v => format[v];
 }

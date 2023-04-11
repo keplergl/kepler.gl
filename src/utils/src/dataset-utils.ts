@@ -565,7 +565,7 @@ const addTimeLabel = (formats: TimeLabelFormat[]) =>
         : f.label
   }));
 
-export function getFieldFormatLabels(fieldType: string): TooltipFormat[] {
+export function getFieldFormatLabels(fieldType?: string): TooltipFormat[] {
   const tooltipTypes = (fieldType && FIELD_OPTS[fieldType].format.tooltip) || [];
   const formatLabels: TimeLabelFormat[] = Object.values(TOOLTIP_FORMATS).filter(t =>
     tooltipTypes.includes(t.type)
@@ -573,7 +573,7 @@ export function getFieldFormatLabels(fieldType: string): TooltipFormat[] {
   return addTimeLabel(formatLabels);
 }
 
-export function getFormatLabels(fields: any, fieldName: string) {
-  const fieldType = fields.find((f: TooltipFields) => f.name === fieldName)?.type;
+export function getFormatLabels(fields: TooltipFields[], fieldName: string) {
+  const fieldType = fields.find(f => f.name === fieldName)?.type;
   return getFieldFormatLabels(fieldType);
 }

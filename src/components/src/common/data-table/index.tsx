@@ -387,7 +387,7 @@ export interface DataTableProps {
   dataContainer: DataContainerInterface;
   fixedHeight?: number;
   colMeta: ColMeta;
-  sortColumn?: SortColumn;
+  sortColumn: SortColumn;
   sortTableColumn: (column: string, mode?: string) => void;
   pinTableColumn: (column: string) => void;
   setDisplayFormat: (column: string, displayFormat: string) => void;
