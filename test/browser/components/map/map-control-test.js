@@ -86,7 +86,8 @@ test('MapControlFactory - display options', t => {
     children: <MapContainer {...propsWithSplitMap} />
   });
 
-  t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 6 MapControlButton');
+  // 5 control buttons as legend is opened automatically in split map mode
+  t.equal(wrapper.find(MapControlButton).length, 5, 'Should show 5 MapControlButton');
   t.equal(wrapper.find(Split).length, 0, 'Should show 0 split map split button');
   t.equal(wrapper.find(Delete).length, 1, 'Should show 1 split map delete button');
   t.equal(wrapper.find(Layers).length, 1, 'Should show 1 Layer button');
@@ -121,9 +122,10 @@ test('MapControlFactory - click options', t => {
     toggleMapControl: onToggleMapControl,
     setLocale: onSetLocale
   };
+  let updateState = keplerGlReducerCore(StateWSplitMaps, toggleMapControl('mapLegend', 0));
   const mapContainerProps = mapFieldsSelector(
     mockKeplerPropsWithState({
-      state: StateWSplitMaps,
+      state: updateState,
       visStateActions,
       mapStateActions,
       uiStateActions
@@ -140,7 +142,7 @@ test('MapControlFactory - click options', t => {
   }, 'MapContainer should not fail without props');
 
   // layer selector is not active
-  t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 5 MapControlButton');
+  t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 6 MapControlButton');
 
   t.equal(wrapper.find(Delete).length, 1, 'Should show 1 delete split map button');
   // click split Map

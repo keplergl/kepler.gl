@@ -43,7 +43,7 @@ const StyledRadiuInput = styled.label<StyledSwitchInputProps>`
 
 const HiddenInput = styled.input`
   position: absolute;
-  display: none;
+  opacity: 0;
 `;
 
 interface StyledCheckboxProps {

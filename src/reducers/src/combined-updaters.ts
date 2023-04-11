@@ -20,14 +20,20 @@
 
 import {
   toggleModalUpdater,
-  loadFilesSuccessUpdater as uiStateLoadFilesSuccessUpdater
+  loadFilesSuccessUpdater as uiStateLoadFilesSuccessUpdater,
+  toggleMapControlUpdater,
+  toggleSplitMapUpdater as uiStateToggleSplitMapUpdater
 } from './ui-state-updaters';
 import {
   updateVisDataUpdater as visStateUpdateVisDataUpdater,
   setMapInfoUpdater,
-  layerTypeChangeUpdater
+  layerTypeChangeUpdater,
+  toggleSplitMapUpdater as visStateToggleSplitMapUpdater
 } from './vis-state-updaters';
-import {receiveMapConfigUpdater as stateMapConfigUpdater} from './map-state-updaters';
+import {
+  receiveMapConfigUpdater as stateMapConfigUpdater,
+  toggleSplitMapUpdater as mapStateToggleSplitMapUpdater
+} from './map-state-updaters';
 import {
   mapStyleChangeUpdater,
   receiveMapConfigUpdater as styleMapConfigUpdater
@@ -40,7 +46,8 @@ import {ProviderState} from './provider-state-updaters';
 import {
   loadFilesSuccessUpdaterAction,
   MapStyleChangeUpdaterAction,
-  LayerTypeChangeUpdaterAction
+  LayerTypeChangeUpdaterAction,
+  ToggleSplitMapUpdaterAction
 } from '@kepler.gl/actions';
 import {VisState} from '@kepler.gl/schemas';
 import {Layer} from '@kepler.gl/layers';
@@ -344,4 +351,29 @@ export const combinedLayerTypeChangeUpdater = (
     ...state,
     visState
   };
+};
+
+/**
+ * Make mapLegend active when toggleSplitMap action is called
+ */
+export const toggleSplitMapUpdater = (
+  state: KeplerGlState,
+  action: ToggleSplitMapUpdaterAction
+): KeplerGlState => {
+  const newState = {
+    ...state,
+    visState: visStateToggleSplitMapUpdater(state.visState, action),
+    uiState: uiStateToggleSplitMapUpdater(state.uiState),
+    mapState: mapStateToggleSplitMapUpdater(state.mapState, action)
+  };
+
+  const isSplit = newState.visState.splitMaps.length !== 0;
+  const isLegendActive = newState.uiState.mapControls?.mapLegend?.active;
+  if (isSplit && !isLegendActive) {
+    newState.uiState = toggleMapControlUpdater(newState.uiState, {
+      payload: {panelId: 'mapLegend', index: action.payload}
+    });
+  }
+
+  return newState;
 };

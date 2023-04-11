@@ -381,13 +381,7 @@ export const toggleMapControlUpdater = (
     ...state.mapControls,
     [panelId]: {
       ...state.mapControls[panelId],
-      // this handles split map interaction
-      // Toggling from within the same map will simply toggle the active property
-      // Toggling from within different maps we set the active property to true
-      active:
-        index === state.mapControls[panelId].activeMapIndex
-          ? !state.mapControls[panelId].active
-          : true,
+      active: !state.mapControls[panelId].active,
       activeMapIndex: index
     }
   }
