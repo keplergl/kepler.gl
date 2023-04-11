@@ -260,7 +260,7 @@ function DataTableModalFactory(
                 pinTableColumn={this.pinTableColumn}
                 sortTableColumn={this.sortTableColumn}
                 setDisplayFormat={this.setDisplayFormat}
-                hasStats
+                hasStats={false}
               />
             ) : null}
           </TableContainer>
