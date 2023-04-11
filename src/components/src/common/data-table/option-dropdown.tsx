@@ -25,7 +25,7 @@ import DropdownList from '../item-selector/dropdown-list';
 import {SORT_ORDER, TABLE_OPTION, TABLE_OPTION_LIST, TooltipFormat} from '@kepler.gl/constants';
 import {getFieldFormatLabels} from '@kepler.gl/utils';
 import {ColMeta, ColMetaProps} from '@kepler.gl/types';
-import {ArrowDown, ArrowUp, Clipboard, Pin, Cancel} from '../icons';
+import {ArrowDown, ArrowUp, Clipboard, Pin, Cancel, Hash} from '../icons';
 
 const ListItem = ({value}) => (
   <div>
@@ -179,7 +179,8 @@ const OptionDropdown = (props: OptionDropdownProps) => {
     ArrowDown,
     ArrowUp,
     Clipboard,
-    Cancel
+    Cancel,
+    Hash
   };
 
   const formatLabels = getFieldFormatLabels(colMeta[column].type);
