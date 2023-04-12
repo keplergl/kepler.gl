@@ -30,7 +30,7 @@ import {format as d3Format} from 'd3-format';
 import {bisectLeft} from 'd3-array';
 import moment from 'moment-timezone';
 
-import {Millisecond, Field} from '@kepler.gl/types';
+import {Millisecond, Field, ColMetaProps} from '@kepler.gl/types';
 
 export type FieldFormatter = (value: any) => string;
 
@@ -296,7 +296,6 @@ export const parseFieldValue = (value: any, type: string): string => {
   if (!notNullorUndefined(value)) {
     return '';
   }
-
   return FIELD_DISPLAY_FORMAT[type] ? FIELD_DISPLAY_FORMAT[type](value) : String(value);
 };
 
@@ -338,6 +337,29 @@ export function getFormatter(
   }
 
   return defaultFormatter;
+}
+
+export function getColumnFormatter(colMeta: ColMetaProps): FieldFormatter {
+  const {format, displayFormat} = colMeta;
+
+  if (!format && !displayFormat) {
+    return FIELD_DISPLAY_FORMAT[colMeta.type];
+  }
+  const tooltipFormat = Object.values(TOOLTIP_FORMATS).find(f => f[TOOLTIP_KEY] === displayFormat);
+
+  if (tooltipFormat) {
+    return applyDefaultFormat(tooltipFormat);
+  } else if (typeof displayFormat === 'string' && colMeta) {
+    return applyCustomFormat(displayFormat, colMeta);
+  } else if (typeof displayFormat === 'object') {
+    return applyValueMap(displayFormat);
+  }
+
+  return defaultFormatter;
+}
+
+export function applyValueMap(format) {
+  return v => format[v];
 }
 
 export function applyDefaultFormat(tooltipFormat: TooltipFormat): (v: any) => string {

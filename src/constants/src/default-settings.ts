@@ -431,7 +431,8 @@ export const TABLE_OPTION = keyMirror({
   UNSORT: null,
   PIN: null,
   UNPIN: null,
-  COPY: null
+  COPY: null,
+  FORMAT_COLUMN: null
 });
 
 export const TABLE_OPTION_LIST = [
@@ -465,7 +466,8 @@ export const TABLE_OPTION_LIST = [
     icon: 'Cancel',
     condition: props => props.isPinned
   },
-  {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: 'Clipboard'}
+  {value: TABLE_OPTION.COPY, display: 'Copy Column', icon: 'Clipboard'},
+  {value: TABLE_OPTION.FORMAT_COLUMN, display: 'Format Column', icon: 'Hash'}
 ];
 
 const YELLOW = '248, 194, 28';

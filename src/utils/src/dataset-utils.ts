@@ -19,13 +19,28 @@
 // THE SOFTWARE.
 
 import {console as globalConsole} from 'global/window';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {
+  ALL_FIELD_TYPES,
+  FIELD_OPTS,
+  TOOLTIP_FORMATS,
+  TOOLTIP_FORMAT_TYPES
+} from '@kepler.gl/constants';
 import {Analyzer, DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import assert from 'assert';
 
-import {ProcessorResult, RGBColor, RowData, Field, FieldPair} from '@kepler.gl/types';
+import {
+  ProcessorResult,
+  RGBColor,
+  RowData,
+  Field,
+  FieldPair,
+  TimeLabelFormat,
+  TooltipFields
+} from '@kepler.gl/types';
+import {TooltipFormat} from '@kepler.gl/constants';
 
-import {notNullorUndefined, isPlainObject} from './data-utils';
+import {notNullorUndefined, isPlainObject, getFormatter} from './data-utils';
+import {getFormatValue} from './format';
 import {range} from 'd3-array';
 import {hexToRgb} from './color-utils';
 
@@ -537,4 +552,28 @@ export function analyzerTypeToFieldType(aType: string): string {
       globalConsole.warn(`Unsupported analyzer type: ${aType}`);
       return ALL_FIELD_TYPES.string;
   }
+}
+
+const TIME_DISPLAY = '2020-05-11 14:00';
+
+const addTimeLabel = (formats: TimeLabelFormat[]) =>
+  formats.map(f => ({
+    ...f,
+    label:
+      f.type === TOOLTIP_FORMAT_TYPES.DATE_TIME || f.type === TOOLTIP_FORMAT_TYPES.DATE
+        ? getFormatter(getFormatValue(f))(TIME_DISPLAY)
+        : f.label
+  }));
+
+export function getFieldFormatLabels(fieldType?: string): TooltipFormat[] {
+  const tooltipTypes = (fieldType && FIELD_OPTS[fieldType].format.tooltip) || [];
+  const formatLabels: TimeLabelFormat[] = Object.values(TOOLTIP_FORMATS).filter(t =>
+    tooltipTypes.includes(t.type)
+  );
+  return addTimeLabel(formatLabels);
+}
+
+export function getFormatLabels(fields: TooltipFields[], fieldName: string) {
+  const fieldType = fields.find(f => f.name === fieldName)?.type;
+  return getFieldFormatLabels(fieldType);
 }

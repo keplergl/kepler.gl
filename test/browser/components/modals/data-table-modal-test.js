@@ -28,6 +28,7 @@ import CloneDeep from 'lodash.clonedeep';
 import {VisStateActions} from '@kepler.gl/actions';
 import {visStateReducer} from '@kepler.gl/reducers';
 
+import {TOOLTIP_FORMATS} from '@kepler.gl/constants';
 import {
   FieldTokenFactory,
   Icons,
@@ -372,12 +373,22 @@ test('Components -> DataTableModal -> render DataTable: csv 1', t => {
   t.end();
 });
 
-test('Components -> DataTableModal -> render DataTable: sort and pin', t => {
+test('Components -> DataTableModal -> render DataTable: sort, pin and display format', t => {
   const initialState = CloneDeep(StateWFiles.visState);
+
+  // set display format
+  const nextState = visStateReducer(
+    initialState,
+    VisStateActions.setColumnDisplayFormat(
+      testCsvDataId,
+      'gps_data.lat',
+      TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format
+    )
+  );
 
   // sort column
   const nextState1 = visStateReducer(
-    initialState,
+    nextState,
     VisStateActions.sortTableColumn(testCsvDataId, 'gps_data.lat')
   );
 
@@ -463,11 +474,12 @@ test('Components -> DataTableModal -> render DataTable: sort and pin', t => {
   t.end();
 });
 
-test('Components -> DatableModal -> sort/pin and copy should be called with the right params', t => {
+test('Components -> DatableModal -> sort/pin/copy and display format should be called with the right params', t => {
   const initialState = CloneDeep(StateWFiles.visState);
   const copyTableColumn = sinon.spy();
   const pinTableColumn = sinon.spy();
   const sortTableColumn = sinon.spy();
+  const setColumnDisplayFormat = sinon.spy();
   const column = 'gps_data.lat';
 
   const wrapper = mountWithTheme(
@@ -477,18 +489,21 @@ test('Components -> DatableModal -> sort/pin and copy should be called with the 
       copyTableColumn={copyTableColumn}
       pinTableColumn={pinTableColumn}
       sortTableColumn={sortTableColumn}
+      setColumnDisplayFormat={setColumnDisplayFormat}
     />
   );
 
   const {
     sortTableColumn: testSortColumn,
     pinTableColumn: testPinColumn,
-    copyTableColumn: testCopyColumn
+    copyTableColumn: testCopyColumn,
+    setDisplayFormat: testSetDisplayFormat
   } = wrapper.find('DataTable').props();
 
   testSortColumn(column);
   testPinColumn(column);
   testCopyColumn(column);
+  testSetDisplayFormat(column, TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format);
 
   t.equal(
     sortTableColumn.calledWith(testCsvDataId, column),
@@ -506,6 +521,16 @@ test('Components -> DatableModal -> sort/pin and copy should be called with the 
     copyTableColumn.calledWith(testCsvDataId, column),
     true,
     'should call copyTableColumn with dataId and column gps_data.lat'
+  );
+
+  t.equal(
+    setColumnDisplayFormat.calledWith(
+      testCsvDataId,
+      column,
+      TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format
+    ),
+    true,
+    'should call setDisplayFormat with dataId, column gps_data.lat, and format'
   );
 
   t.end();
@@ -563,13 +588,17 @@ test('Components -> cellSize -> renderedSize', t => {
 test('Components -> DataTableModal.render: csv 2', t => {
   const dataContainer = createDataContainer(geoStyleRows, {fields: geoStyleFields});
 
+  // manually set display format on the 5th field: radius (.2~e)
+  const fieldsWithDisplayFormat = geoStyleFields;
+  fieldsWithDisplayFormat[5].displayFormat = TOOLTIP_FORMATS.DECIMAL_SCIENTIFIC_FIXED_2.format;
+
   const wrapper = mountWithTheme(
     <DataTableModal
       datasets={{
         smoothie: {
           id: 'smoothie',
           dataContainer,
-          fields: geoStyleFields,
+          fields: fieldsWithDisplayFormat,
           color: [113, 113, 113],
           data: geoStyleRows
         }
@@ -656,7 +685,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
       '[4,5,6]\t',
       '1\t',
       '10\t',
-      '5\t',
+      '5e+0\t',
       '\n'
     ],
     1: [
@@ -665,7 +694,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
       '[4,5,6]\t',
       '3\t',
       '10\t',
-      '5\t',
+      '5e+0\t',
       '\n'
     ],
     2: [
@@ -674,7 +703,7 @@ test('Components -> DataTableModal.render: csv 2', t => {
       '[4,5,6]\t',
       '4\t',
       '10\t',
-      '5\t',
+      '5e+0\t',
       '\n'
     ]
   };

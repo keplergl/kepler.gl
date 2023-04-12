@@ -620,6 +620,36 @@ export function copyTableColumn(
   };
 }
 
+export type SetColumnDisplayFormatUpdaterAction = {
+  dataId: string;
+  column: string;
+  displayFormat: string;
+};
+
+/**
+ * Set column display format
+ * @param dataId
+ * @param column
+ * @param displayFormat
+ * @returns action
+ * @public
+ */
+export function setColumnDisplayFormat(
+  dataId: string,
+  column: string,
+  displayFormat: string
+): Merge<
+  SetColumnDisplayFormatUpdaterAction,
+  {type: typeof ActionTypes.SET_COLUMN_DISPLAY_FORMAT}
+> {
+  return {
+    type: ActionTypes.SET_COLUMN_DISPLAY_FORMAT,
+    dataId,
+    column,
+    displayFormat
+  };
+}
+
 export type AddDataToMapUpdaterOptions = {
   centrMap?: boolean;
   readOnly?: boolean;

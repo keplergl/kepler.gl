@@ -65,7 +65,8 @@ export {
   getBooleanFormatter,
   applyCustomFormat,
   datetimeFormatter,
-  formatNumber
+  formatNumber,
+  getColumnFormatter
 } from './data-utils';
 export {getTimelineFromAnimationConfig, getTimelineFromFilter} from './time';
 
@@ -77,8 +78,11 @@ export {
   getSampleForTypeAnalyze,
   getFieldsFromData,
   renameDuplicateFields,
-  analyzerTypeToFieldType
+  analyzerTypeToFieldType,
+  getFormatLabels,
+  getFieldFormatLabels
 } from './dataset-utils';
+export {getFormatValue} from './format';
 export {exportMapToHTML} from './export-map-html';
 export {
   DEFAULT_IMAGE_NAME,

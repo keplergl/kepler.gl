@@ -219,6 +219,16 @@ class KeplerTable {
   }
 
   /**
+   * Get displayFormat
+   * @param columnName
+   */
+  getColumnDisplayFormat(columnName) {
+    const field = this.fields.find(fd => fd[FID_KEY] === columnName);
+    this._assetField(columnName, field);
+    return field?.displayFormat;
+  }
+
+  /**
    * Get the value of a cell
    */
   getValue(columnName: string, rowIdx: number): any {

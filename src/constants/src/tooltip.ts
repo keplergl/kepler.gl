@@ -93,6 +93,30 @@ export const TOOLTIP_FORMATS = {
     format: '.3~f',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
+  DECIMAL_DECIMAL_FIXED_4: {
+    id: 'DECIMAL_DECIMAL_FIXED_4',
+    label: '1.23456 → 1.2346',
+    format: '.4~f',
+    type: TOOLTIP_FORMAT_TYPES.DECIMAL
+  },
+  DECIMAL_SCIENTIFIC_FIXED_2: {
+    id: 'DECIMAL_SCIENTIFIC_FIXED_2',
+    label: '0.12345 → 1.23e-1',
+    format: '.2~e',
+    type: TOOLTIP_FORMAT_TYPES.DECIMAL
+  },
+  DECIMAL_SCIENTIFIC_FIXED_3: {
+    id: 'DECIMAL_SCIENTIFIC_FIXED_3',
+    label: '0.12345 → 1.235e-1',
+    format: '.3~e',
+    type: TOOLTIP_FORMAT_TYPES.DECIMAL
+  },
+  DECIMAL_SCIENTIFIC_FIXED_4: {
+    id: 'DECIMAL_SCIENTIFIC_FIXED_4',
+    label: '0.123456 → 1.2346e-1',
+    format: '.4~e',
+    type: TOOLTIP_FORMAT_TYPES.DECIMAL
+  },
   DECIMAL_INT: {
     id: 'DECIMAL_INT',
     label: '12345 → 12350',
@@ -103,6 +127,12 @@ export const TOOLTIP_FORMATS = {
     id: 'DECIMAL_THREE',
     label: '12345.4321 → 12,345.432',
     format: ',.3~f',
+    type: TOOLTIP_FORMAT_TYPES.DECIMAL
+  },
+  DECIMAL_FOUR: {
+    id: 'DECIMAL_FOUR',
+    label: '12345.54321 → 12,345.5432',
+    format: ',.4~f',
     type: TOOLTIP_FORMAT_TYPES.DECIMAL
   },
   DECIMAL_DELTA: {

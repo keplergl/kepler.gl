@@ -224,7 +224,7 @@ export {default as ActionPanel, ActionPanelItem} from './common/action-panel';
 export {default as HeaderCellFactory} from './common/data-table/header-cell';
 export {default as DataTableFactory} from './common/data-table';
 export {default as CanvasHack} from './common/data-table/canvas';
-export {default as OptionDropdown} from './common/data-table/option-dropdown';
+export {default as OptionDropdown, FormatterDropdown} from './common/data-table/option-dropdown';
 export {default as MapLayerSelector} from './common/map-layer-selector';
 export {default as VerticalToolbar} from './common/vertical-toolbar';
 export {default as ToolbarItem} from './common/toolbar-item';
@@ -265,6 +265,7 @@ export type {CustomPanelsProps} from './side-panel/custom-panel';
 export type {LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
 export type {LayerGroupColorPickerProps} from './side-panel/map-style-panel/map-layer-group-color-picker';
 export type {MapLegendPanelProps, MapLegendPanelFactoryDeps} from './map/map-legend-panel';
+export type {FormatterDropdownProps} from './common/data-table/option-dropdown';
 
 export {
   Icons,

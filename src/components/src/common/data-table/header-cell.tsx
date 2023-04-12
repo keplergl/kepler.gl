@@ -1,10 +1,12 @@
-import React, {CSSProperties, useCallback} from 'react';
+import React, {CSSProperties, useState, useCallback} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 import Button from './button';
-import {ArrowUp, ArrowDown, VertThreeDots} from '../../common/icons';
-import OptionDropdown from './option-dropdown';
+import {ArrowUp, ArrowDown, VertThreeDots, Hash} from '../../common/icons';
 import {SORT_ORDER} from '@kepler.gl/constants';
+import OptionDropdown, {FormatterDropdown} from './option-dropdown';
+import {getFieldFormatLabels} from '@kepler.gl/utils';
+import {ColMeta} from '@kepler.gl/types';
 import FieldTokenFactory, {FieldTokenProps} from '../../common/field-token';
 import {DataTableProps} from './index';
 
@@ -58,6 +60,12 @@ const StyledHeaderCell = styled.div`
   .more {
     margin-left: 5px;
   }
+
+  .col-name__format svg {
+    width: 10px;
+    height: 10px;
+    stroke-width: 1;
+  }
 `;
 
 type CellInfo = {
@@ -74,6 +82,7 @@ type HeaderCellProps = {
   // passed down from react virtualized Grid
   cellInfo: CellInfo;
   columns: DataTableProps['columns'];
+  colMeta?: ColMeta;
   isPinned?: boolean;
   showStats?: boolean;
   props: DataTableProps;
@@ -91,12 +100,22 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
     moreOptionsColumn
   }: HeaderCellProps) => {
     const {columnIndex, key, style} = cellInfo;
-    const {colMeta, sortColumn = {}, sortTableColumn, pinTableColumn, copyTableColumn} = props;
+    const {
+      colMeta,
+      sortColumn,
+      sortTableColumn,
+      pinTableColumn,
+      copyTableColumn,
+      setDisplayFormat
+    } = props;
+    const [showFormatter, setShowFormatter] = useState(false);
     const column = columns[columnIndex];
 
     const isGhost = column.ghost;
     const isSorted = sortColumn[column];
     const firstCell = columnIndex === 0;
+    const isFormatted = Boolean(colMeta[column]?.displayFormat);
+    const formatLabels = isFormatted ? getFieldFormatLabels(colMeta[column].type) : [];
     const onSortTable = useCallback(() => sortTableColumn(column), [sortTableColumn, column]);
     const onToggleOptionMenu = useCallback(() => toggleMoreOptions(column), [
       toggleMoreOptions,
@@ -104,6 +123,17 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
     ]);
     const onPin = useCallback(() => pinTableColumn(column), [pinTableColumn, column]);
     const onCopy = useCallback(() => copyTableColumn(column), [copyTableColumn, column]);
+    const onSetDisplayFormat = useCallback(
+      displayFormat => {
+        setDisplayFormat(column, displayFormat.format);
+      },
+      [column, setDisplayFormat]
+    );
+
+    const onToggleDisplayFormat = useCallback(() => {
+      setShowFormatter(!showFormatter);
+    }, [showFormatter]);
+
     return (
       <StyledHeaderCell
         className={classnames('header-cell', {
@@ -136,6 +166,18 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
                       )
                     ) : null}
                   </Button>
+                  <Button className="col-name__format" onClick={onToggleDisplayFormat}>
+                    {isFormatted ? <Hash height="14px" /> : null}
+                    <FormatterDropdown
+                      left={0}
+                      top={0}
+                      isOpened={isFormatted && showFormatter}
+                      column={colMeta[column]}
+                      setDisplayFormat={onSetDisplayFormat}
+                      onClose={() => setShowFormatter(false)}
+                      formatLabels={formatLabels}
+                    />
+                  </Button>
                 </div>
                 <Button className="more" onClick={onToggleOptionMenu}>
                   <VertThreeDots height="14px" />
@@ -148,10 +190,12 @@ const HeaderCellFactory = (FieldToken: React.FC<FieldTokenProps>) => {
               <OptionDropdown
                 isOpened={moreOptionsColumn === column}
                 column={column}
+                colMeta={colMeta}
                 toggleMoreOptions={toggleMoreOptions}
                 sortTableColumn={mode => sortTableColumn(column, mode)}
                 pinTableColumn={onPin}
                 copyTableColumn={onCopy}
+                setDisplayFormat={onSetDisplayFormat}
               />
             </section>
           </>

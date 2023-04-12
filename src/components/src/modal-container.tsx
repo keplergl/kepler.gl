@@ -314,6 +314,9 @@ export default function ModalContainerFactory(
                 sortTableColumn={visStateActions.sortTableColumn}
                 pinTableColumn={visStateActions.pinTableColumn}
                 copyTableColumn={visStateActions.copyTableColumn}
+                setColumnDisplayFormat={visStateActions.setColumnDisplayFormat}
+                uiStateActions={uiStateActions}
+                uiState={uiState}
               />
             );
 
