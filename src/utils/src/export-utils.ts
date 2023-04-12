@@ -185,7 +185,7 @@ export function getMapJSON(state, options = DEFAULT_EXPORT_JSON_SETTINGS) {
 
 export function exportJson(state, options: any = {}) {
   const map = getMapJSON(state, options);
-
+  map.info.source = 'kepler.gl';
   const fileBlob = new Blob([exportToJsonString(map)], {type: 'application/json'});
   const fileName = state.appName ? `${state.appName}.json` : DEFAULT_JSON_NAME;
   downloadFile(fileBlob, fileName);
