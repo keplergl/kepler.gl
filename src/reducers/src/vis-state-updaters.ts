@@ -1303,8 +1303,7 @@ export function removeDatasetUpdater<T extends VisState>(
     datasets: newDatasets
   });
 
-  // update filters
-  // ! check again
+  // remove filters
   const filters = newState.filters.filter(filter => !filter.dataId.includes(datasetKey));
 
   newState = {...newState, filters};
@@ -2598,7 +2597,7 @@ export function setLayerAnimationTimeConfigUpdater(
 // Find dataId from a saved visState property:
 // layers, filters, interactions, layerBlending, overlayBlending, splitMaps, animationConfig, editor
 // replace it with another dataId
-function defaultReplaceParentDatasetIds(value, dataId, dataIdToReplace) {
+function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToReplace: string) {
   if (Array.isArray(value)) {
     // for layers, filters, call defaultReplaceParentDatasetIds on each item in array
     const replaced = value

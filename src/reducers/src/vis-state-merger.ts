@@ -100,7 +100,6 @@ export function replaceFilterDatasetIds(
   savedFilter.forEach(filter => {
     if (filter.dataId.includes(dataId)) {
       const newDataId = filter.dataId.map(d => (d === dataId ? dataIdToUse : d));
-      // ! check colorsByDataId
       replaced.push({
         ...filter,
         dataId: newDataId
@@ -115,7 +114,10 @@ export function isSavedLayerConfigV1(layerConfig: any): boolean {
   return layerConfig?.visualChannels;
 }
 
-export function parseLayerConfig(schema: any, layerConfig: any): Layer | undefined {
+export function parseLayerConfig(
+  schema: KeplerGLSchemaClass,
+  layerConfig: any
+): ParsedLayer | undefined {
   // assume the layer config is current version
   const savedConfig = {
     version: CURRENT_VERSION,
@@ -128,7 +130,7 @@ export function parseLayerConfig(schema: any, layerConfig: any): Layer | undefin
 }
 
 function insertItemBasedOnPreservedOrder(
-  currentItems,
+  currentItems: Filter[],
   items: Filter[],
   preservedOrder: any[] = [],
   defaultStart?: boolean
@@ -357,7 +359,10 @@ export function mergeInteractions<S extends VisState>(
   return nextState;
 }
 
-function savedUnmergedInteraction(state, unmerged) {
+function savedUnmergedInteraction<S extends VisState>(
+  state: S,
+  unmerged: Partial<SavedInteractionConfig>
+) {
   if (!unmerged?.tooltip?.fieldsToShow) {
     return state.interactionToBeMerged;
   }
@@ -375,7 +380,7 @@ function savedUnmergedInteraction(state, unmerged) {
   };
 }
 
-function replaceInteractionDatasetIds(interactionConfig, dataId, dataIdToReplace) {
+function replaceInteractionDatasetIds(interactionConfig, dataId: string, dataIdToReplace: string) {
   if (interactionConfig?.tooltip?.fieldsToShow[dataId]) {
     return {
       ...interactionConfig,
