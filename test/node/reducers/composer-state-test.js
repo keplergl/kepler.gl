@@ -37,9 +37,6 @@ import testHexIdData, {
   mergedFilters,
   expectedMergedDataset
 } from 'test/fixtures/test-hex-id-data';
-import {StateWSyncedTimeFilter} from '../../helpers/mock-state';
-import {testCsvDataSlice1Id, testCsvDataSlice2Id} from '../../fixtures/test-csv-data';
-import {getTimeBins} from 'utils/plot';
 import {cmpLayers, cmpFilters, cmpDataset, cmpInteraction} from 'test/helpers/comparison-utils';
 const mockRawData = {
   fields: [
