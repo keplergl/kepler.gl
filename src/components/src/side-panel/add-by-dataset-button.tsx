@@ -29,6 +29,7 @@ import {Button, DatasetSquare} from '../common/styled-components';
 import Typeahead from '../common/item-selector/typeahead';
 import Accessor from '../common/item-selector/accessor';
 import {useIntl} from 'react-intl';
+import {RootContext} from '../context';
 
 const DropdownContainer = styled.div.attrs({
   className: 'add-layer-menu-dropdown'
@@ -159,40 +160,44 @@ const AddByDatasetButton: React.FC<AddByDatasetButtonProps> = ({
   return options.length === 1 ? (
     buttonRendered
   ) : (
-    <Tippy
-      trigger="click"
-      arrow={false}
-      interactive
-      placement="bottom"
-      appendTo="parent"
-      // @ts-ignore
-      onCreate={setTippyInstance}
-      duration={0}
-      content={
-        <DropdownMenu>
-          <DropdownContainer>
-            <Typeahead
-              className={TYPEAHEAD_CLASS}
-              customClasses={{
-                results: 'list-selector',
-                input: TYPEAHEAD_INPUT_CLASS,
-                listItem: 'list__item'
-              }}
-              placeholder={intl ? intl.formatMessage({id: 'placeholder.search'}) : 'Search'}
-              selectedItems={null}
-              options={options}
-              displayOption={Accessor.generateOptionToStringFor('label')}
-              filterOption={'label'}
-              searchable
-              onOptionSelected={onOptionSelected}
-              customListItemComponent={ListItem}
-            />
-          </DropdownContainer>
-        </DropdownMenu>
-      }
-    >
-      {buttonRendered}
-    </Tippy>
+    <RootContext.Consumer>
+      {context => (
+        <Tippy
+          trigger="click"
+          arrow={false}
+          interactive
+          placement="bottom"
+          appendTo={context?.current || 'parent'}
+          // @ts-ignore
+          onCreate={setTippyInstance}
+          duration={0}
+          content={
+            <DropdownMenu>
+              <DropdownContainer>
+                <Typeahead
+                  className={TYPEAHEAD_CLASS}
+                  customClasses={{
+                    results: 'list-selector',
+                    input: TYPEAHEAD_INPUT_CLASS,
+                    listItem: 'list__item'
+                  }}
+                  placeholder={intl ? intl.formatMessage({id: 'placeholder.search'}) : 'Search'}
+                  selectedItems={null}
+                  options={options}
+                  displayOption={Accessor.generateOptionToStringFor('label')}
+                  filterOption={'label'}
+                  searchable
+                  onOptionSelected={onOptionSelected}
+                  customListItemComponent={ListItem}
+                />
+              </DropdownContainer>
+            </DropdownMenu>
+          }
+        >
+          {buttonRendered}
+        </Tippy>
+      )}
+    </RootContext.Consumer>
   );
 };
 

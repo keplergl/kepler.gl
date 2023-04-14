@@ -24,12 +24,19 @@ import cloneDeep from 'lodash.clonedeep';
 import uniq from 'lodash.uniq';
 import get from 'lodash.get';
 import xor from 'lodash.xor';
+import pick from 'lodash.pick';
+import isEqual from 'lodash.isequal';
 import copy from 'copy-to-clipboard';
 import deepmerge from 'deepmerge';
 // Tasks
 import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from '@kepler.gl/tasks';
 // Actions
 import {
+  applyLayerConfig,
+  layerConfigChange,
+  layerTypeChange,
+  layerVisConfigChange,
+  layerVisualChannelConfigChange,
   loadFilesErr,
   loadFilesSuccess,
   loadFileStepSuccess,
@@ -77,7 +84,8 @@ import {
   validateLayerWithData,
   createLayerFromConfig,
   serializeLayer,
-  serializeVisState
+  serializeVisState,
+  parseLayerConfig
 } from './vis-state-merger';
 import {mergeStateFromMergers, isValidMerger} from './merger-handler';
 import {Layer, LayerClasses, LAYER_ID_LENGTH} from '@kepler.gl/layers';
@@ -328,10 +336,129 @@ export function updateStateOnLayerVisibilityChange<S extends VisState>(state: S,
 }
 
 /**
+ * Compares two objects (or arrays) and returns a new object with only the
+ * properties that have changed between the two objects.
+ */
+function pickChangedProps<T>(prev: T, next: T): Partial<T> {
+  const changedProps: Partial<T> = {};
+  const pickPropsOf = obj => {
+    Object.keys(obj).forEach(key => {
+      if (!changedProps.hasOwnProperty(key) && !isEqual(prev[key], next[key])) {
+        changedProps[key] = next[key];
+      }
+    });
+  };
+  pickPropsOf(prev);
+  pickPropsOf(next);
+  return changedProps;
+}
+
+const VISUAL_CHANNEL_PROP_TYPES = ['field', 'scale', 'domain', 'aggregation'];
+
+/**
+ * Apply layer config
+ * @memberof visStateUpdaters
+ * @returns nextState
+ */
+// eslint-disable-next-line complexity, max-statements
+export function applyLayerConfigUpdater(
+  state: VisState,
+  action: VisStateActions.ApplyLayerConfigUpdaterAction
+): VisState {
+  const {oldLayerId, newLayerConfig, layerIndex} = action;
+  const newParsedLayer =
+    // will move visualChannels to the config prop
+    parseLayerConfig(state.schema, newLayerConfig);
+  const oldLayer = state.layers.find(l => l.id === oldLayerId);
+  if (!oldLayer || !newParsedLayer) {
+    return state;
+  }
+  if (layerIndex !== null && layerIndex !== undefined && state.layers[layerIndex] !== oldLayer) {
+    // layerIndex is provided, but it doesn't match the oldLayer
+    return state;
+  }
+  const dataset = state.datasets[newParsedLayer.config.dataId];
+  if (!dataset) {
+    return state;
+  }
+  // Make sure the layer is valid and convert it to Layer
+  const newLayer = validateLayerWithData(dataset, newParsedLayer, state.layerClasses);
+  if (!newLayer) {
+    return state;
+  }
+
+  let nextState = state;
+
+  if (newLayer.type && newLayer.type !== oldLayer.type) {
+    const oldLayerIndex = state.layers.findIndex(l => l.id === oldLayerId);
+    if (oldLayerIndex >= 0) {
+      nextState = layerTypeChangeUpdater(nextState, layerTypeChange(oldLayer, newLayer.type));
+      // layerTypeChangeUpdater changes the id of the layer, so we need to obtain the new id
+      // but first make sure that the layer was not removed
+      if (nextState.layers.length === state.layers.length) {
+        const newLayerId = nextState.layers[oldLayerIndex].id;
+        nextState = applyLayerConfigUpdater(
+          nextState,
+          applyLayerConfig(newLayerId, {...newLayerConfig, id: newLayerId})
+        );
+      }
+    }
+    return nextState;
+  }
+
+  const serializedOldLayer = serializeLayer(oldLayer, state.schema);
+  const serializedNewLayer = serializeLayer(newLayer, state.schema);
+  if (!serializedNewLayer || !serializedOldLayer) {
+    return state;
+  }
+  if (!isEqual(serializedOldLayer, serializedNewLayer)) {
+    const changed = pickChangedProps(serializedOldLayer.config, serializedNewLayer.config);
+
+    if ('visConfig' in changed) {
+      if (changed.visConfig) {
+        nextState = layerVisConfigChangeUpdater(
+          nextState,
+          layerVisConfigChange(oldLayer, changed.visConfig)
+        );
+      }
+      delete changed.visConfig;
+    }
+
+    Object.keys(oldLayer.visualChannels).forEach(channelName => {
+      const channel = oldLayer.visualChannels[channelName];
+      const channelPropNames = VISUAL_CHANNEL_PROP_TYPES.map(prop => channel[prop]);
+      if (channelPropNames.some(prop => prop in changed)) {
+        nextState = layerVisualChannelChangeUpdater(
+          nextState,
+          layerVisualChannelConfigChange(
+            oldLayer,
+            pick(newLayer.config, channelPropNames),
+            channelName
+          )
+        );
+        for (const prop of channelPropNames) {
+          delete changed[prop];
+        }
+      }
+    });
+
+    if (Object.keys(changed).length > 0) {
+      nextState = layerConfigChangeUpdater(
+        nextState,
+        layerConfigChange(oldLayer, pick(newLayer.config, Object.keys(changed)))
+      );
+    }
+  }
+
+  return nextState;
+}
+
+/**
  * Update layer base config: dataId, label, column, isVisible
  * @memberof visStateUpdaters
  * @returns nextState
  */
+// eslint-disable-next-line complexity
 export function layerConfigChangeUpdater(
   state: VisState,
   action: VisStateActions.LayerConfigChangeUpdaterAction
@@ -339,7 +466,10 @@ export function layerConfigChangeUpdater(
   const {oldLayer} = action;
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   const props = Object.keys(action.newConfig);
-  if (typeof action.newConfig.dataId === 'string') {
+  if (
+    typeof action.newConfig.dataId === 'string' &&
+    action.newConfig.dataId !== oldLayer.config.dataId
+  ) {
     const {dataId, ...restConfig} = action.newConfig;
     const stateWithDataId = layerDataIdChangeUpdater(state, {
       oldLayer,
