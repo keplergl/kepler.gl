@@ -1213,6 +1213,8 @@ export function validateFiltersUpdateDatasets<
           ...updatedDatasets,
           ...augmentedDatasets
         };
+      } else {
+        failed.push(filter);
       }
     } else {
       failed.push(filter);

@@ -40,7 +40,7 @@ import {
   onLoadCloudMapSuccess
 } from './actions';
 
-import {loadCloudMap, addDataToMap, addNotification} from '@kepler.gl/actions';
+import {loadCloudMap, addDataToMap, addNotification, replaceDataInMap} from '@kepler.gl/actions';
 import {CLOUD_PROVIDERS} from './cloud-providers';
 
 const KeplerGl = require('@kepler.gl/components').injectComponents([
@@ -57,7 +57,7 @@ import sampleGeojsonPoints from './data/sample-geojson-points';
 import sampleGeojsonConfig from './data/sample-geojson-config';
 import sampleH3Data, {config as h3MapConfig} from './data/sample-hex-id-csv';
 import sampleS2Data, {config as s2MapConfig, dataId as s2DataId} from './data/sample-s2-data';
-import sampleAnimateTrip from './data/sample-animate-trip-data';
+import sampleAnimateTrip, {animateTripDataId} from './data/sample-animate-trip-data';
 import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import sampleGpsData from './data/sample-gps-data';
 
@@ -264,13 +264,33 @@ class App extends Component {
       addDataToMap({
         datasets: [
           {
-            info: {label: 'Trip animation'},
+            info: {label: 'Trip animation', id: animateTripDataId},
             data: processGeojson(sampleAnimateTrip)
           }
         ]
       })
     );
   }
+
+  _replaceData = () => {
+    // add geojson data
+    const sliceData = processGeojson({
+      type: 'FeatureCollection',
+      features: sampleGeojsonPoints.features.slice(0, 5)
+    });
+    this._loadGeojsonData();
+    window.setTimeout(() => {
+      this.props.dispatch(
+        replaceDataInMap({
+          datasetToReplaceId: 'bart-stops-geo',
+          datasetToUse: {
+            info: {label: 'Bart Stops Geo Replaced', id: 'bart-stops-geo-2'},
+            data: sliceData
+          }
+        })
+      );
+    }, 1000);
+  };
 
   _loadGeojsonData() {
     // load geojson

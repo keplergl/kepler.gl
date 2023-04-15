@@ -22,7 +22,38 @@ const config = {
   version: 'v1',
   config: {
     visState: {
-      filters: [],
+      filters: [
+        {
+          dataId: ['bart-stops-geo-2'],
+          id: '2ua7g6t8',
+          name: ['exits'],
+          type: 'range',
+          value: [6121, 13547],
+          plotType: {
+            type: 'histogram'
+          },
+          animationWindow: 'free',
+          yAxis: null,
+          view: 'side',
+          speed: 1,
+          enabled: true
+        },
+        {
+          dataId: ['sf-zip-geo'],
+          id: 'kt1fkkbrb',
+          name: ['ZIP_CODE'],
+          type: 'range',
+          value: [94103, 94133],
+          plotType: {
+            type: 'histogram'
+          },
+          animationWindow: 'free',
+          yAxis: null,
+          view: 'side',
+          speed: 1,
+          enabled: true
+        }
+      ],
       layers: [
         {
           id: 'ze2p6id',
@@ -163,7 +194,7 @@ const config = {
       interactionConfig: {
         tooltip: {
           fieldsToShow: {
-            'bart-stops-geo': ['name', 'code', 'address', 'entries', 'exits'],
+            'bart-stops-geo': ['name'],
             'sf-zip-geo': ['OBJECTID', 'ZIP_CODE', 'ID', 'name', 'STREETNAME']
           },
           enabled: true

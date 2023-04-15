@@ -288,7 +288,11 @@ test('VisStateMerger.v1 -> mergeFilters -> empty filter', t => {
 
   // test parsed filters
   cmpFilters(t, oldFilters, stateWData.filters);
-  t.deepEqual(stateWData.filterToBeMerged, [], 'should not pass fiter validate if tiler is empty');
+  t.deepEqual(
+    stateWData.filterToBeMerged,
+    parsedFilters,
+    'should save filters failed to merge to filterToBeMerged'
+  );
 
   // should filter data
   t.end();
@@ -691,29 +695,30 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
   const oldState = cloneDeep(StateWFilesFiltersLayerColor);
   const oldVisState = oldState.visState;
 
+  const milkShake = [
+    {
+      name: 'have',
+      format: null
+    },
+    {
+      name: 'a',
+      format: null
+    },
+    {
+      name: 'good',
+      format: null
+    },
+    {
+      name: 'day',
+      format: null
+    }
+  ];
   // add random items to interactionToBeMerged
   oldVisState.interactionToBeMerged = {
     ...oldVisState.interactionToBeMerged,
     tooltip: {
       fieldsToShow: {
-        milkshake: [
-          {
-            name: 'have',
-            format: null
-          },
-          {
-            name: 'a',
-            format: null
-          },
-          {
-            name: 'good',
-            format: null
-          },
-          {
-            name: 'day',
-            format: null
-          }
-        ]
+        milkShake
       }
     }
   };
@@ -728,6 +733,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
   const expectedInteractionToBeMerged = {
     tooltip: {
       fieldsToShow: {
+        milkShake,
         '9h10t7fyb': [
           {
             name: 'int_range',
@@ -858,7 +864,18 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
 
   // test parsed interactions
   t.deepEqual(stateWData.interactionConfig, expectedInteractions, 'should merge interactionconfig');
-  t.deepEqual(stateWData.interactionToBeMerged, {}, 'should clear interaction');
+  t.deepEqual(
+    stateWData.interactionToBeMerged,
+    {
+      tooltip: {
+        fieldsToShow: {
+          milkShake
+        },
+        enabled: true
+      }
+    },
+    'should clear interaction'
+  );
 
   t.end();
 });
@@ -946,33 +963,6 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
   const savedConfig = cloneDeep(savedStateV1);
   const oldState = cloneDeep(StateWFilesFiltersLayerColor);
   const oldVisState = oldState.visState;
-
-  // add random items to interactionToBeMerged
-  oldVisState.interactionToBeMerged = {
-    ...oldVisState.interactionToBeMerged,
-    tooltip: {
-      fieldsToShow: {
-        milkshake: [
-          {
-            name: 'have',
-            format: null
-          },
-          {
-            name: 'a',
-            format: null
-          },
-          {
-            name: 'good',
-            format: null
-          },
-          {
-            name: 'day',
-            format: null
-          }
-        ]
-      }
-    }
-  };
 
   const parsedConfig = SchemaManager.parseSavedConfig(savedConfig.config, oldState);
 

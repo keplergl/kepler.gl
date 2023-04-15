@@ -451,21 +451,21 @@ export function removeFilter(
 }
 
 export type RemoveLayerUpdaterAction = {
-  idx: number;
+  id: string | number;
 };
 /**
  * Remove a layer
  * @memberof visStateActions
- * @param idx idx of layer to be removed
+ * @param id idx of layer to be removed
  * @returns action
  * @public
  */
 export function removeLayer(
-  idx: number
+  id: string | number
 ): Merge<RemoveLayerUpdaterAction, {type: typeof ActionTypes.REMOVE_LAYER}> {
   return {
     type: ActionTypes.REMOVE_LAYER,
-    idx
+    id
   };
 }
 

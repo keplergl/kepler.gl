@@ -49,6 +49,7 @@ import {
   arrayInsert,
   generateHashId,
   isPlainObject,
+  isObject,
   addNewLayersToSplitMap,
   computeSplitMapLayers,
   removeLayerFromSplitMaps,
@@ -75,7 +76,8 @@ import {
   VIS_STATE_MERGERS,
   validateLayerWithData,
   createLayerFromConfig,
-  serializeLayer
+  serializeLayer,
+  serializeVisState
 } from './vis-state-merger';
 import {mergeStateFromMergers, isValidMerger} from './merger-handler';
 import {Layer, LayerClasses, LAYER_ID_LENGTH} from '@kepler.gl/layers';
@@ -88,7 +90,7 @@ import {
   DEFAULT_TEXT_LABEL,
   COMPARE_TYPES
 } from '@kepler.gl/constants';
-import {pick_, merge_, swap_} from './composer-helpers';
+import {pick_, merge_, swap_, apply_, compose_} from './composer-helpers';
 
 import KeplerGLSchema, {VisState, Merger, PostMergerPayload} from '@kepler.gl/schemas';
 
@@ -107,6 +109,7 @@ import {
 } from '@kepler.gl/table';
 import {findFieldsToShow} from './interaction-utils';
 import {hasPropsToMerge, getPropValueToMerger} from './merger-handler';
+import {mergeDatasetsByOrder} from './vis-state-merger';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -467,8 +470,8 @@ export function layerTextLabelChangeUpdater(
   });
 }
 
-function validateExistingLayerWithData(dataset, layerClasses, layer) {
-  const loadedLayer = serializeLayer(layer);
+function validateExistingLayerWithData(dataset, layerClasses, layer, schema) {
+  const loadedLayer = serializeLayer(layer, schema);
   return loadedLayer
     ? validateLayerWithData(dataset, loadedLayer, layerClasses, {
         allowEmptyColumn: true
@@ -504,7 +507,8 @@ export function layerDataIdChangeUpdater(
     const validated = validateExistingLayerWithData(
       state.datasets[dataId],
       state.layerClasses,
-      newLayer
+      newLayer,
+      state.schema
     );
     // if cant validate it with data create a new one
     if (!validated) {
@@ -1167,10 +1171,19 @@ export const addLayerUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const removeLayerUpdater = (
-  state: VisState,
-  {idx}: VisStateActions.RemoveLayerUpdaterAction
-): VisState => {
+export function removeLayerUpdater<T extends VisState>(
+  state: T,
+  {id}: VisStateActions.RemoveLayerUpdaterAction
+): T {
+  const idx = Number.isFinite(id)
+    ? // support older API, remove layer by idx
+      Number(id)
+    : state.layers.findIndex(l => l.id === id);
+  if (idx < 0 || idx >= state.layers.length) {
+    // invalid index
+    Console.warn(`can not remove layer with invalid id|idx ${id}`);
+    return state;
+  }
   const {layers, layerData, clicked, hoverInfo} = state;
   const layerToRemove = state.layers[idx];
   const newMaps = removeLayerFromSplitMaps(state.splitMaps, layerToRemove);
@@ -1187,7 +1200,7 @@ export const removeLayerUpdater = (
   };
 
   return updateAnimationDomain(newState);
-};
+}
 
 /**
  * duplicate layer
@@ -1214,7 +1227,7 @@ export const duplicateLayerUpdater = (
   }
 
   // collect layer config from original
-  const loadedLayer = serializeLayer(original);
+  const loadedLayer = serializeLayer(original, state.schema);
 
   // assign new id and label to copied layer
   if (!loadedLayer?.config) {
@@ -1262,10 +1275,10 @@ export const reorderLayerUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
-export const removeDatasetUpdater = (
-  state: VisState,
+export function removeDatasetUpdater<T extends VisState>(
+  state: T,
   action: VisStateActions.RemoveDatasetUpdaterAction
-): VisState => {
+): T {
   // extract dataset key
   const {dataId: datasetKey} = action;
   const {datasets} = state;
@@ -1282,35 +1295,29 @@ export const removeDatasetUpdater = (
   } = state;
   /* eslint-enable no-unused-vars */
 
-  const indexes = layers.reduce((listOfIndexes, layer, index) => {
-    if (layer.config.dataId === datasetKey) {
-      // @ts-ignore
-      listOfIndexes.push(index);
-    }
-    return listOfIndexes;
-  }, []);
+  const layersToRemove = layers.filter(l => l.config.dataId === datasetKey).map(l => l.id);
 
   // remove layers and datasets
-  const {newState} = indexes.reduce(
-    ({newState: currentState, indexCounter}, idx) => {
-      const currentIndex = idx - indexCounter;
-      currentState = removeLayerUpdater(currentState, {idx: currentIndex});
-      indexCounter++;
-      return {newState: currentState, indexCounter};
-    },
-    {newState: {...state, datasets: newDatasets}, indexCounter: 0}
-  );
+  let newState = layersToRemove.reduce((accu, id) => removeLayerUpdater(accu, {id}), {
+    ...state,
+    datasets: newDatasets
+  });
 
   // remove filters
-  const filters = state.filters.filter(filter => !filter.dataId.includes(datasetKey));
+  const filters = newState.filters.filter(filter => !filter.dataId.includes(datasetKey));
 
-  // update interactionConfig
+  newState = {...newState, filters};
+
+  return removeDatasetFromInteractionConfig(newState, {dataId: datasetKey});
+}
+
+function removeDatasetFromInteractionConfig(state, {dataId}) {
   let {interactionConfig} = state;
   const {tooltip} = interactionConfig;
   if (tooltip) {
     const {config} = tooltip;
     /* eslint-disable no-unused-vars */
-    const {[datasetKey]: fields, ...fieldsToShow} = config.fieldsToShow;
+    const {[dataId]: fields, ...fieldsToShow} = config.fieldsToShow;
     /* eslint-enable no-unused-vars */
     interactionConfig = {
       ...interactionConfig,
@@ -1318,9 +1325,8 @@ export const removeDatasetUpdater = (
     };
   }
 
-  return {...newState, filters, interactionConfig};
-};
-
+  return {...state, interactionConfig};
+}
 /**
  * update layer blending mode
  * @memberof visStateUpdaters
@@ -1412,6 +1418,7 @@ export const receiveMapConfigUpdater = (
       mergedState = merger.merge(
         mergedState,
         getPropValueToMerger(config.visState, merger.prop, merger.toMergeProp),
+        // fromConfig
         true
       );
     }
@@ -1619,10 +1626,7 @@ export const updateVisDataUpdater = (
   // save new dataset entry to state
   const mergedState = {
     ...previousState,
-    datasets: {
-      ...previousState.datasets,
-      ...newDataEntries
-    }
+    datasets: mergeDatasetsByOrder(previousState, newDataEntries)
   };
 
   // merge state with config to be merged
@@ -2588,4 +2592,195 @@ export function setLayerAnimationTimeConfigUpdater(
   }
   const updates = checkTimeConfigArgs(config);
   return pick_('animationConfig')(merge_(updates))(state);
+}
+
+// Find dataId from a saved visState property:
+// layers, filters, interactions, layerBlending, overlayBlending, splitMaps, animationConfig, editor
+// replace it with another dataId
+function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToReplace: string) {
+  if (Array.isArray(value)) {
+    // for layers, filters, call defaultReplaceParentDatasetIds on each item in array
+    const replaced = value
+      .map(v => defaultReplaceParentDatasetIds(v, dataId, dataIdToReplace))
+      .filter(d => d);
+    return replaced.length ? replaced : null;
+  }
+  if (typeof value.dataId === 'string' && value.dataId === dataId) {
+    // others
+    return {
+      ...value,
+      dataId: dataIdToReplace
+    };
+  } else if (Array.isArray(value.dataId) && value.dataId.includes(dataId)) {
+    // filter
+    return {
+      ...value,
+      dataId: value.dataId.map(d => (d === dataId ? dataIdToReplace : d))
+    };
+  } else if (value.config?.dataId && value.config?.dataId === dataId) {
+    // layer
+    return {
+      ...value,
+      config: {
+        ...value.config,
+        dataId: dataIdToReplace
+      }
+    };
+  } else if (isObject(value) && value.hasOwnProperty(dataId)) {
+    // for value saved as {[dataId]: {...}}
+    return {[dataIdToReplace]: value[dataId]};
+  }
+
+  return null;
+}
+
+// Find datasetIds derived a saved visState Property;
+function findChildDatasetIds(value) {
+  if (Array.isArray(value)) {
+    // for layers, filters, call defaultReplaceParentDatasetIds on each item in array
+    const childDataIds = value.map(findChildDatasetIds).filter(d => d);
+    return childDataIds.length ? childDataIds : null;
+  }
+
+  // child data id usually stores in the derived dataset info
+  return value?.newDataset?.info.id || null;
+}
+
+// moved unmerged layers, filters, interactions
+function moveValueToBeMerged(state, propValues, {prop, toMergeProp, saveUnmerged}) {
+  // remove prop value from state
+  // TODO: should we add remove updater to merger as well?
+  if (!propValues) {
+    return state;
+  }
+  const stateRemoved =
+    prop === 'layers'
+      ? propValues.reduce((accu, propValue) => removeLayerUpdater(accu, {id: propValue.id}), state)
+      : Array.isArray(state[prop])
+      ? {
+          ...state,
+          [prop]: state[prop].filter(p => !propValues.find(propValue => p.id === propValue.id))
+        }
+      : // if not array, we won't remove it, remove dataset should handle it
+        state;
+
+  // move to stateToBeMerged
+  const toBeMerged = {
+    [toMergeProp]: saveUnmerged
+      ? // call merge saveUnmerged method
+        saveUnmerged(stateRemoved, propValues)
+      : // if toMergeProp is araay, append to it
+      Array.isArray(stateRemoved[toMergeProp])
+      ? [...stateRemoved[toMergeProp], ...propValues]
+      : // save propValues to toMerge
+      isObject(stateRemoved[toMergeProp])
+      ? {
+          ...stateRemoved[toMergeProp],
+          ...propValues
+        }
+      : stateRemoved[toMergeProp]
+  };
+
+  return {
+    ...stateRemoved,
+    ...toBeMerged
+  };
+}
+
+function replaceDatasetAndDeps<T extends VisState>(
+  state: T,
+  dataId: string,
+  dataIdToUse: string
+): T {
+  return compose_<T>([
+    apply_(replaceDatasetDepsInState, {dataId, dataIdToUse}),
+    apply_(removeDatasetUpdater, {dataId})
+  ])(state);
+}
+
+export function prepareStateForDatasetReplace<T extends VisState>(
+  state: T,
+  dataId: string,
+  dataIdToUse: string
+): T {
+  const serializedState = serializeVisState(state, state.schema);
+  const nextState = replaceDatasetAndDeps(state, dataId, dataIdToUse);
+
+  // preserve dataset order
+  nextState.preserveDatasetOrder = Object.keys(state.datasets).map(d =>
+    d === dataId ? dataIdToUse : d
+  );
+
+  // preserveLayerOrder
+  if (nextState.layerToBeMerged?.length) {
+    // copy split maps to be merged, because it will be reset in remove layer
+    nextState.splitMapsToBeMerged = serializedState?.splitMaps ?? [];
+  }
+
+  return nextState;
+}
+
+export function replaceDatasetDepsInState<T extends VisState>(
+  state: T,
+  {dataId, dataIdToUse}: {dataId: string; dataIdToUse: string}
+): T {
+  const serializedState = serializeVisState(state, state.schema);
+
+  const nextState = state.mergers.reduce(
+    (
+      accuState,
+      {prop, toMergeProp, replaceParentDatasetIds, getChildDatasetIds, saveUnmerged, preserveOrder}
+    ) => {
+      // get dataset ids that are depends on this dataset
+      const props = toArray(prop);
+      const toMergeProps = toArray(toMergeProp);
+      const savedProps = serializedState ? props.map(p => serializedState[p]) : [];
+
+      let replacedState = accuState;
+      savedProps.forEach((propValue, i) => {
+        const mergerOptions = {
+          prop: props[i],
+          toMergeProp: toMergeProps[i],
+          getChildDatasetIds,
+          saveUnmerged
+        };
+
+        const replacedItem =
+          replaceParentDatasetIds?.(propValue, dataId, dataIdToUse) ||
+          defaultReplaceParentDatasetIds(propValue, dataId, dataIdToUse);
+        replacedState = replacedItem
+          ? replacePropValueInState(replacedState, replacedItem, mergerOptions)
+          : replacedState;
+
+        if (replacedState[mergerOptions.toMergeProp]?.length && preserveOrder) {
+          replacedState[preserveOrder] = propValue.map(item => item.id);
+        }
+      });
+
+      return replacedState;
+    },
+    state
+  );
+
+  return nextState;
+}
+
+function replacePropValueInState(
+  state,
+  replacedItem,
+  {prop, toMergeProp, getChildDatasetIds, saveUnmerged}
+) {
+  // prop is depends on the dataset to be replaced
+  // remove prop from state, and move it to toBeMerged
+  let nextState = moveValueToBeMerged(state, replacedItem, {prop, toMergeProp, saveUnmerged});
+  const childDataIds = getChildDatasetIds?.(replacedItem) || findChildDatasetIds(replacedItem);
+
+  if (childDataIds) {
+    nextState = toArray(childDataIds).reduce((accu, childDataId) => {
+      // shouldn't need to change child dataset id,
+      // but still need to move out of state and merge back in
+      return replaceDatasetAndDeps(accu, childDataId, childDataId);
+    }, nextState);
+  }
+  return nextState;
 }

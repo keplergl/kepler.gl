@@ -21,11 +21,16 @@
 /* eslint-disable max-statements */
 
 import test from 'tape';
-import keplerGlReducer, {addDataToMapUpdater, INITIAL_UI_STATE} from '@kepler.gl/reducers';
+import keplerGlReducer, {
+  addDataToMapUpdater,
+  replaceDataInMapUpdater,
+  fitBoundsUpdater,
+  INITIAL_UI_STATE
+} from '@kepler.gl/reducers';
 import {processCsvData} from '@kepler.gl/processors';
 import {registerEntry} from '@kepler.gl/actions';
 
-import testCsvData, {sampleConfig} from 'test/fixtures/test-csv-data';
+import testCsvData, {sampleConfig, dataWithNulls} from 'test/fixtures/test-csv-data';
 import testHexIdData, {
   hexIdDataConfig,
   mergedH3Layer,
@@ -367,5 +372,120 @@ test('#composerStateReducer - addDataToMapUpdater: autoCreateLayers', t => {
   });
   t.equal(nextState.visState.layers.length, 0, 'should not create layers');
 
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater', t => {
+  const dataIdToReplace = 'dataset_to_replace';
+  const datasets = {
+    data: processCsvData(testCsvData),
+    info: {
+      id: sampleConfig.dataId
+    }
+  };
+  const datasetToUse = {
+    data: processCsvData(dataWithNulls),
+    info: {
+      id: dataIdToReplace
+    }
+  };
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  // old state contain splitMaps
+  const oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      config: sampleConfig.config
+    }
+  });
+
+  const oldSavedConfig = state.visState.schema.getConfigToSave(oldState).config;
+  const nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse
+    }
+  });
+  const nextSavedConfig = nextState.visState.schema.getConfigToSave(nextState).config;
+
+  const expectedLayers = oldSavedConfig.visState.layers.map(l => ({
+    ...l,
+    config: {
+      ...l.config,
+      dataId: dataIdToReplace
+    }
+  }));
+
+  const bounds = nextState.visState.layers[0].meta.bounds;
+  const expectedMapState = fitBoundsUpdater(oldState.mapState, {payload: bounds});
+
+  const expectedInteractionConfig = {
+    ...oldSavedConfig.visState.interactionConfig,
+    tooltip: {
+      ...oldSavedConfig.visState.interactionConfig.tooltip,
+      fieldsToShow: {
+        [dataIdToReplace]:
+          oldSavedConfig.visState.interactionConfig.tooltip.fieldsToShow[sampleConfig.dataId]
+      }
+    }
+  };
+
+  // dataWithNulls gps_data.utc_timestamp domain
+  const expectedFilterDomain = [1474071056000, 1474071677000];
+  const expectedFilter = {
+    ...oldSavedConfig.visState.filters[0],
+    dataId: [dataIdToReplace],
+    // reset vaue to bonded by domain
+    value: expectedFilterDomain
+  };
+
+  t.deepEqual(
+    nextState.visState.filters[0].domain,
+    expectedFilterDomain,
+    'Should set corect filter domain'
+  );
+  // compare replaced state with old state
+  Object.keys(oldSavedConfig).forEach(key => {
+    if (key === 'mapState') {
+      // should center map
+      t.deepEqual(nextState.mapState, expectedMapState, 'should center map to new layer;');
+    } else if (key === 'visState') {
+      Object.keys(oldSavedConfig.visState).forEach(prop => {
+        if (prop === 'layers') {
+          t.deepEqual(
+            nextSavedConfig.visState.layers,
+            expectedLayers,
+            'should replace layer dataId'
+          );
+        } else if (prop === 'filters') {
+          t.deepEqual(
+            nextSavedConfig.visState.filters,
+            [expectedFilter],
+            'should replace filter dataId and reset value'
+          );
+        } else if (prop === 'interactionConfig') {
+          t.deepEqual(
+            nextSavedConfig.visState.interactionConfig,
+            expectedInteractionConfig,
+            'should replace interactionConfig dataId'
+          );
+        } else {
+          t.deepEqual(
+            nextSavedConfig.visState[prop],
+            oldSavedConfig.visState[prop],
+            `visState.${prop} should not change`
+          );
+        }
+      });
+    } else {
+      // mapStyle
+      t.deepEqual(nextSavedConfig[key], oldSavedConfig[key], 'mapStyle should not change');
+    }
+  });
+
+  t.deepEqual(nextState.visState.layerToBeMerged, [], 'should reset layerToBeMerged');
+  t.deepEqual(nextState.visState.filterToBeMerged, [], 'should reset filterToBeMerged');
+  t.deepEqual(nextState.visState.interactionToBeMerged, {}, 'should reset interactionToBeMerged');
+  t.deepEqual(nextState.visState.splitMapsToBeMerged, [], 'should reset splitMapsToBeMerged');
   t.end();
 });

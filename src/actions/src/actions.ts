@@ -26,7 +26,8 @@ import {
   AddDataToMapPayload,
   Bounds,
   UiState,
-  ParsedConfig
+  ParsedConfig,
+  ProtoDataset
 } from '@kepler.gl/types';
 
 export type ActionHandler<A extends (...args: any) => any> = (...args: Parameters<A>) => void;
@@ -203,6 +204,34 @@ export const keplerGlInit: (
   type: typeof ActionTypes.INIT;
   payload: KeplerGlInitPayload;
 } = createAction(ActionTypes.INIT, (payload: KeplerGlInitPayload) => ({payload}));
+
+export type ReplaceDataToMapOptions = {
+  centerMap?: boolean;
+  keepExistingConfig?: boolean;
+  autoCreateLayers?: boolean;
+};
+export type ReplaceDataInMapPayload = {
+  datasetToReplaceId: string;
+  datasetToUse: ProtoDataset;
+  options?: ReplaceDataToMapOptions;
+};
+
+/**
+ * Initialize kepler.gl reducer. It is used to pass in `mapboxApiAccessToken` to `mapStyle` reducer.
+ * @memberof main
+ * @param {object} payload
+ * @param payload.datasetToReplaceId - mapboxApiAccessToken to be saved to mapStyle reducer
+ * @param payload.datasetToUse - mapboxApiUrl to be saved to mapStyle reducer.
+ * @public
+ */
+export const replaceDataInMap: (
+  payload: ReplaceDataInMapPayload
+) => {
+  type: typeof ActionTypes.REPLACE_DATA_IN_MAP;
+  payload: ReplaceDataInMapPayload;
+} = createAction(ActionTypes.REPLACE_DATA_IN_MAP, (payload: ReplaceDataInMapPayload) => ({
+  payload
+}));
 
 /**
  * This declaration is needed to group actions in docs

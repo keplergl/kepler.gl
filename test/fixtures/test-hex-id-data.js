@@ -157,7 +157,7 @@ export const hexIdDataConfig = {
 export const mergedFilters = [
   {
     dataId: [dataId],
-    id: 'value',
+    id: 'byjasfp0u',
     enabled: true,
     name: ['value'],
     type: 'range',
