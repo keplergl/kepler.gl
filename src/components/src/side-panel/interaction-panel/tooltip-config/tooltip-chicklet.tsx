@@ -41,7 +41,7 @@ type TooltipConfig = {
     [key: string]: {name: string; format: string | null}[];
   };
   compareMode: boolean;
-  compareType: string | null; // ! check
+  compareType: string | null;
 };
 
 type IconDivProps = {

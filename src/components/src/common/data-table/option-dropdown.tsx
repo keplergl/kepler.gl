@@ -81,7 +81,7 @@ export type FormatterDropdownProps = {
   top: number;
   isOpened: boolean;
   displayFormat?: string;
-  setDisplayFormat: (displayFormat: string) => void;
+  setDisplayFormat: (displayFormat: TooltipFormat) => void;
   onClose: () => void;
   formatLabels: TooltipFormat[];
 };
@@ -89,7 +89,15 @@ export type FormatterDropdownProps = {
 export const FormatterDropdown: React.FC<FormatterDropdownProps> = (
   props: FormatterDropdownProps
 ) => {
-  const {left, top, isOpened, displayFormat = '', setDisplayFormat, onClose, formatLabels} = props;
+  const {
+    left,
+    top,
+    isOpened,
+    displayFormat = 'None',
+    setDisplayFormat,
+    onClose,
+    formatLabels
+  } = props;
   const selectionIndex = formatLabels.findIndex(label => label.format === displayFormat);
 
   const onSelectDisplayFormat = useCallback(
@@ -123,7 +131,7 @@ interface OptionDropdownProps {
   sortTableColumn: (sort: string) => void;
   pinTableColumn: () => void;
   copyTableColumn: () => void;
-  setDisplayFormat: (displayFormat: string) => void;
+  setDisplayFormat: (displayFormat: any) => void;
   sortMode?: string;
   isSorted?: string;
   isPinned?: boolean;

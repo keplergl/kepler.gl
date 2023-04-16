@@ -22,7 +22,7 @@ import React, {useCallback, useState} from 'react';
 import styled from 'styled-components';
 
 import {getFieldFormatLabels} from '@kepler.gl/utils';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, TooltipFormat} from '@kepler.gl/constants';
 import {ColMeta, ColMetaProps} from '@kepler.gl/types';
 
 import {InputLight} from '../../common/styled-components';
@@ -55,11 +55,11 @@ const StyledTableConfigGroup = styled.div`
 export type DataTableConfigProps = {
   title: string;
   id: string;
-  defaultFormat: any; // ! fix this
-  options: any;
+  defaultFormat: string;
+  options: TooltipFormat[];
   columns: {name: string}[];
   colMeta: ColMeta;
-  setColumnDisplayFormat: (formats: {column: string; displayFormat: string}) => void;
+  setColumnDisplayFormat: (formats: {[key: string]: string}) => void;
   onClose: () => void;
 };
 
@@ -71,17 +71,17 @@ export const NumberFormatConfig: React.FC<DataTableConfigProps> = ({
   columns,
   setColumnDisplayFormat,
   onClose
-}) => {
+}: DataTableConfigProps) => {
   const [showFormatter, setShowFormatter] = useState(false);
   const [format, setFormat] = useState(defaultFormat);
 
   const onSetDisplayFormat = useCallback(
-    option => {
+    (option: TooltipFormat) => {
       setFormat(option.label);
-      const formats = columns.reduce((prev, col) => {
+      const formats: {[key: string]: string} = columns.reduce((prev, col) => {
         prev[col.name] = option.format;
         return prev;
-      }, {} as {column: string; displayFormat: string});
+      }, {});
       setColumnDisplayFormat(formats);
       onClose();
     },
@@ -112,7 +112,7 @@ export const NumberFormatConfig: React.FC<DataTableConfigProps> = ({
 };
 
 function DataTableConfigFactory() {
-  const getColumnsByFieldType = (columns, colMeta: ColMeta, fieldType: string) => {
+  const getColumnsByFieldType = (columns: string[], colMeta: ColMeta, fieldType: string) => {
     const result: ColMetaProps[] = [];
     columns.forEach(colName => {
       if (colMeta[colName]?.type === fieldType) {
