@@ -26,7 +26,10 @@ import BrushConfigFactory from './brush-config';
 import TooltipConfigFactory from './tooltip-config';
 import {Datasets} from '@kepler.gl/table';
 import {InteractionConfig, ValueOf} from '@kepler.gl/types';
-import {setColumnDisplayFormat} from '@kepler.gl/actions';
+import {
+  setColumnDisplayFormat as setColumnDisplayFormatAction,
+  ActionHandler
+} from '@kepler.gl/actions';
 
 import {
   StyledPanelHeader,
@@ -45,7 +48,7 @@ interface InteractionPanelProps {
   interactionConfigIcons?: {
     [key: string]: React.ElementType;
   };
-  setColumnDisplayFormat: typeof setColumnDisplayFormat;
+  setColumnDisplayFormat: ActionHandler<typeof setColumnDisplayFormatAction>;
 }
 
 const StyledInteractionPanel = styled.div`
