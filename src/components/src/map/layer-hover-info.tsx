@@ -133,14 +133,15 @@ const EntryInfoRow = ({item, fields, data, primaryData, compareType}) => {
   const value = data.valueAt(fieldIdx);
   const displayValue = getTooltipDisplayValue({item, field, value});
 
-  const displayDeltaValue = getTooltipDisplayDeltaValue({
-    item,
-    field,
-    data,
-    fieldIdx,
-    primaryData,
-    compareType
-  });
+  const displayDeltaValue = primaryData
+    ? getTooltipDisplayDeltaValue({
+        field,
+        data,
+        fieldIdx,
+        primaryData,
+        compareType
+      })
+    : null;
 
   return (
     <Row

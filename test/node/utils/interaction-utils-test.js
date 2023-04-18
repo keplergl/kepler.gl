@@ -140,7 +140,8 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
     {
       input: {
         primaryData: dataset.dataContainer.row(0),
-        field: dataset.fields[testFieldIdx],
+        // field.displayFormat has been used to replace tooltipConfig.format
+        field: {...dataset.fields[testFieldIdx], displayFormat: item.format},
         compareType: COMPARE_TYPES.ABSOLUTE,
         data: dataset.dataContainer.row(1),
         fieldIdx: testFieldIdx,
@@ -152,7 +153,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
     {
       input: {
         primaryData: dataset.dataContainer.row(0),
-        field: dataset.fields[testFieldIdx],
+        field: {...dataset.fields[testFieldIdx], displayFormat: item.format},
         compareType: COMPARE_TYPES.RELATIVE,
         data: dataset.dataContainer.row(1),
         fieldIdx: testFieldIdx,
@@ -164,7 +165,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
     {
       input: {
         primaryData: dataset.dataContainer.row(3),
-        field: dataset.fields[testFieldIdx],
+        field: {...dataset.fields[testFieldIdx], displayFormat: item.format},
         compareType: COMPARE_TYPES.ABSOLUTE,
         data: dataset.dataContainer.row(1),
         fieldIdx: testFieldIdx,
@@ -176,7 +177,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
     {
       input: {
         primaryData: dataset.dataContainer.row(0),
-        field: dataset.fields[testFieldIdx],
+        field: {...dataset.fields[testFieldIdx], displayFormat: item.format},
         compareType: COMPARE_TYPES.ABSOLUTE,
         data: dataset.dataContainer.row(3),
         fieldIdx: testFieldIdx,
@@ -188,7 +189,7 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
     {
       input: {
         primaryData: dataset.dataContainer.row(4),
-        field: dataset.fields[testFieldIdx],
+        field: {...dataset.fields[testFieldIdx], displayFormat: item.format},
         compareType: COMPARE_TYPES.ABSOLUTE,
         data: dataset.dataContainer.row(3),
         fieldIdx: testFieldIdx,
@@ -230,7 +231,11 @@ test('interactionUtil -> getTooltipDisplayValue', t => {
   ];
 
   TEST_CASES.forEach(tc => {
-    const field = dataset.fields.find(f => f.name === tc.input.name);
+    // field.displayFormat has been used to replace tooltipConfig.format
+    const field = {
+      ...dataset.fields.find(f => f.name === tc.input.name),
+      displayFormat: tc.input.format
+    };
     const fieldIdx = dataset.fields.findIndex(f => f.name === tc.input.name);
 
     t.deepEqual(

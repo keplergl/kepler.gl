@@ -622,22 +622,23 @@ export function copyTableColumn(
 
 export type SetColumnDisplayFormatUpdaterAction = {
   dataId: string;
-  column: string;
-  displayFormat: string;
+  formats: {
+    [key: string]: string;
+  };
 };
 
 /**
  * Set column display format
  * @param dataId
- * @param column
- * @param displayFormat
+ * @param formats
  * @returns action
  * @public
  */
 export function setColumnDisplayFormat(
   dataId: string,
-  column: string,
-  displayFormat: string
+  formats: {
+    [key: string]: string;
+  }
 ): Merge<
   SetColumnDisplayFormatUpdaterAction,
   {type: typeof ActionTypes.SET_COLUMN_DISPLAY_FORMAT}
@@ -645,8 +646,7 @@ export function setColumnDisplayFormat(
   return {
     type: ActionTypes.SET_COLUMN_DISPLAY_FORMAT,
     dataId,
-    column,
-    displayFormat
+    formats
   };
 }
 

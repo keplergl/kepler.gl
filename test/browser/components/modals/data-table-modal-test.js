@@ -23,7 +23,7 @@ import test from 'tape-catch';
 import global from 'global';
 import sinon from 'sinon';
 import flatten from 'lodash.flattendeep';
-import {mountWithTheme} from 'test/helpers/component-utils';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import CloneDeep from 'lodash.clonedeep';
 import {VisStateActions} from '@kepler.gl/actions';
 import {visStateReducer} from '@kepler.gl/reducers';
@@ -37,13 +37,17 @@ import {
   DatasetModalTab,
   DataTableFactory,
   OptionDropdown,
-  appInjector
+  appInjector,
+  DropdownList,
+  InputLight,
+  DataTableConfigFactory,
+  NumberFormatConfig
 } from '@kepler.gl/components';
 import {testFields, testAllData} from 'test/fixtures/test-csv-data';
 import {geoStyleFields, geoStyleRows} from 'test/fixtures/geojson';
 import {StateWFiles, testCsvDataId, testGeoJsonDataId} from 'test/helpers/mock-state';
 
-import {createDataContainer} from '@kepler.gl/utils';
+import {createDataContainer, getFieldFormatLabels} from '@kepler.gl/utils';
 
 const {VertThreeDots} = Icons;
 const DataTableModal = appInjector.get(DataTableModalFactory);
@@ -129,6 +133,100 @@ function prepareMockCanvas() {
 function restoreMockCanvas() {
   global.window.HTMLCanvasElement.prototype.getContext = oldGetContext;
 }
+
+// eslint-disable-next-line max-statements
+test('Compnents -> DataTableConfig', t => {
+  const expectedColumns = ['gps_data.utc_timestamp'];
+
+  const expectedColMeta = {
+    'gps_data.utc_timestamp': {
+      name: 'gps_data.utc_timestamp',
+      type: 'timestamp',
+      format: 'YYYY-M-D H:m:s'
+    }
+  };
+
+  const columns = expectedColumns;
+  const colMeta = expectedColMeta;
+  const setColumnDisplayFormat = sinon.spy();
+  const onClose = sinon.spy();
+
+  const DataTableConfig = DataTableConfigFactory();
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <DataTableConfig
+          columns={columns}
+          colMeta={colMeta}
+          setColumnDisplayFormat={setColumnDisplayFormat}
+          onClose={onClose}
+        />
+      </IntlWrapper>
+    );
+  }, 'Show not fail without props');
+
+  const numberFormatConfigInput = wrapper.find(NumberFormatConfig);
+  t.equal(numberFormatConfigInput.length, 5, 'should render 5 NumberFormatConfig');
+
+  numberFormatConfigInput
+    .at(0)
+    .find(InputLight)
+    .simulate('click');
+
+  const formatDropdown = wrapper.find(DropdownList);
+  t.equal(formatDropdown.length, 1, 'should render 1 format dropdown');
+
+  const integerDisplayOptions = formatDropdown.at(0).props().options;
+
+  t.deepEqual(
+    integerDisplayOptions,
+    getFieldFormatLabels('integer'),
+    'should render integer type formats'
+  );
+
+  numberFormatConfigInput
+    .at(1)
+    .find(InputLight)
+    .simulate('click');
+
+  const floatDisplayOptions = wrapper
+    .find(DropdownList)
+    .at(1)
+    .props().options;
+
+  t.deepEqual(floatDisplayOptions, getFieldFormatLabels('real'), 'should render real type formats');
+
+  numberFormatConfigInput
+    .at(2)
+    .find(InputLight)
+    .simulate('click');
+
+  const timeDisplayOptions = wrapper
+    .find(DropdownList)
+    .at(2)
+    .props().options;
+
+  t.deepEqual(
+    timeDisplayOptions,
+    getFieldFormatLabels('timestamp'),
+    'should render time type formats'
+  );
+
+  numberFormatConfigInput
+    .at(3)
+    .find(InputLight)
+    .simulate('click');
+
+  const dateDisplayOptions = wrapper
+    .find(DropdownList)
+    .at(3)
+    .props().options;
+
+  t.deepEqual(dateDisplayOptions, getFieldFormatLabels('date'), 'should render date type formats');
+
+  t.end();
+});
 
 /* eslint-disable max-statements */
 test('Components -> DataTableModal.render: csv 1', t => {
@@ -377,13 +475,12 @@ test('Components -> DataTableModal -> render DataTable: sort, pin and display fo
   const initialState = CloneDeep(StateWFiles.visState);
 
   // set display format
+  const formats = {
+    'gps_data.lat': TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format
+  };
   const nextState = visStateReducer(
     initialState,
-    VisStateActions.setColumnDisplayFormat(
-      testCsvDataId,
-      'gps_data.lat',
-      TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format
-    )
+    VisStateActions.setColumnDisplayFormat(testCsvDataId, formats)
   );
 
   // sort column
@@ -497,13 +594,13 @@ test('Components -> DatableModal -> sort/pin/copy and display format should be c
     sortTableColumn: testSortColumn,
     pinTableColumn: testPinColumn,
     copyTableColumn: testCopyColumn,
-    setDisplayFormat: testSetDisplayFormat
+    setColumnDisplayFormat: testSetColumnDisplayFormat
   } = wrapper.find('DataTable').props();
 
   testSortColumn(column);
   testPinColumn(column);
   testCopyColumn(column);
-  testSetDisplayFormat(column, TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format);
+  testSetColumnDisplayFormat({[column]: TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format});
 
   t.equal(
     sortTableColumn.calledWith(testCsvDataId, column),
@@ -524,13 +621,11 @@ test('Components -> DatableModal -> sort/pin/copy and display format should be c
   );
 
   t.equal(
-    setColumnDisplayFormat.calledWith(
-      testCsvDataId,
-      column,
-      TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format
-    ),
+    setColumnDisplayFormat.calledWith(testCsvDataId, {
+      [column]: TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_2.format
+    }),
     true,
-    'should call setDisplayFormat with dataId, column gps_data.lat, and format'
+    'should call setColumnDisplayFormat with dataId, column gps_data.lat, and format'
   );
 
   t.end();

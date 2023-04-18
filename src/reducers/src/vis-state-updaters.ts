@@ -2503,27 +2503,30 @@ export function copyTableColumnUpdater(
 }
 
 /**
- * Set column display format from user selection
+ * Set display format from columns from user selection
  * @memberof visStateUpdaters
  * @public
  */
 export function setColumnDisplayFormatUpdater(
   state: VisState,
-  {dataId, column, displayFormat}: VisStateActions.SetColumnDisplayFormatUpdaterAction
+  {dataId, formats}: VisStateActions.SetColumnDisplayFormatUpdaterAction
 ): VisState {
   const dataset = state.datasets[dataId];
   if (!dataset) {
     return state;
   }
-  const fieldIdx = dataset.fields.findIndex(f => f.name === column);
-  if (fieldIdx < 0) {
-    return state;
-  }
-  const field = dataset.fields[fieldIdx];
+  let newFields = dataset.fields;
+  Object.keys(formats).forEach(column => {
+    const fieldIdx = dataset.fields.findIndex(f => f.name === column);
+    if (fieldIdx >= 0) {
+      const displayFormat = formats[column];
+      const field = newFields[fieldIdx];
+      newFields = swap_(merge_({displayFormat})(field) as {id: string})(
+        newFields as {id: string}[]
+      ) as Field[];
+    }
+  });
 
-  const newFields = swap_(merge_({displayFormat})(field) as {id: string})(
-    dataset.fields as {id: string}[]
-  );
   const newDataset = copyTableAndUpdate(dataset, {fields: newFields as Field[]});
   return pick_('datasets')(merge_({[dataId]: newDataset}))(state);
 }

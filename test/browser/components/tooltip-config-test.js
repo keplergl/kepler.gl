@@ -200,12 +200,19 @@ test('TooltipConfig - render -> tooltip format', t => {
   const tooltipConfig = StateWFiles.visState.interactionConfig.tooltip.config;
 
   const onChange = sinon.spy();
+  const onDisplayFormatChange = sinon.spy();
+
   let wrapper;
 
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <TooltipConfig onChange={onChange} config={tooltipConfig} datasets={datasets} />
+        <TooltipConfig
+          onChange={onChange}
+          onDisplayFormatChange={onDisplayFormatChange}
+          config={tooltipConfig}
+          datasets={datasets}
+        />
       </IntlWrapper>
     );
   }, 'Should render');

@@ -103,18 +103,13 @@ function _mergeFieldPairs(pairs) {
   return pairs.reduce((prev, pair) => [...prev, ...pair], []);
 }
 
-/**
- * @type {typeof import('./interaction-utils').getTooltipDisplayDeltaValue}
- */
 export function getTooltipDisplayDeltaValue({
   primaryData,
   field,
   compareType,
   data,
-  fieldIdx,
-  item
+  fieldIdx
 }: {
-  item: TooltipField;
   field: Field;
   data: DataRow;
   fieldIdx: number;
@@ -135,7 +130,7 @@ export function getTooltipDisplayDeltaValue({
       const deltaFormat =
         compareType === COMPARE_TYPES.RELATIVE
           ? TOOLTIP_FORMATS.DECIMAL_PERCENT_FULL_2[TOOLTIP_KEY]
-          : item.format || TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_3[TOOLTIP_KEY];
+          : field.displayFormat || TOOLTIP_FORMATS.DECIMAL_DECIMAL_FIXED_3[TOOLTIP_KEY];
 
       displayDeltaValue = getFormatter(deltaFormat, field)(deltaValue);
 
@@ -168,6 +163,8 @@ export function getTooltipDisplayValue({
   }
 
   return item?.format
-    ? getFormatter(item.format, field)(value)
+    ? getFormatter(item?.format, field)(value)
+    : field.displayFormat
+    ? getFormatter(field.displayFormat, field)(value)
     : parseFieldValue(value, field.type);
 }

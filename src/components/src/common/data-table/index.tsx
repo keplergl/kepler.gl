@@ -390,7 +390,7 @@ export interface DataTableProps {
   sortColumn: SortColumn;
   sortTableColumn: (column: string, mode?: string) => void;
   pinTableColumn: (column: string) => void;
-  setDisplayFormat: (column: string, displayFormat: string) => void;
+  setColumnDisplayFormat: (formats: {[key: string]: string}) => void;
   copyTableColumn: (column: string) => void;
   sortOrder?: number[] | null;
   showStats?: boolean;
