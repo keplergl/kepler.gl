@@ -192,6 +192,30 @@ test('dataUtils -> getFormatter', t => {
     {
       input: ['yn'],
       assert: [true, 'yes']
+    },
+    {
+      input: ['L LT'],
+      assert: ['2011-04-10 00:00', '04/10/2011 12:00 AM']
+    },
+    {
+      input: ['L LT'],
+      assert: [null, '']
+    },
+    {
+      input: ['L LT'],
+      assert: [undefined, '']
+    },
+    {
+      input: ['L LT'],
+      assert: ['', '']
+    },
+    {
+      input: ['L'],
+      assert: ['2011-04-10', '04/10/2011']
+    },
+    {
+      input: ['L'],
+      assert: [null, '']
     }
   ];
 

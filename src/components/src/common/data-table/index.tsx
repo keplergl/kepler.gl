@@ -219,8 +219,11 @@ const getRowCell = (
   const {type} = colMeta[column];
 
   let value = dataContainer.valueAt(rowIdx, columns.indexOf(column));
-  if (value === undefined) value = 'Err';
-  return formatter ? formatter(value) : parseFieldValue(value, type);
+  return value === null || value === undefined || value === ''
+    ? ''
+    : formatter
+    ? formatter(value)
+    : parseFieldValue(value, type);
 };
 
 type StatsControlProps = {
