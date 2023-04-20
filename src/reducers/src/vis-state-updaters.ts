@@ -1251,7 +1251,7 @@ export const duplicateLayerUpdater = (
   const {layers} = state;
   const original = layers[idx];
 
-  const originalLayerOrderIdx = state.layerOrder.findIndex(id => id === original.id);
+  const originalLayerOrderIdx = state.layerOrder.findIndex(lid => lid === original.id);
   let newLabel = `Copy of ${original.config.label}`;
   let postfix = 0;
   // eslint-disable-next-line no-loop-func
