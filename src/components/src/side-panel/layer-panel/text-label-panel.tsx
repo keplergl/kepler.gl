@@ -20,6 +20,8 @@
 
 import React, {Component} from 'react';
 import {FormattedMessage} from '@kepler.gl/localization';
+import {ColorRange} from '@kepler.gl/constants';
+import styled from 'styled-components';
 
 import {
   Button,
@@ -29,7 +31,8 @@ import {
   SpaceBetweenFlexbox
 } from '../../common/styled-components';
 import {Add} from '../../common/icons';
-import ColorSelector from './color-selector';
+import ColorSelectorFactory from './color-selector';
+import Switch from '../../common/switch';
 import ItemSelector from '../../common/item-selector/item-selector';
 import LayerConfigGroupFactory, {
   ConfigGroupCollapsibleContent,
@@ -38,21 +41,35 @@ import LayerConfigGroupFactory, {
 import RangeSliderFactory from '../../common/range-slider';
 
 import FieldSelectorFactory from '../../common/field-selector';
-import {RGBColor, LayerTextLabel, Field} from '@kepler.gl/types';
+import {RGBColor, RGBAColor, LayerTextLabel, Field} from '@kepler.gl/types';
 import {LAYER_TEXT_CONFIGS} from '@kepler.gl/constants';
 
+const SwitchWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+  line-height: 11px;
+  margin-bottom: 8px;
+`;
+
 type TextLabelPanelProps = {
+  id?: string;
   fields: Field[];
   textLabel: LayerTextLabel[];
   updateLayerTextLabel: (idx: number | 'all', prop: string, value: any) => void;
 };
 
-TextLabelPanelFactory.deps = [RangeSliderFactory, LayerConfigGroupFactory, FieldSelectorFactory];
+TextLabelPanelFactory.deps = [
+  RangeSliderFactory,
+  LayerConfigGroupFactory,
+  FieldSelectorFactory,
+  ColorSelectorFactory
+];
 
 function TextLabelPanelFactory(
   RangeSlider: ReturnType<typeof RangeSliderFactory>,
   LayerConfigGroup: ReturnType<typeof LayerConfigGroupFactory>,
-  FieldSelector: ReturnType<typeof FieldSelectorFactory>
+  FieldSelector: ReturnType<typeof FieldSelectorFactory>,
+  ColorSelector: ReturnType<typeof ColorSelectorFactory>
 ): React.ComponentType<TextLabelPanelProps> {
   class TextLabelPanel extends Component<TextLabelPanelProps> {
     render() {
@@ -103,11 +120,63 @@ function TextLabelPanelFactory(
                     colorSets={[
                       {
                         selectedColor: tl.color,
-                        setColor: (v: RGBColor) => updateLayerTextLabel(idx, 'color', v)
+                        setColor: (v: RGBColor | RGBAColor | ColorRange) =>
+                          updateLayerTextLabel(idx, 'color', v)
                       }
                     ]}
                   />
                 </SidePanelSection>
+
+                <SidePanelSection>
+                  <PanelLabel>
+                    <FormattedMessage id="panel.text.outlineWidth" />
+                  </PanelLabel>
+                  <RangeSlider
+                    {...LAYER_TEXT_CONFIGS.outlineWidth}
+                    value1={tl.outlineWidth}
+                    isRanged={false}
+                    onChange={v => updateLayerTextLabel(idx, 'outlineWidth', v[1])}
+                  />
+                </SidePanelSection>
+                <SidePanelSection>
+                  <PanelLabel>
+                    <FormattedMessage id="panel.text.outlineColor" />
+                  </PanelLabel>
+                  <ColorSelector
+                    colorSets={[
+                      {
+                        selectedColor: tl.outlineColor,
+                        setColor: v => updateLayerTextLabel(idx, 'outlineColor', v)
+                      }
+                    ]}
+                    useOpacity={true}
+                  />
+                </SidePanelSection>
+
+                <SidePanelSection>
+                  <SwitchWrapper>
+                    <PanelLabel>
+                      <FormattedMessage id="panel.text.backgroundColor" />
+                    </PanelLabel>
+                    <Switch
+                      checked={tl.background}
+                      id={`${this.props.id}-textBackgroundEnabled-${idx}`}
+                      onChange={() => updateLayerTextLabel(idx, 'background', !tl.background)}
+                    />
+                  </SwitchWrapper>
+
+                  <ColorSelector
+                    colorSets={[
+                      {
+                        selectedColor: tl.backgroundColor,
+                        setColor: v => updateLayerTextLabel(idx, 'backgroundColor', v)
+                      }
+                    ]}
+                    useOpacity={true}
+                    disabled={!tl.background}
+                  />
+                </SidePanelSection>
+
                 <SidePanelSection>
                   <SpaceBetweenFlexbox>
                     <SBFlexboxItem>

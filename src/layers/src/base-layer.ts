@@ -1326,12 +1326,29 @@ class Layer {
     };
   }
 
-  renderTextLabelLayer({getPosition, getPixelOffset, updateTriggers, sharedProps}, renderOpts) {
+  renderTextLabelLayer(
+    {
+      getPosition,
+      getPixelOffset,
+      backgroundProps,
+      updateTriggers,
+      sharedProps
+    }: {
+      getPosition: any;
+      getPixelOffset: any;
+      backgroundProps?: any;
+      updateTriggers: any;
+      sharedProps: any;
+    },
+    renderOpts
+  ) {
     const {data, mapState} = renderOpts;
     const {textLabel} = this.config;
 
     return data.textLabels.reduce((accu, d, i) => {
       if (d.getText) {
+        const background = textLabel[i].background || backgroundProps?.background;
+
         accu.push(
           new TextLayer({
             ...sharedProps,
@@ -1347,6 +1364,13 @@ class Layer {
             getTextAnchor: textLabel[i].anchor,
             getAlignmentBaseline: textLabel[i].alignment,
             getColor: textLabel[i].color,
+            outlineWidth: textLabel[i].outlineWidth,
+            outlineColor: textLabel[i].outlineColor,
+            background,
+            getBackgroundColor: textLabel[i].backgroundColor,
+            fontSettings: {
+              sdf: textLabel[i].outlineWidth > 0
+            },
             parameters: {
               // text will always show on top of all layers
               depthTest: false
@@ -1365,6 +1389,17 @@ class Layer {
               getTextAnchor: textLabel[i].anchor,
               getAlignmentBaseline: textLabel[i].alignment,
               getColor: textLabel[i].color
+            },
+            _subLayerProps: {
+              ...(background
+                ? {
+                    background: {
+                      parameters: {
+                        cull: false
+                      }
+                    }
+                  }
+                : null)
             }
           })
         );

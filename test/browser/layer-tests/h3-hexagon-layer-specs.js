@@ -335,7 +335,11 @@ test('#H3Layer -> renderLayer', t => {
             size: 18,
             offset: [0, 0],
             anchor: 'middle',
-            alignment: 'center'
+            alignment: 'center',
+            outlineWidth: 0,
+            outlineColor: [255, 0, 0, 255],
+            background: false,
+            backgroundColor: [0, 0, 200, 255]
           }
         ];
 

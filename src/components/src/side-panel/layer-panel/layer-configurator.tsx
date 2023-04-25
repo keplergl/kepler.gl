@@ -30,21 +30,25 @@ import VisConfigByFieldSelectorFactory from './vis-config-by-field-selector';
 import LayerColumnConfigFactory from './layer-column-config';
 import LayerTypeSelectorFactory from './layer-type-selector';
 import DimensionScaleSelector from './dimension-scale-selector';
-import ColorSelector from './color-selector';
 import SourceDataSelectorFactory from '../common/source-data-selector';
 import VisConfigSwitchFactory from './vis-config-switch';
 import VisConfigSliderFactory from './vis-config-slider';
 import LayerConfigGroupFactory, {ConfigGroupCollapsibleContent} from './layer-config-group';
 import TextLabelPanelFactory from './text-label-panel';
+import {
+  LayerColorSelectorFactory,
+  LayerColorRangeSelectorFactory,
+  ArcLayerColorSelectorFactory
+} from './layer-color-selector';
 import HowToButton from './how-to-button';
 import LayerErrorMessage from './layer-error-message';
 
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
-import {CHANNEL_SCALE_SUPPORTED_FIELDS, LAYER_TYPES, ColorRange} from '@kepler.gl/constants';
+import {CHANNEL_SCALE_SUPPORTED_FIELDS, LAYER_TYPES} from '@kepler.gl/constants';
 import {Layer, LayerBaseConfig, VisualChannel, AggregationLayer} from '@kepler.gl/layers';
 
-import {NestedPartial, RGBColor, LayerVisConfig, ColorUI, Field} from '@kepler.gl/types';
+import {NestedPartial, LayerVisConfig, ColorUI, Field} from '@kepler.gl/types';
 import {toggleModal, ActionHandler} from '@kepler.gl/actions';
 import {Datasets} from '@kepler.gl/table';
 
@@ -69,29 +73,6 @@ type LayerConfiguratorProps = {
   updateLayerColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
   updateLayerTextLabel: (idx: number | 'all', prop: string, value: any) => void;
   disableTypeSelect?: boolean;
-};
-
-type LayerColorSelectorProps = {
-  layer: Layer;
-  onChange: (v: Record<string, RGBColor>) => void;
-  selectedColor?: RGBColor;
-  property?: string;
-  setColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
-};
-
-type ArcLayerColorSelectorProps = {
-  layer: Layer;
-  onChangeConfig: (v: {color: RGBColor}) => void;
-  onChangeVisConfig: (v: {targetColor: RGBColor}) => void;
-  property?: string;
-  setColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
-};
-
-type LayerColorRangeSelectorProps = {
-  layer: Layer;
-  onChange: (v: Record<string, ColorRange>) => void;
-  property?: string;
-  setColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
 };
 
 type ChannelByValueSelectorProps = {
@@ -171,7 +152,10 @@ LayerConfiguratorFactory.deps = [
   ChannelByValueSelectorFactory,
   LayerColumnConfigFactory,
   LayerTypeSelectorFactory,
-  VisConfigSwitchFactory
+  VisConfigSwitchFactory,
+  LayerColorSelectorFactory,
+  LayerColorRangeSelectorFactory,
+  ArcLayerColorSelectorFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -182,7 +166,10 @@ export default function LayerConfiguratorFactory(
   ChannelByValueSelector: ReturnType<typeof ChannelByValueSelectorFactory>,
   LayerColumnConfig: ReturnType<typeof LayerColumnConfigFactory>,
   LayerTypeSelector: ReturnType<typeof LayerTypeSelectorFactory>,
-  VisConfigSwitch: ReturnType<typeof VisConfigSwitchFactory>
+  VisConfigSwitch: ReturnType<typeof VisConfigSwitchFactory>,
+  LayerColorSelector: ReturnType<typeof LayerColorSelectorFactory>,
+  LayerColorRangeSelector: ReturnType<typeof LayerColorRangeSelectorFactory>,
+  ArcLayerColorSelector: ReturnType<typeof ArcLayerColorSelectorFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
@@ -284,6 +271,7 @@ export default function LayerConfiguratorFactory(
 
           {/* text label */}
           <TextLabelPanel
+            id={layer.id}
             fields={visConfiguratorProps.fields}
             updateLayerTextLabel={this.props.updateLayerTextLabel}
             textLabel={layer.config.textLabel}
@@ -602,6 +590,7 @@ export default function LayerConfiguratorFactory(
 
           {/* text label */}
           <TextLabelPanel
+            id={layer.id}
             fields={visConfiguratorProps.fields}
             updateLayerTextLabel={this.props.updateLayerTextLabel}
             textLabel={layer.config.textLabel}
@@ -1123,75 +1112,6 @@ export default function LayerConfiguratorFactory(
 
   return LayerConfigurator;
 }
-
-export const LayerColorSelector = ({
-  layer,
-  onChange,
-  selectedColor,
-  property = 'color',
-  setColorUI
-}: LayerColorSelectorProps) => (
-  <SidePanelSection>
-    <ColorSelector
-      colorSets={[
-        {
-          selectedColor: selectedColor || layer.config.color,
-          setColor: (rgbValue: RGBColor) => onChange({[property]: rgbValue})
-        }
-      ]}
-      colorUI={layer.config.colorUI[property]}
-      setColorUI={newConfig => setColorUI(property, newConfig)}
-    />
-  </SidePanelSection>
-);
-
-export const ArcLayerColorSelector = ({
-  layer,
-  onChangeConfig,
-  onChangeVisConfig,
-  property = 'color',
-  setColorUI
-}: ArcLayerColorSelectorProps) => (
-  <SidePanelSection>
-    <ColorSelector
-      colorSets={[
-        {
-          selectedColor: layer.config.color,
-          setColor: (rgbValue: RGBColor) => onChangeConfig({color: rgbValue}),
-          label: 'Source'
-        },
-        {
-          selectedColor: layer.config.visConfig.targetColor || layer.config.color,
-          setColor: (rgbValue: RGBColor) => onChangeVisConfig({targetColor: rgbValue}),
-          label: 'Target'
-        }
-      ]}
-      colorUI={layer.config.colorUI[property]}
-      setColorUI={newConfig => setColorUI(property, newConfig)}
-    />
-  </SidePanelSection>
-);
-
-export const LayerColorRangeSelector = ({
-  layer,
-  onChange,
-  property = 'colorRange',
-  setColorUI
-}: LayerColorRangeSelectorProps) => (
-  <SidePanelSection>
-    <ColorSelector
-      colorSets={[
-        {
-          selectedColor: layer.config.visConfig[property],
-          isRange: true,
-          setColor: (colorRange: ColorRange) => onChange({[property]: colorRange})
-        }
-      ]}
-      colorUI={layer.config.colorUI[property]}
-      setColorUI={newConfig => setColorUI(property, newConfig)}
-    />
-  </SidePanelSection>
-);
 
 ChannelByValueSelectorFactory.deps = [VisConfigByFieldSelectorFactory];
 

@@ -411,7 +411,11 @@ mergedH3Layer.config = {
       size: 18,
       offset: [0, 0],
       anchor: 'start',
-      alignment: 'center'
+      alignment: 'center',
+      outlineWidth: 0,
+      outlineColor: [255, 0, 0, 255],
+      background: false,
+      backgroundColor: [0, 0, 200, 255]
     }
   ],
   colorUI: {

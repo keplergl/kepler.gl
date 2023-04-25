@@ -101,7 +101,7 @@ export type LayerTextLabelChangeUpdaterAction = {
  * Update layer text label
  * @param oldLayer - layer to be updated
  * @param idx -`idx` of text label to be updated
- * @param prop - `prop` of text label, e,g, `anchor`, `alignment`, `color`, `size`, `field`
+ * @param prop - `prop` of text label, e,g, `anchor`, `alignment`, `color`, `size`, `field`, `outlineWidth`, `outlineColor`
  * @param value - new value
  * @returns action
  * @public

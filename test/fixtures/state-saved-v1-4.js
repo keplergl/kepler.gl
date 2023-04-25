@@ -236,7 +236,11 @@ mergedLayer0.config = {
       size: 27,
       offset: [-10, 0],
       anchor: 'end',
-      alignment: 'center'
+      alignment: 'center',
+      outlineWidth: 0,
+      outlineColor: [255, 0, 0, 255],
+      background: false,
+      backgroundColor: [0, 0, 200, 255]
     }
   ],
   colorUI: {

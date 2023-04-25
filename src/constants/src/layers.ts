@@ -56,7 +56,11 @@ export const DEFAULT_TEXT_LABEL: LayerTextLabel = {
   size: 18,
   offset: [0, 0],
   anchor: 'start',
-  alignment: 'center'
+  alignment: 'center',
+  outlineWidth: 0,
+  outlineColor: [255, 0, 0, 255],
+  background: false,
+  backgroundColor: [0, 0, 200, 255]
 };
 
 export const DEFAULT_CUSTOM_PALETTE: ColorRange = {
@@ -467,6 +471,15 @@ export const LAYER_TEXT_CONFIGS: LayerTextConfig = {
     step: 1,
     isRanged: false,
     label: 'Font size',
+    showInput: true
+  },
+  outlineWidth: {
+    type: 'number',
+    range: [0, 1],
+    value0: 0,
+    step: 0.01,
+    isRanged: false,
+    label: 'Outline width',
     showInput: true
   },
   textAnchor: {
