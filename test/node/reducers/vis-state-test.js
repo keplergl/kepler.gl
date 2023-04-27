@@ -5414,3 +5414,41 @@ test('VisStateUpdater -> prepareStateForDatasetReplace', t => {
 
   t.end();
 });
+
+test('VisStateUpdater -> addLayer with empty column', t => {
+  const initialState = StateWFiles.visState;
+  const oldLayers = initialState.layers;
+  let nextState;
+  t.doesNotThrow(() => {
+    nextState = reducer(
+      initialState,
+      VisStateActions.addLayer({
+        type: 'point',
+        id: 'taro-xxx',
+        config: {
+          dataId: testCsvDataId
+          // no column
+        }
+      })
+    );
+  }, 'should not throw error when add layer with empty column');
+
+  t.equal(nextState.layers.length, oldLayers.length + 1, 'should create 1 layer');
+  const newLayer = nextState.layers[nextState.layers.length - 1];
+
+  t.equal(newLayer.id, 'taro-xxx', 'newlayer should have correct id');
+  t.equal(newLayer.type, 'point', 'newlayer should have correct type');
+  t.deepEqual(
+    newLayer.config.columns.lat,
+    {value: null, fieldIdx: -1},
+    'newlayer column should be value: null'
+  );
+
+  t.deepEqual(
+    nextState.layerData[nextState.layerData.length - 1],
+    {},
+    'newlayer layerData should be empty'
+  );
+
+  t.end();
+});
