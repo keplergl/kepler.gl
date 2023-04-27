@@ -66,10 +66,14 @@ export function swap_<X extends {id: string}>(item: X): (arr: X[]) => X[] {
   return arr => arr.map(a => (a.id === item.id ? item : a));
 }
 
-export function findById<X extends {id: string}>(id: string): (arr: X[]) => X | undefined {
-  return arr => arr.find(a => a.id === id);
+export function map_<X, T>(fn: (state: X) => T): (arr: X[]) => T[] {
+  return arr => arr.map(e => fn(e));
 }
 
-export function map_<X>(fn: (state: X) => X): (arr: X[]) => X[] {
-  return arr => arr.map(e => fn(e));
+export function filterOutById<X extends {id: string}>(id: string): (arr: X[]) => X[] {
+  return arr => arr.filter(e => e.id !== id);
+}
+
+export function removeElementAtIndex<X>(index: number): (arr: X[]) => X[] {
+  return arr => [...arr.slice(0, index), ...arr.slice(index + 1, arr.length)];
 }

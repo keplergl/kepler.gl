@@ -41,7 +41,6 @@ type LayerPanelProps = {
   onTouchStart?: TouchEventHandler;
   layer: Layer;
   datasets: Datasets;
-  idx: number;
   layerTypeOptions: {
     id: string;
     label: string;
@@ -133,12 +132,12 @@ function LayerPanelFactory(
 
     _removeLayer: MouseEventHandler = e => {
       e.stopPropagation();
-      this.props.removeLayer(this.props.idx);
+      this.props.removeLayer(this.props.layer.id);
     };
 
     _duplicateLayer: MouseEventHandler = e => {
       e.stopPropagation();
-      this.props.duplicateLayer(this.props.idx);
+      this.props.duplicateLayer(this.props.layer.id);
     };
 
     render() {

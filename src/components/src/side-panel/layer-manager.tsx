@@ -56,7 +56,7 @@ type OverlayBlendingSelectorProps = {
 type LayerManagerProps = {
   datasets: Datasets;
   layers: Layer[];
-  layerOrder: number[];
+  layerOrder: string[];
   layerClasses: LayerClassesType;
   layerBlending: string;
   overlayBlending: string;

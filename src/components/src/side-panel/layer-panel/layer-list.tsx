@@ -29,11 +29,12 @@ import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
 import {useDroppable} from '@dnd-kit/core';
 import {useSortable, SortableContext, verticalListSortingStrategy} from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
+import {findById} from '@kepler.gl/utils';
 
 type LayerListProps = {
   datasets: Datasets;
   layers: Layer[];
-  layerOrder: number[];
+  layerOrder: string[];
   layerClasses: LayerClassesType;
   isSortable?: boolean;
   uiStateActions: typeof UIStateActions;
@@ -79,9 +80,9 @@ LayerListFactory.deps = [LayerPanelFactory];
 function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
   // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
   // Developers can provide any layer panel implementation and it will still be sortable
-  const SortableItem = ({layerId, layers, layerIndex, panelProps, layerActions}) => {
+  const SortableItem = ({layer, layerIndex, panelProps, layerActions}) => {
     const {attributes, listeners, setNodeRef, isDragging, transform, transition} = useSortable({
-      id: layerId
+      id: layer.id
     });
 
     return (
@@ -95,9 +96,9 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
         <LayerPanel
           {...panelProps}
           {...layerActions}
-          key={layerId}
+          key={layer.id}
           idx={layerIndex}
-          layer={layers[layerIndex]}
+          layer={layer}
           listeners={listeners}
         />
       </SortableStyledItem>
@@ -128,15 +129,20 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
       isSortable = true
     } = props;
     const {toggleModal: openModal} = uiStateActions;
-    const layerOrdersToShow = useMemo(
-      () =>
-        layerOrder.filter(layerIdx => Boolean(layers[layerIdx]) && !layers[layerIdx].config.hidden),
-      [layers, layerOrder]
-    );
+
+    const layersToShow = useMemo(() => {
+      return layerOrder.reduce((acc, layerId) => {
+        const layer = findById<Layer>(layerId)(layers);
+        if (!layer) {
+          return acc;
+        }
+        return !layer.config.hidden ? [...acc, layer] : acc;
+      }, [] as Layer[]);
+    }, [layers, layerOrder]);
 
     const sidePanelDndItems = useMemo(() => {
-      return layerOrdersToShow.map(layerIdx => layers[layerIdx].id);
-    }, [layerOrdersToShow, layers]);
+      return layersToShow.map(({id}) => id);
+    }, [layersToShow]);
 
     const layerTypeOptions = useMemo(
       () =>
@@ -175,34 +181,28 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
         <SortableList containerId="sortablelist" sidePanelDndItems={sidePanelDndItems}>
           {/* warning: containerId should be similar to the first key in dndItems defined in kepler-gl.js*/}
 
-          {layerOrdersToShow.map(layerIdx => (
+          {layersToShow.map(layer => (
             <SortableItem
-              key={layers[layerIdx].id}
-              layerId={layers[layerIdx].id}
+              key={layer.id}
+              layer={layer}
+              layerIndex={layers.findIndex(({id}) => id === layer.id)}
               panelProps={panelProps}
               layerActions={layerActions}
-              layers={layers}
-              layerIndex={layerIdx}
             />
           ))}
         </SortableList>
       </>
     ) : (
       <>
-        {layerOrder.map(
-          layerIdx =>
-            layers[layerIdx] &&
-            !layers[layerIdx].config.hidden && (
-              <LayerPanel
-                {...panelProps}
-                {...layerActions}
-                key={layers[layerIdx].id}
-                idx={layerIdx}
-                layer={layers[layerIdx]}
-                isDraggable={false}
-              />
-            )
-        )}
+        {layersToShow.map(layer => (
+          <LayerPanel
+            {...panelProps}
+            {...layerActions}
+            key={layer.id}
+            layer={layer}
+            isDraggable={false}
+          />
+        ))}
       </>
     );
   };

@@ -23,7 +23,7 @@ import cloneDeep from 'lodash.clonedeep';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {LayerClasses, KeplerGlLayers} from '@kepler.gl/layers';
 import {GEOJSON_FIELDS} from '@kepler.gl/constants';
-import {findDefaultLayer, getLayerHoverProp} from '@kepler.gl/reducers';
+import {findDefaultLayer, getLayerHoverProp, getLayerOrderFromLayers} from '@kepler.gl/reducers';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 
 const {PointLayer, ArcLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
@@ -925,5 +925,13 @@ test('layerUtils -> getLayerHoverProp', t => {
 
   t.deepEqual(getLayerHoverProp(args), null, 'should get correct layerHoverProp');
 
+  t.end();
+});
+
+test('layerUtils -> getLayerOrderFromLayers', t => {
+  const visState = cloneDeep(StateWFiles).visState;
+  const layerOrder = getLayerOrderFromLayers(visState.layers);
+
+  t.deepEqual(layerOrder, ['point-0', 'geojson-1'], 'Should generate layerOrder correctly');
   t.end();
 });

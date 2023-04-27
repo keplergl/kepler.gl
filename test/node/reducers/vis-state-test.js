@@ -280,7 +280,7 @@ test('#visStateReducer -> ADD_LAYER.1', t => {
     },
     layers: [{id: 'existing_layer'}],
     layerData: [[{data: [1, 2, 3]}, {data: [4, 5, 6]}]],
-    layerOrder: [0],
+    layerOrder: ['existing_layer'],
     splitMaps: [
       {
         layers: {existing_layer: false}
@@ -321,7 +321,11 @@ test('#visStateReducer -> ADD_LAYER.1', t => {
     [oldState.layerData[0], {}],
     'newState should have empty layer datat'
   );
-  t.deepEqual(newReducer.layerOrder, [1, 0], 'should add to layerOrder');
+  t.deepEqual(
+    newReducer.layerOrder,
+    [newReducer.layers[1].id, newReducer.layers[0].id],
+    'should add to layerOrder'
+  );
   t.deepEqual(newReducer.splitMaps, expectedSplitMaps, 'should add to SplitMaps');
 
   t.end();
@@ -356,7 +360,7 @@ test('#visStateReducer -> LAYER_TYPE_CHANGE.1', t => {
     },
     layers: [{id: 'existing_layer'}, layer],
     layerData: [[{data: [1, 2, 3]}, {data: [4, 5, 6]}]],
-    layerOrder: [1, 0],
+    layerOrder: ['more_layer', 'existing_layer'],
     hoverInfo: {
       layer: {props: {id: 'more_layer'}},
       picked: true
@@ -1075,7 +1079,7 @@ test('#visStateReducer -> REMOVE_LAYER', t => {
   const oldState = {
     layers: [layer1, layer2],
     layerData: [{data: 1}, {data: 2}],
-    layerOrder: [1, 0],
+    layerOrder: ['b', 'a'],
     hoverInfo: {
       layer: {props: {id: 'b'}},
       picked: true
@@ -1095,7 +1099,7 @@ test('#visStateReducer -> REMOVE_LAYER', t => {
     {
       layers: [layer1],
       layerData: [{data: 1}],
-      layerOrder: [0],
+      layerOrder: ['a'],
       hoverInfo: undefined,
       clicked: {
         layer: {props: {id: 'a'}},
@@ -1116,7 +1120,11 @@ test('#visStateReducer -> DUPLICATE_LAYER', t => {
   // layers: ['point-0', 'geojson-1', 'hexagon-2'],
   const layerToCopy = serializeLayer(oldState.layers[0], oldState.schema);
   t.equal(oldState.layers.length, 3, 'should have 3 layers to begin');
-  t.deepEqual(oldState.layerOrder, [2, 0, 1], 'should have 3 layers to begin');
+  t.deepEqual(
+    oldState.layerOrder,
+    [oldState.layers[2].id, oldState.layers[0].id, oldState.layers[1].id],
+    'should have 3 layers to begin'
+  );
 
   const nextState = reducer(oldState, VisStateActions.duplicateLayer(0));
   t.equal(nextState.layers.length, 4, 'should add 1 layer');
@@ -1139,7 +1147,12 @@ test('#visStateReducer -> DUPLICATE_LAYER', t => {
   );
   t.deepEqual(
     nextState.layerOrder,
-    [2, 3, 0, 1],
+    [
+      nextState.layers[2].id,
+      nextState.layers[3].id,
+      nextState.layers[0].id,
+      nextState.layers[1].id
+    ],
     'should insert copied layer in front of older layer'
   );
 
@@ -1164,7 +1177,13 @@ test('#visStateReducer -> DUPLICATE_LAYER', t => {
   );
   t.deepEqual(
     nextState1.layerOrder,
-    [2, 3, 4, 0, 1],
+    [
+      nextState1.layers[2].id,
+      nextState1.layers[3].id,
+      nextState1.layers[4].id,
+      nextState1.layers[0].id,
+      nextState1.layers[1].id
+    ],
     'should insert copied layer in front of older layer'
   );
 
@@ -1186,175 +1205,6 @@ test('#visStateReducer -> DUPLICATE_LAYER', t => {
   // test remove
   t.end();
 });
-
-// TODO: not sure if this test is correct, it basically checks if the loaded visState is empty
-// if we load configuration through the schema manager all layers will be changing from having visualChannels to visualConfig
-// test('#visStateReducer -> SERIALIZE', t => {
-//   const configuration = {
-//     version: 'v1',
-//     config: {
-//       visState: {
-//         filters: [
-//           {
-//             dataId: ['earthquakes'],
-//             id: 'vo18yorx',
-//             name: ['DateTime'],
-//             type: 'timeRange',
-//             value: [663046722470, 1301519405470],
-//             enlarged: true,
-//             plotType: 'histogram',
-//             animationWindow: 'free',
-//             yAxis: null,
-//             speed: 1
-//           }
-//         ],
-//         layers: [
-//           {
-//             id: 'hty62yd',
-//             type: 'point',
-//             config: {
-//               dataId: 'earthquakes',
-//               label: 'Point',
-//               color: [23, 184, 190],
-//               highlightColor: [252, 242, 26, 255],
-//               columns: {
-//                 lat: 'Latitude',
-//                 lng: 'Longitude',
-//                 altitude: null
-//               },
-//               isVisible: true,
-//               visConfig: {
-//                 radius: 10,
-//                 fixedRadius: false,
-//                 opacity: 0.39,
-//                 outline: false,
-//                 thickness: 2,
-//                 strokeColor: [23, 184, 190],
-//                 colorRange: {
-//                   name: 'ColorBrewer PRGn-6',
-//                   type: 'diverging',
-//                   category: 'ColorBrewer',
-//                   colors: ['#762a83', '#af8dc3', '#e7d4e8', '#d9f0d3', '#7fbf7b', '#1b7837'],
-//                   reversed: false
-//                 },
-//                 strokeColorRange: {
-//                   name: 'ColorBrewer PRGn-6',
-//                   type: 'diverging',
-//                   category: 'ColorBrewer',
-//                   colors: ['#762a83', '#af8dc3', '#e7d4e8', '#d9f0d3', '#7fbf7b', '#1b7837'],
-//                   reversed: false
-//                 },
-//                 radiusRange: [4.2, 96.2],
-//                 filled: true
-//               },
-//               hidden: false,
-//               textLabel: [
-//                 {
-//                   field: null,
-//                   color: [255, 255, 255],
-//                   size: 18,
-//                   offset: [0, 0],
-//                   anchor: 'start',
-//                   alignment: 'center'
-//                 }
-//               ]
-//             },
-//             visualChannels: {
-//               colorField: {
-//                 name: 'Magnitude',
-//                 type: 'real'
-//               },
-//               colorScale: 'quantize',
-//               strokeColorField: null,
-//               strokeColorScale: 'quantile',
-//               sizeField: {
-//                 name: 'Magnitude',
-//                 type: 'real'
-//               },
-//               sizeScale: 'sqrt'
-//             }
-//           }
-//         ],
-//         interactionConfig: {
-//           tooltip: {
-//             fieldsToShow: {
-//               earthquakes: [
-//                 {
-//                   name: 'DateTime',
-//                   format: null
-//                 },
-//                 {
-//                   name: 'Latitude',
-//                   format: null
-//                 },
-//                 {
-//                   name: 'Longitude',
-//                   format: null
-//                 },
-//                 {
-//                   name: 'Depth',
-//                   format: null
-//                 },
-//                 {
-//                   name: 'Magnitude',
-//                   format: null
-//                 }
-//               ]
-//             },
-//             compareMode: false,
-//             compareType: 'absolute',
-//             enabled: true
-//           },
-//           brush: {
-//             size: 0.5,
-//             enabled: false
-//           },
-//           geocoder: {
-//             enabled: false
-//           },
-//           coordinate: {
-//             enabled: false
-//           }
-//         },
-//         layerBlending: 'normal',
-//         splitMaps: [],
-//         animationConfig: {
-//           currentTime: null,
-//           speed: 1
-//         }
-//       },
-//       mapState: {
-//         bearing: 0,
-//         dragRotate: false,
-//         latitude: 37.05881309947238,
-//         longitude: -122.80009283836715,
-//         pitch: 0,
-//         zoom: 5.740491857794806,
-//         isSplit: false
-//       },
-//       mapStyle: {
-//         styleType: 'light',
-//         topLayerGroups: {},
-//         visibleLayerGroups: {
-//           border: false,
-//           building: true,
-//           label: true,
-//           land: true,
-//           road: true,
-//           water: true
-//         },
-//         threeDBuildingColor: [9.665468314072013, 17.18305478057247, 31.1442867897876],
-//         mapStyles: {}
-//       }
-//     }
-//   };
-//
-//   const loadedVisState = visStateSchema[CURRENT_VERSION].load(configuration.config.visState);
-//
-//   t.deepEqual(loadedVisState, {}, 'Should have the same configuration');
-//
-//   t.end();
-// });
 
 test('#visStateReducer -> UPDATE_VIS_DATA.1 -> No data', t => {
   const oldState = CloneDeep(InitialState).visState;
@@ -1523,7 +1373,11 @@ test('#visStateReducer -> UPDATE_VIS_DATA.2 -> to empty state', t => {
   cmpLayers(t, expectedLayers, newStateLayers);
 
   t.equal(newState.layerData.length, expectedLayers.length, 'should calculate layerdata');
-  t.deepEqual(newState.layerOrder, [0, 1, 2, 3], 'should calculate layerOrder');
+  t.deepEqual(
+    newState.layerOrder,
+    [newStateLayers[0].id, newStateLayers[1].id, newStateLayers[2].id, newStateLayers[3].id],
+    'should calculate layerOrder'
+  );
 
   t.end();
 });
@@ -1578,7 +1432,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
         }
       }
     },
-    layerOrder: [0],
+    layerOrder: [mockLayer.id],
     layerBlending: 'additive',
     splitMaps: []
   };
@@ -1644,7 +1498,13 @@ test('#visStateReducer -> UPDATE_VIS_DATA.3 -> merge w/ existing state', t => {
   t.equal(newState.layers.length, 5, 'should find 1 arc aline and 2 point layers');
   t.deepEqual(
     newState.layerOrder,
-    [1, 2, 3, 4, 0],
+    [
+      newState.layers[1].id,
+      newState.layers[2].id,
+      newState.layers[3].id,
+      newState.layers[4].id,
+      newState.layers[0].id
+    ],
     'should add new layer index to layer order, put them on top'
   );
   t.equal(newState.layers[1].config.dataId, 'smoothie', 'should save dataId to layer');
@@ -1963,14 +1823,6 @@ test('#visStateReducer -> UPDATE_VIS_DATA -> mergeFilters', t => {
     datasets: expectedDatasets
   };
 
-  // cmpFilters(t, expectedState.filters, newState.filters);
-  //
-  // t.deepEqual(
-  //   newState.filterToBeMerged,
-  //   expectedState.filterToBeMerged,
-  //   'should saved unmerged filter to filterToBeMerged'
-  // );
-
   cmpDatasets(t, expectedState.datasets, newState.datasets);
 
   t.end();
@@ -2001,6 +1853,8 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
     isVisible: false
   });
 
+  const layers = [layer0, layer1, layer2, layer3];
+
   const oldState = {
     ...INITIAL_VIS_STATE,
     layers: [layer0, layer1, layer2, layer3],
@@ -2028,7 +1882,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
       }
     },
     layerData: [],
-    layerOrder: [2, 1, 0, 3]
+    layerOrder: [layers[2].id, layers[1].id, layers[0].id, layers[3].id]
   };
 
   const newState = reducer(
@@ -2061,7 +1915,20 @@ test('#visStateReducer -> UPDATE_VIS_DATA.SPLIT_MAPS', t => {
   ];
 
   t.equal(newState.layers.length, 8, 'should create 1 arc 1 line and 2 point layers');
-  t.deepEqual(newState.layerOrder, [4, 5, 6, 7, 2, 1, 0, 3], 'should move new layers to front');
+  t.deepEqual(
+    newState.layerOrder,
+    [
+      newState.layers[4].id,
+      newState.layers[5].id,
+      newState.layers[6].id,
+      newState.layers[7].id,
+      newState.layers[2].id,
+      newState.layers[1].id,
+      newState.layers[0].id,
+      newState.layers[3].id
+    ],
+    'should move new layers to front'
+  );
   t.deepEqual(newState.splitMaps, expectedSplitMaps, 'should add new layers to split maps');
 
   t.end();
@@ -2100,7 +1967,7 @@ test('#visStateReducer -> setFilter.dynamicDomain & cpu', t => {
 
   const expectedLayers = [expectedLayer1];
   // test default layer
-  t.equal(initialState.layers.length, 1, 'should find two layers');
+  t.equal(initialState.layers.length, 1, 'should find one layer');
 
   cmpLayers(t, expectedLayers, initialState.layers);
 
@@ -3008,7 +2875,7 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     layers: [oldState.layers[1]],
     filters: [oldState.filters[1]],
     layerData: [oldState.layerData[1]],
-    layerOrder: [0],
+    layerOrder: [oldState.layers[1].id],
     datasets: {
       [testGeoJsonDataId]: oldState.datasets[testGeoJsonDataId]
     },
@@ -3124,10 +2991,11 @@ test('#visStateReducer -> SPLIT_MAP: TOGGLE', t => {
 test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
   const layer1 = new PointLayer({id: 'a'});
   const layer2 = new PointLayer({id: 'b'});
+  const layers = [layer1, layer2];
   const oldState = {
-    layers: [layer1, layer2],
+    layers,
     layerData: [{data: 1}, {data: 2}],
-    layerOrder: [1, 0],
+    layerOrder: [layers[1].id, layers[0].id],
     hoverInfo: {
       layer: {props: {id: 'b'}},
       picked: true
@@ -3160,7 +3028,7 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER', t => {
     {
       layers: [layer1],
       layerData: [{data: 1}],
-      layerOrder: [0],
+      layerOrder: [layer1.id],
       hoverInfo: undefined,
       clicked: {
         layer: {props: {id: 'a'}},
@@ -3253,11 +3121,10 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
   const expectedState = {
     layers: [oldState.layers[0]],
     layerData: [oldState.layerData[0]],
-    layerOrder: [0],
+    layerOrder: [oldState.layers[0].id],
     datasets: {
       [testCsvDataId]: oldState.datasets[testCsvDataId]
     },
-
     filters: [],
     interactionConfig: {
       tooltip: {
@@ -5377,7 +5244,7 @@ test('VisStateUpdater -> prepareStateForDatasetReplace', t => {
   t.deepEqual(nextState.filterToBeMerged[0].dataId, [dataIdToUse], 'should replace filter dataId');
 
   // preserveLayerOrder
-  t.deepEqual(nextState.layerOrder, [0], 'should remove layer from layer order');
+  t.deepEqual(nextState.layerOrder, ['geojson-1'], 'should remove layer from layer order');
   t.deepEqual(
     nextState.preserveLayerOrder,
     ['geojson-1', 'point-0'],

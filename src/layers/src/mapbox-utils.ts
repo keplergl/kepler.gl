@@ -21,6 +21,8 @@
 import Layer, {OVERLAY_TYPE_CONST} from './base-layer';
 import {Feature} from 'geojson';
 
+import {findById} from '@kepler.gl/utils';
+
 /**
  * This function will convert layers to mapbox layers
  * @param layers the layers to be converted
@@ -32,28 +34,38 @@ import {Feature} from 'geojson';
 export function generateMapboxLayers(
   layers: Layer[] = [],
   layerData: any[] = [],
-  layerOrder: number[] = [],
+  layerOrder: string[] = [],
   layersToRender: {[key: string]: boolean} = {}
 ): {[key: string]: Layer} {
   if (layerData.length > 0) {
     return layerOrder
       .slice()
       .reverse()
-      .filter(
-        idx =>
-          layers[idx].overlayType === OVERLAY_TYPE_CONST.mapboxgl && layersToRender[layers[idx].id]
-      )
-      .reduce((accu, index) => {
-        const layer = layers[index];
+      .filter(layerId => {
+        const layer = findById<Layer>(layerId)(layers);
+        return layer?.overlayType === OVERLAY_TYPE_CONST.mapboxgl && layersToRender[layerId];
+      })
+      .reduce((acc, layerId) => {
+        const layerIndex = layers.findIndex(l => l.id === layerId);
+        if (layerIndex === -1) {
+          return acc;
+        }
+
+        const layer = layers[layerId];
+
+        if (!(layer.overlayType === OVERLAY_TYPE_CONST.mapboxgl && layersToRender[layerId])) {
+          return acc;
+        }
+
         return {
-          ...accu,
+          ...acc,
           [layer.id]: {
             id: layer.id,
-            data: layerData[index].data,
+            data: layerData[layerIndex].data,
             isVisible: layer.config.isVisible,
-            config: layerData[index].config,
+            config: layerData[layerIndex].config,
             hidden: layer.config.hidden,
-            sourceId: layerData[index].config.source
+            sourceId: layerData[layerIndex].config.source
           }
         };
       }, {});

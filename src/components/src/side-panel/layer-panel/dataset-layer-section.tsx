@@ -31,7 +31,7 @@ type DatasetLayerSectionProps = {
   datasets: Datasets;
   dataset: KeplerTable;
   layers: Layer[];
-  layerOrder: number[];
+  layerOrder: string[];
   layerClasses: LayerClassesType;
   showDeleteDataset: boolean;
   showDatasetTable: ActionHandler<typeof VisStateActions.showDatasetTable>;

@@ -200,11 +200,12 @@ export function getLayerHoverProp({
   return null;
 }
 
-export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: any}, idx: number) {
+export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: any}) {
   const {
     datasets,
-    layers,
-    layerData,
+    layer,
+    layerIndex,
+    data,
     hoverInfo,
     clicked,
     mapState,
@@ -212,16 +213,15 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     animationConfig,
     mapLayers
   } = props;
-  const layer = layers[idx];
-  const data = layerData[idx];
-  const {gpuFilter} = datasets[layer.config.dataId] || {};
+  const dataset = datasets[layer.config.dataId];
+  const {gpuFilter} = dataset || {};
   const objectHovered = clicked || hoverInfo;
   const visible = !mapLayers || (mapLayers && mapLayers[layer.id]);
   // Layer is Layer class
   return layer.renderLayer({
     data,
     gpuFilter,
-    idx,
+    idx: layerIndex,
     interactionConfig,
     layerCallbacks,
     mapState,
@@ -362,14 +362,20 @@ export function computeDeckLayers(
     dataLayers = layerOrder
       .slice()
       .reverse()
-      .filter(idx => currentLayersForDeck[layers[idx].id])
-      .reduce((overlays, idx) => {
-        const bindedLayerCallbacks = layerCallbacks ? bindLayerCallbacks(layerCallbacks, idx) : {};
+      .filter(id => currentLayersForDeck[id])
+      .reduce((overlays, layerId) => {
+        const layerIndex = layers.findIndex(({id}) => id === layerId);
+        const bindedLayerCallbacks = layerCallbacks
+          ? bindLayerCallbacks(layerCallbacks, layerIndex)
+          : {};
+        const layer = layers[layerIndex];
+        const data = layerData[layerIndex];
         const layerOverlay = renderDeckGlLayer(
           {
             datasets,
-            layers,
-            layerData,
+            layer,
+            layerIndex,
+            data,
             hoverInfo,
             clicked,
             mapState,
@@ -377,8 +383,7 @@ export function computeDeckLayers(
             animationConfig,
             mapLayers
           },
-          bindedLayerCallbacks,
-          idx
+          bindedLayerCallbacks
         );
         return overlays.concat(layerOverlay || []);
       }, []);
@@ -419,4 +424,8 @@ export function computeDeckLayers(
   }
 
   return [...customBottomDeckLayers, ...dataLayers, ...customTopDeckLayers, ...editorLayer];
+}
+
+export function getLayerOrderFromLayers<T extends {id: string}>(layers: T[]): string[] {
+  return layers.map(({id}) => id);
 }

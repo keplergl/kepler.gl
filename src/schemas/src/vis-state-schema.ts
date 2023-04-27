@@ -21,11 +21,11 @@
 import pick from 'lodash.pick';
 import {VERSIONS} from './versions';
 import {LAYER_VIS_CONFIGS, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
-import {AddDataToMapOptions} from '@kepler.gl/types';
-import {isFilterValidToSave, notNullorUndefined} from '@kepler.gl/utils';
+import {isFilterValidToSave, notNullorUndefined, findById} from '@kepler.gl/utils';
 import Schema from './schema';
 import cloneDeep from 'lodash.clonedeep';
 import {
+  AddDataToMapOptions,
   AnimationConfig,
   Editor,
   FileLoading,
@@ -67,7 +67,7 @@ export interface VisState {
   layers: Layer[];
   layerData: any[];
   layerToBeMerged: any[];
-  layerOrder: number[];
+  layerOrder: string[];
   filters: Filter[];
   filterToBeMerged: any[];
   datasets: Datasets;
@@ -571,10 +571,10 @@ export class LayerSchemaV0 extends Schema {
     const [visState] = parents.slice(-1);
 
     return {
-      [this.key as 'layers']: visState.layerOrder.reduce((saved, index) => {
+      [this.key as 'layers']: visState.layerOrder.reduce((saved, layerId) => {
         // save layers according to their rendering order
-        const layer = layers[index];
-        if (layer.isValidToSave()) {
+        const layer = findById<Layer>(layerId)(layers);
+        if (layer?.isValidToSave()) {
           saved.push(this.savePropertiesOrApplySchema(layer).layers);
         }
         return saved;

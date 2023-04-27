@@ -211,3 +211,18 @@ export function filterObjectByPredicate(obj, predicate) {
 export function isFunction(func) {
   return typeof func === 'function';
 }
+
+export function findById<X extends {id: string}>(id: string): (arr: X[]) => X | undefined {
+  return arr => arr.find(a => a.id === id);
+}
+
+/**
+ * Returns array difference from
+ */
+export function arrayDifference<X extends {id: string}>(origin: X[]): (compare: X[]) => X[] {
+  return compare =>
+    origin.reduce((acc, element) => {
+      const foundElement = findById<X>(element.id)(compare);
+      return foundElement ? [...acc, foundElement] : acc;
+    }, [] as X[]);
+}

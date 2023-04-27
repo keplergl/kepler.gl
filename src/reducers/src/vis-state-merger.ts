@@ -25,8 +25,10 @@ import {
   arrayInsert,
   getInitialMapLayersForSplitMap,
   applyFiltersToDatasets,
-  validateFiltersUpdateDatasets
+  validateFiltersUpdateDatasets,
+  findById
 } from '@kepler.gl/utils';
+import {getLayerOrderFromLayers} from '@kepler.gl/reducers';
 
 import {LayerColumns, LayerColumn, Layer} from '@kepler.gl/layers';
 import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
@@ -122,7 +124,7 @@ export function parseLayerConfig(
   const savedConfig = {
     version: CURRENT_VERSION,
     config: {
-      visState: {layers: [layerConfig], layerOrder: [0]}
+      visState: {layers: [layerConfig], layerOrder: [layerConfig.id]}
     }
   };
 
@@ -194,7 +196,10 @@ export function serializeLayer(
   newLayer: Layer,
   schema: KeplerGLSchemaClass
 ): ParsedLayer | undefined {
-  const serializedVisState = serializeVisState({layers: [newLayer], layerOrder: [0]}, schema);
+  const serializedVisState = serializeVisState(
+    {layers: [newLayer], layerOrder: [newLayer.id]},
+    schema
+  );
   return serializedVisState?.layers?.[0];
 }
 
@@ -220,7 +225,9 @@ export function mergeLayers<S extends VisState>(
   layersToMerge: NonNullable<ParsedConfig['visState']>['layers'] = [],
   fromConfig?: boolean
 ): S {
-  const preserveLayerOrder = fromConfig ? layersToMerge.map(l => l.id) : state.preserveLayerOrder;
+  const preserveLayerOrder = fromConfig
+    ? getLayerOrderFromLayers(layersToMerge)
+    : state.preserveLayerOrder;
   if (!Array.isArray(layersToMerge) || !layersToMerge.length) {
     return state;
   }
@@ -268,9 +275,10 @@ export function insertLayerAtRightOrder(
     return {newLayers: currentLayers, newLayerOrder: currentOrder};
   }
   // perservedOrder ['a', 'b', 'c'];
-  // layerOrder [1, 0, 3]
-  // layerOrderMap ['a', 'c']
-  const currentLayerQueue = currentOrder.map(i => currentLayers[i]);
+  // layerOrder ['a', 'b', 'c']
+  const currentLayerQueue = currentOrder
+    .map(id => findById(id)(currentLayers))
+    .filter(layer => Boolean(layer));
   const newLayers = currentLayers.concat(layersToInsert);
   const newLayerOrderQueue = insertItemBasedOnPreservedOrder(
     currentLayerQueue,
@@ -280,7 +288,7 @@ export function insertLayerAtRightOrder(
   );
 
   // reconstruct layerOrder after insert
-  const newLayerOrder = newLayerOrderQueue.map(lyr => newLayers.findIndex(l => l.id === lyr.id));
+  const newLayerOrder = getLayerOrderFromLayers(newLayerOrderQueue);
 
   return {
     newLayerOrder,

@@ -116,11 +116,16 @@ export function mockStateWithFileUpload() {
   drainTasksForTesting();
   // replace layer id and color with controlled value for testing
   updatedState.visState.layers.forEach((l, i) => {
+    const oldLayerId = l.id;
     l.id = `${l.type}-${i}`;
     l.config.color = [i, i, i];
     if (l.config.visConfig.strokeColor) {
       l.config.visConfig.strokeColor = [i + 10, i + 10, i + 10];
     }
+    // update layerOrder with newly created IDs
+    updatedState.visState.layerOrder = updatedState.visState.layerOrder.map(layerId =>
+      layerId === oldLayerId ? l.id : layerId
+    );
   });
 
   test(t => {
@@ -144,8 +149,13 @@ function mockStateWithTripGeojson() {
 
   // replace layer id and color with controlled value for testing
   updatedState.visState.layers.forEach((l, i) => {
+    const oldLayerId = l.id;
     l.id = `${l.type}-${i}`;
     l.config.color = [i, i, i];
+    // update layerOrder with newly created IDs
+    updatedState.visState.layerOrder = updatedState.visState.layerOrder.map(layerId =>
+      layerId === oldLayerId ? l.id : layerId
+    );
   });
 
   return updatedState;
@@ -409,7 +419,7 @@ export function mockStateWithLayerDimensions(state) {
     }
   ]);
 
-  const reorderPayload = [[2, 0, 1]];
+  const reorderPayload = [['hexagon-2', 'point-0', 'geojson-1']];
 
   const resultState = applyActions(keplerGlReducer, prepareState, [
     // reorder Layer
