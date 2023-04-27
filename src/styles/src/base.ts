@@ -928,6 +928,9 @@ const dropdownListItemLT = css`
       color: ${props => props.theme.selectColorLT};
     }
   }
+  &.selected {
+    background-color: ${props => props.theme.dropdownListHighlightBgLT};
+  }
 `;
 
 const dropdownListHeader = css`
