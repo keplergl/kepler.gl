@@ -42,7 +42,7 @@ export function generateMapboxLayers(
       .slice()
       .reverse()
       .filter(layerId => {
-        const layer = findById<Layer>(layerId)(layers);
+        const layer = findById(layerId)(layers);
         return layer?.overlayType === OVERLAY_TYPE_CONST.mapboxgl && layersToRender[layerId];
       })
       .reduce((acc, layerId) => {

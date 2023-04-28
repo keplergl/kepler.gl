@@ -573,7 +573,7 @@ export class LayerSchemaV0 extends Schema {
     return {
       [this.key as 'layers']: visState.layerOrder.reduce((saved, layerId) => {
         // save layers according to their rendering order
-        const layer = findById<Layer>(layerId)(layers);
+        const layer = findById(layerId)(layers);
         if (layer?.isValidToSave()) {
           saved.push(this.savePropertiesOrApplySchema(layer).layers);
         }

@@ -132,7 +132,7 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
 
     const layersToShow = useMemo(() => {
       return layerOrder.reduce((acc, layerId) => {
-        const layer = findById<Layer>(layerId)(layers);
+        const layer = findById(layerId)(layers);
         if (!layer) {
           return acc;
         }
