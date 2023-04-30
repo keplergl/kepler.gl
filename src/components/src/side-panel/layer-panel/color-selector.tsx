@@ -52,7 +52,10 @@ export const ColorBlock = styled.div<{backgroundcolor: RGBColor}>`
   width: 32px;
   height: 18px;
   border-radius: 1px;
-  background-color: ${props => `rgb(${props.backgroundcolor.slice(0, 3).join(',')})`};
+  background-color: ${props =>
+    Array.isArray(props.backgroundcolor)
+      ? `rgb(${props.backgroundcolor.slice(0, 3).join(',')})`
+      : 'transparent'};
 `;
 
 export const ColorSelectorInput = styled.div<ColorSelectorInputProps>`
