@@ -267,7 +267,7 @@ export type {LayerTypeListItemType} from './side-panel/layer-panel/layer-type-li
 export type {LayerGroupColorPickerProps} from './side-panel/map-style-panel/map-layer-group-color-picker';
 export type {MapLegendPanelProps, MapLegendPanelFactoryDeps} from './map/map-legend-panel';
 export type {FormatterDropdownProps} from './common/data-table/option-dropdown';
-export type {LayerList, LayerListProps, LayerListFactoryDeps} from './side-panel/layer-panel/layer-list';
+export type {LayerListProps, LayerListFactoryDeps} from './side-panel/layer-panel/layer-list';
 
 export {
   Icons,

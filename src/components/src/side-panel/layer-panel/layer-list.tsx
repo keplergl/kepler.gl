@@ -40,7 +40,7 @@ export type LayerListProps = {
   uiStateActions: typeof UIStateActions;
   visStateActions: typeof VisStateActions;
 };
-export type LayerList = React.FC<LayerListProps>;
+
 export type LayerListFactoryDeps = [typeof LayerPanelFactory];
 
 // make sure the element is always visible while is being dragged

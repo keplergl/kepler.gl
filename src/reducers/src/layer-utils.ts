@@ -331,7 +331,7 @@ export function bindLayerCallbacks(layerCallbacks: LayerCallbacks = {}, idx: num
       ...accu,
       [key]: val => layerCallbacks[key](idx, val)
     }),
-    {} as Record<string, (idx: number, val: any) => void>
+    {} as Record<string, (_idx: number, val: any) => void>
   );
 }
 
