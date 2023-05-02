@@ -105,6 +105,9 @@ export {default as Table} from './table';
 
 export {getEditorLayer} from './editor-layer/editor-layer';
 
+export {default as ScenegraphLayer, scenegraphVisConfigs} from './scenegraph-layer/scenegraph-layer';
+export {default as ScenegraphLayerIcon} from './scenegraph-layer/scenegraph-layer-icon';
+
 import {isDrawingActive, onClick, onHover, getTooltip, getCursor} from './editor-layer/editor-layer-utils';
 export const EditorLayerUtils = {
   isDrawingActive, onClick, onHover, getTooltip, getCursor

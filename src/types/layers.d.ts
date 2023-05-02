@@ -246,6 +246,7 @@ export type LayerVisConfig = {
   // extruded: boolean;
   // wireframe: boolean;
   // weight: number;
+  // scenegraph: VisConfig;
 };
 
 export type TextConfigSelect = {
