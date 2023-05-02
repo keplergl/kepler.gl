@@ -38,7 +38,7 @@ import {
 import {getGpuFilterProps} from '@kepler.gl/table';
 import {VisStateActions, addDataToMap} from '@kepler.gl/actions';
 
-import {colorMaker, layerColors, LayerClasses} from '@kepler.gl/layers';
+import {colorMaker, layerColors, LayerClasses as KeplerLayerClasses} from '@kepler.gl/layers';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {applyActions, InitialState} from 'test/helpers/mock-state';
 // Fixtures
@@ -64,7 +64,7 @@ export function testCreateLayer(t, LayerClass, props = {}) {
   return layer;
 }
 
-export function testCreateLayerFromConfig(t, tc) {
+export function testCreateLayerFromConfig(t, tc, LayerClasses = KeplerLayerClasses) {
   const {datasets, layer: layerConfig = {}} = tc;
   let layer;
 
@@ -121,7 +121,11 @@ export function testCreateCases(t, LayerClass, testCases) {
 export function testFormatLayerDataCases(t, LayerClass, testCases) {
   testCases.forEach(tc => {
     logStep(`---> Test Format Layer Data ${tc.name}`);
-    const layer = testCreateLayerFromConfig(t, tc);
+
+    // use provided LayerClass if present, otherwise default to KeplerLayerClasses
+    const layer = LayerClass
+      ? testCreateLayerFromConfig(t, tc, {[tc.layer.type]: LayerClass})
+      : testCreateLayerFromConfig(t, tc);
     let updatedLayer = layer;
 
     // if provided updates
@@ -149,7 +153,11 @@ export function testRenderLayerCases(t, LayerClass, testCases) {
   testCases.forEach(tc => {
     logStep(`---> Test Render Layer ${tc.name}`);
 
-    const layer = testCreateLayerFromConfig(t, tc);
+    // use provided LayerClass if present, otherwise default to KeplerLayerClasses
+    const layer = LayerClass
+      ? testCreateLayerFromConfig(t, tc, {[tc.layer.type]: LayerClass})
+      : testCreateLayerFromConfig(t, tc);
+
     let result;
     let deckLayers;
     let viewport = INITIAL_MAP_STATE;
