@@ -684,8 +684,7 @@ export const expectedSavedLayer1 = {
     color: [0, 0, 0],
     columns: {
       lat: 'gps_data.lat',
-      lng: 'gps_data.lng',
-      altitude: null
+      lng: 'gps_data.lng'
     },
     textLabel: [
       {
@@ -740,8 +739,7 @@ export const expectedLoadedLayer1 = {
     color: [0, 0, 0],
     columns: {
       lat: 'gps_data.lat',
-      lng: 'gps_data.lng',
-      altitude: null
+      lng: 'gps_data.lng'
     },
     hidden: false,
     isVisible: true,
