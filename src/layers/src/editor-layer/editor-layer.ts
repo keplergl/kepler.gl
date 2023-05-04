@@ -71,7 +71,7 @@ export function getEditorLayer({
   featureCollection,
   selectedFeatureIndexes,
   viewport
-}: GetEditorLayerProps): DeckLayer<DeckLayerProps<any>> {
+}: GetEditorLayerProps): DeckLayer<DeckLayerProps> {
   const {mode: editorMode} = editor;
 
   let mode = DEFAULT_COMPOSITE_MODE;

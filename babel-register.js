@@ -18,9 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+const forceTranspile = [
+  // ESM libraries that require transpilation
+  /@deck.gl\/layers/,
+  // For some reason babel crashes even before trying to transpile this library
+  // Instead we force transpile @deck.gl/layers which includes it, and alias to a transpiled version in babel.config.js
+  /@mapbox\/tiny-sdf/
+];
+
 require('@babel/register')({
-  extensions: ['.tsx', '.ts', '.js', '.json']
+  // This tells babel where to look for `babel.config.js` file
+  root: __dirname,
+  ignore: [
+    filepath => {
+      return forceTranspile.some(patt => patt.test(filepath))
+        ? false
+        : Boolean(filepath.match(/node_modules/));
+    }
+  ],
+  only: [__dirname],
+  extensions: ['.ts', '.js', '.tsx', '.json']
 });
+
 require('@babel/polyfill');
 var path = require('path');
 var glob = require('glob');

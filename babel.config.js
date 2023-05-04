@@ -18,7 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+const {resolve} = require('path');
 const KeplerPackage = require('./package');
+
+const nodeModules = resolve(__dirname, 'node_modules');
 
 const PRESETS = ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'];
 const PLUGINS = [
@@ -36,11 +39,14 @@ const PLUGINS = [
   [
     'module-resolver',
     {
+      extensions: ['.js', '.ts', '.tsx', '.json'],
       root: ['./src'],
       alias: {
-        test: './test'
+        test: './test',
+        // We explicitly transpile this ESM library in scripts/fix-dependencies.js and consume the transpiled version here
+        // This may not be needed once switch to Jest is complete as it is handled by transformIgnorePatterns
+        '@mapbox/tiny-sdf': `${nodeModules}/@mapbox/tiny-sdf/index.cjs`
       },
-      extensions: ['.js', '.ts', '.tsx', '.json']
     }
   ],
   [

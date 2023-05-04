@@ -286,7 +286,7 @@ export function prepareLayersToRender(
   );
 }
 
-type CustomDeckLayer = DeckLayer<DeckLayerProps<any>>;
+type CustomDeckLayer = DeckLayer<DeckLayerProps>;
 
 export function getCustomDeckLayers(deckGlProps?: any): [CustomDeckLayer[], CustomDeckLayer[]] {
   const bottomDeckLayers = Array.isArray(deckGlProps?.layers)
