@@ -28,6 +28,7 @@ import {
 import {default as KeplerTable} from '@kepler.gl/table';
 import Layer, {
   LayerBaseConfig,
+  LayerBaseConfigPartial,
   LayerColorConfig,
   LayerColumn,
   LayerSizeConfig,
@@ -237,7 +238,7 @@ export default class S2GeometryLayer extends Layer {
     };
   }
 
-  getDefaultLayerConfig(props = {}) {
+  getDefaultLayerConfig(props: LayerBaseConfigPartial) {
     return {
       ...super.getDefaultLayerConfig(props),
 

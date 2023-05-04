@@ -86,7 +86,7 @@ export type VisualChannelField = Field | null;
 export type VisualChannelScale = keyof typeof SCALE_TYPES;
 
 export type LayerBaseConfig = {
-  dataId: string | null;
+  dataId: string;
   label: string;
   color: RGBColor;
 
@@ -108,6 +108,8 @@ export type LayerBaseConfig = {
     domain?: null;
   };
 };
+
+export type LayerBaseConfigPartial = {dataId: LayerBaseConfig['dataId']} & Partial<LayerBaseConfig>;
 
 export type LayerColorConfig = {
   colorField: VisualChannelField;
@@ -239,7 +241,7 @@ class Layer {
   constructor(
     props: {
       id?: string;
-    } & Partial<LayerBaseConfig> = {}
+    } & LayerBaseConfigPartial
   ) {
     this.id = props.id || generateHashId(LAYER_ID_LENGTH);
 
@@ -459,10 +461,10 @@ class Layer {
   }
 
   getDefaultLayerConfig(
-    props: Partial<LayerBaseConfig> = {}
+    props: LayerBaseConfigPartial
   ): LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig> {
     return {
-      dataId: props.dataId || null,
+      dataId: props.dataId,
       label: props.label || DEFAULT_LAYER_LABEL,
       color: props.color || colorMaker.next().value,
       columns: props.columns || {},
@@ -1201,7 +1203,7 @@ class Layer {
 
     return this.config[field]
       ? FIELD_OPTS[this.config[field].type].scale[channelScaleType]
-      : [this.getDefaultLayerConfig()[scale]];
+      : [this.getDefaultLayerConfig({dataId: ''})[scale]];
   }
 
   updateLayerVisualChannel(dataset: KeplerTable, channel: string) {

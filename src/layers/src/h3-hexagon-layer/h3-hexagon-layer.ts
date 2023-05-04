@@ -20,6 +20,7 @@
 
 import Layer, {
   LayerBaseConfig,
+  LayerBaseConfigPartial,
   LayerColorConfig,
   LayerColumn,
   LayerCoverageConfig,
@@ -214,7 +215,7 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
-  getDefaultLayerConfig(props = {}) {
+  getDefaultLayerConfig(props: LayerBaseConfigPartial) {
     return {
       ...super.getDefaultLayerConfig(props),
 

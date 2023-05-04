@@ -26,7 +26,7 @@ import {SvgIconLayer} from '@kepler.gl/deckgl-layers';
 import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS, CLOUDFRONT, ColorRange} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
-import Layer, {LayerBaseConfig, LayerColumn} from '../base-layer';
+import Layer, {LayerBaseConfig, LayerBaseConfigPartial, LayerColumn} from '../base-layer';
 import {assignPointPairToLayerColumn} from '../layer-utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {default as KeplerTable} from '@kepler.gl/table';
@@ -127,7 +127,7 @@ export default class IconLayer extends Layer {
     props: {
       id?: string;
       iconGeometry?: IconGeometry;
-    } & Partial<LayerBaseConfig> = {}
+    } & LayerBaseConfigPartial
   ) {
     super(props);
 
