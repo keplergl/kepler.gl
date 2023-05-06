@@ -816,7 +816,7 @@ export function setFilterUpdater(
       // @ts-ignore
       const layerIdDifference = xor(newFilter.layerId, oldFilter.layerId);
 
-      const layerDataIds = uniq(
+      const layerDataIds = uniq<string>(
         layerIdDifference
           .map(lid =>
             get(
@@ -824,22 +824,22 @@ export function setFilterUpdater(
               ['config', 'dataId']
             )
           )
-          .filter(d => d)
+          .filter(d => d) as string[]
       );
 
       // only filter datasetsIds
       datasetIds = layerDataIds;
 
       // Update newFilter dataIds
-      const newDataIds = uniq(
+      const newDataIds = uniq<string>(
         newFilter.layerId
-          .map(lid =>
+          ?.map(lid =>
             get(
               state.layers.find(l => l.id === lid),
               ['config', 'dataId']
             )
           )
-          .filter(d => d)
+          .filter(d => d) as string[]
       );
 
       newFilter = {
@@ -1631,6 +1631,7 @@ export const updateVisDataUpdater = (
   const datasets = toArray(action.datasets);
 
   const newDataEntries = datasets.reduce(
+    // @ts-expect-error  Type '{}' is missing the following properties from type 'ProtoDataset': data, info
     (accu, {info = {}, ...rest} = {}) => ({
       ...accu,
       ...(createNewDataEntry({info, ...rest}, state.datasets) || {})
@@ -2770,7 +2771,11 @@ export function replaceDatasetDepsInState<T extends VisState>(
           ? replacePropValueInState(replacedState, replacedItem, mergerOptions)
           : replacedState;
 
-        if (replacedState[mergerOptions.toMergeProp]?.length && preserveOrder) {
+        if (
+          mergerOptions.toMergeProp !== undefined &&
+          replacedState[mergerOptions.toMergeProp]?.length &&
+          preserveOrder
+        ) {
           replacedState[preserveOrder] = propValue.map(item => item.id);
         }
       });

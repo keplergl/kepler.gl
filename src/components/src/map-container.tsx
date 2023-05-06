@@ -144,7 +144,7 @@ interface StyledDroppableProps {
 }
 
 const StyledDroppable = styled.div<StyledDroppableProps>`
-  background-color: ${({isOver}) => (isOver ? 'rgba(128,128,128,0.2)' : 'none')};
+  background-color: ${props => (props.isOver ? props.theme.dndOverBackgroundColor : 'none')};
   width: 100%;
   height: 100%;
   position: absolute;
@@ -156,7 +156,10 @@ export const isSplitSelector = props =>
   props.visState.splitMaps && props.visState.splitMaps.length > 1;
 
 export const Droppable = ({containerId}) => {
-  const {isOver, setNodeRef} = useDroppable({id: containerId});
+  const {isOver, setNodeRef} = useDroppable({
+    id: containerId,
+    data: {type: 'map', index: containerId}
+  });
 
   return <StyledDroppable ref={setNodeRef} isOver={isOver} />;
 };
@@ -301,6 +304,9 @@ interface MapContainerProps {
   transformRequest?: any;
 
   datasetAttributions?: DatasetAttribution[];
+
+  generateMapboxLayers?: typeof generateMapboxLayers;
+  generateDeckGLLayers?: typeof computeDeckLayers;
 }
 
 export default function MapContainerFactory(
@@ -412,12 +418,16 @@ export default function MapContainerFactory(
       }
     );
 
+    generateMapboxLayerMethodSelector = props => props.generateMapboxLayers ?? generateMapboxLayers;
+
     mapboxLayersSelector = createSelector(
       this.layersSelector,
       this.layerDataSelector,
       this.layerOrderSelector,
       this.layersToRenderSelector,
-      generateMapboxLayers
+      this.generateMapboxLayerMethodSelector,
+      (layer, layerData, layerOrder, layersToRender, generateMapboxLayerMethod) =>
+        generateMapboxLayerMethod(layer, layerData, layerOrder, layersToRender)
     );
 
     // merge in a background-color style if the basemap choice is NO_MAP_ID
@@ -658,7 +668,8 @@ export default function MapContainerFactory(
         deckGlProps,
         index,
         mapControls,
-        theme
+        theme,
+        generateDeckGLLayers
       } = this.props;
 
       const {hoverInfo, editor} = visState;
@@ -675,7 +686,8 @@ export default function MapContainerFactory(
 
       const {setFeatures, onLayerClick, setSelectedFeature} = visStateActions;
 
-      const deckGlLayers = computeDeckLayers(
+      const generateDeckGLLayersMethod = generateDeckGLLayers ?? computeDeckLayers;
+      const deckGlLayers = generateDeckGLLayersMethod(
         {
           visState,
           mapState,

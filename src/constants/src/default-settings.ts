@@ -973,7 +973,7 @@ export const EXPORT_MAP_FORMAT_OPTIONS = Object.entries(EXPORT_MAP_FORMATS).map(
   })
 );
 
-export function getHTMLMapModeTileUrl(mode) {
+export function getHTMLMapModeTileUrl(mode: string): string {
   return `https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/map-${mode.toLowerCase()}-mode.png`;
 }
 

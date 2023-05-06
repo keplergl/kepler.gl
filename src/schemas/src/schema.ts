@@ -53,7 +53,7 @@ export default class Schema {
 
   loadPropertiesOrApplySchema(
     node: any,
-    parents: object[] = [],
+    parents: any[] = [],
     accumulator?: any
   ): {[key: string]: any} {
     return this._getPropertyValueFromSchema('load', node, parents, accumulator);

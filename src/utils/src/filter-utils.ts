@@ -35,6 +35,7 @@ import {
   LAYER_TYPES,
   FILTER_VIEW_TYPES
 } from '@kepler.gl/constants';
+import {VisState} from '@kepler.gl/schemas';
 import * as ScaleUtils from './data-scale-utils';
 import {h3IsValid} from 'h3-js';
 
@@ -171,6 +172,7 @@ export function getDefaultFilter(dataId: string | null | string[]): FilterBase<L
   return {
     ...DEFAULT_FILTER_STRUCTURE,
     // store it as dataId and it could be one or many
+    // @ts-expect-error returns empty array for null, not array of nulls
     dataId: toArray(dataId),
     id: generateHashId(FILTER_ID_LENGTH)
   };
@@ -513,7 +515,7 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
   }
 }
 
-export function updateFilterDataId(dataId: string): FilterBase<LineChart> {
+export function updateFilterDataId(dataId: string | string[]): FilterBase<LineChart> {
   return getDefaultFilter(dataId);
 }
 
@@ -1136,14 +1138,9 @@ export function filterDatasetCPU<T extends StateType<K, L>, K extends KeplerTabl
 /**
  * Validate parsed filters with datasets and add filterProps to field
  */
+type MinVisState = Pick<VisState, 'layers' | 'datasets' | 'isMergingDatasets'>;
 export function validateFiltersUpdateDatasets<
-  S extends {
-    datasets: {[id: string]: K};
-    layers: L[];
-    isMergingDatasets: {
-      [datasetId: string]: boolean;
-    };
-  },
+  S extends MinVisState,
   K extends KeplerTableModel<K, L>,
   L extends {config: {dataId: string | null; label: string}; id: string}
 >(
@@ -1168,7 +1165,11 @@ export function validateFiltersUpdateDatasets<
     // we can merge a filter only if all datasets in filter.dataId are loaded
     if (datasetIds.every(d => datasets[d] && !state.isMergingDatasets[d])) {
       // all datasetIds in filter must be present the state datasets
-      const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce(
+      const {filter: validatedFilter, applyToDatasets, augmentedDatasets} = datasetIds.reduce<{
+        filter: Filter | null;
+        applyToDatasets: string[];
+        augmentedDatasets: {[datasetId: string]: any};
+      }>(
         (acc, datasetId) => {
           const dataset = updatedDatasets[datasetId];
           const layers = state.layers.filter(l => l.config.dataId === dataset.id);
@@ -1185,7 +1186,8 @@ export function validateFiltersUpdateDatasets<
               filter: acc.filter
                 ? {
                     ...acc.filter,
-                    ...mergeFilterDomainStep(acc, updatedFilter)
+                    // TODO check: changed from acc to acc.filter to fix types
+                    ...mergeFilterDomainStep(acc.filter, updatedFilter)
                   }
                 : updatedFilter,
 

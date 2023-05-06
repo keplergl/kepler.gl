@@ -42,7 +42,7 @@ export {defaultElevation as h3DefaultElevation} from './h3-hexagon-layer/h3-hexa
 import {default as ScenegraphLayer} from './scenegraph-layer/scenegraph-layer';
 import {default as TripLayer} from './trip-layer/trip-layer';
 export {defaultLineWidth as tripDefaultLineWidth} from './trip-layer/trip-layer';
-export {containValidTime, parseTripGeoJsonTimestamp} from './trip-layer/trip-utils';
+export {coordHasLength4, containValidTime, isTripGeoJsonField, parseTripGeoJsonTimestamp, getAnimationDomainFromTimestamps} from './trip-layer/trip-utils';
 import {default as S2GeometryLayer} from './s2-geometry-layer/s2-geometry-layer';
 export {defaultElevation as s2DefaultElevation} from './s2-geometry-layer/s2-geometry-layer';
 export {getS2Center} from './s2-geometry-layer/s2-utils';

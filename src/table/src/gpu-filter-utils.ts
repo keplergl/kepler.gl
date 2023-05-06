@@ -38,7 +38,7 @@ export function setFilterGpuMode(filter: Filter, filters: Filter[]) {
     const gpuFilters = filters.filter(f => f.dataId.includes(dataId) && f.gpu);
 
     if (filter.gpu && gpuFilters.length === MAX_GPU_FILTERS) {
-      return set(['gpu'], false, filter);
+      set(['gpu'], false, filter);
     }
   });
 

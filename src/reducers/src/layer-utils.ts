@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
+import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
 import {
   Field,
   TooltipField,
@@ -96,15 +97,20 @@ export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClasse
   });
 }
 
+type MinVisState = {
+  datasets: VisState['datasets'];
+  animationConfig: VisState['animationConfig'];
+};
+
 /**
  * Calculate layer data based on layer type, col Config,
  * return updated layer if colorDomain, dataMap has changed.
  * Also, returns updated layer in case the input layer was in invalid state.
  * Adds an error message to the layer in case of an exception.
  */
-export function calculateLayerData(
+export function calculateLayerData<S extends MinVisState>(
   layer: Layer,
-  state: {datasets: Datasets},
+  state: S,
   oldLayerData?: any
 ): {
   layerData: any;
@@ -248,7 +254,7 @@ export function isLayerVisible(layer, mapLayers) {
 // return {[id]: true \ false}
 export function prepareLayersForDeck(
   layers: Layer[],
-  layerData: any[]
+  layerData: VisState['layerData']
 ): {
   [key: string]: boolean;
 } {
@@ -279,7 +285,9 @@ export function prepareLayersToRender(
   );
 }
 
-export function getCustomDeckLayers(deckGlProps) {
+type CustomDeckLayer = DeckLayer<DeckLayerProps<any>>;
+
+export function getCustomDeckLayers(deckGlProps?: any): [CustomDeckLayer[], CustomDeckLayer[]] {
   const bottomDeckLayers = Array.isArray(deckGlProps?.layers)
     ? deckGlProps?.layers
     : isFunction(deckGlProps?.layers)
@@ -317,24 +325,26 @@ export type ComputeDeckLayersProps = {
   };
 };
 
-export function bindLayerCallbacks(layerCallbacks = {}, idx) {
+export function bindLayerCallbacks(layerCallbacks: LayerCallbacks = {}, idx: number) {
   return Object.keys(layerCallbacks).reduce(
     (accu, key) => ({
       ...accu,
       [key]: val => layerCallbacks[key](idx, val)
     }),
-    {}
+    {} as Record<string, (_idx: number, val: any) => void>
   );
 }
+
+export type LayerCallbacks = {
+  onLayerHover?: (idx: number, value: any) => void;
+  onSetLayerDomain?: (idx: number, value: any) => void;
+};
 
 // eslint-disable-next-line complexity
 export function computeDeckLayers(
   {visState, mapState, mapStyle}: any,
   options?: ComputeDeckLayersProps,
-  layerCallbacks?: {
-    onLayerHover?: (idx: number, value: any) => void;
-    onSetLayerDomain?: (idx: number, value: any) => void;
-  },
+  layerCallbacks?: LayerCallbacks,
   deckGlProps?: any
 ): Layer[] {
   const {
