@@ -23,7 +23,6 @@ import styled from 'styled-components';
 import classnames from 'classnames';
 import {processRowObject} from '@kepler.gl/processors';
 import {FlyToInterpolator} from '@deck.gl/core';
-import KeplerGlSchema from '@kepler.gl/schemas';
 import {getCenterAndZoomFromBounds} from '@kepler.gl/utils';
 
 import Geocoder, {Result} from './geocoder/geocoder';
@@ -57,14 +56,14 @@ const ICON_LAYER = {
   }
 };
 
-const PARSED_CONFIG = KeplerGlSchema.parseSavedConfig({
-  version: 'v1',
-  config: {
+function generateConfig(layerOrder) {
+  return {
     visState: {
-      layers: [ICON_LAYER]
+      layers: [ICON_LAYER],
+      layerOrder: [ICON_LAYER.id, ...layerOrder]
     }
-  }
-});
+  };
+}
 
 interface StyledGeocoderPanelProps {
   width?: number;
@@ -116,8 +115,7 @@ export function getUpdateVisDataPayload(lat, lon, text) {
     [generateGeocoderDataset(lat, lon, text)],
     {
       keepExistingConfig: true
-    },
-    PARSED_CONFIG
+    }
   ];
 }
 
@@ -129,6 +127,7 @@ interface GeocoderPanelProps {
   updateVisData: Function;
   removeDataset: Function;
   updateMap: Function;
+  layerOrder: string[];
 
   transitionDuration?: number;
   width?: number;
@@ -154,8 +153,13 @@ export default function GeocoderPanelFactory(): ComponentType<GeocoderPanelProps
         text,
         bbox
       } = geoItem;
+      const {layerOrder} = this.props;
+
       this.removeGeocoderDataset();
-      this.props.updateVisData(...getUpdateVisDataPayload(lat, lon, text));
+      this.props.updateVisData(
+        ...getUpdateVisDataPayload(lat, lon, text),
+        generateConfig(layerOrder)
+      );
       const bounds = bbox || [
         lon - GEOCODER_GEO_OFFSET,
         lat - GEOCODER_GEO_OFFSET,
