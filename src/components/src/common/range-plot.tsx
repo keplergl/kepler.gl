@@ -25,7 +25,8 @@ import HistogramPlotFactory from './histogram-plot';
 import LineChartFactory, {HoverDP} from './line-chart';
 import {isTest, hasMobileWidth} from '@kepler.gl/utils';
 import {breakPointValues} from '@kepler.gl/styles';
-import {LineChart} from '@kepler.gl/types';
+import {LineChart, Filter} from '@kepler.gl/types';
+import {Datasets} from '@kepler.gl/table';
 
 const StyledRangePlot = styled.div`
   margin-bottom: ${props => props.theme.sliderBarHeight}px;
@@ -47,6 +48,10 @@ interface RangePlotProps {
   timeFormat?: string;
   timezone?: string | null;
   playbackControlWidth?: number;
+
+  animationWindow?: string;
+  filter?: Filter;
+  datasets?: Datasets;
 }
 
 RangePlotFactory.deps = [RangeBrushFactory, HistogramPlotFactory, LineChartFactory];
@@ -127,6 +132,7 @@ export default function RangePlotFactory(
       onMouseMove,
       hoveredDP,
       isRanged,
+      onBrush,
       ...chartProps
     };
 

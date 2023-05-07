@@ -27,7 +27,8 @@ import Slider from './slider/slider';
 import {Input} from './styled-components';
 
 import {observeDimensions, unobserveDimensions, roundValToStep, clamp} from '@kepler.gl/utils';
-import {LineChart} from '@kepler.gl/types';
+import {LineChart, Filter} from '@kepler.gl/types';
+import {Datasets} from '@kepler.gl/table';
 
 interface SliderInputProps {
   flush?: boolean;
@@ -79,6 +80,10 @@ interface RangeSliderProps {
   marks?: number[];
   plotType?: string;
   plotValue?: number[];
+
+  animationWindow?: string;
+  filter?: Filter;
+  datasets?: Datasets;
 }
 
 RangeSliderFactory.deps = [RangePlotFactory];
@@ -227,7 +232,10 @@ export default function RangeSliderFactory(
         step,
         timezone,
         timeFormat,
-        playbackControlWidth
+        playbackControlWidth,
+        animationWindow,
+        filter,
+        datasets
       } = this.props;
 
       const {width} = this.state;
@@ -249,6 +257,9 @@ export default function RangeSliderFactory(
                   isEnlarged={this.props.isEnlarged}
                   onBrush={(val0, val1) => onChange([val0, val1])}
                   marks={this.props.marks}
+                  animationWindow={animationWindow}
+                  filter={filter}
+                  datasets={datasets}
                   range={range}
                   value={this.props.plotValue || this.filterValueSelector(this.props)}
                   width={plotWidth}
