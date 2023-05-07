@@ -21,9 +21,10 @@
 import test from 'tape';
 import cloneDeep from 'lodash.clonedeep';
 import {cmpFilters, cmpSavedLayers} from 'test/helpers/comparison-utils';
-import SchemaManager from '@kepler.gl/schemas';
+import SchemaManager, {CURRENT_VERSION, visStateSchema} from '@kepler.gl/schemas';
 
 import {
+  StateWFiles,
   StateWFilesFiltersLayerColor,
   StateWTooltipFormat,
   expectedSavedLayer0,
@@ -320,5 +321,22 @@ test('#visStateSchema -> v1 -> save animation', t => {
   cmpSavedLayers(t, expectedSavedLayers, vsToSave.layers);
 
   t.deepEqual(vsToSave.animationConfig, expectedAnimationConfig, 'should save animationConfig');
+  t.end();
+});
+
+test('visStateSchema -> saving with a null column value does not throw an error', t => {
+  const testLayer = cloneDeep(StateWFiles).visState.layers[0];
+
+  // set a column to null
+  testLayer.config.columns.altitude = null;
+
+  // test that it doesn't fail ColumnSchemaV1.save
+  t.doesNotThrow(() => {
+    visStateSchema[CURRENT_VERSION].save({
+      layers: [testLayer],
+      layerOrder: [testLayer.id]
+    });
+  }, 'saving with a null column value should not fail');
+
   t.end();
 });

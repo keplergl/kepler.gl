@@ -867,8 +867,8 @@ class Layer {
     const {columns} = this.config;
     return (
       columns &&
-      Object.values(columns).every(v => {
-        return Boolean(v.optional || (v.value && v.fieldIdx > -1));
+      Object.values(columns).every(column => {
+        return Boolean(column && (column.optional || (column.value && column.fieldIdx > -1)));
       })
     );
   }
