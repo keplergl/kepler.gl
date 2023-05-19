@@ -32,6 +32,7 @@ import LocalePanelFactory from './locale-panel';
 import {Layer} from '@kepler.gl/layers';
 import {Editor, MapControls, MapState} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
+import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
 
 interface StyledMapControlProps {
   top?: number;
@@ -66,7 +67,7 @@ export type MapControlProps = {
   mapIndex: number;
   mapControls: MapControls;
   onTogglePerspective: () => void;
-  onToggleSplitMap: () => void;
+  onToggleSplitMap: typeof MapStateActions.toggleSplitMap;
   onToggleSplitMapViewport: ({
     isViewportSynced,
     isZoomLocked
@@ -74,13 +75,15 @@ export type MapControlProps = {
     isViewportSynced: boolean;
     isZoomLocked: boolean;
   }) => void;
+  onMapToggleLayer: (layerId: string) => void;
   onToggleMapControl: (control: string) => void;
   onSetEditorMode: (mode: string) => void;
   onToggleEditorVisibility: () => void;
   top: number;
-  onSetLocale: () => void;
+  onSetLocale: typeof UIStateActions.setLocale;
   locale: string;
-  logoComponent: React.FC | React.ReactNode;
+  logoComponent?: React.FC | React.ReactNode;
+  isExport?: boolean;
 
   // optional
   mapState?: MapState;
@@ -88,25 +91,25 @@ export type MapControlProps = {
   scale?: number;
   mapLayers?: {[key: string]: boolean};
   editor: Editor;
-  actionComponents: React.FC[] | React.Component[];
+  actionComponents?: React.ComponentType<any>[];
   mapHeight?: number;
 };
 
 MapControlFactory.deps = [
-  MapDrawPanelFactory,
-  Toggle3dButtonFactory,
   SplitMapButtonFactory,
-  MapLegendPanelFactory,
+  Toggle3dButtonFactory,
   LayerSelectorPanelFactory,
+  MapLegendPanelFactory,
+  MapDrawPanelFactory,
   LocalePanelFactory
 ];
 
 function MapControlFactory(
-  MapDrawPanel: ReturnType<typeof MapDrawPanelFactory>,
-  Toggle3dButton: ReturnType<typeof Toggle3dButtonFactory>,
   SplitMapButton: ReturnType<typeof SplitMapButtonFactory>,
-  MapLegendPanel: ReturnType<typeof MapLegendPanelFactory>,
+  Toggle3dButton: ReturnType<typeof Toggle3dButtonFactory>,
   LayerSelectorPanel: ReturnType<typeof LayerSelectorPanelFactory>,
+  MapLegendPanel: ReturnType<typeof MapLegendPanelFactory>,
+  MapDrawPanel: ReturnType<typeof MapDrawPanelFactory>,
   LocalePanel: ReturnType<typeof LocalePanelFactory>
 ) {
   const DEFAULT_ACTIONS = [
@@ -118,23 +121,23 @@ function MapControlFactory(
     MapLegendPanel
   ];
 
-  /** @type {import('./map-control').MapControl} */
-  const MapControl: React.FC<MapControlProps> = React.memo(({actionComponents, ...props}) => {
-    return (
-      <StyledMapControl className="map-control" top={props.top}>
-        {actionComponents.map((ActionComponent, index) => (
-          <ActionComponent key={index} className="map-control-action" {...props} />
-        ))}
-      </StyledMapControl>
-    );
-  });
+  const MapControl: React.FC<MapControlProps> = React.memo(
+    ({actionComponents = DEFAULT_ACTIONS, ...props}) => {
+      return (
+        <StyledMapControl className="map-control" top={props.top}>
+          {actionComponents.map((ActionComponent, index) => (
+            <ActionComponent key={index} className="map-control-action" {...props} />
+          ))}
+        </StyledMapControl>
+      );
+    }
+  );
 
   MapControl.defaultProps = {
     isSplit: false,
     top: 0,
     mapIndex: 0,
     logoComponent: LegendLogo,
-    // @ts-expect-error
     actionComponents: DEFAULT_ACTIONS
   };
 

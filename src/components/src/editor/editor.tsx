@@ -33,8 +33,8 @@ import {
   KeyEvent
 } from '@kepler.gl/constants';
 import {Layer, EditorLayerUtils} from '@kepler.gl/layers';
-import {Filter, FeatureSelectionContext} from '@kepler.gl/types';
-import {Feature} from '@nebula.gl/edit-modes';
+import {Filter, FeatureSelectionContext, Feature} from '@kepler.gl/types';
+import {FeatureOf, Polygon} from '@nebula.gl/edit-modes';
 import {Datasets} from '@kepler.gl/table';
 
 const DECKGL_RENDER_LAYER = 'default-deckgl-overlay-wrapper';
@@ -53,12 +53,12 @@ interface EditorProps {
   datasets: Datasets;
   editor: {selectedFeature: Feature; mode: string; selectionContext?: FeatureSelectionContext};
   index: number;
-  className: string;
+  className?: string;
   style: CSSProperties;
-  onSelect: (f: Feature | null) => void;
+  onSelect: (f: Feature | null) => any;
   onSetEditorMode: (m: any) => void;
-  onDeleteFeature: (f: Feature) => void;
-  onTogglePolygonFilter: (l: Layer, f: Feature) => void;
+  onDeleteFeature: (f: Feature) => any;
+  onTogglePolygonFilter: (l: Layer, f: Feature) => any;
 }
 
 export default function EditorFactory(
@@ -163,7 +163,7 @@ export default function EditorFactory(
         <StyledWrapper className={classnames('editor', className)} style={style}>
           {Boolean(rightClick) && selectedFeature && index === mapIndex ? (
             <FeatureActionPanel
-              selectedFeature={selectedFeature}
+              selectedFeature={selectedFeature as FeatureOf<Polygon>}
               datasets={datasets}
               layers={availableLayers}
               currentFilter={currentFilter}

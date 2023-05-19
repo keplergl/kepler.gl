@@ -54,18 +54,20 @@ type PanelActionProps = {
 };
 
 type PanelHeaderDropdownProps = {
-  id: string;
   items: ToolbarItemProps[];
   show?: boolean;
   onClose: () => void;
+  id: string;
+};
+
+type LogoComponentProps = {
+  appName: string;
+  appWebsite: string;
+  version: string;
 };
 
 type DropdownCallbacks = {
-  logoComponent?: React.ComponentType<{
-    appName: string;
-    appWebsite: string;
-    version: string;
-  }>;
+  logoComponent?: React.FC<LogoComponentProps> | React.ComponentType<LogoComponentProps>;
   onExportImage: () => void;
   onExportData: () => void;
   onExportConfig?: () => void;
@@ -89,7 +91,7 @@ type DropdownComponentProps = {
   items?: Item[];
 } & DropdownCallbacks;
 
-type PanelHeaderProps = {
+export type PanelHeaderProps = {
   appName: string;
   appWebsite: string;
   version: string;
@@ -225,7 +227,9 @@ export const SaveExportDropdownFactory = (
 ) => {
   const dropdownItemsSelector = getDropdownItemsSelector();
 
-  const SaveExportDropdown: React.FC<DropdownComponentProps> = props => (
+  const SaveExportDropdown: React.FC<DropdownComponentProps> & {
+    defaultProps: {items: ToolbarItemProps[]};
+  } = props => (
     <PanelHeaderDropdown
       items={dropdownItemsSelector(props)}
       show={props.show}

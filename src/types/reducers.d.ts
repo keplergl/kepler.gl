@@ -168,6 +168,7 @@ export type Feature = {
     type: string;
     coordinates: any;
   };
+  type?: string;
 };
 export type FeatureSelectionContext = {
   rightClick: boolean;
@@ -375,7 +376,7 @@ export type PanelListView = string;
 
 export type UiState = {
   readOnly: boolean;
-  activeSidePanel: string;
+  activeSidePanel: string | null;
   currentModal: string | null;
   datasetKeyToRemove: string | null;
   visibleDropdown: string | null;

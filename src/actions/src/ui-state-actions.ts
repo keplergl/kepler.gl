@@ -25,7 +25,7 @@ import {ExportImage} from '@kepler.gl/constants';
 
 /** TOGGLE_SIDE_PANEL */
 export type ToggleSidePanelUpdaterAction = {
-  payload: string;
+  payload: string | null;
 };
 /**
  * Toggle active side panel
@@ -34,11 +34,11 @@ export type ToggleSidePanelUpdaterAction = {
  * @public
  */
 export const toggleSidePanel: (
-  id: string
+  id: string | null
 ) => Merge<
   ToggleSidePanelUpdaterAction,
   {type: typeof ActionTypes.TOGGLE_SIDE_PANEL}
-> = createAction(ActionTypes.TOGGLE_SIDE_PANEL, (id: string) => ({payload: id}));
+> = createAction(ActionTypes.TOGGLE_SIDE_PANEL, (id: string | null) => ({payload: id}));
 
 /** TOGGLE_MODAL */
 export type ToggleModalUpdaterAction = {

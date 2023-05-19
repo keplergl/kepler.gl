@@ -68,7 +68,7 @@ export {
   formatNumber,
   getColumnFormatter
 } from './data-utils';
-export {getTimelineFromAnimationConfig, getTimelineFromFilter} from './time';
+export {getTimelineFromAnimationConfig, getTimelineFromFilter, SAMPLE_TIMELINE, TIMELINE_MODES} from './time';
 
 export {
   datasetColorMaker,

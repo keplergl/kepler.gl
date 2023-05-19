@@ -30,7 +30,13 @@ import {
   ProtoDataset
 } from '@kepler.gl/types';
 
-export type ActionHandler<A extends (...args: any) => any> = (...args: Parameters<A>) => void;
+type Handler = (...args: any) => any;
+
+export type ActionHandler<A extends Handler> = (...args: Parameters<A>) => void;
+
+export type ActionHandlers<T extends {[k: string]: Handler}> = {
+  [K in keyof T]: ActionHandler<T[K]>;
+};
 
 /**
  * Add data to kepler.gl reducer, prepare map with preset configuration if config is passed.

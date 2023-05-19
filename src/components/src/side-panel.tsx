@@ -45,7 +45,7 @@ import CustomPanelsFactory from './side-panel/custom-panel';
 
 import styled from 'styled-components';
 import get from 'lodash.get';
-import {SidePanelProps} from './types';
+import {SidePanelProps, SidePanelItem} from './types';
 
 export const StyledSidePanelContent = styled.div`
   ${props => props.theme.sidePanelScrollBar};
@@ -101,7 +101,7 @@ export default function SidePanelFactory(
   };
 
   // We should defined sidebar panels here but keeping them for backward compatible
-  const fullPanels = SIDEBAR_PANELS.map(component => ({
+  const fullPanels: SidePanelItem[] = SIDEBAR_PANELS.map(component => ({
     ...component,
     component: SIDEBAR_COMPONENTS[component.id],
     iconComponent: SIDEBAR_ICONS[component.id]
@@ -110,7 +110,7 @@ export default function SidePanelFactory(
   const getCustomPanelProps = get(CustomPanels, ['defaultProps', 'getProps']) || (() => ({}));
 
   // eslint-disable-next-line max-statements
-  const SidePanel = (props: SidePanelProps) => {
+  const SidePanel: React.FC<SidePanelProps> = (props: SidePanelProps) => {
     const {
       appName,
       appWebsite,
@@ -123,7 +123,7 @@ export default function SidePanelFactory(
       layerClasses,
       layerOrder,
       interactionConfig,
-      panels,
+      panels = fullPanels,
       mapInfo,
       mapSaved,
       mapStateActions,
@@ -181,7 +181,7 @@ export default function SidePanelFactory(
       () => (hasStorage && mapSaved ? onClickSaveAsToStorage : null),
       [hasStorage, mapSaved, onClickSaveAsToStorage]
     );
-    const currentPanel = useMemo(() => panels.find(({id}) => id === activeSidePanel), [
+    const currentPanel = useMemo(() => panels.find(({id}) => id === activeSidePanel) || null, [
       activeSidePanel,
       panels
     ]);
@@ -190,7 +190,6 @@ export default function SidePanelFactory(
       onClickShareMap
     ]);
     const customPanelProps = useMemo(() => getCustomPanelProps(props), [props]);
-
     const PanelComponent = currentPanel?.component;
 
     return (
@@ -268,11 +267,6 @@ export default function SidePanelFactory(
 
   SidePanel.defaultProps = {
     panels: fullPanels,
-    sidebarComponents: SIDEBAR_COMPONENTS,
-    uiState: {},
-    visStateActions: {},
-    mapStyleActions: {},
-    uiStateActions: {},
     availableProviders: {},
     mapInfo: {}
   };
