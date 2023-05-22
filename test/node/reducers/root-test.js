@@ -164,6 +164,52 @@ test('keplerGlReducer.initialState.2', t => {
   t.end();
 });
 
+test('keplerGlReducer.initialState extrareducers', t => {
+  const INITIAL_STATE = {
+    panels: []
+  };
+
+  const insightReducer = handleActions(
+    {
+      ADD_PANEL_TO_SECTION: state => ({
+        ...state,
+        panels: ['first']
+      })
+    },
+    INITIAL_STATE
+  );
+
+  const addPanelToSectionAction = createAction('ADD_PANEL_TO_SECTION');
+
+  const test1Reducer = keplerGlReducer.initialState(
+    {
+      visState: {
+        layerClasses: []
+      },
+      mapStyle: {
+        styleType: 'light'
+      }
+    },
+    {
+      insightState: insightReducer
+    }
+  );
+
+  const test1ReducerInitialState = test1Reducer(undefined, registerEntry({id: 'test'}));
+
+  t.deepEqual(test1ReducerInitialState.test.insightState.panels, [], 'should have extra state');
+
+  const actionModifiedState = test1Reducer(test1ReducerInitialState, addPanelToSectionAction());
+
+  t.deepEqual(
+    actionModifiedState.test.insightState.panels,
+    ['first'],
+    'should have modified panels'
+  );
+
+  t.end();
+});
+
 test('keplerGlReducer.plugin', t => {
   // custom actions
   const hideAndShowSidePanel = createAction('HIDE_AND_SHOW_SIDE_PANEL');

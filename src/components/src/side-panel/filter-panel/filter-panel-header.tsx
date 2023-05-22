@@ -52,11 +52,14 @@ const StyledChildrenContainer = styled.div`
 `;
 
 type FilterPanelHeaderProps = {
-  children: React.ReactNode;
+  className?: string;
   datasets: KeplerTable[];
   filter: Filter;
   removeFilter: () => void;
-  actionIcons?: Record<string, ComponentType>;
+  actionIcons?: {
+    delete: ComponentType;
+  };
+  children: React.ReactNode;
 };
 
 FilterPanelHeaderFactory.deps = [PanelHeaderActionFactory];
@@ -67,7 +70,7 @@ function FilterPanelHeaderFactory(
   const defaultActionIcons = {
     delete: Trash
   };
-  const FilterPanelHeader = ({
+  const FilterPanelHeader: React.FC<FilterPanelHeaderProps> = ({
     children,
     datasets,
     filter,

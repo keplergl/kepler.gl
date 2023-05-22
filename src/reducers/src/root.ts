@@ -26,8 +26,8 @@ import {coreReducerFactory} from './core';
 // INITIAL_STATE
 const initialCoreState = {};
 
-export function provideInitialState(initialState) {
-  const coreReducer = coreReducerFactory(initialState);
+export function provideInitialState(initialState, extraReducers?) {
+  const coreReducer = coreReducerFactory(initialState, extraReducers);
 
   const handleRegisterEntry = (
     state,
@@ -96,11 +96,11 @@ export function provideInitialState(initialState) {
 
 const _keplerGlReducer = provideInitialState(initialCoreState);
 
-function mergeInitialState(saved = {}, provided = {}) {
-  const keys = ['mapState', 'mapStyle', 'visState', 'uiState'];
+function mergeInitialState(saved = {}, provided = {}, extraInitialStateKeys: string[] = []) {
+  const keys = ['mapState', 'mapStyle', 'visState', 'uiState', ...extraInitialStateKeys];
 
   // shallow merge each reducer
-  return keys.reduce(
+  const newState = keys.reduce(
     (accu, key) => ({
       ...accu,
       ...(saved[key] && provided[key]
@@ -109,6 +109,8 @@ function mergeInitialState(saved = {}, provided = {}) {
     }),
     {}
   );
+
+  return newState;
 }
 
 function decorate(target, savedInitialState = {}) {
@@ -191,6 +193,7 @@ function decorate(target, savedInitialState = {}) {
    * @mixin keplerGlReducer.initialState
    * @memberof keplerGlReducer
    * @param {Object} iniSt - custom state to be merged with default initial state
+   * @param {Object} extraReducers - optional custom reducers in addition to the default `visState`, `mapState`, `mapStyle`, and `uiState`
    * @public
    * @example
    * const myKeplerGlReducer = keplerGlReducer
@@ -198,9 +201,11 @@ function decorate(target, savedInitialState = {}) {
    *    uiState: {readOnly: true}
    *  });
    */
-  target.initialState = function initialState(iniSt) {
-    const merged = mergeInitialState(targetInitialState, iniSt);
-    const targetReducer = provideInitialState(merged);
+  target.initialState = function initialState(iniSt, extraReducers = {}) {
+    // passing through extraInitialStateKeys and extraReducers allows external customization by adding additional subreducers and state beyond the default `visState`, `mapState`, `mapStyle`, and `uiState`
+    const extraInitialStateKeys = Object.keys(extraReducers);
+    const merged = mergeInitialState(targetInitialState, iniSt, extraInitialStateKeys);
+    const targetReducer = provideInitialState(merged, extraReducers);
 
     return decorate(targetReducer, merged);
   };

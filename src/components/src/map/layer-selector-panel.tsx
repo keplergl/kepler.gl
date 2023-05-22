@@ -27,7 +27,7 @@ import MapLayerSelector from '../common/map-layer-selector';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapControlPanelFactory from './map-control-panel';
 import {Layer} from '@kepler.gl/layers';
-import {MapControl, MapControls} from '@kepler.gl/types';
+import {MapControlItem, MapControls} from '@kepler.gl/types';
 
 LayerSelectorPanelFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory];
 
@@ -55,7 +55,7 @@ function LayerSelectorPanelFactory(
     mapControls,
     readOnly
   }) => {
-    const visibleLayers = mapControls?.visibleLayers || ({} as MapControl);
+    const visibleLayers = mapControls?.visibleLayers || ({} as MapControlItem);
     const {active: isActive, show, disableClose} = visibleLayers || {};
 
     const legendLayers = useMemo(
