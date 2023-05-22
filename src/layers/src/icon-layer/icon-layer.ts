@@ -203,7 +203,7 @@ export default class IconLayer extends Layer {
 
     if (window.fetch) {
       window
-        .fetch(SVG_ICON_URL, fetchConfig)
+        .fetch(this.svgIconUrl, fetchConfig)
         .then(response => response.json())
         .then((parsed: {svgIcons?: any[]} = {}) => {
           const {svgIcons = []} = parsed;
