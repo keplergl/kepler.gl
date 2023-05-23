@@ -46,7 +46,7 @@ import {
   ExportHtml,
   ExportJson,
   ExportMap,
-  MapControl,
+  MapControlItem,
   MapControls,
   UiState
 } from '@kepler.gl/types';
@@ -95,7 +95,7 @@ export const DEFAULT_MODAL = ADD_DATA_ID;
 const uiStateUpdaters = null;
 /* eslint-enable no-unused-vars */
 
-const DEFAULT_MAP_CONTROLS_FEATURES: MapControl = {
+const DEFAULT_MAP_CONTROLS_FEATURES: MapControlItem = {
   show: true,
   active: false,
   disableClose: false,

@@ -342,19 +342,19 @@ export type ExportMap = {
   format: 'HTML' | 'JSON';
 };
 
-export type MapControl = {
+export type MapControlItem = {
   show: boolean;
   active: boolean;
   disableClose?: boolean;
   activeMapIndex?: number;
 };
 export type MapControls = {
-  visibleLayers?: MapControl;
-  mapLegend?: MapControl;
-  toggle3d?: MapControl;
-  splitMap?: MapControl;
-  mapDraw?: MapControl;
-  mapLocale?: MapControl;
+  visibleLayers?: MapControlItem;
+  mapLegend?: MapControlItem;
+  toggle3d?: MapControlItem;
+  splitMap?: MapControlItem;
+  mapDraw?: MapControlItem;
+  mapLocale?: MapControlItem;
 };
 
 export type LoadFiles = {

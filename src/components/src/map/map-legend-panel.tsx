@@ -29,7 +29,7 @@ import MapLegendFactory from './map-legend';
 import LazyTippy from './lazy-tippy';
 import {createPortal} from 'react-dom';
 import {DIMENSIONS} from '@kepler.gl/constants';
-import {MapControl, MapControls, MapState} from '@kepler.gl/types';
+import {MapControlItem, MapControls, MapState} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {media} from '@kepler.gl/styles';
 import {ActionHandler, toggleSplitMapViewport} from '@kepler.gl/actions';
@@ -98,7 +98,7 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     onToggleSplitMapViewport,
     isViewportUnsyncAllowed = true
   }) => {
-    const mapLegend = mapControls?.mapLegend || ({} as MapControl);
+    const mapLegend = mapControls?.mapLegend || ({} as MapControlItem);
     const {active: isPinned} = mapLegend || {};
 
     const onClick = () => {

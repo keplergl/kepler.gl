@@ -41,23 +41,28 @@ export type KeplerGlState = {
   providerState: ProviderState;
 };
 
-const combined = (initialState: Partial<KeplerGlState> = {}) =>
-  combineReducers({
+const combined = (
+  initialState: Partial<KeplerGlState> = {},
+  extraReducers: {[x: string]: unknown} = {}
+) => {
+  return combineReducers({
     visState: visStateReducerFactory(initialState.visState),
     mapState: mapStateReducerFactory(initialState.mapState),
     mapStyle: mapStyleReducerFactory(initialState.mapStyle),
     uiState: uiStateReducerFactory(initialState.uiState),
-    providerState: providerStateReducerFactory(initialState.providerState)
+    providerState: providerStateReducerFactory(initialState.providerState),
+    ...extraReducers
   });
+};
 
-export const coreReducerFactory = (initialState: Partial<KeplerGlState> = {}) => (
-  state,
-  action
-) => {
+export const coreReducerFactory = (
+  initialState: Partial<KeplerGlState> = {},
+  extraReducers = {}
+) => (state, action) => {
   if (composers[action.type]) {
     return composers[action.type](state, action);
   }
-  return combined(initialState)(state, action);
+  return combined(initialState, extraReducers)(state, action);
 };
 
 export default coreReducerFactory();

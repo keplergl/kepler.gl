@@ -56,7 +56,9 @@ export {testForCoordinates} from './geocoder/geocoder';
 export {
   default as PanelHeaderFactory,
   SaveExportDropdownFactory,
-  PanelHeaderDropdownFactory
+  PanelHeaderDropdownFactory,
+  CloudStorageDropdownFactory,
+  PanelAction
 } from './side-panel/panel-header';
 export {default as PanelHeaderActionFactory} from './side-panel/panel-header-action';
 export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/side-bar';
