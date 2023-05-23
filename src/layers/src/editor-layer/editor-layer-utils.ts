@@ -138,6 +138,15 @@ export function onHover(
 }
 
 /**
+ * For small tooltips with short messages, e.g. "Drag to move the point",
+ * use the values below to decide when to position a tooltip to the left
+ * of the cursor or above the cursor, depending on proximity to the edge of
+ * the viewport to prevent the tooltip from being cut off.
+ */
+const MIN_DISTANCE_TO_LEFT_EDGE = 200;
+const MIN_DISTANCE_TO_BOTTOM_EDGE = 100;
+
+/**
  * Returns tooltip based on interactions with Editor layer.
  * @param info Information about hovered object.
  * @param params
@@ -148,10 +157,13 @@ export function onHover(
  */
 // eslint-disable-next-line complexity
 export function getTooltip(
-  info: PickInfo<any>,
+  // TODO PickInfo type in deck typings doesn't include viewport and pixel
+  info: PickInfo<any> & {viewport: any; pixel: any[]},
   {editor, theme, editorMenuActive}: {editorMenuActive: boolean; editor: Editor; theme: any}
 ): object | null {
-  const {object, layer} = info;
+  const {object, layer, viewport = {}, pixel = []} = info;
+  const closeToLeftEdge = viewport?.width - pixel[0] < MIN_DISTANCE_TO_LEFT_EDGE;
+  const closeToBottomEdge = viewport?.height - pixel[1] < MIN_DISTANCE_TO_BOTTOM_EDGE;
 
   // don't show the tooltip when the menu is visible
   if (editor.selectionContext?.rightClick) {
@@ -164,7 +176,10 @@ export function getTooltip(
       return null;
     }
 
-    return getTooltipObject('Click to start new feature', theme);
+    return getTooltipObject('Click to start new feature', theme, {
+      leftOfCursor: closeToLeftEdge,
+      aboveCursor: closeToBottomEdge
+    });
   }
 
   if (layer?.id === EDITOR_LAYER_ID) {
@@ -172,19 +187,31 @@ export function getTooltip(
 
     if (selectedFeature) {
       if (!object || (object.id && object.id === selectedFeature.id)) {
-        return getTooltipObject('Right click to view options\nDrag to move the feature', theme);
+        return getTooltipObject('Right click to view options\nDrag to move the feature', theme, {
+          leftOfCursor: closeToLeftEdge,
+          aboveCursor: closeToBottomEdge
+        });
       }
     }
 
     if (object?.properties?.editHandleType === 'intermediate') {
-      return getTooltipObject('Click to insert a point', theme);
+      return getTooltipObject('Click to insert a point', theme, {
+        leftOfCursor: closeToLeftEdge,
+        aboveCursor: closeToBottomEdge
+      });
     }
 
     if (object?.geometry?.type === 'Point' || object?.properties?.guideType === 'tentative') {
-      return getTooltipObject('Drag to move the point', theme);
+      return getTooltipObject('Drag to move the point', theme, {
+        leftOfCursor: closeToLeftEdge,
+        aboveCursor: closeToBottomEdge
+      });
     }
 
-    return getTooltipObject('Click to select the feature\nRight click to view options', theme);
+    return getTooltipObject('Click to select the feature\nRight click to view options', theme, {
+      leftOfCursor: closeToLeftEdge,
+      aboveCursor: closeToBottomEdge
+    });
   }
 
   return null;
@@ -220,15 +247,25 @@ export function getCursor({
 
 /**
  * Returns a tooltip object that can be used as a Deck tooltip.
+ * Positioning can be modified if the cursor is close to the bottom or left edge of the viewport.
  * @param text Text to show.
  * @param theme Current theme.
+ * @param position.leftOfCursor Tooltip should display to the left of the cursor.
+ * @param position.aboveCursor Tooltip should display above cursor.
  */
-function getTooltipObject(text: string, theme: any): {text: string; style: object} {
+function getTooltipObject(
+  text: string,
+  theme: any,
+  position: {leftOfCursor: boolean; aboveCursor: boolean}
+): {text: string; style: object} {
+  const {leftOfCursor, aboveCursor} = position;
+  const marginTop = aboveCursor ? '-70px' : '15px';
+  const marginLeft = leftOfCursor ? '-200px' : '15px';
   return {
     text,
     style: {
-      'margin-top': '15px',
-      'margin-left': '15px',
+      'margin-top': marginTop,
+      'margin-left': marginLeft,
       'font-family': theme.fontFamily,
       'font-size': theme.tooltipFontSize,
       'font-weight': 400,
