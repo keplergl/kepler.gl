@@ -24,7 +24,7 @@ import GL from '@luma.gl/constants';
 
 import {SvgIconLayer} from '@kepler.gl/deckgl-layers';
 import IconLayerIcon from './icon-layer-icon';
-import {ICON_FIELDS, CLOUDFRONT, ColorRange} from '@kepler.gl/constants';
+import {ICON_FIELDS, KEPLER_UNFOLDED_BUCKET, ColorRange} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerBaseConfigPartial, LayerColumn} from '../base-layer';
 import {assignPointPairToLayerColumn} from '../layer-utils';
@@ -73,7 +73,7 @@ export type IconLayerData = {index: number; icon: string};
 
 const brushingExtension = new BrushingExtension();
 
-export const SVG_ICON_URL = `${CLOUDFRONT}/icons/svg-icons.json`;
+export const SVG_ICON_URL = `${KEPLER_UNFOLDED_BUCKET}/icons/svg-icons.json`;
 
 export const iconPosAccessor = ({lat, lng, altitude}: IconLayerColumnsConfig) => (
   dc: DataContainerInterface
@@ -142,6 +142,10 @@ export default class IconLayer extends Layer {
     this.getSvgIcons();
   }
 
+  get svgIconUrl() {
+    return SVG_ICON_URL;
+  }
+
   get type(): 'icon' {
     return 'icon';
   }
@@ -199,7 +203,7 @@ export default class IconLayer extends Layer {
 
     if (window.fetch) {
       window
-        .fetch(SVG_ICON_URL, fetchConfig)
+        .fetch(this.svgIconUrl, fetchConfig)
         .then(response => response.json())
         .then((parsed: {svgIcons?: any[]} = {}) => {
           const {svgIcons = []} = parsed;
