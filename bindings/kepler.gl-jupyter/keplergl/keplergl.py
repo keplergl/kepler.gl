@@ -3,7 +3,6 @@ from pkg_resources import resource_string
 from traitlets import Unicode, Dict, Int, validate, TraitError
 import pandas as pd
 import geopandas
-import shapely.wkt
 import json
 from ._version import EXTENSION_SPEC_VERSION
 import sys
@@ -34,14 +33,9 @@ def _gdf_to_dict(gdf):
     if gdf.crs and not gdf.crs == 4326:
         gdf = gdf.to_crs(4326)
 
-    # get name of the geometry column
-    # will cause error if data frame has no geometry column
-    name = gdf.geometry.name
 
     # convert geodataframe to dataframe
-    df = pd.DataFrame(gdf)
-    # convert geometry to wkt
-    df[name] = df.geometry.apply(lambda x: shapely.wkt.dumps(x))
+    df = pd.DataFrame(gdf.to_wkt())
 
     return _df_to_dict(df)
 
