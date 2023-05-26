@@ -62,7 +62,7 @@
     "lodash.uniq": "^4.0.1",
     "long": "^4.0.0",
     "prop-types": "^15.6.0",
-    "react": "^16.8.4",
+    "react": "^18.2.0",
     "reselect": "^4.0.0",
     "s2-geometry": "^1.2.10",
     "styled-components": "^4.1.3",

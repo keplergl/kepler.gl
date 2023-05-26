@@ -21,7 +21,7 @@
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {StaticMap, MapRef} from 'react-map-gl';
+import {Map as ReactMapGL, MapRef} from 'react-map-gl';
 import {PickInfo} from '@deck.gl/core/lib/deck';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
@@ -294,7 +294,7 @@ export interface MapContainerProps {
   locale?: any;
   theme?: any;
   editor?: any;
-  MapComponent?: typeof StaticMap;
+  MapComponent?: typeof ReactMapGL;
   deckGlProps?: any;
   onDeckInitialized?: (a: any, b: any) => void;
   onViewStateChange?: (viewport: Viewport) => void;
@@ -317,7 +317,7 @@ export default function MapContainerFactory(
   class MapContainer extends Component<MapContainerProps> {
     displayName = 'MapContainer';
     static defaultProps = {
-      MapComponent: StaticMap,
+      MapComponent: ReactMapGL,
       deckGlProps: {},
       index: 0,
       primary: true
@@ -516,7 +516,7 @@ export default function MapContainerFactory(
     _onDeckError = (error, layer) => {
       const errorMessage = error?.message || 'unknown-error';
       const layerMessage = layer?.id ? ` in ${layer.id} layer` : '';
-      let errorMessageFull =
+      const errorMessageFull =
         errorMessage === 'WebGL context is lost'
           ? 'Your GPU was disconnected. This can happen if your computer goes to sleep. It can also occur for other reasons, such as if you are running too many GPU applications.'
           : `An error in deck.gl: ${errorMessage}${layerMessage}.`;
@@ -858,7 +858,7 @@ export default function MapContainerFactory(
         mapState,
         mapStyle,
         mapStateActions,
-        MapComponent = StaticMap,
+        MapComponent = ReactMapGL,
         mapboxApiAccessToken,
         mapboxApiUrl,
         mapControls,

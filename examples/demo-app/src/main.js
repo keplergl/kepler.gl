@@ -23,7 +23,7 @@ import document from 'global/document';
 import {Provider} from 'react-redux';
 import {browserHistory, Router, Route} from 'react-router';
 import {syncHistoryWithStore} from 'react-router-redux';
-import {render} from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import store from './store';
 import App from './app';
 import {buildAppRoutes} from './utils/routes';
@@ -42,4 +42,6 @@ const Root = () => (
   </Provider>
 );
 
-render(<Root />, document.body.appendChild(document.createElement('div')));
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+root.render(<Root />);
