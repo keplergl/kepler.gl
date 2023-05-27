@@ -72,7 +72,7 @@ const TimeSliderContainer = styled.svg`
 const TICK_FORMATS = {
   millisecond: '.SSS',
   second: ':ss',
-  minute: 'HH:ss',
+  minute: 'HH:mm',
   hour: 'HH A',
   day: 'ddd DD',
   week: 'MMM DD',
