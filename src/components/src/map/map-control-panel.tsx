@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import React, {useCallback} from 'react';
-import styled from 'styled-components';
+import styled, {StyledComponent} from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {CenterFlexbox, IconRoundSmall} from '../common/styled-components';
 import {Close, Pin} from '../common/icons';
@@ -66,7 +66,14 @@ const StyledMapControlPanelHeader = styled.div.attrs({
   }
 `;
 
-const StyledMapControlPanelHeaderSplitViewportsTools = styled(StyledMapControlPanelHeader).attrs({
+const StyledMapControlPanelHeaderSplitViewportsTools: StyledComponent<
+  'div',
+  any,
+  {
+    className: 'map-control__panel-split-viewport-tools';
+  },
+  'className'
+> = styled(StyledMapControlPanelHeader).attrs({
   className: 'map-control__panel-split-viewport-tools'
 })`
   display: flex;
