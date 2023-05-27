@@ -152,7 +152,12 @@ export default function PlotContainerFactory(
 
     _retrieveNewScreenshot = () => {
       if (this.plottingAreaRef.current) {
-        convertToPng(this.plottingAreaRef.current, {filter: DOM_FILTER_FUNC})
+        const {imageSize} = this.props.exportImageSetting;
+        convertToPng(this.plottingAreaRef.current, {
+          filter: DOM_FILTER_FUNC,
+          width: imageSize.imageW,
+          height: imageSize.imageH
+        })
           .then(this.props.setExportImageDataUri)
           .catch(err => {
             this.props.setExportImageError(err);
