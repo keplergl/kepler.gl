@@ -66,7 +66,9 @@ const StyledMapControlPanelHeader = styled.div.attrs({
   }
 `;
 
-const StyledMapControlPanelHeaderSplitViewportsTools = styled(StyledMapControlPanelHeader)`
+const StyledMapControlPanelHeaderSplitViewportsTools = styled(StyledMapControlPanelHeader).attrs({
+  className: 'map-control__panel-split-viewport-tools'
+})`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
