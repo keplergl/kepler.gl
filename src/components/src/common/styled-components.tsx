@@ -574,6 +574,7 @@ export const StyledAttrbution = styled.div.attrs({
     a.mapboxgl-ctrl-logo {
       width: 72px;
       margin-left: 4px;
+      background-size: contain;
     }
   }
   a,
