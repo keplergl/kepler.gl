@@ -282,7 +282,7 @@ export default function MapPopoverFactory(
         {context => (
           <Tippy
             popperOptions={getPopperOptions(container)}
-            zIndex={999} /* should be below Modal which has zIndex=1000 */
+            zIndex={98} /* should be below side panel's z-index of 99  */
             visible={true}
             interactive={true}
             // @ts-ignore
