@@ -206,7 +206,7 @@ export {default as DatasetLabel} from './common/dataset-label';
 export {default as ChickletedInput, ChickletButton} from './common/item-selector/chickleted-input';
 export {default as ItemSelector} from './common/item-selector/item-selector';
 export {default as Typeahead} from './common/item-selector/typeahead';
-export {default as DropdownList, ListItem} from './common/item-selector/dropdown-list';
+export {default as DropdownList, ListItem, classList as dropdownListClassList} from './common/item-selector/dropdown-list';
 export {default as FieldSelectorFactory} from './common/field-selector';
 export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';

@@ -30,7 +30,8 @@ import {
   LayerConfigGroupFactory,
   FieldSelectorFactory,
   ColumnSelectorFactory,
-  appInjector
+  appInjector,
+  dropdownListClassList
 } from '@kepler.gl/components';
 
 import {StateWFiles, StateWTripGeojson, testCsvDataId} from 'test/helpers/mock-state';
@@ -41,7 +42,6 @@ import {
   getItemSelectorListText,
   clickItemSelectList
 } from 'test/helpers/component-utils';
-import {classList as dropdownListClassList} from 'components/common/item-selector/dropdown-list';
 
 // components
 const LayerConfigurator = appInjector.get(LayerConfiguratorFactory);
