@@ -182,7 +182,17 @@ export function getRoundingDecimalFromStep(step: number): number {
     assert(step);
   }
 
-  const splitZero = step.toString().split('.');
+  const stepStr = step.toString();
+
+  // in case the step is a very small number e.g. 1e-7, return decimal e.g. 7 directly
+  const splitExponential = stepStr.split('e-');
+  if (splitExponential.length === 2) {
+    const coeffZero = splitExponential[0].split('.');
+    const coeffDecimal = coeffZero.length === 1 ? 0 : coeffZero[1].length;
+    return parseInt(splitExponential[1], 10) + coeffDecimal;
+  }
+
+  const splitZero = stepStr.split('.');
   if (splitZero.length === 1) {
     return 0;
   }

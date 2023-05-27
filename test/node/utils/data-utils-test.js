@@ -75,6 +75,8 @@ test('dataUtils -> getRoundingDecimalFromStep', t => {
   t.equal(getRoundingDecimalFromStep(10), 0, 'decimal of step=10 should be 0');
   t.equal(getRoundingDecimalFromStep(0.5), 1, 'decimal of step=0.5 should be 0');
   t.equal(getRoundingDecimalFromStep(1.5), 1, 'decimal of step=1.5 should be 1');
+  t.equal(getRoundingDecimalFromStep(0.0000001), 7, 'decimal of step=1e-7 should be 7');
+  t.equal(getRoundingDecimalFromStep(0.0000000000123), 13, 'decimal of step=1.23e-11 should be 13');
   t.end();
 });
 
