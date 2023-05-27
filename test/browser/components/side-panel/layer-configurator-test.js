@@ -41,6 +41,7 @@ import {
   getItemSelectorListText,
   clickItemSelectList
 } from 'test/helpers/component-utils';
+import {classList as dropdownListClassList} from 'components/common/item-selector/dropdown-list';
 
 // components
 const LayerConfigurator = appInjector.get(LayerConfiguratorFactory);
@@ -192,7 +193,11 @@ test('Components -> LayerConfigurator.mount -> defaut prop 2', t => {
     .find(FieldSelector)
     .at(0);
 
-  t.equal(fieldSelector2.find('.list__item.fixed').length, 1, 'should render 1 fixed item');
+  t.equal(
+    fieldSelector2.find(`.list__item.${dropdownListClassList.listItemFixed}`).length,
+    1,
+    'should render 1 fixed item'
+  );
 
   t.equal(
     getItemSelectorListText(fieldSelector2, 0),
