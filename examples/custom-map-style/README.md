@@ -1,6 +1,6 @@
 # Custom Map Style 
 
-![map layers](https://cdn.unfolded.ai/statics/keplergl/documentation/f-map-styles-8.jpg "custom map style")
+![map layers](https://studio-public-data.foursquare.com/statics/keplergl/documentation/f-map-styles-8.jpg "custom map style")
 
 Demo how to use kepler.gl with other basemap services other than Mapbox.
 
