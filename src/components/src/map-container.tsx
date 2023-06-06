@@ -765,7 +765,7 @@ export default function MapContainerFactory(
             views={views}
             layers={deckGlLayers}
             controller={{doubleClickZoom: !isEditorDrawingMode}}
-            viewState={mapState}
+            initialViewState={mapState}
             pickingRadius={DEFAULT_PICKING_RADIUS}
             onBeforeRender={this._onBeforeRender}
             onViewStateChange={this._onViewportChange}
