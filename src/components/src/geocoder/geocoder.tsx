@@ -34,8 +34,10 @@ type StyledContainerProps = {
 };
 
 // matches only valid coordinates
-const COORDINATE_REGEX_STRING =
-  '^[-+]?([1-8]?\\d(\\.\\d+)?|90(\\.0+)?),\\s*[-+]?(180(\\.0+)?|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+)?)';
+// const COORDINATE_REGEX_STRING =
+//   '^[-+]?([1-8]?\\d(\\.\\d+)?|90(\\.0+)?),\\s*[-+]?(180(\\.0+)?|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+)?)';
+
+const COORDINATE_REGEX_STRING = '^[-+]?(180(\\.0+)?|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+)?),\\s*[-+]?([1-8]?\\d(\\.\\d+)?|90(\\.0+)?)'
 const COORDINATE_REGEX = RegExp(COORDINATE_REGEX_STRING);
 
 const PLACEHOLDER = 'Enter an address or coordinates, ex 37.79,-122.40';
