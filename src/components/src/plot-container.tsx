@@ -44,17 +44,24 @@ import {
 } from '@kepler.gl/actions';
 import {mapFieldsSelector} from './kepler-gl';
 
-const CLASS_FILTER = ['mapboxgl-control-container', 'attrition-link', 'attrition-logo'];
+const CLASS_FILTER = [
+  'mapboxgl-control-container',
+  'attrition-link',
+  'attrition-logo',
+  'map-control__panel-split-viewport-tools'
+];
 const DOM_FILTER_FUNC = node => !CLASS_FILTER.includes(node.className);
 const OUT_OF_SCREEN_POSITION = -9999;
 
 PlotContainerFactory.deps = [MapContainerFactory, MapsLayoutFactory];
 
 // Remove mapbox logo in exported map, because it contains non-ascii characters
+// Remove split viewport UI controls from exported images when the legend is shown
 const StyledPlotContainer = styled.div`
   .mapboxgl-ctrl-bottom-left,
   .mapboxgl-ctrl-bottom-right,
-  .mapbox-attribution-container {
+  .mapbox-attribution-container,
+  .map-control__panel-split-viewport-tools {
     display: none;
   }
 
