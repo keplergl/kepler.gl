@@ -137,6 +137,7 @@ export {default as MapDrawPanelFactory} from './map/map-draw-panel';
 export {default as SplitMapButtonFactory} from './map/split-map-button';
 export {default as MapLegendPanelFactory} from './map/map-legend-panel';
 export {default as Toggle3dButtonFactory} from './map/toggle-3d-button';
+export {default as LazzyTippy} from './map/lazy-tippy';
 export {default as MapControlToolbarFactory} from './map/map-control-toolbar';
 
 // // modal factories
@@ -175,7 +176,7 @@ export {default as ImagePreview} from './common/image-preview';
 export {default as HistogramPlotFactory} from './common/histogram-plot';
 export {default as LineChartFactory} from './common/line-chart';
 export {default as RangeBrushFactory} from './common/range-brush';
-export {default as TimeSliderMarkerFactory} from './common/time-slider-marker';
+export {default as TimeSliderMarkerFactory, getTickFormat, getXAxis, updateAxis} from './common/time-slider-marker';
 export {default as TimeRangeSliderTimeTitleFactory} from './common/time-range-slider-time-title';
 export {default as IconButton} from './common/icon-button';
 // // Filters factory
@@ -237,7 +238,7 @@ export {default as TippyTooltip} from './common/tippy-tooltip';
 // side pane components
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
 export {default as LayerTypeDropdownListFactory} from './side-panel/layer-panel/layer-type-dropdown-list';
-export {ConfigGroupCollapsibleContent} from './side-panel/layer-panel/layer-config-group';
+export {ConfigGroupCollapsibleContent, StyledConfigGroupHeader} from './side-panel/layer-panel/layer-config-group';
 export {default as ColumnSelectorFactory} from './side-panel/layer-panel/column-selector';
 export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
 export {default as StyledDropdownSelect} from './common/item-selector/item-selector';
