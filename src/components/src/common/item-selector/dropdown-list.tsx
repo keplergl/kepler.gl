@@ -28,7 +28,8 @@ export const classList = {
   listHeader: 'list__header',
   listSection: 'list__section',
   listItem: 'list__item',
-  listItemAnchor: 'list__item__anchor'
+  listItemAnchor: 'list__item__anchor',
+  listItemFixed: 'list__item__fixed'
 };
 
 const defaultDisplay = d => d;
@@ -214,7 +215,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
               <div
                 className={classNames(classList.listItem, {
                   hover: this.props.selectionIndex === i,
-                  fixed: true
+                  [classList.listItemFixed]: true
                 })}
                 key={`${display(value)}_${i}`}
                 onMouseDown={e => this._onClick(value, e)}
