@@ -26,6 +26,7 @@ import Layer, {
   LayerCoverageConfig,
   LayerSizeConfig
 } from '../base-layer';
+import {BrushingExtension} from '@deck.gl/extensions';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
 import {EnhancedColumnLayer} from '@kepler.gl/deckgl-layers';
@@ -50,6 +51,8 @@ import {
   Merge
 } from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
+
+import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 
 export type HexagonIdLayerColumnsConfig = {
   hex_id: LayerColumn;
@@ -118,6 +121,7 @@ export const HexagonIdVisConfigs: {
   enableElevationZoomFactor: 'enableElevationZoomFactor'
 };
 
+const brushingExtension = new BrushingExtension();
 export default class HexagonIdLayer extends Layer {
   dataToFeature: {centroids: Centroid[]};
 
@@ -253,13 +257,25 @@ export default class HexagonIdLayer extends Layer {
     }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getHexId = this.getPositionAccessor(dataContainer);
-    const {data} = this.updateData(datasets, oldLayerData);
+    const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
     const accessors = this.getAttributeAccessors({dataContainer});
+    const {textLabel} = this.config;
+
+    // get all distinct characters in the text labels
+    const textLabels = formatTextLabelData({
+      textLabel,
+      triggerChanged,
+      oldLayerData,
+      data,
+      dataContainer
+    });
 
     return {
       data,
       getHexId,
       getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
+      textLabels,
+      getPosition: d => d.centroid,
       ...accessors
     };
   }
@@ -289,7 +305,7 @@ export default class HexagonIdLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, mapState} = opts;
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
@@ -311,10 +327,27 @@ export default class HexagonIdLayer extends Layer {
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
+    // getPixelOffset with no radius
+    const radiusScale = 1.0;
+    const getRaidus = null;
+    const getPixelOffset = getTextOffsetByRadius(radiusScale, getRaidus, mapState);
+
+    const brushingProps = this.getBrushingExtensionProps(interactionConfig);
+    const extensions = [...defaultLayerProps.extensions, brushingExtension];
+    const sharedProps = {
+      getFilterValue: data.getFilterValue,
+      extensions,
+      filterRange: defaultLayerProps.filterRange,
+      visible: defaultLayerProps.visible,
+      ...brushingProps
+    };
+
     return [
       new H3HexagonLayer({
         ...defaultLayerProps,
         ...data,
+        ...brushingProps,
+        extensions,
         wrapLongitude: false,
 
         getHexagon: (x: any) => x.id,
@@ -352,7 +385,17 @@ export default class HexagonIdLayer extends Layer {
               wrapLongitude: false
             })
           ]
-        : [])
+        : []),
+      // text label layer
+      ...this.renderTextLabelLayer(
+        {
+          getPosition: data.getPosition,
+          sharedProps,
+          getPixelOffset,
+          updateTriggers
+        },
+        opts
+      )
     ];
   }
 }
