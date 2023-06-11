@@ -401,8 +401,7 @@ mergedH3Layer.config = {
     coverageRange: [0, 1],
     enable3d: false,
     elevationScale: 5,
-    enableElevationZoomFactor: true,
-    enable3d: false
+    enableElevationZoomFactor: true
   },
   textLabel: [
     {
