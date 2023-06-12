@@ -103,6 +103,7 @@ test('#H3Layer -> formatLayerData', t => {
           getElevation: () => {},
           getFilterValue: () => {},
           getFillColor: () => {},
+          getLineColor: () => {},
           getHexId: () => {},
           getCoverage: () => {},
           getPosition: () => {},
@@ -120,6 +121,8 @@ test('#H3Layer -> formatLayerData', t => {
         );
         // getFillColor
         t.deepEqual(layerData.getFillColor, [2, 3, 4], 'getFillColor should be a constant');
+        // getLineColor
+        t.deepEqual(layerData.getLineColor, [2, 3, 4], 'getLineColor should be a constant');
         // getElevation
         t.deepEqual(layerData.getElevation, defaultElevation, 'getElevation should be a constant');
         // getHexId
@@ -143,15 +146,20 @@ test('#H3Layer -> formatLayerData', t => {
       }
     },
     {
-      name: 'H3 layer format data. with colorField and sizeField',
+      name: 'H3 layer format data. with colorField, strokeColorField, and sizeField',
       layer: {
         config: {
           dataId,
           label: 'h3.2',
           columns,
           color: [10, 10, 10],
-          // color by types(string)
+          // fill color by types(string)
           colorField: {
+            type: 'string',
+            name: 'types'
+          },
+          // stroke color by types(string)
+          strokeColorField: {
             type: 'string',
             name: 'types'
           },
@@ -162,6 +170,9 @@ test('#H3Layer -> formatLayerData', t => {
           },
           visConfig: {
             colorRange: {
+              colors: ['#010101', '#020202', '#030303']
+            },
+            strokeColorRange: {
               colors: ['#010101', '#020202', '#030303']
             },
             elevationRange: [10, 20],
@@ -188,6 +199,16 @@ test('#H3Layer -> formatLayerData', t => {
           ],
           'getFillColor should be correct'
         );
+
+        t.deepEqual(
+          layerData.data.map(layerData.getLineColor),
+          [
+            [2, 2, 2],
+            [1, 1, 1]
+          ],
+          'getLineColor should be correct'
+        );
+
         // getElevation
         // domain: [1.59, 11]
         // range: [0, 500]
@@ -258,7 +279,9 @@ test('#H3Layer -> renderLayer', t => {
           autoHighlight: false,
           highlightColor: [255, 255, 255, 60],
           extruded: false,
-          elevationScale: 5
+          elevationScale: 5,
+          filled: true,
+          stroked: false
         };
         Object.keys(expectedProps).forEach(key => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);

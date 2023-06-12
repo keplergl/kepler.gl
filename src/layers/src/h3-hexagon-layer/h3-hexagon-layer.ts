@@ -41,7 +41,13 @@ import {
   createDataContainer
 } from '@kepler.gl/utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
-import {CHANNEL_SCALES, HIGHLIGH_COLOR_3D, ColorRange} from '@kepler.gl/constants';
+import {
+  CHANNEL_SCALES,
+  HIGHLIGH_COLOR_3D,
+  DEFAULT_COLOR_UI,
+  LAYER_VIS_CONFIGS,
+  ColorRange
+} from '@kepler.gl/constants';
 
 import {
   VisConfigBoolean,
@@ -67,6 +73,9 @@ export type HexagonIdLayerVisConfigSettings = {
   coverageRange: VisConfigRange;
   elevationScale: VisConfigNumber;
   enableElevationZoomFactor: VisConfigBoolean;
+  filled: VisConfigBoolean;
+  outline: VisConfigBoolean;
+  thickness: VisConfigNumber;
 };
 
 export type HexagonIdLayerVisConfig = {
@@ -78,6 +87,9 @@ export type HexagonIdLayerVisConfig = {
   coverageRange: [number, number];
   elevationScale: number;
   enableElevationZoomFactor: boolean;
+  filled: boolean;
+  outline: boolean;
+  thickness: number;
 };
 
 export type HexagonIdLayerVisualChannelConfig = LayerColorConfig &
@@ -104,6 +116,11 @@ export const defaultCoverage = 1;
 export const HexagonIdVisConfigs: {
   opacity: 'opacity';
   colorRange: 'colorRange';
+  filled: VisConfigBoolean;
+  outline: 'outline';
+  strokeColor: 'strokeColor';
+  strokeColorRange: 'strokeColorRange';
+  thickness: 'thickness';
   coverage: 'coverage';
   enable3d: 'enable3d';
   sizeRange: 'elevationRange';
@@ -113,6 +130,14 @@ export const HexagonIdVisConfigs: {
 } = {
   opacity: 'opacity',
   colorRange: 'colorRange',
+  filled: {
+    ...LAYER_VIS_CONFIGS.filled,
+    defaultValue: true
+  },
+  outline: 'outline',
+  strokeColor: 'strokeColor',
+  strokeColorRange: 'strokeColorRange',
+  thickness: 'thickness',
   coverage: 'coverage',
   enable3d: 'enable3d',
   sizeRange: 'elevationRange',
@@ -157,7 +182,20 @@ export default class HexagonIdLayer extends Layer {
     return {
       color: {
         ...visualChannels.color,
-        accessor: 'getFillColor'
+        accessor: 'getFillColor',
+        condition: config => config.visConfig.filled
+      },
+      strokeColor: {
+        property: 'strokeColor',
+        key: 'strokeColor',
+        field: 'strokeColorField',
+        scale: 'strokeColorScale',
+        domain: 'strokeColorDomain',
+        range: 'strokeColorRange',
+        channelScaleType: CHANNEL_SCALES.color,
+        accessor: 'getLineColor',
+        condition: config => config.visConfig.outline,
+        defaultValue: config => config.visConfig.strokeColor || config.color
       },
       size: {
         ...visualChannels.size,
@@ -220,10 +258,21 @@ export default class HexagonIdLayer extends Layer {
   }
 
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
-    return {
-      ...super.getDefaultLayerConfig(props),
+    const defaultLayerConfig = super.getDefaultLayerConfig(props);
 
-      // add height visual channel
+    return {
+      ...defaultLayerConfig,
+
+      // add stroke color visual channel
+      strokeColorField: null,
+      strokeColorDomain: [0, 1],
+      strokeColorScale: 'quantile',
+      colorUI: {
+        ...defaultLayerConfig.colorUI,
+        strokeColorRange: DEFAULT_COLOR_UI
+      },
+
+      // add radius visual channel
       coverageField: null,
       coverageDomain: [0, 1],
       coverageScale: 'linear'
@@ -316,6 +365,7 @@ export default class HexagonIdLayer extends Layer {
     const h3HexagonLayerTriggers = {
       getHexagon: this.config.columns,
       getFillColor: updateTriggers.getFillColor,
+      getLineColor: updateTriggers.getLineColor,
       getElevation: updateTriggers.getElevation,
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
@@ -349,6 +399,10 @@ export default class HexagonIdLayer extends Layer {
         ...brushingProps,
         extensions,
         wrapLongitude: false,
+
+        filled: visConfig.filled,
+        stroked: visConfig.outline,
+        lineWidthScale: visConfig.thickness,
 
         getHexagon: (x: any) => x.id,
 

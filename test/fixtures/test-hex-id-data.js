@@ -89,6 +89,7 @@ export const hexIdDataConfig = {
                   colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
                 },
                 coverage: 1,
+                enable3d: false,
                 sizeRange: [0, 500],
                 coverageRange: [0, 1],
                 elevationScale: 5,
@@ -114,7 +115,10 @@ export const hexIdDataConfig = {
               sizeField: null,
               sizeScale: 'linear',
               coverageField: null,
-              coverageScale: 'linear'
+              coverageScale: 'linear',
+              strokeColorDomain: [0, 1],
+              strokeColorField: 'something',
+              strokeColorScale: 'something'
             }
           }
         ],
@@ -371,6 +375,9 @@ mergedH3Layer.config = {
   coverageField: null,
   coverageScale: 'linear',
   coverageDomain: [0, 1],
+  strokeColorDomain: [0, 1],
+  strokeColorField: null,
+  strokeColorScale: 'quantile',
   visConfig: {
     opacity: 0.8,
     colorRange: {
@@ -379,12 +386,22 @@ mergedH3Layer.config = {
       category: 'Uber',
       colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
+    filled: true,
+    outline: false,
+    strokeColor: null,
+    strokeColorRange: {
+      name: 'Global Warming',
+      type: 'sequential',
+      category: 'Uber',
+      colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
+    },
+    thickness: 2,
     coverage: 1,
     sizeRange: [0, 500],
     coverageRange: [0, 1],
+    enable3d: false,
     elevationScale: 5,
-    enableElevationZoomFactor: true,
-    enable3d: false
+    enableElevationZoomFactor: true
   },
   textLabel: [
     {
@@ -398,7 +415,8 @@ mergedH3Layer.config = {
   ],
   colorUI: {
     color: DEFAULT_COLOR_UI,
-    colorRange: DEFAULT_COLOR_UI
+    colorRange: DEFAULT_COLOR_UI,
+    strokeColorRange: DEFAULT_COLOR_UI
   },
   animation: {
     enabled: false

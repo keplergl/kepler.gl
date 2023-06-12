@@ -490,8 +490,13 @@ export default function LayerConfiguratorFactory(
     }) {
       return (
         <StyledLayerVisualConfigurator>
-          {/* Color */}
-          <LayerConfigGroup label={'layer.color'} collapsible>
+          {/* Fill Color */}
+          <LayerConfigGroup
+            {...layer.visConfigSettings.filled}
+            {...visConfiguratorProps}
+            collapsible
+            label={'layer.fillColor'}
+          >
             {layer.config.colorField ? (
               <LayerColorRangeSelector {...visConfiguratorProps} />
             ) : (
@@ -502,8 +507,44 @@ export default function LayerConfiguratorFactory(
                 channel={layer.visualChannels.color}
                 {...layerChannelConfigProps}
               />
-              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          {/* Outline Color */}
+          <LayerConfigGroup
+            {...layer.visConfigSettings.outline}
+            {...visConfiguratorProps}
+            collapsible
+          >
+            <ChannelByValueSelector
+              channel={layer.visualChannels.strokeColor}
+              {...layerChannelConfigProps}
+            />
+            {layer.config.strokeColorField ? (
+              <LayerColorRangeSelector {...visConfiguratorProps} property="strokeColorRange" />
+            ) : (
+              <LayerColorSelector
+                {...visConfiguratorProps}
+                selectedColor={layer.config.visConfig.strokeColor}
+                property="strokeColor"
+              />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.thickness}
+                {...visConfiguratorProps}
+                disabled={!layer.config.visConfig.outline}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          {/* Opacity */}
+          <LayerConfigGroup label={layer.visConfigSettings.opacity.label}>
+            <VisConfigSlider
+              {...layer.visConfigSettings.opacity}
+              {...visConfiguratorProps}
+              label={false}
+            />
           </LayerConfigGroup>
 
           {/* Coverage */}
