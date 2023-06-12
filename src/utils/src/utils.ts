@@ -120,6 +120,14 @@ export function isObject(value): boolean {
   return value !== null && (typeof value === 'object' || typeof value === 'function');
 }
 
+/**
+ * whether is an object
+ * @returns {boolean} - yes or no
+ */
+export function isPlainObject(obj: unknown): obj is Record<string, unknown> {
+  return obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj);
+}
+
 const setPath = <T extends any[] | object>(
   [key, ...next]: (string | number)[],
   value: any,
