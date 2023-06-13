@@ -72,7 +72,6 @@ export {default as ColorPalette} from './side-panel/layer-panel/color-palette';
 export {default as ColorRangeSelector, PaletteConfig, ColorPaletteGroup, ALL_TYPES} from './side-panel/layer-panel/color-range-selector';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
 export {default as SingleColorPalette} from './side-panel/layer-panel/single-color-palette';
-export {default as LayerPanelHeaderFactory, DragHandle} from './side-panel/layer-panel/layer-panel-header';
 export {
   default as LayerConfiguratorFactory,
   LayerColorRangeSelector, 
@@ -82,7 +81,7 @@ export {
   LayerColorSelector
 } from './side-panel/layer-panel/layer-configurator';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
-export {LayerConfigGroupLabelFactory} from './side-panel/layer-panel/layer-config-group';
+
 export {
   AddDataButtonFactory,
   default as DatasetSectionFactory
@@ -238,14 +237,16 @@ export {default as TippyTooltip} from './common/tippy-tooltip';
 // side pane components
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
 export {default as LayerTypeDropdownListFactory} from './side-panel/layer-panel/layer-type-dropdown-list';
-export {ConfigGroupCollapsibleContent, StyledConfigGroupHeader} from './side-panel/layer-panel/layer-config-group';
+export {ConfigGroupCollapsibleContent, StyledConfigGroupHeader, LayerConfigGroupLabelFactory} from './side-panel/layer-panel/layer-config-group';
 export {default as ColumnSelectorFactory} from './side-panel/layer-panel/column-selector';
-export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
 export {default as StyledDropdownSelect} from './common/item-selector/item-selector';
 export {
+  default as LayerPanelHeaderFactory,
+  DragHandle,
   LayerLabelEditor,
   LayerTitleSectionFactory
 } from './side-panel/layer-panel/layer-panel-header';
+export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
 
 export {default as HowToButton} from './side-panel/layer-panel/how-to-button';
 // eslint-disable-next-line prettier/prettier
@@ -269,12 +270,20 @@ export type {CustomPanelsProps} from './side-panel/custom-panel';
 export type {LayerTypeListItemProps, LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
 export type {LayerGroupColorPickerProps} from './side-panel/map-style-panel/map-layer-group-color-picker';
 export type {MapLegendPanelProps, MapLegendPanelFactoryDeps} from './map/map-legend-panel';
-export type {FormatterDropdownProps} from './common/data-table/option-dropdown';
+export type {OptionDropdownProps, FormatterDropdownProps} from './common/data-table/option-dropdown';
 export type {LayerListProps, LayerListFactoryDeps} from './side-panel/layer-panel/layer-list';
 export type {MapContainerProps} from './map-container';
 export type {MapControlProps} from './map/map-control';
 export type {MapDrawPanelProps} from './map/map-draw-panel';
 export type {PanelHeaderProps} from './side-panel/panel-header';
+export type {LayerLabelEditorProps, LayerTitleSectionProps, LayerPanelHeaderProps} from './side-panel/layer-panel/layer-panel-header';
+export type {FilterPanelHeaderProps} from './side-panel/filter-panel/filter-panel-header';
+export type {LayerTypeOption} from './side-panel/layer-panel/layer-type-dropdown-list';
+export type {LayerConfigGroupLabelProps, LayerConfigGroupProps} from './side-panel/layer-panel/layer-config-group';
+export type {FilterManagerProps} from './side-panel/filter-manager';
+export type {PanelMeta} from './side-panel/common/types';
+export type {SideBarProps} from './side-panel/side-bar';
+export type {FeatureActionPanelProps} from './editor/feature-action-panel';
 
 export {
   Icons,

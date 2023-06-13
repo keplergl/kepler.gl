@@ -28,12 +28,12 @@ import {VertThreeDots} from '../../common/icons';
 import {Layer} from '@kepler.gl/layers';
 import {LayerVisConfig} from '@kepler.gl/types';
 
-type LayerConfigGroupLabelProps = {
+export type LayerConfigGroupLabelProps = {
   label?: string;
   description?: string;
 };
 
-type LayerConfigGroupProps = {
+export type LayerConfigGroupProps = {
   layer?: Layer;
   label: string;
   property?: string;

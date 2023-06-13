@@ -123,7 +123,7 @@ export const FormatterDropdown: React.FC<FormatterDropdownProps> = (
   );
 };
 
-interface OptionDropdownProps {
+export interface OptionDropdownProps {
   isOpened?: boolean;
   column: string;
   colMeta: ColMeta;

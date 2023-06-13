@@ -51,7 +51,7 @@ const StyledChildrenContainer = styled.div`
   flex: 2;
 `;
 
-type FilterPanelHeaderProps = {
+export type FilterPanelHeaderProps = {
   className?: string;
   datasets: KeplerTable[];
   filter: Filter;

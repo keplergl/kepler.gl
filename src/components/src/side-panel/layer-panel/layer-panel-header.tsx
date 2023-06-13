@@ -45,7 +45,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {RGBColor} from '@kepler.gl/types';
 import {BaseProps} from '../../common/icons';
 
-type LayerLabelEditorProps = {
+export type LayerLabelEditorProps = {
   layerId: string;
   label?: string;
   onEdit: ChangeEventHandler;
@@ -53,7 +53,7 @@ type LayerLabelEditorProps = {
   onBlur: ChangeEventHandler;
 };
 
-type LayerTitleSectionProps = {
+export type LayerTitleSectionProps = {
   layerType?: string | null;
   layerId: string;
   label?: string;
@@ -62,7 +62,7 @@ type LayerTitleSectionProps = {
   onBlur: ChangeEventHandler;
 };
 
-type LayerPanelHeaderProps = {
+export type LayerPanelHeaderProps = {
   layerId: string;
   isVisible: boolean;
   isValid: boolean;
