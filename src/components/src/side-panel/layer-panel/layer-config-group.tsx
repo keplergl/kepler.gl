@@ -31,6 +31,7 @@ import {LayerVisConfig} from '@kepler.gl/types';
 export type LayerConfigGroupLabelProps = {
   label?: string;
   description?: string;
+  collapsed?: boolean;
 };
 
 export type LayerConfigGroupProps = {
@@ -178,7 +179,7 @@ function LayerConfigGroupFactory(
     return (
       <StyledLayerConfigGroup className={classnames('layer-config-group', {collapsed, disabled})}>
         <StyledConfigGroupHeader onClick={onToggleCollapsed}>
-          <LayerConfigGroupLabel label={label} description={description} />
+          <LayerConfigGroupLabel label={label} description={description} collapsed={collapsed} />
           <StyledLayerConfigGroupAction className="layer-config-group__action">
             {property ? (
               <Switch
