@@ -79,7 +79,7 @@ export {setLayerBlending} from './gl-utils';
 export {flattenMessages, mergeMessages} from './locale-utils';
 export type {Dimensions} from './observe-dimensions';
 export * from './observe-dimensions';
-export {validateBounds, getCenterAndZoomFromBounds, normalizeEvent, MAPBOX_TILE_SIZE} from './projection-utils';
+export * from './projection-utils';
 export {validateToken} from './mapbox-utils';
 export {
   getDefaultLayerGroupVisibility,

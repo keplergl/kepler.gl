@@ -115,6 +115,7 @@ export {default as LayerGroupColorPickerFactory} from './side-panel/map-style-pa
 export {default as CustomPanelsFactory} from './side-panel/custom-panel';
 // // map factories
 export {default as MapPopoverFactory} from './map/map-popover';
+export {default as MapPopoverContentFactory} from './map/map-popover-content';
 export {default as MapControlFactory} from './map/map-control';
 export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as CoordinateInfoFactory} from './map/coordinate-info';

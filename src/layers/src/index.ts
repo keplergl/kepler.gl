@@ -97,8 +97,6 @@ export const LayerClasses = {
   [LAYER_TYPES.s2]: S2GeometryLayer
 };
 
-export type OVERLAY_TYPE = {[key: string]: string};
-
 export * from './mapbox-utils';
 export * from './h3-hexagon-layer';
 export {default as Table} from './table';
@@ -114,3 +112,5 @@ export const EditorLayerUtils = {
 };
 
 export {getFilterDataFunc} from './aggregation-layer';
+
+export * from './layer-update';
