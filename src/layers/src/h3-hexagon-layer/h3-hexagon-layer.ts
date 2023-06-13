@@ -45,6 +45,7 @@ import {
   CHANNEL_SCALES,
   HIGHLIGH_COLOR_3D,
   DEFAULT_COLOR_UI,
+  DEFAULT_TEXT_LABEL,
   LAYER_VIS_CONFIGS,
   ColorRange
 } from '@kepler.gl/constants';
@@ -275,7 +276,15 @@ export default class HexagonIdLayer extends Layer {
       // add radius visual channel
       coverageField: null,
       coverageDomain: [0, 1],
-      coverageScale: 'linear'
+      coverageScale: 'linear',
+
+      // modify default textLabel anchor position to be appropriate for a hexagon shape
+      textLabel: [
+        {
+          ...DEFAULT_TEXT_LABEL,
+          anchor: 'middle'
+        }
+      ]
     };
   }
 
