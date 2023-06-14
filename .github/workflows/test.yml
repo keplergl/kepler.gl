@@ -5,13 +5,12 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -33,7 +32,7 @@ jobs:
         run: npm install -g yarn
 
       - name: Install Dependecies
-        run: yarn global add puppeteer && yarn bootstrap
+        run: yarn global add "puppeteer@19.11.1" && yarn bootstrap
 
       # - name: Lint
       #  run: yarn lint
