@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import test from 'tape';
-import {setStyleSheetBaseHref} from '../../../src/utils/dom-utils';
+import {setStyleSheetBaseHref} from '../../../src/utils/src/dom-utils';
 
 const MOCK_CSS = `div#header { 
     background-image: url('images/header-background.jpg');
