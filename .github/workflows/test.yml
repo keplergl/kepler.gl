@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v2.1.1
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -32,7 +32,7 @@ jobs:
         run: npm install -g yarn
 
       - name: Install Dependecies
-        run: yarn global add "puppeteer@19.11.1" && yarn bootstrap
+        run: yarn global add "puppeteer@19.11.1" && yarn
 
       # - name: Lint
       #  run: yarn lint
