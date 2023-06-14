@@ -42,6 +42,21 @@ const TopRow = styled.div`
   justify-content: space-between;
 `;
 
+/**
+ * only provide suggested field pairs if there is a match,
+ * otherwise the user can select a suggested field pair that will create invalid columns and a hard crash
+ */
+function getFieldPairsSuggestionsForColumn(
+  enhancedFieldPairs,
+  columnPairs: ColumnPairs | null | undefined,
+  columnKey: string
+) {
+  const matchingFieldPairs = enhancedFieldPairs?.filter(({pair}) =>
+    pair.hasOwnProperty(columnPairs?.[columnKey]?.fieldPairKey)
+  );
+  return matchingFieldPairs.length > 0 ? matchingFieldPairs : null;
+}
+
 LayerColumnConfigFactory.deps = [ColumnSelectorFactory];
 
 function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelectorFactory>) {
@@ -103,7 +118,7 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
                 label={(columnLabels && columnLabels[key]) || key}
                 key={key}
                 allFields={fields}
-                fieldPairs={enhancedFieldPairs}
+                fieldPairs={getFieldPairsSuggestionsForColumn(enhancedFieldPairs, columnPairs, key)}
                 onSelect={val => onUpdateColumn(key, val)}
               />
             ))}
