@@ -95,7 +95,11 @@ export const Container = styled.div`
     overflow: hidden;
     border-top: none;
 
-    .scroll-in-ui-thread.pinned-columns--header,
+    .scroll-in-ui-thread.pinned-columns--header {
+      overflow: hidden;
+      border-bottom: 1px solid ${props => props.theme.cellBorderColor};
+      padding-bottom: ${browserScrollBarWidth}px;
+    }
     .scroll-in-ui-thread.unpinned-columns--header {
       width: 100vw;
       overflow: hidden;
