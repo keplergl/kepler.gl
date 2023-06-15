@@ -395,6 +395,7 @@ mergedH3Layer.config = {
       category: 'Uber',
       colors: ['#5A1846', '#900C3F', '#C70039', '#E3611C', '#F1920E', '#FFC300']
     },
+    strokeOpacity: 0.8,
     thickness: 2,
     coverage: 1,
     sizeRange: [0, 500],

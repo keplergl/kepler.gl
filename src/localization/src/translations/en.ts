@@ -464,6 +464,7 @@ export default {
     colorScale: 'Color Scale',
     sizeScale: 'Size Scale',
     strokeScale: 'Stroke Scale',
+    strokeColorScale: 'Stroke Color Scale',
     scale: 'Scale'
   },
   fileUploader: {
