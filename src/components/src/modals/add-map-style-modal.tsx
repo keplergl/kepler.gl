@@ -147,6 +147,7 @@ function AddMapStyleModalFactory() {
     componentDidUpdate() {
       const map = this.mapRef && this.mapRef.getMap();
       if (map && this._map !== map) {
+        // @ts-expect-error react-map-gl.Map vs mapbox-gl.Map ?
         this._map = map;
 
         map.on('style.load', () => {
@@ -286,8 +287,10 @@ function AddMapStyleModalFactory() {
                         this.mapRef = el;
                       }}
                       key={this.state.reRenderKey}
-                      width={MapW}
-                      height={MapH}
+                      style={{
+                        width: MapW,
+                        height: MapH
+                      }}
                       mapStyle={inputStyle.url === null ? undefined : inputStyle.url}
                     />
                   </StyledMapContainer>

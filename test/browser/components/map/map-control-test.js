@@ -22,7 +22,6 @@
 import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';
-import {IntlWrapper, mountWithTheme} from '../../../helpers/component-utils';
 
 import {
   MapControlButton,
@@ -34,18 +33,20 @@ import {
   MapLegendFactory,
   MapControlFactory,
   MapControlToolbarFactory,
-  Icons
+  Icons,
+  MapViewStateContextProvider
 } from '@kepler.gl/components';
+import {LOCALE_CODES, LOCALES} from '@kepler.gl/localization';
+import {toggleMapControl} from '@kepler.gl/actions';
+import {keplerGlReducerCore} from '@kepler.gl/reducers';
+
+import {IntlWrapper, mountWithTheme} from '../../../helpers/component-utils';
 import {
   mockKeplerProps,
   mockKeplerPropsWithState,
   StateWSplitMaps,
   StateWFiles
 } from '../../../helpers/mock-state';
-
-import {LOCALE_CODES, LOCALES} from '@kepler.gl/localization';
-import {toggleMapControl} from '@kepler.gl/actions';
-import {keplerGlReducerCore} from '@kepler.gl/reducers';
 
 const {Cube3d, Split, Legend, DrawPolygon, Layers, Delete} = Icons;
 const MapControl = appInjector.get(MapControlFactory);
@@ -60,7 +61,9 @@ test('MapControlFactory - display options', t => {
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <MapContainer {...initialProps} />
+        <MapViewStateContextProvider mapState={initialProps.mapState}>
+          <MapContainer {...initialProps} />
+        </MapViewStateContextProvider>
       </IntlWrapper>
     );
   }, 'Map Container should not fail without props');
@@ -82,7 +85,11 @@ test('MapControlFactory - display options', t => {
   const propsWithSplitMap = mapFieldsSelector(mockKeplerPropsWithState({state: StateWSplitMaps}));
 
   wrapper.setProps({
-    children: <MapContainer {...propsWithSplitMap} />
+    children: (
+      <MapViewStateContextProvider mapState={propsWithSplitMap.mapState}>
+        <MapContainer {...propsWithSplitMap} />
+      </MapViewStateContextProvider>
+    )
   });
 
   // 5 control buttons as legend is opened automatically in split map mode
@@ -93,7 +100,11 @@ test('MapControlFactory - display options', t => {
 
   // with 0 mapcontrols
   wrapper.setProps({
-    children: <MapContainer {...propsWithSplitMap} mapControls={{}} />
+    children: (
+      <MapViewStateContextProvider mapState={propsWithSplitMap.mapState}>
+        <MapContainer {...propsWithSplitMap} mapControls={{}} />
+      </MapViewStateContextProvider>
+    )
   });
 
   t.equal(wrapper.find(MapControlButton).length, 0, 'Should show 0 MapControlButton');
@@ -135,7 +146,9 @@ test('MapControlFactory - click options', t => {
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <MapContainer {...mapContainerProps} />
+        <MapViewStateContextProvider mapState={mapContainerProps.mapState}>
+          <MapContainer {...mapContainerProps} />
+        </MapViewStateContextProvider>
       </IntlWrapper>
     );
   }, 'MapContainer should not fail without props');
@@ -218,7 +231,9 @@ test('MapControlFactory - show panels', t => {
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <MapContainer {...mapContainerProps} />
+        <MapViewStateContextProvider mapState={mapContainerProps.mapState}>
+          <MapContainer {...mapContainerProps} />
+        </MapViewStateContextProvider>
       </IntlWrapper>
     );
   }, 'MapContainer should not fail without props');
@@ -236,7 +251,11 @@ test('MapControlFactory - show panels', t => {
     mockKeplerPropsWithState({state: updateState, visStateActions})
   );
   wrapper.setProps({
-    children: <MapContainer {...mapContainerProps} index={1} />
+    children: (
+      <MapViewStateContextProvider mapState={mapContainerProps.mapState}>
+        <MapContainer {...mapContainerProps} index={1} />
+      </MapViewStateContextProvider>
+    )
   });
 
   // click layer selector
@@ -262,7 +281,11 @@ test('MapControlFactory - show panels', t => {
   updateState = keplerGlReducerCore(StateWSplitMaps, toggleMapControl('mapDraw', 1));
   mapContainerProps = mapFieldsSelector(mockKeplerPropsWithState({state: updateState}));
   wrapper.setProps({
-    children: <MapContainer {...mapContainerProps} index={1} />
+    children: (
+      <MapViewStateContextProvider mapState={mapContainerProps.mapState}>
+        <MapContainer {...mapContainerProps} index={1} />
+      </MapViewStateContextProvider>
+    )
   });
 
   t.equal(wrapper.find(MapControlToolbar).length, 1, 'should render 1 MapControlToolbar');
@@ -279,7 +302,11 @@ test('MapControlFactory - show panels', t => {
   updateState = keplerGlReducerCore(StateWSplitMaps, toggleMapControl('mapLocale', 1));
   mapContainerProps = mapFieldsSelector(mockKeplerPropsWithState({state: updateState}));
   wrapper.setProps({
-    children: <MapContainer {...mapContainerProps} index={1} />
+    children: (
+      <MapViewStateContextProvider mapState={mapContainerProps.mapState}>
+        <MapContainer {...mapContainerProps} index={1} />
+      </MapViewStateContextProvider>
+    )
   });
 
   t.equal(wrapper.find(MapControlToolbar).length, 1, 'should render 1 MapControlToolbar');

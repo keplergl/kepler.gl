@@ -182,6 +182,7 @@
     "jest-environment-jsdom": "^29.5.0",
     "jsdom": "^16.4.0",
     "json-loader": "^0.5.4",
+    "mapbox-gl": "1.13.1",
     "nyc": "^15.1.0",
     "prettier": "1.19.1",
     "progress-bar-webpack-plugin": "^2.1.0",

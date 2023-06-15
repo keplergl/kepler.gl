@@ -2562,14 +2562,6 @@
   resolved "https://registry.yarnpkg.com/@math.gl/types/-/types-3.6.3.tgz#9fa9866feabcbb76de107d78ff3a89c0243ac374"
   integrity sha512-3uWLVXHY3jQxsXCr/UCNPSc2BG0hNUljhmOBt9l+lNFDp7zHgm0cK2Tw4kj2XfkJy4TgwZTBGwRDQgWEbLbdTA==
 
-"@math.gl/web-mercator@^3.2.0":
-  version "3.4.2"
-  resolved "https://registry.yarnpkg.com/@math.gl/web-mercator/-/web-mercator-3.4.2.tgz#72c7c7e698bcf8d1d1d60c0ec4c5a4698c9b960e"
-  integrity sha512-Az/WI8vxbqnrTEcYgqDQ3CgCRoFA2a4XT9mkjVrT7iIlfrUF5lrIXcmpljjKvoFNBldKrng7hFSeHHM2ghgSrg==
-  dependencies:
-    "@babel/runtime" "^7.12.0"
-    gl-matrix "^3.0.0"
-
 "@math.gl/web-mercator@^3.5.1":
   version "3.5.3"
   resolved "https://registry.yarnpkg.com/@math.gl/web-mercator/-/web-mercator-3.5.3.tgz#4cc7ba98a48580a18ad683206a6f6002fa9d2d7e"
@@ -3658,6 +3650,13 @@
   dependencies:
     "@types/geojson" "*"
 
+"@types/mapbox-gl@^2.6.0":
+  version "2.7.15"
+  resolved "https://registry.yarnpkg.com/@types/mapbox-gl/-/mapbox-gl-2.7.15.tgz#13e95d56c89037f122ff9a3c9c0473206d5eaf87"
+  integrity sha512-UE0dKAnfnFSut6xnoMiABVUGu/yZpwgr+houGvoW3HZ3RtYzg+NyqOMvASOc5sQf6s7O3P20z3cmtUoZecREjA==
+  dependencies:
+    "@types/geojson" "*"
+
 "@types/mapbox-gl@^2.6.3":
   version "2.7.5"
   resolved "https://registry.yarnpkg.com/@types/mapbox-gl/-/mapbox-gl-2.7.5.tgz#9e31fc592adb2762e4e5c7727dca5ec367dfc780"
@@ -3748,10 +3747,10 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-map-gl@^6.1.2":
-  version "6.1.2"
-  resolved "https://registry.yarnpkg.com/@types/react-map-gl/-/react-map-gl-6.1.2.tgz#42959b751097f8547b1ce8b74773541b024b3c4f"
-  integrity sha512-/9+6j/Ej+tOVL2W2CYljw1CVnfH5xwgpiEfz0s8LFlIBzMFa/Nk/wKIYt/WE5wek0kVJEcU/RQ1RA3qvK7E03w==
+"@types/react-map-gl@^6.1.3":
+  version "6.1.3"
+  resolved "https://registry.yarnpkg.com/@types/react-map-gl/-/react-map-gl-6.1.3.tgz#b518a3ee0f51ed7be2b1574c77320c8b26266b3e"
+  integrity sha512-22R7vE/XT/S+Nwu7245llMW+vO8ITPQJHaiRCO9RxmUUdV2kio7mQWaL8M5ko3XMt+7Hyz5ComNI4AopXZsxMA==
   dependencies:
     "@types/geojson" "*"
     "@types/mapbox-gl" "*"
@@ -11777,7 +11776,7 @@ map-visit@^1.0.0:
   dependencies:
     object-visit "^1.0.0"
 
-mapbox-gl@^1.0.0:
+mapbox-gl@1.13.1, mapbox-gl@^1.0.0:
   version "1.13.1"
   resolved "https://registry.yarnpkg.com/mapbox-gl/-/mapbox-gl-1.13.1.tgz#322efe75ab4c764fc4c776da1506aad58d5a5b9d"
   integrity sha512-GSyubcoSF5MyaP8z+DasLu5v7KmDK2pp4S5+VQ5WdVQUOaAqQY4jwl4JpcdNho3uWm2bIKs7x1l7q3ynGmW60g==
@@ -14197,19 +14196,12 @@ react-lifecycles-compat@^3.0.0, react-lifecycles-compat@^3.0.4:
   resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
   integrity sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==
 
-react-map-gl@^5.0.3:
-  version "5.3.10"
-  resolved "https://registry.yarnpkg.com/react-map-gl/-/react-map-gl-5.3.10.tgz#2f385dcde5f5a8b86bd7da9ec456ad3be0e5d174"
-  integrity sha512-mcTS7dZnpingmR4k5xPBbux7iWm3rDdmSKwjp8HwfT1vNKSVXBAyhf8r1rPk8xNWjSyWwqwBsoz5K7F5/2oiUg==
+react-map-gl@7.0.25:
+  version "7.0.25"
+  resolved "https://registry.yarnpkg.com/react-map-gl/-/react-map-gl-7.0.25.tgz#60b7577cd1821efe3f1bc1e42225d10e006e152a"
+  integrity sha512-8aZfbDKxVcJnmTEC1eQ00VnTOu722i5wqnx+lV8VHN37ZvWEfMgb84EQ2kW6w/Q3zq6oZqP4helF7u4ydPFLtA==
   dependencies:
-    "@babel/runtime" "^7.0.0"
-    "@types/geojson" "^7946.0.7"
-    "@types/mapbox-gl" "^2.0.3"
-    mapbox-gl "^1.0.0"
-    mjolnir.js "^2.5.0"
-    prop-types "^15.7.2"
-    resize-observer-polyfill "^1.5.1"
-    viewport-mercator-project "^6.2.3 || ^7.0.2"
+    "@types/mapbox-gl" "^2.6.0"
 
 react-map-gl@^5.2.10:
   version "5.3.19"
@@ -17589,13 +17581,6 @@ viewport-mercator-project@^6.0.0:
   dependencies:
     "@babel/runtime" "^7.0.0"
     gl-matrix "^3.0.0"
-
-"viewport-mercator-project@^6.2.3 || ^7.0.2":
-  version "7.0.2"
-  resolved "https://registry.yarnpkg.com/viewport-mercator-project/-/viewport-mercator-project-7.0.2.tgz#8b37ae5614be139010631fde14d1583cf742abaf"
-  integrity sha512-gH0pBO4Y5McGCPaKulkpL9MPDg+wtOSXtndwh0467T/WLMerfBi7EkHYw1pp9HE2VeqFqUaAfot98cQPGaIjEA==
-  dependencies:
-    "@math.gl/web-mercator" "^3.2.0"
 
 vinyl-fs@^3.0.2:
   version "3.0.3"

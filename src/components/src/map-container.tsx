@@ -21,12 +21,13 @@
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {StaticMap, MapRef} from 'react-map-gl';
+import {Map, MapRef} from 'react-map-gl';
 import {PickInfo} from '@deck.gl/core/lib/deck';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
 import mapboxgl from 'mapbox-gl';
 import {useDroppable} from '@dnd-kit/core';
+import debounce from 'lodash.debounce';
 
 import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actions';
 
@@ -76,6 +77,9 @@ import {
   EMPTY_MAPBOX_STYLE
 } from '@kepler.gl/constants';
 
+// Contexts
+import {MapViewStateContext} from './map-view-state-context';
+
 import ErrorBoundary from './common/error-boundary';
 import {DatasetAttribution} from './types';
 import {LOCALE_CODES} from '@kepler.gl/localization';
@@ -91,6 +95,12 @@ import {
 } from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
 
+// Debounce the propagation of viewport change and mouse moves to redux store.
+// This is to avoid too many renders of other components when the map is
+// being panned/zoomed (leading to laggy basemap/deck syncing).
+const DEBOUNCE_VIEWPORT_PROPAGATE = 10;
+const DEBOUNCE_MOUSE_MOVE_PROPAGATE = 10;
+
 /** @type {{[key: string]: React.CSSProperties}} */
 const MAP_STYLE: {[key: string]: React.CSSProperties} = {
   container: {
@@ -101,10 +111,10 @@ const MAP_STYLE: {[key: string]: React.CSSProperties} = {
   },
   top: {
     position: 'absolute',
-    top: '0px',
-    pointerEvents: 'none',
+    top: 0,
     width: '100%',
-    height: '100%'
+    height: '100%',
+    pointerEvents: 'none'
   }
 };
 
@@ -116,9 +126,12 @@ interface StyledMapContainerProps {
 
 const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
   ({mixBlendMode = 'normal'}) => `
-  .overlays {
+  #default-deckgl-overlay {
     mix-blend-mode: ${mixBlendMode};
   };
+  *[mapboxgl-children] {
+    position: absolute;
+  }
 `
 );
 
@@ -295,7 +308,7 @@ export interface MapContainerProps {
   locale?: any;
   theme?: any;
   editor?: any;
-  MapComponent?: typeof StaticMap;
+  MapComponent?: typeof Map;
   deckGlProps?: any;
   onDeckInitialized?: (a: any, b: any) => void;
   onViewStateChange?: (viewport: Viewport) => void;
@@ -326,8 +339,13 @@ export default function MapContainerFactory(
 ): React.ComponentType<MapContainerProps> {
   class MapContainer extends Component<MapContainerProps> {
     displayName = 'MapContainer';
+
+    static contextType = MapViewStateContext;
+
+    declare context: React.ContextType<typeof MapViewStateContext>;
+
     static defaultProps = {
-      MapComponent: StaticMap,
+      MapComponent: Map,
       deckGlProps: {},
       index: 0,
       primary: true
@@ -490,6 +508,7 @@ export default function MapContainerFactory(
 
     _setMapboxMap: React.Ref<MapRef> = mapbox => {
       if (!this._map && mapbox) {
+        // @ts-expect-error react-map-gl.Map vs mapbox-gl.Map ?
         this._map = mapbox.getMap();
         // i noticed in certain context we don't access the actual map element
         if (!this._map) {
@@ -667,9 +686,13 @@ export default function MapContainerFactory(
       return screenCoord && {x: screenCoord[0], y: screenCoord[1]};
     }
 
-    _renderDeckOverlay(layersForDeck, options = {primaryMap: false}) {
+    _renderDeckOverlay(
+      layersForDeck,
+      options: {primaryMap: boolean; isInteractive?: boolean; children?: React.ReactNode} = {
+        primaryMap: false
+      }
+    ) {
       const {
-        mapState,
         mapStyle,
         visState,
         visStateActions,
@@ -685,14 +708,15 @@ export default function MapContainerFactory(
       } = this.props;
 
       const {hoverInfo, editor} = visState;
-      const {primaryMap} = options;
+      const {primaryMap, isInteractive, children} = options;
 
       // disable double click zoom when editor is in any draw mode
       const {mapDraw} = mapControls;
       const {active: editorMenuActive = false} = mapDraw || {};
       const isEditorDrawingMode = EditorLayerUtils.isDrawingActive(editorMenuActive, editor.mode);
 
-      const viewport = getViewportFromMapState(mapState);
+      const internalViewState = this.context?.getInternalViewState(index);
+      const viewport = getViewportFromMapState(internalViewState);
 
       const editorFeatureSelectedIndex = this.selectedPolygonIndexSelector(this.props);
 
@@ -702,7 +726,7 @@ export default function MapContainerFactory(
       const deckGlLayers = generateDeckGLLayersMethod(
         {
           visState,
-          mapState,
+          mapState: internalViewState,
           mapStyle
         },
         {
@@ -779,15 +803,16 @@ export default function MapContainerFactory(
 
       return (
         <div
-          onMouseMove={
-            primaryMap
-              ? event => {
-                  onMouseMove?.(event);
-                  // @ts-expect-error should be deck viewport
-                  this.props.visStateActions.onMouseMove(normalizeEvent(event, viewport));
-                }
-              : undefined
-          }
+          {...(isInteractive
+            ? {
+                onMouseMove: primaryMap
+                  ? event => {
+                      onMouseMove?.(event);
+                      this._onMouseMoveDebounced(event, viewport);
+                    }
+                  : undefined
+              }
+            : {style: {pointerEvents: 'none'}})}
         >
           <DeckGL
             id="default-deckgl-overlay"
@@ -797,26 +822,32 @@ export default function MapContainerFactory(
               }
             }}
             {...allDeckGlProps}
-            controller={{doubleClickZoom: !isEditorDrawingMode}}
-            viewState={mapState}
+            controller={
+              isInteractive
+                ? {
+                    doubleClickZoom: !isEditorDrawingMode,
+                    dragRotate: this.props.mapState.dragRotate
+                  }
+                : false
+            }
+            initialViewState={internalViewState}
             onBeforeRender={this._onBeforeRender}
-            onViewStateChange={this._onViewportChange}
+            onViewStateChange={isInteractive ? this._onViewportChange : undefined}
             {...extraDeckParams}
-            onHover={(data, event) => {
-              const res = EditorLayerUtils.onHover(data, {
-                editorMenuActive,
-                editor,
-                hoverInfo
-              });
-              if (res) return;
+            onHover={
+              isInteractive
+                ? (data, event) => {
+                    const res = EditorLayerUtils.onHover(data, {
+                      editorMenuActive,
+                      editor,
+                      hoverInfo
+                    });
+                    if (res) return;
 
-              // add `mapIndex` property which will end up in the the `hoverInfo` object of `visState`
-              // this is for limiting the display of the `<MapPopover>` to the `<MapContainer>` the user is interacting with
-              // @ts-ignore (does not fail with local yarn-test)
-              data.mapIndex = index;
-
-              visStateActions.onLayerHover(data);
-            }}
+                    this._onLayerHoverDebounced(data, index, event);
+                  }
+                : null
+            }
             onClick={(data, event) => {
               // @ts-ignore
               normalizeEvent(event.srcEvent, viewport);
@@ -845,7 +876,9 @@ export default function MapContainerFactory(
                 deckRenderCallbacks.onDeckAfterRender(allDeckGlProps);
               }
             }}
-          />
+          >
+            {children}
+          </DeckGL>
         </div>
       );
     }
@@ -866,13 +899,8 @@ export default function MapContainerFactory(
         this._updateMapboxLayers();
       }
     }
-
-    _onViewportChange = ({viewState}) => {
-      if (this.props.isExport) {
-        // Image export map shouldn't be interactive (otherwise this callback can
-        // lead to inadvertent changes to the state of the main map)
-        return;
-      }
+    _onViewportChangePropagateDebounced = debounce(() => {
+      const viewState = this.context?.getInternalViewState(this.props.index);
       onViewPortChange(
         viewState,
         this.props.mapStateActions.updateMap,
@@ -880,7 +908,33 @@ export default function MapContainerFactory(
         this.props.primary,
         this.props.index
       );
+    }, DEBOUNCE_VIEWPORT_PROPAGATE);
+
+    _onViewportChange = viewport => {
+      const {viewState} = viewport;
+      if (this.props.isExport) {
+        // Image export map shouldn't be interactive (otherwise this callback can
+        // lead to inadvertent changes to the state of the main map)
+        return;
+      }
+      const {setInternalViewState} = this.context;
+      setInternalViewState(viewState, this.props.index);
+      this._onViewportChangePropagateDebounced();
     };
+
+    _onLayerHoverDebounced = debounce((data, index, event) => {
+      // add `mapIndex` property which will end up in the the `hoverInfo` object of `visState`
+      // this is for limiting the display of the `<MapPopover>` to the `<MapContainer>` the user is interacting with
+      // TODO this should be part of onLayerHover arguments, investigate
+      // @ts-ignore (does not fail with local yarn-test)
+      data.mapIndex = index;
+
+      this.props.visStateActions.onLayerHover(data);
+    }, DEBOUNCE_MOUSE_MOVE_PROPAGATE);
+
+    _onMouseMoveDebounced = debounce((event, viewport) => {
+      this.props.visStateActions.onMouseMove(normalizeEvent(event, viewport));
+    }, DEBOUNCE_MOUSE_MOVE_PROPAGATE);
 
     _toggleMapControl = panelId => {
       const {index, uiStateActions} = this.props;
@@ -895,7 +949,7 @@ export default function MapContainerFactory(
         mapState,
         mapStyle,
         mapStateActions,
-        MapComponent = StaticMap,
+        MapComponent = Map,
         mapboxApiAccessToken,
         mapboxApiUrl,
         mapControls,
@@ -919,10 +973,9 @@ export default function MapContainerFactory(
 
       // Current style can be a custom style, from which we pull the mapbox API acccess token
       const currentStyle = mapStyle.mapStyles?.[mapStyle.styleType];
+      const internalViewState = this.context?.getInternalViewState(index);
       const mapProps = {
-        ...mapState,
-        width: '100%',
-        height: '100%',
+        ...internalViewState,
         preserveDrawingBuffer: true,
         mapboxApiAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         mapboxApiUrl,
@@ -932,8 +985,20 @@ export default function MapContainerFactory(
       const hasGeocoderLayer = Boolean(layers.find(l => l.id === GEOCODER_LAYER_ID));
       const isSplit = Boolean(mapState.isSplit);
 
-      const deckOverlay = this._renderDeckOverlay(layersForDeck, {primaryMap: true});
-      if (!deckOverlay) {
+      const deck = this._renderDeckOverlay(layersForDeck, {
+        primaryMap: true,
+        isInteractive: true,
+        children: (
+          <MapComponent
+            key="bottom"
+            {...mapProps}
+            mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
+            {...bottomMapContainerProps}
+            ref={this._setMapboxMap}
+          />
+        )
+      });
+      if (!deck) {
         // deckOverlay can be null if onDeckRender returns null
         // in this case we don't want to render the map
         return null;
@@ -972,49 +1037,42 @@ export default function MapContainerFactory(
             mapHeight={mapState.height}
           />
           {isSplitSelector(this.props) && <Droppable containerId={containerId} />}
-          {/* 
-          // @ts-ignore */}
-          <MapComponent
-            key="bottom"
-            {...mapProps}
-            mapStyle={mapStyle.bottomMapStyle ?? EMPTY_MAPBOX_STYLE}
-            {...bottomMapContainerProps}
-            ref={this._setMapboxMap}
-          >
-            {deckOverlay}
-            {this._renderMapboxOverlays()}
-            <Editor
-              index={index || 0}
-              datasets={datasets}
-              editor={editor}
-              filters={this.polygonFiltersSelector(this.props)}
-              layers={layers}
-              onDeleteFeature={visStateActions.deleteFeature}
-              onSelect={visStateActions.setSelectedFeature}
-              onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
-              onSetEditorMode={visStateActions.setEditorMode}
-              style={{
-                pointerEvents: 'all',
-                position: 'absolute',
-                display: editor.visible ? 'block' : 'none'
-              }}
+
+          {deck}
+          {this._renderMapboxOverlays()}
+          <Editor
+            index={index || 0}
+            datasets={datasets}
+            editor={editor}
+            filters={this.polygonFiltersSelector(this.props)}
+            layers={layers}
+            onDeleteFeature={visStateActions.deleteFeature}
+            onSelect={visStateActions.setSelectedFeature}
+            onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
+            onSetEditorMode={visStateActions.setEditorMode}
+            style={{
+              pointerEvents: 'all',
+              position: 'absolute',
+              display: editor.visible ? 'block' : 'none'
+            }}
+          />
+          {this.props.children}
+          {mapStyle.topMapStyle ? (
+            <MapComponent
+              key="top"
+              viewState={internalViewState}
+              mapStyle={mapStyle.topMapStyle}
+              style={MAP_STYLE.top}
+              {...topMapContainerProps}
             />
-            {this.props.children}
-          </MapComponent>
-          {mapStyle.topMapStyle || hasGeocoderLayer ? (
-            <div style={MAP_STYLE.top}>
-              {/* 
-              // @ts-ignore */}
-              <MapComponent
-                key="top"
-                {...mapProps}
-                mapStyle={mapStyle.topMapStyle}
-                {...topMapContainerProps}
-              >
-                {this._renderDeckOverlay({[GEOCODER_LAYER_ID]: hasGeocoderLayer})}
-              </MapComponent>
-            </div>
           ) : null}
+
+          {hasGeocoderLayer
+            ? this._renderDeckOverlay(
+                {[GEOCODER_LAYER_ID]: hasGeocoderLayer},
+                {primaryMap: false, isInteractive: false}
+              )
+            : null}
           {this._renderMapPopover()}
           {this.props.primary ? (
             <Attribution
