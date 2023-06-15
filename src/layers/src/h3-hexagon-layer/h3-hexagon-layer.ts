@@ -67,6 +67,7 @@ export type HexagonIdLayerColumnsConfig = {
 
 export type HexagonIdLayerVisConfigSettings = {
   opacity: VisConfigNumber;
+  strokeOpacity: VisConfigNumber;
   colorRange: VisConfigColorRange;
   coverage: VisConfigNumber;
   enable3d: VisConfigBoolean;

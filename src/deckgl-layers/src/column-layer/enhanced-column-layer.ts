@@ -89,6 +89,7 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
       angle: (angle / 180) * Math.PI,
       offset,
       extruded,
+      stroked,
       coverage,
       elevationScale,
       edgeDistance,
