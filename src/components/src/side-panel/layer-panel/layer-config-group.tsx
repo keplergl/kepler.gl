@@ -91,9 +91,13 @@ export const StyledLayerConfigGroup = styled.div`
   }
 `;
 
+interface StyledConfigGroupHeaderProps {
+  collapsible?: boolean;
+}
+
 export const StyledConfigGroupHeader = styled.div.attrs({
   className: 'layer-config-group__header'
-})`
+})<StyledConfigGroupHeaderProps>`
   display: flex;
   align-items: center;
   justify-content: space-between;
