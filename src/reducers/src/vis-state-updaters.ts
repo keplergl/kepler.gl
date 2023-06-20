@@ -937,7 +937,7 @@ export const addFilterUpdater = (
     ? state
     : {
         ...state,
-        filters: [...state.filters, getDefaultFilter(action.dataId)]
+        filters: [...state.filters, getDefaultFilter({dataId: action.dataId, id: action.id})]
       };
 
 /**

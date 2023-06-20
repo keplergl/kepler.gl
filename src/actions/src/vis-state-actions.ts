@@ -367,20 +367,24 @@ export function setFilterAnimationWindow({
 
 export type AddFilterUpdaterAction = {
   dataId?: string | string[] | null;
+  id?: string;
 };
 /**
  * Add a new filter
  * @memberof visStateActions
  * @param dataId - dataset `id` this new filter is associated with
+ * @param id - `id` for the new filter
  * @returns action
  * @public
  */
 export function addFilter(
-  dataId: string | null
+  dataId: string | null,
+  id?: string
 ): Merge<AddFilterUpdaterAction, {type: typeof ActionTypes.ADD_FILTER}> {
   return {
     type: ActionTypes.ADD_FILTER,
-    dataId
+    dataId,
+    id
   };
 }
 

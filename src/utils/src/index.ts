@@ -100,7 +100,7 @@ export {snapToMarks} from './plot';
 export {transformRequest, isStyleUsingMapboxTiles} from './map-style-utils/mapbox-utils';
 
 // Map
-export {onViewPortChange, getMapLayersFromSplitMaps, getViewportFromMapState} from './map-utils';
+export * from './map-utils';
 
 export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData} from './data-container-utils';
 export type {DataContainerInterface} from './data-container-interface';

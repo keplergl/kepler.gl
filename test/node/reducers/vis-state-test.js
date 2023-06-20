@@ -256,7 +256,7 @@ test('#visStateReducer', t => {
 
 test('#visStateReducer -> ADD_FILTER', t => {
   const dataId = 'kitten';
-  const newFilter = getDefaultFilter(dataId);
+  const newFilter = getDefaultFilter({dataId});
   const newReducer = reducer({filters: [mockFilter]}, VisStateActions.addFilter(dataId));
 
   const expectedReducer = {filters: [mockFilter, newFilter]};
@@ -2290,7 +2290,7 @@ test('#visStateReducer -> SET_FILTER.dataId', t => {
 
   let newFilter = newState.filters[1];
   let expectedFilter = {
-    ...getDefaultFilter(testCsvDataId),
+    ...getDefaultFilter({dataId: testCsvDataId}),
     id: newFilter.id
   };
 
@@ -2302,7 +2302,7 @@ test('#visStateReducer -> SET_FILTER.dataId', t => {
   newFilter = newState.filters[1];
 
   expectedFilter = {
-    ...getDefaultFilter(testCsvDataId),
+    ...getDefaultFilter({dataId: testCsvDataId}),
     id: newFilter.id
   };
 
@@ -2750,7 +2750,7 @@ test('#visStateReducer -> SET_FILTER_PLOT', t => {
   );
 
   const expectedFilterWName = {
-    ...getDefaultFilter('smoothie'),
+    ...getDefaultFilter({dataId: 'smoothie'}),
     freeze: true,
     fixedDomain: true,
     id: filterId,

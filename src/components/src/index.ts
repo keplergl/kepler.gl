@@ -93,6 +93,7 @@ export {default as AddLayerButtonFactory} from './side-panel/layer-panel/add-lay
 export {default as LayerListFactory} from './side-panel/layer-panel/layer-list';
 export {default as CustomPicker} from './side-panel/layer-panel/custom-picker';
 export {default as CustomPalette} from './side-panel/layer-panel/custom-palette';
+export * from './side-panel/layer-panel/custom-palette';
 
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
@@ -204,6 +205,7 @@ export {default as FileUploadFactory, FileUpload, WarningMsg} from './common/fil
 export {default as FileDrop} from './common/file-uploader/file-drop';
 export {default as UploadButton} from './common/file-uploader/upload-button';
 export {default as DatasetLabel} from './common/dataset-label';
+export {default as Accessor} from './common/item-selector/accessor';
 export {default as ChickletedInput, ChickletButton} from './common/item-selector/chickleted-input';
 export {default as ItemSelector} from './common/item-selector/item-selector';
 export {default as Typeahead} from './common/item-selector/typeahead';
