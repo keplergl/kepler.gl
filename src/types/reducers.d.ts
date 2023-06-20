@@ -197,6 +197,10 @@ export type SplitMapLayers = {[key: string]: boolean};
 export type SplitMap = {
   layers: SplitMapLayers;
 };
+
+/** See "Locale aware formats" at https://momentjs.com/docs/#/parsing/string-format/ */
+export type AnimationConfigTimeFormat = 'L' | 'L LT' | 'L LTS';
+
 export type AnimationConfig = {
   domain: number[] | null;
   currentTime: number | null;
@@ -205,9 +209,9 @@ export type AnimationConfig = {
   isAnimating?: boolean;
   timeSteps?: null | number[];
   // auto generated based on time domain
-  defaultTimeFormat?: string | null;
+  defaultTimeFormat: AnimationTimeFormat | null;
   // custom ui input
-  timeFormat?: string | null;
+  timeFormat?: AnimationTimeFormat | null;
   // custom ui input
   timezone?: string | null;
   // hide or show control
