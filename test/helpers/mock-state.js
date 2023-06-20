@@ -429,10 +429,11 @@ export function mockStateWithLayerDimensions(state) {
   return resultState;
 }
 
-function mockStateWithCustomMapStyle() {
+function mockStateWithCustomMapStyle(customType = 'LOCAL') {
   const initialState = cloneDeep(InitialState);
   const testCustomMapStyle = {
     ...getInitialInputStyle(),
+    id: 'smoothie_the_cat',
     accessToken: 'secret_token',
     isValid: true,
     label: 'Smoothie the Cat',
@@ -442,7 +443,10 @@ function mockStateWithCustomMapStyle() {
       layers: [{id: 'background'}, {id: 'road'}, {id: 'label'}],
       name: 'Smoothie the Cat'
     },
-    url: 'mapbox://styles/shanhe/smoothie.the.cat'
+    url: 'mapbox://styles/shanhe/smoothie.the.cat',
+    icon:
+      'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+    custom: customType
   };
 
   // add custom map style
@@ -879,7 +883,9 @@ export const StateWFilters = mockStateWithFilters();
 export const StateWFilesFiltersLayerColor = mockStateWithLayerDimensions(StateWFilters);
 export const StateWMultiFilters = mockStateWithMultiFilters();
 
-export const StateWCustomMapStyle = mockStateWithCustomMapStyle();
+export const StateWCustomMapStyleLegacy = mockStateWithCustomMapStyle(true);
+export const StateWCustomMapStyleLocal = mockStateWithCustomMapStyle('LOCAL');
+export const StateWCustomMapStyleManaged = mockStateWithCustomMapStyle('MANAGED');
 export const StateWSplitMaps = mockStateWithSplitMaps();
 export const StateWTrips = mockStateWithTripData();
 export const StateWTripGeojson = mockStateWithTripGeojson();

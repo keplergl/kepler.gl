@@ -28,13 +28,16 @@ import {
   PanelHeaderContent,
   PanelHeaderTitle,
   PanelLabel,
-  StyledPanelHeader
+  StyledPanelHeader,
+  StyledPanelHeaderProps
 } from '../../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {MapStyle} from '@kepler.gl/reducers';
 import {BaseProps} from '../../common/icons';
 
-const StyledMapDropdown = styled(StyledPanelHeader)`
+type StyledMapDropdownProps = StyledPanelHeaderProps & {hasCallout: boolean};
+
+const StyledMapDropdown = styled(StyledPanelHeader)<StyledMapDropdownProps>`
   height: 48px;
   margin-bottom: 5px;
   opacity: 1;
@@ -60,6 +63,15 @@ const StyledMapDropdown = styled(StyledPanelHeader)`
     border-radius: 3px;
     height: 30px;
     width: 40px;
+  }
+
+  /* show callout dot if props.hasCallout and theme provides calloutDot base styles */
+  :after {
+    ${({theme}) => theme.calloutDot}
+    background-color: #00ACF5;
+    top: 12px;
+    left: 15px;
+    display: ${({theme, hasCallout}) => (theme.calloutDot && hasCallout ? 'block' : 'none')};
   }
 `;
 
@@ -95,6 +107,7 @@ function MapStyleSelectorFactory(PanelHeaderAction: ReturnType<typeof PanelHeade
           })}
           key={op}
           onClick={isSelecting ? () => onChange(op) : toggleActive}
+          hasCallout={Boolean(mapStyle.mapStyles[op].custom)}
         >
           <PanelHeaderContent className="map-title-block">
             <img className="map-preview" src={mapStyle.mapStyles[op].icon} />

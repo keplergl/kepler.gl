@@ -38,7 +38,11 @@ import SchemaManager from '@kepler.gl/schemas';
 import {DEFAULT_MAP_STYLES, DEFAULT_MAPBOX_API_URL, NO_MAP_ID} from '@kepler.gl/constants';
 
 // helpers
-import {StateWCustomMapStyle} from 'test/helpers/mock-state';
+import {
+  StateWCustomMapStyleLegacy,
+  StateWCustomMapStyleLocal,
+  StateWCustomMapStyleManaged
+} from 'test/helpers/mock-state';
 import {MOCK_MAP_STYLE, MOCK_MAP_STYLE_LIGHT} from 'test/helpers/mock-map-styles';
 
 const InitialMapStyle = reducer(undefined, {});
@@ -189,13 +193,291 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES ->  mapStylesReplaceDefault: tr
   t.end();
 });
 
-test('#mapStyleReducer -> RECEIVE_MAP_CONFIG', t => {
+test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
+  drainTasksForTesting();
   const stateWithToken = reducer(
     InitialMapStyle,
     keplerGlInit({mapboxApiAccessToken: 'smoothies_secret_token'})
   );
 
-  const stateToSave = StateWCustomMapStyle;
+  const stateToSave = StateWCustomMapStyleLocal;
+
+  // save state
+  const savedState = SchemaManager.getConfigToSave(stateToSave);
+
+  // load state
+  const stateLoaded = SchemaManager.parseSavedConfig(savedState);
+
+  const tmpStateWithConfig = reducer(stateWithToken, receiveMapConfig(stateLoaded));
+
+  const defaultMapStyles = DEFAULT_MAP_STYLES.reduce(
+    (accu, st) => ({
+      ...accu,
+      [st.id]: st
+    }),
+    {}
+  );
+
+  const expectedStateWithConfig = {
+    styleType: 'smoothie_the_cat',
+    visibleLayerGroups: {label: true, road: true},
+    topLayerGroups: {},
+    mapStyles: {
+      smoothie_the_cat: {
+        accessToken: 'secret_token',
+        custom: 'LOCAL',
+        icon:
+          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+        id: 'smoothie_the_cat',
+        label: 'Smoothie the Cat',
+        url: 'mapbox://styles/shanhe/smoothie.the.cat'
+      },
+      ...defaultMapStyles
+    },
+    isLoading: {
+      smoothie_the_cat: true
+    },
+    mapboxApiAccessToken: 'smoothies_secret_token',
+    mapboxApiUrl: DEFAULT_MAPBOX_API_URL,
+    mapStylesReplaceDefault: false,
+    inputStyle: getInitialInputStyle(),
+    threeDBuildingColor: [1, 2, 3],
+    custom3DBuildingColor: true,
+    backgroundColor: [255, 255, 255],
+    initialState: {},
+    bottomMapStyle: undefined,
+    topMapStyle: undefined
+  };
+
+  t.deepEqual(tmpStateWithConfig, expectedStateWithConfig, 'should load saved map style config');
+  Object.keys(tmpStateWithConfig).forEach(key => {
+    t.deepEqual(
+      tmpStateWithConfig[key],
+      expectedStateWithConfig[key],
+      'should load saved map style config'
+    );
+  });
+  const [actionTask1, ...more1] = drainTasksForTesting();
+  t.equal(more1.length, 0, 'should return 1 tasks');
+
+  const expectedTask = {
+    payload: [
+      {
+        id: 'smoothie_the_cat',
+        url:
+          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat?pluginName=Keplergl&access_token=secret_token'
+      }
+    ]
+  };
+
+  t.deepEqual(actionTask1.payload, expectedTask.payload, 'should create task to load map styles');
+
+  const resultState1 = reducer(
+    tmpStateWithConfig,
+    succeedTaskWithValues(actionTask1, [
+      {id: 'smoothie_the_cat', style: {layers: [], name: 'smoothie_the_cat'}}
+    ])
+  );
+
+  const expectedMapStyles = {
+    smoothie_the_cat: {
+      accessToken: 'secret_token',
+      custom: 'LOCAL',
+      icon:
+        'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+      id: 'smoothie_the_cat',
+      label: 'Smoothie the Cat',
+      url: 'mapbox://styles/shanhe/smoothie.the.cat',
+      style: {layers: [], name: 'smoothie_the_cat'},
+      layerGroups: []
+    },
+    ...defaultMapStyles
+  };
+
+  const expectedMapStyleState = {
+    styleType: 'smoothie_the_cat',
+    visibleLayerGroups: {},
+    topLayerGroups: {},
+    mapStyles: expectedMapStyles,
+    mapboxApiAccessToken: 'smoothies_secret_token',
+    mapboxApiUrl: DEFAULT_MAPBOX_API_URL,
+    mapStylesReplaceDefault: false,
+    inputStyle: getInitialInputStyle(),
+    threeDBuildingColor: [1, 2, 3],
+    custom3DBuildingColor: true,
+    backgroundColor: [255, 255, 255],
+    initialState: {},
+    bottomMapStyle: {layers: [], name: 'smoothie_the_cat'},
+    topMapStyle: null,
+    editable: 0,
+    isLoading: {
+      smoothie_the_cat: false
+    }
+  };
+
+  t.deepEqual(
+    Object.keys(resultState1).sort(),
+    Object.keys(expectedMapStyleState).sort(),
+    'mapStyle state should have same keys'
+  );
+
+  Object.keys(resultState1).forEach(key => {
+    t.deepEqual(
+      resultState1[key],
+      expectedMapStyleState[key],
+      `should update state,${key} with loaded map styles`
+    );
+  });
+
+  const savedConfig = SchemaManager.getConfigToSave({mapStyle: resultState1});
+  const expectedSaved = {
+    version: 'v1',
+    config: {
+      mapStyle: {
+        styleType: 'smoothie_the_cat',
+        topLayerGroups: {},
+        visibleLayerGroups: {},
+        threeDBuildingColor: [1, 2, 3],
+        backgroundColor: [255, 255, 255],
+        mapStyles: {
+          smoothie_the_cat: {
+            accessToken: 'secret_token',
+            custom: 'LOCAL',
+            icon:
+              'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+            id: 'smoothie_the_cat',
+            label: 'Smoothie the Cat',
+            url: 'mapbox://styles/shanhe/smoothie.the.cat'
+          }
+        }
+      }
+    }
+  };
+
+  t.deepEqual(
+    Object.keys(savedConfig).sort(),
+    Object.keys(expectedSaved).sort(),
+    'mapStyle state saved should have same keys'
+  );
+
+  Object.keys(savedConfig).forEach(key => {
+    t.deepEqual(savedConfig[key], expectedSaved[key], `should save state.${key} with correctly`);
+  });
+
+  t.end();
+});
+
+test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'MANAGED')", t => {
+  drainTasksForTesting();
+  const stateWithToken = reducer(
+    InitialMapStyle,
+    keplerGlInit({mapboxApiAccessToken: 'smoothies_secret_token'})
+  );
+
+  const stateToSave = StateWCustomMapStyleManaged;
+
+  // save state
+  const savedState = SchemaManager.getConfigToSave(stateToSave);
+
+  // load state
+  const stateLoaded = SchemaManager.parseSavedConfig(savedState);
+
+  const tmpStateWithConfig = reducer(stateWithToken, receiveMapConfig(stateLoaded));
+
+  const defaultMapStyles = DEFAULT_MAP_STYLES.reduce(
+    (accu, st) => ({
+      ...accu,
+      [st.id]: st
+    }),
+    {}
+  );
+
+  const expectedStateWithConfig = {
+    styleType: 'smoothie_the_cat',
+    visibleLayerGroups: {label: true, road: true},
+    topLayerGroups: {},
+    mapStyles: {
+      smoothie_the_cat: {
+        accessToken: 'secret_token',
+        custom: 'MANAGED',
+        icon:
+          'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+        id: 'smoothie_the_cat',
+        label: 'Smoothie the Cat',
+        url: 'mapbox://styles/shanhe/smoothie.the.cat'
+      },
+      ...defaultMapStyles
+    },
+    isLoading: {
+      smoothie_the_cat: true
+    },
+    mapboxApiAccessToken: 'smoothies_secret_token',
+    mapboxApiUrl: DEFAULT_MAPBOX_API_URL,
+    mapStylesReplaceDefault: false,
+    inputStyle: getInitialInputStyle(),
+    threeDBuildingColor: [1, 2, 3],
+    custom3DBuildingColor: true,
+    backgroundColor: [255, 255, 255],
+    initialState: {},
+    bottomMapStyle: undefined,
+    topMapStyle: undefined
+  };
+
+  t.deepEqual(tmpStateWithConfig, expectedStateWithConfig, 'should load saved map style config');
+  Object.keys(tmpStateWithConfig).forEach(key => {
+    t.deepEqual(
+      tmpStateWithConfig[key],
+      expectedStateWithConfig[key],
+      'should load saved map style config'
+    );
+  });
+
+  const savedConfig = SchemaManager.getConfigToSave({mapStyle: stateToSave.mapStyle});
+  const expectedSaved = {
+    version: 'v1',
+    config: {
+      mapStyle: {
+        styleType: 'smoothie_the_cat',
+        topLayerGroups: {},
+        visibleLayerGroups: {label: true, road: true},
+        threeDBuildingColor: [1, 2, 3],
+        backgroundColor: [255, 255, 255],
+        mapStyles: {
+          smoothie_the_cat: {
+            accessToken: 'secret_token',
+            custom: 'MANAGED',
+            icon:
+              'https://api.mapbox.com/styles/v1/shanhe/smoothie.the.cat/static/-122.3391,37.7922,9,0,0/400x300?access_token=secret_token&logo=false&attribution=false',
+            id: 'smoothie_the_cat',
+            label: 'Smoothie the Cat',
+            url: 'mapbox://styles/shanhe/smoothie.the.cat'
+          }
+        }
+      }
+    }
+  };
+
+  t.deepEqual(
+    savedConfig.mapStyles,
+    expectedSaved.mapStyles,
+    'mapStyle state saved should have same keys in mapStyle.mapStyles'
+  );
+
+  Object.keys(savedConfig).forEach(key => {
+    t.deepEqual(savedConfig[key], expectedSaved[key], `should save state.${key} with correctly`);
+  });
+
+  t.end();
+});
+
+test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards support))', t => {
+  drainTasksForTesting();
+  const stateWithToken = reducer(
+    InitialMapStyle,
+    keplerGlInit({mapboxApiAccessToken: 'smoothies_secret_token'})
+  );
+
+  const stateToSave = StateWCustomMapStyleLegacy;
 
   // save state
   const savedState = SchemaManager.getConfigToSave(stateToSave);

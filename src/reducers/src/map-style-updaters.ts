@@ -422,8 +422,16 @@ export const mapStyleChangeUpdater = (
   state: MapStyle,
   {payload: {styleType, onSuccess}}: MapStyleActions.MapStyleChangeUpdaterAction
 ): MapStyle => {
-  if (!state.mapStyles[styleType]) {
+  if (
     // we might not have received the style yet
+    !state.mapStyles[styleType] ||
+    // or if it is a managed custom style asset
+    // and if it has not been hydrated with URL info yet (during app first initialization)
+    // and it does not have a style object (during adding a custom style)
+    (state.mapStyles[styleType]?.custom === 'MANAGED' &&
+      !state.mapStyles[styleType]?.url &&
+      !hasStyleObject(state.mapStyles[styleType]))
+  ) {
     return state;
   }
 
@@ -673,18 +681,21 @@ export const loadCustomMapStyleUpdater = (
     // style json and icon will load asynchronously
     ...(style
       ? {
-          // @ts-expect-error
-          id: style.id || generateHashId(),
+          id:
+            state.inputStyle.custom === 'MANAGED'
+              ? state.inputStyle.id // custom MANAGED type
+              : // @ts-expect-error
+                style.id || generateHashId(), // custom LOCAL type
           // make a copy of the style object
           style: cloneDeep(style),
           // @ts-expect-error
-          label: style.name,
+          label: state.inputStyle.label || style.name,
           // gathering layer group info from style json
           layerGroups: getLayerGroupsFromStyle(style)
         }
       : {}),
     ...(icon ? {icon} : {}),
-    ...(error !== undefined ? {error} : {})
+    ...(error ? {error} : {})
   }
 });
 
@@ -702,15 +713,21 @@ export const inputMapStyleUpdater = (
     ...inputStyle
   };
 
-  const isValid = isValidStyleUrl(updated.url);
-  const icon = isValid
-    ? getStyleImageIcon({
-        mapState,
-        styleUrl: updated.url || '',
-        mapboxApiAccessToken: updated.accessToken || state.mapboxApiAccessToken || '',
-        mapboxApiUrl: state.mapboxApiUrl || DEFAULT_MAPBOX_API_URL
-      })
-    : state.inputStyle.icon;
+  // differentiate between either a url to hosted style json that needs an icon url,
+  // or an icon already available client-side as a data uri
+  const isValidUrl = isValidStyleUrl(updated.url);
+  const isUpdatedIconDataUri = updated.icon?.startsWith('data:image');
+  const isValid = isValidUrl || Boolean(updated.uploadedFile);
+
+  const icon =
+    isValidUrl && !isUpdatedIconDataUri
+      ? getStyleImageIcon({
+          mapState,
+          styleUrl: updated.url || '',
+          mapboxApiAccessToken: updated.accessToken || state.mapboxApiAccessToken || '',
+          mapboxApiUrl: state.mapboxApiUrl || DEFAULT_MAPBOX_API_URL
+        })
+      : updated.icon;
 
   return {
     ...state,
@@ -729,10 +746,12 @@ export const inputMapStyleUpdater = (
  * @memberof mapStyleUpdaters
  */
 export const addCustomMapStyleUpdater = (state: MapStyle): MapStyle => {
-  // @ts-expect-error
   const styleId = state.inputStyle.id;
-  const newState = {
+  if (!styleId) return state;
+
+  const newState: MapStyle = {
     ...state,
+    // @ts-expect-error Property 'layerGroups' is missing in type 'InputStyle' but required in type 'BaseMapStyle'. Legacy case?
     mapStyles: {
       ...state.mapStyles,
       [styleId]: state.inputStyle
@@ -773,8 +792,9 @@ export const setBackgroundColorUpdater = (
  * Return the initial input style
  * @return Object
  */
-export function getInitialInputStyle() {
+export function getInitialInputStyle(): InputStyle {
   return {
+    id: null,
     accessToken: null,
     error: false,
     isValid: false,
@@ -782,6 +802,7 @@ export function getInitialInputStyle() {
     style: null,
     url: null,
     icon: null,
-    custom: true
+    custom: 'LOCAL',
+    uploadedFile: null
   };
 }
