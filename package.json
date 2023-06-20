@@ -218,7 +218,7 @@
     "@deck.gl/test-utils": "^8.6.0",
     "@luma.gl/test-utils": "^8.5.10",
     "browserslist": "^4.17.0",
-    "caniuse-lite": "^1.0.30001361",
+    "caniuse-lite": "^1.0.30001449",
     "d3-array": "^2.8.0",
     "d3-scale": "^3.2.3",
     "dot-prop": "6.0.0",
