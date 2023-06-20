@@ -98,9 +98,10 @@ export const StyledConfigGroupHeader = styled.div.attrs({
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  cursor: default;
 
   :hover {
-    cursor: pointer;
+    ${props => props.collapsible && 'cursor: pointer;'}
     .layer-config-group__label {
       color: ${props => props.theme.textColorHl};
     }
@@ -175,12 +176,12 @@ function LayerConfigGroupFactory(
   }) => {
     const [collapsed, toggleCollapsed] = useState(!expanded);
     const onToggleCollapsed = useCallback(() => {
-      toggleCollapsed(!collapsed);
-    }, [collapsed, toggleCollapsed]);
+      collapsible && toggleCollapsed(!collapsed);
+    }, [collapsed, toggleCollapsed, collapsible]);
 
     return (
       <StyledLayerConfigGroup className={classnames('layer-config-group', {collapsed, disabled})}>
-        <StyledConfigGroupHeader onClick={onToggleCollapsed}>
+        <StyledConfigGroupHeader onClick={onToggleCollapsed} collapsible={collapsible}>
           <LayerConfigGroupLabel label={label} description={description} collapsed={collapsed} />
           <StyledLayerConfigGroupAction className="layer-config-group__action">
             {property ? (
