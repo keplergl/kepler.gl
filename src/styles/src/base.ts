@@ -885,6 +885,9 @@ const dropdownListAnchor = css`
   padding-left: 3px;
   font-size: ${props => props.theme.selectFontSize};
   line-height: ${props => props.theme.dropdownListLineHeight}px;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
 
   &.disabled {
     color: ${props => props.theme.subtextColor};
@@ -1049,7 +1052,7 @@ const scrollBar = css`
   ::-webkit-scrollbar-thumb {
     border-radius: 10px;
     background: ${props => props.theme.labelColor};
-    border: 3px solid ${props => props.theme.panelBackground}
+    border: 3px solid ${props => props.theme.panelBackground};
 
     :vertical:hover {
       background: ${props => props.theme.textColorHl};
