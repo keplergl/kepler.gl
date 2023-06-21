@@ -40,9 +40,9 @@ export type SavedMapState = {
   pitch: number;
   zoom: number;
   isSplit: boolean;
-  isViewportSynced: true;
-  isZoomLocked: false;
-  splitMapViewports: [];
+  isViewportSynced?: true;
+  isZoomLocked?: false;
+  splitMapViewports?: [];
 };
 
 export type SavedLayerGroups = {
