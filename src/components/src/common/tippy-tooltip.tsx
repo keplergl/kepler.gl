@@ -103,6 +103,7 @@ const TippyTooltip = ({
   duration = 200,
   arrow = true,
   isLightTheme = false,
+  className,
   ...rest
 }: TippyProps & {isLightTheme?: boolean}) => {
   const [opacity, setOpacity] = useState(0);
@@ -139,6 +140,7 @@ const TippyTooltip = ({
           render={attrs => (
             <TippyTooltipContent
               {...attrs}
+              className={className}
               style={{opacity, transition: `opacity ${duration}ms`}}
               arrow={arrow}
               isLightTheme={isLightTheme}
