@@ -58,6 +58,7 @@ export type AddDataToMapOptions = {
   readOnly?: boolean;
   keepExistingConfig?: boolean;
   autoCreateLayers?: boolean;
+  autoCreateTooltips?: boolean;
 };
 
 export type AddDataToMapPayload = {
