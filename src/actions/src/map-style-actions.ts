@@ -49,6 +49,18 @@ export type RemoveCustomMapStyleUpdaterAction = {
 };
 
 /**
+ * Edit map style from user input to reducer.
+ * This action is called when user clicks confirm after editing an existing custom style in the custom map style dialog.
+ * It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
+ * param {void}
+ * @memberof mapStyleActions
+ * @public
+ */
+export const editCustomMapStyle: () => {
+  type: typeof ActionTypes.EDIT_CUSTOM_MAP_STYLE;
+} = createAction(ActionTypes.EDIT_CUSTOM_MAP_STYLE);
+
+/**
  * Remove a custom map style from `state.mapStyle.mapStyles`.
  * @param id
  * @memberof mapStyleActions

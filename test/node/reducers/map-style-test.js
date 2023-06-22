@@ -33,6 +33,8 @@ import {
   loadMapStyles,
   mapConfigChange,
   mapStyleChange,
+  inputMapStyle,
+  editCustomMapStyle,
   removeCustomMapStyle
 } from '@kepler.gl/actions';
 import SchemaManager from '@kepler.gl/schemas';
@@ -826,6 +828,62 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE -> dark basemap to no basemap', t => 
     nextState.backgroundColor,
     nextState2.backgroundColor,
     'backgroundColor should be changed when switching to no basemap option (map-style-updates.js: getBackgroundColorFromStyleBaseLayer())'
+  );
+
+  t.end();
+});
+
+test('#mapStyleReducer -> EDIT_CUSTOM_MAP_STYLE', t => {
+  drainTasksForTesting();
+  const stateWithToken = reducer(
+    InitialMapStyle,
+    keplerGlInit({
+      mapboxApiAccessToken: 'smoothies_secret_token'
+    })
+  );
+
+  // state with custom style
+  let nextState = reducer(stateWithToken, receiveMapConfig(StateWCustomMapStyleLocal));
+
+  const styleIdToEdit = 'smoothie_the_cat';
+  const {label: originalLabel, url, accessToken, icon, custom} = nextState.mapStyles[styleIdToEdit];
+  const inputMapStyleToEdit = {
+    id: styleIdToEdit,
+    label: 'Smoothie the Super Cool Cat',
+    url,
+    accessToken,
+    icon,
+    custom
+  };
+
+  // set input custom map style and provide an edited label property
+  nextState = reducer(nextState, inputMapStyle(inputMapStyleToEdit));
+
+  t.deepEqual(
+    nextState.inputStyle,
+    {...inputMapStyleToEdit, error: false, isValid: true, style: null, uploadedFile: null},
+    'should set the inputStyle'
+  );
+
+  // edit custom map style
+  nextState = reducer(nextState, editCustomMapStyle());
+
+  t.notEqual(
+    nextState.mapStyles[styleIdToEdit].label,
+    originalLabel,
+    'should commit edit to the label property for custom style with id "smoothie_the_cat"'
+  );
+
+  t.equal(
+    nextState.mapStyles[styleIdToEdit].id,
+    styleIdToEdit,
+    'should not make any changes to the id property of the custom style after committing label property edits'
+  );
+
+  t.deepEqual(
+    nextState.inputStyle,
+    getInitialInputStyle(),
+    'should reset the inputStyle after committing edits'
   );
 
   t.end();

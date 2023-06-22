@@ -749,7 +749,26 @@ export const addCustomMapStyleUpdater = (state: MapStyle): MapStyle => {
   const styleId = state.inputStyle.id;
   if (!styleId) return state;
 
-  const newState: MapStyle = {
+  const newState = getNewStateWithCustomMapStyle(state);
+  // set new style
+  return mapStyleChangeUpdater(newState, {payload: {styleType: styleId}});
+};
+
+/**
+ * Edit map style from user input to reducer.
+ * This action is called when user clicks confirm after editing an existing custom style in the custom map style dialog.
+ * It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
+ * @memberof mapStyleUpdaters
+ */
+export const editCustomMapStyleUpdater = (state: MapStyle): MapStyle => {
+  return getNewStateWithCustomMapStyle(state);
+};
+
+function getNewStateWithCustomMapStyle(state: MapStyle): MapStyle {
+  const styleId = state.inputStyle.id;
+  if (!styleId) return state;
+
+  return {
     ...state,
     // @ts-expect-error Property 'layerGroups' is missing in type 'InputStyle' but required in type 'BaseMapStyle'. Legacy case?
     mapStyles: {
@@ -759,9 +778,7 @@ export const addCustomMapStyleUpdater = (state: MapStyle): MapStyle => {
     // set to default
     inputStyle: getInitialInputStyle()
   };
-  // set new style
-  return mapStyleChangeUpdater(newState, {payload: {styleType: styleId}});
-};
+}
 
 /**
  * Remove a custom map style from `state.mapStyle.mapStyles`.
