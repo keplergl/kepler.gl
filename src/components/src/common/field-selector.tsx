@@ -72,6 +72,7 @@ export function FieldListItemFactoryFactory(FieldToken) {
 
 const SuggestedFieldHeader = () => <div>Suggested Field</div>;
 
+export type MinimalField = {name: string; displayName: string; format: string; type?: string};
 type FieldType =
   | string
   | string[]
