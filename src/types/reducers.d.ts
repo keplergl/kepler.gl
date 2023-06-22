@@ -307,6 +307,7 @@ export type BaseMapStyle = {
   accessToken?: string;
   custom?: CustomStyleType;
   colorMode?: BASE_MAP_COLOR_MODES;
+  complimentaryStyleId?: string;
 };
 
 export declare type ExportImage = {
