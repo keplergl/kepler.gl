@@ -68,6 +68,7 @@ type LayerConfiguratorProps = {
   ) => void;
   updateLayerColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
   updateLayerTextLabel: (idx: number | 'all', prop: string, value: any) => void;
+  disableTypeSelect?: boolean;
 };
 
 type LayerColorSelectorProps = {
@@ -138,7 +139,8 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
 export const getLayerFields = (datasets: Datasets, layer: Layer) =>
   layer.config?.dataId && datasets[layer.config.dataId] ? datasets[layer.config.dataId].fields : [];
 
-export const getLayerDataset = (datasets: Datasets, layer: Layer) =>
+/** Return any to be able to customize the Dataset entity */
+export const getLayerDataset = (datasets: Datasets, layer: Layer): any =>
   layer.config?.dataId && datasets[layer.config.dataId] ? datasets[layer.config.dataId] : null;
 
 export const getLayerConfiguratorProps = (props: LayerConfiguratorProps) => ({
@@ -1051,7 +1053,14 @@ export default function LayerConfiguratorFactory(
     }
 
     render() {
-      const {layer, datasets, updateLayerConfig, layerTypeOptions, updateLayerType} = this.props;
+      const {
+        layer,
+        datasets,
+        updateLayerConfig,
+        layerTypeOptions,
+        updateLayerType,
+        disableTypeSelect = false
+      } = this.props;
       const {fields = [], fieldPairs = undefined} = layer.config.dataId
         ? datasets[layer.config.dataId]
         : {};
@@ -1071,6 +1080,7 @@ export default function LayerConfiguratorFactory(
           <LayerConfigGroup label={'layer.basic'} collapsible expanded={!layer.hasAllColumns()}>
             <LayerTypeSelector
               selected={layer.type}
+              disabled={disableTypeSelect}
               options={layerTypeOptions}
               // @ts-ignore
               onSelect={updateLayerType}

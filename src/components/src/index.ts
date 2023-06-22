@@ -76,6 +76,7 @@ export {
   default as LayerConfiguratorFactory,
   LayerColorRangeSelector, 
   getLayerConfiguratorProps, 
+  getLayerDataset,
   getVisConfiguratorProps, 
   ArcLayerColorSelector,
   LayerColorSelector
