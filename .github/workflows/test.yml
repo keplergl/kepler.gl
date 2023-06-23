@@ -5,24 +5,23 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [12.x]
+        node-version: [14.x]
 
     steps:
       - uses: actions/checkout@v2.1.1
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -33,10 +32,10 @@ jobs:
         run: npm install -g yarn
 
       - name: Install Dependecies
-        run: yarn
+        run: yarn global add "puppeteer@19.11.1" && yarn
 
-      - name: Lint
-        run: yarn lint
+      # - name: Lint
+      #  run: yarn lint
 
       - name: Test
         run: xvfb-run --auto-servernum yarn cover

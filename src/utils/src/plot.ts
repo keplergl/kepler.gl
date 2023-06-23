@@ -18,26 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// test in puppeteer browser
-require('@probe.gl/test-utils/polyfill');
-// ensure probe gets access to pure console first
-require('@probe.gl/log');
+import {bisectLeft} from 'd3-array';
 
-const test = require('tape-catch');
-const enableDOMLogging = require('@probe.gl/test-utils')._enableDOMLogging;
-let failed = false;
-test.onFailure(() => {
-  failed = true;
-  window.browserTestDriver_fail();
-});
-test.onFinish(window.browserTestDriver_finish || (() => {}));
-
-// tap-browser-color alternative
-enableDOMLogging({
-  getStyle: message => ({background: failed ? '#F28E82' : '#8ECA6C'})
-});
-
-test('Browser tests', t => {
-  require('./browser-headless/index.js');
-  t.end();
-});
+/**
+ * Use in slider, given a number and an array of numbers, return the nears number from the array
+ * @param value
+ * @param marks
+ */
+export function snapToMarks(value: number, marks: number[]): number {
+  // always use bin x0
+  const i = bisectLeft(marks, value);
+  if (i === 0) {
+    return marks[i];
+  } else if (i === marks.length) {
+    return marks[i - 1];
+  }
+  const idx = marks[i] - value < value - marks[i - 1] ? i : i - 1;
+  return marks[idx];
+}

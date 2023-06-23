@@ -168,13 +168,18 @@ export const LAYER_FILTERS = [FILTER_TYPES.polygon];
 /**
  * Generates a filter with a dataset id as dataId
  */
-export function getDefaultFilter(dataId: string | null | string[]): FilterBase<LineChart> {
+export function getDefaultFilter({
+  dataId,
+  id
+}: {
+  dataId?: string | null | string[];
+  id?: string;
+} = {}): FilterBase<LineChart> {
   return {
     ...DEFAULT_FILTER_STRUCTURE,
     // store it as dataId and it could be one or many
-    // @ts-expect-error returns empty array for null, not array of nulls
-    dataId: toArray(dataId),
-    id: generateHashId(FILTER_ID_LENGTH)
+    dataId: dataId ? toArray(dataId) : [],
+    id: id || generateHashId(FILTER_ID_LENGTH)
   };
 }
 
@@ -267,7 +272,7 @@ export function validateFilter<K extends KeplerTableModel<K, L>, L>(
   }
 
   const initializeFilter: Filter = {
-    ...getDefaultFilter(filter.dataId),
+    ...getDefaultFilter({dataId: filter.dataId}),
     ...filter,
     dataId: filterDataId,
     name: toArray(filter.name)
@@ -516,7 +521,7 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
 }
 
 export function updateFilterDataId(dataId: string | string[]): FilterBase<LineChart> {
-  return getDefaultFilter(dataId);
+  return getDefaultFilter({dataId});
 }
 
 export function filterDataByFilterTypes(
@@ -850,10 +855,7 @@ export function getTimeWidgetTitleFormatter(domain: [number, number]): string | 
  */
 export function isFilterValidToSave(filter: any): boolean {
   return (
-    filter?.type &&
-    Array.isArray(filter?.name) &&
-    (filter?.name.length || filter?.layerId.length) &&
-    isValidFilterValue(filter?.type, filter?.value)
+    filter?.type && Array.isArray(filter?.name) && (filter?.name.length || filter?.layerId.length)
   );
 }
 
@@ -1099,7 +1101,7 @@ export function generatePolygonFilter<
   const dataId = layers.map(l => l.config.dataId).filter(notNullorUndefined);
   const layerId = layers.map(l => l.id);
   const name = layers.map(l => l.config.label);
-  const filter = getDefaultFilter(dataId);
+  const filter = getDefaultFilter({dataId});
   return {
     ...filter,
     fixedDomain: true,
@@ -1138,9 +1140,9 @@ export function filterDatasetCPU<T extends StateType<K, L>, K extends KeplerTabl
 /**
  * Validate parsed filters with datasets and add filterProps to field
  */
-type MinVisState = Pick<VisState, 'layers' | 'datasets' | 'isMergingDatasets'>;
+type MinVisStateForFilter = Pick<VisState, 'layers' | 'datasets' | 'isMergingDatasets'>;
 export function validateFiltersUpdateDatasets<
-  S extends MinVisState,
+  S extends MinVisStateForFilter,
   K extends KeplerTableModel<K, L>,
   L extends {config: {dataId: string | null; label: string}; id: string}
 >(

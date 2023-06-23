@@ -103,8 +103,11 @@ test('#H3Layer -> formatLayerData', t => {
           getElevation: () => {},
           getFilterValue: () => {},
           getFillColor: () => {},
+          getLineColor: () => {},
           getHexId: () => {},
-          getCoverage: () => {}
+          getCoverage: () => {},
+          getPosition: () => {},
+          textLabels: () => {}
         };
         t.deepEqual(
           Object.keys(layerData).sort(),
@@ -118,6 +121,8 @@ test('#H3Layer -> formatLayerData', t => {
         );
         // getFillColor
         t.deepEqual(layerData.getFillColor, [2, 3, 4], 'getFillColor should be a constant');
+        // getLineColor
+        t.deepEqual(layerData.getLineColor, [2, 3, 4], 'getLineColor should be a constant');
         // getElevation
         t.deepEqual(layerData.getElevation, defaultElevation, 'getElevation should be a constant');
         // getHexId
@@ -141,15 +146,20 @@ test('#H3Layer -> formatLayerData', t => {
       }
     },
     {
-      name: 'H3 layer format data. with colorField and sizeField',
+      name: 'H3 layer format data. with colorField, strokeColorField, and sizeField',
       layer: {
         config: {
           dataId,
           label: 'h3.2',
           columns,
           color: [10, 10, 10],
-          // color by types(string)
+          // fill color by types(string)
           colorField: {
+            type: 'string',
+            name: 'types'
+          },
+          // stroke color by types(string)
+          strokeColorField: {
             type: 'string',
             name: 'types'
           },
@@ -160,6 +170,9 @@ test('#H3Layer -> formatLayerData', t => {
           },
           visConfig: {
             colorRange: {
+              colors: ['#010101', '#020202', '#030303']
+            },
+            strokeColorRange: {
               colors: ['#010101', '#020202', '#030303']
             },
             elevationRange: [10, 20],
@@ -186,6 +199,16 @@ test('#H3Layer -> formatLayerData', t => {
           ],
           'getFillColor should be correct'
         );
+
+        t.deepEqual(
+          layerData.data.map(layerData.getLineColor),
+          [
+            [2, 2, 2],
+            [1, 1, 1]
+          ],
+          'getLineColor should be correct'
+        );
+
         // getElevation
         // domain: [1.59, 11]
         // range: [0, 500]
@@ -226,7 +249,7 @@ test('#H3Layer -> renderLayer', t => {
           label: 'h3 hex',
           columns,
           color: [1, 2, 3],
-          visCondig: {
+          visConfig: {
             worldUnitSize: 0.5,
             elevationScale: 5
           }
@@ -256,11 +279,85 @@ test('#H3Layer -> renderLayer', t => {
           autoHighlight: false,
           highlightColor: [255, 255, 255, 60],
           extruded: false,
-          elevationScale: 5
+          elevationScale: 5,
+          filled: true,
+          stroked: false
         };
         Object.keys(expectedProps).forEach(key => {
           t.deepEqual(props[key], expectedProps[key], `should have correct props.${key}`);
         });
+      }
+    },
+    {
+      name: 'Test render h3.2 with text label',
+      layer: {
+        id: 'test_layer_2',
+        type: 'hexagonId',
+        config: {
+          dataId,
+          label: 'h3 hex',
+          columns,
+          color: [1, 2, 3],
+          visConfig: {
+            worldUnitSize: 0.5,
+            elevationScale: 5
+          },
+          textLabel: [
+            {
+              field: {
+                name: 'types',
+                format: ''
+              },
+              format: ''
+            }
+          ]
+        }
+      },
+      datasets: {
+        [dataId]: preparedDataset
+      },
+      assert: (deckLayers, layer) => {
+        t.equal(layer.type, 'hexagonId', 'should create 1 hexagonId layer');
+
+        const expectedTextLabels = [
+          {
+            field: {
+              name: 'types',
+              id: 'types',
+              displayName: 'types',
+              format: '',
+              fieldIdx: 5,
+              type: 'string',
+              analyzerType: 'STRING',
+              valueAccessor: preparedDataset.fields[5].valueAccessor
+            },
+            color: [255, 255, 255],
+            size: 18,
+            offset: [0, 0],
+            anchor: 'middle',
+            alignment: 'center'
+          }
+        ];
+
+        t.deepEqual(
+          layer.config.textLabel,
+          expectedTextLabels,
+          'should create textLabel using field "types"'
+        );
+
+        t.equal(deckLayers.length, 4, 'Should create 4 deck.gl layers');
+        const expectedLayerIds = [
+          'test_layer_2',
+          'test_layer_2-hexagon-cell',
+          'test_layer_2-label-types',
+          'test_layer_2-label-types-characters'
+        ];
+
+        t.deepEqual(
+          deckLayers.map(l => l.id),
+          expectedLayerIds,
+          'should create 1 composite, 1 hexagon-cell layer, 1 text layer, 1 multi-icon layer'
+        );
       }
     }
   ];

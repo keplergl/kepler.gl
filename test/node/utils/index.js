@@ -39,3 +39,4 @@ import './editor-utils-test';
 import './kepler-gl-utils-test';
 import './timeline-test';
 import './composer-helpers-test';
+import './dom-to-image';

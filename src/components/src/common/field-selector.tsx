@@ -38,6 +38,9 @@ const StyledToken = styled.div`
 `;
 const StyledFieldListItem = styled.div`
   line-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 `;
 
 export type FieldListItemFactoryProps = {

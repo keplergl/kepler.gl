@@ -37,6 +37,8 @@ const actionHandler = {
   [ActionTypes.RECEIVE_MAP_CONFIG]: mapStyleUpdaters.receiveMapConfigUpdater,
   [ActionTypes.LOAD_CUSTOM_MAP_STYLE]: mapStyleUpdaters.loadCustomMapStyleUpdater,
   [ActionTypes.ADD_CUSTOM_MAP_STYLE]: mapStyleUpdaters.addCustomMapStyleUpdater,
+  [ActionTypes.EDIT_CUSTOM_MAP_STYLE]: mapStyleUpdaters.editCustomMapStyleUpdater,
+  [ActionTypes.REMOVE_CUSTOM_MAP_STYLE]: mapStyleUpdaters.removeCustomMapStyleUpdater,
   [ActionTypes.RESET_MAP_CONFIG]: mapStyleUpdaters.resetMapConfigMapStyleUpdater,
   [ActionTypes.SET_3D_BUILDING_COLOR]: mapStyleUpdaters.set3dBuildingColorUpdater,
   [ActionTypes.SET_BACKGROUND_COLOR]: mapStyleUpdaters.setBackgroundColorUpdater,

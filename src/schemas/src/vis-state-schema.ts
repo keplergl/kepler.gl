@@ -76,7 +76,7 @@ export interface VisState {
   interactionConfig: InteractionConfig;
   interactionToBeMerged: any;
   layerBlending: string;
-  overlayBlending: string;
+  overlayBlending?: string;
   hoverInfo: any;
   clicked: any;
   mousePos: any;

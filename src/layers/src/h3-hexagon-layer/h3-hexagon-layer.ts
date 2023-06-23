@@ -26,6 +26,7 @@ import Layer, {
   LayerCoverageConfig,
   LayerSizeConfig
 } from '../base-layer';
+import {BrushingExtension} from '@deck.gl/extensions';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
 import {EnhancedColumnLayer} from '@kepler.gl/deckgl-layers';
@@ -40,7 +41,14 @@ import {
   createDataContainer
 } from '@kepler.gl/utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
-import {CHANNEL_SCALES, HIGHLIGH_COLOR_3D, ColorRange} from '@kepler.gl/constants';
+import {
+  CHANNEL_SCALES,
+  HIGHLIGH_COLOR_3D,
+  DEFAULT_COLOR_UI,
+  DEFAULT_TEXT_LABEL,
+  LAYER_VIS_CONFIGS,
+  ColorRange
+} from '@kepler.gl/constants';
 
 import {
   VisConfigBoolean,
@@ -51,12 +59,15 @@ import {
 } from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 
+import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
+
 export type HexagonIdLayerColumnsConfig = {
   hex_id: LayerColumn;
 };
 
 export type HexagonIdLayerVisConfigSettings = {
   opacity: VisConfigNumber;
+  strokeOpacity: VisConfigNumber;
   colorRange: VisConfigColorRange;
   coverage: VisConfigNumber;
   enable3d: VisConfigBoolean;
@@ -64,10 +75,14 @@ export type HexagonIdLayerVisConfigSettings = {
   coverageRange: VisConfigRange;
   elevationScale: VisConfigNumber;
   enableElevationZoomFactor: VisConfigBoolean;
+  filled: VisConfigBoolean;
+  outline: VisConfigBoolean;
+  thickness: VisConfigNumber;
 };
 
 export type HexagonIdLayerVisConfig = {
   opacity: number;
+  strokeOpacity: number;
   colorRange: ColorRange;
   coverage: number;
   enable3d: boolean;
@@ -75,6 +90,9 @@ export type HexagonIdLayerVisConfig = {
   coverageRange: [number, number];
   elevationScale: number;
   enableElevationZoomFactor: boolean;
+  filled: boolean;
+  outline: boolean;
+  thickness: number;
 };
 
 export type HexagonIdLayerVisualChannelConfig = LayerColorConfig &
@@ -99,8 +117,14 @@ export const defaultElevation = 500;
 export const defaultCoverage = 1;
 
 export const HexagonIdVisConfigs: {
-  opacity: 'opacity';
+  opacity: VisConfigNumber;
+  strokeOpacity: VisConfigNumber;
   colorRange: 'colorRange';
+  filled: VisConfigBoolean;
+  outline: 'outline';
+  strokeColor: 'strokeColor';
+  strokeColorRange: 'strokeColorRange';
+  thickness: 'thickness';
   coverage: 'coverage';
   enable3d: 'enable3d';
   sizeRange: 'elevationRange';
@@ -108,8 +132,27 @@ export const HexagonIdVisConfigs: {
   elevationScale: 'elevationScale';
   enableElevationZoomFactor: 'enableElevationZoomFactor';
 } = {
-  opacity: 'opacity',
   colorRange: 'colorRange',
+  filled: {
+    ...LAYER_VIS_CONFIGS.filled,
+    defaultValue: true
+  },
+  opacity: {
+    ...LAYER_VIS_CONFIGS.opacity,
+    label: 'Fill Opacity',
+    range: [0, 1],
+    property: 'opacity'
+  },
+  outline: 'outline',
+  strokeColor: 'strokeColor',
+  strokeColorRange: 'strokeColorRange',
+  strokeOpacity: {
+    ...LAYER_VIS_CONFIGS.opacity,
+    label: 'Stroke Opacity',
+    range: [0, 1],
+    property: 'strokeOpacity'
+  },
+  thickness: 'thickness',
   coverage: 'coverage',
   enable3d: 'enable3d',
   sizeRange: 'elevationRange',
@@ -118,6 +161,7 @@ export const HexagonIdVisConfigs: {
   enableElevationZoomFactor: 'enableElevationZoomFactor'
 };
 
+const brushingExtension = new BrushingExtension();
 export default class HexagonIdLayer extends Layer {
   dataToFeature: {centroids: Centroid[]};
 
@@ -153,7 +197,20 @@ export default class HexagonIdLayer extends Layer {
     return {
       color: {
         ...visualChannels.color,
-        accessor: 'getFillColor'
+        accessor: 'getFillColor',
+        condition: config => config.visConfig.filled
+      },
+      strokeColor: {
+        property: 'strokeColor',
+        key: 'strokeColor',
+        field: 'strokeColorField',
+        scale: 'strokeColorScale',
+        domain: 'strokeColorDomain',
+        range: 'strokeColorRange',
+        channelScaleType: CHANNEL_SCALES.color,
+        accessor: 'getLineColor',
+        condition: config => config.visConfig.outline,
+        defaultValue: config => config.visConfig.strokeColor || config.color
       },
       size: {
         ...visualChannels.size,
@@ -216,13 +273,32 @@ export default class HexagonIdLayer extends Layer {
   }
 
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
-    return {
-      ...super.getDefaultLayerConfig(props),
+    const defaultLayerConfig = super.getDefaultLayerConfig(props);
 
-      // add height visual channel
+    return {
+      ...defaultLayerConfig,
+
+      // add stroke color visual channel
+      strokeColorField: null,
+      strokeColorDomain: [0, 1],
+      strokeColorScale: 'quantile',
+      colorUI: {
+        ...defaultLayerConfig.colorUI,
+        strokeColorRange: DEFAULT_COLOR_UI
+      },
+
+      // add radius visual channel
       coverageField: null,
       coverageDomain: [0, 1],
-      coverageScale: 'linear'
+      coverageScale: 'linear',
+
+      // modify default textLabel anchor position to be appropriate for a hexagon shape
+      textLabel: [
+        {
+          ...DEFAULT_TEXT_LABEL,
+          anchor: 'middle'
+        }
+      ]
     };
   }
 
@@ -253,13 +329,25 @@ export default class HexagonIdLayer extends Layer {
     }
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const getHexId = this.getPositionAccessor(dataContainer);
-    const {data} = this.updateData(datasets, oldLayerData);
+    const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
     const accessors = this.getAttributeAccessors({dataContainer});
+    const {textLabel} = this.config;
+
+    // get all distinct characters in the text labels
+    const textLabels = formatTextLabelData({
+      textLabel,
+      triggerChanged,
+      oldLayerData,
+      data,
+      dataContainer
+    });
 
     return {
       data,
       getHexId,
       getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
+      textLabels,
+      getPosition: d => d.centroid,
       ...accessors
     };
   }
@@ -289,7 +377,7 @@ export default class HexagonIdLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, mapState} = opts;
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
@@ -300,6 +388,7 @@ export default class HexagonIdLayer extends Layer {
     const h3HexagonLayerTriggers = {
       getHexagon: this.config.columns,
       getFillColor: updateTriggers.getFillColor,
+      getLineColor: updateTriggers.getLineColor,
       getElevation: updateTriggers.getElevation,
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
@@ -311,11 +400,32 @@ export default class HexagonIdLayer extends Layer {
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
+    // getPixelOffset with no radius
+    const radiusScale = 1.0;
+    const getRaidus = null;
+    const getPixelOffset = getTextOffsetByRadius(radiusScale, getRaidus, mapState);
+
+    const brushingProps = this.getBrushingExtensionProps(interactionConfig);
+    const extensions = [...defaultLayerProps.extensions, brushingExtension];
+    const sharedProps = {
+      getFilterValue: data.getFilterValue,
+      extensions,
+      filterRange: defaultLayerProps.filterRange,
+      visible: defaultLayerProps.visible,
+      ...brushingProps
+    };
+
     return [
       new H3HexagonLayer({
         ...defaultLayerProps,
         ...data,
+        ...brushingProps,
+        extensions,
         wrapLongitude: false,
+
+        filled: visConfig.filled,
+        stroked: visConfig.outline,
+        lineWidthScale: visConfig.thickness,
 
         getHexagon: (x: any) => x.id,
 
@@ -336,7 +446,8 @@ export default class HexagonIdLayer extends Layer {
           'hexagon-cell': {
             type: EnhancedColumnLayer,
             getCoverage: data.getCoverage,
-            updateTriggers: columnLayerTriggers
+            updateTriggers: columnLayerTriggers,
+            strokeOpacity: visConfig.strokeOpacity
           }
         }
       }),
@@ -352,7 +463,17 @@ export default class HexagonIdLayer extends Layer {
               wrapLongitude: false
             })
           ]
-        : [])
+        : []),
+      // text label layer
+      ...this.renderTextLabelLayer(
+        {
+          getPosition: data.getPosition,
+          sharedProps,
+          getPixelOffset,
+          updateTriggers
+        },
+        opts
+      )
     ];
   }
 }

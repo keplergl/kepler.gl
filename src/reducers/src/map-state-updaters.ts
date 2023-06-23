@@ -478,10 +478,12 @@ function getViewportFromMapState(state) {
   ]);
 }
 
-// From https://stackoverflow.com/a/56650790
 /** Select items from object whose value is not undefined */
 const definedProps = obj =>
-  Object.fromEntries(Object.entries(obj).filter(([k, v]) => v !== undefined));
+  Object.entries(obj).reduce(
+    (accu, [k, v]) => ({...accu, ...(v !== undefined ? {[k]: v} : {})}),
+    {}
+  );
 
 function updateViewport(originalViewport: Viewport, viewportUpdates: Viewport): Viewport {
   let newViewport = {

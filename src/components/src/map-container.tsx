@@ -956,6 +956,7 @@ export default function MapContainerFactory(
                 display: editor.visible ? 'block' : 'none'
               }}
             />
+            {this.props.children}
           </MapComponent>
           {mapStyle.topMapStyle || hasGeocoderLayer ? (
             <div style={MAP_STYLE.top}>

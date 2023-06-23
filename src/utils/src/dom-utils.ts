@@ -148,7 +148,6 @@ export function asArray(arrayLike) {
 }
 
 export function fourRandomChars() {
-  /* see http://stackoverflow.com/a/6248722/2519373 */
   return `0000${((Math.random() * Math.pow(36, 4)) << 0).toString(36)}`.slice(-4);
 }
 
@@ -234,7 +233,6 @@ export function delay(ms) {
 
 export function isSrcAsDataUrl(text) {
   const DATA_URL_REGEX = /url\(['"]?(data:)([^'"]+?)['"]?\)/;
-
   return text.search(DATA_URL_REGEX) !== -1;
 }
 
@@ -351,4 +349,29 @@ export function getAndEncode(url, options) {
       resolve('');
     }
   });
+}
+
+export function concatAndResolveUrl(base, url) {
+  return new URL(url, base).href;
+}
+
+// Set relative URL in stylesheet to absolute url
+export function setStyleSheetBaseHref(text, base) {
+  function addBaseHrefToUrl(match, p1) {
+    const url = /^http/i.test(p1) ? p1 : concatAndResolveUrl(base, p1);
+    return `url('${url}')`;
+  }
+  return isSrcAsDataUrl(text)
+    ? text
+    : text.replace(/url\(['"]?([^'"]+?)['"]?\)/g, addBaseHrefToUrl);
+}
+
+export function toStyleSheet(text) {
+  const doc = document.implementation.createHTMLDocument('');
+  const styleElement = document.createElement('style');
+
+  styleElement.textContent = text;
+  doc.body.appendChild(styleElement);
+
+  return styleElement.sheet;
 }

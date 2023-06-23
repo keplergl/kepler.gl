@@ -22,7 +22,7 @@ machine:
 
 * [Git](http://git-scm.com/): The [Github Guide to Installing Git][git-setup] is a good source of information.
 
-* [Node.js ^6.x](http://nodejs.org): We use Node to generate the documentation, run a
+* [Node.js ^14.x](http://nodejs.org): We use Node to generate the documentation, run a
   development web server, run tests, and generate distributable files. Depending on your system,
   you can install Node either from source or as a pre-packaged bundle.
 
@@ -52,14 +52,17 @@ cd kepler.gl
 # Add the main kepler.gl repository as an upstream remote to your repository:
 git remote add upstream "git@github.com:keplergl/kepler.gl.git"
 
+# Install Puppeteer
+yarn global add puppeteer
+
 # Install JavaScript dependencies:
-yarn
+yarn bootstrap
 
 # Setup mapbox access token locally
 export MapboxAccessToken=<insert_your_token>
 
 # Start the kepler.gl demo app
-npm start
+yarn start
 ```
 
 An demo app will be served at

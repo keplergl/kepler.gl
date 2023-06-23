@@ -48,6 +48,7 @@ export type LayerTypeSelectorProps = {
   options: LayerTypeOption[];
   // TODO add correct type after Theme typing
   theme: Record<string, string>;
+  disabled: boolean;
 };
 
 const StyledLayerTypeSelector = styled.div`
@@ -65,7 +66,12 @@ function LayerTypeSelectorFactory(
   LayerTypeListItem: ReturnType<typeof LayerTypeListItemFactory>,
   LayerTypeDropdownList: ReturnType<typeof LayerTypeDropdownListFactory>
 ) {
-  const LayerTypeSelector: React.FC<LayerTypeSelectorProps> = ({selected, options, onSelect}) => {
+  const LayerTypeSelector: React.FC<LayerTypeSelectorProps> = ({
+    selected,
+    options,
+    onSelect,
+    disabled
+  }) => {
     const selectedItems = useMemo(() => options.find(op => op.id === selected), [
       options,
       selected
@@ -78,6 +84,7 @@ function LayerTypeSelectorFactory(
             selectedItems={selectedItems}
             options={options}
             multiSelect={false}
+            disabled={disabled}
             placeholder="placeholder.selectType"
             onChange={onSelect}
             getOptionValue={getOptionValue}

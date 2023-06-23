@@ -72,17 +72,17 @@ export {default as ColorPalette} from './side-panel/layer-panel/color-palette';
 export {default as ColorRangeSelector, PaletteConfig, ColorPaletteGroup, ALL_TYPES} from './side-panel/layer-panel/color-range-selector';
 export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel';
 export {default as SingleColorPalette} from './side-panel/layer-panel/single-color-palette';
-export {default as LayerPanelHeaderFactory, DragHandle} from './side-panel/layer-panel/layer-panel-header';
 export {
   default as LayerConfiguratorFactory,
   LayerColorRangeSelector, 
   getLayerConfiguratorProps, 
+  getLayerDataset,
   getVisConfiguratorProps, 
   ArcLayerColorSelector,
   LayerColorSelector
 } from './side-panel/layer-panel/layer-configurator';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
-export {LayerConfigGroupLabelFactory} from './side-panel/layer-panel/layer-config-group';
+
 export {
   AddDataButtonFactory,
   default as DatasetSectionFactory
@@ -94,6 +94,7 @@ export {default as AddLayerButtonFactory} from './side-panel/layer-panel/add-lay
 export {default as LayerListFactory} from './side-panel/layer-panel/layer-list';
 export {default as CustomPicker} from './side-panel/layer-panel/custom-picker';
 export {default as CustomPalette} from './side-panel/layer-panel/custom-palette';
+export * from './side-panel/layer-panel/custom-palette';
 
 export {default as SourceDataCatalogFactory} from './side-panel/common/source-data-catalog';
 export {default as SourceDataSelectorFactory} from './side-panel/common/source-data-selector';
@@ -116,6 +117,7 @@ export {default as LayerGroupColorPickerFactory} from './side-panel/map-style-pa
 export {default as CustomPanelsFactory} from './side-panel/custom-panel';
 // // map factories
 export {default as MapPopoverFactory} from './map/map-popover';
+export {default as MapPopoverContentFactory} from './map/map-popover-content';
 export {default as MapControlFactory} from './map/map-control';
 export {default as LayerHoverInfoFactory} from './map/layer-hover-info';
 export {default as CoordinateInfoFactory} from './map/coordinate-info';
@@ -137,6 +139,7 @@ export {default as MapDrawPanelFactory} from './map/map-draw-panel';
 export {default as SplitMapButtonFactory} from './map/split-map-button';
 export {default as MapLegendPanelFactory} from './map/map-legend-panel';
 export {default as Toggle3dButtonFactory} from './map/toggle-3d-button';
+export {default as LazzyTippy} from './map/lazy-tippy';
 export {default as MapControlToolbarFactory} from './map/map-control-toolbar';
 
 // // modal factories
@@ -175,7 +178,7 @@ export {default as ImagePreview} from './common/image-preview';
 export {default as HistogramPlotFactory} from './common/histogram-plot';
 export {default as LineChartFactory} from './common/line-chart';
 export {default as RangeBrushFactory} from './common/range-brush';
-export {default as TimeSliderMarkerFactory} from './common/time-slider-marker';
+export {default as TimeSliderMarkerFactory, getTickFormat, getXAxis, updateAxis} from './common/time-slider-marker';
 export {default as TimeRangeSliderTimeTitleFactory} from './common/time-range-slider-time-title';
 export {default as IconButton} from './common/icon-button';
 // // Filters factory
@@ -203,10 +206,11 @@ export {default as FileUploadFactory, FileUpload, WarningMsg} from './common/fil
 export {default as FileDrop} from './common/file-uploader/file-drop';
 export {default as UploadButton} from './common/file-uploader/upload-button';
 export {default as DatasetLabel} from './common/dataset-label';
+export {default as Accessor} from './common/item-selector/accessor';
 export {default as ChickletedInput, ChickletButton} from './common/item-selector/chickleted-input';
 export {default as ItemSelector} from './common/item-selector/item-selector';
 export {default as Typeahead} from './common/item-selector/typeahead';
-export {default as DropdownList, ListItem} from './common/item-selector/dropdown-list';
+export {default as DropdownList, ListItem, classList as dropdownListClassList} from './common/item-selector/dropdown-list';
 export {default as FieldSelectorFactory} from './common/field-selector';
 export {default as Modal, ModalFooter, ModalTitle} from './common/modal';
 export {default as AppLogo} from './common/logo';
@@ -237,14 +241,17 @@ export {default as TippyTooltip} from './common/tippy-tooltip';
 // side pane components
 export {default as LayerTypeSelectorFactory} from './side-panel/layer-panel/layer-type-selector';
 export {default as LayerTypeDropdownListFactory} from './side-panel/layer-panel/layer-type-dropdown-list';
-export {ConfigGroupCollapsibleContent} from './side-panel/layer-panel/layer-config-group';
+export {ConfigGroupCollapsibleContent, StyledConfigGroupHeader, LayerConfigGroupLabelFactory} from './side-panel/layer-panel/layer-config-group';
 export {default as ColumnSelectorFactory} from './side-panel/layer-panel/column-selector';
-export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
 export {default as StyledDropdownSelect} from './common/item-selector/item-selector';
 export {
+  DragHandle,
   LayerLabelEditor,
-  LayerTitleSectionFactory
+  LayerTitleSectionFactory,
+  LayerPanelHeaderActionSectionFactory,
+  default as LayerPanelHeaderFactory
 } from './side-panel/layer-panel/layer-panel-header';
+export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
 
 export {default as HowToButton} from './side-panel/layer-panel/how-to-button';
 // eslint-disable-next-line prettier/prettier
@@ -268,12 +275,21 @@ export type {CustomPanelsProps} from './side-panel/custom-panel';
 export type {LayerTypeListItemProps, LayerTypeListItemType} from './side-panel/layer-panel/layer-type-list-item';
 export type {LayerGroupColorPickerProps} from './side-panel/map-style-panel/map-layer-group-color-picker';
 export type {MapLegendPanelProps, MapLegendPanelFactoryDeps} from './map/map-legend-panel';
-export type {FormatterDropdownProps} from './common/data-table/option-dropdown';
+export type {OptionDropdownProps, FormatterDropdownProps} from './common/data-table/option-dropdown';
 export type {LayerListProps, LayerListFactoryDeps} from './side-panel/layer-panel/layer-list';
 export type {MapContainerProps} from './map-container';
 export type {MapControlProps} from './map/map-control';
 export type {MapDrawPanelProps} from './map/map-draw-panel';
 export type {PanelHeaderProps} from './side-panel/panel-header';
+export type {LayerLabelEditorProps, LayerTitleSectionProps, LayerPanelHeaderProps, LayerPanelHeaderActionSectionProps} from './side-panel/layer-panel/layer-panel-header';
+export type {FilterPanelHeaderProps} from './side-panel/filter-panel/filter-panel-header';
+export type {LayerTypeOption} from './side-panel/layer-panel/layer-type-dropdown-list';
+export type {LayerConfigGroupLabelProps, LayerConfigGroupProps} from './side-panel/layer-panel/layer-config-group';
+export type {FilterManagerProps} from './side-panel/filter-manager';
+export type {PanelMeta} from './side-panel/common/types';
+export type {SideBarProps} from './side-panel/side-bar';
+export type {FeatureActionPanelProps} from './editor/feature-action-panel';
+export type {SingleColorPaletteProps} from './side-panel/layer-panel/single-color-palette';
 
 export {
   Icons,

@@ -18,8 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {notNullorUndefined, unique} from './data-utils';
 import {extent} from 'd3-array';
+
+import {notNullorUndefined, unique} from './data-utils';
 import {DataContainerInterface} from './data-container-interface';
 
 type dataValueAccessor = <T>(param: T) => T;

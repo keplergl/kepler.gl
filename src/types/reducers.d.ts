@@ -291,6 +291,12 @@ export type LayerGroup = {
   defaultVisibility: boolean;
 };
 
+export type CustomStyleType =
+  | 'LOCAL'
+  | 'MANAGED'
+  // boolean for backwards compatability with previous map configs
+  | boolean;
+
 export type BaseMapStyle = {
   id: string;
   label: string;
@@ -299,8 +305,9 @@ export type BaseMapStyle = {
   style?: Object;
   layerGroups: LayerGroup[];
   accessToken?: string;
-  custom?: boolean;
+  custom?: CustomStyleType;
   colorMode?: BASE_MAP_COLOR_MODES;
+  complimentaryStyleId?: string;
 };
 
 export declare type ExportImage = {
@@ -437,6 +444,7 @@ export type VisibleLayerGroups = {
 };
 
 export type InputStyle = {
+  id?: string | null;
   accessToken: string | null;
   error: boolean;
   isValid: boolean;
@@ -444,7 +452,8 @@ export type InputStyle = {
   style: any | null;
   url: string | null;
   icon: string | null;
-  custom: boolean;
+  custom: CustomStyleType;
+  uploadedFile: File | null;
 };
 
 export type FilterRecord = {

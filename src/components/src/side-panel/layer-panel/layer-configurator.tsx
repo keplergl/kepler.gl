@@ -68,6 +68,7 @@ type LayerConfiguratorProps = {
   ) => void;
   updateLayerColorUI: (prop: string, newConfig: NestedPartial<ColorUI>) => void;
   updateLayerTextLabel: (idx: number | 'all', prop: string, value: any) => void;
+  disableTypeSelect?: boolean;
 };
 
 type LayerColorSelectorProps = {
@@ -138,7 +139,8 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
 export const getLayerFields = (datasets: Datasets, layer: Layer) =>
   layer.config?.dataId && datasets[layer.config.dataId] ? datasets[layer.config.dataId].fields : [];
 
-export const getLayerDataset = (datasets: Datasets, layer: Layer) =>
+/** Return any to be able to customize the Dataset entity */
+export const getLayerDataset = (datasets: Datasets, layer: Layer): any =>
   layer.config?.dataId && datasets[layer.config.dataId] ? datasets[layer.config.dataId] : null;
 
 export const getLayerConfiguratorProps = (props: LayerConfiguratorProps) => ({
@@ -490,8 +492,13 @@ export default function LayerConfiguratorFactory(
     }) {
       return (
         <StyledLayerVisualConfigurator>
-          {/* Color */}
-          <LayerConfigGroup label={'layer.color'} collapsible>
+          {/* Fill */}
+          <LayerConfigGroup
+            {...layer.visConfigSettings.filled}
+            {...visConfiguratorProps}
+            label={'layer.fillColor'}
+            collapsible
+          >
             {layer.config.colorField ? (
               <LayerColorRangeSelector {...visConfiguratorProps} />
             ) : (
@@ -502,7 +509,44 @@ export default function LayerConfiguratorFactory(
                 channel={layer.visualChannels.color}
                 {...layerChannelConfigProps}
               />
-              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+              <VisConfigSlider
+                {...layer.visConfigSettings.opacity}
+                {...visConfiguratorProps}
+                disabled={!layer.config.visConfig.filled}
+              />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+
+          {/* Outline */}
+          <LayerConfigGroup
+            {...layer.visConfigSettings.outline}
+            {...visConfiguratorProps}
+            collapsible
+          >
+            <ChannelByValueSelector
+              channel={layer.visualChannels.strokeColor}
+              {...layerChannelConfigProps}
+            />
+            {layer.config.strokeColorField ? (
+              <LayerColorRangeSelector {...visConfiguratorProps} property="strokeColorRange" />
+            ) : (
+              <LayerColorSelector
+                {...visConfiguratorProps}
+                selectedColor={layer.config.visConfig.strokeColor}
+                property="strokeColor"
+              />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.strokeOpacity}
+                {...visConfiguratorProps}
+                disabled={!layer.config.visConfig.outline}
+              />
+              <VisConfigSlider
+                {...layer.visConfigSettings.thickness}
+                {...visConfiguratorProps}
+                disabled={!layer.config.visConfig.outline}
+              />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
 
@@ -555,6 +599,13 @@ export default function LayerConfiguratorFactory(
               />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
+
+          {/* text label */}
+          <TextLabelPanel
+            fields={visConfiguratorProps.fields}
+            updateLayerTextLabel={this.props.updateLayerTextLabel}
+            textLabel={layer.config.textLabel}
+          />
         </StyledLayerVisualConfigurator>
       );
     }
@@ -1002,7 +1053,14 @@ export default function LayerConfiguratorFactory(
     }
 
     render() {
-      const {layer, datasets, updateLayerConfig, layerTypeOptions, updateLayerType} = this.props;
+      const {
+        layer,
+        datasets,
+        updateLayerConfig,
+        layerTypeOptions,
+        updateLayerType,
+        disableTypeSelect = false
+      } = this.props;
       const {fields = [], fieldPairs = undefined} = layer.config.dataId
         ? datasets[layer.config.dataId]
         : {};
@@ -1022,6 +1080,7 @@ export default function LayerConfiguratorFactory(
           <LayerConfigGroup label={'layer.basic'} collapsible expanded={!layer.hasAllColumns()}>
             <LayerTypeSelector
               selected={layer.type}
+              disabled={disableTypeSelect}
               options={layerTypeOptions}
               // @ts-ignore
               onSelect={updateLayerType}

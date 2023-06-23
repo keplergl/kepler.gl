@@ -38,36 +38,7 @@ export {default as domtoimage} from './dom-to-image';
 export {getFrequency, getMode, aggregate} from './aggregate-utils';
 // eslint-disable-next-line prettier/prettier
 export type {FieldFormatter} from './data-utils';
-export {
-  unique,
-  getLatLngBounds,
-  clamp,
-  getSampleData,
-  timeToUnixMilli,
-  notNullorUndefined,
-  isNumber,
-  isPlainObject,
-  hasOwnProperty,
-  numberSort,
-  getSortingFunction,
-  preciseRound,
-  getRoundingDecimalFromStep,
-  snapToMarks,
-  normalizeSliderValue,
-  roundValToStep,
-  defaultFormatter,
-  FIELD_DISPLAY_FORMAT,
-  parseFieldValue,
-  arrayMove,
-  getFormatter,
-  applyDefaultFormat,
-  roundToFour,
-  getBooleanFormatter,
-  applyCustomFormat,
-  datetimeFormatter,
-  formatNumber,
-  getColumnFormatter
-} from './data-utils';
+export * from './data-utils';
 export {getTimelineFromAnimationConfig, getTimelineFromFilter, SAMPLE_TIMELINE, TIMELINE_MODES} from './time';
 
 export {
@@ -107,12 +78,8 @@ export {
 export {setLayerBlending} from './gl-utils';
 export {flattenMessages, mergeMessages} from './locale-utils';
 export type {Dimensions} from './observe-dimensions';
-export {
-  observeDimensions,
-  unobserveDimensions,
-  default as useDimensions
-} from './observe-dimensions';
-export {validateBounds, getCenterAndZoomFromBounds, normalizeEvent, MAPBOX_TILE_SIZE} from './projection-utils';
+export * from './observe-dimensions';
+export * from './projection-utils';
 export {validateToken} from './mapbox-utils';
 export {
   getDefaultLayerGroupVisibility,
@@ -125,90 +92,20 @@ export {
   mergeLayerGroupVisibility
 } from './map-style-utils/mapbox-gl-style-editor';
 export {isValidMapInfo} from './map-info-utils';
-export {
-  generateHashId,
-  isChrome,
-  capitalizeFirstLetter,
-  camelToTitle,
-  camelize,
-  toArray,
-  insertValue,
-  isObject,
-  set,
-  getError,
-  arrayInsert,
-  isTest,
-  filterObjectByPredicate,
-  isFunction,
-  hasMobileWidth,
-  hasPortableWidth,
-  findById
-} from './utils';
-export {
-  addNewLayersToSplitMap,
-  removeLayerFromSplitMaps,
-  getInitialMapLayersForSplitMap,
-  computeSplitMapLayers
-} from './split-map-utils';
+export * from './utils';
+export * from './split-map-utils';
+export {snapToMarks} from './plot';
 
 // Mapbox
 export {transformRequest, isStyleUsingMapboxTiles} from './map-style-utils/mapbox-utils';
 
 // Map
-export {onViewPortChange, getMapLayersFromSplitMaps, getViewportFromMapState} from './map-utils';
+export * from './map-utils';
 
 export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData} from './data-container-utils';
 export type {DataContainerInterface} from './data-container-interface';
 export type {FilterResult, FilterChanged, dataValueAccessor} from './filter-utils'
-export {
-  TimestampStepMap,
-  histogramBins,
-  enlargedHistogramBins,
-  FILTER_UPDATER_PROPS,
-  LIMITED_FILTER_EFFECT_PROPS,
-  FILTER_COMPONENTS,
-  DEFAULT_FILTER_STRUCTURE,
-  FILTER_ID_LENGTH,
-  LAYER_FILTERS,
-  getDefaultFilter,
-  shouldApplyFilter,
-  validatePolygonFilter,
-  validateFilter,
-  validateFilterWithData,
-  getFilterProps,
-  getPolygonFilterFunctor,
-  getFilterFunction,
-  updateFilterDataId,
-  filterDataByFilterTypes,
-  getFilterRecord,
-  diffFilters,
-  adjustValueToFilterDomain,
-  getNumericFieldDomain,
-  getNumericStepSize,
-  getTimestampFieldDomain,
-  histogramConstruct,
-  getHistogram,
-  formatNumberByStep,
-  isInRange,
-  isInPolygon,
-  isValidTimeDomain,
-  getTimeWidgetTitleFormatter,
-  getTimeWidgetHintFormatter,
-  isFilterValidToSave,
-  isValidFilterValue,
-  isSideFilter,
-  getFilterPlot,
-  getDefaultFilterPlotType,
-  applyFiltersToDatasets,
-  applyFilterFieldName,
-  mergeFilterDomainStep,
-  featureToFilterValue,
-  getFilterIdInFeature,
-  generatePolygonFilter,
-  filterDatasetCPU,
-  validateFiltersUpdateDatasets,
-  getIntervalBins
-} from "./filter-utils";
+export * from "./filter-utils";
 
 export {
   getQuantileDomain,

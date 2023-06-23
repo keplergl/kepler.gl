@@ -27,7 +27,7 @@ export type CollapseButtonProps = {
   onClick: (e: React.MouseEvent<HTMLDivElement>) => void;
 };
 
-type SideBarProps = {
+export type SideBarProps = {
   width: number;
   isOpen: boolean;
   minifiedWidth: number;

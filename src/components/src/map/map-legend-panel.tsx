@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {ComponentType, useState} from 'react';
+import React, {ComponentType, useCallback, useState} from 'react';
 import styled from 'styled-components';
 
 import {Legend} from '../common/icons';
@@ -77,6 +77,7 @@ export type MapLegendPanelProps = {
   offsetRight?: number;
   onToggleSplitMapViewport?: ActionHandler<typeof toggleSplitMapViewport>;
   isViewportUnsyncAllowed?: boolean;
+  onClickControlBtn?: (e?: MouseEvent) => void;
 };
 
 function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
@@ -96,29 +97,37 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
     mapHeight,
     offsetRight,
     onToggleSplitMapViewport,
+    onClickControlBtn,
     isViewportUnsyncAllowed = true
   }) => {
     const mapLegend = mapControls?.mapLegend || ({} as MapControlItem);
     const {active: isPinned} = mapLegend || {};
 
-    const onClick = () => {
+    const onClick = useCallback(() => {
+      onClickControlBtn?.();
       if (mapControls?.mapDraw?.active) {
         onToggleMapControl('mapDraw');
       }
-    };
+    }, [onClickControlBtn, onToggleMapControl, mapControls]);
     const [tippyInstance, setTippyInstance] = useState(null);
-    const onCloseClick = e => {
-      e.preventDefault();
-      onToggleMapControl('mapLegend');
-    };
-    const onPinClick = e => {
-      e.preventDefault();
-      if (tippyInstance) {
-        // @ts-ignore
-        tippyInstance.hide();
-      }
-      onToggleMapControl('mapLegend');
-    };
+    const onCloseClick = useCallback(
+      e => {
+        e.preventDefault();
+        onToggleMapControl('mapLegend');
+      },
+      [onToggleMapControl]
+    );
+    const onPinClick = useCallback(
+      e => {
+        e.preventDefault();
+        if (tippyInstance) {
+          // @ts-ignore
+          tippyInstance.hide();
+        }
+        onToggleMapControl('mapLegend');
+      },
+      [tippyInstance, onToggleMapControl]
+    );
 
     if (!mapLegend.show) {
       return null;

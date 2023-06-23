@@ -28,12 +28,13 @@ import {VertThreeDots} from '../../common/icons';
 import {Layer} from '@kepler.gl/layers';
 import {LayerVisConfig} from '@kepler.gl/types';
 
-type LayerConfigGroupLabelProps = {
+export type LayerConfigGroupLabelProps = {
   label?: string;
   description?: string;
+  collapsed?: boolean;
 };
 
-type LayerConfigGroupProps = {
+export type LayerConfigGroupProps = {
   layer?: Layer;
   label: string;
   property?: string;
@@ -42,6 +43,7 @@ type LayerConfigGroupProps = {
   expanded?: boolean;
   disabled?: boolean;
   onChange?: (newVisConfig: Partial<LayerVisConfig>) => void;
+  IconComponent?: React.ElementType;
 };
 
 export const StyledLayerConfigGroupAction = styled.div`
@@ -89,16 +91,21 @@ export const StyledLayerConfigGroup = styled.div`
   }
 `;
 
+interface StyledConfigGroupHeaderProps {
+  collapsible?: boolean;
+}
+
 export const StyledConfigGroupHeader = styled.div.attrs({
   className: 'layer-config-group__header'
-})`
+})<StyledConfigGroupHeaderProps>`
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  cursor: default;
 
   :hover {
-    cursor: pointer;
+    ${props => props.collapsible && 'cursor: pointer;'}
     .layer-config-group__label {
       color: ${props => props.theme.textColorHl};
     }
@@ -168,17 +175,18 @@ function LayerConfigGroupFactory(
     collapsible,
     description,
     disabled,
-    expanded
+    expanded,
+    IconComponent = VertThreeDots
   }) => {
     const [collapsed, toggleCollapsed] = useState(!expanded);
     const onToggleCollapsed = useCallback(() => {
-      toggleCollapsed(!collapsed);
-    }, [collapsed, toggleCollapsed]);
+      collapsible && toggleCollapsed(!collapsed);
+    }, [collapsed, toggleCollapsed, collapsible]);
 
     return (
       <StyledLayerConfigGroup className={classnames('layer-config-group', {collapsed, disabled})}>
-        <StyledConfigGroupHeader onClick={onToggleCollapsed}>
-          <LayerConfigGroupLabel label={label} description={description} />
+        <StyledConfigGroupHeader onClick={onToggleCollapsed} collapsible={collapsible}>
+          <LayerConfigGroupLabel label={label} description={description} collapsed={collapsed} />
           <StyledLayerConfigGroupAction className="layer-config-group__action">
             {property ? (
               <Switch
@@ -187,7 +195,7 @@ function LayerConfigGroupFactory(
                 onChange={() => onChange?.({[property]: !layer?.config.visConfig[property]})}
               />
             ) : null}
-            {collapsible ? <VertThreeDots height="18px" /> : null}
+            {collapsible ? <IconComponent height="18px" /> : null}
           </StyledLayerConfigGroupAction>
         </StyledConfigGroupHeader>
         <ConfigGroupContent

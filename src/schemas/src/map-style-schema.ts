@@ -30,13 +30,13 @@ export const customMapStylePropsV1 = {
   url: null
 };
 
-const CustomMapStyleSchema = new Schema({
+export const CustomMapStyleSchema = new Schema({
   version: VERSIONS.v1,
   key: 'customStyle',
   properties: customMapStylePropsV1
 });
 
-class MapStyleSchemaV1 extends Schema {
+export class MapStyleSchemaV1 extends Schema {
   version = VERSIONS.v1;
   key = 'mapStyles';
   save(mapStyles) {

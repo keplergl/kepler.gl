@@ -198,9 +198,9 @@ export default {
     rowCount: '{rowCount} rows'
   },
   tooltip: {
-    hideLayer: 'hide layer',
-    showLayer: 'show layer',
-    hideFeature: 'Hide Feature',
+    hideLayer: 'Hide layer',
+    showLayer: 'Show layer',
+    hideFeature: 'Hide feature',
     showFeature: 'Show feature',
     hide: 'hide',
     show: 'show',
@@ -217,7 +217,8 @@ export default {
     hideLayerPanel: 'Hide layer panel',
     showLayerPanel: 'Show layer panel',
     moveToTop: 'Move to top of data layers',
-    selectBaseMapStyle: 'Select Base Map Style',
+    selectBaseMapStyle: 'Select base map style',
+    removeBaseMapStyle: 'Remove base map style',
     delete: 'Delete',
     timePlayback: 'Time Playback',
     cloudStorage: 'Cloud Storage',
@@ -464,6 +465,7 @@ export default {
     colorScale: 'Color Scale',
     sizeScale: 'Size Scale',
     strokeScale: 'Stroke Scale',
+    strokeColorScale: 'Stroke Color Scale',
     scale: 'Scale'
   },
   fileUploader: {

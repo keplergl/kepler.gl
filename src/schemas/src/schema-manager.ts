@@ -30,7 +30,7 @@ import {visStateSchema} from './vis-state-schema';
 import {CURRENT_VERSION, VERSIONS} from './versions';
 import {isPlainObject} from '@kepler.gl/utils';
 
-import {MapInfo, SavedVisState, SavedMapStyle, ParsedConfig} from '@kepler.gl/types';
+import {MapInfo, SavedVisState, SavedMapStyle, ParsedConfig, BaseMapStyle} from '@kepler.gl/types';
 
 export type SavedMapState = {
   bearing: number;
@@ -40,9 +40,9 @@ export type SavedMapState = {
   pitch: number;
   zoom: number;
   isSplit: boolean;
-  isViewportSynced: true;
-  isZoomLocked: false;
-  splitMapViewports: [];
+  isViewportSynced?: true;
+  isZoomLocked?: false;
+  splitMapViewports?: [];
 };
 
 export type SavedLayerGroups = {
@@ -51,8 +51,8 @@ export type SavedLayerGroups = {
 
 export type SavedCustomMapStyle = {
   [key: string]: {
-    accessToken: string;
-    custom: boolean;
+    accessToken?: string;
+    custom: BaseMapStyle['custom'];
     icon: string;
     id: string;
     label: string;

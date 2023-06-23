@@ -42,6 +42,43 @@ export const addCustomMapStyle: () => {
   type: typeof ActionTypes.ADD_CUSTOM_MAP_STYLE;
 } = createAction(ActionTypes.ADD_CUSTOM_MAP_STYLE);
 
+export type RemoveCustomMapStyleUpdaterAction = {
+  payload: {
+    id: string;
+  };
+};
+
+/**
+ * Edit map style from user input to reducer.
+ * This action is called when user clicks confirm after editing an existing custom style in the custom map style dialog.
+ * It should not be called from outside kepler.gl without a valid `inputStyle` in the `mapStyle` reducer.
+ * param {void}
+ * @memberof mapStyleActions
+ * @public
+ */
+export const editCustomMapStyle: () => {
+  type: typeof ActionTypes.EDIT_CUSTOM_MAP_STYLE;
+} = createAction(ActionTypes.EDIT_CUSTOM_MAP_STYLE);
+
+/**
+ * Remove a custom map style from `state.mapStyle.mapStyles`.
+ * @param id
+ * @memberof mapStyleActions
+ * @public
+ */
+export const removeCustomMapStyle: ({
+  id
+}: RemoveCustomMapStyleUpdaterAction['payload']) => Merge<
+  RemoveCustomMapStyleUpdaterAction,
+  {type: typeof ActionTypes.REMOVE_CUSTOM_MAP_STYLE}
+> = createAction(ActionTypes.REMOVE_CUSTOM_MAP_STYLE, ({id}) => {
+  return {
+    payload: {
+      id
+    }
+  };
+});
+
 /** INPUT_MAP_STYLE */
 export type InputMapStyleUpdaterAction = {
   payload: {
@@ -225,7 +262,7 @@ export type LoadCustomMapStyleUpdaterAction = {
   payload: {
     icon?: string;
     style?: object;
-    error?: Error;
+    error?: object;
   };
 };
 /**

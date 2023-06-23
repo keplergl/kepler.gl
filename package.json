@@ -37,6 +37,7 @@
     "url": "https://github.com/keplergl/kepler.gl.git"
   },
   "scripts": {
+    "bootstrap": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true yarn",
     "install:example": "cd examples/demo-app && yarn",
     "install:web": "yarn install:example && cd website && yarn",
     "install-and-start": "node ./scripts/install-and-start",
@@ -137,8 +138,8 @@
     "@loaders.gl/polyfills": "^3.0.9",
     "@luma.gl/test-utils": "^8.5.10",
     "@nebula.gl/layers": "1.0.2-alpha.1",
-    "@probe.gl/env": "^3.0.1",
-    "@probe.gl/test-utils": "^3.0.1",
+    "@probe.gl/env": "^3.5.0",
+    "@probe.gl/test-utils": "^3.5.0",
     "@testing-library/react-hooks": "^3.4.2",
     "@types/d3-array": "^2.0.0",
     "@types/d3-scale": "^3.2.2",
@@ -165,16 +166,12 @@
     "eslint-plugin-prettier": "^3.1.2",
     "eslint-plugin-react": "^7.13.0",
     "eslint-plugin-react-hooks": "^4.1.0",
-    "gl": "^4.2.2",
-    "jest": "^26.6.1",
-    "jest-image-snapshot": "^4.2.0",
-    "jest-puppeteer": "^4.4.0",
+    "gl": "^4.9.2",
     "jsdom": "^16.4.0",
     "json-loader": "^0.5.4",
     "nyc": "^15.1.0",
     "prettier": "1.19.1",
     "progress-bar-webpack-plugin": "^2.1.0",
-    "puppeteer": "^2.1.1",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-hot-loader": "^4.13.0",
@@ -221,7 +218,7 @@
     "@deck.gl/test-utils": "^8.6.0",
     "@luma.gl/test-utils": "^8.5.10",
     "browserslist": "^4.17.0",
-    "caniuse-lite": "^1.0.30001361",
+    "caniuse-lite": "^1.0.30001449",
     "d3-array": "^2.8.0",
     "d3-scale": "^3.2.3",
     "dot-prop": "6.0.0",
@@ -248,14 +245,20 @@
     ]
   },
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=14"
   },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
     "Giuseppe Macri <gmacri@uber.com>"
   ],
   "volta": {
-    "node": "12.22.12",
+    "node": "14.21.1",
     "yarn": "1.22.19"
+  },
+  "nx": {
+    "tags": [
+      "type:lib",
+      "scope:frontend"
+    ]
   }
 }

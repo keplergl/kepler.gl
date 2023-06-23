@@ -412,7 +412,7 @@ export function layerSetIsValidUpdater(
   return state;
 }
 
-function addOrRemoveTextLabels(newFields, textLabel) {
+function addOrRemoveTextLabels(newFields, textLabel, defaultTextLabel = DEFAULT_TEXT_LABEL) {
   let newTextLabel = textLabel.slice();
 
   const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => d);
@@ -422,13 +422,13 @@ function addOrRemoveTextLabels(newFields, textLabel) {
 
   // delete
   newTextLabel = newTextLabel.filter(tl => tl.field && !deleteFields.includes(tl.field.name));
-  newTextLabel = !newTextLabel.length ? [DEFAULT_TEXT_LABEL] : newTextLabel;
+  newTextLabel = !newTextLabel.length ? [defaultTextLabel] : newTextLabel;
 
   // add
   newTextLabel = [
     ...newTextLabel.filter(tl => tl.field),
     ...addFields.map(af => ({
-      ...DEFAULT_TEXT_LABEL,
+      ...defaultTextLabel,
       field: af
     }))
   ];
@@ -465,14 +465,19 @@ export function layerTextLabelChangeUpdater(
   const {oldLayer, idx, prop, value} = action;
   const {textLabel} = oldLayer.config;
 
+  // when adding a new empty text label,
+  // rely on the layer's default config, or use the constant DEFAULT_TEXT_LABEL
+  const defaultTextLabel =
+    oldLayer.getDefaultLayerConfig({dataId: ''})?.textLabel?.[0] ?? DEFAULT_TEXT_LABEL;
+
   let newTextLabel = textLabel.slice();
   if (!textLabel[idx] && idx === textLabel.length) {
     // if idx is set to length, add empty text label
-    newTextLabel = [...textLabel, DEFAULT_TEXT_LABEL];
+    newTextLabel = [...textLabel, defaultTextLabel];
   }
 
   if (idx === 'all' && prop === 'fields') {
-    newTextLabel = addOrRemoveTextLabels(value, textLabel);
+    newTextLabel = addOrRemoveTextLabels(value, textLabel, defaultTextLabel);
   } else {
     newTextLabel = updateTextLabelPropAndValue(idx, prop, value, newTextLabel);
   }
@@ -932,7 +937,7 @@ export const addFilterUpdater = (
     ? state
     : {
         ...state,
-        filters: [...state.filters, getDefaultFilter(action.dataId)]
+        filters: [...state.filters, getDefaultFilter({dataId: action.dataId, id: action.id})]
       };
 
 /**

@@ -19,6 +19,9 @@
 // THE SOFTWARE.
 
 import assert from 'assert';
+import {format as d3Format} from 'd3-format';
+import moment from 'moment-timezone';
+
 import {
   ALL_FIELD_TYPES,
   TOOLTIP_FORMATS,
@@ -26,11 +29,10 @@ import {
   TOOLTIP_KEY,
   TooltipFormat
 } from '@kepler.gl/constants';
-import {format as d3Format} from 'd3-format';
-import {bisectLeft} from 'd3-array';
-import moment from 'moment-timezone';
-
 import {Millisecond, Field, ColMetaProps} from '@kepler.gl/types';
+
+import {snapToMarks} from './plot';
+import {isPlainObject} from './utils';
 
 export type FieldFormatter = (value: any) => string;
 
@@ -116,14 +118,6 @@ export function isNumber(d: any): boolean {
 }
 
 /**
- * whether is an object
- * @returns {boolean} - yes or no
- */
-export function isPlainObject(obj: unknown): obj is Record<string, unknown> {
-  return obj === Object(obj) && typeof obj !== 'function' && !Array.isArray(obj);
-}
-
-/**
  * whether object has property
  * @param {string} prop
  * @returns {boolean} - yes or no
@@ -182,28 +176,21 @@ export function getRoundingDecimalFromStep(step: number): number {
     assert(step);
   }
 
-  const splitZero = step.toString().split('.');
+  const stepStr = step.toString();
+
+  // in case the step is a very small number e.g. 1e-7, return decimal e.g. 7 directly
+  const splitExponential = stepStr.split('e-');
+  if (splitExponential.length === 2) {
+    const coeffZero = splitExponential[0].split('.');
+    const coeffDecimal = coeffZero.length === 1 ? 0 : coeffZero[1].length;
+    return parseInt(splitExponential[1], 10) + coeffDecimal;
+  }
+
+  const splitZero = stepStr.split('.');
   if (splitZero.length === 1) {
     return 0;
   }
   return splitZero[1].length;
-}
-
-/**
- * Use in slider, given a number and an array of numbers, return the nears number from the array
- * @param value
- * @param marks
- */
-export function snapToMarks(value: number, marks: number[]): number {
-  // always use bin x0
-  const i = bisectLeft(marks, value);
-  if (i === 0) {
-    return marks[i];
-  } else if (i === marks.length) {
-    return marks[i - 1];
-  }
-  const idx = marks[i] - value < value - marks[i - 1] ? i : i - 1;
-  return marks[idx];
 }
 
 /**
@@ -220,6 +207,7 @@ export function normalizeSliderValue(
   marks?: number[]
 ): number {
   if (marks && marks.length) {
+    // Use in slider, given a number and an array of numbers, return the nears number from the array
     return snapToMarks(val, marks);
   }
 
