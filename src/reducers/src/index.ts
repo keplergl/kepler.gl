@@ -63,7 +63,7 @@ export * from './provider-state';
 export * from './ui-state';
 export * from './map-state';
 export {getInitialInputStyle, loadMapStylesUpdater, INITIAL_MAP_STYLE} from './map-style-updaters';
-export {fitBoundsUpdater, INITIAL_MAP_STATE} from './map-state-updaters';
+export {fitBoundsUpdater, pickViewportPropsFromMapState, INITIAL_MAP_STATE} from './map-state-updaters';
 
 // Helpers
 export * from './composer-helpers';
