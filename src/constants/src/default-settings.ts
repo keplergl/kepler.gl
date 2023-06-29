@@ -1138,7 +1138,8 @@ export const dataTestIds: Record<string, string> = {
   errorIcon: 'error-icon',
   successIcon: 'success-icon',
   checkmarkIcon: 'checkmark-icon',
-  sortableLayerItems: 'sortable-layer-items',
+  sortableLayerItem: 'sortable-layer-item',
+  staticLayerItem: 'static-layer-item',
   layerTitleEditor: 'layer__title__editor',
   removeLayerAction: 'remove-layer-action',
   layerPanel: 'layer-panel'

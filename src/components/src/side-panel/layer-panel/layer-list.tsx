@@ -21,16 +21,16 @@
 import React, {useMemo} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import LayerPanelFactory from './layer-panel';
+
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
 import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
 
-import {useDroppable} from '@dnd-kit/core';
 import {useSortable, SortableContext, verticalListSortingStrategy} from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
+import LayerPanelFactory from './layer-panel';
 import {findById} from '@kepler.gl/utils';
-import {dataTestIds} from '@kepler.gl/constants';
+import {dataTestIds, SORTABLE_LAYER_TYPE, SORTABLE_SIDE_PANEL_TYPE} from '@kepler.gl/constants';
 
 export type LayerListProps = {
   datasets: Datasets;
@@ -46,6 +46,12 @@ export type LayerListFactoryDeps = [typeof LayerPanelFactory];
 
 // make sure the element is always visible while is being dragged
 // item being dragged is appended in body, here to reset its global style
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
 
 interface SortableStyledItemProps {
   transition?: string;
@@ -85,16 +91,25 @@ LayerListFactory.deps = [LayerPanelFactory];
 function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
   // By wrapping layer panel using a sortable element we don't have to implement the drag and drop logic into the panel itself;
   // Developers can provide any layer panel implementation and it will still be sortable
-  const SortableItem = ({layer, idx, panelProps, layerActions}) => {
+  const SortableItem = ({layer, idx, panelProps, layerActions, disabled}) => {
     const {attributes, listeners, setNodeRef, isDragging, transform, transition} = useSortable({
-      id: layer.id
+      id: layer.id,
+      data: {
+        type: SORTABLE_LAYER_TYPE,
+        parent: SORTABLE_SIDE_PANEL_TYPE
+      },
+      disabled
     });
 
     return (
       <SortableStyledItem
         ref={setNodeRef}
-        className={classnames('sortable-layer-items', {sorting: isDragging})}
-        data-testid={dataTestIds.sortableLayerItems}
+        className={classnames(
+          {[dataTestIds.sortableLayerItem]: !disabled},
+          {[dataTestIds.staticLayerItem]: disabled},
+          {sorting: isDragging}
+        )}
+        data-testid={disabled ? dataTestIds.staticLayerItem : dataTestIds.sortableLayerItem}
         transform={CSS.Transform.toString(transform)}
         transition={transition}
         {...attributes}
@@ -106,21 +121,9 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
           idx={idx}
           layer={layer}
           listeners={listeners}
+          isDraggable={!disabled}
         />
       </SortableStyledItem>
-    );
-  };
-
-  const SortableList = ({containerId, sidePanelDndItems, children}) => {
-    const {setNodeRef} = useDroppable({id: containerId});
-    return (
-      <SortableContext
-        id={containerId}
-        items={sidePanelDndItems}
-        strategy={verticalListSortingStrategy}
-      >
-        <div ref={setNodeRef}>{children}</div>
-      </SortableContext>
     );
   };
 
@@ -188,9 +191,14 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
       [datasets, openModal, layerTypeOptions]
     );
 
-    return isSortable ? (
-      <>
-        <SortableList containerId="sortablelist" sidePanelDndItems={sidePanelDndItems}>
+    return (
+      <Container>
+        <SortableContext
+          id={SORTABLE_SIDE_PANEL_TYPE}
+          items={sidePanelDndItems}
+          strategy={verticalListSortingStrategy}
+          disabled={!isSortable}
+        >
           {/* warning: containerId should be similar to the first key in dndItems defined in kepler-gl.js*/}
           {layersToShow.map(layer => (
             <SortableItem
@@ -199,23 +207,11 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
               idx={layers.findIndex(l => l?.id === layer.id)}
               panelProps={panelProps}
               layerActions={layerActions}
+              disabled={!isSortable}
             />
           ))}
-        </SortableList>
-      </>
-    ) : (
-      <>
-        {layersToShow.map(layer => (
-          <LayerPanel
-            {...panelProps}
-            {...layerActions}
-            key={layer.id}
-            idx={layers.findIndex(l => l?.id === layer.id)}
-            layer={layer}
-            isDraggable={false}
-          />
-        ))}
-      </>
+        </SortableContext>
+      </Container>
     );
   };
   return LayerList;

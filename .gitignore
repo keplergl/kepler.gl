@@ -25,6 +25,7 @@ package-lock.json
 
 npm-debug.log
 .history/
+.yarn
 
 .pnp.*
 .yarn/*

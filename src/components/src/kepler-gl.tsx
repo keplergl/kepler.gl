@@ -28,9 +28,6 @@ import {IntlProvider} from 'react-intl';
 import {messages} from '@kepler.gl/localization';
 import {RootContext, FeatureFlagsContextProvider, FeatureFlags} from './context';
 import {OnErrorCallBack, OnSuccessCallBack, Viewport} from '@kepler.gl/types';
-import {Layer} from '@kepler.gl/layers';
-
-import {DndContext, DragOverlay, DragEndEvent, DragStartEvent} from '@dnd-kit/core';
 
 import {
   MapStateActions,
@@ -58,14 +55,6 @@ import {
   MISSING_MAPBOX_TOKEN
 } from '@kepler.gl/constants';
 
-import {
-  DragItem,
-  DND_EMPTY_MODIFIERS,
-  DRAGOVERLAY_MODIFIERS,
-  findDndContainerId,
-  getLayerOrderOnSort
-} from './dnd-layer-items';
-
 import SidePanelFactory from './side-panel';
 import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
@@ -74,7 +63,7 @@ import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
 import NotificationPanelFactory from './notification-panel';
 import GeoCoderPanelFactory from './geocoder-panel';
-import LayerPanelHeaderFactory from './side-panel/layer-panel/layer-panel-header';
+import DndContextFactory from './dnd-context';
 
 import {
   filterObjectByPredicate,
@@ -138,10 +127,6 @@ const BottomWidgetOuter = styled.div<BottomWidgetOuterProps>(
     pointer-events: all;
   }`
 );
-
-const nop = () => {
-  return;
-};
 
 export const isViewportDisjointed = props => {
   return (
@@ -347,17 +332,11 @@ type KeplerGLBasicProps = {
 
   topMapContainerProps?: object;
   bottomMapContainerProps?: object;
-
-  onDragStart?: (event: DragStartEvent) => void;
-  onDragEnd?: (event: DragEndEvent) => void;
 };
 
 type KeplerGLProps = KeplerGlState & KeplerGlActions & KeplerGLBasicProps;
 type KeplerGLCompState = {
   dimensions: {width: number; height: number} | null;
-  activeLayer?: Layer;
-  isDragging: boolean | null;
-  dndItems: {sortablelist: string[]; 0: []; 1: []};
 };
 
 KeplerGlFactory.deps = [
@@ -369,7 +348,7 @@ KeplerGlFactory.deps = [
   SidePanelFactory,
   PlotContainerFactory,
   NotificationPanelFactory,
-  LayerPanelHeaderFactory
+  DndContextFactory
 ];
 
 function KeplerGlFactory(
@@ -381,7 +360,7 @@ function KeplerGlFactory(
   SidePanel: ReturnType<typeof SidePanelFactory>,
   PlotContainer: ReturnType<typeof PlotContainerFactory>,
   NotificationPanel: ReturnType<typeof NotificationPanelFactory>,
-  LayerPanelHeader: ReturnType<typeof LayerPanelHeaderFactory>
+  DndContext: ReturnType<typeof DndContextFactory>
 ): React.ComponentType<KeplerGLBasicProps & {selector: (...args: any[]) => KeplerGlState}> {
   /** @typedef {import('./kepler-gl').UnconnectedKeplerGlProps} KeplerGlProps */
   /** @augments React.Component<KeplerGlProps> */
@@ -392,30 +371,17 @@ function KeplerGlFactory(
     static defaultProps = DEFAULT_KEPLER_GL_PROPS;
 
     state: KeplerGLCompState = {
-      dimensions: null,
-      activeLayer: undefined,
-      isDragging: null,
-      dndItems: {sortablelist: [], 0: [], 1: []}
+      dimensions: null
     };
 
     componentDidMount() {
       this._validateMapboxToken();
       this._loadMapStyle();
-      this._updateDndItems();
       if (typeof this.props.onKeplerGlInitialized === 'function') {
         this.props.onKeplerGlInitialized();
       }
       if (this.root.current instanceof HTMLElement) {
         observeDimensions(this.root.current, this._handleResize);
-      }
-    }
-
-    componentDidUpdate(prevProps) {
-      if (
-        this.props.visState.layerOrder !== prevProps.visState.layerOrder ||
-        this.props.visState.layers !== prevProps.visState.layers
-      ) {
-        this._updateDndItems();
       }
     }
 
@@ -492,85 +458,8 @@ function KeplerGlFactory(
       this.props.mapStyleActions.loadMapStyles(allStyles);
     };
 
-    _updateDndItems = () => {
-      // update dndItems when layerOrder or layers change
-      this.setState((state, props) => {
-        const {
-          visState: {layerOrder}
-        } = props;
-
-        return {
-          dndItems: {
-            ...state.dndItems,
-            sortablelist: layerOrder
-          }
-        };
-      });
-    };
-
     _deleteMapLabels = (containerId, layerId) => {
-      // delete dnditems in map panel
       this.props.visStateActions.toggleLayerForMap(containerId, layerId);
-    };
-
-    _handleDragStart = event => {
-      if (this.props.onDragStart) {
-        this.props.onDragStart(event);
-        return;
-      }
-
-      const {active} = event;
-      const {
-        visState: {layers},
-        visStateActions
-      } = this.props;
-      const activeLayer = layers.find(layer => layer.id === active.id);
-      this.setState({activeLayer});
-
-      if (activeLayer?.config.isConfigActive) {
-        visStateActions.layerConfigChange(activeLayer, {isConfigActive: false});
-      }
-    };
-
-    _handleDragEnd = event => {
-      if (this.props.onDragEnd) {
-        this.props.onDragEnd(event);
-        return;
-      }
-
-      const {active, over} = event;
-
-      const {
-        visState: {layerOrder, splitMaps},
-        visStateActions
-      } = this.props;
-      const {dndItems} = this.state;
-
-      if (!dndItems) {
-        return;
-      }
-
-      const {id: activeLayerId} = active;
-      const overId = over?.id; // isSplit ? overContainerId : overLayerId
-      const activeContainer = findDndContainerId(activeLayerId, dndItems);
-      const overContainer = findDndContainerId(overId, dndItems);
-
-      if (!activeContainer || !overContainer) {
-        return;
-      }
-
-      if (activeContainer === overContainer) {
-        // drag and drop in the same container: Sortablelist
-        // this sort action may happen in any modes, regardless of isSplit
-        visStateActions.reorderLayer(
-          getLayerOrderOnSort(layerOrder, dndItems[activeContainer], activeLayerId, overId)
-        );
-      } else if (!splitMaps[overContainer].layers[activeLayerId]) {
-        // drag and drop in different containers: Sortablelist -> MapContainer
-        visStateActions.toggleLayerForMap(overContainer, activeLayerId);
-      }
-
-      this.setState({activeLayer: undefined});
     };
 
     // eslint-disable-next-line complexity
@@ -589,11 +478,9 @@ function KeplerGlFactory(
       } = this.props;
 
       const dimensions = this.state.dimensions || {width, height};
-      const activeLayer = this.state.activeLayer;
       const {
         splitMaps, // this will store support for split map view is necessary
-        interactionConfig,
-        datasets
+        interactionConfig
       } = visState;
 
       const isSplit = isSplitSelector(this.props);
@@ -649,44 +536,11 @@ function KeplerGlFactory(
                   ref={this.root}
                 >
                   <NotificationPanel {...notificationPanelFields} />
-                  <DndContext
-                    onDragStart={this._handleDragStart}
-                    onDragEnd={this._handleDragEnd}
-                    modifiers={DND_EMPTY_MODIFIERS}
-                  >
+                  <DndContext>
                     {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
                     <MapsLayout className="maps" mapState={this.props.mapState}>
                       {mapContainers}
                     </MapsLayout>
-                    {isSplit && (
-                      <DragOverlay modifiers={DRAGOVERLAY_MODIFIERS} dropAnimation={null}>
-                        {activeLayer !== undefined ? (
-                          <DragItem>
-                            <LayerPanelHeader
-                              isConfigActive={false}
-                              layerId={activeLayer.id}
-                              isVisible={true}
-                              isValid={true}
-                              label={activeLayer.config.label}
-                              labelRCGColorValues={
-                                activeLayer.config.dataId
-                                  ? datasets[activeLayer.config.dataId].color
-                                  : null
-                              }
-                              onToggleVisibility={nop}
-                              onResetIsValid={nop}
-                              onUpdateLayerLabel={nop}
-                              onToggleEnableConfig={nop}
-                              onDuplicateLayer={nop}
-                              onRemoveLayer={nop}
-                              layerType={activeLayer.type}
-                              allowDuplicate={false}
-                              isDragNDropEnabled={false}
-                            />
-                          </DragItem>
-                        ) : null}
-                      </DragOverlay>
-                    )}
                   </DndContext>
                   {isExportingImage && <PlotContainer {...plotContainerFields} />}
                   {/* 1 geocoder: single mode OR split mode and synced viewports */}

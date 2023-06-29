@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {arrayMove} from '@dnd-kit/sortable';
 import {GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core/typed';
 import {
@@ -439,4 +440,22 @@ export function computeDeckLayers(
 
 export function getLayerOrderFromLayers<T extends {id: string}>(layers: T[]): string[] {
   return layers.map(({id}) => id);
+}
+
+export function reorderLayerOrder(
+  layerOrder: VisState['layerOrder'],
+  originLayerId: string,
+  destinationLayerId: string
+): VisState['layerOrder'] {
+  const activeIndex = layerOrder.indexOf(originLayerId);
+  const overIndex = layerOrder.indexOf(destinationLayerId);
+
+  return arrayMove(layerOrder, activeIndex, overIndex);
+}
+
+export function addLayerToLayerOrder(
+  layerOrder: VisState['layerOrder'],
+  layerId: string
+): string[] {
+  return [layerId, ...layerOrder];
 }

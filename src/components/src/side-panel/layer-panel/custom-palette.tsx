@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, createRef, MouseEventHandler, MouseEvent} from 'react';
+import React, {Component, createRef, MouseEventHandler, MouseEvent, PropsWithChildren} from 'react';
 import classnames from 'classnames';
 import styled, {css} from 'styled-components';
 import {
@@ -163,9 +163,9 @@ const WrappedSortableContainer = SortableContainer<WrappedSortableContainerProps
   ({children, className}) => <div className={className}>{children}</div>
 );
 
-type DragHandleProps = {children?: React.ReactNode; className: string};
+type DragHandleProps = PropsWithChildren<{className?: string; listeners?: unknown}>;
 
-const DragHandle = SortableHandle<DragHandleProps>(({className, children}) => (
+export const DragHandle = SortableHandle<DragHandleProps>(({className, children}) => (
   <StyledDragHandle className={className}>{children}</StyledDragHandle>
 ));
 

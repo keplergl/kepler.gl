@@ -27,6 +27,7 @@ const KeplerGlContext = createContext({
   id: 'map'
 });
 
+// TODO: breakdown this file into multiple files
 export const FeatureFlagsContext = createContext<object | null>({});
 
 export type FeatureFlags = {[key: string]: string | boolean};
