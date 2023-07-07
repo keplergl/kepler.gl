@@ -26,11 +26,13 @@ import {
   getInitialMapLayersForSplitMap,
   applyFiltersToDatasets,
   validateFiltersUpdateDatasets,
-  findById
+  findById,
+  mergeEffectParams
 } from '@kepler.gl/utils';
 import {getLayerOrderFromLayers} from '@kepler.gl/reducers';
 
 import {LayerColumns, LayerColumn, Layer} from '@kepler.gl/layers';
+import {createDeckEffectFromConfig} from '@kepler.gl/effects';
 import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
 import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@kepler.gl/schemas';
 
@@ -41,7 +43,8 @@ import {
   TooltipInfo,
   SavedEditor,
   ParsedConfig,
-  Filter
+  Filter,
+  Effect as EffectType
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
@@ -445,6 +448,38 @@ export function mergeSplitMaps<S extends VisState>(
     ...state,
     splitMaps: merged,
     splitMapsToBeMerged: [...state.splitMapsToBeMerged, ...unmerged]
+  };
+}
+
+/**
+ * Merge effects with saved config
+ */
+export function mergeEffects<S extends VisState>(
+  state: S,
+  effects: NonNullable<ParsedConfig['visState']>['effects'],
+  fromConfig?: boolean
+): S {
+  const newEffects = [
+    ...state.effects,
+    ...(effects || [])
+      .map(effect =>
+        fromConfig
+          ? // collapse all panels when loading effects
+
+            createDeckEffectFromConfig(
+              // @ts-expect-error
+              mergeEffectParams(effect, {config: {isConfigActive: false}})
+            )
+          : (effect as EffectType)
+      )
+      .filter(effect => {
+        return Boolean(effect && effect.isValidToSave());
+      })
+  ];
+  return {
+    ...state,
+    effects: newEffects,
+    effectOrder: newEffects.map(effect => effect.id)
   };
 }
 
@@ -874,6 +909,10 @@ export const VIS_STATE_MERGERS: VisStateMergers<any> = [
     toMergeProp: 'filterToBeMerged',
     preserveOrder: 'preserveFilterOrder',
     replaceParentDatasetIds: replaceFilterDatasetIds
+  },
+  {
+    merge: mergeEffects,
+    prop: 'effects'
   },
   {
     merge: mergeInteractions,

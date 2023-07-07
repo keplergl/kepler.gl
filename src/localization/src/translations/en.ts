@@ -186,6 +186,10 @@ export default {
     '3dBuildingColor': '3D Building Color',
     backgroundColor: 'Background Color'
   },
+  effectManager: {
+    effect: 'Effects',
+    addEffect: 'Add effect'
+  },
   layerConfiguration: {
     defaultDescription: 'Calculate {property} based on selected field',
     howTo: 'How to'
@@ -232,7 +236,12 @@ export default {
     play: 'play',
     pause: 'pause',
     reset: 'reset',
-    export: 'export'
+    export: 'export',
+    showEffectPanel: 'Show effect panel',
+    hideEffectPanel: 'Hide effect panel',
+    removeEffect: 'Remove effect',
+    disableEffect: 'Disable effect',
+    effectSettings: 'Effect settings'
   },
   toolbar: {
     exportImage: 'Export Image',

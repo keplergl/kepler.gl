@@ -2880,6 +2880,8 @@ test('#visStateReducer -> REMOVE_DATASET w filter and layer', t => {
     datasets: {
       [testGeoJsonDataId]: oldState.datasets[testGeoJsonDataId]
     },
+    effects: [],
+    effectOrder: [],
 
     interactionConfig: {
       tooltip: {
@@ -3127,6 +3129,8 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_DATASET', t => {
       [testCsvDataId]: oldState.datasets[testCsvDataId]
     },
     filters: [],
+    effects: [],
+    effectOrder: [],
     interactionConfig: {
       tooltip: {
         id: 'tooltip',

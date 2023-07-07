@@ -222,6 +222,7 @@ export {default as AppLogo} from './common/logo';
 export {default as Switch} from './common/switch';
 export {default as Checkbox} from './common/checkbox';
 export {default as ColorLegend, LegendRow} from './common/color-legend';
+export {default as EffectControlFactory} from './map/effects/effect-control';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export {default as LoadingDialog} from './modals/loading-dialog';
 export {MapViewStateContext, MapViewStateContextProvider} from './map-view-state-context';
@@ -258,6 +259,8 @@ export {
   default as LayerPanelHeaderFactory
 } from './side-panel/layer-panel/layer-panel-header';
 export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
+
+export {default as EffectManagerFactory} from './effects/effect-manager';
 
 export {default as HowToButton} from './side-panel/layer-panel/how-to-button';
 // eslint-disable-next-line prettier/prettier

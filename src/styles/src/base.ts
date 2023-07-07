@@ -472,6 +472,10 @@ export const breakPoints = {
   desk: 768
 };
 
+// effectConfigurator
+export const effectConfiguratorMargin = '6px';
+export const effectConfiguratorPadding = '8px 0px 8px 5px';
+
 // theme is passed to kepler.gl when it's mounted,
 // it is used by styled-components to pass along to
 // all child components
@@ -1541,10 +1545,22 @@ export const theme = {
   layerConfiguratorMargin,
   layerConfiguratorPadding,
 
+  // effectConfigurator
+  effectConfiguratorMargin,
+  effectConfiguratorPadding,
+
   // Styled token
   fieldTokenRightMargin,
   fieldTokenHeight,
-  fieldTokenWidth
+  fieldTokenWidth,
+
+  // Effects
+  effectPanelWidth: 345,
+  effectPanelHeight: 180,
+  effectPanelPaddingSide: 16,
+  effectPanelPaddingTop: 16,
+  rightPanelMarginTop: 12,
+  rightPanelMarginRight: 12
 };
 
 export const themeLT = {

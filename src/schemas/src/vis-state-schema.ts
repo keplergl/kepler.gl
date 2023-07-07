@@ -43,7 +43,8 @@ import {
   MinSavedLayer,
   SavedVisState,
   SplitMap,
-  ValueOf
+  ValueOf,
+  Effect
 } from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
@@ -69,6 +70,8 @@ export interface VisState {
   layerData: any[];
   layerToBeMerged: any[];
   layerOrder: string[];
+  effects: Effect[];
+  effectOrder: string[];
   filters: Filter[];
   filterToBeMerged: any[];
   datasets: Datasets;
@@ -782,6 +785,46 @@ export class SplitMapsSchema extends Schema {
   }
 }
 
+export const effectPropsV1 = {
+  id: null,
+  config: new Schema({
+    version: VERSIONS.v1,
+    key: 'config',
+    properties: {
+      type: null,
+      isEnabled: null,
+      params: null
+    }
+  })
+};
+export class EffectsSchema extends Schema {
+  key = 'effects';
+
+  save(effects, parents) {
+    const [visState] = parents.slice(-1);
+
+    return {
+      [this.key]: visState.effectOrder.reduce((saved, effectId) => {
+        // save effects according to their rendering order
+        /**
+         * @type {Effect | undefined}
+         */
+        const effect = findById(effectId)(effects as Effect[]);
+        if (effect?.isValidToSave()) {
+          saved.push(this.savePropertiesOrApplySchema(effect).effects);
+        }
+        return saved;
+      }, [])
+    };
+  }
+
+  load(effects) {
+    return {
+      [this.key]: effects.map(effect => this.loadPropertiesOrApplySchema(effect, effects).effects)
+    };
+  }
+}
+
 export const filterPropsV1 = {
   ...filterPropsV0,
   plotType: null,
@@ -829,6 +872,10 @@ export const propertiesV1 = {
   layers: new LayerSchemaV0({
     version: VERSIONS.v1,
     properties: layerPropsV1
+  }),
+  effects: new EffectsSchema({
+    version: VERSIONS.v1,
+    properties: effectPropsV1
   }),
   interactionConfig: new InteractionSchemaV1({
     version: VERSIONS.v1,
