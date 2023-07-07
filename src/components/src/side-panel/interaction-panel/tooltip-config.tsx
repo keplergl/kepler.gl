@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {useCallback} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -119,27 +119,62 @@ function TooltipConfigFactory(
     onDisplayFormatChange
   }: DatasetTooltipConfigProps) => {
     const dataId = dataset.id;
+
+    const handleClick = useCallback(
+      () =>
+        onChange({
+          ...config,
+          fieldsToShow: {
+            ...config.fieldsToShow,
+            [dataId]: []
+          }
+        }),
+      [config, dataId, onChange]
+    );
+
+    const findSelectedHelper = useCallback((selected, tooltipFields) => {
+      return selected.map(
+        f =>
+          tooltipFields.find(tooltipField => tooltipField.name === f.name) || {
+            name: f.name,
+            // default initial tooltip is null
+            format: null
+          }
+      );
+    }, []);
+
+    const handleSelect = useCallback(
+      selected => {
+        const newConfig: DatasetTooltipConfigProps['config'] = {
+          ...config,
+          fieldsToShow: {
+            ...config.fieldsToShow,
+            [dataId]: findSelectedHelper(selected, config.fieldsToShow[dataId])
+          }
+        };
+        onChange(newConfig);
+      },
+      [config, dataId, onChange]
+    );
+
+    const handleReorderItems = useCallback(
+      newOrder =>
+        onChange({
+          ...config,
+          fieldsToShow: {
+            ...config.fieldsToShow,
+            [dataId]: newOrder
+          }
+        }),
+      [config, dataId, onChange]
+    );
     return (
       <SidePanelSection key={dataId}>
         <SBFlexboxNoMargin>
           <DatasetTag dataset={dataset} />
           {Boolean(config.fieldsToShow[dataId].length) && (
             <ButtonWrapper>
-              <Button
-                className="clear-all"
-                onClick={() => {
-                  const newConfig = {
-                    ...config,
-                    fieldsToShow: {
-                      ...config.fieldsToShow,
-                      [dataId]: []
-                    }
-                  };
-                  onChange(newConfig);
-                }}
-                width="54px"
-                secondary
-              >
+              <Button className="clear-all" onClick={handleClick} width="54px" secondary>
                 <FormattedMessage id="fieldSelector.clearAll" />
               </Button>
             </ButtonWrapper>
@@ -148,26 +183,8 @@ function TooltipConfigFactory(
         <FieldSelector
           fields={dataset.fields}
           value={config.fieldsToShow[dataId]}
-          onSelect={selected => {
-            const newConfig: DatasetTooltipConfigProps['config'] = {
-              ...config,
-              fieldsToShow: {
-                ...config.fieldsToShow,
-                // @ts-expect-error
-                [dataId]: selected.map(
-                  f =>
-                    config.fieldsToShow[dataId].find(
-                      tooltipField => tooltipField.name === f.name
-                    ) || {
-                      name: f.name,
-                      // default initial tooltip is null
-                      format: null
-                    }
-                )
-              }
-            };
-            onChange(newConfig);
-          }}
+          onSelect={handleSelect}
+          reorderItems={handleReorderItems}
           closeOnSelect={false}
           multiSelect
           inputTheme="secondary"
@@ -190,6 +207,15 @@ function TooltipConfigFactory(
     onDisplayFormatChange,
     intl
   }: TooltipConfigProps) => {
+    const handleChange = useCallback(
+      (option: string | number | boolean | object | null) =>
+        onChange({
+          ...config,
+          compareType: option as string | null
+        }),
+      [config, onChange]
+    );
+
     return (
       <TooltipConfigWrapper>
         {Object.keys(config.fieldsToShow).map(dataId =>
@@ -235,14 +261,7 @@ function TooltipConfigFactory(
             searchable={false}
             inputTheme={'secondary'}
             getOptionValue={d => d}
-            onChange={option => {
-              const newConfig: TooltipConfigProps['config'] = {
-                ...config,
-                // @ts-expect-error
-                compareType: option
-              };
-              onChange(newConfig);
-            }}
+            onChange={handleChange}
           />
         </SidePanelSection>
       </TooltipConfigWrapper>

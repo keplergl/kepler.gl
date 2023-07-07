@@ -20,8 +20,11 @@
 
 import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
+import {DraggableAttributes} from '@dnd-kit/core';
+import {CSS, Transform} from '@dnd-kit/utilities';
 import {ChickletButton, ChickletTag} from '../../../common/item-selector/chickleted-input';
-import {Hash, Delete} from '../../../common/icons';
+import {Hash, Delete, VertDots} from '../../../common/icons';
 import DropdownList from '../../../common/item-selector/dropdown-list';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {TimeLabelFormat, TooltipFields} from '@kepler.gl/types';
@@ -34,6 +37,13 @@ interface TooltipChickletProps {
   item: {name: string};
   displayOption: Function;
   remove: any;
+
+  attributes: DraggableAttributes;
+  listeners: any;
+  setNodeRef: (node: HTMLElement | null) => void;
+  transform: Transform | null;
+  transition?: string;
+  isDragging: boolean;
 }
 
 type TooltipConfig = {
@@ -80,6 +90,38 @@ const IconDiv = styled.div.attrs({
       : props.theme.textColor};
 `;
 
+type SortableStyledItemProps = {
+  transition?: string;
+  transform?: string;
+};
+const SortableStyledItem = styled.div<SortableStyledItemProps>`
+  transition: ${props => props.transition};
+  transform: ${props => props.transform};
+  &.sorting {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  :hover {
+    .tooltip-chicklet__drag-handler {
+      opacity: 1;
+    }
+  }
+`;
+
+const StyledDragHandle = styled.div.attrs({
+  className: 'tooltip-chicklet__drag-handler'
+})`
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  margin-left: -5px;
+  :hover {
+    cursor: move;
+    color: ${props => props.theme.tooltipVerticalLineColor};
+  }
+`;
+
 function getFormatTooltip(formatLabels: TimeLabelFormat[], format: string | null) {
   if (!format) {
     return null;
@@ -102,7 +144,7 @@ function TooltipChickletFactory(
     state = {
       show: false
     };
-    private node!: HTMLDivElement;
+    private node!: HTMLDivElement | null;
 
     componentDidMount() {
       document.addEventListener('mousedown', this.handleClickOutside, false);
@@ -113,13 +155,25 @@ function TooltipChickletFactory(
     }
 
     handleClickOutside = (e: any) => {
-      if (this.node.contains(e.target)) {
+      if (this.node?.contains(e.target)) {
         return;
       }
     };
 
     render() {
-      const {disabled, item, displayOption, remove} = this.props;
+      const {
+        disabled,
+        item,
+        displayOption,
+        remove,
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+      } = this.props;
+
       const {show} = this.state;
       const tooltipField = config.fieldsToShow[dataId].find(
         fieldToShow => fieldToShow.name === item.name
@@ -139,73 +193,84 @@ function TooltipChickletFactory(
       const hashStyle = show ? hashStyles.SHOW : hasFormat ? hashStyles.ACTIVE : null;
 
       return (
-        <ChickletButton ref={(node: HTMLDivElement) => (this.node = node)}>
-          <ChickletTag>{displayOption(item)}</ChickletTag>
-          {formatLabels.length > 1 && (
-            <ChickletAddonWrapper>
-              <TippyTooltip
-                placement="top"
-                render={() => (
-                  <span>
-                    {hasFormat ? (
-                      getFormatTooltip(formatLabels, field.displayName)
-                    ) : (
-                      <FormattedMessage id={'fieldSelector.formatting'} />
-                    )}
-                  </span>
-                )}
-              >
-                <ChickletAddon>
-                  <IconDiv status={hashStyle}>
-                    <Hash
-                      height="8px"
-                      onClick={e => {
+        <SortableStyledItem
+          ref={setNodeRef}
+          className={classnames('sortable-layer-items', {sorting: isDragging})}
+          transform={CSS.Translate.toString(transform)}
+          transition={transition || ''}
+          {...attributes}
+        >
+          <ChickletButton ref={node => (this.node = node)}>
+            <StyledDragHandle {...listeners}>
+              <VertDots height="12px" />
+            </StyledDragHandle>
+            <ChickletTag>{displayOption(item)}</ChickletTag>
+            {formatLabels.length > 1 && (
+              <ChickletAddonWrapper>
+                <TippyTooltip
+                  placement="top"
+                  render={() => (
+                    <span>
+                      {hasFormat ? (
+                        getFormatTooltip(formatLabels, field.displayName)
+                      ) : (
+                        <FormattedMessage id={'fieldSelector.formatting'} />
+                      )}
+                    </span>
+                  )}
+                >
+                  <ChickletAddon>
+                    <IconDiv status={hashStyle}>
+                      <Hash
+                        height="8px"
+                        onClick={e => {
+                          e.stopPropagation();
+                          this.setState({show: Boolean(!show)});
+                        }}
+                      />
+                    </IconDiv>
+                  </ChickletAddon>
+                </TippyTooltip>
+                {show && (
+                  <StyledPopover>
+                    <DropdownList
+                      options={formatLabels}
+                      selectionIndex={selectionIndex}
+                      displayOption={({label}) => label}
+                      onOptionSelected={(result, e) => {
                         e.stopPropagation();
-                        this.setState({show: Boolean(!show)});
+                        this.setState({
+                          show: false
+                        });
+
+                        const displayFormat = getFormatValue(result);
+                        const oldFieldsToShow = config.fieldsToShow[dataId];
+                        const fieldsToShow = oldFieldsToShow.map(fieldToShow => {
+                          return fieldToShow.name === tooltipField.name
+                            ? {
+                                name: tooltipField.name,
+                                format: displayFormat
+                              }
+                            : fieldToShow;
+                        });
+                        const newConfig = {
+                          ...config,
+                          fieldsToShow: {
+                            ...config.fieldsToShow,
+                            [dataId]: fieldsToShow
+                          }
+                        };
+                        onChange(newConfig);
+                        onDisplayFormatChange(dataId, field.name, displayFormat);
                       }}
                     />
-                  </IconDiv>
-                </ChickletAddon>
-              </TippyTooltip>
-              {show && (
-                <StyledPopover>
-                  <DropdownList
-                    options={formatLabels}
-                    selectionIndex={selectionIndex}
-                    displayOption={({label}) => label}
-                    onOptionSelected={(result, e) => {
-                      e.stopPropagation();
-                      this.setState({
-                        show: false
-                      });
-
-                      const displayFormat = getFormatValue(result);
-                      const oldFieldsToShow = config.fieldsToShow[dataId];
-                      const fieldsToShow = oldFieldsToShow.map(fieldToShow => {
-                        return fieldToShow.name === tooltipField.name
-                          ? {
-                              name: tooltipField.name,
-                              format: displayFormat
-                            }
-                          : fieldToShow;
-                      });
-                      const newConfig = {
-                        ...config,
-                        fieldsToShow: {
-                          ...config.fieldsToShow,
-                          [dataId]: fieldsToShow
-                        }
-                      };
-                      onChange(newConfig);
-                      onDisplayFormatChange(dataId, field.name, displayFormat);
-                    }}
-                  />
-                </StyledPopover>
-              )}
-            </ChickletAddonWrapper>
-          )}
-          <Delete onClick={disabled ? null : remove} />
-        </ChickletButton>
+                  </StyledPopover>
+                )}
+              </ChickletAddonWrapper>
+            )}
+            <Delete onClick={disabled ? null : remove} />
+          </ChickletButton>
+        </SortableStyledItem>
       );
     }
   }
