@@ -1,5 +1,6 @@
 import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
+import {injectIntl, IntlShape} from 'react-intl';
 
 import {LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
 import {isNumber} from '@kepler.gl/utils';
@@ -64,7 +65,11 @@ export default function EffectConfiguratorFactory(
   ColorSelector: ReturnType<typeof ColorSelectorFactory>,
   EffectTimeConfigurator: ReturnType<typeof EffectTimeConfiguratorFactory>
 ): React.FC<EffectConfiguratorProps> {
-  const EffectConfigurator = ({effect, updateEffectConfig}: EffectConfiguratorProps) => {
+  const EffectConfigurator = ({
+    effect,
+    updateEffectConfig,
+    intl
+  }: EffectConfiguratorProps & {intl: IntlShape}) => {
     const renderShadowEffectConfigurator = useCallback(() => {
       const {config} = effect;
 
@@ -122,6 +127,7 @@ export default function EffectConfiguratorFactory(
             onDateTimeChange={onDateTimeChange}
             useCurrentTime={config.params.useCurrentTime}
             onUseCurrentTimeChange={onUseCurrentTimeChange}
+            intl={intl}
           />
           <PanelLabelWrapper>
             <PanelLabel>{'Shadow intensity'}</PanelLabel>
@@ -252,5 +258,5 @@ export default function EffectConfiguratorFactory(
     return renderPostProcessingEffectConfigurator();
   };
 
-  return EffectConfigurator;
+  return injectIntl(EffectConfigurator);
 }

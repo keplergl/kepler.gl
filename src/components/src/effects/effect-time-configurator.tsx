@@ -1,4 +1,5 @@
 import React, {useCallback, useMemo} from 'react';
+import {injectIntl, IntlShape} from 'react-intl';
 import styled from 'styled-components';
 
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -17,6 +18,7 @@ export type EffectTimeConfiguratorProps = {
   onDateTimeChange: (time: number) => void;
   useCurrentTime: boolean;
   onUseCurrentTimeChange: (value: boolean) => void;
+  intl: IntlShape;
 };
 
 type StyledWrapperProps = {disabled?: boolean};
@@ -83,7 +85,8 @@ export default function EffectTimeConfiguratorFactory(
     timestamp,
     useCurrentTime,
     onDateTimeChange,
-    onUseCurrentTimeChange
+    onUseCurrentTimeChange,
+    intl
   }: EffectTimeConfiguratorProps) => {
     const [selectedDate, selectedTimeString] = useMemo(() => {
       const date = new Date(timestamp);
@@ -143,7 +146,9 @@ export default function EffectTimeConfiguratorFactory(
             type="radio"
             checked={!useCurrentTime}
             id={`effect-time-toggle-use-pick`}
-            label={'Pick date/time'}
+            label={intl.formatMessage({
+              id: 'effectManager.pickDateTime'
+            })}
             onChange={() => {
               onUseCurrentTimeChange(false);
             }}
@@ -153,7 +158,7 @@ export default function EffectTimeConfiguratorFactory(
           <StyledButton onClick={setCurrentDateTime} data-for="pick-time-button" data-tip>
             <Pin height="15px" />
             <Tooltip id="pick-time-button" effect="solid" place="top" delayShow={500}>
-              <FormattedMessage id={'Pick current time'} />
+              <FormattedMessage id={'effectManager.pickCurrrentTime'} />
             </Tooltip>
           </StyledButton>
           <StyledDatePicker value={selectedDate} onChange={setDate} />
@@ -177,7 +182,9 @@ export default function EffectTimeConfiguratorFactory(
             type="radio"
             checked={useCurrentTime}
             id={`effect-time-toggle-use-current`}
-            label={'Current time'}
+            label={intl.formatMessage({
+              id: 'effectManager.currentTime'
+            })}
             onChange={() => {
               onUseCurrentTimeChange(true);
             }}
@@ -187,5 +194,5 @@ export default function EffectTimeConfiguratorFactory(
     );
   };
 
-  return EffectTimeConfigurator;
+  return injectIntl(EffectTimeConfigurator);
 }

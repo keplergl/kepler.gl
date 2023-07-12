@@ -43,7 +43,8 @@ const StyledEffectPanelHeader = styled(StyledPanelHeader)`
 
   .effect__drag-handle__placeholder {
     height: 20px;
-    padding: 10px;
+    padding: 0px;
+    margin: 10px;
   }
 
   :hover {

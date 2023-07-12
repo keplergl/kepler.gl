@@ -1,7 +1,6 @@
 import React, {useMemo} from 'react';
 import styled from 'styled-components';
-import {IntlShape} from 'react-intl';
-import {injectIntl} from 'react-intl';
+import {injectIntl, IntlShape} from 'react-intl';
 
 import {addEffect, updateEffect, removeEffect, reorderEffect} from '@kepler.gl/actions';
 import {LIGHT_AND_SHADOW_EFFECT, EFFECT_DESCS} from '@kepler.gl/constants';
@@ -19,6 +18,7 @@ export type EffectManagerState = {
   effectOrder: string[];
   children: React.ReactNode;
 };
+export type EffectManagerProps = {};
 export type EffectManagerWithIntlProp = {intl: IntlShape};
 
 const StyledEffectPanelContainer = styled.div`
@@ -66,7 +66,7 @@ function EffectManagerFactory(
   EffectList: ReturnType<typeof EffectListFactory>,
   SidePanelTitle: ReturnType<typeof SidePanelTitleFactory>,
   EffectTypeSelector: ReturnType<typeof EffectTypeSelectorFactory>
-): React.FC<EffectManagerWithIntlProp> {
+): React.FC<EffectManagerProps> {
   const EffectManager = (props: EffectManagerWithIntlProp & EffectManagerState) => {
     const {intl, visStateActions, effects, effectOrder, children} = props;
 
@@ -87,7 +87,7 @@ function EffectManagerFactory(
           <StyledEffectPanelHeader>
             <SidePanelTitle
               className="effect-manager-title"
-              title={intl.formatMessage({id: 'effectManager.effect'})}
+              title={intl.formatMessage({id: 'effectManager.effects'})}
             >
               <EffectTypeSelector options={effectOptions} onSelect={visStateActions.addEffect} />
             </SidePanelTitle>
