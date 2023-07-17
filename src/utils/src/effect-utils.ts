@@ -3,10 +3,10 @@ import SunCalc from 'suncalc';
 
 import {PostProcessEffect} from '@deck.gl/core/typed';
 
-import {LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
+import {LIGHT_AND_SHADOW_EFFECT, LIGHT_AND_SHADOW_EFFECT_TIME_MODES} from '@kepler.gl/constants';
 import {findById} from './utils';
 import {VisState} from '@kepler.gl/schemas';
-import {MapState, EffectParams, Effect} from '@kepler.gl/types';
+import {MapState, Effect} from '@kepler.gl/types';
 
 export function computeDeckEffects({
   visState,
@@ -15,6 +15,7 @@ export function computeDeckEffects({
   visState: VisState;
   mapState: MapState;
 }): PostProcessEffect[] {
+  // TODO: 1) deck effects per deck context 2) preserved between draws
   let effects = visState.effectOrder
     .map(effectId => {
       return findById(effectId)(visState.effects);
@@ -23,7 +24,18 @@ export function computeDeckEffects({
 
   const lightShadowEffect = effects.find(effect => effect.type === LIGHT_AND_SHADOW_EFFECT.type);
   if (lightShadowEffect) {
-    const {timestamp} = lightShadowEffect.config.params;
+    const {timestamp, timeMode} = lightShadowEffect.config.params;
+
+    if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current) {
+      lightShadowEffect.deckEffect.directionalLights[0].timestamp = Date.now();
+    } else if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation) {
+      // TODO: find an easy way to get current animation time
+      const filter = visState.filters.find(filter => filter.fieldType === 'timestamp');
+      if (filter) {
+        lightShadowEffect.deckEffect.directionalLights[0].timestamp = filter.value?.[0] ?? 0;
+      }
+    }
+
     if (!isDaytime(mapState.latitude, mapState.longitude, timestamp)) {
       // TODO: interpolate for dusk/dawn
       // TODO: Should we avoid mutating the effect? (didn't work when tried defensive copying)
@@ -31,23 +43,6 @@ export function computeDeckEffects({
     }
   }
   return effects.map(effect => effect.deckEffect);
-}
-
-export function mergeEffectParams(
-  params: Partial<EffectParams>,
-  extraParams: Partial<EffectParams>
-): Partial<EffectParams> {
-  const p1 = params || {};
-  const p2 = extraParams || {};
-  return {
-    ...p1,
-    ...p2,
-    // @ts-expect-error
-    config: {
-      ...(p1.config || {}),
-      ...(p2.config || {})
-    }
-  };
 }
 
 /**

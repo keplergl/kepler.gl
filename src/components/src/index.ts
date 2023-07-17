@@ -261,6 +261,10 @@ export {
 export {default as FilterPanelHeaderFactory} from './side-panel/filter-panel/filter-panel-header';
 
 export {default as EffectManagerFactory} from './effects/effect-manager';
+export {default as EffectListFactory} from './effects/effect-list';
+export {default as SidePanelTitleFactory} from './effects/side-panel-title';
+export {default as EffectTypeSelectorFactory} from './effects/effect-type-selector';
+export {default as EffectConfiguratorFactory} from './effects/effect-configurator';
 
 export {default as HowToButton} from './side-panel/layer-panel/how-to-button';
 // eslint-disable-next-line prettier/prettier

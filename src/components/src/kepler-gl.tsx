@@ -63,6 +63,7 @@ import ModalContainerFactory from './modal-container';
 import PlotContainerFactory from './plot-container';
 import NotificationPanelFactory from './notification-panel';
 import GeoCoderPanelFactory from './geocoder-panel';
+import EffectManagerFactory from './effects/effect-manager';
 import DndContextFactory from './dnd-context';
 
 import {
@@ -348,7 +349,8 @@ KeplerGlFactory.deps = [
   SidePanelFactory,
   PlotContainerFactory,
   NotificationPanelFactory,
-  DndContextFactory
+  DndContextFactory,
+  EffectManagerFactory
 ];
 
 function KeplerGlFactory(

@@ -28,7 +28,8 @@ export {
   reverseColorRange,
   createLinearGradient,
   colorMaybeToRGB,
-  isRgbColor
+  isRgbColor,
+  normalizeColor
 } from './color-utils';
 export {errorNotification} from './notifications-utils';
 
@@ -97,7 +98,7 @@ export * from './utils';
 export * from './split-map-utils';
 export {snapToMarks} from './plot';
 
-export {computeDeckEffects, fixEffectOrder, mergeEffectParams, reorderEffectOrder} from './effect-utils';
+export {computeDeckEffects, fixEffectOrder, reorderEffectOrder} from './effect-utils';
 
 // Mapbox
 export {transformRequest, isStyleUsingMapboxTiles} from './map-style-utils/mapbox-utils';

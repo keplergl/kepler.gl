@@ -21,13 +21,13 @@
 import uniq from 'lodash.uniq';
 import pick from 'lodash.pick';
 import flattenDeep from 'lodash.flattendeep';
+import deepmerge from 'deepmerge';
 import {
   arrayInsert,
   getInitialMapLayersForSplitMap,
   applyFiltersToDatasets,
   validateFiltersUpdateDatasets,
-  findById,
-  mergeEffectParams
+  findById
 } from '@kepler.gl/utils';
 import {getLayerOrderFromLayers} from '@kepler.gl/reducers';
 
@@ -465,11 +465,7 @@ export function mergeEffects<S extends VisState>(
       .map(effect =>
         fromConfig
           ? // collapse all panels when loading effects
-
-            createDeckEffectFromConfig(
-              // @ts-expect-error
-              mergeEffectParams(effect, {config: {isConfigActive: false}})
-            )
+            createDeckEffectFromConfig(deepmerge(effect, {config: {isConfigActive: false}}))
           : (effect as EffectType)
       )
       .filter(effect => {

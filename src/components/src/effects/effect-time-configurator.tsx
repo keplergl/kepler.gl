@@ -4,6 +4,10 @@ import styled from 'styled-components';
 
 import {FormattedMessage} from '@kepler.gl/localization';
 import {clamp} from '@kepler.gl/utils';
+import {
+  LIGHT_AND_SHADOW_EFFECT_TIME_MODES,
+  LightAndShadowEffectTimeMode
+} from '@kepler.gl/constants';
 
 import {StyledTimePicker, StyledDatePicker, Tooltip} from '../common/styled-components';
 import RangeSliderFactory from '../common/range-slider';
@@ -16,8 +20,8 @@ const DAY_SLIDER_RANGE = 1000 * 60 * 60 * 24;
 export type EffectTimeConfiguratorProps = {
   timestamp: string;
   onDateTimeChange: (time: number) => void;
-  useCurrentTime: boolean;
-  onUseCurrentTimeChange: (value: boolean) => void;
+  timeMode: LightAndShadowEffectTimeMode;
+  onTimeModeChange: (newMode: LightAndShadowEffectTimeMode) => void;
   intl: IntlShape;
 };
 
@@ -83,9 +87,9 @@ export default function EffectTimeConfiguratorFactory(
 ): React.FC<EffectTimeConfiguratorProps> {
   const EffectTimeConfigurator = ({
     timestamp,
-    useCurrentTime,
     onDateTimeChange,
-    onUseCurrentTimeChange,
+    timeMode,
+    onTimeModeChange,
     intl
   }: EffectTimeConfiguratorProps) => {
     const [selectedDate, selectedTimeString] = useMemo(() => {
@@ -139,22 +143,24 @@ export default function EffectTimeConfiguratorFactory(
       onDateTimeChange(new Date().valueOf());
     }, [onDateTimeChange]);
 
+    const disableDateTimePick = timeMode !== LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick;
+
     return (
       <StyledEffectTimeConfigurator>
         <StyledWrapper>
           <StyledRadio
             type="radio"
-            checked={!useCurrentTime}
-            id={`effect-time-toggle-use-pick`}
+            checked={timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick}
+            id={`effect-time-toggle-use-pick-time`}
             label={intl.formatMessage({
               id: 'effectManager.pickDateTime'
             })}
             onChange={() => {
-              onUseCurrentTimeChange(false);
+              onTimeModeChange(LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick);
             }}
           />
         </StyledWrapper>
-        <StyledWrapper disabled={useCurrentTime}>
+        <StyledWrapper disabled={disableDateTimePick}>
           <StyledButton onClick={setCurrentDateTime} data-for="pick-time-button" data-tip>
             <Pin height="15px" />
             <Tooltip id="pick-time-button" effect="solid" place="top" delayShow={500}>
@@ -173,20 +179,32 @@ export default function EffectTimeConfiguratorFactory(
           </StyledLabelWrapper>
         </StyledWrapper>
 
-        <SliderWrapper disabled={useCurrentTime}>
+        <SliderWrapper disabled={disableDateTimePick}>
           <RangeSlider {...timeSliderProps} />
         </SliderWrapper>
 
         <StyledWrapper>
           <StyledRadio
             type="radio"
-            checked={useCurrentTime}
-            id={`effect-time-toggle-use-current`}
+            checked={timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current}
+            id={`effect-time-toggle-use-current-time`}
             label={intl.formatMessage({
               id: 'effectManager.currentTime'
             })}
             onChange={() => {
-              onUseCurrentTimeChange(true);
+              onTimeModeChange(LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current);
+            }}
+          />
+        </StyledWrapper>
+
+        <StyledWrapper>
+          <StyledRadio
+            type="radio"
+            checked={timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation}
+            id={`effect-time-toggle-use-animation-time`}
+            label={'Animation time'}
+            onChange={() => {
+              onTimeModeChange(LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation);
             }}
           />
         </StyledWrapper>

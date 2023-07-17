@@ -75,6 +75,7 @@ import {mockPolygonFeature, mockPolygonFeature2, mockPolygonData} from 'test/fix
 import {
   cmpFilters,
   cmpLayers,
+  cmpEffects,
   cmpDatasets,
   cmpDataset,
   cmpObjectKeys,
@@ -5481,6 +5482,143 @@ test('VisStateUpdater -> applyLayerConfig', t => {
     )
   );
   t.equal(getUpdatedLayerJson(nextState).type, '3D', 'should change layer type');
+
+  t.end();
+});
+
+test('#VisStateUpdater -> addEffect', t => {
+  const initialState = InitialState.visState;
+
+  let nextState = reducer(initialState, VisStateActions.addEffect({}));
+
+  t.equal(nextState.effects.length, 1, 'should add a default effect');
+
+  const expectedEffect = {
+    config: {
+      type: 'ink',
+      name: 'Ink',
+      isEnabled: true,
+      isConfigActive: true,
+      params: {strength: 0.25}
+    }
+  };
+
+  cmpEffects(t, expectedEffect, nextState.effects[0]);
+
+  nextState = reducer(
+    nextState,
+    VisStateActions.addEffect({
+      id: 'e_shadow',
+      config: {type: 'lightAndShadow', params: {timestamp: 1689280466362}}
+    })
+  );
+
+  t.equal(nextState.effects.length, 2, 'should add second effect');
+
+  const expectedEffect2 = {
+    id: 'e_shadow',
+    config: {
+      isConfigActive: true,
+      isEnabled: true,
+      name: 'Light & Shadow',
+      params: {
+        timestamp: 1689280466362,
+        timeMode: 'pick',
+        shadowIntensity: 0.5,
+        shadowColor: [0, 0, 0],
+        sunLightColor: [255, 255, 255],
+        sunLightIntensity: 1,
+        ambientLightColor: [255, 255, 255],
+        ambientLightIntensity: 1
+      },
+      type: 'lightAndShadow'
+    }
+  };
+
+  cmpEffects(t, expectedEffect2, nextState.effects[1], {id: true});
+
+  t.equal(
+    nextState.effects[0].config.isConfigActive,
+    false,
+    "first effect's config should be collapsed"
+  );
+
+  nextState = reducer(nextState, VisStateActions.addEffect({}));
+
+  t.equal(nextState.effectOrder.length, 3, 'should be 3 ids in effectOrder');
+
+  t.equal(nextState.effectOrder[0], 'e_shadow', 'shadow effect should stay as first effect');
+
+  t.end();
+});
+
+test('#VisStateUpdater -> updateEffect', t => {
+  const initialState = InitialState.visState;
+
+  let nextState = reducer(initialState, VisStateActions.addEffect({id: 'e_1'}));
+  nextState = reducer(nextState, VisStateActions.addEffect({}));
+
+  const expectedEffect = {
+    id: 'e_1',
+    config: {
+      type: 'ink',
+      name: 'changed name',
+      isEnabled: false,
+      isConfigActive: false,
+      params: {
+        strength: 0.06
+      }
+    }
+  };
+
+  nextState = reducer(nextState, VisStateActions.updateEffect('e_1', expectedEffect.config));
+
+  cmpEffects(t, expectedEffect, nextState.effects[0], {id: true});
+
+  // bad id, shouldn't fail
+  nextState = reducer(nextState, VisStateActions.updateEffect('fake_id', {}));
+
+  t.end();
+});
+
+test('#VisStateUpdater -> reorderEffect', t => {
+  const initialState = InitialState.visState;
+
+  let nextState = reducer(initialState, VisStateActions.addEffect({id: 'e_1'}));
+  nextState = reducer(nextState, VisStateActions.addEffect({id: 'e_2'}));
+  nextState = reducer(nextState, VisStateActions.addEffect({id: 'e_3'}));
+
+  t.deepEqual(nextState.effectOrder, ['e_3', 'e_2', 'e_1'], 'effect order should be correct order');
+
+  nextState = reducer(nextState, VisStateActions.reorderEffect(['e_2', 'e_1', 'e_3']));
+
+  t.deepEqual(
+    nextState.effectOrder,
+    ['e_2', 'e_1', 'e_3'],
+    'effect order should be correct after '
+  );
+
+  t.end();
+});
+
+test('#VisStateUpdater -> removeEffect', t => {
+  const initialState = InitialState.visState;
+
+  let nextState = reducer(initialState, VisStateActions.addEffect({id: 'e_1'}));
+  nextState = reducer(nextState, VisStateActions.addEffect({id: 'e_2'}));
+  nextState = reducer(nextState, VisStateActions.addEffect({id: 'e_3'}));
+
+  nextState = reducer(nextState, VisStateActions.removeEffect('e_2'));
+
+  t.deepEqual(nextState.effects.length, 2, 'effect should be removed');
+
+  t.deepEqual(nextState.effects[0].id, 'e_1', 'e_1 effect should be available');
+  t.deepEqual(nextState.effects[1].id, 'e_3', 'e_3 effect should be available');
+
+  // bad id, shouldn't fail
+  nextState = reducer(nextState, VisStateActions.removeEffect('e_2'));
+
+  t.equal(nextState.effectOrder.length, 2, 'should be 2 ids in effectOrder');
 
   t.end();
 });
