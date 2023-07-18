@@ -22,7 +22,7 @@ import colorbrewer from 'colorbrewer';
 import {HexColor} from '@kepler.gl/types';
 import {VizColorPalette} from './custom-color-ranges';
 
-export type ColorMap = [string | number | null, HexColor][];
+export type ColorMap = [string[] | string | number | null, HexColor][];
 // Key is HexColor but as key we can use only string
 export type ColorLegends = {[key: string]: string};
 
