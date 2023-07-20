@@ -1250,3 +1250,21 @@ export const EFFECT_DESCS: {type: string; name: string}[] = [
   LIGHT_AND_SHADOW_EFFECT,
   ...Object.keys(POSTPROCESSING_EFFECTS).map(keyName => POSTPROCESSING_EFFECTS[keyName])
 ];
+
+export type EffectType =
+  | 'ink'
+  | 'brightnessContrast'
+  | 'hueSaturation'
+  | 'vibrance'
+  | 'sepia'
+  | 'dotScreen'
+  | 'colorHalftone'
+  | 'noise'
+  | 'triangleBlur'
+  | 'zoomBlur'
+  | 'tiltShift'
+  | 'edgeWork'
+  | 'vignette'
+  | 'magnify'
+  | 'hexagonalPixelate'
+  | 'lightAndShadow';

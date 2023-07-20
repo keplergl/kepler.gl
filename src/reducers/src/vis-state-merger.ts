@@ -44,7 +44,8 @@ import {
   SavedEditor,
   ParsedConfig,
   Filter,
-  Effect as EffectType
+  Effect as EffectType,
+  ParsedEffect
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
@@ -204,6 +205,20 @@ export function serializeLayer(
     schema
   );
   return serializedVisState?.layers?.[0];
+}
+
+/**
+ * Get loaded effect from state
+ */
+export function serializeEffect(
+  newEffect: EffectType,
+  schema: KeplerGLSchemaClass
+): ParsedEffect | undefined {
+  const serializedVisState = serializeVisState(
+    {effects: [newEffect], effectOrder: [newEffect.id]},
+    schema
+  );
+  return serializedVisState?.effects?.[0];
 }
 
 /**
