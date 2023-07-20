@@ -844,7 +844,9 @@ export const filterPropsV1 = {
   layerId: null,
   speed: null,
 
-  enabled: null
+  enabled: null,
+
+  timezone: null
 };
 
 export const propertiesV0 = {

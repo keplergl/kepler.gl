@@ -46,7 +46,8 @@ import {
   VisStateActions,
   MapStateActions,
   processFileContent,
-  ActionTypes
+  ActionTypes,
+  setFilter
 } from '@kepler.gl/actions';
 
 // Utils
@@ -85,7 +86,8 @@ import {
   createLayerFromConfig,
   serializeLayer,
   serializeVisState,
-  parseLayerConfig
+  parseLayerConfig,
+  serializeFilter
 } from './vis-state-merger';
 import {mergeStateFromMergers, isValidMerger} from './merger-handler';
 import {Layer, LayerClasses, LAYER_ID_LENGTH} from '@kepler.gl/layers';
@@ -862,6 +864,38 @@ export function layerVisConfigChangeUpdater(
   }
 
   return updateStateWithLayerAndData(state, {layer: newLayer, idx});
+}
+
+export function applyFilterConfigUpdater(
+  state: VisState,
+  action: VisStateActions.ApplyFilterConfigUpdaterAction
+): VisState {
+  const {filterId, newFilter} = action;
+  const oldFilter = state.filters.find(f => f.id === filterId);
+  if (!oldFilter) {
+    return state;
+  }
+
+  // Serialize the filters to only compare the saved properties
+  const serializedOldFilter = serializeFilter(oldFilter, state.schema) ?? {config: {}};
+  const serializedNewFilter = serializeFilter(newFilter, state.schema);
+  if (!serializedNewFilter || isEqual(serializedOldFilter, serializedNewFilter)) {
+    return state;
+  }
+
+  // If there are any changes to the filter, apply them
+  const changed = pickChangedProps(serializedOldFilter, serializedNewFilter);
+  delete changed['id']; // id should not be changed
+
+  const filterIndex = state.filters.findIndex(f => f.id === filterId);
+  if (filterIndex < 0) {
+    return state;
+  }
+  return setFilterUpdater(
+    state,
+    // @ts-expect-error setFilter doesn't support an array of props
+    setFilter(filterIndex, Object.keys(changed), Object.values(changed))
+  );
 }
 
 /**

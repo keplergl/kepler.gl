@@ -38,6 +38,7 @@ import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@
 
 import {
   ParsedLayer,
+  ParsedFilter,
   ParsedVisState,
   SavedInteractionConfig,
   TooltipInfo,
@@ -190,6 +191,17 @@ export function createLayerFromConfig(state: VisState, layerConfig: any): Layer 
   const newLayer = validated[0];
   newLayer.updateLayerDomain(state.datasets);
   return newLayer;
+}
+
+/**
+ * Get loaded filter from state
+ */
+export function serializeFilter(
+  newFilter: Filter,
+  schema: KeplerGLSchemaClass
+): ParsedFilter | undefined {
+  const serializedVisState = serializeVisState({filters: [newFilter]}, schema);
+  return serializedVisState?.filters?.[0];
 }
 
 /**
