@@ -41,12 +41,12 @@ import {VisStateActions, addDataToMap} from '@kepler.gl/actions';
 
 import {colorMaker, layerColors, LayerClasses as KeplerLayerClasses} from '@kepler.gl/layers';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
-import {applyActions, InitialState} from 'test/helpers/mock-state';
+import {applyActions, InitialState} from '../helpers/mock-state';
 // Fixtures
-import csvData, {wktCsv} from 'test/fixtures/test-csv-data';
-import testLayerData, {bounds, fieldDomain, iconGeometry} from 'test/fixtures/test-layer-data';
-import {geojsonData} from 'test/fixtures/geojson';
-import tripGeoJson from 'test/fixtures/trip-geojson';
+import csvData, {wktCsv} from '../fixtures/test-csv-data';
+import testLayerData, {bounds, fieldDomain, iconGeometry} from '../fixtures/test-layer-data';
+import {geojsonData} from '../fixtures/geojson';
+import tripGeoJson from '../fixtures/trip-geojson';
 
 import {logStep} from '../../scripts/log';
 import {IntlWrapper} from './component-utils';
@@ -406,7 +406,7 @@ export {
   dataId as tripDataId,
   fields as tripFields,
   rows as tripRows
-} from 'test/fixtures/test-trip-data';
+} from '../fixtures/test-trip-data';
 
 /*
  * point, arc, hex, csv dataset from with gpu time filter

@@ -44,17 +44,17 @@ import {
 } from '@kepler.gl/actions';
 
 // fixtures
-import {dataId as csvDataId, testFields, testAllData} from 'test/fixtures/test-csv-data';
-import testLayerData from 'test/fixtures/test-layer-data';
+import {dataId as csvDataId, testFields, testAllData} from '../fixtures/test-csv-data';
+import testLayerData from '../fixtures/test-layer-data';
 
-import {fields, rows, geoJsonDataId} from 'test/fixtures/geojson';
+import {fields, rows, geoJsonDataId} from '../fixtures/geojson';
 import {
   fields as tripFields,
   rows as tripRows,
   config as tripConfig,
   dataId as tripDataId
-} from 'test/fixtures/test-trip-data';
-import tripGeojson, {tripDataInfo} from 'test/fixtures/trip-geojson';
+} from '../fixtures/test-trip-data';
+import tripGeojson, {tripDataInfo} from '../fixtures/trip-geojson';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {MOCK_MAP_STYLE} from './mock-map-styles';
 
