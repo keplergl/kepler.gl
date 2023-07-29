@@ -92,20 +92,21 @@ export default function EffectTimeConfiguratorFactory(
     onTimeModeChange,
     intl
   }: EffectTimeConfiguratorProps) => {
-    const [selectedDate, selectedTimeString] = useMemo(() => {
+    const [dateOnly, selectedTimeString] = useMemo(() => {
       const date = new Date(timestamp);
 
-      const h = date.getHours();
-      const m = date.getMinutes();
+      const h = date.getUTCHours();
+      const m = date.getUTCMinutes();
       const timeString = `${h < 10 ? `0${h}` : `${h}`}:${m < 10 ? `0${m}` : `${m}`}`;
 
+      date.setUTCHours(0, 0, 0);
       return [date, timeString];
     }, [timestamp]);
 
     const timeSliderValue = useMemo(() => {
-      const base = new Date(timestamp).setHours(0, 0, 0).valueOf();
+      const base = dateOnly.valueOf();
       return clamp([0, 1], (parseInt(timestamp) - base) / DAY_SLIDER_RANGE);
-    }, [timestamp, selectedDate]);
+    }, [timestamp, dateOnly]);
 
     const timeSliderProps = useMemo(() => {
       return {
@@ -115,7 +116,7 @@ export default function EffectTimeConfiguratorFactory(
         range: [0, 1],
         value0: 0,
         onChange: value => {
-          const start = new Date(timestamp).setHours(0, 0, 0).valueOf();
+          const start = new Date(timestamp).setUTCHours(0, 0, 0).valueOf();
           onDateTimeChange(Math.floor(start + DAY_SLIDER_RANGE * clamp([0, 0.9999], value[1])));
         },
         showInput: false,
@@ -125,7 +126,9 @@ export default function EffectTimeConfiguratorFactory(
 
     const setDate = useCallback(
       newDate => {
-        onDateTimeChange(Math.floor(newDate.valueOf() + DAY_SLIDER_RANGE * timeSliderValue));
+        const adjustedTime = newDate.valueOf() - newDate.getTimezoneOffset() * 1000 * 60;
+        const newTimestamp = Math.floor(adjustedTime + DAY_SLIDER_RANGE * timeSliderValue);
+        onDateTimeChange(newTimestamp);
       },
       [timeSliderValue, onDateTimeChange]
     );
@@ -133,7 +136,7 @@ export default function EffectTimeConfiguratorFactory(
     const setTime = useCallback(
       time => {
         const conf = time.split(':');
-        const start = new Date(timestamp).setHours(conf[0], conf[1]).valueOf();
+        const start = new Date(timestamp).setUTCHours(conf[0], conf[1]).valueOf();
         onDateTimeChange(start);
       },
       [timestamp, onDateTimeChange]
@@ -167,7 +170,7 @@ export default function EffectTimeConfiguratorFactory(
               <FormattedMessage id={'effectManager.pickCurrrentTime'} />
             </Tooltip>
           </StyledButton>
-          <StyledDatePicker value={selectedDate} onChange={setDate} />
+          <StyledDatePicker value={dateOnly} onChange={setDate} />
           <StyledTimePicker
             value={selectedTimeString}
             onChange={setTime}

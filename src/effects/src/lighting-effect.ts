@@ -1,14 +1,11 @@
-import {
-  LightingEffect as DeckLightingEffect,
-  AmbientLight,
-  _SunLight as SunLight
-} from '@deck.gl/core';
+import {AmbientLight, _SunLight as SunLight} from '@deck.gl/core';
 
 import {LIGHT_AND_SHADOW_EFFECT, DEFAULT_LIGHT_AND_SHADOW_PROPS} from '@kepler.gl/constants';
 import {normalizeColor} from '@kepler.gl/utils';
 import {EffectConfig, EffectParamsPartial} from '@kepler.gl/types';
 
 import Effect from './effect';
+import CustomDeckLightingEffect from './custom-deck-lighting-effect';
 
 const LIGHT_AND_SHADOW_EFFECT_DESC = {
   ...LIGHT_AND_SHADOW_EFFECT,
@@ -38,7 +35,7 @@ class LightingEffect extends Effect {
       _shadow: true
     });
 
-    this.deckEffect = new DeckLightingEffect({
+    this.deckEffect = new CustomDeckLightingEffect({
       ambientLight,
       sunLight
     });
