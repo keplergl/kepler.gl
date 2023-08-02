@@ -787,15 +787,9 @@ export class SplitMapsSchema extends Schema {
 
 export const effectPropsV1 = {
   id: null,
-  config: new Schema({
-    version: VERSIONS.v1,
-    key: 'config',
-    properties: {
-      type: null,
-      isEnabled: null,
-      params: null
-    }
-  })
+  type: null,
+  isEnabled: null,
+  parameters: null
 };
 export class EffectsSchema extends Schema {
   key = 'effects';
@@ -820,7 +814,17 @@ export class EffectsSchema extends Schema {
 
   load(effects) {
     return {
-      [this.key]: effects.map(effect => this.loadPropertiesOrApplySchema(effect, effects).effects)
+      [this.key]: effects.map(effect => {
+        // handle older configs
+        const outEffect = effect.config
+          ? {
+              id: effect.id,
+              ...effect.config,
+              parameters: {...(effect.config.params || {})}
+            }
+          : effect;
+        return this.loadPropertiesOrApplySchema(outEffect, effects).effects;
+      })
     };
   }
 }

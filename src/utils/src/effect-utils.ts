@@ -25,7 +25,7 @@ export function computeDeckEffects({
     .map(effectId => {
       return findById(effectId)(visState.effects);
     })
-    .filter(effect => Boolean(effect && effect.config.isEnabled && effect.deckEffect)) as Effect[];
+    .filter(effect => Boolean(effect && effect.isEnabled && effect.deckEffect)) as Effect[];
 
   return effects.map(effect => {
     updateEffect({visState, mapState, effect});
@@ -76,7 +76,7 @@ function isDaytime(lat, lon, timestamp) {
  */
 function updateEffect({visState, mapState, effect}) {
   if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
-    let {timestamp, timeMode} = effect.config.params;
+    let {timestamp, timeMode} = effect.parameters;
     const sunLight = effect.deckEffect.directionalLights[0];
 
     // set timestamp for shadow
@@ -101,7 +101,7 @@ function updateEffect({visState, mapState, effect}) {
     // output uniform shadow during nighttime
     if (isDaytime(mapState.latitude, mapState.longitude, timestamp)) {
       effect.deckEffect.outputUniformShadow = false;
-      sunLight.intensity = effect.config.params.sunLightIntensity;
+      sunLight.intensity = effect.parameters.sunLightIntensity;
     } else {
       effect.deckEffect.outputUniformShadow = true;
       sunLight.intensity = 0;

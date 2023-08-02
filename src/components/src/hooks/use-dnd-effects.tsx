@@ -25,7 +25,7 @@ const useDndEffects: (effects: Effect[], effectOrder: string[]) => DndEffectsHoo
       const newActiveEffect = effects.find(effect => effect.id === active.id);
       if (newActiveEffect) {
         setActiveEffect(newActiveEffect);
-        if (newActiveEffect.config.isConfigActive) {
+        if (newActiveEffect.isConfigActive) {
           dispatch(updateEffect(newActiveEffect.id, {isConfigActive: false}));
         }
       }

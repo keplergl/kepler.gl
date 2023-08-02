@@ -46,9 +46,9 @@ jest.mock('@kepler.gl/utils', () => ({
 
 describe('useDndEffects', () => {
   const effects = [
-    {id: 1, name: 'Effect 1', config: {isConfigActive: false}},
-    {id: 2, name: 'Effect 2', config: {isConfigActive: false}},
-    {id: 3, name: 'Effect 3', config: {isConfigActive: false}}
+    {id: 1, isConfigActive: false},
+    {id: 2, isConfigActive: false},
+    {id: 3, isConfigActive: false}
   ];
 
   const effectOrder = [2, 1, 3];
@@ -77,9 +77,9 @@ describe('useDndEffects', () => {
 
   test('onDragStart should update activeEffect and dispatch updateEffect if config is active', () => {
     const currentEffects = [
-      {id: 1, name: 'Effect 1', config: {isConfigActive: false}},
-      {id: 2, name: 'Effect 2', config: {isConfigActive: true}},
-      {id: 3, name: 'Effect 3', config: {isConfigActive: false}}
+      {id: 1, isConfigActive: false},
+      {id: 2, isConfigActive: true},
+      {id: 3, isConfigActive: false}
     ];
     const {result} = renderHook(() => useDndEffects(currentEffects, effectOrder));
 

@@ -37,8 +37,7 @@ import {
   Filter,
   ParsedConfig,
   ParsedLayer,
-  EffectConfig,
-  EffectParamsPartial
+  EffectPropsPartial
 } from '@kepler.gl/types';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
@@ -524,7 +523,7 @@ export function duplicateLayer(
 }
 
 export type AddEffectUpdaterAction = {
-  config: EffectParamsPartial;
+  config: EffectPropsPartial;
 };
 
 /**
@@ -535,7 +534,7 @@ export type AddEffectUpdaterAction = {
  * @public
  */
 export function addEffect(
-  config: EffectParamsPartial
+  config: EffectPropsPartial
 ): Merge<AddEffectUpdaterAction, {type: typeof ActionTypes.ADD_EFFECT}> {
   return {
     type: ActionTypes.ADD_EFFECT,
@@ -585,7 +584,7 @@ export function removeEffect(
 
 export type UpdateEffectUpdaterAction = {
   id: string;
-  props: Partial<EffectConfig>;
+  props: EffectPropsPartial;
 };
 
 /**
@@ -597,7 +596,7 @@ export type UpdateEffectUpdaterAction = {
  */
 export function updateEffect(
   id: string,
-  props: Partial<EffectConfig>
+  props: EffectPropsPartial
 ): Merge<UpdateEffectUpdaterAction, {type: typeof ActionTypes.UPDATE_EFFECT}> {
   return {
     type: ActionTypes.UPDATE_EFFECT,

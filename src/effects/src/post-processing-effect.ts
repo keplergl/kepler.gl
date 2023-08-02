@@ -17,12 +17,8 @@ import {
   hexagonalPixelate
 } from '@luma.gl/shadertools';
 
-import {
-  POSTPROCESSING_EFFECTS,
-  EFFECT_DESCS,
-  DEFAULT_POST_PROCESSING_EFFECT_TYPE
-} from '@kepler.gl/constants';
-import {EffectConfig, EffectParamsPartial} from '@kepler.gl/types';
+import {POSTPROCESSING_EFFECTS, DEFAULT_POST_PROCESSING_EFFECT_TYPE} from '@kepler.gl/constants';
+import {EffectPropsPartial} from '@kepler.gl/types';
 
 import Effect from './effect';
 
@@ -92,45 +88,38 @@ const POSTPROCESSING_EFFECTS_DESCS = [
 class PostProcessingEffect extends Effect {
   // deckEffect: PostProcessEffect | LightingEffect | null;
 
-  constructor(props: EffectParamsPartial) {
+  constructor(props: EffectPropsPartial) {
     super(props);
   }
 
   _initializeEffect() {
-    const effectDesc = POSTPROCESSING_EFFECTS_DESCS.find(desc => desc.type === this.config.type);
+    const effectDesc = POSTPROCESSING_EFFECTS_DESCS.find(desc => desc.type === this.type);
     if (effectDesc) {
-      this.deckEffect = new DeckPostProcessEffect(effectDesc.class, this.config.params);
+      this.deckEffect = new DeckPostProcessEffect(effectDesc.class, this.parameters);
 
       const uniforms = this.deckEffect?.module?.uniforms;
       if (uniforms) {
-        // get default params
+        // get default parameters
         const keys = Object.keys(uniforms);
-        const defaultParams = {};
+        const defaultParameters = {};
         keys.forEach(key => {
-          defaultParams[key] = uniforms[key].value ?? uniforms[key];
+          defaultParameters[key] = uniforms[key].value ?? uniforms[key];
         });
-        this.config.params = {...defaultParams, ...this.config.params};
+        this.parameters = {...defaultParameters, ...this.parameters};
       }
     }
   }
 
-  _getDefaultEffectConfig(config: Partial<EffectConfig> = {}) {
-    const type = config.type || DEFAULT_POST_PROCESSING_EFFECT_TYPE;
-    return {
-      type,
-      name: config.name || EFFECT_DESCS.find(desc => desc.type === type)?.name || 'Effect',
-      isEnabled: config.isEnabled ?? true,
-      isConfigActive: config.isConfigActive ?? true,
-      params: {...(config.params || {})}
-    };
+  getDefaultProps(props: EffectPropsPartial = {}) {
+    return super.getDefaultProps({type: DEFAULT_POST_PROCESSING_EFFECT_TYPE, ...props});
   }
 
-  updateConfig(config: Partial<EffectConfig>) {
-    super.updateConfig(config);
+  setProps(props: EffectPropsPartial) {
+    super.setProps(props);
 
     // any uniform updated?
-    if (config.params) {
-      this.deckEffect?.setProps(this.config.params);
+    if (props.parameters) {
+      this.deckEffect?.setProps(this.parameters);
     }
   }
 }
