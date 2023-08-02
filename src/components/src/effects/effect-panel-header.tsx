@@ -1,13 +1,15 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
+
+import {EFFECT_DESCRIPTIONS} from '@kepler.gl/constants';
 
 import PanelHeaderActionFactory from '../side-panel/panel-header-action';
 import {ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots, BaseProps} from '../common/icons';
 import {StyledPanelHeader} from '../common/styled-components';
 
 export type EffectPanelHeaderProps = {
-  label: string;
+  type: string;
   listeners: any;
   effectId: string;
   isEnabled: boolean;
@@ -181,11 +183,16 @@ function EffectPanelHeaderFactory(
     const {
       isConfigActive,
       isDragNDropEnabled,
-      label,
+      type,
       onToggleEnableConfig,
       listeners,
       showSortHandle = true
     } = props;
+
+    const label = useMemo(() => {
+      const description = EFFECT_DESCRIPTIONS.find(_description => _description.type === type);
+      return description?.name || 'Effect';
+    }, [type]);
 
     return (
       <StyledEffectPanelHeader

@@ -5494,13 +5494,10 @@ test('#VisStateUpdater -> addEffect', t => {
   t.equal(nextState.effects.length, 1, 'should add a default effect');
 
   const expectedEffect = {
-    config: {
-      type: 'ink',
-      name: 'Ink',
-      isEnabled: true,
-      isConfigActive: true,
-      params: {strength: 0.25}
-    }
+    type: 'ink',
+    isEnabled: true,
+    isConfigActive: true,
+    parameters: {strength: 0.25}
   };
 
   cmpEffects(t, expectedEffect, nextState.effects[0]);
@@ -5509,7 +5506,8 @@ test('#VisStateUpdater -> addEffect', t => {
     nextState,
     VisStateActions.addEffect({
       id: 'e_shadow',
-      config: {type: 'lightAndShadow', params: {timestamp: 1689280466362}}
+      type: 'lightAndShadow',
+      parameters: {timestamp: 1689280466362}
     })
   );
 
@@ -5517,30 +5515,27 @@ test('#VisStateUpdater -> addEffect', t => {
 
   const expectedEffect2 = {
     id: 'e_shadow',
-    config: {
-      isConfigActive: true,
-      isEnabled: true,
-      name: 'Light & Shadow',
-      params: {
-        timestamp: 1689280466362,
-        timeMode: 'pick',
-        shadowIntensity: 0.5,
-        shadowColor: [0, 0, 0],
-        sunLightColor: [255, 255, 255],
-        sunLightIntensity: 1,
-        ambientLightColor: [255, 255, 255],
-        ambientLightIntensity: 1
-      },
-      type: 'lightAndShadow'
+    type: 'lightAndShadow',
+    isConfigActive: true,
+    isEnabled: true,
+    parameters: {
+      timestamp: 1689280466362,
+      timeMode: 'pick',
+      shadowIntensity: 0.5,
+      shadowColor: [0, 0, 0],
+      sunLightColor: [255, 255, 255],
+      sunLightIntensity: 1,
+      ambientLightColor: [255, 255, 255],
+      ambientLightIntensity: 1
     }
   };
 
   cmpEffects(t, expectedEffect2, nextState.effects[1], {id: true});
 
   t.equal(
-    nextState.effects[0].config.isConfigActive,
+    nextState.effects[0].isConfigActive,
     false,
-    "first effect's config should be collapsed"
+    "first effect's configurator should be collapsed"
   );
 
   nextState = reducer(nextState, VisStateActions.addEffect({}));
@@ -5560,18 +5555,15 @@ test('#VisStateUpdater -> updateEffect', t => {
 
   const expectedEffect = {
     id: 'e_1',
-    config: {
-      type: 'ink',
-      name: 'changed name',
-      isEnabled: false,
-      isConfigActive: false,
-      params: {
-        strength: 0.06
-      }
+    type: 'ink',
+    isEnabled: false,
+    isConfigActive: false,
+    parameters: {
+      strength: 0.06
     }
   };
 
-  nextState = reducer(nextState, VisStateActions.updateEffect('e_1', expectedEffect.config));
+  nextState = reducer(nextState, VisStateActions.updateEffect('e_1', expectedEffect));
 
   cmpEffects(t, expectedEffect, nextState.effects[0], {id: true});
 

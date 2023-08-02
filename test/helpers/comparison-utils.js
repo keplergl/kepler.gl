@@ -217,29 +217,22 @@ export function cmpEffects(t, expectedEffect, actualEffect, opts = {}) {
       t.equal(actualEffect.id, expectedEffect.id, `${actualEffect.type} effect.id should be same`);
     }
 
-    cmpObjectKeys(
-      t,
-      expectedEffect.config,
-      actualEffect.config,
-      `${actualEffect.type} effect.config`
-    );
-
-    Object.keys(expectedEffect.config).forEach(key => {
+    Object.keys(expectedEffect).forEach(key => {
       // test everything except id, which can be auto generated
       switch (key) {
-        case 'params':
+        case 'parameters':
           t.deepEqual(
-            actualEffect.config[key],
-            expectedEffect.config[key],
-            `${actualEffect.type} effect.config.${key} values should be identical`
+            actualEffect[key],
+            expectedEffect[key],
+            `${actualEffect.type} effect.${key} values should be identical`
           );
           break;
         default:
-          if (typeof expectedEffect.config[key] !== 'function') {
+          if (typeof expectedEffect[key] !== 'function') {
             t.deepEqual(
-              actualEffect.config[key],
-              expectedEffect.config[key],
-              `${actualEffect.type} effect.config.${key} should be correct`
+              actualEffect[key],
+              expectedEffect[key],
+              `${actualEffect.type} effect.${key} should be correct`
             );
           }
       }

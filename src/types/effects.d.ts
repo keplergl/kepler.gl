@@ -1,29 +1,27 @@
-export type EffectConfig = {
-  type: string;
-  name: string;
+export type EffectUpdateProps = {
   isEnabled: boolean;
   isConfigActive: boolean;
-  // effect specific params for a deck.gl effect (uniforms)
-  params: {[key: string]: any};
+  // effect specific parameters for a deck.gl effect (uniforms)
+  parameters: {[key: string]: any};
 };
 
-export type EffectParams = {
+export type EffectProps = EffectUpdateProps & {
   id: string;
-  config: EffectConfig;
+  type: string;
 };
 
-export type EffectParamsPartial = {
-  id?: string;
-  config?: Partial<EffectConfig>
-};
+export type EffectPropsPartial = Partial<EffectProps>;
 
 export interface Effect {
   id: string;
-  config: EffectConfig;
+  type: string;
+  isEnabled: boolean;
+  isConfigActive: boolean;
+  // effect specific parameters for a deck.gl effect (uniforms)
+  parameters: {[key: string]: any};
   deckEffect: any;
 
-  _getDefaultEffectConfig(config: Partial<EffectConfig>): EffectConfig;
-  updateConfig(config: Partial<EffectConfig>): void;
+  getDefaultProps(props: Partial<EffectProps>): EffectProps;
+  setProps(props: Partial<EffectProps>): void;
   isValidToSave(): boolean;
-  get type(): string;
 }

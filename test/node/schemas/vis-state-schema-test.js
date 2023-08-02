@@ -346,26 +346,43 @@ test('visStateSchema -> saving with a null column value does not throw an error'
 test('#visStateSchema -> v1 -> save load effects', t => {
   const expectedEffects = [
     {
+      id: 'e_4',
+      type: 'lightAndShadow',
+      isEnabled: true,
+      parameters: {
+        timestamp: 100,
+        timeMode: 'pick',
+        shadowIntensity: 0.5,
+        shadowColor: [0, 0, 0],
+        sunLightColor: [255, 255, 255],
+        sunLightIntensity: 1,
+        ambientLightColor: [255, 255, 255],
+        ambientLightIntensity: 1
+      }
+    },
+    {
       id: 'e_3',
-      config: {
-        type: 'magnify',
-        isEnabled: true,
-        params: {
-          screenXY: [0, 0],
-          radiusPixels: 200,
-          zoom: 2,
-          borderWidthPixels: 0,
-          borderColor: [255, 255, 255, 255]
-        }
+      type: 'magnify',
+      isEnabled: true,
+      parameters: {
+        screenXY: [0, 0],
+        radiusPixels: 200,
+        zoom: 2,
+        borderWidthPixels: 0,
+        borderColor: [255, 255, 255, 255]
       }
     },
     {
       id: 'e_2',
-      config: {type: 'sepia', isEnabled: true, params: {amount: 0.5}}
+      type: 'sepia',
+      isEnabled: true,
+      parameters: {amount: 0.5}
     },
     {
       id: 'e_1',
-      config: {type: 'ink', isEnabled: true, params: {strength: 0.25}}
+      type: 'ink',
+      isEnabled: true,
+      parameters: {strength: 0.25}
     }
   ];
 
@@ -379,6 +396,57 @@ test('#visStateSchema -> v1 -> save load effects', t => {
 
   t.deepEqual(savedEffects, expectedEffects, 'Effects should be saved as expected');
   t.deepEqual(loadedEffects, expectedEffects, 'Effects should be loaded as expected');
+
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save load effects (deprecated beta config)', t => {
+  const deprecatedEffects = [
+    {
+      id: 'e_5',
+      config: {
+        type: 'magnify',
+        name: 'Magnify',
+        isEnabled: false,
+        isConfigActive: true,
+        params: {
+          screenXY: [0, 0],
+          radiusPixels: 200,
+          zoom: 2,
+          borderWidthPixels: 0,
+          borderColor: [255, 255, 255, 255]
+        }
+      }
+    }
+  ];
+
+  const expectedLoadedEffects = [
+    {
+      id: 'e_5',
+      type: 'magnify',
+      isEnabled: false,
+      parameters: {
+        screenXY: [0, 0],
+        radiusPixels: 200,
+        zoom: 2,
+        borderWidthPixels: 0,
+        borderColor: [255, 255, 255, 255]
+      }
+    }
+  ];
+
+  const initialState = cloneDeep(StateWEffects);
+  const deprecatedSavedState = SchemaManager.getConfigToSave(initialState);
+  deprecatedSavedState.config.visState.effects = deprecatedEffects;
+  deprecatedSavedState.config.visState.effectOrder = [deprecatedEffects[0].id];
+
+  const loadedState = SchemaManager.parseSavedConfig(deprecatedSavedState);
+
+  t.deepEqual(
+    loadedState.visState.effects,
+    expectedLoadedEffects,
+    'Effects should be loaded as expected'
+  );
 
   t.end();
 });

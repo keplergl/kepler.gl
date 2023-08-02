@@ -71,7 +71,7 @@ test('Components -> EffectManager -> render', t => {
   t.equal(wrapper.find(EffectList).length, 1, 'should render EffectList');
   t.equal(wrapper.find(SidePanelTitle).length, 1, 'should render SidePanelTitle');
   t.equal(wrapper.find(EffectTypeSelector).length, 1, 'should render EffectTypeSelector');
-  t.equal(wrapper.find('EffectPanel').length, 3, 'should render 3 EffectPanels');
+  t.equal(wrapper.find('EffectPanel').length, 4, 'should render 3 EffectPanels');
 
   t.end();
 });

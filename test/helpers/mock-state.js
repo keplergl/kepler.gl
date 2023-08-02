@@ -258,11 +258,15 @@ function mockStateWithEffects() {
     },
     {
       action: VisStateActions.addEffect,
-      payload: [{id: 'e_2', config: {type: 'sepia'}}]
+      payload: [{id: 'e_2', type: 'sepia'}]
     },
     {
       action: VisStateActions.addEffect,
-      payload: [{id: 'e_3', config: {type: 'magnify'}}]
+      payload: [{id: 'e_3', type: 'magnify'}]
+    },
+    {
+      action: VisStateActions.addEffect,
+      payload: [{id: 'e_4', type: 'lightAndShadow', parameters: {timestamp: 100}}]
     }
   ]);
   return prepareState;

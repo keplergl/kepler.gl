@@ -1,15 +1,24 @@
 import {generateHashId} from '@kepler.gl/utils';
-import {Effect as EffectInterface, EffectConfig, EffectParamsPartial} from '@kepler.gl/types';
+import {Effect as EffectInterface, EffectProps, EffectPropsPartial} from '@kepler.gl/types';
+import {DEFAULT_POST_PROCESSING_EFFECT_TYPE} from '@kepler.gl/constants';
 
 export class Effect implements EffectInterface {
   id: string;
-  config: EffectConfig;
+  type: string;
+  isEnabled: boolean;
+  isConfigActive: boolean;
+  // effect specific parameters for a deck.gl effect (uniforms)
+  parameters: {[key: string]: any};
   deckEffect: any;
 
-  constructor(props: EffectParamsPartial = {}) {
+  constructor(props: EffectPropsPartial = {}) {
     this.id = props.id || `e_${generateHashId(6)}`;
-    this.config = this._getDefaultEffectConfig(props.config);
-    this.deckEffect = null;
+
+    const _props = this.getDefaultProps(props);
+    this.type = _props.type;
+    this.isEnabled = _props.isEnabled;
+    this.isConfigActive = _props.isConfigActive;
+    this.parameters = _props.parameters;
 
     this.deckEffect = null;
     this._initializeEffect();
@@ -19,29 +28,26 @@ export class Effect implements EffectInterface {
     // implemented in subclasses
   }
 
-  _onUpdateConfig() {
-    // implemented in subclasses
-  }
-
-  _getDefaultEffectConfig(config: Partial<EffectConfig> = {}) {
-    // implemented in subclasses
-    return this.config;
-  }
-
-  updateConfig(config: Partial<EffectConfig>) {
-    this.config = {
-      ...this.config,
-      ...config,
-      params: {...this.config.params, ...(config.params || {})}
+  getDefaultProps(props: EffectPropsPartial = {}): EffectProps {
+    return {
+      id: props.id || `e_${generateHashId(6)}`,
+      type: props.type || DEFAULT_POST_PROCESSING_EFFECT_TYPE,
+      isEnabled: props.isEnabled ?? true,
+      isConfigActive: props.isConfigActive ?? true,
+      parameters: {...props.parameters}
     };
   }
 
-  isValidToSave() {
-    return Boolean(this.config.type && this.id && this.deckEffect);
+  setProps(props: EffectPropsPartial) {
+    this.id = props.id ?? this.id;
+    this.type = props.type ?? this.type;
+    this.isEnabled = props.isEnabled ?? this.isEnabled;
+    this.isConfigActive = props.isConfigActive ?? this.isConfigActive;
+    this.parameters = {...this.parameters, ...props.parameters};
   }
 
-  get type() {
-    return this.config.type;
+  isValidToSave() {
+    return Boolean(this.type && this.id && this.deckEffect);
   }
 }
 

@@ -4,7 +4,7 @@ import {injectIntl, IntlShape} from 'react-intl';
 
 import {LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
 import {isNumber} from '@kepler.gl/utils';
-import {Effect, EffectConfig} from '@kepler.gl/types';
+import {Effect, EffectUpdateProps} from '@kepler.gl/types';
 
 import {PanelLabel} from '../common/styled-components';
 import RangeSliderFactory from '../common/range-slider';
@@ -16,7 +16,7 @@ export type EffectConfiguratorProps = {
   updateEffectConfig: (
     e: Event | null | undefined,
     id: string,
-    config: Partial<EffectConfig>
+    config: Partial<EffectUpdateProps>
   ) => void;
 };
 
@@ -67,40 +67,39 @@ export default function EffectConfiguratorFactory(
 ): React.FC<EffectConfiguratorProps> {
   const EffectConfigurator = ({
     effect,
-    updateEffectConfig,
-    intl
+    updateEffectConfig
   }: EffectConfiguratorProps & {intl: IntlShape}) => {
     const renderShadowEffectConfigurator = useCallback(() => {
-      const {config} = effect;
+      const {parameters} = effect;
 
       const sliderProps = useMemo(() => {
         const propNames = ['shadowIntensity', 'ambientLightIntensity', 'sunLightIntensity'];
         return propNames.map(propName => {
           return {
-            value1: effect.config.params[propName],
+            value1: parameters[propName],
             range: [0, 1],
             value0: 0,
-            onChange: (value: number[], e?: Event) => {
-              updateEffectConfig(e, effect.id, {params: {[propName]: value[1]}});
+            onChange: (value: number[], event?: Event) => {
+              updateEffectConfig(event, effect.id, {parameters: {[propName]: value[1]}});
             }
           };
         });
-      }, [effect, config.params, updateEffectConfig]);
+      }, [effect.id, parameters, updateEffectConfig]);
 
       const onDateTimeChange = useCallback(
         value => {
-          updateEffectConfig(null, effect.id, {params: {timestamp: value}});
+          updateEffectConfig(null, effect.id, {parameters: {timestamp: value}});
         },
-        [effect, updateEffectConfig]
+        [effect.id, updateEffectConfig]
       );
 
       const onTimeModeChange = useCallback(
         value => {
           updateEffectConfig(null, effect.id, {
-            params: {timeMode: value}
+            parameters: {timeMode: value}
           });
         },
-        [effect, updateEffectConfig]
+        [effect.id, updateEffectConfig]
       );
 
       const colorPickerProps = useMemo(() => {
@@ -109,13 +108,13 @@ export default function EffectConfiguratorFactory(
           return {
             colorSets: [
               {
-                selectedColor: config.params[propName],
-                setColor: v => updateEffectConfig(null, effect.id, {params: {[propName]: v}})
+                selectedColor: parameters[propName],
+                setColor: v => updateEffectConfig(null, effect.id, {parameters: {[propName]: v}})
               }
             ]
           };
         });
-      }, [effect, config.params, updateEffectConfig]);
+      }, [effect.id, parameters, updateEffectConfig]);
 
       return (
         <StyledEffectConfigurator key={effect.id}>
@@ -123,11 +122,10 @@ export default function EffectConfiguratorFactory(
             <PanelLabel>{'Date & Time'}</PanelLabel>
           </PanelLabelWrapper>
           <EffectTimeConfigurator
-            timestamp={config.params.timestamp}
+            timestamp={parameters.timestamp}
             onDateTimeChange={onDateTimeChange}
-            timeMode={config.params.timeMode}
+            timeMode={parameters.timeMode}
             onTimeModeChange={onTimeModeChange}
-            intl={intl}
           />
           <PanelLabelWrapper>
             <PanelLabel>{'Shadow intensity'}</PanelLabel>
@@ -161,12 +159,11 @@ export default function EffectConfiguratorFactory(
           </StyledColorSelectorWrapper>
         </StyledEffectConfigurator>
       );
-    }, [effect, updateEffectConfig]);
+    }, [effect, effect.parameters, updateEffectConfig]);
 
     const renderPostProcessingEffectConfigurator = useCallback(() => {
-      const {config} = effect;
       const uniforms = effect.deckEffect?.module.uniforms || {};
-      const propNames = Object.keys(uniforms);
+      const propNames = useMemo(() => Object.keys(uniforms), [uniforms]);
 
       const slidersForProps = useMemo(() => {
         return propNames.map(propName => {
@@ -181,7 +178,7 @@ export default function EffectConfiguratorFactory(
             range: [number, number];
             onChange: (value: number[], e?: Event) => void;
           }[] = [];
-          const prevValue = config.params[propName];
+          const prevValue = effect.parameters[propName];
 
           // the uniform is [0, 1] array
           if (uniform.length === 2) {
@@ -189,9 +186,9 @@ export default function EffectConfiguratorFactory(
               value1: prevValue[0] || 0,
               range: [0, 1],
               value0: 0,
-              onChange: (newValue, e) => {
-                updateEffectConfig(e, effect.id, {
-                  params: {[propName]: [newValue[1], prevValue[1]]}
+              onChange: (newValue, event) => {
+                updateEffectConfig(event, effect.id, {
+                  parameters: {[propName]: [newValue[1], prevValue[1]]}
                 });
               }
             });
@@ -200,9 +197,9 @@ export default function EffectConfiguratorFactory(
               value1: prevValue[1] || 0,
               range: [0, 1],
               value0: 0,
-              onChange: (newValue, e) => {
-                updateEffectConfig(e, effect.id, {
-                  params: {[propName]: [prevValue[0], newValue[1]]}
+              onChange: (newValue, event) => {
+                updateEffectConfig(event, effect.id, {
+                  parameters: {[propName]: [prevValue[0], newValue[1]]}
                 });
               }
             });
@@ -213,8 +210,8 @@ export default function EffectConfiguratorFactory(
               value1: prevValue || 0,
               range: [0, 500],
               value0: 0,
-              onChange: (newValue, e) => {
-                updateEffectConfig(e, effect.id, {params: {[propName]: newValue[1]}});
+              onChange: (newValue, event) => {
+                updateEffectConfig(event, effect.id, {parameters: {[propName]: newValue[1]}});
               }
             });
           }
@@ -224,8 +221,8 @@ export default function EffectConfiguratorFactory(
               value1: prevValue || 0,
               range: [uniform.min ?? uniform.softMin ?? 0, uniform.max ?? uniform.softMax ?? 1],
               value0: uniform.min ?? uniform.softMin ?? 0,
-              onChange: (newValue, e) => {
-                updateEffectConfig(e, effect.id, {params: {[propName]: newValue[1]}});
+              onChange: (newValue, event) => {
+                updateEffectConfig(event, effect.id, {parameters: {[propName]: newValue[1]}});
               }
             });
           } else {
@@ -234,7 +231,7 @@ export default function EffectConfiguratorFactory(
 
           return sliders;
         });
-      }, [propNames, effect, effect.config.params, updateEffectConfig]);
+      }, [propNames, effect, effect.parameters, updateEffectConfig]);
 
       return (
         <StyledEffectConfigurator key={effect.id}>
@@ -257,10 +254,9 @@ export default function EffectConfiguratorFactory(
           })}
         </StyledEffectConfigurator>
       );
-    }, [effect, updateEffectConfig]);
+    }, [effect, effect.parameters, updateEffectConfig]);
 
-    const {config} = effect;
-    if (config.type === LIGHT_AND_SHADOW_EFFECT.type) return renderShadowEffectConfigurator();
+    if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) return renderShadowEffectConfigurator();
     return renderPostProcessingEffectConfigurator();
   };
 
