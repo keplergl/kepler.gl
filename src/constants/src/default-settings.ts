@@ -30,7 +30,7 @@ import {
   scalePoint
 } from 'd3-scale';
 import {TOOLTIP_FORMAT_TYPES} from './tooltip';
-import {RGBAColor} from '@kepler.gl/types';
+import {RGBAColor, EffectDescription} from '@kepler.gl/types';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const KEPLER_UNFOLDED_BUCKET = 'https://studio-public-data.foursquare.com/statics/keplergl';
@@ -1170,7 +1170,11 @@ export const DEFAULT_LIGHT_COLOR: [number, number, number] = [255, 255, 255];
 export const DEFAULT_LIGHT_INTENSITY = 1;
 export const DEFAULT_SHADOW_INTENSITY = 0.5;
 export const DEFAULT_SHADOW_COLOR: [number, number, number] = [0, 0, 0];
-export const LIGHT_AND_SHADOW_EFFECT = {type: 'lightAndShadow', name: 'Light & Shadow'};
+export const LIGHT_AND_SHADOW_EFFECT: EffectDescription = {
+  type: 'lightAndShadow',
+  name: 'Light & Shadow',
+  parameters: []
+};
 export const LIGHT_AND_SHADOW_EFFECT_TIME_MODES = {
   pick: 'pick' as 'pick',
   current: 'current' as 'current',
@@ -1197,70 +1201,189 @@ export const DEFAULT_LIGHT_AND_SHADOW_PROPS: {
   ambientLightIntensity: DEFAULT_LIGHT_INTENSITY
 };
 
-export const POSTPROCESSING_EFFECTS: {[key: string]: {type: string; name: string}} = {
+export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   ink: {
     type: 'ink',
-    name: 'Ink'
+    name: 'Ink',
+    parameters: [{name: 'strength'}]
   },
   brightnessContrast: {
     type: 'brightnessContrast',
-    name: 'Brightness & Contrast'
+    name: 'Brightness & Contrast',
+    parameters: [{name: 'brightness'}, {name: 'contrast'}]
   },
   hueSaturation: {
     type: 'hueSaturation',
-    name: 'Hue & Saturation'
+    name: 'Hue & Saturation',
+    parameters: [{name: 'hue'}, {name: 'saturation'}]
   },
   vibrance: {
     type: 'vibrance',
-    name: 'Vibrance'
+    name: 'Vibrance',
+    parameters: [{name: 'amount'}]
   },
   sepia: {
     type: 'sepia',
-    name: 'Sepia'
+    name: 'Sepia',
+    parameters: [{name: 'amount'}]
   },
   dotScreen: {
     type: 'dotScreen',
-    name: 'Dot Screen'
+    name: 'Dot Screen',
+    parameters: [
+      {
+        name: 'angle'
+      },
+      {
+        name: 'size'
+      },
+      {
+        name: 'center',
+        label: 'Center X',
+        index: 0
+      },
+      {
+        name: 'center',
+        label: 'Center Y',
+        index: 1
+      }
+    ]
   },
   colorHalftone: {
     type: 'colorHalftone',
-    name: 'Color Halftone'
+    name: 'Color Halftone',
+    parameters: [
+      {
+        name: 'angle'
+      },
+      {
+        name: 'size'
+      },
+      {
+        name: 'center',
+        label: 'Center X',
+        index: 0
+      },
+      {
+        name: 'center',
+        label: 'Center Y',
+        index: 1
+      }
+    ]
   },
   noise: {
     type: 'noise',
-    name: 'Noise'
+    name: 'Noise',
+    parameters: [{name: 'amount'}]
   },
   triangleBlur: {
     type: 'triangleBlur',
-    name: 'Blur (Triangle)'
+    name: 'Blur (Triangle)',
+    parameters: [{name: 'radius'}, {name: 'delta'}]
   },
   zoomBlur: {
     type: 'zoomBlur',
-    name: 'Blur (Zoom)'
+    name: 'Blur (Zoom)',
+    parameters: [
+      {
+        name: 'strength'
+      },
+      {
+        name: 'center',
+        label: 'Center X',
+        index: 0
+      },
+      {
+        name: 'center',
+        label: 'Center Y',
+        index: 1
+      }
+    ]
   },
   tiltShift: {
     type: 'tiltShift',
-    name: 'Blur (Tilt Shift)'
+    name: 'Blur (Tilt Shift)',
+    parameters: [
+      {
+        name: 'blurRadius',
+        label: 'Blur'
+      },
+      {
+        name: 'gradientRadius',
+        label: 'Gradient'
+      },
+      {
+        name: 'start',
+        index: 0
+      },
+      {
+        name: 'start',
+        label: false,
+        index: 1
+      },
+      {
+        name: 'end',
+        index: 0
+      },
+      {
+        name: 'end',
+        label: false,
+        index: 1
+      }
+    ]
   },
   edgeWork: {
     type: 'edgeWork',
-    name: 'Edge work'
+    name: 'Edge work',
+    parameters: [{name: 'radius'}, {name: 'delta'}]
   },
   vignette: {
     type: 'vignette',
-    name: 'Vignette'
+    name: 'Vignette',
+    parameters: [{name: 'amount'}, {name: 'radius'}]
   },
   magnify: {
     type: 'magnify',
-    name: 'Magnify'
+    name: 'Magnify',
+    parameters: [
+      {
+        name: 'screenXY',
+        label: 'Position X',
+        index: 0,
+        default: 0.5
+      },
+      {
+        name: 'screenXY',
+        label: 'Position Y',
+        index: 1,
+        default: 0.5
+      },
+      {
+        name: 'radiusPixels',
+        label: 'Size',
+        min: 10
+      },
+      {
+        name: 'zoom',
+        min: 0.5,
+        max: 50
+      },
+      {
+        name: 'borderWidthPixels',
+        label: 'Border Width',
+        default: 3,
+        max: 100
+      }
+    ]
   },
   hexagonalPixelate: {
     type: 'hexagonalPixelate',
-    name: 'Hexagonal Pixelate'
+    name: 'Hexagonal Pixelate',
+    parameters: [{name: 'scale'}]
   }
 };
 
-export const EFFECT_DESCRIPTIONS: {type: string; name: string}[] = [
+export const EFFECT_DESCRIPTIONS: EffectDescription[] = [
   LIGHT_AND_SHADOW_EFFECT,
   ...Object.keys(POSTPROCESSING_EFFECTS).map(keyName => POSTPROCESSING_EFFECTS[keyName])
 ];

@@ -6,10 +6,10 @@ import {LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
 import {isNumber} from '@kepler.gl/utils';
 import {Effect, EffectUpdateProps} from '@kepler.gl/types';
 
-import {PanelLabel} from '../common/styled-components';
 import RangeSliderFactory from '../common/range-slider';
-import ColorSelectorFactory from '../side-panel/layer-panel/color-selector';
+import {ArrowDownSmall} from '../common/icons';
 import EffectTimeConfiguratorFactory from './effect-time-configurator';
+import CompactColorPicker from './compact-color-picker';
 
 export type EffectConfiguratorProps = {
   effect: Effect;
@@ -24,7 +24,7 @@ const StyledEffectConfigurator = styled.div.attrs({
   className: 'effect-panel__config'
 })`
   position: relative;
-  margin-top: ${props => props.theme.effectConfiguratorMargin};
+  margin: ${props => props.theme.effectConfiguratorMargin};
   padding: ${props => props.theme.effectConfiguratorPadding};
 `;
 
@@ -33,6 +33,7 @@ export const PanelLabelWrapper = styled.div.attrs({
 })`
   display: flex;
   align-items: self-start;
+  margin-bottom: 11px;
 
   .side-panel-panel__label {
     margin-top: 2px;
@@ -47,6 +48,94 @@ export const StyledColorSelectorWrapper = styled.div`
   margin-top: 2px;
 `;
 
+const StyledVerticalSeparator = styled.div`
+  height: 1px;
+  background-color: ${props => props.theme.inputBgd};
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-left: -20px;
+`;
+
+type StyledWrapperProps = {
+  marginBottom?: number;
+};
+const StyledWrapper = styled.div<StyledWrapperProps>`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${props => props.marginBottom ?? 9}px;
+`;
+
+const StyledConfigSection = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const SectionTitle = styled.div`
+  font-size: ${props => props.theme.inputFontSize};
+  color: ${props => props.theme.effectPanelTextSecondary1};
+  margin-bottom: 5px;
+  text-transform: capitalize;
+`;
+
+const SectionSubTitle = styled.div`
+  font-size: ${props => props.theme.inputFontSize};
+  color: ${props => props.theme.effectPanelTextSecondary2};
+  margin-bottom: 8px;
+  margin-left: 6px;
+`;
+
+const StyleSliderWrapper = styled.div`
+  align-self: flex-start;
+  width: 199px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  .kg-range-slider__input {
+    height: 32px;
+    text-align: center;
+    padding: 3px 6px;
+  }
+  .kg-slider {
+    padding-left: 6px;
+  }
+  .kg-range-slider {
+    padding: 0px !important;
+  }
+`;
+
+const RegularOuterWrapper = styled.div.attrs({
+  className: 'effect-configurator__pp-section'
+})`
+  margin-bottom: 8px;
+`;
+
+const RegularSectionTitleWrapper = styled.div.attrs({
+  className: 'effect-configurator__pp-section-title'
+})`
+  font-size: ${props => props.theme.inputFontSize};
+  color: ${props => props.theme.effectPanelTextSecondary1};
+  text-transform: capitalize;
+  margin-bottom: -3px;
+`;
+
+const RegularSliderWrapper = styled.div.attrs({
+  className: 'effect-configurator__pp-section-control'
+})`
+  height: 32px;
+  .kg-range-slider__input {
+    height: 32px;
+    text-align: center;
+    padding: 3px 6px;
+  }
+  .kg-slider {
+    padding-left: 6px;
+  }
+  .kg-range-slider {
+    padding: 0px !important;
+  }
+`;
+
 const COMMON_SLIDER_PROPS = {
   showInput: true,
   isRanged: false,
@@ -54,15 +143,10 @@ const COMMON_SLIDER_PROPS = {
   label: 'value'
 };
 
-EffectConfiguratorFactory.deps = [
-  RangeSliderFactory,
-  ColorSelectorFactory,
-  EffectTimeConfiguratorFactory
-];
+EffectConfiguratorFactory.deps = [RangeSliderFactory, EffectTimeConfiguratorFactory];
 
 export default function EffectConfiguratorFactory(
   RangeSlider: ReturnType<typeof RangeSliderFactory>,
-  ColorSelector: ReturnType<typeof ColorSelectorFactory>,
   EffectTimeConfigurator: ReturnType<typeof EffectTimeConfiguratorFactory>
 ): React.FC<EffectConfiguratorProps> {
   const EffectConfigurator = ({
@@ -79,7 +163,7 @@ export default function EffectConfiguratorFactory(
             value1: parameters[propName],
             range: [0, 1],
             value0: 0,
-            onChange: (value: number[], event?: Event) => {
+            onChange: (value: number[], event?: Event | null) => {
               updateEffectConfig(event, effect.id, {parameters: {[propName]: value[1]}});
             }
           };
@@ -119,7 +203,7 @@ export default function EffectConfiguratorFactory(
       return (
         <StyledEffectConfigurator key={effect.id}>
           <PanelLabelWrapper>
-            <PanelLabel>{'Date & Time'}</PanelLabel>
+            <SectionTitle>{'Date & Time'}</SectionTitle>
           </PanelLabelWrapper>
           <EffectTimeConfigurator
             timestamp={parameters.timestamp}
@@ -127,129 +211,150 @@ export default function EffectConfiguratorFactory(
             timeMode={parameters.timeMode}
             onTimeModeChange={onTimeModeChange}
           />
-          <PanelLabelWrapper>
-            <PanelLabel>{'Shadow intensity'}</PanelLabel>
-          </PanelLabelWrapper>
-          <RangeSlider {...COMMON_SLIDER_PROPS} {...sliderProps[0]} />
-          <PanelLabelWrapper>
-            <PanelLabel>{'Shadow color'}</PanelLabel>
-          </PanelLabelWrapper>
-          <StyledColorSelectorWrapper>
-            <ColorSelector {...colorPickerProps[2]} />
-          </StyledColorSelectorWrapper>
-          <PanelLabelWrapper>
-            <PanelLabel>{'Ambient light intensity'}</PanelLabel>
-          </PanelLabelWrapper>
-          <RangeSlider {...COMMON_SLIDER_PROPS} {...sliderProps[1]} />
-          <PanelLabelWrapper>
-            <PanelLabel>{'Ambient light color'}</PanelLabel>
-          </PanelLabelWrapper>
-          <StyledColorSelectorWrapper>
-            <ColorSelector {...colorPickerProps[0]} />
-          </StyledColorSelectorWrapper>
-          <PanelLabelWrapper>
-            <PanelLabel>{'Sun light intensity'}</PanelLabel>
-          </PanelLabelWrapper>
-          <RangeSlider {...COMMON_SLIDER_PROPS} {...sliderProps[2]} />
-          <PanelLabelWrapper>
-            <PanelLabel>{'Sun light color'}</PanelLabel>
-          </PanelLabelWrapper>
-          <StyledColorSelectorWrapper>
-            <ColorSelector {...colorPickerProps[1]} />
-          </StyledColorSelectorWrapper>
+
+          <StyledVerticalSeparator />
+
+          <StyledWrapper marginBottom={0}>
+            <SectionTitle>{'Shadow'}</SectionTitle>
+          </StyledWrapper>
+          <StyledWrapper marginBottom={16}>
+            <CompactColorPicker
+              label={'Color'}
+              color={colorPickerProps[2].colorSets[0].selectedColor}
+              onSetColor={colorPickerProps[2].colorSets[0].setColor}
+              Icon={ArrowDownSmall}
+            />
+            <StyledConfigSection>
+              <SectionSubTitle>Intensity</SectionSubTitle>
+              <StyleSliderWrapper>
+                <RangeSlider {...COMMON_SLIDER_PROPS} {...sliderProps[0]} />
+              </StyleSliderWrapper>
+            </StyledConfigSection>
+          </StyledWrapper>
+
+          <StyledWrapper marginBottom={0}>
+            <SectionTitle>{'Ambient light'}</SectionTitle>
+          </StyledWrapper>
+          <StyledWrapper marginBottom={16}>
+            <CompactColorPicker
+              label={'Color'}
+              color={colorPickerProps[0].colorSets[0].selectedColor}
+              onSetColor={colorPickerProps[0].colorSets[0].setColor}
+              Icon={ArrowDownSmall}
+            />
+            <StyledConfigSection>
+              <SectionSubTitle>Intensity</SectionSubTitle>
+              <StyleSliderWrapper>
+                <RangeSlider {...COMMON_SLIDER_PROPS} {...sliderProps[1]} />
+              </StyleSliderWrapper>
+            </StyledConfigSection>
+          </StyledWrapper>
+
+          <StyledWrapper marginBottom={0}>
+            <SectionTitle>{'Sun light'}</SectionTitle>
+          </StyledWrapper>
+          <StyledWrapper marginBottom={0}>
+            <CompactColorPicker
+              label={'Color'}
+              color={colorPickerProps[1].colorSets[0].selectedColor}
+              onSetColor={colorPickerProps[1].colorSets[0].setColor}
+              Icon={ArrowDownSmall}
+            />
+            <StyledConfigSection>
+              <SectionSubTitle>Intensity</SectionSubTitle>
+              <StyleSliderWrapper>
+                <RangeSlider {...COMMON_SLIDER_PROPS} {...sliderProps[2]} />
+              </StyleSliderWrapper>
+            </StyledConfigSection>
+          </StyledWrapper>
         </StyledEffectConfigurator>
       );
     }, [effect, effect.parameters, updateEffectConfig]);
 
     const renderPostProcessingEffectConfigurator = useCallback(() => {
       const uniforms = effect.deckEffect?.module.uniforms || {};
-      const propNames = useMemo(() => Object.keys(uniforms), [uniforms]);
+      const parameterDescriptions = effect.getParameterDescriptions();
 
-      const slidersForProps = useMemo(() => {
-        return propNames.map(propName => {
-          const uniform = uniforms[propName];
+      const controls = useMemo(() => {
+        return parameterDescriptions.map(desc => {
+          const paramName = desc.name;
+
+          const uniform = uniforms[desc.name];
           if ((!uniform && uniform !== 0) || uniform.private) {
             return null;
           }
 
-          const sliders: {
-            value0: number;
-            value1: number;
-            range: [number, number];
-            onChange: (value: number[], e?: Event) => void;
-          }[] = [];
-          const prevValue = effect.parameters[propName];
+          const prevValue = effect.parameters[paramName];
 
-          // the uniform is [0, 1] array
+          const label = desc.label === false ? false : desc.label || desc.name;
+
+          // the uniform is [number, number] array
           if (uniform.length === 2) {
-            sliders.push({
-              value1: prevValue[0] || 0,
+            return {
+              label,
+              value1: prevValue[desc.index || 0] || 0,
               range: [0, 1],
               value0: 0,
-              onChange: (newValue, event) => {
+              onChange: (newValue: number[], event) => {
                 updateEffectConfig(event, effect.id, {
-                  parameters: {[propName]: [newValue[1], prevValue[1]]}
+                  parameters: {
+                    [paramName]:
+                      desc.index === 0 ? [newValue[1], prevValue[1]] : [prevValue[0], newValue[1]]
+                  }
                 });
               }
-            });
-
-            sliders.push({
-              value1: prevValue[1] || 0,
-              range: [0, 1],
-              value0: 0,
-              onChange: (newValue, event) => {
-                updateEffectConfig(event, effect.id, {
-                  parameters: {[propName]: [prevValue[0], newValue[1]]}
-                });
-              }
-            });
+            };
           }
           // the uniform is a plain number without any description
           else if (isNumber(uniform)) {
-            sliders.push({
-              value1: prevValue || 0,
-              range: [0, 500],
-              value0: 0,
-              onChange: (newValue, event) => {
-                updateEffectConfig(event, effect.id, {parameters: {[propName]: newValue[1]}});
+            return {
+              label,
+              value1: prevValue ?? 0,
+              range: [desc.min ?? 0, desc.max ?? 500],
+              value0: desc.min ?? 0,
+              onChange: (newValue: number[], event) => {
+                updateEffectConfig(event, effect.id, {parameters: {[paramName]: newValue[1]}});
               }
-            });
+            };
           }
           // the uniform description is {value: 0, min: 0, max: 1, ...}
           else if (isNumber(uniform.value)) {
-            sliders.push({
+            return {
+              label,
               value1: prevValue || 0,
-              range: [uniform.min ?? uniform.softMin ?? 0, uniform.max ?? uniform.softMax ?? 1],
-              value0: uniform.min ?? uniform.softMin ?? 0,
-              onChange: (newValue, event) => {
-                updateEffectConfig(event, effect.id, {parameters: {[propName]: newValue[1]}});
+              range: [
+                desc.min ?? uniform.min ?? uniform.softMin ?? 0,
+                desc.max ?? uniform.max ?? uniform.softMax ?? 1
+              ],
+              value0: desc.min ?? uniform.min ?? uniform.softMin ?? 0,
+              onChange: (newValue: number[], event) => {
+                updateEffectConfig(event, effect.id, {parameters: {[paramName]: newValue[1]}});
               }
-            });
-          } else {
-            return null;
+            };
           }
 
-          return sliders;
+          // ignore everything else for now
+          return null;
         });
-      }, [propNames, effect, effect.parameters, updateEffectConfig]);
+      }, [parameterDescriptions, effect, effect.parameters, updateEffectConfig]);
 
       return (
         <StyledEffectConfigurator key={effect.id}>
-          {propNames.map((propName, uniformIndex) => {
-            const slidersForProp = slidersForProps[uniformIndex];
-            if (!slidersForProp) {
+          {parameterDescriptions.map((desc, parameterIndex) => {
+            const control = controls[parameterIndex];
+            if (!control) {
               return null;
             }
 
             return (
-              <div key={`${effect.id}-${uniformIndex}`}>
-                <PanelLabelWrapper>
-                  <PanelLabel>{propName}</PanelLabel>
-                </PanelLabelWrapper>
-                {slidersForProp.map((sliderProp, sliderIndex) => {
-                  return <RangeSlider key={sliderIndex} {...COMMON_SLIDER_PROPS} {...sliderProp} />;
-                })}
-              </div>
+              <RegularOuterWrapper key={`${effect.id}-${parameterIndex}`}>
+                {control.label ? (
+                  <RegularSectionTitleWrapper>{control.label}</RegularSectionTitleWrapper>
+                ) : null}
+                <RegularSliderWrapper>
+                  <RangeSlider key={parameterIndex} {...COMMON_SLIDER_PROPS} {...control} />
+                </RegularSliderWrapper>
+              </RegularOuterWrapper>
             );
           })}
         </StyledEffectConfigurator>

@@ -58,10 +58,14 @@ const StyledMapControlOverlay = styled.div`
     pointer-events: all;
   }
 
-  margin-top: ${props => props.theme.rightPanelMarginTop}px;
-  margin-right: ${props => props.theme.rightPanelMarginRight}px;
+  margin-top: ${props => (props.rightPanelVisible ? props.theme.rightPanelMarginTop : 0)}px;
+  margin-right: ${props => (props.rightPanelVisible ? props.theme.rightPanelMarginRight : 0)}px;
   ${props => (props.fullHeight ? 'height' : 'max-height')}: calc(100% - ${props =>
   props.theme.rightPanelMarginTop + props.theme.bottomWidgetPaddingBottom}px);
+
+  .map-control {
+    ${props => (props.rightPanelVisible ? 'padding-top: 0px;' : '')}
+  }
 `;
 
 CustomMapControlFactory.deps = [
@@ -74,9 +78,9 @@ function CustomMapControlFactory(EffectControl, EffectManager, ...deps) {
   const actionComponents = [...(MapControl.defaultProps?.actionComponents ?? []), EffectControl];
 
   const CustomMapControl = props => {
-    const showEffects = props.mapControls?.effect?.active;
+    const showEffects = Boolean(props.mapControls?.effect?.active);
     return (
-      <StyledMapControlOverlay top={props.top}>
+      <StyledMapControlOverlay top={props.top} rightPanelVisible={showEffects}>
         <StyledMapControlPanel>
           {!props.isExport && props.currentSample ? <SampleMapPanel {...props} /> : null}
           <MapControl {...props} top={0} actionComponents={actionComponents} />

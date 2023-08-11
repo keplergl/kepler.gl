@@ -13,7 +13,7 @@ import {StyledTimePicker, StyledDatePicker, Tooltip} from '../common/styled-comp
 import RangeSliderFactory from '../common/range-slider';
 import Checkbox from '../common/checkbox';
 import Button from '../common/data-table/button';
-import {Pin} from '../common/icons';
+import {LocationMarker, Calendar, Clock} from '../common/icons';
 
 const DAY_SLIDER_RANGE = 1000 * 60 * 60 * 24;
 
@@ -24,35 +24,44 @@ export type EffectTimeConfiguratorProps = {
   onTimeModeChange: (newMode: LightAndShadowEffectTimeMode) => void;
 };
 
-type StyledWrapperProps = {disabled?: boolean};
+type StyledWrapperProps = {disabled?: boolean; marginBottom?: number};
 const StyledWrapper = styled.div<StyledWrapperProps>`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-left: 5px;
-  padding-right: 5px;
-  margin-bottom: 9px;
-  opacity: ${props => (props.disabled ? 0.3 : 1)};
-  ${props => (props.disabled ? 'pointer-events: none;' : '')}
+  margin-bottom: ${props => props.marginBottom ?? 9}px;
+  ${props => (props.hidden ? 'display: none;' : '')}
 `;
 
 type SliderWrapperProps = {disabled?: boolean};
 const SliderWrapper = styled.div<SliderWrapperProps>`
   margin-top: 13px;
-  margin-right: 8px;
   margin-bottom: 17px;
+  ${props => (props.hidden ? 'display: none;' : '')}
 
-  opacity: ${props => (props.disabled ? 0.3 : 1)};
-  ${props => (props.disabled ? 'pointer-events: none;' : '')}
+  .kg-range-slider__input {
+    height: 32px;
+    text-align: center;
+    padding: 3px 6px;
+  }
+  .kg-slider {
+    padding-left: 6px;
+  }
+  .kg-range-slider {
+    padding: 0px !important;
+  }
 `;
 
 const StyledButton = styled(Button)`
-  color: ${props => props.theme.textColor};
+  color: ${props => props.theme.effectPanelTextSecondary2};
   background-color: ${props => props.theme.inputBgd};
-  height: 31px;
+  height: 32px;
+  width: 32px;
   padding: 5px;
-  border-radius: 2px;
+  border-radius: 4px;
+  justify-content: center;
   :hover {
+    color: ${props => props.theme.effectPanelTextMain};
     background-color: ${props => props.theme.inputBgdHover};
   }
 `;
@@ -63,20 +72,43 @@ const StyledRadio = styled(Checkbox)`
     font-size: ${props => props.theme.inputFontSize};
   }
   .kg-checkbox__label:before {
-    background-color: ${props => props.theme.inputBgdHover};
+    background: transparent;
+    border-color: ${props => props.theme.effectPanelTextSecondary2};
+  }
+  input:checked + .kg-checkbox__label:before {
+    border-color: ${props => props.theme.activeColor};
+  }
+  .kg-checkbox__label:after {
+    background-color: ${props => props.theme.activeColor};
   }
 `;
 
-const StyledLabelWrapper = styled.div`
-  color: ${props => props.theme.textColor};
-  margin-right: 10px;
-`;
-
 const StyledEffectTimeConfigurator = styled.div`
-  border-left: 3px solid ${props => props.theme.panelBorderColor};
   margin-bottom: 8px;
   margin-top: 3px;
-  margin-left: 3px;
+`;
+
+const WithIconWrapper = styled.div`
+  position: relative;
+`;
+
+const StyledExtraIcon = styled.div`
+  position: absolute;
+  top: 0px;
+  left: 8px;
+  width: 0px;
+  height: 32px;
+  color: ${props => props.theme.effectPanelTextSecondary2};
+  pointer-events: none;
+`;
+
+type TextBlockProps = {
+  width: string;
+};
+const TextBlock = styled.div<TextBlockProps>`
+  color: ${props => props.theme.effectPanelTextSecondary2};
+  width: ${props => props.width};
+  font-size: ${props => props.theme.inputFontSize};
 `;
 
 EffectTimeConfiguratorFactory.deps = [RangeSliderFactory];
@@ -145,11 +177,15 @@ export default function EffectTimeConfiguratorFactory(
       onDateTimeChange(new Date().valueOf());
     }, [onDateTimeChange]);
 
+    const formatShortWeekday = useCallback((locale, date) => {
+      return ['S', 'M', 'T', 'W', 'T', 'F', 'S'][date.getDay()];
+    }, []);
+
     const disableDateTimePick = timeMode !== LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick;
 
     return (
       <StyledEffectTimeConfigurator>
-        <StyledWrapper>
+        <StyledWrapper marginBottom={16}>
           <StyledRadio
             type="radio"
             checked={timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick}
@@ -162,30 +198,53 @@ export default function EffectTimeConfiguratorFactory(
             }}
           />
         </StyledWrapper>
-        <StyledWrapper disabled={disableDateTimePick}>
+
+        <SliderWrapper hidden={disableDateTimePick}>
+          <RangeSlider {...timeSliderProps} />
+        </SliderWrapper>
+
+        <StyledWrapper hidden={disableDateTimePick} marginBottom={2}>
+          <TextBlock width="32px"></TextBlock>
+          <TextBlock width="110px">
+            <FormattedMessage id={'effectManager.date'} />
+          </TextBlock>
+          <TextBlock width="110px">
+            <FormattedMessage id={'effectManager.time'} />
+          </TextBlock>
+        </StyledWrapper>
+
+        <StyledWrapper hidden={disableDateTimePick} marginBottom={24}>
           <StyledButton onClick={setCurrentDateTime} data-for="pick-time-button" data-tip>
-            <Pin height="15px" />
+            <LocationMarker height="16px" />
             <Tooltip id="pick-time-button" effect="solid" place="top" delayShow={500}>
               <FormattedMessage id={'effectManager.pickCurrrentTime'} />
             </Tooltip>
           </StyledButton>
-          <StyledDatePicker value={dateOnly} onChange={setDate} />
-          <StyledTimePicker
-            value={selectedTimeString}
-            onChange={setTime}
-            disableClock={true}
-            format={'hh:mm a'}
-          />
-          <StyledLabelWrapper>
-            <FormattedMessage id={'UTC'} />
-          </StyledLabelWrapper>
+          <WithIconWrapper>
+            <StyledDatePicker
+              value={dateOnly}
+              onChange={setDate}
+              minDetail={'month'}
+              formatShortWeekday={formatShortWeekday}
+            />
+            <StyledExtraIcon>
+              <Calendar width="16px" height="32px" />
+            </StyledExtraIcon>
+          </WithIconWrapper>
+          <WithIconWrapper>
+            <StyledTimePicker
+              value={selectedTimeString}
+              onChange={setTime}
+              disableClock={true}
+              format={'hh:mm a'}
+            />
+            <StyledExtraIcon>
+              <Clock width="16px" height="32px" />
+            </StyledExtraIcon>
+          </WithIconWrapper>
         </StyledWrapper>
 
-        <SliderWrapper disabled={disableDateTimePick}>
-          <RangeSlider {...timeSliderProps} />
-        </SliderWrapper>
-
-        <StyledWrapper>
+        <StyledWrapper marginBottom={16}>
           <StyledRadio
             type="radio"
             checked={timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current}
@@ -199,7 +258,7 @@ export default function EffectTimeConfiguratorFactory(
           />
         </StyledWrapper>
 
-        <StyledWrapper>
+        <StyledWrapper marginBottom={16}>
           <StyledRadio
             type="radio"
             checked={timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation}

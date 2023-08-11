@@ -1,4 +1,4 @@
-import React, {useMemo} from 'react';
+import React, {useMemo, useCallback} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
@@ -76,10 +76,17 @@ function EffectManagerFactory(
         return effect.type === LIGHT_AND_SHADOW_EFFECT.type;
       });
 
-      return hasShadow
-        ? EFFECT_DESCRIPTIONS.filter(desc => desc.type !== LIGHT_AND_SHADOW_EFFECT.type)
-        : EFFECT_DESCRIPTIONS;
+      return EFFECT_DESCRIPTIONS.map(desc => {
+        return {
+          ...desc,
+          disabled: Boolean(hasShadow && desc.type === LIGHT_AND_SHADOW_EFFECT.type)
+        };
+      });
     }, [effects]);
+
+    const onAddEffect = useCallback(type => {
+      visStateActions.addEffect({type});
+    }, []);
 
     return (
       <StyledEffectPanelContainer className="effect-manager">
@@ -89,7 +96,7 @@ function EffectManagerFactory(
               className="effect-manager-title"
               title={intl.formatMessage({id: 'effectManager.effects'})}
             >
-              <EffectTypeSelector options={effectOptions} onSelect={visStateActions.addEffect} />
+              <EffectTypeSelector options={effectOptions} onSelect={onAddEffect} />
             </SidePanelTitle>
           </StyledEffectPanelHeader>
 
