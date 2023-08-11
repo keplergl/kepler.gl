@@ -358,12 +358,6 @@ export const sliderMarginTopIsTime = -12;
 export const sliderMarginTop = 12;
 export const sliderMarginBottom = 12;
 
-// Date picker
-export const datePickerFontSize = '11px';
-export const datePickerBgdColor = inputBgd;
-export const datePickerBgdHover = inputBgdHover;
-export const datePickerSelectedDateBgColor = primaryBtnBgd;
-
 // Geocoder
 export const geocoderWidth = 360;
 export const geocoderTop = 20;
@@ -478,9 +472,27 @@ export const breakPoints = {
   desk: 768
 };
 
-// effectConfigurator
-export const effectConfiguratorMargin = '6px';
-export const effectConfiguratorPadding = '8px 0px 8px 5px';
+// effect manager
+export const effectConfiguratorMargin = '18px 0 18px 0';
+export const effectConfiguratorPadding = '0 0 0 18px';
+export const effectPanelWidth = 345;
+export const effectPanelHeight = 180;
+export const effectPanelPaddingSide = 16;
+export const effectPanelPaddingTop = 16;
+export const effectPanelAddEffectFontFamily = btnFontFamily;
+
+export const effectTypeIconMarginSide = 6;
+export const effectTypeIconSizeL = 56;
+
+export const effectTypeIconBgHoverColor = '#262D40';
+export const effectPanelTextMain = '#F7F7F7';
+export const effectPanelTextSecondary1 = '#A0A7B4';
+export const effectPanelTextSecondary2 = '#6A7485';
+export const effectPanelTextSecondary3 = '#5A6475';
+
+// right panel
+export const rightPanelMarginTop = 12;
+export const rightPanelMarginRight = 12;
 
 // theme is passed to kepler.gl when it's mounted,
 // it is used by styled-components to pass along to
@@ -1460,12 +1472,6 @@ export const theme = {
   sliderMarginTop,
   sliderMarginBottom,
 
-  // Date picker
-  datePickerFontSize,
-  datePickerBgdColor,
-  datePickerBgdHover,
-  datePickerSelectedDateBgColor,
-
   // Geocoder
   geocoderWidth,
   geocoderTop,
@@ -1557,22 +1563,32 @@ export const theme = {
   layerConfiguratorMargin,
   layerConfiguratorPadding,
 
-  // effectConfigurator
-  effectConfiguratorMargin,
-  effectConfiguratorPadding,
-
   // Styled token
   fieldTokenRightMargin,
   fieldTokenHeight,
   fieldTokenWidth,
 
-  // Effects
-  effectPanelWidth: 345,
-  effectPanelHeight: 180,
-  effectPanelPaddingSide: 16,
-  effectPanelPaddingTop: 16,
-  rightPanelMarginTop: 12,
-  rightPanelMarginRight: 12
+  // Effect panel
+  effectPanelWidth,
+  effectPanelHeight,
+  effectPanelPaddingSide,
+  effectPanelPaddingTop,
+  rightPanelMarginTop,
+  rightPanelMarginRight,
+  effectPanelAddEffectFontFamily,
+
+  // effect type selector
+  effectTypeIconMarginSide,
+  effectTypeIconSizeL,
+  effectTypeIconBgHoverColor,
+
+  // effectConfigurator
+  effectConfiguratorMargin,
+  effectConfiguratorPadding,
+  effectPanelTextMain,
+  effectPanelTextSecondary1,
+  effectPanelTextSecondary2,
+  effectPanelTextSecondary3
 };
 
 export const themeLT = {

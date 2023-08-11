@@ -191,7 +191,9 @@ export default {
     addEffect: 'Add effect',
     pickDateTime: 'Pick date/time',
     currentTime: 'Current time',
-    pickCurrrentTime: 'Pick current time'
+    pickCurrrentTime: 'Pick current time',
+    date: 'Date',
+    time: 'Time'
   },
   layerConfiguration: {
     defaultDescription: 'Calculate {property} based on selected field',

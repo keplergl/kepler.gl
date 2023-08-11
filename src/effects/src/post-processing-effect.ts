@@ -85,6 +85,17 @@ const POSTPROCESSING_EFFECTS_DESCS = [
   }
 ];
 
+/**
+ * Temp. Get custom default values from effect description
+ */
+const getDefaultValueForParameter = (name, effectDescription) => {
+  const rec = effectDescription.filter(param => param.name === name);
+  if (rec.length === 1) return rec[0].default;
+  else if (rec.length === 2 && rec[0].default !== undefined && rec[1].default !== undefined) {
+    return [rec[0].default, rec[1].default];
+  }
+};
+
 class PostProcessingEffect extends Effect {
   // deckEffect: PostProcessEffect | LightingEffect | null;
 
@@ -103,9 +114,13 @@ class PostProcessingEffect extends Effect {
         const keys = Object.keys(uniforms);
         const defaultParameters = {};
         keys.forEach(key => {
-          defaultParameters[key] = uniforms[key].value ?? uniforms[key];
+          defaultParameters[key] =
+            getDefaultValueForParameter(key, this._uiConfig) ??
+            uniforms[key].value ??
+            uniforms[key];
         });
         this.parameters = {...defaultParameters, ...this.parameters};
+        this.deckEffect?.setProps(this.parameters);
       }
     }
   }

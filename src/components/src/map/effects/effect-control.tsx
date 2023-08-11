@@ -2,12 +2,12 @@ import React, {useCallback, ComponentType} from 'react';
 
 import {MapControls} from '@kepler.gl/types';
 
-import {EyeSeen} from '../../common/icons';
+import {MagicWand} from '../../common/icons';
 import {MapControlButton} from '../../common/styled-components';
 import MapControlTooltipFactory from '../map-control-tooltip';
 
 interface EffectControlIcons {
-  eyeSeen: ComponentType<any>;
+  effectsIcon: ComponentType<any>;
 }
 
 export type EffectControlProps = {
@@ -22,7 +22,7 @@ export default function EffectControlFactory(
   MapControlTooltip: ReturnType<typeof MapControlTooltipFactory>
 ): React.FC<EffectControlProps> {
   const defaultActionIcons = {
-    eyeSeen: EyeSeen
+    effectsIcon: MagicWand
   };
 
   const EffectControl = ({
@@ -55,7 +55,7 @@ export default function EffectControlFactory(
           onClick={onClick}
           active={active}
         >
-          <actionIcons.eyeSeen height="22px" />
+          <actionIcons.effectsIcon height="22px" />
         </MapControlButton>
       </MapControlTooltip>
     );

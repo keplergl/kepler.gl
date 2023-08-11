@@ -2,10 +2,37 @@ import React, {useMemo} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 
-import {EFFECT_DESCRIPTIONS} from '@kepler.gl/constants';
+import {
+  EFFECT_DESCRIPTIONS,
+  LIGHT_AND_SHADOW_EFFECT,
+  POSTPROCESSING_EFFECTS
+} from '@kepler.gl/constants';
 
 import PanelHeaderActionFactory from '../side-panel/panel-header-action';
-import {ArrowDown, EyeSeen, EyeUnseen, Trash, VertDots, BaseProps} from '../common/icons';
+import {
+  ArrowDown,
+  EyeSeen,
+  EyeUnseen,
+  Trash,
+  VertDots,
+  LightAndShadowEffectIcon,
+  InkEffectIcon,
+  BrightnessContrastEffectIcon,
+  HueSaturationEffectIcon,
+  VibranceEffectIcon,
+  SepiaEffectIcon,
+  DotScreenEffectIcon,
+  ColorHalftoneEffectIcon,
+  NoiseEffectIcon,
+  TriangleBlurEffectIcon,
+  ZoomBlurEffectIcon,
+  TiltShiftEffectIcon,
+  EdgeWorkEffectIcon,
+  VignetteEffectIcon,
+  MagnifyEffectIcon,
+  HexagonalPixelateEffectIcon,
+  BaseProps
+} from '../common/icons';
 import {StyledPanelHeader} from '../common/styled-components';
 
 export type EffectPanelHeaderProps = {
@@ -38,15 +65,39 @@ const defaultActionIcons = {
   enableConfig: ArrowDown
 };
 
+const defaultEffectIcons = {
+  [LIGHT_AND_SHADOW_EFFECT.type]: LightAndShadowEffectIcon,
+  [POSTPROCESSING_EFFECTS.ink.type]: InkEffectIcon,
+  [POSTPROCESSING_EFFECTS.brightnessContrast.type]: BrightnessContrastEffectIcon,
+  [POSTPROCESSING_EFFECTS.hueSaturation.type]: HueSaturationEffectIcon,
+  [POSTPROCESSING_EFFECTS.vibrance.type]: VibranceEffectIcon,
+  [POSTPROCESSING_EFFECTS.sepia.type]: SepiaEffectIcon,
+  [POSTPROCESSING_EFFECTS.dotScreen.type]: DotScreenEffectIcon,
+  [POSTPROCESSING_EFFECTS.colorHalftone.type]: ColorHalftoneEffectIcon,
+  [POSTPROCESSING_EFFECTS.noise.type]: NoiseEffectIcon,
+  [POSTPROCESSING_EFFECTS.triangleBlur.type]: TriangleBlurEffectIcon,
+  [POSTPROCESSING_EFFECTS.zoomBlur.type]: ZoomBlurEffectIcon,
+  [POSTPROCESSING_EFFECTS.tiltShift.type]: TiltShiftEffectIcon,
+  [POSTPROCESSING_EFFECTS.edgeWork.type]: EdgeWorkEffectIcon,
+  [POSTPROCESSING_EFFECTS.vignette.type]: VignetteEffectIcon,
+  [POSTPROCESSING_EFFECTS.magnify.type]: MagnifyEffectIcon,
+  [POSTPROCESSING_EFFECTS.hexagonalPixelate.type]: HexagonalPixelateEffectIcon
+};
+
 const StyledEffectPanelHeader = styled(StyledPanelHeader)`
   height: ${props => props.theme.effectPanelHeaderHeight}px;
   position: relative;
   align-items: stretch;
 
+  .effect__drag-handle {
+    margin-left: -5px;
+    color: ${props => props.theme.textColor};
+  }
+
   .effect__drag-handle__placeholder {
     height: 20px;
     padding: 0px;
-    margin: 10px;
+    margin: 10px 10px 10px 5px;
   }
 
   :hover {
@@ -162,7 +213,7 @@ export function EffectPanelHeaderActionSectionFactory(
 }
 
 const StyledEffectTitleSection = styled.div`
-  margin-left: 4px;
+  margin-left: 8px;
   flex-grow: 1;
   align-items: center;
   display: flex;
@@ -172,6 +223,12 @@ const StyledEffectTitleSection = styled.div`
 const IconPlaceholder = styled.div`
   width: 20px;
   height: 20px;
+`;
+
+const EffectIconWrapper = styled.div`
+  height: 18px;
+  margin: auto;
+  color: ${props => props.theme.textColor};
 `;
 
 EffectPanelHeaderFactory.deps = [EffectPanelHeaderActionSectionFactory];
@@ -194,6 +251,8 @@ function EffectPanelHeaderFactory(
       return description?.name || 'Effect';
     }, [type]);
 
+    const EffectIcon = defaultEffectIcons[type];
+
     return (
       <StyledEffectPanelHeader
         className={classnames('effect-panel__header', {
@@ -209,6 +268,8 @@ function EffectPanelHeaderFactory(
         ) : (
           <div className="effect__drag-handle__placeholder" />
         )}
+
+        <EffectIconWrapper>{EffectIcon ? <EffectIcon height="18px" /> : null}</EffectIconWrapper>
 
         <StyledEffectTitleSection>{label}</StyledEffectTitleSection>
 

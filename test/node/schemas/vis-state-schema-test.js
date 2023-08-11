@@ -365,10 +365,10 @@ test('#visStateSchema -> v1 -> save load effects', t => {
       type: 'magnify',
       isEnabled: true,
       parameters: {
-        screenXY: [0, 0],
+        screenXY: [0.5, 0.5],
         radiusPixels: 200,
         zoom: 2,
-        borderWidthPixels: 0,
+        borderWidthPixels: 3,
         borderColor: [255, 255, 255, 255]
       }
     },

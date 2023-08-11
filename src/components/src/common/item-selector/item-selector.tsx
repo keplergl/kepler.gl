@@ -148,6 +148,7 @@ export type ItemSelectorProps = {
   placeholder?: string;
   closeOnSelect?: boolean;
   typeaheadPlaceholder?: string;
+  DropDownWrapperComponent?: ComponentType<any> | null;
   DropdownHeaderComponent?: ComponentType<any> | null;
   DropDownRenderComponent?: ComponentType<any>;
   DropDownLineItemRenderComponent?: ComponentType<any>;
@@ -166,6 +167,7 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
     searchable: true,
     DropDownRenderComponent: DropdownList,
     DropDownLineItemRenderComponent: ListItem,
+    DropDownWrapperComponent: DropdownWrapper,
     reorderItems: undefined
   };
 
@@ -277,9 +279,13 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
     const {placement = 'bottom'} = this.props;
     const {dimensions} = this.state;
 
+    const DropDownWrapperComponent = this.props.DropDownWrapperComponent as React.ComponentType<
+      any
+    >;
+
     return (
       <Portaled left={0} top={0} isOpened={this.state.showTypeahead} onClose={this._hideTypeahead}>
-        <DropdownWrapper placement={placement} width={dimensions?.width}>
+        <DropDownWrapperComponent placement={placement} width={dimensions?.width}>
           <Typeahead
             customClasses={{
               results: 'list-selector',
@@ -306,7 +312,7 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
             selectedItems={toArray(this.props.selectedItems)}
             light={this.props.inputTheme === 'light'}
           />
-        </DropdownWrapper>
+        </DropDownWrapperComponent>
       </Portaled>
     );
   }

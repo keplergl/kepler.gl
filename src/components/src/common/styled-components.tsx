@@ -787,9 +787,9 @@ export const StyledTimePicker = styled(TimePicker)`
     display: inline-flex;
     position: relative;
     font-family: ${props => props.theme.fontFamily};
-    font-size: ${props => props.theme.datePickerFontSize};
-    background-color: ${props => props.theme.datePickerBgdColor};
-    color: ${props => props.theme.textColor};
+    font-size: ${props => props.theme.inputFontSize};
+    background-color: ${props => props.theme.inputBgd};
+    color: ${props => props.theme.effectPanelTextMain};
   }
   .react-time-picker,
   .react-time-picker *,
@@ -803,20 +803,23 @@ export const StyledTimePicker = styled(TimePicker)`
     display: flex;
     flex-grow: 1;
     flex-shrink: 0;
-    background-color: ${props => props.theme.datePickerBgdColor};
-    border: thin solid ${props => props.theme.datePickerBgdColor};
-    border-radius: 2px;
-    width: 103px;
+    background-color: ${props => props.theme.inputBgd};
+    border-radius: 4px;
+    width: 110px;
     white-space: nowrap;
   }
   .react-time-picker__wrapper:hover {
-    background-color: ${props => props.theme.datePickerBgdHover};
+    background-color: ${props => props.theme.inputBgdHover};
   }
   .react-time-picker__inputGroup {
     min-width: calc((4px * 3) + 0.54em * 6 + 0.217em * 2);
     flex-grow: 1;
-    padding: 4px 10px;
+    padding: 4px 2px;
     box-sizing: content-box;
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    height: 24px;
   }
   .react-time-picker__inputGroup__divider {
     padding: 1px 0;
@@ -825,9 +828,9 @@ export const StyledTimePicker = styled(TimePicker)`
   .react-time-picker__inputGroup__divider,
   .react-time-picker__inputGroup__leadingZero {
     display: inline-block;
-    color: ${props => props.theme.textColor};
+    color: ${props => props.theme.effectPanelTextMain};
     font-family: ${props => props.theme.fontFamily};
-    font-size: ${props => props.theme.datePickerFontSize};
+    font-size: ${props => props.theme.inputFontSize};
   }
   .react-time-picker__inputGroup__input {
     min-width: 0.54em;
@@ -836,9 +839,9 @@ export const StyledTimePicker = styled(TimePicker)`
     padding: 0 1px;
     border: 0;
     background: transparent;
-    color: ${props => props.theme.textColor};
+    color: ${props => props.theme.effectPanelTextMain};
     font-family: ${props => props.theme.fontFamily};
-    font-size: ${props => props.theme.datePickerFontSize};
+    font-size: ${props => props.theme.inputFontSize};
     box-sizing: content-box;
     -webkit-appearance: textfield;
     -moz-appearance: textfield;
@@ -859,15 +862,16 @@ export const StyledTimePicker = styled(TimePicker)`
     padding-left: calc(1px + 0.54em);
   }
   .react-time-picker__inputGroup__amPm {
+    max-width: 37px;
     font: inherit;
     -webkit-appearance: menulist;
     -moz-appearance: menulist;
     appearance: menulist;
-    font-size: ${props => props.theme.datePickerFontSize};
+    font-size: ${props => props.theme.inputFontSize};
   }
   .react-time-picker__button {
     border: 0;
-    background-color: ${props => props.theme.datePickerBgdColor};
+    background-color: ${props => props.theme.inputBgd};
     padding: 4px 6px;
   }
   .react-time-picker__button:enabled {
@@ -887,7 +891,7 @@ export const StyledDatePicker = styled(DatePicker)`
     display: inline-flex;
     position: relative;
     font-family: ${props => props.theme.fontFamily};
-    font-size: ${props => props.theme.datePickerFontSize};
+    font-size: ${props => props.theme.inputFontSize};
   }
   .react-date-picker,
   .react-date-picker *,
@@ -905,26 +909,30 @@ export const StyledDatePicker = styled(DatePicker)`
     display: flex;
     flex-grow: 1;
     flex-shrink: 0;
-    border: thin solid ${props => props.theme.datePickerBgdColor};
-    border-radius: 2px;
-    width: 90px;
+    width: 110px;
     white-space: nowrap;
+    border-radius: 4px;
   }
   .react-date-picker__inputGroup {
     min-width: calc((4px * 3) + 0.54em * 8 + 0.217em * 2);
     flex-grow: 1;
-    padding: 4px 10px;
+    padding: 4px 9px;
     box-sizing: content-box;
-    background-color: ${props => props.theme.datePickerBgdColor};
+    background-color: ${props => props.theme.inputBgd};
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    height: 24px;
+    border-radius: 4px;
   }
 
   .react-date-picker__inputGroup:hover {
-    background-color: ${props => props.theme.datePickerBgdHover};
+    background-color: ${props => props.theme.inputBgdHover};
   }
   .react-date-picker__inputGroup__divider {
     padding: 1px 0;
     white-space: pre;
-    color: ${props => props.theme.textColor};
+    color: ${props => props.theme.effectPanelTextMain};
   }
   .react-date-picker__inputGroup__divider,
   .react-date-picker__inputGroup__leadingZero {
@@ -937,9 +945,9 @@ export const StyledDatePicker = styled(DatePicker)`
     padding: 0 1px;
     border: 0;
     background: none;
-    color: ${props => props.theme.textColor};
+    color: ${props => props.theme.effectPanelTextMain};
     font: inherit;
-    font-size: ${props => props.theme.datePickerFontSize};
+    font-size: ${props => props.theme.inputFontSize};
     box-sizing: content-box;
     -webkit-appearance: textfield;
     -moz-appearance: textfield;
@@ -956,7 +964,7 @@ export const StyledDatePicker = styled(DatePicker)`
     margin: 0;
   }
   .react-date-picker__inputGroup__input:invalid {
-    background: ${props => props.theme.datePickerBgdColor};
+    background: ${props => props.theme.inputBgd};
   }
   .react-date-picker__inputGroup__input--hasLeadingZero {
     margin-left: -0.54em;
@@ -966,8 +974,7 @@ export const StyledDatePicker = styled(DatePicker)`
     width: 257px;
     max-width: 100vw;
     z-index: 11;
-    inset: auto auto auto -25px !important;
-    color: ${props => props.theme.textColor};
+    color: ${props => props.theme.effectPanelTextSecondary1};
   }
   .react-date-picker__calendar--closed {
     display: none;
@@ -979,14 +986,14 @@ export const StyledDatePicker = styled(DatePicker)`
     display: none;
   }
   .react-calendar {
-    width: 257px;
+    width: 256px;
     max-width: 100%;
-    color: ${props => props.theme.textColor};
-    background: ${props => props.theme.datePickerBgdHover};
-    border: 1px solid ${props => props.theme.textColor};
-    border-radius: 2px;
+    color: ${props => props.theme.effectPanelTextSecondary1};
+    background: ${props => props.theme.inputBgdHover};
+    border-radius: 0px 4px 4px 4px;
     font-family: ${props => props.theme.fontFamily};
     line-height: 1.125em;
+    padding: 16px;
   }
   .react-calendar,
   .react-calendar *,
@@ -1002,7 +1009,7 @@ export const StyledDatePicker = styled(DatePicker)`
     outline: none;
   }
   .react-calendar buttom:enabled {
-    color: ${props => props.theme.primaryBtnActColor};
+    color: ${props => props.theme.effectPanelTextMain};
   }
   .react-calendar button:enabled:hover {
     cursor: pointer;
@@ -1026,8 +1033,12 @@ export const StyledDatePicker = styled(DatePicker)`
     font-weight: bold;
   }
   .react-calendar__month-view__weekdays__weekday {
+    color: ${props => props.theme.effectPanelTextSecondary2};
     padding: 0.5em;
-    font-size: ${props => props.theme.datePickerFontSize};
+    font-size: ${props => props.theme.inputFontSize};
+    abbr {
+      text-decoration: none;
+    }
   }
   .react-calendar__month-view__weekNumbers .react-calendar__tile {
     display: flex;
@@ -1036,15 +1047,15 @@ export const StyledDatePicker = styled(DatePicker)`
     font-weight: bold;
   }
   .react-calendar__month-view__days__day--weekend {
-    color: ${props => props.theme.textColor};
+    color: ${props => props.theme.effectPanelTextSecondary1};
   }
   .react-calendar__month-view__days__day--neighboringMonth {
-    color: ${props => props.theme.textColor};
+    color: ${props => props.theme.effectPanelTextSecondary3};
     opacity: 0.4;
   }
   .react-calendar__navigation__label__labelText,
   .react-calendar__navigation__arrow {
-    color: ${props => props.theme.textColor};
+    color: ${props => props.theme.effectPanelTextMain};
   }
   .react-calendar__year-view .react-calendar__tile,
   .react-calendar__decade-view .react-calendar__tile,
@@ -1052,22 +1063,23 @@ export const StyledDatePicker = styled(DatePicker)`
     padding: 2em 0.5em;
   }
   .react-calendar__tile {
-    color: ${props => props.theme.textColor};
+    color: ${props => props.theme.effectPanelTextSecondary1};
     max-width: 100%;
     padding: 6px 4px;
     background: none;
     text-align: center;
-    font-size: ${props => props.theme.datePickerFontSize};
+    font-size: ${props => props.theme.inputFontSize};
+    height: 30px;
   }
   .react-calendar__tile:enabled:hover,
   .react-calendar__tile:enabled:focus {
-    background-color: ${props => props.theme.datePickerSelectedDateBgColor};
+    background-color: ${props => props.theme.primaryBtnBgd};
     color: ${props => props.theme.primaryBtnActColor};
   }
   .react-calendar__tile--now:enabled:hover,
   .react-calendar__tile--now:enabled:focus {
-    background: ${props => props.theme.datePickerSelectedDateBgColor};
-    color: ${props => props.theme.primaryBtnActColor};
+    background: ${props => props.theme.primaryBtnBgd};
+    color: ${props => props.theme.effectPanelTextMain};
   }
   .react-calendar__tile--hasActive {
     background: ${props => props.theme.primaryBtnActBgd};
@@ -1075,17 +1087,18 @@ export const StyledDatePicker = styled(DatePicker)`
   .react-calendar__tile--hasActive:enabled:hover,
   .react-calendar__tile--hasActive:enabled:focus {
     background: ${props => props.theme.primaryBtnActBgd};
-    color: ${props => props.theme.primaryBtnActColor};
+    color: ${props => props.theme.effectPanelTextMain};
   }
   .react-calendar__tile--active {
     background: ${props => props.theme.primaryBtnActBgd};
-    color: ${props => props.theme.primaryBtnActColor};
+    color: ${props => props.theme.effectPanelTextMain};
+    border-radius: 4px;
   }
   .react-calendar__tile--active:enabled:hover,
   .react-calendar__tile--active:enabled:focus {
     background: ${props => props.theme.primaryBtnActBgd};
   }
   .calendar__navigation__label__labelText {
-    сolor: ${props => props.theme.textColor};
+    сolor: ${props => props.theme.effectPanelTextMain};
   }
 `;
