@@ -24,6 +24,7 @@ export class Effect implements EffectInterface {
     this.type = _props.type;
     this.isEnabled = _props.isEnabled;
     this.isConfigActive = _props.isConfigActive;
+    this.isJsonEditorActive = _props.isJsonEditorActive;
     this.parameters = _props.parameters;
 
     this._uiConfig = POSTPROCESSING_EFFECTS[this.type]?.parameters || [];
@@ -51,6 +52,7 @@ export class Effect implements EffectInterface {
     this.type = props.type ?? this.type;
     this.isEnabled = props.isEnabled ?? this.isEnabled;
     this.isConfigActive = props.isConfigActive ?? this.isConfigActive;
+    this.isJsonEditorActive = props.isJsonEditorActive ?? this.isJsonEditorActive;
     this.parameters = {...this.parameters, ...props.parameters};
   }
 
