@@ -23,7 +23,7 @@ import styled from 'styled-components';
 import classnames from 'classnames';
 import {DraggableAttributes} from '@dnd-kit/core';
 import {CSS, Transform} from '@dnd-kit/utilities';
-import {ChickletButton, ChickletTag} from '../../../common/item-selector/chickleted-input';
+import {ChickletButton} from '../../../common/item-selector/chickleted-input';
 import {Hash, Delete, VertDots} from '../../../common/icons';
 import DropdownList from '../../../common/item-selector/dropdown-list';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -122,6 +122,14 @@ const StyledDragHandle = styled.div.attrs({
   }
 `;
 
+const StyledTag = styled.span`
+  margin-right: 5px;
+  text-overflow: ellipsis;
+  width: 100%;
+  overflow: hidden;
+  max-width: 160px;
+`;
+
 function getFormatTooltip(formatLabels: TimeLabelFormat[], format: string | null) {
   if (!format) {
     return null;
@@ -204,7 +212,7 @@ function TooltipChickletFactory(
             <StyledDragHandle {...listeners}>
               <VertDots height="12px" />
             </StyledDragHandle>
-            <ChickletTag>{displayOption(item)}</ChickletTag>
+            <StyledTag title={displayOption(item)}>{displayOption(item)}</StyledTag>
             {formatLabels.length > 1 && (
               <ChickletAddonWrapper>
                 <TippyTooltip
