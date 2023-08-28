@@ -116,6 +116,12 @@ const RangeSliderWrapper = styled.div`
     height: 32px;
     width: 8px;
     margin-top: -14px;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+  }
+  .kg-range-slider__handle::after {
+    margin-left: 1px;
   }
   .kg-range-slider__input {
     height: 32px;

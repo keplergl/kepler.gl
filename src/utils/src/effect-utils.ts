@@ -21,16 +21,16 @@ export function computeDeckEffects({
   mapState: MapState;
 }): PostProcessEffect[] {
   // TODO: 1) deck effects per deck context 2) preserved between draws
-  let effects = visState.effectOrder
+  return visState.effectOrder
     .map(effectId => {
-      return findById(effectId)(visState.effects);
+      const effect = findById(effectId)(visState.effects);
+      if (effect?.isEnabled && effect.deckEffect) {
+        updateEffect({visState, mapState, effect});
+        return effect.deckEffect;
+      }
+      return null;
     })
-    .filter(effect => Boolean(effect && effect.isEnabled && effect.deckEffect)) as Effect[];
-
-  return effects.map(effect => {
-    updateEffect({visState, mapState, effect});
-    return effect.deckEffect;
-  });
+    .filter(effect => effect);
 }
 
 /**
