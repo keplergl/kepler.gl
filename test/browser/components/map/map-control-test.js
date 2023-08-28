@@ -20,6 +20,7 @@
 
 /* eslint-disable enzyme-deprecation/no-mount,enzyme-deprecation/no-shallow,max-statements */
 import React from 'react';
+import {shallow} from 'enzyme';
 import sinon from 'sinon';
 import test from 'tape';
 
@@ -55,6 +56,42 @@ const MapLegend = appInjector.get(MapLegendFactory);
 const MapControlToolbar = appInjector.get(MapControlToolbarFactory);
 
 const initialProps = mapFieldsSelector(mockKeplerProps);
+
+test('MapControlFactory - display all options', t => {
+  const onToggleSplitMap = sinon.spy();
+  const onTogglePerspective = sinon.spy();
+  const onToggleMapControl = sinon.spy();
+  const onSetEditorMode = sinon.spy();
+  const onToggleEditorVisibility = sinon.spy();
+  const onSetLocale = sinon.spy();
+  const $ = shallow(
+    <MapControl
+      mapControls={{
+        splitMap: {show: true},
+        visibleLayers: {show: true},
+        toggle3d: {show: true},
+        mapLegend: {show: true},
+        mapDraw: {show: true},
+        mapLocale: {show: true},
+        effect: {show: true}
+      }}
+      datasets={{}}
+      layers={[]}
+      locale={'en'}
+      layersToRender={{}}
+      dragRotate={true}
+      mapIndex={0}
+      onToggleSplitMap={onToggleSplitMap}
+      onTogglePerspective={onTogglePerspective}
+      onToggleMapControl={onToggleMapControl}
+      onSetEditorMode={onSetEditorMode}
+      onToggleEditorVisibility={onToggleEditorVisibility}
+      onSetLocale={onSetLocale}
+    />
+  );
+  t.equal($.find('.map-control-action').length, 6, 'Should show 6 action panels');
+  t.end();
+});
 
 test('MapControlFactory - display options', t => {
   let wrapper;
