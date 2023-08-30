@@ -122,7 +122,7 @@ test('MapControlFactory - click options', t => {
     toggleMapControl: onToggleMapControl,
     setLocale: onSetLocale
   };
-  let updateState = keplerGlReducerCore(StateWSplitMaps, toggleMapControl('mapLegend', 0));
+  const updateState = keplerGlReducerCore(StateWSplitMaps, toggleMapControl('mapLegend', 0));
   const mapContainerProps = mapFieldsSelector(
     mockKeplerPropsWithState({
       state: updateState,

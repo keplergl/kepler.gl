@@ -26,3 +26,7 @@ export function cdnUrl(path) {
 export function fsqCdnUrl(path) {
   return `${KEPLER_FSQ_BUCKET}/${path}`;
 }
+
+export function fsqStudioUrl(path) {
+  return fsqCdnUrl(`studio/${path}`);
+}

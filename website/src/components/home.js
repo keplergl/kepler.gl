@@ -31,6 +31,7 @@ import Tutorials from './tutorials';
 import Walkthrough from './walkthrough';
 import Features from './features';
 import Ecosystems from './ecosystems';
+import Studio from './studio';
 import Footer from './footer';
 import Section from './common/section';
 import Header from './header';
@@ -47,7 +48,8 @@ const SECTION_CONTENT = {
   features: Features,
   examples: Examples,
   tutorials: Tutorials,
-  ecosystems: Ecosystems
+  ecosystems: Ecosystems,
+  studio: Studio
 };
 
 export default class Home extends PureComponent {

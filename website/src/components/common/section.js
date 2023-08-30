@@ -57,6 +57,7 @@ export const SectionHeader = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 40px;
 `;
 
 export const SectionTitle = styled.div`
@@ -69,7 +70,7 @@ export const SectionTitle = styled.div`
 
 export const SectionDescription = styled.div`
   font-size: 20px;
-  max-width: 500px;
+  max-width: 700px;
   ${media.palm`
     font-size: 16px;
   `};

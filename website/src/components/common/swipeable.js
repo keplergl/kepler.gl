@@ -22,6 +22,12 @@ import React, {PureComponent} from 'react';
 import styled from 'styled-components';
 import SwipeableViews from 'react-swipeable-views';
 
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 72px;
+`;
+
 const PaginationContainer = styled.div`
   display: flex;
   justify-content: center;
@@ -58,12 +64,14 @@ export default class Swipeable extends PureComponent {
   render() {
     const {children, onChange, selectedIndex} = this.props;
     return (
-      <div>
+      <Container>
         <SwipeableViews enableMouseEvents index={selectedIndex} onChange={onChange}>
           {children}
         </SwipeableViews>
-        <Pagination items={children} selectedIndex={selectedIndex} onChange={onChange} />
-      </div>
+        <div>
+          <Pagination items={children} selectedIndex={selectedIndex} onChange={onChange} />
+        </div>
+      </Container>
     );
   }
 }
