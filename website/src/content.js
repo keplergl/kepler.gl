@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {cdnUrl, unfoldedCdnUrl} from './utils';
+import {cdnUrl, fsqCdnUrl} from './utils';
 
 export const SECTIONS = [
   {
@@ -44,7 +44,7 @@ export const SECTIONS = [
     id: 'ecosystems',
     title: 'Ecosystem',
     description: 'A collection of kepler.gl plugins built for common data analytics tools',
-    icon: unfoldedCdnUrl('ecosystem.png'),
+    icon: fsqCdnUrl('ecosystem.png'),
     isDark: true
   },
   {
@@ -185,20 +185,20 @@ export const ECOSYSTEM = [
     title: 'Jupyter',
     description:
       'Built with Deck.gl, Kepler.gl utilizes WebGL to render large datasets quickly and efficiently.',
-    image: unfoldedCdnUrl('ecosystem-jupyter.png'),
+    image: fsqCdnUrl('ecosystem-jupyter.png'),
     githubUrl: 'https://github.com/keplergl/kepler.gl/tree/master/bindings/kepler.gl-jupyter'
   },
   {
     title: 'Tableau',
     description:
       'You can easily drag and drop a dataset, add filters, apply scales, and do aggregation on the fly.',
-    image: unfoldedCdnUrl('ecosystem-tableau.png'),
+    image: fsqCdnUrl('ecosystem-tableau.png'),
     githubUrl: 'https://github.com/keplergl/kepler.gl-tableau'
   },
   {
     title: 'Visual Studio Code',
     description: 'Geo Data Analytics tool for VS Code with Kepler.gl',
-    image: unfoldedCdnUrl('ecosystem-vscode.png'),
+    image: fsqCdnUrl('ecosystem-vscode.png'),
     githubUrl: 'https://github.com/RandomFractals/geo-data-viewer'
   }
 ];

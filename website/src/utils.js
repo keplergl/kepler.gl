@@ -18,16 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {
-  CLOUDFRONT,
-  KEPLER_GL_BUCKET,
-  WEBSITE_ASSET_FOLDER,
-  KEPLER_UNFOLDED_BUCKET
-} from './constants';
+import {CLOUDFRONT, KEPLER_GL_BUCKET, WEBSITE_ASSET_FOLDER, KEPLER_FSQ_BUCKET} from './constants';
 
 export function cdnUrl(path) {
   return `${CLOUDFRONT}/${KEPLER_GL_BUCKET}/${WEBSITE_ASSET_FOLDER}/${path}`;
 }
-export function unfoldedCdnUrl(path) {
-  return `${KEPLER_UNFOLDED_BUCKET}/${path}`;
+export function fsqCdnUrl(path) {
+  return `${KEPLER_FSQ_BUCKET}/${path}`;
 }
