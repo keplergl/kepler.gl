@@ -22,4 +22,5 @@ export const CLOUDFRONT = 'https://d1a3f4spazzrp4.cloudfront.net';
 export const KEPLER_GL_BUCKET = 'kepler.gl';
 export const WEBSITE_ASSET_FOLDER = 'website';
 export const DEMO_LINK = '/demo';
-export const KEPLER_UNFOLDED_BUCKET = 'https://cdn.unfolded.ai/statics/keplergl/images';
+export const KEPLER_UNFOLDED_BUCKET =
+  'https://studio-public-data.foursquare.com/statics/keplergl/images';
