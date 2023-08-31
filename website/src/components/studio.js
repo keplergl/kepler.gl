@@ -30,68 +30,6 @@ const LEARN_MORE_LINK = `${LOCATION_FOURSQUARE_LINK}/products/studio/keplergl-vs
 const getFsqUTMLink = utmCampaign =>
   `${LEARN_MORE_LINK}?utm_source=Kepler&utm_campaign=${utmCampaign}`;
 
-const Flex = styled.div`
-  display: flex;
-`;
-
-const StudioContainer = styled(Flex)`
-  width: 100%;
-  align-items: center;
-  flex-direction: column;
-  gap: 72px;
-`;
-
-const Section = styled(Flex)`
-  gap: 56px;
-  width: 100%;
-  justify-content: center;
-  justify-items: center;
-`;
-
-const MapCard = styled.a`
-  display: flex;
-  flex-direction: column;
-  gap: 56px;
-  max-width: 386px;
-  align-items: center;
-  cursor: pointer;
-  color: white;
-
-  :visited {
-    color: white;
-  }
-`;
-
-const MapCardImage = styled.img`
-  height: 230px;
-  width: 386px;
-  box-shadow: 0 12px 24px 0 rgba(0, 0, 0, 0.5);
-`;
-
-const MapCardBody = styled(Flex)`
-  flex-direction: column;
-  gap: 16px;
-  max-width: 300px;
-  align-items: center;
-`;
-
-const MapCardIcon = styled.img`
-  height: 24px;
-  width: 24px;
-`;
-
-const MapCardTitle = styled.div`
-  font-size: 20px;
-  line-height: 28px;
-  text-align: center;
-`;
-
-const MapCardDescription = styled.div`
-  font-size: 16px;
-  line-height: 26px;
-  text-align: center;
-`;
-
 const SECTIONS = [
   [
     {
@@ -186,6 +124,68 @@ const SECTIONS = [
     }
   ]
 ];
+
+const Flex = styled.div`
+  display: flex;
+`;
+
+const StudioContainer = styled(Flex)`
+  width: 100%;
+  align-items: center;
+  flex-direction: column;
+  gap: 72px;
+`;
+
+const Section = styled(Flex)`
+  gap: 56px;
+  width: 100%;
+  justify-content: center;
+  justify-items: center;
+`;
+
+const MapCard = styled.a`
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  max-width: 386px;
+  align-items: center;
+  cursor: pointer;
+  color: white;
+
+  :visited {
+    color: white;
+  }
+`;
+
+const MapCardImage = styled.img`
+  height: 230px;
+  width: 386px;
+  box-shadow: 0 12px 24px 0 rgba(0, 0, 0, 0.5);
+`;
+
+const MapCardBody = styled(Flex)`
+  flex-direction: column;
+  gap: 16px;
+  max-width: 300px;
+  align-items: center;
+`;
+
+const MapCardIcon = styled.img`
+  height: 24px;
+  width: 24px;
+`;
+
+const MapCardTitle = styled.div`
+  font-size: 20px;
+  line-height: 28px;
+  text-align: center;
+`;
+
+const MapCardDescription = styled.div`
+  font-size: 16px;
+  line-height: 26px;
+  text-align: center;
+`;
 
 const CardSection = ({cards}) => (
   <Section>
