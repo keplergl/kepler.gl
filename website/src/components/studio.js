@@ -24,7 +24,8 @@ import Swipeable from './common/swipeable';
 import {fsqStudioUrl} from '../utils';
 import {LinkButton} from './common/styled-components';
 
-const LEARN_MORE_LINK = 'https://location.foursquare.com/products/studio/keplergl-vs-studio';
+export const LOCATION_FOURSQUARE_LINK = 'https://location.foursquare.com';
+const LEARN_MORE_LINK = `${LOCATION_FOURSQUARE_LINK}/products/studio/keplergl-vs-studio`;
 const UTM_LINK =
   'https://location.foursquare.com/products/studio/keplergl-vs-studio?utm_source=Kepler&utm_medium=partner_site';
 
@@ -158,7 +159,7 @@ const SECTIONS = [
       imageUrl: fsqStudioUrl('screenshots/Tile_Layers.png'),
       icon: fsqStudioUrl('logos/Tile_Layers.png'),
       title: 'Tile Layers',
-      description: 'Add layers from Vector tile, raster tile, and WMS format',
+      description: 'Add layers from Vector tile, Raster tile, and WMS format',
       link: getFsqUTMLink('Keplermap9')
     }
   ],

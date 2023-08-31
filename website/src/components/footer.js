@@ -27,6 +27,7 @@ import {LinkButton} from './common/styled-components';
 import {media} from '../styles';
 import MapboxLogo from './mapbox-logo';
 import NetlifyLogo from './netlify-logo';
+import FoursquareLogo from './foursquare-logo';
 import {DEMO_LINK} from '../constants';
 
 const Container = styled.div`
@@ -49,9 +50,8 @@ const BrandingContainer = styled.div`
     margin-top: ${props => props.theme.margins.small};
   `};
 
-  display: grid;
-  grid-template-columns: repeat(4, auto);
-  column-gap: 20px;
+  display: flex;
+  gap: 20px;
   align-items: center;
 `;
 
@@ -139,6 +139,8 @@ const SocialContainer = styled.div`
   `};
 `;
 
+const GITHUB_BUTTON_STYLE = {marginLeft: '5px'};
+
 export default class Footer extends PureComponent {
   render() {
     return (
@@ -149,6 +151,7 @@ export default class Footer extends PureComponent {
             <img src={cdnUrl('icons/uber.svg')} />
             <MapboxLogo />
             <NetlifyLogo />
+            <FoursquareLogo />
             <CreatedBy>
               created by
               <StyledLogo className="fg">
@@ -168,7 +171,7 @@ export default class Footer extends PureComponent {
               large
               outlineDark
               href="https://github.com/keplergl/kepler.gl"
-              style={{marginLeft: '5px'}}
+              style={GITHUB_BUTTON_STYLE}
             >
               <img src={cdnUrl('icons/github.svg')} /> Github
             </LinkButton>
