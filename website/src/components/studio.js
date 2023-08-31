@@ -24,11 +24,13 @@ import Swipeable from './common/swipeable';
 import {fsqStudioUrl} from '../utils';
 import {LinkButton} from './common/styled-components';
 
-export const LOCATION_FOURSQUARE_LINK = 'https://location.foursquare.com';
-const LEARN_MORE_LINK = `${LOCATION_FOURSQUARE_LINK}/products/studio/keplergl-vs-studio`;
+export const LOCATION_FOURSQUARE_LINK =
+  'https://location.foursquare.com/products/studio/keplergl-vs-studio';
 
 const getFsqUTMLink = utmCampaign =>
-  `${LEARN_MORE_LINK}?utm_source=Kepler&utm_campaign=${utmCampaign}`;
+  `${LEARN_MORE_LINK}?utm_source=Kepler&&utm_medium=partner_site&utm_campaign=${utmCampaign}`;
+
+const LEARN_MORE_LINK = getFsqUTMLink('studio_signup');
 
 const SECTIONS = [
   [
