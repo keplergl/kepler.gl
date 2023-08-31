@@ -26,10 +26,9 @@ import {LinkButton} from './common/styled-components';
 
 export const LOCATION_FOURSQUARE_LINK = 'https://location.foursquare.com';
 const LEARN_MORE_LINK = `${LOCATION_FOURSQUARE_LINK}/products/studio/keplergl-vs-studio`;
-const UTM_LINK =
-  'https://location.foursquare.com/products/studio/keplergl-vs-studio?utm_source=Kepler&utm_medium=partner_site';
 
-const getFsqUTMLink = utmCampaign => `${UTM_LINK}&utm_campaign=${utmCampaign}`;
+const getFsqUTMLink = utmCampaign =>
+  `${LEARN_MORE_LINK}?utm_source=Kepler&utm_campaign=${utmCampaign}`;
 
 const Flex = styled.div`
   display: flex;
@@ -100,21 +99,21 @@ const SECTIONS = [
       icon: fsqStudioUrl('logos/Flow_layer.png'),
       title: 'Flow layer',
       description: 'Visualize origin-destination movement patterns',
-      link: getFsqUTMLink('Keplermap1')
+      link: getFsqUTMLink('Keplermap1_Flow_layer')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/3D_tiles.png'),
       icon: fsqStudioUrl('logos/3D_tiles.png'),
       title: '3D tiles',
       description: 'Stream and render massive 3D geospatial datasets',
-      link: getFsqUTMLink('Keplermap2')
+      link: getFsqUTMLink('Keplermap2_3D_tiles')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Analytics_modules.png'),
       icon: fsqStudioUrl('logos/Analytics_modules.png'),
       title: 'Analytics modules',
       description: 'Expedite spatial data analysis to extract valuable information',
-      link: getFsqUTMLink('Keplermap3')
+      link: getFsqUTMLink('Keplermap3_Analytics_modules')
     }
   ],
   [
@@ -123,21 +122,21 @@ const SECTIONS = [
       icon: fsqStudioUrl('logos/Charts.png'),
       title: 'Charts',
       description: 'Add statistics and charts to maps including tooltip, bar and line charts',
-      link: getFsqUTMLink('Keplermap4')
+      link: getFsqUTMLink('Keplermap4_Charts')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Administrative_boundaries.png'),
       icon: fsqStudioUrl('logos/Administrative_boundaries.png'),
       title: 'Administrative boundaries',
       description: 'Generate the boundary from columns containing administrative identifiers',
-      link: getFsqUTMLink('Keplermap5')
+      link: getFsqUTMLink('Keplermap5_Adnministrative_boundaries')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Host_published_maps.png'),
       icon: fsqStudioUrl('logos/Host_published_maps.png'),
       title: 'Host published maps',
       description: 'Host published maps that can be shared with a link',
-      link: getFsqUTMLink('Keplermap6')
+      link: getFsqUTMLink('Keplermap6_Host_published_maps')
     }
   ],
   [
@@ -146,21 +145,21 @@ const SECTIONS = [
       icon: fsqStudioUrl('logos/Fleet_Visualization.png'),
       title: 'Fleet Visualization',
       description: 'Playback and study of the movement of entire fleets',
-      link: getFsqUTMLink('Keplermap7')
+      link: getFsqUTMLink('Keplermap7_Fleet_Visualization')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Hextile_Analysis.png'),
       icon: fsqStudioUrl('logos/Hextile_Analysis.png'),
       title: 'Hextile Analysis',
       description: 'H3 based tiling system designed for spatial analytics',
-      link: getFsqUTMLink('Keplermap8')
+      link: getFsqUTMLink('Keplermap8_Hextile_Analysis')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Tile_Layers.png'),
       icon: fsqStudioUrl('logos/Tile_Layers.png'),
       title: 'Tile Layers',
       description: 'Add layers from Vector tile, Raster tile, and WMS format',
-      link: getFsqUTMLink('Keplermap9')
+      link: getFsqUTMLink('Keplermap9_Tile_Layers')
     }
   ],
   [
@@ -169,21 +168,21 @@ const SECTIONS = [
       icon: fsqStudioUrl('logos/Dataset_Operation.png'),
       title: 'Dataset Operation',
       description: 'Apply expression, group-by, spatial join operations.',
-      link: getFsqUTMLink('Keplermap10')
+      link: getFsqUTMLink('Keplermap10_Dataset_Operation')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Globe.png'),
       icon: fsqStudioUrl('logos/Globe.png'),
       title: 'Globe',
       description: 'A 3D globe view of the Earth for planetary data.',
-      link: getFsqUTMLink('Keplermap11')
+      link: getFsqUTMLink('Keplermap11_Globe')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Remote_Sensing.png'),
       icon: fsqStudioUrl('logos/Remote_Sensing.png'),
       title: 'Remote Sensing',
       description: 'Analysis-Ready high bit-depth raster data in your browser',
-      link: getFsqUTMLink('Keplermap12')
+      link: getFsqUTMLink('Keplermap12_Remote_Sensing')
     }
   ]
 ];
