@@ -185,6 +185,7 @@ const MapCardDescription = styled.div`
   font-size: 16px;
   line-height: 26px;
   text-align: center;
+  opacity: 0.7;
 `;
 
 const CardSection = ({cards}) => (
