@@ -27,10 +27,10 @@ import {LinkButton} from './common/styled-components';
 export const LOCATION_FOURSQUARE_LINK =
   'https://location.foursquare.com/products/studio/keplergl-vs-studio';
 
-const getFsqUTMLink = utmCampaign =>
-  `${LEARN_MORE_LINK}?utm_source=Kepler&&utm_medium=partner_site&utm_campaign=${utmCampaign}`;
+const getFSQLink = utmCampaign =>
+  `${LOCATION_FOURSQUARE_LINK}?utm_source=Kepler&&utm_medium=partner_site&utm_campaign=${utmCampaign}`;
 
-const LEARN_MORE_LINK = getFsqUTMLink('studio_signup');
+const LEARN_MORE_LINK = getFSQLink('studio_signup');
 
 const SECTIONS = [
   [
@@ -39,21 +39,21 @@ const SECTIONS = [
       icon: fsqStudioUrl('logos/Flow_layer.png'),
       title: 'Flow layer',
       description: 'Visualize origin-destination movement patterns',
-      link: getFsqUTMLink('Keplermap1_Flow_layer')
+      link: getFSQLink('Keplermap1_Flow_layer')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/3D_tiles.png'),
       icon: fsqStudioUrl('logos/3D_tiles.png'),
       title: '3D tiles',
       description: 'Stream and render massive 3D geospatial datasets',
-      link: getFsqUTMLink('Keplermap2_3D_tiles')
+      link: getFSQLink('Keplermap2_3D_tiles')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Analytics_modules.png'),
       icon: fsqStudioUrl('logos/Analytics_modules.png'),
       title: 'Analytics modules',
       description: 'Expedite spatial data analysis to extract valuable information',
-      link: getFsqUTMLink('Keplermap3_Analytics_modules')
+      link: getFSQLink('Keplermap3_Analytics_modules')
     }
   ],
   [
@@ -62,21 +62,21 @@ const SECTIONS = [
       icon: fsqStudioUrl('logos/Charts.png'),
       title: 'Charts',
       description: 'Add statistics and charts to maps including tooltip, bar and line charts',
-      link: getFsqUTMLink('Keplermap4_Charts')
+      link: getFSQLink('Keplermap4_Charts')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Administrative_boundaries.png'),
       icon: fsqStudioUrl('logos/Administrative_boundaries.png'),
       title: 'Administrative boundaries',
       description: 'Generate the boundary from columns containing administrative identifiers',
-      link: getFsqUTMLink('Keplermap5_Adnministrative_boundaries')
+      link: getFSQLink('Keplermap5_Adnministrative_boundaries')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Host_published_maps.png'),
       icon: fsqStudioUrl('logos/Host_published_maps.png'),
       title: 'Host published maps',
       description: 'Host published maps that can be shared with a link',
-      link: getFsqUTMLink('Keplermap6_Host_published_maps')
+      link: getFSQLink('Keplermap6_Host_published_maps')
     }
   ],
   [
@@ -85,21 +85,21 @@ const SECTIONS = [
       icon: fsqStudioUrl('logos/Fleet_Visualization.png'),
       title: 'Fleet Visualization',
       description: 'Playback and study of the movement of entire fleets',
-      link: getFsqUTMLink('Keplermap7_Fleet_Visualization')
+      link: getFSQLink('Keplermap7_Fleet_Visualization')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Hextile_Analysis.png'),
       icon: fsqStudioUrl('logos/Hextile_Analysis.png'),
       title: 'Hextile Analysis',
       description: 'H3 based tiling system designed for spatial analytics',
-      link: getFsqUTMLink('Keplermap8_Hextile_Analysis')
+      link: getFSQLink('Keplermap8_Hextile_Analysis')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Tile_Layers.png'),
       icon: fsqStudioUrl('logos/Tile_Layers.png'),
       title: 'Tile Layers',
       description: 'Add layers from Vector tile, Raster tile, and WMS format',
-      link: getFsqUTMLink('Keplermap9_Tile_Layers')
+      link: getFSQLink('Keplermap9_Tile_Layers')
     }
   ],
   [
@@ -108,21 +108,21 @@ const SECTIONS = [
       icon: fsqStudioUrl('logos/Dataset_Operation.png'),
       title: 'Dataset Operation',
       description: 'Apply expression, group-by, spatial join operations.',
-      link: getFsqUTMLink('Keplermap10_Dataset_Operation')
+      link: getFSQLink('Keplermap10_Dataset_Operation')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Globe.png'),
       icon: fsqStudioUrl('logos/Globe.png'),
       title: 'Globe',
       description: 'A 3D globe view of the Earth for planetary data.',
-      link: getFsqUTMLink('Keplermap11_Globe')
+      link: getFSQLink('Keplermap11_Globe')
     },
     {
       imageUrl: fsqStudioUrl('screenshots/Remote_Sensing.png'),
       icon: fsqStudioUrl('logos/Remote_Sensing.png'),
       title: 'Remote Sensing',
       description: 'Analysis-Ready high bit-depth raster data in your browser',
-      link: getFsqUTMLink('Keplermap12_Remote_Sensing')
+      link: getFSQLink('Keplermap12_Remote_Sensing')
     }
   ]
 ];
@@ -145,6 +145,12 @@ const Section = styled(Flex)`
   justify-items: center;
 `;
 
+const MapCardImage = styled.img`
+  height: 230px;
+  width: 386px;
+  box-shadow: 0 12px 24px 0 rgba(0, 0, 0, 0.5);
+`;
+
 const MapCard = styled.a`
   display: flex;
   flex-direction: column;
@@ -157,12 +163,12 @@ const MapCard = styled.a`
   :visited {
     color: white;
   }
-`;
 
-const MapCardImage = styled.img`
-  height: 230px;
-  width: 386px;
-  box-shadow: 0 12px 24px 0 rgba(0, 0, 0, 0.5);
+  :hover {
+    ${MapCardImage} {
+      box-shadow: 0 12px 24px 0 rgba(122, 122, 122, 0.5);
+    }
+  }
 `;
 
 const MapCardBody = styled(Flex)`
@@ -193,7 +199,7 @@ const MapCardDescription = styled.div`
 const CardSection = ({cards}) => (
   <Section>
     {cards.map(card => (
-      <MapCard key={card.imageUrl} href={card.link}>
+      <MapCard key={card.imageUrl} href={card.link} target="_blank">
         <MapCardImage src={card.imageUrl} alt={card.title} />
         <MapCardBody>
           <MapCardIcon src={card.icon} alt={card.title} />
@@ -227,7 +233,7 @@ const Studio = () => {
           <CardSection key={index} cards={cards} />
         ))}
       </Swipeable>
-      <WhiteLinkButton outline large href={LEARN_MORE_LINK}>
+      <WhiteLinkButton outline large href={LEARN_MORE_LINK} target="_blank">
         Learn More
       </WhiteLinkButton>
     </StudioContainer>
