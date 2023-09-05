@@ -149,16 +149,7 @@ const MapCardImage = styled.img`
   height: 230px;
   width: 386px;
   box-shadow: 0 12px 24px 0 rgba(0, 0, 0, 0.5);
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-transition-duration: 0.3s;
-  transition-duration: 0.3s;
-  -webkit-transition-property: transform;
-  transition-property: transform;
-  -webkit-transition-timing-function: ease-out;
-  transition-timing-function: ease-out;
+  transition: transform 350ms;
 `;
 
 const MapCard = styled.a`
@@ -176,7 +167,7 @@ const MapCard = styled.a`
 
   :hover {
     ${MapCardImage} {
-      transform: translateY(8px);
+      transform: scale3d(1.05, 1.05, 1.05);
     }
   }
 `;
