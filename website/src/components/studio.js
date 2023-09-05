@@ -143,6 +143,7 @@ const Section = styled(Flex)`
   width: 100%;
   justify-content: center;
   justify-items: center;
+  padding-top: 8px;
 `;
 
 const MapCardImage = styled.img`
@@ -156,7 +157,6 @@ const MapCard = styled.a`
   display: flex;
   flex-direction: column;
   gap: 56px;
-  max-width: 386px;
   align-items: center;
   cursor: pointer;
   color: white;
@@ -229,7 +229,11 @@ const Studio = () => {
 
   return (
     <StudioContainer>
-      <Swipeable onChange={onChange} selectedIndex={selectedIndex}>
+      <Swipeable
+        onChange={onChange}
+        selectedIndex={selectedIndex}
+        containerStyle={{overflow: 'visible'}}
+      >
         {SECTIONS.map((cards, index) => (
           <CardSection key={index} cards={cards} />
         ))}
