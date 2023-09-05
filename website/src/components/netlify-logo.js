@@ -20,8 +20,10 @@
 
 import React from 'react';
 
+const LINK_STYLE = {display: 'flex'};
+
 const NetlifyLogo = () => (
-  <a href="https://www.netlify.com">
+  <a href="https://www.netlify.com" style={LINK_STYLE}>
     <svg width="114" height="51">
       <g
         xmlns="http://www.w3.org/2000/svg"

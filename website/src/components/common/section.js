@@ -41,7 +41,7 @@ export const SectionContainer = styled.div`
       ? `url(${props.background})`
       : 'white'};
   padding: ${props => props.theme.margins.huge};
-  margin-bottom: ${props => props.theme.margins.large};
+  // margin-bottom: ${props => props.theme.margins.large};
   background-size: cover;
 
   ${media.portable`
