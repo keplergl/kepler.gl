@@ -30,7 +30,7 @@
     "umd"
   ],
   "dependencies": {
-    "@deck.gl/core": "^8.9.12",
+    "@deck.gl/core": "^8.9.27",
     "@kepler.gl/cloud-providers": "3.0.0-alpha.1",
     "@kepler.gl/constants": "3.0.0-alpha.1",
     "@kepler.gl/layers": "3.0.0-alpha.1",
