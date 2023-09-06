@@ -41,12 +41,20 @@ export const SECTIONS = [
     icon: cdnUrl('icons/features.png')
   },
   {
-    id: 'ecosystems',
-    title: 'Ecosystem',
-    description: 'A collection of kepler.gl plugins built for common data analytics tools',
-    icon: fsqCdnUrl('ecosystem.png'),
+    id: 'studio',
+    title: 'Take The Next Step',
+    description: `Built on top of kelper.gl’s framework, Foursquare Studio is a free,
+powerful geospatial analytics and visualization tool, with new features and updates released every few weeks.`,
+    icon: fsqCdnUrl('fsqlogo.png'),
     isDark: true
   },
+  // {
+  //   id: 'ecosystems',
+  //   title: 'Ecosystem',
+  //   description: 'A collection of kepler.gl plugins built for common data analytics tools',
+  //   icon: fsqCdnUrl('ecosystem.png'),
+  //   isDark: true
+  // },
   {
     id: 'examples',
     title: 'See What People Created',

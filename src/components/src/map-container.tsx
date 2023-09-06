@@ -516,7 +516,7 @@ export default function MapContainerFactory(
     _onDeckError = (error, layer) => {
       const errorMessage = error?.message || 'unknown-error';
       const layerMessage = layer?.id ? ` in ${layer.id} layer` : '';
-      let errorMessageFull =
+      const errorMessageFull =
         errorMessage === 'WebGL context is lost'
           ? 'Your GPU was disconnected. This can happen if your computer goes to sleep. It can also occur for other reasons, such as if you are running too many GPU applications.'
           : `An error in deck.gl: ${errorMessage}${layerMessage}.`;

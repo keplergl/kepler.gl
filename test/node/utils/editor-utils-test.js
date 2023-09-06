@@ -24,10 +24,7 @@ import {EditableGeoJsonLayer} from '@nebula.gl/layers';
 import {INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 import {EDITOR_LAYER_ID, EDITOR_MODES} from '@kepler.gl/constants';
-import {
-  EditorLayerUtils,
-  getEditorLayer
-} from '@kepler.gl/layers';
+import {EditorLayerUtils, getEditorLayer} from '@kepler.gl/layers';
 
 test('editorLayerUtils -> isDrawingActive', t => {
   t.equal(
@@ -54,7 +51,11 @@ test('editorLayerUtils -> getCursor', t => {
     editorMenuActive: true,
     editor
   };
-  t.equal(EditorLayerUtils.getCursor(mockSettings), 'crosshair', 'Should return crosshair for active drawing mode');
+  t.equal(
+    EditorLayerUtils.getCursor(mockSettings),
+    'crosshair',
+    'Should return crosshair for active drawing mode'
+  );
 
   mockSettings.editorMenuActive = false;
   t.equal(
@@ -214,20 +215,35 @@ test('editorLayerUtils -> onClick', t => {
   const {onLayerClick, setSelectedFeature} = VisStateActions;
 
   t.equal(
-    EditorLayerUtils.onClick(info, event, {editor, editorMenuActive: true, onLayerClick, setSelectedFeature}),
+    EditorLayerUtils.onClick(info, event, {
+      editor,
+      editorMenuActive: true,
+      onLayerClick,
+      setSelectedFeature
+    }),
     true,
     'Should return true - onClick is handled as drawing is active'
   );
 
   t.equal(
-    EditorLayerUtils.onClick(info, event, {editor, editorMenuActive: false, onLayerClick, setSelectedFeature}),
+    EditorLayerUtils.onClick(info, event, {
+      editor,
+      editorMenuActive: false,
+      onLayerClick,
+      setSelectedFeature
+    }),
     false,
     "Should return false - onClick isn't handled"
   );
 
   info.layer.id = EDITOR_LAYER_ID;
   t.equal(
-    EditorLayerUtils.onClick(info, event, {editor, editorMenuActive: false, onLayerClick, setSelectedFeature}),
+    EditorLayerUtils.onClick(info, event, {
+      editor,
+      editorMenuActive: false,
+      onLayerClick,
+      setSelectedFeature
+    }),
     true,
     'Should return true - onClick is handled'
   );

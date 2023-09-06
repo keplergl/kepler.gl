@@ -324,7 +324,7 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
         active: this.state.showTypeahead
       }),
       displayOption,
-      disabled: disabled,
+      disabled,
       onClick: this._showTypeahead,
       error: this.props.isError,
       inputTheme,

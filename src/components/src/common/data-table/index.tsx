@@ -222,7 +222,7 @@ const getRowCell = (
   const rowIdx = sortOrder && sortOrder.length ? get(sortOrder, rowIndex) : rowIndex;
   const {type} = colMeta[column];
 
-  let value = dataContainer.valueAt(rowIdx, columns.indexOf(column));
+  const value = dataContainer.valueAt(rowIdx, columns.indexOf(column));
   return value === null || value === undefined || value === ''
     ? ''
     : formatter

@@ -25,7 +25,7 @@ const MapboxLogo = styled.a`
   background-size: 99px 28px;
   background-repeat: no-repeat;
   width: 100px;
-  display: inline-block;
+  display: flex;
   height: 28px;
   flex-shrink: 0;
 `;
