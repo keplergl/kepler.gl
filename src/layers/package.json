@@ -85,8 +85,5 @@
   "volta": {
     "node": "18.18.2",
     "yarn": "1.22.17"
-  },
-  "devDependencies": {
-    "@loaders.gl/wkt": "^3.4.14"
   }
 }
