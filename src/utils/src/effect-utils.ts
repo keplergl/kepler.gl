@@ -1,5 +1,6 @@
 import {arrayMove} from '@dnd-kit/sortable';
 import SunCalc from 'suncalc';
+import cloneDeep from 'lodash.clonedeep';
 
 import {PostProcessEffect} from '@deck.gl/core/typed';
 
@@ -9,9 +10,10 @@ import {
   FILTER_TYPES,
   FILTER_VIEW_TYPES
 } from '@kepler.gl/constants';
-import {findById} from './utils';
 import {VisState} from '@kepler.gl/schemas';
-import {MapState, Effect} from '@kepler.gl/types';
+import {MapState, Effect, EffectProps, EffectDescription} from '@kepler.gl/types';
+import {findById} from './utils';
+import {clamp} from './data-utils';
 
 export function computeDeckEffects({
   visState,
@@ -107,4 +109,54 @@ function updateEffect({visState, mapState, effect}) {
       sunLight.intensity = 0;
     }
   }
+}
+
+/**
+ * Validates parameters for an effect, clamps numbers to allowed ranges
+ * or applies default values in case of wrong non-numeric values.
+ * All unknown properties aren't modified.
+ * @param parameters Parameters candidate for an effect.
+ * @param effectDescription Description of an effect.
+ * @returns
+ */
+export function validateEffectParameters(
+  parameters: EffectProps['parameters'] = {},
+  effectDescription: EffectDescription['parameters']
+): EffectProps['parameters'] {
+  const result = cloneDeep(parameters);
+  effectDescription.forEach(description => {
+    const {index, defaultValue, name, type, min, max} = description;
+
+    if (!result.hasOwnProperty(name)) return;
+    const property = result[name];
+
+    if (type === 'color') {
+      if (!Array.isArray(defaultValue)) return;
+      if (property.length !== defaultValue?.length) {
+        result[name] = defaultValue;
+        return;
+      }
+      defaultValue.forEach((v, i) => {
+        let value = property[i];
+        value = Number.isFinite(value) ? clamp([min, max], value) : defaultValue[i] || min;
+        if (value !== undefined) {
+          property[i] = value;
+        }
+      });
+      return;
+    }
+
+    const indexed = Number.isFinite(index);
+    let value = indexed ? property[index as number] : property;
+    value = Number.isFinite(value) ? clamp([min, max], value) : defaultValue || min;
+
+    if (value !== undefined) {
+      if (indexed) {
+        result[name][index as number] = value;
+      } else {
+        result[name] = value;
+      }
+    }
+  });
+  return result;
 }

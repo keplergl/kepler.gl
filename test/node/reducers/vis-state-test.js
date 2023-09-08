@@ -5585,6 +5585,47 @@ test('#VisStateUpdater -> updateEffect', t => {
   t.end();
 });
 
+test('#VisStateUpdater -> addEffect: invalid effect parameters', t => {
+  const initialState = InitialState.visState;
+
+  let nextState = reducer(
+    initialState,
+    VisStateActions.addEffect({
+      id: 'e_1',
+      type: 'lightAndShadow',
+      parameters: {
+        timestamp: 'x',
+        shadowIntensity: 2,
+        sunLightIntensity: [0, 1],
+        shadowColor: [0, 1],
+        sunLightColor: 2,
+        ambientLightColor: [300, 128, 128],
+        timezone: 'Not a timezone'
+      }
+    })
+  );
+
+  const expectedEffect = {
+    id: 'e_1',
+    type: 'lightAndShadow',
+    parameters: {
+      timestamp: 0,
+      timeMode: 'pick',
+      shadowIntensity: 1,
+      sunLightIntensity: 1,
+      shadowColor: [0, 0, 0],
+      sunLightColor: [255, 255, 255],
+      ambientLightColor: [255, 128, 128],
+      ambientLightIntensity: 1,
+      timezone: 'Not a timezone'
+    }
+  };
+
+  cmpEffects(t, expectedEffect, nextState.effects[0], {id: true});
+
+  t.end();
+});
+
 test('#VisStateUpdater -> reorderEffect', t => {
   const initialState = InitialState.visState;
 

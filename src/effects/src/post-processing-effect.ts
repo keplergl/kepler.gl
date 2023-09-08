@@ -90,10 +90,8 @@ const POSTPROCESSING_EFFECTS_DESCS = [
  */
 const getDefaultValueForParameter = (name, effectDescription) => {
   const rec = effectDescription.filter(param => param.name === name);
-  if (rec.length === 1) return rec[0].default;
-  else if (rec.length === 2 && rec[0].default !== undefined && rec[1].default !== undefined) {
-    return [rec[0].default, rec[1].default];
-  }
+  if (rec.length === 1) return rec[0].defaultValue;
+  else if (rec.length === 2) return [rec[0].defaultValue, rec[1].defaultValue];
 };
 
 class PostProcessingEffect extends Effect {

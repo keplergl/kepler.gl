@@ -1,10 +1,11 @@
 export type EffectParameterDescription = {
   name: string;
+  type?: 'number' | 'color';
   label?: string | false;
   index?: number;
-  min?: number;
-  max?: number;
-  default?: number;
+  min: number;
+  max: number;
+  defaultValue?: number | number[];
 };
 
 export type EffectDescription = {

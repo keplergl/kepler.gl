@@ -1192,11 +1192,7 @@ export const DEFAULT_LIGHT_COLOR: [number, number, number] = [255, 255, 255];
 export const DEFAULT_LIGHT_INTENSITY = 1;
 export const DEFAULT_SHADOW_INTENSITY = 0.5;
 export const DEFAULT_SHADOW_COLOR: [number, number, number] = [0, 0, 0];
-export const LIGHT_AND_SHADOW_EFFECT: EffectDescription = {
-  type: 'lightAndShadow',
-  name: 'Light & Shadow',
-  parameters: []
-};
+
 export const LIGHT_AND_SHADOW_EFFECT_TIME_MODES = {
   pick: 'pick' as 'pick',
   current: 'current' as 'current',
@@ -1223,51 +1219,79 @@ export const DEFAULT_LIGHT_AND_SHADOW_PROPS: {
   ambientLightIntensity: DEFAULT_LIGHT_INTENSITY
 };
 
+export const LIGHT_AND_SHADOW_EFFECT: EffectDescription = {
+  type: 'lightAndShadow',
+  name: 'Light & Shadow',
+  parameters: [
+    {name: 'timestamp', min: 0, max: Number.MAX_SAFE_INTEGER},
+    {name: 'shadowIntensity', min: 0, max: 1, defaultValue: DEFAULT_SHADOW_INTENSITY},
+    {name: 'sunLightIntensity', min: 0, max: 1, defaultValue: DEFAULT_LIGHT_INTENSITY},
+    {name: 'ambientLightIntensity', min: 0, max: 1, defaultValue: DEFAULT_LIGHT_INTENSITY},
+    {name: 'shadowColor', type: 'color', min: 0, max: 255, defaultValue: DEFAULT_SHADOW_COLOR},
+    {name: 'sunLightColor', type: 'color', min: 0, max: 255, defaultValue: DEFAULT_LIGHT_COLOR},
+    {name: 'ambientLightColor', type: 'color', min: 0, max: 255, defaultValue: DEFAULT_LIGHT_COLOR}
+  ]
+};
+
 export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   ink: {
     type: 'ink',
     name: 'Ink',
-    parameters: [{name: 'strength'}]
+    parameters: [{name: 'strength', min: 0, max: 1}]
   },
   brightnessContrast: {
     type: 'brightnessContrast',
     name: 'Brightness & Contrast',
-    parameters: [{name: 'brightness'}, {name: 'contrast'}]
+    parameters: [
+      {name: 'brightness', min: -1, max: 1},
+      {name: 'contrast', min: -1, max: 1}
+    ]
   },
   hueSaturation: {
     type: 'hueSaturation',
     name: 'Hue & Saturation',
-    parameters: [{name: 'hue'}, {name: 'saturation', default: 0.25}]
+    parameters: [
+      {name: 'hue', min: -1, max: 1},
+      {name: 'saturation', defaultValue: 0.25, min: -1, max: 1}
+    ]
   },
   vibrance: {
     type: 'vibrance',
     name: 'Vibrance',
-    parameters: [{name: 'amount', default: 0.5}]
+    parameters: [{name: 'amount', defaultValue: 0.5, min: -1, max: 1}]
   },
   sepia: {
     type: 'sepia',
     name: 'Sepia',
-    parameters: [{name: 'amount'}]
+    parameters: [{name: 'amount', min: 0, max: 1}]
   },
   dotScreen: {
     type: 'dotScreen',
     name: 'Dot Screen',
     parameters: [
       {
-        name: 'angle'
+        name: 'angle',
+        min: 0,
+        max: Math.PI / 2
       },
       {
-        name: 'size'
+        name: 'size',
+        min: 1,
+        max: 20
       },
       {
         name: 'center',
         label: 'Center X',
-        index: 0
+        index: 0,
+        min: 0,
+        max: 1
       },
       {
         name: 'center',
         label: 'Center Y',
-        index: 1
+        index: 1,
+        min: 0,
+        max: 1
       }
     ]
   },
@@ -1276,32 +1300,40 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
     name: 'Color Halftone',
     parameters: [
       {
-        name: 'angle'
+        name: 'angle',
+        min: 0,
+        max: Math.PI / 2
       },
       {
-        name: 'size'
+        name: 'size',
+        min: 1,
+        max: 20
       },
       {
         name: 'center',
         label: 'Center X',
-        index: 0
+        index: 0,
+        min: 0,
+        max: 1
       },
       {
         name: 'center',
         label: 'Center Y',
-        index: 1
+        index: 1,
+        min: 0,
+        max: 1
       }
     ]
   },
   noise: {
     type: 'noise',
     name: 'Noise',
-    parameters: [{name: 'amount'}]
+    parameters: [{name: 'amount', min: 0, max: 1}]
   },
   triangleBlur: {
     type: 'triangleBlur',
     name: 'Blur (Triangle)',
-    parameters: [{name: 'radius'}, {name: 'delta'}]
+    parameters: [{name: 'radius', min: 0, max: 100}]
   },
   zoomBlur: {
     type: 'zoomBlur',
@@ -1309,17 +1341,23 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
     parameters: [
       {
         name: 'strength',
-        default: 0.05
+        defaultValue: 0.05,
+        min: 0,
+        max: 1
       },
       {
         name: 'center',
         label: 'Center X',
-        index: 0
+        index: 0,
+        min: 0,
+        max: 1
       },
       {
         name: 'center',
         label: 'Center Y',
-        index: 1
+        index: 1,
+        min: 0,
+        max: 1
       }
     ]
   },
@@ -1329,41 +1367,56 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
     parameters: [
       {
         name: 'blurRadius',
-        label: 'Blur'
+        label: 'Blur',
+        min: 0,
+        max: 50
       },
       {
         name: 'gradientRadius',
-        label: 'Gradient'
+        label: 'Gradient',
+        min: 0,
+        max: 400
       },
       {
         name: 'start',
-        index: 0
+        index: 0,
+        min: 0,
+        max: 1
       },
       {
         name: 'start',
         label: false,
-        index: 1
+        index: 1,
+        min: 0,
+        max: 1
       },
       {
         name: 'end',
-        index: 0
+        index: 0,
+        min: 0,
+        max: 1
       },
       {
         name: 'end',
         label: false,
-        index: 1
+        index: 1,
+        min: 0,
+        max: 1
       }
     ]
   },
   edgeWork: {
     type: 'edgeWork',
     name: 'Edge work',
-    parameters: [{name: 'radius'}, {name: 'delta'}]
+    parameters: [{name: 'radius', min: 1, max: 50}]
   },
   vignette: {
     type: 'vignette',
     name: 'Vignette',
-    parameters: [{name: 'amount'}, {name: 'radius'}]
+    parameters: [
+      {name: 'amount', min: 0, max: 1},
+      {name: 'radius', min: 0, max: 1}
+    ]
   },
   magnify: {
     type: 'magnify',
@@ -1373,18 +1426,23 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
         name: 'screenXY',
         label: 'Position X',
         index: 0,
-        default: 0.5
+        defaultValue: 0.5,
+        min: 0,
+        max: 1
       },
       {
         name: 'screenXY',
         label: 'Position Y',
         index: 1,
-        default: 0.5
+        defaultValue: 0.5,
+        min: 0,
+        max: 1
       },
       {
         name: 'radiusPixels',
         label: 'Size',
-        min: 10
+        min: 10,
+        max: 500
       },
       {
         name: 'zoom',
@@ -1394,15 +1452,16 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
       {
         name: 'borderWidthPixels',
         label: 'Border Width',
-        default: 3,
-        max: 100
+        defaultValue: 3,
+        min: 0,
+        max: 50
       }
     ]
   },
   hexagonalPixelate: {
     type: 'hexagonalPixelate',
     name: 'Hexagonal Pixelate',
-    parameters: [{name: 'scale', default: 20}]
+    parameters: [{name: 'scale', defaultValue: 20, min: 0, max: 50}]
   }
 };
 
