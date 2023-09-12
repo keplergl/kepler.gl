@@ -53,7 +53,9 @@ export {
   renameDuplicateFields,
   analyzerTypeToFieldType,
   getFormatLabels,
-  getFieldFormatLabels
+  getFieldFormatLabels,
+  arrowDataTypeToFieldType,
+  arrowDataTypeToAnalyzerDataType
 } from './dataset-utils';
 export {getFormatValue} from './format';
 export {exportMapToHTML} from './export-map-html';

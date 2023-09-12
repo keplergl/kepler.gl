@@ -57,6 +57,20 @@ export type LayerWeightConfig = {
   weightField: VisualChannelField;
 };
 
+export enum GEOARROW_ENCODINGS {
+  MULTI_POLYGON = 'geoarrow.multipolygon',
+  POLYGON = 'geoarrow.polygon',
+  MULTI_LINESTRING = 'geoarrow.multilinestring',
+  LINESTRING = 'geoarrow.linestring',
+  MULTI_POINT = 'geoarrow.multipoint',
+  POINT = 'geoarrow.point'
+}
+
+export type GeoArrowFieldMetaData = {
+  encoding: GEOARROW_ENCODINGS;
+  crs: string;
+};
+
 export type Field = {
   analyzerType: string;
   id?: string;
@@ -67,7 +81,7 @@ export type Field = {
   fieldIdx: number;
   valueAccessor(v: {index: number}): any;
   filterProps?: any;
-  metadata?: any;
+  metadata?: object | GeoArrowFieldMetaData;
   displayFormat?: string;
 };
 

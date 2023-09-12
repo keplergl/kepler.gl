@@ -18,13 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {ListVector} from 'apache-arrow';
 import normalize from '@mapbox/geojson-normalize';
 import bbox from '@turf/bbox';
 import {parseSync} from '@loaders.gl/core';
 import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
 import {binaryToGeometry} from '@loaders.gl/gis';
 
-import {Feature, BBox} from 'geojson';
+import {Feature, BBox, MultiPolygon, Position, Polygon} from 'geojson';
 import {getSampleData} from '@kepler.gl/utils';
 
 export type GetFeature = (d: any) => Feature;
@@ -47,16 +48,21 @@ type FeatureTypeMap = {
 /* eslint-enable */
 
 export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
-  if (typeof rawFeature === 'object') {
-    // Support GeoJson feature as object
-    // probably need to normalize it as well
-    const normalized = normalize(rawFeature);
-    if (!normalized || !Array.isArray(normalized.features)) {
-      // fail to normalize GeoJson
-      return null;
-    }
+  if (rawFeature && typeof rawFeature === 'object') {
+    if (typeof rawFeature['type'] === 'string') {
+      // Support GeoJson feature as object
+      // probably need to normalize it as well
+      const normalized = normalize(rawFeature);
+      if (!normalized || !Array.isArray(normalized.features)) {
+        // fail to normalize GeoJson
+        return null;
+      }
 
-    return normalized.features[0];
+      return normalized.features[0];
+    } else if (rawFeature['encoding'].startsWith('geoarrow')) {
+      // Support GeoArrow data
+      return parseGeometryFromArrow(rawFeature);
+    }
   } else if (typeof rawFeature === 'string') {
     return parseGeometryFromString(rawFeature);
   } else if (Array.isArray(rawFeature)) {
@@ -225,4 +231,94 @@ export function getGeojsonFeatureTypes(allFeatures: GeojsonDataMaps): FeatureTyp
   }
 
   return featureTypes;
+}
+
+/**
+ * parse geometry from arrow data that is returned from processArrowData()
+ *
+ * @param rawData the raw geometry data returned from processArrowData, which is an object with two properties: encoding and data
+ * @see processArrowData
+ * @returns
+ */
+export function parseGeometryFromArrow(rawData: object): Feature | null {
+  const encoding = rawData['encoding'];
+  const data = rawData['data'];
+  if (!encoding || !data) return null;
+
+  switch (encoding) {
+    case 'geoarrow.multipolygon': {
+      // convert to geojson MultiPolygon
+      const arrowMultiPolygon: ListVector = data;
+      const multiPolygon: Position[][][] = [];
+      for (let m = 0; m < arrowMultiPolygon.length; m++) {
+        const arrowPolygon = arrowMultiPolygon.get(m);
+        const polygon: Position[][] = [];
+        for (let i = 0; arrowPolygon && i < arrowPolygon?.length; i++) {
+          const arrowRing = arrowPolygon?.get(i);
+          const ring: Position[] = [];
+          for (let j = 0; arrowRing && j < arrowRing.length; j++) {
+            const arrowCoord = arrowRing.get(j);
+            const coord: Position = Array.from(arrowCoord);
+            ring.push(coord);
+          }
+          polygon.push(ring);
+        }
+        multiPolygon.push(polygon);
+      }
+      const geometry: MultiPolygon = {
+        type: 'MultiPolygon',
+        coordinates: multiPolygon
+      };
+      return {
+        type: 'Feature',
+        geometry,
+        properties: {}
+      };
+    }
+    case 'geoarrow.polygon': {
+      // convert to geojson Polygon
+      const arrowPolygon: ListVector = data;
+      const polygon: Position[][] = [];
+      for (let i = 0; arrowPolygon && i < arrowPolygon.length; i++) {
+        const arrowRing = arrowPolygon.get(i);
+        const ring: Position[] = [];
+        for (let j = 0; arrowRing && j < arrowRing.length; j++) {
+          const arrowCoord = arrowRing.get(j);
+          const coords: Position = Array.from(arrowCoord);
+          ring.push(coords);
+        }
+      }
+      const geometry: Polygon = {
+        type: 'Polygon',
+        coordinates: polygon
+      };
+      return {
+        type: 'Feature',
+        geometry,
+        properties: {}
+      };
+    }
+    case 'geoarrow.multipoint':
+      // convert to geojson MultiPoint
+      break;
+    case 'geoarrow.point':
+      // convert to geojson Point
+      break;
+    case 'geoarrow.multilinestring':
+      // convert to geojson MultiLineString
+      break;
+    case 'geoarrow.linestring':
+      // convert to geojson LineString
+      break;
+    case 'geoarrow.wkb':
+      // convert to wkb
+      break;
+    case 'geoarrow.wkt':
+      // convert to wkt
+      break;
+    default:
+      // encoding is not supported, skip
+      console.error('GeoArrow encoding not supported');
+  }
+  return null;
 }

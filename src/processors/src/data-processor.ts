@@ -18,21 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {Table as ApacheArrowTable, Field as ArrowField, ListVector} from 'apache-arrow';
 import {csvParseRows} from 'd3-dsv';
+import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
-import {ALL_FIELD_TYPES, DATASET_FORMATS, GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, DATASET_FORMATS, GUIDES_FILE_FORMAT_DOC, ARROW_GEO_METADATA_KEY} from '@kepler.gl/constants';
 import {ProcessorResult, Field} from '@kepler.gl/types';
 import {
+  arrowDataTypeToAnalyzerDataType,
+  arrowDataTypeToFieldType,
   notNullorUndefined,
   hasOwnProperty,
   isPlainObject,
   analyzerTypeToFieldType,
   getSampleForTypeAnalyze,
   getFieldsFromData,
-  toArray
+  toArray,
+  DataContainerInterface
 } from '@kepler.gl/utils';
 import {KeplerGlSchema, ParsedDataset, SavedMap, LoadedMap} from '@kepler.gl/schemas';
 import {Feature} from '@nebula.gl/edit-modes';
+import {ArrowLoader} from '@loaders.gl/arrow';
+import { load } from '@loaders.gl/core';
+
+import {ProcessFileDataContent} from './file-handler';
 
 // if any of these value occurs in csv, parse it to null;
 // const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];
@@ -388,12 +397,84 @@ export function processKeplerglDataset(
   return Array.isArray(rawData) ? results : results[0];
 }
 
-export const DATASET_HANDLERS: {
-  row: typeof processRowObject;
-  geojson: typeof processGeojson;
-  csv: typeof processCsvData;
-  keplergl: typeof processKeplerglDataset;
-} = {
+export function processArrowColumnarData(content: ProcessFileDataContent): ProcessorResult | null {
+  const { progress, metadata, fileName, length, data, ...columnarData } = content;
+  const table = ApacheArrowTable.new(columnarData);
+  const result = processArrowTable(table);
+  return result;
+}
+
+/**
+ * Parse a arrow table with geometry columns and return a dataset
+ *
+ * @param arrowTable the arrow table to parse
+ * @returns dataset containing `fields` and `rows` or null
+ */
+export function processArrowTable(arrowTable: ApacheArrowTable): ProcessorResult | null {
+  if (!arrowTable) {
+    return null;
+  }
+  const metadata = arrowTable.schema.metadata;
+  // get geometry columns if metadata has key 'geo'
+  let geometryColumns = [];
+  if (metadata.get(ARROW_GEO_METADATA_KEY) !== undefined) {
+    // load geo metadata
+    // parse metadata string to JSON object
+    const geoMeta = JSON.parse(metadata.get(ARROW_GEO_METADATA_KEY) || '');
+    // check if schema_version in geoMeta equals to '0.1.0'
+    const SCHEMA_VERSION = '0.1.0';
+    if (geoMeta.schema_version !== SCHEMA_VERSION) {
+      console.error('Schema version not supported');
+      return null;
+    }
+    // get all geometry columns
+    geometryColumns = geoMeta.columns;
+  }
+
+  const fields: Field[] = [];
+
+  // parse fields and convert columnar to row format table
+  const rowFormatTable: any[][] = [];
+  const columnarTable: {[name: string]: ListVector[]} = {};
+  arrowTable.schema.fields.forEach((field: ArrowField, index: number) => {
+    const arrowColumn = arrowTable.getColumn(field.name);
+    const values = arrowColumn.toArray();
+    columnarTable[field.name] = values;
+    fields.push({
+      name: field.name,
+      id: field.name,
+      displayName: field.name,
+      format: '',
+      fieldIdx: index,
+      type: geometryColumns[field.name] ? ALL_FIELD_TYPES.geojson : arrowDataTypeToFieldType(field.type),
+      analyzerType: geometryColumns[field.name] ? AnalyzerDATA_TYPES.GEOMETRY : arrowDataTypeToAnalyzerDataType(field.type),
+      valueAccessor: (dc: any) => d => {
+        return dc.valueAt(d.index, index);
+      }
+    });
+  });
+
+  const tableRowsCount = arrowTable.length;
+  const tableKeys = Object.keys(columnarTable);
+  for (let index = 0; index < tableRowsCount; index++) {
+    const tableItem: unknown[] = [];
+    for (let keyIndex = 0; keyIndex < tableKeys.length; keyIndex++) {
+      const fieldName = tableKeys[keyIndex];
+      const cellValue = columnarTable[fieldName][index];
+      tableItem.push(
+        geometryColumns[fieldName] ?
+          {
+            encoding: geometryColumns[fieldName].encoding,
+            data: cellValue
+          } : cellValue);
+    }
+    rowFormatTable.push(tableItem);
+  }
+
+  return {fields, rows: rowFormatTable};
+}
+
+export const DATASET_HANDLERS = {
   [DATASET_FORMATS.row]: processRowObject,
   [DATASET_FORMATS.geojson]: processGeojson,
   [DATASET_FORMATS.csv]: processCsvData,
