@@ -18,27 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './data-utils-test';
-import './data-processor-test';
-import './kepler-table-test';
-import './data-container-test';
-import './filter-utils-test';
-import './gpu-filter-utils-test';
-import './layer-utils-test';
-import './data-scale-utils-test';
-import './interaction-utils-test';
-import './mapbox-gl-style-editor-test';
-import './mapbox-utils-test';
-import './notifications-utils-test';
-import './aggregate-utils-test';
-import './color-util-test';
-import './util-test';
-import './export-utils-test';
-import './s2-utils-test';
-import './editor-utils-test';
-import './kepler-gl-utils-test';
-import './timeline-test';
-import './composer-helpers-test';
-import './dom-to-image';
-import './effect-utils-test';
-import './geojson-utils-test';
+import test from 'tape';
+
+import {ListVector} from 'apache-arrow';
+import {parseGeometryFromArrow} from '@kepler.gl/layesr';
+
+test('geojsonUtils.parseGeometryFromArrow', t => {
+  const testArrowGeometry = ListVector.new([
+    [
+      [
+        [4.924520108835094, 45.80404000200565],
+        [4.918578945137262, 45.80935260092964],
+        [4.946835385014492, 45.80941095853843],
+        [4.924520108835094, 45.80404000200565]
+      ]
+    ]
+  ]);
+  const testArrowGeometryObject = {
+    encoding: 'geoarrow.multipolygon',
+    data: testArrowGeometry
+  }
+  const testFeature = parseGeometryFromArrow(testArrowGeometryObject);
+
+  t.equal(testFeature.geometry.type, 'MultiPolygon', 'geometry type is MultiPolygon');
+  t.end();
+});
