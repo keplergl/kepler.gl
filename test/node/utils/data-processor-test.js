@@ -72,7 +72,10 @@ test('Processor -> getFieldsFromData', t => {
       value: '4',
       surge: '1.2',
       isTrip: 'true',
-      zeroOnes: '0'
+      zeroOnes: '0',
+      geojson: '{"type":"Point","coordinates":[-122.4194155,37.7749295]}',
+      wkt: 'POINT (-122.4194155 37.7749295)',
+      wkb: '0101000020E6100000E17A14AE47D25EC0F6F3F6F2F7F94040'
     },
     {
       time: '2016-09-17 00:30:08',
@@ -81,7 +84,10 @@ test('Processor -> getFieldsFromData', t => {
       value: '3',
       surge: null,
       isTrip: 'false',
-      zeroOnes: '1'
+      zeroOnes: '1',
+      geojson: '{"type":"Polygon","coordinates":[[[-122.4194155,37.7749295],[-122.4194155,37.7749295],[-122.4194155,37.7749295]]]}',
+      wkt: 'POLYGON ((-122.4194155 37.7749295, -122.4194155 37.7749295, -122.4194155 37.7749295))',
+      wkb: '0103000020E61000000100000005000000E17A14AE47D25EC0F6F3F6F2F7F940400000000E17A14AE47D25EC0F6F3F6F2F7F940400000000E17A14AE47D25EC0F6F3F6F2F7F94040'
     },
     {
       time: null,
@@ -90,7 +96,10 @@ test('Processor -> getFieldsFromData', t => {
       value: '2',
       surge: '1.3',
       isTrip: null,
-      zeroOnes: '1'
+      zeroOnes: '1',
+      geojson: '{"type":"LineString","coordinates":[[-122.4194155,37.7749295],[-122.4194155,37.7749295]]}',
+      wkt: 'LINESTRING (-122.4194155 37.7749295, -122.4194155 37.7749295)',
+      wkb: '0102000020E610000002000000E17A14AE47D25EC0F6F3F6F2F7F94040E17A14AE47D25EC0F6F3F6F2F7F94040'
     },
     {
       time: null,
@@ -99,7 +108,10 @@ test('Processor -> getFieldsFromData', t => {
       value: '0',
       surge: '1.4',
       isTrip: null,
-      zeroOnes: '0'
+      zeroOnes: '0',
+      geojson: '{"type":"MultiPoint","coordinates":[[-122.4194155,37.7749295],[-122.4194155,37.7749295]]}',
+      wkt: 'MULTIPOINT (-122.4194155 37.7749295, -122.4194155 37.7749295)',
+      wkb: '0104000020E6100000020000000101000000E17A14AE47D25EC0F6F3F6F2F7F94040101000000E17A14AE47D25EC0F6F3F6F2F7F94040'
     }
   ];
 
@@ -112,7 +124,10 @@ test('Processor -> getFieldsFromData', t => {
     'integer',
     'real',
     'boolean',
-    'integer'
+    'integer',
+    'geojson',
+    'geojson',
+    'geojson'
   ];
 
   fields.forEach((f, i) =>
