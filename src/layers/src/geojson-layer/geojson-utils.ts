@@ -152,6 +152,17 @@ export function parseGeometryFromString(geoString: string): Feature | null {
     }
   }
 
+  // try parse as wkb using loaders.gl WKBLoader
+  if (!parsedGeo) {
+    try {
+      const buffer = Buffer.from(geoString, 'hex');
+      const binaryGeo = parseSync(buffer, WKBLoader);
+      parsedGeo = binaryToGeometry(binaryGeo);
+    } catch (e) {
+      return null;
+    }
+  }
+
   if (!parsedGeo) {
     return null;
   }
