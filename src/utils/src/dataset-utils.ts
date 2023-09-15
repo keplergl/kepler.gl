@@ -593,7 +593,7 @@ export function analyzerTypeToFieldType(aType: string): string {
  * @param arrowType the arrow data type
  * @returns corresponding type in `ALL_FIELD_TYPES`
  */
-export function arrowDataTypeToFieldType(arrowType: ArrowDataType): typeof ALL_FIELD_TYPES {
+export function arrowDataTypeToFieldType(arrowType: ArrowDataType): string {
   // Note: this function doesn't return ALL_FIELD_TYPES.geojson or ALL_FIELD_TYPES.array, which
   // should be further detected by caller
   if (ArrowDataType.isDate(arrowType)) {

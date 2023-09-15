@@ -33,14 +33,10 @@ import {
   analyzerTypeToFieldType,
   getSampleForTypeAnalyze,
   getFieldsFromData,
-  toArray,
-  DataContainerInterface
+  toArray
 } from '@kepler.gl/utils';
 import {KeplerGlSchema, ParsedDataset, SavedMap, LoadedMap} from '@kepler.gl/schemas';
 import {Feature} from '@nebula.gl/edit-modes';
-import {ArrowLoader} from '@loaders.gl/arrow';
-import { load } from '@loaders.gl/core';
-
 import {ProcessFileDataContent} from './file-handler';
 
 // if any of these value occurs in csv, parse it to null;
@@ -398,10 +394,9 @@ export function processKeplerglDataset(
 }
 
 export function processArrowColumnarData(content: ProcessFileDataContent): ProcessorResult | null {
-  const { progress, metadata, fileName, length, data, ...columnarData } = content;
-  const table = ApacheArrowTable.new(columnarData);
-  const result = processArrowTable(table);
-  return result;
+  // const { progress, metadata, fileName, length, data, ...columnarData } = content;
+  // const table = ApacheArrowTable.new(columnarData);
+  return null;
 }
 
 /**
