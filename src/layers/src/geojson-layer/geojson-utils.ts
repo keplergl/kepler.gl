@@ -284,6 +284,8 @@ function arrowPolygonToFeature(arrowPolygon: ListVector): Polygon {
       const coords: Position = Array.from(arrowCoord);
       ring.push(coords);
     }
+    polygon.push(ring);
+    console.log(polygon);
   }
   const geometry: Polygon = {
     type: 'Polygon',
