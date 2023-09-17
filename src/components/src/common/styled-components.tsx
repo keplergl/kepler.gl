@@ -556,11 +556,11 @@ export const StyledAttrbution = styled.div.attrs({
     a,
     .pipe-separator {
       margin-right: 2px;
+      color: ${props => props.theme.labelColor};
     }
 
     .pipe-separator {
       text-decoration: none;
-      color: ${props => props.theme.labelColor};
     }
   }
 
