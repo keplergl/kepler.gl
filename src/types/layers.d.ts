@@ -67,7 +67,7 @@ export type Field = {
   fieldIdx: number;
   valueAccessor(v: {index: number}): any;
   filterProps?: any;
-  metadata?: object;
+  metadata?: any;
   displayFormat?: string;
 };
 

@@ -18,19 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Type as ArrowType, Table as ArrowTable} from 'apache-arrow';
-import {ArrowLoader} from '@loaders.gl/arrow';
 import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
-import {
-  processArrowColumnarData,
-  processGeojson,
-  processKeplerglJSON,
-  processRowObject
-} from './data-processor';
+import {processGeojson, processKeplerglJSON, processRowObject} from './data-processor';
 import {generateHashId, isPlainObject} from '@kepler.gl/utils';
-import {DATASET_FORMATS, ARROW_GEO_METADATA_KEY} from '@kepler.gl/constants';
+import {DATASET_FORMATS} from '@kepler.gl/constants';
 import {Loader} from '@loaders.gl/loader-utils';
 import {FileCacheItem, ValidKeplerGlMap} from './types';
 import {Feature, AddDataToMapPayload} from '@kepler.gl/types';
@@ -61,26 +54,9 @@ export type ProcessFileDataContent = {
   data: unknown;
   fileName: string;
   length?: number;
-  progress?: {rowCount?: number, rowCountInBatch?: number, percent?: number};
+  progress?: {rowCount?: number; rowCountInBatch?: number; percent?: number};
   metadata?: Map<string, string>;
 };
-
-const ARROW_LOADER_OPTIONS = {
-  shape: 'arrow-table', // note: this will be changed to `columnar-table` by loaders.gl v3
-  batchType: 'arrow'
-};
-
-export function isArrowTable(rawObject: unknown): rawObject is ArrowTable {
-  return isPlainObject(rawObject) && rawObject.typeId === ArrowType.Struct && Boolean(rawObject.data);
-}
-
-export function isArrowColumnarData(content: ProcessFileDataContent): boolean {
-  return (
-    isPlainObject(content) &&
-    Boolean(content.metadata) &&
-    Boolean(content.metadata?.has(ARROW_GEO_METADATA_KEY))
-  );
-}
 
 export function isGeoJson(json: unknown): json is Feature | FeatureCollection {
   // json can be feature collection
@@ -184,12 +160,11 @@ export async function readFileInBatches({
   fileCache: FileCacheItem[];
   loaders: Loader[];
   loadOptions: any;
-  }): Promise<AsyncGenerator> {
-  loaders = [JSONLoader, CSVLoader, ArrowLoader, ...loaders];
+}): Promise<AsyncGenerator> {
+  loaders = [JSONLoader, CSVLoader, ...loaders];
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
     json: JSON_LOADER_OPTIONS,
-    arrow: ARROW_LOADER_OPTIONS,
     metadata: true,
     ...loadOptions
   };
@@ -208,19 +183,9 @@ export function processFileData({
   fileCache: FileCacheItem[];
 }): Promise<FileCacheItem[]> {
   return new Promise((resolve, reject) => {
-    let {data} = content;
+    const {data} = content;
     let format: string | undefined;
     let processor: Function | undefined;
-
-    if (isArrowColumnarData(content)) {
-      // in loaders.gl/arrow version < 4.0.0, the arrow loader in batch didn't return the correct data.
-      // Instead, the content of each column is returned and stored directly in the content object.
-      // This is a temporary solution untill loaders.gl/arrow is updated to:
-      // https://github.com/visgl/loaders.gl/blob/2577ca735878b521f07a556f26ce8ee457a7ad9f/modules/arrow/src/lib/parse-arrow-in-batches.ts#L29
-      data = content;
-      format = DATASET_FORMATS.arrow;
-      processor = processArrowColumnarData;
-    }
 
     if (isKeplerGlMap(data)) {
       format = DATASET_FORMATS.keplergl;

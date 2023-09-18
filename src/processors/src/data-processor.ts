@@ -19,11 +19,16 @@
 // THE SOFTWARE.
 
 import {Table as ApacheArrowTable, Field as ArrowField, ListVector} from 'apache-arrow';
-import { csvParseRows } from 'd3-dsv';
+import {csvParseRows} from 'd3-dsv';
 import {Console} from 'global/console';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
-import {ALL_FIELD_TYPES, DATASET_FORMATS, GUIDES_FILE_FORMAT_DOC, ARROW_GEO_METADATA_KEY} from '@kepler.gl/constants';
+import {
+  ALL_FIELD_TYPES,
+  DATASET_FORMATS,
+  GUIDES_FILE_FORMAT_DOC,
+  ARROW_GEO_METADATA_KEY
+} from '@kepler.gl/constants';
 import {ProcessorResult, Field} from '@kepler.gl/types';
 import {
   arrowDataTypeToAnalyzerDataType,
@@ -435,8 +440,12 @@ export function processArrowTable(arrowTable: ApacheArrowTable): ProcessorResult
       displayName: field.name,
       format: '',
       fieldIdx: index,
-      type: geometryColumns[field.name] ? ALL_FIELD_TYPES.geojson : arrowDataTypeToFieldType(field.type),
-      analyzerType: geometryColumns[field.name] ? AnalyzerDATA_TYPES.GEOMETRY : arrowDataTypeToAnalyzerDataType(field.type),
+      type: geometryColumns[field.name]
+        ? ALL_FIELD_TYPES.geojson
+        : arrowDataTypeToFieldType(field.type),
+      analyzerType: geometryColumns[field.name]
+        ? AnalyzerDATA_TYPES.GEOMETRY
+        : arrowDataTypeToAnalyzerDataType(field.type),
       valueAccessor: (dc: any) => d => {
         return dc.valueAt(d.index, index);
       }
@@ -451,11 +460,13 @@ export function processArrowTable(arrowTable: ApacheArrowTable): ProcessorResult
       const fieldName = tableKeys[keyIndex];
       const cellValue = columnarTable[fieldName][index];
       tableItem.push(
-        geometryColumns[fieldName] ?
-          {
-            encoding: geometryColumns[fieldName].encoding,
-            data: cellValue
-          } : cellValue);
+        geometryColumns[fieldName]
+          ? {
+              encoding: geometryColumns[fieldName].encoding,
+              data: cellValue
+            }
+          : cellValue
+      );
     }
     rowFormatTable.push(tableItem);
   }
