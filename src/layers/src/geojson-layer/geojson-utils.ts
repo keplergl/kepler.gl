@@ -23,7 +23,7 @@ import bbox from '@turf/bbox';
 import {parseSync} from '@loaders.gl/core';
 import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
 import {binaryToGeometry} from '@loaders.gl/gis';
-import {Feature, BBox}  from 'geojson';
+import {Feature, BBox} from 'geojson';
 import {
   getSampleData,
   parseGeometryFromArrow,

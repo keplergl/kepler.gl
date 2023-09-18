@@ -48,7 +48,7 @@ export {defaultElevation as s2DefaultElevation} from './s2-geometry-layer/s2-geo
 export {getS2Center} from './s2-geometry-layer/s2-utils';
 export {default as AggregationLayer} from './aggregation-layer';
 import {LAYER_TYPES} from '@kepler.gl/constants';
-export {parseGeoJsonRawFeature, parseGeometryFromArrow} from './geojson-layer/geojson-utils';
+export {parseGeoJsonRawFeature} from './geojson-layer/geojson-utils';
 // base layer
 // eslint-disable-next-line prettier/prettier
 export type {

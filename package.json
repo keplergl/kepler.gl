@@ -236,6 +236,7 @@
     "lodash": "4.17.19",
     "minimist": "1.2.3",
     "node-fetch": "2.6.1",
+    "puppeteer": "^18.2.1",
     "tough-cookie": "4.0.0"
   },
   "peerDependencies": {
