@@ -1774,6 +1774,14 @@
     "@loaders.gl/loader-utils" "^2.1.3"
     gifshot "^0.4.5"
 
+"@loaders.gl/wkt@3.0.9":
+  version "3.0.9"
+  resolved "https://registry.yarnpkg.com/@loaders.gl/wkt/-/wkt-3.0.9.tgz#41fee49ebce049ba063a0e78e903c73f88733a79"
+  integrity sha512-d8pFyQ73zbQrrd8zRwTzxgn1tlyV0AJqyW9pl4vdfeoRHEVHZggtCnlmein4mTifYe0sg3GR78e0hXjeXf4zLA==
+  dependencies:
+    "@loaders.gl/loader-utils" "3.0.9"
+    "@loaders.gl/schema" "3.0.9"
+
 "@loaders.gl/wkt@^3.0.9":
   version "3.4.14"
   resolved "https://registry.yarnpkg.com/@loaders.gl/wkt/-/wkt-3.4.14.tgz#1d3b474cf330e14bdd39e2cd829adf8ee27f11b1"
@@ -10162,7 +10170,7 @@ minimist-options@4.1.0:
     is-plain-obj "^1.1.0"
     kind-of "^6.0.3"
 
-minimist@1.2.3, minimist@^0.1.0, minimist@^1.1.0, minimist@^1.1.1, minimist@^1.2.0, minimist@^1.2.3, minimist@^1.2.5, minimist@~1.2.0, minimist@~1.2.5:
+minimist@1.2.3, minimist@^0.1.0, minimist@^1.1.0, minimist@^1.1.1, minimist@^1.2.0, minimist@^1.2.3, minimist@^1.2.5, minimist@~1.2.5:
   version "1.2.3"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.3.tgz#3db5c0765545ab8637be71f333a104a965a9ca3f"
   integrity sha512-+bMdgqjMN/Z77a6NlY/I3U5LlRDbnmaAk6lDveAPKwSpcPM4tKAuYsvYF8xjhOPXhOYGe/73vVLVez5PW+jqhw==
@@ -15527,14 +15535,6 @@ websocket-extensions@>=0.1.1:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/websocket-extensions/-/websocket-extensions-0.1.4.tgz#7f8473bc839dfd87608adb95d7eb075211578a42"
   integrity sha512-OqedPIGOfsDlo31UNwYbCFMSaO9m9G/0faIHj5/dZFDMFqPTcx6UwqyOy3COEaEOg/9VsGIpdqn62W5KhoKSpg==
-
-wellknown@^0.5.0:
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/wellknown/-/wellknown-0.5.0.tgz#09ae9871fa826cf0a6ec1537ef00c379d78d7101"
-  integrity sha1-Ca6YcfqCbPCm7BU37wDDedeNcQE=
-  dependencies:
-    concat-stream "~1.5.0"
-    minimist "~1.2.0"
 
 whatwg-encoding@^1.0.5:
   version "1.0.5"

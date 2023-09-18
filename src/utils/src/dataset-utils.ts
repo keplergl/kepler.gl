@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {DataType as ArrowDataType} from 'apache-arrow';
 import {console as globalConsole} from 'global/window';
 import {
   ALL_FIELD_TYPES,
@@ -580,6 +581,42 @@ export function analyzerTypeToFieldType(aType: string): string {
       globalConsole.warn(`Unsupported analyzer type: ${aType}`);
       return ALL_FIELD_TYPES.string;
   }
+}
+
+/**
+ * Convert arrow data type to analyzer type
+ *
+ * @param arrowType the arrow data type
+ * @returns corresponding type in `AnalyzerDATA_TYPES`
+ */
+export function arrowDataTypeToAnalyzerDataType(
+  arrowType: ArrowDataType
+): typeof AnalyzerDATA_TYPES {
+  if (ArrowDataType.isDate(arrowType)) {
+    return AnalyzerDATA_TYPES.DATE;
+  } else if (ArrowDataType.isTimestamp(arrowType) || ArrowDataType.isTime(arrowType)) {
+    return AnalyzerDATA_TYPES.DATETIME;
+  } else if (ArrowDataType.isFloat(arrowType)) {
+    return AnalyzerDATA_TYPES.FLOAT;
+  } else if (ArrowDataType.isInt(arrowType)) {
+    return AnalyzerDATA_TYPES.INT;
+  } else if (ArrowDataType.isBool(arrowType)) {
+    return AnalyzerDATA_TYPES.BOOLEAN;
+  } else if (ArrowDataType.isUtf8(arrowType) || ArrowDataType.isNull(arrowType)) {
+    return AnalyzerDATA_TYPES.STRING;
+  } else if (
+    ArrowDataType.isBinary(arrowType) ||
+    ArrowDataType.isDictionary(arrowType) ||
+    ArrowDataType.isFixedSizeBinary(arrowType) ||
+    ArrowDataType.isFixedSizeList(arrowType) ||
+    ArrowDataType.isList(arrowType) ||
+    ArrowDataType.isMap(arrowType) ||
+    ArrowDataType.isStruct(arrowType)
+  ) {
+    return AnalyzerDATA_TYPES.OBJECT;
+  }
+  globalConsole.warn(`Unsupported arrow type: ${arrowType}`);
+  return AnalyzerDATA_TYPES.STRING;
 }
 
 const TIME_DISPLAY = '2020-05-11 14:00';
