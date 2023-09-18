@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 import {ListVector, FloatVector, BinaryVector, Utf8Vector} from 'apache-arrow';
-import wktParser from 'wellknown';
+import Console from 'global/console';
 import normalize from '@mapbox/geojson-normalize';
 import bbox from '@turf/bbox';
 import {parseSync} from '@loaders.gl/core';
@@ -58,22 +58,26 @@ type FeatureTypeMap = {
 };
 /* eslint-enable */
 
-export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
-  if (rawFeature && typeof rawFeature === 'object') {
-    if (typeof rawFeature['type'] === 'string') {
-      // Support GeoJson feature as object
-      // probably need to normalize it as well
-      const normalized = normalize(rawFeature);
-      if (!normalized || !Array.isArray(normalized.features)) {
-        // fail to normalize GeoJson
-        return null;
-      }
+type RawArrowFeature = {
+  encoding?: string;
+  data: any;
+};
 
-      return normalized.features[0];
-    } else if (rawFeature['encoding'].startsWith('geoarrow')) {
+export function parseGeoJsonRawFeature(rawFeature: {} | Feature | RawArrowFeature): Feature | null {
+  if (rawFeature && typeof rawFeature === 'object') {
+    if ('encoding' in rawFeature && rawFeature.encoding?.startsWith('geoarrow')) {
       // Support GeoArrow data
       return parseGeometryFromArrow(rawFeature);
     }
+    // Support GeoJson feature as object
+    // probably need to normalize it as well
+    const normalized = normalize(rawFeature);
+    if (!normalized || !Array.isArray(normalized.features)) {
+      // fail to normalize GeoJson
+      return null;
+    }
+
+    return normalized.features[0];
   } else if (typeof rawFeature === 'string') {
     return parseGeometryFromString(rawFeature);
   } else if (Array.isArray(rawFeature)) {
@@ -285,7 +289,6 @@ function arrowPolygonToFeature(arrowPolygon: ListVector): Polygon {
       ring.push(coords);
     }
     polygon.push(ring);
-    console.log(polygon);
   }
   const geometry: Polygon = {
     type: 'Polygon',
@@ -388,7 +391,7 @@ function arrowWkbToFeature(arrowWkb: BinaryVector): Feature | null {
  * convert Arrow wkt to geojson Geometry
  */
 function arrowWktToFeature(arrowWkt: Utf8Vector): Feature | null {
-  const geometry = wktParser(arrowWkt.get(0));
+  const geometry = parseSync(arrowWkt.get(0) || '', WKTLoader);
   const normalized = normalize(geometry);
 
   if (!normalized || !Array.isArray(normalized.features)) {
@@ -406,9 +409,9 @@ function arrowWktToFeature(arrowWkt: Utf8Vector): Feature | null {
  * @see processArrowData
  * @returns
  */
-export function parseGeometryFromArrow(rawData: object): Feature | null {
-  const encoding = rawData['encoding'];
-  const data = rawData['data'];
+export function parseGeometryFromArrow(rawData: RawArrowFeature): Feature | null {
+  const encoding = rawData.encoding;
+  const data = rawData.data;
   if (!encoding || !data) return null;
 
   let geometry;
@@ -442,7 +445,7 @@ export function parseGeometryFromArrow(rawData: object): Feature | null {
     }
     default: {
       // encoding is not supported, skip
-      console.error('GeoArrow encoding not supported');
+      Console.error('GeoArrow encoding not supported');
       return null;
     }
   }
