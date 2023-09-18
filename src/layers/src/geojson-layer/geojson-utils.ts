@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ListVector, FloatVector, BinaryVector, Utf8Vector} from 'apache-arrow';
+import {ListVector, FloatVector} from 'apache-arrow';
 import Console from 'global/console';
 import normalize from '@mapbox/geojson-normalize';
 import bbox from '@turf/bbox';
@@ -65,7 +65,7 @@ type RawArrowFeature = {
 
 export function parseGeoJsonRawFeature(rawFeature: {} | Feature | RawArrowFeature): Feature | null {
   if (rawFeature && typeof rawFeature === 'object') {
-    if ('encoding' in rawFeature && rawFeature.encoding?.startsWith('geoarrow')) {
+    if ('encoding' in rawFeature && rawFeature.encoding) {
       // Support GeoArrow data
       return parseGeometryFromArrow(rawFeature);
     }
@@ -173,17 +173,6 @@ export function parseGeometryFromString(geoString: string): Feature | null {
     }
   }
 
-  // try parse as wkb using loaders.gl WKBLoader
-  if (!parsedGeo) {
-    try {
-      const buffer = Buffer.from(geoString, 'hex');
-      const binaryGeo = parseSync(buffer, WKBLoader);
-      parsedGeo = binaryToGeometry(binaryGeo);
-    } catch (e) {
-      return null;
-    }
-  }
-
   if (!parsedGeo) {
     return null;
   }
@@ -248,6 +237,17 @@ export function getGeojsonFeatureTypes(allFeatures: GeojsonDataMaps): FeatureTyp
   return featureTypes;
 }
 
+export enum GEOARROW_ENCODINGS {
+  MULTI_POLYGON = 'geoarrow.multipolygon',
+  POLYGON = 'geoarrow.polygon',
+  MULTI_LINESTRING = 'geoarrow.multilinestring',
+  LINESTRING = 'geoarrow.linestring',
+  MULTI_POINT = 'geoarrow.multipoint',
+  POINT = 'geoarrow.point',
+  WKB = 'wkb',
+  WKT = 'wkt'
+}
+
 /**
  * convert Arrow MultiPolygon to geojson Feature
  */
@@ -269,7 +269,7 @@ function arrowMultiPolygonToFeature(arrowMultiPolygon: ListVector): MultiPolygon
     multiPolygon.push(polygon);
   }
   const geometry: MultiPolygon = {
-    type: 'MultiPolygon',
+    type: FeatureTypes.MultiPolygon,
     coordinates: multiPolygon
   };
   return geometry;
@@ -291,7 +291,7 @@ function arrowPolygonToFeature(arrowPolygon: ListVector): Polygon {
     polygon.push(ring);
   }
   const geometry: Polygon = {
-    type: 'Polygon',
+    type: FeatureTypes.Polygon,
     coordinates: polygon
   };
   return geometry;
@@ -310,7 +310,7 @@ function arrowMultiPointToFeature(arrowMultiPoint: ListVector): MultiPoint {
     }
   }
   const geometry: MultiPoint = {
-    type: 'MultiPoint',
+    type: FeatureTypes.MultiPoint,
     coordinates: multiPoint
   };
   return geometry;
@@ -322,7 +322,7 @@ function arrowMultiPointToFeature(arrowMultiPoint: ListVector): MultiPoint {
 function arrowPointToFeature(arrowPoint: FloatVector): Point {
   const point: Position = Array.from(arrowPoint.values);
   const geometry: Point = {
-    type: 'Point',
+    type: FeatureTypes.Point,
     coordinates: point
   };
   return geometry;
@@ -346,7 +346,7 @@ function arrowMultiLineStringToFeature(arrowMultiLineString: ListVector): MultiL
     multiLineString.push(lineString);
   }
   const geometry: MultiLineString = {
-    type: 'MultiLineString',
+    type: FeatureTypes.MultiLineString,
     coordinates: multiLineString
   };
   return geometry;
@@ -365,7 +365,7 @@ function arrowLineStringToFeature(arrowLineString: ListVector): LineString {
     }
   }
   const geometry: LineString = {
-    type: 'LineString',
+    type: FeatureTypes.LineString,
     coordinates: lineString
   };
   return geometry;
@@ -374,8 +374,8 @@ function arrowLineStringToFeature(arrowLineString: ListVector): LineString {
 /**
  * convert Arrow wkb to geojson Geometry
  */
-function arrowWkbToFeature(arrowWkb: BinaryVector): Feature | null {
-  const binaryGeo = parseSync(arrowWkb.values, WKBLoader);
+function arrowWkbToFeature(arrowWkb: Uint8Array): Feature | null {
+  const binaryGeo = parseSync(arrowWkb, WKBLoader);
   const geometry = binaryToGeometry(binaryGeo);
   const normalized = normalize(geometry);
 
@@ -390,8 +390,8 @@ function arrowWkbToFeature(arrowWkb: BinaryVector): Feature | null {
 /**
  * convert Arrow wkt to geojson Geometry
  */
-function arrowWktToFeature(arrowWkt: Utf8Vector): Feature | null {
-  const geometry = parseSync(arrowWkt.get(0) || '', WKTLoader);
+function arrowWktToFeature(arrowWkt: string): Feature | null {
+  const geometry = parseSync(arrowWkt, WKTLoader);
   const normalized = normalize(geometry);
 
   if (!normalized || !Array.isArray(normalized.features)) {
@@ -410,41 +410,38 @@ function arrowWktToFeature(arrowWkt: Utf8Vector): Feature | null {
  * @returns
  */
 export function parseGeometryFromArrow(rawData: RawArrowFeature): Feature | null {
-  const encoding = rawData.encoding;
+  const encoding = rawData.encoding?.toLowerCase();
   const data = rawData.data;
   if (!encoding || !data) return null;
 
   let geometry;
 
   switch (encoding) {
-    case 'geoarrow.multipolygon':
+    case GEOARROW_ENCODINGS.MULTI_POLYGON:
       geometry = arrowMultiPolygonToFeature(data);
       break;
-    case 'geoarrow.polygon':
+    case GEOARROW_ENCODINGS.POLYGON:
       geometry = arrowPolygonToFeature(data);
       break;
-    case 'geoarrow.multipoint':
+    case GEOARROW_ENCODINGS.MULTI_POINT:
       geometry = arrowMultiPointToFeature(data);
       break;
-    case 'geoarrow.point':
+    case GEOARROW_ENCODINGS.POINT:
       geometry = arrowPointToFeature(data);
       break;
-    case 'geoarrow.multilinestring':
+    case GEOARROW_ENCODINGS.MULTI_LINESTRING:
       geometry = arrowMultiLineStringToFeature(data);
       break;
-    case 'geoarrow.linestring':
+    case GEOARROW_ENCODINGS.LINESTRING:
       geometry = arrowLineStringToFeature(data);
       break;
-    case 'geoarrow.wkb': {
-      // convert to wkb
+    case GEOARROW_ENCODINGS.WKB: {
       return arrowWkbToFeature(data);
     }
-    case 'geoarrow.wkt': {
-      // convert to wkt
+    case GEOARROW_ENCODINGS.WKT: {
       return arrowWktToFeature(data);
     }
     default: {
-      // encoding is not supported, skip
       Console.error('GeoArrow encoding not supported');
       return null;
     }

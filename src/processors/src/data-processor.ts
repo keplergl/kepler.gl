@@ -19,7 +19,8 @@
 // THE SOFTWARE.
 
 import {Table as ApacheArrowTable, Field as ArrowField, ListVector} from 'apache-arrow';
-import {csvParseRows} from 'd3-dsv';
+import { csvParseRows } from 'd3-dsv';
+import {Console} from 'global/console';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES, DATASET_FORMATS, GUIDES_FILE_FORMAT_DOC, ARROW_GEO_METADATA_KEY} from '@kepler.gl/constants';
@@ -37,7 +38,6 @@ import {
 } from '@kepler.gl/utils';
 import {KeplerGlSchema, ParsedDataset, SavedMap, LoadedMap} from '@kepler.gl/schemas';
 import {Feature} from '@nebula.gl/edit-modes';
-import {ProcessFileDataContent} from './file-handler';
 
 // if any of these value occurs in csv, parse it to null;
 // const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];
@@ -393,12 +393,6 @@ export function processKeplerglDataset(
   return Array.isArray(rawData) ? results : results[0];
 }
 
-export function processArrowColumnarData(content: ProcessFileDataContent): ProcessorResult | null {
-  // const { progress, metadata, fileName, length, data, ...columnarData } = content;
-  // const table = ApacheArrowTable.new(columnarData);
-  return null;
-}
-
 /**
  * Parse a arrow table with geometry columns and return a dataset
  *
@@ -419,7 +413,7 @@ export function processArrowTable(arrowTable: ApacheArrowTable): ProcessorResult
     // check if schema_version in geoMeta equals to '0.1.0'
     const SCHEMA_VERSION = '0.1.0';
     if (geoMeta.schema_version !== SCHEMA_VERSION) {
-      console.error('Schema version not supported');
+      Console.error('Apache Arrow schema version not supported');
       return null;
     }
     // get all geometry columns
