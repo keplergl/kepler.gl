@@ -28,6 +28,7 @@ import {ICON_FIELDS, KEPLER_UNFOLDED_BUCKET, ColorRange} from '@kepler.gl/consta
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerBaseConfigPartial, LayerColumn} from '../base-layer';
 import {assignPointPairToLayerColumn} from '../layer-utils';
+import {isTest} from '@kepler.gl/utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {DataContainerInterface} from '@kepler.gl/utils';
@@ -127,6 +128,7 @@ export default class IconLayer extends Layer {
     props: {
       id?: string;
       iconGeometry?: IconGeometry;
+      svgIcons?: any;
     } & LayerBaseConfigPartial
   ) {
     super(props);
@@ -136,10 +138,19 @@ export default class IconLayer extends Layer {
       iconPosAccessor(this.config.columns)(dataContainer);
     this.getIconAccessor = dataContainer => iconAccessor(this.config.columns)(dataContainer);
 
-    // prepare layer info modal
-    this._layerInfoModal = IconInfoModalFactory();
+    this._layerInfoModal = IconInfoModalFactory(props.svgIcons);
     this.iconGeometry = props.iconGeometry || null;
-    this.getSvgIcons();
+
+    if (isTest()) {
+      return;
+    }
+    if (props.svgIcons) {
+      // if svg icons are passed in then bypass fetching of remote svg icons
+      this.setSvgIcons(props.svgIcons);
+    } else {
+      // prepare layer info modal and fetch remote svg icons
+      this.getSvgIcons();
+    }
   }
 
   get svgIconUrl() {
@@ -201,23 +212,26 @@ export default class IconLayer extends Layer {
       cache: 'no-cache'
     };
 
-    if (window.fetch) {
+    if (window.fetch && this.svgIconUrl) {
       window
         .fetch(this.svgIconUrl, fetchConfig)
         .then(response => response.json())
         .then((parsed: {svgIcons?: any[]} = {}) => {
-          const {svgIcons = []} = parsed;
-          this.iconGeometry = svgIcons.reduce(
-            (accu, curr) => ({
-              ...accu,
-              [curr.id]: flatterIconPositions(curr)
-            }),
-            {}
-          );
-
-          this._layerInfoModal = IconInfoModalFactory(svgIcons);
+          this.setSvgIcons(parsed.svgIcons);
         });
     }
+  }
+
+  setSvgIcons(svgIcons: any[] = []) {
+    this.iconGeometry = svgIcons.reduce(
+      (accu, curr) => ({
+        ...accu,
+        [curr.id]: flatterIconPositions(curr)
+      }),
+      {}
+    );
+
+    this._layerInfoModal = IconInfoModalFactory(svgIcons);
   }
 
   static findDefaultLayerProps({fieldPairs = [], fields = []}: KeplerTable) {

@@ -226,6 +226,10 @@ function* generateColor(): Generator<RGBColor> {
 
 export const colorMaker = generateColor();
 
+export type BaseLayerConstructorProps = {
+  id?: string;
+} & LayerBaseConfigPartial;
+
 class Layer {
   id: string;
   meta: Record<string, any>;
@@ -239,11 +243,7 @@ class Layer {
   isValid: boolean;
   errorMessage: string | null;
 
-  constructor(
-    props: {
-      id?: string;
-    } & LayerBaseConfigPartial
-  ) {
+  constructor(props: BaseLayerConstructorProps) {
     this.id = props.id || generateHashId(LAYER_ID_LENGTH);
 
     // meta
