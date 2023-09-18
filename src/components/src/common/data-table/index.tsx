@@ -347,6 +347,7 @@ export const TableSection = ({
           columnWidth,
           width: fixedWidth || width
         };
+        const headerGridWidth = fixedWidth || width - browserScrollBarWidth;
         const dataGridHeight = fixedHeight || height;
 
         return (
@@ -360,6 +361,7 @@ export const TableSection = ({
                 {...headerGridProps}
                 {...gridDimension}
                 height={headerGridProps.height + browserScrollBarWidth}
+                width={headerGridWidth}
                 scrollLeft={scrollLeft}
                 onScroll={onScroll}
               />
