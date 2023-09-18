@@ -49,21 +49,7 @@ type FeatureTypeMap = {
 export function parseGeoJsonRawFeature(
   rawFeature: string | Feature | RawArrowFeature | number[][] | null
 ): Feature | null {
-  if (typeof rawFeature === 'object') {
-    if (rawFeature && 'encoding' in rawFeature && rawFeature.encoding) {
-      // Support GeoArrow data
-      return parseGeometryFromArrow(rawFeature);
-    }
-    // Support GeoJson feature as object
-    // probably need to normalize it as well
-    const normalized = normalize(rawFeature);
-    if (!normalized || !Array.isArray(normalized.features)) {
-      // fail to normalize GeoJson
-      return null;
-    }
-
-    return normalized.features[0];
-  } else if (typeof rawFeature === 'string') {
+  if (typeof rawFeature === 'string') {
     return parseGeometryFromString(rawFeature);
   } else if (Array.isArray(rawFeature)) {
     // Support GeoJson  LineString as an array of points
@@ -76,8 +62,20 @@ export function parseGeoJsonRawFeature(
       },
       properties: {}
     };
+  } else if (typeof rawFeature === 'object') {
+    if (rawFeature && 'encoding' in rawFeature && rawFeature.encoding) {
+      // Support GeoArrow data
+      return parseGeometryFromArrow(rawFeature);
+    }
+    // Support GeoJson feature as object
+    // probably need to normalize it as well
+    const normalized = normalize(rawFeature);
+    if (!normalized || !Array.isArray(normalized.features)) {
+      // fail to normalize GeoJson
+      return null;
+    }
+    return normalized.features[0];
   }
-
   return null;
 }
 /**
