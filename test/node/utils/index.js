@@ -42,3 +42,4 @@ import './composer-helpers-test';
 import './dom-to-image';
 import './effect-utils-test';
 import './geojson-utils-test';
+import './arrow-utils-test';
