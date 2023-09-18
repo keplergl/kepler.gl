@@ -60,7 +60,11 @@ const unpinnedClassList = {
   rows: 'unpinned-columns--rows unpinned-grid-container'
 };
 
-export const Container = styled.div`
+type ContainerProps = {
+  hasCustomScrollBarStyle?: boolean;
+};
+
+export const Container = styled.div<ContainerProps>`
   display: flex;
   font-size: 11px;
   flex-grow: 1;
@@ -72,7 +76,7 @@ export const Container = styled.div`
     outline: 0;
   }
   .body-grid {
-    ${props => props.theme.modalScrollBar}
+    ${props => props.hasCustomScrollBarStyle && props.theme.modalScrollBar}
   }
 
   .cell {
@@ -401,6 +405,7 @@ export interface DataTableProps {
   copyTableColumn: (column: string) => void;
   sortOrder?: number[] | null;
   showStats?: boolean;
+  hasCustomScrollBarStyle?: boolean;
 }
 
 interface DataTableState {
@@ -422,7 +427,8 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
       fixedWidth: null,
       fixedHeight: null,
       theme: {},
-      hasStats: false
+      hasStats: false,
+      hasCustomScrollBarStyle: true
     };
 
     pinnedGrid = false;
@@ -558,7 +564,8 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
         theme = {},
         fixedWidth,
         fixedHeight = 0,
-        hasStats
+        hasStats,
+        hasCustomScrollBarStyle
       } = this.props;
       const unpinnedColumns = this.unpinnedColumns(this.props);
 
@@ -604,7 +611,11 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
       };
 
       return (
-        <Container className="data-table-container" ref={this.root}>
+        <Container
+          className="data-table-container"
+          ref={this.root}
+          hasCustomScrollBarStyle={hasCustomScrollBarStyle}
+        >
           {Object.keys(cellSizeCache).length ? (
             <>
               <ScrollSync>
