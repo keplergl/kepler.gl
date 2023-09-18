@@ -389,6 +389,27 @@ export function getSampleForTypeAnalyze({
 }
 
 /**
+ * Check if string is a valid Well-known binary (WKB) in HEX format
+ * https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry
+ *
+ * @param str input string
+ * @returns true if string is a valid WKB in HEX format
+ */
+export function isHexWkb(str: string | null): boolean {
+  if (!str) return false;
+  // check if the length of the string is even and is at least 10 characters long
+  if (str.length < 10 || str.length % 2 !== 0) {
+    return false;
+  }
+  // check if first two characters are 00 or 01
+  if (!str.startsWith('00') && !str.startsWith('01')) {
+    return false;
+  }
+  // check if the rest of the string is a valid hex
+  return /^[0-9a-fA-F]+$/.test(str.slice(2));
+}
+
+/**
  * Analyze field types from data in `string` format, e.g. uploaded csv.
  * Assign `type`, `fieldIdx` and `format` (timestamp only) to each field
  *
@@ -446,7 +467,13 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     const name = fieldByIndex[index];
 
     const fieldMeta = metadata.find(m => m.key === field);
-    const {type, format} = fieldMeta || {};
+    let type = fieldMeta.type;
+    const format = fieldMeta.format;
+
+    // check if string is hex wkb
+    if (type === AnalyzerDATA_TYPES.STRING) {
+      type = data.some(d => isHexWkb(d[name])) ? AnalyzerDATA_TYPES.GEOMETRY : type;
+    }
 
     return {
       name,

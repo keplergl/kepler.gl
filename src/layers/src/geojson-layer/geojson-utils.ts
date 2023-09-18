@@ -18,9 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import wktParser from 'wellknown';
 import normalize from '@mapbox/geojson-normalize';
 import bbox from '@turf/bbox';
+import {parseSync} from '@loaders.gl/core';
+import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
+import {binaryToGeometry} from '@loaders.gl/gis';
 
 import {Feature, BBox} from 'geojson';
 import {getSampleData} from '@kepler.gl/utils';
@@ -129,10 +131,21 @@ export function parseGeometryFromString(geoString: string): Feature | null {
     // keep trying to parse
   }
 
-  // try parse as wkt
+  // try parse as wkt using loaders.gl WKTLoader
   if (!parsedGeo) {
     try {
-      parsedGeo = wktParser(geoString);
+      parsedGeo = parseSync(geoString, WKTLoader);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // try parse as wkb using loaders.gl WKBLoader
+  if (!parsedGeo) {
+    try {
+      const buffer = Buffer.from(geoString, 'hex');
+      const binaryGeo = parseSync(buffer, WKBLoader);
+      parsedGeo = binaryToGeometry(binaryGeo);
     } catch (e) {
       return null;
     }

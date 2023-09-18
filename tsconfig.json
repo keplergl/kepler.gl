@@ -21,7 +21,7 @@
     "strict": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "paths": {
       "*": ["*"],
       // Map all modules to their source

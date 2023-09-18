@@ -79,3 +79,30 @@ test('datasetUtils.findDefaultColorField', t => {
   }
   t.end();
 });
+
+test('datasetUtils.isHexWkb', t => {
+  t.notOk(isHexWkb(''), 'empty string is not a valid hex wkb');
+
+  t.notOk(isHexWkb(null), 'null is not a valid hex wkb');
+
+  const countyFIPS = '06075';
+  t.notOk(isHexWkb(countyFIPS), 'FIPS code should not be a valid hex wkb');
+
+  const h3Code = '8a2a1072b59ffff';
+  t.notOk(isHexWkb(h3Code), 'H3 code should not be a valid hex wkb');
+
+  const randomHexStr = '8a2a1072b59ffff';
+  t.notOk(isHexWkb(randomHexStr), 'A random hex string should not be a valid hex wkb');
+
+  const validWkt = '0101000000000000000000f03f0000000000000040';
+  t.ok(isHexWkb(validWkt), 'A valid hex wkb should be valid');
+
+  const validEWkt = '0101000020e6100000000000000000f03f0000000000000040';
+  t.ok(isHexWkb(validEWkt), 'A valid hex ewkb should be valid');
+
+  const validWktNDR = '00000000013ff0000000000000400000000000000040';
+  t.ok(isHexWkb(validWktNDR), 'A valid hex wkb in NDR should be valid');
+
+  const validEWktNDR = '0020000001000013ff0000000000400000000000000040';
+  t.ok(isHexWkb(validEWktNDR), 'A valid hex ewkb in NDR should be valid');
+});
