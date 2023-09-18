@@ -39,7 +39,7 @@ import {appInjector} from './container';
 export {default as KeplerGl, default, injectComponents, ContainerFactory, ERROR_MSG} from './container';
 
 // factories
-export {default as KeplerGlFactory, DEFAULT_KEPLER_GL_PROPS, getVisibleDatasets, mapFieldsSelector, plotContainerSelector} from './kepler-gl';
+export {default as KeplerGlFactory, DEFAULT_KEPLER_GL_PROPS, getVisibleDatasets, makeGetActionCreators, mapFieldsSelector, plotContainerSelector} from './kepler-gl';
 export {default as SidePanelFactory} from './side-panel';
 export {default as PanelTitleFactory} from './side-panel/panel-title';
 export {default as MapContainerFactory, Attribution} from './map-container';
