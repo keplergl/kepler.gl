@@ -25,7 +25,7 @@ import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
 import {binaryToGeometry} from '@loaders.gl/gis';
 
 import {Feature, BBox} from 'geojson';
-import {getSampleData} from '@kepler.gl/utils';
+import {getSampleData, parseGeometryFromArrow, RawArrowFeature} from '@kepler.gl/utils';
 
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = Array<Feature | null>;
@@ -46,8 +46,14 @@ type FeatureTypeMap = {
 };
 /* eslint-enable */
 
-export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
+export function parseGeoJsonRawFeature(
+  rawFeature: string | Feature | RawArrowFeature | number[][] | null
+): Feature | null {
   if (typeof rawFeature === 'object') {
+    if (rawFeature && 'encoding' in rawFeature && rawFeature.encoding) {
+      // Support GeoArrow data
+      return parseGeometryFromArrow(rawFeature);
+    }
     // Support GeoJson feature as object
     // probably need to normalize it as well
     const normalized = normalize(rawFeature);
