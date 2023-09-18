@@ -218,10 +218,13 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
                   [classList.listItemFixed]: true
                 })}
                 key={`${display(value)}_${i}`}
-                onMouseDown={e => this._onClick(value, e)}
                 onClick={e => this._onClick(value, e)}
               >
-                <CustomListItemComponent value={value} displayOption={display} />
+                <CustomListItemComponent
+                  value={value}
+                  displayOption={display}
+                  onOptionSelected={this.props.onOptionSelected}
+                />
               </div>
             ))}
           </div>
@@ -233,10 +236,13 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
               hover: this.props.selectionIndex === i + valueOffset
             })}
             key={`${display(value)}_${i}`}
-            onMouseDown={e => this._onClick(value, e)}
             onClick={e => this._onClick(value, e)}
           >
-            <CustomListItemComponent value={value} displayOption={display} />
+            <CustomListItemComponent
+              value={value}
+              displayOption={display}
+              onOptionSelected={this.props.onOptionSelected}
+            />
           </div>
         ))}
 
