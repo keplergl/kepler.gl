@@ -105,7 +105,7 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
  *  options: {centerMap: true, readOnly: true}
  * }));
  */
-export function processCsvData(rawData: unknown[][], header?: string[]): ProcessorResult {
+export function processCsvData(rawData: unknown[][] | string, header?: string[]): ProcessorResult {
   let rows: unknown[][] | undefined;
   let headerRow: string[] | undefined;
 
