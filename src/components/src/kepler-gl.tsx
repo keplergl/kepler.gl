@@ -174,6 +174,7 @@ export const mapFieldsSelector = (props: KeplerGLProps, index: number = 0) => ({
   mapStyle: props.mapStyle,
   onDeckInitialized: props.onDeckInitialized,
   onViewStateChange: props.onViewStateChange,
+  onMouseMove: props.onMouseMove,
   deckGlProps: props.deckGlProps,
   uiStateActions: props.uiStateActions,
   visStateActions: props.visStateActions,
@@ -335,6 +336,7 @@ type KeplerGLBasicProps = {
   deckGlProps?: object;
   onLoadCloudMapSuccess?: OnSuccessCallBack;
   onLoadCloudMapError?: OnErrorCallBack;
+  onMouseMove?: (event: React.MouseEvent & {lngLat?: [number, number]}) => void;
   onExportToCloudSuccess?: OnSuccessCallBack;
   onExportToCloudError?: OnErrorCallBack;
   readOnly?: boolean;

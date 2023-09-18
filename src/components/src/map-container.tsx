@@ -308,6 +308,8 @@ export interface MapContainerProps {
 
   generateMapboxLayers?: typeof generateMapboxLayers;
   generateDeckGLLayers?: typeof computeDeckLayers;
+
+  onMouseMove?: (event: React.MouseEvent & {lngLat?: [number, number]}) => void;
 }
 
 export default function MapContainerFactory(
@@ -670,7 +672,8 @@ export default function MapContainerFactory(
         index,
         mapControls,
         theme,
-        generateDeckGLLayers
+        generateDeckGLLayers,
+        onMouseMove
       } = this.props;
 
       const {hoverInfo, editor} = visState;
@@ -755,8 +758,11 @@ export default function MapContainerFactory(
         <div
           onMouseMove={
             primaryMap
-              ? // @ts-expect-error should be deck viewport
-                event => this.props.visStateActions.onMouseMove(normalizeEvent(event, viewport))
+              ? event => {
+                  onMouseMove?.(event);
+                  // @ts-expect-error should be deck viewport
+                  this.props.visStateActions.onMouseMove(normalizeEvent(event, viewport));
+                }
               : undefined
           }
         >
