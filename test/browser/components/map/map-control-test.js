@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/* eslint-disable enzyme-deprecation/no-mount,enzyme-deprecation/no-shallow */
+/* eslint-disable enzyme-deprecation/no-mount,enzyme-deprecation/no-shallow,max-statements */
 import React from 'react';
 import sinon from 'sinon';
 import test from 'tape';
