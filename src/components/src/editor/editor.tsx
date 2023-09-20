@@ -161,27 +161,31 @@ export default function EditorFactory(
 
       const {rightClick, position, mapIndex} = selectionContext || {};
 
+      const visiblePanel = Boolean(rightClick) && selectedFeature && index === mapIndex;
+
       return (
         <RootContext.Consumer>
-          {context =>
-            createPortal(
-              <StyledWrapper className={classnames('editor', className)} style={style}>
-                {Boolean(rightClick) && selectedFeature && index === mapIndex ? (
-                  <FeatureActionPanel
-                    selectedFeature={selectedFeature as FeatureOf<Polygon>}
-                    datasets={datasets}
-                    layers={availableLayers}
-                    currentFilter={currentFilter}
-                    onClose={this._closeFeatureAction}
-                    onDeleteFeature={this._onDeleteSelectedFeature}
-                    onToggleLayer={this._togglePolygonFilter}
-                    position={position || null}
-                  />
-                ) : null}
-              </StyledWrapper>,
-              context?.current ?? document.body
-            )
-          }
+          {context => (
+            <>
+              {createPortal(
+                <StyledWrapper className={classnames('editor', className)} style={style}>
+                  {visiblePanel ? (
+                    <FeatureActionPanel
+                      selectedFeature={selectedFeature as FeatureOf<Polygon>}
+                      datasets={datasets}
+                      layers={availableLayers}
+                      currentFilter={currentFilter}
+                      onClose={this._closeFeatureAction}
+                      onDeleteFeature={this._onDeleteSelectedFeature}
+                      onToggleLayer={this._togglePolygonFilter}
+                      position={position || null}
+                    />
+                  ) : null}
+                </StyledWrapper>,
+                context?.current ?? document.body
+              )}
+            </>
+          )}
         </RootContext.Consumer>
       );
     }
