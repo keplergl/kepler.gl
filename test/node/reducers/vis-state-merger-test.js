@@ -89,7 +89,6 @@ import {cmpFilters, cmpLayers, cmpDatasets} from 'test/helpers/comparison-utils'
 import {
   InitialState,
   StateWFilters,
-  StateWEffects,
   StateWMultiFilters,
   StateWFilesFiltersLayerColor,
   StateWSplitMaps,

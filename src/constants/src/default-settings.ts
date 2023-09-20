@@ -1281,15 +1281,9 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
       },
       {
         name: 'center',
-        label: 'Center X',
-        index: 0,
-        min: 0,
-        max: 1
-      },
-      {
-        name: 'center',
-        label: 'Center Y',
-        index: 1,
+        type: 'array',
+        label: ['Center X', 'Center Y'],
+        defaultValue: [0.5, 0.5],
         min: 0,
         max: 1
       }
@@ -1311,15 +1305,9 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
       },
       {
         name: 'center',
-        label: 'Center X',
-        index: 0,
-        min: 0,
-        max: 1
-      },
-      {
-        name: 'center',
-        label: 'Center Y',
-        index: 1,
+        type: 'array',
+        label: ['Center X', 'Center Y'],
+        defaultValue: [0.5, 0.5],
         min: 0,
         max: 1
       }
@@ -1347,15 +1335,9 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
       },
       {
         name: 'center',
-        label: 'Center X',
-        index: 0,
-        min: 0,
-        max: 1
-      },
-      {
-        name: 'center',
-        label: 'Center Y',
-        index: 1,
+        type: 'array',
+        label: ['Center X', 'Center Y'],
+        defaultValue: [0.5, 0.5],
         min: 0,
         max: 1
       }
@@ -1379,27 +1361,17 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
       },
       {
         name: 'start',
-        index: 0,
-        min: 0,
-        max: 1
-      },
-      {
-        name: 'start',
-        label: false,
-        index: 1,
+        type: 'array',
+        label: ['Start', false],
+        defaultValue: [0.0, 0.0],
         min: 0,
         max: 1
       },
       {
         name: 'end',
-        index: 0,
-        min: 0,
-        max: 1
-      },
-      {
-        name: 'end',
-        label: false,
-        index: 1,
+        type: 'array',
+        label: ['End', false],
+        defaultValue: [1, 1],
         min: 0,
         max: 1
       }
@@ -1424,17 +1396,9 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
     parameters: [
       {
         name: 'screenXY',
-        label: 'Position X',
-        index: 0,
-        defaultValue: 0.5,
-        min: 0,
-        max: 1
-      },
-      {
-        name: 'screenXY',
-        label: 'Position Y',
-        index: 1,
-        defaultValue: 0.5,
+        type: 'array',
+        label: ['Position X', 'Position Y'],
+        defaultValue: [0.5, 0.5],
         min: 0,
         max: 1
       },

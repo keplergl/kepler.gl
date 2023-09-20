@@ -125,12 +125,12 @@ export function validateEffectParameters(
 ): EffectProps['parameters'] {
   const result = cloneDeep(parameters);
   effectDescription.forEach(description => {
-    const {index, defaultValue, name, type, min, max} = description;
+    const {defaultValue, name, type, min, max} = description;
 
     if (!result.hasOwnProperty(name)) return;
     const property = result[name];
 
-    if (type === 'color') {
+    if (type === 'color' || type === 'array') {
       if (!Array.isArray(defaultValue)) return;
       if (property.length !== defaultValue?.length) {
         result[name] = defaultValue;
@@ -138,7 +138,7 @@ export function validateEffectParameters(
       }
       defaultValue.forEach((v, i) => {
         let value = property[i];
-        value = Number.isFinite(value) ? clamp([min, max], value) : defaultValue[i] || min;
+        value = Number.isFinite(value) ? clamp([min, max], value) : defaultValue[i] ?? min;
         if (value !== undefined) {
           property[i] = value;
         }
@@ -146,16 +146,10 @@ export function validateEffectParameters(
       return;
     }
 
-    const indexed = Number.isFinite(index);
-    let value = indexed ? property[index as number] : property;
-    value = Number.isFinite(value) ? clamp([min, max], value) : defaultValue || min;
+    const value = Number.isFinite(property) ? clamp([min, max], property) : defaultValue ?? min;
 
     if (value !== undefined) {
-      if (indexed) {
-        result[name][index as number] = value;
-      } else {
-        result[name] = value;
-      }
+      result[name] = value;
     }
   });
   return result;
