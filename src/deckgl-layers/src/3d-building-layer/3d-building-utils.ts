@@ -37,7 +37,7 @@ const MAP_SOURCE = '/v4/mapbox.mapbox-streets-v7';
 export function getTileData(
   host: string,
   token: string,
-  {x, y, z}: Coordinates
+  {index: {x, y, z}}: {index: Coordinates}
 ): Promise<TileDataItem[]> {
   const mapSource = `${host ||
     MAPBOX_HOST}${MAP_SOURCE}/${z}/${x}/${y}.vector.pbf?access_token=${token}`;

@@ -32,8 +32,8 @@
   "dependencies": {
     "@kepler.gl/constants": "3.0.0-alpha.0",
     "@kepler.gl/types": "3.0.0-alpha.0",
-    "@luma.gl/constants": "^8.5.10",
-    "@luma.gl/core": "^8.5.10",
+    "@luma.gl/constants": "8.5.18",
+    "@luma.gl/core": "8.5.18",
     "@mapbox/geo-viewport": "^0.4.1",
     "@turf/boolean-within": "^6.0.1",
     "@turf/helpers": "^6.1.4",
