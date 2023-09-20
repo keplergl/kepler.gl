@@ -773,7 +773,10 @@ function getNewStateWithCustomMapStyle(state: MapStyle): MapStyle {
     // @ts-expect-error Property 'layerGroups' is missing in type 'InputStyle' but required in type 'BaseMapStyle'. Legacy case?
     mapStyles: {
       ...state.mapStyles,
-      [styleId]: state.inputStyle
+      [styleId]: {
+        ...state.mapStyles[styleId], // do not unintentionally drop any additional properties
+        ...state.inputStyle
+      }
     },
     // set to default
     inputStyle: getInitialInputStyle()
