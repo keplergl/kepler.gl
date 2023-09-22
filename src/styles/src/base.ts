@@ -906,10 +906,6 @@ const dropdownListSize = css`
 `;
 
 const dropdownListItem = css`
-  height: 34px;
-  display: flex;
-  align-items: center;
-
   ${dropdownListSize} &.hover,
   &:hover {
     cursor: pointer;
