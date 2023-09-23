@@ -314,6 +314,7 @@ export interface MapContainerProps {
   deckRenderCallbacks?: {
     onDeckLoad?: () => void;
     onDeckRender?: (deckProps: Record<string, unknown>) => Record<string, unknown> | null;
+    onDeckAfterRender?: (deckProps: Record<string, unknown>) => any;
   };
 }
 
@@ -838,6 +839,11 @@ export default function MapContainerFactory(
               }
             }}
             onWebGLInitialized={gl => this._onDeckInitialized(gl)}
+            onAfterRender={() => {
+              if (typeof deckRenderCallbacks?.onDeckAfterRender === 'function') {
+                deckRenderCallbacks.onDeckAfterRender(allDeckGlProps);
+              }
+            }}
           />
         </div>
       );
