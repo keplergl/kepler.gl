@@ -724,7 +724,10 @@ function KeplerGlFactory(
     }
   }
 
-  return keplerGlConnect(mapStateToProps, makeMapDispatchToProps)(withTheme(KeplerGL));
+  return keplerGlConnect(
+    mapStateToProps,
+    makeMapDispatchToProps
+  )(withTheme(KeplerGL)) as ReturnType<typeof KeplerGlFactory>;
 }
 
 export function mapStateToProps(state: KeplerGlState, props: KeplerGLProps) {
