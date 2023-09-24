@@ -21,7 +21,13 @@
 import React, {Component, createRef, MouseEventHandler, MouseEvent} from 'react';
 import classnames from 'classnames';
 import styled, {css} from 'styled-components';
-import {SortableContainer, SortableElement, SortableHandle} from 'react-sortable-hoc';
+import {
+  SortableContainer,
+  SortableContainerProps,
+  SortableElement,
+  SortableElementProps,
+  SortableHandle
+} from 'react-sortable-hoc';
 import Portaled from '../../common/portaled';
 
 import {Button, InlineInput} from '../../common/styled-components';
@@ -133,7 +139,13 @@ const StyledInlineInput = styled.div`
   }
 `;
 
-const SortableItem = SortableElement(({children, isSorting}) => (
+type SortableItemProps = SortableElementProps & {
+  children?: React.ReactNode;
+  className?: string;
+  isSorting: boolean;
+};
+
+const SortableItem = SortableElement<SortableItemProps>(({children, isSorting}) => (
   <StyledSortableItem
     className={classnames('custom-palette__sortable-items', {sorting: isSorting})}
   >
@@ -141,12 +153,19 @@ const SortableItem = SortableElement(({children, isSorting}) => (
   </StyledSortableItem>
 ));
 
-// TODO: Should className be applied to the div here?
-const WrappedSortableContainer = SortableContainer(({children, className}) => (
-  <div className={className}>{children}</div>
-));
+type WrappedSortableContainerProps = SortableContainerProps & {
+  children?: React.ReactNode;
+  className?: string;
+};
 
-const DragHandle = SortableHandle(({className, children}) => (
+// TODO: Should className be applied to the div here?
+const WrappedSortableContainer = SortableContainer<WrappedSortableContainerProps>(
+  ({children, className}) => <div className={className}>{children}</div>
+);
+
+type DragHandleProps = {children?: React.ReactNode; className: string};
+
+const DragHandle = SortableHandle<DragHandleProps>(({className, children}) => (
   <StyledDragHandle className={className}>{children}</StyledDragHandle>
 ));
 

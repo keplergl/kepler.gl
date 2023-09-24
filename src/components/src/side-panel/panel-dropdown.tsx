@@ -27,6 +27,7 @@ type ClickOutsideCloseDropdownProps = {
   type: string;
   className: string;
   onClose: (e: Event) => void;
+  children?: React.ReactNode;
 };
 
 class ClickOutsideCloseDropdown extends Component<ClickOutsideCloseDropdownProps> {

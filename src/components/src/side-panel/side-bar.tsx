@@ -33,6 +33,7 @@ export type SideBarProps = {
   minifiedWidth: number;
   onOpenOrClose: (arg: {isOpen: boolean}) => void;
   shouldShowCollapseButton?: boolean | null;
+  children?: React.ReactNode;
 };
 
 const StyledSidePanelContainer = styled.div<{width: number}>`

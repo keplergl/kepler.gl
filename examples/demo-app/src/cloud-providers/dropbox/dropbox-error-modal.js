@@ -23,7 +23,7 @@ import ReactDOM from 'react-dom';
 
 const WIDTH = 400;
 const HEIGHT = 800;
-const style = {borther: 0};
+const style = {border: 0};
 
 export default class Frame extends Component {
   componentDidMount() {
@@ -34,7 +34,7 @@ export default class Frame extends Component {
   }
 
   componentWillUnmount() {
-    ReactDOM.unmountComponentAtNode(this.root.current.contentDocument);
+    this.root.current.unmount();
   }
 
   root = createRef();

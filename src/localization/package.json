@@ -30,8 +30,8 @@
     "umd"
   ],
   "dependencies": {
-    "react": "^16.8.4",
-    "react-intl": "^3.12.0",
+    "react": "^18.2.0",
+    "react-intl": "^6.3.0",
     "redux": "^4.0.5"
   },
   "nyc": {

@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import {act} from 'react-dom/test-utils';
 import test from 'tape-catch';
 import global from 'global';
 import sinon from 'sinon';
@@ -135,7 +136,7 @@ function restoreMockCanvas() {
 }
 
 // eslint-disable-next-line max-statements
-test('Compnents -> DataTableConfig', t => {
+test('Components -> DataTableConfig', t => {
   const expectedColumns = ['gps_data.utc_timestamp'];
 
   const expectedColMeta = {
@@ -385,8 +386,11 @@ test('Components -> DataTableModal -> render DataTable: csv 1', t => {
 
   t.deepEqual(result, expectedExpandedCellSize, 'should calculate correct cell expansion');
 
-  // manully setting the state and update the component
-  componentInstance.setState(result);
+  // manually setting the state and update the component
+  act(() => {
+    componentInstance.setState(result);
+  });
+
   wrapper2.update();
 
   t.equal(
@@ -517,7 +521,10 @@ test('Components -> DataTableModal -> render DataTable: sort, pin and display fo
   const componentInstance = wrapper2.find('DataTable').instance();
   const result = componentInstance.getCellSizeCache();
   // manually setting the state and update the component
-  componentInstance.setState(result);
+  act(() => {
+    componentInstance.setState(result);
+  });
+
   wrapper2.update();
 
   const expectedHeaders = [
@@ -738,7 +745,9 @@ test('Components -> DataTableModal.render: csv 2', t => {
   const result = componentInstance.getCellSizeCache();
   t.deepEqual(result, expectedExpandedCellSizeGeo, 'should calculate correct cell expansion');
 
-  componentInstance.setState(result);
+  act(() => {
+    componentInstance.setState(result);
+  });
   wrapper2.update();
 
   t.equal(wrapper2.find('.header-cell').length, 21, `should render 7 header cells`);

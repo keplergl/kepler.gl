@@ -84,8 +84,8 @@ const AnimationWidgetInner = styled.div`
 
 const TIMELINE_PLAYBACK_STYLE = {flex: 1};
 
-type AnimationControlProps = {
-  timeline: Timeline;
+export type AnimationControlProps = {
+  timeline?: Timeline;
   isAnimatable?: boolean;
   isAnimating?: boolean;
   updateAnimationSpeed?: (val: number) => void;

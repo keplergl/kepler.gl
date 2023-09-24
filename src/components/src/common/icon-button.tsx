@@ -1,4 +1,4 @@
-import {MouseEvent} from 'react';
+import {MouseEvent, ReactNode} from 'react';
 import styled from 'styled-components';
 import {Button, ButtonProps} from './styled-components';
 interface IconButtonProps extends ButtonProps {
@@ -6,6 +6,7 @@ interface IconButtonProps extends ButtonProps {
   theme?: object;
   className?: string;
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
+  children?: ReactNode;
 }
 
 export const IconButton = styled(Button)<IconButtonProps>`

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Component} from 'react';
+import React, {Component} from 'react';
 import {bisectLeft} from 'd3-array';
 import {requestAnimationFrame, cancelAnimationFrame} from 'global/window';
 import Console from 'global/console';
@@ -36,6 +36,14 @@ interface AnimationControllerProps<T extends number | number[]> {
   domain: number[] | null;
   value: T;
   baseSpeed?: number;
+  children?: (
+    isAnimating: boolean | undefined,
+    startAnimation: () => void,
+    pauseAnimation: () => void,
+    resetAnimation: () => void,
+    timeline: Timeline | undefined,
+    setTimelineValue: (x: any) => void
+  ) => React.ReactElement | null;
 }
 
 class AnimationControllerType<T extends number | number[]> extends Component<

@@ -175,7 +175,7 @@ export default function BottomWidgetFactory(
             setFilterAnimationTime={visStateActions.setFilterAnimationTime}
           >
             {(isAnimating, start, pause, resetAnimation, timeline, setTimelineValue) =>
-              showTimeWidget ? (
+              showTimeWidget && timeline ? (
                 <TimeWidget
                   // TimeWidget uses React.memo, here we pass width
                   // even though it doesnt use it, to force rerender

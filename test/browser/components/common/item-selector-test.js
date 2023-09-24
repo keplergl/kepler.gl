@@ -21,6 +21,7 @@
 import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
+import {act} from 'react-dom/test-utils';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {ItemSelector, Typeahead, DropdownList, ListItem} from '@kepler.gl/components';
 
@@ -102,6 +103,7 @@ test('Components -> ItemSelector.render over 100 options', t => {
       .toString(16)
       .substr(2, 8)
   );
+
   const props = {
     selectedItems: '',
     options: randomOptions,
@@ -165,8 +167,10 @@ test('Components -> ItemSelector.render over 100 options', t => {
   ];
   const dropdown = wrapper.find(DropdownList).instance();
   dropdown.prevY = 100;
-  dropdown.handleObserver(mockedEntries);
-  // update component
+  act(() => {
+    dropdown.handleObserver(mockedEntries);
+  });
+
   wrapper.update();
 
   t.equal(
@@ -180,7 +184,10 @@ test('Components -> ItemSelector.render over 100 options', t => {
 
   // mockup scroll again
   dropdown.prevY = 110;
-  dropdown.handleObserver(mockedEntries);
+  act(() => {
+    dropdown.handleObserver(mockedEntries);
+  });
+
   wrapper.update();
   t.equal(
     wrapper

@@ -32,6 +32,7 @@ export type ImageModalContainerProps = {
   currentProvider?: string | null;
   onUpdateImageSetting: (newSetting: SetExportImageSettingUpdaterAction['payload']) => void;
   cleanupExportImage: () => void;
+  children?: React.ReactNode;
 };
 
 /**

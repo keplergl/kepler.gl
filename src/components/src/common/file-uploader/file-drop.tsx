@@ -22,7 +22,7 @@
  * Copied from https://github.com/sarink/react-file-drop
  * For React 16.8 compatibility
  */
-import React from 'react';
+import React, {ReactNode} from 'react';
 import window from 'global/window';
 
 export type FileDropProps = {
@@ -38,6 +38,7 @@ export type FileDropProps = {
   onFrameDragEnter?: (event: any) => void;
   onFrameDragLeave?: (event: any) => void;
   onFrameDrop?: (event: any) => void;
+  children?: ReactNode;
 };
 
 /** @typedef {import('./file-drop').FileDropProps} FileDropProps */

@@ -19,11 +19,11 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import ReactDOM from 'react-dom/client';
 import document from 'global/document';
-import {render} from 'react-dom';
 import {Provider} from 'react-redux';
-import App from './app';
 import store from './store';
+import App from './app';
 
 const Root = () => (
   <Provider store={store}>
@@ -31,4 +31,6 @@ const Root = () => (
   </Provider>
 );
 
-render(<Root />, document.body.appendChild(document.createElement('div')));
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+root.render(<Root />);

@@ -44,6 +44,7 @@ export type LayerConfigGroupProps = {
   disabled?: boolean;
   onChange?: (newVisConfig: Partial<LayerVisConfig>) => void;
   IconComponent?: React.ElementType;
+  children?: React.ReactNode;
 };
 
 export const StyledLayerConfigGroupAction = styled.div`

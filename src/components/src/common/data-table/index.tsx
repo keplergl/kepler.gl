@@ -705,7 +705,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
     }
   }
 
-  return withTheme(DataTable);
+  return withTheme(DataTable) as React.ComponentType<DataTableProps>;
 }
 
 export default DataTableFactory;

@@ -3,11 +3,20 @@ import {getIntervalBins, getTimelineFromFilter} from '@kepler.gl/utils';
 import {TimeRangeFilter} from '@kepler.gl/types';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
+import {Timeline} from '@kepler.gl/types';
 
 interface FilterAnimationControllerProps {
   filter: TimeRangeFilter & {animationWindow?: string};
   filterIdx: number;
   setFilterAnimationTime: (idx: number, value: string, a: any[]) => void;
+  children?: (
+    isAnimating: boolean | undefined,
+    startAnimation: () => void,
+    pauseAnimation: () => void,
+    resetAnimation: () => void,
+    timeline: Timeline | undefined,
+    setTimelineValue: (x: any) => void
+  ) => React.ReactElement | null;
 }
 
 FilterAnimationControllerFactory.deps = [AnimationControllerFactory];

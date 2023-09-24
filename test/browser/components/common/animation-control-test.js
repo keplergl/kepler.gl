@@ -25,7 +25,7 @@ import moment from 'moment';
 import {setLayerAnimationTimeConfig} from '@kepler.gl/actions';
 import {getTimelineFromAnimationConfig} from '@kepler.gl/utils';
 
-import {mountWithTheme} from 'test/helpers/component-utils';
+import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {
   AnimationControlFactory,
   PlaybackControlsFactory,
@@ -58,12 +58,15 @@ test('Components -> AnimationControl -> render with props', t => {
 
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <AnimationControl
-        isAnimatable
-        setTimelineValue={setLayerAnimationTime}
-        toggleAnimation={toggleAnimation}
-        timeline={timeline}
-      />
+      <IntlWrapper>
+        {/* Error: Uncaught [Error: [React Intl] Could not find required `intl` object. <IntlProvider> needs to exist in the component ancestry.] */}
+        <AnimationControl
+          isAnimatable
+          setTimelineValue={setLayerAnimationTime}
+          toggleAnimation={toggleAnimation}
+          timeline={timeline}
+        />
+      </IntlWrapper>
     );
   }, 'Should not fail with trip layer props');
 
@@ -94,12 +97,15 @@ test('Components -> AnimationControl -> time display', t => {
   const setLayerAnimationTime = () => {};
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <AnimationControl
-        isAnimatable
-        setTimelineValue={setLayerAnimationTime}
-        toggleAnimation={toggleAnimation}
-        timeline={timeline}
-      />
+      <IntlWrapper>
+        {/* Error: Uncaught [Error: [React Intl] Could not find required `intl` object. <IntlProvider> needs to exist in the component ancestry.] */}
+        <AnimationControl
+          isAnimatable
+          setTimelineValue={setLayerAnimationTime}
+          toggleAnimation={toggleAnimation}
+          timeline={timeline}
+        />
+      </IntlWrapper>
     );
   }, 'Should not fail with props');
 
@@ -177,12 +183,15 @@ test('Components -> AnimationControl -> time display -> custom timezone and time
   const setLayerAnimationTime = () => {};
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
-      <AnimationControl
-        isAnimatable
-        setTimelineValue={setLayerAnimationTime}
-        toggleAnimation={toggleAnimation}
-        timeline={timeline}
-      />
+      <IntlWrapper>
+        {/* Error: Uncaught [Error: [React Intl] Could not find required `intl` object. <IntlProvider> needs to exist in the component ancestry.] */}
+        <AnimationControl
+          isAnimatable
+          setTimelineValue={setLayerAnimationTime}
+          toggleAnimation={toggleAnimation}
+          timeline={timeline}
+        />
+      </IntlWrapper>
     );
   }, 'Should not fail with props');
   const timeDisplay = wrapper.find(FloatingTimeDisplay);

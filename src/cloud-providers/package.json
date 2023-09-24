@@ -31,7 +31,7 @@
   ],
   "dependencies": {
     "@kepler.gl/types": "3.0.0-alpha.0",
-    "react": "^16.8.4"
+    "react": "^18.2.0"
   },
   "nyc": {
     "sourceMap": false,

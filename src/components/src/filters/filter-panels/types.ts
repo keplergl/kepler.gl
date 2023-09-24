@@ -1,4 +1,4 @@
-import {FunctionComponent, ComponentType} from 'react';
+import {FunctionComponent, ComponentType, ReactNode} from 'react';
 import {Filter, PolygonFilter, TimeRangeFilter, Field} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
@@ -18,6 +18,7 @@ export interface FilterPanelProps<F = Filter> {
   filter: F;
   removeFilter: () => void;
   setFilter: (idx: number, field: string, value: any) => void;
+  children?: ReactNode;
 }
 export interface PolygonFilterPanelProps extends FilterPanelProps<PolygonFilter> {
   layers: ReadonlyArray<Layer>;

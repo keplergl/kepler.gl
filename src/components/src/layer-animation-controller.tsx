@@ -1,12 +1,20 @@
 import React, {useCallback} from 'react';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
-import {AnimationConfig} from '@kepler.gl/types';
+import {AnimationConfig, Timeline} from '@kepler.gl/types';
 import {snapToMarks, getTimelineFromAnimationConfig, toArray} from '@kepler.gl/utils';
 import AnimationControllerFactory from './common/animation-control/animation-controller';
 
 interface LayerAnimationControllerProps {
   animationConfig: AnimationConfig;
   setLayerAnimationTime: (x: number) => void;
+  children?: (
+    isAnimating: boolean | undefined,
+    startAnimation: () => void,
+    pauseAnimation: () => void,
+    resetAnimation: () => void,
+    timeline: Timeline | undefined,
+    setTimelineValue: (x: any) => void
+  ) => React.ReactElement | null;
 }
 
 LayerAnimationControllerFactory.deps = [AnimationControllerFactory];

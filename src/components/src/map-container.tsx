@@ -311,6 +311,7 @@ export interface MapContainerProps {
 
   onMouseMove?: (event: React.MouseEvent & {lngLat?: [number, number]}) => void;
 
+  children?: React.ReactNode;
   deckRenderCallbacks?: {
     onDeckLoad?: () => void;
     onDeckRender?: (deckProps: Record<string, unknown>) => Record<string, unknown> | null;
