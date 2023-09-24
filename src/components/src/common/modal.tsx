@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component, ReactNode} from 'react';
+import React, {Component, ReactNode, PropsWithChildren} from 'react';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 import styled, {FlattenSimpleInterpolation} from 'styled-components';
@@ -65,7 +65,12 @@ const ModalContent = styled.div`
   z-index: ${props => props.theme.modalContentZ};
 `;
 
-export const ModalTitle = styled.div`
+type ModalTitleProps = PropsWithChildren<{
+  style?: React.CSSProperties;
+  className?: string;
+}>;
+
+export const ModalTitle = styled.div<ModalTitleProps>`
   font-size: ${props => props.theme.modalTitleFontSize};
   color: ${props => props.theme.modalTitleColor};
   margin-bottom: 10px;
