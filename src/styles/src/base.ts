@@ -885,7 +885,6 @@ const dropdownListAnchor = css`
   padding-left: 3px;
   font-size: ${props => props.theme.selectFontSize};
   line-height: ${props => props.theme.dropdownListLineHeight}px;
-  display: inline-block;
   overflow: hidden;
   text-overflow: ellipsis;
 

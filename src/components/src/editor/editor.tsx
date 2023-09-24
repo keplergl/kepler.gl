@@ -38,6 +38,8 @@ import {Filter, FeatureSelectionContext, Feature} from '@kepler.gl/types';
 import {FeatureOf, Polygon} from '@nebula.gl/edit-modes';
 import {Datasets} from '@kepler.gl/table';
 
+import {RootContext} from '../context';
+
 const DECKGL_RENDER_LAYER = 'default-deckgl-overlay-wrapper';
 
 const StyledWrapper = styled.div`
@@ -83,22 +85,30 @@ export default function EditorFactory(
     onToggleLayer,
     position
   }) => {
-    return createPortal(
-      <StyledWrapper className={classnames('editor', className)} style={style}>
-        {visiblePanel ? (
-          <FeatureActionPanel
-            selectedFeature={selectedFeature}
-            datasets={datasets}
-            layers={layers}
-            currentFilter={currentFilter}
-            onClose={onClose}
-            onDeleteFeature={onDeleteFeature}
-            onToggleLayer={onToggleLayer}
-            position={position}
-          />
-        ) : null}
-      </StyledWrapper>,
-      document.body
+    return (
+      <RootContext.Consumer>
+        {context => (
+          <>
+            {createPortal(
+              <StyledWrapper className={classnames('editor', className)} style={style}>
+                {visiblePanel ? (
+                  <FeatureActionPanel
+                    selectedFeature={selectedFeature as FeatureOf<Polygon>}
+                    datasets={datasets}
+                    layers={layers}
+                    currentFilter={currentFilter}
+                    onClose={onClose}
+                    onDeleteFeature={onDeleteFeature}
+                    onToggleLayer={onToggleLayer}
+                    position={position || null}
+                  />
+                ) : null}
+              </StyledWrapper>,
+              context?.current ?? document.body
+            )}
+          </>
+        )}
+      </RootContext.Consumer>
     );
   };
   class EditorUnmemoized extends Component<EditorProps> {

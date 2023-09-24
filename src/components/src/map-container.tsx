@@ -312,6 +312,11 @@ export interface MapContainerProps {
   onMouseMove?: (event: React.MouseEvent & {lngLat?: [number, number]}) => void;
 
   children?: React.ReactNode;
+  deckRenderCallbacks?: {
+    onDeckLoad?: () => void;
+    onDeckRender?: (deckProps: Record<string, unknown>) => Record<string, unknown> | null;
+    onDeckAfterRender?: (deckProps: Record<string, unknown>) => any;
+  };
 }
 
 export default function MapContainerFactory(
@@ -673,6 +678,7 @@ export default function MapContainerFactory(
         deckGlProps,
         index,
         mapControls,
+        deckRenderCallbacks,
         theme,
         generateDeckGLLayers,
         onMouseMove
@@ -756,6 +762,21 @@ export default function MapContainerFactory(
         ? deckGlProps?.views()
         : new MapView({legacyMeterSizes: true});
 
+      let allDeckGlProps = {
+        ...deckGlProps,
+        pickingRadius: DEFAULT_PICKING_RADIUS,
+        views,
+        layers: deckGlLayers
+      };
+
+      if (typeof deckRenderCallbacks?.onDeckRender === 'function') {
+        allDeckGlProps = deckRenderCallbacks.onDeckRender(allDeckGlProps);
+        if (!allDeckGlProps) {
+          // if onDeckRender returns null, do not render deck.gl
+          return null;
+        }
+      }
+
       return (
         <div
           onMouseMove={
@@ -770,12 +791,14 @@ export default function MapContainerFactory(
         >
           <DeckGL
             id="default-deckgl-overlay"
-            {...deckGlProps}
-            views={views}
-            layers={deckGlLayers}
+            onLoad={() => {
+              if (typeof deckRenderCallbacks?.onDeckLoad === 'function') {
+                deckRenderCallbacks.onDeckLoad();
+              }
+            }}
+            {...allDeckGlProps}
             controller={{doubleClickZoom: !isEditorDrawingMode}}
             viewState={mapState}
-            pickingRadius={DEFAULT_PICKING_RADIUS}
             onBeforeRender={this._onBeforeRender}
             onViewStateChange={this._onViewportChange}
             {...extraDeckParams}
@@ -817,6 +840,11 @@ export default function MapContainerFactory(
               }
             }}
             onWebGLInitialized={gl => this._onDeckInitialized(gl)}
+            onAfterRender={() => {
+              if (typeof deckRenderCallbacks?.onDeckAfterRender === 'function') {
+                deckRenderCallbacks.onDeckAfterRender(allDeckGlProps);
+              }
+            }}
           />
         </div>
       );
@@ -904,6 +932,12 @@ export default function MapContainerFactory(
       const hasGeocoderLayer = Boolean(layers.find(l => l.id === GEOCODER_LAYER_ID));
       const isSplit = Boolean(mapState.isSplit);
 
+      const deckOverlay = this._renderDeckOverlay(layersForDeck, {primaryMap: true});
+      if (!deckOverlay) {
+        // deckOverlay can be null if onDeckRender returns null
+        // in this case we don't want to render the map
+        return null;
+      }
       return (
         <>
           <MapControl
@@ -947,7 +981,7 @@ export default function MapContainerFactory(
             {...bottomMapContainerProps}
             ref={this._setMapboxMap}
           >
-            {this._renderDeckOverlay(layersForDeck, {primaryMap: true})}
+            {deckOverlay}
             {this._renderMapboxOverlays()}
             <Editor
               index={index || 0}
@@ -995,6 +1029,12 @@ export default function MapContainerFactory(
 
     render() {
       const {visState} = this.props;
+      const mapContent = this._renderMap();
+      if (!mapContent) {
+        // mapContent can be null if onDeckRender returns null
+        // in this case we don't want to render the map
+        return null;
+      }
       return (
         <StyledMap
           ref={this._ref}
@@ -1002,7 +1042,7 @@ export default function MapContainerFactory(
           onContextMenu={event => event.preventDefault()}
           mixBlendMode={visState.overlayBlending}
         >
-          {this._renderMap()}
+          {mapContent}
         </StyledMap>
       );
     }
