@@ -22,7 +22,7 @@
 // import 'babel-register';
 
 import React from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import {Provider} from 'react-redux';
 import store from './reducers';
 import Routes from './routes';
@@ -33,9 +33,9 @@ require('./static/favicon.png');
 const el = document.createElement('div');
 document.body.appendChild(el);
 
-ReactDOM.render(
+const root = ReactDOM.createRoot(el);
+root.render(
   <Provider store={store}>
     <Routes />
-  </Provider>,
-  el
+  </Provider>
 );
