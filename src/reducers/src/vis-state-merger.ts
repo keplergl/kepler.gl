@@ -554,6 +554,7 @@ export function mergeAnimationConfig<S extends VisState>(
  * @param fields
  * @param savedCols
  * @param emptyCols
+ * @param options
  * @return - validated columns or null
  */
 
@@ -562,7 +563,8 @@ export function validateSavedLayerColumns(
   savedCols: {
     [key: string]: string;
   } = {},
-  emptyCols: LayerColumns
+  emptyCols: LayerColumns,
+  options: {throwOnError?: boolean} = {}
 ) {
   // Prepare columns for the validator
   const columns: typeof emptyCols = {};
@@ -586,11 +588,21 @@ export function validateSavedLayerColumns(
     validateColumn(columns[key], columns, fields)
   );
 
-  if (allColFound) {
-    return columns;
+  const rv = allColFound ? columns : null;
+  if (options.throwOnError) {
+    const requiredColumns = Object.keys(emptyCols).filter(k => !emptyCols[k].optional);
+    const missingColumns = requiredColumns.filter(k => !columns?.[k].value);
+    if (missingColumns.length) {
+      throw new Error(`Layer has missing or invalid columns: ${missingColumns.join(', ')}`);
+    }
+    const configColumns = Object.keys(savedCols);
+    const invalidColumns = configColumns.filter(k => !columns?.[k]?.value);
+    if (invalidColumns.length) {
+      throw new Error(`Layer has invalid columns: ${invalidColumns.join(', ')}`);
+    }
   }
 
-  return null;
+  return rv;
 }
 
 export function validateColumn(
@@ -613,9 +625,15 @@ export function validateColumn(
  *
  * @param {Array<Object>} fields
  * @param {Object} savedTextLabel
+ * @param {Object} options
  * @return {Object} - validated textlabel
  */
-export function validateSavedTextLabel(fields, [layerTextLabel], savedTextLabel) {
+export function validateSavedTextLabel(
+  fields,
+  [layerTextLabel],
+  savedTextLabel,
+  options: {throwOnError?: boolean} = {}
+) {
   const savedTextLabels = Array.isArray(savedTextLabel) ? savedTextLabel : [savedTextLabel];
 
   // validate field
@@ -625,6 +643,10 @@ export function validateSavedTextLabel(fields, [layerTextLabel], savedTextLabel)
           Object.keys(textLabel.field).every(key => textLabel.field[key] === fd[key])
         )
       : null;
+
+    if (field === undefined && options.throwOnError) {
+      throw new Error(`Layer has invalid text label field: ${JSON.stringify(textLabel.field)}`);
+    }
 
     return Object.keys(layerTextLabel).reduce(
       (accu, key) => ({
@@ -643,7 +665,8 @@ export function validateSavedTextLabel(fields, [layerTextLabel], savedTextLabel)
 export function validateSavedVisualChannels(
   fields: KeplerTable['fields'],
   newLayer: Layer,
-  savedLayer: ParsedLayer
+  savedLayer: ParsedLayer,
+  options: {throwOnError?: boolean} = {}
 ): null | Layer {
   Object.values(newLayer.visualChannels).forEach(({field, scale, key}) => {
     let foundField;
@@ -663,6 +686,12 @@ export function validateSavedVisualChannels(
       }
 
       newLayer.validateVisualChannel(key);
+      if (options.throwOnError) {
+        const fieldName = savedLayer.config?.[field]?.name;
+        if (fieldName && fieldName !== newLayer.config[field]?.name) {
+          throw new Error(`Layer has invalid visual channel field: ${field}`);
+        }
+      }
     }
   });
   return newLayer;
@@ -670,6 +699,7 @@ export function validateSavedVisualChannels(
 
 type ValidateLayerOption = {
   allowEmptyColumn?: boolean;
+  throwOnError?: boolean;
 };
 
 export function validateLayersByDatasets(
@@ -710,6 +740,7 @@ export function validateLayersByDatasets(
  * Validate saved layer config with new data,
  * update fieldIdx based on new fields
  */
+// eslint-disable-next-line complexity
 export function validateLayerWithData(
   {fields, id: dataId}: KeplerTable,
   savedLayer: ParsedLayer,
@@ -717,8 +748,12 @@ export function validateLayerWithData(
   options: ValidateLayerOption = {}
 ): Layer | null {
   const {type} = savedLayer;
+  const {throwOnError} = options;
   // layer doesnt have a valid type
   if (!type || !layerClasses.hasOwnProperty(type) || !savedLayer.config) {
+    if (throwOnError) {
+      throw new Error(`Layer has invalid type "${type}" or config is missing`);
+    }
     return null;
   }
 
@@ -734,8 +769,13 @@ export function validateLayerWithData(
 
   // find column fieldIdx
   const columnConfig = newLayer.getLayerColumns();
-  if (Object.keys(columnConfig).length) {
-    const columns = validateSavedLayerColumns(fields, savedLayer.config.columns, columnConfig);
+  if (Object.keys(columnConfig)) {
+    const columns = validateSavedLayerColumns(
+      fields,
+      savedLayer.config.columns,
+      columnConfig,
+      options
+    );
     if (columns) {
       newLayer.updateLayerConfig({columns});
     } else if (!options.allowEmptyColumn) {
@@ -746,11 +786,16 @@ export function validateLayerWithData(
   // visual channel field is saved to be {name, type}
   // find visual channel field by matching both name and type
   // refer to vis-state-schema.js VisualChannelSchemaV1
-  newLayer = validateSavedVisualChannels(fields, newLayer, savedLayer);
+  newLayer = validateSavedVisualChannels(fields, newLayer, savedLayer, options);
 
   const textLabel =
     savedLayer.config.textLabel && newLayer.config.textLabel
-      ? validateSavedTextLabel(fields, newLayer.config.textLabel, savedLayer.config.textLabel)
+      ? validateSavedTextLabel(
+          fields,
+          newLayer.config.textLabel,
+          savedLayer.config.textLabel,
+          options
+        )
       : newLayer.config.textLabel;
 
   // copy visConfig over to emptyLayer to make sure it has all the props
@@ -764,6 +809,12 @@ export function validateLayerWithData(
     visConfig,
     textLabel
   });
+
+  if (throwOnError) {
+    if (!newLayer.isValidToSave()) {
+      throw new Error(`Layer is not valid to save: ${newLayer.id}`);
+    }
+  }
 
   return newLayer;
 }

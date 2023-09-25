@@ -35,10 +35,39 @@ import {
   FeatureSelectionContext,
   InteractionConfig,
   Filter,
-  ParsedConfig
+  ParsedConfig,
+  ParsedLayer
 } from '@kepler.gl/types';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
+
+export type ApplyLayerConfigUpdaterAction = {
+  oldLayerId: string;
+  newLayerConfig: ParsedLayer;
+  layerIndex?: number;
+};
+
+/**
+ * Update layer base config: dataId, label, column, isVisible
+ * @param oldLayerId - layer id to be updated
+ * @param newLayerConfig - new layer config
+ * @param layerIndex - (Optional) Index of the layer to be updated (can be useful in some cases, because
+ *                     the layer id might change during update, e.g. when the type of the layer changes)
+ * @returns action
+ * @public
+ */
+export function applyLayerConfig(
+  oldLayerId: string,
+  newLayerConfig: ParsedLayer,
+  layerIndex?: number
+): Merge<ApplyLayerConfigUpdaterAction, {type: typeof ActionTypes.APPLY_LAYER_CONFIG}> {
+  return {
+    type: ActionTypes.APPLY_LAYER_CONFIG,
+    oldLayerId,
+    newLayerConfig,
+    layerIndex
+  };
+}
 
 export type LayerConfigChangeUpdaterAction = {
   oldLayer: Layer;

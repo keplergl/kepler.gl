@@ -32,6 +32,7 @@ import {
   INITIAL_VIS_STATE,
   DEFAULT_ANIMATION_CONFIG,
   serializeLayer,
+  validateLayerWithData,
   defaultInteractionConfig,
   prepareStateForDatasetReplace
 } from '@kepler.gl/reducers';
@@ -5320,6 +5321,162 @@ test('VisStateUpdater -> addLayer with empty column', t => {
     {},
     'newlayer layerData should be empty'
   );
+
+  t.end();
+});
+
+test('VisStateUpdater -> applyLayerConfig', t => {
+  const initialState = StateWFiles.visState;
+  const oldLayers = initialState.layers;
+
+  const oldLayerIndex = 0;
+  const oldLayer = oldLayers[oldLayerIndex];
+  const oldLayerId = oldLayer.id;
+  const {schema} = initialState;
+  const layerToJson = layer =>
+    schema.getConfigToSave({
+      visState: {layers: [layer], layerOrder: [layer.id]}
+    }).config.visState.layers?.[0];
+  const oldLayerDataset = initialState.datasets[oldLayer.config.dataId];
+  const transformConfig = transform => transform(layerToJson(oldLayer, schema));
+  const getUpdatedLayerJson = state => layerToJson(state.layers[oldLayerIndex], schema);
+
+  let nextState;
+
+  nextState = reducer(
+    initialState,
+    VisStateActions.applyLayerConfig(
+      oldLayerId,
+      transformConfig(layer => {
+        layer.config.isVisible = false;
+        layer.config.label = 'New label';
+        return layer;
+      })
+    )
+  );
+  t.equal(getUpdatedLayerJson(nextState).config.isVisible, false, 'should change isVisible');
+  t.equal(getUpdatedLayerJson(nextState).config.label, 'New label', 'should change label');
+
+  nextState = reducer(
+    initialState,
+    VisStateActions.applyLayerConfig(
+      oldLayerId,
+      transformConfig(layer => {
+        layer.config.columns = {
+          lng: 'gps_data.lat',
+          lat: 'gps_data.lng'
+        };
+        return layer;
+      })
+    )
+  );
+  t.equal(
+    getUpdatedLayerJson(nextState).config.columns.lng,
+    'gps_data.lat',
+    'should change lng column'
+  );
+  t.equal(
+    getUpdatedLayerJson(nextState).config.columns.lat,
+    'gps_data.lng',
+    'should change lat column'
+  );
+
+  nextState = reducer(
+    initialState,
+    VisStateActions.applyLayerConfig(
+      oldLayerId,
+      transformConfig(layer => {
+        layer.config.textLabel = {field: {name: 'gps_data.types', type: 'string'}};
+        return layer;
+      })
+    )
+  );
+  t.equal(
+    getUpdatedLayerJson(nextState).config.textLabel?.[0]?.field?.name,
+    'gps_data.types',
+    'should change text label'
+  );
+
+  nextState = reducer(
+    initialState,
+    VisStateActions.applyLayerConfig(
+      oldLayerId,
+      transformConfig(layer => {
+        layer.visualChannels.colorField = {name: 'gps_data.lat', type: 'real'};
+        layer.visualChannels.colorScale = 'quantize';
+        return layer;
+      })
+    )
+  );
+  t.equal(
+    getUpdatedLayerJson(nextState).visualChannels.colorField?.name,
+    'gps_data.lat',
+    'should change visualChannel colorField'
+  );
+  t.equal(
+    getUpdatedLayerJson(nextState).visualChannels.colorScale,
+    'quantize',
+    'should change visualChannel colorScale'
+  );
+
+  t.throws(() => {
+    validateLayerWithData(
+      oldLayerDataset,
+      transformConfig(layer => {
+        layer.config.textLabel = {field: {name: 'INVALID', type: 'string'}};
+        return layer;
+      }),
+      initialState.layerClasses,
+      {throwOnError: true}
+    );
+  }, 'validation should throw error for invalid text label');
+
+  t.throws(() => {
+    validateLayerWithData(
+      oldLayerDataset,
+      transformConfig(layer => {
+        layer.config.columns = {
+          lng: 'INVALID COLUMN'
+        };
+        return layer;
+      }),
+      initialState.layerClasses,
+      {throwOnError: true}
+    );
+  }, 'validation should throw error for invalid columns');
+
+  nextState = reducer(
+    initialState,
+    VisStateActions.applyLayerConfig(
+      oldLayerId,
+      transformConfig(layer => {
+        layer.config.dataId = 'INVALID DATA ID';
+        return layer;
+      })
+    )
+  );
+  t.equal(
+    getUpdatedLayerJson(nextState).config.dataId,
+    oldLayer.config.dataId,
+    'should not change data id to invalid one'
+  );
+  t.deepEqual(
+    getUpdatedLayerJson(nextState),
+    layerToJson(oldLayer, schema),
+    'should not change on invalid data id'
+  );
+
+  nextState = reducer(
+    initialState,
+    VisStateActions.applyLayerConfig(
+      oldLayerId,
+      transformConfig(layer => {
+        layer.type = '3D';
+        return layer;
+      })
+    )
+  );
+  t.equal(getUpdatedLayerJson(nextState).type, '3D', 'should change layer type');
 
   t.end();
 });
