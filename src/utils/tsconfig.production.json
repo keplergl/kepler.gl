@@ -6,8 +6,8 @@
     "jsx": "react",
     "module": "esnext",
     "moduleResolution": "node",
-    "declaration":true,
-    "emitDeclarationOnly":true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
@@ -22,12 +22,7 @@
     "strict": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": "./src",
-    "paths": {
-      "*": ["*"]
-    }
+    "baseUrl": "./src"
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }
