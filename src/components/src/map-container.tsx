@@ -873,13 +873,15 @@ export default function MapContainerFactory(
         // lead to inadvertent changes to the state of the main map)
         return;
       }
-      onViewPortChange(
-        viewState,
-        this.props.mapStateActions.updateMap,
-        this.props.onViewStateChange,
-        this.props.primary,
-        this.props.index
-      );
+      requestAnimationFrame(() => {
+        onViewPortChange(
+          viewState,
+          this.props.mapStateActions.updateMap,
+          this.props.onViewStateChange,
+          this.props.primary,
+          this.props.index
+        );
+      });
     };
 
     _toggleMapControl = panelId => {
