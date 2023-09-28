@@ -5,13 +5,14 @@
     "prettier",
     "plugin:prettier/recommended",
     "prettier/react",
-    "plugin:react-hooks/recommended"
+    "plugin:react-hooks/recommended",
+    "plugin:jest/recommended"
   ],
   "env": {
     "es6": true,
     "browser": true,
     "node": true,
-    "jest": true
+    "jest/globals": true
   },
   "globals": {
     "page": true,

@@ -88,6 +88,7 @@ export function applyActions(reducer, initialState, actions) {
   );
 }
 
+// TODO: need to be deleted and imported from raw-states
 export const InitialState = keplerGlReducer(undefined, {});
 
 /**
@@ -286,7 +287,7 @@ function mockStateWithH3Layer() {
   return prepareState;
 }
 
-function mockStateWithMultipleH3Layers() {
+export function mockStateWithMultipleH3Layers() {
   const initialState = cloneDeep(InitialState);
 
   const prepareState = applyActions(keplerGlReducer, initialState, [

@@ -51,7 +51,7 @@ export function generateMapboxLayers(
           return acc;
         }
 
-        const layer = layers[layerId];
+        const layer = layers[layerIndex];
 
         if (!(layer.overlayType === OVERLAY_TYPE_CONST.mapboxgl && layersToRender[layerId])) {
           return acc;

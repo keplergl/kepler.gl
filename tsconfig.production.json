@@ -31,6 +31,7 @@
   "exclude": [
     "src/deckgl-layers",
     "src/layers",
+    "node_modules",
     "*.js" //TODO remove one all translations finished
   ]
 }

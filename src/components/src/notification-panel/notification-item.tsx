@@ -22,6 +22,7 @@ import React, {Component} from 'react';
 import styled from 'styled-components';
 import {Delete, Info, Warning, Checkmark} from '../common/icons';
 import ReactMarkdown from 'react-markdown';
+import {dataTestIds} from '@kepler.gl/constants';
 import {ActionHandler, removeNotification as removeNotificationActions} from '@kepler.gl/actions';
 
 interface NotificationItemContentBlockProps {
@@ -114,10 +115,10 @@ const NotificationIcon = styled.div`
 `;
 
 const icons = {
-  info: <Info />,
-  warning: <Warning />,
-  error: <Warning />,
-  success: <Checkmark />
+  info: <Info data-testid={dataTestIds.infoIcon} />,
+  warning: <Warning data-testid={dataTestIds.warningIcon} />,
+  error: <Warning data-testid={dataTestIds.errorIcon} />,
+  success: <Checkmark data-testid={dataTestIds.successIcon} />
 };
 
 const LinkRenderer = props => {

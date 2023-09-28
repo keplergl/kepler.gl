@@ -34,6 +34,7 @@
     "src/deckgl-layers/cluster-layer",
 
     // build files
-    "src/**/dist/**"
+    "src/**/dist/**",
+    "node_modules"
   ]
 }

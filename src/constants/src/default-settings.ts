@@ -1126,3 +1126,15 @@ export const MAP_CONTROLS = keyMirror({
  * https://github.com/visgl/deck.gl/blob/master/docs/upgrade-guide.md
  */
 export const PROJECTED_PIXEL_SIZE_MULTIPLIER = 2 / 3;
+
+export const dataTestIds: Record<string, string> = {
+  infoIcon: 'info-icon',
+  warningIcon: 'warning-icon',
+  errorIcon: 'error-icon',
+  successIcon: 'success-icon',
+  checkmarkIcon: 'checkmark-icon',
+  sortableLayerItems: 'sortable-layer-items',
+  layerTitleEditor: 'layer__title__editor',
+  removeLayerAction: 'remove-layer-action',
+  layerPanel: 'layer-panel'
+};
