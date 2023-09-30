@@ -19,15 +19,16 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {render} from '@testing-library/react';
-import {theme} from 'styles/base';
+import {Provider} from 'react-redux';
+import configureStore from 'redux-mock-store';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
 import {messages} from 'localization';
-import configureStore from 'redux-mock-store';
-import coreReducer from 'reducers/core';
-import {keplerGlInit} from 'actions/actions';
-import {Provider} from 'react-redux';
+
+import {render} from '@testing-library/react';
+import {theme} from '@kepler.gl/styles';
+import {keplerGlReducerCore as coreReducer} from '@kepler.gl/reducers';
+import {keplerGlInit} from '@kepler.gl/actions';
 
 const mockStore = configureStore();
 const initialCoreState = coreReducer(undefined, keplerGlInit({}));

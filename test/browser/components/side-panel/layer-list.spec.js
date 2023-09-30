@@ -19,19 +19,18 @@
 // THE SOFTWARE.
 
 import React from 'react';
-import {fireEvent, screen} from '@testing-library/react';
-import {appInjector} from 'components';
-import LayerListFactory from 'components/side-panel/layer-panel/layer-list';
-import * as VisStateActions from 'actions/vis-state-actions';
-import * as UIStateActions from 'actions/ui-state-actions';
-import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import cloneDeep from 'lodash.clonedeep';
-import keplerGlReducer from 'reducers/core';
-import {addDataToMap} from 'actions/actions';
-import {dataId as csvDataId} from 'test/fixtures/test-csv-data';
-import {processCsvData} from 'processors/data-processor';
-import testLayerData from 'test/fixtures/test-layer-data';
-import {dataTestIds} from '../../../../src/constants/default-settings';
+
+import {fireEvent, screen} from '@testing-library/react';
+import {dataTestIds} from '@kepler.gl/constants';
+import {appInjector, LayerListFactory} from '@kepler.gl/components';
+import {VisStateActions, UIStateActions, addDataToMap} from '@kepler.gl/actions';
+import {processCsvData} from '@kepler.gl/processors';
+import {keplerGlReducer} from '@kepler.gl/reducers';
+
+import {renderWithTheme} from '../../../helpers/component-jest-utils';
+import testLayerData from '../../../fixtures/test-layer-data';
+import {dataId as csvDataId} from '../../../fixtures/test-csv-data';
 
 // TODO: need to be deleted and imported from raw-states
 const InitialState = keplerGlReducer(undefined, {});
@@ -107,8 +106,7 @@ const defaultProps = {
   visStateActions: VisStateActions
 };
 
-jest.mock('actions/vis-state-actions');
-jest.mock('actions/ui-state-actions');
+jest.mock('@kepler.gl/actions');
 
 describe('Components -> SidePanel -> LayerPanel -> LayerList', () => {
   it('render sortable list', () => {
