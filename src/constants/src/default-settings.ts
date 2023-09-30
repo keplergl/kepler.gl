@@ -565,7 +565,7 @@ export const AGGREGATION_TYPES: {
   variance: 'variance';
   // ordinal
   mode: 'mode';
-  countUnique: 'count unique';
+  countUnique: 'countUnique';
 } = {
   // default
   count: 'count',
@@ -579,8 +579,22 @@ export const AGGREGATION_TYPES: {
   variance: 'variance',
   // ordinal
   mode: 'mode',
-  countUnique: 'count unique'
+  countUnique: 'countUnique'
 };
+
+export const AGGREGATION_TYPE_OPTIONS: {id: string; label: string}[] = Object.entries(
+  AGGREGATION_TYPES
+).map(([key, value]) => ({
+  id: key,
+  label:
+    key === 'stdev'
+      ? 'Std Deviation'
+      : key === 'countUnique'
+      ? 'Count Unique'
+      : typeof value === 'string'
+      ? value.charAt(0).toUpperCase() + value.slice(1)
+      : value
+}));
 
 export const linearFieldScaleFunctions = {
   [CHANNEL_SCALES.color]: [SCALE_TYPES.quantize, SCALE_TYPES.quantile],

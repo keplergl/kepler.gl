@@ -1267,7 +1267,7 @@ mergedLayer3.config = {
   },
   visConfig: {
     colorAggregation: 'maximum',
-    sizeAggregation: 'average',
+    sizeAggregation: 'count',
     enable3d: true,
     opacity: 0.8,
     worldUnitSize: 0.5,

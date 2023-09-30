@@ -829,11 +829,6 @@ export function validateLayerWithData(
     }
   }
 
-  // visual channel field is saved to be {name, type}
-  // find visual channel field by matching both name and type
-  // refer to vis-state-schema.js VisualChannelSchemaV1
-  newLayer = validateSavedVisualChannels(fields, newLayer, savedLayer, options);
-
   const textLabel =
     savedLayer.config.textLabel && newLayer.config.textLabel
       ? validateSavedTextLabel(
@@ -848,13 +843,20 @@ export function validateLayerWithData(
   const visConfig = newLayer.copyLayerConfig(
     newLayer.config.visConfig,
     savedLayer.config.visConfig || {},
-    {shallowCopy: ['colorRange', 'strokeColorRange']}
+    {
+      shallowCopy: ['colorRange', 'strokeColorRange']
+    }
   );
 
   newLayer.updateLayerConfig({
     visConfig,
     textLabel
   });
+
+  // visual channel field is saved to be {name, type}
+  // find visual channel field by matching both name and type
+  // refer to vis-state-schema.js VisualChannelSchemaV1
+  newLayer = validateSavedVisualChannels(fields, newLayer, savedLayer, options);
 
   if (throwOnError) {
     if (!newLayer.isValidToSave()) {

@@ -45,12 +45,12 @@ test('AggregateUtils - GetMode', t => {
 
 test('AggregateUtils - aggregate', t => {
   const data = [1, 2, 3, 1, 2, 3, 4, 3];
-  const results = [8, 2.375, 4, 1, 2.5, 1.0606601717798212, 19, 1.125, '3', 8];
+  const results = [8, 2.375, 4, 1, 2.5, 1.0606601717798212, 19, 1.125, '3', 4];
   Object.keys(AGGREGATION_TYPES).map((technique, index) => {
     t.equal(
       aggregate(data, technique),
       results[index],
-      `Should compute the right aggregation using ${technique} - ${index}`
+      `Should compute the right aggregation using ${technique} - ${aggregate(data, technique)}`
     );
   });
 
