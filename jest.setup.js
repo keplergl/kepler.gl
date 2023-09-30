@@ -19,10 +19,10 @@
 // THE SOFTWARE.
 
 import '@testing-library/jest-dom';
-import * as Utils from './src/utils/utils';
+import * as Utils from '@kepler.gl/utils';
 
-jest.mock('./src/utils/utils', () => ({
-  ...(jest.requireActual('./src/utils/utils')),
+jest.mock('@kepler.gl/utils', () => ({
+  ...jest.requireActual('@kepler.gl/utils'),
   hasPortableWidth: jest.fn(),
   hasMobileWidth: jest.fn()
 }));

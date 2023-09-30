@@ -19,10 +19,12 @@
 // THE SOFTWARE.
 
 import cloneDeep from 'lodash.clonedeep';
-import keplerGlReducer from 'reducers';
-import {addDataToMap} from 'actions/actions';
+
+import {keplerGlReducer} from '@kepler.gl/reducers';
+import {addDataToMap} from '@kepler.gl/actions';
+import {processCsvData} from '@kepler.gl/processors';
+
 import {dataId as csvDataId} from '../fixtures/test-csv-data';
-import {processCsvData} from 'processors';
 import testLayerData from '../fixtures/test-layer-data';
 
 export function applyActions(reducer, initialState, actions) {

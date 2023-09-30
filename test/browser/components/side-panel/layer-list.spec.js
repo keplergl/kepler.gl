@@ -24,16 +24,16 @@ import cloneDeep from 'lodash.clonedeep';
 import {fireEvent, screen} from '@testing-library/react';
 import {dataTestIds} from '@kepler.gl/constants';
 import {appInjector, LayerListFactory} from '@kepler.gl/components';
-import {VisStateActions, UIStateActions, addDataToMap} from '@kepler.gl/actions';
+import {VisStateActions, UIStateActions, addDataToMap, keplerGlInit} from '@kepler.gl/actions';
 import {processCsvData} from '@kepler.gl/processors';
-import {keplerGlReducer} from '@kepler.gl/reducers';
+import {keplerGlReducerCore as keplerGlReducer} from '@kepler.gl/reducers';
 
 import {renderWithTheme} from '../../../helpers/component-jest-utils';
 import testLayerData from '../../../fixtures/test-layer-data';
 import {dataId as csvDataId} from '../../../fixtures/test-csv-data';
 
 // TODO: need to be deleted and imported from raw-states
-const InitialState = keplerGlReducer(undefined, {});
+const InitialState = keplerGlReducer(undefined, keplerGlInit({}));
 
 function applyActions(reducer, initialState, actions) {
   const actionQ = Array.isArray(actions) ? actions : [actions];
