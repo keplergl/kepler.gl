@@ -406,9 +406,11 @@ export function applyLayerConfigUpdater(
     return nextState;
   }
 
-  const serializedOldLayer = serializeLayer(oldLayer, state.schema);
+  // serializeLayer() might return null if the old layer is not valid,
+  // we should still apply the changes in that case
+  const serializedOldLayer = serializeLayer(oldLayer, state.schema) ?? {config: {}};
   const serializedNewLayer = serializeLayer(newLayer, state.schema);
-  if (!serializedNewLayer || !serializedOldLayer) {
+  if (!serializedNewLayer) {
     return state;
   }
   if (!isEqual(serializedOldLayer, serializedNewLayer)) {
