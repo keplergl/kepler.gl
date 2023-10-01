@@ -30,6 +30,7 @@ import {useDroppable} from '@dnd-kit/core';
 import {useSortable, SortableContext, verticalListSortingStrategy} from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
 import {findById} from '@kepler.gl/utils';
+import {dataTestIds} from '@kepler.gl/constants';
 
 export type LayerListProps = {
   datasets: Datasets;
@@ -93,6 +94,7 @@ function LayerListFactory(LayerPanel: ReturnType<typeof LayerPanelFactory>) {
       <SortableStyledItem
         ref={setNodeRef}
         className={classnames('sortable-layer-items', {sorting: isDragging})}
+        data-testid={dataTestIds.sortableLayerItems}
         transform={CSS.Transform.toString(transform)}
         transition={transition}
         {...attributes}

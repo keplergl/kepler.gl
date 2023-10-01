@@ -18,23 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export const TIMEOUT = process.env.SLOWMO ? 100000 : 10000;
+import '@testing-library/jest-dom';
+import * as Utils from '@kepler.gl/utils';
 
-export const DEFAULT_WAIT_TIME = {
-  SHORTER: 1000,
-  SHORT: 2000,
-  LONG: 4000,
-  LONGER: 5000
-};
-
-export const detectModalClosing = page =>
-  page.waitFor(() => !document.querySelector('.modal--wrapper'));
-
-export const testScreenshot = async (page, options = {}) => {
-  const image = await page.screenshot();
-  expect(image).toMatchImageSnapshot({
-    failureThreshold: 1,
-    failureThresholdType: 'percent',
-    ...options
-  });
-};
+jest.mock('@kepler.gl/utils', () => ({
+  ...jest.requireActual('@kepler.gl/utils'),
+  hasPortableWidth: jest.fn(),
+  hasMobileWidth: jest.fn()
+}));

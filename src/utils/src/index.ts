@@ -34,6 +34,7 @@ export {errorNotification} from './notifications-utils';
 
 export {createNotification, exportImageError, successNotification} from './notifications-utils';
 
+export {setStyleSheetBaseHref} from './dom-utils';
 export {default as domtoimage} from './dom-to-image';
 export {getFrequency, getMode, aggregate} from './aggregate-utils';
 // eslint-disable-next-line prettier/prettier

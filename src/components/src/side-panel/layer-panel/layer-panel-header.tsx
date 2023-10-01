@@ -42,6 +42,7 @@ import {
 
 import {InlineInput, StyledPanelHeader} from '../../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
+import {dataTestIds} from '@kepler.gl/constants';
 import {RGBColor} from '@kepler.gl/types';
 import {BaseProps} from '../../common/icons';
 
@@ -206,6 +207,11 @@ export const DragHandle: React.FC<{
   </StyledDragHandle>
 );
 
+const noOp = (event: MouseEvent) => {
+  event.stopPropagation();
+  event.preventDefault();
+};
+
 export const LayerLabelEditor: React.FC<LayerLabelEditorProps> = ({
   layerId,
   label,
@@ -216,11 +222,9 @@ export const LayerLabelEditor: React.FC<LayerLabelEditorProps> = ({
   <InlineInput
     type="text"
     className="layer__title__editor"
+    data-testid={dataTestIds.layerTitleEditor}
     value={label}
-    onClick={(e: MouseEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
-    }}
+    onClick={noOp}
     onChange={onEdit}
     onFocus={onFocus}
     onBlur={onBlur}
@@ -302,6 +306,7 @@ export function LayerPanelHeaderActionSectionFactory(
           {showRemoveLayer ? (
             <PanelHeaderAction
               className="layer__remove-layer"
+              testId="remove-layer-action"
               id={layerId}
               tooltip={'tooltip.removeLayer'}
               onClick={onRemoveLayer}

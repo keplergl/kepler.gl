@@ -89,7 +89,6 @@ export function provideInitialState(initialState, extraReducers?) {
     };
 
     // TODO: Understand why the Lint sees an error here, while the IDE does not.
-    // @ts-expect-error
     return handleActions(handlers, initialCoreState)(state, action);
   };
 }

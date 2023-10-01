@@ -29,6 +29,7 @@ import styled from 'styled-components';
 
 import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeaderFactory from './layer-panel-header';
+import {dataTestIds} from '@kepler.gl/constants';
 import {NestedPartial, LayerVisConfig, ColorUI} from '@kepler.gl/types';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {toggleModal, VisStateActions, ActionHandler} from '@kepler.gl/actions';
@@ -151,6 +152,7 @@ function LayerPanelFactory(
         <PanelWrapper
           active={isConfigActive}
           className={`layer-panel ${this.props.className}`}
+          data-testid={dataTestIds.layerPanel}
           style={this.props.style}
           onMouseDown={this.props.onMouseDown}
           onTouchStart={this.props.onTouchStart}

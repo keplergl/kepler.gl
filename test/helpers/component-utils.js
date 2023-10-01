@@ -18,6 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+/*
+ THIS FILE IS DEPRECATED: do not use enzyme for your tests but only jest.
+ Use component-test-utils.js
+ */
+
 /* eslint-disable enzyme-deprecation/no-mount */
 import React from 'react';
 import sinon from 'sinon';
