@@ -55,7 +55,7 @@
     "cover-tape": "nyc --reporter=json --report-dir=tape-coverage --reporter=html yarn test-tape",
     "cover-jest": "yarn jest --coverage --reporter=html --watchAll=false",
     "cover-copy": "rm -rf .nyc_output && mkdir .nyc_output && cp tape-coverage/coverage-final.json .nyc_output/tape-coverage-final.json && cp jest-coverage/coverage-final.json .nyc_output/jest-coverage-final.json",
-    "cover": "yarn cover-jest && yarn cover-tape && yarn cover-copy && nyc report --reporter=json --reporter=html --reporter=lcov",
+    "cover": "yarn cover-jest && yarn cover-tape && yarn cover-copy && nyc report --reporter=json --reporter=html",
     "start": "yarn install-and-start -- examples/demo-app start-local",
     "start:deck": "yarn install-and-start -- examples/demo-app start-local-deck",
     "start:deck-src": "yarn install-and-start -- examples/demo-app start-local-deck-src",
