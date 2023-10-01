@@ -5,7 +5,7 @@ const config = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   verbose: true,
-  testMatch: ['**/?(*.)+(spec).[jt]s?(x)']
+  testMatch: ['<rootDir>/src/**/*.spec.js', '<rootDir>/test/**/*.spec.js']
 };
 
 module.exports = config;

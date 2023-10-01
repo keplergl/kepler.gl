@@ -34,7 +34,6 @@ export type Notification = Record<string, any> & {
   type: 'info' | 'error' | 'warning' | 'success';
   topic: 'global' | 'file';
   count: number;
-  options: any;
 };
 
 /**
@@ -47,7 +46,7 @@ export function createNotification({
   id = generateHashId(DEFAULT_UUID_COUNT),
   count = 1,
   ...options
-}: Partial<Notification>) {
+}: Partial<Notification>): Notification {
   return {
     ...options,
     id,
