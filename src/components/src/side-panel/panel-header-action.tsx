@@ -39,15 +39,19 @@ export interface PanelHeaderActionProps {
   onClick?: MouseEventHandler;
   tooltipType?: TooltipProps['type'];
   IconComponent: PanelHeaderActionIcon;
+  testId?: string;
 }
 
 type HeaderActionWrapperProps = {
   flush?: boolean;
   active?: boolean;
   hoverColor?: string | null;
+  testId?: string;
 };
 
-const HeaderActionWrapper = styled.div<HeaderActionWrapperProps>`
+const HeaderActionWrapper = styled.div.attrs((props: HeaderActionWrapperProps) => ({
+  dataTestId: props.testId
+}))<HeaderActionWrapperProps>`
   margin-left: ${props => (props.flush ? 0 : 8)}px;
   display: flex;
   align-items: center;
@@ -81,7 +85,8 @@ export default function PanelHeaderActionFactory(): React.FC<PanelHeaderActionPr
     tooltipType,
     disabled,
     className,
-    IconComponent
+    IconComponent,
+    testId
   }) => {
     return (
       <HeaderActionWrapper
@@ -96,6 +101,7 @@ export default function PanelHeaderActionFactory(): React.FC<PanelHeaderActionPr
         {IconComponent ? (
           <IconComponent
             className="panel--header__action__component"
+            data-testid={testId}
             data-tip
             data-for={`${tooltip}_${id}`}
             height="16px"

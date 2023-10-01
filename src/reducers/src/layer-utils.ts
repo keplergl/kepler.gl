@@ -144,7 +144,8 @@ export function calculateLayerData<S extends MinVisStateForLayerData>(
     });
     layer.isValid = false;
 
-    layer.errorMessage = err?.message ? err.message.substring(0, 100) : 'Unknown error';
+    layer.errorMessage =
+      err instanceof Error && err.message ? err.message.substring(0, 100) : 'Unknown error';
 
     layerData = {};
   }

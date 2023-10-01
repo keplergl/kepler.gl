@@ -44,12 +44,16 @@ function getObserverRegistry() {
     });
     _observerRegistry = {
       subscribe(target, callback) {
-        resizeObserver.observe(target);
-        callbacks.set(target, callback);
+        if (target instanceof Element) {
+          resizeObserver.observe(target);
+          callbacks.set(target, callback);
+        }
       },
       unsubscribe(target) {
-        resizeObserver.unobserve(target);
-        callbacks.delete(target);
+        if (target instanceof Element) {
+          resizeObserver.unobserve(target);
+          callbacks.delete(target);
+        }
       }
     };
   }
