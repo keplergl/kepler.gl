@@ -106,7 +106,7 @@ const defaultProps = {
   visStateActions: VisStateActions
 };
 
-jest.mock('@kepler.gl/actions');
+// jest.mock('@kepler.gl/actions');
 
 describe('Components -> SidePanel -> LayerPanel -> LayerList', () => {
   it('render sortable list', () => {
