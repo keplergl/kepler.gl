@@ -371,6 +371,50 @@ test('KeplerTable -> findPointFieldPairs', t => {
           suffix: ['latitude', 'longitude']
         }
       ]
+    },
+    {
+      fields: ['point_lat', 'point_lng', 'alt'],
+      expected: [
+        {
+          defaultName: 'point',
+          pair: {
+            // no matching "alt" altitude found for this pair
+            lat: {
+              fieldIdx: 0,
+              value: 'point_lat'
+            },
+            lng: {
+              fieldIdx: 1,
+              value: 'point_lng'
+            }
+          },
+          suffix: ['lat', 'lng']
+        }
+      ]
+    },
+    {
+      fields: ['point_lat', 'point_lng', 'point_alt'],
+      expected: [
+        {
+          defaultName: 'point',
+          pair: {
+            // a matching "point_alt" altitude was found for this pair
+            lat: {
+              fieldIdx: 0,
+              value: 'point_lat'
+            },
+            lng: {
+              fieldIdx: 1,
+              value: 'point_lng'
+            },
+            alt: {
+              fieldIdx: 2,
+              value: 'point_alt'
+            }
+          },
+          suffix: ['lat', 'lng']
+        }
+      ]
     }
   ];
 

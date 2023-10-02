@@ -553,6 +553,12 @@ class Layer {
     }
 
     const {pair: partnerKey, fieldPairKey} = this.columnPairs?.[key];
+
+    if (!pair[fieldPairKey]) {
+      // do not allow `key: undefined` to creep into the `updatedColumn` object
+      return this.config.columns;
+    }
+
     const {fieldPairKey: partnerFieldPairKey} = this.columnPairs?.[partnerKey];
 
     return {
