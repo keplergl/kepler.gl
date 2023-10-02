@@ -29,6 +29,7 @@ const DatasetName = styled.div.attrs({
   font-weight: 500;
   font-size: 12px;
   color: ${props => props.theme.titleColorLT};
+  white-space: nowrap;
 `;
 
 interface DatasetLabelType {

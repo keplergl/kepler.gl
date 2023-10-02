@@ -97,7 +97,6 @@ export const Container = styled.div<ContainerProps>`
     flex-direction: row;
     flex-grow: 1;
     overflow: hidden;
-    border-top: none;
 
     .scroll-in-ui-thread.pinned-columns--header {
       overflow: hidden;
