@@ -26,12 +26,13 @@ import sinon from 'sinon';
 import cloneDeep from 'lodash.clonedeep';
 
 import {
-  ColorSelector,
+  appInjector,
+  ColorSelectorFactory,
   ColorSelectorInput,
   ColorBlock,
-  LayerColorSelector,
-  LayerColorRangeSelector,
-  ArcLayerColorSelector,
+  LayerColorSelectorFactory,
+  LayerColorRangeSelectorFactory,
+  ArcLayerColorSelectorFactory,
   getLayerConfiguratorProps,
   getVisConfiguratorProps,
   SingleColorPalette,
@@ -51,6 +52,11 @@ import {COLOR_RANGES} from '@kepler.gl/constants';
 import {StateWFilesFiltersLayerColor, StateWTrips} from 'test/helpers/mock-state';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 import {hexToRgb} from '@kepler.gl/utils';
+
+const ColorSelector = appInjector.get(ColorSelectorFactory);
+const LayerColorSelector = appInjector.get(LayerColorSelectorFactory);
+const LayerColorRangeSelector = appInjector.get(LayerColorRangeSelectorFactory);
+const ArcLayerColorSelector = appInjector.get(ArcLayerColorSelectorFactory);
 
 test('Components -> ColorSelector.render', t => {
   t.doesNotThrow(() => {
@@ -788,6 +794,53 @@ test('Components -> LayerColorRangeSelector.render -> ColorSelector -> ColorRang
     picker.simulateError({name: 'SecurityError', message: '', stack: []});
     t.equal(wrapper.find(Portaled).length, 1);
   }, 'Should not fail with SecurityError when close CustomPicker');
+
+  t.end();
+});
+
+test('Components -> ColorSelector.opacity', t => {
+  const setColor = sinon.spy();
+
+  const colorSelectorProps = {
+    colorSets: [
+      {
+        selectedColor: [128, 64, 32, 100],
+        setColor: setColor
+      }
+    ],
+    useOpacity: true
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <ColorSelector {...colorSelectorProps} />
+      </IntlWrapper>
+    );
+  }, 'Mount should not fail');
+
+  // show palette
+  wrapper
+    .find('.color-selector__selector')
+    .at(0)
+    .invoke('onMouseDown')({preventDefault() {}, stopPropagation() {}});
+
+  // select color
+  wrapper
+    .find('.single-color-palette__block')
+    .at(100)
+    .simulate('click');
+  t.ok(setColor.calledOnce, 'should call setColor once');
+  t.ok(setColor.calledWith([228, 155, 0, 100]), 'setColor called with correct color and opacity');
+
+  // change opacity via slider
+  wrapper
+    .find('RangeSlider')
+    .at(0)
+    .invoke('onChange')([0.5, 0.5]);
+  t.ok(setColor.calledTwice, 'should call setColor twice');
+  t.ok(setColor.calledWith([128, 64, 32, 128]), 'setColor called with correct color and opacity');
 
   t.end();
 });

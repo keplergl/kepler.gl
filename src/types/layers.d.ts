@@ -85,10 +85,14 @@ export type FieldPair = {
 export type LayerTextLabel = {
   field: Field | null;
   color: RGBColor;
+  background: boolean;
   size: number;
   offset: [number, number];
   anchor: string;
   alignment: string;
+  outlineWidth: number;
+  outlineColor: RGBAColor;
+  backgroundColor: RGBAColor;
 };
 
 export type ColorUI = {
@@ -266,6 +270,7 @@ export type TextConfigNumber = {
 };
 export type LayerTextConfig = {
   fontSize: TextConfigNumber;
+  outlineWidth: TextConfigNumber;
   textAnchor: TextConfigSelect;
   textAlignment: TextConfigSelect;
 };

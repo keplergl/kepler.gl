@@ -71,9 +71,12 @@ export default {
       labelWithId: 'Label {labelId}',
       fontSize: 'Font size',
       fontColor: 'Font color',
+      backgroundColor: 'Background color',
       textAnchor: 'Text anchor',
       alignment: 'Alignment',
-      addMoreLabel: 'Add More Label'
+      addMoreLabel: 'Add More Label',
+      outlineWidth: 'Outline width',
+      outlineColor: 'Outline color'
     }
   },
   sidebar: {
@@ -459,7 +462,8 @@ export default {
     customPalette: 'Custom Palette',
     steps: 'steps',
     type: 'type',
-    reversed: 'reversed'
+    reversed: 'reversed',
+    opacity: 'Opacity'
   },
   scale: {
     colorScale: 'Color Scale',

@@ -33,6 +33,12 @@ import FieldSelectorFactory, {FieldListItemFactoryFactory} from './common/field-
 import FieldTokenFactory from './common/field-token';
 import PanelHeaderActionFactory from './side-panel/panel-header-action';
 import InfoHelperFactory from './common/info-helper';
+import ColorSelectorFactory from './side-panel/layer-panel/color-selector';
+import {
+  LayerColorSelectorFactory,
+  LayerColorRangeSelectorFactory,
+  ArcLayerColorSelectorFactory
+} from './side-panel/layer-panel/layer-color-selector';
 import {appInjector} from './container';
 
 // Components
@@ -66,7 +72,7 @@ export {default as PanelToggleFactory} from './side-panel/panel-toggle';
 export {default as PanelTabFactory} from './side-panel/panel-tab';
 
 export {default as LayerManagerFactory} from './side-panel/layer-manager';
-export {default as ColorSelector, ColorSelectorInput, ColorBlock} from './side-panel/layer-panel/color-selector';
+export {ColorSelectorInput, ColorBlock} from './side-panel/layer-panel/color-selector';
 export {default as CustomSelector} from './side-panel/layer-panel/color-selector';
 export {default as ColorPalette} from './side-panel/layer-panel/color-palette';
 export {default as ColorRangeSelector, PaletteConfig, ColorPaletteGroup, ALL_TYPES} from './side-panel/layer-panel/color-range-selector';
@@ -74,12 +80,9 @@ export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel
 export {default as SingleColorPalette} from './side-panel/layer-panel/single-color-palette';
 export {
   default as LayerConfiguratorFactory,
-  LayerColorRangeSelector, 
   getLayerConfiguratorProps, 
   getLayerDataset,
   getVisConfiguratorProps, 
-  ArcLayerColorSelector,
-  LayerColorSelector
 } from './side-panel/layer-panel/layer-configurator';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
 
@@ -352,6 +355,10 @@ export const PanelHeaderAction = appInjector.get(PanelHeaderActionFactory);
 export const FieldListItemFactory = appInjector.get(FieldListItemFactoryFactory);
 export const LayerTypeListItem = appInjector.get(LayerTypeListItemFactory);
 export const InfoHelper = appInjector.get(InfoHelperFactory);
+export const ColorSelector = appInjector.get(ColorSelectorFactory);
+export const LayerColorSelector = appInjector.get(LayerColorSelectorFactory);
+export const LayerColorRangeSelector = appInjector.get(LayerColorRangeSelectorFactory);
+export const ArcLayerColorSelector = appInjector.get(ArcLayerColorSelectorFactory);
 export {
   appInjector,
   TimeRangeSliderFactory,
@@ -363,5 +370,9 @@ export {
   LayerTypeListItemFactory,
   ChannelByValueSelectorFactory,
   FieldListItemFactoryFactory,
-  InfoHelperFactory
+  InfoHelperFactory,
+  ColorSelectorFactory,
+  LayerColorSelectorFactory,
+  LayerColorRangeSelectorFactory,
+  ArcLayerColorSelectorFactory
 };
