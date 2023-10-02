@@ -23,7 +23,7 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import {CORS_LINK} from '../../constants/default-settings';
-import {FormattedHTMLMessage, FormattedMessage} from 'react-intl';
+import {FormattedMessage} from 'react-intl';
 import {Button} from '@kepler.gl/components';
 import {validateUrl} from '../../utils/url';
 
@@ -91,6 +91,8 @@ const Error = ({error, url}) => (
   </StyledError>
 );
 
+const CORS_LINK_MESSAGE = {corsLink: CORS_LINK};
+
 class LoadRemoteMap extends Component {
   state = {
     dataUrl: '',
@@ -138,7 +140,7 @@ class LoadRemoteMap extends Component {
           </StyledInputLabel>
           <StyledInputLabel>
             <FormattedMessage id={'loadRemoteMap.cors'} />{' '}
-            <FormattedHTMLMessage id={'loadRemoteMap.clickHere'} values={{corsLink: CORS_LINK}} />
+            <FormattedMessage id={'loadRemoteMap.clickHere'} values={CORS_LINK_MESSAGE} />
           </StyledInputLabel>
           <StyledFromGroup>
             <StyledInput
