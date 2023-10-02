@@ -186,7 +186,7 @@ export const LegendRow = ({label = '', displayLabel, color, idx}) => (
   <g transform={`translate(0, ${idx * (ROW_H + GAP)})`}>
     <rect width={RECT_W} height={ROW_H} style={{fill: color}} />
     <text x={RECT_W + 8} y={ROW_H - 1}>
-      {displayLabel ? label.toString() : ''}
+      {displayLabel ? label?.toString() ?? 'N/A' : ''}
     </text>
   </g>
 );
