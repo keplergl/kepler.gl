@@ -97,7 +97,6 @@ export const Container = styled.div<ContainerProps>`
     flex-direction: row;
     flex-grow: 1;
     overflow: hidden;
-    border-top: none;
 
     .scroll-in-ui-thread.pinned-columns--header {
       overflow: hidden;
@@ -219,7 +218,7 @@ interface GetRowCellProps {
 /*
  * This is an accessor method used to generalize getting a cell from a data row
  */
-const getRowCell = (
+const defaultGetRowCell = (
   {dataContainer, columns, column, colMeta, rowIndex, sortOrder}: GetRowCellProps,
   formatter
 ) => {
@@ -408,6 +407,7 @@ export interface DataTableProps {
   sortOrder?: number[] | null;
   showStats?: boolean;
   hasCustomScrollBarStyle?: boolean;
+  getRowCell?: (renderDataCellProps: GetRowCellProps, formatter: any) => string | number;
 }
 
 interface DataTableState {
@@ -505,6 +505,7 @@ function DataTableFactory(HeaderCell: ReturnType<typeof HeaderCellFactory>) {
     scaleCellsToWidth = debounce(this.doScaleCellsToWidth, 300);
 
     renderDataCell = (columns, isPinned, props: DataTableProps) => {
+      const getRowCell = this.props.getRowCell ?? defaultGetRowCell;
       return cellInfo => {
         const {columnIndex, key, style, rowIndex} = cellInfo;
         const {dataContainer, colMeta} = props;

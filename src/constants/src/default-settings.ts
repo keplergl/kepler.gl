@@ -33,7 +33,7 @@ import {TOOLTIP_FORMAT_TYPES} from './tooltip';
 import {RGBAColor} from '@kepler.gl/types';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
-export const KEPLER_UNFOLDED_BUCKET = 'https://cdn.unfolded.ai/statics/keplergl';
+export const KEPLER_UNFOLDED_BUCKET = 'https://studio-public-data.foursquare.com/statics/keplergl';
 export const BASEMAP_ICON_PREFIX = `${KEPLER_UNFOLDED_BUCKET}/geodude`;
 export const DEFAULT_MAPBOX_API_URL = 'https://api.mapbox.com';
 export const TRANSITION_DURATION = 0;

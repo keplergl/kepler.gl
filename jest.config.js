@@ -30,7 +30,11 @@ const config = {
   // node_modules and pnp folders by default so that they are not transpiled
   // Some libraries (even if transitive) are transitioning to ESM and need additional transpilation. Relevant issues:
   // - tiny-sdf: https://github.com/visgl/deck.gl/issues/7735
-  transformIgnorePatterns: ["/node_modules/(?!(@mapbox/tiny-sdf)/)", "\\.pnp\\.[^\\\/]+$"]
+  // TODO For some reason transformIgnorePatterns are ignored in combination with TS, using moduleNameMapper instead.
+  // transformIgnorePatterns: ["/node_modules/(?!(@mapbox/tiny-sdf)/)", "\\.pnp\\.[^\\\/]+$"]
+  moduleNameMapper: {
+    '@mapbox/tiny-sdf': `<rootDir>/node_modules/@mapbox/tiny-sdf/index.cjs`
+  }
 };
 
 module.exports = config;

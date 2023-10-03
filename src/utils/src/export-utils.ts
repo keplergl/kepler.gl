@@ -138,7 +138,15 @@ export function downloadFile(fileBlob: Blob, fileName: string) {
     link.setAttribute('download', fileName);
 
     document.body.appendChild(link);
-    link.click();
+    // in some cases where maps are embedded, e.g. need to
+    // create and dispatch an event so that the browser downloads
+    // the file instead of navigating to the url
+    const evt = new MouseEvent('click', {
+      view: window,
+      bubbles: false,
+      cancelable: true
+    });
+    link.dispatchEvent(evt);
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }

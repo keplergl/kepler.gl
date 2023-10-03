@@ -82,7 +82,7 @@ const Row: React.FC<RowProps> = ({name, value, deltaValue, url}) => {
   const asImg = /<img>/.test(name);
   return (
     <tr className="layer-hover-info__row" key={name}>
-      <td className="row__name">{name}</td>
+      <td className="row__name">{asImg ? name.replace('<img>', '') : name}</td>
       <td className="row__value">
         {asImg ? (
           <img src={value} />

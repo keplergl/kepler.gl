@@ -50,7 +50,15 @@ const StyledModal = styled.div`
 
 const DatasetCatalog = styled.div`
   display: flex;
-  padding: ${dgSettings.verticalPadding} ${dgSettings.sidePadding} 0;
+  padding: ${dgSettings.verticalPadding} ${dgSettings.sidePadding} 0 0;
+
+  .overflow-horizontal {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-direction: row;
+    ${props => props.theme.modalScrollBar}
+  }
 `;
 
 interface DatasetModalTabProps {
@@ -66,9 +74,8 @@ export const DatasetModalTab = styled.div<DatasetModalTabProps>`
   margin: 0 3px;
   padding: 0 5px;
 
-  :first-child {
-    margin-left: 0;
-    padding-left: 0;
+  :hover {
+    border-bottom: 3px solid black;
   }
 `;
 
@@ -81,6 +88,7 @@ const StyledConfigureButton = styled.div`
   svg {
     stroke: black;
   }
+  cursor: pointer;
 `;
 
 interface DatasetTabsUnmemoizedProps {
@@ -95,16 +103,18 @@ const DatasetTabsUnmemoized: React.FC<DatasetTabsUnmemoizedProps> = ({
   showDatasetTable
 }) => (
   <DatasetCatalog className="dataset-modal-catalog">
-    {Object.values(datasets).map(dataset => (
-      <DatasetModalTab
-        className="dataset-modal-tab"
-        active={dataset === activeDataset}
-        key={dataset.id}
-        onClick={() => showDatasetTable(dataset.id)}
-      >
-        <DatasetLabel dataset={dataset} />
-      </DatasetModalTab>
-    ))}
+    <div className="overflow-horizontal">
+      {Object.values(datasets).map(dataset => (
+        <DatasetModalTab
+          className="dataset-modal-tab"
+          active={dataset === activeDataset}
+          key={dataset.id}
+          onClick={() => showDatasetTable(dataset.id)}
+        >
+          <DatasetLabel dataset={dataset} />
+        </DatasetModalTab>
+      ))}
+    </div>
   </DatasetCatalog>
 );
 
@@ -120,6 +130,7 @@ const TableContainer = styled.div`
   flex-grow: 1;
   min-height: 100%;
   max-height: 100%;
+  max-width: 100%;
 `;
 
 interface DataTableModalProps {
