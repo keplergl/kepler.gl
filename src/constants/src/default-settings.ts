@@ -1127,6 +1127,11 @@ export const MAP_CONTROLS = keyMirror({
  */
 export const PROJECTED_PIXEL_SIZE_MULTIPLIER = 2 / 3;
 
+/**
+ * Maximum value for text outline width
+ */
+export const TEXT_OUTLINE_MULTIPLIER = 5;
+
 export const dataTestIds: Record<string, string> = {
   infoIcon: 'info-icon',
   warningIcon: 'warning-icon',

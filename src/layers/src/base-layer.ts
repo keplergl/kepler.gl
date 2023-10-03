@@ -46,7 +46,8 @@ import {
   UNKNOWN_COLOR_KEY,
   DEFAULT_HIGHLIGHT_COLOR,
   DEFAULT_LAYER_LABEL,
-  PROJECTED_PIXEL_SIZE_MULTIPLIER
+  PROJECTED_PIXEL_SIZE_MULTIPLIER,
+  TEXT_OUTLINE_MULTIPLIER
 } from '@kepler.gl/constants';
 
 import {
@@ -1370,7 +1371,7 @@ class Layer {
             getTextAnchor: textLabel[i].anchor,
             getAlignmentBaseline: textLabel[i].alignment,
             getColor: textLabel[i].color,
-            outlineWidth: textLabel[i].outlineWidth,
+            outlineWidth: textLabel[i].outlineWidth * TEXT_OUTLINE_MULTIPLIER,
             outlineColor: textLabel[i].outlineColor,
             background,
             getBackgroundColor: textLabel[i].backgroundColor,
