@@ -49,10 +49,10 @@
     "webpack-hot-middleware": "^2.24.3"
   },
   "resolutions": {
-    "@luma.gl/core": "8.5.18",
-    "@luma.gl/webgl": "8.5.18",
-    "@deck.gl/core": "8.8.27",
-    "@deck.gl/extensions": "8.8.27",
+    "@luma.gl/core": "8.5.19",
+    "@luma.gl/webgl": "8.5.19",
+    "@deck.gl/core": "8.9.12",
+    "@deck.gl/extensions": "8.9.12",
     "react-vis": "1.11.7"
   }
 }

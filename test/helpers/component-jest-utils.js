@@ -23,10 +23,10 @@ import {Provider} from 'react-redux';
 import configureStore from 'redux-mock-store';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
-import {messages} from 'localization';
 
 import {render} from '@testing-library/react';
 import {theme} from '@kepler.gl/styles';
+import {messages} from '@kepler.gl/localization';
 import {keplerGlReducerCore as coreReducer} from '@kepler.gl/reducers';
 import {keplerGlInit} from '@kepler.gl/actions';
 
