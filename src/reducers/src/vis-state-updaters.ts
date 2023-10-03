@@ -573,11 +573,11 @@ function updateTextLabelPropAndValue(idx, prop, value, textLabel) {
 
   let newTextLabel = textLabel.slice();
 
-  if (prop && (value || textLabel.length === 1)) {
-    newTextLabel = textLabel.map((tl, i) => (i === idx ? {...tl, [prop]: value} : tl));
-  } else if (prop === 'field' && value === null && textLabel.length > 1) {
+  if (prop === 'field' && value === null && textLabel.length > 1) {
     // remove label when field value is set to null
     newTextLabel.splice(idx, 1);
+  } else if (prop) {
+    newTextLabel = textLabel.map((tl, i) => (i === idx ? {...tl, [prop]: value} : tl));
   }
 
   return newTextLabel;
