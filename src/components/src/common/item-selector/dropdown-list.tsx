@@ -209,7 +209,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
     return (
       <DropdownListWrapper className={classList.list} light={light}>
         {this.props.customListHeaderComponent ? (
-          <div className={classList.listHeader}>
+          <div className={classNames(classList.listHeader, this.props.customClasses.listHeader)}>
             <this.props.customListHeaderComponent />
           </div>
         ) : null}
