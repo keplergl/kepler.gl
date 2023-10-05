@@ -64,7 +64,7 @@ const DropdownFooterWrapper = styled.div`
 interface DropdownListProps {
   options?: any[];
   allowCustomValues?: number;
-  customClasses?: object;
+  customClasses?: {listHeader?: string};
   customValues?: any[];
   customListItemComponent?: ElementType;
   customListHeaderComponent?: ElementType;
@@ -209,7 +209,7 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
     return (
       <DropdownListWrapper className={classList.list} light={light}>
         {this.props.customListHeaderComponent ? (
-          <div className={classNames(classList.listHeader, this.props.customClasses.listHeader)}>
+          <div className={classNames(classList.listHeader, this.props.customClasses?.listHeader)}>
             <this.props.customListHeaderComponent />
           </div>
         ) : null}
