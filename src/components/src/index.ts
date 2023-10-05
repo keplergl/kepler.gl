@@ -222,6 +222,7 @@ export {default as Checkbox} from './common/checkbox';
 export {default as ColorLegend, LegendRow} from './common/color-legend';
 export {default as LoadingSpinner} from './common/loading-spinner';
 export {default as LoadingDialog} from './modals/loading-dialog';
+export {MapViewStateContext, MapViewStateContextProvider} from './map-view-state-context';
 export {default as FieldTokenFactory} from './common/field-token';
 export {default as Portaled} from './common/portaled';
 export {default as ProgressBar} from './common/progress-bar';

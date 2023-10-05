@@ -28,9 +28,10 @@ import {
   MapContainerFactory,
   MapControlFactory,
   MapPopoverFactory,
-  mapFieldsSelector
+  mapFieldsSelector,
+  MapViewStateContextProvider
 } from '@kepler.gl/components';
-import {StaticMap} from 'react-map-gl';
+// import {Map} from 'react-map-gl'; // see other TODO below
 import Tippy from '@tippyjs/react/headless';
 import {gl, InteractionTestRunner} from '@deck.gl/test-utils';
 
@@ -63,14 +64,17 @@ test('MapContainerFactory - display all options', t => {
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <MapContainer {...props} />
+        <MapViewStateContextProvider mapState={props.mapState}>
+          <MapContainer {...props} />
+        </MapViewStateContextProvider>
       </IntlWrapper>
     );
   }, 'MapContainer should not fail');
 
   t.equal(wrapper.find(MapControl).length, 1, 'Should display 1 MapControl');
 
-  t.equal(wrapper.find(StaticMap).length, 1, 'Should display 1 InteractiveMap');
+  // TODO: why is this failing without Map in quotes
+  t.equal(wrapper.find('Map').length, 1, 'Should display 1 InteractiveMap');
   // Can't test overlay because mapboxgl is not supported in chromium
   t.equal(wrapper.find('Attribution').length, 1, 'Should display 1 Attribution');
 
@@ -95,7 +99,9 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <MapContainer {...props} />
+        <MapViewStateContextProvider mapState={props.mapState}>
+          <MapContainer {...props} />
+        </MapViewStateContextProvider>
       </IntlWrapper>
     );
   }, 'MapContainer should not fail');
@@ -207,7 +213,9 @@ test('MapContainerFactory - _renderDeckOverlay', t => {
           t.doesNotThrow(() => {
             wrapper = mountWithTheme(
               <IntlWrapper>
-                <MapContainer {...propsWithHoverInfo} />
+                <MapViewStateContextProvider mapState={propsWithHoverInfo.mapState}>
+                  <MapContainer {...propsWithHoverInfo} />
+                </MapViewStateContextProvider>
               </IntlWrapper>
             );
           }, 'render map container with map popover should not fail');
@@ -371,7 +379,9 @@ test('MapContainerFactory - _renderEditorContextMenu', t => {
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <MapContainer {...props} />
+        <MapViewStateContextProvider mapState={props.mapState}>
+          <MapContainer {...props} />
+        </MapViewStateContextProvider>
       </IntlWrapper>
     );
   }, 'MapContainer should not fail with intial props');

@@ -22,7 +22,7 @@
 import React, {Component, createRef} from 'react';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
-import {StaticMap} from 'react-map-gl';
+import {Map} from 'react-map-gl';
 import debounce from 'lodash.debounce';
 import {
   exportImageError,
@@ -34,6 +34,7 @@ import {
 import {findMapBounds} from '@kepler.gl/reducers';
 import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
+import {MapViewStateContextProvider} from './map-view-state-context';
 
 import {GEOCODER_LAYER_ID, ExportImage} from '@kepler.gl/constants';
 import {SplitMap} from '@kepler.gl/types';
@@ -227,7 +228,7 @@ export default function PlotContainerFactory(
             active: true
           }
         },
-        MapComponent: StaticMap,
+        MapComponent: Map,
         onMapRender: this._onMapRender,
         isExport: true,
         deckGlProps: {
@@ -242,7 +243,7 @@ export default function PlotContainerFactory(
       const mapContainers = !isSplit ? (
         <MapContainer index={0} primary={true} {...mapProps} />
       ) : (
-        <MapsLayout className="plot-container-maps">
+        <MapsLayout className="plot-container-maps" mapState={mapState}>
           {splitMaps.map((settings, index) => (
             <MapContainer key={index} index={index} primary={index === 1} {...mapProps} />
           ))}
@@ -251,7 +252,9 @@ export default function PlotContainerFactory(
       return (
         <StyledPlotContainer className="export-map-instance">
           <StyledMapContainer ref={this.plottingAreaRef} width={size.width} height={size.height}>
-            {mapContainers}
+            <MapViewStateContextProvider mapState={mapState}>
+              {mapContainers}
+            </MapViewStateContextProvider>
           </StyledMapContainer>
         </StyledPlotContainer>
       );

@@ -23,7 +23,12 @@ import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 import sinon from 'sinon';
 import test from 'tape';
-import {appInjector, MapContainerFactory, mapFieldsSelector} from '@kepler.gl/components';
+import {
+  appInjector,
+  MapContainerFactory,
+  mapFieldsSelector,
+  MapViewStateContextProvider
+} from '@kepler.gl/components';
 import {mockKeplerProps} from '../../helpers/mock-state';
 
 const MapContainer = appInjector.get(MapContainerFactory);
@@ -49,7 +54,9 @@ test('MapContainerFactory - display all options', t => {
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <MapContainer {...props} />
+        <MapViewStateContextProvider mapState={props.mapState}>
+          <MapContainer {...props} />
+        </MapViewStateContextProvider>
       </IntlWrapper>
     );
   }, 'MapContainer should not fail without props');

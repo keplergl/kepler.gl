@@ -151,7 +151,7 @@ export const isViewportDisjointed = props => {
   );
 };
 
-export const mapStateSelector = (props, index) => {
+export const mapStateSelector = (props: any, index: number): any => {
   if (!Number.isFinite(index)) {
     // either no index arg or an invalid index was provided
     // it is expected to be either 0 or 1 when in split mode
@@ -655,7 +655,9 @@ function KeplerGlFactory(
                     modifiers={DND_EMPTY_MODIFIERS}
                   >
                     {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                    <MapsLayout className="maps">{mapContainers}</MapsLayout>
+                    <MapsLayout className="maps" mapState={this.props.mapState}>
+                      {mapContainers}
+                    </MapsLayout>
                     {isSplit && (
                       <DragOverlay modifiers={DRAGOVERLAY_MODIFIERS} dropAnimation={null}>
                         {activeLayer !== undefined ? (

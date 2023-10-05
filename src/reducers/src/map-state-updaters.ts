@@ -143,12 +143,18 @@ export const updateMapUpdater = (
   // make conditional updates to the other viewport not matching this payload's `mapIndex`
   if (Number.isFinite(otherViewportMapIndex) && otherViewportMapIndex > -1) {
     // width and height are a special case and are always updated
-    splitMapViewports[otherViewportMapIndex].width = splitMapViewports[mapIndex].width;
-    splitMapViewports[otherViewportMapIndex].height = splitMapViewports[mapIndex].height;
+    splitMapViewports[otherViewportMapIndex] = {
+      ...splitMapViewports[otherViewportMapIndex],
+      width: splitMapViewports[mapIndex].width,
+      height: splitMapViewports[mapIndex].height
+    };
 
     if (state.isZoomLocked) {
       // update the other viewport with the new zoom from the split viewport that was updated with this payload's `mapIndex`
-      splitMapViewports[otherViewportMapIndex].zoom = splitMapViewports[mapIndex].zoom;
+      splitMapViewports[otherViewportMapIndex] = {
+        ...splitMapViewports[otherViewportMapIndex],
+        zoom: splitMapViewports[mapIndex].zoom
+      };
     }
   }
 
