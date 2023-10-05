@@ -20,21 +20,31 @@
 
 import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
-import {FormattedMessage} from '@kepler.gl/localization';
-import {PanelLabel, SidePanelSection} from '../../common/styled-components';
-import ColumnSelectorFactory from './column-selector';
-import {ColumnPairs, Layer, LayerColumns, LayerBaseConfig} from '@kepler.gl/layers';
-import {Field, FieldPair} from '@kepler.gl/types';
 
-type LayerColumnConfigProps = {
+import {ColumnPairs, LayerColumns, LayerBaseConfig} from '@kepler.gl/layers';
+import {FormattedMessage} from '@kepler.gl/localization';
+import {FieldPair, Field} from '@kepler.gl/types';
+import {toArray} from '@kepler.gl/utils';
+
+import ColumnSelectorFactory from './column-selector';
+import {MinimalField} from '../../common/field-selector';
+import {PanelLabel, SidePanelSection} from '../../common/styled-components';
+
+export type LayerColumnConfigProps<FieldOption extends MinimalField> = {
+  columns: LayerColumns;
+  fields: FieldOption[];
+  assignColumnPairs: (key: string, pair: string) => LayerColumns;
+  assignColumn: (key: string, field: FieldOption) => LayerColumns;
+  updateLayerConfig: (newConfig: Partial<LayerBaseConfig>) => void;
   columnPairs?: ColumnPairs | null;
   fieldPairs?: FieldPair[];
-  columns: LayerColumns;
   columnLabels?: Record<string, string>;
-  fields: Field[];
-  updateLayerConfig: (newConfig: Partial<LayerBaseConfig>) => void;
-  assignColumn: Layer['assignColumn'];
-  assignColumnPairs: Layer['assignColumnPairs'];
+};
+
+export type EnhancedFieldPair = {
+  name: string;
+  type: 'point';
+  pair: FieldPair['pair'];
 };
 
 const TopRow = styled.div`
@@ -46,21 +56,28 @@ const TopRow = styled.div`
  * only provide suggested field pairs if there is a match,
  * otherwise the user can select a suggested field pair that will create invalid columns and a hard crash
  */
-function getFieldPairsSuggestionsForColumn(
-  enhancedFieldPairs,
+function getValidFieldPairsSuggestionsForColumn(
+  enhancedFieldPairs: EnhancedFieldPair[] | null,
   columnPairs: ColumnPairs | null | undefined,
   columnKey: string
-) {
-  const matchingFieldPairs = enhancedFieldPairs?.filter(({pair}) =>
-    pair.hasOwnProperty(columnPairs?.[columnKey]?.fieldPairKey)
-  );
-  return matchingFieldPairs.length > 0 ? matchingFieldPairs : null;
+): EnhancedFieldPair[] | null {
+  if (enhancedFieldPairs && columnPairs?.[columnKey]) {
+    const columnPair = columnPairs[columnKey];
+    const matchingFieldPairs = enhancedFieldPairs.filter(({pair}) => {
+      return toArray(columnPair.fieldPairKey).some(fieldPairKey =>
+        pair.hasOwnProperty(fieldPairKey)
+      );
+    });
+    return matchingFieldPairs.length > 0 ? matchingFieldPairs : null;
+  } else {
+    return null;
+  }
 }
 
 LayerColumnConfigFactory.deps = [ColumnSelectorFactory];
 
 function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelectorFactory>) {
-  const LayerColumnConfig: React.FC<LayerColumnConfigProps> = ({
+  const LayerColumnConfig: React.FC<LayerColumnConfigProps<Field>> = ({
     columnPairs,
     fieldPairs,
     columns,
@@ -70,7 +87,7 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
     assignColumn,
     assignColumnPairs
   }) => {
-    const enhancedFieldPairs = useMemo(
+    const enhancedFieldPairs: EnhancedFieldPair[] | null = useMemo(
       () =>
         columnPairs && fieldPairs
           ? fieldPairs.map(fp => ({
@@ -118,7 +135,11 @@ function LayerColumnConfigFactory(ColumnSelector: ReturnType<typeof ColumnSelect
                 label={(columnLabels && columnLabels[key]) || key}
                 key={key}
                 allFields={fields}
-                fieldPairs={getFieldPairsSuggestionsForColumn(enhancedFieldPairs, columnPairs, key)}
+                fieldPairs={getValidFieldPairsSuggestionsForColumn(
+                  enhancedFieldPairs,
+                  columnPairs,
+                  key
+                )}
                 onSelect={val => onUpdateColumn(key, val)}
               />
             ))}
