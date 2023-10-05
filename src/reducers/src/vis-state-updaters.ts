@@ -1878,7 +1878,12 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
   // if no tooltips merged add default tooltips
   newDataIds.forEach(dataId => {
     const tooltipFields = mergedState.interactionConfig.tooltip.config.fieldsToShow[dataId];
-    if (!Array.isArray(tooltipFields) || !tooltipFields.length) {
+    // loading dataset: autoCreateTooltips is false and we don't want to run addDefaultTooltips when tooltipFields is empty
+    if (
+      options?.autoCreateTooltips !== false &&
+      (!Array.isArray(tooltipFields) || !tooltipFields.length)
+    ) {
+      // adding dataset: autoCreateTooltips is true
       mergedState = addDefaultTooltips(mergedState, newDataEntries[dataId]);
     }
   });
