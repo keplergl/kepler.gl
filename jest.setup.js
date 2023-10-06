@@ -21,9 +21,9 @@
 import '@testing-library/jest-dom';
 import * as Utils from '@kepler.gl/utils';
 
-if (typeof window.URL.createObjectURL === 'undefined') {
-  window.URL.createObjectURL = jest.fn();
-}
+jest.mock('mapbox-gl/dist/mapbox-gl', () => ({
+  Map: () => ({})
+}));
 
 jest.mock('@kepler.gl/utils', () => ({
   ...jest.requireActual('@kepler.gl/utils'),
