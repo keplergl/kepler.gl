@@ -175,8 +175,9 @@ function AddMapStyleModalFactory() {
       const mapboxApiAccessToken = inputStyle.accessToken || this.props.mapboxApiAccessToken;
       const mapProps = {
         ...mapState,
-        mapboxApiUrl,
-        mapboxApiAccessToken,
+        baseApiUrl: mapboxApiUrl,
+        mapboxAccessToken: mapboxApiAccessToken,
+        mapLib: mapboxgl,
         preserveDrawingBuffer: true,
         transformRequest
       };

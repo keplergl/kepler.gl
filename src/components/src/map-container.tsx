@@ -977,8 +977,9 @@ export default function MapContainerFactory(
       const mapProps = {
         ...internalViewState,
         preserveDrawingBuffer: true,
-        mapboxApiAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
-        mapboxApiUrl,
+        mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
+        baseApiUrl: mapboxApiUrl,
+        mapLib: mapboxgl,
         transformRequest: this.props.transformRequest || transformRequest
       };
 
@@ -1063,6 +1064,9 @@ export default function MapContainerFactory(
               viewState={internalViewState}
               mapStyle={mapStyle.topMapStyle}
               style={MAP_STYLE.top}
+              mapboxAccessToken={mapProps.mapboxAccessToken}
+              baseApiUrl={mapProps.baseApiUrl}
+              mapLib={mapboxgl}
               {...topMapContainerProps}
             />
           ) : null}
