@@ -1,6 +1,7 @@
 import React, {useState, useEffect, createContext} from 'react';
 import isEqual from 'lodash.isequal';
 import pick from 'lodash.pick';
+import {pickViewportPropsFromMapState} from '@kepler.gl/reducers';
 
 import {MapState} from '@kepler.gl/types';
 
@@ -38,7 +39,7 @@ export const MapViewStateContextProvider = ({
       }
     } else {
       if (hasChanged(primaryState, mapState)) {
-        setViewStates([mapState]);
+        setViewStates([pickViewportPropsFromMapState(mapState)] as MapState[]);
       }
     }
     // Only update internalViewState when viewState changes

@@ -378,9 +378,9 @@ export const toggleSplitMapViewportUpdater = (
     // if current viewport is synced, and we are unsyncing it
     // or already in unsynced mode and NOT toggling locked zoom
     // make a fresh copy of the current viewport object, assign it to splitMapViewports[]
-    // getViewportFromMapState is called twice to avoid memory allocation conflicts
-    const leftViewport = getViewportFromMapState(newMapState);
-    const rightViewport = getViewportFromMapState(newMapState);
+    // pickViewportPropsFromMapState is called twice to avoid memory allocation conflicts
+    const leftViewport = pickViewportPropsFromMapState(newMapState);
+    const rightViewport = pickViewportPropsFromMapState(newMapState);
     newMapState.splitMapViewports = [leftViewport, rightViewport];
   }
 
@@ -468,7 +468,7 @@ function updateViewportBasedOnBounds(state: MapState, newMapState: MapState) {
   return newMapState;
 }
 
-function getViewportFromMapState(state) {
+export function pickViewportPropsFromMapState(state: MapState): Viewport {
   return pick(state, [
     'width',
     'height',
