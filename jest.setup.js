@@ -21,6 +21,10 @@
 import '@testing-library/jest-dom';
 import * as Utils from '@kepler.gl/utils';
 
+jest.mock('mapbox-gl/dist/mapbox-gl', () => ({
+  Map: () => ({})
+}));
+
 jest.mock('@kepler.gl/utils', () => ({
   ...jest.requireActual('@kepler.gl/utils'),
   hasPortableWidth: jest.fn(),

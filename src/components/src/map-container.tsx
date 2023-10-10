@@ -696,6 +696,7 @@ export default function MapContainerFactory(
       const {
         mapStyle,
         visState,
+        mapState,
         visStateActions,
         mapboxApiAccessToken,
         mapboxApiUrl,
@@ -717,7 +718,8 @@ export default function MapContainerFactory(
       const isEditorDrawingMode = EditorLayerUtils.isDrawingActive(editorMenuActive, editor.mode);
 
       const internalViewState = this.context?.getInternalViewState(index);
-      const viewport = getViewportFromMapState(internalViewState);
+      const internalMapState = {...mapState, ...internalViewState};
+      const viewport = getViewportFromMapState(internalMapState);
 
       const editorFeatureSelectedIndex = this.selectedPolygonIndexSelector(this.props);
 
@@ -727,7 +729,7 @@ export default function MapContainerFactory(
       const deckGlLayers = generateDeckGLLayersMethod(
         {
           visState,
-          mapState: internalViewState,
+          mapState: internalMapState,
           mapStyle
         },
         {
@@ -978,8 +980,9 @@ export default function MapContainerFactory(
       const mapProps = {
         ...internalViewState,
         preserveDrawingBuffer: true,
-        mapboxApiAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
-        mapboxApiUrl,
+        mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
+        baseApiUrl: mapboxApiUrl,
+        mapLib: mapboxgl,
         transformRequest: this.props.transformRequest || transformRequest
       };
 
@@ -1064,6 +1067,9 @@ export default function MapContainerFactory(
               viewState={internalViewState}
               mapStyle={mapStyle.topMapStyle}
               style={MAP_STYLE.top}
+              mapboxAccessToken={mapProps.mapboxAccessToken}
+              baseApiUrl={mapProps.baseApiUrl}
+              mapLib={mapboxgl}
               {...topMapContainerProps}
             />
           ) : null}
