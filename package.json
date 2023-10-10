@@ -48,7 +48,7 @@
     "test-browser-drive": "NODE_ENV=test node ./test/browser-drive.js debug",
     "test-node-debug": "NODE_ENV=test node -r ./babel-register.js ./test/node.js",
     "test-browser-debug": "NODE_ENV=test node -r ./babel-register.js ./test/setup-browser-env.js ./test/js-dom.js",
-    "test-jest": "jest --watch",
+    "test-jest": "jest",
     "test-tape": "yarn test-node && yarn test-browser",
     "test": "yarn test-jest && yarn test-tape",
     "cover-tape": "nyc --reporter=json --report-dir=tape-coverage --reporter=html yarn test-tape",

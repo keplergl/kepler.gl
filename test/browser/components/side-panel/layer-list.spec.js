@@ -112,7 +112,7 @@ describe('Components -> SidePanel -> LayerPanel -> LayerList', () => {
   it('render sortable list', () => {
     renderWithTheme(<LayerList {...defaultProps} isSortable />);
 
-    expect(screen.getAllByTestId(dataTestIds.sortableLayerItems)).toHaveLength(
+    expect(screen.getAllByTestId(dataTestIds.sortableLayerItem)).toHaveLength(
       defaultProps.layers.length
     );
     screen
@@ -124,7 +124,13 @@ describe('Components -> SidePanel -> LayerPanel -> LayerList', () => {
   it('render non-sortable list', () => {
     renderWithTheme(<LayerList {...defaultProps} isSortable={false} />);
 
-    expect(screen.queryByTestId(dataTestIds.sortableLayerItems)).not.toBeInTheDocument();
+    // no sortable items
+    expect(screen.queryByTestId(dataTestIds.sortableLayerItem)).not.toBeInTheDocument();
+
+    // only static ones
+    expect(screen.getAllByTestId(dataTestIds.staticLayerItem)).toHaveLength(
+      defaultProps.layers.length
+    );
     screen
       .getAllByTestId(dataTestIds.layerTitleEditor)
       .forEach((item, index) => expect(item.value).toBe(defaultProps.layers[index].config.label));

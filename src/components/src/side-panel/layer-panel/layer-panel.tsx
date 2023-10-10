@@ -68,7 +68,6 @@ type LayerPanelProps = {
 const PanelWrapper = styled.div<{active: boolean}>`
   font-size: 12px;
   border-radius: 1px;
-  margin-bottom: 8px;
   z-index: 1000;
   &.dragging {
     cursor: move;

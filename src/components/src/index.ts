@@ -118,6 +118,8 @@ export {default as LayerGroupSelectorFactory} from './side-panel/map-style-panel
 export {default as MapStyleSelectorFactory} from './side-panel/map-style-panel/map-style-selector';
 export {default as LayerGroupColorPickerFactory} from './side-panel/map-style-panel/map-layer-group-color-picker';
 export {default as CustomPanelsFactory} from './side-panel/custom-panel';
+export {default as DndContextFactory} from './dnd-context';
+
 // // map factories
 export {default as MapPopoverFactory} from './map/map-popover';
 export {default as MapPopoverContentFactory} from './map/map-popover-content';
@@ -294,6 +296,7 @@ export type {PanelMeta} from './side-panel/common/types';
 export type {SideBarProps} from './side-panel/side-bar';
 export type {FeatureActionPanelProps} from './editor/feature-action-panel';
 export type {SingleColorPaletteProps} from './side-panel/layer-panel/single-color-palette';
+export type {DndContextProps, DndContextComponent} from './dnd-context';
 
 export {
   Icons,

@@ -74,7 +74,8 @@ import {
   THROTTLE_NOTIFICATION_TIME,
   DEFAULT_PICKING_RADIUS,
   NO_MAP_ID,
-  EMPTY_MAPBOX_STYLE
+  EMPTY_MAPBOX_STYLE,
+  DROPPABLE_MAP_CONTAINER_TYPE
 } from '@kepler.gl/constants';
 
 // Contexts
@@ -171,7 +172,7 @@ export const isSplitSelector = props =>
 export const Droppable = ({containerId}) => {
   const {isOver, setNodeRef} = useDroppable({
     id: containerId,
-    data: {type: 'map', index: containerId},
+    data: {type: DROPPABLE_MAP_CONTAINER_TYPE, index: containerId},
     disabled: !containerId
   });
 
