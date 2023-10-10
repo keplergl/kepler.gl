@@ -44,6 +44,9 @@ require('@babel/polyfill');
 var path = require('path');
 var glob = require('glob');
 
+// Requiring mapbox-gl here prevents polyfilling errors during tests.
+require('mapbox-gl');
+
 // eslint-disable-next-line func-names
 process.argv.slice(2).forEach(function(arg) {
   // eslint-disable-next-line func-names
