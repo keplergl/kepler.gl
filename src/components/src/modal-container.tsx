@@ -25,7 +25,7 @@ import get from 'lodash.get';
 import document from 'global/document';
 
 import ModalDialogFactory from './modals/modal-dialog';
-import {exportHtml, isValidMapInfo, exportMap, exportJson} from '@kepler.gl/utils';
+import {exportHtml, isValidMapInfo, exportMap, exportJson, exportImage} from '@kepler.gl/utils';
 import {
   exportData,
   getFileFormatNames,
@@ -201,7 +201,6 @@ export default function ModalContainerFactory(
 
     _onExportImage = () => {
       if (!this.props.uiState.exportImage.processing) {
-        // @ts-ignore TODO: fix exportImage method
         exportImage(this.props.uiState.exportImage, `${this.props.appName}.png`);
         this.props.uiStateActions.cleanupExportImage();
         this._closeModal();
