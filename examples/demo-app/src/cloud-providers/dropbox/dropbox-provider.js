@@ -411,14 +411,14 @@ export default class DropboxProvider extends Provider {
 
   /**
    * Override dropbox cloud-providers url
-   * https://www.dropbox.com/s/bxwwdb81z0jg7pb/keplergl_2018-11-01T23%3A22%3A43.940Z.json?dl=0
+   * https://www.dropbox.com/s/bxwwdb81z0jg7pb/keplergl_2018-11-01T23%3A22%3A43.940Z.json?rlkey=xxx&dl=0
    * ->
-   * https://dl.dropboxusercontent.com/s/bxwwdb81z0jg7pb/keplergl_2018-11-01T23%3A22%3A43.940Z.json
+   * https://dl.dropboxusercontent.com/s/bxwwdb81z0jg7pb/keplergl_2018-11-01T23%3A22%3A43.940Z.json?rlkey=xxx&dl=0
    * @param metadata
    * @returns {DropboxTypes.sharing.FileLinkMetadataReference}
    */
   _overrideUrl(url) {
-    return url ? url.slice(0, url.indexOf('?')).replace(DOMAIN, CORS_FREE_DOMAIN) : null;
+    return url ? url.replace(DOMAIN, CORS_FREE_DOMAIN) : null;
   }
 
   _getUserFromAccount(response) {
