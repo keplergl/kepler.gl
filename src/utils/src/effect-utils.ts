@@ -53,10 +53,7 @@ export function mergeEffectParams(
 /**
  * Always keep light & shadow effect at the top
  */
-export const fixEffectOrder = (
-  effects: Effect[],
-  effectOrder: VisState['effectOrder']
-): VisState['effectOrder'] => {
+export const fixEffectOrder = (effects: Effect[], effectOrder: string[]): string[] => {
   const lightShadowEffect = effects.find(effect => effect.type === LIGHT_AND_SHADOW_EFFECT.type);
   if (lightShadowEffect) {
     const ind = effectOrder.indexOf(lightShadowEffect.id);
@@ -69,10 +66,10 @@ export const fixEffectOrder = (
 };
 
 export function reorderEffectOrder(
-  effectOrder: VisState['effectOrder'],
+  effectOrder: string[],
   originEffectId: string,
   destinationEffectId: string
-): VisState['effectOrder'] {
+): string[] {
   const activeIndex = effectOrder.indexOf(originEffectId);
   const overIndex = effectOrder.indexOf(destinationEffectId);
   return arrayMove(effectOrder, activeIndex, overIndex);
