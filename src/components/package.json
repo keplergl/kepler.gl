@@ -36,6 +36,7 @@
     "@dnd-kit/modifiers": "^6.0.1",
     "@dnd-kit/sortable": "^7.0.2",
     "@dnd-kit/utilities": "^3.2.1",
+    "@floating-ui/react": "0.25.1",
     "@kepler.gl/actions": "3.0.0-alpha.1",
     "@kepler.gl/cloud-providers": "3.0.0-alpha.1",
     "@kepler.gl/constants": "3.0.0-alpha.1",
