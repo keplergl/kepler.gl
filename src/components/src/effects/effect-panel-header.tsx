@@ -63,7 +63,6 @@ const HeaderActionSection = styled.div`
   height: 100%;
   align-items: stretch;
   right: 10px;
-  pointer-events: none;
   :hover {
     .effect-panel__header__actions__hidden {
       opacity: 1;
