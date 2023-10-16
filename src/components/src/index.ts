@@ -71,7 +71,7 @@ export {CollapseButtonFactory, default as SidebarFactory} from './side-panel/sid
 export {default as PanelToggleFactory} from './side-panel/panel-toggle';
 export {default as PanelTabFactory} from './side-panel/panel-tab';
 
-export {default as LayerManagerFactory} from './side-panel/layer-manager';
+export {default as LayerManagerFactory, LayerBlendingSelector} from './side-panel/layer-manager';
 export {ColorSelectorInput, ColorBlock} from './side-panel/layer-panel/color-selector';
 export {default as CustomSelector} from './side-panel/layer-panel/color-selector';
 export {default as ColorPalette} from './side-panel/layer-panel/color-palette';
