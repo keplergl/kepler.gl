@@ -29,6 +29,7 @@
     "./src/processors",
     "./src/tasks",
     "./src/actions",
+    "./src/effects",
     "./src/reducers",
     "./src/components"
   ],
@@ -96,6 +97,7 @@
     "components.js",
     "constants.js",
     "layers.js",
+    "effects.js",
     "middleware.js",
     "processors.js",
     "reducers.js",

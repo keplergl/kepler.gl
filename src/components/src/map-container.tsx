@@ -63,7 +63,8 @@ import {
   onViewPortChange,
   getViewportFromMapState,
   normalizeEvent,
-  rgbToHex
+  rgbToHex,
+  computeDeckEffects
 } from '@kepler.gl/utils';
 import {breakPointValues} from '@kepler.gl/styles';
 
@@ -539,6 +540,11 @@ export default function MapContainerFactory(
       }
     }
 
+    _isOKToRenderEffects() {
+      // TODO a hack to prevent effect preRender without valid generated viewports
+      return Boolean(this._deck?.viewManager?._viewports?.length);
+    }
+
     _onBeforeRender = ({gl}) => {
       setLayerBlending(gl, this.props.visState.layerBlending);
     };
@@ -785,6 +791,8 @@ export default function MapContainerFactory(
         };
       }
 
+      const effects = this._isOKToRenderEffects() ? computeDeckEffects({visState, mapState}) : [];
+
       const views = deckGlProps?.views
         ? deckGlProps?.views()
         : new MapView({legacyMeterSizes: true});
@@ -793,7 +801,8 @@ export default function MapContainerFactory(
         ...deckGlProps,
         pickingRadius: DEFAULT_PICKING_RADIUS,
         views,
-        layers: deckGlLayers
+        layers: deckGlLayers,
+        effects
       };
 
       if (typeof deckRenderCallbacks?.onDeckRender === 'function') {

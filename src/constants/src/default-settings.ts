@@ -1117,7 +1117,8 @@ export const MAP_CONTROLS = keyMirror({
   toggle3d: null,
   splitMap: null,
   mapDraw: null,
-  mapLocale: null
+  mapLocale: null,
+  effect: null
 });
 
 /**
@@ -1142,5 +1143,95 @@ export const dataTestIds: Record<string, string> = {
   staticLayerItem: 'static-layer-item',
   layerTitleEditor: 'layer__title__editor',
   removeLayerAction: 'remove-layer-action',
-  layerPanel: 'layer-panel'
+  layerPanel: 'layer-panel',
+  sortableEffectItem: 'sortable-effect-item',
+  staticEffectItem: 'static-effect-item'
 };
+
+// Effects
+
+export const DEFAULT_EFFECT_TYPE = 'ink';
+
+export const DEFAULT_LIGHT_COLOR: [number, number, number] = [255, 255, 255];
+export const DEFAULT_LIGHT_INTENSITY = 1;
+export const DEFAULT_SHADOW_INTENSITY = 0.5;
+export const DEFAULT_SHADOW_COLOR: [number, number, number] = [0, 0, 0];
+export const LIGHT_AND_SHADOW_EFFECT = {type: 'lightAndShadow', name: 'Light & Shadow'};
+export const DEFAULT_LIGHT_AND_SHADOW_PROPS = {
+  timestamp: Date.now(),
+  useCurrentTime: false,
+  shadowIntensity: DEFAULT_SHADOW_INTENSITY,
+  shadowColor: [...DEFAULT_SHADOW_COLOR] as [number, number, number],
+  sunLightColor: [...DEFAULT_LIGHT_COLOR] as [number, number, number],
+  sunLightIntensity: DEFAULT_LIGHT_INTENSITY,
+  ambientLightColor: [...DEFAULT_LIGHT_COLOR] as [number, number, number],
+  ambientLightIntensity: DEFAULT_LIGHT_INTENSITY
+};
+
+export const POSTPROCESSING_EFFECTS: {[key: string]: {type: string; name: string}} = {
+  ink: {
+    type: 'ink',
+    name: 'Ink'
+  },
+  brightnessContrast: {
+    type: 'brightnessContrast',
+    name: 'Brightness & Contrast'
+  },
+  hueSaturation: {
+    type: 'hueSaturation',
+    name: 'Hue & Saturation'
+  },
+  vibrance: {
+    type: 'vibrance',
+    name: 'Vibrance'
+  },
+  sepia: {
+    type: 'sepia',
+    name: 'Sepia'
+  },
+  dotScreen: {
+    type: 'dotScreen',
+    name: 'Dot Screen'
+  },
+  colorHalftone: {
+    type: 'colorHalftone',
+    name: 'Color Halftone'
+  },
+  noise: {
+    type: 'noise',
+    name: 'Noise'
+  },
+  triangleBlur: {
+    type: 'triangleBlur',
+    name: 'Blur (Triangle)'
+  },
+  zoomBlur: {
+    type: 'zoomBlur',
+    name: 'Blur (Zoom)'
+  },
+  tiltShift: {
+    type: 'tiltShift',
+    name: 'Blur (Tilt Shift)'
+  },
+  edgeWork: {
+    type: 'edgeWork',
+    name: 'Edge work'
+  },
+  vignette: {
+    type: 'vignette',
+    name: 'Vignette'
+  },
+  magnify: {
+    type: 'magnify',
+    name: 'Magnify'
+  },
+  hexagonalPixelate: {
+    type: 'hexagonalPixelate',
+    name: 'Hexagonal Pixelate'
+  }
+};
+
+export const EFFECT_DESCS: {type: string; name: string}[] = [
+  LIGHT_AND_SHADOW_EFFECT,
+  ...Object.keys(POSTPROCESSING_EFFECTS).map(keyName => POSTPROCESSING_EFFECTS[keyName])
+];

@@ -126,6 +126,8 @@ import {
 import {findFieldsToShow} from './interaction-utils';
 import {hasPropsToMerge, getPropValueToMerger} from './merger-handler';
 import {mergeDatasetsByOrder} from './vis-state-merger';
+import {fixEffectOrder} from '@kepler.gl/utils';
+import {createDeckEffectFromConfig} from '@kepler.gl/effects';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -250,6 +252,10 @@ export const INITIAL_VIS_STATE: VisState = {
   // a collection of multiple dataset
   datasets: {},
   editingDataset: undefined,
+
+  // effects
+  effects: [],
+  effectOrder: [],
 
   interactionConfig: defaultInteractionConfig,
   interactionToBeMerged: {},
@@ -1425,6 +1431,92 @@ export const duplicateLayerUpdater = (
   nextState = reorderLayerUpdater(nextState, {order: newLayerOrder});
 
   return updateAnimationDomain(nextState);
+};
+
+/**
+ * Add a new effect
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const addEffectUpdater = (
+  state: VisState,
+  action: VisStateActions.AddEffectUpdaterAction
+): VisState => {
+  const newEffect = createDeckEffectFromConfig(action.config);
+
+  // collapse configurators for other effects
+  state.effects.forEach(effect => effect.updateConfig({isConfigActive: false}));
+
+  const effects = [...state.effects, newEffect];
+  const effectOrder = fixEffectOrder(effects, [newEffect.id, ...state.effectOrder]);
+
+  return {
+    ...state,
+    effects,
+    effectOrder
+  };
+};
+
+/**
+ * remove effect
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const removeEffectUpdater = (
+  state: VisState,
+  {id}: VisStateActions.RemoveEffectUpdaterAction
+): VisState => {
+  const idx = state.effects.findIndex(l => l.id === id);
+  if (idx < 0 || idx >= state.effects.length) {
+    Console.warn(`can not remove effect with invalid id ${id}`);
+    return state;
+  }
+
+  const {effects, effectOrder} = state;
+  const effectToRemove = effects[idx];
+  return {
+    ...state,
+    // @ts-expect-error fixed in ts
+    effects: filterOutById(effectToRemove.id)(effects),
+    effectOrder: effectOrder.filter(effectId => effectId !== effectToRemove.id)
+  };
+};
+
+/**
+ * Reorder effect
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const reorderEffectUpdater = (
+  state: VisState,
+  {order}: VisStateActions.ReorderEffectUpdaterAction
+): VisState => ({
+  ...state,
+  effectOrder: fixEffectOrder(state.effects, [...order])
+});
+
+/**
+ * Update effect
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const updateEffectUpdater = (
+  state: VisState,
+  {id, props}: VisStateActions.UpdateEffectUpdaterAction
+): VisState => {
+  const idx = state.effects.findIndex(l => l.id === id);
+  if (idx < 0 || idx >= state.effects.length) {
+    Console.warn(`can not update effect with invalid id ${id}`);
+    return state;
+  }
+
+  const newEffects = [...state.effects];
+  newEffects[idx].updateConfig(props);
+
+  return {
+    ...state,
+    effects: newEffects
+  };
 };
 
 /**

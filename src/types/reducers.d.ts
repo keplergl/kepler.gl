@@ -366,6 +366,7 @@ export type MapControls = {
   splitMap?: MapControlItem;
   mapDraw?: MapControlItem;
   mapLocale?: MapControlItem;
+  effect?: MapControlItem;
 };
 
 export type LoadFiles = {

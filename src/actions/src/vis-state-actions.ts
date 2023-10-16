@@ -36,7 +36,9 @@ import {
   InteractionConfig,
   Filter,
   ParsedConfig,
-  ParsedLayer
+  ParsedLayer,
+  EffectConfig,
+  EffectParamsPartial
 } from '@kepler.gl/types';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
@@ -518,6 +520,89 @@ export function duplicateLayer(
   return {
     type: ActionTypes.DUPLICATE_LAYER,
     id
+  };
+}
+
+export type AddEffectUpdaterAction = {
+  config: EffectParamsPartial;
+};
+
+/**
+ * Add a new effect
+ * @memberof visStateActions
+ * @param config - new effect config
+ * @returns action
+ * @public
+ */
+export function addEffect(
+  config: EffectParamsPartial
+): Merge<AddEffectUpdaterAction, {type: typeof ActionTypes.ADD_EFFECT}> {
+  return {
+    type: ActionTypes.ADD_EFFECT,
+    config
+  };
+}
+
+export type ReorderEffectUpdaterAction = {
+  order: string[];
+};
+
+/**
+ * Reorder effects
+ * @memberof visStateActions
+ * @param order an array of effect ids
+ * @returns action
+ * @public
+ */
+export function reorderEffect(
+  order: string[]
+): Merge<ReorderEffectUpdaterAction, {type: typeof ActionTypes.REORDER_EFFECT}> {
+  return {
+    type: ActionTypes.REORDER_EFFECT,
+    order
+  };
+}
+
+export type RemoveEffectUpdaterAction = {
+  id: string;
+};
+
+/**
+ * Remove an effect
+ * @memberof visStateActions
+ * @param id idx of the effect to be removed
+ * @returns action
+ * @public
+ */
+export function removeEffect(
+  id: string
+): Merge<RemoveEffectUpdaterAction, {type: typeof ActionTypes.REMOVE_EFFECT}> {
+  return {
+    type: ActionTypes.REMOVE_EFFECT,
+    id
+  };
+}
+
+export type UpdateEffectUpdaterAction = {
+  id: string;
+  props: Partial<EffectConfig>;
+};
+
+/**
+ * Update an effect
+ * @memberof visStateActions
+ * @param props idx of the effect to be updated with specified props
+ * @returns action
+ * @public
+ */
+export function updateEffect(
+  id: string,
+  props: Partial<EffectConfig>
+): Merge<UpdateEffectUpdaterAction, {type: typeof ActionTypes.UPDATE_EFFECT}> {
+  return {
+    type: ActionTypes.UPDATE_EFFECT,
+    id,
+    props
   };
 }
 

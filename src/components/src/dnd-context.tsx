@@ -7,15 +7,25 @@ import {
   DND_MODIFIERS,
   DROPPABLE_MAP_CONTAINER_TYPE,
   SORTABLE_LAYER_TYPE,
-  SORTABLE_SIDE_PANEL_TYPE
+  SORTABLE_SIDE_PANEL_TYPE,
+  SORTABLE_EFFECT_TYPE,
+  SORTABLE_EFFECT_PANEL_TYPE
 } from '@kepler.gl/constants';
-import {layerConfigChange, reorderLayer, toggleLayerForMap} from '@kepler.gl/actions';
+import {
+  layerConfigChange,
+  reorderLayer,
+  toggleLayerForMap,
+  updateEffect,
+  reorderEffect
+} from '@kepler.gl/actions';
 import LayerPanelHeaderFactory from './side-panel/layer-panel/layer-panel-header';
 import {withState} from './injector';
 import {visStateLens} from '@kepler.gl/reducers';
 import {reorderLayerOrder} from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
 import {Layer} from '@kepler.gl/layers';
+import {Effect} from '@kepler.gl/types';
+import {reorderEffectOrder} from '@kepler.gl/utils';
 
 export type DndContextProps = PropsWithChildren<{
   visState: VisState;
@@ -64,24 +74,28 @@ function DndContextFactory(
   };
 
   const DndContext = ({children, visState}: DndContextProps) => {
-    const {datasets, layerOrder, layers, splitMaps} = visState;
+    const {datasets, layerOrder, layers, effects, effectOrder, splitMaps} = visState;
 
     const [activeLayer, setActiveLayer]: [
       Layer | undefined,
       (l: Layer | undefined) => void
     ] = useState();
 
-    const dispatch = useDispatch();
+    const [activeEffect, setActiveEffect]: [
+      Effect | undefined,
+      (l: Effect | undefined) => void
+    ] = useState();
 
+    const dispatch = useDispatch();
     const isSplit = useMemo(() => splitMaps?.length > 1, [splitMaps]);
     const dndModifiers = useMemo(() => (isSplit ? DND_EMPTY_MODIFIERS : DND_MODIFIERS), [isSplit]);
-    const onDragStart = useCallback(
+
+    const onLayerDragStart = useCallback(
       event => {
         const {active} = event;
         const newActiveLayer = layers.find(layer => layer.id === active.id);
         if (newActiveLayer) {
           setActiveLayer(newActiveLayer);
-
           if (newActiveLayer?.config.isConfigActive) {
             dispatch(layerConfigChange(newActiveLayer, {isConfigActive: false}));
           }
@@ -90,12 +104,34 @@ function DndContextFactory(
       [dispatch, layers]
     );
 
-    const onDragEnd = useCallback(
+    const onEffectDragStart = useCallback(
+      event => {
+        const {active} = event;
+        const newActiveEffect = effects.find(effect => effect.id === active.id);
+        if (newActiveEffect) {
+          setActiveEffect(newActiveEffect);
+          if (newActiveEffect.config.isConfigActive) {
+            dispatch(updateEffect(newActiveEffect.id, {isConfigActive: false}));
+          }
+        }
+      },
+      [dispatch, effects]
+    );
+
+    const onDragStart = useCallback(
+      event => {
+        onLayerDragStart(event);
+        onEffectDragStart(event);
+      },
+      [onLayerDragStart, onEffectDragStart]
+    );
+
+    const onLayerDragEnd = useCallback(
       event => {
         const {active, over} = event;
 
         const {id: activeLayerId} = active;
-        const overType = over.data.current?.type;
+        const overType = over?.data.current?.type;
 
         if (!overType) {
           setActiveLayer(undefined);
@@ -129,6 +165,49 @@ function DndContextFactory(
         setActiveLayer(undefined);
       },
       [dispatch, layerOrder]
+    );
+
+    const onEffectDragEnd = useCallback(
+      event => {
+        const {active, over} = event;
+
+        const {id: activeEffectId} = active;
+        const overType = over?.data.current?.type;
+
+        if (!overType) {
+          setActiveEffect(undefined);
+          return;
+        }
+
+        switch (overType) {
+          // swaping effects
+          case SORTABLE_EFFECT_TYPE:
+            dispatch(reorderEffect(reorderEffectOrder(effectOrder, activeEffectId, over.id)));
+            break;
+          //  moving effects within side panel
+          case SORTABLE_EFFECT_PANEL_TYPE:
+            // move effect to the end of the list
+            dispatch(
+              reorderEffect(
+                reorderEffectOrder(effectOrder, activeEffectId, effectOrder[effectOrder.length - 1])
+              )
+            );
+            break;
+          default:
+            break;
+        }
+
+        setActiveEffect(undefined);
+      },
+      [dispatch, effectOrder]
+    );
+
+    const onDragEnd = useCallback(
+      event => {
+        if (activeLayer) onLayerDragEnd(event);
+        if (activeEffect) onEffectDragEnd(event);
+      },
+      [activeLayer, activeEffect, onLayerDragEnd, onEffectDragEnd]
     );
 
     return (

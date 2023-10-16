@@ -152,7 +152,16 @@ const actionHandler = {
 
   [ActionTypes.PROCESS_FILE_CONTENT]: visStateUpdaters.processFileContentUpdater,
 
-  [ActionTypes.SET_LAYER_ANIMATION_TIME_CONFIG]: visStateUpdaters.setLayerAnimationTimeConfigUpdater
+  [ActionTypes.SET_LAYER_ANIMATION_TIME_CONFIG]:
+    visStateUpdaters.setLayerAnimationTimeConfigUpdater,
+
+  [ActionTypes.ADD_EFFECT]: visStateUpdaters.addEffectUpdater,
+
+  [ActionTypes.REORDER_EFFECT]: visStateUpdaters.reorderEffectUpdater,
+
+  [ActionTypes.REMOVE_EFFECT]: visStateUpdaters.removeEffectUpdater,
+
+  [ActionTypes.UPDATE_EFFECT]: visStateUpdaters.updateEffectUpdater
 };
 
 // construct vis-state reducer

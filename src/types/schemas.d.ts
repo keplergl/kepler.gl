@@ -11,6 +11,8 @@ import {
 
 import {LayerTextLabel} from './layers';
 
+import {EffectConfig} from './effects';
+
 export type SavedFilter = {
   dataId: Filter['dataId'];
   id: Filter['id'];
@@ -78,6 +80,11 @@ export type MinSavedLayer = {
 };
 export type ParsedLayer = SavedLayer | MinSavedLayer;
 
+export type ParsedEffect = {
+  id: string;
+  config: EffectConfig;
+};
+
 export type SavedAnimationConfig = {
   currentTime: AnimationConfig['currentTime'];
   speed: AnimationConfig['speed'];
@@ -113,6 +120,7 @@ export type MinSavedVisStateV1 = {
 
 export type ParsedVisState = {
   layers?: ParsedLayer[];
+  effects?: ParsedEffect[];
   filters?: ParsedFilter[];
   interactionConfig?: Partial<SavedInteractionConfig>;
   layerBlending?: string;

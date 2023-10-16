@@ -35,6 +35,7 @@
     "@kepler.gl/constants": "3.0.0-alpha.0",
     "@kepler.gl/deckgl-layers": "3.0.0-alpha.0",
     "@kepler.gl/layers": "3.0.0-alpha.0",
+    "@kepler.gl/effects": "3.0.0-alpha.0",
     "@kepler.gl/localization": "3.0.0-alpha.0",
     "@kepler.gl/processors": "3.0.0-alpha.0",
     "@kepler.gl/schemas": "3.0.0-alpha.0",

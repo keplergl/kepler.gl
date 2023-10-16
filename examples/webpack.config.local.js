@@ -57,7 +57,9 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
     'react-dom': `${NODE_MODULES_DIR}/react-dom`,
     'react-redux': `${NODE_MODULES_DIR}/react-redux/lib`,
     'styled-components': `${NODE_MODULES_DIR}/styled-components`,
-    'react-intl': `${NODE_MODULES_DIR}/react-intl`
+    'react-intl': `${NODE_MODULES_DIR}/react-intl`,
+    // Suppress useles warnings from react-date-picker's dep
+    'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`
   };
 
   // Combine flags

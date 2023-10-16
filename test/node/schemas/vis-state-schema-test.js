@@ -44,6 +44,7 @@ import {VisStateActions} from '@kepler.gl/actions';
 const expectedVisStateEntries = [
   'filters',
   'layers',
+  'effects',
   'interactionConfig',
   'layerBlending',
   'overlayBlending',
