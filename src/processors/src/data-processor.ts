@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Table as ApacheArrowTable, Field as ArrowField, ListVector} from 'apache-arrow';
+import {Table as ApacheArrowTable, Field as ArrowField, Column as ArrowColumn} from 'apache-arrow';
 import {csvParseRows} from 'd3-dsv';
 import {Console} from 'global/console';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
@@ -429,11 +429,10 @@ export function processArrowTable(arrowTable: ApacheArrowTable): ProcessorResult
 
   // parse fields and convert columnar to row format table
   const rowFormatTable: any[][] = [];
-  const columnarTable: {[name: string]: ListVector[]} = {};
+  const columnarTable: {[name: string]: ArrowColumn} = {};
   arrowTable.schema.fields.forEach((field: ArrowField, index: number) => {
     const arrowColumn = arrowTable.getColumn(field.name);
-    const values = arrowColumn.toArray();
-    columnarTable[field.name] = values;
+    columnarTable[field.name] = arrowColumn;
     fields.push({
       name: field.name,
       id: field.name,
@@ -458,7 +457,10 @@ export function processArrowTable(arrowTable: ApacheArrowTable): ProcessorResult
     const tableItem: unknown[] = [];
     for (let keyIndex = 0; keyIndex < tableKeys.length; keyIndex++) {
       const fieldName = tableKeys[keyIndex];
-      const cellValue = columnarTable[fieldName][index];
+      const cellValue = columnarTable[fieldName].get(index);
+      if (geometryColumns[fieldName]) {
+        cellValue.parent = columnarTable[fieldName];
+      }
       tableItem.push(
         geometryColumns[fieldName]
           ? {

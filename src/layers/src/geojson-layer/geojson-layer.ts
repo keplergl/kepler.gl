@@ -167,6 +167,7 @@ export type GeoJsonLayerConfig = Merge<
 export type GeoJsonLayerMeta = {
   featureTypes?: {polygon: boolean; point: boolean; line: boolean};
   fixedRadius?: boolean;
+  isArrow?: boolean;
 };
 
 export const geoJsonRequiredColumns: ['geojson'] = ['geojson'];
@@ -331,7 +332,9 @@ export default class GeoJsonLayer extends Layer {
   }
 
   calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
-    return filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
+    return this.meta.isArrow
+      ? this.dataToFeature
+      : filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
   }
 
   formatLayerData(datasets, oldLayerData) {
@@ -361,19 +364,108 @@ export default class GeoJsonLayer extends Layer {
 
   updateLayerMeta(dataContainer) {
     const getFeature = this.getPositionAccessor(dataContainer);
-    this.dataToFeature = getGeojsonDataMaps(dataContainer, getFeature);
 
-    // get bounds from features
-    const bounds = getGeojsonBounds(this.dataToFeature);
-    // if any of the feature has properties.radius set to be true
-    const fixedRadius = Boolean(
-      this.dataToFeature.find(d => d && d.properties && d.properties.radius)
-    );
+    const feature = getFeature({index: 0});
+    const isArrow = feature && 'encoding' in feature;
 
-    // keep a record of what type of geometry the collection has
-    const featureTypes = getGeojsonFeatureTypes(this.dataToFeature);
+    if (isArrow) {
+      // create binary data from arrow data for GeoJsonLayer
+      const nDim = 2;
+      const geoColumn = feature.data.parent;
+      const chunks = geoColumn.chunks;
+      const dataToFeature: any = [];
+      let sampleCoordinateArray: any = null;
+      for (let c = 0; c < chunks.length; c++) {
+        const geometries = chunks[c];
+        const flatCoordinateArray = geometries
+          .getChildAt(0)
+          .getChildAt(0)
+          .getChildAt(0)
+          .getChildAt(0).data.values;
+        sampleCoordinateArray = flatCoordinateArray;
+        const ringOffsets = geometries.getChildAt(0).getChildAt(0).valueOffsets;
+        const polygonOffsets = ringOffsets;
+        const numOfPolygon = flatCoordinateArray.length / nDim;
 
-    this.updateMeta({bounds, fixedRadius, featureTypes});
+        // create Uint16Array with incremental values starting from 0
+        const featureIds = new Uint32Array(numOfPolygon);
+        for (let i = 0; i < numOfPolygon; i++) {
+          featureIds[i] = i;
+        }
+        const globalFeatureIds = new Uint32Array(numOfPolygon);
+        for (let i = 0; i < numOfPolygon; i++) {
+          globalFeatureIds[i] = i + geoColumn._chunkOffsets[c];
+        }
+        dataToFeature.push({
+          points: {
+            globalFeatureIds: {value: [], size: 1},
+            positions: {value: [], size: 2},
+            properties: [],
+            numericProps: [],
+            featureIds: {value: [], size: 1}
+          },
+          lines: {
+            globalFeatureIds: {value: new Uint32Array(0), size: 1},
+            pathIndices: {value: new Uint16Array(0), size: 1},
+            positions: {value: new Float32Array(0), size: 2},
+            properties: [],
+            numericProps: [],
+            featureIds: {value: new Uint32Array(0), size: 1}
+          },
+          polygons: {
+            globalFeatureIds: {value: globalFeatureIds, size: 1},
+            positions: {
+              value: flatCoordinateArray,
+              size: nDim
+            },
+            polygonIndices: {value: polygonOffsets, size: 1},
+            primitivePolygonIndices: {value: polygonOffsets, size: 1},
+            properties: [],
+            featureIds: {value: featureIds, size: 1},
+            numericProps: [],
+            fields: []
+          }
+        });
+      }
+      this.dataToFeature = dataToFeature;
+
+      // iterate flatCoodrinatesArray to get bounds
+      const bounds = [Infinity, Infinity, -Infinity, -Infinity];
+      const nSamples =
+        sampleCoordinateArray.length / nDim > 1000 ? 1000 : sampleCoordinateArray.length / 2;
+      for (let i = 0; i < nSamples; i += nDim) {
+        const lng = sampleCoordinateArray[i];
+        const lat = sampleCoordinateArray[i + 1];
+        if (lng < bounds[0]) {
+          bounds[0] = lng;
+        }
+        if (lat < bounds[1]) {
+          bounds[1] = lat;
+        }
+        if (lng > bounds[2]) {
+          bounds[2] = lng;
+        }
+        if (lat > bounds[3]) {
+          bounds[3] = lat;
+        }
+      }
+      const fixedRadius = false;
+      const featureTypes = {polygon: true, point: false, line: false};
+      this.updateMeta({bounds, fixedRadius, featureTypes, isArrow});
+    } else {
+      this.dataToFeature = getGeojsonDataMaps(dataContainer, getFeature);
+      // get bounds from features
+      const bounds = getGeojsonBounds(this.dataToFeature);
+      // if any of the feature has properties.radius set to be true
+      const fixedRadius = Boolean(
+        this.dataToFeature.find(d => d && d.properties && d.properties.radius)
+      );
+
+      // keep a record of what type of geometry the collection has
+      const featureTypes = getGeojsonFeatureTypes(this.dataToFeature);
+
+      this.updateMeta({bounds, fixedRadius, featureTypes, isArrow});
+    }
   }
 
   setInitialLayerConfig({dataContainer}) {
@@ -388,7 +480,7 @@ export default class GeoJsonLayer extends Layer {
       // set both fill and stroke to true
       return this.updateLayerVisConfig({
         filled: true,
-        stroked: true,
+        stroked: false,
         strokeColor: colorMaker.next().value
       });
     } else if (featureTypes && featureTypes.point) {
@@ -399,10 +491,21 @@ export default class GeoJsonLayer extends Layer {
     return this;
   }
 
+  hasLayerData(layerData) {
+    if (!layerData) {
+      return false;
+    }
+    return Boolean(
+      layerData.data &&
+        (layerData.data.length ||
+          ('points' in layerData.data && 'polygons' in layerData.data && 'lines' in layerData.data))
+    );
+  }
+
   renderLayer(opts) {
     const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
-    const {fixedRadius, featureTypes} = this.meta;
+    const {fixedRadius, featureTypes, isArrow} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
@@ -429,35 +532,70 @@ export default class GeoJsonLayer extends Layer {
     const pickable = interactionConfig.tooltip.enabled;
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
-    return [
-      new DeckGLGeoJsonLayer({
-        ...defaultLayerProps,
-        ...layerProps,
-        ...data,
-        pickable,
-        highlightColor: HIGHLIGH_COLOR_3D,
-        autoHighlight: visConfig.enable3d && pickable,
-        stroked: visConfig.stroked,
-        filled: visConfig.filled,
-        extruded: visConfig.enable3d,
-        wireframe: visConfig.wireframe,
-        wrapLongitude: false,
-        lineMiterLimit: 2,
-        capRounded: true,
-        jointRounded: true,
-        updateTriggers,
-        _subLayerProps: {
-          ...(featureTypes?.polygon ? {'polygons-stroke': opaOverwrite} : {}),
-          ...(featureTypes?.line ? {linestrings: opaOverwrite} : {}),
-          ...(featureTypes?.point
-            ? {
+    const geojsonLayers = isArrow ?
+      data.data.map((d, i) => {
+        return new DeckGLGeoJsonLayer({
+          ...defaultLayerProps,
+          ...layerProps,
+          ...data,
+          data: d,
+          id: `${this.id}-${i}`,
+          pickable,
+          highlightColor: HIGHLIGH_COLOR_3D,
+          autoHighlight: visConfig.enable3d && pickable,
+          stroked: visConfig.stroked,
+          filled: visConfig.filled,
+          extruded: visConfig.enable3d,
+          wireframe: visConfig.wireframe,
+          wrapLongitude: false,
+          lineMiterLimit: 2,
+          capRounded: true,
+          jointRounded: true,
+          updateTriggers,
+          _subLayerProps: {
+            ...(featureTypes?.polygon ? { 'polygons-stroke': opaOverwrite } : {}),
+            ...(featureTypes?.line ? { linestrings: opaOverwrite } : {}),
+            ...(featureTypes?.point
+              ? {
                 points: {
                   lineOpacity: visConfig.strokeOpacity
                 }
               }
-            : {})
-        }
-      }),
+              : {})
+          }
+        });
+      }) : [
+        new DeckGLGeoJsonLayer({
+          ...defaultLayerProps,
+          ...layerProps,
+          ...data,
+          pickable,
+          highlightColor: HIGHLIGH_COLOR_3D,
+          autoHighlight: visConfig.enable3d && pickable,
+          stroked: visConfig.stroked,
+          filled: visConfig.filled,
+          extruded: visConfig.enable3d,
+          wireframe: visConfig.wireframe,
+          wrapLongitude: false,
+          lineMiterLimit: 2,
+          capRounded: true,
+          jointRounded: true,
+          updateTriggers,
+          _subLayerProps: {
+            ...(featureTypes?.polygon ? { 'polygons-stroke': opaOverwrite } : {}),
+            ...(featureTypes?.line ? { linestrings: opaOverwrite } : {}),
+            ...(featureTypes?.point
+              ? {
+                points: {
+                  lineOpacity: visConfig.strokeOpacity
+                }
+              }
+              : {})
+          }
+        })
+      ];
+    return [
+      ...geojsonLayers,
       // hover layer
       ...(hoveredObject && !visConfig.enable3d
         ? [

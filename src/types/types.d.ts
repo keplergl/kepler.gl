@@ -23,4 +23,4 @@ export type RowData = {
   [key: string]: string | null;
 }[];
 
-export type ProcessorResult = {fields: Field[]; rows: any[][]} | null;
+export type ProcessorResult = {fields: Field[]; rows: any[][];  rawData?: any} | null;

@@ -32,7 +32,7 @@ import {
 } from '@kepler.gl/utils';
 
 export type GetFeature = (d: any) => Feature;
-export type GeojsonDataMaps = Array<Feature | null>;
+export type GeojsonDataMaps = Array<Feature | null> | {points?: any, lines?: any, polygons?: any};
 
 type FeatureTypeMap = {
   [key in FeatureTypes]: boolean;
