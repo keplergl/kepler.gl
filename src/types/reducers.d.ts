@@ -195,6 +195,7 @@ export type Editor = {
 
 export type SplitMapLayers = {[key: string]: boolean};
 export type SplitMap = {
+  id?: string;
   layers: SplitMapLayers;
 };
 
