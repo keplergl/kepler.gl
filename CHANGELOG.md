@@ -15,7 +15,7 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [3.0.0-alpha.1] - October 17 2022
+## [3.0.0-alpha.1] - October 17 2023
 
 - a3521948 [feat] introduction of deck.gl effects (#2372)
 - c798961d [feat] Introduced dnd-context factory to better override dnd properties (#2364)
