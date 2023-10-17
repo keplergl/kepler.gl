@@ -255,7 +255,7 @@ export function parseCsvRowsByFieldType(
  *  }
  * }));
  */
-export function processRowObject(rawData: unknown[]): ProcessorResult {
+export function processRowObject(rawData: object[]): ProcessorResult {
   if (!Array.isArray(rawData)) {
     return null;
   } else if (!rawData.length) {
@@ -418,8 +418,7 @@ export function processArrowTable(arrowTable: ApacheArrowTable): ProcessorResult
     // check if schema_version in geoMeta equals to '0.1.0'
     const SCHEMA_VERSION = '0.1.0';
     if (geoMeta.schema_version !== SCHEMA_VERSION) {
-      Console.error('Apache Arrow schema version not supported');
-      return null;
+      Console.warn('Apache Arrow schema version not supported');
     }
     // get all geometry columns
     geometryColumns = geoMeta.columns;
@@ -427,22 +426,19 @@ export function processArrowTable(arrowTable: ApacheArrowTable): ProcessorResult
 
   const fields: Field[] = [];
 
-  // parse fields and convert columnar to row format table
-  const rowFormatTable: any[][] = [];
-  const columnarTable: {[name: string]: ArrowColumn} = {};
+  // parse fields
   arrowTable.schema.fields.forEach((field: ArrowField, index: number) => {
-    const arrowColumn = arrowTable.getColumn(field.name);
-    columnarTable[field.name] = arrowColumn;
+    const isGeometryColumn =
+      geometryColumns[field.name] !== undefined ||
+      field.metadata.get('ARROW:extension:name')?.startsWith('geoarrow');
     fields.push({
       name: field.name,
       id: field.name,
       displayName: field.name,
       format: '',
       fieldIdx: index,
-      type: geometryColumns[field.name]
-        ? ALL_FIELD_TYPES.geojson
-        : arrowDataTypeToFieldType(field.type),
-      analyzerType: geometryColumns[field.name]
+      type: isGeometryColumn ? ALL_FIELD_TYPES.geojson : arrowDataTypeToFieldType(field.type),
+      analyzerType: isGeometryColumn
         ? AnalyzerDATA_TYPES.GEOMETRY
         : arrowDataTypeToAnalyzerDataType(field.type),
       valueAccessor: (dc: any) => d => {
@@ -451,29 +447,8 @@ export function processArrowTable(arrowTable: ApacheArrowTable): ProcessorResult
     });
   });
 
-  const tableRowsCount = arrowTable.length;
-  const tableKeys = Object.keys(columnarTable);
-  for (let index = 0; index < tableRowsCount; index++) {
-    const tableItem: unknown[] = [];
-    for (let keyIndex = 0; keyIndex < tableKeys.length; keyIndex++) {
-      const fieldName = tableKeys[keyIndex];
-      const cellValue = columnarTable[fieldName].get(index);
-      if (geometryColumns[fieldName]) {
-        cellValue.parent = columnarTable[fieldName];
-      }
-      tableItem.push(
-        geometryColumns[fieldName]
-          ? {
-              encoding: geometryColumns[fieldName].encoding,
-              data: cellValue
-            }
-          : cellValue
-      );
-    }
-    rowFormatTable.push(tableItem);
-  }
-
-  return {fields, rows: rowFormatTable};
+  // return empty rows and use raw arrow table to construct column-wise data container
+  return {fields, rows: [], rawData: arrowTable};
 }
 
 export const DATASET_HANDLERS = {

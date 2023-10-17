@@ -18,37 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ListVector, FloatVector} from 'apache-arrow';
-import Console from 'global/console';
-import normalize from '@mapbox/geojson-normalize';
-import {parseSync} from '@loaders.gl/core';
-import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
-import {binaryToGeometry} from '@loaders.gl/gis';
-
-import {
-  Feature,
-  MultiPolygon,
-  Position,
-  Polygon,
-  MultiPoint,
-  Point,
-  MultiLineString,
-  LineString
-} from 'geojson';
-
-export enum FeatureTypes {
-  Point = 'Point',
-  MultiPoint = 'MultiPoint',
-  LineString = 'LineString',
-  MultiLineString = 'MultiLineString',
-  Polygon = 'Polygon',
-  MultiPolygon = 'MultiPolygon'
-}
-
-export type RawArrowFeature = {
-  encoding?: string;
-  data: any;
-};
+import {ListVector, Float64Vector, Column as ArrowColumn} from 'apache-arrow';
+import {BinaryFeatures} from '@loaders.gl/schema';
 
 export enum GEOARROW_ENCODINGS {
   MULTI_POLYGON = 'geoarrow.multipolygon',
@@ -56,212 +27,207 @@ export enum GEOARROW_ENCODINGS {
   MULTI_LINESTRING = 'geoarrow.multilinestring',
   LINESTRING = 'geoarrow.linestring',
   MULTI_POINT = 'geoarrow.multipoint',
-  POINT = 'geoarrow.point',
-  WKB = 'wkb',
-  WKT = 'wkt'
+  POINT = 'geoarrow.point'
 }
 
 /**
- * convert Arrow MultiPolygon to geojson Feature
+ * get geoarrow encoding from geoarrow column
  */
-function arrowMultiPolygonToFeature(arrowMultiPolygon: ListVector): MultiPolygon {
-  const multiPolygon: Position[][][] = [];
-  for (let m = 0; m < arrowMultiPolygon.length; m++) {
-    const arrowPolygon = arrowMultiPolygon.get(m);
-    const polygon: Position[][] = [];
-    for (let i = 0; arrowPolygon && i < arrowPolygon?.length; i++) {
-      const arrowRing = arrowPolygon?.get(i);
-      const ring: Position[] = [];
-      for (let j = 0; arrowRing && j < arrowRing.length; j++) {
-        const arrowCoord = arrowRing.get(j);
-        const coord: Position = Array.from(arrowCoord);
-        ring.push(coord);
-      }
-      polygon.push(ring);
-    }
-    multiPolygon.push(polygon);
+function getGeoArrowEncoding(column: ArrowColumn): string {
+  const {metadata} = column;
+  if (metadata && metadata.get('ARROW:extension:name')) {
+    return metadata.get('ARROW:extension:name') || '';
   }
-  const geometry: MultiPolygon = {
-    type: FeatureTypes.MultiPolygon,
-    coordinates: multiPolygon
-  };
-  return geometry;
+  return '';
 }
 
-/**
- * convert Arrow Polygon to geojson Feature
- */
-function arrowPolygonToFeature(arrowPolygon: ListVector): Polygon {
-  const polygon: Position[][] = [];
-  for (let i = 0; arrowPolygon && i < arrowPolygon.length; i++) {
-    const arrowRing = arrowPolygon.get(i);
-    const ring: Position[] = [];
-    for (let j = 0; arrowRing && j < arrowRing.length; j++) {
-      const arrowCoord = arrowRing.get(j);
-      const coords: Position = Array.from(arrowCoord);
-      ring.push(coords);
+function updateBoundsFromGeoArrowSamples(
+  flatCoords: Float64Array,
+  nDim: number,
+  bounds: [number, number, number, number],
+  sampleSize: number = 1000
+) {
+  const numberOfFeatures = flatCoords.length / nDim;
+  const sampleStep = Math.max(Math.floor(numberOfFeatures / sampleSize), 1);
+
+  for (let i = 0; i < numberOfFeatures; i += sampleStep) {
+    const lng = flatCoords[i * nDim];
+    const lat = flatCoords[i * nDim + 1];
+    if (lng < bounds[0]) {
+      bounds[0] = lng;
     }
-    polygon.push(ring);
-  }
-  const geometry: Polygon = {
-    type: FeatureTypes.Polygon,
-    coordinates: polygon
-  };
-  return geometry;
-}
-
-/**
- * convert Arrow MultiPoint to geojson MultiPoint
- */
-function arrowMultiPointToFeature(arrowMultiPoint: ListVector): MultiPoint {
-  const multiPoint: Position[] = [];
-  for (let i = 0; arrowMultiPoint && i < arrowMultiPoint.length; i++) {
-    const arrowPoint = arrowMultiPoint.get(i);
-    if (arrowPoint) {
-      const coord: Position = Array.from(arrowPoint);
-      multiPoint.push(coord);
+    if (lat < bounds[1]) {
+      bounds[1] = lat;
+    }
+    if (lng > bounds[2]) {
+      bounds[2] = lng;
+    }
+    if (lat > bounds[3]) {
+      bounds[3] = lat;
     }
   }
-  const geometry: MultiPoint = {
-    type: FeatureTypes.MultiPoint,
-    coordinates: multiPoint
-  };
-  return geometry;
 }
 
-/**
- * convert Arrow Point to geojson Point
- */
-function arrowPointToFeature(arrowPoint: FloatVector): Point {
-  const point: Position = Array.from(arrowPoint.values);
-  const geometry: Point = {
-    type: FeatureTypes.Point,
-    coordinates: point
-  };
-  return geometry;
-}
+const BINARY_GEOMETRY_TEMPLATE = {
+  globalFeatureIds: {value: new Uint32Array(0), size: 1},
+  positions: {value: new Float32Array(0), size: 2},
+  properties: [],
+  numericProps: {},
+  featureIds: {value: new Uint32Array(0), size: 1}
+};
 
-/**
- * convert Arrow MultiLineString to geojson MultiLineString
- */
-function arrowMultiLineStringToFeature(arrowMultiLineString: ListVector): MultiLineString {
-  const multiLineString: Position[][] = [];
-  for (let i = 0; arrowMultiLineString && i < arrowMultiLineString.length; i++) {
-    const arrowLineString = arrowMultiLineString.get(i);
-    const lineString: Position[] = [];
-    for (let j = 0; arrowLineString && j < arrowLineString.length; j++) {
-      const arrowCoord = arrowLineString.get(j);
-      if (arrowCoord) {
-        const coords: Position = Array.from(arrowCoord);
-        lineString.push(coords);
-      }
-    }
-    multiLineString.push(lineString);
-  }
-  const geometry: MultiLineString = {
-    type: FeatureTypes.MultiLineString,
-    coordinates: multiLineString
-  };
-  return geometry;
-}
+function getBinaryPolygonsFromChunk(chunk: ListVector, geoEncoding: string) {
+  const isMultiPolygon = geoEncoding === GEOARROW_ENCODINGS.MULTI_POLYGON;
 
-/**
- * convert Arrow LineString to geojson LineString
- */
-function arrowLineStringToFeature(arrowLineString: ListVector): LineString {
-  const lineString: Position[] = [];
-  for (let i = 0; arrowLineString && i < arrowLineString.length; i++) {
-    const arrowCoord = arrowLineString.get(i);
-    if (arrowCoord) {
-      const coords: Position = Array.from(arrowCoord);
-      lineString.push(coords);
-    }
-  }
-  const geometry: LineString = {
-    type: FeatureTypes.LineString,
-    coordinates: lineString
-  };
-  return geometry;
-}
+  const polygonData = isMultiPolygon ? chunk.getChildAt(0) : chunk;
+  const ringData = polygonData?.getChildAt(0) as ListVector;
+  const pointData = ringData?.getChildAt(0);
+  const coordData = pointData?.getChildAt(0) as ListVector;
 
-/**
- * convert Arrow wkb to geojson Geometry
- */
-function arrowWkbToFeature(arrowWkb: Uint8Array): Feature | null {
-  const binaryGeo = parseSync(arrowWkb, WKBLoader);
-  const geometry = binaryToGeometry(binaryGeo);
-  const normalized = normalize(geometry);
+  const nDim = pointData?.type.listSize || 2;
+  const geomOffset = ringData?.valueOffsets;
+  const flatCoordinateArray = coordData.values as Float64Array;
 
-  if (!normalized || !Array.isArray(normalized.features)) {
-    // fail to normalize geojson
-    return null;
-  }
-
-  return normalized.features[0];
-}
-
-/**
- * convert Arrow wkt to geojson Geometry
- */
-function arrowWktToFeature(arrowWkt: string): Feature | null {
-  const geometry = parseSync(arrowWkt, WKTLoader);
-  const normalized = normalize(geometry);
-
-  if (!normalized || !Array.isArray(normalized.features)) {
-    // fail to normalize geojson
-    return null;
-  }
-
-  return normalized.features[0];
-}
-
-/**
- * parse geometry from arrow data that is returned from processArrowData()
- *
- * @param rawData the raw geometry data returned from processArrowData, which is an object with two properties: encoding and data
- * @see processArrowData
- * @returns
- */
-export function parseGeometryFromArrow(rawData: RawArrowFeature): Feature | null {
-  const encoding = rawData.encoding?.toLowerCase();
-  const data = rawData.data;
-  if (!encoding || !data) return null;
-
-  let geometry;
-
-  switch (encoding) {
-    case GEOARROW_ENCODINGS.MULTI_POLYGON:
-      geometry = arrowMultiPolygonToFeature(data);
-      break;
-    case GEOARROW_ENCODINGS.POLYGON:
-      geometry = arrowPolygonToFeature(data);
-      break;
-    case GEOARROW_ENCODINGS.MULTI_POINT:
-      geometry = arrowMultiPointToFeature(data);
-      break;
-    case GEOARROW_ENCODINGS.POINT:
-      geometry = arrowPointToFeature(data);
-      break;
-    case GEOARROW_ENCODINGS.MULTI_LINESTRING:
-      geometry = arrowMultiLineStringToFeature(data);
-      break;
-    case GEOARROW_ENCODINGS.LINESTRING:
-      geometry = arrowLineStringToFeature(data);
-      break;
-    case GEOARROW_ENCODINGS.WKB: {
-      return arrowWkbToFeature(data);
-    }
-    case GEOARROW_ENCODINGS.WKT: {
-      return arrowWktToFeature(data);
-    }
-    default: {
-      Console.error('GeoArrow encoding not supported');
-      return null;
-    }
-  }
   return {
-    type: 'Feature',
-    geometry,
-    properties: {}
+    flatCoordinateArray,
+    nDim,
+    geomOffset
   };
+}
+
+function getBinaryLinesFromChunk(chunk: ListVector, geoEncoding: string) {
+  const isMultiLineString = geoEncoding === GEOARROW_ENCODINGS.MULTI_LINESTRING;
+
+  const lineData = (isMultiLineString ? chunk.getChildAt(0) : chunk) as ListVector;
+  const pointData = lineData?.getChildAt(0);
+  const coordData = pointData?.getChildAt(0) as Float64Vector;
+
+  const nDim = pointData?.type.listSize || 2;
+  const geomOffset = lineData?.valueOffsets;
+  const flatCoordinateArray = coordData.values as Float64Array;
+
+  return {
+    flatCoordinateArray,
+    nDim,
+    geomOffset
+  };
+}
+
+function getBinaryPointsFromChunk(chunk: ListVector, geoEncoding: string) {
+  const isMultiPoint = geoEncoding === GEOARROW_ENCODINGS.MULTI_POINT;
+
+  const pointData = (isMultiPoint ? chunk.getChildAt(0) : chunk) as ListVector;
+  const coordData = pointData?.getChildAt(0) as ListVector;
+
+  const nDim = pointData?.type.listSize || 2;
+  const geomOffset = pointData?.valueOffsets;
+  const flatCoordinateArray = coordData.values as Float64Array;
+
+  return {
+    flatCoordinateArray,
+    nDim,
+    geomOffset
+  };
+}
+
+function getBinaryGeometriesFromChunk(chunk: ListVector, geoEncoding: string) {
+  if (geoEncoding === GEOARROW_ENCODINGS.POINT || geoEncoding === GEOARROW_ENCODINGS.MULTI_POINT) {
+    return getBinaryPointsFromChunk(chunk, geoEncoding);
+  } else if (
+    geoEncoding === GEOARROW_ENCODINGS.LINESTRING ||
+    geoEncoding === GEOARROW_ENCODINGS.MULTI_LINESTRING
+  ) {
+    return getBinaryLinesFromChunk(chunk, geoEncoding);
+  } else if (
+    geoEncoding === GEOARROW_ENCODINGS.POLYGON ||
+    geoEncoding === GEOARROW_ENCODINGS.MULTI_POLYGON
+  ) {
+    return getBinaryPolygonsFromChunk(chunk, geoEncoding);
+  }
+  throw Error('invalid geoarrow encoding');
+}
+
+/**
+ * get binary geometries from geoarrow polygon column
+ */
+export function getBinaryGeometriesFromGeoArrowPolygon(
+  geoColumn: ArrowColumn
+): {
+  binaryGeometries: BinaryFeatures[];
+  bounds: [number, number, number, number];
+  featureTypes: {polygon: boolean; point: boolean; line: boolean};
+} {
+  const geoEncoding = getGeoArrowEncoding(geoColumn);
+  const featureTypes = {
+    polygon:
+      geoEncoding === GEOARROW_ENCODINGS.MULTI_POLYGON ||
+      geoEncoding === GEOARROW_ENCODINGS.POLYGON,
+    point:
+      geoEncoding === GEOARROW_ENCODINGS.MULTI_LINESTRING ||
+      geoEncoding === GEOARROW_ENCODINGS.LINESTRING,
+    line: geoEncoding === GEOARROW_ENCODINGS.MULTI_POINT || geoEncoding === GEOARROW_ENCODINGS.POINT
+  };
+
+  const bounds: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
+  const chunks = geoColumn.chunks;
+  let globalFeatureIdOffset = 0;
+  const binaryGeometries: BinaryFeatures[] = [];
+
+  for (let c = 0; c < chunks.length; c++) {
+    const geometries = chunks[c] as ListVector;
+    const {flatCoordinateArray, nDim, geomOffset} = getBinaryGeometriesFromChunk(
+      geometries,
+      geoEncoding
+    );
+
+    const numOfFeatures = flatCoordinateArray.length / nDim;
+    const featureIds = new Uint32Array(numOfFeatures);
+    for (let i = 0; i < geomOffset.length; i++) {
+      for (let j = geomOffset[i]; j < geomOffset[i + 1]; j++) {
+        featureIds[j] = i;
+      }
+    }
+    const globalFeatureIds = new Uint32Array(numOfFeatures);
+    for (let i = 0; i < geomOffset.length; i++) {
+      for (let j = geomOffset[i]; j < geomOffset[i + 1]; j++) {
+        globalFeatureIds[j] = i + globalFeatureIdOffset;
+      }
+    }
+    globalFeatureIdOffset += geometries.length;
+
+    const binaryContent = {
+      globalFeatureIds: {value: globalFeatureIds, size: 1},
+      positions: {
+        value: flatCoordinateArray,
+        size: nDim
+      },
+      featureIds: {value: featureIds, size: 1}
+    };
+
+    // TODO: deck.gl defines the BinaryFeatures structure must have points, lines, polygons even if they are empty
+    binaryGeometries.push({
+      points: {
+        type: 'Point',
+        ...BINARY_GEOMETRY_TEMPLATE,
+        ...(featureTypes.point ? binaryContent : {})
+      },
+      lines: {
+        type: 'LineString',
+        ...BINARY_GEOMETRY_TEMPLATE,
+        ...(featureTypes.line ? binaryContent : {}),
+        pathIndices: {value: featureTypes.line ? geomOffset : new Uint16Array(0), size: 1},
+      },
+      polygons: {
+        type: 'Polygon',
+        ...BINARY_GEOMETRY_TEMPLATE,
+        ...(featureTypes.polygon ? binaryContent : {}),
+        polygonIndices: {value: featureTypes.polygon ? geomOffset: new Uint16Array(0), size: 1},
+        primitivePolygonIndices: {value: featureTypes.polygon ? geomOffset: new Uint16Array(0), size: 1},
+      }
+    });
+
+    updateBoundsFromGeoArrowSamples(flatCoordinateArray, nDim, bounds);
+  }
+
+  return {binaryGeometries, bounds, featureTypes};
 }

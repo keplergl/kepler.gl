@@ -891,6 +891,10 @@ export default function LayerConfiguratorFactory(
       );
     }
 
+    _renderGeoarrowLayerConfig(props) {
+      return this._renderGeojsonLayerConfig(props);
+    }
+
     _render3DLayerConfig({layer, visConfiguratorProps}) {
       return (
         <Fragment>

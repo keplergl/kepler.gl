@@ -31,6 +31,7 @@ import {default as LineLayer} from './line-layer/line-layer';
 import {default as GridLayer} from './grid-layer/grid-layer';
 export {pointToPolygonGeo} from './grid-layer/grid-utils';
 import {default as HexagonLayer} from './hexagon-layer/hexagon-layer';
+import {default as ArrowLayer} from './arrow-layer/arrow-layer';
 import {default as GeojsonLayer} from './geojson-layer/geojson-layer';
 export {defaultElevation, defaultLineWidth, defaultRadius} from './geojson-layer/geojson-layer';
 import {default as ClusterLayer} from './cluster-layer/cluster-layer';
@@ -71,6 +72,7 @@ export const KeplerGlLayers = {
   GridLayer,
   HexagonLayer,
   GeojsonLayer,
+  ArrowLayer,
   ClusterLayer,
   IconLayer,
   HeatmapLayer,
@@ -88,6 +90,7 @@ export const LayerClasses = {
   [LAYER_TYPES.grid]: GridLayer,
   [LAYER_TYPES.hexagon]: HexagonLayer,
   [LAYER_TYPES.geojson]: GeojsonLayer,
+  [LAYER_TYPES.geoarrow]: ArrowLayer,
   [LAYER_TYPES.cluster]: ClusterLayer,
   [LAYER_TYPES.icon]: IconLayer,
   [LAYER_TYPES.heatmap]: HeatmapLayer,

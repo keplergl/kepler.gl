@@ -61,6 +61,13 @@ export interface DataContainerInterface {
   column(columnIndex: number): Generator<any, void, any>;
 
   /**
+   * Returns the column object at the specified index.
+   * @param columnIndex Column index.
+   * @returns The column object at the specified index.
+   */
+  getColumn(columnIndex: number): any;
+
+  /**
    * Returns contents of the data container as a two-dimensional array.
    * @returns Data.
    */

@@ -279,7 +279,7 @@ export function validateInputData(data: Record<string, unknown>): ProcessorResul
     return null;
   }
 
-  const {fields, rows} = data;
+  const {fields, rows, ...rest} = data;
 
   // check if all fields has name, format and type
   const allValid = fields.every((f, i) => {
@@ -315,7 +315,7 @@ export function validateInputData(data: Record<string, unknown>): ProcessorResul
   });
 
   if (allValid) {
-    return {rows, fields};
+    return {rows, fields, ...rest};
   }
 
   // if any field has missing type, recalculate it for everyone

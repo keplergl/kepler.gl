@@ -45,6 +45,7 @@ export type ProtoDataset = {
       id?: string;
     }[];
     rows: any[][];
+    rawData?: any;
   };
 
   // table-injected metadata

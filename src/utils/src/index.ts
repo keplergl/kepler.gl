@@ -108,7 +108,7 @@ export {transformRequest, isStyleUsingMapboxTiles} from './map-style-utils/mapbo
 // Map
 export * from './map-utils';
 
-export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData} from './data-container-utils';
+export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData, DataForm} from './data-container-utils';
 export type {DataContainerInterface} from './data-container-interface';
 export type {FilterResult, FilterChanged, dataValueAccessor} from './filter-utils'
 export * from "./filter-utils";

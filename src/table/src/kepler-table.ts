@@ -41,12 +41,13 @@ import {
 
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 
-import {Layer} from '@kepler.gl/layers';
+import { Layer } from '@kepler.gl/layers';
 import {
   generateHashId,
   getSortingFunction,
   timeToUnixMilli,
   createDataContainer,
+  DataForm,
   diffFilters,
   filterDataByFilterTypes,
   FilterResult,
@@ -148,8 +149,13 @@ class KeplerTable {
     //   return this;
     // }
 
-    // @ts-expect-error
-    const dataContainer = createDataContainer(data.rows, {fields: data.fields});
+    const isArrow = info?.format === 'arrow';
+    const dataContainer = createDataContainer(
+      isArrow ? data.rawData._children : data.rows, {
+      // @ts-expect-error
+      fields: data.fields,
+      inputDataFormat: isArrow ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY
+    });
 
     const datasetInfo = {
       id: generateHashId(4),
