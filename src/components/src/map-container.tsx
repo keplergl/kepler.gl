@@ -947,7 +947,6 @@ export default function MapContainerFactory(
       // TODO this should be part of onLayerHover arguments, investigate
       // @ts-ignore (does not fail with local yarn-test)
       data.mapIndex = index;
-      console.log(data);
       this.props.visStateActions.onLayerHover(data);
     }, DEBOUNCE_MOUSE_MOVE_PROPAGATE);
 

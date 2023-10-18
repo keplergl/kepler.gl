@@ -88,6 +88,7 @@ function autoFindTooltipFields(fields, maxDefaultTooltips) {
         .split(' ')
         .every(seg => !ptFields.includes(seg)) &&
       type !== ALL_FIELD_TYPES.geojson &&
+      type !== ALL_FIELD_TYPES.geoarrow &&
       type !== 'object'
   );
 

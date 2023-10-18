@@ -27,14 +27,8 @@ import {
   getBinaryGeometriesFromGeoArrowPolygon,
   parseGeometryFromArrow
 } from '@kepler.gl/utils';
-import {Merge} from '@kepler.gl/types';
 
-import {LayerColumn, LayerBaseConfig} from '../base-layer';
-import GeoJsonLayer, {
-  SUPPORTED_ANALYZER_TYPES,
-  GeoJsonLayerVisConfig,
-  GeoJsonLayerVisualChannelConfig
-} from '../geojson-layer/geojson-layer';
+import GeoJsonLayer, {SUPPORTED_ANALYZER_TYPES} from '../geojson-layer/geojson-layer';
 
 export default class ArrowLayer extends GeoJsonLayer {
   binaryFeatures: BinaryFeatures[];
@@ -113,7 +107,6 @@ export default class ArrowLayer extends GeoJsonLayer {
     // the objectInfo.layer id should be `${this.id}-${i}`
     if (objectInfo?.picked) {
       const deckLayerId = objectInfo?.layer?.props?.id;
-      console.log(deckLayerId);
       return deckLayerId.startsWith(this.id);
     }
     return false;
@@ -122,7 +115,6 @@ export default class ArrowLayer extends GeoJsonLayer {
   hasHoveredObject(objectInfo) {
     // hover object returns the index of the object in the data array
     if (this.isLayerHovered(objectInfo) && objectInfo.index >= 0 && this.dataContainer) {
-      console.time('getHoverData');
       const {geojson} = this.config.columns;
       const col = this.dataContainer.getColumn(geojson.fieldIdx);
       const rawGeometry = col.get(objectInfo.index);
@@ -130,8 +122,12 @@ export default class ArrowLayer extends GeoJsonLayer {
         encoding: col.metadata?.get('ARROW:extension:name'),
         data: rawGeometry
       });
-      console.timeEnd('getHoverData');
-      return hoveredFeature;
+      return {
+        ...hoveredFeature,
+        properties: {
+          index: objectInfo.index
+        }
+      };
     }
     return null;
   }
@@ -174,7 +170,6 @@ export default class ArrowLayer extends GeoJsonLayer {
 
     const pickable = interactionConfig.tooltip.enabled;
     const hoveredObject = this.hasHoveredObject(objectHovered);
-    console.log(hoveredObject);
 
     const deckLayers = data.data.map((d, i) => {
       return new DeckGLGeoJsonLayer({

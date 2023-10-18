@@ -512,6 +512,10 @@ export const FIELD_TYPE_DISPLAY = {
     label: 'geo',
     color: BLUE2
   },
+  [ALL_FIELD_TYPES.geoarrow]: {
+    label: 'geo',
+    color: BLUE2
+  },
   [ALL_FIELD_TYPES.integer]: {
     label: 'int',
     color: YELLOW
@@ -750,6 +754,17 @@ export const FIELD_OPTS = {
     }
   },
   [ALL_FIELD_TYPES.geojson]: {
+    type: 'geometry',
+    scale: {
+      ...notSupportedScaleOpts,
+      ...notSupportAggrOpts
+    },
+    format: {
+      legend: d => '...',
+      tooltip: []
+    }
+  },
+  [ALL_FIELD_TYPES.geoarrow]: {
     type: 'geometry',
     scale: {
       ...notSupportedScaleOpts,
