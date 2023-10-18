@@ -437,7 +437,7 @@ export function processArrowTable(arrowTable: ApacheArrowTable): ProcessorResult
       displayName: field.name,
       format: '',
       fieldIdx: index,
-      type: isGeometryColumn ? ALL_FIELD_TYPES.geojson : arrowDataTypeToFieldType(field.type),
+      type: isGeometryColumn ? ALL_FIELD_TYPES.geoarrow: arrowDataTypeToFieldType(field.type),
       analyzerType: isGeometryColumn
         ? AnalyzerDATA_TYPES.GEOMETRY
         : arrowDataTypeToAnalyzerDataType(field.type),

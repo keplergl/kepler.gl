@@ -150,8 +150,10 @@ class KeplerTable {
     // }
 
     const isArrow = info?.format === 'arrow';
-    const dataContainer = createDataContainer(
-      isArrow ? data.rawData._children : data.rows, {
+    const dataContainerData = isArrow
+        ? [...Array(data.rawData?.numCols || 0).keys()].map(i => data.rawData.getColumnAt(i))
+        : data.rows
+    const dataContainer = createDataContainer(dataContainerData, {
       // @ts-expect-error
       fields: data.fields,
       inputDataFormat: isArrow ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY

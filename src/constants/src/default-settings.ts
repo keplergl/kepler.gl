@@ -430,7 +430,8 @@ export const ALL_FIELD_TYPES = keyMirror({
   timestamp: null,
   point: null,
   array: null,
-  object: null
+  object: null,
+  geoarrow: null
 });
 
 // Data Table

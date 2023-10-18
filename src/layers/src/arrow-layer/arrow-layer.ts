@@ -18,71 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import uniq from 'lodash.uniq';
-import {DATA_TYPES} from 'type-analyzer';
-import {Feature} from 'geojson';
-
 import {BinaryFeatures} from '@loaders.gl/schema';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
-import {
-  GEOJSON_FIELDS,
-  HIGHLIGH_COLOR_3D,
-  CHANNEL_SCALES,
-  ColorRange,
-  LAYER_VIS_CONFIGS
-} from '@kepler.gl/constants';
-import {
-  VisConfigNumber,
-  VisConfigColorSelect,
-  VisConfigColorRange,
-  VisConfigRange,
-  VisConfigBoolean,
-  Merge,
-  RGBColor
-} from '@kepler.gl/types';
+import {HIGHLIGH_COLOR_3D} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
-import { DataContainerInterface, getBinaryGeometriesFromGeoArrowPolygon } from '@kepler.gl/utils';
-
-import Layer, {
-  colorMaker,
-  LayerBaseConfig,
-  LayerBaseConfigPartial,
-  LayerColorConfig,
-  LayerColumn,
-  LayerHeightConfig,
-  LayerRadiusConfig,
-  LayerSizeConfig,
-  LayerStrokeColorConfig
-} from '../base-layer';
 import {
-  getGeojsonDataMaps,
-  getGeojsonBounds,
-  getGeojsonFeatureTypes,
-  GeojsonDataMaps
-} from '../geojson-layer/geojson-utils';
-import GeoJsonLayer, {SUPPORTED_ANALYZER_TYPES} from '../geojson-layer/geojson-layer';
+  DataContainerInterface,
+  getBinaryGeometriesFromGeoArrowPolygon,
+  parseGeometryFromArrow
+} from '@kepler.gl/utils';
+import {Merge} from '@kepler.gl/types';
+
+import {LayerColumn, LayerBaseConfig} from '../base-layer';
+import GeoJsonLayer, {
+  SUPPORTED_ANALYZER_TYPES,
+  GeoJsonLayerVisConfig,
+  GeoJsonLayerVisualChannelConfig
+} from '../geojson-layer/geojson-layer';
 
 export default class ArrowLayer extends GeoJsonLayer {
-  dataToFeature: BinaryFeatures[];
+  binaryFeatures: BinaryFeatures[];
+  dataContainer: DataContainerInterface | null;
 
   // constructor
   constructor(props) {
     super(props);
 
-    this.dataToFeature = [];
+    this.dataContainer = null;
+    this.binaryFeatures = [];
   }
 
-  static findDefaultLayerProps({label, metadata, fields = []}: KeplerTable) {
-    const geojsonColumns = fields
-      .filter(f => f.type === 'geojson' && SUPPORTED_ANALYZER_TYPES[f.analyzerType])
+  static findDefaultLayerProps({label, fields = []}: KeplerTable) {
+    const geoarrowColumns = fields
+      .filter(f => f.type === 'geoarrow' && SUPPORTED_ANALYZER_TYPES[f.analyzerType])
       .map(f => f.name);
 
     const defaultColumns = {
-      geojson: uniq([...GEOJSON_FIELDS.geojson, ...geojsonColumns])
+      geojson: geoarrowColumns
     };
 
     const foundColumns = this.findDefaultColumnField(defaultColumns, fields);
-    if (!foundColumns || !foundColumns.length || metadata.format !== 'arrow') {
+    if (!foundColumns || !foundColumns.length) {
       return {props: []};
     }
 
@@ -106,13 +82,19 @@ export default class ArrowLayer extends GeoJsonLayer {
     return 'GeoArrow';
   }
 
+  get requiredLayerColumns() {
+    return ['geojson'];
+  }
+
   calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
     // TODO: filter arrow table using predicate
     // filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
-    return this.dataToFeature;
+    this.dataContainer = dataContainer;
+    return this.binaryFeatures;
   }
 
   updateLayerMeta(dataContainer: DataContainerInterface) {
+    this.dataContainer = dataContainer;
     const {geojson} = this.config.columns;
     const geoColumn = dataContainer.getColumn(geojson.fieldIdx);
 
@@ -120,10 +102,47 @@ export default class ArrowLayer extends GeoJsonLayer {
     const {binaryGeometries, bounds, featureTypes} = getBinaryGeometriesFromGeoArrowPolygon(
       geoColumn
     );
-    this.dataToFeature = binaryGeometries;
+    this.binaryFeatures = binaryGeometries;
 
     const fixedRadius = false;
     this.updateMeta({bounds, fixedRadius, featureTypes});
+  }
+
+  isLayerHovered(objectInfo): boolean {
+    // there could be multiple deck.gl layers created from multiple chunks in arrow table
+    // the objectInfo.layer id should be `${this.id}-${i}`
+    if (objectInfo?.picked) {
+      const deckLayerId = objectInfo?.layer?.props?.id;
+      console.log(deckLayerId);
+      return deckLayerId.startsWith(this.id);
+    }
+    return false;
+  }
+
+  hasHoveredObject(objectInfo) {
+    // hover object returns the index of the object in the data array
+    if (this.isLayerHovered(objectInfo) && objectInfo.index >= 0 && this.dataContainer) {
+      console.time('getHoverData');
+      const {geojson} = this.config.columns;
+      const col = this.dataContainer.getColumn(geojson.fieldIdx);
+      const rawGeometry = col.get(objectInfo.index);
+      const hoveredFeature = parseGeometryFromArrow({
+        encoding: col.metadata?.get('ARROW:extension:name'),
+        data: rawGeometry
+      });
+      console.timeEnd('getHoverData');
+      return hoveredFeature;
+    }
+    return null;
+  }
+
+  getHoverData(object, dataContainer) {
+    // index of dataContainer is saved to feature.properties
+    const index = object;
+    if (index >= 0) {
+      return dataContainer.row(index);
+    }
+    return null;
   }
 
   renderLayer(opts) {
@@ -155,6 +174,7 @@ export default class ArrowLayer extends GeoJsonLayer {
 
     const pickable = interactionConfig.tooltip.enabled;
     const hoveredObject = this.hasHoveredObject(objectHovered);
+    console.log(hoveredObject);
 
     const deckLayers = data.data.map((d, i) => {
       return new DeckGLGeoJsonLayer({

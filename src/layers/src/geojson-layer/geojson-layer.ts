@@ -152,7 +152,7 @@ export type GeoJsonLayerVisConfig = {
   wireframe: boolean;
 };
 
-type GeoJsonLayerVisualChannelConfig = LayerColorConfig &
+export type GeoJsonLayerVisualChannelConfig = LayerColorConfig &
   LayerStrokeColorConfig &
   LayerSizeConfig &
   LayerHeightConfig &
@@ -168,7 +168,7 @@ export type GeoJsonLayerMeta = {
   fixedRadius?: boolean;
 };
 
-export const geoJsonRequiredColumns: ['geojson'] = ['geojson'];
+export const geoJsonRequiredColumns = ['geojson'];
 export const featureAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
   dc: DataContainerInterface
 ) => d => dc.valueAt(d.index, geojson.fieldIdx);
@@ -276,7 +276,7 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
-  static findDefaultLayerProps({label, metadata, fields = []}: KeplerTable) {
+  static findDefaultLayerProps({label, fields = []}: KeplerTable) {
     const geojsonColumns = fields
       .filter(f => f.type === 'geojson' && SUPPORTED_ANALYZER_TYPES[f.analyzerType])
       .map(f => f.name);
@@ -286,7 +286,7 @@ export default class GeoJsonLayer extends Layer {
     };
 
     const foundColumns = this.findDefaultColumnField(defaultColumns, fields);
-    if (!foundColumns || !foundColumns.length || metadata.format === 'arrow') {
+    if (!foundColumns || !foundColumns.length) {
       return {props: []};
     }
 
@@ -396,17 +396,6 @@ export default class GeoJsonLayer extends Layer {
     }
 
     return this;
-  }
-
-  hasLayerData(layerData) {
-    if (!layerData) {
-      return false;
-    }
-    return Boolean(
-      layerData.data &&
-        (layerData.data.length ||
-          ('points' in layerData.data && 'polygons' in layerData.data && 'lines' in layerData.data))
-    );
   }
 
   renderLayer(opts) {
