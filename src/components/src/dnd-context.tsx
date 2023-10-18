@@ -1,6 +1,7 @@
 import React, {useCallback, useMemo, useState, PropsWithChildren} from 'react';
 import styled from 'styled-components';
 import {DndContext as DndKitContext, DragOverlay} from '@dnd-kit/core';
+import Console from 'global/console';
 import {useDispatch} from 'react-redux';
 import {
   DND_EMPTY_MODIFIERS,
@@ -120,8 +121,17 @@ function DndContextFactory(
 
     const onDragStart = useCallback(
       event => {
-        onLayerDragStart(event);
-        onEffectDragStart(event);
+        const activeType = event.active.data?.current?.type;
+        switch (activeType) {
+          case SORTABLE_LAYER_TYPE:
+            onLayerDragStart(event);
+            break;
+          case SORTABLE_EFFECT_TYPE:
+            onEffectDragStart(event);
+            break;
+          default:
+            Console.log(`activeType ${activeType} unknown`);
+        }
       },
       [onLayerDragStart, onEffectDragStart]
     );
