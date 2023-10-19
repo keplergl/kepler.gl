@@ -1,5 +1,6 @@
 import React, {Component, ComponentType} from 'react';
 import styled from 'styled-components';
+import classnames from 'classnames';
 import PropTypes from 'prop-types';
 
 import {dataTestIds, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
@@ -79,10 +80,12 @@ function EffectPanelFactory(
       const {effect, isDraggable, listeners} = this.props;
       const {config = {} as EffectConfig} = effect;
 
+      const sortingAllowed = config.type !== LIGHT_AND_SHADOW_EFFECT.type;
+
       return (
         <PanelWrapper
           active={false}
-          className={`effect-panel ${this.props.className}`}
+          className={classnames('effect-panel', this.props.className)}
           data-testid={dataTestIds.effectPanel}
           style={this.props.style}
           onMouseDown={this.props.onMouseDown}
@@ -96,7 +99,7 @@ function EffectPanelFactory(
             onToggleEnabled={this._toggleEnabled}
             onRemoveEffect={this._removeEffect}
             onToggleEnableConfig={this._toggleConfigActive}
-            isDragNDropEnabled={isDraggable}
+            isDragNDropEnabled={isDraggable && sortingAllowed}
             listeners={listeners}
             showSortHandle={effect.type !== LIGHT_AND_SHADOW_EFFECT.type}
           />

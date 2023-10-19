@@ -187,8 +187,11 @@ export default {
     backgroundColor: 'Background Color'
   },
   effectManager: {
-    effect: 'Effects',
-    addEffect: 'Add effect'
+    effects: 'Effects',
+    addEffect: 'Add effect',
+    pickDateTime: 'Pick date/time',
+    currentTime: 'Current time',
+    pickCurrrentTime: 'Pick current time'
   },
   layerConfiguration: {
     defaultDescription: 'Calculate {property} based on selected field',

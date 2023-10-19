@@ -358,6 +358,12 @@ export const sliderMarginTopIsTime = -12;
 export const sliderMarginTop = 12;
 export const sliderMarginBottom = 12;
 
+// Date picker
+export const datePickerFontSize = '11px';
+export const datePickerBgdColor = inputBgd;
+export const datePickerBgdHover = inputBgdHover;
+export const datePickerSelectedDateBgColor = primaryBtnBgd;
+
 // Geocoder
 export const geocoderWidth = 360;
 export const geocoderTop = 20;
@@ -1453,6 +1459,12 @@ export const theme = {
   sliderMarginTopIsTime,
   sliderMarginTop,
   sliderMarginBottom,
+
+  // Date picker
+  datePickerFontSize,
+  datePickerBgdColor,
+  datePickerBgdHover,
+  datePickerSelectedDateBgColor,
 
   // Geocoder
   geocoderWidth,
