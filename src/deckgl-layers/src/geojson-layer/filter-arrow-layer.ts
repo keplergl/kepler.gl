@@ -4,18 +4,20 @@ import GL from '@luma.gl/constants';
 
 import shaderModule from './filter-shader-module';
 
+const VALUE_FILTERED = 1;
+
 const defaultProps = {
-  getFiltered: {type: 'accessor', value: 1}
+  getFiltered: {type: 'accessor', value: VALUE_FILTERED}
 };
 
 export type FilterArrowExtensionProps = {
   getFiltered?: () => number;
 };
 
-// Write an extension to filter arrow layer:
-// an instanced attribute 'instanceFiltered' is added to the layer to indicate whether the feature has been Filtered
-// the shader module is modified to discard the feature if instanceFiltered is 0
-// the accessor getFiltered is used to get the value of instanceFiltered based on filteredIndex in Arrowlayer
+// A simple extension to filter arrow layer based on the CPU filteredIndex, so we can avoid filtering on the raw Arrow table.
+// Specifically, an attribute `filtered` is added to the layer to indicate whether the feature has been Filtered
+// the shader module is modified to discard the feature if filtered value is 0
+// the accessor getFiltered is used to get the value of `filtered` based on eht value `filteredIndex` in Arrowlayer
 export default class FilterArrowExtension extends LayerExtension {
   static defaultProps = defaultProps;
   static extensionName = 'FilterArrowExtension';

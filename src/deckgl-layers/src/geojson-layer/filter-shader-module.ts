@@ -36,4 +36,4 @@ export default {
   fs: fs,
   inject: inject,
   getUniforms: () => {}
-}
+};
