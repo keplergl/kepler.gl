@@ -22,19 +22,31 @@ import normalize from '@mapbox/geojson-normalize';
 import bbox from '@turf/bbox';
 import {parseSync} from '@loaders.gl/core';
 import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
-import {binaryToGeometry} from '@loaders.gl/gis';
+import { binaryToGeometry } from '@loaders.gl/gis';
+
 import {Feature, BBox} from 'geojson';
-import {getSampleData, FeatureTypes} from '@kepler.gl/utils';
+import {getSampleData} from '@kepler.gl/utils';
 
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = Array<Feature | null>;
+
+/* eslint-disable */
+// TODO: Re-enable eslint when we upgrade to handle enums and type maps
+export enum FeatureTypes {
+  Point = 'Point',
+  MultiPoint = 'MultiPoint',
+  LineString = 'LineString',
+  MultiLineString = 'MultiLineString',
+  Polygon = 'Polygon',
+  MultiPolygon = 'MultiPolygon'
+}
 
 type FeatureTypeMap = {
   [key in FeatureTypes]: boolean;
 };
 
-export function parseGeoJsonRawFeature(rawFeature: {} | Feature): Feature | null {
-  if (rawFeature && typeof rawFeature === 'object') {
+export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
+  if (typeof rawFeature === 'object') {
     // Support GeoJson feature as object
     // probably need to normalize it as well
     const normalized = normalize(rawFeature);
@@ -61,7 +73,6 @@ export function parseGeoJsonRawFeature(rawFeature: {} | Feature): Feature | null
 
   return null;
 }
-
 /**
  * Parse raw data to GeoJson feature
  * @param dataContainer

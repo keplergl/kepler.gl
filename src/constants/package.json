@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/constants",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.0.0-alpha.0",
+  "version": "3.0.0-alpha.1",
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/index.js",
@@ -30,9 +30,7 @@
     "umd"
   ],
   "dependencies": {
-    "@dnd-kit/core": "^6.0.8",
-    "@dnd-kit/modifiers": "^6.0.1",
-    "@kepler.gl/types": "3.0.0-alpha.0",
+    "@kepler.gl/types": "3.0.0-alpha.1",
     "@types/d3-scale": "^3.2.2",
     "@types/keymirror": "^0.1.1",
     "colorbrewer": "^1.5.0",

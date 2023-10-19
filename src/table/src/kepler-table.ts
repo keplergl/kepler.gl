@@ -41,7 +41,7 @@ import {
 
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 
-import { Layer } from '@kepler.gl/layers';
+import {Layer} from '@kepler.gl/layers';
 import {
   generateHashId,
   getSortingFunction,
@@ -149,7 +149,8 @@ class KeplerTable {
     //   return this;
     // }
 
-    const isArrow = info?.format === 'arrow';
+    // TODO: detect if the data is an arrow table
+    const isArrow = data.rawData && data.rawData.schema && data.rawData.schema.fields;
     const dataContainerData = isArrow
         ? [...Array(data.rawData?.numCols || 0).keys()].map(i => data.rawData.getColumnAt(i))
         : data.rows
