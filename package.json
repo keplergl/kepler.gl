@@ -128,6 +128,7 @@
     "@babel/plugin-proposal-class-properties": "^7.12.1",
     "@babel/plugin-proposal-export-namespace-from": "^7.12.1",
     "@babel/plugin-proposal-optional-chaining": "^7.12.1",
+    "@babel/plugin-transform-class-properties": "^7.12.1",
     "@babel/plugin-transform-modules-commonjs": "^7.12.1",
     "@babel/plugin-transform-runtime": "^7.12.1",
     "@babel/plugin-transform-typescript": "^7.16.8",

@@ -14,7 +14,9 @@ export type FilterArrowExtensionProps = {
   getFiltered?: () => number;
 };
 
-// A simple extension to filter arrow layer based on the CPU filteredIndex, so we can avoid filtering on the raw Arrow table.
+// TODO: this should be in deck.gl extensions
+// A simple extension to filter arrow layer based on the result of CPU filteredIndex,
+// so we can avoid filtering on the raw Arrow table and recreating geometry attributes.
 // Specifically, an attribute `filtered` is added to the layer to indicate whether the feature has been Filtered
 // the shader module is modified to discard the feature if filtered value is 0
 // the accessor getFiltered is used to get the value of `filtered` based on eht value `filteredIndex` in Arrowlayer
