@@ -65,7 +65,7 @@ export interface DataContainerInterface {
    * @param columnIndex Column index.
    * @returns The column object at the specified index.
    */
-  getColumn(columnIndex: number): any;
+  getColumn?(columnIndex: number): any;
 
   /**
    * Returns contents of the data container as a two-dimensional array.

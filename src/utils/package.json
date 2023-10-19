@@ -30,6 +30,7 @@
     "umd"
   ],
   "dependencies": {
+    "apache-arrow": "^4.0.0",
     "@kepler.gl/constants": "3.0.0-alpha.1",
     "@kepler.gl/types": "3.0.0-alpha.1",
     "@luma.gl/constants": "^8.5.19",
