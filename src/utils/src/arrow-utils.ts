@@ -82,7 +82,7 @@ function updateBoundsFromGeoArrowSamples(
   flatCoords: Float64Array,
   nDim: number,
   bounds: [number, number, number, number],
-  sampleSize: number = 1000
+  sampleSize: number = 100
 ) {
   const numberOfFeatures = flatCoords.length / nDim;
   const sampleStep = Math.max(Math.floor(numberOfFeatures / sampleSize), 1);

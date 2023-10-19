@@ -28,12 +28,14 @@ import {
   getBinaryGeometriesFromArrow,
   parseGeometryFromArrow
 } from '@kepler.gl/utils';
-
+import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 import GeoJsonLayer, {SUPPORTED_ANALYZER_TYPES} from '../geojson-layer/geojson-layer';
 
 export default class ArrowLayer extends GeoJsonLayer {
   binaryFeatures: BinaryFeatures[];
   dataContainer: DataContainerInterface | null;
+  filteredIndex: Uint8ClampedArray | null;
+  filteredIndexTrigger: number[];
 
   // constructor
   constructor(props) {
@@ -41,6 +43,8 @@ export default class ArrowLayer extends GeoJsonLayer {
 
     this.dataContainer = null;
     this.binaryFeatures = [];
+    this.filteredIndex = null;
+    this.filteredIndexTrigger = [];
   }
 
   static findDefaultLayerProps({label, fields = []}: KeplerTable) {
@@ -84,6 +88,17 @@ export default class ArrowLayer extends GeoJsonLayer {
   calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
     // TODO: filter arrow table using predicate
     // filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
+    // filter arrow table by values and make a partial copy of the raw table could be expensive
+    // so we will use filteredIndex to create an attribute e.g. filtered (bool) for deck.gl layer
+    if (!this.filteredIndex) {
+      this.filteredIndex = new Uint8ClampedArray(dataContainer.numRows());
+    }
+    this.filteredIndex.fill(0);
+    for (let i = 0; i < filteredIndex.length; ++i) {
+      this.filteredIndex[filteredIndex[i]] = 1;
+    }
+
+    this.filteredIndexTrigger = filteredIndex;
     this.dataContainer = dataContainer;
     return this.binaryFeatures;
   }
@@ -99,7 +114,7 @@ export default class ArrowLayer extends GeoJsonLayer {
 
     // deck.gl geojson-layer will use binaryToFeatureForAccesor(data, index)
     // to get feature from binary data, and the properties of the feature
-    // {index: i} can be used for gpu filter
+    // e.g. properties: {index: i} can be used for gpu filter
     const customFilterValueAccessor = (dc, d, fieldIndex) => {
       return dc.valueAt(d.properties.index, fieldIndex);
     };
@@ -110,6 +125,11 @@ export default class ArrowLayer extends GeoJsonLayer {
     const dataAccessor = dc => d => {
       return {index: d.properties.index};
     };
+
+    const isFilteredAccessor = d => {
+      return this.filteredIndex ? this.filteredIndex[d.properties.index] : 1;
+    };
+
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
 
     // return layerData
@@ -119,6 +139,7 @@ export default class ArrowLayer extends GeoJsonLayer {
         indexAccessor,
         customFilterValueAccessor
       ),
+      getFiltered: isFilteredAccessor,
       ...accessors
     };
   }
@@ -132,6 +153,7 @@ export default class ArrowLayer extends GeoJsonLayer {
     const {binaryGeometries, bounds, featureTypes} = getBinaryGeometriesFromArrow(geoColumn);
     this.binaryFeatures = binaryGeometries;
 
+    // since there is no feature.properties.radius, we set fixedRadius to false
     const fixedRadius = false;
     this.updateMeta({bounds, fixedRadius, featureTypes});
   }
@@ -195,7 +217,8 @@ export default class ArrowLayer extends GeoJsonLayer {
 
     const updateTriggers = {
       ...this.getVisualChannelUpdateTriggers(),
-      getFilterValue: gpuFilter.filterValueUpdateTriggers
+      getFilterValue: gpuFilter.filterValueUpdateTriggers,
+      getFiltered: this.filteredIndexTrigger
     };
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
@@ -225,6 +248,7 @@ export default class ArrowLayer extends GeoJsonLayer {
         capRounded: true,
         jointRounded: true,
         updateTriggers,
+        extensions: [...defaultLayerProps.extensions, new FilterArrowExtension()],
         _subLayerProps: {
           ...(featureTypes?.polygon ? {'polygons-stroke': opaOverwrite} : {}),
           ...(featureTypes?.line ? {linestrings: opaOverwrite} : {}),
