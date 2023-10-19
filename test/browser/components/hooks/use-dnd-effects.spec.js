@@ -32,12 +32,12 @@ jest.mock('react-redux', () => ({
 }));
 
 // Mock dependencies
-jest.mock('actions/vis-state-actions', () => ({
+jest.mock('@kepler.gl/actions', () => ({
   reorderEffect: jest.fn(),
   updateEffect: jest.fn()
 }));
 
-jest.mock('utils/effect-utils', () => ({
+jest.mock('@kepler.gl/utils', () => ({
   reorderEffectOrder: jest.fn()
 }));
 
