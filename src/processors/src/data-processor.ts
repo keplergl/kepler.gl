@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Table as ApacheArrowTable, Field as ArrowField, Column as ArrowColumn} from 'apache-arrow';
+import {Table as ApacheArrowTable, Field as ArrowField} from 'apache-arrow';
 import {csvParseRows} from 'd3-dsv';
 import {Console} from 'global/console';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
@@ -31,6 +31,7 @@ import {
 } from '@kepler.gl/constants';
 import {ProcessorResult, Field} from '@kepler.gl/types';
 import {
+  GEOARROW_COLUMN_METADATA_KEY,
   arrowDataTypeToAnalyzerDataType,
   arrowDataTypeToFieldType,
   notNullorUndefined,
@@ -430,7 +431,7 @@ export function processArrowTable(arrowTable: ApacheArrowTable): ProcessorResult
   arrowTable.schema.fields.forEach((field: ArrowField, index: number) => {
     const isGeometryColumn =
       geometryColumns[field.name] !== undefined ||
-      field.metadata.get('ARROW:extension:name')?.startsWith('geoarrow');
+      field.metadata.get(GEOARROW_COLUMN_METADATA_KEY)?.startsWith('geoarrow');
     fields.push({
       name: field.name,
       id: field.name,

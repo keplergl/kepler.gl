@@ -51,17 +51,27 @@ export enum GEOARROW_ENCODINGS {
   WKT = 'geoarrow.wkt'
 }
 
+export const GEOARROW_COLUMN_METADATA_KEY = 'ARROW:extension:name';
+
 /**
  * get geoarrow encoding from geoarrow column
  */
 function getGeoArrowEncoding(column: ArrowColumn): string {
   const {metadata} = column;
-  if (metadata && metadata.get('ARROW:extension:name')) {
-    return metadata.get('ARROW:extension:name') || '';
+  if (metadata && metadata.get(GEOARROW_COLUMN_METADATA_KEY)) {
+    return metadata.get(GEOARROW_COLUMN_METADATA_KEY) || '';
   }
   return '';
 }
 
+/**
+ *  update bounds from geoarrow samples
+ *
+ * @param flatCoords the flattend coordinates array from one chunk of geoarrow column
+ * @param nDim the number of dimensions of the coordinates
+ * @param bounds the bounds to be updated
+ * @param sampleSize how many samples to be used to update the bounds, default is 1000 per chunk
+ */
 function updateBoundsFromGeoArrowSamples(
   flatCoords: Float64Array,
   nDim: number,
@@ -89,6 +99,7 @@ function updateBoundsFromGeoArrowSamples(
   }
 }
 
+// binary geometry template, see deck.gl BinaryGeometry
 const BINARY_GEOMETRY_TEMPLATE = {
   globalFeatureIds: {value: new Uint32Array(0), size: 1},
   positions: {value: new Float32Array(0), size: 2},
@@ -97,6 +108,12 @@ const BINARY_GEOMETRY_TEMPLATE = {
   featureIds: {value: new Uint32Array(0), size: 1}
 };
 
+/**
+ * get binary polygons from geoarrow polygon column
+ * @param chunk the data of one chunk of geoarrow polygon column
+ * @param geoEncoding the geo encoding of the geoarrow polygon column
+ * @returns
+ */
 function getBinaryPolygonsFromChunk(chunk: ListVector, geoEncoding: string) {
   const isMultiPolygon = geoEncoding === GEOARROW_ENCODINGS.MULTI_POLYGON;
 
@@ -109,10 +126,18 @@ function getBinaryPolygonsFromChunk(chunk: ListVector, geoEncoding: string) {
   const geomOffset = ringData?.valueOffsets;
   const flatCoordinateArray = coordData.values as Float64Array;
 
+  // polygonIndicies can be computed as:
+  // [geomOffset[chunk.valueOffsets[0]], geomOffset[chunk.valueOffsets[1]]];
+  const geometryIndicies = new Uint16Array(chunk.length + 1);
+  for (let i = 0; i < chunk.length; i++) {
+    geometryIndicies[i] = geomOffset[chunk.valueOffsets[i]];
+  }
+  geometryIndicies[chunk.length] = flatCoordinateArray.length / nDim;
   return {
     flatCoordinateArray,
     nDim,
-    geomOffset
+    geomOffset,
+    geometryIndicies
   };
 }
 
@@ -126,11 +151,13 @@ function getBinaryLinesFromChunk(chunk: ListVector, geoEncoding: string) {
   const nDim = pointData?.type.listSize || 2;
   const geomOffset = lineData?.valueOffsets;
   const flatCoordinateArray = coordData.values as Float64Array;
+  const geometryIndicies = new Uint16Array(chunk.length);
 
   return {
     flatCoordinateArray,
     nDim,
-    geomOffset
+    geomOffset,
+    geometryIndicies
   };
 }
 
@@ -143,11 +170,13 @@ function getBinaryPointsFromChunk(chunk: ListVector, geoEncoding: string) {
   const nDim = pointData?.type.listSize || 2;
   const geomOffset = pointData?.valueOffsets;
   const flatCoordinateArray = coordData.values as Float64Array;
+  const geometryIndicies = new Uint16Array(chunk.length);
 
   return {
     flatCoordinateArray,
     nDim,
-    geomOffset
+    geomOffset,
+    geometryIndicies
   };
 }
 
@@ -169,7 +198,7 @@ function getBinaryGeometriesFromChunk(chunk: ListVector, geoEncoding: string) {
 }
 
 /**
- * get binary geometries from geoarrow polygon column
+ * get binary geometries from geoarrow column
  */
 export function getBinaryGeometriesFromArrow(
   geoColumn: ArrowColumn
@@ -189,14 +218,14 @@ export function getBinaryGeometriesFromArrow(
     line: geoEncoding === GEOARROW_ENCODINGS.MULTI_POINT || geoEncoding === GEOARROW_ENCODINGS.POINT
   };
 
-  const bounds: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
   const chunks = geoColumn.chunks;
+  const bounds: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
   let globalFeatureIdOffset = 0;
   const binaryGeometries: BinaryFeatures[] = [];
 
   for (let c = 0; c < chunks.length; c++) {
     const geometries = chunks[c] as ListVector;
-    const {flatCoordinateArray, nDim, geomOffset} = getBinaryGeometriesFromChunk(
+    const {flatCoordinateArray, nDim, geomOffset, geometryIndicies} = getBinaryGeometriesFromChunk(
       geometries,
       geoEncoding
     );
@@ -229,7 +258,7 @@ export function getBinaryGeometriesFromArrow(
     // TODO: check if chunks are sequentially accessed
     globalFeatureIdOffset += geometries.length;
 
-    // TODO: deck.gl defines the BinaryFeatures structure must have points, lines, polygons even if they are empty
+    // NOTE: deck.gl defines the BinaryFeatures structure must have points, lines, polygons even if they are empty
     binaryGeometries.push({
       points: {
         type: 'Point',
@@ -240,14 +269,20 @@ export function getBinaryGeometriesFromArrow(
         type: 'LineString',
         ...BINARY_GEOMETRY_TEMPLATE,
         ...(featureTypes.line ? binaryContent : {}),
-        pathIndices: {value: featureTypes.line ? geomOffset : new Uint16Array(0), size: 1},
+        pathIndices: {value: featureTypes.line ? geomOffset : new Uint16Array(0), size: 1}
       },
       polygons: {
         type: 'Polygon',
         ...BINARY_GEOMETRY_TEMPLATE,
         ...(featureTypes.polygon ? binaryContent : {}),
-        polygonIndices: {value: featureTypes.polygon ? geomOffset: new Uint16Array(0), size: 1},
-        primitivePolygonIndices: {value: featureTypes.polygon ? geomOffset: new Uint16Array(0), size: 1},
+        polygonIndices: {
+          value: featureTypes.polygon ? geometryIndicies : new Uint16Array(0),
+          size: 1
+        },
+        primitivePolygonIndices: {
+          value: featureTypes.polygon ? geomOffset : new Uint16Array(0),
+          size: 1
+        }
       }
     });
 
@@ -255,6 +290,59 @@ export function getBinaryGeometriesFromArrow(
   }
 
   return {binaryGeometries, bounds, featureTypes};
+}
+
+/**
+ * parse geometry from arrow data that is returned from processArrowData()
+ * NOTE: this function could be duplicated with the binaryToFeature() in deck.gl,
+ * it is currently only used for picking because currently deck.gl returns only the index of the feature
+ * So the following functions could be deprecated once deck.gl returns the feature directly for binary geojson layer
+ *
+ * @param rawData the raw geometry data returned from processArrowData, which is an object with two properties: encoding and data
+ * @see processArrowData
+ * @returns Feature or null
+ */
+export function parseGeometryFromArrow(rawData: RawArrowFeature): Feature | null {
+  const encoding = rawData.encoding?.toLowerCase();
+  const data = rawData.data;
+  if (!encoding || !data) return null;
+
+  let geometry;
+
+  switch (encoding) {
+    case GEOARROW_ENCODINGS.MULTI_POLYGON:
+      geometry = arrowMultiPolygonToFeature(data);
+      break;
+    case GEOARROW_ENCODINGS.POLYGON:
+      geometry = arrowPolygonToFeature(data);
+      break;
+    case GEOARROW_ENCODINGS.MULTI_POINT:
+      geometry = arrowMultiPointToFeature(data);
+      break;
+    case GEOARROW_ENCODINGS.POINT:
+      geometry = arrowPointToFeature(data);
+      break;
+    case GEOARROW_ENCODINGS.MULTI_LINESTRING:
+      geometry = arrowMultiLineStringToFeature(data);
+      break;
+    case GEOARROW_ENCODINGS.LINESTRING:
+      geometry = arrowLineStringToFeature(data);
+      break;
+    case GEOARROW_ENCODINGS.WKB: {
+      return arrowWkbToFeature(data);
+    }
+    case GEOARROW_ENCODINGS.WKT: {
+      return arrowWktToFeature(data);
+    }
+    default: {
+      throw Error('GeoArrow encoding not supported');
+    }
+  }
+  return {
+    type: 'Feature',
+    geometry,
+    properties: {}
+  };
 }
 
 /**
@@ -409,54 +497,4 @@ function arrowWktToFeature(arrowWkt: string): Feature | null {
   }
 
   return normalized.features[0];
-}
-
-/**
- * parse geometry from arrow data that is returned from processArrowData()
- *
- * @param rawData the raw geometry data returned from processArrowData, which is an object with two properties: encoding and data
- * @see processArrowData
- * @returns
- */
-export function parseGeometryFromArrow(rawData: RawArrowFeature): Feature | null {
-  const encoding = rawData.encoding?.toLowerCase();
-  const data = rawData.data;
-  if (!encoding || !data) return null;
-
-  let geometry;
-
-  switch (encoding) {
-    case GEOARROW_ENCODINGS.MULTI_POLYGON:
-      geometry = arrowMultiPolygonToFeature(data);
-      break;
-    case GEOARROW_ENCODINGS.POLYGON:
-      geometry = arrowPolygonToFeature(data);
-      break;
-    case GEOARROW_ENCODINGS.MULTI_POINT:
-      geometry = arrowMultiPointToFeature(data);
-      break;
-    case GEOARROW_ENCODINGS.POINT:
-      geometry = arrowPointToFeature(data);
-      break;
-    case GEOARROW_ENCODINGS.MULTI_LINESTRING:
-      geometry = arrowMultiLineStringToFeature(data);
-      break;
-    case GEOARROW_ENCODINGS.LINESTRING:
-      geometry = arrowLineStringToFeature(data);
-      break;
-    case GEOARROW_ENCODINGS.WKB: {
-      return arrowWkbToFeature(data);
-    }
-    case GEOARROW_ENCODINGS.WKT: {
-      return arrowWktToFeature(data);
-    }
-    default: {
-      throw Error('GeoArrow encoding not supported');
-    }
-  }
-  return {
-    type: 'Feature',
-    geometry,
-    properties: {}
-  };
 }

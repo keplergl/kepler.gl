@@ -23,6 +23,7 @@ import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {HIGHLIGH_COLOR_3D} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
 import {
+  GEOARROW_COLUMN_METADATA_KEY,
   DataContainerInterface,
   getBinaryGeometriesFromArrow,
   parseGeometryFromArrow
@@ -98,8 +99,7 @@ export default class ArrowLayer extends GeoJsonLayer {
 
     // deck.gl geojson-layer will use binaryToFeatureForAccesor(data, index)
     // to get feature from binary data, and the properties of the feature
-    // {index: i} can be used, see
-    //
+    // {index: i} can be used for gpu filter
     const customFilterValueAccessor = (dc, d, fieldIndex) => {
       return dc.valueAt(d.properties.index, fieldIndex);
     };
@@ -129,9 +129,7 @@ export default class ArrowLayer extends GeoJsonLayer {
     const geoColumn = dataContainer.getColumn(geojson.fieldIdx);
 
     // create binary data from arrow data for GeoJsonLayer
-    const {binaryGeometries, bounds, featureTypes} = getBinaryGeometriesFromArrow(
-      geoColumn
-    );
+    const {binaryGeometries, bounds, featureTypes} = getBinaryGeometriesFromArrow(geoColumn);
     this.binaryFeatures = binaryGeometries;
 
     const fixedRadius = false;
@@ -156,7 +154,7 @@ export default class ArrowLayer extends GeoJsonLayer {
       const col = this.dataContainer.getColumn(geojson.fieldIdx);
       const rawGeometry = col.get(objectInfo.index);
       const hoveredFeature = parseGeometryFromArrow({
-        encoding: col.metadata?.get('ARROW:extension:name'),
+        encoding: col.metadata?.get(GEOARROW_COLUMN_METADATA_KEY),
         data: rawGeometry
       });
       return {
