@@ -18,7 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {ListVector, FloatVector, Float64Vector, Column as ArrowColumn} from 'apache-arrow';
+import {
+  ListVector,
+  FloatVector,
+  Float64Vector,
+  Column as ArrowColumn,
+  FixedSizeListVector
+} from 'apache-arrow';
 import normalize from '@mapbox/geojson-normalize';
 import {BinaryFeatures} from '@loaders.gl/schema';
 import {parseSync} from '@loaders.gl/core';
@@ -126,14 +132,24 @@ function getBinaryPolygonsFromChunk(chunk: ListVector, geoEncoding: string) {
   const geomOffset = ringData?.valueOffsets;
   const flatCoordinateArray = coordData.values as Float64Array;
 
-  // polygonIndicies can be computed as:
-  // [geomOffset[chunk.valueOffsets[0]], geomOffset[chunk.valueOffsets[1]]];
   const geometryIndicies = new Uint16Array(chunk.length + 1);
   for (let i = 0; i < chunk.length; i++) {
     geometryIndicies[i] = geomOffset[chunk.valueOffsets[i]];
   }
   geometryIndicies[chunk.length] = flatCoordinateArray.length / nDim;
+
+  const numOfVertices = flatCoordinateArray.length / nDim;
+  const featureIds = new Uint32Array(numOfVertices);
+  for (let i = 0; i < chunk.length - 1; i++) {
+    const startIdx = geomOffset[chunk.valueOffsets[i]];
+    const endIdx = geomOffset[chunk.valueOffsets[i + 1]];
+    for (let j = startIdx; j < endIdx; j++) {
+      featureIds[j] = i;
+    }
+  }
+
   return {
+    featureIds,
     flatCoordinateArray,
     nDim,
     geomOffset,
@@ -151,9 +167,20 @@ function getBinaryLinesFromChunk(chunk: ListVector, geoEncoding: string) {
   const nDim = pointData?.type.listSize || 2;
   const geomOffset = lineData?.valueOffsets;
   const flatCoordinateArray = coordData.values as Float64Array;
-  const geometryIndicies = new Uint16Array(chunk.length);
+  const geometryIndicies = new Uint16Array(0);
+
+  const numOfVertices = flatCoordinateArray.length / nDim;
+  const featureIds = new Uint32Array(numOfVertices);
+  for (let i = 0; i < chunk.length - 1; i++) {
+    const startIdx = geomOffset[chunk.valueOffsets[i]];
+    const endIdx = geomOffset[chunk.valueOffsets[i + 1]];
+    for (let j = startIdx; j < endIdx; j++) {
+      featureIds[j] = i;
+    }
+  }
 
   return {
+    featureIds,
     flatCoordinateArray,
     nDim,
     geomOffset,
@@ -164,18 +191,24 @@ function getBinaryLinesFromChunk(chunk: ListVector, geoEncoding: string) {
 function getBinaryPointsFromChunk(chunk: ListVector, geoEncoding: string) {
   const isMultiPoint = geoEncoding === GEOARROW_ENCODINGS.MULTI_POINT;
 
-  const pointData = (isMultiPoint ? chunk.getChildAt(0) : chunk) as ListVector;
+  const pointData = (isMultiPoint ? chunk.getChildAt(0) : chunk) as FixedSizeListVector;
   const coordData = pointData?.getChildAt(0) as ListVector;
 
   const nDim = pointData?.type.listSize || 2;
-  const geomOffset = pointData?.valueOffsets;
   const flatCoordinateArray = coordData.values as Float64Array;
-  const geometryIndicies = new Uint16Array(chunk.length);
+  const geometryIndicies = new Uint16Array(0);
+
+  const numOfVertices = flatCoordinateArray.length / nDim;
+  const featureIds = new Uint32Array(numOfVertices);
+  for (let i = 0; i < chunk.length; i++) {
+    featureIds[i] = i;
+  }
 
   return {
+    featureIds,
     flatCoordinateArray,
     nDim,
-    geomOffset,
+    geomOffset: new Uint16Array(0),
     geometryIndicies
   };
 }
@@ -213,9 +246,10 @@ export function getBinaryGeometriesFromArrow(
       geoEncoding === GEOARROW_ENCODINGS.MULTI_POLYGON ||
       geoEncoding === GEOARROW_ENCODINGS.POLYGON,
     point:
+      geoEncoding === GEOARROW_ENCODINGS.MULTI_POINT || geoEncoding === GEOARROW_ENCODINGS.POINT,
+    line:
       geoEncoding === GEOARROW_ENCODINGS.MULTI_LINESTRING ||
-      geoEncoding === GEOARROW_ENCODINGS.LINESTRING,
-    line: geoEncoding === GEOARROW_ENCODINGS.MULTI_POINT || geoEncoding === GEOARROW_ENCODINGS.POINT
+      geoEncoding === GEOARROW_ENCODINGS.LINESTRING
   };
 
   const chunks = geoColumn.chunks;
@@ -225,21 +259,15 @@ export function getBinaryGeometriesFromArrow(
 
   for (let c = 0; c < chunks.length; c++) {
     const geometries = chunks[c] as ListVector;
-    const {flatCoordinateArray, nDim, geomOffset, geometryIndicies} = getBinaryGeometriesFromChunk(
-      geometries,
-      geoEncoding
-    );
+    const {
+      featureIds,
+      flatCoordinateArray,
+      nDim,
+      geomOffset,
+      geometryIndicies
+    } = getBinaryGeometriesFromChunk(geometries, geoEncoding);
 
     const numOfVertices = flatCoordinateArray.length / nDim;
-    const featureIds = new Uint32Array(numOfVertices);
-    for (let i = 0; i < geometries.length - 1; i++) {
-      const startIdx = geomOffset[geometries.valueOffsets[i]];
-      const endIdx = geomOffset[geometries.valueOffsets[i + 1]];
-      for (let j = startIdx; j < endIdx; j++) {
-        featureIds[j] = i;
-      }
-    }
-
     const globalFeatureIds = new Uint32Array(numOfVertices);
     for (let i = 0; i < numOfVertices; i++) {
       globalFeatureIds[i] = featureIds[i] + globalFeatureIdOffset;
@@ -252,7 +280,9 @@ export function getBinaryGeometriesFromArrow(
         size: nDim
       },
       featureIds: {value: featureIds, size: 1},
-      properties: [...Array(geometries.length).keys()].map(i => ({index: i + globalFeatureIdOffset})),
+      properties: [...Array(geometries.length).keys()].map(i => ({
+        index: i + globalFeatureIdOffset
+      }))
     };
 
     // TODO: check if chunks are sequentially accessed
@@ -276,7 +306,7 @@ export function getBinaryGeometriesFromArrow(
         ...BINARY_GEOMETRY_TEMPLATE,
         ...(featureTypes.polygon ? binaryContent : {}),
         polygonIndices: {
-          value: featureTypes.polygon ? geometryIndicies : new Uint16Array(0),
+          value: featureTypes.polygon ? geomOffset : new Uint16Array(0),
           size: 1
         },
         primitivePolygonIndices: {
