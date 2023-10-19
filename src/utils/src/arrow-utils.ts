@@ -171,7 +171,7 @@ function getBinaryGeometriesFromChunk(chunk: ListVector, geoEncoding: string) {
 /**
  * get binary geometries from geoarrow polygon column
  */
-export function getBinaryGeometriesFromGeoArrowPolygon(
+export function getBinaryGeometriesFromArrow(
   geoColumn: ArrowColumn
 ): {
   binaryGeometries: BinaryFeatures[];
@@ -215,7 +215,6 @@ export function getBinaryGeometriesFromGeoArrowPolygon(
     for (let i = 0; i < numOfVertices; i++) {
       globalFeatureIds[i] = featureIds[i] + globalFeatureIdOffset;
     }
-    globalFeatureIdOffset += geometries.length;
 
     const binaryContent = {
       globalFeatureIds: {value: globalFeatureIds, size: 1},
@@ -223,8 +222,12 @@ export function getBinaryGeometriesFromGeoArrowPolygon(
         value: flatCoordinateArray,
         size: nDim
       },
-      featureIds: {value: featureIds, size: 1}
+      featureIds: {value: featureIds, size: 1},
+      properties: [...Array(geometries.length).keys()].map(i => ({index: i + globalFeatureIdOffset})),
     };
+
+    // TODO: check if chunks are sequentially accessed
+    globalFeatureIdOffset += geometries.length;
 
     // TODO: deck.gl defines the BinaryFeatures structure must have points, lines, polygons even if they are empty
     binaryGeometries.push({

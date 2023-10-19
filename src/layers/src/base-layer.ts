@@ -1256,7 +1256,6 @@ class Layer {
   }
 
   hasHoveredObject(objectInfo) {
-    console.log('objectInfo.object', objectInfo?.object);
     return this.isLayerHovered(objectInfo) && objectInfo.object ? objectInfo.object : null;
   }
 

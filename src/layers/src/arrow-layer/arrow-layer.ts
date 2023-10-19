@@ -24,7 +24,7 @@ import {HIGHLIGH_COLOR_3D} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
 import {
   DataContainerInterface,
-  getBinaryGeometriesFromGeoArrowPolygon,
+  getBinaryGeometriesFromArrow,
   parseGeometryFromArrow
 } from '@kepler.gl/utils';
 
@@ -87,13 +87,49 @@ export default class ArrowLayer extends GeoJsonLayer {
     return this.binaryFeatures;
   }
 
+  formatLayerData(datasets, oldLayerData) {
+    if (this.config.dataId === null) {
+      return {};
+    }
+    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
+
+    // get data from calculateDataAttribute
+    const {data} = this.updateData(datasets, oldLayerData);
+
+    // deck.gl geojson-layer will use binaryToFeatureForAccesor(data, index)
+    // to get feature from binary data, and the properties of the feature
+    // {index: i} can be used, see
+    //
+    const customFilterValueAccessor = (dc, d, fieldIndex) => {
+      return dc.valueAt(d.properties.index, fieldIndex);
+    };
+    const indexAccessor = f => {
+      return f.properties.index;
+    };
+
+    const dataAccessor = dc => d => {
+      return {index: d.properties.index};
+    };
+    const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
+
+    // return layerData
+    return {
+      data,
+      getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
+        indexAccessor,
+        customFilterValueAccessor
+      ),
+      ...accessors
+    };
+  }
+
   updateLayerMeta(dataContainer: DataContainerInterface) {
     this.dataContainer = dataContainer;
     const {geojson} = this.config.columns;
     const geoColumn = dataContainer.getColumn(geojson.fieldIdx);
 
     // create binary data from arrow data for GeoJsonLayer
-    const {binaryGeometries, bounds, featureTypes} = getBinaryGeometriesFromGeoArrowPolygon(
+    const {binaryGeometries, bounds, featureTypes} = getBinaryGeometriesFromArrow(
       geoColumn
     );
     this.binaryFeatures = binaryGeometries;
@@ -114,6 +150,7 @@ export default class ArrowLayer extends GeoJsonLayer {
 
   hasHoveredObject(objectInfo) {
     // hover object returns the index of the object in the data array
+    // NOTE: this could be done in Deck.gl getPickingInfo(params) and binaryToGeojson()
     if (this.isLayerHovered(objectInfo) && objectInfo.index >= 0 && this.dataContainer) {
       const {geojson} = this.config.columns;
       const col = this.dataContainer.getColumn(geojson.fieldIdx);
