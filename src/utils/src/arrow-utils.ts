@@ -167,13 +167,14 @@ function getBinaryLinesFromChunk(chunk: ListVector, geoEncoding: string) {
   const nDim = pointData?.type.listSize || 2;
   const geomOffset = lineData?.valueOffsets;
   const flatCoordinateArray = coordData.values as Float64Array;
+
   const geometryIndicies = new Uint16Array(0);
 
   const numOfVertices = flatCoordinateArray.length / nDim;
   const featureIds = new Uint32Array(numOfVertices);
-  for (let i = 0; i < chunk.length - 1; i++) {
-    const startIdx = geomOffset[chunk.valueOffsets[i]];
-    const endIdx = geomOffset[chunk.valueOffsets[i + 1]];
+  for (let i = 0; i < chunk.length; i++) {
+    const startIdx = geomOffset[i];
+    const endIdx = geomOffset[i + 1];
     for (let j = startIdx; j < endIdx; j++) {
       featureIds[j] = i;
     }
@@ -259,13 +260,10 @@ export function getBinaryGeometriesFromArrow(
 
   for (let c = 0; c < chunks.length; c++) {
     const geometries = chunks[c] as ListVector;
-    const {
-      featureIds,
-      flatCoordinateArray,
-      nDim,
-      geomOffset,
-      geometryIndicies
-    } = getBinaryGeometriesFromChunk(geometries, geoEncoding);
+    const {featureIds, flatCoordinateArray, nDim, geomOffset} = getBinaryGeometriesFromChunk(
+      geometries,
+      geoEncoding
+    );
 
     const numOfVertices = flatCoordinateArray.length / nDim;
     const globalFeatureIds = new Uint32Array(numOfVertices);
@@ -306,6 +304,8 @@ export function getBinaryGeometriesFromArrow(
         ...BINARY_GEOMETRY_TEMPLATE,
         ...(featureTypes.polygon ? binaryContent : {}),
         polygonIndices: {
+          // TODO why deck.gl's tessellatePolygon performance is not good when using geometryIndicies
+          // even when there is no hole in any polygon
           value: featureTypes.polygon ? geomOffset : new Uint16Array(0),
           size: 1
         },
