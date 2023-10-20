@@ -383,3 +383,8 @@ export {
   LayerColorRangeSelectorFactory,
   ArcLayerColorSelectorFactory
 };
+
+// hooks
+export {default as useFeatureFlags} from './hooks/use-feature-flags';
+export {default as useDndLayers} from './hooks/use-dnd-layers';
+export {default as useDndEffects} from './hooks/use-dnd-effects';

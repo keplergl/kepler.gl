@@ -150,7 +150,6 @@
     "@testing-library/dom": "^9.0.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^14.0.0",
-    "@testing-library/react-hooks": "^3.4.2",
     "@testing-library/user-event": "^14.4.3",
     "@types/d3-array": "^2.0.0",
     "@types/d3-scale": "^3.2.2",
