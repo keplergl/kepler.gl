@@ -21,28 +21,30 @@
 import React from 'react';
 import {renderHook, act} from '@testing-library/react';
 import {useDispatch} from 'react-redux';
-import useDndLayers from '@kepler.gl/components';
+import {useDndLayers} from '@kepler.gl/components';
 import {layerConfigChange, reorderLayer, toggleLayerForMap} from '@kepler.gl/actions';
 import {
   DROPPABLE_MAP_CONTAINER_TYPE,
   SORTABLE_LAYER_TYPE,
   SORTABLE_SIDE_PANEL_TYPE
 } from '@kepler.gl/constants';
-import {reorderLayerOrder} from '@kepler.gl/utils';
+import {reorderLayerOrder} from '@kepler.gl/reducers';
 
 // Mock useDispatch hook
 jest.mock('react-redux', () => ({
+  ...jest.requireActual('react-redux'),
   useDispatch: jest.fn()
 }));
 
 // Mock dependencies
 jest.mock('@kepler.gl/actions', () => ({
+  ...jest.requireActual('@kepler.gl/actions'),
   layerConfigChange: jest.fn(),
   reorderLayer: jest.fn(),
   toggleLayerForMap: jest.fn()
 }));
 
-jest.mock('@kepler.gl/utils', () => ({
+jest.mock('@kepler.gl/reducers', () => ({
   reorderLayerOrder: jest.fn()
 }));
 

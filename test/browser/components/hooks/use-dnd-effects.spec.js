@@ -28,16 +28,19 @@ import {reorderEffectOrder} from '@kepler.gl/utils';
 
 // Mock useDispatch hook
 jest.mock('react-redux', () => ({
+  ...jest.requireActual('react-redux'),
   useDispatch: jest.fn()
 }));
 
 // Mock dependencies
 jest.mock('@kepler.gl/actions', () => ({
+  ...jest.requireActual('@kepler.gl/actions'),
   reorderEffect: jest.fn(),
   updateEffect: jest.fn()
 }));
 
 jest.mock('@kepler.gl/utils', () => ({
+  ...jest.requireActual('@kepler.gl/utils'),
   reorderEffectOrder: jest.fn()
 }));
 
