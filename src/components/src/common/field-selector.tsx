@@ -113,6 +113,7 @@ interface FieldSelectorFactoryProps {
   suggested?: ReadonlyArray<string | number | boolean | object> | null;
   CustomChickletComponent?: ComponentType<any>;
   size?: string;
+  reorderItems?: (newOrder: any) => void;
 }
 
 function FieldSelectorFactory(
@@ -124,6 +125,7 @@ function FieldSelectorFactory(
       error: false,
       fields: [],
       onSelect: () => {},
+      reorderItems: () => {},
       placement: 'bottom',
       value: null,
       multiSelect: false,
@@ -194,6 +196,7 @@ function FieldSelectorFactory(
             placeholder={this.props.placeholder}
             placement={this.props.placement}
             onChange={this.props.onSelect}
+            reorderItems={this.props.reorderItems}
             DropDownLineItemRenderComponent={this.fieldListItemSelector(this.props)}
             DropdownHeaderComponent={this.props.suggested ? SuggestedFieldHeader : null}
             CustomChickletComponent={this.props.CustomChickletComponent}

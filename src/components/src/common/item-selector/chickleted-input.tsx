@@ -18,9 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {ElementType, MouseEventHandler, ReactNode} from 'react';
+import React, {ElementType, MouseEventHandler, ReactNode, useMemo, useCallback} from 'react';
 
 import styled from 'styled-components';
+import {DndContext, DragOverlay, pointerWithin} from '@dnd-kit/core';
+import {SortableContext, useSortable, arrayMove} from '@dnd-kit/sortable';
+import {restrictToParentElement} from '@dnd-kit/modifiers';
+
 import Delete from '../icons/delete';
 import {FormattedMessage} from '@kepler.gl/localization';
 
@@ -39,6 +43,7 @@ interface ChickletedInputProps {
   inputTheme?: string;
   CustomChickletComponent?: ElementType;
   className?: string;
+  reorderItems?: (newOrder: any) => void;
 }
 
 interface ChickletButtonProps {
@@ -65,6 +70,7 @@ export const ChickletButton = styled.div<ChickletButtonProps>`
   }
 `;
 
+const DND_MODIFIERS = [restrictToParentElement];
 export const ChickletTag = styled.span`
   margin-right: 10px;
   text-overflow: ellipsis;
@@ -108,6 +114,56 @@ const ChickletedInputContainer = styled.div<ChickletedInputContainerProps>`
   overflow: hidden;
 `;
 
+const ChickletedItem = ({
+  item,
+  removeItem,
+  displayOption,
+  CustomChickletComponent,
+  inputTheme,
+  disabled,
+  itemId
+}) => {
+  const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({
+    id: itemId
+  });
+  const chickletProps = useMemo(
+    () => ({
+      inputTheme,
+      disabled,
+      name: displayOption(item),
+      displayOption,
+      item,
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+      remove: e => removeItem(item, e)
+    }),
+    [
+      item,
+      removeItem,
+      displayOption,
+      CustomChickletComponent,
+      inputTheme,
+      disabled,
+      itemId,
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging
+    ]
+  );
+  return CustomChickletComponent ? (
+    <CustomChickletComponent {...chickletProps} />
+  ) : (
+    <Chicklet {...chickletProps} />
+  );
+};
+
 const ChickletedInput: React.FC<ChickletedInputProps> = ({
   disabled,
   onClick,
@@ -115,39 +171,64 @@ const ChickletedInput: React.FC<ChickletedInputProps> = ({
   selectedItems = [],
   placeholder = '',
   removeItem,
+  reorderItems = d => d,
   displayOption = d => d,
   inputTheme,
   CustomChickletComponent
-}) => (
-  <ChickletedInputContainer
-    className={`${className} chickleted-input`}
-    onClick={onClick}
-    inputTheme={inputTheme}
-    hasPlaceholder={!selectedItems || !selectedItems.length}
-  >
-    {selectedItems.length > 0 ? (
-      selectedItems.map((item, i) => {
-        const chickletProps = {
-          inputTheme,
-          disabled,
-          key: `${displayOption(item)}_${i}`,
-          name: displayOption(item),
-          displayOption,
-          item,
-          remove: e => removeItem(item, e)
-        };
-        return CustomChickletComponent ? (
-          <CustomChickletComponent {...chickletProps} />
-        ) : (
-          <Chicklet {...chickletProps} />
-        );
-      })
-    ) : (
-      <span className={`${className} chickleted-input__placeholder`}>
-        <FormattedMessage id={placeholder || 'placeholder.enterValue'} />
-      </span>
-    )}
-  </ChickletedInputContainer>
-);
+}) => {
+  const selectedItemIds = useMemo(() => selectedItems.map(item => displayOption(item)), [
+    displayOption,
+    selectedItems
+  ]);
+  const handleDragEnd = useCallback(
+    ({active, over}) => {
+      if (!over) return;
+      if (active.id !== over.id) {
+        const oldIndex = selectedItemIds.findIndex(itemId => itemId === active.id);
+        const newIndex = selectedItemIds.findIndex(itemId => itemId === over.id);
+        reorderItems(arrayMove(selectedItems, oldIndex, newIndex));
+      }
+    },
+    [selectedItems, displayOption, reorderItems]
+  );
+
+  return (
+    <ChickletedInputContainer
+      className={`${className} chickleted-input`}
+      onClick={onClick}
+      inputTheme={inputTheme}
+      hasPlaceholder={!selectedItems || !selectedItems.length}
+    >
+      <DndContext
+        onDragEnd={handleDragEnd}
+        modifiers={DND_MODIFIERS}
+        collisionDetection={pointerWithin}
+        autoScroll={false}
+      >
+        <SortableContext items={selectedItemIds}>
+          {selectedItems.length > 0 ? (
+            selectedItems.map((item, index) => (
+              <ChickletedItem
+                item={item}
+                itemId={displayOption(item)}
+                removeItem={removeItem}
+                displayOption={displayOption}
+                CustomChickletComponent={CustomChickletComponent}
+                disabled={disabled}
+                inputTheme={inputTheme}
+                key={`${displayOption(item)}_${index}`}
+              />
+            ))
+          ) : (
+            <span className={`${className} chickleted-input__placeholder`}>
+              <FormattedMessage id={placeholder || 'placeholder.enterValue'} />
+            </span>
+          )}
+        </SortableContext>
+        <DragOverlay dropAnimation={null} />
+      </DndContext>
+    </ChickletedInputContainer>
+  );
+};
 
 export default ChickletedInput;

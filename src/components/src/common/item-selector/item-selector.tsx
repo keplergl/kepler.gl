@@ -154,6 +154,7 @@ export type ItemSelectorProps = {
   CustomChickletComponent?: ComponentType<any>;
   intl: IntlShape;
   className?: string;
+  reorderItems?: (newOrder: any) => void;
   showDropdownOnMount?: boolean;
 };
 
@@ -164,7 +165,8 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
     closeOnSelect: true,
     searchable: true,
     DropDownRenderComponent: DropdownList,
-    DropDownLineItemRenderComponent: ListItem
+    DropDownLineItemRenderComponent: ListItem,
+    reorderItems: undefined
   };
 
   state = {
@@ -342,6 +344,7 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
               selectedItems={toArray(this.props.selectedItems)}
               placeholder={this.props.placeholder}
               removeItem={this._removeItem}
+              reorderItems={this.props.reorderItems}
               CustomChickletComponent={this.props.CustomChickletComponent}
               inputTheme={inputTheme}
             />
