@@ -248,6 +248,26 @@ function mockStateWithMultiFilters() {
   return prepareState;
 }
 
+function mockStateWithEffects() {
+  const initialState = cloneDeep(InitialState);
+
+  let prepareState = applyActions(keplerGlReducer, initialState, [
+    {
+      action: VisStateActions.addEffect,
+      payload: [{id: 'e_1'}]
+    },
+    {
+      action: VisStateActions.addEffect,
+      payload: [{id: 'e_2', config: {type: 'sepia'}}]
+    },
+    {
+      action: VisStateActions.addEffect,
+      payload: [{id: 'e_3', config: {type: 'magnify'}}]
+    }
+  ]);
+  return prepareState;
+}
+
 function mockStateWithH3Layer() {
   const initialState = cloneDeep(InitialState);
 
@@ -881,6 +901,7 @@ export const expectedLoadedLayer2 = {
 
 export const StateWFiles = mockStateWithFileUpload();
 export const StateWFilters = mockStateWithFilters();
+export const StateWEffects = mockStateWithEffects();
 export const StateWFilesFiltersLayerColor = mockStateWithLayerDimensions(StateWFilters);
 export const StateWMultiFilters = mockStateWithMultiFilters();
 

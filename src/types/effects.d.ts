@@ -22,7 +22,7 @@ export interface Effect {
   config: EffectConfig;
   deckEffect: any;
 
-  getDefaultEffectConfig(config: Partial<EffectConfig>): EffectConfig;
+  _getDefaultEffectConfig(config: Partial<EffectConfig>): EffectConfig;
   updateConfig(config: Partial<EffectConfig>): void;
   isValidToSave(): boolean;
   get type(): string;

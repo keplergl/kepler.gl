@@ -26,6 +26,7 @@ import SchemaManager, {CURRENT_VERSION, visStateSchema} from '@kepler.gl/schemas
 import {
   StateWFiles,
   StateWFilesFiltersLayerColor,
+  StateWEffects,
   StateWTooltipFormat,
   expectedSavedLayer0,
   expectedLoadedLayer0,
@@ -338,6 +339,46 @@ test('visStateSchema -> saving with a null column value does not throw an error'
       layerOrder: [testLayer.id]
     });
   }, 'saving with a null column value should not fail');
+
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> save load effects', t => {
+  const expectedEffects = [
+    {
+      id: 'e_3',
+      config: {
+        type: 'magnify',
+        isEnabled: true,
+        params: {
+          screenXY: [0, 0],
+          radiusPixels: 200,
+          zoom: 2,
+          borderWidthPixels: 0,
+          borderColor: [255, 255, 255, 255]
+        }
+      }
+    },
+    {
+      id: 'e_2',
+      config: {type: 'sepia', isEnabled: true, params: {amount: 0.5}}
+    },
+    {
+      id: 'e_1',
+      config: {type: 'ink', isEnabled: true, params: {strength: 0.25}}
+    }
+  ];
+
+  const initialState = cloneDeep(StateWEffects);
+
+  const savedState = SchemaManager.getConfigToSave(initialState);
+  const savedEffects = savedState.config.visState.effects;
+
+  const loadedState = SchemaManager.parseSavedConfig(savedState);
+  const loadedEffects = loadedState.visState.effects;
+
+  t.deepEqual(savedEffects, expectedEffects, 'Effects should be saved as expected');
+  t.deepEqual(loadedEffects, expectedEffects, 'Effects should be loaded as expected');
 
   t.end();
 });

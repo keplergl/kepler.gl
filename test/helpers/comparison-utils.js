@@ -201,6 +201,52 @@ export function cmpSavedLayers(t, expectedLayer, actualLayer, opt = {}, idx = ''
   }
 }
 
+export function cmpEffects(t, expectedEffect, actualEffect, opts = {}) {
+  if (Array.isArray(expectedEffect) && Array.isArray(actualEffect)) {
+    t.equal(actualEffect.length, expectedEffect.length, 'should have same number of effects');
+    expectedEffect.forEach((_, i) => {
+      cmpEffects(t, expectedEffect[i], actualEffect[i], opt, String(i));
+    });
+  } else {
+    if (!expectedEffect || !actualEffect) {
+      t.equal(actualEffect, expectedEffect, `Effects don't match`);
+      return;
+    }
+
+    if (opts.id) {
+      t.equal(actualEffect.id, expectedEffect.id, `${actualEffect.type} effect.id should be same`);
+    }
+
+    cmpObjectKeys(
+      t,
+      expectedEffect.config,
+      actualEffect.config,
+      `${actualEffect.type} effect.config`
+    );
+
+    Object.keys(expectedEffect.config).forEach(key => {
+      // test everything except id, which can be auto generated
+      switch (key) {
+        case 'params':
+          t.deepEqual(
+            actualEffect.config[key],
+            expectedEffect.config[key],
+            `${actualEffect.type} effect.config.${key} values should be identical`
+          );
+          break;
+        default:
+          if (typeof expectedEffect.config[key] !== 'function') {
+            t.deepEqual(
+              actualEffect.config[key],
+              expectedEffect.config[key],
+              `${actualEffect.type} effect.config.${key} should be correct`
+            );
+          }
+      }
+    });
+  }
+}
+
 export function cmpDatasetData(t, expectedDatasetData, actualDatasetData, datasetId = '') {
   if (expectedDatasetData && actualDatasetData) {
     cmpObjectKeys(

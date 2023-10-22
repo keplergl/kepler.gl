@@ -40,3 +40,4 @@ import './kepler-gl-utils-test';
 import './timeline-test';
 import './composer-helpers-test';
 import './dom-to-image';
+import './effect-utils-test';

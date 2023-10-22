@@ -139,3 +139,10 @@ export function isRgbColor(color: unknown): boolean {
       color.every(n => Number.isFinite(n) && n <= 255 && n >= 0)
   );
 }
+
+/**
+ * Take color values in 0-255 range and map to [0, 1]
+ */
+export function normalizeColor(color: number[]): number[] {
+  return color.map(component => component / 255.0);
+}

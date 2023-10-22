@@ -1150,16 +1150,31 @@ export const dataTestIds: Record<string, string> = {
 
 // Effects
 
-export const DEFAULT_EFFECT_TYPE = 'ink';
+export const DEFAULT_POST_PROCESSING_EFFECT_TYPE: string = 'ink';
 
 export const DEFAULT_LIGHT_COLOR: [number, number, number] = [255, 255, 255];
 export const DEFAULT_LIGHT_INTENSITY = 1;
 export const DEFAULT_SHADOW_INTENSITY = 0.5;
 export const DEFAULT_SHADOW_COLOR: [number, number, number] = [0, 0, 0];
 export const LIGHT_AND_SHADOW_EFFECT = {type: 'lightAndShadow', name: 'Light & Shadow'};
-export const DEFAULT_LIGHT_AND_SHADOW_PROPS = {
+export const LIGHT_AND_SHADOW_EFFECT_TIME_MODES = {
+  pick: 'pick' as 'pick',
+  current: 'current' as 'current',
+  animation: 'animation' as 'animation'
+};
+export type LightAndShadowEffectTimeMode = 'pick' | 'current' | 'animation';
+export const DEFAULT_LIGHT_AND_SHADOW_PROPS: {
+  timestamp: number;
+  timeMode: LightAndShadowEffectTimeMode;
+  shadowIntensity: number;
+  shadowColor: [number, number, number];
+  sunLightColor: [number, number, number];
+  sunLightIntensity: number;
+  ambientLightColor: [number, number, number];
+  ambientLightIntensity: number;
+} = {
   timestamp: Date.now(),
-  useCurrentTime: false,
+  timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick as LightAndShadowEffectTimeMode,
   shadowIntensity: DEFAULT_SHADOW_INTENSITY,
   shadowColor: [...DEFAULT_SHADOW_COLOR] as [number, number, number],
   sunLightColor: [...DEFAULT_LIGHT_COLOR] as [number, number, number],

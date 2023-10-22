@@ -94,17 +94,17 @@ export default function EffectConfiguratorFactory(
         [effect, updateEffectConfig]
       );
 
-      const onUseCurrentTimeChange = useCallback(
+      const onTimeModeChange = useCallback(
         value => {
           updateEffectConfig(null, effect.id, {
-            params: {useCurrentTime: value}
+            params: {timeMode: value}
           });
         },
         [effect, updateEffectConfig]
       );
 
       const colorPickerProps = useMemo(() => {
-        const propNames = ['ambientLightColor', 'sunLightColor'];
+        const propNames = ['ambientLightColor', 'sunLightColor', 'shadowColor'];
         return propNames.map(propName => {
           return {
             colorSets: [
@@ -125,14 +125,20 @@ export default function EffectConfiguratorFactory(
           <EffectTimeConfigurator
             timestamp={config.params.timestamp}
             onDateTimeChange={onDateTimeChange}
-            useCurrentTime={config.params.useCurrentTime}
-            onUseCurrentTimeChange={onUseCurrentTimeChange}
+            timeMode={config.params.timeMode}
+            onTimeModeChange={onTimeModeChange}
             intl={intl}
           />
           <PanelLabelWrapper>
             <PanelLabel>{'Shadow intensity'}</PanelLabel>
           </PanelLabelWrapper>
           <RangeSlider {...COMMON_SLIDER_PROPS} {...sliderProps[0]} />
+          <PanelLabelWrapper>
+            <PanelLabel>{'Shadow color'}</PanelLabel>
+          </PanelLabelWrapper>
+          <StyledColorSelectorWrapper>
+            <ColorSelector {...colorPickerProps[2]} />
+          </StyledColorSelectorWrapper>
           <PanelLabelWrapper>
             <PanelLabel>{'Ambient light intensity'}</PanelLabel>
           </PanelLabelWrapper>
@@ -165,7 +171,7 @@ export default function EffectConfiguratorFactory(
       const slidersForProps = useMemo(() => {
         return propNames.map(propName => {
           const uniform = uniforms[propName];
-          if (!uniform || uniform.private) {
+          if ((!uniform && uniform !== 0) || uniform.private) {
             return null;
           }
 
@@ -201,7 +207,7 @@ export default function EffectConfiguratorFactory(
               }
             });
           }
-          // the uniform plain number without any desc
+          // the uniform is a plain number without any description
           else if (isNumber(uniform)) {
             sliders.push({
               value1: prevValue || 0,
