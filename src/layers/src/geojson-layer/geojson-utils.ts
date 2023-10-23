@@ -145,6 +145,7 @@ export function parseGeometryFromString(geoString: string): Feature | null {
     try {
       const buffer = Buffer.from(geoString, 'hex');
       const binaryGeo = parseSync(buffer, WKBLoader);
+      // @ts-expect-error
       parsedGeo = binaryToGeometry(binaryGeo);
     } catch (e) {
       return null;
