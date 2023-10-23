@@ -59,7 +59,8 @@ import {
   getLogDomain,
   getOrdinalDomain,
   getQuantileDomain,
-  DataContainerInterface
+  DataContainerInterface,
+  notNullorUndefined
 } from '@kepler.gl/utils';
 
 export type GpuFilter = {
@@ -583,11 +584,16 @@ export function sortDatasetByColumn(
   }
 
   const sortFunction = sortBy === SORT_ORDER.ASCENDING ? ascending : descending;
-  const sortOrder = allIndexes
-    .slice()
-    .sort((a, b) =>
-      sortFunction(dataContainer.valueAt(a, fieldIndex), dataContainer.valueAt(b, fieldIndex))
-    );
+  const sortOrder = allIndexes.slice().sort((a, b) => {
+    const value1 = dataContainer.valueAt(a, fieldIndex);
+    const value2 = dataContainer.valueAt(b, fieldIndex);
+    if (!notNullorUndefined(value1) && notNullorUndefined(value2)) {
+      return 1;
+    } else if (notNullorUndefined(value1) && !notNullorUndefined(value2)) {
+      return -1;
+    }
+    return sortFunction(value1, value2);
+  });
 
   dataset.sortColumn = {
     [column]: sortBy
