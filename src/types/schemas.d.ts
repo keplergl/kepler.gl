@@ -82,8 +82,14 @@ export type ParsedLayer = SavedLayer | MinSavedLayer;
 
 export type ParsedEffect = {
   id: string;
-  config: EffectConfig;
+  config: {
+    type: string;
+    isEnabled: boolean;
+    params: Record<string, number | number[] | {value: number}>;
+  };
 };
+
+export type SavedEffect = ParsedEffect;
 
 export type SavedAnimationConfig = {
   currentTime: AnimationConfig['currentTime'];
@@ -98,6 +104,7 @@ export type SavedEditor = {
 export type SavedVisState = {
   filters: SavedFilter[];
   layers: SavedLayer[];
+  effects: SavedEffect[];
   interactionConfig: SavedInteractionConfig;
   layerBlending: string;
   overlayBlending?: string;
@@ -110,6 +117,7 @@ export type SavedVisState = {
 export type MinSavedVisStateV1 = {
   filters?: MinSavedFilter[];
   layers?: MinSavedLayer[];
+  effects?: SavedEffect[];
   interactionConfig?: Partial<SavedInteractionConfig>;
   layerBlending?: string;
   overlayBlending?: string;
@@ -122,6 +130,7 @@ export type ParsedVisState = {
   layers?: ParsedLayer[];
   effects?: ParsedEffect[];
   filters?: ParsedFilter[];
+  effects?: ParsedEffect[];
   interactionConfig?: Partial<SavedInteractionConfig>;
   layerBlending?: string;
   overlayBlending?: string;

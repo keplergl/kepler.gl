@@ -1,2 +1,2 @@
-export {Effect} from './effect';
+export {default as Effect} from './effect';
 export {createDeckEffectFromConfig} from './utils';
