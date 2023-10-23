@@ -205,7 +205,7 @@ export function cmpEffects(t, expectedEffect, actualEffect, opts = {}) {
   if (Array.isArray(expectedEffect) && Array.isArray(actualEffect)) {
     t.equal(actualEffect.length, expectedEffect.length, 'should have same number of effects');
     expectedEffect.forEach((_, i) => {
-      cmpEffects(t, expectedEffect[i], actualEffect[i], opt, String(i));
+      cmpEffects(t, expectedEffect[i], actualEffect[i], opts);
     });
   } else {
     if (!expectedEffect || !actualEffect) {
