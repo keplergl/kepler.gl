@@ -39,7 +39,7 @@
   },
   "scripts": {
     "bootstrap": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true yarn",
-    "install:example": "cd examples/demo-app && yarn",
+    "install:example": "NODE_OPTIONS=--openssl-legacy-provider cd examples/demo-app && yarn",
     "install:web": "yarn install:example && cd website && yarn",
     "install-and-start": "node ./scripts/install-and-start",
     "test-fast": "yarn test-node-debug && yarn test-browser-debug",
@@ -85,7 +85,7 @@
     "lint:css": "stylelint './src/**/*.js'",
     "typescript": "tsc --noEmit",
     "web": "(yarn && yarn install:web && yarn start:web)",
-    "deploy": "NODE_OPTIONS=--openssl-legacy-provider yarn install:web && (cd website && yarn build)",
+    "deploy": "yarn install:web && (cd website && yarn build)",
     "clean": "rm -rf node_modules examples/**/node_modules website/node_modules",
     "release:patch": "git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags",
     "fix-dependencies": "./scripts/fix-dependencies.sh"
