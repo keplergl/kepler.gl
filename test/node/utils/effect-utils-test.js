@@ -55,14 +55,18 @@ test('effectUtils -> computeDeckEffects', t => {
   t.ok(deckEffects[0] instanceof LightingEffect, 'lighting effect should be generated');
   t.ok(deckEffects[1] instanceof PostProcessEffect, 'post-processing effect should be generated');
 
-  t.equal(deckEffects[0].shadowColor[3], 0, 'shadows should be disabled');
+  // nighttime
+  t.equal(deckEffects[0].outputUniformShadow, true, 'shadows should be applied uniformly');
+  t.equal(deckEffects[0].directionalLights[0].intensity, 0, 'directional light should be disabled');
 
+  // daytime
   nextState.effects[1].updateConfig({params: {timestamp: 1689415852635}});
   deckEffects = computeDeckEffects({
     visState: nextState,
     mapState: {latitude: 51.033105, longitude: 0.348512}
   });
   t.equal(deckEffects[0].shadowColor[3], 0.5, 'shadows should be enabled');
+  t.equal(deckEffects[0].directionalLights[0].intensity, 1, 'directional light should be enabled');
 
   t.end();
 });

@@ -3,7 +3,12 @@ import SunCalc from 'suncalc';
 
 import {PostProcessEffect} from '@deck.gl/core/typed';
 
-import {LIGHT_AND_SHADOW_EFFECT, LIGHT_AND_SHADOW_EFFECT_TIME_MODES} from '@kepler.gl/constants';
+import {
+  LIGHT_AND_SHADOW_EFFECT,
+  LIGHT_AND_SHADOW_EFFECT_TIME_MODES,
+  FILTER_TYPES,
+  FILTER_VIEW_TYPES
+} from '@kepler.gl/constants';
 import {findById} from './utils';
 import {VisState} from '@kepler.gl/schemas';
 import {MapState, Effect} from '@kepler.gl/types';
@@ -22,27 +27,10 @@ export function computeDeckEffects({
     })
     .filter(effect => Boolean(effect && effect.config.isEnabled && effect.deckEffect)) as Effect[];
 
-  const lightShadowEffect = effects.find(effect => effect.type === LIGHT_AND_SHADOW_EFFECT.type);
-  if (lightShadowEffect) {
-    const {timestamp, timeMode} = lightShadowEffect.config.params;
-
-    if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current) {
-      lightShadowEffect.deckEffect.directionalLights[0].timestamp = Date.now();
-    } else if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation) {
-      // TODO: find an easy way to get current animation time
-      const filter = visState.filters.find(filter => filter.fieldType === 'timestamp');
-      if (filter) {
-        lightShadowEffect.deckEffect.directionalLights[0].timestamp = filter.value?.[0] ?? 0;
-      }
-    }
-
-    if (!isDaytime(mapState.latitude, mapState.longitude, timestamp)) {
-      // TODO: interpolate for dusk/dawn
-      // TODO: Should we avoid mutating the effect? (didn't work when tried defensive copying)
-      lightShadowEffect.deckEffect.shadowColor[3] = 0;
-    }
-  }
-  return effects.map(effect => effect.deckEffect);
+  return effects.map(effect => {
+    updateEffect({visState, mapState, effect});
+    return effect.deckEffect;
+  });
 }
 
 /**
@@ -81,4 +69,42 @@ function isDaytime(lat, lon, timestamp) {
   const date = new Date(timestamp);
   const {sunrise, sunset} = SunCalc.getTimes(date, lat, lon);
   return date >= sunrise && date <= sunset;
+}
+
+/**
+ * Update effect to match latest vis and map states
+ */
+function updateEffect({visState, mapState, effect}) {
+  if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
+    let {timestamp, timeMode} = effect.config.params;
+    const sunLight = effect.deckEffect.directionalLights[0];
+
+    // set timestamp for shadow
+    if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current) {
+      timestamp = Date.now();
+      sunLight.timestamp = timestamp;
+    } else if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation) {
+      timestamp = visState.animationConfig.currentTime ?? 0;
+      if (!timestamp) {
+        const filter = visState.filters.find(
+          filter =>
+            filter.type === FILTER_TYPES.timeRange &&
+            (filter.view === FILTER_VIEW_TYPES.enlarged || filter.syncedWithLayerTimeline)
+        );
+        if (filter) {
+          timestamp = filter.value?.[0] ?? 0;
+        }
+      }
+      sunLight.timestamp = timestamp;
+    }
+
+    // output uniform shadow during nighttime
+    if (isDaytime(mapState.latitude, mapState.longitude, timestamp)) {
+      effect.deckEffect.outputUniformShadow = false;
+      sunLight.intensity = effect.config.params.sunLightIntensity;
+    } else {
+      effect.deckEffect.outputUniformShadow = true;
+      sunLight.intensity = 0;
+    }
+  }
 }
