@@ -229,7 +229,7 @@
     "@luma.gl/test-utils": "8.5.19",
     "@luma.gl/webgl": "8.5.19",
     "browserslist": "^4.17.0",
-    "caniuse-lite": "^1.0.30001449",
+    "caniuse-lite": "^1.0.30001517",
     "d3-array": "^2.8.0",
     "d3-scale": "^3.2.3",
     "dot-prop": "6.0.0",
