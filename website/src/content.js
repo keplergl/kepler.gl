@@ -43,7 +43,7 @@ export const SECTIONS = [
   {
     id: 'studio',
     title: 'Take The Next Step',
-    description: `Built on top of kelper.gl’s framework, Foursquare Studio is a free,
+    description: `Built on top of kepler.gl’s framework, Foursquare Studio is a free,
 powerful geospatial analytics and visualization tool, with new features and updates released every few weeks.`,
     icon: fsqCdnUrl('fsqlogo.png'),
     isDark: true
