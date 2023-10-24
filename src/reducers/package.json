@@ -72,14 +72,14 @@
     "instrument": false
   },
   "engines": {
-    "node": ">=14.21.1"
+    "node": ">=18.18.2"
   },
   "maintainers": [
     "Shan He <heshan0131@gmail.com>",
     "Giuseppe Macri <gmacri@uber.com>"
   ],
   "volta": {
-    "node": "14.21.1",
+    "node": "18.18.2",
     "yarn": "1.22.17"
   }
 }
