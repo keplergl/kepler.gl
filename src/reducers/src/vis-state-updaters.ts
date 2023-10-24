@@ -1320,7 +1320,8 @@ export const addLayerUpdater = (
     });
     newLayerData = {};
   }
-  return {
+
+  let newState = {
     ...state,
     layers: [...state.layers, newLayer],
     layerData: [...state.layerData, newLayerData],
@@ -1328,6 +1329,12 @@ export const addLayerUpdater = (
     layerOrder: [newLayer.id, ...state.layerOrder],
     splitMaps: addNewLayersToSplitMap(state.splitMaps, newLayer)
   };
+
+  if (newLayer.config.animation.enabled) {
+    newState = updateAnimationDomain(newState);
+  }
+
+  return newState;
 };
 
 /**
