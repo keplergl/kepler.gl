@@ -48,19 +48,19 @@ powerful geospatial analytics and visualization tool, with new features and upda
     icon: fsqCdnUrl('fsqlogo.png'),
     isDark: true
   },
-  // {
-  //   id: 'ecosystems',
-  //   title: 'Ecosystem',
-  //   description: 'A collection of kepler.gl plugins built for common data analytics tools',
-  //   icon: fsqCdnUrl('ecosystem.png'),
-  //   isDark: true
-  // },
   {
     id: 'examples',
     title: 'See What People Created',
     description: 'See what others have been creating with Kepler.gl.',
     icon: cdnUrl('icons/examples.png'),
     background: cdnUrl('examples/section-background.png')
+  },
+  {
+    id: 'ecosystems',
+    title: 'Ecosystem',
+    description: 'A collection of kepler.gl plugins built for common data analytics tools',
+    icon: fsqCdnUrl('ecosystem.png'),
+    isDark: true
   },
   {
     id: 'tutorials',
