@@ -27,7 +27,7 @@
     "clean": "rimraf dist/ && rimraf ../keplergl/static/",
     "cleanall": "npm run clean && rimraf node_modules/",
     "prepublish": "yarn build && yarn build:lab",
-    "build": "npm run clean && webpack --config ./webpack/build.js && jupyter labextension build .",
+    "build": "npm run clean && npm run build:lab && webpack --config ./webpack/build.js && jupyter labextension build .",
     "build:lab": "rimraf babel/ && mkdir babel && babel lib --out-dir babel",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint lib webpack --fix",

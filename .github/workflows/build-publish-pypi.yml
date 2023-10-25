@@ -3,7 +3,6 @@ name: Build KeplerGL Python and NPM Packages
 on: push
 
 jobs:
-
   build_and_publish:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
@@ -12,9 +11,9 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Use Node.js 12.x
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: 12.x
+          node-version: 18.x
           registry-url: https://registry.npmjs.org/
 
       - name: Set up Python 3.8
@@ -30,6 +29,7 @@ jobs:
       - name: Build KeplerGL
         env:
           MapboxAccessTokenJupyter: ${{ secrets.mapbox_jupyter_token }}
+          NODE_OPTIONS: --openssl-legacy-provider
         run: |
           python -m virtualenv venv
           source venv/bin/activate
@@ -48,7 +48,7 @@ jobs:
           venv/bin/jupyter nbconvert --execute bindings/kepler.gl-jupyter/notebooks/DataFrame.ipynb --to python
           python bindings/kepler.gl-jupyter/notebooks/DataFrame.py
 
-      - name: Create artifact 
+      - name: Create artifact
         uses: actions/upload-artifact@v2
         with:
           name: keplergl-pypi
@@ -60,16 +60,16 @@ jobs:
           if [[ ${{ github.event.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+-jupyter$ ]]; then
               echo ::set-output name=publish::true
           fi
-      
+
       - name: Publish KeplerGL to Pypi
         if: steps.check-tag.outputs.publish == 'true'
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.pypi_token }}
         run: |
-          python -m twine upload bindings/kepler.gl-jupyter/dist/*.tar.gz 
+          python -m twine upload bindings/kepler.gl-jupyter/dist/*.tar.gz
 
-      - name: Publish kepler-jupyter to NPM 
+      - name: Publish kepler-jupyter to NPM
         if: steps.check-tag.outputs.publish == 'true'
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
