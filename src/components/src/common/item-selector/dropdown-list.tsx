@@ -64,7 +64,7 @@ const DropdownFooterWrapper = styled.div`
 interface DropdownListProps {
   options?: any[];
   allowCustomValues?: number;
-  customClasses?: {listHeader?: string};
+  customClasses?: {listHeader?: string; listItem?: string; results?: string};
   customValues?: any[];
   customListItemComponent?: ElementType;
   customListHeaderComponent?: ElementType;
@@ -207,7 +207,10 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
     // For some reason onClick is not fired when clicked on an option
     // onMouseDown is used here as a workaround of #205 and other
     return (
-      <DropdownListWrapper className={classList.list} light={light}>
+      <DropdownListWrapper
+        className={classNames(classList.list, this.props.customClasses?.results)}
+        light={light}
+      >
         {this.props.customListHeaderComponent ? (
           <div className={classNames(classList.listHeader, this.props.customClasses?.listHeader)}>
             <this.props.customListHeaderComponent />
@@ -218,10 +221,14 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
           <div className={classList.listSection}>
             {fixedOptions?.map((value, i) => (
               <div
-                className={classNames(classList.listItem, {
-                  hover: this.props.selectionIndex === i,
-                  [classList.listItemFixed]: true
-                })}
+                className={classNames(
+                  classList.listItem,
+                  {
+                    hover: this.props.selectionIndex === i,
+                    [classList.listItemFixed]: true
+                  },
+                  this.props.customClasses?.listItem
+                )}
                 key={`${display(value)}_${i}`}
                 onMouseDown={e => this._onClick(value, e)}
                 onClick={e => this._onClick(value, e)}
@@ -234,9 +241,13 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
 
         {this.state.options?.map((value, i) => (
           <div
-            className={classNames(classList.listItem, {
-              hover: this.props.selectionIndex === i + valueOffset
-            })}
+            className={classNames(
+              classList.listItem,
+              {
+                hover: this.props.selectionIndex === i + valueOffset
+              },
+              this.props.customClasses?.listItem
+            )}
             key={`${display(value)}_${i}`}
             onMouseDown={e => this._onClick(value, e)}
             onClick={e => this._onClick(value, e)}
