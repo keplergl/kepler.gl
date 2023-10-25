@@ -128,7 +128,7 @@ export default class IconLayer extends Layer {
     props: {
       id?: string;
       iconGeometry?: IconGeometry;
-      svgIcons?: any;
+      svgIcons?: any[];
     } & LayerBaseConfigPartial
   ) {
     super(props);
