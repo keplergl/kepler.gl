@@ -57,6 +57,12 @@ const StyledTable = styled.table`
       color: ${props => props.theme.negativeBtnActBgd};
     }
   }
+  & .row__value,
+  & .row__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: no-wrap;
+  }
 `;
 
 const StyledDivider = styled.div`
