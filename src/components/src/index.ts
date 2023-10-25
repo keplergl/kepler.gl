@@ -265,6 +265,7 @@ export {default as EffectListFactory} from './effects/effect-list';
 export {default as SidePanelTitleFactory} from './effects/side-panel-title';
 export {default as EffectTypeSelectorFactory} from './effects/effect-type-selector';
 export {default as EffectConfiguratorFactory} from './effects/effect-configurator';
+export {default as EffectTimeConfiguratorFactory} from './effects/effect-time-configurator';
 
 export {default as HowToButton} from './side-panel/layer-panel/how-to-button';
 // eslint-disable-next-line prettier/prettier

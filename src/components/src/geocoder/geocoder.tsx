@@ -21,7 +21,7 @@
 import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import MapboxClient from 'mapbox';
+import geocoderService from '@mapbox/mapbox-sdk/services/geocoding';
 import {injectIntl, IntlShape} from 'react-intl';
 import {WebMercatorViewport} from 'viewport-mercator-project';
 import {KeyEvent} from '@kepler.gl/constants';
@@ -161,7 +161,9 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
   const [results, setResults] = useState(initialResults);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const client = useMemo(() => new MapboxClient(mapboxApiAccessToken), [mapboxApiAccessToken]);
+  const client = useMemo(() => geocoderService({accessToken: mapboxApiAccessToken}), [
+    mapboxApiAccessToken
+  ]);
 
   const onChange = useCallback(
     event => {
@@ -178,10 +180,15 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
         debounceTimeout = setTimeout(async () => {
           if (limit > 0 && Boolean(queryString)) {
             try {
-              const response = await client.geocodeForward(queryString, {limit});
-              if (response.entity.features) {
+              const response = await client
+                .forwardGeocode({
+                  query: queryString,
+                  limit
+                })
+                .send();
+              if (response.body.features) {
                 setShowResults(true);
-                setResults(response.entity.features);
+                setResults(response.body.features);
               }
             } catch (e) {
               // TODO: show geocode error

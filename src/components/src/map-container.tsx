@@ -540,9 +540,14 @@ export default function MapContainerFactory(
       }
     }
 
-    _isOKToRenderEffects() {
-      // TODO a hack to prevent effect preRender without valid generated viewports
-      return Boolean(this._deck?.viewManager?._viewports?.length);
+    /**
+     * 1) Allow effects only for the first view.
+     * 2) Prevent effect:preRender call without valid generated viewports.
+     * @param viewIndex View index.
+     * @returns Returns true if effects can be used.
+     */
+    _isOKToRenderEffects(viewIndex?: number): boolean {
+      return !viewIndex && Boolean(this._deck?.viewManager?._viewports?.length);
     }
 
     _onBeforeRender = ({gl}) => {
@@ -791,7 +796,9 @@ export default function MapContainerFactory(
         };
       }
 
-      const effects = this._isOKToRenderEffects() ? computeDeckEffects({visState, mapState}) : [];
+      const effects = this._isOKToRenderEffects(index)
+        ? computeDeckEffects({visState, mapState})
+        : [];
 
       const views = deckGlProps?.views
         ? deckGlProps?.views()

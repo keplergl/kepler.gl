@@ -20,3 +20,4 @@
 
 import './effect-manager-test';
 import './effect-configurator-test';
+import './effect-time-configurator-test';
