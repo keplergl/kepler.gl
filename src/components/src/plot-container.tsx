@@ -243,7 +243,7 @@ export default function PlotContainerFactory(
       const mapContainers = !isSplit ? (
         <MapContainer index={0} primary={true} {...mapProps} />
       ) : (
-        <MapsLayout className="plot-container-maps" mapState={mapState}>
+        <MapsLayout className="plot-container-maps" mapState={newMapState}>
           {splitMaps.map((settings, index) => (
             <MapContainer key={index} index={index} primary={index === 1} {...mapProps} />
           ))}
@@ -252,7 +252,7 @@ export default function PlotContainerFactory(
       return (
         <StyledPlotContainer className="export-map-instance">
           <StyledMapContainer ref={this.plottingAreaRef} width={size.width} height={size.height}>
-            <MapViewStateContextProvider mapState={mapState}>
+            <MapViewStateContextProvider mapState={newMapState}>
               {mapContainers}
             </MapViewStateContextProvider>
           </StyledMapContainer>
