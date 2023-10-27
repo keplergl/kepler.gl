@@ -1,11 +1,20 @@
 import React, {useState, useEffect, createContext} from 'react';
 import isEqual from 'lodash.isequal';
 import pick from 'lodash.pick';
+import {MapViewState} from '@deck.gl/core/typed';
 import {pickViewportPropsFromMapState} from '@kepler.gl/reducers';
 
 import {MapState} from '@kepler.gl/types';
 
-export const MapViewStateContext: React.Context<any> = createContext(null);
+export type MapViewStateContextType = {
+  getInternalViewState: (index?: number) => MapViewState;
+  setInternalViewState: (viewState: MapViewState, index?: number) => void;
+};
+
+export const MapViewStateContext: React.Context<MapViewStateContextType> = createContext({
+  getInternalViewState: (index = 0) => ({latitude: 0, longitude: 0, zoom: 0}),
+  setInternalViewState: (viewState, index = 0) => {}
+});
 
 /**
  * This context provider is used to localize the map view state so
@@ -46,20 +55,19 @@ export const MapViewStateContextProvider = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapState]);
 
-  return (
-    <MapViewStateContext.Provider
-      value={{
-        getInternalViewState: index => viewStates[index] ?? viewStates[0],
-        setInternalViewState: (newViewState, index) => {
-          setViewStates(prevViewStates => {
-            const nextViewStates = [...prevViewStates];
-            nextViewStates[index] = newViewState;
-            return nextViewStates;
-          });
+  const value = {
+    getInternalViewState: (index = 0) => viewStates[index] ?? viewStates[0],
+    setInternalViewState: (newViewState, index = 0) => {
+      setViewStates(prevViewStates => {
+        if (isSplit && !isViewportSynced) {
+          const nextViewStates = [...prevViewStates];
+          nextViewStates[index] = newViewState as MapState;
+          return nextViewStates;
+        } else {
+          return [newViewState] as MapState[];
         }
-      }}
-    >
-      {children}
-    </MapViewStateContext.Provider>
-  );
+      });
+    }
+  } as MapViewStateContextType;
+  return <MapViewStateContext.Provider value={value}>{children}</MapViewStateContext.Provider>;
 };
