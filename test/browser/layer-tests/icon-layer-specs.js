@@ -499,19 +499,9 @@ test('#IconLayer -> renderLayer', t => {
   t.end();
 });
 
-test('#IconLayer -> fetch icon geometry -> renderIconModal', t => {
-  const mockSuccessResponse = {svgIcons: mockSvgIcons};
-  const mockJsonPromise = sinon.stub().returnsPromise();
-  mockJsonPromise.resolves(mockSuccessResponse);
-
-  const stubedFetch = sinon.stub(global, 'fetch').returnsPromise();
-
-  stubedFetch.resolves({
-    json: mockJsonPromise
-  });
-
+test('#IconLayer -> svg icons as constructor props -> renderIconModal', t => {
   // initialize iconLayer
-  const iconLayer = new IconLayer({dataId: ''});
+  const iconLayer = new IconLayer({dataId: '', svgIcons: mockSvgIcons});
   t.deepEqual(iconLayer.iconGeometry, iconLayer.iconGeometry, 'should create correct iconGeometry');
 
   let wrapper;
@@ -534,6 +524,5 @@ test('#IconLayer -> fetch icon geometry -> renderIconModal', t => {
     'should render alert icon'
   );
 
-  stubedFetch.restore();
   t.end();
 });
