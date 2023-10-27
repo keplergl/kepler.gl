@@ -125,7 +125,7 @@ export default function useDimensions<T extends Element>(
       unobserveDimensions(current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [throttleDelay]);
+  }, [throttleDelay, ref?.current]);
 
   return [ref, size];
 }
