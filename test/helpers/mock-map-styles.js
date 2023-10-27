@@ -18,14 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {DEFAULT_LAYER_GROUPS} from '@kepler.gl/constants';
+import {BASE_MAP_COLOR_MODES, DEFAULT_LAYER_GROUPS} from '@kepler.gl/constants';
 
+/** @type {import('@kepler.gl/reducers').BaseMapStyle} */
 export const MOCK_MAP_STYLE = {
   id: 'dark',
   label: 'Dark',
   url: 'mapbox://styles/xxxxx/abcdefg',
   icon: 'https://my.icon.net/kepler.gl/test/taro.png',
   layerGroups: DEFAULT_LAYER_GROUPS,
+  colorMode: BASE_MAP_COLOR_MODES.DARK,
+  complimentaryStyleId: 'light',
   style: {
     version: 8,
     name: 'Mock-Map-Style',
@@ -89,12 +92,15 @@ export const MOCK_MAP_STYLE = {
   }
 };
 
+/** @type {import('@kepler.gl/reducers').BaseMapStyle} */
 export const MOCK_MAP_STYLE_LIGHT = {
   id: 'light',
   label: 'Light',
   url: 'mapbox://styles/xxxxx/hijklmn',
   icon: 'https://my.icon.net/kepler.gl/test/blue.png',
   layerGroups: DEFAULT_LAYER_GROUPS,
+  colorMode: BASE_MAP_COLOR_MODES.LIGHT,
+  complimentaryStyleId: 'dark',
   style: {
     version: 8,
     name: 'Mock-Map-Style-LIGHT',
@@ -162,4 +168,10 @@ export const MOCK_MAP_STYLE_LIGHT = {
       }
     ]
   }
+};
+
+/** @type {import('@kepler.gl/reducers').MapStyles} */
+export const MOCK_MAP_STYLES = {
+  [MOCK_MAP_STYLE.id]: MOCK_MAP_STYLE,
+  [MOCK_MAP_STYLE_LIGHT.id]: MOCK_MAP_STYLE_LIGHT
 };
