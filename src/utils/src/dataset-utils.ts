@@ -467,8 +467,12 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     const name = fieldByIndex[index];
 
     const fieldMeta = metadata.find(m => m.key === field);
-    let type = fieldMeta.type;
-    const format = fieldMeta.format;
+
+    // fieldMeta could be undefined if the field has no data and Analyzer.computeColMeta
+    // will dump the field. In this case, we will simply assign the field type to STRING
+    // since dropping the column in the RowData could be expensive
+    let type = fieldMeta?.type || 'STRING';
+    const format = fieldMeta?.format || '';
 
     // check if string is hex wkb
     if (type === AnalyzerDATA_TYPES.STRING) {
