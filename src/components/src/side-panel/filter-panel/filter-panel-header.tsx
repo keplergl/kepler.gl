@@ -49,8 +49,8 @@ export const StyledFilterHeader = styled(StyledPanelHeader)<StyledFilterHeaderPr
 
 const StyledChildrenContainer = styled.div`
   display: flex;
-  flex: 2;
-  width: 90%;
+  flex: 1;
+  overflow: hidden;
 `;
 
 export type FilterPanelHeaderProps = {
