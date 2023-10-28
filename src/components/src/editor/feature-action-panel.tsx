@@ -18,15 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useCallback, useState, Component, ComponentType} from 'react';
+import React, {useCallback, useState, ComponentType} from 'react';
 import {useIntl} from 'react-intl';
 
 import ActionPanel, {ActionPanelItem} from '../common/action-panel';
 import styled from 'styled-components';
-import onClickOutside from 'react-onclickoutside';
 import classnames from 'classnames';
 import {Trash, Layers, Copy, Checkmark} from '../common/icons';
 import copy from 'copy-to-clipboard';
+import {useDismiss, useFloating, useInteractions} from '@floating-ui/react';
 import {Layer} from '@kepler.gl/layers';
 import {Filter} from '@kepler.gl/types';
 import {Feature} from '@nebula.gl/edit-modes';
@@ -78,11 +78,24 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
     onToggleLayer,
     onDeleteFeature,
     actionIcons = defaultActionIcons,
-    children
+    children,
+    onClose
   }: FeatureActionPanelProps) => {
     const [copied, setCopied] = useState(false);
     const {layerId = []} = currentFilter || {};
     const intl = useIntl();
+
+    const {refs, context} = useFloating({
+      open: true,
+      onOpenChange: v => {
+        if (!v && onClose) {
+          onClose();
+        }
+      }
+    });
+    const dismiss = useDismiss(context);
+
+    const {getFloatingProps} = useInteractions([dismiss]);
 
     const copyGeometry = useCallback(() => {
       if (selectedFeature?.geometry) copy(JSON.stringify(selectedFeature.geometry));
@@ -95,6 +108,8 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
 
     return (
       <StyledActionsLayer
+        ref={refs.setFloating}
+        {...getFloatingProps()}
         className={classnames('feature-action-panel', className)}
         style={{
           top: `${position.y + LAYOVER_OFFSET}px`,
@@ -163,27 +178,5 @@ export function PureFeatureActionPanelFactory(): React.FC<FeatureActionPanelProp
 FeatureActionPanelFactory.deps = PureFeatureActionPanelFactory.deps;
 
 export default function FeatureActionPanelFactory(): ComponentType<FeatureActionPanelProps> {
-  const PureFeatureActionPanel = PureFeatureActionPanelFactory();
-
-  /**
-   * FeatureActionPanel wrapped with a click-outside handler. Note that this needs to be a
-   * class component, as react-onclickoutside does not handle functional components.
-   */
-  class ClickOutsideFeatureActionPanel extends Component<FeatureActionPanelProps> {
-    handleClickOutside(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      this.props.onClose?.();
-    }
-
-    render() {
-      return <PureFeatureActionPanel {...this.props} />;
-    }
-  }
-
-  const clickOutsideConfig = {
-    handleClickOutside: () => ClickOutsideFeatureActionPanel.prototype.handleClickOutside
-  };
-
-  return onClickOutside(ClickOutsideFeatureActionPanel, clickOutsideConfig);
+  return PureFeatureActionPanelFactory();
 }
