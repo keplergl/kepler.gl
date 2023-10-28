@@ -70,7 +70,7 @@ type LayerManagerProps = {
   panelMetadata: SidePanelItem;
 } & WrappedComponentProps;
 
-const LayerBlendingSelector = React.memo(
+export const LayerBlendingSelector = React.memo(
   ({layerBlending, updateLayerBlending, intl}: LayerBlendingSelectorProps) => {
     const labeledLayerBlendings = Object.keys(LAYER_BLENDINGS).reduce(
       (acc, current) => ({
