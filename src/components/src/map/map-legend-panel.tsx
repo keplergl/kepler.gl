@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {ComponentType, useCallback, useState} from 'react';
+import React, {ComponentType, useCallback, useContext, useState} from 'react';
 import styled from 'styled-components';
 
 import {Legend} from '../common/icons';
@@ -33,6 +33,8 @@ import {MapControlItem, MapControls, MapState} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 import {media} from '@kepler.gl/styles';
 import {ActionHandler, toggleSplitMapViewport} from '@kepler.gl/actions';
+
+import {RootContext} from '../context';
 
 MapLegendPanelFactory.deps = [MapControlTooltipFactory, MapControlPanelFactory, MapLegendFactory];
 
@@ -158,13 +160,14 @@ function MapLegendPanelFactory(MapControlTooltip, MapControlPanel, MapLegend) {
       </MapControlPanel>
     );
 
+    const rootContext = useContext(RootContext);
     if (isPinned) {
       // Pinned panel is not supported in export mode
       if (isExport) {
         return mapControlPanel;
       }
       const pinnedPanel = <PinToBottom offsetRight={offsetRight}>{mapControlPanel}</PinToBottom>;
-      return createPortal(pinnedPanel, document.body);
+      return createPortal(pinnedPanel, rootContext?.current || document.body);
     }
 
     return (
