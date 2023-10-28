@@ -23,7 +23,6 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "*": ["*"],
       // Map all modules to their source
       "@kepler.gl/*": ["src/*/src"]
     }

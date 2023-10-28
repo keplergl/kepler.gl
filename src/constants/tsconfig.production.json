@@ -22,14 +22,8 @@
     "strict": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": "./src",
-    "paths": {
-      "*": ["*"]
-    }
+    "baseUrl": "./src"
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-  ]
+  "include": ["src"],
+  "exclude": []
 }
