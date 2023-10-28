@@ -263,7 +263,7 @@ export const savedStateV1 = {
                 percentile: [0, 96.54],
                 elevationPercentile: [0, 100],
                 elevationScale: 5,
-                colorAggregation: 'average',
+                colorAggregation: 'count', // if associated visualChannel colorField value is null, it can only default to 'count'
                 sizeAggregation: 'average',
                 enable3d: false
               }
@@ -468,8 +468,8 @@ mergedLayer1.config = {
     elevationPercentile: [0, 100],
     elevationScale: 5,
     enableElevationZoomFactor: true,
-    colorAggregation: 'average',
-    sizeAggregation: 'average',
+    colorAggregation: 'count', // if associated colorField value is null, it can only default to 'count'
+    sizeAggregation: 'count', // if associated sizeField value is null, it can only default to 'count'
     enable3d: false
   },
   animation: {enabled: false}

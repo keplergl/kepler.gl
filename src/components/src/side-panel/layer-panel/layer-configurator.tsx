@@ -45,7 +45,11 @@ import LayerErrorMessage from './layer-error-message';
 
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
 
-import {CHANNEL_SCALE_SUPPORTED_FIELDS, LAYER_TYPES} from '@kepler.gl/constants';
+import {
+  CHANNEL_SCALE_SUPPORTED_FIELDS,
+  LAYER_TYPES,
+  AGGREGATION_TYPE_OPTIONS
+} from '@kepler.gl/constants';
 import {Layer, LayerBaseConfig, VisualChannel, AggregationLayer} from '@kepler.gl/layers';
 
 import {NestedPartial, LayerVisConfig, ColorUI, Field} from '@kepler.gl/types';
@@ -1183,16 +1187,31 @@ export const AggregationTypeSelector = ({channel, layer, onChange}: AggregationS
   const {visConfig} = layer.config;
 
   // aggregation should only be selectable when field is selected
-  const aggregationOptions = layer.getAggregationOptions(key);
+  const layerAggregationTypes = layer.getAggregationOptions(key);
+
+  const aggregationOptions = AGGREGATION_TYPE_OPTIONS.filter(({id}) =>
+    layerAggregationTypes.includes(id)
+  );
+
+  const selectedAggregation = aggregation
+    ? aggregationOptions.find(({id}) => id === visConfig[aggregation])
+    : [];
 
   return (
     <SidePanelSection>
       <PanelLabel>
-        <FormattedMessage id={'layer.aggregateBy'} values={{field: selectedField.name}} />
+        <FormattedMessage
+          id={'layer.aggregateBy'}
+          values={{
+            field: selectedField.displayName
+          }}
+        />
       </PanelLabel>
       <ItemSelector
-        selectedItems={visConfig[aggregation as string]}
+        selectedItems={selectedAggregation}
         options={aggregationOptions}
+        displayOption="label"
+        getOptionValue="id"
         multiSelect={false}
         searchable={false}
         onChange={value =>
