@@ -446,6 +446,8 @@ export function mergeSplitMaps<S extends VisState>(
 
         // create map panel if current map is not split
         pushTo[i] = pushTo[i] || {
+          // keep id
+          ...sm,
           layers: pushTo === merged ? getInitialMapLayersForSplitMap(state.layers) : []
         };
         pushTo[i].layers = {
