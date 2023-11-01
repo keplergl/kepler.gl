@@ -36,7 +36,8 @@ import {
   Field,
   FieldPair,
   TimeLabelFormat,
-  TooltipFields
+  TooltipFields,
+  ProtoDataset
 } from '@kepler.gl/types';
 import {TooltipFormat} from '@kepler.gl/constants';
 
@@ -267,7 +268,7 @@ const IGNORE_DATA_TYPES = Object.keys(AnalyzerDATA_TYPES).filter(
 /**
  * Validate input data, adding missing field types, rename duplicate columns
  */
-export function validateInputData(data: Record<string, unknown>): ProcessorResult {
+export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
   if (!isPlainObject(data)) {
     assert('addDataToMap Error: dataset.data cannot be null');
     return null;
@@ -279,13 +280,13 @@ export function validateInputData(data: Record<string, unknown>): ProcessorResul
     return null;
   }
 
-  const {fields, rows, ...rest} = data;
+  const {fields, rows, cols} = data;
 
   // check if all fields has name, format and type
   const allValid = fields.every((f, i) => {
     if (!isPlainObject(f)) {
       assert(`fields needs to be an array of object, but find ${typeof f}`);
-      fields[i] = {};
+      fields[i] = {name: `column_${i}`};
     }
 
     if (!f.name) {
@@ -294,7 +295,7 @@ export function validateInputData(data: Record<string, unknown>): ProcessorResul
       fields[i].name = `column_${i}`;
     }
 
-    if (!ALL_FIELD_TYPES[f.type]) {
+    if (!f.type || !ALL_FIELD_TYPES[f.type]) {
       assert(`unknown field type ${f.type}`);
       return false;
     }
@@ -315,7 +316,7 @@ export function validateInputData(data: Record<string, unknown>): ProcessorResul
   });
 
   if (allValid) {
-    return {rows, fields, ...rest};
+    return {rows, fields, cols};
   }
 
   // if any field has missing type, recalculate it for everyone
@@ -470,7 +471,7 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     const fieldMeta = metadata.find(m => m.key === field);
 
     // fieldMeta could be undefined if the field has no data and Analyzer.computeColMeta
-    // will dump the field. In this case, we will simply assign the field type to STRING
+    // will ignore the field. In this case, we will simply assign the field type to STRING
     // since dropping the column in the RowData could be expensive
     let type = fieldMeta?.type || 'STRING';
     const format = fieldMeta?.format || '';

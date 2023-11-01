@@ -42,6 +42,7 @@ export type ProtoDataset = {
       type?: string;
       format?: string;
       displayName?: string;
+      analyzerType?: string;
       id?: string;
     }[];
     rows: any[][];

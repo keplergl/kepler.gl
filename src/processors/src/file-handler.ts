@@ -56,6 +56,18 @@ const JSON_LOADER_OPTIONS = {
   ]
 };
 
+/**
+ * ProcessFileDataContent
+ * @typedef {Object} ProcessFileDataContent
+ * @property {Object} data - parsed data
+ * @property {string} fileName - file name
+ * @property {number} [length] - number of rows
+ * @property {Object} [progress] - progress of file processing
+ * @property {number} [progress.rowCount] - number of rows processed
+ * @property {number} [progress.rowCountInBatch] - number of rows in current batch
+ * @property {number} [progress.percent] - percent of file processed
+ * @property {Map<string, string>} [metadata] - metadata e.g. for arrow data, metadata could be the schema.fields
+ */
 export type ProcessFileDataContent = {
   data: unknown;
   fileName: string;
@@ -64,10 +76,20 @@ export type ProcessFileDataContent = {
   metadata?: Map<string, string>;
 };
 
+/**
+ * check if table is an ArrowTable object
+ * @param table - object to check
+ * @returns {boolean} - true if table is an ArrowTable object type guarded
+ */
 export function isArrowTable(table: any): table is ArrowTable {
   return Boolean(table && table instanceof ArrowTable);
 }
 
+/**
+ * check if data is an ArrowData object, which is an array of RecordBatch
+ * @param data - object to check
+ * @returns {boolean} - true if data is an ArrowData object type guarded
+ */
 export function isArrowData(data: any): boolean {
   return Array.isArray(data) && Boolean(data[0].data && data[0].schema);
 }
