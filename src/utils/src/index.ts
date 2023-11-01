@@ -124,4 +124,3 @@ export {DataRow} from './data-row';
 
 export type {Centroid} from './h3-utils';
 export {getCentroid, idToPolygonGeo, h3IsValid, getHexFields} from './h3-utils';
-export * from './arrow-utils';

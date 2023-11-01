@@ -23,4 +23,10 @@ export type RowData = {
   [key: string]: string | null;
 }[];
 
-export type ProcessorResult = {fields: Field[]; rows: any[][];  rawData?: any} | null;
+export type ProcessorResult = {
+  info?: any;
+  fields: Field[];
+  rows: any[][];
+  cols?: any[];
+  metadata?: any;
+} | null;

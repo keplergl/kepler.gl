@@ -181,7 +181,8 @@ export function getLayerHoverProp({
     // deckgl layer to kepler-gl layer
     const layer = layers[overlay.props.idx];
 
-    if (object && layer && layer.getHoverData && layersToRender[layer.id]) {
+    // NOTE: for binary format GeojsonLayer, deck will return object=null but hoverInfo.index >= 0
+    if ((object || hoverInfo.index >= 0) && layer && layer.getHoverData && layersToRender[layer.id]) {
       // if layer is visible and have hovered data
       const {
         config: {dataId}
@@ -190,7 +191,11 @@ export function getLayerHoverProp({
         return null;
       }
       const {dataContainer, fields} = datasets[dataId];
-      const data: DataRow | null = layer.getHoverData(object, dataContainer, fields);
+      const data: DataRow | null = layer.getHoverData(
+        object || hoverInfo.index,
+        dataContainer,
+        fields
+      );
       if (!data) {
         return null;
       }

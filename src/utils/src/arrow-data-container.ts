@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Column as ArrowColumn} from 'apache-arrow';
+import {Vector as ArrowColumn} from 'apache-arrow';
 import {DataRow, SharedRowOptions} from './data-row';
-import {Field} from '@kepler.gl/types';
 import {DataContainerInterface, RangeOptions} from './data-container-interface';
+import {Field} from '@kepler.gl/types';
 
 type ArrowDataContainerInput = {
   cols: ArrowColumn[];
@@ -57,6 +57,8 @@ export class ArrowDataContainer implements DataContainerInterface {
   _cols: ArrowColumn[];
   _numColumns: number;
   _numRows: number;
+  _fields: Field[];
+  _colData: any[][];
 
   constructor(data: ArrowDataContainerInput) {
     if (!data.cols) {
@@ -70,6 +72,9 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._cols = data.cols;
     this._numColumns = data.cols.length;
     this._numRows = data.cols[0].length;
+    this._fields = data.fields || [];
+    // cache column data to make valueAt() faster
+    this._colData = data.cols.map(c => c.toArray());
   }
 
   numRows(): number {
@@ -81,7 +86,7 @@ export class ArrowDataContainer implements DataContainerInterface {
   }
 
   valueAt(rowIndex: number, columnIndex: number): any {
-    return this._cols[columnIndex].get(rowIndex);
+    return this._colData[columnIndex][rowIndex];
   }
 
   row(rowIndex: number, sharedRow?: SharedRowOptions): DataRow {
@@ -95,7 +100,7 @@ export class ArrowDataContainer implements DataContainerInterface {
   }
 
   rowAsArray(rowIndex: number): any[] {
-    return this._cols.map(col => col.get(rowIndex));
+    return this._colData.map(col => col[rowIndex]);
   }
 
   rows(sharedRow: SharedRowOptions) {
@@ -109,6 +114,10 @@ export class ArrowDataContainer implements DataContainerInterface {
 
   getColumn(columnIndex: number): ArrowColumn {
     return this._cols[columnIndex];
+  }
+
+  getField(columnIndex: number): Field {
+    return this._fields[columnIndex];
   }
 
   flattenData(): any[][] {
@@ -141,10 +150,7 @@ export class ArrowDataContainer implements DataContainerInterface {
     return out;
   }
 
-  mapIndex<T>(
-    func: ({index}, dc: DataContainerInterface) => T,
-    options: RangeOptions = {}
-  ): T[] {
+  mapIndex<T>(func: ({index}, dc: DataContainerInterface) => T, options: RangeOptions = {}): T[] {
     const {start = 0, end = this.numRows()} = options;
     const endRow = Math.min(this.numRows(), end);
 

@@ -146,6 +146,11 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
           use: ['source-map-loader'],
           enforce: 'pre',
           exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/]
+        },
+        {
+          test: /\.mjs$/,
+          include: /node_modules/,
+          type: 'javascript/auto'
         }
       ]
     },
@@ -250,7 +255,12 @@ function addBabelSettings(env, config, exampleDir) {
       ...config.module,
       rules: [
         ...config.module.rules.filter(r => r.loader !== 'babel-loader'),
-        makeBabelRule(env, exampleDir)
+        makeBabelRule(env, exampleDir),
+        {
+          test: /\.mjs$/,
+          include: /node_modules/,
+          type: 'javascript/auto'
+        }
       ]
     }
   };

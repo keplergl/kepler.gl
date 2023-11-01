@@ -149,15 +149,13 @@ class KeplerTable {
     //   return this;
     // }
 
-    // TODO: detect if the data is an arrow table
-    const isArrow = data.rawData && data.rawData.schema && data.rawData.schema.fields;
-    const dataContainerData = isArrow
-        ? [...Array(data.rawData?.numCols || 0).keys()].map(i => data.rawData.getColumnAt(i))
-        : data.rows
+    const dataContainerData = data.cols ? data.cols : data.rows;
+    const inputDataFormat = data.cols ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY;
+
     const dataContainer = createDataContainer(dataContainerData, {
       // @ts-expect-error
       fields: data.fields,
-      inputDataFormat: isArrow ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY
+      inputDataFormat
     });
 
     const datasetInfo = {

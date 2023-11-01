@@ -108,6 +108,11 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
             ]
           ]
         }
+      },
+      {
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: 'javascript/auto'
       }
     ]
   },

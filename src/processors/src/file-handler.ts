@@ -18,10 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {Table as ArrowTable} from 'apache-arrow';
 import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
-import {processGeojson, processKeplerglJSON, processRowObject} from './data-processor';
+import {ArrowLoader} from '@loaders.gl/arrow';
+import {processArrowTable, processGeojson, processKeplerglJSON, processRowObject} from './data-processor';
 import {generateHashId, isPlainObject} from '@kepler.gl/utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
 import {Loader} from '@loaders.gl/loader-utils';
@@ -38,6 +40,10 @@ const BATCH_TYPE = {
 const CSV_LOADER_OPTIONS = {
   shape: 'object-row-table',
   dynamicTyping: false // not working for now
+};
+
+const ARROW_LOADER_OPTIONS = {
+  shape: 'arrow-table'
 };
 
 const JSON_LOADER_OPTIONS = {
@@ -57,6 +63,14 @@ export type ProcessFileDataContent = {
   progress?: {rowCount?: number; rowCountInBatch?: number; percent?: number};
   metadata?: Map<string, string>;
 };
+
+export function isArrowTable(table: any): table is ArrowTable {
+  return Boolean(table && table instanceof ArrowTable);
+}
+
+export function isArrowData(data: any): boolean {
+  return Array.isArray(data) && Boolean(data[0].data && data[0].schema);
+}
 
 export function isGeoJson(json: unknown): json is Feature | FeatureCollection {
   // json can be feature collection
@@ -94,7 +108,7 @@ export async function* makeProgressIterator(
   let rowCount = 0;
 
   for await (const batch of asyncIterator) {
-    const rowCountInBatch = (batch.data && batch.data.length) || 0;
+    const rowCountInBatch = (batch.data && (batch.data.length || batch.length)) || 0;
     rowCount += rowCountInBatch;
     const percent = Number.isFinite(batch.bytesUsed) ? batch.bytesUsed / info.size : null;
 
@@ -116,14 +130,13 @@ export async function* readBatch(
 ): AsyncGenerator {
   let result = null;
   const batches = <any>[];
-
   for await (const batch of asyncIterator) {
     // Last batch will have this special type and will provide all the root
     // properties of the parsed document.
     // Only json parse will have `FINAL_RESULT`
     if (batch.batchType === BATCH_TYPE.FINAL_RESULT) {
       if (batch.container) {
-        result = {...batch.container};
+        result = { ...batch.container };
       }
       // Set the streamed data correctly is Batch json path is set
       // and the path streamed is not the top level object (jsonpath = '$')
@@ -136,14 +149,15 @@ export async function* readBatch(
         result = batches;
       }
     } else {
-      for (let i = 0; i < batch.data?.length; i++) {
-        batches.push(batch.data[i]);
+      const batchData = isArrowTable(batch.data) ? batch.data.batches : batch.data;
+      for (let i = 0; i < batchData?.length; i++) {
+        batches.push(batchData[i]);
       }
     }
 
     yield {
       ...batch,
-      ...(batch.schema ? {headers: Object.keys(batch.schema)} : {}),
+      ...(batch.schema ? { headers: Object.keys(batch.schema) } : {}),
       fileName,
       // if dataset is CSV, data is set to the raw batches
       data: result ? result : batches
@@ -161,9 +175,10 @@ export async function readFileInBatches({
   loaders: Loader[];
   loadOptions: any;
 }): Promise<AsyncGenerator> {
-  loaders = [JSONLoader, CSVLoader, ...loaders];
+  loaders = [JSONLoader, CSVLoader, ArrowLoader, ...loaders];
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
+    arrow: ARROW_LOADER_OPTIONS,
     json: JSON_LOADER_OPTIONS,
     metadata: true,
     ...loadOptions
@@ -183,11 +198,15 @@ export function processFileData({
   fileCache: FileCacheItem[];
 }): Promise<FileCacheItem[]> {
   return new Promise((resolve, reject) => {
-    const {data} = content;
+    let {data} = content;
     let format: string | undefined;
     let processor: Function | undefined;
 
-    if (isKeplerGlMap(data)) {
+    if (isArrowData(data)) {
+      format = DATASET_FORMATS.arrow;
+      processor = processArrowTable;
+    }
+    else if (isKeplerGlMap(data)) {
       format = DATASET_FORMATS.keplergl;
       processor = processKeplerglJSON;
     } else if (isRowObject(data)) {

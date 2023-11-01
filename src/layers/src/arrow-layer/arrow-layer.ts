@@ -19,17 +19,43 @@
 // THE SOFTWARE.
 
 import {BinaryFeatures} from '@loaders.gl/schema';
+import {getBinaryGeometriesFromArrow, parseGeometryFromArrow} from '@loaders.gl/arrow';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {HIGHLIGH_COLOR_3D} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
-import {
-  GEOARROW_COLUMN_METADATA_KEY,
-  DataContainerInterface,
-  getBinaryGeometriesFromArrow,
-  parseGeometryFromArrow
-} from '@kepler.gl/utils';
+import {DataContainerInterface} from '@kepler.gl/utils';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 import GeoJsonLayer, {SUPPORTED_ANALYZER_TYPES} from '../geojson-layer/geojson-layer';
+
+function updateBoundsFromGeoArrowSamples(
+  flatCoords: Float64Array,
+  nDim: number,
+  bounds: [number, number, number, number],
+  sampleSize: number = 100
+) {
+  const numberOfFeatures = flatCoords.length / nDim;
+  const sampleStep = Math.max(Math.floor(numberOfFeatures / sampleSize), 1);
+
+  const newBounds: [number, number, number, number] = [...bounds];
+  for (let i = 0; i < numberOfFeatures; i += sampleStep) {
+    const lng = flatCoords[i * nDim];
+    const lat = flatCoords[i * nDim + 1];
+    if (lng < bounds[0]) {
+      newBounds[0] = lng;
+    }
+    if (lat < newBounds[1]) {
+      newBounds[1] = lat;
+    }
+    if (lng > newBounds[2]) {
+      newBounds[2] = lng;
+    }
+    if (lat > newBounds[3]) {
+      newBounds[3] = lat;
+    }
+  }
+
+  return newBounds;
+}
 
 export default class ArrowLayer extends GeoJsonLayer {
   binaryFeatures: BinaryFeatures[];
@@ -147,11 +173,32 @@ export default class ArrowLayer extends GeoJsonLayer {
   updateLayerMeta(dataContainer: DataContainerInterface) {
     this.dataContainer = dataContainer;
     const {geojson} = this.config.columns;
-    const geoColumn = dataContainer.getColumn(geojson.fieldIdx);
 
+    const geoColumn = dataContainer.getColumn?.(geojson.fieldIdx);
+    const arrowField = dataContainer.getField?.(geojson.fieldIdx);
+
+    const encoding = arrowField?.metadata?.get('ARROW:extension:name');
     // create binary data from arrow data for GeoJsonLayer
-    const {binaryGeometries, bounds, featureTypes} = getBinaryGeometriesFromArrow(geoColumn);
+    const {binaryGeometries, featureTypes} = getBinaryGeometriesFromArrow(
+      geoColumn,
+      encoding
+    );
     this.binaryFeatures = binaryGeometries;
+
+    // TODO: this should be removed once fix was applied in loaders.gl
+    let bounds : [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity]
+    binaryGeometries.forEach(b => {
+      const coords = featureTypes.polygon
+        ? b.polygons?.positions
+        : featureTypes.point
+        ? b.points?.positions
+        : b.lines?.positions;
+      bounds = updateBoundsFromGeoArrowSamples(
+        coords?.value as Float64Array,
+        coords?.size || 2,
+        bounds
+      );
+    });
 
     // since there is no feature.properties.radius, we set fixedRadius to false
     const fixedRadius = false;
@@ -173,15 +220,30 @@ export default class ArrowLayer extends GeoJsonLayer {
     // NOTE: this could be done in Deck.gl getPickingInfo(params) and binaryToGeojson()
     if (this.isLayerHovered(objectInfo) && objectInfo.index >= 0 && this.dataContainer) {
       const {geojson} = this.config.columns;
-      const col = this.dataContainer.getColumn(geojson.fieldIdx);
-      const rawGeometry = col.get(objectInfo.index);
+
+      const col = this.dataContainer.getColumn?.(geojson.fieldIdx);
+      const rawGeometry = col?.get(objectInfo.index);
+
+      const field = this.dataContainer.getField?.(geojson.fieldIdx);
+      const encoding = field?.metadata?.get('ARROW:extension:name');
+
       const hoveredFeature = parseGeometryFromArrow({
-        encoding: col.metadata?.get(GEOARROW_COLUMN_METADATA_KEY),
+        encoding,
         data: rawGeometry
       });
+
+      const properties = this.dataContainer.rowAsArray(objectInfo.index).reduce((prev, cur, i) => {
+        if (i !== geojson.fieldIdx) {
+          const fieldName = this.dataContainer?.getField?.(i).name;
+          prev[fieldName] = cur;
+        }
+        return prev;
+      }, {});
+
       return {
         ...hoveredFeature,
         properties: {
+          ...properties,
           index: objectInfo.index
         }
       };

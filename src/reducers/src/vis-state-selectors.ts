@@ -21,8 +21,8 @@
 import {createSelector} from 'reselect';
 
 // NOTE: default formats must match file-handler-test.js
-const DEFAULT_FILE_EXTENSIONS = ['csv', 'json', 'geojson'];
-const DEFAULT_FILE_FORMATS = ['CSV', 'Json', 'GeoJSON'];
+const DEFAULT_FILE_EXTENSIONS = ['csv', 'json', 'geojson', 'arrow'];
+const DEFAULT_FILE_FORMATS = ['CSV', 'Json', 'GeoJSON', 'Arrow'];
 
 export const getFileFormatNames = createSelector(
   // @ts-expect-error
