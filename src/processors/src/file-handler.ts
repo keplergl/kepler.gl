@@ -23,7 +23,12 @@ import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {ArrowLoader} from '@loaders.gl/arrow';
-import {processArrowTable, processGeojson, processKeplerglJSON, processRowObject} from './data-processor';
+import {
+  processArrowTable,
+  processGeojson,
+  processKeplerglJSON,
+  processRowObject
+} from './data-processor';
 import {generateHashId, isPlainObject} from '@kepler.gl/utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
 import {Loader} from '@loaders.gl/loader-utils';
@@ -158,7 +163,7 @@ export async function* readBatch(
     // Only json parse will have `FINAL_RESULT`
     if (batch.batchType === BATCH_TYPE.FINAL_RESULT) {
       if (batch.container) {
-        result = { ...batch.container };
+        result = {...batch.container};
       }
       // Set the streamed data correctly is Batch json path is set
       // and the path streamed is not the top level object (jsonpath = '$')
@@ -179,7 +184,7 @@ export async function* readBatch(
 
     yield {
       ...batch,
-      ...(batch.schema ? { headers: Object.keys(batch.schema) } : {}),
+      ...(batch.schema ? {headers: Object.keys(batch.schema)} : {}),
       fileName,
       // if dataset is CSV, data is set to the raw batches
       data: result ? result : batches
@@ -227,8 +232,7 @@ export function processFileData({
     if (isArrowData(data)) {
       format = DATASET_FORMATS.arrow;
       processor = processArrowTable;
-    }
-    else if (isKeplerGlMap(data)) {
+    } else if (isKeplerGlMap(data)) {
       format = DATASET_FORMATS.keplergl;
       processor = processKeplerglJSON;
     } else if (isRowObject(data)) {

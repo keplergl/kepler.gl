@@ -153,7 +153,7 @@ class KeplerTable {
     const inputDataFormat = data.cols ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY;
 
     const dataContainer = createDataContainer(dataContainerData, {
-      // @ts-expect-error
+      // @ts-expect-error ProtoDataset field missing property fieldIdx, valueAccessor
       fields: data.fields,
       inputDataFormat
     });
