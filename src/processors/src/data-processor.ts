@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Table as ApacheArrowTable, Field as ArrowField, RecordBatch} from 'apache-arrow';
+import * as arrow from 'apache-arrow';
 import {csvParseRows} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
@@ -398,15 +398,15 @@ export function processKeplerglDataset(
  * @param arrowTable the arrow table to parse
  * @returns dataset containing `fields` and `rows` or null
  */
-export function processArrowTable(arrowBatches: RecordBatch[]): ProcessorResult | null {
+export function processArrowTable(arrowBatches: arrow.RecordBatch[]): ProcessorResult | null {
   if (arrowBatches.length === 0) {
     return null;
   }
-  const arrowTable = new ApacheArrowTable(arrowBatches);
+  const arrowTable = new arrow.Table(arrowBatches);
   const fields: Field[] = [];
 
   // parse fields
-  arrowTable.schema.fields.forEach((field: ArrowField, index: number) => {
+  arrowTable.schema.fields.forEach((field: arrow.Field, index: number) => {
     const isGeometryColumn = field.metadata.get('ARROW:extension:name')?.startsWith('geoarrow');
     fields.push({
       name: field.name,
@@ -427,7 +427,7 @@ export function processArrowTable(arrowBatches: RecordBatch[]): ProcessorResult 
 
   const cols = [...Array(arrowTable.numCols).keys()].map(i => arrowTable.getChildAt(i));
   // return empty rows and use raw arrow table to construct column-wise data container
-  return {info: {format: 'Arrow'}, fields, rows: [], cols, metadata: arrowTable.schema.metadata};
+  return {fields, rows: [], cols, metadata: arrowTable.schema.metadata};
 }
 
 export const DATASET_HANDLERS = {

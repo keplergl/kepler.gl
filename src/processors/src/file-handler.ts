@@ -135,6 +135,7 @@ export async function* makeProgressIterator(
   let rowCount = 0;
 
   for await (const batch of asyncIterator) {
+    // the length could be stored in `batch.length` for arrow batch
     const rowCountInBatch = (batch.data && (batch.data.length || batch.length)) || 0;
     rowCount += rowCountInBatch;
     const percent = Number.isFinite(batch.bytesUsed) ? batch.bytesUsed / info.size : null;

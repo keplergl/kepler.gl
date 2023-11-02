@@ -44,6 +44,7 @@ export enum FeatureTypes {
 type FeatureTypeMap = {
   [key in FeatureTypes]: boolean;
 };
+/* eslint-enable */
 
 export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
   if (typeof rawFeature === 'object') {

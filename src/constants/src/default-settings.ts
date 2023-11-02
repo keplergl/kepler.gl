@@ -497,8 +497,6 @@ const GREEN2 = '74, 165, 150';
 const RED = '237, 88, 106';
 const ORANGE = '231, 110, 58';
 
-export const ARROW_GEO_METADATA_KEY = 'geo';
-
 export const FIELD_TYPE_DISPLAY = {
   [ALL_FIELD_TYPES.boolean]: {
     label: 'bool',

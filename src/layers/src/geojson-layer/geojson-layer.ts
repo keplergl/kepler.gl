@@ -360,7 +360,6 @@ export default class GeoJsonLayer extends Layer {
 
   updateLayerMeta(dataContainer) {
     const getFeature = this.getPositionAccessor(dataContainer);
-
     this.dataToFeature = getGeojsonDataMaps(dataContainer, getFeature);
     // get bounds from features
     const bounds = getGeojsonBounds(this.dataToFeature);
