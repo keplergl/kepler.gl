@@ -40,7 +40,8 @@ export class ArrowDataContainer implements DataContainerInterface {
   _numColumns: number;
   _numRows: number;
   _fields: Field[];
-  _colData: any[][];
+  // cache column data to make valueAt() faster
+  // _colData: any[][];
 
   constructor(data: ArrowDataContainerInput) {
     if (!data.cols) {
@@ -55,8 +56,8 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._numColumns = data.cols.length;
     this._numRows = data.cols[0].length;
     this._fields = data.fields || [];
-    // cache column data to make valueAt() faster
-    this._colData = data.cols.map(c => c.toArray());
+
+    // this._colData = data.cols.map(c => c.toArray());
   }
 
   numRows(): number {
@@ -68,7 +69,8 @@ export class ArrowDataContainer implements DataContainerInterface {
   }
 
   valueAt(rowIndex: number, columnIndex: number): any {
-    return this._colData[columnIndex][rowIndex];
+    // return this._colData[columnIndex][rowIndex];
+    return this._cols[columnIndex].get(rowIndex);
   }
 
   row(rowIndex: number, sharedRow?: SharedRowOptions): DataRow {
@@ -82,7 +84,8 @@ export class ArrowDataContainer implements DataContainerInterface {
   }
 
   rowAsArray(rowIndex: number): any[] {
-    return this._colData.map(col => col[rowIndex]);
+    // return this._colData.map(col => col[rowIndex]);
+    return this._cols.map(col => col.get(rowIndex));
   }
 
   rows(sharedRow: SharedRowOptions) {

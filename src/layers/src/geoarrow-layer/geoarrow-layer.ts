@@ -240,7 +240,7 @@ export default class GeoArrowLayer extends GeoJsonLayer {
   }
 
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
+    const {data: dataProps, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const {fixedRadius, featureTypes} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
@@ -269,12 +269,12 @@ export default class GeoArrowLayer extends GeoJsonLayer {
 
     const pickable = interactionConfig.tooltip.enabled;
     const hoveredObject = this.hasHoveredObject(objectHovered);
-
-    const deckLayers = data.data.map((d, i) => {
+    const {data, ...props} = dataProps;
+    const deckLayers = data.map((d, i) => {
       return new DeckGLGeoJsonLayer({
         ...defaultLayerProps,
         ...layerProps,
-        ...data,
+        ...props,
         data: d,
         id: `${this.id}-${i}`,
         pickable,
@@ -314,9 +314,9 @@ export default class GeoArrowLayer extends GeoJsonLayer {
               visible: defaultLayerProps.visible,
               wrapLongitude: false,
               data: [hoveredObject],
-              getLineWidth: data.getLineWidth,
-              getPointRadius: data.getPointRadius,
-              getElevation: data.getElevation,
+              getLineWidth: dataProps.getLineWidth,
+              getPointRadius: dataProps.getPointRadius,
+              getElevation: dataProps.getElevation,
               getLineColor: this.config.highlightColor,
               getFillColor: this.config.highlightColor,
               // always draw outline
