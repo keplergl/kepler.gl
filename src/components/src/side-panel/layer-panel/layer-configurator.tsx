@@ -891,6 +891,15 @@ export default function LayerConfiguratorFactory(
       );
     }
 
+    /**
+     * Render layer configurator for GeoArrow layer (reuse the Geojson layer configurator)
+     * @param props - LayerConfiguratorProps
+     * @param props.layer - Layer
+     * @param props.visConfiguratorProps - VisConfiguratorProps
+     * @param props.layerConfiguratorProps - LayerConfiguratorProps
+     * @param props.layerChannelConfigProps - LayerChannelConfigProps
+     * @returns {JSX.Element} - Layer configurator for GeoArrow layer
+     */
     _renderGeoarrowLayerConfig(props) {
       return this._renderGeojsonLayerConfig(props);
     }

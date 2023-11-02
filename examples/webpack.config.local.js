@@ -147,9 +147,10 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
           enforce: 'pre',
           exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/]
         },
+        // for compiling apache-arrow ESM module
         {
           test: /\.mjs$/,
-          include: /node_modules/,
+          include: /node_modules\/apache-arrow/,
           type: 'javascript/auto'
         }
       ]
@@ -255,12 +256,7 @@ function addBabelSettings(env, config, exampleDir) {
       ...config.module,
       rules: [
         ...config.module.rules.filter(r => r.loader !== 'babel-loader'),
-        makeBabelRule(env, exampleDir),
-        {
-          test: /\.mjs$/,
-          include: /node_modules/,
-          type: 'javascript/auto'
-        }
+        makeBabelRule(env, exampleDir)
       ]
     }
   };

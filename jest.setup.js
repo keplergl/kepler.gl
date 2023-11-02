@@ -20,6 +20,7 @@
 
 import '@testing-library/jest-dom';
 import * as Utils from '@kepler.gl/utils';
+require('@loaders.gl/polyfills');
 
 jest.mock('mapbox-gl/dist/mapbox-gl', () => ({
   Map: () => ({})
@@ -30,14 +31,3 @@ jest.mock('@kepler.gl/utils', () => ({
   hasPortableWidth: jest.fn(),
   hasMobileWidth: jest.fn()
 }));
-
-// TextEncoder / TextDecoder APIs are used by arrow, but are not provided by
-// jsdom, all node versions supported provide these via the util module
-if (
-  typeof globalThis.TextEncoder === "undefined" ||
-  typeof globalThis.TextDecoder === "undefined"
-) {
-  const utils = require("util");
-  globalThis.TextEncoder = utils.TextEncoder;
-  globalThis.TextDecoder = utils.TextDecoder;
-}

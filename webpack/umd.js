@@ -109,9 +109,10 @@ const LIBRARY_BUNDLE_CONFIG = env => ({
           ]
         }
       },
+      // for compiling apache-arrow ESM module
       {
         test: /\.mjs$/,
-        include: /node_modules/,
+        include: /node_modules\/apache-arrow/,
         type: 'javascript/auto'
       }
     ]

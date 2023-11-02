@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {Table as ArrowTable} from 'apache-arrow';
+import * as arrow from 'apache-arrow';
 import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
@@ -86,8 +86,8 @@ export type ProcessFileDataContent = {
  * @param table - object to check
  * @returns {boolean} - true if table is an ArrowTable object type guarded
  */
-export function isArrowTable(table: any): table is ArrowTable {
-  return Boolean(table && table instanceof ArrowTable);
+export function isArrowTable(table: any): table is arrow.Table {
+  return Boolean(table instanceof arrow.Table);
 }
 
 /**

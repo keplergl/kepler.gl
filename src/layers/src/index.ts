@@ -31,7 +31,7 @@ import {default as LineLayer} from './line-layer/line-layer';
 import {default as GridLayer} from './grid-layer/grid-layer';
 export {pointToPolygonGeo} from './grid-layer/grid-utils';
 import {default as HexagonLayer} from './hexagon-layer/hexagon-layer';
-import {default as ArrowLayer} from './arrow-layer/arrow-layer';
+import {default as ArrowLayer} from './geoarrow-layer/geoarrow-layer';
 import {default as GeojsonLayer} from './geojson-layer/geojson-layer';
 export {defaultElevation, defaultLineWidth, defaultRadius} from './geojson-layer/geojson-layer';
 import {default as ClusterLayer} from './cluster-layer/cluster-layer';
