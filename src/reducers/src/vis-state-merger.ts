@@ -32,7 +32,7 @@ import {
 import {getLayerOrderFromLayers} from '@kepler.gl/reducers';
 
 import {LayerColumns, LayerColumn, Layer} from '@kepler.gl/layers';
-import {createDeckEffectFromConfig} from '@kepler.gl/effects';
+import {createEffect} from '@kepler.gl/effects';
 import {LAYER_BLENDINGS, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
 import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@kepler.gl/schemas';
 
@@ -479,12 +479,19 @@ export function mergeEffects<S extends VisState>(
   const newEffects = [
     ...state.effects,
     ...(effects || [])
-      .map(effect =>
-        fromConfig
-          ? // collapse all panels when loading effects
-            createDeckEffectFromConfig(deepmerge(effect, {config: {isConfigActive: false}}))
-          : (effect as EffectType)
-      )
+      .map(effect => {
+        return fromConfig
+          ? createEffect(
+              deepmerge.all([
+                effect,
+                {
+                  // collapse all panels when loading effects
+                  isConfigActive: false
+                }
+              ])
+            )
+          : (effect as EffectType);
+      })
       .filter(effect => {
         return Boolean(effect && effect.isValidToSave());
       })

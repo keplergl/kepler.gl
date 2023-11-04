@@ -1260,7 +1260,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: {type: string; name: string
   }
 };
 
-export const EFFECT_DESCS: {type: string; name: string}[] = [
+export const EFFECT_DESCRIPTIONS: {type: string; name: string}[] = [
   LIGHT_AND_SHADOW_EFFECT,
   ...Object.keys(POSTPROCESSING_EFFECTS).map(keyName => POSTPROCESSING_EFFECTS[keyName])
 ];

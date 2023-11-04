@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
 import {addEffect, updateEffect, removeEffect, reorderEffect} from '@kepler.gl/actions';
-import {LIGHT_AND_SHADOW_EFFECT, EFFECT_DESCS} from '@kepler.gl/constants';
+import {LIGHT_AND_SHADOW_EFFECT, EFFECT_DESCRIPTIONS} from '@kepler.gl/constants';
 import {VisStateActions} from '@kepler.gl/actions';
 import {Effect} from '@kepler.gl/types';
 
@@ -73,12 +73,12 @@ function EffectManagerFactory(
     // Prevent shadow effect from being added multiple times
     const effectOptions = useMemo(() => {
       const hasShadow = effects.some(effect => {
-        return effect.config.type === LIGHT_AND_SHADOW_EFFECT.type;
+        return effect.type === LIGHT_AND_SHADOW_EFFECT.type;
       });
 
       return hasShadow
-        ? EFFECT_DESCS.filter(desc => desc.type !== LIGHT_AND_SHADOW_EFFECT.type)
-        : EFFECT_DESCS;
+        ? EFFECT_DESCRIPTIONS.filter(desc => desc.type !== LIGHT_AND_SHADOW_EFFECT.type)
+        : EFFECT_DESCRIPTIONS;
     }, [effects]);
 
     return (

@@ -22,7 +22,6 @@ export type EffectTimeConfiguratorProps = {
   onDateTimeChange: (time: number) => void;
   timeMode: LightAndShadowEffectTimeMode;
   onTimeModeChange: (newMode: LightAndShadowEffectTimeMode) => void;
-  intl: IntlShape;
 };
 
 type StyledWrapperProps = {disabled?: boolean};
@@ -91,7 +90,7 @@ export default function EffectTimeConfiguratorFactory(
     timeMode,
     onTimeModeChange,
     intl
-  }: EffectTimeConfiguratorProps) => {
+  }: EffectTimeConfiguratorProps & {intl: IntlShape}) => {
     const [dateOnly, selectedTimeString] = useMemo(() => {
       const date = new Date(timestamp);
 

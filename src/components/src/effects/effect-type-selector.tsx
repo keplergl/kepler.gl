@@ -45,7 +45,7 @@ function EffectTypeSelectorFactory(): React.FC<EffectTypeSelectorProps> {
               <Button
                 key={`${effectDesc.type}-${idx}`}
                 onClick={() => {
-                  onSelect({config: {type: effectDesc.type}});
+                  onSelect({type: effectDesc.type});
                   // @ts-expect-error type current
                   tippyInstance.current?.hide();
                 }}

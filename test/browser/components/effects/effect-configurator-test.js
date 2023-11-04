@@ -73,7 +73,7 @@ test('Components -> EffectConfigurator -> render -> light & shadow effect', t =>
   let nextState = visStateReducer(
     InitialState.visState,
     VisStateActions.addEffect({
-      config: {type: 'lightAndShadow'}
+      type: 'lightAndShadow'
     })
   );
 

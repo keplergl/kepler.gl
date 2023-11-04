@@ -25,6 +25,7 @@ import Task, {withTask, drainTasksForTesting, succeedTaskInTest} from 'react-pal
 import keplerGlReducer, {
   mergeFilters,
   mergeLayers,
+  mergeEffects,
   mergeInteractions,
   mergeLayerBlending,
   mergeSplitMaps,
@@ -88,6 +89,7 @@ import {cmpFilters, cmpLayers, cmpDatasets} from 'test/helpers/comparison-utils'
 import {
   InitialState,
   StateWFilters,
+  StateWEffects,
   StateWMultiFilters,
   StateWFilesFiltersLayerColor,
   StateWSplitMaps,

@@ -127,7 +127,7 @@ import {findFieldsToShow} from './interaction-utils';
 import {hasPropsToMerge, getPropValueToMerger} from './merger-handler';
 import {mergeDatasetsByOrder} from './vis-state-merger';
 import {fixEffectOrder} from '@kepler.gl/utils';
-import {createDeckEffectFromConfig} from '@kepler.gl/effects';
+import {createEffect} from '@kepler.gl/effects';
 
 // react-palm
 // disable capture exception for react-palm call to withTask
@@ -1449,10 +1449,10 @@ export const addEffectUpdater = (
   state: VisState,
   action: VisStateActions.AddEffectUpdaterAction
 ): VisState => {
-  const newEffect = createDeckEffectFromConfig(action.config);
+  const newEffect = createEffect(action.config);
 
   // collapse configurators for other effects
-  state.effects.forEach(effect => effect.updateConfig({isConfigActive: false}));
+  state.effects.forEach(effect => effect.setProps({isConfigActive: false}));
 
   const effects = [...state.effects, newEffect];
   const effectOrder = fixEffectOrder(effects, [newEffect.id, ...state.effectOrder]);
@@ -1518,7 +1518,7 @@ export const updateEffectUpdater = (
   }
 
   const newEffects = [...state.effects];
-  newEffects[idx].updateConfig(props);
+  newEffects[idx].setProps(props);
 
   return {
     ...state,

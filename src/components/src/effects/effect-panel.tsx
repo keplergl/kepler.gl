@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 
 import {dataTestIds, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
 import {removeEffect, updateEffect} from '@kepler.gl/actions';
-import {Effect, EffectConfig} from '@kepler.gl/types';
+import {Effect} from '@kepler.gl/types';
 
 import EffectPanelHeaderFactory from './effect-panel-header';
 import EffectConfiguratorFactory from './effect-configurator';
@@ -52,35 +52,35 @@ function EffectPanelFactory(
       isDraggable: PropTypes.bool
     };
 
-    _toggleEnabled = (e?: Event) => {
-      e?.stopPropagation();
+    _toggleEnabled = (event?: Event) => {
+      event?.stopPropagation();
       this.props.updateEffect(this.props.effect.id, {
-        isEnabled: !this.props.effect.config.isEnabled
+        isEnabled: !this.props.effect.isEnabled
       });
     };
 
-    _toggleConfigActive = (e?: Event) => {
-      e?.stopPropagation();
+    _toggleConfigActive = (event?: Event) => {
+      event?.stopPropagation();
       this.props.updateEffect(this.props.effect.id, {
-        isConfigActive: !this.props.effect.config.isConfigActive
+        isConfigActive: !this.props.effect.isConfigActive
       });
     };
 
-    _removeEffect = (e?: Event) => {
-      e?.stopPropagation();
+    _removeEffect = (event?: Event) => {
+      event?.stopPropagation();
       this.props.removeEffect(this.props.effect.id);
     };
 
-    _updateEffectConfig = (e, id, props) => {
-      e?.stopPropagation();
+    _updateEffectConfig = (event, id, props) => {
+      event?.stopPropagation();
       this.props.updateEffect(id, props);
     };
 
     render() {
       const {effect, isDraggable, listeners} = this.props;
-      const {config = {} as EffectConfig} = effect;
+      const {id, type, isConfigActive, isEnabled} = effect;
 
-      const sortingAllowed = config.type !== LIGHT_AND_SHADOW_EFFECT.type;
+      const sortingAllowed = type !== LIGHT_AND_SHADOW_EFFECT.type;
 
       return (
         <PanelWrapper
@@ -92,20 +92,20 @@ function EffectPanelFactory(
           onTouchStart={this.props.onTouchStart}
         >
           <EffectPanelHeader
-            isConfigActive={config.isConfigActive}
-            effectId={effect.id}
-            label={config.name}
-            isEnabled={config.isEnabled}
+            isConfigActive={isConfigActive}
+            effectId={id}
+            type={type}
+            isEnabled={isEnabled}
             onToggleEnabled={this._toggleEnabled}
             onRemoveEffect={this._removeEffect}
             onToggleEnableConfig={this._toggleConfigActive}
             isDragNDropEnabled={isDraggable && sortingAllowed}
             listeners={listeners}
-            showSortHandle={effect.type !== LIGHT_AND_SHADOW_EFFECT.type}
+            showSortHandle={type !== LIGHT_AND_SHADOW_EFFECT.type}
           />
-          {config.isConfigActive && (
+          {isConfigActive && (
             <EffectConfigurator
-              key={`effect-configurator-${effect.id}`}
+              key={`effect-configurator-${id}`}
               effect={effect}
               updateEffectConfig={this._updateEffectConfig}
             />

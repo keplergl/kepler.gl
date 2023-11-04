@@ -24,7 +24,12 @@ import test from 'tape';
 import {computeDeckEffects} from '@kepler.gl/utils';
 import {VisStateActions} from '@kepler.gl/actions';
 import {visStateReducer} from '@kepler.gl/reducers';
-import {createDeckEffectFromConfig} from '@kepler.gl/effects';
+import {createEffect} from '@kepler.gl/effects';
+import {
+  POSTPROCESSING_EFFECTS,
+  LIGHT_AND_SHADOW_EFFECT,
+  DEFAULT_POST_PROCESSING_EFFECT_TYPE
+} from '@kepler.gl/constants';
 
 import {InitialState} from 'test/helpers/mock-state';
 
@@ -32,17 +37,15 @@ test('effectUtils -> computeDeckEffects', t => {
   const initialState = InitialState.visState;
   let nextState = visStateReducer(
     initialState,
-    VisStateActions.addEffect({id: 'e_1', config: {type: 'sepia', isEnabled: false}})
+    VisStateActions.addEffect({id: 'e_1', type: 'sepia', isEnabled: false})
   );
-  nextState = visStateReducer(
-    initialState,
-    VisStateActions.addEffect({id: 'e_1', config: {type: 'ink'}})
-  );
+  nextState = visStateReducer(initialState, VisStateActions.addEffect({id: 'e_1', type: 'ink'}));
   nextState = visStateReducer(
     nextState,
     VisStateActions.addEffect({
       id: 'e_shadow',
-      config: {type: 'lightAndShadow', params: {timestamp: 1689383452635}}
+      type: 'lightAndShadow',
+      parameters: {timestamp: 1689383452635}
     })
   );
 
@@ -60,7 +63,7 @@ test('effectUtils -> computeDeckEffects', t => {
   t.equal(deckEffects[0].directionalLights[0].intensity, 0, 'directional light should be disabled');
 
   // daytime
-  nextState.effects[1].updateConfig({params: {timestamp: 1689415852635}});
+  nextState.effects[1].setProps({parameters: {timestamp: 1689415852635}});
   deckEffects = computeDeckEffects({
     visState: nextState,
     mapState: {latitude: 51.033105, longitude: 0.348512}
@@ -71,12 +74,24 @@ test('effectUtils -> computeDeckEffects', t => {
   t.end();
 });
 
-test('effectUtils -> createDeckEffectFromConfig', t => {
-  const ppEffect = createDeckEffectFromConfig({});
-  const lasEffect = createDeckEffectFromConfig({config: {type: 'lightAndShadow'}});
+test('effectUtils -> createEffect', t => {
+  const defaultEffect = createEffect({});
+  const postProcessingEffect = createEffect({
+    type: POSTPROCESSING_EFFECTS.hueSaturation.type
+  });
+  const lightEffect = createEffect({type: LIGHT_AND_SHADOW_EFFECT.type});
 
-  t.equal(ppEffect.config.type, 'ink', 'should create default ink effect');
-  t.equal(lasEffect.config.type, 'lightAndShadow', 'should create lightAndShadow effect');
+  t.equal(
+    defaultEffect.type,
+    DEFAULT_POST_PROCESSING_EFFECT_TYPE,
+    'should create default ink effect'
+  );
+  t.equal(
+    postProcessingEffect.type,
+    POSTPROCESSING_EFFECTS.hueSaturation.type,
+    'should create hueSaturation effect'
+  );
+  t.equal(lightEffect.type, LIGHT_AND_SHADOW_EFFECT.type, 'should create Light&Shadow effect');
 
   t.end();
 });

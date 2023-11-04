@@ -11,8 +11,6 @@ import {
 
 import {LayerTextLabel} from './layers';
 
-import {EffectConfig} from './effects';
-
 export type SavedFilter = {
   dataId: Filter['dataId'];
   id: Filter['id'];
@@ -82,11 +80,9 @@ export type ParsedLayer = SavedLayer | MinSavedLayer;
 
 export type ParsedEffect = {
   id: string;
-  config: {
-    type: string;
-    isEnabled: boolean;
-    params: Record<string, number | number[] | {value: number}>;
-  };
+  type: string;
+  isEnabled: boolean;
+  parameters: Record<string, number | [number, number] | {value: number}>;
 };
 
 export type SavedEffect = ParsedEffect;
