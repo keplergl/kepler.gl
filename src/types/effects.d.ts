@@ -1,3 +1,18 @@
+export type EffectParameterDescription = {
+  name: string;
+  label?: string | false;
+  index?: number;
+  min?: number;
+  max?: number;
+  default?: number;
+};
+
+export type EffectDescription = {
+  type: string;
+  name: string;
+  parameters: EffectParameterDescription[];
+};
+
 export type EffectUpdateProps = {
   isEnabled: boolean;
   isConfigActive: boolean;
@@ -20,8 +35,10 @@ export interface Effect {
   // effect specific parameters for a deck.gl effect (uniforms)
   parameters: {[key: string]: any};
   deckEffect: any;
+  _uiConfig: EffectParameterDescription[];
 
   getDefaultProps(props: Partial<EffectProps>): EffectProps;
   setProps(props: Partial<EffectProps>): void;
   isValidToSave(): boolean;
+  getParameterDescriptions(): EffectParameterDescription[];
 }

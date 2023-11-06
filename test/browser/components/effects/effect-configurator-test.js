@@ -92,7 +92,7 @@ test('Components -> EffectConfigurator -> render -> light & shadow effect', t =>
   }, `EffectConfigurator for ${nextState.effects[0].type} should not fail`);
 
   t.equal(wrapper.find('RangeSlider').length, 4, `should render 4 RangeSliders`);
-  t.equal(wrapper.find('ColorSelector').length, 3, `should render 3 ColorSelectors`);
+  t.equal(wrapper.find('CompactColorPicker').length, 3, `should render 3 CompactColorPickers`);
   t.equal(
     wrapper.find('EffectTimeConfigurator').length,
     1,
