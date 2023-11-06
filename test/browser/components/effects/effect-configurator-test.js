@@ -19,6 +19,8 @@
 // THE SOFTWARE.
 
 import React from 'react';
+import {Provider} from 'react-redux';
+import configureStore from 'redux-mock-store';
 import test from 'tape';
 
 import {appInjector, EffectConfiguratorFactory} from '@kepler.gl/components';
@@ -69,7 +71,12 @@ test('Components -> EffectConfigurator -> render -> post processing effect', t =
   t.end();
 });
 
+const mockStore = configureStore();
+const ititialState = {mapState: {latitude: 0, longitude: 0}};
+
 test('Components -> EffectConfigurator -> render -> light & shadow effect', t => {
+  const store = mockStore(ititialState);
+
   let nextState = visStateReducer(
     InitialState.visState,
     VisStateActions.addEffect({
@@ -81,12 +88,14 @@ test('Components -> EffectConfigurator -> render -> light & shadow effect', t =>
   t.doesNotThrow(() => {
     wrapper = mountWithTheme(
       <IntlWrapper>
-        <EffectConfigurator
-          {...{
-            effect: nextState.effects[0],
-            updateEffectConfig: () => {}
-          }}
-        />
+        <Provider store={store}>
+          <EffectConfigurator
+            {...{
+              effect: nextState.effects[0],
+              updateEffectConfig: () => {}
+            }}
+          />
+        </Provider>
       </IntlWrapper>
     );
   }, `EffectConfigurator for ${nextState.effects[0].type} should not fail`);

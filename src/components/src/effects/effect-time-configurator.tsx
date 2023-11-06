@@ -1,27 +1,39 @@
 import React, {useCallback, useMemo} from 'react';
 import {injectIntl, IntlShape} from 'react-intl';
 import styled from 'styled-components';
+import moment from 'moment-timezone';
+import SunCalc from 'suncalc';
 
+import {MapState} from '@kepler.gl/types';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {clamp} from '@kepler.gl/utils';
 import {
   LIGHT_AND_SHADOW_EFFECT_TIME_MODES,
-  LightAndShadowEffectTimeMode
+  LightAndShadowEffectTimeMode,
+  DEFAULT_TIMEZONE
 } from '@kepler.gl/constants';
+import {mapStateLens} from '@kepler.gl/reducers';
 
-import {StyledTimePicker, StyledDatePicker, Tooltip} from '../common/styled-components';
-import RangeSliderFactory from '../common/range-slider';
+import {withState} from '../injector';
+import {StyledDatePicker as DatePicker, Tooltip} from '../common/styled-components';
 import Checkbox from '../common/checkbox';
 import Button from '../common/data-table/button';
-import {LocationMarker, Calendar, Clock} from '../common/icons';
+import {LocationMarker, Calendar, Clock, Globe} from '../common/icons';
+import TimezoneSelectorFactory from './timezone-selector';
+import EffectTimeSliderFactory from './effect-time-slider';
+import EffectTimeSelectorFactory from './effect-time-selector';
 
-const DAY_SLIDER_RANGE = 1000 * 60 * 60 * 24;
+const DAY_MILISECONDS = 1000 * 60 * 60 * 24;
 
 export type EffectTimeConfiguratorProps = {
-  timestamp: string;
-  onDateTimeChange: (time: number) => void;
+  timestamp: number;
+  timezone: string;
   timeMode: LightAndShadowEffectTimeMode;
-  onTimeModeChange: (newMode: LightAndShadowEffectTimeMode) => void;
+  onChange: (parameters: {
+    timestamp?: number | null;
+    timezone?: string;
+    timeMode?: LightAndShadowEffectTimeMode;
+  }) => void;
 };
 
 type StyledWrapperProps = {disabled?: boolean; marginBottom?: number};
@@ -36,20 +48,8 @@ const StyledWrapper = styled.div<StyledWrapperProps>`
 type SliderWrapperProps = {disabled?: boolean};
 const SliderWrapper = styled.div<SliderWrapperProps>`
   margin-top: 13px;
-  margin-bottom: 17px;
+  margin-bottom: 12px;
   ${props => (props.hidden ? 'display: none;' : '')}
-
-  .kg-range-slider__input {
-    height: 32px;
-    text-align: center;
-    padding: 3px 6px;
-  }
-  .kg-slider {
-    padding-left: 6px;
-  }
-  .kg-range-slider {
-    padding: 0px !important;
-  }
 `;
 
 const StyledButton = styled(Button)`
@@ -88,8 +88,36 @@ const StyledEffectTimeConfigurator = styled.div`
   margin-top: 3px;
 `;
 
-const WithIconWrapper = styled.div`
+const StyledDatePicker = styled.div`
+  .react-date-picker--open .react-date-picker__wrapper .react-date-picker__inputGroup {
+    border: 1px solid ${props => props.theme.activeColor};
+    border-radius: 4px 4px 0px 0px !important;
+  }
+  .react-calendar__navigation__prev2-button,
+  .react-calendar__navigation__next2-button {
+    display: none;
+  }
+  .react-calendar__navigation__label {
+    position: absolute;
+    top: 20px;
+  }
+  .react-calendar__navigation__arrow {
+    position: absolute;
+    top: 18px;
+    font-size: 16px;
+  }
+  .react-calendar__navigation__prev-button {
+    right: 36px;
+  }
+  .react-calendar__navigation__next-button {
+    right: 12px;
+  }
+`;
+
+type WithIconWrapperProps = {width?: string};
+const WithIconWrapper = styled.div<WithIconWrapperProps>`
   position: relative;
+  ${props => (props.width ? 'width: ' + props.width : '')}
 `;
 
 const StyledExtraIcon = styled.div`
@@ -103,7 +131,7 @@ const StyledExtraIcon = styled.div`
 `;
 
 type TextBlockProps = {
-  width: string;
+  width?: string;
 };
 const TextBlock = styled.div<TextBlockProps>`
   color: ${props => props.theme.effectPanelTextSecondary2};
@@ -111,71 +139,137 @@ const TextBlock = styled.div<TextBlockProps>`
   font-size: ${props => props.theme.inputFontSize};
 `;
 
-EffectTimeConfiguratorFactory.deps = [RangeSliderFactory];
+/**
+ * Converts date, time and timezone into a UTC timestamp.
+ * @param {string} dateStr Date string in YYYY-MM-DD format.
+ * @param {string} timeStr Time string in HH:MM format.
+ * @param {string} timezone Timezone name.
+ * @returns {number | null} Timestamp.
+ */
+const getTimestamp = (dateStr, timeStr, timezone) => {
+  let timestamp: number | null = null;
+  const curr = moment.tz(`${dateStr}T${timeStr}:00`, timezone);
+  if (curr.isValid()) {
+    timestamp = curr.utc().valueOf();
+  }
+  return timestamp;
+};
+
+/**
+ * Converts time of the day into [0, 1] range
+ * @param {moment.Moment} date
+ * @returns
+ */
+const getDayRatio = date => {
+  return ((date.hours() * 60 + date.minutes()) * 60 * 1000) / DAY_MILISECONDS;
+};
+
+EffectTimeConfiguratorFactory.deps = [
+  TimezoneSelectorFactory,
+  EffectTimeSliderFactory,
+  EffectTimeSelectorFactory
+];
 
 export default function EffectTimeConfiguratorFactory(
-  RangeSlider: ReturnType<typeof RangeSliderFactory>
+  TimezoneSelector: ReturnType<typeof TimezoneSelectorFactory>,
+  EffectTimeSlider: ReturnType<typeof EffectTimeSliderFactory>,
+  EffectTimeSelector: ReturnType<typeof EffectTimeSelectorFactory>
 ): React.FC<EffectTimeConfiguratorProps> {
   const EffectTimeConfigurator = ({
     timestamp,
-    onDateTimeChange,
+    timezone: _timezone,
     timeMode,
-    onTimeModeChange,
+    onChange: onTimeParametersChanged,
+    mapState,
     intl
-  }: EffectTimeConfiguratorProps & {intl: IntlShape}) => {
-    const [dateOnly, selectedTimeString] = useMemo(() => {
-      const date = new Date(timestamp);
+  }: EffectTimeConfiguratorProps & {intl: IntlShape; mapState: MapState}) => {
+    const timezone = useMemo(() => {
+      return moment.tz.names().includes(_timezone) ? _timezone : DEFAULT_TIMEZONE;
+    }, [_timezone]);
 
-      const h = date.getUTCHours();
-      const m = date.getUTCMinutes();
-      const timeString = `${h < 10 ? `0${h}` : `${h}`}:${m < 10 ? `0${m}` : `${m}`}`;
+    const [
+      datePickerDate,
+      fullDate,
+      formattedTime,
+      formattedDate,
+      dayTimeProgress
+    ] = useMemo(() => {
+      var currentMoment = moment.tz(timestamp, timezone);
 
-      date.setUTCHours(0, 0, 0);
-      return [date, timeString];
-    }, [timestamp]);
+      // Slider value from 0 to 1
+      const dayProgress = getDayRatio(currentMoment);
 
-    const timeSliderValue = useMemo(() => {
-      const base = dateOnly.valueOf();
-      return clamp([0, 1], (parseInt(timestamp) - base) / DAY_SLIDER_RANGE);
-    }, [timestamp, dateOnly]);
+      // Date picker always renders Date in local timezone
+      const date = new Date();
+      date.setFullYear(currentMoment.year(), currentMoment.month(), currentMoment.date());
+      date.setHours(0, 0, 0, 0);
 
-    const timeSliderProps = useMemo(() => {
+      return [
+        date,
+        currentMoment.toDate(),
+        currentMoment.format('HH:mm'),
+        currentMoment.format('YYYY-MM-DD'),
+        dayProgress
+      ];
+    }, [timestamp, timezone]);
+
+    const timeSliderConfig = useMemo(() => {
+      const times = SunCalc.getTimes(fullDate, mapState.latitude, mapState.longitude);
+      const {dawn, sunrise, sunset, dusk} = times;
+
       return {
-        label: 'value',
-        value1: timeSliderValue,
-        step: 0.001,
-        range: [0, 1],
-        value0: 0,
-        onChange: value => {
-          const start = new Date(timestamp).setUTCHours(0, 0, 0).valueOf();
-          onDateTimeChange(Math.floor(start + DAY_SLIDER_RANGE * clamp([0, 0.9999], value[1])));
-        },
-        showInput: false,
-        isRanged: false
+        dawn: getDayRatio(moment.tz(dawn.valueOf(), timezone)),
+        sunrise: getDayRatio(moment.tz(sunrise.valueOf(), timezone)),
+        sunset: getDayRatio(moment.tz(sunset.valueOf(), timezone)),
+        dusk: getDayRatio(moment.tz(dusk.valueOf(), timezone)),
+        sunriseTime: moment.tz(sunrise.valueOf(), timezone).format('hh:mm A'),
+        sunsetTime: moment.tz(sunset.valueOf(), timezone).format('hh:mm A')
       };
-    }, [timeSliderValue, timestamp, onDateTimeChange]);
+    }, [fullDate, timezone, mapState.latitude, mapState.longitude]);
+
+    const onTimeSliderChange = useCallback(
+      value => {
+        const hours = clamp([0, 23], Math.floor(value[1] * 24));
+        const minutes = clamp([0, 59], Math.floor((value[1] * 24 - hours) * 60));
+
+        const newFormattedTime = `${hours < 10 ? '0' + hours : hours}:${
+          minutes < 10 ? '0' + minutes : minutes
+        }`;
+        const newTimestamp = getTimestamp(formattedDate, newFormattedTime, timezone);
+        onTimeParametersChanged({timestamp: newTimestamp});
+      },
+      [formattedDate, timezone, onTimeParametersChanged]
+    );
 
     const setDate = useCallback(
       newDate => {
-        const adjustedTime = newDate.valueOf() - newDate.getTimezoneOffset() * 1000 * 60;
-        const newTimestamp = Math.floor(adjustedTime + DAY_SLIDER_RANGE * timeSliderValue);
-        onDateTimeChange(newTimestamp);
+        const newFormattedDate = moment(newDate).format('YYYY-MM-DD');
+        const newTimestamp = getTimestamp(newFormattedDate, formattedTime, timezone);
+        onTimeParametersChanged({timestamp: newTimestamp});
       },
-      [timeSliderValue, onDateTimeChange]
+      [formattedTime, timezone, onTimeParametersChanged]
     );
 
     const setTime = useCallback(
-      time => {
-        const conf = time.split(':');
-        const start = new Date(timestamp).setUTCHours(conf[0], conf[1]).valueOf();
-        onDateTimeChange(start);
+      newTime => {
+        const newTimestamp = getTimestamp(formattedDate, newTime, timezone);
+        onTimeParametersChanged({timestamp: newTimestamp});
       },
-      [timestamp, onDateTimeChange]
+      [formattedDate, timezone, onTimeParametersChanged]
+    );
+
+    const setTimezone = useCallback(
+      newTimezone => {
+        const newTimestamp = getTimestamp(formattedDate, formattedTime, newTimezone);
+        // date and time are adjusted to have the same value but in the new timezone
+        onTimeParametersChanged({timestamp: newTimestamp, timezone: newTimezone});
+      },
+      [formattedDate, formattedTime, onTimeParametersChanged]
     );
 
     const setCurrentDateTime = useCallback(() => {
-      onDateTimeChange(new Date().valueOf());
-    }, [onDateTimeChange]);
+      onTimeParametersChanged({timestamp: new Date().valueOf()});
+    }, [onTimeParametersChanged]);
 
     const formatShortWeekday = useCallback((locale, date) => {
       return ['S', 'M', 'T', 'W', 'T', 'F', 'S'][date.getDay()];
@@ -194,13 +288,17 @@ export default function EffectTimeConfiguratorFactory(
               id: 'effectManager.pickDateTime'
             })}
             onChange={() => {
-              onTimeModeChange(LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick);
+              onTimeParametersChanged({timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick});
             }}
           />
         </StyledWrapper>
 
         <SliderWrapper hidden={disableDateTimePick}>
-          <RangeSlider {...timeSliderProps} />
+          <EffectTimeSlider
+            value={dayTimeProgress}
+            onChange={onTimeSliderChange}
+            config={timeSliderConfig}
+          />
         </SliderWrapper>
 
         <StyledWrapper hidden={disableDateTimePick} marginBottom={2}>
@@ -213,7 +311,7 @@ export default function EffectTimeConfiguratorFactory(
           </TextBlock>
         </StyledWrapper>
 
-        <StyledWrapper hidden={disableDateTimePick} marginBottom={24}>
+        <StyledWrapper hidden={disableDateTimePick} marginBottom={16}>
           <StyledButton onClick={setCurrentDateTime} data-for="pick-time-button" data-tip>
             <LocationMarker height="16px" />
             <Tooltip id="pick-time-button" effect="solid" place="top" delayShow={500}>
@@ -221,25 +319,37 @@ export default function EffectTimeConfiguratorFactory(
             </Tooltip>
           </StyledButton>
           <WithIconWrapper>
-            <StyledDatePicker
-              value={dateOnly}
-              onChange={setDate}
-              minDetail={'month'}
-              formatShortWeekday={formatShortWeekday}
-            />
+            <StyledDatePicker>
+              <DatePicker
+                value={datePickerDate}
+                onChange={setDate}
+                minDetail={'month'}
+                formatShortWeekday={formatShortWeekday}
+              />
+            </StyledDatePicker>
             <StyledExtraIcon>
               <Calendar width="16px" height="32px" />
             </StyledExtraIcon>
           </WithIconWrapper>
           <WithIconWrapper>
-            <StyledTimePicker
-              value={selectedTimeString}
-              onChange={setTime}
-              disableClock={true}
-              format={'hh:mm a'}
-            />
+            <EffectTimeSelector value={formattedTime} onChange={setTime} />
             <StyledExtraIcon>
               <Clock width="16px" height="32px" />
+            </StyledExtraIcon>
+          </WithIconWrapper>
+        </StyledWrapper>
+
+        <StyledWrapper hidden={disableDateTimePick} marginBottom={2}>
+          <TextBlock>
+            <FormattedMessage id={'effectManager.timezone'} />
+          </TextBlock>
+        </StyledWrapper>
+
+        <StyledWrapper hidden={disableDateTimePick} marginBottom={24}>
+          <WithIconWrapper width={'100%'}>
+            <TimezoneSelector selected={timezone} onSelect={setTimezone} />
+            <StyledExtraIcon>
+              <Globe width="16px" height="32px" />
             </StyledExtraIcon>
           </WithIconWrapper>
         </StyledWrapper>
@@ -253,7 +363,7 @@ export default function EffectTimeConfiguratorFactory(
               id: 'effectManager.currentTime'
             })}
             onChange={() => {
-              onTimeModeChange(LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current);
+              onTimeParametersChanged({timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current});
             }}
           />
         </StyledWrapper>
@@ -265,7 +375,7 @@ export default function EffectTimeConfiguratorFactory(
             id={`effect-time-toggle-use-animation-time`}
             label={'Animation time'}
             onChange={() => {
-              onTimeModeChange(LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation);
+              onTimeParametersChanged({timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation});
             }}
           />
         </StyledWrapper>
@@ -273,5 +383,6 @@ export default function EffectTimeConfiguratorFactory(
     );
   };
 
-  return injectIntl(EffectTimeConfigurator);
+  // @ts-expect-error how to properly type?
+  return withState([mapStateLens])(injectIntl(EffectTimeConfigurator));
 }

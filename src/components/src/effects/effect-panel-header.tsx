@@ -8,9 +8,10 @@ import {
   POSTPROCESSING_EFFECTS
 } from '@kepler.gl/constants';
 
-import PanelHeaderActionFactory from '../side-panel/panel-header-action';
+import PanelHeaderActionFactory, {PanelHeaderActionIcon} from '../side-panel/panel-header-action';
 import {
   ArrowDown,
+  ArrowUp,
   EyeSeen,
   EyeUnseen,
   Trash,
@@ -35,6 +36,16 @@ import {
 } from '../common/icons';
 import {StyledPanelHeader} from '../common/styled-components';
 
+export type ActionItem = {
+  key: string;
+  isHidden?: boolean;
+  tooltip: string;
+  classNames?: Record<string, boolean>;
+  icon: PanelHeaderActionIcon;
+  tooltipType?: 'error';
+  onClick: () => void;
+};
+
 export type EffectPanelHeaderProps = {
   type: string;
   listeners: any;
@@ -52,14 +63,9 @@ export type EffectPanelHeaderProps = {
     visible: React.ComponentType<Partial<BaseProps>>;
     hidden: React.ComponentType<Partial<BaseProps>>;
     enableConfig: React.ComponentType<Partial<BaseProps>>;
+    disableConfig: React.ComponentType<Partial<BaseProps>>;
   };
-  actionItems?: {
-    key: string;
-    isHidden?: boolean;
-    tooltip: string;
-    classNames?: Record<string, boolean>;
-    icon: React.ElementType;
-  }[];
+  actionItems?: ActionItem[];
 };
 
 export const defaultProps = {
@@ -70,7 +76,8 @@ const defaultActionIcons = {
   remove: Trash,
   visible: EyeSeen,
   hidden: EyeUnseen,
-  enableConfig: ArrowDown
+  enableConfig: ArrowDown,
+  disableConfig: ArrowUp
 };
 
 const defaultEffectIcons = {
@@ -185,13 +192,14 @@ export function EffectPanelHeaderActionSectionFactory(
       actionIcons = defaultActionIcons
     } = props;
 
-    const effectActionItems = useMemo(
+    const effectActionItems: ActionItem[] = useMemo(
       () =>
         actionItems ?? [
           {
             key: 'remove-effect',
             isHidden: true,
             tooltip: 'tooltip.removeEffect',
+            tooltipType: 'error',
             onClick: onRemoveEffect,
             icon: actionIcons.remove
           },
@@ -216,8 +224,8 @@ export function EffectPanelHeaderActionSectionFactory(
       <HeaderActionSection className="effect-panel__header__actions">
         <StyledPanelHeaderHiddenActions isConfigActive={isConfigActive}>
           {effectActionItems
-            .filter(item => Boolean(item.isHidden))
-            .map((item, i) => (
+            .filter((item: ActionItem) => Boolean(item.isHidden))
+            .map((item: ActionItem, i) => (
               <PanelHeaderAction
                 key={item.key}
                 className={`effect__${item.key}`}
@@ -225,14 +233,14 @@ export function EffectPanelHeaderActionSectionFactory(
                 id={effectId}
                 tooltip={item.tooltip}
                 onClick={item.onClick}
-                tooltipType="error"
+                tooltipType={item.tooltipType}
                 IconComponent={item.icon}
               />
             ))}
         </StyledPanelHeaderHiddenActions>
         {effectActionItems
-          .filter(item => !item.isHidden)
-          .map((item, i) => (
+          .filter((item: ActionItem) => !item.isHidden)
+          .map((item: ActionItem, i) => (
             <PanelHeaderAction
               key={item.key}
               className={classnames(`effect__${item.key}`, item.classNames)}
@@ -240,7 +248,7 @@ export function EffectPanelHeaderActionSectionFactory(
               id={effectId}
               tooltip={item.tooltip}
               onClick={item.onClick}
-              tooltipType="error"
+              tooltipType={item.tooltipType}
               IconComponent={item.icon}
             />
           ))}

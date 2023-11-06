@@ -143,6 +143,7 @@ export type ItemSelectorProps = {
   isError?: boolean;
   multiSelect?: boolean;
   inputTheme?: string;
+  onOpen?: () => void;
   size?: string;
   onBlur?: () => void;
   placeholder?: string;
@@ -269,6 +270,9 @@ class ItemSelectorUnmemoized extends Component<ItemSelectorProps> {
   _showTypeahead: MouseEventHandler = e => {
     e.stopPropagation();
     if (!this.props.disabled) {
+      if (this.props.onOpen) {
+        this.props.onOpen();
+      }
       this.setState({
         showTypeahead: true
       });

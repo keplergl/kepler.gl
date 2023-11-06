@@ -193,7 +193,8 @@ export default {
     currentTime: 'Current time',
     pickCurrrentTime: 'Pick current time',
     date: 'Date',
-    time: 'Time'
+    time: 'Time',
+    timezone: 'Timezone'
   },
   layerConfiguration: {
     defaultDescription: 'Calculate {property} based on selected field',

@@ -266,7 +266,7 @@ function mockStateWithEffects() {
     },
     {
       action: VisStateActions.addEffect,
-      payload: [{id: 'e_4', type: 'lightAndShadow', parameters: {timestamp: 100}}]
+      payload: [{id: 'e_4', type: 'lightAndShadow', parameters: {timestamp: 100, timezone: 'UTC'}}]
     }
   ]);
   return prepareState;

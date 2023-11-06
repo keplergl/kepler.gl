@@ -1,4 +1,5 @@
 import {AmbientLight, _SunLight as SunLight} from '@deck.gl/core';
+import moment from 'moment-timezone';
 
 import {LIGHT_AND_SHADOW_EFFECT, DEFAULT_LIGHT_AND_SHADOW_PROPS} from '@kepler.gl/constants';
 import {normalizeColor} from '@kepler.gl/utils';
@@ -20,7 +21,11 @@ class LightingEffect extends Effect {
   }
 
   _initializeEffect() {
-    this.parameters = {...DEFAULT_LIGHT_AND_SHADOW_PROPS, ...this.parameters};
+    this.parameters = {
+      ...DEFAULT_LIGHT_AND_SHADOW_PROPS,
+      timezone: moment.tz.guess(true),
+      ...this.parameters
+    };
     const {parameters} = this;
 
     const ambientLight = new AmbientLight({

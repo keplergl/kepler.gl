@@ -1526,7 +1526,7 @@ export const updateEffectUpdater = (
     }
 
     effectOrder = effectOrder.map(effectOrderId =>
-      effectOrderId === id ? props.id : effectOrderId
+      effectOrderId === id ? (props.id as string) : effectOrderId
     );
   }
 

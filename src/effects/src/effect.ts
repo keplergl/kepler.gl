@@ -16,6 +16,7 @@ export class Effect implements EffectInterface {
   parameters: {[key: string]: any};
   deckEffect: any;
   _uiConfig: EffectParameterDescription[];
+  isJsonEditorActive: boolean;
 
   constructor(props: EffectPropsPartial = {}) {
     this.id = props.id || `e_${generateHashId(6)}`;
@@ -43,7 +44,8 @@ export class Effect implements EffectInterface {
       type: props.type || DEFAULT_POST_PROCESSING_EFFECT_TYPE,
       isEnabled: props.isEnabled ?? true,
       isConfigActive: props.isConfigActive ?? true,
-      parameters: {...props.parameters}
+      parameters: {...props.parameters},
+      isJsonEditorActive: props.isJsonEditorActive ?? false
     };
   }
 

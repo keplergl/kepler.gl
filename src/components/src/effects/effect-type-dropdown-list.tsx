@@ -24,7 +24,7 @@ const DropdownListWrapper = styled.div`
   display: flex;
   flex-wrap: wrap;
   align-items: stretch;
-  padding: 17px 0 12px 0;
+  padding: 24px 0 12px 0;
   max-height: 430px;
   justify-content: center;
 `;

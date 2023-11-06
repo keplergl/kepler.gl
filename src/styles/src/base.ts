@@ -490,6 +490,12 @@ export const effectPanelTextSecondary1 = '#A0A7B4';
 export const effectPanelTextSecondary2 = '#6A7485';
 export const effectPanelTextSecondary3 = '#5A6475';
 
+export const effectPanelElementColor = inputBgd;
+export const effectPanelElementColorActive = '#323843';
+export const effectPanelElementColorHovered = inputBgdHover;
+export const effectPanelElementColorSelected = '#454e5d';
+export const effectPanelElementColorSun = '#F7B26B';
+
 // right panel
 export const rightPanelMarginTop = 12;
 export const rightPanelMarginRight = 12;
@@ -1588,7 +1594,13 @@ export const theme = {
   effectPanelTextMain,
   effectPanelTextSecondary1,
   effectPanelTextSecondary2,
-  effectPanelTextSecondary3
+  effectPanelTextSecondary3,
+
+  effectPanelElementColor,
+  effectPanelElementColorActive,
+  effectPanelElementColorHovered,
+  effectPanelElementColorSun,
+  effectPanelElementColorSelected
 };
 
 export const themeLT = {

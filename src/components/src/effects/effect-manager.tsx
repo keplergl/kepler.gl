@@ -1,4 +1,4 @@
-import React, {useMemo, useCallback} from 'react';
+import React, {useMemo, useState, useCallback} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
@@ -52,9 +52,12 @@ const StyledEffectPanelHeader = styled.div`
   min-width: ${({theme}) => theme.effectPanelWidth}px;
 `;
 
-const StyledEffectPanelContent = styled.div`
+type StyledEffectPanelContentProps = {
+  extended?: boolean;
+};
+const StyledEffectPanelContent = styled.div<StyledEffectPanelContentProps>`
   ${props => props.theme.sidePanelScrollBar};
-  padding: 10px 0;
+  padding: ${props => (props.extended ? '32px' : '10px')};
   overflow: overlay;
   display: flex;
   flex-direction: column;
@@ -69,6 +72,8 @@ function EffectManagerFactory(
 ): React.FC<EffectManagerProps> {
   const EffectManager = (props: EffectManagerWithIntlProp & EffectManagerState) => {
     const {intl, visStateActions, effects, effectOrder, children} = props;
+
+    const [typeSelectorOpened, setTypeSelectorOpened] = useState(false);
 
     // Prevent shadow effect from being added multiple times
     const effectOptions = useMemo(() => {
@@ -88,6 +93,14 @@ function EffectManagerFactory(
       visStateActions.addEffect({type});
     }, []);
 
+    const onTypeSelectOpen = useCallback(() => {
+      setTypeSelectorOpened(true);
+    }, []);
+
+    const onTypeSelectClose = useCallback(() => {
+      setTypeSelectorOpened(false);
+    }, []);
+
     return (
       <StyledEffectPanelContainer className="effect-manager">
         <StyledEffectPanel>
@@ -96,11 +109,16 @@ function EffectManagerFactory(
               className="effect-manager-title"
               title={intl.formatMessage({id: 'effectManager.effects'})}
             >
-              <EffectTypeSelector options={effectOptions} onSelect={onAddEffect} />
+              <EffectTypeSelector
+                options={effectOptions}
+                onSelect={onAddEffect}
+                onOpen={onTypeSelectOpen}
+                onBlur={onTypeSelectClose}
+              />
             </SidePanelTitle>
           </StyledEffectPanelHeader>
 
-          <StyledEffectPanelContent>
+          <StyledEffectPanelContent extended={typeSelectorOpened && effects.length === 0}>
             <EffectList
               effects={effects}
               effectOrder={effectOrder}

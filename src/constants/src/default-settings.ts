@@ -1163,7 +1163,7 @@ export const dataTestIds: Record<string, string> = {
 };
 
 // Effects
-
+export const DEFAULT_TIMEZONE = 'UTC';
 export const DEFAULT_POST_PROCESSING_EFFECT_TYPE: string = 'ink';
 
 export const DEFAULT_LIGHT_COLOR: [number, number, number] = [255, 255, 255];
@@ -1215,12 +1215,12 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   hueSaturation: {
     type: 'hueSaturation',
     name: 'Hue & Saturation',
-    parameters: [{name: 'hue'}, {name: 'saturation'}]
+    parameters: [{name: 'hue'}, {name: 'saturation', default: 0.25}]
   },
   vibrance: {
     type: 'vibrance',
     name: 'Vibrance',
-    parameters: [{name: 'amount'}]
+    parameters: [{name: 'amount', default: 0.5}]
   },
   sepia: {
     type: 'sepia',
@@ -1286,7 +1286,8 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
     name: 'Blur (Zoom)',
     parameters: [
       {
-        name: 'strength'
+        name: 'strength',
+        default: 0.05
       },
       {
         name: 'center',
@@ -1379,7 +1380,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   hexagonalPixelate: {
     type: 'hexagonalPixelate',
     name: 'Hexagonal Pixelate',
-    parameters: [{name: 'scale'}]
+    parameters: [{name: 'scale', default: 20}]
   }
 };
 
