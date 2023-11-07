@@ -216,6 +216,7 @@ export function EffectPanelHeaderActionSectionFactory(
       <HeaderActionSection className="effect-panel__header__actions">
         <StyledPanelHeaderHiddenActions isConfigActive={isConfigActive}>
           {effectActionItems
+            // @ts-expect-error typed in follow up
             .filter(item => Boolean(item.isHidden))
             .map((item, i) => (
               <PanelHeaderAction
@@ -231,6 +232,7 @@ export function EffectPanelHeaderActionSectionFactory(
             ))}
         </StyledPanelHeaderHiddenActions>
         {effectActionItems
+          // @ts-expect-error typed in follow up
           .filter(item => !item.isHidden)
           .map((item, i) => (
             <PanelHeaderAction
