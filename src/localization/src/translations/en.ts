@@ -120,7 +120,6 @@ export default {
       hexbin: 'hexbin',
       polygon: 'polygon',
       geojson: 'geojson',
-      geoarrow: 'geoarrow',
       cluster: 'cluster',
       icon: 'icon',
       heatmap: 'heatmap',

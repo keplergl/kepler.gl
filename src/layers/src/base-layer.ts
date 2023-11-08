@@ -1104,10 +1104,7 @@ class Layer {
     const dataUpdateTriggers = this.getDataUpdateTriggers(layerDataset);
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
-    // NOTES:
-    // 1) add checker `oldLayerData`: undefined oldLayerData means this is the first time layer is rendered
-    // and the updateLayerMeta() has already been called in setInitialLayerConfig
-    if (triggerChanged && triggerChanged.getMeta && Boolean(oldLayerData)) {
+    if (triggerChanged && triggerChanged.getMeta) {
       this.updateLayerMeta(dataContainer, getPosition);
     }
 

@@ -18,7 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {FieldPair} from '@kepler.gl/types';
+import * as arrow from 'apache-arrow';
+import {Field, FieldPair} from '@kepler.gl/types';
+import {DataContainerInterface} from '@kepler.gl/utils';
 import {getBinaryGeometriesFromArrow, parseGeometryFromArrow} from '@loaders.gl/arrow';
 
 export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean) {
@@ -36,31 +38,17 @@ export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean) {
   };
 }
 
-export function calculateDataAttributeFromArrow({
+export function getGeojsonLayerMetaFromArrow({
   dataContainer,
-  filteredIndex,
-  oldFilteredIndex,
-  binaryFeatures
+  getColumn,
+  getField
+}: {
+  dataContainer: DataContainerInterface;
+  getColumn: (dataContainer?: DataContainerInterface) => any;
+  getField: (dataContainer?: DataContainerInterface) => any;
 }) {
-  // TODO: filter arrow table using predicate
-  // filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
-  // filter arrow table by values and make a partial copy of the raw table could be expensive
-  // so we will use filteredIndex to create an attribute e.g. filtered (bool) for deck.gl layer
-  const newFilteredIndex = oldFilteredIndex
-    ? oldFilteredIndex
-    : new Uint8ClampedArray(dataContainer.numRows());
-  newFilteredIndex.fill(0);
-  for (let i = 0; i < filteredIndex.length; ++i) {
-    newFilteredIndex[filteredIndex[i]] = 1;
-  }
-
-  // this.filteredIndexTrigger = filteredIndex;
-  return binaryFeatures;
-}
-
-export function getGeojsonLayerMetaFromArrow(dataContainer, getFeature, getColumn, getField) {
-  const geoColumn = getColumn(dataContainer);
-  const arrowField = getField(dataContainer);
+  const geoColumn: arrow.Vector = getColumn(dataContainer);
+  const arrowField: Field = getField(dataContainer);
 
   const encoding = arrowField?.metadata?.get('ARROW:extension:name');
   // create binary data from arrow data for GeoJsonLayer

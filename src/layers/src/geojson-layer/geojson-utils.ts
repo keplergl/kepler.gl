@@ -25,7 +25,7 @@ import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
 import {binaryToGeometry} from '@loaders.gl/gis';
 
 import {Feature, BBox} from 'geojson';
-import {getSampleData} from '@kepler.gl/utils';
+import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
 
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = Array<Feature | null>;
@@ -75,14 +75,18 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
   return null;
 }
 
-export function getGeojsonLayerMeta(dataContainer: any, getFeature: GetFeature) {
+export function getGeojsonLayerMeta({
+  dataContainer,
+  getFeature
+}: {
+  dataContainer: DataContainerInterface;
+  getFeature: GetFeature;
+}) {
   const dataToFeature = getGeojsonDataMaps(dataContainer, getFeature);
   // get bounds from features
   const bounds = getGeojsonBounds(dataToFeature);
   // if any of the feature has properties.radius set to be true
-  const fixedRadius = Boolean(
-    dataToFeature.find(d => d && d.properties && d.properties.radius)
-  );
+  const fixedRadius = Boolean(dataToFeature.find(d => d && d.properties && d.properties.radius));
 
   // keep a record of what type of geometry the collection has
   const featureTypes = getGeojsonFeatureTypes(dataToFeature);
@@ -92,7 +96,7 @@ export function getGeojsonLayerMeta(dataContainer: any, getFeature: GetFeature) 
     bounds,
     fixedRadius,
     featureTypes
-  }
+  };
 }
 
 /**
