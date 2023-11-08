@@ -8,38 +8,8 @@ import {KeplerTable} from '@kepler.gl/table';
 import {DataContainerInterface} from '@kepler.gl/utils';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 import GeoJsonLayer, {SUPPORTED_ANALYZER_TYPES} from '../geojson-layer/geojson-layer';
-
-function updateBoundsFromGeoArrowSamples(
-  flatCoords: Float64Array,
-  nDim: number,
-  bounds: [number, number, number, number],
-  sampleSize: number = 100
-) {
-  const numberOfFeatures = flatCoords.length / nDim;
-  const sampleStep = Math.max(Math.floor(numberOfFeatures / sampleSize), 1);
-
-  const newBounds: [number, number, number, number] = [...bounds];
-  for (let i = 0; i < numberOfFeatures; i += sampleStep) {
-    const lng = flatCoords[i * nDim];
-    const lat = flatCoords[i * nDim + 1];
-    if (lng < bounds[0]) {
-      newBounds[0] = lng;
-    }
-    if (lat < newBounds[1]) {
-      newBounds[1] = lat;
-    }
-    if (lng > newBounds[2]) {
-      newBounds[2] = lng;
-    }
-    if (lat > newBounds[3]) {
-      newBounds[3] = lat;
-    }
-  }
-
-  return newBounds;
-}
-
-export default class GeoArrowLayer extends GeoJsonLayer {
+import Layer from '../base-layer';
+export default class GeoArrowLayer extends Layer {
   binaryFeatures: BinaryFeatures[];
   dataContainer: DataContainerInterface | null;
   filteredIndex: Uint8ClampedArray | null;
@@ -82,11 +52,11 @@ export default class GeoArrowLayer extends GeoJsonLayer {
     return GeoArrowLayer.type;
   }
   static get type() {
-    return 'geoarrow';
+    return 'geojson';
   }
 
   get name() {
-    return 'GeoArrow';
+    return 'Polygon';
   }
 
   get requiredLayerColumns() {
@@ -161,23 +131,8 @@ export default class GeoArrowLayer extends GeoJsonLayer {
 
     const encoding = arrowField?.metadata?.get('ARROW:extension:name');
     // create binary data from arrow data for GeoJsonLayer
-    const {binaryGeometries, featureTypes} = getBinaryGeometriesFromArrow(geoColumn, encoding);
+    const {binaryGeometries, featureTypes, bounds} = getBinaryGeometriesFromArrow(geoColumn, encoding);
     this.binaryFeatures = binaryGeometries;
-
-    // TODO: this should be removed once fix was applied in loaders.gl
-    let bounds: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
-    binaryGeometries.forEach(b => {
-      const coords = featureTypes.polygon
-        ? b.polygons?.positions
-        : featureTypes.point
-        ? b.points?.positions
-        : b.lines?.positions;
-      bounds = updateBoundsFromGeoArrowSamples(
-        coords?.value as Float64Array,
-        coords?.size || 2,
-        bounds
-      );
-    });
 
     // since there is no feature.properties.radius, we set fixedRadius to false
     const fixedRadius = false;
@@ -230,9 +185,11 @@ export default class GeoArrowLayer extends GeoJsonLayer {
     return null;
   }
 
+  // NO
   getHoverData(object, dataContainer) {
     // index of dataContainer is saved to feature.properties
-    const index = object;
+    // for arrow format, `object` is the index of the row returned from deck
+    const index = this.isArrow ? object : object?.properties?.index;
     if (index >= 0) {
       return dataContainer.row(index);
     }
@@ -269,6 +226,7 @@ export default class GeoArrowLayer extends GeoJsonLayer {
 
     const pickable = interactionConfig.tooltip.enabled;
     const hoveredObject = this.hasHoveredObject(objectHovered);
+
     const {data, ...props} = dataProps;
     const deckLayers = data.map((d, i) => {
       return new DeckGLGeoJsonLayer({

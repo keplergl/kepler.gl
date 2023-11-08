@@ -502,7 +502,6 @@ export const LAYER_TYPES = keyMirror({
   grid: null,
   hexagon: null,
   geojson: null,
-  geoarrow: null,
   cluster: null,
   icon: null,
   heatmap: null,

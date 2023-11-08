@@ -74,6 +74,27 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
 
   return null;
 }
+
+export function getGeojsonLayerMeta(dataContainer: any, getFeature: GetFeature) {
+  const dataToFeature = getGeojsonDataMaps(dataContainer, getFeature);
+  // get bounds from features
+  const bounds = getGeojsonBounds(dataToFeature);
+  // if any of the feature has properties.radius set to be true
+  const fixedRadius = Boolean(
+    dataToFeature.find(d => d && d.properties && d.properties.radius)
+  );
+
+  // keep a record of what type of geometry the collection has
+  const featureTypes = getGeojsonFeatureTypes(dataToFeature);
+
+  return {
+    dataToFeature,
+    bounds,
+    fixedRadius,
+    featureTypes
+  }
+}
+
 /**
  * Parse raw data to GeoJson feature
  * @param dataContainer
