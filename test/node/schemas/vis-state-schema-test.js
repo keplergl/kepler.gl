@@ -351,6 +351,7 @@ test('#visStateSchema -> v1 -> save load effects', t => {
       isEnabled: true,
       parameters: {
         timestamp: 100,
+        timezone: 'UTC',
         timeMode: 'pick',
         shadowIntensity: 0.5,
         shadowColor: [0, 0, 0],

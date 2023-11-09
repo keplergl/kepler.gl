@@ -30,12 +30,12 @@ export type PanelWrapperProps = {
 const PanelWrapper = styled.div<PanelWrapperProps>`
   font-size: 12px;
   border-radius: 1px;
-  margin-bottom: 8px;
   z-index: 1000;
   &.dragging {
     cursor: move;
   }
-  margin: 3px 25px;
+  margin: 3px auto 3px 25px;
+  max-width: 275px;
 `;
 
 EffectPanelFactory.deps = [EffectPanelHeaderFactory, EffectConfiguratorFactory];

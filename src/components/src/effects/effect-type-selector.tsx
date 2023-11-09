@@ -9,6 +9,8 @@ export type EffectTypeSelectorProps = {
   options: {type: string; name: string; disabled: boolean}[];
   onSelect: (type: any) => void;
   theme: any;
+  onBlur?: () => void;
+  onOpen?: () => void;
 };
 
 const DropdownWrapper = styled.div`
@@ -19,12 +21,21 @@ const DropdownWrapper = styled.div`
   width: 297px;
   margin-left: -194px;
   margin-top: 26px;
+
+  .typeahead__input {
+    border-color: ${props => props.theme.activeColor};
+    border-radius: 4px 4px 0px 0px !important;
+  }
+  .typeahead__input_box {
+    padding: 0px;
+  }
   .typeahead__input_icon {
-    top: 41px;
+    top: 34px;
+    right: 9px;
   }
 `;
 
-const StyledLayerTypeSelector = styled.div`
+const StyledEffectTypeSelector = styled.div`
   .item-selector .item-selector__dropdown {
     padding: 4px 10px 4px 10px;
     background-color: ${props => props.theme.secondaryBtnBgd};
@@ -46,9 +57,11 @@ const getOptionValue = op => op.type;
 EffectTypeSelectorFactory.deps = [EffectTypeListItemFactory, EffectTypeDropdownListFactory];
 
 function EffectTypeSelectorFactory(EffectTypeListItem, EffectTypeDropdownList) {
-  const LayerTypeSelector: React.FC<EffectTypeSelectorProps> = ({
+  const EffectTypeSelector: React.FC<EffectTypeSelectorProps> = ({
     options,
-    onSelect
+    onSelect,
+    onBlur,
+    onOpen
   }: EffectTypeSelectorProps) => {
     // Make sure effect type selector has dummy as selection
     const selectedItems = useMemo(() => {
@@ -61,7 +74,7 @@ function EffectTypeSelectorFactory(EffectTypeListItem, EffectTypeDropdownList) {
     }, []);
 
     return (
-      <StyledLayerTypeSelector className="effect-config__type">
+      <StyledEffectTypeSelector className="effect-config__type">
         <ItemSelector
           selectedItems={selectedItems}
           options={options}
@@ -69,6 +82,8 @@ function EffectTypeSelectorFactory(EffectTypeListItem, EffectTypeDropdownList) {
           disabled={false}
           placeholder="effectManager.addEffect"
           onChange={onSelect}
+          onBlur={onBlur}
+          onOpen={onOpen}
           getOptionValue={getOptionValue}
           filterOption="name"
           displayOption={getDisplayOption}
@@ -76,11 +91,11 @@ function EffectTypeSelectorFactory(EffectTypeListItem, EffectTypeDropdownList) {
           DropDownRenderComponent={EffectTypeDropdownList}
           DropDownWrapperComponent={DropdownWrapper}
         />
-      </StyledLayerTypeSelector>
+      </StyledEffectTypeSelector>
     );
   };
 
-  return withTheme(LayerTypeSelector);
+  return withTheme(EffectTypeSelector);
 }
 
 export default EffectTypeSelectorFactory;

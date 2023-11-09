@@ -5507,7 +5507,7 @@ test('#VisStateUpdater -> addEffect', t => {
     VisStateActions.addEffect({
       id: 'e_shadow',
       type: 'lightAndShadow',
-      parameters: {timestamp: 1689280466362}
+      parameters: {timestamp: 1689280466362, timezone: 'UTC'}
     })
   );
 
@@ -5520,6 +5520,7 @@ test('#VisStateUpdater -> addEffect', t => {
     isEnabled: true,
     parameters: {
       timestamp: 1689280466362,
+      timezone: 'UTC',
       timeMode: 'pick',
       shadowIntensity: 0.5,
       shadowColor: [0, 0, 0],

@@ -28,6 +28,7 @@ const SortableStyledItem = styled.div<SortableStyledItemProps>`
   z-index: ${props => props.theme.dropdownWrapperZ + 1};
   transition: ${props => props.transition};
   transform: ${props => props.transform};
+  outline: none;
   &.sorting {
     opacity: 0.3;
     pointer-events: none;

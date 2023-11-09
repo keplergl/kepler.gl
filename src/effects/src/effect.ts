@@ -11,10 +11,11 @@ export class Effect implements EffectInterface {
   id: string;
   type: string;
   isEnabled: boolean;
-  isConfigActive: boolean;
-  isJsonEditorActive: boolean;
   // effect specific parameters for a deck.gl effect (uniforms)
   parameters: {[key: string]: any};
+  // runtime props
+  isConfigActive: boolean;
+  isJsonEditorActive: boolean;
   deckEffect: any;
   _uiConfig: EffectParameterDescription[];
 

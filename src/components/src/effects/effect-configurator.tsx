@@ -170,17 +170,14 @@ export default function EffectConfiguratorFactory(
         });
       }, [effect.id, parameters, updateEffectConfig]);
 
-      const onDateTimeChange = useCallback(
-        value => {
-          updateEffectConfig(null, effect.id, {parameters: {timestamp: value}});
-        },
-        [effect.id, updateEffectConfig]
-      );
-
-      const onTimeModeChange = useCallback(
-        value => {
+      const onTimeParametersChanged = useCallback(
+        parameters => {
           updateEffectConfig(null, effect.id, {
-            parameters: {timeMode: value}
+            parameters: {
+              ...(parameters.timestamp ? {timestamp: parameters.timestamp} : null),
+              ...(parameters.timezone ? {timezone: parameters.timezone} : null),
+              ...(parameters.timeMode ? {timeMode: parameters.timeMode} : null)
+            }
           });
         },
         [effect.id, updateEffectConfig]
@@ -207,9 +204,9 @@ export default function EffectConfiguratorFactory(
           </PanelLabelWrapper>
           <EffectTimeConfigurator
             timestamp={parameters.timestamp}
-            onDateTimeChange={onDateTimeChange}
+            timezone={parameters.timezone}
             timeMode={parameters.timeMode}
-            onTimeModeChange={onTimeModeChange}
+            onChange={onTimeParametersChanged}
           />
 
           <StyledVerticalSeparator />

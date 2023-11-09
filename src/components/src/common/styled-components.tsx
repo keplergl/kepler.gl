@@ -831,6 +831,7 @@ export const StyledTimePicker = styled(TimePicker)`
     color: ${props => props.theme.effectPanelTextMain};
     font-family: ${props => props.theme.fontFamily};
     font-size: ${props => props.theme.inputFontSize};
+    font-weight: 400;
   }
   .react-time-picker__inputGroup__input {
     min-width: 0.54em;
@@ -864,6 +865,7 @@ export const StyledTimePicker = styled(TimePicker)`
   .react-time-picker__inputGroup__amPm {
     max-width: 37px;
     font: inherit;
+    font-weight: 400;
     -webkit-appearance: menulist;
     -moz-appearance: menulist;
     appearance: menulist;
@@ -901,15 +903,11 @@ export const StyledDatePicker = styled(DatePicker)`
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
   }
-  .react-date-picker--disabled {
-    background-color: #f0f0f0;
-    color: #6d6d6d;
-  }
   .react-date-picker__wrapper {
     display: flex;
     flex-grow: 1;
     flex-shrink: 0;
-    width: 110px;
+    width: 108px;
     white-space: nowrap;
     border-radius: 4px;
   }
@@ -922,7 +920,8 @@ export const StyledDatePicker = styled(DatePicker)`
     display: flex;
     justify-content: end;
     align-items: center;
-    height: 24px;
+    height: 22px;
+    border: 1px solid ${props => props.theme.inputBgd};
     border-radius: 4px;
   }
 
@@ -975,6 +974,7 @@ export const StyledDatePicker = styled(DatePicker)`
     max-width: 100vw;
     z-index: 11;
     color: ${props => props.theme.effectPanelTextSecondary1};
+    inset: auto !important;
   }
   .react-date-picker__calendar--closed {
     display: none;
