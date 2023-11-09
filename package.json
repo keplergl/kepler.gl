@@ -137,7 +137,7 @@
     "@babel/preset-typescript": "^7.16.7",
     "@babel/register": "^7.12.1",
     "@babel/runtime": "^7.12.1",
-    "@babel/traverse": "^7.12.1",
+    "@babel/traverse": "^7.23.2",
     "@cfaester/enzyme-adapter-react-18": "^0.7.0",
     "@deck.gl/test-utils": "^8.9.12",
     "@loaders.gl/polyfills": "^4.0.3",
