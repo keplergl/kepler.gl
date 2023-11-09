@@ -41,6 +41,7 @@ export type EffectPanelHeaderProps = {
   effectId: string;
   isEnabled: boolean;
   isConfigActive: boolean;
+  isJsonEditorActive: boolean;
   showSortHandle?: boolean;
   isDragNDropEnabled: boolean;
   onToggleEnabled: () => void;
@@ -52,6 +53,13 @@ export type EffectPanelHeaderProps = {
     hidden: React.ComponentType<Partial<BaseProps>>;
     enableConfig: React.ComponentType<Partial<BaseProps>>;
   };
+  actionItems?: {
+    key: string;
+    isHidden?: boolean;
+    tooltip: string;
+    classNames?: Record<string, boolean>;
+    icon: React.ElementType;
+  }[];
 };
 
 export const defaultProps = {
@@ -173,38 +181,71 @@ export function EffectPanelHeaderActionSectionFactory(
       onToggleEnabled,
       onRemoveEffect,
       onToggleEnableConfig,
+      actionItems,
       actionIcons = defaultActionIcons
     } = props;
+
+    const effectActionItems = useMemo(
+      () =>
+        actionItems ?? [
+          {
+            key: 'remove-effect',
+            isHidden: true,
+            tooltip: 'tooltip.removeEffect',
+            onClick: onRemoveEffect,
+            icon: actionIcons.remove
+          },
+          {
+            key: 'visibility-toggle',
+            tooltip: isEnabled ? 'tooltip.disableEffect' : 'tooltip.enabledEffect',
+            onClick: onToggleEnabled,
+            icon: isEnabled ? actionIcons.visible : actionIcons.hidden
+          },
+          {
+            key: 'enable-config',
+            classNames: {'is-open': isConfigActive},
+            tooltip: 'tooltip.effectSettings',
+            onClick: onToggleEnableConfig,
+            icon: actionIcons.enableConfig
+          }
+        ],
+      [actionItems, isEnabled, onRemoveEffect, onToggleEnabled, actionIcons]
+    );
 
     return (
       <HeaderActionSection className="effect-panel__header__actions">
         <StyledPanelHeaderHiddenActions isConfigActive={isConfigActive}>
-          <PanelHeaderAction
-            className="effect__remove-effect"
-            testId="remove-effect-action"
-            id={effectId}
-            tooltip={'tooltip.removeEffect'}
-            onClick={onRemoveEffect}
-            tooltipType="error"
-            IconComponent={actionIcons.remove}
-          />
+          {effectActionItems
+            // @ts-expect-error typed in follow up
+            .filter(item => Boolean(item.isHidden))
+            .map((item, i) => (
+              <PanelHeaderAction
+                key={item.key}
+                className={`effect__${item.key}`}
+                testId={`${item.key}-action`}
+                id={effectId}
+                tooltip={item.tooltip}
+                onClick={item.onClick}
+                tooltipType="error"
+                IconComponent={item.icon}
+              />
+            ))}
         </StyledPanelHeaderHiddenActions>
-        <PanelHeaderAction
-          className="effect__visibility-toggle"
-          id={effectId}
-          tooltip={isEnabled ? 'tooltip.disableEffect' : 'tooltip.enabledEffect'}
-          onClick={onToggleEnabled}
-          IconComponent={isEnabled ? actionIcons.visible : actionIcons.hidden}
-        />
-        <PanelHeaderAction
-          className={classnames('effect__enable-config ', {
-            'is-open': isConfigActive
-          })}
-          id={effectId}
-          tooltip={'tooltip.effectSettings'}
-          onClick={onToggleEnableConfig}
-          IconComponent={actionIcons.enableConfig}
-        />
+        {effectActionItems
+          // @ts-expect-error typed in follow up
+          .filter(item => !item.isHidden)
+          .map((item, i) => (
+            <PanelHeaderAction
+              key={item.key}
+              className={classnames(`effect__${item.key}`, item.classNames)}
+              testId={`${item.key}-action`}
+              id={effectId}
+              tooltip={item.tooltip}
+              onClick={item.onClick}
+              tooltipType="error"
+              IconComponent={item.icon}
+            />
+          ))}
       </HeaderActionSection>
     );
   };

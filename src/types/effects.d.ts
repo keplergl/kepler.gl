@@ -16,6 +16,7 @@ export type EffectDescription = {
 export type EffectUpdateProps = {
   isEnabled: boolean;
   isConfigActive: boolean;
+  isJsonEditorActive: boolean;
   // effect specific parameters for a deck.gl effect (uniforms)
   parameters: {[key: string]: any};
 };
@@ -32,6 +33,7 @@ export interface Effect {
   type: string;
   isEnabled: boolean;
   isConfigActive: boolean;
+  isJsonEditorActive: boolean;
   // effect specific parameters for a deck.gl effect (uniforms)
   parameters: {[key: string]: any};
   deckEffect: any;

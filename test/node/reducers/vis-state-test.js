@@ -5552,6 +5552,7 @@ test('#VisStateUpdater -> updateEffect', t => {
 
   let nextState = reducer(initialState, VisStateActions.addEffect({id: 'e_1'}));
   nextState = reducer(nextState, VisStateActions.addEffect({}));
+  nextState = reducer(nextState, VisStateActions.addEffect({id: 'e_3'}));
 
   const expectedEffect = {
     id: 'e_1',
@@ -5567,8 +5568,18 @@ test('#VisStateUpdater -> updateEffect', t => {
 
   cmpEffects(t, expectedEffect, nextState.effects[0], {id: true});
 
-  // bad id, shouldn't fail
+  // non-existing id, shouldn't fail
   nextState = reducer(nextState, VisStateActions.updateEffect('fake_id', {}));
+
+  // update effect id
+  nextState = reducer(nextState, VisStateActions.updateEffect('e_1', {id: 'e_2'}));
+  cmpEffects(t, {...expectedEffect, id: 'e_2'}, nextState.effects[0], {id: true});
+  t.equal(nextState.effectOrder[2], 'e_2', 'Effect id should be updated');
+
+  // update effect to an existing effect id
+  nextState = reducer(nextState, VisStateActions.updateEffect('e_2', {id: 'e_3'}));
+  cmpEffects(t, {...expectedEffect, id: 'e_2'}, nextState.effects[0], {id: true});
+  t.equal(nextState.effectOrder[2], 'e_2', "Effect id shouldn't be updated");
 
   t.end();
 });

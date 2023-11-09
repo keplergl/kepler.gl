@@ -12,6 +12,7 @@ export class Effect implements EffectInterface {
   type: string;
   isEnabled: boolean;
   isConfigActive: boolean;
+  isJsonEditorActive: boolean;
   // effect specific parameters for a deck.gl effect (uniforms)
   parameters: {[key: string]: any};
   deckEffect: any;
@@ -24,6 +25,7 @@ export class Effect implements EffectInterface {
     this.type = _props.type;
     this.isEnabled = _props.isEnabled;
     this.isConfigActive = _props.isConfigActive;
+    this.isJsonEditorActive = _props.isJsonEditorActive;
     this.parameters = _props.parameters;
 
     this._uiConfig = POSTPROCESSING_EFFECTS[this.type]?.parameters || [];
@@ -42,6 +44,7 @@ export class Effect implements EffectInterface {
       type: props.type || DEFAULT_POST_PROCESSING_EFFECT_TYPE,
       isEnabled: props.isEnabled ?? true,
       isConfigActive: props.isConfigActive ?? true,
+      isJsonEditorActive: props.isJsonEditorActive ?? false,
       parameters: {...props.parameters}
     };
   }
@@ -51,6 +54,7 @@ export class Effect implements EffectInterface {
     this.type = props.type ?? this.type;
     this.isEnabled = props.isEnabled ?? this.isEnabled;
     this.isConfigActive = props.isConfigActive ?? this.isConfigActive;
+    this.isJsonEditorActive = props.isJsonEditorActive ?? this.isJsonEditorActive;
     this.parameters = {...this.parameters, ...props.parameters};
   }
 

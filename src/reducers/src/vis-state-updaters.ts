@@ -1517,12 +1517,26 @@ export const updateEffectUpdater = (
     return state;
   }
 
+  let effectOrder = state.effectOrder;
+  if (props.id !== undefined && props.id !== id) {
+    const idx2 = state.effects.findIndex(l => l.id === props.id);
+    if (idx2 >= 0) {
+      Console.warn(`can not update effect with existing effect id ${id}`);
+      return state;
+    }
+
+    effectOrder = effectOrder.map(effectOrderId =>
+      effectOrderId === id ? (props.id as string) : effectOrderId
+    );
+  }
+
   const newEffects = [...state.effects];
   newEffects[idx].setProps(props);
 
   return {
     ...state,
-    effects: newEffects
+    effects: newEffects,
+    effectOrder
   };
 };
 

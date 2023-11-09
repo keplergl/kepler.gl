@@ -78,7 +78,7 @@ function EffectPanelFactory(
 
     render() {
       const {effect, isDraggable, listeners} = this.props;
-      const {id, type, isConfigActive, isEnabled} = effect;
+      const {id, type, isConfigActive, isJsonEditorActive, isEnabled} = effect;
 
       const sortingAllowed = type !== LIGHT_AND_SHADOW_EFFECT.type;
 
@@ -96,6 +96,7 @@ function EffectPanelFactory(
             effectId={id}
             type={type}
             isEnabled={isEnabled}
+            isJsonEditorActive={isJsonEditorActive}
             onToggleEnabled={this._toggleEnabled}
             onRemoveEffect={this._removeEffect}
             onToggleEnableConfig={this._toggleConfigActive}
