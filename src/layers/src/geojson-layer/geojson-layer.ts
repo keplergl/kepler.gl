@@ -18,9 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import * as arrow from 'apache-arrow';
+import {BinaryFeatures} from '@loaders.gl/schema';
+import {Feature} from 'geojson';
 import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
-
 import Layer, {
   colorMaker,
   LayerBaseConfig,
@@ -33,12 +35,12 @@ import Layer, {
   LayerStrokeColorConfig
 } from '../base-layer';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
+import {getGeojsonLayerMeta, GeojsonDataMaps, DeckGlGeoTypes} from './geojson-utils';
 import {
-  getGeojsonDataMaps,
-  getGeojsonBounds,
-  getGeojsonFeatureTypes,
-  GeojsonDataMaps
-} from './geojson-utils';
+  getGeojsonLayerMetaFromArrow,
+  isLayerHoveredFromArrow,
+  getHoveredObjectFromArrow
+} from '../layer-utils';
 import GeojsonLayerIcon from './geojson-layer-icon';
 import {
   GEOJSON_FIELDS,
@@ -54,10 +56,12 @@ import {
   VisConfigRange,
   VisConfigBoolean,
   Merge,
-  RGBColor
+  RGBColor,
+  Field
 } from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
-import {DataContainerInterface} from '@kepler.gl/utils';
+import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
+import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 
 const SUPPORTED_ANALYZER_TYPES = {
   [DATA_TYPES.GEOMETRY]: true,
@@ -165,14 +169,32 @@ export type GeoJsonLayerConfig = Merge<
   GeoJsonLayerVisualChannelConfig;
 
 export type GeoJsonLayerMeta = {
-  featureTypes?: {polygon: boolean; point: boolean; line: boolean};
+  featureTypes?: DeckGlGeoTypes;
   fixedRadius?: boolean;
 };
 
 export const geoJsonRequiredColumns: ['geojson'] = ['geojson'];
+
+type ObjectInfo = {
+  index: number;
+  object?: Feature | undefined;
+  picked: boolean;
+  layer: Layer;
+  radius?: number;
+  id?: string;
+};
+
 export const featureAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
   dc: DataContainerInterface
 ) => d => dc.valueAt(d.index, geojson.fieldIdx);
+
+const geoColumnAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
+  dc: DataContainerInterface
+): arrow.Vector | null => dc.getColumn?.(geojson.fieldIdx) as arrow.Vector;
+
+const geoFieldAccessor = ({geojson}: GeoJsonLayerColumnsConfig) => (
+  dc: DataContainerInterface
+): Field | null => (dc.getField ? dc.getField(geojson.fieldIdx) : null);
 
 // access feature properties from geojson sub layer
 export const defaultElevation = 500;
@@ -183,12 +205,15 @@ export default class GeoJsonLayer extends Layer {
   declare config: GeoJsonLayerConfig;
   declare visConfigSettings: GeoJsonVisConfigSettings;
   declare meta: GeoJsonLayerMeta;
-  dataToFeature: GeojsonDataMaps;
+
+  dataToFeature: GeojsonDataMaps | BinaryFeatures[] = [];
+  dataContainer: DataContainerInterface | null = null;
+  filteredIndex: Uint8ClampedArray | null = null;
+  filteredIndexTrigger: number[] = [];
 
   constructor(props) {
     super(props);
 
-    this.dataToFeature = [];
     this.registerVisConfig(geojsonVisConfigs);
     this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
       featureAccessor(this.config.columns)(dataContainer);
@@ -279,7 +304,11 @@ export default class GeoJsonLayer extends Layer {
 
   static findDefaultLayerProps({label, fields = []}: KeplerTable) {
     const geojsonColumns = fields
-      .filter(f => f.type === 'geojson' && SUPPORTED_ANALYZER_TYPES[f.analyzerType])
+      .filter(
+        f =>
+          (f.type === 'geojson' || f.type === 'geoarrow') &&
+          SUPPORTED_ANALYZER_TYPES[f.analyzerType]
+      )
       .map(f => f.name);
 
     const defaultColumns = {
@@ -323,7 +352,8 @@ export default class GeoJsonLayer extends Layer {
 
   getHoverData(object, dataContainer) {
     // index of dataContainer is saved to feature.properties
-    const index = object?.properties?.index;
+    // for arrow format, `object` is the index of the row returned from deck
+    const index = dataContainer instanceof ArrowDataContainer ? object : object?.properties?.index;
     if (index >= 0) {
       return dataContainer.row(index);
     }
@@ -331,7 +361,24 @@ export default class GeoJsonLayer extends Layer {
   }
 
   calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
-    return filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
+    // filter geojson/arrow table by values and make a partial copy of the raw table are expensive
+    // so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
+    // in deck.gl layer, see: FilterArrowExtension in @kepler.gl/deckgl-layers
+    if (!this.filteredIndex) {
+      this.filteredIndex = new Uint8ClampedArray(dataContainer.numRows());
+    }
+    this.filteredIndex.fill(0);
+    for (let i = 0; i < filteredIndex.length; ++i) {
+      this.filteredIndex[filteredIndex[i]] = 1;
+    }
+
+    this.filteredIndexTrigger = filteredIndex;
+
+    // for arrow, always return full dataToFeature instead of a filtered one, so there is no need to update attributes in GPU
+    // for geojson, this should work as well and more efficient. But we need to update some test cases e.g. #GeojsonLayer -> formatLayerData
+    return dataContainer instanceof ArrowDataContainer
+      ? this.dataToFeature
+      : filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
   }
 
   formatLayerData(datasets, oldLayerData) {
@@ -349,31 +396,44 @@ export default class GeoJsonLayer extends Layer {
     const dataAccessor = dc => d => ({index: d.properties.index});
     const accessors = this.getAttributeAccessors({dataAccessor, dataContainer});
 
+    const isFilteredAccessor = d => {
+      return this.filteredIndex ? this.filteredIndex[d.properties.index] : 1;
+    };
+
     return {
       data,
       getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(
         indexAccessor,
         customFilterValueAccessor
       ),
+      getFiltered: isFilteredAccessor,
       ...accessors
     };
   }
 
   updateLayerMeta(dataContainer) {
+    // check datasource is arrow format if dataContainer is arrow data container
+    this.dataContainer = dataContainer;
+
     const getFeature = this.getPositionAccessor(dataContainer);
-    this.dataToFeature = getGeojsonDataMaps(dataContainer, getFeature);
+    const getGeoColumn = geoColumnAccessor(this.config.columns);
+    const getGeoField = geoFieldAccessor(this.config.columns);
 
-    // get bounds from features
-    const bounds = getGeojsonBounds(this.dataToFeature);
-    // if any of the feature has properties.radius set to be true
-    const fixedRadius = Boolean(
-      this.dataToFeature.find(d => d && d.properties && d.properties.radius)
-    );
+    if (this.dataToFeature.length === 0) {
+      const updateLayerMetaFunc =
+        dataContainer instanceof ArrowDataContainer
+          ? getGeojsonLayerMetaFromArrow
+          : getGeojsonLayerMeta;
+      const {dataToFeature, bounds, fixedRadius, featureTypes} = updateLayerMetaFunc({
+        dataContainer,
+        getFeature,
+        getGeoColumn,
+        getGeoField
+      });
 
-    // keep a record of what type of geometry the collection has
-    const featureTypes = getGeojsonFeatureTypes(this.dataToFeature);
-
-    this.updateMeta({bounds, fixedRadius, featureTypes});
+      this.dataToFeature = dataToFeature;
+      this.updateMeta({bounds, fixedRadius, featureTypes});
+    }
   }
 
   setInitialLayerConfig({dataContainer}) {
@@ -399,8 +459,26 @@ export default class GeoJsonLayer extends Layer {
     return this;
   }
 
+  isLayerHovered(objectInfo: ObjectInfo): boolean {
+    return this.dataContainer instanceof ArrowDataContainer
+      ? isLayerHoveredFromArrow(objectInfo, this.id)
+      : super.isLayerHovered(objectInfo);
+  }
+
+  hasHoveredObject(objectInfo: ObjectInfo): Feature | null {
+    return this.dataContainer instanceof ArrowDataContainer
+      ? getHoveredObjectFromArrow(
+          objectInfo,
+          this.dataContainer,
+          this.id,
+          geoColumnAccessor(this.config.columns),
+          geoFieldAccessor(this.config.columns)
+        )
+      : super.hasHoveredObject(objectInfo);
+  }
+
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
+    const {data: dataProps, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const {fixedRadius, featureTypes} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
@@ -418,7 +496,8 @@ export default class GeoJsonLayer extends Layer {
 
     const updateTriggers = {
       ...this.getVisualChannelUpdateTriggers(),
-      getFilterValue: gpuFilter.filterValueUpdateTriggers
+      getFilterValue: gpuFilter.filterValueUpdateTriggers,
+      getFiltered: this.filteredIndexTrigger
     };
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
@@ -429,11 +508,17 @@ export default class GeoJsonLayer extends Layer {
     const pickable = interactionConfig.tooltip.enabled;
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
-    return [
-      new DeckGLGeoJsonLayer({
+    const {data, ...props} = dataProps;
+
+    // arrow table can have multiple chunks, a deck.gl layer is created for each chunk
+    const deckLayerData = this.dataContainer instanceof ArrowDataContainer ? data : [data];
+    const deckLayers = deckLayerData.map((d, i) => {
+      return new DeckGLGeoJsonLayer({
         ...defaultLayerProps,
         ...layerProps,
-        ...data,
+        ...props,
+        data: d,
+        id: deckLayerData.length > 1 ? `${this.id}-${i}` : this.id,
         pickable,
         highlightColor: HIGHLIGH_COLOR_3D,
         autoHighlight: visConfig.enable3d && pickable,
@@ -446,6 +531,7 @@ export default class GeoJsonLayer extends Layer {
         capRounded: true,
         jointRounded: true,
         updateTriggers,
+        extensions: [...defaultLayerProps.extensions, new FilterArrowExtension()],
         _subLayerProps: {
           ...(featureTypes?.polygon ? {'polygons-stroke': opaOverwrite} : {}),
           ...(featureTypes?.line ? {linestrings: opaOverwrite} : {}),
@@ -457,7 +543,11 @@ export default class GeoJsonLayer extends Layer {
               }
             : {})
         }
-      }),
+      });
+    });
+
+    return [
+      ...deckLayers,
       // hover layer
       ...(hoveredObject && !visConfig.enable3d
         ? [
@@ -467,9 +557,9 @@ export default class GeoJsonLayer extends Layer {
               visible: defaultLayerProps.visible,
               wrapLongitude: false,
               data: [hoveredObject],
-              getLineWidth: data.getLineWidth,
-              getPointRadius: data.getPointRadius,
-              getElevation: data.getElevation,
+              getLineWidth: props.getLineWidth,
+              getPointRadius: props.getPointRadius,
+              getElevation: props.getElevation,
               getLineColor: this.config.highlightColor,
               getFillColor: this.config.highlightColor,
               // always draw outline

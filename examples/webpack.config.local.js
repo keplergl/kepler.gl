@@ -146,6 +146,12 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
           use: ['source-map-loader'],
           enforce: 'pre',
           exclude: [/node_modules\/react-palm/, /node_modules\/react-data-grid/]
+        },
+        // for compiling apache-arrow ESM module
+        {
+          test: /\.mjs$/,
+          include: /node_modules\/apache-arrow/,
+          type: 'javascript/auto'
         }
       ]
     },

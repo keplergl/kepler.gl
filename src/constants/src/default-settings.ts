@@ -430,7 +430,8 @@ export const ALL_FIELD_TYPES = keyMirror({
   timestamp: null,
   point: null,
   array: null,
-  object: null
+  object: null,
+  geoarrow: null
 });
 
 // Data Table
@@ -506,6 +507,10 @@ export const FIELD_TYPE_DISPLAY = {
     color: PURPLE
   },
   [ALL_FIELD_TYPES.geojson]: {
+    label: 'geo',
+    color: BLUE2
+  },
+  [ALL_FIELD_TYPES.geoarrow]: {
     label: 'geo',
     color: BLUE2
   },
@@ -747,6 +752,17 @@ export const FIELD_OPTS = {
     }
   },
   [ALL_FIELD_TYPES.geojson]: {
+    type: 'geometry',
+    scale: {
+      ...notSupportedScaleOpts,
+      ...notSupportAggrOpts
+    },
+    format: {
+      legend: d => '...',
+      tooltip: []
+    }
+  },
+  [ALL_FIELD_TYPES.geoarrow]: {
     type: 'geometry',
     scale: {
       ...notSupportedScaleOpts,
@@ -1122,7 +1138,8 @@ export const DATASET_FORMATS = keyMirror({
   row: null,
   geojson: null,
   csv: null,
-  keplergl: null
+  keplergl: null,
+  arrow: null
 });
 
 export const MAP_CONTROLS = keyMirror({

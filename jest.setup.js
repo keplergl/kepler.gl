@@ -20,6 +20,7 @@
 
 import '@testing-library/jest-dom';
 import * as Utils from '@kepler.gl/utils';
+require('@loaders.gl/polyfills');
 
 jest.mock('mapbox-gl/dist/mapbox-gl', () => ({
   Map: () => ({})

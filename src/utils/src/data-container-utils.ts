@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {ArrowDataContainer} from './arrow-data-container';
 import {RowDataContainer} from './row-data-container';
 import {IndexedDataContainer} from './indexed-data-container';
 
@@ -30,7 +31,8 @@ export type DataContainerOptions = {
 };
 
 export const DataForm = {
-  ROWS_ARRAY: 'ROWS_ARRAY'
+  ROWS_ARRAY: 'ROWS_ARRAY',
+  COLS_ARRAY: 'COLS_ARRAY'
 };
 
 const defaultOptions: DataContainerOptions = {
@@ -51,6 +53,8 @@ export function createDataContainer(
 
   if (options.inputDataFormat === DataForm.ROWS_ARRAY) {
     return new RowDataContainer({rows: data, fields: options.fields});
+  } else if (options.inputDataFormat === DataForm.COLS_ARRAY) {
+    return new ArrowDataContainer({cols: data, fields: options.fields});
   }
 
   throw Error('Failed to create a data container: not implemented format');

@@ -47,6 +47,7 @@ import {
   getSortingFunction,
   timeToUnixMilli,
   createDataContainer,
+  DataForm,
   diffFilters,
   filterDataByFilterTypes,
   FilterResult,
@@ -148,8 +149,14 @@ class KeplerTable {
     //   return this;
     // }
 
-    // @ts-expect-error
-    const dataContainer = createDataContainer(data.rows, {fields: data.fields});
+    const dataContainerData = data.cols ? data.cols : data.rows;
+    const inputDataFormat = data.cols ? DataForm.COLS_ARRAY : DataForm.ROWS_ARRAY;
+
+    const dataContainer = createDataContainer(dataContainerData, {
+      // @ts-expect-error ProtoDataset field missing property fieldIdx, valueAccessor
+      fields: data.fields,
+      inputDataFormat
+    });
 
     const datasetInfo = {
       id: generateHashId(4),

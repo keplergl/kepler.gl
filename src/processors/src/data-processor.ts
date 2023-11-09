@@ -18,11 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import * as arrow from 'apache-arrow';
 import {csvParseRows} from 'd3-dsv';
+import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {ALL_FIELD_TYPES, DATASET_FORMATS, GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
 import {ProcessorResult, Field} from '@kepler.gl/types';
 import {
+  arrowDataTypeToAnalyzerDataType,
+  arrowDataTypeToFieldType,
   notNullorUndefined,
   hasOwnProperty,
   isPlainObject,
@@ -388,21 +392,56 @@ export function processKeplerglDataset(
   return Array.isArray(rawData) ? results : results[0];
 }
 
-export const DATASET_HANDLERS: {
-  row: typeof processRowObject;
-  geojson: typeof processGeojson;
-  csv: typeof processCsvData;
-  keplergl: typeof processKeplerglDataset;
-} = {
+/**
+ * Parse a arrow table with geometry columns and return a dataset
+ *
+ * @param arrowTable the arrow table to parse
+ * @returns dataset containing `fields` and `rows` or null
+ */
+export function processArrowTable(arrowBatches: arrow.RecordBatch[]): ProcessorResult | null {
+  if (arrowBatches.length === 0) {
+    return null;
+  }
+  const arrowTable = new arrow.Table(arrowBatches);
+  const fields: Field[] = [];
+
+  // parse fields
+  arrowTable.schema.fields.forEach((field: arrow.Field, index: number) => {
+    const isGeometryColumn = field.metadata.get('ARROW:extension:name')?.startsWith('geoarrow');
+    fields.push({
+      name: field.name,
+      id: field.name,
+      displayName: field.name,
+      format: '',
+      fieldIdx: index,
+      type: isGeometryColumn ? ALL_FIELD_TYPES.geoarrow : arrowDataTypeToFieldType(field.type),
+      analyzerType: isGeometryColumn
+        ? AnalyzerDATA_TYPES.GEOMETRY
+        : arrowDataTypeToAnalyzerDataType(field.type),
+      valueAccessor: (dc: any) => d => {
+        return dc.valueAt(d.index, index);
+      },
+      metadata: field.metadata
+    });
+  });
+
+  const cols = [...Array(arrowTable.numCols).keys()].map(i => arrowTable.getChildAt(i));
+  // return empty rows and use raw arrow table to construct column-wise data container
+  return {fields, rows: [], cols, metadata: arrowTable.schema.metadata};
+}
+
+export const DATASET_HANDLERS = {
   [DATASET_FORMATS.row]: processRowObject,
   [DATASET_FORMATS.geojson]: processGeojson,
   [DATASET_FORMATS.csv]: processCsvData,
+  [DATASET_FORMATS.arrow]: processArrowTable,
   [DATASET_FORMATS.keplergl]: processKeplerglDataset
 };
 
 export const Processors: {
   processGeojson: typeof processGeojson;
   processCsvData: typeof processCsvData;
+  processArrowTable: typeof processArrowTable;
   processRowObject: typeof processRowObject;
   processKeplerglJSON: typeof processKeplerglJSON;
   processKeplerglDataset: typeof processKeplerglDataset;
@@ -412,6 +451,7 @@ export const Processors: {
 } = {
   processGeojson,
   processCsvData,
+  processArrowTable,
   processRowObject,
   processKeplerglJSON,
   processKeplerglDataset,

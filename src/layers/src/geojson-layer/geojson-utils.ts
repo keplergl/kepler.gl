@@ -18,14 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {Feature, BBox} from 'geojson';
 import normalize from '@mapbox/geojson-normalize';
 import bbox from '@turf/bbox';
 import {parseSync} from '@loaders.gl/core';
 import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
 import {binaryToGeometry} from '@loaders.gl/gis';
+import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
 
-import {Feature, BBox} from 'geojson';
-import {getSampleData} from '@kepler.gl/utils';
+import {GeojsonLayerMetaProps} from '../layer-utils';
 
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = Array<Feature | null>;
@@ -41,9 +42,6 @@ export enum FeatureTypes {
   MultiPolygon = 'MultiPolygon'
 }
 
-type FeatureTypeMap = {
-  [key in FeatureTypes]: boolean;
-};
 /* eslint-enable */
 
 export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
@@ -74,6 +72,31 @@ export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
 
   return null;
 }
+
+export function getGeojsonLayerMeta({
+  dataContainer,
+  getFeature
+}: {
+  dataContainer: DataContainerInterface;
+  getFeature: GetFeature;
+}): GeojsonLayerMetaProps {
+  const dataToFeature = getGeojsonDataMaps(dataContainer, getFeature);
+  // get bounds from features
+  const bounds = getGeojsonBounds(dataToFeature);
+  // if any of the feature has properties.radius set to be true
+  const fixedRadius = Boolean(dataToFeature.find(d => d && d.properties && d.properties.radius));
+
+  // keep a record of what type of geometry the collection has
+  const featureTypes = getGeojsonFeatureTypes(dataToFeature);
+
+  return {
+    dataToFeature,
+    bounds,
+    fixedRadius,
+    featureTypes
+  };
+}
+
 /**
  * Parse raw data to GeoJson feature
  * @param dataContainer
@@ -195,14 +218,20 @@ export const featureToDeckGlGeoType = {
   MultiPolygon: 'polygon'
 };
 
+export type DeckGlGeoTypes = {
+  point: boolean;
+  line: boolean;
+  polygon: boolean;
+};
+
 /**
  * Parse geojson from string
  * @param {Array<Object>} allFeatures
  * @returns {Object} mapping of feature type existence
  */
-export function getGeojsonFeatureTypes(allFeatures: GeojsonDataMaps): FeatureTypeMap {
-  // @ts-expect-error
-  const featureTypes: FeatureTypeMap = {};
+export function getGeojsonFeatureTypes(allFeatures: GeojsonDataMaps): DeckGlGeoTypes {
+  // @ts-expect-error some test cases only have 1 geotype
+  const featureTypes: DeckGlGeoTypes = {};
   for (let f = 0; f < allFeatures.length; f++) {
     const feature = allFeatures[f];
     if (feature) {
