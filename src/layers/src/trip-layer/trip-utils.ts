@@ -95,7 +95,6 @@ export function isTripGeoJsonField(dataContainer: DataContainerInterface, field)
   const featureTypes = getGeojsonFeatureTypes(features);
 
   // condition 1: contain line string
-  // @ts-expect-error
   if (!featureTypes.line) {
     return false;
   }

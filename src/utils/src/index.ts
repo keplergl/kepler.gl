@@ -53,9 +53,7 @@ export {
   renameDuplicateFields,
   analyzerTypeToFieldType,
   getFormatLabels,
-  getFieldFormatLabels,
-  arrowDataTypeToFieldType,
-  arrowDataTypeToAnalyzerDataType
+  getFieldFormatLabels
 } from './dataset-utils';
 export {getFormatValue} from './format';
 export {exportMapToHTML} from './export-map-html';
@@ -110,7 +108,7 @@ export * from './map-utils';
 
 export {createDataContainer, createIndexedDataContainer, getSampleData as getSampleContainerData, DataForm} from './data-container-utils';
 export type { DataContainerInterface } from './data-container-interface';
-export {ArrowDataContainer} from './arrow-data-container';
+export {ArrowDataContainer, arrowDataTypeToFieldType, arrowDataTypeToAnalyzerDataType} from './arrow-data-container';
 export type {FilterResult, FilterChanged, dataValueAccessor} from './filter-utils'
 export * from "./filter-utils";
 

@@ -1,9 +1,13 @@
 // MIT license, Copyright (c) 2023 Uber Technologies, Inc.
 
 import * as arrow from 'apache-arrow';
+import {console as globalConsole} from 'global/window';
+import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
+import {Field} from '@kepler.gl/types';
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+
 import {DataRow, SharedRowOptions} from './data-row';
 import {DataContainerInterface, RangeOptions} from './data-container-interface';
-import {Field} from '@kepler.gl/types';
 
 type ArrowDataContainerInput = {
   cols: arrow.Vector[];
@@ -173,5 +177,79 @@ export class ArrowDataContainer implements DataContainerInterface {
       initialValue = func(initialValue, row, rowIndex);
     }
     return initialValue;
+  }
+}
+
+/**
+ * Convert arrow data type to kepler.gl field types
+ *
+ * @param arrowType the arrow data type
+ * @returns corresponding type in `ALL_FIELD_TYPES`
+ */
+export function arrowDataTypeToFieldType(arrowType: arrow.DataType): string {
+  // Note: this function doesn't return ALL_FIELD_TYPES.geojson or ALL_FIELD_TYPES.array, which
+  // should be further detected by caller
+  if (arrow.DataType.isDate(arrowType)) {
+    return ALL_FIELD_TYPES.date;
+  } else if (arrow.DataType.isTimestamp(arrowType) || arrow.DataType.isTime(arrowType)) {
+    return ALL_FIELD_TYPES.timestamp;
+  } else if (arrow.DataType.isFloat(arrowType)) {
+    return ALL_FIELD_TYPES.real;
+  } else if (arrow.DataType.isInt(arrowType)) {
+    return ALL_FIELD_TYPES.integer;
+  } else if (arrow.DataType.isBool(arrowType)) {
+    return ALL_FIELD_TYPES.boolean;
+  } else if (arrow.DataType.isUtf8(arrowType) || arrow.DataType.isNull(arrowType)) {
+    return ALL_FIELD_TYPES.string;
+  } else if (
+    arrow.DataType.isBinary(arrowType) ||
+    arrow.DataType.isDictionary(arrowType) ||
+    arrow.DataType.isFixedSizeBinary(arrowType) ||
+    arrow.DataType.isFixedSizeList(arrowType) ||
+    arrow.DataType.isList(arrowType) ||
+    arrow.DataType.isMap(arrowType) ||
+    arrow.DataType.isStruct(arrowType)
+  ) {
+    return ALL_FIELD_TYPES.object;
+  } else {
+    globalConsole.warn(`Unsupported arrow type: ${arrowType}`);
+    return ALL_FIELD_TYPES.string;
+  }
+}
+
+/**
+ * Convert arrow data type to analyzer type
+ *
+ * @param arrowType the arrow data type
+ * @returns corresponding type in `AnalyzerDATA_TYPES`
+ */
+export function arrowDataTypeToAnalyzerDataType(
+  arrowType: arrow.DataType
+): typeof AnalyzerDATA_TYPES {
+  if (arrow.DataType.isDate(arrowType)) {
+    return AnalyzerDATA_TYPES.DATE;
+  } else if (arrow.DataType.isTimestamp(arrowType) || arrow.DataType.isTime(arrowType)) {
+    return AnalyzerDATA_TYPES.DATETIME;
+  } else if (arrow.DataType.isFloat(arrowType)) {
+    return AnalyzerDATA_TYPES.FLOAT;
+  } else if (arrow.DataType.isInt(arrowType)) {
+    return AnalyzerDATA_TYPES.INT;
+  } else if (arrow.DataType.isBool(arrowType)) {
+    return AnalyzerDATA_TYPES.BOOLEAN;
+  } else if (arrow.DataType.isUtf8(arrowType) || arrow.DataType.isNull(arrowType)) {
+    return AnalyzerDATA_TYPES.STRING;
+  } else if (
+    arrow.DataType.isBinary(arrowType) ||
+    arrow.DataType.isDictionary(arrowType) ||
+    arrow.DataType.isFixedSizeBinary(arrowType) ||
+    arrow.DataType.isFixedSizeList(arrowType) ||
+    arrow.DataType.isList(arrowType) ||
+    arrow.DataType.isMap(arrowType) ||
+    arrow.DataType.isStruct(arrowType)
+  ) {
+    return AnalyzerDATA_TYPES.OBJECT;
+  } else {
+    globalConsole.warn(`Unsupported arrow type: ${arrowType}`);
+    return AnalyzerDATA_TYPES.STRING;
   }
 }

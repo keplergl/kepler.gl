@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {DataType as ArrowDataType} from 'apache-arrow';
 import {console as globalConsole} from 'global/window';
 import {
   ALL_FIELD_TYPES,
@@ -585,80 +584,6 @@ export function analyzerTypeToFieldType(aType: string): string {
     default:
       globalConsole.warn(`Unsupported analyzer type: ${aType}`);
       return ALL_FIELD_TYPES.string;
-  }
-}
-
-/**
- * Convert arrow data type to kepler.gl field types
- *
- * @param arrowType the arrow data type
- * @returns corresponding type in `ALL_FIELD_TYPES`
- */
-export function arrowDataTypeToFieldType(arrowType: ArrowDataType): string {
-  // Note: this function doesn't return ALL_FIELD_TYPES.geojson or ALL_FIELD_TYPES.array, which
-  // should be further detected by caller
-  if (ArrowDataType.isDate(arrowType)) {
-    return ALL_FIELD_TYPES.date;
-  } else if (ArrowDataType.isTimestamp(arrowType) || ArrowDataType.isTime(arrowType)) {
-    return ALL_FIELD_TYPES.timestamp;
-  } else if (ArrowDataType.isFloat(arrowType)) {
-    return ALL_FIELD_TYPES.real;
-  } else if (ArrowDataType.isInt(arrowType)) {
-    return ALL_FIELD_TYPES.integer;
-  } else if (ArrowDataType.isBool(arrowType)) {
-    return ALL_FIELD_TYPES.boolean;
-  } else if (ArrowDataType.isUtf8(arrowType) || ArrowDataType.isNull(arrowType)) {
-    return ALL_FIELD_TYPES.string;
-  } else if (
-    ArrowDataType.isBinary(arrowType) ||
-    ArrowDataType.isDictionary(arrowType) ||
-    ArrowDataType.isFixedSizeBinary(arrowType) ||
-    ArrowDataType.isFixedSizeList(arrowType) ||
-    ArrowDataType.isList(arrowType) ||
-    ArrowDataType.isMap(arrowType) ||
-    ArrowDataType.isStruct(arrowType)
-  ) {
-    return ALL_FIELD_TYPES.object;
-  } else {
-    globalConsole.warn(`Unsupported arrow type: ${arrowType}`);
-    return ALL_FIELD_TYPES.string;
-  }
-}
-
-/**
- * Convert arrow data type to analyzer type
- *
- * @param arrowType the arrow data type
- * @returns corresponding type in `AnalyzerDATA_TYPES`
- */
-export function arrowDataTypeToAnalyzerDataType(
-  arrowType: ArrowDataType
-): typeof AnalyzerDATA_TYPES {
-  if (ArrowDataType.isDate(arrowType)) {
-    return AnalyzerDATA_TYPES.DATE;
-  } else if (ArrowDataType.isTimestamp(arrowType) || ArrowDataType.isTime(arrowType)) {
-    return AnalyzerDATA_TYPES.DATETIME;
-  } else if (ArrowDataType.isFloat(arrowType)) {
-    return AnalyzerDATA_TYPES.FLOAT;
-  } else if (ArrowDataType.isInt(arrowType)) {
-    return AnalyzerDATA_TYPES.INT;
-  } else if (ArrowDataType.isBool(arrowType)) {
-    return AnalyzerDATA_TYPES.BOOLEAN;
-  } else if (ArrowDataType.isUtf8(arrowType) || ArrowDataType.isNull(arrowType)) {
-    return AnalyzerDATA_TYPES.STRING;
-  } else if (
-    ArrowDataType.isBinary(arrowType) ||
-    ArrowDataType.isDictionary(arrowType) ||
-    ArrowDataType.isFixedSizeBinary(arrowType) ||
-    ArrowDataType.isFixedSizeList(arrowType) ||
-    ArrowDataType.isList(arrowType) ||
-    ArrowDataType.isMap(arrowType) ||
-    ArrowDataType.isStruct(arrowType)
-  ) {
-    return AnalyzerDATA_TYPES.OBJECT;
-  } else {
-    globalConsole.warn(`Unsupported arrow type: ${arrowType}`);
-    return AnalyzerDATA_TYPES.STRING;
   }
 }
 

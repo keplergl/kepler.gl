@@ -61,23 +61,12 @@ const JSON_LOADER_OPTIONS = {
   ]
 };
 
-/**
- * ProcessFileDataContent
- * @typedef {Object} ProcessFileDataContent
- * @property {Object} data - parsed data
- * @property {string} fileName - file name
- * @property {number} [length] - number of rows
- * @property {Object} [progress] - progress of file processing
- * @property {number} [progress.rowCount] - number of rows processed
- * @property {number} [progress.rowCountInBatch] - number of rows in current batch
- * @property {number} [progress.percent] - percent of file processed
- * @property {Map<string, string>} [metadata] - metadata e.g. for arrow data, metadata could be the schema.fields
- */
 export type ProcessFileDataContent = {
   data: unknown;
   fileName: string;
   length?: number;
   progress?: {rowCount?: number; rowCountInBatch?: number; percent?: number};
+  /**  metadata e.g. for arrow data, metadata could be the schema.fields */
   metadata?: Map<string, string>;
 };
 
