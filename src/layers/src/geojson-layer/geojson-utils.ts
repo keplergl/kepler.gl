@@ -18,14 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {Feature, BBox} from 'geojson';
 import normalize from '@mapbox/geojson-normalize';
 import bbox from '@turf/bbox';
 import {parseSync} from '@loaders.gl/core';
 import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
 import {binaryToGeometry} from '@loaders.gl/gis';
-
-import {Feature, BBox} from 'geojson';
 import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
+
+import {GeojsonLayerMetaProps} from '../layer-utils';
 
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = Array<Feature | null>;
@@ -41,9 +42,6 @@ export enum FeatureTypes {
   MultiPolygon = 'MultiPolygon'
 }
 
-type FeatureTypeMap = {
-  [key in FeatureTypes]: boolean;
-};
 /* eslint-enable */
 
 export function parseGeoJsonRawFeature(rawFeature: unknown): Feature | null {
@@ -81,7 +79,7 @@ export function getGeojsonLayerMeta({
 }: {
   dataContainer: DataContainerInterface;
   getFeature: GetFeature;
-}) {
+}): GeojsonLayerMetaProps {
   const dataToFeature = getGeojsonDataMaps(dataContainer, getFeature);
   // get bounds from features
   const bounds = getGeojsonBounds(dataToFeature);
@@ -220,14 +218,20 @@ export const featureToDeckGlGeoType = {
   MultiPolygon: 'polygon'
 };
 
+export type DeckGlGeoTypes = {
+  point: boolean;
+  line: boolean;
+  polygon: boolean;
+};
+
 /**
  * Parse geojson from string
  * @param {Array<Object>} allFeatures
  * @returns {Object} mapping of feature type existence
  */
-export function getGeojsonFeatureTypes(allFeatures: GeojsonDataMaps): FeatureTypeMap {
-  // @ts-expect-error
-  const featureTypes: FeatureTypeMap = {};
+export function getGeojsonFeatureTypes(allFeatures: GeojsonDataMaps): DeckGlGeoTypes {
+  // @ts-expect-error some test cases only have 1 geotype
+  const featureTypes: DeckGlGeoTypes = {};
   for (let f = 0; f < allFeatures.length; f++) {
     const feature = allFeatures[f];
     if (feature) {

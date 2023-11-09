@@ -1,3 +1,4 @@
+import {Field} from '@kepler.gl/types';
 import {DataRow, SharedRowOptions} from './data-row';
 
 /**
@@ -65,15 +66,14 @@ export interface DataContainerInterface {
    * @param columnIndex Column index.
    * @returns The column object at the specified index.
    */
-  getColumn?(columnIndex: number): any;
-
+  getColumn?(columnIndex: number): unknown;
 
   /**
    * Returns the field object at the specified index.
    * @param columnIndex Column index.
    * @returns The field object at the specified index.
    */
-  getField?(columnIndex: number): any;
+  getField?(columnIndex: number): Field;
 
   /**
    * Returns contents of the data container as a two-dimensional array.

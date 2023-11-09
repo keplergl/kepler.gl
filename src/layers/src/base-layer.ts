@@ -1428,16 +1428,6 @@ class Layer {
     // implemented in subclasses
     return () => null;
   }
-
-  getColumnAccessor(dataContainer?: DataContainerInterface): (...args: any[]) => any {
-    // implemented in subclasses
-    return () => null;
-  }
-
-  getFieldAccessor(dataContainer?: DataContainerInterface): (...args: any[]) => any {
-    // implemented in subclasses
-    return () => null;
-  }
 }
 
 export default Layer;

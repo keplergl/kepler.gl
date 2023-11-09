@@ -96,6 +96,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getElevation',
           'getFillColor',
           'getFilterValue',
+          'getFiltered',
           'getLineColor',
           'getLineWidth',
           'getPointRadius'
@@ -215,6 +216,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getElevation',
           'getFillColor',
           'getFilterValue',
+          'getFiltered',
           'getLineColor',
           'getLineWidth',
           'getPointRadius'
@@ -328,6 +330,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getElevation',
           'getFillColor',
           'getFilterValue',
+          'getFiltered',
           'getLineColor',
           'getLineWidth',
           'getPointRadius'
@@ -429,6 +432,7 @@ test('#GeojsonLayer -> formatLayerData', t => {
           'getElevation',
           'getFillColor',
           'getFilterValue',
+          'getFiltered',
           'getLineColor',
           'getLineWidth',
           'getPointRadius'
