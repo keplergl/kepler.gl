@@ -141,12 +141,12 @@ const TextBlock = styled.div<TextBlockProps>`
 
 /**
  * Converts date, time and timezone into a UTC timestamp.
- * @param {string} dateStr Date string in YYYY-MM-DD format.
- * @param {string} timeStr Time string in HH:MM format.
- * @param {string} timezone Timezone name.
- * @returns {number | null} Timestamp.
+ * @param dateStr Date string in YYYY-MM-DD format.
+ * @param timeStr Time string in HH:MM format.
+ * @param timezone Timezone name.
+ * @returns Timestamp or null if case of bad inputs.
  */
-const getTimestamp = (dateStr, timeStr, timezone) => {
+const getTimestamp = (dateStr: string, timeStr: string, timezone: string): number | null => {
   let timestamp: number | null = null;
   const curr = moment.tz(`${dateStr}T${timeStr}:00`, timezone);
   if (curr.isValid()) {
@@ -157,10 +157,10 @@ const getTimestamp = (dateStr, timeStr, timezone) => {
 
 /**
  * Converts time of the day into [0, 1] range
- * @param {moment.Moment} date
+ * @param date
  * @returns
  */
-const getDayRatio = date => {
+const getDayRatio = (date: moment.Moment) => {
   return ((date.hours() * 60 + date.minutes()) * 60 * 1000) / DAY_MILISECONDS;
 };
 
@@ -194,7 +194,7 @@ export default function EffectTimeConfiguratorFactory(
       formattedDate,
       dayTimeProgress
     ] = useMemo(() => {
-      var currentMoment = moment.tz(timestamp, timezone);
+      const currentMoment = moment.tz(timestamp, timezone);
 
       // Slider value from 0 to 1
       const dayProgress = getDayRatio(currentMoment);
