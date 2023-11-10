@@ -355,7 +355,7 @@ export default function ModalContainerFactory(
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
                 onLoadCloudMap={this._onLoadCloudMap}
-                cloudProviders={this.providerWithStorage(this.props)}
+                cloudProviders={this.cloudProviders(this.props)}
                 onSetCloudProvider={this.props.providerActions.setCloudProvider}
                 getSavedMaps={this.props.providerActions.getSavedMaps}
                 loadFiles={uiState.loadFiles}

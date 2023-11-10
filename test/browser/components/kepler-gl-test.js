@@ -43,6 +43,8 @@ import {
 import {DEFAULT_MAP_STYLES, EXPORT_IMAGE_ID, GEOCODER_DATASET_NAME} from '@kepler.gl/constants';
 // mock state
 import {StateWithGeocoderDataset} from 'test/helpers/mock-state';
+import MockProvider from '../../helpers/mock-provider';
+import MockProviderWithoutPrivateStorage from '../../helpers/mock-provider-without-private-storage';
 
 const KeplerGl = appInjector.get(KeplerGlFactory);
 const SidePanel = appInjector.get(SidePanelFactory);
@@ -94,6 +96,46 @@ test('Components -> KeplerGl -> Mount', t => {
   t.equal(wrapper.find(NotificationPanel).length, 1, 'should render NotificationPanel');
   t.equal(wrapper.find(GeocoderPanel).length, 0, 'should not render GeocoderPanel');
 
+  t.end();
+});
+
+test('Components -> KeplerGl -> Mount -> Load From Storage', t => {
+  drainTasksForTesting();
+  // mount with empty store
+  const store = mockStore(initialState);
+  let wrapper;
+
+  t.doesNotThrow(() => {
+    wrapper = mount(
+      <Provider store={store}>
+        <KeplerGl
+          id="map"
+          mapboxApiAccessToken="smoothie-the-cat"
+          selector={state => state.keplerGl.map}
+          dispatch={store.dispatch}
+          cloudProviders={[new MockProvider(), new MockProviderWithoutPrivateStorage()]}
+        />
+      </Provider>
+    );
+  }, 'Should not throw error when mount KeplerGl');
+
+  t.equal(wrapper.find(KeplerGl).length, 1, 'should render KeplerGl');
+  t.equal(wrapper.find(SidePanel).length, 1, 'should render SidePanel');
+  t.equal(wrapper.find(MapContainer).length, 1, 'should render MapContainer');
+  t.equal(wrapper.find(BottomWidget).length, 1, 'should render BottomWidget');
+  t.equal(wrapper.find(ModalContainer).length, 1, 'should render ModalContainer');
+  t.equal(wrapper.find(PlotContainer).length, 0, 'should not render PlotContainer');
+  t.equal(wrapper.find(NotificationPanel).length, 1, 'should render NotificationPanel');
+  t.equal(wrapper.find(GeocoderPanel).length, 0, 'should not render GeocoderPanel');
+
+  // click load from storage tab
+  const loadFromStorageTab = wrapper
+    .findWhere(node => {
+      return node.type() === 'div' && node.text() === 'Load from Storage';
+    })
+    .at(0);
+  loadFromStorageTab.simulate('click');
+  t.equal(wrapper.find('.provider-tile__wrapper').length, 2, 'should render two providers');
   t.end();
 });
 
