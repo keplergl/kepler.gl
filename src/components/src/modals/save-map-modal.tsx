@@ -18,13 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {useMemo} from 'react';
 import styled from 'styled-components';
-import CloudTile from './cloud-tile';
 import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
-import ProviderModalContainer, {ProviderModalContainerProps} from './provider-modal-container';
+import {FlexContainer} from '../common/flex-container';
 import StatusPanel, {UploadAnimation} from './status-panel';
-
+import {ProviderSelect} from './cloud-components/provider-select';
 import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER, ExportImage} from '@kepler.gl/constants';
 
 import {
@@ -40,6 +39,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {MapInfo} from '@kepler.gl/types';
 import {Provider} from '@kepler.gl/cloud-providers';
 import {setMapInfo, cleanupExportImage as cleanupExportImageAction} from '@kepler.gl/actions';
+import {ModalFooter, useCloudListProvider} from '@kepler.gl/components';
 
 /** @typedef {import('./save-map-modal').SaveMapModalProps} SaveMapModalProps */
 
@@ -75,6 +75,7 @@ const StyledSaveMapModal = styled.div.attrs({
 `;
 
 const nop = _ => {};
+const TEXT_AREA_LIGHT_STYLE = {resize: 'none'};
 
 type CharacterLimits = {
   title?: number;
@@ -84,17 +85,16 @@ type CharacterLimits = {
 type SaveMapModalProps = {
   mapInfo: MapInfo;
   exportImage: ExportImage;
-  cloudProviders: Provider[];
   isProviderLoading: boolean;
-  currentProvider?: string | null;
-  providerError?: any;
+  providerError?: Error;
   characterLimits?: CharacterLimits;
 
   // callbacks
-  onSetCloudProvider: ProviderModalContainerProps['onSetCloudProvider'];
   onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
   cleanupExportImage: typeof cleanupExportImageAction;
   onSetMapInfo: typeof setMapInfo;
+  onConfirm: (provider: Provider) => void;
+  onCancel: () => void;
 };
 
 type MapInfoPanelProps = Pick<SaveMapModalProps, 'mapInfo' | 'characterLimits'> & {
@@ -123,15 +123,15 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
       </div>
     </StyledModalSection>
     <StyledModalSection>
-      <div className="save-map-modal-description" style={{display: 'flex'}}>
+      <FlexContainer className="save-map-modal-description">
         <div className="modal-section-title">Description</div>
         <div className="modal-section-subtitle">(optional)</div>
-      </div>
+      </FlexContainer>
       <div>
         <TextAreaLight
           rows={3}
           id="map-description"
-          style={{resize: 'none'}}
+          style={TEXT_AREA_LIGHT_STYLE as React.CSSProperties}
           value={mapInfo.description}
           onChange={e => onChangeInput('description', e)}
           placeholder="Type map description"
@@ -150,71 +150,68 @@ export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
   </div>
 );
 
+const SaveMapHeader = ({cloudProviders}) => {
+  return (
+    <StyledExportSection>
+      <div className="description">
+        <div className="title">
+          <FormattedMessage id={'modal.saveMap.title'} />
+        </div>
+        <div className="subtitle">
+          <FormattedMessage id={'modal.saveMap.subtitle'} />
+        </div>
+      </div>
+      <ProviderSelect cloudProviders={cloudProviders} />
+    </StyledExportSection>
+  );
+};
+
+const STYLED_EXPORT_SECTION_STYLE = {margin: '2px 0'};
+const PROVIDER_MANAGER_URL_STYLE = {textDecoration: 'underline'};
+
 function SaveMapModalFactory() {
-  /**
-   * @type {React.FunctionComponent<SaveMapModalProps>}
-   */
   const SaveMapModal: React.FC<SaveMapModalProps> = ({
     mapInfo,
     exportImage,
-    characterLimits = {},
-    cloudProviders,
+    characterLimits = MAP_INFO_CHARACTER,
     isProviderLoading,
-    currentProvider,
     providerError,
-    onSetCloudProvider,
-    onUpdateImageSetting,
+    onUpdateImageSetting = nop,
     cleanupExportImage,
-    onSetMapInfo
+    onSetMapInfo,
+    onCancel,
+    onConfirm
   }) => {
+    const {provider, cloudProviders} = useCloudListProvider();
+
     const onChangeInput = (
       key: string,
       {target: {value}}: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
     ) => {
       onSetMapInfo({[key]: value});
     };
-    const provider = currentProvider ? cloudProviders.find(p => p.name === currentProvider) : null;
+
+    const confirmButton = useMemo(
+      () => ({
+        large: true,
+        disabled: Boolean(!(provider && mapInfo.title)),
+        children: 'modal.button.save'
+      }),
+      [provider, mapInfo]
+    );
 
     return (
-      <ProviderModalContainer
-        onSetCloudProvider={onSetCloudProvider}
-        cloudProviders={cloudProviders}
-        currentProvider={currentProvider}
+      <ImageModalContainer
+        provider={provider}
+        onUpdateImageSetting={onUpdateImageSetting}
+        cleanupExportImage={cleanupExportImage}
       >
-        <ImageModalContainer
-          currentProvider={currentProvider}
-          cloudProviders={cloudProviders}
-          onUpdateImageSetting={onUpdateImageSetting}
-          cleanupExportImage={cleanupExportImage}
-        >
-          <StyledSaveMapModal>
-            <StyledModalContent className="save-map-modal-content">
-              <StyledExportSection disabled={isProviderLoading}>
-                <div className="description">
-                  <div className="title">
-                    <FormattedMessage id={'modal.saveMap.title'} />
-                  </div>
-                  <div className="subtitle">
-                    <FormattedMessage id={'modal.saveMap.subtitle'} />
-                  </div>
-                </div>
-                <div className="selection">
-                  {cloudProviders.map(cloudProvider => (
-                    <CloudTile
-                      key={cloudProvider.name}
-                      onSelect={() => onSetCloudProvider(cloudProvider.name)}
-                      onSetCloudProvider={onSetCloudProvider}
-                      cloudProvider={cloudProvider}
-                      isSelected={cloudProvider.name === currentProvider}
-                      isConnected={Boolean(
-                        cloudProvider.getAccessToken && cloudProvider.getAccessToken()
-                      )}
-                    />
-                  ))}
-                </div>
-              </StyledExportSection>
-              {provider && provider.getManagementUrl && (
-                <StyledExportSection style={{margin: '2px 0'}}>
+        <StyledSaveMapModal>
+          <StyledModalContent className="save-map-modal-content">
+            <SaveMapHeader cloudProviders={cloudProviders} />
+            {provider && provider.getManagementUrl && (
+              <>
+                <StyledExportSection style={STYLED_EXPORT_SECTION_STYLE}>
                   <div className="description" />
                   <div className="selection">
                     <a
@@ -222,54 +219,50 @@ function SaveMapModalFactory() {
                       href={provider.getManagementUrl()}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{textDecoration: 'underline'}}
+                      style={PROVIDER_MANAGER_URL_STYLE}
                     >
                       Go to your Kepler.gl {provider.displayName} page
                     </a>
                   </div>
                 </StyledExportSection>
-              )}
-              <StyledExportSection>
-                <div className="description image-preview-panel">
-                  <ImagePreview
-                    exportImage={exportImage}
-                    width={MAP_THUMBNAIL_DIMENSION.width}
-                    showDimension={false}
-                  />
-                </div>
-                {isProviderLoading ? (
-                  <div className="selection map-saving-animation">
-                    <UploadAnimation icon={provider && provider.icon} />
+                <StyledExportSection>
+                  <div className="description image-preview-panel">
+                    <ImagePreview
+                      exportImage={exportImage}
+                      width={MAP_THUMBNAIL_DIMENSION.width}
+                      showDimension={false}
+                    />
                   </div>
-                ) : (
-                  <MapInfoPanel
-                    mapInfo={mapInfo}
-                    characterLimits={characterLimits}
-                    onChangeInput={onChangeInput}
-                  />
-                )}
-              </StyledExportSection>
-              {providerError ? (
-                <StatusPanel
-                  isLoading={false}
-                  error={providerError}
-                  providerIcon={provider && provider.icon}
-                />
-              ) : null}
-            </StyledModalContent>
-          </StyledSaveMapModal>
-        </ImageModalContainer>
-      </ProviderModalContainer>
+                  {isProviderLoading ? (
+                    <div className="selection map-saving-animation">
+                      <UploadAnimation icon={provider && provider.icon} />
+                    </div>
+                  ) : (
+                    <MapInfoPanel
+                      mapInfo={mapInfo}
+                      characterLimits={characterLimits}
+                      onChangeInput={onChangeInput}
+                    />
+                  )}
+                </StyledExportSection>
+              </>
+            )}
+            {providerError ? (
+              <StatusPanel
+                isLoading={false}
+                error={providerError.message}
+                providerIcon={provider && provider.icon}
+              />
+            ) : null}
+          </StyledModalContent>
+        </StyledSaveMapModal>
+        <ModalFooter
+          cancel={onCancel}
+          confirm={() => provider && onConfirm(provider)}
+          confirmButton={confirmButton}
+        />
+      </ImageModalContainer>
     );
-  };
-
-  SaveMapModal.defaultProps = {
-    characterLimits: MAP_INFO_CHARACTER,
-    cloudProviders: [],
-    providerError: null,
-    isProviderLoading: false,
-    onSetCloudProvider: nop,
-    onUpdateImageSetting: nop
   };
 
   return SaveMapModal;

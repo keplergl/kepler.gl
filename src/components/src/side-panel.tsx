@@ -114,7 +114,6 @@ export default function SidePanelFactory(
     const {
       appName,
       appWebsite,
-      availableProviders,
       datasets,
       filters,
       layers,
@@ -139,7 +138,6 @@ export default function SidePanelFactory(
     const {openDeleteModal, toggleModal, toggleSidePanel} = uiStateActions;
     const {activeSidePanel} = uiState;
     const {setMapInfo, showDatasetTable, updateTableColor} = visStateActions;
-    const {hasShare, hasStorage} = availableProviders;
 
     const {title} = mapInfo;
 
@@ -173,22 +171,12 @@ export default function SidePanelFactory(
     const onShowAddDataModal = useCallback(() => toggleModal(ADD_DATA_ID), [toggleModal]);
     const onShowAddMapStyleModal = useCallback(() => toggleModal(ADD_MAP_STYLE_ID), [toggleModal]);
     const onRemoveDataset = useCallback(dataId => openDeleteModal(dataId), [openDeleteModal]);
-    const onSaveToStorage = useMemo(() => (hasStorage ? onClickSaveToStorage : null), [
-      hasStorage,
-      onClickSaveToStorage
-    ]);
-    const onSaveAsToStorage = useMemo(
-      () => (hasStorage && mapSaved ? onClickSaveAsToStorage : null),
-      [hasStorage, mapSaved, onClickSaveAsToStorage]
-    );
+
     const currentPanel = useMemo(() => panels.find(({id}) => id === activeSidePanel) || null, [
       activeSidePanel,
       panels
     ]);
-    const onShareMap = useMemo(() => (hasShare ? onClickShareMap : null), [
-      hasShare,
-      onClickShareMap
-    ]);
+
     const customPanelProps = useMemo(() => getCustomPanelProps(props), [props]);
     const PanelComponent = currentPanel?.component;
 
@@ -211,9 +199,9 @@ export default function SidePanelFactory(
           onExportData={onClickExportData}
           onExportMap={onClickExportMap}
           onSaveMap={onSaveMap}
-          onSaveToStorage={onSaveToStorage}
-          onSaveAsToStorage={onSaveAsToStorage}
-          onShareMap={onShareMap}
+          onSaveToStorage={onClickSaveToStorage}
+          onSaveAsToStorage={onClickSaveAsToStorage}
+          onShareMap={onClickShareMap}
         />
         {/* the next two components should be moved into one */}
         {/* but i am keeping them because of backward compatibility */}
@@ -267,7 +255,6 @@ export default function SidePanelFactory(
 
   SidePanel.defaultProps = {
     panels: fullPanels,
-    availableProviders: {},
     mapInfo: {}
   };
 

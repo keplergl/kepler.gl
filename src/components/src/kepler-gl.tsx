@@ -65,6 +65,7 @@ import NotificationPanelFactory from './notification-panel';
 import GeoCoderPanelFactory from './geocoder-panel';
 import EffectManagerFactory from './effects/effect-manager';
 import DndContextFactory from './dnd-context';
+import {CloudListProvider} from './hooks/use-cloud-list-provider';
 
 import {
   filterObjectByPredicate,
@@ -185,7 +186,7 @@ export function getVisibleDatasets(datasets) {
   return filterObjectByPredicate(datasets, (key, value) => key !== GEOCODER_DATASET_NAME);
 }
 
-export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filteredDatasets) => ({
+export const sidePanelSelector = (props: KeplerGLProps, filteredDatasets) => ({
   appName: props.appName ? props.appName : DEFAULT_KEPLER_GL_PROPS.appName,
   version: props.version ? props.version : DEFAULT_KEPLER_GL_PROPS.version,
   appWebsite: props.appWebsite,
@@ -208,7 +209,6 @@ export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filt
   overlayBlending: props.visState.overlayBlending,
 
   width: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
-  availableProviders,
   mapSaved: props.providerState.mapSaved
 });
 
@@ -420,17 +420,6 @@ function KeplerGlFactory(
     datasetsSelector = props => props.visState.datasets;
     filteredDatasetsSelector = createSelector(this.datasetsSelector, getVisibleDatasets);
 
-    availableProviders = createSelector(
-      (props: KeplerGLProps) => props.cloudProviders,
-      providers =>
-        Array.isArray(providers) && providers.length
-          ? {
-              hasStorage: providers.some(p => p.hasPrivateStorage()),
-              hasShare: providers.some(p => p.hasSharingUrl())
-            }
-          : {}
-    );
-
     localeMessagesSelector = createSelector(
       (props: KeplerGLProps) => props.localeMessages,
       customMessages => (customMessages ? mergeMessages(messages, customMessages) : messages)
@@ -476,7 +465,10 @@ function KeplerGlFactory(
         readOnly,
 
         // features
-        featureFlags
+        featureFlags,
+
+        // cloud providers
+        cloudProviders = []
       } = this.props;
 
       const dimensions = this.state.dimensions || {width, height};
@@ -489,10 +481,10 @@ function KeplerGlFactory(
       const theme = this.availableThemeSelector(this.props);
       const localeMessages = this.localeMessagesSelector(this.props);
       const isExportingImage = uiState.exportImage.exporting;
-      const availableProviders = this.availableProviders(this.props);
 
       const filteredDatasets = this.filteredDatasetsSelector(this.props);
-      const sideFields = sidePanelSelector(this.props, availableProviders, filteredDatasets);
+      const sideFields = sidePanelSelector(this.props, filteredDatasets);
+
       const plotContainerFields = plotContainerSelector(this.props);
       const bottomWidgetFields = bottomWidgetSelector(this.props, theme);
       const modalContainerFields = modalContainerSelector(this.props, this.root.current);
@@ -525,55 +517,57 @@ function KeplerGlFactory(
           <FeatureFlagsContextProvider featureFlags={featureFlags}>
             <IntlProvider locale={uiState.locale} messages={localeMessages[uiState.locale]}>
               <ThemeProvider theme={theme}>
-                <GlobalStyle
-                  className="kepler-gl"
-                  id={`kepler-gl__${id}`}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative',
-                    width: `${width}px`,
-                    height: `${height}px`
-                  }}
-                  ref={this.root}
-                >
-                  <NotificationPanel {...notificationPanelFields} />
-                  <DndContext>
-                    {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                    <MapsLayout className="maps" mapState={this.props.mapState}>
-                      {mapContainers}
-                    </MapsLayout>
-                  </DndContext>
-                  {isExportingImage && <PlotContainer {...plotContainerFields} />}
-                  {/* 1 geocoder: single mode OR split mode and synced viewports */}
-                  {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (
-                    <GeoCoderPanel {...geoCoderPanelFields} index={0} unsyncedViewports={false} />
-                  )}
-                  {/* 2 geocoders: split mode and unsynced viewports */}
-                  {isViewportDisjointed(this.props) &&
-                    interactionConfig.geocoder.enabled &&
-                    mapContainers.map((_mapContainer, index) => (
-                      <GeoCoderPanel
-                        key={index}
-                        {...geoCoderPanelFields}
-                        index={index}
-                        unsyncedViewports={true}
+                <CloudListProvider providers={cloudProviders}>
+                  <GlobalStyle
+                    className="kepler-gl"
+                    id={`kepler-gl__${id}`}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      position: 'relative',
+                      width: `${width}px`,
+                      height: `${height}px`
+                    }}
+                    ref={this.root}
+                  >
+                    <NotificationPanel {...notificationPanelFields} />
+                    <DndContext>
+                      {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
+                      <MapsLayout className="maps" mapState={this.props.mapState}>
+                        {mapContainers}
+                      </MapsLayout>
+                    </DndContext>
+                    {isExportingImage && <PlotContainer {...plotContainerFields} />}
+                    {/* 1 geocoder: single mode OR split mode and synced viewports */}
+                    {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (
+                      <GeoCoderPanel {...geoCoderPanelFields} index={0} unsyncedViewports={false} />
+                    )}
+                    {/* 2 geocoders: split mode and unsynced viewports */}
+                    {isViewportDisjointed(this.props) &&
+                      interactionConfig.geocoder.enabled &&
+                      mapContainers.map((_mapContainer, index) => (
+                        <GeoCoderPanel
+                          key={index}
+                          {...geoCoderPanelFields}
+                          index={index}
+                          unsyncedViewports={true}
+                        />
+                      ))}
+                    <BottomWidgetOuter absolute={!hasPortableWidth(breakPointValues)}>
+                      <BottomWidget
+                        rootRef={this.bottomWidgetRef}
+                        {...bottomWidgetFields}
+                        containerW={dimensions.width}
+                        theme={theme}
                       />
-                    ))}
-                  <BottomWidgetOuter absolute={!hasPortableWidth(breakPointValues)}>
-                    <BottomWidget
-                      rootRef={this.bottomWidgetRef}
-                      {...bottomWidgetFields}
+                    </BottomWidgetOuter>
+                    <ModalContainer
+                      {...modalContainerFields}
                       containerW={dimensions.width}
-                      theme={theme}
+                      containerH={dimensions.height}
                     />
-                  </BottomWidgetOuter>
-                  <ModalContainer
-                    {...modalContainerFields}
-                    containerW={dimensions.width}
-                    containerH={dimensions.height}
-                  />
-                </GlobalStyle>
+                  </GlobalStyle>
+                </CloudListProvider>
               </ThemeProvider>
             </IntlProvider>
           </FeatureFlagsContextProvider>

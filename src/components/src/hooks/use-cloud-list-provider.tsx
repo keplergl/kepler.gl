@@ -1,0 +1,32 @@
+import React, {PropsWithChildren, useCallback, useContext, useMemo, useRef, useState} from 'react';
+import {CloudProviderContext} from '../context';
+import {Provider} from '@kepler.gl/cloud-providers';
+
+type CloudListProviderProps = PropsWithChildren<{
+  providers: Provider[];
+}>;
+
+export const CloudListProvider: React.FC<CloudListProviderProps> = ({children, providers = []}) => {
+  const [currentCloudProvider, setCurrentCloudProvider] = useState<Provider | null>(null);
+  const cloudProviders = useRef(providers);
+
+  const setProvider = useCallback(
+    provider => {
+      setCurrentCloudProvider(currentCloudProvider === provider ? null : provider);
+    },
+    [currentCloudProvider]
+  );
+
+  const value = useMemo(
+    () => ({
+      provider: currentCloudProvider,
+      setProvider: setProvider,
+      cloudProviders: cloudProviders.current
+    }),
+    [currentCloudProvider, setCurrentCloudProvider]
+  );
+
+  return <CloudProviderContext.Provider value={value}>{children}</CloudProviderContext.Provider>;
+};
+
+export const useCloudListProvider = () => useContext(CloudProviderContext);

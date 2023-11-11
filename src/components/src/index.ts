@@ -80,9 +80,9 @@ export {default as LayerPanelFactory} from './side-panel/layer-panel/layer-panel
 export {default as SingleColorPalette} from './side-panel/layer-panel/single-color-palette';
 export {
   default as LayerConfiguratorFactory,
-  getLayerConfiguratorProps, 
+  getLayerConfiguratorProps,
   getLayerDataset,
-  getVisConfiguratorProps, 
+  getVisConfiguratorProps,
 } from './side-panel/layer-panel/layer-configurator';
 export {default as TextLabelPanelFactory} from './side-panel/layer-panel/text-label-panel';
 
@@ -393,3 +393,5 @@ export {
 export {default as useFeatureFlags} from './hooks/use-feature-flags';
 export {default as useDndLayers} from './hooks/use-dnd-layers';
 export {default as useDndEffects} from './hooks/use-dnd-effects';
+export {CloudListProvider, useCloudListProvider} from './hooks/use-cloud-list-provider';
+

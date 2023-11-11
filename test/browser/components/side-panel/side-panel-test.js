@@ -74,8 +74,7 @@ const defaultProps = {
   width: 300,
   uiStateActions: UIStateActions,
   visStateActions: VisStateActions,
-  mapStyleActions: MapStyleActions,
-  availableProviders: {}
+  mapStyleActions: MapStyleActions
 };
 
 test('Components -> SidePanel.mount -> no prop', t => {

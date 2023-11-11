@@ -21,7 +21,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {
-  withState, 
+  withState,
   MapControlFactory,
   EffectControlFactory,
   EffectManagerFactory

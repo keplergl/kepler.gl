@@ -37,7 +37,6 @@ export type SidePanelProps = {
   mapStateActions: typeof MapStateActions;
   mapStyleActions: typeof MapStyleActions;
   uiState: UiState;
-  availableProviders: {[k: string]: {hasShare?: boolean; hasStorage?: boolean}};
   mapSaved?: string | null;
   panels?: SidePanelItem[];
   onSaveMap?: () => void;

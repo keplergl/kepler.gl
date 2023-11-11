@@ -32,7 +32,7 @@ test('Components -> ShareMapUrlModal.mount', t => {
   t.doesNotThrow(() => {
     mountWithTheme(
       <IntlWrapper>
-        <ShareMapUrlModal onSetCloudProvider={onSetCloudProvider} />
+        <ShareMapUrlModal />
       </IntlWrapper>
     );
   }, 'Show not fail without props');

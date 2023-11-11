@@ -18,25 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {AUTH_TOKENS} from '../constants/default-settings';
+import React from 'react';
+import LoadingDialog from '../loading-dialog';
+import styled from 'styled-components';
 
-import DropboxProvider from './dropbox/dropbox-provider';
-import CartoProvider from './carto/carto-provider';
-
-const {DROPBOX_CLIENT_ID, CARTO_CLIENT_ID} = AUTH_TOKENS;
-const DROPBOX_CLIENT_NAME = 'Kepler.gl Demo App';
-
-export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
-
-export const CLOUD_PROVIDERS = [
-  new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME),
-  new CartoProvider(CARTO_CLIENT_ID)
-];
-
-export function getCloudProvider(providerName) {
-  const cloudProvider = CLOUD_PROVIDERS.find(provider => provider.name === providerName);
-  if (!cloudProvider) {
-    throw new Error(`Unknown cloud provider ${providerName}`);
+const StyledSpinner = styled.div`
+  text-align: center;
+  span {
+    margin: 0 auto;
   }
-  return cloudProvider;
-}
+`;
+
+export const ProviderLoading = () => {
+  return (
+    <StyledSpinner>
+      <LoadingDialog size={64} />
+    </StyledSpinner>
+  );
+};

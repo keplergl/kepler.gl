@@ -18,45 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {Component} from 'react';
+import CloudTile from '../cloud-tile';
+import React from 'react';
+import styled from 'styled-components';
 import {Provider} from '@kepler.gl/cloud-providers';
-import {SetCloudProviderPayload} from '@kepler.gl/actions';
 
-export type ProviderModalContainerProps = {
-  cloudProviders?: Provider[];
-  currentProvider?: string | null;
-  onSetCloudProvider: (provider: SetCloudProviderPayload) => void;
-  children?: React.ReactNode;
+const StyledProviderSection = styled.div.attrs({
+  className: 'provider-selection'
+})`
+  display: flex;
+  gap: 8px;
+`;
+
+type ProviderSelectProps = {
+  cloudProviders: Provider[];
 };
 
-/**
- * A wrapper component in modals contain cloud providers.
- * It set default provider by checking which provider has logged in
- * @component
- */
-export default class ProviderModalContainer extends Component<ProviderModalContainerProps> {
-  static defaultProps = {
-    cloudProviders: [],
-    currentProvider: null
-  };
-
-  componentDidMount() {
-    this._setDefaultProvider();
-  }
-
-  _setDefaultProvider() {
-    if (!this.props.currentProvider && this.props.cloudProviders?.length) {
-      const connected = this.props.cloudProviders?.find(
-        p => typeof p.getAccessToken === 'function' && p.getAccessToken()
-      );
-
-      if (connected && typeof this.props.onSetCloudProvider === 'function') {
-        this.props.onSetCloudProvider(connected.name);
-      }
-    }
-  }
-
-  render() {
-    return <>{this.props.children}</>;
-  }
-}
+export const ProviderSelect: React.FC<ProviderSelectProps> = ({cloudProviders = []}) =>
+  cloudProviders.length ? (
+    <StyledProviderSection>
+      {cloudProviders.map(provider => (
+        <CloudTile key={provider.name} provider={provider} />
+      ))}
+    </StyledProviderSection>
+  ) : (
+    <p>No storage provider available</p>
+  );

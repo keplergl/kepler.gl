@@ -18,12 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import styled, {ThemeProvider} from 'styled-components';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
 import {themeLT} from '@kepler.gl/styles';
 import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
-import ProviderModalContainer from './provider-modal-container';
 
 import {
   StyledModalContent,
@@ -31,14 +30,12 @@ import {
   InputLight,
   Button
 } from '../common/styled-components';
-import CloudTile from './cloud-tile';
 import StatusPanel from './status-panel';
 import {FormattedMessage} from '@kepler.gl/localization';
+import {useCloudListProvider} from '../hooks/use-cloud-list-provider';
+import {ProviderSelect} from './cloud-components/provider-select';
 import {Provider} from '@kepler.gl/cloud-providers';
-import {
-  cleanupExportImage as cleanupExportImageAction,
-  SetCloudProviderPayload
-} from '@kepler.gl/actions';
+import {cleanupExportImage as cleanupExportImageAction} from '@kepler.gl/actions';
 
 export const StyledInputLabel = styled.label`
   font-size: 12px;
@@ -88,21 +85,36 @@ const nop = () => {};
 const StyledShareMapModal = styled(StyledModalContent)`
   padding: 24px 72px 40px 72px;
   margin: 0 -72px -40px -72px;
+  display: flex;
+  flex-direction: column;
 `;
 
 const StyledInnerDiv = styled.div`
   min-height: 500px;
 `;
 
+const UNDERLINE_TEXT_DECORATION_STYLE = {textDecoration: 'underline'};
+
+const ShareMapHeader = ({cloudProviders}) => {
+  return (
+    <StyledExportSection>
+      <div className="description">
+        <div className="title">
+          <FormattedMessage id={'modal.saveMap.title'} />
+        </div>
+      </div>
+      <ProviderSelect cloudProviders={cloudProviders} />
+    </StyledExportSection>
+  );
+};
+
 interface ShareMapUrlModalFactoryProps {
   isProviderLoading?: boolean;
   isReady?: boolean;
   onExport?: (provider: Provider) => void;
-  cloudProviders?: Provider[];
   currentProvider: string | null;
   providerError?: string;
   successInfo?: {shareUrl?: string; folderLink?: string};
-  onSetCloudProvider?: (provider: SetCloudProviderPayload) => void;
   onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
   cleanupExportImage: typeof cleanupExportImageAction;
 }
@@ -110,33 +122,31 @@ interface ShareMapUrlModalFactoryProps {
 export default function ShareMapUrlModalFactory() {
   const ShareMapUrlModal: React.FC<ShareMapUrlModalFactoryProps> = ({
     isProviderLoading = false,
-    isReady,
     onExport = nop,
-    cloudProviders = [],
-    currentProvider = null,
     providerError = null,
     successInfo = {},
-    onSetCloudProvider = nop,
     onUpdateImageSetting = nop,
     cleanupExportImage
   }) => {
+    const {provider, cloudProviders} = useCloudListProvider();
     const {shareUrl, folderLink} = successInfo;
-    const provider = currentProvider ? cloudProviders.find(p => p.name === currentProvider) : null;
+
+    useEffect(() => {
+      if (provider) {
+        onExport(provider);
+      }
+    }, [provider]);
 
     return (
       <ThemeProvider theme={themeLT}>
-        <ProviderModalContainer
-          onSetCloudProvider={onSetCloudProvider}
-          cloudProviders={cloudProviders}
-          currentProvider={currentProvider}
+        <ImageModalContainer
+          provider={provider}
+          onUpdateImageSetting={onUpdateImageSetting}
+          cleanupExportImage={cleanupExportImage}
         >
-          <ImageModalContainer
-            currentProvider={currentProvider}
-            cloudProviders={cloudProviders}
-            onUpdateImageSetting={onUpdateImageSetting}
-            cleanupExportImage={cleanupExportImage}
-          >
-            <StyledShareMapModal className="export-cloud-modal">
+          <StyledShareMapModal className="export-cloud-modal">
+            <ShareMapHeader cloudProviders={cloudProviders} />
+            {provider && provider.hasSharingUrl() ? (
               <StyledInnerDiv>
                 <StyledExportSection>
                   <div className="description">
@@ -162,20 +172,6 @@ export default function ShareMapUrlModalFactory() {
                       <FormattedMessage id={'modal.shareMap.cloudSubtitle'} />
                     </div>
                   </div>
-                  <div className="selection">
-                    {cloudProviders.map(cloudProvider => (
-                      <CloudTile
-                        key={cloudProvider.name}
-                        onSelect={() => onExport(cloudProvider)}
-                        onSetCloudProvider={onSetCloudProvider}
-                        cloudProvider={cloudProvider}
-                        actionName="Upload"
-                        isSelected={cloudProvider.name === currentProvider}
-                        isConnected={Boolean(cloudProvider.getAccessToken())}
-                        isReady={isReady}
-                      />
-                    ))}
-                  </div>
                 </StyledExportSection>
                 {isProviderLoading || providerError ? (
                   <StatusPanel
@@ -197,21 +193,18 @@ export default function ShareMapUrlModalFactory() {
                           href={folderLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{textDecoration: 'underline'}}
+                          style={UNDERLINE_TEXT_DECORATION_STYLE}
                         >
-                          <FormattedMessage
-                            id={'modal.shareMap.gotoPage'}
-                            values={{currentProvider}}
-                          />
+                          {provider.name}
                         </a>
                       )}
                     </div>
                   </StyledExportSection>
                 )}
               </StyledInnerDiv>
-            </StyledShareMapModal>
-          </ImageModalContainer>
-        </ProviderModalContainer>
+            ) : null}
+          </StyledShareMapModal>
+        </ImageModalContainer>
       </ThemeProvider>
     );
   };
