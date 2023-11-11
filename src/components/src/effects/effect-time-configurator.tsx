@@ -243,6 +243,8 @@ export default function EffectTimeConfiguratorFactory(
 
     const setDate = useCallback(
       newDate => {
+        if (!newDate) return;
+
         const newFormattedDate = moment(newDate).format('YYYY-MM-DD');
         const newTimestamp = getTimestamp(newFormattedDate, formattedTime, timezone);
         onTimeParametersChanged({timestamp: newTimestamp});
@@ -252,6 +254,8 @@ export default function EffectTimeConfiguratorFactory(
 
     const setTime = useCallback(
       newTime => {
+        if (!newTime) return;
+
         const newTimestamp = getTimestamp(formattedDate, newTime, timezone);
         onTimeParametersChanged({timestamp: newTimestamp});
       },
@@ -260,6 +264,8 @@ export default function EffectTimeConfiguratorFactory(
 
     const setTimezone = useCallback(
       newTimezone => {
+        if (!newTimezone) return;
+
         const newTimestamp = getTimestamp(formattedDate, formattedTime, newTimezone);
         // date and time are adjusted to have the same value but in the new timezone
         onTimeParametersChanged({timestamp: newTimestamp, timezone: newTimezone});
