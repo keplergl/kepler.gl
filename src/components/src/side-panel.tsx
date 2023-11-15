@@ -114,6 +114,7 @@ export default function SidePanelFactory(
     const {
       appName,
       appWebsite,
+      availableProviders,
       datasets,
       filters,
       layers,
@@ -138,6 +139,7 @@ export default function SidePanelFactory(
     const {openDeleteModal, toggleModal, toggleSidePanel} = uiStateActions;
     const {activeSidePanel} = uiState;
     const {setMapInfo, showDatasetTable, updateTableColor} = visStateActions;
+    const {hasShare, hasStorage} = availableProviders;
 
     const {title} = mapInfo;
 
@@ -198,10 +200,10 @@ export default function SidePanelFactory(
           onExportImage={onClickExportImage}
           onExportData={onClickExportData}
           onExportMap={onClickExportMap}
-          onSaveMap={onSaveMap}
-          onSaveToStorage={onClickSaveToStorage}
-          onSaveAsToStorage={onClickSaveAsToStorage}
-          onShareMap={onClickShareMap}
+          onSaveMap={hasStorage ? onSaveMap : undefined}
+          onSaveToStorage={hasStorage ? onClickSaveToStorage : null}
+          onSaveAsToStorage={hasStorage && mapSaved ? onClickSaveAsToStorage : null}
+          onShareMap={hasShare ? onClickShareMap : null}
         />
         {/* the next two components should be moved into one */}
         {/* but i am keeping them because of backward compatibility */}

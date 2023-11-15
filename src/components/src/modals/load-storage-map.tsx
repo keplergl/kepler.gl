@@ -40,8 +40,12 @@ function LoadStorageMapFactory() {
         setIsLoading(true);
         provider
           .listMaps()
-          .then(maps => setMaps(maps))
-          .catch(setError)
+          .then(maps => {
+            setMaps(maps)
+          })
+          .catch(error => {
+            setError(error)
+          })
           .finally(() => setIsLoading(false));
       } else {
         setIsLoading(false);

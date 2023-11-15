@@ -25,8 +25,6 @@ import {MAP_THUMBNAIL_DIMENSION, EXPORT_IMG_RATIOS} from '@kepler.gl/constants';
 import {SetExportImageSettingUpdaterAction} from '@kepler.gl/actions';
 import {Provider} from '@kepler.gl/cloud-providers';
 
-/** @typedef {import('./image-modal-container').ImageModalContainerProps} ImageModalContainerProps */
-
 export type ImageModalContainerProps = {
   provider?: Provider | null;
   onUpdateImageSetting: (newSetting: SetExportImageSettingUpdaterAction['payload']) => void;
@@ -34,6 +32,7 @@ export type ImageModalContainerProps = {
   children?: React.ReactNode;
 };
 
+// TODO: this should be turned into a custom hook
 /**
  * A wrapper component in modals contain a image preview of the map with cloud providers
  * It sets export image size based on provider thumbnail size
@@ -54,7 +53,6 @@ const ImageModalContainer: React.FC<ImageModalContainerProps> = ({
 
   useEffect(() => {
     if (provider) {
-      debugger;
       if (provider.thumbnail) {
         onUpdateImageSetting({
           mapW: get(provider, ['thumbnail', 'width']) || MAP_THUMBNAIL_DIMENSION.width,

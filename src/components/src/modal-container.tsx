@@ -231,9 +231,6 @@ export default function ModalContainerFactory(
     };
 
     _onSaveMap = (provider, overwrite = false) => {
-      // const {currentProvider} = this.props.providerState;
-      // @ts-ignore
-      // const provider = this.props.cloudProviders.find(p => p.name === currentProvider);
       this._exportFileToCloud({
         provider,
         isPublic: false,
@@ -499,7 +496,6 @@ export default function ModalContainerFactory(
             template = (
               <ShareMapModal
                 {...providerState}
-                isReady={!uiState.exportImage.processing}
                 onExport={this._onShareMapUrl}
                 cleanupExportImage={uiStateActions.cleanupExportImage}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}

@@ -52,6 +52,10 @@ export const FeatureFlagsContextProvider = (
   </FeatureFlagsContext.Provider>
 );
 
+/**
+ * This provides keeps track of the ist cloud providers
+ * and the current selected one
+ */
 export const CloudProviderContext = createContext<CloudProviderContextType>({
   provider: null,
   setProvider: () => {},

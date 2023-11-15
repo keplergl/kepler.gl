@@ -36,6 +36,7 @@ import {useCloudListProvider} from '../hooks/use-cloud-list-provider';
 import {ProviderSelect} from './cloud-components/provider-select';
 import {Provider} from '@kepler.gl/cloud-providers';
 import {cleanupExportImage as cleanupExportImageAction} from '@kepler.gl/actions';
+import {dataTestIds} from '@kepler.gl/constants';
 
 export const StyledInputLabel = styled.label`
   font-size: 12px;
@@ -100,7 +101,7 @@ const ShareMapHeader = ({cloudProviders}) => {
     <StyledExportSection>
       <div className="description">
         <div className="title">
-          <FormattedMessage id={'modal.saveMap.title'} />
+          <FormattedMessage id={'modal.shareMap.title'} />
         </div>
       </div>
       <ProviderSelect cloudProviders={cloudProviders} />
@@ -110,9 +111,7 @@ const ShareMapHeader = ({cloudProviders}) => {
 
 interface ShareMapUrlModalFactoryProps {
   isProviderLoading?: boolean;
-  isReady?: boolean;
   onExport?: (provider: Provider) => void;
-  currentProvider: string | null;
   providerError?: string;
   successInfo?: {shareUrl?: string; folderLink?: string};
   onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
@@ -146,8 +145,8 @@ export default function ShareMapUrlModalFactory() {
         >
           <StyledShareMapModal className="export-cloud-modal">
             <ShareMapHeader cloudProviders={cloudProviders} />
-            {provider && provider.hasSharingUrl() ? (
-              <StyledInnerDiv>
+            {provider?.hasSharingUrl() ? (
+              <StyledInnerDiv data-testid={dataTestIds.providerShareMap}>
                 <StyledExportSection>
                   <div className="description">
                     <div className="title">
@@ -177,7 +176,7 @@ export default function ShareMapUrlModalFactory() {
                   <StatusPanel
                     isLoading={isProviderLoading}
                     error={providerError}
-                    providerIcon={provider && provider.icon}
+                    providerIcon={provider.icon}
                   />
                 ) : null}
                 {shareUrl && (

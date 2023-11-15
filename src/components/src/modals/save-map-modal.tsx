@@ -24,7 +24,12 @@ import ImageModalContainer, {ImageModalContainerProps} from './image-modal-conta
 import {FlexContainer} from '../common/flex-container';
 import StatusPanel, {UploadAnimation} from './status-panel';
 import {ProviderSelect} from './cloud-components/provider-select';
-import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER, ExportImage} from '@kepler.gl/constants';
+import {
+  MAP_THUMBNAIL_DIMENSION,
+  MAP_INFO_CHARACTER,
+  ExportImage,
+  dataTestIds
+} from '@kepler.gl/constants';
 
 import {
   StyledModalContent,
@@ -39,9 +44,8 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {MapInfo} from '@kepler.gl/types';
 import {Provider} from '@kepler.gl/cloud-providers';
 import {setMapInfo, cleanupExportImage as cleanupExportImageAction} from '@kepler.gl/actions';
-import {ModalFooter, useCloudListProvider} from '@kepler.gl/components';
-
-/** @typedef {import('./save-map-modal').SaveMapModalProps} SaveMapModalProps */
+import {ModalFooter} from '../common/modal';
+import {useCloudListProvider} from '../hooks/use-cloud-list-provider';
 
 const StyledSaveMapModal = styled.div.attrs({
   className: 'save-map-modal'
@@ -105,50 +109,53 @@ type MapInfoPanelProps = Pick<SaveMapModalProps, 'mapInfo' | 'characterLimits'> 
 };
 
 export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
-  mapInfo = {description: '', title: ''},
+  mapInfo,
   characterLimits,
   onChangeInput
-}) => (
-  <div className="selection map-info-panel">
-    <StyledModalSection className="save-map-modal-name">
-      <div className="modal-section-title">Name*</div>
-      <div>
-        <InputLight
-          id="map-title"
-          type="text"
-          value={mapInfo.title}
-          onChange={e => onChangeInput('title', e)}
-          placeholder="Type map title"
-        />
-      </div>
-    </StyledModalSection>
-    <StyledModalSection>
-      <FlexContainer className="save-map-modal-description">
-        <div className="modal-section-title">Description</div>
-        <div className="modal-section-subtitle">(optional)</div>
-      </FlexContainer>
-      <div>
-        <TextAreaLight
-          rows={3}
-          id="map-description"
-          style={TEXT_AREA_LIGHT_STYLE as React.CSSProperties}
-          value={mapInfo.description}
-          onChange={e => onChangeInput('description', e)}
-          placeholder="Type map description"
-        />
-      </div>
-      <StyledModalInputFootnote
-        error={
-          Boolean(characterLimits?.description) &&
-          mapInfo.description.length > Number(characterLimits?.description)
-        }
-      >
-        {mapInfo.description.length}/
-        {characterLimits?.description || MAP_INFO_CHARACTER.description} characters
-      </StyledModalInputFootnote>
-    </StyledModalSection>
-  </div>
-);
+}) => {
+  const {description = '', title = ''} = mapInfo;
+  return (
+    <div className="selection map-info-panel" data-testid={dataTestIds.providerMapInfoPanel}>
+      <StyledModalSection className="save-map-modal-name">
+        <div className="modal-section-title">Name*</div>
+        <div>
+          <InputLight
+            id="map-title"
+            type="text"
+            value={title}
+            onChange={e => onChangeInput('title', e)}
+            placeholder="Type map title"
+          />
+        </div>
+      </StyledModalSection>
+      <StyledModalSection>
+        <FlexContainer className="save-map-modal-description">
+          <div className="modal-section-title">Description</div>
+          <div className="modal-section-subtitle">(optional)</div>
+        </FlexContainer>
+        <div>
+          <TextAreaLight
+            rows={3}
+            id="map-description"
+            style={TEXT_AREA_LIGHT_STYLE as React.CSSProperties}
+            value={description}
+            onChange={e => onChangeInput('description', e)}
+            placeholder="Type map description"
+          />
+        </div>
+        <StyledModalInputFootnote
+          error={
+            Boolean(characterLimits?.description) &&
+            description.length > Number(characterLimits?.description)
+          }
+        >
+          {description.length}/{characterLimits?.description || MAP_INFO_CHARACTER.description}{' '}
+          characters
+        </StyledModalInputFootnote>
+      </StyledModalSection>
+    </div>
+  );
+};
 
 const SaveMapHeader = ({cloudProviders}) => {
   return (
@@ -209,22 +216,23 @@ function SaveMapModalFactory() {
         <StyledSaveMapModal>
           <StyledModalContent className="save-map-modal-content">
             <SaveMapHeader cloudProviders={cloudProviders} />
-            {provider && provider.getManagementUrl && (
+            {provider && (
               <>
-                <StyledExportSection style={STYLED_EXPORT_SECTION_STYLE}>
-                  <div className="description" />
-                  <div className="selection">
-                    <a
-                      key={1}
-                      href={provider.getManagementUrl()}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={PROVIDER_MANAGER_URL_STYLE}
-                    >
-                      Go to your Kepler.gl {provider.displayName} page
-                    </a>
-                  </div>
-                </StyledExportSection>
+                {provider.getManagementUrl ? (
+                  <StyledExportSection style={STYLED_EXPORT_SECTION_STYLE}>
+                    <div className="selection">
+                      <a
+                        key={1}
+                        href={provider.getManagementUrl()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={PROVIDER_MANAGER_URL_STYLE}
+                      >
+                        Go to your Kepler.gl {provider.displayName} page
+                      </a>
+                    </div>
+                  </StyledExportSection>
+                ) : null}
                 <StyledExportSection>
                   <div className="description image-preview-panel">
                     <ImagePreview
@@ -234,7 +242,10 @@ function SaveMapModalFactory() {
                     />
                   </div>
                   {isProviderLoading ? (
-                    <div className="selection map-saving-animation">
+                    <div
+                      data-testid={dataTestIds.providerLoading}
+                      className="selection map-saving-animation"
+                    >
                       <UploadAnimation icon={provider && provider.icon} />
                     </div>
                   ) : (

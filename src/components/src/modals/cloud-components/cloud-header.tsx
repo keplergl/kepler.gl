@@ -23,6 +23,8 @@ import {Button} from '../../common/styled-components';
 import {ArrowLeft} from '../../common/icons';
 import {FormattedMessage} from '@kepler.gl/localization';
 import styled from 'styled-components';
+import {dataTestIds} from '@kepler.gl/constants';
+import {Provider} from '@kepler.gl/cloud-providers';
 
 const StyledStorageHeader = styled.div`
   display: flex;
@@ -57,10 +59,15 @@ const Title = styled.span`
   }
 `;
 
-export const CloudHeader = ({provider, onBack}) => {
+type CloudHeaderProps = {
+  provider: Provider;
+  onBack: () => void;
+};
+
+export const CloudHeader: React.FC<CloudHeaderProps> = ({provider, onBack}) => {
   const managementUrl = useMemo(() => provider.getManagementUrl(), [provider]);
   return (
-    <div>
+    <div data-testid={dataTestIds.cloudHeader}>
       <StyledStorageHeader>
         <StyledBackBtn>
           <Button link onClick={onBack}>
@@ -68,7 +75,7 @@ export const CloudHeader = ({provider, onBack}) => {
             <FormattedMessage id={'modal.loadStorageMap.back'} />
           </Button>
         </StyledBackBtn>
-        {provider.getManagementUrl && (
+        {managementUrl && (
           <a
             key={1}
             href={managementUrl}

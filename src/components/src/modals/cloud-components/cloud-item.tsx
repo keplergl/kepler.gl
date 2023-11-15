@@ -124,19 +124,20 @@ const StyledVisualizationItem = styled.div`
 `;
 
 export const CloudItem = ({vis, onClick}) => {
+  const thumbnailStyle = {backgroundImage: `url(${vis.thumbnail})`};
   return (
     <StyledVisualizationItem onClick={onClick}>
       {vis.thumbnail ? (
-        <div className="vis_item-thumb" style={{backgroundImage: `url(${vis.thumbnail})`}}>
+        <div role="thumbnail-wrapper" className="vis_item-thumb" style={thumbnailStyle}>
           {vis.hasOwnProperty('privateMap') ? <PrivacyBadge privateMap={vis.privateMap} /> : null}
         </div>
       ) : (
-        <MapIcon className="vis_item-icon">
+        <MapIcon role="map-icon" className="vis_item-icon">
           {vis.hasOwnProperty('privateMap') ? <PrivacyBadge privateMap={vis.privateMap} /> : null}
         </MapIcon>
       )}
       <span className="vis_item-title">{vis.title}</span>
-      {vis.description && vis.description.length && (
+      {vis.description?.length && (
         <span className="vis_item-description">{vis.description}</span>
       )}
       <span className="vis_item-modification-date">

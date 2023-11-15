@@ -215,7 +215,8 @@ export interface ButtonProps {
   inactive?: boolean;
 }
 
-export const Button = styled.div.attrs(props => ({
+// this needs to be an actual button to be able to set disabled attribute correctly
+export const Button = styled.button.attrs(props => ({
   className: classnames('button', props.className)
 }))<ButtonProps>`
   align-items: center;

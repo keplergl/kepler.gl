@@ -337,6 +337,7 @@ export default {
       namingTitle: '3. Name your style'
     },
     shareMap: {
+      title: 'Share Map',
       shareUriTitle: 'Share Map Url',
       shareUriSubtitle: 'Generate a map url to share with others',
       cloudTitle: 'Cloud storage',

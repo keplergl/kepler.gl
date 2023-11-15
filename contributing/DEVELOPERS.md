@@ -52,11 +52,11 @@ cd kepler.gl
 # Add the main kepler.gl repository as an upstream remote to your repository:
 git remote add upstream "git@github.com:keplergl/kepler.gl.git"
 
-# Install JavaScript dependencies:
-yarn bootstrap
-
 # Install Puppeteer
 yarn global add puppeteer
+
+# Install JavaScript dependencies:
+yarn bootstrap
 
 # Setup mapbox access token locally
 export MapboxAccessToken=<insert_your_token>

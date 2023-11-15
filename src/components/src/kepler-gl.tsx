@@ -186,7 +186,7 @@ export function getVisibleDatasets(datasets) {
   return filterObjectByPredicate(datasets, (key, value) => key !== GEOCODER_DATASET_NAME);
 }
 
-export const sidePanelSelector = (props: KeplerGLProps, filteredDatasets) => ({
+export const sidePanelSelector = (props: KeplerGLProps, availableProviders, filteredDatasets) => ({
   appName: props.appName ? props.appName : DEFAULT_KEPLER_GL_PROPS.appName,
   version: props.version ? props.version : DEFAULT_KEPLER_GL_PROPS.version,
   appWebsite: props.appWebsite,
@@ -209,6 +209,7 @@ export const sidePanelSelector = (props: KeplerGLProps, filteredDatasets) => ({
   overlayBlending: props.visState.overlayBlending,
 
   width: props.sidePanelWidth ? props.sidePanelWidth : DEFAULT_KEPLER_GL_PROPS.width,
+  availableProviders,
   mapSaved: props.providerState.mapSaved
 });
 
@@ -420,6 +421,17 @@ function KeplerGlFactory(
     datasetsSelector = props => props.visState.datasets;
     filteredDatasetsSelector = createSelector(this.datasetsSelector, getVisibleDatasets);
 
+    availableProviders = createSelector(
+      (props: KeplerGLProps) => props.cloudProviders,
+      providers =>
+        Array.isArray(providers) && providers.length
+          ? {
+              hasStorage: providers.some(p => p.hasPrivateStorage()),
+              hasShare: providers.some(p => p.hasSharingUrl())
+            }
+          : {}
+    );
+
     localeMessagesSelector = createSelector(
       (props: KeplerGLProps) => props.localeMessages,
       customMessages => (customMessages ? mergeMessages(messages, customMessages) : messages)
@@ -481,10 +493,10 @@ function KeplerGlFactory(
       const theme = this.availableThemeSelector(this.props);
       const localeMessages = this.localeMessagesSelector(this.props);
       const isExportingImage = uiState.exportImage.exporting;
+      const availableProviders = this.availableProviders(this.props);
 
       const filteredDatasets = this.filteredDatasetsSelector(this.props);
-      const sideFields = sidePanelSelector(this.props, filteredDatasets);
-
+      const sideFields = sidePanelSelector(this.props, availableProviders, filteredDatasets);
       const plotContainerFields = plotContainerSelector(this.props);
       const bottomWidgetFields = bottomWidgetSelector(this.props, theme);
       const modalContainerFields = modalContainerSelector(this.props, this.root.current);

@@ -29,4 +29,7 @@ export const CloudListProvider: React.FC<CloudListProviderProps> = ({children, p
   return <CloudProviderContext.Provider value={value}>{children}</CloudProviderContext.Provider>;
 };
 
+/**
+ * this hook provides access the CloudList provider context
+ */
 export const useCloudListProvider = () => useContext(CloudProviderContext);

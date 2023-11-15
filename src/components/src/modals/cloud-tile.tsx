@@ -79,7 +79,7 @@ const StyledUserName = styled.div`
 `;
 
 interface OnClickProps {
-  onClick?: React.MouseEventHandler<HTMLDivElement>;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
 }
 
 const LoginButton = ({onClick}: OnClickProps) => (
@@ -102,6 +102,12 @@ interface CloudTileProps {
   provider: Provider;
 }
 
+/**
+ * this component display a provider and allows users to select and set the current provider
+ * @param provider
+ * @param actionName
+ * @constructor
+ */
 const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
   const [user, setUser] = useState<CloudUser | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -122,7 +128,7 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
     }
   }, [provider]);
 
-  const login = useCallback(async () => {
+  const onLogin = useCallback(async () => {
     try {
       const user = await provider.login();
       setUser(user);
@@ -132,17 +138,17 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
     }
   }, [provider]);
 
-  const select = useCallback(async () => {
+  const onSelect = useCallback(async () => {
     if (isLoading) {
       return;
     }
     if (!user) {
-      await login();
+      await onLogin();
     }
     setProvider(provider);
   }, [setProvider, provider, user, isLoading]);
 
-  const logout = useCallback(async () => {
+  const onLogout = useCallback(async () => {
     setIsLoading(true);
     try {
       await provider.logout();
@@ -158,7 +164,7 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
 
   return (
     <StyledBox>
-      <StyledTileWrapper onClick={select} selected={isSelected}>
+      <StyledTileWrapper onClick={onSelect} selected={isSelected}>
         <StyledCloudName>{displayName || name}</StyledCloudName>
         {provider.icon ? <provider.icon height="64px" /> : null}
         {isLoading ? (
@@ -168,7 +174,7 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
         )}
         {isSelected ? <CheckMark /> : null}
       </StyledTileWrapper>
-      {user ? <LogoutButton onClick={logout} /> : <LoginButton onClick={login} />}
+      {user ? <LogoutButton onClick={onLogout} /> : <LoginButton onClick={onLogin} />}
       {error ? <div>{error.message}</div> : null}
     </StyledBox>
   );

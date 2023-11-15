@@ -34,7 +34,7 @@ const StyledSpinner = styled.div`
 
 export const CloudMaps = ({provider, onSelectMap, isLoading, maps, error}) => {
   if (error) {
-    return <div>Error while fetching maps</div>;
+    return <div>Error while fetching maps: {error.message}</div>;
   }
 
   if (isLoading) {
