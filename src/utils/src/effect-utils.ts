@@ -23,7 +23,7 @@ export function computeDeckEffects({
   // TODO: 1) deck effects per deck context 2) preserved between draws
   return visState.effectOrder
     .map(effectId => {
-      const effect = findById(effectId)(visState.effects);
+      const effect = (findById(effectId)(visState.effects) as Effect) || undefined;
       if (effect?.isEnabled && effect.deckEffect) {
         updateEffect({visState, mapState, effect});
         return effect.deckEffect;
