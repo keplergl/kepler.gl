@@ -107,7 +107,7 @@ export default class Provider {
    * @public
    */
   hasSharingUrl(): boolean {
-    return true;
+    return false;
   }
 
   /**
