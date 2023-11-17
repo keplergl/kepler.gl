@@ -18,6 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './data-table-modal-test';
-import './export-image-modal-test';
-import './load-data-modal-test';
+import React from 'react';
+import LoadingDialog from '../loading-dialog';
+import styled from 'styled-components';
+
+const StyledSpinner = styled.div`
+  text-align: center;
+  span {
+    margin: 0 auto;
+  }
+`;
+
+export const ProviderLoading = () => {
+  return (
+    <StyledSpinner>
+      <LoadingDialog size={64} />
+    </StyledSpinner>
+  );
+};

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {useMemo} from 'react';
 import styled from 'styled-components';
 import {CenterVerticalFlexbox} from '../common/styled-components';
 import {UploadAnimation} from './status-panel';
@@ -26,8 +26,8 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
 import {Provider} from '@kepler.gl/cloud-providers';
 import {cleanupExportImage as cleanupExportImageAction} from '@kepler.gl/actions';
-
-/** @typedef {import('./overwrite-map-modal').OverwriteMapModalProps} OverwriteMapModalProps */
+import {useCloudListProvider} from '../hooks/use-cloud-list-provider';
+import {ModalFooter} from '../common/modal';
 
 const StyledMsg = styled.div`
   margin-top: 24px;
@@ -51,13 +51,19 @@ const StyledOverwriteMapModal = styled(CenterVerticalFlexbox)`
 type OverwriteMapModalProps = {
   mapSaved: string | null;
   title: string;
-  cloudProviders: Provider[];
   isProviderLoading: boolean;
-  currentProvider: string | null;
 
   // callbacks
   onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
   cleanupExportImage: typeof cleanupExportImageAction;
+  onConfirm: (provider: Provider) => void;
+  onCancel: () => void;
+};
+
+const CONFIRM_BUTTON = {
+  large: true,
+  children: 'Yes',
+  disabled: false
 };
 
 const OverwriteMapModalFactory = () => {
@@ -67,17 +73,25 @@ const OverwriteMapModalFactory = () => {
   const OverwriteMapModal: React.FC<OverwriteMapModalProps> = ({
     mapSaved,
     title,
-    currentProvider,
-    cloudProviders,
     isProviderLoading,
     onUpdateImageSetting,
-    cleanupExportImage
+    cleanupExportImage,
+    onCancel,
+    onConfirm
   }) => {
-    const provider = cloudProviders.find(cp => cp.name === currentProvider);
+    const {provider} = useCloudListProvider();
+
+    const confirmButton = useMemo(
+      () => ({
+        ...CONFIRM_BUTTON,
+        disabled: !provider
+      }),
+      [provider]
+    );
+
     return (
       <ImageModalContainer
-        currentProvider={currentProvider}
-        cloudProviders={cloudProviders}
+        provider={provider}
         onUpdateImageSetting={onUpdateImageSetting}
         cleanupExportImage={cleanupExportImage}
       >
@@ -101,6 +115,11 @@ const OverwriteMapModalFactory = () => {
             </>
           )}
         </StyledOverwriteMapModal>
+        <ModalFooter
+          cancel={onCancel}
+          confirm={() => provider && onConfirm(provider)}
+          confirmButton={confirmButton}
+        />
       </ImageModalContainer>
     );
   };

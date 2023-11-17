@@ -22,9 +22,14 @@ import {AUTH_TOKENS} from '../constants/default-settings';
 
 import DropboxProvider from './dropbox/dropbox-provider';
 import CartoProvider from './carto/carto-provider';
+import FoursquareProvider from './fsq-studio/foursquare-provider';
 
-const {DROPBOX_CLIENT_ID, CARTO_CLIENT_ID} = AUTH_TOKENS;
-const DROPBOX_CLIENT_NAME = 'Kepler.gl%20(managed%20by%20Uber%20Technologies%2C%20Inc.)';
+const {
+  DROPBOX_CLIENT_ID,
+  CARTO_CLIENT_ID
+} = AUTH_TOKENS;
+
+const DROPBOX_CLIENT_NAME = 'Kepler.gl Demo App';
 
 export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
 

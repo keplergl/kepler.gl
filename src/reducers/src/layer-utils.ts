@@ -182,7 +182,12 @@ export function getLayerHoverProp({
     const layer = layers[overlay.props.idx];
 
     // NOTE: for binary format GeojsonLayer, deck will return object=null but hoverInfo.index >= 0
-    if ((object || hoverInfo.index >= 0) && layer && layer.getHoverData && layersToRender[layer.id]) {
+    if (
+      (object || hoverInfo.index >= 0) &&
+      layer &&
+      layer.getHoverData &&
+      layersToRender[layer.id]
+    ) {
       // if layer is visible and have hovered data
       const {
         config: {dataId}

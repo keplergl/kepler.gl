@@ -64,5 +64,9 @@ export const AUTH_TOKENS = {
   MAPBOX_TOKEN: process.env.MapboxAccessToken, // eslint-disable-line
   DROPBOX_CLIENT_ID: process.env.DropboxClientId, // eslint-disable-line
   EXPORT_MAPBOX_TOKEN: process.env.MapboxExportToken, // eslint-disable-line
-  CARTO_CLIENT_ID: process.env.CartoClientId // eslint-disable-line
+  CARTO_CLIENT_ID: process.env.CartoClientId, // eslint-disable-line
+  FSQ_STUDIO_CLIENT_ID: process.env.FSQStudioClientId, // eslint-disable-line
+  FSQ_STUDIO_DOMAIN: process.env.FSQStudioDomain, // eslint-disable-line
+  FSQ_STUDIO_API_URL: process.env.FSQStudioAPIURL, // eslint-disable-line
+  FSQ_STUDIO_USER_MAPS_URL: process.env.FSQStudioUserMapsURL // eslint-disable-line
 };

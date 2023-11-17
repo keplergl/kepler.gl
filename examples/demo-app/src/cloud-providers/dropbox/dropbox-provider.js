@@ -21,10 +21,9 @@
 // DROPBOX
 import {Dropbox} from 'dropbox';
 import window from 'global/window';
-import Console from 'global/console';
 import DropboxIcon from './dropbox-icon';
 import {MAP_URI} from '../../constants/default-settings';
-import {Provider} from '@kepler.gl/cloud-providers';
+import {KEPLER_FORMAT, Provider} from '@kepler.gl/cloud-providers';
 
 const NAME = 'dropbox';
 const DISPLAY_NAME = 'Dropbox';
@@ -60,7 +59,7 @@ export default class DropboxProvider extends Provider {
     this.appName = appName;
 
     this._folderLink = `${KEPLER_DROPBOX_FOLDER_LINK}/${appName}`;
-    this._path = `/Apps/${window.decodeURIComponent(this.appName)}`;
+    this._path = '';
 
     // Initialize Dropbox API
     this._initializeDropbox();
@@ -73,71 +72,62 @@ export default class DropboxProvider extends Provider {
    * - Receive the token when ready
    * - Close the opened tab
    */
-  async login(onCloudLoginSuccess) {
-    const link = this._authLink();
+  async login() {
+    return new Promise((resolve, reject) => {
+      const link = this._authLink();
 
-    const authWindow = window.open(link, '_blank', 'width=1024,height=716');
+      const authWindow = window.open(link, '_blank', 'width=1024,height=716');
 
-    const handleToken = async e => {
-      // TODO: add security step to validate which domain the message is coming from
-      if (authWindow) {
-        authWindow.close();
-      }
+      const handleToken = async event => {
+        // if user has dev tools this will skip all the react-devtools events
+        if (!event.data.token) {
+          return;
+        }
 
-      window.removeEventListener('message', handleToken);
+        if (authWindow) {
+          authWindow.close();
+          window.removeEventListener('message', handleToken);
+        }
 
-      if (!e.data.token) {
-        Console.warn('Failed to login to Dropbox');
-        return;
-      }
+        const {token} = event.data;
 
-      this._dropbox.setAccessToken(e.data.token);
-      // save user name
-      const user = await this._getUser();
+        if (!token) {
+          reject('Failed to login to Dropbox');
+          return;
+        }
 
-      if (window.localStorage) {
-        window.localStorage.setItem(
-          'dropbox',
-          JSON.stringify({
-            // dropbox token doesn't expire unless revoked by the user
-            token: e.data.token,
-            user,
-            timestamp: new Date()
-          })
-        );
-      }
+        this._dropbox.setAccessToken(token);
+        // save user name
+        const user = await this.getUser();
 
-      if (typeof onCloudLoginSuccess === 'function') {
-        onCloudLoginSuccess();
-      }
-    };
+        if (window.localStorage) {
+          window.localStorage.setItem(
+            'dropbox',
+            JSON.stringify({
+              // dropbox token doesn't expire unless revoked by the user
+              token: token,
+              user,
+              timestamp: new Date()
+            })
+          );
+        }
 
-    window.addEventListener('message', handleToken);
+        resolve(user);
+      };
+
+      window.addEventListener('message', handleToken);
+    });
   }
 
-  async downloadMap(loadParams) {
-    const token = this.getAccessToken();
-    if (!token) {
-      this.login(() => this.downloadMap(loadParams));
-    }
-    const result = await this._dropbox.filesDownload(loadParams);
-    const json = await this._readFile(result.fileBlob);
-
-    const response = {
-      map: json,
-      format: 'keplergl'
-    };
-
-    this._loadParam = loadParams;
-    return response;
-  }
-
+  /**
+   * returns a list of maps
+   */
   async listMaps() {
     // list files
     try {
       // https://dropbox.github.io/dropbox-sdk-js/Dropbox.html#filesListFolder__anchor
       const response = await this._dropbox.filesListFolder({
-        path: this._path
+        path: `${this._path}`
       });
       const {pngs, visualizations} = this._parseEntries(response);
       // https://dropbox.github.io/dropbox-sdk-js/Dropbox.html#filesGetThumbnailBatch__anchor
@@ -148,15 +138,14 @@ export default class DropboxProvider extends Provider {
       );
 
       // append to visualizations
-      thumbnails &&
-        thumbnails.forEach(thb => {
-          if (thb['.tag'] === 'success' && thb.thumbnail) {
-            const matchViz = visualizations[pngs[thb.metadata.id] && pngs[thb.metadata.id].name];
-            if (matchViz) {
-              matchViz.thumbnail = `${IMAGE_URL_PREFIX}${thb.thumbnail}`;
-            }
+      (thumbnails || []).forEach(thb => {
+        if (thb['.tag'] === 'success' && thb.thumbnail) {
+          const matchViz = visualizations[pngs[thb.metadata.id] && pngs[thb.metadata.id].name];
+          if (matchViz) {
+            matchViz.thumbnail = `${IMAGE_URL_PREFIX}${thb.thumbnail}`;
           }
-        });
+        }
+      });
 
       // dropbox returns
       return Object.values(visualizations).reverse();
@@ -166,49 +155,10 @@ export default class DropboxProvider extends Provider {
     }
   }
 
-  getUserName() {
-    // load user from
-    if (window.localStorage) {
-      const jsonString = window.localStorage.getItem('dropbox');
-      const user = jsonString && JSON.parse(jsonString).user;
-      return user;
-    }
-    return null;
-  }
-
-  async logout(onCloudLogoutSuccess) {
-    const token = this._dropbox.getAccessToken();
-
-    if (token) {
-      await this._dropbox.authTokenRevoke();
-      if (window.localStorage) {
-        window.localStorage.removeItem('dropbox');
-      }
-      // re instantiate dropbox
-      this._initializeDropbox();
-      onCloudLogoutSuccess();
-    }
-  }
-
-  isEnabled() {
-    return this.clientId !== null;
-  }
-
-  hasPrivateStorage() {
-    return PRIVATE_STORAGE_ENABLED;
-  }
-
-  hasSharingUrl() {
-    return SHARING_ENABLED;
-  }
-
   /**
    *
    * @param mapData map data and config in one json object {map: {datasets: Array<Object>, config: Object, info: Object}
    * @param blob json file blob to upload
-   * @param fileName if blob doesn't contain a file name, this field is used
-   * @param isPublic define whether the file will be available publicly once uploaded
-   * @returns {Promise<DropboxTypes.files.FileMetadata>}
    */
   async uploadMap({mapData, options = {}}) {
     const {isPublic} = options;
@@ -221,10 +171,11 @@ export default class DropboxProvider extends Provider {
     // FileWriteMode: Selects what to do if the file already exists.
     // Always overwrite if sharing
     const mode = options.overwrite || isPublic ? 'overwrite' : 'add';
+    const path = `${this._path}/${fileName}`;
     let metadata;
     try {
       metadata = await this._dropbox.filesUpload({
-        path: `${this._path}/${fileName}`,
+        path,
         contents: JSON.stringify(fileContent),
         mode
       });
@@ -233,13 +184,15 @@ export default class DropboxProvider extends Provider {
         throw this.getFileConflictError();
       }
     }
+
     // save a thumbnail image
-    thumbnail &&
-      (await this._dropbox.filesUpload({
-        path: `${this._path}/${fileName}`.replace(/\.json$/, '.png'),
+    if (thumbnail) {
+      await this._dropbox.filesUpload({
+        path: path.replace(/\.json$/, '.png'),
         contents: thumbnail,
         mode
-      }));
+      });
+    }
 
     // keep on create shareUrl
     if (isPublic) {
@@ -250,6 +203,58 @@ export default class DropboxProvider extends Provider {
     this._loadParam = {path: metadata.path_lower};
 
     return this._loadParam;
+  }
+
+  /**
+   * download the map content
+   * @param loadParams
+   */
+  async downloadMap(loadParams) {
+    const token = this.getAccessToken();
+    if (!token) {
+      this.login(() => this.downloadMap(loadParams));
+    }
+    const result = await this._dropbox.filesDownload(loadParams);
+    const json = await this._readFile(result.fileBlob);
+
+    const response = {
+      map: json,
+      format: KEPLER_FORMAT
+    };
+
+    this._loadParam = loadParams;
+    return Promise.resolve(response);
+  }
+
+  getUserName() {
+    // load user from
+    if (window.localStorage) {
+      const jsonString = window.localStorage.getItem('dropbox');
+      const user = jsonString && JSON.parse(jsonString).user;
+      return user;
+    }
+    return null;
+  }
+
+  async logout() {
+    await this._dropbox.authTokenRevoke();
+    if (window.localStorage) {
+      window.localStorage.removeItem('dropbox');
+    }
+    // re instantiate dropbox
+    this._initializeDropbox();
+  }
+
+  isEnabled() {
+    return this.clientId !== null;
+  }
+
+  hasPrivateStorage() {
+    return PRIVATE_STORAGE_ENABLED;
+  }
+
+  hasSharingUrl() {
+    return SHARING_ENABLED;
   }
 
   /**
@@ -314,22 +319,15 @@ export default class DropboxProvider extends Provider {
     this._dropbox.setClientId(this.clientId);
   }
 
-  async _getUser() {
-    let response;
-    try {
-      response = await this._dropbox.usersGetCurrentAccount();
-    } catch (error) {
-      Console.warn(error);
-      return null;
-    }
-
+  async getUser() {
+    const response = await this._dropbox.usersGetCurrentAccount();
     return this._getUserFromAccount(response);
   }
 
   _handleDropboxError(error) {
     // dropbox list_folder error
     if (error && error.error && error.error.error_summary) {
-      return `Dropbox Error: ${error.error.error_summary}`;
+      return new Error(`Dropbox Error: ${error.error.error_summary}`);
     }
 
     return error;
@@ -422,7 +420,12 @@ export default class DropboxProvider extends Provider {
   }
 
   _getUserFromAccount(response) {
-    return response ? (response.name && response.name.abbreviated_name) || response.email : null;
+    const {name} = response;
+    return {
+      name: name.display_name,
+      email: response.email,
+      abbreviated: name.abbreviated_name
+    };
   }
 
   _getThumbnailRequests(pngs) {
@@ -470,7 +473,7 @@ export default class DropboxProvider extends Provider {
           name,
           title,
           id,
-          lastModification: new Date(client_modified).getTime(),
+          updatedAt: new Date(client_modified).getTime(),
           loadParams: {
             path: path_lower
           }

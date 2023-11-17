@@ -18,12 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
 import {Logout, Login} from '../common/icons';
 import {CenterVerticalFlexbox, Button, CheckMark} from '../common/styled-components';
-import LoadingSpinner from '../common/loading-spinner';
 import {Provider} from '@kepler.gl/cloud-providers';
+import {useCloudListProvider} from '../hooks/use-cloud-list-provider';
+import {CloudUser} from '@kepler.gl/cloud-providers/src/provider';
 
 interface StyledTileWrapperProps {
   selected?: boolean;
@@ -59,6 +60,7 @@ const StyledTileWrapper = styled.div.attrs({
 
 const StyledBox = styled(CenterVerticalFlexbox)`
   margin-right: 12px;
+  position: relative;
 `;
 
 const StyledCloudName = styled.div`
@@ -78,7 +80,7 @@ const StyledUserName = styled.div`
 `;
 
 interface OnClickProps {
-  onClick?: React.MouseEventHandler<HTMLDivElement>;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
 }
 
 const LoginButton = ({onClick}: OnClickProps) => (
@@ -95,85 +97,112 @@ const LogoutButton = ({onClick}: OnClickProps) => (
   </Button>
 );
 
-interface ActionButtonProps {
-  isConnected?: boolean;
-  actionName?: string | null;
-  isReady?: boolean;
-}
-
-const ActionButton = ({isConnected, actionName = null, isReady}: ActionButtonProps) =>
-  isConnected && actionName ? (
-    <Button className="cloud-tile__action" small secondary disabled={!isReady}>
-      {isReady ? actionName : <LoadingSpinner size={12} />}
-    </Button>
-  ) : null;
+const NewTag = styled.div`
+  width: 37px;
+  height: 19px;
+  display: flex;
+  align-content: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 4px 8px;
+  background-color: #EDE9F9;
+  color: #8863F8;
+  position: absolute;
+  left: 35%;
+  top: -8px
+  z-index: 500;
+  font-size: 11px;
+  line-height: 10px;
+;
+`;
 
 interface CloudTileProps {
-  onSelect?: React.MouseEventHandler<HTMLDivElement>;
-  // default to login
-  onConnect?: (() => void) | null;
-  // default to logout
-  onLogout?: (() => void) | null;
-  // action name
   actionName?: string | null;
   // cloud provider class
-  cloudProvider: Provider;
-  // function to take after login or logout
-  onSetCloudProvider: (providerName: string | null) => void;
-  // whether provider is selected as currentProvider
-  isSelected?: boolean;
-  // whether user has logged in
-  isConnected?: boolean;
-  isReady?: boolean;
+  provider: Provider;
 }
 
-const CloudTile: React.FC<CloudTileProps> = ({
-  // action when click on the tile
-  onSelect,
-  // default to login
-  onConnect = null,
-  // default to logout
-  onLogout = null,
-  // action name
-  actionName = null,
-  // cloud provider class
-  cloudProvider,
-  // function to take after login or logout
-  onSetCloudProvider,
-  // whether provider is selected as currentProvider
-  isSelected,
-  // whether user has logged in
-  isConnected,
+/**
+ * this component display a provider and allows users to select and set the current provider
+ * @param provider
+ * @param actionName
+ * @constructor
+ */
+const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
+  const [user, setUser] = useState<CloudUser | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const {provider: currentProvider, setProvider} = useCloudListProvider();
+  const isSelected = provider === currentProvider;
 
-  isReady = true
-}) => {
-  const userName =
-    typeof cloudProvider.getUserName === 'function' ? cloudProvider.getUserName() : null;
+  useEffect(() => {
+    if (provider) {
+      setError(null);
+      setIsLoading(true);
+      setError(null);
+      provider
+        .getUser()
+        .then(user => setUser(user))
+        .catch(setError)
+        .finally(() => setIsLoading(false));
+    }
+  }, [provider]);
 
-  const onClickConnect =
-    typeof onConnect === 'function'
-      ? onConnect
-      : () => cloudProvider.login(() => onSetCloudProvider(cloudProvider.name));
+  const onLogin = useCallback(async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const user = await provider.login();
+      setUser(user);
+      setProvider(provider);
+    } catch (error) {
+      setError(error as Error);
+    }
+    setIsLoading(false);
+  }, [provider]);
 
-  const onClickLogout =
-    typeof onLogout === 'function'
-      ? onLogout
-      : () => cloudProvider.logout(() => (isSelected ? onSetCloudProvider(null) : null));
+  const onSelect = useCallback(async () => {
+    if (isLoading) {
+      return;
+    }
+    if (!user) {
+      await onLogin();
+    }
+    setProvider(provider);
+  }, [setProvider, provider, user, isLoading]);
+
+  const onLogout = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await provider.logout();
+    } catch (error) {
+      setError(error as Error);
+    }
+    setIsLoading(false);
+    setUser(null);
+    setProvider(null);
+  }, [provider]);
+
+  const {displayName, name} = provider;
 
   return (
     <StyledBox>
-      <StyledTileWrapper onClick={isConnected ? onSelect : onClickConnect} selected={isSelected}>
-        <StyledCloudName>{cloudProvider.displayName || cloudProvider.name}</StyledCloudName>
-        {cloudProvider.icon ? <cloudProvider.icon height="64px" /> : null}
-        <ActionButton isConnected={isConnected} actionName={actionName} isReady={isReady} />
-        {userName && <StyledUserName>{userName}</StyledUserName>}
-        {isSelected && <CheckMark />}
+      {provider.isNew ? (
+        <NewTag>New</NewTag>
+      ) : null}
+      <div></div>
+      <StyledTileWrapper onClick={onSelect} selected={isSelected}>
+        <StyledCloudName>{displayName || name}</StyledCloudName>
+        {provider.icon ? <provider.icon height="64px" /> : null}
+        {isLoading ? (
+          <div>Loading ...</div>
+        ) : (
+          <>{user ? <StyledUserName>{actionName || user.name}</StyledUserName> : null}</>
+        )}
+        {isSelected ? <CheckMark /> : null}
       </StyledTileWrapper>
-      {isConnected ? (
-        <LogoutButton onClick={onClickLogout} />
-      ) : (
-        <LoginButton onClick={onClickConnect} />
-      )}
+      {user ? <LogoutButton onClick={onLogout} /> : <LoginButton onClick={onLogin} />}
+      {error ? <div>{error.message}</div> : null}
     </StyledBox>
   );
 };

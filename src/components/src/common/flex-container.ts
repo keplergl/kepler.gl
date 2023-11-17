@@ -18,6 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import './data-table-modal-test';
-import './export-image-modal-test';
-import './load-data-modal-test';
+import styled from 'styled-components';
+
+export const FlexContainer = styled.div`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+export const FlexColContainer = styled(FlexContainer)`
+  flex-direction: column;
+`;
+
+export const FlexContainerGrow = styled(FlexContainer)`
+  flex-grow: 1;
+`;

@@ -31,14 +31,10 @@ const actionHandler = {
   [ActionTypes.EXPORT_FILE_SUCCESS]: providerStateUpdaters.exportFileSuccessUpdater,
   [ActionTypes.EXPORT_FILE_ERROR]: providerStateUpdaters.exportFileErrorUpdater,
   [ActionTypes.RESET_PROVIDER_STATUS]: providerStateUpdaters.resetProviderStatusUpdater,
-  [ActionTypes.SET_CLOUD_PROVIDER]: providerStateUpdaters.setCloudProviderUpdater,
   [ActionTypes.POST_SAVE_LOAD_SUCCESS]: providerStateUpdaters.postSaveLoadSuccessUpdater,
   [ActionTypes.LOAD_CLOUD_MAP]: providerStateUpdaters.loadCloudMapUpdater,
   [ActionTypes.LOAD_CLOUD_MAP_SUCCESS]: providerStateUpdaters.loadCloudMapSuccessUpdater,
-  [ActionTypes.LOAD_CLOUD_MAP_ERROR]: providerStateUpdaters.loadCloudMapErrorUpdater,
-  [ActionTypes.GET_SAVED_MAPS]: providerStateUpdaters.getSavedMapsUpdater,
-  [ActionTypes.GET_SAVED_MAPS_SUCCESS]: providerStateUpdaters.getSavedMapsSuccessUpdater,
-  [ActionTypes.GET_SAVED_MAPS_ERROR]: providerStateUpdaters.getSavedMapsErrorUpdater
+  [ActionTypes.LOAD_CLOUD_MAP_ERROR]: providerStateUpdaters.loadCloudMapErrorUpdater
 };
 
 // construct provider-state reducer

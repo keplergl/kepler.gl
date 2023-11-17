@@ -21,7 +21,7 @@
 import {createAction} from '@reduxjs/toolkit';
 import {ACTION_PREFIX} from './action-types';
 import {ExportFileOptions, ExportFileToCloudPayload, OnErrorCallBack, OnSuccessCallBack} from '@kepler.gl/types';
-import {MapListItem, Provider} from '@kepler.gl/cloud-providers';
+import {Provider} from '@kepler.gl/cloud-providers';
 
 // eslint-disable-next-line prettier/prettier
 const assignType = <T>(obj: T): { [K in keyof T]: `${typeof ACTION_PREFIX}${string & K}`; } => obj as any
@@ -30,14 +30,10 @@ export const ActionTypes = assignType({
   EXPORT_FILE_SUCCESS: `${ACTION_PREFIX}EXPORT_FILE_SUCCESS`,
   EXPORT_FILE_ERROR: `${ACTION_PREFIX}EXPORT_FILE_ERROR`,
   RESET_PROVIDER_STATUS: `${ACTION_PREFIX}RESET_PROVIDER_STATUS`,
-  SET_CLOUD_PROVIDER: `${ACTION_PREFIX}SET_CLOUD_PROVIDER`,
   POST_SAVE_LOAD_SUCCESS: `${ACTION_PREFIX}POST_SAVE_LOAD_SUCCESS`,
   LOAD_CLOUD_MAP: `${ACTION_PREFIX}LOAD_CLOUD_MAP`,
   LOAD_CLOUD_MAP_SUCCESS: `${ACTION_PREFIX}LOAD_CLOUD_MAP_SUCCESS`,
   LOAD_CLOUD_MAP_ERROR: `${ACTION_PREFIX}LOAD_CLOUD_MAP_ERROR`,
-  GET_SAVED_MAPS: `${ACTION_PREFIX}GET_SAVED_MAPS`,
-  GET_SAVED_MAPS_SUCCESS: `${ACTION_PREFIX}GET_SAVED_MAPS_SUCCESS`,
-  GET_SAVED_MAPS_ERROR: `${ACTION_PREFIX}GET_SAVED_MAPS_ERROR`
 });
 
 /**
@@ -103,15 +99,6 @@ export const resetProviderStatus: () => {
   type: typeof ActionTypes.RESET_PROVIDER_STATUS;
 } = createAction(ActionTypes.RESET_PROVIDER_STATUS);
 
-/** SET_CLOUD_PROVIDER */
-export type SetCloudProviderPayload = string | null;
-export const setCloudProvider: (
-  p: SetCloudProviderPayload
-) => {
-  type: typeof ActionTypes.SET_CLOUD_PROVIDER;
-  payload: SetCloudProviderPayload;
-} = createAction(ActionTypes.SET_CLOUD_PROVIDER, (provider: SetCloudProviderPayload) => ({payload : provider}));
-
 /** LOAD_CLOUD_MAP */
 export type LoadCloudMapPayload = {
   loadParams: any;
@@ -157,39 +144,3 @@ export const loadCloudMapError: (
   type: typeof ActionTypes.LOAD_CLOUD_MAP_ERROR;
   payload: LoadCloudMapErrorPayload;
 } = createAction(ActionTypes.LOAD_CLOUD_MAP_ERROR, (payload: LoadCloudMapErrorPayload) => ({payload}));
-
-/** GET_SAVED_MAPS */
-export type GetSavedMapsPayload = string;
-export const getSavedMaps: (
-  p: GetSavedMapsPayload
-) => {
-  type: typeof ActionTypes.GET_SAVED_MAPS;
-  payload: GetSavedMapsPayload;
-} = createAction(ActionTypes.GET_SAVED_MAPS, (provider: GetSavedMapsPayload) => ({payload : provider}));
-
-/** GET_SAVED_MAPS_SUCCESS */
-export type GetSavedMapsSuccessPayload = {
-  visualizations: MapListItem[];
-  provider: string;
-};
-export const getSavedMapsSuccess: (
-  p: GetSavedMapsSuccessPayload
-) => {
-  type: typeof ActionTypes.GET_SAVED_MAPS_SUCCESS;
-  payload: GetSavedMapsSuccessPayload;
-} = createAction(
-  ActionTypes.GET_SAVED_MAPS_SUCCESS,
-  (payload: GetSavedMapsSuccessPayload) => ({payload})
-);
-
-/** GET_SAVED_MAPS_ERROR */
-export type GetSavedMapsErrorPayload = {
-  error: any;
-  provider: string;
-};
-export const getSavedMapsError: (
-  p: GetSavedMapsErrorPayload
-) => {
-  type: typeof ActionTypes.GET_SAVED_MAPS_ERROR;
-  payload: GetSavedMapsErrorPayload;
-} = createAction(ActionTypes.GET_SAVED_MAPS_ERROR, payload => ({payload}));

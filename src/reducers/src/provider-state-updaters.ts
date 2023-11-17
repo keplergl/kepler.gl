@@ -25,16 +25,13 @@ import {
   EXPORT_FILE_TO_CLOUD_TASK,
   ACTION_TASK,
   DELAY_TASK,
-  LOAD_CLOUD_MAP_TASK,
-  GET_SAVED_MAPS_TASK
+  LOAD_CLOUD_MAP_TASK
 } from '@kepler.gl/tasks';
 import {
   exportFileSuccess,
   exportFileError,
   postSaveLoadSuccess,
   loadCloudMapSuccess,
-  getSavedMapsSuccess,
-  getSavedMapsError,
   loadCloudMapError,
   resetProviderStatus,
   removeNotification,
@@ -382,72 +379,3 @@ export const resetProviderStatusUpdater = (state: ProviderState): ProviderState 
   isCloudMapLoading: false,
   successInfo: {}
 });
-
-/**
- * Set current cloudProvider
- */
-export const setCloudProviderUpdater = (
-  state: ProviderState,
-  action: ActionPayload<ProviderActions.SetCloudProviderPayload>
-): ProviderState => ({
-  ...state,
-  isProviderLoading: false,
-  providerError: null,
-  successInfo: {},
-  currentProvider: action.payload
-});
-
-export const getSavedMapsUpdater = (
-  state: ProviderState,
-  action: ActionPayload<ProviderActions.GetSavedMapsPayload>
-): ProviderState => {
-  const provider = action.payload;
-  if (!_validateProvider(provider, 'listMaps')) {
-    return state;
-  }
-
-  const getSavedMapsTask = GET_SAVED_MAPS_TASK(provider).bimap(
-    // success
-    visualizations => getSavedMapsSuccess({visualizations, provider}),
-    // error
-    error => getSavedMapsError({error, provider})
-  );
-
-  return withTask(
-    {
-      ...state,
-      isProviderLoading: true
-    },
-    getSavedMapsTask
-  );
-};
-
-export const getSavedMapsSuccessUpdater = (
-  state: ProviderState,
-  action: ActionPayload<ProviderActions.GetSavedMapsSuccessPayload>
-): ProviderState => ({
-  ...state,
-  isProviderLoading: false,
-  visualizations: action.payload.visualizations
-});
-
-export const getSavedMapsErrorUpdater = (
-  state: ProviderState,
-  action: ActionPayload<ProviderActions.GetSavedMapsErrorPayload>
-): ProviderState => {
-  const message =
-    getError(action.payload.error) || `Error getting saved maps from ${state.currentProvider}`;
-
-  Console.warn(action.payload.error);
-
-  const newState = {
-    ...state,
-    currentProvider: null,
-    isProviderLoading: false
-  };
-
-  return withTask(
-    newState,
-    createGlobalNotificationTasks({type: 'error', message, delayClose: false})
-  );
-};

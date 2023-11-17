@@ -18,30 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useMemo} from 'react';
-import ErrorBoundary from '../common/error-boundary';
-import NotificationItemFactory from '../notification-panel/notification-item';
-const NotificationItem = NotificationItemFactory();
+import React from 'react';
+import styled from 'styled-components';
+import LoadingDialog from '../loading-dialog';
+import {FormattedMessage} from '@kepler.gl/localization';
+import {CloudItem} from './cloud-item';
+import {FlexContainer} from '../../common/flex-container';
 
-interface ErrorDisplayProps {
-  error: string;
-}
+const StyledSpinner = styled.div`
+  text-align: center;
+  span {
+    margin: 0 auto;
+  }
+`;
 
-const ErrorDisplay: React.FC<ErrorDisplayProps> = ({error}) => {
-  const notification = useMemo(
-    () => ({
-      type: 'error',
-      message: error,
-      id: 'cloud-export-error'
-    }),
-    [error]
-  );
+const StyledFlexContainer = styled(FlexContainer)`
+  justify-content: flex-start;
+  flex-wrap: wrap;
+`;
+
+export const CloudMaps = ({provider, onSelectMap, isLoading, maps, error}) => {
+  if (error) {
+    return <div>Error while fetching maps: {error.message}</div>;
+  }
+
+  if (isLoading) {
+    return (
+      <StyledSpinner>
+        <LoadingDialog size={64} />
+      </StyledSpinner>
+    );
+  }
 
   return (
-    <ErrorBoundary>
-      <NotificationItem notification={notification} isExpanded />
-    </ErrorBoundary>
+    <StyledFlexContainer>
+      {(maps ?? []).length ? (
+        maps.map(vis => (
+          <CloudItem key={vis.id} onClick={() => onSelectMap(provider, vis)} vis={vis} />
+        ))
+      ) : (
+        <div className="visualization-list__message">
+          <FormattedMessage id={'modal.loadStorageMap.noSavedMaps'} />
+        </div>
+      )}
+    </StyledFlexContainer>
   );
 };
-
-export default ErrorDisplay;

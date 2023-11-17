@@ -347,22 +347,3 @@ test('#providerStateReducer -> RESET_PROVIDER_STATUS', t => {
 
   t.end();
 });
-
-test('#providerStateReducer -> SET_CLOUD_PROVIDER', t => {
-  const nextState = reducer(undefined, setCloudProvider('blue'));
-  t.deepEqual(
-    nextState,
-    {
-      isProviderLoading: false,
-      isCloudMapLoading: false,
-      providerError: null,
-      currentProvider: 'blue',
-      successInfo: {},
-      mapSaved: null,
-      initialState: {},
-      visualizations: []
-    },
-    'Should setCloudProvider'
-  );
-  t.end();
-});

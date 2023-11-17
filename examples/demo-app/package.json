@@ -10,6 +10,7 @@
     "start-local-https": "webpack-dev-server --mode development --https --env.es6 --progress --hot --open"
   },
   "dependencies": {
+    "@auth0/auth0-spa-js": "^2.1.2",
     "@carto/toolkit": "0.0.1-rc.18",
     "@kepler.gl/actions": "^3.0.0-alpha.1",
     "@kepler.gl/components": "^3.0.0-alpha.1",

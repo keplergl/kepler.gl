@@ -1176,7 +1176,12 @@ export const dataTestIds: Record<string, string> = {
   removeLayerAction: 'remove-layer-action',
   layerPanel: 'layer-panel',
   sortableEffectItem: 'sortable-effect-item',
-  staticEffectItem: 'static-effect-item'
+  staticEffectItem: 'static-effect-item',
+  providerLoading: 'provider-loading',
+  providerMapInfoPanel: 'provider-map-info-panel',
+  providerSelect: 'provider-select',
+  cloudHeader: 'cloud-header',
+  providerShareMap: 'provider-share-map'
 };
 
 // Effects
