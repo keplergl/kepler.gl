@@ -114,7 +114,7 @@ export default function SidePanelFactory(
     const {
       appName,
       appWebsite,
-      availableProviders,
+      availableProviders = {},
       datasets,
       filters,
       layers,

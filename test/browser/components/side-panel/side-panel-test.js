@@ -75,7 +75,8 @@ const defaultProps = {
   width: 300,
   uiStateActions: UIStateActions,
   visStateActions: VisStateActions,
-  mapStyleActions: MapStyleActions
+  mapStyleActions: MapStyleActions,
+  availableProviders: {}
 };
 
 test('Components -> SidePanel.mount -> no prop', t => {
@@ -318,18 +319,18 @@ test('Components -> SidePanel -> PanelHeader', t => {
 
   const header = wrapper.find(PanelHeader);
 
-
+  // action item
   t.equal(
     header.find('.side-panel__panel-header__action').length,
-    2,
-    'should render 2 header action items'
+    1,
+    'should render 1 header action item'
   );
 
   // Share
   t.equal(
     header
       .find('.side-panel__panel-header__action')
-      .at(1)
+      .at(0)
       .find('p')
       .text(),
     'Share',
@@ -338,7 +339,7 @@ test('Components -> SidePanel -> PanelHeader', t => {
 
   header
     .find('.side-panel__panel-header__action')
-    .at(1)
+    .at(0)
     .simulate('click');
 
   t.ok(showExportDropdown.calledWith('save'), 'should call toggleSidePanel with share');
@@ -385,14 +386,13 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
   }, 'SidePanel should not fail');
 
   t.ok(wrapper.find(SaveExportDropdown).length === 1, 'should render SaveExportDropdown');
-  // 6 because we are also rendering storage items now
-  t.equal(wrapper.find(ToolbarItem).length, 6, 'should render 6 ToolbarItem');
+  t.equal(wrapper.find(ToolbarItem).length, 3, 'should render 3 ToolbarItem');
 
   // export image
   t.equal(
     wrapper
       .find(ToolbarItem)
-      .at(2)
+      .at(0)
       .find('.toolbar-item__title')
       .text(),
     'Export Image',
@@ -401,7 +401,7 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
 
   wrapper
     .find(ToolbarItem)
-    .at(2)
+    .at(0)
     .find('.toolbar-item')
     .simulate('click');
   t.ok(toggleModal.calledWith(EXPORT_IMAGE_ID), 'Should call toggleModal with EXPORT_IMAGE_ID');
@@ -410,7 +410,7 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
   t.equal(
     wrapper
       .find(ToolbarItem)
-      .at(3)
+      .at(1)
       .find('.toolbar-item__title')
       .text(),
     'Export Data',
@@ -418,7 +418,7 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
   );
   wrapper
     .find(ToolbarItem)
-    .at(3)
+    .at(1)
     .find('.toolbar-item')
     .simulate('click');
   t.ok(toggleModal.calledWith(EXPORT_DATA_ID), 'Should call toggleModal with EXPORT_DATA_ID');
@@ -427,7 +427,7 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
   t.equal(
     wrapper
       .find(ToolbarItem)
-      .at(4)
+      .at(2)
       .find('.toolbar-item__title')
       .text(),
     'Export Map',
@@ -435,7 +435,7 @@ test('Components -> SidePanel -> PanelHeader -> ExportDropDown', t => {
   );
   wrapper
     .find(ToolbarItem)
-    .at(4)
+    .at(2)
     .find('.toolbar-item')
     .simulate('click');
   t.ok(toggleModal.calledWith(EXPORT_MAP_ID), 'Should call toggleModal with EXPORT_MAP_ID');
