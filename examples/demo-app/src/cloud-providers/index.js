@@ -33,7 +33,7 @@ const {
   FOURSQUARE_USER_MAPS_URL
 } = CLOUD_PROVIDERS_CONFIGURATION;
 
-console.log({
+console.log('provider index', {
   clientId: FOURSQUARE_CLIENT_ID,
   authDomain: FOURSQUARE_DOMAIN,
   apiURL: FOURSQUARE_API_URL,

@@ -1,23 +1,3 @@
-// Copyright (c) 2023 Uber Technologies, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-
 import FSQIcon from './foursquare-icon';
 import {Provider, KEPLER_FORMAT} from 'kepler.gl/cloud-providers';
 import {Auth0Client} from '@auth0/auth0-spa-js';
@@ -61,46 +41,55 @@ function extractMapFromFSQResponse(response) {
 export default class FoursquareProvider extends Provider {
   constructor({clientId, authDomain, apiURL, userMapsURL}) {
     super({name: NAME, displayName: DISPLAY_NAME, icon: FSQIcon});
-    this.icon = FSQIcon;
-    this.appName = APP_NAME;
-    this.apiURL = apiURL;
-
-    const redirect_uri = window.location.origin + window.location.pathname;
-
-    this._auth0 = new Auth0Client({
-      domain: authDomain,
-      clientId: clientId,
-      scope: FOURSQUARE_AUTH_SCOPE,
-      authorizationParams: {
-        redirect_uri,
-        audience: FOURSQUARE_AUTH_AUDIENCE
-      },
-      cacheLocation: 'localstorage'
+    console.log('provider index', {
+      name,
+      displayName,
+      clientId,
+      authDomain,
+      apiURL,
+      userMapsURL,
+      FOURSQUARE_AUTH_SCOPE
     });
-
-    // the domain needs to be passed as input param
-    this._folderLink = userMapsURL;
-    this.isNew = true;
+    // this.icon = FSQIcon;
+    // this.appName = APP_NAME;
+    // this.apiURL = apiURL;
+    //
+    // const redirect_uri = window.location.origin + window.location.pathname;
+    //
+    // this._auth0 = new Auth0Client({
+    //   domain: authDomain,
+    //   clientId: clientId,
+    //   scope: FOURSQUARE_AUTH_SCOPE,
+    //   authorizationParams: {
+    //     redirect_uri,
+    //     audience: FOURSQUARE_AUTH_AUDIENCE
+    //   },
+    //   cacheLocation: 'localstorage'
+    // });
+    //
+    // // the domain needs to be passed as input param
+    // this._folderLink = userMapsURL;
+    // this.isNew = true;
   }
 
-  hasPrivateStorage() {
-    return FOURSQUARE_PRIVATE_STORAGE_ENABLED;
-  }
-
-  async getUser() {
-    return this._auth0.getUser();
-  }
-
-  async login() {
-    return this._auth0.loginWithPopup();
-  }
-
-  async logout() {
-    return this._auth0.logout({
-      // this make sure after logging out the sdk will not redirect the user
-      openUrl: false
-    });
-  }
+  // hasPrivateStorage() {
+  //   return FOURSQUARE_PRIVATE_STORAGE_ENABLED;
+  // }
+  //
+  // async getUser() {
+  //   return this._auth0.getUser();
+  // }
+  //
+  // async login() {
+  //   return this._auth0.loginWithPopup();
+  // }
+  //
+  // async logout() {
+  //   return this._auth0.logout({
+  //     // this make sure after logging out the sdk will not redirect the user
+  //     openUrl: false
+  //   });
+  // }
 
   // async uploadMap({mapData, options = {}}) {
   //   // TODO: handle replace
