@@ -65,11 +65,6 @@ export const LOAD_CLOUD_MAP_TASK = Task.fromPromise(
   'LOAD_CLOUD_MAP_TASK'
 );
 
-export const GET_SAVED_MAPS_TASK = Task.fromPromise(
-  provider => provider.listMaps(),
-
-  'GET_SAVED_MAPS_TASK'
-);
 /**
  *  task to dispatch a function as a task
  */

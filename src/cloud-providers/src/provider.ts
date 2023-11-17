@@ -32,6 +32,12 @@ export type MapListItem = {
   privateMap?: boolean;
 };
 
+export type CloudUser = {
+  name: string;
+  email: string;
+  thumbnail?: string;
+};
+
 export type Thumbnail = {
   width: number;
   height: number;
@@ -78,7 +84,6 @@ export default class Provider {
   displayName: string;
   icon: ComponentType<IconProps>;
   thumbnail: Thumbnail;
-  getManagementUrl?: () => string;
 
   constructor(props: ProviderProps) {
     this.name = props.name || NAME;
@@ -102,7 +107,7 @@ export default class Provider {
    * @public
    */
   hasSharingUrl(): boolean {
-    return true;
+    return false;
   }
 
   /**
@@ -137,10 +142,18 @@ export default class Provider {
   /**
    * This method is called to get the user name of the current user. It will be displayed in the cloud provider tile.
    * @public
+   * @deprecated please use getUser
    * @returns true if a user already logged in
    */
   getUserName(): string {
     return '';
+  }
+
+  /**
+   * return a Promise with the user object
+   */
+  getUser(): Promise<CloudUser> {
+    return Promise.reject('You must implement getUser');
   }
 
   /**
@@ -152,24 +165,20 @@ export default class Provider {
 
   /**
    * This method will be called when user click the login button in the cloud provider tile.
-   * Upon login success, `onCloudLoginSuccess` has to be called to notify kepler.gl UI
-   * @param {function} onCloudLoginSuccess - callbacks to be called after login success
+   * Upon login success and return the user Object {name, email, abbreviated}
    * @public
    */
-  async login(onCloudLoginSuccess) {
-    onCloudLoginSuccess();
-    return;
+  async login() {
+    return Promise.reject(new Error('you must implement the `login` method'));
   }
 
   /**
    * This method will be called when user click the logout button under the cloud provider tile.
-   * Upon login success, `onCloudLoginSuccess` has to be called to notify kepler.gl UI
-   * @param {function} onCloudLogoutSuccess - callbacks to be called after logout success
+   * Upon login success
    * @public
    */
-  async logout(onCloudLogoutSuccess: () => void) {
-    onCloudLogoutSuccess();
-    return;
+  async logout(): Promise<void> {
+    return Promise.reject(new Error('you must implement the `logout` method'));
   }
 
   /**
@@ -192,7 +201,7 @@ export default class Provider {
     mapData: MapData;
     options: ExportFileOptions;
   }): Promise<any> {
-    return;
+    return Promise.reject('You must implement uploadMap');
   }
 
   /**
@@ -248,13 +257,17 @@ export default class Provider {
     return;
   }
 
+  getManagementUrl(): string {
+    throw new Error('You must implement getManagementUrl');
+  }
+
   /**
    * @typedef {Object} Viz
    * @property {string} id - An unique id
    * @property {string} title - The title of the map
    * @property {string} description - The description of the map
    * @property {string} imageUrl - The imageUrl of the map
-   * @property {number} lastModification - An epoch timestamp in milliseconds
+   * @property {number} updatedAt - An epoch timestamp in milliseconds
    * @property {boolean} privateMap - Optional, whether if this map is private to the user, or can be accessed by others via URL
    * @property {*} loadParams - A property to be passed to `downloadMap`
    * @public

@@ -114,7 +114,7 @@ export default function SidePanelFactory(
     const {
       appName,
       appWebsite,
-      availableProviders,
+      availableProviders = {},
       datasets,
       filters,
       layers,
@@ -173,22 +173,12 @@ export default function SidePanelFactory(
     const onShowAddDataModal = useCallback(() => toggleModal(ADD_DATA_ID), [toggleModal]);
     const onShowAddMapStyleModal = useCallback(() => toggleModal(ADD_MAP_STYLE_ID), [toggleModal]);
     const onRemoveDataset = useCallback(dataId => openDeleteModal(dataId), [openDeleteModal]);
-    const onSaveToStorage = useMemo(() => (hasStorage ? onClickSaveToStorage : null), [
-      hasStorage,
-      onClickSaveToStorage
-    ]);
-    const onSaveAsToStorage = useMemo(
-      () => (hasStorage && mapSaved ? onClickSaveAsToStorage : null),
-      [hasStorage, mapSaved, onClickSaveAsToStorage]
-    );
+
     const currentPanel = useMemo(() => panels.find(({id}) => id === activeSidePanel) || null, [
       activeSidePanel,
       panels
     ]);
-    const onShareMap = useMemo(() => (hasShare ? onClickShareMap : null), [
-      hasShare,
-      onClickShareMap
-    ]);
+
     const customPanelProps = useMemo(() => getCustomPanelProps(props), [props]);
     const PanelComponent = currentPanel?.component;
 
@@ -210,10 +200,10 @@ export default function SidePanelFactory(
           onExportImage={onClickExportImage}
           onExportData={onClickExportData}
           onExportMap={onClickExportMap}
-          onSaveMap={onSaveMap}
-          onSaveToStorage={onSaveToStorage}
-          onSaveAsToStorage={onSaveAsToStorage}
-          onShareMap={onShareMap}
+          onSaveMap={hasStorage ? onSaveMap : undefined}
+          onSaveToStorage={hasStorage ? onClickSaveToStorage : null}
+          onSaveAsToStorage={hasStorage && mapSaved ? onClickSaveAsToStorage : null}
+          onShareMap={hasShare ? onClickShareMap : null}
         />
         {/* the next two components should be moved into one */}
         {/* but i am keeping them because of backward compatibility */}
@@ -267,7 +257,6 @@ export default function SidePanelFactory(
 
   SidePanel.defaultProps = {
     panels: fullPanels,
-    availableProviders: {},
     mapInfo: {}
   };
 

@@ -167,7 +167,7 @@ const PanelAction: React.FC<PanelActionProps> = React.memo(({item, showExportDro
   }, [item, showExportDropdown]);
 
   return (
-    <StyledPanelAction data-tip data-for={`${item.id}-action`} onClick={onClick}>
+    <StyledPanelAction id={`${item.id}-action`} data-tip data-for={`${item.id}-action`} onClick={onClick}>
       {item.label ? <p>{item.label}</p> : null}
       <a target={item.blank ? '_blank' : ''} href={item.href} rel="noreferrer">
         <item.iconComponent height="20px" {...item.iconComponentProps} />

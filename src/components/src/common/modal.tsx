@@ -143,22 +143,39 @@ type ModalFooterProps = {
   confirmButton?: ModalButtonProps;
 };
 
+/**
+ * this method removes the `disabled` property from button props when disabled is set to false
+ * to avoid issue with the disabled tag
+ *
+ * @param props
+ */
+const processDisabledProperty = (props: ModalButtonProps): ModalButtonProps => {
+  if (!props.disabled) {
+    const {disabled, ...newProps} = props;
+    return newProps;
+  }
+  return props;
+};
+
 export const ModalFooter: React.FC<ModalFooterProps> = ({
   cancel,
   confirm,
   cancelButton,
   confirmButton
 }) => {
-  const cancelButtonProps = {...defaultCancelButton, ...cancelButton};
-  const confirmButtonProps = {...defaultConfirmButton, ...confirmButton};
+  const cancelButtonProps = processDisabledProperty({
+    ...defaultCancelButton,
+    ...cancelButton
+  });
+  const confirmButtonProps = processDisabledProperty({...defaultConfirmButton, ...confirmButton});
   return (
     <StyledModalFooter className="modal--footer">
       <FooterActionWrapper>
         <Button className="modal--footer--cancel-button" {...cancelButtonProps} onClick={cancel}>
-          <FormattedMessage id={cancelButtonProps.children} />
+          <FormattedMessage id={cancelButtonProps.children ?? ''} />
         </Button>
         <Button className="modal--footer--confirm-button" {...confirmButtonProps} onClick={confirm}>
-          <FormattedMessage id={confirmButtonProps.children} />
+          <FormattedMessage id={confirmButtonProps.children ?? ''} />
         </Button>
       </FooterActionWrapper>
     </StyledModalFooter>

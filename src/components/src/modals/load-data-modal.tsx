@@ -30,8 +30,6 @@ import LoadingDialog from './loading-dialog';
 
 import {LOADING_METHODS} from '@kepler.gl/constants';
 import {FileLoading, FileLoadingProgress, LoadFiles} from '@kepler.gl/types';
-import {Provider} from '@kepler.gl/cloud-providers';
-import {SetCloudProviderPayload, ProviderActions, ActionHandler} from '@kepler.gl/actions';
 
 /** @typedef {import('./load-data-modal').LoadDataModalProps} LoadDataModalProps */
 
@@ -68,10 +66,7 @@ type LoadDataModalProps = {
   /** Set to true if app wants to do its own file filtering */
   disableExtensionFilter?: boolean;
   onClose?: (...args: any) => any;
-  cloudProviders?: Provider[];
 
-  onSetCloudProvider: (provider: SetCloudProviderPayload) => void;
-  getSavedMaps: ActionHandler<typeof ProviderActions['getSavedMaps']>;
   loadFiles: LoadFiles;
   fileLoadingProgress: FileLoadingProgress;
 };

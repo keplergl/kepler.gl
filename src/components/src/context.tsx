@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 import React, {createContext, RefObject, ReactNode, ReactElement} from 'react';
+import {Provider} from '@kepler.gl/cloud-providers';
 
 const identity = state => state;
 // New Context API only supported after 16.3
@@ -37,6 +38,12 @@ export type FeatureFlagsContextProviderProps = {
   featureFlags?: FeatureFlags;
 };
 
+export type CloudProviderContextType = {
+  provider: Provider | null;
+  setProvider: (provider: Provider | null) => void;
+  cloudProviders: Provider[];
+};
+
 export const FeatureFlagsContextProvider = (
   props: FeatureFlagsContextProviderProps
 ): ReactElement => (
@@ -44,6 +51,16 @@ export const FeatureFlagsContextProvider = (
     {props.children}
   </FeatureFlagsContext.Provider>
 );
+
+/**
+ * This provides keeps track of the ist cloud providers
+ * and the current selected one
+ */
+export const CloudProviderContext = createContext<CloudProviderContextType>({
+  provider: null,
+  setProvider: () => {},
+  cloudProviders: []
+});
 
 export const RootContext = createContext<RefObject<HTMLDivElement> | null>(null);
 

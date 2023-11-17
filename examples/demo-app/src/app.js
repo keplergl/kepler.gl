@@ -97,6 +97,15 @@ const GlobalStyle = styled.div`
   }
 `;
 
+const CONTAINER_STYLE = {
+  transition: 'margin 1s, height 1s',
+  position: 'absolute',
+  width: '100%',
+  height: '100%',
+  left: 0,
+  top: 0
+};
+
 class App extends Component {
   state = {
     showBanner: false,
@@ -416,16 +425,7 @@ class App extends Component {
           >
             <Announcement onDisable={this._disableBanner} />
           </Banner>
-          <div
-            style={{
-              transition: 'margin 1s, height 1s',
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              left: 0,
-              top: 0
-            }}
-          >
+          <div style={CONTAINER_STYLE}>
             <AutoSizer>
               {({height, width}) => (
                 <KeplerGl

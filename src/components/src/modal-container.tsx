@@ -20,12 +20,11 @@
 
 import React, {Component} from 'react';
 import {css} from 'styled-components';
-import {createSelector} from 'reselect';
 import get from 'lodash.get';
 import document from 'global/document';
 
 import ModalDialogFactory from './modals/modal-dialog';
-import {exportHtml, isValidMapInfo, exportMap, exportJson, exportImage} from '@kepler.gl/utils';
+import {exportHtml, exportMap, exportJson, exportImage} from '@kepler.gl/utils';
 import {
   exportData,
   getFileFormatNames,
@@ -166,14 +165,6 @@ export default function ModalContainerFactory(
       document.removeEventListener('keyup', this._onKeyUp);
     }
 
-    cloudProviders = (props: ModalContainerProps) => props.cloudProviders;
-    providerWithStorage = createSelector(this.cloudProviders, cloudProviders =>
-      cloudProviders.filter(p => p.hasPrivateStorage())
-    );
-    providerWithShare = createSelector(this.cloudProviders, cloudProviders =>
-      cloudProviders.filter(p => p.hasSharingUrl())
-    );
-
     _onKeyUp = event => {
       const keyCode = event.keyCode;
       if (keyCode === KeyEvent.DOM_VK_ESCAPE) {
@@ -239,10 +230,7 @@ export default function ModalContainerFactory(
       });
     };
 
-    _onSaveMap = (overwrite = false) => {
-      const {currentProvider} = this.props.providerState;
-      // @ts-ignore
-      const provider = this.props.cloudProviders.find(p => p.name === currentProvider);
+    _onSaveMap = (provider, overwrite = false) => {
       this._exportFileToCloud({
         provider,
         isPublic: false,
@@ -355,9 +343,6 @@ export default function ModalContainerFactory(
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
                 onLoadCloudMap={this._onLoadCloudMap}
-                cloudProviders={this.providerWithStorage(this.props)}
-                onSetCloudProvider={this.props.providerActions.setCloudProvider}
-                getSavedMaps={this.props.providerActions.getSavedMaps}
                 loadFiles={uiState.loadFiles}
                 fileLoading={visState.fileLoading}
                 fileLoadingProgress={visState.fileLoadingProgress}
@@ -478,62 +463,40 @@ export default function ModalContainerFactory(
                 exportImage={uiState.exportImage}
                 mapInfo={visState.mapInfo}
                 onSetMapInfo={visStateActions.setMapInfo}
-                cloudProviders={this.providerWithStorage(this.props)}
-                onSetCloudProvider={this.props.providerActions.setCloudProvider}
                 cleanupExportImage={uiStateActions.cleanupExportImage}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
+                onCancel={this._closeModal}
+                onConfirm={provider => this._onSaveMap(provider, false)}
               />
             );
             modalProps = {
               title: 'modal.title.saveMap',
               cssStyle: '',
-              footer: true,
-              onCancel: this._closeModal,
-              onConfirm: () => this._onSaveMap(false),
-              confirmButton: {
-                large: true,
-                disabled:
-                  uiState.exportImage.processing ||
-                  !isValidMapInfo(visState.mapInfo) ||
-                  !providerState.currentProvider,
-                children: 'modal.button.save'
-              }
+              footer: false
             };
             break;
           case OVERWRITE_MAP_ID:
             template = (
               <OverWriteMapModal
                 {...providerState}
-                cloudProviders={this.props.cloudProviders}
                 title={get(visState, ['mapInfo', 'title'])}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
                 cleanupExportImage={uiStateActions.cleanupExportImage}
+                onConfirm={this._onOverwriteMap}
+                onCancel={this._closeModal}
               />
             );
             modalProps = {
               title: 'Overwrite Existing File?',
               cssStyle: smallModalCss,
-              footer: true,
-              onConfirm: this._onOverwriteMap,
-              onCancel: this._closeModal,
-              confirmButton: {
-                large: true,
-                children: 'Yes',
-                disabled:
-                  uiState.exportImage.processing ||
-                  !isValidMapInfo(visState.mapInfo) ||
-                  !providerState.currentProvider
-              }
+              footer: false
             };
             break;
           case SHARE_MAP_ID:
             template = (
               <ShareMapModal
                 {...providerState}
-                isReady={!uiState.exportImage.processing}
-                cloudProviders={this.providerWithShare(this.props)}
                 onExport={this._onShareMapUrl}
-                onSetCloudProvider={this.props.providerActions.setCloudProvider}
                 cleanupExportImage={uiStateActions.cleanupExportImage}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
               />

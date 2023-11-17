@@ -58,6 +58,7 @@ import {InitialState} from 'test/helpers/mock-state';
 
 // Constants
 import {EXPORT_DATA_ID, EXPORT_MAP_ID, EXPORT_IMAGE_ID} from '@kepler.gl/constants';
+import {debug} from 'webpack';
 
 // default props from initial state
 const defaultProps = {

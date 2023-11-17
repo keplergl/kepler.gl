@@ -18,25 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {AUTH_TOKENS} from '../constants/default-settings';
+import styled from 'styled-components';
 
-import DropboxProvider from './dropbox/dropbox-provider';
-import CartoProvider from './carto/carto-provider';
+export const FlexContainer = styled.div`
+  display: flex;
+  gap: 8px;
+`;
 
-const {DROPBOX_CLIENT_ID, CARTO_CLIENT_ID} = AUTH_TOKENS;
-const DROPBOX_CLIENT_NAME = 'Kepler.gl Demo App';
+export const FlexColContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
 
-export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
-
-export const CLOUD_PROVIDERS = [
-  new DropboxProvider(DROPBOX_CLIENT_ID, DROPBOX_CLIENT_NAME),
-  new CartoProvider(CARTO_CLIENT_ID)
-];
-
-export function getCloudProvider(providerName) {
-  const cloudProvider = CLOUD_PROVIDERS.find(provider => provider.name === providerName);
-  if (!cloudProvider) {
-    throw new Error(`Unknown cloud provider ${providerName}`);
-  }
-  return cloudProvider;
-}
+export const FlexContainerGrow = styled(FlexContainer)`
+  flex-grow: 1;
+`;

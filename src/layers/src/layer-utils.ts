@@ -118,13 +118,15 @@ export function getHoveredObjectFromArrow(
       return prev;
     }, {});
 
-    return hoveredFeature ? {
-      ...hoveredFeature,
-      properties: {
-        ...properties,
-        index: objectInfo.index
-      }
-    } : null;
+    return hoveredFeature
+      ? {
+          ...hoveredFeature,
+          properties: {
+            ...properties,
+            index: objectInfo.index
+          }
+        }
+      : null;
   }
   return null;
 }

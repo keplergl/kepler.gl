@@ -25,16 +25,14 @@ import {MAP_THUMBNAIL_DIMENSION, EXPORT_IMG_RATIOS} from '@kepler.gl/constants';
 import {SetExportImageSettingUpdaterAction} from '@kepler.gl/actions';
 import {Provider} from '@kepler.gl/cloud-providers';
 
-/** @typedef {import('./image-modal-container').ImageModalContainerProps} ImageModalContainerProps */
-
 export type ImageModalContainerProps = {
-  cloudProviders?: Provider[];
-  currentProvider?: string | null;
+  provider?: Provider | null;
   onUpdateImageSetting: (newSetting: SetExportImageSettingUpdaterAction['payload']) => void;
   cleanupExportImage: () => void;
   children?: React.ReactNode;
 };
 
+// TODO: this should be turned into a custom hook
 /**
  * A wrapper component in modals contain a image preview of the map with cloud providers
  * It sets export image size based on provider thumbnail size
@@ -43,8 +41,7 @@ export type ImageModalContainerProps = {
 const ImageModalContainer: React.FC<ImageModalContainerProps> = ({
   onUpdateImageSetting,
   cleanupExportImage,
-  cloudProviders,
-  currentProvider,
+  provider,
   children
 }) => {
   useEffect(() => {
@@ -55,10 +52,8 @@ const ImageModalContainer: React.FC<ImageModalContainerProps> = ({
   }, [onUpdateImageSetting, cleanupExportImage]);
 
   useEffect(() => {
-    if (currentProvider && cloudProviders && cloudProviders.length) {
-      const provider = cloudProviders.find(p => p.name === currentProvider);
-
-      if (provider && provider.thumbnail) {
+    if (provider) {
+      if (provider.thumbnail) {
         onUpdateImageSetting({
           mapW: get(provider, ['thumbnail', 'width']) || MAP_THUMBNAIL_DIMENSION.width,
           mapH: get(provider, ['thumbnail', 'height']) || MAP_THUMBNAIL_DIMENSION.height,
@@ -74,13 +69,9 @@ const ImageModalContainer: React.FC<ImageModalContainerProps> = ({
         legend: false
       });
     }
-  }, [currentProvider, cloudProviders, onUpdateImageSetting]);
+  }, [provider, onUpdateImageSetting]);
 
   return <>{children}</>;
-};
-
-ImageModalContainer.defaultProps = {
-  cloudProviders: []
 };
 
 export default ImageModalContainer;

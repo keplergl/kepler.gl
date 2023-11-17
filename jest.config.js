@@ -25,7 +25,11 @@ const config = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   verbose: true,
-  testMatch: ['<rootDir>/src/**/*.spec.js', '<rootDir>/test/**/*.spec.js'],
+  testPathIgnorePatterns: [
+    // ignore all dist computed directories
+    "<rootDir>/.*(/|\\\\)dist(/|\\\\).*"
+  ],
+  testMatch: ['<rootDir>/src/**/*.spec.(ts|tsx)', '<rootDir>/src/**/*.spec.js', '<rootDir>/test/**/*.spec.js'],
   // Per https://jestjs.io/docs/configuration#transformignorepatterns-arraystring, transformIgnorePatterns ignores
   // node_modules and pnp folders by default so that they are not transpiled
   // Some libraries (even if transitive) are transitioning to ESM and need additional transpilation. Relevant issues:
