@@ -23,12 +23,11 @@ import styled from 'styled-components';
 export const FlexContainer = styled.div`
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 `;
 
-export const FlexColContainer = styled.div`
-  display: flex;
+export const FlexColContainer = styled(FlexContainer)`
   flex-direction: column;
-  gap: 8px;
 `;
 
 export const FlexContainerGrow = styled(FlexContainer)`

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React, {useMemo} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
 import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
 import {FlexContainer} from '../common/flex-container';
@@ -207,6 +207,12 @@ function SaveMapModalFactory() {
       [provider, mapInfo]
     );
 
+    const confirm = useCallback(() => {
+      if (provider) {
+        onConfirm(provider);
+      }
+    }, [provider]);
+
     return (
       <ImageModalContainer
         provider={provider}
@@ -269,7 +275,7 @@ function SaveMapModalFactory() {
         </StyledSaveMapModal>
         <ModalFooter
           cancel={onCancel}
-          confirm={() => provider && onConfirm(provider)}
+          confirm={confirm}
           confirmButton={confirmButton}
         />
       </ImageModalContainer>

@@ -18,12 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {AUTH_TOKENS} from '../constants/default-settings';
+import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
 
 import DropboxProvider from './dropbox/dropbox-provider';
 import CartoProvider from './carto/carto-provider';
 
-const {DROPBOX_CLIENT_ID, CARTO_CLIENT_ID} = AUTH_TOKENS;
+const {
+  DROPBOX_CLIENT_ID,
+  CARTO_CLIENT_ID
+} = CLOUD_PROVIDERS_CONFIGURATION;
+
 const DROPBOX_CLIENT_NAME = 'Kepler.gl Demo App';
 
 export const DEFAULT_CLOUD_PROVIDER = 'dropbox';

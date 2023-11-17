@@ -63,7 +63,7 @@ describe('LoadStorageMap', () => {
       cloudProviders: []
     }));
 
-    const {getByText } = renderWithTheme(<LoadStorageMap {...DEFAULT_PROPS} />);
+    const {getByText} = renderWithTheme(<LoadStorageMap {...DEFAULT_PROPS} />);
     expect(DEFAULT_PROVIDER.listMaps).toHaveBeenCalled();
 
     // first show loading icon
@@ -72,7 +72,7 @@ describe('LoadStorageMap', () => {
     // show empty maps
     await waitFor(() => {
       expect(getByText('modal.loadStorageMap.noSavedMaps')).toBeInTheDocument();
-    })
+    });
   });
 
   test('renders map list because', async () => {
@@ -88,7 +88,7 @@ describe('LoadStorageMap', () => {
       cloudProviders: []
     }));
 
-    const {getByText } = renderWithTheme(<LoadStorageMap {...DEFAULT_PROPS} />);
+    const {getByText} = renderWithTheme(<LoadStorageMap {...DEFAULT_PROPS} />);
     expect(mapProvider.listMaps).toHaveBeenCalled();
 
     // first show loading icon
@@ -99,8 +99,8 @@ describe('LoadStorageMap', () => {
       DEFAULT_MAPS.forEach(map => {
         expect(getByText(map.title)).toBeInTheDocument();
         expect(getByText(map.description)).toBeInTheDocument();
-      })
-    })
+      });
+    });
   });
 
   test('trigger onLoadCLoudMap when clicking on a map', async () => {
@@ -116,7 +116,7 @@ describe('LoadStorageMap', () => {
       cloudProviders: []
     }));
 
-    const {getByText } = renderWithTheme(<LoadStorageMap {...DEFAULT_PROPS} />);
+    const {getByText} = renderWithTheme(<LoadStorageMap {...DEFAULT_PROPS} />);
     expect(mapProvider.listMaps).toHaveBeenCalled();
 
     // first show loading icon
@@ -138,14 +138,14 @@ describe('LoadStorageMap', () => {
       icon: jest.fn(),
       getManagementUrl: jest.fn().mockImplementation(() => 'provider.url'),
       listMaps: jest.fn().mockRejectedValue(new Error('timeout'))
-    }
+    };
     useCloudListProvider.mockImplementation(() => ({
       provider: rejectableProvider,
       setProvider: jest.fn(),
       cloudProviders: []
     }));
 
-    const {getByText } = renderWithTheme(<LoadStorageMap {...DEFAULT_PROPS} />);
+    const {getByText} = renderWithTheme(<LoadStorageMap {...DEFAULT_PROPS} />);
     expect(rejectableProvider.listMaps).toHaveBeenCalled();
 
     // first show loading icon
@@ -157,4 +157,3 @@ describe('LoadStorageMap', () => {
     });
   });
 });
-

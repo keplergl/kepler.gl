@@ -161,7 +161,11 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
         'MapboxAccessToken',
         'DropboxClientId',
         'MapboxExportToken',
-        'CartoClientId'
+        'CartoClientId',
+        'FoursquareClientId',
+        'FoursquareDomain',
+        'FoursquareAPIURL',
+        'FoursquareUserMapsURL'
       ])
     ]
   };
