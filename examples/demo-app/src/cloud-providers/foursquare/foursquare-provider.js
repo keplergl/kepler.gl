@@ -59,49 +59,49 @@ function extractMapFromFSQResponse(response) {
 }
 
 export default class FoursquareProvider extends Provider {
-  // constructor({clientId, authDomain, apiURL, userMapsURL}) {
-  //   super({name: NAME, displayName: DISPLAY_NAME, icon: FSQIcon});
-  //   this.icon = FSQIcon;
-  //   this.appName = APP_NAME;
-  //   this.apiURL = apiURL;
-  //
-  //   const redirect_uri = window.location.origin + window.location.pathname;
-  //
-  //   this._auth0 = new Auth0Client({
-  //     domain: authDomain,
-  //     clientId: clientId,
-  //     scope: FOURSQUARE_AUTH_SCOPE,
-  //     authorizationParams: {
-  //       redirect_uri,
-  //       audience: FOURSQUARE_AUTH_AUDIENCE
-  //     },
-  //     cacheLocation: 'localstorage'
-  //   });
-  //
-  //   // the domain needs to be passed as input param
-  //   this._folderLink = userMapsURL;
-  //   this.isNew = true;
-  // }
-  //
-  // hasPrivateStorage() {
-  //   return FOURSQUARE_PRIVATE_STORAGE_ENABLED;
-  // }
-  //
-  // async getUser() {
-  //   return this._auth0.getUser();
-  // }
-  //
-  // async login() {
-  //   return this._auth0.loginWithPopup();
-  // }
-  //
-  // async logout() {
-  //   return this._auth0.logout({
-  //     // this make sure after logging out the sdk will not redirect the user
-  //     openUrl: false
-  //   });
-  // }
-  //
+  constructor({clientId, authDomain, apiURL, userMapsURL}) {
+    super({name: NAME, displayName: DISPLAY_NAME, icon: FSQIcon});
+    this.icon = FSQIcon;
+    this.appName = APP_NAME;
+    this.apiURL = apiURL;
+
+    const redirect_uri = window.location.origin + window.location.pathname;
+
+    this._auth0 = new Auth0Client({
+      domain: authDomain,
+      clientId: clientId,
+      scope: FOURSQUARE_AUTH_SCOPE,
+      authorizationParams: {
+        redirect_uri,
+        audience: FOURSQUARE_AUTH_AUDIENCE
+      },
+      cacheLocation: 'localstorage'
+    });
+
+    // the domain needs to be passed as input param
+    this._folderLink = userMapsURL;
+    this.isNew = true;
+  }
+
+  hasPrivateStorage() {
+    return FOURSQUARE_PRIVATE_STORAGE_ENABLED;
+  }
+
+  async getUser() {
+    return this._auth0.getUser();
+  }
+
+  async login() {
+    return this._auth0.loginWithPopup();
+  }
+
+  async logout() {
+    return this._auth0.logout({
+      // this make sure after logging out the sdk will not redirect the user
+      openUrl: false
+    });
+  }
+
   // async uploadMap({mapData, options = {}}) {
   //   // TODO: handle replace
   //   // const mode = options.overwrite ? 'overwrite' : 'add';
