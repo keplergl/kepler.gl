@@ -57,7 +57,7 @@ type StyledEffectPanelContentProps = {
 };
 const StyledEffectPanelContent = styled.div<StyledEffectPanelContentProps>`
   ${props => props.theme.sidePanelScrollBar};
-  padding: ${props => (props.extended ? '32px' : '10px')};
+  padding: ${props => (props.extended ? '32px' : '10px 0px 10px 0px')};
   overflow: overlay;
   display: flex;
   flex-direction: column;

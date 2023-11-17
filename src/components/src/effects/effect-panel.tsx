@@ -35,7 +35,7 @@ const PanelWrapper = styled.div<PanelWrapperProps>`
     cursor: move;
   }
   margin: 3px auto 3px 25px;
-  max-width: 275px;
+  max-width: 295px;
 `;
 
 EffectPanelFactory.deps = [EffectPanelHeaderFactory, EffectConfiguratorFactory];
