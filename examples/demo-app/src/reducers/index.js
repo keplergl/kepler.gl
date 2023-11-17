@@ -34,7 +34,7 @@ import {
   SET_SAMPLE_LOADING_STATUS
 } from '../actions';
 
-import {AUTH_TOKENS} from '../constants/default-settings';
+import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
 import {generateHashId} from '../utils/strings';
 
 // INITIAL_APP_STATE
@@ -84,7 +84,7 @@ const demoReducer = combineReducers({
         ...DEFAULT_EXPORT_MAP,
         [EXPORT_MAP_FORMATS.HTML]: {
           ...DEFAULT_EXPORT_MAP[[EXPORT_MAP_FORMATS.HTML]],
-          exportMapboxAccessToken: AUTH_TOKENS.EXPORT_MAPBOX_TOKEN
+          exportMapboxAccessToken: CLOUD_PROVIDERS_CONFIGURATION.EXPORT_MAPBOX_TOKEN
         }
       }
     },

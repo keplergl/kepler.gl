@@ -12,7 +12,9 @@ describe('CloudMaps Component', () => {
 
   it('displays error message when there is an error', () => {
     const errorMessage = 'Test Error';
-    const {getByText} = renderWithTheme(<CloudMaps isLoading={false} maps={[]} error={{ message: errorMessage }} />);
+    const {getByText} = renderWithTheme(
+      <CloudMaps isLoading={false} maps={[]} error={{message: errorMessage}} />
+    );
     expect(getByText(`Error while fetching maps: ${errorMessage}`)).toBeInTheDocument();
   });
 
@@ -22,8 +24,14 @@ describe('CloudMaps Component', () => {
   });
 
   it('renderWithThemes correct number of CloudItems based on maps prop', () => {
-    const mockMaps = [{ id: 1, title: 'map' }, { id: 2, title: 'map' }, { id: 3, title: 'map' }];
-    const {getAllByText} = renderWithTheme(<CloudMaps isLoading={false} maps={mockMaps} error={null} />);
+    const mockMaps = [
+      {id: 1, title: 'map'},
+      {id: 2, title: 'map'},
+      {id: 3, title: 'map'}
+    ];
+    const {getAllByText} = renderWithTheme(
+      <CloudMaps isLoading={false} maps={mockMaps} error={null} />
+    );
     expect(getAllByText('map')).toHaveLength(mockMaps.length); // Ensure your CloudItem has 'data-testid="cloud-item"'
   });
 
@@ -33,14 +41,25 @@ describe('CloudMaps Component', () => {
   });
 
   it('calls onSelectMap when a CloudItem is clicked', () => {
-    const mockMaps = [{ id: 1, title: 'map' }, { id: 2, title: 'map' }, { id: 3, title: 'map' }];
+    const mockMaps = [
+      {id: 1, title: 'map'},
+      {id: 2, title: 'map'},
+      {id: 3, title: 'map'}
+    ];
     const onSelectMap = jest.fn();
     const provider = 'testProvider';
-    const {getAllByText} = renderWithTheme(<CloudMaps provider={provider} onSelectMap={onSelectMap} isLoading={false} maps={mockMaps} error={null} />);
+    const {getAllByText} = renderWithTheme(
+      <CloudMaps
+        provider={provider}
+        onSelectMap={onSelectMap}
+        isLoading={false}
+        maps={mockMaps}
+        error={null}
+      />
+    );
 
     const firstItem = getAllByText('map')[0];
     fireEvent.click(firstItem);
     expect(onSelectMap).toHaveBeenCalledWith(provider, mockMaps[0]);
   });
 });
-

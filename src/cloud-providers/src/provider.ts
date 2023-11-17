@@ -28,7 +28,7 @@ export type MapListItem = {
   description: string;
   loadParams: any;
   imageUrl?: string;
-  lastModification?: Millisecond;
+  updatedAt?: Millisecond;
   privateMap?: boolean;
 };
 
@@ -59,7 +59,9 @@ const NAME = 'cloud-provider';
 const DISPLAY_NAME = 'Cloud Provider';
 const THUMBNAIL = {width: 300, height: 200};
 const ICON = Upload;
+export const KEPLER_FORMAT = 'keplergl';
 export const FILE_CONFLICT_MSG = 'file_conflict';
+
 /**
  * The default provider class
  * @param {object} props
@@ -84,6 +86,7 @@ export default class Provider {
   displayName: string;
   icon: ComponentType<IconProps>;
   thumbnail: Thumbnail;
+  isNew: boolean = false;
 
   constructor(props: ProviderProps) {
     this.name = props.name || NAME;
@@ -133,10 +136,10 @@ export default class Provider {
   /**
    * This method is called to determine whether user already logged in to this provider
    * @public
-   * @returns true if a user already logged in
+   * @returns {Promise<string>} return the access token if a user already logged in
    */
-  getAccessToken(): boolean {
-    return true;
+  getAccessToken(): Promise<string> {
+    return Promise.reject('You must implement getAccessToken');
   }
 
   /**
@@ -200,7 +203,7 @@ export default class Provider {
   }: {
     mapData: MapData;
     options: ExportFileOptions;
-  }): Promise<any> {
+  }): Promise<MapListItem> {
     return Promise.reject('You must implement uploadMap');
   }
 
@@ -216,7 +219,7 @@ export default class Provider {
    *        title: 'My map',
    *        description: 'My first kepler map',
    *        imageUrl: 'http://',
-   *        lastModification: 1582677787000,
+   *        updatedAt: 1582677787000,
    *        privateMap: false,
    *        loadParams: {}
    *      }
@@ -253,10 +256,13 @@ export default class Provider {
    * }
    */
   async downloadMap(loadParams): Promise<{map: SavedMap; format: string}> {
-    // @ts-expect-error
-    return;
+    return Promise.reject('You must implement downloadMap');
   }
 
+  /**
+   * @return {string} return the storage location url for the current provider
+   * @public
+   */
   getManagementUrl(): string {
     throw new Error('You must implement getManagementUrl');
   }

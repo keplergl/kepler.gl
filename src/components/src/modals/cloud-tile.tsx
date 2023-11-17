@@ -60,6 +60,7 @@ const StyledTileWrapper = styled.div.attrs({
 
 const StyledBox = styled(CenterVerticalFlexbox)`
   margin-right: 12px;
+  position: relative;
 `;
 
 const StyledCloudName = styled.div`
@@ -96,6 +97,25 @@ const LogoutButton = ({onClick}: OnClickProps) => (
   </Button>
 );
 
+const NewTag = styled.div`
+  width: 37px;
+  height: 19px;
+  display: flex;
+  align-content: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 4px 8px;
+  background-color: #EDE9F9;
+  color: #8863F8;
+  position: absolute;
+  left: 35%;
+  top: -8px
+  z-index: 500;
+  font-size: 11px;
+  line-height: 10px;
+;
+`;
+
 interface CloudTileProps {
   actionName?: string | null;
   // cloud provider class
@@ -116,7 +136,7 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
   const isSelected = provider === currentProvider;
 
   useEffect(() => {
-    if (provider.getAccessToken()) {
+    if (provider) {
       setError(null);
       setIsLoading(true);
       setError(null);
@@ -129,6 +149,8 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
   }, [provider]);
 
   const onLogin = useCallback(async () => {
+    setError(null);
+    setIsLoading(true);
     try {
       const user = await provider.login();
       setUser(user);
@@ -136,6 +158,7 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
     } catch (error) {
       setError(error as Error);
     }
+    setIsLoading(false);
   }, [provider]);
 
   const onSelect = useCallback(async () => {
@@ -164,6 +187,10 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
 
   return (
     <StyledBox>
+      {provider.isNew ? (
+        <NewTag>New</NewTag>
+      ) : null}
+      <div></div>
       <StyledTileWrapper onClick={onSelect} selected={isSelected}>
         <StyledCloudName>{displayName || name}</StyledCloudName>
         {provider.icon ? <provider.icon height="64px" /> : null}

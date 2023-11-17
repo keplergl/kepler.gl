@@ -1,6 +1,4 @@
 // @ts-nocheck
-
-//colocating test next the file
 import React from 'react';
 import {fireEvent} from '@testing-library/react';
 import {renderWithTheme} from '../../../../../test/helpers/component-jest-utils';
@@ -23,12 +21,16 @@ describe('CloudItem', () => {
   });
 
   it('renders PrivacyBadge for private maps', () => {
-    const {getByText} = renderWithTheme(<CloudItem vis={{...mockVis, privateMap: true}} onClick={() => {}} />);
+    const {getByText} = renderWithTheme(
+      <CloudItem vis={{...mockVis, privateMap: true}} onClick={() => {}} />
+    );
     expect(getByText('Private')).toBeInTheDocument();
   });
 
   it('does not render PrivacyBadge for public maps', () => {
-    const {queryByText} = renderWithTheme(<CloudItem vis={{...mockVis, privateMap: false}} onClick={() => {}} />);
+    const {queryByText} = renderWithTheme(
+      <CloudItem vis={{...mockVis, privateMap: false}} onClick={() => {}} />
+    );
     expect(queryByText('Private')).toBeNull();
   });
 
@@ -38,7 +40,9 @@ describe('CloudItem', () => {
   });
 
   it('displays MapIcon when no thumbnail is provided', () => {
-    const {getByRole} = renderWithTheme(<CloudItem vis={{...mockVis, thumbnail: null}} onClick={() => {}} />);
+    const {getByRole} = renderWithTheme(
+      <CloudItem vis={{...mockVis, thumbnail: null}} onClick={() => {}} />
+    );
     expect(getByRole('map-icon')).toBeInTheDocument();
   });
 
@@ -46,7 +50,9 @@ describe('CloudItem', () => {
     const {getByText} = renderWithTheme(<CloudItem vis={mockVis} onClick={() => {}} />);
     expect(getByText('Test Title')).toBeInTheDocument();
     expect(getByText('Test Description')).toBeInTheDocument();
-    expect(getByText(`Last modified ${moment.utc(mockVis.lastModification).fromNow()}`)).toBeInTheDocument();
+    expect(
+      getByText(`Last modified ${moment.utc(mockVis.lastModification).fromNow()}`)
+    ).toBeInTheDocument();
   });
 
   it('calls onClick when component is clicked', () => {
@@ -56,4 +62,3 @@ describe('CloudItem', () => {
     expect(onClickMock).toHaveBeenCalled();
   });
 });
-
