@@ -213,6 +213,8 @@ export default class ScenegraphLayer extends Layer {
     return [
       new DeckScenegraphLayer({
         ...this.getDefaultDeckLayerProps(opts),
+        // gpu data filtering is not supported at the moment in scenegraphLayer https://github.com/visgl/deck.gl/issues/8099
+        extensions: [],
         ...data,
         fetch,
         scenegraph: this.config.visConfig.scenegraph || DEFAULT_MODEL,
