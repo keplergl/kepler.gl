@@ -110,7 +110,11 @@ const COMMON_CONFIG = {
       DropboxClientId: null,
       CartoClientId: null,
       GoogleDriveClientId: null,
-      MapboxExportToken: null
+      MapboxExportToken: null,
+      FoursquareClientId: null,
+      FoursquareDomain: null,
+      FoursquareAPIURL: null,
+      FoursquareUserMapsURL: null
     })
   ],
 
@@ -158,6 +162,17 @@ function logInstruction(msg) {
   console.log('\x1b[36m%s\x1b[0m', msg);
 }
 
+function validateEnvVariable(variable, instruction) {
+  if (!process.env[variable]) {
+    logError(`Error! ${variable} is not defined`);
+    logInstruction(
+      `Make sure to run "export ${variable}=<token>" before deploy the website`
+    );
+    logInstruction(instruction);
+    throw new Error(`Missing ${variable}`);
+  }
+}
+
 module.exports = env => {
   env = env || {};
 
@@ -168,32 +183,13 @@ module.exports = env => {
   }
 
   if (env.prod) {
-    if (!process.env.MapboxAccessToken) {
-      logError('Error! MapboxAccessToken is not defined');
-      logInstruction(
-        `Make sure to run "export MapboxAccessToken=<token>" before deploy the website`
-      );
-      logInstruction(
-        'You can get the token at https://www.mapbox.com/help/how-access-tokens-work/'
-      );
-      throw new Error('Missing Mapbox Access token');
-    }
-    if (!process.env.DropboxClientId) {
-      logError('Error! DropboxClientId is not defined');
-      logInstruction(`Make sure to run "export DropboxClientId=<token>" before deploy the website`);
-      logInstruction('You can get the token at https://www.dropbox.com/developers');
-      throw new Error('Missing Export DropboxClientId Access token');
-    }
-    if (!process.env.MapboxExportToken) {
-      logError('Error! MapboxExportToken is not defined');
-      logInstruction(
-        `Make sure to run "export MapboxExportToken=<token>" before deploy the website`
-      );
-      logInstruction(
-        'You can get the token at https://www.mapbox.com/help/how-access-tokens-work/'
-      );
-      throw new Error('Missing Export Mapbox Access token, used to generate the single map file');
-    }
+    validateEnvVariable('MapboxAccessToken', 'You can get the token at https://www.mapbox.com/help/how-access-tokens-work/');
+    validateEnvVariable('DropboxClientId', 'You can get the token at https://www.dropbox.com/developers');
+    validateEnvVariable('MapboxExportToken', 'You can get the token at https://www.mapbox.com/help/how-access-tokens-work/');
+    validateEnvVariable('FoursquareClientId','https://location.foursquare.com/developer');
+    validateEnvVariable('FoursquareDomain','https://location.foursquare.com/developer');
+    validateEnvVariable('FoursquareAPIURL','https://location.foursquare.com/developer');
+    validateEnvVariable('FoursquareUserMapsURL','https://location.foursquare.com/developer');
     config = addProdConfig(config);
   }
 

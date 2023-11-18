@@ -137,11 +137,9 @@ export const CloudItem = ({vis, onClick}) => {
         </MapIcon>
       )}
       <span className="vis_item-title">{vis.title}</span>
-      {vis.description?.length && (
-        <span className="vis_item-description">{vis.description}</span>
-      )}
+      {vis.description?.length && <span className="vis_item-description">{vis.description}</span>}
       <span className="vis_item-modification-date">
-        Last modified {moment.utc(vis.lastModification).fromNow()}
+        Last modified {moment.utc(vis.updatedAt).fromNow()}
       </span>
     </StyledVisualizationItem>
   );

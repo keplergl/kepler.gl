@@ -20,7 +20,6 @@ jest.mock('../hooks/use-cloud-list-provider', () => ({
 
 const ShareMapUrlModal = ShareMapUrlModalFactory();
 
-
 const DEFAULT_PROPS = {
   isProviderLoading: false,
   onExport: jest.fn(),
@@ -28,7 +27,7 @@ const DEFAULT_PROPS = {
   successInfo: undefined,
   onUpdateImageSetting: jest.fn(),
   cleanupExportImage: jest.fn()
-}
+};
 
 describe('ShareMapModal', () => {
   afterEach(() => {
@@ -125,7 +124,7 @@ describe('ShareMapModal', () => {
             <ShareMapUrlModal {...DEFAULT_PROPS} />
           </IntlProvider>
         </ThemeProvider>
-      )
+      );
     });
 
     expect(DEFAULT_PROPS.onExport).toHaveBeenCalled();
@@ -133,12 +132,16 @@ describe('ShareMapModal', () => {
 
   it('displays share URL when provided', () => {
     const shareUrl = 'http://example.com';
-    const { getByText } = renderWithTheme(<ShareMapUrlModal {...DEFAULT_PROPS} successInfo={{ shareUrl }} />);
+    const {getByText} = renderWithTheme(
+      <ShareMapUrlModal {...DEFAULT_PROPS} successInfo={{shareUrl}} />
+    );
     expect(getByText('Share Url')).toBeInTheDocument();
   });
 
   it('renders errors', () => {
-    const { getByText } = renderWithTheme(<ShareMapUrlModal {...DEFAULT_PROPS} providerError={new Error('timeout')} />);
+    const {getByText} = renderWithTheme(
+      <ShareMapUrlModal {...DEFAULT_PROPS} providerError={new Error('timeout')} />
+    );
     expect(getByText('modal.statusPanel.error')).toBeInTheDocument();
   });
-})
+});

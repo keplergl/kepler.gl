@@ -30,7 +30,7 @@ import Announcement, {FormLink} from './components/announcement';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
-import {AUTH_TOKENS, DEFAULT_FEATURE_FLAGS} from './constants/default-settings';
+import {CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS} from './constants/default-settings';
 import {messages} from './constants/localization';
 
 import {
@@ -429,7 +429,7 @@ class App extends Component {
             <AutoSizer>
               {({height, width}) => (
                 <KeplerGl
-                  mapboxApiAccessToken={AUTH_TOKENS.MAPBOX_TOKEN}
+                  mapboxApiAccessToken={CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN}
                   id="map"
                   /*
                    * Specify path to keplerGl state, because it is not mount at the root

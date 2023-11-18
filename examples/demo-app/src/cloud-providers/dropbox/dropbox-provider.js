@@ -21,10 +21,9 @@
 // DROPBOX
 import {Dropbox} from 'dropbox';
 import window from 'global/window';
-import Console from 'global/console';
 import DropboxIcon from './dropbox-icon';
 import {MAP_URI} from '../../constants/default-settings';
-import {Provider} from '@kepler.gl/cloud-providers';
+import {KEPLER_FORMAT, Provider} from '@kepler.gl/cloud-providers';
 
 const NAME = 'dropbox';
 const DISPLAY_NAME = 'Dropbox';
@@ -220,11 +219,11 @@ export default class DropboxProvider extends Provider {
 
     const response = {
       map: json,
-      format: 'keplergl'
+      format: KEPLER_FORMAT
     };
 
     this._loadParam = loadParams;
-    return response;
+    return Promise.resolve(response);
   }
 
   getUserName() {
@@ -474,7 +473,7 @@ export default class DropboxProvider extends Provider {
           name,
           title,
           id,
-          lastModification: new Date(client_modified).getTime(),
+          updatedAt: new Date(client_modified).getTime(),
           loadParams: {
             path: path_lower
           }

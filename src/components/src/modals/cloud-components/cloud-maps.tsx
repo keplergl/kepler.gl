@@ -32,6 +32,11 @@ const StyledSpinner = styled.div`
   }
 `;
 
+const StyledFlexContainer = styled(FlexContainer)`
+  justify-content: flex-start;
+  flex-wrap: wrap;
+`;
+
 export const CloudMaps = ({provider, onSelectMap, isLoading, maps, error}) => {
   if (error) {
     return <div>Error while fetching maps: {error.message}</div>;
@@ -46,7 +51,7 @@ export const CloudMaps = ({provider, onSelectMap, isLoading, maps, error}) => {
   }
 
   return (
-    <FlexContainer>
+    <StyledFlexContainer>
       {(maps ?? []).length ? (
         maps.map(vis => (
           <CloudItem key={vis.id} onClick={() => onSelectMap(provider, vis)} vis={vis} />
@@ -56,6 +61,6 @@ export const CloudMaps = ({provider, onSelectMap, isLoading, maps, error}) => {
           <FormattedMessage id={'modal.loadStorageMap.noSavedMaps'} />
         </div>
       )}
-    </FlexContainer>
+    </StyledFlexContainer>
   );
 };
