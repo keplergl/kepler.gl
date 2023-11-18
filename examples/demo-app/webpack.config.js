@@ -69,7 +69,11 @@ const CONFIG = {
       'MapboxAccessToken',
       'DropboxClientId',
       'MapboxExportToken',
-      'CartoClientId'
+      'CartoClientId',
+      'FoursquareClientId',
+      'FoursquareDomain',
+      'FoursquareAPIURL',
+      'FoursquareUserMapsURL'
     ])
   ]
 };

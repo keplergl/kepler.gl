@@ -23,9 +23,9 @@ The default provider class
 
 **Parameters**
 
--   `props` **[object][27]** 
-    -   `props.name` **[string][28]** 
-    -   `props.displayName` **[string][28]** 
+-   `props` **[object][27]**
+    -   `props.name` **[string][28]**
+    -   `props.displayName` **[string][28]**
     -   `props.icon` **ReactElement** React element
     -   `props.thumbnail` **[object][27]** thumbnail size object
         -   `props.thumbnail.width` **[number][29]** thumbnail width in pixels
@@ -111,13 +111,13 @@ Returns **[string][28]** true if a user already logged in
 
 Whether this provider support upload map to a private storage. If truthy, user will be displayed with the storage save icon on the top right of the side bar.
 
-Returns **[boolean][31]** 
+Returns **[boolean][31]**
 
 ### hasSharingUrl
 
 Whether this provider support share map via a public url, if truthy, user will be displayed with a share map via url under the export map option on the top right of the side bar
 
-Returns **[boolean][31]** 
+Returns **[boolean][31]**
 
 ### listMaps
 
@@ -133,7 +133,7 @@ async listMaps() {
        title: 'My map',
        description: 'My first kepler map',
        imageUrl: 'http://',
-       lastModification: 1582677787000,
+       udpatedAt: 1582677787000,
        privateMap: false,
        loadParams: {}
      }
@@ -168,7 +168,7 @@ With the option to overwrite already saved map, and upload as private or public 
 
 **Parameters**
 
--   `param` **[Object][27]** 
+-   `param` **[Object][27]**
     -   `param.mapData` **[Object][27]** the map object
         -   `param.mapData.map` **[Object][27]** {datasets. config, info: {title, description}}
         -   `param.mapData.thumbnail` **[Blob][35]** A thumbnail of current map. thumbnail size can be defined by provider by this.thumbnail
@@ -186,10 +186,10 @@ Type: [Object][27]
 
 ### Properties
 
--   `map` **[Object][27]** 
-    -   `map.datasets` **[Array][32]&lt;[Object][27]>** 
-    -   `map.config` **[Object][27]** 
-    -   `map.info` **[Object][27]** 
+-   `map` **[Object][27]**
+    -   `map.datasets` **[Array][32]&lt;[Object][27]>**
+    -   `map.config` **[Object][27]**
+    -   `map.info` **[Object][27]**
 -   `format` **[string][28]** one of 'csv': csv file string, 'geojson': geojson object, 'row': row object, 'keplergl': datasets array saved using KeplerGlSchema.save
 
 ## Viz

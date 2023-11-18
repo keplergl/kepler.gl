@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-export {default as Provider, FILE_CONFLICT_MSG} from './provider';
+export {default as Provider, FILE_CONFLICT_MSG, KEPLER_FORMAT} from './provider';
 // eslint-disable-next-line prettier/prettier
 export type {MapListItem, Thumbnail, ProviderProps, IconProps} from './provider';
 export {default as Upload} from './upload';
