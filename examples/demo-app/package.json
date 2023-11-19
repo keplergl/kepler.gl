@@ -52,8 +52,8 @@
   "resolutions": {
     "@luma.gl/core": "8.5.20",
     "@luma.gl/webgl": "8.5.20",
-    "@deck.gl/core": "8.9.27",
-    "@deck.gl/extensions": "8.9.27",
+    "@deck.gl/core": "8.9.32",
+    "@deck.gl/extensions": "8.9.32",
     "react-vis": "1.11.7"
   }
 }

@@ -18,17 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// @ts-nocheck
 import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
-import {Logout, Login} from '../common/icons';
-import {CenterVerticalFlexbox, Button, CheckMark} from '../common/styled-components';
+import {Logout, Login} from '../../common/icons';
+import {CenterVerticalFlexbox, Button, CheckMark} from '../../common/styled-components';
 import {Provider} from '@kepler.gl/cloud-providers';
-import {useCloudListProvider} from '../hooks/use-cloud-list-provider';
-import {CloudUser} from '@kepler.gl/cloud-providers/src/provider';
+import {useCloudListProvider} from '../../hooks/use-cloud-list-provider';
+import {CloudUser} from '@kepler.gl/cloud-providers';
 
 interface StyledTileWrapperProps {
   selected?: boolean;
 }
+
+export const StyledWarning = styled.span`
+  color: ${props => props.theme.errorColor};
+  font-weight: ${props => props.theme.selectFontWeightBold};
+`;
 
 const StyledTileWrapper = styled.div.attrs({
   className: 'provider-tile__wrapper'
@@ -59,7 +65,6 @@ const StyledTileWrapper = styled.div.attrs({
 `;
 
 const StyledBox = styled(CenterVerticalFlexbox)`
-  margin-right: 12px;
   position: relative;
 `;
 
@@ -113,7 +118,6 @@ const NewTag = styled.div`
   z-index: 500;
   font-size: 11px;
   line-height: 10px;
-;
 `;
 
 interface CloudTileProps {
@@ -136,16 +140,20 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
   const isSelected = provider === currentProvider;
 
   useEffect(() => {
-    if (provider) {
-      setError(null);
-      setIsLoading(true);
-      setError(null);
-      provider
-        .getUser()
-        .then(user => setUser(user))
-        .catch(setError)
-        .finally(() => setIsLoading(false));
+    if (!provider) {
+      return;
     }
+    setError(null);
+    setIsLoading(true);
+    setError(null);
+    provider
+      .getUser()
+      .then(setUser)
+      .catch(setError)
+      .finally(() => {
+        setError(null);
+        setIsLoading(false);
+      });
   }, [provider]);
 
   const onLogin = useCallback(async () => {
@@ -166,9 +174,15 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
       return;
     }
     if (!user) {
-      await onLogin();
+      try {
+        await onLogin();
+        setProvider(provider);
+      } catch (err) {
+        setError(err);
+        setProvider(null);
+      }
     }
-    setProvider(provider);
+
   }, [setProvider, provider, user, isLoading]);
 
   const onLogout = useCallback(async () => {
@@ -190,7 +204,6 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
       {provider.isNew ? (
         <NewTag>New</NewTag>
       ) : null}
-      <div></div>
       <StyledTileWrapper onClick={onSelect} selected={isSelected}>
         <StyledCloudName>{displayName || name}</StyledCloudName>
         {provider.icon ? <provider.icon height="64px" /> : null}
@@ -201,8 +214,8 @@ const CloudTile: React.FC<CloudTileProps> = ({provider, actionName}) => {
         )}
         {isSelected ? <CheckMark /> : null}
       </StyledTileWrapper>
-      {user ? <LogoutButton onClick={onLogout} /> : <LoginButton onClick={onLogin} />}
-      {error ? <div>{error.message}</div> : null}
+      {user || error ? <LogoutButton onClick={onLogout} /> : <LoginButton onClick={onLogin} />}
+      {error ? <StyledWarning>{error.message}</StyledWarning> : null}
     </StyledBox>
   );
 };

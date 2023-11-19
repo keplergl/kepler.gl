@@ -66,5 +66,8 @@
   "peerDependencies": {
     "react": "18.x",
     "react-dom": "18.x"
+  },
+  "resolutions": {
+    "@deck.gl/core": "8.9.32"
   }
 }

@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import CloudTile from '../cloud-tile';
+// @ts-nocheck
+import CloudTile from './cloud-tile';
 import React from 'react';
 import styled from 'styled-components';
 import {Provider} from '@kepler.gl/cloud-providers';

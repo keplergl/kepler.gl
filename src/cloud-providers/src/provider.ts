@@ -138,7 +138,7 @@ export default class Provider {
    * @public
    * @returns {Promise<string>} return the access token if a user already logged in
    */
-  getAccessToken(): Promise<string> {
+  async getAccessToken(): Promise<string | null> {
     return Promise.reject('You must implement getAccessToken');
   }
 
@@ -155,7 +155,7 @@ export default class Provider {
   /**
    * return a Promise with the user object
    */
-  getUser(): Promise<CloudUser> {
+  async getUser(): Promise<CloudUser | null> {
     return Promise.reject('You must implement getUser');
   }
 

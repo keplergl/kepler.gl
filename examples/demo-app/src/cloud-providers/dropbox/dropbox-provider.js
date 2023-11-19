@@ -210,7 +210,7 @@ export default class DropboxProvider extends Provider {
    * @param loadParams
    */
   async downloadMap(loadParams) {
-    const token = this.getAccessToken();
+    const token = await this.getAccessToken();
     if (!token) {
       this.login(() => this.downloadMap(loadParams));
     }
@@ -287,7 +287,7 @@ export default class DropboxProvider extends Provider {
    * Provides the current dropbox auth token. If stored in localStorage is set onto dropbox handler and returned
    * @returns {any}
    */
-  getAccessToken() {
+  async getAccessToken() {
     let token = this._dropbox.getAccessToken();
     if (!token && window.localStorage) {
       const jsonString = window.localStorage.getItem('dropbox');
@@ -320,8 +320,12 @@ export default class DropboxProvider extends Provider {
   }
 
   async getUser() {
-    const response = await this._dropbox.usersGetCurrentAccount();
-    return this._getUserFromAccount(response);
+    try {
+      const response = await this._dropbox.usersGetCurrentAccount();
+      return this._getUserFromAccount(response);
+    } catch (err) {
+      return Promise.reject(new Error(err.error.error_summary));
+    }
   }
 
   _handleDropboxError(error) {

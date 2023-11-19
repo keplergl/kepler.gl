@@ -206,7 +206,7 @@ export {default as FeatureActionPanelFactory, PureFeatureActionPanelFactory} fro
 export {injector, provideRecipesToInjector, withState} from './injector';
 
 // Common Components
-export {default as CloudTile} from './modals/cloud-tile';
+export {default as CloudTile} from './modals/cloud-components/cloud-tile';
 export {default as FileUploadFactory, FileUpload, WarningMsg} from './common/file-uploader/file-upload';
 export {default as FileDrop} from './common/file-uploader/file-drop';
 export {default as UploadButton} from './common/file-uploader/upload-button';

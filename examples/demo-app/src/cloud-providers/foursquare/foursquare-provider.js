@@ -1,6 +1,27 @@
+// Copyright (c) 2023 Uber Technologies, Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 import FSQIcon from './foursquare-icon';
-import {Provider, KEPLER_FORMAT} from 'kepler.gl/cloud-providers';
+import {Provider} from '@kepler.gl/cloud-providers';
 import {Auth0Client} from '@auth0/auth0-spa-js';
+import {KEPLER_FORMAT} from '@kepler.gl/cloud-providers';
 
 const NAME = 'Foursquare';
 const DISPLAY_NAME = 'Foursquare';
@@ -41,8 +62,6 @@ function extractMapFromFSQResponse(response) {
 export default class FoursquareProvider extends Provider {
   constructor({clientId, authDomain, apiURL, userMapsURL}) {
     super({name: NAME, displayName: DISPLAY_NAME, icon: FSQIcon});
-    this.icon = FSQIcon;
-    this.appName = APP_NAME;
     this.apiURL = apiURL;
 
     const redirect_uri = window.location.origin + window.location.pathname;
@@ -84,11 +103,10 @@ export default class FoursquareProvider extends Provider {
 
   async uploadMap({mapData, options = {}}) {
     // TODO: handle replace
-    const mode = options.overwrite ? 'overwrite' : 'add';
-    const method = options.overwrite ? 'PUT' : 'POST'
+    // const mode = options.overwrite ? 'overwrite' : 'add';
     const {map, thumbnail} = mapData;
 
-    const {title = '', description = '', id} = map.info;
+    const {title = '', description = ''} = map.info;
     const headers = await this.getHeaders();
     const payload = {
       name: title,
@@ -99,8 +117,8 @@ export default class FoursquareProvider extends Provider {
       }
     };
 
-    const mapResponse = await fetch(`${this.apiURL}/v1/maps${mode === 'overwrite' ? `/${id}` : ''}`, {
-      method,
+    const mapResponse = await fetch(`${this.apiURL}/v1/maps`, {
+      method: 'POST',
       headers,
       body: JSON.stringify(payload)
     });
