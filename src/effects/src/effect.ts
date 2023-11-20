@@ -1,11 +1,15 @@
-import {generateHashId} from '@kepler.gl/utils';
+import {generateHashId, validateEffectParameters} from '@kepler.gl/utils';
 import {
   Effect as EffectInterface,
   EffectProps,
   EffectPropsPartial,
   EffectParameterDescription
 } from '@kepler.gl/types';
-import {DEFAULT_POST_PROCESSING_EFFECT_TYPE, POSTPROCESSING_EFFECTS} from '@kepler.gl/constants';
+import {
+  DEFAULT_POST_PROCESSING_EFFECT_TYPE,
+  POSTPROCESSING_EFFECTS,
+  LIGHT_AND_SHADOW_EFFECT
+} from '@kepler.gl/constants';
 
 export class Effect implements EffectInterface {
   id: string;
@@ -27,9 +31,12 @@ export class Effect implements EffectInterface {
     this.isEnabled = _props.isEnabled;
     this.isConfigActive = _props.isConfigActive;
     this.isJsonEditorActive = _props.isJsonEditorActive;
-    this.parameters = _props.parameters;
 
-    this._uiConfig = POSTPROCESSING_EFFECTS[this.type]?.parameters || [];
+    this._uiConfig =
+      LIGHT_AND_SHADOW_EFFECT.type === this.type
+        ? LIGHT_AND_SHADOW_EFFECT.parameters
+        : POSTPROCESSING_EFFECTS[this.type]?.parameters || [];
+    this.parameters = validateEffectParameters(_props.parameters, this._uiConfig);
 
     this.deckEffect = null;
     this._initializeEffect();
@@ -56,7 +63,10 @@ export class Effect implements EffectInterface {
     this.isEnabled = props.isEnabled ?? this.isEnabled;
     this.isConfigActive = props.isConfigActive ?? this.isConfigActive;
     this.isJsonEditorActive = props.isJsonEditorActive ?? this.isJsonEditorActive;
-    this.parameters = {...this.parameters, ...props.parameters};
+    this.parameters = {
+      ...this.parameters,
+      ...validateEffectParameters(props.parameters, this._uiConfig)
+    };
   }
 
   isValidToSave() {

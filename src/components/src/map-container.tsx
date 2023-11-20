@@ -208,7 +208,12 @@ const DatasetAttributions = ({
     {datasetAttributions?.length ? (
       <StyledDatasetAttributionsContainer isPalm={isPalm}>
         {datasetAttributions.map((ds, idx) => (
-          <a href={ds.url} target="_blank" rel="noopener noreferrer" key={`${ds.title}_${idx}`}>
+          <a
+            {...(ds.url ? {href: ds.url} : null)}
+            target="_blank"
+            rel="noopener noreferrer"
+            key={`${ds.title}_${idx}`}
+          >
             {ds.title}
             {idx !== datasetAttributions.length - 1 ? ', ' : null}
           </a>

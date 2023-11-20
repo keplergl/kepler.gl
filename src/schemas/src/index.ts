@@ -44,7 +44,8 @@ export {
   filterPropsV1,
   default as visStateSchema,
   layerPropsV1,
-  layerPropsV0
+  layerPropsV0,
+  effectPropsV1
 } from './vis-state-schema';
 export type {
   SavedField,
