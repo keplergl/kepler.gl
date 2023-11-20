@@ -1,8 +1,7 @@
-export type EffectParameterDescription = {
+type EffectParameterDescription = {
   name: string;
-  type?: 'number' | 'color';
-  label?: string | false;
-  index?: number;
+  type?: 'number' | 'array' | 'color';
+  label?: string | false | (string | false)[];
   min: number;
   max: number;
   defaultValue?: number | number[];

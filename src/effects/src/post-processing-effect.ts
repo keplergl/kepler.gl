@@ -18,7 +18,7 @@ import {
 } from '@luma.gl/shadertools';
 
 import {POSTPROCESSING_EFFECTS, DEFAULT_POST_PROCESSING_EFFECT_TYPE} from '@kepler.gl/constants';
-import {EffectPropsPartial} from '@kepler.gl/types';
+import {EffectPropsPartial, EffectParameterDescription} from '@kepler.gl/types';
 
 import Effect from './effect';
 
@@ -86,12 +86,20 @@ const POSTPROCESSING_EFFECTS_DESCS = [
 ];
 
 /**
- * Temp. Get custom default values from effect description
+ * Returns default parameter value based on effect description.
+ * @param name Name of the parameter.
+ * @param effectDescription Effect's description.
+ * @param uniformsDesc Effect's uniforms.
+ * @returns
  */
-const getDefaultValueForParameter = (name, effectDescription) => {
-  const rec = effectDescription.filter(param => param.name === name);
-  if (rec.length === 1) return rec[0].defaultValue;
-  else if (rec.length === 2) return [rec[0].defaultValue, rec[1].defaultValue];
+export const getDefaultValueForParameter = (
+  name: string,
+  effectDescription: EffectParameterDescription[],
+  uniformsDesc: any
+) => {
+  const description = effectDescription.find(param => param.name === name);
+  const uniform = uniformsDesc[name];
+  return description?.defaultValue ?? uniform?.value ?? uniform ?? description?.min;
 };
 
 class PostProcessingEffect extends Effect {
@@ -112,10 +120,7 @@ class PostProcessingEffect extends Effect {
         const keys = Object.keys(uniforms);
         const defaultParameters = {};
         keys.forEach(key => {
-          defaultParameters[key] =
-            getDefaultValueForParameter(key, this._uiConfig) ??
-            uniforms[key].value ??
-            uniforms[key];
+          defaultParameters[key] = getDefaultValueForParameter(key, this._uiConfig, uniforms);
         });
         this.parameters = {...defaultParameters, ...this.parameters};
         this.deckEffect?.setProps(this.parameters);

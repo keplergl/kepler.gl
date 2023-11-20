@@ -143,6 +143,14 @@ const COMMON_SLIDER_PROPS = {
   label: 'value'
 };
 
+type EffectParameterDescriptionFlattened = {
+  name: string;
+  label?: string | false | (string | false)[];
+  min: number;
+  max: number;
+  index?: number;
+};
+
 EffectConfiguratorFactory.deps = [RangeSliderFactory, EffectTimeConfiguratorFactory];
 
 export default function EffectConfiguratorFactory(
@@ -272,8 +280,29 @@ export default function EffectConfiguratorFactory(
       const uniforms = effect.deckEffect?.module.uniforms || {};
       const parameterDescriptions = effect.getParameterDescriptions();
 
+      const flatParameterDescriptions = useMemo(() => {
+        return parameterDescriptions.reduce((acc, description) => {
+          if (description.type === 'array') {
+            // split arrays of controls into a separate controls for each component
+            if (Array.isArray(description.defaultValue)) {
+              description.defaultValue.forEach((_, index) => {
+                acc.push({
+                  ...description,
+                  index,
+                  label: description.label?.[index]
+                });
+              });
+            }
+          } else {
+            acc.push(description);
+          }
+
+          return acc;
+        }, [] as EffectParameterDescriptionFlattened[]);
+      }, [parameterDescriptions]);
+
       const controls = useMemo(() => {
-        return parameterDescriptions.map(desc => {
+        return flatParameterDescriptions.map(desc => {
           const paramName = desc.name;
 
           const uniform = uniforms[desc.name];
@@ -333,11 +362,11 @@ export default function EffectConfiguratorFactory(
           // ignore everything else for now
           return null;
         });
-      }, [parameterDescriptions, effect, effect.parameters, updateEffectConfig]);
+      }, [flatParameterDescriptions, effect, effect.parameters, updateEffectConfig]);
 
       return (
         <StyledEffectConfigurator key={effect.id}>
-          {parameterDescriptions.map((desc, parameterIndex) => {
+          {flatParameterDescriptions.map((desc, parameterIndex) => {
             const control = controls[parameterIndex];
             if (!control) {
               return null;

@@ -21,7 +21,7 @@
 import {LightingEffect, PostProcessEffect} from '@deck.gl/core';
 import test from 'tape';
 
-import {computeDeckEffects} from '@kepler.gl/utils';
+import {computeDeckEffects, validateEffectParameters} from '@kepler.gl/utils';
 import {VisStateActions} from '@kepler.gl/actions';
 import {visStateReducer} from '@kepler.gl/reducers';
 import {createEffect} from '@kepler.gl/effects';
@@ -92,6 +92,54 @@ test('effectUtils -> createEffect', t => {
     'should create hueSaturation effect'
   );
   t.equal(lightEffect.type, LIGHT_AND_SHADOW_EFFECT.type, 'should create Light&Shadow effect');
+
+  t.end();
+});
+
+test('effectUtils -> validateEffectParameters', t => {
+  const testCases = [
+    {
+      input: {
+        parameters: {},
+        config: POSTPROCESSING_EFFECTS.magnify.parameters
+      },
+      expected: {}
+    },
+    {
+      input: {
+        parameters: {
+          screenXY: [10, 'x'],
+          radiusPixels: 1000,
+          zoom: 0,
+          borderWidthPixels: 'str'
+        },
+        config: POSTPROCESSING_EFFECTS.magnify.parameters
+      },
+      expected: {
+        screenXY: [1, 0.5],
+        radiusPixels: 500,
+        zoom: 0.5,
+        borderWidthPixels: 3
+      }
+    },
+    {
+      input: {
+        parameters: {
+          blurRadius: null,
+          gradientRadius: [20, 10],
+          start: [10],
+          end: 'str'
+        },
+        config: POSTPROCESSING_EFFECTS.tiltShift.parameters
+      },
+      expected: {blurRadius: 0, gradientRadius: 0, start: [0, 0], end: [1, 1]}
+    }
+  ];
+
+  testCases.forEach((testCase, index) => {
+    const result = validateEffectParameters(testCase.input.parameters, testCase.input.config);
+    t.deepEqual(result, testCase.expected, `parameters should be property validated ${index}`);
+  });
 
   t.end();
 });
