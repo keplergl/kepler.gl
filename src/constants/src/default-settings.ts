@@ -1425,7 +1425,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   hexagonalPixelate: {
     type: 'hexagonalPixelate',
     name: 'Hexagonal Pixelate',
-    parameters: [{name: 'scale', defaultValue: 20, min: 0, max: 50}]
+    parameters: [{name: 'scale', defaultValue: 20, min: 1, max: 50}]
   }
 };
 
