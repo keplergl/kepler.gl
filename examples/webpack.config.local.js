@@ -32,6 +32,11 @@ const webpack = require('webpack');
 const fs = require('fs');
 const KeplerPackage = require('../package');
 const {logStep, logError} = require('../scripts/log');
+const {
+  WEBPACK_ENV_VARIABLES,
+  ENV_VARIABLES_WITH_INSTRUCTIONS,
+  RESOLVE_ALIASES
+} = require('../webpack/shared-webpack-configuration');
 
 const LIB_DIR = resolve(__dirname, '..');
 const SRC_DIR = resolve(LIB_DIR, './src');
@@ -50,29 +55,11 @@ const EXTERNAL_HUBBLE_SRC = resolve(__dirname, '../../hubble.gl');
 
 // Support for hot reloading changes to the deck.gl library:
 function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
-  const resolveAlias = {
-    // Imports kepler.gl library from the src directory in this repo
-    'kepler.gl': SRC_DIR,
-    react: `${NODE_MODULES_DIR}/react`,
-    'react-dom': `${NODE_MODULES_DIR}/react-dom`,
-    'react-redux': `${NODE_MODULES_DIR}/react-redux/lib`,
-    'styled-components': `${NODE_MODULES_DIR}/styled-components`,
-    'react-intl': `${NODE_MODULES_DIR}/react-intl`,
-    // Suppress useles warnings from react-date-picker's dep
-    'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`
-  };
+  const resolveAlias = RESOLVE_ALIASES;
 
   // Combine flags
   const useLocalDeck = env.deck || env.hubble_src;
   const useRepoDeck = env.deck_src;
-
-  // add kepler.gl submodule aliases
-  const workspaces = KeplerPackage.workspaces;
-  workspaces.forEach(workspace => {
-    // workspace =  "./src/types",  "./src/constants", etc
-    const moduleName = workspace.split('/').pop();
-    resolveAlias[`@kepler.gl/${moduleName}`] = join(SRC_DIR, `${moduleName}/src`);
-  });
 
   // resolve deck.gl from local dir
   if (useLocalDeck || useRepoDeck) {
@@ -156,18 +143,7 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
       ]
     },
     // Optional: Enables reading mapbox token from environment variable
-    plugins: [
-      new webpack.EnvironmentPlugin([
-        'MapboxAccessToken',
-        'DropboxClientId',
-        'MapboxExportToken',
-        'CartoClientId',
-        'FoursquareClientId',
-        'FoursquareDomain',
-        'FoursquareAPIURL',
-        'FoursquareUserMapsURL'
-      ])
-    ]
+    plugins: [new webpack.EnvironmentPlugin(WEBPACK_ENV_VARIABLES)]
   };
 }
 

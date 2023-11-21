@@ -273,11 +273,7 @@ function SaveMapModalFactory() {
             ) : null}
           </StyledModalContent>
         </StyledSaveMapModal>
-        <ModalFooter
-          cancel={onCancel}
-          confirm={confirm}
-          confirmButton={confirmButton}
-        />
+        <ModalFooter cancel={onCancel} confirm={confirm} confirmButton={confirmButton} />
       </ImageModalContainer>
     );
   };

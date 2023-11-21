@@ -20,10 +20,10 @@
 
 // This file sends actions on the demo app to Google analytics
 
-import {ActionTypes} from 'kepler.gl/actions';
+import {ActionTypes} from '@kepler.gl/actions';
 import {LOCATION_CHANGE} from 'react-router-redux';
 import window from 'global/window';
-import {ALL_FIELD_TYPES} from 'kepler.gl/constants';
+import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import get from 'lodash.get';
 
 const getPayload = action => (action ? action.payload : null);

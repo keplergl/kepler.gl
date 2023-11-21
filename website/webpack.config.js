@@ -22,9 +22,10 @@ const {resolve, join} = require('path');
 const webpack = require('webpack');
 
 const KeplerPackage = require('../package');
+const {WEBPACK_ENV_VARIABLES, ENV_VARIABLES_WITH_INSTRUCTIONS, RESOLVE_ALIASES} = require('../webpack/shared-webpack-configuration');
 
-const rootDir = join(__dirname, '..');
-const libSources = join(rootDir, 'src');
+const LIB_DIR = resolve(__dirname, '..');
+const SRC_DIR = resolve(LIB_DIR, './src');
 
 const console = require('global/console');
 
@@ -59,18 +60,8 @@ const COMMON_CONFIG = {
 
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
-    modules: ['node_modules', libSources],
-    alias: {
-      'kepler.gl/dist': libSources,
-      // Imports the kepler.gl library from the src directory in this repo
-      'kepler.gl': libSources,
-      react: resolve(rootDir, './node_modules/react'),
-      'react-dom': resolve(rootDir, './node_modules/react-dom'),
-      'styled-components': resolve(rootDir, './node_modules/styled-components'),
-      'react-redux': resolve(rootDir, './node_modules/react-redux'),
-      'react-palm': resolve(rootDir, './node_modules/react-palm'),
-      'react-intl': resolve(rootDir, './node_modules/react-intl')
-    }
+    modules: ['node_modules', SRC_DIR],
+    alias: RESOLVE_ALIASES
   },
 
   module: {
@@ -89,6 +80,12 @@ const COMMON_CONFIG = {
       {
         test: /\.(svg|ico|gif|jpe?g|png)$/,
         loader: 'file-loader?name=[name].[ext]'
+      },
+      // for compiling apache-arrow ESM module
+      {
+        test: /\.mjs$/,
+        include: /node_modules\/apache-arrow/,
+        type: 'javascript/auto'
       }
     ]
   },
@@ -105,17 +102,7 @@ const COMMON_CONFIG = {
   // Optional: Enables reading mapbox token from environment variable
   plugins: [
     // Provide default values to suppress warnings
-    new webpack.EnvironmentPlugin({
-      MapboxAccessToken: undefined,
-      DropboxClientId: null,
-      CartoClientId: null,
-      GoogleDriveClientId: null,
-      MapboxExportToken: null,
-      FoursquareClientId: null,
-      FoursquareDomain: null,
-      FoursquareAPIURL: null,
-      FoursquareUserMapsURL: null
-    })
+    new webpack.EnvironmentPlugin(WEBPACK_ENV_VARIABLES)
   ],
 
   // Required to avoid deck.gl undefined module when code is minified
@@ -183,13 +170,10 @@ module.exports = env => {
   }
 
   if (env.prod) {
-    validateEnvVariable('MapboxAccessToken', 'You can get the token at https://www.mapbox.com/help/how-access-tokens-work/');
-    validateEnvVariable('DropboxClientId', 'You can get the token at https://www.dropbox.com/developers');
-    validateEnvVariable('MapboxExportToken', 'You can get the token at https://www.mapbox.com/help/how-access-tokens-work/');
-    validateEnvVariable('FoursquareClientId','https://location.foursquare.com/developer');
-    validateEnvVariable('FoursquareDomain','https://location.foursquare.com/developer');
-    validateEnvVariable('FoursquareAPIURL','https://location.foursquare.com/developer');
-    validateEnvVariable('FoursquareUserMapsURL','https://location.foursquare.com/developer');
+    Object.entries(ENV_VARIABLES_WITH_INSTRUCTIONS).forEach(entry => {
+      // we validate each entry [name, instruction]
+      validateEnvVariable(...entry);
+    });
     config = addProdConfig(config);
   }
 
