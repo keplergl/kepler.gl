@@ -26,6 +26,9 @@ const resolve = require('path').resolve;
 const join = require('path').join;
 const webpack = require('webpack');
 
+const WEBPACK_ENV_VARIABLES = require('../../webpack/shared-webpack-configuration')
+  .WEBPACK_ENV_VARIABLES;
+
 const CONFIG = {
   // bundle app.js and everything it imports, recursively.
   entry: {
@@ -64,18 +67,7 @@ const CONFIG = {
   },
 
   // Optional: Enables reading mapbox and dropbox client token from environment variable
-  plugins: [
-    new webpack.EnvironmentPlugin([
-      'MapboxAccessToken',
-      'DropboxClientId',
-      'MapboxExportToken',
-      'CartoClientId',
-      'FoursquareClientId',
-      'FoursquareDomain',
-      'FoursquareAPIURL',
-      'FoursquareUserMapsURL'
-    ])
-  ]
+  plugins: [new webpack.EnvironmentPlugin(WEBPACK_ENV_VARIABLES)]
 };
 
 // This line enables bundling against src in this repo rather than installed kepler.gl module

@@ -1,5 +1,5 @@
 import FSQIcon from './foursquare-icon';
-import {Provider, KEPLER_FORMAT} from 'kepler.gl/cloud-providers';
+import {Provider, KEPLER_FORMAT} from '@kepler.gl/cloud-providers';
 import {Auth0Client} from '@auth0/auth0-spa-js';
 
 const NAME = 'Foursquare';
@@ -85,7 +85,7 @@ export default class FoursquareProvider extends Provider {
   async uploadMap({mapData, options = {}}) {
     // TODO: handle replace
     const mode = options.overwrite ? 'overwrite' : 'add';
-    const method = options.overwrite ? 'PUT' : 'POST'
+    const method = options.overwrite ? 'PUT' : 'POST';
     const {map, thumbnail} = mapData;
 
     const {title = '', description = '', id} = map.info;
@@ -99,11 +99,14 @@ export default class FoursquareProvider extends Provider {
       }
     };
 
-    const mapResponse = await fetch(`${this.apiURL}/v1/maps${mode === 'overwrite' ? `/${id}` : ''}`, {
-      method,
-      headers,
-      body: JSON.stringify(payload)
-    });
+    const mapResponse = await fetch(
+      `${this.apiURL}/v1/maps${mode === 'overwrite' ? `/${id}` : ''}`,
+      {
+        method,
+        headers,
+        body: JSON.stringify(payload)
+      }
+    );
 
     const createMap = await mapResponse.json();
 
