@@ -45,14 +45,12 @@ export default class FoursquareProvider extends Provider {
     this.appName = APP_NAME;
     this.apiURL = apiURL;
 
-    const redirect_uri = window.location.origin + window.location.pathname;
-
     this._auth0 = new Auth0Client({
       domain: authDomain,
       clientId: clientId,
       scope: FOURSQUARE_AUTH_SCOPE,
       authorizationParams: {
-        redirect_uri,
+        redirect_uri: window.location.origin,
         audience: FOURSQUARE_AUTH_AUDIENCE
       },
       cacheLocation: 'localstorage'
