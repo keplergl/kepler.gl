@@ -2,7 +2,7 @@ import FSQIcon from './foursquare-icon';
 import {Provider, KEPLER_FORMAT} from '@kepler.gl/cloud-providers';
 import {Auth0Client} from '@auth0/auth0-spa-js';
 
-const NAME = 'Foursquare';
+const NAME = 'foursquare';
 const DISPLAY_NAME = 'Foursquare';
 const APP_NAME = 'Kepler.gl';
 
@@ -18,7 +18,7 @@ const FOURSQUARE_KEPLER_GL_IMPORT_SOURCE = 'kepler.gl-raw';
  * @param model Foursquare Map
  * @return {MapItem} Map
  */
-function convertFSQModelToMapItem(model) {
+function convertFSQModelToMapItem(model, baseApi) {
   return {
     id: model.id,
     title: model.name,
@@ -26,7 +26,8 @@ function convertFSQModelToMapItem(model) {
     updatedAt: model.updatedAt,
     description: model.description,
     loadParams: {
-      mapId: model.id
+      id: model.id,
+      path: `${baseApi}/${model.id}`
     }
   };
 }
@@ -131,17 +132,17 @@ export default class FoursquareProvider extends Provider {
       }
     );
     const data = await response.json();
-    return data.items.map(convertFSQModelToMapItem);
+    return data.items.map(map => convertFSQModelToMapItem(map, `${this.apiURL}/v1/maps`));
   }
 
   async downloadMap(loadParams) {
-    const {mapId} = loadParams;
-    if (!mapId) {
+    const {id} = loadParams;
+    if (!id) {
       return Promise.reject('No Map is was provider as part of loadParams');
     }
     const headers = await this.getHeaders();
 
-    const response = await fetch(`${this.apiURL}/v1/maps/${mapId}`, {
+    const response = await fetch(`${this.apiURL}/v1/maps/${id}`, {
       method: 'GET',
       headers
     });
@@ -152,6 +153,11 @@ export default class FoursquareProvider extends Provider {
       map: extractMapFromFSQResponse(map),
       format: KEPLER_FORMAT
     });
+  }
+
+  getMapUrl(loadParams) {
+    const {id} = loadParams;
+    return `${this.apiURL}/v1/maps/${id}`;
   }
 
   getManagementUrl() {

@@ -22,6 +22,11 @@ import Upload from './upload';
 import {MapData, ExportFileOptions, Millisecond, SavedMap} from '@kepler.gl/types';
 import {ComponentType} from 'react';
 
+export type MapItemLoadParams = {
+  id: string;
+  path: string;
+};
+
 export type MapListItem = {
   id: string;
   title: string;
@@ -125,11 +130,10 @@ export default class Provider {
 
   /**
    * This method is called by kepler.gl demo app to pushes a new location to history, becoming the current location.
-   * @param fullURL - Whether to return the full url with domain, or just the location
    * @returns mapUrl
    * @public
    */
-  getMapUrl(fullURL: boolean = true): string {
+  getMapUrl(loadParams: MapItemLoadParams): string {
     return '';
   }
 

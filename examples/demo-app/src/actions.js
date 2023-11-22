@@ -97,11 +97,13 @@ export function onExportFileSuccess({response = {}, provider, options}) {
   };
 }
 
-export function onLoadCloudMapSuccess({response, provider, loadParams}) {
+export function onLoadCloudMapSuccess({provider, loadParams}) {
   return dispatch => {
-    if (provider.getMapUrl) {
-      const mapUrl = provider.getMapUrl(false, loadParams);
-      dispatch(push(mapUrl));
+    const mapUrl = provider?.getMapUrl(loadParams);
+    debugger;
+    if (mapUrl) {
+      const url = `demo/map/${provider.name}?path=${mapUrl}`;
+      dispatch(push(url));
     }
   };
 }

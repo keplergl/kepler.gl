@@ -199,10 +199,7 @@ export default class DropboxProvider extends Provider {
       return await this._shareFile(metadata);
     }
 
-    // save private map save map url
-    this._loadParam = {path: metadata.path_lower};
-
-    return this._loadParam;
+    return {id: metadata.id, path: metadata.path_lower};
   }
 
   /**
@@ -210,11 +207,8 @@ export default class DropboxProvider extends Provider {
    * @param loadParams
    */
   async downloadMap(loadParams) {
-    const token = this.getAccessToken();
-    if (!token) {
-      this.login(() => this.downloadMap(loadParams));
-    }
-    const result = await this._dropbox.filesDownload(loadParams);
+    const {path} = loadParams;
+    const result = await this._dropbox.filesDownload({path});
     const json = await this._readFile(result.fileBlob);
 
     const response = {
@@ -222,7 +216,6 @@ export default class DropboxProvider extends Provider {
       format: KEPLER_FORMAT
     };
 
-    this._loadParam = loadParams;
     return Promise.resolve(response);
   }
 
@@ -230,8 +223,7 @@ export default class DropboxProvider extends Provider {
     // load user from
     if (window.localStorage) {
       const jsonString = window.localStorage.getItem('dropbox');
-      const user = jsonString && JSON.parse(jsonString).user;
-      return user;
+      return jsonString && JSON.parse(jsonString).user;
     }
     return null;
   }
@@ -269,14 +261,10 @@ export default class DropboxProvider extends Provider {
 
   /**
    * Get the map url of current map, this url can only be accessed by current logged in user
-   * @param {boolean} fullUrl
    */
-  getMapUrl(fullURL = true) {
-    const {path} = this._loadParam;
-    const mapLink = `demo/map/dropbox?path=${path}`;
-    return fullURL
-      ? `${window.location.protocol}//${window.location.host}/${mapLink}`
-      : `/${mapLink}`;
+  getMapUrl(loadParams) {
+    const {path} = loadParams;
+    return path;
   }
 
   getManagementUrl() {
@@ -475,6 +463,7 @@ export default class DropboxProvider extends Provider {
           id,
           updatedAt: new Date(client_modified).getTime(),
           loadParams: {
+            id,
             path: path_lower
           }
         };
