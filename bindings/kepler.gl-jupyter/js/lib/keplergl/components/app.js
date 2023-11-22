@@ -100,11 +100,11 @@ function App() {
           <title>Kepler.gl Jupyter</title>
           <link
             rel="stylesheet"
-            href="http://d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css"
+            href="//d1a3f4spazzrp4.cloudfront.net/kepler.gl/uber-fonts/4.0.0/superfine.css"
           />
           <link
             rel="stylesheet"
-            href="http://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css"
+            href="//api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css"
           />
           <style type="text/css">
             {`font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
