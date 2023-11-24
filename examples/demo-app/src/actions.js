@@ -100,7 +100,6 @@ export function onExportFileSuccess({response = {}, provider, options}) {
 export function onLoadCloudMapSuccess({provider, loadParams}) {
   return dispatch => {
     const mapUrl = provider?.getMapUrl(loadParams);
-    debugger;
     if (mapUrl) {
       const url = `demo/map/${provider.name}?path=${mapUrl}`;
       dispatch(push(url));
