@@ -22,6 +22,11 @@ import Upload from './upload';
 import {MapData, ExportFileOptions, Millisecond, SavedMap} from '@kepler.gl/types';
 import {ComponentType} from 'react';
 
+export type MapItemLoadParams = {
+  id: string;
+  path: string;
+};
+
 export type MapListItem = {
   id: string;
   title: string;
@@ -125,11 +130,10 @@ export default class Provider {
 
   /**
    * This method is called by kepler.gl demo app to pushes a new location to history, becoming the current location.
-   * @param fullURL - Whether to return the full url with domain, or just the location
    * @returns mapUrl
    * @public
    */
-  getMapUrl(fullURL: boolean = true): string {
+  getMapUrl(loadParams: MapItemLoadParams): string {
     return '';
   }
 
@@ -138,7 +142,7 @@ export default class Provider {
    * @public
    * @returns {Promise<string>} return the access token if a user already logged in
    */
-  getAccessToken(): Promise<string> {
+  async getAccessToken(): Promise<string | null> {
     return Promise.reject('You must implement getAccessToken');
   }
 
@@ -155,7 +159,7 @@ export default class Provider {
   /**
    * return a Promise with the user object
    */
-  getUser(): Promise<CloudUser> {
+  async getUser(): Promise<CloudUser | null> {
     return Promise.reject('You must implement getUser');
   }
 

@@ -164,7 +164,7 @@ export default class CartoProvider extends Provider {
    * Returns the access token. If it has expired returns null. The toolkit library loads it
    * from localStorage automatically
    */
-  getAccessToken() {
+  async getAccessToken() {
     let accessToken = null;
     try {
       accessToken = this._carto.oauth.expired ? null : this._carto.oauth.token;
@@ -192,6 +192,14 @@ export default class CartoProvider extends Provider {
    */
   getAccessTokenFromLocation(location) {
     return;
+  }
+
+  async getUser() {
+    return {
+      name: this.getUserName(),
+      abbreviated: '',
+      email: ''
+    }
   }
 
   async downloadMap(queryParams) {

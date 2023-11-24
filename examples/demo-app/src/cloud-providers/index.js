@@ -33,13 +33,6 @@ const {
   FOURSQUARE_USER_MAPS_URL
 } = CLOUD_PROVIDERS_CONFIGURATION;
 
-console.log('provider index', {
-  clientId: FOURSQUARE_CLIENT_ID,
-  authDomain: FOURSQUARE_DOMAIN,
-  apiURL: FOURSQUARE_API_URL,
-  userMapsURL: FOURSQUARE_USER_MAPS_URL
-});
-
 const DROPBOX_CLIENT_NAME = 'Kepler.gl Demo App';
 
 export const DEFAULT_CLOUD_PROVIDER = 'dropbox';
