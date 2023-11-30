@@ -68,6 +68,17 @@ export function createNewDataEntry(
     return {};
   }
 
+  // check if dataset already exists, and update it when loading data by batches incrementally
+  if (info && info.id && datasets[info.id]) {
+    // get keplerTable from datasets
+    const keplerTable = datasets[info.id];
+    // update the data in keplerTable
+    keplerTable.update(validatedData);
+    return {
+      [keplerTable.id]: keplerTable
+    };
+  }
+
   info = info || {};
   const color = info.color || getNewDatasetColor(datasets);
 

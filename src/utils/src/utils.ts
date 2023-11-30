@@ -32,6 +32,28 @@ export function generateHashId(count: number = 6): string {
 }
 
 /**
+ * Generate a hash string based on string
+ * @param str
+ * @returns
+ */
+export function generateHashIdFromString(str: string): string {
+  // generate hash string based on string
+  let hash = 0;
+  let i;
+  let chr;
+  let len;
+  if (str.length === 0) return hash.toString();
+  for (i = 0, len = str.length; i < len; i++) {
+    chr = str.charCodeAt(i);
+    // eslint-disable-next-line no-bitwise
+    hash = (hash << 5) - hash + chr;
+    // eslint-disable-next-line no-bitwise
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash.toString(36);
+}
+
+/**
  * Detect chrome
  * @returns {boolean} - yes or no
  */

@@ -29,7 +29,7 @@ import {
   processKeplerglJSON,
   processRowObject
 } from './data-processor';
-import {generateHashId, isPlainObject} from '@kepler.gl/utils';
+import {generateHashId, isPlainObject, generateHashIdFromString} from '@kepler.gl/utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
 import {Loader} from '@loaders.gl/loader-utils';
 import {FileCacheItem, ValidKeplerGlMap} from './types';
@@ -215,9 +215,12 @@ export function processFileData({
   fileCache: FileCacheItem[];
 }): Promise<FileCacheItem[]> {
   return new Promise((resolve, reject) => {
-    let {data} = content;
+    let {fileName, data} = content;
     let format: string | undefined;
     let processor: Function | undefined;
+
+    // generate unique id with length of 4 using fileName string
+    const id = generateHashIdFromString(fileName);
 
     if (isArrowData(data)) {
       format = DATASET_FORMATS.arrow;
@@ -241,6 +244,7 @@ export function processFileData({
         {
           data: result,
           info: {
+            id,
             label: content.fileName,
             format
           }

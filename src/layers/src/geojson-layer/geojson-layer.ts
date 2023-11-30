@@ -372,7 +372,7 @@ export default class GeoJsonLayer extends Layer {
       this.filteredIndex[filteredIndex[i]] = 1;
     }
 
-    this.filteredIndexTrigger = filteredIndex;
+    // this.filteredIndexTrigger = filteredIndex;
 
     // for arrow, always return full dataToFeature instead of a filtered one, so there is no need to update attributes in GPU
     // for geojson, this should work as well and more efficient. But we need to update some test cases e.g. #GeojsonLayer -> formatLayerData
@@ -419,20 +419,34 @@ export default class GeoJsonLayer extends Layer {
     const getGeoColumn = geoColumnAccessor(this.config.columns);
     const getGeoField = geoFieldAccessor(this.config.columns);
 
-    if (this.dataToFeature.length === 0) {
-      const updateLayerMetaFunc =
-        dataContainer instanceof ArrowDataContainer
-          ? getGeojsonLayerMetaFromArrow
-          : getGeojsonLayerMeta;
-      const {dataToFeature, bounds, fixedRadius, featureTypes} = updateLayerMetaFunc({
-        dataContainer,
-        getFeature,
-        getGeoColumn,
-        getGeoField
-      });
+    if (dataContainer instanceof ArrowDataContainer) {
+      const arrowContainer = dataContainer as ArrowDataContainer;
+      if (this.dataToFeature.length < arrowContainer.numChunks()) {
+        const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMetaFromArrow({
+          dataContainer,
+          getGeoColumn,
+          getGeoField,
+          chunkIndex: this.dataToFeature.length
+        });
+        if (centroids) this.centroids = centroids;
+        if (this.dataToFeature.length === 0) {
+          // not update bounds for every batch, to avoid interrupt user interacts with map while loading the map incrementally
+          this.updateMeta({bounds, fixedRadius, featureTypes});
+        }
+        // @ts-expect-error TODO fix this
+        this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
+      }
+    } else {
+      if (this.dataToFeature.length === 0) {
+        const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMeta({
+          dataContainer,
+          getFeature
+        });
 
-      this.dataToFeature = dataToFeature;
-      this.updateMeta({bounds, fixedRadius, featureTypes});
+        if (centroids) this.centroids = centroids;
+        this.dataToFeature = dataToFeature;
+        this.updateMeta({ bounds, fixedRadius, featureTypes });
+      }
     }
   }
 
