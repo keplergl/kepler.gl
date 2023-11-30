@@ -202,6 +202,18 @@ class KeplerTable {
     this.disableDataOperation = disableDataOperation;
   }
 
+  /**
+   * update table with new data
+   * @param data - new data e.g. the arrow data with new batches loaded
+   */
+  update(data: ProtoDataset['data']) {
+    const dataContainerData = data.cols ? data.cols : data.rows;
+    this.dataContainer.update?.(dataContainerData);
+    this.allIndexes = this.dataContainer.getPlainIndex();
+    this.filteredIndex = this.allIndexes;
+    this.filteredIndexForDomain = this.allIndexes;
+  }
+
   get length() {
     return this.dataContainer.numRows();
   }
