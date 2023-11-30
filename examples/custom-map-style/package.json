@@ -4,9 +4,9 @@
     "start-local": "webpack-dev-server --env.es6 --progress --hot --open"
   },
   "dependencies": {
-    "global": "^4.3.0",
     "@kepler.gl/components": "^3.0.0-alpha.1",
     "@kepler.gl/reducers": "^3.0.0-alpha.1",
+    "global": "^4.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-palm": "^3.3.6",

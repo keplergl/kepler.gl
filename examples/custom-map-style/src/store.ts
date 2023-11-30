@@ -18,8 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
+import {combineReducers, applyMiddleware} from 'redux';
 import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
+import { configureStore } from '@reduxjs/toolkit';
+import { StoreEnhancer } from 'redux';
 
 const mapStyles = {
   voyager: {
@@ -64,11 +66,16 @@ const customizedKeplerGlReducer = keplerGlReducer.initialState({
   }
 });
 
-const reducers = combineReducers({
-  keplerGl: customizedKeplerGlReducer
-});
 
 const middlewares = enhanceReduxMiddleware([]);
-const enhancers = [applyMiddleware(...middlewares)];
+const enhancers: StoreEnhancer[] = [applyMiddleware(...middlewares)];
 
-export default createStore(reducers, {}, compose(...enhancers));
+
+const store = configureStore({
+  reducer: {
+    keplerGl: customizedKeplerGlReducer
+  },
+  enhancers: enhancers
+});
+
+export default store;

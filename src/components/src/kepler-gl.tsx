@@ -111,7 +111,7 @@ const GlobalStyle = styled.div`
     color: ${props => props.theme.labelColor};
   }
 
-  .mapboxgl-ctrl .mapboxgl-ctrl-logo {
+  .maplibregl-ctrl .maplibregl-ctrl-logo {
     display: none;
   }
 `;
