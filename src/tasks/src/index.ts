@@ -20,7 +20,7 @@
 
 import Task, {taskCreator} from 'react-palm/tasks';
 import {json as requestJson} from 'd3-request';
-import {readFileInBatches, processFileData} from '@kepler.gl/processors';
+import {readFileInBatches, processFileData, applyProgressiveLoadGeoArrow} from '@kepler.gl/processors';
 
 export const LOAD_FILE_TASK = Task.fromPromise(
   ({file, fileCache, loaders, loadOptions}) =>
@@ -32,6 +32,15 @@ export const PROCESS_FILE_DATA = Task.fromPromise(
   processFileData,
 
   'PROCESS_FILE_CONTENT'
+);
+
+/**
+ * An async task to load and parse batch data from GeoArrow file using web workers
+ */
+export const PROGRESSIVE_LOAD_TASK = Task.fromPromise(
+  applyProgressiveLoadGeoArrow,
+
+  'PROGRESSIVE_LOAD_TASK'
 );
 
 export const LOAD_MAP_STYLE_TASK = taskCreator(

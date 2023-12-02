@@ -5,6 +5,8 @@ import {console as globalConsole} from 'global/window';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import {Field} from '@kepler.gl/types';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {BinaryDataFromGeoArrow} from '@loaders.gl/arrow';
+import {BinaryFeatures} from '@loaders.gl/schema';
 
 import {DataRow, SharedRowOptions} from './data-row';
 import {DataContainerInterface, RangeOptions} from './data-container-interface';
@@ -45,6 +47,7 @@ export class ArrowDataContainer implements DataContainerInterface {
   _numRows: number;
   _fields: Field[];
   _numChunks: number;
+  _binaryData: Record<number, Record<number, BinaryDataFromGeoArrow>> = {};
   // cache column data to make valueAt() faster
   // _colData: any[][];
 
@@ -72,6 +75,49 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._numChunks = this._cols[0].data.length;
     // cache column data to make valueAt() faster
     // this._colData = this._cols.map(c => c.toArray());
+  }
+
+  updateBinaryData(columnIndex: number, chunkIndex: number, binaryData: BinaryDataFromGeoArrow) {
+    this._binaryData[columnIndex] = {
+      ...this._binaryData[columnIndex],
+      ...{[chunkIndex]: binaryData}
+    };
+  }
+
+  getFilteredIndex(columnIndex: number): number[] {
+    if (columnIndex in this._binaryData) {
+      // count number of properties in binaryGeometries
+      const chunkIndexes = Object.keys(this._binaryData[columnIndex]).map(d => Number(d));
+      // get sum of this._cols[columnIndex].data[chunkIndex].length
+      const numFeatures = chunkIndexes.reduce(
+        (acc, curr) => acc + this._cols[columnIndex].data[curr].length,
+        0
+      );
+      // return an array of length numFeatures
+      return [...Array(numFeatures).keys()];
+    }
+    return this.getPlainIndex();
+  }
+
+  getBinaryData(columnIndex: number): {
+    binaryGeometries: BinaryFeatures[];
+    bounds: [number, number, number, number];
+    featureTypes: { polygon: boolean; point: boolean; line: boolean };
+  } {
+    const binaryGeometries = Object.values(this._binaryData[columnIndex]).map(d => d.binaryGeometries[0]);
+    // merge bounds
+    const bounds = Object.values(this._binaryData[columnIndex]).map(d => d.bounds);
+    const globalBounds = bounds.reduce(
+      (acc, curr) => [
+        Math.min(acc[0], curr[0]),
+        Math.min(acc[1], curr[1]),
+        Math.max(acc[2], curr[2]),
+        Math.max(acc[3], curr[3])
+      ],
+      [Infinity, Infinity, -Infinity, -Infinity]
+    );
+    const featureTypes = Object.values(this._binaryData[columnIndex])[0].featureTypes;
+    return {binaryGeometries, bounds: globalBounds, featureTypes};
   }
 
   numChunks(): number {

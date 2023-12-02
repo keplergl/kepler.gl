@@ -127,7 +127,7 @@ import {
 import {findFieldsToShow} from './interaction-utils';
 import {hasPropsToMerge, getPropValueToMerger} from './merger-handler';
 import {mergeDatasetsByOrder} from './vis-state-merger';
-import {fixEffectOrder} from '@kepler.gl/utils';
+import {fixEffectOrder, ArrowDataContainer} from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
 
 // react-palm
@@ -2238,6 +2238,64 @@ export function makeLoadFileTask(file, fileCache, loaders: Loader[] = [], loadOp
     // error
     err => loadFilesErr(file.name, err)
   );
+}
+
+
+export function progressiveLoadCompletedUpdater(
+  state: VisState,
+  action: VisStateActions.ProgressiveLoadCompletedUpdaterAction
+): VisState {
+  const {parsedData, inputData} = action.payload;
+
+  // for each layer id in parsedBinaryDataForLayers
+  // find the layer in state.layers
+  // update the table with the new data
+  // update the layer metadata with the new data
+
+  const newLayers: Layer[] = [];
+  const newLayerData: any = [];
+
+  // for each key in parsedBinaryDataForLayers
+  Object.keys(parsedData).forEach(layerId => {
+    // find the layer in state.layers
+    const layer = state.layers.find(l => l.id === layerId);
+    if (!layer) {
+      return;
+    }
+
+    // update layer
+    const idx = state.layers.findIndex(l => l.id === layer.id);
+    const oldLayerData = state.layerData[idx];
+
+    // update keplerTable
+    const keplerTable = state.datasets[layer.config.dataId];
+    const dataContainer = keplerTable.dataContainer;
+    if (dataContainer instanceof ArrowDataContainer) {
+      const {fieldIndex, parsedGeoArrowData} = parsedData[layerId];
+      keplerTable.filteredIndex = dataContainer.getFilteredIndex(fieldIndex);
+      dataContainer.updateBinaryData(
+        fieldIndex,
+        parsedGeoArrowData.chunkIndex,
+        parsedGeoArrowData.binaryDataFromGeoArrow
+      );
+    }
+
+    const newLayer = layer;
+    newLayer.calculateDataAttribute(keplerTable, null);
+    newLayer.updateLayerMeta(dataContainer, null);
+    const layerData = newLayer.formatLayerData(state.datasets, oldLayerData);
+
+    newLayers.push(newLayer);
+    newLayerData.push(layerData);
+  });
+
+  const newState = {
+    ...state,
+    layers: newLayers,
+    layerData: newLayerData
+  };
+
+  return newState;
 }
 
 /**

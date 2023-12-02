@@ -411,6 +411,19 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
+  isInPolygon(data: DataContainerInterface, index: number, polygon: Feature<Polygon>): Boolean {
+    if (this.centroids.length === 0 || !this.centroids[index]) {
+      return false;
+    }
+    const isReactangle = polygon.properties?.shape === 'Rectangle';
+    const point = this.centroids[index];
+    // without spatialIndex, use turf.js
+    if (isReactangle && polygon.properties?.bbox) {
+      const [minX, minY, maxX, maxY] = polygon.properties?.bbox;
+      return point[0] >= minX && point[0] <= maxX && point[1] >= minY && point[1] <= maxY;
+    }
+    return booleanWithin(turfPoint(point), polygon);
+  }
   updateLayerMeta(dataContainer) {
     // check datasource is arrow format if dataContainer is arrow data container
     this.dataContainer = dataContainer;
@@ -420,21 +433,27 @@ export default class GeoJsonLayer extends Layer {
     const getGeoField = geoFieldAccessor(this.config.columns);
 
     if (dataContainer instanceof ArrowDataContainer) {
-      const arrowContainer = dataContainer as ArrowDataContainer;
-      if (this.dataToFeature.length < arrowContainer.numChunks()) {
-        const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMetaFromArrow({
-          dataContainer,
-          getGeoColumn,
-          getGeoField,
-          chunkIndex: this.dataToFeature.length
-        });
-        if (centroids) this.centroids = centroids;
+      const {geojson} = this.config.columns;
+      if (this.dataToFeature.length < dataContainer.numChunks()) {
+        const {binaryGeometries, bounds, featureTypes, meanCenters} =
+          this.dataToFeature.length === 0
+            ? getGeojsonLayerMetaFromArrow({dataContainer, getGeoColumn, getGeoField, chunkIndex: 0})
+            : dataContainer.getBinaryData(geojson.fieldIdx);
+
+        if (meanCenters) this.centroids = meanCenters;
         if (this.dataToFeature.length === 0) {
+          dataContainer.updateBinaryData(geojson.fieldIdx, 0, {
+            binaryGeometries,
+            bounds,
+            featureTypes,
+            meanCenters
+          });
           // not update bounds for every batch, to avoid interrupt user interacts with map while loading the map incrementally
+          // since there is no feature.properties.radius, we set fixedRadius to false
+          const fixedRadius = false;
           this.updateMeta({bounds, fixedRadius, featureTypes});
         }
-        // @ts-expect-error TODO fix this
-        this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
+        this.dataToFeature = binaryGeometries;
       }
     } else {
       if (this.dataToFeature.length === 0) {

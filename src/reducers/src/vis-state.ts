@@ -154,6 +154,8 @@ const actionHandler = {
 
   [ActionTypes.PROCESS_FILE_CONTENT]: visStateUpdaters.processFileContentUpdater,
 
+  [ActionTypes.PROGRESSIVE_LOAD_COMPLETED]: visStateUpdaters.progressiveLoadCompletedUpdater,
+
   [ActionTypes.SET_LAYER_ANIMATION_TIME_CONFIG]:
     visStateUpdaters.setLayerAnimationTimeConfigUpdater,
 

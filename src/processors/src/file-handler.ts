@@ -22,18 +22,20 @@ import * as arrow from 'apache-arrow';
 import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
-import {ArrowLoader} from '@loaders.gl/arrow';
+import {ArrowLoader, hardClone, parseGeoArrowOnWorker} from '@loaders.gl/arrow';
 import {
   processArrowTable,
   processGeojson,
   processKeplerglJSON,
   processRowObject
 } from './data-processor';
-import {generateHashId, isPlainObject, generateHashIdFromString} from '@kepler.gl/utils';
+import {generateHashId, isPlainObject, generateHashIdFromString, ArrowDataContainer} from '@kepler.gl/utils';
 import {DATASET_FORMATS} from '@kepler.gl/constants';
 import {Loader} from '@loaders.gl/loader-utils';
 import {FileCacheItem, ValidKeplerGlMap} from './types';
 import {Feature, AddDataToMapPayload} from '@kepler.gl/types';
+import {Layer} from '@kepler.gl/layers';
+import {Datasets} from '@kepler.gl/table';
 import {FeatureCollection} from '@turf/helpers';
 
 const BATCH_TYPE = {
@@ -291,4 +293,76 @@ export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayl
   // add kepler map first with config
   // add datasets later in one add data call
   return collection.keplerMaps.concat({datasets: collection.datasets});
+}
+
+export async function applyProgressiveLoadGeoArrow(
+  {datasets, layers}: {datasets: Datasets; layers: Layer[]}
+): Promise<any> {
+  // for each layer that needs progressive loading
+  // load and parse the batch data
+  // return binary data
+  const result = {};
+  for (let i = 0; i < layers.length; ++i) {
+    const layer = layers[i];
+    const dataset = datasets[layer.config.dataId];
+
+    // get dataContainer from dataset
+    const dataContainer = dataset.dataContainer;
+
+    // check if layer is instance of GeoJsonLayer
+    if (layer.type === 'geojson' && dataContainer instanceof ArrowDataContainer) {
+      // get geometry column from layer
+      const {geojson} = layer.config.columns;
+      const geoColumn = dataContainer.getColumn?.(geojson.fieldIdx);
+      const arrowField = dataContainer.getField?.(geojson.fieldIdx);
+      const encoding = arrowField?.metadata?.get('ARROW:extension:name');
+
+      // chunkIndex is the index of last batch has been loaded in dataContainer
+      const chunkIndex = dataContainer.numChunks() - 1;
+      const geometryChunk = geoColumn?.data[chunkIndex];
+      const chunkCopy = hardClone(geometryChunk, true);
+
+      const chunkData = {
+        type: {
+          ...chunkCopy?.type,
+          typeId: chunkCopy?.typeId,
+          listSize: chunkCopy?.type?.listSize
+        },
+        offset: chunkCopy.offset,
+        length: chunkCopy.length,
+        nullCount: chunkCopy.nullCount,
+        buffers: chunkCopy.buffers,
+        children: chunkCopy.children,
+        dictionary: chunkCopy.dictionary
+      };
+
+      const sourceData = {
+        operation: 'parse-geoarrow',
+        chunkData,
+        chunkIndex,
+        geometryEncoding: encoding,
+        calculateMeanCenters: true,
+        triangle: true
+      };
+
+      const parsedGeoArrowData = await parseGeoArrowOnWorker(
+        sourceData,
+        {
+          _workerType: 'test'
+        }
+      );
+
+      // dataContainer.updateBinaryData(
+      //   geojson.fieldIdx,
+      //   parsedGeoArrowData.chunkIndex,
+      //   parsedGeoArrowData.binaryDataFromGeoArrow
+      // );
+
+      result[layer.id] = {
+        fieldIndex: geojson.fieldIdx,
+        parsedGeoArrowData
+      };
+    }
+  }
+  return result;
 }

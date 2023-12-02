@@ -19,7 +19,8 @@
 // THE SOFTWARE.
 
 // vis-state-reducer
-import {PickInfo} from '@deck.gl/core/lib/deck';
+import { PickInfo } from '@deck.gl/core/lib/deck';
+import {ParseGeoArrowResult} from '@loaders.gl/arrow';
 import {default as ActionTypes} from './action-types';
 import {FileCacheItem} from '@kepler.gl/processors';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
@@ -37,7 +38,8 @@ import {
   Filter,
   ParsedConfig,
   ParsedLayer,
-  EffectPropsPartial
+  EffectPropsPartial,
+  ProtoDataset
 } from '@kepler.gl/types';
 // TODO - import LoaderObject type from @loaders.gl/core when supported
 // TODO - import LoadOptions type from @loaders.gl/core when supported
@@ -1443,6 +1445,21 @@ export function nextFileBatch(
 ): Merge<NextFileBatchUpdaterAction, {type: typeof ActionTypes.NEXT_FILE_BATCH}> {
   return {
     type: ActionTypes.NEXT_FILE_BATCH,
+    payload
+  };
+}
+
+export type ProgressiveLoadCompletedUpdaterAction = {
+  payload: {
+    parsedData: Record<string, { fieldIndex: number; parsedGeoArrowData: ParseGeoArrowResult}>;
+    inputData: ProtoDataset[];
+  };
+};
+export function progressiveLoadCompleted(
+  payload: ProgressiveLoadCompletedUpdaterAction['payload']
+): Merge<ProgressiveLoadCompletedUpdaterAction, {type: typeof ActionTypes.PROGRESSIVE_LOAD_COMPLETED}> {
+  return {
+    type: ActionTypes.PROGRESSIVE_LOAD_COMPLETED,
     payload
   };
 }
