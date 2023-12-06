@@ -35,7 +35,7 @@
     "@kepler.gl/table": "3.0.0-alpha.1",
     "@kepler.gl/types": "3.0.0-alpha.1",
     "@kepler.gl/utils": "3.0.0-alpha.1",
-    "@loaders.gl/loader-utils": "^4.0.3",
+    "@loaders.gl/loader-utils": "^4.1.0-alpha.2",
     "@types/keymirror": "^0.1.1",
     "@types/lodash.clonedeep": "^4.5.7",
     "@types/lodash.pick": "^4.4.6",

@@ -6,7 +6,6 @@ import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import {Field} from '@kepler.gl/types';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {BinaryDataFromGeoArrow} from '@loaders.gl/arrow';
-import {BinaryFeatures} from '@loaders.gl/schema';
 
 import {DataRow, SharedRowOptions} from './data-row';
 import {DataContainerInterface, RangeOptions} from './data-container-interface';
@@ -99,11 +98,7 @@ export class ArrowDataContainer implements DataContainerInterface {
     return this.getPlainIndex();
   }
 
-  getBinaryData(columnIndex: number): {
-    binaryGeometries: BinaryFeatures[];
-    bounds: [number, number, number, number];
-    featureTypes: { polygon: boolean; point: boolean; line: boolean };
-  } {
+  getBinaryData(columnIndex: number): BinaryDataFromGeoArrow {
     const binaryGeometries = Object.values(this._binaryData[columnIndex]).map(d => d.binaryGeometries[0]);
     // merge bounds
     const bounds = Object.values(this._binaryData[columnIndex]).map(d => d.bounds);

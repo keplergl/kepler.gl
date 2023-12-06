@@ -2240,12 +2240,11 @@ export function makeLoadFileTask(file, fileCache, loaders: Loader[] = [], loadOp
   );
 }
 
-
 export function progressiveLoadCompletedUpdater(
   state: VisState,
   action: VisStateActions.ProgressiveLoadCompletedUpdaterAction
 ): VisState {
-  const {parsedData, inputData} = action.payload;
+  const {parsedData} = action.payload;
 
   // for each layer id in parsedBinaryDataForLayers
   // find the layer in state.layers
@@ -2273,11 +2272,13 @@ export function progressiveLoadCompletedUpdater(
     if (dataContainer instanceof ArrowDataContainer) {
       const {fieldIndex, parsedGeoArrowData} = parsedData[layerId];
       keplerTable.filteredIndex = dataContainer.getFilteredIndex(fieldIndex);
-      dataContainer.updateBinaryData(
-        fieldIndex,
-        parsedGeoArrowData.chunkIndex,
-        parsedGeoArrowData.binaryDataFromGeoArrow
-      );
+      if (parsedGeoArrowData.binaryDataFromGeoArrow) {
+        dataContainer.updateBinaryData(
+          fieldIndex,
+          parsedGeoArrowData.chunkIndex,
+          parsedGeoArrowData.binaryDataFromGeoArrow
+        );
+      }
     }
 
     const newLayer = layer;
@@ -2366,31 +2367,30 @@ export const nextFileBatchUpdater = (
     progress: parseProgress(state.fileLoadingProgress[fileName], progress)
   });
 
-  return withTask(
-    stateWithProgress, [
-      ...(fileName.endsWith('arrow') && accumulated && accumulated.data?.length > 0
-        ? [
-            PROCESS_FILE_DATA({content: accumulated, fileCache: []}).bimap(
-              result => loadBatchDataSuccess({fileName, fileCache: result}),
-              err => loadFilesErr(fileName, err)
-            )
-          ]
-        : []),
-      UNWRAP_TASK(gen.next()).bimap(
-        ({value, done}) => {
-          return done
-            ? onFinish(accumulated)
-            : nextFileBatch({
-                gen,
-                fileName,
-                progress: value.progress,
-                accumulated: value,
-                onFinish
-              });
-        },
-        err => loadFilesErr(fileName, err)
-      )
-    ]);
+  return withTask(stateWithProgress, [
+    ...(fileName.endsWith('arrow') && accumulated && accumulated.data?.length > 0
+      ? [
+          PROCESS_FILE_DATA({content: accumulated, fileCache: []}).bimap(
+            result => loadBatchDataSuccess({fileName, fileCache: result}),
+            err => loadFilesErr(fileName, err)
+          )
+        ]
+      : []),
+    UNWRAP_TASK(gen.next()).bimap(
+      ({value, done}) => {
+        return done
+          ? onFinish(accumulated)
+          : nextFileBatch({
+              gen,
+              fileName,
+              progress: value.progress,
+              accumulated: value,
+              onFinish
+            });
+      },
+      err => loadFilesErr(fileName, err)
+    )
+  ]);
 };
 
 /**

@@ -62,9 +62,9 @@ export function getGeojsonLayerMetaFromArrow({
 }: {
   dataContainer: DataContainerInterface;
   getGeoColumn: (dataContainer: DataContainerInterface) => unknown;
-    getGeoField: (dataContainer: DataContainerInterface) => Field | null;
+  getGeoField: (dataContainer: DataContainerInterface) => Field | null;
   chunkIndex?: number;
-}): BinaryDataFromGeoArrow  & {meanCenters?: number[][]} {
+}): BinaryDataFromGeoArrow & {meanCenters?: number[][]} {
   const geoColumn = getGeoColumn(dataContainer) as arrow.Vector;
   const arrowField = getGeoField(dataContainer);
 
@@ -72,19 +72,19 @@ export function getGeojsonLayerMetaFromArrow({
   const options: BinaryGeometriesFromArrowOptions = {
     ...(chunkIndex !== undefined && chunkIndex >= 0 ? {chunkIndex} : {}),
     triangulate: true,
-    meanCenter: true
+    calculateMeanCenters: false
   };
   // create binary data from arrow data for GeoJsonLayer
   const {binaryGeometries, featureTypes, bounds} = getBinaryGeometriesFromArrow(
     geoColumn,
-    encoding
+    encoding,
+    options
   );
 
   return {
     binaryGeometries,
     featureTypes,
-    bounds,
-    meanCenters
+    bounds
   };
 }
 
@@ -114,10 +114,7 @@ export function getHoveredObjectFromArrow(
     const field = fieldAccessor(dataContainer);
     const encoding = field?.metadata?.get('ARROW:extension:name');
 
-    const hoveredFeature = parseGeometryFromArrow({
-      encoding,
-      data: rawGeometry
-    });
+    const hoveredFeature = parseGeometryFromArrow(rawGeometry, encoding);
 
     const properties = dataContainer.rowAsArray(objectInfo.index).reduce((prev, cur, i) => {
       const fieldName = dataContainer?.getField?.(i).name;
@@ -129,7 +126,8 @@ export function getHoveredObjectFromArrow(
 
     return hoveredFeature
       ? {
-          ...hoveredFeature,
+          type: 'Feature',
+          geometry: hoveredFeature,
           properties: {
             ...properties,
             index: objectInfo.index

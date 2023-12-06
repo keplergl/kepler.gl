@@ -22,7 +22,7 @@ import * as arrow from 'apache-arrow';
 import {parseInBatches} from '@loaders.gl/core';
 import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
-import {ArrowLoader, hardClone, parseGeoArrowOnWorker} from '@loaders.gl/arrow';
+import {ArrowLoader, hardClone, parseGeoArrowOnWorker, ParseGeoArrowInput} from '@loaders.gl/arrow';
 import {
   processArrowTable,
   processGeojson,
@@ -319,6 +319,7 @@ export async function applyProgressiveLoadGeoArrow(
 
       // chunkIndex is the index of last batch has been loaded in dataContainer
       const chunkIndex = dataContainer.numChunks() - 1;
+      const chunkOffset = geoColumn?.data[0].length * chunkIndex;
       const geometryChunk = geoColumn?.data[chunkIndex];
       const chunkCopy = hardClone(geometryChunk, true);
 
@@ -336,21 +337,17 @@ export async function applyProgressiveLoadGeoArrow(
         dictionary: chunkCopy.dictionary
       };
 
-      const sourceData = {
+      const sourceData: ParseGeoArrowInput = {
         operation: 'parse-geoarrow',
         chunkData,
         chunkIndex,
+        chunkOffset,
         geometryEncoding: encoding,
         calculateMeanCenters: true,
         triangle: true
       };
 
-      const parsedGeoArrowData = await parseGeoArrowOnWorker(
-        sourceData,
-        {
-          _workerType: 'test'
-        }
-      );
+      const parsedGeoArrowData = await parseGeoArrowOnWorker(sourceData);
 
       // dataContainer.updateBinaryData(
       //   geojson.fieldIdx,
