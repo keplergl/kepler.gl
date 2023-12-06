@@ -313,59 +313,59 @@ export const DEFAULT_MAP_STYLES: {
     style: EMPTY_MAPBOX_STYLE
   },
   {
-    id: 'dark',
-    label: 'Dark',
-    url: 'https://api.maptiler.com/maps/b989b458-e075-497d-9a86-3035fd08bd7c/style.json?key=17oUJVO01Blh1QOfWftj',
-    icon: `${BASEMAP_ICON_PREFIX}/UBER_DARK_V2.png`,
+    id: 'dark-matter',
+    label: 'DarkMatter',
+    url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    icon: NO_BASEMAP_ICON,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.DARK,
-    complimentaryStyleId: 'light'
+    complimentaryStyleId: 'positron'
   },
   {
-    id: 'dark-matter',
-    label: 'Dark Matter',
-    url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-    icon: `${BASEMAP_ICON_PREFIX}/UBER_DARK_V2.png`,
+    id: 'dark-matter-nolabels',
+    label: 'DarkMatterNoLabels',
+    url: 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json',
+    icon: NO_BASEMAP_ICON,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.DARK,
-    complimentaryStyleId: 'light'
+    complimentaryStyleId: 'positron-nolabels'
   },
-
-  // {
-  //   id: 'light',
-  //   label: 'Light',
-  //   url: 'mapbox://styles/uberdata/cjoqb9j339k1f2sl9t5ic5bn4',
-  //   icon: `${BASEMAP_ICON_PREFIX}/UBER_LIGHT_V2.png`,
-  //   layerGroups: DEFAULT_LAYER_GROUPS,
-  //   colorMode: BASE_MAP_COLOR_MODES.LIGHT,
-  //   complimentaryStyleId: 'dark'
-  // },
-  // {
-  //   id: 'muted',
-  //   label: 'Muted Light',
-  //   url: 'mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4',
-  //   icon: `${BASEMAP_ICON_PREFIX}/UBER_MUTED_LIGHT.png`,
-  //   layerGroups: DEFAULT_LAYER_GROUPS,
-  //   colorMode: BASE_MAP_COLOR_MODES.LIGHT,
-  //   complimentaryStyleId: 'muted_night'
-  // },
-  // {
-  //   id: 'muted_night',
-  //   label: 'Muted Night',
-  //   url: 'mapbox://styles/uberdata/cjfxhlikmaj1b2soyzevnywgs',
-  //   icon: `${BASEMAP_ICON_PREFIX}/UBER_MUTED_NIGHT.png`,
-  //   layerGroups: DEFAULT_LAYER_GROUPS,
-  //   colorMode: BASE_MAP_COLOR_MODES.DARK,
-  //   complimentaryStyleId: 'muted'
-  // },
-  // {
-  //   id: 'satellite',
-  //   label: 'Satellite',
-  //   url: `mapbox://styles/mapbox/satellite-v9`,
-  //   icon: `${BASEMAP_ICON_PREFIX}/UBER_SATELLITE.png`,
-  //   layerGroups: [],
-  //   colorMode: BASE_MAP_COLOR_MODES.NONE
-  // }
+  {
+    id: 'positron',
+    label: 'Positron',
+    url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    icon: NO_BASEMAP_ICON,
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
+    complimentaryStyleId: 'dark-matter'
+  },
+  {
+    id: 'positron-nolabels',
+    label: 'PositronNoLabels',
+    url: 'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json',
+    icon: NO_BASEMAP_ICON,
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
+    complimentaryStyleId: 'dark-matter-nolabels'
+  },
+  {
+    id: 'voyager',
+    label: 'Voyager',
+    url: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+    icon: NO_BASEMAP_ICON,
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
+    complimentaryStyleId: 'dark-matter'
+  },
+  {
+    id: 'voyager-nolabels',
+    label: 'VoyagerNoLabels',
+    url: 'https://basemaps.cartocdn.com/gl/voyager-nolabels-gl-style/style.json',
+    icon: NO_BASEMAP_ICON,
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
+    complimentaryStyleId: 'dark-matter-nolabels'
+  }
 ];
 
 export const GEOJSON_FIELDS = {
