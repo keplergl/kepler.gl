@@ -37,6 +37,7 @@ import {
   layerTypeChange,
   layerVisConfigChange,
   layerVisualChannelConfigChange,
+  loadBatchDataSuccess,
   loadFilesErr,
   loadFilesSuccess,
   loadFileStepSuccess,
@@ -126,7 +127,7 @@ import {
 import {findFieldsToShow} from './interaction-utils';
 import {hasPropsToMerge, getPropValueToMerger} from './merger-handler';
 import {mergeDatasetsByOrder} from './vis-state-merger';
-import {fixEffectOrder} from '@kepler.gl/utils';
+import {fixEffectOrder, ArrowDataContainer} from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
 
 // react-palm
@@ -2239,6 +2240,65 @@ export function makeLoadFileTask(file, fileCache, loaders: Loader[] = [], loadOp
   );
 }
 
+export function progressiveLoadCompletedUpdater(
+  state: VisState,
+  action: VisStateActions.ProgressiveLoadCompletedUpdaterAction
+): VisState {
+  const {parsedData} = action.payload;
+
+  // for each layer id in parsedBinaryDataForLayers
+  // find the layer in state.layers
+  // update the table with the new data
+  // update the layer metadata with the new data
+
+  const newLayers: Layer[] = [];
+  const newLayerData: any = [];
+
+  // for each key in parsedBinaryDataForLayers
+  Object.keys(parsedData).forEach(layerId => {
+    // find the layer in state.layers
+    const layer = state.layers.find(l => l.id === layerId);
+    if (!layer) {
+      return;
+    }
+
+    // update layer
+    const idx = state.layers.findIndex(l => l.id === layer.id);
+    const oldLayerData = state.layerData[idx];
+
+    // update keplerTable
+    const keplerTable = state.datasets[layer.config.dataId];
+    const dataContainer = keplerTable.dataContainer;
+    if (dataContainer instanceof ArrowDataContainer) {
+      const {fieldIndex, parsedGeoArrowData} = parsedData[layerId];
+      keplerTable.filteredIndex = dataContainer.getFilteredIndex(fieldIndex);
+      if (parsedGeoArrowData.binaryDataFromGeoArrow) {
+        dataContainer.updateBinaryData(
+          fieldIndex,
+          parsedGeoArrowData.chunkIndex,
+          parsedGeoArrowData.binaryDataFromGeoArrow
+        );
+      }
+    }
+
+    const newLayer = layer;
+    newLayer.calculateDataAttribute(keplerTable, null);
+    newLayer.updateLayerMeta(dataContainer, null);
+    const layerData = newLayer.formatLayerData(state.datasets, oldLayerData);
+
+    newLayers.push(newLayer);
+    newLayerData.push(layerData);
+  });
+
+  const newState = {
+    ...state,
+    layers: newLayers,
+    layerData: newLayerData
+  };
+
+  return newState;
+}
+
 /**
  *
  * @memberof visStateUpdaters
@@ -2276,6 +2336,21 @@ export function parseProgress(prevProgress = {}, progress) {
   };
 }
 
+export function loadBatchDataSuccessUpdater(
+  state: VisState,
+  action: VisStateActions.LoadFileStepSuccessAction
+): VisState {
+  if (!state.fileLoading) {
+    return state;
+  }
+  const {fileCache} = action;
+  const {onFinish} = state.fileLoading;
+  return withTask(
+    state,
+    DELAY_TASK(200).map(() => onFinish(fileCache))
+  );
+}
+
 /**
  * gets called with payload = AsyncGenerator<???>
  * @memberof visStateUpdaters
@@ -2291,8 +2366,16 @@ export const nextFileBatchUpdater = (
     fileName,
     progress: parseProgress(state.fileLoadingProgress[fileName], progress)
   });
-  return withTask(
-    stateWithProgress,
+
+  return withTask(stateWithProgress, [
+    ...(fileName.endsWith('arrow') && accumulated && accumulated.data?.length > 0
+      ? [
+          PROCESS_FILE_DATA({content: accumulated, fileCache: []}).bimap(
+            result => loadBatchDataSuccess({fileName, fileCache: result}),
+            err => loadFilesErr(fileName, err)
+          )
+        ]
+      : []),
     UNWRAP_TASK(gen.next()).bimap(
       ({value, done}) => {
         return done
@@ -2307,7 +2390,7 @@ export const nextFileBatchUpdater = (
       },
       err => loadFilesErr(fileName, err)
     )
-  );
+  ]);
 };
 
 /**

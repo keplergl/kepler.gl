@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import {withTask} from 'react-palm/tasks';
 import {
   toggleModalUpdater,
   loadFilesSuccessUpdater as uiStateLoadFilesSuccessUpdater,
@@ -49,13 +50,15 @@ import {
   MapStyleChangeUpdaterAction,
   LayerTypeChangeUpdaterAction,
   ToggleSplitMapUpdaterAction,
-  ReplaceDataInMapPayload
+  ReplaceDataInMapPayload,
+  progressiveLoadCompleted
 } from '@kepler.gl/actions';
 import {VisState} from '@kepler.gl/schemas';
 import {Layer} from '@kepler.gl/layers';
-import {isPlainObject} from '@kepler.gl/utils';
+import {isPlainObject, toArray} from '@kepler.gl/utils';
 import {findMapBounds} from './data-utils';
 import {BASE_MAP_COLOR_MODES, OVERLAY_BLENDINGS} from '@kepler.gl/constants';
+import {PROGRESSIVE_LOAD_TASK} from '@kepler.gl/tasks';
 
 export type KeplerGlState = {
   visState: VisState;
@@ -160,6 +163,31 @@ export const addDataToMapUpdater = (
     ...payload.options
   };
 
+  // get datasets that already been loaded by checking if dataset.info.id in state.visState.datasets
+  const loadedData = toArray(datasets).filter(ds => ds.info.id && ds.info.id in state.visState.datasets);
+  if (loadedData.length > 0) {
+    // apply progressive data loading using web workers
+    const loadedLayers = state.visState.layers.filter(l => loadedData.find(ds => ds.info.id === l.config.dataId));
+    // filter a dictionary of datasets
+    const loadedDatasets = Object.fromEntries(Object.entries(state.visState.datasets).filter(([dsId, ds]) => loadedData.find(ds => ds.info.id === dsId)));
+    toArray(datasets).forEach(ds => {
+      if (ds.info.id) {
+        // get keplerTable from datasets
+        const keplerTable = loadedDatasets[ds.info.id];
+        // update the data in keplerTable
+        keplerTable.update(ds.data);
+      }
+    });
+    return withTask(
+      state,
+      PROGRESSIVE_LOAD_TASK(
+        { datasets: loadedDatasets, layers: loadedLayers }
+      ).map(
+        parsedData => progressiveLoadCompleted({parsedData, inputData: toArray(datasets)})
+      )
+    );
+  }
+
   // @ts-expect-error
   let parsedConfig: ParsedConfig = config;
 
@@ -190,11 +218,10 @@ export const addDataToMapUpdater = (
     if_(
       Boolean(info),
       pick_('visState')(
-        apply_<VisState, any>(setMapInfoUpdater, {info})
+        apply_<VisState, any>(setMapInfoUpdater, {info })
       )
     ),
-
-    with_(({visState}) =>
+    with_(({ visState }) =>
       pick_('mapState')(
         apply_(
           stateMapConfigUpdater,
@@ -206,10 +233,11 @@ export const addDataToMapUpdater = (
         )
       )
     ),
-    pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
+    pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({ config: parsedConfig, options }))),
     pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null))),
     pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),
     pick_('uiState')(merge_(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {}))
+
   ])(state);
 };
 

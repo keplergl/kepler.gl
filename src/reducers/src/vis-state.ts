@@ -67,6 +67,8 @@ const actionHandler = {
 
   [ActionTypes.LOAD_NEXT_FILE]: visStateUpdaters.loadNextFileUpdater,
 
+  [ActionTypes.LOAD_BATCH_DATA_SUCCESS]: visStateUpdaters.loadBatchDataSuccessUpdater,
+
   [ActionTypes.LOAD_FILE_STEP_SUCCESS]: visStateUpdaters.loadFileStepSuccessUpdater,
 
   [ActionTypes.MAP_CLICK]: visStateUpdaters.mapClickUpdater,
@@ -151,6 +153,8 @@ const actionHandler = {
   [ActionTypes.NEXT_FILE_BATCH]: visStateUpdaters.nextFileBatchUpdater,
 
   [ActionTypes.PROCESS_FILE_CONTENT]: visStateUpdaters.processFileContentUpdater,
+
+  [ActionTypes.PROGRESSIVE_LOAD_COMPLETED]: visStateUpdaters.progressiveLoadCompletedUpdater,
 
   [ActionTypes.SET_LAYER_ANIMATION_TIME_CONFIG]:
     visStateUpdaters.setLayerAnimationTimeConfigUpdater,
