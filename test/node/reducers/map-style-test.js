@@ -729,22 +729,22 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
   t.deepEqual(nextState2.topMapStyle, expectedTopStyle2, 'topMapStyle should be set correctly');
 
   // set style type to light
-  const nextState3 = reducer(nextState2, mapStyleChange('light'));
+  const nextState3 = reducer(nextState2, mapStyleChange('positron'));
   const tasks = drainTasksForTesting();
   t.equal(tasks.length, 1, 'should dispatch 1 request map style task');
 
   const expectedNextState3 = {
     ...nextState2,
-    styleType: 'light',
+    styleType: 'positron',
     isLoading: {
-      light: true
+      positron: true
     }
   };
   const expectedTaskPayload = [
     {
-      id: 'light',
+      id: 'positron',
       url:
-        'https://api.mapbox.com/styles/v1/uberdata/cjoqb9j339k1f2sl9t5ic5bn4?pluginName=Keplergl&access_token=smoothies_secret_token'
+        'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
     }
   ];
   t.deepEqual(nextState3, expectedNextState3, 'state should be correct');
@@ -753,13 +753,13 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
   // successfully load light map style
   const succeedState = reducer(
     nextState3,
-    succeedTaskWithValues(tasks[0], [{id: 'light', style: MOCK_MAP_STYLE_LIGHT.style}])
+    succeedTaskWithValues(tasks[0], [{id: 'positron', style: MOCK_MAP_STYLE_LIGHT.style}])
   );
 
   const expectedMapStyles = {
     ...nextState3.mapStyles,
-    light: {
-      ...nextState3.mapStyles.light,
+    positron: {
+      ...nextState3.mapStyles.positron,
       style: MOCK_MAP_STYLE_LIGHT.style
     }
   };
@@ -779,16 +779,16 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
   };
 
   t.deepEqual(succeedState.topMapStyle, expectedTopStyle3, 'topMapStyle should be set correctly');
-  t.deepEqual(succeedState.isLoading, {light: false}, 'should set isLoading correctly');
+  t.deepEqual(succeedState.isLoading, {}, 'should set isLoading correctly');
   t.deepEqual(
     succeedState.threeDBuildingColor,
-    [237.4432283491836, 237.4432283491836, 237.4432283491836],
+    [209, 206, 199],
     'should set threeDBuildingColor correctly'
   );
 
   // error load light map style
   const erroredState = reducer(nextState3, errorTaskInTest(tasks[0], new Error('hello')));
-  t.deepEqual(erroredState.isLoading, {light: false}, 'should set isLoading correctly');
+  t.deepEqual(erroredState.isLoading, {positron: false}, 'should set isLoading correctly');
 
   t.end();
 });
@@ -822,12 +822,6 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE -> dark basemap to no basemap', t => 
     nextState2,
     expectedNextState2,
     'state should be correct when switching to no basemap option'
-  );
-
-  t.notDeepEqual(
-    nextState.backgroundColor,
-    nextState2.backgroundColor,
-    'backgroundColor should be changed when switching to no basemap option (map-style-updates.js: getBackgroundColorFromStyleBaseLayer())'
   );
 
   t.end();

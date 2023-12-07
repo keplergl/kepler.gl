@@ -22,25 +22,25 @@ import {BASE_MAP_COLOR_MODES, DEFAULT_LAYER_GROUPS} from '@kepler.gl/constants';
 
 /** @type {import('@kepler.gl/reducers').BaseMapStyle} */
 export const MOCK_MAP_STYLE = {
-  id: 'dark',
-  label: 'Dark',
+  id: 'dark-matter',
+  label: 'DarkMatter',
   url: 'mapbox://styles/xxxxx/abcdefg',
   icon: 'https://my.icon.net/kepler.gl/test/taro.png',
   layerGroups: DEFAULT_LAYER_GROUPS,
   colorMode: BASE_MAP_COLOR_MODES.DARK,
-  complimentaryStyleId: 'light',
+  complimentaryStyleId: 'positron',
   style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
 };
 
 /** @type {import('@kepler.gl/reducers').BaseMapStyle} */
 export const MOCK_MAP_STYLE_LIGHT = {
-  id: 'light',
-  label: 'Light',
+  id: 'positron',
+  label: 'Positron',
   url: 'mapbox://styles/xxxxx/hijklmn',
   icon: 'https://my.icon.net/kepler.gl/test/blue.png',
   layerGroups: DEFAULT_LAYER_GROUPS,
   colorMode: BASE_MAP_COLOR_MODES.LIGHT,
-  complimentaryStyleId: 'dark',
+  complimentaryStyleId: 'dark-matter',
   style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
 };
 
