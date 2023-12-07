@@ -31,8 +31,6 @@ const NotificationItem = appInjector.get(NotificationItemFactory);
 
 describe('Notification tests', () => {
 
-  window.URL.createObjectURL = jest.fn();
-
   it('display SUCCESS notification', () => {
     const successNotification = createNotification({message: 'success', type: 'success'});
     // render the component
@@ -49,8 +47,4 @@ describe('Notification tests', () => {
     expect(heading).toBeInTheDocument();
   });
 
-
-  afterEach(() => {
-    window.URL.createObjectURL.mockReset();
-  });
 });
