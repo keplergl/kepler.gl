@@ -140,7 +140,7 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
       {
         id: 'dark-matter',
         url:
-          'https://api.mapbox.com/styles/v1/uberdata/cjoqbbf6l9k302sl96tyvka09?pluginName=Keplergl&access_token=smoothies_secret_token'
+          'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
       }
     ]
   };
