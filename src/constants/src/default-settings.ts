@@ -30,7 +30,7 @@ import {
   scalePoint
 } from 'd3-scale';
 import {TOOLTIP_FORMAT_TYPES} from './tooltip';
-import {RGBAColor, EffectDescription} from '@kepler.gl/types';
+import {RGBAColor, EffectDescription, BaseMapStyle} from '@kepler.gl/types';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const KEPLER_UNFOLDED_BUCKET = 'https://studio-public-data.foursquare.com/statics/keplergl';
@@ -189,7 +189,7 @@ export const PANELS = SIDEBAR_PANELS;
 
 export const DEFAULT_BLDG_COLOR = '#D1CEC7';
 
-export const DEFAULT_BACKGROUND_COLOR = '#FFFFFF';
+export const DEFAULT_BACKGROUND_COLOR = '#000000';
 
 // assists in identifying basemap background layers when auto-determining the backgroundColor
 export const BASE_MAP_BACKGROUND_LAYER_IDS = ['background', 'bg', 'land', 'water'];
@@ -293,20 +293,11 @@ export const EMPTY_MAPBOX_STYLE = {
 
 export const NO_BASEMAP_ICON = `${BASEMAP_ICON_PREFIX}/NO_BASEMAP.png`;
 
-export const DEFAULT_MAP_STYLES: {
-  id: string;
-  label: string;
-  url: string | null;
-  icon: string;
-  layerGroups: typeof DEFAULT_LAYER_GROUPS;
-  complimentaryStyleId?: string;
-  colorMode: string;
-  style?: any;
-}[] = [
+export const DEFAULT_MAP_STYLES: BaseMapStyle[] = [
   {
     id: NO_MAP_ID,
     label: 'No Basemap',
-    url: null,
+    url: '',
     icon: NO_BASEMAP_ICON,
     layerGroups: [BACKGROUND_LAYER_GROUP],
     colorMode: BASE_MAP_COLOR_MODES.NONE,

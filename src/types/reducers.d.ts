@@ -305,7 +305,7 @@ export type CustomStyleType =
 export type BaseMapStyle = {
   id: string;
   label: string;
-  url?: string;
+  url: string;
   icon: string;
   style?: Object;
   layerGroups: LayerGroup[];
