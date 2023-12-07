@@ -50,7 +50,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
   );
 
   const expectedSaved = {
-    styleType: 'dark',
+    styleType: 'dark-matter',
     topLayerGroups: {},
     visibleLayerGroups: {},
     mapStyles: {},
@@ -59,7 +59,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
   };
 
   const expectedLoaded = {
-    styleType: 'dark',
+    styleType: 'dark-matter',
     topLayerGroups: {},
     visibleLayerGroups: {},
     threeDBuildingColor: [209, 206, 199],

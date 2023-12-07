@@ -126,7 +126,7 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
     {
       ...newState,
       isLoading: {
-        dark: true
+        'dark-matter': true
       }
     },
     'user provided mapStyles are populated, defaults ignored'
