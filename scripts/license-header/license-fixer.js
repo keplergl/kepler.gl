@@ -66,7 +66,7 @@ function hashPrefix(line) {
 }
 
 LicenseFixer.prototype.getLicenseForFile = function getLicenseForFile(file) {
-    if (file.match(/\.(js|go|java)$/)) {
+    if (file.match(/\.(js|go|java|ts|tsx)$/)) {
         return this.slashLicense;
     } else if (file.match(/\.(pyx?|pxd)$/)) {
         return this.hashLicense;

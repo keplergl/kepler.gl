@@ -33,14 +33,14 @@ if (argv.help || argv.h) {
     process.exit(0);
 }
 
-var fileFilter = ['*.js'];
+var fileFilter = ['*.js', '*.ts', '*.tsx'];
 if (typeof argv.file === 'string') {
     fileFilter = [argv.file];
 } else if (Array.isArray(argv.file)) {
     fileFilter = argv.file;
 }
 
-var directoryFilter = ['!.git', '!node_modules', '!coverage', '!env', '!.tox', '!vendor', '!Godeps'];
+var directoryFilter = ['!.git', '!node_modules', '!coverage', '!env', '!.tox', '!vendor', '!Godeps', '!dist'];
 if (typeof argv.dir === 'string') {
     directoryFilter = [argv.dir];
 } else if (Array.isArray(argv.dir)) {
