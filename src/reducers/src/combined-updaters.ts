@@ -161,7 +161,10 @@ export const addDataToMapUpdater = (
   };
 
   // check if progresive loading dataset by bataches
-  const isProgressiveLoading = Array.isArray(datasets) && datasets[0].info.id && datasets[0].info.id in state.visState.datasets;
+  const isProgressiveLoading =
+    Array.isArray(datasets) &&
+    datasets[0].info.id &&
+    datasets[0].info.id in state.visState.datasets;
 
   // @ts-expect-error
   let parsedConfig: ParsedConfig = config;
@@ -197,8 +200,8 @@ export const addDataToMapUpdater = (
       )
     ),
     if_(
-      isProgressiveLoading === false,
-      with_(({ visState }) =>
+      !isProgressiveLoading,
+      with_(({visState}) =>
         pick_('mapState')(
           apply_(
             stateMapConfigUpdater,
@@ -211,14 +214,10 @@ export const addDataToMapUpdater = (
         )
       )
     ),
-    if_(
-      isProgressiveLoading === false,
-      pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({ config: parsedConfig, options }))),
-    ),
+    pick_('mapStyle')(apply_(styleMapConfigUpdater, payload_({config: parsedConfig, options}))),
     pick_('uiState')(apply_(uiStateLoadFilesSuccessUpdater, payload_(null))),
     pick_('uiState')(apply_(toggleModalUpdater, payload_(null))),
     pick_('uiState')(merge_(options.hasOwnProperty('readOnly') ? {readOnly: options.readOnly} : {}))
-
   ])(state);
 };
 

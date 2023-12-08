@@ -61,7 +61,7 @@ export function getGeojsonLayerMetaFromArrow({
 }: {
   dataContainer: DataContainerInterface;
   getGeoColumn: (dataContainer: DataContainerInterface) => unknown;
-    getGeoField: (dataContainer: DataContainerInterface) => Field | null;
+  getGeoField: (dataContainer: DataContainerInterface) => Field | null;
   chunkIndex?: number;
 }): GeojsonLayerMetaProps {
   const geoColumn = getGeoColumn(dataContainer) as arrow.Vector;
@@ -69,9 +69,13 @@ export function getGeojsonLayerMetaFromArrow({
 
   const encoding = arrowField?.metadata?.get('ARROW:extension:name');
   const options: BinaryGeometriesFromArrowOptions = {
-    ...(chunkIndex !== undefined && chunkIndex >= 0 ? {chunkIndex} : {}),
-    triangulate: true,
-    meanCenter: true
+    ...(chunkIndex !== undefined && chunkIndex >= 0
+      ? {
+          chunkIndex,
+          chunkOffset: geoColumn.data[0].length * chunkIndex
+        }
+      : {}),
+    triangulate: true
   };
   // create binary data from arrow data for GeoJsonLayer
   const {binaryGeometries, featureTypes, bounds} = getBinaryGeometriesFromArrow(
@@ -90,68 +94,6 @@ export function getGeojsonLayerMetaFromArrow({
     fixedRadius
   };
 }
-
-/*
-export async function getGeojsonLayerMetaFromArrowAsync({
-  dataContainer,
-  getGeoColumn,
-  getGeoField,
-  chunkIndex
-}: {
-  dataContainer: DataContainerInterface;
-  getGeoColumn: (dataContainer: DataContainerInterface) => unknown;
-  getGeoField: (dataContainer: DataContainerInterface) => Field | null;
-  chunkIndex: number;
-  }): Promise<GeojsonLayerMetaProps> {
-  const arrowField = getGeoField(dataContainer);
-  const geoColumn = getGeoColumn(dataContainer) as arrow.Vector;
-  const geometryChunk = geoColumn?.data[chunkIndex];
-
-  const chunkData = {
-    type: {
-      ...geometryChunk?.type,
-      typeId: geometryChunk?.typeId,
-      listSize: geometryChunk?.type?.listSize
-    },
-    offset: geometryChunk.offset,
-    length: geometryChunk.length,
-    nullCount: geometryChunk.nullCount,
-    buffers: geometryChunk.buffers,
-    children: geometryChunk.children,
-    dictionary: geometryChunk.dictionary
-  };
-  const encoding = arrowField?.metadata?.get('ARROW:extension:name');
-
-  const parsedGeoArrowData = await parseGeoArrowOnWorker(
-    {
-      operation: 'parse-geoarrow',
-      chunkData,
-      chunkIndex: 0,
-      geometryEncoding: encoding,
-      meanCenter: true,
-      triangle: false
-    },
-    {
-      _workerType: 'test'
-    }
-  );
-
-  // kepler should await for the result from web worker and render the binary geometries
-  const {binaryGeometries, bounds, featureTypes, meanCenters} =
-    parsedGeoArrowData.binaryDataFromGeoArrow!;
-
-  // since there is no feature.properties.radius, we set fixedRadius to false
-  const fixedRadius = false;
-
-  return {
-    dataToFeature: binaryGeometries,
-    featureTypes,
-    bounds,
-    fixedRadius,
-    centroids: meanCenters
-  };
-}
-*/
 
 export function isLayerHoveredFromArrow(objectInfo, layerId: string): boolean {
   // there could be multiple deck.gl layers created from multiple chunks in arrow table
@@ -194,7 +136,8 @@ export function getHoveredObjectFromArrow(
 
     return hoveredFeature
       ? {
-          ...hoveredFeature,
+          type: 'Feature',
+          geometry: hoveredFeature,
           properties: {
             ...properties,
             index: objectInfo.index
