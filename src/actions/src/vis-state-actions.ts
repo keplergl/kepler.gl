@@ -1427,6 +1427,7 @@ export type NextFileBatchUpdaterAction = {
     /* eslint-disable no-undef */
     gen: AsyncGenerator<FileContent>;
     fileName: string;
+    fileLastModified?: number;
     progress?: any;
     accumulated?: any;
     onFinish: (result: any) => any;

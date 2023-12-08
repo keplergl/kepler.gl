@@ -121,10 +121,7 @@ export function getHoveredObjectFromArrow(
     const field = fieldAccessor(dataContainer);
     const encoding = field?.metadata?.get('ARROW:extension:name');
 
-    const hoveredFeature = parseGeometryFromArrow({
-      encoding,
-      data: rawGeometry
-    });
+    const hoveredFeature = parseGeometryFromArrow(rawGeometry, encoding);
 
     const properties = dataContainer.rowAsArray(objectInfo.index).reduce((prev, cur, i) => {
       const fieldName = dataContainer?.getField?.(i).name;

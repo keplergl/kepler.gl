@@ -2228,9 +2228,13 @@ export function makeLoadFileTask(file, fileCache, loaders: Loader[] = [], loadOp
       nextFileBatch({
         gen,
         fileName: file.name,
+        fileLastModified: file.lastModified,
         onFinish: result =>
           processFileContent({
-            content: result,
+            content: {
+              ...result,
+              fileLastModified: file.lastModified
+            },
             fileCache
           })
       }),
@@ -2300,7 +2304,7 @@ export function loadBatchDataSuccessUpdater(
 export const nextFileBatchUpdater = (
   state: VisState,
   {
-    payload: {gen, fileName, progress, accumulated, onFinish}
+    payload: {gen, fileName, fileLastModified, progress, accumulated, onFinish}
   }: VisStateActions.NextFileBatchUpdaterAction
 ): VisState => {
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
@@ -2308,31 +2312,31 @@ export const nextFileBatchUpdater = (
     progress: parseProgress(state.fileLoadingProgress[fileName], progress)
   });
 
-  return withTask(
-    stateWithProgress, [
-      ...(fileName.endsWith('arrow') && accumulated && accumulated.data?.length > 0
-        ? [
-            PROCESS_FILE_DATA({content: accumulated, fileCache: []}).bimap(
-              result => loadBatchDataSuccess({fileName, fileCache: result}),
-              err => loadFilesErr(fileName, err)
-            )
-          ]
-        : []),
-      UNWRAP_TASK(gen.next()).bimap(
-        ({value, done}) => {
-          return done
-            ? onFinish(accumulated)
-            : nextFileBatch({
-                gen,
-                fileName,
-                progress: value.progress,
-                accumulated: value,
-                onFinish
-              });
-        },
-        err => loadFilesErr(fileName, err)
-      )
-    ]);
+  return withTask(stateWithProgress, [
+    ...(fileName.endsWith('arrow') && accumulated && accumulated.data?.length > 1
+      ? [
+          PROCESS_FILE_DATA({content: {...accumulated, fileLastModified}, fileCache: []}).bimap(
+            result => loadBatchDataSuccess({fileName, fileCache: result}),
+            err => loadFilesErr(fileName, err)
+          )
+        ]
+      : []),
+    UNWRAP_TASK(gen.next()).bimap(
+      ({value, done}) => {
+        return done
+          ? onFinish(accumulated)
+          : nextFileBatch({
+              gen,
+              fileName,
+              fileLastModified,
+              progress: value.progress,
+              accumulated: value,
+              onFinish
+            });
+      },
+      err => loadFilesErr(fileName, err)
+    )
+  ]);
 };
 
 /**
