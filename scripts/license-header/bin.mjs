@@ -8,8 +8,6 @@ import console from 'global/console.js';
 
 import LicenseFixer from './license-fixer.mjs';
 
-import VALID_LICENSES from './valid-licenses.mjs';
-
 var argv = minimist(process.argv.slice(2));
 var cwd = process.cwd();
 
@@ -70,9 +68,8 @@ if (licenses) {
         licenses[i] = readFileSync(licenses[i], 'utf8');
     }
 } else {
-    // In the absense of any command line arguments,
-    // use the defaults.
-    licenses = VALID_LICENSES;
+    console.error('no license provided');
+    process.exit(1);
 }
 
 var licenseFixer = new LicenseFixer({
