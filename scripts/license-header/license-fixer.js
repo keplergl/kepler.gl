@@ -1,6 +1,7 @@
 // Forked from uber-licence, MIT
 
 import {readFileSync, writeFileSync} from 'fs';
+import {logError, logProgress} from '../log';
 
 module.exports = LicenseFixer;
 
@@ -21,21 +22,11 @@ LicenseFixer.prototype.addLicense = function addLicense(license) {
 
 function createLicenseExpression(license) {
     license = license.trim();
-    license = trimToCopyright(license);
     // Transform the license into a regular expression that matches the exact
     // license as well as similar licenses, with different dates and line
     // wraps.
     var pattern = license.split(/\s+/).map(relaxLicenseTerm).join('') + '\\s*';
     return new RegExp(pattern, 'gmi');
-}
-
-function trimToCopyright(license) {
-    // Trim up to Copyright line (skipping prologues like "The MIT License (MIT)")
-    var index = license.indexOf('Copyright');
-    if (index >= 0) {
-        license = license.slice(index);
-    }
-    return license;
 }
 
 function relaxLicenseTerm(term) {
@@ -54,7 +45,6 @@ function regexpEscape(string) {
 }
 
 LicenseFixer.prototype.setLicense = function setLicense(license) {
-    license = trimToCopyright(license);
     this.slashLicense = createSlashLicense(license);
     this.hashLicense = createHashLicense(license);
 };
@@ -123,7 +113,7 @@ LicenseFixer.prototype.fixContent = function fixContent(file, content) {
     var license = this.getLicenseForFile(file);
     if (license === null) {
         if (!this.silent) {
-            console.error('unrecognized file type', file);
+            logError(`unrecognized file type ${file}`);
         }
         return null;
     }
@@ -140,7 +130,7 @@ LicenseFixer.prototype.fixFile = function fixFile(file) {
     if (original.length === 0) {
         // Ignore empty files
         if (this.verbose) {
-            console.log('empty', file);
+            logProgress(`empty ${file}`);
         }
         return false;
     }
@@ -155,13 +145,13 @@ LicenseFixer.prototype.fixFile = function fixFile(file) {
     if (original === content) {
         // No change
         if (this.verbose) {
-            console.log('skip', file);
+            logProgress(`skip ${file}`);
         }
         return false;
     }
 
     if (!this.silent) {
-        console.log('fix', file);
+        logProgress(`fix ${file}`);
     }
 
     if (this.dry) {
