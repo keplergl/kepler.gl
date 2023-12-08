@@ -1,9 +1,7 @@
 // Forked from uber-licence, MIT
 
 import {readFileSync, writeFileSync} from 'fs';
-import {logError, logProgress} from '../log';
-
-module.exports = LicenseFixer;
+import console from 'global/console.js';
 
 function LicenseFixer(options) {
     options = options || {};
@@ -113,7 +111,7 @@ LicenseFixer.prototype.fixContent = function fixContent(file, content) {
     var license = this.getLicenseForFile(file);
     if (license === null) {
         if (!this.silent) {
-            logError(`unrecognized file type ${file}`);
+            console.error(`unrecognized file type ${file}`);
         }
         return null;
     }
@@ -130,7 +128,7 @@ LicenseFixer.prototype.fixFile = function fixFile(file) {
     if (original.length === 0) {
         // Ignore empty files
         if (this.verbose) {
-            logProgress(`empty ${file}`);
+            console.log(`empty ${file}`);
         }
         return false;
     }
@@ -145,13 +143,13 @@ LicenseFixer.prototype.fixFile = function fixFile(file) {
     if (original === content) {
         // No change
         if (this.verbose) {
-            logProgress(`skip ${file}`);
+            console.log(`skip ${file}`);
         }
         return false;
     }
 
     if (!this.silent) {
-        logProgress(`fix ${file}`);
+        console.log(`fix ${file}`);
     }
 
     if (this.dry) {
@@ -161,3 +159,5 @@ LicenseFixer.prototype.fixFile = function fixFile(file) {
     writeFileSync(file, content, 'utf8');
     return true;
 };
+
+export default LicenseFixer

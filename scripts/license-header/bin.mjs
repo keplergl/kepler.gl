@@ -3,13 +3,12 @@
 import readdirp from 'readdirp';
 import minimist from 'minimist';
 import {readFileSync} from 'fs';
-import process from 'global/process';
-import console from 'global/console';
-import {logError} from '../log';
+import process from 'global/process.js';
+import console from 'global/console.js';
 
-import LicenseFixer from './license-fixer';
+import LicenseFixer from './license-fixer.mjs';
 
-import VALID_LICENSES from './valid-licenses';
+import VALID_LICENSES from './valid-licenses.mjs';
 
 var argv = minimist(process.argv.slice(2));
 var cwd = process.cwd();
@@ -112,7 +111,7 @@ function readTree(options, callback) {
 
 function processFiles(err, files) {
     if (err) {
-        logError(err.message);
+        console.error(err.message);
         process.exit(1);
         return;
     }
