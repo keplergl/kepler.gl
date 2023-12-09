@@ -209,7 +209,7 @@ export default class GeoJsonLayer extends Layer {
   dataToFeature: GeojsonDataMaps | BinaryFeatures[] = [];
   dataContainer: DataContainerInterface | null = null;
   filteredIndex: Uint8ClampedArray | null = null;
-  filteredIndexTrigger: number[] = [];
+  filteredIndexTrigger: number[] | null = null;
 
   constructor(props) {
     super(props);
@@ -360,25 +360,32 @@ export default class GeoJsonLayer extends Layer {
     return null;
   }
 
-  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
-    // filter geojson/arrow table by values and make a partial copy of the raw table are expensive
-    // so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
-    // in deck.gl layer, see: FilterArrowExtension in @kepler.gl/deckgl-layers
-    if (!this.filteredIndex) {
-      this.filteredIndex = new Uint8ClampedArray(dataContainer.numRows());
-    }
-    this.filteredIndex.fill(0);
-    for (let i = 0; i < filteredIndex.length; ++i) {
-      this.filteredIndex[filteredIndex[i]] = 1;
-    }
+  calculateDataAttribute({ dataContainer, filteredIndex }, getPosition) {
+    if (dataContainer instanceof ArrowDataContainer) {
+      // filter geojson/arrow table by values and make a partial copy of the raw table are expensive
+      // so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
+      // in deck.gl layer, see: FilterArrowExtension in @kepler.gl/deckgl-layers
+      if (!this.filteredIndex || this.filteredIndex.length !== dataContainer.numRows()) {
+        // for incremental data loading, we need to update filteredIndex
+        this.filteredIndex = new Uint8ClampedArray(dataContainer.numRows());
+        this.filteredIndex.fill(1);
+      }
 
-    this.filteredIndexTrigger = filteredIndex;
-
+      // check if filteredIndex is a range from 0 to numRows if it is, we don't need to update it
+      const isRange = filteredIndex && filteredIndex.length === dataContainer.numRows();
+      if (!isRange || this.filteredIndexTrigger !== null) {
+        this.filteredIndex.fill(0);
+        for (let i = 0; i < filteredIndex.length; ++i) {
+          this.filteredIndex[filteredIndex[i]] = 1;
+        }
+        this.filteredIndexTrigger = filteredIndex;
+      }
     // for arrow, always return full dataToFeature instead of a filtered one, so there is no need to update attributes in GPU
+      return this.dataToFeature;
+    }
+
     // for geojson, this should work as well and more efficient. But we need to update some test cases e.g. #GeojsonLayer -> formatLayerData
-    return dataContainer instanceof ArrowDataContainer
-      ? this.dataToFeature
-      : filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
+    return filteredIndex.map(i => this.dataToFeature[i]).filter(d => d);
   }
 
   formatLayerData(datasets, oldLayerData) {
@@ -412,27 +419,37 @@ export default class GeoJsonLayer extends Layer {
   }
 
   updateLayerMeta(dataContainer) {
-    // check datasource is arrow format if dataContainer is arrow data container
     this.dataContainer = dataContainer;
 
     const getFeature = this.getPositionAccessor(dataContainer);
     const getGeoColumn = geoColumnAccessor(this.config.columns);
     const getGeoField = geoFieldAccessor(this.config.columns);
 
-    if (this.dataToFeature.length === 0) {
-      const updateLayerMetaFunc =
-        dataContainer instanceof ArrowDataContainer
-          ? getGeojsonLayerMetaFromArrow
-          : getGeojsonLayerMeta;
-      const {dataToFeature, bounds, fixedRadius, featureTypes} = updateLayerMetaFunc({
-        dataContainer,
-        getFeature,
-        getGeoColumn,
-        getGeoField
-      });
-
-      this.dataToFeature = dataToFeature;
-      this.updateMeta({bounds, fixedRadius, featureTypes});
+    if (dataContainer instanceof ArrowDataContainer) {
+      // update the latest batch/chunk of geoarrow data when loading data incrementally
+      if (this.dataToFeature.length < dataContainer.numChunks()) {
+        const {dataToFeature, bounds, fixedRadius, featureTypes} = getGeojsonLayerMetaFromArrow({
+          dataContainer,
+          getGeoColumn,
+          getGeoField,
+          chunkIndex: this.dataToFeature.length
+        });
+        if (this.dataToFeature.length === 0) {
+          // not update bounds for every batch, to avoid interrupt user interacts with map while loading the map incrementally
+          this.updateMeta({bounds, fixedRadius, featureTypes});
+        }
+        // @ts-expect-error TODO fix this
+        this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
+      }
+    } else {
+      if (this.dataToFeature.length === 0) {
+        const {dataToFeature, bounds, fixedRadius, featureTypes} = getGeojsonLayerMeta({
+          dataContainer,
+          getFeature
+        });
+        this.dataToFeature = dataToFeature;
+        this.updateMeta({ bounds, fixedRadius, featureTypes });
+      }
     }
   }
 

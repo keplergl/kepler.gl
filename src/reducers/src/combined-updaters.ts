@@ -160,6 +160,24 @@ export const addDataToMapUpdater = (
     ...payload.options
   };
 
+  // check if progresive loading dataset by bataches, and update visState directly
+  const isProgressiveLoading =
+    Array.isArray(datasets) &&
+    datasets[0].info.format === 'arrow' &&
+    datasets[0].info.id &&
+    datasets[0].info.id in state.visState.datasets;
+  if (isProgressiveLoading) {
+    return compose_<KeplerGlState>([
+      pick_('visState')(
+        apply_<VisState, any>(visStateUpdateVisDataUpdater, {
+          datasets,
+          options,
+          config
+        })
+      )
+    ])(state);
+  }
+
   // @ts-expect-error
   let parsedConfig: ParsedConfig = config;
 
@@ -193,7 +211,6 @@ export const addDataToMapUpdater = (
         apply_<VisState, any>(setMapInfoUpdater, {info})
       )
     ),
-
     with_(({visState}) =>
       pick_('mapState')(
         apply_(

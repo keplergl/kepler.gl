@@ -10,6 +10,12 @@ export type RangeOptions = {
 };
 export interface DataContainerInterface {
   /**
+   * Updates the data container with new data.
+   * @param updateData updated data, e.g. for arrow data container, it's an array of arrow columns; for row data container, it's an array of rows.
+   */
+  update?(updateData: any[]): void;
+
+  /**
    * Returns the number of rows in the data container.
    * @returns Number of rows in the data container.
    */

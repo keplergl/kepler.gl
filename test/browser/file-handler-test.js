@@ -20,6 +20,7 @@
 
 /* eslint-disable max-statements */
 import test from 'tape';
+import {generateHashIdFromString} from '@kepler.gl/utils';
 import {processFileData, readFileInBatches, csvWithNull} from '@kepler.gl/processors';
 import {dataWithNulls, testFields, parsedDataWithNulls} from 'test/fixtures/test-csv-data';
 import geojsonString, {
@@ -136,7 +137,7 @@ test('#file-handler -> readFileInBatches.csv -> processFileData', async t => {
 
   // go on to run processFileData
   const processed = await processFileData({content: batch2.value, fileCache: []});
-  const expectedInfo = {label: 'text-data.csv', format: 'row'};
+  const expectedInfo = {id: generateHashIdFromString('text-data.csv'), label: 'text-data.csv', format: 'row'};
 
   t.equal(processed.length, 1, 'processFileData should return 1 result');
   t.ok(processed[0].info, 'processFileData should have info');
@@ -266,7 +267,11 @@ test('#file-handler -> readFileInBatches.GeoJSON FeatureCollection -> processFil
 
   // process geojson data received
   const processed = await processFileData({content: batch4.value, fileCache: []});
-  const expectedInfo = {label: 'text-data-1.geojson', format: 'geojson'};
+  const expectedInfo = {
+    id: generateHashIdFromString('text-data-1.geojson'),
+    label: 'text-data-1.geojson',
+    format: 'geojson'
+  };
 
   t.equal(processed.length, 1, 'processFileData should return 1 result');
   t.ok(processed[0].info, 'processFileData should have info');
@@ -367,7 +372,11 @@ test('#file-handler -> readFileInBatches.GeoJSON Single Feature -> processFileDa
 
   // process geojson data received
   const processed = await processFileData({content: batch2.value, fileCache: []});
-  const expectedInfo = {label: 'text-data-1.geojson', format: 'geojson'};
+  const expectedInfo = {
+    id: generateHashIdFromString('text-data-1.geojson'),
+    label: 'text-data-1.geojson',
+    format: 'geojson'
+  };
 
   t.equal(processed.length, 1, 'processFileData should return 1 result');
   t.ok(processed[0].info, 'processFileData should have info');
@@ -498,7 +507,7 @@ test('#file-handler -> readFileInBatches.row -> processFileData', async t => {
         fields: parsedFields,
         rows: parsedRows
       },
-      info: {label: fileName, format: 'row'}
+      info: {id: generateHashIdFromString(fileName), label: fileName, format: 'row'}
     }
   ];
   t.equal(processed.length, 1, 'processFileData should return 1 result');
@@ -624,7 +633,11 @@ test('#file-handler -> readFileInBatches.keplerMap -> processFileData', async t 
 
   // process file
   const processed = await processFileData({content: batch4.value, fileCache: []});
-  const expectedInfo = {label: fileName, format: 'keplergl'};
+  const expectedInfo = {
+    id: generateHashIdFromString(fileName),
+    label: fileName,
+    format: 'keplergl'
+  };
 
   const expectedFileCache = [
     {
