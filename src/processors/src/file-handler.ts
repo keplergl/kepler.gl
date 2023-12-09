@@ -64,7 +64,6 @@ const JSON_LOADER_OPTIONS = {
 export type ProcessFileDataContent = {
   data: unknown;
   fileName: string;
-  lastModified?: number;
   length?: number;
   progress?: {rowCount?: number; rowCountInBatch?: number; percent?: number};
   /**  metadata e.g. for arrow data, metadata could be the schema.fields */
@@ -216,15 +215,11 @@ export function processFileData({
   fileCache: FileCacheItem[];
 }): Promise<FileCacheItem[]> {
   return new Promise((resolve, reject) => {
-    let {fileName, data, lastModified} = content;
+    let {fileName, data} = content;
     let format: string | undefined;
     let processor: Function | undefined;
 
     // generate unique id with length of 4 using fileName string
-    // attach lastModified to fileName if its not undefined
-    if (lastModified) {
-      fileName = `${fileName}-${lastModified}`;
-    }
     const id = generateHashIdFromString(fileName);
 
     if (isArrowData(data)) {
