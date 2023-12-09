@@ -1223,6 +1223,20 @@ export function loadFileStepSuccess({
   };
 }
 
+export function loadBatchDataSuccess({
+  fileName,
+  fileCache
+}: {
+  fileName: string;
+  fileCache: FileCacheItem[];
+}): Merge<LoadFileStepSuccessAction, {type: typeof ActionTypes.LOAD_BATCH_DATA_SUCCESS}> {
+  return {
+    type: ActionTypes.LOAD_BATCH_DATA_SUCCESS,
+    fileName,
+    fileCache
+  };
+}
+
 export type LoadFilesErrUpdaterAction = {
   fileName: string;
   error: any;
