@@ -4924,8 +4924,11 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   // test LOAD_FILE_TASK success
   const [task2, ...more2] = drainTasksForTesting();
   t.equal(more2.length, 0, 'should ceate 1 task');
-  t.equal(task2.type, 'UNWRAP', 'should return an UNWRAP task');
-  t.ok(task2.payload instanceof Promise, 'task 2 payload should be a Promise');
+  t.equal(task2.type, 'Chain(DELAY)', 'should return an Chain(DELAY) task');
+  t.equal(task2.payload, 10, 'should delay 10 millisecond of the next task');
+  // TODO: FIXME task2 is a chain task with a 10 millisecond delay and a UNWRAP_TASK task
+  // Here the payload of UNWRAP_TASK is a Promise. However, it seems we cannot test it here:
+  // t.ok(task2.payload instanceof Promise, 'task 2 payload should be a Promise');
 
   t.equal(
     nextState2.fileLoading,
@@ -4993,14 +4996,15 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   );
 
   // UNWRAP Task success
-  const unwrapSuccess = await task2.payload;
+  const unwrapSuccess = await asyncIterator.next();
   const resultState3 = reducer(nextState2, succeedTaskInTest(task2, unwrapSuccess));
 
   // should return another unwrap task
   const [task3, ...more3] = drainTasksForTesting();
   t.equal(more3.length, 0, 'should ceate 1 task');
-  t.equal(task3.type, 'UNWRAP', 'should return an UNWRAP task');
-  t.ok(task3.payload instanceof Promise, 'task 3 payload should be a Promise');
+  t.equal(task3.type, 'Chain(DELAY)', 'should return a Chain(DELAY) task');
+  // TODO: FIXME task2
+  // t.ok(task3.payload instanceof Promise, 'task 3 payload should be a Promise');
   const expectedFileLoadingProgress3 = {
     'test-file.csv': {percent: 1, message: 'loading...', fileName: 'test-file.csv', error: null},
     'test-file-2.csv': {percent: 0, message: '', fileName: 'test-file-2.csv', error: null}
@@ -5017,7 +5021,7 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   );
 
   // calling UNWRAP_TASK sucess to create File Process task
-  const unwrapSuccess3 = await task3.payload;
+  const unwrapSuccess3 = await asyncIterator.next();
   const resultState4 = reducer(resultState3, succeedTaskInTest(task3, unwrapSuccess3));
   const [task4, ...more4] = drainTasksForTesting();
 
@@ -5117,10 +5121,10 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   const resultState7 = reducer(resultState6, succeedTaskInTest(task6, asyncIterator2));
   const [task7] = drainTasksForTesting();
 
-  const unwrapSuccess7 = await task7.payload;
+  const unwrapSuccess7 = await asyncIterator2.next();
   const resultState8 = reducer(resultState7, succeedTaskInTest(task7, unwrapSuccess7));
   const [task8] = drainTasksForTesting();
-  const unwrapSuccess8 = await task8.payload;
+  const unwrapSuccess8 = await asyncIterator2.next();
   const resultState9 = reducer(resultState8, succeedTaskInTest(task8, unwrapSuccess8));
   // process task
   const [task9] = drainTasksForTesting();

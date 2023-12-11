@@ -434,7 +434,6 @@ export default class GeoJsonLayer extends Layer {
           getGeoField,
           chunkIndex: this.dataToFeature.length
         });
-        // not update bounds for every batch, to avoid interrupt user interacts with map while loading the map incrementally
         this.updateMeta({ bounds, fixedRadius, featureTypes });
         // @ts-expect-error
         this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
