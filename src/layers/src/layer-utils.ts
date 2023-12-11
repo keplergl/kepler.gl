@@ -22,7 +22,7 @@ import * as arrow from 'apache-arrow';
 import {Feature, BBox} from 'geojson';
 import {Field, FieldPair} from '@kepler.gl/types';
 import {DataContainerInterface} from '@kepler.gl/utils';
-import {BinaryFeatures} from '@loaders.gl/schema';
+import {BinaryFeatureCollection} from '@loaders.gl/schema';
 import {
   getBinaryGeometriesFromArrow,
   parseGeometryFromArrow,
@@ -47,7 +47,7 @@ export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean) {
 }
 
 export type GeojsonLayerMetaProps = {
-  dataToFeature: BinaryFeatures[] | Array<Feature | null>;
+  dataToFeature: BinaryFeatureCollection[] | Array<Feature | null>;
   featureTypes: DeckGlGeoTypes;
   bounds: BBox | null;
   fixedRadius: boolean;

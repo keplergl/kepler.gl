@@ -29,7 +29,7 @@ import isEqual from 'lodash.isequal';
 import copy from 'copy-to-clipboard';
 import deepmerge from 'deepmerge';
 // Tasks
-import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from '@kepler.gl/tasks';
+import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK, DELAY} from '@kepler.gl/tasks';
 // Actions
 import {
   applyLayerConfig,
@@ -37,7 +37,6 @@ import {
   layerTypeChange,
   layerVisConfigChange,
   layerVisualChannelConfigChange,
-  loadBatchDataSuccess,
   loadFilesErr,
   loadFilesSuccess,
   loadFileStepSuccess,
@@ -2277,21 +2276,6 @@ export function parseProgress(prevProgress = {}, progress) {
   };
 }
 
-export function loadBatchDataSuccessUpdater(
-  state: VisState,
-  action: VisStateActions.LoadFileStepSuccessAction
-): VisState {
-  if (!state.fileLoading) {
-    return state;
-  }
-  const {fileCache} = action;
-  const {onFinish} = state.fileLoading;
-  return withTask(
-    state,
-    DELAY_TASK(200).map(() => onFinish(fileCache))
-  );
-}
-
 /**
  * gets called with payload = AsyncGenerator<???>
  * @memberof visStateUpdaters
@@ -2309,28 +2293,30 @@ export const nextFileBatchUpdater = (
   });
 
   return withTask(stateWithProgress, [
-    ...(fileName.endsWith('arrow') && accumulated && accumulated.data?.length > 1
+    ...(fileName.endsWith('arrow') && accumulated?.data?.length > 1
       ? [
           PROCESS_FILE_DATA({content: accumulated, fileCache: []}).bimap(
-            result => loadBatchDataSuccess({fileName, fileCache: result}),
+            result => loadFilesSuccess(result),
             err => loadFilesErr(fileName, err)
           )
         ]
       : []),
-    UNWRAP_TASK(gen.next()).bimap(
-      ({value, done}) => {
-        return done
-          ? onFinish(accumulated)
-          : nextFileBatch({
-              gen,
-              fileName,
-              progress: value.progress,
-              accumulated: value,
-              onFinish
-            });
-      },
-      err => loadFilesErr(fileName, err)
-    )
+    DELAY(10)
+      .chain(() => UNWRAP_TASK(gen.next()))
+      .bimap(
+        ({value, done}) => {
+          return done
+            ? onFinish(accumulated)
+            : nextFileBatch({
+                gen,
+                fileName,
+                progress: value.progress,
+                accumulated: value,
+                onFinish
+              });
+        },
+        err => loadFilesErr(fileName, err)
+      )
   ]);
 };
 

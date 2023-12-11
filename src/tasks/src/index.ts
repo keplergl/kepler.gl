@@ -85,3 +85,9 @@ export const UNWRAP_TASK = Task.fromPromise(
 
   'UNWRAP'
 );
+
+export const DELAY = Task.fromPromise((time) =>
+  new Promise(resolve => window.setTimeout(resolve, time)),
+
+  'DELAY'
+);
