@@ -21,7 +21,6 @@
 import * as arrow from 'apache-arrow';
 import {point as turfPoint} from '@turf/helpers';
 import booleanWithin from '@turf/boolean-within';
-import {BinaryFeatures} from '@loaders.gl/schema';
 import {Feature, Polygon} from 'geojson';
 import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
