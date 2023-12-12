@@ -454,6 +454,10 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
         const pos = getCentroid({id});
         return pos.every(Number.isFinite) && isInPolygon(pos, filter.value);
       };
+    case LAYER_TYPES.geojson:
+      return data => {
+        return layer.isInPolygon(data, data.index, filter.value);
+      };
     default:
       return () => true;
   }

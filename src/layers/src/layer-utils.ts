@@ -50,6 +50,7 @@ export type GeojsonLayerMetaProps = {
   featureTypes: DeckGlGeoTypes;
   bounds: BBox | null;
   fixedRadius: boolean;
+  centroids?: number[][];
 };
 
 export function getGeojsonLayerMetaFromArrow({
@@ -74,10 +75,11 @@ export function getGeojsonLayerMetaFromArrow({
           chunkOffset: geoColumn.data[0].length * chunkIndex
         }
       : {}),
-    triangulate: true
+    triangulate: true,
+    calculateMeanCenters: true
   };
   // create binary data from arrow data for GeoJsonLayer
-  const {binaryGeometries, featureTypes, bounds} = getBinaryGeometriesFromArrow(
+  const {binaryGeometries, featureTypes, bounds, meanCenters} = getBinaryGeometriesFromArrow(
     geoColumn,
     encoding,
     options
@@ -90,7 +92,8 @@ export function getGeojsonLayerMetaFromArrow({
     dataToFeature: binaryGeometries,
     featureTypes,
     bounds,
-    fixedRadius
+    fixedRadius,
+    centroids: meanCenters
   };
 }
 
