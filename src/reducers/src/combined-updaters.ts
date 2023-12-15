@@ -146,7 +146,7 @@ export const addDataToMapUpdater = (
   // check if progresive loading dataset by bataches, and update visState directly
   const isProgressiveLoading =
     Array.isArray(datasets) &&
-    datasets[0].info.format === 'arrow' &&
+    datasets[0]?.info.format === 'arrow' &&
     datasets[0].info.id &&
     datasets[0].info.id in state.visState.datasets;
   if (isProgressiveLoading) {
