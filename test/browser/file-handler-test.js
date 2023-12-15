@@ -65,7 +65,8 @@ test('#file-handler -> readFileInBatches.csv -> processFileData', async t => {
       data: [],
       bytesUsed: 0,
       progress: {rowCount: 0, rowCountInBatch: 0, percent: 0},
-      fileName: 'text-data.csv'
+      fileName: 'text-data.csv',
+      shape: 'metadata'
     },
     done: false
   };
@@ -76,6 +77,7 @@ test('#file-handler -> readFileInBatches.csv -> processFileData', async t => {
   );
 
   t.equal(batch1.value.batchType, expected1.value.batchType, 'batch1.batchType should be the same');
+  t.equal(batch1.value.shape, expected1.value.shape, 'batch1.shape should be the same');
   t.equal(batch1.value.fileName, expected1.value.fileName, 'batch1.fileName should be the same');
   t.deepEqual(batch1.value.data, expected1.value.data, 'batch1.data should be the same');
   t.deepEqual(
@@ -137,7 +139,11 @@ test('#file-handler -> readFileInBatches.csv -> processFileData', async t => {
 
   // go on to run processFileData
   const processed = await processFileData({content: batch2.value, fileCache: []});
-  const expectedInfo = {id: generateHashIdFromString('text-data.csv'), label: 'text-data.csv', format: 'row'};
+  const expectedInfo = {
+    id: generateHashIdFromString('text-data.csv'),
+    label: 'text-data.csv',
+    format: 'row'
+  };
 
   t.equal(processed.length, 1, 'processFileData should return 1 result');
   t.ok(processed[0].info, 'processFileData should have info');
@@ -179,7 +185,8 @@ test('#file-handler -> readFileInBatches.GeoJSON FeatureCollection -> processFil
       data: [],
       bytesUsed: 0,
       progress: {rowCount: 0, rowCountInBatch: 0, percent: 0},
-      fileName: 'text-data-1.geojson'
+      fileName: 'text-data-1.geojson',
+      shape: 'metadata'
     },
     done: false
   };
@@ -191,6 +198,7 @@ test('#file-handler -> readFileInBatches.GeoJSON FeatureCollection -> processFil
   );
 
   t.equal(batch1.value.batchType, expected1.value.batchType, 'batch1.batchType should be the same');
+  t.equal(batch1.value.shape, expected1.value.shape, 'batch1.shape should be the same');
   t.equal(batch1.value.fileName, expected1.value.fileName, 'batch1.fileName should be the same');
   t.deepEqual(batch1.value.data, expected1.value.data, 'batch1.data should be the same');
   t.deepEqual(
@@ -314,7 +322,8 @@ test('#file-handler -> readFileInBatches.GeoJSON Single Feature -> processFileDa
       data: [],
       bytesUsed: 0,
       progress: {rowCount: 0, rowCountInBatch: 0, percent: 0},
-      fileName: 'text-data-1.geojson'
+      fileName: 'text-data-1.geojson',
+      shape: 'metadata'
     },
     done: false
   };
@@ -326,6 +335,7 @@ test('#file-handler -> readFileInBatches.GeoJSON Single Feature -> processFileDa
   );
 
   t.equal(batch1.value.batchType, expected1.value.batchType, 'batch1.batchType should be the same');
+  t.equal(batch1.value.shape, expected1.value.shape, 'batch1.shape should be the same');
   t.equal(batch1.value.fileName, expected1.value.fileName, 'batch1.fileName should be the same');
   t.deepEqual(batch1.value.data, expected1.value.data, 'batch1.data should be the same');
   t.deepEqual(
@@ -422,7 +432,8 @@ test('#file-handler -> readFileInBatches.row -> processFileData', async t => {
       data: [],
       bytesUsed: 0,
       progress: {rowCount: 0, rowCountInBatch: 0, percent: 0},
-      fileName
+      fileName,
+      shape: 'metadata'
     },
     done: false
   };
@@ -433,6 +444,7 @@ test('#file-handler -> readFileInBatches.row -> processFileData', async t => {
   );
 
   t.equal(batch1.value.batchType, expected1.value.batchType, 'batch1.batchType should be the same');
+  t.equal(batch1.value.shape, expected1.value.shape, 'batch1.shape should be the same');
   t.equal(batch1.value.fileName, expected1.value.fileName, 'batch1.fileName should be the same');
   t.deepEqual(batch1.value.data, expected1.value.data, 'batch1.data should be the same');
   t.deepEqual(
@@ -554,7 +566,8 @@ test('#file-handler -> readFileInBatches.keplerMap -> processFileData', async t 
       data: [],
       bytesUsed: 0,
       progress: {rowCount: 0, rowCountInBatch: 0, percent: 0},
-      fileName
+      fileName,
+      shape: 'metadata'
     },
     done: false
   };
@@ -565,6 +578,7 @@ test('#file-handler -> readFileInBatches.keplerMap -> processFileData', async t 
   );
 
   t.equal(batch1.value.batchType, expected1.value.batchType, 'batch1.batchType should be the same');
+  t.equal(batch1.value.shape, expected1.value.shape, 'batch1.shape should be the same');
   t.equal(batch1.value.fileName, expected1.value.fileName, 'batch1.fileName should be the same');
   t.deepEqual(batch1.value.data, expected1.value.data, 'batch1.data should be the same');
   t.deepEqual(
