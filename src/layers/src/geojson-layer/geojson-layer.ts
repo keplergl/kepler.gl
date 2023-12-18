@@ -19,7 +19,6 @@
 // THE SOFTWARE.
 
 import * as arrow from 'apache-arrow';
-import {BinaryFeatures} from '@loaders.gl/schema';
 import {Feature} from 'geojson';
 import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
@@ -206,7 +205,7 @@ export default class GeoJsonLayer extends Layer {
   declare visConfigSettings: GeoJsonVisConfigSettings;
   declare meta: GeoJsonLayerMeta;
 
-  dataToFeature: GeojsonDataMaps | BinaryFeatures[] = [];
+  dataToFeature: GeojsonDataMaps = [];
   dataContainer: DataContainerInterface | null = null;
   filteredIndex: Uint8ClampedArray | null = null;
   filteredIndexTrigger: number[] | null = null;
@@ -434,11 +433,7 @@ export default class GeoJsonLayer extends Layer {
           getGeoField,
           chunkIndex: this.dataToFeature.length
         });
-        if (this.dataToFeature.length === 0) {
-          // not update bounds for every batch, to avoid interrupt user interacts with map while loading the map incrementally
-          this.updateMeta({bounds, fixedRadius, featureTypes});
-        }
-        // @ts-expect-error TODO fix this
+        this.updateMeta({ bounds, fixedRadius, featureTypes });
         this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
       }
     } else {
