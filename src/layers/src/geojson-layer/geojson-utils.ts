@@ -26,7 +26,6 @@ import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
 import {binaryToGeometry} from '@loaders.gl/gis';
 import {BinaryFeatureCollection} from '@loaders.gl/schema';
 import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
-import {isFeature} from '@kepler.gl/processors';
 
 import {GeojsonLayerMetaProps} from '../layer-utils';
 
@@ -86,7 +85,7 @@ export function getGeojsonLayerMeta({
   // get bounds from features
   const bounds = getGeojsonBounds(dataToFeature);
   // if any of the feature has properties.radius set to be true
-  const fixedRadius = Boolean(dataToFeature.find(d => d && isFeature(d) && d.properties.radius));
+  const fixedRadius = Boolean(dataToFeature.find(d => d && 'properties' in d && d.properties?.radius));
 
   // keep a record of what type of geometry the collection has
   const featureTypes = getGeojsonFeatureTypes(dataToFeature);
@@ -236,7 +235,7 @@ export function getGeojsonFeatureTypes(allFeatures: GeojsonDataMaps): DeckGlGeoT
   const featureTypes: DeckGlGeoTypes = {};
   for (let f = 0; f < allFeatures.length; f++) {
     const feature = allFeatures[f];
-    if (feature && isFeature(feature)) {
+    if (feature && 'geometry' in feature) {
       const geoType = featureToDeckGlGeoType[feature.geometry && feature.geometry.type];
       if (geoType) {
         featureTypes[geoType] = true;
