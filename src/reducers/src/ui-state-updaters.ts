@@ -48,7 +48,8 @@ import {
   ExportMap,
   MapControlItem,
   MapControls,
-  UiState
+  UiState,
+  ExportVideo
 } from '@kepler.gl/types';
 
 export const DEFAULT_ACTIVE_SIDE_PANEL = 'layer';
@@ -167,6 +168,14 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   escapeXhtmlForWebpack: true
 };
 
+/**
+ * Default video export config (uses hubble.gl defaults)
+ * @memberof uiStateUpdaters
+ * @constant
+ * @public
+ */
+export const DEFAULT_EXPORT_VIDEO: ExportVideo = {};
+
 export const DEFAULT_LOAD_FILES = {
   fileLoading: false
 };
@@ -254,6 +263,8 @@ export const INITIAL_UI_STATE: UiState = {
   visibleDropdown: null,
   // export image modal ui
   exportImage: DEFAULT_EXPORT_IMAGE,
+  // export video modal ui
+  exportVideo: DEFAULT_EXPORT_VIDEO,
   // export data modal ui
   exportData: DEFAULT_EXPORT_DATA,
   // html export
@@ -538,6 +549,24 @@ export const startExportingImageUpdater = (
     cleanupExportImageUpdater,
     apply_(setExportImageSettingUpdater, payload_(imageSettings))
   ])(state);
+};
+
+/**
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @returns nextState
+ * @public
+ */
+export const setExportVideoSettingUpdater = (
+  state: UiState,
+  {payload: newSetting}: UIStateActions.SetExportVideoSettingUpdaterAction
+): UiState => {
+  const exportVideo = {...state.exportVideo, ...newSetting};
+
+  return {
+    ...state,
+    exportVideo
+  };
 };
 
 /**

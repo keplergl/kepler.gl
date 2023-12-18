@@ -72,6 +72,7 @@ export type TimeWidgetProps = {
   showTimeDisplay: boolean;
   isAnimatable: boolean;
   resetAnimation: () => void;
+  exportAnimation: () => void;
   onClose: () => void;
   setFilterAnimationTime: ActionHandler<typeof setFilterAnimationTime>;
   updateAnimationSpeed: ActionHandler<typeof updateFilterAnimationSpeed>;

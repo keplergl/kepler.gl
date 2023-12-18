@@ -30,6 +30,7 @@ import {HistogramBin, LineChart, Timeline} from '@kepler.gl/types';
 import AnimationControlFactory from './animation-control/animation-control';
 
 const animationControlWidth = 176;
+const animationControlExportWidth = 19;
 
 interface StyledSliderContainerProps {
   isEnlarged?: boolean;
@@ -53,6 +54,7 @@ type TimeRangeSliderProps = {
   animationWindow: string;
   resetAnimation?: () => void;
   toggleAnimation: () => void;
+  exportAnimation?: () => void;
   updateAnimationSpeed?: (val: number) => void;
   setFilterAnimationWindow?: (id: string) => void;
   onChange: (v: number[]) => void;
@@ -113,15 +115,17 @@ export default function TimeRangeSliderFactory(
       updateAnimationSpeed,
       setFilterAnimationWindow,
       toggleAnimation,
+      exportAnimation,
       onChange,
       timeline
     } = props;
 
     const throttledOnchange = useMemo(() => throttle(onChange, 20), [onChange]);
+    const width = animationControlWidth + (exportAnimation ? animationControlExportWidth : 0);
 
     const style = useMemo(
       () => ({
-        width: isEnlarged ? `calc(100% - ${animationControlWidth}px)` : '100%'
+        width: isEnlarged ? `calc(100% - ${width}px)` : '100%'
       }),
       [isEnlarged]
     );
@@ -167,6 +171,7 @@ export default function TimeRangeSliderFactory(
               updateAnimationSpeed={updateAnimationSpeed}
               setTimelineValue={throttledOnchange}
               setAnimationWindow={setFilterAnimationWindow}
+              exportAnimation={exportAnimation}
               showTimeDisplay={false}
               timeline={timeline}
             />
@@ -174,13 +179,14 @@ export default function TimeRangeSliderFactory(
           {isEnlarged && !isMinified ? (
             <PlaybackControls
               isAnimatable={isAnimatable}
-              width={animationControlWidth}
+              width={width}
               speed={speed}
               animationWindow={animationWindow}
               updateAnimationSpeed={updateAnimationSpeed}
               setFilterAnimationWindow={setFilterAnimationWindow}
               pauseAnimation={toggleAnimation}
               resetAnimation={resetAnimation}
+              exportAnimation={exportAnimation}
               isAnimating={isAnimating}
               startAnimation={toggleAnimation}
             />

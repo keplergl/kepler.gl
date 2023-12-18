@@ -68,6 +68,13 @@ export const ADD_DATA_ID = 'addData';
  */
 export const EXPORT_IMAGE_ID = 'exportImage';
 /**
+ * Modal id: export video modal
+ * @constant
+ * @type {string}
+ * @public
+ */
+export const EXPORT_VIDEO_ID = 'exportVideo';
+/**
  * Modal id: export data modal
  * @constant
  * @type {string}

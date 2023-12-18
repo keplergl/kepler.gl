@@ -91,6 +91,7 @@ export type AnimationControlProps = {
   updateAnimationSpeed?: (val: number) => void;
   setAnimationWindow?: (id: string) => void;
   toggleAnimation: () => void;
+  exportAnimation?: () => void;
   resetAnimation?: () => void;
   setTimelineValue: (value: number[]) => void;
   showTimeDisplay?: boolean;
@@ -118,6 +119,7 @@ function AnimationControlFactory(
     isAnimating,
     resetAnimation,
     toggleAnimation,
+    exportAnimation,
     updateAnimationSpeed,
     setTimelineValue,
     setAnimationWindow,
@@ -153,6 +155,7 @@ function AnimationControlFactory(
               isAnimating={isAnimating}
               pauseAnimation={toggleAnimation}
               resetAnimation={resetAnimation}
+              exportAnimation={exportAnimation}
               speed={speed}
               updateAnimationSpeed={updateAnimationSpeed}
               setFilterAnimationWindow={setAnimationWindow}

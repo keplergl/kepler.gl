@@ -45,6 +45,8 @@ const actionHandler = {
   [ActionTypes.CLEANUP_EXPORT_IMAGE]: uiStateUpdaters.cleanupExportImageUpdater,
   [ActionTypes.START_EXPORTING_IMAGE]: uiStateUpdaters.startExportingImageUpdater,
 
+  [ActionTypes.SET_EXPORT_VIDEO_SETTING]: uiStateUpdaters.setExportVideoSettingUpdater,
+
   [ActionTypes.SET_EXPORT_SELECTED_DATASET]: uiStateUpdaters.setExportSelectedDatasetUpdater,
   [ActionTypes.SET_EXPORT_DATA_TYPE]: uiStateUpdaters.setExportDataTypeUpdater,
   [ActionTypes.SET_EXPORT_FILTERED]: uiStateUpdaters.setExportFilteredUpdater,

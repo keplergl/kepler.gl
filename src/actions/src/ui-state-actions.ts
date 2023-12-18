@@ -261,6 +261,35 @@ export const setExportImageSetting: (
   (newSetting: SetExportImageSettingUpdaterAction['payload']) => ({payload: newSetting})
 );
 
+/** SET_EXPORT_VIDEO_SETTING */
+export type SetExportVideoSettingUpdaterAction = {
+  payload: {
+    mediaType?: string;
+    cameraPreset?: string;
+    fileName?: string;
+    resolution?: string;
+    durationMs?: number;
+  };
+};
+
+/**
+ * Set `exportVideo` settings: mediaType, cameraPreset, fileName, resolution, durationMs
+ * @memberof uiStateActions
+ * @param newSetting - field(s) to change, e.g. {mediaType: 'gif'}
+ * @public
+ */
+export const setExportVideoSetting: (
+  newSetting: SetExportVideoSettingUpdaterAction['payload']
+) => Merge<
+  SetExportVideoSettingUpdaterAction,
+  {type: typeof ActionTypes.SET_EXPORT_VIDEO_SETTING}
+> = createAction(
+  ActionTypes.SET_EXPORT_VIDEO_SETTING,
+  (newSetting: SetExportVideoSettingUpdaterAction['payload']) => ({
+    payload: newSetting
+  })
+);
+
 /**
  * Start exporting image flow
  * @memberof uiStateActions

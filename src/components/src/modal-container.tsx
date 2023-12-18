@@ -39,6 +39,7 @@ import OverWriteMapModalFactory from './modals/overwrite-map-modal';
 import DataTableModalFactory from './modals/data-table-modal';
 import LoadDataModalFactory from './modals/load-data-modal';
 import ExportImageModalFactory from './modals/export-image-modal';
+import ExportVideoModalFactory from './modals/export-video-modal';
 import ExportDataModalFactory from './modals/export-data-modal';
 import ExportMapModalFactory from './modals/export-map-modal/export-map-modal';
 import AddMapStyleModalFactory from './modals/add-map-style-modal';
@@ -58,6 +59,7 @@ import {
   DELETE_DATA_ID,
   EXPORT_DATA_ID,
   EXPORT_IMAGE_ID,
+  EXPORT_VIDEO_ID,
   EXPORT_MAP_ID,
   ADD_MAP_STYLE_ID,
   SAVE_MAP_ID,
@@ -134,6 +136,7 @@ ModalContainerFactory.deps = [
   DataTableModalFactory,
   LoadDataModalFactory,
   ExportImageModalFactory,
+  ExportVideoModalFactory,
   ExportDataModalFactory,
   ExportMapModalFactory,
   AddMapStyleModalFactory,
@@ -148,6 +151,7 @@ export default function ModalContainerFactory(
   DataTableModal: ReturnType<typeof DataTableModalFactory>,
   LoadDataModal: ReturnType<typeof LoadDataModalFactory>,
   ExportImageModal: ReturnType<typeof ExportImageModalFactory>,
+  ExportVideoModal: ReturnType<typeof ExportVideoModalFactory>,
   ExportDataModal: ReturnType<typeof ExportDataModalFactory>,
   ExportMapModal: ReturnType<typeof ExportMapModalFactory>,
   AddMapStyleModal: ReturnType<typeof AddMapStyleModalFactory>,
@@ -378,6 +382,23 @@ export default function ModalContainerFactory(
                 disabled: uiState.exportImage.processing,
                 children: 'modal.button.download'
               }
+            };
+            break;
+          case EXPORT_VIDEO_ID:
+            template = (
+              <ExportVideoModal
+                mapStyle={mapStyle}
+                mapState={mapState}
+                visState={visState}
+                exportVideo={uiState.exportVideo}
+                onUpdateVideoSetting={uiStateActions.setExportVideoSetting}
+              />
+            );
+            modalProps = {
+              title: 'modal.title.exportVideo',
+              cssStyle: '',
+              footer: false,
+              onCancel: this._closeModal
             };
             break;
           case EXPORT_DATA_ID:

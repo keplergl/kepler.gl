@@ -334,6 +334,14 @@ export declare type ExportImage = {
   center: boolean;
 };
 
+export type ExportVideo = {
+  mediaType?: string;
+  cameraPreset?: string;
+  fileName?: string;
+  resolution?: string;
+  durationMs?: number;
+};
+
 export type ExportData = {
   selectedDataset: string;
   dataType: string;
@@ -395,6 +403,8 @@ export type UiState = {
   visibleDropdown: string | null;
   // export image modal ui
   exportImage: ExportImage;
+  // export video modal ui
+  exportVideo: ExportVideo;
   // export data modal ui
   exportData: ExportData;
   // html export

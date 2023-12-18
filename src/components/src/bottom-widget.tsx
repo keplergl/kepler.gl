@@ -21,7 +21,7 @@
 import React, {forwardRef, useMemo, useCallback} from 'react';
 import styled, {withTheme} from 'styled-components';
 
-import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
 import {hasPortableWidth, isSideFilter} from '@kepler.gl/utils';
 import {media, breakPointValues} from '@kepler.gl/styles';
 import {TimeRangeFilter} from '@kepler.gl/types';
@@ -88,6 +88,7 @@ export default function BottomWidgetFactory(
       datasets,
       filters,
       animationConfig,
+      toggleModal,
       visStateActions,
       containerW,
       uiState,
@@ -137,6 +138,8 @@ export default function BottomWidgetFactory(
     // animation controller needs to call reset on it
     const filter = (animatedFilter as TimeRangeFilter) || filters[enlargedFilterIdx];
 
+    const exportAnimation = useCallback(() => toggleModal(EXPORT_VIDEO_ID), [toggleModal]);
+
     const onClose = useCallback(
       () => visStateActions.setFilterView(enlargedFilterIdx, FILTER_VIEW_TYPES.side),
       [visStateActions, enlargedFilterIdx]
@@ -159,6 +162,7 @@ export default function BottomWidgetFactory(
               <LayerAnimationControl
                 updateAnimationSpeed={visStateActions.updateLayerAnimationSpeed}
                 toggleAnimation={visStateActions.toggleLayerAnimation}
+                exportAnimation={exportAnimation}
                 isAnimatable={!animatedFilter}
                 isAnimating={isAnimating}
                 resetAnimation={resetAnimation}
@@ -188,6 +192,7 @@ export default function BottomWidgetFactory(
                   setFilterAnimationTime={setTimelineValue}
                   setFilterAnimationWindow={visStateActions.setFilterAnimationWindow}
                   toggleAnimation={visStateActions.toggleFilterAnimation}
+                  exportAnimation={exportAnimation}
                   updateAnimationSpeed={visStateActions.updateFilterAnimationSpeed}
                   resetAnimation={resetAnimation}
                   isAnimatable={!animationConfig || !animationConfig.isAnimating}

@@ -20,4 +20,5 @@
 
 import './data-table-modal-test';
 import './export-image-modal-test';
+import './export-video-modal-test';
 import './load-data-modal-test';

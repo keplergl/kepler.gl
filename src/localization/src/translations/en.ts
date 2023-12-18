@@ -253,6 +253,7 @@ export default {
     exportImage: 'Export Image',
     exportData: 'Export Data',
     exportMap: 'Export Map',
+    exportVideo: 'Export Video',
     shareMapURL: 'Share Map URL',
     saveMap: 'Save Map',
     select: 'Select',

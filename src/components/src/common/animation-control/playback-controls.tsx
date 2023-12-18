@@ -83,6 +83,7 @@ interface PlaybackControlsProps {
   pauseAnimation?: () => void;
   resetAnimation?: () => void;
   startAnimation: () => void;
+  exportAnimation?: () => void;
   playbackIcons?: typeof DEFAULT_ICONS;
   animationItems?: {[key: string]: AnimationItem};
   buttonStyle?: string;
@@ -194,7 +195,8 @@ function PlaybackControlsFactory(
     isAnimatable: true,
     pauseAnimation: nop,
     resetAnimation: nop,
-    startAnimation: nop
+    startAnimation: nop,
+    exportAnimation: nop
   };
 
   return PlaybackControls;
