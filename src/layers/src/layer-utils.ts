@@ -5,14 +5,13 @@ import * as arrow from 'apache-arrow';
 import {Feature, BBox} from 'geojson';
 import {Field, FieldPair} from '@kepler.gl/types';
 import {DataContainerInterface} from '@kepler.gl/utils';
-import {BinaryFeatures} from '@loaders.gl/schema';
 import {
   getBinaryGeometriesFromArrow,
   parseGeometryFromArrow,
   BinaryGeometriesFromArrowOptions
 } from '@loaders.gl/arrow';
 
-import {DeckGlGeoTypes} from './geojson-layer/geojson-utils';
+import {DeckGlGeoTypes, GeojsonDataMaps} from './geojson-layer/geojson-utils';
 
 export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean) {
   const {lat, lng, alt} = pair.pair;
@@ -30,7 +29,7 @@ export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean) {
 }
 
 export type GeojsonLayerMetaProps = {
-  dataToFeature: BinaryFeatures[] | Array<Feature | null>;
+  dataToFeature: GeojsonDataMaps;
   featureTypes: DeckGlGeoTypes;
   bounds: BBox | null;
   fixedRadius: boolean;

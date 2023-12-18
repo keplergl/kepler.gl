@@ -20,7 +20,6 @@ import {
   layerTypeChange,
   layerVisConfigChange,
   layerVisualChannelConfigChange,
-  loadBatchDataSuccess,
   loadFilesErr,
   loadFilesSuccess,
   loadFileStepSuccess,
@@ -2260,21 +2259,6 @@ export function parseProgress(prevProgress = {}, progress) {
   };
 }
 
-export function loadBatchDataSuccessUpdater(
-  state: VisState,
-  action: VisStateActions.LoadFileStepSuccessAction
-): VisState {
-  if (!state.fileLoading) {
-    return state;
-  }
-  const {fileCache} = action;
-  const {onFinish} = state.fileLoading;
-  return withTask(
-    state,
-    DELAY_TASK(200).map(() => onFinish(fileCache))
-  );
-}
-
 /**
  * gets called with payload = AsyncGenerator<???>
  * @memberof visStateUpdaters
@@ -2292,10 +2276,10 @@ export const nextFileBatchUpdater = (
   });
 
   return withTask(stateWithProgress, [
-    ...(fileName.endsWith('arrow') && accumulated && accumulated.data?.length > 1
+    ...(fileName.endsWith('arrow') && accumulated?.data?.length > 0
       ? [
           PROCESS_FILE_DATA({content: accumulated, fileCache: []}).bimap(
-            result => loadBatchDataSuccess({fileName, fileCache: result}),
+            result => loadFilesSuccess(result),
             err => loadFilesErr(fileName, err)
           )
         ]

@@ -31,7 +31,8 @@ const CSV_LOADER_OPTIONS = {
 };
 
 const ARROW_LOADER_OPTIONS = {
-  shape: 'arrow-table'
+  shape: 'arrow-table',
+  batchDebounceMs: 10 // time to delay between batches, for incremental loading
 };
 
 const JSON_LOADER_OPTIONS = {

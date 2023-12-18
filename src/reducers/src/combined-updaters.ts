@@ -147,8 +147,8 @@ export const addDataToMapUpdater = (
   const isProgressiveLoading =
     Array.isArray(datasets) &&
     datasets[0]?.info.format === 'arrow' &&
-    datasets[0].info.id &&
-    datasets[0].info.id in state.visState.datasets;
+    datasets[0]?.info.id &&
+    datasets[0]?.info.id in state.visState.datasets;
   if (isProgressiveLoading) {
     return compose_<KeplerGlState>([
       pick_('visState')(
