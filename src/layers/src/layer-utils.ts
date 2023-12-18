@@ -50,7 +50,7 @@ export type GeojsonLayerMetaProps = {
   featureTypes: DeckGlGeoTypes;
   bounds: BBox | null;
   fixedRadius: boolean;
-  centroids?: number[][];
+  centroids?: Array<number[] | null>;
 };
 
 export function getGeojsonLayerMetaFromArrow({

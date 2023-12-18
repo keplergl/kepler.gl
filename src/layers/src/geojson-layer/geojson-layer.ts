@@ -211,7 +211,7 @@ export default class GeoJsonLayer extends Layer {
   dataContainer: DataContainerInterface | null = null;
   filteredIndex: Uint8ClampedArray | null = null;
   filteredIndexTrigger: number[] | null = null;
-  centroids: number[][] = [];
+  centroids: Array<number[] | null> = [];
 
   constructor(props) {
     super(props);
@@ -424,13 +424,16 @@ export default class GeoJsonLayer extends Layer {
     if (this.centroids.length === 0 || !this.centroids[index]) {
       return false;
     }
-    const isReactangle = polygon.properties?.shape === 'Rectangle';
+    const isReactangleSearchBox = polygon.properties?.shape === 'Rectangle';
     const point = this.centroids[index];
-    // without spatialIndex, use turf.js
-    if (isReactangle && polygon.properties?.bbox) {
+    // if no valid centroid, return false
+    if (!point) return false;
+    // quick check if centroid is within the query rectangle
+    if (isReactangleSearchBox && polygon.properties?.bbox) {
       const [minX, minY, maxX, maxY] = polygon.properties?.bbox;
       return point[0] >= minX && point[0] <= maxX && point[1] >= minY && point[1] <= maxY;
     }
+    // use turf.js to check if centroid is within query polygon
     return booleanWithin(turfPoint(point), polygon);
   }
 

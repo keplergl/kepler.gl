@@ -3210,7 +3210,7 @@
     d3-geo "1.7.1"
     turf-jsts "*"
 
-"@turf/center@>=4.0.0", "@turf/center@^6.5.0":
+"@turf/center@>=4.0.0", "@turf/center@^6.0.1", "@turf/center@^6.5.0":
   version "6.5.0"
   resolved "https://registry.yarnpkg.com/@turf/center/-/center-6.5.0.tgz#3bcb6bffcb8ba147430cfea84aabaed5dbdd4f07"
   integrity sha512-T8KtMTfSATWcAX088rEDKjyvQCBkUsLnK/Txb6/8WUXIeOZyHu42G7MkdkHRoHtwieLdduDdmPLFyTdG5/e7ZQ==

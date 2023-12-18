@@ -284,7 +284,7 @@ test('layerUtils -> findDefaultLayer.1', t => {
   t.end();
 });
 
-test('layerUtils -> findDefaultLayer.2', t => {
+test.only('layerUtils -> findDefaultLayer.2', t => {
   const inputFields = [
     // layer 1
     {

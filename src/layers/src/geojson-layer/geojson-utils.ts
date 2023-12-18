@@ -92,13 +92,17 @@ export function getGeojsonLayerMeta({
   // keep a record of what type of geometry the collection has
   const featureTypes = getGeojsonFeatureTypes(dataToFeature);
 
-  const meanCenters: number[][] = [];
+  const meanCenters: Array<number[] | null> = [];
   for (let i = 0; i < dataToFeature.length; i++) {
     const feature = dataToFeature[i];
     if (feature) {
-      // TODO: use line interpolate to get center of line for LineString
-      const cent = center(feature as AllGeoJSON);
-      meanCenters.push(cent.geometry.coordinates);
+      try {
+        // TODO: use line interpolate to get center of line for LineString
+        const cent = center(feature as AllGeoJSON);
+        meanCenters.push(cent.geometry.coordinates);
+      } catch (e) {
+        meanCenters.push(null);
+      }
     }
   }
 
