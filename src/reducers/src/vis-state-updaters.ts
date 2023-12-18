@@ -29,7 +29,7 @@ import isEqual from 'lodash.isequal';
 import copy from 'copy-to-clipboard';
 import deepmerge from 'deepmerge';
 // Tasks
-import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK, DELAY} from '@kepler.gl/tasks';
+import {LOAD_FILE_TASK, UNWRAP_TASK, PROCESS_FILE_DATA, DELAY_TASK} from '@kepler.gl/tasks';
 // Actions
 import {
   applyLayerConfig,
@@ -2293,7 +2293,7 @@ export const nextFileBatchUpdater = (
   });
 
   return withTask(stateWithProgress, [
-    ...(fileName.endsWith('arrow') && accumulated?.data?.length > 1
+    ...(fileName.endsWith('arrow') && accumulated?.data?.length > 0
       ? [
           PROCESS_FILE_DATA({content: accumulated, fileCache: []}).bimap(
             result => loadFilesSuccess(result),
@@ -2301,8 +2301,7 @@ export const nextFileBatchUpdater = (
           )
         ]
       : []),
-    DELAY(10)
-      .chain(() => UNWRAP_TASK(gen.next()))
+    UNWRAP_TASK(gen.next())
       .bimap(
         ({value, done}) => {
           return done
