@@ -4926,7 +4926,6 @@ test('#visStateReducer -> LOAD_FILES', async t => {
   t.equal(more2.length, 0, 'should ceate 1 task');
   t.equal(task2.type, 'UNWRAP', 'should return an UNWRAP task');
   t.ok(task2.payload instanceof Promise, 'task 2 payload should be a Promise');
-  t.ok(task2.payload instanceof Promise, 'task 2 payload should be a Promise');
 
   t.equal(
     nextState2.fileLoading,

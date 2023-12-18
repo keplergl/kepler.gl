@@ -2301,21 +2301,20 @@ export const nextFileBatchUpdater = (
           )
         ]
       : []),
-    UNWRAP_TASK(gen.next())
-      .bimap(
-        ({value, done}) => {
-          return done
-            ? onFinish(accumulated)
-            : nextFileBatch({
-                gen,
-                fileName,
-                progress: value.progress,
-                accumulated: value,
-                onFinish
-              });
-        },
-        err => loadFilesErr(fileName, err)
-      )
+    UNWRAP_TASK(gen.next()).bimap(
+      ({value, done}) => {
+        return done
+          ? onFinish(accumulated)
+          : nextFileBatch({
+              gen,
+              fileName,
+              progress: value.progress,
+              accumulated: value,
+              onFinish
+            });
+      },
+      err => loadFilesErr(fileName, err)
+    )
   ]);
 };
 
