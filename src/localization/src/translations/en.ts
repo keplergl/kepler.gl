@@ -301,6 +301,7 @@ export default {
       mapLegendTitle: 'Map Legend',
       mapLegendAdd: 'Add legend on map'
     },
+    exportVideo: {},
     exportData: {
       datasetTitle: 'Dataset',
       datasetSubtitle: 'Choose the datasets you want to export',
@@ -525,5 +526,10 @@ export default {
   'Bug Report': 'Bug Report',
   'User Guide': 'User Guide',
   Save: 'Save',
-  Share: 'Share'
+  Share: 'Share',
+
+  exportVideoModal: {
+    animation: 'Animation',
+    settings: 'Settings'
+  }
 };

@@ -38,6 +38,7 @@ export type TimeRangeFilterProps = {
   hideTimeTitle: boolean;
   setFilter: (v: number[]) => void;
   toggleAnimation: () => void;
+  exportAnimation?: () => void;
   timeline: Timeline;
 };
 

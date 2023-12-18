@@ -175,6 +175,7 @@ export {default as WindowActionControlFactory} from './common/animation-control/
 export {default as PlayControlFactory} from './common/animation-control/play-control';
 export {default as ResetControlFactory} from './common/animation-control/reset-control';
 export {default as SpeedControlFactory} from './common/animation-control/speed-control';
+export {default as ExportVideoControlFactory} from './common/animation-control/export-video-control';
 export {default as AnimationWindowControlFactory} from './common/animation-control/animation-window-control';
 export {default as FloatingTimeDisplayFactory} from './common/animation-control/floating-time-display';
 export {default as AnimationSpeedSliderFactory} from './common/animation-control/animation-speed-slider';
