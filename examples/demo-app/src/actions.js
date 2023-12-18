@@ -295,26 +295,18 @@ function loadRemoteData(url) {
 
   // Load data
   return new Promise(resolve => {
+    const loaders = [CSVLoader, ArrowLoader, GeoJSONLoader];
     const loadOptions = {
       arrow: {
         shape: 'arrow-table'
       },
+      csv: {
+        shape: 'object-row-table'
+      },
       metadata: true
     };
-    const data = load(url, [CSVLoader, ArrowLoader, GeoJSONLoader], loadOptions);
+    const data = load(url, loaders, loadOptions);
     resolve(data);
-    // requestMethod(url, (error, result) => {
-    //   if (error) {
-    //     reject(error);
-    //     return;
-    //   }
-    //   const responseError = detectResponseError(result);
-    //   if (responseError) {
-    //     reject(responseError);
-    //     return;
-    //   }
-    //   resolve(result);
-    // });
   });
 }
 
