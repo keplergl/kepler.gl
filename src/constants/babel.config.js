@@ -1,3 +1,6 @@
+// Copyright contributors to the kepler.gl project
+// SPDX-License-Identifier: MIT
+
 // Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
