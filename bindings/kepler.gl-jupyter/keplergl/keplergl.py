@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright contributors to the kepler.gl project
+
 import ipywidgets as widgets
 from pkg_resources import resource_string
 from traitlets import Unicode, Dict, Int, validate, TraitError

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright contributors to the kepler.gl project
+
 from __future__ import print_function
 from distutils import log
 from setuptools import setup, find_packages
