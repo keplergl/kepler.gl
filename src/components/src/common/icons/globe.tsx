@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Base, {BaseProps} from './base';

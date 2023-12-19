@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 // @ts-nocheck
 import React from 'react';
 import {fireEvent} from '@testing-library/react';

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {arrayMove} from '@dnd-kit/sortable';
 import SunCalc from 'suncalc';
 import cloneDeep from 'lodash.clonedeep';

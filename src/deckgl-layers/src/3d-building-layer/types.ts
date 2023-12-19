@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {RGBColor} from '@kepler.gl/types';
 
 export type TileIndex = {x: number; y: number; z: number};

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {useContext} from 'react';
 import {FeatureFlagsContext} from '../context';
 

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import React, {useMemo} from 'react';
 import moment from 'moment-timezone';
 import styled, {withTheme} from 'styled-components';

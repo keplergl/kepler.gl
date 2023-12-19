@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import React, {useState, useEffect, createContext} from 'react';
 import isEqual from 'lodash.isequal';
 import pick from 'lodash.pick';

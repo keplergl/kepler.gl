@@ -1,4 +1,5 @@
-// MIT license, Copyright (c) 2023 Uber Technologies, Inc.
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
 import {console as globalConsole} from 'global/window';

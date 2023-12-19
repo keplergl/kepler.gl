@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {AmbientLight, _SunLight as SunLight} from '@deck.gl/core';
 import moment from 'moment-timezone';
 

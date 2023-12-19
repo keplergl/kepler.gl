@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright contributors to the kepler.gl project
+
 from ._version import version_info, __version__
 
 from .keplergl import *

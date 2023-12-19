@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {MouseEvent, ReactNode} from 'react';
 import styled from 'styled-components';
 import {Button, ButtonProps} from './styled-components';

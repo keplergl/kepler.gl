@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import React from 'react';
 import {openDeleteModal, VisStateActions, ActionHandler} from '@kepler.gl/actions';
 import {RGBColor} from '@kepler.gl/types';

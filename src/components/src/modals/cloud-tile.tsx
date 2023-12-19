@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
 import {Logout, Login} from '../common/icons';

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {SavedMap, ParsedConfig, SavedConfigV1, MinSavedConfigV1} from './schemas';
 
 /** EXPORT_FILE_TO_CLOUD */
