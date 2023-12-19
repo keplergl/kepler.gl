@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 // Forked from uber-licence, MIT
 
 import {readFileSync, writeFileSync} from 'fs';
@@ -64,7 +67,7 @@ function hashPrefix(line) {
 }
 
 LicenseFixer.prototype.getLicenseForFile = function getLicenseForFile(file) {
-    if (file.match(/\.(js|go|java|ts|tsx)$/)) {
+    if (file.match(/\.(js|go|java|ts|tsx|mjs)$/)) {
         return this.slashLicense;
     } else if (file.match(/\.(pyx?|pxd)$/)) {
         return this.hashLicense;

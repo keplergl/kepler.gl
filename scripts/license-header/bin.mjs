@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 // Forked from uber-licence, MIT
 
 import readdirp from 'readdirp';
@@ -30,7 +33,7 @@ if (argv.help || argv.h) {
     process.exit(0);
 }
 
-var fileFilter = ['*.js', '*.ts', '*.tsx'];
+var fileFilter = ['*.js', '*.ts', '*.tsx', '*.mjs'];
 if (typeof argv.file === 'string') {
     fileFilter = [argv.file];
 } else if (Array.isArray(argv.file)) {
