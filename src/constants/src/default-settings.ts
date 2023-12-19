@@ -30,7 +30,7 @@ import {
   scalePoint
 } from 'd3-scale';
 import {TOOLTIP_FORMAT_TYPES} from './tooltip';
-import {RGBAColor, EffectDescription} from '@kepler.gl/types';
+import {RGBAColor, EffectDescription, BaseMapStyle} from '@kepler.gl/types';
 
 export const ACTION_PREFIX = '@@kepler.gl/';
 export const KEPLER_UNFOLDED_BUCKET = 'https://studio-public-data.foursquare.com/statics/keplergl';
@@ -189,7 +189,7 @@ export const PANELS = SIDEBAR_PANELS;
 
 export const DEFAULT_BLDG_COLOR = '#D1CEC7';
 
-export const DEFAULT_BACKGROUND_COLOR = '#FFFFFF';
+export const DEFAULT_BACKGROUND_COLOR = '#000000';
 
 // assists in identifying basemap background layers when auto-determining the backgroundColor
 export const BASE_MAP_BACKGROUND_LAYER_IDS = ['background', 'bg', 'land', 'water'];
@@ -293,68 +293,69 @@ export const EMPTY_MAPBOX_STYLE = {
 
 export const NO_BASEMAP_ICON = `${BASEMAP_ICON_PREFIX}/NO_BASEMAP.png`;
 
-export const DEFAULT_MAP_STYLES: {
-  id: string;
-  label: string;
-  url: string | null;
-  icon: string;
-  layerGroups: typeof DEFAULT_LAYER_GROUPS;
-  complimentaryStyleId?: string;
-  colorMode: string;
-  style?: any;
-}[] = [
+export const DEFAULT_MAP_STYLES: BaseMapStyle[] = [
   {
     id: NO_MAP_ID,
     label: 'No Basemap',
-    url: null,
+    url: '',
     icon: NO_BASEMAP_ICON,
     layerGroups: [BACKGROUND_LAYER_GROUP],
     colorMode: BASE_MAP_COLOR_MODES.NONE,
     style: EMPTY_MAPBOX_STYLE
   },
   {
-    id: 'dark',
-    label: 'Dark',
-    url: 'mapbox://styles/uberdata/cjoqbbf6l9k302sl96tyvka09',
-    icon: `${BASEMAP_ICON_PREFIX}/UBER_DARK_V2.png`,
+    id: 'dark-matter',
+    label: 'DarkMatter',
+    url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    icon: NO_BASEMAP_ICON,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.DARK,
-    complimentaryStyleId: 'light'
+    complimentaryStyleId: 'positron'
   },
   {
-    id: 'light',
-    label: 'Light',
-    url: 'mapbox://styles/uberdata/cjoqb9j339k1f2sl9t5ic5bn4',
-    icon: `${BASEMAP_ICON_PREFIX}/UBER_LIGHT_V2.png`,
-    layerGroups: DEFAULT_LAYER_GROUPS,
-    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
-    complimentaryStyleId: 'dark'
-  },
-  {
-    id: 'muted',
-    label: 'Muted Light',
-    url: 'mapbox://styles/uberdata/cjfyl03kp1tul2smf5v2tbdd4',
-    icon: `${BASEMAP_ICON_PREFIX}/UBER_MUTED_LIGHT.png`,
-    layerGroups: DEFAULT_LAYER_GROUPS,
-    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
-    complimentaryStyleId: 'muted_night'
-  },
-  {
-    id: 'muted_night',
-    label: 'Muted Night',
-    url: 'mapbox://styles/uberdata/cjfxhlikmaj1b2soyzevnywgs',
-    icon: `${BASEMAP_ICON_PREFIX}/UBER_MUTED_NIGHT.png`,
+    id: 'dark-matter-nolabels',
+    label: 'DarkMatterNoLabels',
+    url: 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json',
+    icon: NO_BASEMAP_ICON,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.DARK,
-    complimentaryStyleId: 'muted'
+    complimentaryStyleId: 'positron-nolabels'
   },
   {
-    id: 'satellite',
-    label: 'Satellite',
-    url: `mapbox://styles/mapbox/satellite-v9`,
-    icon: `${BASEMAP_ICON_PREFIX}/UBER_SATELLITE.png`,
-    layerGroups: [],
-    colorMode: BASE_MAP_COLOR_MODES.NONE
+    id: 'positron',
+    label: 'Positron',
+    url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    icon: NO_BASEMAP_ICON,
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
+    complimentaryStyleId: 'dark-matter'
+  },
+  {
+    id: 'positron-nolabels',
+    label: 'PositronNoLabels',
+    url: 'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json',
+    icon: NO_BASEMAP_ICON,
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
+    complimentaryStyleId: 'dark-matter-nolabels'
+  },
+  {
+    id: 'voyager',
+    label: 'Voyager',
+    url: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+    icon: NO_BASEMAP_ICON,
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
+    complimentaryStyleId: 'dark-matter'
+  },
+  {
+    id: 'voyager-nolabels',
+    label: 'VoyagerNoLabels',
+    url: 'https://basemaps.cartocdn.com/gl/voyager-nolabels-gl-style/style.json',
+    icon: NO_BASEMAP_ICON,
+    layerGroups: DEFAULT_LAYER_GROUPS,
+    colorMode: BASE_MAP_COLOR_MODES.LIGHT,
+    complimentaryStyleId: 'dark-matter-nolabels'
   }
 ];
 

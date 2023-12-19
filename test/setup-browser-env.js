@@ -135,6 +135,8 @@ function mockCanvas(globalWindow) {
   globalWindow.HTMLCanvasElement.prototype.toDataURL = () => '';
 }
 
+window.URL.createObjectURL = () => {};
+
 global.window = window;
 global.document = window.document;
 global.HTMLElement = window.HTMLElement;

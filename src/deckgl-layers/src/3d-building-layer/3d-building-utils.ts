@@ -70,6 +70,7 @@ export function decodeTile(
   }
   for (let i = 0; i < vectorTileLayer.length; i++) {
     const vectorTileFeature = vectorTileLayer.feature(i);
+    // @ts-ignore
     const features = vectorTileFeatureToProp(vectorTileFeature, projectFunc);
     features.forEach(f => {
       f.properties.layer = layerName;

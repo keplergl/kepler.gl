@@ -532,18 +532,18 @@ export const StyledModalInputFootnote = styled.div.attrs({
 export const StyledMapContainer = styled.div`
   width: 100%;
   height: 100%;
-  .mapboxgl-map {
-    .mapboxgl-missing-css {
+  .maplibregl-map {
+    .maplibregl-missing-css {
       display: none;
     }
-    .mapboxgl-ctrl-attrib {
+    .maplibregl-ctrl-attrib {
       display: none;
     }
   }
 `;
 
 export const StyledAttrbution = styled.div.attrs({
-  className: 'mapbox-attribution-container'
+  className: 'maplibre-attribution-container'
 })`
   bottom: 0;
   right: 0;
@@ -574,7 +574,7 @@ export const StyledAttrbution = styled.div.attrs({
     align-items: center;
     color: ${props => props.theme.labelColor};
 
-    a.mapboxgl-ctrl-logo {
+    a.maplibregl-ctrl-logo {
       width: 72px;
       margin-left: 4px;
       background-size: contain;
