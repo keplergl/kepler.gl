@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 /* eslint-disable prettier/prettier */
 export * as Icons from './icons';
 export type {

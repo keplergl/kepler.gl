@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
+
 import {Bounds} from '@kepler.gl/types';
 import {Layer} from '@kepler.gl/layers';
 

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 type EffectParameterDescription = {
   name: string;
   type?: 'number' | 'array' | 'color';

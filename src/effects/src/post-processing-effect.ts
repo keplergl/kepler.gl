@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {PostProcessEffect as DeckPostProcessEffect} from '@deck.gl/core';
 import {
   brightnessContrast,

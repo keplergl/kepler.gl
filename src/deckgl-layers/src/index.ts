@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 export {default as ThreeDBuildingLayer} from './3d-building-layer/3d-building-layer';
 
 export {default as DeckGLClusterLayer} from './cluster-layer/cluster-layer';

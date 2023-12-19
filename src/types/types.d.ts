@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 export type RGBColor = [number, number, number];
 export type RGBAColor = [number, number, number, number];
 export type HexColor = string; // this is the best typescript can do at the moment

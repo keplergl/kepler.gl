@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 // @ts-nocheck This is a hack, don't check types
 
 import {console as Console} from 'global/window';

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {Layer, LayerExtension} from '@deck.gl/core';
 import {LayerContext} from '@deck.gl/core/lib/layer';
 import GL from '@luma.gl/constants';

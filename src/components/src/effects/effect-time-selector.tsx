@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import React, {useMemo, useCallback} from 'react';
 import styled, {withTheme} from 'styled-components';
 import classNames from 'classnames';

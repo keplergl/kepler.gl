@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 export type LayerBaseConfig = {
   dataId: string | null;
   label: string;

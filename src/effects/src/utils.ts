@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {Effect as EffectInterface, EffectPropsPartial} from '@kepler.gl/types';
 import {LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
 

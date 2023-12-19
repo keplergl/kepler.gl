@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import React, {useCallback, useMemo} from 'react';
 import {getIntervalBins, getTimelineFromFilter} from '@kepler.gl/utils';
 import {TimeRangeFilter} from '@kepler.gl/types';

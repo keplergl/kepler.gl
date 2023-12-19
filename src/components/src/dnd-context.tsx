@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import React, {useCallback, useMemo, PropsWithChildren} from 'react';
 import styled from 'styled-components';
 import {DndContext as DndKitContext, DragOverlay} from '@dnd-kit/core';

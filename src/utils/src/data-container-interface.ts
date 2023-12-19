@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {Field} from '@kepler.gl/types';
 import {DataRow, SharedRowOptions} from './data-row';
 

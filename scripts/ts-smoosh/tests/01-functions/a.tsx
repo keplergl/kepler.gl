@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 /**
  * A function with a JSDoc type import that matches its name
  * @type {typeof import('./a').foo}

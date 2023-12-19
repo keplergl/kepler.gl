@@ -33,7 +33,7 @@ if (argv.help || argv.h) {
     process.exit(0);
 }
 
-var fileFilter = ['*.js', '*.ts', '*.tsx', '*.mjs'];
+var fileFilter = ['*.js', '*.ts', '*.tsx', '*.mjs', '*.py'];
 if (typeof argv.file === 'string') {
     fileFilter = [argv.file];
 } else if (Array.isArray(argv.file)) {
