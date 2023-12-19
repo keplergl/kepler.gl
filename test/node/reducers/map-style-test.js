@@ -139,8 +139,7 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
     payload: [
       {
         id: 'dark-matter',
-        url:
-          'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+        url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
       }
     ]
   };
@@ -246,7 +245,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
-    backgroundColor: [255, 255, 255],
+    backgroundColor: [0, 0, 0],
     initialState: {},
     bottomMapStyle: undefined,
     topMapStyle: undefined
@@ -308,7 +307,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
-    backgroundColor: [255, 255, 255],
+    backgroundColor: [0, 0, 0],
     initialState: {},
     bottomMapStyle: {layers: [], name: 'smoothie_the_cat'},
     topMapStyle: null,
@@ -341,7 +340,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
         topLayerGroups: {},
         visibleLayerGroups: {},
         threeDBuildingColor: [1, 2, 3],
-        backgroundColor: [255, 255, 255],
+        backgroundColor: [0, 0, 0],
         mapStyles: {
           smoothie_the_cat: {
             accessToken: 'secret_token',
@@ -420,7 +419,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'MANAGED')", t => {
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
-    backgroundColor: [255, 255, 255],
+    backgroundColor: [0, 0, 0],
     initialState: {},
     bottomMapStyle: undefined,
     topMapStyle: undefined
@@ -444,7 +443,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'MANAGED')", t => {
         topLayerGroups: {},
         visibleLayerGroups: {label: true, road: true},
         threeDBuildingColor: [1, 2, 3],
-        backgroundColor: [255, 255, 255],
+        backgroundColor: [0, 0, 0],
         mapStyles: {
           smoothie_the_cat: {
             accessToken: 'secret_token',
@@ -523,7 +522,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
-    backgroundColor: [255, 255, 255],
+    backgroundColor: [0, 0, 0],
     bottomMapStyle: undefined,
     topMapStyle: undefined,
     initialState: {}
@@ -586,7 +585,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
-    backgroundColor: [255, 255, 255],
+    backgroundColor: [0, 0, 0],
     initialState: {},
     bottomMapStyle: {layers: [], name: 'smoothie_the_cat'},
     topMapStyle: null,
@@ -619,7 +618,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
         topLayerGroups: {},
         visibleLayerGroups: {},
         threeDBuildingColor: [1, 2, 3],
-        backgroundColor: [255, 255, 255],
+        backgroundColor: [0, 0, 0],
         mapStyles: {
           smoothie_the_cat: {
             accessToken: 'secret_token',
@@ -658,8 +657,8 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
   );
 
   // loadMapStyles
-  const nextState = reducer(initialState, loadMapStyles({dark: MOCK_MAP_STYLE}));
-  t.deepEqual(nextState.mapStyles.dark, MOCK_MAP_STYLE, 'should load map style');
+  const nextState = reducer(initialState, loadMapStyles({'dark-matter': MOCK_MAP_STYLE}));
+  t.deepEqual(nextState.mapStyles['dark-matter'], MOCK_MAP_STYLE, 'should load map style');
   t.deepEqual(nextState.bottomMapStyle, MOCK_MAP_STYLE.style, 'bottomMapStyle should be set');
   t.equal(nextState.topMapStyle, null, 'topMapStyle should be set');
   t.equal(nextState.editable, 7, 'editable should be set');
@@ -686,17 +685,17 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
     ...MOCK_MAP_STYLE.style,
     layers: [
       {
-        id: 'road-path-rough',
+        id: 'road_path',
         type: 'line',
-        source: 'composite',
-        'source-layer': 'road'
+        source: 'carto',
+        'source-layer': 'transportation'
       },
       {
+        id: 'roadname_minor',
         minzoom: 13,
-        type: 'line',
-        source: 'composite',
-        id: 'bridge-rail',
-        'source-layer': 'road'
+        source: 'carto',
+        type: 'symbol',
+        'source-layer': 'transportation_name'
       },
       {
         type: 'symbol',
@@ -743,8 +742,7 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
   const expectedTaskPayload = [
     {
       id: 'positron',
-      url:
-        'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
+      url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
     }
   ];
   t.deepEqual(nextState3, expectedNextState3, 'state should be correct');
@@ -779,10 +777,10 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
   };
 
   t.deepEqual(succeedState.topMapStyle, expectedTopStyle3, 'topMapStyle should be set correctly');
-  t.deepEqual(succeedState.isLoading, {}, 'should set isLoading correctly');
+  t.deepEqual(succeedState.isLoading, {positron: false}, 'should set isLoading correctly');
   t.deepEqual(
     succeedState.threeDBuildingColor,
-    [209, 206, 199],
+    [237.4432283491836, 0, 0],
     'should set threeDBuildingColor correctly'
   );
 
