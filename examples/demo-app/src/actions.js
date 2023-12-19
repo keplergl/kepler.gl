@@ -4,6 +4,10 @@
 import {push} from 'react-router-redux';
 import {request, text as requestText, json as requestJson} from 'd3-request';
 import {loadFiles, toggleModal} from '@kepler.gl/actions';
+import {load} from '@loaders.gl/core';
+import {CSVLoader} from '@loaders.gl/csv';
+import {ArrowLoader} from '@loaders.gl/arrow';
+import {_GeoJSONLoader as GeoJSONLoader} from '@loaders.gl/json';
 
 import {
   LOADING_SAMPLE_ERROR_MESSAGE,
@@ -166,8 +170,8 @@ function loadRemoteRawData(url) {
 /**
  *
  * @param {Object} options
- * @param {string} [options.dataUrl] the URL to fetch data from, e.g. https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/earthquakes/data.csv
- * @param {string} [options.configUrl] the URL string to fetch kepler config from, e.g. https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/earthquakes/config.json
+ * @param {string} [options.dataUrl] the URL to fetch data from, e.g. https://raw.githubusercontent.com/keplergl/kepler.gl-data/master/earthquakes/data.csv
+ * @param {string} [options.configUrl] the URL string to fetch kepler config from, e.g. https://raw.githubusercontent.com/keplergl/kepler.gl-data/master/earthquakes/config.json
  * @param {string} [options.id] the id used as dataset unique identifier, e.g. earthquakes
  * @param {string} [options.label] the label used to describe the new dataset, e.g. California Earthquakes
  * @param {string} [options.queryType] the type of query to execute to load data/config, e.g. sample
@@ -273,19 +277,19 @@ function loadRemoteData(url) {
   }
 
   // Load data
-  return new Promise((resolve, reject) => {
-    requestMethod(url, (error, result) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      const responseError = detectResponseError(result);
-      if (responseError) {
-        reject(responseError);
-        return;
-      }
-      resolve(result);
-    });
+  return new Promise(resolve => {
+    const loaders = [CSVLoader, ArrowLoader, GeoJSONLoader];
+    const loadOptions = {
+      arrow: {
+        shape: 'arrow-table'
+      },
+      csv: {
+        shape: 'object-row-table'
+      },
+      metadata: true
+    };
+    const data = load(url, loaders, loadOptions);
+    resolve(data);
   });
 }
 

@@ -96,8 +96,8 @@ const LinkRenderer = props => {
   );
 };
 
-// convert https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/nyctrips/config.json
-// to https://github.com/uber-web/kepler.gl-data/blob/master/movement_pittsburgh/config.json
+// convert https://raw.githubusercontent.com/keplergl/kepler.gl-data/master/nyctrips/config.json
+// to https://github.com/keplergl/kepler.gl-data/blob/master/movement_pittsburgh/config.json
 function getURL(url) {
   return url
     ? url

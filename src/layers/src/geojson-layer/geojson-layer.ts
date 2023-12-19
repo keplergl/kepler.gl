@@ -342,7 +342,7 @@ export default class GeoJsonLayer extends Layer {
     return null;
   }
 
-  calculateDataAttribute({ dataContainer, filteredIndex }, getPosition) {
+  calculateDataAttribute({dataContainer, filteredIndex}, getPosition) {
     if (dataContainer instanceof ArrowDataContainer) {
       // filter geojson/arrow table by values and make a partial copy of the raw table are expensive
       // so we will use filteredIndex to create an attribute e.g. filteredIndex [0|1] for GPU filtering
@@ -362,7 +362,7 @@ export default class GeoJsonLayer extends Layer {
         }
         this.filteredIndexTrigger = filteredIndex;
       }
-    // for arrow, always return full dataToFeature instead of a filtered one, so there is no need to update attributes in GPU
+      // for arrow, always return full dataToFeature instead of a filtered one, so there is no need to update attributes in GPU
       return this.dataToFeature;
     }
 
@@ -410,13 +410,15 @@ export default class GeoJsonLayer extends Layer {
     if (dataContainer instanceof ArrowDataContainer) {
       // update the latest batch/chunk of geoarrow data when loading data incrementally
       if (this.dataToFeature.length < dataContainer.numChunks()) {
+        // for incrementally loading data, we only load and render the latest batch; otherwise, we will load and render all batches
+        const isIncrementalLoad = dataContainer.numChunks() - this.dataToFeature.length === 1;
         const {dataToFeature, bounds, fixedRadius, featureTypes} = getGeojsonLayerMetaFromArrow({
           dataContainer,
           getGeoColumn,
           getGeoField,
-          chunkIndex: this.dataToFeature.length
+          ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
         });
-        this.updateMeta({ bounds, fixedRadius, featureTypes });
+        this.updateMeta({bounds, fixedRadius, featureTypes});
         this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
       }
     } else {
@@ -426,7 +428,7 @@ export default class GeoJsonLayer extends Layer {
           getFeature
         });
         this.dataToFeature = dataToFeature;
-        this.updateMeta({ bounds, fixedRadius, featureTypes });
+        this.updateMeta({bounds, fixedRadius, featureTypes});
       }
     }
   }

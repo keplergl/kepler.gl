@@ -7,7 +7,7 @@ import {JSONLoader, _JSONPath} from '@loaders.gl/json';
 import {CSVLoader} from '@loaders.gl/csv';
 import {ArrowLoader} from '@loaders.gl/arrow';
 import {
-  processArrowTable,
+  processArrowBatches,
   processGeojson,
   processKeplerglJSON,
   processRowObject
@@ -208,7 +208,7 @@ export function processFileData({
 
     if (isArrowData(data)) {
       format = DATASET_FORMATS.arrow;
-      processor = processArrowTable;
+      processor = processArrowBatches;
     } else if (isKeplerGlMap(data)) {
       format = DATASET_FORMATS.keplergl;
       processor = processKeplerglJSON;
