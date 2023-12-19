@@ -19,7 +19,9 @@
 // THE SOFTWARE.
 
 import * as arrow from 'apache-arrow';
-import {Feature} from 'geojson';
+import {point as turfPoint} from '@turf/helpers';
+import booleanWithin from '@turf/boolean-within';
+import {Feature, Polygon} from 'geojson';
 import uniq from 'lodash.uniq';
 import {DATA_TYPES} from 'type-analyzer';
 import Layer, {
@@ -209,6 +211,7 @@ export default class GeoJsonLayer extends Layer {
   dataContainer: DataContainerInterface | null = null;
   filteredIndex: Uint8ClampedArray | null = null;
   filteredIndexTrigger: number[] | null = null;
+  centroids: Array<number[] | null> = [];
 
   constructor(props) {
     super(props);
@@ -417,6 +420,23 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
+  isInPolygon(data: DataContainerInterface, index: number, polygon: Feature<Polygon>): Boolean {
+    if (this.centroids.length === 0 || !this.centroids[index]) {
+      return false;
+    }
+    const isReactangleSearchBox = polygon.properties?.shape === 'Rectangle';
+    const point = this.centroids[index];
+    // if no valid centroid, return false
+    if (!point) return false;
+    // quick check if centroid is within the query rectangle
+    if (isReactangleSearchBox && polygon.properties?.bbox) {
+      const [minX, minY, maxX, maxY] = polygon.properties?.bbox;
+      return point[0] >= minX && point[0] <= maxX && point[1] >= minY && point[1] <= maxY;
+    }
+    // use turf.js to check if centroid is within query polygon
+    return booleanWithin(turfPoint(point), polygon);
+  }
+
   updateLayerMeta(dataContainer) {
     this.dataContainer = dataContainer;
 
@@ -429,21 +449,23 @@ export default class GeoJsonLayer extends Layer {
       if (this.dataToFeature.length < dataContainer.numChunks()) {
         // for incrementally loading data, we only load and render the latest batch; otherwise, we will load and render all batches
         const isIncrementalLoad = dataContainer.numChunks() - this.dataToFeature.length === 1;
-        const {dataToFeature, bounds, fixedRadius, featureTypes} = getGeojsonLayerMetaFromArrow({
+        const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMetaFromArrow({
           dataContainer,
           getGeoColumn,
           getGeoField,
           ...(isIncrementalLoad ? {chunkIndex: this.dataToFeature.length} : null)
         });
+        if (centroids) this.centroids = this.centroids.concat(centroids);
         this.updateMeta({bounds, fixedRadius, featureTypes});
         this.dataToFeature = [...this.dataToFeature, ...dataToFeature];
       }
     } else {
       if (this.dataToFeature.length === 0) {
-        const {dataToFeature, bounds, fixedRadius, featureTypes} = getGeojsonLayerMeta({
+        const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMeta({
           dataContainer,
           getFeature
         });
+        if (centroids) this.centroids = centroids;
         this.dataToFeature = dataToFeature;
         this.updateMeta({bounds, fixedRadius, featureTypes});
       }

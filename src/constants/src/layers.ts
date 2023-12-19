@@ -516,5 +516,6 @@ export const EDITOR_AVAILABLE_LAYERS: string[] = [
   LAYER_TYPES.hexagon,
   LAYER_TYPES.arc,
   LAYER_TYPES.line,
-  LAYER_TYPES.hexagonId
+  LAYER_TYPES.hexagonId,
+  LAYER_TYPES.geojson
 ];
