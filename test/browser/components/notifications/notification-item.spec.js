@@ -13,6 +13,7 @@ import {renderWithTheme} from '../../../helpers/component-jest-utils';
 const NotificationItem = appInjector.get(NotificationItemFactory);
 
 describe('Notification tests', () => {
+
   it('display SUCCESS notification', () => {
     const successNotification = createNotification({message: 'success', type: 'success'});
     // render the component
@@ -28,4 +29,5 @@ describe('Notification tests', () => {
     const heading = screen.getByTestId(dataTestIds.errorIcon);
     expect(heading).toBeInTheDocument();
   });
+
 });

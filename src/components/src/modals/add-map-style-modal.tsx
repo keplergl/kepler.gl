@@ -5,7 +5,7 @@ import React, {Component} from 'react';
 import {polyfill} from 'react-lifecycles-compat';
 import classnames from 'classnames';
 import styled from 'styled-components';
-import MapboxGLMap, {MapRef} from 'react-map-gl';
+import MapGLMap, {MapRef} from 'react-map-gl/maplibre';
 import {
   StyledModalContent,
   InputLight,
@@ -19,7 +19,7 @@ import {media} from '@kepler.gl/styles';
 import {transformRequest} from '@kepler.gl/utils';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
-import mapboxgl from 'mapbox-gl';
+import maplibregl from 'maplibre-gl';
 import {InputStyle, MapState} from '@kepler.gl/types';
 
 const MapH = 190;
@@ -125,12 +125,12 @@ function AddMapStyleModalFactory() {
     }
 
     mapRef: MapRef | null | undefined;
-    _map: mapboxgl.Map | undefined;
+    _map: maplibregl.Map | undefined;
 
     componentDidUpdate() {
       const map = this.mapRef && this.mapRef.getMap();
       if (map && this._map !== map) {
-        // @ts-expect-error react-map-gl.Map vs mapbox-gl.Map ?
+
         this._map = map;
 
         map.on('style.load', () => {
@@ -160,7 +160,7 @@ function AddMapStyleModalFactory() {
         ...mapState,
         baseApiUrl: mapboxApiUrl,
         mapboxAccessToken: mapboxApiAccessToken,
-        mapLib: mapboxgl,
+        mapLib: maplibregl,
         preserveDrawingBuffer: true,
         transformRequest
       };
@@ -195,11 +195,11 @@ function AddMapStyleModalFactory() {
                   type="text"
                   value={inputStyle.url || ''}
                   onChange={({target: {value}}) => this.props.inputMapStyle({url: value})}
-                  placeholder="e.g. mapbox://styles/username/style, http://my.stles.com/xxx/style.json "
+                  placeholder="e.g. https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
                 />
               </StyledModalSection>
 
-              <StyledModalSection>
+              {/* <StyledModalSection>
                 <div className="modal-section-title">
                   <FormattedMessage id={'modal.addStyle.publishTitle'} />
                 </div>
@@ -237,7 +237,7 @@ function AddMapStyleModalFactory() {
                   onChange={({target: {value}}) => this.props.inputMapStyle({accessToken: value})}
                   placeholder={intl.formatMessage({id: 'modal.addStyle.exampleToken'})}
                 />
-              </StyledModalSection>
+              </StyledModalSection> */}
 
               <StyledModalSection>
                 <div className="modal-section-title">
@@ -265,7 +265,7 @@ function AddMapStyleModalFactory() {
                   <div className="preview-image-spinner" />
                 ) : (
                   <StyledMapContainer>
-                    <MapboxGLMap
+                    <MapGLMap
                       {...mapProps}
                       ref={el => {
                         this.mapRef = el;

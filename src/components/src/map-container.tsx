@@ -4,11 +4,11 @@
 // libraries
 import React, {Component, createRef, useMemo} from 'react';
 import styled, {withTheme} from 'styled-components';
-import {Map, MapRef} from 'react-map-gl';
+import {Map, MapRef} from 'react-map-gl/maplibre';
 import {PickInfo} from '@deck.gl/core/lib/deck';
 import DeckGL from '@deck.gl/react';
 import {createSelector, Selector} from 'reselect';
-import mapboxgl from 'mapbox-gl';
+import maplibregl from 'maplibre-gl';
 import {useDroppable} from '@dnd-kit/core';
 import debounce from 'lodash.debounce';
 
@@ -114,7 +114,7 @@ const StyledMap = styled(StyledMapContainer)<StyledMapContainerProps>(
   #default-deckgl-overlay {
     mix-blend-mode: ${mixBlendMode};
   };
-  *[mapboxgl-children] {
+  *[maplibregl-children] {
     position: absolute;
   }
 `
@@ -124,15 +124,16 @@ const MAPBOXGL_STYLE_UPDATE = 'style.load';
 const MAPBOXGL_RENDER = 'render';
 const nop = () => {};
 
-const MapboxLogo = () => (
+const MapLibreLogo = () => (
   <div className="attrition-logo">
     Basemap by:
     <a
-      className="mapboxgl-ctrl-logo"
+      style={{marginLeft: "5px"}}
+      className="maplibregl-ctrl-logo"
       target="_blank"
       rel="noopener noreferrer"
-      href="https://www.mapbox.com/"
-      aria-label="Mapbox logo"
+      href="https://www.maplibre.org/"
+      aria-label="MapLibre logo"
     />
   </div>
 );
@@ -242,22 +243,11 @@ export const Attribution: React.FC<{
           <DatasetAttributions datasetAttributions={datasetAttributions} isPalm={isPalm} />
           <div className="attrition-link">
             {datasetAttributions?.length ? <span className="pipe-separator">|</span> : null}
-            {isPalm ? <MapboxLogo /> : null}
+            {isPalm ? <MapLibreLogo /> : null}
             <a href="https://kepler.gl/policy/" target="_blank" rel="noopener noreferrer">
               © kepler.gl |{' '}
             </a>
-            <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">
-              © Mapbox |{' '}
-            </a>
-            <a
-              href="https://www.mapbox.com/map-feedback/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <strong>Improve this map </strong>
-              {!isPalm ? <strong> | </strong> : null}
-            </a>
-            {!isPalm ? <MapboxLogo /> : null}
+            {!isPalm ? <MapLibreLogo /> : null}
           </div>
         </EndHorizontalFlexbox>
       </StyledAttrbution>
@@ -370,7 +360,7 @@ export default function MapContainerFactory(
     }
 
     _deck: any = null;
-    _map: mapboxgl.Map | null = null;
+    _map: maplibregl.Map | null = null;
     _ref = createRef<HTMLDivElement>();
     _deckGLErrorsElapsed: {[id: string]: number} = {};
 
@@ -498,7 +488,6 @@ export default function MapContainerFactory(
 
     _setMapboxMap: React.Ref<MapRef> = mapbox => {
       if (!this._map && mapbox) {
-        // @ts-expect-error react-map-gl.Map vs mapbox-gl.Map ?
         this._map = mapbox.getMap();
         // i noticed in certain context we don't access the actual map element
         if (!this._map) {
@@ -760,7 +749,7 @@ export default function MapContainerFactory(
 
       const extraDeckParams: {
         getTooltip?: (info: any) => object | null;
-        getCursor?: ({isDragging: boolean}) => string;
+        getCursor?: ({isDragging}: {isDragging: boolean}) => string;
       } = {};
       if (primaryMap) {
         extraDeckParams.getTooltip = info =>
@@ -986,7 +975,7 @@ export default function MapContainerFactory(
         preserveDrawingBuffer: true,
         mapboxAccessToken: currentStyle?.accessToken || mapboxApiAccessToken,
         baseApiUrl: mapboxApiUrl,
-        mapLib: mapboxgl,
+        mapLib: maplibregl,
         transformRequest: this.props.transformRequest || transformRequest
       };
 
@@ -1073,7 +1062,7 @@ export default function MapContainerFactory(
               style={MAP_STYLE.top}
               mapboxAccessToken={mapProps.mapboxAccessToken}
               baseApiUrl={mapProps.baseApiUrl}
-              mapLib={mapboxgl}
+              mapLib={maplibregl}
               {...topMapContainerProps}
             />
           ) : null}

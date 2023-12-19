@@ -5,7 +5,7 @@
 import React, {Component, createRef} from 'react';
 import {createSelector} from 'reselect';
 import styled from 'styled-components';
-import {Map} from 'react-map-gl';
+import {Map} from 'react-map-gl/maplibre';
 import debounce from 'lodash.debounce';
 import {
   exportImageError,
@@ -29,7 +29,7 @@ import {
 import {mapFieldsSelector} from './kepler-gl';
 
 const CLASS_FILTER = [
-  'mapboxgl-control-container',
+  'maplibregl-control-container',
   'attrition-link',
   'attrition-logo',
   'map-control__panel-split-viewport-tools'
@@ -42,9 +42,9 @@ PlotContainerFactory.deps = [MapContainerFactory, MapsLayoutFactory];
 // Remove mapbox logo in exported map, because it contains non-ascii characters
 // Remove split viewport UI controls from exported images when the legend is shown
 const StyledPlotContainer = styled.div`
-  .mapboxgl-ctrl-bottom-left,
-  .mapboxgl-ctrl-bottom-right,
-  .mapbox-attribution-container,
+  .maplibregl-ctrl-bottom-left,
+  .maplibregl-ctrl-bottom-right,
+  .maplibre-attribution-container,
   .map-control__panel-split-viewport-tools {
     display: none;
   }

@@ -73,7 +73,7 @@ export type MapStyle = {
 
 const getDefaultState = (): MapStyle => {
   const visibleLayerGroups = {};
-  const styleType = 'dark';
+  const styleType = 'dark-matter';
   const topLayerGroups = {};
 
   return {

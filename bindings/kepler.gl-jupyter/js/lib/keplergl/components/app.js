@@ -87,7 +87,7 @@ function App() {
           />
           <link
             rel="stylesheet"
-            href="http://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css"
+            href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css"
           />
           <style type="text/css">
             {`font-family: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;

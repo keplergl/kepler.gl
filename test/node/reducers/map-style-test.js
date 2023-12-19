@@ -109,7 +109,7 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
     {
       ...newState,
       isLoading: {
-        dark: true
+        'dark-matter': true
       }
     },
     'user provided mapStyles are populated, defaults ignored'
@@ -121,9 +121,8 @@ test('#mapStyleReducer -> INIT & LOAD_MAP_STYLES', t => {
   const expectedTask = {
     payload: [
       {
-        id: 'dark',
-        url:
-          'https://api.mapbox.com/styles/v1/uberdata/cjoqbbf6l9k302sl96tyvka09?pluginName=Keplergl&access_token=smoothies_secret_token'
+        id: 'dark-matter',
+        url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
       }
     ]
   };
@@ -229,7 +228,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
-    backgroundColor: [255, 255, 255],
+    backgroundColor: [0, 0, 0],
     initialState: {},
     bottomMapStyle: undefined,
     topMapStyle: undefined
@@ -291,7 +290,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
-    backgroundColor: [255, 255, 255],
+    backgroundColor: [0, 0, 0],
     initialState: {},
     bottomMapStyle: {layers: [], name: 'smoothie_the_cat'},
     topMapStyle: null,
@@ -324,7 +323,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'LOCAL')", t => {
         topLayerGroups: {},
         visibleLayerGroups: {},
         threeDBuildingColor: [1, 2, 3],
-        backgroundColor: [255, 255, 255],
+        backgroundColor: [0, 0, 0],
         mapStyles: {
           smoothie_the_cat: {
             accessToken: 'secret_token',
@@ -403,7 +402,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'MANAGED')", t => {
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
-    backgroundColor: [255, 255, 255],
+    backgroundColor: [0, 0, 0],
     initialState: {},
     bottomMapStyle: undefined,
     topMapStyle: undefined
@@ -427,7 +426,7 @@ test("#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: 'MANAGED')", t => {
         topLayerGroups: {},
         visibleLayerGroups: {label: true, road: true},
         threeDBuildingColor: [1, 2, 3],
-        backgroundColor: [255, 255, 255],
+        backgroundColor: [0, 0, 0],
         mapStyles: {
           smoothie_the_cat: {
             accessToken: 'secret_token',
@@ -506,7 +505,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
-    backgroundColor: [255, 255, 255],
+    backgroundColor: [0, 0, 0],
     bottomMapStyle: undefined,
     topMapStyle: undefined,
     initialState: {}
@@ -569,7 +568,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
     inputStyle: getInitialInputStyle(),
     threeDBuildingColor: [1, 2, 3],
     custom3DBuildingColor: true,
-    backgroundColor: [255, 255, 255],
+    backgroundColor: [0, 0, 0],
     initialState: {},
     bottomMapStyle: {layers: [], name: 'smoothie_the_cat'},
     topMapStyle: null,
@@ -602,7 +601,7 @@ test('#mapStyleReducer -> RECEIVE_MAP_CONFIG (custom: true (legacy backwards sup
         topLayerGroups: {},
         visibleLayerGroups: {},
         threeDBuildingColor: [1, 2, 3],
-        backgroundColor: [255, 255, 255],
+        backgroundColor: [0, 0, 0],
         mapStyles: {
           smoothie_the_cat: {
             accessToken: 'secret_token',
@@ -641,8 +640,8 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
   );
 
   // loadMapStyles
-  const nextState = reducer(initialState, loadMapStyles({dark: MOCK_MAP_STYLE}));
-  t.deepEqual(nextState.mapStyles.dark, MOCK_MAP_STYLE, 'should load map style');
+  const nextState = reducer(initialState, loadMapStyles({'dark-matter': MOCK_MAP_STYLE}));
+  t.deepEqual(nextState.mapStyles['dark-matter'], MOCK_MAP_STYLE, 'should load map style');
   t.deepEqual(nextState.bottomMapStyle, MOCK_MAP_STYLE.style, 'bottomMapStyle should be set');
   t.equal(nextState.topMapStyle, null, 'topMapStyle should be set');
   t.equal(nextState.editable, 7, 'editable should be set');
@@ -669,17 +668,17 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
     ...MOCK_MAP_STYLE.style,
     layers: [
       {
-        id: 'road-path-rough',
+        id: 'road_path',
         type: 'line',
-        source: 'composite',
-        'source-layer': 'road'
+        source: 'carto',
+        'source-layer': 'transportation'
       },
       {
+        id: 'roadname_minor',
         minzoom: 13,
-        type: 'line',
-        source: 'composite',
-        id: 'bridge-rail',
-        'source-layer': 'road'
+        source: 'carto',
+        type: 'symbol',
+        'source-layer': 'transportation_name'
       },
       {
         type: 'symbol',
@@ -712,22 +711,21 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
   t.deepEqual(nextState2.topMapStyle, expectedTopStyle2, 'topMapStyle should be set correctly');
 
   // set style type to light
-  const nextState3 = reducer(nextState2, mapStyleChange('light'));
+  const nextState3 = reducer(nextState2, mapStyleChange('positron'));
   const tasks = drainTasksForTesting();
   t.equal(tasks.length, 1, 'should dispatch 1 request map style task');
 
   const expectedNextState3 = {
     ...nextState2,
-    styleType: 'light',
+    styleType: 'positron',
     isLoading: {
-      light: true
+      positron: true
     }
   };
   const expectedTaskPayload = [
     {
-      id: 'light',
-      url:
-        'https://api.mapbox.com/styles/v1/uberdata/cjoqb9j339k1f2sl9t5ic5bn4?pluginName=Keplergl&access_token=smoothies_secret_token'
+      id: 'positron',
+      url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
     }
   ];
   t.deepEqual(nextState3, expectedNextState3, 'state should be correct');
@@ -736,13 +734,13 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
   // successfully load light map style
   const succeedState = reducer(
     nextState3,
-    succeedTaskWithValues(tasks[0], [{id: 'light', style: MOCK_MAP_STYLE_LIGHT.style}])
+    succeedTaskWithValues(tasks[0], [{id: 'positron', style: MOCK_MAP_STYLE_LIGHT.style}])
   );
 
   const expectedMapStyles = {
     ...nextState3.mapStyles,
-    light: {
-      ...nextState3.mapStyles.light,
+    positron: {
+      ...nextState3.mapStyles.positron,
       style: MOCK_MAP_STYLE_LIGHT.style
     }
   };
@@ -762,16 +760,16 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE', t => {
   };
 
   t.deepEqual(succeedState.topMapStyle, expectedTopStyle3, 'topMapStyle should be set correctly');
-  t.deepEqual(succeedState.isLoading, {light: false}, 'should set isLoading correctly');
+  t.deepEqual(succeedState.isLoading, {positron: false}, 'should set isLoading correctly');
   t.deepEqual(
     succeedState.threeDBuildingColor,
-    [237.4432283491836, 237.4432283491836, 237.4432283491836],
+    [237.4432283491836, 0, 0],
     'should set threeDBuildingColor correctly'
   );
 
   // error load light map style
   const erroredState = reducer(nextState3, errorTaskInTest(tasks[0], new Error('hello')));
-  t.deepEqual(erroredState.isLoading, {light: false}, 'should set isLoading correctly');
+  t.deepEqual(erroredState.isLoading, {positron: false}, 'should set isLoading correctly');
 
   t.end();
 });
@@ -805,12 +803,6 @@ test('#mapStyleReducer -> MAP_STYLE_CHANGE -> dark basemap to no basemap', t => 
     nextState2,
     expectedNextState2,
     'state should be correct when switching to no basemap option'
-  );
-
-  t.notDeepEqual(
-    nextState.backgroundColor,
-    nextState2.backgroundColor,
-    'backgroundColor should be changed when switching to no basemap option (map-style-updates.js: getBackgroundColorFromStyleBaseLayer())'
   );
 
   t.end();
@@ -906,8 +898,8 @@ test('#mapStyleReducer -> REMOVE_CUSTOM_MAP_STYLE -> removal of currently select
 
   t.equal(
     nextState.styleType,
-    'dark',
-    'should change active styleType to default "dark" when removing a custom style that was the active styleType'
+    'dark-matter',
+    'should change active styleType to default "dark-matter" when removing a custom style that was the active styleType'
   );
 
   t.end();

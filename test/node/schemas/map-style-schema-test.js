@@ -33,20 +33,20 @@ test('#mapStyleSchema -> v1 -> save load mapStyle', t => {
   );
 
   const expectedSaved = {
-    styleType: 'dark',
+    styleType: 'dark-matter',
     topLayerGroups: {},
     visibleLayerGroups: {},
     mapStyles: {},
     threeDBuildingColor: [209, 206, 199],
-    backgroundColor: [255, 255, 255]
+    backgroundColor: [0, 0, 0]
   };
 
   const expectedLoaded = {
-    styleType: 'dark',
+    styleType: 'dark-matter',
     topLayerGroups: {},
     visibleLayerGroups: {},
     threeDBuildingColor: [209, 206, 199],
-    backgroundColor: [255, 255, 255]
+    backgroundColor: [0, 0, 0]
   };
 
   t.deepEqual(msToSave, expectedSaved, 'saved mapStyle should be current');
@@ -70,7 +70,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom local style', t =>
       road: true
     },
     threeDBuildingColor: [1, 2, 3],
-    backgroundColor: [255, 255, 255],
+    backgroundColor: [0, 0, 0],
     mapStyles: {
       smoothie_the_cat: {
         id: 'smoothie_the_cat',
@@ -105,7 +105,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom managed style', t 
       road: true
     },
     threeDBuildingColor: [1, 2, 3],
-    backgroundColor: [255, 255, 255],
+    backgroundColor: [0, 0, 0],
     mapStyles: {
       smoothie_the_cat: {
         id: 'smoothie_the_cat',
@@ -140,7 +140,7 @@ test('#mapStyleSchema -> v1 -> save load mapStyle with custom local style (custo
       road: true
     },
     threeDBuildingColor: [1, 2, 3],
-    backgroundColor: [255, 255, 255],
+    backgroundColor: [0, 0, 0],
     mapStyles: {
       smoothie_the_cat: {
         id: 'smoothie_the_cat',
