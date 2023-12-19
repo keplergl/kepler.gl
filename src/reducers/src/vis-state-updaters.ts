@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import bbox from '@turf/bbox';
 import {console as Console} from 'global/window';
 import {disableStackCapturing, withTask} from 'react-palm/tasks';
 import cloneDeep from 'lodash.clonedeep';
@@ -2558,6 +2559,8 @@ export function setFeaturesUpdater(
   // if feature is part of a filter
   const filterId = feature && getFilterIdInFeature(feature);
   if (filterId && feature) {
+    // add bbox for polygon filter to speed up filtering
+    if (feature.properties) feature.properties.bbox = bbox(feature);
     const featureValue = featureToFilterValue(feature, filterId);
     const filterIdx = state.filters.findIndex(fil => fil.id === filterId);
     // @ts-ignore
@@ -2579,6 +2582,8 @@ export const setSelectedFeatureUpdater = (
   state: VisState,
   {feature, selectionContext}: VisStateActions.SetSelectedFeatureUpdaterAction
 ): VisState => {
+  // add bbox for polygon filter to speed up filtering
+   if (feature && feature.properties) feature.properties.bbox = bbox(feature);
   return {
     ...state,
     editor: {
