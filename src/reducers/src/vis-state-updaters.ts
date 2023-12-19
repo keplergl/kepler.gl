@@ -2291,8 +2291,16 @@ export const nextFileBatchUpdater = (
     fileName,
     progress: parseProgress(state.fileLoadingProgress[fileName], progress)
   });
-  return withTask(
-    stateWithProgress,
+
+  return withTask(stateWithProgress, [
+    ...(fileName.endsWith('arrow') && accumulated?.data?.length > 0
+      ? [
+          PROCESS_FILE_DATA({content: accumulated, fileCache: []}).bimap(
+            result => loadFilesSuccess(result),
+            err => loadFilesErr(fileName, err)
+          )
+        ]
+      : []),
     UNWRAP_TASK(gen.next()).bimap(
       ({value, done}) => {
         return done
@@ -2307,7 +2315,7 @@ export const nextFileBatchUpdater = (
       },
       err => loadFilesErr(fileName, err)
     )
-  );
+  ]);
 };
 
 /**

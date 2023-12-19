@@ -18,6 +18,10 @@
     "@kepler.gl/processors": "^3.0.0-alpha.1",
     "@kepler.gl/reducers": "^3.0.0-alpha.1",
     "@kepler.gl/styles": "^3.0.0-alpha.1",
+    "@loaders.gl/arrow": "^4.1.0-alpha.4",
+    "@loaders.gl/core": "^4.1.0-alpha.4",
+    "@loaders.gl/csv": "^4.1.0-alpha.4",
+    "@loaders.gl/json": "^4.1.0-alpha.4",
     "d3-request": "^1.0.6",
     "dropbox": "^4.0.12",
     "global": "^4.3.0",
@@ -50,8 +54,8 @@
     "webpack-hot-middleware": "^2.24.3"
   },
   "resolutions": {
-    "@luma.gl/core": "8.5.20",
-    "@luma.gl/webgl": "8.5.20",
+    "@luma.gl/core": "8.5.21",
+    "@luma.gl/webgl": "8.5.21",
     "@deck.gl/core": "8.9.27",
     "@deck.gl/extensions": "8.9.27",
     "react-vis": "1.11.7"

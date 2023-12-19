@@ -22,10 +22,13 @@ import * as arrow from 'apache-arrow';
 import {Feature, BBox} from 'geojson';
 import {Field, FieldPair} from '@kepler.gl/types';
 import {DataContainerInterface} from '@kepler.gl/utils';
-import {BinaryFeatures} from '@loaders.gl/schema';
-import {getBinaryGeometriesFromArrow, parseGeometryFromArrow} from '@loaders.gl/arrow';
+import {
+  getBinaryGeometriesFromArrow,
+  parseGeometryFromArrow,
+  BinaryGeometriesFromArrowOptions
+} from '@loaders.gl/arrow';
 
-import {DeckGlGeoTypes} from './geojson-layer/geojson-utils';
+import {DeckGlGeoTypes, GeojsonDataMaps} from './geojson-layer/geojson-utils';
 
 export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean) {
   const {lat, lng, alt} = pair.pair;
@@ -43,7 +46,7 @@ export function assignPointPairToLayerColumn(pair: FieldPair, hasAlt: boolean) {
 }
 
 export type GeojsonLayerMetaProps = {
-  dataToFeature: BinaryFeatures[] | Array<Feature | null>;
+  dataToFeature: GeojsonDataMaps;
   featureTypes: DeckGlGeoTypes;
   bounds: BBox | null;
   fixedRadius: boolean;
@@ -52,20 +55,32 @@ export type GeojsonLayerMetaProps = {
 export function getGeojsonLayerMetaFromArrow({
   dataContainer,
   getGeoColumn,
-  getGeoField
+  getGeoField,
+  chunkIndex
 }: {
   dataContainer: DataContainerInterface;
   getGeoColumn: (dataContainer: DataContainerInterface) => unknown;
   getGeoField: (dataContainer: DataContainerInterface) => Field | null;
+  chunkIndex?: number;
 }): GeojsonLayerMetaProps {
   const geoColumn = getGeoColumn(dataContainer) as arrow.Vector;
   const arrowField = getGeoField(dataContainer);
 
   const encoding = arrowField?.metadata?.get('ARROW:extension:name');
+  const options: BinaryGeometriesFromArrowOptions = {
+    ...(chunkIndex !== undefined && chunkIndex >= 0
+      ? {
+          chunkIndex,
+          chunkOffset: geoColumn.data[0].length * chunkIndex
+        }
+      : {}),
+    triangulate: true
+  };
   // create binary data from arrow data for GeoJsonLayer
   const {binaryGeometries, featureTypes, bounds} = getBinaryGeometriesFromArrow(
     geoColumn,
-    encoding
+    encoding,
+    options
   );
 
   // since there is no feature.properties.radius, we set fixedRadius to false
@@ -105,10 +120,7 @@ export function getHoveredObjectFromArrow(
     const field = fieldAccessor(dataContainer);
     const encoding = field?.metadata?.get('ARROW:extension:name');
 
-    const hoveredFeature = parseGeometryFromArrow({
-      encoding,
-      data: rawGeometry
-    });
+    const hoveredFeature = parseGeometryFromArrow(rawGeometry, encoding);
 
     const properties = dataContainer.rowAsArray(objectInfo.index).reduce((prev, cur, i) => {
       const fieldName = dataContainer?.getField?.(i).name;
@@ -120,7 +132,8 @@ export function getHoveredObjectFromArrow(
 
     return hoveredFeature
       ? {
-          ...hoveredFeature,
+          type: 'Feature',
+          geometry: hoveredFeature,
           properties: {
             ...properties,
             index: objectInfo.index

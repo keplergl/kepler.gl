@@ -22,11 +22,14 @@ import fs from 'fs';
 import {join} from 'path';
 
 export function walkSync(dir, fileList = []) {
-  dir.forEach(dir => {
-    const files = fs.readdirSync(dir);
+  // Ensure dir is an array
+  const directories = Array.isArray(dir) ? dir : [dir];
+
+  directories.forEach(dirPath => {
+    const files = fs.readdirSync(dirPath);
 
     files.forEach((file) => {
-      const path = join(dir, file);
+      const path = join(dirPath, file);
 
       if (fs.statSync(path).isDirectory()) {
         fileList = walkSync(path, fileList);

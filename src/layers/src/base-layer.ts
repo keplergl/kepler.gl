@@ -1104,7 +1104,7 @@ class Layer {
     const dataUpdateTriggers = this.getDataUpdateTriggers(layerDataset);
     const triggerChanged = this.getChangedTriggers(dataUpdateTriggers);
 
-    if (triggerChanged && triggerChanged.getMeta) {
+    if (triggerChanged && (triggerChanged.getMeta || triggerChanged.getData)) {
       this.updateLayerMeta(dataContainer, getPosition);
     }
 

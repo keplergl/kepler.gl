@@ -270,25 +270,21 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
 
   const expectedTask = {
     payload: [
-      {
-        id: 'dark',
-        url:
-          'https://api.mapbox.com/styles/v1/uberdata/cjoqbbf6l9k302sl96tyvka09?pluginName=Keplergl&access_token=smoothie-the-cat'
-      }
+      {id: 'dark-matter', url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'}
     ]
   };
 
   t.deepEqual(actionTask1.payload, expectedTask.payload, 'should create task to load map styles');
-  t.deepEqual(tmpState.mapStyle.isLoading, {dark: true}, 'should set mapStyle isLoading');
+  t.deepEqual(tmpState.mapStyle.isLoading, {'dark-matter': true}, 'should set mapStyle isLoading');
 
   const resultState1 = coreReducer(
     tmpState,
-    succeedTaskWithValues(actionTask1, [{id: 'dark', style: {layers: [], name: 'dark'}}])
+    succeedTaskWithValues(actionTask1, [{id: 'dark-matter', style: {layers: [], name: 'dark'}}])
   );
 
   const expectedStateMapStyles = {
     ...tmpState.mapStyle.mapStyles,
-    dark: {
+    'dark-matter': {
       ...DEFAULT_MAP_STYLES[1],
       style: {layers: [], name: 'dark'}
     }
@@ -303,7 +299,7 @@ test('Components -> KeplerGl -> Mount -> Load default map style task', t => {
   t.deepEqual(
     resultState1.mapStyle.isLoading,
     {
-      dark: false
+      'dark-matter': false
     },
     'should update state isLoading'
   );
