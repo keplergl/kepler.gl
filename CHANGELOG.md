@@ -15,6 +15,8 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.0.0] - December 21 2023
+
 ## [3.0.0-alpha.2] - December 17 2023
 
 - 5264c5f5 [fix] add thumbnails (#2486)
