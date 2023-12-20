@@ -17,6 +17,8 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.0.0-alpha.2] - December 17 2023
 
+- 5264c5f5 [fix] add thumbnails (#2486)
+- 34bb812e [chore] Update all licenses to OpenJS recommendation (#2471)
 - df87781a [Feat] add polygon filter based on mean centers for GeoJsonLayer (#2476)
 - 50924867 [chore] Add file license header script (#2472)
 - f33b09f8 [Demo] Add GeoArrow sample dataset (#2483)
