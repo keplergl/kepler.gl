@@ -290,7 +290,7 @@ export const DEFAULT_MAP_STYLES: BaseMapStyle[] = [
     id: 'dark-matter',
     label: 'DarkMatter',
     url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-    icon: NO_BASEMAP_ICON,
+    icon: `${BASEMAP_ICON_PREFIX}/DARKMATTER.png`,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.DARK,
     complimentaryStyleId: 'positron'
@@ -299,7 +299,7 @@ export const DEFAULT_MAP_STYLES: BaseMapStyle[] = [
     id: 'dark-matter-nolabels',
     label: 'DarkMatterNoLabels',
     url: 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json',
-    icon: NO_BASEMAP_ICON,
+    icon: `${BASEMAP_ICON_PREFIX}/DARKMATTER_NOLABELS.png`,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.DARK,
     complimentaryStyleId: 'positron-nolabels'
@@ -308,7 +308,7 @@ export const DEFAULT_MAP_STYLES: BaseMapStyle[] = [
     id: 'positron',
     label: 'Positron',
     url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-    icon: NO_BASEMAP_ICON,
+    icon: `${BASEMAP_ICON_PREFIX}/POSITRON.png`,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.LIGHT,
     complimentaryStyleId: 'dark-matter'
@@ -317,7 +317,7 @@ export const DEFAULT_MAP_STYLES: BaseMapStyle[] = [
     id: 'positron-nolabels',
     label: 'PositronNoLabels',
     url: 'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json',
-    icon: NO_BASEMAP_ICON,
+    icon: `${BASEMAP_ICON_PREFIX}/POSITRON_NOLABELS.png`,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.LIGHT,
     complimentaryStyleId: 'dark-matter-nolabels'
@@ -326,7 +326,7 @@ export const DEFAULT_MAP_STYLES: BaseMapStyle[] = [
     id: 'voyager',
     label: 'Voyager',
     url: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
-    icon: NO_BASEMAP_ICON,
+    icon: `${BASEMAP_ICON_PREFIX}/VOYAGER.png`,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.LIGHT,
     complimentaryStyleId: 'dark-matter'
@@ -335,7 +335,7 @@ export const DEFAULT_MAP_STYLES: BaseMapStyle[] = [
     id: 'voyager-nolabels',
     label: 'VoyagerNoLabels',
     url: 'https://basemaps.cartocdn.com/gl/voyager-nolabels-gl-style/style.json',
-    icon: NO_BASEMAP_ICON,
+    icon: `${BASEMAP_ICON_PREFIX}/VOYAGER_NOLABELS.png`,
     layerGroups: DEFAULT_LAYER_GROUPS,
     colorMode: BASE_MAP_COLOR_MODES.LIGHT,
     complimentaryStyleId: 'dark-matter-nolabels'
