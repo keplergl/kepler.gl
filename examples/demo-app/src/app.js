@@ -380,8 +380,8 @@ class App extends Component {
       // https://reactjs.org/docs/refs-and-the-dom.html#callback-refs
       // console.log(`Map ${index} has closed`);
     } else {
-      // We expect an InteractiveMap created by KeplerGl's MapContainer.
-      // https://uber.github.io/react-map-gl/#/Documentation/api-reference/interactive-map
+      // We expect an Map created by KeplerGl's MapContainer.
+      // https://visgl.github.io/react-map-gl/docs/api-reference/map
       const map = mapbox.getMap();
       map.on('zoomend', e => {
         // console.log(`Map ${index} zoom level: ${e.target.style.z}`);
