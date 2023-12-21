@@ -166,7 +166,7 @@ overridden by the latest instance and reset to a blank state.
 
 By default, kepler.gl uses mapbox-gl.js to render its base maps. You can create a free account at [mapbox][mapbox] and create a token at [www.mapbox.com/account/access-tokens][mapbox-token].
 
-If you replaced kepler.gl default map styles with your own, and they are not Mapbox styles. `mapboxApiAccessToken` will not be reuiqred.
+If you replaced kepler.gl default map styles with your own, and they are not Mapbox styles. `mapboxApiAccessToken` will not be required.
 
 Read more about [Custom Map Styles][custom-map-styles].
 
