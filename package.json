@@ -218,7 +218,6 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "resolutions": {
-    "apache-arrow": "^13.0.0",
     "@loaders.gl/core": "^4.1.0-alpha.4",
     "@loaders.gl/csv": "^4.1.0-alpha.4",
     "@loaders.gl/gltf": "^4.1.0-alpha.4",
