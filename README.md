@@ -48,12 +48,12 @@ Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to 
 
 ## Env
 
-Use Node 10.15.0 or above, older node versions have not been supported/ tested.
+Use Node 18.18.2 or above, older node versions have not been supported/ tested.
 For best results, use [nvm](https://github.com/creationix/nvm) `nvm install`.
 
 ## Install kepler.gl
 
-Install node (`> 10.15.0`), yarn, and project dependencies
+Install node (`> 18.18.2`), yarn, and project dependencies
 
 ```sh
 npm install --save kepler.gl
@@ -73,7 +73,7 @@ You can add the script tag to your html file as it follows:
 or if you would like, you can load a specific version
 
 ```html
-<script src="https://unpkg.com/kepler.gl@0.2.2/umd/keplergl.min.js" />
+<script src="https://unpkg.com/kepler.gl@2.5.5/umd/keplergl.min.js" />
 ```
 
 ## Develop kepler.gl
@@ -93,8 +93,8 @@ You need to add `taskMiddleware` of `react-palm` to your store too. We are activ
 
 ```js
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
-import keplerGlReducer from 'kepler.gl/reducers';
-import {enhanceReduxMiddleware} from 'kepler.gl/middleware';
+import keplerGlReducer from '@kepler.gl/reducers';
+import {enhanceReduxMiddleware} from '@kepler.gl/middleware';
 
 const initialState = {};
 const reducers = combineReducers({
@@ -139,15 +139,10 @@ Read more about [Reducers][reducers].
 ### 2. Mount Component
 
 ```js
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 const Map = props => (
-  <KeplerGl
-    id="foo"
-    width={width}
-    mapboxApiAccessToken={token}
-    height={height}
-  />
+  <KeplerGl id="foo" width={width} mapboxApiAccessToken={token} height={height} />
 );
 ```
 
@@ -165,14 +160,13 @@ stored in `state.keplerGl.foo`.
 In case you create multiple kepler.gl instances using the same id, the kepler.gl state defined by the entry will be
 overridden by the latest instance and reset to a blank state.
 
-##### `mapboxApiAccessToken` (String, required*)
+##### `mapboxApiAccessToken` (String, required\*)
 
 - Default: `undefined`
 
-
 By default, kepler.gl uses mapbox-gl.js to render its base maps. You can create a free account at [mapbox][mapbox] and create a token at [www.mapbox.com/account/access-tokens][mapbox-token].
 
-If you replaced kepler.gl default map styles with your own, and they are not Mapbox styles. `mapboxApiAccessToken` will not be reuiqred.
+If you replaced kepler.gl default map styles with your own, and they are not Mapbox styles. `mapboxApiAccessToken` will not be required.
 
 Read more about [Custom Map Styles][custom-map-styles].
 
@@ -350,10 +344,9 @@ const composedReducer = (state, action) => {
           // 'map' is the id of the keplerGl instance
           map: {
             ...state.keplerGl.map,
-            visState: visStateUpdaters.updateVisDataUpdater(
-              state.keplerGl.map.visState,
-              {datasets: action.payload}
-            )
+            visState: visStateUpdaters.updateVisDataUpdater(state.keplerGl.map.visState, {
+              datasets: action.payload
+            })
           }
         }
       };
@@ -373,10 +366,10 @@ using connect.
 
 ```js
 // component
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 // action and forward dispatcher
-import {toggleFullScreen, forwardTo} from 'kepler.gl/actions';
+import {toggleFullScreen, forwardTo} from '@kepler.gl/actions';
 import {connect} from 'react-redux';
 
 const MapContainer = props => (
@@ -406,10 +399,10 @@ You can also simply wrap an action into a forward action with the `wrapTo` helpe
 
 ```js
 // component
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 // action and forward dispatcher
-import {toggleFullScreen, wrapTo} from 'kepler.gl/actions';
+import {toggleFullScreen, wrapTo} from '@kepler.gl/actions';
 
 // create a function to wrapper action payload to 'foo'
 const wrapToMap = wrapTo('foo');
@@ -480,12 +473,7 @@ const customTheme = {
 
 return (
   <ThemeProvider theme={customTheme}>
-    <KeplerGl
-      mapboxApiAccessToken={MAPBOX_TOKEN}
-      id="map"
-      width={800}
-      height={800}
-    />
+    <KeplerGl mapboxApiAccessToken={MAPBOX_TOKEN} id="map" width={800} height={800} />
   </ThemeProvider>
 );
 ```
@@ -498,16 +486,14 @@ and call `injectComponents` at the root component of your app where `KeplerGl` i
 Take a look at `examples/demo-app/src/app.js` and see how it renders a custom side panel header in kepler.gl
 
 ```javascript
-import {injectComponents, PanelHeaderFactory} from 'kepler.gl/components';
+import {injectComponents, PanelHeaderFactory} from '@kepler.gl/components';
 
 // define custom header
 const CustomHeader = () => <div>My kepler.gl app</div>;
 const myCustomHeaderFactory = () => CustomHeader;
 
 // Inject custom header into Kepler.gl, replacing default
-const KeplerGl = injectComponents([
-  [PanelHeaderFactory, myCustomHeaderFactory]
-]);
+const KeplerGl = injectComponents([[PanelHeaderFactory, myCustomHeaderFactory]]);
 
 // render KeplerGl, it will render your custom header instead of the default
 const MapContainer = () => (
@@ -520,12 +506,8 @@ const MapContainer = () => (
 Using `withState` helper to add reducer state and actions to customized component as additional props.
 
 ```js
-import {
-  withState,
-  injectComponents,
-  PanelHeaderFactory
-} from 'kepler.gl/components';
-import {visStateLens} from 'kepler.gl/reducers';
+import {withState, injectComponents, PanelHeaderFactory} from '@kepler.gl/components';
+import {visStateLens} from '@kepler.gl/reducers';
 
 // custom action wrap to mounted instance
 const addTodo = text =>
@@ -562,6 +544,7 @@ To interact with a kepler.gl instance and add new data to it, you can dispatch t
 #### Parameters
 
 - `data` **[Object][40]** **\*required**
+
   - `datasets` **([Array][41]&lt;[Object][40]> | [Object][40])** **\*required** datasets can be a dataset or an array of datasets
     Each dataset object needs to have `info` and `data` property.
     - `datasets.info` **[Object][40]** \-info of a dataset
@@ -586,7 +569,7 @@ Kepler.gl provides an easy API `KeplerGlSchema.getConfigToSave` to generate a js
 
 ```javascript
 // app.js
-import {addDataToMap} from 'kepler.gl/actions';
+import {addDataToMap} from '@kepler.gl/actions';
 
 const sampleTripData = {
   fields: [

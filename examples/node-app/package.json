@@ -1,13 +1,13 @@
 {
   "scripts": {
-    "start": "node server.js",
-    "start-local": "WEBPACK_ENV=es6 node server.js"
+    "start": "NODE_OPTIONS=--openssl-legacy-provider node server.js",
+    "start-local": "NODE_OPTIONS=--openssl-legacy-provider WEBPACK_ENV=es6 node server.js"
   },
   "dependencies": {
-    "express": "^4.17.1",
-    "global": "^4.3.0",
     "@kepler.gl/components": "^3.0.0-alpha.1",
     "@kepler.gl/reducers": "^3.0.0-alpha.1",
+    "express": "^4.17.1",
+    "global": "^4.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-palm": "^3.3.6",
