@@ -261,20 +261,10 @@ export default {
       warning: 'aiot poistaa tämän aineiston. Aineostoa käyttävien tasojen lukumäärä: {length}'
     },
     addStyle: {
-      publishTitle: '1. Julkaise tyylisi Mapboxissa tai anna tunniste',
-      publishSubtitle1: 'Voit luoda oman karttatyylisi sivulla',
-      publishSubtitle2: 'ja',
-      publishSubtitle3: 'julkaista',
-      publishSubtitle4: 'sen.',
-      publishSubtitle5: 'Käyttääksesi yksityistä tyyliä, liitä',
-      publishSubtitle6: 'tunnisteesi',
-      publishSubtitle7:
-        'tänne. *kepler.gl on client-side sovellus, data pysyy vain selaimessasi...',
-      exampleToken: 'esim. pk.abcdefg.xxxxxx',
-      pasteTitle: '2. Liitä tyyli-URL',
+      pasteTitle: '1. Liitä tyyli-URL',
       pasteSubtitle1: 'Mikä on',
       pasteSubtitle2: 'tyyli-URL?',
-      namingTitle: '3. Nimeä tyylisi'
+      namingTitle: '2. Nimeä tyylisi'
     },
     shareMap: {
       shareUriTitle: 'Jaa kartan URL',

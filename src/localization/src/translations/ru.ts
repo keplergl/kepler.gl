@@ -269,24 +269,13 @@ export default {
       warning: 'вы собираетесь удалить этот набор данных. Это повлияет на {length} слой'
     },
     addStyle: {
-      publishTitle:
-        '2. Если вы указали URL-адрес файла mapbox на шаге 1, опубликуйте свой стиль на mapbox или предоставьте токен доступа. (Необязательно)',
-      publishSubtitle1: 'Вы можете создать свой собственный стиль карты',
-      publishSubtitle2: 'и',
-      publishSubtitle3: 'опубликовать',
-      publishSubtitle4: 'его.',
-      publishSubtitle5: 'Чтобы использовать частный стиль, вставьте свой',
-      publishSubtitle6: 'token доступа',
-      publishSubtitle7:
-        'прим. kepler.gl - это клиентское приложение, данные остаются в вашем браузере .',
-      exampleToken: 'например pk.abcdefg.xxxxxx',
       pasteTitle: '1. Вставить URL стиля',
       pasteSubtitle0: 'URL стиля может быть mapbox',
       pasteSubtitle1: 'Или',
       pasteSubtitle2: 'URL стиля',
       pasteSubtitle3: 'style.json используя',
       pasteSubtitle4: 'Mapbox GL Style Spec',
-      namingTitle: '3. Назови свой стиль'
+      namingTitle: '2. Назови свой стиль'
     },
     shareMap: {
       shareUriTitle: 'Поделиться URL карты',

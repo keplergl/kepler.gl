@@ -262,20 +262,10 @@ export default {
       warning: 'você irá deletar esse conjunto de dados. Isso irá afetar {length} camadas'
     },
     addStyle: {
-      publishTitle: '1. Publique o seu Estilo no Mapbox ou providencie a chave de acesso',
-      publishSubtitle1: 'Você pode criar o seu próprio estilo em',
-      publishSubtitle2: 'e',
-      publishSubtitle3: 'publicar',
-      publishSubtitle4: 'isso.',
-      publishSubtitle5: 'Para utilizar estilo privado, cole a sua',
-      publishSubtitle6: 'chave de acesso',
-      publishSubtitle7:
-        'aqui. *kepler.gl é uma aplicação client-side, os dados permanecem no seu browser..',
-      exampleToken: 'e.g. pk.abcdefg.xxxxxx',
-      pasteTitle: '2. Cole a url do seu estilo',
+      pasteTitle: '1. Cole a url do seu estilo',
       pasteSubtitle1: 'O que é uma',
       pasteSubtitle2: 'URL de estilo',
-      namingTitle: '3. Nomeie o seu estilo'
+      namingTitle: '2. Nomeie o seu estilo'
     },
     shareMap: {
       shareUriTitle: 'Compartilhar a URL do Mapa',

@@ -267,24 +267,13 @@ export default {
       warning: 'このデータセットを削除します。{length}個のレイヤに影響します。'
     },
     addStyle: {
-      publishTitle:
-        '2. ステップ1でMapboxのスタイルURLを指定した場合、Mapboxでスタイルを公開するか、アクセストークンを以下に入力します（オプション）',
-      publishSubtitle1: '独自のスタイルを',
-      publishSubtitle2: 'で作成し、',
-      publishSubtitle3: '公開',
-      publishSubtitle4: 'することができます',
-      publishSubtitle5: '非公開のスタイルを使用するには、自身の',
-      publishSubtitle6: 'アクセストークン',
-      publishSubtitle7:
-        'をここに入力します。*kepler.glはクライアント上で動作するため、データは自身のブラウザに保持されます。',
-      exampleToken: '例) pk.abcdefg.xxxxxx',
       pasteTitle: '1. スタイルのURLをペースト',
       pasteSubtitle0: 'スタイルのURLはMapboxの',
       pasteSubtitle1: 'What is a',
       pasteSubtitle2: 'スタイルURL',
       pasteSubtitle3: 'を指定するか、Mapbox GLの仕様に沿ったstyle.jsonのURLを指定します：',
       pasteSubtitle4: 'Mapbox GL スタイル仕様',
-      namingTitle: '3. スタイルの名称を設定'
+      namingTitle: '2. スタイルの名称を設定'
     },
     shareMap: {
       shareUriTitle: '地図のURLを共有',
