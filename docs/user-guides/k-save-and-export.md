@@ -2,7 +2,7 @@
 
 ![Save and Export](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/k-save-and-export-1.png "activate interactions")
 
-kepler.gl is a client-side only application. In the demo app, the data you uploaded stays in your browser. Uber does not send or store any user data to any backends. This rule poses an limitation on how you can save and share your maps.
+kepler.gl is a client-side only application. In the demo app, the data you uploaded stays in your browser. kepler.gl does not send or store any user data to any backends. This rule poses an limitation on how you can save and share your maps.
 
 However, in the demo app, you can:
 

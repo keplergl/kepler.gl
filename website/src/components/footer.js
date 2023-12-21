@@ -160,10 +160,10 @@ export default class Footer extends PureComponent {
             </LinkButton>
           </ButtonContainer>
           <SocialContainer>
-            <FacebookShareButton url="https://uber.github.io/kepler.gl/">
+            <FacebookShareButton url="https://kepler.gl/">
               <FacebookIcon size={32} />
             </FacebookShareButton>{' '}
-            <TwitterShareButton url="https://uber.github.io/kepler.gl/" hashtags={['keplergl']}>
+            <TwitterShareButton url="https://kepler.gl/" hashtags={['keplergl']}>
               <TwitterIcon size={32} />
             </TwitterShareButton>
           </SocialContainer>
