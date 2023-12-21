@@ -73,7 +73,7 @@ You can add the script tag to your html file as it follows:
 or if you would like, you can load a specific version
 
 ```html
-<script src="https://unpkg.com/kepler.gl@0.2.2/umd/keplergl.min.js" />
+<script src="https://unpkg.com/kepler.gl@2.5.5/umd/keplergl.min.js" />
 ```
 
 ## Develop kepler.gl
