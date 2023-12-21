@@ -202,46 +202,6 @@ function AddMapStyleModalFactory() {
                 />
               </StyledModalSection>
 
-              {/* <StyledModalSection>
-                <div className="modal-section-title">
-                  <FormattedMessage id={'modal.addStyle.publishTitle'} />
-                </div>
-                <div className="modal-section-subtitle">
-                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle1'})}
-                  <InlineLink target="_blank" href="https://www.mapbox.com/studio/styles/">
-                    {' '}
-                    mapbox
-                  </InlineLink>{' '}
-                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle2'})}
-                  <InlineLink
-                    target="_blank"
-                    href="https://www.mapbox.com/help/studio-manual-publish/"
-                  >
-                    {' '}
-                    {intl.formatMessage({id: 'modal.addStyle.publishSubtitle3'})}
-                  </InlineLink>{' '}
-                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle4'})}
-                </div>
-
-                <div className="modal-section-subtitle">
-                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle5'})}
-                  <InlineLink
-                    target="_blank"
-                    href="https://www.mapbox.com/help/how-access-tokens-work/"
-                  >
-                    {' '}
-                    {intl.formatMessage({id: 'modal.addStyle.publishSubtitle6'})}
-                  </InlineLink>{' '}
-                  {intl.formatMessage({id: 'modal.addStyle.publishSubtitle7'})}
-                </div>
-                <InputLight
-                  type="text"
-                  value={inputStyle.accessToken || ''}
-                  onChange={({target: {value}}) => this.props.inputMapStyle({accessToken: value})}
-                  placeholder={intl.formatMessage({id: 'modal.addStyle.exampleToken'})}
-                />
-              </StyledModalSection> */}
-
               <StyledModalSection>
                 <div className="modal-section-title">
                   <FormattedMessage id={'modal.addStyle.namingTitle'} />
