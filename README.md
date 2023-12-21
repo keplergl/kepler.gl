@@ -93,7 +93,7 @@ You need to add `taskMiddleware` of `react-palm` to your store too. We are activ
 
 ```js
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
-import keplerGlReducer from '@kepler.gl/components';
+import keplerGlReducer from '@kepler.gl/reducers';
 import {enhanceReduxMiddleware} from '@kepler.gl/middleware';
 
 const initialState = {};
@@ -139,7 +139,7 @@ Read more about [Reducers][reducers].
 ### 2. Mount Component
 
 ```js
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 const Map = props => (
   <KeplerGl id="foo" width={width} mapboxApiAccessToken={token} height={height} />
@@ -366,10 +366,10 @@ using connect.
 
 ```js
 // component
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 // action and forward dispatcher
-import {toggleFullScreen, forwardTo} from 'kepler.gl/actions';
+import {toggleFullScreen, forwardTo} from '@kepler.gl/actions';
 import {connect} from 'react-redux';
 
 const MapContainer = props => (
@@ -399,10 +399,10 @@ You can also simply wrap an action into a forward action with the `wrapTo` helpe
 
 ```js
 // component
-import KeplerGl from 'kepler.gl';
+import KeplerGl from '@kepler.gl/components';
 
 // action and forward dispatcher
-import {toggleFullScreen, wrapTo} from 'kepler.gl/actions';
+import {toggleFullScreen, wrapTo} from '@kepler.gl/actions';
 
 // create a function to wrapper action payload to 'foo'
 const wrapToMap = wrapTo('foo');
@@ -486,7 +486,7 @@ and call `injectComponents` at the root component of your app where `KeplerGl` i
 Take a look at `examples/demo-app/src/app.js` and see how it renders a custom side panel header in kepler.gl
 
 ```javascript
-import {injectComponents, PanelHeaderFactory} from 'kepler.gl/components';
+import {injectComponents, PanelHeaderFactory} from '@kepler.gl/components';
 
 // define custom header
 const CustomHeader = () => <div>My kepler.gl app</div>;
@@ -506,8 +506,8 @@ const MapContainer = () => (
 Using `withState` helper to add reducer state and actions to customized component as additional props.
 
 ```js
-import {withState, injectComponents, PanelHeaderFactory} from 'kepler.gl/components';
-import {visStateLens} from 'kepler.gl/reducers';
+import {withState, injectComponents, PanelHeaderFactory} from '@kepler.gl/components';
+import {visStateLens} from '@kepler.gl/reducers';
 
 // custom action wrap to mounted instance
 const addTodo = text =>
@@ -569,7 +569,7 @@ Kepler.gl provides an easy API `KeplerGlSchema.getConfigToSave` to generate a js
 
 ```javascript
 // app.js
-import {addDataToMap} from 'kepler.gl/actions';
+import {addDataToMap} from '@kepler.gl/actions';
 
 const sampleTripData = {
   fields: [
