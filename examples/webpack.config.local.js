@@ -83,8 +83,6 @@ function makeLocalDevConfig(env, EXAMPLE_DIR = LIB_DIR, externals = {}) {
     externals['loaders.gl'].forEach(mdl => {
       resolveAlias[`@loaders.gl/${mdl}`] = `${EXTERNAL_LOADERS_SRC}/modules/${mdl}/src`;
     });
-    // kepler.gl and loaders.gl need to use same apache-arrow
-    resolveAlias['apache-arrow'] = resolve(__dirname, '../node_modules/apache-arrow');
   }
 
   if (env.hubble_src) {

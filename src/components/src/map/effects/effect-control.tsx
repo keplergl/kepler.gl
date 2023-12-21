@@ -41,8 +41,7 @@ export default function EffectControlFactory(
       [onToggleMapControl]
     );
 
-    // TODO uncomment once effect related issues are fixed
-    const showControl = false; // mapControls?.effect?.show;
+    const showControl = mapControls?.effect?.show;
     if (!showControl) {
       return null;
     }
