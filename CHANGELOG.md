@@ -17,6 +17,9 @@ Ref: http://keepachangelog.com/en/0.3.0/
 
 ## [3.0.0] - December 21 2023
 
+- 21a445fd [chore] update readme, fix examples, show effects button (#2492)
+- de8cb971 [Fix] GeoArrow demo not working (#2491)
+
 ## [3.0.0-alpha.2] - December 17 2023
 
 - 5264c5f5 [fix] add thumbnails (#2486)
