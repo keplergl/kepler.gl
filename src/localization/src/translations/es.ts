@@ -270,20 +270,10 @@ export default {
       warning: 'estás a punto de borrar este conjunto de datos. Afectará a {length} capas'
     },
     addStyle: {
-      publishTitle: '1. Publicar tu estilo en Mapbox o proporcionar el token de acceso',
-      publishSubtitle1: 'Puedes crear el tu propio estilo de mapa en',
-      publishSubtitle2: 'y',
-      publishSubtitle3: 'publicar',
-      publishSubtitle4: 'lo.',
-      publishSubtitle5: 'Para utilizar un estilo privado, engancha tu',
-      publishSubtitle6: 'token de acceso',
-      publishSubtitle7:
-        'aquí. *kepler.gl es una aplicación cliente, los datos quedan en tu navegador..',
-      exampleToken: 'p.e. pk.abcdefg.xxxxxx',
-      pasteTitle: '2. Engancha el enlace del estilo',
+      pasteTitle: '1. Engancha el enlace del estilo',
       pasteSubtitle1: 'Qué es un',
       pasteSubtitle2: 'enlace del estilo',
-      namingTitle: '3. Poner nombre a tu estilo'
+      namingTitle: '2. Poner nombre a tu estilo'
     },
     shareMap: {
       shareUriTitle: 'Compartir el enlace del mapa',

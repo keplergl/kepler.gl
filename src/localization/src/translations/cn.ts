@@ -265,23 +265,13 @@ export default {
       warning: '确认要删除这个数据集。它会影响 {length} 个层'
     },
     addStyle: {
-      publishTitle:
-        '2. 如果在步骤1中输入了 mapbox 样式的 url，需要在 mapbox 上发布样式或提供访问令牌（access token）。（可选）',
-      publishSubtitle1: '可以在以下位置创建自己的地图样式',
-      publishSubtitle2: '并',
-      publishSubtitle3: '发布',
-      publishSubtitle4: '。',
-      publishSubtitle5: '使用私有样式，需粘贴',
-      publishSubtitle6: '访问令牌（access token）',
-      publishSubtitle7: '。* Kepler.gl 是一个客户端应用程序，数据保留在您的浏览器中。',
-      exampleToken: '例) pk.abcdefg.xxxxxx',
       pasteTitle: '1. 粘贴样式 url',
       pasteSubtitle0: '样式 url 可以是 Mapbox 的',
       pasteSubtitle1: '什么是',
       pasteSubtitle2: '样式 URL，',
       pasteSubtitle3: '还可以使用遵从Mapbox GL样式的style.json的url：',
       pasteSubtitle4: 'Mapbox GL 样式规范',
-      namingTitle: '3. 命名你的样式'
+      namingTitle: '2. 命名你的样式'
     },
     shareMap: {
       shareUriTitle: '分享地图网址',
