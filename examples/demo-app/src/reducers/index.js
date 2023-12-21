@@ -90,9 +90,16 @@ export const loadRemoteResourceSuccess = (state, action) => {
   // TODO: replace generate with a different function
   const datasetId = action.options.id || generateHashId(6);
   const {dataUrl} = action.options;
+
+  let data = action.response;
   let processorMethod = processRowObject;
+
   // TODO: create helper to determine file ext eligibility
-  if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
+  if (dataUrl.includes('.csv')) {
+    processorMethod = processRowObject;
+    // loaders.gl csv loader returns ArrayRowTable{data, shape: 'arrary-row-table'}
+    data = action.response.data;
+  }  else if (dataUrl.includes('.json') || dataUrl.includes('.geojson')) {
     processorMethod = processGeojson;
   } else if (dataUrl.includes('.arrow')) {
     processorMethod = processArrowTable;
@@ -102,7 +109,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
     info: {
       id: datasetId
     },
-    data: processorMethod(action.response)
+    data: processorMethod(data)
   };
 
   const config = action.config ? KeplerGlSchema.parseSavedConfig(action.config) : null;
