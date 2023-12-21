@@ -206,7 +206,7 @@
     "tape": "^4.9.2",
     "tape-catch": "^1.0.6",
     "typedoc-plugin-markdown": "^3.0.11",
-    "typescript": "4.5.5",    
+    "typescript": "4.5.5",
     "url-loader": "^4.1.1",
     "watchify": "^3.6.1",
     "webpack": "^4.29.0",
@@ -218,6 +218,7 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "resolutions": {
+    "apache-arrow": "^13.0.0",
     "@loaders.gl/core": "^4.1.0-alpha.4",
     "@loaders.gl/csv": "^4.1.0-alpha.4",
     "@loaders.gl/gltf": "^4.1.0-alpha.4",

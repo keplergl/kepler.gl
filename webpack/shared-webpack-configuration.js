@@ -15,9 +15,9 @@ const resolveAlias = {
   'styled-components': `${NODE_MODULES_DIR}/styled-components`,
   'react-intl': `${NODE_MODULES_DIR}/react-intl`,
   // Suppress useless warnings from react-date-picker's dep
-  'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`,
+  'tiny-warning': `${SRC_DIR}/utils/src/noop.ts`
   // kepler.gl and loaders.gl need to use same apache-arrow
-  'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`
+  // 'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`
 };
 
 // add kepler.gl submodule aliases
