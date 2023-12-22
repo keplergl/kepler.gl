@@ -89,7 +89,7 @@ const GATSBY_CONFIG = {
           },
           {
             name: 'react-map-gl',
-            url: 'https://uber.github.io/react-map-gl'
+            url: 'https://visgl.github.io/react-map-gl'
           },
           {
             name: 'nebula.gl',
