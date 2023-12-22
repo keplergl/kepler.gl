@@ -296,7 +296,6 @@ export {default as EffectConfiguratorFactory} from './effects/effect-configurato
 export {default as EffectTimeConfiguratorFactory} from './effects/effect-time-configurator';
 
 export {default as HowToButton} from './side-panel/layer-panel/how-to-button';
-// eslint-disable-next-line prettier/prettier
 export type {ButtonProps, StyledPanelHeaderProps, StyledExportSectionProps} from './common';
 
 export type {CollapseButtonProps} from './side-panel/side-bar';

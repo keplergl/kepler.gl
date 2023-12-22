@@ -9,7 +9,6 @@ export {
   KeplerGLSchema as KeplerGLSchemaClass
 } from './schema-manager';
 
-// eslint-disable-next-line prettier/prettier
 export type {SavedConfigV1, SavedMap, LoadedMap, SavedMapState} from './schema-manager';
 export {CURRENT_VERSION, VERSIONS} from './versions';
 export {

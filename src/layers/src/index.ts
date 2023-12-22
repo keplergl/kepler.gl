@@ -39,7 +39,6 @@ export {default as AggregationLayer} from './aggregation-layer';
 import {LAYER_TYPES} from '@kepler.gl/constants';
 export {parseGeoJsonRawFeature} from './geojson-layer/geojson-utils';
 // base layer
-// eslint-disable-next-line prettier/prettier
 export type {
   LayerBaseConfig,
   LayerColumns,

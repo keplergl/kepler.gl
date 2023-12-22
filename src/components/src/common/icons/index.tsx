@@ -3,7 +3,6 @@
 
 export {default as Base} from './base';
 
-// eslint-disable-next-line prettier/prettier
 export type {BaseProps} from './base';
 
 export {default as Add} from './add';
