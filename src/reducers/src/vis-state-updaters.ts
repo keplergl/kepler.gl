@@ -2583,7 +2583,7 @@ export const setSelectedFeatureUpdater = (
   {feature, selectionContext}: VisStateActions.SetSelectedFeatureUpdaterAction
 ): VisState => {
   // add bbox for polygon filter to speed up filtering
-   if (feature && feature.properties) feature.properties.bbox = bbox(feature);
+  if (feature && feature.properties) feature.properties.bbox = bbox(feature);
   return {
     ...state,
     editor: {

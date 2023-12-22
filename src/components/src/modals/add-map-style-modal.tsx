@@ -130,7 +130,6 @@ function AddMapStyleModalFactory() {
     componentDidUpdate() {
       const map = this.mapRef && this.mapRef.getMap();
       if (map && this._map !== map) {
-
         this._map = map;
 
         map.on('style.load', () => {

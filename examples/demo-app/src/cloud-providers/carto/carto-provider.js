@@ -182,7 +182,7 @@ export default class CartoProvider extends Provider {
       name: this.getUserName(),
       abbreviated: '',
       email: ''
-    }
+    };
   }
 
   async downloadMap(queryParams) {

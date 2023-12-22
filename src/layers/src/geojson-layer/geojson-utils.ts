@@ -5,7 +5,7 @@ import {Feature, BBox} from 'geojson';
 import normalize from '@mapbox/geojson-normalize';
 import bbox from '@turf/bbox';
 import center from '@turf/center';
-import {AllGeoJSON} from '@turf/helpers'
+import {AllGeoJSON} from '@turf/helpers';
 import {parseSync} from '@loaders.gl/core';
 import {WKBLoader, WKTLoader} from '@loaders.gl/wkt';
 import {binaryToGeometry} from '@loaders.gl/gis';
@@ -70,7 +70,9 @@ export function getGeojsonLayerMeta({
   // get bounds from features
   const bounds = getGeojsonBounds(dataToFeature);
   // if any of the feature has properties.radius set to be true
-  const fixedRadius = Boolean(dataToFeature.find(d => d && 'properties' in d && d.properties?.radius));
+  const fixedRadius = Boolean(
+    dataToFeature.find(d => d && 'properties' in d && d.properties?.radius)
+  );
 
   // keep a record of what type of geometry the collection has
   const featureTypes = getGeojsonFeatureTypes(dataToFeature);

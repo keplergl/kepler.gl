@@ -432,7 +432,13 @@ export default class GeoJsonLayer extends Layer {
       if (this.dataToFeature.length < dataContainer.numChunks()) {
         // for incrementally loading data, we only load and render the latest batch; otherwise, we will load and render all batches
         const isIncrementalLoad = dataContainer.numChunks() - this.dataToFeature.length === 1;
-        const {dataToFeature, bounds, fixedRadius, featureTypes, centroids} = getGeojsonLayerMetaFromArrow({
+        const {
+          dataToFeature,
+          bounds,
+          fixedRadius,
+          featureTypes,
+          centroids
+        } = getGeojsonLayerMetaFromArrow({
           dataContainer,
           getGeoColumn,
           getGeoField,
